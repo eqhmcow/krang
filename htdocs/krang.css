@@ -140,6 +140,8 @@ input[type="reset"] {
 .nav1 {
   background-color: #04044c;
   color:            #dceaf5;
+  padding-left:     2px;
+  height:           14pt;
 }
 
 .nav1 a { 
@@ -150,9 +152,19 @@ input[type="reset"] {
   background-color: #dbe9f4;
   color:            #333333;
   padding-left:     10px;
+  padding-top:      1px;
+  padding-bottom:   1px;
 }
 
 .nav3 {
   padding-left:     20px;
+  padding-top:      1px;
+  padding-bottom:   1px;
+}
+
+.nav4 {
+  padding-left:     30px;
+  padding-top:      1px;
+  padding-bottom:   1px;
 }
 
