@@ -95,7 +95,13 @@ sub run {
     #
     # Run CGI
     #
-    my $output = $self->SUPER::run(@args);
+    my $output;
+    eval { $output = $self->SUPER::run(@args); };
+    if (my $err = $@) {
+        debug("Krang::CGI:  UN-Loading Session after error");
+        Krang::Session->unload();
+        die $@;
+    }        
 
 
     # In debug mode append dump_html()
