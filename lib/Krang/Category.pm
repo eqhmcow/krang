@@ -100,6 +100,7 @@ use Exception::Class
    'Krang::Category::DuplicateURL' => {fields => 'category_id'},
    'Krang::Category::RootDeletion');
 use File::Spec;
+use Storable qw(freeze thaw);
 
 # Internal Modules
 ###################
@@ -1026,14 +1027,50 @@ sub deserialize_xml {
     return $cat;
 }
 
-=item C<< $html = $category->publish(publisher => $publisher) >>
+=item C<< $data = Storable::freeze($category) >>
 
-The public interface to publishing for Krang::Category.  Will go on to call
-$category->element->publish().
+Serialize a category.  Krang::Category implements STORABLE_freeze() to
+ensure this works correctly.
 
-If successful, publish() will return a block of HTML.
+=cut
 
-=back
+sub STORABLE_freeze {
+    my ($self, $cloning) = @_;
+    return if $cloning;
+
+    # make sure element tree is loaded
+    $self->element();
+    
+    # serialize data in $self with Storable
+    my $data;
+    eval { $data = freeze({%$self}) };
+    croak("Unable to freeze story: $@") if $@;
+
+    return $data;
+}
+
+=item C<< $category = Storable::thaw($data) >>
+
+Deserialize a frozen story.  Krang::Category implements STORABLE_thaw()
+to ensure this works correctly.
+
+=cut
+
+sub STORABLE_thaw {
+    my ($self, $cloning, $data) = @_;
+
+    # FIX: is there a better way to do this?
+    # Krang::Element::STORABLE_thaw needs a reference to the story in
+    # order to thaw the element tree, but thaw() doesn't let you pass
+    # extra arguments.
+    local $Krang::Element::THAWING_OBJECT = $self;
+
+    # retrieve object
+    eval { %$self = %{thaw($data)} };
+    croak("Unable to thaw story: $@") if $@;
+
+    return $self;
+}
 
 =head1 TO DO
 

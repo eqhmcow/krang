@@ -5,6 +5,7 @@ use Krang::Script;
 use Krang::Element;
 use Krang::Site;
 use Krang::Template;
+use Storable qw(freeze thaw);
 
 use Test::More qw(no_plan);
 
@@ -198,6 +199,16 @@ $category->save();
 
 my ($tmpl2) = Krang::Template->find(template_id => $tmpl->template_id);
 is($tmpl2->url() =~ /freddo/, 1, 'update_child_urls() - template');
+
+# must be able to store and thaw categories with Storable
+my $data;
+eval { $data = freeze($category) };
+ok(not $@);
+ok($data);
+my $clone;
+eval { $clone = thaw($data); };
+ok(not $@);
+isa_ok($clone, 'Krang::Category');
 
 # deletion tests
 ################
