@@ -250,69 +250,73 @@ my @checked_out_tmpls;
 
 if (@remaining_sites) {
     print "Removing dependencies from remaining sites...\n" if ($execute);
-    while (my @stories = Krang::Story->find(site_id => \@remaining_sites,
-                                            limit   => $limit,
-                                            offset  => $offset)) {
-        foreach my $s (@stories) {
+    foreach my $remaining_site_id (@remaining_sites) {
+        while (my @stories = Krang::Story->find(primary_site_id => $remaining_site_id,
+                                                limit   => $limit,
+                                                offset  => $offset)) {
+            foreach my $s (@stories) {
 
-            if ($s->checked_out) {
-                if ($execute) {
-                    print STDOUT sprintf("ERROR: Cannot continue.  Story ID=%i is checked out by User ID=%i\n\n",
-                                         $s->story_id, $s->checked_out_by);
-                    exit(1);
-                } else {
-                    push @checked_out_stories, $s->story_id
+                if ($s->checked_out) {
+                    if ($execute) {
+                        print STDOUT
+                          sprintf("ERROR: Cannot continue.  Story ID=%i is checked out by User ID=%i\n\n",
+                                  $s->story_id, $s->checked_out_by);
+                        exit(1);
+                    } else {
+                        push @checked_out_stories, $s->story_id
+                    }
+                }
+
+                # remove any categories in the sites slated for removal.
+                my @cats;
+                my @removed_cats;
+                foreach my $c ($s->categories()) {
+                    if ($expunged_sites{$c->site_id}) {
+                        push @removed_cats, $c->category_id;
+                        push @stories_removed_cats, $s->story_id;
+                    } else {
+                        push @cats, $c;
+                    }
+                }
+
+                # make a note that we've looked at this story - it qualifies
+                # as 'good' because we know it exists in at least one site not
+                # being expunged.
+                $checked_stories{good}{$s->story_id} = 1;
+
+                my $e = $s->element();
+
+                my ($removed_m, $removed_s) = scrub_children(element    => $e,
+                                                             good_sites => \@remaining_sites);
+
+                push @stories_removed_stories, $s->story_id if (@$removed_s);
+                push @stories_removed_media, $s->story_id if (@$removed_m);
+
+                if (@removed_cats || @$removed_s || @$removed_m) {
+                    if ($verbose) {
+                        print STDERR sprintf("Story ID=%i:\n", $s->story_id);
+                        print STDERR sprintf("\tremove cats=%s\n", join ',', sort bynumber @removed_cats)
+                          if (@removed_cats);
+                        print STDERR sprintf("\tremove stories=%s\n", join ',', sort bynumber @$removed_s)
+                          if (@$removed_s);
+                        print STDERR sprintf("\tremove media=%s\n", join ',', sort bynumber @$removed_m)
+                          if (@$removed_m);
+                    }
+                    # make these changes if the user says so.
+                    if ($execute) {
+                        print STDERR sprintf("Saving changes to StoryID=%i\n", $s->story_id) if ($verbose);
+                        $s->checkout();
+                        $s->categories(@cats);
+                        $e->save();
+                        $s->save();
+                        $s->checkin();
+                    }
                 }
             }
-
-            # remove any categories in the sites slated for removal.
-            my @cats;
-            my @removed_cats;
-            foreach my $c ($s->categories()) {
-                if ($expunged_sites{$c->site_id}) {
-                    push @removed_cats, $c->category_id;
-                    push @stories_removed_cats, $s->story_id;
-                } else {
-                    push @cats, $c;
-                }
-            }
-
-            # make a note that we've looked at this story - it qualifies
-            # as 'good' because we know it exists in at least one site not
-            # being expunged.
-            $checked_stories{good}{$s->story_id} = 1;
-
-            my $e = $s->element();
-
-            my ($removed_m, $removed_s) = scrub_children(element    => $e,
-                                                         good_sites => \@remaining_sites);
-
-            push @stories_removed_stories, $s->story_id if (@$removed_s);
-            push @stories_removed_media, $s->story_id if (@$removed_m);
-
-            if ($verbose && (@removed_cats || @$removed_s || @$removed_m)) {
-                print STDERR sprintf("Story ID=%i:\n", $s->story_id);
-                print STDERR sprintf("\tremove cats=%s\n", join ',', sort bynumber @removed_cats)
-                  if (@removed_cats);
-                print STDERR sprintf("\tremove stories=%s\n", join ',', sort bynumber @$removed_s)
-                  if (@$removed_s);
-                print STDERR sprintf("\tremove media=%s\n", join ',', sort bynumber@$removed_m)
-                  if (@$removed_m);
-            }
-
-
-            # make these changes if the user says so.
-            if ($execute) {
-                print STDERR "Saving changes..\n" if ($verbose);
-                $s->checkout();
-                $s->categories(@cats);
-                $e->save();
-                $s->save();
-                $s->checkin();
-            }
+            $offset += $limit;
         }
-
-        $offset += $limit;
+        # reset offset
+        $offset = 0;
     }
 } else {
     print "\nWARNING: No sites will remain after deletion - skipping dependency checks.\n";
@@ -323,12 +327,12 @@ if ($execute) {
     foreach my $site_id (keys %expunged_sites) {
         print sprintf("\nStarting deletion of '%s':\n", $expunged_sites{$site_id});
 
+        my ($root_cat) = Krang::Category->find(site_id => $site_id, dir => '/');
+
         print "\tDeleting templates...";
 
-        # Krang::Template cannot be searched by site, only by a list of categories.
-        my @site_cats = all_cats(site => $site_id);
-
-        foreach my $tmpl (Krang::Template->find(category_id => \@site_cats)) {
+        # search Krang::Template for all templates under the root category
+        foreach my $tmpl (Krang::Template->find(below_category_id => $root_cat->category_id)) {
             print $tmpl->template_id . ',' if ($verbose);
             eval { $tmpl->delete(); };
             delete_error(object => $tmpl, error => $@) if $@;
@@ -367,14 +371,11 @@ if ($execute) {
         my ($site) = Krang::Site->find(site_id => $site_id);
 
         print "\tDeleting categories...";
-        # need to recursively delete categories within the site.
-        my ($root_cat) = Krang::Category->find(site_id => $site->site_id(), dir => '/');
 
+        # need to recursively delete categories within the site.
         delete_category_children(category => $root_cat);
 
-        print "\n";
-
-        print "\tDeleting site...\n";
+        print "\n\tDeleting site...\n";
 
         $site->delete();
     }
@@ -386,7 +387,7 @@ if ($execute) {
     foreach my $site_id (keys %expunged_sites) {
 
         # Krang::Template cannot be searched by site, only by a list of categories.
-        my @site_cats = all_cats(site => $site_id);
+        my $site_cats = all_cats(site => $site_id);
 
         push @checked_out_stories, Krang::Story->find(site_id     => $site_id,
                                                       checked_out => 1,
@@ -394,7 +395,7 @@ if ($execute) {
         push @checked_out_media, Krang::Media->find(site_id     => $site_id,
                                                     checked_out => 1,
                                                     ids_only    => 1);
-        push @checked_out_tmpls, Krang::Template->find(category_id => \@site_cats,
+        push @checked_out_tmpls, Krang::Template->find(category_id => $site_cats,
                                                        checked_out => 1,
                                                        ids_only    => 1);
     }
@@ -447,7 +448,7 @@ sub all_cats {
         push @cats, $cat->category_id;
     }
 
-    return @cats;
+    return \@cats;
 }
 
 
@@ -464,11 +465,36 @@ sub delete_category_children {
 
     return unless defined($cat);
 
+
+
     foreach my $child ($cat->children()) {
+        # delete the child's dependants
         delete_category_children(category => $child);
+
+        # now delete the child.
         print $child->category_id . ',' if ($verbose);
         $child->delete;
     }
+
+    # at this point, there should be no remaining dependencies.
+    # make sure before you attempt to delete one level up.
+
+    eval {$cat->dependent_check()};
+    if ($@) {
+        if ($@->isa('Krang::Category::Dependent')) {
+            my $dependents = $@->dependents();
+            $dependents = join("\n\t", map{"$_: [" .
+                                             join(",", @{$dependents->{$_}}) .
+                                               "]"} keys %$dependents);
+            print
+              sprintf("The following object classes and ids rely upon this category %i:\n\t%s\n",
+                      $cat->category_id, $dependents);
+            die;
+        } else {
+            die $@;
+        }
+    }
+
 }
 
 #
