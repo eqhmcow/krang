@@ -742,7 +742,7 @@ sub content {
 }
 
 
-=item C<< $txt = $publisher->additional_content_block(filename => $filename, content => $html, use_category => 1);
+=item C<< $txt = $publisher->additional_content_block(filename => $filename, content => $html, use_category => 1); >>
 
 Creates a formatted block of text from C<$html> that, during the final processing of output, will be split out from the rest of the content to be published, and will be written out to C<$filename>.
 
