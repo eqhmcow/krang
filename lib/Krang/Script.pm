@@ -96,7 +96,7 @@ BEGIN {
     if (not defined $instance) {
         my @instances = Krang::Conf->instances();
         if (@instances > 1) {
-            die "Your Krang configuration contains multiple instances, please set the KRANG_INSTANCE environment variable.\n\nAvailable instances are: " . 
+            die "\nYour Krang configuration contains multiple instances, please set the\nKRANG_INSTANCE environment variable.\n\nAvailable instances are: " . 
               join(', ', @instances[0 .. $#instances - 1]) . 
                 " and $instances[-1].\n\n";
         } else {
