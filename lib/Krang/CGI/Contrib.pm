@@ -160,8 +160,6 @@ sub search {
                                       id_handler => sub { return $_[0]->contrib_id },
                                      );
 
-    # print STDERR "==============================>\n". $pager->make_internal_template() ."<==============================\n\n";
-
     # Run pager
     $t->param(pager_html =>  $pager->output());
 

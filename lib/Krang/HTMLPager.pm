@@ -129,7 +129,7 @@ unique to Krang:
 
 =head1 INTERFACE
 
-Krang::HTMLPager implements three primary methods.
+Krang::HTMLPager implements the following primary methods:
 
 =over 4
 
@@ -343,7 +343,7 @@ EOF
 EOF
 
     # Close pager form
-    $pager_tmpl .= "\n</form>\n\n";
+    $pager_tmpl .= "\n</form>\n";
 
     return $pager_tmpl;
 }
@@ -355,8 +355,12 @@ EOF
 
 =head2 Krang::HTMLPager Properties
 
-Krang::HTMLPager expects a number of parameters to be set 
-via the new() method.  Following is a list of those parameters.
+Krang::HTMLPager expects a number of parameters to be set via the
+new() method.  These parameters set properties which are used to
+create a specification for your pager, such as the list of columns and
+which of those columns are sortable.
+
+Following is a list of the parameters for Krang::HTMLPager.
 These parameters are also accessible via object methods.
 
 =over 4
