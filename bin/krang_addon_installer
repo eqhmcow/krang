@@ -1,0 +1,129 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_addon_installer - installs extra functionality into Krang
+
+=head1 SYNOPSIS
+
+Enter a directory containing a Krang addon and run this script:
+
+ $ cd KrangTurboCharger-1.0
+ $ /path/to/krang/bin/krang_addon_installer
+
+=head1 DESCRIPTION
+
+This script installs addon packages into Krang.  An addon package can
+contain new libraries and scripts for Krang, new element sets or even
+new CGI scripts for the frontend interface.
+
+Each addon package must have a file called F<MANIFEST.krang_addon>
+which lists the files to be installed into Krang.  For example:
+
+  lib/Krang/Turbo.pm
+  bin/krang_turbo
+  docs/turbo.pod
+
+All files listed in F<MANIFEST.krang_addon> will be copied into
+Krang's root directory, following the directory structure specified.
+
+B<NOTE>: Krang addon's do not need to include required CPAN modules
+which are already included in Krang.
+
+=head1 TODO
+
+Possible future developments, to be performed as needed:
+
+=over
+
+=item support diffs against Krang files
+
+=item uninstall
+
+=item version checking
+
+=item SQL inclusion
+
+=item allow a script to run
+
+=item logging
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+use Krang::Script;
+use Krang::Conf qw(KrangRoot);
+use File::Copy qw(copy);
+use File::Path qw(mkpath);
+
+# read the manifest
+die "Missing MANIFEST.krang_addon.  Krang addons must have this file.\n"
+  unless -e 'MANIFEST.krang_addon';
+open(MANIFEST, 'MANIFEST.krang_addon') or
+  die "Unable to open 'MANIFEST.krang_addon': $!\n";
+my @files = grep { not /^#/ } <MANIFEST>;
+close MANIFEST or die $!;
+
+die "No files specified in MANIFEST.krang_addon!\n"
+  unless @files;
+
+chomp($_) for @files;
+
+# check the MANIFEST
+foreach my $file (@files) {
+    die "File named '$file' is in MANIFEST.krang_addon but does not exist."
+      unless -e $file and -f _;
+}
+
+# copy the files, creating directories as necessary
+my $root = KrangRoot;
+foreach my $file (@files) {
+    my @parts = splitdir($file);
+    my $dir   = @parts > 1 ? catdir(@parts[0 .. $#parts - 1]) : '';
+    my $target_dir = catdir($root, $dir);
+    my $target = catfile($target_dir, $parts[-1]);
+    unless (-d $target_dir) {
+        mkpath([$target_dir]) 
+          or die "Unable to create directory '$target_dir': $!\n";
+    }
+    print "Copying $file to $target...\n";
+    copy($file, catfile($target_dir, $parts[-1]))
+      or die "Unable to copy '$file' to '$target': $!\n";
+}
+
+print "Installation complete.\n";
