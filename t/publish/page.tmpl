@@ -4,8 +4,10 @@
 <tmpl_if is_paragraph><p><tmpl_var paragraph></p></tmpl_if>
 </tmpl_loop>
 
+<P>Page number <tmpl_var current_page_number> of <tmpl_var total_pages>.</p>
+
 <tmpl_unless is_first_page>
-<a href="<tmpl_var previous_page_url>">Previous Page</a> -- '<tmpl_var is_first_page>'
+<a href="<tmpl_var previous_page_url>">Previous Page</a>
 </tmpl_unless>
 
 <tmpl_loop pagination_loop>
@@ -20,3 +22,4 @@
 <a href="<tmpl_var next_page_url>">Next Page</a>
 </tmpl_unless>
 
+<tmpl_unless is_last_page><tmpl_var page_break></tmpl_unless>

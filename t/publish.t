@@ -52,7 +52,9 @@ my $category2   = 'CATEGORY2 'x5;
 my $category3   = 'CATEGORY3 'x5;
 my $story_title = 'Test Title';
 
-my $pagination1 = '1';
+my $pagination1 = '<P>Page number 1 of 1.</p>';
+
+my $page_break = Krang::Publisher->page_break();
 
 my $category1_head = 'THIS IS HEADS' . $category1 . '---';
 my $category1_tail = '---' . $category1 . 'THIS IS TAILS';
@@ -66,9 +68,9 @@ my $category3_head = 'THIS IS HEADS' . $category3 . '---';
 my $category3_tail = '---' . $category3 . 'THIS IS TAILS';
 my $category3_output = $category3_head . Krang::Publisher->content() . $category3_tail;
 
-my %article_output = (3 => $category3_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $pagination1 . $category3_tail,
-                      2 => $category2_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $pagination1 . $category2_tail,
-                      1 => $category1_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $pagination1 . $category1_tail
+my %article_output = (3 => $category3_head .  "<title>$story_title</title>" . $page_output . $pagination1 . '1' . $category3_tail,
+                      2 => $category2_head .  "<title>$story_title</title>" . $page_output . $pagination1 . '1' . $category2_tail,
+                      1 => $category1_head .  "<title>$story_title</title>" . $page_output . $pagination1 . '1' . $category1_tail
 );
 
 # list of templates to delete at the end of this all.
@@ -202,6 +204,8 @@ END {
 
 ############################################################
 # Testing the publish process.
+
+#test_multi_page_story($category);
 
 # test finding templates.
 find_templates($element);
@@ -384,6 +388,43 @@ sub test_full_publish {
         ok (-e $path, 'Krang::Publisher->publish_story() -- complete media writeout');
     }
 
+}
+
+
+sub test_multi_page_story {
+    my @categories = @_;
+
+    # create a new story, create multiple pages for it.
+    # publish it, find all the pages, compare them to what's expected.
+
+    my $story = create_story(\@categories);
+
+    $story->checkout();
+
+    my $page2 = $story->element->add_child(class => 'page');
+    _add_page_data($page2);
+    my $page3 = $story->element->add_child(class => 'page');
+    _add_page_data($page3);
+    my $page4 = $story->element->add_child(class => 'page');
+    _add_page_data($page4);
+
+    $story->save();
+    $story->checkin();
+
+    my $category = $story->category();
+
+    $publisher->{is_publish} = 1;
+    $publisher->{is_preview} = 0;
+
+    my $pages = $publisher->_assemble_pages(story => $story, category => $category);
+
+    foreach (@$pages) {
+        $_ =~ s/\n//g;
+    }
+
+    $story->delete();
+
+    die Dumper($pages);
 }
 
 ############################################################
@@ -711,13 +752,14 @@ sub test_story_build {
     # test publish() on page element -
     # it should contain header (formatted), note about wide page, 3 paragraphs.
     # Add pagination args as well
-#    my %pagination_hack = (is_first_page => 1, is_last_page => 1);
-#    my $page_pub = $page->publish(element => $page, publisher => $publisher,
-#                                  template_args => \%pagination_hack
-#                                 );
-#    $page_pub =~ s/\n//g;
-#    ok($page_pub eq $page_output, 'Krang::ElementClass->publish() -- page');
-my $page_pub;
+    my %pagination_hack = (is_first_page => 1, is_last_page => 1, current_page_number => 1,
+                          total_pages => 1);
+    my $page_pub = $page->publish(element => $page, publisher => $publisher,
+                                  template_args => \%pagination_hack
+                                 );
+    $page_pub =~ s/\n//g;
+    my $page_string = ($page_output. $pagination1);
+    ok($page_pub eq $page_string, 'Krang::ElementClass->publish() -- page');
 
     # undeploy header tmpl & attempt to publish - should
     # return $header->data().
@@ -762,8 +804,6 @@ my $page_pub;
     my $page_one = $assembled_ref->[0];
     $page_one =~ s/\n//g;
     ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');
-
-
 
 }
 
