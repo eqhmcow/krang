@@ -217,11 +217,11 @@ sub advanced_find {
         $persist_vars->{search_media_id} = $search_media_id;
     }
 
-    # search_has_attributes
-    my $search_has_attributes = $q->param('search_has_attributes');
-    if ($search_has_attributes) {
-        $find_params->{has_attributes} = $search_has_attributes;
-        $persist_vars->{search_has_attributes} = $search_has_attributes;
+    # search_no_attributes
+    my $search_no_attributes = $q->param('search_no_attributes');
+    if ($search_no_attributes) {
+        $find_params->{no_attributes} = $search_no_attributes;
+        $persist_vars->{search_no_attributes} = $search_no_attributes;
     }
 
     # Run pager
