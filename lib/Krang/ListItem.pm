@@ -423,7 +423,8 @@ sub serialize_xml {
 Deserialize XML.  See Krang::DataSet for details.
 
 Note that currently update will not work as there is no identifying field
-other than data, which can change.
+other than data, which can change. However, if an identical list item 
+is found, it will not be replicated. 
 
 =cut
 
@@ -451,10 +452,16 @@ sub deserialize_xml {
     }
 
     if ($parent) {
-       my $li = Krang::ListItem->new( data => $data->{data}, list => $list, parent_list => $parent );
+        my $dupe = (Krang::ListItem->find( data => $data->{data}, list_id => $list->list_id, parent_list_item_id => $parent->list_item_id ))[0] || '';
+        return $dupe if $dupe;
+
+        my $li = Krang::ListItem->new( data => $data->{data}, list => $list, parent_list_item => $parent );
         $li->save;
         return $li;
     } else {
+        my $dupe = (Krang::ListItem->find( data => $data->{data}, list_id => $list->list_id ))[0] || '';
+        return $dupe if $dupe;
+
         my $li = Krang::ListItem->new( data => $data->{data}, list => $list );
         $li->save;
         return $li;
