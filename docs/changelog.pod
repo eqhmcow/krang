@@ -1,0 +1,13 @@
+=head1 Krang Changelog
+
+This document contains a list of changes for each release of Krang.
+
+=head2 v1.013
+
+=over
+
+=item 
+
+First public release of Krang!
+
+=back
