@@ -65,6 +65,8 @@ sub edit {
     my $q = $self->query;
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
     $template->param( $error => 1 ) if $error;
+    $template->param( "reproduce_".$q->param('reproduce') => 1 ) if $q->param('reproduce');
+    $template->param( "bug_severity_".$q->param('bug_severity') => 1 ) if $q->param('reproduce');
     return $template->output; 
 }
 
