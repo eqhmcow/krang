@@ -109,12 +109,26 @@ my $krang_publish = catfile(KrangRoot, 'bin', 'krang_publish');
 $i = 0;
 
 run_benchmark(  module => 'Krang::Story',
-                name => 'Publish 100 stories',
+                name => 'Publish 100 stories, one at a time',
                 count => 100,
                 code => sub {
                     my $sid = $found_stories[$i++]->story_id;
                    `$krang_publish --story_id $sid`;
                 } ); 
+##############################################################
+
+$done = 0;
+my $sids = map{ $_->story_id.',' } @found_stories;
+
+run_benchmark(  module => 'Krang::Story',
+                name => 'Publish 100 stories at a time',
+                count => 100,
+                code => sub {
+                    if (not $done) {
+                        `$krang_publish --story_id $sids`;
+                        $done = 1;
+} } );
+ 
 ##############################################################
 $done = 0;
 my $story_count = Krang::Story->find( count => 1 );
