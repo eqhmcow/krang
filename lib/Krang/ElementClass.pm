@@ -598,8 +598,9 @@ sub fill_template {
     }
 
     my %template_loops;
-    my %pagination;
+    my @page_urls;
     my @reverse_lookups;
+    my $pageable_loopname;
 
     # Note - the following code is somewhat intricate - the
     # explanation is as follows:
@@ -637,31 +638,32 @@ sub fill_template {
 
         my $name     = $child->name;
         my $loopname = $name . '_loop';
+
         my %rev;
         my $is_loop = 0;
 
         foreach ('element_loop', $loopname) {
             if (exists($template_vars{$_})) {
+                $is_loop = 1;
                 push @{$template_loops{$_}}, $idx;
                 $rev{index} = $idx unless exists($rev{index});
                 $rev{loops}{$_} = @{$template_loops{$_}};
-                $is_loop = 1;
+
+                if ($child->pageable) {
+                    # The URL at $page_urls[n] corresponds to the element
+                    # pointed to by the array index in $template_loops{$pageable_loopname}[x].
+                    $pageable_loopname = $_ unless ($pageable_loopname);
+                    my $count = @page_urls;
+                    push @page_urls, $self->_build_page_url(page => $count,
+                                                            publisher => $publisher);
+
+                }
             }
             unless ($is_loop) {  # not in a loop
                 if (exists($template_vars{$name}) && !exists($params{$name})) {
                     $params{$name} = $child->publish(publisher => $publisher);
                 }
             }
-        }
-
-        if ($child->pageable && exists($template_vars{$loopname})) {
-            # The URL at $pagination{$loopname}[n] corresponds to the element
-            # pointed to by the array index in $template_loops{$loopname}[x].
-            $pagination{$loopname} = [] unless exists($pagination{$loopname}); # array init if needed.
-            my $count = @{$pagination{$loopname}};
-            push @{$pagination{$loopname}}, $self->_build_page_url(page => $count,
-                                                                   publisher => $publisher
-                                                                  );
         }
 
         push @reverse_lookups, \%rev if ($is_loop);
@@ -671,25 +673,20 @@ sub fill_template {
     # At this point - anything that is not in a loop has been published & is in %params.
     # Anything in a loop exists in %template_loops, and the position
     # in the loop is pointed to by @reverse_lookups.
-    # Anything pagable has its urls in %pagination.
+    # Anything pagable has its urls in %page_urls.
 
     foreach my $loop_element (@reverse_lookups) {
         my $child = $element_children[$loop_element->{index}];
         my $name = $child->name;
-        my $pagination;
+        my $page_urls;
         my $loopname;
         my $pages;
         my $html;
 
         # if the element is pageable, find the loopname
         if ($child->pageable) {
-            foreach my $paged_loops (keys %pagination) {
-                next unless exists($loop_element->{loops}{$paged_loops});
-                $loopname = $paged_loops;
-                last;
-            }
-            $pagination = $self->_build_pagination_vars(page_list => $pagination{$loopname},
-                                                        page_num => ($loop_element->{loops}{$loopname}));
+            my $pagination = $self->_build_pagination_vars(page_list => \@page_urls,
+                                                           page_num => ($loop_element->{loops}{$pageable_loopname}));
 
             # publish the element - put the results in all the various loops.
             $html = $child->publish(publisher => $publisher, template_args => $pagination);
