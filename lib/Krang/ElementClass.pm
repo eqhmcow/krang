@@ -470,55 +470,21 @@ sub find_template {
     my %args = @_;
     my $tmpl;
 
-    # args for HTML::Template::Expr on instantiation.
-    my %tmpl_args = (
-                     die_on_bad_params => 0,
-                     loop_context_vars => 1,
-                     global_vars       => 1
-                    );
-
     # get the category dir from publisher;
     my $publisher = $args{publisher} || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
-    my $element   = $args{element} || croak __PACKAGE__ . ":missing attribute 'element'.\n";
+    my $element   = $args{element}   || croak __PACKAGE__ . ":missing attribute 'element'.\n";
 
-    my $category = $publisher->category();
     my @search_path = $publisher->template_search_path();
 
     # Attempt to instantiate an HTML::Template::Expr object with that as the search path.
     my $filename = $element->name() . '.tmpl';
 
-    eval {
-        $tmpl = HTML::Template::Expr->new(filename => $filename,
-                                          path => \@search_path,
-                                          %tmpl_args
-                                         );
-    };
+    return $self->_load_template(publisher   => $publisher,
+                                 element     => $element,
+                                 filename    => $filename,
+                                 search_path => \@search_path);
 
-    if ($@) {
-        my $err = $@;
-        # HTML::Template::Expr is having problems - throw an error
-        # based on the problem reported.
-        if ($err =~ /$filename : file not found/) {
-            Krang::ElementClass::TemplateNotFound->throw(message       => "Missing required output template: '$err'",
-                                                         element_name  => $args{element}->display_name(),
-                                                         template_name => $filename,
-                                                         category_url  => $category->url(),
-                                                         error_msg     => $err
-                                                        );
-        }
-        # assuming remaining errors are parse errors at this time.
-        else {
-            Krang::ElementClass::TemplateParseError->throw(message       => "Coding error found in template: '$err'",
-                                                           element_name  => $args{element}->display_name(),
-                                                           template_name => $filename,
-                                                           category_url  => $category->url(),
-                                                           error_msg     => $err
-                                                          );
-        }
-    }
 
-    # if we've gotten this far, we have a valid template.
-    return $tmpl;
 }
 
 
@@ -862,6 +828,84 @@ sub init {
 
     return $self;
 }
+
+
+#
+# $tmpl = _load_template(publisher => $publisher, element => $element,
+#                        filename  => $filename, search_path => \@paths,
+#                        template_args => \%args);
+#
+# Attempts to load HTML::Template::Expr template $filename, searching
+# in order through directory paths specified by search_path argument.
+#
+# template_args contains instantiation params to pass to HTML::Template::Expr.
+# Must include template_args param to add additional template arguments beyond
+# defaults, or to override default settings.
+#
+# Will return an HTML::Template::Expr object, or will throw an error
+# appropriate to the problem encountered.
+#
+
+sub _load_template {
+    my $self = shift;
+    my %args = @_;
+
+    my $template;
+
+    # default template instantiation arguments.
+    my %template_args = ( die_on_bad_params => 0,
+                          loop_context_vars => 1,
+                          global_vars       => 1
+                        );
+
+
+    my $filename    = $args{filename}    || croak __PACKAGE__ . ":missing attribute 'filename'.\n";
+    my $search_path = $args{search_path} || croak __PACKAGE__ . ":missing attribute 'search_path'.\n";
+    my $publisher   = $args{publisher}   || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
+    my $element     = $args{element}     || croak __PACKAGE__ . ":missing attribute 'element'.\n";
+
+    my $category = $publisher->category();
+
+    if (exists($args{template_args})) {
+        map { $template_args{$_} = $args{template_args}{$_} } keys %{$args{template_args}};
+    }
+
+    eval {
+        $template = HTML::Template::Expr->new(filename => $filename,
+                                              path     => $search_path,
+                                              %template_args
+                                             );
+    };
+
+    if ($@) {
+        my $err = $@;
+        # HTML::Template::Expr is having problems - throw an error
+        # based on the problem reported.
+        if ($err =~ /$filename : file not found/) {
+            Krang::ElementClass::TemplateNotFound->throw(message       => "Missing required output template: '$err'",
+                                                         element_name  => $args{element}->display_name(),
+                                                         template_name => $filename,
+                                                         category_url  => $category->url(),
+                                                         error_msg     => $err
+                                                        );
+        }
+        # assuming remaining errors are parse errors at this time.
+        else {
+            Krang::ElementClass::TemplateParseError->throw(message       => "Coding error found in template: '$err'",
+                                                           element_name  => $args{element}->display_name(),
+                                                           template_name => $filename,
+                                                           category_url  => $category->url(),
+                                                           error_msg     => $err
+                                                          );
+        }
+    }
+
+    # if we've gotten this far, we have a valid template.
+    return $template;
+
+
+}
+
 
 
 #
