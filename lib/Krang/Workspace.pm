@@ -34,13 +34,13 @@ checked-out to a particular user.
 
 =over
 
-=item C<< @objects = Krang::Story->find() >>
+=item C<< @objects = Krang::Workspace->find() >>
 
-=item C<< $count = Krang::Story->find(count => 1) >>
+=item C<< $count = Krang::Workspace->find(count => 1) >>
 
 Finds stories, media and templates checked out to a particular user
 (the currently logged in user by default).  The returned array will
-contain Krang::Story, Krang::Media and Krang::Template objects.  
+contain Krang::Story, Krang::Media and Krang::Template objects.
 
 Since the returned objects do not share single ID-space, the standard
 C<ids_only> mode is not supported.
