@@ -94,7 +94,7 @@ sub open {
 
         # return an IO::Scalar for template content or IO::File for media on read
         if ($type eq 'template') {
-            my $data = $object->content || '';
+            my $data = $object->content;
             return new IO::Scalar \$data;
         } else {
             my $path = $object->file_path();
@@ -179,15 +179,14 @@ sub status {
     my ($data,$size,$date,$mode);
 
     if ($type eq 'template') {
-        $data = $object->content || '';
+        $data = $object->content;
         $size = length($data);
         $date = $object->creation_date;
     } else {
         $date = $object->creation_date();
         $size = $object->file_size();
     }
-    
-    $date = Time::Piece->from_mysql_datetime($date);
+    $date = $date ? Time::Piece->from_mysql_datetime($date) : localtime;
     $date = $date->epoch;
 
     my $owner = $object->checked_out_by;
@@ -295,9 +294,12 @@ sub STORE {
     my $object = $self->{object};
     my $user = $self->{user};
 
-    # checkout the template
-    $object->checkout();
-    
+    # checkout and version template if not a new template
+    if  ($object->template_id) {
+        $object->checkout();
+        $object->prepare_for_edit();
+    }
+ 
     # save new content
     $object->content($data);
     $object->save();
