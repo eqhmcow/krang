@@ -21,9 +21,8 @@ sub new {
 sub input_form {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
-    my ($param) = $self->param_names(element => $element);
     my $date = $element->data();
-    return _date_input($query, $param, $date);
+    return _date_input($query, $element->xpath, $date);
 }
 
 sub param_names { 
@@ -35,7 +34,7 @@ sub param_names {
 sub validate {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
-    my ($param) = $self->param_names(element => $element);
+    my $param = $element->xpath();
 
     my $m = $query->param($param . '_month');
     my $d = $query->param($param . '_day');
@@ -59,7 +58,7 @@ sub validate {
 sub load_query_data {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
-    my ($param) = $self->param_names(element => $element);
+    my $param = $element->xpath;
 
     my $m = $query->param($param . '_month');
     my $d = $query->param($param . '_day');
@@ -111,7 +110,7 @@ sub _date_input {
                                    -labels    => { 0 => ' ' });
 
 
-    return $m_sel . " " . $d_sel . " " . $y_sel;
+    return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
 }
 
 # decode a date from query input.  Takes a form name, returns a date
