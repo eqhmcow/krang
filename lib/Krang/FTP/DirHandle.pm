@@ -544,5 +544,6 @@ L<Krang::FTP::Server>
 L<Krang::FTP::FileHandle>
 
 =cut 
+sub dir {return shift};
 
 1;
