@@ -25,10 +25,37 @@ See L<HTML::Template>.
 
 use base 'HTML::Template';
 use Krang::Session qw(%session);
-use Krang::Conf qw(InstanceDisplayName KrangRoot);
+use Krang::Conf qw(InstanceDisplayName KrangRoot Skin);
 use Krang::Message qw(get_messages clear_messages);
 use Krang::Navigation;
 use File::Spec::Functions qw(catdir);
+use Krang::Log qw(debug);
+
+our @PATH = (catdir(KrangRoot, 'skins', Skin, 'templates'),
+             catdir(KrangRoot, 'templates'));
+
+# overload new() to setup template paths
+sub new {
+    my ($pkg, %arg) = @_;
+    $arg{path} = $arg{path} ? _compute_path($arg{path}) : \@PATH;
+    return $pkg->SUPER::new(%arg);
+}
+
+# given the path setting coming from the caller, compute the final path array
+sub _compute_path {
+    my $in = shift;
+    
+    # append @PATH to each input path
+    my @out;
+    foreach my $in (@$in) {
+        foreach my $path (@PATH) {
+            push(@out, "$path/$in");
+        }
+    }
+    push(@out, @PATH);
+
+    return \@out;
+}
 
 # overload output() to setup template variables
 sub output {
