@@ -75,6 +75,8 @@ sub setup {
                          delete_selected
                          save_and_associate_media
                          view
+                         view_version
+                         revert_version
                         )]);
 
     $self->tmpl_path('Media/');
@@ -117,14 +119,7 @@ sub find {
                                        search_filter 
                                        show_thumbnails 
                                       );
-    my @history_return_params_hidden = ();
-    foreach my $hrp (@history_return_param_list) {
-        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
-                                                       -value => $hrp));
-        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
-                                                       -value => $q->param($hrp)));
-    }
-    $t->param(history_return_params => join("\n", @history_return_params_hidden));
+    $t->param(history_return_params => $self->make_history_return_params(@history_return_param_list));
 
     my $search_filter = $q->param('search_filter');
     my $show_thumbnails = $q->param('show_thumbnails');
@@ -197,14 +192,7 @@ sub advanced_find {
                                        search_creation_date_month 
                                        search_creation_date_year 
                                       );
-    my @history_return_params_hidden = ();
-    foreach my $hrp (@history_return_param_list) {
-        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
-                                                       -value => $hrp));
-        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
-                                                       -value => $q->param($hrp)));
-    }
-    $t->param(history_return_params => join("\n", @history_return_params_hidden));
+    $t->param(history_return_params => $self->make_history_return_params(@history_return_param_list));
 
     my $persist_vars = { rm => 'advanced_find' };
     my $find_params = {};
@@ -508,13 +496,8 @@ sub edit {
 
 =item save_edit
 
-Description of run-mode 'save_edit'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+Validate and save the form content to the media object.
+Redirect the user to their Workspace.
 
 =cut
 
@@ -558,12 +541,8 @@ sub save_edit {
 
 =item save_stay_edit
 
-Description of run-mode 'save_stay_edit'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Validate and save the form content to the media object.
+Return the user to the edit screen.
 
 
 =cut
@@ -716,12 +695,7 @@ sub save_and_associate_media {
 
 =item view
 
-Description of run-mode 'view'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Display the specified media object in a view form.
 
 
 =cut
@@ -745,6 +719,45 @@ sub view {
     $t->param($media_view_tmpl_data);
 
     return $t->output();
+}
+
+
+
+
+
+=item view_version
+
+Display the specified version of the media object in a view form.
+
+=cut
+
+
+sub view_version {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    return $self->dump_html();
+}
+
+
+
+
+
+=item revert_version
+
+Send the user to an edit screen, replacing the object with the 
+specified version of itself.
+
+=cut
+
+
+sub revert_version {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    return $self->dump_html();
 }
 
 
@@ -953,6 +966,9 @@ sub make_media_tmpl_data {
         }
     }
 
+    # Persist data for return from view in "history_return_params"
+    $tmpl_data{history_return_params} = $self->make_history_return_params('rm');
+
     # Send data back to caller for inclusion in template
     return \%tmpl_data;
 }
@@ -1043,6 +1059,29 @@ sub make_media_view_tmpl_data {
 
     # Send data back to caller for inclusion in template
     return \%tmpl_data;
+}
+
+
+# Given an array of parameter names, return HTML hidden
+# input fields suitible for setting up a return link
+sub make_history_return_params {
+    my $self = shift;
+    my @history_return_param_list = ( @_ );
+
+    my $q = $self->query();
+
+    my @history_return_params_hidden = ();
+    foreach my $hrp (@history_return_param_list) {
+        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
+                                                       -value => $hrp,
+                                                       -override => 1));
+        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
+                                                       -value => $q->param($hrp),
+                                                       -override => 1));
+    }
+
+    my $history_return_params = join("\n", @history_return_params_hidden);
+    return $history_return_params;
 }
 
 
@@ -1200,6 +1239,8 @@ L<Krang::Category>, L<Krang::Media>, L<Krang::Widget>, L<Krang::Message>, L<Kran
 #                  delete
 #                  delete_selected
 #                  view
+#                  view_version
+#                  revert_version
 #                 ));
 # $c->use_modules(qw/Krang::Category Krang::Media Krang::Widget Krang::Message Krang::HTMLPager Krang::Pref Krang::Session Carp/);
 # $c->tmpl_path('Media/');

@@ -158,20 +158,30 @@
 
 <tmpl_unless add_mode>
 
+
 <form name="media_versions_form" method="POST">
-<input type="hidden" name="rm" value="view_version">
+<tmpl_var history_return_params>
+<input type="hidden" name="rm" value="">
+
 
 <script language="javascript">
 <!-- 
   function revert_version () {
-    alert("Not implemented yet.");
+    if (confirm("Are you sure you want to discard your work and revert to this old version?")) {
+          var myform = document.media_versions_form;
+          myform.rm.value = 'revert_version';
+          myform.submit();
+    }
   }
 
   function view_version () {
-    alert("Not implemented yet.");
+    var myform = document.media_versions_form;
+    myform.rm.value = 'view_version';
+    myform.submit();
   }
 // -->
 </script>
+
 
 <div class=form-box>
 Version: <tmpl_var media_version_chooser>
