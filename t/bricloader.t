@@ -2,6 +2,7 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use Config::ApacheFormat;
 use Data::Dumper;
 use File::Path qw(rmtree);
 use File::Spec::Functions qw(catdir catfile);
@@ -9,25 +10,24 @@ use IPC::Run qw(run);
 
 BEGIN {
     # check for Bricolage environment vars
-    eval "use Test::More skip_all => 'Bricolage vars not defined.'"
-      unless ((grep {defined $ENV{"BRICOLAGE_$_"}}
-               (qw/PASSWORD ROOT SERVER USERNAME/)) == 4 ? 1 : 0);
+    for (qw/PASSWORD ROOT SERVER USERNAME/) {
+        my $var = "BRICOLAGE_$_";
+        eval "use Test::More skip_all => '$var is not defined.'"
+          unless exists $ENV{$var};
+    }
 
     ##### Running Bric Check #####
-    $_ = catdir($ENV{BRICOLAGE_ROOT}, "lib");
-    unshift(@INC, $ENV{PERL5LIB} = defined $ENV{PERL5LIB} ?
-            "$ENV{PERL5LIB}:$_" : $_) if -e $_;
-
-    # make sure Bric is found
+    # make sure we've got Bric
+    unshift(@INC, catdir($ENV{BRICOLAGE_ROOT}, "lib"));
     eval "use Bric";
-    die "Cannot Load Bricolage: $@." if $@;
-
-    use Bric::Config qw(:apachectl);
+    eval "use Test::More skip_all => 'Cannot Load Bricolage'" if $@;
 
     # assume it's running if the pid_file is present, can't call kill do verify
     # if we don't own the process :(.
+    my $conf = Config::ApacheFormat->new();
+    $conf->read(catfile($ENV{BRICOLAGE_ROOT}, 'conf', 'httpd.conf'));
     eval "use Test::More skip_all => 'Bricolage is not running';"
-      unless -e PID_FILE;
+      unless -e $conf->get("PidFile");
     ##### Running Bric Check #####
 
     # create lasistes element set
