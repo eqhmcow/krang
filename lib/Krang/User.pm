@@ -120,7 +120,7 @@ use constant USER_RW => qw(email
 
 # user_user_group table fields
 use constant USER_USER_GROUP => qw(user_id
-			   	   user_group_id);
+			   	   group_id);
 
 # Globals
 ##########
@@ -546,7 +546,7 @@ sub find {
 
         if (($arg eq 'user_id' || $arg eq 'group_ids') &&
             ref $args{$arg} eq 'ARRAY') {
-            my $field = $arg eq 'user_id' ? "u.user_id" : "ug.user_group_id";
+            my $field = $arg eq 'user_id' ? "u.user_id" : "ug.group_id";
             my $tmp = join(" OR ", map {"$field = ?"} @{$args{$arg}});
             $where_clause .= "$and ($tmp)";
             push @params, @{$args{$arg}};
@@ -643,7 +643,7 @@ sub find {
 sub _add_group_ids {
     my ($users_href, $dbh) = @_;
     my $query = <<SQL;
-SELECT user_group_id FROM usr_user_group
+SELECT group_id FROM usr_user_group
 WHERE user_id = ?
 SQL
     my $sth = $dbh->prepare($query);

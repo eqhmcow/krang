@@ -12,20 +12,20 @@ DROP TABLE IF EXISTS asset_group_permission;
 DROP TABLE IF EXISTS permission_group;  /* "group" is a reserved word. */
 CREATE TABLE permission_group (
         group_id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        name                VARCHAR(255),
-        may_publish         BOOL,
-        admin_users         BOOL,
-        admin_users_limited BOOL,
-        admin_groups        BOOL,
-        admin_contribs      BOOL,
-        admin_sites         BOOL,
-        admin_categories    BOOL,
-        admin_jobs          BOOL,
-        admin_desks         BOOL,
-        admin_prefs         BOOL,
-        asset_story         ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "edit",
-        asset_media         ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "edit",
-        asset_template      ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "edit"
+        name                VARCHAR(255) NOT NULL DEFAULT "",
+        may_publish         BOOL NOT NULL DEFAULT 0,
+        admin_users         BOOL NOT NULL DEFAULT 0,
+        admin_users_limited BOOL NOT NULL DEFAULT 0,
+        admin_groups        BOOL NOT NULL DEFAULT 0,
+        admin_contribs      BOOL NOT NULL DEFAULT 0,
+        admin_sites         BOOL NOT NULL DEFAULT 0,
+        admin_categories    BOOL NOT NULL DEFAULT 0,
+        admin_jobs          BOOL NOT NULL DEFAULT 0,
+        admin_desks         BOOL NOT NULL DEFAULT 0,
+        admin_prefs         BOOL NOT NULL DEFAULT 0,
+        asset_story         ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
+        asset_media         ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
+        asset_template      ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide"
 );
 
 /* set up default groups */

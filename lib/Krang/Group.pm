@@ -37,20 +37,12 @@ Krang::Group - Interface to manage Krang permissions
                                  asset_template      => 'hide' );
 
 
-  # Save group
-  $group->save();
-
-
-  # Get group ID
-  my $group_id = $self->group_id();
-
-
-  # Delete group
-  $group->delete();
-
-
-  # Retrieve an existing group
+  # Retrieve an existing group by ID
   my ($group) = Krang::Group->find( group_id => 123 );
+
+
+  # Retrieve multiple existing groups by ID
+  my @groups = Krang::Group->find( group_ids => [1, 2, 3] );
 
 
   # Find groups by exact name
@@ -59,6 +51,18 @@ Krang::Group - Interface to manage Krang permissions
 
   # Find groups by name pattern
   my @groups = Krang::Group->find( name_like => '%editor%' );
+
+
+  # Save group
+  $group->save();
+
+
+  # Delete group
+  $group->delete();
+
+
+  # Get group ID
+  my $group_id = $self->group_id();
 
 
   # Accessors/Mutators
@@ -109,6 +113,11 @@ use Krang::Category;
 use Krang::Log qw(debug);
 use Krang::Desk;
 use Krang::Category;
+
+
+# Exceptions
+use Exception::Class ( 'Krang::Group::DuplicateName' => { fields => [ 'group_id' ] } );
+
 
 # Database fields in table permission_group, asidde from group_id
 use constant FIELDS => qw( name
@@ -208,7 +217,47 @@ sub init {
 
 =item find()
 
-Retrieve Krang::Group objects from database.
+  my @groups = Krang::Group->find();
+
+Retrieve Krang::Group objects from database based on a search
+specification.  Searches are specified by passing a hash to find()
+with search fields as keys and search terms as the values of those keys.
+For example, the following would retrieve all groups with the 
+word "admin" in the group name:
+
+  my @groups = Krang::Group->find(name_like => '%admin%');
+
+Search terms may be combined to further narrow the result set.  For 
+example, the following will limit the above search to groups
+whose IDs are in an explicit list:
+
+  my @groups = Krang::Group->find( name_like => '%admin%',
+                                   group_ids => [1, 5, 10, 34] );
+
+The following search fields are recognized by Krang::Group->find():
+
+  * simple_search  - A scalar string, matches to name
+  * group_id       - Retrieve a specific group by ID
+  * group_ids      - Array reference of group_ids which should be retrieved
+  * name           - Exactly match the group name
+  * name_like      - SQL LIKE-match the group name
+
+
+The find() method provides meta terms to control how the data should 
+be returned:
+
+  * count          - Causes find() to return the number of matches instead of 
+                     the actual objects.
+  * ids_only       - Causes find() to return the IDs of the matching groups
+                     instead of the instantiated group objects.
+  * order_by       - The group field by which the found objects should be 
+                     sorted.  Defaults to "name".
+  * order_desc     - Results will be sorted in descending order if this is
+                     set to "1", ascending if "0".  Defaults to "0".
+  * limit          - The number of objects to be returned.  Defaults to all.
+  * offset         - The index into the result set at which objects should be
+                     returned.  Defaults to "0" -- the first record.
+
 
 =cut
 
@@ -360,6 +409,123 @@ sub find {
 }
 
 
+=item save();
+
+  $group->save();
+
+Save the group object to the database.  If this is a new group object
+it will be inserted into the database and group_id will be defined.
+
+If another existing group has the same name as the group you're trying
+to save, an exception will be thrown:  Krang::Group::DuplicateName
+
+In all cases, the group object's configured category and desk 
+permissions will be checked for validity and sanitized if necessary.
+
+For categories, this means that if a root category is not specified
+in the categories() hash, it will be silently created with "edit"
+permissions.
+
+In the case of desks, missing desks will be created 
+with "edit" permissions.
+
+N.B.:  No effort is made to assure that a specified category or desk 
+actually exists.  An invalid category or desk will be dutifully
+added to the permissions table.
+
+
+=cut
+
+sub save {
+    my $self = shift;
+
+    # Validate object or throw up
+    $self->validate_group();
+
+    # Insert if this is a new group
+    $self->insert_new_group() unless ($self->group_id);
+
+    my $group_id = $self->group_id();
+
+    # Update group object primary fields in database
+    my $update_sql = "update permission_group set ";
+    $update_sql .= join(", ", map { "$_=?" } FIELDS);
+    $update_sql .= " where group_id=?";
+
+    my @update_data = ( map { $self->$_ } FIELDS );
+    push(@update_data, $group_id);
+
+    debug_sql($update_sql, \@update_data);
+
+    my $dbh = dbh();
+    $dbh->do($update_sql, {RaiseError=>1}, @update_data);
+
+    # Sanitize categories: Make sure all root categories are specified
+    my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
+    my %categories = $self->categories();
+    foreach my $cat (@root_cats) {
+        $categories{$cat} = "edit" unless (exists($categories{$cat}));
+    }
+
+    # Blow away all category perms in database and re-build
+    $dbh->do( "delete from category_group_permission where group_id=?",
+              {RaiseError=>1}, $group_id );
+    my $cats_sql = "insert into category_group_permission (group_id,category_id,permission_type) values (?,?,?)";
+    my $cats_sth = $dbh->prepare($cats_sql);
+    while (my ($category_id, $permission_type) = each(%categories)) {
+        $cats_sth->execute($group_id, $category_id, $permission_type);
+    }
+
+    # Sanitize desks: Make sure all desks are specified
+    my @all_desks = ();   # NOT YET IMPLEMENTED -- Krang::Desk->find(ids_only=>1)
+    my %desks = $self->desks();
+    foreach my $desk (@all_desks) {
+        $desks{$desk} = "edit" unless (exists($desks{$desk}));
+    }
+
+    # Blow away all desk perms in database and re-build
+    $dbh->do( "delete from desk_group_permission where group_id=?",
+              {RaiseError=>1}, $group_id );
+    my $desks_sql = "insert into desk_group_permission (group_id,desk_id,permission_type) values (?,?,?)";
+    my $desks_sth = $dbh->prepare($desks_sql);
+    while (my ($desk_id, $permission_type) = each(%desks)) {
+        $desks_sth->execute($group_id, $desk_id, $permission_type);
+    }
+
+}
+
+
+=item delete()
+
+  $group->delete();
+
+Remove a Krang::Group from the system.
+
+=cut
+
+sub delete {
+    my $self = shift;
+
+    my $group_id = $self->group_id();
+
+    # Unsaved group?  Bail right away
+    return unless ($group_id);
+
+    # Blow away data
+    my $dbh = dbh();
+    my @delete_from_tables = qw( category_group_permission
+                                 category_group_permission_cache
+                                 desk_group_permission
+                                 usr_user_group
+                                 permission_group );
+
+    foreach my $table (@delete_from_tables) {
+        $dbh->do( "delete from $table where group_id=?",
+                  {RaiseError=>1}, $group_id );
+    }
+}
+
+
 =item add_catagory_cache()
 
   Krang::Group->add_catagory_cache($category);
@@ -396,7 +562,7 @@ sub delete_catagory_cache {
     my $self = shift;
     my ($category_id) = @_;
 
-    die ("Invalid category_id '$category_id'") unless ($category_id and $category_id =~ /^\d+$/);
+    croak ("Invalid category_id '$category_id'") unless ($category_id and $category_id =~ /^\d+$/);
 
     my $dbh = dbh();
     $dbh->do( "delete from category_group_permission_cache where category_id=?",
@@ -436,6 +602,61 @@ sub rebuild_catagory_cache {
 ###########################
 ####  PRIVATE METHODS  ####
 ###########################
+
+# Verify that the Krang::Object is valid prior to saving
+# Throw exceptions if not.
+sub validate_group {
+    my $self = shift;
+
+    # Are permissions valid?
+    my @valid_levels = qw(edit read-only hide);
+
+    # Check assets
+    my @assets = qw(story media template);
+    foreach my $asset (@assets) {
+        my $ass_method = "asset_$asset";
+        my $level = $self->$ass_method;
+        croak ("Invalid $ass_method security level '$level'") unless (grep { $level eq $_ } @valid_levels);
+    }
+
+    # Check categories
+    my %categories = $self->categories;
+    while (my ($cat, $level) = each(%categories)) {
+        croak ("Invalid security level '$level' for category_id '$cat'")
+          unless (grep { $level eq $_ } @valid_levels);
+    }
+
+    # Check desks
+    my %desks = $self->desks;
+    while (my ($desk, $level) = each(%desks)) {
+        croak ("Invalid security level '$level' for desk_id '$desk'")
+          unless (grep { $level eq $_ } @valid_levels);
+    }
+
+    # Is the name unique?
+    my $group_id = $self->group_id();
+    my $name = $self->name();
+
+    my $dbh = dbh();
+    my $is_dup_sql = "select group_id from permission_group where name = ? and group_id != ?";
+    my ($dup_id) = $dbh->selectrow_array($is_dup_sql, {RaiseError=>1}, $name, $group_id);
+
+    # If dup, throw exception
+    if ($dup_id) {
+        Krang::Group::DuplicateName->throw( message => "duplicate group name", group_id => $dup_id );
+    }
+}
+
+
+# Create a new database record for group.  Set group_id in object.
+sub insert_new_group {
+    my $self = shift;
+
+    my $dbh = dbh();
+    $dbh->do("insert into permission_group (group_id) values (NULL)") || die($dbh->errstr);
+
+    $self->{group_id} = $dbh->{'mysql_insertid'};
+}
 
 # Static function: Given a SQL query and an array ref with
 # query data, send query to Krang log.

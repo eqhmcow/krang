@@ -132,7 +132,41 @@ is($count_group_ids, 2, "Test find(group_ids=>[])");
 
 # Test find(group_id=>1)
 eval { ($group) = Krang::Group->find(group_id=>1) };
+is($group->group_id, "1", "Test find(group_id=>1)");
+
+
+# Test save
+my $unique_str = time();
+$group = Krang::Group->new();
+$group->name("Test $unique_str");
+eval { $group->save(); };
+ok(not($@), "Save without die");
 die ($@) if ($@);
+ok(($group->group_id > 0), "Create and save new group");
+
+# Test create non-unique name
+eval { Krang::Group->new(name=>"Test $unique_str")->save() };
+like($@, qr(duplicate group name), "Test create non-unique name");
+
+# Test load new save
+my ($load_group) = Krang::Group->find(name=>"Test $unique_str");
+ok(ref($load_group), "Can load new group");
+
+# Test delete
+eval { $load_group->delete(); };
+ok(not($@), "Delete without die");
+die ($@) if ($@);
+
+# Try to load deleted group
+($load_group) = Krang::Group->find(name=>"Test $unique_str");
+ok(not(ref($load_group)), "Can't find deleted object");
+
+
+
+####  TO-DO:  Test saving category & desk permissions
+####          Test invalid security levels
+
+
 
 
 ##  Debugging output

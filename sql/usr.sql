@@ -20,8 +20,8 @@ INSERT INTO usr (login, password, first_name, last_name) VALUES ('admin',
 DROP TABLE IF EXISTS usr_user_group;
 CREATE TABLE usr_user_group (
         user_id         INT UNSIGNED NOT NULL,
-        user_group_id   INT UNSIGNED NOT NULL,
-        PRIMARY KEY (user_id, user_group_id)        
+        group_id   INT UNSIGNED NOT NULL,
+        PRIMARY KEY (user_id, group_id)
 );
 
 /* associate 'admin' is in group '1' */
