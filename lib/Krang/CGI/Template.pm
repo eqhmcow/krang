@@ -99,12 +99,15 @@ sub setup {
 
 =head2 RUN MODES
 
-=over 4
+=cut
+
 
 ##############################
 #####  RUN-MODE METHODS  #####
 ##############################
 
+
+=over 4
 
 =item add
 
@@ -580,6 +583,7 @@ then checks in.  The user is sent to 'My Workspace' if save succeeds and back
 to the 'Edit' screen if it fails.
 
 =cut
+
 sub edit_checkin {
     my $self = shift;
     my $q = $self->query();
