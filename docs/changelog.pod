@@ -8,6 +8,17 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added initial support for FreeBSD!  Currently it only supports FreeBSD
+5.2.1 with GNU make (gmake) installed, as that was the only available
+testable environment.  Would be nice if someone with more experience
+in BSD Makefiles could get Krang's Makefiles to work with BSD make.
+There should be nothing keeping Krang from working with earlier
+versions of FreeBSD, but that will require someone to pick up the BSD
+ball and run with it.  [Peter]
+
+
+=item *
+
 Fixed site editor to check that URLs don't have paths attached to them
 and that paths are obsolute. [Sam]
 
