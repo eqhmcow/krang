@@ -4,18 +4,19 @@
 
 DROP TABLE IF EXISTS template;
 CREATE TABLE template (
-        template_id int(11) NOT NULL auto_increment,
-        category_id int(11) NOT NULL,
-        checked_out tinyint(1) NOT NULL,
-        checked_out_by int(11),
-        content longtext,
-        creation_date datetime NOT NULL,
-        deploy_date datetime,
-        deployed tinyint(1) NOT NULL,
-        element_class varchar(255),
-        filename tinytext NOT NULL,
-        testing int(1) NOT NULL,
-        version int(11) NOT NULL,
+        template_id 		int(11) UNSIGNED NOT NULL auto_increment,
+        category_id 		int(11) UNSIGNED,
+        checked_out 		tinyint(1) UNSIGNED NOT NULL,
+        checked_out_by 		int(11) UNSIGNED ,
+        content 		mediumtext,
+        creation_date 		datetime NOT NULL,
+        deploy_date 		datetime,
+        deployed 		tinyint(1) UNSIGNED NOT NULL,
+        deployed_version 	int(11) UNSIGNED ,
+        element_classname 	varchar(255),
+        filename 		tinytext NOT NULL,
+        testing 		int(1) UNSIGNED NOT NULL,
+        version 		smallint UNSIGNED NOT NULL,
         PRIMARY KEY  (template_id),
         INDEX (category_id)
 ) TYPE=MyISAM;
@@ -27,11 +28,8 @@ CREATE TABLE template (
 
 DROP TABLE IF EXISTS template_version;
 CREATE TABLE template_version (
-        template_version_id int(11) NOT NULL auto_increment,
-        data longtext NOT NULL,
-        template_id int(11) NOT NULL,
-        version int(11) NOT NULL,
-        PRIMARY KEY (template_version_id),
-        INDEX (template_id),
-        INDEX (version)
+        data 		mediumtext NOT NULL,
+        template_id 	int(11) UNSIGNED NOT NULL,
+        version 	smallint UNSIGNED NOT NULL,
+        PRIMARY KEY (version, template_id)
 ) TYPE=MyISAM;
