@@ -433,7 +433,8 @@ sub init {
       unless ref $args{categories} and ref $args{categories} eq 'ARRAY';
     croak("categories parameter must contain at least one catgeory")
       unless @{$args{categories}} and 
-        UNIVERSAL::isa($args{categories}[0], 'Krang::Category');
+        ( UNIVERSAL::isa($args{categories}[0], 'Krang::Category') or
+          ( defined $args{categories}[0] and $args{categories}[0] =~ /^\d+$/));
 
     # create a new element based on class
     $self->{class} = delete $args{class};
