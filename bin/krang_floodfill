@@ -22,9 +22,9 @@ text.
 
 =head1 OPTIONS
 
-  --sites - number of sites to create, defaults 7to 3
+  --sites - number of sites to create, defaults to 3
 
-  --cats  - number of categories to create per site, defaults to 5
+  --cats  - number of categories to create, defaults to 15
 
 =cut
 
@@ -67,7 +67,7 @@ use Krang::Category;
 
 my ($help, $man);
 my $sites = 3;
-my $cats  = 5;
+my $cats  = 15;
 pod2usage(2) unless
   GetOptions(help      => \$help,
              man       => \$man,
@@ -82,24 +82,28 @@ pod2usage(-verbose => 2) if $man;
 my (@sites, @cats);
 for(1 .. $sites) {
     my $name = get_word();
-    print STDERR "Creating site $name.com...\n";
     my $site = Krang::Site->new(publish_path => "/tmp/${name}_publish/",
                                 preview_path => "/tmp/${name}_preview/",
                                 preview_url  => "preview.$name.com",
                                 url          => "$name.com");
     $site->save();
+    print STDERR "Created site " . $site->url . "...\n";
     push(@sites, $site);
 
-    # create categories
+    # remember root category
     my ($root) = Krang::Category->find(site_id => $site->site_id);
-    for(1 .. $cats) {
-        my $cname = get_word();
-        print STDERR "Creating category $name.com/$cname...\n";
-        my $cat = Krang::Category->new(dir       => $cname,
-                                       parent_id => $root->category_id);
-        $cat->save();
-        push(@cats, $cat);
-    }
+    push(@cats, $root);
+}
+
+
+# create categorie
+for(1 .. $cats) {
+    my $cname = get_word();
+    my $cat = Krang::Category->new(dir       => $cname,
+                                   parent_id => $cats[int(rand(scalar(@cats)))]->category_id);
+    $cat->save();
+    print STDERR "Created category " . $cat->url . "...\n";
+    push(@cats, $cat);
 }
 
 
