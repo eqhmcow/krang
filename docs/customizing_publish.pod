@@ -82,9 +82,13 @@
 
 =over
 
-=item * publish()
+=item * Preventing an Element from Publishing
+
+=item * Forcing Publish Without a Template
 
 =back
+
+=item * Conclusion
 
 =back
 
@@ -1006,7 +1010,7 @@ Loading an L<HTML::Template::Expr> template requires two things - the template f
 
 By making changes to either C<$filename> or C<@search_path> (ordered from first to last in terms of directories to search), you can affect what template gets loaded.  C<< $self->_load_template() >> handles the actual process of finding, loading, and throwing any required errors for L<HTML::Template::Expr> templates.
 
-If you want to change the type of template being loaded (e.g. you don't want to use L<HTML::Template::Expr> templates), you need to roll your own code to find, load and parse the templates, throwing appropriate errors as needed.  Be aware that C<find_template()> is expecting an L<HTML::Template::Expr> template, so you will need to override C<fill_template()> functionality as well.
+If you want to change the type of template being loaded (e.g. you don't want to use L<HTML::Template::Expr> templates), you need to roll your own code to find, load and parse the templates, throwing appropriate errors as needed.  Be aware that C<find_template()> and C<publish()> are expecting an L<HTML::Template::Expr> template, so you will need to override C<fill_template()> and C<publish()> functionality as well.
 
 
 
@@ -1021,8 +1025,60 @@ Ties the C<find_template()> and C<fill_template()> methods together.  Returns pu
 
 See L<Krang::ElementClass> for more info on publish().
 
+=back
+
+
+C<publish()> acts as the coordinator of the publish process for a given element, making sure that the entire process runs smoothly.  It works as follows:
+
+=over
+
+=item 1)
+
+Find a template for the current element using C<find_template()>.
+
+=item 2)
+
+If no template is found, decide if this is a problem.
+
+By default, if an element has no children, C<publish()> will simply return C<$element->template_data()>.  If the element has children, however, it will propegate the C<Krang::ElementClass::TemplateNotFound> error thrown by C<find_template()>.
+
+=item 3)
+
+If the template is found, pass it to C<fill_template()>.
+
+=item 4)
+
+Once C<fill_template()> is finished, return $template->output().
 
 =back
 
 
+=head2 Preventing an Element from Publishing
 
+While Krang, by default, does not call C<publish()> on any element that is not explicitly included in a template, this may not offer enough protection for elements you don't want published.  Overriding publish to return will make sure that an element (and all of its children) will never be published.
+
+ sub publish {
+   return;
+ }
+
+=head2 Forcing Publish Without a Template
+
+On the other hand, if you know an element will never have a template (or want to make sure that noone goofs things up by creating a template for that element), you can simplify the publish process greatly (again, no children would get published):
+
+ sub publish {
+     my $self = shift;
+     my %args = @_;
+
+     my $element = $args{element};
+
+     return $element->template_data();
+ }
+
+
+
+
+=head1 Conclusion
+
+This covers the major aspects of customizing the Krang publish process.  By overriding the three methods C<fill_template()>, C<find_template()> and C<publish()>, there's a lot that can be done to change how a story publishes itself.
+
+At this point, if you want to learn more about how the publish process works, and what can be done, read the POD and the code itself for L<Krang::ElementClass> and L<Krang::Publisher>.  Good luck!
