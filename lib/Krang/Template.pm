@@ -148,6 +148,21 @@ The four read/write fields for the object are:
 
 =over 4
 
+=item * category
+
+A reference to the category object to which this template belongs.
+
+=cut
+
+sub category {
+    my $self = shift;
+    croak("No category associated with template id '$self->{template_id}'.")
+      unless $self->{category_id};
+    my $cat = (Krang::Category->find(category_id => $self->{category_id}));
+    return $cat;
+}
+
+
 =item * category_id
 
 Integer that identifies the parent category of the template object.
@@ -256,6 +271,8 @@ Validation of the keys in the hash is performed in the init() method.  The
 valid keys to this hash are:
 
 =over 4
+
+=item * category
 
 =item * category_id
 
@@ -751,12 +768,25 @@ sub init {
     my @bad_args;
 
     for (keys %args) {
-        push @bad_args, $_ unless exists $template_args{$_};
+        push @bad_args, $_
+          unless exists $template_args{$_} || $_ eq 'category';
     }
 
     # croak if we've been given invalid args
     croak(__PACKAGE__ . "->init(): The following invalid arguments were " .
           "supplied - " . join' ', @bad_args) if @bad_args;
+
+
+    # if we have a category are use it to set 'category_id'
+    my $category = delete $args{category} || '';
+
+    if ($category) {
+        # make sure it's a category object before attempting to set
+        croak(__PACKAGE__ . "->init(): 'category' argument must be a " .
+              "'Krang::Category' object.")
+          if (not(ref($category) || $category->isa('Krang::Template')));
+        $self->{category_id} = $category->category_id;
+    }
 
     # set filename from element if that's what we have
     if (exists $args{element_class_name}) {

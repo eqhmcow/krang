@@ -21,10 +21,24 @@ isa_ok($site, 'Krang::Site');
 
 my ($category) = Krang::Category->find(site_id => $site->site_id());
 
-# constructor test
-my $tmpl = Krang::Template->new(category_id => $category->category_id(),
-                                content => '<blink><tmpl_var bob></blink>',
-                                element_class_name => 'Bob');
+# constructor failure
+my $tmpl;
+eval {$tmpl = Krang::Template->new(category => 'blah',
+                                   content => 'blah',
+                                   element_class_name => 'A')};
+like($@, qr/'category' argument must be a 'Krang::Category'/s,
+     'constructor failure');
+
+# constructor success 1 - tests category arg
+eval {$tmpl = Krang::Template->new(category => $category,
+                                   content => '<blink><tmpl_var bob></blink>',
+                                   element_class_name => 'Bob')};
+is($@, '', 'contructor good :)');
+
+# constructor success 2
+$tmpl = Krang::Template->new(category_id => $category->category_id(),
+                             content => '<blink><tmpl_var bob></blink>',
+                             element_class_name => 'Bob');
 
 isa_ok($tmpl, 'Krang::Template');
 
