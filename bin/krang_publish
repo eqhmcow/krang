@@ -98,6 +98,9 @@ Publish a single media object, specified by its media_id.  B<CURRENTLY BROKEN>
 
 This modifier will limit the publish process to assets that have been published previously.
 
+=item --to-preview
+
+Publish files to preview rather than the publish location.
 
 =item --verbose
 
@@ -158,6 +161,7 @@ my $limited_to_category = 0;
 my $republish_only      = 0;
 my $increment           = 100;
 my $media_only          = 0;
+my $to_preview          = 0;
 
 pod2usage(2) unless
   GetOptions(help                => \$help,
@@ -168,6 +172,7 @@ pod2usage(2) unless
              limited_to_site     => \$limited_to_site,
              limited_to_category => \$limited_to_category,
              republish_only      => \$republish_only,
+             'to-preview'        => \$to_preview,
 
              'increment=i'       => \$increment,
 
@@ -313,7 +318,13 @@ sub publish_media {
         @assettime = @starttime;
 
         eval { 
-            $publisher->publish_media(media => \@media, %{$publish_args}); 
+            if ($to_preview) {
+                foreach my $media (@media) {
+                    $publisher->preview_media(media => $media, %$publish_args);
+                }
+            } else {
+                $publisher->publish_media(media => \@media, %{$publish_args}); 
+            }
         };
         if (my $err = $@) {
             if ($err->isa('Krang::Publisher::FileWriteError')) {
@@ -364,7 +375,16 @@ sub publish_stories {
         my @starttime = gettimeofday();
         @assettime = @starttime;
 
-        eval { $publisher->publish_story(story => \@stories, %{$publish_args}); };
+        eval {
+            if ($to_preview) {
+                foreach my $story (@stories) {
+                    $publisher->preview_story(story => $story, %$publish_args);
+                }
+
+            } else {
+                $publisher->publish_story(story => \@stories, %$publish_args);
+            }
+        };
 
         if ($@) {
             # if there is an error, figure out what it is, create the
