@@ -287,7 +287,8 @@ sub find {
     my %args = @_;
 
     # check the cache if we're looking for a single group
-    my $cache_worthy = (keys(%args) == 1 and 
+    my $cache_worthy = (Krang::Cache::active() and 
+                        keys(%args) == 1 and 
                         (exists $args{group_id} or 
                          exists $args{group_ids})) ? 1 : 0;
     if ($cache_worthy) {
