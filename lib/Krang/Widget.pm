@@ -10,6 +10,7 @@ use Krang::Conf qw(KrangRoot);
 use Krang::Log qw(debug);
 use HTML::PopupTreeSelect;
 use Text::Wrap qw(wrap);
+use Krang::Message qw(add_message);
 
 use File::Spec::Functions qw(catfile);
 
@@ -108,8 +109,16 @@ sub category_chooser {
     my %find_params = (order_by => 'url');
     $find_params{site_id} = $site_id if ($site_id);
 
-    # build up data structure used by HTML::PopupTreeSelect
+    # get list of all cats
     my @cats = Krang::Category->find(%find_params);
+
+    # if there are no cats then there can't be any chooser
+    unless (@cats) {
+        add_message('no_categories_for_chooser');
+        return "No categories are defined.";
+    }
+
+    # build up data structure used by HTML::PopupTreeSelect
     my $data = { children => [], label => "", open => 1};
     my %nodes;
     foreach my $cat (@cats) {
