@@ -203,14 +203,15 @@ sub access_handler ($$) {
         ($bd->browser_string eq 'Firefox'  and (($bd->major >= 1) or
                                                 ($bd->minor == .1 or
                                                  $bd->minor >= .8))
-        )
+        ) or
+        ($bd->browser_string eq 'Safari' and $bd->major >= 1)
        ) {
         return OK;
     }
 
     # failure
     debug("Unsupported browser detected: " . $r->header_in('User-Agent'));
-    $r->custom_response(FORBIDDEN,  "<h1>Unsupported browser detected.</h1>This application requires Mozilla, Firefox, Netscape 6+, or Internet Explorer 5+.");
+    $r->custom_response(FORBIDDEN,  "<h1>Unsupported browser detected.</h1>This application requires Mozilla, Firefox, Safari 1+, Netscape 6+, or Internet Explorer 5+.");
     return FORBIDDEN;
 }
 
