@@ -1099,14 +1099,5 @@ sub get_contrib_types {
 
 =back
 
-=head1 AUTHOR
-
-Jesse Erlbaum <jesse@erlbaum.net>
-
-
-=head1 SEE ALSO
-
-L<Krang::Contrib>, L<Krang::Message>, L<Krang::Pref>, L<Krang::Session>, L<Krang::CGI>
-
 =cut
 

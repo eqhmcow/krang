@@ -1285,11 +1285,6 @@ sub new_from_db {
 
 =back
 
-
-=head1 AUTHOR
-
-Jesse Erlbaum <jesse@erlbaum.net>
-
 =cut
 
 

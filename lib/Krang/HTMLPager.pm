@@ -1073,21 +1073,5 @@ sub validate_pager {
     # DONE!
 }
 
-
-
-
-=head1 AUTHOR
-
-Jesse Erlbaum <jesse@erlbaum.net>
-
-
-=head1 SEE ALSO
-
-L<Krang>, L<Krang::CGI>
-
-
-=cut
-
-
 # Hallelujah!
 1;

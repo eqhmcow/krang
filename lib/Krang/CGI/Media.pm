@@ -1395,16 +1395,6 @@ sub do_save_media {
 
 =back
 
-
-=head1 AUTHOR
-
-Jesse Erlbaum <jesse@erlbaum.net>
-
-
-=head1 SEE ALSO
-
-L<Krang::Category>, L<Krang::Media>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Krang::Pref>, L<Krang::Session>, L<Carp>, L<Krang::CGI>
-
 =cut
 
 

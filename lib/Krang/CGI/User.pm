@@ -648,16 +648,6 @@ sub search_row_handler {
 Instead of failing to delete a user if he has assets checked out, we should
 check all of his assets in and then perform the deletion.
 
-=head1 AUTHOR
-
-Author of Module <author@module>
-
-
-=head1 SEE ALSO
-
-L<Krang::History>, L<Krang::HTMLPager>, L<Krang::Log>, L<Krang::Message>,
-L<Krang::Pref>, L<Krang::Session>, L<Krang::User>, L<Krang::CGI>
-
 =cut
 
 
