@@ -918,7 +918,8 @@ sub find {
                           ($numeric ? 's.story_id = ?' : ()),
                           's.title LIKE ?', 
                           'sc.url LIKE ?') . ')');
-                push(@param, $word, $word, ($numeric ? ($word) : ()));
+                push(@param, ($numeric ? ($word) : ()),
+                     "%${word}%", "%${word}%");
             }
             next;
         }
