@@ -6,6 +6,18 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Additional documentation!  The long-awaited 
+HREF[Creating an Element Library in Krang|building_element_library.html]! [Peter]
+
+
+=item *
+
+New documentation added -
+HREF[Running Krang on the Desktop|krang_on_desktop.html]:
+A guide on how to install and run Krang on your local machine.
+[Peter]
 
 =item *
 

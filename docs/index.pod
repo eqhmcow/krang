@@ -68,6 +68,11 @@ HREF[Element System|element_system.html] - the Krang element system
 
 =item *
 
+HREF[Creating an Element Library in Krang|building_element_library.html] -
+How to create your own element library in Krang
+
+=item *
+
 HREF[Module Documentation|modules.html] - complete Krang module API documentation
 
 =back
