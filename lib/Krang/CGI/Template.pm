@@ -854,7 +854,7 @@ sub list_active {
     my %persist_vars = (rm => 'list_active');
 
     # Set up find_params for pager
-    my %find_params = (checked_out => 1);
+    my %find_params = (checked_out => 1, may_see => 1);
 
     # FIX: this should look at user permissions
     my $may_checkin_all = 1;

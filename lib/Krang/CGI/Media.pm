@@ -332,7 +332,7 @@ sub list_active {
     my %persist_vars = (rm => 'list_active');
 
     # Set up find_params for pager
-    my %find_params = (checked_out => 1);
+    my %find_params = (checked_out => 1, may_see => 1);
 
     # can checkin all?
     my %admin_perms = Krang::Group->user_admin_permissions();

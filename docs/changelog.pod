@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where permissions were not being applied to the Find Link
+and Active list screens. [Sam]
+
+=item *
+
 Fixed a bug in Krang::Group which caused root-category permisssions to
 be randomized during rebuild_category_cache().  [Sam]
 

@@ -455,6 +455,9 @@ sub find_story_link {
         %persist_vars = ( search_filter => $search_filter);
     }
 
+    # always show only what should be seen
+    $find_params{may_see} = 1;
+
     # exclude this story when editing a story
     if ($self->isa('Krang::CGI::Story') and $session{story}->story_id) {
         $find_params{exclude_story_ids} = [ $session{story}->story_id ];
@@ -613,6 +616,9 @@ sub find_media_link {
         %persist = (search_filter => ($query->param('search_filter') || ""));
     }
                  
+
+    # always show only what should be seen
+    $find{may_see} = 1;
         
     my $pager = Krang::HTMLPager->new      (cgi_query     => $query,
        persist_vars  => {
