@@ -1,0 +1,93 @@
+=head1 BRICOLAGE CONVERSION PROCESS
+
+=head2 DESCRIPTION
+
+The purpose of this document is to enumerate in excruciating detail all the
+programatic steps necessary to convert Bricolage instance to a Krang install.
+Furthermore, it will describe the krang_bric_loader script as well as all of
+the modules necessary to constitute it.
+
+=head2 CONVERSION OUTLINE
+
+In the simplest terms in order to populate a Krang install with Bricolage data
+it is necessary to:
+
+=over
+
+=item * Setup the environmental varibles to access bric_soap, the bricolage db,
+and krang scripts
+
+=item * Extract all available data through Bric::SOAP
+
+=item * Extract the remaining requisite data from the Bricolage database
+
+=item * Construct a valid Krang Dataset from this information
+
+=item * Import the dataset via krang_import
+
+=item * Publish the content, if necessary
+
+=back
+
+=head2 CONVERSION STEPS DETAILED
+
+Here's a restatement of the above in more detail
+
+=over
+
+=item * Setting up the environment:
+
+The following vars must be defined to seamlessly use bric_soap:
+
+ -BRICOLAGE_PASSWORD
+ -BRICOLAGE_ROOT
+ -BRICOLAGE_SERVER
+ -BRICOLAGE_USERNAME
+
+To access the bricolage database we need the following:
+
+ -DBNAME
+ -PGHOST, if different from BRICOLAGE_SERVER
+ -PGPASSWD
+ -PGUSER
+
+=item * Obtain Elements, Media, Stories, and Templates through bric_soap
+
+From bric_soap we should be able to obtain easily parseable XML to which we
+need only apply some sort of mapping to yield a valid Krang object description
+
+=item * Obtain Contributors, Groups, and Users from the database
+
+Given all the connection info, this will entail replicating the sql generated
+by the Bricolage API to obtain each object.  At present, there are no plans to
+migrate user groups.
+
+=item * Obtaining info on Sites
+
+Bricolage, at least the incarnation we use, does not contain information on the
+sites to which top-level categories may map.  This information will have to
+be obtained by the user via a series of questions and answers or by supplying a
+mapping file through a command-line option.
+
+=item * Generating the Krang dataset
+
+Element, Media, Story, and Template output is already obtained in XML, parsing
+this data and converting it to Krang XML should only be a matter of applying a
+map.  Contributors, Groups, and Users, however, will require the additional
+step of constructing a data structure upon which this mapping can be performed.
+
+Is all of this done in memory or are files output at various points in the
+process?  If there are intermediate files, is their output path configurable?
+
+=back
+
+=head2 THE MODULE STRATEGY
+
+The one Object one Module strategy is the current vogue.
+
+=head2 CONSIDERATIONS
+
+=item * The problem of .pl files
+
+=cut
+
