@@ -40,6 +40,10 @@ text.
 
   --users    - number of users to create, defaults to 50
 
+  --undo_script - set to the name of a perl script to generate which will 
+               undo the floodfill by deleting generated content.  Defaults
+               to not create an undo script.
+
 =cut
 
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
@@ -81,6 +85,8 @@ use Krang::Category;
 use Krang::Pref;
 use Krang::User;
 use Krang::Template;
+use Krang::Story;
+use Krang::Media;
 
 use Time::Piece;
 use Imager;
@@ -94,6 +100,7 @@ my $covers;
 my $media    = 25;
 my $users    = 50;
 my $templates = 50;
+my $undo_script;
 pod2usage(2) unless
   GetOptions(help         => \$help,
              man          => \$man,
@@ -105,6 +112,7 @@ pod2usage(2) unless
 	     'users=s'	  => \$users,
              'templates=s'=> \$templates,
              'covers=s'   => \$covers,
+             'undo_script=s' => \$undo_script,
             );
 $covers = defined $covers ? $covers : ($cats >= 2 ? int($cats / 2) : 0);
 
@@ -405,6 +413,55 @@ for(1 .. $users) {
       join(' ', grep { $_ } ("$login:", $fname, $lname)) .
         " (" . join(', ', map { $groups{$_} } @groups) . ")" .
           "\n";
+}
+
+# create an undo script if requested
+if ($undo_script) {
+    my @undo;
+    for my $rec ([ media => \@media ],
+                 [ story => \@stories ],
+                 [ story => \@covers ],
+                 [ contrib => \@contribs ],
+                 [ template => \@templates ],
+                 [ category => [ reverse grep { $_->parent_id } @cats] ],
+                 [ site => \@sites ],
+                 [ user => \@users ]) {
+        my ($name, $list) = @$rec;
+        my $meth = "${name}_id";
+        push(@undo, (map { 
+            ("print STDERR qq{Deleting $name $_...\\n};",
+             "(Krang::" . ucfirst($name) . 
+             "->find($meth => $_))[0]->delete;") }
+                 map { $_->$meth } @$list));
+    }
+
+    print STDERR "Writing undo script to '$undo_script'...\n";
+    open(UNDO, '>', $undo_script) or die "Unable to open '$undo_script': $!";
+    print UNDO <<UNDOEND;
+#!/usr/bin/perl -w 
+use strict;
+BEGIN { \$ENV{KRANG_ROOT} = '$ENV{KRANG_ROOT}' }
+use lib '$ENV{KRANG_ROOT}/lib';
+use Krang::Script;
+use Krang::Conf qw(KrangRoot);
+use Krang::ElementLibrary;
+use Krang::Site;
+use Krang::Category;
+use Krang::Pref;
+use Krang::User;
+use Krang::Template;
+use Krang::Story;
+use Krang::Media;
+
+UNDOEND
+
+
+    print UNDO join("\n", @undo), "\n";
+    
+    print UNDO "print qq{Deleting self.  Goodbye cruel world!\\n};\n";
+    print UNDO "unlink \$0 or die qq{Unable to delete \$0 : \$!};\n";
+    close UNDO;
+    system("chmod +x $undo_script");
 }
 
 # get a random date, with time set to midnight
