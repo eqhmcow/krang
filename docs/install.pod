@@ -89,19 +89,31 @@ For Redhat 7.x:
 
 
 
-=item 5. Build Krang parts...
+=item 5. Add stuffit archive file support (optional)
+
+    a.  Included in $KRANG_ROOT/install/stuffit_linux is a .tgz
+        which contains binaries to compress/decompress stuffit
+        files.  Krang::CGI::Media::BulkUpload can take stuffit
+        files, if the 'unstuff' binary is found in the webserver's
+        $PATH.
+    b.  To include stuffit support, FIRST BE SURE to read the included
+        licence, register if nessicary, then copy the 'unstuff' binary
+        somewhere into the webserver's $PATH
+        (somewhere like /usr/local/bin).
+
+=item 6. Build Krang parts...
 
    a. % cd $HOME/krang/ && make db
    b. % cd $HOME/krang/ && make test
 
 
 
-=item 6. Authorize user to start Krang via SUDO (as root)
+=item 7. Authorize user to start Krang via SUDO (as root)
 
    a. Add via visudo: "username  ALL=(root)  NOPASSWD: $KRANG_ROOT/bin/*"
 
 
-=item 7. Start Krang
+=item 8. Start Krang
 
    a. % cd $KRANG_ROOT
    b. % sudo $KRANG_ROOT/bin/krang_apachectl start
