@@ -9,10 +9,10 @@ BEGIN { use_ok('Krang::Contrib') }
 my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
 isa_ok($contrib, 'Krang::Contrib');
 
-$contrib->contrib_types(1,3);
+$contrib->contrib_type_ids(1,3);
 
-my @contrib_types = $contrib->contrib_types();
-is("@contrib_types", "1 3");
+my @contrib_type_ids = $contrib->contrib_type_ids();
+is("@contrib_type_ids", "1 3");
 
 $contrib->save();
 
@@ -24,7 +24,7 @@ my $contrib2 = $contrib_object[0];
 
 is($contrib2->first, 'Matthew');
 
-$contrib2->contrib_types(2,4);
+$contrib2->contrib_type_ids(2,4);
 
 $contrib2->save();
 
