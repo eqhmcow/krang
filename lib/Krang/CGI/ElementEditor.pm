@@ -199,6 +199,8 @@ sub element_edit {
                              $query->popup_menu(-name => "order_$index",
                                                 -values => \@avail_ord,
                                                 -default => $index + 1,
+                                                -onchange => 
+                                                  'update_order(this, "order_")',
                                                 -override => 1) : 
                              ($index + 1) .  
                              $query->hidden(-name     => "order_$index",

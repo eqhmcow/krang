@@ -62,6 +62,56 @@
      }
   }
 
+// updates the order pull downs to stay consistent
+function update_order(obj, prefix) {
+    var form  = obj.form;
+    var requestedIndex = obj.selectedIndex;
+    var i;
+
+    // get list of relevent form elements
+    var elem = new Array();
+    for (i = 0; i < form.elements.length ; i++) {
+        var e = form.elements[i];
+        if (e.name && e.name.indexOf(prefix) == 0 && e.options) {
+           elem.push(e);
+        }
+     }
+
+    // sort them by their indexes
+    chosenOne = obj;
+    elem.sort(update_order_sort_south);
+
+    // did that do it?
+    if (elem[requestedIndex] != obj) {
+        // the opposite bias must be right 
+        elem.sort(update_order_sort_north);
+    }
+
+    // walk through the elements handing out indexes
+    for (i = 0; i < elem.length; i++) {
+        elem[i].selectedIndex = i;
+    }
+}
+
+// special sort functions that sort by selectedIndex and bias the
+// "chosenOne" to either get sorted higher or lower.
+
+var chosenOne;
+function update_order_sort_north (a, b) {
+    if (a.selectedIndex < b.selectedIndex) { return -1; }
+    if (a.selectedIndex > b.selectedIndex) { return  1; }
+    if (a.name == chosenOne.name) { return -1; }
+    if (b.name == chosenOne.name) { return 1; }
+    return 0;
+}
+function update_order_sort_south (a, b) {
+    if (a.selectedIndex < b.selectedIndex) { return -1; }
+    if (a.selectedIndex > b.selectedIndex) { return  1; }
+    if (a.name == chosenOne.name) { return 1; }
+    if (b.name == chosenOne.name) { return -1; }
+    return 0;
+}
+
 </script>
 
 <tmpl_if alert><div class=alert><tmpl_var alert></div></tmpl_if>
