@@ -66,29 +66,22 @@ sub fill_template {
         $top_cat = $top_cat->parent;
     }
 
-    my @stories = Krang::Story->find( site_id => $top_cat->site->site_id, class => 'article', published => 1 ); 
-
     my @article_loop;
+    my %matched;
 
-    foreach my $s (@stories) {
-        my $matched = 0;
-
-        next if ($s->story_id eq $story->story_id);
-        foreach my $key (@$keywords) {
-            my $ks = $s->element->child('meta_keywords')->data;
-            foreach my $k (@$ks) {
-                if ($k eq $key) {
-                    my %ps;
-                    $ps{title} = $s->element->child('promo_title')->data || $s->title;
-                    $ps{url} = $s->url;
-                    $ps{teaser} = $s->element->child('promo_teaser')->data if $s->element->child('promo_teaser')->data;
-                    push (@article_loop, \%ps );
-                    $matched = 1;
-                    last;
-                }
-            }
-            last if $matched;
-        }
+    foreach my $key (@$keywords) {
+        my @stories = Krang::Story->find( site_id => $top_cat->site->site_id, class => 'article', published => 1, element_index_like => [ meta_keywords => "\%$key%" ] ); 
+    
+        foreach my $s (@stories) {
+            next if ($s->story_id == $story->story_id);
+            next if ($matched{$s->story_id} == 1);
+            my %ps;
+            $ps{title} = $s->element->child('promo_title')->data || $s->title;
+            $ps{url} = $s->url;
+            $ps{teaser} = $s->element->child('promo_teaser')->data if $s->element->child('promo_teaser')->data;
+            push (@article_loop, \%ps );
+            $matched{$s->story_id} = 1;
+        } 
     }
 
     $tmpl->param(article_loop => \@article_loop);
