@@ -8,6 +8,7 @@ use Krang::History qw( add_history );
 use Krang::Log     qw(assert ASSERT affirm debug info critical);
 use Krang::DB      qw(dbh);
 use Krang::Session qw(%session);
+use Krang::Pref;
 use Carp           qw(croak);
 use Storable       qw(freeze thaw);
 use Time::Piece::MySQL;
@@ -1635,18 +1636,31 @@ sub serialize_xml {
     $writer->dataElement(priority   => $self->priority);
     $writer->dataElement(notes      => $self->notes);
     
-    # category_id
+    # categories
     for my $category ($self->categories) {
         $writer->dataElement(category_id => $category->category_id);
+
         $set->add(object => $category);
     }
 
-    # FIX: contribs here
+    # contributors
+    my %contrib_type = Krang::Pref->get('contrib_type');
+    for my $contrib ($self->contribs) {
+        $writer->startTag('contrib');
+        $writer->dataElement(contrib_id => $contrib->contrib_id);
+        $writer->dataElement(contrib_type => 
+                             $contrib_type{$contrib->selected_contrib_type()});
+        $writer->endTag('contrib');
+
+        $set->add(object => $contrib);
+    }
+
 
     # serialize elements
     $self->element->serialize_xml(writer => $writer,
                                   set    => $set);
     
+    # all done
     $writer->endTag('story');
 }
 

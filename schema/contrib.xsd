@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) by rth77 (rth77) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+    <xs:element name="contrib">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="contrib_id" type="xs:int"/>
+                <xs:element name="prefix" type="xs:string"/>
+                <xs:element name="first" type="xs:string"/>
+                <xs:element name="middle" type="xs:string"/>
+                <xs:element name="last" type="xs:string"/>
+                <xs:element name="suffix" type="xs:string"/>
+                <xs:element name="email" type="xs:string"/>
+                <xs:element name="phone" type="xs:string"/>
+                <xs:element name="bio" type="xs:string"/>
+                <xs:element name="url" type="xs:string"/>
+                <xs:element name="contrib_type" type="xs:string" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

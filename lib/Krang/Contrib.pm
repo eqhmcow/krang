@@ -439,6 +439,35 @@ not $valid_params{$param};
     return @contrib_object;
 }
 
+=item C<< $contrib->serialize_xml(writer => $writer, set => $set) >>
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <contrib> linked to schema/contrib.xsd
+    $writer->startTag('contrib',
+                      "xmlns:xsi" => 
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'contrib.xsd');
+
+    # basic fields
+    for (qw(contrib_id prefix first middle last suffix email phone bio url)) {
+        $writer->dataElement($_ => $self->{$_});
+    }
+    
+    # contrib types
+    $writer->dataElement(contrib_type => $_) for $self->contrib_type_names;
+    
+    # all done
+    $writer->endTag('contrib');
+}
 
 
 ###########################

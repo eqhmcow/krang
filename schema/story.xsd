@@ -23,7 +23,7 @@
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element name="contrib_id" type="xs:int"/>
-                            <xs:element name="contrib_type" type="xs:int"/>
+                            <xs:element name="contrib_type" type="xs:string"/>
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>
