@@ -211,7 +211,7 @@ sub open {
             my @template = Krang::Template->find(   filename => $filename,
                                                     category_id => $category_id );
 
-            if (@template) {
+            if ($template[0]) {
                 return new Krang::FTP::FileHandle(  $self->{ftps},
                                                     $template[0],
                                                     $type,
@@ -219,9 +219,10 @@ sub open {
                                                     )->open($mode);
             } else { # else this must be a new template, create it
                 my $new_t = Krang::Template->new(   category_id => $category_id,
-                                                    filename => $filename );
+                                                    filename => $filename,
+                                                    content => '' );
 
-                $new_t->save();
+                #$new_t->save();
     
                 return new Krang::FTP::FileHandle(  $self->{ftps},
                                                     $new_t,
