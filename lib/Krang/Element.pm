@@ -135,7 +135,7 @@ the first C<save()>.
 use Krang::MethodMaker
   new_with_init => 'new',
   new_hash_init => 'hash_init',    
-  get_set       => [ qw( element_id parent ) ];
+  get_set       => [ qw( element_id ) ];
 
 # initialize a new object, creating children as required by the class
 # unless no_expand is passed in
@@ -235,7 +235,7 @@ a Krang::Story or a Krang::Category object.
 
 sub object {
     my $self = shift;
-    return $self->root->object(@_) if $self->{parent};
+    return $self->root->object(@_) if $self->parent;
     return $self->{object} unless @_;    
     $self->{object} = shift;
     
@@ -279,6 +279,18 @@ sub category {
 Returns the parent element for this element, or C<undef> for the root
 element.
 
+=cut
+
+sub parent {
+    my $self = shift;
+    if (@_) {
+        my $parent = shift;
+        $self->{parent} = $parent;
+        weaken($self->{parent});
+    }
+    return $self->{parent} ? $self->{parent} : undef;
+}
+
 =item C<< $root = $element->root() >>
 
 Returns the root element for this element tree.
@@ -287,8 +299,8 @@ Returns the root element for this element tree.
 
 sub root {
     my $self = shift;
-    return $self->{parent}->root()
-      if defined $self->{parent};        
+    return $self->parent->root()
+      if $self->parent;
     return $self;
 }
 
@@ -357,12 +369,12 @@ sub add_child {
           if $count > $max;
     }
 
-    # push on a weak reference to self as parent
-    $arg{parent} = $self;
-    weaken($arg{parent});
-
     # push on the child and return it
     push @$children, ref($self)->new(%arg);
+
+    # assign parent
+    $children->[-1]->parent($self);
+
     return ${$children}[-1];
 }
 
@@ -731,8 +743,7 @@ sub clone {
 
     # fix up parent pointers
     for (@{$clone->{children}}) {
-        $_->{parent} = $clone;
-        weaken($_->{parent});
+        $_->parent($clone);
     }
     return $clone;
 }
@@ -821,7 +832,7 @@ sub STORABLE_freeze {
     foreach_element {
         $ref_to_index{$_} = $i;
         $data[$i] = [ $_->{element_id},
-                      $_->{parent} ? $ref_to_index{$_->{parent}} : undef,
+                      $_->parent ? $ref_to_index{$_->parent()} : undef,
                       $_->{class}->name,
                       $_->freeze_data, 
                     ];          
@@ -959,11 +970,6 @@ through $element->children() for 'foo'.  This probably means caching
 the name to element mappings and updating them on changes to
 children().  That's not easy to do and still allow children() to
 return a reference that can be used to make changes.
-
-=item
-
-Do leak testing to make sure the use of weaken() here is having the
-intended effect.
 
 =item
 
