@@ -10,7 +10,7 @@ use Time::Piece::MySQL;
 # constants
 use constant FIELDS => qw( object_type object_id action version desk user_id timestamp );
 use constant OBJECT_TYPES => qw( Krang::Story Krang::Media Krang::Template );
-use constant ACTIONS => qw( new save check_in check_out publish deploy move revert );
+use constant ACTIONS => qw( new save checkin checkout publish deploy move revert );
 
 # declare exportable functions
 use Exporter;
@@ -51,7 +51,7 @@ our @EXPORT_OK = qw( add_history );
     # record that story was checked in to desk 'Publish' (user_id pulled 
     # from session, object id and type from object passed in)
     add_history(    object => $story, 
-                    action => 'check_in'
+                    action => 'checkin'
                     desk => 'Publish' 
                 );
 
@@ -84,7 +84,7 @@ This class handles the storage and retrieval of historical events in a Krang obj
 
 This method adds an entry into the database of an action taken on an object
 
-The valid trackable objects are: Krang::Story, Krang::Media, and Krang::Template. These correspond to 'object_type', and 'object_id' is used to record the unique object id.  The valid actions (specified by 'action') performed on an object are new, save, check_in, check_out, revert, move, publish, and deploy.  
+The valid trackable objects are: Krang::Story, Krang::Media, and Krang::Template. These correspond to 'object_type', and 'object_id' is used to record the unique object id.  The valid actions (specified by 'action') performed on an object are new, save, checkin, checkout, revert, move, publish, and deploy.  
 
 In addition to tracking actions on objects, the user who performed the action is tracked by 'user_id'.  'version' can be used to track which version of a template, story, or media object was affected.  'desk' can be used to track which desk an action was performed on.  A timestamp is added to each history event, and will appear in the field 'timestamp' on objects returned from find.
 
@@ -258,7 +258,7 @@ sub delete {
     my $object = delete $args{'object'};
     my $object_type = ref $object;
 
-    my $object_id_type = lc((split('::', $args{object_type}))[1]).'_id';
+    my $object_id_type = lc((split('::', $object_type))[1]).'_id';
     my $object_id = $object->$object_id_type;
 
     $dbh->do('DELETE from history where object_id = ? and object_type = ?', undef, $object_id, $object_type);
