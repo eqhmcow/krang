@@ -27,6 +27,19 @@ run_benchmark(module => 'Krang::Element',
                   push(@ids, $e->element_id);
               });
 
+# time finding elements by xpath
+my $i = 0;
+run_benchmark(module => 'Krang::Element',
+              name   => 'xpath matches (5)',
+              count  => $n,
+              code   => sub { 
+                  $e[$i]->match('/page[2]/paragraph[5]');
+                  $e[$i]->match('/page');
+                  $e[$i]->match('//paragraph');
+                  $e[$i]->match('paragraph');
+                  $e[$i]->match('/page/paragraph[2]');
+              });
+
 # time making a change a re-saving to db
 run_benchmark(module => 'Krang::Element',
               name   => 'update tree in db',
@@ -40,7 +53,7 @@ run_benchmark(module => 'Krang::Element',
               });
 
 # time loading element trees by id
-my $i = 0;
+$i = 0;
 run_benchmark(module => 'Krang::Element',
               name   => 'load by ID',
               count  => $n, 

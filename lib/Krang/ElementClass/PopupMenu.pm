@@ -20,8 +20,8 @@ sub new {
 
 sub input_form {
     my ($self, %arg) = @_;
-    my ($query, $element, $order) = @arg{qw(query element order)};
-    my $param = $self->{name} . "_" . $order;
+    my ($query, $element) = @arg{qw(query element)};
+    my $param = $element->xpath();
 
     return scalar $query->popup_menu(-name      => $param,
                                      -default   => $element->data(),
@@ -63,12 +63,6 @@ A reference to an array of values for the select box.
 =item labels
 
 A reference to a hash mapping C<values> to display names.
-
-=item multiple
-
-Set to true to allow multiple items to be selected at once.  Default
-to 0.  You must set C<size> greater than 1 if you set C<multiple>
-true.
 
 =back
 

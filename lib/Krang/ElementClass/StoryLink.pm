@@ -19,8 +19,8 @@ sub new {
 
 sub input_form {
     my ($self, %arg) = @_;
-    my ($query, $element, $order) = @arg{qw(query element order)};
-    my $param = $self->{name} . "_" . $order;
+    my ($query, $element) = @arg{qw(query element)};
+    my $param = $element->xpath;
 
     return scalar $query->button(-name    => "find_story_$param",
                                  -value   => "Find Story",

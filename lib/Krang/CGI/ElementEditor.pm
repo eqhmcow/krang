@@ -12,7 +12,9 @@ Krang::CGI::ElementEditor - element editor CGI class
 
 =head1 DESCRIPTION
 
-Example element editor for Krang.
+Element editor CGI for Krang.  This CGI is embedded in the Story and
+Category editors.  It allows users to edit the contents of the element
+tree attached to the story or category.
 
 =head1 INTERFACE
 
@@ -24,25 +26,28 @@ use Krang::ElementLibrary;
 use Krang::Element;
 use Krang::DB qw(dbh);
 use Carp qw(croak);
+use Krang::Session qw(%session);
 
 use base 'Krang::CGI';
 
 sub setup {
     my $self = shift;
     $self->start_mode('choose_top_level');
+    $self->mode_param('e_rm');
     $self->run_modes(choose_top_level => \&choose_top_level,
-                     create  => \&create,
-                     edit    => \&edit,
-                     add     => \&add,
-                     save    => \&save,
-                     save_and_jump => \&save_and_jump,
-                     save_and_stay => \&save_and_stay,
-                     delete  => \&delete,
-                     reorder => \&reorder,
+                     create           => \&create,
+                     edit             => \&edit,
+                     add              => \&add,
+                     save             => \&save,
+                     save_and_jump    => \&save_and_jump,
+                     save_and_stay    => \&save_and_stay,
+                     delete           => \&delete,
+                     reorder          => \&reorder,
                     );
 }
 
-# show the top_level chooser
+# show the top_level chooser (this won't be used in the final version
+# of the editor, but it's need to allow it to be tested independently)
 sub choose_top_level {
     my $self = shift;
     my $query = $self->query();
@@ -80,63 +85,16 @@ sub create {
     my $top_level = $query->param("top_level") 
       or croak("Missing top_level param!");
 
-    # create a new instance and save it
+    # create a new instance and save it in the session
     my $element = Krang::Element->new(class => $top_level);
-    $element->save();
+    $session{root_element} = $element;
 
     # setup ids and toss to edit
     $query->param(path => '');
-    $query->param(root_id => $element->element_id);
+    $query->param(root_id => undef);
     return $self->edit;
 }
 
-# add sub-elements
-sub add {
-    my $self = shift;
-    my $query = $self->query();
-
-    # gather params
-    my $path    = $query->param('path');
-    my $root_id = $query->param('root_id');
-    my $child   = $query->param('child');
-
-    # find our element
-    my $root   = Krang::Element->find(element_id => $root_id);
-    my $element = _find_element($root, $path);
-
-    # add the child element and save the element tree
-    $element->add_child(class => $child);
-    $root->save();
-
-    # toss to edit
-    return $self->edit();
-}
-
-# finds an element given the root and a path, optionally building @crumbs loop
-sub _find_element {
-    my ($element, $path, $crumbs) = @_;
-    push(@$crumbs, { path => '',
-                     name => $element->display_name })
-      if $crumbs;
-
-    # no path means the element is the root
-    return $element unless defined $path;
-
-    # otherwise, split up the path and locate the elements
-    my @path = split(',', $path);
-    my ($index, @path_back);
-    while(@path) {
-        $index = shift(@path);
-        $element = $element->children()->[$index];
-        if ($crumbs) {
-            push @path_back, $index;
-            push(@$crumbs, { path => join(',',@path_back),
-                             name => $element->display_name });
-        }
-    } 
-
-    return $element;
-}
 
 # show the edit screen
 sub edit {
@@ -149,7 +107,22 @@ sub edit {
     my $path = $query->param('path');
     my $root_id = $query->param('root_id');
 
-    my $root = Krang::Element->find(element_id => $root_id);
+    # find the root element, loading from the session or the DB
+    my $root;
+    if (defined $root_id) {
+        $session{root_element} = 
+          $root = Krang::Element->find(element_id => $root_id);        
+
+        croak("Unable to load element from DB by id '$root_id'")
+          unless defined $root;
+        $query->param(root_id => undef);
+    } else {
+        $root = $session{root_element};
+        croak("Unable to load element from session.") 
+          unless defined $root;
+    }
+
+    # find the element being edited using path, build up @crumbs along the way
     my @crumbs;
     my $element = _find_element($root, $path, \@crumbs);
     $template->param(crumbs => \@crumbs);
@@ -203,6 +176,53 @@ sub edit {
     return $template->output();    
 }
 
+
+# add sub-elements
+sub add {
+    my $self = shift;
+    my $query = $self->query();
+
+    # gather params
+    my $path    = $query->param('path');
+    my $child   = $query->param('child');
+
+    # find our element
+    my $root    = $session{element_root};
+    my $element = _find_element($root, $path);
+
+    # add the child element and save the element tree
+    $element->add_child(class => $child);
+
+    # toss to edit
+    return $self->edit();
+}
+
+# finds an element given the root and a path, optionally building @crumbs loop
+sub _find_element {
+    my ($element, $path, $crumbs) = @_;
+    push(@$crumbs, { path => '',
+                     name => $element->display_name })
+      if $crumbs;
+
+    # no path means the element is the root
+    return $element unless defined $path;
+
+    # otherwise, split up the path and locate the elements
+    my @path = split(',', $path);
+    my ($index, @path_back);
+    while(@path) {
+        $index = shift(@path);
+        $element = $element->children()->[$index];
+        if ($crumbs) {
+            push @path_back, $index;
+            push(@$crumbs, { path => join(',',@path_back),
+                             name => $element->display_name });
+        }
+    } 
+
+    return $element;
+}
+
 sub save_and_stay {
     my $self = shift;
     return $self->save(stay => 1);
@@ -234,7 +254,7 @@ sub save {
     my $index = 0;
     my @invalid;
     foreach my $child ($element->children()) {
-        my ($valid, $msg) = $child->validate(query => $query, order => $index);
+        my ($valid, $msg) = $child->validate(query => $query);
         if (not $valid) {
             push @msgs, "* $msg";
             push @invalid, $index;
@@ -254,7 +274,7 @@ sub save {
     # save data
     $index = 0;
     foreach my $child ($element->children()) {
-        $child->load_query_data(query => $query, order => $index);
+        $child->load_query_data(query => $query);
         $index++;
     }
 

@@ -6,6 +6,7 @@ use Krang::ElementLibrary;
 use Krang::ElementClass;
 use Krang::DB qw(dbh);
 use List::Util qw(first);
+use Scalar::Util qw(weaken);
 use Carp qw(croak);
 use Carp::Assert qw(assert DEBUG);
 
@@ -30,6 +31,12 @@ Krang::Element - element data objectcs
 
   # add data to the sub-element
   $para->data("some test data here");
+
+  # get a reference to the parent of $para, aka $element
+  $parent = $para->parent();
+
+  # get a reference to the root element of this tree, also $element
+  $root = $para->root();
 
   # another way to add a paragraph, this time in one step
   $element->add_child(class => "paragraph",
@@ -60,6 +67,13 @@ Krang::Element - element data objectcs
   foreach_element { 
       print $_->display_name, " => ", $_->data, "\n";
   } $element;
+
+  # find a list of all paragraphs in the tree, using XPath-esque
+  # notation
+  @para = $element->match('//paragraph');
+
+  # get the first paragraph of the second page
+  ($para) = $element->match('/page[1]/paragraph[0]');
 
   # get a list of potential child classes, taking into account max setting
   @classes = $element->available_child_classes();
@@ -114,9 +128,7 @@ the first C<save()>.
 use Krang::MethodMaker
   new_with_init => 'new',
   new_hash_init => 'hash_init',
-  get_set       => [ qw( element_id
-                         data
-                       ) ],
+  get_set       => [ qw( element_id data parent ) ],
   list          => [ qw( children ) ];  
 
 # initialize a new object, creating children as required by the class
@@ -188,6 +200,24 @@ This scalar attribute contains the data associated with the element.
 Depending on the element class it might be textual, numeric or even a
 complex data structure.  To get a flattened representation, call
 C<freeze_data()>.
+
+=item C<< $parent = $element->parent() >>
+
+Returns the parent element for this element, or C<undef> for the root
+element.
+
+=item C<< $root = $element->root() >>
+
+Returns the root element for this element tree.
+
+=cut
+
+sub root {
+    my $self = shift;
+    return $self->{parent}->root()
+      if defined $self->{parent};        
+    return $self;
+}
 
 =item C<< @children = $element->children() >>
 
@@ -263,6 +293,10 @@ sub add_child {
               $self->name . "' - max allowed is $max")
           if $count > $max;
     }
+
+    # push on a weak reference to self as parent
+    $arg{parent} = $self;
+    weaken($arg{parent});
 
     # push on the child and return it
     push @$children, ref($self)->new(%arg);
@@ -523,20 +557,16 @@ sub delete {
         croak("Unable to save() non-top-level element.")
           unless $self->{class}->top_level();
 
-        # check for ID
-        croak("Unable to delete() non-saved element.")
-          unless $self->{element_id};
-        
-        $element_id = $self->{element_id};
-    } else {
-        $element_id = shift;
-    }
+        # check for ID 
+        croak("Unable to delete() non-saved element.")    
+          unless $self->{element_id}; $element_id = $self->{element_id};
+    } else { $element_id = shift; }
 
     $dbh->do('DELETE FROM element WHERE root_id = ?', undef, 
              $element_id);
 
     # clear the object
-    %{$self} = ();
+    %{$self} = () if ref $self;
 
     return 1;
 }
@@ -552,9 +582,17 @@ database.
 
 sub clone {
     my $self = shift;
+
+    # start with a simple copy
     my $clone = bless({%$self}, ref($self));
-    for(my $i = 0; $i < @{$clone->{children}}; $i++) {
-        $clone->{children}[$i] = $clone->{children}[$i]->clone();
+
+    # clone children recursively
+    $clone->{children} = [ map { $_->clone } @{$self->{children}} ];
+
+    # fix up parent pointers
+    for (@{$clone->{children}}) {
+        $_->{parent} = $clone;
+        weaken($_->{parent});
     }
     return $clone;
 }
@@ -620,6 +658,167 @@ sub foreach_element (&@) {
         push(@_, $_->children);
         $code->();
     }
+}
+
+=item C<< $xpath = $element->xpath() >>
+
+Get an xpath to uniquely identify this element.  Can be used with
+match() to find the element later.  The xpath returned is guaranteed
+to be unqiue within the element tree.
+
+=cut
+
+sub xpath {
+    my $self = shift;
+    my $parent = $self->{parent};
+    return '/' unless defined $parent; # root's xpath is /
+    
+    return $parent->xpath() . ($parent->{parent} ? '/' : '') .
+      $self->name . '[' . $parent->_child_order($self) . ']';
+}
+
+# returns the place of the specified child within other children with
+# the same name
+sub _child_order {
+    my ($self, $child) = @_;
+    my $name = $child->name;
+    my $count = 0;
+    for (@{$self->{children}}) {
+        return $count if $_ == $child;
+        $count++ if $_->name eq $name;
+    }
+}
+
+=item C<< ($para) = $element->match('/page[0]/paragraph[2]/' >>
+
+=item C<< @paras = $element->match('//paragraph' >>
+
+The match() method performs a search in the element tree using a
+simplified XPath-esque notation.  This is useful for two purposes:
+
+=over
+
+=item 1 
+
+To retrieve a single element based on a unique path.  For example, to
+retrieve the second paragraph of the third page:
+
+  ($para) = $element->match('/page[2]/paragraph[1]');
+
+=item 2
+
+To retrieve a set of elements that match a given criteria.  For
+example, to get all the image captions regardless of where they exist
+in the element tree:
+
+  @captions = $element->match('//image/caption');
+
+=back
+
+The following XPath syntax elements are supported by match().  This
+list may grow as we find new uses for various constructions.
+
+=over
+
+=item name
+
+Selects a list of elements called 'name' in the element tree below the
+current element.
+
+=item /name
+
+Selects a list of elements called 'name' below the root of the element
+tree.
+
+=item //name
+
+Selects all elements with a matching name, anywhere in the element tree.
+
+=item parent/child/grandchild
+
+Selects a list of grandchildren for all children of all parents.
+
+=item parent[1]/child[2]
+
+Selects a single child by indexing into the children lists.
+
+=item parent[-1]/child[0]
+
+Selects the first child of the last parent.  In the real XPath they
+spell this 'parent[last()]/child[0]' but supporting the Perl syntax is
+practically free here.
+
+=back
+
+=cut
+
+sub match {
+    my ($self, $xpath) = @_;
+
+    # break up an incoming xpath into a set of @patterns to match
+    # against a list of @target elements
+    my (@patterns, @targets);    
+
+    # target aquisition
+    if ($xpath =~ m!^//(.*)$!) {
+        $xpath = $1;
+        # this is a match-anywhere pattern, which should be tried on
+        # all nodes
+        foreach_element { push(@targets, $_) } $self->root();
+    } elsif ($xpath =~ m!^/(.*)$!) {
+        $xpath = $1;
+        # this match starts at the root
+        @targets = ($self->root());
+    } else {
+        # this match starts here
+        @targets = ($self);
+    }
+
+    # pattern breakdown
+    my @parts = split('/', $xpath);
+    for (@parts) {
+        if (/^\w+$/) {
+            # it's a straight name match
+            push(@patterns, { name => $_ });
+        } elsif (/^(\w+)\[(-?\d+)\]$/) {
+            # it's an indexed name
+            push(@patterns, { name => $1, index => $2 });
+        } else {
+            croak("Bad call to match(): '$xpath' contains unknown token '$_'");
+        }
+    }
+    croak("Bad call to match(): '$xpath' contains no search tokens.")
+      unless @patterns;
+        
+    # apply the patterns to all available targets and collect results
+    my @results = map { $_->_match(@patterns) } @targets;
+
+    return @results;
+}
+
+# the underlying match engine.  this takes a list of patterns and
+# applies them to child elements
+sub _match {
+    my ($self, @patterns) = @_;
+
+    # get pattern to apply to direct descendants
+    my $pat = shift @patterns;
+
+    # find matches and put in @results
+    my @results;
+    my @kids = grep { $_->name eq $pat->{name} } @{$self->{children}};
+    if (defined $pat->{index}) {
+        push @results, $kids[$pat->{index}]
+          if (abs($pat->{index}) <= $#kids);
+    } else {
+        push @results, @kids;
+    }
+
+    # all done?
+    return @results unless @patterns;
+
+    # apply remaining patterns on matching kids
+    return map { $_->_match(@patterns) } @results;
 }
 
 =back
@@ -689,11 +888,18 @@ BEGIN {
 
 =over
 
-=item *
+=item
 
-Make $element->child('foo') faster than grepping through
-$element->children() for 'foo'.  This probably means caching the name
-to element mappings and updating them on changes to children().
+Make $element->child('foo') and match('foo') faster than grepping
+through $element->children() for 'foo'.  This probably means caching
+the name to element mappings and updating them on changes to
+children().  That's not easy to do and still allow children() to
+return a reference that can be used to make changes.
+
+=item
+
+Do leak testing to make sure the use of weaken() here is having the
+intended effect.
 
 =back
 

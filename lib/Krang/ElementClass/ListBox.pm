@@ -23,8 +23,8 @@ sub new {
 
 sub input_form {
     my ($self, %arg) = @_;
-    my ($query, $element, $order) = @arg{qw(query element order)};
-    my $param = $self->{name} . "_" . $order;
+    my ($query, $element) = @arg{qw(query element)};
+    my $param = $element->xpath;
 
     return scalar $query->scrolling_list(-name      => $param,
                                          -default   => $element->data(),
@@ -37,8 +37,8 @@ sub input_form {
 
 sub load_query_data {
     my ($self, %arg) = @_;
-    my ($query, $element, $order) = @arg{qw(query element order)};
-    my $param = $self->{name} . "_" . $order;
+    my ($query, $element) = @arg{qw(query element)};
+    my $param = $element->xpath;
     $element->data([$query->param($param)]);
 }
 

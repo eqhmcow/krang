@@ -194,27 +194,27 @@ specialize the behavior of an element class.
 
 =over
 
-=item C<< $html = $class->input_form(element => $element, query => $query, order => $order) >>
+=item C<< $html = $class->input_form(element => $element, query => $query) >>
 
 This call is used to display an HTML form element for data entry in
 the frontend.  It must return the HTML text to be used.
 
 The default implementation returns a hidden field with the name of the
-form C<< $class->name . "_" . $order >>.
+form C<< $element->xpath >>.
 
 =cut
 
 sub input_form {
     my ($self, %arg) = @_;
-    my ($query, $element, $order) = @arg{qw(query element order)};
-    my $param = $self->{name} . "_" . $order;
+    my ($query, $element) = @arg{qw(query element)};
+    my $param = $element->xpath();
 
     return scalar $query->hidden(name     => $param,
                                  default  => ($element->data() || ""),
                                  override => 1);
 }
 
-=item C<< ($bool, $msg) = $class->validate(element => $element, query => $query, order => $order) >>
+=item C<< ($bool, $msg) = $class->validate(element => $element, query => $query) >>
 
 Given the CGI.pm query object from a form submission, this call must
 return true of the input is valid for the element and false if not.
@@ -228,8 +228,8 @@ otherwise does no checking of the input data.
 
 sub validate { 
     my ($self, %arg) = @_;
-    my ($query, $element, $order) = @arg{qw(query element order)};
-    my $param = $self->{name} . "_" . $order;
+    my ($query, $element) = @arg{qw(query element)};
+    my $param = $element->xpath();
     my $value = $query->param($param);
     if ($self->{required} and (not defined $value or not length $value)) {
         return (0, "$self->{display_name} requires a value.");
@@ -237,23 +237,22 @@ sub validate {
     return 1;
 }
 
-=item C<< $class->load_query_data(element => $element, query => $query, order => $order) >>
+=item C<< $class->load_query_data(element => $element, query => $query) >>
 
 This call loads the data from the current query into the object.
 Which this call returns C<< $element->data() >> must return the value
 specified by the user in the form fields provided by
 C<display_form()>.
 
-The default implementation finds a form parameter named 
-C<$class->name . "_" . $element->element_id> and loads it using 
-C<$element->data()>.
+The default implementation finds a form parameter named
+C<$element->xpath> and loads it using C<$element->data()>.
 
 =cut
 
 sub load_query_data {
     my ($self, %arg) = @_;
-    my ($query, $element, $order) = @arg{qw(query element order)};
-    my $param = $self->{name} . "_" . $order;
+    my ($query, $element) = @arg{qw(query element)};
+    my $param = $element->xpath();
     $element->data(scalar $query->param($param));
 }
 

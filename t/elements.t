@@ -23,6 +23,12 @@ is($page->name, $page->class->name);
 is($page->display_name, "Page");
 is(@{$page->children}, 2);
 
+# test parent()
+is($page->parent(), $element);
+is($page->parent()->parent(), undef);
+my $clone = $element->clone();
+is($clone->child('page')->parent, $clone);
+
 # add five paragraphs
 ok($page->add_child(class => "paragraph", data => "bla1 "x40));
 ok($page->add_child(class => "paragraph", data => "bla2 "x40));
@@ -30,6 +36,28 @@ ok($page->add_child(class => "paragraph", data => "bla3 "x40));
 ok($page->add_child(class => "paragraph", data => "bla4 "x40));
 ok($page->add_child(class => "paragraph", data => "bla5 "x40));
 is(@{$page->children}, 7);
+
+# test root()
+is($page->root(), $element);
+is($page->child('paragraph')->root(), $element);
+
+# test xpath
+is($element->xpath(), '/');
+is($page->xpath(), '/page[0]');
+is($page->child('paragraph')->xpath(), '/page[0]/paragraph[0]');
+
+# test match
+is($element->match('/page[0]/paragraph[0]'), 1);
+isa_ok(($element->match('/page[0]/paragraph[0]'))[0], 'Krang::Element');
+is(($element->match('/page[0]/paragraph[3]'))[0]->data(), "bla4 "x40);
+is(($element->match('/page[0]/paragraph[-1]'))[0]->data(), "bla5 "x40);
+is(($element->match('/page[0]/paragraph[-1]'))[0]->xpath(), 
+   '/page[0]/paragraph[4]');
+is($element->match('//paragraph'), 5);
+is($page->match('//paragraph'), 5);
+is($page->match('paragraph'), 5);
+is($element->match('paragraph'), 0);
+is($element->match('/page[1]/paragraph[6]'),0);
 
 # fill in deck
 $element->children()->[0]->data("deck deck deck");
@@ -102,3 +130,6 @@ ok($loaded->delete());
 # make sure it's gone
 eval { $loaded = Krang::Element->find(element_id => $element_id) };
 like($@, qr/No element found/);
+
+# leak test
+#for(0 .. 1000) {
