@@ -82,7 +82,9 @@ sub publish_story {
                              die_on_bad_params => 0
                             );
 
-    my ($stories, $media) = $self->_build_asset_list([$story]);
+    my ($stories, $media, $checked_out) = $self->_build_asset_list([$story]);
+
+    add_message('checked_out_assets') if ($checked_out);
 
     $t->param(stories => $stories, media => $media);
     $t->param(asset_id_list => [{id => "story_$story_id"}]);
@@ -137,7 +139,9 @@ sub publish_story_list {
     @story_list = Krang::Story->find(story_id => \@story_id_list) if @story_id_list;
     @media_list = Krang::Media->find(media_id => \@media_id_list) if @media_id_list;
 
-    my ($stories, $media) = $self->_build_asset_list(\@story_list, \@media_list);
+    my ($stories, $media, $checked_out) = $self->_build_asset_list(\@story_list, \@media_list);
+
+    add_message('checked_out_assets') if ($checked_out);
 
     $t->param(stories => $stories, media => $media);
 
@@ -389,6 +393,8 @@ sub _build_asset_list {
     my $self = shift;
     my ($story_list, $media_list) = @_;
 
+    my $user_id = $ENV{REMOTE_USER};
+
     my $publish_list = [];
     my @stories = ();
     my @media = ();
@@ -404,15 +410,25 @@ sub _build_asset_list {
     push(@{$publish_list}, @$media_list)
       if $media_list and @$media_list;
 
+    my $checked_out_assets = 0;
     # iterate over asset list to create display list.
     foreach my $asset (@$publish_list) {
+        my $checked_out = 0;
+        # deal w/ checked out assets - a problem if assets are checked
+        # out by a user other than the current user.
+        if ($asset->checked_out) {
+            $checked_out = 1 if ($user_id != $asset->checked_out_by);
+        }
+        $checked_out_assets = $checked_out if $checked_out;
+
         if ($asset->isa('Krang::Story')) {
-            push @stories, {id    => $asset->story_id,
-                            url   => format_url(url    => $asset->url,
-                                                linkto => "javascript:preview_story('" . $asset->story_id . "')",
-                                                length => 40
-                                               ),
-                            title => $asset->title
+            push @stories, {id          => $asset->story_id,
+                            url         => format_url(url    => $asset->url,
+                                                      linkto => "javascript:preview_story('" . $asset->story_id . "')",
+                                                      length => 40
+                                                     ),
+                            title       => $asset->title,
+                            checked_out => $checked_out
                            };
         } elsif ($asset->isa('Krang::Media')) {
             push @media, {id        => $asset->media_id,
@@ -421,7 +437,8 @@ sub _build_asset_list {
                                                   length => 40
                                                  ),
                           title     => $asset->title,
-                          thumbnail => $asset->thumbnail_path(relative => 1) || ''
+                          thumbnail => $asset->thumbnail_path(relative => 1) || '',
+                          checked_out => $checked_out
                          };
 
         } else {
@@ -430,7 +447,7 @@ sub _build_asset_list {
         }
     }
 
-    return (\@stories, \@media);
+    return (\@stories, \@media, $checked_out_assets);
 
 }
 

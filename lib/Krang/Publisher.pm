@@ -274,6 +274,7 @@ sub publish_story {
     my %args = @_;
     my $callback = $args{callback};
     my $publish_list;
+    my $user_id = $ENV{REMOTE_USER};
 
     my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
@@ -301,8 +302,10 @@ sub publish_story {
 
         if ($object->isa('Krang::Story')) {
             if ($object->checked_out) {
-                debug(__PACKAGE__ . ": skipping checked out story id=" . $object->story_id);
-                next;
+                if ($user_id != $object->checked_out_by) {
+                    debug(__PACKAGE__ . ": skipping checked out story id=" . $object->story_id);
+                    next;
+                }
             }
             $self->_build_story_all_categories(story => $object);
             # mark object as published - this will update status info,
@@ -389,6 +392,8 @@ Will throw an exception if there are problems with the copy.
 sub publish_media {
     my $self = shift;
     my %args = @_;
+
+    my $user_id = $ENV{REMOTE_USER};
     my @urls;
 
     croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
@@ -396,10 +401,12 @@ sub publish_media {
     if (ref $args{media} eq 'ARRAY') {
         foreach my $media_object (@{$args{media}}) {
 
-            # cannot publish checked out assets.
+            # cannot publish assets checked out by other users.
             if ($media_object->checked_out) {
-                debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $media_object->media_id);
-                next;
+                if ($user_id != $media_object->checked_out_by) {
+                    debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $media_object->media_id);
+                    next;
+                }
             }
 
             push @urls, $self->_write_media($media_object);
@@ -408,10 +415,12 @@ sub publish_media {
         return @urls;
     }
 
-    # cannot publish checked out assets.
+    # cannot publish assets checked out by other users.
     if ($args{media}->checked_out) {
-        debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $args{media}->media_id);
-        return;
+        if ($user_id != $args{media}->checked_out_by) {
+            debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $args{media}->media_id);
+            return;
+        }
     }
 
     my $url = $self->_write_media($args{media});
