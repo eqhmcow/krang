@@ -12,6 +12,8 @@ use warnings;
 use Carp qw(verbose croak);
 use File::Spec::Functions qw(catdir catfile);
 use File::Path qw(rmtree);
+require File::Find;  # File::Find exports a find() method if we use 'use'.
+
 use Storable qw/nfreeze thaw/;
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -887,7 +889,10 @@ sub _clean_tmp {
 
     # delete directories
     for my $dir (@dirs) {
-        rmtree([$dir], 1, 1);
+        File::Find::find(\&_delete_files, $dir);
+
+        debug(__PACKAGE__ . "->_clean_tmp(): deleting dir '$dir'");
+        rmtree([$dir], 0, 1);
         if (-e $dir) {
             critical("Unable to delete '$dir'.");
         } else {
@@ -900,6 +905,23 @@ sub _clean_tmp {
 }
 
 
+
+#
+# subroutine to be passed to File::Find::find to delete files
+# before passing the remaining directory tree to rmtree.
+#
+sub _delete_files {
+
+    my $file = $File::Find::name;
+
+    # skip if it's not a file.
+    return unless -f $file;
+
+    debug(__PACKAGE__ . "->_delete_files() - unlinking '$file'");
+
+    unlink $file;
+
+}
 
 
 

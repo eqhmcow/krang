@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in L<Krang::Schedule> - cleanup of the C<tmp/> directory
+was not being done properly.  This is now fixed. [Peter]
+
+=item *
+
 Cleaned up how C<KRANG_PERSIST> variables are stored in the session
 cache for remembering search preferences.  The cleanup also fixed a
 number of bugs - the C<Clear> buttons on the advanced-search pages now
