@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded L<IPC::Run> to 0.78, which is now pseudohash-free (later
+versions of Perl complain). [Peter]
+
+=item *
+
 Moved htdocs/help/history.html to htdocs/help/log.html to correct links.
 [Perrin]
 

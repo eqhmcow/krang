@@ -167,7 +167,7 @@ exist without your hard work.
 
 =item IPC-Run
 
- Version: 0.74
+ Version: 0.78
  License: Perl License
 
 =item Image-Info
