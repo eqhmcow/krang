@@ -27,6 +27,9 @@ Krang::Template - Interface for managing template objects
  # same template
  $template->mark_for_testing();
 
+ # no longer use this template for testing
+ $template->unmark_for_testing();
+
  # Mark the template as having been deployed to the Krang publish path.
  # unsets testing flag in the database
  $template->mark_as_deployed();
@@ -860,8 +863,6 @@ user.
 
 sub mark_for_testing {
     my $self = shift;
-    my $user_id = $ENV{REMOTE_USER};
-
     $self->verify_checkout();
 
     my $query = <<SQL;
@@ -875,6 +876,34 @@ SQL
 
     # update testing field in memory
     $self->{testing} = 1;
+
+    return $self;
+}
+
+=item $template = $template->mark_for_testing()
+
+This method unsets the testing fields in the template table.
+
+The method croaks if the template is not checked out or checked out by another
+user.
+
+=cut
+
+sub unmark_for_testing {
+    my $self = shift;
+    $self->verify_checkout();
+
+    my $query = <<SQL;
+UPDATE template
+SET testing = ?
+WHERE template_id = ?
+SQL
+
+    my $dbh = dbh();
+    $dbh->do($query, undef, (0, $self->{template_id}));
+
+    # update testing field in memory
+    $self->{testing} = 0;
 
     return $self;
 }

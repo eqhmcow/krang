@@ -120,6 +120,13 @@ if ($@) {
 }
 
 
+# test mark_for_testing and unmark_for_testing
+is($tmpl2->testing, 0);
+ok($tmpl2->mark_for_testing);
+is($tmpl2->testing(), 1);
+ok($tmpl2->unmark_for_testing);
+is($tmpl2->testing, 0);
+
 
 # find() tests
 ###############
