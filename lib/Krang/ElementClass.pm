@@ -705,7 +705,7 @@ sub fill_template {
                                                };
             } else {
                 my $loop_idx = $loop_element->{loops}{$loops} + 1;
-                push @{$params{$loopname}}, {
+                push @{$params{$loops}}, {
                                              $name . '_count' => $loop_idx,
                                              $name            => $html,
                                              "is_$name"       => 1
@@ -917,6 +917,8 @@ sub _build_pagination_vars {
     my $self = shift;
     my %args = @_;
 
+    my $protocol = 'http://';
+
     my $page_list = $args{page_list};
     my $page_num  = $args{page_num};
 
@@ -927,15 +929,15 @@ sub _build_pagination_vars {
     $page_info{current_page_number} = $page_num;
     $page_info{total_pages}         = @$page_list;
 
-    $page_info{first_page_url} = $page_list->[0];
-    $page_info{last_page_url}  = $page_list->[$#$page_list];
+    $page_info{first_page_url} = $protocol . $page_list->[0];
+    $page_info{last_page_url}  = $protocol . $page_list->[$#$page_list];
 
     if ($page_num == 1) { # on the first page
         $page_info{is_first_page}     = 1;
         $page_info{previous_page_url} = '';
     } else {
         $page_info{is_first_page}     = 0;
-        $page_info{previous_page_url} = $page_list->[$current_idx];
+        $page_info{previous_page_url} = $protocol . $page_list->[$current_idx];
     }
 
     if ($page_num == @$page_list) { # on the last page
@@ -943,12 +945,12 @@ sub _build_pagination_vars {
         $page_info{next_page_url} = '';
     } else {
         $page_info{is_last_page}  = 0;
-        $page_info{next_page_url} = $page_list->[$current_idx];
+        $page_info{next_page_url} = $protocol . $page_list->[$current_idx];
     }
 
     for (my $num = 0; $num <= $#$page_list; $num++) {
         my %element = (page_number => ( $num + 1 ),
-                       page_url    => $page_list->[$num]);
+                       page_url    => $protocol . $page_list->[$num]);
 
         ($num == $current_idx) ? ( $element{is_current_page} = 1 ) :
           ( $element{is_current_page} = 0 );

@@ -606,7 +606,29 @@ END
         if ($element->name eq 'category') {
             $content .= Krang::Publisher->content;
         }
-        
+
+        if ($element->name eq 'page') {
+            # add pagination
+            $content .=<<END;
+<P>Page number <tmpl_var current_page_number> of <tmpl_var total_pages>.</p>
+<tmpl_unless is_first_page>
+<a href="<tmpl_var previous_page_url>">Previous Page</a>&lt;&lt;
+</tmpl_unless>
+<tmpl_loop pagination_loop>
+<tmpl_if is_current_page>
+<tmpl_var page_number>
+<tmpl_else>
+<a href="<tmpl_var page_url>"><tmpl_var page_number></a>
+</tmpl_if>
+<tmpl_unless __last__>&nbsp;|&nbsp;</tmpl_unless>
+</tmpl_loop>
+<tmpl_unless is_last_page>
+&gt;&gt;<a href="<tmpl_var next_page_url>">Next Page</a>
+</tmpl_unless>
+<tmpl_unless is_last_page><tmpl_var page_break></tmpl_unless>
+END
+
+        }
         $content .= "</div>";
         
         my $tmpl = Krang::Template->new(content		   => $content,
