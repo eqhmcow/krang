@@ -2,7 +2,26 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 v1.013
+=head2 v1.015
+
+=over
+
+=item
+
+Fixed a bug where an error occuring during preview triggered a
+Krang::Cache error which corrupted the display. [Sam]
+
+=item
+
+Improved error message generated when InstanceElementSet is set to an
+element set that isn't installed. [Peter]
+
+=item
+
+Fixed a ton of whitespace in module source files which was breaking
+the POD output. [Peter]
+
+=head2 v1.014
 
 =over
 
