@@ -131,13 +131,13 @@ function update_order_sort_south (a, b) {
 
 <TMPL_IF associated_contributors>
 
-  <table cellspacing="0" width="100%">
+  <table cellspacing="0" width="100%" class="form-cell">
   <tr class="form-head">
     <th>&nbsp;Last Name</th>
     <th>&nbsp;First, Middle Name</th>
     <th>&nbsp;Type</th>
     <th>&nbsp;Order</th>
-    <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'contrib_unassociate_list')"></th>
+    <th>&nbsp;<input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'contrib_unassociate_list')"></th>
   </tr>
 
   <tmpl_loop associated_contributors>
@@ -151,7 +151,7 @@ function update_order_sort_south (a, b) {
 
   </tmpl_loop>
  
-  </table>
+  </table>&nbsp;
   <div align="right"><input type="button" value="Reorder" onClick="reorder_contributors()" class="button">
 &nbsp;&nbsp;&nbsp;<input type="button" value="Delete" onClick="unassociate_selected()" class="button"></div>
 
@@ -166,39 +166,45 @@ function update_order_sort_south (a, b) {
 
   </td></tr>
 </table>
+  </td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
 
-<table border="0" cellspacing="0" cellpadding="2" width="100%">
+&nbsp;
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellspacing="0" cellpadding="6" width="100%">
 <form name="search_form" method="POST">
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="">
 <input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
 <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
-<tr><td class="form-head">SEARCH<br />
+<tr><td class="light">SEARCH<br />
 <input type="hidden" name="rm" value="search">
 <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<input type="submit" value="Search">
+<input type="submit" value="Search" class="button"><br />
+(By First Name, Last Name, Type)
 </td></tr>
 </form>
 </table>
 
-&nbsp;
+
 <table border="0" cellpadding="6" cellspacing="0" width="100%">
-<tr><td>Choose Contributors
-<p><a href="javascript:add_contrib()">Add A Contributor</a></p>
-
+<tr><td>Choose Contributors</td></tr>
 <form name="krang_pager_form" method="POST">
-
-<tmpl_include HTMLPager/pager-internals.tmpl>
-
+<tr><td><b><a href="javascript:add_contrib()">Add A Contributor</a></b></td></tr>
+<tr><td><tmpl_include HTMLPager/pager-internals.tmpl>
 <tmpl_if krang_pager_rows>
 
-Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row><table cellspacing="0" width="100%"><tr class="form-head"><th><tmpl_var colhead_last></th>
+Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row><table cellspacing="0" width="100%" class="form-cell"><tr class="form-head"><th><tmpl_var colhead_last></th>
 <th><tmpl_var colhead_first_middle></th>
 <th><tmpl_var colhead_type></th>
-<th><tmpl_var colhead_checkbox_column></th></tr>
+<th>&nbsp;<tmpl_var colhead_checkbox_column></th></tr>
 
 
   <tmpl_loop krang_pager_rows>
@@ -216,6 +222,9 @@ Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row
   </tmpl_loop>
  
   </table>
+  <table border="0" cellspacing="1" cellpadding="0" width="100%">
+  <tr><td colspan="2"><img width="1" height="4"></td></tr>
+  <tr><td>
 <tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
 
 <tmpl_loop page_numbers>
@@ -230,16 +239,16 @@ Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row
   <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a>
   <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a>
   </tmpl_if>
+    </td><td align="right">&nbsp;<tmpl_if row_count><input type="button" value="Associate" onClick="associate_selected()" class="button" align="right"></tmpl_if></td></tr>
+  </table>
 
 <tmpl_else>
   <br /><b>None Found</b>
 </tmpl_if>
 
-</form>
-
-<!-- End delete_selected_form -->
-</form>
     </td></tr>
+
+</form>
   </table>
   </td>
   <td width="1" class="line"><img width="1" height="1"></td>
@@ -248,8 +257,7 @@ Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row
 </table>
 
 
-<div class="button-bar">
-<tmpl_if row_count><input type="button" value="Associate" onClick="associate_selected()" class="button"></tmpl_if>&nbsp;&nbsp;&nbsp;<input type="button" value="Return" onClick="do_return()" class="button"></div>
+<div class="button-bar"><input type="button" value="Return" onClick="do_return()" class="button"></div>
 
 <tmpl_include /footer.tmpl>
 
