@@ -943,9 +943,9 @@ sub find {
     # construct base query
     my $query;
     if ($count) {
-        $query = "SELECT count(" . 
-          ($need_distinct ? "DISTINCT " : "") . 
-            "*) FROM story ";
+        $query = "SELECT" . 
+          ($need_distinct ? " DISTINCT" : "") . 
+            "  count(*) FROM story ";
     } elsif ($ids_only) {
         $query = "SELECT ".
           ($need_distinct ? "DISTINCT " : "") . 

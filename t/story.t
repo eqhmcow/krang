@@ -364,3 +364,8 @@ is($result[0], $find[1]->story_id);
                              ids_only => 1);
 is(@result, 0);
 
+# find by site
+my $count = Krang::Story->find(simple_search => "",
+                             count => 1);
+ok($count);
+
