@@ -18,6 +18,8 @@ use Krang::DB qw(dbh);
 use Krang::Test::Content;
 
 use Data::Dumper;
+use Config;
+
 
 my $schedulectl;
 my $restart;
@@ -573,7 +575,16 @@ my $tmpfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_test');
 $date = localtime;
 $date -= (ONE_HOUR * 36);
 
-my $touch_string = sprintf("touch --date='%s' %s", $date->cdate, $tmpfile);
+# need to use different touch syntax for linux vs BSD.
+my $touch_string;
+
+if ($Config{osname} =~ /bsd/i) {
+    my $timestamp = sprintf("%04i%02i%02i%02i%02i.00", $date->year, $date->mon,
+                            $date->mday, $date->hour, $date->minute);
+    $touch_string = sprintf("touch -t %s %s", $timestamp, $tmpfile);
+} else {
+    $touch_string = sprintf("touch --date='%s' %s", $date->cdate, $tmpfile);
+}
 
 `$touch_string`;
 
