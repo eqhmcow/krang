@@ -62,9 +62,8 @@ use Krang::Session qw(%session);
 
 # Constants
 ############
-use constant TEMPLATE_BASEDIR => '';
-use constant TEMPLATE_COLS => qw(id
-				 category_id
+use constant TEMPLATE_BASEDIR => 'tmpl';
+use constant TEMPLATE_COLS => qw(category_id
 				 checked_out
 				 checked_out_by
 				 content
@@ -75,6 +74,7 @@ use constant TEMPLATE_COLS => qw(id
 				 filename
 				 name
 				 notes
+				 template_id
 				 testing
 				 version);
 use constant TEMPLATE_GET_SET => qw(category_id
@@ -85,20 +85,22 @@ use constant TEMPLATE_GET_SET => qw(category_id
 				    name
 				    notes
 				    testing);
-use constant VERSION_COLS => qw(id
-				creation_date
+use constant VERSION_COLS => qw(creation_date
 				data
 				template_id
+				template_version_id
 				version);
 
 # Globals
 ##########
+# args for find() must be package vars to use symbolic refs...
+our ($limit, $offset, $order_by);
 
 # Lexicals
 ###########
 my %find_defaults = (limit => '',
                      offset => 0,
-                     order_by => 'media_id');
+                     order_by => 'template_id');
 my %template_cols = map {$_ => 1} TEMPLATE_COLS;
 
 
@@ -106,21 +108,21 @@ my %template_cols = map {$_ => 1} TEMPLATE_COLS;
 # had to define constants before we could use them
 use Krang::MethodMaker 	new_with_init => 'new',
   			new_hash_init => 'hash_init',
-  			get_set => [TEMPLATE_GET_SET];
+  			get_set => [TEMPLATE_COLS];
 
 
 =head1 INTERFACE
 
 =over 4
 
-=item $template = Krang::Template->new( %params )
+=item C<< $template = Krang::Template->new( %params ) >>
 
 Constructor provided by Krang::MethodMaker.  Accepts a hash its argument.
 Validation of the keys in the hash is performed in the init() method.
 
-=item $template = $template->checkin()
+=item C<< $template = $template->checkin() >>
 
-=item $template = Krang::Template->checkin( $template_id || @template_ids )
+=item C<< $template = Krang::Template->checkin( $template_id || @template_ids ) >>
 
 Class or instance method for checking in a template object, as a class method
 either a list or single template id must be passed.
@@ -132,7 +134,7 @@ previously checked it out.
 
 sub checkin {
     my $self = shift;
-    my @ids = @_ || $self->id();
+    my @ids = @_ || $self->template_id();
     my $dbh = dbh();
     my $user_id = $session{user_id};
 
@@ -140,7 +142,7 @@ sub checkin {
         my $query = <<SQL;
 SELECT checked_out, checked_out_by
 FROM template
-WHERE id = ?
+WHERE template_id = ?
 SQL
         my ($co, $uid) = $dbh->selectrow_arrayref($query, undef, ($_));
 
@@ -150,27 +152,32 @@ SQL
         } else {
             croak(__PACKAGE__ . "->checkin(): Template id '$_' is checked " .
                   "out by the user '$uid'.")
-              unless $uid == $user_id;
+              if (defined $uid && $uid != $user_id);
         }
 
         $query = <<SQL;
 UPDATE template
 SET checked_out = ?, checked_out_by = ?
-WHERE id = ?
+WHERE template_id = ?
 SQL
 
-        croak(__PACKAGE__ . "->checkin(): Unable to checkin template id '$_'")
-          unless $dbh->do($query, undef, ('', '', $_));
+        $dbh->do($query, undef, ('', '', $_));
 
+    }
+
+    # update checkout fields if this is an instance method call
+    if (ref $self eq 'Krang::Template') {
+        $self->checked_out('');
+        $self->checked_out_by('');
     }
 
     return $self;
 }
 
 
-=item $template = $template->checkout()
+=item C<< $template = $template->checkout() >>
 
-=item $template = Krang::Template->checkout( $template_id || @template_ids )
+=item C<< $template = Krang::Template->checkout( $template_id || @template_ids )>>
 
 Class or instance method for checking out template objects, as a class method
 the either a list or single template id must be passed.
@@ -182,9 +189,16 @@ the checkout update query fails.
 
 sub checkout {
     my $self = shift;
-    my @ids = @_ || ($self->id());
+    my @ids = @_ || ($self->template_id());
     my $dbh = dbh();
     my $user_id = $session{user_id};
+    my $instance_meth;
+
+    if (ref $self eq 'Krang::Template' && scalar @ids == 1) {
+        $instance_meth = 1;
+        return $self if ($self->checked_out &&
+                         ($self->checked_out_by == $user_id));
+    }
 
     eval {
         # lock template table
@@ -194,7 +208,7 @@ sub checkout {
             my $query = <<SQL;
 SELECT checked_out, checked_out_by
 FROM template
-WHERE id = ?
+WHERE template_id = ?
 SQL
 
             my ($co, $uid) = $dbh->selectrow_array($query, undef, ($_));
@@ -210,12 +224,10 @@ SQL
             $query = <<SQL;
 UPDATE template
 SET checked_out = ?, checked_out_by = ?
-WHERE id = ?
+WHERE template_id = ?
 SQL
 
-            croak(__PACKAGE__ . "->checkout(): Checkout failed for template " .
-                  "id '$_'")
-              unless $dbh->do($query, undef, (1, $user_id, $_));
+            $dbh->do($query, undef, (1, $user_id, $_));
         }
 
         # unlock template table
@@ -228,44 +240,55 @@ SQL
         croak($@);
     }
 
+    # update checkout fields if this is an instance method call
+    if ($instance_meth) {
+        $self->checked_out(1);
+        $self->checked_out_by($user_id);
+    }
+
     return $self;
 }
 
 
-=item $template->delete()
+=item C<< $template = $template->copy_to( $path ) >>
 
-=item Krang::Template->delete( $template_id || @template_ids )
+Instance method designed to work with Krang::Burner->deploy() to deploy
+templates.  It writes the template 'content' field to the path specified by
+$path.
 
-Class or instance method for deleting template objects.  As a class method the
-method accepts either a single template id or array object ids.
-
-Deletion means deleting all instances of the object in the version table as
-well as the current version in the template table.
-
-This method will croak if an object is checked out by another user.
+An error is thrown if the method cannot write to the specified path.
 
 =cut
 
-sub delete {
-    my $self = shift;
-    my @ids = @_ || ($self->id());
-
-    # checkout the objects
-    Krang::Template->checkout(@ids);
-
-    my $t_query = "DELETE FROM template WHERE " .
-      join(" OR ", map {"id = ?"} @ids);
-    my $v_query = "DELETE FROM template_version WHERE " .
-      join(" OR ", map {"template_id = ?"} @ids);
-
+sub copy_to {
+    my ($self, $path) = @_;
     my $dbh = dbh();
 
-    $dbh->do($t_query, undef, @ids);
-    $dbh->do($v_query, undef, @ids);
+    # get template content
+    my $query = "SELECT content FROM template WHERE template_id = ?";
+    my ($data) = $self->content() ||
+      $dbh->selectrow_array($query, undef, ($self->template_id()));
+
+    # write out file
+    my $fh = IO::File->new(">$path") or
+      croak(__PACKAGE__ . "->copy2(): Unable to write to '$path': $!.");
+    $fh->print($data);
+    $fh->close();
+
+    # update deploy field
+    $query = <<SQL;
+UPDATE template
+SET deployed = ?, deploy_date = now()
+WHERE template_id = ?
+SQL
+
+    $dbh->do($query, undef, (1, $self->template_id()));
+
+    return $self;
 }
 
 
-=item $template = $template->deploy()
+=item C<< $template = $template->deploy() >>
 
 This method is responsible for deploying the template associated with the given
 template object.  Deployment, at present, consists of the of three tasks:
@@ -289,9 +312,8 @@ deployed is set to '1' and deploy_date is set to 'now()'.
 =back
 
 This method croaks if any of these three following circumstances occur: if the
-module is unnable to write to the template's output path, the module is unable
-to close the template's filehandle, or if the database query does not affect
-any rows.
+module is unnable to write to the template's output path or if the module is
+unable to close the template's filehandle.
 
 =cut
 
@@ -303,7 +325,7 @@ sub deploy {
 
     # Write out file
     # expect to get category path in the following fashion:
-    # Krang::Category->find({id => $self->id()})->get_path();
+    # Krang::Category->find({id => $self->template_id()})->get_path();
     my $category_path;
     my $path = File::Spec->catfile(TEMPLATE_BASEDIR,
                                    $category_path,
@@ -317,33 +339,32 @@ sub deploy {
 
     # Update deploy fields
     my $dbh = dbh();
-    my @params = (1, 'now()', $self->id());
+    my @params = (1, 'now()', $self->template_id());
     my $query = <<SQL;
 UPDATE template
-SET deployed = ?, deploy_date = ?
-WHERE id = ?
+SET deployed = ?, deploy_date = now()
+WHERE template_id = ?
 SQL
 
     # print out debugging info
-    Krang::debug(__PACKAGE__ . "->deploy() - query:\n$query");
-    Krang::debug(__PACKAGE__ . "->deploy() - parameters:\n" .
-                 join(",", @params));
+#    Krang::debug(__PACKAGE__ . "->deploy() - query:\n$query");
+#    Krang::debug(__PACKAGE__ . "->deploy() - parameters:\n" .
+#                 join(",", @params));
 
-    croak(__PACKAGE__ . "->deploy(): Update of deploy fields failed.")
-      unless $dbh->do($query, undef, @params);
+    $dbh->do($query, undef, @params);
+
+    # update deploy field if this is an instance method call
+    $self->{deployed} = 1 if $self->template_id();
 
     return $self;
 }
 
 
-=item  @templates  = Krang::Template->find( $param )
-
-=item  $templates_ref = Krang::Template->find( $param )
+=item  C<< @templates  = Krang::Template->find( $param ) >>
 
 Class method that returns the template or templates matching the criteria
 provided in $param. Any of the fields in TEMPLATE_COLS is an acceptable search
-criterion, at least one must be present.  In a scalar context an arrayref of
-template objects is returned in list context an array.
+criterion, at least one must be present.
 
 The method croaks if an invalid search criteria is provided, i.e. a field not
 found in TEMPLATE_COLS.
@@ -354,14 +375,11 @@ sub find {
     my ($self, $args) = @_;
 
     # grab limit and offset args
-    my ($limit, $offset, $order_by);
     {
-        no strict qw/refs/;
-        for (qw/limit offset order_by/) {
-            $$_ = delete $args->{$_} || $find_default{$_};
-        }
+        no strict 'refs';
+        $$_ = delete $args->{$_} || $find_defaults{$_}
+          for (qw/limit offset order_by/);
     }
-
 
     # croak unless the args are in TEMPLATE_COLS
     my @invalid_cols;
@@ -375,8 +393,7 @@ sub find {
     my $dbh = dbh();
 
     # construct base query
-    my $query = "SELECT " . join(", ", TEMPLATE_COLS) .
-      " FROM " . template;
+    my $query = "SELECT " . join(", ", TEMPLATE_COLS) . " FROM template";
 
     # construct limit clause
     if ($limit) {
@@ -392,9 +409,9 @@ sub find {
 
     # log $query and @params if assert is on
     # (assert NOT IMPLEMENTED IN Krang::Log yet)
-    Krang::debug(__PACKAGE__ . "->find() - query:\n$query");
-    Krang::debug(__PACKAGE__ . "->find() - query parameters:\n" .
-                 join(",", @params));
+#    Krang::debug(__PACKAGE__ . "->find() - query:\n$query");
+#    Krang::debug(__PACKAGE__ . "->find() - query parameters:\n" .
+#                 join(",", @params));
 
     my $sth = $dbh->prepare($query);
 
@@ -415,11 +432,11 @@ sub find {
     $sth->finish();
 
     # return an array or arrayref based on context
-    return wantarray ? @templates : \@templates;
+    return @templates;
 }
 
 
-=item $template = $template->init()
+=item C<< $template = $template->init() >>
 
 Method for initializing object.  Called after new() required by
 Krang::MethodMaker.  This method does nothing except forwarding args to
@@ -437,12 +454,10 @@ sub init {
 }
 
 
-=item $template = $template->mark_for_testing()
+=item C<< $template = $template->mark_for_testing() >>
 
 This method sets the testing fields in the template table to allow for the
 testing of output of an undeployed template.
-
-This method croaks if attempt to update the testing fields is unsuccessful.
 
 =cut
 
@@ -451,33 +466,29 @@ sub mark_for_testing {
     my $user_id = $session{user_id};
 
     # checkout the template if it isn't already
-    $self->checkout() unless($self->checked_out() &&
-                             ($user_id == $self->checked_out_by()));
+    $self->checkout();
 
-    my @params = qw/1 $user_id $self->id()/;
+    my @params = qw/1 $user_id $self->template_id()/;
 
     my $query = <<SQL;
 UPDATE template
 SET testing = ?, testing_by = ?
-WHERE id = ?
+WHERE template_id = ?
 SQL
 
     my $dbh = dbh();
-
-    croak(__PACKAGE__ . "->mark_for_testing(): Unable to set testing flags.")
-      unless $dbh->do($query, undef, @params);
+    $dbh->do($query, undef, @params);
 
     return $self;
 }
 
 
-=item $template = $template->prepare_for_edit()
+=item C<< $template = $template->prepare_for_edit() >>
 
 This instance method saves the data currently in the object to the version
 table to permit a call to subsequent call to save that does not lose data.
 
-The method croaks if it is unable to save the serialized object to the version
-table.
+The method croaks if it is unable to serialized the object.
 
 =cut
 
@@ -498,22 +509,20 @@ sub prepare_for_edit {
 
     my $dbh = dbh();
 
-    my @params = ('now()', $frozen, $self->id());
+    my @params = ($frozen, $self->template_id(), $self->version());
 
     my $query = <<SQL;
-INSERT INTO template_version (creation_date,data)
-VALUES (?,?)
-WHERE id = ?
+INSERT INTO template_version (creation_date, data, template_id, version)
+VALUES (now(),?,?,?)
 SQL
 
-    croak(__PACKAGE__ . "->prepare_for_edit(): Save to version table failed.")
-        or $dbh->do($query, undef, @params);
+    $dbh->do($query, undef, @params);
 
     return $self;
 }
 
 
-=item $template = $template->revert( $version )
+=item C<< $template = $template->revert( $version ) >>
 
 Reverts template object data to that of a previous version.
 
@@ -522,41 +531,45 @@ version from the database and loading it into memory, thus overwriting the
 values previously in the object.  A save after reversion results in a new
 version number, the current version number never decreases.
 
-The method croaks if a version corresponding to the version argument for the
-current object is not found in the DB, or if we are unable to deserialize the
-retrieved version.
+The method croaks if it is unable to deserialize the retrieved version.
 
 =cut
 
 sub revert {
     my ($self, $version) = @_;
 
+    $self->checkout();
+
     # dump of object before overwrite
-    debug(__PACKAGE__ . "->revert(): Attempting to revert to version" .
-          "'$version'");
-    debug(__PACKAGE__ . "->revert(): Dump of object before overwrites\n" .
-          Data::Dumper->Dump([$self],['Object']) . "\n");
+#    debug(__PACKAGE__ . "->revert(): Attempting to revert to version" .
+#          "'$version'");
+#    debug(__PACKAGE__ . "->revert(): Dump of object before overwrites\n" .
+#          Data::Dumper->Dump([$self],['Object']) . "\n");
 
     my $query = <<SQL;
-SELECT b.data
-FROM template a, template_version b
-WHERE a.id = ? AND a.id=b.template_id AND b.version = ?
+SELECT data
+FROM template_version
+WHERE template_id = ? AND version = ?
 SQL
 
-    my @params = qw/$self->id() $version/;
+    my @params = ($self->template_id(), $version);
 
     #log query and params
-    debug(__PACKAGE__ . "->revert(): Revert query\n\t$query\n");
-    debug(__PACKAGE__ . "->revert(): Query bind paramerters\n\t'" .
-          join("','", @params));
+#    debug(__PACKAGE__ . "->revert(): Revert query\n\t$query\n");
+#    debug(__PACKAGE__ . "->revert(): Query bind paramerters\n\t'" .
+#          join("','", @params));
 
     my $dbh = dbh();
-    my $row_ref = $dbh->do($query, undef, @params) or
-      croak("No version found matching '$version' for template_id " .
-            "'" . $self->id() . "'");
+    my @row = $dbh->selectrow_array($query, undef, @params);
+
+    # preserve version
+    my $prsvd_version = $self->version;
 
     # overwrite current object
-    eval {$self = thaw($row_ref->[0])};
+    eval {$self = thaw($row[0])};
+
+    # restore version number
+    $self->version($prsvd_version);
 
     # catch Storable exception
     croak(__PACKAGE__ . "->revert(): Unable to deserialize object - $@")
@@ -566,7 +579,7 @@ SQL
 }
 
 
-=item $template = $template->save()
+=item C<< $template = $template->save() >>
 
 Saves template data in memory to the database.
 
@@ -584,8 +597,7 @@ sub save {
     my $user_id = $session{user_id};
 
     # make sure we've checked out the object
-    $self->checkout() unless($self->checked_out() &&
-                             ($user_id == $self->checked_out_by()));
+    $self->checkout() if $self->template_id();
 
     # increment version number
     my $version = $self->version() || 0;
@@ -595,13 +607,15 @@ sub save {
     my ($last_param, $query, @tmpl_params);
     if ($self->version > 1) {
         $query = "UPDATE template SET " .
-          join(', ', map {"$_=?"} TEMPLATE_GET_SET) . "WHERE id = ?";
-        $last_param = $self->id;
+          join(', ', map {"$_=?"} TEMPLATE_GET_SET) . "WHERE template_id = ?";
+        $last_param = $self->template_id();
     } else {
         $query = "INSERT into template (" .
           join(",", (TEMPLATE_GET_SET, 'creation_date')) .
             ") values(?" . ",?" x (scalar TEMPLATE_GET_SET) . ")";
         $last_param = 'now()';
+        $self->checked_out(1);
+        $self->checked_out_by($user_id);
     }
 
     {
@@ -609,10 +623,11 @@ sub save {
         # TEMPLATE_GET_SET and update checkout and testing fields to ''
         no strict qw/subs/;
 
-        for (qw/checked_out checked_out_by testing/) {
+        for (qw/deployed deploy_date testing/) {
             $self->$_('');
         }
-        @tmpl_params = map {$self->$_} TEMPLATE_GET_SET, $last_param;
+        @tmpl_params = map {$self->$_} TEMPLATE_GET_SET;
+        push @tmpl_params, $last_param;
     }
 
     # get database handle
@@ -621,6 +636,28 @@ sub save {
     # croak if no rows are affected
     croak(__PACKAGE__ . "->save(): Unable to save object to DB - " .
           $dbh->errstr) unless $dbh->do($query, undef, @tmpl_params);
+
+    # get id in memory...
+    unless ($self->template_id()) {
+        no warnings;
+        my $query = <<SQL;
+SELECT template_id
+FROM template
+WHERE
+SQL
+        my $i = 0;
+        for (TEMPLATE_GET_SET) {
+            my $val = $self->$_ || '';
+            if ($val) {
+                $query .= " AND " if $i++ >= 1;
+                $query .= "$_ = '$val'";
+            }
+        }
+
+        my @row = $dbh->selectrow_array($query) or
+          croak(__PACKAGE__ . "->save(): Unable to select object 'id'.");
+        $self->template_id($row[0]);
+    }
 
     return $self;
 }
