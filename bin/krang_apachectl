@@ -205,7 +205,7 @@ sub write_conf {
     $template->param(CGI_MODE => $cgi_mode);
 
     $template->param((map { ($_, Krang::Conf->get($_)) }
-                      (qw(ApacheUser ApacheGroup 
+                      (qw(KrangUser KrangGroup 
                           ApacheAddr ApachePort
                           RootVirtualHost
                          ))),
