@@ -247,6 +247,12 @@ But a list of objects is always returned:
 
   @categories = $story->categories;
 
+This method may throw a Krang::Story::DuplicateURL exception if you
+add a new category and it generates a duplicate URL.  When this
+exception is thrown the category list is still changed and you may
+continue to operate on the story.  However, if you try to call save()
+you will receive the same exception.
+
 =cut
 
 sub categories {
