@@ -52,6 +52,7 @@ use Krang::Contrib;
 use Krang::Message qw(add_message);
 use Krang::Pref;
 use Krang::Session qw(%session);
+use Krang::HTMLPager;
 
 
 # Fields in a contrib
@@ -135,18 +136,31 @@ sub search {
 
     # Do simple search based on search field
     my $search_filter = $q->param('search_filter') || '';
-    my @contributors = Krang::Contrib->find(simple_search=>$search_filter);
 
-    # To be replaced with paging
-    my @contrib_tmpl_data = ( map { {
-        contrib_id => $_->contrib_id(),
-        last => $_->last(),
-        first => $_->first(),
-        middle => $_->middle(),
-        types => [ map { { type_name => $_ } } ($_->contrib_type_names()) ]
-    } } @contributors );
+    # Configure pager
+    my $pager = Krang::HTMLPager->new(
+                                      cgi_query => $q,
+                                      use_module => 'Krang::Contrib',
+                                      find_params => { simple_search => $search_filter },
+                                      columns => [qw(last first_middle type command_column checkbox_column)],
+                                      column_labels => {
+                                                        last => 'Last Name',
+                                                        first_middle => 'First, Middle Name'
+                                                       },
+                                      columns_sortable => [qw( last first_middle )],
+                                      columns_sort_map => {first_middle => 'first,middle'},
+                                      command_column_commands => [qw( edit_contrib )],
+                                      command_column_labels => {edit_contrib => 'Edit'},
+                                      row_handler => \&list_view_contrib_row_handler,
+                                      id_handler => sub { return $_[0]->contrib_id },
+                                     );
 
-    $t->param(contributors => \@contrib_tmpl_data);
+    # Run pager
+    $t->param(pager_html =>  $pager->output());
+
+    # Propagate other params
+    $t->param(row_count => $pager->row_count());
+    $t->param(search_filter => $search_filter);
 
     return $t->output();
 }
@@ -855,6 +869,16 @@ sub delete {
 #############################
 #####  PRIVATE METHODS  #####
 #############################
+
+
+# Krang::HTMLPager row handler for contrib list view
+sub list_view_contrib_row_handler {
+    my ($row_hashref, $contrib) = @_;
+    $row_hashref->{first_middle} = $contrib->first();
+    $row_hashref->{first_middle} .= '&nbsp;' . $contrib->middle() if ($contrib->middle());
+    $row_hashref->{last} = $contrib->last();
+    $row_hashref->{type} = join(',&nbsp;', ( $contrib->contrib_type_names() ) );
+}
 
 
 # Get the media or story object from session or die() trying

@@ -32,6 +32,7 @@ my %pager_props = (
                                     },
                    columns_sortable => [qw( last first_middle )],
                    columns_sort_map => { first_middle => 'first,middle' },
+                   default_sort_order_desc => 0,
                    command_column_commands => [qw( edit_contrib )],
                    command_column_labels => {
                                              edit_contrib => 'Edit'
@@ -158,6 +159,10 @@ eval { $pager->output() };
 like($@, qr/columns_sort_map contains non-sortable columns/, "Validate: columns_sort_map match columns_sortable");
 
 $pager->columns_sort_map({ first_middle => 'first,middle' });
+eval { $pager->output() };
+like($@, qr/default_sort_order_desc not defined/, "Validate: default_sort_order_desc defined");
+
+$pager->default_sort_order_desc(0);
 eval { $pager->output() };
 like($@, qr/row_handler not a subroutine reference/, "Validate: row_handler subref");
 

@@ -42,6 +42,7 @@ Krang::HTMLPager - Web-paginate lists of records
     # Configure sorting controls
     columns_sortable => [qw( last first_middle )],
     columns_sort_map => { first_middle => 'first,middle' },
+    default_sort_order_desc => 1,
 
     # Configure built-in column handlers
     command_column_commands => [qw( edit_contrib )],
@@ -66,6 +67,9 @@ Krang::HTMLPager - Web-paginate lists of records
   # ...OR, set up params on custom template
   $pager->fill_template($template):
 
+  # Once we've called output() or fill_template(), get # of rows
+  my $row_count = $pager->row_count();
+
   # Example my_row_handler function
   sub my_row_handler {
     my ($row_hashref, $row_obj) = @_;
@@ -78,6 +82,7 @@ Krang::HTMLPager - Web-paginate lists of records
 use Krang::MethodMaker (
                         new_with_init => 'new',
                         new_hash_init => 'hash_init',
+                        get           => [ qw( row_count ) ],
                         get_set       => [ qw(
                                                cgi_query 
                                                persist_vars 
@@ -89,6 +94,7 @@ use Krang::MethodMaker (
                                                command_column_labels
                                                columns_sortable 
                                                columns_sort_map
+                                               default_sort_order_desc
                                                row_handler
                                                id_handler
                                              ) ],
@@ -145,6 +151,7 @@ sub init {
                     column_labels => {},
                     columns_sortable => [],
                     columns_sort_map => {},
+                    default_sort_order_desc => 0,
                     command_column_commands => [],
                     command_column_labels => {},
                    );
@@ -152,37 +159,10 @@ sub init {
     # finish the object
     $self->hash_init(%defaults, %args);
 
+    # Set default row_count
+    $self->{row_count} = undef;
+
     return $self;
-}
-
-
-
-=item fill_template()
-
-  $pager->fill_template($template_object);
-
-The fill_template() method is one of two ways to execute a paged view
-and utilize the output.  This method is used in the context of a 
-custom pager template.  The section later in this POD, "Creating
-Creating Custom Pager Templates", more fully describes how and why you 
-would want to use a custom template.
-
-The fill_template() method runs the Krang::HTMLPager and sets template 
-variables in the $template_object you provide.  It is then your 
-responsibility to output that $template_object.
-
-=cut
-
-sub fill_template {
-    my $self = shift;
-    my $t = shift;
-
-    # Did we get a template object?
-    croak ("No HTML::Template object specified") unless (ref($t));
-
-    $self->validate_pager();
-
-    $self->_fill_template($t);
 }
 
 
@@ -230,7 +210,7 @@ sub output {
 
     # Dynamically create template as scalar with proper columns
     my $pager_tmpl = '';
-    $pager_tmpl .= '<form name="krang_pager_form" method="POST">';
+    # $pager_tmpl .= '<form name="krang_pager_form" method="POST">';
 
     # Include javascript and hidden data template elements
     $pager_tmpl .= "\n\n<tmpl_include HTMLPager/pager-internals.tmpl>\n\n";
@@ -238,30 +218,9 @@ sub output {
     # Build up table and header row
     my @columns = @{$self->columns()};
 
-    # Build up final array of column headers
-    my @column_header_labels = ();
-    foreach my $col (@columns) {
-        my $col_label = $self->column_labels()->{$col};
-
-        # Create col header for command_column
-        if ( $col eq 'command_column') {
-            push(@column_header_labels, ( defined($col_label) ? $col_label : "" ) );
-            next;
-        }
-
-        # Create col header for checkbox_column
-        if ( $col eq 'checkbox_column' ) {
-            push(@column_header_labels, ( defined($col_label) ? $col_label : $self->make_checkall() ) );
-            next;
-        }
-
-        # Copy label from column_labels or use column name
-        push(@column_header_labels, ( defined($col_label) ? $col_label : $col ) );
-    }
-
     $pager_tmpl .= "<tmpl_if krang_pager_rows>\n\n";
     $pager_tmpl .= '<table cellspacing="0" width="100%"><tr class="form-head"><th>'
-      . join("</th>\n<th>", @column_header_labels) ."</th></tr>\n\n\n";
+      . join("</th>\n<th>", (map { "<tmpl_var colhead_$_>" } @columns) ) ."</th></tr>\n\n\n";
 
     # Build loop for data
     my $row_tmpl = "<tr>\n<td class=\"form-cell\">"
@@ -296,16 +255,64 @@ EOF
 </tmpl_if>
 EOF
 
+    # $pager_tmpl .= "\n</form>\n\n";
 
-    $pager_tmpl .= "\n</form>\n\n";
+    # print STDERR "$pager_tmpl\n\n";
 
-    print STDERR "$pager_tmpl\n\n";
-
-    my $t = HTML::Template->new_scalar_ref(\$pager_tmpl, cache=>1, loop_context_vars=>1);
+    my $t = HTML::Template->new_scalar_ref(\$pager_tmpl, loop_context_vars=>1);
     $self->_fill_template($t);
 
     return $t->output();
 }
+
+
+
+=item fill_template()
+
+  $pager->fill_template($template_object);
+
+The fill_template() method is one of two ways to execute a paged view
+and utilize the output.  This method is used in the context of a 
+custom pager template.  The section later in this POD, "Creating
+Creating Custom Pager Templates", more fully describes how and why you 
+would want to use a custom template.
+
+The fill_template() method runs the Krang::HTMLPager and sets template 
+variables in the $template_object you provide.  It is then your 
+responsibility to output that $template_object.
+
+=cut
+
+sub fill_template {
+    my $self = shift;
+    my $t = shift;
+
+    # Did we get a template object?
+    croak ("No HTML::Template object specified") unless (ref($t));
+
+    $self->validate_pager();
+
+    $self->_fill_template($t);
+}
+
+
+
+=item row_count()
+
+    my $row_count = $pager->row_count();
+
+The row_count() method returns the number of rows output
+by the pager.  It is expected to be called after output()
+or fill_template().  Until one of those methods are called
+row_count() will return undef.
+
+This method is useful for changing the UI based on whether 
+or not any results were found.
+
+
+=cut
+
+# row_count() in implemented via Krang::MethodMaker
 
 
 
@@ -484,6 +491,10 @@ An arrow will appear next to the current sort column.  This
 graphical arrow will identify if the current sort order is 
 ascending (up arrow) or descending (down arrow).
 
+The first item in the list will be regarded as the B<default sort column>.
+This column will be used for sort the first time the pager is invoked.
+This behavior, combined with the "default_sort_order_desc"
+property, allows you to control the default pager sort behavior.
 
 
 =item columns_sort_map
@@ -495,6 +506,17 @@ the string which should be passed to find() via the
 "order_by" parameter.  If a particular sortable column
 is not specified, its name will be used instead.  This
 is probably adequate in most cases.
+
+
+=item default_sort_order_desc
+
+  default_sort_order_desc => 1
+
+A scalar containing a Boolean (1 or 0) value.  If true,
+when the pager is first called the sort order will be
+set to "descending"  If not set, this property will
+default to "0" and sort order will consequently default
+to "ascending".
 
 
 =item row_handler
@@ -538,44 +560,166 @@ creating the checkbox columns and command columns.
 ####  PRIVATE METHODS  ####
 ###########################
 
+# Return the user-preferred page size
+sub get_user_page_size {
+    # When implemented, replace this with the appropriate call to Krang::Prefs
+    return 20;
+}
+
+
+# Given a column name and a column label, return an HTML block containing
+# the sort button, plus state (currently selected, ascending/descending)
+sub make_sortable_column_html {
+    my $self = shift;
+    my ($col, $col_label) = @_;
+
+    my $q = $self->cgi_query();
+
+    # Is column currently selected?
+    my $krang_pager_sort_field = $q->param('krang_pager_sort_field');
+    my $krang_pager_sort_order_desc = $q->param('krang_pager_sort_order_desc') || '0';
+
+    # No sort field set?  Use defaults...
+    unless (defined($krang_pager_sort_field) && length($krang_pager_sort_field)) {
+        $krang_pager_sort_field = $self->columns_sortable()->[0];  # First sort column
+        $krang_pager_sort_order_desc = ($self->default_sort_order_desc() ? '1' : '0');
+    }
+
+    # If selected, show in bold, with arrow showing current sort order (ascending, descending)
+    my $is_selected = ( $krang_pager_sort_field eq $col );
+    if ($is_selected) {
+        $col_label = "<b>$col_label</b>";
+        $col_label .= '<img border="0" src="/images/arrow-'. ($krang_pager_sort_order_desc ? 'desc' : 'asc') .'.gif">';
+    }
+
+    # Make link to re-sort
+    my $new_sort_order_desc = ($is_selected && not($krang_pager_sort_order_desc)) ?  '1' : '0';
+    $col_label = "<a href=\"javascript:do_sort('$col', '$new_sort_order_desc')\">$col_label</a>";
+
+    return $col_label;
+}
+
+
 # Actually run the pager and fill the template here
 sub _fill_template {
     my $self = shift;
     my $t = shift;
 
-    $t->param(
-              krang_pager_rows => [
-                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
-                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
-                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
-                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
-                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
-                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
-                                  ],
-              user_page_size => 20,
-              show_big_view => 1,
-              page_numbers => [
-                               {page_number=>1},
-                               {page_number=>2, is_current_page=>1},
-                               {page_number=>3},
-                               {page_number=>4},
-                               {page_number=>5},
-                              ],
-              prev_page_number => '1',
-              next_page_number => '3',
-             );
+    my $q = $self->cgi_query();
+
+    # Build up hash of column headers
+    my %column_header_labels = ();
+    foreach my $col (@{$self->columns()}) {
+        my $col_tmpl_name = "colhead_$col";
+        my $col_label = $self->column_labels()->{$col};
+
+        # Create col header for command_column
+        if ( $col eq 'command_column') {
+            $col_label = ( defined($col_label) ? $col_label : "" );
+        }
+
+        # Create col header for checkbox_column
+        if ( $col eq 'checkbox_column' ) {
+            my $checkall = '<input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, \'krang_pager_rows_checked\')">';
+            $col_label = ( defined($col_label) ? $col_label : $checkall );
+        }
+
+        # Copy label from column_labels or use column name
+        $col_label = ( defined($col_label) ? $col_label : $col );
+
+        # Add sorting, if we have any
+        if (grep { $_ eq $col } @{$self->columns_sortable()}) {
+            $col_label = $self->make_sortable_column_html($col, $col_label);
+        }
+
+        # Set the final column label HTML
+        $column_header_labels{$col_tmpl_name} = $col_label;
+    }
+
+    # Process pager and get rows
+    my $pager_view = $self->get_pager_view();
+
+    $t->param(%column_header_labels);
+    $t->param($pager_view);
 }
 
 
-# Return a scalar with "check all" interface for checkbox column head
-sub make_checkall {
+sub get_pager_view {
     my $self = shift;
 
-    my $check_all = '<input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, \'krang_pager_rows_checked\')">';
+    my $q = $self->cgi_query();
 
-    return $check_all;
+    my $curr_page_num = ($q->param('krang_pager_curr_page_num') || '1');
+    my $sort_field = ($q->param('krang_pager_sort_field') || '');
+    my $sort_order_desc = ($q->param('krang_pager_sort_order_desc'));
+    my $show_big_view = ($q->param('krang_pager_show_big_view') || '0');
+    my $user_page_size = $self->get_user_page_size();
+
+    # Build up find() args
+    my %find_params = %{$self->find_params()};
+    my $limit = ($show_big_view) ? 100 : $user_page_size ;
+    my $offset = ($curr_page_num - 1) * $limit;
+
+    # Count used to calculate page navigation
+    my $use_module = $self->use_module();
+    my $count = $use_module->find(%find_params, count=>1);
+    my $total_pages = int($count / $limit) + (($count % $limit) > 0);
+    my @page_numbers = ( map { {page_number=>$_, is_current_page=>($_ eq $curr_page_num)} } (1..$total_pages) );
+
+    # Set up previous page nav -- show link unless we're on the first page
+    my $prev_page_number = $curr_page_num - 1;
+    $prev_page_number = 0 unless ($curr_page_num > 0);
+
+    # Set up next page nav -- show link unless we're on the last page
+    my $next_page_number = $curr_page_num + 1;
+    $next_page_number = 0 unless ($next_page_number <= $total_pages);
+
+    # Retrieve and build rows
+    my $order_by = (($self->columns_sort_map()->{$sort_field}) || $sort_field);
+    print STDERR "FIND ORDER BY: '$order_by', '$sort_order_desc'\n";
+    my %all_find_params = (
+                           %find_params,
+                           order_by => $order_by,
+                           order_desc => $sort_order_desc,
+                           offset => $offset,
+                           limit => $limit,
+                          );
+    use Data::Dumper;
+    print STDERR Dumper(\%all_find_params);
+    my @found_objects = $use_module->find(%all_find_params);
+
+    # Build TMPL_LOOP data
+    my @krang_pager_rows = ();
+    foreach my $fobj (@found_objects) {
+        my %row_data = ( map { $_=>'' } @{$self->columns} );
+
+        # Build command_column and checkbox_column
+        ### TO DO
+
+        # Call row_handler
+        my $row_handler = $self->row_handler();
+        $row_handler->(\%row_data, $fobj);
+
+        # Propagate to template
+        push(@krang_pager_rows, \%row_data);
+    }
+
+    my %pager_view = (
+                      curr_page_num    => $curr_page_num,
+                      sort_field       => $sort_field,
+                      sort_order_desc  => $sort_order_desc,
+                      show_big_view    => $show_big_view,
+                      user_page_size => $user_page_size,
+
+                      page_numbers => \@page_numbers,
+                      prev_page_number => $prev_page_number,
+                      next_page_number => $next_page_number,
+
+                      krang_pager_rows => \@krang_pager_rows,
+                     );
+
+    return \%pager_view;
 }
-
 
 
 # Verify that the pager is valid.  Croak if not.
@@ -650,6 +794,10 @@ sub validate_pager {
     }
     croak ("columns_sort_map contains non-sortable columns '". join("', '", @invalid_columns) ."'") 
       if (@invalid_columns);
+
+    # default_sort_order_desc
+    my $default_sort_order_desc = $self->default_sort_order_desc();
+    croak("default_sort_order_desc not defined") unless (defined($default_sort_order_desc));
 
     # row_handler
     croak ("row_handler not a subroutine reference") unless (ref($self->row_handler()) eq 'CODE');

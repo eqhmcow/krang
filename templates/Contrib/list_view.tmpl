@@ -1,7 +1,5 @@
 <tmpl_include /header.tmpl>
 
-<tmpl_include HTMLPager/pager-internals.tmpl>
-
 <script language="Javascript">
 <!-- //
 
@@ -65,38 +63,20 @@ SEARCH<br />
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 
 
-<TMPL_IF contributors>
 
-  <table cellspacing="0" width="100%">
+<!-- START Krang::HTMLPager output -->
+<tmpl_var pager_html>
+<!-- END Krang::HTMLPager output -->
 
-      <tr class="form-head">
-          <th>Last Name</th>
-          <th>First, Middle Name</th>
-          <th>Type</th>
-          <th>Edit</th>
-          <th><input type="checkbox" name="checkallbox" value="1" onClick="krang_pager_checkall(this)"></th>
-      </tr>
 
-  <tmpl_loop contributors>
-      <tr>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML last></td>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML first><tmpl_if middle>&nbsp;<tmpl_var ESCAPE=HTML middle></tmpl_if></td>
-          <td class="form-cell"><tmpl_loop types><tmpl_var ESCAPE=HTML type_name><tmpl_unless __last__>, </tmpl_unless></tmpl_loop></td>
-          <td class="form-cell"><a href="javascript:edit_contrib('<tmpl_var ESCAPE=HTML contrib_id>')">Edit</a></td>
-          <td class="form-cell"><input type="checkbox" name="krang_pager_rows_checked" value="<tmpl_var ESCAPE=HTML contrib_id>"></td>
-      </tr>
 
-  </tmpl_loop>
- 
-  </table>
 
+
+<tmpl_if row_count>
   <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+</tmpl_if>
 
-<TMPL_ELSE>
 
-  <br /><b>No Contributors Found</b>
-
-</TMPL_IF>
 
 
 <!-- End delete_selected_form -->
