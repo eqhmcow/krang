@@ -30,6 +30,10 @@ package Krang::Template;
  # unsets testing flag in the database
  $template->mark_as_deployed();
 
+ # Mark the template as not existing in the publish path.
+ # unsets deployed, deploy_version, deploy_date.
+ $template->mark_as_undeployed();
+
  # reverts to template revision specified by $version
  $template->revert( $version );
 
@@ -494,6 +498,42 @@ SQL
     $self->{deployed_version} = $self->{version};
     $self->{testing} = 0;
     $self->{deploy_date} = $deploy_date;
+
+    return $self;
+}
+
+
+
+=item $template = $template->mark_as_undeployed()
+
+Instance method designed to work with Krang::Publisher->undeploy_template to mark
+templates that have been removed from the publish path.
+
+The method updates the 'deployed', 'deploy_date', and 'deployed_version' fields in the db.
+
+=cut
+
+sub mark_as_undeployed {
+    my ($self) = @_;
+
+    my $dbh = dbh();
+    my $id = $self->{template_id};
+
+    # update deploy fields
+    my $query = <<SQL;
+UPDATE template
+SET deployed = 0, deploy_date = NULL, deployed_version = NULL
+WHERE template_id = ?
+SQL
+
+    $dbh->do($query, undef, ($id));
+
+    add_history(object => $self, action => 'deploy',);
+
+    # set internal flags as well.
+    $self->{deployed} = 0;
+    $self->{deployed_version} = undef;
+    $self->{deploy_date} = undef;
 
     return $self;
 }
