@@ -113,6 +113,9 @@ PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
 
 </IfModule>
 
+# Send 500 errors to bug.pl?ise=1.  Other, less verbose, ways of doing
+# this don't work right for non-vhost access.
+ErrorDocument 500 "<html><head><meta http-equiv='refresh' content='0;URL=bug.pl?ise=1'><title>Internal Server Error</title></head><body><h1>Internal Server Error</h1>An internal server error has occurred.<p>You will now be redirected to a page where you can submit a bug.  If that does not happen, <a href=bug.pl?ise=1>Please click here.</a></body></html><!--"
 
 Listen <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>

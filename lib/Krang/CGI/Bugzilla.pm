@@ -55,7 +55,8 @@ sub setup {
 
 =item edit
 
-Displays a user-editable bug form.
+Displays a user-editable bug form.  If 'ise' is set to a true value
+then the user is informed that something just went boom.
 
 =cut
 

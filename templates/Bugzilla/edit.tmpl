@@ -1,6 +1,11 @@
 <tmpl_include header.tmpl>
 <tmpl_unless bug_added>
-<div class=dark-bar>Submit Krang Bug</div>
+
+<tmpl_if ise>
+  <div class=alert>An internal server error has occurred.  This almost certainly indicates a bug in the system.  Please use the form below to file a bug report.</div><p>
+</tmpl_if>
+
+<div class=dark-bar>Submit a Bug</div>
 <form name="bug_form" method="post">
 <table cellspacing="0" width="100%">
 <tr class="form-cell">
@@ -10,13 +15,13 @@
       </p> 
 <p>
         <tt>
-          <font color="#990000">Bad example</font>: krang crashed when in story.
+          <font color="#990000">Bad example</font>: it crashed when in story.
         </tt>
 
         <br>
         <tt>
           <font color="#009900">Good example</font>:
-          krang crashed with an internal server error while I was editing story "my story", after adding a contributor and clicking 'save'.
+          it crashed with an internal server error while I was editing story "my story", after adding a contributor and clicking 'save'.
         </tt>
       </p>
     </td> 
@@ -35,15 +40,11 @@
       <p>
 
         <tt>
-          <font color="#990000">Bad example</font>: This page looks wrong in
-          Mozilla. Other browsers display it correctly. 
+          <font color="#990000">Bad example</font>: Covers won't publish!!!
         </tt>
         <br>
         <tt>
-          <font color="#009900">Good example</font>: In the
-          page at http://www.foo.com/, text in the first column should be
-          fully justified -- text should be aligned with both the left and
-          right margins. In Mozilla, the text is only left-justified.
+          <font color="#009900">Good example</font>: When I tried to publish the cover for the news/sports category from the edit story screen I got an internal server error.
         </tt>
       </p>
     </td>
@@ -116,7 +117,7 @@
                 wrap="hard"><tmpl_var escape=HTML expected_results></textarea>
       <p>
 
-        What should have Krang done instead?
+        What should the system have done instead?
       </p>
     </td>
   </tr>
@@ -130,10 +131,10 @@
           Normal: It's a bug that should be fixed.
         </option>
         <option name="blocker" value="blocker" <tmpl_if bug_severity_blocker>selected</tmpl_if>>
-          Blocker: This bug prevents you from using Krang.
+          Blocker: This bug prevents you from using the system.
         </option>
         <option name="critical" value="critical" <tmpl_if bug_severity_critical>selected</tmpl_if>>
-          Critical: Krang crashes, hangs, or causes you to 
+          Critical: the system crashes, hangs, or causes you to 
           lose data.
         </option>
         <option name="major" value="major" <tmpl_if bug_severity_major>selected</tmpl_if>>
