@@ -21,7 +21,7 @@ sub verify_dependencies {
     # if this is Perl 5.8.0 then we need to check that the locale
     # isn't set to something UTF8-ish since that breaks this perl
     my $perl = join('.', (map { ord($_) } split("", $^V, 3)));
-    if ($perl eq '5.8.0' and $ENV{LANG} =~ /UTF-8/) {
+    if ($perl eq '5.8.0' and $ENV{LANG} and $ENV{LANG} =~ /UTF-8/) {
         die <<END;
 
 Your version of Perl (v5.8.0) must not be used with a UTF-8 locale
