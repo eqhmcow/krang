@@ -660,6 +660,10 @@ element name and a trailing _total.
 
 A variable called C<title> containing C<< $story->title() >>.
 
+=item *
+
+A variable called C<slug> containing C<< $story->slug() >>.
+
 =item * 
 
 A variable called C<page_break> containing C<< Krang::Publisher->page_break() >>
@@ -703,9 +707,12 @@ sub fill_template {
                   );
 
 
-    # add story title, cover date, page break, and content-break tags, if needed.
+    # add story title, slug, cover date, page break, and content-break tags, if needed.
     $params{title} = $publisher->story()->title()
       if exists($template_vars{title});
+
+    $params{slug} = $publisher->story()->slug()
+      if exists($template_vars{slug});
 
     $params{cover_date} = $publisher->story()->cover_date()->strftime('%b %e, %Y %l:%M %p') if exists($template_vars{cover_date});
 

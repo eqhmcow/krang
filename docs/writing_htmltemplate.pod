@@ -172,6 +172,15 @@ This is available to all templates, regardless of where in the element tree you 
 
 Accessed in the template as <tmpl_var title>.
 
+
+=item *
+
+A variable called C<slug> containing $story->slug.
+
+This is available to all templates, regardless of where in the element tree you are.
+
+Accessed in the template as <tmpl_var slug>.
+
 =item * 
 
 A variable called C<page_break> that forces Krang to create a new page.
