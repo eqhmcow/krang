@@ -42,7 +42,7 @@ Krang::Publisher - Center of the Publishing Universe.
 
 
   # Get the list of related stories and media that will get published
-  my ($story_list, $media_list) = $publisher->get_publish_list(story => $story);
+  my $asset_list_ref = $publisher->get_publish_list(story => [$story1, $story2]);
 
   # Place a template into the production path, to be used when publishing.
   $publisher->deploy_template(
@@ -210,7 +210,7 @@ sub preview_story {
     # build the story HTML.
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
-    my $publish_list = $self->get_publish_list(story => $story);
+    my $publish_list = $self->get_publish_list(story => [$story]);
 
     foreach my $object (@$publish_list) {
         if ($object->isa('Krang::Story')) {
@@ -252,7 +252,7 @@ sub publish_story {
     $self->{is_publish} = 1;
     $self->{is_preview} = 0;
 
-    my $publish_list = $self->get_publish_list(story => $story);
+    my $publish_list = $self->get_publish_list(story => [$story]);
 
     foreach my $object (@$publish_list) {
         if ($object->isa('Krang::Story')) {
@@ -385,6 +385,8 @@ The sub calls $story->linked_stories() and $story->linked_media() to generate th
 
 If successful, it will return lists of Krang::Story and Krang::Media objects that will get published along with $story.  At the absolute minimum (no linked stories or media), $stories->[0] will contain the originally submitted parameter $story.
 
+The story parameter can either be a single Krang::Story object or a list or Krang::Story objects.
+
 =cut
 
 sub get_publish_list {
@@ -393,16 +395,17 @@ sub get_publish_list {
     my %args = @_;
 
     croak (__PACKAGE__ . ": Missing argument 'story'!") unless (exists($args{story}));
-    croak (__PACKAGE__ . ": Argument 'story' is not defined!") unless (defined($args{story}));
-    my $story = $args{story};
-    croak (__PACKAGE__ . ": 'story' is not a Krang::Story object") unless ($story->isa('Krang::Story'));
 
-    # add this story to the publish list.
-    $self->{stories_to_be_published}{$story->story_id()} = 1;
-    my @publish_list = ($story);
+    my @publish_list;
 
-    push @publish_list, $self->_process_linked_assets(story => $story);
-
+    if (ref $args{story} eq 'ARRAY') {
+        my $stories = $args{story};
+        foreach my $story (@$stories) {
+            push @publish_list, $self->_add_to_publish_list($story);
+        }
+    } else {
+        push @publish_list, $self->_add_to_publish_list($args{story});
+    }
     delete $self->{stories_to_be_published};
     delete $self->{media_to_be_published};
     delete $self->{stories_checked_for_links};
@@ -410,9 +413,6 @@ sub get_publish_list {
     return \@publish_list;
 
 }
-
-
-
 
 
 =item C<< $filename = $publisher->deploy_template(template => $template); >>
@@ -686,6 +686,28 @@ sub _build_filename {
 
 }
 
+
+#
+# @list = _add_to_publish_list($story)
+#
+# Internal method - takes Krang::Story object, adds it and it's related objects to the publish list.
+#
+sub _add_to_publish_list {
+    my $self = shift;
+    my $story = shift;
+    my @publish_list = ();
+
+    croak (__PACKAGE__ . ": 'stories' is not defined!") unless (defined($story));
+    croak (__PACKAGE__ . ": 'stories' entry is not a Krang::Story object") unless ($story->isa('Krang::Story'));
+
+    # add this story to the publish list.
+    $self->{stories_to_be_published}{$story->story_id()} = 1;
+    push @publish_list, $story;
+
+    push @publish_list, $self->_process_linked_assets(story => $story);
+
+    return @publish_list;
+}
 
 
 
