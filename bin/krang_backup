@@ -118,7 +118,7 @@ if (@ARGV == 1) {
 } else {
     my ($y, $m, $d) = (localtime)[5,4,3];
     $file = sprintf('krang-%s-%04d%02d%02d.%s', 
-                    hostname, ($y+1900), $m, $d, ($compress ?'kba.gz':'kba'));
+                    hostname, ($y+1900), ($m+1), $d, ($compress ?'kba.gz':'kba'));
 }
 die "File '$file' already exists.\n" if -e $file;
 print STDERR "Creating backup in '$file'...\n\n" if $verbose;
