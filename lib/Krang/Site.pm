@@ -2,7 +2,7 @@ package Krang::Site;
 
 =head1 NAME
 
-Krang::Site - a means access to information on sites
+Krang::Site - a means to access information on sites
 
 =head1 SYNOPSIS
 
@@ -59,9 +59,9 @@ Krang::Site - a means access to information on sites
 
 =head1 DESCRIPTION
 
-What is a Site?
-
-# TO DO: answer the above question
+A site is the basic organizational unit within a Krang instance.  A site may
+correspond to a web-site but only necessarily maps to a unique URL.  Content
+within the site is stored within categories; see L<Krang::Category>.
 
 This module serves as a means of adding, deleting, accessing site objects for a
 given Krang instance.  Site objects, at present, do little other than act
@@ -188,7 +188,8 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 =cut
 
 # validates arguments passed to new(), see Class::MethodMaker, sets '_old_url'
-# the method croaks if an invalid key is found in the hash passed to new()
+# the method croaks if an invalid key is found in the hash passed to new() or
+# if 'url' and 'publish_path' haven't been provided...
 sub init {
     my $self = shift;
     my %args = @_;
@@ -199,6 +200,11 @@ sub init {
     }
     croak(__PACKAGE__ . "->init(): The following constructor args are " .
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
+
+    for (qw/publish_path url/) {
+        croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
+          unless exists $args{$_};
+    }
 
     $self->hash_init(%args);
 
@@ -563,8 +569,6 @@ SQL
 =back
 
 =head1 TO DO
-
- * Describe what the hell a Site is.
 
 =head1 SEE ALSO
 
