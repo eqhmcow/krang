@@ -431,7 +431,7 @@ sub find {
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
-            if (exists $args{$arg} && not defined $args{$arg}) {
+            if (not defined $args{$arg}) {
                 $where_clause .= "$and $lookup_field IS NULL";
             } else {
                 $where_clause .= $like ? "$and $lookup_field LIKE ?" :

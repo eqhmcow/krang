@@ -22,7 +22,7 @@ Krang::Preference - Krang Global Preference API
 
   # a hash of search parameters
   my %params =
-  ( order_desc => 'asc',	# sort results in ascending order
+  ( order_desc => 1,		# result ascend unless this flag is set
     limit => 5,			# return 5 or less category objects
     offset => 1, 	        # start counting result from the
 				# second row
@@ -268,11 +268,6 @@ Result set is sorted in ascending order.
 If this argument is specified, the method will return a count of the categories
 matching the other search criteria provided.
 
-=item * descend
-
-Results set is sorted in descending order only if the 'ascend' option is not
-specified.
-
 =item * ids_only
 
 Returns only preference ids for the results found in the DB, not objects.
@@ -291,6 +286,11 @@ Sets the offset from the first row of the results to return.
 Specify the field by means of which the results will be sorted.  By default
 results are sorted with the 'pref_id' field.
 
+=item * order_desc
+
+Set this flag to '1' to sort results relative to the 'order_by' field in
+descending order, by default results sort in ascending order
+
 =back
 
 The method croaks if an invalid search criteria is provided or if both the
@@ -307,7 +307,7 @@ sub find {
     my $groups = exists $args{group_ids} ? 1 : 0;
 
     # grab ascend/descending, limit, and offset args
-    my $ascend = uc(delete $args{order_desc}) || ''; # its prettier w/uc() :)
+    my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
     my $order_by = delete $args{order_by} || 'pref_id';
@@ -342,7 +342,7 @@ sub find {
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
-            if ($args{$arg} eq '') {
+            if (not defined $args{$arg}) {
                 $where_clause .= "$and $lookup_field IS NULL";
             } else {
                 $where_clause .= $like ? "$and $lookup_field LIKE ?" :
