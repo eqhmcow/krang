@@ -4,6 +4,7 @@ use warnings;
 
 use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
+use Carp qw(croak);
 
 use base 'Exporter';
 our @EXPORT_OK = qw(add_message get_messages clear_messages);
@@ -165,3 +166,5 @@ sub _load_config {
 BEGIN { _load_config() };
 
 1;
+
+=back
