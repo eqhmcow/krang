@@ -15,6 +15,8 @@ StartServers         2
 MaxClients           150
 MaxRequestsPerChild  0
 ErrorLog             <tmpl_var KrangRoot>/logs/apache_error_log
+LogFormat            "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
+CustomLog            <tmpl_var KrangRoot>/logs/apache_access_log combined
 LogLevel             info
 TypesConfig          <tmpl_var ApacheRoot>/conf/mime.types
 UseCanonicalName     On
