@@ -6,6 +6,17 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed the default of Krang::ElementClass::Date so that dates are updated 
+when the default() method is called and not when new() is called.
+
+
+=item *
+
+Made Krang::Sotry::find(published=>1) work with stories that had a published 
+version of 1/0 instead of NOT NULL / NULL.
+
+=item *
+
 Fixed Krang::XML::Writer to allow raw tabs in XML without Base64
 encoding. [Sam]
 
