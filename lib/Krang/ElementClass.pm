@@ -267,7 +267,7 @@ HTML tags escaped for display.
 sub view_data {
     my ($self, %arg) = @_;
     my ($element) = @arg{qw(element)};
-    return CGI->escapeHTML($element->data || "");
+    return "" . CGI->escapeHTML($element->data || "");
 }
 
 =item C<< ($bool, $msg) = $class->validate(element => $element, query => $query) >>
