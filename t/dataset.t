@@ -451,7 +451,7 @@ $big->delete();
 ok(not Krang::Story->find(url => $big->url));
 
 # first test to see if story URL conflict is caught
-my $cstory = Krang::Story->new(categories => [$category, $category2],
+my $cstory = Krang::Story->new(categories => [$category2, $category],
                             title      => "Big",
                             slug       => "big",
                             class      => "article");
