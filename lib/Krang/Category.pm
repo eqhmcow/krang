@@ -1202,10 +1202,11 @@ sub deserialize_xml {
                        "no_update is set.")
             if $no_update and $data->{parent_id};
 
-        # remove existing element tree
-        $dup->element->delete;
-        $dup->{element}    = undef;
-        $dup->{element_id} = undef;
+        # register id before deserializing elements, since they may
+        # contain circular references
+        $set->register_id(class     => 'Krang::Category',
+                          id        => $data->{category_id},
+                          import_id => $dup->category_id);
 
         # deserialize elements for update
         my $element = Krang::Element->deserialize_xml(data => 
@@ -1213,6 +1214,8 @@ sub deserialize_xml {
                                                       set       => $set,
                                                       no_update => $no_update,
                                                       object    => $dup);
+        # remove existing element tree
+        $dup->element->delete;
         $dup->{element}    = $element;
         $dup->{element_id} = undef;
         $dup->save();
