@@ -37,6 +37,8 @@ my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
 my $fh = new FileHandle $filepath;
 $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
 
+is ($media->thumbnail_path(), catfile($media->{tempdir},"t__".$media->filename));
+
 
 # create new contributor object to test associating with media
 my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
