@@ -453,13 +453,7 @@ sub _skip_callback {
     my $object = $args{object};
     my $error  = $args{error};
 
-    my $id;
-    if (ref $object) {
-        $id = $object->isa('Krang::Story') ? $object->story_id : $object->media_id;
-    } else {
-        $id = '-1';
-    }
-
+    my $id = $object->isa('Krang::Story') ? $object->story_id : $object->media_id;
 
     if ($error eq 'checked_out') {
         print sprintf("WARNING: %s ID=%i was not published - it is currently checked out by User ID=%i\n",
