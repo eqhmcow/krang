@@ -43,6 +43,7 @@ sub fill_template {
         push (@story_loop, {story_count => ++$story_count, 
                             url => 'http://'.($publisher->is_preview ? $s->preview_url : $s->url).'/', 
                             promo_title => $ptitle,
+                            story_title => $s->title,
                             cover_date => $s->cover_date->strftime('%b %e, %Y') } ); 
     } 
 
