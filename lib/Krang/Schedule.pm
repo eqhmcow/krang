@@ -212,9 +212,6 @@ The day of the week to run a repeating action at.  Required for
 An optional array ref containing extra data pertaining to the action
 to be performed.
 
-N.B. - this gets frozen by Storable after save(), afterwards it must thaw()'d
-for use.
-
 =back
 
 =cut
@@ -266,6 +263,13 @@ sub init {
                     unless ref $date && $date->isa('Time::Piece');
                   $date = $date->mysql_datetime;
             }
+        } elsif ($_ eq 'context') {
+            my $context = $args{$_};
+            croak("'context' must be an array reference.")
+               unless (ref $context && ref $context eq 'ARRAY');
+
+            # setup field for holding frozen value
+            $self->{_frozen_context} = '';
         }
     }
 
@@ -591,6 +595,16 @@ sub find {
         }
     }
 
+    # thaw contexts, if necessary
+    unless ($count) {
+        for (@schedules) {
+            # store frozen value in '_frozen_context'
+            $_->{_frozen_context} = $_->{context};
+            eval {$_->{context} = thaw($_->{context})};
+            croak(__PACKAGE__ . "->find(): Unable to thaw context: $@") if $@;
+        }
+    }
+
     # return number of rows if count, otherwise an array of ids or objects
     return $count ? $schedules[0] : @schedules;
 }
@@ -632,17 +646,6 @@ sub run {
           map {$obj->{$_}}
             qw/action context schedule_id object_id object_type repeat/;
 
-        # how do we handle context?  thaw it and pass it to the call
-        # we're about to make
-        my $args;
-        if ($context) {
-            eval {$args = thaw($context)};
-            $eval_err = $@;
-            $log->print("ERROR: can't thaw 'context' for Krang::Schedule " .
-                        "'$schedule_id': $eval_err")
-              if $eval_err;
-        }
-
         # what do we do in case of a failure
         if (SCH_DEBUG) {
             $log->print("[$now] Schedule object id '$obj->{schedule_id}' " .
@@ -657,8 +660,8 @@ sub run {
         } else {
             my $call = $action_map{$type}->{$action};
             eval {
-                if ($args) {
-                    $call->($type.'_id' => $object_id, @$args );
+                if ($context) {
+                    $call->($type.'_id' => $object_id, @$context );
                 } else {
                     $call->($type.'_id' => $object_id);
                 }
@@ -699,12 +702,22 @@ sub save {
     my $self = shift;
     my $id = $self->{schedule_id} || 0;
     my @save_fields = grep {$_ ne 'schedule_id'} keys %schedule_cols;
-    my ($context, $query);
+    my ($query);
 
     # validate 'repeat'
     croak(__PACKAGE__ . "->save(): 'repeat' field set to invalid setting - " .
           "$self->{repeat}")
       unless exists $repeat2seconds{$self->{repeat}};
+
+    # freeze context in '_frozen_context'
+    my $context = $self->{context};
+    if ($context) {
+        croak(__PACKAGE__ . "->save(): 'context' field is not an array ref")
+          unless (ref $self->{context} && ref $self->{context} eq 'ARRAY');
+
+        eval {$self->{_frozen_context} = freeze($context)};
+        croak(__PACKAGE__ . "->save(): Unable to freeze context: $@") if $@;
+    }
 
     # the object has already been saved once if $id
     if ($id) {
@@ -717,18 +730,11 @@ sub save {
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
-    # if we have a context, check to see if it's a ref; if so, preserve a
-    # copy and then serialize it, otherwise it's a scalar or must've already
-    # been serialized
-    if (exists $self->{context} && $self->{context} && ref $self->{context}) {
-        $context = $self->{context};
-        eval {$self->{context} = freeze($self->{context})};
-        croak(__PACKAGE__ . "->save(): Unable to serialize context: $@")
-          if $@;
-    }
-
     # bind parameters
-    my @params = map {$self->{$_}} @save_fields;
+    my @params = map {$context && $_ eq 'context' ?
+                        $self->{_frozen_context} :
+                          $self->{$_}}
+      @save_fields;
 
     # need user_id for updates
     push @params, $id if $id;

@@ -4,6 +4,7 @@ use Carp qw/verbose croak/;
 use Data::Dumper;
 use File::Spec;
 use IO::File;
+use Storable qw/freeze thaw/;
 use Test::More qw(no_plan);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -26,7 +27,7 @@ $now_mysql =~ s/:\d+$//;
 # I.A
 # putative run time for the current week has passed; set next_run to the next
 # future runtime in the subsequent week.
-$date = Time::Piece->from_mysql_datetime("2003-04-04 12:00:00");
+$date = $now - ONE_DAY;
 our $s1 = Krang::Schedule->new(action => 'publish',
                                object_id => 1,
                                object_type => 'story',
@@ -36,7 +37,8 @@ our $s1 = Krang::Schedule->new(action => 'publish',
                                minute => $date->minute);
 eval {isa_ok($s1->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
-like($s1->{next_run}, qr/^2003-04-11 12:00/, 'next_run check 1');
+$next_run = Time::Piece->from_mysql_datetime($s1->{next_run});
+is($next_run->mday - 6, $now->mday, 'next_run check 1');
 
 
 # I.B
@@ -54,7 +56,7 @@ our $s2 = Krang::Schedule->new(action => 'publish',
 eval {isa_ok($s2->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
 
-$next_run = Time::Piece->from_mysql_datetime($s2->{next_run}) + ONE_DAY;
+$next_run = Time::Piece->from_mysql_datetime($s2->{next_run});
 is($next_run->day_of_week, $date->day_of_week, 'next_run check 2');
 
 
@@ -291,6 +293,15 @@ $next_run = Time::Piece->from_mysql_datetime($s14->{next_run});
 ($next_run = $next_run->mysql_datetime) =~ s/:\d+$//;
 is($next_run, $now_mysql, 'next_run check 14');
 
+# text 'context' behavior
+is(ref $s14->{context}, 'ARRAY', 'context test 1');
+my %context1 = @{$s14->{context}};
+is($context1{a}, 1, 'context test 2');
+is(exists $s14->{_frozen_context}, 1, 'context test 3');
+my %context2;
+eval {%context2 = @{thaw($s14->{_frozen_context})}};
+is($@, '', "context thaw didn't fail");
+is($context2{a}, $context1{a}, 'context good');
 
 # run test - 1 tests should run
 my $path = File::Spec->catfile($ENV{KRANG_ROOT}, 'logs', "schedule_test.log");
