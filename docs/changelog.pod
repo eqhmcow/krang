@@ -2,6 +2,20 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 v1.021 - Under Development
+
+=over
+
+=item *
+
+Fixed Krang::User to not load Krang::Group unless it needs to interact
+with groups.  This is needed because Krang::Script now uses
+Krang::User to run as the 'system' user.  Loading Krang::Group will
+cause Krang to load its element libraries, which isn't always a good
+thing to do. [Sam]
+
+=back
+
 =head2 v1.020 - Jun 28, 2004
 
 =over

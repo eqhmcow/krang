@@ -102,7 +102,6 @@ require Exporter;
 ###################
 use Krang::DB qw(dbh);
 use Krang::Log qw/critical debug info/;
-use Krang::Group;
 use Krang::Cache;
 
 #
@@ -771,6 +770,9 @@ sub save {
         croak($err);
     }
 
+    # lazy load Krang::Group so using Krang::User won't load element
+    # sets, which is sometimes bad
+    require Krang::Group;
     Krang::Group->add_user_permissions($self);
     
     return $self;
@@ -843,6 +845,11 @@ sub serialize_xml {
     $writer->dataElement( phone => $self->{phone} );
     $writer->dataElement( mobile_phone => $self->{mobile_phone} );
     $writer->dataElement( hidden => $self->{hidden} );
+
+
+    # lazy load Krang::Group so using Krang::User won't load element
+    # sets, which is sometimes bad
+    require Krang::Group;
 
     my $group_ids = $self->{group_ids};
     foreach my $group_id ( @$group_ids ) {
