@@ -968,6 +968,8 @@ BEGIN {
                           bulk_edit_filter
                           check_data
                           default_schedules
+                          serialize_xml
+                          deserialize_xml
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 

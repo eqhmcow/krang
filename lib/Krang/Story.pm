@@ -408,6 +408,7 @@ sub init {
     $self->{priority}       = 2;
     $self->{checked_out}    = 1;
     $self->{checked_out_by} = $session{user_id};
+    $self->{cover_date}     = Time::Piece->new();
 
     # handle categories setup specially since it needs to call
     # _verify_unique which won't work right without an otherwise
@@ -1615,10 +1616,34 @@ Serialize as XML.  See Krang::DataSet for details.
 sub serialize_xml {
     my ($self, %args) = @_;
     my ($writer, $set) = @args{qw(writer set)};
+    local $_;
 
-    $writer->startTag('story');
-    $writer->dataElement(story_id => $self->story_id);
-    $writer->dataElement(title => $self->title);
+    # open up <story> linked to schema/story.xsd
+    $writer->startTag('story',
+                      "xmlns:xsi" => 
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'story.xsd');
+
+    # basic fields
+    $writer->dataElement(story_id   => $self->story_id);
+    $writer->dataElement(class      => $self->class->name);
+    $writer->dataElement(title      => $self->title);
+    $writer->dataElement(slug       => $self->slug);
+    $writer->dataElement(version    => $self->version);
+    $writer->dataElement(cover_date => $self->cover_date->datetime);
+    $writer->dataElement(priority   => $self->priority);
+    $writer->dataElement(notes      => $self->notes);
+    
+    # category_id
+    $writer->dataElement(category_id => $_) for @{$self->{category_ids}};
+
+    # FIX: contribs here
+
+    # serialize elements
+    $self->element->serialize_xml(writer => $writer,
+                                  set    => $set);
+    
     $writer->endTag('story');
 }
 

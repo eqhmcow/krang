@@ -535,9 +535,8 @@ If successful, publish() will return a block of HTML.
 
 Generally, you will not want to override publish().  Changes to template-handling behavior should be done by overriding find_template().  Changes to the parameters being passed to the template should be done by overriding fill_template().  Override publish() only in the event that neither of the previous solutions work for you.
 
-=back
-
 =cut
+
 
 sub publish {
 
@@ -551,7 +550,43 @@ sub publish {
     return $html;
 }
 
+=item C<< $class->serialize_xml(element => $element, writer => $writer, set => $set) >>
 
+This call must serialize the element as XML.  The default
+implementation uses $element->freeze_data() to get a textual
+representation and then produces something like this:
+
+  <element>
+    <class>$class->name</class>
+    <data>$element->freeze_data</data>   
+  </element>
+
+See the Story XML Schema documentation for more details on the
+possible forms for element XML.  Also, see the Krang::DataSet
+documentation for general information concerning the serialize_xml()
+method.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %arg) = @_;
+    my ($element, $writer, $set) = @arg{qw(element writer set)};
+
+    $writer->startTag('element');    
+    $writer->dataElement(class => $self->name());
+    my $data = $element->freeze_data();
+    $writer->dataElement(data  => $data) if $data;
+    foreach my $child ($element->children) {
+        $child->serialize_xml(element => $child,
+                              writer  => $writer,
+                              set     => $set);
+    }
+    $writer->endTag('element');
+}
+
+=back
+
+=cut
 
 # setup defaults and check for required paramters
 sub init {
