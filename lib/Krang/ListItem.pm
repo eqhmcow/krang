@@ -339,7 +339,7 @@ not $valid_params{$param};
         if ($args{'count'}) {
             return $row->{count};
         } elsif ($args{'ids_only'}) {
-            $obj = $row->{list_id};
+            $obj = $row->{list_item_id};
             push (@list_item_object,$obj);
         } else {
             $obj = bless {%$row}, $self;
