@@ -93,6 +93,7 @@ use Krang::ElementClass::CheckBox;
 use Krang::ElementClass::ListBox;
 use Krang::ElementClass::MediaLink;
 use Krang::ElementClass::PopupMenu;
+use Krang::ElementClass::RadioGroup;
 use Krang::ElementClass::StoryLink;
 use Krang::ElementClass::Textarea;
 use Krang::ElementClass::Text;
