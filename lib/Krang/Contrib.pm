@@ -563,7 +563,7 @@ sub deserialize_xml {
     if (exists($data->{media_id})) {
         my $media_id = $set->map_id(class => "Krang::Media",
                                     id    => $data->{media_id});
-        my $media = Krang::Media->find(media_id => $media_id);
+        my ($media) = Krang::Media->find(media_id => $media_id);
         $contrib->image($media);
     }
 
