@@ -106,6 +106,24 @@ sub load {
     $session{__load_count__}++;
 }
 
+=item C<< $is_valid = Krang::Session->validate($session_id) >>
+
+Validates a session by id, without loading it.  Returns 1 if the
+session is valid and 0 if not.
+
+=cut
+
+sub validate {
+    my $pkg = shift;
+    my $session_id = shift;
+    my $dbh = dbh();
+    
+    my ($exists) = $dbh->selectrow_array('SELECT 1 from sessions where id = ?',
+                                         undef, $session_id);
+
+    return $exists ? 1 : 0;
+}
+
 
 =item C<< Krang::Session->unload() >>
 

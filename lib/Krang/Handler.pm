@@ -214,19 +214,11 @@ sub authen_handler ($$) {
         return OK;
     }
 
-    # Validate session by trying to load session
-    debug("Krang::Handler:  Loading session '$session_id'");
-    eval { Krang::Session->load($session_id); };
-
     # Check for invalid session
-    if ($@) {
-        debug("Error loading session: $@");
+    unless (Krang::Session->validate($session_id)) {
+        debug("Invalid session '$session_id'.");
         return OK;
     }
-
-    # Unload the session so that we don't block later
-    debug("Krang::Handler:  UN-Loading session");
-    Krang::Session->unload();
 
     # We have a valid cookie/user!  Setup REMOTE_USER
     $r->connection->user($cookie{user_id});

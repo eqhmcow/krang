@@ -28,6 +28,7 @@ my @keys = keys(%session);
 is(@keys, 0);
 
 # load up
+ok(Krang::Session->validate($id));
 Krang::Session->load($id);
 
 # did that work?
@@ -38,6 +39,7 @@ is($session{bar}[2], 'boom');
 
 # vanish, I say!
 Krang::Session->delete();
+ok(not Krang::Session->validate($id));
 
 # really gone?
 @keys = keys(%session);
