@@ -7,8 +7,37 @@ use Krang::Conf qw(KrangRoot);
 use Krang::DB qw(dbh);
 use Krang::Schedule;
 
-# nothing yet.
-sub per_installation {}
+use File::Spec::Functions qw(catfile);
+
+# Add new krang.conf directive SchedulerMaxChildren
+sub per_installation {
+
+    my $self = shift;
+
+    open(CONF, '<', catfile(KrangRoot, 'conf', 'krang.conf'))
+      or die "Unable to open conf/krang.conf: $!";
+    my $conf = do { local $/; <CONF> };
+    close(CONF);
+
+    # already has a SchedulerMaxChildren setting?
+    return if $conf =~ /^\s*SchedulerMaxChildren/m;
+
+    # write out conf and add the new Skin line
+    open(CONF, '>', catfile(KrangRoot, 'conf', 'krang.conf'))
+      or die "Unable to open conf/krang.conf: $!";
+    print CONF $conf;
+    print CONF <<END;
+#
+# Set the number of child processes the scheduler daemon
+# can spawn when handling tasks.
+# Current wisdom suggests a 3:1 ratio of children to available CPUs.
+#
+SchedulerMaxChildren 3
+END
+
+    close(CONF);
+
+}
 
 sub per_instance {
     my $self = shift;

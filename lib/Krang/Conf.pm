@@ -30,6 +30,7 @@ KrangGroup
 KrangRoot
 KrangUser
 LogLevel
+SchedulerMaxChildren
 SiteServerAddr
 SiteServerPort
 SMTPServer

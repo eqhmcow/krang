@@ -11,7 +11,7 @@ use Carp qw(croak);
 use Time::Piece;
 use Time::Seconds;
 
-use Krang::Conf qw(KrangRoot instance instances);
+use Krang::Conf qw(KrangRoot instance instances SchedulerMaxChildren);
 use Krang::Log qw/critical debug info reopen_log/;
 use Krang::Schedule;
 use Krang::DB qw(dbh forget_dbh);
@@ -20,7 +20,6 @@ use Krang::Cache;
 
 our $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
 
-use constant MAX_CHILDREN => 3;
 use constant CHUNK_SIZE   => 5;
 use constant SLEEP_INTERVAL => 5;
 
@@ -199,7 +198,7 @@ sub scheduler_pass {
         }
 
         # wait for a child to return.
-        if ($CHILD_COUNT >= MAX_CHILDREN) {
+        if ($CHILD_COUNT >= SchedulerMaxChildren) {
             _reap_dead_children(1);
         }
 
