@@ -13,17 +13,6 @@ sub per_instance {
 
     my $dbh  = dbh();
 
-    # rebuild permissions cache, moved here from V1_017 because it
-    # will fail with the current Krang::User before user.hidden is
-    # added
-    print "Rebuilding permissions cache...\n";
-
-    # load Krang::Script to get REMOTE_USER setup which is needed by
-    # Krang::Group
-    local $ENV{KRANG_INSTANCE} = Krang::Conf->instance();
-    eval 'use Krang::Script';
-    Krang::Group->rebuild_category_cache();
-
     # add the new hidden column to 'user' unless it already exists
     my @rows = $dbh->selectrow_array("SHOW COLUMNS FROM user LIKE 'hidden'");
     unless (@rows) {
@@ -45,6 +34,16 @@ sub per_instance {
         $user->group_ids($group_id);
         $user->save();
     }
+
+    # rebuild permissions cache, moved here from V1_017 because it
+    # will fail with the current Krang::User before user.hidden is
+    # added
+    print "Rebuilding permissions cache...\n";
+
+    # setup REMOTE_USER, needed by Krang::Group
+    local $ENV{REMOTE_USER} = (Krang::User->find(login => 'system', 
+                                                 ids_only => 1))[0];
+    Krang::Group->rebuild_category_cache();
 }
 
 # nothing yet
