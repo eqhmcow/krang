@@ -12,6 +12,7 @@ use Krang::CGI::Workspace;
 use Time::Piece;
 use Carp qw(croak);
 use Krang::Pref;
+use Krang::HTMLPager;
 
 use base 'Krang::CGI::ElementEditor';
 
@@ -854,20 +855,83 @@ edit links.
 
 sub find {
     my $self = shift;
-    my $template = $self->load_tmpl('find.tmpl');
+
+    my $q = $self->query();
+    my $template = $self->load_tmpl('find.tmpl', associate=>$q);
     
-    my @stories = Krang::Story->find();
-    my @loop;
-    foreach my $story (@stories) {
-        push(@loop, {
-                     story_id => $story->story_id,
-                     url      => $story->url,
-                     title    => $story->title,
-                    });
-    }
-    $template->param(story_loop => \@loop);
+    my $search_filter = $q->param('search_filter');
+    my $pager = Krang::HTMLPager->new(
+                                      cgi_query => $q,
+                                      persist_vars => {
+                                                       rm => 'find',
+                                                       search_filter => $search_filter,
+                                                      },
+                                      use_module => 'Krang::Story',
+                                      find_params => { simple_search => $search_filter },
+                                      columns => [qw(
+                                                     pub_status 
+                                                     story_id 
+                                                     url 
+                                                     title 
+                                                     cover_date 
+                                                     command_column 
+                                                     status 
+                                                     checkbox_column
+                                                    )],
+                                      column_labels => {
+                                                        pub_status => '',
+                                                        story_id => 'ID',
+                                                        url => 'URL',
+                                                        title => 'Title',
+                                                        cover_date => 'Date',
+                                                        status => 'Status',
+                                                       },
+                                      columns_sortable => [qw( story_id url title cover_date )],
+                                      command_column_commands => [qw( edit_story view_story view_story_log )],
+                                      command_column_labels => {
+                                                                edit_story     => 'Edit',
+                                                                view_story     => 'View',
+                                                                view_story_log => 'Log',
+                                                               },
+                                      row_handler => sub { $self->find_story_row_handler(@_); },
+                                      id_handler => sub { return $_[0]->story_id },
+                                     );
+
+    $template->param(pager_html => $pager->output());
 
     return $template->output;
+}
+
+
+# Pager row handler for story find run-mode
+sub find_story_row_handler {
+    my $self = shift;
+    my ($row, $story) = @_;
+
+    # Columns:
+    #
+
+    # story_id
+    $row->{story_id} = $story->story_id();
+
+    # url
+    my $url = $story->url();
+    $url =~ s!/!/ !g;
+    $row->{url} = $url;
+
+    # title
+    $row->{title} = $story->title();
+
+    # cover_date
+    my $tp = $story->cover_date();
+    $row->{cover_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
+
+    # pub_status  -- NOT YET IMPLEMENTED
+    $row->{pub_status} = '&nbsp;<b>P</b>&nbsp;';
+
+    # status  -- NOT YET IMPLEMENTED
+    $row->{status} = '[n/a]';
+    
 }
 
 
