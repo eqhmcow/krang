@@ -1,3 +1,15 @@
+# Krang master Makefile.  The following targets are supported:
+#
+#   all   - runs ext
+#
+#   ext   - builds the modules in ext-src and installs them in ext-lib
+# 
+#   test  - runs the test suite
+#
+#   TAGS  - builds an etags file from Krang module sources
+#
+#   clean - cleans up ext-src and ext-lib so that a subsequent make ext
+#           will rebuild all libraries.
  
 # test section, ripped from Makefile.PL output
 TEST_VERBOSE=0
@@ -10,6 +22,7 @@ ext:
 
 clean:
 	cd ext-src && $(MAKE) clean
+	cd ext-lib && rm -rf 
 
 TAGS:	
 	find -name '*.pm' | etags --language="perl" --regex='/[ \\t]*[A-Za-z]+::[a-zA-Z:]+/' -
