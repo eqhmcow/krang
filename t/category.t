@@ -107,7 +107,8 @@ my $category5 = Krang::Category->new(dir => '/bob5',
 $category5->save();
 
 # we should get an array of 5 objects back
-my @categories = Krang::Category->find(url_like => '%.com%',
+my @categories = Krang::Category->find(site_id => $site->site_id,
+                                       url_like => '%.com%',
                                        order_by => 'element_id',
                                        order_desc => 1);
 is(scalar @categories, 5, 'find() - quantity');
