@@ -203,7 +203,8 @@ Filehandle for uploaded media.
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
-    get_set       => [ qw( media_id title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename url ) ];
+    get_set       => [ qw( title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename url ) ],
+    get => [ qw( media_id creation_date) ];
 
 sub init {
     my $self = shift;
