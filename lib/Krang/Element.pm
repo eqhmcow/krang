@@ -10,6 +10,7 @@ use Scalar::Util qw(weaken);
 use Carp qw(croak);
 use Krang::Log qw(assert ASSERT debug info);
 use Storable qw(freeze thaw);
+use Krang::Cache;
 
 # declare prototypes
 sub foreach_element (&@);
@@ -255,7 +256,7 @@ $element->object->isa('Krang::Story') and croaks otherwise.
 sub story { 
     my $self = shift;
     my $object = $self->object;
-    croak("Expected a Krang::Story in element->object, but didn't find on!")
+    croak("Expected a Krang::Story in element->object for $self->{element_id}, but didn't find on!")
       unless $object and $object->isa('Krang::Story');
     return $object;
 }
@@ -460,7 +461,24 @@ specified class does not exist.
 
 sub child {
     my ($self, $name) = @_;
-    return first { $_->{class}->name eq $name } @{$self->{children}};
+    return first { $_->{class}{name} eq $name } @{$self->{children}};
+}
+
+=item C<< $text = $element->child_data('deck') >>
+
+Find a child by class name and returns its data.  If there are
+multiple children for this class, uses the first one.  Returns
+C<undef> if a child of the specified class does not exist.  This is
+better than using C<< child('name')->data >> because it won't produce
+an error if C<< child('name') >> doesn't exist.
+
+=cut
+
+sub child_data {
+    my ($self, $name) = @_;
+    my $child = first { $_->{class}{name} eq $name } @{$self->{children}};
+    return undef unless $child;
+    return $child->data;
 }
 
 =item C<< $element->save() >>
@@ -479,6 +497,10 @@ sub save {
     croak("Unable to save() non-top-level element.")
       unless $self->{class}->isa('Krang::ElementClass::TopLevel');
     
+    # saving with the cache on is verboten
+    croak("Cannot save elements while cache is on!")
+      if Krang::Cache::active();
+
     # call the save hook
     $self->{class}->save_hook(element => $self);
 
@@ -636,28 +658,38 @@ containing this element.
 sub load {
     my $pkg  = shift;
     my %arg  = @_;
+    croak("Unrecognized load parameters: " .
+          join(', ', map { "$_ => '$arg{$_}'" } keys %arg))
+      unless $arg{element_id};
+
     my $dbh = dbh;
 
-    if (exists $arg{element_id}) {
-        # select all elements in this tree
-        my $data = $dbh->selectall_arrayref(<<SQL, undef, $arg{element_id});
+    # first look in the cache
+    my $element = Krang::Cache::get(Krang::Element => $arg{element_id});
+    if ($element) {
+        $element->object($arg{object}) unless $element->{object};
+        return $element;
+    }
+
+    # select all elements in this tree
+    my $data = $dbh->selectall_arrayref(<<SQL, undef, $arg{element_id});
           SELECT   element_id, parent_id, class, data
           FROM     element
           WHERE    root_id = ?
           ORDER BY parent_id, ord
 SQL
-        croak("No element found matching id '$arg{element_id}'")
-          unless $data and @$data;
-       
-        my $element;
-        eval { $element = $pkg->_load_tree($data, $arg{object}) };
-        croak("Unable to load element tree with id '$arg{element_id}':\n$@")
-          if $@;
-        return $element;
-    } 
-   
-    croak("Unrecognized load parameters: " .
-          join(', ', map { "$_ => '$arg{$_}'" } keys %arg));
+    croak("No element found matching id '$arg{element_id}'")
+      unless $data and @$data;
+    
+    
+    eval { $element = $pkg->_load_tree($data, $arg{object}) };
+    croak("Unable to load element tree with id '$arg{element_id}':\n$@")
+      if $@;
+
+    # set in the cache
+    Krang::Cache::set(Krang::Element => $arg{element_id} => $element);
+
+    return $element;
 } 
 
 # loads a tree from an array of element arrays coming from a
