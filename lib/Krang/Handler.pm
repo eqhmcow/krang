@@ -198,7 +198,7 @@ sub access_handler ($$) {
     }
 
     # failure
-    critical("Unsupported browser detected: " . $r->header_in('User-Agent'));
+    debug("Unsupported browser detected: " . $r->header_in('User-Agent'));
     $r->custom_response(FORBIDDEN,  "<h1>Unsupported browser detected.</h1>This application requires Netscape 6+ or Internet Explorer 5+.");
     return FORBIDDEN;
 }
