@@ -4,7 +4,7 @@ use warnings;
 
 =head1 NAME
 
-Krang::CGI::ElementEditor - element editor CGI class
+Krang::CGI::ElementEditor - element editor CGI base class
 
 =head1 SYNOPSIS
 
@@ -26,103 +26,99 @@ use Krang::ElementLibrary;
 use Krang::Element;
 use Krang::DB qw(dbh);
 use Carp qw(croak);
-use Krang::Session qw(%session);
+# use Krang::Session qw(%session);
 use Krang::Log qw(debug assert affirm ASSERT);
-
+use Krang::Message qw(add_message get_messages);
 use base 'Krang::CGI';
 
 sub setup {
     my $self = shift;
-    $self->start_mode('choose_top_level');
-    $self->mode_param('e_rm');
-    $self->run_modes(choose_top_level => \&choose_top_level,
-                     create           => \&create,
-                     edit             => \&edit,
-                     add              => \&add,
-                     save             => \&save,
-                     save_and_jump    => \&save_and_jump,
-                     save_and_stay    => \&save_and_stay,
+    $self->start_mode('fake');
+    $self->mode_param('rm');
+    $self->run_modes(
+                     fake             => sub { "OK" },
+                     edit             => 'edit',
+                     add              => 'add',
+                     save             => 'save',
+                     save_and_jump    => 'save_and_jump',
+                     save_and_stay    => 'save_and_stay',
                      delete_children  => sub { shift->revise('delete') },
                      reorder          => sub { shift->revise('reorder') },
-                     delete           => \&delete,
+                     delete           => 'delete',
                     );
 }
 
 # show the top_level chooser (this won't be used in the final version
 # of the editor, but it's need to allow it to be tested independently)
-sub choose_top_level {
-    my $self = shift;
-    my $query = $self->query();
-    my $dbh = dbh();
-    my $template = $self->load_tmpl("element_editor_choose.tmpl",
-                                    associate => $query);
+# sub choose_top_level {
+#     my $self = shift;
+#     my $query = $self->query();
+#     my $dbh = dbh();
+#     my $template = $self->load_tmpl("element_editor_choose.tmpl",
+#                                     associate => $query);
 
-    # whip up top level picker
-    my @values = Krang::ElementLibrary->top_levels;
-    my %labels = map { ($_, Krang::ElementLibrary->top_level(name => $_)
-                                                  ->display_name) } 
-                   @values;
-    $template->param(top_level_select => 
-                     $query->popup_menu(-name   => "top_level",
-                                        -values => \@values,
-                                        -labels => \%labels));
+#     # whip up top level picker
+#     my @values = Krang::ElementLibrary->top_levels;
+#     my %labels = map { ($_, Krang::ElementLibrary->top_level(name => $_)
+#                                                   ->display_name) } 
+#                    @values;
+#     $template->param(top_level_select => 
+#                      $query->popup_menu(-name   => "top_level",
+#                                         -values => \@values,
+#                                         -labels => \%labels));
 
-    # show a list of existing elements
-    my $result = $dbh->selectall_arrayref('SELECT root_id, class FROM element WHERE parent_id IS NULL ORDER BY root_id');
-    my @element_loop;
-    foreach my $row (@$result) {
-        push(@element_loop, { element_id => $row->[0],
-                              name       => $row->[1] });
-    }
-    $template->param(element_loop => \@element_loop);
+#     # show a list of existing elements
+#     my $result = $dbh->selectall_arrayref('SELECT root_id, class FROM element WHERE parent_id IS NULL ORDER BY root_id');
+#     my @element_loop;
+#     foreach my $row (@$result) {
+#         push(@element_loop, { element_id => $row->[0],
+#                               name       => $row->[1] });
+#     }
+#     $template->param(element_loop => \@element_loop);
 
 
-    return $template->output();
-}
+#     return $template->output();
+# }
 
 # create a new top-level element
-sub create {
-    my $self      = shift;
-    my $query     = $self->query();
-    my $top_level = $query->param("top_level") 
-      or croak("Missing top_level param!");
+# sub create {
+#     my $self      = shift;
+#     my $query     = $self->query();
+#     my $top_level = $query->param("top_level") 
+#       or croak("Missing top_level param!");
 
-    # create a new instance and save it in the session
-    my $element = Krang::Element->new(class => $top_level);
-    $session{element} = $element;
+#     # create a new instance and save it in the session
+#     my $element = Krang::Element->new(class => $top_level);
+#     $session{element} = $element;
 
-    # setup ids and toss to edit
-    $query->param(path => '/');
-    $query->param(root_id => undef);
-    return $self->edit;
-}
+#     # setup ids and toss to edit
+#     $query->param(path => '/');
+#     $query->param(root_id => undef);
+#     return $self->edit;
+# }
 
-
-# show the edit screen
 sub edit {
     my $self = shift;
-    my $query = $self->query();
+    my $query = $self->query;
     my $template = $self->load_tmpl("element_editor_edit.tmpl",
                                     associate => $query,
-                                    loop_context_vars => 1);
-    
+                                    loop_context_vars => 1);    
+    $self->element_edit(template => $template);
+    return $template->output();    
+}
+
+# show the edit screen
+sub element_edit {
+    my ($self, %args) = @_;
+    my $query = $self->query();
+    my $template = $args{template};
     my $path    = $query->param('path') || '/';
     my $root_id = $query->param('root_id');
 
     # find the root element, loading from the session or the DB
-    my $root;
-    if ($root_id) {
-        $session{element} = 
-          $root = Krang::Element->find(element_id => $root_id);        
-
-        croak("Unable to load element from DB by id '$root_id'")
-          unless defined $root;
-        $query->param(root_id => undef);
-    } else {
-        $root = $session{element};
-        croak("Unable to load element from session.") 
-          unless defined $root;
-    }
+    my $root = $self->_get_element;
+    croak("Unable to load element from session.") 
+      unless defined $root;
 
     # find the element being edited using path
     my $element = _find_element($root, $path);
@@ -187,9 +183,6 @@ sub edit {
                      $query->popup_menu(-name   => "child",
                                         -values => \@values,
                                         -labels => \%labels));
-
-
-    return $template->output();    
 }
 
 
@@ -203,7 +196,7 @@ sub add {
     my $child   = $query->param('child');
 
     # find our element
-    my $root    = $session{element};
+    my $root    = $self->_get_element;
     my $element = _find_element($root, $path);
 
     # add the child element and save the element tree
@@ -212,8 +205,8 @@ sub add {
     # start editing the new element if it has children
     $query->param(path => $kid->xpath()) if $kid->is_container;
     
-    $query->param(alert => "Added " . $kid->display_name() . " to " . 
-                           $element->display_name() . ".");
+    add_message('added_element', child  => $kid->display_name(),
+                                 parent => $element->display_name());
 
     # toss to edit
     return $self->edit();
@@ -249,7 +242,7 @@ sub save {
     my $path    = $query->param('path') || '/';
     my $root_id = $query->param('root_id');
 
-    my $root = $session{element};
+    my $root = $self->_get_element;
     my $element = _find_element($root, $path);
 
     # validate data
@@ -260,7 +253,7 @@ sub save {
     foreach my $child ($element->children()) {
         my ($valid, $msg) = $child->validate(query => $query);
         if (not $valid) {
-            push @msgs, "* $msg";
+            add_message('invalid_element_data', msg => $msg);
             push @invalid, $index;
             $clean = 0;
         }
@@ -270,7 +263,6 @@ sub save {
     # toss back to edit with an error message if not clean
     if (not $clean) {
         my %seen;
-        $query->param(alert => join('<br>', grep { ++$seen{$_} == 1 } @msgs));
         $query->param(invalid => join(',', @invalid));
         return $self->edit();
     }
@@ -284,8 +276,7 @@ sub save {
 
     # save element tree to DB
     $root->save();
-    $query->param(alert => $element->display_name() . " saved.")
-      unless $query->param('alert');
+    add_message('saved_element', name => $element->display_name());
     
     # save and stay?
     return $self->edit() if exists $arg{stay};
@@ -301,7 +292,7 @@ sub save {
         $query->param(path => $element->parent->xpath);
         return $self->edit();
     } else {
-        return $self->choose_top_level();
+        croak("Krang::CGI::ElementEditor called to handle root save!");
     }
 }
 
@@ -313,7 +304,7 @@ sub revise {
     my $query = $self->query();
 
     my $path = $query->param('path') || '/';
-    my $root = $session{element};
+    my $root = $self->_get_element;
     my $element = _find_element($root, $path);
 
     # get list of existing children and their query parameters
@@ -330,7 +321,7 @@ sub revise {
     } elsif ($op eq 'delete') {
         for (0 .. $#old) {
             if ($query->param("remove_$_")) {
-                push @msgs, "Removed " . $old[$_]->display_name;
+                add_message("deleted_element", name => $old[$_]->display_name);
             } else {
                 push(@new, $old[$_]);
                 $old_to_new[$_] = $#new;
@@ -365,10 +356,11 @@ sub revise {
 
     # deletions get a message listing deleted elements
     if ($op eq 'delete') {
-        @msgs = ('No elements marked for deletion!') unless @msgs;
-        $query->param(alert => join('<br>', @msgs));
+        my %msg = get_messages(keys => 1);
+        add_message('no_elements_deleted') unless $msg{deleted_element};
+
     } else {
-        $query->param(alert => 'Reordered elements.');
+        add_message('reordered_elements');
     }
 
     return $self->edit();
@@ -382,7 +374,7 @@ sub delete {
     my $path = $query->param('path') || '/';
     my $root_id = $query->param('root_id');
 
-    my $root = $session{element};
+    my $root = $self->_get_element;
     my $element = _find_element($root, $path);
 
     my $parent = $element->parent();
@@ -397,8 +389,7 @@ sub delete {
     $parent->children(grep { $_ != $element } $parent->children());
     
     $query->param(path => $parent->xpath());
-    $query->param(alert => 'Removed ' . $element->display_name . ' from ' .
-                           $parent->display_name());
+    add_message('deleted_element', name => $element->display_name);
     return $self->edit();
 }
 
