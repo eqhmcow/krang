@@ -323,6 +323,11 @@ is($success, 1, 'site delete()');
     eval { $tmp->delete() };
     isa_ok($@, "Krang::Category::NoEditAccess", "delete() on read-only category exception");
 
+    # Try to add descendant category
+    eval { Krang::Category->new( dir => "cheeseypoofs",
+                                 parent_id => $ptest_cat_id ) };
+    isa_ok($@, "Krang::Category::NoEditAccess", "new() descendant from read-only category exception");
+
     # Change other branch to "hide"
     $ptest_cat_id = $ptest_categories[2]->category_id();
     $admin_group->categories($ptest_cat_id => "hide");

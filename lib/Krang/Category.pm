@@ -257,6 +257,9 @@ If the category being created is a subcategory (e.g. it has a C<parent_id>), the
 
 =back
 
+N.b.:  The new() method will throw and exception, Krang::Category::NoEditAccess,
+if the current user does not have edit access to the parent category.
+
 =cut
 
 # validates arguments passed to new(), see Class::MethodMaker,
@@ -306,6 +309,12 @@ sub init {
         my ($cat) = Krang::Category->find(category_id => $self->{parent_id});
         croak(__PACKAGE__ . "->init(): No category object found corresponding".
               " to id '$self->{parent_id}'") unless defined $cat;
+
+        # Check permissions of parent category.
+        unless ($cat->may_edit) {
+            Krang::Category::NoEditAccess->throw(message => "User does not have access to add this category");
+        }
+
         $url = $cat->url();
         $self->{site_id} = $cat->site_id;
     } else {
