@@ -69,6 +69,7 @@ sub setup {
                      save_and_view_log => 'save_and_view_log',
                      save_and_stay    => 'save_and_stay',
                      save_and_edit_contribs => 'save_and_edit_contribs',
+                     save_and_edit_schedule => 'save_and_edit_schedule',
                      save_and_stay    => 'save_and_stay',
                      save_and_go_up   => 'save_and_go_up',
                      save_and_bulk_edit => 'save_and_bulk_edit',
@@ -555,6 +556,25 @@ sub save_and_view_log {
 
     $self->header_props(-uri => 'history.pl?history_return_script=story.pl&history_return_params=rm&history_return_params=edit&story_id=' . $session{story}->story_id);
     $self->header_type('redirect');
+}
+
+=item save_and_edit_schedule
+                                                                        
+This mode saves the current data to the session and passes control to
+edit schedule for story.
+                                                                        
+=cut
+                                                                        
+sub save_and_edit_schedule {
+    my $self = shift;
+                                                                        
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+                                                                        
+    $self->header_props(-uri => 'schedule.pl?rm=edit&object_type=story');
+    $self->header_type('redirect');
+    return;
 }
 
 =item save_and_edit_contribs

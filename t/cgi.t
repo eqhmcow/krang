@@ -5,7 +5,9 @@ use File::Find qw(find);
 # requires no parameters)
 our %BAD_DEFAULT = map { ($_,1) } 
   (qw( Krang::CGI::History
-       Krang::CGI::ElementEditor ));
+       Krang::CGI::ElementEditor
+       Krang::CGI::Schedule
+     ));
 
 
 # Arrange for CGI output to come back via return, but NOT go to STDOUT

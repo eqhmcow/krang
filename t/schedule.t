@@ -277,7 +277,7 @@ our $s14 = Krang::Schedule->new(action => 'publish',
                                 repeat => 'hourly',
                                 test_date => $date,
                                 minute => $date->min,
-                                context => [a => 1]);
+                                context => ['version' => 1]);
 
 eval {isa_ok($s14->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
@@ -288,12 +288,12 @@ is($next_run->mysql_datetime, '2003-03-01 00:00:00', 'next_run check 14');
 # text 'context' behavior
 is(ref $s14->{context}, 'ARRAY', 'context test 1');
 my %context1 = @{$s14->{context}};
-is($context1{a}, 1, 'context test 2');
+is($context1{version}, 1, 'context test 2');
 is(exists $s14->{_frozen_context}, 1, 'context test 3');
 my %context2;
 eval {%context2 = @{thaw($s14->{_frozen_context})}};
 is($@, '', "context thaw didn't fail");
-is($context2{a}, $context1{a}, 'context good');
+is($context2{version}, $context1{version}, 'context good');
 
 # run test - 1 tests should run
 my $path = File::Spec->catfile($ENV{KRANG_ROOT}, 'logs', "schedule_test.log");
