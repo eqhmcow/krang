@@ -15,13 +15,13 @@
 
 &nbsp;<br>&nbsp;
 <div align="center">
-<p class="error"><tmpl_var alert></p> 
+<p class="error"><tmpl_var escape=html alert></p> 
 		
 <form method="POST" action="login.pl" name="logform">
 <div id="login">
 <div class="dark-bar"><tmpl_var instance_name> Log In</div>
 <div class="boxb">
-<div class="light"><p>User Name:&nbsp;&nbsp;&nbsp;<input type="text" name="username" value="<tmpl_var username>" size="12"><br><br>Password:&nbsp;&nbsp;&nbsp;<input type="password" name="password" size="12"></p></div></div>
+<div class="light"><p>User Name:&nbsp;&nbsp;&nbsp;<input type="text" name="username" value="<tmpl_var escape=html username>" size="12"><br><br>Password:&nbsp;&nbsp;&nbsp;<input type="password" name="password" size="12"></p></div></div>
 <div class="button-bar"><input class="button" type="submit" value="Log In"></div><input type="hidden" name="rm" value="login"></div>
 </form>
 
