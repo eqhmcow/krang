@@ -11,7 +11,7 @@ sub guess_platform {
     open(RELEASE, '/etc/gentoo-release') or return 0;
     my $release = <RELEASE>;
     close RELEASE;
-    return 1 if $release =~ /Gentoo Base System version 1.4.3/;
+    return 1 if $release =~ /Gentoo Base System version 1.4.\d+/;
     return 0;
 }
 
