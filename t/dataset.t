@@ -156,6 +156,10 @@ $loaded->write(path => $path3);
 ok(-e $path3 and -s $path3);
 END { unlink($path3) if -e $path3 and not $DEBUG };
 
+SKIP: {
+    skip('floodfill tests only work for TestSet1 and Default', 1)
+      unless (InstanceElementSet eq 'TestSet1' or 
+              InstanceElementSet eq 'Default');
 
 # create 10 stories
 my $count = Krang::Story->find(count => 1);
@@ -176,7 +180,7 @@ $set10->add(object => $_) for @stories;
 my $path10 = catfile(KrangRoot, 'tmp', '10stories.kds');
 $set10->write(path => $path10);
 ok(-e $path10 and -s $path10);
-END { unlink($path10) if -e $path10 and not $DEBUG };
+END { unlink($path10) if $path10 and -e $path10 and not $DEBUG };
 
 # delete the floodfilled stories
 system("$undo > /dev/null 2>&1");
@@ -248,6 +252,8 @@ END {
     $_->delete for (grep { $_->isa('Krang::Site') } @imported);
     $_->delete for (grep { $_->isa('Krang::Contrib') } @imported);
 };
+
+}
 
 # try deleting a site a loading it from a data set
 my $lsite = Krang::Site->new(preview_url  => 'preview.lazarus.com',

@@ -8,16 +8,21 @@ use Krang::Site;
 use Krang::Category;
 use Krang::Desk;
 use Krang::User;
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::DB qw(dbh);
 use File::Spec::Functions qw(catfile);
 
 BEGIN { use_ok('Krang::Group') }
 
+SKIP: {
+    skip('floodfill only works for TestSet1 and Default', 1)
+      unless (InstanceElementSet eq 'TestSet1' or
+              InstanceElementSet eq 'Default');
+
 # create some categories and clean them up when finished
 my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');
 system("bin/krang_floodfill --stories 0 --sites 1 --cats 3 --templates 0 --media 0 --users 0 --covers 0 --undo_script $undo 2>&1 /dev/null");
-END { system("$undo 2>&1 /dev/null"); }
+END { system("$undo 2>&1 /dev/null") if $undo }
 
 # Variable for our work
 my $group = 0;
@@ -458,3 +463,5 @@ $admin_group->save();
 $admin_user->group_ids_pop();
 $admin_user->save();
 $admin_perm_test_group->delete();
+
+}
