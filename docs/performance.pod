@@ -5,8 +5,8 @@
 This document provides the results of performance tests performed on
 Krang.
 
-These tests were run a dual-P4/2.8Ghz machine with 4GB of RAM.  MySQL
-was tuned to use XGB of memory.  
+These tests were run on a dual-P4/2.8Ghz machine with 4GB of RAM
+running Redhat Linux 7.3.
 
 The content used in the tests was randomly generated to simulate the
 contents of a typical Krang instance.  The content used is similar to
@@ -72,22 +72,3 @@ Results:
   Story Find Time (by title):   4.6  seconds
   Find Media, limit 100:        .025 seconds
 
-=head2 Extreme Load
-
-This system contains enough content to publish many gargantuan web
-sites.  It exists to test the limits of the system, not to simulate a
-known use-case.
-
-  Sites:        40
-  Categories:   8,000
-  Stories:      400,000
-  Media:        1,000,000
-  Contributors: 20,000
-
-Results:
-
-  Average Publish Time: X seconds
-  Total Site Publish:   X minutes
-  Story Import:         X per second
-  Media Load:           X per second
-  Story Find Time:      X seconds
