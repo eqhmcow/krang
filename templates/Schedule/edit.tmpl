@@ -1,3 +1,5 @@
+<tmpl_include header.tmpl>
+
 <script language=javascript>
  function checkall(checkbox, prefix) {
      for (var i = 0; i < checkbox.form.elements.length ; i++) {
@@ -19,8 +21,6 @@
   }
 
 </script>
-
-<tmpl_include header.tmpl>
 
 <div class=dark-bar><tmpl_if is_story>Story</tmpl_if><tmpl_if is_media>Media</tmpl_if> Schedule Editor <tmpl_if simple>(Simple)</tmpl_if></div>
 
