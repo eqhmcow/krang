@@ -118,5 +118,19 @@ sub login {
     return $output;
 }
 
+# handle a logout
+sub logout {
+    my $self     = shift;
+    my $query    = $self->query();
+
+    # delete the session
+    Krang::Session->delete($ENV{KRANG_SESSION_ID});
+
+    # redirect to login
+    $self->header_props(-uri => 'login.pl');
+    $self->header_type('redirect');
+    return "";
+}
+
 1;
 
