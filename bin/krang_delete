@@ -127,7 +127,7 @@ pod2usage(2) unless
              verbose => \$verbose,
              'sites'    => \$sites,
              'site_id=s'  => \@site_ids,
-             'cateories'     => \$cats,
+             'categories'     => \$cats,
              'cats'     => \$cats,
              'category_id=s' => \@cat_ids,
              'contribs' => \$contribs,
