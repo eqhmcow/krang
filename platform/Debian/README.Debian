@@ -1,0 +1,47 @@
+Krang has been setup & running on Debian Woody (v3.0) with the
+following requisites:
+
+Make sure perl is installed.  Some folks say 5.8, but I was able
+to get away with Woody's 5.6.1.
+
+Then get MySQL version 4.0 installed.  Unfortunately, Woody
+doesn't have 4.0 in its default set of packages, but you could
+use backports.org or build it yourself (which is what I did)
+and install it in /usr/local/mysql.  If you do the build-it-
+yourself route, make sure to setup symlinks in /usr/bin to
+/usr/local/mysql/bin.  Krang relies on /usr/bin/mysql during
+installation.  Also, if you build your own, you'll have to
+setup symlinks in /usr/local/include & /usr/local/lib to
+/usr/local/mysql/include & /usr/local/mysql/lib respectively.
+Yeah ... you might want to do the backports.org thing! ;)
+
+You'll also need to install these Woody packages:
+	* giflib3g
+	* libpng2
+	* libjpeg62
+	* libperl5.6
+
+After that, you should be all set.  Just do a ./bin/krang_install
+with the parameters (see INSTALL doc) and go from there.  I
+would recommend using /usr/local/krang as the installation path,
+so it won't interfere with the rest of your system.  Krang is
+self-contained with its own Apache server and Perl libraries,
+all of which are contained within its own installation directory.
+
+After the installation, it will place an init script in
+/etc/init.d and you will need to use update-rc.d to setup the
+symlinks in the proper runlevel rc.d directories to ensure that
+Krang is properly shutdown and started up along with the rest
+of your system.
+
+At some point, we should have a .deb package for Krang that
+will take care of all this for you, but not today.  Feel free
+to contact me if you'd like to help me with that.
+
+That's it ... once you're done, open a web browser and connect
+to your localhost and have fun!  I would recommend joining the
+Krang-general mailing list at this point, if you haven't
+already for any further assistance and education.
+
+Jason Purdy
+jason@journalistic.com
