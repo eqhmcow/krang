@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added missing indexes to the list tables, providing an impressive
+speedup in working on large lists. [Sam]
+
+=item *
+
 Fixed a bug that prevented Krang from installing on very recent MySQL
 releases which do not tolerate trailing commas in C<CREATE TABLE>
 statements. [Aaron Ross]

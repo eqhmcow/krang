@@ -24,22 +24,27 @@ CREATE TABLE list (
   name varchar(255) NOT NULL,
   parent_list_id mediumint,
   PRIMARY KEY (list_id),
-  KEY (name)
+  KEY (name),
+  INDEX (list_group_id)
 ) TYPE=MyISAM;
 
 DROP TABLE IF EXISTS list_data;
-                                                                                
+
 --
 -- Table structure for table 'list_item'
 --
-                                                                                
+
 CREATE TABLE list_item (
   list_item_id mediumint unsigned NOT NULL auto_increment,
   list_id mediumint unsigned NOT NULL,
   parent_list_item_id  mediumint unsigned,
   data varchar(255) NOT NULL,
   ord smallint NOT NULL,
-  PRIMARY KEY (list_item_id) 
+  PRIMARY KEY (list_item_id),
+  INDEX (list_id),
+  INDEX (parent_list_item_id),
+  INDEX (ord),
+  INDEX (data)
 ) TYPE=MyISAM;
 
 
