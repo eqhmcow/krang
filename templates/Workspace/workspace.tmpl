@@ -49,6 +49,12 @@
     pubform.submit();
   }
 
+  function publish_media(media_id) {
+    var pubform = document.forms["publish_media_form"];
+    pubform.media_id.value=media_id;
+    pubform.submit();
+  }
+
   function deploy(id) {
        document.krang_pager_form.rm.value = 'deploy';
        document.krang_pager_form.id.value = id;
@@ -75,6 +81,12 @@
 <form name="publish_story_form" method="GET" action="publisher.pl">
 <input type=hidden name="rm" value="publish_story">
 <input type=hidden name="story_id" value="">
+</form>
+
+<!-- publish_media form -->
+<form name="publish_media_form" method="GET" action="publisher.pl">
+<input type=hidden name="rm" value="publish_media">
+<input type=hidden name="media_id" value="">
 </form>
 
 
@@ -144,7 +156,7 @@
                Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">
            </tmpl_if>
            <tmpl_if is_media>
-               <input type=button value="Publish" onclick="publish('<tmpl_var id>')">
+               <input type=button value="Publish" onclick="publish_media('<tmpl_var media_id>')">
                <input type=button value="Delete" onclick="remove('<tmpl_var id>')">
                <p>
                <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">

@@ -44,6 +44,7 @@ sub setup {
                          preview_media
                          publish_story
                          publish_assets
+                         publish_media
     )]);
 
 }
@@ -169,6 +170,43 @@ sub publish_assets {
     return "";
 
 }
+
+
+=item publish_media
+
+Publishes a media object immediately.  No scheduling done here.
+
+requires media_id
+
+returns the user to 'My Workspace' when done.
+
+=cut
+
+sub publish_media {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $media_id = $query->param('media_id');
+    croak("Missing required media_id parameter") unless $media_id;
+
+    my ($media) = Krang::Media->find(media_id => $media_id);
+
+    # run things to the publisher
+    my $publisher = Krang::Publisher->new();
+    $publisher->publish_media(media => $media);
+    # add a message
+    add_message('media_publish', media_id => $media_id,
+                url => $media->url,
+                version => $media->version);
+
+    # return to my workspace
+    $self->header_props(-uri => 'workspace.pl');
+    $self->header_type('redirect');
+    return "";
+
+}
+
+
 
 =item preview_story
 
