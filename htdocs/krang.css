@@ -39,6 +39,25 @@ a:active          {
 }
 
 /*** Colored UI elements ***/
+.light-bar { 
+  background-color: #dbe9f4;
+  color:            #333333;
+  padding:          2px;
+  height:           14pt;
+}
+
+.light-bar .left {
+  width:            49%;
+  float:            left;
+  text-align:       left; 
+}
+
+.light-bar .right {
+  width:            49%;
+  float:            right;
+  text-align:       right;
+}
+
 .dark-bar { 
   background-color: #04044c;
   color:            #dceaf5;
@@ -96,6 +115,18 @@ a:active          {
   margin-left:      15px;
 }
 
+.form-head-thin {
+  background-color: #dbe9f4;
+  color:            #333333;
+  border-top:       1px solid #e2e1e7;
+  border-bottom:    1px solid #e2e1e7;
+}
+
+.form-head-thin td {
+  border-top:       1px solid #e2e1e7;
+  border-bottom:    1px solid #e2e1e7;
+}
+
 .form-head {
   background-color: #dbe9f4;
   color:            #333333;
@@ -117,6 +148,14 @@ a:active          {
 .form-box {
   border:         1px solid #e2e1e7;
   padding:        5px;
+}
+
+.form-box-large {
+  border:         1px solid #e2e1e7;
+  padding-top:    5px;
+  padding-bottom: 5px;
+  padding-left:   15px;
+  padding-right:  15px;
 }
 
 .tight-form-box {

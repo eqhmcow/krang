@@ -1,5 +1,6 @@
 use Test::More qw(no_plan);
 use File::Find qw(find);
+use Krang::Script;
 
 # a list of CGI modules without a suitable default mode (one that
 # requires no parameters)
