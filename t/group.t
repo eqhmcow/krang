@@ -450,9 +450,11 @@ is( Krang::Group->user_admin_permissions("admin_users_limited"),
     0,
     "Admin has admin_users_limited=>0 access" );
 
+# fix may_publish permissions for the admin group
+$admin_group->may_publish(1);
+$admin_group->save();
+
 # Clean up
 $admin_user->group_ids_pop();
 $admin_user->save();
 $admin_perm_test_group->delete();
-
-
