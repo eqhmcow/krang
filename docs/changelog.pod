@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded Test::Harness to 2.40 to enable warnings during tests.  Fixed
+a number of warnings in the test files. [Perrin] [Sam]
+
+=item *
+
 Fixed bug where schedule tests would fail frequently due to
 krang_schedulectl leaving bad PID files around.  Also made the
 schedule tests quiet unless an error occurs. [Sam]
