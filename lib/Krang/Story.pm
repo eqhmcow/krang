@@ -564,8 +564,17 @@ sub _save_core {
           ') VALUES (' . join(',', ("?") x STORY_FIELDS) . ')';
     }
 
+    my @data;
+    foreach (STORY_FIELDS) {
+        if (/_date$/) {
+            push(@data, $self->{$_} ? $self->{$_}->mysql_datetime : undef);
+        } else {
+            push(@data, $self->{$_});
+        }
+    }
+
     # do the insert or update
-    $dbh->do($query, undef, @{$self}{(STORY_FIELDS)}, 
+    $dbh->do($query, undef, @data,
              ($update ? $self->{story_id} : ()));
 
     # extract the ID on insert
@@ -870,6 +879,17 @@ sub find {
     while ($row = $sth->fetchrow_arrayref()) {
         my $obj = bless({}, $pkg);
         @{$obj}{(STORY_FIELDS)} = @$row;
+
+        # objectify dates
+        for (qw(cover_date publish_date)) {
+            debug("$_ : $obj->{$_}");
+            if ($obj->{$_} and $obj->{$_} ne '0000-00-00 00:00:00') {
+                $obj->{$_} = Time::Piece->from_mysql_datetime($obj->{$_});
+            } else {
+                $obj->{$_} = undef;
+            }
+        }
+       
 
         # load category_ids and urls
         $result = $dbh->selectall_arrayref('SELECT category_id, url '.
