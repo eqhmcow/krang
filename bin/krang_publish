@@ -148,6 +148,7 @@ use Krang::Category;
 use Krang::Site;
 use Krang::Publisher;
 use Krang::Message qw(add_message);
+use Krang::Cache;
 
 use Time::HiRes qw(gettimeofday tv_interval);
 
@@ -186,6 +187,8 @@ pod2usage(-verbose => 2) if $man;
 pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
   if @ARGV;
 
+# turn on the cache
+Krang::Cache::start();
 
 # figure out how these command-line options affect find criteria.
 my %find_options = (limit => $increment, offset => 0);
@@ -298,11 +301,18 @@ print "\n\nSTATUS: Publish completed.\n=========================================
 print "$arg_string\n\nResults:\n";
 print "\ntype\t\tnumber published\ttime(seconds)\tseconds/asset\n";
 print "----------------------------------------------------------------------\n";
-print sprintf("stories\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_storycount, $total_storytime, (($total_storytime > 0) ? ($total_storytime/$total_storycount) : 0));
-print sprintf("media\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_mediacount, $total_mediatime, (($total_mediatime > 0) ? ($total_mediatime/$total_mediacount) : 0));
+printf("stories\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_storycount, $total_storytime, (($total_storytime > 0) ? ($total_storytime/$total_storycount) : 0));
+printf("media\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_mediacount, $total_mediatime, (($total_mediatime > 0) ? ($total_mediatime/$total_mediacount) : 0));
 
 print "----------------------------------------------------------------------\n";
-print sprintf("TOTAL:\t\t%i assets\t\t%.02f seconds\n\n", ($total_storycount+$total_mediacount), $increment_time);
+printf("TOTAL:\t\t%i assets\t\t%.02f seconds\n\n", ($total_storycount+$total_mediacount), $increment_time);
+
+my ($hits, $loads, $fill) = Krang::Cache::stats();
+printf("CACHE HITS:\t\t%d\n", $hits)
+  if $verbose and Krang::Cache::active();
+printf("CACHE FILL AT END:\t\t%d\n\n", $fill)
+  if $verbose and Krang::Cache::active();
+
 
 
 
