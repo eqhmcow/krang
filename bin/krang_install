@@ -171,7 +171,7 @@ BEGIN {
 use Krang;
 
 
-my $krang_version;
+my @original_args = ();
 my $uniqueness = time();
 my ($help, $man, $do_mysql_install, $do_perl_install);
 my @req_params = qw( HostName
@@ -334,9 +334,11 @@ sub do_perl_install {
     chdir($ENV{KRANG_ROOT});
     `rm -rf $build_dir`;
 
-    # Re-exec process w/o --do-perl-install
-    print "Perl install complete.  Please re-run krang_install w/o --do-perl-install.\n";
-    exit(0);
+    # Re-exec process w/o --do-perl-install and exit
+    print "Perl install complete.  Re-running krang_install without --do-perl-install\n";
+    my $install = $0 ." ". join(" ", (grep { $_ ne "--do-perl-install" } @original_args));
+    print "$install\n";
+    exec($install) || die($!);
 }
 
 
@@ -422,6 +424,9 @@ sub exit_error {
 
 
 sub setup_getopts {
+    # Copy the original args for re-invoking later
+    @original_args = @ARGV;
+
     pod2usage(2) unless
         GetOptions( 'help'      => \$help,
                     'man'       => \$man,
