@@ -147,8 +147,6 @@ sub checkout_checked {
     foreach my $obj (map { _id2obj($_) }
                      $query->param('krang_pager_rows_checked')) {
         $obj->checkout;
-        $obj->desk_id(undef);
-        $obj->save;
     }
     add_message('checkout_checked');
     $self->header_props(-uri => 'workspace.pl');
@@ -200,8 +198,6 @@ sub goto_edit {
     my $query = $self->query;
     my $obj = _id2obj($query->param('id'));
     $obj->checkout;
-    $obj->desk_id(undef);
-    $obj->save;
     $self->header_props(-uri => 'story.pl?rm=edit&story_id=' .
                         $obj->story_id);
     
