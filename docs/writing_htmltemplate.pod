@@ -845,9 +845,9 @@ B<Page.tmpl>
 
  <P>Currently reading page <tmpl_var current_page_number> of <tmpl_var total_pages>.<BR>
 
- <tmpl_if is_first_page>
+ <tmpl_unless is_first_page>
    <a href="<tmpl_var previous_page_url>">Previous Page</a>
- </tmpl_if>
+ </tmpl_unless>
 
  <tmpl_loop pagination_loop>
    <tmpl_if is_current_page>
@@ -857,9 +857,9 @@ B<Page.tmpl>
    </tmpl_if>
  </tmpl_loop>
 
- <tmpl_if is_next_page>
+ <tmpl_unless is_last_page>
    <a href="<tmpl_var next_page_url>">Next Page</a>
- </tmpl_if>
+ </tmpl_unless>
 
  <!-- /Pagination -->
 
