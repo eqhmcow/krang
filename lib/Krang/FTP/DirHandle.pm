@@ -434,7 +434,7 @@ sub status {
     my $type = $self->{type} || '';
     my $instance = $self->{instance} || '';
 
-    print STDERR __PACKAGE__, "::status() : instance = $instance  : type = $type : category = $category_id \n";
+    debug(__PACKAGE__."::status() : instance = $instance  : type = $type : category = $category_id \n");
 
     return ( 'd', 0777, 2, "nobody", "nobody", 0, 0 );
 }
