@@ -211,12 +211,14 @@ sub preview_story {
 
     my $publish_list = $self->get_publish_list(story => $story);
 
-    foreach (@$publish_list) {
-        if ($_->isa('Krang::Story')) {
-            info('Publisher.pm: Previewing story_id=' . $story->story_id());
-            $self->_build_story(story => $story, category => $category, url => $_->preview_url());
-        } elsif ($_->isa('Krang::Media')) {
-            $self->preview_media(media => $_);
+    foreach my $object (@$publish_list) {
+        if ($object->isa('Krang::Story')) {
+            info('Publisher.pm: Previewing story_id=' . $object->story_id());
+            $self->_build_story(story    => $object, 
+                                category => $object->category, 
+                                url      => $object->preview_url());
+        } elsif ($object->isa('Krang::Media')) {
+            $self->preview_media(media => $object);
         }
     }
 
@@ -250,12 +252,14 @@ sub publish_story {
 
     my $publish_list = $self->get_publish_list(story => $story);
 
-    foreach (@$publish_list) {
-        if ($_->isa('Krang::Story')) {
-            info('Publisher.pm: Publishing story_id=' . $_->story_id());
-            $self->_output_story(story => $_);
-        } elsif ($_->isa('Krang::Media')) {
-            $self->publish_media(media => $_);
+    foreach my $object (@$publish_list) {
+        if ($object->isa('Krang::Story')) {
+            info('Publisher.pm: Publishing story_id=' . $object->story_id());
+            $self->_build_story(story    => $object, 
+                                category => $object->category, 
+                                url      => $object->preview_url());
+        } elsif ($object->isa('Krang::Media')) {
+            $self->preview_media(media => $object);
         }
     }
 }
