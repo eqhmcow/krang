@@ -15,7 +15,7 @@
 				<xs:element name="email" type="xs:string"/>
 				<xs:element name="phone" type="xs:string"/>
 				<xs:element name="mobile_phone" type="xs:string"/>
-				<xs:element name="group_id" type="xs:int" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="group_id" type="xs:int" minOccurs="1" maxOccurs="unbounded"/>
 			</xs:sequence>
 		</xs:complexType>
 	</xs:element>

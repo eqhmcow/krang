@@ -829,7 +829,8 @@ sub deserialize_xml {
 
     # parse it up
     my $data = Krang::XML->simple(xml           => $xml,
-                                  suppressempty => 1);
+                                  suppressempty => 1,
+                                  forcearray => ['group_id'] );
     
     # is there an existing object?
     my $user = (Krang::User->find(login => $data->{login}))[0] || '';
@@ -847,6 +848,13 @@ sub deserialize_xml {
     } else {
         $user = Krang::User->new ( password => $data->{password}, encrypted => 1, (map { ($_,$data->{$_}) } keys %fields));
     }
+
+    my @group_ids = @{$data->{group_id}};
+    my @new_group_ids;
+    foreach my $g (@group_ids) {
+        push (@new_group_ids, $set->map_id(class => "Krang::Group", id => $g));
+    }
+    $user->group_ids(@new_group_ids);
 
     $user->save;
 }
