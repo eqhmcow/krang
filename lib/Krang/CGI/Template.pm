@@ -162,85 +162,6 @@ sub add_cancel {
 
 
 
-=item add_save
-
-Saves changes to the template object the end-user enacted on the 'Add' screen.
-The user is sent to 'My Workspace' if save succeeds and back to the 'Add'
-screen if it fails.
-
-=cut
-
-sub add_save {
-    my $self = shift;
-    my $q = $self->query();
-    my $template = $session{template};
-    croak("No object in session") unless ref $template;
-
-    # update template with CGI values
-    $self->update_template($template);
-
-    # validate
-    my %errors = $self->validate($template);
-    return $self->add(%errors) if %errors;
-
-    # save
-    %errors = $self->_save($template);
-    return $self->add(%errors) if %errors;
-
-    add_message('message_saved');
-
-    # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=> $uri);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$uri\">$uri</a>";
-}
-
-=item deploy
-
-Saves, deploys and checks in template.  Redirects to My Workspace.
-
-=cut
-
-sub deploy {
-    my $self = shift;
-    my $query = $self->query;
-
-    my $obj = $session{template};
-    croak("No object in session") unless ref $obj;
-
-    # update template with CGI values
-    $self->update_template($obj);
-
-    if ($obj->template_id) {
-        my %errors = $self->validate($obj);
-        return $self->edit(%errors) if %errors;
-
-        %errors = $self->_save($obj);
-        return $self->edit(%errors) if %errors;
-    } else {
-        my %errors = $self->validate($obj);
-        return $self->add(%errors) if %errors;
-
-        %errors = $self->_save($obj);
-        return $self->add(%errors) if %errors;
-    }
-
-    add_message('message_saved');
-
-    my $publisher = Krang::Publisher->new();
-    $publisher->deploy_template(template => $obj);
-    $obj->checkin;
-
-    add_message('deployed', id => $obj->template_id);
-
-    # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri => $uri);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$uri\">$uri</a>";
-}
-
 =item add_checkin
 
 Saves changes to the template object the end-user enacted on the 'Add'
@@ -277,6 +198,47 @@ sub add_checkin {
     return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
+
+
+=item add_save
+
+Saves changes to the template object the end-user enacted on the 'Add' screen.
+The user is sent to 'My Workspace' if save succeeds and back to the 'Add'
+screen if it fails.
+
+=cut
+
+sub add_save {
+    my $self = shift;
+    my $q = $self->query();
+    my $template = $session{template};
+    croak("No object in session") unless ref $template;
+
+    # update template with CGI values
+    $self->update_template($template);
+
+    # validate
+    my %errors = $self->validate($template);
+    return $self->add(%errors) if %errors;
+
+    # save
+    %errors = $self->_save($template);
+    return $self->add(%errors) if %errors;
+
+    # checkout
+    $template->checkout;
+
+    add_message('message_saved');
+
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri=> $uri);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$uri\">$uri</a>";
+}
+
+
+
 =item add_save_stay
 
 Validates changes to the template from the 'Add' screen, saves the updated
@@ -300,6 +262,9 @@ sub add_save_stay {
     # save
     %errors = $self->_save($template);
     return $self->add(%errors) if %errors;
+
+    # checkout
+    $template->checkout;
 
     add_message('message_saved');
 
@@ -387,6 +352,54 @@ sub advanced_search {
 
 
 
+=item checkin_selected
+
+Checkin all the templates which were checked on the list_active screen.
+
+=cut
+
+sub checkin_selected {
+    my $self = shift;
+    my $q = $self->query();
+    my @template_checkin_list = ( $q->param('krang_pager_rows_checked') );
+    $q->delete('krang_pager_rows_checked');
+
+    foreach my $template_id (@template_checkin_list) {
+         my ($m) = Krang::Template->find(template_id=>$template_id);
+         $m->checkin();
+     }
+
+     if (scalar(@template_checkin_list)) {
+         add_message('selected_template_checkin');
+     }
+     return $self->list_active;
+}
+
+
+
+=item checkout_and_edit
+
+Checks out the template object identified by template_id and sends the user
+to edit.
+
+=cut
+
+sub checkout_and_edit {
+    my $self = shift;
+    my $q = $self->query();
+
+    my $template_id = $q->param('template_id');
+    croak("Missing required template_id parameter.") unless $template_id;
+
+    my ($t) = Krang::Template->find(template_id=>$template_id);
+    croak("Unable to load template_id '$template_id'") unless $t;
+
+    $t->checkout;
+    return $self->edit;
+}
+
+
+
 =item delete
 
 Deletes a template object from the 'Edit' screen.  The user is sent back to the
@@ -462,26 +475,53 @@ sub delete_selected {
     return $self->search;
 }
 
-=item checkout_and_edit
 
-Checks out the template object identified by template_id and sends the user
-to edit.
+
+=item deploy
+
+Saves, deploys and checks in template.  Redirects to My Workspace.
 
 =cut
 
-sub checkout_and_edit {
+sub deploy {
     my $self = shift;
-    my $q = $self->query();
+    my $query = $self->query;
 
-    my $template_id = $q->param('template_id');
-    croak("Missing required template_id parameter.") unless $template_id;
+    my $obj = $session{template};
+    croak("No object in session") unless ref $obj;
 
-    my ($t) = Krang::Template->find(template_id=>$template_id);
-    croak("Unable to load template_id '$template_id'") unless $t;
+    # update template with CGI values
+    $self->update_template($obj);
 
-    $t->checkout;
-    return $self->edit;
+    if ($obj->template_id) {
+        my %errors = $self->validate($obj);
+        return $self->edit(%errors) if %errors;
+
+        %errors = $self->_save($obj);
+        return $self->edit(%errors) if %errors;
+    } else {
+        my %errors = $self->validate($obj);
+        return $self->add(%errors) if %errors;
+
+        %errors = $self->_save($obj);
+        return $self->add(%errors) if %errors;
+    }
+
+    add_message('message_saved');
+
+    my $publisher = Krang::Publisher->new();
+    $publisher->deploy_template(template => $obj);
+    $obj->checkin;
+
+    add_message('deployed', id => $obj->template_id);
+
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri => $uri);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$uri\">$uri</a>";
 }
+
 
 
 =item edit
@@ -537,6 +577,42 @@ sub edit_cancel {
 
 
 
+=item edit_checkin
+Saves changes to the template object the end-user enacted on the 'Edit' screen,
+then checks in.  The user is sent to 'My Workspace' if save succeeds and back
+to the 'Edit' screen if it fails.
+
+=cut
+
+sub edit_checkin {
+    my $self = shift;
+    my $q = $self->query();
+    my $template = $session{template};
+    croak("No object in session") unless ref $template;
+
+    # update template with CGI values
+    $self->update_template($template);
+
+    # validate
+    my %errors = $self->validate($template);
+    return $self->edit(%errors) if %errors;
+
+    # save
+    %errors = $self->_save($template);
+    return $self->edit(%errors) if %errors;
+
+    $template->checkin;
+    add_message('checkin_template', id => $template->template_id);
+
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri=> $uri);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$uri\">$uri</a>";
+}
+
+
+
 =item edit_save
 
 Saves changes to the template object the end-user enacted on the 'Edit' screen.
@@ -573,39 +649,6 @@ sub edit_save {
 }
 
 
-=item edit_checkin
-Saves changes to the template object the end-user enacted on the 'Edit' screen,
-then checks in.  The user is sent to 'My Workspace' if save succeeds and back
-to the 'Edit' screen if it fails.
-
-=cut
-
-sub edit_checkin {
-    my $self = shift;
-    my $q = $self->query();
-    my $template = $session{template};
-    croak("No object in session") unless ref $template;
-
-    # update template with CGI values
-    $self->update_template($template);
-
-    # validate
-    my %errors = $self->validate($template);
-    return $self->edit(%errors) if %errors;
-
-    # save
-    %errors = $self->_save($template);
-    return $self->edit(%errors) if %errors;
-
-    $template->checkin;
-    add_message('checkin_template', id => $template->template_id);
-
-    # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=> $uri);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$uri\">$uri</a>";
-}
 
 =item edit_save_stay
 
@@ -852,28 +895,7 @@ sub list_active {
     return $template->output;
 }
 
-=item checkin_selected
 
-Checkin all the templates which were checked on the list_active screen.
-
-=cut
-
-sub checkin_selected {
-    my $self = shift;
-    my $q = $self->query();
-    my @template_checkin_list = ( $q->param('krang_pager_rows_checked') );
-    $q->delete('krang_pager_rows_checked');
-
-    foreach my $template_id (@template_checkin_list) {
-         my ($m) = Krang::Template->find(template_id=>$template_id);
-         $m->checkin();
-     }
-
-     if (scalar(@template_checkin_list)) {
-         add_message('selected_template_checkin');
-     }
-     return $self->list_active;
-}
 
 #############################
 #####  PRIVATE METHODS  #####
@@ -936,7 +958,8 @@ sub get_tmpl_params {
             push @history_params, $q->hidden(-name => $k,
                                              -value => $v,
                                              -override => 1);
-            $tmpl_params{was_edit} = 1 if (($k eq 'rm') and ($v eq 'checkout_and_edit'));
+            $tmpl_params{was_edit} = 1
+              if (($k eq 'rm') && ($v eq 'checkout_and_edit'));
         }
         $tmpl_params{history_return_params} = join("\n", @history_params);
 
@@ -945,7 +968,7 @@ sub get_tmpl_params {
                                             ($template->checked_out_by ne
                                              $ENV{REMOTE_USER})) );
     }
-             
+
     return \%tmpl_params;
 }
 
@@ -1068,7 +1091,15 @@ sub update_template {
         } elsif ($_ eq 'category_id') {
             $template->$_($val) if $val ne '';
         } else {
-            $template->$_($val) if $val ne '';
+            eval {$template->$_($val);};
+            if ($@) {
+                # this case will eventually get caught at validate()
+                if ($_ eq 'filename' && $@ =~ /invalid characters|'.tmpl'/) {
+                    $template->{filename} = $val;
+                } else {
+                    die $@;
+                }
+            }
         }
         $q->delete($_);
     }
@@ -1093,9 +1124,15 @@ sub validate {
         $errors{error_invalid_category_id} = 1
           unless $category_id =~ /^\d+$/;
 
+        my $filename = $template->filename || '';
+
         # see if filename is set
          $errors{error_no_filename} = 1
-            unless $template->filename;
+            unless $filename;
+
+        # check for a valid filename
+        $errors{error_invalid_filename} = 1
+          unless $filename =~ /^[-\w]+\.tmpl$/;
     }
 
     add_message($_) for keys %errors;
