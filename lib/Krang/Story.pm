@@ -733,6 +733,11 @@ May be either a single date (a L<Time::Piece::MySQL> object) or an
 array of dates specifying a range.  In ranges either member may be
 C<undef>, specifying no limit in that direction.
 
+=item class
+
+Set this to an element class name to limit results to only those
+containing that class.
+
 =item story_id
 
 Load a story by ID.  Given an array of story IDs, loads all the identified
