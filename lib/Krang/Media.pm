@@ -8,7 +8,7 @@ use Krang::Contrib;
 use Krang::Category;
 use Carp qw(croak);
 use Storable qw(freeze thaw);
-use File::Spec::Functions qw(catdir catfile);
+use File::Spec::Functions qw(catdir catfile splitpath);
 use File::Path;
 use File::Copy;
 use LWP::MediaTypes qw(guess_media_type);
@@ -378,7 +378,7 @@ sub upload_file {
 
     my $session_id = $session{_session_id}; 
  
-    my $path = tempdir();
+    my $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
     my $filepath = catfile($path, $filename);
     open (FILE, ">$filepath") || croak("Unable to open $path for writing media!"); 
    
@@ -387,8 +387,9 @@ sub upload_file {
     close $filehandle;
     close FILE;
 
-    $self->{tempdir} = $path;
+    $self->{tempfile} = $filepath;
     $self->{filename} = $filename;
+
     return $self; 
 }
 
@@ -405,7 +406,8 @@ sub mime_type {
 
 =item $file_path = $media->file_path() 
 
-Return filesystem path of uploaded media file.
+Return filesystem path of uploaded media file.  Returns undef before
+upload_file() on new objects.
 
 =cut
 
@@ -417,12 +419,18 @@ sub file_path {
     my $instance = Krang::Conf->instance;
     my $session_id = $session{_session_id} || croak("No session id found");
 
+    # no file_path if no filename
+    return unless $filename;
+
+    # if we have a temp file, return it
+    return $self->{tempfile} if $self->{tempfile};
+
     # return path based on if object has been committed to db yet
-    if ($media_id) { 
-        return catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename});
-    } else {
-        $self->{tempdir} ? return catfile($self->{tempdir},$filename) : return 0;
-    }
+    return catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename})
+      if $self->{media_id};
+
+    # no file_path found
+    return;
 }
 
 sub _media_id_path {
@@ -447,7 +455,7 @@ Return filesize in bytes.
 
 sub file_size {
     my $self = shift;
-    if (-f $self->file_path()) {
+    if ($self->file_path()) {
         my $st = stat($self->file_path());
         return $st->size;
     } else {
@@ -496,23 +504,25 @@ sub save {
         
         my $sql = 'UPDATE media SET '.join(', ',map { "$_ = ?" } @save_fields).' WHERE media_id = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$media_id);
-	# this file exists, new media was uploaded. copy to new position	
-	if (-f catfile($self->{tempdir},$self->{filename})) {
-	   my $old_path = catfile($self->{tempdir},$self->{filename});
-           my $new_path = catdir($root,'data','media',Krang::Conf->instance, $self->_media_id_path,$self->{version});
-	   mkpath($new_path);     
-	   $new_path = catfile($new_path,$self->{filename});
+
+	# this file exists, new media was uploaded. copy to new position
+	if ($self->{tempfile}) {
+	   my $old_path = delete $self->{tempfile};
+           my $new_path = $self->file_path;
+	   mkpath((splitpath($new_path))[1]);     
 	   move($old_path,$new_path) || croak("Cannot move to $new_path");	
 	} else {
 	    # symbolically link to version dir, since it isnt changing 
-	    my $old_path = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path,($self->{version} - 1));
-	    my $new_path = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version});
+            $self->{version}--;
+	    my $old_path = $self->file_path;
+            $self->{version}++;
+	    my $new_path = $self->file_path;
 	    link $old_path, $new_path || croak("Unable to create link $old_path to $new_path");	
 	}
     } else {
-	if (not -f catfile($self->{tempdir},$self->{filename})) {
-            croak('You must upload a file using upload_file() before saving media object!')
-	} 
+        croak('You must upload a file using upload_file() before saving media object!')
+          unless $self->{tempfile};
+
 	$self->{version} = 1;
         my $time = localtime();
         $self->{creation_date} = $time->mysql_datetime();   
@@ -526,21 +536,10 @@ sub save {
 
         $media_id = $self->{media_id};
 
-	my $old_path = catfile($self->{tempdir},$self->{filename});
-	my $new_path = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version}); 
-	mkpath($new_path);
-	$new_path = catfile($new_path,$self->{filename});		
+	my $old_path = delete $self->{tempfile};
+	my $new_path = $self->file_path;
+	mkpath((splitpath($new_path))[1]);
 	move($old_path,$new_path) || croak("Cannot create $new_path");
-
-        # move thumbnail too if exists
-        if ( -f catfile($self->{tempdir},$self->{filename}) ) {
-            $old_path = catfile($self->{tempdir},"t__".$self->{filename});
-            $new_path = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version});
-            mkpath($new_path);
-            $new_path = catfile($new_path,"t__".$self->{filename});               
-        move($old_path,$new_path) || croak("Cannot create $new_path");
-
-        }
     }
 
     # remove any existing media_contrib relatinships and save any new relationships
@@ -752,10 +751,10 @@ sub revert {
     $self->{checked_out_by} = $checked_out_by;
 
     # copy old media file into tmp storage
-    my $path = tempdir( CLEANUP => 1);
+    my $path = tempdir( DIR => catdir(KrangRoot, "tmp") );
     my $filepath = catfile($path, $self->{filename});
     copy($old_filepath,$filepath); 
-    $self->{tempdir} = $path;
+    $self->{tempfile} = $filepath;
     return $self; 
 }
 
@@ -780,14 +779,16 @@ sub thumbnail_path {
             }
         }
         if ($is_image) {    
-            my $path = $self->{media_id} ? catfile($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version},"t__".$filename) : catfile($self->{tempdir},"t__".$filename);
+            # path is the same as the file path with t__ in front of
+            # the filename
+            my $path = catfile((splitpath($self->file_path))[1], "t__$filename");
             if (not -f $path) {
                 my $img = Imager->new();
                 $img->open(file=>$self->file_path()) || croak $img->errstr();
                 my $thumb = $img->scale(xpixels=>THUMBNAIL_SIZE,ypixels=>THUMBNAIL_SIZE,type=>'min');
                 $thumb->write(file=>$path) || croak $thumb->errstr;
             } 
-            return $self->{thumbnail_path} = $path;
+            return $path;
         }
     }
 }
