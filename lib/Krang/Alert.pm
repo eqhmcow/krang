@@ -369,7 +369,7 @@ sub send {
     # mail only if user has email address defined or being tested
     my $email_to = $ENV{KRANG_TEST_EMAIL} || $to_user->email;
     if ($email_to) { 
-        debug(__PACKAGE__."->send() - sending email to ".$to_user->email.": $message");
+        debug(__PACKAGE__."->send() - sending email to ".$email_to.": $message");
         my $sender = new Mail::Sender {smtp => SMTPServer, from => FromAddress};
 
         $sender->MailMsg({  to => $email_to, 
