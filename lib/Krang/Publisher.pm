@@ -109,8 +109,9 @@ use Krang::Log qw(debug info critical);
 use constant PUBLISHER_RO => qw(is_publish is_preview story category);
 
 
-use constant PAGE_BREAK    => "<<<<<<<<<<<<<<<<<< PAGE BREAK >>>>>>>>>>>>>>>>>>";
-use constant CONTENT       => "<<<<<<<<<<<<<<<<<< CONTENT >>>>>>>>>>>>>>>>>>";
+use constant PAGE_BREAK         => "<<<<<<<<<<<<<<<<<< PAGE BREAK >>>>>>>>>>>>>>>>>>";
+use constant CONTENT            => "<<<<<<<<<<<<<<<<<< CONTENT >>>>>>>>>>>>>>>>>>";
+use constant ADDITIONAL_CONTENT => "KRANG_ADDITIONAL_CONTENT";
 
 use Exception::Class
   'Krang::Publisher::FileWriteError' => {fields => [ 'story_id', 'media_id', 'template_id',
@@ -209,6 +210,9 @@ sub preview_story {
 
     my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
+    # set internal mode - preview, not publish.
+    $self->_mode_is_preview();
+
     # in the event the category argument has been added, preview the story
     # using this category.
     # Otherwise, use the story's primary category.
@@ -220,9 +224,6 @@ sub preview_story {
         $url = $story->preview_url();
     }
 
-    # set internal mode - publish, not preview.
-    $self->{is_publish} = 0;
-    $self->{is_preview} = 1;
 
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
@@ -236,20 +237,22 @@ sub preview_story {
     my $counter = 0;
     my @paths;
     foreach my $object (@$publish_list) {
-        $callback->(object => $object,
-                    total  => $total,
+
+        $callback->(object  => $object,
+                    total   => $total,
                     counter => $counter++) if $callback;
+
         if ($object->isa('Krang::Story')) {
             debug('Publisher.pm: Previewing story_id=' . $object->story_id());
-            @paths = $self->_build_story_single_category(story => $object,
-                                           category => $object->category,
-                                           url      => $object->preview_url());
+            @paths = $self->_build_story_single_category(story    => $object,
+                                                         category => $object->category,
+                                                         url      => $object->preview_url()
+                                                        );
 
             # fix up publish locations
-            $self->_rectify_publish_locations(object => $object,
-                                              paths  => \@paths,
+            $self->_rectify_publish_locations(object  => $object,
+                                              paths   => \@paths,
                                               preview => 1);
-    
 
         } elsif ($object->isa('Krang::Media')) {
             debug('Publisher.pm: Previewing media_id=' . $object->media_id());
@@ -288,6 +291,10 @@ sub publish_story {
 
     my $self = shift;
     my %args = @_;
+
+    # set internal mode - publish, not preview.
+    $self->_mode_is_publish();
+
     # callbacks
     my $callback      = $args{callback};
     my $skip_callback = $args{skip_callback};
@@ -297,13 +304,11 @@ sub publish_story {
 
     my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
-    # set internal mode - publish, not preview.
-    $self->{is_publish} = 1;
-    $self->{is_preview} = 0;
 
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
+    # build the list of assets to publish.
     if ($args{disable_related_assets}) {
         debug(__PACKAGE__ . ": disabling related_assets checking for publish");
         if (ref $story eq 'ARRAY') {
@@ -327,8 +332,9 @@ sub publish_story {
                 }
             }
 
-            $callback->(object => $object,
-                        total  => $total,
+            # don't make callbacks on media, that's handled in publish_media().
+            $callback->(object  => $object,
+                        total   => $total,
                         counter => $counter++) if $callback;
 
             my @paths = $self->_build_story_all_categories(story => $object);
@@ -337,6 +343,8 @@ sub publish_story {
             $self->_rectify_publish_locations(object => $object,
                                               paths  => \@paths,
                                               preview => 0);
+            # mark as published.
+            $object->mark_as_published();
 
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object, %args);
@@ -412,7 +420,7 @@ sub unpublish_media {
 
 Copies a media file out to the webserver doc root for the preview website.
 
-Attributes media and category are required.
+Argument media is required.
 
 Returns a url to the media file on the preview website if successful.
 
@@ -427,40 +435,11 @@ sub preview_media {
 
     croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
 
+    $self->_mode_is_preview();
+
     my $media = $args{media};
 
-    my $internal_path = $media->file_path();
-    my $preview_path = $media->preview_path();
-
-    $preview_path =~ /^(.*\/)[^\/]+/;
-    my $dir_path = $1;
-
-    # make sure the output dir exists
-    eval {mkpath($dir_path, 0, 0755); };
-    if ($@) {
-        Krang::Publisher::FileWriteError->throw(message => 'Could not create preview directory',
-                                                destination => $dir_path,
-                                                system_error => $@);
-    }
-
-    # copy file out to the production path
-    unless (copy($internal_path, $preview_path)) {
-        Krang::Publisher::FileWriteError->throw(message  => 'Could not preview media file',
-                                                media_id => $media->media_id(),
-                                                source   => $internal_path,
-                                                destination => $preview_path,
-                                                system_error => $!
-                                               );
-    }
-
-        
-    # fix up publish location
-    $self->_rectify_publish_locations(object => $media,
-                                      paths  => [ $preview_path ],
-                                      preview => 1);
-
-    return $media->preview_url();
-
+    return $self->_write_media(media => $media);
 
 }
 
@@ -480,6 +459,8 @@ Will throw an exception if there are problems with the copy.
 sub publish_media {
     my $self = shift;
     my %args = @_;
+
+    $self->_mode_is_publish();
 
     # callbacks
     my $callback      = $args{callback};
@@ -514,8 +495,16 @@ sub publish_media {
         $callback->(object => $media_object,
                     total  => $total,
                     counter => $counter++) if $callback;
-        push @urls, $self->_write_media($media_object);
+
+        push @urls, $self->_write_media(media => $media_object);
+
+        # log event
+        add_history(object => $media_object, action => 'publish');
+
+        $media_object->mark_as_published();
+
     }
+
 
     return @urls;
 
@@ -769,7 +758,7 @@ sub additional_content_block {
     my $filename = $args{filename} || croak __PACKAGE__ . ": missing required argument 'filename'";
     my $use_category = exists($args{use_category}) ? $args{use_category} : 1;
 
-    return qq{<KRANG_ADDITIONAL_CONTENT filename="$filename" use_category="$use_category">$content</KRANG_ADDITIONAL_CONTENT>};
+    return qq{<${\ADDITIONAL_CONTENT} filename="$filename" use_category="$use_category">$content</${\ADDITIONAL_CONTENT}>};
 
 }
 
@@ -791,7 +780,6 @@ sub story_filename {
 
     my $page     = $args{page} || 0;
     my $story    = $args{story} || $self->story;
-
 
     my $element = $story->element();
 
@@ -1080,16 +1068,16 @@ sub _build_story_all_categories {
 
 
 #
-# @paths = _build_story_single_category(story => $story, category => $category, url => $url);
+# @paths = _build_story_single_category(story => $story, category => $category);
 #
 # Used by both preview & publish processes.
 #
-# Given a story object, a category to publish under, and the url that
-# indicates a final output path, run through the publish process for
-# that story & category, and write out the resulting content under the
-# filename that's indicated by the submitted url.
+# Takes a Krang::Story and Krang::Category object.  Builds the story
+# pages (and additional content, if it exists) for the story, and
+# writes output to disk.
 #
-# Returns a list of file-system paths where the story was written
+# Returns a list of files written to the filesystem (w/ complete path).
+#
 
 sub _build_story_single_category {
 
@@ -1098,40 +1086,13 @@ sub _build_story_single_category {
 
     my $story    = $args{story};
     my $category = $args{category};
-    my $url      = $args{url};
 
-    my $path;
-
-    # create output path.
-    if ($self->{is_publish}) {
-        $path = $story->publish_path(category => $category);
-    } elsif ($self->{is_preview}) {
-        $path = $story->preview_path();
-    }
+    my @paths;
 
     # build the story HTML.
     my $story_pages = $self->_assemble_pages(story => $story, category => $category);
 
-    # iterate over story pages, writing them to disk.
-    my @paths;
-    for (my $p = 0; $p < @$story_pages; $p++) {
-
-        # get the path & filename:
-        my $filename = $self->story_filename(story => $story, page => $p);
-
-        # write the page to disk.
-        my $output_filename = $self->_write_page(path => $path,
-                                                 filename => $filename,
-                                                 story_id => $story->story_id,
-                                                 data => $story_pages->[$p]);
-        
-        push(@paths, $output_filename);
-    }
-   
-    # mark object as published - this will update status info,
-    # check the object back in, and remove it from desks,
-    # as needed.
-    $story->mark_as_published() if $self->{is_publish};
+    push @paths, $self->_write_story(story => $story, pages => $story_pages, category => $category);
 
     return @paths;
 }
@@ -1277,51 +1238,103 @@ sub _clear_asset_lists {
 
 sub _write_media {
     my $self = shift;
-    my $media = shift;
+    my %args = @_;
+
+    my $media = $args{media} || croak __PACKAGE__ . ": missing argument 'media'";
+    my $is_preview = 0;
 
     my $internal_path = $media->file_path();
-    my $publish_path = $media->publish_path();
+    my $output_path;
 
-    $publish_path =~ /^(.*\/)[^\/]+/;
+    if ($self->{is_publish}) {
+        $output_path = $media->publish_path();
+    } elsif ($self->{is_preview}) {
+        $output_path = $media->preview_path();
+        $is_preview = 1;
+    } else {
+        croak __PACKAGE__ . ": Cannot determine preview/publish mode";
+    }
+
+    $output_path =~ /^(.*\/)[^\/]+/;
     my $dir_path = $1;
 
     # make sure the output dir exists
     eval {mkpath($dir_path, 0, 0755); };
     if ($@) {
-        Krang::Publisher::FileWriteError->throw(message => 'Could not create publish directory',
+        Krang::Publisher::FileWriteError->throw(message => 'Could not create output directory',
                                                 destination => $dir_path,
                                                 system_error => $@);
     }
 
     # copy file out to the production path
-    unless (copy($internal_path, $publish_path)) {
-        Krang::Publisher::FileWriteError->throw(message  => 'Could not publish media file',
+    unless (copy($internal_path, $output_path)) {
+        Krang::Publisher::FileWriteError->throw(message  => 'Could not copy media file',
                                                 media_id => $media->media_id(),
                                                 source   => $internal_path,
-                                                destination => $publish_path,
+                                                destination => $output_path,
                                                 system_error => $!
                                                );
     }
 
-    # fix up publish location
+    # fix up output location
     $self->_rectify_publish_locations(object => $media,
-                                      paths  => [ $publish_path ],
-                                      preview => 0);
+                                      paths  => [ $output_path ],
+                                      preview => $is_preview);
 
-    # log event
-    add_history(object => $media, action => 'publish');
+    # return URL
+    $is_preview ? return $media->preview_url : return $media->url;
 
-    # mark object as published - this will update status info,
-    # check the object back in, and remove it from desks,
-    # as needed.
-    $media->mark_as_published();
-
-    return $media->url();
 }
 
 
 #
-# $output_filename = _write_page(path => $path, filename => $filename, data => $content)
+# @filenames = _write_story(story => $story_obj, category => $category, pages => \@story_pages);
+#
+# Given a Krang::Story object and a list of pages comprising the published
+# version of the object, write the pages to the filesystem.
+#
+# Returns the list of files written out.
+#
+
+sub _write_story {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $story    = $args{story}    || croak __PACKAGE__ . ": missing argument 'story'";
+    my $pages    = $args{pages}    || croak __PACKAGE__ . ": missing argument 'pages'";
+    my $category = $args{category} || croak __PACKAGE__ . ": missing argument 'category'";
+
+    my $output_path;
+    my @created_files;
+
+    # determine output path
+    if ($self->{is_publish}) {
+        $output_path = $story->publish_path(category => $category);
+    } elsif ($self->{is_preview}) {
+        $output_path = $story->preview_path();
+    } else {
+        croak __PACKAGE__ . ": Cannot determine preview/publish mode";
+    }
+
+    for (my $page_num = 0; $page_num < @$pages; $page_num++) {
+
+        my $filename = $self->story_filename(story => $story, page => $page_num);
+
+        my $output_filename = $self->_write_page(path     => $output_path,
+                                                 filename => $filename,
+                                                 story_id => $story->story_id,
+                                                 data     => $pages->[$page_num]);
+
+        push(@created_files, $output_filename);
+    }
+
+    return @created_files;
+
+}
+
+#
+# $output_filename = _write_page(path => $path, filename => $filename, data => $content, story_id => $id)
 #
 # Writes the content in $data to $path/$filename.
 #
@@ -1362,6 +1375,32 @@ sub _write_page {
     return $output_filename;
 }
 
+
+
+#
+# MODES -
+#
+# The internal hash keys is_preview and is_publish are checked in a lot of places
+# quick subroutines to cut down on issues.
+#
+
+sub _mode_is_preview {
+
+    my $self = shift;
+
+    $self->{is_preview} = 1;
+    $self->{is_publish} = 0;
+
+}
+
+sub _mode_is_publish {
+
+    my $self = shift;
+
+    $self->{is_preview} = 0;
+    $self->{is_publish} = 1;
+
+}
 
 my $EBN =<<EOEBN;
 
