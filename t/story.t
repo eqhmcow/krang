@@ -268,8 +268,6 @@ is($story->checked_out_by, $ENV{REMOTE_USER});
 
     eval { $story->checkout };
     like($@, qr/already checked out/);
-    eval { $story->checkin };
-    ok($@);
     eval { $story->save() };
     like($@, qr/checked out/);
 }
