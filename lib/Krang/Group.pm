@@ -1021,7 +1021,7 @@ In this case, the resultant permissions for this user will be:
 
 You can also request permissions for a particular asset by specifying it:
 
-  my $media_access = Krang::Group->user_desk_permissions('media');
+  my $media_access = Krang::Group->user_asset_permissions('media');
 
 =cut
 
@@ -1147,7 +1147,7 @@ a high privilege when it is set to 0 -- not 1.)
 
 You can also request permissions for a particular admin function by specifying it:
 
-  my $may_publish = Krang::Group->user_desk_permissions('may_publish');
+  my $may_publish = Krang::Group->user_admin_permissions('may_publish');
 
 
 =cut
