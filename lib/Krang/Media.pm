@@ -6,6 +6,7 @@ use Krang::Conf qw(KrangRoot);
 use Krang::Session qw(%session);
 use Krang::Contrib;
 use Krang::Category;
+use Krang::History qw( add_history );
 use Carp qw(croak);
 use Storable qw(freeze thaw);
 use File::Spec::Functions qw(catdir catfile splitpath);
