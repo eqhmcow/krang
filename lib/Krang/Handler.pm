@@ -78,7 +78,7 @@ use Apache::Cookie;
 use File::Spec::Functions qw(splitdir rel2abs catdir catfile);
 use Carp qw(croak);
 use Krang::Conf qw(KrangRoot);
-use HTML::Template;
+use Krang::HTMLTemplate;
 use Digest::MD5 qw(md5_hex md5);
 use Krang::Log qw(critical info debug);
 use CGI ();
@@ -302,10 +302,8 @@ sub authz_handler ($$) {
 sub instance_menu {
     my ($r) = @_;
 
-    my $template = HTML::Template->new(filename => 'instance_menu.tmpl',
-                                       cache    => 1,
-                                       path     => 
-                                       rel2abs(catdir(KrangRoot,"templates")));
+    my $template = Krang::HTMLTemplate->new(filename => 'instance_menu.tmpl',
+                                            cache    => 1);
 
     # setup the instance loop
     my @loop;

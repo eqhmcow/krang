@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
-use HTML::Template;
+use Krang::HTMLTemplate;
 use Time::Piece qw(localtime);
 use Krang::Category;
 use Krang::Conf qw(KrangRoot);
@@ -96,13 +96,11 @@ sub category_chooser {
     # field defaults to name
     $field ||= $name;
 
-    my $template = HTML::Template->new(filename => 
-                                       catfile(KrangRoot, "templates",
-                                               "Widget", 
-                                               "category_chooser.tmpl"),
-                                       cache   => 1,
-                                       die_on_bad_params => 1,
-                                      );
+    my $template = Krang::HTMLTemplate->new(filename => 
+                                            "Widget/category_chooser.tmpl",
+                                            cache   => 1,
+                                            die_on_bad_params => 1,
+                                           );
 
     my $category_id = $query->param($field) || 0;
 
