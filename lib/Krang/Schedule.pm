@@ -95,6 +95,7 @@ use Carp qw(verbose croak);
 use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
+use Storable qw(freeze thaw);
 
 # Internal Modules
 ###################
@@ -127,7 +128,7 @@ use constant SCHEDULE_RW => qw(action
 
 # Globals
 ##########
-our %action_map = (alert => {send => ''},
+our %action_map = (alert => {send => sub { Krang::Alert->send(@_) } },
                    media => {expire => '',
                              publish => ''},
                    story => {expire => '',
@@ -632,9 +633,9 @@ sub run {
 
         # how do we handle context?  thaw it and pass it to the call
         # we're about to make
-        my @args;
+        my $args;
         if ($context) {
-            eval {@args = thaw($context)};
+            eval {$args = thaw($context)};
             $eval_err = $@;
             $log->print("ERROR: can't thaw 'context' for Krang::Schedule " .
                         "'$schedule_id': $eval_err")
@@ -648,10 +649,10 @@ sub run {
         } else {
             my $call = $action_map{$type}->{$action};
             eval {
-                if (@args) {
-                    &$call($type.'_id' => $object_id, @args);
+                if ($args) {
+                    $call->($type.'_id' => $object_id, @$args );
                 } else {
-                    &$call($type.'_id' => $object_id);
+                    $call->($type.'_id' => $object_id);
                 }
             };
             $eval_err = $@;
@@ -708,8 +709,15 @@ sub save {
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
+    # freeze context for database store
+    my $context_array = $self->{context};
+    $self->{context} = freeze($context_array);
+ 
     # bind parameters
     my @params = map {$self->{$_}} @save_fields;
+
+    # restore context in object
+    $self->{context} = $context_array;        
 
     # need user_id for updates
     push @params, $id if $id;
