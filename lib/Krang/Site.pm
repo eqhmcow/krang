@@ -459,8 +459,6 @@ sub save {
     } else {
         $query = "INSERT INTO site (" . join(',', @save_fields) .
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
-        my $time = localtime();
-        $self->{creation_date} = $time->strftime("%Y-%m-%d %T");
     }
 
     # bind parameters
