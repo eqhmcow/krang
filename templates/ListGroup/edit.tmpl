@@ -78,6 +78,47 @@
         }
     }
 
+    function do_move(list_count, down) {
+        var select_val = get_selected_val(list_count);
+        if (select_val != 'undef' ) {
+            var indexArray = select_val.split('][');
+            var last_index = indexArray.pop();
+            select_val = indexArray.join('][');
+            var firstHalf;
+            var secondHalf;
+            if (down) {
+                last_index = parseInt(last_index) + 1;
+            } else {
+                if (last_index == 0) {
+                    return;
+                } 
+            }
+            if (! select_val) {
+                firstHalf = eval( 'list_data.slice(0, ' + last_index + ')' );
+                secondHalf = eval( 'list_data.slice(' + last_index + ')'
+);
+            } else {
+                 firstHalf = eval( 'list_data[' + select_val + '].slice(0, ' + last_index + ')' );
+                secondHalf = eval( 'list_data[' + select_val + '].slice(' + last_index + ')' );
+            }
+            if (down && (secondHalf.length == 0)) {
+                return;
+            }
+            var prev = firstHalf.pop();
+            var current = secondHalf.shift();
+            firstHalf.push(current);
+            secondHalf.unshift(prev);
+        
+            if (! select_val) {
+                list_data = firstHalf.concat(secondHalf);
+            } else {
+                eval( 'list_data[' + select_val + '] = firstHalf.concat(secondHalf)' );
+            }
+        }
+         
+        populate_list(list_count-1);
+    }
+
     function do_add(list_count) {
         var select_val = get_selected_val(list_count);
         if (select_val != 'undef' ) {
@@ -96,6 +137,7 @@
 
             var t = new Array();
             t['__data__'] = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+            eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''" );
             secondHalf.unshift(t);
             if (! select_val) {
                 list_data = firstHalf.concat(secondHalf);
@@ -132,6 +174,8 @@
 <tmpl_loop list_loop>
 <tr><td><tmpl_var list_name></td><td><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
 <tmpl_if list_item_loop><tmpl_loop list_item_loop><option value="<tmpl_var order>"><tmpl_var data></tmpl_loop></tmpl_if></select>
+<br>&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:do_move(<tmpl_var list_count>, 1)"><img src="images/arrow-asc.gif" border="0"></a>
+<a href="javascript:do_move(<tmpl_var list_count>)"><img src="images/arrow-desc.gif" border="0"></a>
 <br><input type="text" name="new_item_<tmpl_var list_count>">
 <input type="button" value="Add" onClick="do_add(<tmpl_var list_count>)" class="button">
 <input type="button" value="Replace" onClick="do_replace(<tmpl_var list_count>)" class="button">
