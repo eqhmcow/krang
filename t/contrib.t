@@ -41,4 +41,10 @@ my $contrib3 = $contrib_object2[0];
 
 is($contrib3->contrib_id, $contrib_id);
 
+# test count
+my $count = Krang::Contrib->find( full_name => 'matt vella',
+                                  count     => 1 );
+is($count, 1);
+
 $contrib2->delete();
+

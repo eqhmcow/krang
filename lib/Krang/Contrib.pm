@@ -341,7 +341,7 @@ sub find {
     while (my $row = $sth->fetchrow_hashref()) {
         my $obj;
         if ($args{'count'}) {
-            return $row->{count};
+            return $row->{'count(*)'};
         } elsif ($args{'only_ids'}) {
             $obj = $row->{contrib_id};
         } else {
