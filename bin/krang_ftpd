@@ -34,7 +34,6 @@ $@
 END
 }
 
-use Krang;
 use Krang::Conf qw(FTPPort FTPAddress);
 
 # load the server
