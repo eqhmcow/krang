@@ -252,6 +252,7 @@ sub do_install {
     install_krang();
     configure_krang();
     install_addons();
+    create_database();
     update_password();
     add_krang_init();
     start_krang();
@@ -708,7 +709,6 @@ sub configure_krang {
     my $InstallPath = $options{InstallPath};
     chdir($InstallPath);
 
-
     if ($options{FromBackup}) {
         print "Updating backup krang.conf\n";
 
@@ -736,22 +736,6 @@ sub configure_krang {
         }
         close CONF;
         
-        print "  Conf written to '$InstallPath/conf/krang.conf'.\n";
-
-        # load database SQL
-        opendir(BACKUP, catdir($ENV{KRANG_ROOT}, 'data', 'backup'))
-          or die "Unable to open data/backup: $!";
-        my @sql = grep { /\.sql$/ } readdir(BACKUP);
-        closedir(BACKUP);
-                
-        foreach my $sql (@sql) {
-            print "Creating MySQL database from backup source '$sql'.\n";
-            my $file = catfile($ENV{KRANG_ROOT}, 'data', 'backup', $sql);
-            my $cmd = "cat $file | mysql -uroot ";
-            $cmd .= " -p$options{'MySQLRootPassword'}" 
-              if length $options{'MySQLRootPassword'};
-            system($cmd);
-        }
 
     } else {
     
@@ -768,8 +752,33 @@ sub configure_krang {
         open(OUTPUT, ">$output_conf") || die("Can't open '$output_conf' for writing: $!");
         print OUTPUT $t->output();
         close(OUTPUT);
-        print "  Conf written to '$output_conf'.\n";
+    }
 
+    print "  Conf written to '$InstallPath/conf/krang.conf'.\n";
+}
+
+
+# create the DB
+sub create_database {
+    my $InstallPath = $options{InstallPath};
+    chdir($InstallPath);
+
+    if ($options{FromBackup}) {
+        # load database SQL
+        opendir(BACKUP, catdir($ENV{KRANG_ROOT}, 'data', 'backup'))
+          or die "Unable to open data/backup: $!";
+        my @sql = grep { /\.sql$/ } readdir(BACKUP);
+        closedir(BACKUP);
+                
+        foreach my $sql (@sql) {
+            print "Creating MySQL database from backup source '$sql'.\n";
+            my $file = catfile($ENV{KRANG_ROOT}, 'data', 'backup', $sql);
+            my $cmd = "cat $file | mysql -uroot ";
+            $cmd .= " -p$options{'MySQLRootPassword'}" 
+              if length $options{'MySQLRootPassword'};
+            system($cmd);
+        }
+    } else {
         # Create DB
         print "Creating MySQL database and loading schema\n";
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
@@ -778,7 +787,6 @@ sub configure_krang {
         system($createdb) && die("Error calling krang_createdb.  Unable to continue");
     }
 }
-
 
 sub install_addons {
     my @addons = @{$options{WithAddon}};
