@@ -88,7 +88,7 @@ sub save {
     if (defined $self->{list_group_id}) {
         $list_group_id = $self->{list_group_id};
         
-        # get rid of alert_id 
+        # get rid of list_group_id 
         my @save_fields = grep {$_ ne 'list_group_id'} RO_FIELDS,RW_FIELDS;
 
         my $sql = 'UPDATE list_group set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE list_group_id = = ?';
@@ -163,7 +163,7 @@ sub find {
     my $dbh = dbh;
 
     my @where;
-    my @alert_object;
+    my @lg_object;
 
     my %valid_params = ( list_group_id => 1,
                          name => 1,
@@ -237,15 +237,15 @@ not $valid_params{$param};
             return $row->{count};
         } elsif ($args{'ids_only'}) {
             $obj = $row->{list_group_id};
-            push (@alert_object,$obj);
+            push (@lg_object,$obj);
         } else {
             $obj = bless {%$row}, $self;
 
-            push (@alert_object,$obj);
+            push (@lg_object,$obj);
         }
     }
     $sth->finish();
-    return @alert_object;
+    return @lg_object;
 
 }
 
