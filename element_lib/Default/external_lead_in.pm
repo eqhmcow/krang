@@ -26,8 +26,8 @@ sub new {
                                                    size => 2,
                                                    values => [ "Large",
                                                                "Small"],
-                                                   default => "Small"
-                                                              ),
+                                                   default => ["Small"],
+                                                  ),
                  Krang::ElementClass::Textarea->new(name => "title",
                                                     min => 1,
                                                     max => 1

@@ -26,6 +26,11 @@ sub freeze_data {
     return $ret;
 }
 
+sub check_data {
+    my ($class, %arg) = @_;
+    croak("Storable element classes require refs in data().")
+      unless not defined $arg{data} or ref($arg{data});
+}
 
 =head1 NAME
 

@@ -20,13 +20,27 @@ sub new {
     return $pkg->SUPER::new(%args);
 }
 
+sub check_data {
+    my ($class, %arg) = @_;
+    croak("ListBox element class requires an array-ref in data().")
+      unless not defined $arg{data} or 
+        (ref($arg{data}) and ref($arg{data}) eq 'ARRAY');
+}
+
 sub input_form {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
+    my $default;
+    if ($self->multiple) {
+        $default = $element->data || [];
+    } else {
+        $default = $element->data ? $element->data()->[0] : "";
+    }
+
     return scalar $query->scrolling_list(-name      => $param,
-                                         -default   => $element->data(),
+                                         -default   => $default,
                                          -values    => $self->values(),
                                          -labels    => $self->labels(),
                                          -size      => $self->size(),
@@ -54,7 +68,9 @@ Krang::ElementClass::ListBox - list box element class
                      values       => [ 'red', 'white', 'blue' ],
                      labels       => { red   => "Red",
                                        white => "White",
-                                       blue  => "Blue" });
+                                       blue  => "Blue" }.
+                     default      => [ 'white' ],
+                    );
                                                              
 
 =head1 DESCRIPTION
@@ -62,6 +78,9 @@ Krang::ElementClass::ListBox - list box element class
 Provides a list menu element class.  Otherwise known as a select box
 in HTML, but differentiated from Krang::ElementClass::ListBox by the
 fact that it never allows more than one option to be selected.
+
+Elements using this class must contain references to arrays in data(),
+even if multiple is 0.
 
 =head1 INTERFACE
 
