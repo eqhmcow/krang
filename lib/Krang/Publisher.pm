@@ -91,11 +91,13 @@ use Krang::ElementClass;
 use Krang::Template;
 
 use constant PUBLISHER_RO => qw(is_publish is_preview story category);
+use constant PAGE_BREAK   => "<<<<<<<<<<<<<<<<<< PAGE BREAK >>>>>>>>>>>>>>>>>>";
 
 use Krang::MethodMaker (new_with_init => 'new',
                         new_hash_init => 'hash_init',
                         get_set       => [PUBLISHER_RO]
                        );
+
 
 
 
@@ -334,7 +336,7 @@ sub template_search_path {
 }
 
 
-=item C<< PAGE_BREAK() >>
+=item C<< $tag = page_break() >>
 
 Returns the tag used internally to mark the break between pages in a story.  When a multi-page story is assembled by the Krang::ElementClass element tree, it consists of a scaler containing these break tags.  The preview/publish process will split the scaler along those tags to create the individual pages of the story.
 
@@ -343,6 +345,13 @@ No exceptions to throw.
 =back
 
 =cut
+
+sub page_break {
+
+    return PAGE_BREAK;
+
+}
+
 
 =head1 TODO
 
@@ -401,9 +410,7 @@ sub _assemble_pages {
     # get the HTML content for the story
     my $story_html = $story_element->class->publish(element => $story_element, publisher => $self);
 
-
     # WARNING: NEED CATEGORY INFO AS WELL...
-
     return $story_html;
 
 }
