@@ -35,8 +35,9 @@ TAGS:
 # test section, ripped from Makefile.PL output
 TEST_VERBOSE=0
 TEST_FILES = t/*.t
+TEST_ASSERT=1
 test:
-	KRANG_ROOT=`pwd` perl -Ilib -Iext-lib -we 'use Test::Harness qw(&runtests $$verbose); $$verbose=$(TEST_VERBOSE); runtests @ARGV;' $(TEST_FILES)
+	KRANG_ROOT=`pwd` KRANG_ASSERT=$(TEST_ASSERT) perl -Ilib -Iext-lib -we 'use Test::Harness qw(&runtests $$verbose); $$verbose=$(TEST_VERBOSE); runtests @ARGV;' $(TEST_FILES)
 
 
 # setup default BENCH_NAME
