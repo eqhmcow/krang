@@ -18,49 +18,53 @@
 
   <div class=form-box>
     
-  <table class=form-cell cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
-    <tr class=form-head>
-      <td colspan=4><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
-    </tr>
-    <tr class=form-head>
-      <td>ID</td>
-      <td>URL</td>
-      <td colspan=2>Title</td>
-    </tr>
-    
-    <!-- stories loop -->
-    <tmpl_loop stories>
-        <tmpl_if checked_out><tr class="invalid"><tmpl_else><tr></tmpl_if>
-        <td class=form-cell><tmpl_var id></td>
-        <td class=form-cell><tmpl_var url></td>
-        <td class=form-cell colspan=2><tmpl_var title></td>
+    <table class=form-cell cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
+      <tr class=form-head>
+        <td colspan=5><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
       </tr>
-    </tmpl_loop>
-    <!-- /stories loop -->
+      <tr class=form-head>
+        <td>ID</td>
+        <td>URL</td>
+        <td>Title</td>
+        <td colspan=2>Status</td>
+      </tr>
+    
+      <!-- stories loop -->
+      <tmpl_loop stories>
+        <tmpl_if checked_out><tr class="invalid"><tmpl_else><tr></tmpl_if>
+            <td class=form-cell><tmpl_var id></td>
+            <td class=form-cell><tmpl_var url></td>
+            <td class=form-cell><tmpl_var title></td>
+            <td class=form-cell colspan=2><tmpl_if status><tmpl_var status><tmpl_else>&nbsp;</tmpl_if></td>
+          </tr>
+        </tmpl_loop>
+        <!-- /stories loop -->
 
-  <p>
-    <tr>
-      <td colspan=4>&nbsp;</td>
-    </tr>
-    <tr class=form-head>
-      <td colspan=4><b>Media</b>&nbsp;&nbsp;&nbsp;</td>
-    </tr>
-    <tr class=form-head>
-      <td>ID</td>
-      <td>URL</td>
-      <td>Title</td>
-      <td>Thumbnail</td>
-    </tr>
-    
-    <!-- media loop -->
-    <tmpl_loop media>
-        <tmpl_if checked_out><tr class="invalid"><tmpl_else><tr></tmpl_if>
-        <td class=form-cell><tmpl_var id></td>
-        <td class=form-cell><tmpl_var url></td>
-        <td class=form-cell><tmpl_var title></td>
-        <td class=form-cell><tmpl_if thumbnail><a href="javascript:preview_media(<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border=0></a><tmpl_else>&nbsp;</tmpl_if></td>
-      </tr>
-    </tmpl_loop>
+        <p>
+        <tr>
+          <td colspan=4>&nbsp;</td>
+        </tr>
+        <tr class=form-head>
+          <td colspan=5><b>Media</b>&nbsp;&nbsp;&nbsp;</td>
+        </tr>
+        <tr class=form-head>
+          <td>ID</td>
+          <td>URL</td>
+          <td>Title</td>
+          <td>Thumbnail</td>
+          <td>Status</td>
+        </tr>
+        
+        <!-- media loop -->
+        <tmpl_loop media>
+          <tmpl_if checked_out><tr class="invalid"><tmpl_else><tr></tmpl_if>
+              <td class=form-cell><tmpl_var id></td>
+              <td class=form-cell><tmpl_var url></td>
+              <td class=form-cell><tmpl_var title></td>
+              <td class=form-cell><tmpl_if thumbnail><a href="javascript:preview_media(<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border=0></a><tmpl_else>&nbsp;</tmpl_if></td>
+              <td class=form-cell><tmpl_if status><tmpl_var status><tmpl_else>&nbsp;</tmpl_if></td>
+            </tr>
+          </tmpl_loop>
     <!-- /media loop -->
   </table>
 

@@ -25,6 +25,7 @@ This application provides a frontend to Krang::Publisher
 use Krang::Session qw(%session);
 use Krang::Publisher;
 use Krang::Story;
+use Krang::User;
 use Krang::Log qw(debug critical assert ASSERT);
 use Krang::Widget qw(format_url datetime_chooser decode_datetime);
 use Krang::Message qw(add_message get_messages clear_messages);
@@ -414,10 +415,17 @@ sub _build_asset_list {
     # iterate over asset list to create display list.
     foreach my $asset (@$publish_list) {
         my $checked_out = 0;
+        my $status      = '';
         # deal w/ checked out assets - a problem if assets are checked
         # out by a user other than the current user.
         if ($asset->checked_out) {
-            $checked_out = 1 if ($user_id != $asset->checked_out_by);
+            my $checked_out_by = $asset->checked_out_by();
+            if ($user_id != $checked_out_by) {
+                $checked_out = 1;
+                $status = 'Checked out by <b>' .
+                  (Krang::User->find(user_id => $asset->checked_out_by))[0]->login .
+                    '</b>';
+            }
         }
         $checked_out_assets = $checked_out if $checked_out;
 
@@ -428,17 +436,19 @@ sub _build_asset_list {
                                                       length => 40
                                                      ),
                             title       => $asset->title,
-                            checked_out => $checked_out
+                            checked_out => $checked_out,
+                            status      => $status
                            };
         } elsif ($asset->isa('Krang::Media')) {
-            push @media, {id        => $asset->media_id,
-                          url       => format_url(url    => $asset->url,
-                                                  linkto => "javascript:preview_media('" . $asset->media_id . "')",
-                                                  length => 40
+            push @media, {id          => $asset->media_id,
+                          url         => format_url(url    => $asset->url,
+                                                    linkto => "javascript:preview_media('".$asset->media_id."')",
+                                                    length => 40
                                                  ),
-                          title     => $asset->title,
-                          thumbnail => $asset->thumbnail_path(relative => 1) || '',
-                          checked_out => $checked_out
+                          title       => $asset->title,
+                          thumbnail   => $asset->thumbnail_path(relative => 1) || '',
+                          checked_out => $checked_out,
+                          status      => $status
                          };
 
         } else {
