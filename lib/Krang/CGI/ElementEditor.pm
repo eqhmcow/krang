@@ -162,10 +162,8 @@ use base 'Krang::CGI';
 
 sub setup {
     my $self = shift;
-    $self->start_mode('fake');
     $self->mode_param('rm');
     $self->run_modes(
-                     fake             => sub { "OK" },
                      add              => 'add',
                      delete_children  => sub { shift->revise('delete') },
                      reorder          => sub { shift->revise('reorder') },
