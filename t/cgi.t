@@ -1,6 +1,11 @@
 use Test::More qw(no_plan);
-
 use File::Find qw(find);
+
+# a list of CGI modules without a suitable default mode (one that
+# requires no parameters)
+our %BAD_DEFAULT = map { ($_,1) } 
+  (qw( Krang::CGI::History
+       Krang::CGI::ElementEditor ));
 
 
 # Arrange for CGI output to come back via return, but NOT go to STDOUT
@@ -36,11 +41,14 @@ sub check_cgiapp {
     eval ( $app = $app_package->new() );
     isa_ok($app, 'Krang::CGI');
 
+    # skip modules without a suitable default mode
+    next if $BAD_DEFAULT{$app_package};
+
     # Can we run the default mode?
     my $output = '';
     eval { $output = $app->run() };
     ok(not($@), "\$$app_package->run()");
 
     # Does our output start "Content-Type:"?
-    like($output,  qr/^Content\-Type\:/);
+    like($output,  qr/^Content\-Type\:/, "Testing output of $app_package->run().");
 }
