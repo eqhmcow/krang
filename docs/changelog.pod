@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+L<Krang::Story>->find() can now search over a list of site_ids.
+[Peter]
+
+=item *
+
 Bugfix to L<Krang::Category>->deserialize_xml().  Circular
 dependencies were not being handled properly, causing imports of some
 .kds files to fail. [Peter]
