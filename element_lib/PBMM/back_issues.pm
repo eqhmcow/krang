@@ -27,7 +27,7 @@ sub new {
 sub fill_template {
     my ($self, %args) = @_;
                                                                                     my $tmpl      = $args{tmpl};
-    my $story   = $args{element}->object;
+    my $story   = $args{story};
     my $publisher = $args{publisher};
 
     my @s = Krang::Story->find( class => 'issue_cover', published => '1', order_by => 'cover_date', order_desc => 1 );

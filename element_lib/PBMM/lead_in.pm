@@ -159,7 +159,7 @@ sub fill_template {
     # set cover date
     $tmpl->param( cover_date => $story->cover_date->strftime('%b %e, %Y %l:%M %p') );
 
-    my $type = $args{element}->child('type')->data;
+    $type = $args{element}->child('type')->data;
 
     my $image = $story->element->child('promo_image_'.$type) || '';
     $image = $image->template_data(publisher => $publisher) if $image; 
