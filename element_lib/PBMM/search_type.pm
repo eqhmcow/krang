@@ -78,14 +78,14 @@ sub fill_template {
 
     my @rel_prop_loop;
 
-    my $list = (Krang::List->find(name => 'Related Properties'))[0];
+    my $list = (Krang::List->find(name => 'Properties'))[0];
     my @list_items = Krang::ListItem->find(list_id => $list->list_id);
 
     foreach my $li (@list_items) {
         push(@rel_prop_loop, {list_item_id => $li->list_item_id, display_name => $li->data});
     }
 
-    $tmpl->param( related_properties_loop => \@rel_prop_loop );
+    $tmpl->param(properties_loop => \@rel_prop_loop );
 
     $self->SUPER::fill_template( %args );
 }
