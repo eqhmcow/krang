@@ -597,7 +597,7 @@ category_id
 
 =item *
 
-below_category_id - will return stories in category and in categories below as well.
+below_category_id - will return media in category and in categories below as well.
 
 =item *
 
