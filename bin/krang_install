@@ -222,7 +222,7 @@ my @opt_params = qw( FromBackup
                      FTPHostName
                      InstanceDisplayName );
 
-my %options = ( map { $_ => "" } @req_params, @opt_params);
+my %options = ( map { $_ => undef } @req_params, @opt_params);
 
 do_install();
 exit(0);
