@@ -9,6 +9,7 @@ use Krang::Category;
 use Krang::Conf qw(KrangRoot);
 use Krang::Log qw(debug);
 use HTML::PopupTreeSelect;
+use Text::Wrap qw(wrap);
 
 use File::Spec::Functions qw(catfile);
 
@@ -592,20 +593,22 @@ sub format_url {
 
     $length = 15 unless ($length);
 
-    my @parts = split('/', $url);
-    my @url_lines = ();
-    push(@url_lines, shift(@parts) );
-    for(@parts) {
-        if ((length($url_lines[-1]) + length($_)) > $length) {
-            push(@url_lines, "");
-        }
-        $url_lines[-1] .= "/" . $_;
-    }
+    # wrap URL to length using Text::Wrap
+    $Text::Wrap::columns = $length;
+
+    # put spaces after /'s so that wrap() will try to wrap to them if
+    # possible
+    $url =~ s!/!/ !g;
+    $url = wrap("","",$url);    
+    $url =~ s!/ !/!g;
+
+    # format wrapped URL in HTML
     my $format_url_html;
+    my @url_lines = split("\n",$url);
     if ($linkto) {
         # URL with links
-        $format_url_html = join( '<br>', 
-                                 map { qq{<a href="$linkto">$_</a>} } @url_lines );
+        $format_url_html = join('<br>', map { qq{<a href="$linkto">$_</a>} }
+                                @url_lines );
     } else {
         # URL without links
         $format_url_html = join( '<br>', @url_lines );
