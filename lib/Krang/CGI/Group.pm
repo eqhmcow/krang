@@ -46,6 +46,7 @@ use Krang::HTMLPager;
 use Krang::Pref;
 use Krang::Session qw(%session);
 use Krang::Category;
+use Krang::Widget qw(category_chooser format_url);
 use Krang::Desk;
 use Krang::Log qw(debug info critical);
 use Carp;
@@ -258,12 +259,7 @@ sub save {
         add_message('message_group_saved');
     }
 
-    # Set up http redirect to search mode
-    my $url = $q->url(-relative=>1);
-    $self->header_type('redirect');
-    $self->header_props(-url=>$url);
-
-    return "Away we go!: <a href=\"$url\">$url</a>";
+    return $self->search();
 }
 
 
@@ -306,13 +302,15 @@ sub save_stay {
         add_message('message_group_saved');
     }
 
-    # Set up http redirect to edit mode
-    my $group_id = $g->group_id();
-    my $url = $q->url(-relative=>1) . '?rm=edit&group_id='. $group_id;
-    $self->header_type('redirect');
-    $self->header_props(-url=>$url);
+    # Clear out group properties from CGI form
+    $q->delete( keys(%{&GROUP_PROTOTYPE}) );
 
-    return "Away we go!: <a href=\"$url\">$url</a>";
+    # Set up query data for edit mode
+    my $group_id = $g->group_id();
+    $q->param(group_id => $group_id);
+
+    # Return to edit mode
+    return $self->edit();
 }
 
 
@@ -348,12 +346,7 @@ sub cancel {
         add_message('message_save_cancelled');
     }
 
-    # Set up http redirect to search mode
-    my $url = $q->url(-relative=>1);
-    $self->header_type('redirect');
-    $self->header_props(-url=>$url);
-
-    return "Away we go!: <a href=\"$url\">$url</a>";
+    return $self->search();
 }
 
 
@@ -387,13 +380,7 @@ sub delete {
 
     add_message('message_group_deleted');
 
-
-    # Set up http redirect to search mode
-    my $url = $q->url(-relative=>1);
-    $self->header_type('redirect');
-    $self->header_props(-url=>$url);
-
-    return "Away we go!: <a href=\"$url\">$url</a>";
+    return $self->search();
 }
 
 
@@ -454,13 +441,7 @@ sub save_and_edit_categories {
     # Save CGI query to group
     $self->update_group_from_query($g);
 
-    # Redirect to edit_categories
-    my $q = $self->query();
-    my $url = $q->url(-relative=>1) . '?rm=edit_categories';
-    $self->header_type('redirect');
-    $self->header_props(-url=>$url);
-
-    return "Away we go!: <a href=\"$url\">$url</a>";
+    return $self->edit_categories();
 }
 
 
@@ -480,8 +461,58 @@ add, and remove categories.
 sub edit_categories {
     my $self = shift;
 
+    # Retrieve working group object from session
+    my $g = $session{EDIT_GROUP};
+    die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
+
+    # Get permission categories
+    my %categories = $g->categories();
+
     my $q = $self->query();
     my $t = $self->load_tmpl('edit_categories.tmpl', associate=>$q);
+
+    my $category_id = $q->param('category_id');
+    croak ("No category ID specified") unless ($category_id);
+
+    my $root_category_permissions = $categories{$category_id};
+
+    my ($root_category) = Krang::Category->find(category_id=>$category_id);
+    croak ("Can't retrieve root category ID '$category_id'") unless ($root_category);
+    my @descendant_category_ids = ( $root_category->descendants(ids_only=>1) );
+
+    # Extract IDs of descendant categories for which permissions have been set
+    my @perm_categories = ( grep { exists($categories{$_}) } @descendant_category_ids );
+
+    # Build up tmpl loop
+    #
+    # <tmpl_loop categories><tr>
+    #     <td class="form-cell"><tmpl_var category_url></td>
+    #     <tmpl_loop permission_radio><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+    #     <td class="form-cell" align="center"><tmpl_unless is_root><a href="javascript:delete_category('<tmpl_var category_id>')">Delete</a></tmpl_unless></td>
+    # </tr></tmpl_loop>
+    my @categories = ( {
+                        category_url => $root_category->url(),
+                        permission_radio => $self->make_permissions_radio("category_".$category_id),
+                        is_root => 1,
+                        category_id => $category_id,
+                       } );
+    foreach my $cid (@perm_categories) {
+        my ($c) = Krang::Category->find( category_id=>$cid );
+        my $param_name = "category_".$cid;
+        my $row = {
+                   category_url => format_url(url=>$c->url(), length=>30) ,
+                   permission_radio => $self->make_permissions_radio($param_name),
+                   category_id => $cid,
+                  };
+        push(@categories, $row);
+    }
+
+    $t->param(categories => \@categories);
+    $t->param(category_chooser => category_chooser(
+                                                   query => $q,
+                                                   name => "add_category_id",
+                                                   site_id => $root_category->site_id,
+                                                  ));
 
     return $t->output();
 }
@@ -543,7 +574,9 @@ sub edit_categories_return {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    add_message("category_perms_updated");
+
+    return $self->_edit();
 }
 
 

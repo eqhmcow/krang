@@ -10,7 +10,7 @@
         if (confirm("Are you sure you want to remove this category?")) {
             var myform = document.forms["edit_categories_form"];
             myform.rm.value = "delete_category";
-            myform.category_id.value = cat_id;
+            myform.delete_category_id.value = cat_id;
             myform.submit();
         }
     }
@@ -44,7 +44,9 @@
 
 <form name="edit_categories_form" method="POST">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+<input type="hidden" name="category_id" value="<tmpl_var ESCAPE=HTML category_id>">
 <input type="hidden" name="rm" value="save">
+<input type="hidden" name="delete_category_id" value="">
 <input type="hidden" name="group_id" value="<tmpl_var escape=HTML group_id>">
 
 <!-- Krang::HTMLPager params -->
@@ -58,6 +60,11 @@
 <tr>
     <td align="left" valign="top">Group Name:</td>
     <td align="left" valign="top"><tmpl_var escape=HTML name></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Add category:</td>
+    <td align="left" valign="top"><tmpl_var category_chooser><input type="button" value="Add Category" onClick="add_category()"></td>
 </tr>
 
 </table>
@@ -78,7 +85,7 @@
 <tmpl_loop categories><tr>
     <td class="form-cell"><tmpl_var category_url></td>
     <tmpl_loop permission_radio><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
-    <td class="form-cell" align="center"><a href="javascript:delete_category('<tmpl_var category_id>')">Delete</a></td>
+    <td class="form-cell" align="center"><tmpl_unless is_root><a href="javascript:delete_category('<tmpl_var category_id>')">Delete</a><tmpl_else>&nbsp;</tmpl_unless></td>
 </tr></tmpl_loop>
  
 </table>

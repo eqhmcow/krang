@@ -51,6 +51,9 @@ chooser.  The C<name> and C<query> parameters are required.
 
 Additional optional parameters are as follows:
 
+  site_id  - If specified, chooser will limit selection to only
+             this site and its descendant categories.
+
   onchange - can be set to the name of a javascript function
              that will be called when the user picks a category.  
 
@@ -71,8 +74,8 @@ F<Widget/category_chooser.tmpl>.
 
 sub category_chooser {
     my %args = @_;
-    my ($name, $query, $label, $display, $onchange, $formname) =
-      @args{qw(name query label display onchange formname)};
+    my ($name, $query, $label, $display, $onchange, $formname, $site_id) =
+      @args{qw(name query label display onchange formname site_id)};
     croak("Missing required args: name and query")
       unless $name and $query;
 
@@ -86,7 +89,10 @@ sub category_chooser {
     my $category_id = $query->param($name) || 0;
 
     # setup category loop
-    my @cats = Krang::Category->find(order_by => 'url');
+    my %find_params = (order_by => 'url');
+    $find_params{site_id} = $site_id if ($site_id);
+
+    my @cats = Krang::Category->find(%find_params);
     my @category_loop;
     foreach my $cat (@cats) {
         if ($cat->category_id == $category_id) {

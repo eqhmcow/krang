@@ -27,9 +27,10 @@
     }
 
 
-    function edit_categories () {
+    function edit_categories (category_id) {
         var myform = document.forms["edit_group_form"];
         myform.rm.value = "save_and_edit_categories";
+        myform.category_id.value = category_id;
         myform.submit();
     }
 
@@ -57,6 +58,7 @@
 <form name="edit_group_form" method="POST">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="rm" value="save">
+<input type="hidden" name="category_id" value="">
 <input type="hidden" name="group_id" value="<tmpl_var escape=HTML group_id>">
 
 <!-- Krang::HTMLPager params -->
