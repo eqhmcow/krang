@@ -87,13 +87,30 @@ use Krang::DB qw(dbh);
 ####################
 # Constants
 ############
+# Read-only fields
+use constant SITE_RO => qw(creation_date
+			   site_id);
+
+# Read-write fields
+use constant SITE_RW => qw(preview_path
+			   preview_url
+			   publish_path
+			   publish_url
+			   url);
 
 # Globals
 ##########
 
 # Lexicals
 ###########
+my %site_args = map {$_ => 1} SITE_RW;
+my %site_cols = map {$_ => 1} SITE_RO, SITE_RW;
 
+# Constructor/Accessor/Mutator setup
+use Krang::MethodMaker	new_with_init => 'new',
+			new_hash_init => 'init',
+			get => [SITE_RO],
+			get_set => [SITE_RW];
 
 
 =head1 INTERFACE
@@ -168,6 +185,13 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 sub init {
     my $self = shift;
     my %args = shift;
+    my @bad_args;
+
+    for (keys %args) {
+        push @bad_args, $_ unless exists $site_args{$_};
+    }
+    croak(__PACKAGE__ . "->init(): The following constructor args are " .
+          "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
 
     return $self;
 }
@@ -185,8 +209,180 @@ returns '1' following a successful deletion.
 sub delete {
     my $self = shift;
     my $id = shift || $self->{site_id};
-    
+    my $dbh = dbh();
+
+    my $query = "DELETE FROM site WHERE site_id = '$id'";
+    $dbh->do($query);
+
     return 1;
+}
+
+
+=item * @sites = Krang::Site->find( %params )
+
+=item * @sites = Krang::Site->find( site_id => [1, 1, 2, 3, 5] )
+
+=item * @site_ids = Krang::Site->find( ids_only => 1, %params )
+
+=item * $count = Krang::Site->find( count => 1, %params )
+
+Class method that returns an array of site objects, site ids, or a count.
+Case-insensitive sub-string matching can be performed on any valid field by
+passing an argument like: "fieldname_like => '%$string%'" (Note: '%'
+characters must surround the sub-string).  The valid search fields are:
+
+=over 4
+
+=item * preview_path
+
+=item * preview_url
+
+=item * publish_path
+
+=item * publish_url
+
+=item * site_id
+
+=item * url
+
+=back
+
+Additional criteria which affect the search results are:
+
+=over 4
+
+=item * ascend
+
+Result set is sorted in ascending order.
+
+=item * count
+
+If this argument is specified, the method will return a count of the templates
+matching the other search criteria provided.
+
+=item * descend
+
+Results set is sorted in descending order only if the 'ascend' option is not
+specified.
+
+=item * ids_only
+
+Returns only template ids for the results found in the DB, not objects.
+
+=item * limit
+
+Specify this argument to determine the maximum amount of template object or
+template ids to be returned.
+
+=item * offset
+
+Sets the offset from the first row of the results to return.
+
+=item * order_by
+
+Specify the field by means of which the results will be sorted.  By default
+results are sorted with the 'template_id' field.
+
+=back
+
+The method croaks if an invalid search criteria is provided or if both the
+'count' and 'ids_only' options are specified.
+
+=cut
+
+sub find {
+    my $self = shift;
+    my %args = shift;
+    my ($fields, @params, $where_clause);
+
+    # grab ascend/descending, limit, and offset args
+    my $ascend = delete $args{ascend} || '';
+    my $descend = delete $args{descend} || '';
+    my $limit = delete $args{limit} || '';
+    my $offset = delete $args{offset} || '';
+    my $order_by = delete $args{order_by} || 'site_id';
+
+    # set search fields
+    my $count = delete $args{count} || '';
+    my $ids_only = delete $args{ids_only} || '';
+
+    # set bool to determine whether to use $row or %row for binding below
+    my $single_column = $ids_only || $count ? 1 : 0;
+
+    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
+          "Only one can be present.") if ($count && $ids_only);
+
+    $fields = $count ? 'count(*)' :
+      ($ids_only ? 'site_id' : join(", ", keys %site_cols));
+
+    # set up WHERE clause and @params, croak unless the args are in
+    # SITE_RO or SITE_RW
+    my @invalid_cols;
+    for my $arg (keys %args) {
+        my $like = 1 if $arg =~ /_like$/;
+        ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
+
+        push @invalid_cols, $arg unless exists $site_cols{$lookup_field};
+
+        if ($arg eq 'template_id' && ref $args{$arg} eq 'ARRAY') {
+            my $tmp = join(" OR ", map {"site_id = ?"} @{$args{$arg}});
+            $where_clause .= " ($tmp)";
+            push @params, @{$args{$arg}};
+        } else {
+            $where_clause .= $like ? " $lookup_field LIKE ?" :
+              " $lookup_field = ?";
+            push @params, $args{$arg};
+        }
+    }
+
+    croak("The following passed search parameters are invalid: '" .
+          join("', '", @invalid_cols) . "'") if @invalid_cols;
+
+    # construct base query
+    my $query = "SELECT $fields FROM site";
+
+    # add WHERE and ORDER BY clauses, if any
+    $query .= " WHERE $where_clause" if $where_clause;
+    $query .= " ORDER BY $order_by" if $order_by;
+    $query .= $ascend ? " ASC" : ($descend ? " DESC" : "");
+
+    # add LIMIT clause, if any
+    if ($limit) {
+        $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
+    } elsif ($offset) {
+        $query .= " LIMIT $offset, -1";
+    }
+
+    my $dbh = dbh();
+    my $sth = $dbh->prepare($query);
+    $sth->execute(@params);
+
+    # holders for query results and new objects
+    my ($row, @sites);
+
+    # bind fetch calls to $row or %$row
+    # a possibly insane micro-optimization :)
+    if ($single_column) {
+        $sth->bind_col(1, \$row);
+    } else {
+        $sth->bind_columns(\( @$row{@{$sth->{NAME_lc}}} ));
+    }
+
+    # construct template objects from results
+    while ($sth->fetchrow_arrayref()) {
+        # if we just want count or ids
+        if ($single_column) {
+            push @sites, $row;
+        } else {
+            push @sites, bless({%$row}, $self);
+        }
+    }
+
+    # finish statement handle
+    $sth->finish();
+
+    # return number of rows if count, otherwise an array of site ids or objects
+    return $count ? $sites[0] : @sites;
 }
 
 
@@ -202,6 +398,35 @@ its database query affects no rows in the database.
 
 sub save {
     my $self = shift;
+    my $id = $self->{site_id} || '';
+    my $query;
+    my @save_fields = map {$_ ne 'site_id'} keys %site_cols;
+
+    # TODO: lookup sites, make sure this one is unique
+
+    if ($id) {
+        $query = "UPDATE site SET " .
+          join(", ", map {"$_ = ?"} @save_fields) .
+            " WHERE site_id = ?";
+    } else {
+        $query = "INSERT INTO site (" . join(',', @save_fields).
+          ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
+        my $time = localtime();
+        $self->{creation_date} = $time->strftime("%Y-%m-%d %T");
+    }
+
+    # bind parameters
+    my @params = map {$self->{$_}} @save_fields;
+
+    # need site_id for updates
+    push @params, $id if $id;
+
+    my $dbh = dbh();
+
+    # croak if no rows are affected
+    croak(__PACKAGE__ . "->save(): Unable to save site object " .
+          ($id ? "id '$id' " : '') . "to the DB.")
+      unless $dbh->do($query, undef, @params);
 
     return $self;
 }
@@ -211,7 +436,11 @@ sub save {
 
 =head1 TO DO
 
-Lots.
+=over 4
+
+=item * Prevent duplicate site objects.
+
+=back
 
 =head1 SEE ALSO
 
