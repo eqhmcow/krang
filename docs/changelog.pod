@@ -2,9 +2,28 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 v1.027 - Under Development
+=head2 v1.100 - Under Development
 
 =over
+
+=item *
+
+C<About Krang> now reports server IP address, Addons are now
+alphabetized properly. [Peter]
+
+=item *
+
+Added server IP address, along with instance-by-instance breakdowns to
+C<bin/krang_info> [Peter].
+
+=item *
+
+Fixed a bug in L<Krang::Story>->_load_version() - the restored version
+of the story still held outdated checkout and publish settings.  The
+restored version now returns default values for those parameters
+(e.g. not checked out, not published).  Note that this does not affect
+C<revert()>.  The result is that scheduled publication of specific
+story versions now works.  [Peter]
 
 =item *
 
@@ -64,11 +83,28 @@ of some incomplete code meant to check for valid alert id. [Matt]
 
 Made changes in media UI to:
 
-1. add 'publish to preview' button and underlying functionality
-2. cause 'publish' button in edit screen to also preview the media
-3. remove the 'reset' button.
-4. have the 'Publish' button appear on the new media screen, no need to 
-have to click save first. [Matt]
+=over
+
+=item 1
+
+add 'publish to preview' button and underlying functionality
+
+=item 2
+
+cause 'publish' button in edit screen to also preview the media
+
+=item 3
+
+remove the 'reset' button.
+
+=item 4
+
+have the 'Publish' button appear on the new media screen, no need to
+have to click save first.
+
+=back
+
+[Matt]
 
 =item *
 

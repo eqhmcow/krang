@@ -47,9 +47,11 @@ sub show {
     my $self = shift;
     my $template = $self->load_tmpl('about.tmpl');
 
-    $template->param(version => $Krang::VERSION);
+    $template->param(version   => $Krang::VERSION,
+                     server_ip => Krang::Conf->get('ApacheAddr')
+                    );
     
-    my @addons = sort { $a->name cmp $b->name } Krang::AddOn->find();
+    my @addons = sort { lc($a->name) cmp lc($b->name) } Krang::AddOn->find();
     $template->param(addons => [ map { { name => $_->name,
                                          version => $_->version } } @addons ])
       if @addons;
