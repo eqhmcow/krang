@@ -26,7 +26,8 @@ to the install.pod found in the docs directory.
         Test-Manifest-0.91	    
         Test-Builder-Tester-0.09 
         Test-Pod-0.95            
-        Storable-2.06            
+        Pod-Simple-0.96
+    	Storable-2.06            
         Apache-Session-1.54      
         DBI-1.32                 
         DBD-mysql-2.1021         
