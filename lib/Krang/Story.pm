@@ -25,7 +25,6 @@ use Krang::MethodMaker
   get           => [ qw(
                         story_id                        
                         version
-                        published_version
                         checked_out
                         checked_out_by
                        ) ],
@@ -37,6 +36,7 @@ use Krang::MethodMaker
                                          notes
                                          cover_date
                                          publish_date
+                                         published_version
                                          priority
                                          desk_id
                                         ) ]
@@ -50,6 +50,7 @@ use constant STORY_FIELDS =>
       slug
       cover_date
       publish_date
+      published_version
       notes
       priority
       element_id
@@ -850,6 +851,11 @@ Pass an array ref of IDs to be excluded from the result set
 
 Returns stories in the category and in categories below as well.
 
+=item published
+
+If set to 0, returns stories that are not published, set to 1 
+returns published stories.
+
 =back
 
 Options affecting the search and the results returned:
@@ -1093,6 +1099,12 @@ sub find {
             next;
         }
 
+        # handle published flag
+        if ($key eq 'published') {
+            my $ps = ($args{published} eq '1') ? 's.published_version IS NOT NULL' : 's.published_version IS NULL';
+            push(@where, $ps);
+            next;
+        }
 
         croak("Unknown find key '$key'");
     }

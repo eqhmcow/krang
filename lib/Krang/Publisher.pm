@@ -296,6 +296,12 @@ sub publish_story {
                     counter => $counter++) if $callback;
         if ($object->isa('Krang::Story')) {
             $self->_build_story_all_categories(story => $object);
+
+            # update published_version
+            $object->checkout if (not ($object->checked_out));
+            $object->published_version( $object->version );
+            $object->save( keep_version => 1 );
+
             # check the object back in.
             if ($object->checked_out()) { $object->checkin(); }
         } elsif ($object->isa('Krang::Media')) {

@@ -8,6 +8,7 @@ CREATE TABLE story (
         slug            VARCHAR(255) NOT NULL,
         cover_date      DATETIME,
         publish_date    DATETIME,
+        published_version INT UNSIGNED,
         notes           TEXT,
         priority        TINYINT UNSIGNED NOT NULL DEFAULT 2,
         
