@@ -84,6 +84,8 @@ Krang::Story - the Krang story class
                   date   => Time::Piece->new(),
                   action => "publish" });
 
+  # add contributors
+  $story->contribs(@contribs);
 
   # find some stories about Sam
   my @stories = Krang::Story->find(title_like => '%sam%');
@@ -290,9 +292,10 @@ sub urls {
     return @{$self->{url_cache}};
 }
 
-=item C<contributors>
+=item C<contribs>
 
-A list of contributor objects associated with the story.
+A list of contributor objects associated with the story.  See the
+contribs() method for interface details.
 
 =item C<element> (readonly)
 
@@ -388,6 +391,76 @@ sub init {
     return $self;
 }
 
+=item @contribs = $story->contribs();
+
+=item $story->contribs({ contrib_id => 10, contrib_type_id => 1 }, ...);
+
+=item $story->contribs(@contribs);
+
+Called with no arguments, returns a list of contributor
+(Krang::Contrib) objects.  These objects will have
+C<selected_contrib_type> set according to their use with this story
+object.
+
+May be set two ways.  First, a contributor may specified as a two-key
+hash containing the contrib_id and the contrib_type_id for the
+contributor.  A single contributor can be present in the list multiple
+times with different contrib_type_ids.
+
+Second, a list of contributor objects with selected_contrib_type() set
+may be passed in.
+
+=cut
+
+sub contribs {
+    my $self = shift;
+    my @contribs;
+
+    unless (@_) {
+        my $contrib;
+        # return contributor objects
+        foreach my $id (@{$self->{contrib_ids}}) {
+            ($contrib) = Krang::Contrib->find(contrib_id => $id->{contrib_id});
+            croak("No contributor found with contrib_id ". $id->{contrib_id})
+              unless $contrib;
+            $contrib->selected_contrib_type($id->{contrib_type_id});
+            push @contribs, $contrib;
+        }
+        return @contribs; 
+    }
+
+    # store list of contributors, passed as either objects or hashes
+    foreach my $rec (@_) {
+        if (ref($rec) and ref($rec) eq 'Krang::Contrib') {
+            croak("invalid data passed to contrib: contributor objects must have contrib_id and selected_contrib_type set.")
+              unless $rec->contrib_id and $rec->selected_contrib_type;
+
+            push(@contribs, { contrib_id     => $rec->contrib_id,
+                              contrib_type_id=> $rec->selected_contrib_type });
+
+        } elsif (ref($rec) and ref($rec) eq 'HASH') {
+            croak("invalid data passed to contribs: hashes must contain contrib_id and contrib_type_id.")
+              unless $rec->{contrib_id} and $rec->{contrib_type_id};
+            
+            push(@contribs, $rec);
+
+        } else {
+            croak("invalid data passed to contribs");
+        }
+
+        $self->{contrib_ids} = \@contribs;
+    }    
+}
+
+=item $story->clear_contribs()
+
+Removes all contributor associatisons.
+
+=cut
+
+sub clear_contribs { shift->{contrib_ids} = []; }
+
+
 =item C<< $story->save() >>
 
 Save the story to the database.  This is the only call which will make
@@ -416,7 +489,7 @@ sub save {
     # $self->_save_schedules;
 
     # save contributors
-    # $self->_save_contrib;
+    $self->_save_contrib;
 }
 
 # save core Story data
@@ -473,7 +546,23 @@ sub _save_cat {
     }
 }
 
-    
+# save contributors
+sub _save_contrib {
+    my $self = shift;
+    my $dbh = dbh();
+
+    $dbh->do('DELETE FROM story_contrib WHERE story_id = ?',
+             undef, $self->{story_id});
+
+    my $ord = 0;
+    $dbh->do('INSERT INTO story_contrib 
+                    (story_id, contrib_id, contrib_type_id, ord)
+                  VALUES (?,?,?,?)', undef,
+             $self->{story_id}, $_->{contrib_id}, 
+             $_->{contrib_type_id}, ++$ord)
+      for @{$self->{contrib_ids}};
+
+}
 
 =item C<< $story = Krang::Story->load($story_id) >>
 
@@ -516,6 +605,17 @@ sub load {
     $self->{category_ids} = \@category_ids;
     $self->{urls}         = \@urls;
 
+
+    # load contribs
+    $result = $dbh->selectall_arrayref('SELECT contrib_id, contrib_type_id '.
+                                       'FROM story_contrib '.
+                                       'WHERE story_id = ? ORDER BY ord', 
+                                       undef, $story_id);
+    $self->{contrib_ids} = 
+      [ map { { contrib_id      => $_->[0],
+                contrib_type_id => $_->[1] 
+            } } @$result ];
+    
     return $self;
 }
 

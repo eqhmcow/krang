@@ -4,6 +4,7 @@ use warnings;
 use Krang;
 use Krang::Category;
 use Krang::Site;
+use Krang::Contrib;
 use Krang::Session qw(%session);
 
 BEGIN { use_ok('Krang::Story') }
@@ -39,6 +40,12 @@ END {
     $site->delete;
 }
 
+# create new contributor object to test associating with stories
+my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
+isa_ok($contrib, 'Krang::Contrib');
+$contrib->contrib_type_ids(1,3);
+$contrib->save();
+END { $contrib->delete(); }
 
 # create a new story
 $story = Krang::Story->new(categories => [$cat[0], $cat[1]],
@@ -53,6 +60,14 @@ my @story_cat = $story->categories();
 is(@story_cat, 2);
 is($story_cat[0], $cat[0]);
 is($story_cat[1], $cat[1]);
+
+# test contribs
+eval { $story->contribs($contrib); };
+like($@, qr/invalid/);
+$contrib->selected_contrib_type(1);
+$story->contribs($contrib);
+is($story->contribs, 1);
+is(($story->contribs)[0]->contrib_id, $contrib->contrib_id);
 
 # test url production
 ok($story->url);
@@ -116,6 +131,10 @@ for (qw( story_id
          priority )) {
     is($story->$_, $story2->$_, "$_ save/load");
 }
+
+# contribs made it?
+is($story2->contribs, 1);
+is(($story2->contribs)[0]->contrib_id, $contrib->contrib_id);
 
 # categories and urls made it
 is_deeply([ map { $_->category_id } $story->categories ],
