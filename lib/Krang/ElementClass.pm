@@ -543,8 +543,10 @@ sub publish {
 
     my $self = shift;
     my %args = @_;
-    my $html = "NOT IMPLEMENTED YET\n";
 
+    my $template = $self->find_template(@_);
+
+    my $html = $template->output();
 
     return $html;
 }
