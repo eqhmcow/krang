@@ -42,7 +42,7 @@ Krang::Test::Content - a package to simplify content handling in Krang tests.
                                       linked_media => [$media]);
 
   # Where to find the published story on the filesystem
-  my @paths = $creator->story_paths(story => $story);
+  my @paths = $creator->publish_paths(story => $story);
 
   # create a Krang::Contrib object
   my $contributor = $creator->create_contrib();
@@ -483,24 +483,37 @@ sub create_story {
 }
 
 
-=item C<< @paths = $creator->story_paths(story => $story) >>
+=item C<< @paths = $creator->publish_paths(story => $story) >>
 
 Returns a list of filesystem paths where the story will be published.
 
+Takes either C<story> or C<media> arguments.
+
 =cut
 
-sub story_paths {
+sub publish_paths {
 
     my $self = shift;
     my %args = @_;
 
-    my $story = $args{story} || croak __PACKAGE__ . "->story_paths(): missing argument 'story'.";
-
     my @paths;
 
-    for ($story->categories) {
-        push @paths,
-          catfile($story->publish_path(category => $_), 'index.html');
+    croak __PACKAGE__ . "->story_paths(): missing argument 'story' or 'media'." unless 
+      ( exists($args{story}) || exists($args{media}) );
+
+    if ($args{story}) {
+        my $story = $args{story};
+
+        for ($story->categories) {
+            push @paths,
+              catfile($story->publish_path(category => $_), 'index.html');
+        }
+    }
+
+    elsif ($args{media}) {
+        my $media = $args{media};
+
+        push @paths, $media->publish_path();
     }
 
     return @paths;
