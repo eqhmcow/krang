@@ -122,6 +122,7 @@ use Krang::Media;
 use Krang::Publisher;
 use Krang::Story;
 use Krang::Template;
+use Krang::Cache;
 
 #
 # Package Variables
@@ -811,30 +812,40 @@ sub run {
     my @story_ids = map {$_->{object_id}} grep {$_->{object_type} eq 'story'}
       @pubs;
 
+    # unique the lists
+    my %seen;
+    @media_ids = grep { not $seen{$_}++ } @media_ids;
+    %seen = ();
+    @story_ids = grep { not $seen{$_}++ } @story_ids;
+
     # publish accumulated stories and/or media if any
     # publish supercedes expiration
-    unless ($SCH_DEBUG) {
-        if (@media_ids || @story_ids) {
-            my $publisher = Krang::Publisher->new;
-            if (@media_ids) {
-                my @media = Krang::Media->find(media_id => [@media_ids]);
-                eval {$publisher->publish_media(media => \@media);};
-                if ($@) {
-                    critical("Attempt to publish failed: $@");
-                } else {
-                    info("Published media id(s): " . join(", ", @media_ids));
-                }
-            }
-            if (@story_ids) {
-                my @stories = Krang::Story->find(story_id => [@story_ids]);
-                eval {$publisher->publish_story(story => \@stories);};
-                if ($@) {
-                    critical("Attempt to publish failed: $@");
-                } else {
-                    info("Published story id(s): " . join(", ", @story_ids));
-                }
+    if (not $SCH_DEBUG and (@media_ids || @story_ids)) {
+        # turn on the cache
+        Krang::Cache::start();
+
+        my $publisher = Krang::Publisher->new;
+        if (@media_ids) {
+            my @media = Krang::Media->find(media_id => [@media_ids]);
+            eval {$publisher->publish_media(media => \@media);};
+            if ($@) {
+                critical("Attempt to publish failed: $@");
+            } else {
+                info("Published media id(s): " . join(", ", @media_ids));
             }
         }
+        if (@story_ids) {
+            my @stories = Krang::Story->find(story_id => [@story_ids]);
+            eval {$publisher->publish_story(story => \@stories);};
+            if ($@) {
+                critical("Attempt to publish failed: $@");
+            } else {
+                info("Published story id(s): " . join(", ", @story_ids));
+            }
+        }
+
+        # done publishing, turn cache off
+        Krang::Cache::stop();
     }
 
     # expire, do alerts, and set next run
