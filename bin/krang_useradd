@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-krang_passwd - change Krang user passwords
+krang_useradd - change Krang user passwords
 
 =head1 SYNOPSIS
 
@@ -10,22 +10,42 @@ krang_password [options] login
 
 Change the password for userX:
 
-  $ krang_passwd userX
+  $ krang_useradd userX
   New password:
   Re-type password:
 
 Options:
 
+ --email		- Set email for this user
+
+ --fname OR		- Set the first name for this user
+ --first-name
+
+ --groups group, [...]	- Associate login with the listed groups.  By
+ --g OR --G		  default, user is associated with the group
+			  'default'
+
  --help			- Displays this menu.
+
+ --lname OR		- Set the last name for this user
+ --last_name
 
  --man			- Displays POD for entire script as manpage.
 
-N.B.: passwords must be at least 6 characters in length.
+ --mobile-phone		- Set the mobile phone# field for this user
+
+ --phone		- Set the phone# field for this user
+
+N.B. The current valid groups are: admin, default, and editor
 
 =head1 DESCRIPTION
 
-This script changes the password for a Krang user.  Note: passwords must be at
-least 6 characters in length.
+This program provides a means to add a new user to Krang from the command-line.
+Once the command is executed, the uniqueness of the login will be checked
+against the system.  Provided the login is unique, a password prompt will
+appear.  If the password is at least 6 characters in length, the user will be
+prompted to confirm the password.  If all goes well a new user will be created
+in the system.
 
 =cut
 
@@ -83,6 +103,7 @@ use Pod::Usage;
 # Internal Modules
 ###################
 use Krang::Script;
+use Krang::Group;
 use Krang::User;
 
 #
@@ -93,10 +114,14 @@ use Krang::User;
 
 # Globals
 ##########
+our ($email, $first, $last, $mobile_phone, $phone);
 
 # Lexicals
 ###########
+my @gids;
+my @groups = qw/default/;
 my $help = my $man = 0;
+my %valid_groups = map {lc $_->name, $_->group_id} Krang::Group->find;
 
 # termial I/O vars
 my ($c_lflag, $fd, $termios);
@@ -104,14 +129,40 @@ my ($c_lflag, $fd, $termios);
 
 # Input Validation
 ###################
-pod2usage(2) unless GetOptions(help	=> \$help,
-                               man	=> \$man);
+pod2usage(2) unless GetOptions("email=s"	=> \$email,
+                               "first-name=s"	=> \$first,
+                               "fname=s"	=> \$first,
+                               "g=s"		=> \@groups,
+                               "G=s"		=> \@groups,
+                               "groups=s"	=> \@groups,
+                               help		=> \$help,
+                               "last=s"		=> \$last,
+                               "lname=s"	=> \$last,
+                               man		=> \$man,
+                               "mobile-phone=s"	=> \$mobile_phone,
+                               "phone=s"	=> \$phone);
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
 # get login
 my $login = shift @ARGV;
 pod2usage("No user 'login' specified") unless defined $login;
+
+# handle groups
+################
+# fix comma-delimited groups
+@groups = split /,/, join(',', @groups);
+
+# erase dupes
+my %groups = map {$_, 1} @groups;
+
+# validate groups
+for (keys %groups) {
+    my $gid = group_id($_);
+    pod2usage("Invalid group '$_'.") unless $gid;
+    push @gids, $gid;
+}
+
 
 # Program Body :-)
 main();
@@ -123,16 +174,15 @@ main();
 
 =item * main()
 
-A user object corresponding to 'login' is obtained, a new password is obtained
-and saved to the user object.  'Password changed.' is printed if the process
-is a success.
+Check for the existence of a user with the login '$login'.  If login is unique,
+it sets the objects fields and attempts to save it to the database.
 
 =cut
 
 sub main {
     # lookup user
     my ($user) = Krang::User->find(login => $login);
-    die("Login '$login' not found.") unless defined $user;
+    die("User with login '$login' already exists.") if defined $user;
 
     # setup terminal I/O
     $fd = fileno(STDIN);
@@ -143,16 +193,28 @@ sub main {
     # get password
     my $pass = ask_pass($user);
 
-    # set new password
-    $user->password($pass);
+    # constuct user
+    $user = Krang::User->new(login => $login, password => $pass);
+    {
+        # allow symbolic references to access variables and methods of the
+        # same name in for loop :)
+        no strict qw/refs subs/;
+        for (qw/email first last mobile_phone phone/) {
+            next unless $$_;
+            $user->$_($$_);
+        }
+    }
+
+    # handle groups
+    $user->group_ids(@gids);
 
     # save changes to user
     eval {$user->save};
     if (my $err = $@) {
-        print STDERR "\nAttempt to set password failed: $err\n";
+        print STDERR "Attempt to add user failed: $err\n";
         exit 1;
     } else {
-        print "\nPassword changed.\n";
+        print "\nUser '$login' successfully added.\n";
     }
 }
 
@@ -166,8 +228,6 @@ exits otherwise.
 
 sub ask_pass {
     my ($user) = shift;
-
-    print "Changing password for login '$login'\n";
 
     # Get new pass
     ###################
@@ -190,7 +250,7 @@ sub ask_pass {
         ###################
         set_echo();
 
-        print "Re-type password: ";
+        print "\nRe-type password: ";
         my $dpass = <STDIN> || '';
 
         set_echo(1);
@@ -198,13 +258,22 @@ sub ask_pass {
         chomp $dpass;
 
         unless ($npass eq $dpass) {
-            print STDERR "\nPasswords do not match.";
+            print STDERR "\nPasswords do not match.\n";
             exit 1;
         }
     }
 
     return $npass;
 }
+
+
+=item * $gid = group_id( $group_name )
+
+Returns the group id named '$group_name' and undef otherwise
+
+=cut
+
+sub group_id {my $gid = $valid_groups{lc shift} || 0; return $gid;}
 
 
 =item * set_echo()
