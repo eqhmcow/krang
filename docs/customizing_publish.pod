@@ -74,10 +74,9 @@
 
 =over
 
-=item * find_template()
+=item * Loading a Template
 
 =back
-
 
 =item * Changing the Publish Process for an Element
 
@@ -86,12 +85,6 @@
 =item * publish()
 
 =back
-
-=item * Contributors
-
-=item * Pagination
-
-=item * Categories
 
 =back
 
@@ -949,10 +942,87 @@ Note - using the approach of the first example, calling C<< $self->SUPER::fill_t
 
 =head1 Changing How an Element Chooses a Template
 
+=over
+
+=item * find_template(publisher => $publisher, element => $element);
+
+Returns an HTML::Template::Expr object with the template to be used by the element.  Follows a defined protocol for locating the template on the filesystem.
+
+=back
+
+The process by which Krang chooses a publish template for a given element is as follows:
+
+=over
+
+=item 1)
+
+Determine the template name - by default, C< element-name.tmpl >.
+
+=item 2)
+
+Given a category path of C</SITENAME/foo/bar>, start by looking for the template in C</SITENAME/foo/bar/element-name.tmpl>.
+
+=item 3)
+
+If the template is found, attempt to load and parse it.  If successful, return an instantiated L<HTML::Template::Expr> object.  Otherwise, throw an error (C<Krang::ElementClass::TemplateParseError>).
+
+=item 4)
+
+If the template is not found at C</SITENAME/foo/bar/element-name.tmpl>, try C</SITENAME/foo/element-name.tmpl>, C</SITENAME/element-name.tmpl>, finally C</element-name.tmpl>.  If the template is found at any point, load the template as seen in step 3.
+
+=item 5)
+
+If the template cannot be found, throw an error (C<Krang::ElementClass::TemplateNotFound>).
+
+=back
+
+You can make changes to this process by overriding C<find_template()> to change what template Krang will look for, where Krang will look for it, or even what kind of template will be loaded.
+
+
+=head2 Loading a Template
+
+Loading an L<HTML::Template::Expr> template requires two things - the template filename, and a list of directories to search for the template.
+
+ sub find_template {
+
+     my $self = shift;
+     my %args = @_;
+     my $tmpl;
+
+     my $publisher = $args{publisher};
+     my $element   = $args{element};
+
+     my @search_path = $publisher->template_search_path();
+
+     my $filename    = $element->name() . '.tmpl';
+
+     my $template = $self->_load_template(publisher   => $publisher,
+                                          element     => $element,
+                                          filename    => $filename,
+                                          search_path => \@search_path);
+
+     return $template;
+ }
+
+By making changes to either C<$filename> or C<@search_path> (ordered from first to last in terms of directories to search), you can affect what template gets loaded.  C<< $self->_load_template() >> handles the actual process of finding, loading, and throwing any required errors for L<HTML::Template::Expr> templates.
+
+If you want to change the type of template being loaded (e.g. you don't want to use L<HTML::Template::Expr> templates), you need to roll your own code to find, load and parse the templates, throwing appropriate errors as needed.  Be aware that C<find_template()> is expecting an L<HTML::Template::Expr> template, so you will need to override C<fill_template()> functionality as well.
+
+
+
 
 =head1 Changing the Publish Process for an Element
 
+=over
 
+=item * publish(story => $story, category => $category_id)
+
+Ties the C<find_template()> and C<fill_template()> methods together.  Returns publish output for the current element (and therefore, any children beneath it).
+
+See L<Krang::ElementClass> for more info on publish().
+
+
+=back
 
 
 
