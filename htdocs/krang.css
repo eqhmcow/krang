@@ -61,9 +61,26 @@ a:active          {
 .dark-bar .right a { 
   color:            #FFFFFF;
 }
-
+.dark-bar .right a:link { 
+  color:            #FFFFFF;
+}
+.dark-bar .right a:visited { 
+  color:            #FFFFFF;
+}
+.dark-bar .right a:active {
+  color:            #FFFFFF;
+}
 
 .dark-bar a { 
+  color:            #FFFFFF;
+}
+.dark-bar a:link { 
+  color:            #FFFFFF;
+}
+.dark-bar a:visited { 
+  color:            #FFFFFF;
+}
+.dark-bar a:active {
   color:            #FFFFFF;
 }
 
