@@ -143,7 +143,7 @@ sub save {
 
     # if this is not a new list item
     if (defined $self->{list_item_id}) {
-        my $list_id = $self->{list_item_id};
+        my $list_item_id = $self->{list_item_id};
         
         # get rid of list_item_id 
         my @save_fields = grep {$_ ne 'list_item_id'} RO_FIELDS,RW_FIELDS;
@@ -151,14 +151,14 @@ sub save {
         if ($self->{old_ord}) {
             # check to see if order belongs to another list item.
             # if so, swap the order
-            my $sth = $dbh->prepare('SELECT list_item_id from list_item where order = ? and list_item_id != ?');
-            $sth->execute($self->{ord}, $self->{list_item_id});
+            my $sth = $dbh->prepare('SELECT list_item_id from list_item where ord = ? and list_id = ? and list_item_id != ?');
+            $sth->execute($self->{ord},  $self->{list_id}, $self->{list_item_id});
 
             my ($found_liid) = $sth->fetchrow_array();
-            $sth->close;
       
             # if one is found, update it to this object's old order 
             if ($found_liid) {
+debug("DDDDDDD $found_liid ".$self->{old_ord});
                 my $sql =  'update list_item set ord = ? where list_item_id = ?';
                 $dbh->do($sql, undef, $self->{old_ord}, $found_liid); 
                 $self->{old_ord} = undef;
@@ -167,8 +167,8 @@ sub save {
             }
         }
  
-        my $sql = 'UPDATE list_item set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE list_item_id = = ?';
-        $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$list_id);
+        my $sql = 'UPDATE list_item set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE list_item_id = ?';
+        $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$list_item_id);
 
     } else {
         my @save_fields =  (RO_FIELDS,RW_FIELDS);
