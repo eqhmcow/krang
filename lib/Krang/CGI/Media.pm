@@ -829,7 +829,7 @@ sub save_and_view_log {
     $self->update_media($m);
 
     # Redirect to associate screen
-    my $url = 'history.pl?history_return_script=media.pl&return_params=rm&return_params=edit&media_id=' . $m->media_id;
+    my $url = 'history.pl?history_return_script=media.pl&history_return_params=rm&history_return_params=edit&media_id=' . $m->media_id;
     $self->header_props(-uri=>$url);
     $self->header_type('redirect');
 
