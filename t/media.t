@@ -260,6 +260,8 @@ $medias[1]->delete();
     my $ptest_site_id = $ptest_site->site_id();
     my ($ptest_root_cat) = Krang::Category->find(site_id=>$ptest_site_id);
 
+    # need a new filehandle here, since the old one is closed
+    $fh = FileHandle->new($filepath);
     my $media = Krang::Media->new(
                                   title => 'Root Cat media', 
                                   category_id => $ptest_root_cat->category_id(), 
@@ -280,6 +282,7 @@ $medias[1]->delete();
         $newcat->save();
         push(@ptest_categories, $newcat);
 
+	$fh = FileHandle->new($filepath);
         # Add media in this category
         my $media = Krang::Media->new(
                                       title => $_ .' media', 
@@ -323,7 +326,8 @@ $medias[1]->delete();
     my $ptest_cat_id = $ptest_categories[0]->category_id();
     $admin_group->categories($ptest_cat_id => "read-only");
     $admin_group->save();
-
+    
+    $fh = FileHandle->new($filepath);
     # Try to save media to read-only catgory
     $tmp = Krang::Media->new( title => "No media", 
                               category_id => $ptest_cat_id, 
