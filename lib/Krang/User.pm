@@ -102,9 +102,7 @@ require Exporter;
 ###################
 use Krang::DB qw(dbh);
 use Krang::Log qw/critical debug info/;
-use Krang::Media;
-use Krang::Story;
-use Krang::Template;
+use Krang::Group;
 
 
 #

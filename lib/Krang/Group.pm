@@ -120,7 +120,6 @@ The following methods are provided by Krang::Group.
 # Required modules
 use Carp;
 use Krang::DB qw(dbh);
-use Krang::Category;
 use Krang::Log qw(debug);
 use Krang::Desk;
 use Krang::Category;
