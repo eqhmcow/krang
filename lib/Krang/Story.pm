@@ -1739,6 +1739,9 @@ sub deserialize_xml {
                        "exists and no_update is set.")
             if $no_update;
 
+        # check it out to make changes
+        $story->checkout;
+
         # update slug and title
         $story->slug($data->{slug});
         $story->title($data->{title});
