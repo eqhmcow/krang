@@ -1,0 +1,42 @@
+<!-- Pager Internals: START -->
+
+
+<script language="Javascript">
+<!-- //
+
+    function go_page (page_num) {
+        var myform = document.forms["<tmpl_var escape=HTML pager_name>"];
+        myform.<tmpl_var escape=HTML pager_name>_curr_page_num.value = page_num;
+
+      <tmpl_if javascript_presubmit>
+        if (<tmpl_var javascript_presubmit>) {
+            myform.submit();
+        }
+
+      <tmpl_else>
+        myform.submit();
+
+      </tmpl_if>
+    }
+
+
+    function re_sort (sort_field, sort_order) {
+        var myform = document.forms["<tmpl_var escape=HTML pager_name>"];
+        myform.<tmpl_var escape=HTML pager_name>_sort_field.value = sort_field;
+        myform.<tmpl_var escape=HTML pager_name>_sort_order.value = sort_order;
+        go_page("1");
+    }
+
+// -->
+</script>
+
+
+<form method="POST" name="<tmpl_var escape=HTML pager_name>">
+<input type="hidden" name="<tmpl_var escape=HTML pager_name>_curr_page_num" value="<tmpl_var curr_page_num>">
+<input type="hidden" name="<tmpl_var escape=HTML pager_name>_sort_field" value="<tmpl_var sort_field>">
+<input type="hidden" name="<tmpl_var escape=HTML pager_name>_sort_order" value="<tmpl_var sort_order>">
+<tmpl_var pager_persist_data>
+</form>
+
+
+<!-- Pager Internals: END -->

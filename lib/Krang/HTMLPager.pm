@@ -13,27 +13,51 @@ Krang::HTMLPager - Web-paginate lists of records
 
   # Instantiate new template
   my $pager = Krang::HTMLPager->new(
-     name => 'contrib_pager',
-     cgi_query => $q,
-     persist_vars => [ qw( rm search_filter ) ],
-     use_module => 'Krang::Contrib',
-     find_params => { simple_search => $q->param('search_filter') },
-     columns => [qw( last first_middle type order delete_select )],
-     row_handler => sub { return {first_middle=>$_[0]->first." ".$_[0]->middle} },
-     columns_sortable => [qw( last first_middle )],
-     columns_sort_map => { first_middle => 'first,middle' },
-     column_labels => {
-                        last => 'Last Name',
-                        first_middle => 'First, Middle Name'
-                      },
-     javascript_presubmit => 'confirm("Are you SURE?")',
+    name => 'contrib_pager',
+    cgi_query => $q,
+    persist_vars => [ qw( rm search_filter ) ],
+    use_module => 'Krang::Contrib',
+    find_params => { simple_search => $q->param('search_filter') },
+
+    # Configure columns and column display
+    columns => [qw( last first_middle type command_column checkbox_column )],
+    column_labels => {
+                       last => 'Last Name',
+                       first_middle => 'First, Middle Name'
+                     },
+
+    # Configure sorting controls
+    columns_sortable => [qw( last first_middle )],
+    columns_sort_map => { first_middle => 'first,middle' },
+
+    # Configure built-in column handlers
+    command_column_commands => [qw( edit_contrib )],
+    command_column_labels => {
+                               edit_contrib => 'Edit'
+                             },
+
+    # Sub-ref which processes every row.
+    # Gets row hashref and found object as argument.
+    # May specify add'l arguments to be passed to row handler method.
+    row_handler => \&my_row_handler,
+
+    # id_handler:  A sub-ref (like row_handler) which returns a unique ID for this row.
+    # Only needed if you're using command_column or checkbox_column
+    # Receives $row_obj as argument
+    id_handler => sub { return $_[0]->contrib_id },
   );
 
-  # Render template as HTML
+  # Render template as HTML...
   $template->param( pager_html => $pager->output() );
 
-  # Set up params on custom template
+  # ...OR, set up params on custom template
   $pager->fill_template($template):
+
+  # Example my_row_handler function
+  sub my_row_handler {
+    my ($row_hashref, $row_obj) = @_;
+    $row_hashref->{first_middle} = $row_obj->first() . " " . $row_obj->middle();
+  }
 
 =cut
 
@@ -41,9 +65,18 @@ Krang::HTMLPager - Web-paginate lists of records
 use Krang::MethodMaker (
                         new_with_init => 'new',
                         new_hash_init => 'hash_init',
-                        get_set       => [ qw(name cgi_query tmpl_obj use_module) ],
-                        list          => [ qw(persist_vars columns columns_sortable) ],
-                        hash          => [ qw(find_params columns_sort_map column_labels) ],
+                        get_set       => [ qw(
+                                               name 
+                                               cgi_query 
+                                               tmpl_obj 
+                                               use_module 
+                                               persist_vars 
+                                               columns 
+                                               columns_sortable 
+                                               find_params 
+                                               columns_sort_map 
+                                               column_label
+                                             ) ],
                        );
 
 sub init {
