@@ -26,7 +26,11 @@ sub new {
                  Krang::ElementClass::Text->new(name => "small_header"),
                  Krang::ElementClass::Textarea->new(name => "paragraph",
                                                     bulk_edit => 1),
-                 PBMM::image->new(),
+                 Krang::ElementClass::Text->new(name => "name", max => 1),
+                 Krang::ElementClass::Text->new(name => "title", max => 1),
+                 Krang::ElementClass::Text->new(name => "email", max => 1),
+                 PBMM::image->new( max => 1 ),
+                 PBMM::image->new( name => 'logo', max => 1 ),
                  'document',
                 ],
                 @_);
