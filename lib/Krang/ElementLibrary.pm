@@ -172,6 +172,10 @@ sub _load_classes {
     my ($pkg, $lib, $set, $conf) = @_;
     my $dir = catdir($lib, $set);
 
+    # setup @INC so element sets can load successfully
+    local @INC;
+    unshift(@INC, $lib);
+
     # require all .pm files in main set
     opendir(DIR, $dir) or die "Unable to open dir '$dir': $!";
     while($_ = readdir(DIR)) {
