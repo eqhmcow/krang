@@ -604,7 +604,7 @@ END
         }
         
         if ($element->name eq 'category') {
-            $content .= Krang::Publisher->content;
+            $content .= "<tmpl_var content>";
         }
 
         if ($element->name eq 'page') {
