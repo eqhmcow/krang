@@ -215,10 +215,14 @@ sub output {
     # Include javascript and hidden data template elements
     $pager_tmpl .= "\n\n<tmpl_include HTMLPager/pager-internals.tmpl>\n\n";
 
+    # Major TMPL_IF block for results, start
+    $pager_tmpl .= "<tmpl_if krang_pager_rows>\n\n";
+
+    # Result count/page status display
+    $pager_tmpl .= "Found <tmpl_var found_count>.  Viewing <tmpl_var start_row> to <tmpl_var end_row>";
+
     # Build up table and header row
     my @columns = @{$self->columns()};
-
-    $pager_tmpl .= "<tmpl_if krang_pager_rows>\n\n";
     $pager_tmpl .= '<table cellspacing="0" width="100%"><tr class="form-head"><th>'
       . join("</th>\n<th>", (map { "<tmpl_var colhead_$_>" } @columns) ) ."</th></tr>\n\n\n";
 
@@ -662,8 +666,8 @@ sub get_pager_view {
 
     # Count used to calculate page navigation
     my $use_module = $self->use_module();
-    my $count = $use_module->find(%find_params, count=>1);
-    my $total_pages = int($count / $limit) + (($count % $limit) > 0);
+    my $found_count = $use_module->find(%find_params, count=>1);
+    my $total_pages = int($found_count / $limit) + (($found_count % $limit) > 0);
     my @page_numbers = ( map { {page_number=>$_, is_current_page=>($_ eq $curr_page_num)} } (1..$total_pages) );
 
     # Set up previous page nav -- show link unless we're on the first page
@@ -676,7 +680,6 @@ sub get_pager_view {
 
     # Retrieve and build rows
     my $order_by = (($self->columns_sort_map()->{$sort_field}) || $sort_field);
-    print STDERR "FIND ORDER BY: '$order_by', '$sort_order_desc'\n";
     my %all_find_params = (
                            %find_params,
                            order_by => $order_by,
@@ -684,12 +687,11 @@ sub get_pager_view {
                            offset => $offset,
                            limit => $limit,
                           );
-    use Data::Dumper;
-    print STDERR Dumper(\%all_find_params);
     my @found_objects = $use_module->find(%all_find_params);
 
     # Build TMPL_LOOP data
     my @krang_pager_rows = ();
+    my $row_count = 0;
     foreach my $fobj (@found_objects) {
         my %row_data = ( map { $_=>'' } @{$self->columns} );
 
@@ -702,14 +704,25 @@ sub get_pager_view {
 
         # Propagate to template
         push(@krang_pager_rows, \%row_data);
+
+        $row_count++;
     }
+    $self->{row_count} = $row_count;
+
+    # Build up status/page display
+    my $start_row = $offset + 1;
+    my $end_row = $offset + $row_count;
 
     my %pager_view = (
                       curr_page_num    => $curr_page_num,
                       sort_field       => $sort_field,
                       sort_order_desc  => $sort_order_desc,
                       show_big_view    => $show_big_view,
-                      user_page_size => $user_page_size,
+                      user_page_size   => $user_page_size,
+
+                      found_count      => $found_count,
+                      start_row        => $start_row,
+                      end_row          => $end_row,
 
                       page_numbers => \@page_numbers,
                       prev_page_number => $prev_page_number,
