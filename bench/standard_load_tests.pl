@@ -129,8 +129,7 @@ run_benchmark(  module => 'Krang::Story',
 ##############################################################
 
 $done = 0;
-my $sids = map{ $_->story_id.',' } @found_stories;
-
+my $sids = join(',', map{ $_->story_id } @found_stories);
 run_benchmark(  module => 'Krang::Story',
                 name => 'Publish 100 stories at a time',
                 count => 100,

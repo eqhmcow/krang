@@ -21,6 +21,7 @@ CREATE TABLE story (
         desk_id         SMALLINT UNSIGNED,
 
         INDEX(desk_id),
+        INDEX(title),
         INDEX(checked_out),
         INDEX(checked_out_by)
 );
