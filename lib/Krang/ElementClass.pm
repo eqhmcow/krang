@@ -660,11 +660,20 @@ sub fill_template {
             if (exists($params{$loopname})) {
                 $loop_idx = @{$params{$loopname}} + 1;
             }
-            push @{$params{$loopname}}, {
-                                      $name . '_count' => $loop_idx,
-                                      $name            => $html,
-                                      "is_$name"       => 1
-                                     };
+            my %loop_entry = ($name . '_count' => $loop_idx,
+                              $name            => $html,
+                              "is_$name"       => 1);
+
+            # fix to make contrib_loop available - this is because
+            # HTML::Template does not support global loops - only global_vars
+            if ($tmpl->query(name => [$loopname,'contrib_loop'])) {
+                $params{contrib_loop} = $self->_build_contrib_loop(@_) unless
+                  exists($params{contrib_loop});
+                $loop_entry{contrib_loop} = $params{contrib_loop};
+            }
+
+            push @{$params{$loopname}}, \%loop_entry;
+
         }
 
         # if the element is used in the template outside of a loop, and hasn't been set
@@ -716,8 +725,6 @@ sub publish {
 
     my $publisher = $args{publisher};
     my $element_id = $args{element}->element_id();
-
-    debug(__PACKAGE__ . ': publish called for element_id=$element_id name=' . $args{element}->name());
 
     # try and find an appropriate template.
     eval { $html_template = $self->find_template(@_); };
