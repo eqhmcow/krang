@@ -887,6 +887,9 @@ sub element_save {
     my $query = $self->query();
     my $path    = $query->param('path') || '/';
 
+    # saving should check for reorder, else confusing to the editor
+    $self->revise('reorder');
+
     my $root = $args{element};
     my $element = _find_element($root, $path);
 
