@@ -274,11 +274,12 @@ sub find {
         my @words = split(/\s+/, $args{'full_name'});
         foreach my $word (@words) {
             if ($where_string) {
-               $where_string .= " and first like ? or middle like ? or last like ?"; 
+               $where_string .= " and concat(first,' ',middle,' ',last) like ?"; 
             } else {
-                $where_string = "first like ? or middle like ? or last like ?";
+                $where_string = "concat(first,' ',middle,' ',last) like ?";
             }
-            push (@where, "%$word%", "%$word%", "%$word%");
+            push (@where, $word);
+            $args{$word} = "%$word%";
         }
 
     } 
