@@ -260,6 +260,10 @@ sub edit {
                                           onchange => 'add_category',
                                          ));
 
+        $template->param(version_selector => scalar
+                         $query->popup_menu(-name    => 'version',
+                                            -values  => [1 .. $story->version],
+                                            -default => $story->version));
     }
 
     return $template->output();

@@ -50,8 +50,14 @@
   <div class="alert">* <tmpl_var alert></div>
 </tmpl_loop>
 
-<div class=dark-bar>Edit Story</div>
-
+<table width=100% cellspacing=0><tr>
+  <td class=dark-bar>Edit Story</td>
+  <td class=dark-bar align=right>
+     <a href="javascript:goto_log()">Log</a> |
+     <a href="javascript:goto_schedule()">Schedule</a> | 
+     <a href="javascript:goto_help()">Help</a>
+  </td>
+</tr></table>
 <div class=tight-form-box>
 
 <table width=100% cellpadding=2 cellspacing=0>
@@ -169,6 +175,24 @@ Sites / Categories<br>
 
 </div>
 
+<tmpl_if is_root>
+<br>
+  <div class=form-box>
+
+    <table width=100%><tr>
+    <td>
+      Desk: <select name=desk><option value=1>Edit</option></select>
+      <input type=button value="Check-in" onclick="checkin()">
+    </td>
+    <td align=right>
+      Version: <tmpl_var version_selector>
+      <input type=button value="Revert" onclick="revert()">
+      <input type=button value="View" onclick="view()">
+    </td>
+    </table>
+  </div>
+
+</tmpl_if>
 
 <div class=button-bar>
   <input type=button value="Save" onclick="save()">
