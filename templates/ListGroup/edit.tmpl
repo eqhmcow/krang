@@ -70,9 +70,12 @@
     }
 
 
-    function save_stay () {
+    function do_save_stay () {
         var myform = document.forms["edit_form"];
-        myform.rm.value = "save_stay";
+        myform.rm.value = "save";
+        var change_string = change_log.join('%^%');
+        myform.changes.value = change_string;
+        myform.stay.value = 1;
         myform.submit();
     }
 
@@ -242,10 +245,12 @@
 </table>
 
 <form name="edit_form" method="GET" action="list_group.pl">
+<input type="hidden" name="list_group_id" value="<tmpl_var list_group_id>" overwrite="1">
 <input type="hidden" name="rm" overwrite="1">
 <input type="hidden" name="changes" overwrite="1">
+<input type="hidden" name="stay" overwrite="1">
 <table border="1" cellpadding="2" cellspacing="0" width="100%">
-<tr><td width="150">Description:</td><td width="400"><textarea rows="4" cols="60"><tmpl_var list_group_description></textarea></td></tr>
+<tr><td width="150">Description:</td><td width="400"><textarea name="list_group_description" rows="4" cols="60"><tmpl_var list_group_description></textarea></td></tr>
 <tr class="light-bar"><td colspan=2>LISTS</td></tr>
 <tmpl_loop list_loop>
 <tr><td><tmpl_var list_name></td><td><input type='hidden' name="list_id_<tmpl_var list_count>" value="<tmpl_var list_id>"><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
@@ -261,7 +266,7 @@
 </table>
 <div class="button-bar">
     <input type="submit" value="Save" onClick="do_save()" class="button">
-    <input type="button" value="Save &amp; Stay" onClick="save_stay()" class="button">
+    <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
 </div>
 
 

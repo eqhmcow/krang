@@ -18,4 +18,7 @@ isa_ok($lg_f, 'Krang::ListGroup');
 
 is( $lg_f->description, $lg->description, "description was saved and retrieved" );
 
+$lg->description('new desc');
+$lg->save;
+
 END { $lg->delete() }

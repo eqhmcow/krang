@@ -59,10 +59,6 @@ sub setup {
                          search
                          edit
                          save
-                         save_stay
-                         add
-                         modify_selected
-                         delete_selected
                         )]);
 
     $self->tmpl_path('ListGroup/');
@@ -229,7 +225,7 @@ sub edit {
     $t->param( 'list_loop' => \@list_loop ); 
     $t->param( 'js_list_arrays' => $js ); 
     $t->param( 'list_group_description' => $lg->description );
- 
+    $t->param( 'list_group_id' => $list_group_id ); 
     return $t->output();
 }
 
@@ -281,44 +277,19 @@ sub save {
         }
     }
 
-    return $self->search();
+    # now handle list_group_description
+    if ($q->param('list_group_description')) {
+        my ($lg) = Krang::ListGroup->find(list_group_id => $q->param('list_group_id'));
+        $lg->description($q->param('list_group_description'));
+        $lg->save;
+    }
+
+    if ($q->param('stay')) {
+        return $self->edit();
+    } else {
+        return $self->search();
+    }
 }
-
-
-
-=item save_stay
-
-Same as mode "save", except user is returned to the edit screen.
-
-=cut
-
-
-sub save_stay {
-    my $self = shift;
-
-    my $q = $self->query();
-
-    return $self->edit();
-}
-
-=item delete_selected
-
-Delete the selected list item.
-
-=cut
-
-
-sub delete_selected {
-    my $self = shift;
-
-    my $q = $self->query();
-
-    return $self->search();
-}
-
-
-
-
 
 
 #############################

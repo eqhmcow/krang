@@ -91,7 +91,7 @@ sub save {
         # get rid of list_group_id 
         my @save_fields = grep {$_ ne 'list_group_id'} RO_FIELDS,RW_FIELDS;
 
-        my $sql = 'UPDATE list_group set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE list_group_id = = ?';
+        my $sql = 'UPDATE list_group set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE list_group_id = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$list_group_id);
 
     } else {
