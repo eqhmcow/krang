@@ -3,7 +3,8 @@ use strict;
 use warnings;
 
 use Krang::Desk;
-
+use Krang::Conf qw(FTPAddress FTPPort);
+use Krang::Session qw(%session);
 
 =head1 NAME
 
@@ -67,6 +68,13 @@ sub fill_template {
     # can they see any admin tools?
     $template->param(nav_hide_admin => 1) 
       unless grep { $admin_perms{$_} } @admin_apps;
+
+    # setup template FTP link
+    my ($user) = Krang::User->find(user_id => $ENV{REMOTE_USER});
+    $template->param(nav_ftp_server => FTPAddress, 
+                     nav_ftp_port => FTPPort, 
+                     nav_ftp_username => $user->login,
+                     nav_ftp_instance => $ENV{KRANG_INSTANCE} );
                      
 }
 
