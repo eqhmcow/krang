@@ -281,6 +281,13 @@ sub check_categories {
                 my $f_cat = (Krang::Category->find( url => $realcat.$splitcat.'/' ))[0];
                 unless ($f_cat) {
                     my $parent_cat = (Krang::Category->find( url => $realcat ))[0];
+
+                    # return with message if a category that doesnt match a site appears in the root of archive
+                    if (not $parent_cat) {
+                        add_message("bad_category", url => $realcat.$splitcat.'/');
+                        $not_found = 1;
+                        last;
+                    }
                     my $new_cat = Krang::Category->new( dir => $splitcat, parent_id => $parent_cat->category_id );
                     $new_cat->save; 
 
