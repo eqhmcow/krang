@@ -77,7 +77,7 @@ platform.
 If you downloaded the source distribution (ex:
 F<krang-1.013-src.tar.gz>) then you'll need to build Krang before you
 can install it.  If you've got a binary distribution, skip ahead to
-the L<"Installation"> section.
+L<"Installation">.
 
 First, untar the source tar-ball and enter the directory:
 
