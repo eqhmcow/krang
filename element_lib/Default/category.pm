@@ -35,8 +35,8 @@ sub fill_template {
     my ($self, %args) = @_;
     my $story   = $args{publisher}->story;
     my $tmpl      = $args{tmpl};
-    $tmpl->param( metadata_title =>  $story->element->child('metadata_title')->data );
-    $tmpl->param( metadata_description =>  $story->element->child('metadata_description')->data );
+    $tmpl->param( metadata_title =>  $story->element->child_data('metadata_title'));
+    $tmpl->param( metadata_description =>  $story->element->child_data('metadata_description') );
     my $keywords = $story->element->child_data('metadata_keywords') || [];
     my @keys;
     foreach my $kw (@$keywords) {
