@@ -104,9 +104,6 @@ sub new {
         # set category and url
         $m->_build_url;
 
-        # write file
-#        $m->_write_file();
-
         push @media, $m;
     }
 
@@ -133,8 +130,9 @@ sub serialize_xml {
                       'media.xsd');
 
     # write media file into data set
-    my $path = "media_$self->{media_id}/$self->{filename}";
-    $set->add(file => $self->{file}->{data}, path => $path, from => $self);
+    $set->add(file => delete $self->{file}->{data},
+              path => "media_$self->{media_id}/$self->{filename}",
+              from => $self);
 
     my %media_type = Krang::Pref->get('media_type');
 
@@ -226,32 +224,7 @@ sub _map_simple {
 
     # set version to 1
     $self->{version} = 1;
-
-    # file contents
-#    $self->{data} = delete $self->{file}->{data};
 }
-
-# Outputs file content
-sub _write_file {
-    my ($self) = @_;
-    my $path = $self->{file_path};
-    my $data = delete $self->{file}->{data};
-
-    my $fh = IO::File->new(">$path") or
-      croak("Unable to open '$path' for writing: $!.");
-    $fh->print($data);
-    $fh->close;
-
-    # DEBUG
-    if (-e $path) {
-        print STDERR "\n\nWrote image to: $path\n\n";
-
-    } else {
-        print STDERR "\n\n", __PACKAGE__, "->_write_file FAILED!\n\n";
-    }
-}
-
-
 
 
 
