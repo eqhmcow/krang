@@ -483,8 +483,8 @@ sub find {
 Saves the contents of the category object in memory to the database.  Both
 'category_id' and 'url' will be defined if the call is successful. If the
 'dir' field has changed since the last save, the 'url' field will be
-reconstructed and update_child_url() is called to update the category urls
-underneath the present object.
+reconstructed and update_child_url() is called to update the urls underneath
+the present object.
 
 The method croaks if the save would result in a duplicate category object (i.e.
 if the object has the same path or url as another object).  It also croaks if
@@ -576,8 +576,9 @@ sub save {
 
 =item * $success = $category->update_child_urls()
 
-Instance method that will search through the category table and replace all
-occurrences of the categorys old dir with the new one.
+Instance method that will search through the category, media, story, and
+template tables and replaces all occurrences of the category's old dir with the
+new one.
 
 =cut
 
@@ -614,6 +615,25 @@ SQL
     for (keys %ids) {
         (my $url = $ids{$_}) =~  s|^\Q$self->{_old_url}\E|$self->{url}|;
         $sth->execute(($url, $_));
+    }
+
+    # update the 'url's of media, stories, and templates
+    # only implemented in template so far...
+    $query = "SELECT %s_id, url FROM %s WHERE category_id = $id";
+    for my $table(qw/template/) { #media story_category
+        my ($id, $url);
+        $sth = $dbh->prepare(sprintf($query, $table, $table));
+        $sth->execute();
+        $sth->bind_columns(\$id, \$url);
+        $ids{$id} = $url while $sth->fetchrow_arrayref();
+        $sth->finish();
+
+        $sth = $dbh->prepare("UPDATE $table SET url = ? WHERE $table\_id = ?");
+        for (keys %ids) {
+            ($url = $ids{$_}) =~ s|^\Q$self->{_old_url}\E|$self->{url}|;
+            $sth->execute(($url, $_));
+        }
+        $sth->finish();
     }
 
     return 1;
