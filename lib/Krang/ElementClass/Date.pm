@@ -83,8 +83,8 @@ sub _date_input {
 
     my $m_sel = $query->popup_menu(-name      => $name . "_month",
                                    -default   => $date ? $date->mon : 0,
-                                   -values    => [ 0 .. 12 ],
-                                   -labels    => { 0  => ' ',
+                                   -values    => [ '', 1 .. 12 ],
+                                   -labels    => { ''  => ' ',
                                                    1  => 'Jan',
                                                    2  => 'Feb',
                                                    3  => 'Mar',
@@ -99,15 +99,15 @@ sub _date_input {
                                                    12 => 'Dec' });
     my $d_sel = $query->popup_menu(-name      => $name . "_day",
                                    -default   => $date ? $date->mday : 0,
-                                   -values    => [ 0 .. 31 ],
-                                   -labels    => { 0 => ' ' },
+                                   -values    => [ '', 1 .. 31 ],
+                                   -labels    => { '' => ' ' },
                                   );
     my $y_sel = $query->popup_menu(-name      => $name . "_year",
                                    -default   => $date ? $date->year : 0,
-                                   -values    => [ 0, 
+                                   -values    => [ '', 
                                                    localtime()->year - 30 .. 
                                                    localtime()->year + 10 ],
-                                   -labels    => { 0 => ' ' });
+                                   -labels    => { '' => ' ' });
 
 
     return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
