@@ -668,7 +668,7 @@ sub content {
 
 
 
-=item C<< $filename = $publisher->story_filename(page => $page_num);
+=item C<< $filename = $publisher->story_filename(page => $page_num); >>
 
 Returns the filename (B<NOT> the path + filename, just the filename) of the current story being published, given the page number.
 
