@@ -315,7 +315,7 @@ sub log {
     my $timestamp = "[" . localtime()->strftime('%D %T') . "] ";
 
     # print message to file
-    $message = $timestamp . "[" . Krang::Conf->instance . "] [" . lc($level_PV) . "] $message";
+    $message = $timestamp . "[" . (Krang::Conf->instance || 'none') . "] [" . lc($level_PV) . "] $message";
 
     # make sure message ends in a newline
     $message .= "\n" unless $message =~ /\n\z/;
