@@ -24,6 +24,8 @@ TimeStampFormat
 VirtualHost
 LogWrap
 Assertions
+FTPPort
+FTPAddress
 InstanceDisplayName
 );
 }
