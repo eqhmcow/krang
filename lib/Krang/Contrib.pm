@@ -175,7 +175,7 @@ Returns the Krang::Media object associated with this contributor.  Passing a Kra
 sub image {
     my $self  = shift;
     unless (@_) {
-        if (exists($self->{media_id})) {
+        if (exists($self->{media_id}) && defined($self->{media_id})) {
             my ($image) = Krang::Media->find(media_id => $self->{media_id});
             return $image;
         } else {
