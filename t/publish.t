@@ -214,8 +214,21 @@ my %expected = (media => {}, story => {$story->story_id => $story});
 
 # test that get_publish_list(story2) returns story2 + story + media
 
+$publish_list = $publisher->get_publish_list(story => $story2);
+%expected = (media => { $media[0]->media_id => $media[0] },
+             story => { $story->story_id => $story,
+                        $story2->story_id => $story2});
+
+&test_publish_list($publish_list, \%expected);
+
 # add links to all of @stories to story2.
 # test that get_publish_list(story2) returns story2 + story + @stories + media
+foreach (@stories) {
+    &link_story($story2, $_);
+    $expected{story}{$_->story_id} = $_;
+}
+$publish_list = $publisher->get_publish_list(story => $story2);
+&test_publish_list($publish_list, \%expected);
 
 # add links to all of @stories to story.
 # test that get_publish_list(story2) returns story2 + story + @stories + media
