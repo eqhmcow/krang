@@ -6,6 +6,7 @@ use Krang::Conf;
 use Krang::Category;
 use Krang::Template;
 use Krang::Media;
+use Krang::Log qw(debug info critical);
 use Net::FTPServer::FileHandle;
 use Krang::FTP::DirHandle;
 use IO::Scalar;
@@ -129,7 +130,7 @@ in.  Calls Bric::Util::FTP::DirHandle->new().
 
 sub dir {
   my $self = shift;
-  print STDERR __PACKAGE__, "::dir() : ", $self->{filename}, "\n" ;
+  debug(__PACKAGE__."::dir() : ".$self->{filename}."\n");
   return Krang::FTP::DirHandle->new (   $self->{ftps},
                                         $self->dirname,
                                         $self->{type},
@@ -168,7 +169,7 @@ sub status {
     my $object = $self->{object};
     my $type = $self->{type};
 
-    print STDERR __PACKAGE__, "::status() : ", $self->{filename}, "\n";
+    debug(__PACKAGE__."::status() : ".$self->{filename}."\n");
 
     my ($data,$size,$date,$mode);
 
@@ -180,8 +181,8 @@ sub status {
     }
     $date = $object->creation_date(); 
     $date = $date ? Time::Piece->from_mysql_datetime($date) : localtime; 
-    $date->epoch;
-
+    $date = $date->epoch;
+    
     my $owner = $object->checked_out_by;
 
     if ( $owner) { # if checked out, get the username, return read-only
@@ -213,7 +214,7 @@ sub delete {
     my $object = $self->{object};
     my $type = $self->{type};
 
-    print STDERR __PACKAGE__, "::delete() : ", $self->filename, "\n";
+    debug(__PACKAGE__."::delete() : ".$self->filename."\n");
 
     $object->delete;
 
