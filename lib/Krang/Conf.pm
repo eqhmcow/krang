@@ -30,6 +30,8 @@ FTPLog
 InstanceDisplayName
 ScheduleInterval
 ScheduleLog
+SMTPServer
+FromAddress
 );
 }
 
