@@ -150,15 +150,29 @@ my $subcat = Krang::Category->new(dir => 'stuff',
                                   parent_id => $category->category_id());
 $subcat->save();
 
-# test for ancestors
+# test for ancestor ids
 ####################
 my @ancestors = $subcat->ancestors( ids_only => 1);
 is( join(' ', @ancestors), $subcat->parent->category_id.' '.$subcat->parent->parent->category_id , 'ancestors test');
 
-# test for decendants 
+# test for ancestor objects
+###########################
+@ancestors = $subcat->ancestors();
+foreach my $ancestor (@ancestors) {
+    isa_ok($ancestor, 'Krang::Category');
+}
+
+# test for decendant ids
 #####################
 my @decendants = $parent->decendants(ids_only => 1);
 is( join(' ', @decendants), $category->category_id.' '.$category3->category_id.' '.$category4->category_id.' '.$category5->category_id.' '.$subcat->category_id);
+
+# test for decendant objects
+############################
+@decendants = $parent->decendants();
+foreach my $dec (@decendants) {
+    isa_ok($dec, 'Krang::Category');
+}
 
 # another getter
 is($subcat->parent_id() =~ /^\d+$/, 1, 'parent_id()');
