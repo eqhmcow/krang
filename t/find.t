@@ -54,7 +54,7 @@ sub check_find {
 
     # skip modules without a suitable find()
 #    next if $BAD_DEFAULT{$perl_package};
-    next unless ($TEST_PACKAGES{$perl_package});
+    return unless ($TEST_PACKAGES{$perl_package});
 
     # Can we load the module?
     require_ok($perl_package);

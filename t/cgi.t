@@ -49,7 +49,7 @@ sub check_cgiapp {
     isa_ok($app, 'Krang::CGI');
 
     # skip modules without a suitable default mode
-    next if $BAD_DEFAULT{$app_package};
+    return if $BAD_DEFAULT{$app_package};
 
     # Can we run the default mode?
     my $output = '';
