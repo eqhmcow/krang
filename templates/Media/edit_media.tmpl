@@ -19,14 +19,6 @@
     }
 
 
-    function do_reset () {
-        if (confirm("Are you sure you want to abandon your changes?")) {
-            var myform = document.reset_media_form;
-            myform.submit();
-        }
-    }
-
-
     function do_publish () {
         alert ("Not implemented yet");
     }
@@ -103,12 +95,6 @@
 
 <form name="delete_media_form" method="post">
 <input type="hidden" name="rm" value="delete">
-<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
-</form>
-
-<form name="reset_media_form" method="POST">
-<input type="hidden" name="rm" value="edit">
-<input type="hidden" name="force_reload" value="1">
 <input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
 </form>
 
@@ -207,7 +193,7 @@ Version: <tmpl_var media_version_chooser>
   <input type="button" value="Save" onClick="do_save()">
   <input type="button" value="Save &amp; Stay" onClick="do_save_stay()">
   <input type="button" value="Publish" onClick="do_publish()">
-  <input type="reset" value="Reset" onClick="do_reset()">
+  <input type="reset" value="Reset">
   <input type="button" value="Delete" onClick="do_delete()">
 </div>
 

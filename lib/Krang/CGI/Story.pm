@@ -1189,6 +1189,7 @@ sub checkout_selected {
          $self->header_type('redirect');
          return "Redirect: <a href=\"$url\">$url</a>";
      } else {
+         ($session{story}) = Krang::Story->find(story_id=>$story_checkout_list[0]);
          add_message('selected_stories_checkout_one');
          return $self->edit();
      }
