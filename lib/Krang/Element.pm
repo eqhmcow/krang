@@ -759,6 +759,12 @@ sub _load_tree {
             # issue a warning and move on
             info("Unable to load data for element class '$row->[CLASS]' - there is no matching definition in this element set.");
             next;
+        } elsif ($@ and $@ =~ /Unable to add another/) {
+            # the incoming XML has too many of something.  Make this
+            # non-fatal to ease the transition from one element schema
+            # to another.
+            info("Unable to load data for element class '$row->[CLASS]' - unable to add another to parent element.");
+            next;
         } elsif ($@) {
             die $@; 
         } 
@@ -983,6 +989,12 @@ sub _deserialize_xml_children {
             # this is the result of a missing class definition,
             # issue a warning and move on
             info("Unable to load data for element class '$child_data->{class}' - there is no matching definition in this element set.");
+            next;
+        } elsif ($@ and $@ =~ /Unable to add another/) {
+            # the incoming XML has too many of something.  Make this
+            # non-fatal to ease the transition from one element schema
+            # to another.
+            info("Unable to load data for element class '$child_data->{class}' - unable to add another to parent element.");
             next;
         } elsif ($@) {
             die $@; 

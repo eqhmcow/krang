@@ -8,6 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed Krang to log and drop elements which exceed the maximum
+allowed by their parent element.  This mirrors the behavior for
+elements with illegal class names.  This allows for an easier element
+set development process at the risk of possible data loss, which is
+somewhat mitigated by the built in revision system. [Sam]
+
+=item *
+
 Fixed Krang::ElementLibrary to return a sorted list from top_levels().
 This results in a sorted list or article types in the UI.  [Sam]
 
