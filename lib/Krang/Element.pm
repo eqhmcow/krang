@@ -18,7 +18,7 @@ use List::Util qw(first);
 use Scalar::Util qw(weaken);
 use Carp qw(croak);
 use Krang::Log qw(assert ASSERT debug info);
-use Storable qw(freeze thaw);
+use Storable qw(nfreeze thaw);
 use Krang::Cache;
 
 =head1 NAME
@@ -1025,7 +1025,7 @@ sub STORABLE_freeze {
 
     # freeze it
     my $data;
-    eval { $data = freeze(\@data) };
+    eval { $data = nfreeze(\@data) };
     croak("Unable to freeze element: $@") if $@;
 
     return $data;

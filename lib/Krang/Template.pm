@@ -87,7 +87,7 @@ use Exception::Class (
                       'Krang::Template::NoCategoryEditAccess' => {fields => 'category_id'},
                       'Krang::Template::NoEditAccess'         => {fields => 'template_id'},
                      );
-use Storable qw(freeze thaw);
+use Storable qw(nfreeze thaw);
 use Time::Piece;
 use Time::Piece::MySQL;
 
@@ -1136,7 +1136,7 @@ sub save {
 
     # save a copy in the version table
     my $frozen;
-    eval {$frozen = freeze($self)};
+    eval {$frozen = nfreeze($self)};
 
     # catch any exception thrown by Storable
     croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object " .

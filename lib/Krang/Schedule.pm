@@ -12,7 +12,7 @@ use warnings;
 use Carp qw(verbose croak);
 use File::Spec::Functions qw(catdir catfile);
 use File::Path qw(rmtree);
-use Storable qw/freeze thaw/;
+use Storable qw/nfreeze thaw/;
 use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
@@ -1195,7 +1195,7 @@ sub save {
         croak(__PACKAGE__ . "->save(): 'context' field is not an array ref")
           unless (ref $self->{context} && ref $self->{context} eq 'ARRAY');
 
-        eval {$self->{_frozen_context} = freeze($context)};
+        eval {$self->{_frozen_context} = nfreeze($context)};
         croak(__PACKAGE__ . "->save(): Unable to freeze context: $@") if $@;
     }
 

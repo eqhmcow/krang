@@ -10,7 +10,7 @@ use Krang::DB      qw(dbh);
 use Krang::Session qw(%session);
 use Krang::Pref;
 use Carp           qw(croak);
-use Storable       qw(freeze thaw);
+use Storable       qw(nfreeze thaw);
 use Time::Piece::MySQL;
 use File::Spec::Functions qw(catdir canonpath);
 
@@ -757,7 +757,7 @@ sub _save_version {
     # save version
     $dbh->do('REPLACE INTO story_version (story_id, version, data) 
               VALUES (?,?,?)', undef, 
-            $self->{story_id}, $self->{version}, freeze($self));
+            $self->{story_id}, $self->{version}, nfreeze($self));
 }
 
 # check for duplicate URLs
@@ -1936,7 +1936,7 @@ sub STORABLE_freeze {
     
     # serialize data in $self with Storable
     my $data;
-    eval { $data = freeze({%$self}) };
+    eval { $data = nfreeze({%$self}) };
     croak("Unable to freeze story: $@") if $@;
 
     # reconnect cache

@@ -10,7 +10,7 @@ use Krang::Group;
 use Krang::History qw( add_history );
 use Krang::Publisher;
 use Carp qw(croak);
-use Storable qw(freeze thaw);
+use Storable qw(nfreeze thaw);
 use File::Spec::Functions qw(catdir catfile splitpath canonpath);
 use File::Path;
 use File::Copy;
@@ -701,7 +701,7 @@ sub save {
     unless ($args{keep_version}) {
         # save a copy in the version table
         my $serialized; 
-        eval { $serialized = freeze($self); };
+        eval { $serialized = nfreeze($self); };
         croak ("Unable to serialize object: $@") if $@;
         $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
     }
@@ -1823,7 +1823,7 @@ sub STORABLE_freeze {
 
     # serialize data in $self with Storable
     my $data;
-    eval { $data = freeze({%$self}) };
+    eval { $data = nfreeze({%$self}) };
     croak("Unable to freeze story: $@") if $@;
 
     # reconnect cache

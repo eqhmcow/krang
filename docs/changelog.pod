@@ -8,6 +8,17 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Krang now uses C<Storable::nfreeze> rather than C<Storable::freeze>
+when saving binary and object data.  The move to C<nfreeze> should
+make .kds files architecture-independent, allowing migrations between
+different platforms (e.g. x86 / SPARC / PPC).  [Peter]
+
+=item *
+
+Updated L<Storable> to the current release, version 2.13.  [Peter]
+
+=item *
+
 Added C<bin/krang_extract_subset>.  This script is designed to extract
 a single site and its' content from a multi-site Krang Instance.
 [Peter]

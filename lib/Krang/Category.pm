@@ -104,7 +104,7 @@ use Exception::Class
   );
 
 use File::Spec;
-use Storable qw(freeze thaw);
+use Storable qw(nfreeze thaw);
 
 # Internal Modules
 ###################
@@ -1295,7 +1295,7 @@ sub STORABLE_freeze {
     
     # serialize data in $self with Storable
     my $data;
-    eval { $data = freeze({%$self}) };
+    eval { $data = nfreeze({%$self}) };
     croak("Unable to freeze story: $@") if $@;
 
     return $data;
