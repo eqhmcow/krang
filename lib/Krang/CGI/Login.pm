@@ -84,7 +84,7 @@ sub login {
     my $user_id = Krang::User->check_auth($username, $password);
 
     # failure
-    return $self->show_form(alert => "Incorrect user name, try again.")
+    return $self->show_form(alert => "Invalid login.  Please check your user name and password and try again.")
       unless $user_id;
 
     # create a cookie with username, session_id and instance.  Include
