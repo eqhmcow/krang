@@ -19,6 +19,14 @@ use base 'Krang::ElementClass::TopLevel';
 sub new {
    my $pkg = shift;
    my %args = ( name => 'category',
+                children => [
+                             Krang::ElementClass::Text->new(name => 'display_name',
+                                                            allow_delete => 0,
+                                                            min => 1,
+                                                            max => 1,
+                                                            reorderable => 0,
+                                                            required => 1),
+                            ],
                 @_);
    return $pkg->SUPER::new(%args);
 }
