@@ -272,9 +272,7 @@ sub authz_handler ($$) {
     # always allow access to the login app
     my $login_app = LOGIN_APP;
     if (($flavor eq 'root'     and $path =~ m!^/$instance/$login_app!) or 
-        ($flavor eq 'instance' and $path =~ m!^/$login_app!) or
-        ($path =~ m!^/$instance/env\.!) or
-        ($path =~ m!^/env\.!)
+        ($flavor eq 'instance' and $path =~ m!^/$login_app!)
        ) {
         return OK;
     }
