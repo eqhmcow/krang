@@ -80,6 +80,12 @@
        document.krang_pager_form.submit();
   }
 
+  function update_testing(checkbox, id) {
+       document.krang_pager_form.rm.value = 'update_testing';
+       document.krang_pager_form.id.value = id;
+       document.krang_pager_form.submit();
+  }
+
 </script>
 
 <table border="0" cellpadding="2" cellspacing="0" width="100%">
@@ -184,8 +190,7 @@
                <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
                <p>
                <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
-               Test with: <input type="checkbox" <tmpl_if testing>checked</tmpl_if>
-name=testing value='<tmpl_var id>'>
+               Test with: <input onchange="update_testing(this, '<tmpl_var id>')" type="checkbox" <tmpl_if testing>checked</tmpl_if> name=testing_<tmpl_var id> value='1'>
            </tmpl_if>
        </td>
      </tr>

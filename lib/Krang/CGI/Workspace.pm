@@ -46,6 +46,7 @@ sub setup {
       checkin
       checkin_checked
       deploy
+      update_testing
     )]);
 
 }
@@ -261,6 +262,30 @@ sub checkin {
 
     return $self->show;
 }
+
+=item update_testing
+
+Changes the testing flag for a template object.
+
+=cut
+
+sub update_testing {
+    my $self = shift;
+    my $query = $self->query;
+    my $obj = _id2obj($query->param('id'));
+    my $val = $query->param('testing_' . $query->param('id'));
+
+    if ($val) {
+        $obj->mark_for_testing;
+        add_message('marked_for_testing', id => $obj->template_id);
+    } else {
+        $obj->unmark_for_testing;
+        add_message('unmarked_for_testing', id => $obj->template_id);
+    }
+
+    return $self->show;
+}
+
 
 =item checkin_checked
 
