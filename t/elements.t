@@ -8,6 +8,14 @@ use Krang::Story;
 use Krang::Conf qw(InstanceElementSet);
 BEGIN { use_ok('Krang::Element') }
 
+# use the TestSet1 instance, if there is one
+foreach my $instance (Krang::Conf->instances) {
+    Krang::Conf->instance($instance);
+    if (InstanceElementSet eq 'TestSet1') {
+        last;
+    }
+}
+
 # create a site and category for dummy story
 my $site = Krang::Site->new(preview_url  => 'storytest.preview.com',
                             url          => 'storytest.com',

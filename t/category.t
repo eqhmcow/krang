@@ -13,6 +13,15 @@ use Krang::Conf qw(InstanceElementSet);
 
 use Test::More qw(no_plan);
 
+# use the TestSet1 instance, if there is one
+foreach my $instance (Krang::Conf->instances) {
+    Krang::Conf->instance($instance);
+    if (InstanceElementSet eq 'TestSet1') {
+        last;
+    }
+}
+
+
 BEGIN {
     use_ok('Krang::Category');
 }

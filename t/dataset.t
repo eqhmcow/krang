@@ -8,6 +8,16 @@ use Krang::Story;
 use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::Element qw(foreach_element);
 use File::Spec::Functions qw(catfile);
+
+# use the TestSet1 instance, if there is one
+foreach my $instance (Krang::Conf->instances) {
+    Krang::Conf->instance($instance);
+    if (InstanceElementSet eq 'TestSet1') {
+        last;
+    }
+}
+
+
 BEGIN { use_ok('Krang::DataSet') }
 
 my $DEBUG = 0; # supresses deleting kds files at process end
@@ -164,6 +174,7 @@ SKIP: {
 # create 10 stories
 my $count = Krang::Story->find(count => 1);
 my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');
+$ENV{KRANG_INSTANCE} = Krang::Conf->instance;
 system("bin/krang_floodfill --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --contribs 10 --undo_script $undo > /dev/null 2>&1");
 is(Krang::Story->find(count => 1), $count + 10);
 

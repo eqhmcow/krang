@@ -3,15 +3,32 @@
 ### SQL and XML techniques, they should all be as 8-bit clean as
 ### templates.
 
-use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::Script;
 use Krang::Template;
 use Krang::DataSet;
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::Test::Content;
 use File::Spec::Functions qw(catfile);
+
+# skip all tests unless a TestSet1-using instance is available
+BEGIN {
+    my $found;
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        if (InstanceElementSet eq 'TestSet1') {
+            eval 'use Test::More qw(no_plan)';
+            die $@ if $@;
+            $found = 1;
+            last;
+        }
+    }
+
+    eval "use Test::More skip_all => 'test requires a TestSet1 instance';"
+      unless $found;
+    die $@ if $@;
+}
 
 # a bunch of binary data containing all 256 bytes
 my $bits = join('', map { chr($_) } 0 .. 255) .
