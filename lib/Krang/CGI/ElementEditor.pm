@@ -158,6 +158,7 @@ use Carp qw(croak);
 use Krang::Session qw(%session);
 use Krang::Log qw(debug assert affirm ASSERT);
 use Krang::Message qw(add_message get_messages);
+use Krang::Widget qw(category_chooser date_chooser decode_date);
 use base 'Krang::CGI';
 
 sub setup {
@@ -338,8 +339,111 @@ sub find_story_link {
     my $element = _find_element($root, $path);
 
     # determine appropriate find params for search
-    my $search_filter = $query->param('search_filter');
-    my %find_params = ( simple_search => $search_filter);
+    my %find_params;
+    my %persist_vars;
+    if ($query->param('advanced')) {
+        my %tmpl_data;
+        # Set up advanced search
+        my @auto_search_params = qw(
+                                    title
+                                    url
+                                    class 
+                                    below_category_id 
+                                    story_id
+                                    contrib_simple
+                                   );
+        for (@auto_search_params) {
+            my $key = $_;
+            my $val = $query->param("search_". $_);
+
+            # If no data, skip parameter
+            next unless (defined($val) && length($val));
+            
+            # Persist parameter
+            $persist_vars{"search_". $_} = $val;
+
+            # Like search
+            if (grep {$_ eq $key} (qw/title url/)) {
+                $key .= '_like';
+                $val =~ s/\W+/\%/g;
+                $val = "\%$val\%";
+            }
+
+            # Set up search in pager
+            $find_params{$key} = $val;
+        }
+        
+        # Set up cover and publish date search
+        for my $datetype (qw/cover publish/) {
+            my $from = decode_date(query=>$query, name => $datetype .'_from');
+            my $to =   decode_date(query=>$query, name => $datetype .'_to');
+            if ($from || $to) {
+                my $key = $datetype .'_date';
+                my $val = [$from, $to];
+            
+                # Set up search in pager
+                $find_params{$key} = $val;
+            }
+
+            # Persist parameter
+            for my $interval (qw/month day year/) {
+                my $from_pname = $datetype .'_from_'. $interval;
+                my $to_pname = $datetype .'_to_'. $interval;
+
+                # Only persist date vars if they are complete and valid
+                if ($from) {
+                    my $from_pname = $datetype .'_from_'. $interval;
+                    $persist_vars{$from_pname} = $query->param($from_pname);
+                } else {
+                    # Blow away var
+                    $query->delete($from_pname);
+                }
+
+                if ($to) {
+                    $persist_vars{$to_pname} = $query->param($to_pname);
+                } else {
+                    # Blow away var
+                    $query->delete($to_pname);
+                }
+            }
+
+        }
+
+        # If we're showing an advanced search, set up the form
+        $tmpl_data{category_chooser} = 
+          category_chooser(
+                           name => 'search_below_category_id',
+                           query => $query,
+                                                       );
+
+        # Date choosers
+        $tmpl_data{date_chooser_cover_from}   = 
+          date_chooser(query=>$query, name=>'cover_from', nochoice=>1);
+        $tmpl_data{date_chooser_cover_to}     = 
+          date_chooser(query=>$query, name=>'cover_to', nochoice=>1);
+        $tmpl_data{date_chooser_publish_from} = 
+          date_chooser(query=>$query, name=>'publish_from', nochoice=>1);
+        $tmpl_data{date_chooser_publish_to}   = 
+          date_chooser(query=>$query, name=>'publish_to', nochoice=>1);
+
+        # Story class
+        my @classes = grep { $_ ne 'category' } 
+          Krang::ElementLibrary->top_levels;
+        my %class_labels = map {
+            $_ => Krang::ElementLibrary->top_level(name => $_)->display_name()
+        } @classes;
+        $tmpl_data{search_class_chooser} =
+          scalar($query->popup_menu(-name      => 'search_class',
+                                    -default   => '',
+                                    -values    => [ ('', @classes) ],
+                                    -labels    => \%class_labels));
+        $template->param(\%tmpl_data);
+        
+    } else {
+        my $search_filter = $query->param('search_filter');
+        %find_params = ( simple_search => $search_filter);
+        %persist_vars = ( search_filter => $search_filter);
+    }
 
     # exclude this story when editing a story
     if ($self->isa('Krang::CGI::Story') and $session{story}->story_id) {
@@ -349,8 +453,9 @@ sub find_story_link {
     my $pager = Krang::HTMLPager->new      (cgi_query     => $query,
        persist_vars  => {
                          rm => 'find_story_link',
-                         search_filter => $search_filter,
                          path => $query->param('path'),
+                         advanced =>($query->param('advanced') || 0),
+                         %persist_vars,
                         },
        use_module    => 'Krang::Story',
        find_params   => \%find_params,
@@ -435,19 +540,79 @@ sub find_media_link {
 
     $template->param(parent_path => $element->parent->xpath());
 
-    # determine appropriate find params for search
-    my $search_filter = $query->param('search_filter');
+    # determine appropriate find params for search    
+    my %find;
+    my %persist;
+    if ($query->param('advanced')) {
+        my $search_below_category_id = $query->param('search_below_category_id');
+        if ($search_below_category_id) {
+            $persist{search_below_category_id} = $search_below_category_id;
+            $find{below_category_id} = $search_below_category_id;
+        }
+        
+        my $search_creation_date = decode_date(query => $query,
+                                               name => 'search_creation_date');
+        if ($search_creation_date) {
+            # If date is valid send it to search and persist it.
+            $find{creation_date} = $search_creation_date;
+            for (qw/day month year/) {
+                my $varname = "search_creation_date_$_";
+                $persist{$varname} = $query->param($varname);
+            }
+        } else {
+            # Delete date chooser if date is incomplete
+            for (qw/day month year/) {
+                my $varname = "search_creation_date_$_";
+                $query->delete($varname);
+            }
+        }
 
+        # search_filename
+        my $search_filename = $query->param('search_filename');
+        if ($search_filename) {
+            $search_filename =~ s/\W+/\%/g;
+            $find{filename_like} = "\%$search_filename\%";
+            $persist{search_filename} = $search_filename;
+        }
+
+        # search_title
+        my $search_title = $query->param('search_title');
+        if ($search_title) {
+            $search_title =~ s/\W+/\%/g;
+            $find{title_like} = "\%$search_title\%";
+            $persist{search_title} = $search_title;
+        }
+
+        # search_media_id
+        my $search_media_id = $query->param('search_media_id');
+        if ($search_media_id) {
+            $find{media_id} = $search_media_id;
+            $persist{search_media_id} = $search_media_id;
+        }
+
+        # search_no_attributes
+        my $search_no_attributes = $query->param('search_no_attributes');
+        if ($search_no_attributes) {
+            $find{no_attributes} = $search_no_attributes;
+            $persist{search_no_attributes} = $search_no_attributes;
+        }
+        
+        
+    } else {
+        %find = (simple_search => ($query->param('search_filter') || ""));
+        %persist = (search_filter => ($query->param('search_filter') || ""));
+    }
+                 
+        
     my $pager = Krang::HTMLPager->new      (cgi_query     => $query,
        persist_vars  => {
                          rm => 'find_media_link',
-                         search_filter => $search_filter,
                          path => $query->param('path'),
+                         advanced => ($query->param('advanced') || 0),
+                         %persist,
                         },
        use_module    => 'Krang::Media',
-
-       # FIX: should be simple_search
-       find_params   => { simple_search => $search_filter },
+       find_params   => \%find,
        columns       => [qw(
                             pub_status 
                             media_id 
@@ -471,6 +636,17 @@ sub find_media_link {
        row_handler   => sub { $self->find_media_link_row_handler(@_) },
        id_handler    => sub { shift->media_id },
       );
+
+    # Set up advanced search form
+    $template->param(category_chooser => category_chooser(
+                                                   query => $query,
+                                                   name => 'search_below_category_id',
+                                                  ));
+    $template->param(date_chooser     => date_chooser(
+                                               query => $query,
+                                               name => 'search_creation_date',
+                                               nochoice =>1,
+                                              ));
     
     $template->param(pager_html => $pager->output());
 
