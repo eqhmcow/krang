@@ -10,7 +10,7 @@ to the CVS repository on the B<krang-services> server, and (3) he
 has a basic understanding of what Krang does and how it looks when it
 is working.
 
-Note: there are only two supported operating system's for Krang,
+Note: there are only two supported operating systems for Krang,
 Redhat 7.3 and Redhat 9.  Starting with an "everything" install is
 advisable, although a "server" install should also work.
 
