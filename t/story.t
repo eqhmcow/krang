@@ -203,6 +203,9 @@ for (qw( story_id
     is($story->$_, $story2->$_, "$_ save/load");
 }
 
+# test hidden
+test_hidden($root_cat);
+
 
 SKIP: {
     skip('Element tests only work for TestSet1', 5)
@@ -1009,6 +1012,50 @@ sub test_urls {
 }
 
 
+sub test_hidden {
+    my $cat = shift;
+
+  SKIP: {
+        skip('Hidden tests only work for TestSet1', 3)
+          unless (InstanceElementSet eq 'TestSet1');
+
+        # create a new story
+        my $hidden = Krang::Story->new(categories => [$cat],
+                                       title      => "Test Hidden",
+                                       slug       => "testhidden",
+                                       class      => "hidden");
+        $hidden->save();
+
+        # make sure it comes back.
+        my $id = $hidden->story_id;
+
+        my ($test) = Krang::Story->find(story_id => $id);
+
+        ok($test->story_id == $hidden->story_id, 'Krang::Story->show_hidden');
+
+        # do a category search - it shouldn't be found
+        my @stories = Krang::Story->find(category_id => $cat->category_id);
+
+        my $not_found = 1;
+        foreach my $s (@stories) {
+            $not_found = 0 if ($s->story_id == $hidden->story_id);
+        }
+
+        ok($not_found, 'Krang::Story->show_hidden');
+
+        # repeat w/ show_hidden argument.
+        @stories = Krang::Story->find(category_id => $cat->category_id, show_hidden => 1);
+        my $found = 0;
+        foreach my $s (@stories) {
+            $found = 1 if ($s->story_id == $hidden->story_id);
+        }
+        ok($found, 'Krang::Story->show_hidden');
+
+        # cleanup.
+        $hidden->delete;
+    };
+
+}
 
 
 # get a random word
