@@ -79,7 +79,10 @@ sub dbh {
     return $DBH{$name} if $DBH{$name} and $DBH{$name}->ping;
 
     # connect to the defined database
-    $DBH{$name} = DBI->connect("DBI:mysql:database=$name", DBUser, DBPass,
+    $DBH{$name} = DBI->connect(
+                               "DBI:mysql:database=$name".
+                               ":mysql_read_default_group=krang", 
+                               DBUser, DBPass,
                                { RaiseError         => 1, 
                                  AutoCommit         => 1,
                                });
