@@ -49,12 +49,8 @@
 
 <form name="edit_group_form" method="POST">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<tmpl_if add_mode>
-  <input type="hidden" name="rm" value="save_add">
-<tmpl_else>
-  <input type="hidden" name="rm" value="save_edit">
-  <input type="hidden" name="group_id" value="<tmpl_var escape=HTML group_id>">
-</tmpl_if>
+<input type="hidden" name="rm" value="save">
+<input type="hidden" name="group_id" value="<tmpl_var escape=HTML group_id>">
 
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
@@ -66,7 +62,7 @@
 
 <tr>
     <td align="left" valign="top">Group Name:</td>
-    <td align="left" valign="top"><input type="textfield" size="40" name="prefix" value="<tmpl_var escape=HTML name>"></td>
+    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="name" value="<tmpl_var escape=HTML name>"><tmpl_if error_invalid_name></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
 </tr>
 
 </table>

@@ -170,25 +170,13 @@ sub search {
 
 =item add
 
-Description of run-mode 'add'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+Display "add group" screen through which new groups may be added.
 
 =cut
 
 
 sub add {
     my $self = shift;
-    my %ui_messages = ( @_ );
-
-    my $q = $self->query();
-    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
-    $t->param(add_mode => 1);
-    $t->param(%ui_messages) if (%ui_messages);
 
     # Make new Group, but don't save it
     my $g = Krang::Group->new();
@@ -196,27 +184,15 @@ sub add {
     # Stash it in the session for later
     $session{EDIT_GROUP} = $g;
 
-    # Convert Krang::Contrib object to tmpl data
-    my $group_tmpl = $self->get_group_tmpl($g);
-
-    # Propagate to template
-    $t->param($group_tmpl);
-
-    return $t->output();
+    # Show edit form
+    return $self->_edit();
 }
-
-
 
 
 
 =item edit
 
-Description of run-mode 'edit'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Display "edit group" screen through which new groups may be added.
 
 
 =cut
@@ -224,12 +200,10 @@ Description of run-mode 'edit'...
 
 sub edit {
     my $self = shift;
-    my %ui_messages = ( @_ );
 
     my $q = $self->query();
-
     my $group_id = $q->param('group_id');
-    my ( $g ) = Krang::Group->find( group_id=>$group_id);
+    my ( $g ) = Krang::Group->find( group_id => $group_id );
 
     # Did we get our group?  Presumbably, users get here from a list.  IOW, there is 
     # no valid (non-fatal) case where a user would be here with an invalid group_id
@@ -238,32 +212,17 @@ sub edit {
     # Stash it in the session for later
     $session{EDIT_GROUP} = $g;
 
-    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
-    $t->param(%ui_messages) if (%ui_messages);
-
-
-    # Convert Krang::Group object to tmpl data
-    my $group_tmpl = $self->get_group_tmpl($g);
-
-    # Propagate to template
-    $t->param($group_tmpl);
-
-    return $t->output();
+    # Show edit form
+    return $self->_edit();
 }
-
-
 
 
 
 =item save
 
-Description of run-mode 'save'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+Save a group object.  In the case of "add", this will insert a new
+group into the system.  In the case of "edit", this will update an
+existing group.
 
 =cut
 
@@ -273,7 +232,36 @@ sub save {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    my %errors = ( $self->validate_group() );
+
+    # Return to add or edit screen if we have errors
+    return $self->_edit( %errors ) if (%errors);
+
+    # Retrieve working group object from session
+    my $g = $session{EDIT_GROUP};
+    die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
+
+    # If we don't have an ID, we're in add mode
+    my $add_mode = not($g->group_id);
+
+    my %save_errors = ( $self->do_update_group($g) );
+    return $self->_edit(%save_errors) if (%save_errors);
+
+    # Delete group object from session
+    $session{EDIT_GROUP} = 0;
+
+    if ($add_mode) {
+        add_message('message_group_added');
+    } else {
+        add_message('message_group_saved');
+    }
+
+    # Set up http redirect to search mode
+    my $url = $q->url(-relative=>1);
+    $self->header_type('redirect');
+    $self->header_props(-url=>$url);
+
+    return "Away we go!: <a href=\"$url\">$url</a>";
 }
 
 
@@ -282,13 +270,7 @@ sub save {
 
 =item save_stay
 
-Description of run-mode 'save_stay'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+Same as mode "save", except user is returned to the edit screen.
 
 =cut
 
@@ -298,7 +280,37 @@ sub save_stay {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    my %errors = ( $self->validate_group() );
+
+    # Return to add or edit screen if we have errors
+    return $self->_edit( %errors ) if (%errors);
+
+    # Retrieve working group object from session
+    my $g = $session{EDIT_GROUP};
+    die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
+
+    # If we don't have an ID, we're in add mode
+    my $add_mode = not($g->group_id);
+
+    my %save_errors = ( $self->do_update_group($g) );
+    return $self->_edit(%save_errors) if (%save_errors);
+
+    # Delete group object from session
+    $session{EDIT_GROUP} = 0;
+
+    if ($add_mode) {
+        add_message('message_group_added');
+    } else {
+        add_message('message_group_saved');
+    }
+
+    # Set up http redirect to edit mode
+    my $group_id = $g->group_id();
+    my $url = $q->url(-relative=>1) . '?rm=edit&group_id='. $group_id;
+    $self->header_type('redirect');
+    $self->header_props(-url=>$url);
+
+    return "Away we go!: <a href=\"$url\">$url</a>";
 }
 
 
@@ -307,13 +319,8 @@ sub save_stay {
 
 =item cancel
 
-Description of run-mode 'cancel'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+Cancel editing (or adding) a group.  Abandon changes and 
+return to search screen.
 
 =cut
 
@@ -323,7 +330,28 @@ sub cancel {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    # Retrieve working group object from session
+    my $g = $session{EDIT_GROUP};
+    die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
+
+    # If we don't have an ID, we're in add mode
+    my $add_mode = not($g->group_id);
+
+    # Delete group object from session
+    $session{EDIT_GROUP} = 0;
+
+    if ($add_mode) {
+        add_message('message_add_cancelled');
+    } else {
+        add_message('message_save_cancelled');
+    }
+
+    # Set up http redirect to search mode
+    my $url = $q->url(-relative=>1);
+    $self->header_type('redirect');
+    $self->header_props(-url=>$url);
+
+    return "Away we go!: <a href=\"$url\">$url</a>";
 }
 
 
@@ -332,13 +360,7 @@ sub cancel {
 
 =item delete
 
-Description of run-mode 'delete'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+Delete the current group object and return to the search screen.
 
 =cut
 
@@ -348,7 +370,28 @@ sub delete {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    # Retrieve working group object from session
+    my $g = $session{EDIT_GROUP};
+    die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
+
+    # If we don't have an ID, we're in add mode -- impossible!
+    croak ("Attempt to delete un-saved group") unless ($g->group_id);
+
+    # Delete group object from session
+    $session{EDIT_GROUP} = 0;
+
+    # Do the delete
+    $g->delete();
+
+    add_message('message_group_deleted');
+
+
+    # Set up http redirect to search mode
+    my $url = $q->url(-relative=>1);
+    $self->header_type('redirect');
+    $self->header_props(-url=>$url);
+
+    return "Away we go!: <a href=\"$url\">$url</a>";
 }
 
 
@@ -387,7 +430,6 @@ sub delete_selected {
     add_message('message_selected_deleted');
     return $self->search();
 }
-
 
 
 
@@ -472,6 +514,116 @@ sub delete_category {
 #############################
 #####  PRIVATE METHODS  #####
 #############################
+
+# Show edit form.  Used for "add" and "edit" run-mode.
+# Add mode is differentiated from "edit" mode by testing
+# if there is a group_id.
+# The group object MUST be stored in the session before
+# calling this method.
+sub _edit {
+    my $self = shift;
+    my %ui_messages = ( @_ );
+
+    my $g = $session{EDIT_GROUP};
+    croak("Can't retrieve group object") unless ($g and ref($g));
+
+    my $q = $self->query();
+    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
+    $t->param(add_mode => 1) unless ($g->group_id);
+    $t->param(%ui_messages) if (%ui_messages);
+
+    # Convert Krang::Contrib object to tmpl data
+    my $group_tmpl = $self->get_group_tmpl($g);
+
+    # Propagate to template
+    $t->param($group_tmpl);
+
+    return $t->output();
+}
+
+
+# Examine the query data to validate that the submitted
+# group is valid.  Return hash-errors, if any.
+sub validate_group {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    my %errors = ();
+
+    # Validate group name
+    my $name = $q->param('name');
+    $errors{error_invalid_name} = 1
+      unless (defined($name) && ($name =~ /\S+/));
+
+    # Add messages
+    foreach my $error (keys(%errors)) {
+        add_message($error);
+    }
+
+    return %errors;
+}
+
+
+# Updated the provided group object with data
+# from the CGI query
+sub do_update_group {
+    my $self = shift;
+    my $group = shift;
+
+    my $q = $self->query();
+
+    # Get prototype for the purpose of update
+    my %group_prototype = ( %{&GROUP_PROTOTYPE} );
+
+    # We can't update group_id
+    delete($group_prototype{group_id});
+
+    my @query_params = $q->param();
+
+    foreach my $qp (@query_params) {
+        my $value = $q->param($qp);
+
+        # Process category permissions
+        if ($qp =~ /^category\_(\d+)$/) {
+            my $category_id = $1;
+            $group->categories($category_id=>$value);
+            next;
+        }
+
+        # Process desk perms
+        if ($qp =~ /^category\_(\d+)$/) {
+            my $desk_id = $1;
+            $group->desks($desk_id=>$value);
+            next;
+        }
+    }
+    delete($group_prototype{categories});
+    delete($group_prototype{desks});
+
+    # Grab each CGI query param and set the corresponding Krang::Group property
+    foreach my $gk (keys(%group_prototype)) {
+        # Presumably, query data is already validated and un-tainted
+        $group->$gk($q->param($gk));
+    }
+
+    # Attempt to write back to database
+    eval { $group->save() };
+
+    # Is it a dup?
+    if ($@) {
+        if (ref($@) and $@->isa('Krang::Group::DuplicateName')) {
+            add_message('duplicate_name');
+            return (duplicate_name=>1);
+        } else {
+            # Not our error!
+            die($@);
+        }
+    }
+
+    return ();
+}
+
 
 # Given a param name, return an html-tmpl style arrayref
 # containing HTML inputs for permissions
@@ -598,7 +750,6 @@ sub get_group_tmpl {
                                              -value => "1",
                                              -checked => $default,
                                              -label => "" );
-            debug($group_tmpl{$gf});
             next;
         }
 
