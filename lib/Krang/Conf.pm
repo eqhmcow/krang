@@ -79,7 +79,7 @@ C<< Krang::Conf->instance() >>.
 Full details on all configuration parameters is available in the
 configuration document, which you can find at:
 
-  http://krang-docs/configuration.html
+  http://krang.sourceforge.net/docs/configuration.html
 
 =cut
 
