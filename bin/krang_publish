@@ -120,6 +120,11 @@ BROKEN>
 This modifier will limit the publish process to assets that have been
 published previously.
 
+=item --not_on_desk
+
+This modifier will limit the publish process to assets that are not
+currently on a desk (associated with a Krang::Desk object).
+
 =item --version_check
 
 This modifier will force krang_publish to check the last
@@ -193,6 +198,8 @@ my $version_check       = 0;
 my $increment           = 100;
 my $media_only          = 0;
 my $to_preview          = 0;
+my $not_on_desk         = 0;
+
 
 pod2usage(2) unless
   GetOptions(help                => \$help,
@@ -203,6 +210,7 @@ pod2usage(2) unless
              limited_to_site     => \$limited_to_site,
              limited_to_category => \$limited_to_category,
              republish_only      => \$republish_only,
+             not_on_desk         => \$not_on_desk,
              version_check       => \$version_check,
              'to-preview'        => \$to_preview,
 
@@ -232,6 +240,10 @@ my %publish_args = (
 
 if ($republish_only) {
     $find_options{published} = 1;
+}
+
+if($not_on_desk) {
+    $find_options{desk_id} = undef;
 }
 
 
@@ -381,10 +393,15 @@ printf("CACHE FILL AT END:\t\t%d\n\n", $fill)
 
 sub publish_media {
 
-    my ($find_options, $publish_args) = @_;
+    my ($global_find_options, $publish_args) = @_;
+    my $find_options = { %$global_find_options };
 
     # make sure we're starting at the beginning.
     $find_options->{offset} = 0;
+
+    # make sure we don't have 'desk_id'
+    delete $find_options->{desk_id};
+
 
     while (my @media = Krang::Media->find(%{$find_options})) {
         my @starttime = gettimeofday();
@@ -412,7 +429,10 @@ sub publish_media {
 
         my $endtime = tv_interval(\@starttime);
 
-        print sprintf("STATUS: media %i - %i published in %.02f seconds.\n", ($find_options->{offset}+1), ($find_options->{offset} + @media), $endtime);
+        print sprintf("STATUS: media %i - %i published in %.02f seconds.\n",
+                      ($find_options->{offset}+1),
+                      ($find_options->{offset} + @media),
+                      $endtime);
 
         # because Krang::Publisher does not have callback implemented 
         # for preview_media, need to keep track of media preview time

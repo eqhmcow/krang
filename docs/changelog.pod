@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<--not_on_desk> option to C<bin/krang_publish> - limiting
+publishing to checked-in items that are not on any desk. [Michael Peters]
+
+=item *
+
 Fixed a bug in L<Krang::Schedule> - cleanup of the C<tmp/> directory
 was not being done properly.  This is now fixed. [Peter]
 
