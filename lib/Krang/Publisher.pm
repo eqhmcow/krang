@@ -49,6 +49,11 @@ Krang::Publisher - Center of the Publishing Universe.
                               template => $template_object
                              );
 
+  # Remove a template from the production path.
+  $publisher->undeploy_template(
+                                template => $template_object
+                               );
+
 
   # Returns the mark used internally to break content into pages.
   my $break_txt = $publisher->PAGE_BREAK();
@@ -223,14 +228,14 @@ sub deploy_template {
     my $self = shift;
     my %args = @_;
 
-    croak ("Missing argument 'template'!\n") unless (exists($args{template}));
+    croak (__PACKAGE__ . ": Missing argument 'template'!\n") unless (exists($args{template}));
 
     my $template   = $args{template};
     my $id         = $template->template_id();
 
     my $category   = $template->category();
 
-    if (!defined($category)) { die "ERROR: cannot find category '" . $template->category_id() . "'\n"; }
+    if (!defined($category)) { croak __PACKAGE__ .": template '" . $template->template_id() . "' has no category - cannot build filesystem path.\n"; }
 
     my @tmpl_dirs = $self->template_search_path(category => $category);
 
@@ -247,6 +252,48 @@ sub deploy_template {
     $fh->close();
 
     return $file;
+
+}
+
+=item C<< $publisher->undeploy_template(template => $template); >>
+
+Removes the template specified by a L<Krang::Template> object from the template publish_path under $KRANG_ROOT.
+
+The location of the template is based on $category->url() and $template->element_class_name().
+
+If successful, undeploy_template() returns nothing.  In the event of an error, undeploy_template() will croak.
+
+undeploy_template() makes no attempt to update the database as to the publish status or location of the template - that is the responsibility of Krang::Template (or should it call the appropriate method in Krang::Template?)
+
+=cut
+
+sub undeploy_template {
+
+    my $self = shift;
+    my %args = @_;
+
+    croak (__PACKAGE__ . ": Missing argument 'template'!\n") unless (exists($args{template}));
+
+    my $template   = $args{template};
+    my $id         = $template->template_id();
+
+    my $category   = $template->category();
+
+    if (!defined($category)) { croak __PACKAGE__ .": template '" . $template->template_id() . "' has no category.  Cannot build filesystem path.\n"; }
+
+    my @tmpls = $self->template_search_path(category => $category);
+    my $path = $tmpls[0];
+
+    my $file = File::Spec->catfile($path, $template->filename());
+
+    if (-e $file) {
+        if (-d $file) {
+            croak __PACKAGE__ . ": template file '$file' is a directory - will not delete.\n";
+        }
+        unlink $file;
+    }
+
+    return;
 
 }
 

@@ -12,11 +12,15 @@ use Krang::Script;
 
 use Data::Dumper;
 
+my $template_dir = 't/publish/';
+
 # list of templates to delete at the end of this all.
 my @delete_templates = ();
 
 # file path of element template
-my %element_paths = ();
+my %template_paths = ();
+my %template_deployed = ();
+
 
 # create a site and category for dummy story
 my $site = Krang::Site->new(preview_url  => 'publishtest.preview.com',
@@ -71,18 +75,27 @@ for (my $i = 0; $i <= $#paths; $i++) { ok($paths[$i] eq $dirs_a[$i]); }
 # create a new story -- get root element.
 my $story   = &create_story([$category, $child_cat, $child_subcat]);
 my $element = $story->element();
+#diag("story created");
 
-# iterate over the elements of the article, creating templates.
-&create_templates($element);
 
-END { foreach (@delete_templates) { $_->delete() }; } # delete created templates
+# deploy templates in the t/publish/ dir.
+&deploy_templates();
+#diag("templates deployed");
+
+END {
+    foreach (@delete_templates) {
+        # delete created templates
+        $publisher->undeploy_template(template => $_);
+        $_->delete();
+    }
+}
 
 &find_templates($element);
+
 
 # Attempt to publish the story.
 my $html = $publisher->_assemble_pages(story => $story, category => $category, mode => 'publish');
 
-#diag($html);
 
 
 
@@ -106,13 +119,18 @@ sub find_templates {
 
     my ($element) = @_;
 
+    my $tmpl;
+
+#    diag("FINDING: " . $element->name());
+
     eval {
-        my $tmpl = $element->class->find_template(publisher => $publisher, element => $element);
+        $tmpl = $element->class->find_template(publisher => $publisher, element => $element);
     };
     if ($@) {
         diag($@);
         fail();
     } else {
+#        diag("TEMPLATE " . $element->name() ." = " . $tmpl->output());
         pass();
     }
 
@@ -134,34 +152,51 @@ sub find_templates {
 # takes an element, creates its template.  
 # if the element has children, repeats the process.
 #
-sub create_templates {
+sub deploy_templates {
 
-    my ($el) = @_;
-    my $cat;
+    my $template;
 
-    (rand(100) % 2) ? ($cat = $category) : ($cat = $child_cat);
+    undef $/;
 
-#    diag("CATEGORY = " . $cat->category_id . "\tURL = " . $cat->url());
+    opendir(TEMPLATEDIR, $template_dir) || die "ERROR: cannot open dir $template_dir: $!\n";
 
-    my $template = Krang::Template->new(category_id => $cat->category_id(),
-                                        content => "TEMPLATE NAME=" . $el->name() . "\n",
-                                        element_class_name => $el->name());
+    my @files = readdir(TEMPLATEDIR);
+    closedir(TEMPLATEDIR);
 
-    $template->save();
-    push @delete_templates, $template;
+    foreach my $file (@files) {
+        next unless ($file =~ s/^(.*)\.tmpl$/$template_dir\/$1\.tmpl/);
 
-    # deploy template to the publish path.
-    $element_paths{$el->name()} = $publisher->deploy_template(template => $template);
-#    diag($template->template_id(), $element_paths{$el->name()});
+        my $element_name = $1;
 
-    my @children = $el->children();
 
-    return unless @children;
+        open (TMPL, "<$file") || die "ERROR: cannot open file $file: $!\n";
+        my $content = <TMPL>;
+        close TMPL;
 
-    # iterate over the children, repeating the process.
-    foreach (@children) {
-        &create_templates($_, $cat);
+        $template = Krang::Template->new(category_id => $category->category_id(),
+                                         content => $content,
+                                         element_class_name => $element_name);
+
+        eval { $template->save(); };
+
+        unless ($@) {  # can only deply saved templates.
+            push @delete_templates, $template;
+
+            $template_paths{$element_name} = $publisher->deploy_template(template => $template); 
+
+            if ($@) {
+                diag($@);
+                fail();
+            } else {
+#                diag("DEPLOYED: " . $template_paths{$element_name});
+                pass();
+            }
+        }
+
+
     }
+
+    return;
 
 }
 
@@ -192,6 +227,21 @@ sub create_story {
     $page->add_child(class => "paragraph", data => "para5 "x40);
 
 
-    return $story;
+    return ($story);
 
+}
+
+
+# walk element tree, return child names at each point.
+sub walk_tree {
+
+    my ($el) = shift;
+
+    foreach ($el->children()) {
+        my $txt = sprintf("WALK: p='%s' n='%s'", $el->name(), $_->name());
+        diag($txt);
+        &walk_tree($_);
+    }
+
+    return;
 }
