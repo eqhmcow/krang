@@ -1,6 +1,5 @@
 <tmpl_include header.tmpl>
 
-
 <script language=javascript>
   function edit_children(p) {
         document.editor.e_rm.value = 'save_and_jump';
@@ -55,10 +54,9 @@
         document.editor.e_rm.value = 'reorder';
         document.editor.submit();
   }
-
 </script>
 
-<tmpl_if alert><p><font color=red><b><tmpl_var alert></b></font></p></tmpl_if>
+<tmpl_if alert><div class=alert><tmpl_var alert></div></tmpl_if>
 
 <p><tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> >> </tmpl_if></tmpl_loop></p>
 
@@ -67,36 +65,36 @@
   <input type=hidden name=path value="<tmpl_var path>">
   <input type=hidden name=jump_to>
 
+<div class=form-box>
+
 Content<br>
-<table border=0 width=600 cellpadding=0 cellspacing=0>
-  <tr class=line height=2><td colspan=4></tr>
-  <tr class=light>
-    <td class=light width=20%>Element</th>
-    <td width=40%>Data Entry</th>
-    <td width=20% align=center>Order</th>
-    <td width=20% align=center><input type=checkbox></th>
+<table border=0 width=100% cellpadding=0 cellspacing=0>
+  <tr class=form-head>
+    <td width=20%>             Element</td>
+    <td width=40%>             Data Entry</td>
+    <td width=20% align=center>Order</td>
+    <td width=20% align=center><input type=checkbox onclick="checkall()"></td>
   </tr> 
-  <tr class=line height=2><td colspan=4></tr>
 
  <tmpl_loop child_loop>
   <tr>
 
-    <td align=left valign=top class="form-cell">
+    <td align=left class="form-cell">
       <tmpl_if required>*</tmpl_if><tmpl_var name>
     </td>
 
-    <td align=left valign=top class="form-cell">
+    <td align=left class="form-cell">
       <tmpl_if is_container><input type=button value=Edit onClick='edit_children("<tmpl_var path>")'>&nbsp;</tmpl_if>
       <tmpl_if invalid><span class="invalid"></tmpl_if>
         <tmpl_var form>
       <tmpl_if invalid></span></tmpl_if>
     </td>
 
-    <td align=center valign=top class="form-cell">
+    <td align=center class="form-cell">
          <tmpl_var order_select>
     </td>
 
-    <td align=center valign=top class="form-cell">
+    <td align=center class="form-cell">
       <tmpl_if allow_delete><input type=checkbox name=remove_<tmpl_var index>><tmpl_else>&nbsp;</tmpl_if>
     </td>
 
@@ -104,7 +102,7 @@ Content<br>
  </tmpl_loop>
 
  <tmpl_unless child_loop>
-   <tr><td bgcolor=white colspan=4>No sub-elements defined.</td></tr>
+   <tr><td colspan=4>No sub-elements defined.</td></tr>
  </tmpl_unless>
 
    <tr><td align=left colspan=2 class="form-cell"><tmpl_var child_select> <input type=button value="Add Element" onClick='add_child()'></td>
@@ -112,22 +110,15 @@ Content<br>
        <td align=center class="form-cell"><input type=button value=Delete onClick='remove_children()'></td>
    </tr>
 </table>
-<p>
-<table border=0 width=600 cellpadding=3 cellspacing=0>
-   <tr class=bright>
-     <td align=right colspan=4>
-       <input type=button value="Save" onClick="save()">
-       &nbsp;&nbsp;&nbsp;&nbsp;
-       <input type=button value="Save and Stay" onClick="save_and_stay()">
-       &nbsp;&nbsp;&nbsp;&nbsp;
-       <input type=reset value="Reset">
-       &nbsp;&nbsp;&nbsp;&nbsp;
-       <input type=button value="Delete" onclick="remove()">
-     </td>
-   </tr>
 
-</table>
+</div>
 
+<div class=button-bar>
+  <input type=button value="Save" onClick="save()">
+  <input type=button value="Save and Stay" onClick="save_and_stay()">
+  <input type=reset value="Reset">
+  <input type=button value="Delete" onclick="remove()">
+</div>
 
 </form>
 
