@@ -4,7 +4,6 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Krang::Log qw( debug info );
-use Krang::User;
 use Krang::List;
 use Carp qw(croak);
 
@@ -379,6 +378,80 @@ sub delete {
     my $sql = 'UPDATE list_item set ord = ord - 1 where ord > ?';
     $dbh->do($sql, undef, $order);
     
+}
+
+=item $list_item->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <list_item> linked to schema/list_item.xsd
+    $writer->startTag('list_item',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'list_item.xsd');
+
+    $writer->dataElement( list_item_id => $self->list_item_id );
+    $writer->dataElement( list_id => $self->list_id );
+    $writer->dataElement( data => $self->data );
+    $writer->dataElement( order => $self->order ); 
+    $writer->dataElement( parent_list_item_id => $self->parent_list_item_id ) if $self->parent_list_item_id;
+
+    # attach list 
+    my ($list) = Krang::List->find( list_id => $self->list_id );
+    $set->add(object => $list, from => $self);
+
+    # attach parent list item if one exists
+    if ($self->parent_list_item_id) {
+        my ($parent_list_item) = Krang::ListItem->find( list_item_id => $self->parent_list_item_id );
+        $set->add(object => $parent_list_item, from => $self);
+    }
+
+    # all done
+    $writer->endTag('list_item');
+}
+
+=item C<< $list_item = Krang::ListItem->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+Note that currently update will not work as there is no identifying field
+other than data, which can change.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml,
+                                  suppressempty => 1);
+
+
+    # get list_group info
+    my $list_id = $set->map_id(class => "Krang::List",
+                                       id    => $data->{list_id});
+
+    # get parent list item id if one
+    my $parent_id;
+    if ($data->{parent_list_item_id}) {
+        $parent_id = $set->map_id(  class => "Krang::ListItem",
+                                    id => $data->{parent_list_item_id} );
+    }
+
+    if ($parent_id) {
+       return Krang::ListItem->new( data => $data->{data}, list_id => $list_id, parent_list_item_id => $parent_id );
+    } else {
+       return Krang::ListItem->new( data => $data->{data}, list_id => $list_id );
+    }
 }
 
 =back 

@@ -92,6 +92,9 @@ use Krang::Contrib;
 use Krang::Category;
 use Krang::Site;
 use Krang::User;
+use Krang::ListGroup;
+use Krang::List;
+use Krang::ListItem;
 
 my ($help, $man, $list, $no_update);
 my $verbose = 0;
@@ -140,6 +143,8 @@ foreach my $class (keys %classes) {
     my $id_field = $class;
     $id_field =~ s/^Krang:://;
     $id_field = lc($id_field) . "_id";
+    $id_field = 'list_item_id' if ($id_field eq 'listitem_id');
+    $id_field = 'list_group_id' if ($id_field eq 'listgroup_id');
     my ($max) = $class->find(ids_only   => 1, 
                              order_by   => $id_field, 
                              order_desc => 1, 

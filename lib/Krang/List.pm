@@ -4,7 +4,7 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Krang::Log qw( debug info );
-use Krang::User;
+use Krang::ListGroup;
 use Carp qw(croak);
 
 # constants 
@@ -299,6 +299,88 @@ sub delete {
 
     $dbh->do('DELETE from list where list_id = ?', undef, $list_id);
     
+}
+
+=item $list->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <list> linked to schema/list.xsd
+    $writer->startTag('list',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'list.xsd');
+
+    $writer->dataElement( list_id => $self->list_id );
+    $writer->dataElement( list_group_id => $self->list_group_id );
+    $writer->dataElement( name => $self->name );
+    $writer->dataElement( parent_list_id => $self->parent_list_id ) if $self->parent_list_id;
+
+    # attach list group
+    my ($lg) = Krang::ListGroup->find( list_group_id => $self->list_group_id ); 
+    $set->add(object => $lg, from => $self);
+
+    # attach parent list if one exists
+    if ($self->parent_list_id) {
+        my ($parent_list) = Krang::List->find( list_id => $self->parent_list_id );
+        $set->add(object => $parent_list, from => $self);
+    }
+ 
+    # all done
+    $writer->endTag('list');
+}
+
+=item C<< $list = Krang::List->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If a matching list (same name, list_group_id, parent_list_id) exists, it
+will not be updated, but it wil not be replicated either.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml,
+                                  suppressempty => 1);
+
+
+    # get list_group info
+    my $list_group_id = $set->map_id(class => "Krang::ListGroup",
+                                       id    => $data->{list_group_id});
+
+    my $parent_id;
+    if ($data->{parent_list_id}) {
+        $parent_id = $set->map_id(  class => "Krang::List",
+                                    id => $data->{parent_list_id} );
+    }
+
+    my $l;
+    if ($parent_id) {
+        $l = (Krang::List->find( list_group_id => $list_group_id, parent_list_id => $parent_id, name => $data->{name} ))[0];
+    } else {
+        $l = (Krang::List->find( list_group_id => $list_group_id, name => $data->{name} ))[0];
+    }
+
+    # if matching list exists, don't replicate it
+    return if $l; 
+
+    if ($parent_id) {
+        return Krang::List->new( name => $data->{name}, list_group_id => $list_group_id, parent_list_id => $parent_id );
+    } else {
+        return Krang::List->new( name => $data->{name}, list_group_id => $list_group_id );
+    }
 }
 
 =back 

@@ -290,6 +290,9 @@ sub _obj2id {
     my $class = ref $object;
     my ($id_name) = $class =~ /^Krang::(.*)$/;
     $id_name = lc($id_name) . "_id";
+    $id_name = 'list_item_id' if ($id_name eq 'listitem_id');
+    $id_name = 'list_group_id' if ($id_name eq 'listgroup_id');
+
     croak("Unable to determine how to get an id from $class - " . 
           "can($id_name) failed.")
       unless $object->can($id_name);

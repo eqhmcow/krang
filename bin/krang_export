@@ -81,6 +81,8 @@ media, templates, categories, sites, contribs, users and groups.
 
 =item --alerts
 
+=item --list_items
+
 These select all available objects, and their dependencies, for
 export.  May not be combined with --everything.
 
@@ -101,6 +103,8 @@ export.  May not be combined with --everything.
 =item --group_id 10
 
 =item --alert_id 10
+
+=item --list_item_id 10
 
 These select a single object by ID, and its dependecies.  May be
 repeated multiple times to select multiple objects.
@@ -158,15 +162,18 @@ use Krang::Contrib;
 use Krang::Category;
 use Krang::Site;
 use Krang::User;
+use Krang::ListGroup;
+use Krang::List;
+use Krang::ListItem;
 
 
 my ($help, $man, $append, $compress, $overwrite);
 my $output = 'export.kds';
 my $verbose = 0;
 my %all = map { ($_, 0) } qw(stories media templates contribs categories 
-                             sites users groups alerts );
+                             sites users groups alerts list_items );
 my %id  = map { ($_, [])} qw(story_id media_id template_id contrib_id 
-                             category_id site_id user_id group_id alert_id );
+                             category_id site_id user_id group_id alert_id list_item_id );
 
 pod2usage(2) unless
   GetOptions(help       => \$help,
@@ -222,6 +229,8 @@ my $added = 0;
 foreach my $type (grep { $all{$_} } keys %all) {
     $type =~ /ies$/ ? $type =~ s/ies$/y/ : $type =~ /es$/ ? $type =~ s/s$// : $type =~ s/s$//;
     my $class = "Krang::" . ucfirst($type);
+    $class = "Krang::ListItem" if ($type eq 'list_item');
+
     my $id_meth = $type . "_id";
     
     # loop through all objects, 10 at a time
@@ -240,6 +249,8 @@ foreach my $id_meth (grep { @{$id{$_}} } keys %id) {
     my $type = $id_meth;
     $type =~ s/_id$//;
     my $class = "Krang::" . ucfirst($type);
+    $class = "Krang::ListItem" if ($type eq 'list_item');
+
     foreach my $id (@{$id{$id_meth}}) {
         my ($object) = $class->find($id_meth => $id);
         die "Unable to find $type $id in database!\n" unless $object;
