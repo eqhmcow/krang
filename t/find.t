@@ -3,7 +3,7 @@ use File::Find qw(find);
 use Krang::Script;
 
 # a list of non-CGI Krang modules without a suitable find method
-our %BAD_DEFAULT = map { ($_,1) } (qw( Krang::DataSet Krang::Workspace Krang::DB Krang::History Krang::Schedule ));
+our %BAD_DEFAULT = map { ($_,1) } (qw( Krang::DataSet Krang::Workspace Krang::DB Krang::History Krang::Schedule Krang::BricLoader::DataSet));
 
 # Hash of known field names for "order_by" test
 our %ORDER_BY_FIELD = (
