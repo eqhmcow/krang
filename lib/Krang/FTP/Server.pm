@@ -1,8 +1,7 @@
 package Krang::FTP::Server;
 use strict;
 use warnings;
-use Krang::DB qw(dbh);
-use Krang::Conf;
+use Carp qw(croak);
 use Krang::User;
 use Krang::Log qw(debug info critical);
 use Net::FTPServer;
@@ -89,21 +88,27 @@ sub authentication_hook {
     my $user_is_anon = shift;
 
     # log this attempt to login
-    info("Username=$user, password=$pass attempting to login to FTP Server.");
+    info("FTP Login attempt- Username:$user.");
  
     # disallow anonymous access.
     return -1 if $user_is_anon;
 
-
     # get user object
-    my @users = Krang::User->find( login => $user );
-    
-    $self->{user_obj} = $users[0];
+    my $user_object = Krang::User->find( login => $user ); 
+
+    $self->{user_obj} = $user_object if $user_object;
+    debug("User object found for login $user.");
  
     # return failure if authentication fails.
-#    return -1 unless Krang::User->logon($user,$pass);
+    my $login_ok = Krang::User->check_auth($user,$pass);
+
+    if (not $login_ok) {
+        info("FTP login/passowrd denied.");
+        return -1;
+    }
  
     # successful login.
+    info("FTP login/password accepted.");
     return 0;
 }
 
@@ -116,7 +121,7 @@ directory.  This method just calls Krang::FTP::DirHandle->new().
 
 sub root_directory_hook {
   my $self = shift;
-  return new Bric::Util::FTP::DirHandle ($self);
+  return new Krang::FTP::DirHandle ($self);
 }
 
 =item system_error_hook()
