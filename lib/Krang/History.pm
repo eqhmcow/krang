@@ -142,7 +142,7 @@ sub add_history {
 
     # check if should trigger alert
     if ($object_type eq 'Krang::Story') {
-        #Krang::Alert->check_alert( $history, $object);
+        Krang::Alert->check_alert( $history, $object);
     }
 }
 
