@@ -57,6 +57,18 @@ sub fill_template {
     }
     $tmpl->param( meta_keyword_loop => \@keys );
 
+    # handle list group info
+    foreach my $list qw(meta_company_type meta_technology meta_topic meta_geography meta_source) {
+        next if not $story->element->child($list);
+        $keywords = $story->element->child($list)->data;
+        my @k;
+        foreach my $kw (@$keywords) {
+            push (@k, {list_item_id => $kw});
+        }
+        $tmpl->param( $list.'_loop' => \@k );
+
+    }
+
     my @inheritable = qw( footer left_cat_column right_cat_column top_cat_column primary_css secondary_css );
    
     foreach my $el_name (@inheritable) {
