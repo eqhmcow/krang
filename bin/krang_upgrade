@@ -303,7 +303,7 @@ sub make_backups {
     # run krang_backup
     my $backup = catfile($options{KrangRoot}, 'bin', 'krang_backup') . 
       " $BACKUP_FILENAME" . " 2>&1";
-    my $out = `$backup`;
+    my $out = `KRANG_ROOT='' $backup`;
     exit_error("Problem creating krang_backup:\n$out\n")
       unless $out =~ /Backup complete/;
 }
