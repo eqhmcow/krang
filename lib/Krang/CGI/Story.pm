@@ -324,10 +324,11 @@ sub view {
           if $story->cover_date;
 
         my @contribs_loop;
+        my %contrib_types = Krang::Pref->get('contrib_type');
         foreach my $contrib ($story->contribs) {
-            push(@contribs_loop, { first_name => $contrib->first_name,
-                                   last_name  => $contrib->last_name,
-                                   type       => $contrib->selected_contrib_type});
+            push(@contribs_loop, { first_name => $contrib->first,
+                                   last_name  => $contrib->last,
+                                   type       => $contrib_types{$contrib->selected_contrib_type}});
         }
         $template->param(contribs_loop => \@contribs_loop);
         
