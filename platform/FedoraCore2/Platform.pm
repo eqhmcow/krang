@@ -1,4 +1,4 @@
-package FedoraCore1::Platform;
+package FedoraCore2::Platform;
 use strict;
 use warnings;
 
