@@ -37,7 +37,8 @@
   }
 
   function clear_advanced_search () {
-    alert("Not implemented yet!");
+    var myform = document.clear_advanced_search_form;
+    myform.submit();
   }
 
 </script>
@@ -51,6 +52,12 @@
 
 <div class=dark-bar>Find Media<</div>
 
+
+<form name="clear_advanced_search_form" method="POST">
+<input type="hidden" name="rm" value="advanced_find">
+<input type="hidden" name="search_filter" value="">
+<input type="hidden" name="show_thumbnails" value="<tmpl_var escape=HTML show_thumbnails>">
+</form>
 
 
 <table width="100%">

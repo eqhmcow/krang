@@ -37,7 +37,8 @@
   }
 
   function clear_advanced_search () {
-    alert("Not implemented yet!");
+    var myform = document.clear_advanced_search_form;
+    myform.submit();
   }
 
 </script>
@@ -136,6 +137,11 @@
 <div class=dark-bar>Find Story</div>
 
 
+<form name="clear_advanced_search_form" method="POST">
+<input type="hidden" name="rm" value="find">
+<input type="hidden" name="do_advanced_search" value="1">
+</form>
+
 
 <table width="100%">
 <form name="search_form" method="POST">
@@ -213,9 +219,6 @@ SEARCH
   <input type="hidden" name="do_advanced_search" value="0">
   <input type="submit" value="Search">
   </td></tr>
-
-  <!-- Search -->
-  <input type="hidden" name="do_advanced_search" value="<tmpl_var ESCAPE=HTML do_advanced_search>">
 
 </tmpl_if>
 
