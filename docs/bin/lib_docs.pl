@@ -12,7 +12,7 @@ END
 
 find({ wanted => \&process,
        preprocess => sub { sort { $a cmp $b } @_ },
-       no_chdir => 1 }, '../lib');
+       no_chdir => 1 }, '../lib/Krang');
 
 sub process {
     return unless /.pm$/;

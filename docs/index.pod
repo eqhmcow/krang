@@ -37,6 +37,10 @@ HREF[Technical Specification|tech_spec.html] - general technical overview
 
 =item *
 
+HREF[Install|install.html] - how to install a new Krang instance
+
+=item *
+
 HREF[Configuration|configuration.html] - how to configure Krang
 
 =item *

@@ -19,4 +19,4 @@ find({ wanted =>
            ok($warnings, "$_ 'use warnings' test.");
        },
        no_chdir => 1 },
-     'lib');
+     'lib/Krang');

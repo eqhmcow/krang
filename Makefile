@@ -37,15 +37,15 @@ TEST_VERBOSE=0
 TEST_FILES = t/*.t
 TEST_ASSERT=1
 test:
-	KRANG_ROOT=`pwd` KRANG_ASSERT=$(TEST_ASSERT) perl -Ilib -Iext-lib -we 'use Test::Harness qw(&runtests $$verbose); $$verbose=$(TEST_VERBOSE); runtests @ARGV;' $(TEST_FILES)
+	KRANG_ROOT=`pwd` KRANG_ASSERT=$(TEST_ASSERT) perl -Ilib -we 'use Test::Harness qw(&runtests $$verbose); $$verbose=$(TEST_VERBOSE); runtests @ARGV;' $(TEST_FILES)
 
 
 # setup default BENCH_NAME
 BENCH_NAME  = $(shell date +'[ %D %H:%M ]')
 BENCH_FILES = bench/*.pl 
 bench:
-	KRANG_ROOT=`pwd` perl -Ilib -Iext-lib -MKrang::Benchmark -e 'Krang::Benchmark::start_benchmark(name => "$(BENCH_NAME)")'
-	ls $(BENCH_FILES) | KRANG_ROOT=`pwd` xargs -n1 perl -Ilib -Iext-lib
+	KRANG_ROOT=`pwd` perl -Ilib -MKrang::Benchmark -e 'Krang::Benchmark::start_benchmark(name => "$(BENCH_NAME)")'
+	ls $(BENCH_FILES) | KRANG_ROOT=`pwd` xargs -n1 perl -Ilib
 
 bench_clean:
 	- rm bench.out

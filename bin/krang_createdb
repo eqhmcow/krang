@@ -20,17 +20,18 @@ Drops and creates all Krang databases configured in F<conf/krang.conf>.
 
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
 use FindBin qw($RealBin);
+use Config;
+
 BEGIN {
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir($RealBin);
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
-    # use $KRANG_ROOT/lib and $KRANG_ROOT/ext-lib for modules
+    # use $KRANG_ROOT/lib for modules
     my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    my $extlib = catdir($ENV{KRANG_ROOT}, "ext-lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}:$extlib" : 
-      "${lib}:$extlib";
-    unshift @INC, $lib, $extlib;
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
 
     # load Krang
     eval { require Krang };

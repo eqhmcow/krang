@@ -1,0 +1,95 @@
+
+=head1 Installing Krang
+
+
+The purpose of this document is to walk a user through the process of
+installing a new Krang instance.  It is assumed that the user who
+installs this is (1) a knowledgable UNIX administrator, who (2) has
+root access to the machine on which he is installing Krang, has access
+to the CVS repository on the B<krang-services> server, and (3) he
+has a basic understanding of what Krang does and how it looks when it
+is working.
+
+
+=head1 Krang Install Check-list
+
+
+=over 2
+
+
+=item 1. Create user to own Krang instance (as root)
+
+   a. # useradd <username>
+   b. # chmod +x ~<username>
+
+
+
+=item 2. Check out Krang from CVS
+
+   a. % export CVSROOT=':ext:krang-services.ops.about.com:/usr/local/cvs'
+   b. % export CVS_RSH=`which ssh`
+   c. % cd $HOME && cvs co krang
+
+
+
+=item 3. Compile Perl 5.6.1 from source (as root)
+
+   a. # tar -xzvf $KRANG_ROOT/install/Perl/perl-5.6.1.tar.gz
+   b. # cd perl-5.6.1
+   c. # rm -f config.sh Policy.sh \
+      && sh Configure -de \
+      && make \
+      && make test
+   d. # make install
+
+
+
+=item 4. Upgrade/Install MySQL (as root)
+
+   a. Uninstall RedHat's MySQL...
+      i. # rpm -e \
+           libdbi-dbd-mysql \
+           MyODBC \
+           MySQL-python \
+           perl-DBD-MySQL \
+           php-mysql \
+           qt-MySQL \
+           tora \
+           mysql-server
+
+   b. Install MySQL from rpm...
+      i. # cd $KRANG_ROOT/install/MySQL/ \
+           && rpm -Uvh \
+           MySQL-shared-3.23.55-1.i386.rpm \
+           MySQL-devel-3.23.55-1.i386.rpm \
+           MySQL-client-3.23.55-1.i386.rpm \
+           MySQL-3.23.55-1.i386.rpm
+
+   c. Create MySQL user for Krang...
+      i. # echo 'grant all on * to krang@localhost' | mysql -uroot
+
+
+
+=item 5. Build Krang parts...
+
+   a. % cd $HOME/krang/ && make db
+   b. % cd $HOME/krang/ && make test
+
+
+
+=item 6. Authorize user to start Krang via SUDO (as root)
+
+   a. Add via visudo: "username  ALL=(root)  NOPASSWD: $KRANG_ROOT/bin/krang_apachectl"
+
+
+=item 7. Start Krang
+
+   a. % cd $KRANG_ROOT
+   b. % sudo $KRANG_ROOT/bin/krang_apachectl start
+
+
+
+
+
+=back
+

@@ -1,0 +1,61 @@
+This directory contains the files necessary to re-build Krang's
+required external sub-systems and libraries from source.  These
+external assets currently include:
+
+        1. Apache/mod_perl web server
+        2. Open source Perl modules
+
+It is not usually necessary to rebuild from source, as all these
+assets are provided in compiled form in the /krang/apache/ and
+/krang/lib/ directories, respectively.  The files in this directory
+are provided only in the case of some unforseen necessity, such as
+disaster recovery or migration to a new operating system or hardware
+architecture.
+
+It is expected that as new Perl modules or other external resources
+are added, their tarballed source trees will be added to this
+directory.
+
+Following are a list of the required Perl modules, in order of
+prerequisite.  For Perl module installation instructions, please refer
+to the install.pod found in the docs directory.
+
+        Digest-MD5-2.23
+        Test-Harness-2.26	    
+        Test-Simple-0.47	    
+        Test-Manifest-0.91	    
+        Test-Builder-Tester-0.09 
+        Test-Pod-0.90            
+        Storable-2.06            
+        Apache-Session-1.54      
+        DBI-1.32                 
+        DBD-mysql-2.1021         
+        Scalar-List-Utils-1.09   
+        IO-stringy-2.108         
+        Class-MethodMaker-1.08   
+        Text-Balanced-1.89       
+        Config-ApacheFormat-1.1  
+        CGI.pm-2.89              
+        HTML-Template-2.6        
+        CGI-Application-2.6      
+        Text-Tabs+Wrap-2001.0929 
+        HTML-Tagset-3.03         
+        HTML-Parser-3.27         
+        URI-1.23                 
+        MIME-Base64-2.16         
+        libnet-1.12              
+        libwww-perl-5.68         
+        TermReadKey-2.21         
+        Term-Prompt-0.11         
+        IPC-Run-0.74             
+        Time-Piece-1.08          
+        Time-Piece-MySQL-0.02    
+        Carp-Assert-0.17         
+        Imager-0.41              
+        Net-FTPServer-1.115      
+        libapreq-1.1             
+        Time-HiRes-1.42          
+        XML-Parser-2.31          
+        XML-Simple-2.03          
+
+ 

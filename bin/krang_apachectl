@@ -30,22 +30,28 @@ Usage information can be obtained by running the script with no arguments.
 # how long to wait for stop on restart (in seconds)
 use constant MAX_RESTART_WAIT => 10;
 
+# location of ApacheRoot, relative to $KRANG_ROOT
+use constant APACHE_ROOT => 'apache/';
+
+# location of ApacheBin, relative to ApacheRoot
+use constant APACHE_BIN => 'bin/httpd';
+
 $|++;
 
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
 use FindBin qw($RealBin);
+use Config;
 
 BEGIN {
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir($RealBin);
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
-    # use $KRANG_ROOT/lib and $KRANG_ROOT/ext-lib for modules
+    # use $KRANG_ROOT/lib for modules
     my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    my $extlib = catdir($ENV{KRANG_ROOT}, "ext-lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}:$extlib" : 
-      "${lib}:$extlib";
-    unshift @INC, $lib, $extlib;
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
@@ -63,10 +69,11 @@ $@
 END
 }
 
-use Krang::Conf qw(ApacheBin KrangRoot VirtualHost);
+use Krang::Conf qw(KrangRoot VirtualHost);
 
 # the httpd command
-my $httpd = ApacheBin . ' -f ' . 
+my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
+my $httpd = $apache_bin . ' -f ' . 
   rel2abs(catfile(KrangRoot, "tmp", "httpd.conf"));
 
 # get status from the pid file
@@ -178,8 +185,11 @@ sub write_conf {
                                        global_vars => 1,
                                        die_on_bad_params => 0,
                                       );
+
+    my $apache_root = rel2abs(catdir(KrangRoot, APACHE_ROOT));
+    $template->param(ApacheRoot => $apache_root);
     $template->param((map { ($_, Krang::Conf->get($_)) }
-                      (qw(ApacheRoot ApacheUser ApacheGroup 
+                      (qw(ApacheUser ApacheGroup 
                           ApacheAddr ApachePort
                           RootVirtualHost
                          ))),

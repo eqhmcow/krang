@@ -12,8 +12,6 @@ ElementLibrary
 DBName
 DBPass
 DBUser
-ApacheBin
-ApacheRoot
 ApacheUser
 ApacheGroup
 ApacheAddr

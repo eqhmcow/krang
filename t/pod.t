@@ -7,7 +7,7 @@ use File::Find qw(find);
 find({ wanted => sub { ((/\.pm$/ or /\.pod$/) and not /#/ ) and 
                          pod_ok($_, undef, "POD syntax check for $_") },
        no_chdir => 1 },
-     'lib', 'docs');
+     'lib/Krang', 'docs');
 
 # check for compliance with coding standards in modules
 find({ wanted => 
@@ -23,4 +23,4 @@ find({ wanted =>
            }
        },
        no_chdir => 1 },
-     'lib');
+     'lib/Krang');
