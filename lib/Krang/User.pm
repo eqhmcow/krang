@@ -520,7 +520,7 @@ sub find {
     # check the cache if we're looking for a single user    
     my $cache_worthy = (keys(%args) == 1 and exists $args{user_id}) ? 1 : 0;
     if ($cache_worthy) {
-        my $user = Krang::Cache::get(Krang::User => $args{user_id});
+        my $user = Krang::Cache::get('Krang::User' => $args{user_id});
         return ($user) if $user;
     }
         
@@ -661,7 +661,7 @@ sub find {
     }
 
     # set in the cache if this was a simple find
-    Krang::Cache::set(Krang::User => $args{user_id} => $users[0])
+    Krang::Cache::set('Krang::User' => $args{user_id} => $users[0])
       if $cache_worthy and $users[0];
 
     # return number of rows if count, otherwise an array of ids or objects

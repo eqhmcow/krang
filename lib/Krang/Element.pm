@@ -671,7 +671,7 @@ sub load {
     my $dbh = dbh;
 
     # first look in the cache
-    my $element = Krang::Cache::get(Krang::Element => $arg{element_id});
+    my $element = Krang::Cache::get('Krang::Element' => $arg{element_id});
     if ($element) {
         $element->object($arg{object}) unless $element->{object};
         return $element;
@@ -693,7 +693,7 @@ SQL
       if $@;
 
     # set in the cache
-    Krang::Cache::set(Krang::Element => $arg{element_id} => $element);
+    Krang::Cache::set('Krang::Element' => $arg{element_id} => $element);
 
     return $element;
 } 

@@ -82,10 +82,10 @@ use warnings;
 ###############################
 use Carp qw(verbose croak);
 use Exception::Class (
-                      Krang::Template::Checkout             => {fields => [qw/template_id user_id/]},
-                      Krang::Template::DuplicateURL         => {fields => 'template_id'},
-                      Krang::Template::NoCategoryEditAccess => {fields => 'category_id'},
-                      Krang::Template::NoEditAccess         => {fields => 'template_id'},
+                      'Krang::Template::Checkout'             => {fields => [qw/template_id user_id/]},
+                      'Krang::Template::DuplicateURL'         => {fields => 'template_id'},
+                      'Krang::Template::NoCategoryEditAccess' => {fields => 'category_id'},
+                      'Krang::Template::NoEditAccess'         => {fields => 'template_id'},
                      );
 use Storable qw(freeze thaw);
 use Time::Piece;

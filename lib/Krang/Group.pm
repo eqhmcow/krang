@@ -294,7 +294,7 @@ sub find {
     if ($cache_worthy) {
         my @ids = (exists $args{group_ids} ? @{$args{group_ids}} : 
                    ($args{group_id}));
-        my @groups = map { Krang::Cache::get(Krang::Group => $_) } @ids;
+        my @groups = map { Krang::Cache::get('Krang::Group' => $_) } @ids;
         return @groups unless not @groups or grep { not defined } @groups;
     }
 
@@ -438,7 +438,7 @@ sub find {
 
         # set in the cache if this was a simple find
         if ($cache_worthy) {
-            Krang::Cache::set(Krang::Group => $_->{group_id} => $_)
+            Krang::Cache::set('Krang::Group' => $_->{group_id} => $_)
                 for @groups;
         }
 
