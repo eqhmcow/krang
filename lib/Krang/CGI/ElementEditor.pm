@@ -506,6 +506,7 @@ sub revise {
     assert(not(grep { not defined $_ } @new)) if ASSERT;
 
     # effect the change in the element tree
+    $element->clear_children();
     $element->children(@new);
 
     # get a list of new param names
