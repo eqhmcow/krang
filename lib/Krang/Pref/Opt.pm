@@ -122,29 +122,6 @@ The text string used to identify this particular preference option
 
 The id in the pref_opt table corresponding to this preference option object
 
-=item * pref_id
-
-The id in the pref table signifying the Krang::Pref object with which this
-object is associated
-
-=item * pref
-
-The Krang::Pref object with which this object is associated, this call will
-croak unless 'pref_id' is defined and valid.
-
-=cut
-
-sub pref {
-    my $self = shift;
-    croak(__PACKAGE__ . "->pref(): 'pref_id' field is not defined.")
-      unless defined $self->{pref_id};
-    my ($pref) = Krang::Pref->find(pref_id => $self->{pref_id});
-    croak(__PACKAGE__ . "->pref(): no Krang::Pref object found matching " .
-          "id '$self->{pref_id}'") unless ($pref || $pref->isa("Krang::Pref"));
-    return $pref;
-}
-
-
 =item * value
 
 The value associated with this option.
