@@ -330,7 +330,7 @@ sub test_medialink {
 
     # w/ deployed template - make sure it works w/ template.
     my $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
-    my $resulting_link = '<img src="' . $media->url() . '">' . $media->caption() . '<BR>' . $media->title();
+    my $resulting_link = '<img src="http://' . $media->url() . '">' . $media->caption() . '<BR>' . $media->title();
 
     $media_href =~ s/\n//g;
 
@@ -340,7 +340,7 @@ sub test_medialink {
     $publisher->{is_preview} = 1;
 
     $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
-    $resulting_link = '<img src="' . $media->preview_url() . '">' . $media->caption() . '<BR>' . $media->title();
+    $resulting_link = '<img src="http://' . $media->preview_url() . '">' . $media->caption() . '<BR>' . $media->title();
     chomp ($media_href);
 
     ok($media_href eq $resulting_link, 'Krang::ElementClass::MediaLink->publish() -- preview w/ template');
@@ -353,14 +353,14 @@ sub test_medialink {
 
     $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
 
-    ok($media_href eq $media->url(), 'Krang::ElementClass::MediaLink->publish() -- publish-no template');
+    ok($media_href eq "http://" . $media->url(), 'Krang::ElementClass::MediaLink->publish() -- publish-no template');
 
     $publisher->{is_publish} = 0;
     $publisher->{is_preview} = 1;
 
     $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
 
-    ok($media_href eq $media->preview_url(), 'Krang::ElementClass::MediaLink->publish() -- preview-no template');
+    ok($media_href eq "http://" . $media->preview_url(), 'Krang::ElementClass::MediaLink->publish() -- preview-no template');
 
     # re-deploy template.
     $publisher->deploy_template(template => $template_deployed{photo});

@@ -188,9 +188,9 @@ sub fill_template {
       if $tmpl->query(name => 'caption');
 
     if ($publisher->is_publish()) {
-        $params{url} = $element->data()->url();
+        $params{url} = 'http://' . $element->data()->url();
     } elsif ($publisher->is_preview()) {
-        $params{url} = $element->data()->preview_url();
+        $params{url} = 'http://' . $element->data()->preview_url();
     } else {
         croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
     }
@@ -226,9 +226,9 @@ sub publish {
         # no template found.
         # Return the story URL, depending on preview/publish.
         if ($publisher->is_publish()) {
-            return $args{element}->data()->url();
+            return 'http://' . $args{element}->data()->url();
         } elsif ($publisher->is_preview()) {
-            return $args{element}->data()->preview_url();
+            return 'http://' . $args{element}->data()->preview_url();
         } else {
             croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
         }
