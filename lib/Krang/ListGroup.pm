@@ -4,7 +4,6 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Krang::Log qw( debug info );
-use Krang::User;
 use Carp qw(croak);
 
 # constants 
