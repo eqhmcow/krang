@@ -84,6 +84,19 @@ sub thaw_data {
     return $element->data($story);
 }
 
+# do the normal XML serialization, but also include the linked story
+# object in the dataset
+sub serialize_xml {
+    my ($self, %arg) = @_;
+    my ($element, $writer, $set) = @arg{qw(element writer set)};
+    $self->SUPER::serialize_xml(%arg);
+
+    # add object
+    my $story = $element->data;
+    $set->add(object => $story) if $story;
+}
+
+
 =head1 NAME
 
 Krang::ElementClass::StoryLink - story link element class

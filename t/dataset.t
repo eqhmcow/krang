@@ -66,6 +66,23 @@ $set->write(path => $path2);
 ok(-e $path2 and -s $path2);
 END { unlink($path2) if -e $path2 and not $DEBUG };
 
+# create a media object
+my $media = Krang::Media->new(title => 'test media object', category_id => $category->category_id, media_type_id => 1);
+my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
+my $fh = new FileHandle $filepath;
+$media->upload_file(filename => 'krang.jpg', filehandle => $fh);
+$media->save();
+END { $media->delete if $media };
+
+# add it to the set
+$loaded->add(object => $media);
+
+# see if it will write again
+my $path3 = catfile(KrangRoot, 'tmp', 'test3.kds');
+$loaded->write(path => $path3);
+ok(-e $path3 and -s $path3);
+END { unlink($path3) if -e $path3 and not $DEBUG };
+
 # create 25 stories
 my $count = Krang::Story->find(count => 1);
 my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');

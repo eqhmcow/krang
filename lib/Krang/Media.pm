@@ -231,6 +231,16 @@ Returns the unique id assigned the media object.  Will not be populated until $m
 
 =item $media->category_id()
 
+=item $media->category()
+
+Returns to category object matching category_id.
+
+=cut
+
+sub category {
+    return (Krang::Category->find(category_id => shift->{category_id}))[0];
+}
+
 =item $media->filename()
 
 =item $media->caption()
@@ -1157,6 +1167,69 @@ sub delete {
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
 
 }
+
+=item C<< $media->serialize_xml(writer => $writer, set => $set) >>
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <media> linked to schema/media.xsd
+    $writer->startTag('media',
+                      "xmlns:xsi" => 
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'media.xsd');
+
+    # write media file into data set
+    my $path = "media_$self->{media_id}/$self->{filename}";
+    $set->add(file => $self->file_path, path => $path);
+
+    my %media_type = Krang::Pref->get('media_type');
+
+    # basic fields
+    $writer->dataElement(media_id   => $self->{media_id});
+    $writer->dataElement(media_type => $media_type{$self->{media_type_id}});
+    $writer->dataElement(title      => $self->{title});
+    $writer->dataElement(filename   => $self->{filename});
+    $writer->dataElement(path       => $path);
+    $writer->dataElement(category_id => $self->{category_id});    
+    $writer->dataElement(url        => $self->{url});
+    $writer->dataElement(caption    => $self->{caption});    
+    $writer->dataElement(copyright  => $self->{copyright});    
+    $writer->dataElement(alt_tag    => $self->{alt_tag});
+    $writer->dataElement(notes      => $self->{notes});
+    $writer->dataElement(version           => $self->{version});
+    $writer->dataElement(published_version => $self->{published_version})
+      if $self->{published_version};
+    $writer->dataElement(creation_date => $self->{creation_date}->datetime);
+    $writer->dataElement(publish_date  => $self->{publish_date}->datetime)
+      if $self->{publish_date};
+    
+    # add category to set
+    $set->add(object => $self->category);
+
+    # contributors
+    my %contrib_type = Krang::Pref->get('contrib_type');
+    for my $contrib ($self->contribs) {
+        $writer->startTag('contrib');
+        $writer->dataElement(contrib_id => $contrib->contrib_id);
+        $writer->dataElement(contrib_type => 
+                             $contrib_type{$contrib->selected_contrib_type()});
+        $writer->endTag('contrib');
+
+        $set->add(object => $contrib);
+    }
+
+    # all done
+    $writer->endTag('media');
+}
+
 
 =back
 

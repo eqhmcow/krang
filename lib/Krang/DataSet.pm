@@ -4,7 +4,8 @@ use warnings;
 
 use File::Temp qw(tempdir);
 use File::Path qw(mkpath rmtree);
-use File::Spec::Functions qw(catdir catfile);
+use File::Spec::Functions qw(catdir catfile splitpath);
+use File::Copy qw(copy);
 use File::Find qw(find);
 use Krang::Conf qw(KrangRoot);
 use Archive::Tar;
@@ -36,6 +37,9 @@ Creating data sets:
   $set->add(object => $story);
   $set->add(object => $media);
   $set->add(object => $desk);
+
+  # add a file (used by media to include their files)
+  $set->add(file => $file, path => $path);
 
   # write it out to a kds file
   $set->write(path => "foo.kds");
@@ -230,37 +234,56 @@ already exists in the data set then this call does nothing.
 Objects added to data-sets with add() must support serialize_xml() and
 deserialize_xml().  For details, see REQUIRED METHODS below.
 
+=item C<< $set->add(file => $file, path => $path) >>
+
+Adds a file to a data-set.  This is used by media to store media files
+in the data set.  The file argument must be the full path to the file
+on disk.  Path must be the destination path of the file within the
+archive.
+
 =cut
 
 sub add {
     my ($self, %args) = @_;
     my $object = $args{object};
-    croak("Missing required object parameter") unless $object;
+    my $file   = $args{file};
+    my $path   = $args{path};
 
-    my ($class, $id) = _obj2id($object);
+    if ($object) {
+        my ($class, $id) = _obj2id($object);
+        
+        # been there, done that?
+        return if $self->{objects}{$class}{$id};
+        
+        # serialize it
+        my ($file) = ($class =~ /^Krang::(.*)$/);
+        $file = lc($file) . '_' . $id . '.xml';
+        my $path = catfile($self->{dir}, $file);
+        open(my $fh, '>', $path)
+          or croak("Unable to open '$path': $!");
+        
+        my $writer = Krang::XML->writer(fh => $fh);
+        $writer->xmlDecl();
+        $object->serialize_xml(writer => $writer, set => $self);
+        $writer->end();
+        close($fh);
+        
+        if (ASSERT) {
+            assert(-e $path, "XML file created");
+            assert(-s $path, "XML file has stuff in it");
+        }
+        
+        $self->{objects}{$class}{$id} = $file;
 
-    # been there, done that?
-    return if $self->{objects}{$class}{$id};
-
-    # serialize it
-    my ($file) = ($class =~ /^Krang::(.*)$/);
-    $file = lc($file) . '_' . $id . '.xml';
-    my $path = catfile($self->{dir}, $file);
-    open(my $fh, '>', $path)
-      or croak("Unable to open '$path': $!");
-    
-    my $writer = Krang::XML->writer(fh => $fh);
-    $writer->xmlDecl();
-    $object->serialize_xml(writer => $writer, set => $self);
-    $writer->end();
-    close($fh);
-
-    if (ASSERT) {
-        assert(-e $path, "XML file created");
-        assert(-s $path, "XML file has stuff in it");
+    } elsif ($file and $path) {
+        my $full_path = catfile($self->{dir}, $path);
+        mkpath((splitpath($full_path))[1]);
+        copy($file, $full_path)
+          or croak("Unable to copy file '$file' to '$full_path' : $!");
+        print STDERR "WROTE: $full_path\n";
+     } else {
+        croak("Missing required object or file/path params");
     }
-
-    $self->{objects}{$class}{$id} = $file;
 }
 
 sub _obj2id {
@@ -331,27 +354,27 @@ sub write {
     # write the index
     $self->_write_index;
 
-    # build the KDS
-    $kds->add_files('index.xml')
-      or croak("Failed to add index.xml to KDS : ".
-               Archive::Tar->error());
+    # add all files to the tar
+    find({ wanted => sub { return unless -f;
+                           s/^$self->{dir}\/?//;
+                           $kds->add_files($_)
+                             or croak("Failed to add $_ to KDS : " .
+                                      Archive::Tar->error());
+                       },
+           no_chdir => 1 },
+         $self->{dir});
 
-    # add files to the tar
-    foreach my $class (keys %{$self->{objects}}) {
-        foreach my $id (keys %{$self->{objects}{$class}}) {
-            $kds->add_files($self->{objects}{$class}{$id})
-              or croak("Failed to add $self->{objects}{$class}{$id} to KDS : ".
-                       Archive::Tar->error());
-        }
-    }
     $kds->write($path);
 
-    # do a validation pass in dev mode to make sure we're not writing junk
-    eval { $self->_validate } if ASSERT;
-    if ($@) { 
-        print STDERR "Caught $@\n";
-        chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
-        die $@;
+    # Do a validation pass in dev mode to make sure we didn't write
+    # junk.  This is better done after writing so that there's
+    # something on disk to look at if validation fails.
+    if (ASSERT) {
+        eval { $self->_validate };
+        if ($@) { 
+            chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
+            die $@;
+        }
     }
     
     # gotta get back

@@ -1643,6 +1643,9 @@ sub serialize_xml {
         $set->add(object => $category);
     }
 
+    # urls
+    $writer->dataElement(url => $_) for $self->urls;
+
     # contributors
     my %contrib_type = Krang::Pref->get('contrib_type');
     for my $contrib ($self->contribs) {

@@ -139,6 +139,17 @@ sub thaw_data {
     return $element->data($media);
 }
 
+# do the normal XML serialization, but also include the linked media
+# object in the dataset
+sub serialize_xml {
+    my ($self, %arg) = @_;
+    my ($element, $writer, $set) = @arg{qw(element writer set)};
+    $self->SUPER::serialize_xml(%arg);
+
+    # add object
+    my $media = $element->data;
+    $set->add(object => $media) if $media;
+}
 
 =head1 NAME
 
