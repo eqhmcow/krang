@@ -34,6 +34,7 @@ use Krang::Pref;
 use Krang::Session qw/%session/;
 use Krang::Template;
 use Krang::Widget qw/format_url category_chooser/;
+use Krang::Publisher;
 
 use constant WORKSPACE_URI => 'workspace.pl';
 
@@ -72,6 +73,7 @@ sub setup {
 		cancel_edit
 		delete
 		delete_selected
+                deploy
                 checkout_and_edit
 		edit
 		edit_cancel
@@ -184,6 +186,32 @@ sub add_save {
     return $self->add(%errors) if %errors;
 
     add_message('message_saved');
+
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri=> $uri);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$uri\">$uri</a>";
+}
+
+=item deploy
+
+Deploys a template and checks it in.  Redirects to My Workspace.
+
+=cut
+
+sub deploy {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $obj = $session{template};
+    croak("No object in session") unless $obj;
+
+    my $publisher = Krang::Publisher->new();
+    $publisher->deploy_template(template => $obj);
+    $obj->checkin;
+
+    add_message('deployed', id => $obj->template_id);
 
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
