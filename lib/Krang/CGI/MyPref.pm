@@ -132,16 +132,25 @@ sub add_alert {
     
     $params{user_id} = $ENV{REMOTE_USER};
     $params{action} = $q->param('action_list');
-    $params{desk_id} = $q->param('desk_list') if $q->param('desk_list');
-    $params{category_id} = $q->param('category_id') if $q->param('category_id'); 
+    $params{desk_id} = $q->param('desk_list') ? $q->param('desk_list') : 'NULL';
+    $params{category_id} = $q->param('category_id') ? $q->param('category_id') : 'NULL'; 
   
     # return error message on bad combination
-    add_message("bad_desk_combo"), return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id}) );
+    add_message("bad_desk_combo"), return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
     add_message("move_needs_desk"),  return $self->edit() if ( ($params{action} eq 'move') and (not $params{desk_id}) );
- 
-    my $alert = Krang::Alert->new( %params );
-    $alert->save();
-    add_message("alert_added");
+
+    my @found = Krang::Alert->find( %params );
+
+    if (not @found) { 
+        $params{category_id} = undef if ($params{category_id} eq 'NULL');
+        $params{desk_id} = undef if ($params{desk_id} eq 'NULL');
+
+        my $alert = Krang::Alert->new( %params );
+        $alert->save();
+        add_message("alert_added");
+    } else {
+        add_message("duplicate_alert");
+    }
  
     return $self->edit();
 }

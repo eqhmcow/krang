@@ -174,7 +174,11 @@ desk_id
 
 =item *
 
-category_id - will traverse the tree looking and also look for parent categories. an arrayref of category ids can be passed in as well.
+category_id - An arrayref of category ids can be passed in.  'NULL' can also be used here.
+
+=item *
+
+parent_categories - if set true will return results in parent categories as well.
 
 =item *
 
@@ -217,6 +221,7 @@ sub find {
                          action => 1,
                          desk_id => 1,
                          category_id => 1,
+                         parent_categories => 1,
                          order_by => 1,
                          order_desc => 1,
                          limit => 1,
@@ -243,33 +248,61 @@ not $valid_params{$param};
     
     # set simple keys
     foreach my $key (keys %args) {
-        if ( ($key eq 'alert_id') || ($key eq 'user_id') || ($key eq 'action') || ($key eq 'desk_id') ) {   
+        if ( ($key eq 'alert_id') || ($key eq 'user_id') || ($key eq 'action') ) {   
             push @where, $key;
         }
     }
 
     my $where_string = join ' and ', (map { "$_ = ? " } @where);
 
+    if ($args{'desk_id'}) {
+        if ($args{'desk_id'} eq 'NULL') {
+            $where_string ? ($where_string .= ' AND desk_id is NULL') : ($where_string = 'desk_id is NULL');
+        } else {
+            $where_string ? ($where_string .= 'AND desk_id = '.$args{'desk_id'}) : ($where_string = 'desk_id = '.$args{'desk_id'});
+        }
+                                                                                
+    }
+
     if ($args{'category_id'}) {
 
         if (ref($args{'category_id'}) eq 'ARRAY') {
             my @all_cat_ids;
             my $cat_ids = $args{'category_id'};
-            foreach my $cat_id ( @$cat_ids ) {
-                my @cat = Krang::Category->find( category_id => $cat_id);
-                my @ancestors = $cat[0]->ancestors( ids_only => 1 );
-                
-                push @all_cat_ids, @ancestors;
+
+            if ($args{'parent_categories'}) {
+                foreach my $cat_id ( @$cat_ids ) {
+                    my @cat = Krang::Category->find( category_id => $cat_id);
+                    my @ancestors = $cat[0]->ancestors( ids_only => 1 );
+                    
+                    push @all_cat_ids, @ancestors;
+                }
             }
-            
+ 
             push @all_cat_ids, @$cat_ids;
 
-            my %seen;
-            @all_cat_ids = grep { ++$seen{$_} == 1 } @all_cat_ids;
+            if ($args{'parent_categories'}) {
+                my %seen;
+                @all_cat_ids = grep { ++$seen{$_} == 1 } @all_cat_ids;
 
-            $where_string ? ($where_string .= 'AND ('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)') : ($where_string = '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)');
+                $where_string ? ($where_string .= ' AND ('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)') : ($where_string = '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)');
+            } else {
+                $where_string ? ($where_string .= ' AND ('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).')') : ($where_string = '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).')');
+            }
         } else {
-            $where_string ? ($where_string .= 'AND (category_id = '.$args{'category_id'}.' OR category_id is NULL)') : ($where_string = '(category_id = '.$args{'category_id'}.' OR category_id is NULL)');
+            if ($args{'parent_categories'}) {
+                my @all_cat_ids;
+                my @cat = Krang::Category->find( category_id => $args{'category_id'});
+                my @ancestors = $cat[0]->ancestors( ids_only => 1 );
+                push @all_cat_ids, @ancestors;
+                push @all_cat_ids, $args{'category_id'};
+
+                $where_string ? ($where_string .= ' AND ('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)') : ($where_string = '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)');
+            } elsif ($args{'category_id'} eq 'NULL') {
+                $where_string ? ($where_string .= ' AND category_id is NULL') : ($where_string = 'category_id is NULL'); 
+            } else {
+                $where_string ? ($where_string .= ' AND category_id = '.$args{'category_id'}) : ($where_string = 'category_id = '.$args{'category_id'});
+            }
         }
     }
 
@@ -342,6 +375,7 @@ sub check_alert {
 
     $search_criteria{desk_id} = $desk_id if $desk_id;
     $search_criteria{category_id} = \@category_ids if @category_ids;
+    $search_criteria{parent_categories} = 1;
 
     croak(__PACKAGE__."->check_alert requires a valid Krang::History object.") if (ref $history ne 'Krang::History');
 
