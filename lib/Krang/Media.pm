@@ -1294,9 +1294,7 @@ sub mark_as_published {
 
     $self->{published_version} = $self->{version};
     $self->{publish_date} = localtime;
-
-    $self->{checked_out} = 0;
-    $self->{checked_out_by} = 0;
+    $self->{checked_out_by} = undef;
 
     # update the DB.
     my $dbh = dbh();
