@@ -120,11 +120,14 @@ sub init {
     $args{parent_list_item_id} = $parent_list_item->list_item_id if $parent_list_item;
 
     # convert order to ord if present
-    $args{ord} = delete $args{order} if $args{order};
+    my $ord;
+    $ord  = delete $args{order} if $args{order};
 
     # finish the object
     $self->hash_init(%args);
 
+    $self->{ord} = $ord if $ord;
+ 
     return $self;
 }
 
@@ -139,7 +142,8 @@ sub save {
     my $dbh = dbh;
     my $list_item_id;
 
-    my $existing = Krang::ListItem->find( count => 1, list_id => $self->{list_id} );
+    my %search_criteria = $self->{parent_list_item_id} ? (parent_list_item_id => $self->{parent_list_item_id}) : (list_id => $self->{list_id});
+    my $existing = Krang::ListItem->find( count => 1, %search_criteria);
 
     # if this is not a new list item
     if (defined $self->{list_item_id}) {
@@ -151,14 +155,15 @@ sub save {
         if ($self->{old_ord}) {
             # check to see if order belongs to another list item.
             # if so, swap the order
-            my $sth = $dbh->prepare('SELECT list_item_id from list_item where ord = ? and list_id = ? and list_item_id != ?');
-            $sth->execute($self->{ord},  $self->{list_id}, $self->{list_item_id});
+            my $sql = 'SELECT list_item_id from list_item where ord = ? and list_item_id != ?';
+            $sql .= $self->{parent_list_item_id} ? ' and parent_list_item_id = ?' : ' and list_id = ?';
+            my $sth = $dbh->prepare($sql);
+            $sth->execute($self->{ord}, $self->{list_item_id}, ($self->{parent_list_item_id} ? $self->{parent_list_item_id} : $self->{list_id}));
 
             my ($found_liid) = $sth->fetchrow_array();
       
             # if one is found, update it to this object's old order 
             if ($found_liid) {
-debug("DDDDDDD $found_liid ".$self->{old_ord});
                 my $sql =  'update list_item set ord = ? where list_item_id = ?';
                 $dbh->do($sql, undef, $self->{old_ord}, $found_liid); 
                 $self->{old_ord} = undef;
@@ -174,8 +179,9 @@ debug("DDDDDDD $found_liid ".$self->{old_ord});
         my @save_fields =  (RO_FIELDS,RW_FIELDS);
 
         if ($self->{ord} and ($self->{ord} <= $existing)) {
-            my $sql = 'UPDATE list_item set ord = ord + 1 where >= ?';
-            $dbh->do($sql, undef, $self->{ord}); 
+            my $sql = 'UPDATE list_item set ord = ord + 1 where ord >= ?';
+            $sql .= $self->{parent_list_item_id} ? ' and parent_list_item_id = ?' : ' and list_id = ?';
+            $dbh->do($sql, undef, $self->{ord}, ($self->{parent_list_item_id} ? $self->{parent_list_item_id} : $self->{list_id})); 
         } else {
             $self->{ord} = $existing + 1;
         }
