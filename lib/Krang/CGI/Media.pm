@@ -74,6 +74,7 @@ sub setup {
                          delete
                          delete_selected
                          save_and_associate_media
+                         save_and_view_log
                          view
                          view_version
                          revert_version
@@ -690,7 +691,32 @@ sub save_and_associate_media {
 }
 
 
+=item save_and_view_log
 
+The purpose of this mode is to hand the user off to the log viewng
+screen.  This mode writes changes back to the media object without
+calling save().  When done, it performs an HTTP redirect to
+history.pl.
+
+=cut
+
+
+sub save_and_view_log {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    # Update media object
+    my $m = $session{media};
+    $self->update_media($m);
+
+    # Redirect to associate screen
+    my $url = 'history.pl?history_return_script=media.pl&history_return_params=rm&history_return_params=edit&media_id=' . $m->media_id;
+    $self->header_props(-uri=>$url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$url\">$url</a>";
+}
 
 
 =item view

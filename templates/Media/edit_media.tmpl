@@ -46,12 +46,26 @@
         myform.submit();
     }
 
+   
+    function save_and_view_log () {
+        var myform = document.edit_media_form;
+        myform.rm.value = 'save_and_view_log';
+        myform.submit();
+    }
+
+   
+    function save_and_edit_schedule () {
+        alert("Schedule editor not yet implemented.");
+    }
+
 // -->
 </script>
 
 
-<div class=dark-bar><tmpl_if add_mode>New<tmpl_else>Edit</tmpl_if> Media</div>
-
+<div class="dark-bar">
+<span class="left"><tmpl_if add_mode>New<tmpl_else>Edit</tmpl_if> Media</span>
+<span class="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a></span>
+</div>
 
 <tmpl_unless add_mode>
 
