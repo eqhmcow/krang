@@ -681,8 +681,7 @@ sub publish {
         if (scalar($args{element}->children())) {
             Krang::ElementClass::MissingTemplate->throw(message => 'Missing required output template',
                                                         element_name => $args{element}->display_name());
-#            critical(__PACKAGE__ . ": publish() cannot find template for element_id=$element_id");
-#            croak $err;
+
         } else {
             return $args{element}->data();
         }
