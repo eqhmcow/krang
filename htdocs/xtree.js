@@ -360,10 +360,26 @@ WebFXTree.prototype.keydown = function(key) {
 }
 
 WebFXTree.prototype.toString = function() {
-	var str = "<div id=\"" + this.id + "\" ondblclick=\"webFXTreeHandler.toggle(this);\" class=\"webfx-tree-item\" onkeydown=\"return webFXTreeHandler.keydown(this, event)\">";
-	str += "<img id=\"" + this.id + "-icon\" class=\"webfx-tree-icon\" src=\"" + ((webFXTreeHandler.behavior == 'classic' && this.open)?this.openIcon:this.icon) + "\" onclick=\"webFXTreeHandler.select(this);\"><a href=\"" + this.action + "\" id=\"" + this.id + "-anchor\" onfocus=\"webFXTreeHandler.focus(this);\" onblur=\"webFXTreeHandler.blur(this);\">" + this.text + "</a></div>";
+	var str = "<div id=\"" + 
+                  this.id + 
+                  "\" ondblclick=\"webFXTreeHandler.toggle(this);\" class=\"webfx-tree-item\" onkeydown=\"return webFXTreeHandler.keydown(this, event)\">\n";
+	str += "<img id=\"" + 
+                this.id + "-icon\" class=\"webfx-tree-icon\" src=\"" + 
+                ((webFXTreeHandler.behavior == 'classic' && this.open) ? 
+                   this.openIcon :
+                   this.icon) + 
+                "\" onclick=\"webFXTreeHandler.select(this);\"><a href=\"" + 
+                this.action + 
+                "\" id=\"" +
+                this.id + 
+                "-anchor\" onfocus=\"webFXTreeHandler.focus(this);\" onblur=\"webFXTreeHandler.blur(this);\">" + 
+                this.text + 
+                "</a>\n</div>\n";
 	for (var i = 0; i < this.childNodes.length; i++) {
+                str += "\n\n<!-- START " + this.childNodes[i].text + " -->\n\n";
 		str += this.childNodes[i].toString(i, this.childNodes.length);
+
+                str += "\n\n<!-- END " + this.childNodes[i].text + " -->\n\n";
 	}
 	str += "</div>";
 	this.rendered = true;
@@ -518,15 +534,45 @@ WebFXTreeItem.prototype.toString = function (nItem, nItemCount) {
 	}
 	else if (!this.icon) { this.icon = webFXTreeConfig.fileIcon; }
 	var label = this.text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-	var str = "<div id=\"" + this.id + "\" ondblclick=\"webFXTreeHandler.toggle(this);\" class=\"webfx-tree-item\" onkeydown=\"return webFXTreeHandler.keydown(this, event)\">";
+	var str = "<div id=\"" + 
+                  this.id + "\" ondblclick=\"webFXTreeHandler.toggle(this);\" class=\"webfx-tree-item\" onkeydown=\"return webFXTreeHandler.keydown(this, event)\">";
 	str += indent;
-	str += "<img id=\"" + this.id + "-plus\" src=\"" + ((this.folder)?((this.open)?((this.parentNode._last)?webFXTreeConfig.lMinusIcon:webFXTreeConfig.tMinusIcon):((this.parentNode._last)?webFXTreeConfig.lPlusIcon:webFXTreeConfig.tPlusIcon)):((this.parentNode._last)?webFXTreeConfig.lIcon:webFXTreeConfig.tIcon)) + "\" onclick=\"webFXTreeHandler.toggle(this);\">"
-	str += "<img id=\"" + this.id + "-icon\" class=\"webfx-tree-icon\" src=\"" + ((webFXTreeHandler.behavior == 'classic' && this.open)?this.openIcon:this.icon) + "\" onclick=\"webFXTreeHandler.select(this);\"><a href=\"" + this.action + "\" id=\"" + this.id + "-anchor\" onfocus=\"webFXTreeHandler.focus(this);\" onblur=\"webFXTreeHandler.blur(this);\">" + label + "</a></div>";
-	str += "<div id=\"" + this.id + "-cont\" class=\"webfx-tree-container\" style=\"display: " + ((this.open)?'block':'none') + ";\">";
+	str += "<img id=\"" + 
+               this.id + 
+               "-plus\" src=\"" + 
+               ((this.folder) ? 
+                  ((this.open) ?
+                     ((this.parentNode._last) ?
+                        webFXTreeConfig.lMinusIcon:webFXTreeConfig.tMinusIcon):
+                        ((this.parentNode._last) ? 
+                           webFXTreeConfig.lPlusIcon :
+                           webFXTreeConfig.tPlusIcon)) : 
+                        ((this.parentNode._last) ? 
+                           webFXTreeConfig.lIcon:webFXTreeConfig.tIcon)) + 
+               "\" onclick=\"webFXTreeHandler.toggle(this);\">"
+	str += "<a href=\"" + 
+               this.action + 
+               "\" id=\""  + 
+               this.id + 
+               "-anchor\" onfocus=\"webFXTreeHandler.focus(this);\" onblur=\"webFXTreeHandler.blur(this);\">" + 
+               "<img id=\"" + 
+               this.id + 
+               "-icon\" class=\"webfx-tree-icon\" src=\"" + 
+                ((webFXTreeHandler.behavior == 'classic' && this.open) ? 
+                   this.openIcon: this.icon) + 
+                "\"> " + 
+                label + 
+                "</a></div>\n";
+	str += "<div id=\"" + 
+                this.id + 
+                "-cont\" class=\"webfx-tree-container\" style=\"display: " + 
+                ((this.open)?'block':'none') + 
+                ";\">\n";
 	for (var i = 0; i < this.childNodes.length; i++) {
-		str += this.childNodes[i].toString(i,this.childNodes.length);
+                str += "\n\n<!-- START " + this.childNodes[i].text + " -->\n\n";		str += this.childNodes[i].toString(i,this.childNodes.length);
+                str += "\n\n<!-- END " + this.childNodes[i].text + " -->\n\n"
 	}
-	str += "</div>";
+	str += "</div>\n";
 	this.plusIcon = ((this.parentNode._last)?webFXTreeConfig.lPlusIcon:webFXTreeConfig.tPlusIcon);
 	this.minusIcon = ((this.parentNode._last)?webFXTreeConfig.lMinusIcon:webFXTreeConfig.tMinusIcon);
 	return str;
