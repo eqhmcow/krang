@@ -142,7 +142,7 @@ foreach my $type (@types) {
         my @cat_list = Krang::Category->find(site_id => $site_obj[0]->site_id, parent_id => $rc->category_id);
         my $catnames = join(" ",(map { $_->dir } @cat_list));
 
-        my $list_string;
+        my $list_string = '';
 
         if ($type eq 'media') {
             my @existing_media = Krang::Media->find( category_id => $rc->category_id );
