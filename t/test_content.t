@@ -3,6 +3,10 @@ use warnings;
 
 use Test::More qw(no_plan);
 use Krang::Script;
+use Krang::Site;
+use Krang::Category;
+use Krang::Media;
+use Krang::Contrib;
 use Krang::Story;
 
 
@@ -140,6 +144,54 @@ if ($@) {
         pass('delete_item()');
     }
 }
+
+
+
+#
+# test cleanup.
+#
+
+my $site_id = $site->site_id;
+my $cat_id  = $category->category_id;
+my @story_ids;
+my @media_ids;
+my @contrib_ids;
+
+for (1..10) {
+    my $s = $creator->create_story(category => [$category]);
+    my $m = $creator->create_media(category => $category);
+    my $c = $creator->create_contrib();
+
+    push @story_ids, $s->story_id;
+    push @media_ids, $m->media_id;
+    push @contrib_ids, $c->contrib_id;
+}
+
+eval {
+    $creator->cleanup();
+};
+
+if ($@) {
+    diag("cleanup() failed: $@");
+    diag("make db may be required to clean things up.");
+    fail('cleanup');
+} else {
+    my ($tmpsite) = Krang::Site->find(site_id => [$site_id]);
+    ok(!defined($tmpsite), 'cleanup() - Krang::Site');
+    my ($tmpcat) = Krang::Category->find(category_id => [$cat_id]);
+    ok(!defined($tmpcat), 'cleanup() - Krang::Category');
+
+    my @mediafiles = Krang::Media->find(media_id => \@media_ids);
+    is($#mediafiles, -1, 'cleanup() - Krang::Media');
+
+    my @contribfiles = Krang::Contrib->find(contrib_id => \@contrib_ids);
+    is($#contribfiles, -1, 'cleanup() - Krang::Contrib');
+
+    my @storyfiles = Krang::Story->find(story_id => \@story_ids);
+    is($#storyfiles, -1, 'cleanup() - Krang::Story');
+
+}
+
 
 END {
     $creator->cleanup();
