@@ -20,6 +20,10 @@ use File::Path;
 use IO::File;
 
 # these have to be global because of File::Find processing
+#
+# FIX: no they don't, but fixing them to be scoped to the object is
+# too much work for right now.  These get cleared in upload() before
+# each use...
 my $media_list;
 my %category_list;
 my $media_in_root;
@@ -27,9 +31,8 @@ my $chosen_cat_id;
 my $chosen_cat_url;
 
 =head1 NAME
-                                                                                
-Krang::CGI::Media::BulkUpload - web interface used to upload archives 
-of media files.
+
+Krang::CGI::Media::BulkUpload - web interface used to upload archives of media files.
 
 =head1 SYNOPSIS
 
@@ -103,6 +106,13 @@ Returns error messages if categories do not exist.
 sub upload {
     my $self = shift;
     my $q = $self->query;
+
+    # clear out global values - BAD PROGRAMMER, BAD, BAD
+    $media_list     = undef;
+    %category_list  = ();
+    $media_in_root  = undef;
+    $chosen_cat_id  = undef;
+    $chosen_cat_url = undef;
    
     # if file was uploaded 
     if (my $fh = $q->upload('media_file')) {
