@@ -47,7 +47,9 @@
 
    
     function save_and_edit_schedule () {
-        alert("Schedule editor not yet implemented.");
+        var myform = document.edit_media_form;
+        myform.rm.value = 'save_and_edit_schedule';
+        myform.submit();
     }
 
 // -->

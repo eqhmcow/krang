@@ -78,6 +78,7 @@ sub setup {
                          view
                          view_version
                          revert_version
+                         save_and_edit_schedule
                         )]);
 
     $self->tmpl_path('Media/');
@@ -657,9 +658,24 @@ sub delete_selected {
     return $self->find();
 }
 
-
-
-
+=item save_and_edit_schedule
+                                                                                
+This mode saves the current data to the session and passes control to
+edit schedule for story.
+                                                                                
+=cut
+                                                                                
+sub save_and_edit_schedule {
+    my $self = shift;
+                                                                                
+    # Update media object
+    my $m = $session{media};
+    $self->update_media($m);
+                                                                            
+    $self->header_props(-uri => 'schedule.pl?rm=edit&object_type=media');
+    $self->header_type('redirect');
+    return;
+}
 
 =item save_and_associate_media
 
