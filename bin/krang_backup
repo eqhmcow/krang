@@ -83,6 +83,10 @@ $@
 END
 }
 
+# use first instance if one isn't set.  Backups are installation wide
+# anyway.
+BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
+
 use Krang::Script;
 use Krang::Conf qw(KrangRoot InstanceDBName DBUser DBPass);
 use Getopt::Long;

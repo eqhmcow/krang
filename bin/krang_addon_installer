@@ -84,6 +84,11 @@ $@
 ######################################################################
 END
 }
+
+# use first instance if one isn't set.  Addons are installation wide
+# anyway.
+BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
+
 use Krang::Script;
 use Krang::Conf qw(KrangRoot);
 use File::Copy qw(copy);
