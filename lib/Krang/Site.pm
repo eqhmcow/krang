@@ -215,7 +215,7 @@ Lots.
 
 =head1 SEE ALSO
 
-L<Krang::>, L<Krang::DB>
+L<Krang>, L<Krang::DB>
 
 =cut
 
