@@ -875,7 +875,7 @@ sub get_pager_view {
     my $q = $self->cgi_query();
 
     my $curr_page_num = ($q->param('krang_pager_curr_page_num') || '1');
-    my $sort_field = ($q->param('krang_pager_sort_field') || '');
+    my $sort_field = $q->param('krang_pager_sort_field') || $self->columns_sortable()->[0];
     my $sort_order_desc = ($q->param('krang_pager_sort_order_desc'));
 
     # Page size is either 100, or user preferred size.
