@@ -173,7 +173,7 @@ pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
 
 
 # figure out how these command-line options affect find criteria.
-my %find_options = (limit => $increment, offset => 0, checked_out => 0);
+my %find_options = (limit => $increment, offset => 0, checked_out_by => 0);
 my %publish_args = (callback => \&_progress_callback);
 
 if ($republish_only) {
@@ -196,11 +196,21 @@ if ($everything) {
 
 # Start the publish process.
 my $publisher = Krang::Publisher->new();
+
+########################################
+## Time Variables
+##
+my $increment_count = 0;
+my $increment_time  = 0;
+
 my $total_storytime = 0;
 my $total_storycount = 0;
 my $total_mediatime = 0;
 my $total_mediacount = 0;
 
+my @assettime;
+my $storycount = 0;
+my $mediacount = 0;
 
 while (my @stories = Krang::Story->find(%find_options)) {
 
@@ -211,6 +221,7 @@ while (my @stories = Krang::Story->find(%find_options)) {
     }
 
     my @starttime = gettimeofday();
+    @assettime = @starttime;
 
     eval { $publisher->publish_story(story => \@stories, %publish_args); };
 
@@ -236,10 +247,17 @@ while (my @stories = Krang::Story->find(%find_options)) {
 
     my $endtime = tv_interval(\@starttime);
 
-    print sprintf("STATUS: stories (%i - %i) published in %.02f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @stories), $endtime);
+    print sprintf("STATUS: Increment %i - %i (%i stories, %i media) published in %.02f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @stories), $storycount, $mediacount, $endtime);
 
-    $total_storytime += $endtime;
-    $total_storycount += @stories;
+    # add everything up.
+    $increment_time  += $endtime;
+    $increment_count += @stories;
+
+    $total_storycount += $storycount;
+    $total_mediacount += $mediacount;
+
+    $storycount = 0;
+    $mediacount = 0;
 
     last if (@stories < $increment);
     $find_options{offset} += $increment;
@@ -248,15 +266,21 @@ while (my @stories = Krang::Story->find(%find_options)) {
 # if the --everything option was specified, all media needs to be published as well.
 if ($everything) {
     $find_options{offset} = 0;
+
     while (my @media = Krang::Media->find(%find_options)) {
         my @starttime = gettimeofday();
+        @assettime = @starttime;
+
         $publisher->publish_media(media => \@media, %publish_args);
         my $endtime = tv_interval(\@starttime);
 
         print sprintf("STATUS: media (%i - %i) published in %.02f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @media), $endtime);
 
-        $total_mediatime += $endtime;
-        $total_mediacount += @media;
+        $increment_time  += $endtime;
+        $increment_count += @media;
+
+        $total_mediacount += $mediacount;
+        $mediacount = 0;
 
         last if (@media < $increment);
         $find_options{offset} += $increment;
@@ -264,15 +288,15 @@ if ($everything) {
 }
 
 
-print "\n\nSTATUS: Publish completed.\n==================================================\n";
-print "type\t\tnumber published\ttime(seconds)\n\n";
+print "\n\nSTATUS: Publish completed.\n======================================================================\n";
+print "type\t\tnumber published\ttime(seconds)\tseconds/asset\n\n";
+print "----------------------------------------------------------------------\n";
+print sprintf("stories\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_storycount, $total_storytime, (($total_storytime > 0) ? ($total_storytime/$total_storycount) : 0));
+print sprintf("media\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_mediacount, $total_mediatime, (($total_mediatime > 0) ? ($total_mediatime/$total_mediacount) : 0));
 
-print sprintf("stories\t\t%i\t\t\t%.02f\n", $total_storycount, $total_storytime);
-if ($everything) {
-    print sprintf("media\t\t%i\t\t\t%.02f\n", $total_mediacount, $total_mediatime);
-}
+print "----------------------------------------------------------------------\n";
+print sprintf("TOTAL:\t\t%i assets\t\t%.02f seconds\n\n", ($total_storycount+$total_mediacount), $increment_time);
 
-print "\n";
 
 
 
@@ -284,11 +308,22 @@ sub _progress_callback {
     my %arg = @_;
     my ($object, $counter, $total) = @arg{qw(object counter total)};
     my $string;
-    if ($object->isa('Krang::Story')) {
-        $string .= 'Publishing story_id = ' . $object->story_id . ' (' . $object->url . ')';
-    } else {
-        $string .= 'Publishing media_id = ' . $object->media_id . ' (' . $object->url . ')';
-    }
-    if ($verbose) { print "$string\n"; }
 
+
+    my $endtime = tv_interval(\@assettime);
+
+    if ($object->isa('Krang::Story')) {
+        $string .= sprintf("Publishing story_id=%i (time=%.02f url=%s)", $object->story_id, $endtime, $object->url);
+        $storycount++;
+        $total_storytime += $endtime;
+    } else {
+        $string .= sprintf("Publishing media_id=%i (time=%.02f url=%s)", $object->media_id, $endtime, $object->url);
+        $mediacount++;
+        $total_mediatime += $endtime;
+    }
+
+    if ($verbose) {
+        print "$string\n";
+    }
+    @assettime = gettimeofday();
 }

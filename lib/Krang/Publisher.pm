@@ -296,10 +296,6 @@ sub publish_story {
     my $total = @$publish_list;
     my $counter = 0;
     foreach my $object (@$publish_list) {
-        $callback->(object => $object,
-                    total  => $total,
-                    counter => $counter++) if $callback;
-
         if ($object->isa('Krang::Story')) {
             if ($object->checked_out) {
                 if ($user_id != $object->checked_out_by) {
@@ -307,6 +303,11 @@ sub publish_story {
                     next;
                 }
             }
+
+            $callback->(object => $object,
+                        total  => $total,
+                        counter => $counter++) if $callback;
+
             $self->_build_story_all_categories(story => $object);
             # mark object as published - this will update status info,
             # check the object back in, and remove it from desks,
@@ -393,14 +394,17 @@ sub publish_media {
     my $self = shift;
     my %args = @_;
 
-    my $user_id = $ENV{REMOTE_USER};
+    my $callback = $args{callback};
+    my $user_id  = $ENV{REMOTE_USER};
     my @urls;
 
     croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
 
     if (ref $args{media} eq 'ARRAY') {
-        foreach my $media_object (@{$args{media}}) {
+        my $total = @{$args{media}};
+        my $counter = 0;
 
+        foreach my $media_object (@{$args{media}}) {
             # cannot publish assets checked out by other users.
             if ($media_object->checked_out) {
                 if ($user_id != $media_object->checked_out_by) {
@@ -408,6 +412,10 @@ sub publish_media {
                     next;
                 }
             }
+
+            $callback->(object => $media_object,
+                        total  => $total,
+                        counter => $counter++) if $callback;
 
             push @urls, $self->_write_media($media_object);
             $media_object->mark_as_published();
@@ -423,8 +431,11 @@ sub publish_media {
         }
     }
 
-    my $url = $self->_write_media($args{media});
+    $callback->(object => $args{media},
+                total  => 1,
+                counter => 1) if $callback;
 
+    my $url = $self->_write_media($args{media});
     $args{media}->mark_as_published();
 
     return $url;
