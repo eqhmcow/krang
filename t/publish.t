@@ -161,9 +161,12 @@ my @stories;
 for (1..10) {
     push @media, &create_media();
 }
+
 for (1..10) {
     push @stories, &create_story([$category]);
 }
+
+
 
 
 my $story   = &create_story([$category, $child_cat, $child_subcat]);
@@ -948,6 +951,8 @@ sub create_story {
 
     $story->save();
 
+    $story->checkin();
+
     return ($story);
 
 }
@@ -1076,6 +1081,9 @@ sub create_media {
         }
     }
     unlink(catfile(KrangRoot, "tmp", "tmp.$format"));
+
+
+    $media->checkin();
 
     return $media;
 

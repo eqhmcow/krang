@@ -95,7 +95,7 @@ use Krang::ElementClass;
 use Krang::Template;
 use Krang::History qw(add_history);
 
-use Krang::Log qw(debug);
+use Krang::Log qw(debug info critical);
 
 
 use constant PUBLISHER_RO => qw(is_publish is_preview story category);
@@ -298,17 +298,22 @@ sub publish_story {
         $callback->(object => $object,
                     total  => $total,
                     counter => $counter++) if $callback;
+
         if ($object->isa('Krang::Story')) {
+            if ($object->checked_out) {
+                debug(__PACKAGE__ . ": skipping checked out story id=" . $object->story_id);
+                next;
+            }
             $self->_build_story_all_categories(story => $object);
             # mark object as published - this will update status info,
             # check the object back in, and remove it from desks,
             # as needed.
             $object->mark_as_published();
+
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object);
             # publish_media() will mark the media object as published.
         }
-
 
 
     }
@@ -390,10 +395,23 @@ sub publish_media {
 
     if (ref $args{media} eq 'ARRAY') {
         foreach my $media_object (@{$args{media}}) {
+
+            # cannot publish checked out assets.
+            if ($media_object->checked_out) {
+                debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $media_object->media_id);
+                next;
+            }
+
             push @urls, $self->_write_media($media_object);
             $media_object->mark_as_published();
         }
         return @urls;
+    }
+
+    # cannot publish checked out assets.
+    if ($args{media}->checked_out) {
+        debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $args{media}->media_id);
+        return;
     }
 
     my $url = $self->_write_media($args{media});
