@@ -41,6 +41,12 @@ use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x
     # does not exist)
     $thumbnail_path = $media->thumbnail_path();
 
+    # assign 2 contributors to media object, specifying thier contributor type
+    $media->contrib_ids({contrib_id => 1, contrib_type_id => 3}, {contrib_id => 44, contrib_type_id => 4});
+
+    # get contrib objects attached to this media
+    @contribs = $media->list_contrib_objects();
+
     # save the object to the database
     $media->save();
 
@@ -74,7 +80,7 @@ use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x
 =head1 DESCRIPTION
 
 This class handles the storage and retrieval of media objects on the
-filesystem, as well as media object metadata in the database.
+filesystem, as well as media object metadata in the database. Contributors (Krang::Contrib objects) can also be attached to stories.
 
 =head2 Media Versioning
 
@@ -189,7 +195,8 @@ Filehandle for uploaded media.
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
-    get_set       => [ qw( media_id title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename uri ) ];
+    get_set       => [ qw( media_id title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename uri ) ],
+    list => [ qw( contrib_ids ) ];
 
 sub init {
     my $self = shift;
@@ -244,6 +251,10 @@ Returns the path that the media object will preview/publish to. Not settable her
 =item $media->upload_file({filehandle => $filehandle, filename => $filename})
 
 Stores media file to temporary location on filesystem. Sets $media->filename() also. 
+
+=item $media->contrib_ids({contrib_id => 22, contrib_type_id => 1});
+
+Attach contributor/contributor types to media object by id.  The order you pass them in is the order they will be attached.
 
 =cut
 
@@ -473,7 +484,7 @@ sub find {
         $select_string = join(',', FIELDS);
     }
     
-    my $sql = "select $select_string from contrib";
+    my $sql = "select $select_string from media";
     $sql .= " where ".$where_string if $where_string;
     $sql .= " order by $order_by $order_desc";
  
@@ -696,6 +707,19 @@ sub delete {
 
     my $file_dir = catdir($root,'data','media',$self->_media_id_path);
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
+}
+
+=item @contrib_objects = $media->list_contrib_objects();
+
+Return list of contributor (Krang::Contrib) objects.
+
+=cut
+
+sub list_contrib_objects {
+    my $self = shift;
+    my @args = shift;
+
+    
 }
 
 =back
