@@ -24,15 +24,16 @@ CREATE TABLE group_permission (
         admin_categories    BOOL NOT NULL DEFAULT 0,
         admin_jobs          BOOL NOT NULL DEFAULT 0,
         admin_desks         BOOL NOT NULL DEFAULT 0,
+        admin_lists         BOOL NOT NULL DEFAULT 0,
         asset_story         ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
         asset_media         ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
         asset_template      ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide"
 );
 
 /* set up default groups */
-INSERT INTO group_permission VALUES (1, 'Admin'  , 1,1,1,0,1,1,1,1,1,1, "edit", "edit", "edit");
-INSERT INTO group_permission VALUES (2, 'Editor' , 1,0,1,1,0,1,0,1,1,0, "edit", "edit", "read-only");
-INSERT INTO group_permission VALUES (3, 'Default', 0,0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
+INSERT INTO group_permission VALUES (1, 'Admin'  , 1,1,1,0,1,1,1,1,1,1,1, "edit", "edit", "edit");
+INSERT INTO group_permission VALUES (2, 'Editor' , 1,0,1,1,0,1,0,1,1,0,0, "edit", "edit", "read-only");
+INSERT INTO group_permission VALUES (3, 'Default', 0,0,0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
 
 
 /* Join table: desk <-> group_permission */

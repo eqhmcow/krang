@@ -62,7 +62,7 @@ sub fill_template {
     # fill in admin vars
     my @admin_apps = (qw(admin_users admin_groups admin_contribs
                          admin_sites admin_categories admin_jobs
-                         admin_desks));
+                         admin_desks admin_lists));
     $template->param(map { ("nav_$_", $admin_perms{$_}) } @admin_apps);
 
     # can they see any admin tools?

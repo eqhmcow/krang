@@ -32,6 +32,7 @@ Krang::Group - Interface to manage Krang permissions
                                  admin_categories    => 1,
                                  admin_jobs          => 1,
                                  admin_desks         => 1,
+                                 admin_lists         => 1,
                                  asset_story         => 'edit',
                                  asset_media         => 'read-only',
                                  asset_template      => 'hide' );
@@ -77,6 +78,7 @@ Krang::Group - Interface to manage Krang permissions
   my $admin_categories = $group->admin_categories();
   my $admin_jobs       = $group->admin_jobs();
   my $admin_desks      = $group->admin_desks();
+  my $admin_desks      = $group->admin_lists();
   my $asset_story      = $group->asset_story();
   my $asset_media      = $group->asset_media();
   my $asset_template   = $group->asset_template();
@@ -141,6 +143,7 @@ use constant FIELDS => qw( name
                            admin_categories
                            admin_jobs
                            admin_desks
+                           admin_lists
                            asset_story
                            asset_media
                            asset_template );
@@ -184,6 +187,7 @@ specified using Boolean (1 or 0) values:
   * admin_categories
   * admin_jobs
   * admin_desks
+  * admin_lists
 
 =cut
 
@@ -204,6 +208,7 @@ sub init {
                     admin_categories    => 0,
                     admin_jobs          => 0,
                     admin_desks         => 0,
+                    admin_lists         => 0,
                     asset_story         => 'edit',
                     asset_media         => 'edit',
                     asset_template      => 'edit',
@@ -625,6 +630,7 @@ sub serialize_xml {
     $writer->dataElement( admin_categories => $self->{admin_categories} );
     $writer->dataElement( admin_jobs => $self->{admin_jobs} );
     $writer->dataElement( admin_desks=> $self->{admin_desks} );
+    $writer->dataElement( admin_lists => $self->{admin_lists} );
     $writer->dataElement( asset_story => $self->{asset_story} );
     $writer->dataElement( asset_media => $self->{asset_media} );
     $writer->dataElement( asset_template => $self->{asset_template} );
@@ -1229,6 +1235,7 @@ functions:
   admin_categories
   admin_jobs
   admin_desks
+  admin_lists
 
 This method combines the permissions of all the groups with which
 the user is affiliated.  Group permissions are combined using
@@ -1245,7 +1252,7 @@ assigned to the following groups:
               admin_categories    => 1
               admin_jobs          => 1
               admin_desks         => 0
-
+              admin_lists         => 0
 
    Group B => may_publish         => 0
               may_checkin_all     => 1
@@ -1257,6 +1264,7 @@ assigned to the following groups:
               admin_categories    => 0
               admin_jobs          => 1
               admin_desks         => 1
+              admin_lists         => 0
 
 In this case, the resultant permissions for this user will be:
 
@@ -1270,7 +1278,7 @@ In this case, the resultant permissions for this user will be:
    admin_categories    => 1
    admin_jobs          => 1
    admin_desks         => 1
-
+   admin_lists         => 0
 
 (N.B.:  The admin function "admin_users_limited" is deemed to be
 a high privilege when it is set to 0 -- not 1.)
@@ -1310,7 +1318,8 @@ sub user_admin_permissions {
                           admin_sites
                           admin_categories
                           admin_jobs
-                          admin_desks );
+                          admin_desks
+                          admin_lists );
 
     my %admin_perm_access = ();
 
