@@ -116,6 +116,6 @@ system($ENV{KRANG_ROOT}."/bin/krang_createdb --destroy --no_create --no_prompt $
 
 # now blow all files away!
 print "\nNow removing all files...\n\n" if $verbose;
-system("rm -Rf $ENV{KRANG_ROOT}");
+system("$sudo rm -Rf $ENV{KRANG_ROOT}");
 
 exit(1);
