@@ -2,7 +2,7 @@ package FedoraCore2::Platform;
 use strict;
 use warnings;
 
-use base 'FedoraCore2::Platform';
+use base 'FedoraCore1::Platform';
 
 use Cwd qw(cwd);
 
