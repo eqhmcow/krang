@@ -89,17 +89,17 @@ is($story->contribs, 1);
 is(($story->contribs)[0]->contrib_id, $contrib->contrib_id);
 
 # test schedules
-my @sched = $story->schedules;
-push(@sched, { type   => 'absolute',
-                date   => Time::Piece->new(),
-                action => 'expire' });
-push(@sched, { type    => 'absolute',
-                date    => Time::Piece->new(),
-                action  => 'publish',
-                version => 1,
-              });
-$story->schedules(@sched);
-is_deeply(\@sched, [$story->schedules]);
+#my @sched = $story->schedules;
+#push(@sched, { type   => 'absolute',
+#                date   => Time::Piece->new(),
+#                action => 'expire' });
+#push(@sched, { type    => 'absolute',
+#                date    => Time::Piece->new(),
+#                action  => 'publish',
+#                version => 1,
+#              });
+#$story->schedules(@sched);
+#is_deeply(\@sched, [$story->schedules]);
 
 # test url production
 ok($story->url);
@@ -176,7 +176,7 @@ is($story2->contribs, 1);
 is(($story2->contribs)[0]->contrib_id, $contrib->contrib_id);
 
 # schedules?
-is_deeply(\@sched, [$story2->schedules]);
+#is_deeply(\@sched, [$story2->schedules]);
 
 # categories and urls made it
 is_deeply([ map { $_->category_id } $story->categories ],
@@ -290,3 +290,61 @@ eval { $s2->categories($s2->categories, $cat[0]); };
 ok($@);
 isa_ok($@, 'Krang::Story::DuplicateURL');
                           
+# test find
+my @find;
+push @find, Krang::Story->new(class => "article",
+                              title => "title one",
+                              slug => "slug one",
+                              categories => [$cat[7]]);
+push @find, Krang::Story->new(class => "article",
+                              title => "title two",
+                              slug => "slug two",
+                              categories => [$cat[6], $cat[8]]);
+push @find, Krang::Story->new(class => "article",
+                              title => "title three",
+                              slug => "slug three",
+                              categories => [$cat[9]]);
+$_->save for @find;
+END { $_->delete for @find };
+
+# find by category
+my @result = Krang::Story->find(category_id => $cat[8]->category_id,
+                                ids_only => 1);
+is(@result, 1);
+is($result[0], $find[1]->story_id);
+
+# find by primary category
+@result = Krang::Story->find(primary_category_id => $cat[8]->category_id,
+                                ids_only => 1);
+is(@result, 0);
+@result = Krang::Story->find(primary_category_id => $cat[6]->category_id,
+                                ids_only => 1);
+is(@result, 1);
+is($result[0], $find[1]->story_id);
+
+# find by site
+@result = Krang::Story->find(site_id => $cat[6]->site_id,
+                             ids_only => 1);
+ok(@result);
+ok((grep { $_ == $find[1]->story_id } @result));
+
+# find by site
+@result = Krang::Story->find(primary_site_id => $cat[8]->site_id,
+                             ids_only => 1);
+ok(@result);
+ok((grep { $_ == $find[1]->story_id } @result));
+
+# find by URL
+@result = Krang::Story->find(url => $find[1]->url,
+                             ids_only => 1);
+is(@result, 1);
+is($result[0], $find[1]->story_id);
+
+@result = Krang::Story->find(url => $find[1]->url . "XXX",
+                             ids_only => 1);
+is(@result, 0);
+
+@result = Krang::Story->find(primary_url_like => $find[1]->category->url . '%',
+                             ids_only => 1);
+is(@result, 1);
+is($result[0], $find[1]->story_id);

@@ -87,13 +87,6 @@ Krang::Story - the Krang story class
   # get the root element for this story
   my $element = $story->element();
 
-  # add a schedule
-  my @sched = $story->schedules();
-  push(@sched, { type   => "absolute",
-                 date   => Time::Piece->new(),
-                 action => "publish" });
-  $story->schedules(@sched);
-
   # add contributors
   $story->contribs(@contribs);
 
@@ -350,74 +343,6 @@ sub element {
 The element class of the root element (i.e. $story->element->class).
 
 =item C<schedules>
-
-A list of scheduled events for the story.  This is a list of hashes,
-each of which has the following keys:
-
-=over
-
-=item C<type>
-
-Must be one of 'absolute', 'hourly', 'daily', or 'weekly'.
-
-=item C<date>
-
-A Time::Piece object representing the time of the scheduled event.
-Its interpretation depends on the type of the schedule.  For
-'absolute' this will be a full date.  For 'hourly', this will contain
-the minute for the event.  For 'daily', this will contain the time for
-the event.  For 'weekly', this will contain the day of the event.
-
-=item C<action>
-
-Either 'publish' or 'expire'.
-
-=item C<version>
-
-For 'publish' events, a specific version may be specified.  If not,
-this will be C<undef>.
-
-=back
-
-=cut
-
-sub schedules {
-    my $self = shift;
-    return @{$self->{schedules}} unless @_;
-
-    # check passed values
-    $self->{schedules} = [];
-    foreach my $sched (@_) {
-        next unless defined $sched;
-        croak("schedules requires an array of hash refs")
-          unless ref $sched and ref $sched eq 'HASH';
-
-        croak("Schedule 'type' field missing.")
-          unless $sched->{type};
-
-        croak("Schedule 'type' field invalid.")
-          unless ($sched->{type} eq 'absolute' or
-                  $sched->{type} eq 'hourly'   or
-                  $sched->{type} eq 'daily'    or
-                  $sched->{type} eq 'weekly');
-
-        croak("Schedule 'date' field missing.")
-          unless $sched->{date};
-
-        croak("Schedule 'date' field must be a Time::Piece object")
-          unless ref $sched->{date} and
-                 $sched->{date}->isa('Time::Piece');
-
-        croak("Schedule 'action' field missing.")
-          unless $sched->{action};
-
-        croak("Schedule 'action' field invalid.")
-          unless ($sched->{action} eq 'publish' or
-                  $sched->{action} eq 'expire');
-
-        push @{$self->{schedules}}, $sched;
-    }
-}
 
 =item C<checked_out> (readonly)
 
@@ -681,17 +606,6 @@ sub _save_schedules {
     my $self = shift;
     my $dbh  = dbh;
 
-    # clear schedules
-    $dbh->do('DELETE FROM story_schedule WHERE story_id = ?',
-             undef, $self->{story_id});
-
-    my $ord = 0;
-    $dbh->do('INSERT INTO story_schedule
-                    (story_id, ord, type, date, action, version)
-                  VALUES (?,?,?,?,?,?)', undef,
-             $self->{story_id}, ++$ord, $_->{type}, $_->{date}->mysql_datetime,
-             $_->{action}, $_->{version})
-      for @{$self->{schedules}};
 }
 
 # save to the version table
@@ -790,16 +704,16 @@ Set to a user_id to find stories checked-out by a user.
 
 =item contributor_id
 
-Set to a contributor_id to find stories associated with that contributor.
+Set to a contributor_id to find stories associated with that contributor.  B<NOT IMPLEMENTED>
 
 =item link_to_story
 
-Set to a story_id to find stories that link to a specified story.
+Set to a story_id to find stories that link to a specified story.  B<NOT IMPLEMENTED>
 
 =item link_to_media
 
 Set to a media_id to find stories that link to a specified media
-object.
+object. B<NOT IMPLEMENTED>
 
 =item cover_date
 
@@ -891,7 +805,7 @@ sub find {
     return $pkg->_load_version($args{story_id}, $args{version})
       if $args{version};
     
-    my (@where, @param, $like);
+    my (@where, @param, @join, $like, $need_distinct);
     while (my ($key, $value) = each %args) {
         # strip off and remember _like specifier
         $like = ($key =~ s/_like$//) ? 1 : 0;
@@ -913,6 +827,67 @@ sub find {
             } else {
                 push @where, "$key IS NULL";
             }
+            next;
+        }
+        
+        # handle search by category_id
+        if ($key eq 'category_id') {
+            # need to bring in story_category
+            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            push(@where, 'sc.category_id = ?');
+            push(@param, $value);
+            next;
+        }
+
+        # handle search by primary_category_id
+        if ($key eq 'primary_category_id') {
+            # need to bring in story_category
+            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            push(@where, 'sc.category_id = ?', 'sc.ord = 0');
+            push(@param, $value);
+            next;
+        }
+
+        # handle search by site_id
+        if ($key eq 'site_id') {
+            # need to bring in story_category and category
+            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)',
+                        'LEFT JOIN category AS c USING (category_id)');
+            push(@where, 'c.site_id = ?');
+            push(@param, $value);
+            $need_distinct = 1;
+            next;
+        }
+
+        # handle search by primary_site_id
+        if ($key eq 'primary_site_id') {
+            # need to bring in story_category and category
+            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)',
+                        'LEFT JOIN category AS c USING (category_id)');
+            push(@where, 'c.site_id = ?', 'sc.ord = 0');
+            push(@param, $value);
+            $need_distinct = 1;
+            next;
+        }
+
+        # handle search by url
+        if ($key eq 'url') {
+            # need to bring in story_category
+            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'));
+            push(@param, $value);
+            $need_distinct = 1;
+            next;
+        }
+
+        # handle search by primary_url
+        if ($key eq 'primary_url') {
+            # need to bring in story_category
+            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'),
+                         'sc.ord = 0');
+            push(@param, $value);
+            $need_distinct = 1;
             next;
         }
 
@@ -945,13 +920,21 @@ sub find {
     # construct base query
     my $query;
     if ($count) {
-        $query = "SELECT count(*) FROM story ";
+        $query = "SELECT count(" . 
+          ($need_distinct ? "DISTINCT " : "") . 
+            "*) FROM story ";
     } elsif ($ids_only) {
-        $query = "SELECT story_id FROM story ";
+        $query = "SELECT ".
+          ($need_distinct ? "DISTINCT " : "") . 
+            "s.story_id FROM story AS s";
     } else {
-        $query = "SELECT " . join(', ', STORY_FIELDS) . " FROM story ";
+        $query = "SELECT " . ($need_distinct ? "DISTINCT " : "") . 
+          join(', ', map { "s.$_" } STORY_FIELDS) . " FROM story AS s";
     }
 
+    # add joins, if any
+    $query .= " " . join(' ', @join) if @join;    
+    
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE " . join(' AND ', @where) if @where;
     $query .= " ORDER BY $order_by $order_dir " if $order_by and not $count;
@@ -1020,19 +1003,6 @@ sub find {
                   } } @$result ] :
           [];
 
-        # load schedules
-        $result = $dbh->selectall_arrayref(
-                 'SELECT type, date, action, version FROM story_schedule '.
-                 'WHERE story_id = ? ORDER BY ord',
-                                           undef, $obj->{story_id});
-        $obj->{schedules} = @$result ? 
-          [ map { { type      => $_->[0],
-                    date      => Time::Piece->from_mysql_datetime($_->[1]),
-                    action    => $_->[2],
-                    (defined $_->[3] ? (version => $_->[3]) : ())
-                  } } @$result ] :
-          [];
-        
         push @stories, $obj;
     }
 

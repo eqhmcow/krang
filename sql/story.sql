@@ -56,16 +56,3 @@ CREATE TABLE story_contrib (
         PRIMARY KEY (story_id, contrib_id, contrib_type_id),
         INDEX (ord)
 );
-
-/* story_schedule holds scheduled events for stories, managed by
-Krang::Story */
-DROP TABLE IF EXISTS story_schedule;
-CREATE TABLE story_schedule (
-        story_id        INT UNSIGNED NOT NULL,
-        ord             SMALLINT UNSIGNED NOT NULL,
-        type            ENUM('absolute', 'hourly', 'daily', 'weekly') NOT NULL,
-        date            DATETIME NOT NULL,
-        action          ENUM('publish', 'expire') NOT NULL,
-        version         SMALLINT UNSIGNED,
-        PRIMARY KEY (story_id, ord)
-);
