@@ -1281,8 +1281,11 @@ sub deserialize_xml {
                                                   set       => $set,
                                                   no_update => $no_update,
                                                   object    => $cat);
-    $cat->{element} = $element;
-    $cat->{element_id} = $element->element_id;
+
+    # update the element tree - delete the old one if it exists.
+    $cat->{element}->delete if ($cat->{element});
+    $cat->{element}    = $element;
+    $cat->{element_id} = undef;
     $cat->save();
 
     return $cat;
