@@ -520,6 +520,13 @@ sub save {
     # save a serialized copy in the version table
     $self->_save_version;
 
+    # register creation if is the first version
+    add_history(    object => $self, 
+                    action => 'new',
+               )
+      if $self->{version} == 1;
+
+    # register the save
     add_history(    object => $self, 
                     action => 'save',
                );
