@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed krang_createdb to stop after the first failed system
+call. [Scott Lanning]
+
+=item *
+
 Added enhanced cache debugging code and a last-resort check in an
 Apache log_handler to make sure the cache is off at the end of the
 request. [Sam]
