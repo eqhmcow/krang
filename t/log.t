@@ -19,30 +19,29 @@ is(Krang::Log->timestamp(), 1, 'timestamp()');
 Krang::Log->timestamp_format("%m-%d %H:%M:%S");
 is(Krang::Log->timestamp_format(), "%m-%d %H:%M:%S", 'timestamp_format()');
 
-# turn on asserts
-Krang::Log->asserts(1);
-eval {assert(1 == 2) if ASSERT};
-is($@ =~ /assert/, 1, 'assert() works :)');
+# test assertions if they're on
+if (ASSERT) {
+    eval {assert(1 == 2) if ASSERT};
+    is($@ =~ /assert/, 1, 'assert() works :)');
 
-Krang::Log->asserts(0);
-eval {assert(1 == 2) if ASSERT};
-is($@ eq '', 1, 'Carp::Assert off');
-
-Krang::Log->asserts(1);
-eval {assert(1 == 2) if ASSERT};
-is($@ =~ /assert/, 1, 'assert() worked');
-
-eval {
-    affirm {
-        1 == 1;
-        2 == 2;
-        0 == 5;
+    eval {
+        affirm {
+            1 == 1;
+            2 == 2;
+            0 == 5;
+        };
     };
-};
-is($@ =~ /affirm/, 1, 'affirm() works');
+    is($@ =~ /affirm/, 1, 'affirm() works');
+    
+    eval{should(1, 2) if ASSERT};
+    is($@ =~ /should/, 1, 'should() worked');
+    
+} else {
+    # make sure assertions are really off
+    eval {assert(1 == 2) if ASSERT};
+    is($@ eq '', 1, 'Carp::Assert off');
+}
 
-eval{should(1, 2) if ASSERT};
-is($@ =~ /should/, 1, 'should() worked');
 
 #check all the convenice methods
 {

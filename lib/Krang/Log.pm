@@ -8,18 +8,26 @@ Log - Krang logging module
 
 =head1 SYNOPSIS
 
-  use Krang::Log qw(debug info critical);
+  use Krang::Log qw(debug info critical ASSERT assert affirm should shouldnt);
 
+  # logging messages
   debug("I'm inside of block X and \$a == $a.");
 
   critical("This is a critical application failure!!!!");
 
   info("Supply informative message here.");
 
+  # assertion functions from Carp::Assert
+  assert($positive >= 0) if ASSERT
+  affirm { $positive >= 0 } if ASSERT;
+  should($nine, 9) if ASSERT;
+  shouldnt($nine, 10) if ASSERT;
+
 =head1 DESCRIPTION
 
-This module logs messages to file based on the configuration directives set in
-'krang.conf'.  The relevant configuration directives are:
+This module logs messages to file based on the configuration
+directives set in 'krang.conf'.  The relevant configuration directives
+are:
 
 =over 4
 
@@ -49,6 +57,12 @@ are stringified using Time::Piece->strftime().  See L<Time::Piece>.
 If set to true, turns on wrapping for log messages over 80 columns
 long using Text::Wrap.  This is somewhat time-consuming and should not
 be used in production.
+
+=item * Assertions
+
+If set to true assertions will be active.  This is the default for
+'make test' but setting it in krang.conf will activate assertions all
+the time.
 
 =back
 
@@ -113,6 +127,11 @@ BEGIN {
     }
 }
 
+# declare exportable functions
+use Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(debug info critical assert affirm should shouldnt ASSERT);
+
 # log levels and acceptable function calls
 our (%valid_functions, %valid_levels);
 
@@ -156,14 +175,13 @@ BEGIN {
         unless exists $valid_levels{$level};
     $LOG_LEVEL = $level;
 
-    if (Krang::Conf->assertions()) {
-        # turn it on
-        use Carp::Assert;
+    # turn assertions on or off based on KRANG_ASSERT or Assertions
+    # conf setting
+    my $assert_on = exists $ENV{KRANG_ASSERT} ? $ENV{KRANG_ASSERT} :
+      Krang::Conf->assertions();
 
-        $LOG->{asserts} = 1;
-    } else {
-        $LOG->{asserts} = 0;
-    }
+    # set PERL_NDEBUG to control Carp::Assert
+    $ENV{PERL_NDEBUG} = not $assert_on;
 
     # turn on/off timestamp - on by default
     $LOG->{timestamp} = Krang::Conf->logtimestamp() || 1;
@@ -180,6 +198,9 @@ BEGIN {
     $LOG->{timestamp_format} = $fmt || '%D %r';
 }
 
+# load Capr::Assert and rename DEBUG to ASSERT
+use Carp::Assert qw(assert affirm should shouldnt DEBUG);
+use constant ASSERT => DEBUG;
 
 =pod
 
@@ -289,49 +310,44 @@ sub log {
     return $message;
 }
 
-=pod
+=item * debug($msg)
 
-=item * import
-
-This method exports convenience methods into the callers namespace.  Again,
-only the functions debug, info, notice, warning, error, critical,
-emergency are valid; anything else will result in an error.
-
-=back
+Log a message at the debug level.  Available for export.
 
 =cut
 
-my %functs = map {$_, 1} qw/affirm assert should shouldnt/;
+sub debug    ($) { __PACKAGE__->log(level => 'debug',    message => shift); }
 
-sub import {
-    my $pkg = shift;
-    my $callpkg = caller(0);
+=item * info($msg)
 
-    no strict 'refs';
-    foreach my $name (@_) {
-        if (exists $functs{$name}) {
-            *{"$callpkg\::$name"} = *{"Carp::Assert::$name"};
-        } elsif ($name eq 'ASSERT') {
-            *{"$callpkg\::$name"} = *ASSERT;
-        } else {
-            my $lvl = $valid_functions{$name} || 0;
+Log a message at the info level.  Available for export.
 
-            # make sure it a supported method
-            croak("Unsuppored method: $name")
-              unless $lvl;
+=cut
 
-            *{"$callpkg\::$name"} =
-              sub ($){
-                  my $msg = shift;
-                  $pkg->log(level => $lvl, message => $msg);
-              };
-        }
-    }
-}
+sub info     ($) { __PACKAGE__->log(level => 'info',     message => shift); }
 
-sub ASSERT () {
-    return $LOG->{asserts};
-}
+=item * critical($msg)
+
+Log a message at the critical level.  Available for export.
+
+=cut
+
+sub critical ($) { __PACKAGE__->log(level => 'critical', message => shift); }
+
+=item * assert
+
+=item * affirm
+
+=item * should
+
+=item * shouldnt
+
+These functions are exported directly from Carp::Assert, with one
+change.  Instead of using the DEBUG constant, use the ASSERT constant
+exported by Krang::Log.  For all other information, see
+L<Carp::Assert>.
+
+=cut
 
 sub AUTOLOAD {
     our $AUTOLOAD;
@@ -340,18 +356,11 @@ sub AUTOLOAD {
 
     return if $level =~ /DESTROY$/;
 
-    # getter/setter for asserts, log_level, timestamp and timestamp_format
-    if ($level eq 'asserts' || $level eq 'log_level' ||
+    # getter/setter for log_level, timestamp and timestamp_format
+    if ($level eq 'log_level' ||
         $level =~ /^timestamp/) {
         if (defined $arg) {
             $LOG->{$level} = $arg;
-            if ($level eq 'asserts') {
-                if ($arg) {
-                    use Carp::Assert;
-                } else {
-                    no Carp::Assert;
-                }
-            }
             $LOG_LEVEL = $arg if $level eq 'log_level';
         } else {
             return $LOG->{$level};
@@ -371,11 +380,11 @@ END
 
 =pod
 
+=back
+
 =head1 TO DO
 
 =over 4
-
-=item * Figure out how to incorporate Carp::Assert for debugging
 
 =item * Log tracing for errors.
 
