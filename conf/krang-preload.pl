@@ -6,6 +6,7 @@
 
 use Krang::Conf qw(KrangRoot);
 use File::Find qw(find);
+use Krang::HTMLTemplate;
 
 # load all Krang libs, with a few exceptions
 my $skip = qr/Profiler|Test|BricLoader|Cache|FTP|DataSet|Upgrade|MethodMaker|Daemon|Script|XML/;
@@ -30,11 +31,11 @@ find(
      sub {
          return if /^\.?#/; # skip emacs droppings
          return unless /\.tmpl$/;
-         HTML::Template->new(
-                             filename => "$File::Find::dir/$_",
-                             cache => 1,
-                             loop_context_vars => 1,
-                            );
+         Krang::HTMLTemplate->new(
+                                  filename => "$File::Find::dir/$_",
+                                  cache => 1,
+                                  loop_context_vars => 1,
+                                 );
      },
      KrangRoot . '/templates');
 
