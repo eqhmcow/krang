@@ -506,6 +506,7 @@ sub edit_categories {
                                                    query => $q,
                                                    name => "add_category_id",
                                                    site_id => $root_category->site_id,
+                                                   onchange => 'add_category',
                                                   ));
 
     return $t->output();
