@@ -129,19 +129,17 @@ This run-mode expects two optional parameters:
 
 sub search {
     my $self = shift;
-    my %ui_messages = ( @_ );
 
     my $q = $self->query();
 
     # Send request to appropriate associate_* run-mode if we're associating
     if (my $ass_type = ($q->param('associate_mode') || '')) {
-        return $self->associate_story(%ui_messages) if ($ass_type eq 'story');
-        return $self->associate_media(%ui_messages) if ($ass_type eq 'media');
+        return $self->associate_story() if ($ass_type eq 'story');
+        return $self->associate_media() if ($ass_type eq 'media');
         die ("Invalid associate mode type '$ass_type'");
     }
 
     my $t = $self->load_tmpl("list_view.tmpl", associate=>$q, loop_context_vars=>1);
-    $t->param(%ui_messages) if (%ui_messages);
 
     # Do simple search based on search field
     my $search_filter = $q->param('search_filter') || '';
@@ -392,7 +390,8 @@ sub cancel_add {
     my $q = $self->query();
     $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
 
-    return $self->search(message_add_cancelled=>1);
+    add_message('message_add_cancelled');
+    return $self->search();
 }
 
 
