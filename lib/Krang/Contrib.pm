@@ -254,6 +254,7 @@ sub find {
     my $dbh = dbh;
     my @where;
     my @contrib_object;
+    my $where_string;
     
     my $order_by =  $args{'order_by'} ? join(',',$args{'order_by'}) : 'last,first';
     my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
@@ -266,18 +267,18 @@ sub find {
         }
     }
 
-    my $where_string = join ' and ', (map { "$_ = ?" } @where);
+    $where_string = join ' and ', (map { "$_ = ?" } @where);
 
+    # add like search on first, last, middle for all full_name words
     if ($args{'full_name'}) {
         my @words = split(/\s+/, $args{'full_name'});
-
         foreach my $word (@words) {
             if ($where_string) {
                $where_string .= " and first like ? or middle like ? or last like ?"; 
             } else {
                 $where_string = "first like ? or middle like ? or last like ?";
             }
-            push (@where, $word, $word, $word);
+            push (@where, "%$word%", "%$word%", "%$word%");
         }
 
     } 
@@ -291,15 +292,17 @@ sub find {
         $select_string = join(',', FIELDS);
     }
 
-    my $sql = "select $select_string from contrib where ".$where_string." order by $order_by $order_desc";
-  
+    my $sql = "select $select_string from contrib";
+    $sql .= " where ".$where_string if $where_string;
+    $sql .= " order by $order_by $order_desc";
+    
     # add limit and/or offset if defined
     if ($limit) {
        $sql .= " limit $offset, $limit";
     } elsif ($offset) {
         $sql .= " limit $offset, -1";
     }
-
+    
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
     while (my $row = $sth->fetchrow_hashref()) {
