@@ -21,6 +21,9 @@ the standard UNIX dict file in F</usr/dict/words> (or
 F</usr/share/dict/words> if that's not available) to generate random
 text.
 
+Stories and media created will be checked in after being created.
+Templates will be checked in and deployed.
+
 =head1 OPTIONS
 
   --sites    - number of sites to create, defaults to 3
@@ -36,7 +39,8 @@ text.
   --covers   - number of cover stories to create, defaults to (--cats/2)
                (must be less than the number of categories)
 
-  --templates- number of templates to create, defaults to 50
+  --templates- whether or not to create templates (one per element). 
+               Defaults to 1.
 
   --users    - number of users to create, defaults to 50
 
@@ -88,6 +92,7 @@ use Krang::Template;
 use Krang::Story;
 use Krang::Media;
 use Krang::Group;
+use Krang::Publisher;
 
 use Time::Piece;
 use Imager;
@@ -100,7 +105,7 @@ my $stories  = 50;
 my $covers;
 my $media    = 25;
 my $users    = 50;
-my $templates = 50;
+my $templates = 1;
 my $undo_script;
 pod2usage(2) unless
   GetOptions(help         => \$help,
@@ -267,6 +272,7 @@ for my $media_count (1 .. $media) {
             die $@;
         }
     }
+    $media->checkin;
     push(@media, $media);
     unlink(catfile(KrangRoot, "tmp", "tmp.$format"));
     print STDERR "Created Media " . $media->url . "\n";
@@ -344,6 +350,7 @@ for my $story_count (1 .. $stories) {
     $element->child('fancy_keyword')->data([ map { get_word() } (1 .. ((int(rand(10)))+1))]);
 
     $story->save;
+    $story->checkin;
 
     print STDERR "Created Story " . $story->url . "\n";
     push(@stories, $story);
@@ -382,6 +389,7 @@ for my $cover_count (1 .. $covers) {
                                          (0 .. ((int(rand(10)))+1))));
 
     $cover->save;
+    $cover->checkin;
 
     print STDERR "Created Cover " . $cover->url . "\n";
     push(@covers, $cover);
@@ -391,23 +399,59 @@ for my $cover_count (1 .. $covers) {
 
 # create templates
 my @templates;
-for (1..$templates) {
-    my @elements = Krang::ElementLibrary->element_names;
-    my $blrplt = <<TMPL;
-I'm a %s and I'm OK.  I work all night and I play all day.
-<tmpl_var %s>
-TMPL
-    my $element = $elements[int(rand(scalar @elements))];
-    my $content = sprintf($blrplt, $element, $element);
-    my $category_id = $cats[int(rand(scalar(@cats)))]->category_id;
-    my $tmpl = Krang::Template->new(category_id		=> $category_id,
-                                    content		=> $content,
-                                    element_class_name	=> $element,);
-    eval {$tmpl->save};
-    redo if $@;
-    push @templates, $tmpl;
-    print STDERR "Created Template: ", $tmpl->url, "($element)\n";
+if ($templates) {
+    my $publisher = Krang::Publisher->new();
+    my @estack = map { Krang::ElementLibrary->top_level(name => $_) }
+      Krang::ElementLibrary->top_levels;
+    while (@estack) {
+        my $element = pop(@estack);
+        push(@estack, $element->children);
+        
+        my $bgcolor = "#" . 
+          join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
+        
+        # draw a labeled box for the element
+        my $display_name = $element->display_name;    
+        my $content = <<END;
+<div style='border: 1px solid black; margin-left: 3px; margin-top: 10px; margin-right: 5px; padding-left: 3px; padding-right: 3px; padding-bottom: 3px; background-color: $bgcolor'>
+  <span style='border: 1px; border-style: dashed; border-color: #AAA; padding-left: 5px; padding-right: 5px; background-color: white; text-color: whte; top: -7px; left: 5px; position: relative; width: 150px;'>$display_name</span><br>
+END
+        
+        if ($element->children) {
+            # container
+            $content .= "<tmpl_loop element_loop>\n";
+            foreach my $child ($element->children) {
+                $content .= "<tmpl_if is_" . $child->name . ">".
+                  "<tmpl_var name='" . $child->name . "'>".
+                    "</tmpl_if>\n";
+            }
+            $content .= "</tmpl_loop>";
+        } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
+            # media link
+            $content .= "<img src='<tmpl_var name='" . $element->name . "'>'>\n";
+        } else {
+            # data
+            $content .= "<tmpl_var name='" . $element->name . "'>\n";
+        }
+        
+        if ($element->name eq 'category') {
+            $content .= Krang::Publisher->content;
+        }
+        
+        $content .= "</div>";
+        
+        my $tmpl = Krang::Template->new(content		   => $content,
+                                        element_class_name => $element->name);
+        eval { $tmpl->save; };
+        next if $@;
+        
+        push @templates, $tmpl;
+        $publisher->deploy_template(template => $tmpl);
+        $tmpl->checkin;
+        print STDERR "Created Template: ", $tmpl->url, "\n";
+    }
 }
+
 
 # create users
 my %groups = map {$_->group_id, $_->name} Krang::Group->find();
