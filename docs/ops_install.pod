@@ -30,6 +30,14 @@ before installing Krang:
 
 Perl 5.6.1
 
+=item *
+
+Perl 5.8.0
+
+=item *
+
+Perl 5.8.3
+
 =back
 
 =head1 Choosing a Distribution
@@ -102,7 +110,7 @@ need to arrange DNS to point this IPAddress at HostName.
 
 =item AdminPassword
 
-Password assigned to the "admin" Krang user (e.g., "shredder").  This
+Password assigned to the "admin" Krang user (e.g., "whale").  This
 is the password you'll provide when you first log-in to the Krang
 system.
 
