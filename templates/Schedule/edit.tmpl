@@ -1,0 +1,84 @@
+<tmpl_include header.tmpl>
+
+<div class=dark-bar><tmpl_if is_story>Story<tmpl_else>Media</tmpl_if> Schedule Editor <tmpl_if simple>(Simple)</tmpl_if></div>
+
+<div class=tight-form-box>
+                                                                        
+<table width=100% cellpadding=2 cellspacing=0>
+                                                                        
+<tr class=light>
+<td>ID:</td>
+<td><tmpl_var id></td>
+</tr>
+
+<tmpl_if is_story>                                                     
+<tr class=light>
+<td>Story Type:</td>
+<td><tmpl_var story_type></td>
+</tr>
+</tmpl_if>
+                                                             
+<tr class=light>
+<td>Current Version:</td>
+<td><tmpl_var current_version></td>
+</tr>
+                                                                        
+<tr class=light>
+<td>Published Version:</td>
+<td><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td>
+</tr>
+                                                                        
+<tr class=light>
+<td>URL:</td>
+<td><tmpl_var url></td>
+</tr>
+</table>
+</div>
+<br>
+<TMPL_IF existing_schedule_loop>
+                                                                        
+  <table cellspacing="0" width="100%">
+                                                                        
+      <tr class="form-head">
+          <th>Date</th>
+          <th>Time</th>
+          <th>Version</th>
+          <th>Action</th>
+          <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'schedule_delete_list')"></th>
+      </tr>
+                                                                        
+  <tmpl_loop existing_schedule_loop>
+      <tr>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML time></td>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML time></td>
+          <td class="form-cell"><tmpl_if version><tmpl_var ESCAPE=HTML version></tmpl_if></td>
+          <td class="form-cell"><tmpl_var action></td>          
+          <td class="form-cell"><input type="checkbox" name="schedule_delete_list" value="<tmpl_var ESCAPE=HTML schedule_id>"></td>
+      </tr>
+                                                                        
+  </tmpl_loop>
+                                                                        
+  </table>
+                                                                        
+  <div align="right">
+<input type="button" value="Delete" onClick="delete_selected()"></div>
+                                                                        
+<TMPL_ELSE>
+  <b>No Schedule Found</b>
+</TMPL_IF>
+<div class=form-box>
+
+<input type="hidden" name="rm" value="find">
+
+</div></div>
+
+
+<div class=button-bar>
+  <input type=button value="Return" onclick="document.return_form.submit()">
+</div>
+
+<form name="return_form" method="POST" action="<tmpl_if is_story>story.pl<tmpl_else>media.pl</tmpl_if>">
+<input type="hidden" name="rm" value="edit">
+</form>
+
+<tmpl_include footer.tmpl>
