@@ -52,17 +52,9 @@ for a complete usage example.
 
 The IP address for the Apache server.
 
-=item ApacheGroup
-
-The group to run Apache as.
-
 =item ApachePort
 
 The port for the Apache server.
-
-=item ApacheUser
-
-The user to run Apache as.
 
 =item DBName (Instance)
 
@@ -84,9 +76,18 @@ Directory where the Krang element library is installed.
 
 The element set used by the instance.
 
+=item KrangGroup
+
+The group which runs all Krang processes.  See L<KrangUser>.
+
 =item KrangRoot
 
 Directory where Krang is installed.
+
+=item KrangUser
+
+The user which runs all Krang processes.  This user must also be the
+owner of all Krang files.
 
 =item LogFile
 

@@ -15,6 +15,10 @@ Krang - loader for the Krang scripts
 This module exists to load and configure the Krang system for
 command-line scripts.
 
+The first thing the module does is attempt to become the configured
+KrangUser and KrangRoot.  If you're not already KrangUser then you'll
+need to be root in order to change into KrangUser.
+
 This module will activate the first instance defined in F<krang.conf>
 by calling:
 
@@ -34,9 +38,49 @@ mighty hinky.  Fix it to use KRANG_USERNAME and KRANG_PASSWORD.
 
 =cut
 
-use Krang::Conf;
+use Krang::Conf qw(KrangUser KrangGroup KrangRoot);
 use Krang::Log qw(debug critical);
 use Krang::Session qw(%session);
+use Carp qw(croak);
+
+BEGIN {
+    # make sure we are KrangUser/KrangGroup
+
+    # get current uid/gid
+    my $uid = $>;
+    my %gid = map { ($_ => 1) } split( ' ', $) );
+
+    # extract desired uid/gid
+    my @uid_data = getpwnam(KrangUser);
+    croak("Unable to find user for KrangUser '" . KrangUser . "'.")
+      unless @uid_data;
+    my $krang_uid = $uid_data[2];
+    my @gid_data = getgrnam(KrangGroup);
+    croak("Unable to find user for KrangGroup '" . KrangGroup . "'.")
+      unless @gid_data;
+    my $krang_gid = $gid_data[2];
+
+    # become KrangUser/KrangGroup if necessary
+    if ($gid{$krang_gid}) {
+        eval { $) = $krang_gid; };
+        die("Unable to become KrangGroup '" . KrangGroup . "' : $@\n" . 
+            "Maybe you need to start this process as root.\n")
+          if $@;
+        die("Failed to become KrangGroup '" . KrangGroup . "' : $!.\n" .
+            "Maybe you need to start this process as root.\n")
+          unless $) == $krang_gid;
+    }
+
+    if ($uid != $krang_uid) {
+        eval { $> = $krang_uid; };
+        die("Unable to become KrangUser '" . KrangUser . "' : $@\n" .
+            "Maybe you need to start this process as root.\n")
+          if $@;
+        die("Failed to become KrangUser '" . KrangUser . "' : $!\n" .
+            "Maybe you need to start this process as root.\n")
+          unless $> == $krang_uid;
+    }
+}
 
 BEGIN {
     # Set Krang instance if not running under mod_perl

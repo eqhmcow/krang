@@ -12,8 +12,8 @@ ElementLibrary
 DBName
 DBPass
 DBUser
-ApacheUser
-ApacheGroup
+KrangUser
+KrangGroup
 ApacheAddr
 ApachePort
 RootVirtualHost
