@@ -44,9 +44,14 @@ If you want to run just one benchmark script:
 
   make bench BENCH_FILES=bench/file.pl
 
-After the run, use krang_bench to perform benchmark analysis:
+After doing at least two runs, use krang_bench to perform benchmark
+analysis between the last two runs:
 
   bin/krang_bench
+
+Or pass in run names to do arbitrary comparisions:
+
+  bin/krang_bench name1 name2
 
 =head1 DESCRIPTION
 
