@@ -881,7 +881,8 @@ sub _build_contrib_loop {
     my %contrib_types = Krang::Pref->get('contrib_type');
 
     my %contribs = ();
-    my @contributors = ();
+    my @contributors  = ();
+    my @contrib_order = ();
 
     my $publisher = $args{publisher};
 
@@ -892,6 +893,8 @@ sub _build_contrib_loop {
         # check to see if this contributor exists - if so, save
         # on querying for information you already know.
         unless (exists($contribs{$cid})) {
+            # preserve the order in which the contributors arrive.
+            push @contrib_order, $cid;
             $contribs{$cid}{contrib_id} = $cid;
             $contribs{$cid}{prefix}     = $contrib->prefix();
             $contribs{$cid}{first}      = $contrib->first();
@@ -911,8 +914,8 @@ sub _build_contrib_loop {
 
     }
 
-    foreach my $contributor (keys %contribs) {
-        push @contributors, $contribs{$contributor};
+    foreach my $contrib_id (@contrib_order) {
+        push @contributors, $contribs{$contrib_id};
     }
 
     return \@contributors;
