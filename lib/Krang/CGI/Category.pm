@@ -615,7 +615,7 @@ sub delete_selected {
         }        
     }
 
-    add_message('selected_stories_deleted') unless $err;
+    add_message('selected_categories_deleted') unless $err;
     return $self->find();
 }
 
