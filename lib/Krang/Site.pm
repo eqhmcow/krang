@@ -225,8 +225,8 @@ sub delete {
     my $id = shift || $self->{site_id};
 
     # check for references to this site
-    my %info = $id ? $self->dependant_check() :
-      Krang::Site->dependant_check();
+    my %info = $id ? $self->dependent_check() :
+      Krang::Site->dependent_check();
 
     croak(__PACKAGE__ . "->delete(): Category(ies): [" . join(',', keys %info)
           . "] rely on this site.")
@@ -239,16 +239,16 @@ sub delete {
 }
 
 
-=item * %info = $site->dependant_check()
+=item * %info = $site->dependent_check()
 
-=item * %info = Krang::Site->dependant_check( $site_id )
+=item * %info = Krang::Site->dependent_check( $site_id )
 
 Class or instance method that returns a hash of category ids relying upon the
 given site object.
 
 =cut
 
-sub dependant_check {
+sub dependent_check {
     my $self = shift;
     my $id = shift || $self->{site_id};
     my ($category_id, %info);

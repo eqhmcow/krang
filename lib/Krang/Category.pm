@@ -191,7 +191,8 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 
 =cut
 
-# validates arguments passed to new(), see Class::MethodMaker
+# validates arguments passed to new(), see Class::MethodMaker,
+# constructs 'url' as it may be needed before save()
 # the method croaks if we haven't been provied a 'dir' and 'site_id', if an
 # invalid key is found in the hash passed to new(), or if 'dir' contains more
 # than '/'
@@ -200,6 +201,8 @@ sub init {
     my %args = @_;
     my (@bad_args, @required_args);
 
+    # validate %args
+    #################
     for (keys %args) {
         push @bad_args, $_ unless exists $category_args{$_};
 
@@ -207,7 +210,6 @@ sub init {
     croak(__PACKAGE__ . "->init(): The following constructor args are " .
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
 
-    # required arg check...
     for (qw/dir site_id/) {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
           unless exists $args{$_};
@@ -222,7 +224,29 @@ sub init {
     # set '_old_dir' to 'dir' to make changes to 'dir' detectable
     $self->{_old_dir} = $self->{dir};
 
+    # construct 'url'
+    #################
+    my ($param, $query);
+    if (exists $self->{parent_id}) {
+        $query = "SELECT url FROM category WHERE category_id = ?";
+        $param = $self->{parent_id};
+    } else {
+        $query = "SELECT url FROM site WHERE site_id = ?";
+        $param = $self->{site_id};
+    }
+
+    my $dbh = dbh();
+    my ($url) = $dbh->selectrow_array($query, undef, ($param));
+    $self->{url} = join('/', $url, $self->{dir});
+
+    # prevent '//' string from being stored...
+    $self->{url} =~ s|//|/|g;
+
+    # set '_old_url' for use in update_child_urls()
+    $self->{_old_url} = $self->{url};
+
     # define element
+    #################
     $self->{element} = Krang::Element->new(class => 'category');
 
     return $self;
@@ -245,28 +269,67 @@ sub delete {
     my $id = shift || $self->{category_id};
     my $element_id = $self->{element_id} ||
       (Krang::Category->find(category_id => $id))[0]->{element_id};
-    my $dbh = dbh();
 
-    my $query = "SELECT 1 FROM %s WHERE %s = ?";
-
-    my @queries = ([qw/category parent_id/],
-                   [qw/media category_id/],
-                   [qw/story_category category_id/],
-                   [qw/template category_id/]);
-
-    for (@queries) {
-        my ($oid) = $dbh->selectrow_array(sprintf($query, @$_), undef, $id);
-        croak(__PACKAGE__ . "->delete(): $_->[0] object id '$_->[1]' still " .
-              "refers to this category.  You must remove it first.") if $oid;
+    # find dependents
+    my ($dependents, %dependent_info) = $self->dependent_check();
+    if ($dependents) {
+        my $info = "\n\t" . join("\n\t",
+                                 map{ucfirst($_) . ": " .
+                                       join(",", @{$dependent_info{$_}})}
+                                 keys %dependent_info);
+        croak(__PACKAGE__ . "->delete(): The following objects rely on this " .
+              "category:$info");
     }
 
-    $query = "DELETE FROM category WHERE category_id = '$id'";
-    my $e_query = "DELETE FROM element WHERE element_id = '$element_id'";
+    my $query = "DELETE FROM category WHERE category_id = ?";
+    my $e_query = "DELETE FROM element WHERE element_id = ? ";
+    my $dbh = dbh();
 
-    $dbh->do($query);
-    $dbh->do($e_query);
+    $dbh->do($query, undef, ($id));
+    $dbh->do($e_query, undef, ($element_id));
 
     return 1;
+}
+
+
+=item * ($dependents, %info) = $category->dependent_check()
+
+=item * ($dependents, %info) = Krang::Category->dependent_check()
+
+Class or instance method that returns a hash of object types and the ids of
+that object type that rely upon the given category.
+
+=cut
+
+sub dependent_check {
+    my $self = shift;
+    my $id = shift || $self->{category_id};
+    my $dependents = 0;
+    my %info;
+
+    my $query = "SELECT %s FROM %s WHERE %s = ?";
+
+    my @queries = ([qw/category_id category parent_id/],
+                   [qw/media_id media category_id/],
+                   [qw/story_id story_category category_id/],
+                   [qw/template_id template category_id/]);
+
+    my $dbh = dbh();
+
+    for (@queries) {
+        my $oid;
+        (my $name = $_->[1]) =~ s/^([^_]+)_.+$/$1/;
+        my $sth = $dbh->prepare(sprintf($query, @$_));
+        $sth->execute(($id));
+        $sth->bind_col(1, \$oid);
+        while ($sth->fetch()) {
+            push @{$info{$name}}, $oid;
+            $dependents++;
+        }
+        $sth->finish();
+    }
+
+    return $dependents, %info;
 }
 
 
@@ -504,9 +567,8 @@ sub save {
 
     # check for duplicates
     my $category_id = $self->duplicate_check();
-    croak(__PACKAGE__ . "->save(): 'dir' is a duplicate of category " .
-          "'$category_id'.")
-      if defined $category_id;
+    croak(__PACKAGE__ . "->save(): 'dir' is a duplicate of category id '$id'")
+      if $category_id;
 
     # save element, get id back
     my ($element) = $self->{element};
@@ -530,25 +592,6 @@ sub save {
           join(", ", map {"$_ = ?"} @save_fields) .
             " WHERE category_id = ?";
     } else {
-        # calculate url...
-        my $param;
-        if ($self->{parent_id}) {
-            $query = "SELECT url FROM category WHERE category_id = ?";
-            $param = $self->{parent_id};
-        } else {
-            $query = "SELECT url FROM site WHERE site_id = ?";
-            $param = $self->{site_id};
-        }
-        my ($url) = $dbh->selectrow_array($query, undef, ($param));
-        $self->{url} = join('/', $url, $self->{dir});
-
-        # prevent '//' string from being stored...
-        $self->{url} =~ s|//|/|g;
-
-        # set _old_url
-        $self->{_old_url} = $self->{url};
-
-        # build query
         $query = "INSERT INTO category (" . join(',', @save_fields) .
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
@@ -595,12 +638,12 @@ sub update_child_urls {
     my $query = <<SQL;
 SELECT category_id, url
 FROM category
-WHERE site_id = '$self->{site_id}' AND category_id != '$self->{category_id}'
-      AND url LIKE ?
+WHERE site_id = ? AND category_id != ? AND url LIKE ?
 SQL
 
     my $sth = $dbh->prepare($query);
-    $sth->execute(($self->{_old_url} . '%'));
+    $sth->execute(($self->{site_id}, $self->{category_id},
+                   $self->{_old_url} . '%'));
     $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     while($sth->fetch()) {
         $ids{$row->{category_id}} = $row->{url};
@@ -622,7 +665,7 @@ SQL
 
     # update the 'url's of media, stories, and templates
     # only implemented in template so far...
-    $query = "SELECT %s_id, url FROM %s WHERE category_id = $id";
+    $query = "SELECT %s_id, url FROM %s WHERE category_id = ?";
 
     # lock the table to prevent checkouts while we're doing the update
     eval {
@@ -630,11 +673,11 @@ SQL
         for my $table(qw/template/) { #media story_category
             $dbh->do("LOCK TABLES $table WRITE");
 
-            my ($id, $url);
+            my ($oid, $url);
             $sth = $dbh->prepare(sprintf($query, $table, $table));
-            $sth->execute();
-            $sth->bind_columns(\$id, \$url);
-            $ids{$id} = $url while $sth->fetchrow_arrayref();
+            $sth->execute(($id));
+            $sth->bind_columns(\$oid, \$url);
+            $ids{$oid} = $url while $sth->fetchrow_arrayref();
             $sth->finish();
 
             $sth = $dbh->prepare("UPDATE $table SET url = ? WHERE " .

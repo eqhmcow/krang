@@ -150,7 +150,7 @@ is($subcat->parent_id() =~ /^\d+$/, 1, 'parent_id()');
 $category->dir('bob');
 $category->save();
 my ($sub) = Krang::Category->find(category_id => $subcat->category_id());
-is($sub->url() =~ /bob/, 1, 'dir() => update_child_url()');
+is($sub->url() =~ /bob/, 1, 'dir() => update_child_urls()');
 
 my $success = 0;
 my $tmpl = Krang::Template->new(category_id => $category->category_id(),
@@ -161,16 +161,16 @@ $category->dir('freddo');
 $category->save();
 
 my ($tmpl2) = Krang::Template->find(template_id => $tmpl->template_id);
-is($tmpl2->url() =~ /freddo/, 1, 'update_child_url() - template');
+is($tmpl2->url() =~ /freddo/, 1, 'update_child_urls() - template');
 
 eval {$success = $category->delete()};
-is($@ =~ /refers/, 1, 'delete() fail 1');
+is($@ =~ /rely on this category/, 1, 'delete() fail 1');
 
 $success = $subcat->delete();
 is($success, 1, 'delete() 1');
 
 eval {$success = $category->delete()};
-is($@ =~ /refers/, 1, 'delete() fail 2');
+is($@ =~ /rely on this category/, 1, 'delete() fail 2');
 
 $success = $tmpl->delete();
 is($success, 1, 'delete() 2');
