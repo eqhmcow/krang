@@ -32,9 +32,9 @@ For more options see the OPTIONS section below.
 
 =head1 DESCRIPTION
 
-This script takes a Bricolage element tree and constructs a matching
-Krang element set.  The element set is output as a directory
-containing class files in the currently configured ElementDir.
+This script creates a Krang Data Set (.kds) file containing Krang
+objects.  This file can then be used with krang_import to load data
+into another system.
 
 =head1 OPTIONS
 
@@ -101,11 +101,6 @@ export.  May not be combined with --everything.
 These select a single object by ID, and its dependecies.  May be
 repeated multiple times to select multiple objects.
 
-=item --instance instance_name
-
-Sets the instance to operate on.  Equivalent to setting KRANG_INSTANCE
-in the environment.
-
 =item --verbose
 
 Prints a running dialog of what's happening.  Repeat (--verbose
@@ -161,7 +156,7 @@ use Krang::Site;
 use Krang::User;
 
 
-my ($help, $man, $instance, $append, $compress, $overwrite);
+my ($help, $man, $append, $compress, $overwrite);
 my $output = 'export.kds';
 my $verbose = 0;
 my %all = map { ($_, 0) } qw(stories media templates contribs categories 
@@ -173,7 +168,6 @@ pod2usage(2) unless
   GetOptions(help       => \$help,
              man        => \$man,
 
-             instance   => \$instance,
              'verbose+' => \$verbose,
              'compress' => \$compress,
              'overwrite'=> \$overwrite,
