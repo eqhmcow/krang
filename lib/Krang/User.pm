@@ -629,7 +629,7 @@ sub find {
     }
 
     # associate group_ids with user objects
-    unless ($count) {
+    unless ($count or $ids_only) {
         my %user_hash = map {$_->{user_id} => $_} @users;
         _add_group_ids(\%user_hash, $dbh);
     }
