@@ -27,23 +27,12 @@ use base 'HTML::Template';
 use Krang::Session qw(%session);
 use Krang::Conf qw(InstanceDisplayName KrangRoot);
 use Krang::Message qw(get_messages clear_messages);
-use Krang::Desk;
+use Krang::Navigation;
 use File::Spec::Functions qw(catdir);
 
 # overload output() to setup template variables
 sub output {
     my $template = shift;
-
-    my @desks = Krang::Desk->find();
-    my @header_desk_loop;
-    
-    if ($template->query(name => 'header_desk_loop')) { 
-        foreach my $desk (@desks) {
-            push (@header_desk_loop, { desk_id => $desk->desk_id, desk_name => $desk->name
-});
-        }
-        $template->param( header_desk_loop => \@header_desk_loop );
-    }
 
     # fill in header variables as necessary
     if ($template->query(name => 'header_user_name')) {
@@ -61,6 +50,8 @@ sub output {
                          [ map { { message => $_ } } get_messages() ]);
         clear_messages();
     }
+
+    Krang::Navigation->fill_template(template => $template);
                                                  
     return $template->SUPER::output();
 }

@@ -20,39 +20,47 @@
 
 <div class=nav1><a href="javascript:nav_goto('workspace.pl')">My Workspace</a></div>
 <div class=nav2-leaf><a href="javascript:nav_goto('my_pref.pl')">My Preferences</a></div>
+
+<tmpl_unless nav_hide_story>
 <div class=nav2>Story</div>
 <div class=nav3><a href="javascript:nav_goto('story.pl')">New Story</a></div>
 <div class=nav3><a href="javascript:nav_goto('story.pl?rm=find')">Find Stories</a></div>
 <div class=nav3><a href="javascript:nav_goto('story.pl?rm=list_active')">Active Stories</a></div>
 
+<tmpl_if nav_desk_loop>
 <div class=nav3 style="margin-top: 5px">Desks</div>
-<tmpl_loop header_desk_loop>
+<tmpl_loop nav_desk_loop>
 <div class=nav4><a href="desk.pl?desk_id=<tmpl_var desk_id>"><tmpl_var desk_name></a></div>
 </tmpl_loop>
+</tmpl_if>
 
+</tmpl_unless>
+
+<tmpl_unless nav_hide_media>
 <div class=nav2>Media</div>
 <div class=nav3><a href="javascript:nav_goto('media.pl')">New Media</a></div>
 <div class=nav3><a href="javascript:nav_goto('media.pl?rm=find')">Find Media</a></div>
 <div class=nav3><a href="javascript:nav_goto('media.pl?rm=list_active')">Active Media</a></div>
 <div class=nav3><a href="javascript:nav_goto('media_bulk_upload.pl')">Bulk Upload</a></div>
+</tmpl_unless>
 
+<tmpl_unless nav_hide_template>
 <div class=nav2>Template</div>
 <div class=nav3><a href="javascript:nav_goto('template.pl?rm=add')">New Template</a></div>
 <div class=nav3><a href="javascript:nav_goto('template.pl')">Find Templates</a></div>
 <div class=nav3><a href="javascript:nav_goto('template.pl?rm=list_active')">Active Templates</a></div>
 <div class=nav3>FTP</div>
+</tmpl_unless>
 
+<tmpl_unless nav_hide_admin>
 <div class=nav2>Admin</div>
-<div class=nav3><a href="javascript:nav_goto('user.pl')">Users</a></div>
-<div class=nav3><a href="javascript:nav_goto('group.pl')">Groups</a></div>
-<div class=nav3><a href="javascript:nav_goto('desk_admin.pl')">Desks</a></div>
-<div class=nav3><a href="javascript:nav_goto('contributor.pl')">Contributors</a></div>
-<div class=nav3><a href="javascript:nav_goto('site.pl')">Sites</a></div>
-<div class=nav3><a href="javascript:nav_goto('category.pl')">Categories</a></div>
-<div class=nav3><a href="javascript:nav_goto('schedule.pl?rm=list_all')">Jobs</a></div>
-
-<div class=nav2>Dev</div>
-<div class=nav3><a href="javascript:nav_goto('status.pl')">Instance Status</a></div>
-<div class=nav3><a href="javascript:nav_goto('env.pl')">Dump Environment</a></div>
+<tmpl_if nav_admin_users><div class=nav3><a href="javascript:nav_goto('user.pl')">Users</a></div></tmpl_if>
+<tmpl_if nav_admin_groups><div class=nav3><a href="javascript:nav_goto('group.pl')">Groups</a></div></tmpl_if>
+<tmpl_if nav_admin_desks><div class=nav3><a href="javascript:nav_goto('desk_admin.pl')">Desks</a></div></tmpl_if>
+<tmpl_if nav_admin_contribs><div class=nav3><a href="javascript:nav_goto('contributor.pl')">Contributors</a></div></tmpl_if>
+<tmpl_if nav_admin_sites><div class=nav3><a href="javascript:nav_goto('site.pl')">Sites</a></div></tmpl_if>
+<tmpl_if nav_admin_categories><div class=nav3><a href="javascript:nav_goto('category.pl')">Categories</a></div></tmpl_if>
+<tmpl_if nav_admin_jobs><div class=nav3><a href="javascript:nav_goto('schedule.pl?rm=list_all')">Jobs</a></div></tmpl_if>
 <div class=nav3><a href="javascript:nav_goto('bug.cgi')">Submit Bug</a></div>
-
+</div>
+</tmpl_unless>
