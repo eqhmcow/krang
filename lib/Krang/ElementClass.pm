@@ -68,6 +68,7 @@ use Krang::MethodMaker
                          allow_delete
                          default
                          pageable
+                         indexed
                        ) ];
 
 =over 4
@@ -131,6 +132,11 @@ Defaults to 1.
 
 A default value for elements of this class.  Will be loaded into their
 data slot on creation, so this must be a valid value for the element.
+
+=item indexed
+
+If set to 1 then the contents of this element will be indexed.
+Defaults to 0.  See L<index_data()> for more details.
 
 =item children
 
@@ -394,6 +400,17 @@ sub thaw_data {
     return $_[2]->data($_[4]) if $_[1] eq 'element';
     return $_[4]->data($_[2]);
 }
+
+=item C<< $index_data = $class->index_data(element => $element) >>
+
+This method is used when the C<indexed> attribute is true.  Elements
+which are indexed may be used in calls to Krang::Story->find().  The
+return value is limited to 256 characters in length.  The default
+implementation returns C<< $element->freeze_data() >>.
+
+=cut
+
+sub index_data { $_[2]->freeze_data() }
 
 =item C<< $template_data = $class->template_data() >>
 
@@ -818,15 +835,16 @@ sub init {
           unless exists $args{display_name};
 
     # setup defaults for unset parameters
-    $args{min}       = 0  unless exists $args{min};
-    $args{max}       = 0  unless exists $args{max};
-    $args{bulk_edit} = 0  unless exists $args{bulk_edit};
-    $args{required}  = 0  unless exists $args{required};
-    $args{children}  = [] unless exists $args{children};
-    $args{hidden}    = 0  unless exists $args{hidden};
-    $args{reorderable} = 1  unless exists $args{reorderable};
+    $args{min}          = 0  unless exists $args{min};
+    $args{max}          = 0  unless exists $args{max};
+    $args{bulk_edit}    = 0  unless exists $args{bulk_edit};
+    $args{required}     = 0  unless exists $args{required};
+    $args{children}     = [] unless exists $args{children};
+    $args{hidden}       = 0  unless exists $args{hidden};
+    $args{reorderable}  = 1  unless exists $args{reorderable};
     $args{allow_delete} = 1  unless exists $args{allow_delete};
-    $args{default} = undef  unless exists $args{default};
+    $args{default}      = undef  unless exists $args{default};
+    $args{indexed}      = 0 unless exists $args{indexed};
 
     # call generated inititalizer
     $self->hash_init(%args);

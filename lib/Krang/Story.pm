@@ -903,6 +903,16 @@ permissions to are returned.  Defaults to 0.
 If set to 1 then only items which the current user has edit
 permissions to are returned.  Defaults to 0.
 
+=item element_index
+
+This find option allows you to search againt indexed element data.
+For details on element indexing, see L<Krang::ElementClass>.  This
+option should be set with an array containing the element name and the
+value to match against.  For example, to search for stories containing
+'foo' in their deck, assuming deck is an indexed element:
+
+  @stories = Krang::Story->find(element_index_like => [deck => '%foo%']);
+
 =back
 
 Options affecting the search and the results returned:
@@ -1187,6 +1197,22 @@ sub find {
             next;
         }
 
+        # handle element_index
+        if ($key eq 'element_index') {
+            # setup join to element_index
+            $from{"element as e"} = 1;
+            $from{"element_index as ei"} = 1;
+            push(@where, 's.element_id = e.root_id');
+            push(@where, 'e.element_id = ei.element_id');
+
+            # produce where clause
+            push(@where, 
+                 'e.class = ?',
+                 ($like ? 'ei.value LIKE ?' : 'ei.value = ?'));
+            push(@param, $value->[0], $value->[1]);
+            next;
+        }
+
         croak("Unknown find key '$key'");
     }
 
@@ -1201,7 +1227,7 @@ sub find {
         push(@where, 's.story_id = sc.story_id');
         push(@where, 'sc.ord = 0');
         $order_by = 'sc.url';
-    } elsif ($order_by !~ /^s\./) {
+    } elsif ($order_by !~ /\w+\./) {
         $order_by = "s." . $order_by;
     }
    

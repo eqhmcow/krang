@@ -31,6 +31,7 @@ sub new {
                                                      max => 1,
                                                      reorderable => 0,
                                                      allow_delete => 0,
+                                                     indexed => 1,
                                                     ),
                   TestSet1::fancy_keyword->new(min          => 1,
                                            max          => 1,

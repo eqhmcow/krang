@@ -372,15 +372,22 @@ push @find, Krang::Story->new(class => "article",
                               title => "title one",
                               slug => "slug one",
                               categories => [$cat[7]]);
+$find[-1]->element->child('deck')->data("3 one deek one deek one deek")
+  if InstanceElementSet eq 'TestSet1';
+
 push @find, Krang::Story->new(class => "article",
                               title => "title two",
                               slug => "slug two",
                               categories => [$cat[6], $cat[8]]);
+$find[-1]->element->child('deck')->data("2 two deek two deek two deek")
+  if InstanceElementSet eq 'TestSet1';
 $find[-1]->contribs($contrib);
 push @find, Krang::Story->new(class => "article",
                               title => "title three",
                               slug => "slug three",
                               categories => [$cat[9]]);
+$find[-1]->element->child('deck')->data("1 three three three")
+  if InstanceElementSet eq 'TestSet1';
 $_->save for @find;
 END { if ($DELETE) { $_->delete for @find } };
 
@@ -480,6 +487,34 @@ ok(@result);
 is(@result, 1);
 is($result[0], $find[1]->story_id);
 
+# find by element_index
+SKIP: {
+    skip('Element tests only work for TestSet1', 1)
+      unless (InstanceElementSet eq 'TestSet1');
+
+    @result = Krang::Story->find(element_index =>[deck=>"1 three three three"]);
+    is(@result, 1);
+    is($result[0]->story_id, $find[2]->story_id);
+
+    @result = Krang::Story->find(element_index_like =>[deck=>"%deek%"]);
+    is(@result, 2);
+    is($result[0]->story_id, $find[0]->story_id);
+    is($result[1]->story_id, $find[1]->story_id);
+
+    @result = Krang::Story->find(element_index_like =>[deck=>"%deek%"],
+                                 order_by => "ei.value");
+    is(@result, 2);
+    is($result[1]->story_id, $find[0]->story_id);
+    is($result[0]->story_id, $find[1]->story_id);
+   
+    @result = Krang::Story->find(element_index_like =>[deck=>"%one deek%"]);
+    is(@result, 1);
+    is($result[0]->story_id, $find[0]->story_id);
+
+    @result = Krang::Story->find(element_index_like =>[deck=>"%feck%"]);
+    is(@result, 0);
+
+}
 
 # make sure count is accurate
 use Krang::DB qw(dbh);

@@ -528,6 +528,12 @@ sub _insert_children {
                  $child->freeze_data, $ord++);
         $child->{element_id} = $dbh->{mysql_insertid};
 
+        # insert index data if needed
+        $dbh->do('INSERT INTO element_index (element_id, value) 
+                  VALUES (?,?)', undef, 
+                 $child->{element_id}, $child->index_data)
+          if $child->{class}->indexed;
+
         # recurse, if needed
         $child->_insert_children($root_id)
           if @{$child->{children}};
@@ -546,10 +552,14 @@ sub _update_children {
     foreach my $child (@{$self->{children}}) {
         if ($child->{element_id}) {
             # pre-existing child, update
-            push(@element_ids, $child->{element_id});
-           
             $dbh->do('UPDATE element SET data=?, ord=? WHERE element_id = ?',
                      undef, $child->freeze_data, $ord++, $child->{element_id});
+
+            # update index data if needed
+            $dbh->do('UPDATE element_index SET value=? WHERE element_id = ?',
+                     undef, $child->index_data, $child->{element_id})
+              if $child->{class}->indexed;
+
         } else {
             # create a new element and get the ID
             $dbh->do(
@@ -558,9 +568,16 @@ sub _update_children {
                      $self->{element_id}, $root_id, $child->{class}->name, 
                      $child->freeze_data, $ord++);
             $child->{element_id} = $dbh->{mysql_insertid};
-            
-            push(@element_ids, $child->{element_id});
+
+            # insert index data if needed
+            $dbh->do('INSERT INTO element_index (element_id, value) 
+                      VALUES (?,?)', undef, 
+                     $child->{element_id}, $child->index_data)
+              if $child->{class}->indexed;
         }
+
+        # remember this element_id
+        push(@element_ids, $child->{element_id});
         
         # recurse, if needed
         push(@element_ids, $child->_update_children($root_id))
@@ -709,6 +726,10 @@ sub delete {
     $self->class->delete_hook(element => $self);
 
     # delete all from the DB
+    foreach_element {
+        $dbh->do('DELETE FROM element_index WHERE element_id = ?', 
+                 undef, $_->{element_id})
+    } $self;
     $dbh->do('DELETE FROM element WHERE root_id = ?', undef, 
              $self->{element_id});
 
@@ -1021,6 +1042,7 @@ BEGIN {
                           allow_delete
                           url_attributes
                           pageable
+                          indexed
                         )) {
         *{"Krang::Element::$attr"} = sub { $_[0]->{class}->$attr() };
     }
@@ -1044,6 +1066,7 @@ BEGIN {
                           template_data
                           publish
                           fill_template
+                          index_data
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 

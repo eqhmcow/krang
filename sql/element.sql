@@ -12,3 +12,12 @@ CREATE TABLE element (
         INDEX       (parent_id),
         INDEX       (ord)
 );
+
+/* element_index holds indexed data managed by Krang::Element */
+DROP TABLE IF EXISTS element_index;
+CREATE TABLE element_index (
+        element_id  INT UNSIGNED NOT NULL,
+        value       VARCHAR(255),
+        UNIQUE INDEX(element_id),
+        INDEX(value)
+);
