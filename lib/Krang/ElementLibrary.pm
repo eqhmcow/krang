@@ -124,15 +124,15 @@ sub load_set {
     my ($pkg, %arg) = @_;
     my ($set) = @arg{qw(set)};
     local $_;
-    
+
     # get location of the element library, mixing in KrangRoot if non-absolute
     my $lib = catdir(KrangRoot, 'element_lib');
-    
+
     # don't load sets more than once
     our (%LOADED_SET, %PARENT_SETS);
     unless (exists $LOADED_SET{$set}) {
         my $conf = $pkg->_load_conf($lib, $set);
-        
+
         # load parent sets first
         $PARENT_SETS{$set} = [ $conf->get('ParentSets') ];
         Krang::ElementLibrary->load_set(set => $_) 
@@ -141,7 +141,7 @@ sub load_set {
         $pkg->_load_classes($lib, $set, $conf);
         $pkg->_instantiate_top_levels($set, $conf);
         debug("Loaded element set '$set'");
-    } 
+    }
 
     $LOADED_SET{$set} = 1;
     return 1;
@@ -151,8 +151,10 @@ sub load_set {
 sub _load_conf {
     my ($pkg, $lib, $set) = @_;
 
-    croak("Unable to find element set '$set' in element library '$lib'")
-      unless -d catdir($lib, $set);
+    unless (-d catdir($lib, $set)) {
+        warn("\nWARNING: Missing element library '$set'.\n\n");
+        exit;
+    }
 
     # load the element set configuration file
     my $conf_file = catfile($lib, $set, "set.conf");    
