@@ -1,6 +1,9 @@
 use strict;
 use warnings;
 
+use File::Path;
+use File::Spec::Functions;
+
 use Krang::Script;
 use Krang::Conf qw(KrangRoot instance InstanceElementSet);
 use Krang::Site;
@@ -120,6 +123,38 @@ is($tmppage->child('header')->data(), 'header', "create_story() - param('header'
 
 my @pages = $story2->element->match('//page');
 is($#pages, 4, "create_story() - param('pages')");
+
+
+
+# publisher
+
+my $publisher = $creator->publisher();
+
+isa_ok($publisher, 'Krang::Publisher');
+
+
+# deploying/undeploying test templates.
+my @test_templates = $creator->deploy_test_templates();
+
+# make sure deployed templates are actually there.
+my @template_paths;
+foreach my $t (@test_templates) {
+    my @paths = $publisher->template_search_path(category => $t->category());
+    my $p = $paths[0];
+    my $f = catfile($p, $t->filename());
+
+    ok(-e $f, sprintf("deploy_test_templates('%s')", $t->filename()));
+
+    push @template_paths, $f;
+}
+
+# undeploy test templates.
+$creator->undeploy_test_templates();
+
+foreach my $f (@template_paths) {
+    ok(!-e $f, 'undeploy_test_templates()');
+}
+
 
 
 # delete_item

@@ -10,6 +10,8 @@ Krang::Test::Content - a package to simplify content handling in Krang tests.
 
   my $creator = Krang::Test::Content->new();
 
+
+  # create a Krang::Site object
   my $site = $creator->create_site(preview_url => 'preview.fluffydogs.com',
                                    publish_url => 'www.fluffydogs.com',
                                    preview_path => '/tmp/preview_dogs',
@@ -17,29 +19,56 @@ Krang::Test::Content - a package to simplify content handling in Krang tests.
 
   my ($root) = Krang::Category->find(site_id => $site->site_id);
 
+  # create a Krang::Category object.
   my $poodle_cat = $creator->create_category(dir    => 'poodles',
                                              parent => $root->category_id,
                                              data   => 'Fluffy Poodles of the World');
 
+  # create another Krang::Category object w/ $poodle_cat as parent.
   my $french_poodle_cat = $creator->create_category(dir    => 'french',
                                                     parent => $poodle_cat,
                                                     data   => 'French Poodles Uber Alles');
 
+  # create a Krang::Media object.
   my $media = $creator->create_media(category => $poodle_cat);
 
-  my $story1 = $creator->create_story(category => [$poodle_cat, $french_poodle_cat],
-                                      media    => [$media]);
+  # create a Krang::Story object under various categories, with media object.
+  my $story1 = $creator->create_story(category     => [$poodle_cat, $french_poodle_cat],
+                                      linked_media => [$media]);
 
+  # create Story object linking to media and previous story.
   my $story2 = $creator->create_story(category     => [$poodle_cat, $french_poodle_cat],
                                       linked_story => [$story1],
                                       linked_media => [$media]);
 
+  # create a Krang::Contrib object
   my $contributor = $creator->create_contrib();
 
+  # get a Krang::Publisher object
+  my $publisher = $creator->publisher();
+
+  # deploy test templates
+  my @templates = $creator->deploy_test_templates();
+
+  # undeploy a template
+  $creator->undeploy_test_templates();
+
+
+  # undeploy all live templates
+  $ok = $creator->undeploy_live_templates();
+
+  # restore previously live templates
+  $ok = $creator->redeploy_live_templates();
+
+
+  # get a random word.
   my $word = $creator->get_word();
 
+
+  # delete a previously created object
   $creator->delete_item(item => $story);
 
+  # clean up after the mess you made.  Leave things where you found them.
   $creator->cleanup();
 
 
@@ -68,6 +97,8 @@ use Krang::Category;
 use Krang::Story;
 use Krang::Media;
 use Krang::Contrib;
+use Krang::Publisher;
+use Krang::Template;
 
 use Krang::MethodMaker (new_with_init => 'new',
                         new_hash_init => 'hash_init');
@@ -509,6 +540,155 @@ sub create_contrib {
 }
 
 
+=item C<< $publisher = $creator->publisher() >>
+
+Returns a Krang::Publisher object.
+
+=cut
+
+sub publisher {
+
+    my $self = shift;
+
+    return ($self->{publisher}) if (exists($self->{publisher}));
+
+    $self->{publisher} = new Krang::Publisher;
+
+    return $self->{publisher};
+
+}
+
+
+
+=item C<< @templates = $creator->deploy_test_templates() >>
+
+Creates a set of Krang::Template templates based on the elements in TestSet1 (looking at Krang::ElementLibrary).  These templates will be generated randomly, so you cannot run tests based on the content of the templates.  These templates should be used when you need to publish Krang::Story objects generated above.
+
+This method will check to see if L<undeploy_live_templates()> has been run beforehand.
+
+If not, it will run it first as a safety measure, so as to not clobber live templates, or to cause random errors.
+
+Will croak if there are problems.
+
+Returns a list of Krang::Template templates.
+
+=cut
+
+
+sub deploy_test_templates {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $publisher = (exists($self->{publisher})) ? $self->{publisher} : $self->publisher();
+
+    my $site = $self->{stack}{site}[0];
+
+    croak __PACKAGE__ . "->deploy_test_templates(): Must create site before deploying templates!\n" 
+      unless defined($site);
+
+    my ($category) = Krang::Category->find(site_id => $site->site_id);
+
+    my @estack = map { Krang::ElementLibrary->top_level(name => $_) }
+      Krang::ElementLibrary->top_levels;
+    while (@estack) {
+        my $element = pop(@estack);
+        push(@estack, $element->children);
+
+        my $bgcolor = "#" . 
+          join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
+
+        # draw a labeled box for the element
+        my $display_name = $element->display_name;
+        my $content = <<END;
+<div style='border: 1px solid black; margin-left: 3px; margin-top: 10px; margin-right: 5px; padding-left: 3px; padding-right: 3px; padding-bottom: 3px; background-color: $bgcolor'>
+  <span style='border: 1px; border-style: dashed; border-color: #AAA; padding-left: 5px; padding-right: 5px; background-color: white; text-color: whte; top: -7px; left: 5px; position: relative; width: 150px;'>$display_name</span><br>
+END
+
+        if ($element->children) {
+            # container
+            $content .= "<tmpl_loop element_loop>\n";
+            foreach my $child ($element->children) {
+                $content .= "<tmpl_if is_" . $child->name . ">".
+                  "<tmpl_var name='" . $child->name . "'>".
+                    "</tmpl_if>\n";
+            }
+            $content .= "</tmpl_loop>";
+        } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
+            # media link
+            $content .= "<img src='<tmpl_var name='url'>'>\n";
+        } elsif ($element->isa('Krang::ElementClass::StoryLink')) {
+            # story link
+            $content .= "<a href='<tmpl_var name='url'>/'><tmpl_var url></a>\n";
+        } else {
+            # data
+            $content .= "<tmpl_var name='" . $element->name . "'>\n";
+        }
+
+        if ($element->name eq 'category') {
+            $content .= "<tmpl_var content>";
+        }
+
+        if ($element->name eq 'page') {
+            # add pagination
+            $content .=<<END;
+<P>Page number <tmpl_var current_page_number> of <tmpl_var total_pages>.</p>
+<tmpl_unless is_first_page>
+<a href="<tmpl_var previous_page_url>">Previous Page</a>&lt;&lt;
+</tmpl_unless>
+<tmpl_loop pagination_loop>
+<tmpl_if is_current_page>
+<tmpl_var page_number>
+<tmpl_else>
+<a href="<tmpl_var page_url>"><tmpl_var page_number></a>
+</tmpl_if>
+<tmpl_unless __last__>&nbsp;|&nbsp;</tmpl_unless>
+</tmpl_loop>
+<tmpl_unless is_last_page>
+&gt;&gt;<a href="<tmpl_var next_page_url>">Next Page</a>
+</tmpl_unless>
+<tmpl_unless is_last_page><tmpl_var page_break></tmpl_unless>
+END
+
+        }
+        $content .= "</div>";
+
+        my $tmpl = Krang::Template->new(
+                                        content	 => $content,
+                                        filename => $element->name . ".tmpl",
+                                        category => $category
+                                       );
+        eval { $tmpl->save; };
+        next if $@;
+
+        push @{$self->{stack}{template}}, $tmpl;
+
+        $publisher->deploy_template(template => $tmpl);
+        $tmpl->checkin;
+    }
+
+    return @{$self->{stack}{template}};
+
+}
+
+=item C<< $creator->undeploy_test_templates() >>
+
+Removes the test templates placed out on the filesystem.
+
+=cut
+
+sub undeploy_test_templates {
+
+    my $self = shift;
+
+    my $publisher = (exists($self->{publisher})) ? $self->{publisher} : $self->publisher();
+
+    foreach my $tmpl (@{$self->{stack}{template}}) {
+        $publisher->undeploy_template(template => $tmpl);
+    }
+}
+
+
 =item C<< $word = get_word() >>
 
 This subroutine creates all the random text content for the module - each call returns a randomly-chosen word from the source - either /usr/dict/words or /usr/share/dict/words.
@@ -640,7 +820,9 @@ Will log a critical error message and croak if unsuccessful.
 sub cleanup {
     my $self = shift;
 
-    foreach (qw/contrib media story category site/) {
+    delete $self->{publisher} if (exists($self->{publisher}));
+
+    foreach (qw/contrib media story template category site/) {
         if (exists($self->{stack}{$_})) {
             while (my $obj = pop @{$self->{stack}{$_}}) {
                 debug(__PACKAGE__ . '->cleanup() deleting object: ' . ref($obj));
