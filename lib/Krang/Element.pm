@@ -307,8 +307,8 @@ sub root {
 =item C<< @children = $element->children() >>
 
 Returns a list of child elements for this element.  These will be
-Krang::Element objects.  For adding a new child, see C<< add_child()
->>.  To delete a child from the list of children, see 
+Krang::Element objects.  For adding a new child, see C<< add_child() >>.
+To delete a child from the list of children, see 
 C<< remove_child() >>.  To reorder the list of children, use 
 C<< reorder_children() >>.
 
