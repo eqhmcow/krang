@@ -25,7 +25,7 @@ This application provides a frontend to Krang::Publisher
 use Krang::Session qw(%session);
 use Krang::Publisher;
 use Krang::Story;
-use Krang::Log qw(debug assert ASSERT);
+use Krang::Log qw(debug critical assert ASSERT);
 use Krang::Widget qw(format_url datetime_chooser decode_datetime);
 use Krang::Message qw(add_message get_messages clear_messages);
 use Time::Piece;
@@ -298,9 +298,10 @@ sub preview_story {
                         error_msg     => $@->error_msg
                        );
         } else {
-            # something not expected - throw the error
+            # something not expected so log the error.  Can't croak()
+            # here because that will trigger bug.pl.
             print "<div class=alert>An internal server error occurred.  Please check the error logs for details.</div>\n";
-            croak($@);
+            critical($@);
         }
 
         # put the messages on the screen
@@ -472,9 +473,10 @@ sub _publish_assets_now {
                             error_msg     => $@->error_msg
                            );
             } else {
-                # something not expected - throw the error
+                # something not expected so log the error.  Can't croak()
+                # here because that will trigger bug.pl.
                 print "<div class=alert>An internal server error occurred.  Please check the error logs for details.</div>\n";
-                croak($@);
+                critical($@);
             }
 
             # put the messages on the screen
