@@ -318,6 +318,7 @@ sub delete {
              undef, $id);
     $dbh->do("DELETE FROM user_category_permission_cache WHERE user_id = ?",
              undef, $id);
+    $dbh->do("DELETE FROM alert WHERE user_id = ?", undef, $id);
 
     return 1;
 }
