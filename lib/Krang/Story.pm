@@ -1636,7 +1636,10 @@ sub serialize_xml {
     $writer->dataElement(notes      => $self->notes);
     
     # category_id
-    $writer->dataElement(category_id => $_) for @{$self->{category_ids}};
+    for my $category ($self->categories) {
+        $writer->dataElement(category_id => $category->category_id);
+        $set->add(object => $category);
+    }
 
     # FIX: contribs here
 
