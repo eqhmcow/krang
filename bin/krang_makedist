@@ -1,0 +1,143 @@
+#!/usr/bin/perl -w
+
+
+
+=head1 NAME
+
+krang_makedist - make a release of Krang
+
+
+=head1 SYNOPSIS
+
+  $ krang_makedist
+
+
+=head1 DESCRIPTION
+
+This script will create a distribution tar file for Krang.
+
+
+=head2 What C<krang_makedist> does
+
+=over 4
+
+
+=item 1
+
+Extract version from Krang.pm
+
+
+=item 2
+
+Tag files in working directory
+
+If tag already exists (i.e., you're re-building a distribution
+due to a bug) you have to "force" a cvs tag manually (e.g., C<cvs tag -F 'V1_2'>).
+
+
+=item 3
+
+Export krang from CVS using tagged version (to F</tmp> directory)
+
+
+=item 4
+
+Delete excluded directories (i.e., bench/, src/).
+
+
+=back
+
+
+
+=head1 OPTIONS
+
+None
+
+=cut
+
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+
+# Set up KRANG_ROOT and PERL5LIB
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+}
+
+use Krang;
+
+
+
+##  Start make dist
+make_dist();
+exit(0);
+
+my $krang_version;
+
+sub make_dist {
+    get_krang_version();
+    create_cvs_tag();
+    export_krang();
+    exclude_directories();
+    create_tarball();
+    report_status();
+}
+
+
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+sub get_krang_version {
+    $krang_version = $Krang::VERSION;
+    print "Found version: '$krang_version'\n";
+}
+
+
+sub create_cvs_tag {
+    my $ver_string = "V". $krang_version;
+    $ver_string =~ tr/\./\_/;
+
+    print "Tagging CVS repository: '$ver_string'...\n";
+
+    my $cvs_cmd = "cd \$KRANG_ROOT && cvs -q tag '$ver_string'";
+    print STDERR "$cvs_cmd\n";
+    my $cvs_output = `$cvs_cmd`;
+    print "---- CVS OUTPUT ---->\n$cvs_output<---- CVS OUTPUT ----\n";
+
+    if ($cvs_output =~ qr/$ver_string already exists on version/) {
+        print STDERR "It appears this tag already exists.  Aborting.\nEither delete or move the tag first.\n";
+        exit(1);
+    }
+    print "Tagging done.\n"
+}
+
+
+sub export_krang {}
+
+
+sub exclude_directories {}
+
+
+sub create_tarball {}
+
+
+sub report_status {}
+
+
+
