@@ -35,6 +35,17 @@
        document.krang_pager_form.submit();
   }
 
+  function checkin(id) {
+    document.krang_pager_form.rm.value = 'checkin';
+    document.krang_pager_form.id.value = id;
+    document.krang_pager_form.submit();
+  }
+                                                                               
+  function checkin_checked() {
+       document.krang_pager_form.rm.value = 'checkin_checked';
+       document.krang_pager_form.submit();
+  }
+
 </script>
 
 <div class=dark-bar><span class=left>My Workspace</span><span class=right><a href="#">Help</a></span></div>
@@ -103,7 +114,7 @@
                <input type=button value="Publish" onclick="publish('<tmpl_var id>')">
                <input type=button value="Delete" onclick="remove('<tmpl_var id>')">
                <p>
-               Desk: <select></select> <input type=button value="Checkin" onclick="checkin_to_desk('<tmpl_var id>')">
+               Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">
            </tmpl_if>
            <tmpl_if is_media>
                <input type=button value="Publish" onclick="publish('<tmpl_var id>')">

@@ -42,6 +42,8 @@ sub setup {
       goto_edit
       goto_log
       copy
+      checkin
+      checkin_checked
     )]);
 
 }
@@ -59,6 +61,13 @@ sub show {
     my $template = $self->load_tmpl("workspace.tmpl", 
                                     associate         => $query,
                                     die_on_bad_params => 0);
+
+    my @found_desks = Krang::Desk->find();
+    my @desk_loop;
+
+    foreach my $found_desk (@found_desks) {
+        push (@desk_loop, { choice_desk_id => $found_desk->desk_id, choice_desk_name => $found_desk->name });
+    }
 
     # setup sort selector
     my $sort = $query->param('krang_pager_sort_field') || 'type';
@@ -92,7 +101,7 @@ sub show {
        command_column_labels => { edit => 'Edit',
                                   log  => 'Log' },
        id_handler  => \&_obj2id,
-       row_handler => \&_row_handler,
+       row_handler => sub { _row_handler(@_,\@desk_loop) },
       );
 
     # Run the pager
@@ -101,7 +110,9 @@ sub show {
 }
 
 sub _row_handler {
-    my ($row, $obj) = @_;
+    my ($row, $obj, $desk_loop) = @_;
+    $row->{desk_loop} = $desk_loop;
+
     if ($obj->isa('Krang::Story')) {
         $row->{story_id} = $obj->story_id;
         $row->{id} = _obj2id($obj);
@@ -197,6 +208,51 @@ sub delete_checked {
                      $query->param('krang_pager_rows_checked')) {
         $obj->delete;
     }
+    return $self->show;
+}
+
+=item checkin 
+
+Checks in object (to specified desk for stories)
+
+=cut
+
+sub checkin {
+    my $self = shift;
+    my $query = $self->query;
+    my $obj = _id2obj($query->param('id'));
+
+    if ($obj->isa('Krang::Story')) {
+        my $select = 'checkin_to_'.$query->param('id');
+        $obj->checkin();
+        $obj->move_to_desk($query->param($select));
+    } else {
+        $obj->checkin();
+    }
+
+    return $self->show;
+}
+
+=item checkin_checked
+
+Checks in checked objects (to specified desk for stories).
+
+=cut
+                                                                               
+sub checkin_checked {
+    my $self = shift;
+    my $query = $self->query;
+    foreach my $obj (map { _id2obj($_) }
+                     $query->param('krang_pager_rows_checked')) {
+        if ($obj->isa('Krang::Story')) {
+            my $select = 'checkin_to_story_'.$obj->story_id;
+            $obj->checkin();
+            $obj->move_to_desk($query->param($select));
+        } else {
+            $obj->checkin();
+        }
+    }
+                                                                               
     return $self->show;
 }
 

@@ -105,7 +105,7 @@ sub show {
        columns     => [ 'id', 'version', 'url', 'title', 'story_type', 
                         'command_column', 'checkbox_column'],
        columns_sortable => [ ],
-       find_params => { desk_id => $desk_id },
+       find_params => { desk_id => $desk_id, checked_out => 0 },
        command_column_commands => [ 'log', 'view', 'edit' ],
        command_column_labels => {   view => 'View',
                                     edit => 'Edit',
