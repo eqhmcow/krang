@@ -1537,7 +1537,7 @@ sub publish_path {
                                          category => $category);
     
     # remove the site part
-    # $url =~ s![^/]+/!!;
+    $url =~ s![^/]+/!!;
 
     # paste them together
     return canonpath(catdir($path, $url));
@@ -1560,7 +1560,7 @@ sub preview_path {
     my $url  = $self->preview_url;
     
     # remove the site part
-    # $url =~ s![^/]+/!!;
+    $url =~ s![^/]+/!!;
 
     # paste them together
     return canonpath(catdir($path, $url));

@@ -1152,8 +1152,6 @@ sub _write_page {
     }
 
     eval { mkpath($args{path}, 0, 0755); };
-
-    eval {mkpath($args{path}, 0, 0755); };
     if ($@) {
         Krang::Publisher::FileWriteError->throw(message => "Could not create directory '$args{path}'",
                                                 destination => $args{path},

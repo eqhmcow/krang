@@ -354,10 +354,10 @@ sub siteserver_trans_handler ($$) {
             
             # is it a match?
             if ($url eq $host) {
-                $path = catdir($site->publish_path, $site->url);
+                $path = $site->publish_path;
                 last INSTANCE;
             } elsif ($preview_url eq $host) {
-                $path = catdir($site->preview_path, $site->preview_url);
+                $path = $site->preview_path;
                 last INSTANCE;
             }
         }

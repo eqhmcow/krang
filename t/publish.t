@@ -100,7 +100,7 @@ END {
         $publisher->deploy_template(template => $_);
     }
 }
-#
+
 ############################################################
 
 # create a site and category for dummy story
@@ -358,7 +358,7 @@ sub test_full_preview {
     }
 
     foreach (@media) {
-        my $path = catfile($preview_path , $_->preview_url());
+        my $path = $_->preview_path;
         ok (-e $path, 'Krang::Publisher->preview_story() -- complete media writeout');
     }
 
@@ -377,7 +377,7 @@ sub test_full_publish {
     }
 
     foreach (@media) {
-        my $path = catfile($publish_path , $_->url());
+        my $path = $_->preview_path();
         ok (-e $path, 'Krang::Publisher->publish_story() -- complete media writeout');
     }
 
@@ -781,7 +781,7 @@ sub test_publish_story {
                 die Dumper($article_output{($i+1)}, $story_txt);
             }
         } else {
-            diag('Missing story content');
+            diag('Missing story content in ' . $story_paths[$i]);
             fail('Krang::Publisher->publish_story() -- compare');
         }
     }
@@ -801,7 +801,7 @@ sub test_preview_story {
         if ($story_txt =~ /\w/) {
             ok($article_output{1} eq $story_txt, 'Krang::Publisher->preview_story() -- compare');
         } else {
-            fail('Krang::Publisher->preview_story() -- content missing');
+            fail('Krang::Publisher->preview_story() -- content missing from ' . $preview_path_url);
         }
     } else {
         fail('Krang::Publisher->preview_story() -- exists');
@@ -1096,11 +1096,11 @@ sub build_publish_paths {
 
     my $story = shift;
 
-    my @urls = $story->urls();
+    my @cats = $story->categories;
     my @paths;
 
-    foreach (@urls) {
-        push @paths, File::Spec->catfile($site->publish_path(), $_, 'index.html');
+    foreach my $cat (@cats) {
+        push @paths, catfile($story->publish_path(category => $cat), 'index.html');
     }
 
     return @paths;
@@ -1109,10 +1109,7 @@ sub build_publish_paths {
 sub build_preview_path {
 
     my $story = shift;
-
-    my $url = $story->preview_url();
-
-    return File::Spec->catfile($site->preview_path(), $url, 'index.html');
+    return catfile($story->preview_path, 'index.html');
 
 }
 

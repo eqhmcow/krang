@@ -49,8 +49,8 @@ is($media->url, 'testsite1.com/krang.jpg', "URL looks right");
 is($media->preview_url, 'preview.testsite1.com/krang.jpg', "Preview URL looks right");
 
 # check publish_path and preview_path
-is($media->publish_path, canonpath('./sites/test1/testsite1.com/krang.jpg'), "publish_path looks right");
-is($media->preview_path, canonpath('./sites/test1/preview/preview.testsite1.com/krang.jpg'), "preview_path looks right");
+is($media->publish_path, canonpath('./sites/test1/krang.jpg'), "publish_path looks right");
+is($media->preview_path, canonpath('./sites/test1/preview/krang.jpg'), "preview_path looks right");
 
 # create new contributor object to test associating with media
 my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');

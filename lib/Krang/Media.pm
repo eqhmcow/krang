@@ -1355,7 +1355,7 @@ sub publish_path {
     my $url  = $self->url;
     
     # remove the site part
-    # $url =~ s![^/]+/!!;
+    $url =~ s![^/]+/!!;
 
     # paste them together
     return canonpath(catfile($path, $url));
@@ -1376,7 +1376,7 @@ sub preview_path {
     my $url  = $self->preview_url;
     
     # remove the site part
-    # $url =~ s![^/]+/!!;
+    $url =~ s![^/]+/!!;
 
     # paste them together
     return canonpath(catfile($path, $url));

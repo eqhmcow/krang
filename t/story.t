@@ -129,10 +129,8 @@ like($story->preview_url, qr/^$site_url/);
 like($story->preview_url, qr/^${cat_url}test$/);
 
 # test preview and publish paths
-my $site_path = $cat[0]->site->publish_path;
-is($story->publish_path, "$site_path/" . $story->url);
-my $site_path2 = $cat[0]->site->preview_path;
-is($story->preview_path, "$site_path2/" . $story->preview_url);
+is($story->publish_path, "/tmp/storytest_publish/test_0/test");
+is($story->preview_path, "/tmp/storytest_preview/test_0/test");
 
 # set categories by id
 $story->categories($cat[2]->category_id, 
