@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added the C<--skip> option to C<krang_import> which exposes the
+existing Krang::DataSet::import_all() C<skip_classes> option from the
+command-line.
+
+=item *
+
 Removed "Delete Checked" button from List Admin screen.  Lists cannot
 be deleted. [Sam]
 
