@@ -86,8 +86,15 @@
     function do_delete (list_count) {
         var select_val = get_selected_val(list_count);
         log_entry( eval('list_data[' + select_val + "]['__id__']"), 'delete', '');
-        eval('list_data[' + select_val + "]['__data__'] = []");
-        eval('list_data[' + select_val + '] = []');
+        var indexArray = select_val.split('][');
+        var current_index = indexArray.pop();
+        select_val = indexArray.join('][');
+        if (! select_val) {
+            list_data.splice(current_index, 1);
+        } else {
+            // else this is not first list
+            eval('list_data[' + select_val + ']').splice(current_index, 1);
+        }
         populate_list(list_count-1);
     }
 
