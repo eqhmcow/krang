@@ -2,9 +2,7 @@ use Test::More qw(no_plan);
 use File::Find qw(find);
 use Krang::Script;
 
-# a list of non-CGI Krang modules without a suitable find method
-our %BAD_DEFAULT = map { ($_,1) } (qw( Krang::DataSet Krang::Workspace Krang::DB Krang::History Krang::Schedule Krang::Schedule::Daemon Krang::BricLoader::DataSet));
-
+# a list of non-CGI Krang modules with a suitable find method
 our %TEST_PACKAGES = map { ($_,1) } (qw( Krang::Alert Krang::Category Krang::Contrib Krang::Desk Krang::Group Krang::List Krang::ListGroup Krang::ListItem Krang::Media Krang::Site Krang::Story Krang::Template Krang::User));
 
 # Hash of known field names for "order_by" test
@@ -53,7 +51,6 @@ sub check_find {
     my $perl_package = shift;
 
     # skip modules without a suitable find()
-#    next if $BAD_DEFAULT{$perl_package};
     return unless ($TEST_PACKAGES{$perl_package});
 
     # Can we load the module?
