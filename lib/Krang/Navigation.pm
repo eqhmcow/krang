@@ -57,6 +57,8 @@ sub fill_template {
     for (qw(story media template)) {
         $template->param("nav_hide_$_", 1)
           if $asset_perms{$_} eq 'hide';
+        $template->param("nav_readonly_$_", 1)
+          if $asset_perms{$_} eq 'read-only';
     }
     
     # fill in admin vars

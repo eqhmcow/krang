@@ -39,7 +39,7 @@
 
 <tmpl_unless nav_hide_story>
 <div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">Story</div>
-<div class="form-cell-nav"><a href="javascript:nav_goto('story.pl')">New Story</a><br>
+<div class="form-cell-nav"><tmpl_unless nav_readonly_story><a href="javascript:nav_goto('story.pl')">New Story</a><br></tmpl_unless>
 <a href="javascript:nav_goto('story.pl?rm=find')">Find Stories</a><br>
 <a href="javascript:nav_goto('story.pl?rm=list_active')">Active Stories</a><br>
 
@@ -54,18 +54,18 @@
 
 <tmpl_unless nav_hide_media>
 <div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">Media</div>
-<div class="form-cell-nav"><a href="javascript:nav_goto('media.pl')">New Media</a><br>
+<div class="form-cell-nav"><tmpl_unless nav_readonly_media><a href="javascript:nav_goto('media.pl')">New Media</a><br></tmpl_unless>
 <a href="javascript:nav_goto('media.pl?rm=find')">Find Media</a><br>
 <a href="javascript:nav_goto('media.pl?rm=list_active')">Active Media</a><br>
-<a href="javascript:nav_goto('media_bulk_upload.pl')">Bulk Upload</a></div>
+<tmpl_unless nav_readonly_media><a href="javascript:nav_goto('media_bulk_upload.pl')">Bulk Upload</a></tmpl_unless></div>
 </tmpl_unless>
 
 <tmpl_unless nav_hide_template>
 <div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">Template</div>
-<div class="form-cell-nav"><a href="javascript:nav_goto('template.pl?rm=add')">New Template</a><br>
+<div class="form-cell-nav"><tmpl_unless nav_readonly_template><a href="javascript:nav_goto('template.pl?rm=add')">New Template</a><br></tmpl_unless>
 <a href="javascript:nav_goto('template.pl')">Find Templates</a><br>
 <a href="javascript:nav_goto('template.pl?rm=list_active')">Active Templates</a><br>
-<a target="template_ftp" href="ftp://<tmpl_var nav_ftp_username>@<tmpl_var nav_ftp_server>:<tmpl_var nav_ftp_port>/<tmpl_var nav_ftp_instance>/template">FTP</a></div>
+<tmpl_unless nav_readonly_template><a target="template_ftp" href="ftp://<tmpl_var nav_ftp_username>@<tmpl_var nav_ftp_server>:<tmpl_var nav_ftp_port>/<tmpl_var nav_ftp_instance>/template">FTP</a></tmpl_unless></div>
 </tmpl_unless>
 
 <tmpl_unless nav_hide_admin>
