@@ -100,13 +100,14 @@ END {
 # Directory structures for template paths.
 my @rootdirs = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
 
-my @dirs_a = (File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a', 'testdir_b'), File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a'), File::Spec->catfile(@rootdirs, $site->url()));
+my @dirs_a = (File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a', 'testdir_b'), File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a'), File::Spec->catfile(@rootdirs, $site->url()), File::Spec->catfile(@rootdirs));
 
 
 
 my $publisher = new Krang::Publisher ();
 
 isa_ok($publisher, 'Krang::Publisher');
+
 
 ############################################################
 # testing template seach path.
@@ -218,6 +219,7 @@ my $page_one = $assembled_ref->[0];
 $page_one =~ s/\n//g;
 ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');
 
+
 $publisher->publish_story(story => $story);
 
 my @story_paths = build_publish_paths($story);
@@ -327,9 +329,11 @@ sub deploy_templates {
         my $content = <TMPL>;
         close TMPL;
 
-        $template = Krang::Template->new(category_id => $category->category_id(),
+        $template = Krang::Template->new(
+#                                         category_id => $category->category_id(),
                                          content => $content,
-                                         element_class_name => $element_name);
+                                         element_class_name => $element_name
+                                        );
 
         eval { $template->save(); };
 
