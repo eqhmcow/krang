@@ -9,7 +9,7 @@ HTML = changelog.html changes.html coding.html goals.html porting.html \
        customizing_publish.html ops_upgrade.html release.html \
        add_on.html addon_install.html upgrade_system.html ops_backup.html \
        skins.html cpan_inventory.html scheduler.html build_tech_spec.html \
-       running.html
+       running.html building_element_library.html
 
 all   : $(HTML) modules.html scripts.html rm_modules rm_scripts
 
