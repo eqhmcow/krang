@@ -202,10 +202,10 @@ sub instance {
     my $instance = shift;
     if (defined $instance) {
         # get a handle on the block
-        my $block = $CONF->block(instance => $instance);
-        croak("Unable to find instance named '$instance' in configuration " .
-              "file.")
-          unless defined $block;
+        my $block;
+        eval { $block = $CONF->block(instance => $instance); };
+        die("Requested instance '$instance' does not exist in krang.conf.\n\n")
+          unless $block;
 
         # setup package state
         $INSTANCE      = $instance;
