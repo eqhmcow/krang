@@ -64,6 +64,8 @@ Krang::Publisher - Center of the Publishing Universe.
   # Return the category object for the current category of the story being published.
   my $category = $publisher->category();
 
+  # Return the filename for a given page of the story being published.
+  my $filename = $publisher->story_filename(page => $page_num);
 
 
 =head1 DESCRIPTION
@@ -245,7 +247,7 @@ sub preview_story {
     # cleanup - remove any testing templates.
     $self->_undeploy_testing_templates();
 
-    $preview_url = "$url/" . $self->_build_filename(story => $story);
+    $preview_url = "$url/" . $self->story_filename(story => $story);
 
     return $preview_url;
 }
@@ -635,7 +637,7 @@ sub template_search_path {
 }
 
 
-=item C<< $txt = page_break() >>
+=item C<< $txt = $publisher->page_break() >>
 
 Returns the tag used internally to mark the break between pages in a story.  When a multi-page story is assembled by the Krang::ElementClass element tree, it consists of a scaler containing these break tags.  The preview/publish process will split the scaler along those tags to create the individual pages of the story.
 
@@ -650,13 +652,11 @@ sub page_break {
 }
 
 
-=item C<< $txt = content() >>
+=item C<< $txt = $publisher->content() >>
 
 Returns the tag used internally to mark the break between the top and bottom sections of a category page.  Once broken, the individual pages of a story will be placed in between the two halves, and the full HTML page will be assembled.
 
 No exceptions to throw.
-
-=back
 
 =cut
 
@@ -665,6 +665,38 @@ sub content {
     return CONTENT;
 
 }
+
+
+
+=item C<< $filename = $publisher->story_filename(page => $page_num);
+
+Returns the filename (B<NOT> the path + filename, just the filename) of the current story being published, given the page number.
+
+page argument will default to 0 if not passed in.
+
+arguments C<story> can be submitted if you want a filename for something other than what is currently being published.
+
+=back
+
+=cut
+
+sub story_filename {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $page     = $args{page} || 0;
+    my $story    = $args{story} || $self->story;
+
+
+    my $element = $story->element();
+
+    if ($page == 0) { $page = ''; }
+
+    return $element->class()->filename() . $page . $element->class()->extension();
+
+}
+
 
 
 =head1 TODO
@@ -840,28 +872,6 @@ sub _assemble_pages {
 
 }
 
-#
-# $filename = _build_filename(story => $story, page => $page_num)
-#
-# Returns the complete filename for the story being output.
-# NOTE: As it stands now, page_num == 1 will be reduced to ''.
-#
-
-sub _build_filename {
-
-    my $self = shift;
-    my %args = @_;
-
-    my $story = $args{story};
-    my $page  = $args{page} || 0;
-
-    my $element = $story->element();
-
-    if ($page == 0) { $page = ''; }
-
-    return $element->class()->filename() . $page . $element->class()->extension();
-
-}
 
 
 
@@ -932,7 +942,7 @@ sub _build_story_single_category {
     for (my $p = 0; $p < @$story_pages; $p++) {
 
         # get the path & filename:
-        my $filename = $self->_build_filename(story => $story, page => $p);
+        my $filename = $self->story_filename(story => $story, page => $p);
 
         # write the page to disk.
         $self->_write_page(path => $path, filename => $filename,
