@@ -51,6 +51,11 @@ if a user is specified, they are authorized.  If no user
 has been specified (via the authen_handler), the request is
 redirected to the login application.
 
+=item Krang::Handler->log_handler
+
+Logging.  When the application is running under Apache::Registry (not
+in CGI_MODE) this handler gets error messages out of
+C<< $r->notes() >> and logs them with Krang::Log.
 
 =back
 
