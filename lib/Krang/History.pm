@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
+use Krang::Log qw( info );
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -124,6 +125,10 @@ sub save {
  
     $dbh->do('INSERT INTO history ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")", undef, map { $self->{$_} } FIELDS);
 
+    my $info_string = $self->{object_type}." ".$self->{object_id}." ".$self->{action}." by user ".$self->{user_id};
+    $info_string  .= " (version ".$self->{version}.")" if $self->{version};
+    $info_string  .= " to desk '".$self->{desk}."'" if $self->{desk};
+    info(__PACKAGE__." - ".$info_string); 
 }
 
 =item add_history()
