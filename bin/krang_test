@@ -1,0 +1,111 @@
+#!/usr/bin/perl -w
+use strict;
+use warnings;
+
+=pod
+
+=head1 NAME
+
+krang_test - run tests on Krang
+
+=head1 SYNOPSIS
+
+Run all tests:
+
+  $ krang_test
+
+Run just one test file:
+
+  krang_test --files=t/foo.t
+  
+Make it verbose:
+
+  krang_test --files=t/foo.t --verbose
+
+You can also call this script through the Makefile:
+
+  make test TEST_FILES=t/foo.t TEST_VERBOSE=1
+
+=head1 DESCRIPTION
+
+Runs tests on Krang.
+
+=head1 OPTIONS
+
+=over 4
+
+=item --files
+
+Which files to run tests on.  May be a space-separated list of files
+("t/foo.t t/bar.t") and may use globbing ("t/*.t").
+
+=item --verbose
+
+Prints a running dialog of what's happening.
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# process options
+use Getopt::Long;
+use Pod::Usage;
+
+our ($help, $man);
+my $v = 0;
+my $files = "t/*.t";
+pod2usage(2) unless
+  GetOptions(help       => \$help,
+             man        => \$man,
+             'verbose'  => \$v,
+             'verbose-i=i' => \$v,
+             'files=s'  => \$files,
+            );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+# choose the first instance if KRANG_INSTANCE not set
+unless ($ENV{KRANG_INSTANCE}) {
+    require Krang::Conf;
+    $ENV{KRANG_INSTANCE} = (Krang::Conf->instances())[0];
+}
+
+# run tests through Test::Harness
+use Test::Harness qw(&runtests $verbose);
+$verbose=$v; 
+runtests(glob($files));
