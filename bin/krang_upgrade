@@ -65,36 +65,17 @@ Following is a list of the tasks the upgrade script will perform.
 
 =item Validate path to KRANG_ROOT.
 
-=item Verify that no backup KRANG_ROOT exists.
-
-=item Verify that no backup MySQL instance databases exist
-
 =item Locate and parse existing krang.conf file.
-
-=item Verify sufficient disk space
-
-=over 4
-
-=item Required space = KRANG_ROOT + Instance MySQL folders
-
-=back
 
 =item Verify that Krang has been shut down.
 
 =item MySQLRootPassword must be valid, and MySQL should be running
 
-
 =back
 
+=item Make a backup of the existing Krang system using 'krang_backup'.
 
-
-=item Rename existing KRANG_ROOT to KRANG_ROOT + '.backup'.
-
-=item Copy existing Krang MySQL database folders to folder + '.backup'.
-
-=item Install new Krang system to KRANG_ROOT.
-
-=item Copy krang.conf, data/* from backup to new KRANG_ROOT.
+=item Install new Krang system over the existing files in KRANG_ROOT.
 
 =item Apply upgrade scripts.
 
@@ -112,34 +93,11 @@ Following is a list of the tasks the upgrade script will perform.
 
 =item Start Krang
 
-=back
-
-
 =item Output results of upgrade to console.
 
-=over 4
-
-=item Show rollback directory paths for KRANG_ROOT and database
-
 =back
 
 =back
-
-
-
-
-=head2 What C<krang_upgrade --rollback> does
-
-The following tasks will roll back an upgrade to the previously installed state.
-
-=over 4
-
-=item Replace KRANG_ROOT with KRANG_ROOT + '.backup'
-
-=item Replace Krang MySQL database folder with MySQL database folder + '.backup'
-
-=item Re-start Krang
-
 
 =back
 
@@ -154,12 +112,6 @@ The following tasks will roll back an upgrade to the previously installed state.
 
   --KrangRoot            - Directory where Krang is installed (KRANG_ROOT)
   --MySQLRootPassword    - Password for the MySQL user "root"
-
-
-=head2 Upgrade flags
-
-  --rollback             - Revert to last backup
-
 
 =head1 SEE ALSO
 
@@ -198,9 +150,10 @@ my $uniqueness = time();
 my %instance_dbs = ();
 my $mysql_datadir;
 my $OLD_CONF;
+my $BACKUP_FILENAME = "";
+my $OLD_VERSION;
 
-
-my ($help, $man, $rollback);
+my ($help, $man);
 
 my @opt_params = qw( KrangRoot MySQLRootPassword );
 
@@ -217,20 +170,15 @@ exit(0);
 sub do_upgrade {
     setup_getopts();
 
-    # Check all pre-requisites for upgrade or rollback
+    # Check all pre-requisites for upgrade
     check_prereqs();
 
-    if ($rollback) {
-        do_rollback();
-    } else {
-        # Do upgrade
-        make_backups();
-        install_new_krang();
-        copy_data();
-        apply_upgrades();
-        update_db_version();
-        clear_sessions();
-    }
+    # Do upgrade
+    make_backups();
+    install_new_krang();
+    apply_upgrades();
+    update_db_version();
+    clear_sessions();
 
     start_krang();
     output_report();
@@ -287,6 +235,9 @@ sub check_prereqs {
     exit_error("Unable to read config file '$krang_conf'.")
       unless $OLD_CONF;
 
+    # get Krang version
+    $OLD_VERSION = get_krang_version($KrangRoot);
+
     # Verify that this Krang has been shut down.
     # get status from the pid file
     my $pid_file = catfile($KrangRoot, "tmp", "httpd.pid");
@@ -299,7 +250,7 @@ sub check_prereqs {
             $running = 1;
         }
     }
-    exit_error ("Krang is still running.  You must shut down Krang before upgrading.")
+    exit_error ("Krang is still running.  You must shut down Krang before upgrading.  Do this by running:\n\n\t" . catfile($KrangRoot, "bin", "krang_ctl") . " stop\n")
       if ($running);
 
     # MySQLRootPassword must be valid, and MySQL should be running
@@ -321,213 +272,50 @@ sub check_prereqs {
         }
     }
 
-    # Get MySQL datadir
-    my $mysql_datadir_cmd = MYSQLADMIN_BIN ." -uroot";
-    $mysql_datadir_cmd .= " -p". $MySQLRootPassword if (length($MySQLRootPassword));
-    $mysql_datadir_cmd .= " variables";
-    my $mysql_datadir_output = `$mysql_datadir_cmd`;
-    unless ($mysql_datadir_output =~ /\s+datadir\s+\|\s+(\S+)\s+/) {
-        exit_error("Can't get datadir from MySQL.  Cannot continue.");
-    }
-    $mysql_datadir = $1;
-    print "  MySQL data directory: '$mysql_datadir'\n";
-
-    #
-    # Check pre-reqs differently for upgrades and rollbacks
-    #
-    if ($rollback) {
-
-        # Verify that backup KRANG_ROOT exists.
-        my $krang_root_backup = $KrangRoot .".backup";
-        exit_error("$krang_root_backup does not exist.  Cannot continue.")
-          unless (-e $krang_root_backup);
-
-        # Verify that backup exists for instance databases.  Parse out instances and databases for later.
-        foreach my $instpair ($OLD_CONF->get("instance")) {
-            my $instance = $instpair->[1];
-            my $conf_block = $OLD_CONF->block(instance => $instance);
-            my $db = $conf_block->get("InstanceDBName");
-            $instance_dbs{$instance} = $db;
-
-            my $mysql_instance_datadir_backup = $mysql_datadir . $db .".backup";
-            exit_error("$mysql_instance_datadir_backup does not exist.  Cannot continue.")
-              unless (-e $mysql_instance_datadir_backup);
-        }
-
-        # No Instances?
-        exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
-
-        print "  Found instances: ". 
-          join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
-    
-    } else {
-
-        # Verify that no backup KRANG_ROOT exists.
-        my $krang_root_backup = $KrangRoot .".backup";
-        exit_error("$krang_root_backup already exists.  You must remove this before you perform an upgrade.")
-          if (-e $krang_root_backup);
-
-        # Verify that no .backup exists for instance databases.  Parse out instances and databases for later.
-        foreach my $instpair ($OLD_CONF->get("instance")) {
-            my $instance = $instpair->[1];
-            my $conf_block = $OLD_CONF->block(instance => $instance);
-            my $db = $conf_block->get("InstanceDBName");
-            $instance_dbs{$instance} = $db;
-
-            my $mysql_instance_datadir_backup = $mysql_datadir . $db .".backup";
-            exit_error("$mysql_instance_datadir_backup already exists.  You must remove this before you perform an upgrade.")
-              if (-e $mysql_instance_datadir_backup);
-        }
-
-        # No Instances?
-        exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
-
-        print "  Found instances: ". 
-          join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
-    
-        # Calculate necessary disk space
-        my @curr_krang_paths = ( $KrangRoot, (map { $mysql_datadir . $_ } values(%instance_dbs)) );
-        my %path_info = ();
-        my %disk_avail = ();
-        foreach my $path (@curr_krang_paths) {
-            my $get_du = DU_BIN ." -sk $path";
-            my $du = `$get_du`;
-            exit_error ("Can't get disk usage for $path:  $du")
-              unless ($du =~ /^(\d+)\s+$path/);
-            $path_info{$path}->{du} = $1;
-
-            my $get_df = DF_BIN ." -k $path";
-            my $df = `$get_df`;
-            $df = (split/\n/, $df)[-1];
-            my (@df_data) = split(/\s+/, $df);
-
-            exit_error ("Can't get df for $path:  $df")
-              unless (@df_data);
-
-            $path_info{$path}->{partition} = $df_data[5];
-            $disk_avail{$df_data[5]} = $df_data[3] unless (exists($disk_avail{$df_data[5]}));
-        }
-
-        # Verify sufficient disk space: KRANG_ROOT + Instance MySQL folders
-        foreach my $path (@curr_krang_paths) {
-            my $req_kbytes = $path_info{$path}->{du};
-            my $partition = $path_info{$path}->{partition};
-
-            # Subtract space on partition
-            $disk_avail{$partition} -= $req_kbytes;
-        }
-
-        my $insufficient_disk_space = 0;
-        while (my ($partition, $avail) = each(%disk_avail)) {
-            # Require 100 megs of headroom on every partition
-            next if ($avail > 100000);
-
-            my $need_additional = abs($avail - 100000);
-            print "  Insufficient space on partition '$partition'.  Need additional $need_additional kb.\n";
-            $insufficient_disk_space++;
-        }
-        exit_error ("Not enough disk space for upgrade.  Unable to continue.") if ($insufficient_disk_space);
+    foreach my $instpair ($OLD_CONF->get("instance")) {
+        my $instance = $instpair->[1];
+        my $conf_block = $OLD_CONF->block(instance => $instance);
+        my $db = $conf_block->get("InstanceDBName");
+        $instance_dbs{$instance} = $db;
     }
 
+    # No Instances?
+    exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
+
+    print "  Found instances: ". 
+      join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
+    
     ## End of prereq check
 }
 
 
 sub make_backups {
-    print "Making backups\n";
+    # compute a backup filename
+    my ($y, $m, $d) = (localtime)[5,4,3];
+    $BACKUP_FILENAME = 
+      sprintf('krang-upgrade-%04d%02d%02d.kba', ($y+1900), $m, $d);
+    die "Backup file '$BACKUP_FILENAME' already exists.  ".
+      "Remove this file and try again.\n"
+        if -e $BACKUP_FILENAME;
 
-    ## Rename KRANG_ROOT to *.backup
-    #
-    my $KrangRoot = $options{KrangRoot};
-    print "  Moving KrangRoot to ". $KrangRoot .".backup\n";
-    rename($KrangRoot, $KrangRoot.".backup") || die($!);
+    print "Creating backup in '$BACKUP_FILENAME'.\n";
 
-    ## Copy MySQL directories to *.backup
-    #
-    # Shutdown MySQL
-    print "  Shutting down MySQL\n";
-    my $mysql_init = MYSQL_INIT ." stop";
-    system($mysql_init) && die("Error shutting down MySQL");
-
-    # Delay for MySQL shutdown
-    sleep(2);
-
-    # Iterate through instances, making .backup files
-    foreach my $db (values(%instance_dbs)) {
-        my $db_path = $mysql_datadir . $db;
-        my $db_backup = $db_path . ".backup";
-
-        print "  Copying $db_path to $db_backup\n";
-        my $cp_cmd = CP_BIN ." -a $db_path $db_backup";
-        system($cp_cmd) && die("$cp_cmd\nError copying $db_path: $!");
-    }
-
-    # Re-start MySQL
-    print "  Restarting MySQL\n";
-    $mysql_init = MYSQL_INIT ." start";
-    system($mysql_init) && die("Error starting MySQL");
-
-    # Delay for MySQL startup
-    sleep(2);
+    # run krang_backup
+    my $backup = catfile($options{KrangRoot}, 'bin', 'krang_backup') . 
+      " $BACKUP_FILENAME" . " 2>&1";
+    my $out = `$backup`;
+    exit_error("Problem creating krang_backup:\n$out\n")
+      unless $out =~ /Backup complete/;
 }
-
-
-sub do_rollback {
-    print "Restoring from backups\n";
-
-    ## Rename KRANG_ROOT to *.backup
-    #
-    my $KrangRoot = $options{KrangRoot};
-    my $KrangRootBackup = $KrangRoot .".backup";
-    print "  Deleting $KrangRoot\n";
-    my $rm_cmd = RM_BIN ." -rf $KrangRoot";
-    system($rm_cmd) && die("Can't delete $KrangRoot: $!");
-
-    print "  Moving $KrangRootBackup to $KrangRoot\n";
-    rename($KrangRootBackup, $KrangRoot) || die($!);
-
-    ## Copy MySQL directories to *.backup
-    #
-    # Shutdown MySQL
-    print "  Shutting down MySQL\n";
-    my $mysql_init = MYSQL_INIT ." stop";
-    system($mysql_init) && die("Error shutting down MySQL");
-
-    # Delay for MySQL shutdown
-    sleep(2);
-
-    # Iterate through instances, making .backup files
-    foreach my $db (values(%instance_dbs)) {
-        my $db_path = $mysql_datadir . $db;
-        my $db_backup = $db_path . ".backup";
-
-        print "  Deleting $db_path\n";
-        my $rm_cmd = RM_BIN ." -rf $db_path";
-        system($rm_cmd) && die("Can't delete $db_path: $!");
-
-        print "  Moving $db_backup to $db_path\n";
-        rename($db_backup, $db_path) || die($!);
-    }
-
-    # Re-start MySQL
-    print "  Restarting MySQL\n";
-    $mysql_init = MYSQL_INIT ." start";
-    system($mysql_init) && die("Error starting MySQL");
-
-    # Delay for MySQL startup
-    sleep(2);
-}
-
 
 sub install_new_krang {
     my $new_krang = $ENV{KRANG_ROOT};
     my $InstallPath = $options{KrangRoot};
-    mkdir($InstallPath) || die($!);
 
     print "Installing new Krang files into '$InstallPath'\n";
 
     chdir($ENV{KRANG_ROOT});
-    my $copy = COPY_BIN ." -r * $InstallPath\/";
+    my $copy = COPY_BIN ." -a * $InstallPath\/";
     system($copy) && die("Can't copy: $!");
 
     print "  Fixing ownership\n";
@@ -536,61 +324,8 @@ sub install_new_krang {
     my $chown = CHOWN_BIN ." -R $KrangUser\.$KrangGroup $InstallPath";
     system($chown) && die("Can't update ownership: $!");
 
-    # For commands
-    my $chmod;
-
-    print "  Setting group write permissions\n";
-    $chmod = CHMOD_BIN ." -R g+w $InstallPath";
-    system($chmod) && die("Can't set group write permissions: $!");
-
-    print "  Fixing directory read permissions\n";
-    $chmod = FIND_BIN ." $InstallPath -type d | ". XARGS_BIN ." ". CHMOD_BIN ." +rx";
-    system($chmod) && die("Can't fix directory read permissions: $!");
-
-    print "  Fixing file read permissions\n";
-    $chmod = FIND_BIN ." $InstallPath -type f | ". XARGS_BIN ." ". CHMOD_BIN ." +r";
-    system($chmod) && die("Can't fix file read permissions: $!");
-
-    print "  Setting execute bits on scripts\n";
-
-    # Set all *.pl files
-    $chmod = FIND_BIN ." $InstallPath -type f -name '*.pl' | ". XARGS_BIN ." ". CHMOD_BIN ." +x";
-    system($chmod) && die("Can't set execite bits: $!");
-
-    # Set all *.cgi files
-    $chmod = FIND_BIN ." $InstallPath -type f -name '*.cgi' | ". XARGS_BIN ." ". CHMOD_BIN ." +x";
-    system($chmod) && die("Can't set execite bits: $!");
-
-    # Set all files in krang/bin/*
-    $chmod = CHMOD_BIN ." +x $InstallPath/bin/*";
-    system($chmod) && die("Can't set execite bits: $!");
-
     print "  Krang files installed.\n";
 }
-
-
-# Copy krang.conf, data/* from backup to new KRANG_ROOT.
-sub copy_data {
-    print "Copying settings and data from old installation\n";
-
-    my $KrangPath    = $options{KrangRoot};
-    my $OldKrangPath = $KrangPath .".backup";
-
-    # Copy krang.conf
-    my $old_conf = $OldKrangPath ."/conf/krang.conf";
-    my $new_conf = $KrangPath    ."/conf/krang.conf";
-    print "  Copying $old_conf to $new_conf\n";
-    my $conf_cp_cmd = CP_BIN ." -af $old_conf $new_conf";
-    system($conf_cp_cmd) && die("Error copying krang.conf: $!");
-
-    # Copy data/*
-    my $old_data = $OldKrangPath ."/data";
-    my $new_data = $KrangPath;
-    print "  Copying $old_data to $new_data\n";
-    my $data_cp_cmd = CP_BIN ." -af $old_data $new_data";
-    system($data_cp_cmd) && die("Error copying data/ directory: $!");
-}
-
 
 # Run through upgrade module per_installation() and per_instance() methods.
 sub apply_upgrades {
@@ -598,7 +333,7 @@ sub apply_upgrades {
 
     my $KrangRoot = $options{KrangRoot};
 
-    my $old_krang_version = get_krang_version($KrangRoot .".backup");
+    my $old_krang_version = $OLD_VERSION;
     my $new_krang_version = get_krang_version($KrangRoot);
     print "  Upgrading v$old_krang_version to v$new_krang_version\n";
 
@@ -664,10 +399,9 @@ sub clear_sessions {
 
 
 sub start_krang {
-    my $HostName   = $OLD_CONF->get("HostName");
-    my $init_script = "krang-". $HostName .".init";
-    print "Starting Krang via init.d script '$init_script'\n";
-    my $start = "KRANG_ROOT='' PERL5LIB='' /etc/init.d/$init_script start";
+    my $KrangRoot = $options{KrangRoot};
+    print "Starting Krang using $KrangRoot/bin/krang_ctl\n";
+    my $start = "KRANG_ROOT='' PERL5LIB='' $KrangRoot/bin/krang_ctl start";
     system($start) && die("Can't start Krang: $!");
 }
 
@@ -683,14 +417,12 @@ sub output_report {
     my $init_script = "/etc/init.d/krang-". $HostName .".init";
     my $krang_conf = $KrangRoot ."/conf/krang.conf";
 
-    my $report_title = ($rollback) ? "KRANG ROLLBACK COMPLETE" : "KRANG UPGRADE COMPLETE " ;
-
     print <<EOREPORT;
 
 
 #####                                                    #####
 ###                                                        ###
-##                  $report_title                 ##
+##                  KRANG UPGRADE COMPLETE                  ##
 ###                                                        ###
 #####                                                    #####
 
@@ -702,6 +434,9 @@ sub output_report {
    Running on $IPAddress --
      http://$HostName:$ApachePort/
      ftp://$HostName:$FTPPort/
+
+   A backup of your system before the upgrade is here:
+     $BACKUP_FILENAME
 
 EOREPORT
 
@@ -732,7 +467,6 @@ sub setup_getopts {
     pod2usage(2) unless
         GetOptions( 'help'          => \$help,
                     'man'           => \$man,
-                    'rollback'      => \$rollback,
                     (map { $_."=s"  => \$options{$_} } @opt_params) );
 
     pod2usage(1)             if $help;
