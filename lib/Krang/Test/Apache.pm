@@ -63,7 +63,9 @@ Test::More does.
 =head1 INTERFACE
 
 All functions described below can take an optional final $name
-parameter to name the test, like Test::More::ok() and others.
+parameter to name the test, like Test::More::ok() and others.  All the
+functions described below are exported by default, in true Test::More
+style.
 
 =over 4
 
@@ -166,26 +168,6 @@ sub response_unlike {
     my ($re, $name) = @_;
     $Test->unlike($res->content, $re, $name);
 }
-
-=item lwp_ua()
-
-Not a test in itself, this function returns the LWP::UserAgent used by
-this test module.  This can be used to perform more exotic tests than
-the interface supports.
-
-=cut
-
-sub lwp_ua { $ua }
-
-=item lwp_response()
-
-Not a test in itself, this function returns the HTTP::Reponse object
-for the last reponse.  This can be used to perform more exotic tests
-than the interface supports.
-
-=cut
-
-sub lwp_response { $res }
 
 =back
 
