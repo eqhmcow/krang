@@ -33,4 +33,22 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+sub fill_template {
+    my ($self, %args) = @_;
+
+    my $tmpl      = $args{tmpl};
+    my $element   = $args{element};
+    my $publisher = $args{publisher};
+    
+    my $parent = $element->parent();
+
+    my $rel_articles = $parent->child('article_related_link_box') || '';
+
+    if ($rel_articles) {
+        $tmpl->param( article_related_link_box => $rel_articles->publish(publisher => $publisher) );
+    }
+
+    $self->SUPER::fill_template( %args );
+}
+
 1;

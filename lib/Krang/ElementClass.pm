@@ -616,6 +616,8 @@ sub fill_template {
     }
 
 
+    my %element_count;
+
     foreach my $child (@element_children) {
         my $name     = $child->name;
         my $loopname = $name . '_loop';
@@ -644,9 +646,11 @@ sub fill_template {
 
         # build element_loop if it exists.
         if (exists($template_vars{element_loop})) {
+            $element_count{$name} ? $element_count{$name}++ : ($element_count{$name} = 1);
             push @{$params{element_loop}}, {
                                             "is_$name" => 1,
-                                            $name      => $html
+                                            $name      => $html,
+                                            $name.'_count' => $element_count{$name}
                                            };
         }
 

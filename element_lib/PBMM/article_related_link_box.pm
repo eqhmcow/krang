@@ -18,7 +18,6 @@ use base 'Krang::ElementClass';
 sub new {
    my $pkg = shift;
    my %args = ( name => 'article_related_link_box',
-                min  => 1,
                 children => 
                 [ 
                  Default::lead_in->new(),

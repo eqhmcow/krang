@@ -25,7 +25,8 @@ sub new {
                                                     min => 1,
                                                     max => 1,
                                                     allow_delete => '0',
-                                                    reorderable => '0' ),    
+                                                    reorderable => '0',
+                                                    required => 1 ),    
                  Krang::ElementClass::PopupMenu->new(name => "type",
                                                     reorderable => '0',
                                                    min => 1,
@@ -84,7 +85,6 @@ sub fill_template {
    
     $tmpl->param( image_alignment => $args{element}->child('image_alignment')->data ); 
     $tmpl->param( type => $type );
-
 }
 
 
