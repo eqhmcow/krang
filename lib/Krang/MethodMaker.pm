@@ -16,8 +16,9 @@ Krang::MethodMaker - extended version of Class::MethodMaker
   # scratchy() that trigger calls to _notify() when set.
   use Krang::MethodMaker
     get     => ['foo_id'],
-    get_set => ['title', 'url'];
-    get_set_with_notify => ['itchy', 'scratchy'];
+    get_set => ['title', 'url'],
+    get_set_with_notify => { method => '_notify',
+                             attr   => ['itchy', 'scratchy'] };
 
   # catch changes to itchy and scratchy
   sub _notify {
@@ -68,9 +69,11 @@ sub get_set {
 
 =item get_set_with_notify
 
-Works like get_set, but after setting calls the special C<_notify()>
+Works like get_set, but after set operations calls the specified
 method with three three parameters - the attribute which changed, the
 old value and the new value.
+
+Takes a list of hashes with two keys - method and attr.
 
 =cut
 
@@ -78,21 +81,25 @@ sub get_set_with_notify {
     my ($class, @args) = @_;
 
     my %meths;
-    foreach my $slot (@args) {
-        $meths{$slot} = sub {
-            return $_[0]->{$slot}
-              if @_ == 1;
-            if (@_ == 2) {
-                my $old = $_[0]->{$slot};
-                $_[0]->{$slot} = $_[1];
-                $_[0]->_notify($slot, $old, $_[1]);
-                return $_[0]->{$slot};
-            }
-
-            croak "wrong # of args to '$slot' method: must be 0 or 1.\n";
-        };
+    foreach (@args) {
+        my $method = $_->{method};
+        my $attr   = $_->{attr};
+        foreach my $slot (@$attr) {
+            no strict 'subs'; # allow $foo->$bar()
+            $meths{$slot} = sub {
+                return $_[0]->{$slot}
+                  if @_ == 1;
+                if (@_ == 2) {
+                    my $old = $_[0]->{$slot};
+                    $_[0]->{$slot} = $_[1];
+                    $_[0]->$method($slot, $old, $_[1]);
+                    return $_[0]->{$slot};
+                }
+                croak "wrong # of args to '$slot' method: must be 0 or 1.\n";
+            };
+        }
     }
-
+    
     $class->install_methods(%meths);
 }
 
