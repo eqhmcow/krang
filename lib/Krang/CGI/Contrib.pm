@@ -145,7 +145,8 @@ sub search {
                                       columns => [qw(last first_middle type command_column checkbox_column)],
                                       column_labels => {
                                                         last => 'Last Name',
-                                                        first_middle => 'First, Middle Name'
+                                                        first_middle => 'First, Middle Name',
+                                                        type => 'Types',
                                                        },
                                       columns_sortable => [qw( last first_middle )],
                                       columns_sort_map => {first_middle => 'first,middle'},
@@ -532,8 +533,8 @@ sub delete_selected {
     my $self = shift;
 
     my $q = $self->query();
-    my @contrib_delete_list = ( $q->param('contrib_delete_list') );
-    $q->delete('contrib_delete_list');
+    my @contrib_delete_list = ( $q->param('krang_pager_rows_checked') );
+    $q->delete('krang_pager_rows_checked');
 
     # No selected contribs?  Just return to list view without any message
     return $self->search() unless (@contrib_delete_list);

@@ -550,6 +550,10 @@ A subroutine reference pointing to a custom function to return a
 unique identifier for each row of data.  This ID is needed for
 creating the checkbox columns and command columns.
 
+The referenced subroutine receives a reference to the object to be
+displayed on this row.  The job of your custom function is to return
+a unique identifier for this row.
+
 
 =back
 
@@ -567,7 +571,7 @@ creating the checkbox columns and command columns.
 # Return the user-preferred page size
 sub get_user_page_size {
     # When implemented, replace this with the appropriate call to Krang::Prefs
-    return 20;
+    return 7;
 }
 
 
@@ -656,19 +660,27 @@ sub get_pager_view {
     my $curr_page_num = ($q->param('krang_pager_curr_page_num') || '1');
     my $sort_field = ($q->param('krang_pager_sort_field') || '');
     my $sort_order_desc = ($q->param('krang_pager_sort_order_desc'));
+
+    # Page size is either 100, or user preferred size.
     my $show_big_view = ($q->param('krang_pager_show_big_view') || '0');
     my $user_page_size = $self->get_user_page_size();
-
-    # Build up find() args
-    my %find_params = %{$self->find_params()};
     my $limit = ($show_big_view) ? 100 : $user_page_size ;
-    my $offset = ($curr_page_num - 1) * $limit;
 
     # Count used to calculate page navigation
     my $use_module = $self->use_module();
+    my %find_params = %{$self->find_params()};
     my $found_count = $use_module->find(%find_params, count=>1);
     my $total_pages = int($found_count / $limit) + (($found_count % $limit) > 0);
+
+    # Is the current page beyond the $total_pages?  Bring it back in.
+    # This may be the case if a delete operation has reduced the number of pages.
+    $curr_page_num = $total_pages if ($curr_page_num > $total_pages);
+
+    # Build page-jumper
     my @page_numbers = ( map { {page_number=>$_, is_current_page=>($_ eq $curr_page_num)} } (1..$total_pages) );
+
+    # Determine row number at which display starts
+    my $offset = ($curr_page_num - 1) * $limit;
 
     # Set up previous page nav -- show link unless we're on the first page
     my $prev_page_number = $curr_page_num - 1;
@@ -696,7 +708,7 @@ sub get_pager_view {
         my %row_data = ( map { $_=>'' } @{$self->columns} );
 
         # Build command_column and checkbox_column
-        ### TO DO
+        $self->make_dynamic_columns(\%row_data, $fobj);
 
         # Call row_handler
         my $row_handler = $self->row_handler();
@@ -724,7 +736,7 @@ sub get_pager_view {
                       start_row        => $start_row,
                       end_row          => $end_row,
 
-                      page_numbers => \@page_numbers,
+                      page_numbers     => \@page_numbers,
                       prev_page_number => $prev_page_number,
                       next_page_number => $next_page_number,
 
@@ -732,6 +744,42 @@ sub get_pager_view {
                      );
 
     return \%pager_view;
+}
+
+
+# Build command_column and row_column
+sub make_dynamic_columns {
+    my $self = shift;
+    my ($row_data, $fobj) = @_;
+
+    my $id_handler = $self->id_handler();
+    my $row_id = $id_handler->($fobj);
+
+    # Build command_column
+    if (exists($row_data->{command_column})) {
+        my @command_column_commands = @{$self->command_column_commands()};
+        my %command_column_labels = %{$self->command_column_labels()};
+
+        # Build HTML for commands
+        my @commands_html = ();
+        foreach my $command (@command_column_commands) {
+            my $href = "javascript:$command('$row_id')";
+            my $link_text = (exists($command_column_labels{$command}) 
+                             ? $command_column_labels{$command} : $command);
+            my $link = "<a href=\"$href\">$link_text</a>";
+            push(@commands_html, $link);
+        }
+
+        # Propagate to template
+        my $command_column_html = join("&nbsp;|&nbsp;", @commands_html);
+        $row_data->{command_column} = $command_column_html;
+    }
+
+    # Build checkbox_column
+    if (exists($row_data->{checkbox_column})) {
+        my $html = '<input type="checkbox" name="krang_pager_rows_checked" value="'. $row_id .'">';
+        $row_data->{checkbox_column} = $html;
+    }
 }
 
 
