@@ -2,6 +2,9 @@ package Krang::Widget;
 use strict;
 use warnings;
 
+use Carp qw(croak);
+use HTML::Template;
+
 use Krang::Category;
 use Krang::Conf qw(KrangRoot);
 
@@ -61,7 +64,7 @@ sub category_chooser {
                                       );
 
     my $category_id = $query->param($name) || 0;
-                                       
+
     # setup category loop
     my @cats = Krang::Category->find(order_by => 'url');
     my @category_loop;
