@@ -36,6 +36,10 @@ sub fill_template {
     my $cat   = $args{element}->object;
     my $publisher = $args{publisher};
 
+    my $parent = $args{element}->parent();
+    
+    $tmpl->param( "is_".$parent->name => 1);
+
     my @category_loop;
 
     my $top_cat = $cat; 
