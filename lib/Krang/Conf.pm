@@ -96,9 +96,13 @@ sub _load {
     }
 
     croak(<<CROAK) unless -e $conf_file and -r _;
-Unable to find krang.conf.  Please set the KRANG_CONF environment
-variable to the location of the Krang configuration file, or KRANG_ROOT 
-to a directory containing conf/krang.conf.
+
+Unable to find krang.conf!
+
+Krang scripts must be run from within an installed copy of Krang,
+which will have a conf/krang.conf file.  You might be trying to run a
+Krang script from a Krang source directory.
+
 CROAK
 
     # load conf file into package global
