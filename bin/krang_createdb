@@ -12,11 +12,19 @@ krang_createdb
 
 Build databases which do not exist:
 
-   krang_createdb
+   krang_createdb --all
+
+Build the database for the instance 'test1':
+
+   krang_createdb test1
+
+Destroy and recreate the 'test1' instance database:
+
+   krang_createdb --destroy test1
 
 Destroy and recreate all databases:
 
-   krang_createdb --destroy
+   krang_createdb --destroy --all
 
 Provide the MySQL root password, required if MySQL is configured to
 need one:
@@ -35,10 +43,14 @@ The script takes the following options:
 
 =item --destroy
 
-By default the script only creates databases that do not already
-exist.  This option tells krang_createdb to destroy and recreate any
-existing databases.  You will be prompted to confirm your dangerous
-request.
+By default the script only creates databases if they do not already
+exist.  This option tells krang_createdb to destroy the database
+first.  You will be prompted to confirm your dangerous request.
+
+=item --all
+
+Operate on all databases.  If this option is used then no instance
+name should be specified.
 
 =item --no_create
 
@@ -104,7 +116,7 @@ use Getopt::Long;
 use Pod::Usage;
 use XML::Simple;
 
-my ($help, $man, $password, $destroy, $no_prompt, $no_create);
+my ($help, $man, $password, $destroy, $no_prompt, $no_create, $all);
 my $verbose = 0;
 GetOptions(help         => \$help,
            man          => \$man,
@@ -113,9 +125,26 @@ GetOptions(help         => \$help,
             no_prompt   => \$no_prompt,
             no_create   => \$no_create,
            'password=s' => \$password,
+           all          => \$all,
           );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
+
+# get an instance, or collect instances for all
+my @instances;
+if ($all) {
+    pod2usage("Invalid attempt to combine an instance name with --all.")
+      if @ARGV;
+    @instances = Krang::Conf->instances();
+} else {
+    pod2usage("Too many args.")
+      if @ARGV > 1;
+    pod2usage("Missing required instance name.")
+      unless @ARGV;
+    @instances = @ARGV;
+    pod2usage("Unrecognized instance '$instances[0]'")
+      unless grep { $_ eq $instances[0] } Krang::Conf->instances;
+}
 
 # make sure MySQL has what it needs
 my $test_mysql = qq{mysql -uroot -e "select 'world' as hello" };
@@ -142,11 +171,11 @@ if ($destroy) {
     # make sure they really meant --destroy
     unless ($no_prompt) {
         exit 1      
-        unless prompt("y", "This program will drop and recreate all Krang databases (including the \ndatabase-linked contents of data/) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
+        unless prompt("y", "This program will drop and recreate Krang databases (including the \ndatabase-linked contents of data/) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
     }
 
     # drop all databases
-    foreach my $instance (Krang::Conf->instances) {
+    foreach my $instance (@instances) {
         Krang::Conf->instance($instance);
         my $name = InstanceDBName;
         print STDERR "Dropping database '$name'...\n" if $verbose;
@@ -171,7 +200,7 @@ if ($destroy) {
 exit 1 if $no_create;
 
 # create databases
-foreach my $instance (Krang::Conf->instances()) {
+foreach my $instance (@instances) {
     Krang::Conf->instance($instance);
     my $name = InstanceDBName;
     my $user = DBUser;
@@ -183,7 +212,10 @@ foreach my $instance (Krang::Conf->instances()) {
     $cmd .= " -v" if $verbose > 1;
     $cmd .= " 2>&1";
     print "Running '$cmd'\n" if $verbose > 1;
-    next if `$cmd` =~ /$name exists/;
+    if (`$cmd` =~ /$name exists/) {
+        print "Database '$name' already exists, skipping create.\n";
+        next;
+    }
 
     # create the database
     print STDERR "Creating database '$name'...\n" if $verbose;
