@@ -1038,8 +1038,8 @@ sub _build_cat_trail_loop {
 
     my @category_loop;
 
-    my $story   = $args{element}->object;
-    my $base_cat   = $story->category;
+    my $object   = $args{element}->object;
+    my $base_cat = $object->isa('Krang::Story') ? $object->category : $object;
 
     push (@category_loop, { display_name => $base_cat->element->child('display_name')->data, url => $base_cat->url } );
 
