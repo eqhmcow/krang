@@ -922,7 +922,7 @@ sub get_tmpl_params {
         }
         $tmpl_params{history_return_params} = join("\n", @history_params);
 
-        $tmpl_params{can_edit} = 1 unless ( $template->checked_out and ($template->checked_out_by ne $session{user_id}) );
+        $tmpl_params{can_edit} = 1 unless ( $template->checked_out and ($template->checked_out_by ne $ENV{REMOTE_USER}) );
 
     }
 
@@ -1009,7 +1009,7 @@ sub search_row_handler {
     $row->{template_id} = $template->template_id;
     $row->{url} = format_url(url => $template->url, length => 50);
 
-       if (($template->checked_out) and ($template->checked_out_by ne $session{user_id})) {
+       if (($template->checked_out) and ($template->checked_out_by ne $ENV{REMOTE_USER})) {
         $row->{commands_column} = '<a href="javascript:view_template('."'".$template->template_id."'".')">View</a>'
     } else {
         $row->{commands_column} = '<a href="javascript:edit_template('."'".$template->template_id."'".')">Edit</a>'

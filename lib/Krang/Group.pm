@@ -951,7 +951,7 @@ sub user_desk_permissions {
 
     # Just need user_id.  Don't need user.
     # Assumes that user_id is valid and authenticated
-    my $user_id = $session{'user_id'}
+    my $user_id = $ENV{REMOTE_USER}
       || croak("No user_id in session");
 
     my $get_all_group_desks_sql = qq/ 
@@ -1031,7 +1031,7 @@ sub user_asset_permissions {
     my $asset = shift;
 
     # Assumes that user_id is valid and authenticated
-    my $user_id = $session{'user_id'}
+    my $user_id = $ENV{REMOTE_USER}
       || croak("No user_id in session");
     my ($user) = Krang::User->find(user_id=>$user_id);
     croak("Can't find user id '$user_id'") unless ($user && ref($user));
@@ -1158,7 +1158,7 @@ sub user_admin_permissions {
     my $admin_perm = shift;
 
     # Assumes that user_id is valid and authenticated
-    my $user_id = $session{'user_id'}
+    my $user_id = $ENV{REMOTE_USER}
       || croak("No user_id in session");
     my ($user) = Krang::User->find(user_id=>$user_id);
     croak("Can't find user id '$user_id'") unless ($user && ref($user));

@@ -78,7 +78,7 @@ sub get {
     my $dbh  = dbh();
     croak("Invalid pref '$name' does not exist in %Krang::MyPref::CONFIG")
       unless $conf;
-    my $user_id = $session{user_id};
+    my $user_id = $ENV{REMOTE_USER};
 
     if ($conf->{type} eq 'scalar') {
         # handle scalar pref
@@ -115,7 +115,7 @@ sub set {
     my ($pkg, $name, @args) = @_;
     my $conf = $CONFIG{$name};
     my $dbh  = dbh();
-    my $user_id = $session{user_id};
+    my $user_id = $ENV{REMOTE_USER};
     croak("Invalid pref '$name' does not exist in %Krang::MyPref::CONFIG")
       unless $conf;
 

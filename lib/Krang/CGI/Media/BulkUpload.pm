@@ -209,7 +209,7 @@ sub check_media {
                                         filename => $file->{name} ))[0] || '';
         if ($media) {
             if ($media->checked_out) {
-                if ($media->checked_out_by == $session{user_id}) {
+                if ($media->checked_out_by == $ENV{REMOTE_USER}) {
                     $file->{media_id} = $media->media_id;
                 } else {
                     $checked_out = 1;

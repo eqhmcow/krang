@@ -89,13 +89,15 @@ BEGIN {
       $ENV{KRANG_INSTANCE} : (Krang::Conf->instances())[0];
     debug("Krang.pm:  Setting instance to '$instance'");    
     Krang::Conf->instance($instance);
-    
+  
     my $session_id = Krang::Session->create();
-    
-    # get a user_id from KRANG_USER_ID or default to 1
-    my $user_id = exists $ENV{KRANG_USER_ID} ? $ENV{KRANG_USER_ID} : 1;
-    $session{user_id} = $user_id;
-    debug "Setting user_id to $user_id";
+
+    # get a user_id from REMOTE_USER or default to 1
+    unless (exists($ENV{REMOTE_USER})) {
+        my $user_id = 1;
+        $ENV{REMOTE_USER} = $user_id;
+        debug "Setting user_id to $user_id";
+    }
 }
 
 # arrange for session to be deleted at process end

@@ -447,7 +447,7 @@ sub init {
     $self->{version}        = 0;
     $self->{priority}       = 2;
     $self->{checked_out}    = 1;
-    $self->{checked_out_by} = $session{user_id};
+    $self->{checked_out_by} = $ENV{REMOTE_USER};
     $self->{cover_date}     = Time::Piece->new();
 
     # handle categories setup specially since it needs to call
@@ -1274,7 +1274,7 @@ sub checkout {
     $story_id = $self->{story_id} if $self;
 
     my $dbh      = dbh();
-    my $user_id  = $session{user_id};
+    my $user_id  = $ENV{REMOTE_USER};
 
     # short circuit checkout on instance method version of call...
     return if $self and
@@ -1341,7 +1341,7 @@ sub checkin {
     my $self     = ref $_[0] ? $_[0]             : undef;
     my $story_id = $self     ? $self->{story_id} : $_[0];
     my $dbh      = dbh();
-    my $user_id  = $session{user_id};
+    my $user_id  = $ENV{REMOTE_USER};
 
     if ($self) {
         # make sure we're checked out
@@ -1387,7 +1387,7 @@ sub _verify_checkout {
       unless $self->{checked_out};
 
     croak("Story '$self->{story_id}' is already checked out by another user '$self->{checked_out_by}'")
-      unless $self->{checked_out_by} == $session{user_id};
+      unless $self->{checked_out_by} == $ENV{REMOTE_USER};
 }
 
 

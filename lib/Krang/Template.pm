@@ -343,7 +343,7 @@ sub checkout {
     my $self = shift;
     my $id = shift || $self->{template_id};
     my $dbh = dbh();
-    my $user_id = $session{user_id};
+    my $user_id = $ENV{REMOTE_USER};
 
     # make sure we actually have an object
     ($self) = Krang::Template->find(template_id => $id) unless ref $self;
@@ -808,7 +808,7 @@ sub init {
     # setup defaults
     $self->{version}        = 0;
     $self->{checked_out}    = 1;
-    $self->{checked_out_by} = $session{user_id};
+    $self->{checked_out_by} = $ENV{REMOTE_USER};
     $self->{deployed}       = 0;
     $self->{testing}        = 0;
     $self->{creation_date}  = localtime();
@@ -832,7 +832,7 @@ user.
 
 sub mark_for_testing {
     my $self = shift;
-    my $user_id = $session{user_id};
+    my $user_id = $ENV{REMOTE_USER};
 
     $self->verify_checkout();
 
@@ -919,7 +919,7 @@ no rows in the DB.
 
 sub save {
     my $self = shift;
-    my $user_id = $session{user_id};
+    my $user_id = $ENV{REMOTE_USER};
     my $id = $self->{template_id} || 0;
 
     # list of DB fields to insert or update; exclude 'template_id'
@@ -1119,7 +1119,7 @@ out or is checked out by another user, otherwise, '1' is returned.
 sub verify_checkout {
     my $self = shift;
     my $id = $self->{template_id};
-    my $user_id = $session{user_id};
+    my $user_id = $ENV{REMOTE_USER};
 
     Krang::Template::Checkout->throw(message => "Template isn't checked out.",
                                      template_id => $id)

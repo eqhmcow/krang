@@ -97,9 +97,8 @@ sub login {
                        hash       => md5_hex($user_id . $instance .
                                              $session_id . $SALT) );
 
-    # save user info in new session hash
-    $session{user_id}  = $user_id;
-    $session{username} = $username;
+    # Propagate user ID to environment
+    $ENV{REMOTE_USER}  = $user_id;
 
     # Unload the session if we've created it
     Krang::Session->unload() unless (defined($ENV{KRANG_SESSION_ID}));

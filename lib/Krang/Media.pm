@@ -216,7 +216,7 @@ sub init {
     
     $self->{contrib_ids} = [];
     $self->{version} = 0;  # versions start at 0
-    $self->{checked_out_by} = $session{user_id};   
+    $self->{checked_out_by} = $ENV{REMOTE_USER};   
     $self->{creation_date} = localtime unless defined $self->{creation_date};
 
     # Set up temporary permissions
@@ -1042,7 +1042,7 @@ sub checkout {
     my $self = shift;
     my $media_id = shift;
     my $dbh = dbh;
-    my $user_id = $session{user_id};
+    my $user_id = $ENV{REMOTE_USER};
 
     # short circuit checkout on instance method version of call...
     return if $self and
@@ -1098,7 +1098,7 @@ sub checkin {
     my $self = shift;
     my $media_id = shift;
     my $dbh = dbh;
-    my $user_id = $session{user_id};
+    my $user_id = $ENV{REMOTE_USER};
 
     my $is_object = $media_id ? 0 : 1;
     $media_id = $self->{media_id} if (not $media_id);

@@ -106,7 +106,7 @@ sub find {
     $order_by .= ",id" unless $order_by eq 'id' or $order_by =~ /,/;
 
     # use logged in user_id unless user_id passed in
-    my $user_id = $args{user_id} ? $args{user_id} : $session{user_id};
+    my $user_id = $args{user_id} ? $args{user_id} : $ENV{REMOTE_USER};
     my @param  = ($user_id) x 3;
     
     # FIX: this code could be smarter about which fields to SELECT

@@ -130,7 +130,7 @@ sub add_history {
     my $history = Krang::History->new(%args);
 
     $history->{version} = $object->version() if (($args{action} eq 'save') || ($args{action} eq 'revert'));
-    $history->{user_id} = $session{user_id};
+    $history->{user_id} = $ENV{REMOTE_USER};
    
     my $object_type = ref $object;
     $history->{object_type} = $object_type;

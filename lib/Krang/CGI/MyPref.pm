@@ -63,7 +63,7 @@ sub edit {
     my $self = shift;
     my $error = shift || '';
     my $q = $self->query;
-    my $user_id = $session{user_id};
+    my $user_id = $ENV{REMOTE_USER};
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
     $template->param( $error => 1 ) if $error;
     
@@ -130,7 +130,7 @@ sub add_alert {
     my $q = $self->query();
     my %params;
     
-    $params{user_id} = $session{user_id};
+    $params{user_id} = $ENV{REMOTE_USER};
     $params{action} = $q->param('action_list');
     $params{desk_id} = $q->param('desk_list') if $q->param('desk_list');
     $params{category_id} = $q->param('category_id') if $q->param('category_id'); 
@@ -160,7 +160,7 @@ sub update_prefs {
     Krang::MyPref->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size");
     
     if ($q->param('new_password')) {
-        my $user_id = $session{user_id};
+        my $user_id = $ENV{REMOTE_USER};
         my $user = (Krang::User->find( user_id => $user_id ))[0];
         $user->password($q->param('new_password'));
         $user->save;

@@ -30,7 +30,7 @@ my $story = Krang::Story->new(categories => [$root_cat],
 $story->save();
 END { $story->delete() }
 
-my $alert = Krang::Alert->new(  user_id => $session{user_id},
+my $alert = Krang::Alert->new(  user_id => $ENV{REMOTE_USER},
                                 action => 'checkin',
                                 category_id => $root_cat->category_id );
 

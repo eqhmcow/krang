@@ -1350,7 +1350,7 @@ sub make_media_view_tmpl_data {
     }
     $tmpl_data{return_params} = join("\n", @return_params_hidden);
 
-    $tmpl_data{can_edit} = 1 unless ( $m->checked_out and ($m->checked_out_by ne $session{user_id}) );
+    $tmpl_data{can_edit} = 1 unless ( $m->checked_out and ($m->checked_out_by ne $ENV{REMOTE_USER}) );
 
     # Send data back to caller for inclusion in template
     return \%tmpl_data;
@@ -1464,7 +1464,7 @@ sub find_media_row_handler {
     my $pub_status = ($media->published()) ? 'P' : '&nbsp;' ;
     $row->{pub_status} = '&nbsp;<b>'. $pub_status .'</b>&nbsp;';
 
-    if (($media->checked_out) and ($media->checked_out_by ne $session{user_id})) {
+    if (($media->checked_out) and ($media->checked_out_by ne $ENV{REMOTE_USER})) {
         $row->{commands_column} = '<a href="javascript:view_media('."'".$media->media_id."'".')">View</a>'
     } else {
         $row->{commands_column} = '<a href="javascript:edit_media('."'".$media->media_id."'".')">Edit</a>'

@@ -91,7 +91,7 @@ sub get {
                 my $session_id = Krang::Session->create();
                 my $user_id = ${$self->{ftps}{user_objects}}{$inst}->user_id;
                 $self->{ftps}{user_obj} = ${$self->{ftps}{user_objects}}{$inst};
-                $session{user_id} = $user_id;
+                $ENV{REMOTE_USER} = $user_id;
     
                 # arrange for it to be deleted at process end
                 eval "END { Krang::Session->delete() }";

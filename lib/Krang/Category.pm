@@ -770,14 +770,12 @@ sub find {
                         LEFT JOIN user_group_permission AS ugp ON cgpc.group_id = ugp.group_id
                   );
 
-    # Just need user_id.  Don't need user.  This is conditional
-    # because Krang::Category is needed during session
-    # deserialization, before user_id is available.
-    my $user_id = $session{'user_id'};
-    if ($user_id) {
-        push(@wheres, "ugp.user_id=?");
-        push(@where_data, $user_id);
-    }
+    # Just need user_id.  Don't need user.
+    # Assumes that user_id is valid and authenticated
+    my $user_id = $ENV{REMOTE_USER}
+      || croak("No user_id in session");
+    push(@wheres, "ugp.user_id=?");
+    push(@where_data, $user_id);
 
     my $where_clause = "(". join(") AND\n  (", @wheres) .")";
     $query .= "WHERE $where_clause" if $where_clause;

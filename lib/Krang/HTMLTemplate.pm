@@ -47,7 +47,7 @@ sub output {
 
     # fill in header variables as necessary
     if ($template->query(name => 'header_user_name')) {
-        my ($user) = Krang::User->find(user_id => $session{user_id});
+        my ($user) = Krang::User->find(user_id => $ENV{REMOTE_USER});
         $template->param(header_user_name => $user->first_name . " " . 
                                              $user->last_name) if $user;
     }

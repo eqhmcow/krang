@@ -248,11 +248,13 @@ like($@, qr/not checked out/);
 
 $story->checkout();
 is($story->checked_out, 1);
-is($story->checked_out_by, $session{user_id});
+is($story->checked_out_by, $ENV{REMOTE_USER});
 
 # become someone else and try to checkout the story
 {
-    local $session{user_id} = $session{user_id} + 1;
+    my $new_user_id = $ENV{REMOTE_USER} + 1;
+    local $ENV{REMOTE_USER} = $new_user_id;
+
     eval { $story->checkout };
     like($@, qr/already checked out/);
     eval { $story->checkin };
@@ -261,7 +263,7 @@ is($story->checked_out_by, $session{user_id});
     like($@, qr/checked out/);
 }
 is($story->checked_out, 1);
-is($story->checked_out_by, $session{user_id});
+is($story->checked_out_by, $ENV{REMOTE_USER});
 
 # test serialization
 my $data = freeze($story);
