@@ -58,10 +58,10 @@ sub input_form {
 sub validate {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
-    if ($self->{required} and not defined $element->data) {
-        return (0, "$self->{display_name} requires a value.");
-    }
-    return 1;
+    my ($param) = $self->param_names(element => $element);
+    return 1 unless $self->{required};
+    return 1 if $element->data or $query->param($param);
+    return (0, "$self->{display_name} requires a value.");
 }
 
 # show a thumbnail in view mode
