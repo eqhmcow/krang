@@ -9,7 +9,7 @@ BEGIN {use_ok('Krang::Template');}
 
 my $tmpl = Krang::Template->new(category_id => 1,
                                 content => '<blink><tmpl_var bob></blink>',
-                                element_classname => 'Bob');
+                                element_class_name => 'Bob');
 
 isa_ok($tmpl, 'Krang::Template');
 
