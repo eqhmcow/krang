@@ -9,7 +9,7 @@ CREATE TABLE history (
     object_id int(10) unsigned default NULL,
     action varchar(255) default NULL,
     version int(10) unsigned default NULL,
-    desk varchar(255) default NULL,
+    desk_id int(10) unsigned default NULL,
     user_id int(10) unsigned not NULL,
     timestamp datetime default NULL,
     KEY object_type (object_type),
