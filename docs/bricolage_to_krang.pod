@@ -87,7 +87,11 @@ The one Object one Module strategy is the current vogue.
 
 =head2 CONSIDERATIONS
 
+=over
+
 =item * The problem of .pl files
+
+=back
 
 =cut
 
