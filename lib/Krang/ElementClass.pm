@@ -622,9 +622,9 @@ sub fill_template {
 
 
     # add variables passed in by whatever called $self->publish().
-    if (defined($args{template_args})) {
-        foreach my $key (keys %{$args{template_args}}) {
-            $params{$key} = $args{template_args}{$key}
+    if (defined($args{fill_template_args})) {
+        foreach my $key (keys %{$args{fill_template_args}}) {
+            $params{$key} = $args{fill_template_args}{$key}
               if exists($template_vars{$key});
         }
     }
@@ -666,7 +666,7 @@ sub fill_template {
             my $pagination = $self->_build_pagination_vars(page_list => \@page_urls,
                                                            page_num => $page_number);
             # publish the element - put the results in all the various loops.
-            $html = $child->publish(publisher => $publisher, template_args => $pagination);
+            $html = $child->publish(publisher => $publisher, fill_template_args => $pagination);
             # increment the page number.
             $page_number++;
         } else {
