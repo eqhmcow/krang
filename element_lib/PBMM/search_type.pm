@@ -1,6 +1,9 @@
 package PBMM::search_type;
 use strict;
 use warnings;
+use Krang::List;
+use Krang::ListGroup;
+use Krang::ListItem;
 
 =head1 NAME
 
@@ -58,7 +61,6 @@ sub fill_template {
     my $cat   = $args{element}->object;
 
     my @category_loop;
-                                                                                
     my $top_cat = $cat;
                                                                                 
     # get true top level category for site
@@ -73,6 +75,17 @@ sub fill_template {
     }
                                                                                 
     $tmpl->param( category_loop => \@category_loop );
+
+    my @rel_prop_loop;
+
+    my $list = (Krang::List->find(name => 'Related Properties'))[0];
+    my @list_items = Krang::ListItem->find(list_id => $list->list_id);
+
+    foreach my $li (@list_items) {
+        push(@rel_prop_loop, {list_item_id => $li->list_item_id, display_name => $li->data});
+    }
+
+    $tmpl->param( related_properties_loop => \@rel_prop_loop );
 
     $self->SUPER::fill_template( %args );
 }

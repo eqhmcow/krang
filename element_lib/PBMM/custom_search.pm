@@ -47,7 +47,7 @@ sub fill_template {
         my @list_items = Krang::ListItem->find( list_id => (Krang::List->find( name => $list_name ))[0]->list_id );
         my @list_item_loop;
         foreach my $li (@list_items) {
-            push(@list_item_loop, { list_item_id => $li->list_item_id, data => $li->data }); 
+            push(@list_item_loop, { list_item_id => $li->list_item_id, display_name => $li->data }); 
         }
 
         $tmpl->param( lc($list_name).'_loop' => [@list_item_loop] );
