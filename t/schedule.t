@@ -14,6 +14,24 @@ use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::Session;
 use Krang::DB qw(dbh);
 
+# skip all tests unless a TestSet1-using instance is available
+BEGIN {
+    my $found;
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        if (InstanceElementSet eq 'TestSet1') {
+            $found = 1;
+            last;
+        }
+    }
+                          
+    unless ($found) {
+        eval "use Test::More skip_all => 'test requires a TestSet1 instance';";
+    }
+    die $@ if $@;
+}
+
+
 BEGIN {
     # only start if the schedule daemon is actually running....
 
@@ -28,11 +46,7 @@ BEGIN {
 
         # verify pid is active
         if ($pid) {
-            if (InstanceElementSet eq 'TestSet1') {
-                eval 'use Test::More qw(no_plan)';
-            } else {
-                eval 'use Test::More skip_all=>"Schedule tests only work for TestSet1"';
-            }
+            eval 'use Test::More qw(no_plan)';
         } else {
             eval "use Test::More skip_all => 'Schedule Daemon not running.';";
         }
