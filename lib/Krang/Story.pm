@@ -723,13 +723,13 @@ object. B<NOT IMPLEMENTED>
 
 =item cover_date
 
-May be either a single date (a L<Time::Piece::MySQL> object) or an
+May be either a single date (a L<Time::Piece> object) or an
 array of dates specifying a range.  In ranges either member may be
 C<undef>, specifying no limit in that direction.
 
 =item publish_date
 
-May be either a single date (a L<Time::Piece::MySQL> object) or an
+May be either a single date (a L<Time::Piece> object) or an
 array of dates specifying a range.  In ranges either member may be
 C<undef>, specifying no limit in that direction.
 
@@ -941,7 +941,7 @@ sub find {
 
         # handle dates
         if ($key eq 'cover_date' or $key eq 'publish_date') {
-            if (ref $value and UNIVERSAL::isa($value, 'Time::Piece::MySQL')) {
+            if (ref $value and UNIVERSAL::isa($value, 'Time::Piece')) {
                 push @where, "$key = ?";
                 push @param, $value->mysql_datetime;
             } elsif (ref $value and UNIVERSAL::isa($value, 'ARRAY')) {
@@ -954,10 +954,10 @@ sub find {
                     push @param, $value->[0]->mysql_datetime;
                 } elsif ($value->[1]) {
                     push @where, "$key <= ?";
-                    push @param, $value->[0]->mysql_datetime;
+                    push @param, $value->[1]->mysql_datetime;
                 }
             } else {
-                croak("Bad date aguement, must be either an array of two Time::Piece::MySQL objects or one Time::Piece::MySQL object.");
+                croak("Bad date aguement, must be either an array of two Time::Piece objects or one Time::Piece object.");
             }
             next;
         }
