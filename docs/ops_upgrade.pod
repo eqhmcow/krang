@@ -3,8 +3,8 @@
 To upgrade an existing Krang installation, first unpack the new
 version of Krang and enter the created directory
 
-  $ tar zxvf krang-1.000.tar.gz
-  $ cd krang-1.000
+  $ tar zxvf krang-1.013-Redhat7_3-perl5.6.1-i686-linux.tar.gz
+  $ cd krang-1.013-Redhat7_3-perl5.6.1-i686-linux
 
 Then, as root, run the Krang upgrade script:
 
