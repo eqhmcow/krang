@@ -18,43 +18,169 @@
 
   function delete_selected () {
     if (confirm("Are you SURE you want to delete the checked stories?")) {
-      var myform = document.forms["krang_pager_form"];
+      var myform = document.krang_pager_form;
       myform.rm.value = 'delete_selected';
       myform.submit();
     }
   }
 
   function checkout_selected () {
-    var myform = document.forms["krang_pager_form"];
+    var myform = document.krang_pager_form;
     myform.rm.value = 'checkout_selected';
+    myform.submit();
+  }
+
+  function show_advanced_search (show_advanced) {
+    var myform = document.krang_pager_form;
+    myform.show_advanced_search.value = show_advanced;
     myform.submit();
   }
 
 </script>
 
 <form method=post name=find_story>
-<input type=hidden name=rm>
-<input type=hidden name=story_id>
+<input type="hidden" name="rm" value="find">
+<input type="hidden" name="story_id">
 
-<input type=hidden name=return_script value=story.pl>
-<input type=hidden name=return_params value=rm>
-<input type=hidden name=return_params value=find>
+<!-- Set up view mode return -->
+<input type="hidden" name="return_script" value="story.pl">
+
+<input type="hidden" name="return_params" value="rm">
+<input type="hidden" name="return_params" value="find">
+
+<input type="hidden" name="return_params" value="search_filter">
+<input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_filter>">
+
+<input type="hidden" name="return_params" value="show_advanced_search">
+<input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML show_advanced_search>">
+
+<input type="hidden" name="return_params" value="do_advanced_search">
+<input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML do_advanced_search>">
+
+<input type="hidden" name="return_params" value="krang_pager_curr_page_num">
+<input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
+
+<input type="hidden" name="return_params" value="krang_pager_show_big_view">
+<input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+
+<input type="hidden" name="return_params" value="krang_pager_sort_field">
+<input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+
+<input type="hidden" name="return_params" value="krang_pager_sort_order_desc">
+<input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+<!-- END Set up view mode return -->
+
+
+<!-- Search -->
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+<input type="hidden" name="show_advanced_search" value="<tmpl_var ESCAPE=HTML show_advanced_search>">
+<input type="hidden" name="do_advanced_search" value="<tmpl_var ESCAPE=HTML do_advanced_search>">
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
 </form>
 
 <div class=dark-bar>Find Story</div>
 
 
 
-
 <table width="100%">
 <form name="search_form" method="POST">
 <tr><td class="form-head">
-SEARCH<br />
-<input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<input type="submit" value="Search">
-</td></tr>
+SEARCH 
+
+<tmpl_if show_advanced_search>
+
+  (<a href="javascript:show_advanced_search('0')">Simple Search</a>)
+  <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+  <input type="hidden" name="do_advanced_search" value="1">
+  </td></tr>
+
+  <!-- Advanced Search Form -->
+  <tr><td>
+    <table border="0" cellspacing="5">
+
+      <tr>
+        <td colspan="2">Title:</td>
+        <td colspan="7">INPUT HERE</td>
+      </tr>
+
+      <tr>
+        <td colspan="2">URL:</td>
+        <td colspan="7">INPUT HERE</td>
+      </tr>
+
+      <tr>
+        <td colspan="2">Story Type:</td>
+        <td colspan="7">INPUT HERE</td>
+      </tr>
+
+      <tr>
+        <td colspan="2">Site/Category:</td>
+        <td colspan="7">INPUT HERE</td>
+      </tr>
+
+      <tr>
+        <td colspan="2">Story ID:</td>
+        <td colspan="7">INPUT HERE</td>
+      </tr>
+
+      <tr>
+        <td colspan="2">Contributor:</td>
+        <td colspan="7">INPUT HERE</td>
+      </tr>
+
+      <tr>
+        <td>Cover Date:</td>
+        <td>from</td>
+        <td>INPUT</td>
+        <td>INPUT</td>
+        <td>INPUT</td>
+        <td>To</td>
+        <td>INPUT</td>
+        <td>INPUT</td>
+        <td>INPUT</td>
+      </tr>
+
+      <tr>
+        <td>Publish Date:</td>
+        <td>from</td>
+        <td>INPUT</td>
+        <td>INPUT</td>
+        <td>INPUT</td>
+        <td>To</td>
+        <td>INPUT</td>
+        <td>INPUT</td>
+        <td>INPUT</td>
+      </tr>
+
+      <tr>
+        <td colspan="2"></td>
+        <td colspan="7"><input type="reset" value="Clear">&nbsp;<input type="submit" value="Search"></td>
+      </tr>
+
+    </table>
+  </td></tr>
+
+<tmpl_else>
+
+  (<a href="javascript:show_advanced_search('1')">Advanced Search</a>)<br />
+  <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+  <input type="hidden" name="do_advanced_search" value="0">
+  <input type="submit" value="Search">
+  </td></tr>
+
+</tmpl_if>
+
+
+
 
 <input type="hidden" name="rm" value="find">
+<input type="hidden" name="show_advanced_search" value="<tmpl_var ESCAPE=HTML show_advanced_search>">
 
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="">

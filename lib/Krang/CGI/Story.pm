@@ -867,10 +867,16 @@ sub find {
     my $search_filter = $q->param('search_filter');
     $search_filter = '' unless (defined($search_filter));
 
+    # Search mode
+    my $show_advanced_search = $q->param('show_advanced_search');
+    my $do_advanced_search = $q->param('do_advanced_search');
+
     my $pager = Krang::HTMLPager->new(
                                       cgi_query => $q,
                                       persist_vars => {
                                                        rm => 'find',
+                                                       show_advanced_search => $show_advanced_search,
+                                                       do_advanced_search => $do_advanced_search,
                                                        search_filter => $search_filter,
                                                       },
                                       use_module => 'Krang::Story',
