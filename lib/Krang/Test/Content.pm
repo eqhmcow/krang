@@ -29,6 +29,14 @@ Krang::Test::Content - a package to simplify content handling in Krang tests.
                                                     parent => $poodle_cat,
                                                     data   => 'French Poodles Uber Alles');
 
+  # create a Krang::User user.
+  my $user = $creator->create_user();
+
+  # get the login username if you don't know it
+  my $login = $user->login();
+  # get the pw
+  my $password = $user->password();
+
   # create a Krang::Media object.
   my $media = $creator->create_media(category => $poodle_cat);
 
@@ -105,6 +113,7 @@ use Krang::Site;
 use Krang::Category;
 use Krang::Story;
 use Krang::Media;
+use Krang::User;
 use Krang::Contrib;
 use Krang::Publisher;
 use Krang::Template;
@@ -250,6 +259,67 @@ sub create_category {
 
 }
 
+
+=item C<< $user = $creator->create_user() >>
+
+Creates and returns a Krang::User object.
+
+Accepts the standard arguments passed to Krang::User, or will function
+with no arguments whatsoever, in which case it will only create the
+username and password.
+
+B<NOTE:> If a username is specified, L<create_user> will croak if user
+creation fails because that username is already taken.  If no username
+is specified, L<create_user> will try usernames until it finds one
+that does not exist.
+
+B<NOTE2:> If group_ids are not specified, L<create_user> will create a
+user with admin-level access.
+
+=cut
+
+sub create_user {
+
+   my $self = shift;
+   my %args = @_;
+
+   my $user;
+   my $username = $args{login} || join('_', map { $self->get_word() } (0 .. 1));
+   my $password = $args{password} || $self->get_word();
+   my @group_ids;
+
+   # find a group for this user.
+   if ($args{group_ids}) {
+       push @group_ids, @{$args{group_ids}};
+   } else {
+       # find admin groups
+       my @groups = Krang::Group->find(name_like => '%admin%');
+       push @group_ids, map { $_->group_id } @groups;
+   }
+
+   while (1) {
+       $user = Krang::User->new(%args,
+                                login     => $username,
+                                password  => $password,
+                                group_ids => \@group_ids);
+       eval {
+           $user->save();
+       };
+
+       # if an error was thrown, croak if user was specified.
+       if ($@) {
+           croak $@ if ($args{login});
+           $username = join('_', map { $self->get_word() } (0 .. 1));
+       } else {
+           last;
+       }
+
+   }
+   push @{$self->{stack}{user}}, $user;
+
+   return $user;
+
+}
 
 
 =item C<< $media = $creator->create_media() >>
@@ -1005,7 +1075,7 @@ sub cleanup {
 
     delete $self->{publisher} if (exists($self->{publisher}));
 
-    foreach (qw/contrib media story template category site/) {
+    foreach (qw/user contrib media story template category site/) {
         if (exists($self->{stack}{$_})) {
             while (my $obj = pop @{$self->{stack}{$_}}) {
                 debug(__PACKAGE__ . '->cleanup() deleting object: ' . ref($obj));

@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added Krang::User creation/destruction to Krang::Test::Content -
+furthering the goal that Krang::Test::Content should be able to create
+all parts of a site randomly, and clean up everything properly at the
+end. [Peter]
+
+=item *
+
 Modified Krang::Contrib::deserialize_xml() to create contributor types
 as needed.  [Sam]
 

@@ -36,7 +36,7 @@ my $creator = new Krang::Test::Content;
 isa_ok($creator, 'Krang::Test::Content');
 
 can_ok($creator, ('create_site', 'create_category', 'create_media', 
-                  'create_story', 'create_contrib', 'publisher',
+                  'create_story', 'create_user', 'create_contrib', 'publisher',
                   'create_template', 'deploy_test_templates', 'undeploy_test_templates',
                   'undeploy_live_templates', 'redeploy_live_templates',
                   'get_word', 'delete_item', 'cleanup'));
@@ -279,6 +279,35 @@ if ($@) {
     }
 }
 
+##################################################
+# create_user()
+
+# this should fail - the admin user should exist.
+my $user;
+
+eval {
+    $user = $creator->create_user(login => 'admin');
+};
+
+ok($@, 'create_user()');
+
+
+# create a user with no params
+
+$user = $creator->create_user();
+isa_ok($user, 'Krang::User');
+
+# create a user with a few params
+$user = $creator->create_user(login => 'testcontentuser',
+                              password => 'foobar',
+                              email    => 'foo@bar.com');
+
+is($user->login, 'testcontentuser', 'create_user(login)');
+ok($user->check_pass('foobar'), 'create_user(password)');
+is($user->email, 'foo@bar.com', 'create_user(email)');
+
+
+
 
 
 ##################################################
@@ -292,6 +321,7 @@ my @media_ids;
 my @contrib_ids;
 my @template_ids;
 my @category_ids;
+my @user_ids;
 
 for (1..10) {
 
@@ -305,12 +335,14 @@ for (1..10) {
     my $m = $creator->create_media(category => $cat);
     my $c = $creator->create_contrib();
     my $t = $creator->create_template(element => $s->element, category => $cat);
+    my $u = $creator->create_user();
 
     push @story_ids, $s->story_id;
     push @media_ids, $m->media_id;
     push @contrib_ids, $c->contrib_id;
     push @template_ids, $t->template_id;
     push @category_ids, $cat->category_id;
+    push @user_ids, $u->user_id;
 
 }
 
@@ -342,6 +374,9 @@ if ($@) {
 
     my @catfiles = Krang::Category->find(category_id => \@category_ids);
     is($#catfiles, -1, 'cleanup() - Krang::Category');
+
+    my @users = Krang::User->find(user_id => \@user_ids);
+    is($#users, -1, 'cleanup() - Krang::User');
 
     # make sure all live templates are where they should be.
     foreach my $f (@live_template_paths) {
