@@ -19,7 +19,7 @@ use Time::Piece::MySQL;
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
-use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes version url alt_tag published_version checked_out_by);
+use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes version url alt_tag published_version published_date checked_out_by);
 use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x-bmp);
 
 =head1 NAME
@@ -204,7 +204,7 @@ use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get_set       => [ qw( title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename url ) ],
-    get => [ qw( media_id creation_date) ];
+    get => [ qw( media_id creation_date published_date) ];
 
 sub init {
     my $self = shift;
@@ -504,12 +504,12 @@ sub save {
 	} 
 	$self->{version} = 1;
         my $time = localtime();
-        $self->{creation_date} = $time->mysql_date();   
+        $self->{creation_date} = $time->mysql_datetime();   
      
 	$dbh->do('INSERT INTO media ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")", undef, map { $self->{$_} } FIELDS);
 
         # make date readable
-        $self->{creation_date} = Time::Piece->from_mysql_date( $self->{creation_date} );
+        $self->{creation_date} = Time::Piece->from_mysql_datetime( $self->{creation_date} );
 	
         $self->{media_id} = $dbh->{mysql_insertid};
 
