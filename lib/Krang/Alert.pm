@@ -210,6 +210,24 @@ sub find {
     my @where;
     my @alert_object;
 
+    my %valid_params = ( alert_id => 1,
+                         user_id => 1,
+                         action => 1,
+                         desk_id => 1,
+                         category_id => 1,
+                         order_by => 1,
+                         order_desc => 1,
+                         limit => 1,
+                         offset => 1,
+                         count => 1,
+                         ids_only => 1 );
+
+    # check for invalid params and croak if one is found
+    foreach my $param (keys %args) {
+        croak (__PACKAGE__."->find() - Invalid parameter '$param' called.") if
+not $valid_params{$param};
+    }
+
     # check for invalid argument sets
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.")

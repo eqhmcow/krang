@@ -670,6 +670,31 @@ sub find {
     my @where;
     my @media_object;
 
+    my %valid_params = ( media_id => 1,
+                         version => 1,
+                         title => 1,
+                         title_like => 1,
+                         category_id => 1,
+                         below_category_id => 1,
+                         media_type_id => 1,
+                         contrib_id => 1,
+                         filename => 1,
+                         filename_like => 1,
+                         simple_search => 1,
+                         no_attributes => 1,
+                         order_by => 1,
+                         order_desc => 1,
+                         limit => 1,
+                         offset => 1,
+                         count => 1,
+                         ids_only => 1 );
+                                                                               
+    # check for invalid params and croak if one is found
+    foreach my $param (keys %args) {
+        croak (__PACKAGE__."->find() - Invalid parameter '$param' called.") if
+not $valid_params{$param};
+    }
+
     # set defaults if need be
     my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'media_id';
     my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
