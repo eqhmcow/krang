@@ -1349,8 +1349,6 @@ sub mark_as_published {
              $self->{publish_date}->mysql_datetime,
              $self->{media_id}
             );
-
-    add_history(object => $self, action => 'publish');
 }
 
 

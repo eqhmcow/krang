@@ -1538,8 +1538,6 @@ sub mark_as_published {
              $self->{publish_date}->mysql_datetime,
              $self->{story_id}
             );
-
-    add_history(object => $self, action => 'publish');
 }
 
 =item $path = $story->publish_path(category => $category)
