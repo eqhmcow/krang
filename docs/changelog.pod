@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Moved htdocs/help/history.html to htdocs/help/log.html to correct links.
+[Perrin]
+
+=item *
+
 Updated L<Imager> to 0.43. [Peter]
 
 =item *
