@@ -79,6 +79,9 @@ sub fill_template {
     my $pteaser = $story->element->child('promo_teaser')->data || '';
     $tmpl->param( promo_teaser => $pteaser ) if $pteaser;
 
+    # set cover date
+    $tmpl->param( cover_date => $story->cover_date->strftime('%b %e, %Y %l:%M %p') );
+
     my $type = lc($args{element}->child('type')->data);
 
     my $image = $story->element->child('promo_image_'.$type) || '';
@@ -89,6 +92,58 @@ sub fill_template {
    
     $tmpl->param( image_alignment => $args{element}->child('image_alignment')->data ); 
     $tmpl->param( type => $type );
+
+    $tmpl->param( byline => $story->element->child('byline')->data ) if $story->element->child('byline');
+                                                    
+    my %contrib_types = Krang::Pref->get('contrib_type');
+                                                                                
+    my %contribs = ();
+    my @contributors  = ();
+    my @contrib_order = ();
+
+    # get the contributors for the story.
+    foreach my $contrib ($story->contribs()) {
+        my $cid = $contrib->contrib_id();
+                                                                                
+        # check to see if this contributor exists - if so, save
+        # on querying for information you already know.
+        unless (exists($contribs{$cid})) {
+            # preserve the order in which the contributors arrive.
+            push @contrib_order, $cid;
+            $contribs{$cid}{contrib_id} = $cid;
+            $contribs{$cid}{prefix}     = $contrib->prefix();
+            $contribs{$cid}{first}      = $contrib->first();
+            $contribs{$cid}{middle}     = $contrib->middle();
+            $contribs{$cid}{last}       = $contrib->last();
+            $contribs{$cid}{suffix}     = $contrib->suffix();
+            $contribs{$cid}{email}      = $contrib->email();
+            $contribs{$cid}{phone}      = $contrib->phone();
+            $contribs{$cid}{bio}        = $contrib->bio();
+            $contribs{$cid}{url}        = $contrib->url();
+            $contribs{$cid}{full_name}  = $contrib->full_name();
+                                                                                
+            my $media = $contrib->image();
+            if (defined($media)) {
+                if ($publisher->is_preview) {
+                    $contribs{$cid}{image_url} = $media->preview_url();
+                } elsif ($publisher->is_publish) {
+                    $contribs{$cid}{image_url} = $media->url();
+                }
+            }
+        }
+
+        # add the selected contributor type to the contrib_type_loop
+        my $contrib_type_id = $contrib->selected_contrib_type();
+        push @{$contribs{$cid}{contrib_type_loop}}, {contrib_type_id => $contrib_type_id,
+                                                     contrib_type_name => $contrib_types{$contrib_type_id}};
+                                                                                
+    }
+                                                                                
+    foreach my $contrib_id (@contrib_order) {
+        push @contributors, $contribs{$contrib_id};
+    }
+
+    $tmpl->param( contrib_loop => \@contributors );
 }
 
 
