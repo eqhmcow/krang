@@ -287,7 +287,9 @@ sub check_in_and_save {
     $story->checkin();
     my $result = $story->move_to_desk($query->param('checkin_to'));
  
-    $result ? add_message("moved_story", id => $story->story_id) : add_message("story_cant_move", id => $story->story_id);
+    add_message(($result ? "moved_story" : "story_cant_move"),
+                id   => $story->story_id, 
+                desk => (Krang::Desk->find(desk_id => $query->param('checkin_to')))[0]->name);
  
     # redirect to that desk 
     $self->header_props(-uri => 'desk.pl?desk_id='.$query->param('checkin_to'));
