@@ -1,11 +1,11 @@
 <script src="xtree.js"></script>
 <link type="text/css" rel="stylesheet" href="xtree.css">
 
-<span id="category_url"><tmpl_if category_url><tmpl_var category_url><tmpl_else>No site / category selected.</tmpl_if></span>
-<input type=button value="Choose" onclick="category_chooser_show()">
+<tmpl_if display><span id="category_url"><tmpl_if category_url><tmpl_var category_url><tmpl_else>No site / category selected.</tmpl_if></span></tmpl_if>
+<input type=button value="<tmpl_var label>" onmouseup="category_chooser_show()">
 <input type=hidden name="<tmpl_var name>" value="<tmpl_var category_id>">
 
-<div id="category_chooser" style="visibility: hidden; position: absolute; top: 100px; left: 500px; background-color: white; color: black; width: 200px; border: 2px solid grey">
+<div id="category_chooser" style="visibility: hidden; position: absolute; top: 0px; left: 0px; background-color: white; color: black; width: 200px; border: 2px outset #333333">
   <div class=dark-bar>Choose a Category</div>
   <div class=form-box>
 <script language="javascript">
@@ -36,6 +36,10 @@
 
 <script language="JavaScript" type="text/javascript">
   var selected_id, selected_url, selected_elem;
+  var mouseX = 0;
+  var mouseY = 0;
+
+  document.onmousedown = category_chooser_loc;
 
   function category_chooser_select(id, url) {        
         /* remember selection, for ok */
@@ -43,8 +47,22 @@
         selected_url  = url;
   }
 
+  function category_chooser_loc(evt) {
+        evt = (evt) ? evt : (event) ? event : null;
+        if (evt.pageX) {
+           mouseX = evt.pageX;
+           mouseY = evt.pageY;
+        } else {
+           mouseX = evt.clientX + document.documentElement.scrollLeft + document.body.scrollLeft;
+           mouseY = evt.clientY + document.documentElement.scrollTop  + document.body.scrollTop;
+        }
+        return true;
+  }
+
   function category_chooser_show() {
         var chooser = document.getElementById("category_chooser");
+        chooser.style.left = (mouseX + 30) + "px";
+        chooser.style.top = (mouseY - 75) + "px";
         chooser.style.visibility = "visible";
   }
 
@@ -52,8 +70,10 @@
         if (selected_id) {
            /* save selection */
            document.forms[0].<tmpl_var name>.value = selected_id;
+        <tmpl_if display>
            var span = document.getElementById("category_url");
            span.innerHTML = selected_url;
+        </tmpl_if>
         }
 
         /* clear selection */
@@ -75,4 +95,5 @@
         var chooser = document.getElementById("category_chooser");
         chooser.style.visibility = "hidden";
   }
+
 </script>
