@@ -185,7 +185,7 @@ sub _load_classes {
         my @file = sort readdir(DIR);
         closedir(DIR) or die $!;
 
-        while(my $file = shift @file) {
+        foreach my $file (@file) {
             next if $file =~ /#/; # skip emacs backup files
             next unless $file =~ /([^\/]+).pm$/;
             my $name = $1;
