@@ -981,10 +981,12 @@ sub _build_story_single_category {
 
     my @paths;
 
-    my $story    = $args{story};
-    my $category = $args{category};
+    my $story    = $args{story}    || croak __PACKAGE__ . "missing argument 'story'";
+    my $category = $args{category} || croak __PACKAGE__ . "missing argument 'category'";
 
     my $additional_content;
+
+    my $output_path = $self->_determine_output_path(object => $story, category => $category);
 
     # set internal values for accessor methods to call.
     $self->{category} = $category;
@@ -1001,10 +1003,8 @@ sub _build_story_single_category {
     # break the category into header & footer.
     my ($cat_header, $cat_footer) = split(/${\CONTENT}/, $category_output, 2);
 
-
     # parse out additional content
     ($additional_content, $article_output) = $self->_parse_additional_content(text => $article_output);
-
 
     # write additional content to disk
     foreach my $block (@$additional_content) {
@@ -1015,8 +1015,7 @@ sub _build_story_single_category {
         push @paths, $self->_write_page(data     => $content,
                                         filename => $block->{filename},
                                         story_id => $story->story_id,
-                                        path     => $self->_determine_output_path(object => $story,
-                                                                                  category => $category)
+                                        path     => $output_path
                                        );
 
     }
@@ -1037,7 +1036,7 @@ sub _build_story_single_category {
         push @pages, $page
     }
 
-    push @paths, $self->_write_story(story => $story, pages => \@pages, category => $category);
+    push @paths, $self->_write_story(story => $story, pages => \@pages, path => $output_path);
 
     return @paths;
 }
@@ -1256,7 +1255,7 @@ sub _write_media {
 
 
 #
-# @filenames = _write_story(story => $story_obj, category => $category, pages => \@story_pages);
+# @filenames = _write_story(story => $story_obj, path => $output_path, pages => \@story_pages);
 #
 # Given a Krang::Story object and a list of pages comprising the published
 # version of the object, write the pages to the filesystem.
@@ -1269,14 +1268,12 @@ sub _write_story {
     my $self = shift;
     my %args = @_;
 
-    my $story    = $args{story}    || croak __PACKAGE__ . ": missing argument 'story'";
-    my $pages    = $args{pages}    || croak __PACKAGE__ . ": missing argument 'pages'";
-    my $category = $args{category} || croak __PACKAGE__ . ": missing argument 'category'";
+    my $story       = $args{story} || croak __PACKAGE__ . ": missing argument 'story'";
+    my $pages       = $args{pages} || croak __PACKAGE__ . ": missing argument 'pages'";
+    my $output_path = $args{path}  || croak __PACKAGE__ . ": missing argument 'path'";
 
     my @created_files;
 
-    # determine output path
-    my $output_path = $self->_determine_output_path(object => $story, category => $category);
 
     for (my $page_num = 0; $page_num < @$pages; $page_num++) {
 

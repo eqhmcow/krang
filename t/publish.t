@@ -753,7 +753,7 @@ sub test_story_build {
     # NOTE - HTML::Template::Expr throws in a newline at the end.
     my $head_pub = $head->publish(element => $head, publisher => $publisher);
     ok($head_pub eq $head_output, 'Krang::ElementClass->publish() -- header');
-    
+
     # test publish() on page element -
     # it should contain header (formatted), note about wide page, 3 paragraphs.
     # Add pagination args as well
@@ -781,14 +781,13 @@ sub test_story_build {
         diag('page.tmpl was undeployed - publish should croak.');
         fail('Krang::ElementClass->publish() -- missing tmpl');
     }
-    
+
     # redeploy page/header templates.
     $publisher->deploy_template(template => $template_deployed{page});
     $publisher->deploy_template(template => $template_deployed{header});
-    
+
     # test publish() for category element.
     my $category_el = $category->element();
-    
 
     my $cat_pub = $category_el->publish(element => $category_el, publisher => $publisher);
     $cat_pub =~ s/\n//g;
@@ -800,17 +799,8 @@ sub test_story_build {
     ok($cat_pub eq ($category1_output . $para1), 'Krang::ElementClass->publish() -- category w/ child');
     $category_el->remove_children($child_element_para);
 
-
-    # test _assemble_pages() - should return single-element array-ref.
-    # category top/bottom & page content should both exist.
-#    my $assembled_ref = $publisher->_assemble_pages(story => $story, category => $category);
-#    ok(@$assembled_ref == 1, 'Krang::Publisher->_assemble_pages() -- page count');
-
-#    my $page_one = $assembled_ref->[0];
-#    $page_one =~ s/\n//g;
-#    ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');
-
 }
+
 
 sub test_publish_story {
 
