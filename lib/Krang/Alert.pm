@@ -3,12 +3,13 @@ use strict;
 use warnings;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
-use Krang::Log qw( info );
+use Krang::Log qw( debug info );
 use Krang::Schedule;
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
 use Mail::Sender;
+use Krang::Category;
 
 # constants 
 use constant FIELDS => qw( alert_id user_id action desk_id category_id );
@@ -108,7 +109,7 @@ sub init {
     # finish the object
     $self->hash_init(%args);
 
-        return $self;
+    return $self;
 }
 
 =item save()
@@ -165,7 +166,7 @@ desk_id
 
 =item *
 
-category_id - will traverse the tree looking and also look for parent categories. an array of category ids can be passed in as well.
+category_id - will traverse the tree looking and also look for parent categories. an arrayref of category ids can be passed in as well.
 
 =item *
 
@@ -216,20 +217,23 @@ sub find {
         }
     }
 
-    my $where_string = join ' and ', (map { "$_ = ?" } @where);
+    my $where_string = join ' and ', (map { "$_ = ? " } @where);
 
     if ($args{'category_id'}) {
+
         if (ref($args{'category_id'}) eq 'ARRAY') {
-            my @all_cats;
-            my @cats = {$args{'category_id'}};
-            foreach my $cat ( @cats ) {
-                my @ancestors = $cat->ancestors( $cat );
-                push @all_cats, @ancestors;
+            my @all_cat_ids;
+            my $cat_ids = $args{'category_id'};
+            foreach my $cat_id ( @$cat_ids ) {
+                my @cat = Krang::Category->find( category_id => $cat_id);
+                my @ancestors = $cat[0]->ancestors( ids_only => 1 );
+                
+                push @all_cat_ids, @ancestors;
             }
+            
+            push @all_cat_ids, @$cat_ids;
 
-            push @all_cats, @cats;
-
-            $where_string ? ($where_string .= 'AND '.(join ' OR ', (map { "category_id = $_"} @all_cats))) : ($where_string = (join ' OR ', (map { "category_id = $_"} @all_cats)));
+            $where_string ? ($where_string .= 'AND ('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).')') : ($where_string = '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).')');
         } else {
             $where_string ? ($where_string .= 'AND category_id = '.$args{'category_id'}) : ($where_string = 'category_id = '.$args{'category_id'});
         }
@@ -254,6 +258,9 @@ sub find {
     } elsif ($offset) {
         $sql .= " limit $offset, -1";
     }
+
+    debug(__PACKAGE__ . "::find() SQL: " . $sql);
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { defined $args{$_} ? $args{$_} : 'undef' } @where));
 
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
@@ -284,22 +291,20 @@ This method takes two arguments, a Krang::History object and a Krang::Story obje
 sub check_alert {
     my $self = shift;
 
-    # Work-around for bugs
-    return;
-
     my %args = @_;
 
     my $history = $args{history};
+    my $action = $history->action;
     my $story = $args{story};
 
     my @cat_objects = $story->categories;
-    my @category_ids = [ map { $_->category_id } @cat_objects];
+    my @category_ids = map { $_->category_id } @cat_objects;
 
     croak(__PACKAGE__."->check_alert requires a valid Krang::History object.") if (ref $history ne 'Krang::History');
 
-    croak(__PACKAGE__."->check_alert requires a valid Krang::Story object.") if (ref $history ne 'Krang::Story');
+    croak(__PACKAGE__."->check_alert requires a valid Krang::Story object.") if (ref $story ne 'Krang::Story');
  
-    my @matched_alerts = Krang::Alert->find( only_ids => 1, action => $history->action, category_id => @category_ids );  
+    my @matched_alerts = Krang::Alert->find( only_ids => 1, action => $action, category_id => \@category_ids );  
 
     foreach my $alert_id ( @matched_alerts ) {
         my $schedule = Krang::Schedule->new(    object_type => 'alert',
