@@ -44,8 +44,8 @@ sub new {
                                                         reorderable => 0,
                                                         allow_delete => 0,
                                                         ),
-                  Default::promo_image->new(name => 'promo_image_large'),
-                  Default::promo_image->new(name => 'promo_image_small'),
+                  Default::promo_image->new(name => 'promo_image_large', max => 1),
+                  Default::promo_image->new(name => 'promo_image_small', max => 1),
                   Default::cover_page->new()
                 ],
                 @_);
