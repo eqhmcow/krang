@@ -203,6 +203,8 @@ test_medialink($story2, $media[0]);
 
 test_linked_assets();
 
+test_full_preview();
+
 test_full_publish();
 
 
@@ -210,6 +212,23 @@ test_full_publish();
 #
 # SUBROUTINES.
 #
+
+
+sub test_full_preview {
+
+    $publisher->preview_story(story => $story);
+
+    foreach ($story, $story2, @stories) {
+        my $path = build_preview_path($_);
+        ok(-e $path, 'Krang::Publisher->preview_story() -- complete story writeout');
+    }
+
+    foreach (@media) {
+        my $path = catfile($preview_path , $_->preview_url());
+        ok (-e $path, 'Krang::Publisher->preview_story() -- complete media writeout');
+    }
+
+}
 
 
 sub test_full_publish {
@@ -913,7 +932,6 @@ sub build_preview_path {
     my $story = shift;
 
     my $url = $story->preview_url();
-    my @paths;
 
     return File::Spec->catfile($site->preview_path(), $url, 'index.html');
 

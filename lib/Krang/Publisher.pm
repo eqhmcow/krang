@@ -209,9 +209,16 @@ sub preview_story {
     # build the story HTML.
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
-    info('Publisher.pm: Previewing story_id=' . $story->story_id());
+    my $publish_list = $self->get_publish_list(story => $story);
 
-    $self->_build_story(story => $story, category => $category, url => $url);
+    foreach (@$publish_list) {
+        if ($_->isa('Krang::Story')) {
+            info('Publisher.pm: Previewing story_id=' . $story->story_id());
+            $self->_build_story(story => $story, category => $category, url => $_->preview_url());
+        } elsif ($_->isa('Krang::Media')) {
+            $self->preview_media(media => $_);
+        }
+    }
 
     $preview_url = "$url/" . $self->_build_filename(story => $story, page => 1);
 
@@ -739,7 +746,6 @@ sub _output_story {
     # get story URLs.
     my @story_urls = $story->urls();
     my @categories = $story->categories();
-
 
     # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
     foreach (my $i = 0; $i <= $#categories; $i++) {
