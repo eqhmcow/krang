@@ -18,7 +18,7 @@ alerts and password.
 
 =head1 SYNOPSIS
   
-  use Krang::CGI::Pref;
+  use Krang::CGI::MyPref;
   my $app = Krang::CGI::MyPref->new();
   $app->run();
 
@@ -74,12 +74,11 @@ sub edit {
                         publish => 'Publish',
                         move => 'Move To' );    
     
-    my $set_sps = Krang::MyPref->get('search_page_size') || '';
+    my $set_sps = Krang::MyPref->get('search_page_size');
 
-    $template->param(search_page_size => $set_sps);
     $template->param(search_results_selector => scalar
                       $q->popup_menu(-name    => 'search_results_page',
-                                         -values  => ['', 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95 ],
+                                         -values  => [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95 ],
                                          -default => $set_sps));
 
     # get current alerts
@@ -158,7 +157,7 @@ sub update_prefs {
     my $q = $self->query();
 
     # update search_page_size
-    Krang::MyPref->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size") if ($q->param('search_page_size') ne $q->param('search_results_page'));
+    Krang::MyPref->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size");
     
     if ($q->param('new_password')) {
         my $user_id = $session{user_id};

@@ -5,6 +5,7 @@ use warnings;
 use Carp qw(croak);
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
+use Krang::Pref;
 
 =head1 NAME
 
@@ -84,7 +85,7 @@ sub get {
         my ($value) = $dbh->selectrow_array(
                               'SELECT value FROM my_pref WHERE id = ? and user_id = ?',
                                             undef, $conf->{row}, $user_id);
-        return $value;
+        return $value || Krang::Pref->get($conf->{row});
     } elsif ($conf->{type} eq 'list') {
         # handle list pref
         my $result = $dbh->selectall_arrayref(
