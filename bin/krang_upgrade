@@ -624,7 +624,22 @@ sub apply_upgrades {
 }
 
 
-sub update_db_version {}
+sub update_db_version {
+    my $KrangRoot = $options{KrangRoot};
+    my $new_krang_version = get_krang_version($KrangRoot);
+    print "Updating db_version to $new_krang_version";
+
+    # Iterate through instances, making .backup files
+    while (my ($instance, $db) = each(%instance_dbs)) {
+        print "  Updating $instance ($db)";
+        my $mysql_bin = MYSQL_BIN;
+        my $MySQLRootPassword = $options{'MySQLRootPassword'};
+        my $update_db_version_cmd = "$mysql_bin -uroot";
+        $update_db_version_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+        $update_db_version_cmd .= " -e 'update db_version set db_version=$new_krang_version' $db";
+        system($update_db_version_cmd) && exit_error("Error updating db_version");
+    }
+}
 
 
 sub clear_sessions {}
