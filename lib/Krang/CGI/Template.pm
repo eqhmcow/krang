@@ -238,7 +238,7 @@ sub deploy {
 
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=> $uri);
+    $self->header_props(-uri => $uri);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$uri\">$uri</a>";
 }
@@ -502,9 +502,7 @@ sub edit {
     my $template_id = $q->param('template_id');
     my $template = $session{template};
 
-    if ($template_id &&
-        (not(ref($template)) ||
-         $template->template_id != $template_id)) {
+    if ($template_id) {
         ($template) = Krang::Template->find(template_id => $template_id);
         $session{template} = $template;
     }
