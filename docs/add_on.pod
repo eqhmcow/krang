@@ -60,6 +60,14 @@ your files, write a simple C<krang_addon.conf> and tar it up.  The
 rest of the document will explain enhancements which may be used to
 produce more complex add-ons.
 
+
+B<NOTE:> As of Krang 1.102 there is a new script to automate some of
+the work here:
+
+  bin/krang_addon_framework
+
+
+
 =head2 C<krang_addon.conf>
 
 If you need more control over how an addon is installed into Krang
@@ -135,5 +143,5 @@ must make changes to the database or filesystem then a file called
 on a per-installation or per-instance basis, just like other Krang
 upgrade scripts.
 
-Krang's upgrade system is described in the 
+Krang's upgrade system is described in the
 HREF[Upgrade System|upgrade_system.html] document.
