@@ -325,6 +325,8 @@ if (@remaining_sites) {
 # now, delete all content in the sites being expunged.
 if ($execute) {
     foreach my $site_id (keys %expunged_sites) {
+        my $count = 0;
+
         print sprintf("\nStarting deletion of '%s':\n", $expunged_sites{$site_id});
 
         my ($root_cat) = Krang::Category->find(site_id => $site_id, dir => '/');
@@ -336,36 +338,33 @@ if ($execute) {
             print $tmpl->template_id . ',' if ($verbose);
             eval { $tmpl->delete(); };
             delete_error(object => $tmpl, error => $@) if $@;
+            $count++;
         }
-        print "\n";
+        print "\t$count deleted.\n";
+        $count = 0;
 
         print "\tDeleting media...";
         $offset = 0;
-        while (my @media = Krang::Media->find(site_id => $site_id,
-                                              limit   => $limit,
-                                              offset  => $offset)) {
-            foreach my $m (@media) {
-                print $m->media_id . ',' if ($verbose);
-                eval { $m->delete(); };
-                delete_error(object => $m, error => $@) if $@;
-            }
-            $offset += $limit;
+        foreach my $m (Krang::Media->find(site_id => $site_id)) {
+            print $m->media_id . ',' if ($verbose);
+            eval { $m->delete(); };
+            delete_error(object => $m, error => $@) if $@;
+            $count++;
         }
-        print "\n";
+
+        print "\t$count deleted.\n";
+        $count = 0;
 
         print "\tDeleting stories...";
-        $offset = 0;
-        while (my @story = Krang::Story->find(primary_site_id => $site_id,
-                                              limit   => $limit,
-                                              offset  => $offset)) {
-            foreach my $s (@story) {
-                print $s->story_id . ',' if ($verbose);
-                eval { $s->delete(); };
-                delete_error(object => $s, error => $@) if $@;
-            }
-            $offset += $limit;
+
+        foreach my $s (Krang::Story->find(primary_site_id => $site_id)) {
+            print $s->story_id . ',' if ($verbose);
+            eval { $s->delete(); };
+            delete_error(object => $s, error => $@) if $@;
+            $count++;
         }
-        print "\n";
+
+        print "\t$count deleted.\n";
 
 
         my ($site) = Krang::Site->find(site_id => $site_id);
