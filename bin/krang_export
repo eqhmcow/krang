@@ -249,7 +249,7 @@ foreach my $id_meth (grep { @{$id{$_}} } keys %id) {
 print STDERR "Packing $file...\n" if $verbose;
 $set->write(path => $file, compress => $compress);
 
-print STDERR "Export completed.  Output is in $file.\n";
+print "Export completed.  Output is in $file.\n";
 
 # extra verbose, print a tar directory
 system("tar " . ($compress ? 'z' : '') . "tvf $file")
