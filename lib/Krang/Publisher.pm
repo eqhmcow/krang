@@ -252,7 +252,7 @@ sub publish_story {
     $self->{is_publish} = 1;
     $self->{is_preview} = 0;
 
-    my $publish_list = $self->get_publish_list(story => [$story]);
+    my $publish_list = $self->get_publish_list(story => $story);
 
     foreach my $object (@$publish_list) {
         if ($object->isa('Krang::Story')) {
@@ -335,46 +335,19 @@ Will throw an exception if there are problems with the copy.
 sub publish_media {
     my $self = shift;
     my %args = @_;
+    my @urls;
 
     croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
 
-    my $media = $args{media};
-
-    my $internal_path = $media->file_path();
-
-    my $publish_path = catfile($media->category()->site()->publish_path(), $media->url());
-
-    $publish_path =~ /^(.*\/)[^\/]+/;
-
-    my $dir_path = $1;
-
-    # make sure the output dir exists
-    eval {mkpath($dir_path, 0, 0755); };
-    if ($@) {
-        Krang::Publisher::FileWriteError->throw(message => 'Could not create publish directory',
-                                                destination => $dir_path,
-                                                system_error => $@);
+    if (ref $args{media} eq 'ARRAY') {
+        foreach (@{$args{media}}) {
+            push @urls, $self->_write_media($_);
+        }
+        return @urls;
     }
-
-    # copy file out to the production path
-    unless (copy($internal_path, $publish_path)) {
-        Krang::Publisher::FileWriteError->throw(message  => 'Could not publish media file',
-                                                media_id => $media->media_id(),
-                                                source   => $internal_path,
-                                                destination => $publish_path,
-                                                system_error => $!
-                                               );
-    }
-
-    # check media back in.
-    if ($media->checked_out()) { $media->checkin(); }
-
-    # log event
-    add_history(object => $media, action => 'publish');
-
-    return $media->url();
-
+    return $self->_write_media($args{media});
 }
+
 
 
 =item C<< $publish_list_ref = $publisher->get_publish_list(story => $story) >>
@@ -834,6 +807,53 @@ sub _build_story_single_category {
         $self->_write_page(path => $path, filename => $filename,
                            story_id => $story->story_id(), data => $story_pages->[$p]);
     }
+}
+
+
+
+#
+# $url = $pub->_write_out_media($media)
+#
+# Internal method for writing a media object to disk.  Returns media URL if successful.
+#
+
+sub _write_media {
+    my $self = shift;
+    my $media = shift;
+
+    my $internal_path = $media->file_path();
+
+    my $publish_path = catfile($media->category()->site()->publish_path(), $media->url());
+
+    $publish_path =~ /^(.*\/)[^\/]+/;
+
+    my $dir_path = $1;
+
+    # make sure the output dir exists
+    eval {mkpath($dir_path, 0, 0755); };
+    if ($@) {
+        Krang::Publisher::FileWriteError->throw(message => 'Could not create publish directory',
+                                                destination => $dir_path,
+                                                system_error => $@);
+    }
+
+    # copy file out to the production path
+    unless (copy($internal_path, $publish_path)) {
+        Krang::Publisher::FileWriteError->throw(message  => 'Could not publish media file',
+                                                media_id => $media->media_id(),
+                                                source   => $internal_path,
+                                                destination => $publish_path,
+                                                system_error => $!
+                                               );
+    }
+
+    # check media back in.
+    if ($media->checked_out()) { $media->checkin(); }
+
+    # log event
+    add_history(object => $media, action => 'publish');
+
+    return $media->url();
 }
 
 
