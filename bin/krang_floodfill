@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 use warnings;
 use strict;
 use Getopt::Long;
@@ -248,7 +248,7 @@ for my $story_count (1 .. $stories) {
                                                      (1..(int(rand(3)) + 2))),
                                    slug       => get_word(),
                                    categories => \@c,
-                                   cover_date => Time::Piece->new,
+                                   cover_date => get_date(),
                                    class      => "article");
     };
     if ($@) {
@@ -302,6 +302,14 @@ for my $story_count (1 .. $stories) {
     push(@stories, $story);
 }
 
+
+# get a random date, with time set to midnight
+sub get_date {
+    my $m = int rand(11) + 1;
+    my $d = int rand(27) + 1;
+    my $y = int rand(50) + 1975;
+    return Time::Piece->strptime("$m/$d/$y", '%m/%d/%Y');
+}
 
 
 # get a random word
