@@ -112,6 +112,14 @@ The following are perl-only issues.
 
 =over
 
+=item Mac OSX Support (1.102?)
+
+Krang does compile and run on Mac OSX, but is still a little rough
+around the edges - someone needs to clean up the process.  The
+C<Platform.pm> seems to be ok, but C<platform/MacOSX/README.MacOSX>
+needs some revisions.
+
+
 =item New Story - Story Type pulldown should be alphabetized.
 
 The Story-Type pulldown should be in alphabetical order.
