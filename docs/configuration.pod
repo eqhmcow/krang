@@ -5,7 +5,9 @@
 Krang is configured through a single configuration file called
 F<krang.conf>.  Krang finds its configuration file by first looking
 for the C<KRANG_CONF> environment variable.  If this is unset, Krang
-will look for C<KRANG_ROOT> and append F<conf/krang.conf> to it.
+will look for C<KRANG_ROOT> and append F<conf/krang.conf> to it.  In
+most cases Krang can figure out C<KRANG_ROOT> automatically by looking
+at the way you started Krang.
 
 Krang's configuration file is in the same format as Apache.  Simple
 directives are set using the name and value, separated by a space.
@@ -20,7 +22,7 @@ Multiple values are separated by spaces.  Example:
 If a value contains a space, it must be enclosed in quotes (single or
 double):
 
-  ProductName "PIRT/CMS, Enterprise Plus Ultra Edition"
+  InstanceDisplayName "MotorTrendPIRT/CMS, Ultra Super Edition"
 
 Instance blocks in Krang work like VirtualHost blocks in Apache.  For
 example, the instance called "truckin" would have a block like:
@@ -37,71 +39,5 @@ common settings can be defined globally and then selectively
 overridden inside the Instance blocks, reducing overall configuration
 size.
 
-Some variables only make sense inside an instance block, in which case
-they are marked "(Instance)" in the list below.
-
-=head2 Configuration Directives
-
-This list contains every valid configuration directive, in
-alphabetical order.  See the F<conf/krang.conf> that comes with Krang
-for a complete usage example.
-
-=over 4
-
-=item ApacheAddr
-
-The IP address for the Apache server.
-
-=item ApachePort
-
-The port for the Apache server.
-
-=item DBName (Instance)
-
-Name of the database for this instance.
-
-=item DBPass (Instance)
-
-Database password to use to connect to the database.
-
-=item DBUser (Instance)
-
-Database user to use to connect to the database.
-
-=item ElementLibrary
-
-Directory where the Krang element library is installed.
-
-=item ElementSet (Instance)
-
-The element set used by the instance.
-
-=item KrangGroup
-
-The group which runs all Krang processes.  See L<KrangUser>.
-
-=item KrangRoot
-
-Directory where Krang is installed.
-
-=item KrangUser
-
-The user which runs all Krang processes.  This user must also be the
-owner of all Krang files.
-
-=item LogFile
-
-Path to the Krang log file, relative to KrangRoot.
-
-=item RootVirtualHost
-
-The name of the "root" server, usually the name of the machine itself.
-When clients visit this special virtual host they will see a list of
-all available instances on the machine.  This must not be used as an
-instance virtual host.
-
-=item VirtualHost (instance)
-
-The name of the virtual host for a specific instance.
-
-=back
+The actual configuration directives used to configure Krang are
+documented inside the C<krang.conf>.

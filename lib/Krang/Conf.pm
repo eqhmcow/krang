@@ -8,7 +8,6 @@ BEGIN {
 @VALID_DIRECTIVES = map { lc($_) } qw(
 KrangRoot
 ElementSet
-ElementLibrary
 DBName
 DBPass
 DBUser
@@ -17,31 +16,24 @@ KrangGroup
 ApacheAddr
 ApachePort
 RootVirtualHost
-LogFile
 LogLevel
-LogTimeStamp
-TimeStampFormat
 VirtualHost
-LogWrap
 Assertions
 FTPPort
 FTPAddress
-FTPLog
 InstanceDisplayName
 CleanupInterval
 ScheduleInterval
 ScheduleLog
-SessionMaxAge
-TmpMaxAge
 SMTPServer
 FromAddress
 BugzillaEmail
 BugzillaServer
 BugzillaPassword
 BugzillaComponent
+EnableSiteServer
 SiteServerAddr
 SiteServerPort
-HTMLLint
 );
 }
 

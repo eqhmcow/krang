@@ -2,7 +2,7 @@ use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::Script;
-use Krang::Conf qw(KrangRoot ElementLibrary);
+use Krang::Conf qw(KrangRoot);
 use Krang::ElementLibrary;
 use File::Spec::Functions qw(catfile catdir);
 use IPC::Run qw(run);
@@ -25,8 +25,8 @@ foreach my $xml (@xml) {
     eload($set, catfile(KrangRoot, "t", "eloader", $xml));
 
     # created ok?
-    ok(-d catdir(ElementLibrary, $set));
-    ok(-f catfile(ElementLibrary, $set, 'set.conf'));
+    ok(-d catdir('element_lib', $set));
+    ok(-f catfile('element_lib', $set, 'set.conf'));
 
     # try loading it
     eval { 
@@ -35,7 +35,7 @@ foreach my $xml (@xml) {
     };
     is($@, '');
     
-    rmtree([catdir(ElementLibrary, $set)]) if $CLEANUP;
+    rmtree([catdir('element_lib', $set)]) if $CLEANUP;
 }
 
 # create a set from an XML file

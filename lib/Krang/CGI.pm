@@ -40,7 +40,7 @@ use base 'CGI::Application';
 use Krang::ErrorHandler;
 use Data::Dumper ();
 
-use Krang::Conf qw(KrangRoot InstanceDisplayName HTMLLint);
+use Krang::Conf qw(KrangRoot InstanceDisplayName);
 use File::Spec::Functions qw(catdir rel2abs);
 use Krang::CGI::Status;
 use Krang::CGI::ElementEditor;
@@ -51,6 +51,9 @@ use Krang::HTMLTemplate;
 
 # Krang sessions
 use Krang::Session qw/%session/;
+
+# set this to one to see HTML errors in a popup in the UI
+use constant HTMLLint => 0;
 
 # Set up HTML_TEMPLATE_ROOT for templates
 BEGIN {

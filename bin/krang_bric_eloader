@@ -109,7 +109,7 @@ $@
 END
 }
 
-use Krang::Conf qw(KrangRoot ElementLibrary);
+use Krang::Conf qw(KrangRoot);
 use Getopt::Long;
 use Pod::Usage;
 use Text::Wrap;
@@ -155,7 +155,7 @@ unless (defined $bric_password) {
 }
 
 # make sure this set doesn't already exist
-our $set_dir = catdir(ElementLibrary, $set);
+our $set_dir = catdir(KrangRoot, 'element_lib', $set);
 if (-d $set_dir) {
     die"Element set '$set' already exists at '$set_dir'.\n".
         "Choose a new name or remove this set.\n";

@@ -86,7 +86,7 @@ Then either F<Flex/article.pm> or F<Default/article.pm> must exist
 
 =cut
 
-use Krang::Conf qw(ElementSet ElementLibrary KrangRoot);
+use Krang::Conf qw(ElementSet KrangRoot);
 use File::Spec::Functions qw(catdir catfile file_name_is_absolute);
 use Config::ApacheFormat;
 use Carp qw(croak);
@@ -125,9 +125,7 @@ sub load_set {
     local $_;
     
     # get location of the element library, mixing in KrangRoot if non-absolute
-    my $lib = file_name_is_absolute(ElementLibrary) ?
-              ElementLibrary :
-              catdir(KrangRoot, ElementLibrary);
+    my $lib = catdir(KrangRoot, 'element_lib');
     
     # don't load sets more than once
     our (%LOADED_SET, %PARENT_SETS);

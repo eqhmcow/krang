@@ -413,8 +413,7 @@ directories deleted.
 sub clean_tmp {
     my $self = shift;
     my %args = @_;
-    my $max_age = exists $args{max_age} ? $args{max_age} :
-      Krang::Conf->tmpmaxage;
+    my $max_age = exists $args{max_age} ? $args{max_age} : 24;
     my $date = localtime();
     $date = $date - ($max_age * ONE_HOUR); 
     my (@dirs, @files);
@@ -513,8 +512,7 @@ expired.
 sub expire_sessions {
     my $self = shift;
     my %args = @_;
-    my $max_age = exists $args{max_age} ? $args{max_age} :
-      Krang::Conf->sessionmaxage;
+    my $max_age = exists $args{max_age} ? $args{max_age} : 24;
     my $dbh = dbh();
     my ($i, @ids, $query);
 

@@ -4,7 +4,7 @@ package Krang::Log;
 
 =head1 NAME
 
-Log - Krang logging module
+Krang::Log - Krang logging module
 
 =head1 SYNOPSIS
 
@@ -31,10 +31,6 @@ are:
 
 =over 4
 
-=item * LogFile
-
-Sets the path of the log.
-
 =item * LogLevel
 
 Determines the minimum log level to be recorded.  This value may be
@@ -54,12 +50,6 @@ You can also specify a regex to match against module names.  For
 example, to suppress debug messages from all CGI modules:
 
   LogLevel 3,/^Krang::CGI/=2
-
-=item * LogWrap
-
-If set to true, turns on wrapping for log messages over 80 columns
-long using Text::Wrap.  This is somewhat time-consuming and should not
-be used in production.
 
 =item * Assertions
 
@@ -111,8 +101,8 @@ use strict;
 use warnings;
 
 # Krang Modules
-use Krang::Conf qw(assertions logfile loglevel
-		   logwrap KrangUser KrangGroup KrangRoot);
+use Krang::Conf qw(assertions loglevel
+		   KrangUser KrangGroup KrangRoot);
 
 # Module Dependencies
 use Carp qw(verbose croak);
@@ -121,15 +111,8 @@ use IO::File;
 use File::Spec;
 use Time::Piece;
 
-
-# load Text::Wrap if wrapping long lines
-BEGIN {
-    if (logwrap) {
-        require Text::Wrap;
-        import Text::Wrap 'wrap';
-        $Text::Wrap::columns = 80;
-    }
-}
+# constants
+use constant LogFile => "logs/krang.log";
 
 # declare exportable functions
 use Exporter;
@@ -158,7 +141,7 @@ BEGIN {
     $LOG = bless({}, "Krang::Log");
 
     # setup filehandle for log; add $KRANG_ROOT to LogFile directive
-    my $log = File::Spec->catfile(KrangRoot, Krang::Conf->logfile());
+    my $log = File::Spec->catfile(KrangRoot, LogFile);
 
     my $log_exists = (-e $log) ? 1 : 0;
     $LOG->{fh} = IO::File->new(">>$log") or
@@ -330,11 +313,6 @@ sub log {
 
     # make sure message ends in a newline
     $message .= "\n" unless $message =~ /\n\z/;
-
-    # wrap long messages if logwrap is on
-    if (logwrap and length $message > 79) {
-        $message = wrap('', "  ", $message) . "\n";
-    }
 
     # reopen filehandle if necessary
     my $filehandle = $LOG->{fh};

@@ -1,4 +1,4 @@
-use Test::More tests => 17;
+use Test::More tests => 14;
 use strict;
 use warnings;
 
@@ -7,8 +7,6 @@ use File::Temp qw(tempfile);
 # setup a test conf file
 my ($fh, $filename) = tempfile();
 print $fh <<CONF;
-ElementLibrary /usr/local/krang_elements
-
 <Instance instance_one>
   ElementSet Flex
   DBName test
@@ -34,13 +32,10 @@ die $@ if $@;
 
 # get the globals, all ways
 ok(Krang::Conf->get("KrangRoot"));
-is(Krang::Conf->get("ElementLibrary"), "/usr/local/krang_elements");
 ok(Krang::Conf->KrangRoot);
-is(Krang::Conf->ElementLibrary, "/usr/local/krang_elements");
 
-Krang::Conf->import(qw(KrangRoot ElementLibrary DBName));
+Krang::Conf->import(qw(KrangRoot DBName));
 ok(KrangRoot());
-is(ElementLibrary(), "/usr/local/krang_elements");
 ok(not defined DBName());
 
 Krang::Conf->instance("instance_one");

@@ -49,7 +49,7 @@ use Time::Seconds;
 
 # Internal Modules
 ###################
-use Krang::Conf qw(KrangRoot CleanupInterval ScheduleInterval ScheduleLog);
+use Krang::Conf qw(KrangRoot);
 use Krang::Log qw/critical debug info/;
 use Krang::Schedule;
 
@@ -58,9 +58,8 @@ use Krang::Schedule;
 ####################
 # Constants
 ############
-use constant CLEANUP_INTERVAL => CleanupInterval;
-use constant SLEEP_INTERVAL => ScheduleInterval;
-
+use constant CLEANUP_INTERVAL => 900;
+use constant SLEEP_INTERVAL => 60;
 
 # Globals
 ##########
