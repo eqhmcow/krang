@@ -218,7 +218,7 @@ sub preview_story {
     $self->{is_publish} = 0;
     $self->{is_preview} = 1;
 
-    # build the story HTML.
+    # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
     # deploy any templates flagged as testing for this user
@@ -286,6 +286,9 @@ sub publish_story {
     # set internal mode - publish, not preview.
     $self->{is_publish} = 1;
     $self->{is_preview} = 0;
+
+    # this is needed so that element templates don't get Krang's templates
+    local $ENV{HTML_TEMPLATE_ROOT} = "";
 
     if ($args{disable_related_assets}) {
         debug(__PACKAGE__ . ": disabling related_assets checking for publish");
