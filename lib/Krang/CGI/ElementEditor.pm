@@ -282,9 +282,8 @@ sub save {
         $index++;
     }
 
-    # save element tree to DB if this is the root and this isn't an
-    # intermediate save.
-    $root->save() unless $element->parent() or $arg{jump_to};
+    # save element tree to DB
+    $root->save();
     $query->param(alert => $element->display_name() . " saved.")
       unless $query->param('alert');
     
