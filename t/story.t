@@ -375,6 +375,10 @@ SKIP: {
                                   version  => 1);
     is($v1->version, 1);
     is($v1->title, "Foo");
+    is($v1->checked_out, 0);
+    is($v1->checked_out_by, 0);
+    is($v1->published_version, 0);
+
 };
 
 
@@ -816,7 +820,9 @@ is($change->url, 'storyzest.com/test_0/change');
     $ptest_count = Krang::Story->find(site_id => [$site->site_id]);
     is($ptest_count, 12, "find(site_id => [ids])");
 
-
+    # confirm find by primary_site_id as arrayref works.
+    $ptest_count = Krang::Story->find(primary_site_id => [$site->site_id]);
+    is($ptest_count, 12, "find(primary_site_id => [ids])");
 
     # Delete temp story
     for (reverse @stories) {

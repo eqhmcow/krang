@@ -772,6 +772,7 @@ sub _save_version {
     $dbh->do('REPLACE INTO story_version (story_id, version, data) 
               VALUES (?,?,?)', undef, 
             $self->{story_id}, $self->{version}, nfreeze($self));
+
 }
 
 # check for duplicate URLs
@@ -1451,11 +1452,17 @@ sub _load_version {
     croak("Unable to load version '$version' of story '$story_id'")
       unless $data;
 
-    
     my @result;
     eval { @result = (thaw($data)) };
     croak("Error loading version '$version' of story '$story_id' : $@")
       unless @result;
+
+    # restore a bunch of now out-of-date params to default values
+    foreach my $s (@result) {
+        foreach (qw/checked_out checked_out_by published_version/) {
+            $s->{$_} = 0;
+        }
+    }
 
     return @result;
 }
