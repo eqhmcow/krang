@@ -1008,15 +1008,15 @@ sub validate_contrib {
 
     my %errors = ();
 
-    # Validate first name
+    # Must have either first name or last name.
     my $first = $q->param('first');
-    $errors{error_invalid_first} = 1
-      unless (defined($first) && ($first =~ /\S+/));
-
-    # Validate last name
     my $last = $q->param('last');
-    $errors{error_invalid_last} = 1
-      unless (defined($last) && ($last =~ /\S+/));
+    unless ( (defined($first) && ($first =~ /\S+/)) ||
+             (defined($last) && ($last =~ /\S+/))
+           ) {
+        $errors{error_invalid_first} = 1;
+        $errors{error_invalid_last} = 1;
+    }
 
 
     # Validate url
