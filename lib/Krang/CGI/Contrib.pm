@@ -1009,7 +1009,7 @@ sub validate_contrib {
 
     # Validate url
     if ( $q->param('url') ) {
-        $errors{error_invalid_url} = 1 unless ($q->param('url') =~ /http:\/\/\S+\.\S+/);
+        $errors{error_invalid_url} = 1 unless ($q->param('url') =~ /http(s?):\/\/\S+\.\S+/);
     }
 
     if ( $q->param('email') ) {
