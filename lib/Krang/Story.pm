@@ -611,7 +611,7 @@ sub save {
     $self->_save_cat();
 
     # save schedules
-    $self->_save_schedules;
+    $self->_save_schedules($args{keep_version});
 
     # save contributors
     $self->_save_contrib;
@@ -623,7 +623,7 @@ sub save {
     add_history(    object => $self, 
                     action => 'new',
                )
-      if $self->{version} == 1;
+      if $self->{version} == 1 and not $args{keep_version};
 
     # register the save
     add_history(    object => $self, 
@@ -679,9 +679,10 @@ sub _save_element {
 # save schedules
 sub _save_schedules {
     my $self = shift;
+    my $keep_version = shift;
     
     # if this is the first save, save default schedules with story
-    return unless $self->{version} == 1;
+    return unless $self->{version} == 1 and not $keep_version;
     foreach my $sched ($self->element->default_schedules) {
         $sched->save();
     }
