@@ -948,7 +948,7 @@ sub serialize_xml {
     $writer->endTag('category');
 }
 
-=item C<< $site = Krang::Category->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+=item C<< $category = Krang::Category->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
 
 Deserialize XML.  See Krang::DataSet for details.
 
