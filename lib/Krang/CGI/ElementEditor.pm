@@ -65,7 +65,7 @@ sub choose_top_level {
     my @element_loop;
     foreach my $row (@$result) {
         push(@element_loop, { element_id => $row->[0],
-                              name       => ucfirst($row->[1]) });
+                              name       => $row->[1] });
     }
     $template->param(element_loop => \@element_loop);
 

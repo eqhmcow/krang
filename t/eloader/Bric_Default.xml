@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<assets xmlns="http://bricolage.sourceforge.net/assets.xsd">
+ <element id="11">
+  <name>Book Profile</name>
+  <description>A book profile inset element.</description>
+  <burner>Mason</burner>
+  <type>Insets</type>
+  <active>1</active>
+  <top_level>0</top_level>
+  <subelements></subelements>
+  <fields>
+   <field>
+    <type>text</type>
+    <name>Title</name>
+    <label>Title</label>
+    <required>1</required>
+    <repeatable>0</repeatable>
+    <size>32</size>
+    <max_size>256</max_size>
+   </field>
+   <field>
+    <type>text</type>
+    <name>Author</name>
+    <label>Author</label>
+    <required>1</required>
+    <repeatable>0</repeatable>
+    <size>32</size>
+    <max_size>256</max_size>
+   </field>
+   <field>
+    <type>text</type>
+    <name>Publisher</name>
+    <label>Publisher</label>
+    <required>1</required>
+    <repeatable>0</repeatable>
+    <size>32</size>
+    <max_size>256</max_size>
+   </field>
+   <field>
+    <type>date</type>
+    <name>Date</name>
+    <label>Date</label>
+    <required>1</required>
+    <repeatable>0</repeatable>
+   </field>
+  </fields>
+ </element>
+ <element id="3">
+  <name>Book Review</name>
+  <description>A book review element</description>
+  <burner>Mason</burner>
+  <type>Stories</type>
+  <active>1</active>
+  <top_level>1</top_level>
+  <output_channels>
+   <output_channel primary="1">Web</output_channel>
+  </output_channels>
+  <subelements>
+   <subelement>Page</subelement>
+   <subelement>Book Profile</subelement>
+  </subelements>
+  <fields>
+   <field>
+    <type>textarea</type>
+    <name>Deck</name>
+    <label>Deck</label>
+    <required>1</required>
+    <repeatable>0</repeatable>
+    <max_size>256</max_size>
+    <rows>4</rows>
+    <cols>40</cols>
+   </field>
+  </fields>
+ </element>
+ <element id="2">
+  <name>Column</name>
+  <description>A weekly column element</description>
+  <burner>Mason</burner>
+  <type>Stories</type>
+  <active>1</active>
+  <top_level>1</top_level>
+  <output_channels>
+   <output_channel primary="1">Web</output_channel>
+  </output_channels>
+  <subelements>
+   <subelement>Page</subelement>
+  </subelements>
+  <fields>
+   <field>
+    <type>textarea</type>
+    <name>Deck</name>
+    <label>Deck</label>
+    <required>1</required>
+    <repeatable>0</repeatable>
+    <max_size>256</max_size>
+    <rows>4</rows>
+    <cols>40</cols>
+   </field>
+  </fields>
+ </element>
+ <element id="13">
+  <name>Cover</name>
+  <description>A cover element.</description>
+  <burner>Mason</burner>
+  <type>Covers</type>
+  <active>1</active>
+  <top_level>1</top_level>
+  <output_channels>
+   <output_channel primary="1">Web</output_channel>
+  </output_channels>
+  <subelements>
+   <subelement>Related Media</subelement>
+   <subelement>Related Stories</subelement>
+  </subelements>
+  <fields></fields>
+ </element>
+ <element id="5">
+  <name>Illustration</name>
+  <description>An illustration element</description>
+  <burner>Mason</burner>
+  <type>Media</type>
+  <active>1</active>
+  <top_level>1</top_level>
+  <output_channels>
+   <output_channel primary="1">Web</output_channel>
+  </output_channels>
+  <subelements></subelements>
+  <fields></fields>
+ </element>
+ <element id="6">
+  <name>Inset</name>
+  <description>An inset element</description>
+  <burner>Mason</burner>
+  <type>Insets</type>
+  <active>1</active>
+  <top_level>0</top_level>
+  <subelements></subelements>
+  <fields>
+   <field>
+    <type>textarea</type>
+    <name>Copy</name>
+    <label>Copy</label>
+    <required>1</required>
+    <repeatable>0</repeatable>
+    <max_size>1024</max_size>
+    <rows>8</rows>
+    <cols>50</cols>
+   </field>
+  </fields>
+ </element>
+ <element id="10">
+  <name>Page</name>
+  <description>A page element.</description>
+  <burner>Mason</burner>
+  <type>Pages</type>
+  <active>1</active>
+  <top_level>0</top_level>
+  <subelements>
+   <subelement>Related Media</subelement>
+   <subelement>Inset</subelement>
+   <subelement>Pull Quote</subelement>
+  </subelements>
+  <fields>
+   <field>
+    <type>textarea</type>
+    <name>Paragraph</name>
+    <label>Paragraph</label>
+    <required>0</required>
+    <repeatable>1</repeatable>
+    <rows>8</rows>
+    <cols>50</cols>
+   </field>
+   <field>
+    <type>text</type>
+    <name>Previous</name>
+    <label>Previous</label>
+    <required>0</required>
+    <repeatable>0</repeatable>
+    <size>32</size>
+    <max_size>256</max_size>
+   </field>
+   <field>
+    <type>text</type>
+    <name>Next</name>
+    <label>Next</label>
+    <required>0</required>
+    <repeatable>0</repeatable>
+    <size>32</size>
+    <max_size>256</max_size>
+   </field>
+  </fields>
+ </element>
+ <element id="4">
+  <name>Photograph</name>
+  <description>A photograph element</description>
+  <burner>Mason</burner>
+  <type>Media</type>
+  <active>1</active>
+  <top_level>1</top_level>
+  <output_channels>
+   <output_channel primary="1">Web</output_channel>
+  </output_channels>
+  <subelements></subelements>
+  <fields></fields>
+ </element>
+ <element id="7">
+  <name>Pull Quote</name>
+  <description>A pull quote element</description>
+  <burner>Mason</burner>
+  <type>Insets</type>
+  <active>1</active>
+  <top_level>0</top_level>
+  <subelements></subelements>
+  <fields>
+   <field>
+    <type>textarea</type>
+    <name>Quote</name>
+    <label>Quote</label>
+    <required>1</required>
+    <repeatable>0</repeatable>
+    <max_size>1024</max_size>
+    <rows>4</rows>
+    <cols>40</cols>
+   </field>
+  </fields>
+ </element>
+ <element id="12">
+  <name>Related Media</name>
+  <description>A related media element.</description>
+  <burner>Mason</burner>
+  <type>Related Media</type>
+  <active>1</active>
+  <top_level>0</top_level>
+  <subelements></subelements>
+  <fields></fields>
+ </element>
+ <element id="8">
+  <name>Related Stories</name>
+  <description>A related stories element.</description>
+  <burner>Mason</burner>
+  <type>Insets</type>
+  <active>1</active>
+  <top_level>0</top_level>
+  <subelements>
+   <subelement>Related Story</subelement>
+  </subelements>
+  <fields></fields>
+ </element>
+ <element id="9">
+  <name>Related Story</name>
+  <description>A related story element.</description>
+  <burner>Mason</burner>
+  <type>Related Stories</type>
+  <active>1</active>
+  <top_level>0</top_level>
+  <subelements></subelements>
+  <fields>
+   <field>
+    <type>text</type>
+    <name>Alternate Title</name>
+    <label>Alternate Title</label>
+    <required>0</required>
+    <repeatable>0</repeatable>
+    <size>32</size>
+    <max_size>256</max_size>
+   </field>
+   <field>
+    <type>textarea</type>
+    <name>Alternate Teaser</name>
+    <label>Alternate Teaser</label>
+    <required>0</required>
+    <repeatable>0</repeatable>
+    <max_size>512</max_size>
+    <rows>4</rows>
+    <cols>40</cols>
+   </field>
+  </fields>
+ </element>
+ <element id="1">
+  <name>Story</name>
+  <description>A story element</description>
+  <burner>Mason</burner>
+  <type>Stories</type>
+  <active>1</active>
+  <top_level>1</top_level>
+  <output_channels>
+   <output_channel primary="1">Web</output_channel>
+  </output_channels>
+  <subelements>
+   <subelement>Page</subelement>
+   <subelement>Pull Quote</subelement>
+  </subelements>
+  <fields>
+   <field>
+    <type>textarea</type>
+    <name>Deck</name>
+    <label>Deck</label>
+    <required>1</required>
+    <repeatable>0</repeatable>
+    <max_size>256</max_size>
+    <rows>4</rows>
+    <cols>40</cols>
+   </field>
+  </fields>
+ </element>
+</assets>

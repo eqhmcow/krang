@@ -11,7 +11,7 @@ Krang::ElementLibrary - the element class loader and indexer
   use Krang::ElementLibrary;
 
   # load an element set by name
-  Krang::ElementLibary->load_set("Flex");
+  Krang::ElementLibary->load_set(set => "Flex");
 
   # get a list of available top level elements
   @top_levels = Krang::ElementLibary->top_levels());
@@ -85,6 +85,18 @@ use File::Spec::Functions qw(catdir catfile);
 use Config::ApacheFormat;
 use Carp qw(croak);
 use Krang::Log qw(debug info);
+
+# load all Krang::ElementClass base classes, which will be used by
+# element sets
+use Krang::ElementClass;
+use Krang::ElementClass::CheckBox;
+use Krang::ElementClass::ListBox;
+use Krang::ElementClass::MediaLink;
+use Krang::ElementClass::PopupMenu;
+use Krang::ElementClass::StoryLink;
+use Krang::ElementClass::Textarea;
+use Krang::ElementClass::Text;
+use Krang::ElementClass::Date;
 
 =head1 INTERFACE
 
@@ -164,7 +176,7 @@ sub _instantiate_top_levels {
     croak("No TopLevels defined for element set '$set'.")
       unless @tops;
 
-    # FIX: look in ParentSets to
+    # FIX: look in ParentSets too
     foreach my $top (@tops) {
         my $class_pkg = "${set}::$top";
         croak("Unable to find element class '${set}::$top' while " .
@@ -172,6 +184,11 @@ sub _instantiate_top_levels {
           unless $class_pkg->can('new');
         $TOP_LEVEL{$set}{$top} = $class_pkg->new(top_level => 1);        
     }
+
+    # check that the set has the special category element class
+    #croak("Missing required 'category' top-level in element set '$set'.")
+    #  unless exists $TOP_LEVEL{category};
+
 }
 
 =item C<< @toplevels = Krang::ElementLibrary->top_levels() >>
@@ -212,15 +229,20 @@ sub top_level {
 
 Finds an element class by name, looking in the configured ElementSet
 for the current instance.  If the ElementSet has ParentSets
-configured, will look there too.
+configured, will look there too.  Returns an object descended from
+Krang::ElementClass.
+
+For testing purposes, set $Krang::ElementLibrary::TESTING_SET and
+find_class() will look there rather than the current ElementSet.
 
 =cut
 
 sub find_class {
     my ($pkg, %arg) = @_;
     my ($name) = @arg{qw(name)};
+    our $TESTING_SET;
 
-    my $set = ElementSet();
+    my $set = $TESTING_SET || ElementSet();
     my $class_pkg = "${set}::$name";
     return $class_pkg->new() if $class_pkg->can('new');
     croak("Unable to load element class named '$name' in set '$set'");
@@ -231,7 +253,11 @@ sub find_class {
 
 =head1 TODO
 
-Implement ParentSets.
+=over
+
+=item Implement ParentSets.
+
+=back
 
 =cut
 
