@@ -9,7 +9,7 @@ use Time::Piece;
 use Time::Piece::MySQL;
 
 # constants
-use constant FIELDS => qw( object_type object_id action version desk user_id timestamp );
+use constant FIELDS => qw( object_type object_id action version desk_id user_id timestamp );
 use constant OBJECT_TYPES => qw( Krang::Story Krang::Media Krang::Template );
 use constant ACTIONS => qw( new save checkin checkout publish deploy move revert );
 
@@ -38,11 +38,11 @@ our @EXPORT_OK = qw( add_history );
                     action => 'save',
                );
 
-    # record that story was checked in to desk 'Publish' (user_id pulled 
+    # record that story was checked in to desk 2 (user_id pulled 
     # from session, object id and type from object passed in)
     add_history(    object => $story, 
                     action => 'checkin'
-                    desk => 'Publish' 
+                    desk_id => '2' 
                 );
 
     # record that template was deployed (user_id pulled from session, 
@@ -106,10 +106,6 @@ sub _save {
  
     $dbh->do('INSERT INTO history ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")", undef, map { $self->{$_} } FIELDS);
 
-    my $info_string = $self->{object_type}." ".$self->{object_id}." ".$self->{action}." by user ".$self->{user_id};
-    $info_string  .= " (version ".$self->{version}.")" if $self->{version};
-    $info_string  .= " to desk '".$self->{desk}."'" if $self->{desk};
-    info(__PACKAGE__." - ".$info_string); 
 }
 
 =item add_history()
@@ -118,7 +114,7 @@ This method adds an entry into the database of an action taken on an object.
 
 The valid trackable objects are: Krang::Story, Krang::Media, and Krang::Template. These are passed in as 'object' - 'object_type', and 'object_id' are derived from the object.  The valid actions (specified by 'action') performed on an object are new, save, checkin, checkout, revert, move, publish, and deploy.  
 
-In addition to tracking actions on objects, the user who performed the action is tracked by 'user_id', which is found in the session object.  If the 'action' is  'save' or 'revert', version is also derived from the object. 'desk' can be used to track which desk an action was performed on.  A timestamp is added to each history event, and will appear in the field 'timestamp' on objects returned from find. 
+In addition to tracking actions on objects, the user who performed the action is tracked by 'user_id', which is found in the session object.  If the 'action' is  'save' or 'revert', version is also derived from the object. 'desk_id' can be used to track which desk an action was performed on.  A timestamp is added to each history event, and will appear in the field 'timestamp' on objects returned from find. 
 
 =cut
 
@@ -136,6 +132,12 @@ sub add_history {
     my $object_id_type = lc((split('::', $object_type))[1]).'_id'; 
     $history->{object_id} = $object->$object_id_type; 
     $history->_save();
+
+    # log this event
+    my $info_string = $history->{object_type}." ".$history->{object_id}." ".$history->{action}." by user ".$history->{user_id};
+    $info_string  .= " (version ".$history->{version}.")" if $history->{version};
+    $info_string  .= " to desk '".$history->{desk_id}."'" if $history->{desk_id};
+    info(__PACKAGE__." - ".$info_string);
 }
 
 =item find()
