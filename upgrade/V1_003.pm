@@ -5,6 +5,7 @@ use base 'Krang::Upgrade';
 
 use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
+use Krang::DB qw(dbh);
 
 # add new required krang.conf directive, Skin
 sub per_installation {
@@ -39,8 +40,24 @@ END
 }
 
 
-# nothing to do yet
-sub per_instance {}
+# fix duplicate lists created by a bug in krang_createdb
+sub per_instance {
+    my $self = shift;
+    my $dbh = dbh;
+
+    my $results = $dbh->selectall_arrayref('SELECT list_group_id, name FROM list_group ORDER BY list_group_id');
+    use Data::Dumper;
+    print STDERR Dumper($results);    
+
+    my %seen;
+    foreach my $row (@$results) {
+        my ($id, $name) = @$row;
+        next unless $seen{$name}++;
+        
+        # delete duplicates
+        $dbh->do('DELETE FROM list_group WHERE list_group_id = ?', undef, $id);
+    }    
+}
  
 
 1;
