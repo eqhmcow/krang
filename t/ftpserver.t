@@ -1,5 +1,4 @@
 use Test::More qw(no_plan);
-BEGIN { ok(1); exit; }
 
 use strict;
 use warnings;
@@ -122,7 +121,9 @@ my @types = qw(media template);
 my @ret_types = $ftp->ls();
 is("@ret_types", "@types", "Type listing");
 
-my $sitenames = join(" ",(map { $_->url } @sites));
+my @found_sites = Krang::Site->find(order_by => 'url');
+
+my $sitenames = join(" ",(map { $_->url } @found_sites));
 
 # go into media then templates and test
 foreach my $type (@types) {
