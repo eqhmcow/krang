@@ -1412,7 +1412,7 @@ sub _build_story_single_category {
     my @article_pages = split(/${\PAGE_BREAK}/, $article_output);
 
     # chuck the last page if it's only whitespace.
-    if ($article_pages[$#article_pages] =~ /^\s*$/) {
+    if ($article_pages[$#article_pages] =~ /^\s*$/ and $#article_pages != 0) {
         pop @article_pages;
     }
 
