@@ -81,20 +81,21 @@ BEGIN {
 use Krang;
 
 
-
-##  Start make dist
-make_dist();
-exit(0);
-
 my $krang_version;
+my $uniqueness = time();
 
-sub make_dist {
+
+# Make dist
+{
     get_krang_version();
     create_cvs_tag();
     export_krang();
     exclude_directories();
     create_tarball();
     report_status();
+    cleanup_makedist();
+
+    exit(0);
 }
 
 
@@ -110,25 +111,60 @@ sub get_krang_version {
 
 
 sub create_cvs_tag {
-    my $ver_string = "V". $krang_version;
-    $ver_string =~ tr/\./\_/;
+    my $ver_string = get_ver_string();
+
+    # Go to working dir
+    chdir($ENV{KRANG_ROOT});
+
+    print "Checking for CVS tag '$ver_string'...\n";
+    if (cvs_tag_exists($ver_string)) {
+        print STDERR <<EOT;
+Error: TAG EXISTS!
+
+It appears that Krang has already been tagged with '$ver_string'.  This 
+is usually an indication that you did not update \$VERSION in Krang.pm.
+
+To continue WITHOUT updating the \$Krang::VERSION you must first delete 
+this tag from CVS.
+
+To delete tag:
+
+  cvs tag -d '$ver_string'
+
+EOT
+        exit(1);
+    }
 
     print "Tagging CVS repository: '$ver_string'...\n";
 
-    my $cvs_cmd = "cd \$KRANG_ROOT && cvs -q tag '$ver_string'";
-    print STDERR "$cvs_cmd\n";
+    my $cvs_cmd = "cvs tag '$ver_string'";
     my $cvs_output = `$cvs_cmd`;
-    print "---- CVS OUTPUT ---->\n$cvs_output<---- CVS OUTPUT ----\n";
-
-    if ($cvs_output =~ qr/$ver_string already exists on version/) {
-        print STDERR "It appears this tag already exists.  Aborting.\nEither delete or move the tag first.\n";
-        exit(1);
-    }
     print "Tagging done.\n"
 }
 
 
-sub export_krang {}
+sub export_krang {
+    my $ver_string = get_ver_string();
+
+    # Check for version and export if found
+    unless (cvs_tag_exists($ver_string)) {
+        print STDERR "Can't find CVS tag '$ver_string'.  Exiting.";
+        exit(1);
+    }
+
+    # Make directory for work
+    my $export_dir = get_export_dir();
+    mkdir($export_dir);
+
+    # Go to working dir
+    chdir($export_dir);
+
+    # CVS export by tag
+    my $cvs_export_cmd = "cvs export -r $ver_string krang";
+    print "Exporting Krang to $export_dir...\n";
+    my $cvs_output = `$cvs_export_cmd`;
+    print "Export complete.";
+}
 
 
 sub exclude_directories {}
@@ -139,5 +175,38 @@ sub create_tarball {}
 
 sub report_status {}
 
+
+sub cleanup_makedist {}
+
+
+
+##########################
+####  IMPLEMENTATION  ####
+##########################
+
+# Return version string used by CVS for tag
+sub get_ver_string {
+    my $ver_string = "V". $krang_version;
+    $ver_string =~ tr/\./\_/;
+    return $ver_string;
+}
+
+
+# Return the export directory path
+sub get_export_dir {
+    my $export_dir = "/tmp/krang_". get_ver_string() ."_". $uniqueness;
+    return $export_dir;
+}
+
+# Return Boolean 1 if specified tag exists in Krang
+sub cvs_tag_exists {
+    my $tag = shift;
+
+    my $cvs_check_tag_cmd = "cvs -n update -r $tag lib/Krang.pm 2>\&1";
+    my $tagcheck_output = `cd \$KRANG_ROOT && $cvs_check_tag_cmd`;
+
+    # No output == tag exists
+    return not($tagcheck_output);
+}
 
 

@@ -8,28 +8,15 @@ PIRT.
 =over 4
 
 
-=item Make sure your CVS working directory is up to daye (C<cvs update -d>)
+=item Make sure your CVS working directory is up to date (C<cvs update -d>)
 
-=item Update $VERSION in Krang.pm and commit change to CVS
-
+=item Update $VERSION in Krang.pm
 
 =item Verify that upgrade modules have been created for this release
 
-=over 4
-
-=item Located in F<KRANG_ROOT/upgrade/>
-
-=back
-
+=item Make sure all changes are committed to CVS.
 
 =item Run C<bin/krang_makedist>
-
-=over 4
-
-=item Will create release file in KRANG_ROOT, "krang_V1_2.tar.gz"
-
-=back
-
 
 =item Test release on separate machine
 
@@ -37,4 +24,28 @@ PIRT.
 
 
 =back
+
+
+=head2 What release will do
+
+=over 4
+
+=item Tag CVS
+
+Based on the version in Krang.pm, all the files in the release will be
+tagged.  Tag names are derived from the version number by replacing
+"." with "_", and pre-pending a "V", e.g., 
+
+  Version: 1.23
+  CVS Tag: V1_23
+
+If you forget to update the $VERSION in Krang.pm, the release system
+will detect that the tag already exists and will abort.
+
+
+=item Create tar-ball
+
+
+=back
+
 
