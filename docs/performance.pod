@@ -26,11 +26,12 @@ This system is similar to many small websites which will run Krang.
 
 Results:
 
-  Average Publish Time: X seconds
-  Total Site Publish:   X minutes
-  Story Import:         X per second
-  Media Load:           X per second
-  Story Find Time:      X seconds
+  Story Publish:                3 per second 
+  Total Site Publish:           15 minutes
+  Media Upload and Save:        151 per second
+  Story Import:                 9 per second
+  Story Find Time (by title):   .025  seconds
+  Find Media, limit 100:        .025 seconds    
 
 =head2 Medium Load
 
@@ -45,11 +46,12 @@ in our organization.
 
 Results:
 
-  Average Publish Time: X seconds
-  Total Site Publish:   X minutes
-  Story Import:         X per second
-  Media Load:           X per second
-  Story Find Time:      X seconds
+  Story Publish:                3 per second
+  Total Site Publish:           65 minutes
+  Media Upload and Save:        139 per second
+  Story Import:                 7 per second
+  Story Find Time (by title):   .15  seconds
+  Find Media, limit 100:        .025 seconds
 
 =head2 High Load
 
@@ -63,11 +65,12 @@ This system contains enough content to publish several very large sites.
 
 Results:
 
-  Average Publish Time: X seconds
-  Total Site Publish:   X minutes
-  Story Import:         X per second
-  Media Load:           X per second
-  Story Find Time:      X seconds
+  Story Publish:                3 per second
+  Total Site Publish:           15 hours, 24 minutes
+  Media Upload and Save:        42 per second
+  Story Import:                 7 per second
+  Story Find Time (by title):   4.6  seconds
+  Find Media, limit 100:        .025 seconds
 
 =head2 Extreme Load
 
