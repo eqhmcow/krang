@@ -72,6 +72,7 @@ use Krang::MethodMaker (
                                                default_sort_order_desc
                                                row_handler
                                                id_handler
+                                               max_page_links
                                              ) ],
                        );
 
@@ -129,6 +130,7 @@ sub init {
                     default_sort_order_desc => 0,
                     command_column_commands => [],
                     command_column_labels => {},
+                    max_page_links => 10,
                    );
 
     # finish the object
@@ -295,7 +297,7 @@ EOF
 
 <tmpl_loop page_numbers>
   <tmpl_if is_current_page><b><tmpl_var page_number></b>
-  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number></a>
+  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number_label></a>
   </tmpl_if>
   <tmpl_unless __last__>|</tmpl_unless>
 </tmpl_loop>
@@ -571,6 +573,14 @@ The referenced subroutine receives a reference to the object to be
 displayed on this row.  The job of your custom function is to return
 a unique identifier for this row.
 
+=item max_page_links
+
+  max_page_links => 10
+
+Set this to the maximum number of page links that the pager should
+display.  Any more pages outside this number will be represented by a
+"..." in the output HTML.  If set to 0 all page links are shown.  The
+default is 10.
 
 =back
 
@@ -694,11 +704,11 @@ between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 =item page_numbers
 
-The pager is expected to provide a list of page numbers which are 
+The pager is expected to provide a list of page numbers which are
 links to allow the user to jump between pages.  The <TMPL_LOOP>
-"page_numbers" contains this list.  Each for in "page_numbers" 
-is expected to implement two variables, "page_number" and "is_current_page"
-which are described below.
+"page_numbers" contains this list.  Each for in "page_numbers" is
+expected to implement three variables, "page_number",
+"page_number_label" and "is_current_page" which are described below.
 
 
 =item page_number
@@ -710,6 +720,12 @@ particular page of output.
 
 (N.b.: A Javascript function, "go_page()", is provided for navigation
 between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
+
+=item page_number_label
+
+Available in the context of the <TMPL_LOOP> "page_numbers", the
+<TMPL_VAR> "page_number_label" contains the label for a page number.  This
+might be the number itself or it might be the string "...".
 
 
 =item is_current_page
@@ -878,7 +894,34 @@ sub get_pager_view {
     $curr_page_num = $total_pages if ($curr_page_num > $total_pages);
 
     # Build page-jumper
-    my @page_numbers = ( map { {page_number=>$_, is_current_page=>($_ eq $curr_page_num)} } (1..$total_pages) );
+    my @page_numbers;
+    my $max_page_links = $self->max_page_links;
+    if ($max_page_links and $total_pages > $max_page_links) {
+        # compute start and end of sequence to show
+        my $start = ( int(($curr_page_num - 1) / $max_page_links) * 
+                      $max_page_links ) + 1;
+        my $end   = $start + $max_page_links - 1;
+        $end = $total_pages if $end > $total_pages;
+
+        # output page numbers and elipses
+        push(@page_numbers, 
+             { page_number => $start - 1,
+               page_number_label => "..." }) if $start != 1;
+        push(@page_numbers,
+          map { { page_number      => $_, 
+                  page_number_label=> $_,
+                  is_current_page  => ($_ eq $curr_page_num) } }
+            ($start..$end));
+        push(@page_numbers, 
+             { page_number => $end + 1,
+               page_number_label => "..." }) if $end != $total_pages;
+    } else {
+        @page_numbers = 
+          map { { page_number      => $_, 
+                  page_number_label=> $_,
+                  is_current_page  => ($_ eq $curr_page_num) } }
+            (1..$total_pages);
+    }
 
     # Determine row number at which display starts
     my $offset = ($curr_page_num - 1) * $limit;
