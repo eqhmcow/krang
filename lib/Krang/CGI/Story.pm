@@ -510,7 +510,10 @@ sub view {
                      return_params_loop => 
                      [ map { { name => $_, value => $return_params{$_} } } keys %return_params ]);
 
-    $template->param( can_edit => 1 ) unless ( $story->checked_out and ($story->checked_out_by ne $ENV{REMOTE_USER}) );
+    $template->param( can_edit => 1 ) 
+      unless ( $story->checked_out and 
+               ($story->checked_out_by ne $ENV{REMOTE_USER})) or 
+                 not $story->may_edit;
 
     return $template->output();
 }
@@ -1243,7 +1246,7 @@ sub find {
                        );
 
     # Set up find_params for pager
-    my %find_params = ();
+    my %find_params = (may_see => 1);
     if ($do_advanced_search) {
 
         # Set up advanced search
@@ -1557,10 +1560,13 @@ sub find_story_row_handler {
     # pub_status  -- NOT YET IMPLEMENTED
     $row->{pub_status} = '&nbsp;<b>P</b>&nbsp;';
 
-    if (($story->checked_out) and ($story->checked_out_by ne $ENV{REMOTE_USER})) {
+    if (($story->checked_out) and 
+        ($story->checked_out_by ne $ENV{REMOTE_USER}) 
+        or not $story->may_edit ) {
         $row->{commands_column} = '<a href="javascript:view_story('."'".$story->story_id."'".')">View</a>'
-        . '&nbsp;|&nbsp;'
+          . '&nbsp;|&nbsp;'
         . '<a href="javascript:view_story_log('."'".$story->story_id."'".')">Log</a>';
+        $row->{checkbox_column} = "&nbsp;";
     } else {
         $row->{commands_column} = '<a href="javascript:edit_story('."'".$story->story_id."'".')">Edit</a>'
         . '&nbsp;|&nbsp;'
