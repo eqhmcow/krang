@@ -11,7 +11,7 @@ use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 
 use base 'Exporter';
-our @EXPORT_OK = qw(category_chooser date_chooser decode_date);
+our @EXPORT_OK = qw(category_chooser date_chooser decode_date format_url);
 
 =head1 NAME
 
@@ -30,6 +30,8 @@ Krang::Widget - interface widgets for use by Krang::CGI modules
   $date_obj = decode_date(name => 'cover_date',
                           query => $query);
 
+  $url_html = format_url(url => 'http://my.host/some/long/url.html',
+                         linkto => "javascript:preview_media('". $id ."')" );
 
 =head1 DESCRIPTION
 
@@ -237,6 +239,51 @@ sub decode_date {
 
     return Time::Piece->strptime("$m/$d/$y", '%m/%d/%Y');
 }
+
+
+
+  $url_html = 
+
+
+=item $url_html = format_url(url => 'http://my.host/url.html', linkto => 'url.html' );
+
+Returns a block of HTML implementing the standard Krang url
+display/link style.  The C<url> parameter is required.  The 
+optional C<linkto> parameter, if provided, will be used as
+the HTML "href" to which users are directed when they click 
+any line in the URL.
+
+=cut
+
+sub format_url {
+    my %args = @_;
+
+    # Validate calling input
+    my ($url, $linkto) = @args{qw/url linkto/};
+    croak ("Missing required argument 'url'") unless ($url);
+
+    my @parts = split('/', $url);
+    my @url_lines = (shift(@parts), "");
+    for(@parts) {
+        if ((length($url_lines[-1]) + length($_)) > 15) {
+            push(@url_lines, "");
+        }
+        $url_lines[-1] .= "/" . $_;
+    }
+    my $format_url_html;
+    if ($linkto) {
+        # URL with links
+        $format_url_html = join( '<br>', 
+                                 map { qq{<a href="$linkto">$_</a>} } @url_lines );
+    } else {
+        # URL without links
+        $format_url_html = join( '<br>', @url_lines );
+    }
+
+    return $format_url_html;
+}
+
+
 
 
 
