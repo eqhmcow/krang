@@ -115,9 +115,26 @@ sub bulk_edit_filter {
 
 sub fill_template {
     my ($self, %arg) = @_;
+
     $arg{tmpl}->param($self->name, join(', ', @{$arg{element}->data}))
       if $arg{element}->data;
+
 }
+
+# return a list of fields if no template exists.
+sub template_data {
+   my ($self, %args) = @_;
+
+    if (my $data = $args{element}->data) {
+        my @words;
+        foreach my $k (@$data) {
+            push @words, $k if $k;
+        }
+
+        return join ',', @words;
+    }
+}
+
 
 # return all keywords for indexing
 sub index_data {
