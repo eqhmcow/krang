@@ -7,12 +7,13 @@ emerge perl
 Since you will be building Krang from source (it *is* Gentoo after
 all), all other dependencies should be taken care of by this point.
 
-NOTE:
 
-At this time, krang_install is somewhat broken with respects to
-Gentoo: It will successfully install Krang, but will fail with an ugly
-error message when it tries to use chkconfig to install init scripts.
+Getting Krang to Start on Boot:
 
-What this mean is this: Ignore the error message, krang has installed.
-However, it will not start up on boot - for the time being, you will
-need to do that manually.
+During install, Krang adds a file to /etc/init.d called krang-HostName
+(where HostName is the --HostName argument passed to krang_install).
+To make Krang start on system boot, run the following command as root:
+
+rc-update add krang-HostName boot
+
+
