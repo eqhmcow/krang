@@ -107,6 +107,18 @@ if ($@) {
     ok($tmpl2->testing() eq 0, 'Krang::Template->mark_as_deployed()');
 }
 
+# test mark_as_undeployed
+eval { $tmpl2->mark_as_undeployed(); };
+if ($@) {
+    diag($@);
+    fail('Krang::Template->mark_as_undeployed()');
+} else {
+    pass('Krang::Template->mark_as_undeployed()');
+    ok($tmpl2->deployed() == 0, 'Krang::Template->mark_as_undeployed()');
+    ok(!defined($tmpl2->deployed_version()), 'Krang::Template->mark_as_undeployed()');
+    ok(!defined($tmpl2->deploy_date()), 'Krang::Template->mark_as_undeployed()');
+}
+
 
 
 # find() tests
