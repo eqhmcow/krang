@@ -1398,39 +1398,38 @@ sub deploy_test_templates {
 #
 sub test_additional_content_block {
 
-    my $content  = $para1;
-    my $story = $content;
+    my $category = $creator->create_category();
+    my $story    = $creator->create_story(category => [$category]);
+
+    my @expected;
 
     for (my $count = 0; $count < 10; $count++) {
         my $filename = "test$count.txt";
         my $bool = $count % 2;
         my $data = "text$count "x40;
 
-        my $open  = qq{<KRANG_ADDITIONAL_CONTENT filename="$filename" use_category="$bool">};
-        my $close = "</KRANG_ADDITIONAL_CONTENT>";
+        $publisher->additional_content_block(content => $data, filename => $filename, use_category => $bool);
 
-        my $txt = $publisher->additional_content_block(content => $data, filename => $filename, use_category => $bool);
-
-        my $expected = $open . $data . $close;
-
-        ok($txt eq $expected, "Krang::Publisher->additional_content_block");
-
-        $story .= $txt;
+        push @expected, {content => $data, filename => $filename, use_category => $bool};
     }
 
-    my ($additional_ref, $final_story) = $publisher->_parse_additional_content(text => $story);
-
-    ok($final_story eq $content, "Krang::Publisher->_parse_additional_content()");
-
-    for (my $i = 0; $i <= $#$additional_ref; $i++) {
-        my $block = $additional_ref->[$i];
-        my $bool = $i % 2;
-        my $data = "text$i "x40;
-
-        ok($block->{filename} eq "test$i.txt", "Krang::Publisher->_parse_additional_content -- filename");
-        ok($block->{use_category} eq $bool, "Krang::Publisher->_parse_additional_content -- use_category");
-        ok($block->{content} eq $data, "Krang::Publisher->_parse_additional_content -- content");
+    for (my $i = 0; $i <= $#expected; $i++) {
+        foreach (qw/content filename use_category/) {
+            ok($expected[$i]{$_} eq $publisher->{additional_content}[$i]{$_}, 'Krang::Publisher->additional_content_block');
+        }
     }
+
+    $publisher->_set_publish_mode();
+    my @files = $publisher->_build_story_single_category(story => $story, category => $category);
+
+    # check to see that the files got written
+    for (my $i = 0; $i <= $#expected; $i++) {
+        my $path = catfile($story->publish_path(category => $category), "test$i.txt");
+        ok(-e $path, 'Krang::Publisher->additional_content_block');
+    }
+
+    $creator->delete_item(item => $story);
+    $creator->delete_item(item => $category);
 }
 
 
@@ -1495,12 +1494,13 @@ sub link_media {
 sub build_publish_paths {
 
     my $story = shift;
+    my $filename = shift || 'index.html';
 
     my @cats = $story->categories;
     my @paths;
 
     foreach my $cat (@cats) {
-        push @paths, catfile($story->publish_path(category => $cat), 'index.html');
+        push @paths, catfile($story->publish_path(category => $cat), $filename);
     }
 
     return @paths;

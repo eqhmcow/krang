@@ -1095,7 +1095,11 @@ sub template_search_path {
 
 =item C<< $txt = $publisher->page_break() >>
 
-Returns the tag used internally to mark the break between pages in a story.  When a multi-page story is assembled by the Krang::ElementClass element tree, it consists of a scaler containing these break tags.  The preview/publish process will split the scaler along those tags to create the individual pages of the story.
+Returns the tag used internally to mark the break between pages in a
+story.  When a multi-page story is assembled by the
+Krang::ElementClass element tree, it consists of a scaler containing
+these break tags.  The preview/publish process will split the scaler
+along those tags to create the individual pages of the story.
 
 No exceptions to throw.
 
@@ -1110,7 +1114,10 @@ sub page_break {
 
 =item C<< $txt = $publisher->content() >>
 
-Returns the tag used internally to mark the break between the top and bottom sections of a category page.  Once broken, the individual pages of a story will be placed in between the two halves, and the full HTML page will be assembled.
+Returns the tag used internally to mark the break between the top and
+bottom sections of a category page.  Once broken, the individual pages
+of a story will be placed in between the two halves, and the full HTML
+page will be assembled.
 
 No exceptions to throw.
 
@@ -1123,15 +1130,25 @@ sub content {
 }
 
 
-=item C<< $txt = $publisher->additional_content_block(filename => $filename, content => $html, use_category => 1); >>
+=item C<< $publisher->additional_content_block(filename => $filename, content => $html, use_category => 1); >>
 
-Creates a formatted block of text from C<$html> that, during the final processing of output, will be split out from the rest of the content to be published, and will be written out to C<$filename>.
+C<additional_content_block> creates an entry in the publisher that
+will be re-visited once the entire story content has been constructed.
+During the final output of the story, the content C<$html> will be
+written out separately to C<$filename>.
 
-content and filename arguments are required.
+C<content> and C<filename> arguments are required.
 
-C<use_category> is a boolean flag that tells Krang::Publisher whether or not to add the current L<Krang::Category> header/footer to the final output, as it will for the regular published output.  Defaults to true.
+C<use_category> is a boolean flag that tells Krang::Publisher whether
+or not to add the current L<Krang::Category> header/footer to the
+final output, as it will for the regular published output.  Defaults
+to true.
 
-B<WARNING:> C<additional_content_block()> can be called as many times as desired, however it does not perform any sanity checks on C<filename> - if your output contains multiple blocks of additional content with identical filenames, they will overwrite eachother, and only the last one will remain.
+B<WARNING:> C<additional_content_block()> can be called as many times
+as desired, however it does not perform any sanity checks on
+C<filename> - if your output contains multiple blocks of additional
+content with identical filenames, they will overwrite eachother, and
+only the last one will remain.
 
 =cut
 
@@ -1141,11 +1158,13 @@ sub additional_content_block {
     my $self = shift;
     my %args = @_;
 
-    my $content  = $args{content}  || croak __PACKAGE__ . ": missing required argument 'content'";
-    my $filename = $args{filename} || croak __PACKAGE__ . ": missing required argument 'filename'";
-    my $use_category = exists($args{use_category}) ? $args{use_category} : 1;
+    my %block;
 
-    return qq{<${\ADDITIONAL_CONTENT} filename="$filename" use_category="$use_category">$content</${\ADDITIONAL_CONTENT}>};
+    $block{content}  = $args{content}  || croak __PACKAGE__ . ": missing required argument 'content'";
+    $block{filename} = $args{filename} || croak __PACKAGE__ . ": missing required argument 'filename'";
+    $block{use_category} = exists($args{use_category}) ? $args{use_category} : 1;
+
+    push @{$self->{additional_content}}, \%block;
 
 }
 
@@ -1460,8 +1479,6 @@ sub _build_story_single_category {
 
     # get story output
     my $article_output  = $story_element->publish(publisher => $self);
-    # parse out additional content
-    ($additional_content, $article_output) = $self->_parse_additional_content(text => $article_output);
 
     # break the story into pages
     my @article_pages = split(/${\PAGE_BREAK}/, $article_output);
@@ -1514,7 +1531,7 @@ sub _build_story_single_category {
     }
 
     # write additional content to disk
-    foreach my $block (@$additional_content) {
+    while (my $block = shift @{$self->{additional_content}}) {
         my $content = $block->{content};
         if ($block->{use_category} && $story_element->use_category_templates()) {
             $content = $cat_header . $content . $cat_footer;
@@ -1812,34 +1829,6 @@ sub _clear_asset_lists {
 #
 # ADDITIONAL CONTENT METHODS
 #
-
-#
-# (\@additional_output, $article) = $self->_parse_additional_content(text => $article)
-#
-# Returns a listref of hashes containing additional content associated w/ story.
-# Also returns article text minus additional content text.
-#
-
-sub _parse_additional_content {
-
-    my $self = shift;
-    my %args = @_;
-
-    croak __PACKAGE__ . ": missing argument 'text'" unless exists($args{text});
-    my $article = $args{text};
-
-    my @content;
-
-    while ($article =~ s/<${\ADDITIONAL_CONTENT}\s*filename="([^\"]+)"\s*use_category="([^\"]+)[^>]+>(.+?)<\/${\ADDITIONAL_CONTENT}>//s) {
-        my %entry = (filename => $1,
-                     use_category => $2,
-                     content => $3);
-
-        push @content, \%entry;
-    }
-
-    return (\@content, $article);
-}
 
 
 ##################################################

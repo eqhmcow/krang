@@ -751,25 +751,36 @@ While we use C<fill_template_args> in the previous examples, you can call
 
  $child->publish(publisher => $publisher, any_param_name_you_want => $foo);
 
-And the additional parameter(s) will get passed along to C<fill_template()> method of the child object.  It is up to you, of course, to make use of it on that end - the standard Krang implementation only makes use of C<fill_template_args>.
+And the additional parameter(s) will get passed along to
+C<fill_template()> method of the child object.  It is up to you, of
+course, to make use of it on that end - the standard Krang
+implementation only makes use of C<fill_template_args>.
 
 
 =head1 Generating Additional Content
 
-While publishing a given story, you may want to publish additional files containing data related to the story.  For example, an RDF file for syndication, or an XML file containing keywords for search-engines, or an article preview page for subscription purposes.
+While publishing a given story, you may want to publish additional
+files containing data related to the story.  For example, an RDF file
+for syndication, or an XML file containing keywords for
+search-engines, or an article preview page for subscription purposes.
 
-While Krang doesn't provide direct support for such things within the UI, it provides a framework for you to use within your element library, allowing you to build the content in any way you see fit.
+While Krang doesn't provide direct support for such things within the
+UI, it provides a framework for you to use within your element
+library, allowing you to build the content in any way you see fit.
 
-What you're attempting to do is add your additional content into the block of HTML that the elements return during the publish process.  Roughly, it works as follows:
+During the publish process, you can add additional content at any
+point that you have the C<Krang::Publisher> object available.  For example:
 
- my $html = results_of_publish();
+ # Write out 'extra.html' in conjunction with this story.
+ my $additional_content = create_sidebar_story();
 
- my $additional_content = results_of_additional_work();
+ $publisher->additional_content_block(content  => $additional_content,
+                                      filename => 'extra.html',
+                                      use_category => 1);
 
- return $html . $publisher->additional_content_block(content => $additional_content,
-                                                     filename => 'extra.html');
-
-At the end of the publish process, Krang will separate $additional_content out from the rest of the text, and write it to disk as 'extra.html'.
+At the end of the publish process, Krang will handle the entry in
+C<additional_content> separately from the main story, and write it to
+disk as 'extra.html' (or whatever you set C<filename> to be).
 
 B<What is Supported:>
 
@@ -777,11 +788,15 @@ B<What is Supported:>
 
 =item *
 
-An arbitrary number of additional files can be added created - just be careful filenames do not overlap.
+An arbitrary number of additional files can be added created - just be
+careful filenames do not overlap.
 
 =item *
 
-You have the option to add (or not add) the current Category templates (e.g. header/footer) to your output.
+You have the option to add (or not add) the current Category templates
+(e.g. header/footer) to your output.  Simply set C<use_category> to 1
+if you want to wrap C<$additional_content> in the category templates,
+or set it to 0 if you want it to be written to disk as-is.
 
 =back
 

@@ -10,6 +10,16 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Made L<Krang::Publisher>->C<additional_content_block()> a lot easier
+to use from the developer perspective.  Rather than handling the
+result of the call, everything is now handled internally.  Overriding
+C<publish()> to use C<additional_content_block> is no longer required.
+Additionally, it's backwards-compatible with the old way of doing
+things, so no need to make changes to your element libraries.  [Peter]
+
+
+=item *
+
 Fixed symlink bug that caused thumbnails to disappear from the UI
 after a Krang instance was moved to a different location on the
 filesystem.  [Peter]
