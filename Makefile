@@ -35,7 +35,7 @@ test:
 	KRANG_ROOT=`pwd` perl -Ilib -Iext-lib -we 'use Test::Harness qw(&runtests $$verbose); $$verbose=$(TEST_VERBOSE); runtests @ARGV;' $(TEST_FILES)
 
 bench:
-	KRANG_ROOT=`pwd` perl -Ilib -Iext-lib -we 'while($$_ = shift) { do $$_ or die "$$_ : $$!" }' bench/*.pl
+	ls bench/*.pl | KRANG_ROOT=`pwd` xargs -n1 perl -Ilib -Iext-lib
 
 db:
 	bin/krang_createdb
