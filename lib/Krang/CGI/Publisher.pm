@@ -138,7 +138,7 @@ sub publish_story_list {
     $t->param(publish_date_chooser => datetime_chooser(name => 'publish_date',
                                                        query => $query));
 
-    return $t->output() . $self->dump_html();
+    return $t->output();
 
 }
 
@@ -172,7 +172,7 @@ sub publish_assets {
     my @media_list;
 
     foreach (@asset_id_list) {
-        $_ =~ /(\w+)_(\d+)/;
+        $_ =~ /^(\w+)_(\d+)$/o;
         ($1 eq 'story') ? ( push @story_id_list, $2 ) :
           ($1 eq 'media') ? ( push @media_id_list, $2 ) : 
             croak __PACKAGE__ . ": what to do with asset = '$1'??";
