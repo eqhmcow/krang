@@ -654,6 +654,11 @@ sub cleanup {
 
 =back
 
+=head1 BUGS
+
+Krang::Test::Content will only work against the ElementSet TestSet1.  Any other Element Sets will cause unpredictable behavior.
+
+
 =head1 TODO
 
 Flesh out the various create_ methods to support more of the test code in Krang.  Ideally, this module would also support bin/krang_floodfill, so that all test suites and dummy data are coming from the same source.
