@@ -21,15 +21,28 @@ sub fill_template {
     my $publisher = $args{publisher};
 
     # get stories in this category
-    my @s = Krang::Story->find( category_id => $story->category->category_id, published => '1' );
+    my @s = Krang::Story->find( category_id => $story->category->category_id, published => '1', order_by => 'cover_date', order_desc => 1 );
 
-    my @story_loop = ();
+    my @story_loop;
+    my @page_loop;
+    my $story_count = 0;
 
     foreach my $s (@s) {
-        push (@story_loop, {url => 'http://'.$s->url.'/', 
-                            title => $s->title } ) if ($s->story_id ne $story->story_id);
+        push (@story_loop, {page_story_count => ++$story_count, url => 'http://'.($publisher->is_preview ? $s->preview_url : $s->url).'/', 
+                            title => $s->title,
+                            cover_date => $s->cover_date->strftime('%b %e, %Y') } ) if ($s->story_id ne $story->story_id);
+
+        if ($story_count == 10) {
+            push (@page_loop, { story_loop => [@story_loop] } );
+            @story_loop = ();
+            $story_count = 0;
+        }
     } 
 
-    $tmpl->param( story_loop => \@story_loop );
+    if ($story_count) {
+        push (@page_loop, { story_loop => [@story_loop] } );
+    }
+
+    $tmpl->param( page_loop => \@page_loop );
 }
 1;
