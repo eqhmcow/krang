@@ -657,11 +657,11 @@ sub test_story_build {
     # add child to category element & publish() again -
     # make sure tmpl can handle additional var.
     #
-    #$category_el->add_child(class => 'paragraph', data => $para1);
-    #$cat_pub = $category_el->class->publish(element => $category_el, publisher => $publisher);
-    #$cat_pub =~ s/\n//g;
-    #ok($cat_pub eq ($category_output . $para1), 'Krang::ElementClass->publish()');
-    #
+    my $child_element_para = $category_el->add_child(class => 'paragraph', data => $para1);
+    $cat_pub = $category_el->class->publish(element => $category_el, publisher => $publisher);
+    $cat_pub =~ s/\n//g;
+    ok($cat_pub eq ($category1_output . $para1), 'Krang::ElementClass->publish()');
+    $category_el->remove_children($child_element_para);
 
 
     # test _assemble_pages() - should return single-element array-ref.

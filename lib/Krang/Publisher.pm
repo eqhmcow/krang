@@ -587,11 +587,7 @@ sub content {
 
 =head1 TODO
 
-Write out Krang::ElementClass POD and see if this still looks kosher.
-
-Do alternate forms of output concern Krang::Publisher?  I assume any other form of output will be happen via the SOAP interface.
-
-Write out all the methods for the POD listed here.
+Pagination
 
 =head1 SEE ALSO
 
