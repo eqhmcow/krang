@@ -46,8 +46,6 @@ $set->import_all(no_update => 0);
 ($template) = Krang::Template->find(template_id => $template->template_id);
 is($template->content, $bits);
 
-exit;
-
 # try doing the above for a template containing just one of each bit,
 # to make sure the binary detector is working
 my @templates;
