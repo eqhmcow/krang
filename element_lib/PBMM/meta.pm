@@ -36,9 +36,10 @@ sub new {
 
     my @meta = 
       (
-       Default::fancy_keyword->new(name => 'meta_keywords',
-                                   display_name => 'Meta Keywords',
-                                   @opt),
+       Default::fancy_keyword->new( name => 'meta_keywords',
+                                    indexed => 1,
+                                    display_name => 'Meta Keywords',
+                                    @opt),
        Krang::ElementClass::Textarea->new( name => "meta_description",
                                            rows => 2,
                                            @opt),
