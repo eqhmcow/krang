@@ -115,7 +115,10 @@ if (($cats + $sites) > 0 ) {
     $stories_per_cat = $stories ? int($stories / ($cats + $sites)) : 0;
 } 
 
-my $media_per_cat = $media ? int($media / ($cats + $sites)) : 0;
+my $media_per_cat = $media;
+if (($cats + $sites) > 0 ) {
+    $media_per_cat = $media ? int($media / ($cats + $sites)) : 0;
+}
 
 my $super_count = 0;
 my $cover_index = 0;
@@ -234,21 +237,26 @@ while ($contribs) {
     $contribs--;
 }
 
-my ($first_cat) = Krang::Category->find( limit => 1);
+my @first_cats = Krang::Category->find( limit => 10);
 
-# dump the remaining media, stories (leftovers from bad division) into a category.
+# dump the remaining media, stories (leftovers from bad division) into 
+# one of the original 10 categories.
 # remaining covers count will get added to articles.
 $stories = $stories + $covers;
 $covers = 0;
 
+my $cat_count = 0;
+
 while ($stories) {
-    create_story(category_id => $first_cat->category_id);
+    create_story(category_id => $first_cats[$cat_count++]->category_id);
     $stories--;
+    $cat_count = 0 if ($cat_count == 10);
 }
 
 while ($media) {
-     create_media(category_id => $first_cat->category_id);
+     create_media(category_id => $first_cats[$cat_count++]->category_id);
      $media--;
+     $cat_count = 0 if ($cat_count == 10);
 }
 
 print STDERR "$stories stories left, $covers covers left, $media media left\n";
