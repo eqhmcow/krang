@@ -36,13 +36,9 @@ application to be paper prototyped.
 
 =back
 
-=head2 Technical Documentation
+=head2 Admin Documentation
 
-=over 4
-
-=item *
-
-HREF[Technical Specification|tech_spec.html] - general technical overview
+=over
 
 =item *
 
@@ -54,15 +50,29 @@ HREF[Operations Upgrade|ops_upgrade.html] - how to upgrade an existing Krang ins
 
 =item *
 
+HREF[Configuration|configuration.html] - how to configure Krang
+
+=back
+
+=head2 Technical Documentation
+
+=over 4
+
+=item *
+
+HREF[Technical Specification|tech_spec.html] - general technical overview (somewhat out of date)
+
+=item *
+
+HREF[Database Schema Diagram|database_schema.gif] - graphical overview of the database
+
+=item *
+
 HREF[Development Install|install.html] - how to install a new Krang instance for developers
 
 =item *
 
 HREF[Releasing Krang|release.html] - how to make a krang distribution
-
-=item *
-
-HREF[Configuration|configuration.html] - how to configure Krang
 
 =item *
 
@@ -98,13 +108,5 @@ HREF[Krang Permissions System|permissions.html] - How the Krang permissions syst
 
 =back
 
-=head2 Project Management
 
-=over
-
-=item *
-
-HREF[Schedule|schedule.html] - Krang master schedule
-
-=back
 
