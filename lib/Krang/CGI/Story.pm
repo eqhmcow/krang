@@ -482,6 +482,7 @@ sub view {
                                                      linkto => "javascript:preview_story('". $story->story_id() ."')",
                                                      length => 50,
                                                     ),
+                     old_version       => $version ? 1 : 0,
                      version           => $story->version);
 
     if (not $query->param('path') or $query->param('path') eq '/') {
