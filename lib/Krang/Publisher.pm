@@ -81,7 +81,8 @@ use warnings;
 
 use Carp;
 
-use File::Spec;
+use File::Spec::Functions;
+use File::Copy qw(copy);
 use File::Path;
 
 use Krang::Conf qw(KrangRoot instance);
@@ -205,7 +206,7 @@ sub preview_story {
     my $file_root = $category->site()->preview_path();
 
     # create output path.
-    my $path = File::Spec->catfile($file_root, $url);
+    my $path = catfile($file_root, $url);
 
     # build the story HTML.
     my $story_pages = $self->_assemble_pages(story => $story, category => $category);
@@ -266,7 +267,7 @@ sub publish_story {
         info("Publisher.pm: publishing story under URI='$uri'");
 
         # create output path.
-        my $path = File::Spec->catfile($file_root, $uri);
+        my $path = catfile($file_root, $uri);
 
         # build the story HTML.
         my $story_pages = $self->_assemble_pages(story => $story, category => $cat);
@@ -298,6 +299,12 @@ Will throw an exception if there are problems with the copy.
 
 =cut
 
+sub preview_media {
+
+    critical('NOT IMPLEMENTED YET');
+
+}
+
 
 =item C<< $url = $publisher->publish_media(media => $media, user => $user) >>
 
@@ -310,6 +317,32 @@ Returns a url to the media file on the publish website if successful.
 Will throw an exception if there are problems with the copy.
 
 =cut
+
+sub publish_media {
+    my $self = shift;
+    my %args = @_;
+
+    croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
+
+    my $media = $args{media};
+
+    my $media_url = catfile($media->url(), $media->filename());
+
+    my $internal_path = $media->file_path();
+
+    my $publish_path = catfile($media->category()->site()->publish_path(), $media_url);
+
+    # copy file out to the production path
+    unless (copy($internal_path, $publish_path)) {
+        my $msg = __PACKAGE__ . ": could not copy '$internal_path' to '$publish_path': $!\n";
+        critical($msg);
+        croak($msg);
+    }
+
+    return $media_url;
+
+}
+
 
 =item C<< ($stories, $media) = $publisher->get_publish_list(story => $story) >>
 
@@ -345,14 +378,12 @@ sub deploy_template {
 
     my $category   = $template->category();
 
-    if (!defined($category)) { croak __PACKAGE__ .": template '" . $template->template_id() . "' has no category - cannot build filesystem path.\n"; 
-}
     my @tmpl_dirs = $self->template_search_path(category => $category);
 
     my $path = $tmpl_dirs[0];
     mkpath($path, 0, 0755);
 
-    my $file = File::Spec->catfile($path, $template->filename());
+    my $file = catfile($path, $template->filename());
 
     # write out file
     my $fh = IO::File->new(">$file") or
@@ -391,12 +422,10 @@ sub undeploy_template {
 
     my $category   = $template->category();
 
-    if (!defined($category)) { croak __PACKAGE__ .": template '" . $template->template_id() . "' has no category.  Cannot build filesystem path.\n"; }
-
     my @tmpls = $self->template_search_path(category => $category);
     my $path = $tmpls[0];
 
-    my $file = File::Spec->catfile($path, $template->filename());
+    my $file = catfile($path, $template->filename());
 
     if (-e $file) {
         if (-d $file) {
@@ -422,26 +451,37 @@ L<category> is an optional argument - if not supplied, the current category in t
 
 sub template_search_path {
 
-    my $self = shift;
-    my %args = @_;
-    my $category = $args{category} || $self->{category};
-
-    my @paths = ();
+    my $self         = shift;
+    my %args         = @_;
+    my @subdirs      = ();
+    my @paths        = ();
+    my $category;
 
     # Root dir for this instance.
     my @root = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
 
-    my $cat_dir = $category->url();
+    if (exists($args{category})) {
+        # if category arg is not defined, return root dir for instance.
+        return catfile(@root) unless (defined($args{category}));
+        $category = $args{category};
+    } else {
+        $category = $self->{category};
+    }
 
-    my @subdirs = split '/', $cat_dir || ('/');
+    croak __PACKAGE__ . ': missing argument \'category\'' unless (defined($category));
 
-    @subdirs = ('/') unless @subdirs;   # if $cat_dir == '/', @subdirs is empty.
+    @subdirs = split '/', $category->url();
+
+#    @subdirs = ('/') unless @subdirs;   # if $cat_dir == '/', @subdirs is empty.
 
     while (@subdirs > 0) {
-        my $path = File::Spec->catfile(@root, @subdirs);
+        my $path = catfile(@root, @subdirs);
         push @paths, $path;
         pop @subdirs;
     }
+
+    # add root dir as well.
+    push @paths, catfile(@root);
 
     return @paths;
 
@@ -600,7 +640,7 @@ sub _write_page {
         croak __PACKAGE__ . ": Could not create directory '$args{path}': $!\n";
     }
 
-    my $output_filename = File::Spec->catfile($args{path}, $args{filename});
+    my $output_filename = catfile($args{path}, $args{filename});
 
     open (OUT, ">$output_filename") || 
       croak __PACKAGE__ . ": unable to open file '$output_filename' for writing: $!\n";
