@@ -235,6 +235,26 @@ sub url {
     return $url;
 }
 
+=item C<preview_url> (readonly)
+
+The primary preview URL for the story.  C<undef> until at least one
+category is assigned.
+
+=cut
+
+sub preview_url {
+    my $self = shift;
+    croak "illegal attempt to set readonly attribute 'preview_url'.\n"
+      if @_;
+    my $url = $self->url;
+    my $site = $self->category->site;
+    my $site_url = $site->url;
+    my $site_preview_url = $site->preview_url;
+    $url =~ s/^\Q$site_url\E/$site_preview_url/;
+
+    return $url;
+}
+
 =item C<categories>
 
 A list of category objects associated with the story.  The first
@@ -324,6 +344,25 @@ sub urls {
                                     category => $self->{category_cache}[$_]);
     }
     return @{$self->{url_cache}};
+}
+
+=item C<preview_urls> (readonly)
+
+A list of preview URLs for this story, in order by category.
+
+=cut
+
+sub preview_urls {
+    my $self = shift;
+    croak "illegal attempt to set readonly attribute 'preview_url'.\n"
+      if @_;
+    my @urls = $self->urls;
+    my $site = $self->category->site;
+    my $site_url = $site->url;
+    my $site_preview_url = $site->preview_url;
+    @urls = map { s/^\Q$site_url\E/$site_preview_url/ } @urls;
+
+    return @urls;
 }
 
 =item C<contribs>

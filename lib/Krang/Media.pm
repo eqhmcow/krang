@@ -1106,6 +1106,25 @@ sub url {
     return catdir($url, $self->{filename});
 }
 
+=item * preview_url (read-only)
+
+The preview URL for this media object
+
+=cut
+
+sub preview_url {
+    my $self = shift;
+    croak "illegal attempt to set readonly attribute 'preview_url'.\n"
+      if @_;
+    my $url = $self->url;
+    my $site = $self->category->site;
+    my $site_url = $site->url;
+    my $site_preview_url = $site->preview_url;
+    $url =~ s/^\Q$site_url\E/$site_preview_url/;
+
+    return $url;
+}
+
 =item $media_id = $media->duplicate_check()
 
 This method checks whether the url of a media object is unique.

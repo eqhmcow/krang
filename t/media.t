@@ -42,6 +42,10 @@ $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
 is ($media->thumbnail_path(), catfile((splitpath($media->{tempfile}))[1],"t__".$media->filename));
 
 
+# check url and preview_url
+is($media->url, 'testsite1.com/krang.jpg');
+is($media->preview_url, 'preview.testsite1.com/krang.jpg');
+
 # create new contributor object to test associating with media
 my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
 isa_ok($contrib, 'Krang::Contrib');
@@ -80,8 +84,6 @@ ok(-f $media->file_path);
 my ($copy) = Krang::Media->find(media_id => $media->media_id);
 is($media->file_path, $copy->file_path);
 ok(-f $copy->file_path);
-
-
 
 $fh = new FileHandle $filepath;
 

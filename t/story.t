@@ -110,6 +110,15 @@ like($story->url, qr/^$cat_url/);
 like($story->url, qr/^$site_url/);
 like($story->url, qr/^${cat_url}test$/);
 
+# test preview url production
+ok($story->preview_url);
+is($story->preview_urls, 2);
+$site_url = $cat[0]->site->preview_url;
+$cat_url = $cat[0]->preview_url;
+like($story->preview_url, qr/^$cat_url/);
+like($story->preview_url, qr/^$site_url/);
+like($story->preview_url, qr/^${cat_url}test$/);
+
 # set categories by id
 $story->categories($cat[2]->category_id, 
                    $cat[3]->category_id, 

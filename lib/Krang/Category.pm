@@ -204,6 +204,26 @@ sub site { (Krang::Site->find(site_id => shift->{site_id}))[0] }
 
 The full URL to this category
 
+=item * preview_url (read-onlu)
+
+The preview URL for this category
+
+=cut
+
+sub preview_url {
+    my $self = shift;
+    croak "illegal attempt to set readonly attribute 'preview_url'.\n"
+      if @_;
+    my $url = $self->url;
+    my $site = $self->site;
+    my $site_url = $site->url;
+    my $site_preview_url = $site->preview_url;
+    $url =~ s/^\Q$site_url\E/$site_preview_url/;
+
+    return $url;
+}
+
+
 =back
 
 =head2 METHODS
@@ -920,6 +940,7 @@ sub serialize_xml {
 
     # basic fields
     $writer->dataElement(dir => $self->dir);
+    $writer->dataElement(url => $self->url);
 
     # serialize elements
     $self->element->serialize_xml(writer => $writer,
@@ -927,6 +948,60 @@ sub serialize_xml {
     $writer->endTag('category');
 }
 
+=item C<< $site = Krang::Category->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming category has the same URL as an existing category then
+an update will occur.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml, 
+                                  suppressempty => 1);
+    
+
+    # is there an existing category with this URL?
+    my ($dup) = Krang::Category->find(url => $data->{url});
+    if ($dup) {
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A category with the URL ".
+                       "$data->{url} already exists and ".
+                       "no_update is set.")
+            if $no_update;
+
+        # FIX: do element update here
+    }
+
+    # get import site_id
+    my ($site_id, $parent_id);
+    if ($data->{parent_id}) {
+        # get import parent_id
+        $parent_id = Krang::DataSet->map_id(class => "Krang::Category",
+                                            id    => $data->{parent_id});
+    } else {
+        # get site_id for root category
+        $site_id = Krang::DataSet->map_id(class => "Krang::Site",
+                                          id    => $data->{site_id});
+    }
+
+    # create a new category
+    my $cat = Krang::Category->new(
+                                   ($parent_id ? 
+                                    (parent_id => $parent_id) : ()),
+                                   ($site_id   ? 
+                                    (site_id   => $site_id)   : ()),
+                                   dir => $data->{dir},
+                                  );
+    $cat->save();
+
+    return $cat;
+}
 
 =item C<< $html = $category->publish(publisher => $publisher) >>
 
