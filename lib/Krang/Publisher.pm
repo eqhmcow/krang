@@ -90,6 +90,8 @@ use Krang::Category;
 use Krang::ElementClass;
 use Krang::Template;
 
+use Krang::Log qw(debug info critical);
+
 use constant PUBLISHER_RO => qw(is_publish is_preview story category);
 
 
@@ -98,7 +100,7 @@ use constant CONTENT      => "<<<<<<<<<<<<<<<<<< CONTENT >>>>>>>>>>>>>>>>>>";
 
 use Krang::MethodMaker (new_with_init => 'new',
                         new_hash_init => 'hash_init',
-                        get_set       => [PUBLISHER_RO]
+                        get           => [PUBLISHER_RO]
                        );
 
 
@@ -197,12 +199,16 @@ sub publish_story {
     $self->{is_publish} = 1;
     $self->{is_preview} = 0;
 
+    info('Publish.pm: Publishing story_id=' . $story->story_id());
+
     # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
     foreach (my $i = 0; $i < $#categories; $i++) {
         my $cat = $categories[$i];
         my $uri = $story_urls[$i];
 
         my $file_root = $cat->site()->publish_path();
+
+        info("Publish.pm: publishing story under URI='$uri'");
 
         # create output path.
         my $path = File::Spec->catfile($file_root, $uri);
@@ -283,8 +289,8 @@ sub deploy_template {
 
     my $category   = $template->category();
 
-    if (!defined($category)) { croak __PACKAGE__ .": template '" . $template->template_id() . "' has no category - cannot build filesystem path.\n"; }
-
+    if (!defined($category)) { croak __PACKAGE__ .": template '" . $template->template_id() . "' has no category - cannot build filesystem path.\n"; 
+}
     my @tmpl_dirs = $self->template_search_path(category => $category);
 
     my $path = $tmpl_dirs[0];
@@ -298,6 +304,8 @@ sub deploy_template {
             "template '$id': $!.");
     $fh->print($template->{content});
     $fh->close();
+
+    info("Publisher.pm: template_id=$id deployed to '$file'");
 
     return $file;
 
@@ -340,6 +348,8 @@ sub undeploy_template {
         }
         unlink $file;
     }
+
+    info("Publisher.pm: template_id=$id removed (undeployed) from location '$file'");
 
     return;
 
@@ -542,6 +552,8 @@ sub _write_page {
     print OUT $args{data};
 
     close OUT;
+
+    info("Publisher.pm: wrote page '$output_filename'");
 
     return;
 }
