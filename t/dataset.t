@@ -328,7 +328,7 @@ $lset->import_all();
 ok($found);
 END { (Krang::Template->find(url => $ltemplate->url))[0]->delete() }
 
-# now test desks, groups, users
+# now test desks, groups, users, alerts
 my $ldesk= Krang::Desk->new(name => 'abc_test_desk');
 
 my $lgroup = Krang::Group->new( name => 'abc_test_group',
@@ -361,12 +361,23 @@ $luser->save;
 
 $lset->add(object => $luser);
 
+my $lalert = Krang::Alert->new( user_id => $luser->user_id,
+                                action => 'move_to',
+                                category_id => $category->category_id,
+                                desk_id => $ldesk->desk_id );
+
+$lalert->save;
+
+$lset->add(object => $lalert);
+
 # they live, yes?
 ($found) = Krang::User->find(login => $luser->login, count => 1 );
 ok($found);
 ($found) = Krang::Group->find(name => $lgroup->name, count => 1 );
 ok($found);
 ($found) = Krang::Desk->find(name => $ldesk->name, count => 1 );
+ok($found);
+($found) = Krang::Alert->find(alert_id => $lalert->alert_id, count => 1 );
 ok($found);
 
 # this should fail
@@ -377,22 +388,33 @@ ok($@);
 $luser->delete();
 $lgroup->delete();
 $ldesk->delete();
+$lalert->delete();
 ($found) = Krang::User->find(login => $luser->login, count => 1);
 ok(not $found);
 ($found) = Krang::Group->find(name => $lgroup->name, count => 1 );
 ok(not $found);
 ($found) = Krang::Desk->find(name => $ldesk->name, count => 1 );
+ok(not $found);
+($found) = Krang::Alert->find(alert_id => $lalert->alert_id, count => 1 );
 ok(not $found);
 
 # the resurection
 $lset->import_all();
 ($found) = Krang::User->find(login => $luser->login, count => 1);
+my $uid = (Krang::User->find(login => $luser->login))[0]->user_id;
 ok($found);
 ($found) = Krang::Group->find(name => $lgroup->name, count => 1 );
 ok($found);
 ($found) = Krang::Desk->find(name => $ldesk->name, count => 1 );
+my $did = (Krang::Desk->find(name => $ldesk->name))[0]->desk_id;
 ok($found);
 
+my $cid = (Krang::Category->find( url => $category->url ))[0]->category_id;
+($found) = Krang::Alert->find( user_id => $uid, desk_id => $did, category_id => $cid, action => 'move_to', count => 1 );
+ok($found);
+
+END{ (Krang::Alert->find( user_id => $uid, desk_id => $did, category_id =>
+$cid, action => 'move_to'))[0]->delete }
 END{ (Krang::Desk->find(name => $ldesk->name))[0]->delete() }
 END{ (Krang::Group->find(name => $lgroup->name))[0]->delete() }
 END{ (Krang::User->find(login => $luser->login))[0]->delete() }
