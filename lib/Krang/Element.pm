@@ -462,7 +462,7 @@ sub child {
     my ($self, $name) = @_;
     my $child = first { $_->{class}->name eq $name } @{$self->{children}};
     return $child if $child;
-    croak("Unable to find child of class '$name'.");
+    croak("Unable to find child named '$name' in '" . $self->name ."'.");
 }
 
 =item C<< $element->save() >>
