@@ -9,6 +9,18 @@ theme or even a new UI feature.  Krang add-ons are separately
 versioned and can depend on a version of Krang or on other Krang
 add-ons.
 
+=head2 Installing an Addon
+
+Although this document is about creating addons, it's useful to know
+how to use them.  Installing a Krang addon is done using the
+C<krang_addon_installer> on an addon file:
+
+  bin/krang_addon_installer Turbo-1.00.tar.gz
+
+For more details see the krang_addon_installer help:
+
+  bin/krang_addon_installer --help
+
 =head2 File Format
 
 A Krang add-on is a specially constructed .tar.gz file containing
@@ -124,3 +136,5 @@ three decimal places).  This file may contain code to run on a
 per-installation or per-instance basis, just like other Krang upgrade
 scripts.
 
+Krang's upgrade process is described in the 
+HREF[Operations Upgrade|ops_upgrade.html] document.
