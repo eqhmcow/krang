@@ -42,14 +42,17 @@ my $publish_path = '/tmp/krangpubtest_publish';
 # Content params
 my $para1       = "para1 "x40;
 my $para2       = "para2 "x40;
+my $para3       = "para3 "x40;
 my $head1       = "header "x10;
 my $head_output = "<h1>$head1</h1>\n";
 my $deck1       = 'DECK DECK DECK';
-my $page_output = "<h1>$head1</h1>THIS IS A VERY WIDE PAGE<p>$para1</p><p>$para2</p>";
+my $page_output = "<h1>$head1</h1>THIS IS A VERY WIDE PAGE<p>$para1</p><p>$para2</p><p>$para3</p>";
 my $category1   = 'CATEGORY1 'x5;
 my $category2   = 'CATEGORY2 'x5;
 my $category3   = 'CATEGORY3 'x5;
 my $story_title = 'Test Title';
+
+my $pagination1 = '1';
 
 my $category1_head = 'THIS IS HEADS' . $category1 . '---';
 my $category1_tail = '---' . $category1 . 'THIS IS TAILS';
@@ -63,9 +66,9 @@ my $category3_head = 'THIS IS HEADS' . $category3 . '---';
 my $category3_tail = '---' . $category3 . 'THIS IS TAILS';
 my $category3_output = $category3_head . Krang::Publisher->content() . $category3_tail;
 
-my %article_output = (3 => $category3_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $category3_tail,
-                      2 => $category2_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $category2_tail,
-                      1 => $category1_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $category1_tail
+my %article_output = (3 => $category3_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $pagination1 . $category3_tail,
+                      2 => $category2_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $pagination1 . $category2_tail,
+                      1 => $category1_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $pagination1 . $category1_tail
 );
 
 # list of templates to delete at the end of this all.
@@ -327,14 +330,14 @@ sub test_template_testing {
     my $page = $element->child('page');
     my $head = $page->child('header');
 
-    my $head_pub = $head->class->publish(element => $head, publisher => $publisher);
+    my $head_pub = $head->publish(element => $head, publisher => $publisher);
     ok($head_pub eq ('TESTING' . $head_output), 'Krang::Publisher testing templates');
 
 
     # test that in publish mode, testing templates not are used.
     $publisher->{is_preview} = 0;
     $publisher->{is_publish} = 1;
-    $head_pub = $head->class->publish(element => $head, publisher => $publisher);
+    $head_pub = $head->publish(element => $head, publisher => $publisher);
     ok($head_pub eq $head_output, 'Krang::Publisher testing templates');
 
     # remove testing templates & test.
@@ -587,7 +590,7 @@ sub test_storylink {
     my $storylink = $page->child('leadin');
 
     # w/ deployed template - make sure it works w/ template.
-    my $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+    my $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
     my $resulting_link = '<a href="http://' . $dest_story->url() . '">' . $dest_story->title() . '</a>';
     chomp ($story_href);
 
@@ -596,7 +599,7 @@ sub test_storylink {
     $publisher->{is_publish} = 0;
     $publisher->{is_preview} = 1;
 
-    $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+    $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
     $resulting_link = '<a href="http://' . $dest_story->preview_url() . '">' . $dest_story->title() . '</a>';
     chomp ($story_href);
 
@@ -609,14 +612,14 @@ sub test_storylink {
     # undeploy template - make sure it works w/ no template.
     $publisher->undeploy_template(template => $template_deployed{leadin});
 
-    $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+    $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
 
     ok($story_href eq 'http://' . $dest_story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
 
     $publisher->{is_publish} = 0;
     $publisher->{is_preview} = 1;
 
-    $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+    $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
 
     ok($story_href eq 'http://' . $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
 
@@ -640,7 +643,7 @@ sub test_medialink {
     my $medialink = $page->child('photo');
 
     # w/ deployed template - make sure it works w/ template.
-    my $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
+    my $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
     my $resulting_link = '<img src="http://' . $media->url() . '">' . $media->caption() . '<BR>' . $media->title();
 
     $media_href =~ s/\n//g;
@@ -650,7 +653,7 @@ sub test_medialink {
     $publisher->{is_publish} = 0;
     $publisher->{is_preview} = 1;
 
-    $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
+    $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
     $resulting_link = '<img src="http://' . $media->preview_url() . '">' . $media->caption() . '<BR>' . $media->title();
     chomp ($media_href);
 
@@ -662,14 +665,14 @@ sub test_medialink {
     # undeploy template - make sure it works w/ no template.
     $publisher->undeploy_template(template => $template_deployed{photo});
 
-    $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
+    $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
 
     ok($media_href eq "http://" . $media->url(), 'Krang::ElementClass::MediaLink->publish() -- publish-no template');
 
     $publisher->{is_publish} = 0;
     $publisher->{is_preview} = 1;
 
-    $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
+    $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
 
     ok($media_href eq "http://" . $media->preview_url(), 'Krang::ElementClass::MediaLink->publish() -- preview-no template');
     # re-deploy template.
@@ -696,30 +699,35 @@ sub test_story_build {
 
     # test publish() on paragraph element -
     # it should return $paragraph_element->data()
-    my $para_pub = $para->class->publish(element => $para, publisher => $publisher);
+    my $para_pub = $para->publish(element => $para, publisher => $publisher);
     ok($para_pub eq $para1, 'Krang::ElementClass->publish()');
 
     # test publish() on header element -
     # it should return $header_element->data() wrapped in <h1></h1>.
     # NOTE - HTML::Template::Expr throws in a newline at the end.
-    my $head_pub = $head->class->publish(element => $head, publisher => $publisher);
+    my $head_pub = $head->publish(element => $head, publisher => $publisher);
     ok($head_pub eq $head_output, 'Krang::ElementClass->publish() -- header');
     
     # test publish() on page element -
-    # it should contain header (formatted), note about wide page, 2 paragraphs.
-    my $page_pub = $page->class->publish(element => $page, publisher => $publisher);
-    $page_pub =~ s/\n//g;
-    ok($page_pub eq $page_output, 'Krang::ElementClass->publish() -- page');
-    
+    # it should contain header (formatted), note about wide page, 3 paragraphs.
+    # Add pagination args as well
+#    my %pagination_hack = (is_first_page => 1, is_last_page => 1);
+#    my $page_pub = $page->publish(element => $page, publisher => $publisher,
+#                                  template_args => \%pagination_hack
+#                                 );
+#    $page_pub =~ s/\n//g;
+#    ok($page_pub eq $page_output, 'Krang::ElementClass->publish() -- page');
+my $page_pub;
+
     # undeploy header tmpl & attempt to publish - should
     # return $header->data().
     $publisher->undeploy_template(template => $template_deployed{header});
-    $head_pub = $head->class->publish(element => $head, publisher => $publisher);
+    $head_pub = $head->publish(element => $head, publisher => $publisher);
     ok($head_pub eq $head1, 'Krang::ElementClass->publish() -- no tmpl');
-    
+
     # undeploy page tmpl & attempt to publish - should croak.
     $publisher->undeploy_template(template => $template_deployed{page});
-    eval {$page_pub = $page->class->publish(element => $page, publisher => $publisher);};
+    eval {$page_pub = $page->publish(element => $page, publisher => $publisher);};
     if ($@) {
         pass('Krang::ElementClass->publish() -- missing tmpl');
     } else {
@@ -735,20 +743,14 @@ sub test_story_build {
     my $category_el = $category->element();
     
 
-    my $cat_pub = $category_el->class->publish(element => $category_el, publisher => $publisher);
+    my $cat_pub = $category_el->publish(element => $category_el, publisher => $publisher);
     $cat_pub =~ s/\n//g;
     ok($cat_pub eq $category1_output, 'Krang::ElementClass->publish() -- category');
 
-    #
-    # TEST REMOVED FOR NOW - Base element set has no support for children in category.
-    #
-    # add child to category element & publish() again -
-    # make sure tmpl can handle additional var.
-    #
     my $child_element_para = $category_el->add_child(class => 'paragraph', data => $para1);
-    $cat_pub = $category_el->class->publish(element => $category_el, publisher => $publisher);
+    $cat_pub = $category_el->publish(element => $category_el, publisher => $publisher);
     $cat_pub =~ s/\n//g;
-    ok($cat_pub eq ($category1_output . $para1), 'Krang::ElementClass->publish()');
+    ok($cat_pub eq ($category1_output . $para1), 'Krang::ElementClass->publish() -- category w/ child');
     $category_el->remove_children($child_element_para);
 
 
@@ -760,6 +762,8 @@ sub test_story_build {
     my $page_one = $assembled_ref->[0];
     $page_one =~ s/\n//g;
     ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');
+
+
 
 }
 
@@ -931,12 +935,7 @@ sub create_story {
 
     my $page = $story->element->child('page');
 
-    $page->child('header')->data($head1);
-    $page->child('wide_page')->data(1);
-
-    # add two paragraphs
-    $page->add_child(class => "paragraph", data => $para1);
-    $page->add_child(class => "paragraph", data => $para2);
+    _add_page_data($page);
 
     # add storylink if it exists
     if (defined($linked_story)) {
@@ -957,6 +956,20 @@ sub create_story {
     $story->checkin();
 
     return ($story);
+
+}
+
+sub _add_page_data {
+
+    my $page = shift;
+
+    $page->child('header')->data($head1);
+    $page->child('wide_page')->data(1);
+
+    # add three paragraphs
+    $page->add_child(class => "paragraph", data => $para1);
+    $page->add_child(class => "paragraph", data => $para2);
+    $page->add_child(class => "paragraph", data => $para3);
 
 }
 

@@ -589,6 +589,14 @@ sub fill_template {
       if exists($template_vars{contrib_loop});
 
 
+    # add variables passed in by whatever called $self->publish().
+    if (defined($args{template_args})) {
+        foreach my $key (keys %{$args{template_args}}) {
+            $params{$key} = $args{template_args}{$key}
+              if exists($template_vars{$key});
+        }
+    }
+
     my %template_loops;
     my %pagination;
     my @reverse_lookups;
@@ -668,6 +676,7 @@ sub fill_template {
     foreach my $loop_element (@reverse_lookups) {
         my $child = $element_children[$loop_element->{index}];
         my $name = $child->name;
+        my $pagination;
         my $loopname;
         my $pages;
         my $html;
@@ -679,10 +688,17 @@ sub fill_template {
                 $loopname = $paged_loops;
                 last;
             }
+            $pagination = $self->_build_pagination_vars(page_list => $pagination{$loopname},
+                                                        page_num => ($loop_element->{loops}{$loopname}));
+
+            # publish the element - put the results in all the various loops.
+            $html = $child->publish(publisher => $publisher, template_args => $pagination);
+
+        } else {
+            $html = $child->publish(publisher => $publisher);
         }
 
-        # publish the element - put the results in all the various loops.
-        $html = $child->publish(publisher => $publisher);
+
 
         foreach my $loops (keys %{$loop_element->{loops}}) {
             if ($loops eq 'element_loop') {
@@ -887,6 +903,64 @@ sub _build_page_url {
     }
 
     return "$base_url/" . $publisher->story_filename(page => $page_num);
+}
+
+
+#
+# $pagination_hashref = _build_pagination_vars(page_list => $pages_listref, page_num => $page_num);
+#
+# Builds the full set of template pagination variables for a given pageable element.
+# Takes a list of URLs for all the pages in the story, along with the current page number.
+#
+# See the Pagination section of docs/writing_htmltemplate.pod for further information on using
+# these variables.
+#
+sub _build_pagination_vars {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $page_list = $args{page_list};
+    my $page_num  = $args{page_num};
+
+    my $current_idx = $page_num - 1;
+
+    my %page_info;
+
+    $page_info{current_page_number} = $page_num;
+    $page_info{total_pages}         = @$page_list;
+
+    $page_info{first_page_url} = $page_list->[0];
+    $page_info{last_page_url}  = $page_list->[$#$page_list];
+
+    if ($page_num == 1) { # on the first page
+        $page_info{is_first_page}     = 1;
+        $page_info{previous_page_url} = '';
+    } else {
+        $page_info{is_first_page}     = 0;
+        $page_info{previous_page_url} = $page_list->[$current_idx];
+    }
+
+    if ($page_num == @$page_list) { # on the last page
+        $page_info{is_last_page}  = 1;
+        $page_info{next_page_url} = '';
+    } else {
+        $page_info{is_last_page}  = 0;
+        $page_info{next_page_url} = $page_list->[$current_idx];
+    }
+
+    for (my $num = 0; $num <= $#$page_list; $num++) {
+        my %element = (page_number => ( $num + 1 ),
+                       page_url    => $page_list->[$num]);
+
+        ($num == $current_idx) ? ( $element{is_current_page} = 1 ) :
+          ( $element{is_current_page} = 0 );
+
+        push @{$page_info{pagination_loop}}, \%element;
+
+    }
+
+    return \%page_info;
 }
 
 #
