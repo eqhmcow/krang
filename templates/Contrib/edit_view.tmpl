@@ -21,12 +21,83 @@
 
 <tmpl_if message_contrib_added><div class="alert">Contributor has been added.</div></tmpl_if>
 
-  <div class="button-bar">
-      <input type="submit" value="Save">
-      <input type="button" value="Save &amp; Stay">
-      <input type="reset" value="Reset">
-      <tmpl_unless add_mode><input type="button" value="Delete"></tmpl_unless>
-  </div>
+
+<form name="edit_contrib_form" method="POST">
+<tmpl_if add_mode>
+  <input type="hidden" name="rm" value="save_add">
+<tmpl_else>
+  <input type="hidden" name="rm" value="save_edit">
+  <input type="hidden" name="contrib_id" value="<tmpl_var escape=HTML contrib_id>">
+</tmpl_if>
+
+
+<table border="1" cellpadding="5" cellspacing="0">
+
+<tr>
+    <td align="left" valign="top">Prefix:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="prefix" value="<tmpl_var escape=HTML prefix>"></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">First:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="first" value="<tmpl_var escape=HTML first>"></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Middle:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="middle" value="<tmpl_var escape=HTML middle>"></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Last:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="last" value="<tmpl_var escape=HTML last>"></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Suffix:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="suffix" value="<tmpl_var escape=HTML suffix>"></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Contributor Type:</td>
+    <td align="left" valign="top"><select name="contrib_type_ids" size="3" multiple="multiple"><tmpl_loop contrib_types>
+        <option value="<tmpl_var escape=HTML contrib_type_id>"><tmpl_var escape=HTML contrib_type_name></option></tmpl_loop>
+    </select></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Email:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="email" value="<tmpl_var escape=HTML email>"></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Phone:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="phone" value="<tmpl_var escape=HTML phone>"></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Bio:</td>
+    <td align="left" valign="top"><textarea cols="30" rows="4" name="bio"><tmpl_var escape=HTML bio></textarea></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">URL:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="url" value="<tmpl_var escape=HTML url>"></td>
+</tr>
+
+</table>
+
+
+<div class="button-bar">
+    <input type="submit" value="Save">
+    <input type="button" value="Save &amp; Stay">
+    <input type="reset" value="Reset">
+    <tmpl_unless add_mode><input type="button" value="Delete"></tmpl_unless>
+</div>
+
+
+<!-- End edit_contrib_form -->
+</form>
 
 
 <tmpl_include /footer.tmpl>

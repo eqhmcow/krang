@@ -14,6 +14,13 @@
         myform.submit();
     }
 
+    function delete_selected () {
+        if (confirm("Are you SURE you want to delete these contributors?")) {
+            var myform = document.forms["delete_selected_form"];
+            myform.submit();
+        }
+    }
+
 // -->
 </script>
 
@@ -83,7 +90,7 @@ SEARCH
  
   </table>
 
-  <div class="button-bar"><input type="button" value="Delete Checked" onClick=""></div>
+  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()"></div>
 
 <TMPL_ELSE>
 

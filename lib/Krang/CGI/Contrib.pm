@@ -104,14 +104,14 @@ sub search {
     my $t = $self->load_tmpl('list_view.tmpl', loop_context_vars=>1);
 
     $t->param(%ui_messages) if (%ui_messages);
-    $t->param(
-              message_contrib_added => 1,
-              message_add_cancelled => 1,
-              message_contrib_saved => 1,
-              message_save_cancelled => 1,
-              message_selected_deleted => 1,
-              message_contrib_deleted => 1,
-             );
+#     $t->param(
+#               message_contrib_added => 1,
+#               message_add_cancelled => 1,
+#               message_contrib_saved => 1,
+#               message_save_cancelled => 1,
+#               message_selected_deleted => 1,
+#               message_contrib_deleted => 1,
+#              );
 
     my @contributors = (
                         {
@@ -220,11 +220,6 @@ sub delete_selected {
 Display an "Add Contributor" screen, through which
 users may create a new Contributor object.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
 =cut
 
 
@@ -317,11 +312,10 @@ users may edit an existing Contributor object.
 Pre-populate form with properties of Contributor
 selected on the "Contributor List" screen.
 
+This run-mode expects to receive the required 
+parameter "contrib_id".  It will croak() if this
+parameter is missing or invalid.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
 
 =cut
 
