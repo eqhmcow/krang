@@ -1430,7 +1430,6 @@ sub clone {
         do {
             $copy->slug("$self->{slug}_copy" . ($x > 1 ? $x : ""));
             $x++;
-            print STDERR "TESTING: $copy->{slug} : " . $copy->url . "\n";
         } while ($is_dup->($copy));
     } else {
         # erase category associations
