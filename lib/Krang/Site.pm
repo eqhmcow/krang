@@ -19,7 +19,8 @@ Krang::Site - a means access to information on sites
   $site->save();
 
   # get or set the site objects fields
-  my $id = $site->site_id();
+  my $id = $site->site_id();	# save() must have been called for this to
+				# be defined
 
   my $path = $site->preview_path() || $site->publish_path();
 
@@ -58,6 +59,10 @@ Krang::Site - a means access to information on sites
 
 =head1 DESCRIPTION
 
+What is a Site?
+
+# TO DO: answer the above question
+
 This module serves as a means of adding, deleting, accessing site objects for a
 given Krang instance.  Site objects, at present, do little other than act
 as a means to determine the urls and path associated with a site.
@@ -90,8 +95,7 @@ use Krang::DB qw(dbh);
 # Constants
 ############
 # Read-only fields
-use constant SITE_RO => qw(creation_date
-			   site_id);
+use constant SITE_RO => qw(site_id);
 
 # Read-write fields
 use constant SITE_RW => qw(preview_path
@@ -129,31 +133,34 @@ The available fields for a site object are:
 
 =over 4
 
-=item * preview_path
+=item * preview_path (read-only)
 
-Path under which the media and stories of this site will be output for preview.
+Full filesystem path under which the media and stories of this site will be
+output for preview.
 
-=item * preview_url
+=item * preview_url (read-only)
 
 URL relative to which one is redirected after the preview output of a media
-object or story is generated.
+object or story is generated.  The document root of this server is the value
+of 'preview_path'.
 
-=item * publish_path
+=item * publish_path (read-only)
 
-Path under which the media and stories are published.
+Full filesystem path under which the media and stories are published.
 
-=item * publish_url
+=item * publish_url (read-only)
 
 URL relative to which one is redirected after a media object or story is
-published.
+published.  The document root of this server is the value of 'publish_path'.
 
 =item * site_id (read-only)
 
 Integer which identifies the database rows associated with this site object.
 
-=item * url
+=item * url (read-only)
 
-Base URL where site content is found.
+Base URL where site content is found.  Categories and consequently media and
+stories will form their URLs based on this value.
 
 =back
 
@@ -222,6 +229,44 @@ sub delete {
 }
 
 
+=item * @info = $site->duplicate_check()
+
+This method checks the database to see if any existing site objects possess any
+of the same values as the one in memory.  If this is the case an array
+containing the 'site_id' and the name of the duplicate field is returned
+otherwise the array will be empty.
+
+=cut
+
+sub duplicate_check {
+    my $self = shift;
+    my $id = $self->{site_id};
+    my @id_info;
+    my @save_fields = grep {$_ ne 'site_id'} keys %site_cols;
+
+    my $query = "SELECT * FROM site WHERE " .
+      join(" OR ", map {"$_ = ?"} @save_fields) . " LIMIT 1";
+    my $dbh = dbh();
+    my $sth = $dbh->prepare($query);
+    $sth->execute(map {$self->{$_}} @save_fields);
+
+    # reference into which result are fetched
+    my $row;
+    $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
+    while ($sth->fetch()) {
+        for (@save_fields) {
+            if ($self->{$_} eq $row->{$_}) {
+                push @id_info, $row->{site_id}, $_;
+                last;
+            }
+        }
+    }
+    $sth->finish();
+
+    return @id_info;
+}
+
+
 =item * @sites = Krang::Site->find( %params )
 
 =item * @sites = Krang::Site->find( site_id => [1, 1, 2, 3, 5] )
@@ -255,19 +300,10 @@ Additional criteria which affect the search results are:
 
 =over 4
 
-=item * ascend
-
-Result set is sorted in ascending order.
-
 =item * count
 
 If this argument is specified, the method will return a count of the sites
 matching the other search criteria provided.
-
-=item * descend
-
-Results set is sorted in descending order only if the 'ascend' option is not
-specified.
 
 =item * ids_only
 
@@ -287,6 +323,11 @@ Sets the offset from the first row of the results to return.
 Specify the field by means of which the results will be sorted.  By default
 results are sorted with the 'site_id' field.
 
+=item * order_desc
+
+Specify this option with a value of 'asc' or 'desc' to return the results in
+ascending or descending sort order relative to the 'order_by' field
+
 =back
 
 The method croaks if an invalid search criteria is provided or if both the
@@ -300,8 +341,7 @@ sub find {
     my ($fields, @params, $where_clause);
 
     # grab ascend/descending, limit, and offset args
-    my $ascend = delete $args{ascend} || '';
-    my $descend = delete $args{descend} || '';
+    my $ascend = uc(delete $args{order_desc}) || ''; # its prettier w/uc() :)
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
     my $order_by = delete $args{order_by} || 'site_id';
@@ -349,8 +389,7 @@ sub find {
 
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE $where_clause" if $where_clause;
-    $query .= " ORDER BY $order_by" if $order_by;
-    $query .= $ascend ? " ASC" : ($descend ? " DESC" : "");
+    $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
     if ($limit) {
@@ -407,25 +446,12 @@ sub save {
     my $id = $self->{site_id} || '';
     my @save_fields = grep {$_ ne 'site_id'} keys %site_cols;
 
-    # prevent creation of duplicate or saving of duplicate field
-    my $query = "SELECT * FROM site WHERE " .
-      join(" OR ", map {"$_ = ?"} @save_fields) . " LIMIT 1";
-    my $dbh = dbh();
-    my $sth = $dbh->prepare($query);
-    $sth->execute(map {$self->{$_}} @save_fields);
+    # check for duplicates
+    my ($site_id, $field) = $self->duplicate_check();
+    croak(__PACKAGE__ . "->save(): field '$field' is a duplicate of site id" .
+          " '$site_id'.") if defined $site_id;
 
-    # reference into which result are fetched
-    my $row;
-    $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
-    while ($sth->fetch()) {
-        for (@save_fields) {
-            croak(__PACKAGE__ . "->save(): Object field '$_' is the same " .
-                  "as that of object id '$row->{site_id}'.")
-              if $self->{$_} eq $row->{$_};
-        }
-    }
-    $sth->finish();
-
+    my $query;
     if ($id) {
         $query = "UPDATE site SET " .
           join(", ", map {"$_ = ?"} @save_fields) .
@@ -443,6 +469,8 @@ sub save {
     # need site_id for updates
     push @params, $id if $id;
 
+    my $dbh = dbh();
+
     # croak if no rows are affected
     croak(__PACKAGE__ . "->save(): Unable to save site object " .
           ($id ? "id '$id' " : '') . "to the DB.")
@@ -457,6 +485,8 @@ sub save {
 =back
 
 =head1 TO DO
+
+Describe what the hell a Site is.
 
 =head1 SEE ALSO
 
