@@ -148,7 +148,8 @@ sub find {
                         show_thumbnails => $show_thumbnails,
                        };
 
-    my $find_params = { simple_search => $search_filter };
+    my $find_params = { may_see => 1,
+                        simple_search => $search_filter };
 
     my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails);
 
@@ -1350,7 +1351,8 @@ sub make_media_view_tmpl_data {
     }
     $tmpl_data{return_params} = join("\n", @return_params_hidden);
 
-    $tmpl_data{can_edit} = 1 unless ( $m->checked_out and ($m->checked_out_by ne $ENV{REMOTE_USER}) );
+    $tmpl_data{can_edit} = 1 unless ( not($m->may_edit) 
+                                      or ($m->checked_out and ($m->checked_out_by ne $ENV{REMOTE_USER})) );
 
     # Send data back to caller for inclusion in template
     return \%tmpl_data;
@@ -1464,7 +1466,7 @@ sub find_media_row_handler {
     my $pub_status = ($media->published()) ? 'P' : '&nbsp;' ;
     $row->{pub_status} = '&nbsp;<b>'. $pub_status .'</b>&nbsp;';
 
-    if (($media->checked_out) and ($media->checked_out_by ne $ENV{REMOTE_USER})) {
+    if ( not($media->may_edit) or (($media->checked_out) and ($media->checked_out_by ne $ENV{REMOTE_USER})) ) {
         $row->{commands_column} = '<a href="javascript:view_media('."'".$media->media_id."'".')">View</a>'
     } else {
         $row->{commands_column} = '<a href="javascript:edit_media('."'".$media->media_id."'".')">Edit</a>'
@@ -1489,6 +1491,15 @@ sub do_save_media {
         if (ref($@) and $@->isa('Krang::Media::DuplicateURL')) {
             add_message('duplicate_url');
             return (duplicate_url=>1);
+        } elsif (ref($@) and $@->isa('Krang::Media::NoCategoryEditAccess')) {
+            # User tried to save to a category to which he doesn't have access
+            my $category_id = $@->category_id || 
+              croak("No category_id on Krang::Media::NoCategoryEditAccess exception");
+            my ($cat) = Krang::Category->find(category_id => $category_id);
+            add_message( 'no_category_access', 
+                         url => $cat->url, 
+                         id => $category_id );
+            return (error_category_id=>1);
         } else {
             # Not our error!
             die($@);

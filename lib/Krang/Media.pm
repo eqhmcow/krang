@@ -536,9 +536,10 @@ sub save {
     my $media_id;
 
     # Check permissions: Is user allowed to edit the catent category?
-    my ($category) = Krang::Category->find(category_id=>$self->{category_id});
-    Krang::Media::NoCategoryEditAccess->throw( message => "Not allowed to edit media in category $category",
-                                               category_id => $category )
+    my $category_id = $self->{category_id};
+    my ($category) = Krang::Category->find(category_id=>$category_id);
+    Krang::Media::NoCategoryEditAccess->throw( message => "Not allowed to edit media in category $category_id",
+                                               category_id => $category_id )
         unless ($category->may_edit);
 
     # Is user allowed to otherwise edit this object?
