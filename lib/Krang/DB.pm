@@ -88,7 +88,7 @@ sub dbh {
     unless ($args{ignore_version}) {
         my ($db_version) = $DBH{$name}->selectrow_array("select db_version from db_version");
         my $krang_version = $Krang::VERSION;
-        croak("Database <-> Krang version mismatch! (Krang v$krang_version, DB v$db_version)  Unable to continue")
+        die("Database <-> Krang version mismatch! (Krang v$krang_version, DB v$db_version).\n\n Unable to continue.\n")
           unless ($db_version eq $krang_version);
     }
 
