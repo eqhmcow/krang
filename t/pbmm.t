@@ -1,4 +1,3 @@
-use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::Script;
@@ -24,12 +23,13 @@ BEGIN {
     } else {
         eval "use Test::More qw(no_plan);";
     }
+    die $@ if $@;
 }
 
 
 # PBMM story types must all have the full meta set
-my @meta = qw(title keywords description categories related_properties 
-              topics geography sources);
+my @meta = qw(keywords description technology company_type
+              topic geography source);
 foreach my $top_name (Krang::ElementLibrary->top_levels) {
     next if $top_name eq 'category';
     my $class = Krang::ElementLibrary->top_level(name => $top_name);
