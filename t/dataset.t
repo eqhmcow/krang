@@ -294,7 +294,7 @@ my $lsite = Krang::Site->new(preview_url  => 'preview.lazarus.com',
                              preview_path => '/tmp/lazarus');
 $lsite->save();
 
-my $lset = Krang::DataSet->new();
+$lset = Krang::DataSet->new();
 $lset->add(object => $lsite);
 
 # it lives, yes?
