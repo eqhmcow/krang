@@ -54,6 +54,12 @@ Krang::Publisher - Center of the Publishing Universe.
   # Returns the mark used internally to break content into pages.
   my $break_txt = $publisher->PAGE_BREAK();
 
+  # Return the Krang::Story object of the story currently being published.
+  my $story = $publisher->story();
+
+  # Return the category object for the current category of the story being published.
+  my $category = $publisher->category();
+
 
 
 =head1 DESCRIPTION
@@ -89,6 +95,9 @@ Returns a 1 if the current publish run is in publish-mode (e.g. going live), 0 o
 
 Returns a Krang::Category object for the category currently being published.
 
+=item * story
+
+Returns a Krang::Story object for the Story currently being published.
 
 =back
 
