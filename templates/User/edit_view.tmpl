@@ -190,6 +190,7 @@
         <td align="right" valign="top">
 	<div align="center">
 	<b>Current Groups</b><br />
+<tmpl_if error_missing_group><span class="invalid"></tmpl_if>
 <tmpl_if error_null_group><span class="invalid"></tmpl_if>
 <tmpl_if error_invalid_group_id><span class="invalid"></tmpl_if>
 <select name="current_group_ids" size="<tmpl_var size>" multiple="multiple">
@@ -198,6 +199,7 @@
 	</select>
 <tmpl_if error_null_group></span></tmpl_if>
 <tmpl_if error_invalid_group_id></span></tmpl_if>
+<tmpl_if error_missing_group></span></tmpl_if>
 	<br /><input name="rm_grp" onClick="remove_group();" type="button" value="Remove Group">
 	</div>
 	</td>

@@ -577,6 +577,12 @@ sub update_user {
             $q->param('errors', 1);
             add_message($error);
             return %errors;
+        } elsif (ref $@ && $@->isa('Krang::User::MissingGroup')) {
+            my $error = "error_missing_group";
+            $errors{$error} = 1;
+            $q->param('errors', 1);
+            add_message($error);
+            return %errors;
         } else {
             # it's somebody else's problem :)
             croak($@);

@@ -44,8 +44,13 @@ eval {$user->save()};
 isa_ok($@, 'Krang::User::InvalidGroup');
 is($@ =~ /Invalid group_id in object/s, 1, 'save() - invalid group_id check');
 
-# success
+# Check save w/o groups
 $user->group_ids_clear();
+eval { $user->save() };
+isa_ok($@, 'Krang::User::MissingGroup', "Not allowed to save user without groups.  Exception");
+
+# success
+$user->group_ids_push(1);
 $user->save();
 like($user->user_id(), qr/^\d+$/, 'save() - success');
 
@@ -56,7 +61,7 @@ like($user->user_id(), qr/^\d+$/, 'save() - success');
     is($user->$_, undef, "getter - $_")
       for qw/email first_name last_name mobile_phone phone/;
 }
-is(scalar @{$user->group_ids} <= 0, 1, 'getter - group_ids()');
+is(scalar(@{$user->group_ids}), 1, 'getter - group_ids()');
 
 # setters
 ##########

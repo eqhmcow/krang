@@ -93,7 +93,9 @@ use Digest::MD5 qw(md5_hex);
 use Exception::Class
   ('Krang::User::Duplicate' => {fields => 'duplicates'},
    'Krang::User::Dependency' => {fields => 'dependencies'},
-   'Krang::User::InvalidGroup' => {fields => 'group_id'});
+   'Krang::User::InvalidGroup' => {fields => 'group_id'},
+   'Krang::User::MissingGroup' );
+
 require Exporter;
 
 # Internal Modules
@@ -758,7 +760,12 @@ sub _validate_group_ids {
     my $self = shift;
     my (@bad_groups, %types);
 
-    foreach my $group_id (@{$self->{group_ids}}) {
+    my @group_ids = @{$self->{group_ids}};
+    # Throw exception if no groups
+    Krang::User::MissingGroup->throw( message => 'No groups specified for this user')
+        unless (@group_ids);
+
+    foreach my $group_id (@group_ids) {
         my ($found_group) = Krang::Group->find(group_id=>$group_id, count=>1);
         push (@bad_groups, $group_id) unless ($found_group);
     }
