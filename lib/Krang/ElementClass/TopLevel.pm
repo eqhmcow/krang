@@ -76,6 +76,25 @@ sub build_url {
     return $category->url . CGI::Util::escape($story->slug || '');
 }
 
+
+=item C<< $url = $class->build_preview_url(story => $story, category => $category) >>
+
+Builds a preview-path URL for the given story and category.  The
+default implementation takes the category url and appends a URI
+encoded copy of the story slug.  This may be overriden by top level
+elements to implement alternative URL schemes.  See
+L<Krang::ElementClass::Cover> for an example.
+
+=cut
+
+sub build_preview_url {
+    my ($self, %arg) = @_;
+    my ($story, $category) = @arg{qw(story category)};
+    croak("Category not defined!") unless $category;
+    return $category->preview_url . CGI::Util::escape($story->slug || '');
+}
+
+
 =item C<< @fields = $class->url_attributes() >>
 
 Returns a list of Story attributes that are being used to compute the

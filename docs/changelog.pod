@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<build_preview_url> to L<Krang::ElementClass::TopLevel>. [Peter]
+
+=item *
+
 Added alt_tag and alt_tag_like searching to L<Krang::Media>, also added
 as an option in Media advanced find screen. [Matt]
 
