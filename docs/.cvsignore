@@ -1,14 +1,3 @@
-changes.html
-objects.html
-coding.html
-goals.html
-rationale.html
-cpan.html
-new_features.html
-paper_screen.html
-element_system.html
-index.html
-requirements.html
-paper_screen.html
+*.html
 modules.*
-krang_*.html
+
