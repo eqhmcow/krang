@@ -49,11 +49,11 @@ use constant DELETE_FIELDS => qw(Krang::User::USER_RW
 ##############################
 
 sub setup {
-	my $self = shift;
+    my $self = shift;
 
-	$self->start_mode('search');
+    $self->start_mode('search');
 
-	$self->run_modes([qw/
+    $self->run_modes([qw/
 		add
 		cancel_add
 		save_add
@@ -67,13 +67,8 @@ sub setup {
 		search
 	/]);
 
-	$self->tmpl_path('User/');
+    $self->tmpl_path('User/');
 
-}
-
-
-sub teardown {
-	my $self = shift;
 }
 
 
@@ -99,23 +94,23 @@ to the system.
 =cut
 
 sub add {
-	my $self = shift;
-        my %ui_messages = @_;
-	my $q = $self->query();
-        my $t = $self->load_tmpl("edit_view.tmpl", associate => $q);
+    my $self = shift;
+    my %ui_messages = @_;
+    my $q = $self->query();
+    my $t = $self->load_tmpl("edit_view.tmpl", associate => $q);
 
-        $t->param(add_mode => 1);
-        $t->param(%ui_messages) if %ui_messages;
+    $t->param(add_mode => 1);
+    $t->param(%ui_messages) if %ui_messages;
 
-        # make new User object
-        my $user = Krang::User->new(login => '', password => '');
+    # make new User object
+    my $user = Krang::User->new(login => '', password => '');
 
-        # store object in session
-        $session{EDIT_USER} = $user;
+    # store object in session
+    $session{EDIT_USER} = $user;
 
-        $t->param($self->get_user_params($user));
+    $t->param($self->get_user_params($user));
 
-        return $t->output();
+    return $t->output();
 }
 
 
@@ -127,13 +122,13 @@ mode.
 =cut
 
 sub cancel_add {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
+    my $q = $self->query();
 
-        add_message('message_add_cancelled');
+    add_message('message_add_cancelled');
 
-	return $self->search();
+    return $self->search();
 }
 
 
@@ -153,27 +148,27 @@ screen.
 =cut
 
 sub save_add {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
+    my $q = $self->query();
 
-        my %errors = $self->validate_user();
+    my %errors = $self->validate_user();
 
-        # Return to edit screen if there are errors
-        return $self->add(%errors) if %errors;
+    # Return to edit screen if there are errors
+    return $self->add(%errors) if %errors;
 
-        # Get user from session
-        my $user = $session{EDIT_USER} || 0;
-        croak("Can't retrieve EDIT_USER from session") unless $user;
+    # Get user from session
+    my $user = $session{EDIT_USER} || 0;
+    croak("Can't retrieve EDIT_USER from session") unless $user;
 
-        %errors = $self->update_user($user);
-        return $self->edit(%errors) if %errors;
+    %errors = $self->update_user($user);
+    return $self->edit(%errors) if %errors;
 
-        $q->delete(DELETE_FIELDS);
+    $q->delete(DELETE_FIELDS);
 
-        add_message('message_user_saved');
+    add_message('message_user_saved');
 
-        return $self->search();
+    return $self->search();
 }
 
 
@@ -187,30 +182,30 @@ the user to 'edit' run mode.
 =cut
 
 sub save_stay_add {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
+    my $q = $self->query();
 
-        my %errors = $self->validate_user();
+    my %errors = $self->validate_user();
 
-        # Return to edit screen if there are errors
-        return $self->add(%errors) if %errors;
+    # Return to edit screen if there are errors
+    return $self->add(%errors) if %errors;
 
-        # Get user from session
-        my $user = $session{EDIT_USER} || 0;
-        croak("Can't retrieve EDIT_USER from session") unless $user;
+    # Get user from session
+    my $user = $session{EDIT_USER} || 0;
+    croak("Can't retrieve EDIT_USER from session") unless $user;
 
-        %errors = $self->update_user($user);
-        return $self->add(%errors) if %errors;
+    %errors = $self->update_user($user);
+    return $self->add(%errors) if %errors;
 
-        # preserve, set vals for 'edit' run mode
-        $q->delete(DELETE_FIELDS);
-        $q->param(user_id => $user->user_id());
-        $q->param(rm => 'edit');
+    # preserve, set vals for 'edit' run mode
+    $q->delete(DELETE_FIELDS);
+    $q->param(user_id => $user->user_id());
+    $q->param(rm => 'edit');
 
-        add_message('message_user_saved');
+    add_message('message_user_saved');
 
-	return $self->edit();
+    return $self->edit();
 }
 
 
@@ -260,36 +255,36 @@ array of 'user_id's signifying the user objects to be deleted.
 =cut
 
 sub delete_selected {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
-        my @user_delete_list = ($q->param('krang_pager_rows_checked'));
-        $q->delete('krang_pager_rows_checked');
+    my $q = $self->query();
+    my @user_delete_list = ($q->param('krang_pager_rows_checked'));
+    $q->delete('krang_pager_rows_checked');
 
-        # return to search if no ids were passed
-        return $self->search() unless @user_delete_list;
+    # return to search if no ids were passed
+    return $self->search() unless @user_delete_list;
 
-        # destroy users
-        for my $u(@user_delete_list) {
-            eval {Krang::User->delete($u);};
-            if ($@) {
-                if (ref $@ && $@->isa('Krang::User::Dependency')) {
-                    critical("Unable to delete user '$u': objects are " .
-                             "checked out by this user.");
-                    my ($user) = Krang::User->find(user_id => $u);
-                    add_message('error_deletion_failure',
-                                login => $user->login,
-                                user_id => $user->user_id,);
-                    return $self->search();
-                } else {
-                    croak($@);
-                }
+    # destroy users
+    for my $u(@user_delete_list) {
+        eval {Krang::User->delete($u);};
+        if ($@) {
+            if (ref $@ && $@->isa('Krang::User::Dependency')) {
+                critical("Unable to delete user '$u': objects are checked " .
+                         "out by this user.");
+                my ($user) = Krang::User->find(user_id => $u);
+                add_message('error_deletion_failure',
+                            login => $user->login,
+                            user_id => $user->user_id,);
+                return $self->search();
+            } else {
+                croak($@);
             }
         }
+    }
 
-        add_message('message_selected_deleted');
+    add_message('message_selected_deleted');
 
-	return $self->search();
+    return $self->search();
 }
 
 
@@ -311,17 +306,16 @@ sub edit {
     my %ui_messages = @_;
     my $q = $self->query();
     my $user_id = $q->param('user_id');
-    my ($user) = Krang::User->find(user_id => $user_id);
+    my $user = $session{EDIT_USER};
 
+    if ($user_id) {
+        ($user) = Krang::User->find(user_id => $user_id);
+        $session{EDIT_USER} = $user;
+    }
     croak(__PACKAGE__ . "->edit(): No Krang::User object found matching " .
-          "user_id '$user_id'")
-      unless defined $user;
+          "user_id '$user_id'") unless defined $user;
 
-    # Store in session, just following Jesse's lead
-    $session{EDIT_USER} = $user;
-
-    my $t = $self->load_tmpl("edit_view.tmpl",
-                             associate => $q);
+    my $t = $self->load_tmpl("edit_view.tmpl", associate => $q);
 
     $t->param(%ui_messages) if %ui_messages;
 
@@ -339,13 +333,13 @@ mode.
 =cut
 
 sub cancel_edit {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
+    my $q = $self->query();
 
-        add_message('message_save_cancelled');
+    add_message('message_save_cancelled');
 
-	return $self->search();
+    return $self->search();
 }
 
 
@@ -365,27 +359,27 @@ screen.
 =cut
 
 sub save_edit {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
+    my $q = $self->query();
 
-        my %errors = $self->validate_user();
+    my %errors = $self->validate_user();
 
-        # Return to edit screen if there are errors
-        return $self->edit(%errors) if %errors;
+    # Return to edit screen if there are errors
+    return $self->edit(%errors) if %errors;
 
-        # Get user from session
-        my $user = $session{EDIT_USER} || 0;
-        croak("Can't retrieve EDIT_USER from session") unless $user;
+    # Get user from session
+    my $user = $session{EDIT_USER} || 0;
+    croak("Can't retrieve EDIT_USER from session") unless $user;
 
-        %errors = $self->update_user($user);
-        return $self->edit(%errors) if %errors;
+    %errors = $self->update_user($user);
+    return $self->edit(%errors) if %errors;
 
-        $q->delete(DELETE_FIELDS);
+    $q->delete(DELETE_FIELDS);
 
-        add_message('message_user_saved');
+    add_message('message_user_saved');
 
-        return $self->search();
+    return $self->search();
 }
 
 
@@ -399,30 +393,30 @@ the user to 'edit' run mode.
 =cut
 
 sub save_stay_edit {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
+    my $q = $self->query();
 
-        my %errors = $self->validate_user();
+    my %errors = $self->validate_user();
 
-        # Return to edit screen if there are errors
-        return $self->edit(%errors) if %errors;
+    # Return to edit screen if there are errors
+    return $self->edit(%errors) if %errors;
 
-        # Get user from session
-        my $user = $session{EDIT_USER} || 0;
-        croak("Can't retrieve EDIT_USER from session") unless $user;
+    # Get user from session
+    my $user = $session{EDIT_USER} || 0;
+    croak("Can't retrieve EDIT_USER from session") unless $user;
 
-        %errors = $self->update_user($user);
-        return $self->edit(%errors) if %errors;
+    %errors = $self->update_user($user);
+    return $self->edit(%errors) if %errors;
 
-        # preserve, set vals for 'edit' run mode
-        $q->delete(DELETE_FIELDS);
-        $q->param(user_id => $user->user_id());
-        $q->param(rm => 'edit');
+    # preserve, set vals for 'edit' run mode
+    $q->delete(DELETE_FIELDS);
+    $q->param(user_id => $user->user_id());
+    $q->param(rm => 'edit');
 
-        add_message('message_user_saved');
+    add_message('message_user_saved');
 
-	return $self->edit();
+    return $self->edit();
 }
 
 
@@ -436,65 +430,61 @@ to contain a text string which will in turn be used to query users.
 =cut
 
 sub search {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
+    my $q = $self->query();
 
-        my $t = $self->load_tmpl("list_view.tmpl",
-                                 associate => $q,
-                                 loop_context_vars => 1);
+    my $t = $self->load_tmpl("list_view.tmpl",
+                             associate => $q,
+                             loop_context_vars => 1);
 
-        # simple search
-        my $search_filter = $q->param('search_filter') || '';
+    # simple search
+    my $search_filter = $q->param('search_filter') || '';
 
-        # setup pager
-        my $pager = Krang::HTMLPager->new(cgi_query => $q,
-                                          persist_vars => {
-                                                           rm => 'search',
-                                                           search_filter =>
-                                                           $search_filter,
+    # setup pager
+    my $pager = Krang::HTMLPager->new(cgi_query => $q,
+                                      persist_vars => {
+                                                       rm => 'search',
+                                                       search_filter =>
+                                                       $search_filter,
+                                                      },
+                                      use_module => 'Krang::User',
+                                      find_params =>
+                                      {simple_search => $search_filter},
+                                      columns => [
+                                                  'login',
+                                                  'last',
+                                                  'first',
+                                                  'command_column',
+                                                  'checkbox_column',
+                                                 ],
+                                      column_labels => {login => 'Login',
+                                                        last => 'Last Name',
+                                                        first => 'First Name',
+                                                       },
+                                      columns_sortable =>
+                                      [qw(login last first)],
+                                      columns_sort_map => {
+                                                           last => 'last_name',
+                                                           first =>
+                                                           'first_name'
                                                           },
-                                          use_module => 'Krang::User',
-                                          find_params =>
-                                          {simple_search => $search_filter},
-                                          columns => [
-                                                      'login',
-                                                      'last',
-                                                      'first',
-                                                      'command_column',
-                                                      'checkbox_column',
-                                                     ],
-                                          column_labels => {
-                                                            login => 'Login',
-                                                            last =>
-                                                            'Last Name',
-                                                            first =>
-                                                            'First Name',
-                                                           },
-                                          columns_sortable =>
-                                          [qw(login last first)],
-                                          columns_sort_map => {
-                                                               last =>
-                                                               'last_name',
-                                                               first =>
-                                                               'first_name'
-                                                              },
-                                          command_column_commands =>
-                                          [qw(edit_user)],
-                                          command_column_labels =>
-                                          {edit_user => 'Edit'},
-                                          row_handler => \&search_row_handler,
-                                          id_handler =>
-                                          sub {return $_[0]->user_id},
-                                         );
+                                      command_column_commands =>
+                                      [qw(edit_user)],
+                                      command_column_labels =>
+                                      {edit_user => 'Edit'},
+                                      row_handler => \&search_row_handler,
+                                      id_handler =>
+                                      sub {return $_[0]->user_id},
+                                     );
 
-        # get pager output
-        $t->param(pager_html => $pager->output());
+    # get pager output
+    $t->param(pager_html => $pager->output());
 
-        # get counter params
-        $t->param(row_count => $pager->row_count());
+    # get counter params
+    $t->param(row_count => $pager->row_count());
 
-        return $t->output();
+    return $t->output();
 }
 
 
