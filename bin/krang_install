@@ -243,6 +243,24 @@ sub check_prereqs {
         exit_error("InstanceElementSet '$InstanceElementSet' does not exist");
     }
 
+    my $perl_version = $Config{version};
+    my $archname = $Config{archname};
+    if ($do_perl_install) {
+        if (($perl_version eq '5.6.1') and ($archname eq 'i686-linux')) {
+            exit_error("Correct perl already installed!  Try again without --do-perl-install");
+        }
+    } else {
+        unless (($perl_version eq '5.6.1') and ($archname eq 'i686-linux')) {
+            exit_error("Wrong Perl version ($perl_version/$archname).  Try again with --do-perl-install");
+        }
+    }
+
+    # InstallPath must NOT exist.
+    my $InstallPath = $options{InstallPath};
+    if (-e $InstallPath) {
+        exit_error("InstallPath '$InstallPath' already exists.  Cannot continue.");
+    }
+
     if ($do_mysql_install) {
         # Bail if version 4 is already installed
         my $mysql_bin = MYSQL_BIN;
@@ -285,24 +303,6 @@ sub check_prereqs {
         }
 
     }
-
-    my $perl_version = $Config{version};
-    my $archname = $Config{archname};
-    if ($do_perl_install) {
-        if (($perl_version eq '5.6.1') and ($archname eq 'i686-linux')) {
-            exit_error("Correct perl already installed!  Try again without --do-perl-install");
-        }
-    } else {
-        unless (($perl_version eq '5.6.1') and ($archname eq 'i686-linux')) {
-            exit_error("Wrong Perl version ($perl_version/$archname).  Try again with --do-perl-install");
-        }
-    }
-
-    # InstallPath must NOT exist.
-    my $InstallPath = $options{InstallPath};
-    if (-e $InstallPath) {
-        exit_error("InstallPath '$InstallPath' already exists.  Cannot continue.");
-    }
 }
 
 
@@ -323,10 +323,12 @@ sub do_perl_install {
                          && sh Configure -Dprefix=/usr -des \\
                          && make \\
                          && make test \\
-                         && make install \\
-                         && /bin/true );
+                         && make install );
 
-    system($perl_build) || exit_error("There was a problem building Perl.  Unable to continue.");
+    # Check for compile error
+    if (system($perl_build)) {
+        exit_error("There was a problem building Perl.  Unable to continue.");
+    }
  
     # Blow away build directory
     chdir($ENV{KRANG_ROOT});
@@ -338,7 +340,40 @@ sub do_perl_install {
 }
 
 
-sub do_mysql_install {}
+sub do_mysql_install {
+    # -Uvh from *.rpm files
+    my $mysql_rpm_path = $ENV{KRANG_ROOT} ."/install/MySQL/";
+    chdir($mysql_rpm_path);
+
+    # Start MySQL
+    print "Installing/upgrading MySQL 4...\n";
+    my $rpm_upgrade = "/bin/rpm -Uvh *.rpm";
+    if (system($rpm_upgrade)) {
+        exit_error("There was a problem installing MySQL.  Unable to continue.");
+    }
+
+    # MySQLRootPassword must be valid, and MySQL should be running
+    my $mysql_bin = MYSQL_BIN;
+    my $MySQLRootPassword = $options{'MySQLRootPassword'};
+    my $test_mysql = qq/\/bin\/echo 'select "world" as hello' | $mysql_bin -uroot/;
+    $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+    $test_mysql .= " 2>&1";
+    my $mysql_test_output = `$test_mysql`;
+
+    unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
+        print STDERR "$mysql_test_output";
+        if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
+            exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
+        } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
+            exit_error("Can't connect to MySQL.  Start MySQL and try again.");
+        } else {
+            exit_error("Unable to verify MySQLRootPassword.");
+        }
+    }
+
+    # All done
+    print "MySQL installed.\n";
+}
 
 
 sub create_mysql_user {}
