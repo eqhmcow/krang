@@ -842,10 +842,10 @@ sub find {
         # handle simple fields
         if (exists $simple_fields{$key}) {
             if (defined $value) {
-                push @where, $like ? "$key LIKE ?" : "$key = ?";
+                push @where, $like ? "s.$key LIKE ?" : "s.$key = ?";
                 push @param, $value;
             } else {
-                push @where, "$key IS NULL";
+                push @where, "s.$key IS NULL";
             }
             next;
         }
