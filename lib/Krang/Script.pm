@@ -92,8 +92,17 @@ BEGIN {
 
 BEGIN {
     # Set Krang instance if not running under mod_perl
-    my $instance = exists $ENV{KRANG_INSTANCE} ? 
-      $ENV{KRANG_INSTANCE} : (Krang::Conf->instances())[0];
+    my $instance = $ENV{KRANG_INSTANCE};
+    if (not defined $instance) {
+        my @instances = Krang::Conf->instances();
+        if (@instances > 1) {
+            die "Your Krang configuration contains multiple instances, please set the KRANG_INSTANCE environment variable.\n\nAvailable instances are: " . 
+              join(', ', @instances[0 .. $#instances - 1]) . 
+                " and $instances[-1].\n\n";
+        } else {
+            $instance = $instances[0];
+        }
+    }
     debug("Krang.pm:  Setting instance to '$instance'");    
     Krang::Conf->instance($instance);
   

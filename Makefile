@@ -37,8 +37,9 @@ TAGS:
 TEST_VERBOSE=0
 TEST_FILES = t/*.t
 TEST_ASSERT=1
+TEST_INSTANCE=$(shell KRANG_ROOT=`pwd` perl -Ilib -MKrang::Conf -e 'print(( Krang::Conf->instances() )[0]);')
 test:
-	KRANG_ROOT=`pwd` KRANG_ASSERT=$(TEST_ASSERT) perl -Ilib -we 'use Test::Harness qw(&runtests $$verbose); $$verbose=$(TEST_VERBOSE); runtests @ARGV;' $(TEST_FILES)
+	KRANG_ROOT=`pwd` KRANG_ASSERT=$(TEST_ASSERT) KRANG_INSTANCE=$(TEST_INSTANCE) perl -Ilib -we 'use Test::Harness qw(&runtests $$verbose); $$verbose=$(TEST_VERBOSE); runtests @ARGV;' $(TEST_FILES)
 
 
 # setup default BENCH_NAME
