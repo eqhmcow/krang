@@ -87,7 +87,7 @@ sub fill_template {
                     my $keywords = $cat->element->child('related_properties')->data;
                     my @k;
                     foreach my $kw (@$keywords) {
-                        push (@k, {display_name => (Krang::ListItem->find(list_item_id => $kw))[0]->data, list_item_id => $kw});
+                        push (@k, {display_name => (Krang::ListItem->find(list_item_id => $kw))[0]->data, list_item_id => $kw}) if (Krang::ListItem->find(list_item_id => $kw))[0];
                     }
                     $tmpl->param( related_properties_loop => [@k] );
                 }
@@ -99,7 +99,7 @@ sub fill_template {
         my $keywords = $cat->element->child('related_properties')->data;
         my @k;
         foreach my $kw (@$keywords) {
-            push (@k, {display_name => (Krang::ListItem->find(list_item_id => $kw))[0]->data, list_item_id => $kw});
+            push (@k, {display_name => (Krang::ListItem->find(list_item_id => $kw))[0]->data, list_item_id => $kw}) if (Krang::ListItem->find(list_item_id => $kw))[0];
         }
         $tmpl->param( related_properties_loop => [@k] );
     }
