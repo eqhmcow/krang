@@ -1,0 +1,126 @@
+package <tmpl_var package_name>;
+use base qw(<tmpl_var base_module>);
+use strict;
+use warnings;
+
+<tmpl_if new_dbh_method># new_dbh_method: '<tmpl_var new_dbh_method>'</tmpl_if>
+
+=pod
+
+=head1 NAME
+
+<tmpl_var package_name> - web interface to.....
+
+
+=head1 SYNOPSIS
+
+  use <tmpl_var package_name>;
+  my $app = <tmpl_var package_name>->new();
+  $app->run();
+
+
+=head1 DESCRIPTION
+
+<tmpl_var package_name> provides a web-based system
+through which users can.....
+
+
+=head1 INTERFACE
+
+Following are descriptions of all the run-modes
+provided by <tmpl_var package_name>.
+
+The default run-mode (start_mode) for <tmpl_var package_name>
+is '<tmpl_var start_mode>'.
+
+=head2 Run-Modes
+
+=cut
+
+
+<tmpl_loop use_modules>use <tmpl_var module_name>;
+</tmpl_loop>
+
+
+##############################
+#####  OVERRIDE METHODS  #####
+##############################
+
+sub setup {
+    my $self = shift;
+
+    $self->start_mode('<tmpl_var start_mode>');
+
+    $self->run_modes([qw(<tmpl_loop run_modes>
+                         <tmpl_var mode_name></tmpl_loop>
+                        )]);
+
+<tmpl_if tmpl_path>    $self->tmpl_path('<tmpl_var tmpl_path>');</tmpl_if>
+}
+
+
+
+
+##############################
+#####  RUN-MODE METHODS  #####
+##############################
+
+<tmpl_loop run_modes>
+
+
+=pod
+
+=over 4
+
+=item <tmpl_var mode_name>
+
+Description of run-mode '<tmpl_var mode_name>'...
+
+  * Purpose
+  * Expected parameters
+  * Function on success
+  * Function on failure
+
+
+=back
+
+=cut
+
+
+sub <tmpl_var mode_name> {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    return $self->dump_html();
+}
+
+
+</tmpl_loop>
+
+
+
+
+#############################
+#####  PRIVATE METHODS  #####
+#############################
+
+
+
+1;
+
+
+=pod
+
+
+=head1 AUTHOR
+
+Author of Module <author@module>
+
+
+=head1 SEE ALSO
+
+<tmpl_loop use_modules>L<<tmpl_var module_name>>, </tmpl_loop>L<<tmpl_var base_module>>
+
+=cut
+
