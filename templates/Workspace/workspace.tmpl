@@ -141,7 +141,7 @@
                <input type=button value="Delete" onclick="remove('<tmpl_var id>')">
                <p>
                <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">
-               Test with: <input type=checkbox>
+               Test with: <input type=checkbox <tmpl_if testing>checked</tmpl_if> name=testing value='<tmpl_var id>'>
            </tmpl_if>
        </td>
      </tr>

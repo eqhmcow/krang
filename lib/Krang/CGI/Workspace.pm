@@ -142,6 +142,7 @@ sub _row_handler {
         $row->{is_template} = 1;
         $row->{url} = format_url(url    => $obj->url,
                                  length => 50);
+        $row->{testing} = $obj->testing;
     }
 
     # setup version, used by all types
@@ -181,6 +182,7 @@ sub deploy {
     add_message('deployed', id => $obj->template_id);
     my $publisher = Krang::Publisher->new();
     $publisher->deploy_template(template => $obj);
+    $obj->checkin;
     return $self->show;
 }
 
