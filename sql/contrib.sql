@@ -30,6 +30,11 @@ CREATE TABLE contrib_type (
     PRIMARY KEY contrib_type_id (contrib_type_id)
 ) TYPE=MyISAM;
 
+-- Insert base types
+INSERT INTO contrib_type (contrib_type_id, type) VALUES (1, 'Writer');
+INSERT INTO contrib_type (contrib_type_id, type) VALUES (2, 'Illustrator');
+INSERT INTO contrib_type (contrib_type_id, type) VALUES (3, 'Photographer');
+
 DROP TABLE IF EXISTS contrib_contrib_type;
 
 --
