@@ -598,60 +598,6 @@ sub clone {
     return $clone;
 }
 
-=item C<< $element->remember >>
-
-Saves the current state of the element, and all its children, so that
-a future call to C<< $element->rollback() >> can get back to this
-state.  This is used by the web UI to implement the cancel button
-functionality.
-
-This saved state will not persist in the database.
-
-=cut
-
-sub remember {
-    my $self = shift;
-    delete $self->{memory};
-    $self->{memory} = $self->clone();
-}
-
-=item C<< $element->has_memory() >>
-
-Returns true if the element has a remembered state.
-
-=cut
-
-sub has_memory { shift->{memory} ? 1 : 0 }
-
-=item C<< $element->rollback() >>
-
-Rolls back to the last C<remember()>ed state.  Dies if called without
-a prior call to C<remember()>.  After this call, the memory is empty.
-
-=cut
-
-sub rollback {
-    my $self = shift;
-    croak("Call to rollback() without prior call to remember()!")
-      unless $self->{memory};
-    %$self = %{$self->{memory}};
-}
-
-=item C<< $element->forget() >>
-
-Removes the current memory without rolling back.  Calling this method
-in a timely manner will help save on memory usage.  Will croak() if
-called with no existing memory.
-
-=cut
-
-sub forget {
-    my $self = shift;
-    croak("Call to forget() without prior call to remember()!")
-      unless $self->{memory};
-    delete $self->{memory};    
-}    
-
 =item C<< foreach_element { print $_->name, "\n" } $element >>
 
 Apply a block of code to each element in an element tree, recursing

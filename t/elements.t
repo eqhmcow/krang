@@ -74,22 +74,6 @@ END
 die $@ if $@;
 is($count, 10);
 
-# remember the current state of the page and make some changes
-$page->remember();
-$page->children([]);
-$page->add_child(class => "paragraph", data => "a new para");
-is(@{$page->children}, 1);
-
-# get back to where we once belonged
-$page->rollback();
-is(@{$page->children}, 7);
-
-# can't forget or rollback with no memory
-eval { $page->rollback(); };
-like($@, qr/\QCall to rollback() without prior call to remember()!\E/);
-eval { $page->forget(); };
-like($@, qr/\QCall to forget() without prior call to remember()!\E/);
-
 # save to DB
 $element->save();
 my $element_id = $element->element_id;
