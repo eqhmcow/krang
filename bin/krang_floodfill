@@ -29,6 +29,8 @@ text.
 
   --contribs - number of contributors to create, defaults to 50
 
+  --stories  - number of stories to create, defaults to 50
+
 =cut
 
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
@@ -73,12 +75,14 @@ my ($help, $man);
 my $sites    = 3;
 my $cats     = 15;
 my $contribs = 50;
+my $stories  = 50;
 pod2usage(2) unless
   GetOptions(help         => \$help,
              man          => \$man,
              'sites=s'    => \$sites,
              'cats=s'     => \$cats,
              'contribs=s' => \$contribs,
+             'stories=s'  => \$stories,
             );
 
 pod2usage(1)             if $help;
@@ -117,6 +121,7 @@ for(1 .. $cats) {
 
 # create contribs
 my %types = Krang::Pref->get('contrib_type');
+my @contribs;
 for(1 .. $contribs) {
     my $fname = ucfirst(get_word());
     my $lname = ucfirst(get_word());
@@ -141,11 +146,80 @@ for(1 .. $contribs) {
     $contrib->contrib_type_ids(@types);
     eval { $contrib->save() };
     redo if $@ and $@ =~ /duplicate/;
+    push(@contribs, $contrib);
     print STDERR "Created contributor " . 
       join(' ', grep { $_ } ($prefix, $fname, $mname, $lname, $suffix)) . 
         " (" . join(', ', map { $types{$_} } @types) . ")" .
            "\n";
 }
+
+# create stories
+my @stories;
+for my $story_count (1 .. $stories) {
+
+    # determine categories, up to 3
+    my @c = ($cats[int(rand(scalar(@cats)))]);
+    push(@c, $cats[int(rand(scalar(@cats)))])
+      if (int(rand(2)));
+    push(@c, $cats[int(rand(scalar(@cats)))])
+      if (int(rand(2)));
+    my %c = map { ($_->category_id,$_) } @c;
+    @c = values(%c);
+
+    # create story
+    my $story = Krang::Story->new(title      => join(" ", 
+                                                     map {ucfirst(get_word())} 
+                                                     (1..(int(rand(3)) + 2))),
+                                  slug       => get_word(),
+                                  categories => \@c,
+                                  class      => "article");
+
+    # add some contribs, up to 5
+    my @con;
+    for(1 .. (int(rand(4)) + 1)) {
+        my $contrib = $contribs[int(rand(scalar(@contribs)))];
+        my @types = $contrib->contrib_type_ids;
+        $contrib->selected_contrib_type($types[int(rand(scalar(@types)))]);
+        push(@con, $contrib)
+          unless grep { $_->contrib_id == $contrib->contrib_id } @con;
+    }
+    $story->contribs(@con);       
+    
+    # make a multi-page story
+    my $element = $story->element;
+    my $deck = join(" ", map { get_word() } (1 .. ((int(rand(100)))+1)));
+    $element->child('deck')->data($deck);
+    $element->add_child(class => "page") for (1 .. ((int(rand(5)))+1));
+
+    # foreach page, add 10 paragraphs
+    foreach my $page (grep { $_->name eq 'page' } $element->children()) {
+        $page->child('header')->data(join(" ", map { ucfirst(get_word()) } (1 .. ((int(rand(6)))+1))));
+        foreach my $para_num (1 .. ((int(rand(20)))+1)) {
+            my $para = join(" ",
+                            map { get_word() } 
+                            (0 .. ((int(rand(100)))+1)));
+            $page->add_child(class => "paragraph", 
+                             data => $para);
+        }
+    }
+
+    # add some keywords
+    $element->child('fancy_keyword')->data([ map { get_word() } (1 .. ((int(rand(10)))+1))]);
+
+    eval { $story->save };
+    if ($@) {
+        if (ref($@) and ref($@) eq 'Krang::Story::DuplicateURL') {
+            redo;
+        } else {
+            die $@;
+        }
+    }
+
+    print STDERR "Created Story " . $story->url . "\n";
+    push(@stories, $story);
+}
+
+
 
 # get a random word
 BEGIN {
