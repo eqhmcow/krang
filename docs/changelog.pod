@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed Krang::Story->preview_path() to use the submitted category
+argument.  This was keeping preview from writing out content to
+multiple sites. [Peter]
+
+=item *
+
 Added password-length check to My Preferences, enforcing the
 6-character minimum length on passwords that exists everywhere else in
 the UI.  [Peter]

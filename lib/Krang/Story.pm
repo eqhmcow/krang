@@ -1588,9 +1588,9 @@ sub preview_path {
     my $self = shift;
     my %arg  = @_;
 
-    my $path = $self->category->site->preview_path;
     my $category = $arg{category} ? $arg{category} : $self->category;
 
+    my $path = $category->site->preview_path;
     my $url  = $self->element->build_url(story    => $self,
                                          category => $category);
 
