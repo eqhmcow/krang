@@ -1,4 +1,4 @@
-package PBMM::article;
+package PBMM::bio_article;
 use strict;
 use warnings;
 use base 'Krang::ElementClass::TopLevel';
@@ -14,7 +14,7 @@ sub new {
 
     my %args = 
       ( 
-       name => 'article',
+       name => 'bio_article',
        children => 
        [
         PBMM::meta->new(),
@@ -35,7 +35,7 @@ sub new {
         Krang::ElementClass::Text->new(name         => 'icopywrite_link',
                                        display_name => 'iCopywrite Link',
                                        max          => 1),        
-        'page',
+        'bio_page',
 
        ]);
     return $pkg->SUPER::new(%args);

@@ -3,52 +3,6 @@ use strict;
 use warnings;
 use Default::keyword;
 
-#
-# Source Lists
-#
-
-our @COMPANY_TYPES =
-  ( "All",
-    "Automakers",
-    "Dealers/Distributors",
-    "Other Organizations",
-    "Suppliers" );
-
-our @TECHNOLOGIES = 
-  ( "All",
-    "Chassis",
-    "Mfg Tech & Processes",
-    "Powertrain",
-    "Vehicle Exterior",
-    "Vehicle Interior" );
-
-our @TOPICS = 
-  ( "All", 
-    "Financial",
-    "Future Product Plans",
-    "Heavy-Duty Trucking",
-    "Management & Strategy",
-    "Plant Use & Production",
-    "Politics, Regulatory, Trade",
-    "Product Devlpmt, Design, Engrg",
-    "Sales/Marketing",
-    "Supply Chain",
-    "Vehicles" );
-
-our @GEOGRAPHIES =
-  ( "All",
-    "Asia/Pacific",
-    "Europe",
-    "N. America",
-    "Other Regions",
-    "S. Americs",
-    "World" );
-
-our @SOURCES = 
-  ( "Newswire",
-    "Ward's AutoWorld Magazine",
-    "Ward's Dealer Business Magazine",
-    "WardsAuto.com" );
 
 =head1 NAME
 
@@ -66,7 +20,7 @@ story types.
   Meta Keywords
   Meta Description
   Meta Company Type
-  Meta Technolgy
+  Meta Technology
   Meta Topic
   Meta Geography
   Meta Source
@@ -88,29 +42,29 @@ sub new {
        Krang::ElementClass::Textarea->new( name => "meta_description",
                                            rows => 2,
                                            @opt),
-       Krang::ElementClass::ListBox->new( name     => "meta_company_type",
+       Krang::ElementClass::ListGroup->new( name     => "meta_company_type",
+                                            list_group => 'Company Types',
                                           multiple => 1,
-                                          values   => \@COMPANY_TYPES,
                                           size     => 5,
                                           @opt),
-       Krang::ElementClass::ListBox->new( name     => "meta_technology",
+       Krang::ElementClass::ListGroup->new( name     => "meta_technology",
+                                            list_group => 'Technologies',
                                           multiple => 1,
-                                          values   => \@TECHNOLOGIES,
                                           size     => 5,
                                           @opt),
-       Krang::ElementClass::ListBox->new( name     => "meta_topic",
+       Krang::ElementClass::ListGroup->new( name     => "meta_topic",
+                                            list_group => 'Topics',
                                           multiple => 1,
-                                          values   => \@TOPICS,
                                           size     => 5,
                                           @opt),
-       Krang::ElementClass::ListBox->new( name     => "meta_geography",
+       Krang::ElementClass::ListGroup->new( name     => "meta_geography",
+                                            list_group => 'Geographies',
                                           multiple => 1,
-                                          values   => \@GEOGRAPHIES,
                                           size     => 5,
                                           @opt),
-       Krang::ElementClass::ListBox->new( name     => "meta_source",
+       Krang::ElementClass::ListGroup->new( name     => "meta_source",
+                                            list_group => 'Sources',
                                           multiple => 1,
-                                          values   => \@SOURCES,
                                           size     => 5,
                                           @opt),
       );

@@ -1,4 +1,4 @@
-package PBMM::page;
+package PBMM::bio_page;
 use strict;
 use warnings;
 
@@ -8,7 +8,7 @@ PBMM::page
 
 =head1 DESCRIPTION
 
-PBMM article page class.
+PBMM bio page class.
 
 =cut
 
@@ -17,7 +17,7 @@ use base 'Krang::ElementClass';
 
 sub new {
    my $pkg = shift;
-   my %args = ( name => 'page',
+   my %args = ( name => 'bio_page',
                 min  => 1,
                 pageable => 1,
                 children => 
@@ -26,7 +26,7 @@ sub new {
                  Krang::ElementClass::Text->new(name => "small_header"),
                  Krang::ElementClass::Textarea->new(name => "paragraph",
                                                     bulk_edit => 1),
-                 Default::image->new(),
+                 PBMM::image->new(),
                  'document',
                 ],
                 @_);
