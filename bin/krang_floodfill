@@ -169,6 +169,7 @@ for(1 .. $cats) {
     my $cname = get_word();
     my $cat = Krang::Category->new(dir       => $cname,
                                    parent_id => $cats[int(rand(scalar(@cats)))]->category_id);
+    $cat->element->child('display_name')->data(ucfirst($cname) . "!");
     eval { $cat->save() };
     redo if $@ and $@ =~ /duplicate/;
     print STDERR "Created category " . $cat->url . "...\n";
