@@ -32,6 +32,7 @@ LogLevel
 SiteServerAddr
 SiteServerPort
 SMTPServer
+Skin
 );
 }
 
