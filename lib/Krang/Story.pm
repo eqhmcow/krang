@@ -1616,36 +1616,6 @@ sub STORABLE_thaw {
     eval { %$self = %{thaw($data)} };
     croak("Unable to thaw story: $@") if $@;
 
-    # check for deleted contributors
-    my %bad;
-    foreach (@{$self->{contrib_ids}}) {
-        next if Krang::Contrib->find(contrib_id => $_->{contrib_id},
-                                     count      => 1,
-                                     limit      => 1,
-                                    );
-        # it's not there!
-        $bad{$_->{contrib_id}} = 1;
-    }
-    
-    # FIX: replace this with a non-lethal warning when such is available
-    croak("Attempt to deserialize story with missing contributors: ", join(', ', keys(%bad)))
-      if keys %bad;
-
-    # check for deleted categories
-    %bad = ();
-    for (@{$self->{category_ids}}) {
-        next if Krang::Category->find(category_id => $_,
-                                      count       => 1,
-                                      limit       => 1,
-                                     );
-        # it's not there!
-        $bad{$_} = 1;
-    }
-
-    # FIX: replace this with an exception
-    croak("Attempt to deserialize story with missing categories: ", join(', ', keys(%bad)))
-      if keys %bad;
-
     return $self;
 }
 
