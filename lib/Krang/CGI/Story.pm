@@ -149,33 +149,36 @@ sub create {
     return $self->new_story(bad => \@bad) if @bad;
 
     # create the object
-    my $story = Krang::Story->new(class => $type,
-                                  title => $title,
-                                  slug  => $slug,
-                                  categories => [ $category_id ],
-                                  cover_date => $cover_date);
-
-    # try to save it
-    eval { $story->save() };
-
+    my $story;
+    eval {
+        $story = Krang::Story->new(class => $type,
+                                   title => $title,
+                                   slug  => $slug,
+                                   categories => [ $category_id ],
+                                   cover_date => $cover_date);   
+    };
+    
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        my $class = Krang::ElementLibrary->find_class(name => $type);
         add_message('duplicate_url', 
                     story_id => $dup->story_id,
-                    url      => $dup->url,
+                    url      => $dup->url,                    
                     which    => join(' and ', 
-                                     join(', ',
-                                          $story->element->url_attributes),
-                                     "site/category"));
+                                     join(', ', $class->url_attributes),
+                                     "site/category"),
+                   );
 
-        return $self->new_story(bad => ['category_id', 
-                                        $story->element->url_attributes] );
+        return $self->new_story(bad => ['category_id',$class->url_attributes]);
     } elsif ($@) {
         # rethrow
         die($@);
     }
+
+    # save it
+    $story->save();
 
     # store in session for edit
     $session{story} = $story;
@@ -703,7 +706,31 @@ sub add_category {
 
     # push it on
     push(@categories, $category);
-    $story->categories(@categories);
+
+    # this might fail if a duplicate URL is created
+    eval { $story->categories(@categories); };
+
+    # is it a dup?
+    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+        # load duplicate story
+        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        add_message('duplicate_url_on_category_add', 
+                    story_id => $dup->story_id,
+                    url      => $dup->url,                    
+                    category => $category->url,
+                   );
+
+        # remove added category
+        pop(@categories);
+        $story->categories(@categories);
+
+        return $self->edit;
+    } elsif ($@) {
+        # rethrow
+        die($@);
+    }
+
+    # success
     add_message('added_category', url => $category->url);
 
     return $self->edit();
