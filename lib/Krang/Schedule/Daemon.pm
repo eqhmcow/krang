@@ -23,12 +23,15 @@ pidfile and close its log.
 
 =cut
 
+use IO::File;
+use Proc::Daemon;
 
-# Start Daemon before loading Krang::Log or its file descriptor will be closed
+# Start Daemon before loading Krang::Log
 BEGIN {
-    use IO::File;
-    use Proc::Daemon;
     Proc::Daemon::Init;
+
+    # set constant for log module to reopen on writes
+    $ENV{SCH_DAEMON} = 1;
 }
 
 

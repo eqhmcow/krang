@@ -791,7 +791,7 @@ sub run {
             if ($action eq 'alert') {
                 eval {Krang::Alert->send($type . '_id' => $object_id,
                                          @$context)};
-                info("Attempt to send alert failed: $eval_err")
+                critical("Attempt to send alert failed: $eval_err")
                   if ($eval_err = $@);
             } elsif ($action eq 'expire' || $action eq 'publish') {
                 my $url;
@@ -800,13 +800,13 @@ sub run {
                 unless ($obj) {
                     $eval_err = "Can't find $class id '$object_id', " .
                       "skipping $action.";
-                    info($eval_err);
+                    critical($eval_err);
                 } else {
                     if ($action eq 'expire') {
                         eval {$obj->delete;};
                         if ($eval_err = $@) {
-                            info("Unable to expire $class id '$object_id': ".
-                                 $eval_err);
+                            critical("Unable to expire $class id " .
+                                     "'$object_id': $eval_err");
                         } else {
                             info("Deleted $class id '$object_id'.");
                         }
@@ -816,8 +816,8 @@ sub run {
                         eval {$url = $publisher->$meth($type => $obj,
                                                        @$context);};
                         if ($eval_err = $@) {
-                            info("$action failed for $class id '$object_id': ".
-                                 $eval_err);
+                            critical("$action failed for $class id " .
+                                     "'$object_id': $eval_err");
                         } else {
                             my $call = ucfirst $action . "ed";
                             my $msg = "$call $class id '$object_id'" .
@@ -826,9 +826,7 @@ sub run {
                         }
                     }
                 }
-
             }
-
         }
 
         # we're assuming the action was successful unless we've gotten an
