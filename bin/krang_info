@@ -83,6 +83,7 @@ foreach my $i (@instances) {
     Krang::Conf->instance($i);
 
     foreach my $site (Krang::Site->find()) {
+        $site_list{$site->url}{site_id} = $site->site_id;
         $site_list{$site->url}{story_count} =
           Krang::Story->find(count   => 1,
                              site_id => $site->site_id);
@@ -122,12 +123,14 @@ foreach my $i (keys %instance_stats) {
     my ($tot_s, $tot_m) = (0,0);
 
     foreach my $s (keys %{$instance_stats{$i}}) {
-        my $len = length $s;
+        my $sitename = sprintf("%s (id=%2i)", $s, $instance_stats{$i}{$s}{site_id});
+
+        my $len = length $sitename;
 
         my $site_tabs = join '', ("\t") x ((32 - $len) / 8);
 
         print STDOUT sprintf("\t%s%s%6i stories\t%6i media\n",
-                             $s, $site_tabs,
+                             $sitename, $site_tabs,
                              $instance_stats{$i}{$s}{story_count},
                              $instance_stats{$i}{$s}{media_count});
 
