@@ -60,7 +60,7 @@ use Krang::BricLoader::Category;
 =over
 
 
-=item C<< @media = $media->new(path => $filepath) >>
+=item C<< @media = Krang::BricLoader::Media->new(path => $filepath) >>
 
 Constructs a new set of media objects from XML in the specified filepath.
 

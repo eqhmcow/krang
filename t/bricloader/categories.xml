@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <assets xmlns="http://bricolage.sourceforge.net/assets.xsd">
- <category id="0">
-  <name>Root Category</name>
-  <description>Root Category</description>
-  <path>/</path>
-  <active>1</active>
-  <adstring></adstring>
-  <adstring2></adstring2>
-  <keywords></keywords>
- </category>
  <category id="1040">
   <name>4Wheel &amp; Off Road</name>
   <description></description>

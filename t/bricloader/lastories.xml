@@ -1,464 +1,572 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <assets xmlns="http://bricolage.sourceforge.net/assets.xsd">
- <story id="1142" element="Article">
-  <name>Test Article</name>
+ <story id="1118" element="Article">
+  <name>1979 Chevrolet 1/2-Ton Stepside Project, Part IV</name>
   <description></description>
-  <slug>test19</slug>
-  <primary_uri>/superstreet/test19</primary_uri>
+  <slug>1468</slug>
+  <primary_uri>/sporttruck/projectbuild/1468</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>2002-12-17T20:38:00Z</cover_date>
+  <cover_date>1998-01-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/superstreet</category>
+   <category primary="1">/sporttruck/projectbuild</category>
+   <category>/customclassictrucks/projectbuild</category>
   </categories>
   <keywords></keywords>
-  <contributors></contributors>
+  <contributors>
+   <contributor>
+    <fname>Chuck</fname>
+    <mname></mname>
+    <lname>Lombardo</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Steve</fname>
+    <mname></mname>
+    <lname>Warner</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
   <elements>
-   <data order="2" element="promo_title">Test Article</data>
-   <data element="deck" order="3" />
-   <data order="4" element="metadata title">Test Article</data>
-   <data element="metadata description" order="5" />
-   <data element="metadata keywords" order="6" />
-   <data order="7" element="subscription form">1</data>
-   <container order="8" element="Page">
-    <data order="1" element="Paragraph">Getting 230 hp from this engine required relatively few changes. A larger turbo is used, helping to reduce exhaust restriction and allowing higher boost pressures without overspeeding the turbine or compressor or creating excessive back pressure. The stock exhaust manifold is retained.</data>
-    <data order="2" element="Paragraph">The boost pressures are relatively mild. In stock form the 1.8T hits about 6 psi of boost, then backs off to 4 psi. The Oettinger-modified engine hits 0.4 bar higher--almost 6 psi--than stock, or about 12 peak psi. Nothing is outrageous here--except for the performance. Naturally the engine management software is modified to match the new turbo. Expertly modified, we might add.</data>
-    <data order="3" element="Paragraph">Not only is the performance stunning, this newest of VWs is also one of the most comfortable to drive. There is nothing--absolutely nothing--to indicate the system is compromised for greater performance. Are you slogging along at 1200 rpm in third gear? Need acceleration? No worries. Just push down and go. No ill manners, no stalls and stumbles--just hard pull and solid forward thrust. Even when the car is pushed, the water temp needle sits unwavering in its indigo blue glow. Engine oil temp also stays well within bounds. After Oettinger's magic, this engine thinks it was born to crank out this kind of power.</data>
-    <data order="4" element="Paragraph">Other changes include improved intake ducting and a cat-back Oettinger exhaust, with a pair of sexy polished outlets. Although the exhaust allows prodigious power, it purrs rather than growls, a refreshing change from overly loud exhausts that don't make more power. Finally, the Golf/GTI installation requires a new turbo-to-catalytic converter pipe to meet the power goals. (Passat and A4s do not require this change.) The stock intercooler is retained.</data>
-    <container related_media_id="1610" order="0" relative="1" element="Inline Image">
-     <data order="0" element="caption">Hello this is a caption</data>
-     <data element="copyright" order="1" />
-     <data order="2" element="alignment">right</data>
-    </container>
+   <data order="0" element="deck">Body Basics for Operation Retro Ride</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">body,paint,Chevrolet,Chevy,Sport Truck,CustomClassic Trucks,California Street Rods,Golden State Pickup Parts,PPG</data>
+   <data order="3" element="metadata title">1979 Chevrolet 1/2-Ton Stepside Project, Part IV</data>
+   <data order="4" element="promo_title">1979 Chevrolet 1/2-Ton Stepside Project, Part IV</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">Our beloved 1979 Chevy, affectionately dubbed Operation Retro Ride, is in the final stages of becoming a true rolling art form as we continue our series covering the older, classic sport trucks. Transforming our hunk o&amp;#8217 metal into a showpiece takes than simply bolting on the latest and greatest body parts. It takes hard, physical, manual labor to accomplish the next set of tasks we face.</data>
+    <data order="1" element="Paragraph">Now is when many sport truck restorers lose patience with their projects because this is the bodywork and final body prep stage. Once these tasks are completed, the body will be lavished with several coats of PPG paint.</data>
+    <data order="2" element="Paragraph">Follow along as we take you through these mind-numbing, finger-wearying tasks. And keep in mind that the more body preparation you do at the outset, the better the end result will be. All the effort spent at this stage will prove well worth the extra time.</data>
    </container>
   </elements>
  </story>
- <story id="1143" element="Article">
-  <name>Test Article</name>
+ <story id="1119" element="Article">
+  <name>Camshaft Installation</name>
   <description></description>
-  <slug>test20</slug>
-  <primary_uri>/zglobalautos/test20</primary_uri>
-  <priority>3</priority>
-  <publish_status>1</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>2002-12-17T20:39:00Z</cover_date>
-  <categories>
-   <category primary="1">/zglobalautos</category>
-  </categories>
-  <keywords></keywords>
-  <contributors></contributors>
-  <elements>
-   <data order="2" element="promo_title">Test Article</data>
-   <data element="deck" order="3" />
-   <data order="4" element="metadata title">Test Article</data>
-   <data element="metadata description" order="5" />
-   <data element="metadata keywords" order="6" />
-   <data order="7" element="subscription form">1</data>
-   <container order="8" element="Page">
-    <data order="1" element="Paragraph">Getting 230 hp from this engine required relatively few changes. A larger turbo is used, helping to reduce exhaust restriction and allowing higher boost pressures without overspeeding the turbine or compressor or creating excessive back pressure. The stock exhaust manifold is retained.</data>
-    <data order="2" element="Paragraph">The boost pressures are relatively mild. In stock form the 1.8T hits about 6 psi of boost, then backs off to 4 psi. The Oettinger-modified engine hits 0.4 bar higher--almost 6 psi--than stock, or about 12 peak psi. Nothing is outrageous here--except for the performance. Naturally the engine management software is modified to match the new turbo. Expertly modified, we might add.</data>
-    <data order="3" element="Paragraph">Not only is the performance stunning, this newest of VWs is also one of the most comfortable to drive. There is nothing--absolutely nothing--to indicate the system is compromised for greater performance. Are you slogging along at 1200 rpm in third gear? Need acceleration? No worries. Just push down and go. No ill manners, no stalls and stumbles--just hard pull and solid forward thrust. Even when the car is pushed, the water temp needle sits unwavering in its indigo blue glow. Engine oil temp also stays well within bounds. After Oettinger's magic, this engine thinks it was born to crank out this kind of power.</data>
-    <data order="4" element="Paragraph">Other changes include improved intake ducting and a cat-back Oettinger exhaust, with a pair of sexy polished outlets. Although the exhaust allows prodigious power, it purrs rather than growls, a refreshing change from overly loud exhausts that don't make more power. Finally, the Golf/GTI installation requires a new turbo-to-catalytic converter pipe to meet the power goals. (Passat and A4s do not require this change.) The stock intercooler is retained.</data>
-    <container related_media_id="1610" order="0" relative="1" element="Inline Image">
-     <data order="0" element="caption">Hello this is a caption</data>
-     <data element="copyright" order="1" />
-     <data order="2" element="alignment">right</data>
-    </container>
-   </container>
-  </elements>
- </story>
- <story id="1153" element="Article">
-  <name>Mustang Monthly - article</name>
-  <description></description>
-  <slug>article</slug>
-  <primary_uri>/mustangmonthly/article</primary_uri>
+  <slug>1469</slug>
+  <primary_uri>/sporttruck/howto/1469</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>2002-12-17T23:53:00Z</cover_date>
+  <cover_date>1998-01-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/mustangmonthly</category>
+   <category primary="1">/sporttruck/howto</category>
   </categories>
   <keywords></keywords>
-  <contributors></contributors>
+  <contributors>
+   <contributor>
+    <fname>Steve</fname>
+    <mname></mname>
+    <lname>Warner</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Steve</fname>
+    <mname></mname>
+    <lname>Warner</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
   <elements>
-   <data element="promo_title" order="2" />
-   <data element="deck" order="3" />
-   <data element="metadata title" order="4" />
-   <data element="metadata description" order="5" />
-   <data element="metadata keywords" order="6" />
-   <data order="7" element="subscription form">1</data>
-   <container order="8" element="Page">
-    <data order="0" element="Paragraph">The 450SLC 5.0s were special lightweight 300-bhp 5.0-liter V8 versions of the 450SLC for Group 4, with aluminum engine blocks and reinforced chassis. In 1980, the factory modified them still more, calling it the 500SLC, and ran all season without a win until the last event of the year, the 3,200-mile Ivory Coast rally, which was won by Bjorn Waldegaard in a 450SLC with Jorge Recalde second in one of the new 500SLCs. Their point made, the factory pulled out of rallying a week before Christmas. That generation of SL, the last ever offered with a manual transmission, finished off as the 380SL, 500SL, and the rare 560SL, and lasted until 1989 with continuous upgrades like a four-speed automatic overdrive.</data>
-    <data order="1" element="Paragraph">The fourth generation of the Mercedes-Benz SL was introduced in 1990 as a luxury two-seater and technology banner-carrier, and it was never raced above club level. Originally offered as 380SL or 500SL models, they fell victim to corporate name switching and finished their lives as SL380 and SL500, later joined by the SL600 V12, with the largest, most powerful (394 bhp) engine ever put in an SL. The angular beauty offered ABS, traction control, ESP yaw control, and a host of other technologies in a stylish two-seater that sold very well here, setting sales records in the last year of its life, 2001. Over the years, AMG built tons of upgraded SL500 and SL600 models for individuals and for the factory.</data>
-    <data order="2" element="Paragraph">The latest generation SL500 was introduced here last fall as a 2002 model. Incorporating all of the base Mercedes technologies, plus the world's first electronically operated brakes and a folding steel convertible top, a whole new generation of 5.0-liter three-valve V8 engines, and an electronically controlled five-speed automatic, it is the quickest, fastest, most stable and comfortable SL of them all, starting at about $87,000. A really nice prize-winning 300SL gullwing is about $300,000. It may not have the quirky charisma of the original gullwing coupe, and it certainly doesn't weigh 1,900 lb, but the new SL500 is the technology leader of the entire Mercedes-Benz fleet, a car with amazing capabilities at ten tenths, especially in the SL55 AMG version. It'll go quicker, farther and faster and last longer than any 300SL Rudy Uhlenhaut ever dreamed of. We're just thankful that he dreamed of that first one.</data>
-   </container>
-   <container order="9" element="Sidebar Article">
-    <data order="0" element="sidebar title">Important Things to Consider</data>
-    <data order="1" element="paragraph">Power gains and sounds from a brand new exhaust may vary slightly from an exhaust that's been used several months. All of the exhausts tested were brand new and had never been previously installed or broken in.</data>
-    <data order="2" element="paragraph">The first few exhausts were tested in the morning, giving them a slight advantage because of cooler weather--and they were tested in the order shown here. The SAE correction on the Dynojet 248C dynamometer works well, but it is not perfect. For this reason, another baseline run was done at the end of the day to provide a fairer comparison against the exhausts tested in the afternoon. This new baseline number yielded a loss in peak hp and torque measurements of 2.0 and 1.2, respectively, from the initial baseline run done in the morning. And by the end of the day the UUC exhaust dropped from its peak 219.0 hp to 216.7 hp due to the increase in ambient temperature, even with SAE correction incorporated. With this in mind, all of the exhausts performed within about 1 percent of each other.</data>
-    <data order="3" element="paragraph">Whether that's a small enough margin of error to say that all of these exhausts are pretty much the same in performance is hard to say. Some people may have been hoping for similar results to what was seen in our Jetta 1.8T test (ec, 11/01), but we knew that wasn't going to happen, because a turbocharged car will respond much differently, and often more positively to exhaust upgrades, than a normally aspirated car such as this M3.</data>
+   <data order="0" element="deck">The key to making power is maximizing just the right combination of parts that, once installed, will make your entire powerplant come alive. Power starts at the camshaft--the heart of the engine...</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">cam,camshaft,Crane Cams,Crane,Sport Truck</data>
+   <data order="3" element="metadata title">Camshaft Installation</data>
+   <data order="4" element="promo_title">Camshaft Installation</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">The key to making power is maximizing just the right combination of parts that, once installed, will make your entire powerplant come alive. Power starts at the camshaft--the heart of the engine. This is probably the single best area for realizing huge power gains because an aftermarket camshaft can increase valve lift and duration.</data>
+    <data order="1" element="Paragraph">Most truck manufacturers install an all-around camshaft, one that will keep the truck from suffering poor gas mileage and will make decent power in all situations whether it's cruising, towing, or racing. You can, however, change the camshaft in your engine and then specifically tailor the new camshaft to your exact needs. For example, if you plan to use the truck most often for towing heavy loads, then use a camshaft specifically designed to produce more torque in the low rpm range. All of the big manufacturers offer a technical hotline to address your needs.</data>
+    <data order="2" element="Paragraph">For our application, we wanted the maximum horsepower we could achieve without having to increase the stock compression ratio or go to more exotic pistons and crankshaft. So we consulted the folks at the Crane technical support hotline. They advised us to use one of their Compucam hydraulic roller camshafts.</data>
+    <data order="3" element="Paragraph">The following information about how to install the Compucam camshaft applies to any and all hydraulic and roller tappet camshafts. So, if you want to maximize your engine's performance without adding more expensive power bolt-ons like superchargers and turbochargers, a camshaft, lifter, valve spring, and rocker arm swap may be just what the doctor ordered.</data>
    </container>
   </elements>
  </story>
- <story id="1154" element="Article">
-  <name>JP - article</name>
+ <story id="1120" element="Article">
+  <name>Power Gains</name>
   <description></description>
-  <slug>article</slug>
-  <primary_uri>/jpmag/article</primary_uri>
+  <slug>1470</slug>
+  <primary_uri>/sporttruck/howto/1470</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>2002-12-18T01:18:00Z</cover_date>
+  <cover_date>1998-01-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/jpmag</category>
+   <category primary="1">/sporttruck/howto</category>
   </categories>
   <keywords></keywords>
-  <contributors></contributors>
+  <contributors>
+   <contributor>
+    <fname>Steve</fname>
+    <mname></mname>
+    <lname>Warner</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Steve</fname>
+    <mname></mname>
+    <lname>Warner</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
   <elements>
-   <data element="promo_title" order="2" />
-   <data element="deck" order="3" />
-   <data element="metadata title" order="4" />
-   <data element="metadata description" order="5" />
-   <data element="metadata keywords" order="6" />
-   <data order="7" element="subscription form">1</data>
-   <container order="8" element="Page">
-    <data order="0" element="Paragraph">Important Things to Consider Power gains and sounds from a brand new exhaust may vary slightly from an exhaust that's been used several months. All of the exhausts tested were brand new and had never been previously installed or broken in.</data>
-    <data order="1" element="Paragraph">The first few exhausts were tested in the morning, giving them a slight advantage because of cooler weather--and they were tested in the order shown here. The SAE correction on the Dynojet 248C dynamometer works well, but it is not perfect. For this reason, another baseline run was done at the end of the day to provide a fairer comparison against the exhausts tested in the afternoon. This new baseline number yielded a loss in peak hp and torque measurements of 2.0 and 1.2, respectively, from the initial baseline run done in the morning. And by the end of the day the UUC exhaust dropped from its peak 219.0 hp to 216.7 hp due to the increase in ambient temperature, even with SAE correction incorporated. With this in mind, all of the exhausts performed within about 1 percent of each other.</data>
-    <data order="2" element="Paragraph">Whether that's a small enough margin of error to say that all of these exhausts are pretty much the same in performance is hard to say. Some people may have been hoping for similar results to what was seen in our Jetta 1.8T test (ec, 11/01), but we knew that wasn't going to happen, because a turbocharged car will respond much differently, and often more positively to exhaust upgrades, than a normally aspirated car such as this M3.</data>
-    <data order="3" element="Paragraph">Choosing a Favorite We left the task of choosing a favorite exhaust to our test car's owner, and by no means was it a simple task for him. He bounced back and forth between four exhausts before he finally made his decision. After a long hour of going through the exhausts and all of the objective and subjective ratings, he finally chose the single-canister UUC System U. "I like the way the tips look and the way the car sounds with this exhaust," he said, "plus I don't mind the fact that it's light and put out more horsepower than almost all the rest."</data>
-    <data order="4" element="Paragraph">UUC is a company well known for its drivetrain upgrades and exhausts for German cars. We used one of its short-shift kits and transmission braces on our Project S4 and loved them (ec, 9/02).</data>
-    <data order="5" element="Paragraph">About a month after the install, we asked the owner how he was doing with the new exhaust on the car. He replied, "The sound is awesome under full-throttle acceleration, especially when it bounces off the concrete walls of the California Speedway!"</data>
-    <data order="6" element="Paragraph">We concur--we were there to hear it from the pit lane, and it sure sounded sweet. "But for my taste," he added, "although I am getting more used to it, I still wish it would be just a little quieter for cruising around town. Also, the fit has become a bit of an issue, since one of the tips has seemed to have melted a small part of the rear valance." The exhaust is a prototype version and hopefully UUC will have this sorted out by the time you read this.</data>
-    <data order="7" element="Paragraph">Every exhaust here had its pros and cons, but at the same time none of them made substantial peak horsepower. If there were any power gains, most of them were achieved in the midrange, save for the Rogue unit, which found peak gains up top.</data>
+   <data order="0" element="deck">Two Stages of JET Power</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">JET,ignition,fuel,pulleys,Sport Truck,engine</data>
+   <data order="3" element="metadata title">Power Gains</data>
+   <data order="4" element="promo_title">Power Gains</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">Bolt-on power comes in all shapes, sizes, and costs. Sport truck owners who've recently dropped the fat green for their rides now find themselves at a distinct disadvantage. Having spent the money it cost to give their truck the required altitude adjustment, they find they've gone to the well once too often; it's run dry, leaving them without the funds to quench their thirst for engine power.</data>
+    <data order="1" element="Paragraph">JET Performance Products comes to the rescue. The company offers a complete line of entry-level performance parts with several new computer-controlled components that interface with a truck's OBD-II onboard diagnostics system. For those who don't know what OBD-II is or how it works, picture this scenario: You've just installed some fly-by-night performance parts on your brand new sport truck. The family is loaded up in the vehicle and you're happily motoring along the road. Suddenly the Check Engine light flashes on and the truck's computer initiates its procedure leading to complete engine shutdown. That, folks, is OBD-II at work.</data>
+    <data order="2" element="Paragraph">It's not all bad news since you can gain a bunch of ponies with OBD-II's assistance. For the money-conscious, JET offers an entry-level Stage I Power Package that's compatible with OBD-II emission systems. If the horsepower tweaks in that package aren't enough, you can step up to the slightly higher-priced Stage II Package for even more power.</data>
+    <data order="3" element="Paragraph">Come along as we demonstrate an installation of both the Stage I and Stage II JET Power Packages. We'll give you JET Performance's figures on rear- wheel horsepower that will show all the power-starved truck owners out there what gains they can expect.</data>
    </container>
   </elements>
  </story>
- <story id="1155" element="Article">
-  <name>Rachel's Test Article</name>
+ <story id="1121" element="Article">
+  <name>1992 Chevrolet C1500</name>
   <description></description>
-  <slug>test</slug>
-  <primary_uri>/carcraft/uhhuh/test</primary_uri>
+  <slug>1471</slug>
+  <primary_uri>/sporttruck/featuredvehicles/1471</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>2002-12-18T15:20:00Z</cover_date>
+  <cover_date>1998-01-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/carcraft/uhhuh</category>
+   <category primary="1">/sporttruck/featuredvehicles</category>
   </categories>
   <keywords></keywords>
-  <contributors></contributors>
+  <contributors>
+   <contributor>
+    <fname>Joel</fname>
+    <mname></mname>
+    <lname>Mollis</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Scott</fname>
+    <mname></mname>
+    <lname>Killeen</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
   <elements>
-   <data order="2" element="promo_title">promo title</data>
-   <data order="3" element="deck">Deck</data>
-   <data order="4" element="metadata title">meta title</data>
-   <data order="5" element="metadata description">meta description</data>
-   <data order="6" element="metadata keywords">meta keywords</data>
-   <data order="7" element="subscription form">1</data>
-   <container order="8" element="Page">
-    <data order="0" element="Paragraph">sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk </data>
-    <data order="1" element="Paragraph">sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk </data>
+   <data order="0" element="deck">How to Spend $55,000: Take One Part Truck, Add Two Parts Vette, and Then...</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">1992,Chevy,Chevrolet,C1500,1/2 Ton Pickup</data>
+   <data order="3" element="metadata title">1992 Chevrolet C1500</data>
+   <data order="4" element="promo_title">1992 Chevrolet C1500</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">You know, it's true. A dollar just doesn't buy what it used to. For proof, look at the truck on these pages. It cost over 55 large to build this sassy street stiletto. Great balls of fire, man! We remember the good ol' days when a sport truck enthusiast could whip up an ass-kickin' ride like this Bow Tie for, oh, right around $50,000, give or take a few thou. My, how times have changed.</data>
+    <data order="1" element="Paragraph">Anyhoo, now that the cat's out of the bag in regards to the cost of this C1500, you're dying to know how the dough was spent, aren't you? What? You're dying to know how to get that much dough of your own? Sorry, we can't help you with that. Besides, if you had a big pile of moolah to spend, how could we be sure that you'd spend it to build a custom street truck? You just might be the type who'd spend it on wine, women, and song. Hmmm. All right, enough already. Now, back to our story....</data>
+    <data order="2" element="Paragraph">When John Bohannon turned his thoughts to the precise manner in which he would build his version of the ultimate street truck, he didn't mess around. What he dreamed up was unique and could be described as having the best of both worlds: Corvette drivetrain and suspension, Chevy truck sheetmetal. Yikes! Talk about genuine Chevrolet!</data>
+    <data order="3" element="Paragraph">With the plan laid out, John went to work, tearing into the hapless half-tonner, tossing out everything related to a C1500 drivetrain and scrapping the entire suspension, lock, stock, and leaf springs. After acquiring a wrecked '92 Corvette (that's another story), John and the guys at Robinson Racing scrutinized every detail with an eye to suspension geometry and general fitment of the Corvette's suspenders.</data>
+    <data order="4" element="Paragraph">Then, the Vette was summarily relieved of its front control arms and related hardware, along with the entire rear independent suspension. Knee-deep in Corvette underpinnings, the guys went to work, adapting, fabricating, switching, and swapping just about every suspension component in an ultimately-successful effort not only to fit the Corvette parts to the truck's chassis, but to make the whole thing function and perform in a desirable manner. With the custom suspension setup, no lowering kit was necessary as the control arms and coilover shocks were positioned on the truck's frame at a point where 4 inches of front drop and 6 inches of rear slam were built in.</data>
+    <data order="5" element="Paragraph">Compared to working on the suspension, swapping out the stock '92 truck small-block and swapping in a '94 Corvette small-block was simple. The LT1 engine is basically stock although a few dress up goodies were added. The biggest hassle was getting the electronic management for the 5.7L aluminum engine hooked up and online. After much research deep into the pages of GM service manuals for both vehicles, John was able to wire-up a custom harness that allows an interface between Corvette and C1500, one which has proven to be both functional and reliable.</data>
+    <data order="6" element="Paragraph">That beautiful Chevy body is stylishly clean and oh so very smooth. It got that way through much effort on John's part--and we mean personal effort. You see, John is a full-time body and paint pro at Corvette Limited in Cookeville, Tennessee. The body mods include swapped-in Caddy taillights and a third brake light, a molded-in fiberglass bedliner, and shaved door handles. Bolt-ons include a fiberglass hood, a billet grille, a custom front bumper, and a front spoiler, all of which came from Hunter's Custom Automotive. John fabbed the rear roll pan, then stitched the tailgate shut, once and for all.</data>
+    <data order="7" element="Paragraph">Porsche Guards Red was sprayed, rubbed, sanded, and polished by John. As you can see, he knows his stuff. The hauler's interior got its share of upgrades in the form of swapped-in leather-covered seats, door panels, and a dashboard, all donated by a '96 Chevy Tahoe. A stock Tahoe steering wheel was deemed not stylish enough for John's truck so a Billet Specialties Eagle tiller was fastened into place. David Wornbles helped John out with the tasty inside conversion.</data>
+    <data order="8" element="Paragraph">Holy rollers, Bohannon! Where'd you get them wheels? Oh, from that little ol' aluminum carver Boyds. They're dubbed Boyds Twister and they're nicely wrapped with super-sticky BFG Comp T/As.</data>
+    <data order="9" element="Paragraph">Now John and his wife Sandra get to cruise the highways and byways that crisscross the South in a hot-rodded red hauler. Have fun, you two, but don't go too far, because the staff of Sport Truck has an idea for a new project that we think John should take a whack at: Take one part Dodge Dakota, add two parts Viper, and then...</data>
+    <data order="10" element="Paragraph">Just give us a call when it's finished, would ya, JB?</data>
    </container>
   </elements>
  </story>
- <story id="1157" element="Cover">
-  <name>Rachel's Test Cover</name>
+ <story id="1122" element="Article">
+  <name>Supercharger Installation</name>
   <description></description>
-  <slug>testcover</slug>
-  <primary_uri>/carcraft/uhhuh</primary_uri>
+  <slug>1472</slug>
+  <primary_uri>/sporttruck/howto/1472</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>2002-12-18T15:27:00Z</cover_date>
+  <cover_date>1998-01-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/carcraft/uhhuh</category>
+   <category primary="1">/sporttruck/howto</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>Steve</fname>
+    <mname></mname>
+    <lname>Warner</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Steve</fname>
+    <mname></mname>
+    <lname>Warner</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">Dominant Whipple Charger Power</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">Whipple,supercharger,blower,engine,Sport Truck</data>
+   <data order="3" element="metadata title">Supercharger Installation</data>
+   <data order="4" element="promo_title">Supercharger Installation</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">If you own a pre-Vortec 1988-1995 big-block-equipped Chevy sport truck, SUV, or Suburban, you are not alone. There are over 200,000 of these vehicles on the road today doing service in a variety of activities; everything from hauling the kids to school and back, to transporting the family on vacation trips, and to long-distance treks with horse, boat, or car trailers in tow. And yet the single most common complaint the factory gets is customers bemoaning the engine&amp;#146;s serious lack of power.</data>
+    <data order="1" element="Paragraph">Unless you had the 454 SS version of the old 7.4L V-8, the peak power output was critically limited. The older 454 SS 1/2-ton Super Sport truck produced 255 hp at 4,000 rpm and some stump-pulling 405 lb-ft of torque at 2,400 rpm. But it was only in that truck's configuration the 7.4L engine created any semblance of power. Non-454-SS-equipped vehicles only produced 230 hp at 3,600 rpm and 385 lb-ft of torque at 1,600 rpm. The reason for the 25hp decrease was to broaden the appeal of these vehicles to the market for which they were designed; a market covering every intended use, including work trucks, ambulances, and family haulers. The engines were never meant to be the power machines we sport truckers all crave.</data>
+    <data order="2" element="Paragraph">Enter supercharging to save the day. Although typically considered extreme by the more conventional horsepower gurus, supercharging the engine is the biggest and fastest way to boost all-around power. Spend a mere weekend installing one of these powerful smog-legal additives and most pre-Vortec engines will see power gains from 50 to 75 hp.</data>
+    <data order="3" element="Paragraph">That&amp;#8217s the inducement behind Whipple Industries Whipple Charger supercharger kits. The company offers its twin-screw superchargers for all Chevrolet 1988-1995 pre-Vortec engines and 1996-1998 Vortec-equipped big- and small-block engines. A twin-screw blower is by design an axial-flow supercharger that compresses air as it moves between the twin screws of the blower. The twin-screw supercharger is believed to have advantages over less efficient, non-internal compression designs because the outlet temperatures are typically lower than more conventional roots or centrifugal supercharging systems, thereby providing increases in all-around power.</data>
+    <data order="4" element="Paragraph">Because these older pre-Vortec engines are not as powerful as their replacements, many people have indeed turned to supercharging as a means to an end. Getting up steep-grade highways is no longer an issue and with a supercharger installation on the pre-Vortec engines your all-around power and torque will be much greater than that of the new Vortec engines.</data>
+    <data order="5" element="Paragraph">With our test truck running a pre-Vortec 1993 big-block 7.4L V-8, equipped with a set of Doug Thorley headers and a Walker Ultra Flow back-cat exhaust system, a series of baseline tests were staged to establish the truck&amp;#8217s "before" rear-wheel horsepower and torque. Using Whipple Industries&amp;#8217 Rancho Cucamonga, California, test facility, the 1993 big-block made 185 rear-wheel horsepower at 3,700 rpm and 319 lb-ft of torque at 2,900 rpm. Once the Whipple Charger was installed, however, the big-block produced 253 hp at 4,100 rpm and 372 lb-ft of torque at 3,100 rpm running with a 6 psi maximum boost pulley.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1123" element="Article">
+  <name>1979 Chevrolet 1/2-Ton Stepside Project, Part V</name>
+  <description></description>
+  <slug>1480</slug>
+  <primary_uri>/sporttruck/projectbuild/1480</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>1998-03-01T12:00:00Z</cover_date>
+  <categories>
+   <category primary="1">/sporttruck/projectbuild</category>
+   <category>/customclassictrucks/projectbuild</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>Chuck</fname>
+    <mname></mname>
+    <lname>Lombardo</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Steve</fname>
+    <mname></mname>
+    <lname>Warner</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">Final Assembly</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">Seatz Manufacturing,PPG,Performance Suspension Technology,PST,Painting &amp;amp; Stripping Corp. of America,Golden State Pickup Parts,California Street Rods,Boyds Billet Wheels,BFGoodrich,Best Glass Installers,Belltech,Chevrolet,Chevy,paint,body,</data>
+   <data order="3" element="metadata title">1979 Chevrolet 1/2-Ton Stepside Project, Part V</data>
+   <data order="4" element="promo_title">1979 Chevrolet 1/2-Ton Stepside Project, Part V</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">After any finished sport truck project build, we like to sit back and admire the results (like the beautiful red finish that adorns the sheetmetal of Operation Retro Ride). And at the same time we lament that the project is over and we have to turn our attention to upcoming projects.</data>
+    <data order="1" element="Paragraph">Before we show the final assembly of Operation Retro Ride we want to remind you, our readers who are working on or just completing your very own sport truck builds, to keep in mind that the final assembly process shouldn't be a hurry-up-and-throw-the-pieces-on procedure. The same amount of time and devotion you spent tearing the project apart needs to be spent when you reassembe the project. Care should be taken to prevent scratching the freshly painted surfaces or nicking that freshly chromed bumper, and when tweaking that ultra-hard-to-find interior piece.</data>
+    <data order="2" element="Paragraph">Again, top-notch quality standards must be maintained to ensure a well-constructed retro sport truck. Just as the expert folks at California Street Rods have been an integral part of our past builds, they again stepped up to help in the final assembly.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1124" element="Article">
+  <name>1994 Chevrolet C1500 Extended Cab</name>
+  <description></description>
+  <slug>1481</slug>
+  <primary_uri>/sporttruck/featuredvehicles/1481</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>1998-05-01T12:00:00Z</cover_date>
+  <categories>
+   <category primary="1">/sporttruck/featuredvehicles</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>Gary</fname>
+    <mname></mname>
+    <lname>Robinson</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Wes</fname>
+    <mname></mname>
+    <lname>Allison</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">Budnick&amp;#146;s Evolutionary C/K Ducati Hauler</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">Extended Cab,Ducati Hauler, Budnick, Chevy, Chevrolet, 1994, C1500</data>
+   <data order="3" element="metadata title">1994 Chevrolet C1500 Extended Cab</data>
+   <data order="4" element="promo_title">1994 Chevrolet C1500 Extended Cab</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">The latest creation from Budnik Wheels isn't a rim, a steering wheel, or a trim accessory. It's a '94 Chevy C1500 Extended Cab truck that Alan Budnik, president and founder of Budnik Wheels, bought new three years ago to haul some of his collection of wild street bikes. It has taken those three years to transform the truck into his vision of what a post-'88 C/K sport trucks should be.</data>
+    <data order="1" element="Paragraph">We think he's created a shining example of sport truck styling that rivals the best we've seen. It breaks the mold of late-model cookie-cutter trucks and raises the standard for those who aspire to build a pickup of their own.</data>
+    <data order="2" element="Paragraph">The subtle yet unique look of this truck wasn't achieved overnight. It was accomplished through a tedious and meticulous metal-metamorphosis. The front fascia is entirely made of steel which was cut, trimmed, welded, and ground until it fitted tight and smooth, giving the front end a molded one-piece appearance without modifying the hood or front bumper. The grille inserts are precisely machined billet aluminum pieces that have a subtle peak down the center, and the top insert features unique electric hideaway headlamps that are a marvel unto themselves.</data>
+    <data order="3" element="Paragraph">The cab has a few noticeable body mods too, including a shaved door with remote electric switches, Street Scene electric mirrors, filled cab body seams, and an oval-shaped third brake light that utilizes a machined and polished acrylic lens inlaid with a computer-generated latex graphic of the Budnik logo.</data>
+    <data order="4" element="Paragraph">The front end clip is made even more swoopy with a specially made metal hood cowl which covers windshield wipers that were modified to exhibit a lower profile. The cowl features two functional scoops that direct air into the HVAC.</data>
+    <data order="5" element="Paragraph">Then there's the bed that's as unique and swoopy as the front fascia and grille. You can't begin to appreciate the work that has gone into the bed until you study it very closely. For starters, the bed's sides were pulled out 1.5 inches per side to accommodate the 13.5-inch-wide Goodyear tires Alan planned to use on his newly designed, specially made 18x12 Budnik Arrowhead wheels. He also made a molded-steel rear roll pan for the bed and modified the tailgate which has a reversed latch, a small spoiler welded onto its top edge, and radiused exterior corners, and it houses part of the modified '97 S-10 taillights that mount partially in the bed corners and in the tailgate.</data>
+    <data order="6" element="Paragraph">The tailgate's lower fitment gap was decreased and the hinges were relocated. To open the latch, a remote pull-cable system is used. A peek just below the steel molded rear roll pan spots a unique belly pan held on with quarter-turn fasteners that have oval exits through which the polished stainless steel exhaust tips protrude. To prevent road debris from collecting in the belly pan, Alan handmade and installed special steel rear inner fenderwell panels.</data>
+    <data order="7" element="Paragraph">On top of the bed is a flat flush-mounted canvas-covered aluminum bedcover--another unique Budnik creation. It's comprised of four panels; the two in the center swing downward to create an opening for hauling Budnik's '97 Ducati 916 two-wheeled canyon carver without having to remove the bedcover. Macs tie-downs and special aircraft connectors mounted to the bed floor help secure the bike.</data>
+    <data order="8" element="Paragraph">Keeping with the tight-fit theme, Alan moved the bed 3/4 inch forward to close the gap between the front of the bed and the back of the cab. That completed the bold creation and implementation of sheetmetal mods--probably the most important yet difficult part of this buildup.</data>
+    <data order="9" element="Paragraph">Redoing the chassis was much easier, but nearly as important since stance is intrinsic to a sport truck's overall image. Because the bed was moved forward 3/4 inch, Alan also moved the rear end 3/4 inch forward from its stock location. He C-notched and boxed the rear framerails for axle-housing clearance, relocated the springs' hangers upward from their stock position, and, in the pursuit of the right rear ride height, installed a set of Firestone airbags on a custom-made mounting system.</data>
+    <data order="10" element="Paragraph">The front suspension was treated to a set of Belltech 2-inch dropped spindles, Eibach springs, and a set of Firestone airbags mounted inside the coil springs with the front shock absorbers relocated to an outer mounting point on the lower control arm. Front- and rear-mounted Suspension Techniques sway bars help to stiffen the chassis and stifle cab and bed roll. Big Baer Racing binders work on all four corners to promptly slow things down, and give a high-tech look that blends well with the newly designed open-lug Budnik Arrowhead rims.</data>
+    <data order="11" element="Paragraph">Body-paint prep was completed by Alan and his crew, but the final sanding and spraying was performed by Mick Jenkins of Mick's Paint of Huntington Beach, California. Mick applied PPG Yellow over the smoothly prepped metal surface, and with the help of Paco, color-sanded and buffed the paint to an almost-liquid high luster.</data>
+    <data order="12" element="Paragraph">Then, Budnik's hauler was hauled to Arizona for audio and exhaust tuning. Streamline Audio in Tempe, Arizona, created and installed a powerful audio system with fantastic style and sound, using the best Rockford Fosgate automotive audio hardware.</data>
+    <data order="13" element="Paragraph">B Fabrication installed a set of Doug Thorley Headers and backed them up with a custom-built, all-stainless steel-tube, hand-fabricated exhaust system. All exhaust components were treated to a protective ceramic coating provided by HPC coatings of Salt Lake City.</data>
+    <data order="14" element="Paragraph">Back in SoCal, it was trim time for the truck. Alan can do many things with his machining and metalworking talents, but upholstery isn't one of them. He commissioned Dan Miller of Simi Valley, California, to cut, fit, and stitch Spinneybeck leather over the Flo-Fit front bucket seats, reshaped rear seat, custom door panels, dash pod, console, and the newly designed Budnik Stringer billet aluminum steering wheel.</data>
+    <data order="15" element="Paragraph">The steering wheel, steering column cover, and various other exposed interior panels were all color-matched in a flat tone to complement the leather interior and contrast with the bright yellow exterior hue.</data>
+    <data order="16" element="Paragraph">As for the truck's powertrain, Alan opted to keep the 5.7L V-8 and 700R4 transmission stock for now so that he can enjoy the fruits of his labors by putting some miles on the truck.</data>
+    <data order="17" element="Paragraph">Further plans include the possible installation of a '97 Vette LS1 V-8 engine--a powerplant worthy of a sport truck of this quality. There may be other surprises to come, but according to Alan, only time will tell. As he puts it, "Nothing is ever really finished. As time progresses, there's always some new idea that can make something better than before."</data>
+    <data order="18" element="Paragraph">Maybe so, but we think time will prove Alan's Ducati Hauler to be an ageless sport truck masterpiece.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1125" element="Article">
+  <name>Small-Block Big-Power How-Tos</name>
+  <description></description>
+  <slug>1482</slug>
+  <primary_uri>/sporttruck/howto/1482</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>1998-07-01T12:00:00Z</cover_date>
+  <categories>
+   <category primary="1">/sporttruck/howto</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>Gary</fname>
+    <mname></mname>
+    <lname>Robinson</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Kevin</fname>
+    <mname></mname>
+    <lname>Lee</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">"Nothing is ever too fast" is a credo that quite a few sport truck enthusiasts live by, and the need for speed is an urge that can only be satisfied with varying doses of horsepower and torque...</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">Hedman,Paxton,JBA,Holley,headers,intake manifold,engine,Sport Truck,camshaft,exhaust,computer,air cleaner,cylinder heads,valvetrain,timing</data>
+   <data order="3" element="metadata title">Small-Block Big-Power How-Tos</data>
+   <data order="4" element="promo_title">Small-Block Big-Power How-Tos</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">"Nothing is ever too fast" is a credo that quite a few sport truck enthusiasts live by, and the need for speed is an urge that can only be satisfied with varying doses of horsepower and torque.</data>
+    <data order="1" element="Paragraph">Some drivers need just a little bit more power to be pacified, while others need megadoses to stifle the nagging power jones churning within. Yet increased power output can have a positive affect on something other than one's craving for quickness and acceleration. It can and does serve practical purposes, such as improved towing and hauling, but most of the time it's ego, not practicality, that's the inspiration for the pursuit of engine power. But there's got to be at least one rational justification for satisfying this need for speed, right? Nah.</data>
+    <data order="2" element="Paragraph">So, if you have a Mouse mill under the hood of your sport truck and are looking for a way to get it to go faster, then pay attention. We've got three power bolt-on how-tos for small-block Chevys to show you. Each offering presents different ways to achieve increased horsepower, measured in overall performance gains and cost per horsepower-hey, there are no free lunches.</data>
+    <data order="3" element="Paragraph">So how much power do you need? Check out the sidebars listed below for the full story.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1126" element="Article">
+  <name>Get The Most Truck For Your Buck</name>
+  <description></description>
+  <slug>1484</slug>
+  <primary_uri>/sporttruck/techarticles/1484</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>1998-08-01T12:00:00Z</cover_date>
+  <categories>
+   <category primary="1">/sporttruck/techarticles</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>Kevin</fname>
+    <mname></mname>
+    <lname>Lee</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>The Sport Truck Archives</fname>
+    <mname></mname>
+    <lname></lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">Keep your eyes open because you might find your next project where you&amp;#8217d least expect...</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">used truck, truck buying, sport truck, street truck</data>
+   <data order="3" element="metadata title">Get The Most Truck For Your Buck</data>
+   <data order="4" element="promo_title">Get The Most Truck For Your Buck</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">Keep your eyes open because you might find your next project where you'd least expect.</data>
+    <data order="1" element="Paragraph">No event in our lives holds as many hopes and expectations, or as great a potential for a crushing letdown, as buying a used truck--except for maybe a date with a supermodel (tip: always find out what she models).</data>
+    <data order="2" element="Paragraph">If you're anything like me, you love the excitement of looking for that next project. I buy all the typical publications: The Recycler, Truck Trader, Hemmings Motor News, and the like. As I read those fine magazines, visions of rust-free, dent-free trucks dance through my head. I find a couple of trucks that fit my imaginings and make arrangements to take a look at them, but, unfortunately, they rarely live up to my expectations.</data>
+    <data order="3" element="Paragraph">I was recently on the hunt again, this time for a '67-'72 GM 1/2-ton Fleetside shortbed. So I went through my regular routine and--eureka!--finally found just what I was looking for.</data>
+    <data order="4" element="Paragraph">Follow along as I detail what my routine is and give you some tips that I've found make the entire process easier and more rewarding.</data>
+    <data order="5" element="Paragraph">&lt;b&gt;Set Your Goals&lt;/b&gt;&lt;p&gt;Before you can even start a successful truck search, you need to set some parameters. How much money you can afford to spend will dictate the type and condition of the trucks you can reasonably look at. Can you afford to buy one that&amp;#8217s fixed up and ready to enjoy as is, or do you need to find one that will need some work and parts that you can purchase as money allows? Never spend all your money to buy the truck; after all, it&amp;#8217s a used truck and unexpected repairs are inevitable. Nothing is worse than being unable to drive your new truck because you don&amp;#8217t have the money to fix a problem.&lt;/p&gt;</data>
+    <data order="6" element="Paragraph">How much of the work can you do yourself? Do you have the garage space and tools necessary to do the work? If you'll need to farm out a lot of the labor, then you must realize that a large portion of your budget will be allocated for that. One of the biggest problems first-time builders have is that they arrive at the middle of a project and then run out of money or enthusiasm or both. A tried-and-true practice is to estimate your expenses and then double the amount. Also, keep in mind that these half-finished projects can be a good buy as long as the work has been done well and they mesh with your goals. You don't want to have to redo a lot of the work.</data>
+    <data order="7" element="Paragraph">It's also essential that you consider the type of truck you want. Be true to yourself; it's your money and you're the one who's going to drive and cherish the truck when it's done. If your dream truck is an International, then by all means build an International. But do so with the knowledge that when the time comes to sell it, it might take a while, and you might not realize a return on your investment.</data>
+    <data order="8" element="Paragraph">After you've set the make and model you want, devise a profile of what you expect the truck to do for you after the buildup. If it will be a daily driver, then a blown-injected, alcohol-burning big-block might not be the best choice.</data>
+    <data order="9" element="Paragraph">Another important factor to consider is the parts you're going to have to replace. If you have a fresh engine and transmission sitting in the garage, then look for a truck with no engine or an engine that's not running. It makes no sense to pay for parts that are going to be replaced during the buildup. In my case, I knew I'd be replacing the entire drivetrain, so the most important thing for me was to find a truck with a clean body and a straight frame.</data>
+    <data order="10" element="Paragraph">&lt;b&gt;The Search&lt;/b&gt;&lt;p&gt;Trucks are everywhere. Typically, it shouldn&amp;#8217t be necessary to travel too far to find what you&amp;#8217re looking for. The obvious place to start is the newspaper classified ads for the local and surrounding cities. Most areas are covered by some kind of a speciality publication such as The Recycler or Truck Trader, which cover a broader territory than the local paper. Several nationwide publicationa, such as Hemmings Motor News and Old Car Trader, are also available if your search has come up empty. The problem with these publications is that they list ads from around the nation, so you need to be prepared to travel.&lt;/p&gt;</data>
+    <data order="11" element="Paragraph">Read the ads thoroughly; the truck you want might not be listed in the area where you think it should be. Someone might be trying to sell two vehicles in one ad. For example, if someone is selling a GTO and a Cheyenne, the ad might be in the Pontiac section. Read as many ads and look at as many trucks as you can to educate yourself on the going rates for the trucks you're interested in. Once you've found some potential trucks, call the sellers, and if the trucks still sound interesting, go look at them.</data>
+    <data order="12" element="Paragraph">Swap meets and truck shows are good places to start your search. Be prepared for some variations in asking prices; some owners operate under the theory of testing what the market will bear and put outrageous prices on their trucks. Others really want to sell that very day and set their prices accordingly. If you find a truck you like, but it's priced higher than you think it's worth, write down the seller's phone number and call in a month or so. The truck will probably still be unsold and the owner might be motivated to lower his price. This strategy also works well when responding to classified ads. It's not uncommon to call about a truck that was advertised a couple of months before, and find it not only still for sale but for less money.</data>
+    <data order="13" element="Paragraph">You can also find a deal by driving around your neighborhood and scouting the type of truck you want. Don't be afraid to ask the owner if it might be for sale. If it's not, maybe he knows of a similar one that might be. Leave your phone number with him and thank him for his time. You might be surprised by the number of return calls you get. Of course the majority of calls will come after you've found your next project.</data>
+    <data order="14" element="Paragraph">&lt;b&gt;What You Want To Know&lt;/b&gt;&lt;p&gt;When it&amp;#8217s time to make a call on an ad you&amp;#8217re interested in, be sure to gather as much information as possible from the seller by phone before you go look at the truck. Remember, the owner&amp;#8217s trying to sell it, so take whatever he or she tells you with a grain of salt. The owner should be willing to take the time to answer your questions over the phone. If the owner acts as if you&amp;#8217re infringing on his or her time, move on.&lt;/p&gt;</data>
+    <data order="15" element="Paragraph">Armed with all the information you can muster, you can better decide whether a trip to get a look at it is worth your time. But be prepared to be disappointed. Here are some of the most important things to ask:</data>
+    <data order="16" element="Paragraph">What's the model? Many times, the ad might not mention whether it's 1/2-ton or 3/4-ton, 2WD or 4WD, or longbed or shortbed.</data>
+    <data order="17" element="Paragraph">What condition is the body in? This one is very subjective; what's good to one person might be junk to another.</data>
+    <data order="18" element="Paragraph">What condition are the engine and drivetrain in? Find out how many miles are on it. If repairs have been made, ask if there are receipts to prove it.</data>
+    <data order="19" element="Paragraph">Is the registration up to date? If not, it can be quite expensive to renew. Check with your local DMV about the renewal fees before you make an offer.</data>
+    <data order="20" element="Paragraph">Does he have the Certificate of Ownership? Never buy a truck without the appropriate paperwork.</data>
+    <data order="21" element="Paragraph">&lt;b&gt;Diamond In The Rough&lt;/b&gt;&lt;p&gt;Make arrangements with the seller to look at the truck. Set a time during the day so that you have good light and can see as much as possible. Paint and bodywork can appear a lot better at night under artificial light. If the seller wants to meet somewhere like a supermarket parking lot instead of his house, be suspicious. The paperwork might have an incorrect name or address and if something goes wrong there&amp;#8217s no way to track him down.&lt;/p&gt;</data>
+    <data order="22" element="Paragraph">Be prepared to crawl under and around the truck to look for signs of rust, rust repair, frame damage, or poor maintenance. If the truck's front end or bed are a different color, there's a good chance it has been in an accident. If that's the case, make sure the frame is straight. Look at all the gaps in the sheetmetal. If there are wide variations in them, look for the reason why. Is it just an adjustment problem or is something out of square?</data>
+    <data order="23" element="Paragraph">Check the fluids. Look under the seat and around the cab for bottles of oil or transmission fluid or the funnels used to top off the levels. If you find those items, then there's a strong indication that the engine or transmission might be burning more oil than normal. Both times when I went to look at the truck I bought, the owner was putting in either engine oil or transmission fluid. That's definitely not something you want to see unless you're planning to replace the engine and transmission soon.</data>
+    <data order="24" element="Paragraph">&lt;b&gt;Let&amp;#8217s Seal The Deal&lt;/b&gt;&lt;p&gt;Now that you&amp;#8217ve found a candidate for your next project, it&amp;#8217s time to hammer out a deal that, hopefully, will make both parties happy.&lt;/p&gt;</data>
+    <data order="25" element="Paragraph">Always be polite. If a truck you've arranged to look at is something other than as represented, take a quick look and leave. If you like it, but it's overpriced, make an offer. Don't tell the seller all the things that are wrong with his truck. He already knows and doesn't care. He knows you're interested or you wouldn't be there. If you upset the owner he's not going to budge an inch. If he refuses your offer, leave your phone number, thank him for his time, and move on. Often time is on your side and you'll be surprised how many return calls you'll get.</data>
+    <data order="26" element="Paragraph">Don't get emotionally attached. It's hard when you're looking at several trucks and then find one that interests you. As a gearhead you already have the truck built in your mind and hate to give up on one that matches your visions. Even if that deal doesn't happen, another one will. There are lots of trucks out there.</data>
+    <data order="27" element="Paragraph">Bring the cash with you. Make an offer and show the seller the cash. Cash talks and everything else walks. Many times just the presence of a wad of cash is enough to bring a reluctant seller around to your way of thinking. Another possible way to turn a no-sale around is to make sure the owner's wife or girlfriend witnesses the cash offer. She might be the one writing the checks and balancing the budget.</data>
+    <data order="28" element="Paragraph">Following the advice outlined above will give you the best possible beginning and increased confidence when you're driving an unfamiliar truck.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1127" element="Cover">
+  <name>text cover x</name>
+  <description></description>
+  <slug></slug>
+  <primary_uri>/4wheeloffroad</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2003-07-29T21:35:00Z</cover_date>
+  <categories>
+   <category primary="1">/4wheeloffroad</category>
   </categories>
   <keywords></keywords>
   <contributors></contributors>
   <elements>
-   <data order="2" element="leadins per page">3</data>
-   <data element="metadata description" order="3" />
-   <data element="metadata keywords" order="4" />
-   <data element="metadata title" order="5" />
-   <data element="promo title" order="6" />
-   <data element="promo teaser" order="7" />
-   <data order="8" element="sema box">no</data>
-   <container related_story_id="1155" order="9" relative="1" element="Lead In">
+   <data order="0" element="leadins per page">10</data>
+   <data order="1" element="metadata description">description</data>
+   <data order="2" element="metadata keywords">keywords</data>
+   <data order="3" element="metadata title">title</data>
+   <data order="4" element="promo title">title</data>
+   <data order="5" element="promo teaser">teaser</data>
+   <data order="6" element="sema box">yes</data>
+   <container related_story_id="1102" order="7" relative="1" element="Lead In">
+    <data order="0" element="type">small</data>
+   </container>
+   <container related_story_id="1033" order="8" relative="1" element="Lead In">
     <data order="0" element="type">small</data>
    </container>
   </elements>
  </story>
- <story id="1158" element="Article">
-  <name>shannon5</name>
+ <story id="1102" element="Article">
+  <name>&amp;#8217;87 Chevrolet Fleetside</name>
   <description></description>
-  <slug>shannon5</slug>
-  <primary_uri>/carcraft/shannon5</primary_uri>
-  <priority>3</priority>
-  <publish_status>1</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>2002-12-18T21:03:00Z</cover_date>
-  <categories>
-   <category primary="1">/carcraft</category>
-  </categories>
-  <keywords></keywords>
-  <contributors></contributors>
-  <elements>
-   <data element="promo_title" order="2" />
-   <data element="deck" order="3" />
-   <data element="metadata title" order="4" />
-   <data element="metadata description" order="5" />
-   <data element="metadata keywords" order="6" />
-   <data order="7" element="subscription form">1</data>
-  </elements>
- </story>
- <story id="1159" element="Article">
-  <name>mustangfords - article</name>
-  <description></description>
-  <slug>article</slug>
-  <primary_uri>/mustangfords/article</primary_uri>
+  <slug>1405</slug>
+  <primary_uri>/sporttruck/featuredvehicles/1405</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>2002-12-18T21:34:00Z</cover_date>
+  <cover_date>2000-05-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/mustangfords</category>
+   <category primary="1">/sporttruck/featuredvehicles</category>
   </categories>
   <keywords></keywords>
-  <contributors></contributors>
+  <contributors>
+   <contributor>
+    <fname>Rick</fname>
+    <mname></mname>
+    <lname>Amado</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Scott</fname>
+    <mname></mname>
+    <lname>Killeen</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Rick</fname>
+    <mname></mname>
+    <lname>Amado</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
   <elements>
-   <data element="promo_title" order="2" />
-   <data element="deck" order="3" />
-   <data element="metadata title" order="4" />
-   <data element="metadata description" order="5" />
-   <data element="metadata keywords" order="6" />
-   <data order="7" element="subscription form">1</data>
-   <container order="8" element="Page">
-    <data order="0" element="Paragraph">Choosing a Favorite We left the task of choosing a favorite exhaust to our test car's owner, and by no means was it a simple task for him. He bounced back and forth between four exhausts before he finally made his decision. After a long hour of going through the exhausts and all of the objective and subjective ratings, he finally chose the single-canister UUC System U. "I like the way the tips look and the way the car sounds with this exhaust," he said, "plus I don't mind the fact that it's light and put out more horsepower than almost all the rest."</data>
-    <data order="1" element="Paragraph">UUC is a company well known for its drivetrain upgrades and exhausts for German cars. We used one of its short-shift kits and transmission braces on our Project S4 and loved them (ec, 9/02).</data>
-    <data order="2" element="Paragraph">About a month after the install, we asked the owner how he was doing with the new exhaust on the car. He replied, "The sound is awesome under full-throttle acceleration, especially when it bounces off the concrete walls of the California Speedway!"</data>
-    <data order="3" element="Paragraph">We concur--we were there to hear it from the pit lane, and it sure sounded sweet. "But for my taste," he added, "although I am getting more used to it, I still wish it would be just a little quieter for cruising around town. Also, the fit has become a bit of an issue, since one of the tips has seemed to have melted a small part of the rear valance." The exhaust is a prototype version and hopefully UUC will have this sorted out by the time you read this.</data>
-    <data order="4" element="Paragraph">Every exhaust here had its pros and cons, but at the same time none of them made substantial peak horsepower. If there were any power gains, most of them were achieved in the midrange, save for the Rogue unit, which found peak gains up top.</data>
-    <data order="5" element="Paragraph">The UUC exhausts were light, sounded great and, although the numbers were minimal, made some of the best horsepower gains of all. But the fit was an issue for both of them. The B&amp;B exhaust was very light, made power, had nice staggered tips, and sounded wonderful at idle. But the sound became noisy and a little less desirable at full throttle. The Ansa exhaust didn't show power gains but sported the factory look with much nicer tips and a deeper rumble. It was a perfect fit, too, retaining the factory heat shield and hangers. The HIOP was light and a very easy install. It had the biggest gains around a very usable 5200 rpm and maintained similar gains to those of the UUC System U all the way through redline. But it also had the biggest torque losses up until 3500 rpm. The HKS exhaust was the lightest and the easiest to fit, but the sound was one of the least desirable of the bunch. Also, some people will love the massive, single oval tip--some people will hate it. The Rogue exhaust was gorgeous, fit well, and it probably could have taken the cake if it were a little bit lighter. The Racing Dynamics exhaust showed minimal horsepower improvements and was difficult to align, but it was light and the build quality was superb. Lastly, if there was one exhaust that had the highest and most consistent gains from 4000 to 6000 rpm, it was the Supersprint DTM exhaust. Unfortunately, this also turned out to be by far the heaviest exhaust of the bunch, giving up more than 12 lb to the lightweight HKS.</data>
-    <data order="6" element="Paragraph">Now, go ahead and take your pick.</data>
+   <data order="0" element="deck">The Magic Touch</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">Chevrolet,Chevy,Fleetside,Street Truck,Sport Truck,1987</data>
+   <data order="3" element="metadata title">&amp;#8217;87 Chevrolet Fleetside</data>
+   <data order="4" element="promo_title">&amp;#8217;87 Chevrolet Fleetside</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">Sometimes a project comes together like magic. You make minimal plans, just a basic clean-up, a set of wheels, and all of a sudden the planets align, good karma comes your way, and it's as if King Midas happened by and laid his hand on your project. Alan Button of O'Fallon, Missouri, has that kind of power, and it shows in his rendition of this '87 Chevy Fleetside.</data>
+    <data order="1" element="Paragraph">Alan's truck started life as a special-order from his local Chevy dealer and came with the Wheatland Yellow fleet color already applied. The truck started out as intended, serving Alan as a hauler for his auto body business until that fateful day when he decided that stock just wasn't cutting it. After a subtle reworking of the body, mostly to the bed, and a reapplication of the factory color, Alan hit the streets in the head-turner you see here.</data>
+    <data order="2" element="Paragraph">It takes a trained eye to spot all the subtle modifications Alan applied to his shortbed beauty. After shaving the markers and emblems from the fenders and color matching the driprails, handles, and door lock bezels on the cab, Alan went to work on the bed. He started with probably the most subtle and difficult-to-spot modification: He vertically extended the quarters behind the rear wheel openings. This brought the lower edge of the body down until it visually matched the height of the quarters in front of the wheel openings. A hand-fabricated aluminum roll pan followed the extension of the lower edge of the tailgate--both modifications were masterfully executed by Alan himself. The bed was finished with filled stake pockets and a custom-built flush tonneau cover.</data>
+    <data order="3" element="Paragraph">With the body mods completed, Alan finished the exterior with the reapplication of the factory color in PPG two-stage paint before sending the truck to Stitch N Fit of St. Peters, Missouri, for the tastefully low-key tan tweed interior. The final touch to Alan's smoothie was the owner-fabricated 6/8 drop and the addition of a set of 15-inch skinny Boyds wheels up front and 17-inch fat Boyds wheels out back for that perfect bigs 'n' littles look. If you ever have the good fortune to run into Alan at a truck show, be sure to rub elbows with him, because with a little luck, some of that magic might just rub off.</data>
    </container>
   </elements>
  </story>
- <story id="1160" element="Open Format Article">
-  <name>Advanced Search</name>
+ <story id="1033" element="Article">
+  <name>10 STEPS TO PERFORMANCE</name>
   <description></description>
-  <slug>adv_search</slug>
-  <primary_uri>/carcraft/adv_search</primary_uri>
+  <slug>727</slug>
+  <primary_uri>/fourwheeler/techarticles/727</primary_uri>
   <priority>3</priority>
-  <publish_status>1</publish_status>
+  <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>2003-06-13T14:02:00Z</cover_date>
+  <cover_date>1996-11-11T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/carcraft</category>
-   <category>/circletrack</category>
-   <category>/chevyhigh</category>
+   <category primary="1">/fourwheeler/techarticles</category>
   </categories>
   <keywords></keywords>
-  <contributors></contributors>
+  <contributors>
+   <contributor>
+    <fname>Will</fname>
+    <mname></mname>
+    <lname>Handzel</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Jim</fname>
+    <mname></mname>
+    <lname>Smart</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
   <elements>
-   <data element="promo title" order="2" />
-   <data element="promo teaser" order="3" />
-   <data element="metadata_title" order="4" />
-   <data element="metadata_description" order="5" />
-   <data element="metadata keywords" order="6" />
-   <container order="7" element="Open Format Page">
-    <data order="0" element="content">&lt;span class="title"&gt;Advanced Search&lt;/span&gt;&lt;br&gt;&lt;br&gt;
-
-You can perform an advanced search by using the four criteria below.  You can use one or more of the terms to perform the search.&lt;br&gt;&lt;br&gt;
-
-&lt;script language="javascript"&gt;
-&lt;!--
-
-var makeexpr = /;*([\w\.\s]+):/g;
-
-var txtfile = new String('&lt;!--#include virtual="/models.txt" --&gt;');
-var mk= txtfile.match(makeexpr);
-
-
-
-for (i=0;i&lt;mk.length;i++) {
-	mk[i] = mk[i].match(/[^;:]+/);
-	
-}
-
-
-
-
-var modelexpr = /:([\w,\s-\/]+);*/g;
-var md= txtfile.match(modelexpr);
-
-for (i=0;i&lt;md.length;i++) {
-	md[i] = md[i].match(/[^,;:]+/g);
-}
-
-
-	
-	function buildFormHTML(){
-		var sHTML = '';
-		sHTML += 		'&lt;SELECT id="make" name="mk" onChange="listModels(this.form.make,  this.form.model);"&gt;' +
-					          '&lt;option selected value=""&gt;Make&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/option&gt;' 
-						      for(var i=0;i&lt;5;i++){sHTML +='&lt;option&gt; &lt;/option&gt;'} 
-		sHTML +=		'&lt;/SELECT&gt;&lt;/td&gt;&lt;/tr&gt;' +                
-					        '&lt;tr&gt;&lt;td&gt;&lt;SELECT id="model" name="md" width="200"&gt;' +
-							  '&lt;Option selected value=""&gt;Model&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/option&gt;'
-						      for(var i=0;i&lt;5;i++){sHTML +='&lt;option&gt; &lt;/option&gt;'} 
-		sHTML +=		'&lt;/SELECT&gt;'
-		return sHTML;							
-	}	
-	
-			
-	function writeFormHTML(){document.write(buildFormHTML())}	
-			
-	
-	
-	function listMakes(makeselect){
-		//this function initializes the make list drop down...
-		makeselect.length = 1;
-		for(i=0;i&lt;mk.length;i++){
-			makeselect.options[makeselect.length]=new Option(mk[i], mk[i])
-		}
-		return true;
-	}
-	
-	
-	function listModels(makeselect,modelselect){
-	  modelselect.length = 1;
-	  if (makeselect[makeselect.selectedIndex].value == '') {
-	    resetModel(modelselect);
-		return true;
-	  }
-	  if (makeselect[makeselect.selectedIndex].text != "") {modelselect.length = 0}
-	  var modelindex = makeselect.selectedIndex;
-	  
-                  modelselect.options[modelselect.length] = new Option('All', 'All');	
-	  for (j=0;j&lt;md[makeselect.selectedIndex - 1].length;j++){
-			modelselect.options[modelselect.length]= new Option(md[makeselect.selectedIndex - 1][j], md[makeselect.selectedIndex - 1][j])
-		}
-			
-	  modelselect.selectedIndex = 0;
-	  return true;
-	}
-	
-	
-	function resetModel(modelselect){
-	    modelselect.length = 1;
-		modelselect.options[0] = new Option("Model                 ", "", true);
-		modelselect.options.selectedIndex = 0}
-
-
-
-
-
-//--&gt;
-
-
-
-
-&lt;/script&gt;
-&lt;table&gt;
-&lt;form name="pulldown" action="/adv_search_results/"&gt;
-
-&lt;tr&gt;
-&lt;TD width="100%"&gt;
-&lt;script language="javascript"&gt;writeFormHTML();&lt;/script&gt;
-&lt;/td&gt;
-&lt;/tr&gt;
-
-&lt;tr&gt;&lt;td&gt;&lt;select name="aseg" size="5" multiple&gt;
-&lt;option value=""&gt;Auto Segment&lt;/option&gt;
-&lt;option value="Compact Coupe"&gt;Compact Coupe &lt;/option&gt;
-&lt;option value="Compact Pickup"&gt;Compact Pickup  &lt;/option&gt;
-&lt;option value="Compact Hatchback"&gt;Compact Hatchback  &lt;/option&gt;
-&lt;option value="Compact SUV"&gt;Compact SUV  &lt;/option&gt;
-&lt;option value="Compact Sedan"&gt;Compact Sedan  &lt;/option&gt;
-&lt;option value="Compact Wagon"&gt;Compact Wagon  &lt;/option&gt;
-&lt;option value="Exotic Convertible"&gt;Exotic Convertible  &lt;/option&gt;
-&lt;option value="Exotic Coupe"&gt;Exotic Coupe  &lt;/option&gt;
-&lt;option value="Exotic Sedan"&gt;Exotic Sedan  &lt;/option&gt;
-&lt;option value="Fullsize Pickup"&gt;Fullsize Pickup  &lt;/option&gt;
-&lt;option value="Fullsize SUV"&gt;Fullsize SUV  &lt;/option&gt;
-&lt;option value="Fullsize Sedan"&gt;Fullsize Sedan  &lt;/option&gt;
-&lt;option value="Fullsize Wagon"&gt;Fullsize Wagon&lt;/option&gt;
-&lt;option value="Fullsize Van"&gt;Fullsize Van  &lt;/option&gt;
-&lt;option value="Luxury Convertible"&gt;Luxury Convertible  &lt;/option&gt;
-&lt;option value="Luxury Coupe"&gt;Luxury Coupe  &lt;/option&gt;
-&lt;option value="Luxury Pickup"&gt;Luxury Pickup&lt;/option&gt;
-&lt;option value="Luxury SUV"&gt;Luxury SUV &lt;/option&gt;
-&lt;option value="Luxury Sedan"&gt;Luxury Sedan &lt;/option&gt;
-&lt;option value="Luxury Wagon"&gt;Luxury Wagon &lt;/option&gt;
-&lt;option value="Midsize Convertible"&gt;Midsize Convertible &lt;/option&gt;
-&lt;option value="Midsize Coupe"&gt;Midsize Coupe&lt;/option&gt;
-&lt;option value="Midsize Hatchback"&gt;Midsize Hatchback&lt;/option&gt;
-&lt;option value="Midsize SUV"&gt;Midsize SUV&lt;/option&gt;
-&lt;option value="Midsize Sedan"&gt;Midsize Sedan&lt;/option&gt;
-&lt;option value="Midsize Wagon"&gt;Midsize Wagon&lt;/option&gt;
-&lt;option value="Minivan"&gt;Minivan &lt;/option&gt;
-&lt;option value="Sport Convertible"&gt;Sport Convertible&lt;/option&gt;
-&lt;option value="Sport Coupe"&gt;Sport Coupe&lt;/option&gt;
-&lt;option value="Sport Hatchback"&gt;Sport Hatchback&lt;/option&gt;
-&lt;option value="Sport Wagon"&gt;Sport Wagon&lt;/option&gt;
-&lt;option value="Subcompact Coupe"&gt;Subcompact Coupe	&lt;/option&gt;
-&lt;option value="Subcompact Hatchback"&gt;Subcompact Hatchback&lt;/option&gt;
-&lt;option value="Subcompact Sedan"&gt;Subcompact Sedan&lt;/option&gt;
-&lt;option value="Subcompact Wagon"&gt;Subcompact Wagon&lt;/option&gt;
-&lt;/select&gt;
-&lt;/td&gt;&lt;/tr&gt;
-
-&lt;tr&gt;&lt;td&gt;&lt;input type="text" size="20" name="terms"&gt;&lt;/td&gt;&lt;/tr&gt;
-
-&lt;tr&gt;&lt;td&gt;
-&lt;input type="submit" value="Submit" class="red10ptBold"&gt;
-&lt;/td&gt;&lt;/tr&gt;
-&lt;/form&gt;
-&lt;/table&gt;</data>
-   </container>
-  </elements>
- </story>
- <story id="1161" element="Open Format Article">
-  <name>Advanced Search Results</name>
-  <description></description>
-  <slug>adv_search_results</slug>
-  <primary_uri>/circletrack/adv_search_results</primary_uri>
-  <priority>3</priority>
-  <publish_status>1</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>2003-06-13T14:05:00Z</cover_date>
-  <categories>
-   <category primary="1">/circletrack</category>
-   <category>/carcraft</category>
-   <category>/chevyhigh</category>
-  </categories>
-  <keywords></keywords>
-  <contributors></contributors>
-  <elements>
-   <data element="promo title" order="2" />
-   <data element="promo teaser" order="3" />
-   <data element="metadata_title" order="4" />
-   <data element="metadata_description" order="5" />
-   <data element="metadata keywords" order="6" />
-   <container order="7" element="Open Format Page">
-    <data order="0" element="content">&lt;span class="title"&gt;Advanced Search Results&lt;/span&gt;&lt;br&gt;&lt;br&gt;
-
-&lt;a href="/adv_search" class="featured"&gt;Search Again&lt;/a&gt;&lt;br&gt;&lt;br&gt;
-
-&lt;!--#include virtual="/searchprime/combositesearch?${QUERY_STRING}&amp;db=${SITE_DIR_DAME}&amp;sitename=${SITE_DIR_NAME}&amp;scope=-&amp;autos=y&amp;purl=/adv_search_results/"--&gt;
-</data>
+   <data element="deck" order="0" />
+   <data element="metadata description" order="1" />
+   <data element="metadata keywords" order="2" />
+   <data order="3" element="metadata title">10 STEPS TO PERFORMANCE</data>
+   <data order="4" element="promo_title">10 STEPS TO PERFORMANCE</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">Driving hot rods should always be fun, especially when you're young. Unfortunately, it doesn't always work out that way. Many first-timer hot rods end up being powered by small-block engines that've been loaded with a 750 double-pumper carb, an open-plenum intake, a 280 solid-lifter cam and 21/4-inch headers, all pumping into a stock converter and a 2.79:1 geared rearend. If you have ever driven a car like this, you know the thing doesn't run well. This type of combination ends up in many first-timer hot rods because their owners don't know what to do first, second or even third in putting together a car that "works."</data>
+    <data order="1" element="Paragraph">This article is for those whose cars fit this description. We asked everyone from car builders to warehouse parts suppliers in what order they would recommend modifying a car for performance. From this, we were able to put together the 10 Steps to Performance. So check out the suggestions, add the components as you get time, money or experience, and put together a car that most only dream about owning.</data>
    </container>
   </elements>
  </story>

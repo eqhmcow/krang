@@ -46,9 +46,9 @@ use XML::Simple qw(XMLin);
 # Internal Modules
 ###################
 use Krang::Conf qw(KrangRoot);
-use Krang::Pref;
 # BricLoader Modules
 use Krang::BricLoader::Category;
+use Krang::BricLoader::Contrib;
 use Krang::BricLoader::Media;
 
 #
@@ -62,7 +62,7 @@ use Krang::BricLoader::Media;
 
 # Lexicals
 ###########
-my %media;
+my $contrib_count = 0;
 
 
 =head1 INTERFACE
@@ -104,7 +104,7 @@ sub new {
     link($path, $new_path);
 
     $ref = XMLin($new_path,
-                 forcearray => ['category', 'story'],
+                 forcearray => ['category', 'contributor', 'story'],
                  keyattr => 'hobbittses');
     unlink($new_path);
     croak("\nNo Stories defined in input.\n") unless exists $ref->{story};
@@ -167,13 +167,10 @@ sub serialize_xml {
     $writer->dataElement(url => $_) for @{$self->{urls}};
 
     # contributors
-    my %contrib_type = Krang::Pref->get('contrib_type');
-    for my $contrib ($self->{contribs}) {
-        next unless defined $contrib && $contrib->isa('Krang::Contributor');
+    for my $contrib (@{$self->{contribs}}) {
         $writer->startTag('contrib');
-        $writer->dataElement(contrib_id => $contrib->contrib_id);
-        $writer->dataElement(contrib_type =>
-                             $contrib_type{$contrib->selected_contrib_type()});
+        $writer->dataElement(contrib_id => $contrib->{contrib_id});
+        $writer->dataElement(contrib_type => $contrib->{contrib_type_name});
         $writer->endTag('contrib');
 
         $set->add(object => $contrib, from => $self);
@@ -281,6 +278,11 @@ sub _map_simple {
 
     # set version to 1
     $self->{version} = 1;
+
+    # handle contributors
+    $tmp = delete $self->{contributors}->{contributor};
+    push @{$self->{contribs}}, Krang::BricLoader::Contrib->new(obj => $_)
+      for @$tmp;
 }
 
 # serializes story subelements into xml similar to

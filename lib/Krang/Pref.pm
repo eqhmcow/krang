@@ -87,6 +87,35 @@ module.
 
 =over 4
 
+=item C<< $opt_id = Krang::Pref->add_option($list_pref_name, $new_pref_opt) >>
+
+Adds a new option to the list of available options for a list preference.  The
+id of the new option is returned.
+
+=cut
+
+sub add_option {
+    my ($pkg, $pref, $opt) = @_;
+    my $conf = $CONFIG{$pref};
+    my $dbh  = dbh();
+
+    croak("Invalid pref '$pref' does not exist in %Krang::Pref::CONFIG")
+      unless $conf;
+    croak("Pref '$pref' must be of type 'list'.")
+      unless $conf->{type} eq 'list';
+
+    my $sql = "INSERT INTO $conf->{table} ($conf->{name_field}) VALUES (?)";
+    $dbh->do($sql, undef, $opt);
+
+    $sql = "SELECT $conf->{id_field} FROM $conf->{table} WHERE " .
+      "$conf->{name_field} = ?";
+    my $row = $dbh->selectrow_arrayref($sql, undef, $opt);
+
+    return $row->[0];
+}
+
+
+
 =item $value = Krang::Pref->get('scalar_pref');
 
 =item %hash = Krang::Pref->get('list_pref');

@@ -82,6 +82,7 @@ use Krang::Log qw(debug assert ASSERT);
 use Krang::XML;
 # BricLoader Modules :)
 use Krang::BricLoader::Category;
+use Krang::BricLoader::Contrib;
 use Krang::BricLoader::Site;
 use Krang::BricLoader::Story;
 
