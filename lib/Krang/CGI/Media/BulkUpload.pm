@@ -20,8 +20,9 @@ use IO::File;
 # these have to be global because of File::Find processing
 my $media_list;
 my %category_list;
-my $is_category;
 my $media_in_root;
+my $chosen_cat_id;
+my $chosen_cat_url;
 
 =head1 NAME
                                                                                 
@@ -74,6 +75,7 @@ for upload.
 sub choose {
     my $self = shift;
     my $query = $self->query;
+    
     my $template = $self->load_tmpl('choose.tmpl', associate => $query );
 
     $template->param( category_chooser => category_chooser(name=>'category_id', query=>$query) );
@@ -122,9 +124,8 @@ media!");
         return $self->choose() if not $opened_root;
   
         # get chosen category_id, if one
-        my $root_category = $q->param('category_id');
-        $is_category = 1 if $root_category;
- 
+        $chosen_cat_id = $q->param('category_id');
+        $chosen_cat_url = (Krang::Category->find( category_id => $chosen_cat_id ))[0]->url if $chosen_cat_id; 
         # find all files and dirs in archive 
         File::Find::find(\&build_image_list, $opened_root);    
 
@@ -132,7 +133,7 @@ media!");
 
         # check to see all dirs in archive match Krang site/cats,
         # return if not
-        return $self->choose if check_categories($root_category);
+        return $self->choose if check_categories();
 
         # check media to see if already exist or checked out
         return $self->choose if check_media();
@@ -140,7 +141,10 @@ media!");
         # if we have gotten this far, upload the files as Krang::Media
         my ($create_count, $update_count) = create_media();
         add_message('media_uploaded', new_count => $create_count, update_count => $update_count);
-                
+        
+        # reset category_id
+        $q->param('category_id' => '');
+        
     } else {
         add_message('no_file');
     } 
@@ -222,21 +226,18 @@ Returns 1 if bad categories found, else undef.
 =cut
 
 sub check_categories {
-    my $root_category_id = shift;
-    my $root_category = $root_category_id ? (Krang::Category->find( category_id => $root_category_id ))[0] : '';
-    my $root_cat_path =  $root_category ? $root_category->url : '';
-
     my $not_found;
     
     foreach my $cat (keys %category_list) {
-        my $found_cat = (Krang::Category->find( url => "$root_cat_path$cat/" ))[0];
+        my $found_cat = (Krang::Category->find( url => $cat ))[0];
         $category_list{$cat} = $found_cat->category_id if $found_cat;
 
         if (not $found_cat) {
-            add_message("bad_category", url => "$root_cat_path$cat/");
+            add_message("bad_category", url => $cat);
             $not_found = 1;
         }
     }
+
     return $not_found;
 }
 
@@ -323,14 +324,15 @@ sub build_image_list {
     my $full_path = $File::Find::name;
     debug(__PACKAGE__."->build_image_list - found: $full_path");
 
-    $media_in_root = 1 if ((not $is_category) and (not $path));
-  
+    $media_in_root = 1 if ((not $chosen_cat_id) and (not $path));
+ 
+    $path = $path ? "$chosen_cat_url$path/" : $chosen_cat_url; 
     $temp->{name} = $file;
-    $temp->{category} = $path if $path;
+    $temp->{category} = $path;
     $temp->{full_path} = $full_path;
                                                                          
     push @$media_list, $temp;
-    $category_list{$path} = 1 if ((not $category_list{$path}) and ($path));
+    $category_list{$path} = 1 if ((not $category_list{$path}) and $path);
 }
 
 =back
