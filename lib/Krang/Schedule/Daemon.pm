@@ -55,6 +55,7 @@ use Time::Seconds;
 use Krang::Conf qw(KrangRoot);
 use Krang::Log qw/critical debug info/;
 use Krang::Schedule;
+use Krang::DB qw(forget_dbh);
 
 #
 # Package Variables
@@ -107,6 +108,9 @@ through setting the ScheduleLog directive in krang.conf.
 
 sub run {
     my $self = shift;
+
+    # forget old dbh from parent process
+    forget_dbh();
 
     # drop off pidfile
     my $pidfile = IO::File->new(">$pidfile");
