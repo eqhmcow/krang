@@ -1058,6 +1058,7 @@ BEGIN {
     foreach my $meth (qw( input_form
                           burn 
                           validate
+                          validate_children
                           load_query_data
                           freeze_data 
                           is_container

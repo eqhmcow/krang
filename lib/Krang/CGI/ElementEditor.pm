@@ -899,10 +899,18 @@ sub element_save {
         $index++;
     }
 
+    # let the parent take a crack at it if all else is ok
+    if ($clean) {
+        my ($valid, $msg) = $element->validate_children(query => $query);
+        if (not $valid) {
+            add_message('invalid_element_data', msg => $msg);
+            $clean = 0;
+        }
+    }
+
     # toss back to edit with an error message if not clean
     if (not $clean) {
-        my %seen;
-        $query->param(invalid => join(',', @invalid));
+        $query->param(invalid => join(',', @invalid)) if @invalid;
         return 0;
     }
 

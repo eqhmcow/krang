@@ -347,6 +347,22 @@ sub validate {
     return 1;
 }
 
+=item C<< ($bool, $msg) = $class->validate_children(element => $element, query => $query) >>
+
+Given the CGI.pm query object from a form submission, this call must
+return true of the input is valid for the elements children, taken
+collectively and false if not.  If false, an error message should be
+returned as well, describing the error.  This method is only called if
+all the children return (1) from their validate methods.
+
+The default implementation does nothing.
+
+=cut
+
+sub validate_children { 
+    return 1;
+}
+
 =item C<< $class->load_query_data(element => $element, query => $query) >>
 
 This call loads the data from the current query into the object.
