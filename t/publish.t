@@ -69,11 +69,7 @@ for (my $i = 0; $i <= $#paths; $i++) { ok($paths[$i] eq $dirs_a[$i]); }
 # testing Krang::ElementClass->find_template().
 
 # create a new story -- get root element.
-my $story = Krang::Story->new(categories => [$category],
-                              title      => "Test",
-                              slug       => "test",
-                              class      => "article");
-
+my $story   = &create_story([$category, $child_cat, $child_subcat]);
 my $element = $story->element();
 
 # iterate over the elements of the article, creating templates.
@@ -83,15 +79,42 @@ END { foreach (@delete_templates) { $_->delete() }; } # delete created templates
 
 &find_templates($element);
 
+# Attempt to publish the story.
+my $html = $publisher->_assemble_pages(story => $story, category => $category, mode => 'publish');
 
-# iterate over the elements, testing find_template()
+#diag($html);
+
+
+
+
+
+
+
+
+############################################################
+#
+# SUBROUTINES
+#
+
+#
+# find_templates
+# iterate over the elements, testing Krang::ElementClass->find_template()
+# Basically, 
+# 
+
 sub find_templates {
 
     my ($element) = @_;
 
-    my $tmpl = $element->class->find_template(publisher => $publisher, element => $element);
-
-#    diag($tmpl->output());
+    eval {
+        my $tmpl = $element->class->find_template(publisher => $publisher, element => $element);
+    };
+    if ($@) {
+        diag($@);
+        fail();
+    } else {
+        pass();
+    }
 
     my @children = $element->children();
 
@@ -139,5 +162,36 @@ sub create_templates {
     foreach (@children) {
         &create_templates($_, $cat);
     }
+
+}
+
+
+
+#
+# create a fleshed-out story for testing purposes.
+#
+sub create_story {
+
+    my @categories = @_;
+
+    my $story = Krang::Story->new(categories => \@categories,
+                                  title      => "Test Title",
+                                  slug       => "test-publish-test",
+                                  class      => "article");
+
+    # add some content
+    $story->element->child('deck')->data('DECK DECK DECK');
+
+    my $page = $story->element->child('page');
+
+    # add five paragraphs
+    $page->add_child(class => "paragraph", data => "para1 "x40);
+    $page->add_child(class => "paragraph", data => "para2 "x40);
+    $page->add_child(class => "paragraph", data => "para3 "x40);
+    $page->add_child(class => "paragraph", data => "para4 "x40);
+    $page->add_child(class => "paragraph", data => "para5 "x40);
+
+
+    return $story;
 
 }
