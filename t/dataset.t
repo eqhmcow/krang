@@ -279,6 +279,32 @@ $lset->import_all();
 ok($found);
 END { (Krang::Media->find(url_like => '%lazarus.jpg'))[0]->delete() }
 
+# try the same with template
+my $ltemplate = Krang::Template->new(element_class_name => 'abcd_fake_element_class',
+                               category_id   => $category->category_id,
+                               content => 'this is the content here' );
+
+$ltemplate->save();
+$lset->add(object => $ltemplate);
+                                                                                     
+# it lives, yes?
+($found) = Krang::Template->find(url => $ltemplate->url, count => 1 );
+ok($found);
+                                                                                     
+# this should fail
+eval { $lset->import_all(no_update => 1) };
+ok($@);
+                                                                                     
+# it dies
+$ltemplate->delete();
+($found) = Krang::Template->find(url => $ltemplate->url, count => 1);
+ok(not $found);
+                                                                                     
+# the resurection
+$lset->import_all();
+($found) = Krang::Template->find(url => $ltemplate->url, count => 1);
+ok($found);
+END { (Krang::Template->find(url => $ltemplate->url))[0]->delete() }
 
 # create a story with an element tree and make sure it gets through an
 # export/import intact
