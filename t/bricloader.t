@@ -53,6 +53,9 @@ BEGIN {
         rmtree([$path]) if -e $path;
     }
 
+    # set instance var
+    $ENV{KRANG_INSTANCE} = 'lasites';
+
     # use bogus krang.conf
     $ENV{KRANG_CONF} = catfile($root, 't', 'bricloader', 'junk.conf');
 }

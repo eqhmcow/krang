@@ -144,6 +144,14 @@ use constant SCHEDULE_RW => qw(action
                                hour
                                minute);
 
+# valid actions
+use constant ACTIONS	=> qw(expire
+			      publish
+			      send);
+# valid object_type's
+use constant TYPES	=> qw(alert
+			      media
+			      story);
 
 # Globals
 ##########
@@ -151,6 +159,8 @@ our $SCH_DEBUG = $ENV{SCH_DEBUG} || 0;
 
 # Lexicals
 ###########
+my %actions = map {$_, 1} ACTIONS;
+my %types = map {$_, 1} TYPES;
 my %repeat2seconds = (daily => ONE_DAY,
                       hourly => ONE_HOUR,
                       weekly => ONE_WEEK,
@@ -179,12 +189,12 @@ Create a new schedule object.  The following keys are required:
 
 =item C<action>
 
-The action to be performed.  Must be 'publish', 'expire' or 'alert'.
+The action to be performed.  Must be 'publish', 'expire' or 'send'.
 
 =item C<object_type>
 
 The type of object which the action refers to.  Currently 'story',
-'media'.
+'media', and 'alert'.
 
 =item C<object_id>
 
@@ -270,8 +280,7 @@ sub init {
             # lowercase for safety
             my $action = lc $args{$_};
             croak(__PACKAGE__ . "->init(): '$action' is not a valid 'action'.")
-              unless ($action eq 'alert' || $action eq 'expire' ||
-                      $action eq 'publish');
+              unless (exists $actions{$action});
             $args{$_} = $action;
         } elsif ($_ eq 'repeat') {
             $repeat = $args{$_};
@@ -305,7 +314,7 @@ sub init {
             # testing see lines 792-6
             my $type = lc $args{$_};
             croak("Invalid object type '$args{$_}'!") unless
-              ($type eq 'alert' || $type eq 'media' || $type eq 'story');
+              (exists $types{$type});
             $args{$_} = $type;
         }
     }
