@@ -362,6 +362,7 @@ sub check_prereqs {
     foreach my $addon (@{$options{'WithAddon'}}) {
         exit_error("Addon file '$addon' does not exist")
           unless -e $addon;
+        $addon = rel2abs($addon);
     }
     
     exit_error("InstanceElementSet '$options{InstanceElementSet}' does not exist in Krang.\nPerhaps you misspelled it, or forgot a --WithAddon option.\n")
