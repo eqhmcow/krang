@@ -85,8 +85,8 @@ Krang::Group - Interface to manage Krang permissions
 
 
   # Category permissions cache management
-  Krang::Group->add_catagory_cache($category);
-  Krang::Group->delete_catagory_cache($category);
+  Krang::Group->add_catagory_permissions($category);
+  Krang::Group->delete_catagory_permissions($category);
   Krang::Group->rebuild_catagory_cache();
 
 
@@ -532,46 +532,113 @@ sub delete {
 }
 
 
-=item add_catagory_cache()
+=item add_catagory_permissions()
 
-  Krang::Group->add_catagory_cache($category);
+  Krang::Group->add_catagory_permissions($category);
 
-Given a particular category object, update the category_group_permission_cache
-table to add this category for all groups.
+This method is expected to be called by Krang::Category when a new 
+category is added to the system.  As the nature of categories are 
+hierarchal, it is expected that new categories have no descendants.
+
+Given a particular category object, this method will update the 
+category_group_permission_cache table to add this category for all 
+groups.
+
+In the case of a "root" category (no parent_id, associated with a 
+site), permissions will be added to the category_group_permission
+table for each group, defaulting to "edit".
 
 =cut
 
-sub add_catagory_cache {
+sub add_catagory_permissions {
     my $self = shift;
     my ($category) = @_;
 
     croak ("No category provided") unless ($category && ref($category));
 
-    my $dbh = dbh();
+    # Get category_id -- needed for update
+    my $category_id = $category->category_id();
 
-    # Iterate through each group
+    # Get category parent -- needed for default perms
+    my $parent_id = $category->parent_id();
+
+    # Set up STHs for queries and update
+    my $dbh = dbh();
+    my $sth_get_parent_perm = $dbh->prepare(qq/
+                                            select may_see, may_edit from category_group_permission_cache 
+                                            where category_id=? and group_id=?
+                                            /);
+
+    # For new non-"root" categories
+    my $sth_set_perm = $dbh->prepare(qq/
+                                     insert into category_group_permission_cache
+                                     (category_id, group_id, may_see, may_edit) values (?,?,?,?)
+                                     /);
+
+    # For new "root" categories
+    my $sth_add_group_perm = $dbh->prepare(qq/
+                                           insert into category_group_permission
+                                           (category_id, group_id, permission_type) values (?,?,"edit")
+                                           /);
+
+    # Iterate through groups, default to permission of parent category, or "edit"
+    my @group_ids = $self->find(ids_only=>1);
+    foreach my $group_id (@group_ids) {
+        my $may_see = 1;
+        my $may_edit = 1;
+
+        # Get parent category permissions, if any
+        if ($parent_id) {
+            # Non-root categories inherit permissions of their parent
+            $sth_get_parent_perm->execute($parent_id, $group_id);
+            ($may_see, $may_edit) = $sth_get_parent_perm->fetchrow_array();
+            $sth_get_parent_perm->finish();
+        } else {
+            # Root categories get added to category_group_permission
+            $sth_add_group_perm->execute($category_id, $group_id);
+        }
+
+        # Update category perms cache for this group
+        $sth_set_perm->execute($category_id, $group_id, $may_see, $may_edit);
+    }
 
 }
 
 
 
-=item delete_catagory_cache()
+=item delete_catagory_permissions()
 
-  Krang::Group->delete_catagory_cache($category_id);
+  Krang::Group->delete_catagory_permissions($category);
 
-Given a particular category ID, update the category_group_permission_cache
+This method is expected to be called by Krang::Category when a  
+category is about to be removed from the system.  As the nature of categories are 
+hierarchal, it is expected that deleted categories have no descendants.
+
+Given a particular category object, update the category_group_permission_cache
 table to delete this category for all groups.
+
+Also, delete from category_group_permission all references to this 
+category.
 
 =cut
 
-sub delete_catagory_cache {
+sub delete_catagory_permissions {
     my $self = shift;
-    my ($category_id) = @_;
+    my ($category) = @_;
 
-    croak ("Invalid category_id '$category_id'") unless ($category_id and $category_id =~ /^\d+$/);
+    croak ("No category provided") unless ($category && ref($category));
+
+    # Get category_id from object
+    my $category_id = $category->category_id();
 
     my $dbh = dbh();
+
+    # Get rid of permissions cache
     $dbh->do( "delete from category_group_permission_cache where category_id=?",
+              {RaiseError=>1}, $category_id );
+
+    # Get rid of permissions
+    $dbh->do( "delete from category_group_permission where category_id=?",
               {RaiseError=>1}, $category_id );
 }
 
@@ -589,7 +656,7 @@ according to the configuration.
 Permissions for a particular category are applicable to all descendant
 categories.  In lieu of a specific disposition for a particular category
 (as is the case if a group does not specify access for a site), permissions
-will default to "edit".  IOW, 
+will default to "edit". 
 
 
 =cut

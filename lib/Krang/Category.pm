@@ -104,6 +104,7 @@ use Krang::Element;
 use Krang::Media;
 use Krang::Story;
 use Krang::Template;
+use Krang::Group;
 
 #
 # Package Variables
@@ -331,6 +332,9 @@ sub delete {
 
     # throws dependent exception if one exists
     $self->dependent_check();
+
+    # Remove from permissions
+    Krang::Group->delete_catagory_permissions($self);
 
     # delete element
     $self->element()->delete();
@@ -769,7 +773,13 @@ sub save {
           ($id ? "id '$id' " : '') . "to the DB.")
       unless $dbh->do($query, undef, @params);
 
-    $self->{category_id} = $dbh->{mysql_insertid} unless $id;
+    unless ($id) {
+        # Set category_id directly in object
+        $self->{category_id} = $dbh->{mysql_insertid};
+
+        # Make sure category permissions (and cache) are added for this category
+        Krang::Group->add_catagory_permissions($self);
+    }
 
     # update child URLs if url has changed
     if ($new_url) {
