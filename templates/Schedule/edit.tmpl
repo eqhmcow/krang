@@ -99,7 +99,7 @@
       </tr>
         <tr>
             <td>Publish:</td>
-            <td><tmpl_var publish_selector></td>
+            <td <tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var publish_selector></td>
         </tr>
         <tr>
             <td>Version:</td>
@@ -115,10 +115,10 @@
             <td class="form-cell">Date/Time</td>
             <td class="form-cell">
                 <table>
-                <tr><td><input type="radio" name="repeat" value="never" <tmpl_if repeat_never>CHECKED</tmpl_if>>Once at:</td><td><tmpl_var full_date_selector><br></td>
-                <tr><td><input type="radio" name="repeat" value="hourly" <tmpl_if repeat_hourly>CHECKED</tmpl_if>>Hourly at:</td><td><tmpl_var hourly_minute_selector> minutes after the hour</td></tr>
-                <tr><td><input type="radio" name="repeat" value="daily" <tmpl_if repeat_daily>CHECKED</tmpl_if>>Daily at:</td><td><tmpl_var daily_time_selector></td></tr>
-                <tr><td><input type="radio" name="repeat" value="weekly" <tmpl_if repeat_weekly>CHECKED</tmpl_if>>Weekly on:</td><td><tmpl_var weekly_day_selector>
+                <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="never" <tmpl_if repeat_never>CHECKED</tmpl_if>>Once at:</td><td <tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var full_date_selector><br></td>
+                <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="hourly" <tmpl_if repeat_hourly>CHECKED</tmpl_if>>Hourly at:</td><td><tmpl_var hourly_minute_selector> minutes after the hour</td></tr>
+                <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="daily" <tmpl_if repeat_daily>CHECKED</tmpl_if>>Daily at:</td><td <tmpl_if no_hour>class="invalid"</tmpl_if>><tmpl_var daily_time_selector></td></tr>
+                <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="weekly" <tmpl_if repeat_weekly>CHECKED</tmpl_if>>Weekly on:</td><td <tmpl_if no_weekly_hour>class="invalid"</tmpl_if>><tmpl_var weekly_day_selector>
 - <tmpl_var weekly_time_selector></td></tr>
                 </table>
     </td>

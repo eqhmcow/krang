@@ -95,9 +95,11 @@ session.
 
 sub edit {
     my $self = shift;
+    my $invalid = shift;
     my $query = $self->query;
     my $template = $self->load_tmpl('edit.tmpl', associate => $query);
 
+    $template->param ( $invalid => 1 ) if $invalid;
     # load params
     my $object_type = $query->param('object_type') || croak("No object type was specified. Need 'story' or 'media'.");
     croak("Invalid object type - must be 'story' or 'media'")
@@ -247,7 +249,7 @@ sub add {
     my $version = $q->param('version');
 
     my $object_type = $q->param('object_type');
-                                                                                  
+    
     # Get media or story object from session -- or die() trying
     my $object = $self->get_object($object_type);
     my $object_id = ($object_type eq 'story') ? $object->story_id  :  $object->media_id;
@@ -255,7 +257,7 @@ sub add {
     my $repeat = $q->param('repeat');
     unless ($repeat) {
         add_message('no_date_type');
-        return $self->edit();
+        return $self->edit('no_date_type');
     }
  
     $q->param( "repeat_$repeat" => 1 );
@@ -266,7 +268,7 @@ sub add {
         my $date = decode_datetime(name=>'full_date', query=>$q);
         if (not $date) {
             add_message('invalid_datetime');
-            return $self->edit();
+            return $self->edit('invalid_datetime');
         }
 
         if ($version) {
@@ -306,7 +308,7 @@ sub add {
         my $hour = $q->param('daily_time_hour');
         unless ($hour) {
             add_message('no_hour');
-            return $self->edit();
+            return $self->edit('no_hour');
         }
         my $ampm = $q->param('daily_time_ampm');
         if ($ampm eq 'PM') {
@@ -339,7 +341,7 @@ sub add {
         my $hour = $q->param('weekly_time_hour');
         unless ($hour) {
             add_message('no_hour');
-            return $self->edit();
+            return $self->edit('no_weekly_hour');
         }
         
         my $ampm = $q->param('weekly_time_ampm');
@@ -416,11 +418,12 @@ sub add_simple {
         $schedule->save();
    
         add_message('scheduled_publish');
+        return $self->edit();
     } else {
         add_message('invalid_datetime');
+        return $self->edit('invalid_datetime');
     }
 
-    return $self->edit(); 
 }
 
 =item delete()
