@@ -1,0 +1,145 @@
+<tmpl_include header.tmpl>
+
+<script language="JavaScript" type="text/javascript">
+
+  function edit_media (id) {
+    document.find_media.rm.value = 'edit';
+    document.find_media.media_id.value = id;
+    document.find_media.submit();
+  }
+
+
+  function view_media (id) {
+    document.find_media.rm.value = 'view';
+    document.find_media.media_id.value = id;
+    document.find_media.submit();
+  }
+
+
+  function delete_selected () {
+    if (confirm("Are you SURE you want to delete the checked media?")) {
+      var myform = document.krang_pager_form;
+      myform.rm.value = 'delete_selected';
+      myform.submit();
+    }
+  }
+
+  function advanced_search () {
+    var myform = document.search_form;
+    myform.rm.value = 'advanced_find';
+    myform.submit();
+  }
+
+  function simple_search () {
+    var myform = document.search_form;
+    myform.rm.value = 'find';
+    myform.submit();
+  }
+
+  function clear_advanced_search () {
+    alert("Not implemented yet!");
+  }
+
+</script>
+
+
+<form method="POST" name="find_media">
+<input type="hidden" name="rm" value="view">
+<input type="hidden" name="media_id">
+</form>
+
+
+<div class=dark-bar>Find Media<</div>
+
+
+
+<table width="100%">
+<form name="search_form" method="POST">
+<tr><td class="form-head">
+SEARCH 
+
+
+<tmpl_if do_advanced_search>
+
+  (<a href="javascript:simple_search()">Simple Search</a>)
+  <input type="hidden" name="rm" value="advanced_find"><br />
+  <input type="checkbox" name="show_thumbnails" value="1"<tmpl_if show_thumbnails> checked</tmpl_if>>Show Thumbnails</td></tr>
+
+  <!-- Advanced Search Form -->
+  <tr><td>
+    <table border="0" cellspacing="5">
+
+      <tr>
+        <td>File:</td>
+        <td><input size="40" type="textfield" name="search_filename" value="<tmpl_var escape=HTML search_filename>"></td>
+      </tr>
+
+      <tr>
+        <td>Title:</td>
+        <td><input size="40" type="textfield" name="search_title" value="<tmpl_var escape=HTML search_title>"></td>
+      </tr>
+
+      <tr>
+        <td>ID:</td>
+        <td><input size="40" type="textfield" name="search_media_id" value="<tmpl_var escape=HTML search_media_id>"></td>
+      </tr>
+
+      <tr>
+        <td>Site/Category:</td>
+        <td><tmpl_var category_chooser></td>
+      </tr>
+
+      <tr>
+        <td>Creation Date:</td>
+        <td><tmpl_var date_chooser></td>
+      </tr>
+
+      <tr>
+        <td>Has Attributes:</td>
+        <td><input type="checkbox" name="search_has_attributes" value="1"<tmpl_if search_has_attributes> checked</tmpl_if>></td>
+      </tr>
+
+      <tr>
+        <td></td>
+        <td><input type="button" value="Clear" onClick="clear_advanced_search()">&nbsp;<input type="submit" value="Search"></td>
+      </tr>
+
+      <input type="hidden" name="search_filter" value="">
+
+    </table>
+  </td></tr>
+
+<tmpl_else>
+
+  (<a href="javascript:advanced_search()">Advanced Search</a>)<br />
+  <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+  <input type="hidden" name="rm" value="find">
+  <input type="submit" value="Search">
+  <input type="checkbox" name="show_thumbnails" value="1"<tmpl_if show_thumbnails> checked</tmpl_if>>Show Thumbnails
+  </td></tr>
+
+</tmpl_if>
+
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+</form>
+</table>
+
+
+
+
+<!-- Krang::HTMLPager -->
+<tmpl_var pager_html>
+<!-- Krang::HTMLPager -->
+
+
+<tmpl_if row_count>
+  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+</tmpl_if>
+
+<tmpl_include footer.tmpl>

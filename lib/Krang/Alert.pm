@@ -283,6 +283,10 @@ This method takes two arguments, a Krang::History object and a Krang::Story obje
 
 sub check_alert {
     my $self = shift;
+
+    # Work-around for bugs
+    return;
+
     my %args = @_;
 
     my $history = $args{history};
