@@ -710,7 +710,7 @@ sub find {
         my @decendants = $specd_cat->decendants( ids_only => 1 );
         unshift @decendants, $specd_cat->category_id;
 
-        $where_string ? ($where_string .= " and (".join(" OR ",(map { "category = $_" } @decendants)).")") : ($where_string .= "(".join(" OR ",(map { "category = $_" } @decendants)).")"); 
+        $where_string ? ($where_string .= " and (".join(" OR ",(map { "category_id = $_" } @decendants)).")") : ($where_string .= "(".join(" OR ",(map { "category_id = $_" } @decendants)).")"); 
  
     }
 
