@@ -58,11 +58,20 @@ HREF[Database Schema Diagram|database_schema.gif] - graphical overview of the da
 
 =item *
 
+HREF[Module Documentation|modules.html] - complete Krang module documentation
+
+
+=item *
+
 HREF[Technical Specification|tech_spec.html] - general technical overview (somewhat out of date)
 
 =item *
 
-HREF[Module Documentation|modules.html] - complete Krang module documentation
+HREF[Coding Standards|coding.html] - rules for Krang development
+
+=item *
+
+HREF[Porting Krang|porting.html] - How to port Krang to a new platform.
 
 =item *
 
@@ -75,10 +84,6 @@ HREF[Releasing Krang|release.html] - how to make a krang distribution
 =item *
 
 HREF[Writing Templates|writing_htmltemplate.html] - guide to template creation
-
-=item *
-
-HREF[Coding Standards|coding.html] - rules for Krang development
 
 =item *
 

@@ -1,0 +1,105 @@
+=head1 Porting Krang
+
+This document describes how to port Krang to a new platform.  You'll
+need to port Krang if you want to run Krang on a platform which isn't
+supported.  See HREF[the installation instructions|ops_install.html]
+for the list of supported platforms.
+
+=head2 Getting Started
+
+Every platform Krang supports should have a directory inside the
+F<platform/> directory.  For example, Redhat 7.3 has
+F<platform/Redhat7_3>.  Create a directory for the new platform.
+
+Next, you'll need to create a file called Platform.pm which contains
+at least the following:
+
+  package PLATFORM_NAME::Platform;
+  use warnings;
+  use strict;
+
+  use base 'Krang::Platform';
+
+  1;
+
+At this point you I<might> be done, particularly if your platform is
+very similar to Redhat Linux (Krang's home platform).  To find out,
+try to build Krang:
+
+  bin/krang_build PLATFORM_NAME
+
+If that works, try building a database and running the test suite:
+
+  make db test
+
+If that worked, start up Krang and take a stroll through the UI:
+
+  bin/krang_ctl start
+
+Finally, you need to test installing a binary distribution.  First
+make one:
+
+  bin/krang_makedist
+
+Then try installing it as usual.
+
+=head2 Solving Problems
+
+It's quite likely that one of the steps described above didn't work.
+If so, it's time to write some code.
+
+=head3 Fixing the Build
+
+If Krang failed to build, or test failures reveal that something
+wasn't built right you need to make changes to your Platform.pm.  One
+possibility is to choose a base class from among the other supported
+platforms.  For example, when porting Krang to Mandrake Linux it might
+be reasonable to start with this:
+
+  use base 'Redhat9::Platform';
+
+In place of this line:
+
+  use base 'Krang::Platform';
+
+Now your build process will mimic that of another platform.
+
+Failing that, you'll need to start overriding methods in
+Krang::Platform to adjust Krang's build process.  For example, let's
+say Apache::DBI won't build on your platform without /usr/local/bin
+first in the path.  You could add an overridden build_perl_module() to
+your Platform.pm:
+
+  sub build_perl_module {
+    my ($pkg, %arg) = @_;
+    my $name = $arg{name};
+
+    if ($name =~ /Apache-DBI/) {
+        local $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";
+        return $pkg->SUPER::build_perl_module(%arg);
+    }
+
+    return $pkg->SUPER::build_perl_module(%arg);
+  }
+
+See the L<Krang::Platform> documentation for a description of all
+available methods.
+
+=head3 Fixing Krang
+
+Another possibility is that Krang itself needs work to perform
+correctly on your platform.  This is particularly likely if you're
+trying to add support for a new version of Perl or MySQL.
+
+=head2 Wrapping Up
+
+Each platform is allowed to have its own F<README> file.  This file is
+copied into binary distributions for that platform.  For an example,
+take a look at F<platform/Redhat7_3/README.Redhat7_3>.  This file is a
+good place to describe any platform-specific setup needed to get Krang
+working.
+
+When you're done porting Krang, commit your work to CVS or send a
+patch to the Krang developer mailing-list.  Remember to add the
+platform to the supported platform list in F<docs/ops_install.pod>.
+
