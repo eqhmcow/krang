@@ -1,5 +1,7 @@
 =head1 Upgrading Krang
 
+=head2 Upgrading Krang from a Binary Release
+
 To upgrade an existing Krang installation, first unpack the new
 version of Krang and enter the created directory
 
@@ -15,6 +17,24 @@ point C<krang_upgrade> in the right direction:
 
   # ./bin/krang_upgrade --krangRoot /path/to/krang/install
 
+
+=head1 Upgrading Krang from a Source Release
+
+Before you can upgrade Krang, you must build necessary packages out of
+the source release:
+
+  $ cd KRANG_ROOT
+  $ make build
+
+Once built, you need to create a distribution package:
+
+  $ make dist
+
+You can then use the resulting tarball and follow the instructions
+above for Binary Releases.
+
+
+
 =head2 A Note for CVS Users
 
 First, you should only use the CVS tree if you are involved in Krang
@@ -27,7 +47,8 @@ CVS release, you run the risk of crucial config files being
 overwritten, along with getting your directory tree polluted with
 unnecessary CVS directories.
 
-  # ./bin/krang_makedist
+  # make build
+  # make dist
   # cp krang-versionnum-platformname-perlversion.tar.gz /usr/local/src/.
   # cd /usr/local/src
   # tar zxf krang-versionnum-platformname-perlversion.tar.gz
