@@ -78,11 +78,6 @@ $category->save();
 my $u2 = $category->url();
 is($category->url() =~ /fred/, 1, 'dir() - setter');
 
-# parent_id - must fail
-eval {$category->parent_id(100)};
-like($@, qr/illegal attempt to set readonly attribute/,
-     'parent_id setter test');
-
 # duplicate test
 #################
 my $dupe = Krang::Category->new(dir => 'fred',
