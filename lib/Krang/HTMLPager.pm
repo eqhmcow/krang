@@ -3,19 +3,10 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
-use HTML::Template;
+use Krang::HTMLTemplate;
 use Krang::Conf qw(KrangRoot);
 use Krang::MyPref;
 use File::Spec::Functions qw(catdir);
-
-
-# Set up HTML_TEMPLATE_ROOT for templates
-BEGIN {
-    # use $KRANG_ROOT/templates for templates
-    $ENV{HTML_TEMPLATE_ROOT} = catdir(KrangRoot, "templates");
-}
-
-
 
 =head1 NAME
 
@@ -184,7 +175,7 @@ sub output {
     # Dynamically create template as scalar with proper columns
     my $pager_tmpl = $self->make_internal_template();
 
-    my $t = HTML::Template->new_scalar_ref(\$pager_tmpl, loop_context_vars=>1);
+    my $t = Krang::HTMLTemplate->new_scalar_ref(\$pager_tmpl, loop_context_vars=>1);
     $self->_fill_template($t);
 
     return $t->output();
