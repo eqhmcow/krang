@@ -401,10 +401,25 @@ its database query affects no rows in the database.
 sub save {
     my $self = shift;
     my $id = $self->{site_id} || '';
-    my $query;
     my @save_fields = map {$_ ne 'site_id'} keys %site_cols;
 
-    # TODO: lookup sites, make sure this one is unique
+    # prevent creation of a new site that is a duplicate
+    my $query = "SELECT * FROM site";
+    my $dbh = dbh();
+    my $sth = $dbh->prepare($query);
+    $sth->execute();
+
+    # reference into which result are fetched
+    my $row;
+    $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
+    while ($sth->fetch()) {
+        for (@save_fields) {
+            croak(__PACKAGE__ . "->save(): Object field '$_' is the same " .
+                  "as that of object id '$row->{site_id}'.")
+              if $self->{$_} eq $row->{$_};
+        }
+    }
+    $sth->finish();
 
     if ($id) {
         $query = "UPDATE site SET " .
@@ -423,8 +438,6 @@ sub save {
     # need site_id for updates
     push @params, $id if $id;
 
-    my $dbh = dbh();
-
     # croak if no rows are affected
     croak(__PACKAGE__ . "->save(): Unable to save site object " .
           ($id ? "id '$id' " : '') . "to the DB.")
@@ -442,6 +455,8 @@ sub save {
 
 =item * Prevent duplicate site objects.
 
+This is now at least partially complete, but the current solution is costly.
+
 =back
 
 =head1 SEE ALSO
@@ -451,5 +466,9 @@ L<Krang>, L<Krang::DB>
 =cut
 
 
-my $poem = <<END;
+my $quip = <<END;
+Democracy is the theory that holds that the common people know what they want,
+and deserve to get it good and hard.
+
+--H.L. Mencken
 END
