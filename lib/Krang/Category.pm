@@ -95,7 +95,6 @@ use File::Spec;
 
 # Internal Modules
 ###################
-use Krang;
 use Krang::DB qw(dbh);
 use Krang::Element;
 use Krang::Media;

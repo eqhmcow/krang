@@ -94,7 +94,6 @@ require Exporter;
 
 # Internal Modules
 ###################
-use Krang;
 use Krang::DB qw(dbh);
 use Krang::Media;
 use Krang::Story;

@@ -87,7 +87,6 @@ use Carp qw(croak);
 
 # Internal Modules
 ###################
-use Krang;
 use Krang::Category;
 use Krang::DB qw(dbh);
 use Krang::Log qw/affirm assert should shouldnt ASSERT/;

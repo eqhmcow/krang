@@ -75,7 +75,6 @@ use Time::Piece::MySQL;
 
 # Internal Module Depenedencies
 ################################
-use Krang;
 use Krang::Category;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
