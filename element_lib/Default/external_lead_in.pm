@@ -36,7 +36,8 @@ sub new {
                                                     min => 1,
                                                     max => 1
                                                    ),
-                 Krang::ElementClass::Textarea->new(name => "URL",
+                 Krang::ElementClass::Textarea->new(name => "url",
+                                                    display_name => 'URL',
                                                     min => 1,
                                                     max => 1,
                                                     required => 1
