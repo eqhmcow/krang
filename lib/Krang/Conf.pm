@@ -228,8 +228,10 @@ sub instances {
 =item C<< Krang::Conf->check() >>
 
 Sanity-check Krang configuration.  This will die() with an error
-message if something is wrong with the configuration file.  This is
-run when the Krang::Conf loads.
+message if something is wrong with the configuration file.
+
+This is run when the Krang::Conf loads unless the environment variable
+"KRANK_CONF_NOCHECK" is set to a true value.
 
 =cut
 
@@ -276,8 +278,8 @@ sub _broked {
     die("Error found in krang.conf: $_[0].\n");
 }
  
-# run the check ASAP
-BEGIN { Krang::Conf->check() }
+# run the check ASAP, unless we're in upgrade mode
+BEGIN { Krang::Conf->check() unless ($ENV{KRANK_CONF_NOCHECK}) }
 
 =back
 

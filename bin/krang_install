@@ -44,7 +44,7 @@ system from a dist file created by krang_makedist.
 
 
 
-=head2 What C<krang_makedist> does
+=head2 What C<krang_install> does
 
 Following is a list of the tasks the installer script will perform.
 

@@ -1,0 +1,391 @@
+#!/usr/bin/perl -w
+use warnings;
+use strict;
+
+
+# Path to pre-req binaries
+use constant MYSQL_BIN      => '/usr/bin/mysql';
+use constant GROUPADD_BIN   => '/usr/sbin/groupadd';
+use constant USERADD_BIN    => '/usr/sbin/useradd';
+use constant USERMOD_BIN    => '/usr/sbin/usermod';
+use constant COPY_BIN       => '/bin/cp';
+use constant CHOWN_BIN      => '/bin/chown';
+use constant CHMOD_BIN      => '/bin/chmod';
+use constant XARGS_BIN      => '/usr/bin/xargs';
+use constant FIND_BIN       => '/usr/bin/find';
+use constant SH_BIN         => '/bin/sh';
+use constant MAKE_BIN       => '/usr/bin/make';
+use constant RM_BIN         => '/bin/rm';
+use constant ECHO_BIN       => '/bin/echo';
+use constant TAR_BIN        => '/bin/tar';
+use constant RPM_BIN        => '/bin/rpm';
+use constant IFCONFIG_BIN   => '/sbin/ifconfig';
+use constant CAT_BIN        => '/bin/cat';
+use constant CHKCONFIG_BIN  => '/sbin/chkconfig';
+use constant LN_BIN         => '/bin/ln';
+
+use constant MYSQLADMIN_BIN => '/usr/bin/mysqladmin';
+use constant PERL_BIN       => '/usr/bin/perl';
+use constant DU_BIN         => '/usr/bin/du';
+
+=head1 NAME
+
+krang_upgrade - upgrade Krang from a dist file
+
+
+=head1 SYNOPSIS
+
+  $ krang_upgrade
+
+
+=head1 DESCRIPTION
+
+This script will upgrade Krang on a RedHat 7.3 (i686-linux) 
+system from a dist file created by krang_makedist.
+
+
+
+=head2 What C<krang_upgrade> does
+
+Following is a list of the tasks the upgrade script will perform.
+
+
+=over 4
+
+=item Check pre-requisites
+
+=over 4
+
+=item Validate path to KRANG_ROOT.
+
+=item Verify that no '.backup' versions exist
+
+=item Locate and parse existing krang.conf file.
+
+=item Verify sufficient disk space
+
+=over 4
+
+=item Required space = KRANG_ROOT + Instance MySQL folders
+
+=back
+
+=item Verify that this Krang has been shut down.
+
+=item Verify that no backup KRANG_ROOT exists.
+
+
+=back
+
+
+
+=item Rename existing KRANG_ROOT to KRANG_ROOT + '.backup'.
+
+=item Shut down MySQL
+
+=item Copy existing Krang MySQL database folders to folder + '.backup'.
+
+=item Restart MySQL
+
+=item Install new Krang system to KRANG_ROOT.
+
+=item Copy krang.conf, data/* from backup to new KRANG_ROOT.
+
+=item Apply upgrade scripts.
+
+=over 4
+
+=item E.g., "KRANG_ROOT/upgrade/V1_2.pm"
+
+=item Run class methods C<per_installation()> and C<per_instance()>
+
+=back
+
+=item Update db_version for each instance
+
+=item Clear out sessions from database.
+
+=item Make test on new system.
+
+=over 4
+
+=item If failure, recommend C<krang_upgrade --rollback>
+
+=back
+
+
+=item Output results of upgrade to console.
+
+=over 4
+
+=item Show rollback directory paths for KRANG_ROOT and database
+
+=back
+
+=back
+
+
+
+
+=head2 What C<krang_upgrade --rollback> does
+
+The following tasks will roll back an upgrade to the previously installed state.
+
+=over 4
+
+=item Shut down Krang and MySQL
+
+=item Replace KRANG_ROOT with KRANG_ROOT + '.backup'
+
+=item Replace Krang MySQL database folder with MySQL database folder + '.backup'
+
+=item Re-start Krang
+
+
+=back
+
+
+
+=head1 OPTIONS
+
+  --help                 - Show usage
+  --man                  - Show full man page
+
+=head2 Optional parameters
+
+  --KrangRoot            - Directory where Krang is installed (KRANG_ROOT)
+  --MySQLRootPassword    - Password for the MySQL user "root"
+
+
+=head2 Upgrade flags
+
+  --no-krang-test        - Skip Krang "make test"
+
+
+=head1 SEE ALSO
+
+Refer to F<docs/ops_upgrade.pod>.
+
+=cut
+
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+
+# Set up KRANG_ROOT and PERL5LIB
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+}
+
+use Krang;
+use Getopt::Long;
+use Pod::Usage;
+
+
+my @original_args = ();
+my $uniqueness = time();
+my %INSTANCE_DBS = ();
+
+my ($help, $man, $no_krang_test);
+
+my @opt_params = qw( KrangRoot MySQLRootPassword );
+
+my %options = ( map { $_ => "" } @opt_params);
+
+do_upgrade();
+exit(0);
+
+
+################################
+####  MAKE UPGRADE METHODS  ####
+################################
+
+sub do_upgrade {
+    setup_getopts();
+
+    # Do upgradeation
+    check_prereqs();
+
+    make_test() unless ($no_krang_test);
+    output_report();
+}
+
+
+sub check_prereqs {
+    print "Checking prerequisites\n";
+
+    # Must be running as root.
+    exit_error("Must be run as root.") unless ($> eq "0");
+
+    # Validate path to KRANG_ROOT.
+    my $KrangRoot = $options{KrangRoot};
+    unless (-e $KrangRoot) {
+        exit_error("KrangRoot '$KrangRoot' does not exists.  Cannot continue.");
+    }
+
+    # Does krang.conf exist at that location?
+    my $krang_conf = $KrangRoot ."/conf/krang.conf";
+    unless (-r $krang_conf) {
+        exit_error("'$krang_conf' does not exists.  Cannot continue.");
+    }
+
+    # Get MySQL datadir
+    my $mysql_datadir_cmd = MYSQLADMIN_BIN ." -uroot";
+    $mysql_datadir_cmd .= " -p". $options{MySQLRootPassword} if (length($options{MySQLRootPassword}));
+    $mysql_datadir_cmd .= " variables";
+    my $mysql_datadir_output = `$mysql_datadir_cmd`;
+    unless ($mysql_datadir_output =~ /\s+datadir\s+\|\s+(\S+)\s+/) {
+        exit_error("Can't get datadir from MySQL.  Cannot continue.");
+    }
+    my $mysql_datadir = $1;
+    print STDERR "mysql_datadir: '$mysql_datadir'\n";
+
+    # Verify that no '.backup' versions exist for KRANG_ROOT
+    my $krang_root_backup = $KrangRoot .".backup";
+    exit_error("$krang_root_backup already exists.  You must remove this before you perform an upgrade.")
+      if (-e $krang_root_backup);
+
+    # Start by loading instances from $krang_conf
+    my $get_instances_perl = qq( for (Krang::Conf->instances) {
+                                     print ">>>". \$_ ."<<<";
+                                     Krang::Conf->instance(\$_);
+                                     print ">>>". Krang::Conf->InstanceDBName ."<<<\n";
+                                 } );
+    my $get_instances_cmd = "KRANK_CONF_NOCHECK=1 KRANG_CONF=$krang_conf ". PERL_BIN;
+    $get_instances_cmd .= " -MKrang::Conf -e '$get_instances_perl' && echo \"Success $uniqueness\"";
+
+    print STDERR "$get_instances_cmd\n\n=======\n\n";
+    my $get_instances_output = `$get_instances_cmd`;
+
+    unless ($get_instances_output =~ /Success\ $uniqueness/) {
+        print STDERR $get_instances_output;
+        exit_error("Error getting instances.  Cannot continue.");
+    }
+
+    # Verify that no .backup exists for instance databases.  Parse out instances and databases for later.
+    foreach my $get_instances_output_row (split(/\n/, $get_instances_output)) {
+        next unless ($get_instances_output_row =~ />>>(.*)<<<>>>(.*)<<</);
+        my $instance = $1;
+        my $db = $2;
+        $INSTANCE_DBS{$instance} = $db;
+        print "## Instance: '$instance'    Database: '$db'\n";
+
+        my $mysql_instance_datadir_backup = $mysql_datadir . $db .".backup";
+        exit_error("$mysql_instance_datadir_backup already exists.  You must remove this before you perform an upgrade.")
+          if (-e $mysql_instance_datadir_backup);
+    }
+    
+
+    # Verify sufficient disk space: KRANG_ROOT + Instance MySQL folders
+    # Verify that this Krang has been shut down.
+    # Verify that no backup KRANG_ROOT exists.
+
+    exit(1);
+}
+
+
+sub make_test {
+    print "Running Krang tests...\n";
+
+    my $AdminPassword = $options{AdminPassword};
+
+    my $UpgradePath =  $options{UpgradePath};
+    chdir($UpgradePath);
+
+    my $make_bin = MAKE_BIN;
+    my $make_test = "KRANG_ROOT='' PERL5LIB='' KRANG_PASSWORD='$AdminPassword' $make_bin test";
+    system($make_test) && die("Error running tests: $!");
+}
+
+
+sub output_report {
+    my $init_script = "/etc/init.d/krang-". $options{HostName} .".init";
+    my $krang_conf = $options{UpgradePath} ."/conf/krang.conf";
+
+    print <<EOREPORT;
+
+
+#####                                                    #####
+###                                                        ###
+##                  KRANG UPGRADE COMPLETE                  ##
+###                                                        ###
+#####                                                    #####
+
+
+   Upgraded at         :  $options{UpgradePath}
+   Startup init script :  $init_script
+   Krang conf file     :  $krang_conf
+
+   Running on $options{IPAddress} --
+     http://$options{HostName}:$options{ApachePort}/
+     ftp://$options{HostName}:$options{FTPPort}/
+
+   CMS admin user password:  "$options{AdminPassword}"
+
+
+EOREPORT
+}
+
+
+
+
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+sub exit_error {
+    my $cmd = $0;
+    $cmd =~ s/.*\/(.+)$/$1/;
+
+    my $message = shift;
+    print STDERR "\nError: $cmd:  $message\n\n";
+    exit(1);
+}
+
+
+sub setup_getopts {
+    # Copy the original args for re-invoking later
+    @original_args = @ARGV;
+
+    pod2usage(2) unless
+        GetOptions( 'help'      => \$help,
+                    'man'       => \$man,
+                    'no-krang-test' => \$no_krang_test,
+                    (map { $_."=s" => \$options{$_} } @opt_params) );
+
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+
+    # Set opt defaults
+    set_param_defaults();
+}
+
+
+sub set_param_defaults {
+    my %defaults = (
+                    KrangRoot => '/usr/local/krang',
+                    MySQLRootPassword => '',
+                   );
+
+    # Set up defaults if value is not otherwise set
+    while (my ($k, $dv) = each(%defaults)) {
+        # Skip if value already defined
+        next if (length($options{$k}));
+
+        # Set default
+        $options{$k} = $dv;
+    }
+
+}

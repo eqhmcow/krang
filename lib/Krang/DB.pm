@@ -25,6 +25,21 @@ database for this instance does not yet exist, it will be created.
 
 =over
 
+=cut
+
+
+use base 'Exporter';
+our @EXPORT_OK = qw(dbh forget_dbh);
+
+use Carp qw(croak);
+use DBI;
+
+use Krang;
+use Krang::Conf qw(InstanceDBName DBUser DBPass KrangRoot);
+use Krang::Log qw(info debug critical);
+
+
+
 =item C<< $dbh = dbh() >>
 
 Returns a DBI handle for the database for the active instance.  The
@@ -37,31 +52,24 @@ This call is guaranteed to return the same database handle on
 subsequent calls within the same instance and process.  (Until a call
 to forget_dbh(), of course.)
 
-=item C<< forget_dbh() >>
+This method will croak() if the database to which a connection is
+requested does not match the version of Krang which is currently
+installed.  (This is only evaluated when a new connection is opened,
+as opposed to retrieved from cache).
 
-Causes the next call to dbh() to perform a fresh connect.  This is
-useful in cases where you know the currently cached dbh() is invalid.
-For example, after forking a child process a call to forget_dbh() is
-necessary to avoid the parent and child trying to use the same
-database connection.
+If you don't want the database connection to croak you have to call
+dbh() with the ignore_version parameter set:
 
-=back
+  my $dbh = dbh( ignore_version => 1 );
 
 =cut
-
-use DBI;
-use base 'Exporter';
-our @EXPORT_OK = qw(dbh forget_dbh);
-
-use Krang::Conf qw(InstanceDBName DBUser DBPass KrangRoot);
-use Carp qw(croak);
-
-use Krang::Log qw(info debug critical);
 
 
 our %DBH;
 
-sub dbh () {
+sub dbh {
+    my %args = ( @_ );
+
     my $name = InstanceDBName;
     croak("Unable to create dbh, InstanceDBName is undefined.\n" . 
           "Maybe you forgot to call Krang::Conf->instance()?")
@@ -75,8 +83,33 @@ sub dbh () {
                                { RaiseError         => 1, 
                                  AutoCommit         => 1,
                                });
+
+    # Check version, unless specifically asked not to
+    unless ($args{ignore_version}) {
+        my ($db_version) = $DBH{$name}->selectrow_array("select db_version from db_version");
+        my $krang_version = $Krang::VERSION;
+        croak("Database <-> Krang version mismatch! (Krang v$krang_version, DB v$db_version)  Unable to continue")
+          unless ($db_version eq $krang_version);
+    }
+
     return $DBH{$name};
 }
+
+
+
+
+
+
+=item C<< forget_dbh() >>
+
+Causes the next call to dbh() to perform a fresh connect.  This is
+useful in cases where you know the currently cached dbh() is invalid.
+For example, after forking a child process a call to forget_dbh() is
+necessary to avoid the parent and child trying to use the same
+database connection.
+
+=cut
+
 
 sub forget_dbh () {
     my $name = InstanceDBName;
@@ -88,10 +121,13 @@ sub forget_dbh () {
     delete $DBH{$name};
 }
 
-=head1 TODO
 
-Should use Apache::DBI if running in mod_perl.
+
+
+
+=back
 
 =cut
+
 
 1;
