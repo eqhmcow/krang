@@ -1,12 +1,71 @@
+=for comment
+This POD file is used to generate INSTALL in distribution archives.
 
 =head1 Installing Krang
 
-The following instructions will install Krang on a RedHat Linux 7.3 or
-Redhat Linux 9 system, on the i686 architecture.
+This document describes how to install Krang on your system.
 
-To install, do the following as root:
+=head1 Supported Platforms
 
-  # cd <Krang src directory>
+Krang supports the following operating system platforms:
+
+=over 4
+
+=item *
+
+Redhat Linux 7.3 on x86
+
+=item *
+
+Redhat Linux 9 on x86
+
+=back
+
+Krang supports these versions of Perl, one of which must be available
+before installing Krang:
+
+=over 4
+
+=item *
+
+Perl 5.6.1
+
+=back
+
+=head1 Choosing a Distribution
+
+When you download Krang you must choose a distribution that matches
+your operating system and version of Perl.  If you don't know what
+version of Perl you have, run this command on your command-line:
+
+  perl -MConfig -e 'printf "perl%d.%d.%d-%s",
+                    (map { ord($_) } split("", $^V, 3)), $Config{archname}'
+
+This will print something like:
+
+  perl5.6.1-i686-linux
+
+Using this information, if you wanted to install Krang 1.013 on Redhat
+7.3 you would download:
+
+  krang-1.013-Redhat7_3-perl5.6.1-i686-linux.tar.gz
+
+Krang also has a special source distribution with F<-src> instead of a
+platform description (ex: F<krang-1.013-src.tar.gz>).  You can
+download this release and attempt to build Krang from source.  Of
+course, this will require porting work if Krang doesn't support your
+platform.  
+
+=head1 Installation
+
+Once you've downloaded Krang, un-tar it and enter the directory:
+
+  tar zxvf krang-1.013-Redhat7_3-perl5.6.1-i686-linux.tar.gz
+  cd krang-1.013-Redhat7_3-perl5.6.1-i686-linux
+
+To install, run bin/krang_install as root, providing options
+describing how to setup Krang:
+
   # ./bin/krang_install \
          --HostName             $HostName            \
          --IPAddress            $IPAddress           \
@@ -17,61 +76,72 @@ To install, do the following as root:
          --InstanceHostName     $InstanceHostName    \
          --InstanceElementSet   $InstanceElementSet  
 
+These options are described below.
 
-=head1 Install Worksheet
+=head2 Required Variables
 
 Before you install you must gather the following information.  The
 following variables should be replaced in example shell commands with
 the appropriate values.
 
-
-
-=head2 Required Variables
-
-
 =over 4
 
 =item HostName
 
-Host name used for CMS Apache virtual host (e.g., "cms23.thepirtgroup.com").
-
+Host name used for Krang's main Apache virtual host (e.g.,
+"cms23.foo.com").  This is the master host which provides a list of
+all configured Krang instances.  Often this is the hostname of the
+machine itself, although systems with multiple Krang installations
+must choose different HostNames for each.
 
 =item IPAddress
 
-IP address used for CMS Apache server and FTP server.
+IP address used for the Krang Apache server and FTP server.  You'll
+need to arrange DNS to point this IPAddress at HostName.
 
 
 =item AdminPassword
 
-Password assigned to the "admin" CMS user (e.g., "shredder").
+Password assigned to the "admin" Krang user (e.g., "shredder").  This
+is the password you'll provide when you first log-in to the Krang
+system.
 
 
 =item DBUser
 
-Name of MySQL user which is used by this CMS instance (e.g., "motortrend").
+Name of MySQL user which is used by this CMS installation (e.g.,
+"krangdb").  This user will be created if it does not exist.
 
 
 
 =item DBPass
 
-MySQL user password which is used by this CMS instance (e.g., "xyzzy").
+MySQL user password which is used by this Krang installation (e.g.,
+"xyzzy").  If the MySQL user already exists this must be the correct
+password for the user.
 
 
 
 =item InstanceDBName
 
-Name of MySQL database which is used by this CMS instance (e.g., "motortrend").
-
+Krang can contain multiple instances, but just one is setup by
+C<krang_install>.  This parameter names that database.  Typically this
+will be the name of your first site, eg. "coolmagazine1".
 
 
 =item InstanceHostName
 
-Host name of CMS virtual Apache server (e.g., "cms.motortrend.com")
+Host name for the virtual host connected directly to the instance
+powered by InstanceDBName, typically something like
+"cms.coolmagazine1.com".  You'll need to arrange DNS to point
+IPAddress at InstanceHostName.
 
 
 =item InstanceElementSet
 
-Name of element set used by this CMS instance (e.g., "Flex").
+Name of element set used by this instance.  Possible values are
+directories under the F<element_lib> directory.  If you're not ready
+to choose an element set yet, just use "Default".
 
 =back
 
@@ -80,29 +150,37 @@ Name of element set used by this CMS instance (e.g., "Flex").
 
 =head2 Optional Variables
 
+Other variables may be required, depending on your installation needs:
+
 =over 4
 
 =item MySQLRootPassword
 
 Defaults to "" (none).  The password for the MySQL user "root" who is
-assumed to exist, and to have full access to MySQL.
+assumed to exist, and to have full access to MySQL.  If the "root"
+user doesn't exist or has restricted access you must change your MySQL
+configuration before installing Krang.
 
 
 =item InstallPath
 
-Defaults to "/usr/local/krang".  Directory into which Krang should be installed.
+Defaults to "/usr/local/krang".  Directory into which Krang should be
+installed.
 
 
 =item KrangUser
 
-Defaults to "krang".  UNIX user for process ownership (Apache, etc.), file ownership and
-install location.
+Defaults to "krang".  UNIX user for process ownership (Apache, etc.),
+file ownership and install location.  This user will be created if it
+does not exist.
 
 
 =item KrangGroup
 
-Defaults to "krang".  UNIX group for process ownership (Apache, etc.), file ownership and
-install location.
+Defaults to "krang".  UNIX group for process ownership (Apache, etc.),
+file ownership and install location.  This group will be created if it
+does not exist.
+
 
 
 =item FTPPort
@@ -113,13 +191,13 @@ Defaults to 21.  Port on which FTP server should run.
 =item ApachePort
 
 
-Defaults to 80.  Port on which CMS Apache server should run.
+Defaults to 80.  Port on which the Apache server should run.
 
 
 =item SMTPServer
 
 Defaults to localhost (127.0.0.1).  Address of SMTP mail server used
-by Krang for sending email.
+by Krang for sending email alerts.
 
 
 =item InstanceDisplayName
@@ -131,14 +209,13 @@ the CMS interface for informational purposes.
 
 This option provides an addon which will be installed with Krang.
 Krang addons can provide element sets, libraries and other services.
-You can specify multiple addons to install.
+You can specify multiple addons to install by repeating this option.
 
 =back
 
 
 
 =head2 Some definitions
-
 
 =over 4
 
@@ -152,9 +229,9 @@ outside of development.  A single installation may have multiple
 
 =item Instance
 
-A particular CMS database and element set.  Multiple instances may
-exist within a particular Krang installation.  A single instance may
-have multiple "Sites".
+A particular database, host name and element set within Krang.
+Multiple instances may exist within a particular Krang installation.
+A single instance may have multiple "Sites".
 
 
 =item Site
