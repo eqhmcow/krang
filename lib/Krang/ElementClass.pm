@@ -1037,6 +1037,15 @@ sub _build_contrib_loop {
             $contribs{$cid}{bio}        = $contrib->bio();
             $contribs{$cid}{url}        = $contrib->url();
             $contribs{$cid}{full_name}  = $contrib->full_name();
+
+            my $media = $contrib->image();
+            if (defined($media)) {
+                if ($publisher->is_preview) {
+                    $contribs{$cid}{image_url} = $media->preview_url();
+                } elsif ($publisher->is_publish) {
+                    $contribs{$cid}{image_url} = $media->url();
+                }
+            }
         }
         # add the selected contributor type to the contrib_type_loop
         my $contrib_type_id = $contrib->selected_contrib_type();

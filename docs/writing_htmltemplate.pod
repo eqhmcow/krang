@@ -556,6 +556,10 @@ The contributor's biography.
 
 The url to the contributor's website.
 
+=item url
+
+The url of the image associated with this contributor.
+
 =item contrib_type_loop
 
 This loop corresponds to the the various tasks a contributor may have performed (e.g. Photographer, Illustrator).  The loop exists because a single contributor may have performed multiple tasks for a given story.
@@ -605,6 +609,12 @@ For the purposes of this example, we have three contributors - two writers, Feli
               <tmpl_if __last__>)</tmpl_if>
            </tmpl_loop>
         </tmpl_if>
+
+        <!-- Image -->
+        <tmpl_if image_url>
+              <img src=<tmpl_var image_url>>
+        </tmpl_if>
+
      </tmpl_loop>
   </tmpl_if>
 
@@ -646,6 +656,12 @@ B<Page.tmpl>
               <tmpl_if __last__>)</tmpl_if>
            </tmpl_loop>
         </tmpl_if>
+
+        <!-- Image -->
+        <tmpl_if image_url>
+              <img src=<tmpl_var image_url>>
+        </tmpl_if>
+
      </tmpl_loop>
   </tmpl_if>
 

@@ -258,8 +258,14 @@ sub test_contributors {
     my %contributor = build_contrib_hash();
     my %contrib_types = Krang::Pref->get('contrib_type');
 
+    $publisher->_mode_is_publish();
+
     my $story   = create_story(\@categories);
     my $contrib = create_contributor(%contributor);
+    my $media   = create_media();
+
+    $contrib->image($media);
+    $contrib->save();
 
     $story->contribs({contrib_id => $contrib->contrib_id, contrib_type_id => 1});
 
@@ -272,7 +278,8 @@ sub test_contributors {
 
     foreach my $schmoe (@$contributors) {
         foreach (keys %contributor) {
-            ok($schmoe->{$_} eq $contributor{$_}, 'Krang::ElementClass->_build_contrib_loop()');
+            next if ($_ eq 'image_url');
+            ok($schmoe->{$_} eq $contributor{$_}, "Krang::ElementClass->_build_contrib_loop() -- $_");
         }
         ok($schmoe->{contrib_id} eq $contrib->contrib_id(), 'Krang::ElementClass->_build_contrib_loop()');
 
@@ -282,11 +289,17 @@ sub test_contributors {
                 $contrib_types{$gig->{contrib_type_id}} eq $gig->{contrib_type_name}),
                'Krang::ElementClass->_build_contrib_loop()');
         }
+
+        # test image
+        ok($media->url eq $schmoe->{image_url}, 'Krang::ElementClass->_build_contrib_loop() -- image_url');
+
     }
 
-    $story->delete();
-    $contrib->delete();
-
+    END {
+        $story->delete();
+        $contrib->delete();
+        $media->delete();
+    };
 }
 
 
