@@ -8,6 +8,21 @@ This document contains a list of changes for each release of Krang.
 
 Added support for Fedora Core 1. [Perrin Harkins]
 
+
+=item *
+
+Moved Krang user/group creation from krang_install to Krang::Platform.
+This can now be overridden on a platform-by-platform basis. [Peter]
+
+=item *
+
+Created Krang::Platform->find_bin().  Use of this sub now needs to be
+propegated throughout krang_install along with Krang::Platform and its
+derivatives - it searches $PATH for the full path for the executable
+you're trying to run. [Peter]
+
+
+
 =item *
 
 Moved the final installation message out of bin/krang_install, created

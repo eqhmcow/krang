@@ -285,37 +285,49 @@ sub check_libpng {
 }
 
 
-#
-# internal method to actually search for libraries.
-# takes 'so' and 'h' args for the files to look for.
-# takes 'includes' and 'lib_files' as the directories to search for.
-#
+=back
 
-sub _check_libs {
+=item C<< $bin = find_bin(bin => $bin_name) >>
+
+If $ENV{PATH} exists, searches $ENV{PATH} for $bin_name, returning the
+full path to the desired executable.
+
+If $ENV{PATH} does not contain /sbin or /usr/sbin, it will search those as well.
+
+will die() with error if it cannot find the desired executable.
+
+=cut
+
+sub find_bin {
 
     my ($pkg, %args) = @_;
-    my $mode = $args{mode};
 
-    my $name = $args{name};
-    my $so   = $args{so};
-    my $h    = $args{h};
+    my $bin = $args{bin};
+    my $dir;
 
-    my $re = qr/^$so/;
+    my %additional_paths = (catdir('/', 'sbin') => 1,
+                            catdir('/', 'usr', 'sbin') => 1);
 
-    die "\n\n$name is missing from your system.\n".
-      "This library is required by Krang.\n\n"
-        unless grep { /^$re/ } @{$args{lib_files}};
-    die <<END unless $mode eq 'install' or grep { -e catfile($_, $h) } @{$args{includes}};
+    my @PATH = split(':', ($ENV{PATH} || ""));
 
-The header file for $name, '$h', is missing from your system.
-This file is needed to compile the Imager module which uses $name.
+    foreach $dir (@PATH) {
+        delete($additional_paths{$dir}) if ($additional_paths{$dir});
+    }
 
-END
+    push @PATH, keys(%additional_paths);
 
+    foreach $dir (@PATH) {
+
+        my $exec = catfile($dir, $bin);
+
+        return $exec if (-e $exec);
+    }
+
+    my $path = join ':', @PATH;
+
+    die "Cannot find required utility '$bin' in PATH=$path\n\n";
 
 }
-
-=back
 
 
 =item C<< check_ip(ip => $ip) >>
@@ -342,6 +354,156 @@ sub check_ip {
         return 0;
     }
     return 1;
+}
+
+
+
+=item C<< $gid = create_krang_group(options => \%options) >>
+
+Called to create a Krang Group, as specified by the command-line
+argument to bin/krang_install (--KrangGroup).  Takes the %options hash
+built by krang_install as the one argument.
+
+The default version of this sub works for GNU/Linux.  Other platforms
+(e.g. BSD-like) will need to override this method to work with their
+platforms' requirements for user creation.
+
+The sub will check to see if --KrangGroup exists, and create it if it
+does not.  It will return the group ID (gid) in either case.
+
+This sub will die with an error if it cannot create --KrangGroup.
+
+=cut
+
+sub create_krang_group {
+    my ($pkg, %args) = @_;
+
+    my %options = %{$args{options}};
+
+    my $groupadd_bin = $pkg->find_bin(bin => 'groupadd');
+
+    my $KrangGroup   = $options{KrangGroup};
+
+    print "Creating UNIX group ('$KrangGroup')\n";
+    my ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+
+    unless (defined($gid)) {
+        my $groupadd = $groupadd_bin;
+        $groupadd .= " $KrangGroup";
+        system($groupadd) && die("Can't add group: $!");
+
+        ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+        print "  Group created (gid $gid).\n";
+
+    } else {
+        print "  Group already exists (gid $gid).\n";
+    }
+
+    return $gid;
+}
+
+
+
+=item C<< $uid = create_krang_user(group_id => $gid, options => \%options) >>
+
+Called to create a Krang User, as specified by the command-line
+argument to bin/krang_install (--KrangUser).  Takes the %options hash
+built by krang_install as the one argument.
+
+The default version of this sub works for GNU/Linux.  Other platforms
+(e.g. BSD-like) will need to override this method to work with their
+platforms' requirements for user creation.
+
+The sub will check to see if --KrangUser exists, and create it if it
+does not.  If the user is created, the default group will be
+--KrangGroup.  If the user already exists, it will be made a member of
+the --KrangGroup group.
+
+The sub will return the user ID (uid) if successful.
+
+This sub will die with an error if it cannot create --KrangUser.
+
+=cut
+
+sub create_krang_user {
+
+    my ($pkg, %args) = @_;
+
+    my %options = %{$args{options}};
+
+    my $useradd_bin = $pkg->find_bin(bin => 'useradd');
+
+    my $KrangUser   = $options{KrangUser};
+    my $KrangGroup  = $options{KrangGroup};
+    my $InstallPath = $options{InstallPath};
+
+    # Get KrangGroup info.
+    my ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+
+    # Create user, if necessary
+    print "Creating UNIX user ('$KrangUser')\n";
+    my ($uname,$upasswd,$uid,$ugid,$uquota,$ucomment,$ugcos,$udir,$ushell,$uexpire) = getpwnam($KrangUser);
+
+    unless (defined($uid)) {
+        my $useradd = $useradd_bin;
+
+        $useradd .= " -d $InstallPath -M $KrangUser -g $gid";
+        system($useradd) && die("Can't add user: $!");
+
+        # Update user data
+        ($uname,$upasswd,$uid,$ugid,$uquota,$ucomment,$ugcos,$udir,$ushell,$uexpire) = getpwnam($KrangUser);
+        print "  User created (uid $uid).\n";
+    } else {
+        print "  User already exists (uid $uid).\n";
+    }
+
+    # Sanity check - make sure the user is a member of the group.
+    ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+
+    my @group_members = ( split(/\s+/, $gmembers) );
+    my $user_is_group_member = ( grep { $_ eq $KrangUser } @group_members );
+
+    unless (($ugid eq $gid) or $user_is_group_member) {
+        $pkg->krang_usermod(options => \%options);
+    }
+
+    return $uid;
+
+}
+
+
+=item C<< krang_usermod(options => \%options) >>
+
+Called when --KrangUser is not a member of --KrangGroup.  This sub
+adds --KrangUser to --KrangGroup.
+
+The default version of this sub works for GNU/Linux.  Other platforms
+(e.g. BSD-like) will need to override this method to work with their
+platforms' requirements for user creation.
+
+This sub will die with an error if it cannot make --KrangUser a member
+of --KrangGroup.
+
+=cut
+
+
+sub krang_usermod {
+    my ($pkg, %args) = @_;
+
+    my %options = %{$args{options}};
+
+    my $KrangUser  = $options{KrangUser};
+    my $KrangGroup = $options{KrangGroup};
+
+    print "  Adding user $KrangUser to group $KrangGroup.\n";
+
+    my $usermod = $pkg->find_bin(bin => 'usermod');
+
+    $usermod .= " -G $KrangGroup $KrangUser";
+
+    system($usermod) && die("Can't add user $KrangUser to group $KrangGroup: $!");
+    print "  User added to group.\n";
+
 }
 
 =item C<< build_perl_module(name => $name) >>
@@ -636,6 +798,40 @@ sub build_params {
 =back
 
 =cut
+
+
+
+#
+# internal method to actually search for libraries.
+# takes 'so' and 'h' args for the files to look for.
+# takes 'includes' and 'lib_files' as the directories to search for.
+#
+
+sub _check_libs {
+
+    my ($pkg, %args) = @_;
+    my $mode = $args{mode};
+
+    my $name = $args{name};
+    my $so   = $args{so};
+    my $h    = $args{h};
+
+    my $re = qr/^$so/;
+
+    die "\n\n$name is missing from your system.\n".
+      "This library is required by Krang.\n\n"
+        unless grep { /^$re/ } @{$args{lib_files}};
+    die <<END unless $mode eq 'install' or grep { -e catfile($_, $h) } @{$args{includes}};
+
+The header file for $name, '$h', is missing from your system.
+This file is needed to compile the Imager module which uses $name.
+
+END
+
+
+}
+
+
 
 sub _load_expect {
     # load Expect - don't load at compile time because this module is

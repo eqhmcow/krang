@@ -6,9 +6,6 @@ use IO::Socket;
 # Path to pre-req binaries
 use constant MYSQL_BIN      => 'mysql';
 use constant PERL_BIN       => $^X;
-use constant GROUPADD_BIN   => 'groupadd';
-use constant USERADD_BIN    => 'useradd';
-use constant USERMOD_BIN    => 'usermod';
 use constant COPY_BIN       => 'cp';
 use constant CHOWN_BIN      => 'chown';
 use constant CHMOD_BIN      => 'chmod';
@@ -143,7 +140,6 @@ Refer to F<docs/ops_install.pod>.
 =cut
 
 
-
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
 use FindBin qw($RealBin);
 use Config;
@@ -216,7 +212,7 @@ sub do_install {
 
     # enforce requirements
     enforce_requirements();
-    
+
     # Do installation
     check_prereqs();
 
@@ -364,7 +360,7 @@ sub check_prereqs {
              exit_error("Will not proceed due to existing krang install.") unless prompt("y", "InstallPath '$InstallPath' already exists and seems to contain\nan existing Krang instance.\nThis program must totally and permanently\nremove this krang installation in order to proceed.\n\nIs this what you really want to do?", "y/n", "n");
              {
                  local $ENV{KRANG_ROOT} = $InstallPath;
-                 system(catfile($InstallPath,'bin','krang_uninstall').' --no_prompt --verbose');
+                 system(catfile($InstallPath,'bin','krang_uninstall').' --no_prompt --verbose') && die("Unable to uninstall existing Krang Instance at $InstallPath.  Please remove this directory manually before running krang_install again.\n\n");
              }
          } else { 
              exit_error("InstallPath '$InstallPath' already exists and does not appear to belong to an existing krang instance.  Cannot continue.");
@@ -473,52 +469,13 @@ sub create_mysql_user {
 
 
 sub create_unix_user_group {
-    my $KrangUser = $options{'KrangUser'};
-    my $KrangGroup = $options{'KrangGroup'};
-    my $InstallPath = $options{InstallPath};
 
-    # Create user, if necessary
-    print "Creating UNIX user ('$KrangUser')\n";
-    my ($uname,$upasswd,$uid,$ugid,$uquota,$ucomment,$ugcos,$udir,$ushell,$uexpire) = getpwnam($KrangUser);
-    unless (defined($uid)) {
-        my $useradd = USERADD_BIN;
-        $useradd .= " -d $InstallPath -M $KrangUser";
-        system($useradd) && die("Can't add user: $!");
+    our $PLATFORM;
 
-        # Update user data
-        ($uname,$upasswd,$uid,$ugid,$uquota,$ucomment,$ugcos,$udir,$ushell,$uexpire) = getpwnam($KrangUser);
-        print "  User created (uid $uid).\n";
-    } else {
-        print "  User already exists (uid $uid).\n";
-    }
+    my $gid = $PLATFORM->create_krang_group(options => \%options);
 
-    # Create group, if necessary
-    print "Creating UNIX group ('$KrangGroup')\n";
-    my ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
-    unless (defined($gid)) {
-        my $groupadd = GROUPADD_BIN;
-        $groupadd .= " $KrangGroup";
-        system($groupadd) && die("Can't add group: $!");
+    my $uid = $PLATFORM->create_krang_user(group_id => $gid, options => \%options);
 
-        # Update group data for later
-        ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
-        print "  Group created (gid $gid).\n";
-    } else {
-        print "  Group already exists (gid $gid).\n";
-    }
-
-    # Add user to group, if user not already a member
-    print "Adding user $KrangUser to group $KrangGroup\n";
-    my @group_members = ( split(/\s+/, $gmembers) );
-    my $user_is_group_member = ( grep { $_ eq $KrangUser } @group_members );
-    unless (($ugid eq $gid) or $user_is_group_member) {
-        my $usermod = USERMOD_BIN;
-        $usermod .= " -G $KrangGroup $KrangUser";
-        system($usermod) && die("Can't add user $KrangUser to group $KrangGroup: $!");
-        print "  User added to group.\n";
-    } else {
-        print "  User already in group.\n";
-    }
 }
 
 sub install_krang {
