@@ -1,22 +1,10 @@
 <tmpl_include header.tmpl>
-
-<script language=javascript>
- function checkall(checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
-  }
-
-</script>
-
+<tmpl_unless bug_added>
 <div class=dark-bar>Submit Krang Bug</div>
 <form name="bug_form" method="post">
 <table cellspacing="0" width="100%">
 <tr class="form-cell">
-<td class="form-cell"><b> Summary</b> </td><td class="form-cell"><input type="text" size="60" name="summary" id="short_desc"><p>
+<td class="form-cell">*<b>Summary</b> </td><td class="form-cell"><input type="text" size="60" name="summary" value="<tmpl_var escape=HTML summary>" <tmpl_if no_summary>class="invalid"</tmpl_if>><p>
         A sentence which summarizes the problem.
         Please be descriptive and use lots of keywords.
       </p> 
@@ -35,10 +23,10 @@
 </tr>
 <tr>
     <td class="form-cell">
-      <b>Description</b> 
+      *<b>Description</b> 
     </td>
     <td class="form-cell">
-<textarea rows="6" cols="60" name="description"
+<textarea rows="6" cols="60" name="description" value="<tmpl_var escape=HTML description>" <tmpl_if no_description>class="invalid"</tmpl_if>
                 wrap="hard"></textarea>
       <p>
         Expand on the Summary. Please be
@@ -94,9 +82,9 @@
     </td>
     <td class="form-cell">
 <textarea rows="4" cols="60" name="steps" wrap="hard">
-1.
+<tmpl_if steps><tmpl_var escape=HTML steps><tmpl_else>1.
 2.
-3.
+3.</tmpl_if>
 </textarea>
       <p>
         Describe how to reproduce the problem, step by
@@ -112,7 +100,7 @@
     </td>
 <td class="form-cell">
 <textarea rows="4" cols="60" name="actual_results"
-                wrap="hard"></textarea>
+                wrap="hard"><tmpl_var escape=HTML actual_results></textarea>
       <p>
         What happened after you performed the steps above?
       </p>  
@@ -125,7 +113,7 @@
     </td>
     <td class="form-cell">
 <textarea rows="4" cols="60" name="expected_results"
-                wrap="hard"></textarea>
+                wrap="hard"><tmpl_var escape=HTML expected_results></textarea>
       <p>
 
         What should have Krang done instead?
@@ -171,5 +159,5 @@
   <input type=submit value="Submit Bug">
 </div>
 </form>
-
+</tmpl_unless>
 <tmpl_include footer.tmpl>

@@ -4,10 +4,14 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use Data::Dumper;
+use File::Path;
+use File::Spec::Functions qw(catdir catfile);
+use File::Temp qw/ tempdir /;
 use WWW::Bugzilla;
 use Krang::Message qw(add_message);
 use Krang::Session qw(%session);
-use Krang::Conf qw(BugzillaServer BugzillaEmail BugzillaPassword BugzillaComponent);
+use Krang::Conf qw(KrangRoot BugzillaServer BugzillaEmail BugzillaPassword BugzillaComponent);
 
 =head1 NAME
 
@@ -57,9 +61,10 @@ Displays a user-editable bug form.
 
 sub edit {
     my $self = shift;
+    my $error = shift || '';
     my $q = $self->query;
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
-
+    $template->param( $error => 1 ) if $error;
     return $template->output; 
 }
 
@@ -72,6 +77,14 @@ Commits bug to the bugzilla server.
 sub commit {
     my $self = shift;
     my $q = $self->query();
+
+    if (not $q->param('summary')) {
+        add_message('no_summary');
+        return $self->edit('no_summary');
+    } elsif (not $q->param('description')) {
+        add_message('no_description');
+        return $self->edit('no_description');
+    }
 
     my $bz = WWW::Bugzilla->new(    server => BugzillaServer,
                                     email => BugzillaEmail,
@@ -90,9 +103,23 @@ sub commit {
     $bz->description($description);    
     $bz->severity($q->param('bug_severity'));
     
-    $bz->commit();
+    my $bug_num = $bz->commit();
+
+    # create tempfile for storage of session dump
+    my $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
+    my $temp_file = catfile($path, 'session_dump.txt');
+    open (FILE, ">$temp_file") || croak(__PACKAGE__."->commit() - Unable to open $temp_file for writing");
+    print FILE Data::Dumper->Dump([\%session], ['session']);    
+    close FILE;
  
-    return $self->edit();
+    $bz->add_attachment(    filepath => $temp_file,
+                            description => 'Session Dump Text File' );
+
+    # remove tempfile and path
+    rmtree($path);
+
+    add_message('bug_added', bug_num => $bug_num); 
+    return $self->edit('bug_added');
 }
 
 =back
