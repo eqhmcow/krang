@@ -4,14 +4,13 @@ use warnings;
 
 use base 'Krang::ElementClass';
 
-use Krang::MethodMaker
-  get_set => [ qw( allow_upload show_thumbnail ) ];
+#use Krang::MethodMaker
+#  get_set => [ qw( ) ];
 
 sub new {
     my $pkg = shift;
-    my %args = ( allow_upload   => 1,
-                 show_thumbnail => 1,
-                 @_
+    my %args = ( 
+                @_
                );
     
     return $pkg->SUPER::new(%args);
@@ -22,16 +21,29 @@ sub input_form {
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
-    return scalar $query->button(-name    => "find_story_$param",
-                                 -value   => "Find Story",
-                                 -onClick => "find_story('$param')",
-                                );
+        my $html = "";
+
+    # include thumbnail if media is available
+    my $story_id = $element->data();
+    if ($story_id) {
+        my ($story) = Krang::Story->find(story_id => $story_id);
+        $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .          
+          qq{Title: "} . $story->title . qq{"<br>} . 
+          qq{URL: <a href="#">} . $story->url . qq{</a></div>};
+    }
+
+    
+    $html .= scalar $query->button(-name    => "find_story_$param",
+                                   -value   => "Find Story",
+                                   -onClick => "find_story('$param')",
+                                  );
+    return $html;
 }
 
 
 =head1 NAME
 
-Krang::ElementClass::Textarea - textarea element class
+Krang::ElementClass::StoryLink - story link element class
 
 =head1 SYNOPSIS
 
@@ -39,7 +51,7 @@ Krang::ElementClass::Textarea - textarea element class
                                                 
 =head1 DESCRIPTION
 
-Provides an element to link to story.
+Provides an element to link to a story.
 
 =head1 INTERFACE
 
