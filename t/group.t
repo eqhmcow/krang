@@ -4,6 +4,9 @@ use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::Script;
+use Krang::Category;
+use Krang::Desk;
+
 
 BEGIN { use_ok('Krang::Group') }
 
@@ -18,13 +21,28 @@ ok(ref($group), 'Create a new group object w/o params');
 isa_ok($group, "Krang::Group");
 
 
+# Verify that new group has inherited existing root categories and set them to "edit" by default
+my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
+my $group_categories = $group->categories();
+foreach my $cat (@root_cats) {
+    is($group_categories->{$cat}, "edit", "Root category '$cat' defaults to 'edit'");
+}
+
+
+# Verify that new group has inherited existing desks and set them to "edit" by default
+my @all_desks = ();   # NOT YET IMPLEMENTED -- Krang::Desk->find(ids_only=>1);
+my $group_desks = $group->desks();
+foreach my $desk (@all_desks) {
+    is($group_desks->{$desk}, "edit", "Desk '$desk' defaults to 'edit'");
+}
+
+
 # Create a new group object with params
 my %test_params = ( name => 'Car Editors',
-                    categories    => { 1 => 'read-only', 
-                                       2 => 'edit', 
-                                       23 => 'hide' },
-                    desks         => { },
-                    assets  => { },
+                    categories          => { 1 => 'read-only', 
+                                             2 => 'edit', 
+                                             23 => 'hide' },
+                    desks               => { },
                     may_publish         => 1,
                     admin_users         => 1,
                     admin_users_limited => 1,
@@ -34,7 +52,10 @@ my %test_params = ( name => 'Car Editors',
                     admin_categories    => 1,
                     admin_jobs          => 1,
                     admin_desks         => 1,
-                    admin_prefs         => 1 );
+                    admin_prefs         => 1,
+                    asset_story         => 'edit',
+                    asset_media         => 'read-only',
+                    asset_template      => 'hide' );
 
 $group = 0;
 eval { $group = Krang::Group->new(%test_params) };
@@ -60,7 +81,10 @@ my @scalar_params = qw( name
                         admin_categories
                         admin_jobs
                         admin_desks
-                        admin_prefs );
+                        admin_prefs
+                        asset_story
+                        asset_media
+                        asset_template );
 
 for (@scalar_params) {
     my $val = "Test $_";
@@ -70,8 +94,7 @@ for (@scalar_params) {
 
 # Test hash methods
 my @hash_params = qw( categories
-                      desks
-                      assets );
+                      desks );
 
 for (@hash_params) {
     my $val = "Test $_";
@@ -106,6 +129,10 @@ like($@, qr(group_ids array ref may only contain numeric IDs), 'Test bad array r
 my $count_group_ids = Krang::Group->find(count=>1, group_ids=>[1, 2, 505]);
 is($count_group_ids, 2, "Test find(group_ids=>[])");
 
+
+# Test find(group_id=>1)
+eval { ($group) = Krang::Group->find(group_id=>1) };
+die ($@) if ($@);
 
 
 ##  Debugging output

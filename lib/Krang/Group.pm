@@ -19,8 +19,9 @@ Krang::Group - Interface to manage Krang permissions
                                  categories => { 1 => 'read-only', 
                                                  2 => 'edit', 
                                                  23 => 'hide' },
-                                 desks      => {  NOT YET IMPLEMENTED  },
-                                 assets     => {  NOT YET IMPLEMENTED  },
+                                 desks      => { 1 => 'read-only', 
+                                                 2 => 'edit', 
+                                                 23 => 'hide' },
                                  may_publish         => 1,
                                  admin_users         => 1,
                                  admin_users_limited => 1,
@@ -30,7 +31,10 @@ Krang::Group - Interface to manage Krang permissions
                                  admin_categories    => 1,
                                  admin_jobs          => 1,
                                  admin_desks         => 1,
-                                 admin_prefs         => 1 );
+                                 admin_prefs         => 1,
+                                 asset_story         => 'edit',
+                                 asset_media         => 'read-only',
+                                 asset_template      => 'hide' );
 
 
   # Save group
@@ -69,9 +73,11 @@ Krang::Group - Interface to manage Krang permissions
   my $admin_jobs       = $group->admin_jobs();
   my $admin_desks      = $group->admin_desks();
   my $admin_prefs      = $group->admin_prefs();
+  my $asset_story      = $group->asset_story();
+  my $asset_media      = $group->asset_media();
+  my $asset_template   = $group->asset_template();
   my %categories       = $group->categories();
   my %desks            = $group->desks();
-  my %assets     = $group->assets();
 
 
   # Category permissions cache management
@@ -101,7 +107,8 @@ use Carp;
 use Krang::DB qw(dbh);
 use Krang::Category;
 use Krang::Log qw(debug);
-
+use Krang::Desk;
+use Krang::Category;
 
 # Database fields in table permission_group, asidde from group_id
 use constant FIELDS => qw( name
@@ -114,7 +121,10 @@ use constant FIELDS => qw( name
                            admin_categories
                            admin_jobs
                            admin_desks
-                           admin_prefs );
+                           admin_prefs
+                           asset_story
+                           asset_media
+                           asset_template );
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker ( new_with_init => 'new',
@@ -122,8 +132,7 @@ use Krang::MethodMaker ( new_with_init => 'new',
                          get => [ "group_id" ],
                          get_set => [ FIELDS ],
                          hash => [ qw( categories
-                                       desks 
-                                       assets ) ] );
+                                       desks ) ] );
 
 
 =item new()
@@ -134,20 +143,38 @@ This method returns a new Krang::Group object.  You may pass a hash
 into new() containing initial values for the object properties.  These
 properties are:
 
-  * name (scalar)  - Name of this group
-  * may_edit_user (scalar)  - "1" or "0"
-  * may_publish (scalar)  - "1" or "0"
+  * name               - Name of this group
+  * asset_story        - Story asset security level
+  * asset_media        - Media asset security level
+  * asset_template     - Template asset security level
   * categories (hash)  - Map category ID to security level
-  * desks (hash)  - Map desk ID to security level
-  * assets (hash)  - Asset ID to security level
+  * desks (hash)       - Map desk ID to security level
 
 Security levels may be "edit", "read-only", or "hide".
+
+In addition to these properties, the following properties may be
+specified using Boolean (1 or 0) values:
+
+  * may_publish
+  * admin_users
+  * admin_users_limited
+  * admin_groups
+  * admin_contribs
+  * admin_sites
+  * admin_categories
+  * admin_jobs
+  * admin_desks
+  * admin_prefs
 
 =cut
 
 sub init {
     my $self = shift;
     my %args = ( @_ );
+
+    # Get list of root categoies and all desks, for permissions
+    my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
+    my @all_desks = ();   # NOT YET IMPLEMENTED -- Krang::Desk->find(ids_only=>1)
 
     # Set up default values
     my %defaults = (
@@ -162,9 +189,11 @@ sub init {
                     admin_jobs          => 0,
                     admin_desks         => 0,
                     admin_prefs         => 0,
-                    categories          => {},
-                    desks               => {},
-                    assets              => {},
+                    asset_story         => 'edit',
+                    asset_media         => 'edit',
+                    asset_template      => 'edit',
+                    categories          => { map { $_ => "edit" } @root_cats },
+                    desks               => { map { $_ => "edit" } @all_desks },
                    );
 
     # finish the object
@@ -423,11 +452,30 @@ sub new_from_db {
     my $pkg = shift;
     my $group_data = shift;
 
+    my $dbh = dbh();
+    my $group_id = $group_data->{group_id};
+
     # Load categories hash (category_id => security level)
+    my $cat_sql = "select category_id, permission_type from category_group_permission where group_id=?";
+    my $cat_sth = $dbh->prepare($cat_sql);
+    $cat_sth->execute($group_id) || die ($cat_sth->errstr);
+    my %categories = ();
+    while (my ($category_id, $permission_type) = $cat_sth->fetchrow_array()) {
+        $categories{$category_id} = $permission_type;
+    }
+    $cat_sth->finish();
+    $group_data->{categories} = \%categories;
 
     # Load desks (desk_id => security level)
-
-    # Load assets (asset_id => security level)
+    my $desk_sql = "select desk_id, permission_type from desk_group_permission where group_id=?";
+    my $desk_sth = $dbh->prepare($desk_sql);
+    $desk_sth->execute($group_id) || die ($desk_sth->errstr);
+    my %desks = ();
+    while (my ($desk_id, $permission_type) = $desk_sth->fetchrow_array()) {
+        $desks{$desk_id} = $permission_type;
+    }
+    $desk_sth->finish();
+    $group_data->{desks} = \%desks;
 
     # Bless into object and return
     bless ($group_data, $pkg);
