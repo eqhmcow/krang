@@ -59,7 +59,7 @@ Krang::Site - a means access to information on sites
 =head1 DESCRIPTION
 
 This module serves as a means of adding, deleting, accessing site objects for a
-given Krang instance.  Template objects, at present, do little other than act
+given Krang instance.  Site objects, at present, do little other than act
 as a means to determine the urls and path associated with a site.
 
 =cut
@@ -261,7 +261,7 @@ Result set is sorted in ascending order.
 
 =item * count
 
-If this argument is specified, the method will return a count of the templates
+If this argument is specified, the method will return a count of the sites
 matching the other search criteria provided.
 
 =item * descend
@@ -271,12 +271,12 @@ specified.
 
 =item * ids_only
 
-Returns only template ids for the results found in the DB, not objects.
+Returns only site ids for the results found in the DB, not objects.
 
 =item * limit
 
-Specify this argument to determine the maximum amount of template object or
-template ids to be returned.
+Specify this argument to determine the maximum amount of site object or
+site ids to be returned.
 
 =item * offset
 
@@ -285,7 +285,7 @@ Sets the offset from the first row of the results to return.
 =item * order_by
 
 Specify the field by means of which the results will be sorted.  By default
-results are sorted with the 'template_id' field.
+results are sorted with the 'site_id' field.
 
 =back
 
@@ -328,7 +328,7 @@ sub find {
 
         push @invalid_cols, $arg unless exists $site_cols{$lookup_field};
 
-        if ($arg eq 'template_id' && ref $args{$arg} eq 'ARRAY') {
+        if ($arg eq 'site_id' && ref $args{$arg} eq 'ARRAY') {
             my $tmp = join(" OR ", map {"site_id = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
@@ -374,7 +374,7 @@ sub find {
         $sth->bind_columns(\( @$row{@{$sth->{NAME_lc}}} ));
     }
 
-    # construct template objects from results
+    # construct site objects from results
     while ($sth->fetchrow_arrayref()) {
         # if we just want count or ids
         if ($single_column) {
