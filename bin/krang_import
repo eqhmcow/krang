@@ -80,10 +80,48 @@ $@
 END
 }
 
-use Krang::Script;
-use Krang::Conf qw(KrangRoot ElementLibrary);
+# process options
 use Getopt::Long;
 use Pod::Usage;
+
+our ($help, $man, $list, $no_update, $verbose, $file);
+BEGIN {
+    $verbose = 0;
+    pod2usage(2) unless
+      GetOptions(help       => \$help,
+                 man        => \$man,
+                 'verbose+' => \$verbose,
+                 list       => \$list,
+                 'no-update'=> \$no_update,
+                );
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+    
+    # get input file
+    $file = shift(@ARGV);
+    pod2usage("Missing filename command-line parameter!\n")
+      unless $file;
+
+    # validate filename
+    die "Specified file '$file' does not exist."
+      unless -e $file;
+    die "Input filename must end in .kds or .kds.gz\n"
+      unless $file =~ /\.kds$/ or $file =~ /\.kds\.gz$/;
+
+    # make sure that's it
+    pod2usage("Unrecognized options to krang_export: '" . join(' ', @ARGV) . "'\n")
+      if @ARGV;
+
+
+    # open file for later processing.  this has to happen before
+    # Krang::Script loads and su's to KrangUser
+    open(SOURCE, '<', $file) or die "Unable to open '$file': $!";
+}
+
+
+
+use Krang::Script;
+use Krang::Conf qw(KrangRoot ElementLibrary);
 use Krang::DataSet;
 use Krang::Story;
 use Krang::Media;
@@ -95,34 +133,21 @@ use Krang::User;
 use Krang::ListGroup;
 use Krang::List;
 use Krang::ListItem;
+use File::Temp qw(tempfile);
+use File::Copy qw(copy);
 
-my ($help, $man, $list, $no_update);
-my $verbose = 0;
-pod2usage(2) unless
-  GetOptions(help       => \$help,
-             man        => \$man,
-             'verbose+' => \$verbose,
-             list       => \$list,
-             'no-update'=> \$no_update,
-            );
-pod2usage(1)             if $help;
-pod2usage(-verbose => 2) if $man;
+# copy file someplace Krang can open it
+my (undef, $tempfile) = tempfile(DIR => catdir(KrangRoot, 'tmp'),
+                               SUFFIX => 
+                               ($file =~ /\.gz$/ ? '.kds.gz' : '.kds'),
+                               CLEANUP => 1);
+copy(\*SOURCE, $tempfile) 
+  or die "Unable to copy '$file' to '$tempfile': $!";
+close SOURCE;
+print STDERR "Copied '$file' to '$tempfile'.\n" if $verbose > 1;
+$file = $tempfile;
 
-# get input file
-my $file = shift(@ARGV);
-pod2usage("Missing filename command-line parameter!\n")
-  unless $file;
-
-# validate filename
-die "Specified file '$file' does not exist."
-  unless -e $file;
-die "Input filename must end in .kds or .kds.gz\n"
-  unless $file =~ /\.kds$/ or $file =~ /\.kds\.gz$/;
-
-# make sure that's it
-pod2usage("Unrecognized options to krang_export: '" . join(' ', @ARGV) . "'\n")
-  if @ARGV;
-
+# open up the dataset
 my $set = Krang::DataSet->new(path            => $file, 
                               import_callback => \&import_callback);
 

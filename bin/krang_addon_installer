@@ -130,15 +130,15 @@ use Config::ApacheFormat;
 use File::Find qw(find);
 use Krang::AddOn;
 use Krang;
+use File::Copy qw(copy);
 
 # copy source file into someplace it can be read
-my ($fh, $tempfile) = tempfile(DIR => catdir(KrangRoot, 'tmp'),
+my (undef, $tempfile) = tempfile(DIR => catdir(KrangRoot, 'tmp'),
                                SUFFIX => 
                                ($source =~ /\.gz$/ ? '.tar.gz' : '.tar'),
                                CLEANUP => 1);
-while (<SOURCE>) { print $fh $_; }
-close SOURCE;
-close $fh;
+copy(\*SOURCE, $tempfile)
+  or die "Unable to copy '$source' to '$tempfile': $!";
 print STDERR "Copied '$source' to '$tempfile'.\n" if $verbose > 1;
 $source = $tempfile;
 
