@@ -785,7 +785,12 @@ sub search {
     my $self = shift;
     my $q = $self->query();
 
-    return $self->advanced_search() if ( not $q->param('rm') and ($session{'KRANG_PERSIST_Template_rm'} and ($session{'KRANG_PERSIST_Template_rm'} eq 'advanced_search')) );
+    return $self->advanced_search() if 
+      (not $q->param('rm') and
+       ($session{'KRANG_PERSIST_Template_rm'} and
+        ($session{'KRANG_PERSIST_Template_rm'} eq 'advanced_search')
+       )
+      );
  
     my $t = $self->load_tmpl("list_view.tmpl",
                              associate => $q,
@@ -794,7 +799,12 @@ sub search {
     $t->param(history_return_params =>
               $self->make_history_return_params(@history_param_list));
 
-    my $search_filter = defined($q->param('search_filter')) ? $q->param('search_filter') : $session{'KRANG_PERSIST_Template_search_filter'};
+    my $search_filter = defined($q->param('search_filter')) ?
+      $q->param('search_filter') :
+        $session{'KRANG_PERSIST_Template_search_filter'};
+
+    # ensure that $search_filter is at the very least defined.
+    $search_filter = '' unless ($search_filter);
 
     my $find_params = {simple_search => $search_filter, may_see=>1};
     my $persist_vars = {rm => 'search',
