@@ -74,6 +74,7 @@ sub setup {
                      save_and_leave_bulk_edit => 'save_and_leave_bulk_edit',
                      save_and_change_bulk_edit_sep => 'save_and_change_bulk_edit_sep',
                      save_and_find_story_link    => 'save_and_find_story_link',
+                     save_and_find_media_link    => 'save_and_find_media_link',
                     );
 
     $self->tmpl_path('Story/');
@@ -620,6 +621,24 @@ sub save_and_find_story_link {
     return $output if length $output;
 
     $self->query->param(find_story_link => 1);
+    return $self->edit();
+}
+
+=item save_and_find_media_link
+
+This mode saves the current element data to the session and goes to
+edit with find_media_link set to 1
+
+=cut
+
+sub save_and_find_media_link {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    $self->query->param(find_media_link => 1);
     return $self->edit();
 }
 
