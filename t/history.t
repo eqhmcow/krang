@@ -43,12 +43,14 @@ $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
 # save it
 $media->save();
 
-my @events = Krang::History->find( object => $media );
+my @events = Krang::History->find( object => $media, order_by => 'action' );
 
 is($events[0]->object_id, $media->media_id, "object_id in history matches media_id");
 is($events[0]->object_type, ref $media, "object_type stored properly in history");
-is($events[0]->action, 'save', "history entry is a save since media was saved");
-is($events[0]->version, $media->version, "history version matches media version");
+is($events[0]->action, 'new', "history entry is new since media was created and saved");
+is($events[1]->action, 'save', "history entry is new since media was created and
+saved");
+is($events[1]->version, $media->version, "history version matches media version");
 
 # perform a few other actions on the media then check that there are the 
 # appropriate nuber of events returned from Krang::History->find
