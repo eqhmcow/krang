@@ -510,12 +510,17 @@ parameters are required.
 If decode_datetime() is unable to retrieve a date it will return undef.
                                                                                 
 Standard Krang datetime choosers can be created via datetime_chooser().
-                                                                                
+
+If 'no_time_is_end' is set to 1, then datetimes with no Hour/Min/Sec
+will translate to date:23:59:59 (defualt is to date:00:00:00)
+ 
 =cut
 
 sub decode_datetime {
     my %args = @_;
     my ($name, $query) = @args{qw(name query)};
+    my $ntie = $args{no_time_is_end} || 0;
+
     croak("Missing required args: name and query")
       unless $name and $query;
                                                                                 
@@ -524,8 +529,19 @@ sub decode_datetime {
     my $y = $query->param($name . '_year');
     my $h = $query->param($name . '_hour');
     my $min = $query->param($name . '_minute');
-    $min = 0 if ( (defined $min) and ($min eq 'undef') );
-    my $ampm = $query->param($name . '_ampm');
+    my $ampm;
+    my $sec = '00';
+    if ( (defined $min) and ($min eq 'undef') ) {
+        if ($ntie and ($h eq 0)) {
+            $ampm = 'na';
+            $min = 59;
+            $h = 23; 
+            $sec = '59';           
+        } else {
+            $min = 0;
+        }
+    }
+    $ampm = $query->param($name . '_ampm') unless $ampm;
 
     # deal with converting AM/PM to 24 hour time
     if ($h == 12) {
@@ -535,7 +551,7 @@ sub decode_datetime {
     }
     return undef unless $m and $d and $y;
                                                                                 
-    return Time::Piece->strptime("$y-$m-$d $h:$min:00", '%Y-%m-%d %H:%M:%S');
+    return Time::Piece->strptime("$y-$m-$d $h:$min:$sec", '%Y-%m-%d %H:%M:%S');
 }
 
 =item $date_obj = decode_date(name => 'cover_date', query => $query)

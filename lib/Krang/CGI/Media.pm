@@ -230,6 +230,7 @@ sub advanced_find {
                                            name => 'search_creation_date_from',
                                           );
      my $search_creation_date_to = decode_datetime(
+                                           no_time_is_end => 1,
                                            query => $q,
                                            name => 'search_creation_date_to',
                                           );

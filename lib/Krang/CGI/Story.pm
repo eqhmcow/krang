@@ -1315,7 +1315,7 @@ sub find {
         # Set up cover and publish date search
         for my $datetype (qw/cover publish/) {
             my $from = decode_datetime(query=>$q, name => $datetype .'_from');
-            my $to =   decode_datetime(query=>$q, name => $datetype .'_to');
+            my $to =   decode_datetime(no_time_is_end => 1, query=>$q, name => $datetype .'_to');
             if ($from || $to) {
                 my $key = $datetype .'_date';
                 my $val = [$from, $to];
