@@ -188,6 +188,10 @@ The filename of the uploaded media.
 
 Filehandle for uploaded media.
 
+=item creation_date
+
+Date the media object was created.  Defaults to current time unless set.
+
 =back
 
 =cut
@@ -208,6 +212,8 @@ sub init {
     
     $self->{contrib_ids} = [];
     $self->{version} = 0;  # versions start at 0
+    $self->{checked_out_by} = $session{user_id};   
+    $self->{creation_date} = localtime unless defined $self->{creation_date};
     
     # finish the object
     $self->hash_init(%args);
@@ -718,6 +724,12 @@ sub find {
             $obj = $row->{media_id};
         } else {    
             $obj = bless {%$row}, $self;
+
+            # make dates into Time::Piece objects
+            foreach my $date_field (grep { /_date$/ } keys %$obj) {
+                next unless defined $obj->{$date_field};
+                $obj->{$date_field} = Time::Piece->from_mysql_datetime($obj->{$date_field});
+            }
 
             # add contrib ids to object
             my $sth2 = $dbh->prepare('select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord');
