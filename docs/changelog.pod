@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Deployed version is now displayed in the template edit UI.
+[Michael Peters]
+
+=item *
+
 Fixed a bug in L<Krang::Schedule> - scheduling specific versions of a
 story or media object for publish now works again.  [Peter]
 

@@ -904,7 +904,7 @@ sub get_tmpl_params {
     my $template = shift;
     my $q = $self->query();
     my @fields = qw/content filename template_id testing url
-		    version/;
+		    version deployed_version/;
     my $rm = $q->param('rm');
     my (%tmpl_params, $version);
 
