@@ -695,20 +695,27 @@ sub find {
 	} 
     }
   
-    my $where_string = join ' and ', (map { "$_ = ?" } @where);
+    my $where_string = "";
+    $where_string .= join(' and ', map { "$_ = ?" } @where);
     
     # add media_id(s) if needed
     if ($args{media_id}) {
         if (ref $args{media_id} eq 'ARRAY') {
-            $where_string ? ($where_string .= " and (".join("OR", (map { " media_id = ".$dbh->quote($_) } @{$args{media_id} })).')') : ($where_string = ')'.join("OR", (map { " media_id = ".$dbh->quote($_) } @{$args{media_id} })).')' );
+            $where_string .= " and " if $where_string;
+            $where_string .= "(" . 
+              join(" OR ",  map { " media_id = " . $dbh->quote($_) } 
+                   @{$args{media_id} }) .
+                     ')';
         } else {
-             $where_string ? ($where_string .= " and media_id = ".$dbh->quote($args{media_id})) : ($where_string = "media_id = ".$dbh->quote($args{media_id}));
-        }        
+            $where_string .= " and " if $where_string;
+            $where_string .= "media_id = ". $dbh->quote($args{media_id});
+        }
     }
 
     # add title_like to where_string if present
     if ($args{'title_like'}) {
-        $where_string ? ($where_string .= " and title like ?") : ($where_string = " title like ?");
+        $where_string .= " and " if $where_string;
+        $where_string .= " and title like ?";
         push @where, 'title_like';
     }
 
@@ -718,31 +725,38 @@ sub find {
         my @decendants = $specd_cat->decendants( ids_only => 1 );
         unshift @decendants, $specd_cat->category_id;
 
-        $where_string ? ($where_string .= " and (".join(" OR ",(map { "category_id = $_" } @decendants)).")") : ($where_string .= "(".join(" OR ",(map { "category_id = $_" } @decendants)).")"); 
+        $where_string .= " and " if $where_string;
+        $where_string .= "(".
+          join(" OR ", map { "category_id = $_" } @decendants) .")";
  
     }
 
     # add filename_like to where_string if present
     if ($args{'filename_like'}) {
-        $where_string ? ($where_string .= " and filename like ?") : ($where_string = " filename like ?");
+        $where_string .= " and " if $where_string;
+        $where_string .= "filename like ?";
         push @where, 'filename_like';
     }
 
     # add url_like to where_string if present
     if ($args{'url_like'}) {
-        $where_string ? ($where_string .= " and url like ?") : ($where_string = " url like ?");
+        $where_string .= " and " if $where_string;
+        $where_string .= "url like ?";
         push @where, 'url_like';
     }
 
     if ($args{'no_attributes'}) {
-        $where_string ? ($where_string .= " AND ((caption = '' or caption is NULL) AND (copyright = '' or copyright is NULL) AND (notes = '' or notes is NULL) AND (alt_tag = '' or alt_tag is NULL))") : ($where_string = "((caption = '' or caption is NULL) AND (copyright = '' or copyright is NULL) AND (notes = '' or notes is NULL) AND (alt_tag = '' or alt_tag is NULL))");
+        $where_string .= " and " if $where_string;
+        $where_string .= "((caption = '' or caption is NULL) AND (copyright = '' or copyright is NULL) AND (notes = '' or notes is NULL) AND (alt_tag = '' or alt_tag is NULL))";
     }
 
     if ($args{'creation_date'}) {
         if (ref($args{'creation_date'}) eq 'ARRAY') {
-            $where_string ? ($where_string .= " AND creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'") : ($where_string = "creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'");
+            $where_string .= " and " if $where_string;
+            $where_string .= " creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'";
         } else {
-            $where_string ? ($where_string .= " AND creation_date = '".$args{'creation_date'}->mysql_datetime."'") : ($where_string = "creation_date = '".$args{'creation_date'}->mysql_datetime."'");
+            $where_string .= " and " if $where_string;
+            $where_string .= " creation_date = '".$args{'creation_date'}->mysql_datetime."'";
         }
     }
 
@@ -751,7 +765,8 @@ sub find {
         foreach my $word (@words){
                 my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
                 my $joined = $numeric ? 'media_id = ?' : '('.join(' OR ', 'title LIKE ?', 'url LIKE ?', 'filename LIKE ?').')';
-                $where_string ? ($where_string .= 'AND '.$joined) : ($where_string = $joined);
+                $where_string .= " and " if $where_string;
+                $where_string .= $joined;
                 if ($numeric) {
                     push @where, 'simple_search';
                 } else {
