@@ -634,14 +634,9 @@ sub _save {
 
     if ($@) {
         if (ref $@ && $@->isa('Krang::Site::Duplicate')) {
-            my %dups = %{$@->duplicates};
-            while (my ($site_id, $field) = each %dups) {
-                for (@$field) {
-                    my $msg = "duplicate_$_";
-                    $errors{$msg} = 1;
-                    add_message($msg);
-                }
-            }
+            my $msg = "duplicate_url";
+            $errors{$msg} = 1;
+            add_message($msg);
             $q->param('errors', 1);
             return %errors;
         } else {
