@@ -1,0 +1,225 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+krang_passwd - change Krang user passwords
+
+=head1 SYNOPSIS
+
+krang_password [options] login
+
+Change the password for userX:
+
+  $ krang_passwd userX
+  New password:
+  Re-type password:
+
+Options:
+
+ --help			- Displays this menu.
+
+ --man			- Displays POD for entire script as manpage.
+
+N.B.: passwords must be at least 6 characters in length.
+
+=head1 DESCRIPTION
+
+This script changes the password for a Krang user.  Note: passwords must be at
+least 6 characters in length.
+
+=cut
+
+#
+# Pragmas/Module Dependencies
+##############################
+# Pragmas
+##########
+use strict;
+use warnings;
+
+# External Modules
+###################
+use Config;
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use POSIX;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# use first instance if one isn't set.  Addons are installation wide
+# anyway.
+BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
+
+
+# Krang-Dependent External Modules
+###################################
+use Getopt::Long;
+use Pod::Usage;
+
+# Internal Modules
+###################
+use Krang::Script;
+use Krang::User;
+
+#
+# Package Variables
+####################
+# Constants
+############
+
+# Globals
+##########
+
+# Lexicals
+###########
+my $help = my $man = 0;
+
+
+# Input Validation
+pod2usage(2) unless GetOptions(help	=> \$help,
+                               man	=> \$man);
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+
+# get login
+my $login = shift @ARGV;
+pod2usage("No user 'login' specified") unless defined $login;
+
+# Program Body :-)
+main();
+
+
+=head1 METHODS
+
+=over 4
+
+=item * main()
+
+A user object corresponding to 'login' is obtained, a new password is obtained
+and saved to the user object.  'Password changed.' is printed if the process
+is a success.
+
+=cut
+
+sub main {
+    # lookup user
+    my ($user) = Krang::User->find(login => $login);
+    die("Login '$login' not found.") unless defined $user;
+
+    # get password
+    my $pass = ask_pass($user);
+
+    # set new password
+    $user->password($pass);
+
+    # save changes to user
+    eval {$user->save};
+    if (my $err = $@) {
+        print STDERR "Attempt to set password failed: $err\n";
+        exit 1;
+    } else {
+        print "Password changed.\n";
+    }
+}
+
+
+=item * $new_password = ask_pass()
+
+Attempts to obtain a valid new password.  Returns new password on success
+exits otherwise.
+
+=cut
+
+sub ask_pass {
+    my ($user) = shift;
+
+    print "Changing password for login '$login'\n";
+
+    # Get handle on terminal settings
+    my $termios = POSIX::Termios->new;
+    my $c_lflag = $termios->getlflag;
+    $termios->getattr(0);
+
+    # Get new pass
+    ###################
+    # turn off echoing
+    $termios->setlflag($c_lflag & ~ECHO);
+
+    # apply changes to terminal struct immediately
+    $termios->setattr(0);
+
+    print "New password: ";
+    my $npass = <STDIN> || '';
+
+    $termios->setlflag($c_lflag);
+    $termios->setattr(0);
+
+    chomp $npass;
+
+    unless (valid_pass($npass)) {
+        print STDERR "Invalid password!  Passwords must be at least 6 " .
+          "characters.\n";
+        exit 1;
+    } else {
+
+        # Confirm new pass
+        ###################
+        $termios->setlflag($c_lflag & ~ECHO);
+        $termios->setattr(0);
+
+        print "Re-type password: ";
+        my $dpass = <STDIN> || '';
+
+        $termios->setlflag($c_lflag);
+        $termios->setattr(0);
+
+        chomp $dpass;
+
+        unless ($npass eq $dpass) {
+            print STDERR "Passwords do not match.";
+            exit 1;
+        }
+    }
+
+    return $npass;
+}
+
+
+=item * $success = valid_pass( $password )
+
+Returns 1 if the passed string is a valid password or 0 otherwise.
+
+=cut
+
+sub valid_pass {
+    return length shift >= 6 ? 1 : 0;
+}
+
+
+=back
+
+=cut

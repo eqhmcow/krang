@@ -267,6 +267,17 @@ sub check_auth {
 }
 
 
+=item * $match = $user->check_pass( $password )
+
+=cut
+
+sub check_pass {
+    my ($user, $pass) = @_;
+
+    return md5_hex($SALT, $pass) eq $user->{password} ?
+      $user->{user_id} : 0;
+}
+
 =item * $success = $user->delete()
 
 =item * $success = Krang::user->delete( $user_id )
