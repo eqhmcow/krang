@@ -31,7 +31,7 @@ Krang::Category - a means to access information on categories
   my $id 	= $category->element_id();  # undef until after save()
   my $url 	= $category->url();	    # undef until after save()
 
-  # setter
+  # setters
   $category->element( $element );
   $category->dir( $some_single_level_dirname );
 
@@ -77,6 +77,10 @@ template and may be used to derive category-specific layout behavior.
 
 This module serves as a means of adding, deleting, and accessing these objects.
 
+N.B. Categories must be associated with a site via the 'site_id' constructor
+arg or a 'parent_id' equal to the category idea of a valid object must be
+passed.  Once the Category object is saved, 'parent_id' cannot be altered.
+
 =cut
 
 
@@ -114,12 +118,12 @@ use Krang::Group;
 # Read-only fields
 use constant CATEGORY_RO => qw(category_id
 			       element_id
+			       parent_id
 			       url);
 
 # Read-write fields
 use constant CATEGORY_RW => qw(dir
 			       element
-			       parent_id
 			       site_id);
 
 # Globals
@@ -128,7 +132,7 @@ use constant CATEGORY_RW => qw(dir
 # Lexicals
 ###########
 my %category_args = map {$_ => 1} qw(dir parent_id site_id);
-my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW;
+my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW, 'parent_id';
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
@@ -168,7 +172,7 @@ Id in the element table of this object's element
 
 The display name of the category i.e. '/gophers'
 
-=item * parent_id
+=item * parent_id (read-only)
 
 Id of this categories parent category, if any
 
@@ -259,6 +263,9 @@ sub init {
           "must be present.")
       unless ($args{site_id} || $args{parent_id});
 
+    # extract 'parent_id' if any
+    $self->{parent_id} = delete $args{parent_id} if exists $args{parent_id};
+
     $self->hash_init(%args);
 
     # set '_old_dir' to 'dir' to make changes to 'dir' detectable
@@ -287,7 +294,7 @@ sub init {
 
     # define element
     #################
-    $self->{element} = Krang::Element->new(class => 'category', 
+    $self->{element} = Krang::Element->new(class => 'category',
                                            object => $self);
 
     return $self;
@@ -459,7 +466,8 @@ SQL
 
 =item * @category_ids = Krang::Category->ancestors( ids_only => 1 )
 
-Will return array of Krang::Category objects or category_ids of parents and parents of parents etc
+Will return array of Krang::Category objects or category_ids of parents and
+parents of parents etc
 
 =cut
 
@@ -469,25 +477,29 @@ sub ancestors {
     my $ids_only = $args{ids_only} ? 1 : 0;
     my @ancestors;
     my $parent_found = $self->parent();
-
     return if not $parent_found;
 
-    $ids_only ? (push @ancestors, $parent_found->category_id) : (push @ancestors, $parent_found);
-    
+    my $id_or_obj = $ids_only ? $parent_found->category_id : $parent_found;
+    push @ancestors, $id_or_obj;
+
     while ($parent_found) {
         $parent_found = $parent_found->parent();
 
         if ($parent_found) {
-            $ids_only ? (push @ancestors, $parent_found->category_id) : (push @ancestors, $parent_found);
-        } 
+            $id_or_obj = $ids_only ? $parent_found->category_id :
+              $parent_found;
+            push @ancestors, $id_or_obj;
+        }
     }
-
-    return @ancestors;        
+    return @ancestors;
 }
+
 
 =item * @categories = Krang::Category->decendants()
 
 =item * @category_ids = Krang::Category->decendants( ids_only => 1 )
+
+
 
 =cut
 
@@ -496,38 +508,42 @@ sub decendants {
     my %args = @_;
     my $ids_only = $args{ids_only} ? 1 : 0;
     my @decendants;
-    
     my @children_found = $self->children;
-    
+
     return if not $children_found[0];
 
-    $ids_only ? (push @decendants, (map { $_->category_id } @children_found) ) : (push @decendants, @children_found);
+    $ids_only ? (push @decendants, (map { $_->category_id } @children_found)) :
+      (push @decendants, @children_found);
 
     foreach my $child (@children_found) {
         my @c_cs = $child->children();
-        $ids_only ? (push @decendants, (map { $_->category_id } @c_cs) ) : (push @decendants, @c_cs);
-        push @children_found, @c_cs; 
+        $ids_only ? (push @decendants, (map { $_->category_id } @c_cs) ) :
+          (push @decendants, @c_cs);
+        push @children_found, @c_cs;
     }
-    
-    return @decendants; 
+    return @decendants;
 }
+
 
 =item * @categories = Krang::Category->children()
 
 =item * @category_ids = Krang::Category->children( ids_only => 1 )
 
-Returns array of Krang::Category objects or category_ids of immediate childen.  Convenience method to find().
+Returns array of Krang::Category objects or category_ids of immediate childen.
+Convenience method to find().
 
-=cut 
+=cut
 
 sub children {
     my $self = shift;
     my %args = @_;
     my $ids_only = $args{ids_only} ? 1 : 0;
 
-    return $ids_only ? Krang::Category->find( parent_id => $self->category_id, ids_only => 1 ) : Krang::Category->find( parent_id => $self->category_id);
-    
+    return $ids_only ?
+      Krang::Category->find(parent_id => $self->category_id, ids_only => 1) :
+          Krang::Category->find(parent_id => $self->category_id);
 }
+
 
 =item * @categories = Krang::Category->find( %params )
 
@@ -728,8 +744,9 @@ sub save {
     my $self = shift;
     my $id = $self->{category_id} || '';
     my @lookup_fields = qw/dir url/;
-    my @save_fields = grep {$_ ne 'category_id' && $_ ne 'element'}
-      keys %category_cols;
+    my @save_fields =
+      grep {$_ ne 'category_id' && $_ ne 'element' && $_ ne 'parent_id'}
+        keys %category_cols;
 
     # set flag if url must change; only applies to objects after first save...
     my $new_url = ($id && ($self->{dir} ne $self->{_old_dir})) ? 1 : 0;
@@ -758,6 +775,8 @@ sub save {
           join(", ", map {"$_ = ?"} @save_fields) .
             " WHERE category_id = ?";
     } else {
+        # set 'parent_id' on initial save
+        push @save_fields, 'parent_id';
         $query = "INSERT INTO category (" . join(',', @save_fields) .
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
@@ -905,14 +924,14 @@ sub serialize_xml {
     # serialize elements
     $self->element->serialize_xml(writer => $writer,
                                   set    => $set);
-    
     $writer->endTag('category');
 }
 
 
 =item C<< $html = $category->publish(publisher => $publisher) >>
 
-The public interface to publishing for Krang::Category.  Will go on to call $category->element->publish().
+The public interface to publishing for Krang::Category.  Will go on to call
+$category->element->publish().
 
 If successful, publish() will return a block of HTML.
 
