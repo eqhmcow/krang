@@ -6,6 +6,7 @@ use Krang::Category;
 use Krang::Site;
 use Krang::Contrib;
 use Krang::Session qw(%session);
+use Storable qw(freeze thaw);
 
 BEGIN { use_ok('Krang::Story') }
 
@@ -45,7 +46,7 @@ my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 
 isa_ok($contrib, 'Krang::Contrib');
 $contrib->contrib_type_ids(1,3);
 $contrib->save();
-END { $contrib->delete(); }
+END { if(0) { $contrib->delete(); } }
 
 # create a new story
 $story = Krang::Story->new(categories => [$cat[0], $cat[1]],
@@ -176,3 +177,44 @@ is($story->checked_out_by, $session{user_id});
 is($story->checked_out, 1);
 is($story->checked_out_by, $session{user_id});
 
+# test serialization
+my $data = freeze($story);
+ok($data);
+
+my $copy = thaw($data);
+ok($copy);
+isa_ok($copy, 'Krang::Story');
+is($copy->story_id, $story->story_id);
+
+
+# test versioning
+my $v = Krang::Story->new(categories => [$cat[0], $cat[1]],
+                          title      => "Foo",
+                          slug       => "foo",
+                          class      => "article");
+END { $v->delete };
+$v->save();
+is($v->version, 1);
+
+$v->prepare_for_edit();
+is($v->version, 1);
+$v->title("Bar");
+
+$v->save();
+is($v->version, 2);
+is($v->title(), "Bar");
+
+$v->prepare_for_edit();
+$v->revert(1);
+is($v->version, 3);
+
+$v->prepare_for_edit();
+is($v->title(), "Foo");
+$v->save();
+
+$v->prepare_for_edit();
+$v->revert(2);
+is($v->version, 5);
+$v->prepare_for_edit();
+is($v->title(), "Bar");
+$v->save();

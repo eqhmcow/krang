@@ -8,6 +8,7 @@ use Krang::Log qw(assert ASSERT affirm debug info critical);
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Carp qw(croak);
+use Storable qw(freeze thaw);
 
 # create accessors for object fields
 use Krang::MethodMaker 
@@ -501,8 +502,10 @@ sub _save_core {
     # write an insert or update query for the story
     my $query;
     if ($update) {
+        # update version
+        $self->{version}++;
         $query = 'UPDATE story SET ' . 
-          join(', ', map { "$_ = ?" } STORY_FIELDS) . 'WHERE story_id = ?';
+          join(', ', map { "$_ = ?" } STORY_FIELDS) . ' WHERE story_id = ?';
     } else {
         $query = 'INSERT INTO story (' . join(', ', STORY_FIELDS) .
           ') VALUES (' . join(',', ("?") x STORY_FIELDS) . ')';
@@ -847,17 +850,58 @@ sub verify_checkout {
 }
 
 
-
 =item C<< $story->prepare_for_edit() >>
 
 Copy current version of story into versioning table.  Will only work
 for objects that have been saved (not new objects).
+
+=cut
+
+sub prepare_for_edit {
+    my $self = shift;
+    $self->verify_checkout();
+
+    dbh->do('INSERT into story_version (story_id, version, data) 
+             VALUES (?,?,?)', undef, 
+            $self->{story_id}, $self->{version}, freeze($self));
+}
 
 =item C<< $story->revert($version) >>
 
 Loads an old version of this story into the current story object.
 Saving this object will create a new version, but with the contents of
 the old version, thus reverting the contents of the story.
+
+=cut
+
+sub revert {
+    my ($self, $target) = @_;
+    $self->verify_checkout();
+    my $dbh = dbh;
+
+    # persist certain data from current version
+    my %persist = (
+                   version           => $self->{version} + 1,
+                   checked_out_by    => $self->{checked_out_by},
+                   checked_out       => $self->{checked_out_by},
+                   published_version => $self->{published_version},
+                   publish_date      => $self->{publish_date},
+                  );
+
+    # retrieve object from version table
+    my ($data) = $dbh->selectrow_array('SELECT data FROM story_version 
+                                        WHERE story_id = ? AND version = ?',
+                                       undef, $self->{story_id}, $target);
+    croak("Unable to revert story '$self->{story_id}' to version '$target'")
+      unless $data;
+    my $obj = thaw($data);
+
+    # copy in data, preserving contents of %persist
+    %$self = (%$obj, %persist);
+
+
+    return $self; 
+}
 
 =item C<< $story->delete() >>
 
@@ -881,6 +925,82 @@ sub delete {
 Creates a copy of the story object, with all fields identical except
 for C<story_id> and C<< element->element_id >> which will both be
 C<undef>.
+
+=item C<< $data = Storable::freeze($story) >>
+
+Serialize a story.  Krang::Story implements STORABLE_freeze() to
+ensure this works correctly.
+
+=cut
+
+sub STORABLE_freeze {
+    my ($self, $cloning) = @_;
+    return if $cloning;
+
+    # avoid serializing category cache since they contain objects not
+    # owned by the story
+    my $category_cache = delete $self->{category_cache};
+
+    # make sure element tree is loaded
+    $self->element();
+    
+    # serialize data in $self with Storable
+    my $data;
+    eval { $data = freeze({%$self}) };
+    croak("Unable to freeze story: $@") if $@;
+
+    # reconnect cache
+    $self->{category_cache} = $category_cache;
+
+    return $data;
+}
+
+=item C<< $story = Storable::thaw($data) >>
+
+Deserialize a frozen story.  Krang::Story implements STORABLE_thaw()
+to ensure this works correctly.
+
+=cut
+
+sub STORABLE_thaw {
+    my ($self, $cloning, $data) = @_;
+
+    # retrieve object
+    eval { %$self = %{thaw($data)} };
+    croak("Unable to thaw story: $@") if $@;
+
+    # check for deleted contributors
+    my %bad;
+    foreach (@{$self->{contrib_ids}}) {
+        next if Krang::Contrib->find(contrib_id => $_->{contrib_id},
+                                     count      => 1,
+                                     limit      => 1,
+                                    );
+        # it's not there!
+        $bad{$_->{contrib_id}} = 1;
+    }
+    
+    # FIX: replace this with a non-lethal warning when such is available
+    croak("Attempt to deserialize story with missing contributors: ", join(', ', keys(%bad)))
+      if keys %bad;
+
+    # check for deleted categories
+    %bad = ();
+    for (@{$self->{category_ids}}) {
+        next if Krang::Category->find(category_id => $_,
+                                      count       => 1,
+                                      limit       => 1,
+                                     );
+        # it's not there!
+        $bad{$_} = 1;
+    }
+
+    # FIX: replace this with an exception
+    croak("Attempt to deserialize story with missing categories: ", join(', ', keys(%bad)))
+      if keys %bad;
+
+    return $self;
+}
 
 =back
 
