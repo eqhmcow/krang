@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Support for Mac OSX has been added!  Currently tested against 10.3.5,
+let us know if it works on other versions!  Thanks to Matthew Wood
+(matt@nomorefluffybunny.com).  [Peter]
+
+=item *
+
 C<bin/krang_info> now gives story/media stats for each
 instance. [Peter]
 

@@ -1,0 +1,84 @@
+BUILDING KRANG ON MACOSX
+
+Building Krang (1.025-src) has been verified on MacOSX 10.3.5. 
+This does not mean that other versions will not work, but that they have not been tested.
+
+Version 4.0.21 of MySQL was used.
+
+Follow these steps:
+
+1.   Fix Apple's Config.pm
+
+     Edit the file /System/Library/Perl/5.8.1/darwin-thread-multi-2level/Config.pm
+
+         sudo vi /System/Library/Perl/5.8.1/darwin-thread-multi-2level/Config.pm 
+
+     Modify the line:
+
+         ld='MACOSX_DEPLOYMENT_TARGET=10.3 cc' 
+
+     to read:
+
+         ld='env MACOSX_DEPLOYMENT_TARGET=10.3 cc'
+
+2.   Install Dependent Libraries
+
+     Use a package management tool (eg. Fink http://fink.sourceforge.net/) to install
+     libraries needed by Krang, or install them by hand from source.
+
+         sudo apt-get install libjpeg
+         sudo apt-get install libpng3
+         sudo apt-get install libexpat
+         sudo apt-get install libungif
+
+1.   Unpack the Distribution
+
+         tar -C /usr/local/src -zxf krang-1.025-src.tar.gz
+
+2.   Install the Platform File
+
+         mkdir /usr/local/src/krang-1.025-src/platform/MacOSX
+         cp Platform.pm /usr/local/src/krang-1.025-src/platform/MacOSX/
+
+3.   Upgrade Scalar Utils Package
+
+     The version of the Scalar Utils package (1.09) that ships with Krang 1.025 
+     does not build properly on MacOSX. You can workaround this by upgrading to 
+     a more recent version.
+
+         sudo perl -MCPAN -e shell
+         get Scalar::Util
+	 quit
+         rm /usr/local/src/krang-1.025-src/src/Scalar-List-Utils-1.09.tar.gz 
+         cp ~/.cpan/sources/authors/id/G/GB/GBARR/Scalar-List-Utils-1.14.tar.gz \
+             /usr/local/src/krang-1.025-src/src/
+
+4.   Point to Libraries and Includes
+
+     Use the MACOSX_LIB and MACOSX_INC environment variables to tell the krang
+     build process where your dependent libraries are installed, eg. /sw/lib and
+     /sw/include
+
+         export MACOSX_LIB=/sw/lib
+         export MACOSX_INC=/sw/include
+
+5.   Build!
+
+         cd /usr/local/src/krang-1.025-src/
+         ./bin/krang_build
+
+6.   Install!
+
+         sudo ./bin/krang_install --HostName krang              \
+                                  --IPAddress 10.0.1.19         \
+                                  --AdminPassword password      \
+                                  --DBUser krang                \
+                                  --DBPass password             \
+                                  --InstanceHostName krang      \
+                                  --InstanceDBName krang        \
+                                  --InstanceElementSet Default  \
+                                  --MySQLRootPassword password
+
+     Your options may vary.
+ 
+NOTE: Support for a boot time startup script is not provided at this time.
