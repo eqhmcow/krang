@@ -37,6 +37,9 @@ sub new {
                                         max => 1 ),
                 PBMM::html_include->new(),
                 PBMM::cat_paragraph->new(),
+                 Default::empty->new(   display_name => 'Print this page/Email this article',
+                                        name => 'print_email',
+                                        max => 1 ),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
