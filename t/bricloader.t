@@ -25,7 +25,7 @@ my (@categories, @sites);
 my $sites_path = catfile(KrangRoot, 't', 'bricloader', 'sites.xml');
 
 eval {@sites = Krang::BricLoader::Site->new(path => $sites_path);};
-like($@, qr//, 'Site constructor succeeded :)');
+is($@, '', 'Site constructor succeeded :)');
 
 # check for valid site objects
 isa_ok($_, 'Krang::BricLoader::Site') for @sites;
@@ -36,12 +36,12 @@ $set->add(object => $_) for @sites;
 # let's do some categories
 my $cat_path = catfile(KrangRoot, 't', 'bricloader', 'categories.xml');
 eval {@categories = Krang::BricLoader::Category->new(path => $cat_path);};
-like($@, qr//, 'Category constructor succeeded :)');
+is($@, '', 'Category constructor succeeded :)');
 
 # add categories to data set
 for (@categories) {
     eval {$set->add(object => $_)};
-    like($@, qr//, 'Category addition succeeded :)');
+    is($@, '', 'Category addition succeeded :)');
     if ($@) {
         print STDERR "\n\n", $@;
         exit 1;

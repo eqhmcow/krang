@@ -8,8 +8,6 @@ Krang::BricLoader::Category -
 
  use Krang::BricLoader::Category;
 
- my @categories = Krang::BricLoader::Category->new(xml_ref => \$xml);
-	OR
  my @categories = Krang::BricLoader::Category->new(path => $filepath);
 
  # add categories to dataset
@@ -42,6 +40,7 @@ use XML::Simple qw(XMLin);
 # Internal Modules
 ###################
 use Krang::Conf qw(KrangRoot);
+use Krang::BricLoader::Site;
 
 #
 # Package Variables
@@ -54,6 +53,8 @@ use Krang::Conf qw(KrangRoot);
 
 # Lexicals
 ###########
+my $id = 1;
+my %parent_info;
 
 
 
@@ -62,54 +63,45 @@ use Krang::Conf qw(KrangRoot);
 
 =over
 
-=item C<< @categories = Krang::BricLoader::Category->new(xml => $xml_ref) >>
-
 =item C<< @categories = Krang::BricLoader::Category->new(path=> 'cats.xml') >>
 
-Constructs an array of objects from a reference to an xml string or an xml
-file.
+Constructs an array of objects from an xml file.
 
 =cut
 
 sub new {
     my ($pkg, %args) = @_;
     my $self = bless({},$pkg);
-    my $xml = $args{xml};
     my $path = $args{path};
-    my ($new_path, @categories);
+    my ($base, @categories, $new_path, $ref);
+
+    croak("A value must be passed with either the 'path' or 'xml' arg.")
+      unless $path;
 
     # set tmpdir
     $self->{dir} = tempdir(DIR => catdir(KrangRoot, 'tmp'));
 
-    if ($xml) {
-        # write out file to tmpdir
-        $new_path = catfile($self->{dir}, 'bric_categories.xml');
-        my $wh = IO::File->new(">$new_path");
-        $wh->print($$xml);
-        $wh->close();
-    } elsif ($path) {
-        croak("File '$path' not found on the system!") unless -e $path;
-        my $base = (splitpath($path))[2];
-        $new_path = catfile($self->{dir}, $base);
-        link($path, $new_path);
-    } else {
-        croak("A value must be passed with either the 'path' or 'xml' arg.");
-    }
+    croak("File '$path' not found on the system!") unless -e $path;
+    $base = (splitpath($path))[2];
+    $new_path = catfile($self->{dir}, $base);
+    link($path, $new_path);
 
-    my $ref = XMLin($new_path,
-                    forcearray => ['category'],
-                    keyattr => 'hobbittses');
+    $ref = XMLin($new_path,
+                 forcearray => ['category'],
+                 keyattr => 'hobbittses');
     unlink($new_path);
     croak("\nNo Categories defined in input.\n")
       unless exists $ref->{category};
 
-    for (@{$ref->{category}}) {
+    for my $c(@{$ref->{category}}) {
         # skip root categories, created by the Site object????
-        next if $_->{path} eq '/';
+        next if ($c->{path} eq '/' || exists $parent_info{$c->{path}});
 
-        # check for duplicates
+        $c = bless($c, $pkg);
+        $c->_fixup_object;
+        $c->_add_info;
 
-        push @categories, bless($_, $pkg);
+        push @categories, $c;
     }
 
     return @categories;
@@ -135,7 +127,9 @@ sub serialize_xml {
 
     for (qw/category_id site_id parent_id dir url/) {
         # don't add a parent entity if its NULL
-        next if $_ eq 'parent_id' && $self->{parent_id} eq '';
+        next if ($_ eq 'parent_id' &&
+                 (not(defined($self->{parent_id})) ||
+                  $self->{parent_id} eq ''));
         $writer->dataElement($_ => $self->{$_});
     }
 
@@ -163,6 +157,78 @@ sub DESTROY {
 
 # Private Methods
 ##################
+sub _add_info {
+    my $self = shift;
+    $parent_info{$self->{_path}}->{$_} = $self->{$_}
+      for (qw/category_id site_id url/);
+}
+
+sub _build_url {
+    my $self = shift;
+    $self->{url} = join('/', $self->{parent_path}, $self->{dir}) . '/';
+    $self->{url} =~ s#/+#/#g;
+}
+
+sub _fixup_object {
+    my $self = shift;
+    my $path = $self->{path};
+
+    # get id
+    $self->{category_id} = $id++;
+
+    # get dir
+    $self->_set_dir;
+
+    # is it a mapping category
+    if (Krang::BricLoader::Site->is_top($path)) {
+        # parent id is null
+        $self->{parent_path} = Krang::BricLoader::Site->get_url($path);
+        $self->{site_id} = Krang::BricLoader::Site->get_site_id($path);
+    } else {
+        # set parent path
+        (my $lookup_path = $path) =~ s#/\Q$self->{dir}\E$##;
+
+        # get parent_info hash
+        my $info = $parent_info{$lookup_path};
+
+        croak("No info about category with parent_path " .
+              "'$self->{parent_path}'.") unless ref $info eq 'HASH';
+
+        # set parent_id, parent_path, site_id
+        $self->{parent_id} = $info->{category_id};
+        $self->{parent_path} = $info->{url};
+        $self->{site_id} = $info->{site_id};
+    }
+
+    # preserve old path info, future lookups are based on Bricolage category
+    # paths not krang urls...
+    $self->{_path} = $path;
+
+    # subtract site mapping path
+    $self->_remove_top_level if Krang::BricLoader::Site->multiple_sites;
+
+    # build url
+    $self->_build_url;
+}
+
+sub _remove_top_level {
+    my $self = shift;
+    my $path = $self->{path};
+    my @parts = split('/', $path);
+    $self->{path} = join('/', @parts[2..$#parts]);
+}
+
+sub _set_dir {
+    my $self = shift;
+    my $path = $self->{path};
+
+    if (Krang::BricLoader::Site->is_top($path)) {
+        $self->{dir} = '/';
+    } else {
+        ($self->{dir}) = ($path =~ m#([^/]+)$#);
+    }
+}
+
 
 
 

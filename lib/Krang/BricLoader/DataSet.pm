@@ -67,14 +67,17 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
+use Cwd qw(fastcwd);
+use File::Copy qw(copy);
+use File::Find qw(find);
 use File::Path qw(mkpath rmtree);
-use File::Spec::Functions qw(catdir catfile splitpath);
+use File::Spec::Functions qw(catdir catfile file_name_is_absolute rel2abs
+			     splitpath);
 use File::Temp qw(tempdir);
 
 # Internal Modules
 ###################
 use Krang::Conf qw(KrangRoot);
-use Krang::DataSet qw(write _validate _validate_file _write_index);
 use Krang::Log qw(debug assert ASSERT);
 use Krang::XML;
 # BricLoader Modules :)
@@ -105,7 +108,6 @@ our %unique_field = ('category' => 'url',
 =head1 INTERFACE
 
 =over
-
 
 =item C<< $set = Krang::BricLoader::DataSet->new() >>
 
@@ -204,83 +206,113 @@ sub add {
 This method is imported from Krang::DataSet, See <Krang::DataSet> for more
 details.
 
+=cut
+
+sub write {
+    my ($self, %args) = @_;
+    my $path     = $args{path};
+    my $compress = $args{compress} || 0;
+
+    croak("Missing required path arg.") unless $path;
+    if ($compress) {
+        croak("Path does not end in .kds.gz") unless $path =~ /\.kds\.gz$/;
+    } else {
+        croak("Path does not end in .kds") unless $path =~ /\.kds$/;
+    }
+
+    # go to the kds dir
+    my $old_dir = fastcwd;
+    chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
+
+    # open up a new archive
+    my $kds = Archive::Tar->new();
+
+    # write the index
+    $self->_write_index;
+
+    # add all files to the tar
+    find({ wanted => sub { return unless -f;
+                           s!^$self->{dir}/!!;
+                           $kds->add_files($_)
+                             or croak("Failed to add $_ to KDS : " .
+                                      Archive::Tar->error());
+                       },
+           no_chdir => 1 },
+         $self->{dir});
+
+    $kds->write((file_name_is_absolute($path) ?
+                 $path : catfile($old_dir, $path)),
+                $compress ? 9 : 0);
+
+    # gotta get back
+    chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
+
+    # Do a validation pass in dev mode to make sure we didn't write
+    # junk.  This is better done after writing so that there's
+    # something on disk to look at if validation fails.
+#    $self->_validate if ASSERT;
+}
+
 =back
 
 =cut
 
-
-
 # Private Methods
 ##################
-# obtains the category id of the given category's parent
-sub _find_parent_site {
-    my $cat = shift;
-    my @dirs = split(m#/#, $cat->{path});
-    my $dir = @dirs >= 3 ? $dirs[$#dirs] : '/';
-    my $top = '/' . $dirs[1];
-    my $site_id = $category_map{$top} or
-      croak("No site found associated with");
-    my $parent = join('/', $site_url{$site_id}, @dirs[2..$#dirs - 1]) . '/';
-    $parent =~ s#/+#/#g;
-    my $parent_id = $category{$parent} || '';
-    my $url = join('/', $parent, $dir) . '/';
-    $url =~ s#/+#/#g;
-
-    return ($site_id, $url, $parent_id, $dir);
-}
-
-
 # returns a pre-existing or new id to identify object
 sub _obj2id {
     my $object = shift;
     (my $class = ref $object) =~ s/^.+::(.*)$/$1/;
-    my $id = _obtain_id($class, $object);
+    my $field = lc $class . "_id";
+    my $id = $object->{$field};
+    $class = "Krang::" . ucfirst $class;
     return ($class, $id);
 }
 
+# write out the index XML
+sub _write_index {
+    my $self = shift;
 
-# retrieve the arbitrary id for a given object
-sub _obtain_id {
-    my ($class, $object) = @_;
-    my $hashname = my $counter = lc $class;
-    my $id;
+    open(my $fh, '>','index.xml') or
+      croak("Unable to open index.xml: $!");
+    my $writer = Krang::XML->writer(fh => $fh);
 
-    if ($hashname eq 'site') {
-        # increment site_id
-        $id = $site++;
+    # open up index document
+    $writer->xmlDecl();
+    $writer->startTag('index',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'index.xsd');
 
-        # set up category to site mapping
-        $category_map{$object->{category}} = $id;
+    # add Krang version
+    $writer->dataElement(version => $Krang::VERSION);
 
-        # store site urls keyd by id
-        $object->{url} .= '/' if $object->{url} !~ m#/$#;
+    foreach my $class (keys %{$self->{objects}}) {
 
-        $site_url{$id} = $object->{url};
-    } elsif ($hashname eq 'category') {
-        # get site_id, parent_id, computed path
-        my ($site_id, $url, $pid, $dir) = _find_parent_site($object);
-        $object->{parent_id} = $pid;
-        $object->{site_id} = $site_id;
-
-        # set url, revised path
-        $object->{dir} = $dir;
-        $object->{url} = $url;
-
-        # get category id
-        $id = exists $category{$object->{url}} ? $category{$object->{url}} :
-          $category++;
-
-        # store in category hash
-        $category{$object->{url}} = $id;
+        $writer->startTag('class', name => $class);
+        foreach my $id (keys %{$self->{objects}{$class}}) {
+            $writer->startTag('object');
+            $writer->dataElement(id  => $id);
+            $writer->dataElement(xml => $self->{objects}{$class}{$id}{xml});
+            if (my $files = $self->{objects}{$class}{$id}{files}) {
+                foreach my $file (@$files) {
+                    $writer->dataElement(file => $file);
+                }
+            }
+            $writer->endTag('object');
+        }
+        $writer->endTag('class');
     }
-
-    return $id;
+    $writer->endTag('index');
+    $writer->end;
+    close($fh);
 }
-
-
 
 sub DESTROY {
     my $self = shift;
+    # DEBUG
+#    print STDERR "\nOutput dir: $self->{dir}\n\n";
     rmtree($self->{dir}) if $self->{dir};
 
     # DEBUG

@@ -8,12 +8,17 @@ Krang::BricLoader::Site -
 
  use Krang::BricLoader::Site;
 
- my $site = Krang::BricLoader::Site->new(xml_ref => \$xml);
-	OR
  my @sites = Krang::BricLoader::Site->new(path => $filepath);
 
  # add set of sites to dataset or one at a time
  $set->add(object => $_) for @sites;
+
+ # class methods
+ ################
+ my $path = '/bricolage-top-level-category-that-maps-to-a-site';
+ my $site_id		= Krang::BricLoader::Site->get_site_id($path);
+ my $url		= Krang::BricLoader::Site->get_url($path);
+ my $true_or_false 	= Krang::BricLoader::Site->is_top($path);
 
 =head1 DESCRIPTION
 
@@ -64,7 +69,7 @@ use XML::Simple qw(XMLin);
 # Internal Modules
 ###################
 use Krang::Conf qw(KrangRoot);
-use Krang::DataSet qw(_validate_file);
+#use Krang::DataSet qw(_validate_file);
 # BricLoader mods :)
 use Krang::BricLoader::Category;
 use Krang::BricLoader::DataSet;
@@ -80,21 +85,18 @@ use Krang::BricLoader::DataSet;
 
 # Lexicals
 ###########
-
-
+my $id = 1;
+my %site_info;
 
 
 =head1 INTERFACE
 
 =over
 
-=item C<< @sites = Krang::BricLoader::Site->new(xml => $xml_ref) >>
-
 =item C<< @sites = Krang::BricLoader::Site->new(path => 'sites.xml') >>
 
-Constructs a single or set of objects from a reference to an xml string or
-an xml file respectively.  XML must be of the form describe in DESCRIPTION or
-an exception will be thrown.
+Constructs objects from an xml file.  XML must be of the form describe in
+DESCRIPTION or an exception will be thrown.
 
 =cut
 
@@ -103,35 +105,85 @@ sub new {
     my $self = bless({},$pkg);
     my $xml = $args{xml};
     my $path = $args{path};
-    my ($new_path, @sites);
+    my ($base, $new_path, $ref, @sites);
+
+    croak("The required 'path' arg was not passed or is NULL.") unless $path;
 
     # set tmpdir
     $self->{dir} = tempdir(DIR => catdir(KrangRoot, 'tmp'));
 
-    if ($xml) {
-        # write out file to tmpdir
-        $new_path = catfile($self->{dir}, 'bric_sites.xml');
-        my $wh = IO::File->new(">$new_path");
-        $wh->print($$xml);
-        $wh->close();
-    } elsif ($path) {
-        croak("File '$path' not found on the system!") unless -e $path;
-        my $base = (splitpath($path))[2];
-        $new_path = catfile($self->{dir}, $base);
-        link($path, $new_path);
-    } else {
-        croak("A value must be passed with either the 'path' or 'xml' arg.");
-    }
+    croak("File '$path' not found on the system!") unless -e $path;
+    $base = (splitpath($path))[2];
+    $new_path = catfile($self->{dir}, $base);
+    link($path, $new_path);
 
-    $self->_validate_input($new_path);
-    my $ref = XMLin($new_path,
+#    $self->_validate_input($new_path);
+    $ref = XMLin($new_path,
                     forcearray => ['site'],
                     keyattr => 'hobbittses');
     unlink($new_path);
     croak("\nNo SITES defined in input.\n") unless exists $ref->{site};
 
-    push @sites, bless($_, $pkg) for @{$ref->{site}};
+    for (@{$ref->{site}}) {
+        $_->{site_id} = $id++;
+        $site_info{$_->{category}} = {site_id => $_->{site_id},
+                                      url => $_->{url}};
+        push @sites, bless($_, $pkg);
+    }
+
     return @sites;
+}
+
+
+=item C<< $site_id = Krang::BricLoader::Site->get_site_id( $path ) >>
+
+Returns the site_id associated with the Bricolage category path passed in $path
+
+=cut
+
+sub get_site_id {
+    my ($self, $path) = @_;
+    croak("Path '$path' is not a valid top_level Bricolage category.")
+      unless $self->is_top($path);
+    return $site_info{$path}->{site_id};
+}
+
+
+=item C<< $url = Krang::BricLoader::Site->get_url( $path ) >>
+
+Returns the url associated with the Bricolage category path passed in $path
+
+=cut
+
+sub get_url {
+    my ($self, $path) = @_;
+    croak("Path '$path' is not a valid top_level Bricolage category.")
+      unless $self->is_top($path);
+    return $site_info{$path}->{url};
+}
+
+
+=item C<< ($true || $false) = Krang::BricLoader::Site->is_top( $path ) >>
+
+Returns true if the passed path is one of the top-level categories that maps to
+a site root category in krang
+
+=cut
+
+sub is_top {
+    my ($self, $path) = @_;
+    return exists $site_info{$path};
+}
+
+
+=item C<< ($true || $false) = Krang::BricLoader::Site->multiple_sites >>
+
+Returns true if more than one site object has been created.
+
+=cut
+
+sub multiple_sites {
+    return $id > 2;
 }
 
 
