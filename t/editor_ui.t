@@ -39,12 +39,12 @@ END { system("$undo > /dev/null 2>&1"); }
 
 # make sure that worked
 request_ok('story.pl', {rm => 'find'});
-response_like(qr/FIND STORY/);
+response_like(qr/FIND STORY/i);
 response_unlike(qr/None Found/);
 
 # get the story creation screen
 request_ok('story.pl', {rm => 'new_story'});
-response_like(qr/NEW STORY/);
+response_like(qr/NEW STORY/i);
 
 # find a category to use
 my ($category) = Krang::Category->find(limit      => 1, 
