@@ -108,6 +108,8 @@ if (-f $init_script) {
 # drop all databases
 my $v = $verbose ? '--verbose' : '';
 
+Krang::Session->delete($ENV{SESSION_ID});
+
 system($ENV{KRANG_ROOT}."/bin/krang_createdb --destroy --no_create --no_prompt $v");
 
 # now blow all files away!
