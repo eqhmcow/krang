@@ -1943,7 +1943,6 @@ sub deserialize_xml {
     
     # is there an existing object?
     my ($story) = Krang::Story->find(url => $data->{url}[0]);
-    my $update = 0;
     if ($story) {
 
         # if primary url of this imported story matches a non-primary
@@ -1965,9 +1964,6 @@ sub deserialize_xml {
         # update slug and title
         $story->slug($data->{slug});
         $story->title($data->{title});
-
-        # set the update flag
-        $update = 1;
 
     } else {
 

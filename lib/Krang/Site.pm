@@ -690,7 +690,7 @@ sub serialize_xml {
     $writer->endTag('site');
 }
 
-=item * C<< $site = Krang::Site->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+=item * C<< $site = Krang::Site->deserialize_xml(xml => $xml, set => $set, no_update => 0, skip_update => 0) >>
 
 Deserialize XML.  See Krang::DataSet for details.
 
@@ -704,7 +704,8 @@ instances of the same site.
 
 sub deserialize_xml {
     my ($pkg, %args) = @_;
-    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+    my ($xml, $set, $no_update, $skip_update) 
+      = @args{qw(xml set no_update skip_update)};
 
     # parse it up
     my $data = Krang::XML->simple(xml           => $xml, 
@@ -713,6 +714,7 @@ sub deserialize_xml {
 
     # is there an existing site with this URL?
     my ($dup) = Krang::Site->find(url => $data->{url});
+    return $dup if $dup and $skip_update;
     
     if ($dup) {
         Krang::DataSet::DeserializationFailed->throw(

@@ -495,6 +495,18 @@ duplicates will cause the object to fail to import.  (Note that the
 exact policy on updates is decided by the individual class'
 deserialize_xml() method.)
 
+=item skip_classes
+
+Set this option to an array of class names and content for these
+classes will not be used to update existing objects.  This is useful
+in cases where you wish to update an object without updating objects
+it must point to.  For example, to load stories from a set without
+altering existing categories:
+
+  $set->import_all(skip_classes => [ 'Krang::Category' ]);
+
+This is currently implemented only for Krang::Category and Krang::Site.
+
 =back
 
 May throw a Krang::DataSet::ValidationFailed exception if the archive
@@ -512,6 +524,14 @@ sub import_all {
     $self->{in_import} = 1;
     $self->{done}      = {};
     $self->{no_update} = $arg{no_update} || 0;
+    $self->{skip_classes} = { map { ($_, 1) } @{$arg{skip_classes} || []} };
+
+    # check skip classes
+    foreach my $class (keys %{$self->{skip_classes}}) {
+        next if $class eq 'Krang::Category';
+        next if $class eq 'Krang::Site';
+        croak("Found unexpected value in skip_classes list: $class.  Only Krang::Category and Krang::Site are supported.");
+    }
 
     my @failed;
 
@@ -600,9 +620,13 @@ sub _deserialize {
     close(XML) or croak("Unable to close '$file': $!");
     croak("Unable to load XML from $file") unless $xml;
 
+    # are we skipping this clas?
+    my $skip = $self->{skip_classes}{$class};
+
     my $obj = $class->deserialize_xml(xml       => $xml, 
                                       set       => $self, 
-                                      no_update => $self->{no_update});
+                                      no_update => $self->{no_update},
+                                      skip_update => $skip);
     croak("Call to $class->deserialize failed!")
       unless $obj;
     croak("Call to $class->deserialize didn't return a $class object!")
@@ -704,12 +728,16 @@ serialized object will be packaged.  The object is responsible for
 calling C<< $set->add() >> on any objects referenced by ID in the
 output XML.
 
-=item C<< $object = Krang::Foo->deserialize_xml(xml => $xml, set => $set, no_update => 0); >>
+=item C<< $object = Krang::Foo->deserialize_xml(xml => $xml, set => $set, no_update => 0, skip_update => 0); >>
 
 This call must instantiate a new object using the XML provided.  If
 C<no_update> is false then the method should make an effort to use the
 data to update an existing record if creating it as a new record would
 result in an invalid duplicate.
+
+If C<skip_update> is true then the method should not make changes to
+an existing object.  Instead, it should return the object unchanged.
+New objects should still be created as usual.
 
 This call must use C<< $set->map_id() >> to request ID mappings for
 linked objects (the same ones the object calls $set->add() on during

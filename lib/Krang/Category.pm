@@ -1171,7 +1171,7 @@ sub serialize_xml {
     $writer->endTag('category');
 }
 
-=item * C<< $category = Krang::Category->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+=item * C<< $category = Krang::Category->deserialize_xml(xml => $xml, set => $set, no_update => 0, skip_update => 0) >>
 
 Deserialize XML.  See Krang::DataSet for details.
 
@@ -1182,7 +1182,8 @@ an update will occur.
 
 sub deserialize_xml {
     my ($pkg, %args) = @_;
-    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+    my ($xml, $set, $no_update, $skip_update) 
+      = @args{qw(xml set no_update skip_update)};
 
     # parse it up
     my $data = Krang::XML->simple(xml           => $xml, 
@@ -1192,7 +1193,8 @@ sub deserialize_xml {
 
     # is there an existing category with this URL?
     my ($dup) = Krang::Category->find(url => $data->{url});
-    
+    return $dup if $dup and $skip_update;
+
     if ($dup) {
         Krang::DataSet::DeserializationFailed->throw(
             message => "A category with the URL ".
