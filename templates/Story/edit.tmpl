@@ -13,6 +13,11 @@
         document.forms[0].submit();
   }
 
+  function check_in() {
+        document.forms[0].rm.value = 'check_in';
+        document.forms[0].submit();
+  }
+
   function save_and_jump() {
         document.forms[0].rm.value = 'save_and_jump';
         document.forms[0].submit();
@@ -245,8 +250,8 @@ Sites / Categories<br>
 
     <table width=100%><tr>
     <td>
-      Desk: <select name=desk><option value=1>Edit</option></select>
-      <input type=button value="Check-in" onclick="alert('Desks not yet implemented')">
+      Desk: <select name="checkin_to"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select>
+      <input type=button value="Check-in" onclick="check_in()">
     </td>
     <td align=right>
       Version: <tmpl_var version_selector>

@@ -50,6 +50,8 @@ sub setup {
                      new_story        => 'new_story',
                      create           => 'create',
                      edit             => 'edit',
+                     checkout_and_edit => 'checkout_and_edit',
+                     check_in   => 'check_in',
                      view             => 'view',
                      revert           => 'revert',
                      find             => 'find',
@@ -213,6 +215,68 @@ sub create {
     return $self->edit;
 }
 
+=item check_in 
+
+Check-In story to a particular desk and redirects to that desk.
+
+=cut
+
+sub check_in {
+    my $self = shift;
+    my $query = $self->query;
+                                                                             
+    my $story;
+    if ($query->param('story_id')) {
+        # load story from DB
+        ($story) = Krang::Story->find(story_id => $query->param('story_id'));        croak("Unable to load story '" . $query->param('story_id') . "'.")
+          unless $story;
+                                                                             
+        $query->delete('story_id');
+        $session{story} = $story;
+    } else {
+        $story = $session{story};
+        croak("Unable to load story from session!")
+          unless $story;
+    }
+
+    $story->checkin();
+    my $result = $story->move_to_desk($query->param('checkin_to'));
+  
+    # redirect to that desk 
+    $self->header_props(-uri => 'desk.pl?desk_id='.$query->param('checkin_to'));
+    $self->header_type('redirect');
+    return ""; 
+}
+
+=item checkout_and_edit
+
+Checkout story and then call story editing interface.
+
+=cut
+
+sub checkout_and_edit {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $story;
+    if ($query->param('story_id')) {
+        # load story from DB
+        ($story) = Krang::Story->find(story_id => $query->param('story_id'));        croak("Unable to load story '" . $query->param('story_id') . "'.")
+          unless $story;
+                                                                             
+        $query->delete('story_id');
+        $session{story} = $story;
+    } else {
+        $story = $session{story};
+        croak("Unable to load story from session!")
+          unless $story;
+    }
+
+    $story->checkout;
+
+    return $self->edit();
+}
+
 =item edit
 
 The story editing interface.  Expects to find a story to edit in
@@ -309,6 +373,16 @@ sub edit {
                                             -values  => [1 .. $story->version],
                                             -default => $story->version));
     }
+
+    # get desks for checkin selector
+    my @found_desks = Krang::Desk->find();
+    my @desk_loop;
+
+    foreach my $found_desk (@found_desks) {
+        push (@desk_loop, { choice_desk_id => $found_desk->desk_id, choice_desk_name => $found_desk->name });
+    }
+
+    $template->param( desk_loop => \@desk_loop);
 
     return $template->output();
 }
@@ -1186,7 +1260,7 @@ sub find {
                                                      url 
                                                      title 
                                                      cover_date 
-                                                     command_column 
+                                                     commands_column 
                                                      status 
                                                      checkbox_column
                                                     )],
@@ -1195,16 +1269,11 @@ sub find {
                                                         story_id => 'ID',
                                                         url => 'URL',
                                                         title => 'Title',
+                                                        commands_column => '',
                                                         cover_date => 'Date',
                                                         status => 'Status',
                                                        },
                                       columns_sortable => [qw( story_id url title cover_date )],
-                                      command_column_commands => [qw( edit_story view_story view_story_log )],
-                                      command_column_labels => {
-                                                                edit_story     => 'Edit',
-                                                                view_story     => 'View',
-                                                                view_story_log => 'Log',
-                                                               },
                                       row_handler => sub { $self->find_story_row_handler(@_); },
                                       id_handler => sub { return $_[0]->story_id },
                                      );
@@ -1315,8 +1384,20 @@ sub find_story_row_handler {
     # pub_status  -- NOT YET IMPLEMENTED
     $row->{pub_status} = '&nbsp;<b>P</b>&nbsp;';
 
-    # status  -- NOT YET IMPLEMENTED
-    $row->{status} = '[n/a]';
+    if (($story->checked_out) and ($story->checked_out_by ne $session{user_id})) {
+        $row->{commands_column} = '<a href="javascript:view_story('."'".$story->story_id."'".')">View</a>'
+        . '&nbsp;|&nbsp;'
+        . '<a href="javascript:view_story_log('."'".$story->story_id."'".')">Log</a>';
+    } else {
+        $row->{commands_column} = '<a href="javascript:edit_story('."'".$story->story_id."'".')">Edit</a>'
+        . '&nbsp;|&nbsp;'
+        . '<a href="javascript:view_story('."'".$story->story_id."'".')">View</a>'
+        . '&nbsp;|&nbsp;'
+        . '<a href="javascript:view_story_log('."'".$story->story_id."'".')">Log</a>';
+    }
+ 
+    # status 
+    $row->{status} = $story->checked_out ? "Checked out by <b>".(Krang::User->find(user_id => $story->checked_out_by))[0]->login.'</b>' : "On <b> ".(Krang::Desk->find(desk_id => $story->desk_id))[0]->name.'</b> desk';
     
 }
 
