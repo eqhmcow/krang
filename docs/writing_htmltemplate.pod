@@ -39,7 +39,7 @@
 
 ----------------------------------------
 
-=item Varying Templates and Output by Category -- Overriding Templates
+=item * Varying Templates and Output by Category -- Overriding Templates
 
 ----------------------------------------
 
