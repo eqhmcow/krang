@@ -24,6 +24,15 @@ my $stop_daemon;
 my $schedulectl;
 
 
+# use the TestSet1 instance, if there is one
+foreach my $instance (Krang::Conf->instances) {
+    Krang::Conf->instance($instance);
+    if (InstanceElementSet eq 'TestSet1') {
+        last;
+    }
+}
+
+
 
 BEGIN {
     $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
