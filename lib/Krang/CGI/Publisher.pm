@@ -335,7 +335,7 @@ sub preview_story {
                             element_name  => $@->element_name,
                             template_name => $@->template_name,
                             category_url  => $@->category_url,
-                            error_msg     => $@->error_msg
+                            error_msg     => $@->message
                            );
             } elsif (ref $@ and $@->isa('Krang::Publisher::FileWriteError')) {
                 add_message('file_write_error',
@@ -573,6 +573,8 @@ sub _publish_assets_now {
                                 filename     => $err->template_name,
                                 category_url => $err->category_url
                                );
+                    critical(sprintf("Unable to find template '%s' for Category '%s'",
+                                     $err->template_name, $err->category_url));
 
                 } elsif (ref $err &&
                          $err->isa('Krang::ElementClass::TemplateParseError')) {
@@ -580,31 +582,33 @@ sub _publish_assets_now {
                                 element_name  => $err->element_name,
                                 template_name => $err->template_name,
                                 category_url  => $err->category_url,
-                                error_msg     => $err->error_msg
+                                error_msg     => $err->message
                                );
+                    critical($err->error_msg)
                 } elsif (ref $err &&
                          $err->isa('Krang::Publisher::FileWriteError')) {
                     add_message('file_write_error',
                                 path => $err->destination);
+                    critical(sprintf("Unable to write file to '%s'", $err->destination));
                 } else {
                     # something not expected so log the error.  Can't croak()
                     # here because that will trigger bug.pl.
-                    print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
-                    critical($err);
+                    die $err;
                 }
+
 
                 # put the messages on the screen
-                foreach my $error (get_messages()) {
-                    print "<div class='alertp'>$error</div>\n";
-                }
+#                  foreach my $error (get_messages()) {
+#                      print "<div class='alertp'>$error</div>\n";
+#                  }
 
-                clear_messages();
+#                 clear_messages();
 
                 # make sure to turn off caching
                 Krang::Cache::stop();
                 debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
 
-                die $err;
+                return;
 
             } else {
 

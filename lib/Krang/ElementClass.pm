@@ -538,9 +538,13 @@ sub find_template {
         }
         # assuming remaining errors are parse errors at this time.
         else {
+            # parse the message - stack traces aren't user-friendly.
+            $err =~ /^(.+?)\n[^\n]+Template\:\:Expr/so;
+            my $msg = $1;
+
             Krang::ElementClass::TemplateParseError->throw
                 (
-                 message       => "Coding error found in template: '$err'",
+                 message       => "Coding error found in template: '$msg'",
                  element_name  => $element->display_name(),
                  template_name => $filename,
                  category_url  => $publisher->category->url(),
@@ -855,9 +859,13 @@ sub publish {
     if (my $err = $@) {
         # known output problems involve bad HTML::Template::Expr usage.
         if ($err =~ /HTML::Template::Expr/) {
+            # try and parse $err to remove the stack trace.
+            $err =~ /^(.*?Expr.*?\n)/so;
+            my $msg = $1;
+
             Krang::ElementClass::TemplateParseError->throw
                 (
-                 message       => "Error publishing with template: '$err'",
+                 message       => "Error publishing with template: '$msg'",
                  element_name  => $args{element}->display_name,
                  template_name => $args{element}->name . '.tmpl',
                  category_url  => $publisher->category->url(),

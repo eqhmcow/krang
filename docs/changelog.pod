@@ -8,9 +8,8 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Fixed Krang::CGI::Publisher to leave error messages thrown during the
-publish process up on the screen, rather than quickly redirecting the
-user back to their previous page. [Peter]
+Fixed error reporting in the publish process - error messages are
+displayed in a more user-friendly fashion.[Peter]
 
 =item *
 
