@@ -429,6 +429,9 @@ END
         } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
             # media link
             $content .= "<img src='<tmpl_var name='url'>'>\n";
+        } elsif ($element->isa('Krang::ElementClass::StoryLink')) {
+            # story link
+            $content .= "<a href='<tmpl_var name='url'>/'><tmpl_var url></a>\n";
         } else {
             # data
             $content .= "<tmpl_var name='" . $element->name . "'>\n";
