@@ -1577,6 +1577,23 @@ sub STORABLE_thaw {
     return $self;
 }
 
+=item C<< $story->serialize_xml(writer => $writer, set => $set) >>
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+
+    $writer->startTag('story');
+    $writer->dataElement(story_id => $self->story_id);
+    $writer->dataElement(title => $self->title);
+    $writer->endTag('story');
+}
+
+
 =back
 
 =cut
