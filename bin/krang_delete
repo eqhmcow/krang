@@ -326,18 +326,87 @@ if (@categories) {
                         join(",", @{$dependents->{$_}}) .
                     "]"} keys %$dependents);
     
-                        print "The following object classes and ids rely upon " .
+                        print STDERR "The following object classes and ids rely upon " .
                     "category ". $cat->category_id." (skipping):\n\t$dependents\n";
                         next;
                     }
                 } else { 
+                    next unless Krang::Category->find(category_id => $cat->category_id);
                     $cat->delete();
                     print "Deleted category ".$cat->category_id.".\n" if $verbose;
                 }
             }
         } else {
-            print "Skipping category ".$cat->category_id.", it is a top level category.\n";
+            print STDERR "Skipping category ".$cat->category_id.", it is a top level category.\n";
         }
+    }
+}
+
+#### delete sites
+my @sts;
+                                                                                
+if ($sites) {
+    @sts = Krang::Site->find( order_desc => 1 );
+} elsif (@site_ids) {
+    @sts = Krang::Site->find( site_id => \@site_ids, order_desc => 1 );
+}
+
+if (@sts) {
+    outer: foreach my $site (@sts) {
+        my @dep_cats;
+        push(@dep_cats, $site);
+        my ($root) = Krang::Category->find(dir => '/',
+                                       site_id => $site->site_id); 
+        push(@dep_cats, $root);                                                                               
+       while (@dep_cats) {
+            my $cat = shift @dep_cats;
+            my $type = ((ref $cat) eq 'Krang::Site') ? 'site' : 'category';
+            my $type_id = $type."_id";
+            
+            eval {$cat->dependent_check()};
+            if ($@ and $@->isa('Krang::Site::Dependency')) {
+                if ($recursive) {    
+                    push (@dep_cats, $cat);
+                    foreach my $cid (@{$@->category_id}) {
+                        push (@dep_cats, (Krang::Category->find(category_id => $cid))[0] );
+                    }
+                } else {
+                    print STDERR "Site ".$site->site_id." cannot be deleted.  Categories with the following" .
+           " ids depend upon it: " . join(",", @{$@->category_id}) . "\n";
+                    next outer; 
+                }
+            } elsif ($@ and $@->isa('Krang::Category::Dependent')) {
+               my $dependents = $@->dependents();
+               my $has_cats = 0;
+               foreach my $d (keys %$dependents) {
+                  foreach my $oid (@{$dependents->{$d}}) {
+                      if ($d eq 'category') {
+                          push (@dep_cats, (Krang::Category->find( category_id => $oid ))[0]);
+                          $has_cats = 1;
+                       } else {
+                          my $pkg = "Krang::".ucfirst($d);
+                          $pkg->delete($oid);
+                          print "Deleted $d $oid.\n" if $verbose;
+                       }
+                   }
+               }
+                                                                         
+               if (not $has_cats) {
+                    $cat->delete() if (not( ($type eq 'category') and ($cat->category_id eq $root->category_id)));
+                   print "Deleted $type ".$cat->$type_id.".\n" if $verbose;
+               } else {
+                  push (@dep_cats, $cat);
+               }
+                                                                                
+            } else {
+                # make sure cat/site still exists
+                my $pkg = "Krang::".ucfirst($type);
+                next unless $pkg->find($type_id => $cat->$type_id);
+
+                $cat->delete() if (not( ($type eq 'category') and ($cat->category_id eq $root->category_id)));
+                print "Deleted $type ".$cat->$type_id.".\n" if $verbose;
+            }
+       }
     }
 }
 
