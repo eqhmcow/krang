@@ -182,15 +182,17 @@ sub _load_classes {
     eval {         
         # require all .pm files in main set
         opendir(DIR, $dir) or die "Unable to open dir '$dir': $!";
-        while($_ = readdir(DIR)) {
-            next if /#/; # skip emacs backup files
-            next unless /([^\/]+).pm$/;
+        my @file = sort readdir(DIR);
+        closedir(DIR) or die $!;
+
+        while(my $file = shift @file) {
+            next if $file =~ /#/; # skip emacs backup files
+            next unless $file =~ /([^\/]+).pm$/;
             my $name = $1;
             eval "use ${set}::$name;";
-            die "Unable to load element class $dir/$_.  Error was:\n\n$@\n"
+            die "Unable to load element class $dir/$file.  Error was:\n\n$@\n"
               if $@;
         }
-        closedir(DIR) or die $!;
     };
     shift(@INC);
     die $@ if $@;
