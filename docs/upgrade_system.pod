@@ -84,4 +84,12 @@ upgrade from v1.001 to v1.004 Krang would run, if available:
    upgrade/V1_003.pm
    upgrade/V1_004.pm
 
+=head2 How to Run an Upgrade Module Manually
+
+While testing upgrade modules it helps to be able to run them by hand,
+rather than as part of a full C<krang_upgrade> run.  Here's how it's
+done, using V1_000.pm as an example:
+
+   KRANG_ROOT=`pwd` perl -Ilib -Iupgrade -MKrang::Script \
+   -MV1_000 -e 'V1_000->new()->upgrade()'
 
