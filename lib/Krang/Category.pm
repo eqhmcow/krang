@@ -863,6 +863,41 @@ sub _build_url {
     return $url;
 }
 
+=item C<< $category->serialize_xml(writer => $writer, set => $set) >>
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <category> linked to schema/category.xsd
+    $writer->startTag('category',
+                      "xmlns:xsi" => 
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'category.xsd');
+
+    $writer->dataElement(category_id   => $self->category_id);
+    $writer->dataElement(site_id => $self->site_id);
+    if ($self->parent_id) {
+        $writer->dataElement(parent_id => $self->parent_id);
+        $set->add(object => $self->parent);
+    }
+    $set->add(object => $self->site);
+
+    # basic fields
+    $writer->dataElement(dir => $self->dir);
+
+    # serialize elements
+    $self->element->serialize_xml(writer => $writer,
+                                  set    => $set);
+    
+    $writer->endTag('category');
+}
 
 
 =item C<< $html = $category->publish(publisher => $publisher) >>

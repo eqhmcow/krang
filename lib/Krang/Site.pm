@@ -667,6 +667,28 @@ sub url {
     return $self;
 }
 
+=item C<< $site->serialize_xml(writer => $writer, set => $set) >>
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <site> linked to schema/site.xsd
+    $writer->startTag('site',
+                      "xmlns:xsi" => 
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'site.xsd');
+
+    $writer->dataElement($_, $self->$_)
+      for qw(site_id url preview_url publish_path preview_path);
+    $writer->endTag('site');
+}
 
 =back
 

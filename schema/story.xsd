@@ -31,7 +31,7 @@
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-    <xs:complexType name="element_type" mixed="1">
+    <xs:complexType name="element_type">
         <xs:sequence>
             <xs:element name="class" type="xs:string"/>
             <xs:element name="data" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
