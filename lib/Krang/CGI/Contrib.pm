@@ -239,14 +239,13 @@ respectively.
 
 =cut
 
-
 sub associate_search {
     my $self = shift;
     my %ui_messages = ( @_ );
 
     my $q = $self->query();
 
-    # Check for "associate_mode".  Retrieve object from session or die() trying
+    # Check for "associate_mode".
     my $associate_mode = $q->param('associate_mode') || '';
     die("Invalid associate_mode '$associate_mode'") unless (grep { $associate_mode eq $_ } qw( story media ));
 
@@ -320,10 +319,10 @@ sub associate_selected {
 
     unless (@contrib_associate_list) {
         add_message('missing_contrib_associate_list');
-        return $self->search();
+        return $self->associate_search();
     }
 
-    # Check for "associate_mode".  Retrieve object from session or die() trying
+    # Check for "associate_mode".
     my $associate_mode = $q->param('associate_mode') || '';
     die("Invalid associate_mode '$associate_mode'") unless (grep { $associate_mode eq $_ } qw( story media ));
 
@@ -376,8 +375,47 @@ sub unassociate_selected {
     my $self = shift;
 
     my $q = $self->query();
+    my @contrib_unassociate_list = ( $q->param('contrib_unassociate_list') );
 
-    return $self->dump_html();
+    unless (@contrib_unassociate_list) {
+        add_message('missing_contrib_unassociate_list');
+        return $self->associate_search();
+    }
+
+    # Check for "associate_mode".
+    my $associate_mode = $q->param('associate_mode') || '';
+    die("Invalid associate_mode '$associate_mode'") unless (grep { $associate_mode eq $_ } qw( story media ));
+
+    # Get media or story object from session -- or die() trying
+    my $ass_obj = $session{$associate_mode};
+    die ("No story or media object available for contributor association") unless (ref($ass_obj));
+
+    # Build up list of contribs, skipping over contribs who are in @contrib_unassociate_list
+    my @new_contribs = ();
+    foreach my $contrib ($ass_obj->contribs()) {
+        my $curr_contrib_id_type_str = sprintf(
+                                               "%d:%d",
+                                               $contrib->contrib_id(),
+                                               $contrib->selected_contrib_type()
+                                              );
+
+        # Skip contribs who are on remove list
+        next if (grep { $_ eq $curr_contrib_id_type_str } @contrib_unassociate_list);
+
+        # No match on remove list?  Propagate contrib back to list
+        push(@new_contribs, $contrib);
+    }
+
+    if (@new_contribs) {
+        # Update list of contribs in story or media object
+        $ass_obj->contribs(@new_contribs);
+    } else {
+        # No contribs left -- force clear list
+        $ass_obj->clear_contribs();
+    }
+
+    add_message('message_selected_unassociated');
+    return $self->associate_search();
 }
 
 
