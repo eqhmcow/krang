@@ -1353,8 +1353,12 @@ sub make_media_tmpl_data {
                                                 -name => 'media_type_id',
                                                 -values => \@media_type_ids,
                                                 -labels => \%media_types,
-                                                -default => $m->media_type_id(),
+                                                -default => ($m->media_type_id() || $session{'KRANG_PERSIST_Media_media_type_id'}),
                                                );
+    
+    # persist media_type_id in session for next time someone adds media..
+    $session{'KRANG_PERSIST_Media_media_type_id'} = $m->media_type_id();
+
     $tmpl_data{type_chooser} = $media_types_popup_menu;
 
     # Build category chooser
