@@ -55,6 +55,8 @@ sub setup {
                      revert           => 'revert',
                      find             => 'find',
                      delete           => 'delete',
+                     delete_selected  => 'delete_selected',
+                     checkout_selected => 'checkout_selected',
                      delete_categories    => 'delete_categories',
                      add_category         => 'add_category',
                      set_primary_category => 'set_primary_category',
@@ -848,8 +850,11 @@ sub delete {
 
 =item find
 
-Temporary find stories run-mode.  Just lists all stories and provides
-edit links.
+List all stories which match the search criteria.  Provide links to 
+edit or view each story.  Provide a link to view the log for a story.
+
+Also, provide checkboxes next to each story through which the user may 
+select a set of stories to be deleted or checked out to Workplace.
 
 =cut
 
@@ -858,8 +863,10 @@ sub find {
 
     my $q = $self->query();
     my $template = $self->load_tmpl('find.tmpl', associate=>$q);
-    
+
     my $search_filter = $q->param('search_filter');
+    $search_filter = '' unless (defined($search_filter));
+
     my $pager = Krang::HTMLPager->new(
                                       cgi_query => $q,
                                       persist_vars => {
@@ -898,9 +905,80 @@ sub find {
                                      );
 
     $template->param(pager_html => $pager->output());
+    $template->param(row_count => $pager->row_count());
 
     return $template->output;
 }
+
+
+=item delete_selected
+
+Delete all the stories which were checked on the find screen.
+
+=cut
+
+sub delete_selected {
+    my $self = shift;
+
+    my $q = $self->query();
+    my @story_delete_list = ( $q->param('krang_pager_rows_checked') );
+    $q->delete('krang_pager_rows_checked');
+
+    # No selected stories?  Just return to find without any message
+    return $self->find() unless (@story_delete_list);
+
+    foreach my $story_id (@story_delete_list) {
+        Krang::Story->delete($story_id);
+    }
+
+    add_message('selected_stories_deleted');
+    return $self->find();
+}
+
+
+=item checkout_selected
+
+Check out to Workplace all the stories which were checked on the find screen.
+
+=cut
+
+sub checkout_selected {
+     my $self = shift;
+
+     my $q = $self->query();
+     my @story_checkout_list = ( $q->param('krang_pager_rows_checked') );
+     $q->delete('krang_pager_rows_checked');
+
+     # No selected stories?  Just return to find without any message
+     return $self->find() unless (@story_checkout_list);
+
+     foreach my $story_id (@story_checkout_list) {
+         my ($s) = Krang::Story->find(story_id=>$story_id);
+         $s->checkout();
+     }
+
+     # Do we go to the edit screen (one story) or Workspace (N stories)?
+     if (scalar(@story_checkout_list) > 1) {
+         add_message('selected_stories_checkout');
+
+         # Redirect to Workplace
+         my $url = "workspace.pl";
+         $self->header_props(-url=>$url);
+         $self->header_type('redirect');
+         return "Redirect: <a href=\"$url\">$url</a>";
+     } else {
+         add_message('selected_stories_checkout_one');
+         return $self->edit();
+     }
+}
+
+
+
+
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
 
 
 # Pager row handler for story find run-mode

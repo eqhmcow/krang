@@ -1,16 +1,35 @@
 <tmpl_include header.tmpl>
 
 <script language="JavaScript" type="text/javascript">
+
   function edit_story (id) {
     document.find_story.rm.value = 'edit';
     document.find_story.story_id.value = id;
     document.find_story.submit();
   }
+
+
   function view_story (id) {
     document.find_story.rm.value = 'view';
     document.find_story.story_id.value = id;
     document.find_story.submit();
   }
+
+
+  function delete_selected () {
+    if (confirm("Are you SURE you want to delete the checked stories?")) {
+      var myform = document.forms["krang_pager_form"];
+      myform.rm.value = 'delete_selected';
+      myform.submit();
+    }
+  }
+
+  function checkout_selected () {
+    var myform = document.forms["krang_pager_form"];
+    myform.rm.value = 'checkout_selected';
+    myform.submit();
+  }
+
 </script>
 
 <form method=post name=find_story>
@@ -54,7 +73,8 @@ SEARCH<br />
 <!-- Krang::HTMLPager -->
 
 
-
-
+<tmpl_if row_count>
+  <div class="button-bar"><input type="button" value="Checkout" onClick="checkout_selected()"><input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+</tmpl_if>
 
 <tmpl_include footer.tmpl>
