@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added enhanced cache debugging code and a last-resort check in an
+Apache log_handler to make sure the cache is off at the end of the
+request. [Sam]
+
+=item *
+
 Moved setup of /etc/init.d link from krang_install into the Redhat
 platform modules' finish_installation() methods.  This should allow
 the Gentoo and Debian ports to proceed. [Sam]
