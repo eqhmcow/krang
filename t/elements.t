@@ -8,10 +8,11 @@ my $element = Krang::Element->new(class => "article");
 isa_ok($element, 'Krang::Element');
 
 # article has two default children, page and deck
-is(@{$element->children()}, 3);
-is($element->children()->[0]->name, "deck");
-is($element->children()->[1]->name, "fancy_keyword");
-is($element->children()->[2]->name, "page");
+is(@{$element->children()}, 4);
+is($element->children()->[0]->name, "issue_date");
+is($element->children()->[1]->name, "deck");
+is($element->children()->[2]->name, "fancy_keyword");
+is($element->children()->[3]->name, "page");
 
 
 # try push on another deck, should fail
@@ -19,7 +20,7 @@ eval { $element->add_child(class => "deck") };
 like($@, qr/Unable to add another/);
 
 # poke around with page
-my $page = $element->children()->[2];
+my $page = $element->children()->[3];
 isa_ok($page, "Krang::Element");
 is($page->name, $page->class->name);
 is($page->display_name, "Page");
@@ -62,8 +63,8 @@ is($element->match('paragraph'), 0);
 is($element->match('/page[1]/paragraph[6]'),0);
 
 # fill in deck
-$element->children()->[0]->data("deck deck deck");
-is($element->children()->[0]->data, "deck deck deck");
+$element->children()->[1]->data("deck deck deck");
+is($element->children()->[1]->data, "deck deck deck");
 is($element->child('deck')->data, "deck deck deck");
 
 
@@ -74,7 +75,7 @@ eval <<END;
   foreach_element { print \$_->name, "\n"; \$count++ } \$element;
 END
 die $@ if $@;
-is($count, 11);
+is($count, 12);
 
 # save to DB
 $element->save();
@@ -97,11 +98,12 @@ undef $element;
 my $loaded = Krang::Element->find(element_id => $element_id);
 isa_ok($loaded, 'Krang::Element');
 is($loaded->name, "article");
-is(@{$loaded->children()}, 3);
-is($loaded->children()->[0]->name, "deck");
-is($loaded->children()->[1]->name, "fancy_keyword");
-is($loaded->children()->[2]->name, "page");
-my $lpage = $loaded->children()->[1];
+is(@{$loaded->children()}, 4);
+is($loaded->children()->[0]->name, "issue_date");
+is($loaded->children()->[1]->name, "deck");
+is($loaded->children()->[2]->name, "fancy_keyword");
+is($loaded->children()->[3]->name, "page");
+my $lpage = $loaded->children()->[3];
 my $x = 0;
 foreach my $para ($lpage->children) {
     if ($x > 1) {
