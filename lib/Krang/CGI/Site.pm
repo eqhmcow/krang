@@ -39,7 +39,7 @@ our @history_param_list = ('rm',
                            'krang_pager_show_big_view',
                            'krang_pager_sort_field',
                            'krang_pager_sort_order_desc',);
-our @obj_fields = (Krang::Site::SITE_RW, 'url');
+our @obj_fields = ('url', 'preview_url', 'publish_path', 'preview_path');
 
 
 ##############################
@@ -568,10 +568,18 @@ sub validate {
     for (@obj_fields) {
         my $msg = "error_invalid_$_";
         my $val = $site->$_;
-        $errors{$msg} = 1 if $val eq '' || $val =~ m#\%|\@|\$|\\|\|#;
+
+        if (($_ eq 'url' or 'preview_url') and $val =~ m!https?://!) {
+            add_message("error_${_}_has_http");
+            $errors{$msg} = 1;
+        } elsif (not length $val or $val !~ m!^[-:\w\./]+$!) {
+            add_message($msg);
+            $errors{$msg} = 1;
+        }
+
+
     }
 
-    add_message($_) for keys %errors;
     $q->param('errors', 1) if keys %errors;
 
     return %errors;
