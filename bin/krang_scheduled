@@ -3,26 +3,50 @@
 use strict;
 use warnings;
 
+use File::Spec::Functions qw(catdir splitdir);
+use FindBin qw($RealBin);
 use Config;
-use File::Spec;
+
+
+
+
 
 BEGIN {
-    my $lib = File::Spec->catfile($ENV{KRANG_ROOT}, 'lib');
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
     unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
 }
 
 # setup first instance by default, schedule daemon works on all
 # instances but Krang::Script isn't happy picking one anymore.
 use Krang::Conf;
 BEGIN { $ENV{KRANG_INSTANCE} = (Krang::Conf->instances)[0]; }
+use Krang::Script;
 
 use Krang::Schedule::Daemon;
-use Krang::Script;
-use Krang::Log qw(critical);
 
-eval { Krang::Schedule::Daemon->run };
-if (my $err = $@) {
-    critical($err);
-    die $@;
-}
+#use Krang::Log qw(critical);
+
+Krang::Schedule::Daemon->run;
+

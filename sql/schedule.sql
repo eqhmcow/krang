@@ -7,12 +7,14 @@ CREATE TABLE schedule (
         context         TEXT,
         object_type     VARCHAR(255) NOT NULL,
         object_id       INT UNSIGNED NOT NULL,
-        initial_date     DATETIME,
+        initial_date    DATETIME,
         last_run        DATETIME,
         next_run        DATETIME NOT NULL,
         day_of_week     INT UNSIGNED,
         hour            INT UNSIGNED,
         minute          INT UNSIGNED,
+        priority        INT UNSIGNED NOT NULL,
+
         PRIMARY KEY (schedule_id),
         INDEX       (object_type, object_id),
         INDEX       (next_run)

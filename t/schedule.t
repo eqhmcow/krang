@@ -1,10 +1,12 @@
 use strict;
+use warnings;
 
-use Carp qw/verbose croak/;
-use Data::Dumper;
-use File::Spec::Functions qw(catfile catdir);
+use Carp;
+use File::Spec::Functions;
+use File::Path;
 use IO::File;
 use Storable qw/freeze thaw/;
+
 use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
@@ -13,608 +15,659 @@ use Krang::Script;
 use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::Session;
 use Krang::DB qw(dbh);
+use Krang::Test::Content;
+
+use Data::Dumper;
+
+my $schedulectl;
+my $restart;
 
 # skip all tests unless a TestSet1-using instance is available
 BEGIN {
+
     my $found;
+    $schedulectl = File::Spec->catfile(KrangRoot, 'bin', 'krang_schedulectl');
+    $restart = 0;
+
     foreach my $instance (Krang::Conf->instances) {
         Krang::Conf->instance($instance);
         if (InstanceElementSet eq 'TestSet1') {
+            eval 'use Test::More qw(no_plan)';
             $found = 1;
             last;
         }
     }
-                          
-    unless ($found) {
+
+    if ($found) {
+        my $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
+        if (-e $pidfile) {
+            diag("Shutting down Krang Scheduler Daemon for tests..");
+            `$schedulectl stop`;
+            sleep 5;
+            if (-e $pidfile) {
+                diag('Shutdown failed.  Exiting.');
+                exit(1);
+            } else {
+                diag('Shutdown successful.  Continuing with tests..');
+                $restart = 1;
+            }
+        }
+    } else {
         eval "use Test::More skip_all => 'test requires a TestSet1 instance';";
     }
     die $@ if $@;
+
 }
 
-
-BEGIN {
-    # only start if the schedule daemon is actually running....
-
-    # check for the pid file
-    my $pid_file = catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
-    unless (-e $pid_file) {
-        eval "use Test::More skip_all => 'Schedule Daemon not running.';";
-    } else {
-        # get pid
-        my $pid = `cat $pid_file`;
-        chomp $pid;
-
-        # verify pid is active
-        if ($pid) {
-            eval 'use Test::More qw(no_plan)';
-        } else {
-            eval "use Test::More skip_all => 'Schedule Daemon not running.';";
-        }
+END {
+    if ($restart) {
+        diag("Restarting Krang Scheduler Daemon..");
+        `$schedulectl start`;
     }
-
-    die $@ if $@;
-
-    # set debug flag
-    $ENV{SCH_DEBUG} = 1;
-    use_ok('Krang::Schedule');
 }
 
-our (@non_test_deployed_templates, @test_templates_delete,
-     %test_template_lookup, %template_deployed, %template_paths);
-our $template_dir = "t/schedule";
 
-my $story_content = <<STORY;
-This is my rifle. There are many like it, but this one is mine. My rifle is my best friend. It is my life. I must master it, as I must master my life. Without me my rifle is useless. Without my rifle, I am useless. I must fire my rifle true. I must shoot straighter than my enemy who is trying to kill me. I must shoot him before he shoots me. I will. Before God I swear this creed. My rifle and myself are defenders of my country. We are the masters of our enemy. We are the saviours of my life. So be it ... until there is no enemy ... but peace. Amen.
-STORY
+##################################################
+##################################################
+# SETUP
+#
 
-my ($date, $next_run);
-my $now = localtime;
-my $now_mysql = $now->mysql_datetime;
-$now_mysql =~ s/:\d+$//;
+# Create needed Krang::Site, Krang::Category objects.
+
+my $preview_url = 'scheduletest.preview.com';
+my $publish_url = 'scheduletest.com';
+my $preview_path = '/tmp/krangschedtest_preview';
+my $publish_path = '/tmp/krangschedtest_publish';
+
+my @schedules;
+
+use_ok('Krang::Schedule');
 
 
-# I.A
-# putative run time for the current week has passed; set next_run to the next
-# future runtime in the subsequent week.
-#$date = $now - ONE_DAY;
-$date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
+# create story and media object.
+my $creator = Krang::Test::Content->new();
+
+
+my $site = $creator->create_site(
+                                 preview_url  => $preview_url,
+                                 publish_url  => $publish_url,
+                                 preview_path => $preview_path,
+                                 publish_path => $publish_path
+                                );
+
+
+my ($category) = Krang::Category->find(site_id => $site->site_id());
+
+# Create needed Krang::Story and Krang::Media objects.
+my $story = $creator->create_story(category => [$category]);
+my $media = $creator->create_media(category => $category);
+
+
+# Make sure live templates are undeployed, create and deploy
+# a set of test templates for publishing.
+$creator->undeploy_live_templates();
+$creator->deploy_test_templates();
+
+
+
+END {
+    foreach (@schedules) {
+        is($_->delete, 1, 'Krang::Schedule->delete()');
+    }
+    $creator->cleanup();
+    rmtree $preview_path;
+    rmtree $publish_path;
+}
+
+
 # 03/01 - is a saturday hence day_of_week - 6
-our $s1 = Krang::Schedule->new(action => 'publish',
-                               object_id => 1,
-                               object_type => 'story',
-                               repeat => 'weekly',
-                               test_date => $date,
-                               day_of_week => 5,
-                               hour => $date->hour,
-                               minute => $date->minute);
-eval {isa_ok($s1->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-$next_run = Time::Piece->from_mysql_datetime($s1->{next_run});
-is($next_run->mysql_datetime, '2003-03-07 00:00:00', 'next_run check 1');
+my $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
+my $publish_date = Time::Piece->from_mysql_datetime('2003-03-03 00:00:00');
+
+my $sched = Krang::Schedule->new(
+                                 action      => 'publish',
+                                 object_id   => $story->story_id(),
+                                 object_type => 'story',
+                                 repeat      => 'never',
+                                 date        => $publish_date,
+                                 test_date   => $date,
+                                );
+
+isa_ok($sched, 'Krang::Schedule');
+
+# save test
+isa_ok($sched->save(), 'Krang::Schedule');
+
+# capability test
+can_ok($sched, ('new', 'context', 'object_id', 'priority', 'action', 'object_type',
+                'repeat', 'day_of_week', 'hour', 'minute', 'next_run', 'last_run',
+                'initial_date', 'schedule_id', 'find', 'execute', 'delete', 'determine_priority',
+                'save', 'serialize_xml', 'deserialize_xml'));
 
 
-# I.B
-# next_run will be set to some time later this week
-# run date is two days in the future...
-our $s2 = Krang::Schedule->new(action => 'publish',
-                               object_id => 1,
-                               object_type => 'story',
-                               repeat => 'weekly',
-                               test_date => $date,
-                               day_of_week => 0,
-                               hour => $date->hour,
-                               minute => $date->min);
+# # check next run - should be $publish_date.
+is($sched->next_run(), $publish_date->mysql_datetime, 'Krang::Schedule next_run()');
 
-eval {isa_ok($s2->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
+push @schedules, $sched;
 
-$next_run = Time::Piece->from_mysql_datetime($s2->{next_run});
-is($next_run->mysql_datetime, '2003-03-02 00:00:00', 'next_run check 2');
+# try and change repeat from 'never' - should die.
+eval {
+    $sched->repeat('daily');
+};
+
+$@ ? pass('Krang::Schedule->repeat()') : fail('Krang::Schedule->repeat()');
 
 
-# I.C && I.E
-# next_run should be set to sometime today, in the future...
-our $s3 = Krang::Schedule->new(action => 'publish',
-                               object_id => 1,
-                               object_type => 'story',
-                               repeat => 'weekly',
-                               test_date => $date,
-                               day_of_week => $date->day_of_week,
-                               hour => $date->hour + 2,
-                               minute => $date->minute);
 
-eval {isa_ok($s3->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
+##################################################
+##################################################
+#
+# Testing date-calculation
+#
 
-$next_run = Time::Piece->from_mysql_datetime($s3->{next_run});
-is($next_run->mysql_datetime, '2003-03-01 02:00:00', 'next_run check 3');
+# Create new story publish job - repeats weekly - Mondays at noon.
+$sched = Krang::Schedule->new(
+                              action      => 'publish',
+                              object_id   => $story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'weekly',
+                              day_of_week => 1,
+                              hour        => 12,
+                              minute      => 0,
+                              test_date   => $date
+                             );
 
+isa_ok($sched, 'Krang::Schedule');
 
-# I.C && I.D.i
-# advance next_run to next week because the hour on which it was expected to
-# run today has already passed
-$date = Time::Piece->from_mysql_datetime('2003-03-01 01:00:00');
-our $s4 = Krang::Schedule->new(action => 'publish',
-                               object_id => 1,
-                               object_type => 'story',
-                               repeat => 'weekly',
-                               test_date => $date,
-                               day_of_week => $date->day_of_week,
-                               hour => $date->hour - 1,
-                               minute => $date->minute);
+# save test
+isa_ok($sched->save(), 'Krang::Schedule');
 
-eval {isa_ok($s4->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
+push @schedules, $sched;
 
-$next_run = Time::Piece->from_mysql_datetime($s4->{next_run});
-is($next_run->mysql_datetime, '2003-03-08 00:00:00', 'next_run check 4');
+# check next run - should be 2003-03-3 12:00:00.
+$publish_date = Time::Piece->from_mysql_datetime('2003-03-03 12:00:00');
 
+is($sched->next_run(), $publish_date->mysql_datetime, 'Krang::Schedule next_run()');
 
-# I.A && I.D.ii
-# next run must be sometime next week less an our hour or more
-$date = $now - ONE_DAY - ONE_HOUR;
-$date = Time::Piece->from_mysql_datetime('2003-03-01 01:00:00');
-our $s5 = Krang::Schedule->new(action => 'publish',
-                               object_id => 1,
-                               object_type => 'story',
-                               repeat => 'weekly',
-                               test_date => $date,
-                               day_of_week => 5,
-                               hour => $date->hour - 1,
-                               minute => $date->min);
+# change date to 2003-03-03 12:00:00 (publish time).
+# Next publish should be 2003-03-10 12:00:00.
+_check_calc_next_run($sched, '2003-03-03 12:00:00', '2003-03-03 12:00:00');
 
-eval {isa_ok($s5->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
+# change date to 2003-03-03 12:01:00 (1 minute past publish).
+# Next publish should be 2003-03-10 12:00:00.
+_check_calc_next_run($sched, '2003-03-03 12:01:00', '2003-03-10 12:00:00');
 
-$next_run = Time::Piece->from_mysql_datetime($s5->{next_run});
-is($next_run->mysql_datetime, '2003-03-07 00:00:00', 'next_run check 5');
+# change date to 2003-03-03 13:01:00 (1 hour, 1 minute past publish).
+# Next publish should be 2003-03-10 12:00:00.
+_check_calc_next_run($sched, '2003-03-03 13:01:00', '2003-03-10 12:00:00');
+
+# change date to 2003-03-03 13:01:00 (1 minute before publish).
+# Next publish should be 2003-03-03 12:00:00.
+_check_calc_next_run($sched, '2003-03-03 11:59:00', '2003-03-03 12:00:00');
+
+# change date to 2003-04-06 12:01:00 (one day before publish, some time in the future).
+# Next publish should be 2003-04-07 12:00:00
+_check_calc_next_run($sched, '2003-04-06 12:01:00', '2003-04-07 12:00:00');
 
 
-# I.C && I.F && I.H
-# next_run will be set to this week, the present hour ,a few minutes in the
-# future
+# reset internal test date -- 2003-03-01 00:00:00
+$date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
+$publish_date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
+$sched->_test_date($date);
+
+# change repeat to daily - next_run should be $publish_date.
+eval { $sched->repeat('daily'); };
+$@ ? fail('Krang::Schedule->repeat()') : pass('Krang::Schedule->repeat()');
+
+is($sched->next_run(), $publish_date->mysql_datetime, 'Krang::Schedule->next_run()');
+
+# change date to 2003-03-01 12:00:00 (publish time)
+# next publish should be 2003-03-02 12:00:00
+_check_calc_next_run($sched, '2003-03-01 12:00:00', '2003-03-01 12:00:00');
+
+# change date to 2003-03-01 12:01:00 (one minute after publish)-
+# next publish should be 2003-03-02 12:00:00
+_check_calc_next_run($sched, '2003-03-01 12:01:00', '2003-03-02 12:00:00');
+
+# change date to 2003-03-01 13:00:00 (one hour after publish)-
+# next publish should be 2003-03-02 12:00:00
+_check_calc_next_run($sched, '2003-03-01 13:00:00', '2003-03-02 12:00:00');
+
+# change date to 2003-03-01 11:59:00 - (one minute before publish)
+# next publish should be 2003-03-01 12:00:00
+_check_calc_next_run($sched, '2003-03-01 11:59:00', '2003-03-01 12:00:00');
+
+# change date to 2003-03-01 10:59:00 - (one hour, one minute before publish)
+# next publish should be 2003-03-01 12:00:00
+_check_calc_next_run($sched, '2003-03-01 10:59:00', '2003-03-01 12:00:00');
+
+# change date to 2003-03-01 23:59:00 - (one minute before midnight)
+# next publish should be 2003-03-02 12:00:00
+_check_calc_next_run($sched, '2003-03-01 23:59:00', '2003-03-02 12:00:00');
+
+
+# reset internal test date -- 2003-03-01 00:00:00
+$date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
+$sched->_test_date($date);
+
+# change repeat to hourly - next_run should be right now.
+eval { $sched->repeat('hourly'); };
+$@ ? fail('Krang::Schedule->repeat()') : pass('Krang::Schedule->repeat()');
+
+is($sched->next_run(), $date->mysql_datetime, 'Krang::Schedule->next_run()');
+
+# change date to 2003-03-01 00:01:00 (one minute past publish)
+# next publish should be 2003-03-01 01:00:00
+_check_calc_next_run($sched, '2003-03-01 00:01:00', '2003-03-01 01:00:00');
+
+# change date to 2003-03-01 00:59:00 (one minute before next publish)
+# next publish should be 2003-03-01 01:00:00
+_check_calc_next_run($sched, '2003-03-01 00:59:00', '2003-03-01 01:00:00');
+
+
+# change date to 2003-03-01 00:30:00 (30 minutes before next publish)
+# next publish should be 2003-03-01 01:00:00
+_check_calc_next_run($sched, '2003-03-01 00:30:00', '2003-03-01 01:00:00');
+
+
+# change date to 2003-03-01 00:31:00 (31 minutes before next publish)
+# next publish should be 2003-03-01 01:00:00
+_check_calc_next_run($sched, '2003-03-01 00:31:00', '2003-03-01 01:00:00');
+
+
+##################################################
+##################################################
+#
+# Testing repeat changes
+#
+
+$date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
+
+# Create new story publish job - repeats hourly.
+$sched = Krang::Schedule->new(
+                              action      => 'publish',
+                              object_id   => $story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'hourly',
+                              minute      => 0,
+                              test_date   => $date
+                             );
+
+
+
+is($sched->next_run(), $date->mysql_datetime, 'Krang::Schedule->next_run()');
+
+isa_ok($sched, 'Krang::Schedule');
+
+# save test
+isa_ok($sched->save(), 'Krang::Schedule');
+
+push @schedules, $sched;
+
+# confirm hourly.
+_check_calc_next_run($sched, '2003-03-01 00:00:00', '2003-03-01 00:00:00');
+_check_calc_next_run($sched, '2003-03-01 00:01:00', '2003-03-01 01:00:00');
+_check_calc_next_run($sched, '2003-03-01 00:59:00', '2003-03-01 01:00:00');
+
+
+# change repeat to daily - it should croak.
+eval { $sched->repeat('daily'); };
+$@ ? pass('Krang::Schedule->repeat()') : fail('Krang::Schedule->repeat()');
+
+# set hour - should pass now.
+$sched->hour(0);
+eval { $sched->repeat('daily'); };
+$@ ? fail('Krang::Schedule->repeat()') : pass('Krang::Schedule->repeat()');
+
+# confirm nextrun is still correct.
+_check_calc_next_run($sched, '2003-03-01 00:00:00', '2003-03-01 00:00:00');
+_check_calc_next_run($sched, '2003-03-01 00:01:00', '2003-03-02 00:00:00');
+_check_calc_next_run($sched, '2003-03-01 23:59:00', '2003-03-02 00:00:00');
+
+
+# change repeat to weekly - it should croak.
+eval { $sched->repeat('weekly'); };
+$@ ? pass('Krang::Schedule->repeat()') : fail('Krang::Schedule->repeat()');
+
+# set hour - should pass now.
+$sched->day_of_week(1);
+eval { $sched->repeat('weekly'); };
+$@ ? fail('Krang::Schedule->repeat()') : pass('Krang::Schedule->repeat()');
+
+# confirm nextrun is still correct.
+_check_calc_next_run($sched, '2003-03-01 00:00:00', '2003-03-03 00:00:00');
+_check_calc_next_run($sched, '2003-03-03 00:01:00', '2003-03-10 00:00:00');
+_check_calc_next_run($sched, '2003-03-09 23:59:00', '2003-03-10 00:00:00');
+
+
+##################################################
+##################################################
+#
+# Priority tests
+#
+
+$sched = Krang::Schedule->new(
+                              action      => 'publish',
+                              object_id   => $story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'never',
+                              date        => $publish_date,
+                              test_date   => $date,
+                             );
+$sched->save();
+push @schedules, $sched;
+
+# priority should be 8 for a non-repeating story publish.
+is($sched->priority(), 8, 'Krang::Schedule->priority()');
+
+$sched->minute(0);
+$sched->repeat('hourly');
+
+# priority should be 5 for an hourly publish
+is($sched->priority(), 5, 'Krang::Schedule->priority()');
+
+$sched->hour(0);
+$sched->repeat('daily');
+
+# priority should be 6 for a daily publish
+is($sched->priority(), 6, 'Krang::Schedule->priority()');
+
+$sched->day_of_week(0);
+$sched->repeat('weekly');
+
+# priority should be 7 for a repeating story weekly publish.
+is($sched->priority(), 7, 'Krang::Schedule->priority()');
+
+
+# change to expiration.
+$sched->action('expire');
+
+# check to see that repeat was re-set to 'never'.
+is($sched->repeat(), 'never', 'Krang::Schedule->action()');
+
+# priority should be 4 for a one-time expire.
+is($sched->priority(), 4, 'Krang::Schedule->priority()');
+
+
+# change to alert.
+$sched->action('send');
+
+# check to see that repeat was re-set to 'never'.
+is($sched->repeat(), 'never', 'Krang::Schedule->action()');
+
+# priority should be 2 for an alert.
+is($sched->priority(), 2, 'Krang::Schedule->priority()');
+
+
+##################################################
+##################################################
+#
+# Context Test
+#
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
-our $s6 = Krang::Schedule->new(action => 'publish',
-                               object_id => 1,
-                               object_type => 'story',
-                               repeat => 'weekly',
-                               test_date => $date,
-                               day_of_week => $date->day_of_week,
-                               hour => $date->hour,
-                               minute => $date->minute + 4);
-
-eval {isa_ok($s6->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-
-$next_run = Time::Piece->from_mysql_datetime($s6->{next_run});
-is($next_run->mysql_datetime, '2003-03-01 00:04:00', 'next_run check 6');
-
-
-# I.C && I.F && I.G.i
-# next run advances a week because the minute of its putative run has passed
-$date = Time::Piece->from_mysql_datetime('2003-03-01 00:01:00');
-our $s7 = Krang::Schedule->new(action => 'publish',
-                               object_id => 1,
-                               object_type => 'story',
-                               repeat => 'weekly',
-                               test_date => $date,
-                               day_of_week => $date->day_of_week,
-                               hour => $date->hour,
-                               minute => $date->min - 1);
-
-eval {isa_ok($s7->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-
-$next_run = Time::Piece->from_mysql_datetime($s7->{next_run});
-is($next_run->mysql_datetime, '2003-03-08 00:00:00', 'next_run check 7');
-
-
-# I.C && I.F && I.G.ii
-# next_run is a minute or more in the future
-$date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
-our $s8 = Krang::Schedule->new(action => 'publish',
-                               object_id => 1,
-                               object_type => 'story',
-                               repeat => 'weekly',
-                               test_date => $date,
-                               day_of_week => $date->day_of_week,
-                               hour => $date->hour,
-                               minute => $date->min + 1);
-
-eval {isa_ok($s8->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-
-$next_run = Time::Piece->from_mysql_datetime($s8->{next_run});
-is($next_run->mysql_datetime, '2003-03-01 00:01:00', 'next_run check 8');
-
-
-# II.A && II.D.ii
-# next_run is set to tomorrow less a minute or so
-$date = Time::Piece->from_mysql_datetime('2003-03-01 01:01:00');
-our $s9 = Krang::Schedule->new(action => 'publish',
-                               object_id => 1,
-                               object_type => 'story',
-                               repeat => 'daily',
-                               test_date => $date,
-                               hour => $date->hour - 1,
-                               minute => $date->min - 1);
-
-eval {isa_ok($s9->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-
-$next_run = Time::Piece->from_mysql_datetime($s9->{next_run});
-is($next_run->mysql_datetime, '2003-03-02 00:00:00', 'next_run check 9');
-
-
-# II.B
-# next_run is an hour or more in the future
-$date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
-our $s10 = Krang::Schedule->new(action => 'publish',
-                                object_id => 1,
-                                object_type => 'story',
-                                repeat => 'daily',
-                                test_date => $date,
-                                hour => $date->hour + 1,
-                                minute => $date->min);
-
-eval {isa_ok($s10->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-
-$next_run = Time::Piece->from_mysql_datetime($s10->{next_run});
-is($next_run->mysql_datetime, '2003-03-01 01:00:00', 'next_run check 10');
-
-
-# II.C && II.D.i
-# next_run advances a day as its schedule hour has passed
-$date = Time::Piece->from_mysql_datetime('2003-03-01 01:00:00');
-our $s11 = Krang::Schedule->new(action => 'publish',
-                                object_id => 1,
-                                object_type => 'story',
-                                repeat => 'daily',
-                                test_date => $date,
-                                hour => $date->hour - 1,
-                                minute => $date->min);
-
-eval {isa_ok($s11->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-
-$next_run = Time::Piece->from_mysql_datetime($s11->{next_run});
-is($next_run->mysql_datetime, '2003-03-02 00:00:00', 'next_run check 11');
-
-
-# II.E
-# next run is set 1 or more minutes in the future
-$date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
-our $s12 = Krang::Schedule->new(action => 'publish',
-                                object_id => 1,
-                                object_type => 'story',
-                                repeat => 'daily',
-                                test_date => $date,
-                                hour => $date->hour,
-                                minute => $date->min + 1);
-
-eval {isa_ok($s12->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-
-$next_run = Time::Piece->from_mysql_datetime($s12->{next_run});
-is($next_run->mysql_datetime, '2003-03-01 00:01:00', 'next_run check 12');
-
-
-# III.A
-# next_run advances an hour because its scheduled minute has passed;
-$date = Time::Piece->from_mysql_datetime('2003-03-01 00:01:00');
-our $s13 = Krang::Schedule->new(action => 'publish',
-                                object_id => 1,
-                                object_type => 'story',
-                                repeat => 'hourly',
-                                test_date => $date,
-                                minute => $date->min - 1);
-
-eval {isa_ok($s13->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-
-$next_run = Time::Piece->from_mysql_datetime($s13->{next_run});
-is($next_run->mysql_datetime, '2003-03-01 01:00:00', 'next_run check 13');
-
-
-# III.B
-# next_run in now...should be run in Krang::Schedule->run
-$date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
-our $s14 = Krang::Schedule->new(action => 'publish',
-                                object_id => 1,
-                                object_type => 'story',
-                                repeat => 'hourly',
-                                test_date => $date,
-                                minute => $date->min,
-                                context => ['version' => 1]);
-
-eval {isa_ok($s14->save(), 'Krang::Schedule')};
-is($@, '', 'save() works :)');
-
-$next_run = Time::Piece->from_mysql_datetime($s14->{next_run});
-is($next_run->mysql_datetime, '2003-03-01 00:00:00', 'next_run check 14');
+$sched = Krang::Schedule->new(
+                              action      => 'publish',
+                              object_id   => $story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'never',
+                              date        => $date,
+                              context     => ['version' => 1],
+                              test_date   => $date,
+                             );
+$sched->save();
+push @schedules, $sched;
 
 # text 'context' behavior
-is(ref $s14->{context}, 'ARRAY', 'context test 1');
-my %context1 = @{$s14->{context}};
-is($context1{version}, 1, 'context test 2');
-is(exists $s14->{_frozen_context}, 1, 'context test 3');
+is(ref $sched->{context}, 'ARRAY', 'Krang::Schedule->context()');
+my %context1 = @{$sched->{context}};
+is($context1{version}, 1, 'Krang::Schedule->context()');
+is(exists $sched->{_frozen_context}, 1, 'Krang::Schedule->context()');
 my %context2;
-eval {%context2 = @{thaw($s14->{_frozen_context})}};
-is($@, '', "context thaw didn't fail");
-is($context2{version}, $context1{version}, 'context good');
-
-# run test - 1 tests should run
-my $count;
-eval {$count = Krang::Schedule->run();};
-is($@, '', "run() didn't fail");
-is($count >= 14, 1, 'run() succeeded :).');
-
-# force a save failure
-$s1->repeat('fred');
-eval {$s1->save()};
-like($@, qr/'repeat' field set to invalid setting -/, 'save() failure test');
+eval {%context2 = @{thaw($sched->{_frozen_context})}};
+is($@, '', "Krang::Schedule->context() thaw");
+is($context2{version}, $context1{version}, 'Krang::Schedule->context()');
 
 
-################################
-# story expire and publish test
+
+
+##################################################
+##################################################
+#
+# Action Tests
 #
 
-our $publisher = Krang::Publisher->new;
+##############################
+# publish
 
-@non_test_deployed_templates = Krang::Template->find(deployed => 1);
+# bad test - create a schedule object with a bogus story_id.
+# execute should fail.
+$date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 
-foreach (@non_test_deployed_templates) {
-    &undeploy_template($_);
+$sched = Krang::Schedule->new(
+                              action      => 'publish',
+                              object_id   => 16384,
+                              object_type => 'story',
+                              repeat      => 'hourly',
+                              minute      => 0,
+                              test_date   => $date
+                             );
+$sched->save();
+
+# run the job - should fail.
+eval { $sched->execute(); };
+
+$@ ? pass('Krang::Schedule->execute(bogus story)') : fail('Krang::Schedule->execute(bogus story)');
+
+# cleanup.
+$sched->delete();
+
+
+# create a schedule object to publish a story hourly.
+$sched = Krang::Schedule->new(
+                              action      => 'publish',
+                              object_id   => $story->story_id(),
+                              object_type => 'story',
+                              repeat      => 'hourly',
+                              minute      => 0,
+                              test_date   => $date
+                             );
+
+$sched->save();
+push @schedules, $sched;
+
+# run the job.
+eval { $sched->execute(); };
+
+$@ ? fail('Krang::Schedule->execute()') : pass('Krang::Schedule->execute()');
+
+# check to see if the stories exist
+my @story_paths = $creator->publish_paths(story => $story);
+
+foreach my $p (@story_paths) {
+    ok(-e $p, 'Krang::Schedule->execute(publish)');
 }
 
-END {
-    # restore system templates.
-    foreach (@non_test_deployed_templates) {
-        $publisher->deploy_template(template => $_);
-    }
+# check last_run and next_run - should be 2003-03-01 01:00:00.
+is($sched->last_run(), $date->mysql_datetime, 'Krang::Schedule->last_run()');
+$date += ONE_HOUR;
+is($sched->next_run(), $date->mysql_datetime, 'Krang::Schedule->next_run()');
+
+##############################
+# expire
+
+# ok - now another job to expire (delete) this one.
+
+$date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
+
+my $story_id = $story->story_id();
+$sched = Krang::Schedule->new(
+                              action      => 'expire',
+                              object_id   => $story_id,
+                              object_type => 'story',
+                              repeat      => 'never',
+                              date        => $date,
+                              test_date   => $date
+                             );
+$sched->save();
+my $sched_id = $sched->schedule_id();
+
+push @schedules, $sched;
+
+eval { $sched->execute(); };
+
+$@ ? fail('Krang::Schedule->execute()' . $@) : pass('Krang::Schedule->execute()');
+
+# check to see if the stories exist
+foreach my $p (@story_paths) {
+    ok(!-e $p, 'Krang::Schedule->execute(expire)');
 }
 
-# turn off debugging
-is(Krang::Schedule->get_debug, 1, 'debugging on');
-Krang::Schedule->set_debug(0);
-is(Krang::Schedule->get_debug, 0, 'debugging off');
+my @storyfiles = Krang::Story->find(story_id => [$story_id]);
+is($#storyfiles, -1, 'Krang::Schedule->execute(expire)');
 
-# build Site
-my $pre = catdir KrangRoot, 'tmp', 'story_preview';
-my $pub = catdir KrangRoot, 'tmp', 'story_publish';
-my $site = Krang::Site->new(preview_url  => 'scheduletest.preview.com',
-                            url          => 'scheduletest.com',
-                            publish_path => $pub,
-                            preview_path => $pre);
-$site->save();
-my ($root_cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
-
-# put test templates out into the production path.
-deploy_test_templates($root_cat);
-
-# build story
-my $story = Krang::Story->new(categories => [$root_cat],
-                              title	 => 'Schedule test story',
-                              slug	 => 'slug',
-                              class	 => 'article');
-my $page = $story->element->child('page');
-$page->add_child(class => 'paragraph', data => $story_content);
-$story->save;
-$story->checkin;
-
-our $s15 = Krang::Schedule->new(object_type => 'story',
-                                object_id => $story->story_id,
-                                action => 'publish',
-                                repeat => 'never',
-                                date => $now);
-$s15->save;
-eval {$count = Krang::Schedule->run};
-is($@, '', 'Run did not fail :).');
-
-# wait till the schedule daemon should have run
-sleep(7);
-
-test_publish_story($story);
+# make sure that it removed itself.
+my @schedule_files = Krang::Schedule->find(schedule_id => [$sched_id]);
+is($#schedule_files, -1, 'deleting repeat(never) jobs');
 
 
-our $s16 = Krang::Schedule->new(object_type => 'story',
-                                object_id => $story->story_id,
-                                action => 'expire',
-                                repeat => 'never',
-                                date => $now);
-$s16->save;
-eval {$count = Krang::Schedule->run};
-is($@, '', 'Run did not fail :).');
-
-# wait for another run
-sleep(7);
-
-my ($obj) = Krang::Story->find(story_id => $story->story_id);
-is($obj, undef, 'Story expiration is a success :).');
+##############################
+# alert
 
 
-SKIP: {
-    skip "Tmp cleaner tests require touch version 4.5+", 2
-      unless `touch --version` =~ /(\d+\.\d+)/ and $1 >= 4.5;
+# bad test - create a schedule object with a bogus story_id.
+# execute should fail.
+$date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 
-    # clean_tmp tests
-    my $path = catfile($ENV{KRANG_ROOT}, 'tmp', 'bob172800x');
-    my $path2 = catfile($ENV{KRANG_ROOT}, 'tmp', 'bob3600x');
-    if (system("touch -B 172800 $path") == 0 &&
-        system("touch -B 3600 $path2") == 0) {
-        my @deletions = Krang::Schedule->clean_tmp(max_age => 47);
-        my $sof = grep /bob172800x$/, @deletions;
-        is($sof >= 1, 1, 'clean_tmp deletion successful');
-        is(-e $path2, 1, 'clean_tmp appropriately abstemious');
-        unlink $path2;
-    }
-}
+$sched = Krang::Schedule->new(
+                              action      => 'send',
+                              object_id   => 16384,
+                              object_type => 'alert',
+                              repeat      => 'hourly',
+                              minute      => 0,
+                              test_date   => $date
+                             );
+$sched->save();
 
-END {
-    # remove outstanding templates.
-    foreach (@test_templates_delete) {
-        # delete created templates
-        $publisher->undeploy_template(template => $_);
-        $_->delete();
-    }
+# run the job - should fail.
+eval { $sched->execute(); };
 
-    # delete site
-    $site->delete();
+$@ ? pass('Krang::Schedule->execute(bogus alert)') : fail('Krang::Schedule->execute(bogus alert)');
 
-    # delete schedules
-    for (1..14) {
-        no strict;
-        is(${"s$_"}->delete, 1, "deletion test $_") if ${"s$_"};
-    }
-}
+# cleanup.
+$sched->delete();
 
 
-##### Code basically borrowed from publish.t #####
-sub build_publish_paths {
-    my $story = shift;
-    my @paths;
+# NOTE:  Assumptions are being made that alerts function properly.
 
-    for ($story->categories) {
-        push @paths,
-          catfile($story->publish_path(category => $_), 'index.html');
-    }
 
-    return @paths;
+# Test tmp cleanup
+my $tmpfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_test');
+
+# create a file in tmp with a date of 36 hours ago.
+$date = localtime;
+$date -= (ONE_HOUR * 36);
+
+my $touch_string = sprintf("touch --date='%s' %s", $date->cdate, $tmpfile);
+
+`$touch_string`;
+
+if (-e $tmpfile) {
+
+    $sched = Krang::Schedule->new(
+                                  action      => 'clean',
+                                  object_type => 'tmp',
+                                  repeat      => 'daily',
+                                  hour        => 3,
+                                  minute      => 0,
+                                 );
+
+    $sched->save();
+
+    push @schedules, $sched;
+
+    eval { $sched->execute() };
+
+    $@ ? fail("Krang::Schedule->_clean_tmp(): $@") : pass('Krang::Schedule->_clean_tmp()');
+
+    (-e $tmpfile) ? fail('Krang::Schedule->_clean_tmp()') : pass('Krang::Schedule->_clean_tmp()');
+
+
+} else {
+    diag("Cannot touch $tmpfile.  Skipping tmp tests.");
 }
 
 
-sub deploy_template {
-    my $tmpl = shift;
-    my $result;
 
-    my $category = $tmpl->category();
+# Test Session cleanup -- insert bad record.
 
-    my @tmpls = $publisher->template_search_path(category => $category);
-    my $path = $tmpls[0];
+my $dbh = dbh();
+my $sess_id = 'abcdeftestsessiontesttest';
+$date = localtime;
 
-    my $file = catfile($path, $tmpl->filename());
+my $q = "INSERT INTO sessions (id, last_modified) values (?, ?)";
 
-    eval { $result = $publisher->deploy_template(template => $tmpl); };
+$dbh->do($q, undef, $sess_id, $date->mysql_datetime());
 
-    if ($@) {
-        diag($@);
-        fail('deploy_template()');
-    }
+$sched = Krang::Schedule->new(
+                              action      => 'clean',
+                              object_type => 'session',
+                              repeat      => 'daily',
+                              hour        => 3,
+                              minute      => 0
+                             );
+$sched->save();
 
-    return $file;
-}
+push @schedules, $sched;
+
+$sched->execute();
+
+ok(Krang::Session->validate($sess_id), 'Krang::Schedule->_expire_sessions()');
+
+# move date
+$date -= (ONE_DAY * 2);
+
+$q = "UPDATE sessions SET last_modified=? WHERE id=?";
+
+$dbh->do($q, undef, $date->mysql_datetime(), $sess_id);
+
+$sched->execute();
+
+ok(!Krang::Session->validate($sess_id), 'Krang::Schedule->_expire_sessions()');
 
 
+# cleanup
+
+$q = "DELETE FROM sessions WHERE id=?";
+
+$dbh->do($q, undef, $sess_id);
+
+
+
+##################################################
+##################################################
+# Support subs
 #
-# deploy_test_templates() - 
-# Places the template files found in t/publish/*.tmpl out on the filesystem
-# using Krang::Publisher->deploy_template().
-sub deploy_test_templates {
-    my ($category) = @_;
 
-    my $template;
 
-    local $/;
+# given a Krang::Schedule object, and times for both 'now' and the publish date, figure
+# out if Krang::Schedule->_calc_next_run() is returning the proper time.
+sub _check_calc_next_run {
+    my ($sched, $now_string, $publish_string) = @_;
 
-    opendir(TEMPLATEDIR, $template_dir) or
-      die "ERROR: cannot open dir $template_dir: $!\n";
+    $date = Time::Piece->from_mysql_datetime($now_string);
+    $publish_date = Time::Piece->from_mysql_datetime($publish_string);
 
-    my @files = readdir(TEMPLATEDIR);
-    closedir(TEMPLATEDIR);
+    $sched->_test_date($date);
 
-    foreach my $file (@files) {
-        next unless ($file =~ s/^(.*)\.tmpl$/$template_dir\/$1\.tmpl/);
+    my $ok = is($sched->_calc_next_run(), $publish_date->mysql_datetime, 'Krang::Schedule->_calc_next_run()');
+    diag("failed date check: date='$now_string', pubdate='$publish_string'") unless ($ok);
 
-        my $element_name = $1;
-
-        open (TMPL, "<$file") or die "ERROR: cannot open file $file: $!\n";
-        my $content = <TMPL>;
-        close TMPL;
-
-        $template = Krang::Template->new(content => $content,
-                                         filename => "$element_name.tmpl",
-                                         category => $category);
-
-        eval {$template->save();};
-
-        if ($@) {
-            diag("ERROR: $@");
-            fail('Krang::Template->new()');
-        } else {
-            push @test_templates_delete, $template;
-            $test_template_lookup{$element_name} = $template;
-
-            $template_paths{$element_name} = &deploy_template($template);
-
-            unless (exists($template_deployed{$element_name})) {
-                $template_deployed{$element_name} = $template;
-            }
-        }
-    }
-
-    return;
 }
 
 
-sub load_story_page {
-    my $filename = shift;
-    my $data;
-
-    local undef $/;
-
-    if (open(PAGE, "<$filename")) {
-        $data = <PAGE>;
-        close PAGE;
-    } else {
-        diag("Cannot open $filename: $!");
-        fail('Krang::Publisher->publish_story();');
-    }
-
-    return $data;
-}
 
 
-sub test_publish_story {
-    my $story = shift;
-
-    my @story_paths = build_publish_paths($story);
-
-    for (my $i = $#story_paths; $i >= 0; $i--) {
-        my $story_txt = load_story_page($story_paths[$i]);
-        $story_txt =~ s/\n//g;
-        $story_content =~ s/\n//g;
-        if ($story_txt =~ /\w/) {
-            ok($story_content eq $story_txt, 'Story page content correct');
-            if ($story_content ne $story_txt) {
-                diag('Story content does not match expected results');
-            }
-        } else {
-            diag('Missing story content in ' . $story_paths[$i]);
-            fail('Krang::Publisher->publish_story() -- compare');
-        }
-    }
-}
 
 
-# test to make sure that Krang::Template templates are removed from the
-# filesystem properly.
-sub undeploy_template {
 
-    my $tmpl = shift;
 
-    my $category = $tmpl->category();
-
-    my @tmpls = $publisher->template_search_path(category => $category);
-    my $path = $tmpls[0];
-
-    my $file = catfile($path, $tmpl->filename());
-
-    # undeploy template
-    eval { $publisher->undeploy_template(template => $tmpl); };
-
-    if ($@) {
-        diag($@);
-        fail('undeploy_template()');
-    }
-}
