@@ -5,11 +5,14 @@ use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Krang::Log qw( debug info );
 use Krang::Schedule;
+use Krang::User;
+use Krang::Story;
+use Krang::Category;
+use Krang::Conf qw(SMTPServer FromAddress);
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
 use Mail::Sender;
-use Krang::Category;
 
 # constants 
 use constant FIELDS => qw( alert_id user_id action desk_id category_id );
@@ -134,7 +137,10 @@ sub save {
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$alert_id);
 
     } else {
-        $dbh->do('INSERT INTO media ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")", undef, map { $self->{$_} } FIELDS);
+        my $sql = 'INSERT INTO alert ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")";
+        debug(__PACKAGE__."->save() - $sql");
+        
+        $dbh->do($sql, undef, map { $self->{$_} } FIELDS);
         
         $self->{alert_id} = $dbh->{mysql_insertid};
     }
@@ -259,8 +265,8 @@ sub find {
         $sql .= " limit $offset, -1";
     }
 
-    debug(__PACKAGE__ . "::find() SQL: " . $sql);
-    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { defined $args{$_} ? $args{$_} : 'undef' } @where));
+    debug(__PACKAGE__ . "->find() SQL: " . $sql);
+    debug(__PACKAGE__ . "->find() SQL ARGS: " . join(', ', map { defined $args{$_} ? $args{$_} : 'undef' } @where));
 
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
@@ -271,6 +277,7 @@ sub find {
             return $row->{count};
         } elsif ($args{'only_ids'}) {
             $obj = $row->{alert_id};
+            push (@alert_object,$obj);
         } else {
             $obj = bless {%$row}, $self;
 
@@ -303,19 +310,95 @@ sub check_alert {
     croak(__PACKAGE__."->check_alert requires a valid Krang::History object.") if (ref $history ne 'Krang::History');
 
     croak(__PACKAGE__."->check_alert requires a valid Krang::Story object.") if (ref $story ne 'Krang::Story');
+
+    debug(__PACKAGE__."->check_alert() - checking for any alerts on action $action in categories @category_ids");
  
     my @matched_alerts = Krang::Alert->find( only_ids => 1, action => $action, category_id => \@category_ids );  
 
+    debug(__PACKAGE__."->check_alert() - found alert_ids @matched_alerts for criteria (action $action in categories @category_ids).") if @matched_alerts;
+
     foreach my $alert_id ( @matched_alerts ) {
+        my $time = localtime;
         my $schedule = Krang::Schedule->new(    object_type => 'alert',
                                                 object_id => $alert_id,
                                                 action => 'send',
-                                                date => localtime,
+                                                date => $time,
                                                 repeat      => 'never',
-                                                context     => [ user_id => $history->user_id ]
+                                                context     => [ user_id => $history->user_id, story_id => $story->story_id ]
                                             );   
         $schedule->save(); 
     }
+}
+
+=item Krang::Alert->send( alert_id => $alert_id, user_id => $user_id, story_id => $story_id )
+
+=cut 
+
+sub send {
+    my $self = shift;
+    my %args = @_;
+    
+    my $alert_id = $args{alert_id} || croak(__PACKAGE__."->send() - you must specify an alert_id");
+    my $user_id = $args{user_id} || croak(__PACKAGE__."->send() - you must specify a user_id");
+    my $story_id = $args{story_id} || croak(__PACKAGE__."->send() - you must specify a story_id");
+
+    my $alert = (Krang::Alert->find(alert_id => $alert_id))[0];
+    
+    croak("No valid Krang::Alert object found with id $alert_id") if not ( ref $alert eq 'Krang::Alert');
+
+    my $to_user = (Krang::User->find( user_id => $alert->user_id ))[0];
+
+    croak("No valid Krang::User object found with id ".$alert->user_id) if not ( ref $to_user eq 'Krang::User');
+
+    my $user = (Krang::User->find( user_id => $user_id ))[0];
+
+    croak("No valid Krang::User object found with id $user_id") if not ( ref $user eq 'Krang::User');
+
+    my $story = (Krang::Story->find(story_id => $story_id))[0];
+
+    croak("No valid Krang::Story object found with id $story_id") if not ( ref $story eq 'Krang::Story');
+
+    my $message = "A Krang alert has been triggered for story $story_id (".$story->title.") \nby user $user_id (".$user->first_name.' '.$user->last_name.").\n\n";
+
+    $message .= "Below is the criteria which triggered this alert:\n";
+    $message .= "\nACTION: ".$alert->action;
+    $message .= "\nCATEGORY: ".$alert->category_id."(".(Krang::Category->find(category_id => $alert->category_id))[0]->dir.")" if $alert->category_id;
+    $message .= "\nDESK: ".$alert->desk_id."(".(Krang::Desk->find(desk_id => $alert->desk_id))[0]->name.")" if $alert->desk_id; 
+    $message .= "\nTRIGGERED BY USER: $user_id (".$user->first_name.' '.$user->last_name.")";   
+
+    debug(__PACKAGE__."->send() - sending email to ".$to_user->email.": $message");
+ 
+    my $sender = new Mail::Sender {smtp => SMTPServer, from => FromAddress};
+
+    $sender->MailFile({ to => $to_user->email, 
+                        subject => "Krang alert for action ".$alert->action,
+                        msg => $message 
+                    });  
+    
+}
+
+=item delete()
+
+=item Krang::Alert->delete( alert_id => $alert_id)
+
+Deletes alert or alert with specified id.
+
+=cut
+
+sub delete {
+    my $self = shift;
+    my $alert_id = shift;
+    my $dbh = dbh;
+
+    $alert_id = $self->{alert_id} if (not $alert_id);
+
+    croak("No alert_id specified for delete!") if not $alert_id;
+
+    $dbh->do('DELETE from alert where alert_id = ?', undef, $alert_id);
+
+    # delete schedule objects for this alert also
+    $dbh->do('DELETE from schedule where object_type = ? and object_id = ?', undef, 'alert', $alert_id);
+
 }
 
 =back 
