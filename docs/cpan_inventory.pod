@@ -352,7 +352,7 @@ exist without your hard work.
 
 =item XML-Validator-Schema
 
- Version: 1.04
+ Version: 1.06
  License: Perl License
 
 =item XML-Writer

@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgrade XML::Validator::Schema to the latest release, 1.06. [Sam]
+
+=item *
+
 Fixed Krang::Story->preview_path() to use the submitted category
 argument.  This was keeping preview from writing out content to
 multiple sites. [Peter]
@@ -33,6 +37,7 @@ occur in preview.  [Peter]
 
 =item *
 
+>>>>>>> 1.41
 Fixed krang_ftpd to setup higher file and memory limits.  These limits
 were preventing the FTP server from operating on some systems. [Sam]
 
