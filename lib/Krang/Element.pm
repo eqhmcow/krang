@@ -264,6 +264,21 @@ sub add_child {
 }
 
 
+=item C<< my $deck = $element->child('deck') >>
+
+Find a child by class name.  If there are multiple children for this
+class, returns the first one.  Croaks if a child of the specified
+class does not exist.
+
+=cut
+
+sub child {
+    my ($self, $name) = @_;
+    my $child = first { $_->{class}->name eq $name } @{$self->{children}};
+    return $child if $child;
+    croak("Unable to find child of class '$name'.");
+}
+
 =item C<< $element->save() >>
 
 Save the element, and all its children, to the database.  After this
@@ -456,6 +471,8 @@ sub _load_tree {
 
 =item $element->delete()
 
+=item Krang::Element->delete($element_id)
+
 Delete the element, and all its children, from the database.  After
 this call, C<element_id> is undef and a future C<save()> will create a
 new element record with a new id.  This call only works for top-level
@@ -469,15 +486,27 @@ Returns 1 on success.
 sub delete {
     my $self = shift;
     my $dbh  = dbh;
+    my $element_id;
 
-    # check top-levelitude
-    croak("Unable to save() non-top-level element.")
-      unless $self->{class}->top_level();
+    if (ref $self) {
+        # check top-levelitude
+        croak("Unable to save() non-top-level element.")
+          unless $self->{class}->top_level();
+
+        # check for ID
+        croak("Unable to delete() non-saved element.")
+          unless $self->{element_id};
+        
+        $element_id = $self->{element_id};
+    } else {
+        $element_id = shift;
+    }
 
     $dbh->do('DELETE FROM element WHERE root_id = ?', undef, 
-             $self->{element_id});
+             $element_id);
 
-    foreach_element { $_->{element_id} = undef } $self;
+    foreach_element { $_->{element_id} = undef } $self
+      if ref $self;
 
     return 1;
 }
@@ -623,3 +652,18 @@ BEGIN {
 }
 
 1;
+
+=head1 TODO
+
+=over
+
+=item *
+
+Make $element->child('foo') faster than grepping through
+$element->children() for 'foo'.  This probably means caching the name
+to element mappings and updating them on changes to children().
+
+=back
+
+=cut
+
