@@ -45,7 +45,7 @@ sub setup {
     $self->SUPER::setup();
     $self->mode_param('rm');
     $self->start_mode('new_story');
-    
+
     # add story specific modes to existing set
     $self->run_modes($self->run_modes(),
                      new_story        => 'new_story',
@@ -102,13 +102,13 @@ sub new_story {
     my $query = $self->query;
     my $template = $self->load_tmpl('new.tmpl', associate => $query);
     my %args = @_;
-    
+
     # setup error message if passed in
     if ($args{bad}) {
         $template->param("bad_$_" => 1) for @{$args{bad}}
     }
 
-    
+
     # setup the type selector
     my @types = grep { $_ ne 'category' } Krang::ElementLibrary->top_levels;
     my %type_labels = 
@@ -125,7 +125,7 @@ sub new_story {
                                       query => $query,
                                       may_edit => 1,
                                      ));
-    
+
     # setup date selector
     $template->param(cover_date_selector => datetime_chooser(name=>'cover_date', query=>$query));
 
@@ -1250,7 +1250,13 @@ sub delete {
 
     add_message('story_delete', story_id => $story->story_id,
                                 url      => $story->url);
-    $story->delete();
+
+    # check to make sure a story_id exists - the UI allows you to
+    # delete a story that has not been saved yet.
+    if ($story->story_id) {
+        $story->delete();
+    }
+
     delete $session{story};
 
     # return to my workspace

@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug where deleting a newly-copied story threw an error in the
+UI. [Peter]
+
+=item *
+
 Added platform support for Gentoo release 1.5.2, thanks to a patch 
 from Fred Moyer (fmoyer@plusthree.com) [Perrin]
 
