@@ -1,8 +1,8 @@
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-BEGIN { use_ok('Krang::Session') }
 use Krang;
+BEGIN { ok(1) }
 use Krang::Session qw(%session);
 
 # loading Krang should provide a session
