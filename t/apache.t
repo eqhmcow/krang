@@ -28,7 +28,7 @@ $base_url .= ":" . ApachePort if ApachePort ne '80';
 $base_url .= '/';
 
 # try to request the root page
-my $ua = LWP::UserAgent->new;
+my $ua = LWP::UserAgent->new(agent => 'Mozilla/5.0');
 
 my $res = $ua->request(GET($base_url));
 ok($res->is_success, "request root index page");
