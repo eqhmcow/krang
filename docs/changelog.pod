@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<--no-backup> option to C<krang_upgrade>. [Sam]
+
+=item *
+
 Fixed bug in C<bin/krang_publish> where unknown errors during story
 publish would trigger an exit without any kind of useful message.  The
 error is now printed to STDERR. [Peter]

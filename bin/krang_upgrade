@@ -87,6 +87,7 @@ Following is a list of the tasks the upgrade script will perform.
 
   --KrangRoot            - Directory where Krang is installed (KRANG_ROOT)
   --MySQLRootPassword    - Password for the MySQL user "root"
+  --no-backup            - Preven
 
 =head1 SEE ALSO
 
@@ -152,7 +153,7 @@ sub do_upgrade {
     check_prereqs();
 
     # Do upgrade
-    make_backups();
+    make_backups() unless $options{'no-backup'};
     install_new_krang();
     apply_upgrades();
     update_db_version();
@@ -448,6 +449,7 @@ sub setup_getopts {
     pod2usage(2) unless
         GetOptions( 'help'          => \$help,
                     'man'           => \$man,
+                    'no-backup'     => \$options{'no-backup'},
                     (map { $_."=s"  => \$options{$_} } @opt_params) );
 
     pod2usage(1)             if $help;
