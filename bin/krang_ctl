@@ -22,8 +22,8 @@ script must be run as root, unless you have a working 'sudo' with
 NOPASSWD setup in which case krang_ctl will use that to start
 processes as root.
 
-This script calls krang_apachectl, krang_ftpctl and krang_schedctl to
-do its work.  See their respective manpages for details concerning
+This script calls krang_apachectl, krang_ftpctl and krang_schedulectl
+to do its work.  See their respective manpages for details concerning
 environment variables that may be used to control their functioning.
 
 =cut
@@ -44,8 +44,7 @@ BEGIN {
 
     # use $KRANG_ROOT/lib for modules
     my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
-      "${lib}";
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
     unshift @INC, $lib, "$lib/".$Config{archname};
 
     # load Krang::Conf (don't need to load Krang here because we won't
@@ -69,7 +68,7 @@ use Krang::Conf qw(KrangRoot);
 # check for args
 usage() unless @ARGV;
 my $command = shift @ARGV;
-usage() unless $command eq 'start' or 
+usage() unless $command eq 'start' or
                $command eq 'stop' or
                $command eq 'restart';
 
@@ -80,7 +79,7 @@ if ($< != 0 or $> != 0) {
 }
 
 # call ctl scripts
-for (qw(krang_apachectl krang_ftpctl)) {
+for (qw(krang_apachectl krang_ftpctl krang_schedulectl)) {
     my $script = catfile(KrangRoot, 'bin', $_);
     print STDERR "=> krang_ctl calling '$sudo$script $command'...\n";
     system("$sudo$script $command");
