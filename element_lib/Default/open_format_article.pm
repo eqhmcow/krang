@@ -2,7 +2,7 @@ package Default::open_format_article;
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use base 'Krang::ElementClass::TopLevel';
 
 sub new {
    my $pkg = shift;
@@ -48,6 +48,7 @@ sub new {
                   Default::promo_image->new(name => 'promo_image_small'),
                   Krang::ElementClass::Textarea->new(   name => 'open_format_page',
                                                         display_name => 'Open Format Page',
+                                                        pageable => 1,
                                                         rows => 10,
                                                         cols => 50,
                                                         min => 1 )
