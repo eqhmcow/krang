@@ -94,11 +94,20 @@ my $tmpl2 = Krang::Template->new(category_id => $category->category_id(),
 
 $tmpl2->save();
 
-# checkout deploy method
-my $dir = File::Spec->catdir($ENV{PWD});
-my $path = File::Spec->catfile($dir, 't_w_c.tmpl');
-$tmpl2->deploy_to($dir);
-ok(-e $path, 'Deploy Test');
+
+# test mark_as_deployed
+eval { $tmpl2->mark_as_deployed(); };
+if ($@) {
+    diag($@);
+    fail('Krang::Template->mark_as_deployed()');
+} else {
+    pass('Krang::Template->mark_as_deployed()');
+    ok($tmpl2->deployed(), 'Krang::Template->mark_as_deployed()');
+    ok($tmpl2->deployed_version() eq $tmpl2->version(), 'Krang::Template->mark_as_deployed()');
+    ok($tmpl2->testing() eq 0, 'Krang::Template->mark_as_deployed()');
+}
+
+
 
 # find() tests
 ###############
