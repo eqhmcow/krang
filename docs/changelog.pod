@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Split the various checks out of Krang::Platform->verify_dependencies().
+This will simplify ports to other platforms, as individual checks can
+now be overridden, rather than the entire sub. [Peter]
+
+
+=item *
+
 Added new default scheduled job to analyze DB tables nightly.  This
 greatly improves performance for large databases. [Sam]
 
