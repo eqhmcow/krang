@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use CGI ();
 
 =head1 NAME
 
@@ -279,16 +280,16 @@ to templates.  See the template tutorial for more information.
 =item C<< $url = $class->build_url(story => $story, category => $category) >>
 
 Builds a URL for the given story and category.  The default
-implementation takes the site URL, appends the category path and the
-story slug.  This may be overriden by top_level elements to implement
-alternative URL schemes.
+implementation takes the category url, appends a URI encoded copy of
+the story slug.  This may be overriden by top_level elements to
+implement alternative URL schemes.
 
 =cut
 
 sub build_url {
     my ($self, %arg) = @_;
     my ($story, $category) = @arg{qw(story category)};
-    return $category->url . $story->slug;
+    return $category->url . CGI->escape($story->slug);
 }
 
 =item C<< @fields = $class->url_attributes() >>
