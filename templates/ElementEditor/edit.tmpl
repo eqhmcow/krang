@@ -5,8 +5,19 @@
         document.forms[0].submit();
   }
 
+  var containers = new Array();
+  <tmpl_loop container_loop>
+     containers["<tmpl_var name>"] = 1;
+  </tmpl_loop>
+
   function add_child() {
-     document.forms[0].rm.value = 'add';
+     var list = document.forms[0].child;
+     var name = list.options[list.selectedIndex].value;
+     if (containers[name]) {
+       document.forms[0].rm.value = 'save_and_add';
+     } else {
+       document.forms[0].rm.value = 'add';
+     }
      document.forms[0].submit();
   }
 
@@ -14,13 +25,6 @@
      document.forms[0].rm.value = 'save_and_jump';
      document.forms[0].jump_to.value = p;
      document.forms[0].submit();
-  }
-
-  function cancel_edit() {
-        if (confirm("Really cancel changes?")) {
-           document.forms[0].rm.value = 'cancel';
-           document.forms[0].submit();
-        }
   }
 
   function remove_children() {
@@ -100,7 +104,12 @@ Content
    <tr><td colspan=4>No sub-elements defined.</td></tr>
  </tmpl_unless>
 
-   <tr><td align=left colspan=2 class="form-cell"><tmpl_var child_select> <input type=button value="Add Element" onClick='add_child()'></td>
+   <tr><td align=left colspan=2 class="form-cell">
+      <tmpl_var child_select> <input type=button value="Add Element" onClick='add_child()'>
+      <tmpl_if bulk_edit_select> 
+         <br><tmpl_var bulk_edit_select> <input type=button value="Bulk Edit" onClick='save_and_bulk_edit()'>
+      </tmpl_if>
+   </td>
        <td align=center class="form-cell"><input type=button value=Reorder onClick='reorder()'></td>
        <td align=center class="form-cell"><input type=button value=Delete onClick='remove_children()'></td>
    </tr>

@@ -2,8 +2,28 @@
 
 <script language="javascript">
 
-  function save() {
-        document.forms[0].rm.value = 'save';
+  function db_save() {
+        document.forms[0].rm.value = 'db_save';
+        document.forms[0].submit();
+  }
+
+  function db_save_and_stay() {
+        document.forms[0].rm.value = 'db_save_and_stay';
+        document.forms[0].submit();
+  }
+
+  function save_and_jump() {
+        document.forms[0].rm.value = 'save_and_jump';
+        document.forms[0].submit();
+  }
+
+  function save_and_add() {
+        document.forms[0].rm.value = 'save_and_add';
+        document.forms[0].submit();
+  }
+
+  function save_and_go_up() {
+        document.forms[0].rm.value = 'save_and_go_up';
         document.forms[0].submit();
   }
 
@@ -12,8 +32,14 @@
         document.forms[0].submit();
   }
 
-  function edit_contribs () {
-     document.contrib.submit();
+  function save_and_view() {
+        document.forms[0].rm.value = 'save_and_view';
+        document.forms[0].submit();
+  }
+
+  function save_and_edit_contribs() {
+        document.forms[0].rm.value = 'save_and_edit_contribs';
+        document.forms[0].submit();
   }
 
   function remove() {
@@ -23,11 +49,6 @@
         }
   }
 
-
-  function view() {
-        document.forms[0].rm.value = 'save_and_view';
-        document.forms[0].submit();
-  }
 
   function revert() {
         var v = document.forms[0].version.options[document.forms[0].version.selectedIndex].value;
@@ -143,7 +164,7 @@
   None.
 </tmpl_if>
 </td>
-<td valign=top><input type=button value="Edit Contributors" onclick="edit_contribs()"></td>
+<td valign=top><input type=button value="Edit Contributors" onclick="save_and_edit_contribs()"></td>
 </tr></table>
 </td>
 </tr>
@@ -157,7 +178,7 @@
 
 <div class=form-box>
 
-<tmpl_include /element_editor_edit.tmpl>
+<tmpl_include /ElementEditor/edit.tmpl>
 
 <tmpl_if is_root>
 <p>
@@ -197,12 +218,12 @@ Sites / Categories<br>
     <table width=100%><tr>
     <td>
       Desk: <select name=desk><option value=1>Edit</option></select>
-      <input type=button value="Check-in" onclick="checkin()">
+      <input type=button value="Check-in" onclick="alert('Desks not yet implemented')">
     </td>
     <td align=right>
       Version: <tmpl_var version_selector>
       <input type=button value="Revert" onclick="revert()">
-      <input type=button value="View" onclick="view()">
+      <input type=button value="View" onclick="save_and_view()">
     </td>
     </table>
   </div>
@@ -210,24 +231,20 @@ Sites / Categories<br>
 </tmpl_if>
 
 <div class=button-bar>
-  <input type=button value="Save" onclick="save()">
-  <input type=button value="Save &amp; Stay" onclick="save_and_stay()">
   <tmpl_if is_root>
+    <input type=button value="Save" onclick="db_save()">
+    <input type=button value="Save &amp; Stay" onclick="db_save_and_stay()">
     <input type=button value="Publish" onclick="alert('Tell Peter to write Krang::Burner.')">
-  </tmpl_if>
-  <input type=reset value="Reset">
-  <tmpl_if is_root>
+    <input type=reset value="Reset">
      <input type=button value="Delete" onclick="remove()">
   <tmpl_else>
-     <input type=button value="Delete" onclick="remove_element()">
+    <input type=button value="Save" onclick="save_and_go_up()">
+    <input type=button value="Save &amp; Stay" onclick="save_and_stay()">
+    <input type=button value="Delete" onclick="remove_element()">
   </tmpl_if>
 
 </div>
 
-</form>
-
-<form name="contrib" action="contributor.pl" method="post">
-   <input type=hidden name=rm value=associate_story>
 </form>
 
 <tmpl_include footer.tmpl>
