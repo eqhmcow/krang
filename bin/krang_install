@@ -26,6 +26,7 @@ use constant CAT_BIN        => '/bin/cat';
 use constant CHKCONFIG_BIN  => '/sbin/chkconfig';
 use constant LN_BIN         => '/bin/ln';
 
+$|++;
 
 =head1 NAME
 
@@ -39,9 +40,11 @@ krang_install - install Krang from a dist file
 
 =head1 DESCRIPTION
 
-This script will install Krang on a RedHat 7.3 (i686-linux) 
-system from a dist file created by krang_makedist.
+This script will install Krang on a RedHat 7.3 or Redhat 9
+(i686-linux) system from a dist file created by krang_makedist.
 
+It can also install Krang from a backup file created by krang_backup.
+For more on this topic, see C<docs/ops_backup.pod>.
 
 
 =head2 What C<krang_install> does
@@ -152,6 +155,8 @@ Following is a list of the tasks the installer script will perform.
   --ApachePort           - Port on which CMS HTTP server should run
   --SMTPServer           - Address of SMTP mail server 
   --InstanceDisplayName  - Name of the Instance for UI display
+  --FromBackup           - the name of a backup file to use as source for 
+                           the install.
 
 =head2 Installation flags
 
@@ -191,6 +196,8 @@ use Getopt::Long;
 use Pod::Usage;
 use HTML::Template;
 use Term::Prompt qw(prompt);
+use File::Temp qw(tempdir);
+use Config::ApacheFormat;
 
 my @original_args = ();
 my $uniqueness = time();
@@ -204,7 +211,8 @@ my @req_params = qw( HostName
                      DBPass
                      InstanceElementSet );
 
-my @opt_params = qw( MySQLRootPassword 
+my @opt_params = qw( FromBackup
+                     MySQLRootPassword 
                      InstallPath 
                      KrangUser 
                      KrangGroup 
@@ -227,10 +235,18 @@ exit(0);
 sub do_install {
     setup_getopts();
 
+    # unpack backup, which contributes to options
+    unpack_backup() if $options{FromBackup};
+
+    # enforce requirements
+    enforce_requirements();
+    
     # Do installation
     check_prereqs();
     do_perl_install() if ($do_perl_install);
     do_mysql_install() if ($do_mysql_install);
+
+    # working here - must create all users spec'd in backup conf
     create_mysql_user();
     create_unix_user_group();
     install_krang();
@@ -241,6 +257,83 @@ sub do_install {
     output_report();
 }
 
+# open up the backup file, if one is specified, and load unspecified
+# values from the config
+sub unpack_backup {
+    our $BACKUP_DIR;
+    our $BACKUP_CONF;
+    our @BACKUP_INSTANCES;
+
+    # open up the backup
+    my $kba = $options{'FromBackup'};
+    exit_error("FromBackup file '$kba' should end in .kba or .kba.gz")
+      unless $kba =~ /\.kba\.gz$/ or $kba =~ /\.kba$/;
+    exit_error("FromBackup file '$kba' does not exist.")
+      unless -e $kba;
+    $kba = rel2abs($kba);
+
+    # make temp directory for backup files
+    $BACKUP_DIR = tempdir(CLEANUP => 1,
+                          DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'));
+
+    print "Unpacking backup file '$kba'.\n";
+    my $cmd = TAR_BIN . " -x" . ($kba =~ /gz$/ ? 'z' : '') . "f $kba -C $BACKUP_DIR";
+    system($cmd) && die("Error un-tarring file '$kba' to '$BACKUP_DIR'.\n");
+    exit_error("FromBackup file '$kba' is not a valid Krang backup - missing conf/krang.conf.")
+      unless -e catfile($BACKUP_DIR, 'conf', 'krang.conf');
+
+    # make sure the versions match
+    my $this_version = _get_version("$ENV{KRANG_ROOT}/lib/Krang.pm");
+    my $backup_version = _get_version("$BACKUP_DIR/lib/Krang.pm");
+    exit_error("Backup file '$kba' was made with version '$backup_version' of Krang!  This is version '$this_version'.")
+      unless $this_version == $backup_version;
+    
+    # load configuration file from backup to get defaults
+    print "Loading backup configuration.\n";
+    $BACKUP_CONF = Config::ApacheFormat->new();
+    $BACKUP_CONF->read(catfile($BACKUP_DIR, 'conf', 'krang.conf'));    
+    
+    # use the values from the first instance
+    my @blocks = $BACKUP_CONF->get('Instance');
+    my $conf = $BACKUP_CONF->block($blocks[0]);
+
+    # load option defaults from conf    
+    $options{HostName}           ||= $conf->get('HostName');
+    $options{IPAddress}          ||= $conf->get('ApacheAddr');
+    $options{AdminPassword}      ||= '*** RESTORED FROM BACKUP ***';
+    $options{DBUser}             ||= $conf->get('DBUser');
+    $options{DBPass}             ||= $conf->get('DBPass');
+    $options{InstanceElementSet} ||= $conf->get('InstanceElementSet');
+    $options{InstanceDBName}     ||= $conf->get('InstanceDBName');
+    $options{InstanceHostName}   ||= $conf->get('InstanceHostName');
+    $options{KrangUser}          ||= $conf->get('KrangUser');
+    $options{KrangGroup}         ||= $conf->get('KrangGroup');
+    $options{FTPPort}            ||= $conf->get('FTPPort');
+    $options{FTPHostName}        ||= $conf->get('FTPHostName');
+    $options{ApachePort}         ||= $conf->get('ApachePort');
+    $options{SMTPServer}         ||= $conf->get('SMTPServer');
+    $options{InstanceDisplayName}||= $conf->get('InstanceDisplayName');
+
+    # load extra instance data into @BACKUP_INSTANCES
+    if (@blocks > 1) {
+        foreach my $block_name (@blocks[1..$#blocks]) {
+            $conf = $BACKUP_CONF->block($block_name);
+            push(@BACKUP_INSTANCES, 
+                 { InstanceElementSet => $conf->get('InstanceElementSet'),
+                   InstanceDBName     => $conf->get('InstanceDBName'),
+                   InstanceHostName   => $conf->get('InstanceHostName'),
+                 });
+        }
+    }
+
+    # set KrangRoot to backup directory so backup will flow from there
+    $ENV{KRANG_ROOT} = $BACKUP_DIR;
+}
+
+# extract a version number from Krang.pm
+sub _get_version {
+    `perl -e 'require qq{$_[0]}; print \$Krang::VERSION'`;
+}
 
 sub check_prereqs {
     print "Checking prerequisites\n";
@@ -285,13 +378,13 @@ sub check_prereqs {
     if (-e $InstallPath) {
         if (-e catfile($InstallPath,'bin','krang_uninstall')) {
              exit_error("Will not proceed due to existing krang install.") unless prompt("y", "InstallPath '$InstallPath' already exists and seems to contain an existing Krang instance.\nThis program must totally and permanently remove this krang installation in order to proceed.\n\nIs this what you really want to do?", "y/n", "n");
-            my $real_krang_root = $ENV{KRANG_ROOT};
-            $ENV{KRANG_ROOT} = $InstallPath;
-            system(catfile($InstallPath,'bin','krang_uninstall').' --no_prompt --verbose');
-            $ENV{KRANG_ROOT} = $real_krang_root;
-        } else { 
-            exit_error("InstallPath '$InstallPath' already exists and does not appear to belong to an existing krang instance.  Cannot continue.");
-        }
+             {
+                 local $ENV{KRANG_ROOT} = $InstallPath;
+                 system(catfile($InstallPath,'bin','krang_uninstall').' --no_prompt --verbose');
+             }
+         } else { 
+             exit_error("InstallPath '$InstallPath' already exists and does not appear to belong to an existing krang instance.  Cannot continue.");
+         }
     }
 
     # Start-up (init.d) script must NOT exist.
@@ -449,6 +542,22 @@ sub create_mysql_user {
     print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
     system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
     print "  MySQL access granted.\n";
+
+    # handles any backup instances
+    our @BACKUP_INSTANCES;
+    foreach my $instance (@BACKUP_INSTANCES) {
+        my $InstanceDBName = $instance->{'InstanceDBName'};
+
+        $grant = "grant all on $InstanceDBName\.* to $DBUser\@localhost";
+        $grant .= " identified by '$DBPass'" if ($DBPass);
+        
+        my $mysql_grant = ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
+        $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+        print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
+        system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
+        print "  MySQL access granted.\n";
+        
+    }
 }
 
 
@@ -501,7 +610,6 @@ sub create_unix_user_group {
     }
 }
 
-
 sub install_krang {
     my $InstallPath = $options{InstallPath};
     mkdir($InstallPath) || die($!);
@@ -511,6 +619,10 @@ sub install_krang {
     chdir($ENV{KRANG_ROOT});
     my $copy = COPY_BIN ." -r * $InstallPath\/";
     system($copy) && die("Can't copy: $!");
+
+    # remove scripts that won't do anything useful in an installed
+    # system
+    system("rm $InstallPath/bin/krang_install $InstallPath/bin/krang_makedist $InstallPath/bin/krang_upgrade");
 
     print "  Fixing ownership\n";
     my $KrangUser = $options{KrangUser};
@@ -557,39 +669,87 @@ sub configure_krang {
     my $InstallPath = $options{InstallPath};
     chdir($InstallPath);
 
-    # Make custom krang.conf
-    print "Creating krang.conf from specification\n";
-    my $t = HTML::Template->new(filename => $ENV{KRANG_ROOT} ."/conf/krang.conf.tmpl");
-    foreach my $param (keys(%options)) {
-        # Filter out params which are not in HTML::Template file 'krang.conf.tmpl'
-        unless ( grep { $param eq $_ } qw/AdminPassword MySQLRootPassword InstallPath/ ) {
-            $t->param($param => $options{$param});
+
+    if ($options{FromBackup}) {
+        print "Updating backup krang.conf\n";
+
+        # processing existing krang.conf, replacing IPAddress and
+        # HostName parameters needed to migrate a backup to a new machine
+        open(CONF, "<", "conf/krang.conf") 
+          or die "Unable to open conf/krang.conf : $!";
+        my @conf = <CONF>;
+        close(CONF);
+
+        open(CONF, ">", "conf/krang.conf") 
+          or die "Unable to open conf/krang.conf : $!";
+        foreach my $line (@conf) {
+            if ($line =~ /^\s*ApacheAddr\s/i) {
+                print CONF "ApacheAddr $options{IPAddress}\n";
+            } elsif ($line =~ /^\s*FTPAddress\s/i) {
+                print CONF "FTPAddress $options{IPAddress}\n";
+            } elsif ($line =~ /^\s*HostName\s/i) {
+                print CONF "HostName $options{HostName}\n";
+            } elsif ($line =~ /^\s*FTPHostName\s/i) {
+                print CONF "FTPHostName $options{FTPHostName}\n";
+            } else {
+                print CONF $line;
+            }
         }
-    }
-    my $output_conf = $InstallPath ."/conf/krang.conf";
-    open(OUTPUT, ">$output_conf") || die("Can't open '$output_conf' for writing: $!");
-    print OUTPUT $t->output();
-    close(OUTPUT);
-    print "  Conf written to '$output_conf'.\n";
+        close CONF;
+        
+        print "  Conf written to '$InstallPath/conf/krang.conf'.\n";
 
-    # Create DB
-    print "Creating MySQL database and loading schema\n";
-    my $MySQLRootPassword = $options{'MySQLRootPassword'};
-    my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb";
-    $createdb .= " --password $MySQLRootPassword" if (length($MySQLRootPassword));
-    system($createdb) && die("Error calling krang_createdb.  Unable to continue");
+        # load database SQL
+        opendir(BACKUP, catdir($ENV{KRANG_ROOT}, 'data', 'backup'))
+          or die "Unable to open data/backup: $!";
+        my @sql = grep { /\.sql$/ } readdir(BACKUP);
+        closedir(BACKUP);
+                
+        foreach my $sql (@sql) {
+            print "Creating MySQL database from backup source '$sql'.\n";
+            my $file = catfile($ENV{KRANG_ROOT}, 'data', 'backup', $sql);
+            my $cmd = "cat $file | mysql -uroot ";
+            $cmd .= " -p$options{'MySQLRootPassword'}" 
+              if length $options{'MySQLRootPassword'};
+            system($cmd);
+        }
 
-    # Customize DB (Admin password)
-    my $AdminPassword = $options{AdminPassword};
-    print "  Changing 'admin' CMS login password to '$AdminPassword'\n";
-    my $update_pw_perl = qq(
+    } else {
+    
+        # Make custom krang.conf
+        print "Creating krang.conf from specification\n";
+        my $t = HTML::Template->new(filename => $ENV{KRANG_ROOT} ."/conf/krang.conf.tmpl");
+        foreach my $param (keys(%options)) {
+            # Filter out params which are not in HTML::Template file 'krang.conf.tmpl'
+            unless ( grep { $param eq $_ } qw/AdminPassword MySQLRootPassword InstallPath FromBackup/ ) {
+                $t->param($param => $options{$param});
+            }
+        }
+        my $output_conf = $InstallPath ."/conf/krang.conf";
+        open(OUTPUT, ">$output_conf") || die("Can't open '$output_conf' for writing: $!");
+        print OUTPUT $t->output();
+        close(OUTPUT);
+        print "  Conf written to '$output_conf'.\n";
+
+        # Create DB
+        print "Creating MySQL database and loading schema\n";
+        my $MySQLRootPassword = $options{'MySQLRootPassword'};
+        my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb";
+        $createdb .= " --password $MySQLRootPassword" if (length($MySQLRootPassword));
+        system($createdb) && die("Error calling krang_createdb.  Unable to continue");
+        
+        # Customize DB (Admin password)
+        my $AdminPassword = $options{AdminPassword};
+        print "  Changing 'admin' CMS login password to '$AdminPassword'\n";
+        my $update_pw_perl = qq(
                             my (\$user) = Krang::User->find(login=>"admin");
                             \$user->password("$AdminPassword");
                             \$user->save();
                            );
-    my $update_admin_pw = "KRANG_ROOT='$InstallPath' PERL5LIB='$InstallPath/lib' ";
-    $update_admin_pw .= PERL_BIN ." -MKrang::Script -MKrang::User -e '$update_pw_perl'";
-    system($update_admin_pw) && die("Error changing admin password: $!");
+        my $update_admin_pw = "KRANG_ROOT='$InstallPath' PERL5LIB='$InstallPath/lib' ";
+        $update_admin_pw .= PERL_BIN ." -MKrang::Script -MKrang::User -e '$update_pw_perl'";
+        system($update_admin_pw) && die("Error changing admin password: $!");
+    }
 }
 
 
@@ -694,10 +854,13 @@ sub setup_getopts {
     pod2usage(1)             if $help;
     pod2usage(-verbose => 2) if $man;
 
+}
+
+sub enforce_requirements {
     # Enforce required params
     my $error_output = "";
     foreach my $p (@req_params) {
-        next if (length($options{$p}));
+        next if defined($options{$p});
         $error_output .= "Missing --". $p ."\n";
     }
     if ($error_output) {

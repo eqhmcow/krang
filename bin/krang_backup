@@ -26,8 +26,10 @@ Create a backup named C<backup.kba>:
 =head1 DESCRIPTION
 
 This script creates a backup of a Krang installation.  The C<.kba> (or
-C<.kba.gz>) file produced may be later fed to C<krang_restore> to
-recreate the Krang installation.
+C<.kba.gz>) file produced may be later fed to C<krang_install --FromBackup>
+to recreate the Krang installation.
+
+For more details, see L<docs/ops_backup.pod>.
 
 =head1 OPTIONS
 
@@ -126,7 +128,8 @@ foreach my $instance (Krang::Conf->instances) {
     Krang::Conf->instance($instance);
 
     my $cmd = MYSQL_DUMP . ' -u' . DBUser .
-      (DBPass ? (' -p' . DBPass) : '') . ' -e -l ' . InstanceDBName . 
+      (DBPass ? (' -p' . DBPass) : '') . ' -e -l --databases ' . 
+        InstanceDBName . 
         ' >' . catfile($dir, InstanceDBName . '.sql');
     print STDERR "Dumping " . InstanceDBName . " database with command:" .
       "\n\t$cmd\n\n"
