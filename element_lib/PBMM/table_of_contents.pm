@@ -1,14 +1,14 @@
-package PBMM::site_related_link_box;
+package PBMM::table_of_contents;
 use strict;
 use warnings;
 
 =head1 NAME
 
-PBMM::site_related_link_box
+PBMM::table_of_contents
 
 =head1 DESCRIPTION
 
-PBMM article_related_link_box element class for Krang. 
+PBMM table_of_contents element class for Krang. 
 
 =cut
 
@@ -17,7 +17,7 @@ use base 'Krang::ElementClass';
 
 sub new {
    my $pkg = shift;
-   my %args = ( name => 'site_related_link_box',
+   my %args = ( name => 'table_of_contents',
                 children => 
                 [
                     Krang::ElementClass::CheckBox->new(name => 'table_background',
@@ -31,8 +31,7 @@ sub new {
                                                     min => 1,
                                                         max => 1,
                                                         allow_delete => 1,
-                                                        reorderable => 0 ),
- 
+                                                        reorderable => 0 ), 
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

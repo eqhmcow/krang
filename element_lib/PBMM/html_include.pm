@@ -1,14 +1,14 @@
-package PBMM::site_related_link_box;
+package PBMM::html_include;
 use strict;
 use warnings;
 
 =head1 NAME
 
-PBMM::site_related_link_box
+Default::html_include
 
 =head1 DESCRIPTION
 
-PBMM article_related_link_box element class for Krang. 
+PBMM html_include element class for Krang. 
 
 =cut
 
@@ -17,9 +17,17 @@ use base 'Krang::ElementClass';
 
 sub new {
    my $pkg = shift;
-   my %args = ( name => 'site_related_link_box',
+   my %args = ( name => 'html_include',
+                display_name => 'HTML Include',
                 children => 
                 [
+                    Krang::ElementClass::MediaLink->new(name => "file",
+                                                        min => 1,
+                                                        max => 1,
+                                                        required => 1,
+                                                        allow_delete => 1,
+                                                        reorderable => 0
+                                                     ),
                     Krang::ElementClass::CheckBox->new(name => 'table_background',
                                                        min => 1,
                                                         max => 1,
@@ -31,8 +39,7 @@ sub new {
                                                     min => 1,
                                                         max => 1,
                                                         allow_delete => 1,
-                                                        reorderable => 0 ),
- 
+                                                        reorderable => 0 ), 
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
