@@ -6,6 +6,19 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug related to the internal tracking of assets in
+L<Krang::Publisher>.  This finishes up a minor restructuring that
+ensures C<krang_publish> publishes each story/media object only once
+during a publish run. [Peter]
+
+=item *
+
+Fixed a bug in C<krang_publish>.  When publishing with the
+C<--site_id> argument, all media objects under that site are now
+published, not just those media objects linked to stories. [Peter]
+
+=item *
+
 Cleaned up the code handling the management of internal asset lists in
 L<Krang::Publisher>.  This code is used to ensure the same asset is
 not published more than once during a publish run. [Peter]

@@ -241,6 +241,18 @@ all related assets, regardless of whether or not the current version
 has been published to preview before.
 
 
+=item * C<remember_asset_list>
+
+Boolean, defaults to false.
+
+If true, the C<Krang::Publisher> object will remember these media
+objects, and will skip re-publishing them if they come up again
+(e.g. if linked to a story being published).
+
+This only affects successive publish calls to a single
+C<Krang::Publisher> object.  See C<bin/krang_publish> for an example
+of this functionality being used.
+
 =item * C<callback>
 
 The optional parameter C<callback> will point to a subroutine which is
@@ -278,10 +290,11 @@ sub preview_story {
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
-    my $story         = $args{story}   || croak __PACKAGE__ . ": missing required argument 'story'";
-    my $callback      = $args{callback};
-    my $unsaved       = (exists($args{unsaved})) ? $args{unsaved} : 0;
-    my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $story           = $args{story}   || croak __PACKAGE__ . ": missing required argument 'story'";
+    my $callback        = $args{callback};
+    my $unsaved         = (exists($args{unsaved})) ? $args{unsaved} : 0;
+    my $version_check   = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $keep_asset_list = $args{remember_asset_list} || 0;
 
     # deploy any templates flagged as testing for this user
     $self->_deploy_testing_templates();
@@ -323,6 +336,8 @@ sub preview_story {
 
     # cleanup - remove any testing templates.
     $self->_undeploy_testing_templates();
+
+    $self->_clear_asset_lists() unless ($keep_asset_list);
 
     my $preview_url = catfile($story->preview_url, $self->story_filename(story => $story));
 
@@ -377,6 +392,18 @@ see if the current version has been published previously, skipping
 those that have.  When false, it will publish all related assets,
 regardless of whether or not the current version has been published
 before.
+
+=item * C<remember_asset_list>
+
+Boolean, defaults to false.
+
+If true, the C<Krang::Publisher> object will remember these media
+objects, and will skip re-publishing them if they come up again
+(e.g. if linked to a story being published).
+
+This only affects successive publish calls to a single
+C<Krang::Publisher> object.  See C<bin/krang_publish> for an example
+of this functionality being used.
 
 
 =item * C<callback>
@@ -451,6 +478,7 @@ sub publish_story {
     my $skip_callback = $args{skip_callback};
 
     my $no_related_check = (exists($args{disable_related_assets})) ? $args{disable_related_assets} : 0;
+    my $keep_asset_list  = $args{remember_asset_list} || 0;
 
     my $user_id       = $ENV{REMOTE_USER};
 
@@ -533,6 +561,8 @@ sub publish_story {
 
 
     }
+
+    $self->_clear_asset_lists() unless ($keep_asset_list);
 }
 
 
@@ -632,6 +662,19 @@ is force a republish of the media object to the preview path the next
 time the object comes up as a related object to a story being
 previewed.
 
+=item * C<remember_asset_list>
+
+Boolean, defaults to false.
+
+If true, the C<Krang::Publisher> object will remember these media
+objects, and will skip re-publishing them if they come up again
+(e.g. if linked to a story being published).
+
+This only affects successive publish calls to a single
+C<Krang::Publisher> object.  See C<bin/krang_publish> for an example
+of this functionality being used.
+
+
 =back
 
 Returns a url to the media file on the preview website if successful.
@@ -647,10 +690,19 @@ sub preview_media {
 
     $self->_set_preview_mode();
 
+    my $keep_asset_list = $args{remember_asset_list} || 0;
+
     my $media    = $args{media} || croak __PACKAGE__ . ": Missing argument 'media'!\n";
     my $unsaved  = (exists($args{unsaved})) ? $args{unsaved} : 0;
 
+    # add it to the asset list
+    unless ($unsaved) {
+        $self->_mark_asset(object => $media);
+    }
+
     $media->mark_as_previewed(unsaved => $unsaved);
+
+    $self->_clear_asset_lists() unless ($keep_asset_list);
 
     return $self->_write_media(media => $media);
 
@@ -668,6 +720,19 @@ Arguments:
 =item * C<media>
 
 Required.  The Krang::Media object being published.
+
+=item * C<remember_asset_list>
+
+Boolean, defaults to false.
+
+If true, the C<Krang::Publisher> object will remember these media
+objects, and will skip re-publishing them if they come up again
+(e.g. if linked to a story being published).
+
+This only affects successive publish calls to a single
+C<Krang::Publisher> object.  See C<bin/krang_publish> for an example
+of this functionality being used.
+
 
 =back
 
@@ -693,6 +758,8 @@ sub publish_media {
     my $callback      = $args{callback};
     my $skip_callback = $args{skip_callback};
 
+    my $keep_asset_list = $args{remember_asset_list} || 0;
+
     my $publish_list;
 
     my $user_id  = $ENV{REMOTE_USER};
@@ -710,6 +777,9 @@ sub publish_media {
     my $counter = 0;
 
     foreach my $media_object (@$publish_list) {
+        # make a note in the asset list.
+        my $ok = $self->_mark_asset(object => $media_object);
+
         # cannot publish assets checked out by other users.
         if ($media_object->checked_out) {
             if ($user_id != $media_object->checked_out_by) {
@@ -754,6 +824,7 @@ sub publish_media {
 
     }
 
+    $self->_clear_asset_lists() unless ($keep_asset_list);
 
     return @urls;
 
@@ -827,7 +898,8 @@ sub asset_list {
 
     my $story         = $args{story} || croak __PACKAGE__ . ": Missing parameter 'story'";
     my $mode          = $args{mode};
-    my $keep_list     = $args{keep_asset_list} || 0;
+#    my $keep_list     = $args{keep_asset_list} || 0;
+#    my $keep_list = 0;
     my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
 
     # check publish mode.
@@ -843,16 +915,14 @@ sub asset_list {
         }
     }
 
-    $self->_init_asset_lists();
-
     my @publish_list = $self->_build_asset_list(object         => $story,
                                                 version_check  => $version_check,
                                                 initial_assets => 1,
                                                );
 
-    unless ($keep_list) {
-        $self->_clear_asset_lists();
-    }
+#     unless ($keep_list) {
+#         $self->_clear_asset_lists();
+#     }
 
     return \@publish_list;
 
@@ -1575,6 +1645,9 @@ sub _mark_asset {
     my $set;
     my $id;
 
+    # make sure the asset list exists - non-destructive init.
+    $self->_init_asset_lists();
+
     if ($object->isa('Krang::Story')) {
         $set = 'story_publish_set';
         $id  = $object->story_id();
@@ -1586,10 +1659,6 @@ sub _mark_asset {
         croak sprintf("%s->_mark_asset: unknown object type: %s\n", __PACKAGE__, $object->isa);
     }
 
-    unless (exists($self->{asset_list}{$instance}{$set})) {
-        use Data::Dumper;
-        croak Dumper($instance, $set);
-    }
     if ($self->{asset_list}{$instance}{$set}->contains($id)) {
         return 0;
     }
@@ -1614,6 +1683,9 @@ sub _mark_asset_links {
     my $object = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
 
     return 0 unless ($object->isa('Krang::Story'));
+
+    # make sure the asset list exists - non-destructive init.
+    $self->_init_asset_lists();
 
     my $instance = $ENV{KRANG_INSTANCE};
     my $story_id = $object->story_id();

@@ -223,9 +223,11 @@ Krang::Cache::start();
 
 # figure out how these command-line options affect find criteria.
 my %find_options = (limit => $increment, offset => 0);
-my %publish_args = (callback      => \&_progress_callback,
-                    skip_callback => \&_skip_callback,
-                    version_check => $version_check
+my %publish_args = (
+                    callback            => \&_progress_callback,
+                    skip_callback       => \&_skip_callback,
+                    version_check       => $version_check,
+                    remember_asset_list => 1
                    );
 
 if ($republish_only) {
@@ -301,32 +303,42 @@ my @assettime;
 my $storycount = 0;
 my $mediacount = 0;
 
-# if the --everything option was specified, all media needs to be published first.
-# Additionally, if the --media_id option was used, do it first.
-
-if ($everything || $find_options{media_id}) {
-    my $story_id;
-
-    # remove story_id if it's also a param
-    if (exists($find_options{story_id})) {
-        $story_id = $find_options{story_id};
-        delete $find_options{story_id};
-    }
-
+# if the --everything option was specified, publish all media first,
+# then stories.
+if ($everything) {
     publish_media(\%find_options, \%publish_args);
-
-    # delete media_id from find_options.
-    delete $find_options{media_id};
-
-    # restore story_id if needed.
-    $find_options{story_id} = $story_id if $story_id;
-}
-
-if ($everything || $find_options{story_id} || 
-    $find_options{category_id} || $find_options{site_id}) {
-
     publish_stories(\%find_options, \%publish_args);
 
+} else {
+    if (
+        $find_options{site_id}     ||
+        $find_options{category_id} ||
+        $find_options{media_id}
+       ) {
+        # publish media first - remove story_id arg
+        my $story_id;
+
+        if (exists($find_options{story_id})) {
+            $story_id = $find_options{story_id};
+            delete $find_options{story_id};
+        }
+
+        publish_media(\%find_options, \%publish_args);
+
+        # delete media_id from find_options.
+        delete $find_options{media_id};
+
+        # restore story_id if needed.
+        $find_options{story_id} = $story_id if $story_id;
+    }
+
+    if (
+        $find_options{site_id}     ||
+        $find_options{category_id} ||
+        $find_options{story_id}
+       ) {
+        publish_stories(\%find_options, \%publish_args);
+    }
 }
 
 print "\n\nSTATUS: Publish completed.\n======================================================================\n";
@@ -359,7 +371,7 @@ sub publish_media {
         my @starttime = gettimeofday();
         @assettime = @starttime;
 
-        eval { 
+        eval {
             if ($to_preview) {
                 foreach my $media (@media) {
                     $publisher->preview_media(media => $media, %$publish_args);
