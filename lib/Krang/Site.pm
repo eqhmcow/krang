@@ -408,10 +408,11 @@ sub save {
     my @save_fields = grep {$_ ne 'site_id'} keys %site_cols;
 
     # prevent creation of duplicate or saving of duplicate field
-    my $query = "SELECT * FROM site";
+    my $query = "SELECT * FROM site WHERE " .
+      join(" OR ", map {"$_ = ?"} @save_fields) . " LIMIT 1";
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
-    $sth->execute();
+    $sth->execute(map {$self->{$_}} @save_fields);
 
     # reference into which result are fetched
     my $row;
@@ -456,14 +457,6 @@ sub save {
 =back
 
 =head1 TO DO
-
-=over 4
-
-=item * Prevent duplicate site objects.
-
-This is now at least partially complete, but the current solution is costly.
-
-=back
 
 =head1 SEE ALSO
 
