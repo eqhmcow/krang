@@ -19,6 +19,9 @@ Krang::ElementLibrary - the element class loader and indexer
   # get the object for the top level called "article" from the current set
   $class = Krang::ElementLibary->top_level(name => "article");
 
+  # get a list of all element names, anywhere in the element library
+  @names = Krang::ElementLibrary->element_names();
+
 =head1 DESCRIPTION
 
 This module is responsible for loading the Krang Element Library and
@@ -229,6 +232,34 @@ sub top_level {
           "element set '" . ElementSet() . "'");
 }
 
+=item C<< @names = Krang::ElementLibrary->element_names() >>
+
+Returns a list of element names in the current ElementSet.  This list
+is uniqued (since the same name may be used in different places in the
+set) and sorted.
+
+=cut
+
+sub element_names {
+    my $pkg = shift;
+    our %TOP_LEVEL;
+    
+    # start with the top-levels, recursing down from there
+    my @stack = values %{$TOP_LEVEL{ElementSet()}};
+
+    # build list of names in %names
+    my %names;
+    while(@stack) {
+        my $node = pop(@stack);
+        $names{$node->name} = 1;
+        push(@stack, $node->children);
+    }
+
+    # sort and return
+    return sort keys %names;
+}
+
+
 =item C<< $class = Krang::ElementLibrary->find_class(name => "deck") >>
 
 =item C<< $class = Krang::ElementLibrary->find_class(name => "deck", set => "Flex") >>
@@ -237,6 +268,9 @@ Finds an element class by name, looking in the configured ElementSet
 for the current instance unless as set argument is passed.  If the
 ElementSet has ParentSets configured, will look there too.  Returns an
 object descended from Krang::ElementClass or undef on failure.
+
+This call only finds classes that are declared as separate packages,
+not those declared inline.
 
 For testing purposes, set $Krang::ElementLibrary::TESTING_SET and
 find_class() will look there rather than the current ElementSet.

@@ -12,13 +12,19 @@ foreach my $instance (Krang::Conf->instances()) {
     Krang::Conf->instance($instance);
     ok(Krang::ElementLibrary->load_set(set => ElementSet));
 
+    # check that element_names works
+    my @names = Krang::ElementLibrary->element_names();
+    ok(@names, "element_names returned something");
+
     # recurse through classes, giving them a checkup
     my @top = Krang::ElementLibrary->top_levels();
     ok(@top, "top_levels exist " . ElementSet);
     foreach my $name (@top) {
+        ok(grep { $_ eq $name } @names, "$name is in element_names");
         my $class = Krang::ElementLibrary->top_level(name => $name);
         check_kids($class);
     }
+
 }
 Krang::Conf->instance($old_instance);
 
