@@ -2,6 +2,19 @@ package Krang::HTMLPager;
 use strict;
 use warnings;
 
+use Carp qw(croak);
+use HTML::Template;
+use Krang::Conf qw(KrangRoot);
+use File::Spec::Functions qw(catdir);
+
+
+# Set up HTML_TEMPLATE_ROOT for templates
+BEGIN {
+    # use $KRANG_ROOT/templates for templates
+    $ENV{HTML_TEMPLATE_ROOT} = catdir(KrangRoot, "templates");
+}
+
+
 
 =head1 NAME
 
@@ -66,16 +79,18 @@ use Krang::MethodMaker (
                         new_with_init => 'new',
                         new_hash_init => 'hash_init',
                         get_set       => [ qw(
-                                               name 
                                                cgi_query 
-                                               tmpl_obj 
-                                               use_module 
                                                persist_vars 
-                                               columns 
-                                               columns_sortable 
+                                               use_module 
                                                find_params 
-                                               columns_sort_map 
-                                               column_label
+                                               columns 
+                                               column_labels
+                                               command_column_commands
+                                               command_column_labels
+                                               columns_sortable 
+                                               columns_sort_map
+                                               row_handler
+                                               id_handler
                                              ) ],
                        );
 
@@ -122,10 +137,20 @@ sub init {
     my $self = shift;
     my %args = ( @_ );
 
-    $args{name} ||= 'krang_pager';
+    # Set up default values
+    my %defaults = (
+                    persist_vars => [],
+                    find_params => {},
+                    columns => [],
+                    column_labels => {},
+                    columns_sortable => [],
+                    columns_sort_map => {},
+                    command_column_commands => [],
+                    command_column_labels => {},
+                   );
 
     # finish the object
-    $self->hash_init(%args);
+    $self->hash_init(%defaults, %args);
 
     return $self;
 }
@@ -148,7 +173,15 @@ responsibility to output that $template_object.
 
 =cut
 
-sub fill_template {}
+sub fill_template {
+    my $self = shift;
+    my $t = shift;
+
+    # Did we get a template object?
+    croak ("No HTML::Template object specified") unless (ref($t));
+
+    $self->validate_pager();
+}
 
 
 
@@ -186,7 +219,14 @@ pager property.
 
 =cut
 
-sub output {}
+sub output {
+    my $self = shift;
+
+    my $t = HTML::Template->new_file("HTMLPager/pager.tmpl", cache=>1);
+    $self->fill_template($t);
+
+    return $t->output();
+}
 
 
 
@@ -410,6 +450,97 @@ creating the checkbox columns and command columns.
 
 
 =head2 Creating Custom Pager Templates
+
+
+=cut
+
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+# Verify that the pager is valid.  Croak if not.
+sub validate_pager {
+    my $self = shift;
+
+    # cgi_query
+    croak ("No cgi_query specified") unless (ref($self->cgi_query));
+
+    # use_module
+    my $use_module = $self->use_module();
+    croak ("No use_module specified") unless ($use_module);
+    eval "require $use_module";
+    croak ("Can't require $use_module: $@") if ($@);
+    croak ("The use_module '$use_module' has no find() method") unless ($use_module->can('find'));
+
+    # find_params
+    croak ("find_params is not a hash") unless (ref($self->find_params) eq 'HASH');
+
+    # columns
+    my $columns = $self->columns();
+    croak ("columns is not an array") unless (ref($columns) eq 'ARRAY');
+    croak ("No columns have been specified") unless (scalar(@$columns));
+
+    # column_labels
+    my $column_labels = $self->column_labels();
+    croak ("column_labels is not a hash") unless (ref($column_labels) eq 'HASH');
+    my @invalid_columns = ();
+    foreach my $col_lab (keys(%$column_labels)) {
+        push(@invalid_columns, $col_lab) unless (grep { $col_lab eq $_ } @$columns);
+    }
+    croak ("column_labels contains invalid columns '". join("', '", @invalid_columns) ."'") 
+      if (@invalid_columns);
+
+    # command_column_commands
+    my $command_column_commands = $self->command_column_commands();
+    croak ("command_column_commands is not an array") unless (ref($command_column_commands) eq 'ARRAY');
+    if (grep { $_ eq 'command_column' } @$columns) {
+        croak ("No command_column_commands have been specified")
+          unless (scalar(@$command_column_commands));
+    } else {
+        croak ("command_column_commands have been specified but columns does not contain a command_column") 
+          if (scalar(@$command_column_commands));
+    }
+
+    # command_column_labels
+    my $command_column_labels = $self->command_column_labels();
+    croak ("command_column_labels is not a hash") unless (ref($command_column_labels) eq 'HASH');
+    @invalid_columns = ();
+    foreach my $col_lab (keys(%$command_column_labels)) {
+        push(@invalid_columns, $col_lab) unless (grep { $col_lab eq $_ } @$command_column_commands);
+    }
+    croak ("command_column_labels contains invalid commands '". join("', '", @invalid_columns) ."'") 
+      if (@invalid_columns);
+
+    # columns_sortable
+    my $columns_sortable = $self->columns_sortable();
+    croak ("columns_sortable is not an array") unless (ref($columns_sortable) eq 'ARRAY');
+    @invalid_columns = ();
+    foreach my $col_lab (@$columns_sortable) {
+        push(@invalid_columns, $col_lab) unless (grep { $col_lab eq $_ } @$columns);
+    }
+    croak ("columns_sortable contains invalid columns '". join("', '", @invalid_columns) ."'") 
+      if (@invalid_columns);
+
+    # columns_sort_map
+    my $columns_sort_map = $self->columns_sort_map();
+    croak ("columns_sort_map is not a hash") unless (ref($columns_sort_map) eq 'HASH');
+    @invalid_columns = ();
+    foreach my $col_lab (keys(%$columns_sort_map)) {
+        push(@invalid_columns, $col_lab) unless (grep { $col_lab eq $_ } @$columns_sortable);
+    }
+    croak ("columns_sort_map contains non-sortable columns '". join("', '", @invalid_columns) ."'") 
+      if (@invalid_columns);
+
+    # row_handler
+    croak ("row_handler not a subroutine reference") unless (ref($self->row_handler()) eq 'CODE');
+
+    # id_handler
+    croak ("id_handler not a subroutine reference") unless (ref($self->id_handler()) eq 'CODE');
+
+    # DONE!
+}
+
 
 
 
