@@ -5,6 +5,10 @@
 <!-- //
 
     <tmpl_var js_list_arrays>
+
+    var new_count = 1;
+    var change_log = new Array();
+
     function populate_list (list_count,sel_in_list,no_clear) {
         var next_list = list_count + 1;
 
@@ -20,9 +24,6 @@
             for(var key in eval('list_data[' + select_val + ']') ) {
                 if (eval('list_data[' + select_val + "][key]['__data__']") ) {
                     eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + "'" + eval("list_data[" + select_val + "][key]['__data__']") + "', '" + select_val + '][' + key + "')");
-                    if (sel_in_list == (count-1) ) {
-                        eval ('document.forms["edit_form"].list_' + next_list + '.options[' + (count-1) + '].selected = true');  
-                    } 
                 }
             }
         } else {
@@ -30,11 +31,11 @@
             for(var key in list_data) {
                if (list_data[key]['__data__']) {
                     eval ('document.forms["edit_form"].list_1.options[' + count++ + '] = new Option(' + "'" + eval("list_data[key]['__data__']") +  "', '" + key + "')"); 
-                    if (sel_in_list == (count-1) ) {
-                        eval ('document.forms["edit_form"].list_1.options[' + (count-1) + '].selected = true');
-                    }
                }
             }
+        }
+        if (sel_in_list > -1) {
+            eval( 'document.forms["edit_form"].list_' + next_list + '.selectedIndex = sel_in_list');
         }
     }
 
@@ -57,7 +58,9 @@
 
     function do_save () {
         var myform = document.forms["edit_form"];
-        myform.rm.value = "save";
+        //myform.rm.value = "save";
+        var change_string = change_log.join('%^%');
+        alert(change_string);
         myform.submit();
     }
 
@@ -71,19 +74,23 @@
 
     function do_delete (list_count) {
         var select_val = get_selected_val(list_count);
-        eval( "list_data[" + select_val + "]['__data__'] = []");
-        eval( "list_data[" + select_val + "] = []");
+        log_entry( list_data[select_val]['__id__'], 'delete', '');
+        list_data[select_val]['__data__'] = [];
+        list_data[select_val] = [];
         populate_list(list_count-1);
     }
 
     function do_replace(list_count) {
         var select_val = get_selected_val(list_count);
         if ( eval("document.forms['edit_form'].new_item_" + list_count + ".value" ) ) {
-            eval( "list_data[" + select_val + "]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
+            var item = eval( "list_data[" + select_val + "]");
+            var nv = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+            item['__data__'] = nv;
             var indexArray = select_val.split('][');
             var last_index = indexArray.pop();
             populate_list(list_count-1, last_index, 1);
             eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''");
+            log_entry(item['__id__'], 'replace', nv);
         }
     }
 
@@ -116,6 +123,14 @@
             }
             var prev = firstHalf.pop();
             var current = secondHalf.shift();
+
+            // log this change           
+            if (down) {
+                log_entry(prev['__id__'], 'move', parseInt(last_index) + 1);
+            } else {
+                log_entry(current['__id__'], 'move', parseInt(last_index));
+            }
+ 
             firstHalf.push(current);
             secondHalf.unshift(prev);
         
@@ -133,6 +148,7 @@
 
     function do_add(list_count) {
         var select_val = get_selected_val(list_count);
+        var new_data = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
         if (select_val != 'undef' ) {
             var indexArray = select_val.split('][');
             var last_index = indexArray.pop();
@@ -140,20 +156,22 @@
             var firstHalf;
             var secondHalf;
             if (! select_val) {
-                firstHalf = eval( 'list_data.slice(0, ' + last_index + ')' );
-                secondHalf = eval( 'list_data.slice(' + last_index + ')' );
+                firstHalf = list_data.slice(0, last_index);
+                secondHalf = list_data.slice(last_index);
             } else {
-                 firstHalf = eval( 'list_data[' + select_val + '].slice(0, ' + last_index + ')' );
-                secondHalf = eval( 'list_data[' + select_val + '].slice(' + last_index + ')' );
+                 firstHalf = list_data[select_val].slice(0, last_index);
+                secondHalf = list_data[select_val].slice(last_index );
             }
 
             var t = new Array();
-            t['__data__'] = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+            t['__data__'] = new_data;
+            t['__id__'] = 'new_' + new_count++;
+            log_entry(t['__id__'], 'new', t['__data__']);
             secondHalf.unshift(t);
             if (! select_val) {
                 list_data = firstHalf.concat(secondHalf);
             } else {
-                eval( 'list_data[' + select_val + '] = firstHalf.concat(secondHalf)' );
+                list_data[select_val] = firstHalf.concat(secondHalf);
             } 
         } else {
             if (list_count - 1) {
@@ -165,20 +183,27 @@
             if (select_val == 'undef') {
                 if( ! list_data[0]) {
                     list_data[0] = new Array();
-                    eval( "list_data[0]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" );
+                    list_data[0]['__data__'] = new_data;
+                    list_data[0]['__id__'] = 'new_' + new_count++;
+                    log_entry(list_data[0]['__id__'], 'new', list_data[0]['__data__']);
                 } else {
                     var nitem = new Array();
-                    nitem['__data__'] = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+                    nitem['__data__'] = new_data;
+                    nitem['__id__'] = 'new_' + new_count++;
                     list_data.splice(0,0,nitem);
+                    log_entry(nitem['__id__'], 'new', nitem['__data__']);
                 }
             } else { 
-                if( ! eval( 'list_data[' + select_val + '][0]') ) {
-                    eval( 'list_data[' + select_val + '][0] = new Array()' );
-                    eval( 'list_data[' + select_val + "][0]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
+                if( ! list_data[select_val][0] ) {
+                    list_data[select_val][0] = new Array();
+                    eval( "list_data[select_val][0]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
+                    list_data[select_val][0]['__id__'] = "new_" +  new_count++;
                 } else {
                     var nitem = new Array();
-                    nitem['__data__'] = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
-                    eval( 'list_data[' + select_val + "].splice(0,0,nitem)" );
+                    nitem['__data__'] = new_data;
+                    nitem['__id__'] = 'new_' + new_count++;
+                    list_data[select_val].splice(0,0,nitem);
+                    log_entry(nitem['__id__'], 'new', nitem['__data__']);
                 }
             }
             last_index = 0;
@@ -186,6 +211,12 @@
         
         eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''" );
         populate_list(list_count-1, last_index);
+    }
+
+    function log_entry (item_id, action, data) {
+        var entry;
+        entry = item_id + '#&#' + action + '#&#' + data;
+        change_log.push(entry);
     }
     
 // -->
