@@ -1,0 +1,115 @@
+=head1 Running Krang
+
+Running Krang is a guide to setting up Krang and keeping it in good
+working order.  It goes beyond merely installing the application,
+covering publishing setup and basic operation.  You should read this
+after installing Krang for the first time.
+
+=head2 Creating a Site
+
+Every Krang instance needs at least one site to do anything
+interesting.  A site controls where content is published and
+configures the URLs by which stories and media are identified.
+
+You need to create a site before you can create stories or media.  To
+add a site, login as an administrative user and go to the 'Sites'
+application within the 'Admin' section of the navigation bar.  Click
+on 'Add a Site' and you'll see the interface in Figure 1.
+
+=for html
+<div style='margin-left: 30px; margin-right: 30px; padding: 5px; border: solid #dddddd 1px;'><img src="running_1.png"><br>Figure 1: Add a Site</div>
+
+You must fill in four fields:
+
+=over
+
+=item * URL
+
+This is the primary URL of your site, where users go to access live
+content.
+
+=item * Preview URL
+
+This is the private URL where editors will go to see pre-production
+output from Krang.
+
+=item * Publish Path
+
+This is the path where Krang will write files which must be served by
+the configured URL.
+
+=item * Preview Path
+
+This is the path where Krang will write files which must be served by
+the configured Preview URL.
+
+=back
+
+Now when an editor previews or publishes a story it will be written to
+the paths you configured.
+
+=head2 Preview and Publish Setup
+
+The values configured for a site must correspond to the setup of
+another web server.  This is because Krang is not a front-end web
+server.  Krang works by publishing stories and media to the
+file-system, allowing another server to serve this content to
+end-users.
+
+This external server can be on same machine as Krang or on another
+machine which is able to read from the configured preview and publish
+paths (by NFS, for example).
+
+For example, if I setup a site with:
+
+  URL:          www.foo.com
+  Preview URL:  preview.foo.com
+  Publish Path: /www/foo
+  Preview Path: /www/preview.foo
+
+Then I could setup a copy of Apache with this vhost configuration to
+serve the live and preview sites:
+
+  <VirtualHost *>
+     ServerName www.foo.com
+     DocumentRoot /www/foo
+  </VirtualHost>
+
+  <VirtualHost *>
+     ServerName preview.foo.com
+     DocumentRoot /www/preview.foo
+  </VirtualHost>
+
+Of course, you'll probably want to put access control on your preview
+server to keep non-editors out, but that is beyond the scope of this
+document.  For more information on configuring Apache see
+http://httpd.apache.org .  Of course, you're not limited to using
+Apache to serve Krang-generated content.  Any web server will work!
+
+To test your preview and publish setup, create a story and add some
+content.  Try previewing the story.  Then try publishing the story and
+entering the URL for the story in your browser's location bar.  If you
+got the story both times, you're done!
+
+=head2 Adding Categories
+
+After adding a site the next step is to create some categories within
+the new site.  Categories are analgous to directories on a
+file-system.  Stories, Media and Templates are created within
+categories.  The category of a Story or Media determines the first
+part of its URL.  For example, a Story with the slug 'weekend_update'
+within the category 'foo.com/news' would have the URL
+'foo.com/news/weekend_update'.
+
+Every site has at least one category which is created when the site is
+created - the root category.  The root category is special in that it
+doesn't have a directory name; its URL is simply the site URL with a
+trailing '/'.
+
+To add a new category, go to the 'Categories' application within the
+'Admin' section of the navigation bar.  Click on 'Add a Category' and
+you'll see the interface in Figure 2.
+
+=for html
+<div style='margin-left: 30px; margin-right: 30px; padding: 5px; border: solid #dddddd 1px;'><img src="running_2.png"><br>Figure 2: Add a Category</div>
+
