@@ -13,7 +13,6 @@ use Time::Piece;
 use Carp qw(croak);
 use Krang::Pref;
 
-# use base qw(Krang::CGI);
 use base 'Krang::CGI::ElementEditor';
 
 sub _get_element { $session{story}->element; }
@@ -54,7 +53,9 @@ sub setup {
                      new_story        => 'new_story',
                      create           => 'create',
                      edit             => 'edit',
+                     save_and_view    => 'save_and_view',
                      view             => 'view',
+                     revert           => 'revert',
                      find             => 'find',
                      save             => 'save',
                      save_and_jump    => 'save_and_jump',
@@ -276,8 +277,11 @@ sub edit {
 
 =item view
 
-The story viewing interface.  Expects to receive a story_id and,
-optionally, a version of the story to be viewed.
+The story viewing interface.  Requires a return_script parameter with
+the name of the script to return to and a list of return_params
+parameters containing key/value pairs for the return request.
+Optionally, a story_id and a version may be passed.  If a story_id is
+not present then a story must be available in the session.
 
 =cut
 
@@ -290,10 +294,15 @@ sub view {
                                     loop_context_vars => 1);
     my %args = @_;
               
+    # get story_id from params or from the story in the session
+    my $story_id = $query->param('story_id') ? $query->param('story_id') :
+                   $session{story}->story_id;
+    croak("Unable to get story_id!") unless $story_id;
+    
     # load story from DB
     my $version = $query->param('version');
-    my ($story) = Krang::Story->find(story_id => $query->param('story_id'),
-                                     (defined $version ? 
+    my ($story) = Krang::Story->find(story_id => $story_id,
+                                     (length $version ? 
                                       (version => $version) : ()),
                                     );
     croak("Unable to load story '" . $query->param('story_id') . "'" . 
@@ -337,7 +346,38 @@ sub view {
         
     }
 
+    # setup return form
+    croak("Missing return_script and return_params!") 
+      unless $query->param('return_params') and $query->param('return_script');
+    my %return_params = $query->param('return_params');
+    $template->param(return_script => $query->param('return_script'),
+                     return_params_loop => 
+                     [ map { { name => $_, value => $return_params{$_} } } keys %return_params ]);
+    
+
     return $template->output();
+}
+
+=item revert
+
+Revert contents of a story to that of an older version.  Expects a
+story in the session and 'version' parameter.  Returns to edit mode
+after C<< $story->revert() >>.
+
+=cut
+
+sub revert {
+    my $self = shift;
+    my $query = $self->query;
+    my $version = $query->param('version');
+    my $story = $session{story};
+    croak("Unable to load story from session!")
+      unless $story;
+
+    $story->revert($version);
+    add_message('reverted_story', version => $version);
+
+    return $self->edit();
 }
 
 =item save
@@ -387,6 +427,12 @@ sub save {
         $story->cover_date($cover_date);
         $story->priority($priority);
 
+        # jump to view now
+        if ($arg{view}) {
+            $query->param('return_script' => 'story.pl');
+            $query->param('return_params' => rm => 'edit');
+            return $self->view();
+        }
 
         my $dest_path = $query->param('path') || '/';
         if ($dest_path eq '/') {
@@ -412,6 +458,11 @@ sub save {
 sub save_and_stay {
     my $self = shift;
     return $self->save(stay => 1);
+}
+
+sub save_and_view {
+    my $self = shift;
+    return $self->save(view => 1);
 }
 
 sub save_and_jump {

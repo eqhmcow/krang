@@ -2,8 +2,13 @@
 
 <form method=post name=view>
   <input type=hidden name=rm value=view>
-  <input type=hidden name=return_to value="<tmpl_var escape=html return_to>">
   <input type=hidden name=story_id value="<tmpl_var story_id>">
+  <input type=hidden name=version value="<tmpl_var version>">
+  <input type=hidden name=return_script value="<tmpl_var escape=html return_script>"> 
+   <tmpl_loop return_params_loop>
+      <input type=hidden name=return_params value="<tmpl_var escape=HTML name="name">">
+      <input type=hidden name=return_params value="<tmpl_var escape=HTML name="value">">
+   </tmpl_loop>
 
 <div class="dark-bar">
 <span class="left">View Story</span>
@@ -95,12 +100,21 @@
 
 <p>
 
+</form>
+<form name="ret" action=<tmpl_var return_script> method=post>
+   <tmpl_loop return_params_loop>
+      <input type=hidden name="<tmpl_var escape=HTML name="name">" value="<tmpl_var escape=HTML name="value">">
+   </tmpl_loop>
+</form>
+
 <div class=button-bar>
   <tmpl_if parent_path>
     <input type=button value="Return" onclick="view_path('<tmpl_var parent_path>')">
   <tmpl_else>
-    <input type=button value="Return" onclick="return()">
+     <input type=button value="Return" onclick="document.ret.submit()">
   </tmpl_if>
 </div>
+
+
 
 </form>

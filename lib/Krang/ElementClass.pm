@@ -304,6 +304,7 @@ implement alternative URL schemes.
 sub build_url {
     my ($self, %arg) = @_;
     my ($story, $category) = @arg{qw(story category)};
+    croak("Category not defined!") unless $category;
     return $category->url . CGI::Util::escape($story->slug || '');
 }
 

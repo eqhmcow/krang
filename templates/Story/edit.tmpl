@@ -23,6 +23,20 @@
         }
   }
 
+
+  function view() {
+        document.forms[0].rm.value = 'save_and_view';
+        document.forms[0].submit();
+  }
+
+  function revert() {
+        var v = document.forms[0].version.options[document.forms[0].version.selectedIndex].value;
+        if (confirm("Really discard changes and revert to version " + v + "?")) {
+           document.forms[0].rm.value = 'revert';
+           document.forms[0].submit();
+        }
+  }
+
   function add_category() {
         document.forms[0].rm.value = 'add_category';
         document.forms[0].submit();
@@ -198,7 +212,9 @@ Sites / Categories<br>
 <div class=button-bar>
   <input type=button value="Save" onclick="save()">
   <input type=button value="Save &amp; Stay" onclick="save_and_stay()">
-  <input type=button value="Publish" onclick="alert('Tell Peter to write Krang::Burner.')">
+  <tmpl_if is_root>
+    <input type=button value="Publish" onclick="alert('Tell Peter to write Krang::Burner.')">
+  </tmpl_if>
   <input type=reset value="Reset">
   <tmpl_if is_root>
      <input type=button value="Delete" onclick="remove()">
@@ -213,6 +229,5 @@ Sites / Categories<br>
 <form name="contrib" action="contributor.pl" method="post">
    <input type=hidden name=rm value=associate_story>
 </form>
-
 
 <tmpl_include footer.tmpl>
