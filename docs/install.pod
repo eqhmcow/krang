@@ -10,6 +10,9 @@ to the CVS repository on the B<krang-services> server, and (3) he
 has a basic understanding of what Krang does and how it looks when it
 is working.
 
+Note: there are only two supported operating system's for Krang,
+Redhat 7.3 and Redhat 9.  Starting with an "everything" install is
+advisable, although a "server" install should also work.
 
 =head1 Krang Install Check-list
 
@@ -34,6 +37,21 @@ is working.
 
 =item 3. Compile Perl 5.6.1 from source (as root)
 
+For Redhat 9:
+
+   a. # tar -xzvf $KRANG_ROOT/install/Perl/perl-5.6.1.tar.gz
+   b. # cd perl-5.6.1
+   c. # rm -f config.sh Policy.sh \
+      && chmod +w makedepend.SH
+      && cp makedepend.SH makedepend.SH.orig
+      && sed 's/<stdin>/<.*>/' makedepend.SH.orig > makedepend.SH
+      && sh Configure -de \
+      && make \
+      && make test
+   d. # make install
+
+For Redhat 7.x:
+
    a. # tar -xzvf $KRANG_ROOT/install/Perl/perl-5.6.1.tar.gz
    b. # cd perl-5.6.1
    c. # rm -f config.sh Policy.sh \
@@ -41,8 +59,6 @@ is working.
       && make \
       && make test
    d. # make install
-
-
 
 =item 4. Upgrade/Install MySQL (as root)
 
@@ -55,7 +71,10 @@ is working.
            php-mysql \
            qt-MySQL \
            tora \
-           mysql-server
+           mysql-server \
+           mysql-3.23.54a-11 \
+           mod_auth_mysql-1.11-12 \
+           mysql-devel-3.23.54a-11
 
    b. Install MySQL from rpm...
       i. # cd $KRANG_ROOT/install/MySQL/ \
@@ -79,7 +98,7 @@ is working.
 
 =item 6. Authorize user to start Krang via SUDO (as root)
 
-   a. Add via visudo: "username  ALL=(root)  NOPASSWD: $KRANG_ROOT/bin/krang_apachectl"
+   a. Add via visudo: "username  ALL=(root)  NOPASSWD: $KRANG_ROOT/bin/*"
 
 
 =item 7. Start Krang
