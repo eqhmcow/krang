@@ -11,6 +11,7 @@ use Krang::Widget qw(category_chooser);
 use Krang::CGI::Workspace;
 use Time::Piece;
 use Carp qw(croak);
+use Krang::Pref;
 
 # use base qw(Krang::CGI);
 use base 'Krang::CGI::ElementEditor';
@@ -235,10 +236,11 @@ sub edit {
                                                          2 => "Medium",
                                                          3 => "High" }));
         my @contribs_loop;
+        my %contrib_types = Krang::Pref->get('contrib_type');
         foreach my $contrib ($story->contribs) {
             push(@contribs_loop, { first_name => $contrib->first,
                                    last_name  => $contrib->last,
-                                   type       => $contrib->selected_contrib_type});
+                                   type       => $contrib_types{$contrib->selected_contrib_type}});
         }
         $template->param(contribs_loop => \@contribs_loop);
 
