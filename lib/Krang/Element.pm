@@ -136,6 +136,10 @@ sub init {
     # finish the object
     $self->hash_init(%args);
 
+    # setup default value if available and data not set
+    $self->{data} = $self->{class}->default
+      unless defined $self->{data};
+
     # find children with min > 0 and create elements for them, unless
     # called from _load_tree, in which case no_expand will be passed
     # in
@@ -305,7 +309,8 @@ sub save {
         # loop through kids, calling _update_children()
         my @element_ids = $self->_update_children($self->{element_id});
 
-        # remove deleted children
+        # remove deleted children, defined as elements with this
+        # root_id but not in the list of elements just updated
         $dbh->do('DELETE FROM element WHERE root_id = ? 
                                             AND element_id NOT IN (' .
                  join(',', ("?") x @element_ids) . ')',
@@ -326,7 +331,7 @@ sub save {
     }
 }
 
-# a stripped-down version of _update_children used with new element trees
+# a stripped-down version of _update_children used with new element trees.
 sub _insert_children {
     my ($self, $root_id) = @_;
     my $dbh = dbh;
@@ -499,10 +504,10 @@ sub _load_tree {
 =item Krang::Element->delete($element_id)
 
 Delete the element, and all its children, from the database.  After
-this call, C<element_id> is undef and a future C<save()> will create a
-new element record with a new id.  This call only works for top-level
-elements.  To remove elements from the middle of a tree, simply remove
-them from the C<children> list in the parent and then call C<save>.
+this call the element is empty, without children, data or an id.  This
+call only works for top-level elements.  To remove elements from the
+middle of a tree, simply remove them from the C<children> list in the
+parent and then call C<save>.
 
 Returns 1 on success.
 
@@ -530,8 +535,8 @@ sub delete {
     $dbh->do('DELETE FROM element WHERE root_id = ?', undef, 
              $element_id);
 
-    foreach_element { $_->{element_id} = undef } $self
-      if ref $self;
+    # clear the object
+    %{$self} = ();
 
     return 1;
 }
@@ -639,8 +644,8 @@ proxied method.  For example, you can write:
 
 Which is equivalent to:
 
-  $element->class->burn(element => $element,
-                        query   => $query);
+  $element->class->input_form(element => $element,
+                              query   => $query);
 
 =cut
 

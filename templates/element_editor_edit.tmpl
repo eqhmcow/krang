@@ -80,7 +80,7 @@
  <tmpl_loop child_loop>
   <tr>
     <td bgcolor=CCDDEE align=right valign=top><tmpl_if invalid><font color=red><b>*</b></font></a></tmpl_if><tmpl_var name></td>
-    <td bgcolor=DDEEFF align=left valign=top><tmpl_if is_container><input type=button value=Edit onClick='edit_children("<tmpl_var index>")'><tmpl_else><tmpl_var form></tmpl_if></td>
+    <td bgcolor=DDEEFF align=left valign=top><tmpl_if is_container><input type=button value=Edit onClick='edit_children("<tmpl_var index>")'>&nbsp;</tmpl_if><tmpl_var form></td>
     <td bgcolor=E5F5FF align=center valign=top><tmpl_if reorderable><tmpl_var order_select></tmpl_if></td>
     <td bgcolor=EAFAFF align=center valign=top><tmpl_if allow_delete><input type=checkbox name=remove_<tmpl_var index>></tmpl_if></td>
   </tr>

@@ -55,6 +55,7 @@ use Krang::MethodMaker
                          top_level
                          hidden
                          allow_delete
+                         default
                        ) ];
 
 
@@ -119,6 +120,11 @@ set to 1.  Defaults to 1.
 
 If set to 0 then the UI will not allow the element to be deleted.
 Defaults to 1.
+
+=item default
+
+A default value for elements of this class.  Will be loaded into their
+data slot on creation, so this must be a valid value for the element.
 
 =item children
 
@@ -362,7 +368,7 @@ sub init {
     $args{hidden}    = 0  unless exists $args{hidden};
     $args{reorderable} = 1  unless exists $args{reorderable};
     $args{allow_delete} = 1  unless exists $args{allow_delete};
-
+    $args{default} = undef  unless exists $args{default};
 
     # call generated inititalizer
     $self->hash_init(%args);

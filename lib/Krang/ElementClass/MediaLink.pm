@@ -24,8 +24,7 @@ sub input_form {
 
     return scalar $query->button(-name    => "find_media_$param",
                                  -value   => "Find Media",
-                                 -onClick => "find_media(" . 
-                                              $element->element_id . ")",
+                                 -onClick => "find_media('$param')",
                                 ) 
       . ' or upload a new file: '
         . scalar $query->filefield(-name => $param);
