@@ -83,11 +83,13 @@ The following methods are provided by Krang::Group.
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker ( new_with_init => 'new',
                          new_hash_init => 'hash_init',
-                         get => [ qw/group_id/ ],
-                         get_set => [ qw/ name
-                                      may_edit_user
-                                      may_publish / ],
-                         hash => [ qw/categories desks applications/ ] );
+                         get => [ "group_id" ],
+                         get_set => [ qw( name
+                                          may_edit_user
+                                          may_publish ) ],
+                         hash => [ qw( categories
+                                       desks 
+                                       applications ) ] );
 
 
 =item new()
