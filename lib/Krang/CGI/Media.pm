@@ -471,7 +471,7 @@ sub edit {
     # Load media object into session, or die trying
     my $m = $session{media};
     my $force_reload = $q->param('force_reload');
-    if ( ($force_reload) or ( $media_id  &&  not(ref($m) && ($media_id eq $m->media_id))) ) {
+    if ( ($force_reload) or ( $media_id  &&  not(ref($m) && defined($media_id) && ($media_id eq $m->media_id))) ) {
         # If we have a media_id, force load using it.
         ($m) = Krang::Media->find(media_id=>$media_id);
         $session{media} = $m;
@@ -751,6 +751,11 @@ sub view_version {
     die ("Invalid selected version '$selected_version'") 
       unless ($selected_version and $selected_version =~ /^\d+$/);
 
+    # Update media object
+    my $m = $session{media};
+    $self->update_media($m);
+
+    # Return view mode with version
     return $self->view($selected_version);
 }
 
@@ -770,8 +775,25 @@ sub revert_version {
     my $self = shift;
 
     my $q = $self->query();
+    my $selected_version = $q->param('selected_version');
 
-    return $self->dump_html();
+    die ("Invalid selected version '$selected_version'") 
+      unless ($selected_version and $selected_version =~ /^\d+$/);
+
+    # Perform revert
+    my $m = $session{media};
+    $m->revert($selected_version);
+
+    # Inform user
+    add_message("message_revert_version", version => $selected_version);
+
+    # Redirect to edit mode
+    my $url = $q->url(-relative=>1);
+    $url .= "?rm=edit";
+    $self->header_props(-url=>$url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$url\">$url</a>";
 }
 
 
@@ -878,11 +900,17 @@ sub update_media {
             $m->upload_file(filehandle => $filehandle,
                             filename => $filename);
 
+            # Clear param and continue
+            $q->delete($mf);
             next;
         }
 
         # Default: Grab scalar value from CGI form
-        $m->$mf( $q->param($mf) );
+        my $val = $q->param($mf);
+        $m->$mf( $val );
+
+        # Clear param and continue
+        $q->delete($mf);
     }
 
     # Done!
@@ -1086,11 +1114,16 @@ sub make_history_return_params {
 
     my @history_return_params_hidden = ();
     foreach my $hrp (@history_return_param_list) {
+        # Store param name
         push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
                                                        -value => $hrp,
                                                        -override => 1));
+
+        # Store param value
+        my $pval = $q->param($hrp);
+        $pval = '' unless (defined($pval));
         push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
-                                                       -value => $q->param($hrp),
+                                                       -value => $pval,
                                                        -override => 1));
     }
 

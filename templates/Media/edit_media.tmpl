@@ -152,31 +152,24 @@
 </table>
 </div>
 
-</form>
 
 
-
+<!-- Version Navigation -->
 <tmpl_unless add_mode>
-
-
-<form name="media_versions_form" method="POST">
 <tmpl_var history_return_params>
-<input type="hidden" name="rm" value="">
-<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
-
 
 <script language="javascript">
 <!-- 
   function revert_version () {
     if (confirm("Are you sure you want to discard your work and revert to this old version?")) {
-          var myform = document.media_versions_form;
+          var myform = document.edit_media_form;
           myform.rm.value = 'revert_version';
           myform.submit();
     }
   }
 
   function view_version () {
-    var myform = document.media_versions_form;
+    var myform = document.edit_media_form;
     myform.rm.value = 'view_version';
     myform.submit();
   }
@@ -189,12 +182,9 @@ Version: <tmpl_var media_version_chooser>
 <input type="button" value="Revert" onClick="revert_version()">
 <input type="button" value="View" onClick="view_version()">
 </div>
-
-</form>
-
-
-
 </tmpl_unless>
+<!-- END Version Navigation -->
+
 
 
 <div class="button-bar">
@@ -205,6 +195,8 @@ Version: <tmpl_var media_version_chooser>
   <input type="button" value="Delete" onClick="do_delete()">
 </div>
 
+
+</form>
 
 
 <tmpl_include footer.tmpl>
