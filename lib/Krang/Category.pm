@@ -618,7 +618,7 @@ sub save {
     if ($id) {
         # recalculate url if we have a new dir...
         if ($new_url) {
-            $self->{url} =~ s|\Q$self->{_old_dir}\E$||
+            $self->{url} =~ s|\Q$self->{_old_dir}\E/?$||
               unless $self->{_old_dir} eq '/';
             $self->{url} = _build_url($self->{url}, $self->{dir});
         }
@@ -729,7 +729,12 @@ SQL
 
 
 # constructs a url by joining parts by '/'
-sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url; }
+sub _build_url {
+    (my $url = join('/', @_)) =~ s|/+|/|g;
+    $url .= '/' unless $url =~ m|/$|;
+    return $url;
+}
+
 
 =back
 
