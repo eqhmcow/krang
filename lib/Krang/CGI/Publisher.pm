@@ -26,6 +26,8 @@ use Krang::Session qw(%session);
 use Krang::Publisher;
 use Krang::Story;
 use Krang::Log qw(debug assert ASSERT);
+use Krang::Widget qw(format_url);
+
 use Carp qw(croak);
 
 use base 'Krang::CGI';
@@ -36,11 +38,72 @@ sub setup {
     $self->mode_param('rm');
     $self->tmpl_path('Publisher/');
     $self->run_modes([qw(
-        preview_story
-        preview_media
+                         preview_story
+                         preview_media
+                         publish_story
     )]);
 
 }
+
+
+=item publish_story
+
+Presents a list of story and media objects to be published.  Allows
+the user to schedule a publish date.
+
+Requires story_id parameter with the ID of the story to be published.
+
+=cut
+
+sub publish_story {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $story_id = $query->param('story_id');
+    croak("Missing required story_id parameter") unless $story_id;
+
+    my ($story) = Krang::Story->find(story_id => $story_id);
+
+    my $t = $self->load_tmpl('publish_list.tmpl',
+                             associate => $query,
+                             loop_context_vars => 1);
+
+    my $publisher = Krang::Publisher->new();
+    my $publish_list = $publisher->get_publish_list(story => $story);
+
+    # build @stories and @media.
+
+#    my @stories = ({id          => $story_id,
+#                    url         => format_url(url => $story->url, linkto => $story->preview_url),
+#                    title       => $story->title,
+#                   });
+    my @stories = ();
+    my @media = ();
+
+
+    foreach my $asset (@$publish_list) {
+        if ($asset->isa('Krang::Story')) {
+            push @stories, {id          => $asset->story_id,
+                            url         => format_url(url => $asset->url, linkto => $asset->preview_url),
+                            title       => $asset->title
+                           };
+        } elsif ($asset->isa('Krang::Media')) {
+            push @media, {id          => $asset->media_id,
+                          url         => format_url(url => $asset->url, linkto => $asset->preview_url),
+                          title       => $asset->title
+                         };
+
+        } else {
+            croak sprintf("%s: I have no idea what to do with this: ISA='%s'", __PACKAGE__, $_->isa());
+        }
+    }
+
+    $t->param(stories => \@stories, media => \@media);
+
+    return $t->output();
+
+}
+
 
 =item preview_story
 
