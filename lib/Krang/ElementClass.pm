@@ -403,10 +403,13 @@ sub thaw_data {
 
 =item C<< $index_data = $class->index_data(element => $element) >>
 
+=item C<< @index_data = $class->index_data(element => $element) >>
+
 This method is used when the C<indexed> attribute is true.  Elements
 which are indexed may be used in calls to Krang::Story->find().  The
-return value is limited to 256 characters in length.  The default
-implementation returns C<< $element->freeze_data() >>.
+return value is limited to 256 characters in length.  A list of
+strings may be returned which will index against multiple values.  The
+default implementation returns C<< $element->freeze_data() >>.
 
 =cut
 

@@ -18,6 +18,6 @@ DROP TABLE IF EXISTS element_index;
 CREATE TABLE element_index (
         element_id  INT UNSIGNED NOT NULL,
         value       VARCHAR(255),
-        UNIQUE INDEX(element_id),
+        INDEX(element_id),
         INDEX(value)
 );

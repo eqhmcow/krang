@@ -526,10 +526,14 @@ sub _insert_children {
         $child->{element_id} = $dbh->{mysql_insertid};
 
         # insert index data if needed
-        $dbh->do('INSERT INTO element_index (element_id, value) 
-                  VALUES (?,?)', undef, 
-                 $child->{element_id}, $child->index_data)
-          if $child->{class}->indexed;
+        if ($child->{class}->indexed) {
+            foreach my $index_data ($child->index_data) {
+                next unless defined $index_data;
+                $dbh->do('INSERT INTO element_index (element_id, value) 
+                          VALUES (?,?)', undef, 
+                         $child->{element_id}, $index_data);
+            }
+        }
 
         # recurse, if needed
         $child->_insert_children($root_id)
@@ -552,9 +556,9 @@ sub _update_children {
             $dbh->do('UPDATE element SET data=?, ord=? WHERE element_id = ?',
                      undef, $child->freeze_data, $ord++, $child->{element_id});
 
-            # update index data if needed
-            $dbh->do('UPDATE element_index SET value=? WHERE element_id = ?',
-                     undef, $child->index_data, $child->{element_id})
+            # clear index data if needed
+            $dbh->do('DELETE FROM element_index WHERE element_id = ?',
+                     undef, $child->{element_id})
               if $child->{class}->indexed;
 
         } else {
@@ -565,12 +569,16 @@ sub _update_children {
                      $self->{element_id}, $root_id, $child->{class}->name, 
                      $child->freeze_data, $ord++);
             $child->{element_id} = $dbh->{mysql_insertid};
-
-            # insert index data if needed
-            $dbh->do('INSERT INTO element_index (element_id, value) 
-                      VALUES (?,?)', undef, 
-                     $child->{element_id}, $child->index_data)
-              if $child->{class}->indexed;
+        }
+                    
+        # insert index data if needed
+        if ($child->{class}->indexed) {
+            foreach my $index_data ($child->index_data) {
+                next unless defined $index_data;
+                $dbh->do('INSERT INTO element_index (element_id, value) 
+                              VALUES (?,?)', undef, 
+                         $child->{element_id}, $index_data);
+            }
         }
 
         # remember this element_id

@@ -115,4 +115,13 @@ sub bulk_edit_filter {
     return @return;
 }
 
+# return all keywords for indexing
+sub index_data {
+    my ($self, %arg) = @_;
+    my ($element) = @arg{qw(element)};
+    my $data = $element->data;
+    return @$data if $data;
+    return ();
+}
+
 1;

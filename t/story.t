@@ -376,6 +376,8 @@ push @find, Krang::Story->new(class => "article",
                               categories => [$cat[7]]);
 $find[-1]->element->child('deck')->data("3 one deek one deek one deek")
   if InstanceElementSet eq 'TestSet1';
+$find[-1]->element->child('fancy_keyword')->data(['common', 'one'])
+  if InstanceElementSet eq 'TestSet1';
 
 push @find, Krang::Story->new(class => "article",
                               title => "title two",
@@ -383,12 +385,16 @@ push @find, Krang::Story->new(class => "article",
                               categories => [$cat[6], $cat[8]]);
 $find[-1]->element->child('deck')->data("2 two deek two deek two deek")
   if InstanceElementSet eq 'TestSet1';
+$find[-1]->element->child('fancy_keyword')->data(['common', 'two'])
+  if InstanceElementSet eq 'TestSet1';
 $find[-1]->contribs($contrib);
 push @find, Krang::Story->new(class => "article",
                               title => "title three",
                               slug => "slug three",
                               categories => [$cat[9]]);
 $find[-1]->element->child('deck')->data("1 three three three")
+  if InstanceElementSet eq 'TestSet1';
+$find[-1]->element->child('fancy_keyword')->data(['common', 'three'])
   if InstanceElementSet eq 'TestSet1';
 $_->save for @find;
 END { if ($DELETE) { $_->delete for @find } };
@@ -515,6 +521,22 @@ SKIP: {
 
     @result = Krang::Story->find(element_index_like =>[deck=>"%feck%"]);
     is(@result, 0);
+
+    @result = Krang::Story->find(element_index => [fancy_keyword => 'common']);
+    is(@result, 3);
+
+    @result = Krang::Story->find(element_index => [fancy_keyword => 'one']);
+    is(@result, 1);
+    is($result[0]->story_id, $find[0]->story_id);
+
+    @result = Krang::Story->find(element_index => [fancy_keyword => 'two']);
+    is(@result, 1);
+    is($result[0]->story_id, $find[1]->story_id);
+
+    @result = Krang::Story->find(element_index => [fancy_keyword => 'three']);
+    is(@result, 1);
+    is($result[0]->story_id, $find[2]->story_id);
+
 
 }
 
