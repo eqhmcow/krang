@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Krang;
 use Krang::Conf qw (KrangRoot);
+use Krang::Contrib;
 use File::Spec::Functions qw(catdir catfile);
 use FileHandle;
 
@@ -17,6 +18,23 @@ my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
 my $fh = new FileHandle $filepath;
 $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
 
+
+# create new contributor object to test associating with media
+my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
+isa_ok($contrib, 'Krang::Contrib');
+$contrib->contrib_type_ids(1,3);
+$contrib->save();
+END { $contrib->delete(); }
+
+# add contributor to media
+$media->contribs({ contrib_id      => $contrib->contrib_id, 
+                   contrib_type_id => 3 });
+is($media->contribs, 1);
+
+# same object?
+is(($media->contribs)[0]->contrib_id, $contrib->contrib_id);
+is(($media->contribs)[0]->selected_contrib_type, 3);
+
 # save it
 $media->save();
 
@@ -25,6 +43,16 @@ $fh = new FileHandle $filepath;
 # create another media object
 my $media2 = Krang::Media->new(title => 'test media object 2', category_id => 1, filename => 'krang.jpg', filehandle => $fh);
 isa_ok($media2, 'Krang::Media');
+
+# add 2 contributors to media
+$media2->contribs($media->contribs,
+                  { contrib_id      => $contrib->contrib_id, 
+                    contrib_type_id => 1 });
+is($media2->contribs, 2);
+is(($media2->contribs)[0]->contrib_id, $contrib->contrib_id);
+is(($media2->contribs)[0]->selected_contrib_type, 3);
+is(($media2->contribs)[1]->contrib_id, $contrib->contrib_id);
+is(($media2->contribs)[1]->selected_contrib_type, 1);
 
 # save second media file
 $media2->save();
@@ -36,12 +64,22 @@ my @medias = Krang::Media->find(filename => 'krang.jpg', order_by => 'media_id',
 # make sure 2 are returned
 is(scalar @medias, 2);
 
-
 # assign what should be the second created (first returned) to var
 my $m2 = $medias[0];
 
 # check title
 is ($m2->title(), 'test media object 2');
+
+# check contribs
+is($m2->contribs, 2);
+is(($m2->contribs)[0]->contrib_id, $contrib->contrib_id);
+is(($m2->contribs)[0]->selected_contrib_type, 3);
+is(($m2->contribs)[1]->contrib_id, $contrib->contrib_id);
+is(($m2->contribs)[1]->selected_contrib_type, 1);
+
+# remove contribs
+$m2->clear_contribs();
+is($m2->contribs, 0);
 
 # check title of other media object too
 is ($medias[1]->title(), 'test media object');

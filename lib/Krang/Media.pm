@@ -45,10 +45,14 @@ use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x
     $thumbnail_path = $media->thumbnail_path();
 
     # assign 2 contributors to media object, specifying thier contributor type
-    $media->contrib_ids({contrib_id => 1, contrib_type_id => 3}, {contrib_id => 44, contrib_type_id => 4});
+    $media->contribs({contrib_id => 1, contrib_type_id => 3},
+                     {contrib_id => 44, contrib_type_id => 4});
 
     # get contrib objects attached to this media
-    @contribs = $media->list_contrib_objects();
+    @contribs = $media->contribs();
+
+    # change assignment to include just the first contributor
+    $media->contribs($contribs[0]);
 
     # save the object to the database
     $media->save();
@@ -198,8 +202,7 @@ Filehandle for uploaded media.
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
-    get_set       => [ qw( media_id title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename uri ) ],
-    list => [ qw( contrib_ids ) ];
+    get_set       => [ qw( media_id title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename uri ) ];
 
 sub init {
     my $self = shift;
@@ -208,6 +211,8 @@ sub init {
     my $filename = $args{'filename'};
 
     my $filehandle = delete $args{'filehandle'};
+    
+    $self->{contrib_ids} = [];
 
     # finish the object
     $self->hash_init(%args);
@@ -281,13 +286,78 @@ Returns the initial creation date of the media object.  Not settable here.
 
 Returns the path that the media object will preview/publish to. Not settable here.
 
+=item @contribs = $media->contribs();
+
+=item $media->contribs({ contrib_id => 10, contrib_type_id => 1 }, ...);
+
+=item $media->contribs(@contribs);
+
+Called with no arguments, returns a list of contributor
+(Krang::Contrib) objects.  These objects will have
+C<selected_contrib_type> set according to their use with this media
+object.
+
+May be set two ways.  First, a contributor may specified as a two-key
+hash containing the contrib_id and the contrib_type_id for the
+contributor.  A single contributor can be present in the list multiple
+times with different contrib_type_ids.
+
+Second, a list of contributor objects with selected_contrib_type() set
+may be passed in.
+
+=cut
+
+sub contribs {
+    my $self = shift;
+    my @contribs;
+
+    unless (@_) {
+        my $contrib;
+        # return contributor objects
+        foreach my $id (@{$self->{contrib_ids}}) {
+            ($contrib) = Krang::Contrib->find(contrib_id => $id->{contrib_id});
+            croak("No contributor found with contrib_id ". $id->{contrib_id})
+              unless $contrib;
+            $contrib->selected_contrib_type($id->{contrib_type_id});
+            push @contribs, $contrib;
+        }
+        return @contribs; 
+    }
+
+    # store list of contributors, passed as either objects or hashes
+    foreach my $rec (@_) {
+        if (ref($rec) and ref($rec) eq 'Krang::Contrib') {
+            croak("invalid data passed to contrib: contributor objects must have contrib_id and selected_contrib_type set.")
+              unless $rec->contrib_id and $rec->selected_contrib_type;
+
+            push(@contribs, { contrib_id     => $rec->contrib_id,
+                              contrib_type_id=> $rec->selected_contrib_type });
+
+        } elsif (ref($rec) and ref($rec) eq 'HASH') {
+            croak("invalid data passed to contribs: hashes must contain contrib_id and contrib_type_id.")
+              unless $rec->{contrib_id} and $rec->{contrib_type_id};
+            
+            push(@contribs, $rec);
+
+        } else {
+            croak("invalid data passed to contribs");
+        }
+
+        $self->{contrib_ids} = \@contribs;
+    }    
+}
+
+=item $media->clear_contribs()
+
+Removes all contributor associatisons.
+
+=cut
+
+sub clear_contribs { shift->{contrib_ids} = []; }
+
 =item $media->upload_file({filehandle => $filehandle, filename => $filename})
 
 Stores media file to temporary location on filesystem. Sets $media->filename() also. 
-
-=item $media->contrib_ids({contrib_id => 22, contrib_type_id => 1});
-
-Attach contributor/contributor types to media object by id.  The order you pass them in is the order they will be attached.
 
 =cut
 
@@ -435,7 +505,7 @@ sub save {
     # remove any existing media_contrib relatinships and save any new relationships
     $dbh->do('delete from media_contrib where media_id = ?', undef, $media_id);
     my $count; 
-    foreach my $contrib ($self->contrib_ids()) {
+    foreach my $contrib (@{$self->{contrib_ids}}) {
         $dbh->do('insert into media_contrib (media_id, contrib_id, contrib_type_id, ord) values (?,?,?,?)', undef, $media_id, $contrib->{contrib_id}, $contrib->{contrib_type_id}, $count++);
     }
 }
@@ -600,11 +670,10 @@ sub find {
             # add contrib ids to object
             my $sth2 = $dbh->prepare('select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord');
             $sth2->execute($row->{media_id});
-            my @contrib_ids;
+            $obj->{contrib_ids} = [];
             while (my ($contrib_id, $contrib_type_id) = $sth2->fetchrow_array()) {
-                push @contrib_ids, {contrib_id => $contrib_id, contrib_type_id => $contrib_type_id};
+                push @{$obj->{contrib_ids}}, {contrib_id => $contrib_id, contrib_type_id => $contrib_type_id};
             }
-            $obj->contrib_ids(@contrib_ids); 
         }
 	push (@media_object,$obj);
     }
@@ -802,27 +871,6 @@ sub delete {
 
     my $file_dir = catdir($root,'data','media',$self->_media_id_path);
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
-}
-
-=item @contrib_objects = $media->list_contrib_objects();
-
-Return list of contributor (Krang::Contrib) objects.
-
-=cut
-
-sub list_contrib_objects {
-    my $self = shift;
-    my @args = shift;
-    my @contribs;
-
-    foreach my $contrib ($self->contrib_ids()) {
-        my @c = Krang::Contrib->find(contrib_id => $contrib->{contrib_id});
-        croak ("No contributor found with contrib_id ".$contrib->{contrib_id}) if not $c[0];
-        $c[0]->selected_contrib_type($contrib->{contrib_type_id});
-        push @contribs, $c[0];             
-    }
-   
-    return @contribs; 
 }
 
 =back
