@@ -9,6 +9,11 @@ sub build_url {
     return $arg{category} ? $arg{category}->url : "";
 }
 
+sub build_preview_url {
+    my ($self, %arg) = @_;
+    return $arg{category} ? $arg{category}->preview_url : "";
+}
+
 sub url_attributes { () }
 
 
