@@ -28,6 +28,7 @@ sub new {
                                             max => 1,
                                             allow_delete => 0,
                                             reorderable => 0 ),
+                 PBMM::custom_search->new(max => 1),
                  Krang::ElementClass::Text->new(name => "large_header"),
                  Krang::ElementClass::Text->new(name => "small_header"),
                  Krang::ElementClass::Textarea->new(name => "paragraph",

@@ -29,6 +29,7 @@ sub new {
                     Default::lead_in->new(),
                     PBMM::external_lead_in->new(),
                     PBMM::image->new(),
+                    PBMM::custom_search->new(max => 1),
                     Krang::ElementClass::Text->new(name         => "small_header" ),
                     Krang::ElementClass::Text->new(name         => "large_header" ),   
                     Krang::ElementClass::Textarea->new(name => "paragraph",

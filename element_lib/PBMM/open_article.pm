@@ -34,6 +34,7 @@ sub new {
                                             reorderable => 0 ),
                     PBMM::meta->new(),
                     PBMM::promo->new(),
+                    PBMM::custom_search->new(max => 1),
                     Krang::ElementClass::Textarea->new(   name => 'body',
                                                         display_name => 'Content',
                                                         pageable => 1,
