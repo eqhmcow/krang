@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed site editor to check that URLs don't have paths attached to them
+and that paths are obsolute. [Sam]
+
+=item *
+
 Fixed krang_upgrade to use Krang::Platform.  Added a new method to
 Krang::Platform, post_upgrade_message(). [Sam]
 

@@ -564,26 +564,50 @@ sub search_row_handler {
 # validate
 sub validate {
     my ($self, $site) = @_;
-    my $q = $self->query();
+
     my %errors;
 
-    for (@obj_fields) {
-        my $msg = "error_invalid_$_";
-        my $val = $site->$_;
+    # check all fields
+    for my $name (@obj_fields) {    
+        my $val = $site->{$name};
+        if (not length $val) {
+            add_message("error_invalid_$name");
+            $errors{"error_invalid_$name"} = 1;
+            next;
+        }
 
-        if (($_ eq 'url' or 'preview_url') and $val =~ m!https?://!) {
-            add_message("error_${_}_has_http");
-            $errors{$msg} = 1;
-        } elsif (not length $val or $val !~ m!^[-:\w\./]+$!) {
-            add_message($msg);
-            $errors{$msg} = 1;
+        if ($name eq 'url' or $name eq 'preview_url') {            
+            # check for http://
+            if ($val =~ m!https?://!) {
+                add_message("error_${name}_has_http");
+                $errors{"error_invalid_$name"} = 1;
+            } 
+
+            # check for /s
+            if ($val =~ m!/!) {
+                add_message("error_${name}_has_path");
+                $errors{"error_invalid_$name"} = 1;
+            }
+
+            # check for other bad chars
+            if ($val !~ m!^[-\w.]+$!) {
+                add_message("error_${name}_has_bad_chars");
+                $errors{"error_invalid_$name"} = 1;
+            }
+        }
+
+        if ($name eq 'publish_path' or $name eq 'preview_path') {
+            # must be an absolute UNIX path
+            if ($val !~ m!^/!) {
+                add_message("error_${name}_not_absolute");
+                $errors{"error_invalid_$name"} = 1;
+            }
         }
 
 
     }
 
-    $q->param('errors', 1) if keys %errors;
-
+    $self->query->param('errors', 1) if keys %errors;
     return %errors;
 }
 
