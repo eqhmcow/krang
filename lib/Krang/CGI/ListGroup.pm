@@ -109,15 +109,17 @@ sub search {
                                                       },
                                       use_module => 'Krang::ListGroup',
                                       find_params => { %find_params },
-                                      columns => [qw(name command_column )],
+                                      columns => [qw(name description command_column )],
                                       column_labels => {
-                                                        name => 'List Group Name',
+                                                        name => 'List Group Name', 
+                                                        description => 'Description'
                                                        },
                                       columns_sortable => [qw( name )],
                                       command_column_commands => [qw( edit_list_group )],
                                       command_column_labels => {edit_list_group => 'Edit'},
                                       row_handler => sub {
-                                          $_[0]->{name} = $_[1]->name();
+                                            $_[0]->{name} = $_[1]->name();
+                                            $_[0]->{description} = $_[1]->description();
                                       },
                                       id_handler => sub { return $_[0]->list_group_id },
                                      );
