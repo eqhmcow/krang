@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed amusing bug in Krang::Test::Content that was causing the same random
+word sequences to be generated multiple times when called in a tight loop.
+[Perrin]
+
+=item *
+
 Fixes to the import process as it affects L<Krang::ListItem>
 objects - list orders are now preserved properly.  [Peter]
 

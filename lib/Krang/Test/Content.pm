@@ -1200,7 +1200,6 @@ sub _init_words {
         chomp;
         push @{$self->{words}}, $_;
     }
-    srand (time ^ $$);  # sets random seed.
 
 }
 
