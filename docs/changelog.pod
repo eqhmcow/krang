@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in Krang::Group where the category permissions cache
+wasn't being correctly rebuilt after group changes were saved. [Sam]
+
+=item *
+
 Added filesystem sanity checks to the Publish checks - If the
 story/media object being tested does not exist on the filesystem in
 all locations that it should, it's flagged for output, regardless of

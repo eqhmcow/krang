@@ -873,50 +873,54 @@ sub add_user_permissions {
                                              select permission_type from category_group_permission
                                              where category_id=? and group_id=?
                                              /);
- 
-    my @category = Krang::Category->find( ignore_user => 1 );
+
+    # do a lookup on a parent
+    my $sth_get_parent_perm = $dbh->prepare(qq/
+                                            select may_see, may_edit from user_category_permission_cache 
+                                            where category_id=? and user_id=?
+                                            /);
+
+    # get categories, sorted with parents before children
+    my @category = Krang::Category->find( ignore_user => 1,
+                                          order_by => 'url' );
 
     foreach my $category (@category) {
         my $may_see = 0;
         my $may_edit = 0;
-        my $see_set = 0;
-        my $edit_set = 0;
+        my $found = 0;
 
         # Get category parent -- needed for default perms
         my $parent_id = $category->parent_id();
-
         my @group_ids = $user->group_ids();
 
         foreach my $group_id (@group_ids) {
-            if ($parent_id and ((not $may_see) or (not $may_edit))) {
-                # Non-root categories inherit permissions of their parent
-                $sth_check_group_perm->execute($parent_id, $group_id);
-                my ($permission_type) = $sth_check_group_perm->fetchrow_array();
-                $sth_check_group_perm->finish();
-                
-                if ($permission_type) {
-                    ($permission_type eq "edit") ? ($may_edit = 1, $edit_set = 1) : ($may_edit = 0, $edit_set = 1);
-                ($permission_type ne "hide") ? ($may_see  = 1, $see_set = 1) : ($may_see = 0, $see_set = 1);
-                }
-            }
-
             # Apply permissions if they exist (rebuild case)
             $sth_check_group_perm->execute($category->category_id, $group_id);
             my ($permission_type) = $sth_check_group_perm->fetchrow_array();
-            $sth_check_group_perm->finish();
-                                                                                                                                       
-            if ($permission_type) {
-                ($permission_type eq "edit") ? ($may_edit = 1, $edit_set = 1) : ($may_edit = 0, $edit_set = 1);
-                ($permission_type ne "hide") ? ($may_see  = 1, $see_set = 1) : ($may_see = 0, $see_set = 1);
-            } 
+            next unless $permission_type;
+            $found = 1;
+
+            if ($permission_type eq "edit") { 
+                $may_edit = 1;
+            } else {
+                $may_edit = 0 unless $may_edit;
+            }
+            if ($permission_type eq "hide") {
+                $may_see = 0 unless $may_see;
+            } else {
+                $may_see = 1;
+            }
         }
         
-        $may_edit = 1 if not $edit_set;
-        $may_see = 1 if not $see_set;
- 
-        # Update category perms cache for this user
-        $sth_set_perm->execute($category->category_id, $user_id, $may_see, $may_edit);
+        unless ($found) {
+            # lookup parent permissions and use them
+            $sth_get_parent_perm->execute($category->parent_id, $user_id);
+            ($may_see, $may_edit) = $sth_get_parent_perm->fetchrow_array();
+        }
 
+        # commit permissions
+        $sth_set_perm->execute($category->category_id, $user_id, 
+                               $may_see, $may_edit);            
     }
 }
 
