@@ -8,7 +8,8 @@ use CGI ();
 use HTML::Template::Expr;
 use Krang::Log qw(debug info critical);
 
-
+use Exception::Class
+  'Krang::ElementClass::MissingTemplate' => { fields => [ 'element_name', 'category_id' ] };
 
 =head1 NAME
 
@@ -673,11 +674,15 @@ sub publish {
     eval { $html_template = $self->find_template(@_); };
 
     if ($@) {
+        my $err = $@;
+
         # no template found - if the element has children, this is an error.
         # otherwise, return the raw data stored in the element.
         if (scalar($args{element}->children())) {
-            critical(__PACKAGE__ . ": publish() cannot find template for element_id=$element_id");
-            croak $@;
+            Krang::ElementClass::MissingTemplate->throw(message => 'Missing required output template',
+                                                        element_name => $args{element}->display_name());
+#            critical(__PACKAGE__ . ": publish() cannot find template for element_id=$element_id");
+#            croak $err;
         } else {
             return $args{element}->data();
         }
