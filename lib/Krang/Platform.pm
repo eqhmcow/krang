@@ -211,7 +211,10 @@ others.
 sub build_perl_module {
     my ($pkg, %arg) = @_;
     my $name = $arg{name};
-    _load_expect();
+
+    # load expect unless we're building it
+    my $use_expect = ($name =~ /IO-Tty/ or $name =~ /Expect/) ? 0 : 1;
+    _load_expect() if $use_expect;
 
     my $dest_dir = catdir($ENV{KRANG_ROOT}, 'lib');
     my $trash_dir = catdir(cwd, '..', 'trash');
@@ -224,42 +227,50 @@ sub build_perl_module {
     local $ENV{NOCONF} = 1 if $name =~ /Net-FTPServer/;
     
     # We only want the libs, not the executables or man pages
-    my $command =
-      Expect->spawn("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir MAN1PODS=\\{\\} MAN3PODS=\\{\\}");
+    if ($use_expect) {
+        my $command =
+          Expect->spawn("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir MAN1PODS=\\{\\} MAN3PODS=\\{\\}");
+        
+        # setup command to answer questions modules ask
+        my @responses = qw(n n n n n y !);
+        while (
+               my $match = $command->expect(
+                  undef,
+                 'ParserDetails.ini? [Y]',
+                 'remove gif support? [Y/n]',
+                 'mech-dump utility? [y]',
+                 'configuration (y|n) ? [no]',
+                 'unicode entities? [no]',
+                 'Do you want to skip these tests? [y]',
+                 "('!' to skip)",
+                                           )
+              )
+          {
+              $command->send( $responses[ $match - 1 ] . "\n" );
+          }
+        $command->soft_close();
+        if ( $command->exitstatus() != 0 ) {
+            die "make failed: $?";
+        }
+    
+        print "Running make...\n";
+        $command = Expect->spawn('make');
+        @responses = qw(n);
+        while ( my $match = $command->expect( undef, 
+                                              'Mail::Sender? (y/N)', 
+                                            ) ) {
+            $command->send($responses[ $match - 1 ] . "\n");
+        }
+        $command->soft_close();
+        if ( $command->exitstatus() != 0 ) {
+            die "make failed: $?";
+        }
 
-    # setup command to answer questions modules ask
-    my @responses = qw(n n n n n y !);
-    while (
-        my $match = $command->expect(
-            undef,
-            'ParserDetails.ini? [Y]',
-            'remove gif support? [Y/n]',
-            'mech-dump utility? [y]',
-            'configuration (y|n) ? [no]',
-            'unicode entities? [no]',
-            'Do you want to skip these tests? [y]',
-            "('!' to skip)",
-        )
-      )
-    {
-        $command->send( $responses[ $match - 1 ] . "\n" );
-    }
-    $command->soft_close();
-    if ( $command->exitstatus() != 0 ) {
-        die "make failed: $?";
-    }
-
-    print "Running make...\n";
-    $command = Expect->spawn('make');
-    @responses = qw(n);
-    while ( my $match = $command->expect( undef, 
-                                          'Mail::Sender? (y/N)', 
-                                        ) ) {
-        $command->send($responses[ $match - 1 ] . "\n");
-    }
-    $command->soft_close();
-    if ( $command->exitstatus() != 0 ) {
-        die "make failed: $?";
+    } else {
+        # do it without Expect for IO-Tty and Expect installation.
+        # Fortunately they don't ask any questions.
+        system("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir MAN1PODS=\\{\\} MAN3PODS=\\{\\}") == 0 
+          or die "make failed: $?";
     }
 
     system('make install') == 0 or die "make install failed: $?";   

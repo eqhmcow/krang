@@ -91,7 +91,6 @@ my $build_dir       = tempdir(DIR     => catdir( $ENV{KRANG_ROOT}, 'tmp' ));
 my $APACHE       = 'Apache-MOD_PERL/apache_1.3.27.tar.gz';
 my $MOD_PERL     = 'Apache-MOD_PERL/mod_perl-1.27.tar.gz';
 my $LIBAPREQ     = 'libapreq';
-my $ALWAYS_SKIP  = '^(Expect|IO-Tty)';
 
 # options
 my $skip_apache = 0;
@@ -174,10 +173,17 @@ foreach my $distribution qw(DBD-mysql Image-BioChrome) {
     push @files, $file if $file;
 }
 
+# shuffle Expect and IO-Tty to the front since they're needed by later
+# build steps
+foreach my $distribution qw(Expect IO-Tty) {
+    my ($file) = grep( /$distribution/, @files );
+    @files = grep( !/$distribution/, @files );
+    unshift @files, $file if $file;
+}
+
 # loop through files, unpacking and calling build_perl_module()
 foreach my $file (@files) {
     next unless $file =~ /gz$/;
-    next if $file =~ /$ALWAYS_SKIP/o;
 
     # wait to build libapreq till after building Apache
     next if $file =~ /^$LIBAPREQ/o;
