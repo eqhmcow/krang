@@ -888,7 +888,7 @@ sub set_param_defaults {
     # Set up defaults if value is not otherwise set
     while (my ($k, $dv) = each(%defaults)) {
         # Skip if value already defined
-        next if (length($options{$k}));
+        next if (defined $options{$k});
 
         if ($k eq 'FTPPort') {
             # attempt to connect to port 21. else default to 2121
