@@ -89,9 +89,12 @@ END
 
 use Term::Prompt qw(prompt);
 use Krang::Conf qw (InstanceElementSet KrangRoot InstanceDBName DBUser DBPass);
+use Krang::ListGroup;
+use Krang::List;
 
 use Getopt::Long;
 use Pod::Usage;
+use XML::Simple;
 
 my ($help, $man, $password, $destroy);
 my $verbose = 0;
@@ -189,7 +192,6 @@ foreach my $instance (Krang::Conf->instances()) {
     system($cmd);
   
     # populate default template set, if it exists
-    my $e_set = InstanceElementSet;
     my $import_file = catfile(KrangRoot, 'element_lib', 
                               InstanceElementSet, 'templates.kds');
     
@@ -203,7 +205,13 @@ foreach my $instance (Krang::Conf->instances()) {
         print "Running '$cmd'\n" if $verbose > 1;
         system($cmd);
     }
+    
 }
+
+# have Krang::ListGroups and Krang::Lists created
+my $cmd = catdir(KrangRoot, 'bin', 'krang_create_lists');
+print "Running '$cmd'\n" if $verbose > 1;
+system($cmd);
 
 print "Databases created successfully.\n";
 
