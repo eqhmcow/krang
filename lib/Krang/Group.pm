@@ -430,9 +430,8 @@ permissions.
 In the case of desks, missing desks will be created 
 with "edit" permissions.
 
-N.B.:  No effort is made to assure that a specified category or desk 
-actually exists.  An invalid category or desk will be dutifully
-added to the permissions table.
+If an invalid category or desk is specified, save() will croak()
+with errors.
 
 
 =cut

@@ -45,6 +45,9 @@ use Krang::Message qw(add_message);
 use Krang::HTMLPager;
 use Krang::Pref;
 use Krang::Session qw(%session);
+use Krang::Category;
+use Krang::Desk;
+use Krang::Log qw(debug info critical);
 use Carp;
 
 
@@ -237,10 +240,6 @@ sub edit {
 
     my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
     $t->param(%ui_messages) if (%ui_messages);
-
-
-    # For testing
-    return $t->output();
 
 
     # Convert Krang::Group object to tmpl data
@@ -474,29 +473,132 @@ sub delete_category {
 #####  PRIVATE METHODS  #####
 #############################
 
-# Return a hashref based on group properties, suitible
+# Given a param name, return an html-tmpl style arrayref
+# containing HTML inputs for permissions
+sub make_permissions_radio {
+    my $self = shift;
+    my ($param_name) = @_;
+
+    # Specify all security levels
+    my @security_levels = qw(edit read-only hide);
+
+    # Get default value from object
+    my $group = $session{EDIT_GROUP};
+    croak("No group available") unless ($group);
+
+    my $default = "[N/A]";
+    if ($param_name =~ /^desk\_(\d+)$/) {
+        # Got desk
+        my $desk_id = $1;
+        $default = $group->desks($desk_id);
+
+    } elsif ($param_name =~ /^category\_(\d+)$/) {
+        # Got category
+        my $category_id = $1;
+        $default = $group->categories($category_id);
+
+    } elsif (grep {$_ eq $param_name} qw(asset_story asset_media asset_template)) {
+        # Got asset
+        $default = $group->$param_name;
+
+    } else {
+        # Unknown param -- possible tainted data?
+        croak("Unknown permission radio group '$param_name'");
+
+    }
+
+    # Set back to "edit" unless security level makes sense
+    $default = "edit" unless ( $default && (grep { $default eq $_ } @security_levels) );
+
+    my $q = $self->query();
+    my @html_radio_inputs = $q->radio_group(
+                                            -name => $param_name,
+                                            -values => \@security_levels,
+                                            -labels => { map { $_=>"" } @security_levels },
+                                            -default => $default,
+                                           );
+    my @tmpl_radio_inputs = map {  {radio_select=>$_}  } @html_radio_inputs;
+
+    return \@tmpl_radio_inputs;
+}
+
+
+# Given a $group object, return a hashref based on group properties, suitible
 # to be passed to an HTML::Template edit/add screen.
-# If a $group object is supplied, use its properties
-# for default values.
 sub get_group_tmpl {
     my $self = shift;
-    my $g = shift || 0;
+    my $g = shift;
+
+    croak ("No group object specified") unless ($g and ref($g));
 
     my $q = $self->query();
 
     my %group_tmpl = ( %{&GROUP_PROTOTYPE} );
+    my @root_categories = Krang::Category->find(parent_id=>undef, order_by=>'url');
+    my @desks = Krang::Desk->find();
 
     # For each group prop, convert to HTML::Template compatible data
     foreach my $gf (keys(%group_tmpl)) {
         # Handle radio groups
         if (grep { $gf eq $_ } qw(asset_story asset_media asset_template)) {
-            delete($group_tmpl{$gf});
+            $group_tmpl{$gf} = $self->make_permissions_radio($gf);
             next;
         }
 
-        # Handle compound properties
-        if (grep { $gf eq $_ } qw(categories desks)) {
-            delete($group_tmpl{$gf});
+        # Handle desks
+        if ($gf eq "desks") {
+            my @desks_tmpl = ();
+
+            # Build radio select for each desk
+            foreach my $desk (@desks) {
+                my $param_name = "desk_".$desk->desk_id();
+                my %desk_row = (
+                                desk_name => $desk->name(),
+                                permission_radio => $self->make_permissions_radio($param_name),
+                               );
+                push(@desks_tmpl, \%desk_row);
+            }
+
+            $group_tmpl{desks} = \@desks_tmpl;
+
+            next;
+        }
+
+        # Handle sites/categories
+        if ($gf eq "categories") {
+            my @categories_tmpl = ();
+
+            # Build radio select for each category
+            foreach my $category (@root_categories) {
+                
+                my $param_name = "category_".$category->category_id();
+                my %category_row = (
+                                    category_url => $category->url(),
+                                    category_id => $category->category_id(),
+                                    permission_radio => $self->make_permissions_radio($param_name),
+                                   );
+                push(@categories_tmpl, \%category_row);
+            }
+
+            $group_tmpl{categories} = \@categories_tmpl;
+            next;
+        }
+
+        if (grep { $gf eq $_} qw( may_publish
+                        admin_users
+                        admin_users_limited
+                        admin_groups
+                        admin_contribs
+                        admin_sites
+                        admin_categories
+                        admin_jobs
+                        admin_desks )) {
+            my $default = $g->$gf();
+            $group_tmpl{$gf} = $q->checkbox( -name => $gf, 
+                                             -value => "1",
+                                             -checked => $default,
+                                             -label => "" );
+            debug($group_tmpl{$gf});
             next;
         }
 
@@ -525,7 +627,7 @@ sub get_group_tmpl {
 
 =head1 SEE ALSO
 
-L<Krang::Group>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Krang::Pref>, L<Krang::Session>, L<Carp>, L<Krang::CGI>
+L<Krang::Group>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Krang::Pref>, L<Krang::Session>, L<Krang::Category>, L<Krang::Desk>, L<Krang::Log>, L<Carp>, L<Krang::CGI>
 
 =cut
 
@@ -553,7 +655,7 @@ L<Krang::Group>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Kra
 #                  add_category
 #                  delete_category
 #                 ));
-# $c->use_modules(qw/Krang::Group Krang::Widget Krang::Message Krang::HTMLPager Krang::Pref Krang::Session Carp/);
+# $c->use_modules(qw/Krang::Group Krang::Widget Krang::Message Krang::HTMLPager Krang::Pref Krang::Session Krang::Category Krang::Desk Krang::Log Carp/);
 # $c->tmpl_path('Group/');
 
 # print $c->output_app_module();

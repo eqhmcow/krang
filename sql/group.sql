@@ -42,6 +42,13 @@ CREATE TABLE desk_group_permission (
         PRIMARY KEY (desk_id, group_id)        
 );
 
+/* set up default desk permissions */
+INSERT INTO desk_group_permission VALUES (1, 1, "edit");
+INSERT INTO desk_group_permission VALUES (2, 1, "edit");
+INSERT INTO desk_group_permission VALUES (1, 2, "edit");
+INSERT INTO desk_group_permission VALUES (2, 2, "edit");
+INSERT INTO desk_group_permission VALUES (1, 3, "hide");
+INSERT INTO desk_group_permission VALUES (2, 3, "hide");
 
 /* Join table: category <-> permission_group */
 DROP TABLE IF EXISTS category_group_permission;

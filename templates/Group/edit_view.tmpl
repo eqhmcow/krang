@@ -20,6 +20,13 @@
     }
 
 
+    function edit_categories () {
+        var myform = document.forms["edit_group_form"];
+        myform.rm.value = "edit_categories";
+        myform.submit();
+    }
+
+
     function delete_group () {
         var myform = document.forms["edit_group_form"];
         if (confirm("Are you SURE you want to delete this group?")) {
@@ -62,6 +69,7 @@
     <td align="left" valign="top"><input type="textfield" size="40" name="prefix" value="<tmpl_var escape=HTML name>"></td>
 </tr>
 
+</table>
 
 
 
@@ -69,42 +77,56 @@
 <table cellspacing="0" width="100%">
 
 <tr class="form-head">
-    <th><b>Sites</b></th>
-    <th>Edit</th>
-    <th>Read-Only</th>
-    <th>Hide</th>
-    <th>Categories</th>
+    <th align="left">Sites</th>
+    <th width="100">Categories</th>
+    <th width="100">Edit</th>
+    <th width="100">Read-Only</th>
+    <th width="100">Hide</th>
 </tr>
 
-<tmpl_loop sites><tr>
-    <td class="form-cell"><tmpl_var site_url></td>
-    <tmpl_loop permission_radio><td class="form-cell"><tmpl_var radio_select></td></tmpl_loop>
-    <td class="form-cell"><a href="javascript:edit_site('<tmpl_var site_id>')"></a></td>
+<tmpl_loop categories><tr>
+    <td class="form-cell"><tmpl_var category_url></td>
+    <td class="form-cell" align="center"><a href="javascript:edit_categories('<tmpl_var category_id>')">Edit</a></td>
+    <tmpl_loop permission_radio><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
 </tr></tmpl_loop>
  
 </table>
 <!-- END Site/Root Category permissions -->
 
 
+<br />
 
 <!-- Asset permissions -->
 <table cellspacing="0" width="100%">
 
 <tr class="form-head">
-    <th><b>Assets</b></th>
-    <th>Edit</th>
-    <th>Read-Only</th>
-    <th>Hide</th>
+    <th align="left">Assets</th>
+    <th width="100">Edit</th>
+    <th width="100">Read-Only</th>
+    <th width="100">Hide</th>
 </tr>
 
-<tmpl_loop sites><tr>
-    <td class="form-cell"><tmpl_var site_url></td>
-    <tmpl_loop permission_radio><td class="form-cell"><tmpl_var radio_select></td></tmpl_loop>
-</tr></tmpl_loop>
+<tr>
+    <td class="form-cell">Stories</td>
+    <tmpl_loop asset_story><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+</tr>
+
+<tr>
+    <td class="form-cell">Media</td>
+    <tmpl_loop asset_media><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+</tr>
+
+<tr>
+    <td class="form-cell">Templates</td>
+    <tmpl_loop asset_template><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+</tr>
+
  
 </table>
 <!-- END Asset permissions -->
 
+
+<br />
 
 
 
@@ -112,22 +134,70 @@
 <table cellspacing="0" width="100%">
 
 <tr class="form-head">
-    <th><b>Desks</b></th>
-    <th>Edit</th>
-    <th>Read-Only</th>
-    <th>Hide</th>
+    <th align="left">Desks</th>
+    <th width="100">Edit</th>
+    <th width="100">Read-Only</th>
+    <th width="100">Hide</th>
 </tr>
 
-<tmpl_loop sites><tr>
-    <td class="form-cell"><tmpl_var site_url></td>
-    <tmpl_loop permission_radio><td class="form-cell"><tmpl_var radio_select></td></tmpl_loop>
+<tmpl_loop desks><tr>
+    <td class="form-cell"><tmpl_var desk_name></td>
+    <tmpl_loop permission_radio><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
 </tr></tmpl_loop>
  
 </table>
 <!-- END Desk permissions -->
 
+<br />
 
 <!-- Administration permissions -->
+<table cellspacing="0" width="100%">
+
+<tr class="form-head">
+    <th colspan="2" align="left">Administration permissions</th>
+</tr>
+
+<tr>
+    <td class="form-cell" align="center"><tmpl_var may_publish></td>
+    <td class="form-cell" align="left">May Publish</td>
+</tr>
+
+<tr>
+    <td class="form-cell" align="center"><tmpl_var admin_users></td>
+    <td class="form-cell" align="left">Manage Users<br /><tmpl_var admin_users_limited> Group Limited</td>
+</tr>
+
+<tr>
+    <td class="form-cell" align="center"><tmpl_var admin_groups></td>
+    <td class="form-cell" align="left">Manage Groups</td>
+</tr>
+
+<tr>
+    <td class="form-cell" align="center"><tmpl_var admin_contribs></td>
+    <td class="form-cell" align="left">Manage Contributors</td>
+</tr>
+
+<tr>
+    <td class="form-cell" align="center"><tmpl_var admin_sites></td>
+    <td class="form-cell" align="left">Manage Sites</td>
+</tr>
+
+<tr>
+    <td class="form-cell" align="center"><tmpl_var admin_categories></td>
+    <td class="form-cell" align="left">Manage Categories</td>
+</tr>
+
+<tr>
+    <td class="form-cell" align="center"><tmpl_var admin_jobs></td>
+    <td class="form-cell" align="left">Manage Jobs</td>
+</tr>
+
+<tr>
+    <td class="form-cell" align="center"><tmpl_var admin_desks></td>
+    <td class="form-cell" align="left">Manage Desks</td>
+</tr>
+ 
+</table>
 <!-- END Administration permissions -->
 
 
