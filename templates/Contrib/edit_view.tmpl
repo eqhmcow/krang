@@ -1,0 +1,32 @@
+<tmpl_include /header.tmpl>
+
+
+<script language="Javascript">
+<!-- //
+// -->
+</script>
+
+
+<form name="add_contrib_form" method="POST">
+<input type="hidden" name="rm" value="add">
+</form>
+
+<form name="edit_contrib_form" method="POST">
+<input type="hidden" name="rm" value="edit">
+<input type="hidden" name="contrib_id" value="">
+</form>
+
+<div class="dark-bar">Contributor <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></div>
+
+
+<tmpl_if message_contrib_added><div class="alert">Contributor has been added.</div></tmpl_if>
+
+  <div class="button-bar">
+      <input type="submit" value="Save">
+      <input type="button" value="Save &amp; Stay">
+      <input type="reset" value="Reset">
+      <tmpl_unless add_mode><input type="button" value="Delete"></tmpl_unless>
+  </div>
+
+
+<tmpl_include /footer.tmpl>

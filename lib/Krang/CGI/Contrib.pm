@@ -232,8 +232,10 @@ sub add {
     my $self = shift;
 
     my $q = $self->query();
+    my $t = $self->load_tmpl("edit_view.tmpl");
+    $t->param(add_mode => 1);
 
-    return $self->dump_html();
+    return $t->output() . $self->dump_html();
 }
 
 
@@ -328,8 +330,9 @@ sub edit {
     my $self = shift;
 
     my $q = $self->query();
+    my $t = $self->load_tmpl("edit_view.tmpl");
 
-    return $self->dump_html();
+    return $t->output() . $self->dump_html();
 }
 
 
