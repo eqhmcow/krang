@@ -116,7 +116,7 @@ is($sites[0]->url() =~ /4/, 1, 'find - limit/offset 2');
 
 
 # update category test
-my $category = Krang::Category->new(name => '/',
+my $category = Krang::Category->new(dir => '/',
                                     site_id => $site2->site_id());
 $category->save();
 $site2->url('testsite2.com');

@@ -17,7 +17,7 @@ my $site = Krang::Site->new(publish_path => './sites/test1/',
 $site->save();
 isa_ok($site, 'Krang::Site');
 
-my $category = Krang::Category->new(name => '/',
+my $category = Krang::Category->new(dir => '/',
                                     site_id => $site->site_id());
 $category->save();
 isa_ok($category, 'Krang::Category');

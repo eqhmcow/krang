@@ -4,6 +4,7 @@ use warnings;
 use Krang;
 use Krang::Element;
 use Krang::Site;
+use Krang::Template;
 
 use Test::More qw(no_plan);
 
@@ -23,7 +24,7 @@ my $site_id = $site->site_id();
 # constructor tests
 ####################
 # make the top level category
-my $category = Krang::Category->new(name => '/',
+my $category = Krang::Category->new(dir => '/',
                                     site_id => $site_id);
 
 isa_ok($category, 'Krang::Category');
@@ -32,12 +33,12 @@ isa_ok($category, 'Krang::Category');
 eval {my $cat2 = Krang::Category->new(fred => 1)};
 is($@ =~ /invalid: 'fred'/, 1, 'new() - invalid arg');
 
-# missing name
+# missing dir
 eval {my $cat2 = Krang::Category->new(site_id => 1)};
-is($@ =~ /'name' not present/, 1, "new() - missing 'name'");
+is($@ =~ /'dir' not present/, 1, "new() - missing 'dir'");
 
 # missing site_id
-eval {my $cat2 = Krang::Category->new(name => 1)};
+eval {my $cat2 = Krang::Category->new(dir => 1)};
 is($@ =~ /'site_id' not present/, 1, "new() - missing 'site_id'");
 
 
@@ -53,10 +54,10 @@ is($category->category_id() =~ /^\d+$/, 1, 'category_id()');
 my $element = $category->element();
 isa_ok($element, 'Krang::Element');
 is($category->element_id() =~ /^\d+$/, 1, 'element_id()');
-my $name = $category->name();
-is($name eq '/', 1, 'name()');
+my $dir = $category->dir();
+is($dir eq '/', 1, 'dir()');
 is($category->site_id() =~ /^\d+$/, 1, 'site_id');
-is($category->url() =~ /$name/, 1, 'url()');
+is($category->url() =~ /$dir/, 1, 'url()');
 
 
 # setter tests
@@ -68,30 +69,32 @@ $category->element($element);
 $category->save();
 is($category->element_id(), $element->element_id(), 'element() - setter');
 
-# name()
-$category->name('fred');
+# dir()
+my $d = $category->dir('fred');
+my $u = $category->url();
 $category->save();
-is($category->url() =~ /fred/, 1, 'name() - setter');
+$u = $category->url();
+is($category->url() =~ /fred/, 1, 'dir() - setter');
 
 
 # duplicate test
 #################
-my $dupe = Krang::Category->new(name => '/fred',
+my $dupe = Krang::Category->new(dir => 'fred',
                                 site_id => $site_id);
 eval {$dupe->save()};
-is($@ =~ /duplicate/, 1, 'duplicate_check() - name');
+is($@ =~ /duplicate/, 1, 'duplicate_check() - dir');
 
 
 # find() tests
 ###############
 # setup a bunch of categorys
-my $category3 = Krang::Category->new(name => '/bob3',
+my $category3 = Krang::Category->new(dir => '/bob3',
                                      site_id => $site_id);
 $category3->save();
-my $category4 = Krang::Category->new(name => '/bob4',
+my $category4 = Krang::Category->new(dir => '/bob4',
                                      site_id => $site_id);
 $category4->save();
-my $category5 = Krang::Category->new(name => '/bob5',
+my $category5 = Krang::Category->new(dir => '/bob5',
                                      site_id => $site_id);
 $category5->save();
 
@@ -132,7 +135,7 @@ is($categories[0]->url() =~ /4/, 1, 'find - limit/offset 2');
 # deletion tests
 #################
 # add a subcat to make deletion fail
-my $subcat = Krang::Category->new(name => 'stuff',
+my $subcat = Krang::Category->new(dir => 'stuff',
                                   parent_id => $category->category_id(),
                                   site_id => $site_id);
 $subcat->save();
@@ -141,29 +144,39 @@ $subcat->save();
 is($subcat->parent_id() =~ /^\d+$/, 1, 'parent_id()');
 
 # a setter test and test of update_child_url()
-$category->name('bob');
+$category->dir('bob');
 $category->save();
 my ($sub) = Krang::Category->find(category_id => $subcat->category_id());
-is($sub->url() =~ /bob/, 1, 'name() => update_child_url()');
+is($sub->url() =~ /bob/, 1, 'dir() => update_child_url()');
 
 my $success = 0;
+my $tmpl = Krang::Template->new(category_id => $category->category_id(),
+                                filename => 'bob.tmpl');
+$tmpl->save();
+
 eval {$success = $category->delete()};
-is($@ =~ /refering/, 1, 'delete() fail');
+is($@ =~ /refers/, 1, 'delete() fail 1');
 
 $success = $subcat->delete();
 is($success, 1, 'delete() 1');
 
-$success = $category->delete();
+eval {$success = $category->delete()};
+is($@ =~ /refers/, 1, 'delete() fail 2');
+
+$success = $tmpl->delete();
 is($success, 1, 'delete() 2');
+
+$success = $category->delete();
+is($success, 1, 'delete() 3');
 
 $success = $category3->delete();
-is($success, 1, 'delete() 2');
+is($success, 1, 'delete() 4');
 
 $success = $category4->delete();
-is($success, 1, 'delete() 2');
+is($success, 1, 'delete() 5');
 
 $success = $category5->delete();
-is($success, 1, 'delete() 2');
+is($success, 1, 'delete() 6');
 
 # delete site
 $success = $site->delete();
