@@ -1,13 +1,29 @@
 use strict;
 use warnings;
 
+use Krang;
+use Krang::Category;
+use Krang::Site;
+
 use Data::Dumper;
 use Test::More qw(no_plan);
 
 
 BEGIN {use_ok('Krang::Template');}
 
-my $tmpl = Krang::Template->new(category_id => 1,
+# set up site and category
+my $site = Krang::Site->new(publish_path => './sites/test1/',
+                            url => 'testsite1.com');
+$site->save();
+isa_ok($site, 'Krang::Site');
+
+my $category = Krang::Category->new(name => '/',
+                                    site_id => $site->site_id());
+$category->save();
+isa_ok($category, 'Krang::Category');
+
+# constructor test
+my $tmpl = Krang::Template->new(category_id => $category->category_id(),
                                 content => '<blink><tmpl_var bob></blink>',
                                 element_class_name => 'Bob');
 
@@ -16,6 +32,14 @@ isa_ok($tmpl, 'Krang::Template');
 # increment version
 $tmpl->save();
 is($tmpl->version(), 1, 'Version Check');
+
+# duplicate check
+eval {
+    my $tmplX = Krang::Template->new(category_id => $category->category_id(),
+                                     element_class_name => 'Bob');
+    $tmplX->save();
+};
+is($@ =~ /'url' field is a duplicate/, 1, 'duplicate_check()');
 
 # write version to version table
 $tmpl->prepare_for_edit();
@@ -54,7 +78,7 @@ is($@ =~ /not checked out/i, 1, 'verify_checkout() Test');
 # verify checkout works
 is($tmpl->checkout()->isa('Krang::Template'), 1, 'Checkout Test');
 
-my $tmpl2 = Krang::Template->new(category_id => 1,
+my $tmpl2 = Krang::Template->new(category_id => $category->category_id(),
                                  content => '<html></html>',
                                  filename => 't_w_c.tmpl');
 
@@ -104,7 +128,10 @@ is($tmpls5[0]->filename(), 'Bob.tmpl', "Find - ascend/descend");
 
 # clean up the mess
 unlink 't_w_c.tmpl';
-is ($tmpl->delete(), 1, 'Deletion Test 1');
-is ($tmpl2->delete(), 1, 'Deletion Test 2');
+is($tmpl->delete(), 1, 'Deletion Test 1');
+is($tmpl2->delete(), 1, 'Deletion Test 2');
 
+# delete category and site
+$category->delete();
+$site->delete();
 

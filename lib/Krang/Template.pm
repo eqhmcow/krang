@@ -63,23 +63,26 @@ Krang::Burner, the FTP interface, and the SOAP interface.
 =cut
 
 # Pragmas
+##########
 use strict;
 use warnings;
 
 # External Module Dependencies
+###############################
 use Carp qw(verbose croak);
 use Storable qw(freeze thaw);
 use Time::Piece::MySQL;
 
 # Internal Module Depenedencies
+################################
 use Krang;
+use Krang::Category;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 
 #
 # Package Variables
 ####################
-
 # Constants
 ############
 # Read-only fields for the object
@@ -91,6 +94,7 @@ use constant TEMPLATE_RO => qw(template_id
 			       deployed
 			       deployed_version
 			       testing
+			       url
 			       version);
 
 # Read-write fields
@@ -114,6 +118,7 @@ my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW;
 
 
 # Interal Module Dependecies (con't)
+####################################
 # had to define constants before we could use them
 use Krang::MethodMaker 	new_with_init => 'new',
   			new_hash_init => 'hash_init',
@@ -198,6 +203,12 @@ table.
 Boolean that is true when the object has been marked for testing, i.e. the
 current object will be used to generate output for preview irrespective
 of deployed versions of the template.
+
+=item * url
+
+Text field where the object's calculate virtual url is stored.  The url is
+calculated by concatenating its category's 'url' and its 'filename'.  The
+purpose of this field is to ensure the uniqueness of a template.
 
 =item * version
 
@@ -389,6 +400,34 @@ sub delete {
     $dbh->do($v_query, undef, ($id));
 
     return 1;
+}
+
+
+=item $template_id = $template->duplicate_check()
+
+This method checks whether the url of a template is unique.
+
+=cut
+
+sub duplicate_check {
+    my $self = shift;
+    my $id = $self->{template_id} || 0;
+    my $template_id = 0;
+
+    my $query = <<SQL;
+SELECT template_id
+FROM template
+WHERE url = '$self->{url}'
+SQL
+    $query .= "AND template_id != $id" if $id;
+    my $dbh = dbh();
+    my $sth = $dbh->prepare($query);
+    $sth->execute();
+    $sth->bind_col(1, \$template_id);
+    $sth->fetch();
+    $sth->finish();
+
+    return $template_id;
 }
 
 
@@ -773,8 +812,9 @@ Saves template data in memory to the database.
 Stores a copy of the objects current contents to the template table. The
 version field is incremented on each save.
 
-The method croaks if the template is not checked out, checked out by another
-user, or if the executed SQL affects no rows in the DB.
+The method croaks if the template's url is not unique, if the template is not
+checked out, checked out by another user, or if the executed SQL affects no
+rows in the DB.
 
 =cut
 
@@ -785,6 +825,16 @@ sub save {
 
     # list of DB fields to insert or update; exclude 'template_id'
     my @save_fields = grep {$_ ne 'template_id'} TEMPLATE_RO, TEMPLATE_RW;
+
+    # calculate url
+    my $url =
+      (Krang::Category->find(category_id => $self->{category_id}))[0]->url();
+    $self->{url} = File::Spec->catfile($url, $self->{filename});
+
+    # check for duplicate url
+    my $template_id = $self->duplicate_check();
+    croak(__PACKAGE__ . "->save(): 'url' field is a duplicate of template " .
+          "'$template_id'") if $template_id;
 
     # make sure we've checked out the object
     $self->verify_checkout() if $id;

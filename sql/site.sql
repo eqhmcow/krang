@@ -9,7 +9,7 @@ CREATE TABLE site (
        preview_url	varchar(255),
        publish_url	varchar(255),
        preview_path	varchar(255),
-       publish_path	varchar(255),
+       publish_path	varchar(255) NOT NULL,
        creation_date    datetime NOT NULL,
        primary key (site_id)
 ) TYPE=MyISAM;

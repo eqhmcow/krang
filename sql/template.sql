@@ -16,6 +16,7 @@ CREATE TABLE template (
         element_class_name 	varchar(255),
         filename 		tinytext NOT NULL,
         testing 		int(1) UNSIGNED NOT NULL,
+        url			text NOT NULL,
         version 		smallint UNSIGNED NOT NULL,
         PRIMARY KEY  (template_id),
         INDEX (category_id)

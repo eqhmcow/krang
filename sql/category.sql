@@ -9,7 +9,7 @@ CREATE TABLE category (
         name		varchar(255) NOT NULL,
         parent_id	int UNSIGNED,
         site_id		int UNSIGNED,
-        url		varchar(255) NOT NULL,
+        url		text NOT NULL,
         PRIMARY KEY (category_id),
         KEY (element_id),
         KEY (name),
