@@ -528,7 +528,7 @@ SQL
 
     $dbh->do($query, undef, ($id));
 
-    add_history(object => $self, action => 'deploy',);
+#    add_history(object => $self, action => 'undeploy',);
 
     # set internal flags as well.
     $self->{deployed} = 0;
