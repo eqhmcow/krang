@@ -323,6 +323,7 @@ query.  Note the use of sum() and "group by":
     media.media_id,
     media.title,
     media.category_id,
+    (sum(cgpc.may_see) > 0) as may_see,
     (sum(cgpc.may_edit) > 0) as may_edit
 
   from
@@ -344,11 +345,28 @@ if not, sum() will effectively be greater than zero if the user is
 allowed to edit a particular object via at least one group.
 
 As you can see, this SQL will hide records to which the user has no
-authority to see.  This handles the "Hide" case, but does not handle
+authority to see.  This is not always the desired behavior.  For
+example, if a story is in a category to which the user has read
+access, but that story uses media which is in a category to which the
+user does NOT have access, it is expected that the media will appear
+in the context of the story, nonetheless.  This requires that the API
+only hide hidden records when specifically requested to do so.  To
+this end, a new parameter to find() is provided, "hide".  For example:
+
+  my @media = Krang::Media->find( hide=>1 );
+
+If "hide" is not specified (or is set to "0"), all records will be
+shown.  It is expected that objects will only be hidden when viewed by
+applications which are specifically for managing that object type.
+For example, story objects will only be hidden when accessed via the
+story manager application.  When non hidden, the "may_see" property
+will be propagated to the object, and may be used as needed.
+
+This handles the "Hide" case, but does not handle
 the "Edit" verses "Read-Only" case.  To support this case, the
 "may_edit" property should be used.  When records are instantiated
-from the database the "may_edit" property should be stored with the
-object.
+from the database the "may_edit" property (as well as the "may_see"
+property) should be stored with the object.
 
 This object property should be considered whenever the user attempts
 to trigger a write operation on the object, in which case the
@@ -401,20 +419,35 @@ In Krang, "assets" refer to stories, media, or templates.  Permissions
 are assigned independently to these three different asset types, for
 each group.
 
-For each asset type, a group may be granted "edit", "read-only", or
-"hide" access.  These asset permission settings are implemented as
-enumerated fields in the "permission_groups" table, and are made
-available via the session system, in the following keys which each
-contain Boolean ("1" or "0") values:
+Access to the permission settings are provided via the Krang::User
+module.  For each asset type, a group may be granted "edit",
+"read-only", or "hide" access.
 
-  $session{permissions}->{may_edit_story};
-  $session{permissions}->{may_see_story};
+A user may be a member of more than one group.  The asset permissions
+work on a basis of "most permissive", meaning that if a user is
+allowed to "edit" an asset because of their membership in one group,
+they are then allowed to edit that asset, regardless of whether
+another group of which they are a member does not have "edit" access.
 
-  $session{permissions}->{may_edit_media};
-  $session{permissions}->{may_see_media};
+These asset permission settings are implemented as enumerated fields
+in the "permission_groups" table.  In order to more easily use these
+permissions, they are logically converted into two Boolean permissions
+for each asset type:  may_edit and may_see.  For example:
 
-  $session{permissions}->{may_edit_template};
-  $session{permissions}->{may_see_template};
+ If asset_story == edit, then...
+   ...may_edit_story == 1
+   ...may_see_story == 1
+
+ If asset_media == read-only, then...
+   ...may_edit_media == 0
+   ...may_see_media == 1
+
+ If asset_template == hide, then...
+   ...may_edit_template == 0
+   ...may_see_template == 0
+
+These six properties are provided as read-only methods of Krang::User
+objects.
 
 Functionally, there are two significant differences between asset
 permissions and category permissions.  The first difference is that
