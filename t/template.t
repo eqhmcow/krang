@@ -2,7 +2,6 @@ use strict;
 use warnings;
 
 use Data::Dumper;
-use Krang;
 use Test::More qw(no_plan);
 
 
@@ -10,7 +9,7 @@ BEGIN {use_ok('Krang::Template');}
 
 my $tmpl = Krang::Template->new(category_id => 1,
                                 content => '<blink><tmpl_var bob></blink>',
-                                element_class => 'Krang::ElementClass::Bob');
+                                element_classname => 'Bob');
 
 isa_ok($tmpl, 'Krang::Template');
 
@@ -46,7 +45,14 @@ is($tmpl->version(), 3, 'Version Check 3');
 
 # verify checkin works
 $tmpl->checkin();
-is($tmpl->checked_out, '', 'Checkin Test');
+is($tmpl->checked_out, 0, 'Checkin Test');
+
+# verify save fails on a checked-in object
+eval{$tmpl->save()};
+is($@ =~ /not checked out/i, 1, 'verify_checkout() Test');
+
+# verify checkout works
+is($tmpl->checkout()->isa('Krang::Template'), 1, 'Checkout Test');
 
 my $tmpl2 = Krang::Template->new(category_id => 1,
                                  content => '<html></html>',
@@ -80,19 +86,25 @@ my @tmpls = Krang::Template->find(template_id => \@ids);
 is (ref $_, 'Krang::Template', "Find - template_id " . $i++) for @tmpls;
 
 my $count = Krang::Template->find(count => 1, template_id => \@ids);
-is ($count, scalar @ids, "Find - count");
+is($count, scalar @ids, "Find - count");
 
 $i = 2;
 my @tmpls2 = Krang::Template->find(creation_date_like => '%2003%');
-is (ref $_, 'Krang::Template', "Find - _like " . $i++) for @tmpls2;
+is(ref $_, 'Krang::Template', "Find - _like " . $i++) for @tmpls2;
 
 my ($tmpl4) = Krang::Template->find(limit => 1,
                                     offset => 1,
                                     order_by => 'filename');
-is ($tmpl4->filename(), 't_w_c.tmpl', "Find - limit, offset, order_by");
+
+is($tmpl4->filename(), 't_w_c.tmpl', "Find - limit, offset, order_by");
+
+my @tmpls5 = Krang::Template->find(ascend => 1,
+                                   creation_date_like => '%2003%');
+is($tmpls5[0]->filename(), 'Bob.tmpl', "Find - ascend/descend");
 
 # clean up the mess
 unlink 't_w_c.tmpl';
-$tmpl->delete();
-$tmpl2->delete();
+is ($tmpl->delete(), 1, 'Deletion Test 1');
+is ($tmpl2->delete(), 1, 'Deletion Test 2');
+
 
