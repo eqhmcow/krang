@@ -388,7 +388,7 @@ sub delete {
     }
 
     # Throw RootDeletion exception unless called by Krang::Site
-    if ($self->{dir} eq '/' and not $ENV{KRANG_PROFILE}) {
+    if ($self->{dir} eq '/') {
         Krang::Category::RootDeletion->throw(message => 'Root categories ' .
                                              'can only be removed by ' .
                                              'deleting their Site object')

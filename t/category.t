@@ -1,10 +1,10 @@
 use strict;
 use warnings;
+use Krang::Script;
 
 use Krang::Story;
 use Krang::Media;
 
-use Krang::Script;
 use Krang::Element;
 use Krang::Site;
 use Krang::Template;
@@ -223,12 +223,10 @@ SKIP: {
 
 # deletion tests
 ################
-unless ($ENV{KRANG_PROFILE}) {
-    eval {$parent->delete()};
-    isa_ok($@, 'Krang::Category::RootDeletion');
-    like($@, qr/Root categories can only be removed by deleting their Site object/,
-         'RootDeletion exception test');
-}
+eval {$parent->delete()};
+isa_ok($@, 'Krang::Category::RootDeletion');
+like($@, qr/Root categories can only be removed by deleting their Site object/,
+     'RootDeletion exception test');
 
 eval {$success = $category->delete()};
 isa_ok($@, 'Krang::Category::Dependent');
