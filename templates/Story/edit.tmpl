@@ -120,6 +120,7 @@
 <tr>
 <td>Contributors:</td>
 <td>
+<table border=0><tr><td>
 <tmpl_if contribs_loop>
   <tmpl_loop contribs_loop>
      <tmpl_var first_name> <tmpl_var last_name> (<tmpl_var type>)
@@ -128,7 +129,9 @@
 <tmpl_else>
   None.
 </tmpl_if>
-<input type=button value="Edit Contributors" onclick="edit_contribs()">
+</td>
+<td valign=top><input type=button value="Edit Contributors" onclick="edit_contribs()"></td>
+</tr></table>
 </td>
 </tr>
 
