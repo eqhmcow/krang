@@ -131,7 +131,7 @@ Krang add-ons support the same upgrade facility as Krang.  This means
 you can include an 'upgrade/' directory with standard
 L<Krang::Upgrade> modules.  For example, if Turbo-1.01 is released and
 must make changes to the database or filesystem then a file called
-'upgrade/V1.01.pm' must be created.  This file may contain code to run
+'upgrade/V1_01.pm' must be created.  This file may contain code to run
 on a per-installation or per-instance basis, just like other Krang
 upgrade scripts.
 
