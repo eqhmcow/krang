@@ -1,4 +1,4 @@
-# Krang master Makefile.  The following targets are supported:
+# Krang master Makefile.  The following targets are supported: 
 #
 #   all   - runs ext
 #
