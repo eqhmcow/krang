@@ -506,11 +506,10 @@ sub get_user_params {
     my %user_tmpl;
 
     # make group_ids multi-select
-    my (@cgids, %cgids, @pgids);
-    @cgids = $user->group_ids
-      unless @cgids = $q->param('current_group_ids');
-    %cgids = map {$_, 1} @cgids;
-    @pgids = grep {not exists $cgids{$_}} keys %user_groups;
+    my @cgids = $q->param('errors') ? $q->param('current_group_ids') :
+      $user->group_ids;
+    my %cgids = map {$_, 1} @cgids;
+    my @pgids = grep {not exists $cgids{$_}} keys %user_groups;
     push @{$user_tmpl{possible_group_ids}},
       {id => $_, name => $user_groups{$_}} for @pgids;
     push @{$user_tmpl{current_group_ids}},
@@ -518,7 +517,12 @@ sub get_user_params {
     $user_tmpl{size} = $size;
 
     # loop through User fields
-    $user_tmpl{$_} = $q->param($_) || $user->$_ for Krang::User::USER_RW;
+    if ($q->param('errors')) {
+        $user_tmpl{$_} = $q->param($_) for Krang::User::USER_RW;
+        $q->delete('errors');
+    } else {
+        $user_tmpl{$_} = $user->$_ for Krang::User::USER_RW;
+    }
 
     return \%user_tmpl;
 }
@@ -531,8 +535,11 @@ sub update_user {
     my $q = $self->query();
 
     # overwrite object fields
-    $user->$_($q->param($_) ? $q->param($_) : undef)
-      for (Krang::User::USER_RW, 'password');
+    $user->$_($q->param($_) ? $q->param($_) : undef) for Krang::User::USER_RW;
+
+    # set password if we've been handed one
+    my $pass = $q->param('password') || '';
+    $user->password($pass) unless $pass eq '';
 
     # handle group ids
     my @gids = $q->param('current_group_ids');
@@ -554,6 +561,7 @@ sub update_user {
                 for (@$v) {
                     my $error = "duplicate_" . $_;
                     $errors{$error} = 1;
+                    $q->param('errors', 1);
                     add_message($error);
                 }
             }
@@ -574,24 +582,34 @@ sub validate_user {
     my $q = $self->query();
     my %errors;
 
+    # login, first, last, and email cannot be '' or just whitespace
+    for (qw/login first_name last_name email/) {
+        my $val = $q->param($_);
+        $errors{"error_invalid_$_"} = 1
+          if ($val eq '' || $val =~ /^\s+$/);
+    }
+
+    my ($mode, $pass, $cpass) = map {$q->param($_)}
+      qw/rm new_password confirm_password/;
+
     # validate new_password and confirm_password
-    my $pass = $q->param('new_password');
-    my $cpass = $q->param('confirm_password');
-    if (defined $pass && defined $cpass) {
+    if ($pass eq '') {
+        $errors{error_null_password} = 1 if $mode =~ /add/;
+        $errors{error_password_mismatch} = 1 if $cpass ne '';
+    } elsif ($cpass eq '') {
+        $errors{error_password_mismatch} = 1 if $mode =~ /add/;
+        $errors{error_password_mismatch} = 1 if $pass ne '';
+    } elsif ($pass ne '' || $cpass ne '') {
         if ($pass ne $cpass) {
-            $errors{error_password_mismatch} = 1
+            $errors{error_password_mismatch} = 1;
         } else {
-                $q->param('password', $pass) unless $pass eq '';
+            $q->param('password', $pass);
         }
     }
 
-    # login cannot be null
-    my $login = $q->param('login');
-    $errors{error_invalid_login} = 1
-      unless (defined $login || $login =~ /^\s+$/);
-
     # Add error messages
     add_message($_) for keys %errors;
+    $q->param('errors', 1) if keys %errors;
 
     return %errors;
 }

@@ -147,18 +147,18 @@
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 
 <tr>
-    <td align="left" valign="top">First:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_first_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="first_name" value="<tmpl_var escape=HTML first_name>"><tmpl_if duplicate_first_name></span></tmpl_if></td>
+    <td align="left" valign="top">*First:</td>
+    <td align="left" valign="top"><tmpl_if error_invalid_first_name><span class="invalid"></tmpl_if><tmpl_if duplicate_first_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="first_name" value="<tmpl_var escape=HTML first_name>"><tmpl_if error_invalid_first_name></span></tmpl_if><tmpl_if duplicate_first_name></span></tmpl_if></td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">Last:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_last_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="last_name" value="<tmpl_var escape=HTML last_name>"><tmpl_if duplicate_last_name></span></tmpl_if></td>
+    <td align="left" valign="top">*Last:</td>
+    <td align="left" valign="top"><tmpl_if error_invalid_last_name><span class="invalid"></tmpl_if><tmpl_if duplicate_last_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="last_name" value="<tmpl_var escape=HTML last_name>"><tmpl_if error_invalid_last_name></span></tmpl_if><tmpl_if duplicate_last_name></span></tmpl_if></td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">Email:</td>
-    <td align="left" valign="top"><input type="textfield" size="40" name="email" value="<tmpl_var escape=HTML email>"></td>
+    <td align="left" valign="top">*Email:</td>
+    <td align="left" valign="top"><tmpl_if error_invalid_email><span class="invalid"></tmpl_if><input type="textfield" size="40" name="email" value="<tmpl_var escape=HTML email>"><tmpl_if error_invalid_email></span></tmpl_if></td>
 </tr>
 
 <tr>
@@ -203,18 +203,18 @@
 </tr>
 
 <tr>
-    <td align="left" valign="top">Login:</td>
+    <td align="left" valign="top">*Login:</td>
     <td align="left" valign="top"><tmpl_if duplicate_login><span class="invalid"></tmpl_if><tmpl_if error_invalid_login><span class="invalid"></tmpl_if><input type="textfield" size="40" name="login" value="<tmpl_var escape=HTML login>"><tmpl_if error_invalid_login></span></tmpl_if><tmpl_if duplicate_login></span></tmpl_if></td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">New Password:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="40" name="new_password" value="<tmpl_var new_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if></td>
+    <td align="left" valign="top"><tmpl_if add_mode>*</tmpl_if>New Password:</td>
+    <td align="left" valign="top"><tmpl_if error_null_password><span class="invalid"></tmpl_if><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="40" name="new_password" value="<tmpl_var new_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if><tmpl_if error_null_password></span></tmpl_if></td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">Confirm New Password:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="40" name="confirm_password" value="<tmpl_var confirm_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if></td>
+    <td align="left" valign="top"><tmpl_if add_mode>*</tmpl_if>Confirm New Password:</td>
+    <td align="left" valign="top"><tmpl_if error_null_password><span class="invalid"></tmpl_if><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="40" name="confirm_password" value="<tmpl_var confirm_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if><tmpl_if error_null_password></span></tmpl_if></td>
 </tr>
 </table>
 </div>
