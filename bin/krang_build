@@ -254,7 +254,11 @@ sub build_module {
     eval { $pkg->build_perl_module(name => $dist_dir); };
     die "Problem building $dist_dir in $build_dir:\n\n$@\n"
       if $@;
+
+    # clean up dist dir
+    system("rm -rf $dist_dir") == 0 or die "Error cleaning $dist_dir: $?";
 }
+
 
 
 # returns true if list contains a string which contains the target string
