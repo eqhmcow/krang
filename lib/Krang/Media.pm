@@ -23,8 +23,7 @@ use File::Temp qw/ tempdir /;
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
-use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag published_version publish_date checked_out_by);
-use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x-bmp);
+use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version publish_date checked_out_by);
 
 # setup exceptions
 use Exception::Class (
@@ -222,6 +221,7 @@ use Krang::MethodMaker
                           publish_date
                           caption copyright 
                           notes 
+                          mime_type
                           media_type_id 
                          ) ],
     get_set_with_notify => [ { method => '_notify',
@@ -302,6 +302,11 @@ sub category {
 =item $media->copyright()
 
 =item $media->alt_tag()
+
+=item $media->mime_type()
+
+Returns the MIME type of the media file.  This is readonly and undef
+until after upload_file() has been called.
 
 =item $media->notes()
 
@@ -450,18 +455,10 @@ sub upload_file {
     # blow the URL cache since filename has changed
     undef $self->{url_cache};
 
+    # guess the mime_type
+    return $self->{mime_type} = guess_media_type($filepath);
+
     return $self; 
-}
-
-=item $mime_type = $media->mime_type()
-
-Returns MIME type of uploaded file, returns nothing if unknown type or no file uploaded.
-
-=cut
-
-sub mime_type {
-    my $self = shift;
-    return guess_media_type($self->file_path);
 }
 
 =item $file_path = $media->file_path() 
@@ -713,6 +710,10 @@ filename
 
 =item *
 
+mime_type
+
+=item *
+
 filename_like - case insensitive match on filename. Must include '%' on either end for substring match.
 
 =item *
@@ -807,7 +808,10 @@ sub find {
                          creation_date => 1,
                          ids_only => 1,
                          may_see => 1,
-                         may_edit => 1 );
+                         may_edit => 1,
+                         mime_type => 1,
+                         mime_type_like => 1,
+                       );
                                                                                
     # check for invalid params and croak if one is found
     foreach my $param (keys %args) {
@@ -845,7 +849,8 @@ not $valid_params{$param};
 
     # set simple keys
     my @simple_keys = qw( title category_id media_type_id filename url
-                          contrib_id checked_out_by may_see may_edit );
+                          contrib_id checked_out_by may_see may_edit 
+                          mime_type );
     foreach my $key (keys %args) {
 	if ( grep { $key eq $_ } @simple_keys ) {
             push @where, $key;
@@ -910,6 +915,13 @@ not $valid_params{$param};
         $where_string .= " and " if $where_string;
         $where_string .= "media.filename like ?";
         push @where, 'filename_like';
+    }
+
+    # add mime_type_like to where_string if present
+    if ($args{'mime_type_like'}) {
+        $where_string .= " and " if $where_string;
+        $where_string .= "media.mime_type like ?";
+        push @where, 'mime_type_like';
     }
 
     # add url_like to where_string if present
@@ -1123,7 +1135,7 @@ types are stored in IMAGE_TYPES constant. Will create thumbnail if
 first time called.  If relative is set to 1, returns a path relative
 to KrangRoot.
 
-Returns undef for media objects that are not images.
+Returns undef if a thumbnail cannot be created.
 
 =cut
 
@@ -1132,41 +1144,38 @@ sub thumbnail_path {
     my %args = @_;
     my $root = KrangRoot;
     my $filename = $self->{filename};
-    if ($self->filename()) {
-        my $mime_type = $self->mime_type();
-        my $is_image;
+    return undef unless $filename;
 
-        foreach my $image_type (IMAGE_TYPES) {
-            if ($image_type eq $mime_type) {
-                $is_image = 1;
-                last;
-            }
-        }
-        if ($is_image) {    
-            # path is the same as the file path with t__ in front of
-            # the filename
-            my $path = catfile((splitpath($self->file_path(relative => $args{relative})))[1], "t__$filename");
-            if (not -f $path) {
-                # problems creating thumbnails shouldn't be fatal
-                eval {
-                    my $img = Imager->new();
-                    $img->open(file=>$self->file_path()) || croak $img->errstr();
-                    my $thumb = $img->scale(xpixels=>THUMBNAIL_SIZE,ypixels=>THUMBNAIL_SIZE,type=>'min', qtype =>'preview' );
-                    $thumb->write(file=>$path) || croak $thumb->errstr;
-                };
- 
-                # if it didn't work, log the problem and move on.
-                # Thumbnails are optional.
-                if ($@) {
-                    debug(__PACKAGE__ . " - problem creating thumbnail for $filename : $@");
-                    return undef;
-                }
-            } 
+    # thumbnail path is the same as the file path with t__ in front of
+    # the filename
+    my $path = catfile((splitpath($self->file_path(relative => $args{relative})))[1], "t__$filename");
+    
+    # all done if it exists
+    return $path if -f $path;
 
-            return $path;
-        }
+    # don't bother with none images
+    return undef unless $self->{mime_type} =~ m!^image/!;
+
+    # problems creating thumbnails shouldn't be fatal
+    eval {
+        my $img = Imager->new();
+        $img->open(file=>$self->file_path()) or croak $img->errstr();
+        my $thumb = $img->scale(xpixels => THUMBNAIL_SIZE,
+                                ypixels => THUMBNAIL_SIZE,
+                                type    =>'min',
+                                qtype   =>'preview' );
+        $thumb->write(file=>$path) or croak $thumb->errstr;
+    };
+            
+    # if it didn't work, log the problem and move on. Thumbnails are
+    # optional.
+    if ($@) {
+        debug(__PACKAGE__." - problem creating thumbnail for $filename : $@");
+        return undef;
     }
-    return undef;
+
+    # all done, return the thumbnail path
+    return $path;
 }
 
 =item $media->checkout() || Krang::Media->checkout($media_id)

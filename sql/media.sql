@@ -14,6 +14,7 @@ CREATE TABLE media (
   notes text,
   url varchar(255) NOT NULL,
   alt_tag varchar(255) default NULL,
+  mime_type varchar(255),
   version SMALLINT unsigned NOT NULL,
   creation_date datetime NOT NULL,
   media_type_id mediumint unsigned default NULL,

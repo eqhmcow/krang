@@ -148,6 +148,12 @@ is ($m2->file_size(), 2021);
 # check MIME type
 is ($m2->mime_type(), 'image/jpeg');
 
+# test find by mime_type
+my @found = Krang::Media->find(mime_type => 'image/jpeg');
+ok(grep { $_->media_id == $m2->media_id} @found);
+@found = Krang::Media->find(mime_type => 'image/gif');
+ok(not grep { $_->media_id == $m2->media_id} @found);
+
 # mark as checked out
 $m2->checkout();
 
