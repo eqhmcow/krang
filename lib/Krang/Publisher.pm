@@ -45,6 +45,12 @@ Krang::Publisher - Center of the Publishing Universe.
   # Get the list of related stories and media that will get published
   my ($story_list, $media_list) = $publisher->get_publish_list(story => $story);
 
+  # Place a template into the production path, to be used when publishing.
+  $publisher->deploy_template(
+                              template => $template_object,
+                              category => $category_object,
+                             );
+
 
   # Returns the mark used internally to break content into pages.
   my $break_txt = $publisher->PAGE_BREAK();
@@ -66,7 +72,7 @@ In the publish (but not preview) process, stories will also be checked for linke
 
 =over
 
-None at this time.
+=item * None at this time.
 
 =back
 
@@ -132,7 +138,19 @@ The sub calls $story->linked_stories() and $story->linked_media() to generate th
 
 If successful, it will return lists of Krang::Story and Krang::Media objects that will get published along with $story.  At the absolute minimum (no linked stories or media), $stories->[0] will contain the originally submitted parameter $story.
 
+=cut
 
+=item C<< $filename = $publisher->deploy_template(template => $template, category => $category); >>
+
+Deploys the template stored in a L<Krang::Template> object into the template publish_path under $KRANG_ROOT.
+
+The final path of the template is based on $category->dir() and $template->element_class_name().
+
+If successful, deploy_template() returns the final resting place of the template.  In the event of an error, deploy_template() will croak.
+
+deploy_template() makes no attempt to update the database as to the publish status or location of the template - that is the responsibility of Krang::Template (or should it call the appropriate method in Krang::Template?)
+
+=cut
 
 =item C<< PAGE_BREAK() >>
 
