@@ -54,8 +54,8 @@ sub fill_template {
     my ($self, %args) = @_;
                                                                                 
     my $tmpl      = $args{tmpl};
-    my $cat   = $args{element}->object;
-    my $story   = $args{publisher}->story;
+    my $story   = $args{element}->object;
+    my $cat   = $story->category;
    
     $tmpl->param( slug => $story->slug );
  
