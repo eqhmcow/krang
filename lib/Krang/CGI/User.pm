@@ -44,6 +44,7 @@ use constant DELETE_FIELDS => qw(Krang::User::USER_RW
 				 current_group_ids);
 
 use constant SHORT_NAMES	=> qw(adam
+				      admin
 				      arobin
 				      matt
 				      sam);
@@ -600,6 +601,7 @@ sub update_user {
 
 # Ensure the validity of parameters passed while attempting to save or update
 # the user object
+# * Enforces the login length requirement (at present 3 characters).
 sub validate_user {
     my $self = shift;
     my $q = $self->query();
@@ -615,7 +617,7 @@ sub validate_user {
             # check login and pass length
             if ($_ eq 'login') {
                 $errors{"error_login\_length"} = 1
-                  unless (length($val) >= 6 || grep $val eq $_, SHORT_NAMES);
+                  unless (length($val) >= 3 || grep $val eq $_, SHORT_NAMES);
             }
         } else {
             $errors{error_invalid_email} = 1
