@@ -304,9 +304,7 @@ sub edit {
     my $site_id = $q->param('site_id') || '';
     my $site = $session{site};
 
-    if ($site_id &&
-        (not(ref($site)) ||
-         $site->site_id != $site_id)) {
+    if ($site_id) {
         ($site) = Krang::Site->find(site_id => $site_id);
         $session{site} = $site;
     }
@@ -366,6 +364,9 @@ sub edit_save {
     %errors = $self->_save($site);
     return $self->edit(%errors) if %errors;
 
+    # update site in session
+    $session{site} = $site;
+
     add_message('message_saved');
 
     return $self->search();
@@ -396,6 +397,9 @@ sub edit_save_stay {
     # save
     %errors = $self->_save($site);
     return $self->edit(%errors) if %errors;
+
+    # update site in session
+    $session{site} = $site;
 
     add_message('message_saved');
 
@@ -487,14 +491,7 @@ sub view {
     my $q = $self->query();
     my $t = $self->load_tmpl('view.tmpl');
     my $site_id = $q->param('site_id');
-    my $site = $session{site};
-
-    if ($site_id &&
-        (not(ref($site)) ||
-         $site->site_id != $site_id)) {
-        ($site) = Krang::Site->find(site_id => $site_id);
-        $session{site} = $site;
-    }
+    my ($site) = Krang::Site->find(site_id => $site_id);
     croak("No Krang::Site object found matching site_id '$site_id'")
       unless ref $site;
 
