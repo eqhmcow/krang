@@ -240,7 +240,6 @@ sub _lookup_contrib {
     my $tmp;
 
     if (my $contrib = $contribs{$key}) {
-#        ++$contribs{$key}->{count};
         $tmp->{$_} = $contrib->{$_} for keys %$contrib;
         return bless $tmp, ref $self;
     } else {
@@ -261,10 +260,7 @@ sub _map {
     }
 
     # add contributor to lookup hash
-    my $tmp; #= bless({}, ref $self);
-    $tmp->{$_} = $self->{$_} for qw/contrib_id first middle last/;
-#    $tmp->{count} = 1;
-    $contribs{$key} = $tmp;
+    $contribs{$key}->{$_} = $self->{$_} for qw/contrib_id first middle last/;
 
     return $self;
 }
