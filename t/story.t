@@ -284,7 +284,7 @@ my $s2 = Krang::Story->new(class => "article",
                            categories => [$cat[1]]);
 $s2->save();
 ok($s2->story_id);
-END { $s1->delete() };
+END { $s2->delete() };
 
 eval { $s2->categories($s2->categories, $cat[0]); };
 ok($@);
