@@ -10,7 +10,7 @@ use Krang::Category;
 use Krang::Site;
 use File::Path;
 
-my $count = 100;
+my $count = 500;
 my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
 my $media;
 
@@ -59,7 +59,7 @@ run_benchmark(module => 'Krang::Media',
          });
 
 ###################################
-my $i = 0;
+$i = 0;
 my $div = $count / 5;
 run_benchmark(  module => 'Krang::Media',
                 name   => "find with limit $div, offset",
