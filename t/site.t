@@ -124,7 +124,6 @@ is(scalar @sites, 2, 'find() - limit/offset 1');
 isa_ok($_, 'Krang::Site') for @sites;
 is($sites[0]->url() =~ /4/, 1, 'find - limit/offset 2');
 
-
 # update category test
 my $category = Krang::Category->new(dir => '/blah',
                                     site_id => $site2->site_id());

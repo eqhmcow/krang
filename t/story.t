@@ -22,6 +22,7 @@ my $site = Krang::Site->new(preview_url  => 'storytest.preview.com',
                             preview_path => '/tmp/storytest_preview');
 isa_ok($site, 'Krang::Site');
 $site->save();
+END { $site->delete() }
 my ($root_cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
 isa_ok($root_cat, 'Krang::Category');
 $root_cat->save();
@@ -38,7 +39,6 @@ for (0 .. 10) {
 # cleanup the mess
 END {
     $_->delete for @cat;
-    $site->delete;
 }
 
 # create new contributor object to test associating with stories
@@ -62,6 +62,23 @@ is(@story_cat, 2);
 is($story_cat[0], $cat[0]);
 is($story_cat[1], $cat[1]);
 
+# add some content
+$story->element->child('deck')->data('DECK DECK DECK');
+is($story->element->child('deck')->data(), "DECK DECK DECK");
+my $page = $story->element->child('page');
+isa_ok($page, "Krang::Element");
+is($page->name, $page->class->name);
+is($page->display_name, "Page");
+is(@{$page->children}, 2);
+
+# add five paragraphs
+ok($page->add_child(class => "paragraph", data => "bla1 "x40));
+ok($page->add_child(class => "paragraph", data => "bla2 "x40));
+ok($page->add_child(class => "paragraph", data => "bla3 "x40));
+ok($page->add_child(class => "paragraph", data => "bla4 "x40));
+ok($page->add_child(class => "paragraph", data => "bla5 "x40));
+is(@{$page->children}, 7);
+
 # test contribs
 eval { $story->contribs($contrib); };
 like($@, qr/invalid/);
@@ -77,7 +94,7 @@ my $site_url = $cat[0]->site->url;
 my $cat_url = $cat[0]->url;
 like($story->url, qr/^$cat_url/);
 like($story->url, qr/^$site_url/);
-like($story->url, qr/^$cat_url\/test$/);
+like($story->url, qr/^${cat_url}test$/);
 
 # set categories by id
 $story->categories($cat[2]->category_id, 
@@ -114,7 +131,7 @@ ok($story->story_id);
 END { $story->delete() }
 
 # try loading
-my $story2 = Krang::Story->load($story->{story_id});
+my ($story2) = Krang::Story->find(story_id => $story->{story_id});
 isa_ok($story2, 'Krang::Story');
 
 # basic fields survived?
@@ -132,6 +149,14 @@ for (qw( story_id
          priority )) {
     is($story->$_, $story2->$_, "$_ save/load");
 }
+
+# elements ok?
+is($story2->element->child('deck')->data(), "DECK DECK DECK");
+my $page2 = $story2->element->child('page');
+isa_ok($page2, "Krang::Element");
+is($page2->name, $page2->class->name);
+is($page2->display_name, "Page");
+is(@{$page2->children}, 7);
 
 # contribs made it?
 is($story2->contribs, 1);
@@ -193,20 +218,24 @@ my $v = Krang::Story->new(categories => [$cat[0], $cat[1]],
                           slug       => "foo",
                           class      => "article");
 END { $v->delete };
+$v->element->child('deck')->data('Version 1 Deck');
 $v->save();
 is($v->version, 1);
 
 $v->prepare_for_edit();
-is($v->version, 1);
+is($v->version, 2);
 $v->title("Bar");
 
 $v->save();
 is($v->version, 2);
 is($v->title(), "Bar");
+$v->element->child('deck')->data('Version 2 Deck');
+is($v->element->child('deck')->data, 'Version 2 Deck');
 
 $v->prepare_for_edit();
 $v->revert(1);
 is($v->version, 3);
+is($v->element->child('deck')->data, 'Version 1 Deck');
 
 $v->prepare_for_edit();
 is($v->title(), "Foo");
