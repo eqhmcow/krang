@@ -330,24 +330,47 @@ sub publish_story {
             if ($object->checked_out) {
                 if ($user_id != $object->checked_out_by) {
                     debug(__PACKAGE__ . ": skipping checked out story id=" . $object->story_id);
-                    $skip_callback->(object => $object) if $skip_callback;
+                    $skip_callback->(object => $object, error => 'checked_out') if $skip_callback;
                     next;
                 }
             }
 
-            my @paths = $self->_build_story_all_categories(story => $object);
+            eval {
+                my @paths = $self->_build_story_all_categories(story => $object);
 
-            # fix up publish locations
-            $self->_rectify_publish_locations(object => $object,
-                                              paths  => \@paths,
-                                              preview => 0);
-            # mark as published.
-            $object->mark_as_published();
+                # fix up publish locations
+                $self->_rectify_publish_locations(object => $object,
+                                                  paths  => \@paths,
+                                                  preview => 0);
+                # mark as published.
+                $object->mark_as_published();
 
-            # don't make callbacks on media, that's handled in publish_media().
-            $callback->(object  => $object,
-                        total   => $total,
-                        counter => $counter++) if $callback;
+                # don't make callbacks on media, that's handled in publish_media().
+                $callback->(object  => $object,
+                            total   => $total,
+                            counter => $counter++) if $callback;
+
+            };
+
+            if ($@) {
+                if ($skip_callback) {
+                    if (ref $@ && $@->isa('Krang::Publisher::FileWriteError')) {
+                        $skip_callback->(object => $object,
+                                         error  => 'output_error',
+                                         path   => $@->destination,
+                                         error_msg => $@->system_error);
+                    } else {
+                        # call generic skip_callback.
+                        $skip_callback->(object => $object, error => $@->isa);
+                    }
+                }
+                # the skip_callback is not used by the CGIs - re-propegate the error so the UI
+                # can handle it.
+                else {
+                    die ($@);
+                }
+            }
+
 
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object, %args);
@@ -500,21 +523,42 @@ sub publish_media {
         if ($media_object->checked_out) {
             if ($user_id != $media_object->checked_out_by) {
                 debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $media_object->media_id);
-                $skip_callback->(object => $media_object) if $skip_callback;
+                $skip_callback->(object => $media_object, error => 'checked_out') if $skip_callback;
                 next;
             }
         }
 
-        push @urls, $self->_write_media(media => $media_object);
+        eval {
+            push @urls, $self->_write_media(media => $media_object);
 
-        # log event
-        add_history(object => $media_object, action => 'publish');
+            # log event
+            add_history(object => $media_object, action => 'publish');
 
-        $media_object->mark_as_published();
+            $media_object->mark_as_published();
 
-        $callback->(object => $media_object,
-                    total  => $total,
-                    counter => $counter++) if $callback;
+            $callback->(object => $media_object,
+                        total  => $total,
+                        counter => $counter++) if $callback;
+        };
+
+        if ($@) {
+            if ($skip_callback) {
+                if (ref $@ && $@->isa('Krang::Publisher::FileWriteError')) {
+                    $skip_callback->(object => $media_object,
+                                     error  => 'output_error',
+                                     path   => $@->destination,
+                                     error_msg => $@->system_error);
+                } else {
+                    # call generic skip_callback.
+                    $skip_callback->(object => $media_object, error => $@->isa);
+                }
+            }
+            # the skip_callback is not used by the CGIs - re-propegate the error so the UI
+            # can handle it.
+            else {
+                die ($@);
+            }
+        }
 
 
     }
@@ -957,8 +1001,7 @@ sub _build_story_all_categories {
         debug("Publisher.pm: publishing story under URI='$story_urls[$i]'");
 
         push @paths, $self->_build_story_single_category(story    => $story,
-                                            category => $categories[$i],
-                                            url      => $story_urls[$i]);
+                                                         category => $categories[$i]);
     }
     return @paths;
 }

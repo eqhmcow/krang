@@ -147,7 +147,6 @@ use Krang::Media;
 use Krang::Category;
 use Krang::Site;
 use Krang::Publisher;
-use Krang::Message qw(add_message);
 use Krang::Cache;
 
 use Time::HiRes qw(gettimeofday tv_interval);
@@ -400,19 +399,27 @@ sub publish_stories {
             # if there is an error, figure out what it is, create the
             # appropriate message and return.
             if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
-                add_message('missing_template',
-                            filenname      => $@->template_name,
-                            category_url   => $@->category_url
-                           );
+
+                print STDERR sprintf("Cannot continue publish: Missing template '%s', cannot build story in category '%s'\n", $@->template_name, $@->category_url);
+
             } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
-                add_message('template_parse_error',
-                            element_name  => $@->element_name,
-                            template_name => $@->template_name,
-                            category_url  => $@->category_url,
-                            error_msg     => $@->error_msg
-                           );
+
+                print STDERR sprintf("Cannot continue publish: Template '%s' in category '%s' has parse errors.  Error='%s'\n", $@->template_name, $@->category_url, $@->error_msg);
+
+            } elsif (ref $@ && $@->isa('Krang::Publisher::FileWriteError')) {
+                my $object;
+                if ($@->story_id) {
+                    $object = 'story_id=' . $@->story_id;
+                } elsif ($@->media_id) {
+                    $object = 'media_id=' . $@->media_id;
+                } else {
+                    $object = 'template_id=' . $@->template_id;
+                }
+
+                print STDERR sprintf("Publish Output error writng %s to '%s': %s: '%s'\n", $object, $@->destination, $@->message, $@->system_error);
+
             }
-            die($@);
+            exit;
         }
 
 
@@ -444,15 +451,18 @@ sub _skip_callback {
     my %args = @_;
 
     my $object = $args{object};
+    my $error  = $args{error};
 
-    if ($object->isa('Krang::Story')) {
-        print sprintf("WARNING:  Story ID=%i was not published - it is currently checked out by User ID=%i\n", 
-                      $object->story_id, $object->checked_out_by);
-    } elsif ($object->isa('Krang::Media')) {
-        print sprintf("WARNING:  Media ID=%i was not published - it is currently checked out by User ID=%i\n", 
-                      $object->media_id, $object->checked_out_by);
+    my $id = $object->isa('Krang::Story') ? $object->story_id : $object->media_id;
+
+    if ($error eq 'checked_out') {
+        print sprintf("WARNING: %s ID=%i was not published - it is currently checked out by User ID=%i\n",
+                      $object->isa(), $id, $object->checked_out_by);
+    } elsif ($error eq 'output_error') {
+        print sprintf("WARNING: %s ID=%i was not published to '%s'.  The following error occurred: '%s'\n",
+                      $object->isa(), $id, $args{path}, $args{error_msg});
     } else {
-        print sprintf("WARNING: Unknown object of type=%s was not published.\n", $object->isa());
+        print sprintf("WARNING: %s ID=%i was not published for error='%s'", $object->isa, $id, $error);
     }
 
 }
