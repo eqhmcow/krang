@@ -281,7 +281,7 @@ sub create_story {
 
     $s->checkin;
 
-    $copy->slug( $copy->slug.$super_count++ );
+    $copy->slug( $copy->slug.time.$super_count++ );
 
     $copy->categories($args{category_id});
 
