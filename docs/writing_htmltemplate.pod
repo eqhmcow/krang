@@ -649,6 +649,73 @@ B<Note> - it is possible to move <tmpl_var page_break> into Page.tmpl as well, b
 
 
 
+=head2 Links to Other Stories
+
+Links to other stories are provided by whatever element subclasses Krang::Element::StoryLink - like all elements, the name is specific to that element set.  In this example, the element will be called 'leadin'.
+
+B<Story Tree>
+
+Taking the story tree from C<Example 2>, we'll add a leadin element to the page:
+
+   Story
+        - Deck             (textbox attribute)
+        + Page             (repeatable element)
+             - Paragraph   (repeatable textbox attribute)
+             - Pull Quote  (repeatable textbox attribute)
+             - Paragraph   (repeatable textbox attribute)
+             - Leadin      (repeatable attribute)
+
+B<Templates>
+
+StoryLink elements can function with or without their own templates.
+
+=over
+
+=item * Without a template
+
+If no corresponding template is found, the StoryLink object will simply return the URL to the connected story.
+
+=item * Constructing a template:
+
+If you decide to create a template, the following variables will be available as variables in the template: B<url>, B<title>
+
+B<Leadin.tmpl>
+
+ <a href="<tmpl_var escape=html url>"><tmpl_var title></a>
+
+=back
+
+
+
+The Page.tmpl template will treat leadin like any other child element - <tmpl_var leadin>, within <tmpl_loop element_loop>.  Be careful - this example Page.tmpl assumes that leadin has no template - if leadin has a template like Leadin.tmpl above, the resulting HTML will be broken!
+
+B<Page.tmpl>
+
+ <!-- Test for first page here -->
+ <tmpl_if is_first_page>
+    <h1><tmpl_var title></h1>
+    <b><tmpl_var deck></b>
+ </tmpl_if>
+
+ <tmpl_loop element_loop>
+
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+
+    <tmpl_if is_pull_quote>
+      <tmpl_var pull_quote>
+    </tmpl_if>
+
+    <tmpl_if is_leadin>
+      <p><a href="<tmpl_var leadin>">Related Story</a></p>
+    </tmpl_if>
+
+ </tmpl_loop>
+
+ <!-- Pagination Removed to shorten Example -->
+
+
 
 
 
@@ -1102,27 +1169,6 @@ B<Disadvantages>
 
 =back
 
-=head1 Handling Links to Other Stories
-
-Links to other stories in Krang are all of the type Krang::ElementClass::StoryLink.  As a subclass of Krang::ElementClass, Krang::ElementClass::StoryLink objects do inherit all the methods of the parent class, but the publish() and fill_template() methods are overridden to handle the differences that exist within Krang::ElementClass::StoryLink objects.
-
-B<Default Functionality>
-
-=over
-
-=item * Without a template:
-
-If no corresponding template is found, the StoryLink object will simply return the URL to the connected story.
-
-=item * Constructing a template:
-
-If you decide to create a template, the following story attributes will be available as variables in the template: B<url>, B<title>
-
-B<Example:>
-
- <a href="<tmpl_var escape=html url>"><tmpl_var title></a>
-
-=back
 
 =head1 Handling Media Objects
 
