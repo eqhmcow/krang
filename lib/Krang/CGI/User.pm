@@ -628,22 +628,26 @@ sub validate_user {
     my ($mode, $pass, $cpass) = map {$q->param($_)}
       qw/rm new_password confirm_password/;
 
-    # validate new_password and confirm_password
-    if ($pass eq '') {
-        $errors{error_null_password} = 1 if $mode =~ /add/;
-        $errors{error_password_mismatch} = 1 if $cpass ne '';
-    } elsif ($cpass eq '') {
-        $errors{error_password_mismatch} = 1 if $mode =~ /add/;
-        $errors{error_password_mismatch} = 1 if $pass ne '';
-    } elsif ($pass ne '' || $cpass ne '') {
-        if ($pass ne $cpass) {
-            $errors{error_password_mismatch} = 1;
-        } else {
-            $q->param('password', $pass);
+    # only check if this is a first time save or if either of the password
+    # fields contain a value...
+    if ((not $q->param('user_id')) || $pass || $cpass) {
+        # validate new_password and confirm_password
+        if ($pass eq '') {
+            $errors{error_null_password} = 1 if $mode =~ /add/;
+            $errors{error_password_mismatch} = 1 if $cpass ne '';
+        } elsif ($cpass eq '') {
+            $errors{error_password_mismatch} = 1 if $mode =~ /add/;
+            $errors{error_password_mismatch} = 1 if $pass ne '';
+        } elsif ($pass ne '' || $cpass ne '') {
+            if ($pass ne $cpass) {
+                $errors{error_password_mismatch} = 1;
+            } else {
+                $q->param('password', $pass);
+            }
         }
-    }
 
-    $errors{error_password_length} = 1 if length $pass < 6;
+        $errors{error_password_length} = 1 if length $pass < 6;
+    }
 
     # Add error messages
     add_message($_) for keys %errors;
