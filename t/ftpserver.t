@@ -16,18 +16,21 @@ use IPC::Run qw(start);
 use File::Spec::Functions qw(catfile);
 use IO::Scalar;
 
-my ($in,$out);
-my @cmd = (catfile(KrangRoot,'bin','krang_ftpd'), '-s');
-my $server_run = start (\@cmd, \$in, \$out, \$out );
+# check for ftp server pid and start if not there
+my $started_ftpd;
+unless (-e catfile(KrangRoot, 'tmp', 'krang_ftpd.pid')) {
+    system(catfile(KrangRoot, 'bin', "krang_ctl") . " start");
+    $started_ftpd = 1;
+}
+
+# set up end block to kill server at the end if we started it
+END {
+    system(catfile(KrangRoot, 'bin', "krang_ctl") . " stop")
+      if $started_ftpd;
+}
 
 # wait 3 seconds for the server to have time to start
 sleep 3;
-
-# set up end block to kill server at the end
-END {
-    $server_run->kill_kill;
-}
-
 
 my @sites;
 
@@ -75,18 +78,14 @@ for (0 .. 10) {
 
 # set up for cleanup 
 END {
-    $_->delete for @cat;
-    $_->delete for @cat2;
-    $_->delete for @sites;
+    $_->delete for (@cat, @cat2, @sites);
 }
 
 # set up Net::FTP session
-my $ftp = Net::FTP->new(FTPAddress, Port => FTPPort);
+my $ftp = Net::FTP->new(FTPAddress, Port => FTPPort, Timeout => 10);
 
-# set up end block to kill server at end
-END {
-    $ftp->quit;
-}
+# set up end block to kill connection at end
+END { $ftp->quit; }
 
 isa_ok($ftp, 'Net::FTP', 'is Net::FTP');
 
