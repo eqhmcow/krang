@@ -297,63 +297,31 @@ sub dependent_check {
 
 =item * $site->duplicate_check()
 
-This method checks the database to see if any existing site objects possess any
-of the same values as the object in memory.  If this is the case, a
-Krang::Site::Duplicate exception is thrown, otherwise, 0 is returned.
-
-Krang::Site::Duplicate exceptions have a 'duplicate' field that contains a
-hashref of the site_id's and fieldnames duplicated by the given Site object.
-One might obtain this info thusly:
-
- eval {$site->duplicate_check()};
- if ($@ and $@->isa('Krang::Site::Duplicate')) {
-     my $info = $@->duplicates;
-     $info = join("\n\t", map {"$_: " . join ", ", @{$info{$_}}} keys %$info);
-     croak("The following site_id, fieldname pairs specify which objects" .
-	   " are duplicated by this site:\n\t$info\n");
- }
+This method checks the database to see if any existing site objects
+possess the same URLs any of the same values as the object in memory.
+If this is the case, a Krang::Site::Duplicate exception is thrown,
+otherwise, 0 is returned.
 
 =cut
 
 sub duplicate_check {
     my $self = shift;
+    my $dbh = dbh();
     my $id = $self->{site_id};
-    my (@fields, %info, @params, @wheres);
 
-    for (keys %site_cols) {
-        push @fields, $_;
-        push @wheres, "$_ = ?";
-        push @params, $self->{$_};
-    }
-
-    my $query = "SELECT " . join(",", @fields).
-      " FROM site WHERE (" . join(" OR ", @wheres) . ")";
-
+    # setup query
+    my @params = ($self->{url});
+    my $query = "SELECT 1 FROM site WHERE url = ?";
     if ($id) {
         $query .= " AND site_id != ?";
         push @params, $id;
     }
 
-    my $dbh = dbh();
-    my $sth = $dbh->prepare($query);
-    $sth->execute(@params);
+    my ($exists) = $dbh->selectrow_array($query, undef, @params);
+    Krang::Site::Duplicate->throw(message => "A site with the URL '$self->{url}' already exists in the database.")
+        if $exists;
 
-    my $row;
-    $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
-    while ($sth->fetch()) {
-        for (keys %$row) {
-            if (exists $self->{$_} && exists $row->{$_}
-                && $self->{$_} eq $row->{$_}) {
-                push @{$info{$row->{site_id}}}, $_;
-            }
-        }
-    }
-
-    Krang::Site::Duplicate->throw(message => 'Duplicates of this site exist' .
-                                  ' in the database',
-                                  duplicates => \%info)
-        if keys %info;
-
+    # no dup found
     return 0;
 }
 

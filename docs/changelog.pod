@@ -6,6 +6,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed Krang::Site so that only the site's URL is required to be
+unique.  Requiring all four fields to be unique, while seemingly
+sensible, causes numerous problems during data imports.  If necessary
+we could add these checks back in at the UI level in Krang::CGI::Site.
+[Sam]
+
+=item *
+
 Fixed a bug in Krang::Contrib's full_name() that would add ", " to the
 end of the name when the contributor had an empty suffix. [Sam]
 

@@ -54,13 +54,7 @@ my $site3 = Krang::Site->new(publish_path => 'sites/test2/',
                              url => 'testsite.t');
 eval {$site3->save();};
 isa_ok($@, 'Krang::Site::Duplicate');
-like($@, qr/Duplicates of this site exist in the database/,
-     'save() duplicate test');
-my $dupes = $@->duplicates;
-is(scalar keys %$dupes > 0, 1, "Exception 'duplicates' field test 1");
-is($_ =~ /^\d+$/ && (grep /_path|url/, @{$dupes->{$_}}), 1,
-   'Krang::Site::Duplicate test')
-  for (keys %$dupes);
+like($@, qr/already exists/);
 
 # accessor/mutator tests
 #########################
