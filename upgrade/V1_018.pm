@@ -6,6 +6,7 @@ use base 'Krang::Upgrade';
 use Krang::Conf qw(KrangRoot);
 use Krang::DB qw(dbh);
 use Krang::User;
+use Krang::Group;
 
 sub per_instance {
     my $self = shift;
@@ -17,14 +18,17 @@ sub per_instance {
     $dbh->do("ALTER TABLE user ALTER COLUMN hidden SET DEFAULT 0");
 
     # add 'system' user
-    Krang::User->new(login      => 'system',
-                     email      => 'system@noemail.com',
-                     first_name => 'System',
-                     last_name  => 'User',
-                     password   => '*',
-                     encrypted  => 1,
-                     hidden     => 1,
-                    )->save();
+    my ($group_id) = Krang::Group->find(name => 'Admin', ids_only => 1);
+    my $user = Krang::User->new(login      => 'system',
+                                email      => 'system@noemail.com',
+                                first_name => 'System',
+                                last_name  => 'User',
+                                password   => '*',
+                                encrypted  => 1,
+                                hidden     => 1,
+                               );
+    $user->group_ids($group_id);
+    $user->save();
 }
 
 # nothing yet
