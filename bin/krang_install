@@ -677,13 +677,13 @@ sub install_krang {
     $chmod = CHMOD_BIN ." -R g+w $InstallPath";
     system($chmod) && die("Can't set group write permissions: $!");
 
+    print "  Fixing file read permissions\n";
+    $chmod = CHMOD_BIN ." -R +r $InstallPath";
+    system($chmod) && die("Can't fix file read permissions: $!");
+
     print "  Fixing directory read permissions\n";
     $chmod = FIND_BIN ." $InstallPath -type d | ". XARGS_BIN ." ". CHMOD_BIN ." +rx";
     system($chmod) && die("Can't fix directory read permissions: $!");
-
-    print "  Fixing file read permissions\n";
-    $chmod = FIND_BIN ." $InstallPath -type f | ". XARGS_BIN ." ". CHMOD_BIN ." +r";
-    system($chmod) && die("Can't fix file read permissions: $!");
 
     print "  Setting execute bits on scripts\n";
 
