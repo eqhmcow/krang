@@ -107,6 +107,12 @@ sub upload {
     # if file was uploaded 
     if (my $fh = $q->upload('media_file')) {
         my $filename = $q->param('media_file');
+        
+        # remove filename from potential path (IE)
+        $filename = (split(/\\/, $filename))[-1];
+        # get rid of spaces now
+        $filename =~ s/ /_/g;
+
         my $archive_type = file_type($filename);
     
         if (not $archive_type) {
