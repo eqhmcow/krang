@@ -9,7 +9,7 @@ use Krang::Media;
 use Krang::Category;
 use Krang::Message qw(add_message);
 use Krang::Widget qw(category_chooser);
-use Krang::Conf qw(KrangRoot FTPAddress FTPPort);
+use Krang::Conf qw(KrangRoot FTPHostName FTPPort);
 use Krang::Session qw(%session);
 use Krang::Log qw(debug);
 use Krang::User;
@@ -86,7 +86,7 @@ sub choose {
                                                      -size => 32) );
     # FTP Settings    
     my ($user) = Krang::User->find(user_id => $ENV{REMOTE_USER});    
-    $template->param( ftp_server => FTPAddress, 
+    $template->param( ftp_server => FTPHostName, 
                       ftp_port   => FTPPort, 
                       username   => $user->login, 
                       instance   => $ENV{KRANG_INSTANCE} );

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use Krang::Desk;
-use Krang::Conf qw(FTPAddress FTPPort);
+use Krang::Conf qw(FTPHostName FTPPort);
 use Krang::Session qw(%session);
 
 =head1 NAME
@@ -71,7 +71,7 @@ sub fill_template {
 
     # setup template FTP link
     my ($user) = Krang::User->find(user_id => $ENV{REMOTE_USER});
-    $template->param(nav_ftp_server => FTPAddress, 
+    $template->param(nav_ftp_server => FTPHostName, 
                      nav_ftp_port => FTPPort, 
                      nav_ftp_username => $user->login,
                      nav_ftp_instance => $ENV{KRANG_INSTANCE} );

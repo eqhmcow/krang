@@ -19,6 +19,7 @@ EnableSiteServer
 FromAddress
 FTPAddress
 FTPPort
+FTPHostName
 HostName
 InstanceDBName
 InstanceDisplayName
@@ -238,7 +239,7 @@ This is run when the Krang::Conf loads unless the environment variable
 sub check {
     # check required directives
     foreach my $dir (qw(KrangUser KrangGroup ApacheAddr ApachePort
-                        HostName LogLevel FTPPort FTPAddress
+                        HostName LogLevel FTPPort FTPHostName FTPAddress
                         SMTPServer FromAddress BugzillaEmail BugzillaServer
                         BugzillaPassword BugzillaComponent)) {
         _broked("Missing required $dir directive") 

@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use warnings;
 use strict;
-
+use IO::Socket;
 
 # Path to pre-req binaries
 use constant MYSQL_BIN      => '/usr/bin/mysql';
@@ -139,7 +139,7 @@ Following is a list of the tasks the installer script will perform.
   --InstanceHostName     - Host name of CMS instance virtual server
   --InstanceDBName       - Name of MySQL database
   --InstanceElementSet   - Name of element set used by CMS instance
-
+  --FTPHostName          - Display name of the FTP host
 
 =head2 Optional parameters
 
@@ -147,7 +147,8 @@ Following is a list of the tasks the installer script will perform.
   --InstallPath          - Directory for Krang install
   --KrangUser            - UNIX user for process ownership
   --KrangGroup           - UNIX group for process ownership
-  --FTPPort              - Port on which FTP server should run
+  --FTPPort              - Port on which FTP server should run, defaults 
+                            to 21 if available, else 2121
   --ApachePort           - Port on which CMS HTTP server should run
   --SMTPServer           - Address of SMTP mail server 
   --InstanceDisplayName  - Name of the Instance for UI display
@@ -200,7 +201,8 @@ my @req_params = qw( HostName
                      AdminPassword 
                      InstanceDBName 
                      DBUser 
-                     DBPass 
+                     DBPass
+                     FTPHostName
                      InstanceElementSet );
 
 my @opt_params = qw( MySQLRootPassword 
@@ -715,6 +717,19 @@ sub set_param_defaults {
     while (my ($k, $dv) = each(%defaults)) {
         # Skip if value already defined
         next if (length($options{$k}));
+
+        if ($k eq 'FTPPort') {
+            # attempt to connect to port 21. else default to 2121
+            my $remote;
+            $remote = IO::Socket::INET->new(
+                        Proto    => "tcp",
+                        PeerAddr => $options{'IPAddress'},
+                        PeerPort => "ftp(21)",
+                    ) || '';
+            close $remote if $remote;
+
+            $dv = 2121 if (not $remote);
+        }
 
         # Set default
         $options{$k} = $dv;
