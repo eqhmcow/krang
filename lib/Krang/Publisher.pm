@@ -89,8 +89,8 @@ use constant PUBLISHER_RO => qw(is_publish is_preview story category);
 
 use Krang::MethodMaker (new_with_init => 'new',
                         new_hash_init => 'hash_init',
-                        get_set       => [PUBLISHER_RO]);
-
+                        get_set       => [PUBLISHER_RO]
+                       );
 
 
 
@@ -213,7 +213,7 @@ sub deploy_template {
 
     if (!defined($category)) { die "ERROR: cannot find category '" . $template->category_id() . "'\n"; }
 
-    my @tmpl_dirs = $self->template_search_path();
+    my @tmpl_dirs = $self->template_search_path(category => $category);
 
     my $path = $tmpl_dirs[0];
     mkpath($path, 0, 0755);
@@ -232,21 +232,26 @@ sub deploy_template {
 }
 
 
-=item C<< $dir = $publisher->template_search_path() >>
+=item C<< $dir = $publisher->template_search_path(category => $category) >>
 
 Given the current category, returns the list of directories that may contain a template.  The first element in the returning array contains the directory of the current category, the last element contains the directory of the root category (parent of all categories in the site).
+
+L<category> is an optional argument - if not supplied, the current category in the publish run is used (usually the best choice).
 
 =cut
 
 sub template_search_path {
 
     my $self = shift;
+    my %args = @_;
+    my $category = $args{category} || $self->{category};
+
     my @paths = ();
 
     # Root dir for this instance.
     my @root = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
 
-    my $cat_dir = $self->{category}->url();
+    my $cat_dir = $category->url();
 
     my @subdirs = split '/', $cat_dir || ('/');
 
