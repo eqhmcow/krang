@@ -213,7 +213,7 @@ if ($append) {
 
 # add all objects for a type?
 foreach my $type (grep { $all{$_} } keys %all) {
-    $type =~ /ies$/ ? $type =~ s/ies$/y/ : $type =~ s/s$/y/;
+    $type =~ /ies$/ ? $type =~ s/ies$/y/ : $type =~ /es$/ ? $type =~ s/s$// : $type =~ s/s$/y/;
     my $class = "Krang::" . ucfirst($type);
     my $id_meth = $type . "_id";
     
