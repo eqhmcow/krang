@@ -453,16 +453,14 @@ sub reorder_children {
 =item C<< my $deck = $element->child('deck') >>
 
 Find a child by class name.  If there are multiple children for this
-class, returns the first one.  Croaks if a child of the specified
-class does not exist.
+class, returns the first one.  Returns C<undef> if a child of the
+specified class does not exist.
 
 =cut
 
 sub child {
     my ($self, $name) = @_;
-    my $child = first { $_->{class}->name eq $name } @{$self->{children}};
-    return $child if $child;
-    croak("Unable to find child named '$name' in '" . $self->name ."'.");
+    return first { $_->{class}->name eq $name } @{$self->{children}};
 }
 
 =item C<< $element->save() >>
