@@ -1,0 +1,45 @@
+<tmpl_include header.tmpl>
+
+<script language="JavaScript" type="text/javascript">
+
+  function preview_story(id) {
+        window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
+  }
+
+  function view_story (id) {
+    document.find_story.rm.value = 'view';
+    document.find_story.story_id.value = id;
+    document.find_story.submit();
+  }
+
+  function checkin_selected () {
+    var myform = document.krang_pager_form;
+    myform.rm.value = 'checkin_selected';
+    myform.submit();
+  }
+
+</script>
+
+<form method=post name=find_story>
+<input type="hidden" name="rm" value="list_active">
+<input type="hidden" name="story_id">
+
+<!-- Set up view mode return -->
+<input type="hidden" name="return_script" value="story.pl">
+<input type="hidden" name="return_params" value="rm">
+<input type="hidden" name="return_params" value="list_active">
+
+</form>
+
+<div class=dark-bar>Active Stories</div>
+
+<!-- Krang::HTMLPager -->
+<tmpl_var pager_html>
+<!-- Krang::HTMLPager -->
+
+
+<tmpl_if row_count><tmpl_if may_checkin_all>
+  <div class="button-bar"><input type="button" value="Checkin" onClick="checkin_selected()"></div>
+</tmpl_if></tmpl_if>
+
+<tmpl_include footer.tmpl>

@@ -55,10 +55,12 @@ sub setup {
                      view             => 'view',
                      revert           => 'revert',
                      find             => 'find',
+                     list_active      => 'list_active',
                      cancel           => 'cancel',
                      delete           => 'delete',
                      delete_selected  => 'delete_selected',
                      checkout_selected => 'checkout_selected',
+                     checkin_selected  => 'checkin_selected',
                      delete_categories    => 'delete_categories',
                      add_category         => 'add_category',
                      set_primary_category => 'set_primary_category',
@@ -1324,6 +1326,60 @@ sub find {
     return $template->output;
 }
 
+=item list_active
+
+List all active stories.  Provide links to view each story.  If the
+user has 'checkin all' admin abilities then checkboxes are provided to
+allow the stories to be checked-in.
+
+=cut
+
+sub list_active {
+    my $self = shift;
+    my $q = $self->query();
+
+    # Set up persist_vars for pager
+    my %persist_vars = (rm => 'list_active');
+
+    # Set up find_params for pager
+    my %find_params = (checked_out => 1);
+
+    # FIX: this should look at user permissions
+    my $may_checkin_all = 1;
+
+    my $pager = Krang::HTMLPager->new(
+       cgi_query => $q,
+       persist_vars => \%persist_vars,
+       use_module => 'Krang::Story',
+       find_params => \%find_params,
+       columns => [(qw(
+                       story_id 
+                       url 
+                       title 
+                       user
+                       commands_column
+                      )), ($may_checkin_all ? ('checkbox_column') : ())],
+       column_labels => {
+                         story_id => 'ID',
+                         url => 'URL',
+                         title => 'Title',
+                         user  => 'User',
+                         commands_column => '',
+                        },
+       columns_sortable => [qw( story_id url title )],
+       row_handler => sub { $self->list_active_row_handler(@_); },
+       id_handler => sub { return $_[0]->story_id },
+      );
+
+    # Set up output
+    my $template = $self->load_tmpl('list_active.tmpl', associate=>$q);
+    $template->param(pager_html => $pager->output());
+    $template->param(row_count => $pager->row_count());
+    $template->param(may_checkin_all => $may_checkin_all);
+
+    return $template->output;
+}
+
 
 =item delete_selected
 
@@ -1388,6 +1444,32 @@ sub checkout_selected {
 }
 
 
+=item checkin_selected
+
+Checkin all the stories which were checked on the list_active screen.
+
+=cut
+
+sub checkin_selected {
+     my $self = shift;
+
+     my $q = $self->query();
+     my @story_checkin_list = ( $q->param('krang_pager_rows_checked') );
+     $q->delete('krang_pager_rows_checked');
+
+     foreach my $story_id (@story_checkin_list) {
+         my ($s) = Krang::Story->find(story_id=>$story_id);
+         $s->checkin();
+     }
+
+     if (scalar(@story_checkin_list)) {
+         add_message('selected_stories_checkin');
+     }
+
+     return $self->list_active;
+}
+
+
 
 
 
@@ -1434,7 +1516,6 @@ sub find_story_row_handler {
     }
  
     # status 
-    debug("STORY $story->{story_id} : " . (defined $story->{desk_id} ? $story->{desk_id} : 'undef'));
     if ($story->checked_out) {
         $row->{status} = "Checked out by <b>" . 
           (Krang::User->find(user_id => $story->checked_out_by))[0]->login.
@@ -1447,6 +1528,34 @@ sub find_story_row_handler {
         $row->{status} = '&nbsp;';
     }
     
+
+}
+
+# Pager row handler for story list active run-mode
+sub list_active_row_handler {
+    my $self = shift;
+    my ($row, $story) = @_;
+
+    # Columns:
+    #
+
+    # story_id
+    $row->{story_id} = $story->story_id();
+
+    # format url to fit on the screen and to link to preview
+    $row->{url} = format_url( url => $story->url(),
+                              linkto => "javascript:preview_story('". $row->{story_id} ."')" );
+
+    # title
+    $row->{title} = $story->title();
+
+    # commands column
+    $row->{commands_column} = '<a href="javascript:view_story(' .
+      $story->story_id . ')">View</a>';
+
+    # user
+    my ($user) = Krang::User->find(user_id => $story->checked_out_by);
+    $row->{user} = $user->first_name . " " . $user->last_name;
 }
 
 
