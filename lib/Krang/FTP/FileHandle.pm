@@ -10,6 +10,7 @@ use Krang::Media;
 use Net::FTPServer::FileHandle;
 use Krang::FTP::DirHandle;
 use IO::Scalar;
+use IO::File;
 
 ################################################################################
 # Inheritance
@@ -70,9 +71,9 @@ sub new {
 
 =item open($mode)
 
-This method opens this template object for access using the provided
+This method opens this template/media object for access using the provided
 mode ('r', 'w' or 'a').  The method returns an IO::Scalar object that
-will be used by Net::FTPServer to access the template text.  For
+will be used by Net::FTPServer to access the template/media text.  For
 read-only access a plain IO::Scalar object is returned.  For
 write-methods an internal tied class -
 Krang::FTP::FileHandle::SCALAR - is used with IO::Scalar to
@@ -97,7 +98,8 @@ sub open {
         my $data = $object->content;
         return new IO::Scalar \$data;
     } else {
-        
+        my $path = $object->file_path();
+        return new IO::File $path;        
     }
   } elsif ($mode eq "w" or $mode eq "a") {
     # check write access
@@ -277,32 +279,32 @@ use warnings;
 
 sub TIESCALAR {
     my $pkg = shift;
-    my $template = shift;
+    my $object = shift;
     my $user = shift;
-    my $self = { template => $template, user => $user };
+    my $self = { object => $object, user => $user };
     return bless $self, $pkg;
 }
 
 sub FETCH {
     my $self = shift;
-    return $self->{template}->get_data();
+    return $self->{object}->get_content();
 }
 
 sub STORE {
     my $self = shift;
     my $data = shift;
-    my $template = $self->{template};
+    my $object = $self->{object};
     my $user = $self->{user};
 
     # checkout the template
-    $template->checkout();
+    $object->checkout();
     
     # save new content
-    $template->content($data);
-    $template->save();
+    $object->content($data);
+    $object->save();
 
     # checkin the template
-    $template->checkin();
+    $object->checkin();
 
     # deploy
 
