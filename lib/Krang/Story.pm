@@ -19,15 +19,22 @@ use Krang::MethodMaker
                         checked_out
                         checked_out_by
                        ) ],
-  get_set       => [ qw(
-                        title
-                        slug
-                        notes
-                        cover_date
-                        publish_date
-                        priority
-                        schedules
-                       ) ];
+  get_set_with_notify => [ qw(
+                              title
+                              slug
+                              notes
+                              cover_date
+                              publish_date
+                              priority
+                              schedules
+                             ) ];
+
+# catch changes that must invalidate the URL cache
+sub _notify {
+    my ($self, $which) = @_;
+    return unless exists $self->{url_attributes}{$which};
+    $self->{url_cache} = [];
+}
 
 =head1 NAME
 
@@ -68,8 +75,6 @@ Krang::Story - the Krang story class
 
   # load a group of stories by id
   my ($story) = Krang::Story->find(story_ids => [1, 20, 30, 100]);
-
-  
 
 =head1 DESCRIPTION
 
@@ -341,6 +346,10 @@ sub init {
     # create a new element based on class
     $self->{class} = delete $args{class};
     $self->{element} = Krang::Element->new(class => $self->{class});
+
+    # get hash of url_attributes
+    $self->{url_attributes} = 
+      { map { $_ => 1 } $self->{element}->url_attributes };
 
     # finish the object, calling set methods for each key/value pair
     $self->hash_init(%args);

@@ -873,6 +873,7 @@ BEGIN {
                           top_level
                           hidden
                           allow_delete
+                          url_attributes
                         )) {
         *{"Krang::Element::$attr"} = sub { $_[0]->{class}->$attr() };
     }

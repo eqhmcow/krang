@@ -12,10 +12,18 @@ Krang::MethodMaker - extended version of Class::MethodMaker
 =head1 SYNOPSIS
 
   # create a readonly foo_id() accessor and standard accessor/mutators
-  # title() and url()
+  # title() and url().  Create standard accessor/mutators itchy() and
+  # scratchy() that trigger calls to _notify() when set.
   use Krang::MethodMaker
     get     => ['foo_id'],
     get_set => ['title', 'url'];
+    get_set_with_notify => ['itchy', 'scratchy'];
+
+  # catch changes to itchy and scratchy
+  sub _notify {
+    my ($self, $which, $old, $new) = @_;
+    # ...
+  }
 
 =head1 DESCRIPTION
 
@@ -57,6 +65,37 @@ sub get_set {
 
     $class->install_methods(%meths);
 }
+
+=item get_set_with_notify
+
+Works like get_set, but after setting calls the special C<_notify()>
+method with three three parameters - the attribute which changed, the
+old value and the new value.
+
+=cut
+
+sub get_set_with_notify {
+    my ($class, @args) = @_;
+
+    my %meths;
+    foreach my $slot (@args) {
+        $meths{$slot} = sub {
+            return $_[0]->{$slot}
+              if @_ == 1;
+            if (@_ == 2) {
+                my $old = $_[0]->{$slot};
+                $_[0]->{$slot} = $_[1];
+                $_[0]->_notify($slot, $old, $_[1]);
+                return $_[0]->{$slot};
+            }
+
+            croak "wrong # of args to '$slot' method: must be 0 or 1.\n";
+        };
+    }
+
+    $class->install_methods(%meths);
+}
+
 
 =item get
 

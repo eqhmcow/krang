@@ -9,6 +9,8 @@ sub build_url {
     return $arg{category}->url;
 }
 
+sub url_attributes { () }
+
 
 =head1 NAME
 
@@ -23,7 +25,9 @@ Krang::ElementClass::Cover - cover element base class
 
 Provides a base class for cover element classes.  Overrides
 C<build_url()> to provide a URL that just uses site URL and category
-path data, without taking into account the story slug.
+path data, without taking into account the story slug.  Also overrides
+C<url_attributes()> to correctly report that no story attributes are
+used in the URL.
 
 =head1 INTERFACE
 

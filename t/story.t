@@ -27,7 +27,7 @@ my @cat;
 for (0 .. 10) {
     push @cat, Krang::Category->new(site_id   => $site->site_id,
                                     parent_id => $root_cat->category_id,
-                                    dir       => 'test_' . time .  '_' . $_);
+                                    dir       => 'test_' . $_);
     isa_ok($root_cat, 'Krang::Category');
     $cat[-1]->save();
 }
@@ -54,6 +54,15 @@ is(@story_cat, 2);
 is($story_cat[0], $cat[0]);
 is($story_cat[1], $cat[1]);
 
+# test url production
+ok($story->url);
+is($story->urls, 2);
+my $site_url = $cat[0]->site->url;
+my $cat_url = $cat[0]->url;
+like($story->url, qr/^$cat_url/);
+like($story->url, qr/^$site_url/);
+like($story->url, qr/^$cat_url\/test$/);
+
 # set categories by id
 $story->categories($cat[2]->category_id, 
                    $cat[3]->category_id, 
@@ -66,6 +75,19 @@ is($story_cat[2]->category_id, $cat[4]->category_id);
 
 # test category shortcut
 is($story->category, $story_cat[0]);
+my @urls = $story->urls;
+is(@urls, 3);
+$cat_url = $cat[2]->url;
+like($urls[0], qr/^$cat_url/);
+$cat_url = $cat[3]->url;
+like($urls[1], qr/^$cat_url/);
+$cat_url = $cat[4]->url;
+like($urls[2], qr/^$cat_url/);
 
-# test url production
-ok($story->url);
+# url should change when slug is changed
+my $old = $story->url;
+$story->slug("foobar");
+ok($old ne $story->url);
+like($story->url, qr/foobar$/);
+
+

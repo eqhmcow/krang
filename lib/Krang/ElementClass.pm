@@ -291,6 +291,17 @@ sub build_url {
     return join('/', $category->url, $story->slug);
 }
 
+=item C<< @fields = $class->url_attributes() >>
+
+Returns a list of Story attributes that are being used to compute the
+url in build_url().  For example, the default implementation returns
+('slug') because slug is the only story attribute used in the URL.
+Krang::ElementClass::Cover returns an empty list because it uses no
+story attributes in its C<build_url()>.
+
+=cut
+
+sub url_attributes { ('slug') }
 
 =item C<< $text = $class->freeze_data(element => $element) >>
 
