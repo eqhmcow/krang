@@ -184,45 +184,24 @@ sub checkout {
     my @ids = @_ || ($self->id());
     my $dbh = dbh();
     my $user_id = $session{user_id};
-    my (@params, $query, $sth);
-
-    $query = <<SQL;
-SELECT checked_out, checked_out_by
-FROM TEMPLATE_TABLE
-WHERE id = ?
-SQL
-    $sth = $dbh->prepare($query);
-
-    # make sure each id isn't checked out by another user
-    for my $i(0..$#ids) {
-        $sth->execute($ids[$i]);
-        my ($co, $uid) = $sth->fetchrow_array();
-
-        if ($co) {
-            if ($uid == $user_id) {
-                $ids[$i] = '';
-            } else {
-                croak(__PACKAGE__ . "->checkout(): Template id '$ids[$i]' " .
-                      "is already checked out by user '$uid'");
-            }
-        }
-    }
-
-    # finish statement handle
-    $sth->finish();
-
-    # remove empty entries in the array
-    @ids = grep /\d/, @ids;
-
-    # return if everything is already checked out
-    return $self unless @ids;
 
     eval {
         # lock template table
         $dbh->do("LOCK TABLES TEMPLATE_TABLE WRITE");
 
         for (@ids) {
-            @params = (1, $user_id, $_);
+            my $query = <<SQL;
+SELECT checked_out, checked_out_by
+FROM TEMPLATE_TABLE
+WHERE id = ?
+SQL
+
+            my ($co, $uid) = $dbh->selectrow_array($query, undef, ($_));
+
+            croak(__PACKAGE__ . "->checkout(): Template id '$_' is already " .
+                  "checked out by user '$uid'")
+              if ($co && ($uid != $user_id));
+
             $query = <<SQL;
 UPDATE TEMPLATE_TABLE
 SET checked_out = ?, checked_out_by = ?
@@ -231,16 +210,16 @@ SQL
 
             croak(__PACKAGE__ . "->checkout(): Checkout failed for template " .
                   "id '$_'")
-              unless $dbh->do($query, undef, @params);
+              unless $dbh->do($query, undef, (1, $user_id, $_));
         }
 
         # unlock template table
-        $dbh->do("UNLOCK TABLES TEMPLATE_TABLE");
+        $dbh->do("UNLOCK TABLES");
     };
 
     if ($@) {
         # unlock the table, so it's not locked forever
-        $dbh->do("UNLOCK TABLES TEMPLATE_TABLE");
+        $dbh->do("UNLOCK TABLES");
         croak($@);
     }
 
