@@ -884,7 +884,7 @@ sub _build_pagination_vars {
         $page_info{previous_page_url} = '';
     } else {
         $page_info{is_first_page}     = 0;
-        $page_info{previous_page_url} = $protocol . $page_list->[$current_idx];
+        $page_info{previous_page_url} = $protocol . $page_list->[($current_idx - 1)];
     }
 
     if ($page_num == @$page_list) { # on the last page
@@ -892,7 +892,7 @@ sub _build_pagination_vars {
         $page_info{next_page_url} = '';
     } else {
         $page_info{is_last_page}  = 0;
-        $page_info{next_page_url} = $protocol . $page_list->[$current_idx];
+        $page_info{next_page_url} = $protocol . $page_list->[($current_idx + 1)];
     }
 
     for (my $num = 0; $num <= $#$page_list; $num++) {
