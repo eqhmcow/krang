@@ -17,7 +17,7 @@ Run all tests:
 Run just one test file:
 
   krang_test --files=t/foo.t
-  
+
 Make it verbose:
 
   krang_test --files=t/foo.t --verbose
