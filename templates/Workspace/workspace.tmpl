@@ -112,7 +112,7 @@
                <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">
            </tmpl_if>
            <tmpl_if is_template>
-               <input type=button value="Publish" onclick="publish('<tmpl_var id>')">
+               <input type=button value="Deploy" onclick="deploy('<tmpl_var id>')">
                <input type=button value="Delete" onclick="remove('<tmpl_var id>')">
                <p>
                <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">
@@ -141,10 +141,6 @@
   <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a>
   </tmpl_if>
 
-<tmpl_else>
-  <br /><b>None Found</b>
-</tmpl_if>
-
 </div>
 
 <div class=button-bar>
@@ -153,6 +149,7 @@
   <input type=button value="Publish" onclick='publish_checked()'>
 </div>
 
+</tmpl_if>
 
 </form>
 
