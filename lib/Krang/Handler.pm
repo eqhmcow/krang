@@ -102,7 +102,7 @@ sub trans_handler ($$) {
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    unless ( $r->is_initial_req() or $r->uri =~ /\/bug.pl/) {
+    unless ( $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/) {
         return DECLINED;
     }
 
@@ -188,7 +188,7 @@ sub authen_handler ($$) {
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    unless ( $r->is_initial_req() or $r->uri =~ /\/bug.pl/) {
+    unless ( $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/) {
         return DECLINED;
     }
 
@@ -245,7 +245,7 @@ sub authz_handler ($$) {
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    unless ( $r->is_initial_req() or $r->uri =~ /\/bug.pl/) {
+    unless ( $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/) {
         return DECLINED;
     }
 

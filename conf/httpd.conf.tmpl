@@ -102,6 +102,10 @@ PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
         use Krang::Handler;
 </Perl>
 
+<FilesMatch "^.*\.cgi$">
+        SetHandler cgi-script
+</FilesMatch>
+
 <FilesMatch "^.*\.pl$">
 <TMPL_IF CGI_MODE>
         SetHandler cgi-script
@@ -124,7 +128,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 
    <Location />
       PerlSetVar        flavor root
-      ErrorDocument 500 /bug.pl?ise=1
+      ErrorDocument 500 /bug.cgi?rm=ise=1
    </Location>
 
    <tmpl_loop InstanceLoop>
@@ -139,7 +143,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
          PerlLogHandler    Krang::Handler->log_handler
          require           valid-user
 
-         ErrorDocument 500 /<tmpl_var InstanceName>/bug.pl?ise=1
+         ErrorDocument 500 /<tmpl_var InstanceName>/bug.cgi?ise=1
       </Location>
    </tmpl_loop>
 </VirtualHost>
@@ -162,7 +166,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
        PerlLogHandler    Krang::Handler->log_handler
        require valid-user
 
-       ErrorDocument 500 /bug.pl?ise=1
+       ErrorDocument 500 /bug.cgi?ise=1
    </Location>
 </VirtualHost>
 </tmpl_loop>
