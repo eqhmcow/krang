@@ -14,8 +14,8 @@ Added support for hidden stories, based on class definitions.  A
 hidden story is one that, by default, does not show up in calls to
 C<find()>.  This is useful for auto-generated story lists where some
 types of stories shouldn't be listed.  For example, this will be used
-immediately by HREF[Krang Sitemap|addons.html] and HREF[Krang
-RSS|addons.html], neither of which should show in most lists.  See
+immediately by HREF[Krang Sitemap|/addons.html] and 
+HREF[Krang RSS|/addons.html], neither of which should show in most lists.  See
 L<Krang::ElementClass::TopLevel> and L<Krang::Story> for more
 information.  [Peter]
 
