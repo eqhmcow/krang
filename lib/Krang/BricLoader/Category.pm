@@ -150,6 +150,28 @@ sub serialize_xml {
 }
 
 
+=item C<< ($id, $url) = Krang::Bricloader::Category->add_new_path(set => $dataset, path => $path ) >>
+
+Class method that adds a new Krang::Bricloader::Category object to the
+passed in Krang::BricLoader::DataSet.  Returns the 'category_id' and 'url' of the new object.
+
+=cut
+
+sub add_new_path {
+    my ($pkg, %args) = @_;
+    my $self = bless({}, $pkg);
+    my $set = $args{set};
+
+    $self->{path} = $args{path};
+    $self->_fixup_object;
+    $self->_add_info;
+
+    $set->add(object => $self);
+
+    return ($self->{category_id}, $self->{url});
+}
+
+
 =item C<< ($id, $url) = Krang::BricLoader::Category->get_id_url( $path ) >>
 
 Method that returns the 'category_id' and 'url' information associated with a

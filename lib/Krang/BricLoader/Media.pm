@@ -51,7 +51,8 @@ use Krang::BricLoader::Category;
 
 # Lexicals
 ###########
-
+# reference to Krang::BricLoader::DataSet
+my $set;
 
 
 
@@ -60,7 +61,7 @@ use Krang::BricLoader::Category;
 =over
 
 
-=item C<< @media = Krang::BricLoader::Media->new(path => $filepath) >>
+=item C<< @media = Krang::BricLoader::Media->new(dataset=>$set, path=>$path) >>
 
 Constructs a new set of media objects from XML in the specified filepath.
 
@@ -71,6 +72,7 @@ sub new {
     my $self = bless({},$pkg);
     my $path = $args{path};
     my $xml = $args{xml};
+    $set = $args{dataset} || '';
     my ($base, @media, $new_path, $ref);
 
     # set tmpdir
@@ -130,8 +132,9 @@ sub serialize_xml {
                       'media.xsd');
 
     # write media file into data set
+    my $path = "media_$self->{media_id}/$self->{filename}";
     $set->add(file => delete $self->{file}->{data},
-              path => "media_$self->{media_id}/$self->{filename}",
+              path => $path,
               from => $self);
 
     my %media_type = Krang::Pref->get('media_type');
@@ -186,10 +189,17 @@ sub DESTROY {
 sub _build_url {
     my $self = shift;
     my $path = $self->{category};
-    my ($id, $url) = Krang::BricLoader::Category->get_id_url($path);
+    my ($id, $obj, $url);
+    ($id, $url) = Krang::BricLoader::Category->get_id_url($path);
 
-    croak("No category id and/or url found associated with Bricolage" .
-          " category '$path'") unless ($id && $url);
+    unless ($id && $url) {
+        croak("Valid Krang::BricLoader::DataSet object necessary to add " .
+              "objects via Krang::BricLoader::Category->add_new_path!")
+          unless (defined $set && ref $set eq 'Krang::BricLoader::DataSet');
+        ($id, $url) =
+          Krang::BricLoader::Category->add_new_path(set => $set,
+                                                    path => $path);
+    }
 
     $self->{category_id} = $id;
     $self->{url} = join('/', $url, $self->{filename});
@@ -213,7 +223,8 @@ sub _map_simple {
     $self->{title} = delete $self->{name};
 
     # element becomes class
-    ($self->{class} = lc delete $self->{element}) =~ s/ /_/g;
+    ($self->{class} = delete $self->{element}) =~ s/ /_/g;
+    $self->{class} =~ tr/A-Z/a-z/;
 
     # set media_type_id of that for images....
     $self->{media_type_id} = 1;

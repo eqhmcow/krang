@@ -63,15 +63,15 @@ use Krang::BricLoader::Media;
 # Lexicals
 ###########
 my $contrib_count = 0;
-
+my $set;
 
 =head1 INTERFACE
 
 =over
 
-=item C<< $story = Krang::BricLoader->new(path => $filepath) >>
+=item C<< $story = Krang::BricLoader->new(dataset => $set, path => $path) >>
 
-=item C<< $story = Krang::BricLoader->new(xml => $xml) >>
+=item C<< $story = Krang::BricLoader->new(dataset => $set, xml => $xml) >>
 
 
 
@@ -82,6 +82,7 @@ sub new {
     my $self = bless({},$pkg);
     my $path = $args{path};
     my $xml = $args{xml};
+    $set = $args{dataset} || '';
     my ($base, @stories, @media, $new_path, $ref);
 
     # set tmpdir
@@ -203,12 +204,20 @@ sub _build_urls {
     my $tmp = delete $self->{categories};
     my $cats = $tmp->{category};
 
-      for my $i(0..$#$cats) {
+    for my $i(0..$#$cats) {
+        my ($id, $obj, $url);
         my $path = $i == 0 ? $cats->[$i]->{content} : $cats->[$i];
-        my ($id, $url) = Krang::BricLoader::Category->get_id_url($path);
+        ($id, $url) = Krang::BricLoader::Category->get_id_url($path);
 
-        croak("No category id and/or url found associated with Bricolage" .
-              " category '$path'") unless ($id && $url);
+        unless ($id && $url) {
+            croak("Valid Krang::BricLoader::DataSet object necessary to add " .
+                  "objects via Krang::BricLoader::Category->add_new_path!")
+              unless (defined $set &&
+                      ref $set eq 'Krang::BricLoader::DataSet');
+            ($id, $url) =
+              Krang::BricLoader::Category->add_new_path(set => $set,
+                                                        path => $path);
+        }
 
         if (exists $self->{slug} && $self->{slug} ne '') {
             $url = join('/', $url, $self->{slug});
@@ -231,7 +240,8 @@ sub _deserialize_elements {
     if ($data) {
         $data = ref $data eq 'ARRAY' ? $data : [$data];
         for my $d(@$data) {
-            (my $class = lc $d->{element}) =~ s/ /_/g;
+            (my $class = $d->{element}) =~ s/ /_/g;
+            $class =~ tr/A-Z/a-z/;
             my $data = $d->{content} || '';
             $tmp->[$d->{order}] = {class => $class, data => $data};
         }
@@ -243,7 +253,8 @@ sub _deserialize_elements {
             my $media_id = $o->{related_media_id} || 0;
             my $story_id = $o->{related_story_id} || 0;
             my $data = $media_id ? $media_id : $story_id ? $story_id : '';
-            (my $class = lc $o->{element}) =~ s/ /_/g;
+            (my $class = $o->{element}) =~ s/ /_/g;
+            $class =~ tr/A-Z/a-z/;
             $tmp->[$o->{order}] = {class => $class, data => $data,
                                    elements => _deserialize_elements($o)};
         }
@@ -285,7 +296,7 @@ sub _map_simple {
 # process name for use as an identifier
 sub _process_name {
     my $name = shift;
-    $name = lc($name);
+    $name =~ tr/A-Z/a-z/;
     $name =~ s/\s+/_/g;
     $name =~ s/-/_/g;
     $name =~ s/[^\w]/_/g;

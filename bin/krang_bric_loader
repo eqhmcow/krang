@@ -139,7 +139,7 @@ BEGIN {
     $debug	= 0;
     $output	= catfile($ENV{PWD},'bric.kds');
     $site_doc	= catfile($ENV{PWD},'sites.xml');
-    $timeout 	= 300;
+    $timeout 	= 900;
     $verbose	= 0;
     $password	= $ENV{BRICOLAGE_PASSWORD};
     $root 	= $ENV{BRICOLAGE_ROOT};
@@ -288,6 +288,15 @@ sub main {
     unless ($no_elements) {
         my @ids = split /\n/, bric_soap('element', 'list_ids');
         my $xml = bric_soap('element', 'export', @ids);
+
+        if (DEBUG) {
+            my $xmlpath = catfile($temp_path, 'elements.xml');
+            my $fh = IO::File->new(">$xmlpath") or
+              die "Can't write to '$xmlpath': $!";
+            $fh->print($xml);
+            $fh->close;
+        }
+
         Krang::BricLoader::ElementSet->create(set => $set_name,
                                               verbosity => $verbose - 1,
                                               xml => $xml);
@@ -322,14 +331,14 @@ sub main {
 
     # pull in media
     unless ($no_media) {
-        $set->add(object => $_) for get_assets('media');
+        $set->add(object => $_) for get_assets('media', $set);
 
         print STDERR "Added Media to dataset...\n" if $verbose;
     }
 
     # pull in stories
     unless ($no_stories) {
-        $set->add(object => $_) for get_assets('story');
+        $set->add(object => $_) for get_assets('story', $set);
 
         print STDERR "Added Stories to dataset...\n" if $verbose;
     }
@@ -389,7 +398,7 @@ on whether $object_type eq 'category' || 'media' || 'story'.
 =cut
 
 sub get_assets {
-    my ($module) = @_;
+    my ($module, $set) = @_;
     my $pkg = "Krang::BricLoader::" . ucfirst $module;
     my @objs;
     my $i = 0 if DEBUG;
@@ -408,7 +417,12 @@ sub get_assets {
             $i++;
         }
 
-        push @objs, $pkg->new(xml => $out);
+        if ($set) {
+            push @objs, $pkg->new(xml => $out, dataset => $set);
+        } else {
+            push @objs, $pkg->new(xml => $out);
+
+        }
 
     }
 

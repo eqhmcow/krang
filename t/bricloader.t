@@ -100,7 +100,8 @@ $set->add(object => $_) for @categories;
 
 # add media
 my $media_path = catfile(KrangRoot, 't', 'bricloader', 'lamedia.xml');
-eval {@media = Krang::BricLoader::Media->new(path => $media_path);};
+eval {@media = Krang::BricLoader::Media->new(dataset => $set,
+                                             path => $media_path);};
 is($@, '', 'Media constructor did not croak :)');
 $set->add(object => $_) for @media;
 
@@ -139,7 +140,8 @@ eval {
 
     # verify object count
     my @objects = $iset->list;
-    my $categories = scalar @categories;
+    # 1 on extra for the category added via add_new_path :)
+    my $categories = scalar @categories + 1;
     my $contributors = Krang::BricLoader::Contrib->get_contrib_count;
     my $media = scalar @media;
     my $sites = scalar @sites;
