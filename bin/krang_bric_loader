@@ -54,7 +54,10 @@ and optionally imports that dataset.
  --server		- The ip address or hostname assigned to the
 			  Bricolage install (default: BRICOLAGE_SERVER)
 
- --site_doc		- The path to the XML file containing the
+ --set-name		- Name of the element set to be created.
+			  Required unless --no-elements is supplied.
+
+ --site-doc		- The path to the XML file containing the
 			  relevant Category to Site mapping info
 			  (default: $PWD/sites.xml)
 
@@ -123,8 +126,8 @@ use Krang::Conf qw(KrangRoot);
 
 my ($contributors, $debug, $elements, $help, $import, $man, $media,
     $no_categories, $no_contributors, $no_elements, $no_media, $no_sites,
-    $no_stories, $output, $sites, $site_doc, $soap, $temp_path, $timeout,
-    $verbose);
+    $no_stories, $no_templates, $output, $set_name, $sites, $site_doc, $soap,
+    $temp_path, $timeout, $verbose);
 our ($password, $root, $server, $username);
 
 BEGIN {
@@ -150,11 +153,13 @@ BEGIN {
                "no-media"		=> \$no_media,
                "no-sites"		=> \$no_sites,
                "no-stories"		=> \$no_stories,
+               "no-templates"		=> \$no_templates,
                "output=s"		=> \$output,
                "password=s"		=> \$password,
                "root=s"			=> \$root,
                "server=s"		=> \$server,
-               "sites=s"		=> \$site_doc,
+               "set-name=s"		=> \$set_name,
+               "site-doc=s"		=> \$site_doc,
                "timeout=s"		=> \$timeout,
                "user=s"			=> \$username,
                "verbose"		=> \$verbose)
@@ -198,17 +203,22 @@ END
     pod2usage(-msg => "\nUnable to find 'bric_soap' at: $soap\n\n")
       unless -e $soap;
 
-    # if we just have contributors or elements or sites
+    # if we just have contributors, elements, sites, or templates
     if ($contributors) {
         $no_categories = $no_elements = $no_media = $no_sites =
-          $no_stories = 1;
+          $no_stories = $no_templates = 1;
     } elsif ($elements) {
         $no_categories = $no_contributors = $no_media = $no_sites =
-          $no_stories = 1;
+          $no_stories = $no_templates = 1;
     } elsif ($sites) {
         $no_categories = $no_contributors = $no_elements = $no_media =
-          $no_stories = 1;
+          $no_stories = $no_templates = 1;
     }
+
+    # must have a set-name unless -no-elements has been supplied
+    pod2usage("The -set-name argument must be supplied unless the " .
+              "-no-elements arg is supplied")
+      unless($no_elements || $set_name);
 
     # must have a site if we have categories, media, or stories
     pod2usage(-msg => "\nSite information is necessary to support " .
@@ -225,9 +235,10 @@ END
 use Krang::BricLoader::DataSet;
 use Krang::BricLoader::Category;
 use Krang::BricLoader::Contrib;
-use Krang::BricLoader::Element;
+use Krang::BricLoader::ElementSet;
 use Krang::BricLoader::Site;
 use Krang::BricLoader::Story;
+use Krang::BricLoader::Template;
 
 use constant DEBUG => $debug;
 
@@ -266,7 +277,12 @@ sub main {
         $set->add(object => $_) for Krang::BricLoader::Contrib->load;
     }
 
-    # get elements
+    # create element library
+    unless ($no_elements) {
+        my @ids = split /\n/, bric_soap('element', 'list_ids');
+        my $xml = bric_soap('element', 'export', @ids);
+        Krang::BricLoader::ElementSet->create(set => $set_name, xml => $xml);
+    }
 
     # pull in categories
     unless ($no_categories) {
@@ -281,6 +297,11 @@ sub main {
     # pull in stories
     unless ($no_stories) {
         $set->add(object => $_) for get_assets('story');
+    }
+
+    # pull in templates
+    unless ($no_templates) {
+        $set->add(object => $_) for get_assets('template');
     }
 
     # generate .kds
@@ -327,7 +348,6 @@ on whether $object_type eq 'category' || 'media' || 'story'.
 
 sub get_assets {
     my ($module) = @_;
-    my $ids = catfile($temp_path, 'ids.txt');
     my $pkg = "Krang::BricLoader::" . ucfirst $module;
     my @objs;
     my $i = 0 if DEBUG;

@@ -71,21 +71,9 @@ my $contrib_count = 0;
 
 =item C<< $story = Krang::BricLoader->new(path => $filepath) >>
 
-The constructor requires the following arguments:
+=item C<< $story = Krang::BricLoader->new(xml => $xml) >>
 
-=over
 
-=item * path
-
-The absolute path to file containing the XML to be parsed.
-
-=back
-
-Any other passed arguments will result in a croak.  Internally the passed XML
-is parsed and mapped.  In the course of mapping, any requisite categories,
-contributors, media or sites are created and attached to the Story.  The
-resulting output is suitable for addition to a Krang::BricLoader::DataSet
-object.
 
 =cut
 
