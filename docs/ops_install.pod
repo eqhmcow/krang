@@ -21,24 +21,20 @@ Redhat Linux 9 on x86
 
 =back
 
-Krang supports these versions of Perl, one of which must be available
-before installing Krang:
+=head1 Software Requirements
 
-=over 4
+Before you can install Krang you'll need Perl version 5.6.1 or later
+and MySQL version 4.0.13 or later.  You can download Perl here:
 
-=item *
+  http://www.perl.com/download.csp
 
-Perl 5.6.1
+And MySQL 4 can be found here:
 
-=item *
+  http://www.mysql.com/downloads/mysql-4.0.html
 
-Perl 5.8.0
-
-=item *
-
-Perl 5.8.3
-
-=back
+Krang may require additional software, depending on your operating
+system.  Be sure to read the platform-specific README (eg.
+F<README.Redhat9>) included with Krang.
 
 =head1 Choosing a Distribution
 
@@ -62,7 +58,7 @@ Krang also has a special source distribution with F<-src> instead of a
 platform description (ex: F<krang-1.013-src.tar.gz>).  You can
 download this release and attempt to build Krang from source.  Of
 course, this will require porting work if Krang doesn't support your
-platform.  
+platform.
 
 =head1 Installation
 
