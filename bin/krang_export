@@ -215,6 +215,9 @@ if ($append) {
                                (add_callback => \&add_callback) : ());
 }
 
+# keep a count of things added
+my $added = 0;
+
 # add all objects for a type?
 foreach my $type (grep { $all{$_} } keys %all) {
     $type =~ /ies$/ ? $type =~ s/ies$/y/ : $type =~ /es$/ ? $type =~ s/s$// : $type =~ s/s$//;
@@ -227,6 +230,7 @@ foreach my $type (grep { $all{$_} } keys %all) {
         my @objects = $class->find(limit => 10, offset => $x);
         for my $object (@objects) {
             $set->add(object => $object);
+            $added++;
         }
     }
 }
@@ -240,8 +244,13 @@ foreach my $id_meth (grep { @{$id{$_}} } keys %id) {
         my ($object) = $class->find($id_meth => $id);
         die "Unable to find $type $id in database!\n" unless $object;
         $set->add(object => $object);
+        $added++;
     }
 }
+
+# did we add anything?
+die "Nothing selected for export!  Did you mean to use --everything?\n"
+  unless $added;
 
 
 print STDERR "Packing $file...\n" if $verbose;
