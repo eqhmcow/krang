@@ -1162,10 +1162,13 @@ sub upload_image {
         # Use first category of first site - user can always change it later.
         my ($site) = Krang::Site->find(limit => 1);
         my ($category) = Krang::Category->find(site_id => $site->site_id, limit => 1);
+        my %media_types = Krang::Pref->get('media_type');
+        my @media_type_ids = keys(%media_types);
 
         $media = Krang::Media->new(
                                    title => 'Contributor Photo:' . $contrib->full_name,
-                                   category_id => $category->category_id
+                                   category_id => $category->category_id,
+                                    media_type_id => $media_type_ids[0]
                                   );
     }
 

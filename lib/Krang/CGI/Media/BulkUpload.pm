@@ -191,10 +191,15 @@ sub create_media {
         } else { #else create new media object
             my $category_id = $category_list{$file->{category}};
             my $fh = new IO::File $file->{full_path};
+
+            my %media_types = Krang::Pref->get('media_type');
+            my @media_type_ids = keys(%media_types);
+
             my $media = Krang::Media->new(  title => $file->{name},
                                             category_id => $category_id,
                                             filename => $file->{name},
-                                            filehandle => $fh );
+                                            filehandle => $fh,
+                                            media_type_id => $media_type_ids[0] );
             $media->save();
             $new_count++;
         }

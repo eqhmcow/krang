@@ -124,10 +124,14 @@ sub load_query_data {
         croak("Expected a story or a category in element->object!");
     }
 
+    my %media_types = Krang::Pref->get('media_type');
+    my @media_type_ids = keys(%media_types);
+
     my $media = Krang::Media->new(title => $filename,
                                   category_id => $category_id,
                                   filename => $filename,
-                                  filehandle => $fh);
+                                  filehandle => $fh,
+                                  media_type_id => $media_type_ids[0] );
 
     # this could be a dup
     eval { $media->save(); };
