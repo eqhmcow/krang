@@ -30,14 +30,6 @@ use Krang::Message qw(get_messages clear_messages);
 use Krang::Desk;
 use File::Spec::Functions qw(catdir);
 
-# overload new() to locally setup HTML_TEMPLATE_ROOT.  It can't be
-# global because that would affect Krang's publisher.
-sub new {
-    my $pkg = shift;
-    local $ENV{HTML_TEMPLATE_ROOT} = catdir(KrangRoot, "templates");
-    return $pkg->SUPER::new(@_);
-}
-
 # overload output() to setup template variables
 sub output {
     my $template = shift;

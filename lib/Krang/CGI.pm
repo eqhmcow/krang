@@ -68,6 +68,11 @@ BEGIN {
 # load template and bless it into Krang::HTMLTemplate
 sub load_tmpl {
     my $pkg = shift;
+
+    # locally setup HTML_TEMPLATE_ROOT.  It can't be global because that
+    # would affect Krang's publisher.
+    local $ENV{HTML_TEMPLATE_ROOT} = catdir(KrangRoot, "templates");
+
     my $template = $pkg->SUPER::load_tmpl(@_, cache => 1);
     return bless($template, 'Krang::HTMLTemplate');
 }
