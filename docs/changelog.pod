@@ -2,7 +2,19 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 v1.026 - Under Development
+=head2 v1.027 - Under Development
+
+=over
+
+=item *
+
+Minor bugfix in C<bin/krang_extract_subset> - proper handling of
+StoryLink/MediaLink elements that do not point to anything.
+
+=back
+
+
+=head2 v1.026 - November 4, 2004
 
 =over
 
