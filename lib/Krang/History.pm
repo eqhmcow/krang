@@ -125,6 +125,8 @@ In addition to tracking actions on objects, the user who performed the action is
 sub add_history {
     my %args = @_;
     my $object = delete $args{'object'};
+    croak("No object specified") unless ($object);
+
     my $history = Krang::History->new(%args);
 
     $history->{version} = $object->version() if (($args{action} eq 'save') || ($args{action} eq 'revert'));
@@ -193,6 +195,8 @@ sub find {
     my $dbh = dbh;
 
     my $object = delete $args{'object'};
+    croak("No object specified") unless ($object);
+
     $args{object_type} = ref $object;
     
     my $object_id_type = lc((split('::', $args{object_type}))[1]).'_id';
