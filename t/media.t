@@ -206,7 +206,7 @@ ok(($m2->checked_out_by > 0), 'Krang::Media->checked_out_by');
 $m2->checkin();
 
 # test that checkin is working properly - should return that it is not checked out.
-is($m2->checked_out, undef, 'Krang::Media->checked_out');
+is($m2->checked_out, 0, 'Krang::Media->checked_out');
 is($m2->checked_out_by, undef, 'Krang::Media->checked_out_by');
 
 
