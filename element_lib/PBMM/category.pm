@@ -36,7 +36,7 @@ sub new {
                     PBMM::right_cat_column->new(),
                     Default::empty->new(    name => 'footer',
                                             max => 1
-                                            ),
+                                            )
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

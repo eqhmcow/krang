@@ -40,6 +40,7 @@ sub new {
 sub input_form {
     my ($self, %arg) = @_;
     my ($element) = $arg{element};
+    return if not $element->child('size');
     return $element->child('size')->data;
 }
 

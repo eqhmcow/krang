@@ -22,6 +22,12 @@ sub new {
                 pageable => 1,
                 children => 
                 [ 
+                Krang::ElementClass::CheckBox->new(    name => 'link_to_top_of_page',
+                                            default => 1,
+                                            min => 1,
+                                            max => 1,
+                                            allow_delete => 0,
+                                            reorderable => 0 ),
                  Krang::ElementClass::Text->new(name => "large_header"),
                  Krang::ElementClass::Text->new(name => "small_header"),
                  Krang::ElementClass::Textarea->new(name => "paragraph",
