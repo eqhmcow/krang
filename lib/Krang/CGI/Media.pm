@@ -482,7 +482,8 @@ sub edit {
 
     # Load media object into session, or die trying
     my $m = $session{media};
-    if ( $media_id  &&  not(ref($m) && ($media_id eq $m->media_id)) ) {
+    my $force_reload = $q->param('force_reload');
+    if ( ($force_reload) or ( $media_id  &&  not(ref($m) && ($media_id eq $m->media_id))) ) {
         # If we have a media_id, force load using it.
         ($m) = Krang::Media->find(media_id=>$media_id);
         $session{media} = $m;
