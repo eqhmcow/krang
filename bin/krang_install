@@ -26,6 +26,7 @@ use constant CAT_BIN        => '/bin/cat';
 use constant CHKCONFIG_BIN  => '/sbin/chkconfig';
 use constant LN_BIN         => '/bin/ln';
 
+
 =head1 NAME
 
 krang_install - install Krang from a dist file
@@ -366,7 +367,7 @@ sub do_perl_install {
                          && $make_bin install );
 
     # Check for compile error
-    system($perl_build) && die("There was a problem building Perl: $!");
+    system($perl_build) && die("There was a problem building Perl.  Cannot continue");
  
     # Blow away build directory
     chdir($ENV{KRANG_ROOT});
@@ -620,7 +621,14 @@ sub start_krang {
 }
 
 
-sub make_test {}
+sub make_test {
+    print "Running Krang tests...\n";
+    my $InstallPath =  $options{InstallPath};
+    chdir($InstallPath);
+    my $make_bin = MAKE_BIN;
+    my $make_test = "KRANG_ROOT='' PERL5LIB='' $make_bin test";
+    system($make_test) && die("Error running tests: $!");
+}
 
 
 sub output_report {

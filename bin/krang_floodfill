@@ -82,7 +82,7 @@ END
 }
 
 use Krang::Script;
-use Krang::Conf qw(KrangRoot SiteServerPort ElementSet EnableSiteServer);
+use Krang::Conf qw(KrangRoot SiteServerPort InstanceElementSet EnableSiteServer);
 use Krang::ElementLibrary;
 use Krang::Site;
 use Krang::Category;
@@ -127,8 +127,8 @@ pod2usage(-verbose => 2) if $man;
 
 # make sure element set is supported
 if (($stories or $covers or $cats) and 
-    (ElementSet ne 'TestSet1' and ElementSet ne 'Default')) {
-    die "Unknown element set '" . ElementSet . "'.  I only know how to create stories and categories for 'TestSet1' and 'Default'.\n";
+    (InstanceElementSet ne 'TestSet1' and InstanceElementSet ne 'Default')) {
+    die "Unknown element set '" . InstanceElementSet . "'.  I only know how to create stories and categories for 'TestSet1' and 'Default'.\n";
 }
 
 # covers each need a category
@@ -184,7 +184,7 @@ for(1 .. $cats) {
                                    parent_id => $cats[int(rand(scalar(@cats)))]->category_id);
 
     # TestSet1 categories have display names
-    if (ElementSet eq 'TestSet1') {
+    if (InstanceElementSet eq 'TestSet1') {
         $cat->element->child('display_name')->data(ucfirst($cname) . "!");
     }
 
@@ -349,7 +349,7 @@ for my $story_count (1 .. $stories) {
     # make a multi-page story
     my $element = $story->element;
 
-    if (ElementSet eq 'TestSet1') {
+    if (InstanceElementSet eq 'TestSet1') {
         my $deck = get_words(100);
         $element->child('deck')->data($deck);
         $element->add_child(class => "page") for (1 .. ((int(rand(5)))+1));
@@ -370,7 +370,7 @@ for my $story_count (1 .. $stories) {
         # add some keywords
         $element->child('fancy_keyword')->data([ map { get_word() } (1 .. ((int(rand(10)))+1))]);
 
-    } elsif (ElementSet eq 'Default') {
+    } elsif (InstanceElementSet eq 'Default') {
         $element->child('metadata_title')->data($story->title);
         $element->child('promo_title')->data($story->title);
         $element->child('metadata_description')->data(get_words(50));
@@ -453,7 +453,7 @@ for my $cover_count (1 .. $covers) {
     # add some photos and lead-ins to stories
     my $element = $cover->element;
 
-    if (ElementSet eq 'TestSet1') {
+    if (InstanceElementSet eq 'TestSet1') {
         foreach my $obj_num (1 .. ((int(rand(30)))+1)) {
             if ((int(rand(3))) != 1) {
                 $element->add_child(class => "leadin",
@@ -467,7 +467,7 @@ for my $cover_count (1 .. $covers) {
         # setup a header
         $element->child('header')->data(get_words(10));
 
-    } elsif (ElementSet eq 'Default') {
+    } elsif (InstanceElementSet eq 'Default') {
         $element->child('metadata_title')->data(get_words(10));
         $element->child('promo_title')->data(get_words(10));
         $element->child('metadata_description')->data(get_words(50));

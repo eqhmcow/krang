@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 use Krang::Script;
-use Krang::Conf qw(KrangRoot RootVirtualHost ApachePort);
+use Krang::Conf qw(KrangRoot HostName ApachePort);
 use LWP::UserAgent;
 use HTTP::Request::Common;
 use File::Spec::Functions qw(catfile);

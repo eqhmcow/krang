@@ -12,6 +12,12 @@
 KrangUser <tmpl_var KrangUser>
 KrangGroup <tmpl_var KrangGroup>
 
+#
+# MySQL user and password for Krang
+#
+DBUser <tmpl_var DBUser>
+DBPass "<tmpl_var DBPass>"
+
 # 
 # ApacheAddr and ApachePort: the IP and port for the Apache server
 #
@@ -19,17 +25,17 @@ ApacheAddr <tmpl_var IPAddress>
 ApachePort <tmpl_var ApachePort>
 
 #
-# RootVirtualHost: the virtual host for the root server, which
+# HostName: the virtual host for the root server, which
 # displays a list of available instances.
 #
-RootVirtualHost <tmpl_var HostName>
+HostName <tmpl_var HostName>
 
 #
 # LogLevel: how much logging detail to include in krang.log.  Valid setting are
 # 1 (critical only), 2 (critical and info) and 3 (critical, info and
 # debug).  A setting of 2 is standard for production use.
 #
-LogLevel 1
+LogLevel 2
 
 #
 # FTPAddress and FTPPort: set this to the address and port of the
@@ -72,23 +78,20 @@ BugzillaComponent 'Auto-submitted Bugs'
 #
 # Instance: each instance has its own block named for the instance.
 #
-<Instance <tmpl_var InstanceVirtualHost>>
+<Instance <tmpl_var InstanceHostName>>
 
    # the UI display name for this instance
    InstanceDisplayName <tmpl_var InstanceDisplayName>
 
-   # the virtual host users will use to access this site
-   VirtualHost <tmpl_var InstanceVirtualHost>
+   # the virtual host users will use to access this instance
+   InstanceHostName <tmpl_var InstanceHostName>
 
-   # the database setup for this instance.  Each instance requires its
-   # own database.
-   DBName <tmpl_var InstanceDBName>
-   DBUser <tmpl_var InstanceDBUser>
-   DBPass "<tmpl_var InstanceDBPass>"
+   # MySQL database name for this instance
+   InstanceDBName <tmpl_var InstanceDBName>
 
    # the element set to be used in this instance.  Instances may share
    # element sets.
-   ElementSet <tmpl_var InstanceElementSet>
+   InstanceElementSet <tmpl_var InstanceElementSet>
 
 </Instance>
 

@@ -73,7 +73,7 @@ $@
 END
 }
 
-use Krang::Conf qw(KrangRoot VirtualHost);
+use Krang::Conf qw(KrangRoot InstanceHostName);
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
@@ -196,7 +196,7 @@ sub write_conf {
     $template->param((map { ($_, Krang::Conf->get($_)) }
                       (qw(KrangUser KrangGroup 
                           SiteServerAddr SiteServerPort
-                          RootVirtualHost
+                          HostName
                          ))),
                      KrangRoot => rel2abs(Krang::Conf->get("KrangRoot")));
     

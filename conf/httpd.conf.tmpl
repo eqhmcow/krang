@@ -117,12 +117,12 @@ PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
 
 </IfModule>
 
-ServerName <tmpl_var RootVirtualHost>
+ServerName <tmpl_var HostName>
 Listen <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 
 <VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
-   ServerName <tmpl_var RootVirtualHost>
+   ServerName <tmpl_var HostName>
 
    PerlTransHandler Krang::Handler->trans_handler
    PerlLogHandler    Krang::Handler->log_handler
@@ -152,7 +152,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 
 <tmpl_loop InstanceLoop>
 <VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
-   ServerName      <tmpl_var VirtualHost>
+   ServerName      <tmpl_var InstanceHostName>
 
    PerlTransHandler Krang::Handler->trans_handler
    PerlLogHandler   Krang::Handler->log_handler

@@ -65,7 +65,7 @@ use DBI;
 use base 'Exporter';
 our @EXPORT_OK = qw(dbh create_db forget_dbh);
 
-use Krang::Conf qw(DBName DBUser DBPass KrangRoot);
+use Krang::Conf qw(InstanceDBName DBUser DBPass KrangRoot);
 use List::Util qw(first);
 use Carp qw(croak);
 use File::Find qw(find);
@@ -78,8 +78,8 @@ use Krang::Log qw(info debug critical);
 our %DBH;
 
 sub dbh () {
-    my $name = DBName;
-    croak("Unable to create dbh, DBName is undefined.\n" . 
+    my $name = InstanceDBName;
+    croak("Unable to create dbh, InstanceDBName is undefined.\n" . 
           "Maybe you forgot to call Krang::Conf->instance()?")
       unless defined $name;
 
@@ -98,8 +98,8 @@ sub dbh () {
 }
 
 sub forget_dbh () {
-    my $name = DBName;
-    croak("Unable to create dbh, DBName is undefined.\n" . 
+    my $name = InstanceDBName;
+    croak("Unable to create dbh, InstanceDBName is undefined.\n" . 
           "Maybe you forgot to call Krang::Conf->instance()?")
       unless defined $name;
 
@@ -109,7 +109,7 @@ sub forget_dbh () {
 
 # create the database
 sub create_db {
-    my $name = DBName;
+    my $name = InstanceDBName;
     my $dbh =  DBI->connect("DBI:mysql:database=mysql", DBUser, DBPass,
                             { RaiseError         => 1, 
                               AutoCommit         => 1,
@@ -130,7 +130,7 @@ sub load_sql {
 
     my @command =  ('mysql', '-u', DBUser, 
                     (length(DBPass) ? ('-p', DBPass) : ()),
-                    DBName);
+                    InstanceDBName);
     my $fh = IO::File->new("<$sql");
     
     run \@command, $fh, 

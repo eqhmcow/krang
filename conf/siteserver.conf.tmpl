@@ -100,12 +100,12 @@ PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
 # Non mod_perl config
 #
 
-ServerName <tmpl_var RootVirtualHost>
+ServerName <tmpl_var HostName>
 Listen <tmpl_var SiteServerAddr>:<tmpl_var SiteServerPort>
 NameVirtualHost <tmpl_var SiteServerAddr>:<tmpl_var SiteServerPort>
 
 <VirtualHost <tmpl_var SiteServerAddr>:<tmpl_var SiteServerPort>>
-   ServerName <tmpl_var RootVirtualHost>
+   ServerName <tmpl_var HostName>
    ServerAlias *
 
    PerlTransHandler Krang::Handler->siteserver_trans_handler

@@ -6,7 +6,7 @@ use LWP::UserAgent;
 use HTTP::Request::Common;
 use File::Spec::Functions qw(catfile);
 use HTTP::Cookies;
-use Krang::Conf qw(KrangRoot RootVirtualHost ApachePort);
+use Krang::Conf qw(KrangRoot HostName ApachePort);
 use Krang::Log qw(debug);
 use Test::Builder;
 
@@ -105,10 +105,11 @@ sub _do_login {
     # the current instance.  Is there a better way to make sure login
     # succeeded?
     my $found = 0;
+    my $hostname = HostName;
     $cookies->scan(sub { 
                        my ($domain, $val) = @_[4,2];
                        $found = 1 
-                         if $domain eq RootVirtualHost and
+                         if $domain =~ /^$hostname/ and
                            $val =~ /instance&$instance/;
                    });
     $success = 0 unless $found;
@@ -181,7 +182,7 @@ sub _url {
     my $script = shift;
 
     # compute Krang's URL
-    my $base_url = 'http://' . RootVirtualHost;
+    my $base_url = 'http://' . HostName;
     $base_url .= ":" . ApachePort if ApachePort ne '80';
 
     # build the URL

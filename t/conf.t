@@ -10,7 +10,7 @@ KrangUser nobody
 KrangGroup nobody
 ApacheAddr 127.0.0.1
 ApachePort 80
-RootVirtualHost localhost.localdomain
+HostName localhost.localdomain
 EnableSiteServer 1
 SiteServerAddr 127.0.0.1
 SiteServerPort 8080
@@ -25,19 +25,19 @@ BugzillaPassword shredder
 BugzillaComponent 'Auto-submitted Bugs'
 <Instance instance_one>
    InstanceDisplayName "Test Magazine One"
-   VirtualHost cms.test1.com
-   DBName test
+   InstanceHostName cms.test1.com
+   InstanceDBName test
    DBUser test
    DBPass ""
-   ElementSet TestSet1
+   InstanceElementSet TestSet1
 </Instance>
 <Instance instance_two>
    InstanceDisplayName "Test Magazine Two"
-   VirtualHost cms.test2.com
-   DBName test2
+   InstanceHostName cms.test2.com
+   InstanceDBName test2
    DBUser test2
    DBPass ""
-   ElementSet TestSet1
+   InstanceElementSet TestSet1
 </Instance>
 CONF
 
@@ -53,22 +53,22 @@ ok(Krang::Conf->KrangRoot);
 ok(Krang::Conf->get("ApachePort"));
 ok(Krang::Conf->ApachePort);
 
-Krang::Conf->import(qw(KrangRoot DBName ApachePort));
+Krang::Conf->import(qw(KrangRoot InstanceDBName ApachePort));
 ok(KrangRoot());
-ok(not defined DBName());
+ok(not defined InstanceDBName());
 ok(ApachePort());
 
 Krang::Conf->instance("instance_one");
 is(Krang::Conf->instance, "instance_one");
 ok(KrangRoot());
-is(Krang::Conf->get("DBName"), "test");
-is(DBName(), "test");
+is(Krang::Conf->get("InstanceDBName"), "test");
+is(InstanceDBName(), "test");
 
 Krang::Conf->instance("instance_two");
 is(Krang::Conf->instance, "instance_two");
 ok(KrangRoot());
-is(Krang::Conf->get("DBName"), "test2");
-is(DBName(), "test2");
+is(Krang::Conf->get("InstanceDBName"), "test2");
+is(InstanceDBName(), "test2");
 
 
 # make sure KrangUser and KrangGroup are checked
@@ -84,16 +84,16 @@ _setup_conf($bad_conf);
 eval { Krang::Conf::_load(); Krang::Conf->check() };
 like($@, qr/KrangGroup.*does not exist/);
 
-# make sure repeated DBNames are caught
+# make sure repeated InstanceDBNames are caught
 $bad_conf = $base_conf;
 $bad_conf .= <<CONF;
 <Instance instance_thre>
    InstanceDisplayName "Test Magazine Three"
-   VirtualHost cms.test2.com
-   DBName test2
+   InstanceHostName cms.test2.com
+   InstanceDBName test2
    DBUser test3
    DBPass ""
-   ElementSet TestSet1
+   InstanceElementSet TestSet1
 </Instance>
 CONF
 _setup_conf($bad_conf);

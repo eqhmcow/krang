@@ -7,7 +7,7 @@ use Krang::Site;
 use Krang::Contrib;
 use Krang::Session qw(%session);
 use Storable qw(freeze thaw);
-use Krang::Conf qw(ElementSet);
+use Krang::Conf qw(InstanceElementSet);
 use Time::Piece;
 
 BEGIN { use_ok('Krang::Story') }
@@ -69,7 +69,7 @@ is($story_cat[1], $cat[1]);
 
 SKIP: {
     skip('Element tests only work for TestSet1', 10)
-      unless (ElementSet eq 'TestSet1');
+      unless (InstanceElementSet eq 'TestSet1');
 
     # add some content
     $story->element->child('deck')->data('DECK DECK DECK');
@@ -188,7 +188,7 @@ for (qw( story_id
 
 SKIP: {
     skip('Element tests only work for TestSet1', 5)
-      unless (ElementSet eq 'TestSet1');
+      unless (InstanceElementSet eq 'TestSet1');
 
     # elements ok?
     is($story2->element->child('deck')->data(), "DECK DECK DECK");
@@ -301,7 +301,7 @@ is($thawed->story_id, $story->story_id);
 
 SKIP: {
     skip('Element tests only work for TestSet1', 1)
-      unless (ElementSet eq 'TestSet1');
+      unless (InstanceElementSet eq 'TestSet1');
     
     # test versioning
     my $v = Krang::Story->new(categories => [$cat[0], $cat[1]],
@@ -490,7 +490,7 @@ is($count, $real_count);
 
 SKIP: {
     skip('Element tests only work for TestSet1', 1)
-      unless (ElementSet eq 'TestSet1');
+      unless (InstanceElementSet eq 'TestSet1');
 
     # create a cover to test links between stories
     my $cover = Krang::Story->new(categories => [$cat[0]],

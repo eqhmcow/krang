@@ -79,7 +79,7 @@ $@
 END
 }
 
-use Krang::Conf qw(KrangRoot VirtualHost);
+use Krang::Conf qw(KrangRoot InstanceHostName);
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
@@ -209,7 +209,7 @@ sub write_conf {
     $template->param((map { ($_, Krang::Conf->get($_)) }
                       (qw(KrangUser KrangGroup 
                           ApacheAddr ApachePort
-                          RootVirtualHost
+                          HostName
                          ))),
                      KrangRoot => rel2abs(Krang::Conf->get("KrangRoot")));
     
@@ -220,7 +220,7 @@ sub write_conf {
         push(@loop,
              {
               InstanceName => $instance,
-              VirtualHost  => VirtualHost,
+              InstanceHostName  => InstanceHostName,
              });
     }
     $template->param(InstanceLoop => \@loop);

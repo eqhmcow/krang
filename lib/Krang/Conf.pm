@@ -6,31 +6,31 @@ use warnings;
 our @VALID_DIRECTIVES;
 BEGIN {
 @VALID_DIRECTIVES = map { lc($_) } qw(
-KrangRoot
-ElementSet
-DBName
-DBPass
-DBUser
-KrangUser
-KrangGroup
 ApacheAddr
 ApachePort
-RootVirtualHost
-LogLevel
-VirtualHost
 Assertions
-FTPPort
-FTPAddress
-InstanceDisplayName
-SMTPServer
-FromAddress
-BugzillaEmail
-BugzillaServer
-BugzillaPassword
 BugzillaComponent
+BugzillaEmail
+BugzillaPassword
+BugzillaServer
+DBPass
+DBUser
 EnableSiteServer
+FromAddress
+FTPAddress
+FTPPort
+HostName
+InstanceDBName
+InstanceDisplayName
+InstanceElementSet
+InstanceHostName
+KrangGroup
+KrangRoot
+KrangUser
+LogLevel
 SiteServerAddr
 SiteServerPort
+SMTPServer
 );
 }
 
@@ -236,7 +236,7 @@ run when the Krang::Conf loads.
 sub check {
     # check required directives
     foreach my $dir (qw(KrangUser KrangGroup ApacheAddr ApachePort
-                        RootVirtualHost LogLevel FTPPort FTPAddress
+                        HostName LogLevel FTPPort FTPAddress
                         SMTPServer FromAddress BugzillaEmail BugzillaServer
                         BugzillaPassword BugzillaComponent)) {
         _broked("Missing required $dir directive") 
@@ -247,8 +247,8 @@ sub check {
     foreach my $instance (Krang::Conf->instances()) {
         my $block = $CONF->block(instance => $instance);
         
-        foreach my $dir (qw(VirtualHost ElementSet InstanceDisplayName
-                            DBName DBPass DBUser)) {
+        foreach my $dir (qw(InstanceHostName InstanceElementSet InstanceDisplayName
+                            InstanceDBName DBPass DBUser)) {
             _broked("Instance '$instance' missing required '$dir' directive")
               unless defined $block->get($dir);
         }
@@ -264,11 +264,11 @@ sub check {
     my %seen;
     foreach my $instance (Krang::Conf->instances()) {
         my $block = $CONF->block(instance => $instance);
-        if ($seen{$block->get("DBName")}) {
+        if ($seen{$block->get("InstanceDBName")}) {
             _broked("More than one instance is using the '" . 
-                    $block->get("DBName") . "' database");
+                    $block->get("InstanceDBName") . "' database");
         }
-        $seen{$block->get("DBName")} = 1;
+        $seen{$block->get("InstanceDBName")} = 1;
     }
 }
 

@@ -56,6 +56,7 @@ BEGIN {
 
 use Krang::DB qw(create_db dbh);
 use Krang::Script;
+use Krang::Conf qw ( InstanceElementSet KrangRoot );
 
 # Blow away data/*
 my $datadir = catfile($ENV{KRANG_ROOT}, "data", "*");
@@ -63,22 +64,18 @@ system("rm -rf $datadir");
 
 foreach my $instance (Krang::Conf->instances()) {
     Krang::Conf->instance($instance);
-    create_db();
-                                                                                 
-    # load in templates if desired in conf
-    use Krang::Conf qw ( ElementSet KrangRoot );
-                                                                                 
-    my $e_set = ElementSet;
-                                                                                 
-                                                                                 
-    my $import_bin = KrangRoot.'/bin/krang_import';
-    my $import_file = KrangRoot."/element_lib/$e_set/templates.kds";
-                                                                                 
-    if (-f $import_file) {
-        # perform import from templates.kds file
-        `$import_bin $import_file`;
-    }
-                                                                                 
-                                                                                 
+      create_db();
+      
+      # load in templates if desired in conf
+      my $e_set = InstanceElementSet;
+      die("No InstanceElementSet specified") unless ($e_set);
+      
+      my $import_bin = KrangRoot.'/bin/krang_import';
+      my $import_file = KrangRoot."/element_lib/$e_set/templates.kds";
+      
+      if (-f $import_file) {
+          # perform import from templates.kds file
+          `$import_bin $import_file`;
+      }
 }
 

@@ -5,7 +5,7 @@ use Krang::Script;
 use Krang::Site;
 use Krang::Category;
 use Krang::Story;
-use Krang::Conf qw(ElementSet);
+use Krang::Conf qw(InstanceElementSet);
 BEGIN { use_ok('Krang::Element') }
 
 # create a site and category for dummy story
@@ -31,7 +31,7 @@ isa_ok($element, 'Krang::Element');
 # article has two default children, page and deck
 SKIP: {
     skip('Element tests only work for TestSet1', 100)
-      unless (ElementSet eq 'TestSet1');
+      unless (InstanceElementSet eq 'TestSet1');
 
 my @children = $element->children();
 is(@children , 4);

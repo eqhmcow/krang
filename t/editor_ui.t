@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Krang::Script;
-use Krang::Conf qw(KrangRoot RootVirtualHost ApachePort ElementSet);
+use Krang::Conf qw(KrangRoot HostName ApachePort InstanceElementSet);
 use LWP::UserAgent;
 use HTTP::Request::Common;
 use File::Spec::Functions qw(catfile);
@@ -16,7 +16,7 @@ use Krang::Category;
 BEGIN {
     if (not -e catfile(KrangRoot, 'tmp', 'httpd.pid')) {
         eval "use Test::More skip_all => 'Krang Apache server not running.';";
-    } elsif (ElementSet ne 'TestSet1') {
+    } elsif (InstanceElementSet ne 'TestSet1') {
         eval "use Test::More skip_all => 'TestSet1 required.';";
     } else {
         eval "use Test::More qw(no_plan);"

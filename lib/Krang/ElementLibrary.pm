@@ -32,7 +32,7 @@ allowing access to the classes contained within it.  Each instance is
 configured with an element set in F<krang.conf>:
 
   <Instance test>
-     ElementSet Flex
+     InstanceElementSet Flex
   </Instance>
 
 This library is responsible for loading the configured element sets
@@ -86,7 +86,7 @@ Then either F<Flex/article.pm> or F<Default/article.pm> must exist
 
 =cut
 
-use Krang::Conf qw(ElementSet KrangRoot);
+use Krang::Conf qw(InstanceElementSet KrangRoot);
 use File::Spec::Functions qw(catdir catfile file_name_is_absolute);
 use Config::ApacheFormat;
 use Carp qw(croak);
@@ -215,7 +215,7 @@ filter out this name to use the list for possible story types.
 
 sub top_levels {
     our %TOP_LEVEL;
-    return keys %{$TOP_LEVEL{ElementSet()}};
+    return keys %{$TOP_LEVEL{InstanceElementSet()}};
 }
 
 =item C<< $class = Krang::ElementLibrary->top_level(name => "article") >>
@@ -229,15 +229,15 @@ element.
 sub top_level {
     my %args = @_[1..$#_];
     our %TOP_LEVEL;    
-    return $TOP_LEVEL{ElementSet()}{$args{name}}
-      if exists $TOP_LEVEL{ElementSet()}{$args{name}};
+    return $TOP_LEVEL{InstanceElementSet()}{$args{name}}
+      if exists $TOP_LEVEL{InstanceElementSet()}{$args{name}};
     croak("Unable to find top-level element named '$args{name}' in ".
-          "element set '" . ElementSet() . "'");
+          "element set '" . InstanceElementSet() . "'");
 }
 
 =item C<< @names = Krang::ElementLibrary->element_names() >>
 
-Returns a list of element names in the current ElementSet.  This list
+Returns a list of element names in the current InstanceElementSet.  This list
 is uniqued (since the same name may be used in different places in the
 set) and sorted.
 
@@ -248,7 +248,7 @@ sub element_names {
     our %TOP_LEVEL;
     
     # start with the top-levels, recursing down from there
-    my @stack = values %{$TOP_LEVEL{ElementSet()}};
+    my @stack = values %{$TOP_LEVEL{InstanceElementSet()}};
 
     # build list of names in %names
     my %names;
@@ -267,16 +267,16 @@ sub element_names {
 
 =item C<< $class = Krang::ElementLibrary->find_class(name => "deck", set => "Flex") >>
 
-Finds an element class by name, looking in the configured ElementSet
+Finds an element class by name, looking in the configured InstanceElementSet
 for the current instance unless as set argument is passed.  If the
-ElementSet has ParentSets configured, will look there too.  Returns an
+InstanceElementSet has ParentSets configured, will look there too.  Returns an
 object descended from Krang::ElementClass or undef on failure.
 
 This call only finds classes that are declared as separate packages,
 not those declared inline.
 
 For testing purposes, set $Krang::ElementLibrary::TESTING_SET and
-find_class() will look there rather than the current ElementSet.
+find_class() will look there rather than the current InstanceElementSet.
 
 =cut
 
@@ -284,7 +284,7 @@ sub find_class {
     my ($pkg, %args) = @_;
     our ($TESTING_SET, %PARENT_SETS);
     my ($name, $set) = @args{('name', 'set')};
-    $set ||= ($TESTING_SET || ElementSet);
+    $set ||= ($TESTING_SET || InstanceElementSet);
  
     # look in current set
     my $class_pkg = "${set}::$name";
@@ -320,7 +320,7 @@ BEGIN {
     my $cur_instance = Krang::Conf->instance();
     foreach my $instance (Krang::Conf->instances()) {
         Krang::Conf->instance($instance);
-        Krang::ElementLibrary->load_set(set => ElementSet());
+        Krang::ElementLibrary->load_set(set => InstanceElementSet());
     }
     Krang::Conf->instance($cur_instance);
 }

@@ -5,7 +5,7 @@ use Krang::Script;
 use Krang::Site;
 use Krang::Category;
 use Krang::Story;
-use Krang::Conf qw(KrangRoot ElementSet);
+use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::Element qw(foreach_element);
 use File::Spec::Functions qw(catfile);
 BEGIN { use_ok('Krang::DataSet') }
@@ -445,7 +445,7 @@ is($big->element->child('deck')->data, "DECK DECK DECK");
 
 SKIP: {
     skip('Element tests only work for TestSet1', 1)
-      unless (ElementSet eq 'TestSet1');
+      unless (InstanceElementSet eq 'TestSet1');
 
     # create a pair of stories that point to each other in a circle
     my $jack = Krang::Story->new(categories => [Krang::Category->find(category_id => $category->category_id)],

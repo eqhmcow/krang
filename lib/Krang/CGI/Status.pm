@@ -40,7 +40,7 @@ sub status {
                             th("Directive"), th("Value"),
                             Tr(td("Instance"), td(Krang::Conf->instance)),
                             ( map { Tr(td($_), td(Krang::Conf->get($_))) }
-                              (qw( ElementSet DBName VirtualHost ))),
+                              (qw( InstanceElementSet InstanceDBName InstanceHostName ))),
                            ),
                       h2('Global Settings'),
                         table({border => 1},
