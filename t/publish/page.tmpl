@@ -1,0 +1,14 @@
+<!-- PAGE TEMPLATE -->
+
+ <tmpl_loop element_loop>
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+    <tmpl_if is_pull_quote>
+      <p><blockquote><i>
+    <tmpl_var pull_quote>
+      </i></blockquote></p>
+    </tmpl_if>
+ </tmpl_loop>
+
+<!-- /PAGE -->
