@@ -1,6 +1,6 @@
 <tmpl_loop page_loop>
 <title><tmpl_var title></title>
-<tmpl_if __first__><h1><tmpl_var title></h1><b><tmpl_var deck></b></tmpl_if>
+<tmpl_if __first__><h1><tmpl_var title></h1><tmpl_if deck><b><tmpl_var deck></b></tmpl_if></tmpl_if>
 <tmpl_var page>
 <tmpl_unless __last__><tmpl_var page_break></tmpl_unless>
 </tmpl_loop>
