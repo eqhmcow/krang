@@ -10,6 +10,7 @@ use Krang::Media;
 use Krang::Log qw(debug info critical);
 use Net::FTPServer::DirHandle;
 use Krang::FTP::FileHandle;
+use Krang::Pref;
 
 # Inheritance
 our @ISA = qw(Net::FTPServer::DirHandle);
@@ -214,9 +215,13 @@ sub open {
                                                 $category_id
                                                 )->open($mode);
         } else {
+            my %media_type = Krang::Pref->get('media_type');
+            my @media_type = keys %media_type;
+
             my $new_m = Krang::Media->new ( filename => $filename,
                                             title => $filename,
                                             category_id => $category_id,
+                                            media_type_id => $media_type[0]
                                           );
 
             return new Krang::FTP::FileHandle(  $self->{ftps},
