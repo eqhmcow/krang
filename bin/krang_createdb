@@ -142,12 +142,8 @@ if ($destroy) {
     # make sure they really meant --destroy
     unless ($no_prompt) {
         exit 1      
-        unless prompt("y", "This program will drop and recreate all Krang databases (including the contents of data/*) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
+        unless prompt("y", "This program will drop and recreate all Krang databases (including the \ndatabase-linked contents of data/) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
     }
-
-    # blow away data/*
-    my $datadir = catfile($ENV{KRANG_ROOT}, "data", "*");
-    system("rm -rf $datadir");
 
     # drop all databases
     foreach my $instance (Krang::Conf->instances) {
@@ -159,6 +155,16 @@ if ($destroy) {
         $cmd .= " -v" if $verbose > 1;
         print "Running '$cmd'\n" if $verbose > 1;
         system($cmd);
+
+        # remove the data directories for this database
+        my $template_dir = catdir($ENV{KRANG_ROOT}, "data", "templates", 
+                                  $instance);
+        print STDERR "Clearing '$template_dir'...\n" if $verbose;
+        system("rm -rf $template_dir");
+
+        my $media_dir = catdir($ENV{KRANG_ROOT}, "data", "media", $instance);
+        print STDERR "Clearing '$media_dir'...\n" if $verbose;
+        system("rm -rf $media_dir");
     }
 }
 
