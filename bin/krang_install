@@ -909,7 +909,7 @@ sub set_param_defaults {
 
     # Default instancedisplayname => $instancevirtualhost
     my $idn = "InstanceDisplayName";
-    unless (length($options{$idn})) {
+    unless (defined $options{$idn}) {
         $options{$idn} = $options{'InstanceHostName'};
     }
 }
