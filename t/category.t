@@ -54,8 +54,8 @@ is($category->category_id() =~ /^\d+$/, 1, 'save() test');
 # getter tests
 ########################
 is($category->category_id() =~ /^\d+$/, 1, 'category_id()');
-my $element = $category->element();
-isa_ok($element, 'Krang::Element');
+my $element1 = $category->element();
+isa_ok($element1, 'Krang::Element');
 is($category->element_id() =~ /^\d+$/, 1, 'element_id()');
 my $dir = $category->dir();
 is($dir eq '/blah', 1, 'dir()');
@@ -66,11 +66,14 @@ is($category->url() =~ /$dir/, 1, 'url()');
 # setter tests
 ###############
 # element()
-$element = Krang::Element->new(class => 'category');
+my $element = Krang::Element->new(class => 'category');
 $element->save();
 $category->element($element);
 $category->save();
 is($category->element_id(), $element->element_id(), 'element() - setter');
+
+# delete first element
+$element1->delete();
 
 # dir()
 my $d = $category->dir('fred');
