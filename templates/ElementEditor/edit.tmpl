@@ -1,5 +1,4 @@
 <script language=javascript>
-
   function preview_media(id) {
         window.open("publisher.pl?rm=preview_media&media_id=" + id, "");
   }
@@ -57,10 +56,14 @@
 
 
   function remove_element() {
+     <tmpl_if allow_delete>
         if (confirm("Really delete this element?")) {
            document.forms[0].rm.value = 'delete_element';
            document.forms[0].submit();
         }
+     <tmpl_else>
+        alert("Sorry, this element cannot be deleted.");
+     </tmpl_if>
   }
 
   function reorder() {
