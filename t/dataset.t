@@ -458,7 +458,9 @@ my $cstory = Krang::Story->new(categories => [$category2, $category],
 
 $cstory->save;
 
-like( $bset->import_all(), qr/A story object with a non-primary url/);
+eval { $bset->import_all() };
+
+like( $@, qr/A story object with a non-primary url/);
 
 $cstory->delete;
 
