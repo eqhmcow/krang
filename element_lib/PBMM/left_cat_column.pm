@@ -42,5 +42,23 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+sub fill_template {
+    my ($self, %args) = @_;
+                                                                        
+                                                                        
+    my $tmpl      = $args{tmpl};
+    my $element   = $args{element};
+                                                                        
+    my @ad_m =  grep { $_->name() eq 'ad_module' } $element->children();                                                                        
+    my %a_count;
+                                                                        
+    foreach my $ad_m (@ad_m) {
+        $a_count{$ad_m->child('size')->data.'_count'}++;
+    }
+                                                                        
+    $tmpl->param( \%a_count );
+                                                                        
+    $self->SUPER::fill_template( %args );
+}
 
 1;

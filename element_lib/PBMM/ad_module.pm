@@ -38,7 +38,9 @@ sub new {
 }
 
 sub input_form {
-    return '';
+    my ($self, %arg) = @_;
+    my ($element) = $arg{element};
+    return $element->child('size')->data;
 }
 
 
