@@ -6,6 +6,16 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Made changes in media UI to:
+
+1. add 'publish to preview' button and underlying functionality
+2. cause 'publish' button in edit screen to also preview the media
+3. remove the 'reset' button.
+4. have the 'Publish' button appear on the new media screen, no need to 
+have to click save first. [Matt]
+
 =item *
 
 Small bugfix to the Solaris C<Platform.pm> [Joseph Sacco]
