@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
-use Benchmark qw(timethis);
 use Krang;
 use Krang::Element;
+use Krang::Benchmark qw(run_benchmark);
 
 $|++;
 
@@ -9,41 +9,39 @@ $|++;
 $n = 100;
 
 # time creating new element trees, without saving them
-print "\n", "=" x 79, "\nCreating ", ($n * 4), " element trees in memory.\n";
-timethis($n * 4, \&create_tree);
-print "=" x 79, "\n\n";
+run_benchmark(module => 'Krang::Element',
+              name   => 'create tree in memory',
+              count  => $n * 4, 
+              code   => \&create_tree);
 
 # time creating new element trees, saving to the database
-print "\n", "=" x 79, "\nCreating $n element trees in the db.\n";
 my @ids;
-timethis($n, 
-         sub {
-             my $e = create_tree();
-             $e->save(); 
-             push(@ids, $e->element_id);
-         });
-print "=" x 79, "\n\n";
+run_benchmark(module => 'Krang::Element',
+              name   => 'create tree in db',
+              count  => $n, 
+              code   => sub {
+                  my $e = create_tree();
+                  $e->save(); 
+                  push(@ids, $e->element_id);
+              });
 
 # time loading element trees by id
-print "\n", "=" x 79, "\nLoading $n element trees by ID.\n";
 my $i = 0;
-timethis($n, 
-         sub {
-             my $e = Krang::Element->find(element_id => $ids[$i++]);
-         });
-print "=" x 79, "\n\n";
+run_benchmark(module => 'Krang::Element',
+              name   => 'load by ID',
+              count  => $n, 
+              code   => sub {
+                  my $e = Krang::Element->find(element_id => $ids[$i++]);
+              });
 
 # time deleting element trees by id
-print "\n", "=" x 79, "\nDeleting $n element trees.\n";
 $i = 0;
-timethis($n, 
-         sub {
-             Krang::Element->delete($ids[$i++]);
-         });
-print "=" x 79, "\n\n";
-
-
-
+run_benchmark(module => 'Krang::Element',
+              name   => 'delete',
+              count  => $n, 
+              code   => sub {
+                  Krang::Element->delete($ids[$i++]);
+              });
 
 # create a "normal" element tree
 sub create_tree {
