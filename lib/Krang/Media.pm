@@ -1248,8 +1248,9 @@ sub checkin {
         unless ($self->may_edit);
 
     $dbh->do('UPDATE media SET checked_out_by = NULL WHERE media_id = ?', undef, $media_id);
-    
-    $self->{checked_out_by}= $user_id;
+
+    $self->{checked_out_by} = undef;
+
     add_history( object => $self,
                  action => 'checkin' );
 }
