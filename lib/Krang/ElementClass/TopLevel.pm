@@ -178,6 +178,26 @@ The default implementation returns 1 (true) in all cases.
 sub use_category_templates { 1 }
 
 
+=item C<< $bool = $class->publish_category_per_page(element => $element) >>
+
+This method is called during the publish/preview process.  If true, it
+will re-publish the category element for each page in the story,
+passing the current page number and total number of pages to the
+category element.  The published output will be matched only with the
+current page.
+
+If false, the category element will be published once, and its output
+will be matched up with each story page.
+
+The default implementation returns 0 (false) in all cases.
+
+Override this method to return 1 (true) if you want to generate
+content on category templates varies for each page in a story.
+
+=cut
+
+sub publish_category_per_page { 0 }
+
 =back
 
 =cut

@@ -4,6 +4,15 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+
+=item *
+
+Added C<publish_category_per_page()> to
+L<Krang::ElementClass::TopLevel>.  This method will soon be used by
+L<Krang::Publisher> to determine whether or not to publish category
+elements once for each page in a story, or once for all pages in a
+story.  [Peter]
+
 =item *
 
 Added automatic height and width data to the Default::image element. 
