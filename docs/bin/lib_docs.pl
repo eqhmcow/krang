@@ -16,6 +16,8 @@ find({ wanted => \&process,
 
 sub process {
     return unless /.pm$/;
+    return if /^\./ or /^#/; # ignore emacs droppings
+
     my ($name) = /lib\/(.*?)\.pm/;
     my $fname = lc($name);
     $fname =~ s!/!_!g;
@@ -24,7 +26,7 @@ sub process {
 
     # get short desc line from POD
     my $desc = "";
-    open(PM, $_) or die $!;
+    open(PM, $_) or die "Can't open $_: $!";
     while(my $line = <PM>) {
         next unless $line =~ /^=head1 NAME/;        
         last;
