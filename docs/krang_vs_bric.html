@@ -3,6 +3,7 @@
 <title>Krang VS Bricolage Comparison</title>
 </head>
 
+<LINK REL="stylesheet" HREF="docs.css" TYPE="text/css">
 <style type="text/css"><!--
   th      { border-bottom: 1px solid black }
   td      { border-right: 1px solid #555;
@@ -26,6 +27,15 @@
 
 <p>
 
+<ul>
+<li><a href="#features">Feature Comparison</a></li>
+<li><a href="#complexity">Complexity Comparison</a></li>
+</ul>
+
+<p>
+
+<h2><a name="features">Features</a></h2>
+
 Krang was designed as a replacement for our usage of Bricolage.
 During the design of Krang features not found in Bricolage were added
 and some Bricolage features were removed.  This page provides a
@@ -34,7 +44,7 @@ examples of things that stayed the same in Krang.
 
 <p>
 
-<table border=0 cellspacing=0 width=50%>
+<table border=0 cellspacing=0 width=70%>
 <tr>
   <th width=40% align=left>Feature</th>
   <th width=20%>Krang 1.0</th>
@@ -352,7 +362,72 @@ examples of things that stayed the same in Krang.
   <td class="yes">Yes</td>
 </tr>
 
+<tr>
+  <td>Timezone Support</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
 </table>
+
+<h2><a name="complexity">Complexity</a></h2>
+
+Bricolage's enormous complexity created many problems for us.  Krang
+is designed to replace our usage of Bricolage with as simple a code
+base as possible.  While measuring complexity isn't a science, certain
+pieces of data express the relative simplicity of Krang:
+
+<p>
+
+<table border=0 cellspacing=0 width=70%>
+<tr>
+  <th width=40% align=left>Metric</th>
+  <th width=20%>Krang 1.0</th>
+  <th width=20%>Bricolage 1.4.6</th>
+</tr>
+
+<tr>
+  <td>Perl Modules</td>
+  <td class="yes">67</td>
+  <td class="no">157</td>
+</tr>
+
+<tr>
+  <td>Perl Module Lines</td>
+  <td class="yes">29,429</td>
+  <td class="no">112,201</td>
+</tr>
+
+<tr>
+  <td>Perl Module <a href="http://www.dwheeler.com/sloccount/">SLOC</a></td>
+  <td class="yes">13,599</td>
+  <td class="no">25,478</td>
+</tr>
+
+
+
+<tr>
+  <td>HTML::Template templates / HTML::Mason components</td>
+  <td class="yes">39</td>
+  <td class="no">130</td>
+</tr>
+
+<tr>
+  <td>HTML::Template template lines / HTML::Mason component lines</td>
+  <td class="yes">4,878</td>
+  <td class="no">15,146</td>
+</tr>
+
+
+<tr>
+  <td>Database Tables</td>
+  <td class="yes">33</td>
+  <td class="no">145</td>
+</tr>
+
+</table>
+
+<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;
 
 </body>
 </html>
