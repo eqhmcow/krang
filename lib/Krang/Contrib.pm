@@ -218,7 +218,7 @@ last
 
 =item 
 
-full name - will search first, middle, last for matching strings
+full_name - will search first, middle, last for matching LIKE strings
 
 =item * 
 
@@ -249,7 +249,77 @@ count - return only a count if this is set to true. Cannot be used with only_ids
 =cut
 
 sub find {
+    my $self = shift;
+    my %args = @_;
+    my $dbh = dbh;
+    my @where;
+    my @contrib_object;
+    
+    my $order_by =  $args{'order_by'} ? join(',',$args{'order_by'}) : 'last,first';
+    my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
+    my $limit = $args{'limit'} ? $args{'limit'} : undef;
+    my $offset = $args{'offset'} ? $args{'offset'} : 0;
 
+    foreach my $key (keys %args) {
+        if ( ($key eq 'contrib_id') || ($key eq 'first') || ($key eq 'last') ) {
+            push @where, $key;
+        }
+    }
+
+    my $where_string = join ' and ', (map { "$_ = ?" } @where);
+
+    if ($args{'full_name'}) {
+        my @words = split(/\s+/, $args{'full_name'});
+
+        foreach my $word (@words) {
+            if ($where_string) {
+               $where_string .= " and first like ? or middle like ? or last like ?"; 
+            } else {
+                $where_string = "first like ? or middle like ? or last like ?";
+            }
+            push (@where, $word, $word, $word);
+        }
+
+    } 
+    
+    my $select_string;
+    if ($args{'count'}) {
+        $select_string = 'count(*)';
+    } elsif ($args{'only_ids'}) {
+        $select_string = 'contrib_id';
+    } else {
+        $select_string = join(',', FIELDS);
+    }
+
+    my $sql = "select $select_string from contrib where ".$where_string." order by $order_by $order_desc";
+  
+    # add limit and/or offset if defined
+    if ($limit) {
+       $sql .= " limit $offset, $limit";
+    } elsif ($offset) {
+        $sql .= " limit $offset, -1";
+    }
+
+    my $sth = $dbh->prepare($sql);
+    $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
+    while (my $row = $sth->fetchrow_hashref()) {
+        my $obj;
+        if ($args{'count'}) {
+            return $row->{count};
+        } elsif ($args{'only_ids'}) {
+            $obj = $row->{contrib_id};
+        } else {
+            $obj = bless {}, $self;
+            foreach my $field (FIELDS) {
+                if ($row->{$field}) {
+                    $obj->{$field} = $row->{$field};
+                }
+            }
+        }
+        push (@contrib_object,$obj);
+    }
+    $sth->finish();
+    return wantarray ? @contrib_object: \@contrib_object;
 }
 
 =back
