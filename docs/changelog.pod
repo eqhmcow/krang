@@ -4,6 +4,11 @@ This document contains a list of changes for each release of Krang.
 
 =head2 v1.026 - Under Development
 
+=item *
+
+Fixed browser detection to deal with 1.0 prerelease of Firefox, which
+gives a version number of 0.10.  [Aaron Ross]
+
 =head2 v1.025 - October 1, 2004
 
 =over
