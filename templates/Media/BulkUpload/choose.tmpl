@@ -3,7 +3,11 @@
 <form name="upload_form" method="post" enctype="multipart/form-data">
 <table cellspacing="0" width="100%" class="form-box">
 <tr><th class="form-head" align="left">FTP Upload</th></tr>
-<tr><td>(Windows IE or for use with an external FTP client)<br><a href="javascript:window.open('ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media')">ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media</a></td></td>
+<tr><td>(Windows IE or for use with an external FTP client)
+<br>
+<a target="media_bulkupload" href="ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media">ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media</a>
+
+</td></td>
 </table>
 <br>
 <table cellspacing="0" width="100%" class="form-box">
