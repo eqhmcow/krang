@@ -459,11 +459,11 @@ sub _progress_callback {
     my $endtime = tv_interval(\@assettime);
 
     if ($object->isa('Krang::Story')) {
-        $string .= sprintf("Publishing story_id=%i (time=%.02f url=%s)", $object->story_id, $endtime, $object->url);
+        $string .= sprintf("Published story_id=%i (time=%.02f url=%s)", $object->story_id, $endtime, $object->url);
         $storycount++;
         $total_storytime += $endtime;
     } elsif ($object->isa('Krang::Media')) {
-        $string .= sprintf("Publishing media_id=%i (time=%.02f url=%s)", $object->media_id, $endtime, $object->url);
+        $string .= sprintf("Published media_id=%i (time=%.02f url=%s)", $object->media_id, $endtime, $object->url);
         $mediacount++;
         $total_mediatime += $endtime;
     } else {

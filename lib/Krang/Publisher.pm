@@ -238,10 +238,6 @@ sub preview_story {
     my @paths;
     foreach my $object (@$publish_list) {
 
-        $callback->(object  => $object,
-                    total   => $total,
-                    counter => $counter++) if $callback;
-
         if ($object->isa('Krang::Story')) {
             debug('Publisher.pm: Previewing story_id=' . $object->story_id());
             @paths = $self->_build_story_single_category(story    => $object,
@@ -258,6 +254,11 @@ sub preview_story {
             debug('Publisher.pm: Previewing media_id=' . $object->media_id());
             $self->preview_media(media => $object);
         }
+
+        $callback->(object  => $object,
+                    total   => $total,
+                    counter => $counter++) if $callback;
+
     }
 
 
@@ -334,11 +335,6 @@ sub publish_story {
                 }
             }
 
-            # don't make callbacks on media, that's handled in publish_media().
-            $callback->(object  => $object,
-                        total   => $total,
-                        counter => $counter++) if $callback;
-
             my @paths = $self->_build_story_all_categories(story => $object);
 
             # fix up publish locations
@@ -347,6 +343,11 @@ sub publish_story {
                                               preview => 0);
             # mark as published.
             $object->mark_as_published();
+
+            # don't make callbacks on media, that's handled in publish_media().
+            $callback->(object  => $object,
+                        total   => $total,
+                        counter => $counter++) if $callback;
 
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object, %args);
@@ -504,16 +505,17 @@ sub publish_media {
             }
         }
 
-        $callback->(object => $media_object,
-                    total  => $total,
-                    counter => $counter++) if $callback;
-
         push @urls, $self->_write_media(media => $media_object);
 
         # log event
         add_history(object => $media_object, action => 'publish');
 
         $media_object->mark_as_published();
+
+        $callback->(object => $media_object,
+                    total  => $total,
+                    counter => $counter++) if $callback;
+
 
     }
 
