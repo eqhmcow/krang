@@ -1,0 +1,358 @@
+<html>
+<head>
+<title>Krang VS Bricolage Comparison</title>
+</head>
+
+<style type="text/css"><!--
+  th      { border-bottom: 1px solid black }
+  td      { border-right: 1px solid grey;
+            border-bottom: 1px solid grey; }
+  .yes    { background-color: #aaffaa;
+            text-align: center;
+          }
+  .no     { background-color: #ffaaaa;
+            text-align: center;
+          }
+  .section { padding-top: 10px;
+             padding-bottom: 3px;
+             border-right: none; 
+             font-weight: bold;
+           }
+--></style>
+
+<body>
+
+<h1>Krang VS Bricolage Comparison</h1>
+
+<p>
+
+Krang was designed as a replacement for our usage of Bricolage.
+During the design of Krang features not found in Bricolage were added
+and some Bricolage features were removed.  This page provides a
+summary of the most important of these changes, as well as some
+examples of things that stayed the same in Krang.
+
+<p>
+
+<table border=0 cellspacing=0 width=50%>
+<tr>
+  <th width=40% align=left>Feature</th>
+  <th width=20%>Krang 1.0</th>
+  <th width=20%>Bricolage 1.4.6</th>
+</tr>
+
+<tr><td colspan=3 class=section>Stories</td></tr>
+
+<tr>
+  <td>Add Contributor During Story Edit</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Scheduled Republishing</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Schedule Publish By Version</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Publish From Anywhere In UI</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Story Workflow</td>
+  <td class="yes">Yes</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Publishing via FTP</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Publishing via SCP</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Integrated Source Support</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr><td colspan=3 class=section>Media</td></tr>
+
+<tr>
+  <td>Upload Media During Story Edit</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>FTP Interface for Media</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Media Archive Upload</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Media Workflow</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Media Keywords</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr><td colspan=3 class=section>Templates</td></tr>
+
+<tr>
+  <td>Template Testing Facility</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>HTML::Template Support</td>
+  <td class="yes">Yes</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>HTML::Mason Support</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Template Workflow</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr><td colspan=3 class=section>Element Classes</td></tr>
+
+<tr>
+  <td>Centralized Element Class Library</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Extensible Element Class System</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Categories Have Elements</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Media Objects Have Elements</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Element Classes Editable by Non-Programmers</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr><td colspan=3 class=section>XML</td></tr>
+
+<tr>
+  <td>XML Import/Export for Assets</td>
+  <td class="yes">Yes</td>
+  <td class="yes">Yes</td>
+</tr>
+
+
+<tr>
+  <td>XML Import/Export for All Objects</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Runtime XML Schema Validation</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>SOAP Interface</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+
+<tr><td colspan=3 class=section>User Interface</td></tr>
+
+<tr>
+  <td>All Lists Include Paging</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>All Lists Include Check-all Controls</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Hierarchical Category Picker</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Leaving an Editor Without Saving Warns</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Integrated Bug-Reporting</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr><td colspan=3 class=section>Permissions</td></tr>
+
+<tr>
+  <td>Configurable User Groups</td>
+  <td class="yes">Yes</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Supports Hiding Assets and Applications</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Configurable Object Groups</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr><td colspan=3 class=section>Database</td></tr>
+
+<tr>
+  <td>Delete Really Deletes From DB</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>MySQL Support</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>PostgreSQL Support</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr><td colspan=3 class=section>Apache</td></tr>
+
+<tr>
+  <td>Multiple Instances in One Apache Process</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Must Control Entire Virtual Host</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+
+<tr><td colspan=3 class=section>General</td></tr>
+
+<tr>
+  <td>Integrated Multi-Site Publishing</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>User Preferences</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Complete Automated Test Suite</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Support for Netscape/6+, Mozilla/1+, IE/5+</td>
+  <td class="yes">Yes</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Support for Netscape/4.x, IE/4.x</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Email Alerts</td>
+  <td class="yes">Yes</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Jabber Alerts</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Output Channels</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+<tr>
+  <td>Unicode Support</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+</table>
+
+</body>
+</html>
