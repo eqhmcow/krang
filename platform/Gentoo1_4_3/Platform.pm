@@ -53,4 +53,25 @@ sub finish_installation {
     chdir $old;
 }
 
+
+sub post_install_message {
+
+    my ($pkg, %arg) = @_;
+    my %options = %{$arg{options}};
+
+    $pkg->SUPER::post_install_message(%arg);
+
+    # return a note about setting up krang_ctl on boot.
+    my $init_script = "krang-". $options{HostName};
+
+    print <<EOREPORT;
+
+   To make Krang start on boot, run the following command as root:
+   rc-update add $init_script boot
+
+EOREPORT
+
+}
+
+
 1;
