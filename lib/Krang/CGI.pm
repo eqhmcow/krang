@@ -52,14 +52,12 @@ use Krang::User;
 # Krang sessions
 use Krang::Session qw/%session/;
 
-
 # Set up HTML_TEMPLATE_ROOT for templates
 BEGIN {
     # use $KRANG_ROOT/templates for templates
     my $html_template_root = catdir(KrangRoot, "templates");
     $ENV{HTML_TEMPLATE_ROOT} = $html_template_root unless (defined($ENV{HTML_TEMPLATE_ROOT}));
 }
-
 
 sub load_tmpl {
     my $pkg = shift;
@@ -82,6 +80,14 @@ sub load_tmpl {
 sub run {
     my $self = shift;
     my @args = ( @_ );
+
+    # setup instance if not running in mod_perl
+    unless($ENV{MOD_PERL}) {
+        my $instance = exists $ENV{KRANG_INSTANCE} ? 
+          $ENV{KRANG_INSTANCE} : (Krang::Conf->instances())[0];
+        debug("Krang.pm:  Setting instance to '$instance'");
+        Krang::Conf->instance($instance);
+    }
 
     # Load and unload session ONLY if we have a session ID set
     my $we_loaded_session = 0;

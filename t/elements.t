@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use Krang;
+use Krang::Script;
 BEGIN { use_ok('Krang::Element') }
 
 my $element = Krang::Element->new(class => "article");

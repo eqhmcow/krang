@@ -2,7 +2,7 @@ use Test::More tests => 4;
 use strict;
 use warnings;
 
-use Krang;
+use Krang::Script;
 use Krang::Conf;
 use Krang::DB qw(dbh forget_dbh); 
 

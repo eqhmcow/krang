@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use Krang;
+use Krang::Script;
 BEGIN { ok(1) }
 use Krang::Session qw(%session);
 

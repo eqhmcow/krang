@@ -265,4 +265,14 @@ sub find_class {
 
 =cut
 
+# load all configured element sets
+BEGIN {
+    my $cur_instance = Krang::Conf->instance();
+    foreach my $instance (Krang::Conf->instances()) {
+        Krang::Conf->instance($instance);
+        Krang::ElementLibrary->load_set(set => ElementSet());
+    }
+    Krang::Conf->instance($cur_instance);
+}
+
 1;

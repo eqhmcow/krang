@@ -2,7 +2,7 @@ use Test::More qw(no_plan);
 use strict;
 use warnings;
 
-use Krang;
+use Krang::Script;
 use Krang::Conf qw(ElementSet);
 BEGIN { use_ok('Krang::ElementLibrary') }
 

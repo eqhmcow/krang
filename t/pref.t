@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Krang;
+use Krang::Script;
 
 use Test::More qw(no_plan);
 

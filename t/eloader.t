@@ -1,7 +1,7 @@
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use Krang;
+use Krang::Script;
 use Krang::Conf qw(KrangRoot ElementLibrary);
 use Krang::ElementLibrary;
 use File::Spec::Functions qw(catfile catdir);

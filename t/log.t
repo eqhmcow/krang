@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Krang;
+use Krang::Script;
 use Test::More 'no_plan';
 
 # make sure it loads
