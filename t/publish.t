@@ -22,6 +22,7 @@ use_ok('Krang::Publisher');
 
 my $template_dir = 't/publish/';
 
+
 # Site params
 my $preview_url = 'publishtest.preview.com';
 my $publish_url = 'publishtest.com';
@@ -38,6 +39,7 @@ my $page_output = "<h1>$head1</h1>THIS IS A VERY WIDE PAGE<p>$para1</p><p>$para2
 my $category1   = 'CATEGORY1 'x5;
 my $category2   = 'CATEGORY2 'x5;
 my $category3   = 'CATEGORY3 'x5;
+my $story_title = 'Test Title';
 
 my $category1_head = 'THIS IS HEADS' . $category1 . '---';
 my $category1_tail = '---' . $category1 . 'THIS IS TAILS';
@@ -54,9 +56,9 @@ my $category3_tail = '---' . $category3 . 'THIS IS TAILS';
 my $category3_output = $category3_head . Krang::Publisher->content() . $category3_tail;
 #my $article3_output = 
 
-my %article_output = (3 => $category3_head .  "<title>Test Title</title><h1>Test Title</h1><b>$deck1</b>" . $page_output . $category3_tail,
-                      2 => $category2_head .  "<title>Test Title</title><h1>Test Title</h1><b>$deck1</b>" . $page_output . $category2_tail,
-                      1 => $category1_head .  "<title>Test Title</title><h1>Test Title</h1><b>$deck1</b>" . $page_output . $category1_tail
+my %article_output = (3 => $category3_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $category3_tail,
+                      2 => $category2_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $category2_tail,
+                      1 => $category1_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $category1_tail
 );
 
 # list of templates to delete at the end of this all.
@@ -132,6 +134,7 @@ for (my $i = 0; $i <= $#paths; $i++) { ok($paths[$i] eq $dirs_a[$i], 'Krang::Pub
 my $story   = &create_story([$category, $child_cat, $child_subcat]);
 my $story2  = &create_story([$category], [$story]);
 my $element = $story->element();
+my $media   = &create_media();
 
 &deploy_templates();
 
@@ -146,6 +149,7 @@ END {
     }
     $story2->delete();
     $story->delete();
+    $media->delete();
 }
 
 
@@ -232,47 +236,11 @@ ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- comp
 # test publisher->preview_story
 &check_preview_story($story);
 
-my $media = &create_media();
+&test_media_deploy($media);
 
-END { $media->delete(); }
-
-# test media deployment.
-my $pub_expected_path = catfile($publish_path, $media->url());
-
-my $pub_media_url = $publisher->publish_media(media => $media);
-
-my $pub_media_path = catfile($publish_path, $pub_media_url);
-
-ok($pub_expected_path eq $pub_media_path, 'Krang::Publisher->publish_media()');
+&test_storylink($story2, $story);
 
 
-my $prev_expected_path = catfile($preview_path, $media->url());
-
-my $prev_media_url = $publisher->preview_media(media => $media);
-
-my $prev_media_path = catfile($preview_path, $prev_media_url);
-
-ok($prev_expected_path eq $prev_media_path, 'Krang::Publisher->preview_media()');
-
-
-# test related story - add a storylink from one story to the other.
-$publisher->{story} = $story2;
-$publisher->{is_publish} = 1;
-$publisher->{is_preview} = 0;
-
-my $page2 = $story2->element()->child('page');
-my $storylink = $page2->child('leadin');
-
-my $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
-
-ok($story_href eq $story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
-
-$publisher->{is_publish} = 0;
-$publisher->{is_preview} = 1;
-
-$story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
-
-ok($story_href eq $story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
 
 
 
@@ -286,6 +254,86 @@ ok($story_href eq $story->preview_url(), 'Krang::ElementClass::StoryLink->publis
 #
 # SUBROUTINES.
 #
+
+
+# Test to make sure Krang::Publisher->publish/preview_media works.
+sub test_media_deploy {
+
+    my $media = shift;
+
+    # test media deployment.
+    my $pub_expected_path = catfile($publish_path, $media->url());
+
+    my $pub_media_url = $publisher->publish_media(media => $media);
+
+    my $pub_media_path = catfile($publish_path, $pub_media_url);
+
+    ok($pub_expected_path eq $pub_media_path, 'Krang::Publisher->publish_media()');
+
+
+    my $prev_expected_path = catfile($preview_path, $media->url());
+
+    my $prev_media_url = $publisher->preview_media(media => $media);
+
+    my $prev_media_path = catfile($preview_path, $prev_media_url);
+
+    ok($prev_expected_path eq $prev_media_path, 'Krang::Publisher->preview_media()');
+
+}
+
+
+# test to make sure Krang::ElementClass::StoryLink->publish works as expected.
+sub test_storylink {
+
+    my ($src_story, $dest_story) = @_;
+
+    # test related story - add a storylink from one story to the other.
+    $publisher->{story} = $src_story;
+    $publisher->{is_publish} = 1;
+    $publisher->{is_preview} = 0;
+
+    my $page = $src_story->element()->child('page');
+    my $storylink = $page->child('leadin');
+
+    # w/ deployed template - make sure it works w/ template.
+    my $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+    my $resulting_link = '<a href="' . $dest_story->url() . '">' . $dest_story->title() . '</a>';
+    chomp ($story_href);
+
+    ok($story_href eq $resulting_link, 'Krang::ElementClass::StoryLink->publish() -- publish w/ template');
+
+    $publisher->{is_publish} = 0;
+    $publisher->{is_preview} = 1;
+
+    $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+    $resulting_link = '<a href="' . $dest_story->preview_url() . '">' . $dest_story->title() . '</a>';
+    chomp ($story_href);
+
+    ok($story_href eq $resulting_link, 'Krang::ElementClass::StoryLink->publish() -- preview w/ template');
+
+
+    $publisher->{is_publish} = 1;
+    $publisher->{is_preview} = 0;
+
+    # undeploy template - make sure it works w/ no template.
+    $publisher->undeploy_template(template => $template_deployed{leadin});
+
+    $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+
+    ok($story_href eq $dest_story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
+
+    $publisher->{is_publish} = 0;
+    $publisher->{is_preview} = 1;
+
+    $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+
+    ok($story_href eq $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
+
+    # re-deploy template.
+    $publisher->deploy_template(template => $template_deployed{leadin});
+
+
+}
 
 
 
@@ -444,7 +492,7 @@ sub create_story {
     my ($categories, $linked_story) = @_;
 
     my $story = Krang::Story->new(categories => $categories,
-                                  title      => "Test Title",
+                                  title      => $story_title,
                                   slug       => 'TEST-SLUG-' . int(rand(255)),
                                   class      => "article");
 
