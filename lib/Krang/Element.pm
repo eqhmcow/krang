@@ -2,12 +2,14 @@ package Krang::Element;
 use strict;
 use warnings;
 
-
-# export before using other libs - prevents library load loop.
-require Exporter;
-our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(foreach_element);
-
+# declare prototypes
+sub foreach_element (&@);
+our (@ISA, @EXPORT_OK);
+BEGIN {
+    require Exporter;
+    our @ISA = qw(Exporter);
+    our @EXPORT_OK = qw(foreach_element);
+}
 
 use Krang::ElementLibrary;
 use Krang::ElementClass;
@@ -18,10 +20,6 @@ use Carp qw(croak);
 use Krang::Log qw(assert ASSERT debug info);
 use Storable qw(freeze thaw);
 use Krang::Cache;
-
-# declare prototypes
-sub foreach_element (&@);
-
 
 =head1 NAME
 
