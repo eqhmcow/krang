@@ -308,6 +308,9 @@ sub preview_story {
                         category_url  => $@->category_url,
                         error_msg     => $@->error_msg
                        );
+        } elsif (ref $@ and $@->isa('Krang::Publisher::FileWriteError')) {
+            add_message('file_write_error',
+                        path          => $@->destination);
         } else {
             # something not expected so log the error.  Can't croak()
             # here because that will trigger bug.pl.
@@ -371,12 +374,35 @@ sub preview_media {
         croak("Unable to load media from sesssion '$session_key'")
           unless $media;
     }
-
+    
     my $publisher = Krang::Publisher->new();
-    my $url = $publisher->preview_media(media => $media);
+    my $url;
+    eval { $url = $publisher->preview_media(media => $media); };
+    if (my $e = $@) {
+        # load the error screen template, one way or another we'll
+        # need it.
+        my $template = $self->load_tmpl('media_error.tmpl');
+        my @error_loop;
 
-    # this should always be true
-    assert($url eq $media->preview_url) if ASSERT;
+        if (ref $e and $e->isa('Krang::Publisher::FileWriteError')) {
+            add_message('file_write_error',
+                        path          => $e->destination);
+            # put the messages on the screen
+            foreach my $err (get_messages()) {
+                push(@error_loop, { err => $err });
+            }
+            clear_messages();
+        } else {
+            # something not expected so log the error.  Can't croak()
+            # here because that will trigger bug.pl.
+            push(@error_loop, 'An internal server error occurred.  Please check the error logs for details.');
+            critical($e);
+        }
+
+        # finish the error screen
+        $template->param(error_loop => \@error_loop);
+        return $template->output;
+    }
 
     # redirect to preview
     $self->header_type('redirect');
@@ -505,6 +531,9 @@ sub _publish_assets_now {
                             category_url  => $@->category_url,
                             error_msg     => $@->error_msg
                            );
+            } elsif (ref $@ and $@->isa('Krang::Publisher::FileWriteError')) {
+                add_message('file_write_error',
+                            path          => $@->destination);
             } else {
                 # something not expected so log the error.  Can't croak()
                 # here because that will trigger bug.pl.
