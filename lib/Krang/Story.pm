@@ -33,6 +33,7 @@ use Krang::MethodMaker
                         checked_out_by
                         may_see
                         may_edit
+                        hidden
                        ) ],
   get_set_with_notify => [ { 
                             method => '_notify',
@@ -66,6 +67,7 @@ use constant STORY_FIELDS =>
       checked_out
       checked_out_by
       desk_id
+      hidden
     );
 
 # called by get_set_with_notify attibutes.  Catches changes that must
@@ -424,6 +426,12 @@ sub class {
 
 =item C<checked_out_by> (readonly)
 
+=item C<hidden> (readonly)
+
+Whether or not the story is by default hidden from C<find()>.  This is
+determined by the story class, and set in
+L<Krang::ElementClass::TopLevel>.
+
 =back
 
 =cut
@@ -465,6 +473,9 @@ sub init {
     # get hash of url_attributes
     $self->{url_attributes} = 
       { map { $_ => 1 } $self->class->url_attributes };
+
+    # determine if this story should be hidden or not
+    $self->{hidden} = $self->class->hidden;
 
     # setup defaults
     $self->{version}           = 0;
@@ -960,6 +971,23 @@ Output field to sort by.  Defaults to 'story_id'.
 Results will be in sorted in ascending order unless this is set to 1
 (making them descending).
 
+=item show_hidden
+
+Returns all stories, not just those where C<< Krang::Story->hidden() >>
+is false.
+
+If you are developing an element set, you may or may not want this
+option - See L<Krang::ElementClass::TopLevel> for more information on
+C<hidden()>.
+
+B<NOTE:> C<show_hidden> is automatically enabled if any of the
+following search terms are used: C<story_id>, C<checked_out>,
+C<checked_out_by>, C<class>, C<desk_id>, C<may_see>, C<may_edit>.
+
+B<WARNING - A NOTE TO KRANG DEVELOPERS:> Be aware that unless the
+above search terms are used, you B<MUST> use this modifier whenever UI
+or bin/ scripts make calls to C<find()>!
+
 =back
 
 =cut
@@ -975,12 +1003,19 @@ sub find {
     my $dbh = dbh();
 
     # get search parameters out of args, leaving just field specifiers
-    my $order_by  = delete $args{order_by} || 's.story_id';
-    my $order_dir = delete $args{order_desc} ? 'DESC' : 'ASC';
-    my $limit     = delete $args{limit}    || 0;
-    my $offset    = delete $args{offset}   || 0;
-    my $count     = delete $args{count}    || 0;
-    my $ids_only  = delete $args{ids_only} || 0;
+    my $order_by    = delete $args{order_by}    || 's.story_id';
+    my $order_dir   = delete $args{order_desc}  ? 'DESC' : 'ASC';
+    my $limit       = delete $args{limit}       || 0;
+    my $offset      = delete $args{offset}      || 0;
+    my $count       = delete $args{count}       || 0;
+    my $ids_only    = delete $args{ids_only}    || 0;
+
+    # determine whether or not to display hidden stories.
+    my $show_hidden = delete $args{show_hidden} || 0;
+
+    foreach (qw/story_id checked_out checked_out_by class desk_id may_see may_edit/) {
+        if (exists($args{$_})) { $show_hidden = 1; last; }
+    }
 
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
@@ -995,7 +1030,7 @@ sub find {
     # loading a past version is handled by _load_version()
     return $pkg->_load_version($args{story_id}, $args{version})
       if $args{version};
-    
+
     my (@where, @param, %from, $like);
     while (my ($key, $value) = each %args) {
         # strip off and remember _like specifier
@@ -1008,7 +1043,7 @@ sub find {
               join(',', ("?") x @$value) . ')';
             push @param, @$value;
             next;
-        }                      
+        }
 
         # handle class => ['article', 'cover']
         if ($key eq 'class' and ref($value) and ref($value) eq 'ARRAY') {
@@ -1017,7 +1052,7 @@ sub find {
               join(',', ("?") x @$value) . ')';
             push @param, @$value;
             next;
-        }                      
+        }
 
         # handle simple fields
         if (exists $simple_fields{$key}) {
@@ -1261,10 +1296,15 @@ sub find {
     } elsif ($order_by !~ /\w+\./) {
         $order_by = "s." . $order_by;
     }
-   
+
+    # restrict to visible stories unless show_hidden is passed.
+    unless ($show_hidden) {
+        push(@where, 's.hidden = 0');
+    }
+
     # always restrict perm checking to primary category
     push(@where, 'sc_p.ord = 0');
-        
+
     # construct base query
     my $query;
     my $from = " FROM story AS s 
@@ -1719,7 +1759,7 @@ if the story is checked out to another user.
 =cut
 
 sub delete {
-    my $self = shift;    
+    my $self = shift;
     unless(ref $self) {
         my $story_id = shift;
         ($self) = Krang::Story->find(story_id => $story_id);
@@ -1730,7 +1770,7 @@ sub delete {
     # Is user allowed to otherwise edit this object?
     Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
         unless ($self->may_edit);
-    
+
     # unpublish
     Krang::Publisher->new->unpublish_story(story => $self);
 
@@ -1747,7 +1787,7 @@ sub delete {
     $dbh->do('DELETE FROM story_contrib WHERE story_id = ?',
              undef, $self->{story_id});
     $self->element->delete;
-    
+
     # delete schedules for this story
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?', undef, 'story', $self->{story_id});
 }
@@ -2008,9 +2048,9 @@ sub deserialize_xml {
                                                     'data',
                                                    ],
                                   suppressempty => 1);
-    
+
     # is there an existing object?
-    my ($story) = Krang::Story->find(url => $data->{url}[0]);
+    my ($story) = Krang::Story->find(url => $data->{url}[0], show_hidden => 1);
     if ($story) {
 
         # if primary url of this imported story matches a non-primary
@@ -2038,7 +2078,7 @@ sub deserialize_xml {
         # check if any of the secondary urls match existing stories
         # and fail if so
         for (my $count = 1; $count < @{$data->{url}}; $count++) {
-            my ($found) = Krang::Story->find(url => $data->{url}[$count]);
+            my ($found) = Krang::Story->find(url => $data->{url}[$count], show_hidden => 1);
             Krang::DataSet::DeserializationFailed->throw(
                 message => "A story object with url '$data->{url}[$count]' already exists, which conflicts with one of this storys secondary URLs.") if $found;
         }

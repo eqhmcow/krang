@@ -16,6 +16,8 @@ CREATE TABLE story (
         element_id      INT UNSIGNED NOT NULL,
         class           VARCHAR(255) NOT NULL,
 
+        hidden          BOOL NOT NULL DEFAULT 0,
+
         checked_out     BOOL NOT NULL,
         checked_out_by  INT UNSIGNED NOT NULL,
 

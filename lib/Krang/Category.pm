@@ -515,7 +515,12 @@ sub dependent_check {
     # get other dependencies
     for my $type(qw/Media Story Template/) {
         no strict 'subs';
-        for ("Krang::$type"->find(category_id => $id)) {
+
+        my %find_args = ($type eq 'Story') ?
+          (category_id => $id, show_hidden => 1) :
+            (category_id => $id);
+
+        for ("Krang::$type"->find(%find_args)) {
             my $field = lc $type . "_id";
             push @{$info{lc($type)}}, $_->$field;
             $dependents++;
@@ -523,7 +528,7 @@ sub dependent_check {
     }
 
     Krang::Category::Dependent->throw(message => "Category cannot be deleted.".
-                                      "  Objects depend on its exsitence.",
+                                      "  Objects depend on its existence.",
                                       dependents => \%info)
         if $dependents;
 
@@ -653,8 +658,7 @@ sub children {
     my $self = shift;
     my %args = @_;
 
-    return 
-      Krang::Category->find(parent_id => $self->category_id, %args);
+    return Krang::Category->find(parent_id => $self->category_id, %args);
 }
 
 

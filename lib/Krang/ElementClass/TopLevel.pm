@@ -140,11 +140,11 @@ sub delete_hook {}
 =item C<< $bool = $class->publish_check(element => $element) >>
 
 This method is called before publishing the story via a scheduled
-publish job (not in the UI).  If this method returns 0 the publish
-won't happen.  This may be used to implement a "Holding" desk where
-stories won't be automatically published, for example.
+publish job (not in the UI).  If this method returns 0 (false) the
+publish won't happen.  This may be used to implement a "Holding" desk
+where stories won't be automatically published, for example.
 
-The default implementation just returns 1 in all cases.
+The default implementation just returns 1 (true) in all cases.
 
 =cut
 
@@ -159,7 +159,7 @@ false, other versioning and sanity checks (see L<Krang::Publisher> and
 L<Krang::Story>) are made to determine whether or not to publish the
 story.
 
-The default implementation returns 0 in all cases.
+The default implementation returns 0 (false) in all cases.
 
 =cut
 
@@ -199,6 +199,27 @@ content on category templates varies for each page in a story.
 =cut
 
 sub publish_category_per_page { 0 }
+
+
+=item C<< $bool = $class->hidden() >>
+
+This method sets the value of C<< Krang::Story>->hidden() >>.  If
+true, stories of this class will not return in a call to C<<
+Krang::Story->find() >> unless the parameter C<< show_hidden => 1 >>
+is set.
+
+As an example: this is useful for story classes that aren't supposed
+to show up in most-recently-published lists.  For example, the
+HREF[Krang RSS|http://krang.sourceforge.net] and HREF[Krang
+Sitemap|href://krang.sourceforge.net] addons republish nightly by
+default - neither of these story classes should show up in a cover
+displaying the most-recently-published stories.
+
+This method is false by default.
+
+=cut
+
+sub hidden { 0 }
 
 =back
 

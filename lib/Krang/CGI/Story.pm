@@ -243,13 +243,14 @@ sub check_in_and_save {
     # call internal _save and return output from it on error
     my $output = $self->_save();
     return $output if length $output;
-                                                                     
+
     my $story;
     if ($query->param('story_id')) {
         # load story from DB
-        ($story) = Krang::Story->find(story_id => $query->param('story_id'));        croak("Unable to load story '" . $query->param('story_id') . "'.")
+        ($story) = Krang::Story->find(story_id => $query->param('story_id'));
+        croak("Unable to load story '" . $query->param('story_id') . "'.")
           unless $story;
-                                                                             
+
         $query->delete('story_id');
         $session{story} = $story;
     } else {
@@ -271,7 +272,7 @@ sub check_in_and_save {
                                      join(', ', $story->class->url_attributes),
                                      "site/category"),
                    );
-                                                                                                       
+
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
         add_message('missing_category_on_save');
@@ -314,9 +315,10 @@ sub checkout_and_edit {
     my $story;
     if ($query->param('story_id')) {
         # load story from DB
-        ($story) = Krang::Story->find(story_id => $query->param('story_id'));        croak("Unable to load story '" . $query->param('story_id') . "'.")
+        ($story) = Krang::Story->find(story_id => $query->param('story_id'));
+        croak("Unable to load story '" . $query->param('story_id') . "'.")
           unless $story;
-                                                                             
+
         $query->delete('story_id');
         $session{story} = $story;
     } else {
@@ -1291,7 +1293,8 @@ sub find {
                        );
 
     # Set up find_params for pager
-    my %find_params = (may_see => 1);
+    my %find_params = (may_see => 1, show_hidden => 1);
+
     if ($do_advanced_search) {
 
         # Set up advanced search
