@@ -371,7 +371,14 @@ offset).
 
 Although it is expected that use_module will specify a Krang object
 module, any module which implements a sufficiently compatible find()
-method can be used.
+method can be used.  In this case, "sufficiently compatible" means
+the following parameters are supported:
+
+  * count
+  * order_by
+  * order_desc
+  * offset
+  * limit
 
 
 =item find_params

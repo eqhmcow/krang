@@ -263,7 +263,8 @@ sub associate_search {
     $t->param(%ui_messages) if (%ui_messages);
 
     # Set Boolean for H::T
-    $t->param(associate_story=>($q->param('associate_mode') eq 'story'));
+    my $associate_mode = $q->param('associate_mode');
+    $t->param(associate_story=>($associate_mode eq 'story'));
 
     # Get table of contrib types
     my %contrib_types = Krang::Pref->get('contrib_type');
@@ -275,26 +276,34 @@ sub associate_search {
     my $ass_contrib_count = scalar(@contribs);
     my $curr_contrib_pos = 0;
 
-    my @associated_contributors = ();
-    my %associated_contrib_id_types = ();
+    my @associated_contributors_loop = ();
+    my %associated_contrib_filter = ();
     foreach my $c (@contribs) {
         my $contrib_id = $c->contrib_id();
         my $contrib_type_id = $c->selected_contrib_type();
 
-        # Set up hash for associated removal from contrib list below
-        my $associated_contrib_id_type = sprintf("%d:%d", $contrib_id, $contrib_type_id);
-        $associated_contrib_id_types{$associated_contrib_id_type} = 1;
+        # Create entry in filter list
+        $associated_contrib_filter{$contrib_id} = {
+                                                   contrib_id => $contrib_id,
+                                                   available_type_ids => [ $c->contrib_type_ids() ],
+                                                  } unless (exists($associated_contrib_filter{$contrib_id}));
+
+        # Remove available type from associated_contrib_filter
+        $associated_contrib_filter{$contrib_id}->{'available_type_ids'} = 
+          [ grep { $_ ne $contrib_type_id } @{$associated_contrib_filter{$contrib_id}->{'available_type_ids'}} ];
 
         # Make re-order drop-down for this contrib
+        my $associated_contrib_id_type = sprintf("%d:%d", $c->contrib_id, $contrib_type_id);
         my $order_contrib_popup_menu = $q->popup_menu(
                                                       -name => 'order_contrib_' . $associated_contrib_id_type,
+                                                      -onChange => "update_order(this, 'order_contrib_')",
                                                       -values => [ (1..$ass_contrib_count) ],
                                                       -default => ++$curr_contrib_pos,
                                                       -override => 1,
                                                      );
 
         # Propagate to template loop
-        push(@associated_contributors, {
+        push(@associated_contributors_loop, {
                                         contrib_id => $contrib_id,
                                         contrib_type_id => $contrib_type_id,
                                         type => $contrib_types{$contrib_type_id},
@@ -306,54 +315,51 @@ sub associate_search {
     }
 
     # Propagate list of current contributors
-    $t->param(associated_contributors => \@associated_contributors);
+    $t->param(associated_contributors => \@associated_contributors_loop);
+
+
 
     # Do simple search based on search field
     my $search_filter = $q->param('search_filter') || '';
-    my @contributors = Krang::Contrib->find(simple_search=>$search_filter);
+    my @exclude_contrib_ids = ( grep {
+        not(@{ $associated_contrib_filter{$_}->{'available_type_ids'} });
+    } keys(%associated_contrib_filter) );
 
-    # To be replaced with paging
+    # Make pager
     my %contrib_type_prefs = Krang::Pref->get('contrib_type');
-    my @contrib_tmpl_data = ();
+    my $pager = Krang::HTMLPager->new(
+                                      cgi_query => $q,
+                                      persist_vars => {
+                                                       rm => 'associate_search',
+                                                       search_filter => $search_filter,
+                                                       associate_mode => $associate_mode,
+                                                      },
+                                      use_module => 'Krang::Contrib',
+                                      find_params => {
+                                                      simple_search => $search_filter,
+                                                      exclude_contrib_ids => \@exclude_contrib_ids,
+                                                     },
+                                      columns => [qw(last first_middle type checkbox_column)],
+                                      column_labels => {
+                                                        last => 'Last Name',
+                                                        first_middle => 'First, Middle Name',
+                                                        type => 'Type',
+                                                       },
+                                      columns_sortable => [qw( last first_middle )],
+                                      columns_sort_map => {first_middle => 'first,middle'},
+                                      row_handler => sub {
+                                          $self->list_view_ass_contrib_row_handler(
+                                                                                   @_, 
+                                                                                   \%associated_contrib_filter,
+                                                                                   \%contrib_type_prefs,
+                                                                                  );
+                                      },
+                                      id_handler => sub { return 0; },
+                                     );
 
-    # Iterate through each contributor
-    foreach my $c (@contributors) {
-        my @contrib_type_ids = ( $c->contrib_type_ids() );
-
-        # Iterate for each contrib TYPE
-        my $contrib_type_count = 0;
-        my %contrib_tmpl_data = (
-                                 last => $c->last(),
-                                 first => $c->first(),
-                                 middle => $c->middle(),
-                                 contrib_types => [],
-                                );
-        foreach my $contrib_type_id (@contrib_type_ids) {
-
-            # Skip this contrib if it's already associated
-            my $contrib_id_type = sprintf("%d:%d", $c->contrib_id, $contrib_type_id);
-            next if (exists($associated_contrib_id_types{$contrib_id_type}));
-
-
-            # Push contrib-type data
-            push(@{$contrib_tmpl_data{contrib_types}}, {
-                                                        contrib_id => $c->contrib_id(),
-                                                        contrib_type_id => $contrib_type_id,
-                                                        type => $contrib_type_prefs{$contrib_type_id},
-                                                       });
-            $contrib_type_count++;
-        }
-
-        if ($contrib_type_count) {
-            # Set up ROW SPAN based on count of types for this contrib
-            $contrib_tmpl_data{contrib_row_span} = $contrib_type_count;
-
-            # Push contrib to template
-            push(@contrib_tmpl_data, \%contrib_tmpl_data);
-        }
-    }
-
-    $t->param(contributors => \@contrib_tmpl_data);
+    # Put pager in template
+    $pager->fill_template($t);
+    $t->param('row_count', $pager->row_count());
 
     return $t->output();
 }
@@ -376,7 +382,7 @@ sub associate_selected {
     my $self = shift;
 
     my $q = $self->query();
-    my @contrib_associate_list = ( $q->param('contrib_associate_list') );
+    my @contrib_associate_list = ( $q->param('krang_pager_rows_checked') );
 
     unless (@contrib_associate_list) {
         add_message('missing_contrib_associate_list');
@@ -626,7 +632,7 @@ sub save_add {
         my @contrib_associate_list = ( map { sprintf("%d:%d", $contrib_id, $_) } @contrib_type_ids);
 
         # Add param for "associate_selected" run-mode
-        $q->param(contrib_associate_list => @contrib_associate_list);
+        $q->param(krang_pager_rows_checked => @contrib_associate_list);
 
         # Jump to associate_selected mode -- do the associate
         return $self->associate_selected();
@@ -873,6 +879,43 @@ sub delete {
 #############################
 #####  PRIVATE METHODS  #####
 #############################
+
+# Set up special row_handler for associate contrib screen
+sub list_view_ass_contrib_row_handler {
+    my $self = shift;
+    my ($row_hashref, $contrib, $associated_contrib_filter, $contrib_type_prefs) = @_;
+    $row_hashref->{first_middle} = $contrib->first();
+    $row_hashref->{first_middle} .= '&nbsp;' . $contrib->middle() if ($contrib->middle());
+    $row_hashref->{last} = $contrib->last();
+
+    # 'type' isn't actually used.  Loop 'contrib_types' instead
+    delete($row_hashref->{type});
+
+    # Get rid of checkbox_column.  We're rolling our own.
+    delete($row_hashref->{checkbox_column});
+
+    # State for contrib
+    my $contrib_id = $contrib->contrib_id();
+    my $contrib_filter = $associated_contrib_filter->{$contrib_id} || 0;
+
+    # Now build up types loop 'contrib_types'
+    my @contrib_type_ids = ( $contrib->contrib_type_ids() );
+    @contrib_type_ids = (@{$contrib_filter->{available_type_ids}}) if (ref($contrib_filter));
+    my $contrib_type_count = scalar(@contrib_type_ids);
+
+    my @contrib_types = ();
+    foreach my $contrib_type_id (@contrib_type_ids) {
+        push(@contrib_types, {
+                              contrib_id => $contrib_id,
+                              contrib_type_id => $contrib_type_id,
+                              type => $contrib_type_prefs->{$contrib_type_id},
+                             });
+    }
+    $row_hashref->{contrib_types} = \@contrib_types;
+
+    # Add contrib_row_span for rowspan
+    $row_hashref->{contrib_type_count} = $contrib_type_count;
+}
 
 
 # Krang::HTMLPager row handler for contrib list view

@@ -9,7 +9,8 @@
     }
 
     function associate_selected () {
-        var myform = document.forms["associate_selected_form"];
+        var myform = document.forms["krang_pager_form"];
+        myform.rm.value = 'associate_selected';
         myform.submit();
     }
 
@@ -30,6 +31,60 @@
         myform.submit();
     }
 
+
+// updates the order pull downs to stay consistent
+function update_order(obj, prefix) {
+    var form  = obj.form;
+    var requestedIndex = obj.selectedIndex;
+    var i;
+
+    // get list of relevent form elements
+    var elem = new Array();
+    for (i = 0; i < form.elements.length ; i++) {
+        var e = form.elements[i];
+        if (e.name && e.name.indexOf(prefix) == 0 && e.options) {
+           elem.push(e);
+        }
+     }
+
+    // sort them by their indexes
+    chosenOne = obj;
+    elem.sort(update_order_sort_south);
+
+    // did that do it?
+    if (elem[requestedIndex] != obj) {
+        // the opposite bias must be right 
+        elem.sort(update_order_sort_north);
+    }
+
+    // walk through the elements handing out indexes
+    for (i = 0; i < elem.length; i++) {
+        elem[i].selectedIndex = i;
+    }
+}
+
+// special sort functions that sort by selectedIndex and bias the
+// "chosenOne" to either get sorted higher or lower.
+
+var chosenOne;
+function update_order_sort_north (a, b) {
+    if (a.selectedIndex < b.selectedIndex) { return -1; }
+    if (a.selectedIndex > b.selectedIndex) { return  1; }
+    if (a.name == chosenOne.name) { return -1; }
+    if (b.name == chosenOne.name) { return 1; }
+    return 0;
+}
+
+
+function update_order_sort_south (a, b) {
+    if (a.selectedIndex < b.selectedIndex) { return -1; }
+    if (a.selectedIndex > b.selectedIndex) { return  1; }
+    if (a.name == chosenOne.name) { return 1; }
+    if (b.name == chosenOne.name) { return -1; }
+    return 0;
+}
+
+
 // -->
 </script>
 
@@ -49,6 +104,13 @@
 <input type="hidden" name="rm" value="add">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
 </form>
 
 
@@ -63,6 +125,12 @@ Current Contributors
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
 
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
 
 <TMPL_IF associated_contributors>
 
@@ -73,7 +141,7 @@ Current Contributors
           <th>First,Middle Name</th>
           <th>Type</th>
           <th>Order</th>
-          <th>[]</th>
+          <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'contrib_unassociate_list')"></th>
       </tr>
 
   <tmpl_loop associated_contributors>
@@ -103,6 +171,14 @@ Current Contributors
 
 <table width="100%">
 <form name="search_form" method="POST">
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
 <tr><td class="form-head">
 SEARCH<br />
@@ -115,13 +191,7 @@ SEARCH<br />
 </table>
 
 
-
-
-<form name="associate_selected_form" method="POST">
-<input type="hidden" name="rm" value="associate_selected">
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
-
+<br />
 
 Choose Contributors
 
@@ -130,42 +200,61 @@ Choose Contributors
 <b><a href="javascript:add_contrib()">Add A Contributor</a></b>
 
 
-<TMPL_IF contributors>
 
-  <table cellspacing="0" width="100%">
 
-      <tr class="form-head">
-          <th>Last Name</th>
-          <th>First, Middle Name</th>
-          <th>Type</th>
-          <th>[]</th>
-      </tr>
 
-  <tmpl_loop contributors>
-      <tr>
-          <td class="form-cell" rowspan="<tmpl_var contrib_row_span>"><tmpl_var ESCAPE=HTML last></td>
-          <td class="form-cell" rowspan="<tmpl_var contrib_row_span>"><tmpl_var ESCAPE=HTML first><tmpl_if middle>&nbsp;<tmpl_var ESCAPE=HTML middle></tmpl_if></td>
+<form name="krang_pager_form" method="POST">
+
+<tmpl_include HTMLPager/pager-internals.tmpl>
+
+<tmpl_if krang_pager_rows>
+
+Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row><table cellspacing="0" width="100%"><tr class="form-head"><th><tmpl_var colhead_last></th>
+<th><tmpl_var colhead_first_middle></th>
+<th><tmpl_var colhead_type></th>
+<th><tmpl_var colhead_checkbox_column></th></tr>
+
+
+  <tmpl_loop krang_pager_rows>
+    <tr>
+      <td class="form-cell" rowspan="<tmpl_var contrib_type_count>"><tmpl_var last></td>
+      <td class="form-cell" rowspan="<tmpl_var contrib_type_count>"><tmpl_var first_middle></td>
 
     <tmpl_loop contrib_types>
       <tmpl_unless __first__><tr></tmpl_unless>
           <td class="form-cell"><tmpl_var ESCAPE=HTML type></td>
-          <td class="form-cell"><input type="checkbox" name="contrib_associate_list" value="<tmpl_var ESCAPE=HTML contrib_id>:<tmpl_var ESCAPE=HTML contrib_type_id>"></td>
+          <td class="form-cell"><input type="checkbox" name="krang_pager_rows_checked" value="<tmpl_var ESCAPE=HTML contrib_id>:<tmpl_var ESCAPE=HTML contrib_type_id>"></td>
       </tr>
     </tmpl_loop>
 
   </tmpl_loop>
  
   </table>
+<tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
 
+<tmpl_loop page_numbers>
+  <tmpl_if is_current_page><b><tmpl_var page_number></b>
+  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number></a>
+  </tmpl_if>
+  <tmpl_unless __last__>|</tmpl_unless>
+</tmpl_loop>
+
+<tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
+
+  <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a>
+  <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a>
+  </tmpl_if>
+
+<tmpl_else>
+  <br /><b>None Found</b>
+</tmpl_if>
+
+</form>
+
+
+<tmpl_if row_count>
   <div align="right"><input type="button" value="Associate" onClick="associate_selected()"></div>
-
-
-<TMPL_ELSE>
-
-  <br /><br /><b>No Contributors Found</b>
-
-</TMPL_IF>
-
+</tmpl_if>
 
 
 </td></tr></table>
