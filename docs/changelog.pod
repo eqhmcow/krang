@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added initial support for Gentoo 1.4.3. [Peter]
+
+=item *
+
 Updated porting.pod with steps that might really work. [Sam]
 
 =item *
