@@ -33,7 +33,6 @@ use XML::Simple qw(XMLin);
 
 # Internal Modules
 ###################
-use Krang::Conf qw(KrangRoot);
 
 #
 # Package Variables
@@ -76,7 +75,7 @@ sub create {
     $verbose = $args{verbosity} || 0;
 
     # create dir for element set if it doesn't already exist
-    $set_dir = catdir(KrangRoot, 'element_lib', $set);
+    $set_dir = catdir($ENV{KRANG_ROOT}, 'element_lib', $set);
     die("Element set '$set' already exists at '$set_dir'.\n".
         "Choose a new name or remove this set.\n")
       if -d $set_dir;

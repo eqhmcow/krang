@@ -27,7 +27,7 @@ use warnings;
 # External Modules
 ###################
 use File::Path qw(rmtree);
-use File::Spec::Functions qw(catdir catfile);
+use File::Spec::Functions qw(catdir catfile splitpath);
 use File::Temp qw(tempdir);
 use MIME::Base64;
 use Time::Piece;

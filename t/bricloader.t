@@ -6,6 +6,7 @@ use Config::ApacheFormat;
 use Data::Dumper;
 use File::Path qw(rmtree);
 use File::Spec::Functions qw(catdir catfile);
+use IO::File;
 use IPC::Run qw(run);
 
 BEGIN {
@@ -30,25 +31,25 @@ BEGIN {
       unless -e $conf->get("PidFile");
     ##### Running Bric Check #####
 
-    # create lasistes element set
+    # ElementSet has no Krang module dependecies...:)
+    require Krang::BricLoader::ElementSet;
     my $root = $ENV{KRANG_ROOT};
-    my $set = 'lasites';
-    # will pull from Bric directly once something is modified to create a
-    # category element
-    my $xml = catfile($root, 't', 'bricloader', 'laelements.xml');
 
-    my @command = (catfile($root, "bin", "krang_bric_eloader"),
-                   "--set" => $set,
-                   "--xml" => $xml,
-                  );
-    my $in;
-    run(\@command, \$in, \*STDOUT, \*STDERR)
-      or eval "use Test::More skip_all => 'Unable to run ".
-        catfile($root, "bin", "krang_bric_eloader"). "';";
+    # Create ElementSet
+    local $/ = undef;
+    my $xml_doc = catfile($root, 't', 'bricloader', 'laelements.xml');
+    my $rh = IO::File->new("<$xml_doc") or
+      croak("Can't open '$xml_doc' for reading!");
+    my $xml = <$rh>;
+    $rh->close;
+    eval {
+        Krang::BricLoader::ElementSet->create(set => 'lasites', xml => $xml);
+    };
+    eval "use Test::More skip_all => 'ElementSet creation failed: $@'" if $@;
 
     END {
         # remove created element_lib
-        my $path = catdir($root, 'element_lib', $set);
+        my $path = catdir($root, 'element_lib', 'lasites');
         rmtree([$path]) if -e $path;
     }
 
@@ -63,14 +64,15 @@ use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::DataSet;
 use Krang::ElementLibrary;
 
-
 BEGIN {
     use_ok('Krang::BricLoader::DataSet');
     use_ok('Krang::BricLoader::Category');
     use_ok('Krang::BricLoader::Contrib');
+    use_ok('Krang::BricLoader::ElementSet');
     use_ok('Krang::BricLoader::Media');
     use_ok('Krang::BricLoader::Site');
     use_ok('Krang::BricLoader::Story');
+    use_ok('Krang::BricLoader::Template');
 }
 
 
@@ -78,13 +80,11 @@ BEGIN {
 my $set = Krang::BricLoader::DataSet->new();
 isa_ok($set, 'Krang::BricLoader::DataSet');
 
-my (@categories, @media, @sites, @stories);
-my $sites_path = catfile(KrangRoot, 't', 'bricloader', 'lasites.xml');
+my (@categories, @media, @sites, @stories, @templates);
 
+my $sites_path = catfile(KrangRoot, 't', 'bricloader', 'lasites.xml');
 eval {@sites = Krang::BricLoader::Site->new(path => $sites_path);};
 is($@, '', 'Site constructor did not croak :)');
-
-# add sites to data set
 $set->add(object => $_) for @sites;
 
 
@@ -92,8 +92,6 @@ $set->add(object => $_) for @sites;
 my $cat_path = catfile(KrangRoot, 't', 'bricloader', 'lacategories.xml');
 eval {@categories = Krang::BricLoader::Category->new(path => $cat_path);};
 is($@, '', 'Category constructor did not croak :)');
-
-# add categories to data set
 $set->add(object => $_) for @categories;
 
 
@@ -103,8 +101,17 @@ eval {@media = Krang::BricLoader::Media->new(path => $media_path);};
 is($@, '', 'Media constructor did not croak :)');
 $set->add(object => $_) for @media;
 
+
 # add contributors
 $set->add(object => $_) for Krang::BricLoader::Contrib->load;
+
+
+# add templates
+my $template_path = catfile(KrangRoot, 't', 'bricloader', 'latemplates.xml');
+eval {@templates = Krang::BricLoader::Template->new(path => $template_path)};
+is($@, '', 'Template constructor did not croak :)');
+$set->add(object => $_) for @templates;
+
 
 # add some stories
 my $story_path = catfile(KrangRoot, 't', 'bricloader', 'lastories.xml');
@@ -134,7 +141,9 @@ eval {
     my $media = scalar @media;
     my $sites = scalar @sites;
     my $stories = scalar @stories;
-    my $sum = $stories + $sites + $media + $contributors + $categories;
+    my $templates = scalar @templates;
+    my $sum = $templates + $stories + $sites + $media + $contributors
+      + $categories;
     is(scalar @objects, $sum, 'Verify dataset object count');
 
     # import test
@@ -149,9 +158,12 @@ eval {
        'Verified imported Media count');
     is((grep {$_->isa('Krang::Story')} @imported), $stories,
        'Verified imported Story count');
+    is((grep {$_->isa('Krang::Template')} @imported), $templates,
+       'Verified imported Template count');
 
     END {
         $_->delete for (grep {$_->isa('Krang::Story')} @imported);
+        $_->delete for (grep {$_->isa('Krang::Template')} @imported);
         $_->delete for (grep {$_->isa('Krang::Media')} @imported);
         $_->delete for (grep {$_->isa('Krang::Contrib')} @imported);
         $_->delete for (grep {$_->isa('Krang::Category') && $_->dir ne '/'}
