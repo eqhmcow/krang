@@ -409,8 +409,14 @@ sub file_path {
     my $self = shift;
     my $root = KrangRoot;
     my $media_id = $self->{media_id};
- 
-    return catfile($root,'data','media',$self->_media_id_path(),$self->{version},$self->{filename});
+    my $session_id = $session{_session_id} || croak("No session id found");
+
+    # return path based on if object has been committed to db yet
+    if ($media_id) { 
+        return catfile($root,'data','media',$self->_media_id_path(),$self->{version},$self->{filename});
+    } else {
+        return catfile($root,'tmp','media',$session_id,'tempfile');
+    }
 }
 
 sub _media_id_path {
@@ -436,8 +442,12 @@ Return filesize in bytes.
 
 sub file_size {
     my $self = shift;
-    my $st = stat($self->file_path());
-    return $st->size;
+    if (-f $self->file_path()) {
+        my $st = stat($self->file_path());
+        return $st->size;
+    } else {
+        return 0;
+    }
 }
  
 =item $media->save()
@@ -849,7 +859,7 @@ sub prepare_for_edit {
     eval {
         $serialized = freeze($self);
     };
-    craok ("Unable to serialize object: $@") if $@;
+    croak ("Unable to serialize object: $@") if $@;
 
     $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
 
