@@ -366,6 +366,12 @@ is(@result, 0);
 
 # find by site
 my $count = Krang::Story->find(simple_search => "",
-                             count => 1);
+                               count => 1);
 ok($count);
+
+
+# find by site
+@result = Krang::Story->find(simple_search => "",
+                             order_by => "url");
+ok(@result);
 

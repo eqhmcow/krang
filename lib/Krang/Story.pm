@@ -810,7 +810,7 @@ sub find {
     return $pkg->_load_version($args{story_id}, $args{version})
       if $args{version};
     
-    my (@where, @param, @join, $like, $need_distinct);
+    my (@where, @param, %from, $like, $need_distinct);
     while (my ($key, $value) = each %args) {
         # strip off and remember _like specifier
         $like = ($key =~ s/_like$//) ? 1 : 0;
@@ -838,7 +838,8 @@ sub find {
         # handle search by category_id
         if ($key eq 'category_id') {
             # need to bring in story_category
-            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id');
             push(@where, 'sc.category_id = ?');
             push(@param, $value);
             next;
@@ -847,7 +848,8 @@ sub find {
         # handle search by primary_category_id
         if ($key eq 'primary_category_id') {
             # need to bring in story_category
-            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id');
             push(@where, 'sc.category_id = ?', 'sc.ord = 0');
             push(@param, $value);
             next;
@@ -856,8 +858,10 @@ sub find {
         # handle search by site_id
         if ($key eq 'site_id') {
             # need to bring in story_category and category
-            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)',
-                        'LEFT JOIN category AS c USING (category_id)');
+            $from{"story_category as sc"} = 1;
+            $from{"category as c"} = 1;
+            push(@where, 's.story_id = sc.story_id');
+            push(@where, 'sc.category_id = c.category_id');
             push(@where, 'c.site_id = ?');
             push(@param, $value);
             $need_distinct = 1;
@@ -867,8 +871,10 @@ sub find {
         # handle search by primary_site_id
         if ($key eq 'primary_site_id') {
             # need to bring in story_category and category
-            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)',
-                        'LEFT JOIN category AS c USING (category_id)');
+            $from{"story_category as sc"} = 1;
+            $from{"category as c"} = 1;
+            push(@where, 's.story_id = sc.story_id');
+            push(@where, 'sc.category_id = c.category_id');
             push(@where, 'c.site_id = ?', 'sc.ord = 0');
             push(@param, $value);
             $need_distinct = 1;
@@ -878,7 +884,8 @@ sub find {
         # handle search by url
         if ($key eq 'url') {
             # need to bring in story_category
-            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id');
             push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'));
             push(@param, $value);
             $need_distinct = 1;
@@ -888,7 +895,8 @@ sub find {
         # handle search by primary_url
         if ($key eq 'primary_url') {
             # need to bring in story_category
-            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id');
             push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'),
                          'sc.ord = 0');
             push(@param, $value);
@@ -898,7 +906,8 @@ sub find {
 
         # handle simple_search
         if ($key eq 'simple_search') {            
-            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id');
             $need_distinct = 1;
 
             my @words = split(/\s+/, $args{'simple_search'});
@@ -939,13 +948,21 @@ sub find {
 
         croak("Unknown find key '$key'");
     }
+
+    # handle ordering by primary URL, which is in story_category
+    if ($order_by eq 'url') {
+        $from{"story_category as sc"} = 1;
+        push(@where, 's.story_id = sc.story_id');
+        push(@where, 'sc.ord = 0');
+        $order_by = 'sc.url';
+    }
         
     # construct base query
     my $query;
     if ($count) {
         $query = "SELECT" . 
           ($need_distinct ? " DISTINCT" : "") . 
-            "  count(*) FROM story ";
+            "  count(*) FROM story AS s";
     } elsif ($ids_only) {
         $query = "SELECT ".
           ($need_distinct ? "DISTINCT " : "") . 
@@ -956,7 +973,7 @@ sub find {
     }
 
     # add joins, if any
-    $query .= " " . join(' ', @join) if @join;    
+    $query .= ", " . join(', ', keys(%from)) if (%from);
     
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE " . join(' AND ', @where) if @where;
