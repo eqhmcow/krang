@@ -256,6 +256,8 @@ sub publish_story {
         if ($object->isa('Krang::Story')) {
             info('Publisher.pm: Publishing story_id=' . $object->story_id());
             $self->_build_story_all_categories(story => $object);
+            # check the object back in.
+            if ($object->checked_out()) { $object->checkin(); }
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object);
         }
@@ -362,6 +364,9 @@ sub publish_media {
                                                 system_error => $!
                                                );
     }
+
+    # check media back in.
+    if ($media->checked_out()) { $media->checkin(); }
 
     return $media->url();
 
