@@ -179,6 +179,23 @@ Will throw an exception if the user does not have permissions to publish.
 
 =cut
 
+sub publish_story {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
+
+    foreach ($story->categories()) {
+        # publish the story HTML
+        my $story_html = $self->_assemble_pages(story => $story, category => $_, mode => 'publish');
+
+        # publish the category HTML
+        
+    }
+}
+
+
 =item C<< $url = $publisher->preview_media(media => $media) >>
 
 Copies a media file out to the webserver doc root for the preview website.
