@@ -57,6 +57,7 @@ DROP TABLE IF EXISTS media_contrib;
 CREATE TABLE media_contrib (
         media_id        INT(10) UNSIGNED NOT NULL,
         contrib_id  INT(10) UNSIGNED NOT NULL,
+        contrib_type_id  INT(10) UNSIGNED NOT NULL,
         ord             SMALLINT UNSIGNED NOT NULL,
         PRIMARY KEY (media_id, contrib_id, ord)
 );
