@@ -33,6 +33,7 @@ sub new {
                 PBMM::site_related_link_box->new( max => 1),
                 PBMM::table_of_contents->new(),
                 PBMM::ad_module->new(),
+                PBMM::back_issues->new(),
                 PBMM::auto_navigation->new(
                                         max => 1 ),
                 PBMM::html_include->new(),

@@ -36,6 +36,7 @@ sub new {
                  PBMM::html_include->new(),
                  PBMM::cat_paragraph->new(),
                  PBMM::lead_in->new(),
+                 PBMM::back_issues->new(),
                  PBMM::image->new(),
                  Default::empty->new(   display_name => 'Print this page/Email this article',                         
                                         name => 'print_email',
