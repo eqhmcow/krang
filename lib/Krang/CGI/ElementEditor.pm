@@ -852,15 +852,7 @@ sub element_bulk_save {
 
     # left over children, remove them from this element
     elsif (@children) { 
-        my %to_delete = map { ($_->xpath, 1) } @children;
-        my @old = $element->children();
-        my @new;
-        foreach (@old) {
-            push(@new, $_) 
-              unless $to_delete{$_->xpath};
-        }
-        $element->children_clear();
-        $element->children(@new);
+        $element->remove_children(@children);
     }
 
     add_message('saved_bulk', 
@@ -937,11 +929,14 @@ sub revise {
         for (0 .. $#old) {
             $new[$query->param("order_$_") - 1] = $old[$_];
             $old_to_new[$_] = $query->param("order_$_") - 1;
-        }
+        }        
     } elsif ($op eq 'delete') {
         for (0 .. $#old) {
             if ($query->param("remove_$_")) {
                 add_message("deleted_element", name => $old[$_]->display_name);
+
+                # do the removal
+                $element->remove_children($old[$_]);
             } else {
                 push(@new, $old[$_]);
                 $old_to_new[$_] = $#new;
@@ -956,9 +951,8 @@ sub revise {
     assert(@old == @new)                      if ASSERT and $op eq 'reorder';
     assert(not(grep { not defined $_ } @new)) if ASSERT;
 
-    # effect the change in the element tree
-    $element->clear_children();
-    $element->children(@new);
+    # do the reorder
+    $element->reorder_children(@new) if $op eq 'reorder';
 
     # get a list of new param names
     my @new_names =  map { [ $_->param_names ] } @new;
