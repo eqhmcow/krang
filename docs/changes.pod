@@ -209,8 +209,9 @@ as to require such a facility.
 
 =head2 User Override
 
-This feature will exist in Krang but will not be the only way to
-checkin stories checked out to a user.
+This feature will exist in Krang but will not appear in the UI.
+Instead, a command-line tool will be available to allow access to any
+user account.
 
 =head2 Alert Types
 

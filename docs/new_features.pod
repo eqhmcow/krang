@@ -122,6 +122,20 @@ prominent, add paging to handle large numbers of stories, etc.
 
 =back
 
+=head2 Active Assets
+
+=over
+
+=item *
+
+The active (stories|media|templates) screen will provide a list of
+items currently checked out.  If the user has "super checkin"
+priviledges then they will be allow to checkin items from this screen.
+This will allow admins to checkin items checked out by a user without
+requiring user override capabilities. [ hard ]
+
+=back
+
 =head2 Admin
 
 =over
