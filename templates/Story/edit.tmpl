@@ -109,7 +109,7 @@
 
 <div class="dark-bar">
 <span class="left">Edit Story</span>
-<span class="right"><tmpl_if is_root><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_if><a href="javascript:goto_help()">Help</a></span>
+<span class="right"><tmpl_if is_root><tmpl_if story_id><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_if></tmpl_if><a href="javascript:goto_help()">Help</a></span>
 </div>
 
 
@@ -212,6 +212,12 @@ Sites / Categories<br>
     <td width=15% align=center>Primary</td>
     <td width=15% align=center><input type=checkbox onclick="checkall(this, 'cat_remove_')"></td>
   </tr> 
+
+  <tmpl_unless category_loop>
+  <tr>
+    <td class=form-cell colspan=4><span class=invalid>No categories assigned!</span></td>
+  </tr>
+  </tmpl_unless>  
 
   <tmpl_loop category_loop>
   <tr>
