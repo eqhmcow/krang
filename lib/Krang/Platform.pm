@@ -42,41 +42,101 @@ be either "build" or "install" depending on when the method is called.
 This method should either succeed or die() with a message for the
 user.
 
-The default implementation checks for the following conditions:
+By default, shared object (.so) files are searched for in $Config{libpth}.
+header files (.h) are search for in $Config{usrinc}, /include and /usr/local/include
+
+
+The default implementation runs the following default checks (which
+are all overrideable):
 
 =over
-
-=item *
-
-Perl is the right version and compiled for the right architecture
-(skipped in build mode).
-
-=item *
-
-The C<mysql> shell is available and MySQL is v4.0.13 or higher.
-
-=item *
-
-The Expat library is installed.  The default implementation looks in
-$Config{libpth} for libexpat.so.
-
-=item *
-
-libjpeg, libgif and libpng are installed with header files.  The
-default implementation looks in $Config{libpth} for the appropriate
-*.so files, and in $Config{usrinc} and /usr/local/include for the
-header files (unless installing, in which case header files aren't
-needed).
-
-=back
 
 =cut
 
 sub verify_dependencies {
+
     my ($pkg, %arg) = @_;
     my $mode = $arg{mode};
     my @PATH = split(':', ($ENV{PATH} || ""));
-    
+
+    # check perl
+    if ($mode eq 'install') {
+        $pkg->check_perl();
+    }
+
+    # check mysql
+    $pkg->check_mysql();
+
+    # build lib/includes for following searches.
+    my @libs = split(" ", $Config{libpth});
+    my @lib_files;
+    foreach my $lib (@libs) {
+        opendir(DIR, $lib) or die $!;
+        push(@lib_files, grep { not -d $_ } readdir(DIR));
+        closedir(DIR);
+    }
+    my @incs = ($Config{usrinc}, '/include', '/usr/local/include');
+
+    # check expat
+    $pkg->check_expat(lib_files => \@lib_files, includes => \@incs, mode => $mode);
+
+    # check various image libs
+    $pkg->check_libjpeg(lib_files => \@lib_files, includes => \@incs, mode => $mode);
+    $pkg->check_libgif(lib_files => \@lib_files, includes => \@incs, mode => $mode);
+    $pkg->check_libpng(lib_files => \@lib_files, includes => \@incs, mode => $mode);
+}
+
+=item C<check_perl()>
+
+Perl is the right version and compiled for the right architecture
+(skipped in build mode).
+
+=cut
+
+sub check_perl {
+
+    my $pkg = shift;
+
+    # check that Perl is right for this build
+    my %params = $pkg->build_params();
+
+    my $perl = join('.', (map { ord($_) } split("", $^V, 3)));
+    if ($perl ne $params{Perl}) {
+        die <<END;
+
+This distribution of Krang is compiled for Perl version
+'$params{Perl}', but you have '$perl' installed.  You must either
+install the expected version of Perl, or download a different release
+of Krang.  Please see the installation instructions in INSTALL for
+more details.
+
+END
+    }
+
+    if ($Config{archname} ne $params{Arch}) {
+        die <<END;
+
+This distribution of Krang is compiled for the '$params{Arch}'
+architecture, but your copy of Perl is compiled for
+'$Config{archname}'.  You must download a different Krang
+distribution, or rebuild your Perl installation.  Please see the
+installation instructions in INSTALL for more details.
+
+END
+    }
+}
+
+
+=item C<check_mysql()>
+
+The C<mysql> shell is available and MySQL is v4.0.13 or higher.
+
+=cut
+
+sub check_mysql {
+    my ($pkg, %arg) = @_;
+    my @PATH = split(':', ($ENV{PATH} || ""));
+
     # look for MySQL command shell
     die <<END unless grep { -e catfile($_, 'mysql') } @PATH;
 
@@ -84,7 +144,7 @@ MySQL not found.  Krang requires MySQL v4.0.13 or later.  If MySQL is
 installed, ensure that the 'mysql' client is in your PATH and try again.
 
 END
-    
+
     # check the version of MySQL
     no warnings qw(exec);
     my $mysql_version = `mysql -V 2>&1`;
@@ -99,19 +159,21 @@ END
     die "\n\nMySQL version too old.  Krang requires v4.0.13 or higher.\n" .
       "'mysql -V' returned:\n\n\t$mysql_version\n\n"
         unless $version >= 0.13;
+}
 
-    # get ready to look for libs and include files
-    my @libs = split(" ", $Config{libpth});
-    my @lib_files;
-    foreach my $lib (@libs) {
-        opendir(DIR, $lib) or die $!;
-        push(@lib_files, grep { not -d $_ } readdir(DIR));
-        closedir(DIR);
-    }
-    my @incs = ($Config{usrinc}, '/include', '/usr/local/include');
-    
-    # look for Expat
-    unless (grep { /^libexpat\./ } @lib_files) {
+
+=item C<< check_expat(lib_files => \@libs, includes => \@incs, mode => $mode) >>
+
+Checks to see that the Expat library is installed.  The default
+implementation looks in $Config{libpth} for libexpat.so.
+
+=cut
+
+sub check_expat {
+    my ($pkg, %args) = @_;
+    my $mode = $args{mode};
+
+    unless (grep { /^libexpat\./ } @{$args{lib_files}}) {
         die <<END;
 
 Expat XML parser library not found.  Install expat
@@ -122,7 +184,7 @@ END
 
     # look for Expat headers, if building
     if ($mode eq 'build' and not 
-        ( grep { -e catfile($_, 'expat.h') } @incs  )) {
+        ( grep { -e catfile($_, 'expat.h') } @{$args{includes}}  )) {
         die <<END;
 
 Expat XML parser header files not found, although the library is
@@ -132,62 +194,129 @@ appropriate devel package and try again.
 END
     }
 
-    # look for libjpeg, libgif and libpng
-    my @l = ( { name => 'libjpeg',
-                so   => 'libjpeg.so',
-                h    => 'jpeglib.h', },
-              { name => 'libgif',
-                so   => 'libgif.so',
-                h    => 'gif_lib.h', },
-              { name => 'libpng',
-                so   => 'libpng.so',
-                h    => 'png.h', } );
-    foreach my $l (@l) {
-        my $re = qr/^$l->{so}/;
-        die "\n\n$l->{name} is missing from your system.\n".
-          "This library is required by Krang.\n\n"
-            unless grep { /^$re/ } @lib_files;
-        die <<END unless $mode eq 'install' or grep { -e catfile($_, $l->{h}) } @incs;
+}
 
-The header file for $l->{name}, '$l->{h}', is missing from your system.
-This file is needed to compile the Imager module which uses $l->{name}.
+=item C<< check_libjpeg(lib_files => \@libs, includes => \@incs, mode => $mode) >>
 
-END
-    }
+Checks for the existance of the libjpeg shared object and header files.
 
+Looks for libjpeg.so in $Config{libpth}
 
+Looks for libjpeg.h in $Config{usrinc} and /usr/local/include.
 
-    if ($mode eq 'install') {
-        # check that Perl is right for this build
-        my %params = $pkg->build_params();
+libjpeg.h is not needed for an install.
 
-        my $perl = join('.', (map { ord($_) } split("", $^V, 3)));
-        if ($perl ne $params{Perl}) {
-            die <<END;
+=cut
 
-This distribution of Krang is compiled for Perl version
-'$params{Perl}', but you have '$perl' installed.  You must either
-install the expected version of Perl, or download a different release
-of Krang.  Please see the installation instructions in INSTALL for
-more details.
+sub check_libjpeg {
 
-END
-        }
+    my ($pkg, %args) = @_;
 
-        if ($Config{archname} ne $params{Arch}) {
-            die <<END;
+    $pkg->_check_libs(%args,
+                      name => 'libjpeg',
+                      so   => 'libjpeg.so',
+                      h    => 'jpeglib.h');
 
-This distribution of Krang is compiled for the '$params{Arch}'
-architecture, but your copy of Perl is compiled for
-'$Config{archname}'.  You must download a different Krang
-distribution, or rebuild your Perl installation.  Please see the
-installation instructions in INSTALL for more details.
-
-END
-        }
-    }
 
 }
+
+=item C<< check_libgif(lib_files => \@libs, includes => \@incs, mode => $mode) >>
+
+Checks for the existance of the libgif or libungif shared object and header files.
+
+Looks for libgif.so and libungif.so in $Config{libpth}
+
+Looks for libgif.h and libungif.h in $Config{usrinc} and /usr/local/include.
+
+Header files are not needed for install.
+
+Either libgif or libungif will suffice.
+
+=cut
+
+sub check_libgif {
+
+
+    my ($pkg, %args) = @_;
+
+
+    # check first for libgif.
+    eval {
+        $pkg->_check_libs(%args,
+                          name => 'libgif',
+                          so   => 'libgif.so',
+                          h    => 'gif_lib.h');
+    };
+
+    # if that fails, check for libungif (just as good).
+    if ($@) {
+        $pkg->_check_libs(%args,
+                          name => 'libpng',
+                          so   => 'libpng.so',
+                          h    => 'png.h');
+    }
+
+
+}
+
+
+=item C<< check_libpng(lib_files => \@libs, includes => \@incs, mode => $mode) >>
+
+Checks for the existance of the libpng shared object and header files.
+
+Looks for libpng.so in $Config{libpth}
+
+Looks for libpng.h in $Config{usrinc} and /usr/local/include.
+
+libpng.h is not needed for an install.
+
+=cut
+
+sub check_libpng {
+
+
+    my ($pkg, %args) = @_;
+
+    $pkg->_check_libs(%args,
+                      name => 'libpng',
+                      so   => 'libpng.so',
+                      h    => 'png.h');
+
+}
+
+
+#
+# internal method to actually search for libraries.
+# takes 'so' and 'h' args for the files to look for.
+# takes 'includes' and 'lib_files' as the directories to search for.
+#
+
+sub _check_libs {
+
+    my ($pkg, %args) = @_;
+    my $mode = $args{mode};
+
+    my $name = $args{name};
+    my $so   = $args{so};
+    my $h    = $args{h};
+
+    my $re = qr/^$so/;
+
+    die "\n\n$name is missing from your system.\n".
+      "This library is required by Krang.\n\n"
+        unless grep { /^$re/ } @{$args{lib_files}};
+    die <<END unless $mode eq 'install' or grep { -e catfile($_, $h) } @{$args{includes}};
+
+The header file for $name, '$h', is missing from your system.
+This file is needed to compile the Imager module which uses $name.
+
+END
+
+
+}
+
+=back
+
 
 =item C<< check_ip(ip => $ip) >>
 
@@ -297,6 +426,7 @@ sub build_perl_module {
     system('make install') == 0 or die "make install failed: $?";   
 }
 
+
 =item C<< build_apache_modperl(apache_dir => $dir, modperl_dir => $dir) >>
 
 Called to build Apache and mod_perl in their respective locations.
@@ -361,7 +491,7 @@ sub build_apache_modperl {
     # clean up unneeded apache directories
     my $KrangRoot = $ENV{KRANG_ROOT};
     system("rm -rf $KrangRoot/apache/man $KrangRoot/apache/htdocs/*");
-    
+
 }
 
 =item C<< apache_build_parameters(apache_dir => $dir, modperl_dir => $dir) >>
@@ -482,5 +612,6 @@ Krang:
 
 END
 }
+
 
 1;
