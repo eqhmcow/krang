@@ -17,7 +17,7 @@ BEGIN {
         }
     }
     unless ($found) {
-        eval "use Test::More skip_all => 'test requires a PBMM instance';";
+        eval "use Test::More skip_all => 'test requires a CanoeKayak instance';";
     } else {
         eval "use Test::More qw(no_plan);";
     }
