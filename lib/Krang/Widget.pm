@@ -242,9 +242,6 @@ sub decode_date {
 
 
 
-  $url_html = 
-
-
 =item $url_html = format_url(url => 'http://my.host/url.html', linkto => 'url.html' );
 
 Returns a block of HTML implementing the standard Krang url

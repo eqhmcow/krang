@@ -41,13 +41,15 @@ is 'add'.
 
 
 use Krang::Media;
-use Krang::Widget qw(category_chooser date_chooser decode_date);
+use Krang::Widget qw(category_chooser date_chooser decode_date format_url);
 use Krang::Message qw(add_message);
 use Krang::HTMLPager;
 use Krang::Pref;
 use Krang::Session qw(%session);
 use Carp qw(croak);
 
+
+use constant WORKSPACE_URL => '/workspace.pl';
 
 
 ##############################
@@ -68,7 +70,6 @@ sub setup {
                          save_stay_add
                          edit
                          save_edit
-                         cancel_edit
                          save_stay_edit
                          delete
                          delete_selected
@@ -167,31 +168,30 @@ sub advanced_find {
     $show_thumbnails = 0 unless (defined($show_thumbnails));
     $persist_vars->{show_thumbnails} = $show_thumbnails;
 
-    # Set up advanced search form
-    $t->param(category_chooser => category_chooser(
-                                                 query => $q,
-                                                 name => 'search_below_category_id',
-                                                 formname => 'search_form',
-                                                ));
-    $t->param(date_chooser => date_chooser(
-                                           query => $q,
-                                           name => 'search_creation_date',
-                                           nochoice =>1,
-                                          ));
-
     # Build find params
     my $search_below_category_id = $q->param('search_below_category_id');
-    $persist_vars->{search_below_category_id} = $search_below_category_id;
+    if ($search_below_category_id) {
+        $persist_vars->{search_below_category_id} = $search_below_category_id;
+        $find_params->{below_category_id} = $search_below_category_id;
+    }
 
     my $search_creation_date = decode_date(
                                            query => $q,
-                                           name => 'search_below_category_id',
+                                           name => 'search_creation_date',
                                           );
     if ($search_creation_date) {
+        # If date is valid send it to search and persist it.
         $find_params->{creation_date} = $search_creation_date;
-        $persist_vars->{search_creation_date_day}   = $q->param('search_creation_date_day');
-        $persist_vars->{search_creation_date_month} = $q->param('search_creation_date_month');
-        $persist_vars->{search_creation_date_year}  = $q->param('search_creation_date_year');
+        for (qw/day month year/) {
+            my $varname = "search_creation_date_$_";
+            $persist_vars->{$varname} = $q->param($varname);
+        }
+    } else {
+        # Delete date chooser if date is incomplete
+        for (qw/day month year/) {
+            my $varname = "search_creation_date_$_";
+            $q->delete($varname);
+        }
     }
 
     # search_filename
@@ -228,6 +228,18 @@ sub advanced_find {
     my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails);
     $t->param(pager_html => $pager->output());
     $t->param(row_count => $pager->row_count());
+
+    # Set up advanced search form
+    $t->param(category_chooser => category_chooser(
+                                                 query => $q,
+                                                 name => 'search_below_category_id',
+                                                 formname => 'search_form',
+                                                ));
+    $t->param(date_chooser => date_chooser(
+                                           query => $q,
+                                           name => 'search_creation_date',
+                                           nochoice =>1,
+                                          ));
 
     return $t->output();
 }
@@ -277,8 +289,14 @@ sub save_add {
     my $m = $session{media};
     die ("No media object in session") unless (ref($m));
 
-    # Update object and save
+    # Update object in session
     $self->update_media($m);
+
+    # Validate input.  Return errors, if any.
+    my %errors = $self->validate_media($m);
+    return $self->_add(%errors) if (%errors);
+
+    # Save object to database and checkout to Workspace
     $m->save();
     $m->checkout();
 
@@ -299,12 +317,9 @@ sub save_add {
 
 =item cancel_add
 
-Description of run-mode 'cancel_add'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Called when user clicks "delete" from an add new media screen.
+This mode removes the currewnt media object from the session
+and redirects the user to the Workspace.
 
 
 =cut
@@ -315,7 +330,17 @@ sub cancel_add {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    # Remove media from session
+    delete($session{media});
+
+    add_message('message_media_deleted');
+
+    # Redirect to workspace
+    my $workspace_url = WORKSPACE_URL;
+    $self->header_props(-url=>$workspace_url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$workspace_url\">$workspace_url</a>";
 }
 
 
@@ -324,13 +349,8 @@ sub cancel_add {
 
 =item save_stay_add
 
-Description of run-mode 'save_stay_add'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+Functions the same as save_add, except user is
+redirected to edit screen with same object.
 
 =cut
 
@@ -340,7 +360,30 @@ sub save_stay_add {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    my $m = $session{media};
+    die ("No media object in session") unless (ref($m));
+
+    # Update object in session
+    $self->update_media($m);
+
+    # Validate input.  Return errors, if any.
+    my %errors = $self->validate_media($m);
+    return $self->_add(%errors) if (%errors);
+
+    # Save object to database and checkout to Workspace
+    $m->save();
+    $m->checkout();
+
+    # Notify user
+    add_message("new_media_saved");
+
+    # Redirect to edit mode
+    my $url = $q->url(-relative=>1);
+    $url .= "?rm=edit&media_id=". $m->media_id();
+    $self->header_props(-url=>$url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$url\">$url</a>";
 }
 
 
@@ -431,32 +474,29 @@ sub save_edit {
 
     my $q = $self->query();
 
-    return $self->dump_html();
-}
+    my $m = $session{media};
+    die ("No media object in session") unless (ref($m));
 
+    # Update object in session
+    $self->update_media($m);
 
+    # Validate input.  Return errors, if any.
+    my %errors = $self->validate_media($m);
+    return $self->edit(%errors) if (%errors);
 
+    # Save object to database and checkout to Workspace
+    $m->save();
+    $m->checkout();
 
+    # Notify user
+    add_message("media_saved");
 
-=item cancel_edit
+    # Redirect to workspace.pl
+    my $url = '/workspace.pl';
+    $self->header_props(-url=>$url);
+    $self->header_type('redirect');
 
-Description of run-mode 'cancel_edit'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
-
-=cut
-
-
-sub cancel_edit {
-    my $self = shift;
-
-    my $q = $self->query();
-
-    return $self->dump_html();
+    return "Redirect: <a href=\"$url\">$url</a>";
 }
 
 
@@ -490,13 +530,8 @@ sub save_stay_edit {
 
 =item delete
 
-Description of run-mode 'delete'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+Delete the media object specified by CGI form 
+parameter 'media_id'.  Redirect user to Workspace.
 
 =cut
 
@@ -505,8 +540,28 @@ sub delete {
     my $self = shift;
 
     my $q = $self->query();
+    my $media_id = $q->param('media_id');
 
-    return $self->dump_html();
+    # Check the session.  Is this media stashed there?  (Clean, if so.)
+    my $m = $session{media} || 0;
+    if (ref($m) && (($m->media_id() || '') eq $media_id)) {
+        # Delete media and clear from session
+        $m->delete();
+        delete($session{media});
+    } else {
+        # Delete this media by media_id
+        my $m = Krang::Media->find(media_id=>$media_id);
+        $m->delete();
+    }
+
+    add_message('message_media_deleted');
+
+    # Redirect to workspace
+    my $workspace_url = WORKSPACE_URL;
+    $self->header_props(-url=>$workspace_url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$workspace_url\">$workspace_url</a>";
 }
 
 
@@ -515,12 +570,10 @@ sub delete {
 
 =item delete_selected
 
-Description of run-mode 'delete_selected'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Delete the media objects which have been selected (checked)
+from the find mode list view.  This mode expects selected 
+media objects to be specified in the CGI param 
+'krang_pager_rows_checked'.
 
 
 =cut
@@ -530,8 +583,19 @@ sub delete_selected {
     my $self = shift;
 
     my $q = $self->query();
+    my @media_delete_list = ( $q->param('krang_pager_rows_checked') );
+    $q->delete('krang_pager_rows_checked');
 
-    return $self->dump_html();
+    # No selected contribs?  Just return to list view without any message
+    return $self->find() unless (@media_delete_list);
+
+    foreach my $mid (@media_delete_list) {
+        my ($m) = Krang::Media->find( media_id => $mid);
+        $m->delete();
+    }
+
+    add_message('message_selected_deleted');
+    return $self->find();
 }
 
 
@@ -602,6 +666,42 @@ sub view {
 #####  PRIVATE METHODS  #####
 #############################
 
+# Validate media object to check validity.  Return errors as hash and add_message()s.
+# Must pass in $media object
+sub validate_media {
+    my $self = shift;
+    my $media = shift;
+
+    # Errors array
+    my @errors = ();
+
+    # Validate: title
+    my $title = $media->title();
+    push(@errors, 'error_invalid_title') unless ($title && ($title =~ /\S+/));
+
+    # Validate: media_type_id
+    my $media_type_id = $media->media_type_id();
+    push(@errors, 'error_media_type_id') unless ($media_type_id);
+
+    # Validate: category_id
+    my $category_id = $media->category_id();
+    push(@errors, 'error_category_id') unless ($category_id);
+
+    # Validate: media_file
+    my $media_file = $media->filename();
+    push(@errors, 'error_media_file') unless ($media_file);
+
+    # Add messages, return hash for errors
+    my %hash_errors = ();
+    foreach my $error (@errors) {
+        add_message($error);
+        $hash_errors{$error} = 1;
+    }
+
+    return %hash_errors;
+}
+
+
 # Return an add form.  This method expects a media object in the session.
 sub _add {
     my $self = shift;
@@ -647,11 +747,18 @@ sub update_media {
     foreach my $mf (@m_fields) {
         # Handle file upload
         if ($mf eq 'media_file') {
-            my $media_file = $q->param('media_file');
-            next unless ($media_file);
+            my $filehandle = $q->upload('media_file');
+            next unless ($filehandle);
 
-            $m->upload_file(filehandle => $media_file,
-                            filename => $media_file);
+            my $media_file = $q->param('media_file');
+
+            # Coerce a reasonable name from what we get
+            my @filename_parts = split(/[\/\\\:]/, $media_file);
+            my $filename = $filename_parts[-1];
+
+            # Put the file in the Media object
+            $m->upload_file(filehandle => $filehandle,
+                            filename => $filename);
 
             next;
         }
@@ -695,15 +802,19 @@ sub make_media_tmpl_data {
     # Build upload field
     my $upload_chooser = $q->filefield(
                                        -name => 'media_file',
-                                       -default => 'starting value',
                                        -size => 32,
                                       );
     $tmpl_data{upload_chooser} = $upload_chooser;
 
-    # If we already have a file, show it.
-    $tmpl_data{filename}  = $m->filename();
-    $tmpl_data{file_size} = $m->file_size();
-    $tmpl_data{file_path} = $m->file_path(relative => 1);
+    # If we have a filename, show it.
+    $tmpl_data{file_size} = sprintf("%.1f", ($m->file_size() / 1024))
+      if ($tmpl_data{filename}  = $m->filename());
+
+    # Set up details only found on edit (not add) view
+    if ($tmpl_data{media_id} = $m->media_id()) {
+        my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
+        $tmpl_data{thumbnail_path} = $thumbnail_path;
+    }
 
     # Set up Contributors
     my @contribs = ();
@@ -798,27 +909,19 @@ sub find_media_row_handler {
     my ($show_thumbnails, $row, $media) = @_;
 
     # media_id
-    $row->{media_id} = $media->media_id();
+    my $media_id = $media->media_id();
+    $row->{media_id} = $media_id;
 
     # format url to fit on the screen and to link to preview
-    my $url = $media->url();
-    my @parts = split('/', $url);
-    my @url_lines = (shift(@parts), "");
-    for(@parts) {
-        if ((length($url_lines[-1]) + length($_)) > 15) {
-            push(@url_lines, "");
-        }
-        $url_lines[-1] .= "/" . $_;
-    }
-    $row->{url} = join('<br>', 
-                       map { qq{<a href="javascript:preview_media($row->{media_id})">$_</a>} } @url_lines);
+    $row->{url} = format_url( url => $media->url(),
+                              linkto => "javascript:preview_media('". $media_id ."')" );
 
     # title
     $row->{title} = $media->title();
 
     # thumbnail
     if ($show_thumbnails) {
-        my $thumbnail_path = $media->thumbnail_path(relative => 1);
+        my $thumbnail_path = $media->thumbnail_path(relative => 1) || '';
         $row->{thumbnail} = "<img src=\"$thumbnail_path\">";
     }
 
@@ -871,7 +974,6 @@ L<Krang::Media>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Kra
 #                  save_stay_add
 #                  edit
 #                  save_edit
-#                  cancel_edit
 #                  save_stay_edit
 #                  delete
 #                  delete_selected

@@ -7,7 +7,7 @@ use Krang::ElementLibrary;
 use Krang::Log qw(debug assert ASSERT);
 use Krang::Session qw(%session);
 use Krang::Message qw(add_message);
-use Krang::Widget qw(category_chooser date_chooser decode_date);
+use Krang::Widget qw(category_chooser date_chooser decode_date format_url);
 use Krang::CGI::Workspace;
 use Carp qw(croak);
 use Krang::Pref;
@@ -1149,17 +1149,8 @@ sub find_story_row_handler {
     $row->{story_id} = $story->story_id();
 
     # format url to fit on the screen and to link to preview
-    my $url = $story->url();
-    my @parts = split('/', $url);
-    my @url_lines = (shift(@parts), "");
-    for(@parts) {
-        if ((length($url_lines[-1]) + length($_)) > 15) {
-            push(@url_lines, "");
-        }
-        $url_lines[-1] .= "/" . $_;
-    }
-    $row->{url} = join('<br>', 
-                       map { qq{<a href="javascript:preview_story($row->{story_id})">$_</a>} } @url_lines);
+    $row->{url} = format_url( url => $story->url(),
+                              linkto => "javascript:preview_story('". $row->{story_id} ."')" );
 
     # title
     $row->{title} = $story->title();
