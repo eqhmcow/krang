@@ -45,9 +45,7 @@ sub show {
 
     # load as template to process includes
     my $template = Krang::HTMLTemplate->new(filename => $file,
-                                            path     => catdir(KrangRoot, 
-                                                               'templates', 
-                                                               'Help'),
+                                            path     => ['Help'],
                                             search_path_on_includes => 1,
                                             cache    => 1);
 
