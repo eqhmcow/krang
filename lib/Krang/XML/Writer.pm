@@ -61,6 +61,7 @@ sub startTag {
 
 sub characters {
     my ($self, $value) = @_;
+    return unless defined $value;
     _fix_val(\$value);
     $self->SUPER::characters($value);
 }
