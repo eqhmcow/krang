@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Krang::DB qw(dbh);
 use Krang::Conf qw(KrangRoot);
+use Krang::Log qw(debug);
 use Krang::Session qw(%session);
 use Krang::Contrib;
 use Krang::Category;
@@ -691,7 +692,7 @@ sub find {
 
     my $select_string;
     if ($args{'count'}) {
-        $select_string = 'count(*)';
+        $select_string = 'count(*) as count';
     } elsif ($args{'only_ids'}) {
         $select_string = 'media_id';
     } else {
@@ -709,6 +710,10 @@ sub find {
     } elsif ($offset) {
         $sql .= " limit $offset, -1";
     }
+
+    debug(__PACKAGE__ . "::find() SQL: " . $sql);
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { $args{$_} } @where));
+
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
     while (my $row = $sth->fetchrow_hashref()) {
@@ -730,7 +735,7 @@ sub find {
         }
 	push (@media_object,$obj);
     }
-    $sth->finish();	
+    $sth->finish();
     return @media_object; 
 }
 
