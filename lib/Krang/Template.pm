@@ -920,8 +920,11 @@ sub save {
     my @save_fields = grep {$_ ne 'template_id'} keys %template_cols;
 
     # calculate url
-    my ($url) = Krang::Category->find(category_id => $self->{category_id});
-    $url = ref $url ? $url->url() : '';
+    my $url = "";
+    if ($self->{category_id}) {
+        my $cat = Krang::Category->find(category_id => $self->{category_id});
+        $url = $cat->url;
+    }
     $self->{url} = _build_url($url, $self->{filename});
 
     # check for duplicate url
