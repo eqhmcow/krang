@@ -21,7 +21,6 @@ a:visited {
 a:active {
   color:            #05034c;
 }
-
 /*** generic style palette ***/
 .light { 
   background-color: #dbe9f4;
@@ -344,4 +343,65 @@ a:active {
 a.copyright:link, a.copyright:visited, a.copyright:active, a.copyright:hover {
     color: #04044c;
     text-decoration: none;
+}
+
+/*** New Left Nav Styles ***/
+
+.dark-bar-nav { 
+  background-color: #04044c;
+  color:            #dbeaf5;
+  margin-top:       4px;
+  padding:          4px 25px 0px 25px;
+  height:           20px;
+  font-weight:      bold;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+}
+.dark-bar-nav a:link { 
+  background-color: #04044c;
+  color:            #dbeaf5;
+  font-weight:      bold;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+}
+.dark-bar-nav a:visited { 
+  background-color: #04044c;
+  color:            #dbeaf5;
+  font-weight:      bold;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+}
+.dark-bar-nav a:active { 
+  background-color: #04044c;
+  color:            #dbeaf5;
+  font-weight:      bold;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+}
+.light-bar-nav { 
+  background-color: #dbe9f4;
+  color:            #333333;
+  padding:          4px 4px 0px 4px;
+  height:           20px;
+  font-weight:      bold;
+  margin-top:       3px;
+}
+.light-bar-nav img {
+	margin-left:    5px;
+	margin-right:   5px;
+}
+.form-cell-nav {
+  border:         1px solid #bababa;
+  border-top:     none;
+  padding:        4px 24px;
+  line-height:    150%;
+}
+.plain-cell-nav {
+  padding:        2px 24px;
+  line-height:    150%;
+}
+.blue-border {
+	background:    #000448;
+	height:        50px;
+   margin-top:       3px;
 }
