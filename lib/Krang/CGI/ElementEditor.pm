@@ -524,7 +524,10 @@ sub select_story {
 
     my $root    = $self->_get_element;
     my $element = _find_element($root, $path);
-    $element->data($story_id);
+
+    # find story and set it in element data
+    my ($story) = Krang::Story->find(story_id => $story_id);
+    $element->data($story);
 
     # back to edit, in the parent and out of find_story_link mode
     $query->delete_all();
@@ -546,7 +549,10 @@ sub select_media {
 
     my $root    = $self->_get_element;
     my $element = _find_element($root, $path);
-    $element->data($media_id);
+
+    # find media and set it in element data
+    my ($media) = Krang::Media->find(media_id => $media_id);
+    $element->data($media);
 
     # back to edit, in the parent and out of find_media_link mode
     $query->delete_all();

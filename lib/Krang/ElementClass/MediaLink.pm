@@ -27,9 +27,9 @@ sub input_form {
     my $html = "";
 
     # include thumbnail if media is available
-    my $media_id = $element->data();
-    if ($media_id) {
-        my ($media) = Krang::Media->find(media_id => $media_id);
+    my $media = $element->data();
+    if ($media) {
+        my $media_id = $media->media_id;
         my $size = $media->file_size;
         $size = $size > 1024 ? int($size / 1024) . 'k' : $size . 'b';
         my $thumbnail_path = $media->thumbnail_path(relative => 1);
@@ -61,9 +61,9 @@ sub view_data {
     my $html = "";
 
     # include thumbnail if media is available
-    my $media_id = $element->data();
-    if ($media_id) {
-        my ($media) = Krang::Media->find(media_id => $media_id);
+    my $media = $element->data();
+    if ($media) {
+        my $media_id = $media->media_id;
         my $size = $media->file_size;
         $size = $size > 1024 ? int($size / 1024) . 'k' : $size . 'b';
         my $path = $media->file_path(relative => 1);
@@ -111,20 +111,39 @@ sub load_query_data {
                         filename => $filename);
 
             # use the dup instead of the new object
-            $element->data($err->media_id);
+            $element->data($err);
         } else {
             die $@;
         }
     } else {
         # the save worked
-        $element->data($media->media_id);
+        $element->data($media);
     }
+}
+
+# store ID of object in the database
+sub freeze_data {
+    my ($self, %arg) = @_;
+    my ($element) = @arg{qw(element)};
+    my $media = $element->data;
+    return undef unless $media;
+    return $media->media_id;
+}
+
+# load object by ID, ignoring failure since the object might have been
+# deleted
+sub thaw_data {
+    my ($self, %arg) = @_;
+    my ($element, $data) = @arg{qw(element data)};
+    return $element->data(undef) unless $data;
+    my ($media) = Krang::Media->find(media_id => $data);
+    return $element->data($media);
 }
 
 
 =head1 NAME
 
-Krang::ElementClass::Textarea - textarea element class
+Krang::ElementClass::MediaLink - media linking element class
 
 =head1 SYNOPSIS
 
@@ -134,7 +153,8 @@ Krang::ElementClass::Textarea - textarea element class
 
 =head1 DESCRIPTION
 
-Provides an element to link to media.
+Provides an element to link to media.  A reference to the media object
+is returned from data() for elements of this class.
 
 =head1 INTERFACE
 
@@ -145,11 +165,12 @@ All the normal L<Krang::ElementClass> attributes are available, plus:
 =item allow_upload
 
 Show an upload box in the editing interface to create new Media
-objects inline.
+objects inline.  Defaults to 1.
 
 =item show_thumbnail
 
-Show a thumbnail of the media object in the editing interface.
+Show a thumbnail of the media object in the editing and viewing
+interface.  Defaults to 1.
 
 =back
 
