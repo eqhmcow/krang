@@ -1504,6 +1504,13 @@ sub clone {
     # mangle title
     $copy->{title} = "Copy of $copy->{title}";
 
+    # start at version 0
+    $copy->{version} = 0;
+
+    # never been published
+    $copy->{publish_date} = undef;
+    $copy->{published_version} = 0;
+
     # returns 1 if there is a dup, 0 otherwise
     my $is_dup = sub {  
         eval { shift->_verify_unique; };
