@@ -421,7 +421,7 @@ sub file_path {
     if ($media_id) { 
         return catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename});
     } else {
-        return catfile($self->{tempdir},$filename);
+        $self->{tempdir} ? return catfile($self->{tempdir},$filename) : return 0;
     }
 }
 
