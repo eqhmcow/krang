@@ -79,7 +79,7 @@ if ($< != 0 or $> != 0) {
 }
 
 # call ctl scripts
-for (qw(krang_apachectl krang_ftpctl krang_schedulectl)) {
+for (qw(krang_apachectl krang_ftpctl krang_schedulectl krang_siteserverctl)) {
     my $script = catfile(KrangRoot, 'bin', $_);
     print STDERR "=> krang_ctl calling '$sudo$script $command'...\n";
     system("$sudo$script $command");

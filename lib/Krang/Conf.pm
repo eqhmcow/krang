@@ -39,6 +39,8 @@ BugzillaEmail
 BugzillaServer
 BugzillaPassword
 BugzillaComponent
+SiteServerAddr
+SiteServerPort
 );
 }
 

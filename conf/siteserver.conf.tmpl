@@ -1,0 +1,111 @@
+ServerType           standalone
+ServerRoot           <tmpl_var ApacheRoot>
+ServerAdmin          root@localhost
+ServerSignature      Email
+PidFile              <tmpl_var KrangRoot>/tmp/siteserver.pid
+DocumentRoot         <tmpl_var KrangRoot>/tmp
+User                 <tmpl_var KrangUser>
+Group                <tmpl_var KrangGroup>
+KeepAlive            Off
+MaxKeepAliveRequests 100
+KeepAliveTimeout     15
+MinSpareServers      2
+MaxSpareServers      6
+StartServers         2
+MaxClients           150
+MaxRequestsPerChild  0
+ErrorLog             <tmpl_var KrangRoot>/logs/siteserver_error_log
+LogLevel             info
+TypesConfig          <tmpl_var ApacheRoot>/conf/mime.types
+UseCanonicalName     On
+HostNameLookups      Off
+Timeout              30
+
+#
+# Dynamic Shared Object (DSO) Support
+#
+# To be able to use the functionality of a module which was built as a DSO you
+# have to place corresponding `LoadModule' lines at this location so the
+# directives contained in it are actually available _before_ they are used.
+# Please read the file http://httpd.apache.org/docs/dso.html for more
+# details about the DSO mechanism and run `httpd -l' for the list of already
+# built-in (statically linked and thus always available) modules in your httpd
+# binary.
+#
+# Note: The order in which modules are loaded is important.  Don't change
+# the order below without expert advice.
+#
+# Example:
+# LoadModule foo_module libexec/mod_foo.so
+LoadModule mime_magic_module  libexec/mod_mime_magic.so
+# LoadModule rewrite_module     libexec/mod_rewrite.so
+# LoadModule proxy_module       libexec/libproxy.so
+
+#  Reconstruction of the complete module list from all available modules
+#  (static and shared ones) to achieve correct module execution order.
+#  [WHENEVER YOU CHANGE THE LOADMODULE SECTION ABOVE UPDATE THIS, TOO]
+ClearModuleList
+AddModule mod_env.c
+AddModule mod_log_config.c
+AddModule mod_mime_magic.c
+AddModule mod_mime.c
+AddModule mod_negotiation.c
+AddModule mod_status.c
+AddModule mod_include.c
+AddModule mod_autoindex.c
+AddModule mod_dir.c
+# AddModule mod_cgi.c
+AddModule mod_asis.c
+# AddModule mod_imap.c
+AddModule mod_actions.c
+# AddModule mod_userdir.c
+# AddModule mod_alias.c
+# AddModule mod_rewrite.c
+AddModule mod_access.c
+AddModule mod_auth.c
+# AddModule mod_proxy.c
+AddModule mod_so.c
+AddModule mod_setenvif.c
+AddModule mod_perl.c
+
+
+PassEnv KRANG_ROOT
+PassEnv KRANG_CONF
+PassEnv KRANG_DEBUG
+PassEnv CGI_MODE
+PassEnv PERL5LIB
+PassEnv HTML_TEMPLATE_ROOT
+
+
+#
+# MOD_PERL Configuration for Krang
+#
+PerlPassEnv KRANG_ROOT
+PerlPassEnv KRANG_CONF
+PerlPassEnv KRANG_DEBUG
+PerlPassEnv CGI_MODE
+PerlPassEnv PERL5LIB
+PerlPassEnv HTML_TEMPLATE_ROOT
+
+PerlSendHeader Off
+PerlWarn On
+PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
+
+<Perl>
+        use Krang::Handler;
+</Perl>
+
+
+#
+# Non mod_perl config
+#
+
+Listen <tmpl_var SiteServerAddr>:<tmpl_var SiteServerPort>
+NameVirtualHost <tmpl_var SiteServerAddr>:<tmpl_var SiteServerPort>
+
+<VirtualHost <tmpl_var SiteServerAddr>:<tmpl_var SiteServerPort>>
+   ServerName <tmpl_var RootVirtualHost>
+   ServerAlias *
+
+   PerlTransHandler Krang::Handler->siteserver_trans_handler
+</VirtualHost>
