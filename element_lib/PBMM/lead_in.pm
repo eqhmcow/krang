@@ -119,19 +119,22 @@ sub fill_template {
 
     return if not $story;
 
-    my $ptitle = $story->element->child('promo_title')->data || $story->title;
-    $tmpl->param( promo_title => $ptitle );
+    
+    my $ptitle = $story->element->child('promo_title');
+    $tmpl->param( promo_title => ($ptitle ? $ptitle->data : $story->title) );
 
     my $pteaser;
-    if (($element->child('promo_text_type')->data eq 'promo teaser') || ($story->element->name ne 'article')) {
+    my $pttype = $element->child('promo_text_type');
+    my $type = $pttype ? $pttype->data : '';
+    if (($type eq 'promo teaser') || ($story->element->name ne 'article')) {
         $pteaser = $story->element->child('promo_teaser')->data;
         $tmpl->param( from_promo_teaser => 1 );    
     } else {
         my $limit;
-        if ($element->child('promo_text_type')->data eq 'full article') {
+        if ($type eq 'full article') {
             $limit = 'none at all';
         } else {
-            $limit = (split(' ', $element->child('promo_text_type')->data))[0];
+            $limit = (split(' ', $type))[0];
         }
 
         my $count = 0;
@@ -166,7 +169,9 @@ sub fill_template {
   
     $tmpl->param( header_size => $args{element}->child('header_size')->data ) if $args{element}->child('header_size');
  
-    $tmpl->param( alignment => $args{element}->child('alignment')->data ); 
+
+    my $al = $args{element}->child('alignment');
+    $tmpl->param( alignment => $al ? $al->data : 'left' );
     $tmpl->param( type => $type );
 
     $tmpl->param( byline => $story->element->child('byline')->data ) if $story->element->child('byline');
