@@ -11,7 +11,7 @@ knowlegable HTML people, without any interaction with perl code.
 
 =over
 
-=item Changes to Save functionality (1.101?)
+=item Changes to Save functionality (1.10x?)
 
 To help prevent lost saves, the message in the JavaScript window should
 say:
@@ -81,6 +81,29 @@ The final goal would be a cleaner HTML/CSS implementation of the UI
 that would support more browsers and be easier to maintain and skin in
 the long run.
 
+=item Better version control in publish (1.200?)
+
+There is a desire to be able to keep a version from publishing before
+a specific date/time - this allows for time-sensitive content to be
+entered beforehand, without it being published until the proper time.
+
+This would require changes to a number of areas:
+
+First, API additions would need to be added to Krang::Story (perhaps
+as simple as an accessor/mutator of C<<
+$story->earliest_publish_date() >> or equivilant).
+
+Second, L<Krang::Publisher> would need to honor the API addition.
+
+Finally, this needs to be integrated into the UI - how does this fit
+into the current story edit UI?
+
+=item Contributor Types UI (1.200?)
+
+There is currently no UI to edit the various Contributor types.  This
+is a fairly simple CGI that just needs to be banged out.
+
+
 =back
 
 =head2 Dev-only Items
@@ -106,6 +129,7 @@ scheduled publish.
 
 Allow the C<--media-only> option to work in conjunction with the
 C<--site_id> option and publish only media in that site.
+
 
 =back
 
