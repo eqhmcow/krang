@@ -8,6 +8,7 @@ use Krang::Script;
 use Krang::Category;
 use Krang::Site;
 use Krang::User;
+use Krang::Media;
 use Krang::Session qw(%session);
 use Net::FTP;
 use IPC::Run qw(start);
@@ -140,22 +141,49 @@ foreach my $type (@types) {
 
         my @cat_list = Krang::Category->find(site_id => $site_obj[0]->site_id, parent_id => $rc->category_id);
         my $catnames = join(" ",(map { $_->dir } @cat_list));
+
+        my $list_string;
+
+        if ($type eq 'media') {
+            my @existing_media = Krang::Media->find( category_id => $rc->category_id );
+            my $medianames = join(" ",(map { $_->filename } @existing_media));
+
+            if ($catnames) {
+                $list_string = $catnames;
+                $list_string .= " $medianames" if $medianames;
+            } elsif ($medianames) {
+                $list_string = $medianames; 
+            }
+        } else {
+            my @existing_templates = Krang::Template->find( category_id => $rc->category_id );
+
+            my $tnames = join(" ",(map { $_->filename } @existing_templates));
+            
+            if ($catnames) {
+                $list_string = $catnames;
+                $list_string .= " $tnames" if $tnames;
+            } elsif ($tnames) {
+                $list_string = $tnames; 
+            }
+        }
+ 
         my @ret_cats = $ftp->ls();
-        is("@ret_cats", $catnames, "Category ls in site $site for type $type");
+        is("@ret_cats", $list_string, "Category ls in site $site for type $type");
        
         # go into each category and create, get, put, delete media/template
-        foreach my $cat (@ret_cats) {
-            $ftp->cwd($cat);
+        foreach my $cat (@cat_list) {
+            my $cat_dir = $cat->dir;
+            $ftp->cwd($cat_dir);
             $ftp->binary;
             if ($type eq 'media') {
                 my $media_path = catfile(KrangRoot, 't','media','krang.jpg');
-                is($ftp->put($media_path), 'krang.jpg', "Put media krang.jpg in category $cat" );
-                is($ftp->put($media_path), 'krang.jpg', "Put version 2 of media krang.jpg in category $cat" ); 
-                is($ftp->delete('krang.jpg'), 1, "Delete media krang.jpg in category $cat");
+                is($ftp->put($media_path), 'krang.jpg', "Put media krang.jpg in category $cat_dir" );
+                is($ftp->put($media_path), 'krang.jpg', "Put version 2 of media krang.jpg in category $cat_dir" ); 
+                is($ftp->delete('krang.jpg'), 1, "Delete media krang.jpg in category $cat_dir");
             } else {
                 my $template_path = catfile(KrangRoot, 't','template','test.tmpl');
-                is($ftp->put( $template_path ), 'test.tmpl', "Put template test.tmpl in category $cat" );
-                is($ftp->delete('test.tmpl'), 1, "Delete template test.tmpl in category $cat");
+                is($ftp->put( $template_path ), 'test.tmpl', "Put template test.tmpl in category $cat_dir" );
+                is($ftp->delete('test.tmpl'), 1, "Delete template test.tmpl in category $cat_dir");
             }
             $ftp->cdup()            
         }
