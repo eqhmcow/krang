@@ -126,7 +126,7 @@ use Krang::ElementLibrary;
 use Krang::Element;
 use Krang::DB qw(dbh);
 use Carp qw(croak);
-# use Krang::Session qw(%session);
+use Krang::Session qw(%session);
 use Krang::Log qw(debug assert affirm ASSERT);
 use Krang::Message qw(add_message get_messages);
 use base 'Krang::CGI';
@@ -141,6 +141,7 @@ sub setup {
                      delete_children  => sub { shift->revise('delete') },
                      reorder          => sub { shift->revise('reorder') },
                      delete_element   => 'delete_element',
+                     select_story     => 'select_story',
                     );
 }
 
@@ -153,6 +154,9 @@ sub element_edit {
 
     # pass to bulk edit it bulk editing
     return $self->element_bulk_edit(%args) if $query->param('bulk_edit');
+
+    # pass to find_story if finding a story link
+    return $self->element_find_story(%args) if $query->param('find_story_link');
 
     # find the root element, loading from the session or the DB
     my $root = $args{element};
@@ -200,7 +204,7 @@ sub element_edit {
                                                 -values => \@avail_ord,
                                                 -default => $index + 1,
                                                 -onchange => 
-                                                  'update_order(this, "order_")',
+                                                "update_order(this, 'order_')",
                                                 -override => 1) : 
                              ($index + 1) .  
                              $query->hidden(-name     => "order_$index",
@@ -294,6 +298,125 @@ sub element_bulk_edit {
     $template->param(crumbs => \@crumbs) unless @crumbs == 1;
 }
 
+sub element_find_story {
+    my ($self, %args) = @_;
+    my $query = $self->query();
+    my $template = $args{template};
+    my $path    = $query->param('path') || '/';
+
+    # find the root element, loading from the session or the DB
+    my $root = $args{element};
+    croak("Unable to load element from session.") 
+      unless defined $root;
+
+    # find the element being edited using path
+    my $element = _find_element($root, $path);
+
+    # determine appropriate find params for search
+    my $search_filter = $query->param('search_filter');
+    my %find_params = ( simple_search => $search_filter);
+
+    # FIX: won't work for category!
+    if ($session{story} and $session{story}->story_id) {
+        $find_params{exclude_story_ids} = [ $session{story}->story_id ];
+    }
+
+    my $pager = Krang::HTMLPager->new      (cgi_query     => $query,
+       persist_vars  => {
+                         rm => 'edit',
+                         search_filter => $search_filter,
+                         path => $query->param('path'),
+                         find_story_link => 1,
+                        },
+       use_module    => 'Krang::Story',
+       find_params   => \%find_params,
+       columns       => [qw(
+                            pub_status 
+                            story_id 
+                            url 
+                            title 
+                            cover_date 
+                            command_column 
+                           )],
+       column_labels => {
+                         pub_status => '',
+                         story_id => 'ID',
+                         url => 'URL',
+                         title => 'Title',
+                         cover_date => 'Date',
+                        },
+       columns_sortable        => [qw( story_id url title cover_date )],
+       command_column_commands => [qw( select_story )],
+       command_column_labels   => {
+                                   select_story     => 'Select',
+                                  },
+       row_handler   => sub { $self->find_story_link_row_handler(@_) },
+       id_handler    => sub { shift->story_id },
+      );
+    
+    $template->param(pager_html => $pager->output());
+
+    # crumbs let the user jump up the tree
+    my $pointer = $element;
+    my @crumbs = ();
+    do {
+        unshift(@crumbs, { name => $pointer->display_name,
+                           path => $pointer->xpath });
+        $pointer = $pointer->parent;
+    } while ($pointer);
+    $template->param(crumbs => \@crumbs) unless @crumbs == 1;
+
+    return $template->output;
+}
+
+
+# Pager row handler for story find run-mode
+sub find_story_link_row_handler {
+    my $self = shift;
+    my ($row, $story) = @_;
+
+    # Columns:
+    #
+
+    # story_id
+    $row->{story_id} = $story->story_id();
+
+    # url
+    $row->{url} = $story->url();
+
+    # title
+    $row->{title} = $story->title();
+
+    # cover_date
+    my $tp = $story->cover_date();
+    $row->{cover_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
+
+    # pub_status
+    $row->{pub_status} = $story->published_version() ? 
+      '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
+}
+
+sub select_story {
+    my $self = shift;
+    my $query = $self->query;
+
+    # gather params
+    my $path    = $query->param('path') || '/';
+    my $story_id = $self->query->param('selected_story_id');
+
+    my $root    = $self->_get_element;
+    my $element = _find_element($root, $path);
+    $element->data($story_id);
+
+    # back to edit, in the parent and out of find_story_link mode
+    $query->delete_all();
+    $query->param(path => $element->parent->xpath()); 
+
+    # brag
+    add_message('selected_story', id => $story_id);
+
+    return $self->edit;
+}
 
 sub element_view {
     my ($self, %args) = @_;

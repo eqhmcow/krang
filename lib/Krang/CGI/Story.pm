@@ -73,6 +73,7 @@ sub setup {
                      save_and_bulk_edit => 'save_and_bulk_edit',
                      save_and_leave_bulk_edit => 'save_and_leave_bulk_edit',
                      save_and_change_bulk_edit_sep => 'save_and_change_bulk_edit_sep',
+                     save_and_find_story_link    => 'save_and_find_story_link',
                     );
 
     $self->tmpl_path('Story/');
@@ -604,6 +605,24 @@ sub save_and_leave_bulk_edit {
 }
 
 
+=item save_and_find_story_link
+
+This mode saves the current element data to the session and goes to
+edit with find_story_link set to 1
+
+=cut
+
+sub save_and_find_story_link {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    $self->query->param(find_story_link => 1);
+    return $self->edit();
+}
+
 =item save_and_go_up
 
 This mode saves the current element data to the session and jumps to
@@ -645,7 +664,9 @@ sub _save {
 
     # if we're saving in the root then save the story data
     my $path = $query->param('path') || '/';
-    if ($path eq '/' and not $query->param('bulk_edit')) {
+    if ($path eq '/' 
+        and not $query->param('bulk_edit') 
+        and not $query->param('find_story_link')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug');
         my $cover_date = $self->_decode_date('cover_date');
