@@ -133,6 +133,10 @@ Returns the unique id assigned the contributor object.  Will not be populated un
 
 Gets/sets the value.
 
+=item $contrib->selected_contrib_type()
+
+Temporary storage space used by assets (media, story, etc) to show which contrib type the contrib object they are referring belongs to.
+
 =item $contrib->contrib_type_ids()
 
 Returns an array of contrib_type_id's associated with this contributor.  Passing in array of ids sets them (overwriting any current type ids).
@@ -339,7 +343,7 @@ sub find {
         push (@contrib_object,$obj);
     }
     $sth->finish();
-    return wantarray ? @contrib_object: \@contrib_object;
+    return @contrib_object;
 }
 
 =back
