@@ -239,6 +239,7 @@ test_story_unpublish();
 
 test_media_unpublish();
 
+test_additional_content_block();
 
 ############################################################
 #
@@ -1033,6 +1034,28 @@ sub deploy_test_templates {
 
 }
 
+
+#
+# test Krang::Publisher->additional_content_block()
+#
+sub test_additional_content_block {
+
+    my $content  = $para1;
+    my $filename = 'test1.txt';
+
+    for (0..1) {
+
+        my $open  = qq{<KRANG_ADDITIONAL_CONTENT filename="$filename" use_category="$_">};
+        my $close = "</KRANG_ADDITIONAL_CONTENT>";
+
+        my $txt = $publisher->additional_content_block(content => $content, filename => $filename, use_category => $_);
+
+        my $expected = $open . $content . $close;
+
+        ok($txt eq $expected, "Krang::Publisher->additional_content_block");
+
+    }
+}
 
 
 #

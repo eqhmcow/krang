@@ -109,8 +109,8 @@ use Krang::Log qw(debug info critical);
 use constant PUBLISHER_RO => qw(is_publish is_preview story category);
 
 
-use constant PAGE_BREAK   => "<<<<<<<<<<<<<<<<<< PAGE BREAK >>>>>>>>>>>>>>>>>>";
-use constant CONTENT      => "<<<<<<<<<<<<<<<<<< CONTENT >>>>>>>>>>>>>>>>>>";
+use constant PAGE_BREAK    => "<<<<<<<<<<<<<<<<<< PAGE BREAK >>>>>>>>>>>>>>>>>>";
+use constant CONTENT       => "<<<<<<<<<<<<<<<<<< CONTENT >>>>>>>>>>>>>>>>>>";
 
 use Exception::Class
   'Krang::Publisher::FileWriteError' => {fields => [ 'story_id', 'media_id', 'template_id',
@@ -747,6 +747,32 @@ sub content {
 }
 
 
+=item C<< $txt = $publisher->additional_content_block(filename => $filename, content => $html, use_category => 1);
+
+Creates a formatted block of text from C<$html> that, during the final processing of output, will be split out from the rest of the content to be published, and will be written out to C<$filename>.
+
+content and filename arguments are required.
+
+C<use_category> is a boolean flag that tells Krang::Publisher whether or not to add the current L<Krang::Category> header/footer to the final output, as it will for the regular published output.  Defaults to true.
+
+B<WARNING:> C<additional_content_block()> can be called as many times as desired, however it does not perform any sanity checks on C<filename> - if your output contains multiple blocks of additional content with identical filenames, they will overwrite eachother, and only the last one will remain.
+
+=cut
+
+
+sub additional_content_block {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $content  = $args{content}  || croak __PACKAGE__ . ": missing required argument 'content'";
+    my $filename = $args{filename} || croak __PACKAGE__ . ": missing required argument 'filename'";
+    my $use_category = exists($args{use_category}) ? $args{use_category} : 1;
+
+    return qq{<KRANG_ADDITIONAL_CONTENT filename="$filename" use_category="$use_category">$content</KRANG_ADDITIONAL_CONTENT>};
+
+}
+
 
 =item C<< $filename = $publisher->story_filename(page => $page_num); >>
 
@@ -755,8 +781,6 @@ Returns the filename (B<NOT> the path + filename, just the filename) of the curr
 page argument will default to 0 if not passed in.
 
 arguments C<story> can be submitted if you want a filename for something other than what is currently being published.
-
-=back
 
 =cut
 
@@ -778,6 +802,25 @@ sub story_filename {
 }
 
 
+=item C<< $begin_tag = $publisher->begin_special_content(); >>
+
+Returns the begin tag that Krang::Publisher will use internally to separate special content out from the rest of the story content.
+
+Read HREF[Customizing the Publish Process in Krang|customizing_publish.html] for more information on publishing Specialty pages.
+
+=cut
+
+
+=item C<< $end_tag = $publisher->end_special_content(); >>
+
+Returns the end tag that Krang::Publisher will use internally to separate special content out from the rest of the story content.
+
+Read HREF[Customizing the Publish Process in Krang|customizing_publish.html] for more information on publishing Specialty pages.
+
+=cut
+
+
+=back
 
 =head1 TODO
 
