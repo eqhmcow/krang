@@ -22,7 +22,8 @@ sub new {
                                        max  => 1),
                     Krang::ElementClass::Textarea->new(name => 'byline',
                                            max => 1),
-
+                    Krang::ElementClass::Textarea->new(name => 'deck',
+                                           @fixed),
                     Krang::ElementClass::CheckBox->new(name => 'enhanced_content',
                                            @fixed),
                     PBMM::meta->new(),
