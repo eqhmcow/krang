@@ -50,6 +50,7 @@ use Krang::Conf qw(KrangUser KrangGroup KrangRoot);
 use Krang::Log qw(debug critical);
 # use Krang::Session qw(%session);
 use Carp qw(croak);
+use Krang::User;
 
 BEGIN {
     # make sure we are KrangUser/KrangGroup
@@ -107,19 +108,15 @@ BEGIN {
     debug("Krang.pm:  Setting instance to '$instance'");    
     Krang::Conf->instance($instance);
   
-    # my $session_id = Krang::Session->create();
-
-    # get a user_id from REMOTE_USER or default to 1
+    # set REMOTE_USER to the user_id for the 'system' user
     unless (exists($ENV{REMOTE_USER})) {
-        my $user_id = 1;
-        $ENV{REMOTE_USER} = $user_id;
-        debug "Setting user_id to $user_id";
+        ($ENV{REMOTE_USER}) = Krang::User->find(ids_only => 1,
+                                                login    => 'system');
+        unless ($ENV{REMOTE_USER}) {
+            warn("Unable to find 'system' user.  All Krang instances must contain the special 'system' account.\n");
+            exit(1);
+        }
     }
 }
-
-# arrange for session to be deleted at process end
-# END { 
-#    Krang::Session->delete();
-# }
 
 1;

@@ -6,6 +6,7 @@ use Krang::Site;
 use Krang::Template;
 
 use Test::More qw(no_plan);
+use Carp qw(croak);
 
 BEGIN {
     use_ok('Krang::User');
@@ -80,7 +81,7 @@ for (qw/email first_name last_name mobile_phone phone/) {
 
 # find() tests
 ###############
-($admin) = Krang::User->find(login => 'admin');
+($admin) = Krang::User->find(login => 'system', hidden => 1);
 isa_ok($admin, 'Krang::User', 'find() - login');
 
 # make sure email is '' for testing
@@ -88,12 +89,8 @@ my $email = $admin->email;
 $admin->email(undef);
 eval {$admin->save};
 croak("Very Bad things: $@") if $@;
-my $count = Krang::User->find(email => undef,
-                              first_name => 'Joe',
-                              last_name => 'Admin',
-                              login => 'admin',
-                              mobile_phone => undef,
-                              phone => undef);
+my $count = Krang::User->find(login => 'system', hidden => 1, count => 1);
+
 is($count, 1, 'find - all fields');
 
 my @users = Krang::User->find(email => undef);
@@ -122,14 +119,14 @@ is(scalar @{$users[0]->group_ids()}, 3, 'group_ids - count');
 # make sure the admin's username and password are 'admin' and 'whale'
 # preserve values for restoration
 my ($clogin, $cpass) = map {$admin->$_} qw/login password/;
-$admin->login('admin');
+$admin->login('system');
 $admin->password('whale');
 eval {$admin->save();};
 croak("Won't complete tests bad things have happened: $@") if $@;
 
 is(Krang::User->check_auth('',''), 0, 'check_auth() - failure 1');
-is(Krang::User->check_auth('admin',''), 0, 'check_auth() - failure 2');
-is(Krang::User->check_auth('admin', 'whale'), 1, 'check_auth() - success');
+is(Krang::User->check_auth('system',''), 0, 'check_auth() - failure 2');
+ok(Krang::User->check_auth('system', 'whale'), 'check_auth() - success');
 
 # revert values
 $admin->login($clogin);

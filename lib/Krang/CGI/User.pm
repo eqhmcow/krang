@@ -460,7 +460,9 @@ sub search {
                                                       },
                                       use_module => 'Krang::User',
                                       find_params =>
-                                      {simple_search => $search_filter},
+                                      {simple_search => $search_filter,
+                                       hidden        => 0,
+                                      },
                                       columns => [
                                                   'login',
                                                   'last',
@@ -527,6 +529,7 @@ sub get_user_params {
         $user_tmpl{$_} = $user->$_ for Krang::User::USER_RW;
     }
 
+    delete $user_tmpl{hidden};
     return \%user_tmpl;
 }
 
@@ -538,7 +541,8 @@ sub update_user {
     my $q = $self->query();
 
     # overwrite object fields
-    $user->$_($q->param($_) ? $q->param($_) : undef) for Krang::User::USER_RW;
+    $user->$_($q->param($_) ? $q->param($_) : undef) 
+      for grep { $_ ne 'hidden' } Krang::User::USER_RW;
 
     # set password if we've been handed one
     my $pass = $q->param('password') || '';

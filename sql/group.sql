@@ -63,8 +63,9 @@ CREATE TABLE user_group_permission (
         INDEX (group_id)
 );
 
-/* set default (admin) user permissions */
+/* set default (admin) user permissions for 'admin' and 'system' */
 INSERT INTO user_group_permission VALUES (1,1);
+INSERT INTO user_group_permission VALUES (2,1);
 
 /* Join table: category <-> group_permission */
 DROP TABLE IF EXISTS category_group_permission;

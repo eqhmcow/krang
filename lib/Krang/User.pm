@@ -119,7 +119,8 @@ use constant USER_RW => qw(email
 			   last_name
 			   login
 			   mobile_phone
-			   phone);
+			   phone
+                           hidden);
 
 # user_user_group table fields
 use constant USER_USER_GROUP => qw(user_id
@@ -246,6 +247,9 @@ sub init {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
           unless exists $args{$_};
     }
+
+    # hidden defaults to 0
+    $args{hidden} = 0 unless exists $args{hidden};
 
     $self->hash_init(%args);
 
@@ -524,7 +528,6 @@ sub find {
         return ($user) if $user;
     }
         
-
     # are we looking up group ids as well
     my $groups = exists $args{group_ids} ? 1 : 0;
 
@@ -839,6 +842,7 @@ sub serialize_xml {
     $writer->dataElement( email => $self->{email} );
     $writer->dataElement( phone => $self->{phone} );
     $writer->dataElement( mobile_phone => $self->{mobile_phone} );
+    $writer->dataElement( hidden => $self->{hidden} );
 
     my $group_ids = $self->{group_ids};
     foreach my $group_id ( @$group_ids ) {

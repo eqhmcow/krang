@@ -295,7 +295,7 @@ END {
     $new_admin_group->categories($test_cats[1]->category_id => "edit");
     $new_admin_group->save();
 
-    my ($admin_user) = Krang::User->find(login=>"admin");
+    my ($admin_user) = Krang::User->find(login=>"system", hidden => 1);
     $admin_user->group_ids_push($new_admin_group->group_id());
     $admin_user->save();
 

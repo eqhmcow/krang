@@ -352,7 +352,7 @@ is( Krang::Group->user_desk_permissions($desk_perm_test_desk_id),
     "Admin has 'hide' desk access" );
 
 # Add new group to Admin user and check again.  Access should now be "read-only"
-my ($admin_user) = Krang::User->find(user_id=>1);
+my ($admin_user) = Krang::User->find(login=>'system', hidden => 1);
 $admin_user->group_ids_push( $desk_perm_test_group->group_id );
 $admin_user->save();
 is( Krang::Group->user_desk_permissions($desk_perm_test_desk_id),
@@ -396,7 +396,7 @@ is( $user_asset_permissions{"media"},
 #
 
 # Change admin group to have "hide" access to media
-($admin_group) = Krang::Group->find(group_id=>1);
+($admin_group) = Krang::Group->find(group_id=>$admin_user->group_ids());
 $admin_group->asset_media("hide");
 $admin_group->save();
 
@@ -411,7 +411,7 @@ is( Krang::Group->user_asset_permissions("media"),
     "Admin has 'hide' access to media" );
 
 # Add new group to Admin user and check again.  Access should now be "read-only"
-($admin_user) = Krang::User->find(user_id=>1);
+($admin_user) = Krang::User->find(login => 'system', hidden => 1);
 $admin_user->group_ids_push( $asset_perm_test_group->group_id );
 $admin_user->save();
 is( Krang::Group->user_asset_permissions("media"),
@@ -469,7 +469,7 @@ is( Krang::Group->user_admin_permissions("may_publish"),
     "Admin has may_publish=>0 access" );
 
 # Add new group to Admin user and check again.  Access should now be "read-only"
-($admin_user) = Krang::User->find(user_id=>1);
+($admin_user) = Krang::User->find(login => 'system', hidden => 1);
 $admin_user->group_ids_push( $admin_perm_test_group->group_id );
 $admin_user->save();
 is( Krang::Group->user_admin_permissions("may_publish"),
