@@ -209,7 +209,10 @@ sub deploy_template {
 
     my $template   = $args{template};
     my $id         = $template->template_id();
-    my ($category) = Krang::Category->find(category_id => $template->category_id());
+
+    my $category   = $template->category();
+
+#    my ($category) = Krang::Category->find(category_id => $template->category_id());
 
     if (!defined($category)) { die "ERROR: cannot find category '" . $template->category_id() . "'\n"; }
 
