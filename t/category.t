@@ -69,18 +69,10 @@ is($dir eq '/blah', 1, 'dir()');
 is($category->site_id() =~ /^\d+$/, 1, 'site_id');
 is($category->url() =~ /$dir/, 1, 'url()');
 
+is($category->element_id(), $element1->element_id(), 'element_id');
 
-# setter tests
-###############
-# element()
-my $element = Krang::Element->new(class => 'category', object => $category);
-$element->save();
-$category->element($element);
-$category->save();
-is($category->element_id(), $element->element_id(), 'element() - setter');
+#END {$element1->delete()};
 
-# delete first element
-$element1->delete();
 
 # dir()
 my $d = $category->dir('fred');
@@ -364,6 +356,7 @@ is($success, 1, 'site delete()');
 
     # Delete site
     $ptest_site->delete();
+
 }
 
 
