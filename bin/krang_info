@@ -1,0 +1,94 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+=head1 NAME
+
+krang_info - gives a quick summary of the Krang installation
+
+=head1 SYNOPSIS
+
+To find out the version, installed addons, and instances within the
+Krang installation:
+
+  bin/krang_info
+
+=head1 DESCRIPTION
+
+This script returns a quick summary of the Krang installation - which
+version of Krang, the addons installed, and a full list of the
+instances.
+
+
+=head1 OPTIONS
+
+None at this time.
+
+=cut
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# set the instance as the first instance that exists - just so that we
+# can get Krang::Script loaded without complaints.
+BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
+
+use Krang::Script;
+use Krang;
+use Krang::AddOn;
+
+use Data::Dumper;
+
+my @instances = Krang::Conf->instances;
+my $version   = $Krang::VERSION;
+
+my @addons = sort { $a->name cmp $b->name } Krang::AddOn->find();
+
+
+print STDOUT "######################################################################\n\n";
+print STDOUT "Krang\n\nVersion:\t\t$version\n\n";
+print STDOUT "Installed Addons:\n\n";
+foreach (@addons) {
+    my $tabs = (length($_->{name}) > 8) ? "\t" : "\t\t";
+    print STDOUT "\t$_->{name}$tabs$_->{version}\n";
+}
+
+print STDOUT "\nConfigured instances (in conf/krang.conf):\n\n";
+
+foreach (@instances) {
+    print STDOUT "\t\t\t$_\n";
+}
+
+print STDOUT "\n######################################################################\n\n";
+
+exit;

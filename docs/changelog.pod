@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<bin/krang_info> - a simple command-line script to list the
+currently configured status of Krang.  [Peter]
+
+=item *
+
 Reordered subroutine exports in L<Krang::Element> to fix a library
 loading loop that cropped up under some circumstances.  Thanks to
 Michael Peters (mpeters@plusthree.com) for finding it.  [Peter]
