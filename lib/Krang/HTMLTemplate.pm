@@ -34,13 +34,15 @@ sub output {
     my $template = shift;
 
     my @desks = Krang::Desk->find();
-    my @desk_loop;
+    my @header_desk_loop;
     
-    foreach my $desk (@desks) {
-        push (@desk_loop, { desk_id => $desk->desk_id, desk_name => $desk->name
+    if ($template->query(name => 'header_desk_loop')) { 
+        foreach my $desk (@desks) {
+            push (@header_desk_loop, { desk_id => $desk->desk_id, desk_name => $desk->name
 });
+        }
+        $template->param( header_desk_loop => \@header_desk_loop );
     }
-    $template->param( desk_loop => \@desk_loop );
 
     # fill in header variables as necessary
     if ($template->query(name => 'header_user_name')) {
