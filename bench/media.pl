@@ -51,13 +51,24 @@ my @media_object;
 
 $i = $media->media_id() - ($count - 1);
 run_benchmark(module => 'Krang::Media',
-              name   => 'find',
+              name   => 'find by id',
               count  => $count,               
               code   =>
          sub {
              push @media_object, Krang::Media->find(media_id => $i++);
          });
 
+###################################
+my $i = 0;
+run_benchmark(  module => 'Krang::Media',
+                name   => 'find with limit, offset',
+                count => $count,
+                code =>
+            sub {
+                Krang::Media->find( limit => 20, offset => $i );
+                $i = $i + 20;
+                $i = 0 if ($i == 120);
+            });
 ###################################
 
 $i = 0;
