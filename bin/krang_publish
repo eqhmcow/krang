@@ -7,7 +7,7 @@ use FindBin qw($RealBin);
 use Getopt::Long;
 use Pod::Usage;
 use Config;
-
+use Carp;
 
 =head1 NAME
 
@@ -312,7 +312,20 @@ sub publish_media {
         my @starttime = gettimeofday();
         @assettime = @starttime;
 
-        $publisher->publish_media(media => \@media, %{$publish_args});
+        eval { 
+            $publisher->publish_media(media => \@media, %{$publish_args}); 
+        };
+        if (my $err = $@) {
+            if ($err->isa('Krang::Publisher::FileWriteError')) {
+                print STDOUT sprintf("ERROR:\n%s\:\nsource='%s'\ndestination='%s'\nerror='%s'\n",
+                                     $err->{message}, $err->{source}, $err->{destination},
+                                     $err->{system_error});
+                croak;
+            } else {
+                croak($err);
+            }
+        }
+
         my $endtime = tv_interval(\@starttime);
 
         print sprintf("STATUS: media %i - %i published in %.02f seconds.\n", ($find_options->{offset}+1), ($find_options->{offset} + @media), $endtime);
