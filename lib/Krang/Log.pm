@@ -219,7 +219,10 @@ BEGIN {
             eval 'sub info     ($) { __PACKAGE__->log(level => "info",     message => shift); }';
         }
 
-    }
+    } else {
+         eval 'sub debug    ($) { __PACKAGE__->log(level => "debug",    message => shift); }';
+        eval 'sub info     ($) { __PACKAGE__->log(level => "info",     message => shift); }';
+    } 
 
     # turn assertions on or off based on KRANG_ASSERT or Assertions
     # conf setting
