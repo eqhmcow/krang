@@ -112,10 +112,9 @@ sub validate {
     open(XML, $filename) or die "Unable to open $filename: $!";
     my $found = 0;
     while(defined(my $line = <XML>)) {
-        if ($line =~ /xmlns:xsi.*xsi:noNamespaceSchemaLocation/) {
-            $found = 1;
-            last;
-        }
+        next unless $line =~ /xmlns:xsi.*xsi:noNamespaceSchemaLocation/;
+        $found = 1;
+        last;
     }
     close XML or die $!;
     return (0, "$filename is missing xmlns:xsi and xsi:noNamespaceSchemaLocation attributes necessary for schema validation.")
