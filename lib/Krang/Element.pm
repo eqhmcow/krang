@@ -1163,6 +1163,7 @@ BEGIN {
                           publish_check
                           force_republish
                           use_category_templates
+                          mark_form_invalid
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 

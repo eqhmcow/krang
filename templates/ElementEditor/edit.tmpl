@@ -219,9 +219,7 @@ Words: <span id=bulk_edit_words></span> &nbsp;&nbsp;&nbsp;Characters: <span id=b
 
     <td align=left class="form-cell">
       <tmpl_if is_container><input type="button" value=Edit onClick='edit_children("<tmpl_var path>")' class="button">&nbsp;</tmpl_if>
-      <tmpl_if invalid><span class="invalid"></tmpl_if>
-        <tmpl_var form>
-      <tmpl_if invalid></span></tmpl_if>
+      <tmpl_var form>
     </td>
 
     <td align=center class="form-cell">

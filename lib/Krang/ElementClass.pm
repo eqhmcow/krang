@@ -385,6 +385,22 @@ sub validate_children {
     return 1;
 }
 
+=item C<< $invalid_html = $class->mark_form_invalid(html => $html) >>
+
+This method is used to mark the form fields created by input_form()
+invalid when the element fails validate().  The default implementation
+wraps the form in C<< <span class="invalid"></span> >>.  This method
+may be overridden if the class uses HTML which would be broken by
+being wrapped in a span.
+
+=cut
+
+sub mark_form_invalid {
+    my ($self, %arg) = @_;
+    my ($html) = @arg{qw(html)};
+    return qq{<span class="invalid">$html</span>};
+}
+
 =item C<< $class->load_query_data(element => $element, query => $query) >>
 
 This call loads the data from the current query into the object.

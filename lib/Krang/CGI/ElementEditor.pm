@@ -224,12 +224,14 @@ sub element_edit {
     $template->param( no_reorder => 1 ) if not @avail_ord;
  
     foreach my $child (@children) {        
+        # setup form, making it invalid if needed
+        my $form = $child->input_form(query   => $query,
+                                      order   => $index,
+                                      invalid => $invalid{$index});
+        $form = $child->mark_form_invalid(html => $form) if $invalid{$index};
+
         push(@child_loop, {
-                           form         => $child->input_form(
-                                                query   => $query,
-                                                order   => $index,
-                                                invalid => $invalid{$index},
-                                                             ),
+                           form         => $form,
                            name         => $child->display_name(),
                            path         => $child->xpath(),
                            (order_select =>
