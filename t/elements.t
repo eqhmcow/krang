@@ -34,6 +34,8 @@ is(@{$page->children}, 6);
 # fill in deck
 $element->children()->[0]->data("deck deck deck");
 is($element->children()->[0]->data, "deck deck deck");
+is($element->child('deck')->data, "deck deck deck");
+
 
 # walk through elements with foreach_element
 my $count = 0;
