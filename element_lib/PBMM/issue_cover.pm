@@ -2,7 +2,8 @@ package PBMM::issue_cover;
 use strict;
 use warnings;
 use PBMM::meta;
-
+use PBMM::promo;
+                                                                           
 use base 'Krang::ElementClass::Cover';
 
 sub new {
@@ -18,14 +19,7 @@ sub new {
                                        max  => 1),
                     Krang::ElementClass::CheckBox->new(name => 'enhanced_content',
                                            @fixed),
-                    Krang::ElementClass::Text->new(name => 'promo_title',
-                                       @fixed),
-                    Krang::ElementClass::Textarea->new(name => 'promo_teaser',
-                                           @fixed),
-                    Krang::ElementClass::MediaLink->new(name => 'promo_image_small',
-                                            max  => 1),
-                    Krang::ElementClass::MediaLink->new(name => 'promo_image_large',
-                                            max  => 1),
+                    PBMM::promo->new(),
                     Default::lead_in->new(),
                     PBMM::image->new(),
                     Krang::ElementClass::Text->new(name         => "small_header" ),
