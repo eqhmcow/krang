@@ -1,6 +1,5 @@
 package Krang::Publisher;
-use strict;
-use warnings;
+
 
 =head1 NAME
 
@@ -69,6 +68,30 @@ Krang::Publisher is responsible for coordinating the various components that mak
 In both the preview and publish process, stories are checked for related media (see Krang::Story::linked_media()).  Media objects will be copied into the proper output directory as part of the build process.
 
 In the publish (but not preview) process, stories will also be checked for linked stories (see Krang::Story::linked_stories()).  Any linked-to stories will be checked for publish status, and will be published if they are marked as unpublished.
+
+=cut
+
+use strict;
+use warnings;
+
+use Carp;
+
+use File::Spec;
+use File::Path;
+
+use Krang::Conf qw(KrangRoot instance);
+use Krang::Story;
+use Krang::Category;
+use Krang::ElementClass;
+use Krang::Template;
+
+use constant PUBLISHER_RO => qw(is_publish is_preview story category);
+
+use Krang::MethodMaker (new_with_init => 'new',
+                        new_hash_init => 'hash_init',
+                        get_set       => [PUBLISHER_RO]);
+
+
 
 
 =head1 INTERFACE
@@ -169,13 +192,76 @@ If successful, it will return lists of Krang::Story and Krang::Media objects tha
 
 Deploys the template stored in a L<Krang::Template> object into the template publish_path under $KRANG_ROOT.
 
-The final path of the template is based on $category->dir() and $template->element_class_name().
+The final path of the template is based on $category->url() and $template->element_class_name().
 
 If successful, deploy_template() returns the final resting place of the template.  In the event of an error, deploy_template() will croak.
 
 deploy_template() makes no attempt to update the database as to the publish status or location of the template - that is the responsibility of Krang::Template (or should it call the appropriate method in Krang::Template?)
 
 =cut
+
+sub deploy_template {
+
+    my $self = shift;
+    my %args = @_;
+
+    croak ("Missing argument 'template'!\n") unless (exists($args{template}));
+
+    my $template   = $args{template};
+    my $id         = $template->template_id();
+    my ($category) = Krang::Category->find(category_id => $template->category_id());
+
+    if (!defined($category)) { die "ERROR: cannot find category '" . $template->category_id() . "'\n"; }
+
+    my @tmpl_dirs = $self->template_search_path();
+
+    my $path = $tmpl_dirs[0];
+    mkpath($path, 0, 0755);
+
+    my $file = File::Spec->catfile($path, $template->filename());
+
+    # write out file
+    my $fh = IO::File->new(">$file") or
+      croak(__PACKAGE__ . "->deploy_template(): Unable to write to '$file' for " .
+            "template '$id': $!.");
+    $fh->print($template->{content});
+    $fh->close();
+
+    return $file;
+
+}
+
+
+=item C<< $dir = $publisher->template_search_path() >>
+
+Given the current category, returns the list of directories that may contain a template.  The first element in the returning array contains the directory of the current category, the last element contains the directory of the root category (parent of all categories in the site).
+
+=cut
+
+sub template_search_path {
+
+    my $self = shift;
+    my @paths = ();
+
+    # Root dir for this instance.
+    my @root = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
+
+    my $cat_dir = $self->{category}->url();
+
+    my @subdirs = split '/', $cat_dir || ('/');
+
+    @subdirs = ('/') unless @subdirs;   # if $cat_dir == '/', @subdirs is empty.
+
+    while (@subdirs > 0) {
+        my $path = File::Spec->catfile(@root, @subdirs);
+        push @paths, $path;
+        pop @subdirs;
+    }
+
+    return @paths;
+
+}
+
 
 =item C<< PAGE_BREAK() >>
 
@@ -202,6 +288,22 @@ L<Krang::ElementClass>, L<Krang::Category>, L<Krang::Media>
 =cut
 
 
+#
+# init()
+#
+# Sanity check as part of load.
+#
+sub init {
+
+    my $self = shift;
+    my %args = @_;
+
+    $self->hash_init(%args);
+
+    return;
+}
+
+
 
 #
 # _assemble_pages()
@@ -215,3 +317,10 @@ L<Krang::ElementClass>, L<Krang::Category>, L<Krang::Media>
 # Attributes story and category are required.
 #
 
+my $EBN =<<EOEBN;
+
+This is a test of the emergency broadcast network.
+
+Please stand by and await further instructions.
+
+EOEBN
