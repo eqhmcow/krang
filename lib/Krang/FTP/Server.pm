@@ -2,11 +2,13 @@ package Krang::FTP::Server;
 use strict;
 use warnings;
 use Carp qw(croak);
+use Krang::Conf;
 use Krang::User;
 use Krang::Log qw(debug info critical);
 use Net::FTPServer;
 use Krang::FTP::FileHandle;
 use Krang::FTP::DirHandle;
+use Krang::DB qw( forget_dbh );
 
 # Inheritance
 our @ISA = qw(Net::FTPServer);
@@ -86,6 +88,8 @@ sub authentication_hook {
     my $user = shift;
     my $pass = shift;
     my $user_is_anon = shift;
+    my @auth_instances;
+    my $login_found;
 
     # log this attempt to login
     info("FTP Login attempt- Username:$user.");
@@ -93,22 +97,46 @@ sub authentication_hook {
     # disallow anonymous access.
     return -1 if $user_is_anon;
 
-    # get user object
-    my $user_object = Krang::User->find( login => $user ); 
+    # check each instance to see if user has login on each
+    foreach my $instance (Krang::Conf->instances()) {
 
-    $self->{user_obj} = $user_object if $user_object;
-    debug("User object found for login $user.");
+        # set instance
+        Krang::Conf->instance($instance);
+
+        # get user object
+        my $user_object = Krang::User->find( login => $user ); 
+
+        next if not $user_object;
+
+        $self->{user_obj} = $user_object if $user_object;
+        debug("User object found for login $user in instance $instance.");
  
-    # return failure if authentication fails.
-    my $login_ok = Krang::User->check_auth($user,$pass);
+        # return failure if authentication fails.
+        my $login_ok = Krang::User->check_auth($user,$pass);
 
-    if (not $login_ok) {
-        info("FTP login/passowrd denied.");
-        return -1;
+        if ($login_ok) {
+            push @auth_instances, $instance;
+            $login_found = 1;
+        }        
     }
- 
+
+    if (not $login_found) {
+            info("FTP login/password denied for user $user.");
+            return -1;
+    }
+
+    # undefine instance until they choose one at top level
+    Krang::Conf->instance(undef);
+
+    # set accepted instances
+    $self->{auth_instances} = \@auth_instances;
+
+    # set user_id in ENV
+    $ENV{USER_ID} = $user;
+  
     # successful login.
-    info("FTP login/password accepted.");
+    info("FTP login/password accepted for user $user, instances: @auth_instances.");
+     
     return 0;
 }
 
