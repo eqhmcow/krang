@@ -425,7 +425,7 @@ sub thaw_data {
 }
 
 
-=item C<< $html_tmpl = $class->find_template(category => $category) >>
+=item C<< $html_tmpl = $class->find_template(element => $element, category => $category) >>
 
 Part of the publish/output section of Krang::ElementClass.  This call searches the filesystem for the appropriate output template to use with this element.
 
@@ -460,7 +460,7 @@ If the root directory is reached, no template exists.  Croak.
 =cut
 
 
-=item C<< $class->fill_template(story => $story, template => $template, category => $category) >>
+=item C<< $class->fill_template(story => $story, element => $element, template => $template, category => $category) >>
 
 Part of the publish/output section of Krang::ElementClass.  This call is responsible for populating the otuput template of the element with the content stored within.  This replaces the "autofill" and .pl files that were found in Bricolage.
 
@@ -498,7 +498,7 @@ A variable called "page_break" containing Krang::Publisher->PAGE_BREAK()
 
 =cut
 
-=item C<< $html = $class->publish(story => $story, category => $category) >>
+=item C<< $html = $class->publish(story => $story, element => $element, category => $category) >>
 
 The API frontend of the publish/output section of Krang::ElementClass.  This sub builds the HTML represented by this object and the element tree beneath it.  The default implementation ties find_template() and fill_template() together.
 
