@@ -11,7 +11,7 @@ BEGIN {
 
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
-use Krang::Log qw( info );
+use Krang::Log qw( info debug );
 use Krang::Alert;
 use Carp qw(croak);
 use Time::Piece;
@@ -219,7 +219,7 @@ sub find {
 
     my $select_string;
     if ($args{'count'}) {
-        $select_string = 'count(*)';
+        $select_string = 'count(*) as count';
     } else {
         $select_string = join(',', FIELDS);
     }
@@ -234,6 +234,9 @@ sub find {
     } elsif ($offset) {
         $sql .= " limit $offset, -1";
     }
+
+    debug(__PACKAGE__ . "::find() SQL: " . $sql);
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { defined $args{$_} ? $args{$_} : 'undef' } @where));
 
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
