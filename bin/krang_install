@@ -152,6 +152,12 @@ Following is a list of the tasks the installer script will perform.
   --SMTPServer           - Address of SMTP mail server 
   --InstanceDisplayName  - Name of the Instance for UI display
 
+=head2 Installation flags
+
+  --do-perl-install      - Install Perl 5.6.1, i686-linux (if not already installed)
+  --do-mysql-install     - Install MySQL 4 (if not already installed)
+  --no-krang-test        - Skip Krang "make test"
+
 
 =head1 SEE ALSO
 
@@ -187,7 +193,7 @@ use HTML::Template;
 
 my @original_args = ();
 my $uniqueness = time();
-my ($help, $man, $do_mysql_install, $do_perl_install);
+my ($help, $man, $do_mysql_install, $do_perl_install, $no_krang_test);
 my @req_params = qw( HostName
                      IPAddress
                      InstanceHostName
@@ -228,7 +234,7 @@ sub do_install {
     configure_krang();
     add_krang_init();
     start_krang();
-    make_test();
+    make_test() unless ($no_krang_test);
     output_report();
 }
 
@@ -596,20 +602,29 @@ sub make_test {
 
 
 sub output_report {
-    my $init_script = "krang-". $options{HostName} .".init";
+    my $init_script = "/etc/init.d/krang-". $options{HostName} .".init";
     my $krang_conf = $options{InstallPath} ."/conf/krang.conf";
 
     print <<EOREPORT;
 
-Krang installation complete.
 
-  Installed at    :  $options{InstallPath}
-  Init script     :  $init_script (Configured to start at boot)
-  Krang conf file :  $krang_conf
+#####                                                         #####
+###                                                             ###
+##                  KRANG INSTALLATION COMPLETE                  ##
+###                                                             ###
+#####                                                         #####
 
-  Running on $options{IPAddress} --
-    http://$options{HostName}:$options{ApachePort}/
-    ftp://$options{HostName}:$options{FTPPort}/
+
+   Installed at        :  $options{InstallPath}
+   Startup init script :  $init_script
+   Krang conf file     :  $krang_conf
+
+   Running on $options{IPAddress} --
+     http://$options{HostName}:$options{ApachePort}/
+     ftp://$options{HostName}:$options{FTPPort}/
+
+   CMS admin user password:  "$options{AdminPassword}"
+
 
 EOREPORT
 }
@@ -641,6 +656,7 @@ sub setup_getopts {
                     'man'       => \$man,
                     'do-mysql-install' => \$do_mysql_install,
                     'do-perl-install' => \$do_perl_install,
+                    'no-krang-test' => \$no_krang_test,
                     (map { $_."=s" => \$options{$_} } @req_params, @opt_params) );
 
     pod2usage(1)             if $help;
