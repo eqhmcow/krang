@@ -276,8 +276,8 @@ sub init {
     my $self = shift;
     my %args = @_;
     my @bad_args;
-    my ($date, $day_of_week, $hour, $minute, $test_date) =
-      map {$args{$_}} qw/date day_of_week hour minute test_date/;
+    my ($date, $day_of_week, $hour, $minute, $test_date, $priority) =
+      map {$args{$_}} qw/date day_of_week hour minute test_date priority/;
 
     my ($repeat, $action, $object_type);
 
@@ -380,7 +380,8 @@ sub init {
     $self->{initial_date} = $self->{next_run};
 
     # determine priority
-    $self->{priority} = $self->determine_priority();
+    $self->{priority} = $priority ? $priority : $self->determine_priority();
+
 
     return $self;
 }
@@ -1247,6 +1248,8 @@ sub serialize_xml {
       if defined $self->{minute};
     $writer->dataElement( day_of_week => $self->{day_of_week} )
       if defined $self->{day_of_week};
+
+    $writer->dataElement( priority => $self->{priority} );
 
     # context
     if (my $context = $self->{context}) {
