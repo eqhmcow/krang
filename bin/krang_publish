@@ -229,7 +229,7 @@ my %publish_args = (callback      => \&_progress_callback,
                    );
 
 if ($republish_only) {
-    $find_options{publish_status} = 1;
+    $find_options{published} = 1;
 }
 
 

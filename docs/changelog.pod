@@ -4,6 +4,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+
+=item *
+
+Fixed broken --republish_only flag in bin/krang_publish. [Peter]
+
 =item *
 
 Changed the default of Krang::ElementClass::Date so that dates are updated 
