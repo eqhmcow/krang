@@ -24,7 +24,7 @@ my %test_params = ( name => 'Car Editors',
                                        2 => 'edit', 
                                        23 => 'hide' },
                     desks         => { },
-                    applications  => { },
+                    assets  => { },
                     may_publish         => 1,
                     admin_users         => 1,
                     admin_users_limited => 1,
@@ -71,7 +71,7 @@ for (@scalar_params) {
 # Test hash methods
 my @hash_params = qw( categories
                       desks
-                      applications );
+                      assets );
 
 for (@hash_params) {
     my $val = "Test $_";
@@ -83,6 +83,29 @@ for (@hash_params) {
 # Test find() for invalid arg handling
 eval { Krang::Group->find( no_such_find_arg => 1) };
 like($@, qr(Invalid find arg), 'Test invalid find arg');
+
+
+# Test find(count=>1)
+my $count = Krang::Group->find(count=>1);
+ok(($count =~ /^\d+$/), "Test find(count=>1)");
+
+
+# Test find(ids_only=>1)
+my @group_ids = ( Krang::Group->find(ids_only=>1) );
+is(scalar(@group_ids), $count, "find(ids_only=>1)");
+like($group_ids[0], qr(^\d+$), "ids_only really returns IDs");
+
+
+# Test find(group_ids=>[])
+eval { Krang::Group->find(group_ids=>'bad input') };
+like($@, qr(group_ids must be an array ref), 'Test bad scalar input to group_ids');
+
+eval { Krang::Group->find(group_ids=>[1, 2, 3, '4bad input']) };
+like($@, qr(group_ids array ref may only contain numeric IDs), 'Test bad array ref input to group_ids');
+
+my $count_group_ids = Krang::Group->find(count=>1, group_ids=>[1, 2, 505]);
+is($count_group_ids, 2, "Test find(group_ids=>[])");
+
 
 
 ##  Debugging output

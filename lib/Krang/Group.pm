@@ -16,11 +16,11 @@ Krang::Group - Interface to manage Krang permissions
 
   # Create a new group
   my $group = Krang::Group->new( name => 'Car Editors',
-                                 categories    => { 1 => 'read-only', 
-                                                    2 => 'edit', 
-                                                   23 => 'hide' },
-                                 desks         => {  NOT YET IMPLEMENTED  },
-                                 applications  => {  NOT YET IMPLEMENTED  },
+                                 categories => { 1 => 'read-only', 
+                                                 2 => 'edit', 
+                                                 23 => 'hide' },
+                                 desks      => {  NOT YET IMPLEMENTED  },
+                                 assets     => {  NOT YET IMPLEMENTED  },
                                  may_publish         => 1,
                                  admin_users         => 1,
                                  admin_users_limited => 1,
@@ -71,7 +71,7 @@ Krang::Group - Interface to manage Krang permissions
   my $admin_prefs      = $group->admin_prefs();
   my %categories       = $group->categories();
   my %desks            = $group->desks();
-  my %applications     = $group->applications();
+  my %assets     = $group->assets();
 
 
   # Category permissions cache management
@@ -100,26 +100,30 @@ The following methods are provided by Krang::Group.
 use Carp;
 use Krang::DB qw(dbh);
 use Krang::Category;
+use Krang::Log qw(debug);
 
+
+# Database fields in table permission_group, asidde from group_id
+use constant FIELDS => qw( name
+                           may_publish
+                           admin_users
+                           admin_users_limited
+                           admin_groups
+                           admin_contribs
+                           admin_sites
+                           admin_categories
+                           admin_jobs
+                           admin_desks
+                           admin_prefs );
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker ( new_with_init => 'new',
                          new_hash_init => 'hash_init',
                          get => [ "group_id" ],
-                         get_set => [ qw( name
-                                          may_publish
-                                          admin_users
-                                          admin_users_limited
-                                          admin_groups
-                                          admin_contribs
-                                          admin_sites
-                                          admin_categories
-                                          admin_jobs
-                                          admin_desks
-                                          admin_prefs ) ],
+                         get_set => [ FIELDS ],
                          hash => [ qw( categories
                                        desks 
-                                       applications ) ] );
+                                       assets ) ] );
 
 
 =item new()
@@ -135,7 +139,7 @@ properties are:
   * may_publish (scalar)  - "1" or "0"
   * categories (hash)  - Map category ID to security level
   * desks (hash)  - Map desk ID to security level
-  * applications (hash)  - Application class ID to security level
+  * assets (hash)  - Asset ID to security level
 
 Security levels may be "edit", "read-only", or "hide".
 
@@ -158,9 +162,9 @@ sub init {
                     admin_jobs          => 0,
                     admin_desks         => 0,
                     admin_prefs         => 0,
-                    categories => {},
-                    desks => {},
-                    applications => {},
+                    categories          => {},
+                    desks               => {},
+                    assets              => {},
                    );
 
     # finish the object
@@ -179,9 +183,6 @@ Retrieve Krang::Group objects from database.
 
 =cut
 
-##  REMOVE  ###########
-use constant FIELDS => ();
-
 sub find {
     my $self = shift;
     my %args = @_;
@@ -189,15 +190,18 @@ sub find {
 
     # Check for invalid args and croak() if any
     my @valid_find_params = qw(
+                               order_by
                                order_desc
-                               name
-                               name_like
                                limit
                                offset
-                               simple_search
                                count
-                               only_ids
+                               ids_only
+
+                               simple_search
                                group_id
+                               group_ids
+                               name
+                               name_like
                               );
 
     foreach my $arg (keys(%args)) {
@@ -205,108 +209,125 @@ sub find {
           unless (grep { $arg eq $_ } @valid_find_params);
     }
 
-    croak("Krang::Group->find() not yet implemented");
+    # For SQL query
+    my $order_by  = delete $args{order_by} || 'name';
+    my $order_dir = delete $args{order_desc} ? 'DESC' : 'ASC';
+    my $limit     = delete $args{limit}    || 0;
+    my $offset    = delete $args{offset}   || 0;
+    my $count     = delete $args{count}    || 0;
+    my $ids_only  = delete $args{ids_only} || 0;
 
+    # check for invalid argument sets
+    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
+          "Only one can be present.")
+      if $count and $ids_only;
+
+    my @sql_wheres = ();
+    my @sql_where_data = ();
+
+    #
+    # Build search query
+    #
+
+    # simple_search: like searches on name
+    if (my $search = $args{simple_search}) {
+        my @words = split(/\W+/, $search);
+        my @like_words = map { "\%$_\%" } @words;
+        push(@sql_wheres, (map { "name LIKE ?" } @like_words) );
+        push(@sql_where_data, @like_words);
+    }
+
+
+    # group_id
+    if (my $search = $args{group_id}) {
+        push(@sql_wheres, "group_id = ?" );
+        push(@sql_where_data, $search);
+    }
+
+
+    # group_ids
+    if (my $search = $args{group_ids}) {
+        croak ("group_ids must be an array ref")
+          unless ($search and (ref($search) eq 'ARRAY'));
+        croak ("group_ids array ref may only contain numeric IDs")
+          if (grep { $_ =~ /\D/ } @$search);
+        my $group_ids_str = join(",", @$search);
+        push(@sql_wheres, "group_id IN ($group_ids_str)" );
+    }
+
+
+    # name
+    if (my $search = $args{name}) {
+        push(@sql_wheres, "name = ?" );
+        push(@sql_where_data, $search);
+    }
+
+
+    # name_like
+    if (my $search = $args{name_like}) {
+        $search =~ s/\W+/%/g;
+        push(@sql_wheres, "name LIKE ?" );
+        push(@sql_where_data, "$search");
+    }
+
+
+    #
+    # Build SQL query
+    #
+
+    # Handle order by/dir
+    my @order_bys = split(/,/, $order_by);
+    my @order_by_dirs = map { "$_ $order_dir" } @order_bys;
+
+    # Build SQL where, order by and limit clauses as string -- same for all situations
+    my $sql_from_where_str = "from permission_group ";
+    $sql_from_where_str .= "where ". join(" and ", @sql_wheres) ." "  if (@sql_wheres);
+    $sql_from_where_str .= "order by ". join(",", @order_by_dirs) ." ";
+    $sql_from_where_str .= "limit $offset,$limit"  if ($limit);
+
+    # Build select list and run SQL, return results
     my $dbh = dbh();
-    my @where = ();
-    my @contrib_object = ();
-    my $where_string = "";
 
-    my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';    
-    $args{order_by} ||= 'last,first';
-    my $order_by =  join(',', 
-                         map { "$_ $order_desc" } 
-                           split(',', $args{'order_by'}));
-    my $limit = $args{'limit'} ? $args{'limit'} : undef;
-    my $offset = $args{'offset'} ? $args{'offset'} : 0;
+    if ($count) {
+        # Return count(*)
+        my $sql = "select count(*) $sql_from_where_str";
+        debug_sql($sql, \@sql_where_data);
 
-    foreach my $key (keys %args) {
-        if ( ($key eq 'contrib_id') || ($key eq 'first') || ($key eq 'last') ) {
-            push @where, $key;
-        }
-    }
+        my ($group_count) = $dbh->selectrow_array($sql, {RaiseError=>1}, @sql_where_data);
+        return $group_count;
 
-    $where_string = join ' and ', (map { "$_ = ?" } @where);
 
-    # exclude_contrib_ids: Specifically exclude contribs with IDs in this set
-    if ($args{'exclude_contrib_ids'}) {
-        my $exclude_contrib_ids_sql_set = "'".  join("', '", @{$args{'exclude_contrib_ids'}})  ."'";
+    } elsif ($ids_only) {
+        # Return group_ids
+        my $sql = "select group_id $sql_from_where_str";
+        debug_sql($sql, \@sql_where_data);
 
-        # Append to SQL where clause
-        $where_string .= " and " if ($where_string);
-        $where_string .= "contrib_id NOT IN ($exclude_contrib_ids_sql_set)";
-    }
+        my $sth = $dbh->prepare($sql);
+        $sth->execute(@sql_where_data);
+        my @group_ids = ();
+        while (my ($group_id) = $sth->fetchrow_array()) {
+            push(@group_ids, $group_id);
+        };
+        $sth->finish();
+        return @group_ids;
 
-    # full_name: add like search on first, last, middle for all full_name words
-    if ($args{'full_name'}) {
-        my @words = split(/\s+/, $args{'full_name'});
-        foreach my $word (@words) {
-            if ($where_string) {
-               $where_string .= " and concat(first,' ',middle,' ',last) like ?"; 
-            } else {
-                $where_string = "concat(first,' ',middle,' ',last) like ?";
-            }
-            push (@where, $word);
-            $args{$word} = "%$word%";
-        }
-    } 
-    
-    # simple_search: add like search on first, last, middle for all simple_search words
-    if ($args{'simple_search'}) {
-        my @words = split(/\s+/, $args{'simple_search'});
-        foreach my $word (@words) {
-            if ($where_string) {
-               $where_string .= " and concat(first,' ',middle,' ',last) like ?"; 
-            } else {
-                $where_string = "concat(first,' ',middle,' ',last) like ?";
-            }
-            push (@where, $word);
-            $args{$word} = "%$word%";
-        }
-    } 
-    
-    my $select_string;
-    if ($args{'count'}) {
-        $select_string = 'count(*)';
-    } elsif ($args{'only_ids'}) {
-        $select_string = 'contrib_id';
+
     } else {
-        $select_string = join(',', FIELDS);
-    }
+        # Return objects
+        my $sql_fields = join(",", ("group_id", FIELDS) );
+        my $sql = "select $sql_fields $sql_from_where_str";
+        debug_sql($sql, \@sql_where_data);
 
-    my $sql = "select $select_string from contrib";
-    $sql .= " where ".$where_string if $where_string;
-    $sql .= " order by $order_by ";
-    
-    # add limit and/or offset if defined
-    if ($limit) {
-       $sql .= " limit $offset, $limit";
-    } elsif ($offset) {
-        $sql .= " limit $offset, -1";
-    }
+        my $sth = $dbh->prepare($sql);
+        $sth->execute(@sql_where_data);
+        my @groups = ();
+        while (my $group_data = $sth->fetchrow_hashref) {
+            push(@groups, $self->new_from_db($group_data));
+        };
+        $sth->finish();
+        return @groups;
 
-    my $sth = $dbh->prepare($sql);
-    $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
-    while (my $row = $sth->fetchrow_hashref()) {
-        my $obj;
-        if ($args{'count'}) {
-            return $row->{'count(*)'};
-        } elsif ($args{'only_ids'}) {
-            $obj = $row->{contrib_id};
-        } else {
-            $obj = bless {}, $self;
-            %$obj = %$row;
-
-            # load contrib_type ids
-            my $result = $dbh->selectcol_arrayref(
-                          'SELECT contrib_type_id FROM contrib_contrib_type
-                           WHERE contrib_id = ?', undef, $obj->{contrib_id});
-            $obj->{contrib_type_ids} = $result || [];
-        }
-        push (@contrib_object,$obj);
     }
-    $sth->finish();
-    return @contrib_object;
 }
 
 
@@ -381,6 +402,37 @@ sub rebuild_catagory_cache {
     $dbh->do( "delete from category_group_permission_cache", {RaiseError=>1});
 }
 
+
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+# Static function: Given a SQL query and an array ref with
+# query data, send query to Krang log.
+sub debug_sql {
+    my ($query, $param) = ( @_ );
+
+    debug(__PACKAGE__ . "::find() SQL: " . $query);
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @$param));
+}
+
+
+# Given a hash ref with data, instantiate a new Krang::Group object
+sub new_from_db {
+    my $pkg = shift;
+    my $group_data = shift;
+
+    # Load categories hash (category_id => security level)
+
+    # Load desks (desk_id => security level)
+
+    # Load assets (asset_id => security level)
+
+    # Bless into object and return
+    bless ($group_data, $pkg);
+    return $group_data;
+}
 
 
 =back

@@ -24,10 +24,9 @@ CREATE TABLE permission_group (
 );
 
 /* set up default groups */
-INSERT INTO permission_group (group_id, name) VALUES (1, 'Global Admin');
-INSERT INTO permission_group (group_id, name) VALUES (2, 'Site Admin');
-INSERT INTO permission_group (group_id, name) VALUES (3, 'Category Admin');
-INSERT INTO permission_group (group_id, name) VALUES (4, 'Default');
+INSERT INTO permission_group VALUES (1, 'Admin'  , 1,1,0,1,1,1,1,1,1,1);
+INSERT INTO permission_group VALUES (2, 'Editor' , 1,1,1,0,1,0,1,1,0,0);
+INSERT INTO permission_group VALUES (3, 'Default', 0,0,0,0,0,0,0,0,0,0);
 
 
 /* Join table: category <-> permission_group */
