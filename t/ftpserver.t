@@ -27,11 +27,11 @@ BEGIN {
 
 my @sites;
 
-# create a site and some categories to put stories in
+# create a site and some categories to put media in
 $sites[0] = Krang::Site->new(preview_url  => 'preview.test.com',
                             url          => 'test.com',
-                            publish_path => '/tmp/test_publish',
-                            preview_path => '/tmp/test_preview');
+                            publish_path => KrangRoot.'/tmp/test_publish',
+                            preview_path => KrangRoot.'/tmp/test_preview');
 isa_ok($sites[0], 'Krang::Site', 'is Krang::Site');
 $sites[0]->save();
 
@@ -48,11 +48,11 @@ for (0 .. 10) {
     $cat[-1]->save();
 }
 
-# create a site and some categories to put stories in
+# create a site and some categories to put media in
 $sites[1] = Krang::Site->new(preview_url  => 'preview.test2.com',
                             url          => 'test2.com',
-                            publish_path => '/tmp/test2_publish',
-                            preview_path => '/tmp/test2_preview');
+                            publish_path => KrangRoot.'/tmp/test2_publish',
+                            preview_path => KrangRoot.'/tmp/test2_preview');
 isa_ok($sites[1], 'Krang::Site', 'is Krang::Site');
 $sites[1]->save();
 
