@@ -353,6 +353,7 @@ sub main {
 
     # get contributors
     unless ($no_contributors) {
+        print STDERR "Connecting to Bricolage db at $dbname...\n" if $verbose;
         my $dbh =
           DBI->connect("dbi:Pg:dbname=$dbname", undef, undef,
                        {RaiseError => 1})
@@ -485,9 +486,9 @@ sub get_assets {
         for (@files) {
             my $out = catfile($xml_path, $_);
             if ($set) {
-                push @objs, $pkg->new(xml => $out, dataset => $set);
+                push @objs, $pkg->new(path => $out, dataset => $set);
             } else {
-                push @objs, $pkg->new(xml => $out);
+                push @objs, $pkg->new(path => $out);
 
             }
         }
