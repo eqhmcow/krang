@@ -11,8 +11,6 @@ use Krang::DB qw(dbh);
 # Nothing to do for this version....
 sub per_installation {
     my $self = shift;
-
-    print STDERR "$self\::per_installation:  KrangRoot => '". KrangRoot ."'\n";
 }
 
 
@@ -22,7 +20,6 @@ sub per_instance {
 
     my $dbh = dbh();
     my $instance = Krang::Conf->instance();
-    print STDERR "$self\::per_instance:  instance => '$instance' ($dbh)\n";
 }
 
 

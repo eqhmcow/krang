@@ -491,7 +491,7 @@ sub do_rollback {
     #
     my $KrangRoot = $options{KrangRoot};
     my $KrangRootBackup = $KrangRoot .".backup";
-    print "  Deleting $KrangRoot";
+    print "  Deleting $KrangRoot\n";
     my $rm_cmd = RM_BIN ." -rf $KrangRoot";
     system($rm_cmd) && die("Can't delete $KrangRoot: $!");
 
@@ -513,7 +513,7 @@ sub do_rollback {
         my $db_path = $mysql_datadir . $db;
         my $db_backup = $db_path . ".backup";
 
-        print "  Deleting $db_path";
+        print "  Deleting $db_path\n";
         my $rm_cmd = RM_BIN ." -rf $db_path";
         system($rm_cmd) && die("Can't delete $db_path: $!");
 
@@ -659,7 +659,20 @@ sub update_db_version {
 }
 
 
-sub clear_sessions {}
+sub clear_sessions {
+    print "Clearing out sessions tables\n";
+
+    # Iterate through instances, making .backup files
+    while (my ($instance, $db) = each(%instance_dbs)) {
+        print "  Deleting sessions for $instance ($db)\n";
+        my $mysql_bin = MYSQL_BIN;
+        my $MySQLRootPassword = $options{'MySQLRootPassword'};
+        my $update_db_version_cmd = "$mysql_bin -uroot";
+        $update_db_version_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+        $update_db_version_cmd .= " -e 'delete from sessions' $db";
+        system($update_db_version_cmd) && exit_error("Error updating db_version");
+    }
+}
 
 
 sub start_krang {
