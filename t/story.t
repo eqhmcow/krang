@@ -15,6 +15,13 @@ use Time::Piece;
 BEGIN { use_ok('Krang::Story') }
 our $DELETE = 1;
 
+# use the TestSet1 instance, if there is one
+foreach my $instance (Krang::Conf->instances) {
+    Krang::Conf->instance($instance);
+    if (InstanceElementSet eq 'TestSet1') {
+        last;
+    }
+}
 
 # creation should fail without required fields
 my $story;

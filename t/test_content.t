@@ -14,6 +14,14 @@ use Krang::Story;
 
 
 BEGIN {
+    # use the TestSet1 instance, if there is one
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        if (InstanceElementSet eq 'TestSet1') {
+            last;
+        }
+    }
+
     if (InstanceElementSet eq 'TestSet1') {
         eval 'use Test::More qw(no_plan)';
     } else {
