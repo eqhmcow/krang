@@ -468,29 +468,50 @@ Part of the publish/output section of Krang::ElementClass.  This call searches t
 
 If successful, it will return an instantiated HTML::Template::Expr object with the selected template loaded.
 
+Parameters are as follows:
+
+=over
+
+=item *
+
+C<publisher> - The L<Krang::Publisher> object handling the current publish run.
+
+=item *
+
+C<element> - The element currently being published - a L<Krang::Element> object.
+
+=item *
+
+C<filename> - The name of the template that should be found.  If this parameter is not set, C<find_template()> will search for C<< $element->name . '.tmpl' >>.
+
+=back
+
+C<publisher> is a required argument, and either C<element> or
+C<filename> must be passed in as well.
+
 The default process by which a template is loaded goes as follows:
 
 =over
 
-=item * 
+=item *
 
 The name of the template being searched for is $class->name() . ".tmpl"
 Instead of element, filename arg can be passed in, which should correspond 
 to the template name you are looking for.
 
-=item * 
+=item *
 
 The search starts in the directory $publisher->category->url().
 
-=item * 
+=item *
 
 If the template is found, it is loaded into an HTML::Template::Expr object.  NOTE - Need rules on checking for deployment/preview settings
 
-=item * 
+=item *
 
 If the template is not found, move to the parent directory and repeat the search.
 
-=item * 
+=item *
 
 If the root directory is reached, no template exists.  Croak.
 
@@ -503,7 +524,7 @@ sub find_template {
     my $publisher = $args{publisher} 
       || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
     my $element   = $args{element};
-    my $filename = $args{filename};
+    my $filename  = $args{filename};
 
     croak __PACKAGE__ . ":missing attribute 'element' or 'filename'.\n" if (not $element and not $filename);
 
@@ -518,7 +539,7 @@ sub find_template {
     my $template;
     eval {
         $template = HTML::Template::Expr->new(filename          => $filename,
-                                              path  => \@search_path,
+                                              path              => \@search_path,
                                               die_on_bad_params => 0,
                                               loop_context_vars => 1,
                                               global_vars       => 1,
