@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+L<Krang::Template> now handles calls to find() an arrayref of
+category_ids. [Peter]
+
 =item * 
 
 Fixed a bug in L<Krang::CGI::Site> that would cause ISE on attempted 

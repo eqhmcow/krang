@@ -733,6 +733,10 @@ sub find {
             my $tmp = join(" OR ", map {"t.template_id = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
+        } elsif ($arg eq 'category_id' && ref ($args{$arg} eq 'ARRAY')) {
+            my $tmp= join(" OR ", map {"t.category_id = ?"} @{$args{$arg}});
+            $where_clause .= " ($tmp)";
+            push @params, @{$args{$arg}};
         } elsif ($arg eq 'below_category_id') {
             $where_clause = "c.category_id = ? AND " .
               "t.url LIKE ?" . ($where_clause ? " AND $where_clause" : '');

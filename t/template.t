@@ -171,6 +171,12 @@ ok(@tmpls5);
 isa_ok($_, 'Krang::Template') for @tmpls5;
 is($tmpls5[0]->filename(), 't_w_c.tmpl', "Find - ascend/descend");
 
+# check category arrayref search for find().
+my @cat_ids = ($category->category_id);
+my @tmpls6 = Krang::Template->find(category_id => \@cat_ids);
+isa_ok($_, 'Krang::Template') for @tmpls5;
+
+
 # version find
 my ($tmplXYZ) = Krang::Template->find(template_id => $tmpl->template_id,
                                       version => 2);
