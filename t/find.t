@@ -114,7 +114,7 @@ sub check_find {
         die ($@) if ($@);
         
         my $order_by = $ORDER_BY_FIELD{$perl_package};
-        is($stuff[1]->$order_by, $stuff2[0]->$order_by, "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record") if @stuff;
+        is($stuff[1]->$order_by, $stuff2[0]->$order_by, "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record") if $stuff[1];
     }
 
     # 8. unknown param is fatal error
