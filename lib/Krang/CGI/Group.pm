@@ -8,7 +8,7 @@ use warnings;
 
 =head1 NAME
 
-Krang::CGI::Group - web interface to.....
+Krang::CGI::Group - web interface to manage permission groups
 
 
 =head1 SYNOPSIS
@@ -20,8 +20,8 @@ Krang::CGI::Group - web interface to.....
 
 =head1 DESCRIPTION
 
-Krang::CGI::Group provides a web-based system
-through which users can.....
+Krang::CGI::Group provides a web-based system through which users can
+add, modify or delete permission groups from a Krang instance.
 
 
 =head1 INTERFACE
@@ -30,7 +30,7 @@ Following are descriptions of all the run-modes
 provided by Krang::CGI::Group.
 
 The default run-mode (start_mode) for Krang::CGI::Group
-is 'find'.
+is 'search'.
 
 =head2 Run-Modes
 
@@ -56,16 +56,17 @@ use Carp;
 sub setup {
     my $self = shift;
 
-    $self->start_mode('find');
+    $self->start_mode('search');
 
     $self->run_modes([qw(
-                         find
+                         search
                          add
                          edit
                          save
                          save_stay
                          cancel
                          delete
+                         delete_selected
                          edit_categories
                          add_category
                          delete_category
@@ -84,28 +85,59 @@ sub setup {
 
 
 
-=item find
+=item search
 
-Description of run-mode 'find'...
+This run-mode lists all groups and allows users to search for groups
+based on the group name.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+From this mode users may edit a group, add a new group, or delete a set of groups.
 
+This run-mode expects an optional parameters "search_filter"
+which is expected to contain the text string which is used to 
+query groups.
 
 =cut
 
 
-sub find {
+sub search {
     my $self = shift;
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    my $t = $self->load_tmpl("list_view.tmpl", associate=>$q, loop_context_vars=>1);
+
+    # Do simple search based on search field
+    my $search_filter = $q->param('search_filter') || '';
+
+    # Configure pager
+    my $pager = Krang::HTMLPager->new(
+                                      cgi_query => $q,
+                                      persist_vars => {
+                                                       rm => 'search',
+                                                       search_filter => $search_filter,
+                                                      },
+                                      use_module => 'Krang::Group',
+                                      find_params => { simple_search => $search_filter },
+                                      columns => [qw(name may_publish command_column checkbox_column)],
+                                      column_labels => {
+                                                        name => 'Group Name',
+                                                        may_publish => 'Publish?',
+                                                       },
+                                      columns_sortable => [qw( name may_publish )],
+                                      command_column_commands => [qw( edit_group )],
+                                      command_column_labels => {edit_group => 'Edit'},
+                                      row_handler => sub { $_[0]->{name} = $_[1]->name(); $_[0]->{may_publish} = $_[1]->may_publish() ? 'Yes' : 'No'; },
+                                      id_handler => sub { return $_[0]->group_id },
+                                     );
+
+    # Run pager
+    $t->param(pager_html =>  $pager->output());
+
+    # Propagate other params
+    $t->param(row_count => $pager->row_count());
+
+    return $t->output();
 }
-
-
 
 
 
@@ -259,6 +291,31 @@ sub delete {
 
 
 
+=item delete_selected
+
+Description of run-mode 'delete_selected'...
+
+  * Purpose
+  * Expected parameters
+  * Function on success
+  * Function on failure
+
+
+=cut
+
+
+sub delete_selected {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    return $self->dump_html();
+}
+
+
+
+
+
 =item edit_categories
 
 Description of run-mode 'edit_categories'...
@@ -364,15 +421,16 @@ L<Krang::Group>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Kra
 # $c->app_module_tmpl($ENV{HOME}.'/krang/templates/krang_cgi_app.tmpl');
 # $c->package_name('Krang::CGI::Group');
 # $c->base_module('Krang::CGI');
-# $c->start_mode('find');
+# $c->start_mode('search');
 # $c->run_modes(qw(
-#                  find
+#                  search
 #                  add
 #                  edit
 #                  save
 #                  save_stay
 #                  cancel
 #                  delete
+#                  delete_selected
 #                  edit_categories
 #                  add_category
 #                  delete_category
