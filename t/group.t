@@ -7,6 +7,7 @@ use Krang::Script;
 use Krang::Site;
 use Krang::Category;
 use Krang::Desk;
+use Krang::User;
 use Krang::Conf qw(KrangRoot);
 use Krang::DB qw(dbh);
 use File::Spec::Functions qw(catfile);
@@ -261,4 +262,191 @@ is($desks{$new_desk_id}, undef, "Delete desks deletes new desk permissions");
 
 # Remove test group -- we're done.
 $load_group->delete();
+
+
+
+### Test user_*_permissions() methods
+#
+
+# user_desk_permissions()
+my %user_desk_permissions;
+eval { %user_desk_permissions = Krang::Group->user_desk_permissions() };
+
+# Check that we didn't die
+ok(not($@), "Krang::Group->user_desk_permissions()");
+die ($@) if ($@);
+
+# Check that we can get a hash of all desks
+ok(%user_desk_permissions, "Got desk permissions");
+
+# Check that select for individual desk matches hash
+is($user_desk_permissions{1}, Krang::Group->user_desk_permissions(1), "Desk 1 permissions match");
+
+
+## Check that desk permissions combine correctly
+#
+my $desk_perm_test_desk = Krang::Desk->new(name=>"desk_perm_test_desk");
+my $desk_perm_test_desk_id = $desk_perm_test_desk->desk_id;
+
+# Change admin group to have "hide" access to new desk
+my ($admin_group) = Krang::Group->find(group_id=>1);
+$admin_group->desks($desk_perm_test_desk_id=>"hide");
+$admin_group->save();
+
+# Set up new group with "read-only" access to new desk.
+my $desk_perm_test_group = Krang::Group->new();
+$desk_perm_test_group->desks($desk_perm_test_desk_id=>"read-only");
+$desk_perm_test_group->save();
+
+# Admin should only have "hide" access to desk now
+is( Krang::Group->user_desk_permissions($desk_perm_test_desk_id),
+    "hide",
+    "Admin has 'hide' desk access" );
+
+# Add new group to Admin user and check again.  Access should now be "read-only"
+my ($admin_user) = Krang::User->find(user_id=>1);
+$admin_user->group_ids_push( $desk_perm_test_group->group_id );
+$admin_user->save();
+is( Krang::Group->user_desk_permissions($desk_perm_test_desk_id),
+    "read-only",
+    "Admin has 'read-only' desk access" );
+
+# Change permissions for admin group, for this desk, to "edit".  Re-check -- should be "edit" now.
+$admin_group->desks($desk_perm_test_desk_id=>"edit");
+$admin_group->save();
+is( Krang::Group->user_desk_permissions($desk_perm_test_desk_id),
+    "edit",
+    "Admin has 'edit' desk access" );
+
+# Clean up
+$desk_perm_test_group->delete();
+$desk_perm_test_desk->delete();
+
+
+
+
+# user_asset_permissions()
+my %user_asset_permissions;
+eval { %user_asset_permissions = Krang::Group->user_asset_permissions() };
+
+# Check that we didn't die
+ok(not($@), "Krang::Group->user_asset_permissions()");
+die ($@) if ($@);
+
+# Check that we can get a hash of all assets
+ok(%user_asset_permissions, "Got asset permissions");
+
+# Check that select for individual asset matches hash
+is( $user_asset_permissions{"media"},
+    Krang::Group->user_asset_permissions("media"),
+    "Asset 'media' permissions match" );
+
+
+## Check that asset permissions combine correctly
+#
+
+# Change admin group to have "hide" access to media
+($admin_group) = Krang::Group->find(group_id=>1);
+$admin_group->asset_media("hide");
+$admin_group->save();
+
+# Set up new group with "read-only" access to media.
+my $asset_perm_test_group = Krang::Group->new( name=>"asset_perm_test_group" );
+$asset_perm_test_group->asset_media("read-only");
+$asset_perm_test_group->save();
+
+# Admin should only have "hide" access to media now
+is( Krang::Group->user_asset_permissions("media"),
+    "hide",
+    "Admin has 'hide' access to media" );
+
+# Add new group to Admin user and check again.  Access should now be "read-only"
+($admin_user) = Krang::User->find(user_id=>1);
+$admin_user->group_ids_push( $asset_perm_test_group->group_id );
+$admin_user->save();
+is( Krang::Group->user_asset_permissions("media"),
+    "read-only",
+    "Admin has 'read-only' access to media" );
+
+# Change permissions for admin group, for media, to "edit".  Re-check -- should be "edit" now.
+$admin_group->asset_media("edit");
+$admin_group->save();
+is( Krang::Group->user_asset_permissions("media"),
+    "edit",
+    "Admin has 'edit' access to media" );
+
+# Clean up
+$asset_perm_test_group->delete();
+
+
+
+
+# user_admin_permissions()
+my %user_admin_permissions;
+eval { %user_admin_permissions = Krang::Group->user_admin_permissions() };
+
+# Check that we didn't die
+ok(not($@), "Krang::Group->user_admin_permissions()");
+die ($@) if ($@);
+
+# Check that we can get a hash of all admins
+ok(%user_admin_permissions, "Got admin permissions");
+
+# Check that select for individual admin matches hash
+is( $user_admin_permissions{"media"},
+    Krang::Group->user_admin_permissions("media"),
+    "Admin 'media' permissions match" );
+
+
+## Check that admin permissions combine correctly
+#
+
+# Change admin group to have may_publish=>0 access
+($admin_group) = Krang::Group->find(group_id=>1);
+$admin_group->may_publish(0);
+$admin_group->save();
+
+# Set up new group with may_publish=>1 access.
+my $admin_perm_test_group = Krang::Group->new( name=>"admin_perm_test_group" );
+$admin_perm_test_group->may_publish(1);
+$admin_perm_test_group->save();
+
+# Admin should only may_publish=>0 access
+is( Krang::Group->user_admin_permissions("may_publish"),
+    0,
+    "Admin has may_publish=>0 access" );
+
+# Add new group to Admin user and check again.  Access should now be "read-only"
+($admin_user) = Krang::User->find(user_id=>1);
+$admin_user->group_ids_push( $admin_perm_test_group->group_id );
+$admin_user->save();
+is( Krang::Group->user_admin_permissions("may_publish"),
+    1,
+    "Admin has may_publish=>1 access" );
+
+
+## Check admin_users_limited
+#
+
+# Set test group and admin group to admin_users_limited=>1
+$admin_perm_test_group->admin_users_limited(1);
+$admin_perm_test_group->save();
+$admin_group->admin_users_limited(1);
+$admin_group->save();
+
+# Test that admin is admin_users_limited=>1;
+is( Krang::Group->user_admin_permissions("admin_users_limited"),
+    1,
+    "Admin has admin_users_limited=>1 access" );
+
+# Change admin group to admin_users_limited=>0.  Re-test.
+$admin_group->admin_users_limited(0);
+$admin_group->save();
+is( Krang::Group->user_admin_permissions("admin_users_limited"),
+    0,
+    "Admin has admin_users_limited=>0 access" );
+
+# Clean up
+$admin_perm_test_group->delete();
+
 

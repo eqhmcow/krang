@@ -122,6 +122,7 @@ use Krang::Category;
 use Krang::Log qw(debug);
 use Krang::Desk;
 use Krang::Category;
+use Krang::Session qw(%session);
 
 
 # Exceptions
@@ -944,7 +945,47 @@ You can also request permissions for a particular desk by specifying it by ID:
 =cut
 
 
-sub user_desk_permissions {}
+sub user_desk_permissions {
+    my $self = shift;
+    my $desk_id = shift;
+
+    # Just need user_id.  Don't need user.
+    # Assumes that user_id is valid and authenticated
+    my $user_id = $session{'user_id'}
+      || croak("No user_id in session");
+
+    my $get_all_group_desks_sql = qq/ 
+      select desk_id, permission_type 
+        from desk_group_permission 
+          left join user_group_permission 
+            on desk_group_permission.group_id=user_group_permission.group_id 
+              where user_group_permission.user_id=? /;
+    my $dbh = dbh();
+    my $sth = $dbh->prepare($get_all_group_desks_sql);
+
+    # Used to evaluate permission levels
+    my %levels = (
+                  "hide" => 1,
+                  "read-only" => 2,
+                  "edit" => 3
+                 );
+
+    my %desk_access = ();
+
+    $sth->execute($user_id);
+    while (my ($desk_id, $permission_type) = $sth->fetchrow_array()) {
+        my $curr_access_level = $levels{$desk_access{$desk_id} || ""} || 0;
+        my $new_access_level = $levels{$permission_type};
+        $desk_access{$desk_id} = $permission_type
+          if ($new_access_level > $curr_access_level);
+    }
+
+    # Now that we have the table of desk access levels, return results
+    return $desk_access{$desk_id} if ($desk_id);
+
+    # Return whole table if no desk specified
+    return %desk_access;
+}
 
 
 
@@ -985,7 +1026,52 @@ You can also request permissions for a particular asset by specifying it:
 =cut
 
 
-sub user_asset_permissions {}
+sub user_asset_permissions {
+    my $self = shift;
+    my $asset = shift;
+
+    # Assumes that user_id is valid and authenticated
+    my $user_id = $session{'user_id'}
+      || croak("No user_id in session");
+    my ($user) = Krang::User->find(user_id=>$user_id);
+    croak("Can't find user id '$user_id'") unless ($user && ref($user));
+
+    # Get groups for this user
+    my @user_group_ids = $user->group_ids();
+    my @groups = ( Krang::Group->find(group_ids=>\@user_group_ids) );
+
+    # Used to evaluate permission levels
+    my %levels = (
+                  "hide" => 1,
+                  "read-only" => 2,
+                  "edit" => 3
+                 );
+
+    my @assets = qw(story media template);
+    my %asset_access = ();
+
+    # Iterate through each asset
+    foreach my $asset (@assets) {
+        my $asset_method = "asset_". $asset;
+
+        # Iterate through groups
+        foreach my $group (@groups) {
+            my $curr_access_level = $levels{$asset_access{$asset} || ""} || 0;
+            my $permission_type = $group->$asset_method();
+            my $new_access_level = $levels{$permission_type};
+
+            if ($new_access_level > $curr_access_level) {
+                $asset_access{$asset} = $permission_type;
+            }
+        }
+    }
+
+    # Now that we have the table of asset access levels, return results
+    return $asset_access{$asset} if ($asset);
+
+    # Return whole table if no desk specified
+    return %asset_access;
+}
 
 
 
@@ -1067,7 +1153,70 @@ You can also request permissions for a particular admin function by specifying i
 =cut
 
 
-sub user_admin_permissions {}
+sub user_admin_permissions {
+    my $self = shift;
+    my $admin_perm = shift;
+
+    # Assumes that user_id is valid and authenticated
+    my $user_id = $session{'user_id'}
+      || croak("No user_id in session");
+    my ($user) = Krang::User->find(user_id=>$user_id);
+    croak("Can't find user id '$user_id'") unless ($user && ref($user));
+
+    # Get groups for this user
+    my @user_group_ids = $user->group_ids();
+    my @groups = ( Krang::Group->find(group_ids=>\@user_group_ids) );
+
+    # Used to evaluate permission levels
+    my %levels;  # Will be set later
+
+    my @admin_perms = qw( may_publish
+                          may_checkin_all
+                          admin_users
+                          admin_users_limited
+                          admin_groups
+                          admin_contribs
+                          admin_sites
+                          admin_categories
+                          admin_jobs
+                          admin_desks );
+
+    my %admin_perm_access = ();
+
+    # Iterate through each admin_perm
+    foreach my $admin_perm (@admin_perms) {
+        my $admin_perm_method = $admin_perm;
+
+        if ($admin_perm eq "admin_users_limited") {
+            # admin_users_limited is opposite: 0 is higher perm than 1
+            %levels = ( 0 => 2,
+                        1 => 1 );
+        } else {
+            # Everything else is normal
+            %levels = ( 0 => 1,
+                        1 => 2 );
+        }
+
+        # Iterate through groups
+        foreach my $group (@groups) {
+            my $curr_permission_type = $admin_perm_access{$admin_perm};
+            $curr_permission_type = "" unless (defined($curr_permission_type));
+            my $curr_access_level = $levels{$curr_permission_type};
+            my $permission_type = $group->$admin_perm_method();
+            my $new_access_level = $levels{$permission_type};
+
+            if (not(defined($curr_access_level)) or ($new_access_level > $curr_access_level)) {
+                $admin_perm_access{$admin_perm} = $permission_type;
+            }
+        }
+    }
+
+    # Now that we have the table of admin_perm access levels, return results
+    return $admin_perm_access{$admin_perm} if ($admin_perm);
+
+    # Return whole table if no desk specified
+    return %admin_perm_access;
+}
 
 
 
