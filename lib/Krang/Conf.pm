@@ -293,7 +293,7 @@ sub check {
 
 sub _broked {
     warn("Error found in krang.conf: $_[0].\n");
-    exit;
+    exit(1);
 }
  
 # run the check ASAP, unless we're in upgrade mode
