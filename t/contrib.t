@@ -48,22 +48,22 @@ is($count, 1);
 
 
 # Test ability to make a change to an existing record and save()
-$contrib2->first('George');
+$contrib2->first('George1234');
 $contrib2->save();
 
 # Has contrib2 been updated in database?
 my ($contrib2loaded) = Krang::Contrib->find( contrib_id => $contrib2->contrib_id() );
-is($contrib2loaded->first(), 'George');
+is($contrib2loaded->first(), 'George1234');
 
 
 ## Test simple_search()
 #
 # Should find one
-my @ss_contribs = Krang::Contrib->find(simple_search=>'George Vella');
+my @ss_contribs = Krang::Contrib->find(simple_search=>'George1234 Vella');
 is(scalar(@ss_contribs), 1);
 
 # Should find one
-@ss_contribs = Krang::Contrib->find(simple_search=>'George');
+@ss_contribs = Krang::Contrib->find(simple_search=>'George1234');
 is(scalar(@ss_contribs), 1);
 
 # Should find one
@@ -71,7 +71,7 @@ is(scalar(@ss_contribs), 1);
 is(scalar(@ss_contribs), 1);
 
 # Should find NONE
-@ss_contribs = Krang::Contrib->find(simple_search=>'George Carlin');
+@ss_contribs = Krang::Contrib->find(simple_search=>'George1234 Carlin');
 is(scalar(@ss_contribs), 0);
 
 # Clean up added contrib
@@ -108,4 +108,35 @@ is(@results, 3);
 is($results[2]->contrib_id, $contribs[1]->contrib_id);
 is($results[1]->contrib_id, $contribs[0]->contrib_id);
 is($results[0]->contrib_id, $contribs[2]->contrib_id);
+
+
+# Test exclude_contrib_ids: Filter set of contribs based on ID
+{
+    # Create set of contribs
+    my @first_names = qw(Jesse Matt Sam Rudy Adam Peter);
+    my @last_names = qw(One Two Three Four Five Six);
+    my @types = qw(1 2 3);
+    my @new_contribs = ();
+    for (0..5) {
+        my $c = Krang::Contrib->new(
+                            first => $first_names[$_],
+                            last => "TestGuy_" . $last_names[$_],
+                            contrib_type_ids => [ $types[rand(3)] ],
+                           );
+        $c->save();
+        push(@new_contribs, $c);
+    }
+
+    my @exclude_contrib_ids = map { $_->contrib_id() } @new_contribs[0..2];
+
+    # Select back contribs, with and without exclusions.  We should get exactly three more without
+    my $count = Krang::Contrib->find(count=>1);
+    my $count_excluded = Krang::Contrib->find(count=>1, exclude_contrib_ids=>\@exclude_contrib_ids);
+
+    # Is that what we got?
+    is(($count - $count_excluded), 3, "exclude_contrib_ids");
+
+    # Delete test contribs
+    $_->delete() for (@new_contribs);
+}
 

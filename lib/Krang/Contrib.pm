@@ -250,6 +250,7 @@ Find and return contributors with with parameters specified. Supported paramter 
 
 =over 4
 
+
 =item *
 
 contrib_id
@@ -270,29 +271,40 @@ full_name - will search first, middle, last for matching LIKE strings
 
 simple_search - will search first, middle, last for matching LIKE strings
 
+=item 
+
+exclude_contrib_ids - pass array ref of IDs to be excluded from the result set
+
+
 =item * 
 
 order_by - field(s) to order search by, defaults to last,first. Can pass in list.
+
 
 =item *
 
 order_desc - results will be in ascending order unless this is set to 1 (making them descending).
 
+
 =item *
 
 limit - limits result to number passed in here, else no limit.
+
 
 =item *
 
 offset - offset results by this number, else no offset.
 
+
 =item *
 
 only_ids - return only contrib_ids, not objects if this is set true.
 
+
 =item *
 
 count - return only a count if this is set to true. Cannot be used with only_ids.
+
 
 =back
 
@@ -321,6 +333,15 @@ sub find {
     }
 
     $where_string = join ' and ', (map { "$_ = ?" } @where);
+
+    # exclude_contrib_ids: Specifically exclude contribs with IDs in this set
+    if ($args{'exclude_contrib_ids'}) {
+        my $exclude_contrib_ids_sql_set = "'".  join("', '", @{$args{'exclude_contrib_ids'}})  ."'";
+
+        # Append to SQL where clause
+        $where_string .= " and " if ($where_string);
+        $where_string .= "contrib_id NOT IN ($exclude_contrib_ids_sql_set)";
+    }
 
     # full_name: add like search on first, last, middle for all full_name words
     if ($args{'full_name'}) {
@@ -369,7 +390,7 @@ sub find {
     } elsif ($offset) {
         $sql .= " limit $offset, -1";
     }
-    
+
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
     while (my $row = $sth->fetchrow_hashref()) {
