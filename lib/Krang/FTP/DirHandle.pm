@@ -203,9 +203,11 @@ sub open {
         # look for media with name = $filename in spec'd cat
         my @media = Krang::Media->find( filename => $filename,
                                         category_id => $category_id,
-                                        may_see => 1 );
+                                      );
 
         if ($media[0]) {
+            return undef if not $media[0]->may_edit;
+
             return new Krang::FTP::FileHandle(  $self->{ftps},
                                                 $media[0],
                                                 $type,
@@ -215,7 +217,7 @@ sub open {
             my $new_m = Krang::Media->new ( filename => $filename,
                                             title => $filename,
                                             category_id => $category_id,
-                                            may_see => 1 );
+                                          );
 
             return new Krang::FTP::FileHandle(  $self->{ftps},
                                                     $new_m,
@@ -228,9 +230,11 @@ sub open {
             # look for template with name = $filename in spec'd cat
             my @template = Krang::Template->find(   filename => $filename,
                                                     category_id => $category_id,
-                                                    may_see => 1 );
+                                                 );
 
             if ($template[0]) {
+                return undef if not $template[0]->may_edit;
+
                 return new Krang::FTP::FileHandle(  $self->{ftps},
                                                     $template[0],
                                                     $type,
@@ -240,7 +244,7 @@ sub open {
                 my $new_t = Krang::Template->new(   category_id => $category_id,
                                                     filename => $filename,
                                                     content => '',
-                                                    may_see => 1 );
+                                                 );
 
                 return new Krang::FTP::FileHandle(  $self->{ftps},
                                                     $new_t,
@@ -291,8 +295,9 @@ sub list {
         return \@results;
     
     } elsif (not $type) { # if no $type, return 'media' and 'template'
-    
-        @results = ( ['media', Krang::FTP::DirHandle->new( $self->{ftps}, "/$instance/media", 'media') ], ['template', Krang::FTP::DirHandle->new( $self->{ftps}, "/$instance/template", 'template') ] );
+        my %asset_perms = Krang::Group->user_asset_permissions();
+        push (@results, ['media', Krang::FTP::DirHandle->new( $self->{ftps}, "/$instance/media", 'media') ]) if ($asset_perms{media} ne 'hide');    
+         push (@results, ['template', Krang::FTP::DirHandle->new( $self->{ftps}, "/$instance/template", 'template')]) if ($asset_perms{template} ne 'hide');
         return \@results;
     
     } elsif ( not $category_id ) { # if category not defined, return top level cats
@@ -310,16 +315,20 @@ sub list {
         }
 
         if ($type eq 'template') {
-            my @template = Krang::Template->find( filename_like => $like,
+            my %asset_perms = Krang::Group->user_asset_permissions();
+
+            unless ($asset_perms{template} eq 'hide') {
+                my @template = Krang::Template->find( filename_like => $like,
                                                     category_id => undef,
                                                     may_see => 1
 );
-            foreach my $template (@template) {
-                my $fileh = new Krang::FTP::FileHandle (    $self->{ftps},
+                foreach my $template (@template) {
+                    my $fileh = new Krang::FTP::FileHandle (    $self->{ftps},
                                                             $template,
                                                             $type,
                                                             $category_id );
-                push @results, [ $template->filename, $fileh ];
+                    push @results, [ $template->filename, $fileh ];
+                }
             }
         }
 
