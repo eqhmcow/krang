@@ -4,7 +4,6 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Conf qw(KrangRoot);
 use Krang::Log qw(debug assert ASSERT);
-use Krang::Session qw(%session);
 use Krang::Contrib;
 use Krang::Category;
 use Krang::History qw( add_history );

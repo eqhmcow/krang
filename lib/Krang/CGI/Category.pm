@@ -93,7 +93,10 @@ sub find {
                                                        search_filter => $search_filter,
                                                       },
                                       use_module => 'Krang::Category',
-                                      find_params => { simple_search => $search_filter },
+                                      find_params => {
+                                                      may_see => 1,
+                                                      simple_search => $search_filter
+                                                     },
                                       columns => [qw(category_id url command_column checkbox_column)],
                                       column_labels => {
                                                         category_id  => "ID",
@@ -119,6 +122,10 @@ sub find_row_handler {
     my ($row, $category) = @_;
     $row->{category_id} = $category->category_id;
     $row->{url} = format_url( url => $category->url(), length => 60 );
+    unless ($category->may_edit) {
+        $row->{command_column} = "&nbsp;";
+        $row->{checkbox_column} = "&nbsp;";
+    }
 }
 
 
@@ -171,8 +178,22 @@ sub create {
     return $self->new_category(bad => \@bad) if @bad;
 
     # create the object
-    my $category = Krang::Category->new(parent_id => $parent_id,
-                                        dir       => $dir);
+    my $category;
+    eval { $category = Krang::Category->new( parent_id => $parent_id,
+                                             dir       => $dir ) };
+
+    if ($@ and ref($@) and $@->isa('Krang::Category::NoEditAccess')) {
+        # User isn't allowed to add a descendant category
+        my ($parent_cat) = Krang::Category->find(category_id => $@->category_id);
+        add_message( 'add_not_allowed',
+                     category_id => $parent_cat->category_id,
+                     url => $parent_cat->url );
+        return $self->new_category(bad => ['parent_id']);
+    } elsif ($@) {
+        # rethrow
+        die($@);
+    }
+
     # save it
     eval { $category->save(); };
 
@@ -264,7 +285,7 @@ sub db_save {
 
     # save category to the database
     my $category = $session{category};
-    $category->save();
+    $self->category_save();
 
     add_message('category_save', 
                 category_id => $category->category_id,
@@ -292,7 +313,7 @@ sub db_save_and_stay {
 
     # save category to the database
     my $category = $session{category};
-    $category->save();
+    $self->category_save();
     
     add_message('category_save', category_id => $category->category_id,
                 url      => $category->url);
@@ -602,5 +623,23 @@ sub delete_selected {
 =back
 
 =cut
+
+
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+
+# Encapculate category save (in case we need to handle permissions)
+sub category_save {
+    my $self = shift;
+
+    # save category to the database
+    my $category = $session{category};
+    $category->save();
+}
+
+
 
 1;

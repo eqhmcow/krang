@@ -98,10 +98,12 @@ use warnings;
 ###################
 use Carp qw(verbose croak);
 use Exception::Class
-  ( 'Krang::Category::Dependent' => {fields => 'dependents'},
-    'Krang::Category::DuplicateURL' => {fields => 'category_id'},
-    'Krang::Category::RootDeletion',
-    'Krang::Category::NoEditAccess' );
+  (
+   'Krang::Category::Dependent' => {fields => 'dependents'},
+   'Krang::Category::DuplicateURL' => {fields => 'category_id'},
+   'Krang::Category::NoEditAccess' => {fields => 'category_id'},
+   'Krang::Category::RootDeletion',
+  );
 
 use File::Spec;
 use Storable qw(freeze thaw);
@@ -116,7 +118,6 @@ use Krang::Story;
 use Krang::Template;
 use Krang::Group;
 use Krang::Log qw(debug);
-use Krang::Session qw(%session);
 
 #
 # Package Variables
@@ -312,7 +313,8 @@ sub init {
 
         # Check permissions of parent category.
         unless ($cat->may_edit) {
-            Krang::Category::NoEditAccess->throw(message => "User does not have access to add this category");
+            Krang::Category::NoEditAccess->throw( message => "User does not have access to add this category",
+                                                  category_id => $cat->category_id );
         }
 
         $url = $cat->url();
@@ -381,7 +383,8 @@ sub delete {
 
     # Throw exception if user is not allowed to edit this category
     unless ($self->may_edit) {
-        Krang::Category::NoEditAccess->throw(message => "User does not have access to delete this category");
+        Krang::Category::NoEditAccess->throw( message => "User does not have access to delete this category", 
+                                              category_id => $id );
     }
 
     # Throw RootDeletion exception unless called by Krang::Site
@@ -773,7 +776,7 @@ sub find {
     # Just need user_id.  Don't need user.
     # Assumes that user_id is valid and authenticated
     my $user_id = $ENV{REMOTE_USER}
-      || croak("No user_id in session");
+      || croak("No user_id set");
     push(@wheres, "ugp.user_id=?");
     push(@where_data, $user_id);
 
@@ -863,7 +866,8 @@ sub save {
 
     # Throw exception if user is not allowed to edit this category
     unless ($self->may_edit) {
-        Krang::Category::NoEditAccess->throw(message => "User does not have access to update this category");
+        Krang::Category::NoEditAccess->throw( message => "User does not have access to update this category",
+                                              category_id => $self->category_id() );
     }
 
     my $id = $self->{category_id} || '';
