@@ -8,7 +8,7 @@ use Krang::Conf qw(KrangRoot);
 use File::Find qw(find);
 
 # load all Krang libs, with a few exceptions
-my $skip = qr/Profiler|Test|BricLoader|Cache|FTP|DataSet|Upgrade|MethodMaker|Daemon|Script/;
+my $skip = qr/Profiler|Test|BricLoader|Cache|FTP|DataSet|Upgrade|MethodMaker|Daemon|Script|XML/;
 find({ 
       wanted => sub {
           return unless m!(Krang/.*).pm$!;
