@@ -33,7 +33,7 @@ sub new {
                  Krang::ElementClass::Text->new(name => "small_header"),
                  Krang::ElementClass::Textarea->new( display_name => "Person's Bio", name => "paragraph",
                                                     bulk_edit => 1),
-                 Krang::ElementClass::Text->new(display_name = "Person's Name", 
+                 Krang::ElementClass::Text->new(display_name => "Person's Name", 
 , name => "name", max => 1),    
                   Krang::ElementClass::Text->new(display_name => "Person's Title", name => "person_title", max => 1),
                  Krang::ElementClass::Text->new(name => "page_title", max => 1),
