@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added indexes on the C<class> and C<published_version> columns in the
+C<story> table.  This greatly speeds up searches against these fields.
+[Sam]
+
+=item *
+
 Added new method C<use_category_templates()> to
 L<Krang::ElementClass::TopLevel>.  This boolean method defaults to
 true, and can be used to determine whether or not to wrap story output

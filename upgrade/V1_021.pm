@@ -21,6 +21,15 @@ sub per_instance {
     };
     warn("Attempt to add some list indexes failed: $@")
       if $@;
+
+    # add some new story indexes which are helpful for certain kinds
+    # of story searches
+    eval {
+        $dbh->do('ALTER TABLE story ADD INDEX (class)');
+        $dbh->do('ALTER TABLE story ADD INDEX (published_version)');
+    };
+    warn("Attempt to add some story indexes failed: $@")
+      if $@;
 }
 
 # nothing yet

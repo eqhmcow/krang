@@ -24,7 +24,9 @@ CREATE TABLE story (
         INDEX(desk_id),
         INDEX(title),
         INDEX(checked_out),
-        INDEX(checked_out_by)
+        INDEX(checked_out_by),
+        INDEX(class),
+        INDEX(published_version)
 );
 
 /* story_version holds version data managed by Krang::Story */
