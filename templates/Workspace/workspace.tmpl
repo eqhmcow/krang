@@ -2,6 +2,10 @@
 
 <script language="javascript">
 
+  function preview_story(id) {
+        window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
+  }
+
   function remove(id) {
      if (confirm("Are you sure you wish to delete this item permanently?")) {
        document.krang_pager_form.rm.value = 'delete';
@@ -31,6 +35,12 @@
 
   function copy(id) {
        document.krang_pager_form.rm.value = 'copy';
+       document.krang_pager_form.id.value = id;
+       document.krang_pager_form.submit();
+  }
+
+  function deploy(id) {
+       document.krang_pager_form.rm.value = 'deploy';
        document.krang_pager_form.id.value = id;
        document.krang_pager_form.submit();
   }

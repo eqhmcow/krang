@@ -27,6 +27,7 @@ use Krang::Log qw(debug assert affirm ASSERT);
 use Krang::HTMLPager;
 use Krang::Widget qw(format_url);
 use Krang::Message qw(add_message);
+use Krang::Publisher;
 
 use base 'Krang::CGI';
 
@@ -44,6 +45,7 @@ sub setup {
       copy
       checkin
       checkin_checked
+      deploy
     )]);
 
 }
@@ -119,10 +121,10 @@ sub _row_handler {
         $row->{title} = $obj->title;
         $row->{story_type} = $obj->class->display_name;
         $row->{is_story} = 1;
-        $row->{url} = format_url(url    => $obj->url,
-                                 linkto => 
-                                 "javascript:preview_story($row->{id})",
-                                 length => 50);
+        $row->{url} =format_url(url    => $obj->url,
+                                linkto => 
+                                "javascript:preview_story(".$obj->story_id.")",
+                                length => 50);
     } elsif ($obj->isa('Krang::Media')) {
         $row->{media_id} = $obj->media_id;
         $row->{id} = _obj2id($obj);
@@ -162,6 +164,23 @@ sub delete {
                          ($obj->isa('Krang::Media') ? 'Media' :
                           'Template')));
     $obj->delete;
+    return $self->show;
+}
+
+=item deploy
+
+Deploys a single template.  Requires an 'id' parameter of the form
+'type_id'.
+
+=cut
+
+sub deploy {
+    my $self = shift;
+    my $query = $self->query;
+    my $obj = _id2obj($query->param('id'));
+    add_message('deployed', id => $obj->template_id);
+    my $publisher = Krang::Publisher->new();
+    $publisher->deploy_template(template => $obj);
     return $self->show;
 }
 
