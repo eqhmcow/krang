@@ -293,7 +293,7 @@ for my $story_count (1 .. $stories) {
                                  data => $para);
             } else {
                 $page->add_child(class => "photo",
-                                 data => $media[int(rand(scalar(@media)))]->media_id);
+                                 data => $media[int(rand(scalar(@media)))]);
             }
         }
     }
