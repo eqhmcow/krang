@@ -1,7 +1,7 @@
 # docs/Makefile - process POD format documentation into HTML.  Uses
 # both pod2html and custom scripts stored in bin/
 
-HTML = changes.html objects.html coding.html goals.html rationale.html \
+HTML = changes.html coding.html goals.html rationale.html \
        new_features.html element_system.html \
        index.html install.html building_perl_modules.html requirements.html \
        configuration.html tech_spec.html writing_htmltemplate.html \
