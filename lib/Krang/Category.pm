@@ -164,6 +164,14 @@ Id of this categories parent category, if any
 
 Id in the site table of this object's site
 
+=item * site (read-only)
+
+The site object identified by site_id.
+
+=cut
+
+sub site { (Krang::Site->find(site_id => shift->{site_id}))[0] }
+
 =item * url (read-only)
 
 The full URL to this category
