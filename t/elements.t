@@ -34,18 +34,19 @@ SKIP: {
       unless (InstanceElementSet eq 'TestSet1');
 
 my @children = $element->children();
-is(@children , 4);
+is(@children , 5);
 is($children[0]->name, "issue_date");
 is($children[1]->name, "deck");
-is($children[2]->name, "fancy_keyword");
-is($children[3]->name, "page");
+is($children[2]->name, "auto_segments");
+is($children[3]->name, "fancy_keyword");
+is($children[4]->name, "page");
 
 # try push on another deck, should fail
 eval { $element->add_child(class => "deck") };
 like($@, qr/Unable to add another/);
 
 # poke around with page
-my $page = ($element->children())[3];
+my $page = ($element->children())[4];
 isa_ok($page, "Krang::Element");
 is($page->name, $page->class->name);
 is($page->display_name, "Page");
@@ -102,7 +103,7 @@ eval <<END;
   foreach_element { \$count++ } \$element;
 END
 die $@ if $@;
-is($count, 12);
+is($count, 13);
 
 # save to DB
 $element->save();
@@ -125,12 +126,13 @@ my $loaded = Krang::Element->load(element_id => $element_id, object => $story);
 isa_ok($loaded, 'Krang::Element');
 is($loaded->name, "article");
 @children = $loaded->children();
-is(@children, 4);
+is(@children, 5);
 is($children[0]->name, "issue_date");
 is($children[1]->name, "deck");
-is($children[2]->name, "fancy_keyword");
+is($children[2]->name, "auto_segments");
 is($children[3]->name, "page");
-my $lpage = $children[3];
+is($children[4]->name, "page");
+my $lpage = $children[4];
 my $x = 0;
 foreach my $para ($lpage->children) {
     if ($x > 1) {
@@ -143,19 +145,21 @@ foreach my $para ($lpage->children) {
 # try some reordering
 $loaded->reorder_children(reverse($loaded->children));
 @children = $loaded->children();
-is(@children, 4);
-is($children[3]->name, "issue_date");
-is($children[2]->name, "deck");
-is($children[1]->name, "fancy_keyword");
+is(@children, 5);
+is($children[4]->name, "issue_date");
+is($children[3]->name, "deck");
+is($children[2]->name, "auto_segments");
+is($children[1]->name, "page");
 is($children[0]->name, "page");
 
 $loaded->reorder_children(reverse(0 .. $loaded->children_count - 1));
 @children = $loaded->children();
-is(@children, 4);
+is(@children, 5);
 is($children[0]->name, "issue_date");
 is($children[1]->name, "deck");
-is($children[2]->name, "fancy_keyword");
+is($children[2]->name, "auto_segments");
 is($children[3]->name, "page");
+is($children[4]->name, "page");
 
 # prepare to check that delete_hook is working
 my $delete_count = $TestSet1::article::DELETE_COUNT;
