@@ -383,8 +383,10 @@ sub get_publish_list {
     my $self = shift;
     my %args = @_;
 
-    croak (__PACKAGE__ . ": Missing argument 'story'!\n") unless (exists($args{story}));
+    croak (__PACKAGE__ . ": Missing argument 'story'!") unless (exists($args{story}));
+    croak (__PACKAGE__ . ": Argument 'story' is not defined!") unless (defined($args{story}));
     my $story = $args{story};
+    croak (__PACKAGE__ . ": 'story' is not a Krang::Story object") unless ($story->isa('Krang::Story'));
 
     # add this story to the publish list.
     $self->{stories_to_be_published}{$story->story_id()} = 1;
