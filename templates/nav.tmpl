@@ -30,7 +30,7 @@
 <tmpl_if nav_desk_loop>
 <div class=nav3 style="margin-top: 5px">Desks</div>
 <tmpl_loop nav_desk_loop>
-<div class=nav4><a href="desk.pl?desk_id=<tmpl_var desk_id>"><tmpl_var desk_name></a></div>
+<div class=nav4><a href="javascript:nav_goto('desk.pl?desk_id=<tmpl_var desk_id>')"><tmpl_var desk_name></a></div>
 </tmpl_loop>
 </tmpl_if>
 
