@@ -10,5 +10,5 @@ CREATE TABLE schedule (
         next_run        DATETIME NOT NULL,
         PRIMARY KEY (schedule_id),
         INDEX       (object_type, object_id),
-        INDEX       (next_run),
+        INDEX       (next_run)
 );
