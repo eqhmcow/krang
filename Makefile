@@ -13,7 +13,8 @@
 #
 #   bench - runs the benchmark scripts in bench/
 #
-
+#   db    - recreates databases by calling bin/krang_createdb
+#
 # test section, ripped from Makefile.PL output
 TEST_VERBOSE=0
 TEST_FILES = t/*.t
@@ -35,6 +36,9 @@ test:
 
 bench:
 	KRANG_ROOT=`pwd` perl -Ilib -Iext-lib -we 'while($$_ = shift) { do $$_ or die "$$_ : $$!" }' bench/*.pl
+
+db:
+	bin/krang_createdb
 
 .PHONY : all test clean TAGS bench
 

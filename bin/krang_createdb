@@ -1,0 +1,62 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_createdb
+
+=head1 SYNOPSIS
+
+   krang_createdb
+
+=head1 DESCRIPTION
+
+Drops and creates all Krang databases configured in F<conf/krang.conf>.
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib and $KRANG_ROOT/ext-lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    my $extlib = catdir($ENV{KRANG_ROOT}, "ext-lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}:$extlib" : 
+      "${lib}:$extlib";
+    unshift @INC, $lib, $extlib;
+
+    # load Krang
+    eval { require Krang };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.  Do you need to set KRANG_ROOT?
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Term::Prompt qw(prompt);
+BEGIN {
+    exit 1      
+      unless prompt("y", "This program will drop and recreate all Krang databases for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
+}
+
+
+use Krang::DB qw(create_db dbh);
+
+foreach my $instance (Krang::Conf->instances()) {
+    Krang::Conf->instance($instance);
+    create_db();
+}
