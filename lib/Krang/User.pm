@@ -525,7 +525,6 @@ sub find {
         $fields = 'u.user_id';
     } else {
         $fields = join(", ", map {"u.$_"} keys %user_cols);
-        $fields .= ", ug.user_group_id" if $groups;
     }
 
     # set up WHERE clause and @params, croak unless the args are in
@@ -583,13 +582,13 @@ sub find {
     my $from = "usr u";
     if ($groups) {
         $from .= ", usr_user_group ug";
-        $where_clause = "u.user_id = ?" . $where_clause
-          if $where_clause !~ /u.user_id = \?/;
         $where_clause = "u.user_id = ug.user_id AND " . $where_clause;
     }
 
     # setup base query
-    my $query = "SELECT $fields FROM $from";
+    # distinct so we don't return duplicates which is a definite possiblity
+    # with multiple 'group_ids'
+    my $query = "SELECT distinct $fields FROM $from";
 
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE $where_clause" if $where_clause;
@@ -721,7 +720,7 @@ sub save {
     $id = $self->{user_id};
 
     # associate user with groups if any
-    my @gids = @{$self->{group_ids}};
+    my @gids = @{$self->{group_ids}} if $self->{group_ids};
     if (@gids) {
         eval {
             $dbh->do("LOCK TABLES usr_user_group WRITE");

@@ -35,11 +35,12 @@ $user = Krang::User->new(login => 'arobin',
 ###############
 # failure
 eval {$admin->save()};
-is($@ =~ /user objects.*login.*password/s, 1, 'save() - duplicate check');
+isa_ok($@, 'Krang::User::Duplicate');
+is($@ =~ /This object duplicates/s, 1, 'save() - duplicate check');
 
 # success
 $user->save();
-is($user->user_id() =~ /^\d+$/, 1, 'save() - success');
+like($user->user_id(), qr/^\d+$/, 'save() - success');
 
 # getters
 ##########
@@ -93,8 +94,8 @@ is($users[0]->login, 'arobin', 'find - offset');
 
 @users = Krang::User->find(group_ids => [1,2,3]);
 isa_ok($_, 'Krang::User') for @users;
-is(scalar @users, 1, 'find - group_ids');
-is(scalar @{$users[0]->group_ids()}, 3, 'group_ids - count');
+is(scalar @users, 2, 'find - group_ids');
+is(scalar @{$users[1]->group_ids()}, 3, 'group_ids - count');
 
 # check_user_pass() tests
 ##########################
@@ -119,15 +120,15 @@ $template->checkout();
 
 # failure
 eval {$admin->delete()};
-is($@ =~ /reference this class:.*template/is, 1, 'delete() failure');
+is($@, 'Objects depend on this user', 'delete() failure');
 
 # remove cause of failure
 $template->delete();
 
-# success
-is($user->delete(), 1, 'delete()');
-
 # remove leftover site
 $site->delete();
 
-__END__
+END {
+    # success
+    is($user->delete(), 1, 'delete()');
+}
