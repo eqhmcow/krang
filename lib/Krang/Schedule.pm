@@ -142,10 +142,10 @@ use constant SCHEDULE_RW => qw(action
 # Globals
 ##########
 our %action_map = (alert => {send => sub { Krang::Alert->send(@_) } },
-                   media => {expire => '',
-                             publish => ''},
-                   story => {expire => '',
-                             publish => ''}
+                   media => {expire  => sub {},
+                             publish => sub {}},
+                   story => {expire  => sub {},
+                             publish => sub {}}
                    );
 
 # Lexicals

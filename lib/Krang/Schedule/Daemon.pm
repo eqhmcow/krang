@@ -72,8 +72,8 @@ $SIG{'TERM'} = sub {
     # remove pidfile if it exists
     unlink $pidfile if -e $pidfile;
 
-    info("Removed Schedule Daemon pidfile.");
-    info("SCHEDULE DAEMON ENDED");
+    debug("Removed Schedule Daemon pidfile.");
+    debug("SCHEDULE DAEMON ENDED");
 
     # get out of here
     exit(0);
@@ -116,7 +116,7 @@ sub run {
 
     # print kickoff message
     my $now = localtime;
-    info("SCHEDULE DAEMON STARTED");
+    debug("SCHEDULE DAEMON STARTED");
 
     # count of cleanup_attempts
     my $cleanups = 0;
@@ -135,7 +135,7 @@ sub run {
         # CLEANUP_INTERVAL minutes
         if (($cleanups == 0 ) ||
             (($before - ($now + (CLEANUP_INTERVAL * $cleanups))) >= 0)) {
-            info(__PACKAGE__ . ": attempting cleanup.");
+            debug(__PACKAGE__ . ": attempting cleanup.");
             Krang::Schedule->clean_tmp();
             Krang::Schedule->expire_sessions();
             $cleanups++;
@@ -143,10 +143,10 @@ sub run {
 
         # log activity
         if (@schedule_ids) {
-            info(__PACKAGE__ . ": RAN SCHEDULE OBJECT IDS: " .
+            debug(__PACKAGE__ . ": RAN SCHEDULE OBJECT IDS: " .
                  join(",", @schedule_ids));
         } else {
-            info(__PACKAGE__ . ": NO SCHEDULE OBJECTS RAN.");
+            debug(__PACKAGE__ . ": NO SCHEDULE OBJECTS RAN.");
         }
 
         $after = localtime;
