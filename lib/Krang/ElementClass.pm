@@ -901,6 +901,7 @@ sub _build_contrib_loop {
             $contribs{$cid}{phone}      = $contrib->phone();
             $contribs{$cid}{bio}        = $contrib->bio();
             $contribs{$cid}{url}        = $contrib->url();
+            $contribs{$cid}{full_name}  = $contrib->full_name();
         }
         # add the selected contributor type to the contrib_type_loop
         my $contrib_type_id = $contrib->selected_contrib_type();
