@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Restructured the index page in docs/ - added a 'User' section, moved a
+few things around to make things easier for new users. [Peter]
+
+=item *
+
 Added C<bin/krang_info> - a simple command-line script to list the
 currently configured status of Krang.  [Peter]
 

@@ -38,29 +38,7 @@ HREF[Changelog|changelog.html] - a list of changes for each version of Krang
 
 =back
 
-=head2 Design Documentation
-
-=over 4
-
-=item *
-
-HREF[Goals|goals.html] - goals of the Krang project
-
-=item *
-
-HREF[Krang VS Bricolage|krang_vs_bric.html] - Krang/Bricolage comparison document
-
-=item *
-
-HREF[Performance|performance.html] - Performance test results
-
-=item *
-
-HREF[Database Schema Diagram|database_schema.gif] - graphical overview of the database
-
-=back
-
-=head2 Technical Documentation
+=head2 User Documentation
 
 =over 4
 
@@ -71,6 +49,24 @@ HREF[Module Documentation|modules.html] - complete Krang module documentation
 =item *
 
 HREF[Script Documentation|scripts.html] - complete Krang script documentation
+
+=item *
+
+HREF[Writing Templates|writing_htmltemplate.html] - guide to template creation
+
+=item *
+
+HREF[Customizing Publish|customizing_publish.html] - guide to customizing the publish process
+
+=item *
+
+HREF[Element System|element_system.html] - the Krang element system
+
+=back
+
+=head2 Technical Documentation
+
+=over 4
 
 =item *
 
@@ -91,14 +87,6 @@ HREF[Development Install|install.html] - how to install a new Krang instance for
 =item *
 
 HREF[Releasing Krang|release.html] - how to make a krang distribution
-
-=item *
-
-HREF[Writing Templates|writing_htmltemplate.html] - guide to template creation
-
-=item *
-
-HREF[Element System|element_system.html] - the Krang element system
 
 =item *
 
@@ -138,5 +126,27 @@ HREF[CPAN Module Inventory|cpan_inventory.html] - A list of all CPAN modules inc
 
 =back
 
+
+=head2 Design Documentation
+
+=over 4
+
+=item *
+
+HREF[Goals|goals.html] - goals of the Krang project
+
+=item *
+
+HREF[Krang VS Bricolage|krang_vs_bric.html] - Krang/Bricolage comparison document
+
+=item *
+
+HREF[Performance|performance.html] - Performance test results
+
+=item *
+
+HREF[Database Schema Diagram|database_schema.gif] - graphical overview of the database
+
+=back
 
 
