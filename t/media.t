@@ -6,7 +6,7 @@ use Krang::Conf qw (KrangRoot);
 use Krang::Contrib;
 use Krang::Site;
 use Krang::Category;
-use File::Spec::Functions qw(catdir catfile splitpath);
+use File::Spec::Functions qw(catdir catfile splitpath canonpath);
 use FileHandle;
 
 BEGIN { use_ok('Krang::Media') }
@@ -47,6 +47,10 @@ is ($media->thumbnail_path(),
 # check url and preview_url
 is($media->url, 'testsite1.com/krang.jpg', "URL looks right");
 is($media->preview_url, 'preview.testsite1.com/krang.jpg', "Preview URL looks right");
+
+# check publish_path and preview_path
+is($media->publish_path, canonpath('./sites/test1/testsite1.com/krang.jpg'), "publish_path looks right");
+is($media->preview_path, canonpath('./sites/test1/preview/preview.testsite1.com/krang.jpg'), "preview_path looks right");
 
 # create new contributor object to test associating with media
 my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');

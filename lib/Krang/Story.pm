@@ -12,6 +12,7 @@ use Krang::Pref;
 use Carp           qw(croak);
 use Storable       qw(freeze thaw);
 use Time::Piece::MySQL;
+use File::Spec::Functions qw(catdir canonpath);
 
 # setup exceptions
 use Exception::Class 
@@ -1515,7 +1516,55 @@ sub mark_as_published {
     add_history(object => $self, action => 'publish');
 }
 
+=item $path = $story->publish_path(category => $category)
 
+Returns the publish path for the story object, using the site's
+publish_path and the story's URL.  This is the filesystem path where
+the story object will be published.
+
+If a category is not passed the primary category for the story is
+returned.
+
+=cut
+
+sub publish_path {
+    my $self = shift;
+    my %arg  = @_;
+    my $category = $arg{category} ? $arg{category} : $self->category;
+
+    my $path = $category->site->publish_path;
+    my $url  = $self->element->build_url(story    => $self,
+                                         category => $category);
+    
+    # remove the site part
+    # $url =~ s![^/]+/!!;
+
+    # paste them together
+    return canonpath(catdir($path, $url));
+}
+
+
+=item $path = $story->preview_path()
+
+Returns the preview path for the story object, using the site's
+preview_path and the story's URL.  This is the filesystem path where
+the story object will be previewed.
+
+The primary category is always used to construct the preview_path.
+
+=cut
+
+sub preview_path {
+    my $self = shift;
+    my $path = $self->category->site->preview_path;
+    my $url  = $self->preview_url;
+    
+    # remove the site part
+    # $url =~ s![^/]+/!!;
+
+    # paste them together
+    return canonpath(catdir($path, $url));
+}
 
 # make sure the object is checked out, or croak
 sub _verify_checkout {

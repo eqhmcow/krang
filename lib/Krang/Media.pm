@@ -11,7 +11,7 @@ use Krang::History qw( add_history );
 use Krang::Publisher;
 use Carp qw(croak);
 use Storable qw(freeze thaw);
-use File::Spec::Functions qw(catdir catfile splitpath);
+use File::Spec::Functions qw(catdir catfile splitpath canonpath);
 use File::Path;
 use File::Copy;
 use LWP::MediaTypes qw(guess_media_type);
@@ -1341,6 +1341,47 @@ sub preview_url {
     return $url;
 }
 
+=item $path = $media->publish_path()
+
+Returns the publish path for the media object, using the site's
+publish_path and the media's URL.  This is the filesystem path where
+the media object will be published.
+
+=cut
+
+sub publish_path {
+    my $self = shift;
+    my $path = $self->category->site->publish_path;
+    my $url  = $self->url;
+    
+    # remove the site part
+    # $url =~ s![^/]+/!!;
+
+    # paste them together
+    return canonpath(catfile($path, $url));
+}
+
+
+=item $path = $media->preview_path()
+
+Returns the preview path for the media object, using the site's
+preview_path and the media's URL.  This is the filesystem path where
+the media object will be previewed.
+
+=cut
+
+sub preview_path {
+    my $self = shift;
+    my $path = $self->category->site->preview_path;
+    my $url  = $self->preview_url;
+    
+    # remove the site part
+    # $url =~ s![^/]+/!!;
+
+    # paste them together
+    return canonpath(catfile($path, $url));
+}
+
 =item $media_id = $media->duplicate_check()
 
 This method checks whether the url of a media object is unique.
@@ -1381,19 +1422,18 @@ sub preview {
 }
 
 =item $media->publish
-                                                                                      
+
 Convenience method to Krang::Publisher, publishes media object.
-                                                                                      
+
 =cut
-                                                                                      
+
 sub publish {
     my $self = shift;
     my $publisher = new Krang::Publisher();
-                                                                                      
+
     $publisher->publish_media(
                                    media    => $self
                                   );
-                                                                                      
 }
 
 =item $media->delete() || Krang::Media->delete($media_id)

@@ -353,11 +353,9 @@ sub preview_media {
     my $media = $args{media};
 
     my $internal_path = $media->file_path();
-
-    my $preview_path = catfile($media->category()->site()->preview_path(), $media->preview_url());
+    my $preview_path = $media->preview_path();
 
     $preview_path =~ /^(.*\/)[^\/]+/;
-
     my $dir_path = $1;
 
     # make sure the output dir exists
@@ -930,9 +928,9 @@ sub _build_story_single_category {
 
     # create output path.
     if ($self->{is_publish}) {
-        $path = catfile($category->site()->publish_path(), $url);
+        $path = $story->publish_path(category => $category);
     } elsif ($self->{is_preview}) {
-        $path = catfile($category->site()->preview_path(), $url);
+        $path = $story->preview_path();
     }
 
     # build the story HTML.
@@ -1094,11 +1092,9 @@ sub _write_media {
     my $media = shift;
 
     my $internal_path = $media->file_path();
-
-    my $publish_path = catfile($media->category()->site()->publish_path(), $media->url());
+    my $publish_path = $media->publish_path();
 
     $publish_path =~ /^(.*\/)[^\/]+/;
-
     my $dir_path = $1;
 
     # make sure the output dir exists
@@ -1179,7 +1175,6 @@ sub _write_page {
 
     return;
 }
-
 
 
 my $EBN =<<EOEBN;
