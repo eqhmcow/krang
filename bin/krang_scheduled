@@ -17,11 +17,9 @@ BEGIN {
 use Krang::Conf;
 BEGIN { $ENV{KRANG_INSTANCE} = (Krang::Conf->instances)[0]; }
 
-use Krang::Script;
 use Krang::Schedule::Daemon;
+use Krang::Script;
 use Krang::Log qw(critical);
-
-
 
 eval { Krang::Schedule::Daemon->run };
 if (my $err = $@) {
