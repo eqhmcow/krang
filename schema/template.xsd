@@ -8,13 +8,12 @@
 		<xs:complexType>
 			<xs:sequence>
 				<xs:element name="template_id" type="xs:int"/>
+				<xs:element name="filename" type="xs:string"/>
 				<xs:element name="url" type="xs:string"/>
-				<xs:element name="element_class_name" type="xs:string"/>
 				<xs:element name="category_id" type="xs:int" minOccurs="0"/>
 				<xs:element name="content" type="xs:string"/>
 				<xs:element name="creation_date" type="xs:dateTime"/>
 				<xs:element name="deploy_date" type="xs:dateTime" minOccurs="0"/>
-				<xs:element name="filename" type="xs:string"/>
 				<xs:element name="version" type="xs:int"/>
                                 <xs:element name="deployed_version" type="xs:int" minOccurs="0"/>
 			</xs:sequence>
