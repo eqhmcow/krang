@@ -95,9 +95,22 @@ $story = $creator->create_story(category => [$category]);
 
 isa_ok($story, 'Krang::Story');
 
-# 'pages' argument not yet supported
-# Further testing needed to make sure that all the options work.
+# further testing to make sure that the story params are supported.
+my $story2 = $creator->create_story(category => [$category],
+                                    title    => 'title',
+                                    deck     => 'deck',
+                                    header   => 'header',
+                                    pages    => 5);
 
+
+is($story2->title, 'title', "create_story() - param('title')");
+is($story2->element->child('deck')->data(), 'deck', "create_story() - param('deck')");
+
+my $tmppage = $story2->element->child('page');
+is($tmppage->child('header')->data(), 'header', "create_story() - param('header')");
+
+my @pages = $story2->element->match('//page');
+is($#pages, 4, "create_story() - param('pages')");
 
 
 # delete_item

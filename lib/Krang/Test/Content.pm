@@ -49,7 +49,7 @@ Krang::Test::Content exists to simplify the process of writing tests for the mor
 
 This module is designed to work with the Default and TestSet1 element sets - it may or may not work with other element sets.
 
-NOTE - It should be clear that this module assumes that the following modules are all in working order: L<Krang::Category>, L<Krang::Story>, L<Krang::Media>, L<Krang::Contrib>.
+NOTE - It should be clear that this module assumes that the following modules are all in working order: L<Krang::Site>, L<Krang::Category>, L<Krang::Story>, L<Krang::Media>, L<Krang::Contrib>.
 
 =cut
 
@@ -343,6 +343,10 @@ An array reference containing Krang::Media objects.  Each Media object in the ar
 
 Determines how many pages will exist in the story.  Each page will contain a header and 3 paragraphs.  By Default, one page is created.
 
+=item paras_per_page
+
+Determines how many paragraphs will be created on each page.  Defaults to 3.
+
 =item C<< title => 'Confessions of a Poodle Lover' >>
 
 The title for the story being created.  By default, a randomly-generated title will be used.
@@ -380,6 +384,8 @@ sub create_story {
     my $deck  = $args{deck} || join(' ', map { $self->get_word() } (0 .. 5));
     my $head  = $args{header} || join(' ', map { $self->get_word() } (0 .. 5));
     my $paras = $args{paragraph} || undef;
+    my $paras_page = $args{paras_per_page} || 3;
+    my $page_count = $args{pages} || 1;
 
     my $slug_id;
     do {
@@ -394,24 +400,23 @@ sub create_story {
                                   class      => "article");
 
 
-    # add some content
+    # add content - first page no matter what.
     $story->element->child('deck')->data($deck);
 
-    my $page = $story->element->child('page');
+    $self->_fill_page(page      => $story->element->child('page'),
+                      header    => $head,
+                      paragraph => $paras,
+                      paras_per_page => $paras_page
+                     );
 
-    $page->child('header')->data($head);
-    $page->child('wide_page')->data(1);
-
-    if (defined($paras)) {
-        foreach (@$paras) {
-            $page->add_child(class => "paragraph", data => $_);
-        }
-    } else {
-        for (1..3) {
-            my $paragraph = join(' ', map { $self->get_word() } (0 .. 20));
-            $page->add_child(class => "paragraph", data => $paragraph);
+    if ($page_count > 1) {
+        for (2..$page_count) {
+            $self->_fill_page(page => $story->element->add_child(class => 'page'),
+                              paras_per_page => $paras_page
+                             );
         }
     }
+
 
     # add storylink if it exists
     if ($args{linked_stories}) {
@@ -704,5 +709,38 @@ sub _link_media {
 }
 
 
+#
+# Fill a Krang::Story page element with content.
+# Takes the following arguments, or builds random equivilants.
+#
+# page - page element to be filled.
+# header - header text
+# paragraph - array ref of paras.  Will build 3 otherwise.
+#
+sub _fill_page {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $page = $args{page};
+    my $head = $args{header} || join(' ', map { $self->get_word() } (0 .. 5));
+    my $para = $args{paragraph};
+    my $paras_page = $args{paras_per_page} || 3;
+
+    $page->child('header')->data($head);
+    $page->child('wide_page')->data(1);
+
+    if (defined($para)) {
+        foreach (@$para) {
+            $page->add_child(class => "paragraph", data => $_);
+        }
+    } else {
+        for (1..$paras_page) {
+            my $paragraph = join(' ', map { $self->get_word() } (0 .. 20));
+            $page->add_child(class => "paragraph", data => $paragraph);
+        }
+    }
+
+}
 
 1;
