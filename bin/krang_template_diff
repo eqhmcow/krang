@@ -5,37 +5,32 @@ use warnings;
 
 =head1 NAME
 
-krang_template_diff - describe differences between template sets
+krang_template_diff - describe differences between template datasets
 
 =head1 SYNOPSIS
 
-Produce a diff of all changes from KRANG1 to KRANG2:
+Produce a diff of all changes from Krang dataset 1 to Krang dataset 2:
 
-  $ krang_template_diff $KRANG_ROOT1 $KRANG_ROOT2 > diff.txt
-
-Produce a diff of the changes to template_id 5:
-
-  $ krang_template_diff --template_id 5 $KRANG_ROOT1 $KRANG_ROOT2 > diff.txt
+  $ krang_template_diff templates1.kds templates2.kds > diff.txt
 
 Same thing, ignoring changes in whitespace
 
   $ krang_template_diff --diff-options -urbB --template_id 5 \
-    $KRANG_ROOT1 $KRANG_ROOT2 > diff.txt
+    templates1.kds templates2.kds > diff.txt
 
 =head1 OPTIONS
 
-krang_template_diff [options] from_root to_root
+krang_template_diff [options] from.kds to.kds
 
 Arguments:
 
-  from_root         - the base path of the Krang from instance
+  from         	    - Krang template dataset file from which comparisons
+		      are made
 
-  to_root           - the base path of the Krang to instance
+  to                - Krang template dataset for which additions will be
+		      generated
 
 Options:
-
-  --template_id     - pass the id of a template here and only this template
-                      will be included in the diff.
 
   --diff-options    - options to pass to diff, defaults to "-ur".  Note
                       that bric_template_patch requires '-ur' and won't
@@ -69,7 +64,10 @@ This program requires GNU C<diff> to be installed and in your path.
 =cut
 
 use Config;
+use Cwd qw(cwd);
+use File::Path qw(mkpath);
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use File::Temp qw(tempdir);
 use FindBin qw($RealBin);
 use Getopt::Long;
 use Pod::Usage;
@@ -103,7 +101,7 @@ END
     # get parameters from command line.  do this during compile so
     # $VERBOSE can effect use options and such.  also so errors get
     # detected as quick as possible - people are waiting out there!
-    our ($from_root, $to_root);
+    our ($from, $to);
     our $VERBOSE              = 0;
     our ($help, $man);
     our $template_id;
@@ -119,40 +117,44 @@ END
     pod2usage(-verbose => 2) if $man;
 
     # get from and tos
-    $from_root = shift @ARGV;
-    pod2usage("Missing required from_root and to_root parameters")
-      unless defined $from_root;
-    $to_root = shift @ARGV;
-    pod2usage("Missing required to_root parameter")
-	unless $to_root;
+    $from = shift @ARGV;
+    pod2usage("Missing required 'from' and 'to' datasets")
+      unless defined $from;
+    $to = shift @ARGV;
+    pod2usage("Missing required 'to' dataset")
+      unless $to;
 };
 
 our $VERBOSE;
-require Data::Dumper if $VERBOSE;
 
-use Cwd qw(cwd);
-use File::Temp qw(tempdir);
-use File::Spec::Functions qw(catdir splitdir);
-use File::Path qw(mkpath);
+require Data::Dumper if $VERBOSE;
 use IPC::Run qw(run);
+use XML::Simple qw(XMLin);
 
 main();
 
 # main is where it's at
 sub main {
-    our ($from_root, $to_root);
+    our ($from, $to);
 
-    # fetch templates from from and to
-    my $root = catdir($from_root, 'tmp');
+    my $root = catdir($ENV{KRANG_ROOT}, 'tmp');
     my $temp = tempdir(DIR => $root, CLEANUP => 1);
-    fetch_templates($from_root, catdir($temp, 'from'), 'from');
-    fetch_templates($to_root, catdir($temp, 'to'), 'to');
+
+    # extract .kds's
+    my ($from_dir, $to_dir) = map {catdir($temp, $_)} qw/from to/;
+    extract($from_dir, $from);
+    extract($to_dir, $to);
+
+    # rewrite out 'content' for each template to 'filename'
+    write_out($from_dir);
+    write_out($to_dir);
 
     # make'um diff'um
     make_diff($temp);
 
     exit 0;
 }
+
 
 # make a diff of the templates
 sub make_diff {
@@ -176,31 +178,46 @@ sub make_diff {
     chdir($old_dir) or die "Can't get back to $old_dir: $!";
 }
 
-# get all templates from a server
-sub fetch_templates {
-    my ($root, $dir, $kds) = @_;
-    our $template_id;
+
+sub extract {
+    my ($dir, $kds) = @_;
+    my ($in, $out, $err);
+
     mkpath([$dir]) unless -d $dir;
 
-    $ENV{KRANG_ROOT} = $root;
+    my @cmd = ("tar", "-C" => $dir, "-xf" => $kds, "template_*.xml");
+    run(\@cmd, \$in, \$out, \$err) or
+      die("Unable to extract '$kds' to '$dir': $!");
 
-    my @cmd;
-    my $output = catfile($dir, $kds . ".kds");
-    my $cmd = catfile($root, 'bin', 'krang_export');
+    # DEBUG
+    print STDERR "Extracted '$kds' to '$dir'\n" if $VERBOSE;
+}
 
-    if ($template_id) {
-        @cmd = ($cmd, "--template_id" => $template_id, "--output" => $output);
-    } else {
-        @cmd = ($cmd, "--templates", "--output" => $output);
+
+sub write_out {
+    my ($dir) = @_;
+    my @files;
+
+    opendir(DIR, $dir);
+    @files = grep /\.xml$/, readdir DIR;
+    closedir(DIR);
+
+    for (@files) {
+        my $fpath = catfile($dir, $_);
+        my $xml = XMLin($fpath);
+        my $npath = catfile($dir, $xml->{filename});
+        my $data = $xml->{content} || '';
+
+        # DEBUG
+        print STDERR "Writing to '$npath'\n" if $VERBOSE;
+
+        open(TEMPLATE, ">$npath") or die "Unable to open $npath : $!";
+        print TEMPLATE $data;
+        close TEMPLATE or die $!;
+
+        unlink $fpath;
+
+        # DEBUG
+        print STDERR "Removed '$fpath'\n" if $VERBOSE;
     }
-
-    # get template .kds
-    my ($in, $out, $err);
-    run(\@cmd, \$in, \$out, \$err) or
-      die("Unable to run '" . join(' ', @cmd) ."': $!");
-
-    # extract .kds file
-    @cmd = ("tar", "-C" => $dir, "-xf" => $output);
-    run(\@cmd, \$in, \$out, \$err) or
-      die("Unable to run '" . join(' ', @cmd) . "': $!");
 }
