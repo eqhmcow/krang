@@ -576,9 +576,9 @@ sub edit_save {
 Saves changes to the template object the end-user enacted on the 'Edit' screen, then checks in.
 The user is sent to 'My Workspace' if save succeeds and back to the 'Edit'
 screen if it fails.
-                                                                             
+
 =cut
-                                                                             
+                                             
 sub edit_checkin {
     my $self = shift;
     my $q = $self->query();
@@ -1045,7 +1045,7 @@ sub update_template {
     my $template = shift;
     my $q = $self->query();
 
-    for (qw/category_id content filename testing/) {
+    for (qw/category_id content filename/) {
         next if ($_ eq 'filename') && $template->template_id;
         next if ($_ eq 'category_id') && $template->template_id;
 
@@ -1061,12 +1061,16 @@ sub update_template {
             }
         } elsif ($_ eq 'category_id') {
             $template->$_($val) if $val ne '';
-        } elsif ($_ eq 'testing') {
-            $template->mark_for_testing if $val;
         } else {
             $template->$_($val) if $val ne '';
         }
         $q->delete($_);
+    }
+
+    if ($q->param('testing')) {
+        $template->mark_for_testing;
+    } else {
+        $template->unmark_for_testing;
     }
 }
 
