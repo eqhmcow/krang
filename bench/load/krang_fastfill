@@ -49,25 +49,25 @@ BEGIN {
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir($RealBin);
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
-                                                                                  
+
     # use $KRANG_ROOT/lib for modules
     my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
       "${lib}";
     unshift @INC, $lib, "$lib/".$Config{archname};
-                                                                                  
+
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
     eval { require Krang::Conf };
     die <<"END" if $@;
 ######################################################################
-                                                                                  
+
 Cannot load Krang.
-                                                                                  
+
 Error message:
-                                                                                  
+
 $@
-                                                                                  
+
 ######################################################################
 END
 }
@@ -140,9 +140,9 @@ my $krang_import = catfile(KrangRoot, 'bin', 'krang_import');
 `$krang_import $base_kds`;
 
 # now update site preview and publish path for this installation
-my ($site1) = Krang::Site->find( url => 'equilibrium.kra:8080');
-$site1->preview_path( catdir(KrangRoot, "tmp", 'equilibrium.kra_preview') );
-$site1->publish_path( catdir(KrangRoot, "tmp", 'equilibrium.kra_publish') );
+my ($site1) = Krang::Site->find( limit => 1 );
+$site1->preview_path( catdir(KrangRoot, "tmp", $site1->preview_url) );
+$site1->publish_path( catdir(KrangRoot, "tmp", $site1->url) );
 $site1->save();
 
 # load base stories covers media into memory 
@@ -279,10 +279,17 @@ sub create_media {
 
     my $fh = new FileHandle $m->file_path;
 
+    # Pick a type
+    my %media_types = Krang::Pref->get('media_type');
+    my @media_type_ids = keys(%media_types);
+    my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
+
     my $new_m = Krang::Media->new(  title => "test_media_".time.$super_count++,
                                     category_id => $args{category_id},
                                     filehandle => $fh,
-                                    filename => time.$super_count++.$m->filename );
+                                    filename => time.$super_count++.$m->filename,
+                                    media_type_id => $media_type_id
+                                 );
     $new_m->save;
     $new_m->checkin;
                                     
