@@ -36,6 +36,7 @@ foreach my $instance (Krang::Conf->instances) {
 
 BEGIN {
 
+
     my $found;
 
     $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
