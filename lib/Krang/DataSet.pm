@@ -351,7 +351,14 @@ sub write {
     my $kds = Archive::Tar->new();
 
     # write the index
-    $self->_write_index;
+    eval { $self->_write_index; };
+
+    if ($@) {
+        # gotta get back, regardless of errors
+        my $err = $@;
+        chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
+        die $err;
+    }
 
     # add all files to the tar
     find({ wanted => sub { return unless -f;
@@ -363,11 +370,18 @@ sub write {
            no_chdir => 1 },
          $self->{dir});
 
-    $kds->write((file_name_is_absolute($path) ? 
-                 $path : catfile($old_dir, $path)), 
-                $compress ? 9 : 0);
-
-    # gotta get back
+    eval {
+        $kds->write((file_name_is_absolute($path) ? 
+                     $path : catfile($old_dir, $path)), 
+                    $compress ? 9 : 0);
+    };
+    if ($@) {
+        # gotta get back, regardless of errors
+        my $err = $@;
+        chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
+        die $err;
+    }
+    
     chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
 
     # Do a validation pass in dev mode to make sure we didn't write
@@ -379,6 +393,10 @@ sub write {
 # write out the index XML
 sub _write_index {
     my $self = shift;
+
+    # can't write an index for an empty set
+    croak("Unable to write index for empty dataset!")
+      unless keys %{$self->{objects}};
 
     open(my $fh, '>','index.xml') or
       croak("Unable to open index.xml: $!");

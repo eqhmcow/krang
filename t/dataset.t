@@ -12,6 +12,14 @@ BEGIN { use_ok('Krang::DataSet') }
 
 my $DEBUG = 1; # supresses deleting kds files at process end
 
+# try creating an empty dataset
+my $empty = Krang::DataSet->new();
+isa_ok($empty, 'Krang::DataSet');
+
+my $empty_path = catfile(KrangRoot, 'tmp', 'empty.kds');
+eval { $empty->write(path => $empty_path); };
+like($@, qr/empty dataset/);
+
 # create a dataset with a single contributor
 my $contrib = Krang::Contrib->new(first  => 'J.',
                                   middle => 'Jonah',
