@@ -1,6 +1,9 @@
 # count objects in all tables and put results in dbcount.txt
 use Test::More qw(no_plan);
 
+# ignore a few tables which harmlessly grow in certain circumstances
+our %IGNORE = map { ($_,1) } qw( my_pref sessons history );
+
 use strict;
 use warnings;
 use Krang::Script;
@@ -12,15 +15,8 @@ open(COUNT, ">", catfile(KrangRoot, "tmp", "dbcount.txt")) or die $!;
 my $dbh = dbh;
 
 my $tables = $dbh->selectcol_arrayref('show tables');
+@$tables = grep { not exists $IGNORE{$_} } @$tables;
 ok(@$tables);
-
-# make an exception for my_pref, which harmlessly adds a row the first
-# time my_pref.t is run.  Maybe fix some day...
-
-# also, ignore sessions since new sessions will get cleaned up
-# automatically anyway
-
-@$tables = grep { $_ ne 'my_pref' and $_ ne 'sessions' } @$tables;
 
 foreach my $table (sort @$tables) {
     my ($count) = $dbh->selectrow_array("select count(*) from $table");
