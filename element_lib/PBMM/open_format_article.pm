@@ -16,12 +16,22 @@ sub new {
 
    my %args = ( name => 'open_format_article',
                 children => [
-                    PBMM::meta->new(),
                     Krang::ElementClass::Text->new(name => 'issue_id',
                                        max  => 1),
+                    Krang::ElementClass::Text->new(name => 'article_id',
+                                       max  => 1),
+                    Krang::ElementClass::Textarea->new(name => 'byline',
+                                           max => 1),
+
                     Krang::ElementClass::CheckBox->new(name => 'enhanced_content',
                                            @fixed),
+                    PBMM::meta->new(),
                     PBMM::promo->new(),
+                     Krang::ElementClass::PopupMenu->new(name => "search_type",
+                                                     @fixed,
+                                                     values => [ "keyword",                                                                 "topic",
+                                                                 "multisite",
+                                                                 "custom"],                                                     default => "keyword"),
                     Krang::ElementClass::Textarea->new(   name => 'open_format_page',
                                                         display_name => 'Open Format Page',
                                                         pageable => 1,
