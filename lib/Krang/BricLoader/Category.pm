@@ -73,18 +73,23 @@ sub new {
     my ($pkg, %args) = @_;
     my $self = bless({},$pkg);
     my $path = $args{path};
+    my $xml = $args{xml};
     my ($base, @categories, $new_path, $ref);
 
     croak("A value must be passed with either the 'path' or 'xml' arg.")
-      unless $path;
+      unless $path || $xml;
 
     # set tmpdir
     $self->{dir} = tempdir(DIR => catdir(KrangRoot, 'tmp'));
 
-    croak("File '$path' not found on the system!") unless -e $path;
-    $base = (splitpath($path))[2];
-    $new_path = catfile($self->{dir}, $base);
-    link($path, $new_path);
+    if ($path) {
+        croak("File '$path' not found on the system!") unless -e $path;
+        $base = (splitpath($path))[2];
+        $new_path = catfile($self->{dir}, $base);
+        link($path, $new_path);
+    } elsif ($xml) {
+        $new_path = $xml;
+    }
 
     $ref = XMLin($new_path,
                  forcearray => ['category'],

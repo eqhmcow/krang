@@ -103,6 +103,8 @@ eval {@media = Krang::BricLoader::Media->new(path => $media_path);};
 is($@, '', 'Media constructor did not croak :)');
 $set->add(object => $_) for @media;
 
+# add contributors
+$set->add(object => $_) for Krang::BricLoader::Contrib->load;
 
 # add some stories
 my $story_path = catfile(KrangRoot, 't', 'bricloader', 'lastories.xml');
@@ -115,10 +117,7 @@ $set->add(object => $_) for @stories;
 my $kds = catfile(KrangRoot, 'tmp', 'bob.kds');
 $set->write(path => $kds);
 
-# DEBUG
-#print STDERR "\n", Krang::BricLoader::Contributor->_dump, "\n\n";
-
-#END {unlink($kds);}
+END {unlink($kds);}
 
 # validate output
 eval {

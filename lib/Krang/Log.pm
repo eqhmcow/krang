@@ -205,7 +205,7 @@ BEGIN {
     } else {
          eval 'sub debug    ($) { __PACKAGE__->log(level => "debug",    message => shift); }';
         eval 'sub info     ($) { __PACKAGE__->log(level => "info",     message => shift); }';
-    } 
+    }
 
     # turn assertions on or off based on KRANG_ASSERT or Assertions
     # conf setting
@@ -374,14 +374,6 @@ sub _reopen_log {
       croak("Unable to open logfile, $LOG->{path}: $!\n");
 }
 
-my $quote = <<END;
-The best laid schemes o' Mice an' Men
-Gang aft agley
-
---Robert Burns
-END
-
-=pod
 
 =back
 
@@ -398,4 +390,16 @@ END
 L<Krang>, L<Krang::Conf>, L<Time::Piece>
 
 =cut
+
+
+my $quote = <<END;
+But, Mousie, thou art no thy lane
+In proving foresight may be vain:
+The best-laid schemes o' mice an' men
+                Gang aft agley,
+An' lea'e us nought but grief an' pain,
+                For promised joy.
+
+--Robert Burns, from 'To a Mouse'
+END
 

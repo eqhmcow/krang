@@ -93,15 +93,20 @@ sub new {
     my ($pkg, %args) = @_;
     my $self = bless({},$pkg);
     my $path = $args{path};
+    my $xml = $args{xml};
     my ($base, @stories, @media, $new_path, $ref);
 
     # set tmpdir
     $self->{dir} = tempdir(DIR => catdir(KrangRoot, 'tmp'));
 
-    croak("File '$path' not found on the system!") unless -e $path;
-    $base = (splitpath($path))[2];
-    $new_path = catfile($self->{dir}, $base);
-    link($path, $new_path);
+    if ($path) {
+        croak("File '$path' not found on the system!") unless -e $path;
+        $base = (splitpath($path))[2];
+        $new_path = catfile($self->{dir}, $base);
+        link($path, $new_path);
+    } elsif ($xml) {
+        $new_path = $xml;
+    }
 
     $ref = XMLin($new_path,
                  forcearray => ['category', 'contributor', 'story'],
@@ -281,8 +286,12 @@ sub _map_simple {
 
     # handle contributors
     $tmp = delete $self->{contributors}->{contributor};
-    push @{$self->{contribs}}, Krang::BricLoader::Contrib->new(obj => $_)
-      for @$tmp;
+    for (@$tmp) {
+        $_->{mname} = '' if ref $_->{mname};
+        my $contrib = Krang::BricLoader::Contrib->lookup($_);
+        croak("No matching contributor found!") unless $contrib;
+        push @{$self->{contribs}}, $contrib;
+    }
 }
 
 # serializes story subelements into xml similar to

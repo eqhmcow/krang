@@ -66,6 +66,7 @@ use warnings;
 
 # External Modules
 ###################
+use Archive::Tar;
 use Carp qw(verbose croak);
 use Cwd qw(fastcwd);
 use File::Copy qw(copy);

@@ -149,15 +149,12 @@ sub serialize_xml {
     $writer->dataElement(version	=> $self->{version});
     $writer->dataElement(creation_date 	=> $self->{creation_date}->datetime);
 
-    # add category to set
-#    $set->add(object => $self->{category}, from => $self);
-
     # contributors
     my %contrib_type = Krang::Pref->get('contrib_type');
     for my $contrib (@{$self->{contribs}}) {
         $writer->startTag('contrib');
         $writer->dataElement(contrib_id => $contrib->contrib_id);
-        $writer->dataElement(contrib_type => 
+        $writer->dataElement(contrib_type =>
                              $contrib_type{$contrib->selected_contrib_type()});
         $writer->endTag('contrib');
 
@@ -172,7 +169,6 @@ sub serialize_xml {
 =back
 
 =cut
-
 
 
 # Private Methods

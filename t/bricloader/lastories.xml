@@ -1,303 +1,100 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 
 <assets xmlns="http://bricolage.sourceforge.net/assets.xsd">
- <story id="1118" element="Article">
-  <name>1979 Chevrolet 1/2-Ton Stepside Project, Part IV</name>
+ <story id="1027" element="Article">
+  <name>Chevrolet Blazer</name>
   <description></description>
-  <slug>1468</slug>
-  <primary_uri>/sporttruck/projectbuild/1468</primary_uri>
+  <slug>506</slug>
+  <primary_uri>/4wheeloffroad/featuredvehicles/506</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>1998-01-01T12:00:00Z</cover_date>
+  <cover_date>1999-09-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/sporttruck/projectbuild</category>
-   <category>/customclassictrucks/projectbuild</category>
+   <category primary="1">/4wheeloffroad/featuredvehicles</category>
   </categories>
   <keywords></keywords>
   <contributors>
    <contributor>
-    <fname>Chuck</fname>
+    <fname>Cole</fname>
     <mname></mname>
-    <lname>Lombardo</lname>
+    <lname>Quinnell</lname>
     <type>Illustrators</type>
     <role>DEFAULT</role>
    </contributor>
    <contributor>
-    <fname>Steve</fname>
+    <fname>Craig</fname>
     <mname></mname>
-    <lname>Warner</lname>
+    <lname>Perronne</lname>
     <type>Writers</type>
     <role>DEFAULT</role>
    </contributor>
   </contributors>
   <elements>
-   <data order="0" element="deck">Body Basics for Operation Retro Ride</data>
+   <data order="0" element="deck">Built for Double Duty</data>
    <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">body,paint,Chevrolet,Chevy,Sport Truck,CustomClassic Trucks,California Street Rods,Golden State Pickup Parts,PPG</data>
-   <data order="3" element="metadata title">1979 Chevrolet 1/2-Ton Stepside Project, Part IV</data>
-   <data order="4" element="promo_title">1979 Chevrolet 1/2-Ton Stepside Project, Part IV</data>
-   <container order="5" element="Page">
-    <data order="0" element="Paragraph">Our beloved 1979 Chevy, affectionately dubbed Operation Retro Ride, is in the final stages of becoming a true rolling art form as we continue our series covering the older, classic sport trucks. Transforming our hunk o&amp;#8217 metal into a showpiece takes than simply bolting on the latest and greatest body parts. It takes hard, physical, manual labor to accomplish the next set of tasks we face.</data>
-    <data order="1" element="Paragraph">Now is when many sport truck restorers lose patience with their projects because this is the bodywork and final body prep stage. Once these tasks are completed, the body will be lavished with several coats of PPG paint.</data>
-    <data order="2" element="Paragraph">Follow along as we take you through these mind-numbing, finger-wearying tasks. And keep in mind that the more body preparation you do at the outset, the better the end result will be. All the effort spent at this stage will prove well worth the extra time.</data>
+   <data order="2" element="metadata keywords">4-Wheel &amp; Off-Road, 4x4, Chevrolet, Blazer</data>
+   <data order="3" element="metadata title">Chevrolet Blazer</data>
+   <data order="4" element="promo_title">Chevrolet Blazer</data>
+   <container order="5" element="Ad Keywords">
+    <data element="make" order="0" />
+    <data element="model" order="1" />
+    <data element="year" order="2" />
+    <data element="ad keyword 1" order="3" />
+    <data element="ad keyword 2" order="4" />
+    <data element="auto segment" order="5" />
+   </container>
+   <container order="6" element="Ad Keywords">
+    <data element="make" order="0" />
+    <data element="model" order="1" />
+    <data element="year" order="2" />
+    <data element="ad keyword 1" order="3" />
+    <data element="ad keyword 2" order="4" />
+    <data element="auto segment" order="5" />
+   </container>
+   <container order="7" element="Search Keywords and Segments">
+    <data element="keyword" order="0" />
+    <data element="auto segment" order="1" />
+   </container>
+   <container order="8" element="Search Keywords and Segments">
+    <data element="keyword" order="0" />
+    <data element="auto segment" order="1" />
+   </container>
+   <container order="9" element="Page">
+    <data order="0" element="Paragraph">&lt;P&gt;&lt;SPAN class=tx&gt;Tony Salvemini of Tuscon, Arizona, was a man on a mission. He wanted to build a vehicle that was capable of doing it all: crawling over rocks, blasting across desert, throwing mud, and making the commute to work. It also had to be fun to drive and reliable. Could a vehicle be adept at all these tasks and still prove reliable, not to mention easy to drive? Tony thought so. He chose a Chevy Blazer to build into a true multipurpose tool.&lt;/SPAN&gt;&lt;/P&gt;&lt;P&gt;&lt;SPAN class=tx&gt;&lt;SPAN class=m&gt;&lt;SPAN class=tx&gt;&lt;SPAN class=tx&gt;&lt;/SPAN&gt;&lt;/SPAN&gt;&lt;/SPAN&gt;&lt;/SPAN&gt;&amp;nbsp;&lt;/P&gt;</data>
+    <data order="1" element="Paragraph">&lt;P&gt;&lt;SPAN class=tx&gt;&lt;SPAN class=tx&gt;The first step for Tony was to get a suspension underneath his rig that wouldn&amp;#8217t beat his brains out. He wanted to be high up, but not so high that he would constantly get nosebleeds. A Rancho 2-1/2-inch lift kit was deemed suitable. Dual Dick Cepek shocks were used in the front to keep the suspension under control, and single Cepeks found their way out back. The rear also used the stock springs along with 2-inch add-a-leaves to help gain lift. Rancho kicker shocks were used out back to help keep axlewrap under control. For further articulation Tony added an Offroad Design sway-bar disconnect system. With the new suspension in place, 33x12.50-15 BF Goodrich Mud-Terrains on 15x10 steel wheels from American Racing were used as rolling stock&lt;/SPAN&gt;&lt;/SPAN&gt;&lt;/P&gt;</data>
+    <data order="2" element="Paragraph">&lt;P&gt;&lt;SPAN class=tx&gt;&lt;SPAN class=m&gt;&lt;SPAN class=tx&gt;The next step was to build the drivetrain. It needed to be ultrareliable, so Tony decided to keep things close to stock. The internals of the 5.7L V-8 were kept original, but a little oomph was added with a 2-1/2-inch exhaust utilizing Flowmaster mufflers. Further motivation came by way of Jacob&amp;#146;s ignition and an ADS Superchip for the computer. The stock TH700-R4 transmission was rebuilt. The 208 transfer case was also retained and sends power to 10-bolt axles front and rear; both received 4:56 gears and Lock-Rights.&lt;/SPAN&gt;&lt;/SPAN&gt;&lt;/SPAN&gt;&lt;/P&gt;</data>
+    <data order="3" element="Paragraph">&lt;P&gt;&lt;SPAN class=tx&gt;&lt;SPAN class=m&gt;&lt;SPAN class=tx&gt;&lt;SPAN class=tx&gt;The exterior was next to receive attention. Tony started out by fabricating a prerunner-style bumper for the front with extra lights for nocturnal adventures. Next, the front fenders and rear quarter-panels were trimmed to help keep the tires from rubbing. A Harwood cowl-induction hood was then put into place. After all the bodywork was finished, a glossy coat of black paint was laid down.&lt;/SPAN&gt;&lt;/SPAN&gt;&lt;/SPAN&gt;&lt;/SPAN&gt;&lt;/P&gt;</data>
+    <data order="4" element="Paragraph">&lt;SPAN class=tx&gt;Often neglected on many 4x4s is the interior. Since Tony spends a lot of time inside his truck, he decided to expend some energy into making things comfortable. To make the commute to work a little more bearable, seats from a Honda Civic were put in. Further interior refinements included custom door and side panels along with marine-grade carpet. Stewart-Warner gauges replaced the stockers and transmit all necessary information to the driver. A Sony radio was also installed to give Tony something to sing along to.&lt;/SPAN&gt;</data>
+    <data order="5" element="Paragraph">&lt;SPAN class=tx&gt;With his work finally finished, Tony gets out and &amp;#8217wheels his new toy every chance he gets. So far the black Blazer has proved to be up to the task and capable at many different forms of wheeling. It also gets Tony to work every day in style. What more could you ask for?&lt;/SPAN&gt;</data>
    </container>
   </elements>
  </story>
- <story id="1119" element="Article">
-  <name>Camshaft Installation</name>
+ <story id="1028" element="Article">
+  <name>Tavit &amp;#147;Dave&amp;#148; Meshefedjian&amp;#146;s &amp;#146;66 Mustang 2+2</name>
   <description></description>
-  <slug>1469</slug>
-  <primary_uri>/sporttruck/howto/1469</primary_uri>
+  <slug>524</slug>
+  <primary_uri>/carcraft/featuredvehicles/524</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>1998-01-01T12:00:00Z</cover_date>
+  <cover_date>2001-08-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/sporttruck/howto</category>
+   <category primary="1">/carcraft/featuredvehicles</category>
   </categories>
   <keywords></keywords>
   <contributors>
    <contributor>
-    <fname>Steve</fname>
+    <fname>Don</fname>
     <mname></mname>
-    <lname>Warner</lname>
-    <type>Illustrators</type>
-    <role>DEFAULT</role>
-   </contributor>
-   <contributor>
-    <fname>Steve</fname>
-    <mname></mname>
-    <lname>Warner</lname>
-    <type>Writers</type>
-    <role>DEFAULT</role>
-   </contributor>
-  </contributors>
-  <elements>
-   <data order="0" element="deck">The key to making power is maximizing just the right combination of parts that, once installed, will make your entire powerplant come alive. Power starts at the camshaft--the heart of the engine...</data>
-   <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">cam,camshaft,Crane Cams,Crane,Sport Truck</data>
-   <data order="3" element="metadata title">Camshaft Installation</data>
-   <data order="4" element="promo_title">Camshaft Installation</data>
-   <container order="5" element="Page">
-    <data order="0" element="Paragraph">The key to making power is maximizing just the right combination of parts that, once installed, will make your entire powerplant come alive. Power starts at the camshaft--the heart of the engine. This is probably the single best area for realizing huge power gains because an aftermarket camshaft can increase valve lift and duration.</data>
-    <data order="1" element="Paragraph">Most truck manufacturers install an all-around camshaft, one that will keep the truck from suffering poor gas mileage and will make decent power in all situations whether it's cruising, towing, or racing. You can, however, change the camshaft in your engine and then specifically tailor the new camshaft to your exact needs. For example, if you plan to use the truck most often for towing heavy loads, then use a camshaft specifically designed to produce more torque in the low rpm range. All of the big manufacturers offer a technical hotline to address your needs.</data>
-    <data order="2" element="Paragraph">For our application, we wanted the maximum horsepower we could achieve without having to increase the stock compression ratio or go to more exotic pistons and crankshaft. So we consulted the folks at the Crane technical support hotline. They advised us to use one of their Compucam hydraulic roller camshafts.</data>
-    <data order="3" element="Paragraph">The following information about how to install the Compucam camshaft applies to any and all hydraulic and roller tappet camshafts. So, if you want to maximize your engine's performance without adding more expensive power bolt-ons like superchargers and turbochargers, a camshaft, lifter, valve spring, and rocker arm swap may be just what the doctor ordered.</data>
-   </container>
-  </elements>
- </story>
- <story id="1120" element="Article">
-  <name>Power Gains</name>
-  <description></description>
-  <slug>1470</slug>
-  <primary_uri>/sporttruck/howto/1470</primary_uri>
-  <priority>3</priority>
-  <publish_status>0</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>1998-01-01T12:00:00Z</cover_date>
-  <categories>
-   <category primary="1">/sporttruck/howto</category>
-  </categories>
-  <keywords></keywords>
-  <contributors>
-   <contributor>
-    <fname>Steve</fname>
-    <mname></mname>
-    <lname>Warner</lname>
-    <type>Illustrators</type>
-    <role>DEFAULT</role>
-   </contributor>
-   <contributor>
-    <fname>Steve</fname>
-    <mname></mname>
-    <lname>Warner</lname>
-    <type>Writers</type>
-    <role>DEFAULT</role>
-   </contributor>
-  </contributors>
-  <elements>
-   <data order="0" element="deck">Two Stages of JET Power</data>
-   <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">JET,ignition,fuel,pulleys,Sport Truck,engine</data>
-   <data order="3" element="metadata title">Power Gains</data>
-   <data order="4" element="promo_title">Power Gains</data>
-   <container order="5" element="Page">
-    <data order="0" element="Paragraph">Bolt-on power comes in all shapes, sizes, and costs. Sport truck owners who've recently dropped the fat green for their rides now find themselves at a distinct disadvantage. Having spent the money it cost to give their truck the required altitude adjustment, they find they've gone to the well once too often; it's run dry, leaving them without the funds to quench their thirst for engine power.</data>
-    <data order="1" element="Paragraph">JET Performance Products comes to the rescue. The company offers a complete line of entry-level performance parts with several new computer-controlled components that interface with a truck's OBD-II onboard diagnostics system. For those who don't know what OBD-II is or how it works, picture this scenario: You've just installed some fly-by-night performance parts on your brand new sport truck. The family is loaded up in the vehicle and you're happily motoring along the road. Suddenly the Check Engine light flashes on and the truck's computer initiates its procedure leading to complete engine shutdown. That, folks, is OBD-II at work.</data>
-    <data order="2" element="Paragraph">It's not all bad news since you can gain a bunch of ponies with OBD-II's assistance. For the money-conscious, JET offers an entry-level Stage I Power Package that's compatible with OBD-II emission systems. If the horsepower tweaks in that package aren't enough, you can step up to the slightly higher-priced Stage II Package for even more power.</data>
-    <data order="3" element="Paragraph">Come along as we demonstrate an installation of both the Stage I and Stage II JET Power Packages. We'll give you JET Performance's figures on rear- wheel horsepower that will show all the power-starved truck owners out there what gains they can expect.</data>
-   </container>
-  </elements>
- </story>
- <story id="1121" element="Article">
-  <name>1992 Chevrolet C1500</name>
-  <description></description>
-  <slug>1471</slug>
-  <primary_uri>/sporttruck/featuredvehicles/1471</primary_uri>
-  <priority>3</priority>
-  <publish_status>0</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>1998-01-01T12:00:00Z</cover_date>
-  <categories>
-   <category primary="1">/sporttruck/featuredvehicles</category>
-  </categories>
-  <keywords></keywords>
-  <contributors>
-   <contributor>
-    <fname>Joel</fname>
-    <mname></mname>
-    <lname>Mollis</lname>
+    <lname>Weberg</lname>
     <type>Writers</type>
     <role>DEFAULT</role>
    </contributor>
    <contributor>
-    <fname>Scott</fname>
-    <mname></mname>
-    <lname>Killeen</lname>
-    <type>Illustrators</type>
-    <role>DEFAULT</role>
-   </contributor>
-  </contributors>
-  <elements>
-   <data order="0" element="deck">How to Spend $55,000: Take One Part Truck, Add Two Parts Vette, and Then...</data>
-   <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">1992,Chevy,Chevrolet,C1500,1/2 Ton Pickup</data>
-   <data order="3" element="metadata title">1992 Chevrolet C1500</data>
-   <data order="4" element="promo_title">1992 Chevrolet C1500</data>
-   <container order="5" element="Page">
-    <data order="0" element="Paragraph">You know, it's true. A dollar just doesn't buy what it used to. For proof, look at the truck on these pages. It cost over 55 large to build this sassy street stiletto. Great balls of fire, man! We remember the good ol' days when a sport truck enthusiast could whip up an ass-kickin' ride like this Bow Tie for, oh, right around $50,000, give or take a few thou. My, how times have changed.</data>
-    <data order="1" element="Paragraph">Anyhoo, now that the cat's out of the bag in regards to the cost of this C1500, you're dying to know how the dough was spent, aren't you? What? You're dying to know how to get that much dough of your own? Sorry, we can't help you with that. Besides, if you had a big pile of moolah to spend, how could we be sure that you'd spend it to build a custom street truck? You just might be the type who'd spend it on wine, women, and song. Hmmm. All right, enough already. Now, back to our story....</data>
-    <data order="2" element="Paragraph">When John Bohannon turned his thoughts to the precise manner in which he would build his version of the ultimate street truck, he didn't mess around. What he dreamed up was unique and could be described as having the best of both worlds: Corvette drivetrain and suspension, Chevy truck sheetmetal. Yikes! Talk about genuine Chevrolet!</data>
-    <data order="3" element="Paragraph">With the plan laid out, John went to work, tearing into the hapless half-tonner, tossing out everything related to a C1500 drivetrain and scrapping the entire suspension, lock, stock, and leaf springs. After acquiring a wrecked '92 Corvette (that's another story), John and the guys at Robinson Racing scrutinized every detail with an eye to suspension geometry and general fitment of the Corvette's suspenders.</data>
-    <data order="4" element="Paragraph">Then, the Vette was summarily relieved of its front control arms and related hardware, along with the entire rear independent suspension. Knee-deep in Corvette underpinnings, the guys went to work, adapting, fabricating, switching, and swapping just about every suspension component in an ultimately-successful effort not only to fit the Corvette parts to the truck's chassis, but to make the whole thing function and perform in a desirable manner. With the custom suspension setup, no lowering kit was necessary as the control arms and coilover shocks were positioned on the truck's frame at a point where 4 inches of front drop and 6 inches of rear slam were built in.</data>
-    <data order="5" element="Paragraph">Compared to working on the suspension, swapping out the stock '92 truck small-block and swapping in a '94 Corvette small-block was simple. The LT1 engine is basically stock although a few dress up goodies were added. The biggest hassle was getting the electronic management for the 5.7L aluminum engine hooked up and online. After much research deep into the pages of GM service manuals for both vehicles, John was able to wire-up a custom harness that allows an interface between Corvette and C1500, one which has proven to be both functional and reliable.</data>
-    <data order="6" element="Paragraph">That beautiful Chevy body is stylishly clean and oh so very smooth. It got that way through much effort on John's part--and we mean personal effort. You see, John is a full-time body and paint pro at Corvette Limited in Cookeville, Tennessee. The body mods include swapped-in Caddy taillights and a third brake light, a molded-in fiberglass bedliner, and shaved door handles. Bolt-ons include a fiberglass hood, a billet grille, a custom front bumper, and a front spoiler, all of which came from Hunter's Custom Automotive. John fabbed the rear roll pan, then stitched the tailgate shut, once and for all.</data>
-    <data order="7" element="Paragraph">Porsche Guards Red was sprayed, rubbed, sanded, and polished by John. As you can see, he knows his stuff. The hauler's interior got its share of upgrades in the form of swapped-in leather-covered seats, door panels, and a dashboard, all donated by a '96 Chevy Tahoe. A stock Tahoe steering wheel was deemed not stylish enough for John's truck so a Billet Specialties Eagle tiller was fastened into place. David Wornbles helped John out with the tasty inside conversion.</data>
-    <data order="8" element="Paragraph">Holy rollers, Bohannon! Where'd you get them wheels? Oh, from that little ol' aluminum carver Boyds. They're dubbed Boyds Twister and they're nicely wrapped with super-sticky BFG Comp T/As.</data>
-    <data order="9" element="Paragraph">Now John and his wife Sandra get to cruise the highways and byways that crisscross the South in a hot-rodded red hauler. Have fun, you two, but don't go too far, because the staff of Sport Truck has an idea for a new project that we think John should take a whack at: Take one part Dodge Dakota, add two parts Viper, and then...</data>
-    <data order="10" element="Paragraph">Just give us a call when it's finished, would ya, JB?</data>
-   </container>
-  </elements>
- </story>
- <story id="1122" element="Article">
-  <name>Supercharger Installation</name>
-  <description></description>
-  <slug>1472</slug>
-  <primary_uri>/sporttruck/howto/1472</primary_uri>
-  <priority>3</priority>
-  <publish_status>0</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>1998-01-01T12:00:00Z</cover_date>
-  <categories>
-   <category primary="1">/sporttruck/howto</category>
-  </categories>
-  <keywords></keywords>
-  <contributors>
-   <contributor>
-    <fname>Steve</fname>
-    <mname></mname>
-    <lname>Warner</lname>
-    <type>Illustrators</type>
-    <role>DEFAULT</role>
-   </contributor>
-   <contributor>
-    <fname>Steve</fname>
-    <mname></mname>
-    <lname>Warner</lname>
-    <type>Writers</type>
-    <role>DEFAULT</role>
-   </contributor>
-  </contributors>
-  <elements>
-   <data order="0" element="deck">Dominant Whipple Charger Power</data>
-   <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">Whipple,supercharger,blower,engine,Sport Truck</data>
-   <data order="3" element="metadata title">Supercharger Installation</data>
-   <data order="4" element="promo_title">Supercharger Installation</data>
-   <container order="5" element="Page">
-    <data order="0" element="Paragraph">If you own a pre-Vortec 1988-1995 big-block-equipped Chevy sport truck, SUV, or Suburban, you are not alone. There are over 200,000 of these vehicles on the road today doing service in a variety of activities; everything from hauling the kids to school and back, to transporting the family on vacation trips, and to long-distance treks with horse, boat, or car trailers in tow. And yet the single most common complaint the factory gets is customers bemoaning the engine&amp;#146;s serious lack of power.</data>
-    <data order="1" element="Paragraph">Unless you had the 454 SS version of the old 7.4L V-8, the peak power output was critically limited. The older 454 SS 1/2-ton Super Sport truck produced 255 hp at 4,000 rpm and some stump-pulling 405 lb-ft of torque at 2,400 rpm. But it was only in that truck's configuration the 7.4L engine created any semblance of power. Non-454-SS-equipped vehicles only produced 230 hp at 3,600 rpm and 385 lb-ft of torque at 1,600 rpm. The reason for the 25hp decrease was to broaden the appeal of these vehicles to the market for which they were designed; a market covering every intended use, including work trucks, ambulances, and family haulers. The engines were never meant to be the power machines we sport truckers all crave.</data>
-    <data order="2" element="Paragraph">Enter supercharging to save the day. Although typically considered extreme by the more conventional horsepower gurus, supercharging the engine is the biggest and fastest way to boost all-around power. Spend a mere weekend installing one of these powerful smog-legal additives and most pre-Vortec engines will see power gains from 50 to 75 hp.</data>
-    <data order="3" element="Paragraph">That&amp;#8217s the inducement behind Whipple Industries Whipple Charger supercharger kits. The company offers its twin-screw superchargers for all Chevrolet 1988-1995 pre-Vortec engines and 1996-1998 Vortec-equipped big- and small-block engines. A twin-screw blower is by design an axial-flow supercharger that compresses air as it moves between the twin screws of the blower. The twin-screw supercharger is believed to have advantages over less efficient, non-internal compression designs because the outlet temperatures are typically lower than more conventional roots or centrifugal supercharging systems, thereby providing increases in all-around power.</data>
-    <data order="4" element="Paragraph">Because these older pre-Vortec engines are not as powerful as their replacements, many people have indeed turned to supercharging as a means to an end. Getting up steep-grade highways is no longer an issue and with a supercharger installation on the pre-Vortec engines your all-around power and torque will be much greater than that of the new Vortec engines.</data>
-    <data order="5" element="Paragraph">With our test truck running a pre-Vortec 1993 big-block 7.4L V-8, equipped with a set of Doug Thorley headers and a Walker Ultra Flow back-cat exhaust system, a series of baseline tests were staged to establish the truck&amp;#8217s "before" rear-wheel horsepower and torque. Using Whipple Industries&amp;#8217 Rancho Cucamonga, California, test facility, the 1993 big-block made 185 rear-wheel horsepower at 3,700 rpm and 319 lb-ft of torque at 2,900 rpm. Once the Whipple Charger was installed, however, the big-block produced 253 hp at 4,100 rpm and 372 lb-ft of torque at 3,100 rpm running with a 6 psi maximum boost pulley.</data>
-   </container>
-  </elements>
- </story>
- <story id="1123" element="Article">
-  <name>1979 Chevrolet 1/2-Ton Stepside Project, Part V</name>
-  <description></description>
-  <slug>1480</slug>
-  <primary_uri>/sporttruck/projectbuild/1480</primary_uri>
-  <priority>3</priority>
-  <publish_status>0</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>1998-03-01T12:00:00Z</cover_date>
-  <categories>
-   <category primary="1">/sporttruck/projectbuild</category>
-   <category>/customclassictrucks/projectbuild</category>
-  </categories>
-  <keywords></keywords>
-  <contributors>
-   <contributor>
-    <fname>Chuck</fname>
-    <mname></mname>
-    <lname>Lombardo</lname>
-    <type>Illustrators</type>
-    <role>DEFAULT</role>
-   </contributor>
-   <contributor>
-    <fname>Steve</fname>
-    <mname></mname>
-    <lname>Warner</lname>
-    <type>Writers</type>
-    <role>DEFAULT</role>
-   </contributor>
-  </contributors>
-  <elements>
-   <data order="0" element="deck">Final Assembly</data>
-   <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">Seatz Manufacturing,PPG,Performance Suspension Technology,PST,Painting &amp;amp; Stripping Corp. of America,Golden State Pickup Parts,California Street Rods,Boyds Billet Wheels,BFGoodrich,Best Glass Installers,Belltech,Chevrolet,Chevy,paint,body,</data>
-   <data order="3" element="metadata title">1979 Chevrolet 1/2-Ton Stepside Project, Part V</data>
-   <data order="4" element="promo_title">1979 Chevrolet 1/2-Ton Stepside Project, Part V</data>
-   <container order="5" element="Page">
-    <data order="0" element="Paragraph">After any finished sport truck project build, we like to sit back and admire the results (like the beautiful red finish that adorns the sheetmetal of Operation Retro Ride). And at the same time we lament that the project is over and we have to turn our attention to upcoming projects.</data>
-    <data order="1" element="Paragraph">Before we show the final assembly of Operation Retro Ride we want to remind you, our readers who are working on or just completing your very own sport truck builds, to keep in mind that the final assembly process shouldn't be a hurry-up-and-throw-the-pieces-on procedure. The same amount of time and devotion you spent tearing the project apart needs to be spent when you reassembe the project. Care should be taken to prevent scratching the freshly painted surfaces or nicking that freshly chromed bumper, and when tweaking that ultra-hard-to-find interior piece.</data>
-    <data order="2" element="Paragraph">Again, top-notch quality standards must be maintained to ensure a well-constructed retro sport truck. Just as the expert folks at California Street Rods have been an integral part of our past builds, they again stepped up to help in the final assembly.</data>
-   </container>
-  </elements>
- </story>
- <story id="1124" element="Article">
-  <name>1994 Chevrolet C1500 Extended Cab</name>
-  <description></description>
-  <slug>1481</slug>
-  <primary_uri>/sporttruck/featuredvehicles/1481</primary_uri>
-  <priority>3</priority>
-  <publish_status>0</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>1998-05-01T12:00:00Z</cover_date>
-  <categories>
-   <category primary="1">/sporttruck/featuredvehicles</category>
-  </categories>
-  <keywords></keywords>
-  <contributors>
-   <contributor>
-    <fname>Gary</fname>
-    <mname></mname>
-    <lname>Robinson</lname>
-    <type>Writers</type>
-    <role>DEFAULT</role>
-   </contributor>
-   <contributor>
-    <fname>Wes</fname>
+    <fname>Wesley</fname>
     <mname></mname>
     <lname>Allison</lname>
     <type>Illustrators</type>
@@ -305,226 +102,282 @@
    </contributor>
   </contributors>
   <elements>
-   <data order="0" element="deck">Budnick&amp;#146;s Evolutionary C/K Ducati Hauler</data>
+   <data order="0" element="deck">It Can Hold Its Own With Anything Ever Built In Stuttgart</data>
    <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">Extended Cab,Ducati Hauler, Budnick, Chevy, Chevrolet, 1994, C1500</data>
-   <data order="3" element="metadata title">1994 Chevrolet C1500 Extended Cab</data>
-   <data order="4" element="promo_title">1994 Chevrolet C1500 Extended Cab</data>
-   <container order="5" element="Page">
-    <data order="0" element="Paragraph">The latest creation from Budnik Wheels isn't a rim, a steering wheel, or a trim accessory. It's a '94 Chevy C1500 Extended Cab truck that Alan Budnik, president and founder of Budnik Wheels, bought new three years ago to haul some of his collection of wild street bikes. It has taken those three years to transform the truck into his vision of what a post-'88 C/K sport trucks should be.</data>
-    <data order="1" element="Paragraph">We think he's created a shining example of sport truck styling that rivals the best we've seen. It breaks the mold of late-model cookie-cutter trucks and raises the standard for those who aspire to build a pickup of their own.</data>
-    <data order="2" element="Paragraph">The subtle yet unique look of this truck wasn't achieved overnight. It was accomplished through a tedious and meticulous metal-metamorphosis. The front fascia is entirely made of steel which was cut, trimmed, welded, and ground until it fitted tight and smooth, giving the front end a molded one-piece appearance without modifying the hood or front bumper. The grille inserts are precisely machined billet aluminum pieces that have a subtle peak down the center, and the top insert features unique electric hideaway headlamps that are a marvel unto themselves.</data>
-    <data order="3" element="Paragraph">The cab has a few noticeable body mods too, including a shaved door with remote electric switches, Street Scene electric mirrors, filled cab body seams, and an oval-shaped third brake light that utilizes a machined and polished acrylic lens inlaid with a computer-generated latex graphic of the Budnik logo.</data>
-    <data order="4" element="Paragraph">The front end clip is made even more swoopy with a specially made metal hood cowl which covers windshield wipers that were modified to exhibit a lower profile. The cowl features two functional scoops that direct air into the HVAC.</data>
-    <data order="5" element="Paragraph">Then there's the bed that's as unique and swoopy as the front fascia and grille. You can't begin to appreciate the work that has gone into the bed until you study it very closely. For starters, the bed's sides were pulled out 1.5 inches per side to accommodate the 13.5-inch-wide Goodyear tires Alan planned to use on his newly designed, specially made 18x12 Budnik Arrowhead wheels. He also made a molded-steel rear roll pan for the bed and modified the tailgate which has a reversed latch, a small spoiler welded onto its top edge, and radiused exterior corners, and it houses part of the modified '97 S-10 taillights that mount partially in the bed corners and in the tailgate.</data>
-    <data order="6" element="Paragraph">The tailgate's lower fitment gap was decreased and the hinges were relocated. To open the latch, a remote pull-cable system is used. A peek just below the steel molded rear roll pan spots a unique belly pan held on with quarter-turn fasteners that have oval exits through which the polished stainless steel exhaust tips protrude. To prevent road debris from collecting in the belly pan, Alan handmade and installed special steel rear inner fenderwell panels.</data>
-    <data order="7" element="Paragraph">On top of the bed is a flat flush-mounted canvas-covered aluminum bedcover--another unique Budnik creation. It's comprised of four panels; the two in the center swing downward to create an opening for hauling Budnik's '97 Ducati 916 two-wheeled canyon carver without having to remove the bedcover. Macs tie-downs and special aircraft connectors mounted to the bed floor help secure the bike.</data>
-    <data order="8" element="Paragraph">Keeping with the tight-fit theme, Alan moved the bed 3/4 inch forward to close the gap between the front of the bed and the back of the cab. That completed the bold creation and implementation of sheetmetal mods--probably the most important yet difficult part of this buildup.</data>
-    <data order="9" element="Paragraph">Redoing the chassis was much easier, but nearly as important since stance is intrinsic to a sport truck's overall image. Because the bed was moved forward 3/4 inch, Alan also moved the rear end 3/4 inch forward from its stock location. He C-notched and boxed the rear framerails for axle-housing clearance, relocated the springs' hangers upward from their stock position, and, in the pursuit of the right rear ride height, installed a set of Firestone airbags on a custom-made mounting system.</data>
-    <data order="10" element="Paragraph">The front suspension was treated to a set of Belltech 2-inch dropped spindles, Eibach springs, and a set of Firestone airbags mounted inside the coil springs with the front shock absorbers relocated to an outer mounting point on the lower control arm. Front- and rear-mounted Suspension Techniques sway bars help to stiffen the chassis and stifle cab and bed roll. Big Baer Racing binders work on all four corners to promptly slow things down, and give a high-tech look that blends well with the newly designed open-lug Budnik Arrowhead rims.</data>
-    <data order="11" element="Paragraph">Body-paint prep was completed by Alan and his crew, but the final sanding and spraying was performed by Mick Jenkins of Mick's Paint of Huntington Beach, California. Mick applied PPG Yellow over the smoothly prepped metal surface, and with the help of Paco, color-sanded and buffed the paint to an almost-liquid high luster.</data>
-    <data order="12" element="Paragraph">Then, Budnik's hauler was hauled to Arizona for audio and exhaust tuning. Streamline Audio in Tempe, Arizona, created and installed a powerful audio system with fantastic style and sound, using the best Rockford Fosgate automotive audio hardware.</data>
-    <data order="13" element="Paragraph">B Fabrication installed a set of Doug Thorley Headers and backed them up with a custom-built, all-stainless steel-tube, hand-fabricated exhaust system. All exhaust components were treated to a protective ceramic coating provided by HPC coatings of Salt Lake City.</data>
-    <data order="14" element="Paragraph">Back in SoCal, it was trim time for the truck. Alan can do many things with his machining and metalworking talents, but upholstery isn't one of them. He commissioned Dan Miller of Simi Valley, California, to cut, fit, and stitch Spinneybeck leather over the Flo-Fit front bucket seats, reshaped rear seat, custom door panels, dash pod, console, and the newly designed Budnik Stringer billet aluminum steering wheel.</data>
-    <data order="15" element="Paragraph">The steering wheel, steering column cover, and various other exposed interior panels were all color-matched in a flat tone to complement the leather interior and contrast with the bright yellow exterior hue.</data>
-    <data order="16" element="Paragraph">As for the truck's powertrain, Alan opted to keep the 5.7L V-8 and 700R4 transmission stock for now so that he can enjoy the fruits of his labors by putting some miles on the truck.</data>
-    <data order="17" element="Paragraph">Further plans include the possible installation of a '97 Vette LS1 V-8 engine--a powerplant worthy of a sport truck of this quality. There may be other surprises to come, but according to Alan, only time will tell. As he puts it, "Nothing is ever really finished. As time progresses, there's always some new idea that can make something better than before."</data>
-    <data order="18" element="Paragraph">Maybe so, but we think time will prove Alan's Ducati Hauler to be an ageless sport truck masterpiece.</data>
+   <data order="2" element="metadata keywords">Ford,Mustang,2+2,Car Craft</data>
+   <data order="3" element="metadata title">Tavit &amp;#147;Dave&amp;#148; Meshefedjian&amp;#146;s &amp;#146;66 Mustang 2+2</data>
+   <data order="4" element="promo_title">Tavit &amp;#147;Dave&amp;#148; Meshefedjian&amp;#146;s &amp;#146;66 Mustang 2+2</data>
+   <container order="5" element="Sidebar Article">
+    <data element="sidebar title" order="0" />
+    <data element="paragraph" order="1" />
+   </container>
+   <container order="6" element="Sidebar Article">
+    <data element="sidebar title" order="0" />
+    <data element="paragraph" order="1" />
+   </container>
+   <container order="7" element="Sidebar Article">
+    <data element="sidebar title" order="0" />
+    <data element="paragraph" order="1" />
+   </container>
+   <container order="8" element="Page">
+    <data order="0" element="Paragraph">&lt;p&gt;With the cost and complexity of new cars these days, it doesn&amp;#146;t surprise us  that a guy who fixes Mercedes-Benzes all day long would yearn to work on a simpler car at home. Something with a carburetor, a manual trans, and basic technology that&amp;#146;s half a century old. But as classics go, Tavit &amp;#147;Dave&amp;#148; Meshefedjian&amp;#146;s &amp;#146;66 Mustang 2+2 can hold its own with anything ever built in Stuttgart.&lt;/p&gt;      &lt;p&gt;After a five-month hunt for the car he always wanted, Dave eventually settled on a fastback cloaked in road-hazard orange with &amp;#147;custom&amp;#148; Mercury Cougar taillights. Despite its physical condition, which included about an inch of Bondo on each rear quarter, it was already a mean runner with a Ford Motorsport SVO 302 crate engine and a Tremec TKO five-speed tranny. With about 8,000 miles on the drivetrain, the Mustang was mechanically on track. Despite his wife Angelique&amp;#146;s rolling eyes, Dave was possessed by fantasies of what the car could be and stole it for $3,000. &lt;/p&gt;      &lt;p&gt;Armed with the able help of his brother, Shant, and his 7-year-old son, K.C, Dave pulled the engine, gutted the interior, and sent the shell off to his friend Stanko for bodywork and paint. With the engine on a stand, Dave ported the heads, cleaned up the Holley 750 double-pumper carb, and detailed the Hooker headers. Aluminum dress-up parts were sent out for polishing and a few new pieces were added. By the time all was said and done, the hot small-block was driving the mercury even higher, cranking out 405 ponies at 6,200 rpm, and pulling with 390 lb-ft of torque at about 3,600 rpm. It was more than he anticipated, and he estimates performance in the low 13s.&lt;/p&gt;      &lt;p&gt;Meanwhile, Stanko yanked the hideous taillights and worked his   magic on the body. Wanting to get the best results possible, he convinced Dave to invest in new fenders and valances along with a custom fiberglass hood, trunk lid, and Shelby spoilers and scoops. With the cost rising faster than an SR-71 grabbing air, Dave ordered the car to be sprayed Chrysler&amp;#146;s devilishly hot PRD red with white stripes. &lt;/p&gt;      &lt;p&gt;While the paint was still drying, a Mustangs Plus performance suspension kit was called to duty, lowering both the front and rear ends to match. A set of Z-rated Goodyear Eagle F-1s were mated with 17x8 Torq-Thrust IIs completing an awesome handling package with sizzling looks. &lt;/p&gt;      &lt;p&gt;With the body, suspension, and engine done, Dave turned to Harry&amp;#146;s Upholstery in West Los Angeles to install a new dash, headliner, and carpeting. Two-tone leather Recaro front sport buckets and matching two-tone rear seats and door panels, all detailed with red stitching, stand out from the stock-resto norm. An Alpine head unit with CD player, MTX five-channel amp, and Boston woofer/speaker combo were added to try to override the rumble of the fit 302. Fuller Racing seatbelts and a GT wheel complete the package.&lt;/p&gt;      &lt;p&gt;Dave estimates the car has its claws into him for about $32,000 thus far. But when he considers that it has already broiled a 911 Turbo and can fight Vipers and Camaros at will, he says it&amp;#146;s worth it, and it&amp;#146;s a far cry from his first ride, a Renault Fuego turbo. To make it even more formidable, Dave is anxious to bolt on a blower or supercharger, though he hasn&amp;#146;t yet decided which one. The 9.0:1 compression will make either an easy addition. &lt;/p&gt;      &lt;p&gt;Sharing garage space with the Mustang is a &amp;#146;69 Camaro awaiting a similar treatment. Painted Le Mans blue with rally stripes, the Camaro wears P295s in the back and has a Pro Street look to it. By the time Dave slides in a 383 stroker, that car just might be grumpier than the Mustang it rooms with. And we&amp;#146;d take either one over a new Benz any day.&lt;/p&gt;</data>
    </container>
   </elements>
  </story>
- <story id="1125" element="Article">
-  <name>Small-Block Big-Power How-Tos</name>
+ <story id="1029" element="Article">
+  <name>Randy Miller&amp;#146;s &amp;#146;69 Yenko Camaro</name>
   <description></description>
-  <slug>1482</slug>
-  <primary_uri>/sporttruck/howto/1482</primary_uri>
+  <slug>527</slug>
+  <primary_uri>/chevyhighperformance/featuredvehicles/527</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>1998-07-01T12:00:00Z</cover_date>
+  <cover_date>2001-08-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/sporttruck/howto</category>
+   <category primary="1">/chevyhighperformance/featuredvehicles</category>
   </categories>
   <keywords></keywords>
   <contributors>
    <contributor>
-    <fname>Gary</fname>
+    <fname>Bob</fname>
     <mname></mname>
-    <lname>Robinson</lname>
+    <lname>Mehlhoff</lname>
     <type>Writers</type>
     <role>DEFAULT</role>
    </contributor>
    <contributor>
-    <fname>Kevin</fname>
+    <fname>Jeff</fname>
     <mname></mname>
-    <lname>Lee</lname>
+    <lname>Smith</lname>
     <type>Illustrators</type>
     <role>DEFAULT</role>
    </contributor>
   </contributors>
   <elements>
-   <data order="0" element="deck">"Nothing is ever too fast" is a credo that quite a few sport truck enthusiasts live by, and the need for speed is an urge that can only be satisfied with varying doses of horsepower and torque...</data>
+   <data order="0" element="deck">135 MPH in Under 10 Seconds In An Original!</data>
    <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">Hedman,Paxton,JBA,Holley,headers,intake manifold,engine,Sport Truck,camshaft,exhaust,computer,air cleaner,cylinder heads,valvetrain,timing</data>
-   <data order="3" element="metadata title">Small-Block Big-Power How-Tos</data>
-   <data order="4" element="promo_title">Small-Block Big-Power How-Tos</data>
+   <data order="2" element="metadata keywords">Chevrolet,Camaro,Chevy High Performance</data>
+   <data order="3" element="metadata title">Randy Miller&amp;#146;s &amp;#146;69 Yenko Camaro</data>
+   <data order="4" element="promo_title">Randy Miller&amp;#146;s &amp;#146;69 Yenko Camaro</data>
    <container order="5" element="Page">
-    <data order="0" element="Paragraph">"Nothing is ever too fast" is a credo that quite a few sport truck enthusiasts live by, and the need for speed is an urge that can only be satisfied with varying doses of horsepower and torque.</data>
-    <data order="1" element="Paragraph">Some drivers need just a little bit more power to be pacified, while others need megadoses to stifle the nagging power jones churning within. Yet increased power output can have a positive affect on something other than one's craving for quickness and acceleration. It can and does serve practical purposes, such as improved towing and hauling, but most of the time it's ego, not practicality, that's the inspiration for the pursuit of engine power. But there's got to be at least one rational justification for satisfying this need for speed, right? Nah.</data>
-    <data order="2" element="Paragraph">So, if you have a Mouse mill under the hood of your sport truck and are looking for a way to get it to go faster, then pay attention. We've got three power bolt-on how-tos for small-block Chevys to show you. Each offering presents different ways to achieve increased horsepower, measured in overall performance gains and cost per horsepower-hey, there are no free lunches.</data>
-    <data order="3" element="Paragraph">So how much power do you need? Check out the sidebars listed below for the full story.</data>
+    <data order="0" element="Paragraph">&lt;p&gt;Accelerating from 0 to 135 mph in 9.97 seconds is heart-stopping. Doing that in an original Yenko Camaro is astounding. And that&amp;#146;s exactly what Randy Miller, a lumberyard operator from Millers Creek, North Carolina, does. &lt;/p&gt;      &lt;p&gt;During the supercar battles of the late &amp;#146;60s, Pennsylvania-based Yenko Chevrolet undertook an all-out assault on the horsepower wars. Yenko convinced Chevrolet to build a quantity of special high-performance 427ci Camaros. These unique F-bodies hit the lot dealer-equipped with special striping and equipment for dragstrip duty. With just over 200 of these hard-charging Camaros built during 1969, today they are eagerly sought out&amp;#151;especially Randy Miller&amp;#146;s. His modified &amp;#146;69 Yenko is a player in the NMCA Factory Street class. Last year at the Atlanta NMCA World Championship finals, Randy&amp;#146;s Camaro won the Factory Street class clocking a low e.t. of 9.97. &lt;/p&gt;      &lt;p&gt;But don&amp;#146;t think he had to violate the car&amp;#146;s heritage to get those low-e.t. timeslips. The Factory Street class requires competing cars to retain their original appearance and profiles and run on DOT-approved tires. Only aftermarket fiberglass panels such as hoods and bumpers are allowed, and modifications to the floor or trunk pan are prohibited. To reduce frontend weight and allow more induction room, Randy replaced the original ZL2 hood with a lighter fiberglass piece with a 5-inch dome. &lt;/p&gt;      &lt;p&gt;Under that hood Randy has swapped the original L-72 427ci big-block with a highly modified 477ci Rat motor built by Gene Fulton with 13:1 slugs and big-port aluminum cylinder heads. The fuel delivery system is comprised of a fuel cell, a Holley electric pump, and a single Holley 900-cfm 4150 carburetor bolted to a Weiand aluminum intake. Cooling the Rat is a Griffin aluminum radiator and CSI electric water pump. Exhaust routing is provided via a   set of Hooker 21/8-inch Super Competition headers connected to two Borla mufflers. Providing the gear changes to the 3,575-pound Camaro (with driver) is a reworked Powerglide and a 4,500-stall converter. To handle the hard launches, Randy runs a fabricated 9-inch rearend holding 4.10 or 4.33 gears, depending on track conditions. Since class rules require the use of DOT-approved tires, he uses BFGoodrich 275/60R15 Drag Radials. &lt;/p&gt;      &lt;p&gt;To retain the original Yenko appearance, Randy contracted Gary Barnes and Randy Roten to apply No. 72 Hugger Orange lacquer   paint and Yenko striping to the Camaro. But don&amp;#146;t mistake Randy for a newcomer to the Chevrolet faithful. Randy has owned and   built all types of COPO and ultra-rare Chevrolets since the early &amp;#146;70s. It&amp;#146;s just that now he has to do it quickly.&lt;/p&gt;</data>
    </container>
   </elements>
  </story>
- <story id="1126" element="Article">
-  <name>Get The Most Truck For Your Buck</name>
+ <story id="1030" element="Article">
+  <name>Bronco Bolt-On Suspension </name>
   <description></description>
-  <slug>1484</slug>
-  <primary_uri>/sporttruck/techarticles/1484</primary_uri>
+  <slug>529</slug>
+  <primary_uri>/4wheeloffroad/howto/529</primary_uri>
   <priority>3</priority>
   <publish_status>0</publish_status>
   <active>1</active>
   <source>Internal</source>
-  <cover_date>1998-08-01T12:00:00Z</cover_date>
+  <cover_date>2000-07-01T12:00:00Z</cover_date>
   <categories>
-   <category primary="1">/sporttruck/techarticles</category>
+   <category primary="1">/4wheeloffroad/howto</category>
   </categories>
   <keywords></keywords>
   <contributors>
    <contributor>
-    <fname>Kevin</fname>
+    <fname>Craig</fname>
     <mname></mname>
-    <lname>Lee</lname>
-    <type>Writers</type>
+    <lname>Perronne</lname>
+    <type>Illustrators</type>
     <role>DEFAULT</role>
    </contributor>
    <contributor>
-    <fname>The Sport Truck Archives</fname>
+    <fname>Craig</fname>
+    <mname></mname>
+    <lname>Perronne</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">James Duff Goes Long Travel</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">Bronco, Suspension, James Duff, Long Travel, Chassis</data>
+   <data order="3" element="metadata title">Bronco Bolt-On Suspension </data>
+   <data order="4" element="promo_title">Bronco Bolt-On Suspension </data>
+   <container order="5" element="Vendor Record">
+    <data element="name" order="0" />
+    <data element="description" order="1" />
+    <data element="address 1" order="2" />
+    <data element="address 2" order="3" />
+    <data element="city" order="4" />
+    <data element="state" order="5" />
+    <data element="zip" order="6" />
+    <data element="telephone 1" order="7" />
+    <data element="telephone 2" order="8" />
+    <data element="fax" order="9" />
+    <data element="url 1" order="10" />
+    <data element="url 2" order="11" />
+    <data element="email" order="12" />
+   </container>
+   <container order="6" element="Vendor Record">
+    <data element="name" order="0" />
+    <data element="description" order="1" />
+    <data element="address 1" order="2" />
+    <data element="address 2" order="3" />
+    <data element="city" order="4" />
+    <data element="state" order="5" />
+    <data element="zip" order="6" />
+    <data element="telephone 1" order="7" />
+    <data element="telephone 2" order="8" />
+    <data element="fax" order="9" />
+    <data element="url 1" order="10" />
+    <data element="url 2" order="11" />
+    <data element="email" order="12" />
+   </container>
+   <container order="7" element="Vendor Record">
+    <data element="name" order="0" />
+    <data element="description" order="1" />
+    <data element="address 1" order="2" />
+    <data element="address 2" order="3" />
+    <data element="city" order="4" />
+    <data element="state" order="5" />
+    <data element="zip" order="6" />
+    <data element="telephone 1" order="7" />
+    <data element="telephone 2" order="8" />
+    <data element="fax" order="9" />
+    <data element="url 1" order="10" />
+    <data element="url 2" order="11" />
+    <data element="email" order="12" />
+   </container>
+   <container order="8" element="Vendor Record">
+    <data element="name" order="0" />
+    <data element="description" order="1" />
+    <data element="address 1" order="2" />
+    <data element="address 2" order="3" />
+    <data element="city" order="4" />
+    <data element="state" order="5" />
+    <data element="zip" order="6" />
+    <data element="telephone 1" order="7" />
+    <data element="telephone 2" order="8" />
+    <data element="fax" order="9" />
+    <data element="url 1" order="10" />
+    <data element="url 2" order="11" />
+    <data element="email" order="12" />
+   </container>
+   <container order="9" element="Vendor Record">
+    <data element="name" order="0" />
+    <data element="description" order="1" />
+    <data element="address 1" order="2" />
+    <data element="address 2" order="3" />
+    <data element="city" order="4" />
+    <data element="state" order="5" />
+    <data element="zip" order="6" />
+    <data element="telephone 1" order="7" />
+    <data element="telephone 2" order="8" />
+    <data element="fax" order="9" />
+    <data element="url 1" order="10" />
+    <data element="url 2" order="11" />
+    <data element="email" order="12" />
+   </container>
+   <container order="10" element="Page">
+    <data order="0" element="Paragraph">If you are an Early Bronco fan then you know one thing&amp;#151;in stock form, your suspension sucks. Short shocks and radius arms seriously hamper efforts to get articulation. Older coil designs give a tank-like ride and zero flex. To make things even worse, no one has yet to offer a complete system that gives loads of articulation. This had made those folks who actually use their Broncos go through the headache-ridden process of custom suspension building that often resulted in ill-working suspensions. </data>
+    <data order="1" element="Paragraph">Many Bronco owners have dreamed of a suspension that is easy to install and gives massive gains in articulation. That dream has become reality with the introduction of the James Duff Long Travel System for &amp;#146;66-&amp;#146;77 Broncos. The new system combines the company&amp;#146;s Stage II Ultimate Suspension System with its new Stage III radius arms, and replaces every old suspension component on your pony with new ones that have been designed with maximum articulation and performance in mind.</data>
+    <data order="2" element="Paragraph">We were lucky enough to get our hands on a prototype kit to give you an early sneak peek at what the system (which should be available by the time you read this) is capable of. The folks at James Duff informed us that the kit will be very similar in its final form to what you see here. We took the new parts and our old Bronco down to Off Road Unlimited (ORU) to install the system. We found the installation time-consuming, but not technically difficult. </data>
+    <data order="3" element="Paragraph">With a deadline looming, we only had time for a quick trail run, but the increase in articulation and suspension performance was amazing. Of course, this newfound suspension flex also transformed our Bronco into an extremely capable trail rig. It walked through sections that were previously impassable. </data>
+    <data order="4" element="Paragraph">The Bronco was very stable when crossed up, which we attribute to its equal amounts of articulation front and rear. A quick run up a 23-degree RTI ramp also confirmed the extra flexiness of the suspension. In stock form, the Bronco managed only a pathetic 380, but with the new James Duff system it ramped a very respectable 900 with the same wheels and tires. We suspect the Bronco will easily do 1,100 as our original tire and wheel package rubbed the new shock hoops because of wheels with 4 inches of backspacing.</data>
+    <data order="5" element="Paragraph"> Equally as impressive was on-road handling, where the Bronco could be driven with confidence and ease. This is in stark contrast to other high-travel trail rigs we have driven on-road, which usually have loads of body roll and spooky steering habits. If you are looking for an easy-to-install suspension for your Bronco&amp;#151;one that gives loads of articulation and can still easily be driven on the highway&amp;#151;then this is it!</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1031" element="Article">
+  <name>Tech Tips on Fuel Metering</name>
+  <description></description>
+  <slug>588</slug>
+  <primary_uri>/hotrod/techarticles/588</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2000-10-01T12:00:00Z</cover_date>
+  <categories>
+   <category primary="1">/hotrod/techarticles</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>D.C.</fname>
+    <mname></mname>
+    <lname>James</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>D.C.</fname>
+    <mname></mname>
+    <lname>James</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">Facts and Myths About the Heart of Your Carb</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">Holley, power valves, carburetor, repair  </data>
+   <data order="3" element="metadata title">Tech Tips on Fuel Metering</data>
+   <data order="4" element="promo_title">Tech Tips on Fuel Metering</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">What are the little valves that look like some sort of space station, how do they work, and what are they for? Many people are misinformed about power valves, and we&amp;#146;re here to give some facts and dispel the myths.</data>
+    <data order="1" element="Paragraph">Fact is, the power valve is the heart of one of the many fuel-metering circuits in a Holley carburetor and was created to provide additional fuel during conditions of rapid throttle opening and extended periods of high engine loads brought on by climbing hills or towing. Air passing through the booster draws fuel through the jets into the main well and into the booster where the fuel is mixed with the air. If this signal decreases during a high load condition, the air/fuel mixture will be leaner. The same condition will result from rapid throttle opening.</data>
+    <data order="2" element="Paragraph">The power valve is essentially just that, a valve. It consists of a spring-loaded diaphragm with an attached valve and a seat assembly. The power valve is screwed into the metering block. After the metering block is installed, the diaphragm side of the power valve resides in a power valve chamber. This chamber receives a manifold vacuum signal through a hole in the throttle body. The manifold vacuum controls the power valve opening and closing.</data>
+    <data order="3" element="Paragraph">When manifold vacuum is high,  the diaphragm of the power valve is held closed, which prevents additional fuel from entering the main well. When manifold pressure drops below the power valve rating, a spring will open the valve and allow fuel to enter the main well.  Every power valve has a rating, which is stamped directly on it. The rating is a number, such as 65. This number indicates that the power valve would open whenever the manifold vacuum drops below 6.5 inches. Generally, a 65 power valve is sufficient for most high-performance applications that have a manifold vacuum of at least 12 inches Hg. However, some problems can result with radically crammed, full-race machines equipped with automatic transmissions. These vehicles often idle at 2,000 rpm and only develop 6 to 8 inches of manifold vacuum. At this point, the power valve will open and fuel will enter through the center of the power valve, exit through the openings in the power valve housing, and start feeding the two power valve channel restrictions, which meter the flow of fuel in the main well. The added fuel in the main well will richen the mixture and the engine will probably "load up." To correct this problem, install a 45 or 35 power valve.</data>
+    <data order="4" element="Paragraph">The best way to determine what power valve rating your engine will require is to use a vacuum gauge. If the vehicle is equipped with an automatic transmission and the engine makes 12 inches Hg or less at idle with the transmission in Drive, take the manifold vacuum at idle and divide that number by two. The answer is the power valve rating that is best for your application. This will provide idling and proper fuel flow under wide open throttle conditions when manifold vacuum seldom rises above 1 inch Hg. To correct for a manifold vacuum of 5 inches or less, remove the power valve and install a Holley power valve plug. This is the only time the power valve should be removed and plugged. After the plug is installed, the carburetor jetting should be increased six to eight jet sizes.</data>
+    <data order="5" element="Paragraph">The latest advancement in carburetor power valve technology came nearly a decade ago when Holley added power valve blowout protection to its carburetors. This power valve blowout protection system protects the power valve from lean engine backfires that can result from a vacuum leak, old or fouled spark plugs, clogged fuel lines or filters, clogged air cleaner, or ignition problems such as bad plug wires, incorrect timing, or a malfunctioning distributor.</data>
+    <data order="6" element="Paragraph">Even though it is very rare for an engine backfire to rupture a power valve diaphragm, beware. A ruptured power valve diaphragm will cause the power valve to remain open. The likely result  will be a rich condition at idle.</data>
+    <data order="7" element="Paragraph">The way Holley decided to protect the power valve from a blowout was to add a check valve system into the throttle body. This check valve is designed with a manifold reference hole and a check ball that will seal the power valve quickly should a backfire occur. Once closed, the check valve system interrupts the pressure wave generated by the backfire, thus protecting the power valve diaphragm.</data>
+    <data order="8" element="Paragraph">The easiest way to tell if your carburetor is equipped with power valve protection is to use a penlight and look through the small hole in the throttle plate. If your carburetor is equipped with power valve protection, you will see a small check ball inside this hole. To help you install power valve protection on an older Holley carb, Holley has introduced a Power Valve Check Ball Kit, PN 125-500.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1032" element="Article">
+  <name>Chevrolet SSR</name>
+  <description></description>
+  <slug>600</slug>
+  <primary_uri>/hotrod/roadtests/600</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2000-10-01T12:00:00Z</cover_date>
+  <categories>
+   <category primary="1">/hotrod/roadtests</category>
+   <category>/customclassictrucks/roadtests</category>
+   <category>/fourwheeler/roadtests</category>
+   <category>/sporttruck/roadtests</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>Courtesy of General Motors</fname>
     <mname></mname>
     <lname></lname>
     <type>Illustrators</type>
     <role>DEFAULT</role>
    </contributor>
-  </contributors>
-  <elements>
-   <data order="0" element="deck">Keep your eyes open because you might find your next project where you&amp;#8217d least expect...</data>
-   <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">used truck, truck buying, sport truck, street truck</data>
-   <data order="3" element="metadata title">Get The Most Truck For Your Buck</data>
-   <data order="4" element="promo_title">Get The Most Truck For Your Buck</data>
-   <container order="5" element="Page">
-    <data order="0" element="Paragraph">Keep your eyes open because you might find your next project where you'd least expect.</data>
-    <data order="1" element="Paragraph">No event in our lives holds as many hopes and expectations, or as great a potential for a crushing letdown, as buying a used truck--except for maybe a date with a supermodel (tip: always find out what she models).</data>
-    <data order="2" element="Paragraph">If you're anything like me, you love the excitement of looking for that next project. I buy all the typical publications: The Recycler, Truck Trader, Hemmings Motor News, and the like. As I read those fine magazines, visions of rust-free, dent-free trucks dance through my head. I find a couple of trucks that fit my imaginings and make arrangements to take a look at them, but, unfortunately, they rarely live up to my expectations.</data>
-    <data order="3" element="Paragraph">I was recently on the hunt again, this time for a '67-'72 GM 1/2-ton Fleetside shortbed. So I went through my regular routine and--eureka!--finally found just what I was looking for.</data>
-    <data order="4" element="Paragraph">Follow along as I detail what my routine is and give you some tips that I've found make the entire process easier and more rewarding.</data>
-    <data order="5" element="Paragraph">&lt;b&gt;Set Your Goals&lt;/b&gt;&lt;p&gt;Before you can even start a successful truck search, you need to set some parameters. How much money you can afford to spend will dictate the type and condition of the trucks you can reasonably look at. Can you afford to buy one that&amp;#8217s fixed up and ready to enjoy as is, or do you need to find one that will need some work and parts that you can purchase as money allows? Never spend all your money to buy the truck; after all, it&amp;#8217s a used truck and unexpected repairs are inevitable. Nothing is worse than being unable to drive your new truck because you don&amp;#8217t have the money to fix a problem.&lt;/p&gt;</data>
-    <data order="6" element="Paragraph">How much of the work can you do yourself? Do you have the garage space and tools necessary to do the work? If you'll need to farm out a lot of the labor, then you must realize that a large portion of your budget will be allocated for that. One of the biggest problems first-time builders have is that they arrive at the middle of a project and then run out of money or enthusiasm or both. A tried-and-true practice is to estimate your expenses and then double the amount. Also, keep in mind that these half-finished projects can be a good buy as long as the work has been done well and they mesh with your goals. You don't want to have to redo a lot of the work.</data>
-    <data order="7" element="Paragraph">It's also essential that you consider the type of truck you want. Be true to yourself; it's your money and you're the one who's going to drive and cherish the truck when it's done. If your dream truck is an International, then by all means build an International. But do so with the knowledge that when the time comes to sell it, it might take a while, and you might not realize a return on your investment.</data>
-    <data order="8" element="Paragraph">After you've set the make and model you want, devise a profile of what you expect the truck to do for you after the buildup. If it will be a daily driver, then a blown-injected, alcohol-burning big-block might not be the best choice.</data>
-    <data order="9" element="Paragraph">Another important factor to consider is the parts you're going to have to replace. If you have a fresh engine and transmission sitting in the garage, then look for a truck with no engine or an engine that's not running. It makes no sense to pay for parts that are going to be replaced during the buildup. In my case, I knew I'd be replacing the entire drivetrain, so the most important thing for me was to find a truck with a clean body and a straight frame.</data>
-    <data order="10" element="Paragraph">&lt;b&gt;The Search&lt;/b&gt;&lt;p&gt;Trucks are everywhere. Typically, it shouldn&amp;#8217t be necessary to travel too far to find what you&amp;#8217re looking for. The obvious place to start is the newspaper classified ads for the local and surrounding cities. Most areas are covered by some kind of a speciality publication such as The Recycler or Truck Trader, which cover a broader territory than the local paper. Several nationwide publicationa, such as Hemmings Motor News and Old Car Trader, are also available if your search has come up empty. The problem with these publications is that they list ads from around the nation, so you need to be prepared to travel.&lt;/p&gt;</data>
-    <data order="11" element="Paragraph">Read the ads thoroughly; the truck you want might not be listed in the area where you think it should be. Someone might be trying to sell two vehicles in one ad. For example, if someone is selling a GTO and a Cheyenne, the ad might be in the Pontiac section. Read as many ads and look at as many trucks as you can to educate yourself on the going rates for the trucks you're interested in. Once you've found some potential trucks, call the sellers, and if the trucks still sound interesting, go look at them.</data>
-    <data order="12" element="Paragraph">Swap meets and truck shows are good places to start your search. Be prepared for some variations in asking prices; some owners operate under the theory of testing what the market will bear and put outrageous prices on their trucks. Others really want to sell that very day and set their prices accordingly. If you find a truck you like, but it's priced higher than you think it's worth, write down the seller's phone number and call in a month or so. The truck will probably still be unsold and the owner might be motivated to lower his price. This strategy also works well when responding to classified ads. It's not uncommon to call about a truck that was advertised a couple of months before, and find it not only still for sale but for less money.</data>
-    <data order="13" element="Paragraph">You can also find a deal by driving around your neighborhood and scouting the type of truck you want. Don't be afraid to ask the owner if it might be for sale. If it's not, maybe he knows of a similar one that might be. Leave your phone number with him and thank him for his time. You might be surprised by the number of return calls you get. Of course the majority of calls will come after you've found your next project.</data>
-    <data order="14" element="Paragraph">&lt;b&gt;What You Want To Know&lt;/b&gt;&lt;p&gt;When it&amp;#8217s time to make a call on an ad you&amp;#8217re interested in, be sure to gather as much information as possible from the seller by phone before you go look at the truck. Remember, the owner&amp;#8217s trying to sell it, so take whatever he or she tells you with a grain of salt. The owner should be willing to take the time to answer your questions over the phone. If the owner acts as if you&amp;#8217re infringing on his or her time, move on.&lt;/p&gt;</data>
-    <data order="15" element="Paragraph">Armed with all the information you can muster, you can better decide whether a trip to get a look at it is worth your time. But be prepared to be disappointed. Here are some of the most important things to ask:</data>
-    <data order="16" element="Paragraph">What's the model? Many times, the ad might not mention whether it's 1/2-ton or 3/4-ton, 2WD or 4WD, or longbed or shortbed.</data>
-    <data order="17" element="Paragraph">What condition is the body in? This one is very subjective; what's good to one person might be junk to another.</data>
-    <data order="18" element="Paragraph">What condition are the engine and drivetrain in? Find out how many miles are on it. If repairs have been made, ask if there are receipts to prove it.</data>
-    <data order="19" element="Paragraph">Is the registration up to date? If not, it can be quite expensive to renew. Check with your local DMV about the renewal fees before you make an offer.</data>
-    <data order="20" element="Paragraph">Does he have the Certificate of Ownership? Never buy a truck without the appropriate paperwork.</data>
-    <data order="21" element="Paragraph">&lt;b&gt;Diamond In The Rough&lt;/b&gt;&lt;p&gt;Make arrangements with the seller to look at the truck. Set a time during the day so that you have good light and can see as much as possible. Paint and bodywork can appear a lot better at night under artificial light. If the seller wants to meet somewhere like a supermarket parking lot instead of his house, be suspicious. The paperwork might have an incorrect name or address and if something goes wrong there&amp;#8217s no way to track him down.&lt;/p&gt;</data>
-    <data order="22" element="Paragraph">Be prepared to crawl under and around the truck to look for signs of rust, rust repair, frame damage, or poor maintenance. If the truck's front end or bed are a different color, there's a good chance it has been in an accident. If that's the case, make sure the frame is straight. Look at all the gaps in the sheetmetal. If there are wide variations in them, look for the reason why. Is it just an adjustment problem or is something out of square?</data>
-    <data order="23" element="Paragraph">Check the fluids. Look under the seat and around the cab for bottles of oil or transmission fluid or the funnels used to top off the levels. If you find those items, then there's a strong indication that the engine or transmission might be burning more oil than normal. Both times when I went to look at the truck I bought, the owner was putting in either engine oil or transmission fluid. That's definitely not something you want to see unless you're planning to replace the engine and transmission soon.</data>
-    <data order="24" element="Paragraph">&lt;b&gt;Let&amp;#8217s Seal The Deal&lt;/b&gt;&lt;p&gt;Now that you&amp;#8217ve found a candidate for your next project, it&amp;#8217s time to hammer out a deal that, hopefully, will make both parties happy.&lt;/p&gt;</data>
-    <data order="25" element="Paragraph">Always be polite. If a truck you've arranged to look at is something other than as represented, take a quick look and leave. If you like it, but it's overpriced, make an offer. Don't tell the seller all the things that are wrong with his truck. He already knows and doesn't care. He knows you're interested or you wouldn't be there. If you upset the owner he's not going to budge an inch. If he refuses your offer, leave your phone number, thank him for his time, and move on. Often time is on your side and you'll be surprised how many return calls you'll get.</data>
-    <data order="26" element="Paragraph">Don't get emotionally attached. It's hard when you're looking at several trucks and then find one that interests you. As a gearhead you already have the truck built in your mind and hate to give up on one that matches your visions. Even if that deal doesn't happen, another one will. There are lots of trucks out there.</data>
-    <data order="27" element="Paragraph">Bring the cash with you. Make an offer and show the seller the cash. Cash talks and everything else walks. Many times just the presence of a wad of cash is enough to bring a reluctant seller around to your way of thinking. Another possible way to turn a no-sale around is to make sure the owner's wife or girlfriend witnesses the cash offer. She might be the one writing the checks and balancing the budget.</data>
-    <data order="28" element="Paragraph">Following the advice outlined above will give you the best possible beginning and increased confidence when you're driving an unfamiliar truck.</data>
-   </container>
-  </elements>
- </story>
- <story id="1127" element="Cover">
-  <name>text cover x</name>
-  <description></description>
-  <slug></slug>
-  <primary_uri>/4wheeloffroad</primary_uri>
-  <priority>3</priority>
-  <publish_status>0</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>2003-07-29T21:35:00Z</cover_date>
-  <categories>
-   <category primary="1">/4wheeloffroad</category>
-  </categories>
-  <keywords></keywords>
-  <contributors></contributors>
-  <elements>
-   <data order="0" element="leadins per page">10</data>
-   <data order="1" element="metadata description">description</data>
-   <data order="2" element="metadata keywords">keywords</data>
-   <data order="3" element="metadata title">title</data>
-   <data order="4" element="promo title">title</data>
-   <data order="5" element="promo teaser">teaser</data>
-   <data order="6" element="sema box">yes</data>
-   <container related_story_id="1102" order="7" relative="1" element="Lead In">
-    <data order="0" element="type">small</data>
-   </container>
-   <container related_story_id="1033" order="8" relative="1" element="Lead In">
-    <data order="0" element="type">small</data>
-   </container>
-  </elements>
- </story>
- <story id="1102" element="Article">
-  <name>&amp;#8217;87 Chevrolet Fleetside</name>
-  <description></description>
-  <slug>1405</slug>
-  <primary_uri>/sporttruck/featuredvehicles/1405</primary_uri>
-  <priority>3</priority>
-  <publish_status>0</publish_status>
-  <active>1</active>
-  <source>Internal</source>
-  <cover_date>2000-05-01T12:00:00Z</cover_date>
-  <categories>
-   <category primary="1">/sporttruck/featuredvehicles</category>
-  </categories>
-  <keywords></keywords>
-  <contributors>
    <contributor>
-    <fname>Rick</fname>
+    <fname>hotrod.com</fname>
     <mname></mname>
-    <lname>Amado</lname>
+    <lname></lname>
     <type>Writers</type>
     <role>DEFAULT</role>
    </contributor>
-   <contributor>
-    <fname>Scott</fname>
-    <mname></mname>
-    <lname>Killeen</lname>
-    <type>Illustrators</type>
-    <role>DEFAULT</role>
-   </contributor>
-   <contributor>
-    <fname>Rick</fname>
-    <mname></mname>
-    <lname>Amado</lname>
-    <type>Illustrators</type>
-    <role>DEFAULT</role>
-   </contributor>
   </contributors>
   <elements>
-   <data order="0" element="deck">The Magic Touch</data>
+   <data order="0" element="deck">The 2002 Super Sport Roadster</data>
    <data element="metadata description" order="1" />
-   <data order="2" element="metadata keywords">Chevrolet,Chevy,Fleetside,Street Truck,Sport Truck,1987</data>
-   <data order="3" element="metadata title">&amp;#8217;87 Chevrolet Fleetside</data>
-   <data order="4" element="promo_title">&amp;#8217;87 Chevrolet Fleetside</data>
+   <data order="2" element="metadata keywords">SSR,Chevy,Chevrolet,2002,roadster,pickup</data>
+   <data order="3" element="metadata title">Chevrolet SSR</data>
+   <data order="4" element="promo_title">Chevrolet SSR</data>
    <container order="5" element="Page">
-    <data order="0" element="Paragraph">Sometimes a project comes together like magic. You make minimal plans, just a basic clean-up, a set of wheels, and all of a sudden the planets align, good karma comes your way, and it's as if King Midas happened by and laid his hand on your project. Alan Button of O'Fallon, Missouri, has that kind of power, and it shows in his rendition of this '87 Chevy Fleetside.</data>
-    <data order="1" element="Paragraph">Alan's truck started life as a special-order from his local Chevy dealer and came with the Wheatland Yellow fleet color already applied. The truck started out as intended, serving Alan as a hauler for his auto body business until that fateful day when he decided that stock just wasn't cutting it. After a subtle reworking of the body, mostly to the bed, and a reapplication of the factory color, Alan hit the streets in the head-turner you see here.</data>
-    <data order="2" element="Paragraph">It takes a trained eye to spot all the subtle modifications Alan applied to his shortbed beauty. After shaving the markers and emblems from the fenders and color matching the driprails, handles, and door lock bezels on the cab, Alan went to work on the bed. He started with probably the most subtle and difficult-to-spot modification: He vertically extended the quarters behind the rear wheel openings. This brought the lower edge of the body down until it visually matched the height of the quarters in front of the wheel openings. A hand-fabricated aluminum roll pan followed the extension of the lower edge of the tailgate--both modifications were masterfully executed by Alan himself. The bed was finished with filled stake pockets and a custom-built flush tonneau cover.</data>
-    <data order="3" element="Paragraph">With the body mods completed, Alan finished the exterior with the reapplication of the factory color in PPG two-stage paint before sending the truck to Stitch N Fit of St. Peters, Missouri, for the tastefully low-key tan tweed interior. The final touch to Alan's smoothie was the owner-fabricated 6/8 drop and the addition of a set of 15-inch skinny Boyds wheels up front and 17-inch fat Boyds wheels out back for that perfect bigs 'n' littles look. If you ever have the good fortune to run into Alan at a truck show, be sure to rub elbows with him, because with a little luck, some of that magic might just rub off.</data>
+    <data order="0" element="Paragraph">When manufacturers pull the dramatic drape off their concept vehicles, the resulting product often pushes the fine line between dry heave and explosive laughter. It sometimes seems they&amp;#146;re aiming more for the freak factor than production potential. But not so with the Chevy SSR. The concept roadster pickup was greeted with new sounds--gasps, oohs, and pleas for it to become reality. In 2002, it will.</data>
+    <data order="1" element="Paragraph">The SSR could quite possibly fill the needs, desires, and demands of everyone on the planet--it has rear-wheel drive, a retractable hardtop, and yep, that&amp;#146;s a pickup bed. Did we mention a V-8? Of course, we don&amp;#146; t need to tell you that retro is now, and the Bow Tie takes full advantage of the trend by sporting a full-width grille bar, oversized fenders, 19-inch front and 20-inch rubber, and five-spoke alloy rims.</data>
+    <data order="2" element="Paragraph">&lt;p&gt;The two-seater is being built off a GM truck platform (we&amp;#146;re hearing Silverado). If you like numbers, here are the stats: It will have a 116.5-inch wheelbase, a width of 76.1 inches, and a height of 62.2 inches. The 6.0L V-8 will be hooked to a four-speed automatic tranny.&lt;/p&gt;    &lt;p&gt;GM says the SSR went from being a sketch to a full-size model in just seven weeks, which is overnight in automotive-building terms. We&amp;#146;ll see if this limited-production head-turner can say the same for its success.&lt;/p&gt;</data>
    </container>
   </elements>
  </story>
@@ -567,6 +420,196 @@
    <container order="5" element="Page">
     <data order="0" element="Paragraph">Driving hot rods should always be fun, especially when you're young. Unfortunately, it doesn't always work out that way. Many first-timer hot rods end up being powered by small-block engines that've been loaded with a 750 double-pumper carb, an open-plenum intake, a 280 solid-lifter cam and 21/4-inch headers, all pumping into a stock converter and a 2.79:1 geared rearend. If you have ever driven a car like this, you know the thing doesn't run well. This type of combination ends up in many first-timer hot rods because their owners don't know what to do first, second or even third in putting together a car that "works."</data>
     <data order="1" element="Paragraph">This article is for those whose cars fit this description. We asked everyone from car builders to warehouse parts suppliers in what order they would recommend modifying a car for performance. From this, we were able to put together the 10 Steps to Performance. So check out the suggestions, add the components as you get time, money or experience, and put together a car that most only dream about owning.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1034" element="Article">
+  <name>Carb vs. Injection</name>
+  <description></description>
+  <slug>849</slug>
+  <primary_uri>/carcraft/techarticles/849</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>1999-01-01T12:00:00Z</cover_date>
+  <categories>
+   <category primary="1">/carcraft/techarticles</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>Marlan</fname>
+    <mname></mname>
+    <lname>Davis</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Marlan</fname>
+    <mname></mname>
+    <lname>Davis</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">Are Carburetors Dead?</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">carburetor,carb,fuel injection,EFI,electronic fuel injection,engine,fuel,fuel management</data>
+   <data order="3" element="metadata title">Carb vs. Injection</data>
+   <data order="4" element="promo_title">Carb vs. Injection</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">With all new cars fuel-injected and many race-sanctioning bodies allowing electronic engine-management systems, fuel injection is rapidly approaching critical mass. But hard-core domestic V-8 lovers won't surrender their carbs without a fight. To get the lowdown on the coming battle, Car Craft consulted leading industry movers and shakers. Their consensus: Don't hold a wake for your carb just yet!</data>
+    <data order="1" element="Paragraph">&lt;p&gt;&lt;b&gt;Is the carburetor dead?&lt;/b&gt;&lt;/p&gt;  </data>
+    <data order="2" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Jim McFarland, McFarland and Associates:&lt;/STRONG&gt;   If carbs are left as they are today, with no technical improvements, they have about seven to eight years left. But there are tech improvements on the horizon that will prolong their life. Carbs will last longest in motorsports. In the future you may not recognize them as carbs, but they&amp;#8217ll still rely on pressure differential to meter fuel.&lt;/p&gt; </data>
+    <data order="3" element="Paragraph">&lt;p&gt;&lt;b&gt;  How long will it be before EFI outnumbers carburetors on street machines?&lt;/b&gt;&lt;/p&gt;</data>
+    <data order="4" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Butch Bass, Holley:&lt;/STRONG&gt;   Electronic fuel injection may never become more popular than carburetors on street machines. Many street machiners want to emulate Pro Stock race cars that still use carburetion, and they prefer the simplicity of carburetion--no return lines to the fuel tank and no electronics package to mount. However, as prices come down and the driveability   aspects of EFI become more widely   appreciated, fuel injection will gain a much larger following.&lt;/p&gt;</data>
+    <data order="5" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Kevin McClelland, Flowmaster:&lt;/STRONG&gt;   It will be upwards of 10 years on domestics. That&amp;#8217s due to the cost of conversion on cars not factory-equipped with fuel injection, not fear of new technology. Look at the import market: there high-tech is embraced. Import kids are computer literate, and the cars are already fuel-injected, so the cost to get into the program is less.&lt;/p&gt;</data>
+    <data order="6" element="Paragraph">&lt;p&gt;&lt;STRONG&gt; Steve Johnson, BG Products:&lt;/STRONG&gt;   Not anytime soon. EFI makes more power, but our EFI system costs $2,400, compared to $400-450 for our Speed Demon carburetor. You only gain about 10 hp at the peak, so for a lot of guys it isn&amp;#8217t worth the money. Off-roaders will probably go to EFI before street machiners because it helps them overcome steep grades and vibrations that cause trouble with carbs.&lt;/p&gt;</data>
+    <data order="7" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Mark Hamel, ACCEL:&lt;/STRONG&gt;   Most likely it&amp;#8217ll be six to eight years, sooner if the import market continues its rapid growth. Eventually, it will happen. How long will old musclecars be around at affordable prices?&lt;/p&gt;</data>
+    <data order="8" element="Paragraph">&lt;p&gt;&lt;b&gt;  When will we see EFI in big-time racing like Pro Stock or NASCAR?&lt;/b&gt;&lt;/p&gt;</data>
+    <data order="9" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Butch Bass:&lt;/STRONG&gt;   You are not going to see EFI in NASCAR for many years. The cars are fast, competitive, and they don&amp;#8217t fail. NASCAR is also concerned about having more onboard electronics that could enable the highly sophisticated teams to disguise something akin to traction-control within the EFI system.&lt;/p&gt;</data>
+    <data order="10" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Myron Cottrell, TPI Specialties:&lt;/STRONG&gt;   There&amp;#8217s already injection in Formula 1, CART, IRL, and many SCCA road-racing classes. You&amp;#8217ll see it in the holdout sanctioning bodies as soon as younger folks are put in charge.&lt;/p&gt;  &lt;p&gt;&lt;STRONG&gt;Jason Scott, Lingenfelter Racing:&lt;/STRONG&gt; ASA stock cars will use "spec" GM-assembly-line-built LS1 430hp EFI engines this year. Except for hotter cams, modified computer calibration, race-type exhaust systems, and Lingenfelter-installed dry-sump systems, these are the same engines used in the Corvette.&lt;/p&gt;</data>
+    <data order="11" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Carl Olsen, NHRA:&lt;/STRONG&gt;   No time in the   foreseeable future. Pro Stock is healthy now, with extremely close competition. If it ain&amp;#8217t broke, why fix it? EFI could cause big problems. The sophisticated microprocessors used with EFI systems can do more than just meter fuel. The technology already exists to drive the car by itself. Factory-backed favorites could gain an unfair advantage using EFI.&lt;/p&gt;</data>
+    <data order="12" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Warren Johnson, Pro Stock racer:&lt;/STRONG&gt;   There&amp;#8217s no excuse for not moving to EFI. The traditional sanctioning bodies are 180 degrees reversed from reality. The "self-driving car that we can&amp;#8217t tech" excuse doesn&amp;#8217t hold up. The old guard has always used that excuse, but it&amp;#8217s time to bring the tech department into the 21st century. EFI is more user-friendly than carburetion and will help the more novice tuners. They can perfect the combo on the dyno, then the EFI will self-correct for atmospheric conditions. After a short learning curve, EFI actually levels the playing field. Anyone can learn to tune an EFI, but there are only about two to three legitimate carb experts that can really dial in carbs for Pro Stock.&lt;/p&gt;</data>
+    <data order="13" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Lenny Imbrogno, IHRA:&lt;/STRONG&gt;   EFI will be legal in IHRA Pro Stock in 2001, although racers can continue to run carbs if they wish. The ECM can control everything from the firewall forward--including the fuel and ignition--but in Pro Stock we won&amp;#8217t allow inputs for traction control or the transmission. There won&amp;#8217t be a spec controller, but we will control the number and function of the pin-outs. Any manufacturer who conforms to the standard may participate. IHRA welcomes some of the new technology. We can control it and keep it simple enough, inexpensive enough that it won&amp;#8217t gouge the racers. As for advanced technology in Top Fuel, never say never. We&amp;#8217re looking at traction control there--it could lead to much closer racing. The goal is to provide a better show for the fans.&lt;/p&gt;</data>
+    <data order="14" element="Paragraph">&lt;p&gt;&lt;b&gt;  Which makes more power--carburetors or EFI?&lt;/b&gt;&lt;/p&gt;</data>
+    <data order="15" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Butch Bass:&lt;/STRONG&gt;   A properly sized manifold and carb can make as much absolute power as EFI. Although EFI tends to produce a broader torque curve, ultimate horsepower is simply a case of flow and distribution.  &lt;p&gt;&lt;STRONG&gt;Jim McFarland: &lt;/STRONG&gt;If you boil everything down to combustion efficiency, ultimately full-sequential port-EFI systems will make the most power. Carbs are not good providers of mixture quality when tuning one cylinder at a time.&lt;/p&gt;</data>
+    <data order="16" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Warren Johnson:&lt;/STRONG&gt;   Properly tuned, carburetors make more peak power than EFI in a Pro Stock engine. A carb&amp;#8217s pressure differential atomizes the gas a lot better than spraying fuel through an orifice. But EFI has a broader powerband and superior cylinder-to-cylinder fuel distribution. The 1,100- to 1,300-cfm dual carbs are good only over a narrow range, about 1,500 rpm at most. EFI performs well over 2,000 rpm or more. On average, if optimized, both systems perform about the same as far as how fast you get down the track. However, the EFI system is much easier to tune than a carburetor.&lt;/p&gt;</data>
+    <data order="17" element="Paragraph">&lt;p&gt;&lt;b&gt;  Will EFI systems become cost-competitive with carbureted systems?&lt;/b&gt;&lt;/p&gt;</data>
+    <data order="18" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Butch Bass:&lt;/STRONG&gt;   The primary component that is keeping prices of EFI systems higher is the cost of the ECU. Although the cost of electronic devices is rapidly coming down, companies like Holley continue to upgrade the features and capabilities of their ECUs, so we haven&amp;#8217t seen a large decline in overall costs yet. The overall cost of EFI will probably remain more than carburetion simply because there are more components. If you consider EFI&amp;#8217s price-to-value factor (better fuel economy, longer engine life, and reduced emissions), then it makes more sense financially. Ultimately it will be the consumer who determines how much EFI costs. If he embraces EFI and the demand is there, the economies of scale will take over and costs will be   reduced.&lt;/p&gt;</data>
+    <data order="19" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Myron Cottrell:&lt;/STRONG&gt;   You can pick up an   entry-level Holley carb for $99 (more like $199--ed.). You can pay thousands of bucks for a TPI system, and if you&amp;#8217re modifying the engine, it probably won&amp;#8217t run right out of the box. On the other hand, if you&amp;#8217re going to drive 25,000 miles per year, with the improved reliability, decreased maintenance costs, and better fuel economy of an EFI system...then the economics start to come back.&lt;/p&gt;  &lt;p&gt;&lt;STRONG&gt;Mark Hamel:&lt;/STRONG&gt; They&amp;#8217re not that far away now. A trick aftermarket carbureted intake, a Holley Dominator carb, and a high-  volume fuel pump will set you back over $1,000. ACCEL can sell you a complete system for $1,800-2,000. The difference is that the EFI system is complete, one big price hit all at once, but you can piece the carburetor system together separately, so it appears more affordable.&lt;/p&gt;</data>
+    <data order="20" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Bill Howell, Howell Engine Developments and GM Motorsports tech rep to ASA:&lt;/STRONG&gt;   The ASA stock car LS1 spec engines cost one-third less and last three times as long as last year&amp;#8217s engine--that&amp;#8217s $12,000 compared to $30,000. They make 430 hp with rpm held to 6,500 max. They use a GM computer, which any Chevy mechanic can scan with the normal dealer diagnostic tools. Seal the motor and seal a production ECM, and you can keep control and have fast, reliable, and affordable racing.&lt;/p&gt;</data>
+    <data order="21" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Warren Johnson:&lt;/STRONG&gt;   Most Pro Stock racers farm out the carbs to a specialist, and generally you have a set of carbs custom-tailored for each engine. EFI has a bunch of nozzles but only one controller per vehicle. Both systems require custom intakes. Either way, you&amp;#8217re looking at about $7,000 for a complete Pro Stock system.&lt;/p&gt;</data>
+    <data order="22" element="Paragraph">&lt;p&gt;&lt;b&gt;  How far are we from an affordable, self-programming EFI system for the masses?&lt;/b&gt;&lt;/p&gt;</data>
+    <data order="23" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Mark Hamel:&lt;/STRONG&gt;   It&amp;#8217s a lot easier said than done. If we can control the total motor combination from the cam up, the technology is there to do it; otherwise, there&amp;#8217s a lot of variables you need to overcome.&lt;/p&gt;    &lt;p&gt;&lt;STRONG&gt;Butch Bass:&lt;/STRONG&gt;   The performance aftermarket is already offering EFI systems that have "self-programming for the masses." Take Holley&amp;#8217s 4D systems, for example. They are delivered with a fuel map pre-  installed. The consumer is able to fine-tune the idle, power, and cruise fuel ratios by simply turning a few dials on the control module. Holley&amp;#8217s more sophisticated 4Di units are programmable with a laptop computer; there are basic fuel curves developed for various power levels that can be automatically loaded into the ECU. They are close enough for most engine combinations but can be fuel-mapped very precisely if you desire. Other Holley EFI aftermarket systems will simply use the existing original-equipment manufacture ECU, and all you have to do is install the hardware (manifold, air valve, fuel pump, and injectors); there&amp;#8217s no programming involved at all.&lt;/p&gt;</data>
+    <data order="24" element="Paragraph">&lt;p&gt;&lt;b&gt;  Is there a limit to the power level EFI can support?&lt;/b&gt;&lt;/p&gt;</data>
+    <data order="25" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Mark Hamel:&lt;/STRONG&gt;   There&amp;#8217s no limit as far as the electronics go. The limits are presently available hardware and injector sizes. Right now 2,000 hp is not a big deal.&lt;/p&gt;    &lt;p&gt;&lt;STRONG&gt;Warren Johnson:&lt;/STRONG&gt;   When you get to Top Fuel, there is an immense learning curve to develop an integrated EFI system that could deliver fuel at the needed rate, but I won&amp;#8217t rule it out. It has the potential to reduce downtime because there&amp;#8217d be fewer oildowns. That makes Top Fuel a better show for big-time TV. And it gets rid of grumbling in the stands. Who wants to sit for three hours in 95-degree heat watching them clean up the oil?&lt;/p&gt;</data>
+    <data order="26" element="Paragraph">&lt;p&gt;&lt;b&gt;  Why should anyone still run a carburetor?&lt;/b&gt;&lt;/p&gt;</data>
+    <data order="27" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Butch Bass:&lt;/STRONG&gt;   If you are doing a total restoration, then you will want to stick with what the vehicle came with. In many cases EFI just isn&amp;#8217t available for your model of engine, and unless you are pretty sophisticated at selecting individual EFI components and have the fabrication skills to build your own manifold and fuel-rail setup, carburetion is the way to go.&lt;/p&gt;    &lt;p&gt;&lt;STRONG&gt;Steve Johnson:&lt;/STRONG&gt;   Cost is the big thing, followed by ease of installation and repair. Of course, certain classes still require carburetors. There are also safety issues in circle-track racing, where mechanical fuel pumps tied directly to the engine are preferred over high-pressure electric pumps.&lt;/p&gt;</data>
+    <data order="28" element="Paragraph">&lt;p&gt;&lt;b&gt;  Why run fuel injection if your car isn&amp;#8217t factory-equipped with it?&lt;/b&gt;&lt;/p&gt;</data>
+    <data order="29" element="Paragraph">&lt;p&gt;&lt;STRONG&gt;Butch Bass:&lt;/STRONG&gt;   Anyone who has driven a modern fuel-injected vehicle can answer this question. EFI simply enables the engine to be more efficient throughout the rpm range. From cold-starting to throttle   response, a properly designed EFI setup is hard to beat. Engine management is the key to overall engine performance in the future, and when you control fuel and spark together, you have the ultimate tuning   capability.&lt;/p&gt;    &lt;p&gt;&lt;STRONG&gt;Mark Hamel:&lt;/STRONG&gt;   Fuel injection does everything right--improves driveability, makes more torque, solves cold-start problems, lowers emissions, and improves gas mileage. You can make 450 hp and drive the car every day.  Myron Cottrell: EFI is for the guy who wants to learn. It is for the guy involved in the technology of today.&lt;/p&gt;</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1035" element="Article">
+  <name>Guide To A-Body Disc Brake Swaps</name>
+  <description></description>
+  <slug>850</slug>
+  <primary_uri>/carcraft/techarticles/850</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>1999-03-01T12:00:00Z</cover_date>
+  <categories>
+   <category primary="1">/carcraft/techarticles</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>Marlan</fname>
+    <mname></mname>
+    <lname>Davis</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Marlan</fname>
+    <mname></mname>
+    <lname>Davis</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Baer Racing</fname>
+    <mname></mname>
+    <lname></lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>H-O Enterprises</fname>
+    <mname></mname>
+    <lname></lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Master Power</fname>
+    <mname></mname>
+    <lname></lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Stainless Steel Brakes</fname>
+    <mname></mname>
+    <lname></lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Wilwood Engineering</fname>
+    <mname></mname>
+    <lname></lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">Where to Get Whoa</data>
+   <data element="metadata description" order="1" />
+   <data element="metadata keywords" order="2" />
+   <data order="3" element="metadata title">Guide To A-Body Disc Brake Swaps</data>
+   <data order="4" element="promo_title">Guide To A-Body Disc Brake Swaps</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">&lt;p&gt;Musclecars of the 1960s may have been quick off the line, but most of them didn&amp;#8217t stop worth a damn. The vast majority of the street machines ever built in Detroit--namely, GM&amp;#8217s 1964-1972 A-  bodies--came equipped only with marginal drum brakes. Massive in weight for their day and front-heavy (especially with optional big-block engines), the Buick Special, Skylark, and GS; Chevy Chevelle; Olds F85, Cutlass, and 442; and Pontiac Tempest, Le Mans, and GTO really benefit by upgrading to front disc brakes, which provide superior resistance to fade, perform better in the wet, and offer a superior modulated pedal feel that contributes to smooth, sure stops. Today the aftermarket offers a plethora of mild to wild front disc-brake   conversion kits, yet a persistent swap-meet addict or salvage-yard scrounger can still score his own production-based components. This story will give you some insight into swaps for any budget.&lt;/p&gt;</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1036" element="Article">
+  <name>Interior Restoration Guide</name>
+  <description></description>
+  <slug>852</slug>
+  <primary_uri>/carcraft/techarticles/852</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2000-03-01T12:00:00Z</cover_date>
+  <categories>
+   <category primary="1">/carcraft/techarticles</category>
+  </categories>
+  <keywords></keywords>
+  <contributors>
+   <contributor>
+    <fname>Matthew</fname>
+    <mname></mname>
+    <lname>King</lname>
+    <type>Writers</type>
+    <role>DEFAULT</role>
+   </contributor>
+   <contributor>
+    <fname>Matthew</fname>
+    <mname></mname>
+    <lname>King</lname>
+    <type>Illustrators</type>
+    <role>DEFAULT</role>
+   </contributor>
+  </contributors>
+  <elements>
+   <data order="0" element="deck">Getting It Together on the Inside</data>
+   <data element="metadata description" order="1" />
+   <data order="2" element="metadata keywords">dash,carpets,seats,upholstery,headliner,door panels,arm rests</data>
+   <data order="3" element="metadata title">Interior Restoration Guide</data>
+   <data order="4" element="promo_title">Interior Restoration Guide</data>
+   <container order="5" element="Page">
+    <data order="0" element="Paragraph">To us, few aspects of car restoration are more satisying than returning a crack- house interior to its former glory. After all, for a car that's driven more than once in a blue moon, you spend most of your time enjoying it from the inside. If you own a really popular car like a '57 Chevy, a first-gen Camaro, or an early Mustang, restoring your interior is relatively simple because you can buy just about everything from the many catalog restoration companies that specialize in these popular models. But depending on the make and model, you may find that offerings are slim for lots of other very popular cars. Many items, such as replacement gauges, steering wheels, and interior chrome and trim simply aren't reproduced, and even among popular brands, stuff like upholstery and door panels for some of the lower trim levels such as Chevy Biscaynes and Plymouth Belvederes can also be hard to find.</data>
+    <data order="1" element="Paragraph">The good news is that often your worn-out parts can be restored, so there's no need to go searching around in junkyards for replacements that are in no better condition than what you already have. The same holds true for restoration parts. Although something is better than nothing, some resto parts are made overseas and the quality and fitment can be disappointing in some cases. Unless you've got the cash and time to scout out new old stock parts to replace your worn-out originals, your best bet is to search out qualified specialists who can put a new shine on your tired interior.</data>
+    <data order="2" element="Paragraph">Using our '65 Chevy Bel Air station wagon as a example, we've compiled a guide to companies that specialize in services to help you get your interior back in tip-top shape. We didn't just open a catalog and order every new part we could find, mainly because we couldn't, since lots of the wagon's parts are different than a two-door car's and therefore not available off the shelf. Plus that would be lame. Instead, we focused on fixing what we had and finding original-looking replacements for parts that were missing or beyond repair.</data>
+    <data order="3" element="Paragraph">&lt;p&gt; &lt;STRONG&gt;Restore or Restify?&lt;/STRONG&gt;  &lt;/p&gt;  &lt;p&gt; During the interior restoration of a 20-plus-year-old car, you&amp;#8217ll be faced with many opportunities to deviate from its original colors and materials, and you&amp;#8217ll have to make choices about the level and type of restoration you&amp;#8217re trying to accomplish. At the car shows we attend around the country, we see basically three types of interior restorations--which we&amp;#8217ll call concours-quality, mild-resto, and custom--and each has its merits. The concours restoration tries to return every detail of the car to its as-new condition, which means that if the factory shade of the dashpad didn&amp;#8217t match the kick panels and the kick panels didn&amp;#8217t match the door panels and the carpet didn&amp;#8217t match anything, that&amp;#8217s still how it will look when the restoration is complete. This type of restoration is very difficult and expensive to accomplish and is best left to show-only cars. The mild resto applies to most of the "restored" cars we see at car shows and many daily drivers. The intent here is to return the car to close to as-new condition, but the owner may choose to upgrade certain areas or install parts that aren&amp;#8217t stock, like steering wheels and gauges. He may also choose to match interior colors or makes slight changes, such as using a different pattern seat cloth than came stock. This is the type of restoration the majority of people shoot for, and for the popular models and trim levels, you can buy most of the parts you need from restoration specialists. With a full custom interior restoration, anything goes, and it&amp;#8217s up to the restorer&amp;#8217s personal taste. We suspect that the reason so many people "customize" their interiors is   because they can&amp;#8217t find, or don&amp;#8217t want to pay for, the parts to put it back to stock condition. Since our 1965 Bel Air wagon is a daily driver and far from a show car, our goal was to keep it as stock- and vintage-looking as possible without replacing any more parts than were necessary.&lt;/p&gt;</data>
    </container>
   </elements>
  </story>
