@@ -301,13 +301,13 @@ $fh = new FileHandle $filepath;
 my $lmedia = Krang::Media->new(title         => 'test media object', 
                                category_id   => $category->category_id, 
                                media_type_id => 1,
-                               filename      => 'lazarus.jpg', 
+                               filename      => 'lazarus lives.jpg', 
                                filehandle    => $fh);
 $lmedia->save();
 $lset->add(object => $lmedia);
 
 # it lives, yes?
-($found) = Krang::Media->find(url_like => '%lazarus.jpg', count => 1);
+($found) = Krang::Media->find(url_like => '%lazarus lives.jpg', count => 1);
 ok($found);
 
 # this should fail
@@ -316,14 +316,14 @@ ok($@);
 
 # it dies
 $lmedia->delete();
-($found) = Krang::Media->find(url_like => '%lazarus.jpg', count => 1);
+($found) = Krang::Media->find(url_like => '%lazarus lives.jpg', count => 1);
 ok(not $found);
 
 # the resurection
 $lset->import_all();
-($found) = Krang::Media->find(url_like => '%lazarus.jpg', count => 1);
+($found) = Krang::Media->find(url_like => '%lazarus lives.jpg', count => 1);
 ok($found);
-END { (Krang::Media->find(url_like => '%lazarus.jpg'))[0]->delete() }
+END { (Krang::Media->find(url_like => '%lazarus lives.jpg'))[0]->delete() }
 
 # try the same with template
 my $ltemplate = Krang::Template->new(filename => 'abcd_fake.tmpl',
