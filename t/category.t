@@ -116,7 +116,8 @@ isa_ok($_, 'Krang::Category') for @categories;
 is($categories[0]->url() =~ '/bob5', 1, 'find() - ordering');
 
 # count test
-my $count = Krang::Category->find(count => 1,
+my $count = Krang::Category->find(site_id => $site->site_id,
+                                  count => 1,
                                   url_like => '%f%');
 is($count, 1, 'find() - count');
 
