@@ -147,17 +147,15 @@ sub search {
                                                       },
                                       use_module => 'Krang::Group',
                                       find_params => { simple_search => $search_filter },
-                                      columns => [qw(name may_publish command_column checkbox_column)],
+                                      columns => [qw(name command_column checkbox_column)],
                                       column_labels => {
                                                         name => 'Group Name',
-                                                        may_publish => 'Publish?',
                                                        },
-                                      columns_sortable => [qw( name may_publish )],
+                                      columns_sortable => [qw( name )],
                                       command_column_commands => [qw( edit_group )],
                                       command_column_labels => {edit_group => 'Edit'},
                                       row_handler => sub {
                                           $_[0]->{name} = $_[1]->name();
-                                          $_[0]->{may_publish} = $_[1]->may_publish() ? 'Yes' : 'No';
                                       },
                                       id_handler => sub { return $_[0]->group_id },
                                      );
