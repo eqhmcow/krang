@@ -46,9 +46,14 @@ sub input_form {
     $html .= scalar $query->button(-name    => "find_media_$param",
                                    -value   => "Find Media",
                                    -onClick => "find_media('$param')",
+                                   -class   => "button",
                                   ) 
       . ' or upload a new file: '
-        . scalar $query->filefield(-name => $param);
+        . scalar $query->filefield(-name => $param) . '&nbsp;' .
+          scalar $query->button(-name    => "upload_media_$param",
+                                -value   => "Upload",
+                                -onClick => "save_and_stay()",
+                                -class   => "button");
 
     return $html;
 }
