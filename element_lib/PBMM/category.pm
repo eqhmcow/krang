@@ -61,6 +61,9 @@ sub fill_template {
     $tmpl->param( title =>  $story->title );
     $tmpl->param( meta_description =>  $story->element->child('meta_description')->data ) if $story->element->child('meta_description');
     $tmpl->param( promo_title =>  $story->element->child('promo_title')->data ) if $story->element->child('promo_title');
+
+    # pass no_index var if this not the primary category
+    $tmpl->param( no_index => 1 ) unless ($publisher->category->category_id == $story->category->category_id );
  
     my $keywords = $story->element->child('meta_keywords') ? $story->element->child('meta_keywords')->data : [];
     my @keys;
