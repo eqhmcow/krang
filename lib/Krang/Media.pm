@@ -421,19 +421,16 @@ sub file_path {
     my $root = KrangRoot;
     my $media_id = $self->{media_id};
     my $filename = $self->{filename};
-    my $instance = Krang::Conf->instance;
-    my $session_id = $session{_session_id} || croak("No session id found");
-
-    # no file_path if no filename
-    return unless $filename;
-
     my $path;
 
     # if we have a temp file, return it
     if ($self->{tempfile}) {
         $path = $self->{tempfile};
     } elsif ($self->{media_id}) {
-        # return path based on if object has been committed to db yet
+        # return path based on media_id if object has been committed to db
+        my $instance = Krang::Conf->instance;
+        my $session_id = $session{_session_id} || croak("No session id found");
+
         $path = catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename});
     }
 
@@ -786,12 +783,20 @@ sub revert {
 
 =item $thumbnail_path = $media->thumbnail_path();
 
-Returns the path to the thumbnail (if media is an image).  Valid image types are stored in IMAGE_TYPES constant. Will create thumbnail if first time called.
+=item $thumbnail_path = $media->thumbnail_path(relative => 1);
+
+Returns the path to the thumbnail (if media is an image).  Valid image
+types are stored in IMAGE_TYPES constant. Will create thumbnail if
+first time called.  If relative is set to 1, returns a path relative
+to KrangRoot.
+
+Returns undef for media objects that are not images.
 
 =cut
 
 sub thumbnail_path {
     my $self = shift;
+    my %args = @_;
     my $root = KrangRoot;
     my $filename = $self->{filename};
     if ($self->filename()) {
@@ -807,16 +812,19 @@ sub thumbnail_path {
         if ($is_image) {    
             # path is the same as the file path with t__ in front of
             # the filename
-            my $path = catfile((splitpath($self->file_path))[1], "t__$filename");
+            my $path = catfile((splitpath($self->file_path(relative => $args{relative})))[1], "t__$filename");
             if (not -f $path) {
                 my $img = Imager->new();
                 $img->open(file=>$self->file_path()) || croak $img->errstr();
                 my $thumb = $img->scale(xpixels=>THUMBNAIL_SIZE,ypixels=>THUMBNAIL_SIZE,type=>'min');
                 $thumb->write(file=>$path) || croak $thumb->errstr;
             } 
+
+
             return $path;
         }
     }
+    return undef;
 }
 
 =item $media->checkout() || Krang::Media->checkout($media_id)
