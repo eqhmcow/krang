@@ -1038,10 +1038,18 @@ sub find_story_row_handler {
     # story_id
     $row->{story_id} = $story->story_id();
 
-    # url
+    # format url to fit on the screen and to link to preview
     my $url = $story->url();
-    $url =~ s!/!/ !g;
-    $row->{url} = $url;
+    my @parts = split('/', $url);
+    my @url_lines = (shift(@parts), "");
+    for(@parts) {
+        if ((length($url_lines[-1]) + length($_)) > 15) {
+            push(@url_lines, "");
+        }
+        $url_lines[-1] .= "/" . $_;
+    }
+    $row->{url} = join('<br>', 
+                       map { qq{<a href="javascript:preview_story($row->{story_id})">$_</a>} } @url_lines);
 
     # title
     $row->{title} = $story->title();
