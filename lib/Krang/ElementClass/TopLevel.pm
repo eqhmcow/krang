@@ -135,6 +135,19 @@ default implementation does nothing.
 
 sub delete_hook {}
 
+=item C<< $bool = $class->publish_check(element => $element) >>
+
+This method is called before publishing the story via a scheduled
+publish job (not in the UI).  If this method returns 0 the publish
+won't happen.  This may be used to implement a "Holding" desk where
+stories won't be automatically published, for example.
+
+The default implementation just returns 1 in all cases.
+
+=cut
+
+sub publish_check { 1 }
+
 =back
 
 =cut

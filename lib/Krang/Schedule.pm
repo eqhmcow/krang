@@ -818,6 +818,8 @@ sub run {
     %seen = ();
     @story_ids = grep { not $seen{$_}++ } @story_ids;
 
+    my %deferred_stories;
+
     # publish accumulated stories and/or media if any
     # publish supercedes expiration
     if (not $SCH_DEBUG and (@media_ids || @story_ids)) {
@@ -836,11 +838,24 @@ sub run {
         }
         if (@story_ids) {
             my @stories = Krang::Story->find(story_id => [@story_ids]);
-            eval {$publisher->publish_story(story => \@stories);};
+
+            # filter out stories not ready to be published, put them
+            # into deferred list
+            my @to_publish;
+            foreach my $story (@stories) {
+                if ($story->element->publish_check) {
+                    push(@to_publish, $story);
+                } else {
+                    $deferred_stories{$story->story_id} = 1;
+                }
+            }                
+
+            eval {$publisher->publish_story(story => \@to_publish);};
             if ($@) {
                 critical("Attempt to publish failed: $@");
             } else {
-                info("Published story id(s): " . join(", ", @story_ids));
+                info("Published story id(s): " . 
+                     join(", ", map { $_->story_id } @to_publish));
             }
         }
 
@@ -854,6 +869,11 @@ sub run {
         my ($action, $context, $schedule_id, $object_id, $type, $repeat) =
           map {$obj->{$_}}
             qw/action context schedule_id object_id object_type repeat/;
+
+        # skip objects for deferred stories
+        next if $obj->{action} eq 'publish' and
+                $obj->{object_type} eq 'story' and
+                $deferred_stories{$obj->{object_id}};
 
         # what do we do in case of a failure
         if ($SCH_DEBUG) {

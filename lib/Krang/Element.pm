@@ -1133,6 +1133,7 @@ BEGIN {
                           publish
                           fill_template
                           index_data
+                          publish_check
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 
