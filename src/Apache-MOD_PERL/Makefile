@@ -11,8 +11,8 @@
 
 
 # What are the names of the packages to build (not including ".tar.gz")
-APACHE_PACKAGE		= apache_1.3.27
-MODPERL_PACKAGE		= mod_perl-1.27
+APACHE_PACKAGE		= apache_1.3.29
+MODPERL_PACKAGE		= mod_perl-1.29
 
 
 # Where do we put the final builds?
