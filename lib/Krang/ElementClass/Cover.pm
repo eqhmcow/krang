@@ -2,7 +2,7 @@ package Krang::ElementClass::Cover;
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use base 'Krang::ElementClass::TopLevel';
 
 sub build_url {
     my ($self, %arg) = @_;

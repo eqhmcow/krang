@@ -286,9 +286,16 @@ sub create_class {
     # build list of subelements
     my $sub_elements = join(",\n\n", @sub);    
 
-    # base class for covers is Krang::ElementClass::Cover
-    my $base = ($data->{type} eq 'Covers') ? 'Krang::ElementClass::Cover' :
-                                             'Krang::ElementClass';
+    my $base;
+    if ($data->{type} eq 'Covers') {
+        # base class for covers is Krang::ElementClass::Cover
+        $base = 'Krang::ElementClass::Cover';
+    } elsif ($data->{top_level}) {
+        # others top-levels must be subclasses of TopLevel
+        $base = 'Krang::ElementClass::TopLevel';
+    } else {
+        $base = 'Krang::ElementClass';
+    }
 
     # open module for output
     open(MOD, ">", catfile($set_dir, "$ename.pm")) 
@@ -305,9 +312,6 @@ sub new {
     my \$pkg  = shift;
     my \%args = ( name      => '$ename',
 END
-
-    print MOD "                 top_level => 1,\n"
-      if $data->{top_level};
 
 print MOD <<END;
                  children  => [

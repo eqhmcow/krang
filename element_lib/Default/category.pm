@@ -14,7 +14,7 @@ moment.
 =cut
 
 
-use base 'Krang::ElementClass';
+use base 'Krang::ElementClass::TopLevel';
 
 sub new {
    my $pkg = shift;

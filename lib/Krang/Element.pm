@@ -161,7 +161,8 @@ sub init {
 
     # make sure we've got an object if this is a top_level
     croak("Krang::Element->new() called without object parameter!")
-      unless not($self->class->top_level) or $self->object;
+      if $self->class->isa('Krang::ElementClass::TopLevel') and
+        not $self->object;
 
     # setup data, using default value if set
     $self->data($have_data ? $data : $self->{class}->default);
@@ -479,7 +480,7 @@ sub save {
 
     # check top-levelitude
     croak("Unable to save() non-top-level element.")
-      unless $self->{class}->top_level();
+      unless $self->{class}->isa('Krang::ElementClass::TopLevel');
 
     if (defined $self->{element_id}) {
         # update data
@@ -704,7 +705,7 @@ sub delete {
     if (ref $self) {
         # check top-levelitude
         croak("Unable to save() non-top-level element.")
-          unless $self->{class}->top_level();
+          unless $self->{class}->isa('Krang::ElementClass::TopLevel');
 
         # check for ID 
         croak("Unable to delete() non-saved element.")    
@@ -1019,7 +1020,6 @@ BEGIN {
                           bulk_edit
                           required
                           reorderable
-                          top_level
                           hidden
                           allow_delete
                           url_attributes

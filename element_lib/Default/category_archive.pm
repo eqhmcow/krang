@@ -2,7 +2,7 @@ package Default::category_archive;
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use base 'Krang::ElementClass::TopLevel';
 
 #use Krang::Story;
 

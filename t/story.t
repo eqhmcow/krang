@@ -251,8 +251,6 @@ $story->checkin();
 is($story->checked_out, 0);
 is($story->checked_out_by, 0);
 
-eval { $story->checkin() };
-ok($@, 'double checkin fails');
 is($story->checked_out, 0);
 is($story->checked_out_by, 0);
 

@@ -95,6 +95,8 @@ use Krang::Log qw(debug info);
 # load all Krang::ElementClass base classes, which will be used by
 # element sets
 use Krang::ElementClass;
+use Krang::ElementClass::TopLevel;
+use Krang::ElementClass::Cover;
 use Krang::ElementClass::CheckBox;
 use Krang::ElementClass::ListBox;
 use Krang::ElementClass::MediaLink;
@@ -197,7 +199,6 @@ sub _instantiate_top_levels {
         my $class_obj = $pkg->find_class(name => $top, set => $set);
         croak("Unable to find top-level element class '${set}::$top' while loading element set.")
           unless $class_obj;
-        $class_obj->top_level(1);
         $TOP_LEVEL{$set}{$top} = $class_obj;
     }
 }
