@@ -630,8 +630,8 @@ sub format_url {
     my @url_lines = split("\n",$url);
     if ($linkto) {
         # URL with links
-        $format_url_html = join('<br>', map { qq{<a href="$linkto">$_</a>} }
-                                @url_lines );
+        $format_url_html = qq{<a href="$linkto">} . 
+          join('<br>', @url_lines ) . qq{</a>};
     } else {
         # URL without links
         $format_url_html = join( '<br>', @url_lines );
