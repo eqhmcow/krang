@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in L<Krang::DataSet> with loading compressed C<.kds.gz> files
+and added a test for it.  Also fixed bug in dataset.t where it was not
+skipping all the tests that need TestSet1 when TestSet1 is not available
+[Perrin]
+
+=item *
+
 Fixed a bug in L<Krang::List> - default sort order for C<find> was by
 C<name>, it is now by C<parent_list_id>.  [Peter]
 

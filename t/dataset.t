@@ -17,7 +17,6 @@ foreach my $instance (Krang::Conf->instances) {
     }
 }
 
-
 BEGIN { use_ok('Krang::DataSet') }
 
 my $DEBUG = 0; # supresses deleting kds files at process end
@@ -58,6 +57,16 @@ END { unlink($jpath) if -e $jpath and not $DEBUG };
 
 # try an import, should work
 $cset->import_all();
+
+# now try it compressed
+my $lpath = catfile(KrangRoot, 'tmp', 'lll.kds.gz');
+$cset->write(path => $lpath, compress => 1);
+ok(-e $lpath and -s $lpath);
+END { unlink($lpath) if -e $lpath and not $DEBUG };
+
+# and make sure we can load it compressed
+ok( my $lset = Krang::DataSet->new( path => $lpath ), 'create DataSet for compressed file');
+$lset->import_all();
 
 # try an import with no_update, should fail
 eval { $cset->import_all(no_update => 1); };
@@ -454,47 +463,46 @@ END{ (Krang::Desk->find(name => $ldesk->name))[0]->delete() }
 END{ (Krang::Group->find(name => $lgroup->name))[0]->delete() }
 END{ (Krang::User->find(login => $luser->login))[0]->delete() }
 
-# create a story with an element tree and make sure it gets through an
-# export/import intact
-# create a new story
-my $big = Krang::Story->new(categories => [$category],
+SKIP: {
+    skip('Element tests only work for TestSet1', 1)
+      unless (InstanceElementSet eq 'TestSet1');
+    # create a story with an element tree and make sure it gets through an
+    # export/import intact
+    # create a new story
+    my $big = Krang::Story->new(categories => [$category],
                             title      => "Big",
                             slug       => "big",
                             class      => "article");
-$big->element->child('deck')->data("DECK DECK DECK");
-$big->save();
+    $big->element->child('deck')->data("DECK DECK DECK");
+    $big->save();
 
-my $bset = Krang::DataSet->new();
-$bset->add(object => $big);
+    my $bset = Krang::DataSet->new();
+    $bset->add(object => $big);
 
-ok(Krang::Story->find(url => $big->url));
-$big->delete();
-ok(not Krang::Story->find(url => $big->url));
+    ok(Krang::Story->find(url => $big->url));
+    $big->delete();
+    ok(not Krang::Story->find(url => $big->url));
 
-# first test to see if story URL conflict is caught
-my $cstory = Krang::Story->new(categories => [$category2, $category],
+    # first test to see if story URL conflict is caught
+    my $cstory = Krang::Story->new(categories => [$category2, $category],
                                title      => "Big",
                                slug       => "big",
                                class      => "article");
 
-$cstory->save;
+    $cstory->save;
 
-eval { $bset->import_all() };
+    eval { $bset->import_all() };
 
-like( $@, qr/A story object with a non-primary url/);
+    like( $@, qr/A story object with a non-primary url/);
 
-$cstory->delete;
+    $cstory->delete;
 
-$bset->import_all();
-($big) = Krang::Story->find(url => $big->url);
-ok($big);
-END { $big->delete };
+    $bset->import_all();
+    ($big) = Krang::Story->find(url => $big->url);
+    ok($big);
+    END { if (defined $big) { $big->delete() } };
 
-is($big->element->child('deck')->data, "DECK DECK DECK");
-
-SKIP: {
-    skip('Element tests only work for TestSet1', 1)
-      unless (InstanceElementSet eq 'TestSet1');
+    is($big->element->child('deck')->data, "DECK DECK DECK");
 
     # create a pair of stories that point to each other in a circle
     my $jack = Krang::Story->new(categories => [Krang::Category->find(category_id => $category->category_id)],

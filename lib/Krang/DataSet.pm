@@ -148,7 +148,7 @@ sub new {
 
 	my $z = "";
 	$z = "z" if $path =~ /\.gz$/;
-	my $result = system("tar -xf$z ". 
+	my $result = system("tar -x${z}f ". 
 	  (file_name_is_absolute($path) ? $path : rel2abs($path)));
 	
         chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
