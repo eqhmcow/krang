@@ -59,8 +59,9 @@ use constant STORY_FIELDS =>
 # called by get_set_with_notify attibutes.  Catches changes that must
 # invalidate the URL cache.
 sub _notify {
-    my ($self, $which) = @_;
-    return unless exists $self->{url_attributes}{$which};
+    my ($self, $which, $old, $new) = @_;
+    return unless exists $self->{url_attributes}{$which} and 
+      defined $old ? ($old ne $new) : (not defined $new);
     $self->{url_cache} = [];
 }
 
@@ -442,7 +443,7 @@ sub init {
       { map { $_ => 1 } $self->{element}->url_attributes };
 
     # setup defaults
-    $self->{version}        = 1;
+    $self->{version}        = 0;
     $self->{priority}       = 2;
     $self->{checked_out}    = 1;
     $self->{checked_out_by} = $session{user_id};
@@ -548,6 +549,9 @@ sub save {
     # make sure it's got a unique URI
     $self->_verify_unique();
 
+    # update the version number
+    $self->{version}++ unless $args{keep_version};
+
     # save element tree, populating $self->{element_id}
     $self->_save_element();
 
@@ -565,9 +569,6 @@ sub save {
 
     # save a serialized copy in the version table
     $self->_save_version;
-    
-    # update the version number
-    $self->{version}++ unless $args{keep_version};
 }
 
 # save core Story data
@@ -800,7 +801,7 @@ stories.
 
 =item version
 
-Combined with C<story_id> (and only C<story_id), loads a specific
+Combined with C<story_id> (and only C<story_id>), loads a specific
 version of a story.  Unlike C<revert()>, this object has C<version>
 set to the actual version number of the loaded object.
 
