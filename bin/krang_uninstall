@@ -1,0 +1,114 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use Getopt::Long;
+use Pod::Usage;
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+=pod
+
+=head1 NAME
+
+krang_uninstall - delete a krang install
+
+=head1 SYNOPSIS
+
+  krang_uninstall 
+
+=head1 DESCRIPTION
+
+This script will uninstall a krang instance by means
+of database, init script, and file removal.
+
+This script must be run as root, unless you have a working 'sudo' with
+NOPASSWD setup in which case krang_uninistall will use that to delete
+init scripts, etc.
+
+Please use this script with utmost caution!
+
+=head1 OPTIONS
+  
+    --verbose     - print a running dialogue of what happens, otherwise
+                  actions are performed silently.
+
+=cut
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Term::Prompt qw(prompt);
+use Krang::Script;
+use Krang::Conf qw(KrangRoot HostName InstanceDBName DBUser DBPass);
+
+my ($help, $man);
+my $verbose;
+
+pod2usage(2) unless
+  GetOptions(help         => \$help,
+             man          => \$man,
+             verbose => \$verbose,
+            );
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+exit 1
+      unless prompt("y", "This program will totally and permanently remove this krang installation.\n\nAre you sure you
+want to proceed?", "y/n", "y");
+
+# will need sudo?
+my $sudo = "";
+if ($< != 0 or $> != 0) {
+    $sudo = "sudo";
+}
+
+# stop krang services
+system($ENV{KRANG_ROOT}."/bin/krang_ctl stop");
+
+# delete init scripts
+
+my $init_script = "/etc/init.d/krang-". HostName .".init";
+
+if (-f $init_script) {
+    print "\nDeleting Krang init.d script '$init_script'\n\n" if $verbose;
+    system("$sudo rm $init_script");
+} else {
+    print "\nNo init script found at $init_script, no init script delete.\n\n" if $verbose;
+}
+
+# drop all databases
+my $v = $verbose ? '--verbose' : '';
+
+system($ENV{KRANG_ROOT}."/bin/krang_createdb --destroy --no_create --no_prompt $v");
+
+# now blow all files away!
+print "\nNow removing all files...\n\n" if $verbose;
+system("rm -rf $ENV{KRANG_ROOT}");
+
+exit(1);
