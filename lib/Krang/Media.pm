@@ -344,9 +344,9 @@ sub save {
             my @media_digits = split(//, $media_id);
             push( @media_id_path, join('',@media_digits[0..2]) );
             if ($media_digits[6]) {
-                push(@media_id_path, @media_digits[4..6]);
+                push(@media_id_path, @media_digits[3..6]);
             } elsif ($media_digits[5]) {
-                push(@media_id_path, @media_digits[4..5]);
+                push(@media_id_path, @media_digits[3..5]);
             } elsif ($media_digits[4]) {
                 push(@media_id_path,@media_digits[3..4]);
             } elsif ($media_digits[3]) {
@@ -384,9 +384,9 @@ sub save {
             my @media_digits = split(//, $media_id);
             push( @media_id_path, join('',@media_digits[0..2]) );
             if ($media_digits[6]) {
-                push(@media_id_path, @media_digits[4..6]);
+                push(@media_id_path, @media_digits[3..6]);
             } elsif ($media_digits[5]) {
-                push(@media_id_path, @media_digits[4..5]);
+                push(@media_id_path, @media_digits[3..5]);
             } elsif ($media_digits[4]) {
                 push(@media_id_path,@media_digits[3..4]);
             } elsif ($media_digits[3]) {
