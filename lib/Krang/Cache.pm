@@ -82,6 +82,7 @@ yet exist it will be created.
 sub new {
     my ($pkg, %arg) = @_;
     my $self = bless({}, $pkg);
+    return $self if CACHE_OFF;
 
     my $name = $arg{name} || croak("Missing required name parameter");
     $self->{name} = $name;
@@ -114,7 +115,10 @@ C<undef> even if you just called write()!
 
 =cut
 
-sub read { $_[0]->{mmap}->read($_[1]); }
+sub read { 
+    return if CACHE_OFF;
+    $_[0]->{mmap}->read($_[1]); 
+}
 
 =item C<< $cache->write($id, $obj) >>
 
@@ -122,7 +126,10 @@ Writes an object to the cache, keyed by ID.
 
 =cut
 
-sub write { $_[0]->{mmap}->write($_[1], $_[2]); }
+sub write { 
+    return if CACHE_OFF;
+    $_[0]->{mmap}->write($_[1], $_[2]); 
+}
 
 =item C<< $cache->delete($id) >>
 
@@ -130,7 +137,10 @@ Deletes an object from the cache, keyed by ID.
 
 =cut
 
-sub delete { $_[0]->{mmap}->delete($_[1]); }
+sub delete { 
+    return if CACHE_OFF;
+    $_[0]->{mmap}->delete($_[1]); 
+}
 
 =item C<< $cache->clear() >>
 
@@ -139,6 +149,7 @@ Clears all objects from the cache.
 =cut
 
 sub clear {
+    return if CACHE_OFF;
     my $self = shift;
     my $mmap = $self->{mmap};
     foreach my $key ($mmap->entries()) {

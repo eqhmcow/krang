@@ -117,6 +117,11 @@ use Krang::Story;
 use Krang::Template;
 use Krang::Group;
 use Krang::Log qw(debug assert ASSERT);
+use Krang::Cache;
+
+# load the cache
+our $cache = Krang::Cache->new(name => 'category');
+
 
 #
 # Package Variables
@@ -144,7 +149,7 @@ my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW, 'parent_id';
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
 			new_hash_init => 'hash_init',
-			get => [CATEGORY_RO, qw(may_see may_edit)],
+			get => [CATEGORY_RO],
 			get_set => [CATEGORY_RW];
 
 
@@ -230,6 +235,56 @@ sub preview_url {
     return $url;
 }
 
+=item * may_see (read-only)
+
+Returns 1 if the current user has permissions to see the category, 0
+otherwise.
+
+=cut
+
+sub may_see {
+    my $self = shift;
+    my $user_id = $ENV{REMOTE_USER} || croak("No user_id set");
+    return $self->{may_see}{$user_id} if exists $self->{may_see}{$user_id};
+
+    # compute permission for this user
+    $self->_load_permissions($user_id);
+    return $self->{may_see}{$user_id};
+}
+
+=item * may_edit (read-only)
+
+Returns 1 if the current user has permissions to edit the category, 0
+otherwise.
+
+=cut
+
+sub may_edit {
+    my $self = shift;
+    my $user_id = $ENV{REMOTE_USER} || croak("No user_id set");
+    return $self->{may_edit}{$user_id} if exists $self->{may_edit}{$user_id};
+
+    # compute permission for this user
+    $self->_load_permissions($user_id);
+    return $self->{may_see}{$user_id};
+}
+
+# loads permissions for a particular user_id
+sub _load_permissions {
+    my ($self, $user_id) = @_;
+    my $dbh = dbh;
+        
+    ($self->{may_see}{$user_id}, $self->{may_edit}{$user_id}) 
+      = $dbh->selectrow_array(
+        'SELECT (sum(cgpc.may_see) > 0), (sum(cgpc.may_edit) > 0)
+         FROM category AS cat
+         LEFT JOIN category_group_permission_cache AS cgpc 
+           ON cgpc.category_id = cat.category_id
+         LEFT JOIN user_group_permission AS ugp 
+           ON cgpc.group_id = ugp.group_id
+         WHERE ugp.user_id = ? AND cat.category_id = ?', 
+         undef, $user_id, $self->{category_id});
+}
 
 =back
 
@@ -335,8 +390,9 @@ sub init {
                                            object => $self);
 
     # Set up permissions
-    $self->{may_see} = 1;
-    $self->{may_edit} = 1;
+    my $user_id = $ENV{REMOTE_USER} || croak("No user_id set");
+    $self->{may_see}{$user_id} = 1;
+    $self->{may_edit}{$user_id} = 1;
 
     return $self;
 }
@@ -406,8 +462,10 @@ sub delete {
     my $dbh = dbh();
     $dbh->do($query, undef, $id);
 
-    # verify deletion was successful
-    return Krang::Category->find(category_id => $id) ? 0 : 1;
+    # delete from cache
+    $cache->delete($id);
+
+    return 1;
 }
 
 
@@ -673,7 +731,7 @@ The method croaks if an invalid search criteria is provided or if both the
 =cut
 
 sub find {
-    my $self = shift;
+    my $pkg = shift;
     my %args = @_;
 
     # grab ascend/descending, limit, and offset args
@@ -689,6 +747,21 @@ sub find {
     # Can't get count and ids_only at the same time
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.") if ($count && $ids_only);
+
+    # if the is just a request for a single category object look in
+    # the cache first
+    if (exists $args{category_id} and
+        scalar(keys(%args)) == 1  and
+        not $count and
+        not $ids_only) {
+        debug("CACHE READ: Category $args{category_id}");
+        if (my $category = $cache->read($args{category_id})) {
+            debug("CACHE HIT: Category $args{category_id}");
+            assert(UNIVERSAL::isa($category, 'Krang::Category')) if ASSERT;
+            assert($category->category_id == $args{category_id}) if ASSERT;
+            return $category;
+        }
+    }
 
     # set up WHERE clause and @params, croak unless the args are in
     # CATEGORY_RO or CATEGORY_RW
@@ -820,13 +893,20 @@ sub find {
     my @categories = ();
     while (my $row = $sth->fetchrow_hashref()) {
         # Make an object
-        my $new_category = bless($row, $self);
+        my $new_category = bless({%$row}, $pkg);
 
         # set '_old_dir' and '_old_url'
         $new_category->{_old_dir} = $new_category->{dir};
         $new_category->{_old_url} = $new_category->{url};
 
-        push(@categories, $row);
+        # setup permissions
+        $new_category->{may_see}  = { $user_id => $row->{may_see}  };
+        $new_category->{may_edit} = { $user_id => $row->{may_edit} };
+
+        push(@categories, $new_category);
+
+        # save in the cache
+        $cache->write($new_category->{category_id}, $new_category);
     }
 
     # finish statement handle
@@ -943,6 +1023,9 @@ sub save {
         $self->{_old_url} = $self->{url};
     }
 
+    # save in the cache
+    $cache->write($self->{category_id}, $self);
+
     return $self;
 }
 
@@ -1011,11 +1094,8 @@ SQL
                  undef, $self->{url}, $self->{category_id});
     }
 
-    if (keys %ids) {
-        for (Krang::Category->find(category_id => [keys %ids])) {
-            $failures++ unless $_->url =~ /^$self->{url}/;
-        }
-    }
+    # clear the cache
+    $cache->clear();    
 
     return $failures ? 0 : 1;
 }

@@ -293,6 +293,12 @@ is($success, 1, 'site delete()');
     is($tmp->may_see, 1, "read-only may_see => 1");
     is($tmp->may_edit, 0, "read-only may_edit => 0");
 
+    # Check that reloading may_see and may_edit works
+    $tmp->{may_see}  = {};
+    $tmp->{may_edit} = {};
+    is($tmp->may_see, 1, "read-only may_see => 1 loads");
+    is($tmp->may_edit, 0, "read-only may_edit => 0 loads");
+
     # Check permissions for descendant of that category
     $ptest_cat_id = $ptest_categories[1]->category_id();
     ($tmp) = Krang::Category->find(category_id=>$ptest_cat_id);
