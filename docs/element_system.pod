@@ -40,9 +40,10 @@ set can be configured to inherit elements from other element sets.
 For example, Flex might inherit from the Default set.
 
 An element set may also contain a file with default templates, called
-F<templates.kds>.  This file must be a valid HREF[Krang
-Dataset|xml.html] file containing only L<Krang::Template> objects.  If
-present, it will be loaded into the database by C<krang_createdb>.
+F<templates.kds>.  This file must be a valid
+HREF[Krang::Dataset|xml.html] file containing only L<Krang::Template>
+objects.  If present, it will be loaded into the database by
+C<krang_createdb>.
 
 Finally, elements sets may include a F<lists.conf> file describing
 lists available for use by the element set and in the user interface.
@@ -122,7 +123,7 @@ contain sub-elements.  Here's an example data element,
 Flex::paragraph, which inherits from Krang::ElementClass::TextBox:
 
   package Flex::paragraph;
-  use base q(Krang::ElementClass::TextBox);
+  use base qw(Krang::ElementClass::TextBox);
 
   sub new {
       my $pkg = shift;

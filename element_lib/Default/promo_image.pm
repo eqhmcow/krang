@@ -9,7 +9,7 @@ Default::promo_image
 =head1 DESCRIPTION
 
 Default promo image element class for Krang. Image has a caption and copyright
-that will override assoicated media caption/copyright if set.
+that will override associated media caption/copyright if set.
 
 =cut
 

@@ -90,7 +90,7 @@ Krang::Element - element data objects
 This module implements elements in Krang.  Krang elements belong to a
 single element class, see L<Krang::ElementClass> for details.  Krang
 elements exist to contain child elements and/or store data.  All
-complex functionality, like C<burn()> and C<display_form()>, is proxied
+complex functionality, like C<publish()> and C<display_form()>, is proxied
 to the element class.
 
 =head1 INTERFACE
