@@ -38,7 +38,8 @@ to the install.pod found in the docs directory.
         CGI.pm-2.89              
         HTML-Template-2.6        
 	HTML-Template-Expr-0.04
-        CGI-Application-3.0
+        Parse-RecDescent-1.94
+	CGI-Application-3.0
         Text-Tabs+Wrap-2001.0929 
         HTML-Tagset-3.03         
         HTML-Parser-3.27         
