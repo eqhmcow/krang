@@ -301,6 +301,8 @@ sub check_alert {
         my $schedule = Krang::Schedule->new(    object_type => 'alert',
                                                 object_id => $alert_id,
                                                 action => 'send',
+                                                date => localtime,
+                                                repeat      => 'never',
                                                 context     => [ user_id => $history->user_id ]
                                             );   
         $schedule->save(); 
