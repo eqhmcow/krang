@@ -462,12 +462,12 @@ $sched = Krang::Schedule->new(
 $sched->save();
 
 # run the job - should fail.
-eval { $sched->execute(); };
+$sched->execute();
 
-$@ ? pass('Krang::Schedule->execute(bogus story)') : fail('Krang::Schedule->execute(bogus story)');
+# in failure, the job should delete itself.
+my ($dead_sched_count) = Krang::Schedule->find(count => 1, schedule_id => $sched->schedule_id);
 
-# cleanup.
-$sched->delete();
+is($dead_sched_count, 0, 'Krang::Schedule(bogus id)');
 
 
 # create a schedule object to publish a story hourly.
@@ -542,7 +542,7 @@ is($#schedule_files, -1, 'deleting repeat(never) jobs');
 # alert
 
 
-# bad test - create a schedule object with a bogus story_id.
+# bad test - create a schedule object with a bogus alert_id.
 # execute should fail.
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 
@@ -557,12 +557,12 @@ $sched = Krang::Schedule->new(
 $sched->save();
 
 # run the job - should fail.
-eval { $sched->execute(); };
+$sched->execute();
 
-$@ ? pass('Krang::Schedule->execute(bogus alert)') : fail('Krang::Schedule->execute(bogus alert)');
+# in failure, the job should delete itself.
+($dead_sched_count) = Krang::Schedule->find(count => 1, schedule_id => $sched->schedule_id);
 
-# cleanup.
-$sched->delete();
+is($dead_sched_count, 0, 'Krang::Schedule(bogus id)');
 
 
 # NOTE:  Assumptions are being made that alerts function properly.
