@@ -127,8 +127,10 @@ foreach my $type (@types) {
     if ($type eq 'template') {
         my @templates = Krang::Template->find( category_id => undef);
         @templates = map { $_->filename } @templates;
-
-        is("@ret_sites", $sitenames." @templates", "Site listing in $type");
+   
+        my $list = $sitenames;
+        $list .= " @templates" if @templates; 
+        is("@ret_sites", $list, "Site listing in $type");
 
          my $template_path = catfile(KrangRoot, 't','template','test.tmpl');
          is($ftp->put( $template_path ), 'test.tmpl', "Put template test.tmpl, not associated with category" );
