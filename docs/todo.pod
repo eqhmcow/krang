@@ -152,6 +152,16 @@ Chooser, one that shows the hierarchtical relationships between
 elements.  The current category chooser (built by L<Krang::Widget>)
 can be used as a guide.
 
+=item Template UI - variable browser (future)
+
+One of the hardest parts of template development in Krang is that the
+CMS provides no way for template developers to see what variables are
+available to them, or what their makeup is.
+
+Some kind of element-variable browser would be extremely helpful.  How
+it looks and how the user interacts with it still needs to be
+determined, but something useful should be possible.
+
 
 
 =item Fixing Stylesheet issues in the Krang UI/Making Krang resizeable (future).
@@ -222,6 +232,45 @@ an arbitrary depth.
 The MD5 Salt should be built at install.  Care is needed to make sure
 this doesn't break existing installs on upgrade.
 
+
 =back
 
+=head2 Other
+
+Everything Krang-related that's not part of the application itself.
+
+=over
+
+=item * The Website
+
+The current Krang website was put together in about 15 minutes,
+perhaps less.  It needs a redesign.  Getting rid of the IFrames would
+be a nice start.
+
+A long-term goal would be the eat-your-own-dogfood goal - the site
+should be managed by Krang.  Two major components are needed:
+
+=over
+
+=item 1
+
+An element library & templates to serve the site
+
+=item 2
+
+A script to take Krang POD (both in /lib and /docs) and add it to the
+site - the element library would need a good 'POD Article' story type.
+
+=back
+
+Publish-to-FTP functionality (see above) would also be helpful here.
+
+=item * Documentation
+
+Krang is still missing some key documentation.  The biggest hole is a
+real user guide, something that could be handed to non-technical users
+to help them use the site.
+
+
+=back
 
