@@ -755,24 +755,24 @@ While we use C<fill_template_args> in the previous examples, you can call
 And the additional parameter(s) will get passed along to C<fill_template()> method of the child object.  It is up to you, of course, to make use of it on that end - the standard Krang implementation only makes use of C<fill_template_args>.
 
 
-=head1 Creating A Specialty Page
+=head1 Creating A Wall Page
 
 (Need further explanation of what a Specialty/Wall page is here)
 
-To create a specialty page in Krang, you need to take the content that will make up the page (minus any header/footers that are added by the category), wrap it in delimiters (using a function provided by Krang), and include it in the HTML stream that makes up the full output from a published story.  During post-processing, Krang will take the specialty page from the block of HTML, wrap it in category headers/footers as needed, and write the page out to disk on its own accord.
+To create a wall page in Krang, you need to take the content that will make up the page (minus any header/footers that are added by the category), wrap it in delimiters (using a function provided by Krang), and include it in the HTML stream that makes up the full output from a published story.  During post-processing, Krang will take the wall page from the block of HTML, wrap it in category headers/footers as needed, and write the page out to disk on its own accord.
 
-The process by which the Specialty page is created is roughly as follows:
+The process by which the Wall page is created is roughly as follows:
 
  my $html = $publish_results_to_this_point;
 
- my $specialty_html = generate_specialty_page();
+ my $wall_html = generate_wall_page();
 
- $html .= $publisher->begin_special_content() . $specialty_html . $publisher->end_special_content();
+ $html .= $publisher->begin_special_content() . $wall_html . $publisher->end_special_content();
 
  return $html;
 
 
-=head2 Example - Generating a Specialty First Page
+=head2 Example - Generating a Wall First Page
 
 In this case we have a story consisting of three pages, with the following element tree:
 
@@ -793,24 +793,24 @@ In this case we have a story consisting of three pages, with the following eleme
              - Paragraph   (subclass of Krang::ElementClass::TextArea)
              - Paragraph   (subclass of Krang::ElementClass::TextArea)
 
-We want have two goals here - first, we want to build a three-page story out of this tree.  Second, we want to create a specialty page using the content of the first page, and a specialty template.
+We want have two goals here - first, we want to build a three-page story out of this tree.  Second, we want to create a wall page using the content of the first page, and a wall template.
 
 The best angle of attack here will be to work from the Story element - we want to manipulate content depending on which page element we're on, and page elements don't know about eachother.  Additionally, we need access to elements that won't be available to Page elements.
 
 =head3 fill_template() - Story Element
 
-In overriding the C<fill_template()> method in the story element, we're going to maintain two separate hashes of parameters - one will be used for the regular story template, the other for the specialty page template.
+In overriding the C<fill_template()> method in the story element, we're going to maintain two separate hashes of parameters - one will be used for the regular story template, the other for the wall page template.
 
  sub fill_template {
      my $self = shift;
      my %args = @_;
 
      my %params;
-     my %specialty_params;
+     my %wall_params;
 
-     my $special_template = $self->_load_template(@_,
-                                                  filename => 'special.tmpl',
-                                                  search_path => ['/foo/bar']);
+     my $wall_template = $self->_load_template(@_,
+                                               filename => 'wall.tmpl',
+                                               search_path => ['/foo/bar']);
 
      my $template  = $args{tmpl};
      my $element   = $args{element};
@@ -818,7 +818,7 @@ In overriding the C<fill_template()> method in the story element, we're going to
      my $story     = $publisher->story();
 
      $params{title} = $story->title();
-     $special_params{title} = $story->title();
+     $wall_params{title} = $story->title();
 
 
      # retrieve the list of child elements
@@ -831,24 +831,24 @@ In overriding the C<fill_template()> method in the story element, we're going to
 
          unless (exists($params{$name})) {
              $params{$name} = $html;
-             $special_params{$name} = $html;
+             $wall_params{$name} = $html;
          }
 
          if ($name eq 'page') {
              push @{$params{"$name_loop"}}, { $name => $html };
-             unless (exists($special_params{"$name_loop"})) {
-                 push @{$special_params{"$name_loop"}}, { $name => $html };
+             unless (exists($wall_params{"$name_loop"})) {
+                 push @{$wall_params{"$name_loop"}}, { $name => $html };
              }
          }
      }
 
      $template->param(%params);
-     $special_template->param(%special_params);
+     $wall_template->param(%wall_params);
 
      my $html = $template->output();
-     my $special_html = $special_template->output();
+     my $wall_html = $wall_template->output();
 
-     $html .= $publisher->begin_special_content() . $special_html . $publisher->end_special_content();
+     $html .= $publisher->begin_special_content(filename => 'wall.html') . $wall_html . $publisher->end_special_content();
 
      return $html;
 
