@@ -9,15 +9,16 @@ our %TEST_PACKAGES = map { ($_,1) } (qw( Krang::Alert Krang::Category Krang::Con
 
 # Hash of known field names for "order_by" test
 our %ORDER_BY_FIELD = (
-                       Krang::Alert => 'alert_id', 
+                       Krang::Alert    => 'alert_id', 
                        Krang::Category => 'category_id',
-                       Krang::Contrib => 'contrib_id',
-                       Krang::Group => 'group_id',
-                       Krang::Media => 'media_id',
-                       Krang::Site => 'site_id',
-                       Krang::Story => 'story_id',
+                       Krang::Contrib  => 'contrib_id',
+                       Krang::Group    => 'group_id',
+                       Krang::List     => 'list_id',
+                       Krang::Media    => 'media_id',
+                       Krang::Site     => 'site_id',
+                       Krang::Story    => 'story_id',
                        Krang::Template => 'template_id',
-                       Krang::User => 'user_id',
+                       Krang::User     => 'user_id',
                       );
 
 # Check all Krang object modules
