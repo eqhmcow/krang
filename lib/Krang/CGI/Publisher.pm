@@ -114,7 +114,8 @@ sub publish_story_list {
     my $self = shift;
     my $query = $self->query;
 
-    my (@story_list,@media_list,@story_id_list,@media_id_list);
+    my (@story_list,@media_list,@story_id_list,@media_id_list,
+        @template_id_list);
 
     my @asset_id_list = $query->param('krang_pager_rows_checked');
 
@@ -132,12 +133,31 @@ sub publish_story_list {
         if (/^(\w+)_(\d+)$/) {
             push(@story_id_list, $2), next if $1 eq 'story';
             push(@media_id_list, $2), next if $1 eq 'media';
+            push(@template_id_list, $2), next if $1 eq 'template';
         }
         croak __PACKAGE__ . ": what to do with asset = '$1'??";
     }
 
 
     $t->param(asset_id_list => \@id_list);
+
+    # take care of templates first, they don't go to the next screen
+    if (@template_id_list) {
+        my $publisher = Krang::Publisher->new();
+        foreach my $template_id (@template_id_list) {
+            my ($template) = Krang::Template->find(template_id =>$template_id);
+            add_message('deployed', id => $template_id);
+            $publisher->deploy_template(template => $template);
+            $template->checkin;
+        }
+    }
+    
+    # if there are no stories and media, return to workspace directly
+    unless (@story_id_list or @media_id_list) {
+        $self->header_props(-uri => 'workspace.pl');
+        $self->header_type('redirect');
+        return "";
+    }       
 
     @story_list = Krang::Story->find(story_id => \@story_id_list) if @story_id_list;
     @media_list = Krang::Media->find(media_id => \@media_id_list) if @media_id_list;
