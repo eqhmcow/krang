@@ -313,8 +313,7 @@ sub datetime_chooser {
                                                                                 
     my @day_values = (1..31);
     my %day_labels = ();
-                                                                                
-    my @year_values = (1970..(localtime()->year() + 10));
+                                                                                    my @year_values = ((localtime()->year() - 10) .. (localtime()->year() + 10));
     my %year_labels = ();
 
     my @hour_values = (1..12);
@@ -463,7 +462,7 @@ sub date_chooser {
     my @day_values = (1..31);
     my %day_labels = ();
 
-    my @year_values = (1970..(localtime()->year() + 10));
+    my @year_values = ((localtime()->year() - 10)..(localtime()->year() + 10));
     my %year_labels = ();
 
     # Set up blanks if "no choice" IS allowed
