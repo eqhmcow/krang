@@ -28,7 +28,7 @@ sub input_form {
     if ($story) {
         my $story_id = $story->story_id;
         my ($story) = Krang::Story->find(story_id => $story_id);
-        $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .          
+        $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .
           qq{Title: "} . $story->title . qq{"<br>} . 
           qq{URL: <a href="#">} . $story->url . qq{</a></div>};
     }
@@ -93,7 +93,7 @@ sub serialize_xml {
 
     # add object
     my $story = $element->data;
-    $set->add(object => $story) if $story;
+    $set->add(object => $story, from => $element->object) if $story;
 }
 
 

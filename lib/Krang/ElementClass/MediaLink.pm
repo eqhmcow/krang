@@ -148,7 +148,7 @@ sub serialize_xml {
 
     # add object
     my $media = $element->data;
-    $set->add(object => $media) if $media;
+    $set->add(object => $media, from => $element->object) if $media;
 }
 
 =head1 NAME
