@@ -153,7 +153,8 @@ my $count = Krang::Template->find(count => 1, template_id => \@ids);
 is($count, scalar @ids, "Find - count");
 
 $i = 2;
-my @tmpls2 = Krang::Template->find(creation_date_like => '%2003%');
+my $year = (localtime)[5] + 1900;
+my @tmpls2 = Krang::Template->find(creation_date_like => "%${year}%");
 ok(@tmpls2);
 is(ref $_, 'Krang::Template', "Find - _like " . $i++) for @tmpls2;
 
@@ -164,7 +165,7 @@ my ($tmpl4) = Krang::Template->find(limit => 1,
 is($tmpl4->filename(), 't_w_c.tmpl', "Find - limit, offset, order_by");
 
 my @tmpls5 = Krang::Template->find(order_desc => 1,
-                                   creation_date_like => '%2003%',
+                                   creation_date_like => "%${year}%",
                                    category_id => $category->category_id);
 ok(@tmpls5);
 isa_ok($_, 'Krang::Template') for @tmpls5;
