@@ -108,11 +108,11 @@ $category5->save();
 
 # we should get an array of 5 objects back
 my @categories = Krang::Category->find(url_like => '%.com%',
-                                       order_by => 'url',
-                                       order_desc => 'asc');
+                                       order_by => 'element_id',
+                                       order_desc => 1);
 is(scalar @categories, 5, 'find() - quantity');
 isa_ok($_, 'Krang::Category') for @categories;
-is($categories[0]->url() =~ '/$', 1, 'find() - ordering');
+is($categories[0]->url() =~ '/bob5', 1, 'find() - ordering');
 
 # count test
 my $count = Krang::Category->find(count => 1,

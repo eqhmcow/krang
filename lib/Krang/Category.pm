@@ -40,7 +40,7 @@ Krang::Category - a means to access information on categories
 
   # a hash of search parameters
   my %params =
-  ( order_desc => 'asc',	# sort results in ascending order
+  ( order_desc => 1,		# result ascend unless this flag is set
     limit => 5,			# return 5 or less category objects
     offset => 1, 	        # start counting result from the
 				# second row
@@ -456,8 +456,8 @@ results are sorted with the 'category_id' field.
 
 =item * order_desc
 
-Specify this option with a value of 'asc' or 'desc' to return the results in
-ascending or descending sort order relative to the 'order_by' field
+Set this flag to '1' to sort results relative to the 'order_by' field in
+descending order, by default results sort in ascending order
 
 =back
 
@@ -472,7 +472,7 @@ sub find {
     my ($fields, @params, $where_clause);
 
     # grab ascend/descending, limit, and offset args
-    my $ascend = uc(delete $args{order_desc}) || ''; # its prettier w/uc() :)
+    my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
     my $order_by = delete $args{order_by} || 'category_id';
@@ -511,7 +511,7 @@ sub find {
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
-            if ($args{$arg} eq '') {
+            if (exists $args{$arg} && not defined $args{$arg}) {
                 $where_clause .= "$and $lookup_field IS NULL";
             } else {
                 $where_clause .= $like ? "$and $lookup_field LIKE ?" :

@@ -421,11 +421,6 @@ Result set is sorted in ascending order.
 If this argument is specified, the method will return a count of the categories
 matching the other search criteria provided.
 
-=item * order_desc
-
-Set this flag to '1' to sort results relative to the 'order_by' field in
-descending order, by default results sort in ascending order
-
 =item * ids_only
 
 Returns only user ids for the results found in the DB, not objects.
@@ -443,6 +438,11 @@ Sets the offset from the first row of the results to return.
 
 Specify the field by means of which the results will be sorted.  By default
 results are sorted with the 'user_id' field.
+
+=item * order_desc
+
+Set this flag to '1' to sort results relative to the 'order_by' field in
+descending order, by default results sort in ascending order
 
 =back
 
