@@ -206,6 +206,21 @@ BEGIN {
         }
     }
 
+    if (not @parts) {
+        if ($LOG_LEVEL_DEFAULT != 3) {
+            eval 'sub debug ($) { }';
+        } else {
+            eval 'sub debug    ($) { __PACKAGE__->log(level => "debug",    message => shift); }';
+        }
+
+        if ($LOG_LEVEL_DEFAULT == 1) {
+            eval 'sub info ($) { }';
+        } else {
+            eval 'sub info     ($) { __PACKAGE__->log(level => "info",     message => shift); }';
+        }
+
+    }
+
     # turn assertions on or off based on KRANG_ASSERT or Assertions
     # conf setting
     my $assert_on = exists $ENV{KRANG_ASSERT} ? $ENV{KRANG_ASSERT} :
@@ -342,17 +357,9 @@ sub log {
 
 Log a message at the debug level.  Available for export.
 
-=cut
-
-sub debug    ($) { __PACKAGE__->log(level => 'debug',    message => shift); }
-
 =item * info($msg)
 
 Log a message at the info level.  Available for export.
-
-=cut
-
-sub info     ($) { __PACKAGE__->log(level => 'info',     message => shift); }
 
 =item * critical($msg)
 
