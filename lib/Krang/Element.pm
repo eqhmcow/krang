@@ -620,28 +620,8 @@ to be unqiue within the element tree.  For example, the third
 paragraph element inside the second page element has the xpath
 "/page[1]/paragraph[2]".
 
-=cut
-
-sub xpath {
-    my $self = shift;
-    my $parent = $self->{parent};
-    return '/' unless defined $parent; # root's xpath is /
-    
-    return $parent->xpath() . ($parent->{parent} ? '/' : '') .
-      $self->name . '[' . $parent->_child_order($self) . ']';
-}
-
-# returns the place of the specified child within other children with
-# the same name
-sub _child_order {
-    my ($self, $child) = @_;
-    my $name = $child->name;
-    my $count = 0;
-    for (@{$self->{children}}) {
-        return $count if $_ == $child;
-        $count++ if $_->name eq $name;
-    }
-}
+This method is provided by L<Class::XPath>.  See the documentation for
+that module for more details.
 
 =item C<< ($para) = $element->match('/page[0]/paragraph[2]/' >>
 
@@ -669,115 +649,23 @@ in the element tree:
 
 =back
 
-The following XPath syntax elements are supported by match().  This
-list may grow as we find new uses for various constructions.
-
-=over
-
-=item name
-
-Selects a list of elements called 'name' in the element tree below the
-current element.
-
-=item /name
-
-Selects a list of elements called 'name' below the root of the element
-tree.
-
-=item //name
-
-Selects all elements with a matching name, anywhere in the element tree.
-
-=item parent/child/grandchild
-
-Selects a list of grandchildren for all children of all parents.
-
-=item parent[1]/child[2]
-
-Selects a single child by indexing into the children lists.
-
-=item parent[-1]/child[0]
-
-Selects the first child of the last parent.  In the real XPath they
-spell this 'parent[last()]/child[0]' but supporting the Perl syntax is
-practically free here.
-
-=back
+This method is provided by L<Class::XPath>.  See the documentation for
+that module for more details, including a full description of the
+syntax supported by match().
 
 =cut
 
-sub match {
-    my ($self, $xpath) = @_;
+# generate match() and xpath()
+use Class::XPath   
+  get_name => 'name',         # get the node name with the 'name' method
+  get_parent => 'parent',     # get parent with the 'parent' method
+  get_root   => 'root',       # call get_root($node) to get the root
+  get_children => 'children', # get children with the 'kids' method
 
-    # / is the root.  This should probably work as part of the
-    # algorithm, but it doesn't.
-    return $self->root if $xpath eq '/';
-
-    # break up an incoming xpath into a set of @patterns to match
-    # against a list of @target elements
-    my (@patterns, @targets);    
-
-    # target aquisition
-    if ($xpath =~ m!^//(.*)$!) {
-        $xpath = $1;
-        # this is a match-anywhere pattern, which should be tried on
-        # all nodes
-        foreach_element { push(@targets, $_) } $self->root();
-    } elsif ($xpath =~ m!^/(.*)$!) {
-        $xpath = $1;
-        # this match starts at the root
-        @targets = ($self->root());
-    } else {
-        # this match starts here
-        @targets = ($self);
-    }
-
-    # pattern breakdown
-    my @parts = split('/', $xpath);
-    for (@parts) {
-        if (/^\w+$/) {
-            # it's a straight name match
-            push(@patterns, { name => $_ });
-        } elsif (/^(\w+)\[(-?\d+)\]$/) {
-            # it's an indexed name
-            push(@patterns, { name => $1, index => $2 });
-        } else {
-            croak("Bad call to match(): '$xpath' contains unknown token '$_'");
-        }
-    }
-    croak("Bad call to match(): '$xpath' contains no search tokens.")
-      unless @patterns;
-        
-    # apply the patterns to all available targets and collect results
-    my @results = map { $_->_match(@patterns) } @targets;
-
-    return @results;
-}
-
-# the underlying match engine.  this takes a list of patterns and
-# applies them to child elements
-sub _match {
-    my ($self, @patterns) = @_;
-
-    # get pattern to apply to direct descendants
-    my $pat = shift @patterns;
-
-    # find matches and put in @results
-    my @results;
-    my @kids = grep { $_->name eq $pat->{name} } @{$self->{children}};
-    if (defined $pat->{index}) {
-        push @results, $kids[$pat->{index}]
-          if (abs($pat->{index}) <= $#kids);
-    } else {
-        push @results, @kids;
-    }
-
-    # all done?
-    return @results unless @patterns;
-
-    # apply remaining patterns on matching kids
-    return map { $_->_match(@patterns) } @results;
-}
+  get_attr_names => sub {},   # no attribs (yet?)
+  get_attr_value => sub {},   # 
+  get_content    => 'data',   # get content from the 'data' method
+  ;
 
 =back
 
