@@ -280,6 +280,10 @@ sub authz_handler ($$) {
         return OK;
     }
 
+    # always allow access to the CSS file and the logo - needed before
+    # login to display the login screen
+    return OK if $path =~ m!krang.css$! or $path =~ m!logo.png$!;
+
     # If user is logged in, we're done
     return OK if (defined($r->connection->user()));
 
