@@ -78,6 +78,7 @@ use Time::Piece::MySQL;
 use Krang::Category;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
+use Krang::History qw( add_history );
 
 #
 # Package Variables
@@ -290,6 +291,10 @@ SQL
         $self->{checked_out_by} = 0;
     }
 
+    add_history(    object => $self, 
+                    action => 'checkin',
+               );
+
     return $self;
 }
 
@@ -360,6 +365,10 @@ SQL
         $self->{checked_out_by} = $user_id;
     }
 
+    add_history(    object => $self, 
+                    action => 'checkout',
+               );
+
     return $self;
 }
 
@@ -391,6 +400,14 @@ sub delete {
     } else {
         $self = Krang::Template->checkout($id);
     }
+
+    # first delete history for this object
+    if ($self->{template_id}) {
+        Krang::History->delete(object => $self);
+    } else {
+        Krang::History->delete( object => ((Krang::Template->find(template_id => $id))[0]) );
+    }
+
 
     my $t_query = "DELETE FROM template WHERE template_id = ?";
     my $v_query = "DELETE FROM template_version WHERE template_id = ?";
@@ -464,6 +481,10 @@ WHERE template_id = ?
 SQL
 
     $dbh->do($query, undef, (1, 'now()', $self->{version}, 0, $id));
+
+    add_history(    object => $self, 
+                    action => 'deploy',
+               );
 
     return $self;
 }
@@ -801,6 +822,10 @@ SQL
     croak(__PACKAGE__ . "->revert(): Unable to deserialize object for " .
           "template id '$id' - $@") if $@;
 
+    add_history(    object => $self, 
+                    action => 'revert',
+               );
+
     # restore version number
     $self->{version} = $prsvd_version;
 
@@ -880,6 +905,10 @@ sub save {
 
     # get template_id for new objects
     $self->{template_id} = $dbh->{mysql_insertid} unless $id;
+
+    add_history(    object => $self, 
+                    action => 'save',
+               );
 
     return $self;
 }
