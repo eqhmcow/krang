@@ -106,7 +106,9 @@ isa_ok($publisher, 'Krang::Publisher');
 can_ok($publisher, ('publish_story', 'preview_story', 'unpublish_story',
                     'publish_media', 'preview_media', 'unpublish_media',
                     'asset_list', 'deploy_template', 'undeploy_template',
-                    'PAGE_BREAK', 'story', 'category', 'story_filename'));
+                    'PAGE_BREAK', 'story', 'category', 'story_filename',
+                    'publish_context', 'clear_publish_context'
+                   ));
 
 ############################################################
 # remove all currently deployed templates from the system
@@ -271,6 +273,8 @@ test_additional_content_block();
 test_multi_page_story();
 
 test_publish_category_per_page();
+
+text_publish_context();
 
 ############################################################
 #
@@ -1433,6 +1437,42 @@ sub test_additional_content_block {
 }
 
 
+# test Krang::Publisher->publish_context().
+sub text_publish_context {
+
+    my %vars;
+
+    for (1..10) {
+        $vars{$creator->get_word} = $creator->get_word;
+    }
+
+    $publisher->publish_context(%vars);
+
+    my %context = $publisher->publish_context();
+
+    foreach (keys %context) {
+        is($context{$_}, $vars{$_}, 'Krang::Publisher->publish_context');
+        $context{$_} = 'aaa';
+    }
+
+    # see if the new vars set properly.
+    $publisher->publish_context(%context);
+
+    my %changes = $publisher->publish_context();
+
+    foreach (keys %changes) {
+        is($changes{$_}, 'aaa', 'Krang::Publisher->publish_context');
+    }
+
+    # clear context
+    $publisher->clear_publish_context();
+
+    my %last_laugh = $publisher->publish_context();
+
+    is((keys %last_laugh), 0, 'Krang::Publisher->publish_context');
+
+
+}
 
 sub _add_page_data {
 

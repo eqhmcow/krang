@@ -322,7 +322,10 @@ sub preview_story {
             } else {
                 $object->mark_as_previewed(unsaved => 0);
             }
-        } elsif ($object->isa('Krang::Media')) {
+            # clear context to not sully the next story.
+            $self->clear_publish_context;
+
+    } elsif ($object->isa('Krang::Media')) {
             debug('Publisher.pm: Previewing media_id=' . $object->media_id());
             $self->preview_media(media => $object);
         }
@@ -541,6 +544,9 @@ sub publish_story {
                 }
             }
 
+            # clear the publish context to not dirty things for the
+            # next pass.
+            $self->clear_publish_context();
 
         } elsif ($object->isa('Krang::Media')) {
             # publish_media() will mark the media object as published.
@@ -1157,6 +1163,72 @@ sub additional_content_block {
 }
 
 
+=item C<< %vars = $publisher->publish_context(%set_params) >>
+
+C<publish_context()> provides a way to set and retrieve parameters in
+the L<Krang::Publisher> object during the publish process for a single
+story.
+
+C<publish_context()> takes a hash of parameters for storage, and will
+return a hash of all stored parameters if called without arguments.
+Note that saving the same key-value pair multiple times will result in
+only the last variant being stored.
+
+  # store 'foo => bar'
+  $publisher->publish_context(foo => 'bar');
+
+  # $vars{foo} is 'bar'
+  my %vars = $publisher->publish_context();
+
+  # foo is now 'baz'
+  $publisher->publish_context(foo => 'baz');
+
+
+Note - the internal hash used by C<publish_context()> is cleared after
+every story is published - the variables stored here are not
+persistant across stories.
+
+=cut
+
+sub publish_context {
+
+    my $self = shift;
+
+    # check to see if there are params.
+    if (@_) {
+        my %args = @_;
+
+        foreach my $key (keys %args) {
+            $self->{publish_context}{$key} = $args{$key};
+        }
+
+        return;
+    }
+
+    return %{$self->{publish_context}};
+}
+
+
+=item C<< $publisher->clear_publish_context() >>
+
+Working in conjunction with C<publish_context()> above, clear the
+internal hash.
+
+Nothing is returned.
+
+=cut
+
+sub clear_publish_context {
+
+    my $self = shift;
+
+    delete $self->{publish_context};
+
+    $self->{publish_context} = {};
+
+}
+
+
 =item C<< $filename = $publisher->story_filename(page => $page_num); >>
 
 Returns the filename (B<NOT> the path + filename, just the filename)
@@ -1277,7 +1349,7 @@ sub test_publish_status {
 
 =head1 TODO
 
-Pagination
+Nothing at the moment.
 
 =head1 SEE ALSO
 
