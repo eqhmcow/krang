@@ -1471,9 +1471,17 @@ sub _build_story_single_category {
     # break the story into pages
     my @article_pages = split(/${\PAGE_BREAK}/, $article_output);
 
-    # chuck the last page if it's only whitespace
-    if ($article_pages[$#article_pages] =~ /^\s*$/ and $#article_pages != 0) {
-        pop @article_pages;
+    # if nothing returned, we have a problem.  Log a message, and
+    # create a nominal array entry.
+    if ($#article_pages < 0) {
+        info(sprintf("%s: publishing story id=%i, category=%s returned zero-length output.",
+                     __PACKAGE__, $story->story_id, $category->url));
+        push @article_pages, '';
+    }
+
+    # chuck the last page if it's only whitespace.
+    if ($#article_pages > 0) {
+        pop @article_pages if ($article_pages[$#article_pages] =~ /^\s*$/);
     }
 
     # check to see if category output is needed

@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in L<Krang::Publisher> - zero-length story output is now
+output properly, with a logfile entry to make a note of it.  [Peter]
+
+=item *
+
 Deployed version is now displayed in the template edit UI.
 [Michael Peters]
 
