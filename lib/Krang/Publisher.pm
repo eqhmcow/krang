@@ -224,7 +224,8 @@ sub preview_story {
         my $filename = $self->_build_filename(story => $story, page => $page_num);
 
         # write the page to disk.
-        $self->_write_page(path => $path, filename => $filename, data => $story_pages->[$p]);
+        $self->_write_page(path => $path, filename => $filename, 
+                           story_id => $story->story_id(), data => $story_pages->[$p]);
 
     }
 
@@ -285,7 +286,8 @@ sub publish_story {
             my $filename = $self->_build_filename(story => $story, page => $page_num);
 
             # write the page to disk.
-            $self->_write_page(path => $path, filename => $filename, data => $story_pages->[$p]);
+            $self->_write_page(path => $path, filename => $filename, 
+                               story_id => $story->story_id(), data => $story_pages->[$p]);
 
         }
     }
@@ -674,8 +676,9 @@ sub _write_page {
     my $output_filename = catfile($args{path}, $args{filename});
 
     my $fh = IO::File->new(">$output_filename") or
-      Krang::Publisher::FileWriteError->throw(message => 'Cannot output story',
-                                              destination => $output_filename,
+      Krang::Publisher::FileWriteError->throw(message      => 'Cannot output story',
+                                              story_id     => $args{story_id},
+                                              destination  => $output_filename,
                                               system_error => $!);
     $fh->print($args{data});
     $fh->close();
