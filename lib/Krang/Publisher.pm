@@ -279,7 +279,9 @@ As part of the publish process, all media and stories linked to by $story will b
 
 If you do not care about related assets (WARNING - You want to care!), you can set the argument I<disable_related_assets> =>1
 
-Will throw an exception if the current user ($ENV{REMOTE_USER})does not have permissions to publish.
+If the user attempts to publish content that is checked out by someone else, it will get skipped.
+
+It is assumed that the UI will prevent a user from attempting to publish something when they do not have permissions.
 
 The optional parameter C<callback> may point to a subroutine which is
 called when each object is published.  It recieves three named
@@ -451,6 +453,10 @@ Copies a media file out to the webserver doc root for the publish website.
 Attributes media and category are required.
 
 Returns a url to the media file on the publish website if successful.
+
+If the user attempts to publish content that is checked out by someone else, it will get skipped.
+
+It is assumed that the UI will prevent a user from attempting to publish something when they do not have permissions.
 
 Will throw an exception if there are problems with the copy.
 
@@ -790,22 +796,6 @@ sub story_filename {
 }
 
 
-=item C<< $begin_tag = $publisher->begin_special_content(); >>
-
-Returns the begin tag that Krang::Publisher will use internally to separate special content out from the rest of the story content.
-
-Read HREF[Customizing the Publish Process in Krang|customizing_publish.html] for more information on publishing Specialty pages.
-
-=cut
-
-
-=item C<< $end_tag = $publisher->end_special_content(); >>
-
-Returns the end tag that Krang::Publisher will use internally to separate special content out from the rest of the story content.
-
-Read HREF[Customizing the Publish Process in Krang|customizing_publish.html] for more information on publishing Specialty pages.
-
-=cut
 
 
 =back
@@ -922,51 +912,6 @@ sub _undeploy_testing_templates {
     delete $self->{testing_template_path}{$user_id};
 
     return;
-}
-
-#
-# $filename = _write_template(template => $template);
-#
-# Given a template, determines the full path of the template and writes it to disk.
-# Will croak in the event of an error in the process.
-# Returns the full path + filename if successful.
-#
-
-sub _write_template {
-
-    my $self = shift;
-    my %args = @_;
-
-    my $template   = $args{template};
-    my $id         = $template->template_id();
-
-    my $category   = $template->category();
-
-    my @tmpl_dirs = $self->template_search_path(category => $category);
-
-    my $path = $tmpl_dirs[0];
-
-    eval {mkpath($path, 0, 0755); };
-    if ($@) {
-        Krang::Publisher::FileWriteError->throw(message => 'Could not create publish directory',
-                                                destination => $path,
-                                                system_error => $@);
-    }
-
-
-    my $file = catfile($path, $template->filename());
-
-    # write out file
-    my $fh = IO::File->new(">$file") or
-      Krang::Publisher::FileWriteError->throw(message => 'Cannot deploy template',
-                                              template_id => $id,
-                                              destination => $file,
-                                              system_error => $!);
-    $fh->print($template->{content});
-    $fh->close();
-
-    return $file;
-
 }
 
 
@@ -1354,8 +1299,8 @@ sub _write_page {
 
     eval { mkpath($args{path}, 0, 0755); };
     if ($@) {
-        Krang::Publisher::FileWriteError->throw(message => "Could not create directory '$args{path}'",
-                                                destination => $args{path},
+        Krang::Publisher::FileWriteError->throw(message      => "Could not create directory '$args{path}'",
+                                                destination  => $args{path},
                                                 system_error => $@);
     }
 
@@ -1377,6 +1322,53 @@ sub _write_page {
 
 
 
+#
+# $filename = _write_template(template => $template);
+#
+# Given a template, determines the full path of the template and writes it to disk.
+# Will croak in the event of an error in the process.
+# Returns the full path + filename if successful.
+#
+
+sub _write_template {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $template   = $args{template};
+    my $id         = $template->template_id();
+
+    my $category   = $template->category();
+
+    my @tmpl_dirs = $self->template_search_path(category => $category);
+
+    my $path = $tmpl_dirs[0];
+
+    eval {mkpath($path, 0, 0755); };
+    if ($@) {
+        Krang::Publisher::FileWriteError->throw(message      => 'Could not create publish directory',
+                                                destination  => $path,
+                                                system_error => $@);
+    }
+
+
+    my $file = catfile($path, $template->filename());
+
+    # write out file
+    my $fh = IO::File->new(">$file") or
+      Krang::Publisher::FileWriteError->throw(message      => 'Cannot deploy template',
+                                              template_id  => $id,
+                                              destination  => $file,
+                                              system_error => $!);
+    $fh->print($template->{content});
+    $fh->close();
+
+    return $file;
+
+}
+
+
+############################################################
 #
 # MODES -
 #
