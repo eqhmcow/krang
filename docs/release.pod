@@ -22,7 +22,7 @@ PIRT.
 =back
 
 
-=item C<make dist>
+=item Run C<bin/krang_makedist>
 
 =over 4
 
@@ -38,41 +38,4 @@ PIRT.
 
 =back
 
-=head2 What C<make dist> does
-
-=over
-
-=item Extract version from Krang.pm
-
-=item Tag files in working directory
-
-=over 4
-
-=item E.g., C<cvs tag 'V1_2'>
-
-=item If tag already exists (i.e., you're re-building a distribution
-due to a bug) you have to "force" a cvs tag manually
-
-=over 4
-
-=item E.g., C<cvs tag -F 'V1_2'>
-
-=back
-
-
-=back
-
-=item Export krang from CVS using tagged version (to F</tmp> directory)
-
-=item Delete excluded directories
-
-=over 4
-
-=item bench/, src/
-
-=back
-
-
-
-=back
 
