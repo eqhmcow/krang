@@ -46,8 +46,6 @@ sub per_instance {
     my $dbh = dbh;
 
     my $results = $dbh->selectall_arrayref('SELECT list_group_id, name FROM list_group ORDER BY list_group_id');
-    use Data::Dumper;
-    print STDERR Dumper($results);    
 
     my %seen;
     foreach my $row (@$results) {
