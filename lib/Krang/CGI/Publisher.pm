@@ -322,7 +322,8 @@ sub preview_story {
 
         # put the messages on the screen
         foreach my $error (get_messages()) {
-            print "<div class='alertp'>$error</div>\n";
+            print "<div class='alertp'>" . $query->escapeHTML($error) . 
+              "</div>\n";
         }
         clear_messages();
         return;
