@@ -34,6 +34,11 @@ sub new {
                     PBMM::top_cat_column->new(allow_delete => 0),
                     PBMM::left_cat_column->new(allow_delete => 0),
                     PBMM::right_cat_column->new(allow_delete => 0),
+                    Default::empty->new(    name => 'footer',
+                                            allow_delete => 0,
+                                            reorderable => 0,
+                                            max => 1,
+                                            min => 1 )
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
