@@ -494,7 +494,7 @@ sub _publish_assets_now {
             # appropriate message and return.
             if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
                 add_message('missing_template',
-                            filenname      => $@->template_name,
+                            filename      => $@->template_name,
                             category_url   => $@->category_url
                            );
 
