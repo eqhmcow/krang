@@ -59,19 +59,19 @@ is($contrib2loaded->first(), 'George');
 ## Test simple_search()
 #
 # Should find one
-my @ss_contribs = Krang::Contrib->simple_search('George Vella');
+my @ss_contribs = Krang::Contrib->find(simple_search=>'George Vella');
 is(scalar(@ss_contribs), 1);
 
 # Should find one
-@ss_contribs = Krang::Contrib->simple_search('George');
+@ss_contribs = Krang::Contrib->find(simple_search=>'George');
 is(scalar(@ss_contribs), 1);
 
 # Should find one
-@ss_contribs = Krang::Contrib->simple_search('Vella');
+@ss_contribs = Krang::Contrib->find(simple_search=>'Vella');
 is(scalar(@ss_contribs), 1);
 
 # Should find NONE
-@ss_contribs = Krang::Contrib->simple_search('George Carlin');
+@ss_contribs = Krang::Contrib->find(simple_search=>'George Carlin');
 is(scalar(@ss_contribs), 0);
 
 

@@ -51,9 +51,6 @@ use constant FIELDS => qw(contrib_id prefix first middle last suffix email phone
     # delete contributor
     $contribs[0]->delete();
 
-    # Execute simple search from CGI on Contribs
-    my @contribs = Krang::Contrib->simple_search($search_string);
-
 
 =head1 DESCRIPTION
 
@@ -256,6 +253,10 @@ last
 
 full_name - will search first, middle, last for matching LIKE strings
 
+=item 
+
+simple_search - will search first, middle, last for matching LIKE strings
+
 =item * 
 
 order_by - field(s) to order search by, defaults to last,first. Can pass in list.
@@ -305,7 +306,7 @@ sub find {
 
     $where_string = join ' and ', (map { "$_ = ?" } @where);
 
-    # add like search on first, last, middle for all full_name words
+    # full_name: add like search on first, last, middle for all full_name words
     if ($args{'full_name'}) {
         my @words = split(/\s+/, $args{'full_name'});
         foreach my $word (@words) {
@@ -317,7 +318,20 @@ sub find {
             push (@where, $word);
             $args{$word} = "%$word%";
         }
-
+    } 
+    
+    # simple_search: add like search on first, last, middle for all simple_search words
+    if ($args{'simple_search'}) {
+        my @words = split(/\s+/, $args{'simple_search'});
+        foreach my $word (@words) {
+            if ($where_string) {
+               $where_string .= " and concat(first,' ',middle,' ',last) like ?"; 
+            } else {
+                $where_string = "concat(first,' ',middle,' ',last) like ?";
+            }
+            push (@where, $word);
+            $args{$word} = "%$word%";
+        }
     } 
     
     my $select_string;
@@ -364,24 +378,6 @@ sub find {
     return @contrib_object;
 }
 
-
-
-=item @contribs = Krang::Contrib->simple_search($search_string)
-
-The simple_search() method expects a scalar containing a "search string".
-Based on this string Krang::Contrib objects will be returned according
-to the business rules of the simple_search() implementation.
-
-The current rules for simple_search() are that $search_string will be
-used as a "full_name" query via find().
-
-=cut
-
-sub simple_search {
-    my $self = shift;
-    my $search_string = shift;
-    return $self->find(full_name=>$search_string);
-}
 
 
 
