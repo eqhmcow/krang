@@ -1025,8 +1025,9 @@ sub update_child_urls {
     my $failures = 0;
     my $dbh = dbh();
 
-    # update 'url' if call was made by site
-    if ($site && UNIVERSAL::isa($site, 'Krang::Site')) {
+    # update 'url' if call was made by site, and we're a top-level cat
+    if ($site && UNIVERSAL::isa($site, 'Krang::Site') && 
+        (not $self->{parent_id}) ) {
         $self->{url} = _build_url($site->url(), $self->{dir});
 
         # save new url
