@@ -785,6 +785,15 @@ sub add_category_permissions {
                                            (category_id, group_id, permission_type) values (?,?,"edit")
                                            /);
 
+    # root categories start with "edit" if not yet setup
+    unless ($parent_id) {
+        foreach my $group_id (Krang::Group->find(ids_only => 1)) {
+            $sth_check_group_perm->execute($category_id, $group_id);
+            my ($perm) = $sth_check_group_perm->fetchrow_array();
+            $sth_add_group_perm->execute($category_id, $group_id) unless $perm;
+        }
+    }
+
 
     my @users = Krang::User->find();
    
@@ -824,9 +833,6 @@ sub add_category_permissions {
                 ($permission_type eq "edit") ? ($may_edit = 1, $edit_set = 1) :
                   ($may_edit = 0, $edit_set = 1);
                 ($permission_type ne "hide") ? ($may_see  = 1, $see_set = 1) : ($may_see = 0, $see_set = 1);
-            } else {
-                # Root categories get added to category_group_permission
-                $sth_add_group_perm->execute($category_id, $group_id) unless ($parent_id);
             }
         }
        
