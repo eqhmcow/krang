@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in Krang::Contrib's full_name() that would add ", " to the
+end of the name when the contributor had an empty suffix. [Sam]
+
+=item *
+
 Fixed a bug in Krang::Publisher where no file would be written if the
 story's output contained only whitespace or was empty. [Sam]
 

@@ -43,6 +43,13 @@ $category->save();
 my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
 isa_ok($contrib, 'Krang::Contrib');
 
+# test full_name
+is($contrib->full_name, "Mr Matthew Charles Vella");
+$contrib->suffix("The Dude");
+is($contrib->full_name, "Mr Matthew Charles Vella, The Dude");
+$contrib->suffix("");
+is($contrib->full_name, "Mr Matthew Charles Vella");
+
 $contrib->contrib_type_ids(1,3);
 $contrib->selected_contrib_type(1);
 

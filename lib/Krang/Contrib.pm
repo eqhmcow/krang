@@ -148,21 +148,12 @@ full_name takes the form of: B<prefix() first() middle() last(), suffix()>
 =cut
 
 sub full_name {
-
     my $self = shift;
-    my $name;
-
-    foreach (qw(prefix first middle last)) {
-        if (defined($self->{$_}) && $self->{$_} =~ /\w/) {
-            $name .= "$self->{$_} ";
-        }
-    }
-    $name =~ s/\s*$//o;
-
-    if (defined($self->{suffix})) {
-        $name .= ", $self->{suffix}";
-    }
-    return $name;
+    return join(" ", 
+      grep { defined and length } 
+        map  { $self->{$_} } (qw(prefix first middle last))) .
+          (defined $self->{suffix} and length $self->{suffix} ?
+           ", $self->{suffix}" : "");
 }
 
 
