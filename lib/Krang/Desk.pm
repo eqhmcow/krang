@@ -18,7 +18,7 @@ Krang::Desk - Krang Desk API
 
     # return desk id
     my $desk_id = $desk->desk_id;
-    
+
     # return desk order
     my $desk_order = $desk->order;
 
@@ -33,9 +33,9 @@ Krang::Desk - Krang Desk API
     # reorder desks (in this case switch order of the two we have created)
     Krang::Desk->reorder(   $desk[0]->desk_id => $desk2->order,
                             $desk2->desk_id => $desk[0]->order );
-    
+
     $desk->delete();
-     
+
 =head1 DESCRIPTION
 
 Krang::Desk provides methods to create, delete, find and reorder desks.
@@ -64,6 +64,7 @@ available slot in desk order.
 =back
 
 =cut
+
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
@@ -186,6 +187,8 @@ Defaults to 'order'.
 
 If this is set to true, results will be sorted as descending 
 (default is ascending).
+
+=back
 
 =cut
 
