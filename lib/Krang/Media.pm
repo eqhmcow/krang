@@ -682,6 +682,7 @@ sub find {
                          filename_like => 1,
                          simple_search => 1,
                          no_attributes => 1,
+                         checked_out_by => 1,
                          order_by => 1,
                          order_desc => 1,
                          limit => 1,
