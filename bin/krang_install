@@ -195,7 +195,6 @@ use Krang;
 use Getopt::Long;
 use Pod::Usage;
 use HTML::Template;
-use Term::Prompt qw(prompt);
 use File::Temp qw(tempdir);
 use Config::ApacheFormat;
 
@@ -447,6 +446,38 @@ sub check_prereqs {
     }
 }
 
+# sort of simulates Term::Prompt, but not really
+sub prompt {
+
+    my($yes_val, $prompt_string,$choices,$default_val) = @_;
+
+    #  if there is a default value, print it
+    if ($default_val) {
+        print $prompt_string, "($choices)", " [", $default_val, "]: ";
+    } else {
+        print $prompt_string, "($choices)", ": ";
+    }
+
+    $_ = <STDIN>;         # get the input from STDIN 
+
+
+    # remove the newline character from the end of user input
+    chomp;
+   
+    if ($_) {
+        if ($_ eq $yes_val) {
+            return 1;
+        } else {
+            return 0;
+        } 
+    } else {
+        if ($default_val eq $yes_val) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+}
 
 # Compile and install Perl, then re-exec w/o "--do-perl-install" flag
 sub do_perl_install {
