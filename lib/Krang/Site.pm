@@ -133,22 +133,22 @@ The available fields for a site object are:
 
 =over 4
 
-=item * preview_path (read-only)
+=item * preview_path
 
 Full filesystem path under which the media and stories of this site will be
 output for preview.
 
-=item * preview_url (read-only)
+=item * preview_url
 
 URL relative to which one is redirected after the preview output of a media
 object or story is generated.  The document root of this server is the value
 of 'preview_path'.
 
-=item * publish_path (read-only)
+=item * publish_path
 
 Full filesystem path under which the media and stories are published.
 
-=item * publish_url (read-only)
+=item * publish_url
 
 URL relative to which one is redirected after a media object or story is
 published.  The document root of this server is the value of 'publish_path'.
@@ -157,7 +157,7 @@ published.  The document root of this server is the value of 'publish_path'.
 
 Integer which identifies the database rows associated with this site object.
 
-=item * url (read-only)
+=item * url
 
 Base URL where site content is found.  Categories and consequently media and
 stories will form their URLs based on this value.
