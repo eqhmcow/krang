@@ -2,8 +2,9 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 v1.026 - Under Development
 
-=head2 v1.025 - Under Development
+=head2 v1.025 - October 1, 2004
 
 =over
 
@@ -15,8 +16,8 @@ reported in a cleaner fashion.  [Peter]
 
 =item *
 
-Fixed a bug in the upgrade process of 1.024.  Users of 1.024 should
-immediately upgrade to 1.025.  [Peter]
+Fixed a bug in the upgrade process of 1.024.  Users who upgraded to
+1.024 should immediately upgrade to 1.025.  [Peter]
 
 =item *
 
