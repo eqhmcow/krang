@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where aftrer upgrading to v1.018 old users don't show up in
+the User Admin list screen. [Sam]
+
+=item *
+
 Changed Krang::Site so that only the site's URL is required to be
 unique.  Requiring all four fields to be unique, while seemingly
 sensible, causes numerous problems during data imports.  If necessary
