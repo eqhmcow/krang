@@ -333,7 +333,7 @@ sub deserialize_xml {
     }
 
     return $lg;
-
+}
 
 =back 
 
