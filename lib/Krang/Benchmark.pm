@@ -22,13 +22,15 @@ To create a new benchmark script, create a new .pl file in F<bench/>:
 
   use Krang::Benchmark qw(run_benchmark);
 
-  run_benchmark(name  => "name of benchmark here",
-                count => 1000,
-                code  => sub { "some code to benchmark here" });
+  run_benchmark(module => "Krang::Foo",
+                name   => "name of benchmark here",
+                count  => 1000,
+                code   => sub { "some code to benchmark here" });
 
-  run_benchmark(name  => "name of another benchmark here",
-                count => 1000,
-                code  => sub { "some code to benchmark here" });
+  run_benchmark(module => "Krang::Foo",
+                name   => "name of another benchmark here",
+                count  => 1000,
+                code   => sub { "some code to benchmark here" });
 
 To perform a benchmark run:
 
