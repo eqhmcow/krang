@@ -197,21 +197,22 @@ sub edit {
             while ($has_parent) {
                 if ($c_li->parent_list_item_id) {
                     $c_li = (Krang::ListItem->find( list_item_id => $c_li->parent_list_item_id ))[0]; 
-                    unshift(@parents,$c_li->list_item_id);
+                    unshift(@parents,($c_li->order - 1));
                     
                 } else {
-                    push(@parents,$li->list_item_id); 
+                    push(@parents,($li->order - 1)); 
                     $has_parent = 0;
                 }
             }
-            @parents = map { "['".$_."']" } @parents;
+            @parents = map { "[".$_."]" } @parents;
 
             my $parent_string = join('', @parents);
             $js .= "\nlist_data$parent_string = new Array();";
             $js .= "\nlist_data$parent_string\['__data__'] = '".$li->data."';";
-           
+            $js .= "\nlist_data$parent_string\['__id__'] = '".$li->list_item_id."';";
+ 
             # prepopulate first list 
-            push (@list_item_loop, { data => $li->data, list_item_id => $li->list_item_id, first => $first }) if ($count == 1);
+            push (@list_item_loop, { data => $li->data, order => ($li->order - 1), first => $first }) if ($count == 1);
 
         }
 

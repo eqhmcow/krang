@@ -12,13 +12,22 @@
         // first, clear lists above one selected
         clear_lists_above(next_list);
 
-        var select_val = eval ('document.forms["edit_form"].list_' + list_count + '.options[document.forms["edit_form"].list_' + list_count + '.selectedIndex].value');
+        if ( list_count != 0 ) {
+            var select_val = get_selected_val(list_count);
         
-        var count = 0;
-        for(var key in eval('list_data[' + select_val + ']') ) {
-           if (eval('list_data[' + select_val + "][key]['__data__']") ) {
-                eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + "'" + eval("list_data[" + select_val + "][key]['__data__']") + "', '" + select_val + '][' + key + "')");
-           }
+            var count = 0;
+            for(var key in eval('list_data[' + select_val + ']') ) {
+                if (eval('list_data[' + select_val + "][key]['__data__']") ) {
+                    eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + "'" + eval("list_data[" + select_val + "][key]['__data__']") + "', '" + select_val + '][' + key + "')");
+                }
+            }
+        } else {
+            var count = 0;
+            for(var key in list_data) {
+               if (list_data[key]['__data__']) {
+                    eval ('document.forms["edit_form"].list_1.options[' + count++ + '] = new Option(' + "'" + eval("list_data[key]['__data__']") +  "', '" + key + "')"); 
+               }
+            }
         }
     }
 
@@ -27,6 +36,15 @@
             eval ('document.forms["edit_form"].list_' + c + '.options.length = 0'); 
         }
     }
+
+    function get_selected_val (list_count) {
+        var sindex = eval( 'document.forms["edit_form"].list_' + list_count + '.selectedIndex' );
+        if (sindex > -1) {
+            return eval ('document.forms["edit_form"].list_' + list_count + '.options[' + sindex + '].value');
+        } else {
+            return('undef');
+        }
+    };
 
     nav_edit_mode();
 
@@ -44,9 +62,56 @@
     }
 
 
-    function do_delete (list_id) {
-        var select_val = eval ('document.forms["edit_form"].list_' + list_id + '.options[document.forms["edit_form"].list_' + list_id + '.selectedIndex].value');
-        alert(select_val);
+    function do_delete (list_count) {
+        var select_val = get_selected_val(list_count);
+        eval( "list_data[" + select_val + "]['__data__'] = []");
+        eval( "list_data[" + select_val + "] = []");
+        populate_list(list_count-1);
+    }
+
+    function do_replace(list_count) {
+        var select_val = get_selected_val(list_count);
+        if ( eval("document.forms['edit_form'].new_item_" + list_count + ".value" ) ) {
+            eval( "list_data[" + select_val + "]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
+            populate_list(list_count-1);
+            eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''");
+        }
+    }
+
+    function do_add(list_count) {
+        var select_val = get_selected_val(list_count);
+        if (select_val != 'undef' ) {
+            var indexArray = select_val.split('][');
+            var last_index = indexArray.pop();
+            select_val = indexArray.join('][');
+            var firstHalf;
+            var secondHalf;
+            if (! select_val) {
+                firstHalf = eval( 'list_data.slice(0, ' + last_index + ')' );
+                secondHalf = eval( 'list_data.slice(' + last_index + ')' );
+            } else {
+                 firstHalf = eval( 'list_data[' + select_val + '].slice(0, ' + last_index + ')' );
+                secondHalf = eval( 'list_data[' + select_val + '].slice(' + last_index + ')' );
+            }
+
+            var t = new Array();
+            t['__data__'] = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+            secondHalf.unshift(t);
+            if (! select_val) {
+                list_data = firstHalf.concat(secondHalf);
+            } else {
+                eval( 'list_data[' + select_val + '] = firstHalf.concat(secondHalf)' );
+            } 
+        } else {
+            select_val = get_selected_val(list_count - 1);
+            
+            if( ! eval( 'list_data[' + select_val + '][0]') ) {
+                eval( 'list_data[' + select_val + '][0] = new Array()' );
+                eval( 'list_data[' + select_val + "][0]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
+            }
+        }
+         
+        populate_list(list_count-1);
     }
     
 // -->
@@ -66,9 +131,9 @@
 <tr class="light-bar"><td colspan=2>LISTS</td></tr>
 <tmpl_loop list_loop>
 <tr><td><tmpl_var list_name></td><td><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
-<option value=" " <tmpl_unless choice>SELECTED</tmpl_unless>>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tmpl_if list_item_loop><tmpl_loop list_item_loop><option value="<tmpl_var list_item_id>"><tmpl_var data></tmpl_loop></tmpl_if></select>
+<tmpl_if list_item_loop><tmpl_loop list_item_loop><option value="<tmpl_var order>"><tmpl_var data></tmpl_loop></tmpl_if></select>
 <br><input type="text" name="new_item_<tmpl_var list_count>">
-<input type="submit" value="Add" onClick="do_add(<tmpl_var list_count>)" class="button">
+<input type="button" value="Add" onClick="do_add(<tmpl_var list_count>)" class="button">
 <input type="button" value="Replace" onClick="do_replace(<tmpl_var list_count>)" class="button">
 <input type="button" value="Delete Selected" onClick="do_delete(<tmpl_var list_count>)" class="button">
 </td></tr>
