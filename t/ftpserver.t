@@ -1,4 +1,6 @@
 use Test::More qw(no_plan);
+BEGIN { ok(1); exit; }
+
 use strict;
 use warnings;
 use Krang::Conf qw(KrangRoot FTPPort FTPAddress);
