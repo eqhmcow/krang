@@ -181,6 +181,8 @@ sub create {
       unless $title;
     push(@bad, 'slug'),        add_message('missing_slug')
       unless not($slug_req) or $slug;
+    push(@bad, 'slug'),        add_message('bad_slug')
+      if length $slug and $slug !~ /^[-\w]+$/;
     push(@bad, 'category_id'), add_message('missing_category')
       unless $category_id;
     push(@bad, 'cover_date'),  add_message('missing_cover_date')
@@ -1059,6 +1061,8 @@ sub _save {
           unless $title;
         push(@bad, 'slug'),        add_message('missing_slug')
           unless not($slug_req) or $slug;
+        push(@bad, 'slug'),        add_message('bad_slug')
+          if length $slug and $slug !~ /^[-\w]+$/;
         push(@bad, 'cover_date'),  add_message('missing_cover_date')
           unless $cover_date;
         # return to edit mode if there were problems
