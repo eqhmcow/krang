@@ -63,7 +63,7 @@ BEGIN {
 
     # Set up environment for non-MOD_PERL operation
     # Set instance, load/unload session
-    unless ($ENV{MODE_PERL}) {
+    unless ($ENV{MOD_PERL}) {
 
         # Set Krang instance if not running under mod_perl
         my $instance = exists $ENV{KRANG_INSTANCE} ? 
