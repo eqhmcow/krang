@@ -220,6 +220,8 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 
 Either a 'parent_id' or a 'site_id' must be passed but not both.
 
+If the category being created is a subcategory (e.g. it has a C<parent_id>), the value of C<dir> should be the subdirectory itself, B<NOT> the full directory path - that will be handled internally by Krang::Category.
+
 =back
 
 =cut
