@@ -1284,11 +1284,16 @@ sub find {
     my $template = $self->load_tmpl('find.tmpl', associate=>$q);
     my %tmpl_data = ();
 
+    # if the user clicked 'clear', nuke the cached params in the session.
+    if (defined($q->param('clear_search_form'))) {
+        delete $session{KRANG_PERSIST}{Story};
+    }
+
     # Search mode
-    my $do_advanced_search = defined($q->param('do_advanced_search')) ? $q->param('do_advanced_search') : $session{'KRANG_PERSIST_Story_do_advanced_search'};
+    my $do_advanced_search = defined($q->param('do_advanced_search')) ?
+      $q->param('do_advanced_search') : $session{KRANG_PERSIST}{Story}{do_advanced_search};
     $template->param('do_advanced_search' => $do_advanced_search);
 
-    
     # Set up persist_vars for pager
     my %persist_vars = (
                         rm => 'find',
@@ -1311,7 +1316,8 @@ sub find {
                                    );
         for (@auto_search_params) {
             my $key = $_;
-            my $val = defined($q->param("search_".$_)) ? $q->param("search_".$_) : $session{"KRANG_PERSIST_Story_search_$_"};
+            my $val = defined($q->param("search_".$_)) ? 
+              $q->param("search_".$_) : $session{KRANG_PERSIST}{Story}{"search_" . $_};
  
             $template->param("search_$key" => $val);
 
@@ -1370,11 +1376,13 @@ sub find {
         }
 
         # If we're showing an advanced search, set up the form
-        $tmpl_data{category_chooser} = category_chooser(
-                                                        name => 'search_below_primary_category_id',
-                                                        query => $q,
-                                                        formname => 'search_form',
-                                                       );
+        $tmpl_data{category_chooser} =
+          category_chooser(
+                           name       => 'search_below_primary_category_id',
+                           query      => $q,
+                           formname   => 'search_form',
+                           persistkey => 'Story',
+                          );
 
         # Date choosers
         $tmpl_data{date_chooser_cover_from}   = datetime_chooser(query=>$q, name=>'cover_from', nochoice=>1);
@@ -1393,7 +1401,8 @@ sub find {
                                                                  -labels    => \%class_labels));
     } else {
         # Set up simple search
-        my $search_filter = defined($q->param('search_filter')) ? $q->param('search_filter') : $session{'KRANG_PERSIST_Story_search_filter'};
+        my $search_filter = defined($q->param('search_filter')) ?
+          $q->param('search_filter') : $session{KRANG_PERSIST}{Story}{search_filter};
         $find_params{simple_search} = $search_filter;
         $persist_vars{search_filter} = $search_filter;
         $template->param(search_filter => $search_filter);

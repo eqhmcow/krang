@@ -8,6 +8,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Cleaned up how C<KRANG_PERSIST> variables are stored in the session
+cache for remembering search preferences.  The cleanup also fixed a
+number of bugs - the C<Clear> buttons on the advanced-search pages now
+work again, category searches are now done on a per-type basis
+(e.g. separate Story/Media/Template category-search prefs), and search
+terms are remembered properly. [Peter]
+
+=item *
+
 Fixed a bug in L<Krang::CGI::ElementEditor> - the new "save always
 reorders" functionality that is part of 1.100 was breaking bulk-edit,
 where reordering never happens.  This now works properly.  [Peter]

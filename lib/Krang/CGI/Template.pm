@@ -292,6 +292,12 @@ sub advanced_search {
     
     my $q = $self->query();
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
+
+    # if the user clicked 'clear', nuke the cached params in the session.
+    if (defined($q->param('clear_search_form'))) {
+        delete $session{KRANG_PERSIST}{Template};
+    }
+
     $t->param(do_advanced_search=>1);
     $t->param(history_return_params =>
               $self->make_history_return_params(@history_param_list));
@@ -300,21 +306,27 @@ sub advanced_search {
     my $find_params = {};
 
     # Build find params
-    my $search_below_category_id = defined($q->param('search_below_category_id')) ? $q->param('search_below_category_id') : $session{'KRANG_PERSIST_cat_chooser_id_template_search_form_search_below_category_id'};
+    my $search_below_category_id = defined($q->param('search_below_category_id')) ? 
+      $q->param('search_below_category_id') : 
+        $session{KRANG_PERSIST}{Template}{cat_chooser_id_template_search_form_search_below_category_id};
     if ($search_below_category_id) {
         $persist_vars->{search_below_category_id} = $search_below_category_id;
         $find_params->{below_category_id} = $search_below_category_id;
     }
 
     # search_element
-    my $search_element = defined($q->param('search_element')) ? $q->param('search_element') : $session{'KRANG_PERSIST_Template_search_element'};
+    my $search_element = defined($q->param('search_element')) ? 
+      $q->param('search_element') : $session{KRANG_PERSIST}{Template}{search_element};
+
     if ($search_element) {
         $find_params->{filename}        = "$search_element.tmpl";
         $persist_vars->{search_element} = $q->param('search_element');
     }
 
     # search_template_id
-    my $search_template_id = defined($q->param('search_template_id')) ? $q->param('search_template_id') : $session{'KRANG_PERSIST_Template_search_template_id'};
+    my $search_template_id = defined($q->param('search_template_id')) ?
+      $q->param('search_template_id') : $session{KRANG_PERSIST}{Template}{search_template_id};
+
     if ($search_template_id) {
         $find_params->{template_id} = $search_template_id;
         $persist_vars->{search_template_id} = $q->param('search_template_id');
@@ -322,7 +334,9 @@ sub advanced_search {
     }
 
     # search_url
-    my $search_url = defined($q->param('search_url')) ? $q->param('search_url') : $session{'KRANG_PERSIST_Template_search_url'};
+    my $search_url = defined($q->param('search_url')) ?
+      $q->param('search_url') : $session{KRANG_PERSIST}{Template}{search_url};
+
     if ($search_url) {
         $search_url =~ s/\W+/\%/g;
         $find_params->{url_like} = "\%$search_url\%";
@@ -344,10 +358,12 @@ sub advanced_search {
     $t->param(element_loop => \@element_loop);
 
     # Set up advanced search form
-    $t->param(category_chooser => category_chooser(query => $q,
-                                                   name =>
+    $t->param(category_chooser => category_chooser(query      => $q,
+                                                   formname   => 'template_search_form',
+                                                   persistkey => 'Template',
+                                                   name       =>
                                                    'search_below_category_id',
-                                                   formname => 'template_search_form'));
+                                                  ));
     return $t->output();
 }
 
@@ -784,10 +800,11 @@ sub search {
     my $self = shift;
     my $q = $self->query();
 
-    return $self->advanced_search() if 
+    # if no runmode, and last search was advanced, do advanced.
+    return $self->advanced_search() if
       (not $q->param('rm') and
-       ($session{'KRANG_PERSIST_Template_rm'} and
-        ($session{'KRANG_PERSIST_Template_rm'} eq 'advanced_search')
+       ($session{KRANG_PERSIST}{Template}{rm} and
+        ($session{KRANG_PERSIST}{Template}{rm} eq 'advanced_search')
        )
       );
  
@@ -800,7 +817,7 @@ sub search {
 
     my $search_filter = defined($q->param('search_filter')) ?
       $q->param('search_filter') :
-        $session{'KRANG_PERSIST_Template_search_filter'};
+        $session{KRANG_PERSIST}{Template}{search_filter};
 
     # ensure that $search_filter is at the very least defined.
     $search_filter = '' unless ($search_filter);

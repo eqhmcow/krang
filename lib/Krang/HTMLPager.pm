@@ -867,7 +867,7 @@ sub _fill_template {
                                              -override => 1
                                             ));
 
-        $session{'KRANG_PERSIST_'.$use_module."_$k"} = $v;
+        $session{KRANG_PERSIST}{$use_module}{$k} = $v;
     }
     
     $t->param(pager_persist_data => join("\n", @pager_persist_data));

@@ -609,20 +609,19 @@ sub find_media_link {
             $find{no_attributes} = $search_no_attributes;
             $persist{search_no_attributes} = $search_no_attributes;
         }
-        
-        
     } else {
-        my $search_filter = defined($query->param('search_filter')) ? $query->param('search_filter') : $session{'KRANG_PERSIST_Media_search_filter'};
+        my $search_filter = defined($query->param('search_filter')) ?
+          $query->param('search_filter') : $session{KRANG_PERSIST}{Media}{search_filter};
         %find = (simple_search => $search_filter);
         %persist = (search_filter => $search_filter);
         $template->param(search_filter => $search_filter);
     }
-                 
 
     # always show only what should be seen
     $find{may_see} = 1;
-        
-    my $pager = Krang::HTMLPager->new      (cgi_query     => $query,
+
+    my $pager = Krang::HTMLPager->new
+      (cgi_query     => $query,
        persist_vars  => {
                          rm => 'find_media_link',
                          path => $query->param('path'),

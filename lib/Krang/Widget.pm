@@ -49,7 +49,7 @@ This modules exports a set of generally useful CGI widgets.
 =item $chooser_html = category_chooser(name => 'category_id', query => $query)
 
 Returns a block of HTML implementing the standard Krang category
-chooser.  
+chooser.
 
 Available parameters are as follows:
 
@@ -87,6 +87,9 @@ Available parameters are as follows:
   may_edit - Hide categoriew which are read-only to the current user.
              Defaults to 0.
 
+  persistkey - Hash key that indicates where in the session hash to
+               look for a pre-existing value.
+
 The template for the category chooser is located in
 F<Widget/category_chooser.tmpl>.
 
@@ -95,9 +98,9 @@ F<Widget/category_chooser.tmpl>.
 sub category_chooser {
     my %args = @_;
     my ($name, $query, $label, $display, $onchange, $formname, $site_id, 
-        $field, $title, $may_see, $may_edit) =
+        $field, $title, $may_see, $may_edit, $persistkey) =
       @args{qw(name query label display onchange formname site_id 
-               field title may_see may_edit)};
+               field title may_see may_edit persistkey)};
     croak("Missing required args: name and query")
       unless $name and $query;
 
@@ -115,10 +118,12 @@ sub category_chooser {
 
     $formname = '' if not $formname;
     $name = '' if not $name;
-    my $category_id = defined($query->param($field)) ? $query->param($field) : $session{'KRANG_PERSIST_cat_chooser_id_'.$formname."_".$name};
-    $category_id = 0 if not $category_id;
+    my $category_id =
+      $query->param($field) ||
+        $session{KRANG_PERSIST}{$persistkey}{'cat_chooser_id_'.$formname."_".$name} || 0;
 
-    $session{'KRANG_PERSIST_cat_chooser_id_'.$formname."_".$name} = $query->param($field) if defined($query->param($field));
+    $session{KRANG_PERSIST}{$persistkey}{'cat_chooser_id_'.$formname."_".$name} =
+      $query->param($field) if defined($query->param($field));
 
     # setup category loop
     my %find_params = (order_by => 'url');
