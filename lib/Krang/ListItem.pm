@@ -226,6 +226,10 @@ list_id
 
 parent_list_item_id 
 
+=item *
+
+no_parent
+
 =item * 
 
 data
@@ -280,7 +284,9 @@ sub find {
                          limit => 1,
                          offset => 1,
                          count => 1,
-                         ids_only => 1 );
+                         ids_only => 1,
+                         no_parent => 1,
+                       );
 
     # check for invalid params and croak if one is found
     foreach my $param (keys %args) {
@@ -306,8 +312,10 @@ not $valid_params{$param};
         }
     }
 
-    my $where_string = join ' and ', (map { "$_ = ? " } @where);
-    
+    my $where_string = join ' and ', 
+      (map { "$_ = ? " } @where), 
+      ($args{no_parent} ? ("parent_list_item_id IS NULL") : ());
+       
     my $select_string;
     if ($args{'count'}) {
         $select_string = 'count(*) as count';

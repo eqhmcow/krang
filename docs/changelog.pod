@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<no_parent> option to Krang::ListItem::find(). [Sam]
+
+=item *
+
 Fixed a bug in Krang::ListItem::find() which prevented C<ids_only>
 from working. [Sam]
 
