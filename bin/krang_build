@@ -51,6 +51,12 @@ Same as C<module> above, but skips the specified modules and builds
 everything else.  The C<module> and C<skip-module> options are not
 intended to be used together.
 
+=item --rebuild
+
+Build even if there is already an existing Krang build in this location.
+This is useful for installing a new module into an existing build when
+an add-on requires it.
+
 =item --help
 
 =item --man
@@ -95,11 +101,12 @@ my $LIBAPREQ     = 'libapreq';
 
 # options
 my $skip_apache = 0;
-my ( @modules, @skip_modules, $help, $man );
+my ( @modules, @skip_modules, $rebuild, $help, $man );
 GetOptions(
     'no-apache'     => \$skip_apache,
     'module=s'      => \@modules,
     'skip-module=s' => \@skip_modules,
+    'rebuild'       => \$rebuild,
     'help'          => \$help,
     'man'           => \$man,
   )
@@ -120,7 +127,7 @@ while (my $f = readdir DIR) {
 # check that we're not trying to build on top of an existing build
 die "A build of Krang already exists here.  Run 'make clean' to remove it".
   "\nbefore trying again.\n" 
-  if -e catfile($KrangRoot, 'data', 'build.db');
+  if -e catfile($KrangRoot, 'data', 'build.db') and !$rebuild;
 
 
 if (@ARGV) {
