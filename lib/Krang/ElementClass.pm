@@ -194,20 +194,29 @@ specialize the behavior of an element class.
 
 =over
 
+=item C<< @names = $class->param_names(element => $element) >>
+
+Returns the CGI parameter names that will be used for the element.
+The default implementation returns a single parameter name of 
+C<< $element->xpath() >>.  If you create a sub-class with multiple form
+inputs you will need to override this method.
+
+=cut
+
+sub param_names { $_[2]->xpath(); }
+
 =item C<< $html = $class->input_form(element => $element, query => $query) >>
 
 This call is used to display an HTML form element for data entry in
-the frontend.  It must return the HTML text to be used.
-
-The default implementation returns a hidden field with the name of the
-form C<< $element->xpath >>.
+the frontend.  It must return the HTML text to be used.  The default
+implementation returns a hidden field.
 
 =cut
 
 sub input_form {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
-    my $param = $element->xpath();
+    my ($param) = $self->param_names(element => $element);
 
     return scalar $query->hidden(name     => $param,
                                  default  => ($element->data() || ""),
@@ -229,7 +238,7 @@ otherwise does no checking of the input data.
 sub validate { 
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
-    my $param = $element->xpath();
+    my ($param) = $self->param_names(element => $element);
     my $value = $query->param($param);
     if ($self->{required} and (not defined $value or not length $value)) {
         return (0, "$self->{display_name} requires a value.");
@@ -244,15 +253,15 @@ Which this call returns C<< $element->data() >> must return the value
 specified by the user in the form fields provided by
 C<display_form()>.
 
-The default implementation finds a form parameter named
-C<$element->xpath> and loads it using C<$element->data()>.
+The default implementation loads data from the query using
+C<$element->data()> for this element's parameter.
 
 =cut
 
 sub load_query_data {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
-    my $param = $element->xpath();
+    my ($param) = $self->param_names(element => $element);
     $element->data(scalar $query->param($param));
 }
 

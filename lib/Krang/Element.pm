@@ -885,6 +885,7 @@ BEGIN {
                           is_container
                           thaw_data
                           build_url
+                          param_names
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 

@@ -21,7 +21,7 @@ sub new {
 sub input_form {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
-    my $param = $element->xpath;
+    my ($param) = $self->param_names(element => $element);
 
     return scalar $query->radio_group(-name      => $param,
                                       -default   => $element->data(),

@@ -1,6 +1,12 @@
 <html>
 <head><title>Krang Element Editor</title></head>
 
+<style type="text/css">
+  .invalid textarea { background-color: #FFFF99 }
+  .invalid input    { background-color: #FFFF99 }
+  .invalid select   { background-color: #FFFF99 }
+</style>
+
 <script language=javascript>
   function edit_children(p) {
         document.editor.e_rm.value = 'save_and_jump';
@@ -80,10 +86,26 @@
 
  <tmpl_loop child_loop>
   <tr>
-    <td bgcolor=CCDDEE align=right valign=top><tmpl_if invalid><font color=red><b>*</b></font></a></tmpl_if><tmpl_var name></td>
-    <td bgcolor=DDEEFF align=left valign=top><tmpl_if is_container><input type=button value=Edit onClick='edit_children("<tmpl_var path>")'>&nbsp;</tmpl_if><tmpl_var form></td>
-    <td bgcolor=E5F5FF align=center valign=top><tmpl_if reorderable><tmpl_var order_select></tmpl_if></td>
-    <td bgcolor=EAFAFF align=center valign=top><tmpl_if allow_delete><input type=checkbox name=remove_<tmpl_var index>></tmpl_if></td>
+
+    <td bgcolor=CCDDEE align=right valign=top>
+      <tmpl_if required>*</tmpl_if><tmpl_var name>
+    </td>
+
+    <td bgcolor=DDEEFF align=left valign=top>
+      <tmpl_if is_container><input type=button value=Edit onClick='edit_children("<tmpl_var path>")'>&nbsp;</tmpl_if>
+      <tmpl_if invalid><span class="invalid"></tmpl_if>
+        <tmpl_var form>
+      <tmpl_if invalid></span></tmpl_if>
+    </td>
+
+    <td bgcolor=E5F5FF align=center valign=top>
+         <tmpl_var order_select>
+    </td>
+
+    <td bgcolor=EAFAFF align=center valign=top>
+      <tmpl_if allow_delete><input type=checkbox name=remove_<tmpl_var index>></tmpl_if>
+    </td>
+
   </tr>
  </tmpl_loop>
 
