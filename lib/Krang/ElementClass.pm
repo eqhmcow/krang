@@ -909,11 +909,14 @@ sub _load_template {
 
 
 #
-# $list_ref = _build_page_url(publisher => $pub, page => $page_num);
+# $url = _build_page_url(publisher => $pub, page => $page_num, protocol => 'https://');
 #
-# builds a list of page URLs for a submitted list of elements.
-# returning listref of urls matches the order of the element list.
+# Constructs and returns the URL for a specified page in the story.
+# All parameters are optional.
+# protocol defaults to 'http://' unless otherwise specified.
 #
+
+
 sub _build_page_url {
 
     my $self = shift;
@@ -921,6 +924,8 @@ sub _build_page_url {
 
     my $page_num  = $args{page} || 0;
     my $publisher = $args{publisher} || $self->{publisher};
+    my $protocol  = $args{protocol} || 'http://';
+
     my $story     = $publisher->story;
 
     my $base_url;
@@ -933,7 +938,7 @@ sub _build_page_url {
         croak __PACKAGE__ . ": Mode unknown - are we in publish or preview mode?";
     }
 
-    return "$base_url/" . $publisher->story_filename(page => $page_num);
+    return sprintf('%s%s/%s', $protocol, $base_url, $publisher->story_filename(page => $page_num));
 }
 
 
@@ -951,8 +956,6 @@ sub _build_pagination_vars {
     my $self = shift;
     my %args = @_;
 
-    my $protocol = 'http://';
-
     my $page_list = $args{page_list};
     my $page_num  = $args{page_num};
 
@@ -963,15 +966,15 @@ sub _build_pagination_vars {
     $page_info{current_page_number} = $page_num;
     $page_info{total_pages}         = @$page_list;
 
-    $page_info{first_page_url} = $protocol . $page_list->[0];
-    $page_info{last_page_url}  = $protocol . $page_list->[$#$page_list];
+    $page_info{first_page_url} = $page_list->[0];
+    $page_info{last_page_url}  = $page_list->[$#$page_list];
 
     if ($page_num == 1) { # on the first page
         $page_info{is_first_page}     = 1;
         $page_info{previous_page_url} = '';
     } else {
         $page_info{is_first_page}     = 0;
-        $page_info{previous_page_url} = $protocol . $page_list->[($current_idx - 1)];
+        $page_info{previous_page_url} = $page_list->[($current_idx - 1)];
     }
 
     if ($page_num == @$page_list) { # on the last page
@@ -979,12 +982,12 @@ sub _build_pagination_vars {
         $page_info{next_page_url} = '';
     } else {
         $page_info{is_last_page}  = 0;
-        $page_info{next_page_url} = $protocol . $page_list->[($current_idx + 1)];
+        $page_info{next_page_url} = $page_list->[($current_idx + 1)];
     }
 
     for (my $num = 0; $num <= $#$page_list; $num++) {
         my %element = (page_number => ( $num + 1 ),
-                       page_url    => $protocol . $page_list->[$num]);
+                       page_url    => $page_list->[$num]);
 
         ($num == $current_idx) ? ( $element{is_current_page} = 1 ) :
           ( $element{is_current_page} = 0 );
