@@ -1,38 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) by rth77 (rth77) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
-    <xs:element name="story">
-        <xs:complexType>
+  <xs:element name="story">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="story_id" type="xs:int"/>
+        <xs:element name="class">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:minLength value="1"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+        <xs:element name="title">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:minLength value="1"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+        <xs:element name="slug" type="xs:string"/>
+        <xs:element name="version">
+          <xs:simpleType>
+            <xs:restriction base="xs:int">
+              <xs:minInclusive value="1"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+        <xs:element name="published_version" type="xs:int" minOccurs="0"/>
+        <xs:element name="cover_date" type="xs:dateTime"/>
+        <xs:element name="publish_date" type="xs:dateTime" minOccurs="0"/>
+        <xs:element name="priority"/>
+        <xs:element name="notes"/>
+        <xs:element name="category_id" type="xs:int" maxOccurs="unbounded"/>
+        <xs:element name="url" maxOccurs="unbounded">
+          <xs:simpleType>
+            <xs:restriction base="xs:string">
+              <xs:minLength value="1"/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:element>
+        <xs:element name="contrib" minOccurs="0" maxOccurs="unbounded">
+          <xs:complexType>
             <xs:sequence>
-                <xs:element name="story_id" type="xs:int"/>
-                <xs:element name="class" type="xs:string"/>
-                <xs:element name="title" type="xs:string"/>
-                <xs:element name="slug" type="xs:string"/>
-                <xs:element name="version" type="xs:int"/>
-                <xs:element name="published_version" type="xs:int" minOccurs="0"/>
-                <xs:element name="cover_date" type="xs:dateTime"/>
-                <xs:element name="publish_date" type="xs:dateTime" minOccurs="0"/>
-                <xs:element name="priority"/>
-                <xs:element name="notes"/>
-                <xs:element name="category_id" type="xs:int" maxOccurs="unbounded"/>
-                <xs:element name="url" type="xs:string" maxOccurs="unbounded"/>
-                <xs:element name="contrib" minOccurs="0" maxOccurs="unbounded">
-                    <xs:complexType>
-                        <xs:sequence>
-                            <xs:element name="contrib_id" type="xs:int"/>
-                            <xs:element name="contrib_type" type="xs:string"/>
-                        </xs:sequence>
-                    </xs:complexType>
-                </xs:element>
-                <xs:element name="element" type="element_type"/>
+              <xs:element name="contrib_id" type="xs:int"/>
+              <xs:element name="contrib_type">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:minLength value="1"/>
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
             </xs:sequence>
-        </xs:complexType>
-    </xs:element>
-    <xs:complexType name="element_type">
-        <xs:sequence>
-            <xs:element name="class" type="xs:string"/>
-            <xs:element name="data" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
-            <xs:element name="element" type="element_type" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="element" type="element_type"/>
+      </xs:sequence>
     </xs:complexType>
+  </xs:element>
+  <xs:complexType name="element_type">
+    <xs:sequence>
+      <xs:element name="class">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:minLength value="1"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element name="data" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="element" type="element_type" minOccurs="0" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
 </xs:schema>
