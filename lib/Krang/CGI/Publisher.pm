@@ -251,6 +251,10 @@ sub preview_story {
     my $self = shift;
     my $query = $self->query;
 
+    # this is a no-parse header script
+    $self->header_type('none');
+    print $query->header;
+
     my $session_key = $query->param('session');
     my $story_id    = $query->param('story_id');
     croak("Missing required story_id or session parameter.")
@@ -267,10 +271,17 @@ sub preview_story {
           unless $story;
     }
 
+    # output the progress header
+    my $template = $self->load_tmpl('progress.tmpl');
+    $template->param(preview => 1);
+    $|++;
+    print $template->output;
+
     my $publisher = Krang::Publisher->new();
     my $url;
     eval {
-        $url = $publisher->preview_story(story => $story);
+        $url = $publisher->preview_story(story => $story, 
+                                         callback =>\&_preview_story_callback);
     };
     if ($@) {
         # if there is an error, figure out what it is, create the appropriate message
@@ -300,16 +311,26 @@ sub preview_story {
                                 );
 
         return $t->output();
-
     }
 
     # this should always be true
     assert($url eq $story->preview_url) if ASSERT;
 
-    # redirect to preview
-    $self->header_type('redirect');
-    $self->header_props(-url=>"http://$url");
-    return "Redirecting to <a href='http://$url'>http://$url</a>.";
+    # dynamic redirect to preview
+    print "<script language='javascript'>window.location = 'http://$url'</script>\n";
+}
+
+# update the progress bar during preview
+sub _preview_story_callback {
+    my %arg = @_;
+    my ($object, $counter, $total) = @arg{qw(object counter total)};
+    my $string;
+    if ($object->isa('Krang::Story')) {
+        $string = "Story " . $object->story_id . ": " . $object->url;
+    } else {
+        $string = "Media " . $object->media_id . ": " . $object->url;
+    }
+    print "<script language='javascript'>update_progress_bar($counter, $total, '$string');</script>\n";
 }
 
 =item preview_media

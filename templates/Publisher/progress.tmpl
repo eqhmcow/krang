@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html401/loose.dtd">
+
+<html>
+<head>
+<title>Processing <tmpl_if preview>Preview<tmpl_else>Publish</tmpl_if> Request</title>
+<link rel="stylesheet" href="/krang.css" type="text/css" />
+</head>
+<script language='javascript'>
+   function update_progress_bar (counter, total, string) {
+      var bar = document.getElementById("progress_bar");
+      var prog = counter/total;
+      var width = Math.floor(prog * 300);
+      bar.style.width = width + 'px';
+      bar.innerHTML = Math.floor(prog * 100) + "%";
+
+      var label = document.getElementById("progress_bar_label");
+      label.innerHTML = string;
+   }
+</script>
+<body>
+<div class=tight-form-box>
+<div class=dark-bar>Processing <tmpl_if preview>Preview<tmpl_else>Publish</tmpl_if> Request</div>
+<div style="margin-left: 250px; margin-top: 10px; border: 1px solid #bababa; padding: 1px; width: 300px; height: 15px;" class="light"><div id="progress_bar" style="width: 0px; height: 15px; text-align: right; overflow: clip;" class="bright"></div></div>
+<div style="text-align: center" id="progress_bar_label">&nbsp;</div>
+<br>
+</div>
+</div>

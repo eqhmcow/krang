@@ -171,7 +171,7 @@ sub init {
 }
 
 
-=item C<< $url = $publisher->preview_story(story => $story, category => $category) >>
+=item C<< $url = $publisher->preview_story(story => $story, category => $category, callback => \&onpreview) >>
 
 Generates a story, saving it to the preview doc root on the filesystem.  Returns a URL to the story if successful, or will throw one of several potential Exceptions (potential issues: filesystem problems, exceptions thrown by other objects, anything else?) in the event something goes wrong.
 
@@ -179,12 +179,17 @@ category is an optional attribute.  By default, preview() will build a story bas
 
 As part of the publish process, all media and stories linked to by $story will be published to preview as well.
 
+The optional parameter C<callback> may point to a subroutine which is
+called when each object is published to the preview location.  It
+recieves three named parameters - object, counter and total.
+
 =cut
 
 sub preview_story {
 
     my $self = shift;
     my %args = @_;
+    my $callback = $args{callback};
     my $category;
     my $url;
 
@@ -214,8 +219,13 @@ sub preview_story {
     $self->_deploy_testing_templates();
 
     my $publish_list = $self->get_publish_list(story => [$story]);
-
+    
+    my $total = @$publish_list;
+    my $counter = 0;
     foreach my $object (@$publish_list) {
+        $callback->(object => $object,
+                    total  => $total,
+                    counter => $counter++) if $callback;
         if ($object->isa('Krang::Story')) {
             debug('Publisher.pm: Previewing story_id=' . $object->story_id());
             $self->_build_story_single_category(story    => $object,
