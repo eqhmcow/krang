@@ -12,7 +12,19 @@ BEGIN {
     unshift @INC, $lib, "$lib/".$Config{archname};
 }
 
-use Krang::Schedule::Daemon;
-use Krang::Script;
+# setup first instance by default, schedule daemon works on all
+# instances but Krang::Script isn't happy picking one anymore.
+use Krang::Conf;
+BEGIN { $ENV{KRANG_INSTANCE} = (Krang::Conf->instances)[0]; }
 
-Krang::Schedule::Daemon->run;
+use Krang::Script;
+use Krang::Schedule::Daemon;
+use Krang::Log qw(critical);
+
+
+
+eval { Krang::Schedule::Daemon->run };
+if (my $err = $@) {
+    critical($err);
+    die $@;
+}
