@@ -6,6 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Mandrake support has been added!  [Matt]
+
+=item *
+
 Fixed browser detection to deal with 1.0 prerelease of Firefox, which
 gives a version number of 0.10.  [Aaron Ross]
 
