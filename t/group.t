@@ -1,6 +1,5 @@
 ## Test script for Krang::Group
 
-use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::Script;
@@ -10,19 +9,63 @@ use Krang::Desk;
 use Krang::User;
 use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::DB qw(dbh);
+
+use Krang::Test::Content;
+
+
 use File::Spec::Functions qw(catfile);
 
-BEGIN { use_ok('Krang::Group') }
+BEGIN {
+        my $found;
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        if (InstanceElementSet eq 'TestSet1' || InstanceElementSet eq 'Default') {
+            $found = 1;
+            last;
+        }
+    }
 
-SKIP: {
-    skip('floodfill only works for TestSet1 and Default', 1)
-      unless (InstanceElementSet eq 'TestSet1' or
-              InstanceElementSet eq 'Default');
+    unless ($found) {
+        eval "use Test::More skip_all => 'test requires an instance using TestSet1 or Default';";
+    } else {
+        eval "use Test::More qw(no_plan);";
+    }
+    die $@ if $@;
+}
+
+
+use_ok('Krang::Group');
 
 # create some categories and clean them up when finished
-my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');
-system("bin/krang_floodfill --stories 0 --sites 1 --cats 3 --templates 0 --media 0 --users 0 --covers 0 --undo_script $undo 2>&1 /dev/null");
-END { system("$undo 2>&1 /dev/null") if $undo }
+# Site params
+my $preview_url = 'grouptest.preview.com';
+my $publish_url = 'grouptest.com';
+my $preview_path = KrangRoot . '/tmp/kranggrouptest_preview';
+my $publish_path = KrangRoot . '/tmp/kranggrouptest_publish';
+
+
+my $creator = Krang::Test::Content->new;
+
+my $site = $creator->create_site(preview_url  => $preview_url,
+                                 publish_url  => $publish_url,
+                                 preview_path => $preview_path,
+                                 publish_path => $publish_path
+                                );
+
+my ($root_cat) = Krang::Category->find(site_id => $site->site_id());
+
+my @cats;
+for (1..3) {
+    push @cats, $creator->create_category(
+                                          dir     => 'grouptest_' . $_,
+                                          parent  => $root_cat->category_id
+                                         );
+}
+
+END {
+    $creator->cleanup();
+}
+
 
 # Variable for our work
 my $group = 0;
@@ -464,4 +507,4 @@ $admin_user->group_ids_pop();
 $admin_user->save();
 $admin_perm_test_group->delete();
 
-}
+

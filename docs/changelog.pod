@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+t/group.t now uses Krang::Test::Content to generate random content,
+rather than bin/krang_floodfill. [Peter]
+
+=item *
+
 More comprehensive FreeBSD support.  Krang now works on FreeBSD 4.9
 and 5.2.1, and should work on versions between and previous to that
 (as long as the appropriate dependencies are in place).  [Peter]
