@@ -1,10 +1,10 @@
 <tmpl_if display><span id="<tmpl_var name>_url"><tmpl_if category_url><tmpl_var category_url><tmpl_else>No site / category selected.</tmpl_if></span></tmpl_if>
-<input type=hidden name="<tmpl_var name>" value="<tmpl_var category_id>">
+<input type=hidden id="<tmpl_if formname><tmpl_var formname>.</tmpl_if><tmpl_var field>" name="<tmpl_var field>" value="<tmpl_var category_id>">
 <tmpl_var chooser>
 
 
 <script language="javascript">
-  function choose_category (packed) {
+  function <tmpl_var name>_choose_category (packed) {
      var parts = packed.split(",",2);
      var id = parts[0];
      var url = parts[1];
@@ -13,8 +13,8 @@
          span.innerHTML = url;
      </tmpl_if>
 
-     document.<tmpl_if formname><tmpl_var formname><tmpl_else>forms[0]</tmpl_if>.elements["<tmpl_var name>"].value = id;
-
+     var field = document.getElementById("<tmpl_if formname><tmpl_var formname>.</tmpl_if><tmpl_var field>");
+     field.value = id;
      <tmpl_if onchange><tmpl_var onchange>();</tmpl_if>
   }
 </script>

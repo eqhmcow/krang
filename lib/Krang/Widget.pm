@@ -132,7 +132,7 @@ sub category_chooser {
                                              title      => 'Choose a Category',
                                              data       => $data,
                                              image_path => 'images',
-                                             onselect   => 'choose_category',
+                                             onselect   => $name . '_choose_category',
                                              hide_root  => 1,
                                              button_label => $label||'Choose',
                                              include_css => 0,
@@ -140,7 +140,8 @@ sub category_chooser {
 
     # send data to the template
     $template->param(chooser       => $chooser->output,
-                     name          => $field,
+                     name          => $name,
+                     field         => $field,
                      display       => defined $display ? $display : 1,
                      formname      => $formname,
                      onchange      => $onchange);
