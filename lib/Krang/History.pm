@@ -245,7 +245,7 @@ sub find {
             $obj = bless {%$row}, $self;
 
             # make date readable
-            $obj->{timestamp} = Time::Piece->from_mysql_datetime( $self->{timestamp} );
+            $obj->{timestamp} = Time::Piece->from_mysql_datetime( $obj->{timestamp} );
 
             push (@history_object,$obj);
         }
