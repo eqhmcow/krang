@@ -2,6 +2,8 @@ package Krang::Cache;
 use strict;
 use warnings;
 
+use Krang::Log qw(info debug critical);
+
 =head1 NAME
 
 Krang::Cache - a read-only, non-persistent, private, LRU cache
@@ -120,6 +122,7 @@ our $CACHE_ON    = 0;
 our $CACHE_LOADS;
 our $CACHE_HITS;
 our $CACHE_FILL = 0;
+our @CACHE_STACK;
 
 use constant KEY   => 0;
 use constant VALUE => 1;
@@ -131,6 +134,7 @@ sub start {
         $CACHE_HITS  = 0;
         $CACHE_FILL  = 0;
     }
+    push(@CACHE_STACK, [caller]);
 }
 
 sub stop { 
@@ -139,7 +143,13 @@ sub stop {
         %CACHE_POS = (); 
         @CACHE = ();
     }
-};
+    if (@CACHE_STACK) {
+        my $frame = pop(@CACHE_STACK);
+        debug("Krang::Cache::stop : ending cache started at " . join(', ', @$frame));
+    } else {
+        debug("Krang::Cache::stop : stopping already stopped cache.");
+    }
+}
 
 sub active { $CACHE_ON ? 1 : 0 }
 

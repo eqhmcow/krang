@@ -84,6 +84,7 @@ use Krang::Log qw(critical info debug);
 use CGI ();
 use HTTP::BrowserDetect;
 use Apache::SizeLimit;
+use Krang::Cache;
 
 # Login app name
 use constant LOGIN_APP => 'login.pl';
@@ -329,6 +330,12 @@ sub log_handler ($$) {
         if (my $err = $r->notes('error-notes')) {
             critical($err);
         }
+    }
+
+    # must make sure the cache is off at the end of the request
+    if (Krang::Cache::active()) {
+        critical("Cache still on in log handler!  This cache was started at " . join(', ', @{$Krang::Cache::CACHE_STACK[-1]}) . ".");
+        Krang::Cache::stop() while (Krang::Cache::active());
     }
 
     return OK;

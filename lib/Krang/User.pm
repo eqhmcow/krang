@@ -710,8 +710,9 @@ sub save {
     my @save_fields = grep {$_ ne 'user_id'} keys %user_cols;
 
     # saving with the cache on is verboten
-    croak("Cannot save users while cache is on!")
-      if Krang::Cache::active();
+    if (Krang::Cache::active()) {
+        croak("Cannot save users while cache is on!  This cache was started at " . join(', ', @{$Krang::Cache::CACHE_STACK[-1]}) . ".");
+    }
 
     # check for duplicates
     $self->duplicate_check();

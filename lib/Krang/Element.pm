@@ -504,8 +504,10 @@ sub save {
       unless $self->{class}->isa('Krang::ElementClass::TopLevel');
     
     # saving with the cache on is verboten
-    croak("Cannot save elements while cache is on!")
-      if Krang::Cache::active();
+    if (Krang::Cache::active()) {
+        croak("Cannot save elements while cache is on!  This cache was started at " . join(', ', @{$Krang::Cache::CACHE_STACK[-1]}) . ".");
+    }
+
 
     # call the save hook
     $self->{class}->save_hook(element => $self);
