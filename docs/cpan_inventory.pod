@@ -1,0 +1,324 @@
+=head1 CPAN Distributions Used in Krang
+
+This document lists each CPAN distribution included in Krang.  Every
+distribution mentioned is available with complete source and
+documentation in the F<src/> directory of the Krang source
+distribution.
+
+To the authors of these fine modules, thank you.  Krang would not
+exist without your hard work.
+
+=over
+
+=item Apache-DBI
+
+ Version: 0.91
+ License: Perl License
+
+=item mod_perl
+
+ Version: 1.3.27
+ License: Apache License
+
+=item Apache-Session
+
+ Version: 1.54
+ License: Perl License
+
+=item Archive-Tar
+
+ Version: 0.23
+ License: Perl License
+
+=item Bit-Vector
+
+ Version: 6.3
+ License: Perl License
+
+=item CGI-Application
+
+ Version: 3.1
+ License: Perl License
+
+=item CGI-Application-Generator
+
+ Version: 1.0
+ License: 
+
+=item CGI.pm
+
+ Version: 2.89
+ License: 
+
+=item Cache-Mmap
+
+ Version: 0.07
+ License: 
+
+=item Carp-Assert
+
+ Version: 0.17
+ License: 
+
+=item Class-MethodMaker
+
+ Version: 1.08
+ License: 
+
+=item Class-XPath
+
+ Version: 1.0
+ License: 
+
+=item Compress-Zlib
+
+ Version: 1.31
+ License: 
+
+=item Config-ApacheFormat
+
+ Version: 1.2
+ License: 
+
+=item DBD-mysql
+
+ Version: 2.9002
+ License: 
+
+=item DBI
+
+ Version: 1.32
+ License: 
+
+=item Digest-MD5
+
+ Version: 2.23
+ License: 
+
+=item HTML-Lint
+
+ Version: 1.22
+ License: 
+
+=item HTML-Parser
+
+ Version: 3.27
+ License: 
+
+=item HTML-PopupTreeSelect
+
+ Version: 1.0
+ License: 
+
+=item HTML-Tagset
+
+ Version: 3.03
+ License: 
+
+=item HTML-Template
+
+ Version: 2.6
+ License: 
+
+=item HTML-Template-Expr
+
+ Version: 0.04
+ License: 
+
+=item HTTP-BrowserDetect
+
+ Version: 0.97
+ License: 
+
+=item IO-String
+
+ Version: 1.03
+ License: 
+
+=item IO-stringy
+
+ Version: 2.108
+ License: 
+
+=item IPC-Run
+
+ Version: 0.74
+ License: 
+
+=item Image-Info
+
+ Version: 1.15
+ License: 
+
+=item Imager
+
+ Version: 0.41
+ License: 
+
+=item MIME-Base64
+
+ Version: 2.16
+ License: 
+
+=item Net-FTPServer
+
+ Version: 1.115
+ License: 
+
+=item Parse-RecDescent
+
+ Version: 1.94
+ License: 
+
+=item Pod-Escapes
+
+ Version: 1.03
+ License: 
+
+=item Pod-Simple
+
+ Version: 0.96
+ License: 
+
+=item Scalar-List-Utils
+
+ Version: 1.09
+ License: 
+
+=item Set-IntRange
+
+ Version: 5.1
+ License: 
+
+=item Storable
+
+ Version: 2.06
+ License: 
+
+=item Term-Prompt
+
+ Version: 0.11
+ License: 
+
+=item TermReadKey
+
+ Version: 2.21
+ License: 
+
+=item Test-Builder-Tester
+
+ Version: 0.09
+ License: 
+
+=item Test-Harness
+
+ Version: 2.26
+ License: 
+
+=item Test-Manifest
+
+ Version: 0.91
+ License: 
+
+=item Test-Pod
+
+ Version: 0.95
+ License: 
+
+=item Test-Simple
+
+ Version: 0.47
+ License: 
+
+=item Text-Balanced
+
+ Version: 1.89
+ License: 
+
+=item Text-Tabs+Wrap
+
+ Version: 2001.0929
+ License: 
+
+=item Time-HiRes
+
+ Version: 1.42
+ License: 
+
+=item Time-Piece
+
+ Version: 1.08
+ License: 
+
+=item Time-Piece-MySQL
+
+ Version: 0.02
+ License: 
+
+=item Tree-DAG_Node
+
+ Version: 1.04
+ License: 
+
+=item URI
+
+ Version: 1.23
+ License: 
+
+=item XML-Filter-BufferText
+
+ Version: 1.01
+ License: 
+
+=item XML-NamespaceSupport
+
+ Version: 1.08
+ License: 
+
+=item XML-Parser
+
+ Version: 2.31
+ License: 
+
+=item XML-SAX
+
+ Version: 0.12
+ License: 
+
+=item XML-SAX-Expat
+
+ Version: 0.37
+ License: 
+
+=item XML-Simple
+
+ Version: 2.03
+ License: 
+
+=item XML-Validator-Schema
+
+ Version: 1.04
+ License: 
+
+=item XML-Writer
+
+ Version: 0.4
+ License: 
+
+=item libapreq
+
+ Version: 1.1
+ License: 
+
+=item libnet
+
+ Version: 1.12
+ License: 
+
+=item libwww-perl
+
+ Version: 5.68
+ License: 
+
+=back
+
