@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<assets xmlns="http://bricolage.sourceforge.net/assets.xsd">
+ <story id="1142" element="Article">
+  <name>Test Article</name>
+  <description></description>
+  <slug>test19</slug>
+  <primary_uri>/superstreet/test19</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2002-12-17T20:38:00Z</cover_date>
+  <categories>
+   <category primary="1">/superstreet</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data order="2" element="promo_title">Test Article</data>
+   <data element="deck" order="3" />
+   <data order="4" element="metadata title">Test Article</data>
+   <data element="metadata description" order="5" />
+   <data element="metadata keywords" order="6" />
+   <data order="7" element="subscription form">1</data>
+   <container order="8" element="Page">
+    <data order="1" element="Paragraph">Getting 230 hp from this engine required relatively few changes. A larger turbo is used, helping to reduce exhaust restriction and allowing higher boost pressures without overspeeding the turbine or compressor or creating excessive back pressure. The stock exhaust manifold is retained.</data>
+    <data order="2" element="Paragraph">The boost pressures are relatively mild. In stock form the 1.8T hits about 6 psi of boost, then backs off to 4 psi. The Oettinger-modified engine hits 0.4 bar higher--almost 6 psi--than stock, or about 12 peak psi. Nothing is outrageous here--except for the performance. Naturally the engine management software is modified to match the new turbo. Expertly modified, we might add.</data>
+    <data order="3" element="Paragraph">Not only is the performance stunning, this newest of VWs is also one of the most comfortable to drive. There is nothing--absolutely nothing--to indicate the system is compromised for greater performance. Are you slogging along at 1200 rpm in third gear? Need acceleration? No worries. Just push down and go. No ill manners, no stalls and stumbles--just hard pull and solid forward thrust. Even when the car is pushed, the water temp needle sits unwavering in its indigo blue glow. Engine oil temp also stays well within bounds. After Oettinger's magic, this engine thinks it was born to crank out this kind of power.</data>
+    <data order="4" element="Paragraph">Other changes include improved intake ducting and a cat-back Oettinger exhaust, with a pair of sexy polished outlets. Although the exhaust allows prodigious power, it purrs rather than growls, a refreshing change from overly loud exhausts that don't make more power. Finally, the Golf/GTI installation requires a new turbo-to-catalytic converter pipe to meet the power goals. (Passat and A4s do not require this change.) The stock intercooler is retained.</data>
+    <container related_media_id="1610" order="0" relative="1" element="Inline Image">
+     <data order="0" element="caption">Hello this is a caption</data>
+     <data element="copyright" order="1" />
+     <data order="2" element="alignment">right</data>
+    </container>
+   </container>
+  </elements>
+ </story>
+ <story id="1143" element="Article">
+  <name>Test Article</name>
+  <description></description>
+  <slug>test20</slug>
+  <primary_uri>/zglobalautos/test20</primary_uri>
+  <priority>3</priority>
+  <publish_status>1</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2002-12-17T20:39:00Z</cover_date>
+  <categories>
+   <category primary="1">/zglobalautos</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data order="2" element="promo_title">Test Article</data>
+   <data element="deck" order="3" />
+   <data order="4" element="metadata title">Test Article</data>
+   <data element="metadata description" order="5" />
+   <data element="metadata keywords" order="6" />
+   <data order="7" element="subscription form">1</data>
+   <container order="8" element="Page">
+    <data order="1" element="Paragraph">Getting 230 hp from this engine required relatively few changes. A larger turbo is used, helping to reduce exhaust restriction and allowing higher boost pressures without overspeeding the turbine or compressor or creating excessive back pressure. The stock exhaust manifold is retained.</data>
+    <data order="2" element="Paragraph">The boost pressures are relatively mild. In stock form the 1.8T hits about 6 psi of boost, then backs off to 4 psi. The Oettinger-modified engine hits 0.4 bar higher--almost 6 psi--than stock, or about 12 peak psi. Nothing is outrageous here--except for the performance. Naturally the engine management software is modified to match the new turbo. Expertly modified, we might add.</data>
+    <data order="3" element="Paragraph">Not only is the performance stunning, this newest of VWs is also one of the most comfortable to drive. There is nothing--absolutely nothing--to indicate the system is compromised for greater performance. Are you slogging along at 1200 rpm in third gear? Need acceleration? No worries. Just push down and go. No ill manners, no stalls and stumbles--just hard pull and solid forward thrust. Even when the car is pushed, the water temp needle sits unwavering in its indigo blue glow. Engine oil temp also stays well within bounds. After Oettinger's magic, this engine thinks it was born to crank out this kind of power.</data>
+    <data order="4" element="Paragraph">Other changes include improved intake ducting and a cat-back Oettinger exhaust, with a pair of sexy polished outlets. Although the exhaust allows prodigious power, it purrs rather than growls, a refreshing change from overly loud exhausts that don't make more power. Finally, the Golf/GTI installation requires a new turbo-to-catalytic converter pipe to meet the power goals. (Passat and A4s do not require this change.) The stock intercooler is retained.</data>
+    <container related_media_id="1610" order="0" relative="1" element="Inline Image">
+     <data order="0" element="caption">Hello this is a caption</data>
+     <data element="copyright" order="1" />
+     <data order="2" element="alignment">right</data>
+    </container>
+   </container>
+  </elements>
+ </story>
+ <story id="1153" element="Article">
+  <name>Mustang Monthly - article</name>
+  <description></description>
+  <slug>article</slug>
+  <primary_uri>/mustangmonthly/article</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2002-12-17T23:53:00Z</cover_date>
+  <categories>
+   <category primary="1">/mustangmonthly</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data element="promo_title" order="2" />
+   <data element="deck" order="3" />
+   <data element="metadata title" order="4" />
+   <data element="metadata description" order="5" />
+   <data element="metadata keywords" order="6" />
+   <data order="7" element="subscription form">1</data>
+   <container order="8" element="Page">
+    <data order="0" element="Paragraph">The 450SLC 5.0s were special lightweight 300-bhp 5.0-liter V8 versions of the 450SLC for Group 4, with aluminum engine blocks and reinforced chassis. In 1980, the factory modified them still more, calling it the 500SLC, and ran all season without a win until the last event of the year, the 3,200-mile Ivory Coast rally, which was won by Bjorn Waldegaard in a 450SLC with Jorge Recalde second in one of the new 500SLCs. Their point made, the factory pulled out of rallying a week before Christmas. That generation of SL, the last ever offered with a manual transmission, finished off as the 380SL, 500SL, and the rare 560SL, and lasted until 1989 with continuous upgrades like a four-speed automatic overdrive.</data>
+    <data order="1" element="Paragraph">The fourth generation of the Mercedes-Benz SL was introduced in 1990 as a luxury two-seater and technology banner-carrier, and it was never raced above club level. Originally offered as 380SL or 500SL models, they fell victim to corporate name switching and finished their lives as SL380 and SL500, later joined by the SL600 V12, with the largest, most powerful (394 bhp) engine ever put in an SL. The angular beauty offered ABS, traction control, ESP yaw control, and a host of other technologies in a stylish two-seater that sold very well here, setting sales records in the last year of its life, 2001. Over the years, AMG built tons of upgraded SL500 and SL600 models for individuals and for the factory.</data>
+    <data order="2" element="Paragraph">The latest generation SL500 was introduced here last fall as a 2002 model. Incorporating all of the base Mercedes technologies, plus the world's first electronically operated brakes and a folding steel convertible top, a whole new generation of 5.0-liter three-valve V8 engines, and an electronically controlled five-speed automatic, it is the quickest, fastest, most stable and comfortable SL of them all, starting at about $87,000. A really nice prize-winning 300SL gullwing is about $300,000. It may not have the quirky charisma of the original gullwing coupe, and it certainly doesn't weigh 1,900 lb, but the new SL500 is the technology leader of the entire Mercedes-Benz fleet, a car with amazing capabilities at ten tenths, especially in the SL55 AMG version. It'll go quicker, farther and faster and last longer than any 300SL Rudy Uhlenhaut ever dreamed of. We're just thankful that he dreamed of that first one.</data>
+   </container>
+   <container order="9" element="Sidebar Article">
+    <data order="0" element="sidebar title">Important Things to Consider</data>
+    <data order="1" element="paragraph">Power gains and sounds from a brand new exhaust may vary slightly from an exhaust that's been used several months. All of the exhausts tested were brand new and had never been previously installed or broken in.</data>
+    <data order="2" element="paragraph">The first few exhausts were tested in the morning, giving them a slight advantage because of cooler weather--and they were tested in the order shown here. The SAE correction on the Dynojet 248C dynamometer works well, but it is not perfect. For this reason, another baseline run was done at the end of the day to provide a fairer comparison against the exhausts tested in the afternoon. This new baseline number yielded a loss in peak hp and torque measurements of 2.0 and 1.2, respectively, from the initial baseline run done in the morning. And by the end of the day the UUC exhaust dropped from its peak 219.0 hp to 216.7 hp due to the increase in ambient temperature, even with SAE correction incorporated. With this in mind, all of the exhausts performed within about 1 percent of each other.</data>
+    <data order="3" element="paragraph">Whether that's a small enough margin of error to say that all of these exhausts are pretty much the same in performance is hard to say. Some people may have been hoping for similar results to what was seen in our Jetta 1.8T test (ec, 11/01), but we knew that wasn't going to happen, because a turbocharged car will respond much differently, and often more positively to exhaust upgrades, than a normally aspirated car such as this M3.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1154" element="Article">
+  <name>JP - article</name>
+  <description></description>
+  <slug>article</slug>
+  <primary_uri>/jpmag/article</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2002-12-18T01:18:00Z</cover_date>
+  <categories>
+   <category primary="1">/jpmag</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data element="promo_title" order="2" />
+   <data element="deck" order="3" />
+   <data element="metadata title" order="4" />
+   <data element="metadata description" order="5" />
+   <data element="metadata keywords" order="6" />
+   <data order="7" element="subscription form">1</data>
+   <container order="8" element="Page">
+    <data order="0" element="Paragraph">Important Things to Consider Power gains and sounds from a brand new exhaust may vary slightly from an exhaust that's been used several months. All of the exhausts tested were brand new and had never been previously installed or broken in.</data>
+    <data order="1" element="Paragraph">The first few exhausts were tested in the morning, giving them a slight advantage because of cooler weather--and they were tested in the order shown here. The SAE correction on the Dynojet 248C dynamometer works well, but it is not perfect. For this reason, another baseline run was done at the end of the day to provide a fairer comparison against the exhausts tested in the afternoon. This new baseline number yielded a loss in peak hp and torque measurements of 2.0 and 1.2, respectively, from the initial baseline run done in the morning. And by the end of the day the UUC exhaust dropped from its peak 219.0 hp to 216.7 hp due to the increase in ambient temperature, even with SAE correction incorporated. With this in mind, all of the exhausts performed within about 1 percent of each other.</data>
+    <data order="2" element="Paragraph">Whether that's a small enough margin of error to say that all of these exhausts are pretty much the same in performance is hard to say. Some people may have been hoping for similar results to what was seen in our Jetta 1.8T test (ec, 11/01), but we knew that wasn't going to happen, because a turbocharged car will respond much differently, and often more positively to exhaust upgrades, than a normally aspirated car such as this M3.</data>
+    <data order="3" element="Paragraph">Choosing a Favorite We left the task of choosing a favorite exhaust to our test car's owner, and by no means was it a simple task for him. He bounced back and forth between four exhausts before he finally made his decision. After a long hour of going through the exhausts and all of the objective and subjective ratings, he finally chose the single-canister UUC System U. "I like the way the tips look and the way the car sounds with this exhaust," he said, "plus I don't mind the fact that it's light and put out more horsepower than almost all the rest."</data>
+    <data order="4" element="Paragraph">UUC is a company well known for its drivetrain upgrades and exhausts for German cars. We used one of its short-shift kits and transmission braces on our Project S4 and loved them (ec, 9/02).</data>
+    <data order="5" element="Paragraph">About a month after the install, we asked the owner how he was doing with the new exhaust on the car. He replied, "The sound is awesome under full-throttle acceleration, especially when it bounces off the concrete walls of the California Speedway!"</data>
+    <data order="6" element="Paragraph">We concur--we were there to hear it from the pit lane, and it sure sounded sweet. "But for my taste," he added, "although I am getting more used to it, I still wish it would be just a little quieter for cruising around town. Also, the fit has become a bit of an issue, since one of the tips has seemed to have melted a small part of the rear valance." The exhaust is a prototype version and hopefully UUC will have this sorted out by the time you read this.</data>
+    <data order="7" element="Paragraph">Every exhaust here had its pros and cons, but at the same time none of them made substantial peak horsepower. If there were any power gains, most of them were achieved in the midrange, save for the Rogue unit, which found peak gains up top.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1155" element="Article">
+  <name>Rachel's Test Article</name>
+  <description></description>
+  <slug>test</slug>
+  <primary_uri>/carcraft/uhhuh/test</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2002-12-18T15:20:00Z</cover_date>
+  <categories>
+   <category primary="1">/carcraft/uhhuh</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data order="2" element="promo_title">promo title</data>
+   <data order="3" element="deck">Deck</data>
+   <data order="4" element="metadata title">meta title</data>
+   <data order="5" element="metadata description">meta description</data>
+   <data order="6" element="metadata keywords">meta keywords</data>
+   <data order="7" element="subscription form">1</data>
+   <container order="8" element="Page">
+    <data order="0" element="Paragraph">sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk </data>
+    <data order="1" element="Paragraph">sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk sjd fh;adsjf a;sdjf aksfh aljfh alkjfh alksjg hfaksjfh a;dlsj fhk </data>
+   </container>
+  </elements>
+ </story>
+ <story id="1157" element="Cover">
+  <name>Rachel's Test Cover</name>
+  <description></description>
+  <slug>testcover</slug>
+  <primary_uri>/carcraft/uhhuh</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2002-12-18T15:27:00Z</cover_date>
+  <categories>
+   <category primary="1">/carcraft/uhhuh</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data order="2" element="leadins per page">3</data>
+   <data element="metadata description" order="3" />
+   <data element="metadata keywords" order="4" />
+   <data element="metadata title" order="5" />
+   <data element="promo title" order="6" />
+   <data element="promo teaser" order="7" />
+   <data order="8" element="sema box">no</data>
+   <container related_story_id="1155" order="9" relative="1" element="Lead In">
+    <data order="0" element="type">small</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1158" element="Article">
+  <name>shannon5</name>
+  <description></description>
+  <slug>shannon5</slug>
+  <primary_uri>/carcraft/shannon5</primary_uri>
+  <priority>3</priority>
+  <publish_status>1</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2002-12-18T21:03:00Z</cover_date>
+  <categories>
+   <category primary="1">/carcraft</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data element="promo_title" order="2" />
+   <data element="deck" order="3" />
+   <data element="metadata title" order="4" />
+   <data element="metadata description" order="5" />
+   <data element="metadata keywords" order="6" />
+   <data order="7" element="subscription form">1</data>
+  </elements>
+ </story>
+ <story id="1159" element="Article">
+  <name>mustangfords - article</name>
+  <description></description>
+  <slug>article</slug>
+  <primary_uri>/mustangfords/article</primary_uri>
+  <priority>3</priority>
+  <publish_status>0</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2002-12-18T21:34:00Z</cover_date>
+  <categories>
+   <category primary="1">/mustangfords</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data element="promo_title" order="2" />
+   <data element="deck" order="3" />
+   <data element="metadata title" order="4" />
+   <data element="metadata description" order="5" />
+   <data element="metadata keywords" order="6" />
+   <data order="7" element="subscription form">1</data>
+   <container order="8" element="Page">
+    <data order="0" element="Paragraph">Choosing a Favorite We left the task of choosing a favorite exhaust to our test car's owner, and by no means was it a simple task for him. He bounced back and forth between four exhausts before he finally made his decision. After a long hour of going through the exhausts and all of the objective and subjective ratings, he finally chose the single-canister UUC System U. "I like the way the tips look and the way the car sounds with this exhaust," he said, "plus I don't mind the fact that it's light and put out more horsepower than almost all the rest."</data>
+    <data order="1" element="Paragraph">UUC is a company well known for its drivetrain upgrades and exhausts for German cars. We used one of its short-shift kits and transmission braces on our Project S4 and loved them (ec, 9/02).</data>
+    <data order="2" element="Paragraph">About a month after the install, we asked the owner how he was doing with the new exhaust on the car. He replied, "The sound is awesome under full-throttle acceleration, especially when it bounces off the concrete walls of the California Speedway!"</data>
+    <data order="3" element="Paragraph">We concur--we were there to hear it from the pit lane, and it sure sounded sweet. "But for my taste," he added, "although I am getting more used to it, I still wish it would be just a little quieter for cruising around town. Also, the fit has become a bit of an issue, since one of the tips has seemed to have melted a small part of the rear valance." The exhaust is a prototype version and hopefully UUC will have this sorted out by the time you read this.</data>
+    <data order="4" element="Paragraph">Every exhaust here had its pros and cons, but at the same time none of them made substantial peak horsepower. If there were any power gains, most of them were achieved in the midrange, save for the Rogue unit, which found peak gains up top.</data>
+    <data order="5" element="Paragraph">The UUC exhausts were light, sounded great and, although the numbers were minimal, made some of the best horsepower gains of all. But the fit was an issue for both of them. The B&amp;B exhaust was very light, made power, had nice staggered tips, and sounded wonderful at idle. But the sound became noisy and a little less desirable at full throttle. The Ansa exhaust didn't show power gains but sported the factory look with much nicer tips and a deeper rumble. It was a perfect fit, too, retaining the factory heat shield and hangers. The HIOP was light and a very easy install. It had the biggest gains around a very usable 5200 rpm and maintained similar gains to those of the UUC System U all the way through redline. But it also had the biggest torque losses up until 3500 rpm. The HKS exhaust was the lightest and the easiest to fit, but the sound was one of the least desirable of the bunch. Also, some people will love the massive, single oval tip--some people will hate it. The Rogue exhaust was gorgeous, fit well, and it probably could have taken the cake if it were a little bit lighter. The Racing Dynamics exhaust showed minimal horsepower improvements and was difficult to align, but it was light and the build quality was superb. Lastly, if there was one exhaust that had the highest and most consistent gains from 4000 to 6000 rpm, it was the Supersprint DTM exhaust. Unfortunately, this also turned out to be by far the heaviest exhaust of the bunch, giving up more than 12 lb to the lightweight HKS.</data>
+    <data order="6" element="Paragraph">Now, go ahead and take your pick.</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1160" element="Open Format Article">
+  <name>Advanced Search</name>
+  <description></description>
+  <slug>adv_search</slug>
+  <primary_uri>/carcraft/adv_search</primary_uri>
+  <priority>3</priority>
+  <publish_status>1</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2003-06-13T14:02:00Z</cover_date>
+  <categories>
+   <category primary="1">/carcraft</category>
+   <category>/circletrack</category>
+   <category>/chevyhigh</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data element="promo title" order="2" />
+   <data element="promo teaser" order="3" />
+   <data element="metadata_title" order="4" />
+   <data element="metadata_description" order="5" />
+   <data element="metadata keywords" order="6" />
+   <container order="7" element="Open Format Page">
+    <data order="0" element="content">&lt;span class="title"&gt;Advanced Search&lt;/span&gt;&lt;br&gt;&lt;br&gt;
+
+You can perform an advanced search by using the four criteria below.  You can use one or more of the terms to perform the search.&lt;br&gt;&lt;br&gt;
+
+&lt;script language="javascript"&gt;
+&lt;!--
+
+var makeexpr = /;*([\w\.\s]+):/g;
+
+var txtfile = new String('&lt;!--#include virtual="/models.txt" --&gt;');
+var mk= txtfile.match(makeexpr);
+
+
+
+for (i=0;i&lt;mk.length;i++) {
+	mk[i] = mk[i].match(/[^;:]+/);
+	
+}
+
+
+
+
+var modelexpr = /:([\w,\s-\/]+);*/g;
+var md= txtfile.match(modelexpr);
+
+for (i=0;i&lt;md.length;i++) {
+	md[i] = md[i].match(/[^,;:]+/g);
+}
+
+
+	
+	function buildFormHTML(){
+		var sHTML = '';
+		sHTML += 		'&lt;SELECT id="make" name="mk" onChange="listModels(this.form.make,  this.form.model);"&gt;' +
+					          '&lt;option selected value=""&gt;Make&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/option&gt;' 
+						      for(var i=0;i&lt;5;i++){sHTML +='&lt;option&gt; &lt;/option&gt;'} 
+		sHTML +=		'&lt;/SELECT&gt;&lt;/td&gt;&lt;/tr&gt;' +                
+					        '&lt;tr&gt;&lt;td&gt;&lt;SELECT id="model" name="md" width="200"&gt;' +
+							  '&lt;Option selected value=""&gt;Model&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/option&gt;'
+						      for(var i=0;i&lt;5;i++){sHTML +='&lt;option&gt; &lt;/option&gt;'} 
+		sHTML +=		'&lt;/SELECT&gt;'
+		return sHTML;							
+	}	
+	
+			
+	function writeFormHTML(){document.write(buildFormHTML())}	
+			
+	
+	
+	function listMakes(makeselect){
+		//this function initializes the make list drop down...
+		makeselect.length = 1;
+		for(i=0;i&lt;mk.length;i++){
+			makeselect.options[makeselect.length]=new Option(mk[i], mk[i])
+		}
+		return true;
+	}
+	
+	
+	function listModels(makeselect,modelselect){
+	  modelselect.length = 1;
+	  if (makeselect[makeselect.selectedIndex].value == '') {
+	    resetModel(modelselect);
+		return true;
+	  }
+	  if (makeselect[makeselect.selectedIndex].text != "") {modelselect.length = 0}
+	  var modelindex = makeselect.selectedIndex;
+	  
+                  modelselect.options[modelselect.length] = new Option('All', 'All');	
+	  for (j=0;j&lt;md[makeselect.selectedIndex - 1].length;j++){
+			modelselect.options[modelselect.length]= new Option(md[makeselect.selectedIndex - 1][j], md[makeselect.selectedIndex - 1][j])
+		}
+			
+	  modelselect.selectedIndex = 0;
+	  return true;
+	}
+	
+	
+	function resetModel(modelselect){
+	    modelselect.length = 1;
+		modelselect.options[0] = new Option("Model                 ", "", true);
+		modelselect.options.selectedIndex = 0}
+
+
+
+
+
+//--&gt;
+
+
+
+
+&lt;/script&gt;
+&lt;table&gt;
+&lt;form name="pulldown" action="/adv_search_results/"&gt;
+
+&lt;tr&gt;
+&lt;TD width="100%"&gt;
+&lt;script language="javascript"&gt;writeFormHTML();&lt;/script&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td&gt;&lt;select name="aseg" size="5" multiple&gt;
+&lt;option value=""&gt;Auto Segment&lt;/option&gt;
+&lt;option value="Compact Coupe"&gt;Compact Coupe &lt;/option&gt;
+&lt;option value="Compact Pickup"&gt;Compact Pickup  &lt;/option&gt;
+&lt;option value="Compact Hatchback"&gt;Compact Hatchback  &lt;/option&gt;
+&lt;option value="Compact SUV"&gt;Compact SUV  &lt;/option&gt;
+&lt;option value="Compact Sedan"&gt;Compact Sedan  &lt;/option&gt;
+&lt;option value="Compact Wagon"&gt;Compact Wagon  &lt;/option&gt;
+&lt;option value="Exotic Convertible"&gt;Exotic Convertible  &lt;/option&gt;
+&lt;option value="Exotic Coupe"&gt;Exotic Coupe  &lt;/option&gt;
+&lt;option value="Exotic Sedan"&gt;Exotic Sedan  &lt;/option&gt;
+&lt;option value="Fullsize Pickup"&gt;Fullsize Pickup  &lt;/option&gt;
+&lt;option value="Fullsize SUV"&gt;Fullsize SUV  &lt;/option&gt;
+&lt;option value="Fullsize Sedan"&gt;Fullsize Sedan  &lt;/option&gt;
+&lt;option value="Fullsize Wagon"&gt;Fullsize Wagon&lt;/option&gt;
+&lt;option value="Fullsize Van"&gt;Fullsize Van  &lt;/option&gt;
+&lt;option value="Luxury Convertible"&gt;Luxury Convertible  &lt;/option&gt;
+&lt;option value="Luxury Coupe"&gt;Luxury Coupe  &lt;/option&gt;
+&lt;option value="Luxury Pickup"&gt;Luxury Pickup&lt;/option&gt;
+&lt;option value="Luxury SUV"&gt;Luxury SUV &lt;/option&gt;
+&lt;option value="Luxury Sedan"&gt;Luxury Sedan &lt;/option&gt;
+&lt;option value="Luxury Wagon"&gt;Luxury Wagon &lt;/option&gt;
+&lt;option value="Midsize Convertible"&gt;Midsize Convertible &lt;/option&gt;
+&lt;option value="Midsize Coupe"&gt;Midsize Coupe&lt;/option&gt;
+&lt;option value="Midsize Hatchback"&gt;Midsize Hatchback&lt;/option&gt;
+&lt;option value="Midsize SUV"&gt;Midsize SUV&lt;/option&gt;
+&lt;option value="Midsize Sedan"&gt;Midsize Sedan&lt;/option&gt;
+&lt;option value="Midsize Wagon"&gt;Midsize Wagon&lt;/option&gt;
+&lt;option value="Minivan"&gt;Minivan &lt;/option&gt;
+&lt;option value="Sport Convertible"&gt;Sport Convertible&lt;/option&gt;
+&lt;option value="Sport Coupe"&gt;Sport Coupe&lt;/option&gt;
+&lt;option value="Sport Hatchback"&gt;Sport Hatchback&lt;/option&gt;
+&lt;option value="Sport Wagon"&gt;Sport Wagon&lt;/option&gt;
+&lt;option value="Subcompact Coupe"&gt;Subcompact Coupe	&lt;/option&gt;
+&lt;option value="Subcompact Hatchback"&gt;Subcompact Hatchback&lt;/option&gt;
+&lt;option value="Subcompact Sedan"&gt;Subcompact Sedan&lt;/option&gt;
+&lt;option value="Subcompact Wagon"&gt;Subcompact Wagon&lt;/option&gt;
+&lt;/select&gt;
+&lt;/td&gt;&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td&gt;&lt;input type="text" size="20" name="terms"&gt;&lt;/td&gt;&lt;/tr&gt;
+
+&lt;tr&gt;&lt;td&gt;
+&lt;input type="submit" value="Submit" class="red10ptBold"&gt;
+&lt;/td&gt;&lt;/tr&gt;
+&lt;/form&gt;
+&lt;/table&gt;</data>
+   </container>
+  </elements>
+ </story>
+ <story id="1161" element="Open Format Article">
+  <name>Advanced Search Results</name>
+  <description></description>
+  <slug>adv_search_results</slug>
+  <primary_uri>/circletrack/adv_search_results</primary_uri>
+  <priority>3</priority>
+  <publish_status>1</publish_status>
+  <active>1</active>
+  <source>Internal</source>
+  <cover_date>2003-06-13T14:05:00Z</cover_date>
+  <categories>
+   <category primary="1">/circletrack</category>
+   <category>/carcraft</category>
+   <category>/chevyhigh</category>
+  </categories>
+  <keywords></keywords>
+  <contributors></contributors>
+  <elements>
+   <data element="promo title" order="2" />
+   <data element="promo teaser" order="3" />
+   <data element="metadata_title" order="4" />
+   <data element="metadata_description" order="5" />
+   <data element="metadata keywords" order="6" />
+   <container order="7" element="Open Format Page">
+    <data order="0" element="content">&lt;span class="title"&gt;Advanced Search Results&lt;/span&gt;&lt;br&gt;&lt;br&gt;
+
+&lt;a href="/adv_search" class="featured"&gt;Search Again&lt;/a&gt;&lt;br&gt;&lt;br&gt;
+
+&lt;!--#include virtual="/searchprime/combositesearch?${QUERY_STRING}&amp;db=${SITE_DIR_DAME}&amp;sitename=${SITE_DIR_NAME}&amp;scope=-&amp;autos=y&amp;purl=/adv_search_results/"--&gt;
+</data>
+   </container>
+  </elements>
+ </story>
+</assets>

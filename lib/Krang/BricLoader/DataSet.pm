@@ -182,6 +182,9 @@ sub add {
         copy($file, $full_path)
           or croak("Unable to copy file '$file' to '$full_path' : $!");
 
+        # delete media tmpdir
+        rmtree($from->{dir});
+
         # register file with caller
         my ($from_class, $from_id) = _obj2id($from);
         $self->{objects}{$from_class}{$from_id}{files} ||= [];

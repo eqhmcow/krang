@@ -13,6 +13,7 @@ use Krang::DataSet;
 BEGIN {
     use_ok('Krang::BricLoader::DataSet');
     use_ok('Krang::BricLoader::Category');
+    use_ok('Krang::BricLoader::Media');
     use_ok('Krang::BricLoader::Site');
     use_ok('Krang::BricLoader::Story');
 }
@@ -21,7 +22,7 @@ BEGIN {
 my $set = Krang::BricLoader::DataSet->new();
 isa_ok($set, 'Krang::BricLoader::DataSet');
 
-my (@categories, @sites, @stories);
+my (@categories, @media, @sites, @stories);
 my $sites_path = catfile(KrangRoot, 't', 'bricloader', 'sites.xml');
 
 eval {@sites = Krang::BricLoader::Site->new(path => $sites_path);};
@@ -40,11 +41,11 @@ is($@, '', 'Category constructor did not croak :)');
 $set->add(object => $_) for @categories;
 
 
-# add some stories
-my $story_path = catfile(KrangRoot, 't', 'bricloader', 'lastories.xml');
-eval {@stories = Krang::BricLoader::Story->new(path => $story_path);};
-is($@, '', 'Story constructor did not croak :)');
-$set->add(object => $_) for @stories;
+# add media
+my $media_path = catfile(KrangRoot, 't', 'bricloader', 'lamedia.xml');
+eval {@media = Krang::BricLoader::Media->new(path => $media_path);};
+is($@, '', 'Media constructor did not croak :)');
+$set->add(object => $_) for @media;
 
 
 # write output
@@ -63,28 +64,41 @@ eval {
     # verify object count
     my @objects = $iset->list;
     my $categories = scalar @categories;
+    my $media = scalar @media;
     my $sites = scalar @sites;
-    my $stories = scalar @stories;
-    my $sum = $stories + $sites + $categories;
+#    my $stories = scalar @stories;
+#    my $sum = $stories + $sites + $media + $categories;
+    my $sum = $sites + $media + $categories;
     is(scalar @objects, $sum, 'Verify dataset object count');
 
     # import test
-#    $iset->import_all;
-#    is((grep {$_->isa('Krang::Site')} @imported), $sites,
-#       'Verified imported Site count');
-#    is((grep {$_->isa('Krang::Category')} @imported), $categories,
-#       'Verified imported Category count');
+    $iset->import_all;
+    is((grep {$_->isa('Krang::Site')} @imported), $sites,
+       'Verified imported Site count');
+    is((grep {$_->isa('Krang::Category')} @imported), $categories,
+       'Verified imported Category count');
+    is((grep {$_->isa('Krang::Media')} @imported), $media,
+       'Verified imported Media count');
 #    is((grep {$_->isa('Krang::Story')} @imported), $stories,
 #       'Verified imported Story count');
-#    END {
+    END {
 #        $_->delete for (grep {$_->isa('Krang::Story')} @imported);
-#        $_->delete for (grep {$_->isa('Krang::Category') && $_->dir ne '/'}
-#                        @imported);
-#        $_->delete for (grep {$_->isa('Krang::Site')} @imported);
-#    }
+        $_->delete for (grep {$_->isa('Krang::Media')} @imported);
+        $_->delete for (grep {$_->isa('Krang::Category') && $_->dir ne '/'}
+                        @imported);
+        $_->delete for (grep {$_->isa('Krang::Site')} @imported);
+    }
 };
 
 croak $@ if $@;
+
+
+# add some stories
+my $story_path = catfile(KrangRoot, 't', 'bricloader', 'lastories.xml');
+eval {@stories = Krang::BricLoader::Story->new(path => $story_path);};
+is($@, '', 'Story constructor did not croak :)');
+$set->add(object => $_) for @stories;
+
 
 
 END {

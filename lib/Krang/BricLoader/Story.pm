@@ -37,7 +37,6 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
-#use DateTime::Format::ISO8601;
 use File::Path qw(mkpath rmtree);
 use File::Spec::Functions qw(catdir catfile splitpath);
 use File::Temp qw(tempdir);
@@ -50,6 +49,7 @@ use Krang::Conf qw(KrangRoot);
 use Krang::Pref;
 # BricLoader Modules
 use Krang::BricLoader::Category;
+use Krang::BricLoader::Media;
 
 #
 # Package Variables
@@ -62,8 +62,7 @@ use Krang::BricLoader::Category;
 
 # Lexicals
 ###########
-my $id = 1;
-
+my %media;
 
 
 =head1 INTERFACE
@@ -93,9 +92,8 @@ object.
 sub new {
     my ($pkg, %args) = @_;
     my $self = bless({},$pkg);
-    my $xml = $args{xml};
     my $path = $args{path};
-    my ($base, @stories, $new_path, $ref);
+    my ($base, @stories, @media, $new_path, $ref);
 
     # set tmpdir
     $self->{dir} = tempdir(DIR => catdir(KrangRoot, 'tmp'));
@@ -150,24 +148,19 @@ sub serialize_xml {
                       "xsi:noNamespaceSchemaLocation" =>
                       'story.xsd');
 
-    my $tmp = Time::Piece->strptime($self->{cover_date}, "%FT%TZ");
-    my $t = localtime($tmp->epoch);
-
     # basic fields
     $writer->dataElement(story_id   => $self->{story_id});
     $writer->dataElement(class      => $self->{class});
     $writer->dataElement(title      => $self->{title});
     $writer->dataElement(slug       => $self->{slug});
     $writer->dataElement(version    => $self->{version});
-    $writer->dataElement(cover_date => $t->datetime);
+    $writer->dataElement(cover_date => $self->{cover_date}->datetime);
     $writer->dataElement(priority   => $self->{priority});
     $writer->dataElement(notes      => $self->{notes});
 
     # categories
     for my $c (@{$self->{categories}}) {
         $writer->dataElement(category_id => $c);
-
-#        $set->add(object => $category, from => $self);
     }
 
     # urls
@@ -257,10 +250,10 @@ sub _deserialize_elements {
     if ($obj) {
         $obj = ref $obj eq 'ARRAY' ? $obj : [$obj];
         for my $o(@$obj) {
-            next if exists $o->{related_media_id};
+            my $media_id = $o->{related_media_id} || 0;
+            my $story_id = $o->{related_story_id} || 0;
+            my $data = $media_id ? $media_id : $story_id ? $story_id : '';
             my $class = lc $o->{element};
-            my $data = exists $o->{related_story_id} ? $o->{related_story_id} :
-              '';
             $tmp->[$o->{order}] = {class => $class, data => $data,
                                    elements => _deserialize_elements($o)};
         }
@@ -282,11 +275,16 @@ sub _map_simple {
     # element becomes class
     $self->{class} = lc delete $self->{element};
 
+    # cover_date
+    my $tmp = Time::Piece->strptime($self->{cover_date}, "%FT%TZ");
+    $self->{cover_date} = localtime($tmp->epoch);
+
     # set version to 1
     $self->{version} = 1;
 }
 
-#
+# serializes story subelements into xml similar to
+# Krang::Element->serialize_element
 sub _serialize_element {
     my ($self, $writer, $e) = @_;
     $writer->startTag('element');
