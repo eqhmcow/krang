@@ -19,7 +19,7 @@ sub new {
    my $pkg = shift;
    my %args = ( name => 'external_lead_in',
                 children => 
-                [ 
+                [
                  Krang::ElementClass::ListBox->new(name => "type",
                                                    min => 1,
                                                    max => 1,
@@ -42,10 +42,11 @@ sub new {
                                                     max => 1,
                                                     required => 1
                                                    ),
-                 Default::image->new(name => "image",
-                                                     min => 1,
-                                                     max => 1,
-                                                     allow_delete => 0),
+                 Default::image->new(
+                                     name => "image",
+                                     max => 1,
+                                     allow_delete => 1
+                                    ),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
