@@ -214,9 +214,9 @@ sub preview_story {
     foreach my $object (@$publish_list) {
         if ($object->isa('Krang::Story')) {
             info('Publisher.pm: Previewing story_id=' . $object->story_id());
-            $self->_build_story(story    => $object, 
-                                category => $object->category, 
-                                url      => $object->preview_url());
+            $self->_build_story_single_category(story    => $object,
+                                                category => $object->category,
+                                                url      => $object->preview_url());
         } elsif ($object->isa('Krang::Media')) {
             $self->preview_media(media => $object);
         }
@@ -255,11 +255,9 @@ sub publish_story {
     foreach my $object (@$publish_list) {
         if ($object->isa('Krang::Story')) {
             info('Publisher.pm: Publishing story_id=' . $object->story_id());
-            $self->_build_story(story    => $object, 
-                                category => $object->category, 
-                                url      => $object->preview_url());
+            $self->_build_story_all_categories(story => $object);
         } elsif ($object->isa('Krang::Media')) {
-            $self->preview_media(media => $object);
+            $self->publish_media(media => $object);
         }
     }
 }
@@ -735,12 +733,12 @@ sub _process_linked_assets {
 
 
 #
-# _output_story(story => $story);
+# _build_story_all_categories(story => $story);
 #
 # Handles the process for publishing a story out over all its various categories.
 # Used only in the publish process, not the preview process.
 #
-sub _output_story {
+sub _build_story_all_categories {
 
     my $self = shift;
     my %args = @_;
@@ -755,15 +753,15 @@ sub _output_story {
     foreach (my $i = 0; $i <= $#categories; $i++) {
         info("Publisher.pm: publishing story under URI='$story_urls[$i]'");
 
-        $self->_build_story(story    => $story, 
-                            category => $categories[$i],
-                            url      => $story_urls[$i]);
+        $self->_build_story_single_category(story    => $story,
+                                            category => $categories[$i],
+                                            url      => $story_urls[$i]);
     }
 }
 
 
 #
-# _build_story(story => $story, category => $category, url => $url);
+# _build_story_single_category(story => $story, category => $category, url => $url);
 #
 # Used by both preview & publish processes.
 #
@@ -772,7 +770,7 @@ sub _output_story {
 # that story & category, and write out the resulting content under the
 # filename that's indicated by the submitted url.
 #
-sub _build_story {
+sub _build_story_single_category {
 
     my $self = shift;
     my %args = @_;
