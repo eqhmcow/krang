@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added support for Debian. [Jason Purdy]
+
+=item *
+
 Fixed bug where clicking on a media link in the element editor would
 open a new window every time. [Sam]
 
