@@ -280,6 +280,10 @@ sub element_edit {
                      [ map { { name => $_->name } } 
                          grep { $_->is_container } @available ]);
 
+    # instance_name is used for preview window targeting
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $template->param(instance_name => $instance_name);
 }
 
 sub element_bulk_edit {

@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where clicking on a media link in the element editor would
+open a new window every time. [Sam]
+
+=item *
+
 Moved code to run tests from Makefile into bin/krang_test.  This
 allows krang_install to affect which Perl binary runs the tests. It
 also helps with BSD portability since the test target didn't work with
