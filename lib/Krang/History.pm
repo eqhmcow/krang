@@ -1,6 +1,14 @@
 package Krang::History;
 use strict;
 use warnings;
+
+BEGIN {
+    # declare exportable functions
+    use Exporter;
+    our @ISA = qw(Exporter);
+    our @EXPORT_OK = qw( add_history );
+}
+
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Krang::Log qw( info );
@@ -13,11 +21,6 @@ use Time::Piece::MySQL;
 use constant FIELDS => qw( object_type object_id action version desk_id user_id timestamp );
 use constant OBJECT_TYPES => qw( Krang::Story Krang::Media Krang::Template );
 use constant ACTIONS => qw( new save checkin checkout publish deploy move revert );
-
-# declare exportable functions
-use Exporter;
-our @ISA = qw(Exporter);
-our @EXPORT_OK = qw( add_history );
 
 =head1 NAME
 
