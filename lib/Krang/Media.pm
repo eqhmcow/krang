@@ -447,6 +447,9 @@ sub upload_file {
     $self->{tempdir} = $path;
     $self->{filename} = $filename;
 
+    # blow the URL cache since filename has changed
+    undef $self->{url_cache};
+
     return $self; 
 }
 
@@ -1466,6 +1469,9 @@ sub delete {
 
     $self->checkout();
      
+    # unpublish
+    Krang::Publisher->new->unpublish_media(media => $self);
+
     # first delete history for this object
     Krang::History->delete(object => $self);
 

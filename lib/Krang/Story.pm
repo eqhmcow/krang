@@ -1662,6 +1662,9 @@ sub delete {
     # Is user allowed to otherwise edit this object?
     Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
         unless ($self->may_edit);
+    
+    # unpublish
+    Krang::Publisher->new->unpublish_story(story => $self);
 
     # first delete history for this object
     Krang::History->delete(object => $self);

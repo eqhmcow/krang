@@ -235,6 +235,10 @@ test_full_preview();
 
 test_full_publish();
 
+test_story_unpublish();
+
+test_media_unpublish();
+
 
 ############################################################
 #
@@ -850,6 +854,86 @@ sub test_preview_story {
     } else {
         fail('Krang::Publisher->preview_story() -- exists');
     }
+}
+
+sub test_story_unpublish {
+    # create a story in all three categories
+    my $story   = &create_story([$category, $child_cat, $child_subcat]);
+    $publisher->preview_story(story => $story);
+    my $preview_path_url = build_preview_path($story);
+    ok(-e $preview_path_url);
+
+    # remove the primary category and re-preview
+    $story->categories($child_cat, $child_subcat);
+    $publisher->preview_story(story => $story);
+    my $new_preview_path_url = build_preview_path($story);
+    ok(-e $new_preview_path_url);
+    ok((not -e $preview_path_url), 'expired preview path cleaned up');
+
+    # now publish
+    $publisher->publish_story(story => $story);
+    my @paths = build_publish_paths($story);
+    ok(-e $_) for @paths;
+   
+    # remove another category and republish
+    $story->categories($child_subcat);
+    $publisher->publish_story(story => $story);
+    my @new_paths = build_publish_paths($story);
+    ok(-e $_) for @new_paths;
+    my %new = map {($_,1)} @new_paths;
+    foreach my $old (@paths) {
+        next if $new{$old};
+        ok((not -e $old), "expired publish path '$old' cleaned up");
+    }
+
+    # delete it
+    $story->delete;
+
+    # make sure it's really gone
+    ok((not -e $_), 'delete removed dead paths') for @new_paths;    
+}
+
+sub test_media_unpublish {
+    # create media
+    my $media   = &create_media();
+
+    # preview
+    $publisher->preview_media(media => $media);   
+    my $old_preview_path = $media->preview_path;
+    ok(-e $old_preview_path);
+
+    # publish
+    $publisher->publish_media(media => $media);   
+    my $old_publish_path = $media->publish_path;
+    ok(-e $old_publish_path);
+    
+    # upload a new file, changing the URL
+    my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
+    my $fh = new FileHandle $filepath;
+    $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
+    $media->save;
+    like($media->url, qr/krang.jpg$/);
+    isnt($media->publish_path, $old_publish_path);
+    isnt($media->preview_path, $old_preview_path);
+
+    # preview
+    $publisher->preview_media(media => $media);   
+    my $preview_path = $media->preview_path;
+    ok(-e $preview_path);
+    ok((not -e $old_preview_path), 'changed URL removed obsolete file');
+
+    # publish
+    $publisher->publish_media(media => $media);   
+    my $publish_path = $media->publish_path;
+    ok(-e $publish_path);
+    ok((not -e $old_publish_path), 'changed URL removed obsolete file');
+
+    # delete it
+    $media->delete;
+
+    # make sure it's really gone
+    ok((not -e $preview_path), 'delete removed published media');
+    ok((not -e $publish_path), 'delete removed published media');
 }
 
 #

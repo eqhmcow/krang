@@ -26,6 +26,9 @@ Krang::Publisher - Center of the Publishing Universe.
                            );
 
 
+  # unpublish a story, usually called from $story->delete
+  $publisher->unpublish_story(story => $story);
+
   # Publish a media object to the preview path.
   # Returns the media URL if successful.
   $url = $publisher->preview_media(
@@ -38,6 +41,8 @@ Krang::Publisher - Center of the Publishing Universe.
                                    media    => $media_object,
                                   );
 
+  # unpublish a media object, usually called from $media->delete
+  $publisher->unpublish_media(media => $media);
 
   # Get the list of related stories and media that will get published
   my $asset_list_ref = $publisher->get_publish_list(
@@ -96,6 +101,7 @@ use Krang::Category;
 use Krang::ElementClass;
 use Krang::Template;
 use Krang::History qw(add_history);
+use Krang::DB qw(dbh);
 
 use Krang::Log qw(debug info critical);
 
@@ -228,15 +234,23 @@ sub preview_story {
 
     my $total = @$publish_list;
     my $counter = 0;
+    my @paths;
     foreach my $object (@$publish_list) {
         $callback->(object => $object,
                     total  => $total,
                     counter => $counter++) if $callback;
         if ($object->isa('Krang::Story')) {
             debug('Publisher.pm: Previewing story_id=' . $object->story_id());
-            $self->_build_story_single_category(story    => $object,
-                                                category => $object->category,
-                                                url      => $object->preview_url());
+            @paths = $self->_build_story_single_category(story => $object,
+                                           category => $object->category,
+                                           url      => $object->preview_url());
+
+            # fix up publish locations
+            $self->_rectify_publish_locations(object => $object,
+                                              paths  => \@paths,
+                                              preview => 1);
+    
+
         } elsif ($object->isa('Krang::Media')) {
             debug('Publisher.pm: Previewing media_id=' . $object->media_id());
             $self->preview_media(media => $object);
@@ -317,7 +331,12 @@ sub publish_story {
                         total  => $total,
                         counter => $counter++) if $callback;
 
-            $self->_build_story_all_categories(story => $object);
+            my @paths = $self->_build_story_all_categories(story => $object);
+
+            # fix up publish locations
+            $self->_rectify_publish_locations(object => $object,
+                                              paths  => \@paths,
+                                              preview => 0);
 
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object, %args);
@@ -329,6 +348,65 @@ sub publish_story {
 }
 
 
+=item C<< $publisher->unpublish_story(story => $story) >>
+
+Removes a story from its published locations.  Usually called by
+$story->delete.  Affects both preview and publish locations.
+
+=cut
+
+sub unpublish_story {
+    my ($self, %arg) = @_;
+    my $dbh = dbh;
+    my $story = $arg{story};
+
+    # get location list, preview and publish
+    my $paths = $dbh->selectcol_arrayref(
+               "SELECT path FROM publish_story_location WHERE story_id = ?",
+                                         undef, $story->story_id);
+
+    # delete
+    foreach my $path (@$paths) {
+        next unless -f $path;
+        unlink($path) or 
+          croak("Unable to delete file '$path' during unpublish : $!");
+    }
+
+    # clean the table
+    $dbh->do('DELETE FROM publish_story_location WHERE story_id = ?',
+             undef, $story->story_id)
+      if @$paths;
+}
+
+=item C<< $publisher->unpublish_media(media => $media) >>
+
+Removes a media object from its published locations.  Usually called
+by $media->delete.  Affects both preview and publish locations.
+
+=cut
+
+sub unpublish_media {
+    my ($self, %arg) = @_;
+    my $dbh = dbh;
+    my $media = $arg{media};
+
+    # get location list, preview and publish
+    my $paths = $dbh->selectcol_arrayref(
+               "SELECT path FROM publish_media_location WHERE media_id = ?",
+                                         undef, $media->media_id);
+
+    # delete
+    foreach my $path (@$paths) {
+        next unless -f $path;
+        unlink($path) or 
+          croak("Unable to delete file '$path' during unpublish : $!");
+    }
+
+    # clean the table
+    $dbh->do('DELETE FROM publish_media_location WHERE media_id = ?',
+             undef, $media->media_id)
+      if @$paths;
+}
 
 =item C<< $url = $publisher->preview_media(media => $media) >>
 
@@ -374,6 +452,12 @@ sub preview_media {
                                                 system_error => $!
                                                );
     }
+
+        
+    # fix up publish location
+    $self->_rectify_publish_locations(object => $media,
+                                      paths  => [ $preview_path ],
+                                      preview => 1);
 
     return $media->preview_url();
 
@@ -705,6 +789,45 @@ L<Krang::ElementClass>, L<Krang::Category>, L<Krang::Media>
 
 =cut
 
+# $self->_rectify_publish_locations(object => $object, paths=>[], preview => 1)
+#
+# remove any dangling files previously published for this object and
+# update the publish location data in the DB
+
+sub _rectify_publish_locations {
+    my $self = shift;
+    my %arg = @_;
+    my $object = $arg{object};
+    my $paths  = $arg{paths} || [];
+    my $preview = $arg{preview};
+    my $type = $object->isa('Krang::Story') ? 'story' : 'media';
+    my $id   = $type eq 'story' ? $object->story_id : $object->media_id;
+    my $dbh  = dbh;
+
+    # get old location list
+    my $old_paths = $dbh->selectcol_arrayref(
+       "SELECT path FROM publish_${type}_location 
+        WHERE ${type}_id = ? AND preview = ?", undef, $id, $preview);
+
+    # build hash of current paths
+    my %cur = map { ($_,1) } @$paths;
+
+    # delete any files that aren't part of the current set
+    foreach my $old (@$old_paths) {
+        next if $cur{$old};
+        next unless -f $old;
+        unlink($old) 
+          or croak("Unable to delete extinct publish result '$old'.");
+    }
+
+    # write new paths to publish location table
+    $dbh->do("DELETE FROM publish_${type}_location 
+              WHERE ${type}_id = ? AND preview = ?", undef, $id, $preview);
+    $dbh->do("INSERT INTO publish_${type}_location 
+              (${type}_id,preview,path) VALUES ".join(',',('(?,?,?)')x@$paths),
+             undef, map { ($id, $preview, $_) } @$paths)
+      if @$paths;
+}
 
 #
 # _deploy_testing_templates()
@@ -879,11 +1002,13 @@ sub _assemble_pages {
 
 
 #
-# _build_story_all_categories(story => $story);
+# @paths = _build_story_all_categories(story => $story);
 #
 # Handles the process for publishing a story out over all its various categories.
 # Used only in the publish process, not the preview process.
 #
+# Returns a list of file-system paths where the story was written
+
 sub _build_story_all_categories {
 
     my $self = shift;
@@ -899,18 +1024,20 @@ sub _build_story_all_categories {
     add_history(object => $story, action => 'publish');
 
     # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
+    my @paths;
     foreach (my $i = 0; $i <= $#categories; $i++) {
         debug("Publisher.pm: publishing story under URI='$story_urls[$i]'");
 
-        $self->_build_story_single_category(story    => $story,
+        push @paths, $self->_build_story_single_category(story    => $story,
                                             category => $categories[$i],
                                             url      => $story_urls[$i]);
     }
+    return @paths;
 }
 
 
 #
-# _build_story_single_category(story => $story, category => $category, url => $url);
+# @paths = _build_story_single_category(story => $story, category => $category, url => $url);
 #
 # Used by both preview & publish processes.
 #
@@ -919,6 +1046,8 @@ sub _build_story_all_categories {
 # that story & category, and write out the resulting content under the
 # filename that's indicated by the submitted url.
 #
+# Returns a list of file-system paths where the story was written
+
 sub _build_story_single_category {
 
     my $self = shift;
@@ -941,20 +1070,27 @@ sub _build_story_single_category {
     my $story_pages = $self->_assemble_pages(story => $story, category => $category);
 
     # iterate over story pages, writing them to disk.
+    my @paths;
     for (my $p = 0; $p < @$story_pages; $p++) {
 
         # get the path & filename:
         my $filename = $self->story_filename(story => $story, page => $p);
 
         # write the page to disk.
-        $self->_write_page(path => $path, filename => $filename,
-                           story_id => $story->story_id(), data => $story_pages->[$p]);
+        my $output_filename = $self->_write_page(path => $path,
+                                                 filename => $filename,
+                                                 story_id => $story->story_id,
+                                                 data => $story_pages->[$p]);
+        
+        push(@paths, $output_filename);
     }
    
     # mark object as published - this will update status info,
     # check the object back in, and remove it from desks,
     # as needed.
     $story->mark_as_published() if $self->{is_publish};
+
+    return @paths;
 }
 
 
@@ -1124,6 +1260,11 @@ sub _write_media {
                                                );
     }
 
+    # fix up publish location
+    $self->_rectify_publish_locations(object => $media,
+                                      paths  => [ $publish_path ],
+                                      preview => 0);
+
     # log event
     add_history(object => $media, action => 'publish');
 
@@ -1137,14 +1278,14 @@ sub _write_media {
 
 
 #
-# _write_page(path => $path, filename => $filename, data => $content)
+# $output_filename = _write_page(path => $path, filename => $filename, data => $content)
 #
 # Writes the content in $data to $path/$filename.
 #
 # Will croak if it cannot determine the filename, or
 # cannot write to the filesystem.
 #
-# Returns nothing.
+# Returns the full path to the file written.
 #
 sub _write_page {
 
@@ -1175,7 +1316,7 @@ sub _write_page {
 
     debug("Publisher.pm: wrote page '$output_filename'");
 
-    return;
+    return $output_filename;
 }
 
 
