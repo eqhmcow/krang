@@ -2,6 +2,7 @@ package Krang::CGI;
 use strict;
 use warnings;
 
+
 =head1 NAME
 
 Krang::CGI - Krang base class for CGI modules
@@ -52,12 +53,11 @@ use Krang::User;
 use Krang::Session qw/%session/;
 
 
-# setup tmpl_path
-sub new {
-    my $pkg = shift;
-    my $self = $pkg->SUPER::new(@_);
-    $self->tmpl_path(rel2abs(catdir(KrangRoot, "templates")) . "/");
-    return $self;
+# Set up HTML_TEMPLATE_ROOT for templates
+BEGIN {
+    # use $KRANG_ROOT/templates for templates
+    my $html_template_root = catdir(KrangRoot, "templates");
+    $ENV{HTML_TEMPLATE_ROOT} = $html_template_root unless (defined($ENV{HTML_TEMPLATE_ROOT}));
 }
 
 
