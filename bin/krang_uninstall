@@ -33,6 +33,8 @@ Please use this script with utmost caution!
     --verbose     - print a running dialogue of what happens, otherwise
                   actions are performed silently.
 
+    --no_prompt   - suppress warning prompt
+
 =cut
 
 BEGIN {
