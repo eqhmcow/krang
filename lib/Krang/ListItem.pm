@@ -143,7 +143,7 @@ sub save {
 
     # if this is not a new list item
     if (defined $self->{list_item_id}) {
-        $list_id = $self->{list_item_id};
+        my $list_id = $self->{list_item_id};
         
         # get rid of list_item_id 
         my @save_fields = grep {$_ ne 'list_item_id'} RO_FIELDS,RW_FIELDS;
@@ -180,9 +180,12 @@ sub save {
             $self->{ord} = $existing + 1;
         }
         my $sql = 'INSERT INTO list_item ('.join(',', @save_fields).') VALUES (?'.",?" x ((scalar @save_fields) - 1).")";
+
+        my @save_vals = map { $self->{$_} } @save_fields;
         debug(__PACKAGE__."->save() - $sql");
-        
-        $dbh->do($sql, undef, map { $self->{$_} } @save_fields);
+        debug(__PACKAGE__ . "::save() SQL ARGS: ".join(',', @save_vals));
+ 
+        $dbh->do($sql, undef, @save_vals);
         
         $self->{list_item_id} = $dbh->{mysql_insertid};
     }
@@ -288,7 +291,7 @@ not $valid_params{$param};
       if $args{count} and $args{ids_only};
 
     # set defaults if need be
-    my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'name';
+    my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'ord';
     my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
     my $limit = $args{'limit'} ? $args{'limit'} : undef;
     my $offset = $args{'offset'} ? $args{'offset'} : 0;
@@ -311,7 +314,7 @@ not $valid_params{$param};
         $select_string = join(',', (RO_FIELDS,RW_FIELDS));
     }
 
-    my $sql = "select $select_string from list";
+    my $sql = "select $select_string from list_item";
     $sql .= " where ".$where_string if $where_string;
     $sql .= " order by $order_by $order_desc";
 
