@@ -279,23 +279,27 @@ sub _child_work {
 
     # start the cache
     Krang::Cache::start();
+    eval {
 
-    # child
-    debug(sprintf("%s: Child PID=%i spawned with Schedule IDs=%s.",
-                 __PACKAGE__, $$, (join ', ', (map { $_->schedule_id } @$tasks))));
-
-    foreach my $t (@$tasks) {
-        debug(sprintf("%s->_child_work('%s'): Child PID=%i running schedule_id=%i",
-                      __PACKAGE__, $instance, $$, $t->schedule_id()));
-        eval { $t->execute(); };
-        if (my $err = $@) {
-            critical(sprintf("%s->_child_work('%s'): Child PID=%i encountered fatal error with Schedule ID=%i",
-                             __PACKAGE__, $instance, $$, $t->schedule_id()));
+        # child
+        debug(sprintf("%s: Child PID=%i spawned with Schedule IDs=%s.",
+                      __PACKAGE__, $$, (join ', ', (map { $_->schedule_id } @$tasks))));
+        
+        foreach my $t (@$tasks) {
+            debug(sprintf("%s->_child_work('%s'): Child PID=%i running schedule_id=%i",
+                          __PACKAGE__, $instance, $$, $t->schedule_id()));
+            eval { $t->execute(); };
+            if (my $err = $@) {
+                critical(sprintf("%s->_child_work('%s'): Child PID=%i encountered fatal error with Schedule ID=%i",
+                                 __PACKAGE__, $instance, $$, $t->schedule_id()));
+            }
         }
-    }
+    };
+    my $err = $@;
 
     # turn cache off
     Krang::Cache::stop();
+    die $err if $err;
 
     debug(sprintf("%s: Child PID=%i finished.  Exiting.", __PACKAGE__, $$));
 

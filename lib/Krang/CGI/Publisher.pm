@@ -310,56 +310,63 @@ sub preview_story {
     $|++;
     print $template->output;
 
-    # start up the cache
+    # start up the cache and setup an eval{} to catch any death
     Krang::Cache::start();
-
-    my $publisher = Krang::Publisher->new();
     my $url;
     eval {
-        $url = $publisher->preview_story(story => $story, 
-                                         callback =>\&_progress_callback);
+
+        my $publisher = Krang::Publisher->new();
+        eval {
+            $url = $publisher->preview_story(story => $story, 
+                                             callback =>\&_progress_callback);
+        };
+        if ($@) {
+            # if there is an error, figure out what it is, create the
+            # appropriate message and return an error page.
+            if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
+                add_message('missing_template',
+                            filename       => $@->template_name,
+                            category_url   => $@->category_url
+                       );
+            } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {           
+                add_message('template_parse_error',
+                            element_name  => $@->element_name,
+                            template_name => $@->template_name,
+                            category_url  => $@->category_url,
+                            error_msg     => $@->error_msg
+                           );
+            } elsif (ref $@ and $@->isa('Krang::Publisher::FileWriteError')) {
+                add_message('file_write_error',
+                            path          => $@->destination);
+            } else {
+                # something not expected so log the error.  Can't croak()
+                # here because that will trigger bug.pl.
+                print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
+                critical($@);
+            }
+
+            # put the messages on the screen
+            foreach my $error (get_messages()) {
+                print "<div class='alertp'>" . $query->escapeHTML($error) . 
+                  "</div>\n";
+            }
+            clear_messages();
+
+            # make sure to turn off caching
+            Krang::Cache::stop();
+            debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
+            
+            return;
+        }
     };
-    if ($@) {
-        # if there is an error, figure out what it is, create the appropriate message
-        # and return an error page.
-        if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
-            add_message('missing_template',
-                        filename       => $@->template_name,
-                        category_url   => $@->category_url
-                       );
-        } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {            add_message('template_parse_error',
-                        element_name  => $@->element_name,
-                        template_name => $@->template_name,
-                        category_url  => $@->category_url,
-                        error_msg     => $@->error_msg
-                       );
-        } elsif (ref $@ and $@->isa('Krang::Publisher::FileWriteError')) {
-            add_message('file_write_error',
-                        path          => $@->destination);
-        } else {
-            # something not expected so log the error.  Can't croak()
-            # here because that will trigger bug.pl.
-            print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
-            critical($@);
-        }
+    my $err = $@;
 
-        # put the messages on the screen
-        foreach my $error (get_messages()) {
-            print "<div class='alertp'>" . $query->escapeHTML($error) . 
-              "</div>\n";
-        }
-        clear_messages();
-
-        # make sure to turn off caching
-        Krang::Cache::stop();
-        debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
-
-        return;
-    }
-
-    # cache off
+    # cache off, regardless of $err
     Krang::Cache::stop();
     debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
+
+    # die a rightful death
+    die $err if $err;
 
     # this should always be true
     assert($url eq $story->preview_url) if ASSERT;
@@ -543,76 +550,91 @@ sub _publish_assets_now {
     $|++;
     print $template->output;
 
-    # start caching
+    # start caching and setup an eval{} to catch death
     Krang::Cache::start();
-
-    # run things to the publisher
-    my $publisher = Krang::Publisher->new();
-    if (@$story_list) {
-        # publish!
-        eval { $publisher->publish_story(story => $story_list, 
-                                         callback =>\&_progress_callback); };
+    eval {
     
-        if ($@) {
-            # if there is an error, figure out what it is, create the
-            # appropriate message and return.
-            if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
-                add_message('missing_template',
-                            filename      => $@->template_name,
-                            category_url   => $@->category_url
-                           );
+        # run things to the publisher
+        my $publisher = Krang::Publisher->new();
+        if (@$story_list) {
+            # publish!
+            eval { $publisher->publish_story(story => $story_list, 
+                                             callback =>\&_progress_callback);
+                 };
+    
+            if ($@) {
+                # if there is an error, figure out what it is, create the
+                # appropriate message and return.
+                if (ref $@ && 
+                    $@->isa('Krang::ElementClass::TemplateNotFound')) {
+                    add_message('missing_template',
+                                filename      => $@->template_name,
+                                category_url   => $@->category_url
+                               );
+                    
+                } elsif (ref $@ && 
+                         $@->isa('Krang::ElementClass::TemplateParseError')) {
+                    add_message('template_parse_error',
+                                element_name  => $@->element_name,
+                                template_name => $@->template_name,
+                                category_url  => $@->category_url,
+                                error_msg     => $@->error_msg
+                               );
+                } elsif (ref $@ and 
+                         $@->isa('Krang::Publisher::FileWriteError')) {
+                    add_message('file_write_error',
+                                path          => $@->destination);
+                } else {
+                    # something not expected so log the error.  Can't croak()
+                    # here because that will trigger bug.pl.
+                    print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
+                    critical($@);
+                }
 
-            } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
-                add_message('template_parse_error',
-                            element_name  => $@->element_name,
-                            template_name => $@->template_name,
-                            category_url  => $@->category_url,
-                            error_msg     => $@->error_msg
-                           );
-            } elsif (ref $@ and $@->isa('Krang::Publisher::FileWriteError')) {
-                add_message('file_write_error',
-                            path          => $@->destination);
+                # put the messages on the screen
+                foreach my $error (get_messages()) {
+                    print "<div class='alertp'>$error</div>\n";
+                }
+                clear_messages();
+
+                # make sure to turn off caching
+                Krang::Cache::stop();
+                debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
+                
+                return;
+                
             } else {
-                # something not expected so log the error.  Can't croak()
-                # here because that will trigger bug.pl.
-                print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
-                critical($@);
+                
+                # otherwise, we're good.
+                foreach my $story (@$story_list) {
+                    # add a publish message for the UI
+                    add_message('story_publish', story_id => $story->story_id,
+                                url => $story->url,
+                                version => $story->version);
+                }
             }
+        }
+        
 
-            # put the messages on the screen
-            foreach my $error (get_messages()) {
-                print "<div class='alertp'>$error</div>\n";
-            }
-            clear_messages();
-            return;
-
-        } else {
-            
-            # otherwise, we're good.
-            foreach my $story (@$story_list) {
+        if (@$media_list) {
+            # publish!
+            $publisher->publish_media(media => $media_list);
+            foreach my $media (@$media_list) {
                 # add a publish message for the UI
-                add_message('story_publish', story_id => $story->story_id,
-                            url => $story->url,
-                            version => $story->version);
+                add_message('media_publish', media_id => $media->media_id,
+                            url => $media->url,
+                            version => $media->version);
             }
         }
-    }
-
-
-    if (@$media_list) {
-        # publish!
-        $publisher->publish_media(media => $media_list);
-        foreach my $media (@$media_list) {
-            # add a publish message for the UI
-            add_message('media_publish', media_id => $media->media_id,
-                        url => $media->url,
-                        version => $media->version);
-        }
-    }
+    };
+    my $err = $@;
 
     # done caching
     Krang::Cache::stop();
     debug("Krang::Cache stats " . join(' : ', Krang::Cache::stats()));
+
+    # die if you want to
+    die $err if $err;
 
     # dynamic redirect to workspace
     print "<form action=workspace.pl></form><script language='javascript'>document.forms[0].submit();</script>\n";

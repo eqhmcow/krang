@@ -41,12 +41,12 @@ This cache is held in memory and won't be visible in other processes.
 
 =item private
 
-Since the cache is memory it won't affect other processes.
+Since the cache is in process memory it won't affect other processes.
 
 =item LRU
 
 This cache expires objects in Least Recently Used order.  Whenever an
-object requested from the cache it goes to the top of the list and
+object is requested from the cache it goes to the top of the list and
 objects are always removed from the bottom when the cache is full.
 
 =back
@@ -68,6 +68,12 @@ cache won't go off till the last one stop()s.
 
 Stop caching objects.  Calling this multiple times decrements an
 internal counter and doesn't take effect till the count reaches 0.
+
+B<NOTE>: It is very important to make sure stop() gets called after
+start().  You should have an C<eval{}> around code between start() and
+stop() and be sure to call stop() if the code die()s.  Failing to do
+so can produce very strange results in persistent environments like
+mod_perl.
 
 =item C<< Krang::Cache::active() >>
 
@@ -98,7 +104,7 @@ off.
 
 =item C<< $obj = Krang::Cache::set('Krang::Element' => $element_id => $element) >>
 
-Sets and object in the cache, using a class name, an id and a
+Sets an object in the cache, using a class name, an id and a
 reference to the object.
 
 =back
