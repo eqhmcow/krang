@@ -8,6 +8,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added alt_tag and alt_tag_like searching to L<Krang::Media>, also added
+as an option in Media advanced find screen. [Matt]
+
+=item * 
+
+Clicking Story save/save and stay now reorders elements as well. [Matt]
+
+=item *
+
 L<Krang::Story>->find() can now search over a list of site_ids.
 [Peter]
 
