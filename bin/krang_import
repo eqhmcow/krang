@@ -168,7 +168,7 @@ exit 0;
 sub import_callback {
     my %arg = @_;
     my $object = $arg{object};
-
+    
     if ($verbose) {
         my ($class, $id) = Krang::DataSet::_obj2id($object);
         if ($id > $max_id{$class}) {

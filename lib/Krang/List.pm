@@ -374,12 +374,16 @@ sub deserialize_xml {
     }
 
     # if matching list exists, don't replicate it
-    return if $l; 
+    return $l if $l; 
 
     if ($parent_id) {
-        return Krang::List->new( name => $data->{name}, list_group_id => $list_group_id, parent_list_id => $parent_id );
+        my $new_l = Krang::List->new( name => $data->{name}, list_group_id => $list_group_id, parent_list_id => $parent_id );
+        $new_l->save;
+        return $new_l;
     } else {
-        return Krang::List->new( name => $data->{name}, list_group_id => $list_group_id );
+        my $new_l = Krang::List->new( name => $data->{name}, list_group_id => $list_group_id );
+        $new_l->save;
+        return $new_l;
     }
 }
 

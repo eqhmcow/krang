@@ -326,10 +326,12 @@ sub deserialize_xml {
             if $no_update;
 
         # update simple fields
-        Krang::ListGroup->description($data->{description});
+        $lg->description($data->{description});
+        $lg->save(); 
 
     } else {
         $lg = Krang::ListGroup->new( name => $data->{name}, description => $data->{description} );
+        $lg->save;
     }
 
     return $lg;

@@ -436,21 +436,28 @@ sub deserialize_xml {
                                   suppressempty => 1);
 
 
-    # get list_group info
+    # get list info
     my $list_id = $set->map_id(class => "Krang::List",
                                        id    => $data->{list_id});
 
+    my ($list) = Krang::List->find( list_id => $list_id );
+ 
     # get parent list item id if one
-    my $parent_id;
+    my $parent;
     if ($data->{parent_list_item_id}) {
-        $parent_id = $set->map_id(  class => "Krang::ListItem",
+        my $parent_id = $set->map_id(  class => "Krang::ListItem",
                                     id => $data->{parent_list_item_id} );
+        $parent = (Krang::ListItem->find( list_item_id => $parent_id ))[0];
     }
 
-    if ($parent_id) {
-       return Krang::ListItem->new( data => $data->{data}, list_id => $list_id, parent_list_item_id => $parent_id );
+    if ($parent) {
+       my $li = Krang::ListItem->new( data => $data->{data}, list => $list, parent_list => $parent );
+        $li->save;
+        return $li;
     } else {
-       return Krang::ListItem->new( data => $data->{data}, list_id => $list_id );
+        my $li = Krang::ListItem->new( data => $data->{data}, list => $list );
+        $li->save;
+        return $li;
     }
 }
 
