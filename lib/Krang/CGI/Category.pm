@@ -12,6 +12,7 @@ use Krang::CGI::Workspace;
 use Carp qw(croak);
 use Krang::Pref;
 use Krang::HTMLPager;
+use Krang::Site;
 
 use base 'Krang::CGI::ElementEditor';
 
@@ -165,6 +166,10 @@ an error message.  Upon success, goes to edit_category.
 sub create {
     my $self = shift;
     my $query = $self->query;
+
+    # throw error if there are no sites in the system
+    my $site_count = Krang::Site->find(count => 1);
+    add_message('no_sites') unless $site_count;
 
     my $parent_id = $query->param('parent_id');
     my $dir       = $query->param('dir');
