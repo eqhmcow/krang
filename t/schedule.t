@@ -1,6 +1,8 @@
 use strict;
 
 use Data::Dumper;
+use File::Spec;
+use IO::File;
 use Test::More qw(no_plan);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -9,7 +11,7 @@ use Time::Seconds;
 use Krang::Script;
 
 # set debug flag
-$ENV{SCH_DEBUG} = 1;
+#$ENV{SCH_DEBUG} = 1;
 
 BEGIN {use_ok('Krang::Schedule');}
 
@@ -37,7 +39,6 @@ like($s1->{next_run}, qr/^2003-04-11 12:00/, 'next_run check 1');
 
 # I.B
 # next_run will be set to some time later this week
-
 # run date is two days in the future...
 $date = $now + (2 * ONE_DAY);
 our $s2 = Krang::Schedule->new(action => 'publish',
@@ -92,7 +93,7 @@ eval {isa_ok($s4->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
 
 $next_run = Time::Piece->from_mysql_datetime($s4->{next_run}) - ONE_WEEK +
-  ONE_HOUR;
+  ONE_HOUR + ONE_HOUR;
 ($next_run = $next_run->mysql_datetime) =~ s/:\d+$//;
 is($next_run, $now_mysql, 'next_run check 4');
 
@@ -112,7 +113,7 @@ eval {isa_ok($s5->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
 
 $next_run = Time::Piece->from_mysql_datetime($s5->{next_run}) - ONE_WEEK
-  + ONE_DAY + ONE_HOUR;
+  + ONE_DAY + ONE_HOUR + ONE_HOUR;
 ($next_run = $next_run->mysql_datetime) =~ s/:\d+$//;
 is($next_run, $now_mysql, 'next_run check 5');
 
@@ -154,7 +155,7 @@ is($@, '', 'save() works :)');
 
 # - ONE_HOUR, inexplicable side effect of subtraction involving ONE_WEEK
 $next_run = Time::Piece->from_mysql_datetime($s7->{next_run}) - ONE_WEEK
-  - ONE_HOUR + ONE_MINUTE;
+  - ONE_HOUR + ONE_HOUR + ONE_MINUTE;
 ($next_run = $next_run->mysql_datetime) =~ s/:\d+$//;
 is($next_run, $now_mysql, 'next_run check 7');
 
@@ -192,8 +193,8 @@ eval {isa_ok($s9->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
 
 # day and week subtraction is off by an hour
-$next_run = Time::Piece->from_mysql_datetime($s9->{next_run}) - ONE_DAY +
-  ONE_MINUTE;
+$next_run = Time::Piece->from_mysql_datetime($s9->{next_run}) - ONE_DAY
+  + ONE_HOUR + ONE_MINUTE;
 ($next_run = $next_run->mysql_datetime) =~ s/:\d+$//;
 is($next_run, $now_mysql, 'next_run check 9');
 
@@ -230,7 +231,8 @@ eval {isa_ok($s11->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
 
 # day and week subtraction is off by an hour
-$next_run = Time::Piece->from_mysql_datetime($s11->{next_run}) - ONE_DAY;
+$next_run = Time::Piece->from_mysql_datetime($s11->{next_run}) - ONE_DAY
+  + ONE_HOUR;
 ($next_run = $next_run->mysql_datetime) =~ s/:\d+$//;
 is($next_run, $now_mysql, 'next_run check 11');
 
@@ -287,15 +289,24 @@ $next_run = Time::Piece->from_mysql_datetime($s14->{next_run});
 is($next_run, $now_mysql, 'next_run check 14');
 
 
+# run test - 1 tests should run
+my $path = File::Spec->catfile($ENV{KRANG_ROOT}, "schedule_test.log");
+my $log = IO::File->new(">$path");
+my $count = Krang::Schedule->run($log);
+is($count, 1, 'run() succeeded :).');
+
 # force a save failure
 $s1->repeat('fred');
 eval {$s1->save()};
 like($@, qr/'repeat' field set to invalid setting -/, 'save() failure test');
 
-# run test - 1 tests should run
-my $count = Krang::Schedule->run();
-is($count, 1, 'run() succeeded :).');
-
 # delete everything
-is($_->delete, 1, 'deletion test') for Krang::Schedule->find;
+for (1..14) {
+    no strict;
+    is(${"s$_"}->delete, 1, "deletion test $_");
+}
 
+END {
+    $log->close();
+    unlink $path;
+}

@@ -28,7 +28,8 @@ FTPPort
 FTPAddress
 FTPLog
 InstanceDisplayName
-ScheduleSleepInterval
+ScheduleInterval
+ScheduleLog
 );
 }
 

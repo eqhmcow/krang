@@ -99,7 +99,7 @@ use Time::Seconds;
 # Internal Modules
 ###################
 use Krang::DB qw(dbh);
-use Krang::Log qw/ASSERT assert critical debug info/;
+use Krang::Log qw/ASSERT assert/;
 use Krang::Media;
 use Krang::Story;
 use Krang::Template;
@@ -597,9 +597,9 @@ sub find {
 }
 
 
-=item C<< @schedule_ids_run = Krang::Schedule->run >>
+=item C<< @schedule_ids_run = Krang::Schedule->run( $log_handle ) >>
 
-=item C<< $object_run_count = Krang::Schedule->run >>
+=item C<< $object_run_count = Krang::Schedule->run( $log_handle ) >>
 
 This method runs all pending schedules.  It works by pulling a list of
 schedules with next_run greater than current time.  It runs these
@@ -619,11 +619,16 @@ will be deleted after its action is performed.
 =cut
 
 sub run {
+    my ($self, $log) = @_;
+    croak(__PACKAGE__ . "->run(): \$log handle is undefined or not an " .
+          "object.")
+      unless (defined $log || ref $log || $log->isa('IO::File'));
     my $now = localtime();
     my @objs = Krang::Schedule->find(next_run_less_or_equal => 'now()');
     my @schedule_ids_run;
 
     for my $obj(@objs) {
+        my $eval_err;
         my ($action, $context, $schedule_id, $object_id, $type, $repeat) =
           map {$obj->{$_}}
             qw/action context schedule_id object_id object_type repeat/;
@@ -633,15 +638,16 @@ sub run {
         my @args;
         if ($context) {
             eval {@args = thaw($context)};
-            critical("Error thawing 'context' for Krang::Schedule " .
-                     "'$schedule_id': $@")
-              if $@;
+            $eval_err = $@;
+            $log->print("ERROR: can't thaw 'context' for Krang::Schedule " .
+                        "'$schedule_id': $eval_err")
+              if $eval_err;
         }
 
         # what do we do in case of a failure
         if (SCH_DEBUG) {
-            debug("[$now] Schedule object id '$obj->{schedule_id}' " .
-                  "did something.");
+            $log->print("[$now] Schedule object id '$obj->{schedule_id}' " .
+                        "did something.\n");
         } else {
             my $call = $action_map{$type}->{$action};
             eval {
@@ -651,11 +657,15 @@ sub run {
                     &$call($object_id);
                 }
             };
-            critical("'$action' for Krang::$type id '$object_id' failed: $@")
-              if $@;
+            $eval_err = $@;
+            $log->print("ERROR: '$action' for Krang::$type id '$object_id' " .
+                        "failed: $eval_err")
+              if $eval_err;
         }
 
-        push @schedule_ids_run, $obj->{schedule_id};
+        # we're assuming the action was successful unless we've gotten an
+        # EVAL_ERR
+        push @schedule_ids_run, $obj->{schedule_id} unless $eval_err;
 
         if ($repeat eq 'never') {
             $obj->delete();
