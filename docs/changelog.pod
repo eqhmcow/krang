@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+C<bin/krang_upgrade> now supports remote MySQL databases.  [Aaron
+Ross]
+
+=item *
+
 Bugfix for C<bin/krang_publish>, now correctly counts media total
 and time with --to-preview option. [Matt]
 
