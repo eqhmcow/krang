@@ -252,16 +252,25 @@ sub check {
         _broked("Missing required $dir directive") 
           unless defined $CONF->get($dir);
     }
-    
+
+    my $element_lib = catdir($ENV{KRANG_ROOT}, 'element_lib');
+
     # make sure each instance has the necessary directives
     foreach my $instance (Krang::Conf->instances()) {
         my $block = $CONF->block(instance => $instance);
-        
+
         foreach my $dir (qw(InstanceHostName InstanceElementSet InstanceDisplayName
                             InstanceDBName DBPass DBUser)) {
             _broked("Instance '$instance' missing required '$dir' directive")
               unless defined $block->get($dir);
         }
+
+        # check to make sure that the InstanceElementSet exists.
+        unless (-d catdir($element_lib, $block->get('InstanceElementSet'))) {
+            _broked(sprintf("Instance '%s' is looking for InstanceElementSet '%s' which is not installed",
+                            $instance, $block->get('InstanceElementSet')));
+        }
+
     }
 
     # make sure KrangUser and KrangGroup exist
@@ -283,7 +292,8 @@ sub check {
 }
 
 sub _broked {
-    die("Error found in krang.conf: $_[0].\n");
+    warn("Error found in krang.conf: $_[0].\n");
+    exit;
 }
  
 # run the check ASAP, unless we're in upgrade mode
