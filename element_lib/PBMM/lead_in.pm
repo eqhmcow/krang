@@ -69,7 +69,7 @@ sub new {
                                                                 "24 paragraphs",
                                                                 "25 paragraphs"],
 
-                                                   default => "promo_teaser"
+                                                   default => "promo teaser"
                                                            ),
 
                  Krang::ElementClass::PopupMenu->new(name => "header_size",
