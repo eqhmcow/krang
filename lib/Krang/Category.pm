@@ -24,10 +24,11 @@ Krang::Category - a means access to information on categories
 
   my $id = $category->category_id();	# undef until after save()
   my $id = $category->element_id();	# undef until after save()
-  my $path = $category->path();		# undef until after save()
+  my $url = $category->url();		# undef until after save()
 
   # setter
   $category->element( $element );
+  $category->name( $some_relative_path );
 
   # delete the category from the database
   $category->delete();
@@ -38,11 +39,11 @@ Krang::Category - a means access to information on categories
     limit => 5,			# return 5 or less category objects
     offset => 1, 	        # start counting result from the
 				# second row
-    order_by => 'path'		# sort on the 'path' field
+    order_by => 'url'		# sort on the 'url' field
     name_like => '%bob%',	# match categories with name LIKE '%bob%'
-    path_like => '%fred%',
     parent_id => 8,
-    site_id => 9 );
+    site_id => 9,
+    url_like => '%fred%' );
 
   # any valid object field can be appended with '_like' to perform a
   # case-insensitive sub-string match on that field in the database
@@ -52,8 +53,23 @@ Krang::Category - a means access to information on categories
 
 =head1 DESCRIPTION
 
-This module serves as a means of adding, deleting, accessing category objects
-for a given Krang instance.
+Categories serve three purposes in Krang.  They serve as a means of dividing a
+sites content into distinct areas.  Consequently, all content sharing the
+property of "being chiefly about 'X'" should be placed within category 'X'.  A
+catgory's name, such as '/X', translates to both a relative system filepath for
+preview and publish output and a URL relative path.  For example category '/X'
+would map to $SITE_ROOT/$PUBLISH_PATH/X as well as http://$SITE_URL/X.
+
+Secondly, categories serve as a data container.  The 'element' field of a
+category object is a Krang::Element wherein arbitrary information about the
+category may be stored.
+
+Thirdly, once a template object is associated with its element, a category
+serves to provide a layout container for story content that belongs to it.  All
+of the fields defined in the category's element will be available to this
+template and may be used to derive category-specific layout behavior.
+
+This module serves as a means of adding, deleting, and accessing these objects.
 
 =cut
 
@@ -70,6 +86,7 @@ use warnings;
 ###################
 use Carp qw(verbose croak);
 use Data::Dumper;
+use File::Spec;
 use Time::Piece::MySQL;
 
 # Internal Modules
@@ -86,13 +103,13 @@ use Krang::Element;
 # Read-only fields
 use constant CATEGORY_RO => qw(category_id
 			       element_id
-			       name
 			       parent_id
-			       path
-			       site_id);
+			       site_id
+			       url);
 
 # Read-write fields
-use constant CATEGORY_RW => qw(element);
+use constant CATEGORY_RW => qw(element
+			       name);
 
 # Globals
 ##########
@@ -135,7 +152,7 @@ Element object associated with the given category object
 
 Id in the element table of this object's element
 
-=item * name (read-only)
+=item * name
 
 The display name of the category i.e. '/gophers'
 
@@ -188,6 +205,9 @@ sub init {
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
 
     $self->hash_init(%args);
+
+    # set checker for changes to 'name'
+    $self->{_old_name} = $self->{name};
 
     # define element
     $self->{element} = Krang::Element->new(class => 'category');
@@ -279,9 +299,9 @@ sub duplicate_check {
 
 =item * $count = Krang::Category->find( count => 1, %params )
 
-Class method that returns an array of category objects, category ids, or a count.
-Case-insensitive sub-string matching can be performed on any valid field by
-passing an argument like: "fieldname_like => '%$string%'" (Note: '%'
+Class method that returns an array of category objects, category ids, or a
+count.  Case-insensitive sub-string matching can be performed on any valid
+field by passing an argument like: "fieldname_like => '%$string%'" (Note: '%'
 characters must surround the sub-string).  The valid search fields are:
 
 =over 4
@@ -442,7 +462,10 @@ sub find {
 =item * $category = $category->save()
 
 Saves the contents of the category object in memory to the database.  Both
-'category_id' and 'path' will be defined if the call is successful.
+'category_id' and 'path' will be defined if the call is successful. If the
+'name' field has changed since the last save, the 'url' field will be
+reconstructed and update_child_url() is called to update the category urls
+underneath the present object.
 
 The method croaks if the save would result in a duplicate category object (i.e.
 if the object has the same path or url as another object).  It also croaks if
@@ -456,6 +479,9 @@ sub save {
     my @lookup_fields = qw/name path/;
     my @save_fields = grep {$_ ne 'category_id'} keys %category_cols;
 
+    # flag for change in 'name' field
+    my $new_url = $self->{name} ne $self->{_old_name} ? 1 : 0;
+
     # check for duplicates
     my ($site_id, $field) = $self->duplicate_check();
     croak(__PACKAGE__ . "->save(): field '$field' is a duplicate of site id" .
@@ -468,22 +494,26 @@ sub save {
 
     my $query;
     my $dbh = dbh();
+
+    # the object has already been saved once if $id
     if ($id) {
+        # recalculate url if we have a new name...
+        $self->{url} =~ s/$self->{_old_name}\$/$self->{name}\$/ if $new_url;
         $query = "UPDATE category SET " .
           join(", ", map {"$_ = ?"} @save_fields) .
             " WHERE category_id = ?";
     } else {
         # calculate path...
         if ($self->{parent_id}) {
-            $query = "SELECT path FROM category WHERE category_id = " .
+            $query = "SELECT url FROM category WHERE category_id = " .
               "'$self->{parent_id}'";
         } else {
             # i guess publish_path is right...
-            $query = "SELECT publish_path FROM site WHERE site_id = " .
+            $query = "SELECT url FROM site WHERE site_id = " .
               "'$self->{site_id}'";
         }
-        my ($path) = $dbh->selectrow_array($query);
-        $self->{path} = File::Spec->catdir($path, $self->{name});
+        my ($url) = $dbh->selectrow_array($query);
+        $self->{url} = File::Spec->catdir($url, $self->{name});
 
         # build query
         $query = "INSERT INTO category (" . join(',', @save_fields) .
@@ -503,7 +533,55 @@ sub save {
 
     $self->{category_id} = $dbh->{mysql_insertid} unless $id;
 
+    # update child URLs if name has changed
+    if ($new_url) {
+        $self->update_child_url();
+        $self->{_old_name} = $self->{name};
+    }
+
     return $self;
+}
+
+
+=item * $success = $category->update_child_url()
+
+Instance method that will search through the category table and replace all
+occurrences of the category's old name with the new one.
+
+=cut
+
+sub update_child_url {
+    my $self = shift;
+    my $id = $self->{category_id};
+    my (%ids, $row);
+    my $dbh = dbh();
+
+    # build hash of category_id and old urls 
+    my $sth = $dbh->prepare("SELECT category_id, url FROM category WHERE " .
+                            "url LIKE '$self->{url}%'");
+    $sth->execute();
+    $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
+    while($sth->fetch()) {
+        $ids{$row->{category_id}} = $row->{url};
+    }
+    $sth->finish();
+
+    (my $new_root = $self->{url}) =~ s/$self->{name}/$self->{_old_name}/;
+    my $query = <<SQL;
+UPDATE category
+SET url = ?
+WHERE category_id = ?
+SQL
+
+    $sth = $dbh->prepare($query);
+
+    for (keys %ids) {
+        (my $url = $ids{$_}) =~
+          s/^$self->{url}(.+)$/File::Spec->catdir($new_root, $1)/e;
+        $sth->execute(($url, $_));
+    }
+
+    return 1;
 }
 
 
@@ -511,11 +589,17 @@ sub save {
 
 =head1 TO DO
 
-Write a much better DESCRIPTION section.
+=over
+
+=item * Provide a means to bubble down changes to the 'name' field
+
+=item * Provide a means to bubble down chages in a sites 'url' field
+
+=back
 
 =head1 SEE ALSO
 
-L<Krang>, L<Krang::DB>
+L<Krang>, L<Krang::DB>, L<Krang::Element>
 
 =cut
 
