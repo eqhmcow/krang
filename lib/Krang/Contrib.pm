@@ -429,9 +429,9 @@ not $valid_params{$param};
         my @words = split(/\s+/, $args{'full_name'});
         foreach my $word (@words) {
             if ($where_string) {
-               $where_string .= " and concat(first,' ',middle,' ',last) like ?"; 
+               $where_string .= " and concat_ws(' ', first, middle, last) like ?"; 
             } else {
-                $where_string = "concat(first,' ',middle,' ',last) like ?";
+                $where_string = "concat_ws(' ', first, middle, last) like ?";
             }
             push (@where, $word);
             $args{$word} = "%$word%";
@@ -443,9 +443,9 @@ not $valid_params{$param};
         my @words = split(/\s+/, $args{'simple_search'});
         foreach my $word (@words) {
             if ($where_string) {
-               $where_string .= " and concat(first,' ',middle,' ',last) like ?"; 
+               $where_string .= " and concat_ws(' ', first, middle, last) like ?"; 
             } else {
-                $where_string = "concat(first,' ',middle,' ',last) like ?";
+                $where_string = "concat_ws(' ', first, middle, last) like ?";
             }
             push (@where, $word);
             $args{$word} = "%$word%";
