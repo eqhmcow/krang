@@ -1962,8 +1962,8 @@ sub deserialize_xml {
         $story->checkout;
 
         # update slug and title
-        $story->slug($data->{slug});
-        $story->title($data->{title});
+        $story->slug($data->{slug} || "");
+        $story->title($data->{title} || "");
 
     } else {
 
@@ -1983,8 +1983,8 @@ sub deserialize_xml {
 
         # create a new story object using categories, slug, title and class
         $story = Krang::Story->new(categories => \@categories,
-                                   slug       => $data->{slug},
-                                   title      => $data->{title},
+                                   slug       => $data->{slug} || "",
+                                   title      => $data->{title} || "",
                                    class      => $data->{class});
     }
     
