@@ -48,7 +48,7 @@ sub status {
                               ( map { Tr(td($_), td(Krang::Conf->get($_))) }
                                 
                                 (qw( KrangRoot ElementLibrary
-                                     ApacheUser ApacheGroup
+                                     KrangUser KrangGroup
                                    ))),
                              ));
 
