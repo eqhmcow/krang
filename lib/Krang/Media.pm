@@ -654,7 +654,7 @@ sub find {
 
     # set simple keys
     foreach my $key (keys %args) {
-	if ( ($key eq 'title') || ($key eq 'category_id') || ($key eq 'media_type_id') || ($key eq 'filename') || ($key eq 'creation_date') || ($key eq 'contrib_id' ) ) {
+	if ( ($key eq 'title') || ($key eq 'category_id') || ($key eq 'media_type_id') || ($key eq 'filename') || ($key eq 'creation_date') || ($key eq 'contrib_id' ) || ($key eq 'checked_out_by')) {
             push @where, $key;
 	} 
     }
