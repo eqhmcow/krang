@@ -6,6 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed the schema for the Krang::User XML format to make the new
+'hidden' field optional.  This allows data files from pre-v1.017 Krang
+to load in later Krangs. [Sam]
+
+=item *
+
 Fixed the v1.018 upgrade module to successfully upgrade instances from
 v1.016 and older.  Also made changes to allow repeated runs of the
 upgrade module to succeed even if the upgrade stops part way through.
