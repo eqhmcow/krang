@@ -208,7 +208,7 @@ sub _map_simple {
     $self->{title} = delete $self->{name};
 
     # element becomes class
-    $self->{class} = lc delete $self->{element};
+    ($self->{class} = lc delete $self->{element}) =~ s/ /_/g;
 
     # set media_type_id of that for images....
     $self->{media_type_id} = 1;

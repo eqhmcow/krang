@@ -241,7 +241,7 @@ sub _deserialize_elements {
     if ($data) {
         $data = ref $data eq 'ARRAY' ? $data : [$data];
         for my $d(@$data) {
-            my $class = lc $d->{element};
+            (my $class = lc $d->{element}) =~ s/ /_/g;
             my $data = $d->{content} || '';
             $tmp->[$d->{order}] = {class => $class, data => $data};
         }
@@ -253,7 +253,7 @@ sub _deserialize_elements {
             my $media_id = $o->{related_media_id} || 0;
             my $story_id = $o->{related_story_id} || 0;
             my $data = $media_id ? $media_id : $story_id ? $story_id : '';
-            my $class = lc $o->{element};
+            (my $class = lc $o->{element}) =~ s/ /_/g;
             $tmp->[$o->{order}] = {class => $class, data => $data,
                                    elements => _deserialize_elements($o)};
         }
@@ -273,7 +273,7 @@ sub _map_simple {
     $self->{title} = delete $self->{name};
 
     # element becomes class
-    $self->{class} = lc delete $self->{element};
+    ($self->{class} = lc delete $self->{element}) =~ s/ /_/g;
 
     # cover_date
     my $tmp = Time::Piece->strptime($self->{cover_date}, "%FT%TZ");
