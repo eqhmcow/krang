@@ -125,6 +125,14 @@ use constant USER_RW => qw(email
 use constant USER_USER_GROUP => qw(user_id
 			   	   group_id);
 
+# valid short logins :)
+use constant SHORT_NAMES	=> qw(adam
+				      admin
+				      arobin
+				      matt
+				      sam);
+
+
 # Globals
 ##########
 my $SALT = <<SALT;

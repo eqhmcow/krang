@@ -2,19 +2,23 @@
 
 =head1 NAME
 
-krang_useradd - change Krang user passwords
+krang_useradd - Add a new user to Krang
 
 =head1 SYNOPSIS
 
-krang_password [options] login
+krang_useradd [options] login
 
-Change the password for userX:
+Specify new user/login and then supply password:
 
-  $ krang_useradd userX
+  $ krang_useradd minimum_6_character_login
   New password:
   Re-type password:
 
 Options:
+
+ --debug		- Prints a list of all the user's fields setable
+			  from the command-line and a dump of the object
+			  after save
 
  --email		- Set email for this user
 
@@ -36,7 +40,8 @@ Options:
 
  --phone		- Set the phone# field for this user
 
-N.B. The current valid groups are: admin, default, and editor
+N.B. Logins and passwords must at least be 6 characters long.  The current
+valid groups are: admin, default, and editor
 
 =head1 DESCRIPTION
 
@@ -114,13 +119,13 @@ use Krang::User;
 
 # Globals
 ##########
-our ($email, $first, $last, $mobile_phone, $phone);
+our ($email, $first_name, $last_name, $mobile_phone, $phone);
 
 # Lexicals
 ###########
 my @gids;
 my @groups = qw/default/;
-my $help = my $man = 0;
+my $debug = my $help = my $man = 0;
 my %valid_groups = map {lc $_->name, $_->group_id} Krang::Group->find;
 
 # termial I/O vars
@@ -129,15 +134,16 @@ my ($c_lflag, $fd, $termios);
 
 # Input Validation
 ###################
-pod2usage(2) unless GetOptions("email=s"	=> \$email,
-                               "first-name=s"	=> \$first,
-                               "fname=s"	=> \$first,
+pod2usage(2) unless GetOptions("debug"		=> \$debug,
+                               "email=s"	=> \$email,
+                               "first-name=s"	=> \$first_name,
+                               "fname=s"	=> \$first_name,
                                "g=s"		=> \@groups,
                                "G=s"		=> \@groups,
                                "groups=s"	=> \@groups,
                                help		=> \$help,
-                               "last=s"		=> \$last,
-                               "lname=s"	=> \$last,
+                               "last=s"		=> \$last_name,
+                               "lname=s"	=> \$last_name,
                                man		=> \$man,
                                "mobile-phone=s"	=> \$mobile_phone,
                                "phone=s"	=> \$phone);
@@ -147,6 +153,8 @@ pod2usage(-verbose => 2) if $man;
 # get login
 my $login = shift @ARGV;
 pod2usage("No user 'login' specified") unless defined $login;
+pod2usage("Logins must be at least 6 characters") unless
+  (length $login >= 6 || grep $login eq $_, Krang::User::SHORT_NAMES);
 
 # handle groups
 ################
@@ -199,10 +207,23 @@ sub main {
         # allow symbolic references to access variables and methods of the
         # same name in for loop :)
         no strict qw/refs subs/;
-        for (qw/email first last mobile_phone phone/) {
+        for (qw/email first_name last_name mobile_phone phone/) {
             next unless $$_;
             $user->$_($$_);
         }
+    }
+
+    if ($debug) {
+my $groups = join ",", keys %groups;
+print STDERR <<END;
+Login:		$login
+Email:		$email
+First Name:	$first_name
+Groups:		$groups
+Last Name:	$last_name
+Mobile Phone:	$mobile_phone
+Phone:		$phone
+END
     }
 
     # handle groups
@@ -214,6 +235,10 @@ sub main {
         print STDERR "Attempt to add user failed: $err\n";
         exit 1;
     } else {
+        if ($debug) {
+            require Data::Dumper;
+            print STDERR "\n", Data::Dumper->Dump([$user],['user']), "\n";
+        }
         print "\nUser '$login' successfully added.\n";
     }
 }
@@ -261,6 +286,8 @@ sub ask_pass {
             print STDERR "\nPasswords do not match.\n";
             exit 1;
         }
+
+        print "\n\n" if $debug;
     }
 
     return $npass;
@@ -273,7 +300,7 @@ Returns the group id named '$group_name' and undef otherwise
 
 =cut
 
-sub group_id {my $gid = $valid_groups{lc shift} || 0; return $gid;}
+sub group_id {return @_ ? $valid_groups{$_[0]} : 0;}
 
 
 =item * set_echo()

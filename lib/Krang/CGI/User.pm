@@ -43,12 +43,6 @@ use constant DELETE_FIELDS => qw(Krang::User::USER_RW
 				 password
 				 current_group_ids);
 
-use constant SHORT_NAMES	=> qw(adam
-				      admin
-				      arobin
-				      matt
-				      sam);
-
 ##############################
 #####  OVERRIDE METHODS  #####
 ##############################
@@ -617,7 +611,8 @@ sub validate_user {
             # check login and pass length
             if ($_ eq 'login') {
                 $errors{"error_login\_length"} = 1
-                  unless (length($val) >= 6 || grep $val eq $_, SHORT_NAMES);
+                  unless (length($val) >= 6 ||
+                          grep $val eq $_, Krang::User::SHORT_NAMES);
             }
         } else {
             $errors{error_invalid_email} = 1
