@@ -121,22 +121,8 @@ sub dump_html {
     my $self = shift;
     my $output = '';
 
-    # Dump Params
-    $output .= "<P>\nQuery Parameters:<BR>\n<OL>\n";
-    my @params = $self->query->param();
-    foreach my $p (sort(@params)) {
-        my @data = $self->query->param($p);
-        my $data_str = "'<B>".join("</B>', '<B>", @data)."</B>'";
-        $output .= "<LI> $p => $data_str\n";
-    }
-    $output .= "</OL>\n";
-
-    # Dump ENV
-    $output .= "<P>\nQuery Environment:<BR>\n<OL>\n";
-    foreach my $ek (sort(keys(%ENV))) {
-        $output .= "<LI> $ek => '<B>".$ENV{$ek}."</B>'\n";
-    }
-    $output .= "</OL>\n";
+    # Call standard dump
+    $output .= $self->SUPER::dump_html();
 
     # Dump Session state
     $output .= "<P>\nSession State:<BR>\n<b><PRE>";
