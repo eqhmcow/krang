@@ -452,6 +452,8 @@ SQL
 
 =item * @category_ids = Krang::Category->ancestors( ids_only => 1 )
 
+Will return array of Krang::Category objects or category_ids of parents and parents of parents etc
+
 =cut
 
 sub ancestors {
@@ -474,6 +476,50 @@ sub ancestors {
     }
 
     return @ancestors;        
+}
+
+=item * @categories = Krang::Category->decendants()
+
+=item * @category_ids = Krang::Category->decendants( ids_only => 1 )
+
+=cut
+
+sub decendants {
+    my $self = shift;
+    my %args = @_;
+    my $ids_only = $args{ids_only} ? 1 : 0;
+    my @decendants;
+    
+    my @children_found = $self->children;
+    
+    return if not $children_found[0];
+
+    $ids_only ? (push @decendants, (map { $_->category_id } @children_found) ) : (push @decendants, @children_found);
+
+    foreach my $child (@children_found) {
+        my @c_cs = $child->children();
+        $ids_only ? (push @decendants, (map { $_->category_id } @c_cs) ) : (push @decendants, @c_cs);
+        push @children_found, @c_cs; 
+    }
+    
+    return @decendants; 
+}
+
+=item * @categories = Krang::Category->children()
+
+=item * @category_ids = Krang::Category->children( ids_only => 1 )
+
+Returns array of Krang::Category objects or category_ids of immediate childen.  Convenience method to find().
+
+=cut 
+
+sub children {
+    my $self = shift;
+    my %args = @_;
+    my $ids_only = $args{ids_only} ? 1 : 0;
+
+    return $ids_only ? Krang::Category->find( parent_id => $self->category_id, ids_only => 1 ) : Krang::Category->find( parent_id => $self->category_id);
+    
 }
 
 =item * @categories = Krang::Category->find( %params )
