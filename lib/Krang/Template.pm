@@ -115,14 +115,14 @@ use Krang::MethodMaker 	new_with_init => 'new',
 
 =over 4
 
-=item C<< $template = Krang::Template->new( %params ) >>
+=item $template = Krang::Template->new( %params )
 
 Constructor provided by Krang::MethodMaker.  Accepts a hash its argument.
 Validation of the keys in the hash is performed in the init() method.
 
-=item C<< $template = $template->checkin() >>
+=item $template = $template->checkin()
 
-=item C<< $template = Krang::Template->checkin( $template_id || @template_ids ) >>
+=item $template = Krang::Template->checkin( $template_id || @template_ids )
 
 Class or instance method for checking in a template object, as a class method
 either a list or single template id must be passed.
@@ -175,9 +175,9 @@ SQL
 }
 
 
-=item C<< $template = $template->checkout() >>
+=item $template = $template->checkout()
 
-=item C<< $template = Krang::Template->checkout( $template_id || @template_ids )>>
+=item $template = Krang::Template->checkout( $template_id || @template_ids )>>
 
 Class or instance method for checking out template objects, as a class method
 the either a list or single template id must be passed.
@@ -250,7 +250,7 @@ SQL
 }
 
 
-=item C<< $template = $template->copy_to( $path ) >>
+=item $template = $template->copy_to( $path )
 
 Instance method designed to work with Krang::Burner->deploy() to deploy
 templates.  It writes the template 'content' field to the path specified by
@@ -288,7 +288,7 @@ SQL
 }
 
 
-=item C<< $template = $template->deploy() >>
+=item $template = $template->deploy()
 
 This method is responsible for deploying the template associated with the given
 template object.  Deployment, at present, consists of the of three tasks:
@@ -360,7 +360,7 @@ SQL
 }
 
 
-=item  C<< @templates  = Krang::Template->find( $param ) >>
+=item @templates  = Krang::Template->find( $param )
 
 Class method that returns the template or templates matching the criteria
 provided in $param. Any of the fields in TEMPLATE_COLS is an acceptable search
@@ -436,7 +436,7 @@ sub find {
 }
 
 
-=item C<< $template = $template->init() >>
+=item $template = $template->init()
 
 Method for initializing object.  Called after new() required by
 Krang::MethodMaker.  This method does nothing except forwarding args to
@@ -454,7 +454,7 @@ sub init {
 }
 
 
-=item C<< $template = $template->mark_for_testing() >>
+=item $template = $template->mark_for_testing()
 
 This method sets the testing fields in the template table to allow for the
 testing of output of an undeployed template.
@@ -483,7 +483,7 @@ SQL
 }
 
 
-=item C<< $template = $template->prepare_for_edit() >>
+=item $template = $template->prepare_for_edit()
 
 This instance method saves the data currently in the object to the version
 table to permit a call to subsequent call to save that does not lose data.
@@ -522,7 +522,7 @@ SQL
 }
 
 
-=item C<< $template = $template->revert( $version ) >>
+=item $template = $template->revert( $version )
 
 Reverts template object data to that of a previous version.
 
@@ -579,7 +579,7 @@ SQL
 }
 
 
-=item C<< $template = $template->save() >>
+=item $template = $template->save()
 
 Saves template data in memory to the database.
 
