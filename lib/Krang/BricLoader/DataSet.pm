@@ -66,8 +66,9 @@ use warnings;
 
 # External Modules
 ###################
+use Carp qw(verbose croak);
 use File::Path qw(mkpath rmtree);
-use File::Spec::Functions qw(catdir catfile);
+use File::Spec::Functions qw(catdir catfile splitpath);
 use File::Temp qw(tempdir);
 
 # Internal Modules
@@ -89,7 +90,7 @@ use Krang::BricLoader::Story;
 
 # Globals
 ##########
-our (%category, %category_map, %site, %story);
+our (%category, %category_map, %site, %site_url, %story);
 our $category = our $site = our $story = 1;
 our %unique_field = ('category' => 'url',
                      'site'	=> 'url',
@@ -211,7 +212,25 @@ details.
 
 # Private Methods
 ##################
-# overrides Krang::DataSet
+# obtains the category id of the given category's parent
+sub _find_parent_site {
+    my $cat = shift;
+    my @dirs = split(m#/#, $cat->{path});
+    my $dir = @dirs >= 3 ? $dirs[$#dirs] : '/';
+    my $top = '/' . $dirs[1];
+    my $site_id = $category_map{$top} or
+      croak("No site found associated with");
+    my $parent = join('/', $site_url{$site_id}, @dirs[2..$#dirs - 1]) . '/';
+    $parent =~ s#/+#/#g;
+    my $parent_id = $category{$parent} || '';
+    my $url = join('/', $parent, $dir) . '/';
+    $url =~ s#/+#/#g;
+
+    return ($site_id, $url, $parent_id, $dir);
+}
+
+
+# returns a pre-existing or new id to identify object
 sub _obj2id {
     my $object = shift;
     (my $class = ref $object) =~ s/^.+::(.*)$/$1/;
@@ -226,24 +245,54 @@ sub _obtain_id {
     my $hashname = my $counter = lc $class;
     my $id;
 
-    {
-        no strict 'refs';
-        my $identifier = $object->{$unique_field{$hashname}};
-        if (my $val = ${$hashname}{$identifier}) {
-            $id = $val;
-        } else {
-            ${$hashname}{$identifier} = ${$counter};
-            $id = ${$counter}++;
-        }
+    if ($hashname eq 'site') {
+        # increment site_id
+        $id = $site++;
 
         # set up category to site mapping
-        $category_map{$object->{category}} = $id
-          if $hashname eq 'site';
+        $category_map{$object->{category}} = $id;
+
+        # store site urls keyd by id
+        $object->{url} .= '/' if $object->{url} !~ m#/$#;
+
+        $site_url{$id} = $object->{url};
+    } elsif ($hashname eq 'category') {
+        # get site_id, parent_id, computed path
+        my ($site_id, $url, $pid, $dir) = _find_parent_site($object);
+        $object->{parent_id} = $pid;
+        $object->{site_id} = $site_id;
+
+        # set url, revised path
+        $object->{dir} = $dir;
+        $object->{url} = $url;
+
+        # get category id
+        $id = exists $category{$object->{url}} ? $category{$object->{url}} :
+          $category++;
+
+        # store in category hash
+        $category{$object->{url}} = $id;
     }
 
     return $id;
 }
 
+
+
+sub DESTROY {
+    my $self = shift;
+    rmtree($self->{dir}) if $self->{dir};
+
+    # DEBUG
+    use Data::Dumper;
+#    print STDERR "\n", Data::Dumper->Dump([\%category],['category']),
+#      "\n\n";
+#    print STDERR "\n", Data::Dumper->Dump([\%category_map],['category_map']),
+#      "\n\n";
+#    print STDERR "\n", Data::Dumper->Dump([\%site],['site']), "\n\n";
+#    print STDERR "\n", Data::Dumper->Dump([\%site_url],['site_url']), "\n\n";
+#    print STDERR "\n", Data::Dumper->Dump([\%story],['story']), "\n\n";
+}
 
 
 my $quip = <<QUIP;

@@ -13,11 +13,7 @@ Krang::BricLoader::Site -
  my @sites = Krang::BricLoader::Site->new(path => $filepath);
 
  # add set of sites to dataset or one at a time
- $set->add_site(\@sites);
- $set->add_site($site);
-
- # obtain Krang XML representation of the Site
- my $xml = $site->serialize_xml;
+ $set->add(object => $_) for @sites;
 
 =head1 DESCRIPTION
 
@@ -116,7 +112,7 @@ sub new {
         # write out file to tmpdir
         $new_path = catfile($self->{dir}, 'bric_sites.xml');
         my $wh = IO::File->new(">$new_path");
-        $wh->print($xml);
+        $wh->print($$xml);
         $wh->close();
     } elsif ($path) {
         croak("File '$path' not found on the system!") unless -e $path;
@@ -198,6 +194,12 @@ sub _validate_input {
 
     # restore cwd
     chdir($old_cwd) or die("Unable to change to '$old_cwd': $!");
+}
+
+
+sub DESTROY {
+    my $self = shift;
+    rmtree($self->{dir}) if $self->{dir};
 }
 
 
