@@ -27,9 +27,9 @@ sub new {
                 max => 1,
                 children => 
                 [ 
-                PBMM::search_type->new( min  => 1,
+                PBMM::search_type->new( 
                                         max  => 1,
-                                        allow_delete => 0),
+                                       ),
                 PBMM::site_related_link_box->new( max => 1), 
                 PBMM::table_of_contents->new(), 
                 Krang::ElementClass::Text->new(name         => "ad_module",
