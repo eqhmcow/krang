@@ -12,18 +12,13 @@ Krang::Publisher - Center of the Publishing Universe.
   my $publisher = new Krang::Publisher();
 
 
-  # Outputs a story in the previously-set preview path,
-  # returns preview URL.
-  my $url = $publisher->preview_story(
-                                      story    => $story_object,
-                                      category => $category_object
-                                     );
+  # Publish a list of stories to the preview path.
+  # returns preview URL of first story in the list.
+  my $url = $publisher->preview_story(story => \@stories);
 
 
-  # Outputs a story in the previously-set publish path.
-  $publisher->publish_story(
-                            story    => $story_object,
-                           );
+  # Publish a list of stories to the publish path.
+  $publisher->publish_story(story => \@stories);
 
 
   # unpublish a story, usually called from $story->delete
@@ -31,34 +26,24 @@ Krang::Publisher - Center of the Publishing Universe.
 
   # Publish a media object to the preview path.
   # Returns the media URL if successful.
-  $url = $publisher->preview_media(
-                                   media    => $media_object
-                                  );
+  $url = $publisher->preview_media(media => $media);
 
   # Publish a media object to the preview path.
   # Returns the media URL if successful.
-  $url = $publisher->publish_media(
-                                   media    => $media_object,
-                                  );
+  $url = $publisher->publish_media(media => $media);
 
   # unpublish a media object, usually called from $media->delete
   $publisher->unpublish_media(media => $media);
 
   # Get the list of related stories and media that will get published
-  my $asset_list_ref = $publisher->get_publish_list(
-                                                    story => [$story1, $story2]
-                                                   );
+  my $asset_list = $publisher->asset_list(story => [$story1, $story2]);
 
-  # Place a template into the production path, to be used when publishing.
-  $publisher->deploy_template(
-                              template => $template_object
-                             );
+  # Place a Krang::Template template into the production path, to be
+  # used when publishing.
+  $publisher->deploy_template(template => $template);
 
   # Remove a template from the production path.
-  $publisher->undeploy_template(
-                                template => $template_object
-                               );
-
+  $publisher->undeploy_template(template => $template);
 
   # Returns the mark used internally to break content into pages.
   my $break_txt = $publisher->PAGE_BREAK();
@@ -66,20 +51,47 @@ Krang::Publisher - Center of the Publishing Universe.
   # Return the Krang::Story object of the story currently being published.
   my $story = $publisher->story();
 
-  # Return the category object for the current category of the story being published.
+  # Return the Krang::Category object for the current category of the
+  # story being published.
   my $category = $publisher->category();
 
   # Return the filename for a given page of the story being published.
   my $filename = $publisher->story_filename(page => $page_num);
 
+  # determine if we're in preview mode or publish mode.
+  $bool = $publisher->is_preview();
+  $bool = $publisher->is_publish();
+
+  # check to see if an object will be published, given its current state
+  $bool = $publisher->test_publish_status(object => $story, mode => 'publish');
 
 =head1 DESCRIPTION
 
-Krang::Publisher is responsible for coordinating the various components that make up a Story (Elements, Media, Categories), and putting them all together, out on the filesystem, for the world + dog to see.  The publish process will result in either 'preview' or 'publish' output - content-wise, they are indistinguishable.
+Krang::Publisher is responsible for coordinating the various
+components that make up a Story (Elements, Media, Categories), and
+putting them all together, out on the filesystem, for the world + dog
+to see.  The publish process will result in either 'preview' or
+'publish' output - content-wise, they are indistinguishable.
 
-In both the preview and publish process, stories are checked for related media (see Krang::Story::linked_media()).  Media objects will be copied into the proper output directory as part of the build process.
+In both the preview and publish process, stories are checked for
+related media (see L<Krang::Story>->linked_media()).  Media objects
+will be copied into the proper output directory as part of the build
+process.
 
-In the publish (but not preview) process, stories will also be checked for linked stories (see Krang::Story::linked_stories()).  Any linked-to stories will be checked for publish status, and will be published if they are marked as unpublished.
+Unless C<version_check> is turned off, all related assets will compare
+C<version()> with C<preview_version()> or C<publish_version()>, to see
+if the currently live version (in either preview or publish, depending
+on the mode) is the latest saved version.  If so, the asset will not
+be published, though it will be checked for additional related assets
+to publish.
+
+See L<Krang::ElementClass::TopLevel>->force_republish() to bypass the
+C<version_check> functionality.
+
+In the publish (but not preview) process, stories will also be checked
+for linked stories (see L<Krang::Story>->linked_stories()).  Any
+linked-to stories will be checked for publish status, and will be
+published if they are marked as unpublished.
 
 =cut
 
@@ -98,7 +110,6 @@ use Set::IntRange;
 use Krang::Conf qw(KrangRoot instance);
 use Krang::Story;
 use Krang::Category;
-use Krang::ElementClass;
 use Krang::Template;
 use Krang::History qw(add_history);
 use Krang::DB qw(dbh);
@@ -106,9 +117,7 @@ use Krang::DB qw(dbh);
 use Krang::Log qw(debug info critical);
 
 
-use constant PUBLISHER_RO => qw(is_publish is_preview story category);
-
-
+use constant PUBLISHER_RO       => qw(is_publish is_preview story category);
 use constant PAGE_BREAK         => "<<<<<<<<<<<<<<<<<< PAGE BREAK >>>>>>>>>>>>>>>>>>";
 use constant CONTENT            => "<<<<<<<<<<<<<<<<<< CONTENT >>>>>>>>>>>>>>>>>>";
 use constant ADDITIONAL_CONTENT => "KRANG_ADDITIONAL_CONTENT";
@@ -130,7 +139,10 @@ use Krang::MethodMaker (new_with_init => 'new',
 
 =head2 FIELDS
 
-Access to fields for this object are provided by Krang::MethodMaker. All fields are accessible in a B<read-only> fashion.  The value of fields can be obtained in the following fashion:
+Access to fields for this object are provided by
+Krang::MethodMaker. All fields are accessible in a B<read-only>
+fashion.  The value of fields can be obtained in the following
+fashion:
 
   $value = $publisher->field_name();
 
@@ -140,15 +152,18 @@ The available fields for a publish object are:
 
 =item * is_preview
 
-Returns a 1 if the current publish run is in preview-mode, 0 otherwise.
+Returns a 1 if the current publish run is in preview-mode, 0
+otherwise.
 
 =item * is_publish
 
-Returns a 1 if the current publish run is in publish-mode (e.g. going live), 0 otherwise.
+Returns a 1 if the current publish run is in publish-mode (e.g. going
+live), 0 otherwise.
 
 =item * category
 
-Returns a Krang::Category object for the category currently being published.
+Returns a Krang::Category object for the category currently being
+published.
 
 =item * story
 
@@ -164,7 +179,8 @@ Returns a Krang::Story object for the Story currently being published.
 
 =item C<< $publisher = Krang::Publisher->new(); >>
 
-Creates a new Krang::Publisher object.  No parameters are needed at this time.
+Creates a new Krang::Publisher object.  No parameters are needed at
+this time.
 
 =cut
 
@@ -184,7 +200,7 @@ sub init {
 }
 
 
-=item C<< $url = $publisher->preview_story(story => $story, callback => \&onpreview) >>
+=item C<< $url = $publisher->preview_story(story => \@stories) >>
 
 Generates a story, saving it to the preview doc root on the
 filesystem.  Returns a URL to the story if successful, or will throw
@@ -192,12 +208,62 @@ one of several potential Exceptions (potential issues: filesystem
 problems, exceptions thrown by other objects, anything else?) in the
 event something goes wrong.
 
-As part of the publish process, all media and stories linked to by
-$story will be published to preview as well.
+Arguments:
 
-The optional parameter C<callback> may point to a subroutine which is
+=over
+
+=item * C<story>
+
+Either a single L<Krang::Story> object, or a reference to an array of
+L<Krang::Story> objects.
+
+
+=item * C<unsaved>
+
+defaults to 0.  If C<unsaved> is true,
+L<Krang::Story>->preview_version will be set to -1.  What this does
+is force a republish of the story object to the preview path the next
+time the object comes up as a related object to a story being
+previewed.
+
+As part of the publish process, all media and stories linked to by
+C<$story> will be examined.  If the current version of each object has
+not been published to preview, it will be.  If the object has been
+previewed previously, it will be skipped.
+
+
+=item * C<version_check>
+
+Defaults to 1.  When true, it checks all related stories and media to
+see if the current version has been published previously to the
+preview path, skipping those that have.  When false, it will publish
+all related assets, regardless of whether or not the current version
+has been published to preview before.
+
+
+=item * C<callback>
+
+The optional parameter C<callback> will point to a subroutine which is
 called when each object is published to the preview location.  It
-recieves three named parameters - object, counter and total.
+recieves three named parameters:
+
+=over
+
+=item C<object>
+
+The affected object.
+
+=item C<counter>
+
+The index of the current object in the list of objects being published.
+
+=item C<total>.
+
+The total number of objects being published.
+
+=back
+
+=back
 
 =cut
 
@@ -205,26 +271,26 @@ sub preview_story {
 
     my $self = shift;
     my %args = @_;
-    my $callback = $args{callback};
-    my $category;
-    my $url;
-
-    my $preview_url;
-
-    my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
-
-    $url = $story->preview_url();
-
-    # set internal mode - preview, not publish.
-    $self->_mode_is_preview();
 
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
+    my $category;
+
+    my $story         = $args{story}   || croak __PACKAGE__ . ": missing required argument 'story'";
+    my $callback      = $args{callback};
+    my $unsaved       = (exists($args{unsaved})) ? $args{unsaved} : 0;
+    my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
+
+    # set internal mode - preview, not publish.
+    $self->_set_preview_mode();
+
     # deploy any templates flagged as testing for this user
     $self->_deploy_testing_templates();
 
-    my $publish_list = $self->get_publish_list(story => [$story]);
+    my $publish_list = $self->asset_list(story         => [$story],
+                                         mode          => 'preview',
+                                         version_check => $version_check);
 
     my $total = @$publish_list;
     my $counter = 0;
@@ -239,9 +305,12 @@ sub preview_story {
                                               paths   => \@paths,
                                               preview => 1);
 
+            # mark as previewed.
+            $object->mark_as_previewed(unsaved => $unsaved);
+
         } elsif ($object->isa('Krang::Media')) {
             debug('Publisher.pm: Previewing media_id=' . $object->media_id());
-            $self->preview_media(media => $object);
+            $self->preview_media(media => $object, unsaved => $unsaved);
         }
 
         $callback->(object  => $object,
@@ -254,28 +323,113 @@ sub preview_story {
     # cleanup - remove any testing templates.
     $self->_undeploy_testing_templates();
 
-    $preview_url = "$url/" . $self->story_filename(story => $story);
+    my $preview_url = catfile($story->preview_url, $self->story_filename(story => $story));
 
     return $preview_url;
 }
 
 =item C<< $publisher->publish_story(story => $story, callback => \%onpublish) >>
 
-Publishes a story to the live webserver document root, as set by publish_path.
+Publishes a story to the live webserver document root, as set by
+publish_path.
 
-When a story is published, it is published under all categories it is associated with (see Krang::Story->categories()).
+When a story is published, it is published under all categories it is
+associated with (see Krang::Story->categories()).
 
-As part of the publish process, all media and stories linked to by $story will be published as well.
+As part of the publish process, all media and stories linked to by
+$story will be examined.  For each of these objects, if the latest
+version has not yet been published, it will be.  If the current
+version has been published, it will be skipped (though the objects
+links will also be checked).
 
-If you do not care about related assets (WARNING - You want to care!), you can set the argument I<disable_related_assets> =>1
+If you do not care about related assets (WARNING - You want to care!),
+you can set the argument I<disable_related_assets> =>1
 
-If the user attempts to publish content that is checked out by someone else, it will get skipped.
+If the user attempts to publish an object that is checked out by
+someone else, it will get skipped.
 
-It is assumed that the UI will prevent a user from attempting to publish something when they do not have permissions.
+It is assumed that the UI will prevent a user from attempting to
+publish something when they do not have permissions.  The only
+access-control issues that will come up here would involve filesystem
+permissions.
 
-The optional parameter C<callback> may point to a subroutine which is
-called when each object is published.  It recieves three named
-parameters - object, counter and total.
+Arguments:
+
+=over
+
+=item * C<story>
+
+Either a single L<Krang::Story> object, or a reference to an array of
+L<Krang::Story> objects.
+
+
+=item * C<disable_related_assets>
+
+Defaults to 0.  If true, no link-checking is done, only the items
+passed in as part of the C<story> argument are published.
+
+
+=item * C<version_check>
+
+Defaults to 1.  When true, it checks all related stories and media to
+see if the current version has been published previously, skipping
+those that have.  When false, it will publish all related assets,
+regardless of whether or not the current version has been published
+before.
+
+
+=item * C<callback>
+
+The optional parameter C<callback> will point to a subroutine which is
+called when each object is published to the preview location.  It
+recieves three named parameters:
+
+=over
+
+=item C<object>
+
+The affected object.
+
+=item C<counter>
+
+The index of the current object in the list of objects being published.
+
+=item C<total>.
+
+The total number of objects being published.
+
+=back
+
+
+=item * C<skip_callback>
+
+The optional parameter C<skip_callback> is a pointer to a subroutine
+which is called whenever an object is skipped during the publish
+process, for whatever reason.  It takes four named parameters:
+
+=over
+
+=item C<object>
+
+The object being skipped during the publish run.
+
+=item C<error>
+
+The type of error.  C<output_error>, C<checked_out>, and a number of
+internal exceptions are the current set.
+
+=item C<path>
+
+The location on the filesystem where the object was to be published to.
+
+=item C<error_msg>
+
+A text message explaining the error in more detail.
+
+
+=back
+
+=back
 
 =cut
 
@@ -284,24 +438,29 @@ sub publish_story {
     my $self = shift;
     my %args = @_;
 
-    # set internal mode - publish, not preview.
-    $self->_mode_is_publish();
+    my $story         = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
+    my $unsaved       = (exists($args{unsaved})) ? $args{unsaved} : 0;
+    my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
 
     # callbacks
     my $callback      = $args{callback};
     my $skip_callback = $args{skip_callback};
 
+    my $no_related_check = (exists($args{disable_related_assets})) ? $args{disable_related_assets} : 0;
+
+    my $user_id       = $ENV{REMOTE_USER};
+
     my $publish_list;
-    my $user_id = $ENV{REMOTE_USER};
 
-    my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
+    # set internal mode - publish, not preview.
+    $self->_set_publish_mode();
 
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
     # build the list of assets to publish.
-    if ($args{disable_related_assets}) {
+    if ($no_related_check) {
         debug(__PACKAGE__ . ": disabling related_assets checking for publish");
         if (ref $story eq 'ARRAY') {
             $publish_list = $story;
@@ -309,7 +468,9 @@ sub publish_story {
             push @$publish_list, $story;
         }
     } else {
-        $publish_list = $self->get_publish_list(%args);
+        $publish_list = $self->asset_list(story         => $story,
+                                          mode          => 'publish',
+                                          version_check => $version_check);
     }
 
     my $total = @$publish_list;
@@ -362,8 +523,8 @@ sub publish_story {
 
 
         } elsif ($object->isa('Krang::Media')) {
-            $self->publish_media(media => $object, %args);
             # publish_media() will mark the media object as published.
+            $self->publish_media(media => $object, %args);
         }
 
 
@@ -376,7 +537,11 @@ sub publish_story {
 Removes a story from its published locations.  Usually called by
 $story->delete.  Affects both preview and publish locations.
 
-B<NOTE:> The C<published>, C<publish_date> and C<published_version> attributes of the L<Krang::Story> object are not updated at this time.  If the UI ever supports Unpublish-Story functionality (currently, this is only called when a Krang::Story object is deleted), this work needs to be done.
+B<NOTE:> The C<published>, C<publish_date> and C<published_version>
+attributes of the L<Krang::Story> object are not updated at this time.
+If the UI ever supports Unpublish-Story functionality (currently, this
+is only called when a Krang::Story object is deleted), this work needs
+to be done.
 
 
 =cut
@@ -384,7 +549,7 @@ B<NOTE:> The C<published>, C<publish_date> and C<published_version> attributes o
 sub unpublish_story {
     my ($self, %arg) = @_;
     my $dbh = dbh;
-    my $story = $arg{story};
+    my $story = $arg{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
     # get location list, preview and publish
     my $paths = $dbh->selectcol_arrayref(
@@ -409,7 +574,11 @@ sub unpublish_story {
 Removes a media object from its published locations.  Usually called
 by $media->delete.  Affects both preview and publish locations.
 
-B<NOTE:> The C<published>, C<publish_date> and C<published_version> attributes of the L<Krang::Media> object are not updated at this time.  If the UI ever supports Unpublish-Media functionality (currently, this is only called when a Krang::Media object is deleted), this work needs to be done.
+B<NOTE:> The C<published>, C<publish_date> and C<published_version>
+attributes of the L<Krang::Media> object are not updated at this time.
+If the UI ever supports Unpublish-Media functionality (currently, this
+is only called when a Krang::Media object is deleted), this work needs
+to be done.
 
 
 =cut
@@ -417,7 +586,7 @@ B<NOTE:> The C<published>, C<publish_date> and C<published_version> attributes o
 sub unpublish_media {
     my ($self, %arg) = @_;
     my $dbh = dbh;
-    my $media = $arg{media};
+    my $media = $arg{media} || croak __PACKAGE__ . ": missing required argument 'media'";
 
     # get location list, preview and publish
     my $paths = $dbh->selectcol_arrayref(
@@ -437,11 +606,29 @@ sub unpublish_media {
       if @$paths;
 }
 
-=item C<< $url = $publisher->preview_media(media => $media) >>
 
-Copies a media file out to the webserver doc root for the preview website.
+=item C<< $url = $publisher->preview_media(media => $media, unsaved => 1) >>
 
-Argument media is required.
+Copies a media file out to the webserver doc root for the preview
+website.
+
+Arguments:
+
+=over
+
+=item * C<media>
+
+Required.  The L<Krang::Media> object being previewed.
+
+=item * C<unsaved>
+
+Optional, defaults to 0.  If C<unsaved> is true,
+L<<Krang::Media->preview_version>> will be set to -1.  What this does
+is force a republish of the media object to the preview path the next
+time the object comes up as a related object to a story being
+previewed.
+
+=back
 
 Returns a url to the media file on the preview website if successful.
 
@@ -454,11 +641,13 @@ sub preview_media {
     my $self = shift;
     my %args = @_;
 
-    croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
+    my $media    = $args{media} || croak __PACKAGE__ . ": Missing argument 'media'!\n";
+    my $unsaved  = (exists($args{unsaved})) ? $args{unsaved} : 0;
 
-    $self->_mode_is_preview();
 
-    my $media = $args{media};
+    $self->_set_preview_mode();
+
+    $media->mark_as_previewed(unsaved => $unsaved);
 
     return $self->_write_media(media => $media);
 
@@ -469,13 +658,23 @@ sub preview_media {
 
 Copies a media file out to the webserver doc root for the publish website.
 
-Attributes media and category are required.
+Arguments:
+
+=over
+
+=item * C<media>
+
+Required.  The Krang::Media object being published.
+
+=back
 
 Returns a url to the media file on the publish website if successful.
 
-If the user attempts to publish content that is checked out by someone else, it will get skipped.
+If the user attempts to publish content that is checked out by someone
+else, it will get skipped.
 
-It is assumed that the UI will prevent a user from attempting to publish something when they do not have permissions.
+It is assumed that the UI will prevent a user from attempting to
+publish something when they do not have permissions.
 
 Will throw an exception if there are problems with the copy.
 
@@ -485,7 +684,7 @@ sub publish_media {
     my $self = shift;
     my %args = @_;
 
-    $self->_mode_is_publish();
+    $self->_set_publish_mode();
 
     # callbacks
     my $callback      = $args{callback};
@@ -560,47 +759,98 @@ sub publish_media {
 
 
 
-=item C<< $publish_list_ref = $publisher->get_publish_list(story => $story, keep_asset_list = 1) >>
+=item C<< $asset_list = $publisher->asset_list(story => $story) >>
 
-Returns the list of stories and media objects that will get published if publish_story(story => $story) is called.
+Returns the list of stories and media objects that will get published
+if either L<publish_story()> or L<preview_story()> is called.
 
-The sub calls $story->linked_stories() and $story->linked_media() to generate the lists, recursively operating on the results generated by $story->linked_stories().
+The sub calls $story->linked_stories() and $story->linked_media() to
+generate the lists, recursively operating on the results generated by
+$story->linked_stories().
 
-If successful, it will return lists of Krang::Story and Krang::Media objects that will get published along with $story.  At the absolute minimum (no linked stories or media), $stories->[0] will contain the originally submitted parameter $story.
+If successful, it will return lists of L<Krang::Story> and
+L<Krang::Media> objects that will get published along with $story.  At
+the absolute minimum (no linked stories or media), $stories->[0] will
+contain the originally submitted parameter $story.
 
-The story parameter can either be a single Krang::Story object or a list or Krang::Story objects.
+Arguments:
 
-If you are going to be making multiple successive calls to get_publish_list(), and want to ensure that the returning asset list does not contain assets from previous calls, set the C<keep_asset_list> argument to 1.  Default behavior is to return all assets connected to the submitted stories.
+=over
+
+=item * C<story>
+
+The story parameter can either be a single L<Krang::Story> object or a
+list of L<Krang::Story> objects.
+
+=item * C<keep_asset_list>
+
+Defaults to false.  If true, the internal list of checked stories is
+not cleared upon completion.  If you are going to be making multiple
+successive calls to asset_list(), and want to ensure that the
+returning asset list does not contain assets from previous calls, set
+to true.
+
+=item * C<mode>
+
+Either 'preview' or 'publish'.  If not set, checks to see if either
+C<is_preview()> or C<is_publish> is true.  If neither are true, will
+croak.
+
+
+=item * C<version_check>
+
+Defaults to true.  If true, every related asset will be checked to see
+if either C<< $object->preview_version() >> or
+C<< $object->publish_version() >> (depending on C<mode> above) is equal
+to C<< $object->version() >>.  If so, it won't be published, but its'
+related assets will still be checked.
+
+Setting C<version_check> to 0 (false) will result in the original
+Krang behavior - all related content will be published, regardless of
+versioning.
+
+This addition is a performance improvement - the purpose is to keep
+from publishing content that has not changed since the last
+publishing.
+
+=back
 
 =cut
 
-sub get_publish_list {
+sub asset_list {
 
     my $self = shift;
     my %args = @_;
 
-    croak (__PACKAGE__ . ": Missing argument 'story'!") unless (exists($args{story}));
+    my $story         = $args{story} || croak __PACKAGE__ . ": Missing parameter 'story'";
+    my $mode          = $args{mode};
+    my $keep_list     = $args{keep_asset_list} || 0;
+    my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
 
-    my @publish_list;
+    # check publish mode.
+    unless ($mode) {
+        if ($self->is_preview()) { $mode = 'preview' }
+        elsif ($self->is_publish()) { $mode = 'publish' }
+        else { croak "Publish mode unknown.  Set the 'mode' argument'"; }
+    }
 
     $self->_init_asset_lists();
 
-    if (ref $args{story} eq 'ARRAY') {
-        my $stories = $args{story};
-        foreach my $story (@$stories) {
-            push @publish_list, $self->_add_to_publish_list(story => $story);
-        }
-    } else {
-        push @publish_list, $self->_add_to_publish_list(story => $args{story});
-    }
+    my @publish_list = $self->_build_asset_list(object         => $story,
+                                                version_check  => $version_check,
+                                                initial_assets => 1,
+                                                mode           => $mode
+                                               );
 
-    unless ($args{keep_asset_list}) {
+    unless ($keep_list) {
         $self->_clear_asset_lists();
     }
 
     return \@publish_list;
 
 }
+
+
 
 
 =item C<< $filename = $publisher->deploy_template(template => $template); >>
@@ -620,9 +870,7 @@ sub deploy_template {
     my $self = shift;
     my %args = @_;
 
-    croak (__PACKAGE__ . ": Missing argument 'template'!\n") unless (exists($args{template}));
-
-    my $template = $args{template};
+    my $template = $args{template} || croak __PACKAGE__ . ": Missing argument 'template'!\n";
 
     # write the template out.
     my $filename = $self->_write_template(template => $template);
@@ -654,9 +902,7 @@ sub undeploy_template {
     my $self = shift;
     my %args = @_;
 
-    croak (__PACKAGE__ . ": Missing argument 'template'!\n") unless (exists($args{template}));
-
-    my $template   = $args{template};
+    my $template = $args{template} || croak __PACKAGE__ . ": Missing argument 'template'!\n";
 
     my $category   = $template->category();
 
@@ -837,6 +1083,71 @@ sub story_filename {
 }
 
 
+
+=item C<< $bool = $publisher->test_publish_status(object => $story, mode => 'publish') >>
+
+Checks the current version of the object against its' stored
+C<preview_version> or C<published_version>.  If the versions are not
+identical, it will return true, indicating that it should be
+published.
+
+If the versions are identical, it will perform an additional check for
+L<Krang::Story> objects, checking
+L<Krang::ElementClass::TopLevel>->C<force_republish>.
+
+Will return 0 (false) if it determines that there is no rule
+indicating the asset should be published.
+
+Arguments:
+
+=over
+
+=item * C<object>
+
+The L<Krang::Story> or L<Krang::Media> object to be published.
+
+=item * C<mode>
+
+Either 'preview' or 'publish'.  If this is not set, it will check
+L<is_preview()> and L<is_publish()> for an indication of mode.  If
+those are not set either, it will croak with an error.
+
+=back
+
+=cut
+
+sub test_publish_status {
+    my ($self, %args) = @_;
+
+    my $object = $args{object} || croak "Missing required argument 'object'";
+    my $mode   = $args{mode};
+
+    my $publish_yes = 0;
+
+    unless ($mode) {
+        if ($self->is_preview()) { $mode = 'preview' }
+        elsif ($self->is_publish()) { $mode = 'publish' }
+        else { croak "Publish mode unknown.  Set the 'mode' argument'"; }
+    }
+
+    if ($mode eq 'preview') {
+        $publish_yes = 1 unless ($object->preview_version == $object->version);
+    } elsif ($mode eq 'publish') {
+        $publish_yes = 1 unless ($object->published_version == $object->version);
+    } else {
+        croak "Unknown mode '$mode'.  Re-check the 'mode' argument";
+    }
+
+    return $publish_yes if $publish_yes;
+
+    # for stories, can check force_republish.
+    if ($object->isa('Krang::Story')) {
+        $publish_yes = $object->element->class->force_republish();
+    }
+
+    return $publish_yes;
+
+}
 
 
 =back
@@ -1083,94 +1394,148 @@ sub _build_story_single_category {
 ##
 
 #
-# @list = _add_to_publish_list(story => $story)
+# @assets = _build_asset_list(object => \@story, version_check => 1, initial_assets => 1, mode => $mode);
 #
-# Internal method - takes Krang::Story object, adds it and it's related objects to the publish list.
+# Recursively builds the list of assets to be published, called by
+# asset_list().
 #
-sub _add_to_publish_list {
+# story can be either a Krang::Story or Krang::Media object, or a
+# listref of Story/Media objects.
+#
+# version_check will check preview/published_version if true.
+# Defaults true.
+#
+# initial_assets will skip that check when true - used for the first
+# call from asset_list().  Defaults false.
+#
+# mode is either 'preview' or 'publish'.
+#
+# Returns a list of Krang::Story and Krang::Media objects.
+#
+sub _build_asset_list {
 
-    my $self = shift;
-    my %args = @_;
-    my @publish_list = ();
+    my ($self, %args) = @_;
 
-    my $story    = $args{story};
-    my $story_id = $story->story_id();
+    my $object         = $args{object};
+    my $version_check  = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $initial_assets = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
+    my $mode           = $args{mode};
 
-    croak (__PACKAGE__ . ": 'stories' is not defined!") unless (defined($story));
-    croak (__PACKAGE__ . ": 'stories' entry is not a Krang::Story object") unless ($story->isa('Krang::Story'));
+    my @asset_list;
+    my @check_list;
 
-    # add this story to the publish list.
-    unless ($self->{story_publish_set}->contains($story_id)) {
-        $self->{story_publish_set}->Bit_On($story_id);
-        push @publish_list, $story;
+    if (ref $object eq 'ARRAY') {
+        foreach my $o (@$object) {
+            my ($publish_ok, $check_links) = $self->_check_asset_status(object => $o,
+                                                                        mode   => $mode,
+                                                                        version_check  => $version_check,
+                                                                        initial_assets => $initial_assets
+                                                                       );
+
+            push @asset_list, $o if ($publish_ok);
+            if ($check_links) {
+                push @check_list, $o->linked_stories;
+                push @check_list, $o->linked_media;
+            }
+        }
+
+    } else {
+        my ($publish_ok, $check_links) = $self->_check_asset_status(object => $object,
+                                                                    mode   => $mode,
+                                                                    version_check  => $version_check,
+                                                                    initial_assets => $initial_assets
+                                                                   );
+
+        push @asset_list, $object if ($publish_ok);
+        if ($check_links) {
+            push @check_list, $object->linked_stories;
+            push @check_list, $object->linked_media;
+        }
     }
 
-    # check to see if this story needs to be checked for related assets.
-    unless ($self->{checked_links_set}->contains($story_id)) {
-        $self->{checked_links_set}->Bit_On($story_id);
-        push @publish_list, $self->_process_linked_assets(story => $story);
-    }
+    # if there are objects to be checked, check 'em.
+    push @asset_list, $self->_build_asset_list(object         => \@check_list,
+                                               version_check  => $version_check,
+                                               initial_assets => 0,
+                                               mode           => $mode) if (@check_list);
 
-    return @publish_list;
+    return @asset_list;
 }
 
 
 
 #
-# _process_linked_assets(story => $story);
+# ($publish_ok, $check_links) = _check_object_status(object => $object,
+#                                                    mode   => $mode,
+#                                                    initial_assets => 1
+#                                                    version_check  => 1);
 #
+# checks the Krang::Story or Krang::Media object to see if it should
+# be added to the publish list, and whether or not it needs to be
+# checked for related assets.
 #
-# This sub is the internal method used to walk the paths provided by
-# the lists of linked assets that every story contains.  This walk is
-# done recursively, the catch being that you do not want to add any
-# linked asset to the publish list more than once, and you don't want
-# to repeatedly process the same asset.
+# object - a Krang::Story or Krang::Media object
 #
-# This is a standard recursive walk - the internal integer sets
-# 'story_publish_set', 'checked_links_set', and 'media_publish_set'
-# are used to make sure we're not getting trapped in a cycle.
+# mode - 'publish' or 'preview'.
 #
-sub _process_linked_assets {
 
-    my $self = shift;
-    my %args = @_;
+sub _check_asset_status {
 
-    my @publish_list = ();
+    my ($self, %args) = @_;
 
-    croak (__PACKAGE__ . ": Missing argument 'story'!\n") unless (exists($args{story}));
-    my $story = $args{story};
+    my $object = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
+    my $mode   = $args{mode};
+    my $version_check  = (exists($args{version_check})) ? $args{version_check} : 1;
+    my $initial_assets = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
 
-    foreach ($story->linked_stories()) {
-        my $id = $_->story_id();
-        # 1) add to publish list if not already on the list
-        next if ($self->{story_publish_set}->contains($id));
-        $self->{story_publish_set}->Bit_On($id);
-        push @publish_list, $_;
+    my $publish_ok = 0;
+    my $check_links = 0;
 
-        # 2) check for related assets if not already on the list.
-        next if ($self->{checked_links_set}->contains($id));
-        $self->{checked_links_set}->Bit_On($id);
-        push @publish_list, $self->_process_linked_assets(story => $_);
+    if ($object->isa('Krang::Story')) {
+        # if we haven't seen this story before, check to see if it
+        # should be published.
+        my $story_id = $object->story_id;
+        unless ($self->{story_publish_set}->contains($story_id)) {
+            $self->{story_publish_set}->Bit_On($story_id);
+            if ($initial_assets) {
+                $publish_ok = 1;
+            } elsif (!$version_check) {
+                $publish_ok = 1;
+            } elsif ($self->test_publish_status(%args)) {
+                $publish_ok = 1;
+            }
+        }
+        # see if this story needs to be checked for related assets.
+        unless ($self->{checked_links_set}->contains($story_id)) {
+            $self->{checked_links_set}->Bit_On($story_id);
+            $check_links = 1;
+        }
+    } elsif ($object->isa('Krang::Media')) {
+        # if we haven't seen this media object before, check to see if
+        # it should be published.
+        my $media_id = $object->media_id();
+        unless ($self->{media_publish_set}->contains($media_id)) {
+            $self->{media_publish_set}->Bit_On($media_id);
+            if ($initial_assets) {
+                $publish_ok = 1;
+            } elsif (!$version_check) {
+                $publish_ok = 1;
+            } elsif ($self->test_publish_status(%args)) {
+                $publish_ok = 1;
+            }
+        }
     }
 
-    # 1) add asset to the list if not already on it.
-    foreach ($story->linked_media()) {
-        my $id = $_->media_id();
-
-        next if ($self->{media_publish_set}->contains($id));
-        $self->{media_publish_set}->Bit_On($id);
-        push @publish_list, $_;
-    }
-
-    return @publish_list;
+    return ($publish_ok, $check_links);
 }
+
 
 
 #
 # _init_asset_lists()
 #
 # Set up the internally-maintained lists of asset IDs,
-# these lists are used by get_publish_list to determine which assets are
+# these lists are used by asset_list to determine which assets are
 # going to get published.
 #
 # Note - Set::IntRange is being used as an efficient method for storing
@@ -1456,7 +1821,7 @@ sub _determine_output_path {
 # quick subroutines to cut down on issues.
 #
 
-sub _mode_is_preview {
+sub _set_preview_mode {
 
     my $self = shift;
 
@@ -1465,7 +1830,7 @@ sub _mode_is_preview {
 
 }
 
-sub _mode_is_publish {
+sub _set_publish_mode {
 
     my $self = shift;
 

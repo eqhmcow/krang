@@ -64,39 +64,68 @@ Using the --everything flag will cause krang_publish to ignore the
 
 =item --site_id
 
-Publish all content (stories and media) under the site specified by the site_id.
+Publish all content (stories and media) under the site specified by
+the site_id.
 
-Using the --site_id flag will cause krang_publish to ignore the --category_id, --story_id and --media_id options.
+Using the --site_id flag will cause krang_publish to ignore the
+--category_id, --story_id and --media_id options.
 
 =item --limited_to_site
 
-An option addendum to --site_id, any related stories or media that are outside of the specified site will not be published.
+An option addendum to --site_id, any related stories or media that are
+outside of the specified site will not be published.
 
-B<WARNING>: The intended use case for this option would be an installation that is already in production and underwent template changes to a specific site, requiring a re-publish for that site *only*.  This option should not be used unless you are absolutely sure that stories and media outside of this site are in place in the publish path, or broken links in the publish path may result.
+B<WARNING>: The intended use case for this option would be an
+installation that is already in production and underwent template
+changes to a specific site, requiring a re-publish for that site
+*only*.  This option should not be used unless you are absolutely sure
+that stories and media outside of this site are in place in the
+publish path, or broken links in the publish path may result.
 
 =item --category_id
 
-Publish all content (stories and media) under the category specified by the category_id.
+Publish all content (stories and media) under the category specified
+by the category_id.
 
-Using the --category_id flag will cause krang_publish to ignore the --story_id and --media_id options.
+Using the --category_id flag will cause krang_publish to ignore the
+--story_id and --media_id options.
 
 =item --limited_to_category
 
-An option addendum to --category_id, any related stories or media that are outside of the specified category will not be published.
+An option addendum to --category_id, any related stories or media that
+are outside of the specified category will not be published.
 
-B<WARNING>: The intended use case for this option would be an installation that is already in production and underwent template changes to a specific category, requiring a re-publish for that category *only*.  This option should not be used unless you are absolutely sure that stories and media outside of this category are in place in the publish path, or broken links in the publish path may result.
+B<WARNING>: The intended use case for this option would be an
+installation that is already in production and underwent template
+changes to a specific category, requiring a re-publish for that
+category *only*.  This option should not be used unless you are
+absolutely sure that stories and media outside of this category are in
+place in the publish path, or broken links in the publish path may
+result.
 
 =item --story_id
 
-Publishes the story and related media objects associated with the story_id.  Supports multiple --story_id arguments, or a single --story_id argument with a comma-separated list of IDs to publish more than one story.
+Publishes the story and related media objects associated with the
+story_id.  Supports multiple --story_id arguments, or a single
+--story_id argument with a comma-separated list of IDs to publish more
+than one story.
 
 =item --media_id
 
-Publish a single media object, specified by its media_id.  B<CURRENTLY BROKEN>
+Publish a single media object, specified by its media_id.  B<CURRENTLY
+BROKEN>
 
 =item --republish_only
 
-This modifier will limit the publish process to assets that have been published previously.
+This modifier will limit the publish process to assets that have been
+published previously.
+
+=item --version_check
+
+This modifier will force krang_publish to check the last
+published/previewed version of all assets related to the ones being
+published.  Those that haven't changed since the last time they were
+published/previewed will be skipped.
 
 =item --to-preview
 
@@ -104,7 +133,8 @@ Publish files to preview rather than the publish location.
 
 =item --verbose
 
-Increases the level of output to STDOUT to give a more in-depth explanation of what is going on.
+Increases the level of output to STDOUT to give a more in-depth
+explanation of what is going on.
 
 =back
 
@@ -159,6 +189,7 @@ my ($help, $man, $everything, $verbose) = (0, 0, 0, 0);
 my $limited_to_site     = 0;
 my $limited_to_category = 0;
 my $republish_only      = 0;
+my $version_check       = 0;
 my $increment           = 100;
 my $media_only          = 0;
 my $to_preview          = 0;
@@ -172,6 +203,7 @@ pod2usage(2) unless
              limited_to_site     => \$limited_to_site,
              limited_to_category => \$limited_to_category,
              republish_only      => \$republish_only,
+             version_check       => \$version_check,
              'to-preview'        => \$to_preview,
 
              'increment=i'       => \$increment,
@@ -191,8 +223,9 @@ Krang::Cache::start();
 
 # figure out how these command-line options affect find criteria.
 my %find_options = (limit => $increment, offset => 0);
-my %publish_args = (callback => \&_progress_callback,
-                    skip_callback => \&_skip_callback
+my %publish_args = (callback      => \&_progress_callback,
+                    skip_callback => \&_skip_callback,
+                    version_check => $version_check
                    );
 
 if ($republish_only) {

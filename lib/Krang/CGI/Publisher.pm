@@ -296,6 +296,9 @@ sub preview_story {
       unless $story_id or $session_key;
 
     my $story;
+
+    my $unsaved = 0;
+
     unless ($session_key) {
         ($story) = Krang::Story->find(story_id => $story_id);
         croak("Unable to find story '$story_id'")
@@ -304,6 +307,7 @@ sub preview_story {
         $story = $session{$session_key};
         croak("Unable to load story from sesssion '$session_key'")
           unless $story;
+        $unsaved = 1 if ($session_key eq 'story');
     }
 
     # output the progress header
@@ -319,8 +323,10 @@ sub preview_story {
 
         my $publisher = Krang::Publisher->new();
         eval {
-            $url = $publisher->preview_story(story => $story, 
-                                             callback =>\&_progress_callback);
+            $url = $publisher->preview_story(story    => $story, 
+                                             callback =>\&_progress_callback,
+                                             unsaved  => $unsaved
+                                            );
         };
         if (my $err = $@) {
             # if there is an error, figure out what it is, create the
@@ -474,7 +480,7 @@ sub _build_asset_list {
 
     # retrieve all stories linked to the submitted list.
     push(@{$publish_list}, 
-         @{$publisher->get_publish_list(story => $story_list)})
+         @{$publisher->asset_list(story => $story_list, mode => 'publish')})
       if $story_list and @$story_list;
 
     # add previously submitted media objects to the list.
@@ -560,9 +566,10 @@ sub _publish_assets_now {
         my $publisher = Krang::Publisher->new();
         if (@$story_list) {
             # publish!
-            eval { $publisher->publish_story(story => $story_list, 
-                                             callback =>\&_progress_callback);
-                 };
+            eval {
+                $publisher->publish_story(story    => $story_list,
+                                          callback =>\&_progress_callback);
+            };
 
             if (my $err = $@) {
                 # if there is an error, figure out what it is, create the
@@ -595,14 +602,6 @@ sub _publish_assets_now {
                     # here because that will trigger bug.pl.
                     die $err;
                 }
-
-
-                # put the messages on the screen
-#                  foreach my $error (get_messages()) {
-#                      print "<div class='alertp'>$error</div>\n";
-#                  }
-
-#                 clear_messages();
 
                 # make sure to turn off caching
                 Krang::Cache::stop();

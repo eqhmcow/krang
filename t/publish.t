@@ -105,7 +105,7 @@ isa_ok($publisher, 'Krang::Publisher');
 
 can_ok($publisher, ('publish_story', 'preview_story', 'unpublish_story',
                     'publish_media', 'preview_media', 'unpublish_media',
-                    'get_publish_list', 'deploy_template', 'undeploy_template',
+                    'asset_list', 'deploy_template', 'undeploy_template',
                     'PAGE_BREAK', 'story', 'category', 'story_filename'));
 
 ############################################################
@@ -229,11 +229,13 @@ END {
 
 #test_multi_page_story($category);
 
-# test finding templates.
 test_find_templates($element);
 
-# test contrib loop
 test_contributors($category);
+
+test_publish_status();
+
+test_linked_assets($category);
 
 # test story construction
 test_story_build($story, $category);
@@ -249,8 +251,6 @@ test_media_deploy($media[0]);
 test_storylink($story2, $story);
 
 test_medialink($story2, $media[0]);
-
-test_linked_assets();
 
 test_template_testing($story, $category);
 
@@ -281,7 +281,7 @@ sub test_contributors {
     my %contributor = build_contrib_hash();
     my %contrib_types = Krang::Pref->get('contrib_type');
 
-    $publisher->_mode_is_publish();
+    $publisher->_set_publish_mode();
 
     my $story   = $creator->create_story(category => \@categories);
     my $contrib = $creator->create_contrib(%contributor);
@@ -469,66 +469,148 @@ sub test_multi_page_story {
 ############################################################
 # Testing related stories/media list.
 
+
+
+sub test_publish_status {
+
+    my $story = $creator->create_story(category => [$category]);
+    my $pub   = Krang::Publisher->new();
+
+    eval {
+        # this should croak - no publish status set.
+        $pub->test_publish_status(object => $story);
+    };
+
+    $@ ? pass('Krang::Publisher->test_publish_status()') : fail('Krang::Publisher->test_publish_status()');
+
+    my $bool;
+    eval {
+        # this should return true.
+        $bool = $pub->test_publish_status(object => $story, mode => 'publish');
+    };
+
+    if ($@) {
+        diag("Unexpected croak: $@");
+        fail('Krang::Publisher->test_publish_status()');
+    } else {
+        is($bool, 1, 'Krang::Publisher->test_publish_status()');
+    }
+
+
+    # 'preview' the story - the next test should return 0.
+    $story->mark_as_previewed();
+
+    $bool = $pub->test_publish_status(object => $story, mode => 'preview');
+    is($bool, 0, 'Krang::Publisher->test_publish_status()');
+
+    # but a publish test should return 1.
+    $bool = $pub->test_publish_status(object => $story, mode => 'publish');
+    is($bool, 1, 'Krang::Publisher->test_publish_status()');
+
+    # mark as published, test again - should now be 0.
+    $story->mark_as_published();
+    $bool = $pub->test_publish_status(object => $story, mode => 'publish');
+    is($bool, 0, 'Krang::Publisher->test_publish_status()');
+
+    # 'preview' the story as unsaved - the next test should return 1.
+    $story->mark_as_previewed(unsaved => 1);
+    $bool = $pub->test_publish_status(object => $story, mode => 'preview');
+    is($bool, 1, 'Krang::Publisher->test_publish_status()');
+
+
+    $pub->_init_asset_lists();
+    my ($publish_ok, $check_links) = $pub->_check_asset_status(object => $story,
+                                                               mode   => 'publish',
+                                                               version_check => 0,
+                                                               initial_assets => 0);
+
+    # should pass.
+    is($publish_ok, 1, 'Krang::Publisher: version_check off');
+
+    $pub->_init_asset_lists();
+    ($publish_ok, $check_links) = $pub->_check_asset_status(object => $story,
+                                                            mode   => 'publish',
+                                                            version_check => 1,
+                                                            initial_assets => 0);
+    is($publish_ok, 0, 'Krang::Publisher: version_check on');
+
+}
+
+
+
+
 sub test_linked_assets {
 
-    # test that get_publish_list(story) returns story.
-    my $publish_list = $publisher->get_publish_list(story => $story);
+    my $publisher = Krang::Publisher->new();
+
+    # test that asset_list(story) returns story.
+    my $publish_list = $publisher->asset_list(story => $story, mode => 'preview', version_check => 1);
     my %expected = (media => {}, story => {$story->story_id => $story});
     test_publish_list($publish_list, \%expected);
 
     # link story to story.
     # nothing changes in terms of what's expected.
     link_story($story, $story);
-    $publish_list = $publisher->get_publish_list(story => $story);
+    $publish_list = $publisher->asset_list(story => $story, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
-    # test that get_publish_list(story2) returns story2 + story + media
-    $publish_list = $publisher->get_publish_list(story => $story2);
+    # test that asset_list(story2) returns story2 + story + media
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     %expected = (media => { $media[0]->media_id => $media[0] },
                  story => { $story->story_id => $story,
                             $story2->story_id => $story2});
 
     test_publish_list($publish_list, \%expected);
 
+    # mark story as previewed - it should no longer show up when story2 is 'previewed'.
+    $story->mark_as_previewed();
+    delete $expected{story}{$story->story_id};
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
+    test_publish_list($publish_list, \%expected);
+
+    # undo the preview by marking as an unsaved preview (which forces preview next time).
+    $story->mark_as_previewed(unsaved => 1);
+    $expected{story}{$story->story_id} = $story;
+
     # add links to all of @stories to story2.
-    # test that get_publish_list(story2) returns story2 + story + @stories + media
+    # test that asset_list(story2) returns story2 + story + @stories + media
     foreach (@stories) {
         &link_story($story2, $_);
         $expected{story}{$_->story_id} = $_;
     }
-    $publish_list = $publisher->get_publish_list(story => $story2);
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
     # add links to all of @stories to story -- duplicates story requirements.
-    # test that get_publish_list(story2) returns story2 + story + @stories + media
+    # test that asset_list(story2) returns story2 + story + @stories + media
     foreach (@stories) {
         link_story($story, $_);
     }
-    $publish_list = $publisher->get_publish_list(story => $story2);
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
 
     # add links to all of @media to story2.
-    # test that get_publish_list(story2) returns story2 + story + @stories + media + @media
+    # test that asset_list(story2) returns story2 + story + @stories + media + @media
     foreach (@media) {
         link_media($story2, $_);
         $expected{media}{$_->media_id} = $_;
     }
-    $publish_list = $publisher->get_publish_list(story => $story2);
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
     # add links to all of @media to story -- duplicates media requirements.
-    # test that get_publish_list(story2) returns story2 + story + @stories + media + @media
+    # test that asset_list(story2) returns story2 + story + @stories + media + @media
     foreach (@media) {
         link_media($story, $_);
     }
-    $publish_list = $publisher->get_publish_list(story => $story2);
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
     # add link to story2 to story -- creates a full cycle.
-    # test that get_publish_list(story2) returns story2 + story + @stories + media + @media
+    # test that asset_list(story2) returns story2 + story + @stories + media + @media
     link_story($story, $story2);
-    $publish_list = $publisher->get_publish_list(story => $story2);
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
     # stress test - create multiple cycles, create as many interlinking dependencies as possible.
@@ -537,7 +619,66 @@ sub test_linked_assets {
         link_story($_, $story);
         link_story($_, $story2);
     }
-    $publish_list = $publisher->get_publish_list(story => $story2);
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
+    test_publish_list($publish_list, \%expected);
+
+    # asset test - mark all @stories as previewed - they shouldn't show up in the publish list.
+    foreach (@stories) {
+        $_->mark_as_previewed();
+        delete $expected{story}{$_->story_id};
+    }
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
+    test_publish_list($publish_list, \%expected);
+
+    foreach (@media) {
+        $_->mark_as_previewed();
+        delete $expected{media}{$_->media_id};
+    }
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
+    test_publish_list($publish_list, \%expected);
+
+    # undo the marking
+    foreach (@stories, @media) {
+        $_->mark_as_previewed(unsaved => 1);
+        if ($_->isa('Krang::Story')) {
+            $expected{story}{$_->story_id} = $_;
+        } else {
+            $expected{media}{$_->media_id} = $_;
+        }
+    }
+
+    # now check publish
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
+    test_publish_list($publish_list, \%expected);
+
+    # mark @stories as published - they should not show up in $publish_list.
+    foreach (@stories) {
+        $_->mark_as_published();
+        delete $expected{story}{$_->story_id};
+    }
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
+    test_publish_list($publish_list, \%expected);
+
+    # mark @media as published - they too should no longer show up.
+    foreach (@media) {
+        $_->mark_as_published();
+        delete $expected{media}{$_->media_id};
+    }
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
+    test_publish_list($publish_list, \%expected);
+
+    # restore everything, test one last time.
+    foreach (@stories, @media) {
+        $_->checkout();
+        $_->save();  # this will bump the version number.
+        if ($_->isa('Krang::Story')) {
+            $expected{story}{$_->story_id} = $_;
+        } else {
+            $expected{media}{$_->media_id} = $_;
+        }
+    }
+
+    $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
 }
@@ -555,14 +696,18 @@ sub test_publish_list {
     # test to see if what returned was expected
     foreach (@$publist) {
         if ($_->isa('Krang::Story')) {
-            ok(exists($expected->{story}{$_->story_id}), 'Krang::Publisher->get_publish_list() - expected story');
+            unless (ok(exists($expected->{story}{$_->story_id}), 'asset_list() - story check')) {
+                diag("Found story that should not be in publish list");
+            }
             $lookup{story}{$_->story_id} = 1;
         }
         elsif ($_->isa('Krang::Media')) {
-            ok(exists($expected->{media}{$_->media_id}), 'Krang::Publisher->get_publish_list() - expected media');
+            unless (ok(exists($expected->{media}{$_->media_id}), 'asset_list() - media check')) {
+                diag("Found media that should not be in publish list") ;
+            }
             $lookup{media}{$_->media_id} = 1;
         } else {
-            fail("Krang::Publisher->get_publish_list - returned '" . $_->isa() . "'");
+            fail("Krang::Publisher->asset_list - returned '" . $_->isa() . "'");
         }
     }
 
@@ -571,9 +716,13 @@ sub test_publish_list {
         foreach my $key (keys %{$expected->{$_}}) {
             my $obj = $expected->{$_}{$key};
             if ($_ eq 'story') {
-                ok(exists($lookup{story}{$obj->story_id}), 'Krang::Publisher->get_publish_list() - found story'); 
+                unless (ok(exists($lookup{story}{$obj->story_id}), 'asset_list() - story check')) {
+                    diag("Missing expected story in publish list");
+                }
             } elsif ($_ eq 'media') {
-                ok(exists($lookup{media}{$obj->media_id}), 'Krang::Publisher->get_publish_list() - found media'); 
+                unless (ok(exists($lookup{media}{$obj->media_id}), 'asset_list() - media check')) {
+                    diag("Missing expected media in publish list");
+                }
             }
         }
     }

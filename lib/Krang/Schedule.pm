@@ -612,7 +612,7 @@ sub _publish {
 
 
         eval {
-            $publisher->publish_story(story => \@stories);
+            $publisher->publish_story(story => \@stories, version_check => 0);
         };
 
         if (my $err = $@) {

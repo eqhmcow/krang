@@ -8,6 +8,19 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Large changes to the publishing engine.  When publishing/previewing a
+story, Krang::Publisher will now check all related stories/media to
+see if the most recent version of each object has been
+published/previewed before.  If so, the object will not be
+published/previewed again.  The chosen story/media object will always
+be published/previewed.  This is only default behavior in the UI,
+scheduled publish jobs and bin/krang_publisher still publish all
+content.  Additional parameters have been added to the
+Krang::Publisher API to support this functionality, see
+L<Krang::Publisher> for more information.  [Peter]
+
+=item *
+
 Fixed bug in Krang::Contrib where importing a contributor with no
 first name or no last name would duplicate the contributor if it
 already existed instead of updating. [Sam]
