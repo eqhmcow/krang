@@ -199,8 +199,7 @@ sub show_row_handler {
     }
 
     # setup date
-    $row->{timestamp}   = $history->timestamp->mdy("/") . " " . 
-                          $history->timestamp->hms;
+    $row->{timestamp}   = $history->timestamp->strftime('%b %e, %Y %l:%M %p'); 
 
     # some events have attributes
     my $attr = "";
