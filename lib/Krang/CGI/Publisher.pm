@@ -314,13 +314,13 @@ sub preview_story {
         } else {
             # something not expected so log the error.  Can't croak()
             # here because that will trigger bug.pl.
-            print "<div class=alert>An internal server error occurred.  Please check the error logs for details.</div>\n";
+            print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
             critical($@);
         }
 
         # put the messages on the screen
         foreach my $error (get_messages()) {
-            print "<div class=alert>$error</div>\n";
+            print "<div class='alertp'>$error</div>\n";
         }
         clear_messages();
         return;
@@ -537,13 +537,13 @@ sub _publish_assets_now {
             } else {
                 # something not expected so log the error.  Can't croak()
                 # here because that will trigger bug.pl.
-                print "<div class=alert>An internal server error occurred.  Please check the error logs for details.</div>\n";
+                print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
                 critical($@);
             }
 
             # put the messages on the screen
             foreach my $error (get_messages()) {
-                print "<div class=alert>$error</div>\n";
+                print "<div class='alertp'>$error</div>\n";
             }
             clear_messages();
             return;

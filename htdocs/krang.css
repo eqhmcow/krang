@@ -9,11 +9,19 @@ body {
   background-image: url("/images/left_bg.jpg");
   background-repeat: repeat-y;
 }
+
 html {
 	width: 770px;
 	height: 100%;
 }
 /*** Positioning ***/
+
+#frame {
+		width:770px;
+		padding:0px;
+		text-align:left;
+		}
+
 
 #header {
   padding: 			  10px; 
@@ -65,35 +73,6 @@ html {
   width: 760px;
 }	
 
-.left2 {
-  margin-top:	     0px;
-  height:           auto; 
-  padding-bottom:   3px;
-}
-
-#content {
-margin-top:          0px;
-margin-left:         157px;
-padding-left:        10px;
-  width:            590px;
-} 
-
-#footer-top {
-	background-color: #ffffff;
-	width:            750px;
-	height:           10px;
-	clear:            both;
-}
-#footer {
-	background-color: #dbe9f4;
-   color:            #333333;
-	width:            750px;
-	padding-left:     10px;
-	padding-top:      4px;
-	padding-bottom:   4px;
-	text-align:       left;
-	clear:            both;
-}
 #left-nav {
 	float:             left;
 	margin-top:        0px;
@@ -102,11 +81,55 @@ padding-left:        10px;
   background-color: #ffffff;  
 }
 
+#space {
+	float:             left;
+	margin-top:        0px;
+	width:             12px;
+  height:             100%;
+  background-color: #ffffff;  
+	
+}
+
+#content {
+margin-top:          0px;
+float:               left;
+padding:        0px;
+  width:            590px;
+} 
+
+#footer {
+	background-color: transparent;
+   color:            #333333;
+	width:            760px;
+	margin-top:        3px;
+	clear:            both;
+}
+
+#copy {
+	background-color: #dbe9f4;
+   color:            #333333;
+	padding-top:      4px;
+	padding-bottom:   4px;
+	float:            right;
+	width:            590px;  
+	text-align:       left;
+}
+
 #login {
 	position:          absolute;
 	left:              220px;
 	top:               100px;
 	width:             340px; 
+}
+
+.left2 {
+  margin-top:	     0px;
+  height:           auto; 
+  padding-bottom:   3px;
+}
+
+b {
+	font-weight:      bold;
 }
 
 p.logl {
@@ -123,7 +146,13 @@ p.logr {
 	padding-bottom:     20px;
 }
 
-
+div.publish {
+	position:          absolute;
+	left:              180px;
+	top:               10px;
+	width:             590px; 
+	text-align:        center;
+}
 
 
 div.box {
@@ -267,6 +296,11 @@ a:active {
 	margin: 0px;
 }
 
+.dark-bar p.center {
+	text-align:       center;
+	margin: 0px;
+}
+
 .dark-bar2 { 
   background-color: #04044c;
   color:            #dbeaf5;
@@ -375,6 +409,15 @@ a:active {
   color:          red;
   font-weight:    bold;
   margin-bottom:  5px;
+}
+
+.alertp {
+  position:      absolute;
+  color:         red;
+  font-weight:   bold;
+  width:        400px;
+  left:         275px;
+  top:          140px; 
 }
 
 .no-border { 
@@ -528,10 +571,9 @@ a:active {
 }
 
 .hpts-button {
-   background-color: #FFFFFF;
-   color:            #003466;
-   font-family:      Verdana,Helvetica,Arial,sans-serif;
-   font-size:        12px;
+    background-color: #FFFFFF;
+    color:            #003466;
+    font-family:      Verdana,Helvetica,Arial,sans-serif;
 }
 
 .hpts-label-selected {
@@ -583,7 +625,6 @@ a:active {
   padding:          4px 4px 0px 4px;
   height:           20px;
   font-weight:      bold;
-  margin-top:       3px;
 }
 .light-bar-nav img {
 	margin-left:    5px;
@@ -594,12 +635,14 @@ a:active {
   border-top:     none;
   padding:        4px 24px;
   line-height:    150%;
+  margin-bottom:  3px;
 }
 .plain-cell {
   padding:        2px 24px;
   line-height:    150%;
+  margin-bottom:       3px;
 }
 .blue-border {
-	background:    #000448;
-   margin-top:       3px;
+	background:    #ffffff;
+   height:       3px;
 }

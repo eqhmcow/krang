@@ -1,7 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
 <html>
 <head>
-<title><tmpl_var instance_name>Login</title>
+<title><tmpl_var instance_name> Login</title>
 <style type="text/css">
 body {
   background-color: #ffffff;
@@ -126,6 +126,13 @@ div.boxb {
    font-family:      Verdana,Helvetica,Arial,sans-serif;
    font-size:        12px;
 }
+
+.error {
+	color: Red;	
+	position:          absolute;
+	left:              220px;
+	top:               70px;
+}
 </style>
 </head>
 
@@ -143,10 +150,10 @@ div.boxb {
 		
 <form method="POST" action="login.pl" name="logform">
 <div id="login">
-<div class="dark-bar"><tmpl_var instance_name>Log In</div>
+<div class="dark-bar"><tmpl_var instance_name> Log In</div>
 <div class="boxb">
 <div class="light"><p>User Name:&nbsp;&nbsp;&nbsp;<input type="text" name="username" value="<tmpl_var username>" size="12"><br><br>Password:&nbsp;&nbsp;&nbsp;<input type="password" name="password" size="12"></p></div></div>
-<div class="button-bar"><input class="button" type="submit" value="Log in"></div><input type="hidden" name="rm" value="login"></div>
+<div class="button-bar"><input class="button" type="submit" value="Log In"></div><input type="hidden" name="rm" value="login"></div>
 </form>
 <div id="footer">&nbsp;&nbsp;&nbsp;Copyright &copy; 2003 The PIRT Group.  All Rights Reserved.</div>
 

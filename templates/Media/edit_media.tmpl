@@ -116,14 +116,15 @@
 </tmpl_unless>
 <div class="box">
 <table border="0" cellpadding="5" cellspacing="0" width="100%">
-<tr>
-  <td>*Title:</td>
-  <td colspan="2"><tmpl_if error_invalid_title><span class="invalid"></tmpl_if><input type="textfield" size="45" name="title" value="<tmpl_var escape=HTML title>"><tmpl_if error_invalid_title></span></tmpl_if></td>
-</tr>
 
 <tr>
   <td>*Type:</td>
   <td colspan="2"><tmpl_if error_media_type_id><span class="invalid"></tmpl_if><tmpl_var type_chooser><tmpl_if error_media_type_id></span></tmpl_if></td>
+</tr>
+
+<tr>
+  <td>*Title:</td>
+  <td colspan="2"><tmpl_if error_invalid_title><span class="invalid"></tmpl_if><input type="textfield" size="45" name="title" value="<tmpl_var escape=HTML title>"><tmpl_if error_invalid_title></span></tmpl_if></td>
 </tr>
 
 <tr>
