@@ -54,20 +54,20 @@
 </tr>
 
 <tr>
-<td class=form-cell>* Site / Category</td>
-<td class=form-cell valign=middle>
-    <tmpl_if bad_category_id><span class="invalid"></tmpl_if>
-      <tmpl_var category_chooser>
-    <tmpl_if bad_category_id></span></tmpl_if>
-</td>
-</tr>
-
-<tr>
 <td class=form-cell>* Cover Date</td>
 <td class=form-cell>
     <tmpl_if bad_cover_date><span class="invalid"></tmpl_if>
        <tmpl_var cover_date_selector>
     <tmpl_if bad_cover_date></span></tmpl_if>
+</td>
+</tr>
+
+<tr>
+<td class=form-cell>* Site / Category</td>
+<td class=form-cell valign=middle>
+    <tmpl_if bad_category_id><span class="invalid"></tmpl_if>
+      <tmpl_var category_chooser>
+    <tmpl_if bad_category_id></span></tmpl_if>
 </td>
 </tr>
 
