@@ -25,6 +25,8 @@ This module provides methods to assist in handling XML data in Krang.
 Their primary purpose is to make writing the serialize_xml() and
 deserialize_xml() methods required by Krang::DataSet easier.
 
+See L<Krang::XML::Validator> for XML Schema validation.
+
 =head1 INTERFACE
 
 =over 4

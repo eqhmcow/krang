@@ -22,6 +22,7 @@ use Krang::Template;
 use Krang::Media;
 use Krang::Category;
 use Krang::Site;
+use Krang::XML::Validator;
 
 # setup exceptions
 use Exception::Class 
@@ -184,33 +185,19 @@ sub _validate {
     my $self = shift;
     local $_;
 
+    my $validator = Krang::XML::Validator->new();
+
     # switch into directory with XML
     my $old_dir = fastcwd;
     chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
-    
-    # prepare links to schema documents so schema processing can work
-    my @links;
-    find(sub { 
-             return unless /\.xsd$/; 
-             push(@links, catfile($self->{dir}, $_));
-             link(catfile(KrangRoot, "schema", $_), $links[-1])
-               or die "Unable to link $_ to $links[-1] : $!";
-         }, catdir(KrangRoot, "schema"));
 
     # validate the files
     my %invalid;
     find(sub { 
              return unless /\.xml$/;
-             eval { $self->_validate_file($_) };
-             if ($@ and ref $@ and $@->isa('Krang::DataSet::InvalidFile')) {
-                 $invalid{$@->file()} = $@->err;
-             } elsif ($@) {
-                 die $@;
-             }
+             my ($ok, $err) = $validator->validate(path => $_);
+             $invalid{$_} = $err unless ($ok);
          }, $self->{dir});
-
-    # remove the links
-    unlink($_) for @links;
 
     # get back
     chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
@@ -222,32 +209,6 @@ sub _validate {
                 map { "File '$_' failed validation: \n$invalid{$_}\n" } 
                 keys %invalid))
         if %invalid;
-}
-
-# validate a single file, producing an InvalidFile exception if
-# validation fails
-sub _validate_file {
-    my ($self, $file) = @_;
-
-    # FIX: use XML::Xerces if I can ever get it working
-    my $DOMCount = catfile(KrangRoot, 'xerces', 'DOMCount');
-    local $ENV{LD_LIBRARY_PATH} = catdir(KrangRoot, 'xerces', 'lib') . 
-      ($ENV{LD_LIBRARY_PATH} ? ":$ENV{LD_LIBRARY_PATH}" : "");
-    my $error = `$DOMCount -n -s -f $file 2>&1`;
-
-    return unless $error =~ /Error/;
-
-    # fixup error message
-    $error =~ s{\Q$self->{dir}\E/?}{}g;
-    $error =~ s!Errors occurred, no output available!!g;
-    $error =~ s!^\s+!!;
-    $error =~ s{\s+$}{};
-
-    # toss invalid file exception
-    Krang::DataSet::InvalidFile->throw(
-         file    => $file,
-         err     => $error,
-         message => "File '$file' failed validation: \n$error\n");
 }
 
 =item C<< $set->add(object => $story, from => $self) >>
