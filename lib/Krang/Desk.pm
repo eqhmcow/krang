@@ -194,6 +194,10 @@ Defaults to 'order'.
 If this is set to true, results will be sorted as descending 
 (default is ascending).
 
+=item * limit
+
+Limit the number of results returned.
+
 =back
 
 =cut
@@ -208,7 +212,8 @@ sub find {
                             count => 1,
                             ids_only => 1,
                             order_by => 1,
-                            order_desc => 1
+                            order_desc => 1,
+                            limit => 1
                         );
 
     # check for invalid params and croak if one is found
@@ -255,6 +260,7 @@ sub find {
     my $query = "$select from desk";
     $query .= " $where_clause" if $where_clause;
     $query .= " order by $order_by $order_dir";
+    $query .= " limit ".$args{limit} if $args{limit};
 
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
@@ -344,6 +350,46 @@ sub serialize_xml {
 
     # all done
     $writer->endTag('desk');
+}
+
+=item C<< $desk = Krang::Desk->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming desk has the same name as an existing desk then an
+update will occur, unless no_update is set.
+
+=cut
+                                                                                
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml,
+                                  suppressempty => 1);
+                                                                                 
+    # is there an existing object?
+    my $desk = (Krang::Desk->find(name => $data->{name}))[0] || '';
+
+    if ($desk) {
+
+        debug (__PACKAGE__."->deserialize_xml : found desk");
+        
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A desk object with the name '$data->{name}' already ".
+                       "exists and no_update is set.")
+            if $no_update;
+        
+        # update simple fields
+        Krang::Desk->reorder($desk->{desk_id} => $data->{order});
+
+    } else {
+        $desk = Krang::Desk->new( name => $data->{name} );
+    }
+
+    return $desk;
 }
 
 =back

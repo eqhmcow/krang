@@ -26,6 +26,7 @@
 					</xs:complexType>
 				</xs:element>
 				<xs:element name="may_publish" type="xs:boolean"/>
+                                <xs:element name="may_checkin_all" type="xs:boolean"/>
 				<xs:element name="admin_users" type="xs:boolean"/>
 				<xs:element name="admin_users_limited" type="xs:boolean"/>
 				<xs:element name="admin_groups" type="xs:boolean"/>

@@ -1797,8 +1797,27 @@ sub deserialize_xml {
     $story->{element}->delete if $story->{element};   
     $story->{element} = $element;
 
+    # get hash of contrib type names to ids
+    my %contrib_types = reverse Krang::Pref->get('contrib_type');
+                                                                              
+    # handle contrib association
+    if ($data->{contrib}) {
+        my @contribs = @{$data->{contrib}};
+        my @altered_contribs;
+        foreach my $c (@contribs) {
+            my $contrib_type_id = $contrib_types{$c->{contrib_type}} ||
+                            Krang::DataSet::DeserializationFailed->throw(
+                                 "Unknown contrib_type '".$c->{contrib_type}."'.");
+                                                                              
+            push (@altered_contribs, { contrib_id => $set->map_id(class => "Krang::Contrib", id => $c->{contrib_id}), contrib_type_id => $contrib_type_id });
+        }
+                                                                              
+        $story->contribs(@altered_contribs);
+    }
+
     # finish the story, not incrementing version
     $story->save(keep_version => 1);
+    $story->checkin;
 
     return $story;
 }

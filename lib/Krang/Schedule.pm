@@ -887,13 +887,15 @@ sub serialize_xml {
     $writer->dataElement( object_id => $self->{object_id} );
     $writer->dataElement( action => $self->{action} );
     $writer->dataElement( repeat => $self->{repeat} );
-    my $next_run = $self->{next_run};
+    my $next_run = $self->{next_run} || '';
     $next_run =~ s/\s/T/;
     $writer->dataElement( next_run => $next_run );
-    my $initial_date = $self->{initial_date};
+    my $last_run = $self->{last_run} || '';
+    $last_run =~ s/\s/T/;
+    $writer->dataElement( last_run => $last_run ) if $self->{last_run};
+    my $initial_date = $self->{initial_date} || '';
     $initial_date =~ s/\s/T/;
     $writer->dataElement( initial_date => $initial_date );
-    $writer->dataElement( last_run => $self->{last_run} ) if $self->{last_run}; 
     $writer->dataElement( hour => $self->{hour} ) if defined $self->{hour};
     $writer->dataElement( minute => $self->{minute} ) if defined $self->{minute};
     $writer->dataElement( day_of_week => $self->{day_of_week} ) if defined $self->{day_of_week};
@@ -907,7 +909,7 @@ sub serialize_xml {
             $writer->dataElement( value => $c_hash{$key} );
             $writer->endTag('context');
                                                                                      
-            # $set->add(object => ($Krang::User->find( user_id => $c_hash{user_id}))[0], from => $self) if ($key eq 'user_id');
+            $set->add(object => ($Krang::User->find( user_id => $c_hash{user_id}))[0], from => $self) if ($key eq 'user_id');
             # $set->add(object => ($Krang::Alert->find( alert_id => $c_hash{alert_id}))[0], from => $self) if ($key eq 'alert_id');
         }
     }

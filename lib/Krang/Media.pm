@@ -1287,8 +1287,9 @@ sub deserialize_xml {
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
     
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml, 
-                                  suppressempty => 1);
+    my $data = Krang::XML->simple(  xml           => $xml, 
+                                    forcearray  => ['contrib'],
+                                    suppressempty => 1);
 
     # is there an existing object?
     my ($media) = Krang::Media->find(url => $data->{url});
@@ -1317,7 +1318,25 @@ sub deserialize_xml {
                                    (map { ($_,$data->{$_}) } keys %simple));
 
     }
-        
+      
+    # get hash of contrib type names to ids
+    my %contrib_types = reverse Krang::Pref->get('contrib_type');
+
+    # handle contrib association
+    if ($data->{contrib}) { 
+        my @contribs = @{$data->{contrib}};
+        my @altered_contribs;
+        foreach my $c (@contribs) {
+            my $contrib_type_id = $contrib_types{$c->{contrib_type}} || 
+                            Krang::DataSet::DeserializationFailed->throw(
+                                 "Unknown contrib_type '".$c->{contrib_type}."'.");
+
+            push (@altered_contribs, { contrib_id => $set->map_id(class => "Krang::Contrib", id => $c->{contrib_id}), contrib_type_id => $contrib_type_id });
+        }
+    
+        $media->contribs(@altered_contribs);
+    }
+ 
     # upload the file
     my $path = "media_$data->{media_id}/$data->{filename}";
     my $full_path = $set->map_file(path => $path);
@@ -1339,6 +1358,7 @@ sub deserialize_xml {
         
     # save changes
     $media->save();
+    $media->checkin();
 
     # make sure there's a file on the other end
     assert($media->file_path and -e $media->file_path,

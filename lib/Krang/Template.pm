@@ -1076,7 +1076,6 @@ sub deserialize_xml {
    
     # is there an existing object?
     my $template = (Krang::Template->find(url => $data->{url}))[0] || '';
-    my $updated;
     if ($template) {
 
          debug (__PACKAGE__."->deserialize_xml : found template");
@@ -1086,8 +1085,6 @@ sub deserialize_xml {
                        "exists and no_update is set.")
             if $no_update;
        
-        $updated = 1; 
-
         $template->checkout;
 
         # update simple fields

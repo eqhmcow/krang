@@ -583,6 +583,7 @@ sub serialize_xml {
     }
 
     $writer->dataElement( may_publish => $self->{may_publish} );
+    $writer->dataElement( may_checkin_all => $self->{may_checkin_all} );
     $writer->dataElement( admin_users => $self->{admin_users} );
     $writer->dataElement( admin_users_limited => $self->{admin_users_limited} );
     $writer->dataElement( admin_groups => $self->{admin_groups} );
@@ -598,6 +599,79 @@ sub serialize_xml {
     # all done
     $writer->endTag('group');
 
+}
+
+=item C<< $group = Krang::Group->deserialize_xml(xml => $xml, set => $set,
+no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming group has the same name as an existing group then an
+update will occur, unless no_update is set.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+     # divide FIELDS into simple and complex groups
+    my (%complex, %simple);
+    
+    # strip out all fields we don't want updated or used or we want to deal with manually.
+    @complex{qw(group_id)} = ();
+    %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
+
+       # parse it up
+    my $data = Krang::XML->simple(  xml           => $xml,
+                                    forcearray => ['category','desk'],
+                                    suppressempty => 1);
+    
+    # is there an existing object?
+    my $group = (Krang::Group->find(name => $data->{name}))[0] || '';
+    if ($group) {
+         
+        debug (__PACKAGE__."->deserialize_xml : found group");
+        
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A group object with the name '$data->{name}' already ".
+                       "exists and no_update is set.")
+            if $no_update;
+        
+        # update simple fields
+        $group->{$_} = $data->{$_} for keys %simple;
+
+    } else {
+        $group = Krang::Group->new((map { ($_,$data->{$_}) } keys %simple));
+    }
+
+    # take care of category association
+    if ($data->{category}) {
+        my @categories = @{$data->{category}};
+        my %altered_cats;
+        foreach my $cat (@categories) {
+           $altered_cats{ $set->map_id(class => "Krang::Category", id => $cat->{category_id})} = $cat->{security_level};
+        }
+                                                                            
+        $group->categories(%altered_cats);
+    }
+
+    # take care of desk association
+    if ($data->{desk}) {
+        my @desks = @{$data->{desk}};
+        my %altered_desks;
+        foreach my $desk (@desks) {
+           $altered_desks{ $set->map_id(class => "Krang::Desk", id
+=> $desk->{desk_id}) } = $desk->{security_level};
+        }
+                                                                              
+        $group->desks(%altered_desks);
+    }
+
+    $group->save();
+
+    return $group;
 }
 
 =item add_category_permissions()
