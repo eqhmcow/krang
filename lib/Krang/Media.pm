@@ -625,13 +625,13 @@ sub find {
     # add title_like to where_string if present
     if ($args{'title_like'}) {
         $where_string ? ($where_string .= " and title like ?") : ($where_string = " title like ?");
-        push @where, $args{'title_like'};
+        push @where, 'title_like';
     }
 
     # add filename_like to where_string if present
     if ($args{'filename_like'}) {
         $where_string ? ($where_string .= " and filename like ?") : ($where_string = " filename like ?");
-        push @where, $args{'filename_like'};
+        push @where, 'filename_like';
     }
 
     if ($args{'creation_date'}) {
@@ -662,7 +662,6 @@ sub find {
     } elsif ($offset) {
         $sql .= " limit $offset, -1";
     }
-
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
     while (my $row = $sth->fetchrow_hashref()) {
