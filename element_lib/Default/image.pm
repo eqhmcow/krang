@@ -9,8 +9,8 @@ Default::image
 =head1 DESCRIPTION
 
 Default image element class for Krang. Image has a caption and copyright
-that will override assoicated media caption/copyright if set.
-It also has an alignment property.
+that will override assoicated media caption/copyright if set.  It also has an alignment property.  The height and width of the associated MediaLink image are added to the template data during publication.
+
 =cut
 
 
@@ -54,6 +54,25 @@ sub input_form {
         return $data;
     }
     return '';
+}
+
+sub fill_template {
+    my ($self, %args) = @_;
+
+    my $tmpl      = $args{tmpl};
+    my $element   = $args{element};
+
+    my %params = ();
+
+    # add width and height of image
+    $params{width} = $element->child_data('media')->width()
+      if $tmpl->query( name => 'width' );
+    $params{height} = $element->child_data('media')->height()
+      if $tmpl->query( name => 'height' );
+    
+    $tmpl->param( \%params );
+    
+    $self->SUPER::fill_template(%args);
 }
 
 1;

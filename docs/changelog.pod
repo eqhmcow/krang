@@ -2,6 +2,15 @@
 
 This document contains a list of changes for each release of Krang.
 
+=over
+
+=item *
+
+Added automatic height and width data to the Default::image element. 
+[Perrin]
+
+=back
+
 =head2 v1.021 - July 21, 2004
 
 =over
