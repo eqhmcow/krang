@@ -769,6 +769,11 @@ sub revert {
     };
     croak ("Unable to deserialize object: $@") if $@;
 
+    # add history now to show which version was reverted to
+    add_history(    object => $self,
+                    action => 'revert',
+                );
+    
     my $old_filepath = $self->file_path();
     $self->{version} = $version;
     $self->{checked_out_by} = $checked_out_by;
@@ -779,10 +784,6 @@ sub revert {
     copy($old_filepath,$filepath); 
     $self->{tempfile} = $filepath;
    
-    add_history(    object => $self,
-                    action => 'revert',
-                ); 
-
     return $self; 
 }
 
