@@ -24,11 +24,20 @@
 #   upgrade - upgrade an existing Krang installation from a distribution
 #
 
-
 all:
-	@echo "Krang Makefile:  You're probably looking for 'make db' or 'make test'"
+	@echo "No default make target."
+
+build: clean
+	bin/krang_build
+
+dist:
+	bin/krang_makedist
 
 clean:	bench_clean
+	- rm krang-*gz
+	- find lib/ -mindepth 1 -maxdepth 1 | grep -v Krang | xargs rm -rf
+	- rm -rf apache/*
+	- rm data/build.db
 
 TAGS:	
 	find -name '*.pm' | etags --language="perl" --regex='/[ \\t]*[A-Za-z]+::[a-zA-Z:]+/' -
@@ -64,11 +73,6 @@ elements:
 	bin/krang_bric_eloader --set NYM --xml t/eloader/NYM.xml
 	bin/krang_bric_eloader --set Bric_Default --xml t/eloader/Bric_Default.xml
 
-dist:
-	@echo "Use bin/krang_makedist to make a release."
-	@bin/krang_makedist --help
-
-
 install:
 	@echo "Use bin/krang_install to install."
 	@bin/krang_install --help
@@ -79,5 +83,5 @@ upgrade:
 	@bin/krang_upgrade --help
 
 
-.PHONY : all test clean TAGS bench docs bench_clean elements dist install upgrade
+.PHONY : all dist test clean TAGS bench docs bench_clean elements install upgrade build
 
