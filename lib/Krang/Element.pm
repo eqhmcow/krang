@@ -8,7 +8,7 @@ use Krang::DB qw(dbh);
 use List::Util qw(first);
 use Scalar::Util qw(weaken);
 use Carp qw(croak);
-use Krang::Log qw(assert ASSERT debug);
+use Krang::Log qw(assert ASSERT debug info);
 use Storable qw(freeze thaw);
 
 # declare prototypes
@@ -693,15 +693,30 @@ sub _load_tree {
     my $row;
     while (@$data) {
         $row = shift @$data;
-        croak("found child '$row->[ELEMENT_ID]' with unknown parent ".
-              "'$row->[PARENT_ID]'")
-          unless (exists $ehash{$row->[PARENT_ID]});
-        $ehash{$row->[ELEMENT_ID]} = 
-          $ehash{$row->[PARENT_ID]}->add_child(class     => $row->[CLASS],
-                                               element_id=> $row->[ELEMENT_ID],
-                                               no_expand => 1
-                                              );
-        $ehash{$row->[ELEMENT_ID]}->thaw_data(data => $row->[DATA]);
+        
+        # skip children with unloaded parents, since they probably
+        # failed to find an element class.  At some point we might
+        # want to differentiate between this case and pure database
+        # corruption.
+        next unless exists $ehash{$row->[PARENT_ID]};
+
+        eval { 
+            $ehash{$row->[ELEMENT_ID]} = 
+              $ehash{$row->[PARENT_ID]}->add_child(class     => $row->[CLASS],
+                                                   element_id=> $row->[ELEMENT_ID],
+                                                   no_expand => 1
+                                                  );
+
+            $ehash{$row->[ELEMENT_ID]}->thaw_data(data => $row->[DATA]);
+        };
+        if ($@ and $@ =~ /No class named/) {
+            # this is the result of a missing class definition,
+            # issue a warning and move on
+            info("Unable to load data for element class '$row->[CLASS]' - there is no matching definition in this element set.");
+            next;
+        } elsif ($@) {
+            die $@; 
+        } 
     }
 
     # all done
@@ -911,18 +926,28 @@ sub _deserialize_xml_children {
     my ($data, $set) =  @args{qw(data set)};
 
     foreach my $child_data (@{$data->{element}}) {
-        # create child
-        $self->add_child(class     => $child_data->{class},
-                         no_expand => 1);
-        # thaw child data
-        $self->{children}[-1]->thaw_data_xml(data => $child_data->{data},
-                                             set  => $set);
-
-        # recurse if needed
-        if ($child_data->{element}) {
-            $self->{children}[-1]->_deserialize_xml_children(data => 
-                                                              $child_data,
-                                                            set  => $set);
+        eval { 
+            # create child
+            $self->add_child(class     => $child_data->{class},
+                             no_expand => 1);
+            # thaw child data
+            $self->{children}[-1]->thaw_data_xml(data => $child_data->{data},
+                                                 set  => $set);
+        };
+        if ($@ and $@ =~ /No class named/) {
+            # this is the result of a missing class definition,
+            # issue a warning and move on
+            info("Unable to load data for element class '$child_data->{class}' - there is no matching definition in this element set.");
+            next;
+        } elsif ($@) {
+            die $@; 
+        } else {
+            # recurse if needed
+            if ($child_data->{element}) {
+                $self->{children}[-1]->_deserialize_xml_children(data => 
+                                                                 $child_data,
+                                                                 set  => $set);
+            }
         }
     }
 }
