@@ -10,6 +10,7 @@ use Krang::Script;
 use Krang::Template;
 use Krang::DataSet;
 use Krang::Conf qw(KrangRoot);
+use Krang::Test::Content;
 use File::Spec::Functions qw(catfile);
 
 # a bunch of binary data containing all 256 bytes
@@ -86,4 +87,64 @@ foreach my $template (@templates) {
     $template->delete;
 }
 
-# unlink(catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
+# make a story, with paragraphs containing 8-bit data
+my $creator = Krang::Test::Content->new();
+my $site = $creator->create_site(preview_url => 'preview.8bit.com',
+                                 publish_url => 'www.8bit.com',
+                                 preview_path => '/tmp/8bit-prev',
+                                 publish_path => '/tmp/8bit-pub');
+my $cat = $creator->create_category(dir    => '8bit');
+
+my $story = Krang::Story->new(class => 'article',
+                              categories => [$cat],
+                              slug => '8bits',
+                              title => '8 is enough');
+my $page = $story->element->child('page');
+
+@bits = ();
+for my $bit (map { chr($_) } (0 .. 255)) {
+    $page->add_child(class => 'pull_quote',
+                     data => ord($bit));
+    my $para = $page->add_child(class => 'paragraph',
+                                data => $bit);
+    is($para->data, $bit, 'BIT: ' . ord($bit) . ' is ok.');
+    push(@bits, $bit);
+}
+
+# save it and check it
+$story->save();
+($story) = Krang::Story->find(story_id => $story->story_id);
+my @b = @bits;
+foreach my $para ($story->element->match('//paragraph')) {
+    my $bit = shift @b;
+    is($para->data, $bit, 'BIT: ' . ord($bit) . ' is ok.');
+}
+
+# put it in a dataset
+$set = Krang::DataSet->new();
+$set->add(object => $story);
+eval { 
+    $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
+};
+ok(not($@), 'writing dataset with eight-bit template');
+print STDERR $@ if $@;
+ok(-e catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
+
+# load up the dataset and see if the story made it
+$set = Krang::DataSet->new(path => 
+                           catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
+$set->import_all(no_update => 0);
+
+($story) = Krang::Story->find(story_id => $story->story_id);
+foreach my $para ($story->element->match('//paragraph')) {
+    my $bit = shift @bits;
+    is($para->data, $bit, 'BIT: ' . ord($bit) . ' is ok.');
+}
+
+
+# clean up
+
+$story->delete;
+($cat) = Krang::Category->find(category_id => $cat->category_id);
+$cat->delete;
+$creator->cleanup();
