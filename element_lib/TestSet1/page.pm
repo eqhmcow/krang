@@ -22,6 +22,7 @@ sub new {
    my $pkg = shift;
    my %args = ( name => 'page',
                 min  => 1,
+                pageable => 1,
                 children => 
                 [ 
                  Krang::ElementClass::Text->new(name         => "header",
@@ -39,7 +40,6 @@ sub new {
                                                   display_name => "Background Color",
                                                   values => ['', qw(white blue
                                                                 red grey)],
-                                                  
                                                  ),
                  Krang::ElementClass::ListBox->new(name => "ad_links",
                                                    display_name => "Ad Links",

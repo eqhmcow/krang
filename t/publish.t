@@ -683,6 +683,10 @@ sub test_story_build {
 
     my ($story, $category) = @_;
 
+    # make sure the publisher knows where we are..
+    $publisher->{is_publish} = 1;
+    $publisher->{is_preview} = 0;
+
     $publisher->{story}    = $story;
     $publisher->{category} = $category;
 

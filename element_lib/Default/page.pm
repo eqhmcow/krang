@@ -19,6 +19,7 @@ sub new {
    my $pkg = shift;
    my %args = ( name => 'page',
                 min  => 1,
+                pageable => 1,
                 children => 
                 [ 
                  Krang::ElementClass::Text->new(name         => "section_header",

@@ -1023,6 +1023,7 @@ BEGIN {
                           hidden
                           allow_delete
                           url_attributes
+                          pageable
                         )) {
         *{"Krang::Element::$attr"} = sub { $_[0]->{class}->$attr() };
     }
