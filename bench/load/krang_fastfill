@@ -226,9 +226,9 @@ for(1 .. $sites) {
 
 while ($contribs) {
     my $contrib = Krang::Contrib->new(  prefix => 'Mr.',
-                                        first => 'first'.$super_count++,
-                                        middle => 'middle'.$super_count++,
-                                        last => 'last'.$super_count++,
+                                        first => 'first'.time.$super_count++,
+                                        middle => 'middle'.time.$super_count++,
+                                        last => 'last'.time.$super_count++,
                                         email => 'person@email.com',
                                         phone => '111-222-3333',
                                         bio => 'This is my bio.',
@@ -273,10 +273,10 @@ sub create_media {
 
     my $fh = new FileHandle $m->file_path;
 
-    my $new_m = Krang::Media->new(  title => "test_media_".$super_count++,
+    my $new_m = Krang::Media->new(  title => "test_media_".time.$super_count++,
                                     category_id => $args{category_id},
                                     filehandle => $fh,
-                                    filename => $super_count++.$m->filename );
+                                    filename => time.$super_count++.$m->filename );
     $new_m->save;
     $new_m->checkin;
                                     
