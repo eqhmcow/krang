@@ -323,7 +323,7 @@ SQL mechanism should be employed when retrieving permissions, and a
 "select distinct" when doing a count.
 
 Put together with the rest of the system, here is how a count of media
-records might be implemented in SQL:
+records to which a user has access to see might be implemented in SQL:
 
   select
     count(distinct media_id)
@@ -340,8 +340,8 @@ records might be implemented in SQL:
     cgpc.may_see = 1 
 
 
-Here is how you would retrieve matching media records for the same
-query.  Note the use of sum() and "group by":
+Here is how you would retrieve media records to which the user has
+access to see.  Note the use of sum() and "group by":
 
   select
     media.media_id,
@@ -359,34 +359,40 @@ query.  Note the use of sum() and "group by":
 
   where
     usr_user_group.user_id = 1 AND
-    cgpc.may_see = 1 
 
   group by
     media.media_id
+    cgpc.may_see = 1 
 
 Because the may_edit column will contain "1" if true and "0"
 if not, sum() will effectively be greater than zero if the user is
 allowed to edit a particular object via at least one group.
 
-As you can see, this SQL will hide records to which the user has no
+The above SQL will hide records to which the user has no
 authority to see.  This is not always the desired behavior.  For
 example, if a story is in a category to which the user has read
 access, but that story uses media which is in a category to which the
 user does NOT have access, it is expected that the media will appear
 in the context of the story, nonetheless.  This requires that the API
 only hide hidden records when specifically requested to do so.  To
-this end, a new parameter to find() is provided, "use_permissions".  For example:
+this end, the parameters "may_see" and "may_edit" have been added to
+the find() methods of effected object types:
 
-  my @media = Krang::Media->find( use_permissions=>1 );
+  my @visible_media = Krang::Media->find( may_see=>1 );
 
-If "use_permissions" is not specified (or is set to "0"), all records will be
-shown.  It is expected that objects will only be hidden when viewed by
-applications which are specifically for managing that object type.
-For example, story objects will only be hidden when accessed via the
-story manager application.  When non hidden, the "may_see" property
-will be propagated to the object, and may be used as needed.
+If "may_see" is not specified, all records will be shown.  It is
+expected that objects will only be hidden when viewed by applications
+which are specifically for managing that object type. For example,
+story objects will only be hidden when accessed via the story manager
+application.  When non hidden, the "may_see" property will be
+propagated to the object, and may be used as needed.
 
-The following modules implement "use_permissions" in their find() method:
+The same interface is used for "may_edit":
+
+  my @editable_stories = Krang::Story->find( may_edit=>1 );
+
+The following modules implement "may_see" and "may_edit" in their
+find() method:
 
   Krang::Story
   Krang::Media
