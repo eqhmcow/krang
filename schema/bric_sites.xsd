@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xs:schema xmlns:xs="http://krang.kra/b/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+<xs:schema xmlns:xs="http://krang.kra/b/XMLSchema" elementFormDefault="unqualified" attributeFormDefault="unqualified">
     <xs:element name="sites">
         <xs:complexType>
             <xs:sequence>
