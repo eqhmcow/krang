@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug where C<tmpl_include> calls in templates weren't correctly
+searching the category tree in all cases. [Matt]
+
+=item *
+
 Modified Krang::Widget::category_chooser() to take into account
 category permissions when building the category chooser.  Also took
 advantage of the multiple-root support in HTML::PopupTreeSelect 1.4 to

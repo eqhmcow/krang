@@ -518,6 +518,7 @@ sub find_template {
                                               loop_context_vars => 1,
                                               global_vars       => 1,
                                               cache             => 1,
+                                              search_path_on_include => 1,
                                               %args,
                                              );
     };
