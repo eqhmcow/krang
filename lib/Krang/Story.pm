@@ -189,6 +189,10 @@ A Time::Piece object representing an arbitrary cover date.
 A Time::Piece object containing the date and time this story was last
 published.
 
+=item C<desk_id>
+
+Returns the ID of the L<Krang::Desk> that the story is currently on, if any.  Also see $story->C<move_to_desk()> below.
+
 =item C<version> (readonly)
 
 =item C<published_version> (readonly)
