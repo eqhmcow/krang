@@ -61,6 +61,8 @@ sub fill_template {
     my $story   = $args{element}->object;
     my $publisher = $args{publisher};
 
+    if($args{element}->child('automatic_leadins')->data) {
+
     # get stories in this category
     my @s = Krang::Story->find( category_id => $story->category->category_id, published => '1', order_by => 'cover_date', order_desc => 1 );
 
@@ -171,6 +173,7 @@ sub fill_template {
 
 
     $tmpl->param( page_loop => \@page_loop );
+    }
 
     $self->SUPER::fill_template( %args );
 }
