@@ -18,6 +18,10 @@ HREF[Upgrade|ops_upgrade.html] - how to upgrade an existing Krang installation
 
 =item *
 
+HREF[Backup and Restore|ops_backup.html] - how to backup and restore Krang
+
+=item *
+
 HREF[Configuration|configuration.html] - how to configure Krang
 
 =item *

@@ -1,0 +1,56 @@
+=head1 Krang Backup and Restore
+
+Krang includes completely automated backup and restore procedures.
+This file explains how to use them.
+
+=head2 Making a Backup
+
+To make a backup of a Krang installation, use the C<krang_backup>
+script:
+
+  $ cd /path/to/krang
+  $ bin/krang_backup
+
+By default this will create a Krang Backup Archive (C<.kba>) with a
+filename of the form 'I<krang-hostname-YYYYMMDD.kba>'.  For example,
+I<krang-valis-20031011.kba>.  You can provide your own name as an
+argument to C<krang_backup>:
+
+  $ bin/krang_backup mybackup.kba
+
+You can also create a compressed backup with the C<--compress> option,
+but beware that this can take much longer than creating an
+uncompressed backup:
+
+  $ bin/krang_backup --compress mybackup.kba.gz
+
+=head2 Restoring from Backup
+
+You can restore from a backup file using C<krang_install>.  To start,
+download the source for the version of Krang used to create the
+backup, uncompress it and enter the directory:
+
+  $ tar zxvf krang-1.018.tar.gz
+  $ cd krang-1.018
+
+If you're unsure which version to use, you can peek inside the C<.kba>
+file with C<tar> and look at the contents of I<lib/Krang.pm>.
+
+Then call C<krang_install> with the C<--FromBackup> option.  For
+example, to restore C<mybackup.kba> into C</usr/local/krang> (the
+default InstallPath):
+
+  $ bin/krang_install --FromBackup mybackup.kba
+
+To restore elsewhere, include the C<InstallPath> option as with a
+normal install:
+
+  $ bin/krang_install --FromBackup mybackup.kba --InstallPath /path/to/krang
+
+If you're restoring onto a different machine then you'll need to edit
+C</path/to/krang/conf/krang.conf> after installation is complete to
+correct the C<HostName> and IP address settings.
+
+C<krang_install> will automatically call C<krang_uninstall> if the
+target C<InstallPath> already exists, so this procedure can be used to
+restore a backup over an existing installation.
