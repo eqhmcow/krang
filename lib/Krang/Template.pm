@@ -615,6 +615,10 @@ sub find {
     $fields = $count ? 'count(*)' :
       ($ids_only ? 'template_id' : join(", ", keys %template_cols));
 
+    # handle version loading
+    return $self->_load_version($args{template_id}, $args{version})
+      if $args{version};
+
     # set up WHERE clause and @params, croak unless the args are in
     # TEMPLATE_RO or TEMPLATE_RW
     my @invalid_cols;
@@ -693,6 +697,24 @@ sub find {
     # return number of rows if count, otherwise an array of template ids or
     # objects
     return $count ? $templates[0] : @templates;
+}
+
+
+# handles version loading for find()
+sub _load_version {
+    my ($self, $id, $version) = @_;
+    my $dbh = dbh();
+    my $query = <<SQL;
+SELECT data FROM template_version
+WHERE template_id = ? AND version = ?
+SQL
+    my ($row) = $dbh->selectrow_array($query, undef, $id, $version);
+
+    my @result;
+    eval {@result = (thaw($row))};
+    croak("Unable to thaw version '$version' for id '$id': $@") if $@;
+
+    return @result;
 }
 
 

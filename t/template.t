@@ -118,11 +118,18 @@ my @tmpls5 = Krang::Template->find(order_desc => 1,
 ok(@tmpls5);
 is($tmpls5[0]->filename(), 't_w_c.tmpl', "Find - ascend/descend");
 
+# version find
+my ($tmplXYZ) = Krang::Template->find(template_id => $tmpl->template_id,
+                                      version => 2);
+isa_ok($tmplXYZ, 'Krang::Template');
+is($tmplXYZ->version(), 2, 'Template version test');
+
 # clean up the mess
-unlink 't_w_c.tmpl';
-is($tmpl->delete(), 1, 'Deletion Test 1');
-is($tmpl2->delete(), 1, 'Deletion Test 2');
+END {
+    unlink 't_w_c.tmpl';
+    is($tmpl->delete(), 1, 'Deletion Test 1');
+    is($tmpl2->delete(), 1, 'Deletion Test 2');
 
-# delete category and site
-$site->delete();
-
+    # delete category and site
+    $site->delete();
+}
