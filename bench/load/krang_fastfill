@@ -34,7 +34,7 @@ media and stories semi-consistant in size.
   --media    - number of media objects to create, defaults and minimum of 50
 
   --stories  - number of stories to create, defaults and minimum of 50 
-  (10 articles, 10 covers).  Story/Cover ratio is approx 5:1 if enough cats 
+  (40 articles, 10 covers).  Story/Cover ratio is approx 5:1 if enough cats 
   exist, else number of covers = numbers of cats.
 
   --contribs - number of contribs to create, defaults and minimum of 50.
