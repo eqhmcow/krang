@@ -55,7 +55,7 @@ if (FTPAddress ne "") {
 }
 
 # fix default limits which are set terribly low by default
-push(@ARGV, '-o', 'limit memory=' . 64 * 1024 * 1024);
+push(@ARGV, '-o', 'limit memory=' . 64*1024);
 push(@ARGV, '-o', 'limit nr files=1024');
 
 # setup log
