@@ -1100,9 +1100,7 @@ sub serialize_xml {
       if $self->{category_id};
     $writer->dataElement( content => $self->{content} );
     $writer->dataElement( creation_date => $self->{creation_date}->datetime );
-    my $deploy_date = $self->{deploy_date} || '';
-    $deploy_date =~ s/\s/T/ if $deploy_date;
-    $writer->dataElement( deploy_date => $deploy_date ) if $deploy_date;
+    $writer->dataElement( deploy_date => $self->{deploy_date}->datetime ) if $self->{deploy_date};
     $writer->dataElement( version => $self->{version} );
     $writer->dataElement( deployed_version => $self->{deployed_version} ) if $self->{deployed_version};
 
