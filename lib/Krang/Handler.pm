@@ -60,6 +60,7 @@ None.
 
 =cut
 
+use Krang::ErrorHandler;
 use Krang;
 use Krang::CGI::Login;
 use Apache;
@@ -212,7 +213,7 @@ sub authen_handler ($$) {
 
     # Check for invalid session
     if ($@) {
-        debug("Error loading session: $@");
+        die("Error loading session: $@");
         return OK;
     }
 
@@ -291,7 +292,20 @@ sub instance_menu {
 }
 
 
+sub log_handler ($$) {
+    my $pkg = shift;
+    my $r = shift;
 
+    # in Apache::Registry mode this is where we collect die() and
+    # warn()s since they don't get caught by Krang::ErrorHandler
+    if ($ENV{GATEWAY_INTERFACE} =~ /Perl/) {
+        if (my $err = $r->notes('error-notes')) {
+            critical($err);
+        }
+    }
+
+    return OK;
+}
 
 ###########################
 ####  PRIVATE METHODS  ####
