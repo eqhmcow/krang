@@ -311,7 +311,40 @@ sub preview_story {
     }
 
     my $publisher = Krang::Publisher->new();
-    my $url = $publisher->preview_story(story => $story);
+    my $url;
+    eval {
+        $url = $publisher->preview_story(story => $story);
+    };
+    if ($@) {
+        # if there is an error, figure out what it is, create the appropriate message
+        # and return an error page.
+        if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
+            add_message('missing_template',
+                        element_name  => $@->element_name,
+                        category_url   => $@->category_url
+                       );
+
+        } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
+            add_message('template_parse_error',
+                        element_name  => $@->element_name,
+                        template_name => $@->template_name,
+                        category_url  => $@->category_url,
+                        error_msg     => $@->error_msg
+                       );
+        } else {
+            # something not expected - throw the error
+            croak($@);
+        }
+        # return the error template & get outta here.
+        my $t = $self->load_tmpl('error_popup.tmpl',
+                                 associate => $query,
+                                 loop_context_vars => 1,
+                                 die_on_bad_params => 0
+                                );
+
+        return $t->output();
+
+    }
 
     # this should always be true
     assert($url eq $story->preview_url) if ASSERT;
