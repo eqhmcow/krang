@@ -1,5 +1,8 @@
 #!/usr/bin/perl -w
-
+use warnings;
+use strict;
+use Getopt::Long;
+use Pod::Usage;
 
 
 =head1 NAME
@@ -51,7 +54,11 @@ Delete excluded directories and files (i.e., bench/, src/, .cvsignore).
 
 =head1 OPTIONS
 
-None
+  --version   - Rebuild a dist file based on an old version
+
+  --help      - Show usage
+
+  --man       - Show full man page
 
 =cut
 
@@ -83,30 +90,69 @@ use Krang;
 
 my $krang_version;
 my $uniqueness = time();
+my ($help, $man, $version);
+
+do_makedist();
+exit(0);
 
 
-# Make dist
-{
+#############################
+####  MAKE DIST METHODS  ####
+#############################
+
+sub do_makedist {
+    setup_getopts();
+
+    # Make dist    
     get_krang_version();
-    create_cvs_tag();
+    create_cvs_tag() unless ($version);
     export_krang();
     exclude_directories();
     create_tarball();
     cleanup_makedist();
     output_report();
 
-    exit(0);
+
 }
 
 
+sub setup_getopts {
+    pod2usage(2) unless
+        GetOptions( 'help'      => \$help,
+                    'man'       => \$man,
+                    'version=s' => \$version );
 
-###########################
-####  PRIVATE METHODS  ####
-###########################
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+}
+
 
 sub get_krang_version {
-    $krang_version = $Krang::VERSION;
-    print "Found version: '$krang_version'\n";
+    if (defined($version)) {
+
+        # Does supplied version look right?
+        unless ($version =~ /^\d+\.\d+$/) {
+            print STDERR "\nError:  Invalid version '$version'\n\n";
+            exit(0);
+        }
+
+        # Try to use supplied version
+        $krang_version = $version;
+
+        # Check for (and disallow) rebuilds on non-existent versions
+        my $ver_string = get_ver_string();
+        unless (cvs_tag_exists($ver_string)) {
+            print STDERR "\nError:  No such tagged version '$ver_string'\n\n";
+            exit(1);
+        }
+        print "Rebuilding dist for version: '$krang_version'\n";
+
+    } else {
+
+        $krang_version = $Krang::VERSION;
+        print "Found version: '$krang_version'\n";
+
+    }
 }
 
 
@@ -248,6 +294,5 @@ sub cvs_tag_exists {
     my $cvs_check_tag_cmd = "cvs -n update -r $tag lib/Krang.pm 2>\&1";
     my $tagcheck_output = `cd \$KRANG_ROOT && $cvs_check_tag_cmd`;
 
-    # No output == tag exists
-    return not($tagcheck_output);
+    return not($tagcheck_output =~ qr/no such tag/);
 }
