@@ -33,16 +33,17 @@ package Krang::Template;
 
 =head1 DESCRIPTION
 
-Templates determine the form of this systems output.  This module provides a
-means of managing this rather crucial resource.
+Templates determine the form of this system's output.  This module provides a
+means to check in, check out, edit, revert, save, and search Template objects.
 
-Users have the ability to revert to any previous version of a template. Past
-revisions of templates are maintained in a template versioning table, the
-current version of a particular template is stored in the template table.
-
-Template data, i.e. the 'content' field, is at present intended to be in
-HTML::Template format.  All template filenames will end in the extension
-'.tmpl'.
+A template is either associated with an element class and hence determine
+its formatting or it may some miscellaneous utiltiy whether formatting or
+otherwise. Template data, i.e. the 'content' field, is, at present, intended
+to be in HTML::Template format.  All template filenames will end in the
+extension '.tmpl'. Users have the ability to revert to any previous version of
+a template.  Past revisions of templates are maintained in a template
+versioning table, the current version of a particular template is stored in
+the template table.
 
 This module interfaces or will interface with Krang::CGI::Template,
 Krang::Burner, the FTP interface, and the SOAP interface.
@@ -91,8 +92,6 @@ use constant VERSION_COLS => qw(data
 
 # Globals
 ##########
-# args for find() must be package vars to use symbolic refs...
-our ($limit, $offset, $order_by);
 
 # Lexicals
 ###########
@@ -101,6 +100,11 @@ my %find_defaults = (limit => '',
                      order_by => 'template_id');
 my %template_args = map {$_ => 1} TEMPLATE_ARGS;
 my %template_cols = map {$_ => 1} TEMPLATE_COLS;
+
+# valid search criteria hash
+my %search_cols = %template_cols;
+# remove 'content' from hash of valid search criteria
+delete $search_cols{content};
 
 
 # Interal Module Dependecies (con't)
@@ -203,8 +207,9 @@ sub checkout {
     my $id = shift || $self->template_id();
     my $dbh = dbh();
     my $user_id = $session{user_id};
-    my $instance_meth;
+    my $instance_meth = 0;
 
+    # short circuit checkout on instance method version of call...
     if (ref $self eq 'Krang::Template') {
         $instance_meth = 1;
         return $self if ($self->checked_out &&
@@ -221,15 +226,11 @@ FROM template
 WHERE template_id = ?
 SQL
 
-        my ($co, $uid) = $dbh->selectrow_array($query, undef, ($_));
+        my ($co, $uid) = $dbh->selectrow_array($query, undef, ($id));
 
-        if ($co) {
-            # no need to call update on a row that's already checked out
-            next if $uid == $user_id;
-
-            croak(__PACKAGE__ . "->checkout(): Template id '$_' is " .
-                  "already checked out by user '$uid'");
-        }
+        croak(__PACKAGE__ . "->checkout(): Template id '$id' is " .
+              "already checked out by user '$uid'")
+          if ($co && $uid != $user_id);
 
         $query = <<SQL;
 UPDATE template
@@ -237,7 +238,7 @@ SET checked_out = ?, checked_out_by = ?
 WHERE template_id = ?
 SQL
 
-        $dbh->do($query, undef, (1, $user_id, $_));
+        $dbh->do($query, undef, (1, $user_id, $id));
 
         # unlock template table
         $dbh->do("UNLOCK TABLES");
@@ -332,10 +333,26 @@ SQL
 }
 
 
-=item @templates  = Krang::Template->find( %params )
+=item @templates = Krang::Template->find( %params )
 
-Class method that returns the template or templates matching the criteria
-provided in $param. The valid keys to the search criteria hash are:
+=item @templates = Krang::Template->find( template_id => [1, 2, 3, 5, 8] )
+
+=item @template_ids = Krang::Template->find( category_id => 7,
+					     ids_only => 1,
+					     etc., )
+
+Class method that returns the template objects or ids matching the criteria
+provided in %params.
+
+Fields may be matched using SQL matching.  Appending "_like" to a field name
+will specify a case-insensitive SQL match.
+
+@templates = Krang::Template->find(filename_like => '%' . $string . '%');
+
+Notice that it is necessary to surround terms with '%' to perform sub-string
+matches.
+
+The list valid search fields is:
 
 =over 4
 
@@ -344,8 +361,6 @@ provided in $param. The valid keys to the search criteria hash are:
 =item * checked_out
 
 =item * checked_out_by
-
-=item * content
 
 =item * creation_date
 
@@ -357,14 +372,6 @@ provided in $param. The valid keys to the search criteria hash are:
 
 =item * filename
 
-=item * limit
-
-=item * name
-
-=item * offset
-
-=item * order_by
-
 =item * template_id
 
 =item * testing
@@ -373,26 +380,78 @@ provided in $param. The valid keys to the search criteria hash are:
 
 =back
 
-The method croaks if an invalid search criteria is provided.
+=over 4
+
+Additional criteria which affect the search results are:
+
+=item * count
+
+If this argument is specified, the method will return a count of the templates
+matching the other search criteria provided.
+
+=item * ids_only
+
+Returns only template ids for the results found in the DB, not objects.
+
+=item * limit
+
+Specify this argument to determine the maximum amount of template object or
+template ids to be returned.
+
+=item * offset
+
+=item * order_by
+
+Specify the field by means of which the results will be sorted.  By default
+results are sorted with the 'template_id' field.
+
+=back
+
+The method croaks if an invalid search criteria is provided or if both the
+'count' and 'ids_only' options are specified.
 
 =cut
 
 sub find {
     my $self = shift;
     my %args = @_;
+    my ($fields, @params, $where_clause);
 
     # grab limit and offset args
-    {
-        no strict 'refs';
-        $$_ = delete $args{$_} || $find_defaults{$_}
-          for (qw/limit offset order_by/);
+    my $limit = delete $args{limit} || $find_defaults{limit};
+    my $offset = delete $args{offset} || $find_defaults{offset};
+    my $order_by = delete $args{order_by} || $find_defaults{order_by};
+
+    # set search fields
+    my $count = delete $args{count} || '';
+    my $ids_only = delete $args{ids_only} || '';
+
+    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
+          "Only one can be present.") if ($count && $ids_only);
+
+    $fields = $count ? 'count(template_id)' :
+      ($ids_only ? 'template_id' : join(", ", TEMPLATE_COLS));
+
+    # set up WHERE clause and @params, croak unless the args are in
+    # TEMPLATE_COLS
+    my @invalid_cols;
+    for my $arg (keys %args) {
+        my $like = 1 if $arg =~ /_like$/;
+        ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
+
+        push @invalid_cols, $arg unless exists $search_cols{$lookup_field};
+
+        if ($arg eq 'template_id' && ref $args{$arg} eq 'ARRAY') {
+            my $tmp = join(" OR ", map {"template_id = ?"} @{$args{$arg}});
+            $where_clause .= "($tmp) ";
+            push @params, @{$args{$arg}};
+        } else {
+            $where_clause .= $like ? "$lookup_field LIKE ? " :
+              "$lookup_field = ? ";
+            push @params, $args{$arg};
+        }
     }
 
-    # croak unless the args are in TEMPLATE_COLS
-    my @invalid_cols;
-    for (keys %args) {
-        push @invalid_cols, $_ unless exists $template_cols{$_};
-    }
     croak("The following passed search parameters are invalid: '" .
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
@@ -400,30 +459,36 @@ sub find {
     my $dbh = dbh();
 
     # construct base query
-    my $query = "SELECT " . join(", ", TEMPLATE_COLS) . " FROM template";
+    my $query = "SELECT $fields FROM template ";
 
-    # construct limit clause
+    # add WHERE clause, if any
+    $query .= "WHERE $where_clause" if $where_clause;
+
+    # append limit clause, if any
     if ($limit) {
-        $limit = "LIMIT $offset, $limit";
+        $query .= "LIMIT $offset, $limit ";
     } elsif ($offset) {
-        $limit = "LIMIT $offset, -1";
+        $query .= "LIMIT $offset, -1 ";
     }
 
-    # construct where clause based on %args, push bind parameter onto @params
-    $query .= " WHERE " . join(" AND ", map {"$_=?"} keys %args) .
-      " $limit ORDER BY $order_by" if keys %args;
+    # append order clause, if any
+    $query .= "ORDER BY $order_by" if $order_by;
 
-    my @params = map {$args{$_}} keys %args;
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
 
     # construct template objects from results
     my (@row, @templates);
     while (@row = $sth->fetchrow_array()) {
-        my $obj = bless {}, $self;
-        my $i = 0;
-        @{$obj}{(TEMPLATE_COLS)} = @row;
-        push @templates, $obj;
+        # if we just want ids
+        if ($ids_only) {
+            push @templates, $row[0];
+        } else {
+            my $obj = bless {}, $self;
+            my $i = 0;
+            @{$obj}{(TEMPLATE_COLS)} = @row;
+            push @templates, $obj;
+        }
     }
 
     # finish statement handle
