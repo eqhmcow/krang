@@ -121,6 +121,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
    ServerName <tmpl_var RootVirtualHost>
 
    PerlTransHandler Krang::Handler->trans_handler
+   PerlLogHandler    Krang::Handler->log_handler
 
    <Location />
       PerlSetVar        flavor root
@@ -135,6 +136,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
          AuthName          <tmpl_var InstanceName>
          PerlAuthenHandler Krang::Handler->authen_handler
          PerlAuthzHandler  Krang::Handler->authz_handler
+         PerlLogHandler    Krang::Handler->log_handler
          require           valid-user
       </Location>
    </tmpl_loop>
@@ -145,6 +147,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
    ServerName      <tmpl_var VirtualHost>
 
    PerlTransHandler Krang::Handler->trans_handler
+   PerlLogHandler   Krang::Handler->log_handler
 
    <Location />
        PerlSetVar      flavor instance   
@@ -154,6 +157,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
        AuthName <tmpl_var InstanceName>
        PerlAuthenHandler Krang::Handler->authen_handler
        PerlAuthzHandler  Krang::Handler->authz_handler
+       PerlLogHandler    Krang::Handler->log_handler
        require valid-user
    </Location>
 </VirtualHost>
