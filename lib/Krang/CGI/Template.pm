@@ -141,8 +141,6 @@ sub add {
     return $t->output();
 }
 
-
-
 =item add_cancel
 
 Cancels edit of template object on "Add" screen and returns to 'search' run
@@ -254,11 +252,11 @@ sub add_save_stay {
 
     # update template with CGI values
     $self->update_template($template);
-
+    
     # validate
     my %errors = $self->validate($template);
     return $self->add(%errors) if %errors;
-
+    
     # save
     %errors = $self->_save($template);
     return $self->add(%errors) if %errors;
@@ -1078,7 +1076,7 @@ sub update_template {
         next if ($_ eq 'category_id') && $template->template_id;
 
         my $val = $q->param($_) || '';
-        if ($_ eq 'content' && $val) {
+        if (($_ eq 'content') ) {
             if (my $fh = $q->upload('template_file')) {
                 my ($buffer, $content);
                 $content .= $buffer while (read($fh, $buffer, 10240));
@@ -1093,11 +1091,9 @@ sub update_template {
             eval {$template->$_($val);};
             if ($@) {
                 # this case will eventually get caught at validate()
-                if ($_ eq 'filename' && $@ =~ /invalid characters|'.tmpl'/) {
+                if (($_ eq 'filename') && ($@ =~ /invalid characters|'.tmpl'/)) {
                     $template->{filename} = $val;
-                } else {
-                    die $@;
-                }
+                } 
             }
         }
         $q->delete($_);
@@ -1133,11 +1129,11 @@ sub validate {
         $errors{error_invalid_filename} = 1
           unless $filename =~ /^[-\w]+\.tmpl$/;
     }
-
+    
     add_message($_) for keys %errors;
     $q->param('errors', 1) if keys %errors;
 
-    return %errors;;
+    return %errors;
 }
 
 
