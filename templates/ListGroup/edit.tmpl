@@ -250,24 +250,33 @@
 // -->
 </script>
 
-
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;LIST GROUP EDIT - <tmpl_var list_group_name></td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
-
-<form name="edit_form" method="GET" action="list_group.pl">
+<form name="edit_form" method="POST" action="list_group.pl">
 <input type="hidden" name="list_group_id" value="<tmpl_var list_group_id>" overwrite="1">
 <input type="hidden" name="rm" overwrite="1">
 <input type="hidden" name="changes" overwrite="1">
 <input type="hidden" name="stay" overwrite="1">
-<table border="1" cellpadding="2" cellspacing="0" width="100%">
-<tr><td width="150">Description:</td><td width="400"><textarea name="list_group_description" rows="4" cols="60"><tmpl_var list_group_description></textarea></td></tr>
-<tr class="light-bar"><td colspan=2>LISTS</td></tr>
+
+
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;List Group Edit</td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
+
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr><td width="150" class=form-cell>Group Name:</td>
+<td class=form-cell><tmpl_var list_group_name></td></tr>
+<tr><td width="150" class=form-cell>Description:</td>
+<td class=form-cell><textarea name="list_group_description" rows="2" cols="30"><tmpl_var list_group_description></textarea></td></tr>
+</table>
+<p>
+
+<div class="light-bar">Lists</div>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
 <tmpl_loop list_loop>
-<tr><td><tmpl_var list_name></td><td><input type='hidden' name="list_id_<tmpl_var list_count>" value="<tmpl_var list_id>"><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
+<tr><td class=form-cell width=150><tmpl_var list_name>:</td>
+<td class=form-cell><input type='hidden' name="list_id_<tmpl_var list_count>" value="<tmpl_var list_id>"><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
 <tmpl_if list_item_loop><tmpl_loop list_item_loop><option value="<tmpl_var order>"><tmpl_var data></tmpl_loop></tmpl_if></select>
 <br>&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:do_move(<tmpl_var list_count>, 1)"><img src="images/arrow-asc.gif" border="0"></a>
 <a href="javascript:do_move(<tmpl_var list_count>)"><img src="images/arrow-desc.gif" border="0"></a>
@@ -278,6 +287,7 @@
 </td></tr>
 </tmpl_loop>
 </table>
+
 <div class="button-bar">
     <input type="submit" value="Save" onClick="do_save()" class="button">
     <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
@@ -287,5 +297,6 @@
 <!-- End edit_form -->
 </form>
 
+</div>
 
 <tmpl_include /footer.tmpl>
