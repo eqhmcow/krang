@@ -4,7 +4,6 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Conf;
 use Krang::Category;
-use Krang::Site;
 use Krang::Template;
 use Krang::Media;
 use Net::FTPServer::FileHandle;
@@ -38,7 +37,7 @@ required methods.  This class is used internally by Krang::FTP::Server.
 
 =over
 
-=item krang::FTP::FileHandle->new($ftps, $object, $type, $site_id, $category_id)
+=item krang::FTP::FileHandle->new($ftps, $object, $type, $category_id)
 
 Creates a new Krang::FTP::FileHandle object.  Requires 4 arguments:
 the Krang::FTP::Server object, the Krang::Media or Krang::Template object,
@@ -52,7 +51,6 @@ sub new {
     my $ftps    = shift;
     my $object  = shift;
     my $type    = shift;
-    my $site_id = shift;
     my $category_id = shift;
 
     my $filename =  $object->filename();
@@ -61,7 +59,6 @@ sub new {
     my $self = Net::FTPServer::FileHandle->new ($ftps, $filename);
 
     $self->{object}         = $object;
-    $self->{site_id}        = $site_id;
     $self->{category_id}    = $category_id;
     $self->{type}           = $type;
     $self->{filename}       = $filename;
@@ -142,7 +139,6 @@ sub dir {
   return Krang::FTP::DirHandle->new (   $self->{ftps},
                                         $self->dirname,
                                         $self->{type},
-                                        $self->{site_id},
                                         $self->{category_id});
 }
 
@@ -194,8 +190,8 @@ sub status {
     my $owner = $object->checked_out_by;
 
     if (defined $owner) { # if checked out, get the username, return read-only
-        my $user = Krang::User->find( user_id => $owner );
-        my $login = defined $user ? $user->login : "unknown";
+        my @user = Krang::User->find( user_id => $owner );
+        my $login = defined $user[0] ? $user[0]->login : "unknown";
         return ( 'f', 0444, 1, $login, "co", $size,  $date);
     } else { # check for write privs - TODO
         my $priv = 1;
@@ -287,7 +283,7 @@ sub TIESCALAR {
 
 sub FETCH {
     my $self = shift;
-    return $self->{object}->get_content();
+    return $self->{object}->content();
 }
 
 sub STORE {
