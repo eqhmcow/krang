@@ -28,6 +28,10 @@ HREF[Configuration|configuration.html] - how to configure Krang
 
 HREF[Add-On Installation|addon_install.html] - how to install Krang add-ons
 
+=item *
+
+HREF[Changelog|changelog.html] - a list of changes for each version of Krang
+
 =back
 
 =head2 Design Documentation
@@ -120,6 +124,10 @@ HREF[Scheduler Technical Design|scheduler.html] - How the Krang scheduler works.
 =item *
 
 HREF[Build System|build_tech_spec.html] - How the Krang build system works.
+
+=item *
+
+HREF[CPAN Module Inventory|cpan_inventory.html] - A list of all CPAN modules included with Krang
 
 =back
 
