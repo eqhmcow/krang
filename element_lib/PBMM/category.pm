@@ -31,6 +31,11 @@ sub new {
                     Krang::ElementClass::Text->new(name => 'secondary_css',
                                                             max => 1,
                                                             ),
+                    Krang::ElementClass::ListGroup->new( name     => "related_properties",
+                                                        list_group => 'Properties',
+                                                        multiple => 1,
+                                                        size     => 5,
+                                                        max => 1 ),
                     PBMM::top_cat_column->new(),
                     PBMM::left_cat_column->new(),
                     PBMM::right_cat_column->new(),
@@ -70,7 +75,7 @@ sub fill_template {
 
     }
 
-    my @inheritable = qw( footer left_cat_column right_cat_column top_cat_column primary_css secondary_css );
+    my @inheritable = qw( related_properties footer left_cat_column right_cat_column top_cat_column primary_css secondary_css );
    
     foreach my $el_name (@inheritable) {
         if (not $element->child($el_name)) {
