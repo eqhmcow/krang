@@ -96,6 +96,10 @@ HREF[Software Requirements|requirements.html] - software dependencies for Krang
 
 =item *
 
+HREF[Building a Krang Add-On|add_on.html] - How to build a Krang add-on
+
+=item *
+
 HREF[Module Documentation|modules.html] - Krang module documentation
 
 =item *

@@ -1,0 +1,126 @@
+=head1 Building a Krang Add-On
+
+=head2 Introduction
+
+This document describes how to build Krang add-ons.  The Krang add-on
+facility allows you to develop separate packages of code which can be
+installed into Krang.  An add-on can supply a new element set, a new
+theme or even a new UI feature.  Krang add-ons are separately
+versioned and can depend on a version of Krang or on other Krang
+add-ons.
+
+=head2 File Format
+
+A Krang add-on is a specially constructed .tar.gz file containing
+files to install into Krang as well as special files used during
+installation.  
+
+As an example, consider an add-on called 'Turbo'.  This add-on will
+supply a script called 'krang_turbo' which optimizes Krang for faster
+performance.  It requires a new library (Krang::Turbo) supplies a new
+test file (turbo.t) and comes with some documentation (turbo.pod).  It
+has a version number of 1.00.  Its directory structure will look like:
+
+    Turbo-1.00/
+    |-- docs/
+    |   `-- turbo.pod
+    |-- lib/
+    |   `-- Krang/
+    |       `-- Turbo.pm
+    `-- t/
+        `-- turbo.t
+
+This add-on would ship in a file called 'Turbo-1.00.tar.gz'.
+
+Notice that this structure is ready to be copied directly into Krang,
+because the 'docs', 'lib' and 't' directories match existing
+directories in Krang.
+
+That's all there is to producing a simple Krang add-on.  Just lay-out
+your files as you wish them to be in Krang, put them in a directory
+with the format "$name-$version" and make a .tar.gz.  The rest of this
+document will explain enchancements that can be used to create more
+complicated add-ons.
+
+=head2 C<krang_addon.conf>
+
+If you need more control over how an addon is installed into Krang
+then you must create a C<krang_addon.conf> file in your add-on's
+directory.  The file follows the same Apache-inspired format as
+Krang's krang.conf file.  I'll explain each available directive.
+
+=over 4
+
+=item * C<Name> I<name>
+
+You can declare the name of your add-on.  If you do not declare the
+name here it will be parsed from the name of your add-on directory
+(thus Turbo-1.00 has the name 'Turbo').  Names must match
+C</^[-\w]$/>.  For example:
+
+  Name Turbo
+
+=item * C<Version> I<x.y>
+
+You can declare the version of your add-on.  If you do not declare the
+version here it will be parsed from the name of your add-on directory
+(thus Turbo-1.00 is assumed to be version 1.00).  A version must be a
+valid floating point number and will be treated as such (ie. 1.10 is
+the same as 1.1).  For example:
+
+  Version 1.01
+
+=item * C<Files> I<file> I<file> I<...>
+
+This directive allows you to specify a list of files to install into
+Krang.  If not present then all files (aside from those used for
+add-on installation) are installed into Krang.  For example,
+Turbo-1.00 might list:
+
+  Files docs/turbo.pod lib/Krang/Turbo.pm t/turbo.t
+
+=item C<ExcludeFiles> I<file> I<file> I<...>
+
+This directive allows you to exclude a set of files from installation.
+For example, if Turbo-1.00 included a I<README> file but wanted to
+install everything else into Krang:
+
+  ExcludeFiles README
+
+=item C<RequireKrang> I<x.y>
+
+Require a version of Krang.  For example, if Turbo will only work with
+Krag 1.00 or higher:
+
+  RequireKrang 1.00
+
+=item C<RequireAddOns> I<name> I<x.y> [ I<name> I<x.y> ... ]
+
+Require one or more addons, with versions.  Specifying a version of
+'0' will require the add-on to be present with any version.  For
+example, if Turbo requires at least version 2.0 of the Nitro extension
+and any version of RacingStripes:
+
+  RequireAddOns Nitro         2 \
+                RacingStripes 0
+
+=item C<PostInstallScript> I<script>
+
+A script to run after file installation is complete.  C<KRANG_ROOT>
+will be set in the environment for this script.  Note that this script
+is run for installation, not for upgrades.  See L<"Upgrades"> for
+information on scripting upgrades.
+
+=back
+
+=head2 Upgrades
+
+Krang add-ons support the same upgrade facility as Krang.  This means
+you can include an 'upgrade/' directory with standard
+L<Krang::Upgrade> modules.  For example, if Turbo-1.01 is released and
+must make changes to the database or filesystem then a file called
+'upgrade/V1.010.pm' must be created (note the required expansion to
+three decimal places).  This file may contain code to run on a
+per-installation or per-instance basis, just like other Krang upgrade
+scripts.
+
