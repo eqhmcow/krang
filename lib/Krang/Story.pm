@@ -438,12 +438,17 @@ new(), but C<class>, C<categories>, C<slug> and C<title> are all
 required.  After this call the object is guaranteed to be in a valid
 state and may be saved immediately with C<save()>.
 
+Will throw a Krang::Story::DuplicateURL exception with a story_id
+field if saving this story would conflict with an existing story.
+
 =cut
 
 sub init {
     my ($self, %args) = @_;
     exists $args{$_} or croak("Missing required parameter '$_'.")
       for ('class', 'categories', 'slug', 'title');
+    croak("categories parameter must be an ARRAY ref.")
+      unless ref $args{categories} and ref $args{categories} eq 'ARRAY';
 
     # create a new element based on class
     $self->{class} = delete $args{class};
@@ -460,9 +465,17 @@ sub init {
     $self->{checked_out_by} = $session{user_id};
     $self->{schedules}      = [];
 
+    # handle categories setup specially since it needs to call
+    # _verify_unique which won't work right without an otherwise
+    # complete object.
+    my $categories = delete $args{categories};
+
     # finish the object, calling set methods for each key/value pair
     $self->hash_init(%args);
 
+    # setup categories
+    $self->categories(@$categories);
+    
     return $self;
 }
 
