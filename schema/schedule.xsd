@@ -18,7 +18,7 @@
 				<xs:element name="hour" type="xs:int" minOccurs="0"/>
 				<xs:element name="minute" type="xs:int" minOccurs="0"/>
 				<xs:element name="day_of_week" type="xs:int" minOccurs="0"/>
-				<xs:element name="priority" type="xs:int"/>
+				<xs:element name="priority" type="xs:int" minOccurs="0"/>
 				<xs:element name="context" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:sequence>
