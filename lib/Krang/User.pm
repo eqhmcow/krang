@@ -370,11 +370,11 @@ sub duplicate_check {
     my $self = shift;
     my $id = $self->{user_id};
     my $query = <<SQL;
-SELECT user_id, login, password, first_name, last_name
+SELECT user_id, login, first_name, last_name
 FROM user
-WHERE login = ? OR password = ? OR (first_name = ? AND last_name = ?)
+WHERE login = ? OR (first_name = ? AND last_name = ?)
 SQL
-    my @params = map {$self->{$_}} qw/login password first_name last_name/;
+    my @params = map {$self->{$_}} qw/login first_name last_name/;
 
     # alter query if save() has already been called
     if ($id) {

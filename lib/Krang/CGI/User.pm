@@ -593,8 +593,9 @@ sub validate_user {
     # login, first, last, and email cannot be '' or just whitespace
     for (qw/login first_name last_name email/) {
         my $val = $q->param($_);
-        $errors{"error_invalid_$_"} = 1
-          if ($val eq '' || $val =~ /^\s+$/);
+        $errors{"error_invalid_$_"} = 1 if ($val eq '' || $val =~ /^\s+$/);
+        $errors{error_invalid_email} = 1
+          if ($_ eq 'email' && $val !~ /[\w.-]+\@[\w.-]+\.\w+/);
     }
 
     my ($mode, $pass, $cpass) = map {$q->param($_)}
