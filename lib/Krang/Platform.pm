@@ -634,9 +634,9 @@ sub build_apache_modperl {
         die "mod_perl Makefile.PL failed: " . $command->exitstatus();
     }
 
-    system("make") == 0
+    system("make PERL=$^X") == 0
       or die "mod_perl make failed: $?";
-    system("make install") == 0
+    system("make install PERL=$^X") == 0
       or die "mod_perl make install failed: $?";
 
     # build Apache
@@ -814,20 +814,29 @@ sub build_params {
     my $db_file = catfile($ENV{KRANG_ROOT}, 'data', 'build.db');
     return () unless -e $db_file;
 
-    # delay loading since Config::ApacheFormat won't be available
-    # until after build
-    eval "use Config::ApacheFormat";
-    die $@ if $@;
+    # it would be nice to use Config::ApacheFormat here, but
+    # unfortunately it's not possible to guarantee that it will load
+    # because it uses Scalar::Util which is an XS module.  If the
+    # caller isn't running the right architecture then it will fail to
+    # load.  So, fall back to parsing by hand...
+    open(DB, $db_file) or die "Unable to open '$db_file': $!\n";
+    my ($platform, $perl, $arch);
+    while(<DB>) {
+        chomp;
+        next if /^\s*#/;
+        if (/^\s*platform\s+["']?([^'"]+)["']?/i) {
+            $platform = $1;
+        } elsif (/^\s*perl\s+["']?([^'"]+)/i) {
+            $perl = $1;
+        } elsif (/^\s*arch\s+["']?([^'"]+)/i) {
+            $arch = $1;
+        }
+    }
+    close DB;
 
-    my $db = Config::ApacheFormat->new(
-                   valid_directives => [qw( platform perl arch )],
-                   valid_blocks     => []);
-    eval { $db->read($db_file) };
-    die "Unable to read data/build.db: $@\n" if $@;
-
-    return ( Platform => $db->get('Platform'),
-             Perl     => $db->get('Perl'),
-             Arch     => $db->get('Arch') );
+    return ( Platform => $platform,
+             Perl     => $perl,
+             Arch     => $arch );
 }
 
 =back
