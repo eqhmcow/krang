@@ -64,8 +64,8 @@ sub setup {
     
     $self->tmpl_path('Media/BulkUpload/');
 }
-                                                                                
-=over
+
+=over 4
 
 =item choose()
 

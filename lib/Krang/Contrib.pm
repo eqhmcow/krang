@@ -281,23 +281,23 @@ Find and return contributors with with parameters specified. Supported paramter 
 
 contrib_id
 
-=item
+=item *
 
 first
 
-=item
+=item *
 
 last
 
-=item 
+=item *
 
 full_name - will search first, middle, last for matching LIKE strings
 
-=item 
+=item *
 
 simple_search - will search first, middle, last for matching LIKE strings
 
-=item 
+=item *
 
 exclude_contrib_ids - pass array ref of IDs to be excluded from the result set
 
