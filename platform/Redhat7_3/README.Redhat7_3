@@ -14,3 +14,5 @@ libungif-devel RPM:
 
   http://mirrors.kernel.org/redhat/redhat/linux/7.3/en/os/i386/RedHat/RPMS/libungif-devel-4.1.0-10.i386.rpm
 
+NOTE: On Redhat7.3 Krang is setup to start on boot, via a link to
+bin/krang_ctl placed in /etc/init.d and activated using chkconfig.

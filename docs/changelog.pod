@@ -8,10 +8,16 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Moved setup of /etc/init.d link from krang_install into the Redhat
+platform modules' finish_installation() methods.  This should allow
+the Gentoo and Debian ports to proceed. [Sam]
+
+=item *
+
 Fixed build and installation system to work with a Perl that isn't
 called 'perl' and in your path.  So, for example, if you've got a
 binary called 'perl5.8.0' you can build Krang with it and install with
-it.
+it. [Sam]
 
 =item *
 

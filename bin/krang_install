@@ -18,7 +18,6 @@ use constant MAKE_BIN       => 'make';
 use constant ECHO_BIN       => 'echo';
 use constant TAR_BIN        => 'tar';
 use constant IFCONFIG_BIN   => 'ifconfig';
-use constant CHKCONFIG_BIN  => 'chkconfig';
 use constant LN_BIN         => 'ln';
 
 $|++;
@@ -229,7 +228,7 @@ sub do_install {
     install_addons();
     create_database();
     update_password();
-    add_krang_init();
+    finish_install();
     start_krang();
     make_test() if ($run_tests);
     output_report();
@@ -372,12 +371,6 @@ sub check_prereqs {
          }
     }
 
-    # Start-up (init.d) script must NOT exist.
-    my $init_script = "/etc/init.d/krang-". $options{HostName} .".init";
-    if (-l $init_script) {
-        exit_error("Init script '$init_script' already exists.  Cannot continue.");
-    }
-        
     # MySQLRootPassword must be valid, and MySQL should be running
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
     my $mysql_bin = MYSQL_BIN;
@@ -716,28 +709,15 @@ sub update_password {
     system($update_admin_pw) && die("Error changing admin password.\n");    
 }
 
-sub add_krang_init {
-    my $init_script = "krang-". $options{HostName} .".init";
-    print "Installing Krang init.d script '$init_script'\n";
-
-    chdir("/etc/init.d");
-    my $InstallPath =  $options{InstallPath};
-    my $link_init = LN_BIN ." -s $InstallPath\/bin/krang_ctl $init_script";
-    system($link_init) && die ("Can't link init script: $!");
-
-    print "Setting $init_script to start on boot\n";
-    my $chkconfig = CHKCONFIG_BIN ." --add $init_script";
-    system($chkconfig) && die("Can't chkconfig --add $init_script: $!");
-
-    $chkconfig = CHKCONFIG_BIN ." $init_script on";
-    system($chkconfig) && die("Can't chkconfig $init_script on: $!");
+sub finish_install {
+    our $PLATFORM;
+    $PLATFORM->finish_installation(options => \%options);
 }
 
-
 sub start_krang {
-    my $init_script = "krang-". $options{HostName} .".init";
-    print "Starting Krang via init.d script '$init_script'\n";
-    my $start = "KRANG_ROOT='' PERL5LIB='' /etc/init.d/$init_script start";
+    my $InstallPath = $options{InstallPath};
+    print "Starting Krang via $InstallPath/bin/krang_ctl\n";
+    my $start = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_ctl start";
     system($start) && die("Can't start Krang: $!");
 }
 
@@ -757,9 +737,6 @@ sub make_test {
 
 
 sub output_report {
-    my $init_script = "/etc/init.d/krang-". $options{HostName} .".init";
-    my $krang_conf = $options{InstallPath} ."/conf/krang.conf";
-
     print <<EOREPORT;
 
 
@@ -771,8 +748,8 @@ sub output_report {
 
 
    Installed at        :  $options{InstallPath}
-   Startup init script :  $init_script
-   Krang conf file     :  $krang_conf
+   Control script      :  $options{InstallPath}/bin/krang_ctl
+   Krang conf file     :  $options{InstallPath}/conf/krang.conf
 
    Running on $options{IPAddress} --
      http://$options{HostName}:$options{ApachePort}/

@@ -400,10 +400,11 @@ sub mod_perl_build_parameters {
 	   "EVERYTHING=1";
 }
 
-=item C<finish_installation()>
+=item C<finish_installation(options => \%options)>
 
 Anything that needs to be done at the end of installation can be done
-here.  The default implementation does nothing.
+here.  The default implementation does nothing.  The options hash
+contains all the options passed to C<krang_install> (ex: InstallPath).
 
 =cut
 

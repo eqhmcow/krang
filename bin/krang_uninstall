@@ -20,7 +20,7 @@ krang_uninstall - delete a krang install
 =head1 DESCRIPTION
 
 This script will uninstall a krang instance by means
-of database, init script, and file removal.
+of database and file removal.
 
 This script must be run as root.
 
@@ -89,17 +89,6 @@ exit_error("Must be run as root.") unless ($> eq "0");
 
 # stop krang services
 system($ENV{KRANG_ROOT}."/bin/krang_ctl stop");
-
-# delete init scripts
-
-my $init_script = "/etc/init.d/krang-". HostName .".init";
-
-if (-f $init_script) {
-    print "\nDeleting Krang init.d script '$init_script'\n\n" if $verbose;
-    system("rm $init_script");
-} else {
-    print "\nNo init script found at $init_script, no init script delete.\n\n" if $verbose;
-}
 
 # drop all databases
 my $v = $verbose ? '--verbose' : '';
