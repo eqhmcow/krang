@@ -711,11 +711,8 @@ sub revert_version {
                 version => $selected_version);
 
     # Redirect to edit
-    my $url = $q->url(-relative=>1);
-    $url .= "?rm=edit&template_id=". $template->template_id();
-    $self->header_props(-url=>$url);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$url\">$url</a>";
+    $q->delete_all();
+    return $self->edit;
 }
 
 
