@@ -106,6 +106,7 @@ use Krang::Conf qw(assertions loglevel
 
 # Module Dependencies
 use Carp qw(verbose croak);
+use Data::Dumper;
 use Fcntl qw(:flock);
 use IO::File;
 use File::Spec::Functions qw(catfile catdir);
@@ -319,21 +320,19 @@ sub log {
     # make sure message ends in a newline
     $message .= "\n" unless $message =~ /\n\z/;
 
-    my $filehandle = $LOG->{fh};
-
     # reopen filehandle if we're running under the Daemon
     $self->_reopen_log() if REOPEN;
 
     # try to obtain an exclusive lock
     croak("Failed to obtain file lock : $!")
-      unless (flock($filehandle, LOCK_EX));
+      unless (flock($LOG->{fh}, LOCK_EX) || REOPEN);
 
-    $filehandle->print($message)
+    $LOG->{fh}->print($message)
       or croak("Unable to print to logfile: $!");
 
     # release lock - does it have a return value?
-    flock($filehandle, LOCK_UN)
-      or croak("Unable to unlock logfile: $!");
+    croak("Unable to unlock logfile: $!")
+      unless (flock($LOG->{fh}, LOCK_UN) || REOPEN);
 
     # return value for Tests...
     return $message;
@@ -386,6 +385,8 @@ sub _reopen_log {
 =head1 TO DO
 
 =over 4
+
+=item * Fix flock()ing for scheduled.  Disabled as of 12/16/2003 by adam.
 
 =item * Log tracing for errors.
 
