@@ -98,12 +98,9 @@ is(scalar @{$users[0]->group_ids()}, 3, 'group_ids - count');
 
 # check_user_pass() tests
 ##########################
-is(Krang::User->check_user_pass('',''), 0,
-   'check_user_pass() - failure 1');
-is(Krang::User->check_user_pass('admin',''), 0,
-   'check_user_pass() - failure 2');
-is(Krang::User->check_user_pass('admin', 'shredder'), 1,
-   'check_user_pass() - success');
+is(Krang::User->check_auth('',''), 0, 'check_auth() - failure 1');
+is(Krang::User->check_auth('admin',''), 0, 'check_auth() - failure 2');
+is(Krang::User->check_auth('admin', 'shredder'), 1, 'check_auth() - success');
 
 # delete() tests
 #################

@@ -243,7 +243,7 @@ sub init {
 }
 
 
-=item * $user_id = Krang::User->check_user_pass( $login, $password )
+=item * $user_id = Krang::User->check_auth( $login, $password )
 
 Class method that retrieves the user object associated with $login and compares
 the value in the objects 'password' field with md5_hex( $SALT, $password ).
@@ -251,7 +251,7 @@ If it is successful, the 'user_id' is returned, otherwise '0' is returned.
 
 =cut
 
-sub check_user_pass {
+sub check_auth {
     my ($self, $login, $password) = @_;
 
     my ($user) = Krang::User->find(login => $login);
