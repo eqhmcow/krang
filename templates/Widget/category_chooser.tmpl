@@ -1,0 +1,78 @@
+<script src="xtree.js"></script>
+<link type="text/css" rel="stylesheet" href="xtree.css">
+
+<span id="category_url"><tmpl_if category_url><tmpl_var category_url><tmpl_else>No site / category selected.</tmpl_if></span>
+<input type=button value="Choose" onclick="category_chooser_show()">
+<input type=hidden name="<tmpl_var name>" value="<tmpl_var category_id>">
+
+<div id="category_chooser" style="visibility: hidden; position: absolute; top: 100px; left: 500px; background-color: white; color: black; width: 200px; border: 2px solid grey">
+  <div class=dark-bar>Choose a Category</div>
+  <div class=form-box>
+<script language="javascript">
+	var tree = new WebFXTree(" ");
+	tree.setBehavior('explorer');
+
+        var cats = new Array();
+        <tmpl_loop category_loop>
+           cats["<tmpl_var category_id>"] = new WebFXTreeItem("<tmpl_var dir>", "javascript:category_chooser_select(" + <tmpl_var category_id> + ", '" + "<tmpl_var url>" + "')");;
+           <tmpl_if parent_id>
+              cats["<tmpl_var parent_id>"].add(cats["<tmpl_var category_id>"]);
+           <tmpl_else>
+              tree.add(cats["<tmpl_var category_id>"]);
+           </tmpl_if>
+
+        </tmpl_loop>
+
+	document.write(tree);
+
+</script>
+  <div class=button-bar>
+    <input type=button value=" Ok " onclick="category_chooser_ok()">
+    <input type=button value="Cancel" onclick="category_chooser_cancel()">
+  </div>
+</div>
+</div>
+
+
+<script language="JavaScript" type="text/javascript">
+  var selected_id, selected_url, selected_elem;
+
+  function category_chooser_select(id, url) {        
+        /* remember selection, for ok */
+        selected_id   = id;
+        selected_url  = url;
+  }
+
+  function category_chooser_show() {
+        var chooser = document.getElementById("category_chooser");
+        chooser.style.visibility = "visible";
+  }
+
+  function category_chooser_ok() {
+        if (selected_id) {
+           /* save selection */
+           document.forms[0].<tmpl_var name>.value = selected_id;
+           var span = document.getElementById("category_url");
+           span.innerHTML = selected_url;
+        }
+
+        /* clear selection */
+        selected_id  = 0;
+        selected_url = "";  
+
+        /* close chooser */
+        var chooser = document.getElementById("category_chooser");
+        chooser.style.visibility = "hidden";
+  }
+
+
+  function category_chooser_cancel() {
+        /* clear selection */
+        selected_id  = 0;
+        selected_url = "";  
+
+        /* close chooser */
+        var chooser = document.getElementById("category_chooser");
+        chooser.style.visibility = "hidden";
+  }
+</script>
