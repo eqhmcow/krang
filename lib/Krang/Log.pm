@@ -94,18 +94,18 @@ use strict;
 use warnings;
 
 # Krang Modules
-use Krang;
-use Krang::Conf qw(logfile loglevel logtimestamp timestampformat logwrap);
+use Krang::Conf qw(assertions logfile loglevel logtimestamp timestampformat
+		   logwrap);
 
 # Module Dependencies
 use Fcntl qw(:flock);
 use IO::File;
 use File::Spec;
 use Time::Piece;
-use Carp qw(croak);
+use Carp qw(verbose croak);
 
 # load Text::Wrap if wrapping long lines
-BEGIN { 
+BEGIN {
     if (logwrap) {
         require Text::Wrap;
         import Text::Wrap 'wrap';
@@ -121,7 +121,6 @@ our $LOG_LEVEL;
 
 # Package ref to log object
 our $LOG;
-
 
 # instantiate a new log object so we are ready to go after compliation
 BEGIN {
@@ -157,6 +156,15 @@ BEGIN {
         unless exists $valid_levels{$level};
     $LOG_LEVEL = $level;
 
+    if (Krang::Conf->assertions()) {
+        # turn it on
+        use Carp::Assert;
+
+        $LOG->{asserts} = 1;
+    } else {
+        $LOG->{asserts} = 0;
+    }
+
     # turn on/off timestamp - on by default
     $LOG->{timestamp} = Krang::Conf->logtimestamp() || 1;
 
@@ -171,6 +179,7 @@ BEGIN {
     }
     $LOG->{timestamp_format} = $fmt || '%D %r';
 }
+
 
 =pod
 
@@ -292,18 +301,36 @@ emergency are valid; anything else will result in an error.
 
 =cut
 
+my %functs = map {$_, 1} qw/affirm assert should shouldnt/;
+
 sub import {
     my $pkg = shift;
     my $callpkg = caller(0);
 
+    no strict 'refs';
     foreach my $name (@_) {
-        # make sure it a supported method
-        croak("Unsuppored method: $name")
-            unless exists $valid_functions{$name};
+        if (exists $functs{$name}) {
+            *{"$callpkg\::$name"} = *{"Carp::Assert::$name"};
+        } elsif ($name eq 'ASSERT') {
+            *{"$callpkg\::$name"} = *ASSERT;
+        } else {
+            my $lvl = $valid_functions{$name} || 0;
 
-        no strict 'refs';
-        *{"$callpkg\::$name"} = sub ($){my $msg = shift; $pkg->$name($msg);};
+            # make sure it a supported method
+            croak("Unsuppored method: $name")
+              unless $lvl;
+
+            *{"$callpkg\::$name"} =
+              sub ($){
+                  my $msg = shift;
+                  $pkg->log(level => $lvl, message => $msg);
+              };
+        }
     }
+}
+
+sub ASSERT () {
+    return $LOG->{asserts};
 }
 
 sub AUTOLOAD {
@@ -313,11 +340,19 @@ sub AUTOLOAD {
 
     return if $level =~ /DESTROY$/;
 
-    # getter/setter for log_level, timestamp and timestamp_format
-    if ($level =~ /log_level|^timestamp/) {
+    # getter/setter for asserts, log_level, timestamp and timestamp_format
+    if ($level eq 'asserts' || $level eq 'log_level' ||
+        $level =~ /^timestamp/) {
         if (defined $arg) {
-            $LOG_LEVEL = $arg if $level eq 'log_level';
             $LOG->{$level} = $arg;
+            if ($level eq 'asserts') {
+                if ($arg) {
+                    use Carp::Assert;
+                } else {
+                    no Carp::Assert;
+                }
+            }
+            $LOG_LEVEL = $arg if $level eq 'log_level';
         } else {
             return $LOG->{$level};
         }
@@ -327,11 +362,12 @@ sub AUTOLOAD {
     }
 }
 
-{
-    no warnings;
-    q|The best laid schemes o' Mice an' Men
-      Gang aft agley|
-}
+my $quote = <<END;
+The best laid schemes o' Mice an' Men
+Gang aft agley
+
+--Robert Burns
+END
 
 =pod
 
