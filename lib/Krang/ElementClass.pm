@@ -353,16 +353,8 @@ sub load_query_data {
     $element->data(scalar $query->param($param));
 }
 
-=item C<< $html = $class->burn(element => $element) >>
 
-This call allows the class to implement custom code for the burn
-process.  This replaces the .pl files found in Bricolage.
 
-The default implementation loads a template named C<$class->name
-. ".tmpl">.  It then sets up the standard variables and loops provided
-to templates.  See the template tutorial for more information.
-
-=cut
 
 =item C<< $url = $class->build_url(story => $story, category => $category) >>
 
@@ -432,9 +424,92 @@ sub thaw_data {
     return $_[4]->data($_[2]);
 }
 
+
+=item C<< $html_tmpl = $class->find_template(category => $category) >>
+
+Part of the publish/output section of Krang::ElementClass.  This call searches the filesystem for the appropriate output template to use with this element.
+
+If successful, it will return an instantiated HTML::Template::Expr object with the selected template loaded.
+
+The default process by which a template is loaded goes as follows:
+
+=over
+
+=item * 
+
+The name of the template being searched for is $class->name() . ".tmpl"
+
+=item * 
+
+The search starts in the directory $category->url().
+
+=item * 
+
+If the template is found, it is loaded into an HTML::Template::Expr object.  NOTE - Need rules on checking for deployment/preview settings
+
+=item * 
+
+If the template is not found, move to the parent directory and repeat the search.
+
+=item * 
+
+If the root directory is reached, no template exists.  Croak.
+
 =back
 
 =cut
+
+
+=item C<< $class->fill_template(story => $story, template => $template, category => $category) >>
+
+Part of the publish/output section of Krang::ElementClass.  This call is responsible for populating the otuput template of the element with the content stored within.  This replaces the "autofill" and .pl files that were found in Bricolage.
+
+The default implementation walks the element tree by calling $class->publish() on all children of the current element.  If you decide to override fill_template, but don't want to deal with the manual work of walking the element tree, make sure to make a call to $self->SUPER::fill_template().
+
+The default implementation populates the template as follows:
+
+=over
+
+=item * 
+
+A single variable is created for $element->name().
+
+=item * 
+
+A loop is created for every child element named with the name of the element followed by _loop. The rows of the loop contain the variable described above and a _count variable.
+
+=item * 
+
+A loop called "element_loop" is created with a row for every child element contained. The values are the same as for the loop above with the addition of a boolean is_ variable.
+
+=item * 
+
+A variable for the total number of child elements named with the element name and a trailing _total.
+
+=item * 
+
+A variable called "title" containing $story->title.
+
+=item * 
+
+A variable called "page_break" containing Krang::Publisher->PAGE_BREAK()
+
+=back
+
+=cut
+
+=item C<< $html = $class->publish(story => $story, category => $category) >>
+
+The API frontend of the publish/output section of Krang::ElementClass.  This sub builds the HTML represented by this object and the element tree beneath it.  The default implementation ties find_template() and fill_template() together.
+
+If successful, publish() will return a block of HTML.
+
+Generally, you will not want to override publish().  Changes to template-handling behavior should be done by overriding find_template().  Changes to the parameters being passed to the template should be done by overriding fill_template().  Override publish() only in the event that neither of the previous solutions work for you.
+
+=back
+
+=cut
+
 
 # setup defaults and check for required paramters
 sub init {
@@ -475,6 +550,10 @@ sub init {
 =item *
 
 Modify validate() to throw an exception to indicate failure.
+
+=item *
+
+Implement output (find_template(), fill_template(), publish()).
 
 =back
 
