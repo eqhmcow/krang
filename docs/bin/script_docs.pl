@@ -11,7 +11,7 @@ opendir(DIR, "../bin") or die "Can't open ../bin: $!";
 my @scripts = sort grep { /^krang_/ } readdir(DIR);
 
 foreach my $script (@scripts) {
-    return if $script =~ /#/; # ignore emacs droppings
+    next if ($script =~ /#/ || $script =~ /~/); # ignore emacs droppings
 
     # get short desc line from POD
     my $desc = "";
@@ -26,7 +26,7 @@ foreach my $script (@scripts) {
         last;
     }
     close(PM);
-            
+
     my $fname = "script_$script";
 
     # reference in modules.html
