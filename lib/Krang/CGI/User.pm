@@ -41,8 +41,7 @@ use constant DELETE_FIELDS => qw(Krang::User::USER_RW
 				 confirm_password
 				 new_password
 				 password
-				 current_group_ids
-				 possible_group_ids);
+				 current_group_ids);
 
 # convenience alias
 my %user_groups = %Krang::User::user_groups;
@@ -540,11 +539,12 @@ sub update_user {
     $user->$_($q->param($_))
       for (Krang::User::USER_RW, 'password');
 
-    my $gids = $q->param('current_group_ids');
-    unless ($gids) {
+    # handle group ids
+    my @gids = $q->param('current_group_ids');
+    unless (@gids) {
         $user->group_ids_clear();
     } else {
-        $user->group_ids($gids);
+        $user->group_ids(@gids);
     }
 
     # attempt to save

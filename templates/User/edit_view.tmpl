@@ -81,7 +81,7 @@
         var myform = document.forms["edit_user_form"];
         var right = myform['current_group_ids'];
         for (var i = 0; i < right.length; i++) {
-            right[i].selected = 1;
+	    right[i].selected = 1;
         }
     }
     /* End Krangolage */
@@ -168,8 +168,6 @@
     <td align="left" valign="top">Mobile Phone:</td>
     <td align="left" valign="top"><input type="textfield" size="40" name="mobile_phone" value="<tmpl_var escape=HTML mobile_phone>"></td>
 </tr>
-
-<input name="bs" type="hidden" value="this is bs">
 
 <tr>
   <td align="left" valign="top">User Groups:</td>
