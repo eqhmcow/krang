@@ -710,7 +710,7 @@ results are sorted with the 'category_id' field.
 Set this flag to '1' to sort results relative to the 'order_by' field in
 descending order, by default results sort in ascending order
 
-=item ignore_user
+=item * ignore_user
 
 Will ignore user in ENV if set to 1.
 
@@ -895,7 +895,7 @@ sub find {
     return @categories;
 }
 
-=item C<element> (readonly)
+=item * C<element> (readonly)
 
 The element for this category. 
 
@@ -1082,7 +1082,7 @@ sub _build_url {
 }
 
 
-=item C<< @linked_stories = $category->linked_stories >>
+=item * C<< @linked_stories = $category->linked_stories >>
 
 Returns a list of stories linked to from this category.  These will be
 Krang::Story objects.  If no stories are linked, returns an empty
@@ -1108,7 +1108,7 @@ sub linked_stories {
     return values %story_links;
 }
 
-=item C<< @linked_media = $category->linked_media >>
+=item * C<< @linked_media = $category->linked_media >>
 
 Returns a list of media linked to from this category.  These will be
 Krang::Media objects.  If no media are linked, returns an empty list.

@@ -549,6 +549,14 @@ A loop is created for every child element named with the name of the element fol
 
 A loop called "element_loop" is created with a row for every child element contained. The values are the same as for the loop above with the addition of a boolean is_ variable.
 
+=item *
+
+A loop C<contrib_loop> that contains all contributor information.  See the section on L<Contributors>
+
+=item *
+
+If the element is pageable (see L<Krang::Element>), a series of variables relating to Pagination.  See the section on L<Pagination>.
+
 =item * 
 
 A variable for the total number of child elements named with the element name and a trailing _total.
@@ -710,12 +718,12 @@ Generally, you will not want to override publish().  Changes to template-handlin
 
 =head2 A Note on Elements
 
-=over
-
 Some elements are simply attributes with a value, and no formatting to be associated with them.  This can be because the developer of the element tree wants to handle formatting in the parent element's template, or that there should be no formatting of the data whatsoever (e.g. $element->template_data() might get embedded in an <input> tag).
 
 In these cases, the element will have no template associated with it - which will cause find_template to fail.  If the element has no children, the value of $element->template_data() will be returned as the result of the publish() call.  If the element *does* have children, however, publish() will propegate the error thrown by find_template().
 
+
+=over
 
 =cut
 

@@ -779,7 +779,7 @@ sub _validate_group_ids {
                                       group_id => \@bad_groups ) if @bad_groups;
 }
 
-=item $user->serialize_xml(writer => $writer, set => $set)
+=item * $user->serialize_xml(writer => $writer, set => $set)
 
 Serialize as XML.  See Krang::DataSet for details.
 
@@ -822,7 +822,7 @@ sub serialize_xml {
     $writer->endTag('user');
 }
 
-=item C<< $user = Krang::User->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+=item * C<< $user = Krang::User->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
 
 Deserialize XML.  See Krang::DataSet for details.
 

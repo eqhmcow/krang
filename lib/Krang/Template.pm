@@ -644,9 +644,9 @@ The list valid search fields is:
 
 =back
 
-=over 4
-
 Additional criteria which affect the search results are:
+
+=over 4
 
 =item * count
 

@@ -750,12 +750,12 @@ url
 
 url_like - case insensitive match on url. Must include '%' on either end for substring match.
 
-=item checked_out
+=item * checked_out
 
 Set to 0 to find only non-checked-out media.  Set to 1 to find only
 checked out media.  The default, C<undef> returns all media.
 
-=item checked_out_by
+=item * checked_out_by
 
 Set to a user_id to find media checked-out by a user.
 
@@ -1680,50 +1680,46 @@ sub deserialize_xml {
 }
 
 =item C<< $data = Storable::freeze($story) >>
-                                                                                
+
 Serialize media.  Krang::Media implements STORABLE_freeze() to
 ensure this works correctly.
-                                                                                
+
 =cut
-                                                                                
+
 sub STORABLE_freeze {
     my ($self, $cloning) = @_;
     return if $cloning;
-                                                                                
+
     # avoid serializing category cache since they contain objects not
     # owned by the story
     my $category_cache = delete $self->{cat_cache};
-                                                                                
+
     # serialize data in $self with Storable
     my $data;
     eval { $data = freeze({%$self}) };
     croak("Unable to freeze story: $@") if $@;
-                                                                                
+
     # reconnect cache
     $self->{cat_cache} = $category_cache if defined $category_cache;
-                                                                                
+
     return $data;
 }
-                                                                                
-=item C<< $media = Storable::thaw($data) >>
-                                                                                
-Deserialize frozen media.  Krang::Media implements STORABLE_thaw()
-to ensure this works correctly.
 
-=cut                                      
+=item C<< $media = Storable::thaw($data) >>
+
+Deserialize frozen media.  Krang::Media implements STORABLE_thaw() to ensure this works correctly.
+
+=cut
 
 sub STORABLE_thaw {
     my ($self, $cloning, $data) = @_;
-                                                                                
+
     # retrieve object
     eval { %$self = %{thaw($data)} };
     croak("Unable to thaw story: $@") if $@;
-                                                                                
+
     return $self;
 }
-                                          
-=cut
-
 
 =back
 

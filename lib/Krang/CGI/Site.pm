@@ -80,11 +80,11 @@ sub teardown {
 
 =head2 RUN MODES
 
-=over 4
-
 ##############################
 #####  RUN-MODE METHODS  #####
 ##############################
+
+=over 4
 
 =item add
 

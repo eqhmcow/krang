@@ -5,7 +5,7 @@ use File::Find qw(find);
 
 # check general pod correctness
 find({ wanted => sub { ((/\.pm$/ or /\.pod$/) and not /#/ ) and 
-                         pod_ok($_, undef, "POD syntax check for $_") },
+                         pod_file_ok($_, "POD syntax check for $_") },
        no_chdir => 1 },
      'lib/Krang', 'docs');
 

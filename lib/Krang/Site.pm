@@ -646,9 +646,9 @@ SQL
 }
 
 
-=item $url = $site->url()
+=item * $url = $site->url()
 
-=item $site = $site->url( $url )
+=item * $site = $site->url( $url )
 
 Instance method that gets and sets the object 'url' field.  When called as a
 setter, the '_old_url' is updated as well.
@@ -667,7 +667,7 @@ sub url {
     return $self;
 }
 
-=item C<< $site->serialize_xml(writer => $writer, set => $set) >>
+=item * C<< $site->serialize_xml(writer => $writer, set => $set) >>
 
 Serialize as XML.  See Krang::DataSet for details.
 
@@ -690,7 +690,7 @@ sub serialize_xml {
     $writer->endTag('site');
 }
 
-=item C<< $site = Krang::Site->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+=item * C<< $site = Krang::Site->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
 
 Deserialize XML.  See Krang::DataSet for details.
 
