@@ -667,6 +667,17 @@ url
 
 url_like - case insensitive match on url. Must include '%' on either end for substring match.
 
+=item checked_out
+
+Set to 0 to find only non-checked-out media.  Set to 1 to find only
+checked out media.  The default, C<undef> returns all media.
+
+=item checked_out_by
+
+Set to a user_id to find media checked-out by a user.
+
+=item *
+
 ids_only - return only media_ids, not objects if this is set true.
 
 =item *
@@ -702,9 +713,10 @@ sub find {
                          filename_like => 1,
                          simple_search => 1,
                          no_attributes => 1,
-                         checked_out_by => 1,
                          order_by => 1,
                          order_desc => 1,
+                         checked_out => 1,
+                         checked_out_by => 1,
                          limit => 1,
                          offset => 1,
                          count => 1,
@@ -795,6 +807,12 @@ not $valid_params{$param};
         $where_string .= " and " if $where_string;
         $where_string .= "url like ?";
         push @where, 'url_like';
+    }
+
+    # checked out if checked_out_by is NULL
+    if (defined $args{'checked_out'}) {
+        $where_string .= " and " if $where_string;
+        $args{'checked_out'} ? ($where_string .= "checked_out_by is not NULL") : ($where_string .= "checked_out_by is NULL");
     }
 
     if ($args{'no_attributes'}) {
