@@ -88,19 +88,30 @@ sub setup {
 Display a list of matching contributors, or all
 contributors if no filter text is provided.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This run-mode expects two optional parameters:
+
+  1. search_filter - Text string which is used to query contributors
+  2. search_page   - Page number (0-based) of results to display.
 
 =cut
 
 
 sub search {
     my $self = shift;
+    my %ui_messages = ( @_ );
 
     my $q = $self->query();
     my $t = $self->load_tmpl('list_view.tmpl', loop_context_vars=>1);
+
+    $t->param(%ui_messages) if (%ui_messages);
+    $t->param(
+              message_contrib_added => 1,
+              message_add_cancelled => 1,
+              message_contrib_saved => 1,
+              message_save_cancelled => 1,
+              message_selected_deleted => 1,
+              message_contrib_deleted => 1,
+             );
 
     my @contributors = (
                         {
