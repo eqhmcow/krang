@@ -120,8 +120,10 @@ sub get {
             }         
         } elsif ($type eq 'template') {
             # look for template with name = $filename in spec'd cat
-            my @template = Krang::Template->find(   filename => $filename,
-                                                    category_id => $category_id );
+            my $cid = $category_id || undef;
+            my @template = Krang::Template->find( filename => $filename,
+                                                  category_id => $cid
+                                                  );
 
             if (@template) {
                 return new Krang::FTP::FileHandle(  $self->{ftps},
@@ -189,7 +191,7 @@ sub open {
 
     debug(__PACKAGE__."::open($filename, $mode)\n"); 
 
-    if ((not $instance) || (not $category_id)) {
+    if ((not $instance) || (($type eq 'media') and (not $category_id))) {
         return undef;
     }
     
@@ -298,6 +300,20 @@ sub list {
             chop $url;
             push @results, [ $url, $dirh ];
         }
+
+        if ($type eq 'template') {
+            my @template = Krang::Template->find( filename_like => $like,
+                                                    category_id => undef
+);
+            foreach my $template (@template) {
+                my $fileh = new Krang::FTP::FileHandle (    $self->{ftps},
+                                                            $template,
+                                                            $type,
+                                                            $category_id );
+                push @results, [ $template->filename, $fileh ];
+            }
+        }
+
         return \@results;
     } 
     

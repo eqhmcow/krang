@@ -306,6 +306,14 @@ sub close {
     $object->save();
     $object->checkin();
 
+    # deploy, preview, publish object as needed
+    if ($type eq 'template') {
+        $object->deploy;
+    } else {
+        $object->preview;
+        $object->publish;
+    }
+
     return 1;
     
 }

@@ -123,9 +123,23 @@ my $sitenames = join(" ",(map { $_->url } @found_sites));
 foreach my $type (@types) {
     $ftp->cwd($type);
     my @ret_sites = $ftp->ls();
-    is("@ret_sites", $sitenames, "Site listing in $type");
 
+    if ($type eq 'template') {
+        my @templates = Krang::Template->find( category_id => undef);
+        @templates = map { $_->filename } @templates;
+
+        is("@ret_sites", $sitenames." @templates", "Site listing in $type");
+
+         my $template_path = catfile(KrangRoot, 't','template','test.tmpl');
+         is($ftp->put( $template_path ), 'test.tmpl', "Put template test.tmpl, not associated with category" );
+         is($ftp->delete('test.tmpl'), 1, "Delete template test.tmpl");
+
+    } else {
+        is("@ret_sites", $sitenames, "Site listing in $type");
+    }
+    
     foreach my $site (@ret_sites) {
+        next if ($site =~ /^\S*\.tmpl$/);
         $ftp->cwd($site);
         my @site_obj = Krang::Site->find(url => $site);
         isa_ok($site_obj[0], 'Krang::Site', "Krang::Site $site");

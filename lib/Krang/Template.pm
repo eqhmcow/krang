@@ -38,6 +38,9 @@ Krang::Template - Interface for managing template objects
  # reverts to template revision specified by $version
  $template->revert( $version );
 
+ # deploy template
+ $template->deploy
+
  # remove all references to the object in the template and
  # template_version tables
  $template->delete();
@@ -85,6 +88,7 @@ use Krang::History qw(add_history);
 use Krang::Session qw(%session);
 use Krang::Site;
 use Krang::Log qw(debug);
+use Krang::Publisher;
 
 #
 # Package Variables
@@ -427,6 +431,21 @@ sub delete {
 }
 
 
+=item $template->deploy()
+
+Convenience method to Krang::Publisher, deploys template.
+
+=cut
+
+sub deploy {
+    my $self = shift;
+    my $publisher = new Krang::Publisher();
+
+    $publisher->deploy_template(
+                              template => $self
+                             );
+}
+
 =item $template->duplicate_check()
 
 This method checks whether the url of a template is unique.  A DuplicateURL
@@ -722,6 +741,8 @@ sub find {
     } elsif ($offset) {
         $query .= " LIMIT $offset, -1";
     }
+
+    debug(__PACKAGE__."->find: Executing query $query with params: @params");
 
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);

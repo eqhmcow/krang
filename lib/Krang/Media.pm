@@ -7,6 +7,7 @@ use Krang::Log qw(debug assert ASSERT);
 use Krang::Contrib;
 use Krang::Category;
 use Krang::History qw( add_history );
+use Krang::Publisher;
 use Carp qw(croak);
 use Storable qw(freeze thaw);
 use File::Spec::Functions qw(catdir catfile splitpath);
@@ -85,6 +86,12 @@ use Exception::Class
 
     # save this in order to keep changes from revert
     $media->save();
+
+    # preview media object
+    $media->preview
+
+    # publish media object
+    $media->publish
 
     # get id for this object
     my $media_id = $media->media_id();
@@ -1176,6 +1183,38 @@ sub duplicate_check {
     $sth->finish();
 
     return $media_id;
+}
+
+=item $media->preview
+
+Convenience method to Krang::Publisher, previews media object.
+
+=cut 
+
+sub preview {
+    my $self = shift;
+    my $publisher = new Krang::Publisher();
+
+    $publisher->preview_media(
+                                   media    => $self
+                                  );
+ 
+}
+
+=item $media->publish
+                                                                                      
+Convenience method to Krang::Publisher, publishes media object.
+                                                                                      
+=cut
+                                                                                      
+sub publish {
+    my $self = shift;
+    my $publisher = new Krang::Publisher();
+                                                                                      
+    $publisher->publish_media(
+                                   media    => $self
+                                  );
+                                                                                      
 }
 
 =item $media->delete() || Krang::Media->delete($media_id)
