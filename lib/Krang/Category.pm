@@ -341,7 +341,7 @@ sub delete {
     $self->dependent_check();
 
     # Remove from permissions
-    Krang::Group->delete_catagory_permissions($self);
+    Krang::Group->delete_category_permissions($self);
 
     # delete element
     $self->element()->delete();
@@ -797,7 +797,7 @@ sub save {
         $self->{category_id} = $dbh->{mysql_insertid};
 
         # Make sure category permissions (and cache) are added for this category
-        Krang::Group->add_catagory_permissions($self);
+        Krang::Group->add_category_permissions($self);
     }
 
     # update child URLs if url has changed

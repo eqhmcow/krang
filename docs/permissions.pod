@@ -89,47 +89,47 @@ system.
 
 =over 4
 
-=item * May publish
+=item * May publish (may_publish)
 
 Publish stories and media to the live server.
 
 
-=item * Manage users
+=item * Manage users (admin_users)
 
 Add, edit, or delete users.
 
 
-=item * Group limited user manage
+=item * Group limited user manage (admin_users_limited)
 
 When editing users, may only grant access to groups to which user personally has access.
 
 
-=item * Manage groups
+=item * Manage groups (admin_groups)
 
 Add, edit, or delete permission groups.
 
 
-=item * Manage contributors
+=item * Manage contributors (admin_contribs)
 
 Add, edit or delete contributors.
 
 
-=item * Manage sites
+=item * Manage sites (admin_sites)
 
 Add, edit or delete sites.
 
 
-=item * Manage categories
+=item * Manage categories (admin_categories)
 
 Add, edit or delete categories.
 
 
-=item * Manage jobs
+=item * Manage jobs (admin_jobs)
 
 Add, edit or delete jobs.
 
 
-=item * Manage desks
+=item * Manage desks (admin_desks)
 
 Add, edit or delete desks.
 
@@ -295,7 +295,7 @@ Finally, it is important to recognize that a user may be a member of
 more than one group.  The result of this is that the database may
 return more than one row per user/category.  In order to compensate
 for the possible 1:N nature of users to qualifying groups, a group-by
-SQL mechanism should be employeed when retrieving permissions, and a
+SQL mechanism should be employed when retrieving permissions, and a
 "select distinct" when doing a count.
 
 Put together with the rest of the system, here is how a count of media
@@ -323,7 +323,6 @@ query.  Note the use of sum() and "group by":
     media.media_id,
     media.title,
     media.category_id,
-    (sum(cgpc.may_edit) > 0) as may_edit,
     (sum(cgpc.may_edit) > 0) as may_edit
 
   from
@@ -340,9 +339,9 @@ query.  Note the use of sum() and "group by":
   group by
     media.media_id
 
-Because may_see and may_edit columns will contain "1" if true and "0"
+Because the may_edit column will contain "1" if true and "0"
 if not, sum() will effectively be greater than zero if the user is
-allowed to see or edit, respectively.
+allowed to edit a particular object via at least one group.
 
 As you can see, this SQL will hide records to which the user has no
 authority to see.  This handles the "Hide" case, but does not handle
@@ -369,14 +368,31 @@ corrupting the database.
 Maintenance of the category_group_permission_cache table is managed by
 the Krang::Group module which is called when categories or groups are
 changed.  If it is necessary to rebuild the cache from the ground up, 
-the class function rebuild_catagory_cache() is provided.  This can be 
-invoked as follows:
+the class function rebuild_category_cache() is provided.  This can be 
+invoked from the command-line as follows:
 
-  perl -MKrang::Group -e 'Krang::Group->rebuild_catagory_cache()'
+  perl -MKrang::Script -MKrang::Group -e 'Krang::Group->rebuild_category_cache()'
 
 This method may take some time to complete during which a running system will 
-not function normally.  If it is necessary to rebuild the cache table
-it is recommended that the Krang instance be shut down first.
+not function properly.  Rebuilding the cache table requires iterating through 
+possibly thousands of SQL statements.  Precisely speaking, the cache table 
+contains one row for every group/category combination.  When designing the
+permissions system, the following quantities were considered possible per 
+Krang instance:
+
+    Number of groups: 20
+    Number of sites: 20
+    Categories per site: 500
+    Total cache table rows:    20 (groups)
+                             * 20 (sites)
+                            * 500 (site/categories)
+                        -----------------------------
+                          200,000 (cache entries)
+
+Rebuilding the entire category permissions cache is not usually necessary.
+As a result, it is not optimized for run-time performance.  If it is necessary 
+to rebuild the cache table it is recommended that the Krang instance be shut 
+down first.
 
 
 =item * Assets
@@ -407,7 +423,7 @@ are particular to an individual object.
 
 For example, if a user has "read-only" access to media, the
 Krang::Media methods which require "edit" access will croak() when
-called.  This methods include:
+called.  These methods include:
 
   save()
   delete()
@@ -430,8 +446,9 @@ stories.  If the behavior of find() were modified to hide all media,
 the story interface would break.
 
 Instead, the semantics of "hide" with regards to assets will be that
-the web interfaces to managing the hidden assets will be removed from
-view.  This is discussed more in the UI section of this document.
+the link to the web interfaces to managing the hidden assets will be 
+removed from view.  This is discussed more in the UI section of this 
+document.
 
 
 =item * Desks
@@ -445,7 +462,7 @@ view.  This is discussed more in the UI section of this document.
 =back
 
 
-=head2 UI security
+=head2 User Interface (UI) security
 
 The purpose of UI security is to inform the various user interface
 applications so that features to which the user does not have access
@@ -480,7 +497,7 @@ method, may_edit(), which returns "1" or "0" indicating whether an
 object is editable or not, respectively.
 
 In practice, this would effect list views which display "edit" buttons
-or checkboxes to delete or checkout objects.  This would be
+or check boxes to delete or checkout objects.  This would be
 implemented via the Krang::HTMLPager row handler function.  For
 example:
 
@@ -511,10 +528,53 @@ example:
   }
 
 This same technique can be used to remove delete and checkout
-checkboxes from rows which are not editable.
+check boxes from rows which are not editable.
 
 
 =item * Assets
+
+As described previously in this document, for each asset type, a 
+group may be granted "edit", "read-only", or "hide" access which 
+are accessible via logical Boolean values stored in the %session:
+
+  $session{permissions}->{may_edit_story};
+  $session{permissions}->{may_see_story};
+
+  $session{permissions}->{may_edit_media};
+  $session{permissions}->{may_see_media};
+
+  $session{permissions}->{may_edit_template};
+  $session{permissions}->{may_see_template};
+
+Unlike category permissions, asset permissions UI security is 
+not entirely back-stopped by API security.  The "edit" functions are
+secured in the API, but "hide" security is exclusively the
+responsibility of the UI to implement.
+
+The "hide" permission setting is implemented, for all asset classes,
+as a Boolean "may see" variable, as specified above.  It is expected
+that this will be respected by the "left navigation" system.  If
+"may_see_media" is false ("0"), the left navigation system should hide
+the links to "New Media" and "Find Media".  The "may_see_story" and
+"may_see_template" should function similarly.
+
+There may be other places where it is intuitive to hide functional
+links based on "may_see_*" values.  It is *NOT* expected that a false
+"may_see_*" value would hide a record from display in another object
+view of which the hidden object class is a constituent.  When in
+doubt, consult the paper prototyping team.
+
+The "may_edit_*" properties function similarly to "may_see_*", but
+they have more complex requirements.  For example, if "may_edit_media"
+is false, this should result in all interfaces to adding, editing, or
+deleting media be hidden from view.  This affects multiple
+applications throughout Krang, such as Krang::CGI::Story, which
+provide contextual links to manipulate media objects.
+
+Unlike "may_see_*", "may_edit_*" is back-stopped by API security.  If
+a link to a write operation is made accessible to a user who does not
+have "edit" permissions to that particular object, an internal server
+error will result if the user clicks on that button.
 
 
 

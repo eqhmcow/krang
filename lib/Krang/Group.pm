@@ -83,9 +83,9 @@ Krang::Group - Interface to manage Krang permissions
 
 
   # Category permissions cache management
-  Krang::Group->add_catagory_permissions($category);
-  Krang::Group->delete_catagory_permissions($category);
-  Krang::Group->rebuild_catagory_cache();
+  Krang::Group->add_category_permissions($category);
+  Krang::Group->delete_category_permissions($category);
+  Krang::Group->rebuild_category_cache();
 
 
 =head1 DESCRIPTION
@@ -529,9 +529,9 @@ sub delete {
 }
 
 
-=item add_catagory_permissions()
+=item add_category_permissions()
 
-  Krang::Group->add_catagory_permissions($category);
+  Krang::Group->add_category_permissions($category);
 
 This method is expected to be called by Krang::Category when a new 
 category is added to the system.  As the nature of categories are 
@@ -547,7 +547,7 @@ table for each group, defaulting to "edit".
 
 =cut
 
-sub add_catagory_permissions {
+sub add_category_permissions {
     my $self = shift;
     my ($category) = @_;
 
@@ -620,9 +620,9 @@ sub add_catagory_permissions {
 
 
 
-=item delete_catagory_permissions()
+=item delete_category_permissions()
 
-  Krang::Group->delete_catagory_permissions($category);
+  Krang::Group->delete_category_permissions($category);
 
 This method is expected to be called by Krang::Category when a  
 category is about to be removed from the system.  As the nature of categories are 
@@ -636,7 +636,7 @@ category.
 
 =cut
 
-sub delete_catagory_permissions {
+sub delete_category_permissions {
     my $self = shift;
     my ($category) = @_;
 
@@ -658,9 +658,9 @@ sub delete_catagory_permissions {
 
 
 
-=item rebuild_catagory_cache()
+=item rebuild_category_cache()
 
-  Krang::Group->rebuild_catagory_cache();
+  Krang::Group->rebuild_category_cache();
 
 This class method will clear the table category_group_permission_cache 
 and rebuild it from the category_group_permission table.  This logically 
@@ -675,7 +675,7 @@ will default to "edit".
 
 =cut
 
-sub rebuild_catagory_cache {
+sub rebuild_category_cache {
     my $self = shift;
 
     my $dbh = dbh();
@@ -686,7 +686,7 @@ sub rebuild_catagory_cache {
     # Traverse category hierarchy
     my @root_cats = Krang::Category->find(parent_id=>undef);
     foreach my $category (@root_cats) {
-        $self->rebuild_catagory_cache_process_category($category);
+        $self->rebuild_category_cache_process_category($category);
     }
 }
 
@@ -697,17 +697,17 @@ sub rebuild_catagory_cache {
 ###########################
 
 # Re-build category cache for this category, and descend by recursion
-sub rebuild_catagory_cache_process_category {
+sub rebuild_category_cache_process_category {
     my $self = shift;
     my ($category) = @_;
 
     # Add categories
-    $self->add_catagory_permissions($category);
+    $self->add_category_permissions($category);
 
     # Descend and recurse
     my @children = $category->children();
     foreach my $category (@children) {
-        $self->rebuild_catagory_cache_process_category($category);
+        $self->rebuild_category_cache_process_category($category);
     }
 }
 
