@@ -98,12 +98,11 @@ sub find {
                                                       may_see => 1,
                                                       simple_search => $search_filter
                                                      },
-                                      columns => [qw(category_id url command_column checkbox_column)],
+                                      columns => [qw(url command_column checkbox_column)],
                                       column_labels => {
-                                                        category_id  => "ID",
                                                         url => 'URL',
                                                        },
-                                      columns_sortable => [qw( category_id url )],
+                                      columns_sortable => [qw( url )],
                                       command_column_commands => [qw( edit_category )],
                                       command_column_labels => {edit_category => 'Edit'},
                                       row_handler => \&find_row_handler,
@@ -121,7 +120,6 @@ sub find {
 
 sub find_row_handler {
     my ($row, $category) = @_;
-    $row->{category_id} = $category->category_id;
     $row->{url} = format_url( url => $category->url(), length => 60 );
     unless ($category->may_edit) {
         $row->{command_column} = "&nbsp;";
@@ -197,7 +195,6 @@ sub create {
         # User isn't allowed to add a descendant category
         my ($parent_cat) = Krang::Category->find(category_id => $@->category_id);
         add_message( 'add_not_allowed',
-                     category_id => $parent_cat->category_id,
                      url => $parent_cat->url );
         return $self->new_category(bad => ['parent_id']);
     } elsif ($@) {
@@ -213,7 +210,6 @@ sub create {
         # load duplicate category
         my ($dup) = Krang::Category->find(category_id => $@->category_id);
         add_message('duplicate_url', 
-                    category_id => $dup->category_id,
                     url         => $dup->url,                    
                    );
 
@@ -299,7 +295,6 @@ sub db_save {
     $self->category_save();
 
     add_message('category_save', 
-                category_id => $category->category_id,
                 url         => $category->url);
 
     # remove category from session
@@ -326,7 +321,7 @@ sub db_save_and_stay {
     my $category = $session{category};
     $self->category_save();
     
-    add_message('category_save', category_id => $category->category_id,
+    add_message('category_save', 
                 url      => $category->url);
 
     # return to edit
@@ -573,7 +568,6 @@ sub delete {
     }
 
     add_message('category_delete', 
-                category_id => $category->category_id,
                 url      => $category->url);
 
     # return to find
