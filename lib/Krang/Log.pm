@@ -123,7 +123,7 @@ use warnings;
 
 # Krang Modules
 use Krang::Conf qw(assertions logfile loglevel logtimestamp timestampformat
-		   logwrap);
+		   logwrap KrangUser KrangGroup);
 
 # Module Dependencies
 use Fcntl qw(:flock);
@@ -170,10 +170,20 @@ BEGIN {
     # setup filehandle for log; add $KRANG_ROOT to LogFile directive
     my $log = File::Spec->catfile($ENV{KRANG_ROOT},
                                   Krang::Conf->logfile());
+
+    my $log_exists = (-e $log) ? 1 : 0;
     $LOG->{fh} = IO::File->new(">>$log") or
       croak("Unable to open logfile, $log: $!\n");
     $LOG->{path} = $log;
 
+    # if the log file is freshly created
+    if (not $log_exists) { 
+        my ($uid) = (getpwnam(KrangUser))[2];
+        my ($gid) = (getgrnam(KrangGroup))[2];
+        chown($uid, $gid, $log) 
+          or croak("Unable to chown '$log' to $uid, $gid : $!");
+    }
+    
     # set logging level using LogLevel directive; convert arg to int
     # if we have a string
     my $level = Krang::Conf->loglevel();
