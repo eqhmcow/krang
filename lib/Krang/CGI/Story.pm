@@ -645,12 +645,12 @@ sub save_and_view_log {
 }
 
 =item save_and_edit_schedule
-                                                                        
+
 This mode saves the current data to the session and passes control to
 edit schedule for story.
-                                                                        
+
 =cut
-                                                                        
+
 sub save_and_edit_schedule {
     my $self = shift;
                                                                         
@@ -822,7 +822,7 @@ sub save_and_go_up {
     # compute target
     my $query = $self->query;
     my $path = $query->param('path');
-    $path =~ s!/.+$!!;
+    $path =~ s!/[^/]+$!!;
 
     # set target and show edit screen
     $query->param(path => $path);
