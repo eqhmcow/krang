@@ -22,6 +22,11 @@ HREF[Changes|changes.html] - a list of differences between Bricolage and Krang
 
 =item *
 
+HREF[Krang VS Bricolage|krang_vs_bric.html] - Krang/Bricolage comparison document
+
+
+=item *
+
 HREF[Screen List|paper_screen.html] - a list of screens in the
 application to be paper prototyped.
 

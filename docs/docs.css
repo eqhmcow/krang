@@ -1,19 +1,13 @@
 body {
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-size: 14px;
-    line-height: 20px;
 }
 
 p {
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-size: 14px;
-    line-height: 20px;
 }
 
 PRE     {
   font-family: monospace
-  font-size: 12px;
-  line-height: 16px;
   background: #eeeeee;
   border: 1px solid grey;
   color: #000010;
@@ -31,7 +25,7 @@ h2 {
     font-weight: bold;
     text-decoration: none;
     color: #224488;
-    font-size: 16px;
+    font-size: 14px;
 
     background: #dddddd;
     padding-top: 4px;
@@ -44,7 +38,6 @@ h1 {
     font-weight: bold;
     text-decoration: none;
     color: #FFFFFF;
-    font-size: 18px;
     background: #336699;
     padding-top: 8px;
     padding-bottom: 3px;
@@ -55,7 +48,6 @@ ul > li > a {
     font-family: Verdana, Arial, Helvetica, sans-serif;
     font-weight: bold;
     color: #336699;
-    font-size: 13px;
 }
 
 a.link {
