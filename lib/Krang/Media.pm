@@ -695,9 +695,9 @@ sub find {
     # add media_id(s) if needed
     if ($args{media_id}) {
         if (ref $args{media_id} eq 'ARRAY') {
-            $where_string ? ($where_string .= " and media_id = ".join( ' or media_id = ', @{$args{media_id}} )) : ($where_string = "media_id = ".join( ' or media_id = ', @{$args{media_id}} ));
+            $where_string ? ($where_string .= " and (".join("OR", (map { " media_id = ".$dbh->quote($_) } @{$args{media_id} })).')') : ($where_string = ')'.join("OR", (map { " media_id = ".$dbh->quote($_) } @{$args{media_id} })).')' );
         } else {
-            $where_string ? ($where_string .= " and media_id = ".$args{media_id}) : ($where_string = "media_id = ".$args{media_id});
+             $where_string ? ($where_string .= " and media_id = ".$dbh->quote($args{media_id})) : ($where_string = "media_id = ".$dbh->quote($args{media_id}));
         }        
     }
 
