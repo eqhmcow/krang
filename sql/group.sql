@@ -2,6 +2,7 @@
 
 
 /* DEPRECATE OLD TABLES */
+DROP TABLE IF EXISTS permission_group;
 DROP TABLE IF EXISTS app_class;
 DROP TABLE IF EXISTS app_class_group_permission;
 DROP TABLE IF EXISTS asset;
