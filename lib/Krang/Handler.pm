@@ -151,11 +151,13 @@ sub handler ($$) {
     # run the CGI app, catching any errors and writing them to log
     eval { $module_pkg->new()->run(); };
     my $err = $@;
-    critical($err), die($err) if $err;
 
     # unload the session ASAP, the client might be making another
     # request already!
     Krang::Session->unload();
+
+    # if the page generated an error, cough it up
+    critical($err), die($err) if $err;
 
     return OK;
 }
