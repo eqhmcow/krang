@@ -3,6 +3,24 @@ use Krang::Script;
 use Krang::Element;
 use Krang::Benchmark qw(run_benchmark);
 
+use Krang::Site;
+use Krang::Category;
+use Krang::Story;
+
+# create a site and category for dummy story
+my $site = Krang::Site->new(preview_url  => 'storytest.preview.com',
+                            url          => 'storytest.com',
+                            publish_path => '/tmp/storytest_publish',
+                            preview_path => '/tmp/storytest_preview');
+$site->save();
+END { $site->delete() }
+my ($category) = Krang::Category->find(site_id => $site->site_id());
+
+# create a new story
+my $story = Krang::Story->new(categories => [$category],
+                              title      => "Test",
+                              slug       => "test",
+                              class      => "article");
 $|++;
 
 # set magnitude for tests here
@@ -47,8 +65,7 @@ run_benchmark(module => 'Krang::Element',
               code   => sub {
                   my $e = shift @e;
                   $e->child('page')->child('paragraph')->data('some new paragraph data...');
-                  my @kids = $e->children();
-                  $e->children(@kids[0 .. $#kids - 1]);
+                  $e->remove_children($e->children_count - 1);
                   $e->save();
               });
 
@@ -58,7 +75,9 @@ run_benchmark(module => 'Krang::Element',
               name   => 'load by ID',
               count  => $n, 
               code   => sub {
-                  my $e = Krang::Element->find(element_id => $ids[$i++]);
+                  my $e = Krang::Element->load(element_id => $ids[$i++], 
+                                               object => $story
+                                              );
               });
 
 # time deleting element trees by id
@@ -72,7 +91,7 @@ run_benchmark(module => 'Krang::Element',
 
 # create a "normal" element tree
 sub create_tree {
-    my $element = Krang::Element->new(class => "article");
+    my $element = Krang::Element->new(class => "article", object => $story);
     
     # make a five page story
     $element->add_child(class => "page") for (1 .. 4);
