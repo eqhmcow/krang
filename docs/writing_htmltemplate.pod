@@ -29,6 +29,30 @@
 
 =item * Example 2: Using Multiple Templates
 
+=over
+
+=item * The Next Step
+
+=back
+
+=back
+
+----------------------------------------
+
+=item * Additional Publishing Components
+
+=over
+
+=item * Pagination
+
+=item * Links to Other Stories
+
+=item * Media Objects
+
+=item * How Categories and Category Templates Work
+
+=item * Contributors
+
 =back
 
 ----------------------------------------
@@ -55,19 +79,12 @@
 
 =item * Example 4: Using Multiple Templates
 
+=item * Story and Media Links
+
 =back
 
-----------------------------------------
 
-=item * How Categories and Category Templates Work
 
-=item * Using Pagination
-
-=item * Links to Other Stories
-
-=item * Media Objects
-
-=item * Contributors
 
 =back
 
@@ -110,15 +127,17 @@ The most important things to understand when getting into template development i
 
 =head2 An Example Story Type
 
-We'll examine a simple example story type called C<Story>. Here's the element tree for C<Story>:
+We'll examine an example story type called C<Story>. Here's the element tree for C<Story>:
 
    Story
         - Deck             (textbox attribute)
         + Page             (repeatable element)
              - Paragraph   (repeatable textbox attribute)
              - Pull Quote  (repeatable textbox attribute)
+             - Paragraph   (repeatable textbox attribute)
 
-The Story element has an attribute called Deck, and can contain any number of Page elements. Pages are composed of Paragraph attributes and Pull Quote attributes, both of which can be repeated.
+
+The Story element has an attribute called Deck, and can contain any number of Page elements. Pages are composed of Paragraph and Pull Quote attributes, both of which can be repeated.
 
 When the publish process is called on this story, Krang will walk this element tree, starting from the top (C<Story>), recursively touching every element in the tree to construct the final output.
 
@@ -196,79 +215,136 @@ See the section C<Using Pagination>, further on in this document, for more infor
 
 =head2 Example 1: Using One Large Template
 
+With very simple stories, you can use a single template to handle the entire publish process.
 
+For the purposes of this example, imagine the following element tree for a story:
 
+   Story
+        - Deck        (textbox attribute)
+        - Paragraph   (repeatable textbox attribute)
+        - Pull Quote  (repeatable textbox attribute)
+        - Paragraph   (repeatable textbox attribute)
 
-Overriding the various methods in the element tree is not always required.  If no methods are overridden, the methods found in Krang::ElementClass are used.
-
-
-
-B<Additional notes>
-
-The template being used in this strategy is almost exactly the same as for strategy 1. There are a couple changes.  First, the variable names used in the template must correspond to what $element->name() will return.  Second, the default fill_template() method provides "is_$element->name()" variables inside the element_loops to make testing for the type of row more obvious and more fool-proof.  In STRATEGY 1 a paragraph with the sole contents "0" wouldn't have been printed.
 
 B<The Template - Story.tmpl>
-
- #
- # Note: Need to explain how to save in Krang::Template
- #
-
- <tmpl_loop page_loop>
 
    <html>
 
    <head>
      <title><tmpl_var title></title>
    </head>
+
    <body>
 
-     <tmpl_if __first__>
-        <h1><tmpl_var title></h1>
-        <b><tmpl_var deck></b>
-     </tmpl_if>
+     <h1><tmpl_var title></h1>
+     <b><tmpl_var deck></b>
 
      <tmpl_loop element_loop>
+
         <tmpl_if is_paragraph>
           <p><tmpl_var paragraph></p>
         </tmpl_if>
+
         <tmpl_if is_pull_quote>
           <p><blockquote><i>
             <tmpl_var pull_quote>
           </i></blockquote></p>
         </tmpl_if>
+
      </tmpl_loop>
-
-     <tmpl_unless __first__>
-     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
-     </tmpl_unless>
-
-     <tmpl_unless __last__>
-     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
-     </tmpl_unless>
 
    </body>
    </html>
 
-   <tmpl_var page_break>
+
+This is a pretty boring example, but it illustrates the basic concepts of variable construction in Krang.  Because there are no elements containing children, the only loop that is available to the template is C<element_loop>.  While <tmpl_var paragraph> exists only once in the template, because it is within the context of <tmpl_loop element_loop>, both paragraphs will be built.
+
+B<Results:>
+
+=over
+
+=item * Pros
+
+=over
+
+=item *
+
+With only one template, everything is in a single place - easy to keep track of everything.
+
+=item *
+
+For simple stories, putting together a single template is fast.
+
+=back
+
+=item * Cons
+
+=over
+
+=item *
+
+The complexity of the element tree is greatly limited.  No story elements can have children (this is why we could not use the first example story type, and had to use a simplified version).
+
+=item *
+
+There is no customizability - small variations require the entire template to be re-implemented each time.  If you want to publish a story in several different categories, each with it's own appearance, the entire template needs to be re-written each time.
+
+=item *
+
+Pagination (links between pages of a multiple-page story) is not available.
+
+=back
+
+=back
+
+=head2 Example 2: Using Multiple Templates
+
+The real power of Krang comes about when you start associating templates with elements within your stories.  By breaking up your templates into element-specific components, you can begin to really take control of how parts of your element tree will represent themselves when published.
+
+Beyond the advantages of control and customizability, you can now support far more complex story architectures - the initial example of a Story element tree (with page elements) can now be supported.
+
+B<The Example Story Tree>
+
+Going back to the original example Story Tree:
+
+   Story
+        - Deck             (textbox attribute)
+        + Page             (repeatable element)
+             - Paragraph   (repeatable textbox attribute)
+             - Pull Quote  (repeatable textbox attribute)
+             - Paragraph   (repeatable textbox attribute)
+
+While this may not look like a big step up from the element tree in Example 1, we're now making use of an important concept in Krang - elements that contain other elements as their children.
+
+B<The Templates>
+
+With the more complex element tree, we now need a minimum of two templates - a template for the story, and a template for the page element - which will handle its own children.
+
+B<Page.tmpl>
+
+Page.tmpl will look a lot like the inner loop <tmpl_loop element_loop> that was found in Story.tmpl for example 1.  By removing it from Story.tmpl, we now have a small, easy-to-maintain template with very simple functionality.
+
+
+ <tmpl_loop element_loop>
+
+   <tmpl_if is_paragraph>
+     <p><tmpl_var paragraph></p>
+   </tmpl_if>
+
+   <tmpl_if is_pull_quote>
+     <p><blockquote><i>
+       <tmpl_var pull_quote>
+     </i></blockquote></p>
+   </tmpl_if>
 
  </tmpl_loop>
 
 
 
-=head2 Example 2: Using Multiple Templates
-
-If your building an element that will be used as a sub-element in more than one tree, you can save a lot of time and effort by splitting out the functionality of that element from the rest of the system.
-
-This example will take what we did in Example 2 (single template, no fill_template() method), and break out the construction of the Page element into a separate template.  The publish() method will not be overloaded in this example, so the default publish() method will be relied upon to build the loops and variables.  All behavior of the default publish() method talked about in Example 2 still applies.
-
-
-B<The Templates>
-
 B<Story.tmpl>
 
-The Story template (taken from Story.tmpl in Example 2 above) sees one major revision - the entire <tmpl_loop element_loop> section has been removed and replaced with a single B<<tmpl_var page>>.  The default publish() method (or the one you roll on your own, see Example 4, below) will see this and now make a call to the publish() method for the page element to generate the HTML needed by <tmpl_var>.
+The story template you see here is somewhat revised from the Story.tmpl you saw in the first example.
 
-# Note: Need to explain how to save in Krang::Template
 
  <tmpl_loop page_loop>
 
@@ -286,67 +362,425 @@ The Story template (taken from Story.tmpl in Example 2 above) sees one major rev
 
      <tmpl_var page>
 
-     <tmpl_unless __first__>
-     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
-     </tmpl_unless>
-
-     <tmpl_unless __last__>
-     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
-     </tmpl_unless>
+     Page Number: <tmpl_var page_count>
 
    </body>
    </html>
 
-   <tmpl_var page_break>
+   <tmpl_unless __last__>
+     <tmpl_var page_break>
+   </tmpl_unless>
 
  </tmpl_loop>
+
+B<Questions>:
+
+=over
+
+=item *
+
+Where do <tmpl_var page> and <tmpl_var page_count> come from?
+
+Go back and re-read C<How Krang Builds Template Data>.  Each element within <tmpl_loop page_loop> contains two variables - <tmpl_var page> (containing the output from the page element), and <tmpl_var page_count> (which tells you what the number of the element is in the loop).
+
+=item *
+
+<tmpl_loop element_loop> has been removed, and replaced with <tmpl_loop page_loop>.
+
+Rather than iterate over all child elements of Story, we're now looping over page elements, each of which will return the results of publishing with Page.tmpl above.
+
+=item *
+
+<tmpl_var page_break> ?
+
+They are called B<page> elements.  Each page should be considered separate, the I<page_break> tag will tell Krang to create a new page for the next page element's content.
+
+=item *
+
+What's the deal with <tmpl_if __first__> and <tmpl_unless __last__> ?
+
+__first__ and __last__ are loop variables that are always made available within the context of a <tmpl_loop>.
+
+__first__ returns true if you are on the first iteration through a loop, false otherwise.
+
+__last__ returns true if you are on the last iteration through a loop, false otherwise.
+
+In this case, we're putting the story title and deck at the head of the first page only, and putting in a page break on every page except the last one.  Since we only have one page to this story, there's only one page break.
+
+=back
+
+
+
+B<Results:>
+
+=over
+
+=item Pros
+
+=over
+
+=item *
+
+Two simplified templates are easier to understand than one large complex one.
+
+=item * 
+
+Customizability - multiple implementations of the Page template can be used to provide different layouts, all without touching the Story template.
+
+=item *
+
+Complex story types - multiple pages and all!
+
+=back
+
+=item Cons
+
+=over
+
+=item * 
+
+Everything is no longer in a single spot - the developer is now forced to look in multiple locations for all template information.
+
+=back
+
+=back
+
+
+=head2 The Next Step
+
+You can create templates for any element you choose.  For example, the C<Pull Quote> element.  If you wanted all Pull Quotes to be identical in appearance, you could create a template specific to the Pull Quote.
+
+B<Pull_Quote.tmpl>
+
+ <p><blockquote><i>
+   <tmpl_var pull_quote>
+ </i></blockquote></p>
+
+
+Now whenever Krang attempts to publish a Pull Quote element, rather than simply return the data stored within the Pull Quote element, it will return the formatted output.
+
+The Page template can now stop formatting Pull Quotes:
+
+B<Page.tmpl>
+
+ <tmpl_loop element_loop>
+
+   <tmpl_if is_paragraph>
+     <p><tmpl_var paragraph></p>
+   </tmpl_if>
+
+   <tmpl_if is_pull_quote>
+     <tmpl_var pull_quote>
+   </tmpl_if>
+
+ </tmpl_loop>
+
+
+
+
+
+=head1 Additional Publishing Components
+
+With templates in place, you can now begin to take advantage of some of the other features available in Krang.
+
+=head2 Pagination
+
+A whole set of template variables relating to pagination are created by Krang for specific elements.  These variables are built whenever Krang encounters an element with the attribute C<pageable> set to 1 (Generally the C<page> element -- See C<Creating Element Libraries in Krang> for more information).
+
+To put things in the context of the previous example, pagination information will be available to Page.tmpl, B<not> to Story.tmpl.
+
+
+B<Variables>
+
+For pageable elements, the following variables are made available:
+
+=over 4
+
+=item current_page_number
+
+Contains the number (starting at 1) of the current page being built.
+
+=item total_pages
+
+Contains the total number of pages in the story.
+
+=item previous_page_url
+
+Contains the URL of the previous page in the story.  Will be empty if on the first page of the story.
+
+=item next_page_url
+
+Contains the URL of the next page in the story.  Will be empty if on the last page of the story.
+
+=item first_page_url
+
+Contains the URL for the first page in the story.
+
+=item last_page_url
+
+Contains the URL for the last page in the story.
+
+=item is_first_page
+
+Boolean that will be true if the current page is the first page.
+
+=item is_last_page
+
+Boolean that will be true if the current page is the last page.
+
+=item pagination_loop
+
+Each element in the loop contains variables that correspond to pages in the story, in page order.
+
+The variables in each loop element are as follows:
+
+=over 4
+
+=item is_current_page
+
+Boolean that will be true if C<page_number> = C<current_page_number>.
+
+=item page_number
+
+The number of the page in the story, starting at 1.
+
+=item page_url
+
+The URL for the page.  Will be empty if C<page_number> = C<current_page_number>.
+
+=back
+
+=back
+
+B<Updated Story Tree>
+
+Since pagination isn't very interesting with only one page, let's add a second page to the previous Story Tree.  Furthermore, since the two pages are entirely separate constructs, there's no reason why the second page has to be identical to the first in structure.
+
+   Story
+        - Deck             (textbox attribute)
+        + Page             (repeatable element)
+             - Paragraph   (repeatable textbox attribute)
+             - Pull Quote  (repeatable textbox attribute)
+             - Paragraph   (repeatable textbox attribute)
+        + Page             (repeatable element)
+             - Pull Quote  (repeatable textbox attribute)
+             - Paragraph   (repeatable textbox attribute)
+             - Paragraph   (repeatable textbox attribute)
+             - Paragraph   (repeatable textbox attribute)
+
+
+B<Templates>
+
+Continuing with the templates from the previous example, all the pagination logic will be found in Page.tmpl.  As a result, Story.tmpl becomes further simplified, as you will see.
 
 
 B<Page.tmpl>
 
-Page.tmpl is simply the inner loop @element_loop that was found in the Story.tmpl of Example 2.  By removing it from Story.tmpl, we now have a small, easy-to-maintain template with very simple functionality.
-
-Notice that the header and footer logic found in the previous template (using __first__ and __last__) is not present here - those variables are internal HTML::Template variables that correspond to the current location in @page_loop, which doesn't exist here.  
-
-# Note: Need to explain how to save in Krang::Template
+ <!-- Test for first page here -->
+ <tmpl_if is_first_page>
+    <h1><tmpl_var title></h1>
+    <b><tmpl_var deck></b>
+ </tmpl_if>
 
  <tmpl_loop element_loop>
-   <tmpl_if paragraph>
-     <p><tmpl_var paragraph></p>
-   </tmpl_if>
-   <tmpl_if name="pull quote">
-     <p><blockquote><i>
-       <tmpl_var name="pull quote">
-     </i></blockquote></p>
+
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+
+    <tmpl_if is_pull_quote>
+      <tmpl_var pull_quote>
+    </tmpl_if>
+
+ </tmpl_loop>
+
+ <!-- Pagination at the bottom of the page -->
+
+ <P>Currently reading page <tmpl_var current_page_number> of <tmpl_var total_pages>.<BR>
+
+ <tmpl_unless is_first_page>
+   <a href="<tmpl_var previous_page_url>">Previous Page</a>
+ </tmpl_unless>
+
+ <tmpl_loop pagination_loop>
+   <tmpl_if is_current_page>
+     <tmpl_var page_number>
+   <tmpl_else>
+     <a href="<tmpl_var page_url>"><tmpl_var page_number></a>
    </tmpl_if>
  </tmpl_loop>
 
+ <tmpl_unless is_last_page>
+   <a href="<tmpl_var next_page_url>">Next Page</a>
+ </tmpl_unless>
+
+ <!-- /Pagination -->
+
+
+Notice a few things that used to exist in Story.tmpl?  The <tmpl_var title> and <tmpl_var deck> that should only appear on the first page can now be placed here.  And the <tmpl_var page_count> that used to provide an element (page) count is now pretty redundant as well.
+
+The new Story.tmpl looks a lot smaller now:
+
+
+B<Story.tmpl>
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_var page>
+
+   </body>
+   </html>
+
+   <tmpl_unless __last__>
+     <tmpl_var page_break>
+   </tmpl_unless>
+
+ </tmpl_loop>
+
+B<Note> - it is possible to move <tmpl_var page_break> into Page.tmpl as well, but would require moving around a lot of HTML and other page logic, in this case it's simply easier to leave it in place.
 
 
 
 
-=head2 RESULTS
 
 
-B<Advanteges:>
+
+
+
+=head2 Contributors
+
+Contributors in Krang are attached directly to stories.  They are made available to all elements as a list (tmpl_loop) of contributors, under the loop B<contrib_loop>.
+
+B<Variables>
+
+The variables that make up the contributors are as follows:
+
+=over 4
+
+=item contrib_loop
+
+Each element in B<contrib_loop> corresponds to a single contributor.
+
+Within each element, the following variables are available (corresponding to the parameters available within the Contributers interface):
+
+=over 
+
+=item contrib_id
+
+The internal ID attached to the specific contributor.
+
+=item prefix
+
+The prefix of the contributor's name.
+
+=item first
+
+The contributor's first name.
+
+=item middle
+
+The contributor's middle name.
+
+=item last
+
+The contributor's last name.
+
+=item suffix
+
+The suffix of the contributor's name.
+
+=item email
+
+The contributor's email address.
+
+=item phone
+
+The contributor's phone number.
+
+=item bio
+
+The contributor's biography.
+
+=item url
+
+The url to the contributor's website.
+
+=item contrib_type_loop
+
+This loop corresponds to the the various tasks a contributor may have performed (e.g. Writer, Illustrator).  The loop exists because a single contributor may have performed multiple tasks for a given story.
+
+Within this loop, there are two fields:
 
 =over
 
-=item * Two simplified templates easier to understand than one large complex one.
+=item contrib_type_id
 
-=item * Customizability - multiple implementations of the Page template can be used to provide different layouts, all without touching the Story template.
+The internal id of the task performed.
 
-=item * Use of the default publish() method means that no custom perl code is required.
+=item contrib_type_name
+
+The name of the task performed (e.g. Writer).
+
+
+=back
 
 =back
 
-B<Disadvanteges:>
-
-=over
-
-=item * Everything is no longer in a single spot - the developer is now forced to look in multiple locations for all template information.
-
 =back
+
+B<Templates>
+
+In this case, we want to publish contributors on the first page of the story.  Because of this, the contributors loop should be placed in Page.tmpl.
+
+
+B<Page.tmpl>
+
+ <tmpl_if is_first_page>
+    <h1><tmpl_var title></h1>
+    <b><tmpl_var deck></b>
+
+    <p>Contributors to this story:
+      <tmpl_if contrib_loop>
+         <tmpl_loop contrib_loop>
+            <tmpl_var prefix> <tmpl_var first> <tmpl_var last><br>
+            <tmpl_if contrib_type_loop>
+               <tmpl_loop contrib_type_loop>
+                  Task ID:   <tmpl_var contrib_type_id><BR>
+                  Task Name: <tmpl_var contrib_type_name>
+               </tmpl_loop>
+            </tmpl_if>
+         </tmpl_loop>
+      <tmpl_else>
+         None.
+      </tmpl_if>
+
+
+ </tmpl_if>
+
+ <tmpl_loop element_loop>
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+    <tmpl_if is_pull_quote>
+      <p><blockquote><i>
+    <tmpl_var pull_quote>
+      </i></blockquote></p>
+    </tmpl_if>
+ </tmpl_loop>
+
+
+ <!-- Further Pagination information removed to keep the example short -->
+
+
+
+
 
 =head1 Publishing with Customized Publish Methods
 
@@ -856,176 +1290,7 @@ Generally, the default fill_template() will suffice.  For reference, here's a sa
  }
 
 
-=head1 Pagination
 
-Variables for pagination will be built as a part of the Krang autofill process whenever it encounters a story element with the attribute C<pageable> set to 1 (Generally the C<page> element).  The following variables are made available:
-
-=over 4
-
-=item current_page_number
-
-Contains the number (starting at 1) of the current page being built.
-
-=item total_pages
-
-Contains the total number of pages in the story.
-
-=item previous_page_url
-
-Contains the URL of the previous page in the story.  Will be empty if on the first page of the story.
-
-=item next_page_url
-
-Contains the URL of the next page in the story.  Will be empty if on the last page of the story.
-
-=item first_page_url
-
-Contains the URL for the first page in the story.
-
-=item last_page_url
-
-Contains the URL for the last page in the story.
-
-=item is_first_page
-
-Boolean that will be true if the current page is the first page.
-
-=item is_last_page
-
-Boolean that will be true if the current page is the last page.
-
-=item pagination_loop
-
-Each element in the loop contains variables that correspond to pages in the story, in page order.
-
-The variables in each loop element are as follows:
-
-=over 4
-
-=item is_current_page
-
-Boolean that will be true if C<page_number> = C<current_page_number>.
-
-=item page_number
-
-The number of the page in the story, starting at 1.
-
-=item page_url
-
-The URL for the page.  Will be empty if C<page_number> = C<current_page_number>.
-
-=back
-
-=back
-
-=head2 Template Example
-
-Again, using page.tmpl:
-
-B<Page.tmpl>
-
- <!-- Test for first page here -->
- <tmpl_if is_first_page>
-    <h1><tmpl_var title></h1>
-    <b><tmpl_var deck></b>
- </tmpl_if>
-
- <tmpl_loop element_loop>
-    <tmpl_if is_paragraph>
-      <p><tmpl_var paragraph></p>
-    </tmpl_if>
-    <tmpl_if is_pull_quote>
-      <p><blockquote><i>
-    <tmpl_var pull_quote>
-      </i></blockquote></p>
-    </tmpl_if>
- </tmpl_loop>
-
- <!-- Pagination at the bottom of the page -->
-
- <P>Currently reading page <tmpl_var current_page_number> of <tmpl_var total_pages>.<BR>
-
- <tmpl_unless is_first_page>
-   <a href="<tmpl_var previous_page_url>">Previous Page</a>
- </tmpl_unless>
-
- <tmpl_loop pagination_loop>
-   <tmpl_if is_current_page>
-     <tmpl_var page_number>
-   <tmpl_else>
-     <a href="<tmpl_var page_url>"><tmpl_var page_number></a>
-   </tmpl_if>
- </tmpl_loop>
-
- <tmpl_unless is_last_page>
-   <a href="<tmpl_var next_page_url>">Next Page</a>
- </tmpl_unless>
-
- <!-- /Pagination -->
-
-
-=head1 Contributors
-
-Contributors in Krang are attached directly to stories.  By default, they are made available to all templates as a list (tmpl_loop) of contributors, under the loop B<contrib_loop>.
-
-=head2 Template Example
-
-In this case, we want to publish contributors on every page of a given story.  Using the B<page.tmpl> from Example 4, the addition of a contributors loop goes as follows:
-
-B<Page.tmpl>
-
- <tmpl_if first>
-    <h1><tmpl_var title></h1>
-    <b><tmpl_var deck></b>
- </tmpl_if>
-
- <tmpl_loop element_loop>
-    <tmpl_if is_paragraph>
-      <p><tmpl_var paragraph></p>
-    </tmpl_if>
-    <tmpl_if is_pull_quote>
-      <p><blockquote><i>
-    <tmpl_var pull_quote>
-      </i></blockquote></p>
-    </tmpl_if>
- </tmpl_loop>
-
- Contributors to this story:
- <tmpl_if contrib_loop>
-   <tmpl_loop contrib_loop>
-      <tmpl_var prefix> <tmpl_var first> <tmpl_var last><br>
-      <tmpl_if contrib_type_loop>
-         <tmpl_loop contrib_type_loop>
-            Task ID:   <tmpl_var contrib_type_id><BR>
-            Task Name: <tmpl_var contrib_type_name>
-         </tmpl_loop>
-      </tmpl_if>
-   </tmpl_loop>
- <tmpl_else>
-   None.
- </tmpl_if>
-
-Now the contributors block can look confusing, but it's not.  The breakdown is as follows:
-
-=over
-
-=item *
-
-Each element in B<contrib_loop> corresponds to a single contributor.
-
-=item *
-
-Within each element, the following variables are available (corresponding to the parameters available within the Contributers interface):
-
-B<contrib_id>, B<prefix>, B<first>, B<middle>, B<last>, B<suffix> B<email>, B<phone>, B<bio>, B<url>
-
-=item *
-
-Finally, within each element, there is an additional loop: B<contrib_type_loop>.  This loop corresponds to the the various tasks a contributor may have performed (e.g. Writer, Illustrator).  Within this loop, there are two fields:
-
-B<contrib_type_id>, B<contrib_type_name>
-
-=back
 
 =head2 Code Example
 
