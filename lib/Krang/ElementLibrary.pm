@@ -80,8 +80,8 @@ Then either F<Flex/article.pm> or F<Default/article.pm> must exist
 
 =cut
 
-use Krang::Conf qw(ElementSet ElementLibrary);
-use File::Spec::Functions qw(catdir catfile);
+use Krang::Conf qw(ElementSet ElementLibrary KrangRoot);
+use File::Spec::Functions qw(catdir catfile file_name_is_absolute);
 use Config::ApacheFormat;
 use Carp qw(croak);
 use Krang::Log qw(debug info);
@@ -114,12 +114,17 @@ sub load_set {
     my ($pkg, %arg) = @_;
     my ($set) = @arg{qw(set)};
 
+    # get location of the element library, mixing in KrangRoot if non-absolute
+    my $lib = file_name_is_absolute(ElementLibrary) ?
+                ElementLibrary :
+                catdir(KrangRoot, ElementLibrary);
+
     # don't load sets more than once
     our %LOADED_SET;
     unless (exists $LOADED_SET{$set}) {
-        my $conf = $pkg->_load_conf($set);
+        my $conf = $pkg->_load_conf($lib, $set);
         # FIX: load parentsets
-        $pkg->_load_classes($set, $conf);
+        $pkg->_load_classes($lib, $set, $conf);
         $pkg->_instantiate_top_levels($set, $conf);
         info("Loaded element set '$set'");
     } 
@@ -130,10 +135,8 @@ sub load_set {
 
 # load a set.conf file
 sub _load_conf {
-    my ($pkg, $set) = @_;
+    my ($pkg, $lib, $set) = @_;
 
-    # check the element library
-    my $lib = ElementLibrary();
     croak("Unable to find element set '$set' in element library '$lib'")
       unless -d catdir($lib, $set);
 
@@ -153,9 +156,9 @@ sub _load_conf {
 
 # load classes for an element set
 sub _load_classes {
-    my ($pkg, $set, $conf) = @_;
-    my $dir = catdir(ElementLibrary(), $set);
-    
+    my ($pkg, $lib, $set, $conf) = @_;
+    my $dir = catdir($lib, $set);
+
     # require all .pm files
     opendir(DIR, $dir) or die "Unable to open dir '$dir': $!";
     while($_ = readdir(DIR)) {
