@@ -10,6 +10,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Escape values on login page to foil cross-site scripting attacks. [Perrin]
+
+=item *
+
+Add option to show 100 results per page. [Perrin]
+
+=item *
+
 Restructured the index page in docs/ - added a 'User' section, moved a
 few things around to make things easier for new users. [Peter]
 
