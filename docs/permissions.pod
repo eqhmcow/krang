@@ -40,7 +40,7 @@ for a group are assigned in three major "security realms":
 Sites, and the categories (e.g., directories) within each site.
 
 
-=item 2. Application Classes
+=item 2. Assets
 
 Includes four classes of applications: Story, Media, Templates, and Admin.
 
@@ -81,23 +81,62 @@ User may neither see nor change items.
 
 
 
-=head2 Global Permissions
+=head2 Administration permissions
 
-In addition to the realms and levels described above, there are two
-security items affiliated with a group which are global to the whole
+In addition to the realms and levels described above, there are a handful
+of security items affiliated with a group which are global to the whole
 system.
 
 =over 4
 
-=item * Can Create Users
+=item * May publish
 
-Controls the ability of the user to access the edit functions of the
-Admin/User application.
+Publish stories and media to the live server.
 
 
-=item * Can Publish
+=item * Manage users
 
-Controls the ability of the user to send content to the live site.
+Add, edit, or delete users.
+
+
+=item * Group limited user manage
+
+When editing users, may only grant access to groups to which user personally has access.
+
+
+=item * Manage groups
+
+Add, edit, or delete permission groups.
+
+
+=item * Manage contributors
+
+Add, edit or delete contributors.
+
+
+=item * Manage sites
+
+Add, edit or delete sites.
+
+
+=item * Manage categories
+
+Add, edit or delete categories.
+
+
+=item * Manage jobs
+
+Add, edit or delete jobs.
+
+
+=item * Manage desks
+
+Add, edit or delete desks.
+
+
+=item * Manage system preferences
+
+Add, edit or delete system-wide preference settings.
 
 
 =back
@@ -143,6 +182,22 @@ A user is granted "Edit" access to "Story" and "Media" application
 classes, but not to "Templates".  As a result, they can manage
 content, but may not make changes to the templates which control the
 appearance of content.
+
+
+=item * 
+
+User is NOT granted "may publish" access.  As a result, the publish 
+buttons are hidden from all screens on which they normally appear.
+
+
+=item * 
+
+User is NOT granted "manage contributors" access.  As a result, the
+"Contributors" link is hidden from the left navigation in Krang.
+The user may still associate contributors with stories or media, but
+they cannot access the edit screen for existing contributors or delete 
+contributors.
+
 
 =back
 
@@ -321,7 +376,7 @@ the Krang::Group module which is called when categories or groups are
 changed.
 
 
-=item * Application Classes
+=item * Assets
 
 
 
@@ -329,7 +384,7 @@ changed.
 
 
 
-=item * Global Permissions
+=item * Administration permissions
 
 
 
@@ -405,7 +460,7 @@ This same technique can be used to remove delete and checkout
 checkboxes from rows which are not editable.
 
 
-=item * Application Classes
+=item * Assets
 
 
 
@@ -413,7 +468,7 @@ checkboxes from rows which are not editable.
 
 
 
-=item * Global Permissions
+=item * Administration permissions
 
 
 
