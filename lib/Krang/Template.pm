@@ -418,6 +418,12 @@ sub delete {
     ($self) = Krang::Template->find(template_id => $id) unless ref $self;
     $self->checkout;
 
+    # if the template has been deployed, undeploy it.
+    if ($self->{deployed}) {
+        my $publisher = Krang::Publisher->new();
+        $publisher->undeploy_template(template => $self);
+    }
+
     # first delete history for this object
     Krang::History->delete(object => $self);
 
