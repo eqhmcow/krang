@@ -7,6 +7,7 @@ CREATE TABLE schedule (
         context         TEXT,
         object_type     VARCHAR(255) NOT NULL,
         object_id       INT UNSIGNED NOT NULL,
+        initial_date     DATETIME,
         last_run        DATETIME,
         next_run        DATETIME NOT NULL,
         day_of_week     INT UNSIGNED,

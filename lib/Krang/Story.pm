@@ -1697,7 +1697,11 @@ sub serialize_xml {
         $set->add(object => $contrib, from => $self);
     }
 
-
+    # schedules
+    foreach my $schedule ( Krang::Schedule->find( object_type => 'story', object_id => $self->story_id ) ) {
+        $set->add(object => $schedule, from => $self);
+    }
+    
     # serialize elements
     $self->element->serialize_xml(writer => $writer,
                                   set    => $set);

@@ -1248,6 +1248,11 @@ sub serialize_xml {
         $set->add(object => $contrib, from => $self);
     }
 
+    # schedules
+    foreach my $schedule ( Krang::Schedule->find( object_type => 'media', object_id => $self->media_id ) ) {
+        $set->add(object => $schedule, from => $self);
+    }
+
     # all done
     $writer->endTag('media');
 }

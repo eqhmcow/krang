@@ -126,6 +126,7 @@ use constant SCH_DEBUG => $ENV{SCH_DEBUG} || 0;
 # Read-only fields
 use constant SCHEDULE_RO => qw(last_run
 			       next_run
+                               initial_date
 			       schedule_id);
 
 # Read-write fields
@@ -295,6 +296,8 @@ sub init {
     my $now = SCH_DEBUG ? $test_date : localtime;
     $self->{next_run} = $repeat eq 'never' ? $date :
       _next_run($now, $repeat, $day_of_week, $hour, $minute);
+    
+    $self->{initial_date} = $self->{next_run};
 
     return $self;
 }
@@ -531,6 +534,8 @@ Available search options are:
 
 =item action
 
+=item initial_date
+
 =item last_run
 
 =item next_run
@@ -683,6 +688,10 @@ sub find {
 
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
+    
+    debug(__PACKAGE__."->find() SQL: $query");
+    debug(__PACKAGE__."->find() SQL ARGS: @params");
+
     $sth->execute(@params);
 
     # holders for query results and new objects
@@ -707,7 +716,7 @@ sub find {
     }
 
     # thaw contexts, if necessary
-    unless ($count) {
+    unless ($count or $ids_only) {
         for (@schedules) {
             # store frozen value in '_frozen_context'
             $_->{_frozen_context} = $_->{context};
@@ -855,6 +864,114 @@ sub save {
     return $self;
 }
 
+=item $schedule->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+                                                                                     
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <schedule> linked to schema/schedule.xsd
+    $writer->startTag('schedule',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'schedule.xsd');
+
+    $writer->dataElement( schedule_id => $self->{schedule_id} );
+    $writer->dataElement( object_type => $self->{object_type} );
+    $writer->dataElement( object_id => $self->{object_id} );
+    $writer->dataElement( action => $self->{action} );
+    $writer->dataElement( repeat => $self->{repeat} );
+    my $next_run = $self->{next_run};
+    $next_run =~ s/\s/T/;
+    $writer->dataElement( next_run => $next_run );
+    my $initial_date = $self->{initial_date};
+    $initial_date =~ s/\s/T/;
+    $writer->dataElement( initial_date => $initial_date );
+    $writer->dataElement( last_run => $self->{last_run} ) if $self->{last_run}; 
+    $writer->dataElement( hour => $self->{hour} ) if defined $self->{hour};
+    $writer->dataElement( minute => $self->{minute} ) if defined $self->{minute};
+    $writer->dataElement( day_of_week => $self->{day_of_week} ) if defined $self->{day_of_week};
+    
+    # context
+    if (my $context = $self->{context}) {
+        my %c_hash = @$context;
+        for my $key (keys %c_hash ) {
+            $writer->startTag('context');
+            $writer->dataElement( key => $key );
+            $writer->dataElement( value => $c_hash{$key} );
+            $writer->endTag('context');
+                                                                                     
+            # $set->add(object => ($Krang::User->find( user_id => $c_hash{user_id}))[0], from => $self) if ($key eq 'user_id');
+            # $set->add(object => ($Krang::Alert->find( alert_id => $c_hash{alert_id}))[0], from => $self) if ($key eq 'alert_id');
+        }
+    }
+
+    # all done
+    $writer->endTag('schedule');
+}
+
+=item C<< $schedule = Krang::Schedule->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming schedule has matching fields with an existing schedule, it
+is ignored (not duplicated).
+
+Note that last_run is not imported, next_run is translated to 'date'.
+                                                                                     
+=cut
+                                                                                     
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set) = @args{qw(xml set)};
+
+    # divide FIELDS into simple and complex groups
+    my (%complex, %simple);
+                                                                                     
+    # strip out all fields we don't want updated or used.
+    @complex{qw(schedule_id object_id last_run context next_run initial_date)} = ();
+    %simple = map { ($_,1) } grep { not exists $complex{$_} } (SCHEDULE_RO,SCHEDULE_RW);
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml,
+                                  suppressempty => 1);
+    
+    my $new_id = $set->map_id(class => "Krang::".ucfirst($data->{object_type}), id => $data->{object_id});
+
+    my $initial_date = $data->{initial_date}; 
+    $initial_date =~ s/T/ /;
+
+    my %search_params = ( object_type => $data->{object_type}, 
+                          object_id => $new_id,
+                          action => $data->{action},
+                          repeat => $data->{repeat},
+                          initial_date => $initial_date );
+
+    $initial_date = Time::Piece->from_mysql_datetime($initial_date);
+    $search_params{hour} = $data->{hour} if $data->{hour};
+    $search_params{minute} = $data->{minute} if $data->{minute};   
+    $search_params{day_of_week} = $data->{day_of_week} if $data->{day_of_week}; 
+
+    debug(__PACKAGE__."->deserialize_xml() : finding schedules with params- ".join(',', (map { $search_params{$_} } keys %search_params) ));
+
+    # is there an existing object?
+    my $schedule = (Krang::Schedule->find( %search_params ))[0] || '';
+
+    if (not $schedule) {
+        $schedule = Krang::Schedule->new(   object_id => $new_id,
+                                            date => $initial_date,
+                                            (map { ($_,$data->{$_}) } keys %simple));
+        $schedule->save;
+    }
+
+    return $schedule;
+}
 
 =back
 

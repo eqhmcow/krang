@@ -1079,7 +1079,7 @@ sub serialize_xml {
     $writer->endTag('template');
 }
 
-=item C<< $template = Krang::Media->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+=item C<< $template = Krang::Template->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
 
 Deserialize XML.  See Krang::DataSet for details.
 
