@@ -297,13 +297,13 @@ sub file_path {
     if ($media_id >= 1000) { 
         my @media_digits = split(//, $media_id);
         push( @media_id_path, join('',$media_digits[0..2]) );
-        if ($media_digits[6]) {
+        if (defined $media_digits[6]) {
             push(@media_id_path, @media_digits[3..6]);
-        } elsif ($media_digits[5]) {
+        } elsif (defined $media_digits[5]) {
             push(@media_id_path, @media_digits[3..5]);
-        } elsif ($media_digits[4]) {
+        } elsif (defined $media_digits[4]) {
             push(@media_id_path,@media_digits[3..4]);
-        } elsif ($media_digits[3]) {
+        } elsif (defined $media_digits[3]) {
              push(@media_id_path,$media_digits[3]);
         }
     } 
@@ -343,13 +343,13 @@ sub save {
         if ($media_id >= 1000) {
             my @media_digits = split(//, $media_id);
             push( @media_id_path, join('',@media_digits[0..2]) );
-            if ($media_digits[6]) {
+            if (defined $media_digits[6]) {
                 push(@media_id_path, @media_digits[3..6]);
-            } elsif ($media_digits[5]) {
+            } elsif (defined $media_digits[5]) {
                 push(@media_id_path, @media_digits[3..5]);
-            } elsif ($media_digits[4]) {
+            } elsif (defined $media_digits[4]) {
                 push(@media_id_path,@media_digits[3..4]);
-            } elsif ($media_digits[3]) {
+            } elsif (defined $media_digits[3]) {
                  push(@media_id_path,$media_digits[3]);
             }
         } 
@@ -360,7 +360,7 @@ sub save {
 	# this file exists, new media was uploaded. copy to new position	
 	if (-f catfile($root,'tmp','media',$session_id,'tempfile')) {
 	   my $old_path = catfile($root,'tmp','media',$session_id,'tempfile');
-           my $new_path = catdir($root,'data','media',@media_id_path,$self->{version});
+           my $new_path = catdir($root,'data','media',@media_id_path,'v.'.$self->{version});
 	   mkpath($new_path);     
 	   $new_path = catfile($new_path,$self->{filename});
 	   move($old_path,$new_path) || croak("Cannot move to $new_path");	
@@ -383,13 +383,13 @@ sub save {
         if ($media_id >= 1000) {
             my @media_digits = split(//, $media_id);
             push( @media_id_path, join('',@media_digits[0..2]) );
-            if ($media_digits[6]) {
+            if (defined $media_digits[6]) {
                 push(@media_id_path, @media_digits[3..6]);
-            } elsif ($media_digits[5]) {
+            } elsif (defined $media_digits[5]) {
                 push(@media_id_path, @media_digits[3..5]);
-            } elsif ($media_digits[4]) {
+            } elsif (defined $media_digits[4]) {
                 push(@media_id_path,@media_digits[3..4]);
-            } elsif ($media_digits[3]) {
+            } elsif (defined $media_digits[3]) {
                  push(@media_id_path,$media_digits[3]);
             }
         }
@@ -457,6 +457,10 @@ only_ids - return only media_ids, not objects if this is set true.
 
 count - return only a count if this is set to true. Cannot be used with only_ids.
 
+=item *
+
+creation_date - in 'YYYYMMDD' format.  If array of two dates passed in, will use to find media created between those dates.
+
 =back
 
 =cut
@@ -480,6 +484,15 @@ sub find {
     }
   
     my $where_string = join ' and ', (map { "$_ = ?" } @where);
+
+    if ($args{'creation_date'}) {
+        if (ref($args{'creation_date'}) eq 'ARRAY') {
+            $where_string ? $where_string .= 'AND creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1] : $where_string = 'creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1];
+        } else {
+            $where_string ? $where_string .= 'AND creation_date = '.$args{'creation_date'} : $where_string = 'creation_date = '.$args{'creation_date'};
+        }
+    }
+
     my $select_string;
     if ($args{'count'}) {
         $select_string = 'count(*)';
