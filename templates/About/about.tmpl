@@ -1,0 +1,28 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<head>
+<title>About Krang</title>
+<link rel="stylesheet" href="krang.css" type="text/css">
+</head>
+<body style="background-image: none">
+
+<div class="dark-bar">About Krang</div>
+
+<p>
+This is Krang <b>v<tmpl_var version></b>.
+</p>
+
+<tmpl_if addons>
+<p>The following addons are installed:
+<ul>
+<tmpl_loop addons>
+  <li><tmpl_var name> <b>v<tmpl_var version></b></li>
+</tmpl_loop>
+</ul>
+</p>
+
+<tmpl_else>
+
+<p>There are no addons installed.</p>
+
+</tmpl_if>
