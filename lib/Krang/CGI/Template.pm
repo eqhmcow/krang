@@ -4,7 +4,6 @@ package Krang::CGI::Template;
 
 Krang::CGI::Template - Module what manages templates
 
-
 =head1 SYNOPSIS
 
   use Krang::CGI::Template;
@@ -734,7 +733,7 @@ sub view {
     my $self = shift;
     my $version = shift;
     my $q = $self->query();
-    my $t = $self->load_tmpl('view.tmpl');
+    my $t = $self->load_tmpl('view.tmpl', die_on_bad_params => 0);
     my $template_id = $q->param('template_id') ||
       croak("No 'template_id' specified.");
     my %find;
