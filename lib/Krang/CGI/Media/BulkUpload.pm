@@ -13,7 +13,7 @@ use Krang::Conf qw(KrangRoot FTPAddress FTPPort);
 use Krang::Session qw(%session);
 use Krang::Log qw(debug);
 use File::Temp qw/ tempdir /;
-use File::Spec::Functions qw(catdir catfile);
+use File::Spec::Functions qw(catdir catfile abs2rel);
 use File::Find;
 use IO::File;
 
@@ -51,14 +51,14 @@ Krang::CGI::Media::BulkUpload.
 # setup runmodes
 sub setup {
     my $self = shift;
-                                                                                
+    
     $self->start_mode('choose');
-                                                                                
+    
     $self->run_modes([qw(
                             choose
                             upload
                     )]);
-                                                                                
+    
     $self->tmpl_path('Media/BulkUpload/');
 }
                                                                                 
@@ -156,7 +156,9 @@ Returns number of uploaded media.
 =cut
 
 sub create_media {
-    my ($new_count, $update_count) = 0;
+    my $new_count = 0;
+    my $update_count = 0;
+
     foreach my $file (@$media_list) {
         if ($file->{media_id}) { # if media_id exists, update object
             my $media = (Krang::Media->find( media_id => $file->{media_id} ))[0];
@@ -256,15 +258,21 @@ sub open_media_source {
     if ($type eq 'tar') {
         my $tar_bin = `which tar`;
         chomp $tar_bin;
+        add_message('no_opener_binary', which => 'tar', type => 'tar'), return 0 if not ( -B $tar_bin);
         $source_open_statement = "$tar_bin -xf $filepath -C $tempdir";
     } elsif ($type eq 'zip') {
         my $unzip_bin = `which unzip`;
         chomp $unzip_bin;
+        add_message('no_opener_binary', which => 'unzip', type => 'zip'), return 0 if not ( -B $unzip_bin);
         $source_open_statement = "$unzip_bin -oq $filepath -d $tempdir";
     } elsif ($type eq 'sit') {
         my $unstuff_bin = `which unstuff`;
         chomp $unstuff_bin;
-        $source_open_statement = "$unstuff_bin -q -d=$tempdir $filepath";
+        add_message('no_opener_binary', which => 'unstuff', type => 'stuffit'), return 0 if not ( -B $unstuff_bin);        
+        # unstuff wants relative paths
+        my $rel_filepath = abs2rel( $filepath );
+        my $rel_tempdir = abs2rel( $tempdir );
+        $source_open_statement = "$unstuff_bin -q -d=$rel_tempdir $rel_filepath";
     }    
 
     debug(__PACKAGE__."->open_media_source - atempting to run '$source_open_statement'");
