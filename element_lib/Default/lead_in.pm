@@ -69,6 +69,8 @@ sub fill_template {
     my $story   = $args{element}->child('story')->data;
     my $publisher = $args{publisher};
 
+    return if not $story;
+
     my $ptitle = $story->element->child('promo_title')->data || $story->title;
     $tmpl->param( promo_title => $ptitle );
 
