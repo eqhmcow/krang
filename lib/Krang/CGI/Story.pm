@@ -411,7 +411,8 @@ sub edit {
         $template->param(version_selector => scalar
                          $query->popup_menu(-name    => 'version',
                                             -values  => [1 .. $story->version],
-                                            -default => $story->version));
+                                            -default => $story->version,
+                                            -override => 1));
 
         # permissions
         my %admin_perms = Krang::Group->user_admin_permissions();
