@@ -25,14 +25,16 @@
       <input type=hidden name=return_params value="<tmpl_var escape=HTML name="value">">
    </tmpl_loop>
 
-<div class="dark-bar">
-<span class="left">View Story</span>
-<span class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:goto_help()">Help</a></span>
-</div>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;VIEW STORY</td>
+  <td align="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
 
 <p>
 
-<table width=100% cellpadding=2 cellspacing=0>
+<table width=100% cellpadding=2 cellspacing=0 class="form-cell">
 
 <tr class=form-head>
 <td colspan=2>Information</td>
@@ -123,13 +125,13 @@
 </form>
 
 <div class=button-bar>
-  <tmpl_if can_edit><input type=button value="Edit" onclick="edit_story()"></tmpl_if>
+  <tmpl_if can_edit><input type=button value="Edit" onclick="edit_story()" class="button"></tmpl_if>
   <tmpl_if parent_path>
-    <input type=button value="Return" onclick="view_path('<tmpl_var parent_path>')">
+    <input type=button value="Return" onclick="view_path('<tmpl_var parent_path>')" class="button">
   <tmpl_else>
-     <input type=button value="Return" onclick="document.ret.submit()">
+     <input type=button value="Return" onclick="document.ret.submit()" class="button">
   </tmpl_if>
-</div>
+&nbsp;</div>
 
 </form>
 

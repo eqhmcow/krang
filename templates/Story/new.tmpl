@@ -16,23 +16,29 @@
 <form method=post name=new_story>
 <input type=hidden name=rm>
 
-
-<div class=dark-bar>New Story</div>
-<p>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;NEW STORY</td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
 
 <tmpl_loop alerts_loop>
   <div class="alert">* <tmpl_var alert></div>
 </tmpl_loop>
 
-<table width=100% cellpadding=0 cellspacing=0>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+  <td class="line"><img width="1" height="1"></td>
+  <td><table border="0" cellpadding="5" cellspacing="0" width="100%">
 
-<tr class=form-head>
+<tr>
 <td colspan=2>Properties</td>
 </tr>
 
 <tr>
-<td class=form-cell width=20%>* Type</td>
-<td class=form-cell width=80%>
+<td width="135">*Type:</td>
+<td>
     <tmpl_if bad_type><span class="invalid"></tmpl_if>
        <tmpl_var type_selector>
     <tmpl_if bad_type></span></tmpl_if>
@@ -40,22 +46,22 @@
 </tr>
 
 <tr>
-<td class=form-cell>* Title</td>
-<td class=form-cell>
+<td>*Title:</td>
+<td>
    <input <tmpl_if bad_title>class="invalid"</tmpl_if> type=text size=40 value="<tmpl_var escape=html title>" name=title>
 </td>
 </tr>
 
 <tr>
-<td class=form-cell>* Slug</td>
-<td class=form-cell>
+<td>*Slug:</td>
+<td>
    <input <tmpl_if bad_slug>class="invalid"</tmpl_if> type=text size=15 value="<tmpl_var escape=html slug>" name=slug>
 </td>
 </tr>
 
 <tr>
-<td class=form-cell>* Cover Date</td>
-<td class=form-cell>
+<td>*Cover Date:</td>
+<td>
     <tmpl_if bad_cover_date><span class="invalid"></tmpl_if>
        <tmpl_var cover_date_selector>
     <tmpl_if bad_cover_date></span></tmpl_if>
@@ -63,21 +69,29 @@
 </tr>
 
 <tr>
-<td class=form-cell>* Site / Category</td>
-<td class=form-cell valign=middle>
+<td>*Site/Category:</td>
+<td valign=middle>
     <tmpl_if bad_category_id><span class="invalid"></tmpl_if>
       <tmpl_var category_chooser>
     <tmpl_if bad_category_id></span></tmpl_if>
 </td>
 </tr>
 
+<tr><td><img width="1" height="10"></td></tr>
+
+</table>
+</td>
+<td class="line"><img width="1" height="1"></td>
+</tr>
+
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
 </table>
 
 <div class=button-bar>
-  <input type=button value="Create" onclick="create()">
-  <input type=reset value="Reset">
-  <input type=button value="Cancel" onclick="cancel()">
-</div>
+  <input type=button value="Create" onclick="create()" class="button">
+  <input type=reset value="Reset" class="button">
+  <input type=button value="Cancel" onclick="cancel()" class="button">
+&nbsp;&nbsp;&nbsp;</div>
 
 
 <tmpl_include footer.tmpl>
