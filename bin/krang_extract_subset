@@ -269,34 +269,23 @@ my $limit  = 50;
 my $offset = 0;
 
 
-while (my @media = Krang::Media->find(limit   => $limit,
-                                      offset  => $offset,
-                                      site_id => $id{site_id})
-      ) {
-    foreach my $m (@media) {
-        $set->add(object => $m);
-        $checked_media{$m->media_id} = 1;
-    }
+foreach my $m (Krang::Media->find(site_id => $id{site_id})) {
+    $set->add(object => $m);
+    $checked_media{$m->media_id} = 1;
 
-    $offset += $limit;
-    $stats{media} += ($#media + 1);
+    $stats{media}++;
 }
 
 
 $offset = 0;
 # add stories - this is where things get a little complicated.
-while (my @stories = Krang::Story->find(limit   => $limit,
-                                        offset  => $offset,
-                                        site_id => $id{site_id})
-      ) {
-    foreach my $s (@stories) {
-        my $clean = sanitize_story(story => $s, site_id => $id{site_id});
-        $checked_stories{$clean->story_id} = 1;
-        $set->add(object => $clean);
-    }
+foreach my $s (Krang::Story->find(site_id => $id{site_id})) {
 
-    $offset += $limit;
-    $stats{story} += ($#stories + 1);
+    my $clean = sanitize_story(story => $s, site_id => $id{site_id});
+    $checked_stories{$clean->story_id} = 1;
+    $set->add(object => $clean);
+
+    $stats{story}++;
 }
 
 
