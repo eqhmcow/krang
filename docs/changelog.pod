@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where unknown errors during story publish would trigger an
+exit without any kind of useful message.  The error is now printed to
+STDERR. [Peter]
+
+=item *
+
 Changed Krang to log and drop elements which exceed the maximum
 allowed by their parent element.  This mirrors the behavior for
 elements with illegal class names.  This allows for an easier element
@@ -21,6 +27,7 @@ This results in a sorted list or article types in the UI.  [Sam]
 
 =item *
 
+>>>>>>> 1.61
 Added a new hidden user called 'system' which is now used by
 Krang::Script.  This means you can now delete the 'admin' user with
 impunity. [Sam]
