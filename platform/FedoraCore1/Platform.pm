@@ -32,10 +32,11 @@ sub finish_installation {
     system($link_init) && die ("Can't link init script: $!");
 
     print "Setting $init_script to start on boot\n";
-    my $chkconfig = "chkconfig --add $init_script";
+    my $chkconfig_bin = $pkg->find_bin(bin => 'chkconfig');
+    my $chkconfig = "$chkconfig_bin --add $init_script";
     system($chkconfig) && die("Can't chkconfig --add $init_script: $!");
 
-    $chkconfig = "chkconfig $init_script on";
+    $chkconfig = "$chkconfig_bin $init_script on";
     system($chkconfig) && die("Can't chkconfig $init_script on: $!");
 
     chdir $old;

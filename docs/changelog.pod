@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in the FedoraCore1 platform library that would fail to find
+chkconfig unless it was in the user's PATH. [Sam]
+
+=item *
+
 Fixed a bug where elements using the default Krang::ElementClass
 input_form() implementation would eventually cause browsers to slow to
 a crawl and eventually crash.  The whole sordid tale is here:
