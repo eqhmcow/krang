@@ -35,7 +35,7 @@ dist:
 
 clean:	bench_clean
 	- find lib/ -mindepth 1 -maxdepth 1 | grep -v Krang | grep -v CVS | xargs rm -rf
-	- rm -rf apache/*
+	- find apache/ -mindepth 1 -maxdepth 1 | grep -v CVS | xargs rm -rf
 	- rm data/build.db
 
 TAGS:	
