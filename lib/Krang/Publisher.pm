@@ -1339,16 +1339,16 @@ sub _build_story_all_categories {
 
     my @categories = $story->categories();
 
-    # log history
-    if ($self->{is_publish}) {
-        add_history(object => $story, action => 'publish');
-    }
-
     # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
     my @paths;
     foreach (my $i = 0; $i <= $#categories; $i++) {
         push @paths, $self->_build_story_single_category(story    => $story,
                                                          category => $categories[$i]);
+    }
+
+    # log history
+    if ($self->{is_publish}) {
+        add_history(object => $story, action => 'publish');
     }
 
     return @paths;
