@@ -92,10 +92,20 @@ sub load_query_data {
 
     my $fh = $query->upload($param);
     return unless $fh;
-    
+
+    # find the category_id for the containing object
+    my $object = $element->object;
+    my $category_id;
+    if ($object->isa('Krang::Story')) {
+        $category_id = $object->category()->category_id();
+    } elsif ($object->isa('Krang::Category')) { 
+        $category_id = $object->category_id();
+    } else {
+        croak("Expected a story or a category in element->object!");
+    }
+
     my $media = Krang::Media->new(title => $filename,
-                                  category_id => 
-                                  $element->story()->category()->category_id(),
+                                  category_id => $category_id,
                                   filename => $filename,
                                   filehandle => $fh);
 

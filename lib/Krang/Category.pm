@@ -110,6 +110,7 @@ use Krang::Media;
 use Krang::Story;
 use Krang::Template;
 use Krang::Group;
+use Krang::Log qw(debug);
 
 #
 # Package Variables
@@ -398,6 +399,8 @@ the given category object.  You might want to handle the exception thusly:
        "]"} keys %$dependents);
      croak("The following object classes and ids rely upon this " .
 	   "category:\n\t$dependents);
+ } else {
+     die $@;
  }
 
 =cut
@@ -594,6 +597,8 @@ characters must surround the sub-string).  The valid search fields are:
 
 =item * url
 
+=item * simple_search
+
 =back
 
 Additional criteria which affect the search results are:
@@ -671,12 +676,23 @@ sub find {
         my $like = 1 if $arg =~ /_like$/;
         ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
 
-        push @invalid_cols, $arg unless exists $category_cols{$lookup_field};
+        push @invalid_cols, $arg unless exists $category_cols{$lookup_field}
+          or $lookup_field eq 'simple_search';
 
         if ($arg eq 'category_id' && ref $args{$arg} eq 'ARRAY') {
             my $tmp = join(" OR ", map {"category_id = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
+        } elsif ($arg eq 'simple_search') {
+            my @words = split(/\s+/, $args{'simple_search'});            
+            foreach my $word (@words) {
+                my $and = defined $where_clause && $where_clause ne '' ?
+                  ' AND' : '';
+                $where_clause .= 
+                  "$and (" . join(" OR ", 
+                                  "url LIKE ?", "category_id = ?") . ")";
+                push(@params, '%'.$word.'%', $word);
+            }
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
@@ -706,6 +722,9 @@ sub find {
     } elsif ($offset) {
         $query .= " LIMIT $offset, -1";
     }
+
+    debug(__PACKAGE__ . "::find() SQL: " . $query);
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @params));
 
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
@@ -916,7 +935,7 @@ sub _build_url {
     return $url;
 }
 
-=item C<< $category->serialize_xml(writer => $writer, set => $set) >>
+=item * C<< $category->serialize_xml(writer => $writer, set => $set) >>
 
 Serialize as XML.  See Krang::DataSet for details.
 
@@ -952,7 +971,7 @@ sub serialize_xml {
     $writer->endTag('category');
 }
 
-=item C<< $category = Krang::Category->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+=item * C<< $category = Krang::Category->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
 
 Deserialize XML.  See Krang::DataSet for details.
 
@@ -1027,7 +1046,7 @@ sub deserialize_xml {
     return $cat;
 }
 
-=item C<< $data = Storable::freeze($category) >>
+=item * C<< $data = Storable::freeze($category) >>
 
 Serialize a category.  Krang::Category implements STORABLE_freeze() to
 ensure this works correctly.
@@ -1049,7 +1068,7 @@ sub STORABLE_freeze {
     return $data;
 }
 
-=item C<< $category = Storable::thaw($data) >>
+=item * C<< $category = Storable::thaw($data) >>
 
 Deserialize a frozen story.  Krang::Category implements STORABLE_thaw()
 to ensure this works correctly.
@@ -1071,6 +1090,8 @@ sub STORABLE_thaw {
 
     return $self;
 }
+
+=back
 
 =head1 TO DO
 

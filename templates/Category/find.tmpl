@@ -1,0 +1,74 @@
+<tmpl_include /header.tmpl>
+
+<script language="Javascript">
+<!-- //
+
+    function add_category () {
+        var myform = document.forms["add_category_form"];
+        myform.submit();
+    }
+
+    function edit_category (category_id) {
+        var myform = document.forms["edit_category_form"];
+        myform.category_id.value = category_id;
+        myform.submit();
+    }
+
+    function delete_selected () {
+        if (confirm("Are you SURE you want to delete these categories?")) {
+            var myform = document.forms["krang_pager_form"];
+            myform.rm.value = 'delete_selected';
+            myform.submit();
+        }
+    }
+
+
+// -->
+</script>
+
+<form name="add_category_form" method="POST">
+<input type="hidden" name="rm" value="new_category">
+</form>
+
+<form name="edit_category_form" method="POST">
+<input type="hidden" name="rm" value="edit">
+<input type="hidden" name="category_id" value="">
+</form>
+
+<div class="dark-bar">Category List</div>
+
+<table width="100%">
+<form name="search_form" method="POST">
+<tr><td class="form-head">
+SEARCH<br />
+<input type="hidden" name="rm" value="find">
+<input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+<input type="submit" value="Search" class="button">
+</td></tr>
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+</form>
+</table>
+
+
+<br />
+<b><a href="javascript:add_category()">Add A Category</a></b>
+<br />
+
+
+<!-- START Krang::HTMLPager output -->
+<tmpl_var pager_html>
+<!-- END Krang::HTMLPager output -->
+
+
+<tmpl_if row_count>
+  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+</tmpl_if>
+
+
+<tmpl_include /footer.tmpl>

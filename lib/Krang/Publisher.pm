@@ -635,11 +635,9 @@ sub _assemble_pages {
     $self->{story}    = $story;
 
     # get the HTML content for the story & category..
-    my $article_output  = $story_element->class->publish(element   => $story_element,
-                                                         publisher => $self);
+    my $article_output  = $story_element->publish(publisher => $self);
 
-    my $category_output = $category_element->class->publish(element   => $category_element,
-                                                            publisher => $self);
+    my $category_output = $category_element->publish(publisher => $self);
 
     # break the story into pages
     my @article_pages = split(/${\PAGE_BREAK}/, $article_output);
