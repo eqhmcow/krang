@@ -3,8 +3,24 @@
 This document contains a list of changes for each release of Krang.
 
 
+=head2 v1.025 - Under Development
 
-=head2 v1.024 - Under Development
+=over
+
+=item *
+
+Fixed a bug in the upgrade process of 1.024.  Users of 1.024 should
+immediately upgrade to 1.025.  [Peter]
+
+=item *
+
+C<bin/krang_publish> and C<bin/krang_delete> now properly interact
+with hidden stories. [Peter]
+
+=back
+
+
+=head2 v1.024 - September 24, 2004
 
 =over
 
