@@ -161,16 +161,13 @@ sub get {
     $CACHE_POS{$key} = $#CACHE;
 
     # need to compress the cache?
-    if (@CACHE > $CACHE_SIZE * 3) {
+    if (@CACHE > $CACHE_SIZE * 10) {
         my $spot = 0;
         foreach my $x (0 .. $#CACHE) {
             next unless defined $CACHE[$x];
-            if ($x == $spot) {
-                $spot++;
-            } else {
-                $CACHE[$spot] = $CACHE[$x];
-                $CACHE_POS{[$CACHE[$spot][KEY]]} = $spot++;
-            }            
+            $CACHE[$spot] = $CACHE[$x];
+            $CACHE_POS{$CACHE[$spot][KEY]} = $spot;
+            $spot++;
         }
         $#CACHE = $spot - 1;
     }
