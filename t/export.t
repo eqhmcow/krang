@@ -25,7 +25,8 @@ my $story = Krang::Story->new(categories => [$category],
                               slug       => "test",
                               class      => "article");
 $story->save();
-END { $story->delete() }
+
+END { $story->delete(); }
 
 # export the story
 my $krang_export = catfile(KrangRoot, 'bin', 'krang_export');

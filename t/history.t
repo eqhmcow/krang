@@ -28,7 +28,7 @@ my ($category) = Krang::Category->find(site_id => $site->site_id());
 my $category_id = $category->category_id();
 
 # create new media object
-my $media = Krang::Media->new(title => 'test media object', category_id => $category_id);
+my $media = Krang::Media->new(title => 'test media object', category_id => $category_id, media_type_id => 1);
 isa_ok($media, 'Krang::Media');
 
 END {
