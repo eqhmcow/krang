@@ -37,7 +37,7 @@ Krang::Site - a means access to information on sites
 
   # a hash of search parameters
   my %params =
-  ( ascend => 1,      		  # sort results in ascending order
+  ( order_desc => 'asc',      	  # sort results in ascending order
     limit => 5,       		  # return 5 or less site objects
     offset => 1, 	          # start counting result from the
 				  # second row

@@ -32,7 +32,7 @@ Krang::Category - a means access to information on categories
 
   # a hash of search parameters
   my %params =
-  ( ascend => 1,		# sort results in ascending order
+  ( order_desc => 'asc',	# sort results in ascending order
     limit => 5,			# return 5 or less category objects
     offset => 1, 	        # start counting result from the
 				# second row
@@ -81,8 +81,7 @@ use Krang::DB qw(dbh);
 # Constants
 ############
 # Read-only fields
-use constant CATEGORY_RO => qw(creation_date
-			       category_id
+use constant CATEGORY_RO => qw(category_id
 			       name
 			       parent_id
 			       path
@@ -123,10 +122,6 @@ The available fields for a category object are:
 =item * category_id (read-only)
 
 The object's id in the category table
-
-=item * creation_date (read-only)
-
-The datetime when this object was first saved to the database
 
 =item * element_id
 
@@ -224,6 +219,44 @@ SQL
 }
 
 
+=item * @info = $category->duplicate_check()
+
+This method checks the database to see if any existing site objects possess any
+of the same values as the one in memory.  If this is the case an array
+containing the 'site_id' and the name of the duplicate field is returned
+otherwise the array will be empty.
+
+=cut
+
+sub duplicate_check {
+    my $self = shift;
+    my $id = $self->{category_id};
+    my @id_info;
+    my @save_fields = grep {$_ ne 'category_id'} keys %category_cols;
+
+    my $query = "SELECT category_id, name, path FROM category WHERE " .
+      join(" OR ", map {"$_ = ?"} @save_fields) . " LIMIT 1";
+    my $dbh = dbh();
+    my $sth = $dbh->prepare($query);
+    $sth->execute(map {$self->{$_}} @save_fields);
+
+    # reference into which result are fetched
+    my $row;
+    $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
+    while ($sth->fetch()) {
+        for (@save_fields) {
+            if ($self->{$_} eq $row->{$_}) {
+                push @id_info, $row->{category_id}, $_;
+                last;
+            }
+        }
+    }
+    $sth->finish();
+
+    return @id_info;
+}
+
+
 =item * @categories = Krang::Category->find( %params )
 
 =item * @categories = Krang::Category->find( category_id => [1, 1, 2, 3, 5] )
@@ -240,8 +273,6 @@ characters must surround the sub-string).  The valid search fields are:
 =over 4
 
 =item * category_id
-
-=item * creation_date
 
 =item * element_id
 
@@ -304,8 +335,7 @@ sub find {
     my ($fields, @params, $where_clause);
 
     # grab ascend/descending, limit, and offset args
-    my $ascend = delete $args{ascend} || '';
-    my $descend = delete $args{descend} || '';
+    my $ascend = uc(delete $args{order_desc}) || ''; # its prettier w/uc() :)
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
     my $order_by = delete $args{order_by} || 'category_id';
@@ -353,8 +383,7 @@ sub find {
 
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE $where_clause" if $where_clause;
-    $query .= " ORDER BY $order_by" if $order_by;
-    $query .= $ascend ? " ASC" : ($descend ? " DESC" : "");
+    $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
     if ($limit) {
@@ -413,25 +442,13 @@ sub save {
     my @lookup_fields = qw/name path/;
     my @save_fields = grep {$_ ne 'category_id'} keys %category_cols;
 
-    # prevent creation of duplicate objects or saving of duplicate fields
-    my $query = "SELECT category_id, name, path FROM category WHERE " .
-      join(" OR ", map {"$_ = ?"} @lookup_fields) . " LIMIT 1";
+    # check for duplicates
+    my ($site_id, $field) = $self->duplicate_check();
+    croak(__PACKAGE__ . "->save(): field '$field' is a duplicate of site id" .
+          " '$site_id'.") if defined $site_id;
+
+    my $query;
     my $dbh = dbh();
-    my $sth = $dbh->prepare($query);
-    $sth->execute(map {$self->{$_}} @lookup_fields);
-
-    # reference into which result are fetched
-    my $row;
-    $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
-    while ($sth->fetch()) {
-        for (@lookup_fields) {
-            croak(__PACKAGE__ . "->save(): Object field '$_' is the same " .
-                  "as that of object id '$row->{category_id}'.")
-              if $self->{$_} eq $row->{$_};
-        }
-    }
-    $sth->finish();
-
     if ($id) {
         $query = "UPDATE category SET " .
           join(", ", map {"$_ = ?"} @save_fields) .
@@ -447,10 +464,6 @@ sub save {
               "'$self->{site_id}'";
         }
         my ($path) = $dbh->selectrow_array($query);
-
-        # set fields
-        my $time = localtime();
-        $self->{creation_date} = $time->strftime("%Y-%m-%d %T");
         $self->{path} = File::Spec->catdir($path, $self->{name});
 
         # build query
