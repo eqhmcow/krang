@@ -89,14 +89,17 @@ sub update_prefs {
         Krang::MyPref->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size");
     } 
 
-    if ($q->param('new_password')) {
-        my $user_id = $ENV{REMOTE_USER};
-        my $user = (Krang::User->find( user_id => $user_id ))[0];
-        $user->password($q->param('new_password'));
-        $user->save;
-        add_message("changed_password");
+    if (my $pass = $q->param('new_password')) {
+        # check minimum password length.
+        if (length $pass < 6) { add_message('error_password_length'); }
+        else {
+            my $user_id = $ENV{REMOTE_USER};
+            my $user = (Krang::User->find( user_id => $user_id ))[0];
+            $user->password($q->param('new_password'));
+            $user->save;
+            add_message("changed_password");
+        }
     }
- 
     return $self->edit();
 }
 

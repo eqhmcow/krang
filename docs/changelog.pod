@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added password-length check to My Preferences, enforcing the
+6-character minimum length on passwords that exists everywhere else in
+the UI.  [Peter]
+
+=item *
+
 Fixed error reporting in the publish process - error messages are
 displayed in a more user-friendly fashion.[Peter]
 
