@@ -8,11 +8,13 @@ use Krang::Schedule;
 use Krang::User;
 use Krang::Story;
 use Krang::Category;
-use Krang::Conf qw(SMTPServer FromAddress);
+use Krang::Conf qw(SMTPServer FromAddress KrangRoot);
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
 use Mail::Sender;
+use HTML::Template;
+use File::Spec::Functions qw(catfile);
 
 # constants 
 use constant FIELDS => qw( alert_id user_id action desk_id category_id );
@@ -314,6 +316,8 @@ not $valid_params{$param};
 
 =item check_alert()
 
+Check to see if given criteria matches a set user alert.
+
 This method takes two arguments, a Krang::History object and a Krang::Story object. 
 
 =cut 
@@ -355,6 +359,8 @@ sub check_alert {
 
 =item Krang::Alert->send( alert_id => $alert_id, user_id => $user_id, story_id => $story_id )
 
+Sends an alert to email address.  Message sent is formatted by template at KrangRoot/templates/Alert/message.tmpl
+
 =cut 
 
 sub send {
@@ -381,26 +387,30 @@ sub send {
 
     croak("No valid Krang::Story object found with id $story_id") if not ( ref $story eq 'Krang::Story');
 
-    my $message = "A Krang alert has been triggered for story $story_id ('".$story->title."') \nby user $user_id ('".$user->first_name.' '.$user->last_name."').\n\n";
+    my $template = HTML::Template->new(filename => catfile(KrangRoot, 'templates', 'Alert', 'message.tmpl'));
 
-    $message .= "Below is the criteria which triggered this alert:\n";
-    $message .= "\nACTION: ".$alert->action;
-    $message .= "\nCATEGORY: ".$alert->category_id."('".(Krang::Category->find(category_id => $alert->category_id))[0]->dir."')" if $alert->category_id;
-    $message .= "\nDESK: ".$alert->desk_id."('".(Krang::Desk->find(desk_id => $alert->desk_id))[0]->name."')" if $alert->desk_id; 
-    $message .= "\nUSER TRIGGERED BY: $user_id ('".$user->first_name.' '.$user->last_name."')";   
+    $template->param(   story_id => $story_id, 
+                        story_title => $story->title,
+                        first_name => $user->first_name,
+                        last_name => $user->last_name,
+                        action => $alert->action );
+
+    $template->param( category => (Krang::Category->find(category_id => $alert->category_id))[0]->url ) if $alert->category_id;
+
+    $template->param( desk => (Krang::Desk->find(desk_id => $alert->desk_id))[0]->name ) if $alert->desk_id; 
 
     # mail only if user has email address defined or being tested
     my $email_to = $ENV{KRANG_TEST_EMAIL} || $to_user->email;
     if ($email_to) { 
-        debug(__PACKAGE__."->send() - sending email to ".$email_to.": $message");
+        debug(__PACKAGE__."->send() - sending email to ".$email_to.": ".$template->output);
         my $sender = new Mail::Sender {smtp => SMTPServer, from => FromAddress};
 
         $sender->MailMsg({  to => $email_to, 
-                            subject => "Krang alert for action ".$alert->action,
-                            msg => $message,
+                            subject => "Krang alert for action '".$alert->action."'",
+                            msg => $template->output,
                         }); 
     } else {
-        info(__PACKAGE__."->send() - no email address found for user: alert not sent: $message");        
+        info(__PACKAGE__."->send() - no email address found for user: alert not sent: ".$template->output);        
     }
     
 }
