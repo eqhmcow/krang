@@ -3,6 +3,11 @@ use strict;
 use warnings;
 use Krang::Log qw(critical debug);
 
+# make Exception::Class errors print a stack trace when not caught
+use Exception::Class;
+Exception::Class::Base->Trace(1);
+
+# setup die() and warn() handlers
 BEGIN {
     $SIG{__DIE__} = sub {
         my $in_eval = 0;
@@ -41,6 +46,10 @@ When you use this module, $SIG{__DIE__} and $SIG{__WARN__} handlers
 are setup such that all die() and warn() messages are sent to
 Krang::Log.  This does not alter their operation - die() still really
 die()s and warn() still prints to STDERR.
+
+This module also turns on the Trace option for all Exception::Class
+usage in Krang.  This causes a stack trace to be printed when an
+unhandled exception is printed.
 
 Note that Krang::Script uses Krang::ErrorHandler, so test scripts
 don't need to use this module explicitely.  However, CGI scripts do
