@@ -1,7 +1,7 @@
 <tmpl_if display><span id="<tmpl_var name>_url"><tmpl_if category_url><tmpl_var category_url><tmpl_else>No site / category selected.</tmpl_if></span></tmpl_if>
 <input type=hidden id="<tmpl_if formname><tmpl_var formname>.</tmpl_if><tmpl_var field>" name="<tmpl_var field>" value="<tmpl_var category_id>">
 <tmpl_var chooser>
-<input type=button value="Clear" class="button" onclick="<tmpl_var name>_clear_category()">
+<input type="button" value="Clear" class="hpts-button" onclick="<tmpl_var name>_clear_category()">
 
 <script language="javascript">
   function <tmpl_var name>_choose_category (packed) {

@@ -345,8 +345,8 @@ td, th {
 .no-border { 
   background-color: #ffffff;
   color:            #333333;
-  padding: 4px 12px 0px 10px;
-  height:           20px;
+  padding: 3px 12px 3px 10px;
+  height:           auto;
 }
 .no-border p.left {
 	float:           left;

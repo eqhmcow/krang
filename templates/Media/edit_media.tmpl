@@ -66,7 +66,7 @@
 // -->
 </script>
 
-<div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>New<tmpl_else>Edit</tmpl_if> Media</p><p class="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+<div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>New Media</p><p class="right"><a href="javascript:openWin('/help/media_new.html')">Help</a>&nbsp;</p></div><tmpl_else>Edit Media</p><p class="right"><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | <a href="javascript:openWin('/help/media_edit.html')">Help</a>&nbsp;</p></div></tmpl_if>
 
 <!-- publish_media form -->
 <form name="publish_media_form" method="GET" action="publisher.pl">

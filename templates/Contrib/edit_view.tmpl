@@ -43,7 +43,7 @@
 </script>
 
 
-<div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if> Contributor</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+<div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if> Contributor</p><p class="right"><a href="javascript:openWin('/help/contributor.html')">Help</a>&nbsp;</p></div>
 
 <div class="box">
 <form name="edit_contrib_form" method="POST" enctype="multipart/form-data">
@@ -123,7 +123,7 @@
                   <a href="javascript:preview_media(<tmpl_var media_id>)">
                   <tmpl_var escape=HTML filename></a>
                   <tmpl_var escape=HTML file_size>
-                  <br></tmpl_if>
+                 <br></tmpl_if>
                 <input type="file" name="media_file" size="32" class="button">
     </td>
 </tr>

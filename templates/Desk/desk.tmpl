@@ -95,7 +95,7 @@
 
 </script>
 
-<div class="dark-bar"><p class="left"><tmpl_var desk_name> Desk</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+<div class="dark-bar"><p class="left"><tmpl_var desk_name> Desk</p><p class="right"><a href="javascript:openWin('/help/desk.html')">Help</a>&nbsp;</p></div>
 
 <!-- publish_story form -->
 <form name="publish_story_form" method="GET" action="publisher.pl">
@@ -151,7 +151,7 @@
            <tmpl_if may_edit>
                <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button"></tmpl_if>
                <input type="button" value="Check Out" onclick="checkout('<tmpl_var id>')" class="button">
-                 <br><br>
+                <br><br>
                <input type="button" value="Move" onclick="move('<tmpl_var id>')" class="button"> to <select name="move_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>" <tmpl_if is_selected>SELECTED</tmpl_if>><tmpl_var choice_desk_name> Desk</tmpl_loop></select>
           </tmpl_if>
        </td>
