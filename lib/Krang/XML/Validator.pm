@@ -9,6 +9,8 @@ use File::Copy qw(copy);
 use Cwd qw(fastcwd);
 use File::Spec::Functions qw(catdir catfile splitdir);
 use Krang::Conf qw(KrangRoot);
+use XML::SAX::ParserFactory;
+use XML::Validator::Schema;
 
 =head1 NAME
 
@@ -53,35 +55,8 @@ of them.
 sub new {
     my $pkg = shift;
     my $self = bless({}, $pkg);
-    local $_;
-
-    # create a temp directory to hold links to .xsd files
-    my $temp_dir = tempdir( DIR => catdir(KrangRoot, 'tmp')); 
-    $self->{temp_dir} = $temp_dir;
-
-    # switch into it
-    my $old_dir = fastcwd;
-    chdir($temp_dir) or die "Unable to chdir to '$temp_dir': $!";
-    
-    # prepare links to schema documents so schema processing can work
-    my @links;
-    File::Find::find(sub { 
-             return unless /\.xsd$/; 
-             my $link = catfile($temp_dir, $_);
-             link(catfile(KrangRoot, "schema", $_), $link)
-               or die "Unable to link $_ to $link : $!";
-         }, catdir(KrangRoot, "schema"));
-
-    # gotta get back
-    chdir($old_dir) or die "Can't get back to '$old_dir' : $!";
 
     return $self;
-}
-
-# zap the temp dir with the object
-sub DESTROY {
-    my $self = shift;
-    rmtree($self->{temp_dir}) if $self->{temp_dir};
 }
 
 =item C<< ($ok, $msg) = $validator->validate(path => 'foo.xml') >>
@@ -97,57 +72,40 @@ sub validate {
     my $path = $arg{path};
     croak("Missing required path parameter") unless $path;
     croak("Specified path '$path' does not exist") unless -e $path;
-    my $temp_dir = $self->{temp_dir};
-    my $filename = (splitdir($path))[-1];
 
-    # copy the file into the temp dir (maybe link instead?)
-    copy($path, catfile($temp_dir, $filename))
-      or croak("Unable to copy $path into $temp_dir/$filename: $!");
-
-    # follow it
-    my $old_dir = fastcwd;
-    chdir($temp_dir) or die "Unable to chdir to '$temp_dir': $!";
-
-    # make sure it has an XML Schema declaration
-    open(XML, $filename) or die "Unable to open $filename: $!";
-    my $found = 0;
+    # pull the schema name out of the SchemaLocation directive
+    open(XML, $path) or die "Unable to open $path: $!";
+    my $xsd;
     while(defined(my $line = <XML>)) {
-        next unless $line =~ /xmlns:xsi.*xsi:noNamespaceSchemaLocation/;
-        $found = 1;
+        next unless $line =~ /noNamespaceSchemaLocation\s*=\s*"(.*?)"/;
+        $xsd = $1;
         last;
     }
     close XML or die $!;
-    return (0, "$filename is missing xmlns:xsi and xsi:noNamespaceSchemaLocation attributes necessary for schema validation.")
-      unless $found;
+    return (0, "$path is missing noNamespaceSchemaLocation attribute necessary for schema validation.")
+      unless $xsd;
 
-    # call out to DOMCount for the validation    
-    my $DOMCount = catfile(KrangRoot, 'xerces', 'DOMCount');
-    local $ENV{LD_LIBRARY_PATH} = catdir(KrangRoot, 'xerces', 'lib') . 
-      ($ENV{LD_LIBRARY_PATH} ? ":$ENV{LD_LIBRARY_PATH}" : "");
-    my $error = `$DOMCount -n -s -f $filename 2>&1`;
+    # run the file through the schema validator
+    my $validator = XML::Validator::Schema->new(file => catfile(KrangRoot, 
+                                                                "schema",
+                                                                $xsd),
+                                                cache => 1,
+                                               );
 
-    # gotta get back
-    chdir($old_dir) or die "Can't get back to '$old_dir' : $!";
+    my $parser = XML::SAX::ParserFactory->parser(Handler => $validator);
 
-    # success?
-    return (1, undef) unless $error =~ /Error/;
+    # make sure we didn't get the PurePerl parser
+    die "XML::SAX::ParserFactory returned an XML::SAX::PurePerl, which is too slow to use."
+      if $parser->isa('XML::SAX::PurePerl');
 
-    # fixup error message
-    $error =~ s{\Q$temp_dir\E/?}{}g;
-    $error =~ s!Errors occurred, no output available!!g;
-    $error =~ s!^\s+!!;
-    $error =~ s{\s+$}{};
+    eval { $parser->parse_uri($path); };
 
-    # return the message
-    return (0, $error);
+    # all done, return results
+    return (1, undef) unless $@;
+    return (0, $@);
 }
 
 =back
-
-=head1 TODO
-
-Implement better XML Schema validation than calling out to DOMCount.
-Inline::C, XML::Xerces, anything...
 
 =cut
 
