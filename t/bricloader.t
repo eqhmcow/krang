@@ -3,12 +3,75 @@ use warnings;
 
 use Carp qw(croak);
 use Data::Dumper;
-use File::Spec::Functions qw(catfile);
-use Test::More qw(no_plan);
+use File::Path qw(rmtree);
+use File::Spec::Functions qw(catdir catfile);
+use IPC::Run qw(run);
+
+BEGIN {
+    # check for Bricolage environment vars
+    eval "use Test::More skip_all => 'Bricolage vars not defined.'"
+      unless ((grep {defined $ENV{"BRICOLAGE_$_"}}
+               (qw/PASSWORD ROOT SERVER USERNAME/)) == 4 ? 1 : 0);
+
+    ##### Running Bric Check #####
+    $_ = catdir($ENV{BRICOLAGE_ROOT}, "lib");
+    unshift(@INC, $ENV{PERL5LIB} = defined $ENV{PERL5LIB} ?
+            "$ENV{PERL5LIB}:$_" : $_) if -e $_;
+
+    # make sure Bric is found
+    eval "use Bric";
+    die "Cannot Load Bricolage: $@." if $@;
+
+    use Bric::Config qw(:apachectl);
+
+    # assume it's running if the pid_file is present, can't call kill do verify
+    # if we don't own the process :(.
+    eval "use Test::More skip_all => 'Bricolage is not running';"
+      unless -e PID_FILE;
+    ##### Running Bric Check #####
+
+    # create lasistes element set
+    my $root = $ENV{KRANG_ROOT};
+    my $set = 'lasites';
+    unless (catdir($root, 'element_lib', $set)) {
+        # will pull from Bric directly once something is modified to create a
+        # category element
+        my $xml = catfile($root, 't', 'bricloader', 'laelements.xml');
+
+        my @command = (catfile($root, "bin", "krang_bric_eloader"),
+                       "--set" => $set,
+                       "--xml" => $xml,
+                      );
+        my $in;
+        run(\@command, \$in, \*STDOUT, \*STDERR)
+          or die "Unable to run ". catfile($root, "bin", "krang_bric_eloader");
+    }
+}
 
 use Krang::Script;
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::DataSet;
+use Krang::ElementLibrary;
+
+BEGIN {
+    # lasites instance check
+    my $found;
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        if (InstanceElementSet eq 'lasites') {
+            $found = 1;
+            last;
+        }
+    }
+
+    unless ($found) {
+        eval "use Test::More skip_all => 'lasites instance not present';";
+    } else {
+        eval "use Test::More qw(no_plan);";
+    }
+    die $@ if $@;
+
+}
 
 BEGIN {
     use_ok('Krang::BricLoader::DataSet');
@@ -48,10 +111,18 @@ is($@, '', 'Media constructor did not croak :)');
 $set->add(object => $_) for @media;
 
 
+# add some stories
+my $story_path = catfile(KrangRoot, 't', 'bricloader', 'lastories.xml');
+eval {@stories = Krang::BricLoader::Story->new(path => $story_path);};
+is($@, '', 'Story constructor did not croak :)');
+$set->add(object => $_) for @stories;
+
+
 # write output
 my $kds = catfile(KrangRoot, 'tmp', 'bob.kds');
 $set->write(path => $kds);
 
+END {unlink($kds);}
 
 # validate output
 eval {
@@ -66,9 +137,8 @@ eval {
     my $categories = scalar @categories;
     my $media = scalar @media;
     my $sites = scalar @sites;
-#    my $stories = scalar @stories;
-#    my $sum = $stories + $sites + $media + $categories;
-    my $sum = $sites + $media + $categories;
+    my $stories = scalar @stories;
+    my $sum = $stories + $sites + $media + $categories;
     is(scalar @objects, $sum, 'Verify dataset object count');
 
     # import test
@@ -79,10 +149,10 @@ eval {
        'Verified imported Category count');
     is((grep {$_->isa('Krang::Media')} @imported), $media,
        'Verified imported Media count');
-#    is((grep {$_->isa('Krang::Story')} @imported), $stories,
-#       'Verified imported Story count');
+    is((grep {$_->isa('Krang::Story')} @imported), $stories,
+       'Verified imported Story count');
     END {
-#        $_->delete for (grep {$_->isa('Krang::Story')} @imported);
+        $_->delete for (grep {$_->isa('Krang::Story')} @imported);
         $_->delete for (grep {$_->isa('Krang::Media')} @imported);
         $_->delete for (grep {$_->isa('Krang::Category') && $_->dir ne '/'}
                         @imported);
@@ -93,16 +163,10 @@ eval {
 croak $@ if $@;
 
 
-# add some stories
-my $story_path = catfile(KrangRoot, 't', 'bricloader', 'lastories.xml');
-eval {@stories = Krang::BricLoader::Story->new(path => $story_path);};
-is($@, '', 'Story constructor did not croak :)');
-$set->add(object => $_) for @stories;
-
-
-
 END {
-    unlink($kds);
+    # remove created element_lib
+    my $path = catdir(KrangRoot, 'element_lib', $set);
+    rmtree([$path]) if -e $path;
 }
 
 __END__
