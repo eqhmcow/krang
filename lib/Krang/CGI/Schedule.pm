@@ -10,17 +10,7 @@ use Krang::Schedule;
 use Krang::Message qw(add_message);
 use Krang::Session qw(%session);
 use Krang::Log qw(debug);
-use Krang::Widget qw(datetime_chooser decode_datetime);
-use constant SCHEDULE_PROTOTYPE => {
-                                    schedule_id => '',
-                                    repeat => '',
-                                    action => '',
-                                    context => '',
-                                    object_type => '',
-                                    object_id => '',
-                                    last_run => '',
-                                    next_run => '' 
-                                    };
+use Krang::Widget qw(time_chooser datetime_chooser decode_datetime);
 
 our %ACTION_LABELS = (
                       publish  => 'Publish',
@@ -133,18 +123,39 @@ sub edit {
         # setup date selector for publish
         $template->param( publish_selector => datetime_chooser(name=>'publish_date', query=>$query, nochoice => 1));
        
-        my %version_labels = map { $_ => $_ } [0 .. $object->version]; 
-        $version_labels{0} = 'Newest Version';
+    } else {
+        $template->param( 'advanced' => 1 );
+        
+        $template->param( full_date_selector => datetime_chooser(name=>'full_date', query=>$query, nochoice => 1));
 
+        $template->param( hourly_minute_selector =>  scalar
+                            $query->popup_menu( -name    => 'hourly_minute',
+                                                -values => [0..59] ));
+
+        $template->param( daily_time_selector => time_chooser(name=>'daily_time', query=>$query, nochoice => 1));
+
+        $template->param( weekly_day_selector => scalar
+                            $query->popup_menu( -name    => 'weekly_day',
+                                                -values => [keys %WEEKDAYS],
+                                                -labels => \%WEEKDAYS ));
+
+        $template->param( weekly_time_selector => time_chooser(name=>'weekly_time', query=>$query, nochoice => 1));
+
+        $template->param( action_selector => scalar
+                            $query->popup_menu( -name    => 'action',
+                                                -values => [keys %ACTION_LABELS],
+                                                -labels => \%ACTION_LABELS ));
+                             
+    }
+
+    my %version_labels = map { $_ => $_ } [0 .. $object->version];
+        $version_labels{0} = 'Newest Version';
+                                                                                  
         $template->param(version_selector => scalar
                          $query->popup_menu(-name    => 'version',
                                             -values  => [0 .. $object->version],
                                             -labels => \%version_labels,
                                             -default => 0));
-                                                                                  
-    } else {
-        $template->param( 'advanced' => 1 );
-    }
 
     # get existing scheduled actions for object
     my @existing_schedule = get_existing_schedule($object_type, $object_id);
@@ -219,6 +230,151 @@ sub convert_hour {
     } else {
         return $hour, 'AM'; 
     }
+}
+
+=item add() 
+
+Adds events to schedule based on UI selections
+
+=cut
+
+sub add {
+    my $self = shift;
+    my $q = $self->query();
+
+    my $action = $q->param('action');
+    my $version = $q->param('version');
+
+    my $object_type = $q->param('object_type');
+                                                                                  
+    # Get media or story object from session -- or die() trying
+    my $object = $self->get_object($object_type);
+    my $object_id = ($object_type eq 'story') ? $object->story_id  :  $object->media_id;
+
+    my $repeat = $q->param('repeat');
+    unless ($repeat) {
+        add_message('no_date_type');
+        return $self->edit();
+    }
+ 
+    $q->param( "repeat_$repeat" => 1 );
+
+    my $schedule;
+ 
+    if ($repeat eq 'never') {
+        my $date = decode_datetime(name=>'full_date', query=>$q);
+        if (not $date) {
+            add_message('invalid_datetime');
+            return $self->edit();
+        }
+
+        if ($version) {
+            $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                                object_id => $object_id,
+                                                action => $action,
+                                                repeat => 'never',
+                                                context => [ version => $version ],
+                                                date => $date );
+        } else {
+            $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                                object_id => $object_id,
+                                                action => $action,
+                                                repeat => 'never',
+                                                date => $date );
+        }
+
+    } elsif ($repeat eq 'hourly') {
+        if ($version) {
+            $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            context => [ version => $version ],
+                                            repeat => 'hourly',
+                                            minute => $q->param('hourly_minute'));    
+        } else {
+             $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            repeat => 'hourly',
+                                            minute => $q->param('hourly_minute'));
+        } 
+    } elsif ($repeat eq 'daily') {
+        my $minute = $q->param('daily_time_minute') || 0;
+        $minute = 0 if ($minute eq 'undef');
+
+        my $hour = $q->param('daily_time_hour');
+        unless ($hour) {
+            add_message('no_hour');
+            return $self->edit();
+        }
+        my $ampm = $q->param('daily_time_ampm');
+        if ($ampm eq 'PM') {
+            $hour = ($hour + 12) unless ($hour == 12);
+        } else {
+            $hour = 0 if ($hour == 12);
+        }
+        
+        if ($version) { 
+            $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            context => [ version => $version ],
+                                            repeat => 'daily',
+                                            minute => $minute,
+                                            hour => $hour );
+        } else {
+            $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            repeat => 'daily',
+                                            minute => $minute,
+                                            hour => $hour );
+ 
+        } 
+    } elsif ($repeat eq 'weekly') {
+        my $minute = $q->param('weekly_time_minute');
+        $minute = 0 if ($minute eq 'undef');
+                                                                                  
+        my $hour = $q->param('weekly_time_hour');
+        unless ($hour) {
+            add_message('no_hour');
+            return $self->edit();
+        }
+        
+        my $ampm = $q->param('weekly_time_ampm');
+        if ($ampm eq 'PM') {
+            $hour = ($hour + 12) unless ($hour == 12);
+        } else {
+            $hour = 0 if ($hour == 12);
+        }
+       
+        my $day = $q->param('weekly_day');
+
+        if ($version) { 
+            $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            repeat => 'weekly',
+                                            context => [ version => $version ],
+                                            day_of_week => $day,
+                                            minute => $minute,
+                                            hour => $hour );
+        } else {
+            $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            repeat => 'weekly',
+                                            day_of_week => $day,
+                                            minute => $minute,
+                                            hour => $hour );
+
+        }
+    }
+
+    $schedule->save();
+    add_message('new_event');
+
+    return $self->edit();
 }
 
 =item add_simple()
