@@ -12,13 +12,40 @@ Krang::CGI::ElementEditor - element editor CGI base class
 
 =head1 DESCRIPTION
 
-Element editor CGI for Krang.  This CGI is embedded in the Story and
-Category editors.  It allows users to edit the contents of the element
-tree attached to the story or category.
+Element editor CGI for Krang.  This module is a super-class upon which
+element editing CGIs (story and category editors) may be built.  It
+supplies some full run-modes as well as some helper functions which
+the child classes will use to implement their run-modes.
 
 =head1 INTERFACE
 
-None.
+=head2 Provided Run Modes
+
+This module implements the following run modes:
+
+=over
+
+=item add
+
+Called when the user clicks the "Add Element" button in the element
+editor.  Returns to the 'edit' mode when complete without modifying
+'path'.
+
+=item delete_children
+
+Called to delete sub-elements.  Returns to the 'edit' mode when
+complete without modifying 'path'.
+
+=item reorder
+
+Called to reorder sub-elements.  Returns to the 'edit' mode when
+complete without modifying 'path'.
+
+=item delete_element
+
+Called to delete an element.  This should called when the user clicks
+the delete button, except on the root screen where delete refers to
+the containing object.
 
 =cut
 
@@ -37,74 +64,25 @@ sub setup {
     $self->mode_param('rm');
     $self->run_modes(
                      fake             => sub { "OK" },
-                     edit             => 'edit',
                      add              => 'add',
-                     save             => 'save',
-                     save_and_jump    => 'save_and_jump',
-                     save_and_stay    => 'save_and_stay',
                      delete_children  => sub { shift->revise('delete') },
                      reorder          => sub { shift->revise('reorder') },
-                     delete           => 'delete',
+                     delete_element   => 'delete_element',
                     );
 }
 
-# show the top_level chooser (this won't be used in the final version
-# of the editor, but it's need to allow it to be tested independently)
-# sub choose_top_level {
-#     my $self = shift;
-#     my $query = $self->query();
-#     my $dbh = dbh();
-#     my $template = $self->load_tmpl("element_editor_choose.tmpl",
-#                                     associate => $query);
+sub is_root {
+    my $self    = shift;
+    my $query   = $self->query;
+    my $rm      = $query->param('rm');
+    my $path    = $query->param('path') || '/';
+    my $jump_to = $query->param('jump_to');
 
-#     # whip up top level picker
-#     my @values = Krang::ElementLibrary->top_levels;
-#     my %labels = map { ($_, Krang::ElementLibrary->top_level(name => $_)
-#                                                   ->display_name) } 
-#                    @values;
-#     $template->param(top_level_select => 
-#                      $query->popup_menu(-name   => "top_level",
-#                                         -values => \@values,
-#                                         -labels => \%labels));
-
-#     # show a list of existing elements
-#     my $result = $dbh->selectall_arrayref('SELECT root_id, class FROM element WHERE parent_id IS NULL ORDER BY root_id');
-#     my @element_loop;
-#     foreach my $row (@$result) {
-#         push(@element_loop, { element_id => $row->[0],
-#                               name       => $row->[1] });
-#     }
-#     $template->param(element_loop => \@element_loop);
-
-
-#     return $template->output();
-# }
-
-# create a new top-level element
-# sub create {
-#     my $self      = shift;
-#     my $query     = $self->query();
-#     my $top_level = $query->param("top_level") 
-#       or croak("Missing top_level param!");
-
-#     # create a new instance and save it in the session
-#     my $element = Krang::Element->new(class => $top_level);
-#     $session{element} = $element;
-
-#     # setup ids and toss to edit
-#     $query->param(path => '/');
-#     $query->param(root_id => undef);
-#     return $self->edit;
-# }
-
-sub edit {
-    my $self = shift;
-    my $query = $self->query;
-    my $template = $self->load_tmpl("element_editor_edit.tmpl",
-                                    associate => $query,
-                                    loop_context_vars => 1);    
-    $self->element_edit(template => $template);
-    return $template->output();    
+    return 1 if $path eq '/' and $rm !~ /^save/;
+    return 1 if $rm eq 'save' and $path eq '/';
+    return 1 if $rm eq 'save_and_stay' and $path eq '/';
+    return 1 if $rm eq 'save_and_jump' and $jump_to eq '/';
+    return 0;
 }
 
 # show the edit screen
@@ -203,7 +181,7 @@ sub add {
     my $kid = $element->add_child(class => $child);
 
     # start editing the new element if it has children
-    $query->param(path => $kid->xpath()) if $kid->is_container;
+    # $query->param(path => $kid->xpath()) if $kid->is_container;
     
     add_message('added_element', child  => $kid->display_name(),
                                  parent => $element->display_name());
@@ -223,18 +201,7 @@ sub _find_element {
     return $element;
 }
 
-sub save_and_stay {
-    my $self = shift;
-    return $self->save(stay => 1);
-}
-
-sub save_and_jump {
-    my $self = shift;
-    my $query = $self->query();
-    return $self->save(jump_to => $query->param("jump_to"));
-}
-
-sub save {
+sub element_save {
     my $self = shift;
     my %arg = @_;
     my $query = $self->query();
@@ -264,7 +231,7 @@ sub save {
     if (not $clean) {
         my %seen;
         $query->param(invalid => join(',', @invalid));
-        return $self->edit();
+        return 0;
     }
 
     # save data
@@ -275,25 +242,26 @@ sub save {
     }
 
     # save element tree to DB
-    $root->save();
-    add_message('saved_element', name => $element->display_name());
+    # $root->save();
+    add_message('saved_element', name => $element->display_name())
+      if $element->parent();
     
+
     # save and stay?
-    return $self->edit() if exists $arg{stay};
+    return 1 if exists $arg{stay};
 
     # save and jump?
     if (exists $arg{jump_to}) {
         $query->param(path => $arg{jump_to});
-        return $self->edit();
+        return 1;
     }
 
     # go up a level
     if ($element->parent()) {
         $query->param(path => $element->parent->xpath);
-        return $self->edit();
-    } else {
-        croak("Krang::CGI::ElementEditor called to handle root save!");
     }
+
+    return 1;
 }
 
 # revise sub-element list, reordering or deleting as requested.  This
@@ -367,7 +335,7 @@ sub revise {
 }
 
 # delete this element
-sub delete {
+sub delete_element {
     my $self  = shift;
     my $query = $self->query();
 
@@ -394,3 +362,5 @@ sub delete {
 }
 
 1;
+
+=back

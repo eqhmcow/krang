@@ -1,13 +1,26 @@
 <tmpl_include header.tmpl>
 
 <script language="javascript">
-  function save_and_stay () {
-     document.edit.rm.value = 'edit';
-     document.edit.submit();
+
+  function save() {
+        document.forms[0].rm.value = 'save';
+        document.forms[0].submit();
+  }
+
+  function save_and_stay() {
+        document.forms[0].rm.value = 'save_and_stay';
+        document.forms[0].submit();
   }
 
   function edit_contribs () {
      document.contrib.submit();
+  }
+
+  function remove() {
+        if (confirm("Really delete this story?")) {
+           document.forms[0].rm.value = 'delete';
+           document.forms[0].submit();
+        }
   }
 
 </script>
@@ -36,7 +49,7 @@
 <td><tmpl_var type></td>
 </tr>
 
-<tmpl_if root_edit>
+<tmpl_if is_root>
 
 <tr class=light>
 <td>Current Version:</td>
@@ -55,7 +68,7 @@
 <td><a href="#"><tmpl_var url></a></td>
 </tr>
 
-<tmpl_if root_edit>
+<tmpl_if is_root>
 
 <tr>
 <td>*Title:</td>
@@ -108,15 +121,49 @@
 
 <tmpl_include /element_editor_edit.tmpl>
 
+<tmpl_if is_root>
+<p>
+Sites / Categories<br>
+<table border=0 width=100% cellpadding=0 cellspacing=0>
+  <tr class=form-head>
+    <td width=15%>Site</td>
+    <td width=55%>Category</td>
+    <td width=15% align=center>Primary</td>
+    <td width=15% align=center><input type=checkbox onchange="checkall(this, 'cat_remove_')"></td>
+  </tr> 
+
+  <tmpl_loop category_loop>
+  <tr>
+    <td class=form-cell><tmpl_var site></td>
+    <td class=form-cell><tmpl_var category></td>
+    <td class=form-cell align=center><input type=radio name=primary_cat value=<tmpl_var category_id> <tmpl_if __first__>checked</tmpl_if>></td>
+    <td class=form-cell align=center><tmpl_unless __first__><input type=checkbox name=cat_remove_<tmpl_var index>></tmpl_unless></td>
+  </tr>
+  </tmpl_loop>
+
+  <tr>
+    <td align=left colspan=2 class="form-cell"><tmpl_var category_chooser></td>
+    <td class="form-cell" align=center><input type=button value="Set" onclick="set_primary_category()"></td>
+    <td align=center class="form-cell"><input type=button value=Delete onClick='remove_children()'></td>
+  </tr>
+</table>
+
+</tmpl_if>   
+
 </div>
 
 
 <div class=button-bar>
   <input type=button value="Save" onclick="save()">
   <input type=button value="Save &amp; Stay" onclick="save_and_stay()">
-  <input type=button value="Publish" onclick="publish()">
+  <input type=button value="Publish" onclick="alert('Tell Peter to write Krang::Burner.')">
   <input type=reset value="Reset">
-  <input type=button value="Delete" onclick="remove()">
+  <tmpl_if is_root>
+     <input type=button value="Delete" onclick="remove()">
+  <tmpl_else>
+     <input type=button value="Delete" onclick="remove_element()">
+  </tmpl_if>
+
 </div>
 
 </form>
