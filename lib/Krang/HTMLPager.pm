@@ -656,6 +656,10 @@ sub _fill_template {
 
     my $q = $self->cgi_query();
 
+    # Set up get_form_obj_magic_name -- special parameter to find proper <form>
+    my $get_form_obj_magic_name = "krang_pager_". scalar(time);
+    $t->param(get_form_obj_magic_name => $get_form_obj_magic_name);
+
     # Build up hash of column headers
     my %column_header_labels = ();
     foreach my $col (@{$self->columns()}) {

@@ -43,7 +43,7 @@
 
 
     function get_form_obj () {
-        var magic_name = 'krang_pager_curr_page_num';
+        var magic_name = '<tmpl_var get_form_obj_magic_name>';
 
         // Iterate through forms in document
         for (var i=0; i<document.forms.length; i++) {
@@ -63,7 +63,7 @@
 // -->
 </script>
 
-
+<input type="hidden" name="<tmpl_var get_form_obj_magic_name>" value="">
 <input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var curr_page_num>">
 <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var sort_field>">
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var sort_order_desc>">
