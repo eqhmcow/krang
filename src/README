@@ -61,3 +61,5 @@ to the install.pod found in the docs directory.
         XML-Simple-2.03          
         CGI-Application-Generator-1.0
         Apache-DBI-0.91
+	Set::IntRange 5.1
+	Bit::Vector 6.3
