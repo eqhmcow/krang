@@ -1,0 +1,291 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+
+=pod
+
+=head1 NAME
+
+krang_fastfill - load krang with data as fast as possible.
+
+=head1 SYNOPSIS
+                                                                                  
+  krang_fastfill --sites 5 --cats 50 --stories 100 --media 100 --contribs 100
+                                                                                  
+=head1 DESCRIPTION
+                                                                                  
+This script creates fake Krang data for benchmark and load testing.  
+It uses a base of 50 stories (40 articles, 10 covers), 1 site, 10 
+categories, and 50 media objects from a .kds file that is imported.
+
+Above that base, in order to reduce time loading stories and media,
+stories are copied to create new stories, and media files are reused 
+for new media.  This also helps normalize the database content by keeping 
+media and stories semi-consistant in size.
+
+=head1 OPTIONS
+                                                                                  
+  --sites    - number of sites to create, defaults and minimum of 1.
+
+  --cats     - number of categories to create, defaults and minimum of 10
+
+  --media    - number of media objects to create, defaults and minimum of 50
+
+  --stories  - number of stories to create, defaults and minimum of 50 (10 articles, 10 covers).  Story/Cover ratio is approx 5:1 if enough cats exist, else number of covers = 
+numbers of cats.
+
+  --contribs - number of contribs to create, defaults and minimum of 50.
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
+                                                                                  
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+                                                                                  
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+                                                                                  
+Cannot load Krang.
+                                                                                  
+Error message:
+                                                                                  
+$@
+                                                                                  
+######################################################################
+END
+}
+
+use Krang::Script;
+use Krang::Category;
+use Krang::Conf qw(KrangRoot SiteServerPort ElementSet);
+use Krang::Site;
+use Krang::Story;
+use Krang::Media;
+
+my ($help, $man);
+my $sites    = 1;
+my $cats     = 10;
+my $contribs = 50;
+my $stories  = 50;
+my $media    = 50;
+
+pod2usage(2) unless
+  GetOptions(help         => \$help,
+             man          => \$man,
+             'sites=s'    => \$sites,
+             'cats=s'     => \$cats,
+             'contribs=s' => \$contribs,
+             'stories=s'  => \$stories,
+             'media=s'    => \$media,
+            );
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+$stories = $stories - 50;
+$cats = $cats - 10;
+$media = $media - 50;
+$sites--;
+$contribs = $contribs - 50;
+
+my $covers = (($sites + $cats) > int($stories/5)) ? int($stories/5) : ($sites + $cats);
+$stories = $stories - $covers;
+
+my $cats_per_site = ($cats && $stories && $sites) ? int($cats / $sites) : 0;
+my $stories_per_cat = $stories ? int($stories / ($cats + $sites)) : 0;
+my $media_per_cat = $media ? int($media / ($cats + $sites)) : 0;
+
+my $super_count = 0;
+my $cover_index = 0;
+my $story_index = 0;
+my $media_index = 0;
+
+# make sure element set is supported
+if (($stories or $cats) and
+    (ElementSet ne 'TestSet1')) {
+    die "Unknown element set '" . ElementSet . "'.  I only know how to create stories and categories for 'TestSet1'.\n";
+}
+
+
+my $base_kds = catfile($RealBin,'base','export.kds');
+
+my $krang_import = catfile(KrangRoot, 'bin', 'krang_import');
+
+# load base stuff from kds
+`$krang_import $base_kds`;
+
+# load base stories covers media into memory 
+my @base_stories = Krang::Story->find( class => 'article', limit => 40 );
+my @base_covers = Krang::Story->find( class => 'cover', limit => 10 );
+my @base_media = Krang::Media->find( limit => 50 );
+
+# create sites and cats first, along with covers if requested
+my @root_cat_ids;
+
+for(1 .. $sites) {
+    my $name = 'testsite'.++$super_count;
+    my $site = Krang::Site->new(publish_path =>
+                                  catdir(KrangRoot, "tmp", "${name}_publish"),
+                                preview_path =>
+                                  catdir(KrangRoot, "tmp", "${name}_preview"),
+                                preview_url  => "preview.$name" .
+                                  (SiteServerPort eq '80' ?
+                                   "" : ":" . SiteServerPort),
+                                url          => "$name" .
+                                  (SiteServerPort eq '80' ?
+                                   "" : ":" . SiteServerPort));
+    eval { $site->save() };
+    redo if $@ and $@ =~ /duplicate/;
+
+    # since sites creates a cat..
+    $cats--;
+    
+    # remember root category
+    my ($root) = Krang::Category->find(site_id => $site->site_id);
+    push(@root_cat_ids, $root->category_id);
+
+    # create story or cover in this category if need be
+    if ($covers) {
+        create_story(cover => 1, category_id => $root->category_id); 
+        $covers--;
+    } 
+  
+    if ($stories) { 
+        for (my $count = 1; $count <= $stories_per_cat; $count++) {
+            create_story(category_id => $root->category_id);
+            $stories--;
+            last if not $stories;
+        }
+    }
+
+    if ($media) {
+        for (my $count = 1; $count <= $media_per_cat; $count++) {
+            create_media(category_id => $root->category_id);
+            $media--;
+            last if not $media;
+        }
+    }
+
+    for(1 .. $cats_per_site) {
+        my $cname = 'testcat'.++$super_count;
+         my $new_c  = Krang::Category->new(  dir       => $cname,
+                                parent_id => $root->category_id );
+        $new_c->save;
+
+        if ($covers) {
+            create_story(cover => 1, category_id => $new_c->category_id);
+            $covers--;
+        }
+
+        if ($stories) {
+            for (my $count = 1; $count <= $stories_per_cat; $count++) {
+                create_story(category_id => $new_c->category_id);
+                $stories--;
+                last if not $stories;
+            }
+        }
+
+        if ($media) {
+            for (my $count = 1; $count <= $media_per_cat; $count++) {
+                create_media(category_id => $new_c->category_id);
+                $media--;
+                last if not $media;
+            }
+        }
+    }
+
+    print STDERR "$stories stories left, $covers covers left, $media media left\n";
+}
+
+while ($contribs) {
+    my $contrib = Krang::Contrib->new(  prefix => 'Mr.',
+                                        first => 'first'.$super_count++,
+                                        middle => 'middle'.$super_count++,
+                                        last => 'last'.$super_count++,
+                                        email => 'person@email.com',
+                                        phone => '111-222-3333',
+                                        bio => 'This is my bio.',
+                                        url => 'http://www.myurlhere.com' );
+
+    $contrib->save;
+
+    $contribs--;
+}
+
+my ($first_cat) = Krang::Category->find( limit => 1);
+
+# dump the remaining media, stories into a category.
+
+$stories = $stories + $covers;
+$covers = 0;
+
+while ($stories) {
+    create_story(category_id => $first_cat->category_id);
+    $stories--;
+}
+
+while ($media) {
+     create_media(category_id => $first_cat->category_id);
+     $media--;
+}
+
+print STDERR "$stories stories left, $covers covers left, $media media left\n";
+
+#############################################################
+sub create_media {
+    my %args = @_;
+
+    my $m = $base_media[$media_index++];
+
+    $media_index = 0 if ($media_index == 50);
+
+    my $fh = new FileHandle $m->file_path;
+
+    my $new_m = Krang::Media->new(  title => "test_media_".$super_count++,
+                                    category_id => $args{category_id},
+                                    filehandle => $fh,
+                                    filename => $super_count++.$m->filename );
+    $new_m->save;
+    $new_m->checkin;
+                                    
+}
+
+sub create_story {
+    my %args = @_;
+
+    my $s = $args{cover} ? $base_covers[$cover_index++] : $base_stories[$story_index++];
+
+    # reset indexes if need be
+    $story_index = 0 if ($story_index == 40);
+    $cover_index = 0 if ($cover_index == 10);
+
+    $s->checkout;
+ 
+    my $copy = $s->clone();
+
+    $s->checkin;
+
+    $copy->slug( $copy->slug.$super_count++ );
+
+    $copy->categories($args{category_id});
+
+    $copy->save; 
+
+    $copy->checkin;
+}
