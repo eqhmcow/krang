@@ -308,7 +308,41 @@ Will throw an exception if there are problems with the copy.
 
 sub preview_media {
 
-    critical('NOT IMPLEMENTED YET');
+    my $self = shift;
+    my %args = @_;
+
+    croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
+
+    my $media = $args{media};
+
+    my $internal_path = $media->file_path();
+
+    my $preview_path = catfile($media->category()->site()->preview_path(), $media->url());
+
+    $preview_path =~ /^(.*\/)[^\/]+/;
+
+    my $dir_path = $1;
+
+    # make sure the output dir exists
+    eval {mkpath($dir_path, 0, 0755); };
+    if ($@) {
+        Krang::Publisher::FileWriteError->throw(message => 'Could not create preview directory',
+                                                destination => $dir_path,
+                                                system_error => $@);
+    }
+
+    # copy file out to the production path
+    unless (copy($internal_path, $preview_path)) {
+        Krang::Publisher::FileWriteError->throw(message  => 'Could not preview media file',
+                                                media_id => $media->media_id(),
+                                                source   => $internal_path,
+                                                destination => $preview_path,
+                                                system_error => $!
+                                               );
+    }
+
+    return $media->url();
+
 
 }
 
