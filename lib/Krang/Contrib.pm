@@ -191,7 +191,7 @@ sub save {
         my @fields = FIELDS;
         @fields = splice(@fields,1);
 
-        $dbh->do('UPDATE contrib set '.join(',', (map { "$_ = ?" } @fields)).' WHERE contrib_id = ? ', undef, map { $self->{$_} } @fields, $contrib_id);
+        $dbh->do('UPDATE contrib set '.join(',', (map { "$_ = ?" } @fields)).' WHERE contrib_id = ? ', undef, (map { $self->{$_} } @fields), $contrib_id);
        
         # remove all contributor - contributor tyoe relations, we are going to re-add them 
         $dbh->do('DELETE from contrib_contrib_type where contrib_id = ?', undef, $contrib_id);
