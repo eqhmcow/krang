@@ -148,6 +148,16 @@ input[type="reset"] {
   color:            #FFFFFF;
 }
 
+.nav1 a:link { 
+  color:            #FFFFFF;
+}
+.nav1 a:visited { 
+  color:            #FFFFFF;
+}
+.nav1 a:active {
+  color:            #FFFFFF;
+}
+
 .nav2 {
   background-color: #dbe9f4;
   color:            #333333;
