@@ -1606,8 +1606,13 @@ sub serialize_xml {
                       "xsi:noNamespaceSchemaLocation" =>
                         'media.xsd');
 
+    # hash the media_id to a path
+    my $media_id = $self->{media_id};
+    my $one = $media_id % 1024;
+    my $two = int($media_id / 1024);
+    my $path = "media_$one/$two/$self->{filename}";
+
     # write media file into data set
-    my $path = "media_$self->{media_id}/$self->{filename}";
     $set->add(file => $self->file_path, path => $path, from => $self);
 
     my %media_type = Krang::Pref->get('media_type');
@@ -1730,8 +1735,9 @@ sub deserialize_xml {
     }
  
     # upload the file
-    my $path = "media_$data->{media_id}/$data->{filename}";
-    my $full_path = $set->map_file(path => $path);
+    my $full_path = $set->map_file(class => "Krang::Media",
+                                   id    => $data->{media_id});
+    croak("Unable to get file path from dataset!") unless $full_path;
     my $fh = IO::File->new($full_path) or 
       croak("Unable to open $full_path: $!");
     $media->upload_file(filehandle => $fh,

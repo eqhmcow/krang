@@ -449,7 +449,11 @@ sub _load_index {
     foreach my $class_rec (@{$data->{class}}) {
         my $class = $class_rec->{name};
         foreach my $object (@{$class_rec->{object}}) {
-            $index{$class}{$object->{id}[0]} = { xml => $object->{xml}[0] };
+            $index{$class}{$object->{id}[0]} = { xml => $object->{xml}[0],
+                                                 ($object->{file} ? 
+                                                  (files => $object->{file}) : 
+                                                  ()),
+                                               };
             croak("index.xml refers to file '$object->{xml}[0]' which is ".
                   "not in the archive.")
               unless -e catfile($self->{dir}, $object->{xml}[0]);
@@ -654,7 +658,7 @@ sub register_id {
     $self->{done}{$class}{$id} = $import_id;   
 }
 
-=item C<< $full_path = $set->map_file(path => $path) >>
+=item C<< $full_path = $set->map_file(class => $class, id => $id) >>
 
 Get the full path to a file within a set previously added with add().
 
@@ -662,8 +666,12 @@ Get the full path to a file within a set previously added with add().
 
 sub map_file {
     my ($self, %arg) = @_;
-    my $path = $arg{path};
-    croak("Missing required 'path' arg!") unless $path;
+    my $class = $arg{class};
+    my $id    = $arg{id};
+
+    my $path = $self->{objects}{$class}{$id}{files}[0];
+    return unless $path;
+
     my $full_path = catfile($self->{dir}, $path);
     croak("Unable to find file '$path' in the data set.")
       unless -e $full_path;

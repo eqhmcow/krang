@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added directory hashing to Krang::Media's XML serialization system.
+This allows a single KDS file to contain any number of media files.
+The previous limit was 32,000. [Sam]
+
+=item *
+
 Added C<no_parent> option to Krang::ListItem::find(). [Sam]
 
 =item *
