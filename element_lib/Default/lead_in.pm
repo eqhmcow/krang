@@ -76,7 +76,8 @@ sub fill_template {
 
     my $type = lc($args{element}->child('type')->data);
 
-    my $image = $story->element->child('promo_image_'.$type)->child('media')->template_data(publisher => $publisher) || '';
+    my $image = $story->element->child('promo_image_'.$type) || '';
+    $image = $image->child('media')->template_data(publisher => $publisher) if $image; 
     $tmpl->param( promo_image => $image) if $image;
 
     $tmpl->param( url => $args{element}->child('story')->template_data(publisher => $publisher) );

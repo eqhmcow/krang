@@ -34,7 +34,7 @@ sub new {
                                                     min => 0,
                                                     max => 1
                                                    ),
-                 Krang::ElementClass::MediaLink->new(name => "media",
+                 Krang::ElementClass::MediaLink->new(name => "file",
                                                      min => 1,
                                                      max => 1,
                                                      required => 1,
@@ -48,7 +48,7 @@ sub input_form {
     my ($self, %arg) = @_;
     my ($query, $element, $order) = @arg{qw(query element order)};
     my ($header, $data);
-    if ($header = $element->child('media') and
+    if ($header = $element->child('file') and
         $data   = $header->view_data) {
         return $data;
     }

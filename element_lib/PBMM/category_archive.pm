@@ -75,5 +75,7 @@ sub fill_template {
     }
 
     $tmpl->param( page_loop => \@page_loop );
+
+    $self->SUPER::fill_template( %args );
 }
 1;
