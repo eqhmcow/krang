@@ -16,7 +16,8 @@ h2 {
 }
 
 body {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: 12px;
 }
 
 PRE     {
@@ -36,7 +37,7 @@ CODE {
 
 ul > li > a {
     font-family: Verdana, Arial, Helvetica, sans-serif;
-    font-weight: bold;
+#    font-weight: bold;
     color: #5a695a;
 }
 
