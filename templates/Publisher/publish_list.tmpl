@@ -15,31 +15,37 @@
   <div class="dark-bar">Publish Story</div>
 
   <form method=get action="publisher.pl">
+
+  <div class=form-box>
     
-  <table border=1 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
-    <tr class=form-head-thin>
-      <td colspan=3><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
+  <table class=form-cell cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
+    <tr class=form-head>
+      <td colspan=4><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
     </tr>
     <tr class=form-head>
       <td>ID</td>
       <td>URL</td>
-      <td>Title</td>
+      <td colspan=2>Title</td>
     </tr>
     
     <!-- stories loop -->
     <tmpl_loop stories>
       <tr>
-        <td><tmpl_var id></td><td><tmpl_var url></td><td><tmpl_var title></td>
+        <td class=form-cell><tmpl_var id></td>
+        <td class=form-cell><tmpl_var url></td>
+        <td class=form-cell colspan=2><tmpl_var title></td>
       </tr>
     </tmpl_loop>
     <!-- /stories loop -->
-  </table>
 
-  <table border=1 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
-    <tr class=form-head-thin>
+  <p>
+    <tr>
+      <td colspan=4>&nbsp;</td>
+    </tr>
+    <tr class=form-head>
       <td colspan=4><b>Media</b>&nbsp;&nbsp;&nbsp;</td>
     </tr>
-    <tr class=form-head-thin>
+    <tr class=form-head>
       <td>ID</td>
       <td>URL</td>
       <td>Title</td>
@@ -49,8 +55,10 @@
     <!-- media loop -->
     <tmpl_loop media>
       <tr>
-        <td><tmpl_var id></td><td><tmpl_var url></td><td><tmpl_var title></td>
-        <td><tmpl_if thumbnail><img src="<tmpl_var thumbnail>"><tmpl_else>&nbsp;</tmpl_if></td>
+        <td class=form-cell><tmpl_var id></td>
+        <td class=form-cell><tmpl_var url></td>
+        <td class=form-cell><tmpl_var title></td>
+        <td class=form-cell><tmpl_if thumbnail><a href="javascript:preview_media(<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border=0></a><tmpl_else>&nbsp;</tmpl_if></td>
       </tr>
     </tmpl_loop>
     <!-- /media loop -->
@@ -61,13 +69,16 @@
     <input type=hidden name="asset_id_list" value="<tmpl_var id>">
   </tmpl_loop>
 
-  <table width=100% cellpadding=0 cellspacing=0>
+  <p>
+
+  <table class=form-cell width=100% cellpadding=0 cellspacing=0>
     <tr class=form-head-thin>
       <td colspan=2>Schedule Publish Time</td>
     </tr>
     
     <tr>
-      <td class=form-cell><input type="radio" name="publish_now" value="1" checked="checked"/></td><td class=form-cell>Now</td>
+      <td class=form-cell><input type="radio" name="publish_now" value="1" checked="checked"/></td>
+      <td class=form-cell>Now</td>
     </tr>
     <tr>
       <td class=form-cell><input type="radio" name="publish_now" value="0"/></td>
@@ -78,9 +89,12 @@
     </tr>
     
   </table>
-  
-  <!-- <div class="button-bar"><input type="button" value="Publish" onclick="publish_assets"></div> -->
-  <div class="button-bar"><input type="submit" name="Publish"></div>
+
+</div>
+
+<div class="button-bar">
+   <input type="submit" name="Publish" value="Publish">
+</div>
   
 </form>
 
