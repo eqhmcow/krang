@@ -29,10 +29,10 @@
 
 <h1>Krang VS Bricolage Comparison</h1>
 
-This document compares Krang to Bricolage, the system Krang was
-designed to replace.  The version of Bricolage examined is 1.4.6,
-which was the stable version for most of Krang's development.  Later
-versions of Bricolage may be included in this chart as time permits.
+This document compares Krang to Bricolage, the system Krang was based
+on.  The version of Bricolage examined is 1.4.6, which was the stable
+version for most of Krang's development.  Later versions of Bricolage
+may be included in this chart as time permits.
 
 <p>
 
@@ -430,10 +430,9 @@ examples of things that stayed the same in Krang.
 
 <h2><a name="complexity">Complexity</a></h2>
 
-Bricolage's enormous complexity created many problems for us.  Krang
-is designed to replace our usage of Bricolage with as simple a code
-base as possible.  While measuring complexity isn't a science, certain
-pieces of data express the relative simplicity of Krang:
+Krang was designed to replace our usage of Bricolage with as simple a
+code base as possible.  While measuring complexity isn't a science,
+certain pieces of data express the relative simplicity of Krang:
 
 <p>
 
@@ -486,14 +485,6 @@ pieces of data express the relative simplicity of Krang:
 </table>
 
 <h2><a name="performance">Performance</a></h2>
-
-Bricolage is too slow to publish large websites (more than 100,000
-articles) in a reasonable period of time.  Even with small data loads
-Bricolage makes poor use of system resources.  Krang was designed to
-publish the largest sites easily and support many small sites with
-minimal overhead.
-
-<p>
 
 The following table compares a few common operations on Bricolage and
 Krang system with approximately 7,000 stories, running on identical
