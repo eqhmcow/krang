@@ -111,7 +111,7 @@ if (@ARGV == 0) {
     $set2 = $sets[-1];
 } elsif (@ARGV == 2) {
     $set1 = $ARGV[0];    
-    $set2 = $ARGV[0];
+    $set2 = $ARGV[1];
 } else {
     print "Wrong number of arguments!\n";
     pod_usage(1);
@@ -171,7 +171,7 @@ print <<END;
 END
 
 # print data, and collect total info
-my ($total1, $total2);
+my $total = 0;
 foreach my $module ( sort keys %data ) {
     my $first = 1;
     foreach my $name ( sort keys %{$data{$module}} ) {
@@ -179,12 +179,16 @@ foreach my $module ( sort keys %data ) {
         my $change;
         if (defined $run1 and defined $run2) {
             if ($run1 > $run2) {
-                $change = sprintf("- %2d%%", (($run1 - $run2) / $run1) * 100);
+                $change = 0 - (($run1 - $run2) / $run1) * 100;
             } else {
-                $change = sprintf("+ %2d%%", (($run2 - $run1) / $run2) * 100);
+                $change = (($run2 - $run1) / $run2) * 100;
             }
-            $total1 += $run1;
-            $total2 += $run2;
+            $total += $change;
+            if ($change >= 0) {
+                $change = sprintf("+ %2d%%", $change);
+            } else {
+                $change = sprintf("- %2d%%", -$change);
+            }
         } else {
             $change = 'N/A';
         }
@@ -200,19 +204,16 @@ END
 }
 
 # print total
-my $total_change;
-if ($total1 > $total2) {
-    $total_change = sprintf("- %2d%%", (($total1 - $total2) / $total1) *100);
+if ($total >= 0) {
+    $total = sprintf("+ %2d%%", $total);
 } else {
-    $total_change = sprintf("+ %2d%%", (($total2 - $total1) / $total2) *100);
+    $total = sprintf("- %2d%%", -$total);
 }
-$total1 = sprintf("%d", $total1);
-$total2 = sprintf("%d", $total2);
-printf (<<END, $total1, $total2, $total_change);
+printf (<<END, $total);
 
-                                              Total 1 | Total 2 |   Change
+                                                            Average Change
  -------------------------------------------------------------------------
-                                              %7s | %7s | %8s
+                                                                     %4s
 
 
 END
