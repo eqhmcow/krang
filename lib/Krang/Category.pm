@@ -620,20 +620,35 @@ SQL
     # update the 'url's of media, stories, and templates
     # only implemented in template so far...
     $query = "SELECT %s_id, url FROM %s WHERE category_id = $id";
-    for my $table(qw/template/) { #media story_category
-        my ($id, $url);
-        $sth = $dbh->prepare(sprintf($query, $table, $table));
-        $sth->execute();
-        $sth->bind_columns(\$id, \$url);
-        $ids{$id} = $url while $sth->fetchrow_arrayref();
-        $sth->finish();
 
-        $sth = $dbh->prepare("UPDATE $table SET url = ? WHERE $table\_id = ?");
-        for (keys %ids) {
-            ($url = $ids{$_}) =~ s|^\Q$self->{_old_url}\E|$self->{url}|;
-            $sth->execute(($url, $_));
+    # lock the table to prevent checkouts while we're doing the update
+    eval {
+        for my $table(qw/template/) { #media story_category
+            $dbh->do("LOCK TABLES $table WRITE");
+
+            my ($id, $url);
+            $sth = $dbh->prepare(sprintf($query, $table, $table));
+            $sth->execute();
+            $sth->bind_columns(\$id, \$url);
+            $ids{$id} = $url while $sth->fetchrow_arrayref();
+            $sth->finish();
+
+            $sth = $dbh->prepare("UPDATE $table SET url = ? WHERE " .
+                                 "$table\_id = ?");
+            for (keys %ids) {
+                ($url = $ids{$_}) =~ s|^\Q$self->{_old_url}\E|$self->{url}|;
+                $sth->execute(($url, $_));
+            }
+            $sth->finish();
+
+            $dbh->do("UNLOCK TABLES");
         }
-        $sth->finish();
+    };
+
+    if (my $eval_err = $@) {
+        # make sure to unlock the table
+        $dbh->do("UNLOCK TABLES");
+        croak(__PACKAGE__ . "->update_child_urls(): $@");
     }
 
     return 1;
@@ -643,6 +658,9 @@ SQL
 =back
 
 =head1 TO DO
+
+ * Optimize performance of update_child_urls(); this operation may potentially
+   be run on 1 million+ objects.
 
 =head1 SEE ALSO
 
