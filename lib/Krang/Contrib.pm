@@ -620,23 +620,28 @@ sub verify_unique {
     my $self   = shift;
     my $dbh    = dbh;
 
-    my $query = 'SELECT contrib_id FROM contrib WHERE first = ? AND last = ? ';
-    my @param = ($self->{first}, $self->{last});
+    # build up where clause and param list
+    my (@where, @param);
 
     # exception for self if saved
     if ($self->{contrib_id}) {
-        $query .= " AND contrib_id != ? ";
+        push @where, 'contrib_id != ?';
         push(@param, $self->{contrib_id});
     }
 
-    # missing middle name could be '' or NULL
-    if ($self->{middle}) {
-        $query .= " AND middle = ? ";
-        push(@param, $self->{middle});
-    } else {
-        $query .= " AND (middle = ? OR middle IS NULL)";
-        push(@param, "");
+    # missing name could be '' or NULL, treat them the same
+    foreach my $name (qw(first middle last)) {
+        if ($self->{$name}) {
+            push @where, "$name = ?";
+            push(@param, $self->{$name});
+        } else {
+            push @where, "($name = ? OR $name IS NULL)";
+            push(@param, "");
+        }
     }
+
+    my $query = 'SELECT contrib_id FROM contrib WHERE ' . 
+      join(' AND ', @where);
 
     # lookup dup
     my ($dup_id) = $dbh->selectrow_array($query, undef, @param);
