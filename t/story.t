@@ -515,3 +515,24 @@ ok($obj);
 Krang::Story->delete($doomed_id);
 ($obj) = Krang::Story->find(story_id => $doomed_id);
 ok(not $obj);
+
+# test that when category URL changes, story URL changes too
+my $change = Krang::Story->new(class => "article",
+                               title => "I can feel it coming",
+                               slug => "change",
+                               categories => [$cat[0]]);
+$change->save();
+END { $change->delete if $change };
+
+is($change->url, $cat[0]->url . 'change');
+
+# change the site url
+my $url = $site->url;
+$url =~ s/test/zest/;
+$site->url($url);
+like($site->url, qr/zest/);
+$site->save();
+
+# did the story URL change?
+($change) = Krang::Story->find(story_id => $change->story_id);
+is($change->url, 'storyzest.com/test_0/change');

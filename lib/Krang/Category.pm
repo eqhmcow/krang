@@ -792,7 +792,7 @@ sub find {
     # add LIMIT clause, if any
     if ($limit) {
         $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
-    } elsif ($offset) {
+   } elsif ($offset) {
         $query .= " LIMIT $offset, -1";
     }
 
@@ -994,15 +994,13 @@ SQL
         $sth->execute(($url, $_));
     }
 
-    # update the 'url's of media, stories, and templates
-    # only implemented in Krang::Template so far...
-    for (qw/Template/) { # Media Story
-        no strict 'subs';
-        for my $obj("Krang::$_"->find(category_id => $id)) {
-            $obj->update_url($self->{url});
-            $obj->save();
-            $failures++ unless $obj->url =~ /$self->{url}/;
-        }
+    # update the urls of media, stories, and templates    
+    my $url_offset = length($self->{_old_url}) + 1;
+    foreach my $table (qw/story_category template media/) {
+        $dbh->do("UPDATE $table 
+                  SET url=CONCAT(?, SUBSTRING(url, $url_offset)) 
+                  WHERE category_id = ?",
+                 undef, $self->{url}, $self->{category_id});
     }
 
     if (keys %ids) {
@@ -1234,11 +1232,6 @@ sub STORABLE_thaw {
 }
 
 =back
-
-=head1 TO DO
-
- * Optimize performance of update_child_urls(); this operation may
-   potentially be run on 1 million+ objects.
 
 =head1 SEE ALSO
 
