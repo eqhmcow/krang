@@ -156,7 +156,8 @@ my ($help, $man, $everything, $verbose) = (0, 0, 0, 0);
 my $limited_to_site     = 0;
 my $limited_to_category = 0;
 my $republish_only      = 0;
-my $increment           = 25;
+my $increment           = 100;
+my $media_only          = 0;
 
 pod2usage(2) unless
   GetOptions(help                => \$help,
@@ -191,28 +192,62 @@ if ($republish_only) {
     $find_options{publish_status} = 1;
 }
 
+
+my $arg_string = "Publishing content with the following options:\n$0";
+
+my $has_options = 0;
+
 if ($everything) {
     # removes checking for related stories/media.
     $publish_args{disable_related_assets} = 1;
+
+    $arg_string .= " --everything\n";
+
+    $has_options = 1;
 } else {
-    if (@{$id{site_id}}) {
-        $find_options{site_id} = $id{site_id}[0];
-    } elsif (@{$id{category_id}}) {
-        $find_options{category_id} = $id{category_id}[0];
-    } elsif ($id{story_id}) {
-        if ((@{$id{story_id}} == 1 && $id{story_id}[0] =~ /,/)) {
-            $id{story_id} = [ split /,/, $id{story_id}[0] ];
+    # NOTE: --site_id and --category_id options are mutually 
+    #       exclusive from --story_id and --media_id.
+    if (@{$id{site_id}} || @{$id{category_id}}) {
+        if (@{$id{site_id}}) {
+            $find_options{site_id} = $id{site_id}[0];
+            $arg_string .= " --site_id $find_options{site_id}";
+            $has_options = 1;
+        } elsif (@{$id{category_id}}) {
+            $find_options{category_id} = $id{category_id}[0];
+            $arg_string .= " --category_id $find_options{category_id}";
+            $has_options = 1;
         }
-        $find_options{story_id} = $id{story_id};
+    } elsif (@{$id{story_id}} || @{$id{media_id}}) {
+        # you can specify both --story_id and --media_id
+        # arguments simultaneously.
+        if (@{$id{story_id}}) {
+            $arg_string .= " --story_id $id{story_id}[0]";
+            if ((@{$id{story_id}} == 1 && $id{story_id}[0] =~ /,/)) {
+                $id{story_id} = [ split /,/, $id{story_id}[0] ];
+            }
+            $find_options{story_id} = $id{story_id};
+            $has_options = 1;
+        }
+
+        if (@{$id{media_id}}) {
+            $arg_string .= " --media_id $id{media_id}[0]";
+            if ((@{$id{media_id}} == 1 && $id{media_id}[0] =~ /,/)) {
+                $id{media_id} = [ split /,/, $id{media_id}[0] ];
+            }
+            $find_options{media_id} = $id{media_id};
+            $has_options = 1;
+        }
     }
 }
 
+# If there are no command-line options, return the equivilant of --help.
+pod2usage(1) unless $has_options;
 
 # Start the publish process.
 my $publisher = Krang::Publisher->new();
 
 ########################################
-## Time Variables
+## Time/Count Variables
 ##
 my $increment_count = 0;
 my $increment_time  = 0;
@@ -227,81 +262,35 @@ my $storycount = 0;
 my $mediacount = 0;
 
 # if the --everything option was specified, all media needs to be published first.
-if ($everything) {
-                                                                                  
-    while (my @media = Krang::Media->find(%find_options)) {
-        my @starttime = gettimeofday();
-        @assettime = @starttime;
-                                                                                  
-        $publisher->publish_media(media => \@media, %publish_args);
-        my $endtime = tv_interval(\@starttime);
-                                                                                  
-        print sprintf("STATUS: media (%i - %i) published in %.02f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @media), $endtime);
-                                                                                  
-        $increment_time  += $endtime;
-        $increment_count += @media;
-                                                                                 
-        $total_mediacount += $mediacount;
-        $mediacount = 0;
-                                                                                  
-        last if (@media < $increment);
-        $find_options{offset} += $increment;
+# Additionally, if the --media_id option was used, do it first.
+
+if ($everything || $find_options{media_id}) {
+    my $story_id;
+
+    # remove story_id if it's also a param
+    if (exists($find_options{story_id})) {
+        $story_id = $find_options{story_id};
+        delete $find_options{story_id};
     }
+
+    publish_media(\%find_options, \%publish_args);
+
+    # delete media_id from find_options.
+    delete $find_options{media_id};
+
+    # restore story_id if needed.
+    $find_options{story_id} = $story_id if $story_id;
 }
 
-$find_options{offset} = 0;
-while (my @stories = Krang::Story->find(%find_options)) {
+if ($everything || $find_options{story_id} || 
+    $find_options{category_id} || $find_options{site_id}) {
 
-    if (@stories == $increment) {
-        $publish_args{keep_asset_list} = 1;
-    } else { 
-        $publish_args{keep_asset_list} = 0;
-    }
+    publish_stories(\%find_options, \%publish_args);
 
-    my @starttime = gettimeofday();
-    @assettime = @starttime;
-
-    eval { $publisher->publish_story(story => \@stories, %publish_args); };
-
-    if ($@) {
-        # if there is an error, figure out what it is, create the
-        # appropriate message and return.
-        if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
-            add_message('missing_template',
-                        filenname      => $@->template_name,
-                        category_url   => $@->category_url
-                       );
-        } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
-            add_message('template_parse_error',
-                        element_name  => $@->element_name,
-                        template_name => $@->template_name,
-                        category_url  => $@->category_url,
-                        error_msg     => $@->error_msg
-                       );
-        }
-        die($@);
-    }
-
-
-    my $endtime = tv_interval(\@starttime);
-
-    print sprintf("STATUS: Increment %i - %i (%i stories, %i media) published in %.02f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @stories), $storycount, $mediacount, $endtime);
-
-    # add everything up.
-    $increment_time  += $endtime;
-    $increment_count += @stories;
-
-    $total_storycount += $storycount;
-    $total_mediacount += $mediacount;
-
-    $storycount = 0;
-    $mediacount = 0;
-
-    last if (@stories < $increment);
-    $find_options{offset} += $increment;
 }
 
 print "\n\nSTATUS: Publish completed.\n======================================================================\n";
+print "$arg_string\n\nResults:\n";
 print "\ntype\t\tnumber published\ttime(seconds)\tseconds/asset\n";
 print "----------------------------------------------------------------------\n";
 print sprintf("stories\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_storycount, $total_storytime, (($total_storytime > 0) ? ($total_storytime/$total_storycount) : 0));
@@ -311,6 +300,101 @@ print "----------------------------------------------------------------------\n"
 print sprintf("TOTAL:\t\t%i assets\t\t%.02f seconds\n\n", ($total_storycount+$total_mediacount), $increment_time);
 
 
+
+sub publish_media {
+
+    my ($find_options, $publish_args) = @_;
+
+    # make sure we're starting at the beginning.
+    $find_options->{offset} = 0;
+
+    while (my @media = Krang::Media->find(%{$find_options})) {
+        my @starttime = gettimeofday();
+        @assettime = @starttime;
+
+        $publisher->publish_media(media => \@media, %{$publish_args});
+        my $endtime = tv_interval(\@starttime);
+
+        print sprintf("STATUS: media %i - %i published in %.02f seconds.\n", ($find_options->{offset}+1), ($find_options->{offset} + @media), $endtime);
+
+        $increment_time  += $endtime;
+        $increment_count += @media;
+
+        $total_mediacount += $mediacount;
+        $mediacount = 0;
+
+        last if (@media < $increment);
+        $find_options->{offset} += $increment;
+    }
+
+    # cleanup.
+    $find_options->{offset} = 0;
+
+}
+
+
+sub publish_stories {
+
+    my ($find_options, $publish_args) = @_;
+
+    # make sure offset is reset
+    $find_options->{offset} = 0;
+
+    while (my @stories = Krang::Story->find(%{$find_options})) {
+
+        if (@stories == $increment) {
+            $publish_args->{keep_asset_list} = 1;
+        } else { 
+            $publish_args->{keep_asset_list} = 0;
+        }
+
+        my @starttime = gettimeofday();
+        @assettime = @starttime;
+
+        eval { $publisher->publish_story(story => \@stories, %{$publish_args}); };
+
+        if ($@) {
+            # if there is an error, figure out what it is, create the
+            # appropriate message and return.
+            if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
+                add_message('missing_template',
+                            filenname      => $@->template_name,
+                            category_url   => $@->category_url
+                           );
+            } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
+                add_message('template_parse_error',
+                            element_name  => $@->element_name,
+                            template_name => $@->template_name,
+                            category_url  => $@->category_url,
+                            error_msg     => $@->error_msg
+                           );
+            }
+            die($@);
+        }
+
+
+        my $endtime = tv_interval(\@starttime);
+
+        print sprintf("STATUS: Stories %i - %i (%i stories, %i media) published in %.02f seconds.\n", ($find_options->{offset}+1), ($find_options->{offset} + @stories), $storycount, $mediacount, $endtime);
+
+        # add everything up.
+        $increment_time  += $endtime;
+        $increment_count += @stories;
+
+        $total_storycount += $storycount;
+        $total_mediacount += $mediacount;
+
+        $storycount = 0;
+        $mediacount = 0;
+
+        last if (@stories < $increment);
+        $find_options->{offset} += $increment;
+    }
+
+    # offset cleanup, to be sure.
+    $find_options->{offset} = 0;
+
+}
 
 
 sub _skip_callback {
