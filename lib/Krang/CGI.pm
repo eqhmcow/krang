@@ -84,7 +84,8 @@ sub run {
     #
     # Run CGI -- catch exception if we have one, save it for after session un-load
     #
-    eval {   $self->SUPER::run(@args)   };
+    my $output = '';
+    eval {   $output = $self->SUPER::run(@args)   };
     my $cgiapp_errors = $@;
 
 
@@ -95,6 +96,8 @@ sub run {
     }
 
     die ("Krang::CGI caught exception: $cgiapp_errors") if ($cgiapp_errors);
+
+    return $output;
 }
 
 
