@@ -621,12 +621,12 @@ sub save {
 
 	$self->{version} = 1;
         my $time = localtime();
-        $self->{creation_date} = $time->mysql_date();   
+        $self->{creation_date} = $time->mysql_datetime();
      
 	$dbh->do('INSERT INTO media ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")", undef, map { $self->{$_} } FIELDS);
 
         # make date readable
-        $self->{creation_date} = Time::Piece->from_mysql_date( $self->{creation_date} );
+        $self->{creation_date} = $time;
         	
         $self->{media_id} = $dbh->{mysql_insertid};
 
