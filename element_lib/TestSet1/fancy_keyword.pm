@@ -115,7 +115,8 @@ sub bulk_edit_filter {
 
 sub fill_template {
     my ($self, %arg) = @_;
-    $arg{tmpl}->param($self->name, join(', ', @{$arg{element}->data}));
+    $arg{tmpl}->param($self->name, join(', ', @{$arg{element}->data}))
+      if $arg{element}->data;
 }
 
 1;
