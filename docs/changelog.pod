@@ -2,7 +2,18 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 v1.017 - Under Development
+=head2 v1.018 - Under Development
+
+=over
+
+=item *
+
+Fixed a bug where previewing/publishing zero-length stories caused an
+error.  [Peter]
+
+=back
+
+=head2 v1.017 - April 29, 2004
 
 =over
 

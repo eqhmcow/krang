@@ -1657,7 +1657,8 @@ sub _parse_additional_content {
     my $self = shift;
     my %args = @_;
 
-    my $article = $args{text} || croak __PACKAGE__ . ": missing argument 'text'";
+    croak __PACKAGE__ . ": missing argument 'text'" unless exists($args{text});
+    my $article = $args{text};
 
     my @content;
 
