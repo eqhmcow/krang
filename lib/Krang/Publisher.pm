@@ -40,7 +40,9 @@ Krang::Publisher - Center of the Publishing Universe.
 
 
   # Get the list of related stories and media that will get published
-  my $asset_list_ref = $publisher->get_publish_list(story => [$story1, $story2]);
+  my $asset_list_ref = $publisher->get_publish_list(
+                                                    story => [$story1, $story2]
+                                                   );
 
   # Place a template into the production path, to be used when publishing.
   $publisher->deploy_template(
@@ -84,6 +86,7 @@ use File::Copy qw(copy);
 use File::Path;
 use File::Temp qw(tempdir);
 use Time::Piece;
+use Set::IntRange;
 
 use Krang::Conf qw(KrangRoot instance);
 use Krang::Story;
@@ -286,7 +289,7 @@ sub publish_story {
             push @$publish_list, $story;
         }
     } else {
-        $publish_list = $self->get_publish_list(story => $story);
+        $publish_list = $self->get_publish_list(%args);
     }
 
     my $total = @$publish_list;
@@ -403,7 +406,7 @@ sub publish_media {
 
 
 
-=item C<< $publish_list_ref = $publisher->get_publish_list(story => $story) >>
+=item C<< $publish_list_ref = $publisher->get_publish_list(story => $story, keep_asset_list = 1) >>
 
 Returns the list of stories and media objects that will get published if publish_story(story => $story) is called.
 
@@ -412,6 +415,8 @@ The sub calls $story->linked_stories() and $story->linked_media() to generate th
 If successful, it will return lists of Krang::Story and Krang::Media objects that will get published along with $story.  At the absolute minimum (no linked stories or media), $stories->[0] will contain the originally submitted parameter $story.
 
 The story parameter can either be a single Krang::Story object or a list or Krang::Story objects.
+
+If you are going to be making multiple successive calls to get_publish_list(), and want to ensure that the returning asset list does not contain assets from previous calls, set the C<keep_asset_list> argument to 1.  Default behavior is to return all assets connected to the submitted stories.
 
 =cut
 
@@ -424,17 +429,20 @@ sub get_publish_list {
 
     my @publish_list;
 
+    $self->_init_asset_lists();
+
     if (ref $args{story} eq 'ARRAY') {
         my $stories = $args{story};
         foreach my $story (@$stories) {
-            push @publish_list, $self->_add_to_publish_list($story);
+            push @publish_list, $self->_add_to_publish_list(story => $story);
         }
     } else {
-        push @publish_list, $self->_add_to_publish_list($args{story});
+        push @publish_list, $self->_add_to_publish_list(story => $args{story});
     }
-    delete $self->{stories_to_be_published};
-    delete $self->{media_to_be_published};
-    delete $self->{stories_checked_for_links};
+
+    unless ($args{keep_asset_list}) {
+        $self->_clear_asset_lists();
+    }
 
     return \@publish_list;
 
@@ -820,79 +828,6 @@ sub _build_filename {
 }
 
 
-#
-# @list = _add_to_publish_list($story)
-#
-# Internal method - takes Krang::Story object, adds it and it's related objects to the publish list.
-#
-sub _add_to_publish_list {
-    my $self = shift;
-    my $story = shift;
-    my @publish_list = ();
-
-    croak (__PACKAGE__ . ": 'stories' is not defined!") unless (defined($story));
-    croak (__PACKAGE__ . ": 'stories' entry is not a Krang::Story object") unless ($story->isa('Krang::Story'));
-
-    # add this story to the publish list.
-    unless (exists($self->{stories_to_be_published}{$story->story_id()})) {
-        $self->{stories_to_be_published}{$story->story_id()} = 1;
-        push @publish_list, $story;
-    }
-    push @publish_list, $self->_process_linked_assets(story => $story);
-
-    return @publish_list;
-}
-
-
-
-#
-# _process_linked_assets(story => $story);
-#
-#
-# This sub is the internal method used to walk the paths provided by
-# the lists of linked assets that every story contains.  This walk is
-# done recursively, the catch being that you do not want to add any
-# linked asset to the publish list more than once, and you don't want
-# to repeatedly process the same asset.
-#
-# This is a standard recursive walk - the internal hashes
-# 'stories_to_be_published', 'stories_checked_for_links', and
-# 'media_to_be_published' are used to make sure we're not getting
-# trapped in a cycle.
-#
-sub _process_linked_assets {
-
-    my $self = shift;
-    my %args = @_;
-
-    my @publish_list = ();
-
-    croak (__PACKAGE__ . ": Missing argument 'story'!\n") unless (exists($args{story}));
-    my $story = $args{story};
-
-    foreach ($story->linked_stories()) {
-        my $id = $_->story_id();
-        # check to see if this story has been added to the publish list.
-        next if (exists($self->{stories_to_be_published}{$id}));
-        $self->{stories_to_be_published}{$id} = 1;
-        push @publish_list, $_;
-        # check to see if we've examined this story for additional links.
-        next if (exists($self->{stories_checked_for_links}{$id}));
-        $self->{stories_checked_for_links}{$id} = 1;
-        # add whatever additional links it has to the list.
-        push @publish_list, $self->_process_linked_assets(story => $_);
-    }
-
-    foreach ($story->linked_media()) {
-        my $id = $_->media_id();
-        # check to see if this media object has been added to the publish list.
-        next if (exists($self->{media_to_be_published}{$id}));
-        $self->{media_to_be_published}{$id} = 1;
-        push @publish_list, $_;
-    }
-
-    return @publish_list;
-}
 
 
 #
@@ -972,6 +907,137 @@ sub _build_story_single_category {
 
 
 
+
+##################################################
+##
+## Asset Link Checking
+##
+
+#
+# @list = _add_to_publish_list(story => $story)
+#
+# Internal method - takes Krang::Story object, adds it and it's related objects to the publish list.
+#
+sub _add_to_publish_list {
+
+    my $self = shift;
+    my %args = @_;
+    my @publish_list = ();
+
+    my $story    = $args{story};
+    my $story_id = $story->story_id();
+
+    croak (__PACKAGE__ . ": 'stories' is not defined!") unless (defined($story));
+    croak (__PACKAGE__ . ": 'stories' entry is not a Krang::Story object") unless ($story->isa('Krang::Story'));
+
+    # add this story to the publish list.
+    unless ($self->{story_publish_set}->contains($story_id)) {
+        $self->{story_publish_set}->Bit_On($story_id);
+        push @publish_list, $story;
+    }
+
+    # check to see if this story needs to be checked for related assets.
+    unless ($self->{checked_links_set}->contains($story_id)) {
+        $self->{checked_links_set}->Bit_On($story_id);
+        push @publish_list, $self->_process_linked_assets(story => $story);
+    }
+
+    return @publish_list;
+}
+
+
+
+#
+# _process_linked_assets(story => $story);
+#
+#
+# This sub is the internal method used to walk the paths provided by
+# the lists of linked assets that every story contains.  This walk is
+# done recursively, the catch being that you do not want to add any
+# linked asset to the publish list more than once, and you don't want
+# to repeatedly process the same asset.
+#
+# This is a standard recursive walk - the internal integer sets
+# 'story_publish_set', 'checked_links_set', and 'media_publish_set'
+# are used to make sure we're not getting trapped in a cycle.
+#
+sub _process_linked_assets {
+
+    my $self = shift;
+    my %args = @_;
+
+    my @publish_list = ();
+
+    croak (__PACKAGE__ . ": Missing argument 'story'!\n") unless (exists($args{story}));
+    my $story = $args{story};
+
+    foreach ($story->linked_stories()) {
+        my $id = $_->story_id();
+        # 1) add to publish list if not already on the list
+        next if ($self->{story_publish_set}->contains($id));
+        $self->{story_publish_set}->Bit_On($id);
+        push @publish_list, $_;
+
+        # 2) check for related assets if not already on the list.
+        next if ($self->{checked_links_set}->contains($id));
+        $self->{checked_links_set}->Bit_On($id);
+        push @publish_list, $self->_process_linked_assets(story => $_);
+    }
+
+    # 1) add asset to the list if not already on it.
+    foreach ($story->linked_media()) {
+        my $id = $_->media_id();
+
+        next if ($self->{media_publish_set}->contains($id));
+        $self->{media_publish_set}->Bit_On($id);
+        push @publish_list, $_;
+    }
+
+    return @publish_list;
+}
+
+
+#
+# _init_asset_lists()
+#
+# Set up the internally-maintained lists of asset IDs,
+# these lists are used by get_publish_list to determine which assets are
+# going to get published.
+#
+# Note - Set::IntRange is being used as an efficient method for storing
+# potentially large sets of integers.
+#
+
+sub _init_asset_lists {
+
+    my $self = shift;
+
+    foreach (qw(story_publish_set media_publish_set checked_links_set)) {
+        $self->{$_} = Set::IntRange->new(0, 4194304) unless (exists ($self->{$_}));
+    }
+}
+
+#
+# _clear_asset_lists()
+#
+# Nukes all content in the asset lists.
+#
+sub _clear_asset_lists {
+
+    my $self = shift;
+
+    foreach (qw(story_publish_set media_publish_set checked_links_set)) {
+        $self->{$_}->Empty();
+    }
+}
+
+
+
+##################################################
+##
+## Output
+##
+
 #
 # $url = $pub->_write_out_media($media)
 #
@@ -1014,7 +1080,7 @@ sub _write_media {
     my $t = localtime;
     $media->publish_date( $t );
     $media->save( keep_version => 1 );
-                                                                                
+
     # check media back in.
     if ($media->checked_out()) { $media->checkin(); }
 
@@ -1068,6 +1134,7 @@ sub _write_page {
 
     return;
 }
+
 
 
 my $EBN =<<EOEBN;
