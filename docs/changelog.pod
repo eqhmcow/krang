@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug that prevented Krang from installing on very recent MySQL
+releases which do not tolerate trailing commas in C<CREATE TABLE>
+statements. [Aaron Ross]
+
+=item *
+
 Added the ability to run Krang against a MySQL database on a different
 machine.  There is a new configuration parameter, C<DBHost>, and a new
 option to C<krang_install>, C<--DBHost>.  [Aaron Ross]

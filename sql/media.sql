@@ -84,5 +84,5 @@ CREATE TABLE media_contrib (
         ord             smallint UNSIGNED NOT NULL,
         PRIMARY KEY (media_id, contrib_id, ord),
         KEY (media_id),
-        KEY (contrib_id),
+        KEY (contrib_id)
 );
