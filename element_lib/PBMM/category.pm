@@ -31,14 +31,11 @@ sub new {
                     Krang::ElementClass::Text->new(name => 'secondary_css',
                                                             max => 1,
                                                             ),
-                    PBMM::top_cat_column->new(allow_delete => 0),
-                    PBMM::left_cat_column->new(allow_delete => 0),
-                    PBMM::right_cat_column->new(allow_delete => 0),
-                    Default::empty->new(    name => 'footer',
-                                            allow_delete => 0,
-                                            reorderable => 0,
-                                            max => 1,
-                                            min => 1 )
+                    PBMM::top_cat_column->new(),
+                    PBMM::left_cat_column->new(),
+                    PBMM::right_cat_column->new(),
+                    Default::empty->new(    name => 'footer'
+                                            )
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
@@ -48,6 +45,9 @@ sub fill_template {
     my ($self, %args) = @_;
     my $story   = $args{publisher}->story;
     my $tmpl      = $args{tmpl};
+    my $element = $args{element};
+    my $publisher = $args{publisher};
+
     $tmpl->param( title =>  $story->title );
     $tmpl->param( meta_description =>  $story->element->child('meta_description')->data );
     my $keywords = $story->element->child('meta_keywords')->data;
@@ -56,6 +56,27 @@ sub fill_template {
         push (@keys, {meta_keyword => $kw});
     }
     $tmpl->param( meta_keyword_loop => \@keys );
+
+    my @inheritable = qw( footer left_cat_column right_cat_column top_cat_column primary_css secondary_css );
+   
+    foreach my $el_name (@inheritable) {
+        if (not $element->child($el_name)) {
+            my $category = $story->category;
+            my $found = 0;
+            while (not $found) {
+                if ($category->parent) {
+                    $category = $category->parent;
+                    if( $category->element->child($el_name) ) {
+                        $tmpl->param( $el_name => $category->element->child($el_name)->publish( publisher => $publisher) );
+                        $found = 1; 
+                    } 
+                } else {
+                     last;
+                } 
+            }
+        }
+    }
+ 
     $self->SUPER::fill_template( %args ); 
 }
 
