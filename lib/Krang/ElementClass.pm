@@ -425,9 +425,9 @@ sub thaw_data {
 }
 
 
-=item C<< $html_tmpl = $class->find_template(element => $element, category => $category) >>
+=item C<< $html_tmpl = $class->find_template(element => $element, publisher => $publisher) >>
 
-Part of the publish/output section of Krang::ElementClass.  This call searches the filesystem for the appropriate output template to use with this element.
+Part of the publish/output section of Krang::ElementClass.  This call searches the filesystem for the appropriate output template to use with this element.  
 
 If successful, it will return an instantiated HTML::Template::Expr object with the selected template loaded.
 
@@ -441,7 +441,7 @@ The name of the template being searched for is $class->name() . ".tmpl"
 
 =item * 
 
-The search starts in the directory $category->url().
+The search starts in the directory $publisher->category->url().
 
 =item * 
 
@@ -460,11 +460,11 @@ If the root directory is reached, no template exists.  Croak.
 =cut
 
 
-=item C<< $class->fill_template(story => $story, element => $element, template => $template, category => $category) >>
+=item C<< $class->fill_template(element => $element, template => $template, publisher => $publisher) >>
 
 Part of the publish/output section of Krang::ElementClass.  This call is responsible for populating the otuput template of the element with the content stored within.  This replaces the "autofill" and .pl files that were found in Bricolage.
 
-The default implementation walks the element tree by calling $class->publish() on all children of the current element.  If you decide to override fill_template, but don't want to deal with the manual work of walking the element tree, make sure to make a call to $self->SUPER::fill_template().
+The default implementation walks the element tree by calling $child->publish() on all children of the current element.  If you decide to override fill_template, but don't want to deal with the manual work of walking the element tree, make sure to make a call to $self->SUPER::fill_template().
 
 The default implementation populates the template as follows:
 
@@ -498,7 +498,7 @@ A variable called "page_break" containing Krang::Publisher->PAGE_BREAK()
 
 =cut
 
-=item C<< $html = $class->publish(story => $story, element => $element, category => $category) >>
+=item C<< $html = $class->publish(element => $element, publisher => $publisher) >>
 
 The API frontend of the publish/output section of Krang::ElementClass.  This sub builds the HTML represented by this object and the element tree beneath it.  The default implementation ties find_template() and fill_template() together.
 
