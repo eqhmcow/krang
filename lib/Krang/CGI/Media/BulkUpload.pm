@@ -31,20 +31,20 @@ Krang::CGI::Media::BulkUpload - web interface used to upload archives
 of media files.
 
 =head1 SYNOPSIS
-                                                                                
+
   use Krang::CGI::Media::BulkUpload;
   my $app = Krang::CGI::Media::BulkUpload->new();
   $app->run();
-                                                                                
+
 =head1 DESCRIPTION
-                                                                                
+
 Krang::CGI::Media::BulkUpload provides a web based UI that takes a 
 valid archive file (.tar, .zip, .sit), opens it, evaluates the contents,
 and creates new media files corresponding with files in the archive.
 Directories in the archive match categories.
 
 =head1 INTERFACE
-                                                                                
+
 Following are descriptions of all the run-modes provided by
 Krang::CGI::Media::BulkUpload.
 
@@ -312,7 +312,7 @@ sub file_type {
     return 0;
 }
 
-=sub build_image_list()
+=item build_image_list()
 
 Used by File::Find::find to process files.
 
