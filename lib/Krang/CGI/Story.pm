@@ -65,6 +65,7 @@ sub setup {
                      save_and_jump    => 'save_and_jump',
                      save_and_add     => 'save_and_add',
                      save_and_view    => 'save_and_view',
+                     save_and_view_log => 'save_and_view_log',
                      save_and_stay    => 'save_and_stay',
                      save_and_edit_contribs => 'save_and_edit_contribs',
                      save_and_stay    => 'save_and_stay',
@@ -509,6 +510,24 @@ sub save_and_view {
     $query->param('return_script' => 'story.pl');
     $query->param('return_params' => rm => 'edit');
     return $self->view();
+}
+
+=item save_and_view_log
+
+This mode saves the current data to the session and passes control to
+view to view a version of the story.
+
+=cut
+
+sub save_and_view_log {
+    my $self = shift;
+    
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    $self->header_props(-uri => 'history.pl?history_return_script=story.pl&history_return_params=rm&history_return_params=edit&story_id=' . $session{story}->story_id);
+    $self->header_type('redirect');
 }
 
 =item save_and_edit_contribs

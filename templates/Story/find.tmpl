@@ -15,6 +15,11 @@
     document.find_story.submit();
   }
 
+  function view_story_log (id) {
+    document.view_story_log.story_id.value = id;
+    document.view_story_log.submit();
+  }
+
 
   function delete_selected () {
     if (confirm("Are you SURE you want to delete the checked stories?")) {
@@ -42,6 +47,94 @@
   }
 
 </script>
+
+<form method=post name=view_story_log action=history.pl>
+  <input type="hidden" name="story_id">
+
+<!-- Set up history mode return -->
+<input type="hidden" name="history_return_script" value="story.pl">
+
+<input type="hidden" name="history_return_params" value="rm">
+<input type="hidden" name="history_return_params" value="find">
+
+<tmpl_if do_advanced_search>
+  <input type="hidden" name="history_return_params" value="search_title">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_title>">
+
+  <input type="hidden" name="history_return_params" value="search_url">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_url>">
+
+  <input type="hidden" name="history_return_params" value="search_cover_from_day">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_cover_from_day>">
+
+  <input type="hidden" name="history_return_params" value="search_cover_from_month">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_cover_from_month>">
+
+  <input type="hidden" name="history_return_params" value="search_cover_from_year">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_cover_from_year>">
+
+  <input type="hidden" name="history_return_params" value="search_cover_to_day">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_cover_to_day>">
+
+  <input type="hidden" name="history_return_params" value="search_cover_to_month">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_cover_to_month>">
+
+  <input type="hidden" name="history_return_params" value="search_cover_to_year">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_cover_to_year>">
+
+  <input type="hidden" name="history_return_params" value="search_publish_from_day">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_publish_from_day>">
+
+  <input type="hidden" name="history_return_params" value="search_publish_from_month">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_publish_from_month>">
+
+  <input type="hidden" name="history_return_params" value="search_publish_from_year">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_publish_from_year>">
+
+  <input type="hidden" name="history_return_params" value="search_publish_to_day">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_publish_to_day>">
+
+  <input type="hidden" name="history_return_params" value="search_publish_to_month">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_publish_to_month>">
+
+  <input type="hidden" name="history_return_params" value="search_publish_to_year">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_publish_to_year>">
+
+  <input type="hidden" name="history_return_params" value="search_class">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_class>">
+
+  <input type="hidden" name="history_return_params" value="search_story_id">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_story_id>">
+
+  <input type="hidden" name="history_return_params" value="search_contrib_simple">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_contrib_simple>">
+
+  <input type="hidden" name="history_return_params" value="search_below_category_id">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_below_category_id>">
+
+<tmpl_else>
+
+  <input type="hidden" name="history_return_params" value="search_filter">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_filter>">
+
+</tmpl_if>
+
+<input type="hidden" name="history_return_params" value="do_advanced_search">
+<input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML do_advanced_search>">
+
+<input type="hidden" name="history_return_params" value="krang_pager_curr_page_num">
+<input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
+
+<input type="hidden" name="history_return_params" value="krang_pager_show_big_view">
+<input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+
+<input type="hidden" name="history_return_params" value="krang_pager_sort_field">
+<input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+
+<input type="hidden" name="history_return_params" value="krang_pager_sort_order_desc">
+<input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+</form>
 
 <form method=post name=find_story>
 <input type="hidden" name="rm" value="find">

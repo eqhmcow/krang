@@ -1,0 +1,21 @@
+<tmpl_include header.tmpl>
+
+<div class=dark-bar><tmpl_if story_id>Story</tmpl_if><tmpl_if media_id>Media</tmpl_if><tmpl_if template_id>Template</tmpl_if> Log</div>
+<div class=form-box>
+
+<input type="hidden" name="rm" value="find">
+
+<tmpl_var pager_html>
+
+</div></div>
+
+
+<div class=button-bar>
+  <input type=button value="Return" onclick="document.return_form.submit()">
+</div>
+
+<form name=return_form action=<tmpl_var return_script> method=post>
+  <tmpl_var return_hidden>
+</form>
+
+<tmpl_include footer.tmpl>

@@ -37,6 +37,11 @@
         document.forms[0].submit();
   }
 
+  function save_and_view_log() {
+        document.forms[0].rm.value = 'save_and_view_log';
+        document.forms[0].submit();
+  }
+
   function save_and_bulk_edit() {
         document.forms[0].rm.value = 'save_and_bulk_edit';
         document.forms[0].submit();
@@ -98,7 +103,7 @@
 
 <div class="dark-bar">
 <span class="left">Edit Story</span>
-<span class="right"><tmpl_if is_root><a href="javascript:goto_log()">Log</a> | <a href="javascript:goto_schedule()">Schedule</a> | </tmpl_if><a href="javascript:goto_help()">Help</a></span>
+<span class="right"><tmpl_if is_root><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:goto_schedule()">Schedule</a> | </tmpl_if><a href="javascript:goto_help()">Help</a></span>
 </div>
 
 

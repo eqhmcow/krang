@@ -12,7 +12,7 @@
 
 <div class="dark-bar">
 <span class="left">View Story</span>
-<span class="right"><a href="javascript:goto_log()">Log</a> | <a href="javascript:goto_help()">Help</a></span>
+<span class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:goto_help()">Help</a></span>
 </div>
 
 <p>
@@ -115,6 +115,37 @@
   </tmpl_if>
 </div>
 
-
-
 </form>
+
+
+<form method=post name=view_log action=history.pl>
+  <input type=hidden name=history_return_script value=story.pl>
+  <input type=hidden name=story_id value=<tmpl_var story_id>>
+
+  <input type=hidden name=history_return_script value=return_script>
+  <input type=hidden name=history_return_script value=story.pl>
+
+  <input type=hidden name=history_return_params value=rm>
+  <input type=hidden name=history_return_params value=view>
+
+  <input type=hidden name=history_return_params value=story_id>
+  <input type=hidden name=history_return_params value=<tmpl_var story_id>>
+
+  <input type=hidden name=history_return_params value=version>
+  <input type=hidden name=history_return_params value=<tmpl_var version>>
+
+  <input type=hidden name=history_return_params value=path>
+  <input type=hidden name=history_return_params value=<tmpl_var path>>
+
+  <input type=hidden name=history_return_params value=return_script>
+  <input type=hidden name=history_return_params value="<tmpl_var return_script>">
+
+    <tmpl_loop return_params_loop>
+      <input type=hidden name=history_return_params value=return_params>
+      <input type=hidden name=history_return_params value="<tmpl_var escape=HTML name="name">">
+
+      <input type=hidden name=history_return_params value=return_params>
+      <input type=hidden name=history_return_params value="<tmpl_var escape=HTML name="value">">
+   </tmpl_loop>
+</form>
+
