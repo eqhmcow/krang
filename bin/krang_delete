@@ -53,9 +53,10 @@ object id.
 
   --recursive   - if this is set, all dependant objects will be deleted.
                   Use this option with care!
-  
+
   --verbose     - print a running dialogue of what happens, otherwise
                   actions are performed silently.
+
 =cut
 
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
