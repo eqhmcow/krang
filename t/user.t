@@ -143,7 +143,7 @@ $template->checkout();
 
 # failure
 eval {$admin->delete()};
-is($@, 'Objects depend on this user', 'delete() failure');
+isa_ok($@, 'Krang::User::Dependency');
 
 # remove cause of failure
 $template->delete();
