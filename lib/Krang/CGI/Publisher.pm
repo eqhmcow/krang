@@ -459,7 +459,7 @@ sub _build_asset_list {
             push @stories, {id          => $asset->story_id,
                             url         => format_url(url    => $asset->url,
                                                       linkto => "javascript:preview_story('" . $asset->story_id . "')",
-                                                      length => 40
+                                                      length => 20
                                                      ),
                             title       => $asset->title,
                             checked_out => $checked_out,
@@ -469,7 +469,7 @@ sub _build_asset_list {
             push @media, {id          => $asset->media_id,
                           url         => format_url(url    => $asset->url,
                                                     linkto => "javascript:preview_media('".$asset->media_id."')",
-                                                    length => 40
+                                                    length => 20
                                                  ),
                           title       => $asset->title,
                           thumbnail   => $asset->thumbnail_path(relative => 1) || '',
