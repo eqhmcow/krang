@@ -246,11 +246,43 @@ sub save {
     my $self = shift;
 
     my $q = $self->query();
+    my $changes = $q->param('changes');
+    my @change_list = split('%\^%', $changes);
+    my %new_ids;
+    foreach my $c (@change_list) {
+        my @c_params = split('#&#', $c);
+        if ($c_params[1] eq 'new') {
+            my ($data,$order,$lid,$pid) = split('\^\*\^', $c_params[2]);
+            my %s_params;
+            $s_params{data} = $data;
+            $s_params{order} = $order;
+            $s_params{list} = (Krang::List->find( list_id => $lid))[0];
+            $s_params{parent_list_item} = (Krang::ListItem->find( list_item_id => $pid))[0] if $pid; 
+            my $new_item = Krang::ListItem->new( %s_params );
+            $new_item->save();
+            $new_ids{$c_params[0]} = $new_item->list_item_id;
+        } else {
+            my $list_item_id = $c_params[0];
+            if ($c_params[0] =~ /^new_\S+/) {
+                $list_item_id = $new_ids{$c_params[0]};
+            }
+            
+            my ($item) = Krang::ListItem->find( list_item_id => $list_item_id );
+
+            if ($c_params[1] eq 'delete') {
+                $item->delete;
+            } elsif ($c_params[1] eq 'replace') {
+                $item->data($c_params[2]);
+                $item->save;
+            } elsif ($c_params[1] eq 'move') {
+                $item->order($c_params[2]);
+                $item->save; 
+            }
+        }
+    }
 
     return $self->search();
 }
-
-
 
 
 

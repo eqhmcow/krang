@@ -54,13 +54,18 @@
         }
     };
 
+    function get_list_id (list_count) {
+        var lid = eval( 'document.forms["edit_form"].list_id_' + list_count + '.value' );
+        return lid; 
+    }
+
     nav_edit_mode();
 
     function do_save () {
         var myform = document.forms["edit_form"];
-        //myform.rm.value = "save";
+        myform.rm.value = "save";
         var change_string = change_log.join('%^%');
-        alert(change_string);
+        myform.changes.value = change_string;
         myform.submit();
     }
 
@@ -74,16 +79,16 @@
 
     function do_delete (list_count) {
         var select_val = get_selected_val(list_count);
-        log_entry( list_data[select_val]['__id__'], 'delete', '');
-        list_data[select_val]['__data__'] = [];
-        list_data[select_val] = [];
+        log_entry( eval('list_data[' + select_val + "]['__id__']"), 'delete', '');
+        eval('list_data[' + select_val + "]['__data__'] = []");
+        eval('list_data[' + select_val + '] = []');
         populate_list(list_count-1);
     }
 
     function do_replace(list_count) {
         var select_val = get_selected_val(list_count);
         if ( eval("document.forms['edit_form'].new_item_" + list_count + ".value" ) ) {
-            var item = eval( "list_data[" + select_val + "]");
+            var item = eval( 'list_data[' + select_val + ']');
             var nv = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
             item['__data__'] = nv;
             var indexArray = select_val.split('][');
@@ -111,12 +116,11 @@
                 } 
             }
             if (! select_val) {
-                firstHalf = eval( 'list_data.slice(0, ' + last_index + ')' );
-                secondHalf = eval( 'list_data.slice(' + last_index + ')'
-);
+                firstHalf = list_data.slice(0, last_index);
+                secondHalf = list_data.slice(last_index);
             } else {
-                 firstHalf = eval( 'list_data[' + select_val + '].slice(0, ' + last_index + ')' );
-                secondHalf = eval( 'list_data[' + select_val + '].slice(' + last_index + ')' );
+                firstHalf = eval('list_data[' + select_val + '].slice(0,last_index)');
+                secondHalf = eval('list_data[' + select_val + '].slice(last_index)');
             }
             if (down && (secondHalf.length == 0)) {
                 return;
@@ -137,7 +141,7 @@
             if (! select_val) {
                 list_data = firstHalf.concat(secondHalf);
             } else {
-                eval( 'list_data[' + select_val + '] = firstHalf.concat(secondHalf)' );
+                eval('list_data[' + select_val + '] = firstHalf.concat(secondHalf)');
             }
         }
         if (! down) {
@@ -159,19 +163,23 @@
                 firstHalf = list_data.slice(0, last_index);
                 secondHalf = list_data.slice(last_index);
             } else {
-                 firstHalf = list_data[select_val].slice(0, last_index);
-                secondHalf = list_data[select_val].slice(last_index );
+                firstHalf = eval('list_data[' + select_val + '].slice(0, last_index)');
+                secondHalf = eval('list_data[' + select_val + '].slice(last_index)');
             }
 
             var t = new Array();
             t['__data__'] = new_data;
             t['__id__'] = 'new_' + new_count++;
-            log_entry(t['__id__'], 'new', t['__data__']);
+            var parent;
+            if (indexArray.length) {
+                parent = eval("list_data[" + select_val + "]['__id__']");
+            }
+            log_entry(t['__id__'], 'new', t['__data__'] + '^*^' + (parseInt(last_index) + 1) + '^*^' + get_list_id(list_count) + '^*^' + parent );
             secondHalf.unshift(t);
             if (! select_val) {
                 list_data = firstHalf.concat(secondHalf);
             } else {
-                list_data[select_val] = firstHalf.concat(secondHalf);
+                eval('list_data[' + select_val + '] = firstHalf.concat(secondHalf)');
             } 
         } else {
             if (list_count - 1) {
@@ -185,25 +193,28 @@
                     list_data[0] = new Array();
                     list_data[0]['__data__'] = new_data;
                     list_data[0]['__id__'] = 'new_' + new_count++;
-                    log_entry(list_data[0]['__id__'], 'new', list_data[0]['__data__']);
+                    log_entry(list_data[0]['__id__'], 'new', list_data[0]['__data__'] + '^*^' + 1 + '^*^' + get_list_id(list_count) );
                 } else {
                     var nitem = new Array();
                     nitem['__data__'] = new_data;
                     nitem['__id__'] = 'new_' + new_count++;
                     list_data.splice(0,0,nitem);
-                    log_entry(nitem['__id__'], 'new', nitem['__data__']);
+                    log_entry(nitem['__id__'], 'new', nitem['__data__'] + '^*^' + 1 + '^*^' + get_list_id(list_count) );
                 }
             } else { 
-                if( ! list_data[select_val][0] ) {
-                    list_data[select_val][0] = new Array();
-                    eval( "list_data[select_val][0]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
-                    list_data[select_val][0]['__id__'] = "new_" +  new_count++;
+                if( ! eval('list_data[' + select_val + '][0]') ) {
+                    eval('list_data[' + select_val + '][0] = new Array()');
+                    var it = eval('list_data[' + select_val + '][0]');
+                    eval( "list_data[" + select_val + "][0]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
+                    it['__id__'] = "new_" + new_count++;
+                    log_entry(it['__id__'], 'new', it['__data__'] + '^*^'
++ 1 + '^*^' + get_list_id(list_count) + '^*^' + eval('list_data[' + select_val + "]['__id__']"));
                 } else {
                     var nitem = new Array();
                     nitem['__data__'] = new_data;
                     nitem['__id__'] = 'new_' + new_count++;
-                    list_data[select_val].splice(0,0,nitem);
-                    log_entry(nitem['__id__'], 'new', nitem['__data__']);
+                    eval('list_data[' + select_val + '].splice(0,0,nitem)');
+                    log_entry(nitem['__id__'], 'new', nitem['__data__'] + '^*^' + 1 + '^*^' + get_list_id(list_count) + '^*^' + eval('list_data[' + select_val + ']["__id__"]'));
                 }
             }
             last_index = 0;
@@ -231,11 +242,13 @@
 </table>
 
 <form name="edit_form" method="GET" action="list_group.pl">
+<input type="hidden" name="rm" overwrite="1">
+<input type="hidden" name="changes" overwrite="1">
 <table border="1" cellpadding="2" cellspacing="0" width="100%">
 <tr><td width="150">Description:</td><td width="400"><textarea rows="4" cols="60"><tmpl_var list_group_description></textarea></td></tr>
 <tr class="light-bar"><td colspan=2>LISTS</td></tr>
 <tmpl_loop list_loop>
-<tr><td><tmpl_var list_name></td><td><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
+<tr><td><tmpl_var list_name></td><td><input type='hidden' name="list_id_<tmpl_var list_count>" value="<tmpl_var list_id>"><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
 <tmpl_if list_item_loop><tmpl_loop list_item_loop><option value="<tmpl_var order>"><tmpl_var data></tmpl_loop></tmpl_if></select>
 <br>&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:do_move(<tmpl_var list_count>, 1)"><img src="images/arrow-asc.gif" border="0"></a>
 <a href="javascript:do_move(<tmpl_var list_count>)"><img src="images/arrow-desc.gif" border="0"></a>

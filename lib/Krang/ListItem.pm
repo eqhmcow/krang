@@ -366,8 +366,18 @@ sub delete {
     my $is_object = $list_item_id ? 0 : 1;
 
     $list_item_id = $self->{list_item_id} if $is_object;
+    my $order;
+    if (not $is_object) {
+        $order  = (Krang::ListItem->find( list_item_id => $list_item_id ))[0]->order;
+    } else {
+        $order = $self->{ord}
+    }
 
     $dbh->do('DELETE from list_item where list_item_id = ?', undef, $list_item_id);
+
+    # get rid of gaps in order
+    my $sql = 'UPDATE list_item set ord = ord - 1 where ord > ?';
+    $dbh->do($sql, undef, $order);
     
 }
 
