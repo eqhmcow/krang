@@ -565,10 +565,11 @@ sub create_template {
     if (exists($args{category})) {
         $category = $args{category};
     } else {
+        # use root cat for first site.
         my $site = $self->{stack}{site}[0];
         croak __PACKAGE__ . "->deploy_test_templates(): Must create site before deploying templates!\n" 
           unless defined($site);
-        ($category) = Krang::Category->find(site_id => $site->site_id);
+        ($category) = Krang::Category->find(site_id => $site->site_id, dir => '/');
     }
 
 
@@ -697,13 +698,14 @@ sub deploy_test_templates {
     # make sure live templates have been undeployed
     $self->undeploy_live_templates() unless (exists($self->{live_templates}));
 
+    # all templates go in root cat for first site found.
     my $site = $self->{stack}{site}[0];
-    my ($category) = Krang::Category->find(site_id => $site->site_id);
 
-    # ensuring parent cat.
-    while ($category->parent_id) {
-        $category = $category->parent;
-    }
+    croak __PACKAGE__ . "->deploy_test_templates(): Must create site before deploying templates!\n" 
+      unless defined($site);
+
+    my ($category) = Krang::Category->find(site_id => $site->site_id, dir => '/');
+
 
     croak __PACKAGE__ . "->deploy_test_templates(): Must create site before deploying templates!\n" 
       unless defined($site);
