@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Krang::DB qw(dbh);
 use Krang::Conf;
+use Krang::Session qw(%session);
 use Krang::Category;
 use Krang::Template;
 use Krang::Media;
@@ -32,11 +33,11 @@ required methods.  This class is used internally by Krang::FTP::Server.
 
 =over
 
-=item Krang::FTP::DirHandle->new($ftps, [$pathname, $type, $category_id])
+=item Krang::FTP::DirHandle->new($ftps, [$pathname, $instance, $type, $category_id])
 
 Creates a new Krang::FTP::DirHandle object.  Requires a Krang::FTP::Server
-object as its first parameter.  Optionally takes a pathname, is_media,  
-and category_id. Type must correspond with media or template, defaults to template. If not supplied the pathname defaults to "/".
+object as its first parameter.  Optionally takes a pathname, instance, type,  
+and category_id. Type must correspond with media or template. If not supplied the pathname defaults to "/".
 
 =cut
 
@@ -44,6 +45,7 @@ sub new {
     my $class       = shift;
     my $ftps        = shift;       # FTP server object.
     my $pathname    = shift || "/";
+    my $instance    = shift;
     my $type        = shift;
     my $category_id = shift;
 
@@ -52,11 +54,14 @@ sub new {
     bless $self, $class;
   
     # set category id, default to dummy value.  
-    $self->{category_id} = defined $category_id ? $category_id : -1;
-   
+    $self->{category_id} = $category_id;
+  
+    # set instance
+    $self->{instance} = $instance;
+
     # set type
     $self->{type} = $type;
- 
+
     return $self;
 }
 
@@ -76,47 +81,72 @@ sub get {
     my $filename    = shift;
     my $category_id = $self->{category_id};
     my $type = $self->{type} || '';
+    my $instance = $self->{instance};
+ 
+    if (not $instance) {
+        foreach my $inst (@{$self->{ftps}{auth_instances}}) {
+            if ($filename eq $inst) {
+                Krang::Conf->instance($inst);
+                my $session_id = Krang::Session->create();
+                my $user_id = $ENV{USER_ID};
+                $session{user_id} = $user_id;
     
-    if ($type eq 'media') {
-        # look for media with name = $filename in spec'd cat
-        my @media = Krang::Media->find( filename => $filename,
-                                        category_id => $category_id );
-        
-        if (@media) {
-            return new Krang::FTP::FileHandle(  $self->{ftps},
-                                                $media[0],
-                                                $type,
-                                                $category_id
+                # arrange for it to be deleted at process end
+                eval "END { Krang::Session->delete() }";
+               
+                return Krang::FTP::DirHandle->new(  $self->{ftps},
+                                                    $self->pathname . $filename . "/", 
+                                                    $filename 
                                                 ); 
-        }         
-    } elsif ($type eq 'template') {
-        # look for template with name = $filename in spec'd cat
-        my @template = Krang::Template->find(   filename => $filename,
-                                                category_id => $category_id );
+            }
+        }
+            # return undef if filname doesn't match a authorized instance
+            return undef;
 
-        if (@template) {
-            return new Krang::FTP::FileHandle(  $self->{ftps},
-                                                $template[0],
-                                                $type,
-                                                $category_id
-                                                );
+    } elsif ($type) {
+        if ($type eq 'media') {
+            # look for media with name = $filename in spec'd cat
+            my @media = Krang::Media->find( filename => $filename,
+                                            category_id => $category_id );
+        
+            if (@media) {
+                return new Krang::FTP::FileHandle(  $self->{ftps},
+                                                    $media[0],
+                                                    $type,
+                                                    $category_id
+                                                    ); 
+            }         
+        } elsif ($type eq 'template') {
+            # look for template with name = $filename in spec'd cat
+            my @template = Krang::Template->find(   filename => $filename,
+                                                    category_id => $category_id );
+
+            if (@template) {
+                return new Krang::FTP::FileHandle(  $self->{ftps},
+                                                    $template[0],
+                                                    $type,
+                                                    $category_id
+                                                    );
+            }
         } 
-    } elsif ( ($filename eq 'template') || ($filename eq 'media') ) {
+    } elsif ( (not $type) && (($filename eq 'template') || ($filename eq 'media')) ) {
     # $type is not defined, and they are asking for template or media
     # they want to see sites (top level cats) under template or media
         $type = $filename;
         return Krang::FTP::DirHandle->new( $self->{ftps},
                                             $self->pathname . $filename . "/",
+                                            $instance,
                                             $type,
                                             $category_id
                                            );
     }
    
-    if ($category_id == -1) { 
+    if (not $category_id) { 
         my @categories = Krang::Category->find( url => $filename.'/' );
 
         return Krang::FTP::DirHandle->new( $self->{ftps},
                                            $self->pathname . $filename . "/",
+                                           $instance,
                                            $type,
                                            $categories[0]->category_id,
                                           ) if $categories[0];
@@ -125,6 +155,7 @@ sub get {
                                                 parent_id => $category_id );
         return Krang::FTP::DirHandle->new( $self->{ftps},
                                            $self->pathname . $filename . "/",
+                                           $instance,
                                            $type,
                                            $categories[0]->category_id,
                                           ) if $categories[0];
@@ -150,7 +181,7 @@ sub open {
     my $category_id = $self->{category_id};
     my $type = $self->{type};
 
-    if ($category_id == -1) {
+    if (not $category_id) {
         return undef;
     }
     
@@ -199,6 +230,7 @@ sub list {
     my $self        = shift;
     my $wildcard    = shift;
     my $category_id = $self->{category_id};
+    my $instance    = $self->{instance};
     my $type        = $self->{type};
     my $ftps        = $self->{ftps};
 
@@ -211,15 +243,25 @@ sub list {
     }
     $like = '%' if not $like;
 
-    # if no $type, return 'media' and 'template'
-    if (not $type) {
-        @results = ( ['media', Krang::FTP::DirHandle->new( $self->{ftps}, '/media', 'media') ], ['template', Krang::FTP::DirHandle->new( $self->{ftps}, '/template', 'template') ] );
+    if (not $instance) {
+   
+        foreach my $inst (@{$self->{ftps}{auth_instances}}) {
+            push @results, [$inst, Krang::FTP::DirHandle->new( $self->{ftps}, "/$inst", $inst ) ];
+        }
         return \@results;
-    } elsif ( $category_id == -1 ) { # if category not defined, return top level cats
+    
+    } elsif (not $type) { # if no $type, return 'media' and 'template'
+    
+        @results = ( ['media', Krang::FTP::DirHandle->new( $self->{ftps}, "/$instance/media", 'media') ], ['template', Krang::FTP::DirHandle->new( $self->{ftps}, "/$instance/template", 'template') ] );
+        return \@results;
+    
+    } elsif ( not $category_id ) { # if category not defined, return top level cats
         my @categories = Krang::Category->find( url_like => $like, order_by => 'url', parent_id => undef );
+        
         foreach my $cat ( @categories ) {
             my $dirh = Krang::FTP::DirHandle->new( $self->{ftps},
-                                                   "/$type/" . $cat->url() ,
+                                                   "/$instance/$type/" . $cat->url() ,
+                                                    $instance,
                                                     $type,
                                                     $cat->category_id() );
             my $url = $cat->url;
@@ -236,12 +278,13 @@ sub list {
     foreach my $cat (@categories) {
         my $dirh = new Krang::FTP::DirHandle (  $self->{ftps},
                                                 $self->pathname."/".$cat->dir,
+                                                $instance,
                                                 $type,
                                                 $cat->category_id );
         push @results, [ $cat->dir, $dirh ];
     }
   
-    if ($category_id != -1) { 
+    if ( $category_id ) { 
         # get templates or media 
         if ($type eq 'media') {
             my @media = Krang::Media->find( filename_like => $like,
@@ -300,21 +343,36 @@ sub parent {
     my $self = shift;
     my $category_id = $self->{category_id};
     my $type = $self->{type};
+    my $instance = $self->{instance};
     my $dirh;
 
     return $self if $self->is_root;
 
-    # get parent category_id for category
-    my @cats;
-    @cats = Krang::Category->find( category_id => $category_id );
-    $dirh = $self->SUPER::parent;
+    $dirh = $self->SUPER::parent;    
+
+    if ($category_id) {
+
+       $dirh->{type} = $type;
+       $dirh->{instance} = $instance;
+
+        # get parent category_id for category
+        my @cats;
+        @cats = Krang::Category->find( category_id => $category_id );
  
-    if ($cats[0]) { 
-        # get a new directory handle and change category_id to parent's
-        $dirh->{category_id} = $cats[0]->parent_id();
-        $dirh->{type} = $type;
+        if ($cats[0]) {
+            if (my $parent_cat = $cats[0]->parent) {
+                # get a new directory handle and change category_id to parent's
+                $dirh->{category_id} = $parent_cat->category_id();
+            } else {
+                $dirh->{category_id} = undef;
+            }
+        } 
+    } elsif ($type) {
+        $dirh->{type} = '';
+        $dirh->{instance} = $instance;
     } 
-   
+ 
+ 
     return bless $dirh, ref $self; 
 }
 
@@ -342,10 +400,11 @@ In this case all of these values are fixed for all categories: ( 'd',
 
 sub status {
     my $self        = shift;
-    my $category_id = $self->{category_id} || -1;
-    my $type = $self->{type} || -1;
+    my $category_id = $self->{category_id} || '';
+    my $type = $self->{type} || '';
+    my $instance = $self->{instance} || '';
 
-    print STDERR __PACKAGE__, "::status() : $type : $category_id \n";
+    print STDERR __PACKAGE__, "::status() : instance = $instance  : type = $type : category = $category_id \n";
 
     return ( 'd', 0777, 2, "nobody", "nobody", 0, 0 );
 }
