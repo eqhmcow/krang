@@ -291,9 +291,15 @@ SQL
         $self->{checked_out_by} = 0;
     }
 
-    add_history(    object => $self, 
-                    action => 'checkin',
+    if ($self->isa('Krang::Template')) {
+        add_history(    object => $self,
+                        action => 'checkin',
                );
+    } else {
+        add_history(    object => ((Krang::Template->find(template_id => $id))[0]),
+                        action => 'checkin',
+               );
+    }
 
     return $self;
 }
@@ -365,9 +371,15 @@ SQL
         $self->{checked_out_by} = $user_id;
     }
 
-    add_history(    object => $self, 
-                    action => 'checkout',
+    if ($self->isa('Krang::Template')) {
+        add_history(    object => $self,
+                        action => 'checkout',
                );
+    } else {
+        add_history(    object => ((Krang::Template->find(template_id => $id))[0]),
+                        action => 'checkout',
+               );
+    }
 
     return $self;
 }

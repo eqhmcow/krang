@@ -871,9 +871,16 @@ sub checkout {
 
     $self->{checked_out_by}= $user_id;
 
-    add_history(    object => $self,
-                    action => 'checkout',
-                );
+    if ($self->isa('Krang::Media')) {
+        add_history(    object => $self,
+                        action => 'checkout',
+               );
+    } else {
+        add_history(    object => ((Krang::Media->find(media_id => $media_id))[0]),
+                        action => 'checkout',
+               );
+    }
+
 }
 
 =item $media->checkin() || Krang::Media->checkin($media_id)
@@ -895,9 +902,15 @@ sub checkin {
     
     $self->{checked_out_by}= $user_id;
 
-    add_history(    object => $self,
-                    action => 'checkin',
-                ); 
+    if ($self->isa('Krang::Media')) {
+        add_history(    object => $self,
+                        action => 'checkin',
+               );
+    } else {
+        add_history(    object => ((Krang::Media->find(media_id => $media_id))[0]),
+                        action => 'checkin',
+               );
+    }
 
 }
 
