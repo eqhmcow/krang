@@ -472,6 +472,9 @@ sub find_template {
     my $self = shift;
     my %args = @_;
 
+    # args for HTML::Template::Expr on instantiation.
+    my %tmpl_args = (die_on_bad_params => 0);
+
     # get the category dir from publisher;
     my $publisher = $args{publisher} || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
     my $element   = $args{element} || croak __PACKAGE__ . ":missing attribute 'element'.\n";
@@ -481,7 +484,9 @@ sub find_template {
 
     # Attempt to instantiate an HTML::Template::Expr object with that as the search path.
     my $tmpl = HTML::Template::Expr->new(filename => $element->name() . '.tmpl',
-                                         path => \@path);
+                                         path => \@path,
+                                         %tmpl_args
+                                        );
 
     # HTML::Template::Expr will gack if no template has been found.  return template.
     return $tmpl;
@@ -489,7 +494,7 @@ sub find_template {
 
 
 
-=item C<< $class->fill_template(element => $element, template => $template, publisher => $publisher) >>
+=item C<< $class->fill_template(element => $element, tmpl => $html_template, publisher => $publisher) >>
 
 Part of the publish/output section of Krang::ElementClass.  This call is responsible for populating the otuput template of the element with the content stored within.  This replaces the "autofill" and .pl files that were found in Bricolage.
 
@@ -521,11 +526,57 @@ A variable called "title" containing $story->title.
 
 =item * 
 
-A variable called "page_break" containing Krang::Publisher->PAGE_BREAK()
+A variable called "page_break" containing Krang::Publisher->page_break()
 
 =back
 
 =cut
+
+sub fill_template {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $tmpl      = $args{tmpl};
+    my $publisher = $args{publisher};
+    my $element   = $args{element};
+
+    my %child_loops  = (); # item 2 from POD
+    my @element_loop = (); # item 3 from POD.
+
+    # iterate over children, building out @element_loop.
+    foreach ($element->children()) {
+        my %el = ('is_' . $_->name() => 1,
+                  $_->name()         => $_->class->publish(
+                                                           element => $_,
+                                                           publisher => $publisher
+                                                          )
+                  );
+        push @element_loop, \%el;
+    }
+
+
+    # build out params going to the template.
+    my %params  = (
+                   $element->name() => $element->data(),
+                   title            => $publisher->story()->title(),
+                   page_break       => $publisher->page_break(),
+                   element_loop     => \@element_loop
+                  );
+
+
+#    foreach (keys %child_loops) {
+#        # loops for each child type
+#        my $loopname  = $_ . '_loop';
+#        my $totalname = $_ . '_total'; 
+#        $params{$loopname}  = $child_loops{$_};
+#        $params{$totalname} = @{$child_loops{$_}};
+#    }
+
+
+    $tmpl->param(%params);
+}
+
 
 =item C<< $html = $class->publish(element => $element, publisher => $publisher) >>
 
@@ -535,6 +586,12 @@ If successful, publish() will return a block of HTML.
 
 Generally, you will not want to override publish().  Changes to template-handling behavior should be done by overriding find_template().  Changes to the parameters being passed to the template should be done by overriding fill_template().  Override publish() only in the event that neither of the previous solutions work for you.
 
+=head3 A Note on Elements
+
+Some elements are simply attributes with a value, and no formatting to be associated with them.  This can be because the developer of the element tree wants to handle formatting in the parent element's template, or that there should be no formatting of the data whatsoever (e.g. $element->data() might get embedded in an <input> tag).
+
+In these cases, the element will have no template associated with it - which will cause find_template to fail.  If the element has no children, the value of $element->data() will be returned as the result of the publish() call.  If the element *does* have children, however, publish() will propegate the error thrown by find_template().
+
 =cut
 
 
@@ -543,9 +600,30 @@ sub publish {
     my $self = shift;
     my %args = @_;
 
-    my $template = $self->find_template(@_);
+    my $html_template;
 
-    my $html = $template->output();
+    foreach (qw(element publisher)) {
+        unless (exists($args{$_})) {
+            croak(__PACKAGE__ . ": Missing argument '$_'.  Exiting.\n");
+        }
+    }
+
+    # try and find an appropriate template.
+    eval { $html_template = $self->find_template(@_); };
+
+    if ($@) {
+        # no template found - if the element has children, this is an error.
+        # otherwise, return the raw data stored in the element.
+        if (scalar($args{element}->children())) {
+            croak $@;
+        } else {
+            return $args{element}->data();
+        }
+
+    }
+    $self->fill_template(tmpl => $html_template, @_);
+
+    my $html = $html_template->output();
 
     return $html;
 }
