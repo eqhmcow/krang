@@ -480,7 +480,7 @@ sub edit {
 
     die ("Can't find media object with media_id '$media_id'") unless (ref($m));
 
-    my $t = $self->load_tmpl('edit_media.tmpl', associate=>$q);
+    my $t = $self->load_tmpl('edit_media.tmpl', associate=>$q, loop_context_vars=>1);
 
     my $media_tmpl_data = $self->make_media_tmpl_data($m);
     $t->param($media_tmpl_data);
