@@ -12,7 +12,6 @@ use File::Copy;
 use LWP::MediaTypes qw(guess_media_type);
 use Image::Thumbnail;
 use File::stat;
-use FileHandle;
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
@@ -149,6 +148,8 @@ This is also how CVS works.
 
 =item $media = Krang::Media->new()
 
+Initialize new media object.  Passing in filehandle and filename upon new is eqivalent of calling new(), then upload_file().
+
 $media->new() supports the following name-value arguments:
 
 =over
@@ -194,10 +195,9 @@ sub init {
     my $self = shift;
     my %args = @_;
 
-    my $filehandle = $args{'filehandle'};
     my $filename = $args{'filename'};
 
-    delete $args{'filehandle'} if $filehandle;
+    my $filehandle = delete $args{'filehandle'};
 
     # finish the object
     $self->hash_init(%args);
@@ -225,7 +225,7 @@ Returns the unique id assigned the media object.  Will not be populated until $m
 
 =item $media->notes()
 
-=item $media->media_type()
+=item $media->media_type_id()
 
 Gets/sets the value.
 
@@ -243,7 +243,7 @@ Returns the path that the media object will preview/publish to. Not settable her
 
 =item $media->upload_file({filehandle => $filehandle, filename => $filename})
 
-Store media file to filesystem. Sets $media->filename() also. 
+Stores media file to temporary location on filesystem. Sets $media->filename() also. 
 
 =cut
 
@@ -280,7 +280,7 @@ Returns MIME type of uploaded file, returns nothing if unknown type or no file u
 
 sub mime_type {
     my $self = shift;
-    return $self->{mime_type} = guess_media_type($self->file_path);
+    return guess_media_type($self->file_path);
 }
 
 =item $file_path = $media->file_path() 
@@ -292,7 +292,7 @@ Return filesystem path of uploaded media file.
 sub file_path {
     my $self = shift;
     my $root = KrangRoot; 
-    return $self->{file_path} = catfile($root,'data','media',$self->{media_id},$self->{version},$self->{filename});
+    return catfile($root,'data','media',$self->{media_id},$self->{version},$self->{filename});
 }
 
 =item $file_size = $media->file_size()
@@ -303,15 +303,13 @@ Return filesize in bytes.
 
 sub file_size {
     my $self = shift;
-    my $fh = new FileHandle $self->file_path() || croak("Unable to access file ".$self->file_path()." for reading");
-    my $st = stat($fh);
-    close $fh;
-    return $self->{file_size} = $st->size;
+    my $st = stat($self->file_path());
+    return $st->size;
 }
  
 =item $media->save()
 
-Commits media object to the database. 
+Commits media object to the database. Will set media_id to unique id if not already defined (first save).
 
 =cut
 
@@ -401,6 +399,14 @@ limit - limits result to number passed in here, else no limit.
 
 offset - offset results by this number, else no offset.
 
+=item *
+
+only_ids - return only media_ids, not objects if this is set true.
+
+=item *
+
+count - return only a count if this is set to true. Cannot be used with only_ids.
+
 =back
 
 =cut
@@ -423,8 +429,17 @@ sub find {
 	} 
     }
   
-    my $where_string = join(' = ? and ', @where)."= ? " if @where; 
-    my $sql = 'select '.join(',', FIELDS).' from media where '.$where_string." order by $order_by $order_desc";
+    my $where_string = join ' and ', (map { "$_ = ?" } @where);
+    my $select_string;
+    if ($args{'count'}) {
+        $select_string = 'count(*)';
+    } elsif ($args{'only_ids'}) {
+        $select_string = 'media_id';
+    } else {
+        $select_string = join(',', FIELDS);
+    }
+    
+    my $sql = "select $select_string from media where ".$where_string." order by $order_by $order_desc";
    
     # add limit and/or offset if defined 
     if ($limit) {
@@ -432,17 +447,23 @@ sub find {
     } elsif ($offset) {
         $sql .= " limit $offset, -1";
     }
+
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
     while (my $row = $sth->fetchrow_hashref()) {
-        my $obj = bless {}, $self;
-	foreach my $field (FIELDS) {
-	    if ($row->{$field}) {
-		$obj->{$field} = $row->{$field};
-	    } else {
-		$obj->{$field} = undef;
+        my $obj;
+        if ($args{'count'}) {
+            return $row->{count};
+        } elsif ($args{'only_ids'}) {
+            $obj = $row->{media_id};
+        } else {    
+            $obj = bless {}, $self;
+	    foreach my $field (FIELDS) {
+	        if ($row->{$field}) {
+		    $obj->{$field} = $row->{$field};
+	        } 
 	    }
-	}
+        }
 	push (@media_object,$obj);
     }
     $sth->finish();	
@@ -474,7 +495,11 @@ sub revert {
     my $data = $sth->fetchrow_array(); 
     $sth->finish();
 
-    %$self = %{thaw($data)};
+    eval {
+        %$self = %{thaw($data)};
+    };
+    craok ("Unable to deserialize object: $@") if $@;
+
     my $old_filepath = $self->file_path();
     $self->{version} = $version;
     $self->{checked_out_by} = $checked_out_by;
@@ -574,41 +599,30 @@ sub checkin {
     $self->{checked_out_by}= $user_id;
 }
 
-=item $media->prepare_for_edit() || Krang::Media->prepare_for_edit($media_id)
+=item $media->prepare_for_edit() 
 
-Copy current version of media from media table into versioning table.
+Copy current version of media from media table into versioning table.  Will only work for objects that have been save()ed (not new objects).
 
 =cut
 
 sub prepare_for_edit {
     my $self = shift;
-    my $media_id = shift;
     my $dbh = dbh;
 
-    if ($media_id) {
-        # ASSERT that this is checked out by current user (not someone else)
+    # ASSERT that this is checked out by current user (not someone else)
 
-        my $sql = 'SELECT '.join(',', FIELDS).' FROM media WHERE media_id = ?';
-        my $sth= $dbh->prepare($sql);
-        $sth->execute($media_id); 
-
-        while (my $row = $sth->fetchrow_hashref()) {
-            foreach my $field (FIELDS) {
-                if ($row->{$field}) {
-                    $self->{$field} = $row->{$field};
-                } else {
-                    $self->{$field} = undef;
-                }
-            }
-        }
-        $sth->finish();
-    } elsif ($self->media_id) {
+    my $media_id;
+    if ($self->media_id) {
         $media_id = $self->media_id;
     } else {
         croak("No media_id specified for prepare_for_edit!");
     }
 
-    my $serialized = freeze($self);
+    my $serialized; 
+    eval {
+        $serialized = freeze($self);
+    };
+    craok ("Unable to serialize object: $@") if $@;
 
     $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
 
@@ -628,6 +642,9 @@ sub delete {
     my $root = KrangRoot;
 
     $media_id = $self->{media_id} if (not $media_id);
+  
+    $self->checkout($media_id);
+     
     croak("No media_id specified for delete!") if not $media_id;
 
     $dbh->do('DELETE from media where media_id = ?', undef, $media_id); 
