@@ -16,7 +16,7 @@ from Fred Moyer (fmoyer@plusthree.com) [Perrin]
 =back
 
 
-=head2 v1.022
+=head2 v1.022 - August 6, 2004
 
 =over
 
