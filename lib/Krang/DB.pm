@@ -9,11 +9,15 @@ Krang::DB - provides access to Krang database
 =head1 SYNOPSIS
 
   # get a database handle
-  use Krang::DB qw(dbh create_db);
+  use Krang::DB qw(dbh create_db disconnect_dbh);
   $dbh = dbh();
 
   # create an empty database for an instance
   create_db($instance);
+
+  # forget about the current dbh for this instance, triggering a
+  # reconnect on the next call to dbh()
+  forget_dbh();
 
 =head1 DESCRIPTION
 
@@ -31,10 +35,13 @@ default options are:
 
   RaiseError         => 1
   AutoCommit         => 1
-  ShowErrorStatement => 1
 
 If the database for the current instance does not exist, will call
 create_db() automatically.
+
+This call is guaranteed to return the same database handle on
+subsequent calls within the same instance and process.  (Until a call
+to forget_dbh(), of course.)
 
 =item C<< create_db() >>
 
@@ -42,13 +49,21 @@ Creates an empty Krang database for the current instance.  Will drop
 the database for this instance, if one exists, so be careful with this
 call.  Called automatically from dbh() if no database exists.
 
+=item C<< forget_dbh() >>
+
+Causes the next call to dbh() to perform a fresh connect.  This is
+useful in cases where you know the currently cached dbh() is invalid.
+For example, after forking a child process a call to forget_dbh() is
+necessary to avoid the parent and child trying to use the same
+database connection.
+
 =back
 
 =cut
 
 use DBI;
 use base 'Exporter';
-our @EXPORT_OK = qw(dbh create_db);
+our @EXPORT_OK = qw(dbh create_db forget_dbh);
 
 use Krang::Conf qw(DBName DBUser DBPass KrangRoot);
 use List::Util qw(first);
@@ -78,9 +93,18 @@ sub dbh () {
     $DBH{$name} = DBI->connect("DBI:mysql:database=$name", DBUser, DBPass,
                                { RaiseError         => 1, 
                                  AutoCommit         => 1,
-                                 ShowErrorStatement => 1,
                                });
     return $DBH{$name};
+}
+
+sub forget_dbh () {
+    my $name = DBName;
+    croak("Unable to create dbh, DBName is undefined.\n" . 
+          "Maybe you forgot to call Krang::Conf->instance()?")
+      unless defined $name;
+
+    # check cache
+    delete $DBH{$name};
 }
 
 # create the database
