@@ -549,6 +549,46 @@ here.  The default implementation does nothing.
 
 sub finish_upgrade {}
 
+=item C<post_install_message(options => \%options)>
+
+Called by bin/krang_install, returns install information once everything
+is complete.
+
+=cut
+
+sub post_install_message {
+
+    my ($pkg, %args) = @_;
+
+    my %options = %{$args{options}};
+
+    print <<EOREPORT;
+
+
+#####                                                         #####
+###                                                             ###
+##                  KRANG INSTALLATION COMPLETE                  ##
+###                                                             ###
+#####                                                         #####
+
+
+   Installed at        :  $options{InstallPath}
+   Control script      :  $options{InstallPath}/bin/krang_ctl
+   Krang conf file     :  $options{InstallPath}/conf/krang.conf
+
+   Running on $options{IPAddress} --
+     http://$options{HostName}:$options{ApachePort}/
+     ftp://$options{HostName}:$options{FTPPort}/
+
+   CMS admin user password:  "$options{AdminPassword}"
+
+
+EOREPORT
+
+}
+
+
+
 =item C<guess_platform()>
 
 Called to guess whether this module should handle building on this
