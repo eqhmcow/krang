@@ -205,8 +205,15 @@ exit(0);
 sub do_install {
     setup_getopts();
 
+    # Must be running as root, check now to avoid unpacking backup
+    # only to fail on this trivial condition
+    exit_error("Must be run as root.") unless ($> eq "0");
+
     # unpack backup, which contributes to options
     unpack_backup() if $options{FromBackup};
+
+    # load the plaform module for this distribution
+    load_platform();
 
     # enforce requirements
     enforce_requirements();
@@ -307,25 +314,39 @@ sub _get_version {
     `perl -e 'require qq{$_[0]}; print \$Krang::VERSION'`;
 }
 
+# load the platform module for this dist
+sub load_platform {
+    our $PLATFORM;
+
+    exit_error("Can't find data/build.db.  Do you need to run 'make build'?")
+      unless -e catfile($ENV{KRANG_ROOT}, 'data', 'build.db');
+    require Krang::Platform;
+    my %build_params = Krang::Platform->build_params;
+
+    # add in $KRANG_ROOT/platform for platform build modules
+    my $plib    = catdir($ENV{KRANG_ROOT}, "platform");
+    $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
+    unshift @INC, $plib;
+
+    print "Loading platform module for '$build_params{Platform}...\n";
+    $PLATFORM = "$build_params{Platform}::Platform";
+    eval "use $PLATFORM;";
+    die "Unable to load $PLATFORM: $@"
+      if $@;
+}
+
 sub check_prereqs {
+    our $PLATFORM;
     print "Checking prerequisites\n";
 
-    # Must be running as root.
-    exit_error("Must be run as root.") unless ($> eq "0");
+    # check that the platform is set up right.  This will check Perl,
+    # MySQL and any libraries needed.
+    $PLATFORM->verify_dependencies(mode => 'install');
 
-    # IP address must be configured on host.
-    my $ifconfig_bin = IFCONFIG_BIN;
-    my $ifconfig = `$ifconfig_bin`;
-    my @ip_addrs = ();
-    foreach my $if_line (split(/\n/, $ifconfig)) {
-        next unless ($if_line =~ /inet\ addr\:(\d+\.\d+\.\d+\.\d+)/);
-        my $ip = $1;
-        push(@ip_addrs, $ip);
-    }
+    # check IP address
     my $IPAddress = $options{'IPAddress'};
-    unless (grep {$_ eq $IPAddress} @ip_addrs) {
-        exit_error("IPAddress '$IPAddress' not bound to machine");
-    }
+    exit_error("IPAddress '$IPAddress' not bound to machine")
+      unless $PLATFORM->check_ip(ip => $IPAddress);
 
     # Addons files must exist
     foreach my $addon (@{$options{'WithAddon'}}) {
@@ -336,12 +357,6 @@ sub check_prereqs {
     
     exit_error("InstanceElementSet '$options{InstanceElementSet}' does not exist in Krang.\nPerhaps you misspelled it, or forgot a --WithAddon option.\n")
       unless _check_element_set($options{'InstanceElementSet'});
-
-    my $perl_version = $Config{version};
-    my $archname = $Config{archname};
-    unless (($perl_version eq '5.6.1') and ($archname eq 'i686-linux')) {
-        exit_error("Incorrect Perl version (Found $perl_version/$archname, expecting 5.6.1/i686-linux).");
-    }
 
     # InstallPath must NOT exist.
     my $InstallPath = $options{InstallPath};
@@ -363,47 +378,35 @@ sub check_prereqs {
         exit_error("Init script '$init_script' already exists.  Cannot continue.");
     }
         
-        # Check for proper version of MySQL.
-        #     Suggest ""--do-mysql-install"" flag if not
-        #     installed.
-        my $mysql_bin = MYSQL_BIN;
-        unless (-f $mysql_bin) {
-            exit_error("MySQL not installed.");
+    # MySQLRootPassword must be valid, and MySQL should be running
+    my $MySQLRootPassword = $options{'MySQLRootPassword'};
+    my $mysql_bin = MYSQL_BIN;
+    my $test_mysql = ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
+    $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+    $test_mysql .= " 2>&1";
+    my $mysql_test_output = `$test_mysql`;
+
+    unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
+        print STDERR "$mysql_test_output";
+        if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
+            exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
+        } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
+            exit_error("Can't connect to MySQL.  Start MySQL and try again.");
+        } else {
+            exit_error("Unable to verify MySQLRootPassword.");
         }
+    }
 
-        my $mysql_version = `$mysql_bin -V`;
-        unless ((-f $mysql_bin) and ($mysql_version =~ /Distrib\ 4\./)) {
-            exit_error("MySQL version 4.* not installed.");
-        }
-
-        # MySQLRootPassword must be valid, and MySQL should be running
-        my $MySQLRootPassword = $options{'MySQLRootPassword'};
-        my $test_mysql = ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
-        $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
-        $test_mysql .= " 2>&1";
-        my $mysql_test_output = `$test_mysql`;
-
-        unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
-            print STDERR "$mysql_test_output";
-            if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
-                exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
-            } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
-                exit_error("Can't connect to MySQL.  Start MySQL and try again.");
-            } else {
-                exit_error("Unable to verify MySQLRootPassword.");
-            }
-        }
-
-        # InstanceDBName should NOT exist in MySQL
-        my $InstanceDBName = $options{InstanceDBName};
-        my $db_exists_test = ECHO_BIN ." 'select 1' | $mysql_bin -uroot";
-        $db_exists_test .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
-        $db_exists_test .= " $InstanceDBName 2>&1";
-        my $db_exists_test_output = `$db_exists_test`;
-
-        unless ($db_exists_test_output =~ /ERROR 1049: Unknown database/) {
-            exit_error("Database '$InstanceDBName' already exists.  Cannot continue.");
-        }
+    # InstanceDBName should NOT exist in MySQL
+    my $InstanceDBName = $options{InstanceDBName};
+    my $db_exists_test = ECHO_BIN ." 'select 1' | $mysql_bin -uroot";
+    $db_exists_test .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+    $db_exists_test .= " $InstanceDBName 2>&1";
+    my $db_exists_test_output = `$db_exists_test`;
+    
+    unless ($db_exists_test_output =~ /ERROR 1049: Unknown database/) {
+        exit_error("Database '$InstanceDBName' already exists.  Cannot continue.");
+    }
     
 }
 
@@ -537,7 +540,7 @@ sub install_krang {
 
     # remove scripts that won't do anything useful in an installed
     # system
-    system("rm $InstallPath/bin/krang_install $InstallPath/bin/krang_makedist $InstallPath/bin/krang_upgrade");
+    system("rm $InstallPath/bin/krang_install $InstallPath/bin/krang_makedist $InstallPath/bin/krang_upgrade $InstallPath/bin/krang_build");
 
     print "  Fixing ownership\n";
     my $KrangUser = $options{KrangUser};
@@ -839,6 +842,7 @@ sub set_param_defaults {
                         Proto    => "tcp",
                         PeerAddr => $options{'IPAddress'},
                         PeerPort => "ftp(21)",
+                        Timeout  => 1,
                     ) || '';
             close $remote if $remote;
 

@@ -4,6 +4,7 @@ use warnings;
 
 use File::Spec::Functions qw(catdir catfile canonpath);
 use Cwd qw(cwd);
+use Config;
 
 =head1 NAME
 
@@ -41,13 +42,31 @@ be either "build" or "install" depending on when the method is called.
 This method should either succeed or die() with a message for the
 user.
 
-The default implemntation checks for the following conditions:
+The default implementation checks for the following conditions:
 
 =over
 
 =item *
 
+Perl is the right version and compiled for the right architecture
+(skipped in build mode).
+
+=item *
+
 The C<mysql> shell is available and MySQL is v4.0.13 or higher.
+
+=item *
+
+The Expat library is installed.  The default implementation looks in
+$Config{libpth} for libexpat.so.
+
+=item *
+
+libjpeg, libgif and libpng are installed with header files.  The
+default implementation looks in $Config{libpth} for the appropriate
+*.so files, and in $Config{usrinc} and /usr/local/include for the
+header files (unless installing, in which case header files aren't
+needed).
 
 =back
 
@@ -60,26 +79,121 @@ sub verify_dependencies {
     
     # look for MySQL command shell
     die <<END unless grep { -e catfile($_, 'mysql') } @PATH;
+
 MySQL not found.  Krang requires MySQL v4.0.13 or later.  If MySQL is 
 installed, ensure that the 'mysql' client is in your PATH and try again.
+
 END
     
-    # check the version
+    # check the version of MySQL
     no warnings qw(exec);
     my $mysql_version = `mysql -V 2>&1`;
-    die "Unable to determine MySQL version using 'mysql -V'.\n" .
-      "Error was '$!'.\n"
+    die "\n\nUnable to determine MySQL version using 'mysql -V'.\n" .
+      "Error was '$!'.\n\n"
         unless defined $mysql_version and length $mysql_version;
     chomp $mysql_version;
     my ($version) = $mysql_version =~ /\s4\.(\d+\.\d+)/;
-    die "MySQL version 4 not found.  'mysql -V' returned:" .
+    die "\n\nMySQL version 4 not found.  'mysql -V' returned:" .
       "\n\n\t$mysql_version\n\n"
         unless defined $version;
-    die "MySQL version too old.  Krang requires v4.0.13 or higher.\n" .
+    die "\n\nMySQL version too old.  Krang requires v4.0.13 or higher.\n" .
       "'mysql -V' returned:\n\n\t$mysql_version\n\n"
         unless $version >= 0.13;
+
+    # get ready to look for libs and include files
+    my @libs = split(" ", $Config{libpth});
+    my @incs = ($Config{usrinc}, '/include', '/usr/local/include');
     
-    
+    # look for Expat
+    unless (grep { -e catfile($_, 'libexpat.so') } @libs) {
+        die <<END;
+
+Expat XML parser library not found.  Install expat
+(http://expat.sf.net) and try again.
+
+END
+    }
+
+    # look for libjpeg, libgif and libpng
+    my @l = ( { name => 'libjpeg',
+                so   => 'libjpeg.so',
+                h    => 'jpeglib.h', },
+              { name => 'libgif',
+                so   => 'libgif.so',
+                h    => 'gif_lib.h', },
+              { name => 'libpng',
+                so   => 'libpng.so',
+                h    => 'png.h', } );
+    foreach my $l (@l) {
+        die "\n\n$l->{name} is missing from your system.\n".
+          "This library is required by Krang.\n\n"
+            unless grep { -e catfile($_, $l->{so}) } @libs;
+        die <<END unless $mode eq 'install' or grep { -e catfile($_, $l->{h}) } @incs;
+
+The header file for $l->{name}, '$l->{h}', is missing from your system.
+This file is needed to compile the Imager module which uses $l->{name}.
+
+END
+    }
+
+
+
+    if ($mode eq 'install') {
+        # check that Perl is right for this build
+        my %params = $pkg->build_params();
+
+        my $perl = join('.', (map { ord($_) } split("", $^V, 3)));
+        if ($perl ne $params{Perl}) {
+            die <<END;
+
+This distribution of Krang is compiled for Perl version
+'$params{Perl}', but you have '$perl' installed.  You must either
+install the expected version of Perl, or download a different release
+of Krang.  Please see the installation instructions in INSTALL for
+more details.
+
+END
+        }
+
+        if ($Config{archname} ne $params{Arch}) {
+            die <<END;
+
+This distribution of Krang is compiled for the '$params{Arch}'
+architecture, but your copy of Perl is compiled for
+'$Config{archname}'.  You must download a different Krang
+distribution, or rebuild your Perl installation.  Please see the
+installation instructions in INSTALL for more details.
+
+END
+        }
+    }
+
+}
+
+=item C<< check_ip(ip => $ip) >>
+
+Called by the installation system to check whether an IP address is
+correct for the machine.  The default implementation runs
+/sbin/ifconfig and tries to parse the resulting text for IP addresses.
+Should return 1 if the IP address is ok, 0 otherwise.
+
+=cut
+
+sub check_ip {
+    my ($pkg, %arg) = @_;
+    my $IPAddress = $arg{ip};
+
+    my $ifconfig = `/sbin/ifconfig`;
+    my @ip_addrs = ();
+    foreach my $if_line (split(/\n/, $ifconfig)) {
+        next unless ($if_line =~ /inet\ addr\:(\d+\.\d+\.\d+\.\d+)/);
+        my $ip = $1;
+        push(@ip_addrs, $ip);
+    }
+    unless (grep {$_ eq $IPAddress} @ip_addrs) {
+        return 0;
+    }
+    return 1;
 }
 
 =item C<< build_perl_module(name => $name) >>
@@ -105,7 +219,10 @@ sub build_perl_module {
     print "\n\n************************************************\n\n",
           " Building $name",
           "\n\n************************************************\n\n";
-               
+         
+    # Net::FTPServer needs this to not try to install /etc/ftp.conf
+    local $ENV{NOCONF} = 1 if $name =~ /Net-FTPServer/;
+    
     # We only want the libs, not the executables or man pages
     my $command =
       Expect->spawn("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir");
