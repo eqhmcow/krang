@@ -53,7 +53,7 @@ sub fill_template {
     my %a_count;
     
     foreach my $ad_m (@ad_m) {
-        $a_count{$ad_m->child('size')->data.'_count'}++;
+        $a_count{$ad_m->child('size')->data.'_total'}++;
     }
 
     $tmpl->param( \%a_count );
