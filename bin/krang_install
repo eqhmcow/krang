@@ -139,10 +139,10 @@ Following is a list of the tasks the installer script will perform.
   --InstanceHostName     - Host name of CMS instance virtual server
   --InstanceDBName       - Name of MySQL database
   --InstanceElementSet   - Name of element set used by CMS instance
-  --FTPHostName          - Display name of the FTP host
 
 =head2 Optional parameters
 
+  --FTPHostName          - Host name for FTP server, defaults to HostName.
   --MySQLRootPassword    - Password for the MySQL user "root"
   --InstallPath          - Directory for Krang install
   --KrangUser            - UNIX user for process ownership
@@ -202,7 +202,6 @@ my @req_params = qw( HostName
                      InstanceDBName 
                      DBUser 
                      DBPass
-                     FTPHostName
                      InstanceElementSet );
 
 my @opt_params = qw( MySQLRootPassword 
@@ -212,6 +211,7 @@ my @opt_params = qw( MySQLRootPassword
                      FTPPort 
                      ApachePort 
                      SMTPServer 
+                     FTPHostName
                      InstanceDisplayName );
 
 my %options = ( map { $_ => "" } @req_params, @opt_params);
@@ -709,6 +709,7 @@ sub set_param_defaults {
                     KrangUser => 'krang',
                     KrangGroup => 'krang',
                     FTPPort => '21',
+                    FTPHostName => $options{'HostName'},
                     ApachePort => '80',
                     SMTPServer => '127.0.0.1',
                     );
