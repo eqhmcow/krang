@@ -364,14 +364,20 @@ is($result[0], $find[1]->story_id);
                              ids_only => 1);
 is(@result, 0);
 
-# find by site
+# count works with simple_search
 my $count = Krang::Story->find(simple_search => "",
                                count => 1);
 ok($count);
 
 
-# find by site
+# order_by url working
 @result = Krang::Story->find(simple_search => "",
                              order_by => "url");
 ok(@result);
 
+# make sure count is accurate
+use Krang::DB qw(dbh);
+my ($real_count) = dbh->selectrow_array('SELECT COUNT(*) FROM story');
+$count = Krang::Story->find(simple_search => "",
+                            count => 1);
+is($count, $real_count);

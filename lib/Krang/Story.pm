@@ -960,17 +960,29 @@ sub find {
         
     # construct base query
     my $query;
-    if ($count) {
-        $query = "SELECT" . 
-          ($need_distinct ? " DISTINCT" : "") . 
-            "  count(*) FROM story AS s";
+    if ($count) {        
+        if ($need_distinct) {
+            $query = "SELECT COUNT(DISTINCT(s.story_id)) FROM story AS s";
+        } else {
+            $query = "SELECT COUNT(*) FROM story AS s";
+        }
     } elsif ($ids_only) {
-        $query = "SELECT ".
-          ($need_distinct ? "DISTINCT " : "") . 
-            "s.story_id FROM story AS s";
+        if ($need_distinct) {
+            $query = "SELECT DISTINCT(s.story_id) FROM story AS s";
+        } else {
+            $query = "SELECT s.story_id FROM story AS s";
+        }
     } else {
-        $query = "SELECT " . ($need_distinct ? "DISTINCT " : "") . 
-          join(', ', map { "s.$_" } STORY_FIELDS) . " FROM story AS s";
+        if ($need_distinct) {
+            $query = "SELECT DISTINCT(s.story_id), " . 
+              join(', ', map { "s.$_" } 
+                   grep { $_ ne 'story_id' } STORY_FIELDS) . 
+                     " FROM story AS s";
+        } else {
+            $query = "SELECT " .
+              join(', ', map { "s.$_" } STORY_FIELDS) .
+                " FROM story AS s";
+        }
     }
 
     # add joins, if any
