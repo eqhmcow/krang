@@ -5,12 +5,13 @@
 <!-- //
 
     <tmpl_var js_list_arrays>
-    function populate_list (list_count) {
-
+    function populate_list (list_count,sel_in_list,no_clear) {
         var next_list = list_count + 1;
 
         // first, clear lists above one selected
-        clear_lists_above(next_list);
+        if ( ! no_clear) {
+            clear_lists_above(next_list);
+        }
 
         if ( list_count != 0 ) {
             var select_val = get_selected_val(list_count);
@@ -19,6 +20,9 @@
             for(var key in eval('list_data[' + select_val + ']') ) {
                 if (eval('list_data[' + select_val + "][key]['__data__']") ) {
                     eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + "'" + eval("list_data[" + select_val + "][key]['__data__']") + "', '" + select_val + '][' + key + "')");
+                    if (sel_in_list == (count-1) ) {
+                        eval ('document.forms["edit_form"].list_' + next_list + '.options[' + (count-1) + '].selected = true');  
+                    } 
                 }
             }
         } else {
@@ -26,6 +30,9 @@
             for(var key in list_data) {
                if (list_data[key]['__data__']) {
                     eval ('document.forms["edit_form"].list_1.options[' + count++ + '] = new Option(' + "'" + eval("list_data[key]['__data__']") +  "', '" + key + "')"); 
+                    if (sel_in_list == (count-1) ) {
+                        eval ('document.forms["edit_form"].list_1.options[' + (count-1) + '].selected = true');
+                    }
                }
             }
         }
@@ -73,16 +80,19 @@
         var select_val = get_selected_val(list_count);
         if ( eval("document.forms['edit_form'].new_item_" + list_count + ".value" ) ) {
             eval( "list_data[" + select_val + "]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
-            populate_list(list_count-1);
+            var indexArray = select_val.split('][');
+            var last_index = indexArray.pop();
+            populate_list(list_count-1, last_index, 1);
             eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''");
         }
     }
 
     function do_move(list_count, down) {
         var select_val = get_selected_val(list_count);
+        var last_index;
         if (select_val != 'undef' ) {
             var indexArray = select_val.split('][');
-            var last_index = indexArray.pop();
+            last_index = indexArray.pop();
             select_val = indexArray.join('][');
             var firstHalf;
             var secondHalf;
@@ -115,8 +125,10 @@
                 eval( 'list_data[' + select_val + '] = firstHalf.concat(secondHalf)' );
             }
         }
-         
-        populate_list(list_count-1);
+        if (! down) {
+            last_index--;
+        } 
+        populate_list((list_count-1), last_index, 1);
     }
 
     function do_add(list_count) {
@@ -153,7 +165,7 @@
             }
         }
          
-        populate_list(list_count-1);
+        populate_list(list_count-1, last_index);
     }
     
 // -->
