@@ -29,11 +29,17 @@ with Media and Story objects.
 
 =head1 INTERFACE
 
-Following are descriptions of all the run-modes
-provided by Krang::CGI::Contrib.
+Krang::CGI::Contrib is expected to be invoked via a CGI
+"instance script".  The requested run-mode is specified via 
+the query parameter "rm".  For example, the following
+request would invoke the "add" run-mode:
 
-The default run-mode (start_mode) for Krang::CGI::Contrib
-is 'search'.
+  http://server-name/contributor.pl?rm=add
+
+Following are descriptions of all the run-modes provided 
+by Krang::CGI::Contrib.  The default run-mode (start_mode) 
+for Krang::CGI::Contrib is 'search'.
+
 
 =head2 Run-Modes
 
@@ -47,8 +53,19 @@ use Krang::DB qw(dbh);
 
 
 # Fields in a contrib
-use constant CONTRIB_FIELDS => [qw(
-                                  )];
+use constant CONTRIB_PROTOTYPE => {
+                                contrib_id       => '',
+                                bio              => '',
+                                contrib_type_ids => [],
+                                email            => '',
+                                first            => '',
+                                last             => '',
+                                middle           => '',
+                                phone            => '',
+                                prefix           => '',
+                                suffix           => '',
+                                url              => '',
+                               };
 
 
 
@@ -226,6 +243,12 @@ sub add {
     $t->param(add_mode => 1);
     $t->param(%ui_messages) if (%ui_messages);
 
+    # Convert Krang::Contrib object to tmpl data
+    my $contrib_tmpl = $self->get_contrib_tmpl();
+
+    # Propagate to template
+    $t->param($contrib_tmpl);
+
     return $t->output() . $self->dump_html();
 }
 
@@ -337,56 +360,10 @@ sub edit {
     $t->param(%ui_messages) if (%ui_messages);
 
     # Convert Krang::Contrib object to tmpl data
-    my %contrib_tmpl = (
-                        contrib_id       => '',
-                        bio              => '',
-                        contrib_type_ids => [],
-                        email            => '',
-                        first            => '',
-                        last             => '',
-                        middle           => '',
-                        phone            => '',
-                        prefix           => '',
-                        suffix           => '',
-                        url              => '',
-                       );
-
-    foreach my $cf (keys(%contrib_tmpl)) {
-
-        # Handle special case: contrib_type_ids multiple select
-        if ($cf eq 'contrib_type_ids') {
-            if (defined($q->param('first'))) {
-                # If "first" was defined, assume that edit form has been submitted
-                $contrib_tmpl{$cf} = [ $q->param('contrib_type_ids') ];
-            } else {
-                # No submission.  Load from database
-                $contrib_tmpl{$cf} = [ $c->contrib_type_ids() ];
-            }
-            next;
-        }
-
-        # Overlay query params
-        my $query_val = $q->param($cf);
-        if (defined($query_val)) {
-            $contrib_tmpl{$cf} = $query_val;
-        } else {
-            # Handle simple (text) fields
-            $contrib_tmpl{$cf} = $c->$cf;
-        }
-    }
-
-    # Fix up contrib_type_ids to be tmpl-data
-    my $all_contrib_types = $self->get_contrib_types();
-
-    foreach my $ct (@$all_contrib_types) {
-        my $contrib_type_id = $ct->{contrib_type_id};
-        $ct->{selected} = 1 
-          if ( grep { $_ eq $contrib_type_id } (@{$contrib_tmpl{contrib_type_ids}}) );
-    }
-    $contrib_tmpl{contrib_type_ids} = $all_contrib_types;
+    my $contrib_tmpl = $self->get_contrib_tmpl($c);
 
     # Propagate to template
-    $t->param(%contrib_tmpl);
+    $t->param($contrib_tmpl);
 
     return $t->output() . $self->dump_html();
 }
@@ -495,6 +472,58 @@ sub delete {
 #############################
 #####  PRIVATE METHODS  #####
 #############################
+
+
+# Return a hashref based on contributor properties, suitible 
+# to be passed to an HTML::Template edit/add screen.
+# If a $contributor object is supplied, use its properties 
+# for default values.
+sub get_contrib_tmpl {
+    my $self = shift;
+    my $c = shift || 0;
+
+    my $q = $self->query();
+
+    my %contrib_tmpl = ( %{&CONTRIB_PROTOTYPE} );
+
+    # For each contrib prop, convert to HTML::Template compatible data
+    foreach my $cf (keys(%contrib_tmpl)) {
+
+        # Handle special case: contrib_type_ids multiple select
+        if ($cf eq 'contrib_type_ids') {
+            if (defined($q->param('first'))) {
+                # If "first" was defined, assume that edit form has been submitted
+                $contrib_tmpl{$cf} = [ $q->param('contrib_type_ids') ];
+            } else {
+                # No submission.  Load from database
+                $contrib_tmpl{$cf} = [ $c->contrib_type_ids() ] if (ref($c));
+            }
+            next;
+        }
+
+        # Overlay query params
+        my $query_val = $q->param($cf);
+        if (defined($query_val)) {
+            $contrib_tmpl{$cf} = $query_val;
+        } else {
+            # Handle simple (text) fields
+            $contrib_tmpl{$cf} = $c->$cf if (ref($c));
+        }
+    }
+
+    # Fix up contrib_type_ids to be tmpl-data
+    my $all_contrib_types = $self->get_contrib_types();
+
+    foreach my $ct (@$all_contrib_types) {
+        my $contrib_type_id = $ct->{contrib_type_id};
+        $ct->{selected} = 1 
+          if ( grep { $_ eq $contrib_type_id } (@{$contrib_tmpl{contrib_type_ids}}) );
+    }
+    $contrib_tmpl{contrib_type_ids} = $all_contrib_types;
+
+    # Return a reference to the tmpl-compat data
+    return \%contrib_tmpl;
+}
 
 
 # Replace with Krang::Prefs(?)
