@@ -27,7 +27,7 @@ BEGIN {
         chomp $pid;
 
         # verify pid is active
-        if ($pid and kill(0, $pid)) {
+        if ($pid) {
             eval "use Test::More qw(no_plan);";
         } else {
             eval "use Test::More skip_all => 'Schedule Daemon not running.';";
@@ -394,7 +394,8 @@ $s15->save;
 eval {$count = Krang::Schedule->run};
 is($@, '', 'Run did not fail :).');
 
-sleep($ENV{KRANG_DEBUG} ? 15 : 65);
+# wait till the schedule daemon should have run
+sleep(7);
 
 test_publish_story($story);
 
@@ -408,7 +409,8 @@ $s16->save;
 eval {$count = Krang::Schedule->run};
 is($@, '', 'Run did not fail :).');
 
-sleep($ENV{KRANG_DEBUG} ? 15 : 65);
+# wait for another run
+sleep(7);
 
 my ($obj) = Krang::Story->find(story_id => $story->story_id);
 is($obj, undef, 'Story expiration is a success :).');

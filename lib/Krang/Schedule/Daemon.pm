@@ -62,7 +62,7 @@ use Krang::Schedule;
 # Constants
 ############
 use constant CLEANUP_INTERVAL => 900;
-use constant SLEEP_INTERVAL => $ENV{KRANG_DEBUG} ? 10 : 60;
+use constant SLEEP_INTERVAL   => 5;
 
 # Globals
 ##########
