@@ -111,7 +111,11 @@ pod2usage( -verbose => 2 ) if $man;
 pod2usage("Wrong number of arguments.\n") if @ARGV > 1;
 my $platform;
 opendir(DIR, catdir($KrangRoot, 'platform')) or die $!;
-my @platforms = grep { $_ !~ /^\.\.?$/ and $_ !~ /CVS/ } sort readdir DIR;
+my @platforms;
+while (my $f = readdir DIR) {
+    push @platforms, $f if (-e catfile($KrangRoot, 'platform', $f, 'Platform.pm'));
+}
+#my @platforms = grep { $_ !~ /^\.\.?$/ and $_ !~ /CVS/ } sort readdir DIR;
 
 # check that we're not trying to build on top of an existing build
 die "A build of Krang already exists here.  Run 'make clean' to remove it".
@@ -132,6 +136,7 @@ if (@ARGV) {
     # look for a platform that wants to handle this
     my $found;
     foreach my $plat (@platforms) {
+        print "ATTEMPTING: $plat\n";
         my $pkg = $plat . '::Platform';
         eval "use $pkg";
         die "Unable to load platform modules '$pkg': $@\n" if $@;
