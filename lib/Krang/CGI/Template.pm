@@ -72,6 +72,7 @@ sub setup {
 		delete
 		delete_selected
                 deploy
+                deploy_selected
                 checkout_and_edit
 		edit
 		edit_cancel
@@ -522,6 +523,31 @@ sub deploy {
     return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
+
+=item deploy_selected
+
+Deploys selected templates from the find interface.
+
+=cut
+
+sub deploy_selected {
+    my $self = shift;
+    my $q = $self->query;
+
+    my @template_ids = $q->param('krang_pager_rows_checked');
+
+    return $self->search unless @template_ids;
+
+    for my $t(@template_ids) {
+        my $template = (Krang::Template->find( template_id => $t ))[0];
+        $template->deploy;
+    }
+
+    add_message('message_selected_deployed');
+    
+    return $self->search;
+
+}
 
 
 =item edit

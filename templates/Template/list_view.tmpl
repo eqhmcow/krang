@@ -15,7 +15,7 @@
   }
 
   function delete_selected () {
-    if (confirm("Are you SURE you want to delete the checked template?")) {
+    if (confirm("Are you SURE you want to delete the checked templates?")) {
       var myform = document.krang_pager_form;
       myform.rm.value = 'delete_selected';
       myform.submit();
@@ -37,6 +37,14 @@
   function clear_advanced_search () {
     var myform = document.clear_advanced_search_form;
     myform.submit();
+  }
+
+  function do_deploy () {
+    if (confirm("Are you SURE you want to deploy the checked templates?")) {
+      var myform = document.krang_pager_form;
+      myform.rm.value = 'deploy_selected';
+      myform.submit();
+    }
   }
 
 </script>
