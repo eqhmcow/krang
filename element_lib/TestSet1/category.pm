@@ -41,6 +41,8 @@ sub new {
                                                             required => 0),
                              Krang::ElementClass::MediaLink->new(name => "photo"),
                              Krang::ElementClass::StoryLink->new(name => "leadin"),
+                             Krang::ElementClass::CategoryLink->new(name => "leftnav_link"),
+
                             ],
                 @_);
    return $pkg->SUPER::new(%args);
