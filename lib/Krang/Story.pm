@@ -1399,9 +1399,9 @@ if the story is checked out to another user.
 =cut
 
 sub delete {
-    my $self = shift;
+    my $self = shift;    
     unless(ref $self) {
-        my $story_id = $self;
+        my $story_id = shift;
         ($self) = Krang::Story->find(story_id => $story_id);
         croak("Unable to load story '$story_id'.") unless $self;
     }

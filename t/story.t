@@ -470,3 +470,16 @@ $cover2->categories([$cat[1]]);
 eval { $cover2->save };
 ok(not $@);
 END { $cover2->delete };
+
+# test delete by ID
+my $doomed = Krang::Story->new(categories => [$cat[0], $cat[1]],
+                               title      => "Doomed",
+                               slug       => "doomed",
+                               class      => "article");
+$doomed->save();
+my $doomed_id = $doomed->story_id;
+my ($obj) = Krang::Story->find(story_id => $doomed_id);
+ok($obj);
+Krang::Story->delete($doomed_id);
+($obj) = Krang::Story->find(story_id => $doomed_id);
+ok(not $obj);
