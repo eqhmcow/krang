@@ -266,7 +266,7 @@ sub preview_story {
 
     # this is a no-parse header script
     $self->header_type('none');
-    print $query->header;
+    print $query->header(-expires => '-1d');
 
     my $session_key = $query->param('session');
     my $story_id    = $query->param('story_id');
