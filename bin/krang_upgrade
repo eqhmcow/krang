@@ -87,7 +87,7 @@ Following is a list of the tasks the upgrade script will perform.
 
   --KrangRoot            - Directory where Krang is installed (KRANG_ROOT)
   --MySQLRootPassword    - Password for the MySQL user "root"
-  --no-backup            - Preven
+  --no-backup            - Skip making a backup before running the upgrade.
 
 =head1 SEE ALSO
 
@@ -313,10 +313,13 @@ sub make_backups {
 
     # run krang_backup
     my $backup = catfile($options{KrangRoot}, 'bin', 'krang_backup') . 
-      " $BACKUP_FILENAME" . " 2>&1";
+      " /tmp/$BACKUP_FILENAME" . " 2>&1";
     my $out = `KRANG_ROOT='' $backup`;
-    exit_error("Problem creating krang_backup:\n$out\n")
+    exit_error("Problem creating krang_backup.  To suppress backup creation, run krang_upgrade with --no-backup.  Error was:\n\n$out\n")
       unless $out =~ /Backup complete/;
+
+    system("mv /tmp/$BACKUP_FILENAME ./$BACKUP_FILENAME") &&
+      exit_error("Unable to move backup from /tmp/$BACKUP_FILENAME to ./$BACKUP_FILENAME");
 }
 
 sub install_new_krang {
