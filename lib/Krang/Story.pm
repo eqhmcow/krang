@@ -984,7 +984,7 @@ sub find {
             push(@where, 's.story_id = sc.story_id');
             $need_distinct = 1;
 
-            my @words = split(/\s+/, $args{'simple_search'});
+            my @words = split(/\s+/, ($args{'simple_search'} || ""));
             foreach my $word (@words){
                 my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
                   push(@where, '(' .                      
