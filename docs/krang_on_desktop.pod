@@ -47,24 +47,24 @@ When running C<krang_install>:
 
 =over
 
-=item HostName
+=item * HostName
 
 C<localhost> is fine.
 
-=item IPAddress
+=item * IPAddress
 
 Use C<127.0.0.1> - C<127.0.0.1> is B<ALWAYS> the current machine.
 
-=item KrangUser
+=item * KrangUser
 
 Your user account is a good choice.  This will give your user account
 permissions to modify any file in your installed copy of Krang.
 
-=item KrangGroup
+=item * KrangGroup
 
 The default group for your user account is also a good choice.
 
-=item InstanceHostName, InstanceDBName, InstanceElementSet
+=item * InstanceHostName, InstanceDBName, InstanceElementSet
 
 Every Krang installation needs a minimum of one instance.  This guide
 will use "cms.testsite.kra", "testsite", and "Default", respectively.
@@ -114,19 +114,19 @@ create a site.
 Under the B<sites> menu (underneath B<Admin>), choose the "Add a site"
 option.
 
-=item URL
+=item * URL
 
 The URL of your "live" site:
 
   testsite.kra:8080
 
-=item Preview URL
+=item * Preview URL
 
 The URL for the preview version of your site:
 
   preview.testsite.kra:8080
 
-=item Publish Path
+=item * Publish Path
 
 The website root for C<testsite.kra>.  You want to choose a directory
 path that C<KrangUser> has write-access to.
@@ -143,7 +143,7 @@ well, or even a path in the Krang install path (e.g. C<KRANG_ROOT>)!
 
 Is a good choice as well.
 
-=item Preview Path
+=item * Preview Path
 
 Same as C<Publish Path> - put it in the same location, just call it
 C<preview.testsite.kra>.
