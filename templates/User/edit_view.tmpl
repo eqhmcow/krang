@@ -1,0 +1,126 @@
+<tmpl_include /header.tmpl>
+
+
+<script language="Javascript">
+<!-- //
+
+    function save_stay () {
+        var myform = document.forms["edit_user_form"];
+      <tmpl_if add_mode>
+        myform.rm.value = "save_stay_add";
+      <tmpl_else>
+        myform.rm.value = "save_stay_edit";
+      </tmpl_if>
+        myform.submit();
+    }
+
+
+    function cancel_user_change () {
+        var myform = document.forms["edit_user_form"];
+      <tmpl_if add_mode>
+        myform.rm.value = "cancel_add";
+      <tmpl_else>
+        myform.rm.value = "cancel_edit";
+      </tmpl_if>
+        myform.submit();
+    }
+
+
+    function delete_user () {
+        var myform = document.forms["edit_user_form"];
+        if (confirm("Are you SURE you want to delete this user?")) {
+            myform.rm.value = "delete";
+            myform.submit();
+        }
+    }
+
+// -->
+</script>
+
+
+<div class="dark-bar">User <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></div>
+
+
+<div class=form-box>
+
+<table cellpadding="5" cellspacing="0">
+
+
+<form name="edit_user_form" method="POST">
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+<tmpl_if add_mode>
+  <input type="hidden" name="rm" value="save_add">
+<tmpl_else>
+  <input type="hidden" name="rm" value="save_edit">
+  <input type="hidden" name="user_id" value="<tmpl_var escape=HTML user_id>">
+</tmpl_if>
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+<tr>
+    <td align="left" valign="top">First:</td>
+    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_first><span class="invalid"></tmpl_if><input type="textfield" size="40" name="first_name" value="<tmpl_var escape=HTML first_name>"><tmpl_if error_invalid_first></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Last:</td>
+    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_last><span class="invalid"></tmpl_if><input type="textfield" size="40" name="last_name" value="<tmpl_var escape=HTML last_name>"><tmpl_if error_invalid_last></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">User Groups:</td>
+    <td align="left" valign="top"><tmpl_var group_ids></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Email:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="email" value="<tmpl_var escape=HTML email>"></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Phone:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="phone" value="<tmpl_var escape=HTML phone>"></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Mobile Phone:</td>
+    <td align="left" valign="top"><input type="textfield" size="40" name="mobile_phone" value="<tmpl_var escape=HTML mobile_phone>"></td>
+</tr>
+
+<tr><td colspan="2">&nbsp;</td></tr>
+
+<tr>
+    <td align="left" valign="top">Login:</td>
+    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_login><span class="invalid"></tmpl_if><input type="textfield" size="40" name="login" value="<tmpl_var escape=HTML login>"><tmpl_if error_invalid_login></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">New Password:</td>
+    <td align="left" valign="top"><input type="password" size="40" name="new_password" value=""></td>
+</tr>
+
+<tr>
+    <td align="left" valign="top">Confirm New Password:</td>
+    <td align="left" valign="top"><input type="password" size="40" name="confirm_password" value=""></td>
+</tr>
+
+</div>
+
+<div class="button-bar">
+    <input type="submit" value="Save">
+    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()"></tmpl_unless>
+    <input type="reset" value="Reset">
+    <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_user()"></tmpl_unless>
+    <input type="button" value="Cancel" onClick="cancel_user_change()">
+</div>
+
+
+<!-- End edit_user_form -->
+</form>
+
+
+<tmpl_include /footer.tmpl>

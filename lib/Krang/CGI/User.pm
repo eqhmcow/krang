@@ -33,11 +33,12 @@ use Krang::HTMLPager;
 use Krang::Log;
 use Krang::Message qw(add_message);
 use Krang::Pref;
-use Krang::Session;
+use Krang::Session qw(%session);
 use Krang::User;
 
 
-
+# alias user_groups hash, for convenience :)
+my %user_groups = %Krang::User::user_groups;
 
 ##############################
 #####  OVERRIDE METHODS  #####
@@ -180,10 +181,6 @@ sub delete {
 	my $q = $self->query();
         my $user_id = $q->param('user_id');
 
-        eval {Krang::User->delete($user_id)};
-        if ($@) {
-        }
-
 	return $self->dump_html();
 }
 
@@ -219,21 +216,52 @@ sub delete_selected {
 
 =item * edit
 
-Description of run-mode edit...
+Display a screen allowing the end-user to edit the User object selected from
+the 'search' screen.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This run mode expects a 'user_id' query param and it will croak if it's missing
+or invalid.
 
 =cut
 
 sub edit {
 	my $self = shift;
-
+        my %ui_messages = @_;
 	my $q = $self->query();
+        my $user_id = $q->param('user_id');
+        my ($user) = Krang::User->find(user_id => $user_id);
 
-	return $self->dump_html();
+        croak(__PACKAGE__ . "->edit(): No Krang::User object found matching " .
+              "user_id '$user_id'")
+          unless defined $user;
+
+        # Store in session, just following Jesse's lead
+        $session{EDIT_USER} = $user;
+
+        my $t = $self->load_tmpl("edit_view.tmpl",
+                                 associate => $q);
+
+        $t->param(%ui_messages) if %ui_messages;
+
+        # make group_ids checkbox
+        my $default = $user->group_ids;
+        my @values = keys %user_groups;
+        my $size = scalar @values;
+        my $group_ids = $q->scrolling_list(-name => 'group_ids',
+                                           -values => \@values,
+                                           -default => $default,
+                                           -size => $size,
+                                           -multiple => 'true',
+                                           -labels => \%user_groups,);
+        $t->param(group_ids => $group_ids);
+
+        # loop through User fields
+        for (Krang::User::USER_RO, Krang::User::USER_RW) {
+            no strict;
+            $t->param($_ => $user->$_);
+        }
+
+        return $t->output();
 }
 
 
