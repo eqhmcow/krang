@@ -1,6 +1,9 @@
 =head1 Krang Element System
 
 This document describes the Krang Element System at a technical level.
+The information given here is neither exhaustive nor authoritative but
+should provide a good introduction.  For more detail, see the
+documentation in the modules referenced in this text.
 
 =head2 Element Library
 
@@ -9,8 +12,9 @@ element sets available for use with Krang.  The intent is to support
 the maximum possible degree of reusability in Krang elements.
 
 The element library will be developed and versioned separately from
-Krang.  Element sets will be able to declare dependencies of Krang
-versions as necessary to make use of new features.
+Krang.  One element set can use elements from another set, either by
+directly referencing element classes in foreign sets or by declaring
+another set as a parent set.
 
 For example, the root directory of the element library might contain:
 
@@ -19,34 +23,37 @@ For example, the root directory of the element library might contain:
   /LA
   /Anaheim
 
-Each instance will declare the element sets they wish to use with the
-ElementSet configuration option in krang.conf.  For example, a Flex
-site would use:
+Each Krang instance will declare the element sets they wish to use
+with the ElementSet configuration option in krang.conf.  For example,
+a site using the Flex element set would declare:
 
   ElementSet Flex
 
-Each element set can be configured to inherit elements from other
-element sets.  For example, Flex might inherit from the Default set.
-
 =head2 Element Set
 
-An element set contains element classes that define the elements for a
-site.  It also contains a configuration file, F<set.conf>, which
-contains a version number and a list of top-level elemets.
+An element set contains element classes that power the elements for an
+instance.  Elements provide the building blocks for stories.
+
+Each element set contains a configuration file, F<set.conf>, which
+contains a version number and a list of top-level element classes in
+the set.
 
 An upgrade directory may contain sub-directories with upgrade scripts
 for each version of the element set.  Using this mechanism, changes to
 element sets can be made without damaging existing assets.
 
+Each element set can be configured to inherit elements from other
+element sets.  For example, Flex might inherit from the Default set.
+
 =head2 Element Classes
 
 An element class is a Perl module that describes how the element data
 will be edited, stored and displayed.  Element class modules inherits
-from Krang::ElementClass or one of Krang::ElementClass's subclasses.
+from Krang::ElementClass or one of Krang::ElementClass's sub-classes.
 Here's an example container element, Flex::Page:
 
   package Flex::page;
-  use base q(Krang::ElementClass);
+  use base qw(Krang::ElementClass);
 
   sub new {
       my $pkg = shift;
@@ -75,6 +82,9 @@ Here's an example container element, Flex::Page:
              # requiring new module
              Krang::ElementClass::Image->new(name => "inline_image"),
             ],
+
+          # allow code that creates new pages to override any of the
+          # available parameters
           @_,
       );
  
@@ -113,5 +123,47 @@ than is shown above.  In most cases it will be enough to inherit from
 one of the provided element classes.  However, overriding methods
 inside the element class can give you control over every operation
 involving the element.  See L<Krang::ElementClass> for more details.
+
+=head1 Element
+
+An element is a piece of a story.  Every element is a
+L<Krang::Element> object and belongs to a particular element class.
+The element class of an object is accessible through the C<class()>
+method.
+
+When you create a new story you define the class of its root element
+with the class parameter.  For example, to create a new story based on
+the Article element class:
+
+  $story = Krang::Story->new(class      => 'article',
+                             title      => "Title",
+                             slug       => "slug",
+                             categories => [1]);
+
+This prints "Article" because $story->element is an element assigned
+to the "Article" class:
+
+  print $story->element->class->display_name;
+
+Elements proxy element class methods to their element classes,
+mimicking inheritance.  So this also prints "Article":
+
+  print $story->element->display_name;
+
+Given an element, you can access a list of children with the
+C<children()> method.  These children are also elements with their own
+class assignments.  For example, if the Article has three paragraph
+elements as children then this will print "Paragraph" three times:
+
+  print $_->display_name . "\n" for $story->element->children;
+
+You can, of course, add children to add data to the story.  For
+example, to add another paragraph with the content "foo":
+
+  $story->element->add_child(class => "paragraph",
+                             data  => "foo");
+
+See L<Krang::Element> for more information about how to work with
+elements.
 
 =cut
