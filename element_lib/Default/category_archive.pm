@@ -33,7 +33,7 @@ sub fill_template {
                                page_story_count => ++$story_count, 
                                url => 'http://'.($publisher->is_preview ? $s->preview_url : $s->url).'/',
                                title => $s->title,
-                               cover_date => $s->cover_date->strftime('%b %e, %Y');
+                               cover_date => $s->cover_date->strftime('%b %e, %Y'),
                                promo_teaser => $s->element->child('promo_teaser')->data() || ''
                               };
         }
