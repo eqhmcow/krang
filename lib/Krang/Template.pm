@@ -151,13 +151,14 @@ The four read/write fields for the object are:
 =item * category
 
 A reference to the category object to which this template belongs.
+Returns undef if template does not have a category (global templates
+don't).
 
 =cut
 
 sub category {
     my $self = shift;
-    croak("No category associated with template id '$self->{template_id}'.")
-      unless $self->{category_id};
+    return undef unless $self->{category_id};
     my ($cat) = Krang::Category->find(category_id => $self->{category_id});
     return $cat;
 }
