@@ -437,6 +437,27 @@ is($result[0], $find[1]->story_id);
                              ids_only => 1);
 is(@result, 0);
 
+# find by creator search
+my ($me) = Krang::User->find(user_id => $ENV{REMOTE_USER});
+isa_ok($me, 'Krang::User');
+
+@result = Krang::Story->find(creator_simple => $me->first_name);
+ok(grep { $_->story_id == $find[0]->story_id } @result);
+ok(grep { $_->story_id == $find[1]->story_id } @result);
+ok(grep { $_->story_id == $find[2]->story_id } @result);
+
+@result = Krang::Story->find(creator_simple => $me->first_name . ' ' . $me->last_name);
+ok(grep { $_->story_id == $find[0]->story_id } @result);
+ok(grep { $_->story_id == $find[1]->story_id } @result);
+ok(grep { $_->story_id == $find[2]->story_id } @result);
+
+
+@result = Krang::Story->find(creator_simple => $me->first_name  . 'foozle');
+ok(not grep { $_->story_id == $find[0]->story_id } @result);
+ok(not grep { $_->story_id == $find[1]->story_id } @result);
+ok(not grep { $_->story_id == $find[2]->story_id } @result);
+
+
 # count works with simple_search
 my $count = Krang::Story->find(simple_search => "",
                                count => 1);

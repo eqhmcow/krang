@@ -887,6 +887,11 @@ looking only at primary category relationships.
 If set to 0, returns stories that are not published, set to 1 
 returns published stories.
 
+=item creator_simple
+
+This performs a simple search against users and finds stories created
+by matching users.
+
 =item may_see
 
 If set to 1 then only items which the current user has at least read
@@ -1075,7 +1080,7 @@ sub find {
             push(@param, $value);
             next;
         }
-
+ 
         # handle contrib_simple
         if ($key eq 'contrib_simple') {
             $from{"story_contrib as scon"} = 1;
@@ -1092,7 +1097,25 @@ sub find {
             next;
         }
 
-            
+
+        # handle creator_simple
+        if ($key eq 'creator_simple') {
+            $from{"history as h"} = 1;
+            $from{"user as u"} = 1;
+            push(@where, 's.story_id = h.object_id');
+            push(@where, "h.object_type = 'Krang::Story'");
+            push(@where, "h.action = 'new'");
+            push(@where, 'h.user_id = u.user_id');
+
+            my @words = split(/\s+/, $args{'creator_simple'});
+            foreach my $word (@words){
+                push(@where, 
+                     q{concat(u.first_name,' ',u.last_name) LIKE ?});
+                push(@param, "%${word}%");
+            }
+            next;
+        }
+
         # handle simple_search
         if ($key eq 'simple_search') {            
             $from{"story_category as sc"} = 1;
