@@ -31,7 +31,7 @@ Krang::Profiler - Devel::Profiler wrapper for Krang
 
 =head1 SYNOPSIS
 
-  use Krang::Profiler;
+  KRANG_PROFILE=1 ./script_to_profile.pl
 
 =head1 DESCRIPTION
 
@@ -40,6 +40,9 @@ correctly with Krang.  To use this module set the environment variable
 KRANG_PROFILE to 1 and run the script you wish to profile.  Don't
 forget to use Krang::Script since that's how this module gets
 activated.
+
+B<NOTE:> Do not use Krang::Profiler directly unless you want profiling
+to be turned on all the time.
 
 This module sets up Devel::Profiler to only profile subroutines in the
 Krang hierarchy.  That means that calls that Krang makes to external
