@@ -69,7 +69,7 @@ $tmpl2->deploy_to($dir);
 ok(-e $path, 'Deploy Test');
 
 # find test
-my ($tmpl3) = Krang::Template->find(filename => 'bob.tmpl');
+my ($tmpl3) = Krang::Template->find(filename_like => '%bob%');
 is(ref $tmpl3, 'Krang::Template', 'Find Test');
 
 # clean up the mess
