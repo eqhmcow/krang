@@ -63,7 +63,7 @@ $@
 END
 }
 
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot EnableSiteServer);
 
 # check for args
 usage() unless @ARGV;
@@ -78,8 +78,11 @@ if ($< != 0 or $> != 0) {
     $sudo = "sudo ";
 }
 
+my @ctl = (qw(krang_apachectl krang_ftpctl krang_schedulectl));
+push(@ctl, 'krang_siteserverctl') if EnableSiteServer;
+
 # call ctl scripts
-for (qw(krang_apachectl krang_ftpctl krang_schedulectl krang_siteserverctl)) {
+for (@ctl) {
     my $script = catfile(KrangRoot, 'bin', $_);
     print STDERR "=> krang_ctl calling '$sudo$script $command'...\n";
     system("$sudo$script $command");

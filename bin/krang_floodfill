@@ -82,7 +82,7 @@ END
 }
 
 use Krang::Script;
-use Krang::Conf qw(KrangRoot SiteServerPort ElementSet);
+use Krang::Conf qw(KrangRoot SiteServerPort ElementSet EnableSiteServer);
 use Krang::ElementLibrary;
 use Krang::Site;
 use Krang::Category;
@@ -159,11 +159,13 @@ for(1 .. $sites) {
                                 preview_path => 
                                   catdir(KrangRoot, "tmp", "${name}_preview"),
                                 preview_url  => "preview.$name" .
-                                  (SiteServerPort eq '80' ? 
-                                   "" : ":" . SiteServerPort),
+                                  (EnableSiteServer ? 
+                                   (SiteServerPort eq '80' ? 
+                                    "" : ":" . SiteServerPort) : ""),
                                 url          => "$name" .
-                                  (SiteServerPort eq '80' ? 
-                                   "" : ":" . SiteServerPort));
+                                  (EnableSiteServer ? 
+                                   (SiteServerPort eq '80' ? 
+                                    "" : ":" . SiteServerPort) : ""));
     eval { $site->save() };
     redo if $@ and $@ =~ /duplicate/;
     print STDERR "Created site " . $site->url . "...\n";
