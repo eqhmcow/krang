@@ -1,0 +1,425 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+=pod
+
+=head1 NAME
+
+krang_extract_subset - creates subsets of .kds files created by
+C<bin/krang_export>.
+
+=head1 SYNOPSIS
+
+Create a new .kds file of all content under a specific site:
+
+  $ krang_extract_subset --site_id 1
+
+Create a new .kds file based on a series of sites:
+
+  $ krang_extract_subset --site_id 1 --site_id 2 --site_id 3
+
+Output the resulting .kds file to a different filename:
+
+  $ krang_extract_subset --site_id 1 --output site_1.kds
+
+See more of what is going on during the process:
+
+  $ krang_extract_subset --site_id 1 --verbose
+
+=head1 DESCRIPTION
+
+This script is designed to extract one or more sites from a Krang
+instance, and save them as a Krang DataSet (.kds) file, akin to those
+created by C<krang_export>.
+
+This script is designed to generate a data subset, based on a Krang
+instance, specific to a single site or series of sites.  To do this,
+Krang objects may be modified to eliminate dependencies.
+
+B<REPEAT>: Krang objects may be modified as part of the process!
+
+The process works as follows (assuming that a subset is to be created
+for C<--site_id 1>:
+
+=over
+
+=item *
+
+Every category in the .kds file is checked.  Any category part of
+site_id=1 is added to the new dataset.
+
+=item *
+
+Every story in the .kds file is checked:
+
+=over
+
+=item *
+
+If the story is part of the site (e.g. any of its categories are part
+of the site), it is added to the new dataset.  Any categories not part
+of the site are removed prior to saving in the new dataset.
+
+=item *
+
+All related stories are checked.  Any links to stories that are not
+part of the site (e.g. they have no categories in the site) are
+nullified (e.g. the element continues to exist, but does not link to
+anything).
+
+=item *
+
+All related media are checked.  If they are not part of the site
+(e.g. category not part of the site), the link is nullified in the
+same fashion as story links.
+
+=back
+
+=item *
+
+Media objects are added to the dataset if their category is within the
+target site.
+
+=item *
+
+All contributors to included stories are also included.
+
+=item *
+
+Templates are only included in the final dataset if they are part of
+the site - sitewide templates are not included.
+
+=back
+
+B<NOTE:> Once again: B<THE RESULTING DATASET IS NOT IDENTICAL TO THE
+ORIGINAL DATA!!>
+
+This script B<breaks links>.  The dataset output by this script is
+designed to exist on its own, with all external dependencies removed.
+This new dataset is not consistent with the original data!
+
+Note that this script does not modify anything in the original
+data.  It does not modify anything in any running Krang instances.
+It simply creates a newly-scrubbed data file.  That being said, this
+data file is not consistent with any other dumps you may have.
+
+A final example on what all the warnings above are about:
+
+  # Krang Instance contains SiteA (id=1) and SiteB (id=2).
+
+  # SiteA and SiteB have a number of stories that exist under both
+  # sites, and stories that link from stories in SiteA to stories in
+  # SiteB
+
+  $ bin/krang_extract_subset --site_id 1 --output siteA.kds
+
+  $ bin/krang_extract_subset --site_id 2 --output siteB.kds
+
+  # we now have distinct exports for each site.  However, all links
+  # between SiteA and SiteB are gone.  Stories that existed in both
+  # sites now exist separately in each site.
+
+  # re-import into a new instance.
+
+  $ bin/krang_import siteA.kds
+  $ bin/krang_import siteB.kds
+
+  # While the two sites have been restored, they are not identical to
+  # those in the original instance from which they came.
+
+
+In closing, B<BE VERY CAREFUL WHEN USING THIS SCRIPT>.
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Getopt::Long;
+use Pod::Usage;
+
+# process args and open the output file before dropping privs
+our ($help, $man, $output, $verbose, $file, $compress, $set, %id);
+
+BEGIN { 
+    eval {
+        $output = 'extract_subset.kds';
+        $verbose = 0;
+
+        %id  = map { ($_, [])} qw( site_id );
+
+        pod2usage(2) unless
+          GetOptions(help        => \$help,
+                     man         => \$man,
+                     'verbose+'  => \$verbose,
+                     'compress'  => \$compress,
+                     'output=s'  => \$output,
+                     (map { ("$_=i", $id{$_})  } keys %id),
+                    );
+        pod2usage(1)             if $help;
+        pod2usage(-verbose => 2) if $man;
+        pod2usage("Unrecognized options to krang_extract_subset: '" . 
+                  join(' ', @ARGV) . "'\n")
+          if @ARGV;
+
+        pod2usage(1) unless $id{site_id};
+
+        # open up an output filehandle before using Krang::Script and switching
+        # privs
+        $file = $output;
+
+        open(OUTPUT, '>', $file)
+          or die "Unable to open '$file' for output: $!\n";
+    };
+
+    # output errors without the BEGIN compilation failed message
+    if ($@) { 
+        warn $@;
+        exit(1);
+    }
+}
+
+
+use Krang::Script;
+use Krang::DataSet;
+use Krang::Story;
+use Krang::Media;
+use Krang::Template;
+use Krang::Category;
+use Krang::Site;
+
+use Krang::Conf qw(KrangRoot);
+use File::Temp qw(tempfile);
+use Data::Dumper;
+
+
+my %all = map { ($_, 0) } qw(stories media templates contribs categories 
+                             sites users groups alerts list_items );
+
+
+my %checked_stories;
+my %checked_media;
+
+my %stats;
+
+# open up the data set
+$set = Krang::DataSet->new($verbose ? 
+                           (add_callback => \&add_callback) : ());
+
+# find the proper site(s).
+my @sites = Krang::Site->find(site_id => $id{site_id});
+my @cat_ids;
+
+# add them & their dependencies to the set.
+foreach my $site (@sites) {
+    print STDERR sprintf("Adding site '%s'.\n", $site->url) if $verbose;
+
+    $set->add(object => $site);
+
+    # add dependent categories
+    foreach my $cat (Krang::Category->find(site_id => $site->site_id)) {
+        $set->add(object => $cat);
+        push @cat_ids, $cat->category_id;
+    }
+}
+
+$stats{site} = $#sites + 1;
+$stats{cats} = $#cat_ids + 1;
+
+# add site-specific templates -- annoyance, cannot searh by ref
+foreach my $id (@cat_ids) {
+    foreach my $tmpl (Krang::Template->find(category_id => $id)) {
+        $set->add(object => $tmpl);
+    }
+}
+
+
+# add media.
+my $limit  = 50;
+my $offset = 0;
+
+
+while (my @media = Krang::Media->find(limit   => $limit,
+                                      offset  => $offset,
+                                      site_id => $id{site_id})
+      ) {
+    foreach my $m (@media) {
+        $set->add(object => $m);
+        $checked_media{$m->media_id} = 1;
+    }
+
+    $offset += $limit;
+    $stats{media} += ($#media + 1);
+}
+
+
+$offset = 0;
+# add stories - this is where things get a little complicated.
+while (my @stories = Krang::Story->find(limit   => $limit,
+                                        offset  => $offset,
+                                        site_id => $id{site_id})
+      ) {
+    foreach my $s (@stories) {
+        my $clean = sanitize_story(story => $s, site_id => $id{site_id});
+        $checked_stories{$clean->story_id} = 1;
+        $set->add(object => $clean);
+    }
+
+    $offset += $limit;
+    $stats{story} += ($#stories + 1);
+}
+
+
+print sprintf("Subset completed.\n\nsites:\t\t%6i\ncategories:\t%6i\nstories:\t%6i\nmedia:\t\t%6i\n\nWriting to disk....\n\n", $stats{site}, $stats{cats}, $stats{story}, $stats{media});
+
+# write file to a temp location and copy down the OUTPUT pipe.  This
+# is necessary if $file can't be written to by KrangUser
+my (undef, $temp) = tempfile(DIR    => catdir(KrangRoot, 'tmp'),
+                             SUFFIX => '.kds' . ($compress ? '.gz' : ''), 
+                            );
+$set->write(path => $temp, compress => $compress);
+
+# do a buffered copy from TEMP to OUTPUT
+open(TEMP, '<', $temp) or die "Unable to open '$temp': $!\n";
+my $buffer = "";
+while(read(TEMP, $buffer, 10240)) {
+    print OUTPUT $buffer;
+}
+close TEMP;
+close OUTPUT;
+unlink $temp or die $!;
+
+print "Export completed.  Output is in '$file'.\n";
+
+exit(0);
+
+#
+# go through and remove any categories that are not in the desired sites.
+# also nullify any links to stories/media that are not in the sites.
+#
+sub sanitize_story {
+    my %args  = @_;
+
+    my $story      = $args{story};
+    my %good_sites = map { $_ => 1 } @{$args{site_id}};
+
+    print STDERR sprintf("Examining Story ID=%i\n", $story->story_id)
+      if ($verbose > 1);
+
+    # make sure all categories are in the accepted sites.
+    my @final_cats;
+    foreach my $cat ($story->categories) {
+        if ($good_sites{$cat->site_id}) {
+            push @final_cats, $cat;
+        } else {
+            print STDERR sprintf("Story ID=%i - removing category='%s'\n",
+                                 $story->story_id, $cat->url) if ($verbose);
+        }
+    }
+    $story->categories(@final_cats);
+
+
+    # iterate over the elements of the story - looking for
+    # storylink/medialink elements.
+    my $root = $story->element;
+
+    scrub_children(element => $root, site_id => $args{site_id});
+
+    return $story;
+
+}
+
+#
+# scrub_children(element => $e, site_id => \@ids);
+#
+# Iterates over all the children of $e.  If any of the children are
+# Krang::ElementClass::StoryLink or Krang::ElementClass::MediaLink
+# objects, make sure that the stories/media they link to are ok -
+# e.g. part of the list of sites.
+#
+# If the story/media object is not ok, empty the element (let it
+# continue to exist, but no longer points to anything).
+#
+sub scrub_children {
+    my %args = @_;
+
+    my $element    = $args{element};
+    my %good_sites = map { $_ => 1 } @{$args{site_id}};
+
+    foreach my $child ($element->children) {
+        # check to confirm story has a cat in the site.
+        if ($child->class->isa('Krang::ElementClass::StoryLink')) {
+            my $s  = $child->data();
+
+            # don't bother w/ known-good stories.
+            next if ($checked_stories{$s->story_id});
+            my $ok = 0;
+            foreach my $cat ($s->categories) {
+                if ($good_sites{$cat->site_id}) {
+                    $ok = 1;
+                    last;
+                }
+            }
+            # if the story isn't part of the sites, nix it.
+            $child->data(undef) unless $ok;
+
+        }
+        # check media objects to see if they are in the site.
+        elsif ($child->class->isa('Krang::ElementClass::MediaLink')) {
+            my $m = $child->data();
+            $child->data(undef) unless ($good_sites{$m->category->site_id});
+        }
+        # recurse further.
+        elsif ($child->children) {
+            scrub_children(element => $child, site_id => $args{site_id});
+        }
+    }
+}
+
+
+sub add_callback {
+    my $object = $_[1];
+    my $class = ref $object;
+    my ($type) = $class =~ /^Krang::(.*)$/;
+    my $id_meth = lc($type) . "_id";
+    $id_meth = 'list_item_id' if ($id_meth eq 'listitem_id');
+    $id_meth = 'list_group_id' if ($id_meth eq 'listgroup_id');
+
+    print STDERR "Adding $type " . $object->$id_meth . " to $file...\n";
+}
+
+# keep a count of things added
+my $added = 0;
+
+
+
