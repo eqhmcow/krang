@@ -291,8 +291,25 @@ Return filesystem path of uploaded media file.
 
 sub file_path {
     my $self = shift;
-    my $root = KrangRoot; 
-    return catfile($root,'data','media',$self->{media_id},$self->{version},$self->{filename});
+    my $root = KrangRoot;
+    my $media_id = $self->{media_id};
+    my @media_id_path;
+    if ($media_id >= 1000) { 
+        my @media_digits = split(//, $media_id);
+        push( @media_id_path, join('',$media_digits[0..2]) );
+        if ($media_digits[6]) {
+            push(@media_id_path, @media_digits[3..6]);
+        } elsif ($media_digits[5]) {
+            push(@media_id_path, @media_digits[3..5]);
+        } elsif ($media_digits[4]) {
+            push(@media_id_path,@media_digits[3..4]);
+        } elsif ($media_digits[3]) {
+             push(@media_id_path,$media_digits[3]);
+        }
+    } 
+    push(@media_id_path,$media_id);
+ 
+    return catfile($root,'data','media',@media_id_path,'v.'.$self->{version},$self->{filename});
 }
 
 =item $file_size = $media->file_size()
@@ -321,20 +338,36 @@ sub save {
 
     # if this is not a new media object
     if (defined $self->{media_id}) {
+        my $media_id = $self->{media_id}; 
+        my @media_id_path;
+        if ($media_id >= 1000) {
+            my @media_digits = split(//, $media_id);
+            push( @media_id_path, join('',@media_digits[0..2]) );
+            if ($media_digits[6]) {
+                push(@media_id_path, @media_digits[4..6]);
+            } elsif ($media_digits[5]) {
+                push(@media_id_path, @media_digits[4..5]);
+            } elsif ($media_digits[4]) {
+                push(@media_id_path,@media_digits[3..4]);
+            } elsif ($media_digits[3]) {
+                 push(@media_id_path,$media_digits[3]);
+            }
+        } 
+        push(@media_id_path,$media_id);
 	$self->{version} = ($self->{version} + 1);
-	$dbh->do('UPDATE media SET category_id = ?, title = ?, filename = ?, caption = ?, copyright = ?, notes = ?, version = ?, media_type_id = ? WHERE media_id = ?', undef, $self->{category_id}, $self->{title}, $self->{filename}, $self->{caption}, $self->{copyright}, $self->{notes}, $self->{version}, $self->{media_type_id}, $self->{media_id});
+	$dbh->do('UPDATE media SET category_id = ?, title = ?, filename = ?, caption = ?, copyright = ?, notes = ?, version = ?, media_type_id = ? WHERE media_id = ?', undef, $self->{category_id}, $self->{title}, $self->{filename}, $self->{caption}, $self->{copyright}, $self->{notes}, $self->{version}, $self->{media_type_id}, $media_id);
 
 	# this file exists, new media was uploaded. copy to new position	
 	if (-f catfile($root,'tmp','media',$session_id,'tempfile')) {
 	   my $old_path = catfile($root,'tmp','media',$session_id,'tempfile');
-           my $new_path = catdir($root,'data','media',$self->{media_id},$self->{version});
+           my $new_path = catdir($root,'data','media',@media_id_path,$self->{version});
 	   mkpath($new_path);     
 	   $new_path = catfile($new_path,$self->{filename});
 	   move($old_path,$new_path) || croak("Cannot move to $new_path");	
 	} else {
 	    # symbolically link to version dir, since it isnt changing 
-	    my $old_path = catdir($root,'data','media',$self->{media_id},($self->{version} - 1));
-	    my $new_path = catdir($root,'data','media',$self->{media_id},$self->{version});
+	    my $old_path = catdir($root,'data','media',@media_id_path,'v.'.($self->{version} - 1));
+	    my $new_path = catdir($root,'data','media',@media_id_path,'v.'.$self->{version});
 	    link $old_path, $new_path || croak("Unable to create link $old_path to $new_path");	
 	}
     } else {
@@ -345,8 +378,25 @@ sub save {
 	$dbh->do('INSERT INTO media (category_id, title, filename, caption, copyright, notes, version, media_type_id, creation_date) VALUES (?,?,?,?,?,?,?,?,now())', undef, $self->{category_id}, $self->{title}, $self->{filename}, $self->{caption}, $self->{copyright}, $self->{notes}, $self->{version}, $self->{media_type_id});
 	$self->{media_id} = $dbh->{mysql_insertid};
 
+        my $media_id = $self->{media_id};
+        my @media_id_path;
+        if ($media_id >= 1000) {
+            my @media_digits = split(//, $media_id);
+            push( @media_id_path, join('',@media_digits[0..2]) );
+            if ($media_digits[6]) {
+                push(@media_id_path, @media_digits[4..6]);
+            } elsif ($media_digits[5]) {
+                push(@media_id_path, @media_digits[4..5]);
+            } elsif ($media_digits[4]) {
+                push(@media_id_path,@media_digits[3..4]);
+            } elsif ($media_digits[3]) {
+                 push(@media_id_path,$media_digits[3]);
+            }
+        }
+        push(@media_id_path,$media_id);
+
 	my $old_path = catfile($root,'tmp','media',$session_id,'tempfile');
-	my $new_path = catdir($root,'data','media',$self->{media_id},$self->{version}); 
+	my $new_path = catdir($root,'data','media',@media_id_path,'v.'.$self->{version}); 
 	mkpath($new_path);
 	$new_path = catfile($new_path,$self->{filename});		
 	move($old_path,$new_path) || croak("Cannot create $new_path");
