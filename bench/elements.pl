@@ -33,14 +33,24 @@ timethis($n,
          });
 print "=" x 79, "\n\n";
 
+# time deleting element trees by id
+print "\n", "=" x 79, "\nDeleting $n element trees.\n";
+$i = 0;
+timethis($n, 
+         sub {
+             Krang::Element->delete($ids[$i++]);
+         });
+print "=" x 79, "\n\n";
+
+
+
 
 # create a "normal" element tree
 sub create_tree {
     my $element = Krang::Element->new(class => "article");
     
-    # add a couple more pages
-    $element->add_child(class => "page");
-    $element->add_child(class => "page");
+    # make a five page story
+    $element->add_child(class => "page") for (1 .. 4);
 
     # foreach page, add 10 paragraphs
     foreach my $page (grep { $_->name eq 'page' } $element->children()) {
