@@ -150,7 +150,7 @@ sub search {
 
     $t->param(contributors => \@contrib_tmpl_data);
 
-    return $t->output() . $self->dump_html();
+    return $t->output();
 }
 
 
@@ -209,10 +209,9 @@ Delete a set of contribuitors, specified by check-mark
 on the "Contributor List" screen provided by the "search" 
 run-mode.  Return to the "search" run-mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This mode expects the query param "contrib_delete_list"
+to contain an array of contrib_id values which correspond
+to contributor records to be deleted.
 
 =cut
 
@@ -221,8 +220,17 @@ sub delete_selected {
     my $self = shift;
 
     my $q = $self->query();
+    my @contrib_delete_list = ( $q->param('contrib_delete_list') );
+    $q->delete('contrib_delete_list');
 
-    return $self->dump_html();
+    # No selected contribs?  Just return to list view without any message
+    return $self->search() unless (@contrib_delete_list);
+
+    foreach my $cid (@contrib_delete_list) {
+        Krang::Contrib->delete($cid);
+    }
+
+    return $self->search(message_selected_deleted=>1);
 }
 
 
@@ -256,7 +264,7 @@ sub add {
     # Propagate to template
     $t->param($contrib_tmpl);
 
-    return $t->output() . $self->dump_html();
+    return $t->output();
 }
 
 
@@ -266,10 +274,14 @@ sub add {
 Insert the Contributor object which was specified on the 
 "Add Contributor" screen.  Return to the "search" run-mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This run-mode retrieves a temporary $contributor which was
+created and stored in the %session by the "add" mode.  By 
+working with a temporary contributor object we don't have
+to worry about the user inadvertantly creating a deplicate
+contributor if thay hit reload/refresh on their web browser.
+
+This mode expects to receive parameters which match the name
+of the contrib properties, excluding "contrib_id".
 
 =cut
 
@@ -285,7 +297,7 @@ sub save_add {
     return $self->add( %errors ) if (%errors);
 
     # Retrieve new contrib object
-    my $c = $session{EDIT_CONTRIB};
+    my $c = $session{EDIT_CONTRIB} || 0;
     die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
 
     $self->do_update_contrib($c);
@@ -300,11 +312,6 @@ sub save_add {
 Cancel the addition of a Contributor object which was specified on the 
 "Add Contributor" screen.  Return to the "search" run-mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
 =cut
 
 
@@ -312,8 +319,9 @@ sub cancel_add {
     my $self = shift;
 
     my $q = $self->query();
+    $q->delete( $q->param() );
 
-    return $self->dump_html();
+    return $self->search(message_add_cancelled=>1);
 }
 
 
@@ -324,10 +332,9 @@ Insert the Contributor object which was specified on the
 "Add Contributor" screen.  Go to the "Edit Contributor"
 screen ("edit" run-mode), so that further edits may be made.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This mode functions exactly the same as "save_add", with 
+the exception that the user is returned to the "edit" mode
+when they are done.
 
 =cut
 
@@ -337,7 +344,24 @@ sub save_stay_add {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    my %errors = ( $self->validate_contrib() );
+
+    # Return to add screen if we have errors
+    return $self->add( %errors ) if (%errors);
+
+    # Retrieve new contrib object
+    my $c = $session{EDIT_CONTRIB} || 0;
+    die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
+
+    $self->do_update_contrib($c);
+
+    # Set up for edit mode
+    my $contrib_id = $c->contrib_id();
+    $q->delete( $q->param() );
+    $q->param(contrib_id => $contrib_id);
+    $q->param(rm => 'edit');
+
+    return $self->edit(message_contrib_added=>1);
 }
 
 
@@ -352,7 +376,6 @@ selected on the "Contributor List" screen.
 This run-mode expects to receive the required 
 parameter "contrib_id".  It will croak() if this
 parameter is missing or invalid.
-
 
 =cut
 
@@ -382,7 +405,7 @@ sub edit {
     # Propagate to template
     $t->param($contrib_tmpl);
 
-    return $t->output() . $self->dump_html();
+    return $t->output();
 }
 
 
@@ -392,10 +415,13 @@ sub edit {
 Update the Contributor object as specified on the 
 "Edit Contributor" screen.  Return to the "search" run-mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This run-mode retrieves the $contributor which was
+created and stored in the %session by the "edit" mode.
+
+This mode expects to receive parameters which match the name
+of the contrib properties.  This parameters will override 
+the properties of the contributor which are in the database,
+except for "contrib_id" which cannot be changed.
 
 =cut
 
@@ -411,7 +437,7 @@ sub save_edit {
     return $self->edit( %errors ) if (%errors);
 
     # Retrieve new contrib object
-    my $c = $session{EDIT_CONTRIB};
+    my $c = $session{EDIT_CONTRIB} || 0;
     die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
 
     $self->do_update_contrib($c);
@@ -426,11 +452,6 @@ sub save_edit {
 Cancel the edit of the Contributor object currently on the 
 "Edit Contributor" screen.  Return to the "search" run-mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
 =cut
 
 
@@ -438,8 +459,9 @@ sub cancel_edit {
     my $self = shift;
 
     my $q = $self->query();
+    $q->delete( $q->param() );
 
-    return $self->dump_html();
+    return $self->search(message_save_cancelled=>1);
 }
 
 
@@ -450,10 +472,9 @@ Update the Contributor object as specified on the
 "Edit Contributor" screen.  Return to the "Edit Contributor"
 screen ("edit" run-mode), so that further edits may be made.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This mode functions exactly the same as "save_edit", with 
+the exception that the user is returned to the "edit" mode
+when they are done.
 
 =cut
 
@@ -463,7 +484,24 @@ sub save_stay_edit {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    my %errors = ( $self->validate_contrib() );
+
+    # Return to edit screen if we have errors
+    return $self->edit( %errors ) if (%errors);
+
+    # Retrieve new contrib object
+    my $c = $session{EDIT_CONTRIB} || 0;
+    die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
+
+    $self->do_update_contrib($c);
+
+    # Set up for edit mode
+    my $contrib_id = $c->contrib_id();
+    $q->delete( $q->param() );
+    $q->param(contrib_id => $contrib_id);
+    $q->param(rm => 'edit');
+
+    return $self->edit(message_contrib_saved=>1);
 }
 
 
@@ -474,10 +512,9 @@ Delete the Contributor object currently on the
 "Edit Contributor" screen.  Return to the "search"
 run-mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This mode expects to receive a query parameter
+"contrib_id" which contains the contributor to
+be deleted.
 
 =cut
 
@@ -486,8 +523,20 @@ sub delete {
     my $self = shift;
 
     my $q = $self->query();
+    my $contrib_id = $q->param('contrib_id');
 
-    return $self->dump_html();
+    # Check the session.  Is this contrib stashed there?  (Clean, if so.)
+    my $c = $session{EDIT_CONTRIB} || 0;
+    if (ref($c) && (($c->contrib_id() || '') eq $contrib_id)) {
+        # Delete contrib and clear from session
+        $c->delete();
+        delete($session{EDIT_CONTRIB});
+    } else {
+        # Delete this contrib by contrib_id
+        Krang::Contrib->delete($contrib_id);
+    }
+
+    return $self->search(message_contrib_deleted=>1);
 }
 
 

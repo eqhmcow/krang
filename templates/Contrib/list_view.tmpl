@@ -24,11 +24,11 @@
 // -->
 </script>
 
-<form name="add_contrib_form" method="GET">
+<form name="add_contrib_form" method="POST">
 <input type="hidden" name="rm" value="add">
 </form>
 
-<form name="edit_contrib_form" method="GET">
+<form name="edit_contrib_form" method="POST">
 <input type="hidden" name="rm" value="edit">
 <input type="hidden" name="contrib_id" value="">
 </form>
@@ -39,7 +39,7 @@
 <tmpl_if message_contrib_added><div class="alert">Contributor has been added.</div></tmpl_if>
 <tmpl_if message_add_cancelled><div class="alert">Add contributor cancelled.</div></tmpl_if>
 <tmpl_if message_contrib_saved><div class="alert">Contributor saved.</div></tmpl_if>
-<tmpl_if message_save_cancelled><div class="alert">Save contributor cancelled.</div></tmpl_if>
+<tmpl_if message_save_cancelled><div class="alert">Edit contributor cancelled.</div></tmpl_if>
 <tmpl_if message_selected_deleted><div class="alert">Checked contributors deleted.</div></tmpl_if>
 <tmpl_if message_contrib_deleted><div class="alert">Contributor deleted.</div></tmpl_if>
 

@@ -28,8 +28,10 @@
 
     function delete_contrib () {
         var myform = document.forms["edit_contrib_form"];
-        myform.rm.value = "delete";
-        myform.submit();
+        if (confirm("Are you SURE you want to delete this contributor?")) {
+            myform.rm.value = "delete";
+            myform.submit();
+        }
     }
 
 // -->
@@ -42,6 +44,9 @@
 <tmpl_if error_invalid_first><div class="alert">Please specify a valid first name.</div></tmpl_if>
 <tmpl_if error_invalid_last><div class="alert">Please specify a valid last name.</div></tmpl_if>
 <tmpl_if error_invalid_type><div class="alert">Please specify a valid contributor type.</div></tmpl_if>
+
+<tmpl_if message_contrib_added><div class="alert">Contributor has been added.</div></tmpl_if>
+<tmpl_if message_contrib_saved><div class="alert">Contributor saved.</div></tmpl_if>
 
 
 <form name="edit_contrib_form" method="POST">
