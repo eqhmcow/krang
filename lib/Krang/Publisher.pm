@@ -99,6 +99,11 @@ use constant PUBLISHER_RO => qw(is_publish is_preview story category);
 use constant PAGE_BREAK   => "<<<<<<<<<<<<<<<<<< PAGE BREAK >>>>>>>>>>>>>>>>>>";
 use constant CONTENT      => "<<<<<<<<<<<<<<<<<< CONTENT >>>>>>>>>>>>>>>>>>";
 
+use Exception::Class
+  'Krang::Publisher::FileWriteError' => {fields => [ 'story_id', 'media_id', 'template_id',
+                                                     'source', 'destination', 'system_error' ] };
+
+
 use Krang::MethodMaker (new_with_init => 'new',
                         new_hash_init => 'hash_init',
                         get           => [PUBLISHER_RO]
@@ -326,20 +331,33 @@ sub publish_media {
 
     my $media = $args{media};
 
-    my $media_url = catfile($media->url(), $media->filename());
-
     my $internal_path = $media->file_path();
 
-    my $publish_path = catfile($media->category()->site()->publish_path(), $media_url);
+    my $publish_path = catfile($media->category()->site()->publish_path(), $media->url());
+
+    $publish_path =~ /^(.*\/)[^\/]+/;
+
+    my $dir_path = $1;
+
+    # make sure the output dir exists
+    eval {mkpath($dir_path, 0, 0755); };
+    if ($@) {
+        Krang::Publisher::FileWriteError->throw(message => 'Could not create publish directory',
+                                                destination => $dir_path,
+                                                system_error => $@);
+    }
 
     # copy file out to the production path
     unless (copy($internal_path, $publish_path)) {
-        my $msg = __PACKAGE__ . ": could not copy '$internal_path' to '$publish_path': $!\n";
-        critical($msg);
-        croak($msg);
+        Krang::Publisher::FileWriteError->throw(message  => 'Could not publish media file',
+                                                media_id => $media->media_id(),
+                                                source   => $internal_path,
+                                                destination => $publish_path,
+                                                system_error => $!
+                                               );
     }
 
-    return $media_url;
+    return $media->url();
 
 }
 
@@ -381,14 +399,23 @@ sub deploy_template {
     my @tmpl_dirs = $self->template_search_path(category => $category);
 
     my $path = $tmpl_dirs[0];
-    mkpath($path, 0, 0755);
+
+    eval {mkpath($path, 0, 0755); };
+    if ($@) {
+        Krang::Publisher::FileWriteError->throw(message => 'Could not create publish directory',
+                                                destination => $path,
+                                                system_error => $@);
+    }
+
 
     my $file = catfile($path, $template->filename());
 
     # write out file
     my $fh = IO::File->new(">$file") or
-      croak(__PACKAGE__ . "->deploy_template(): Unable to write to '$file' for " .
-            "template '$id': $!.");
+      Krang::Publisher::FileWriteError->throw(message => 'Cannot deploy template',
+                                              template_id => $id,
+                                              destination => $file,
+                                              system_error => $!);
     $fh->print($template->{content});
     $fh->close();
 
@@ -636,18 +663,22 @@ sub _write_page {
 
     eval { mkpath($args{path}, 0, 0755); };
 
+    eval {mkpath($args{path}, 0, 0755); };
     if ($@) {
-        croak __PACKAGE__ . ": Could not create directory '$args{path}': $!\n";
+        Krang::Publisher::FileWriteError->throw(message => 'Could not create directory',
+                                                destination => $args{path},
+                                                system_error => $@);
     }
+
 
     my $output_filename = catfile($args{path}, $args{filename});
 
-    open (OUT, ">$output_filename") || 
-      croak __PACKAGE__ . ": unable to open file '$output_filename' for writing: $!\n";
-
-    print OUT $args{data};
-
-    close OUT;
+    my $fh = IO::File->new(">$output_filename") or
+      Krang::Publisher::FileWriteError->throw(message => 'Cannot output story',
+                                              destination => $output_filename,
+                                              system_error => $!);
+    $fh->print($args{data});
+    $fh->close();
 
     info("Publisher.pm: wrote page '$output_filename'");
 
