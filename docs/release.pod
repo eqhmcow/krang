@@ -34,7 +34,11 @@ PIRT.
 =item Release to PIRT for production
 
 
+=back
+
 =head2 What C<make dist> does
+
+=over
 
 =item Extract version from Krang.pm
 
