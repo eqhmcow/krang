@@ -32,9 +32,18 @@ sub new {
                                                    min => 1,
                                                    max => 1,
                                                    allow_delete => '0',
-                                                   values => [ "Large",
-                                                               "Small"],
-                                                   default => "Small"
+                                                   values => [ "large",
+                                                               "small"],
+                                                   default => "small"
+                                                           ),
+                 Krang::ElementClass::PopupMenu->new(name => "header_size",
+                                                    reorderable => '0',
+                                                   min => 1,
+                                                   max => 1,
+                                                   allow_delete => '0',
+                                                   values => [ "large",
+                                                               "small"],
+                                                   default => "small"
                                                            ),
                  Krang::ElementClass::PopupMenu->new(name => "image_alignment",
                                                     reorderable => '0',
@@ -82,7 +91,7 @@ sub fill_template {
     # set cover date
     $tmpl->param( cover_date => $story->cover_date->strftime('%b %e, %Y %l:%M %p') );
 
-    my $type = lc($args{element}->child('type')->data);
+    my $type = $args{element}->child('type')->data;
 
     my $image = $story->element->child('promo_image_'.$type) || '';
     $image = $image->template_data(publisher => $publisher) if $image; 
