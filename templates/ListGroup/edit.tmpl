@@ -85,9 +85,9 @@
 
     function do_delete (list_count) {
         var select_val = get_selected_val(list_count);
-        log_entry( eval('list_data[' + select_val + "]")['__id__'], 'delete', '');
-        eval('list_data[' + select_val + ']')['__data__'] = [];
-        eval('list_data[' + select_val + ']') = [];
+        log_entry( eval('list_data[' + select_val + "]['__id__']"), 'delete', '');
+        eval('list_data[' + select_val + "]['__data__'] = []");
+        eval('list_data[' + select_val + '] = []');
         populate_list(list_count-1);
     }
 
