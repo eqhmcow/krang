@@ -410,6 +410,10 @@ title
 
 =item *
 
+title_like - case insensitive substring match on title.
+
+=item *
+
 category_id
 
 =item *
@@ -422,9 +426,9 @@ filename
 
 =item *
 
-creation_date
+filename_like - case insensitive substring match on filename.
 
-=item * 
+=item *
 
 order_by - field to order search by, defaults to media_id
 
@@ -475,6 +479,18 @@ sub find {
     }
   
     my $where_string = join ' and ', (map { "$_ = ?" } @where);
+
+    # add title_like to where_string if present
+    if ($args{'title_like'}) {
+        $where_string ? $where_string .= " and title like ?" : $where_string = " title like ?";
+        push @where, '%'.$args{'title_like'}.'%';
+    }
+
+    # add filename_like to where_string if present
+    if ($args{'filename_like'}) {
+        $where_string ? $where_string .= " and filename like ?" : $where_string = " filename like ?";
+        push @where, '%'.$args{'filename_like'}.'%';
+    }
 
     if ($args{'creation_date'}) {
         if (ref($args{'creation_date'}) eq 'ARRAY') {
