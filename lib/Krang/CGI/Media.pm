@@ -159,6 +159,9 @@ sub find {
     $t->param(row_count => $pager->row_count());
     $t->param(show_thumbnails => $show_thumbnails);
 
+    # instance_name is used for preview window targeting
+    $t->param(instance_name => Krang::Conf->instance);
+
     return $t->output();
 }
 
@@ -343,7 +346,10 @@ sub list_active {
     $template->param(pager_html => $pager->output());
     $template->param(row_count => $pager->row_count());
     $template->param(may_checkin_all => $may_checkin_all);
-    
+
+    # instance_name is used for preview window targeting
+    $template->param(instance_name => Krang::Conf->instance);
+
     return $template->output;
 
 }
@@ -615,6 +621,10 @@ sub edit {
 
     # Propagate messages, if we have any
     $t->param(%args) if (%args);
+
+    # instance_name is used for preview window targeting
+    $t->param(instance_name => Krang::Conf->instance);
+
 
     return $t->output();
 }
@@ -970,6 +980,9 @@ sub view {
 
     my $media_view_tmpl_data = $self->make_media_view_tmpl_data($m);
     $t->param($media_view_tmpl_data);
+
+    # instance_name is used for preview window targeting
+    $t->param(instance_name => Krang::Conf->instance);
 
     return $t->output();
 }

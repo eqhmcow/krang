@@ -4,11 +4,13 @@
   <tmpl_if was_edit>nav_edit_mode();</tmpl_if>
 
   function preview_story(id) {
-        window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
+        Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
+        Preview.focus();
   }
 
   function preview_media(id) {
-        window.open("publisher.pl?rm=preview_media&media_id=" + id, "");
+        Preview = window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var "instance_name">");
+        Preview.focus();
   }
 
   function edit_story() {

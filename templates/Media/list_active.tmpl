@@ -3,7 +3,8 @@
 <script language="JavaScript" type="text/javascript">
 
   function preview_media(id) {
-        window.open("publisher.pl?rm=preview_media&media_id=" + id, "");
+        Preview = window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var "instance_name">");
+        Preview.focus();
   }
 
   function view_media (id) {

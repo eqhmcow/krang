@@ -96,6 +96,10 @@ sub show {
     my %admin_perms = Krang::Group->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
 
+    # instance_name is used for preview window targeting
+    $template->param(instance_name => Krang::Conf->instance);
+
+
     # setup paging list of objects
     my $pager = Krang::HTMLPager->new
       (

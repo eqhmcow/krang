@@ -4,7 +4,8 @@
   nav_edit_mode();
 
   function preview_story_session() {
-        window.open("publisher.pl?rm=preview_story&session=story");
+        Preview = window.open("publisher.pl?rm=preview_story&session=story", "<tmpl_var "instance_name">");
+        Preview.focus();
   }
         
   function db_save() {

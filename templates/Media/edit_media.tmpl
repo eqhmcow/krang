@@ -58,7 +58,8 @@
     }
 
     function preview_media_session() {
-        window.open("publisher.pl?rm=preview_media&session=media");
+        Preview = window.open("publisher.pl?rm=preview_media&session=media", "<tmpl_var "instance_name">");
+        Preview.focus();
     }
 
 // -->
