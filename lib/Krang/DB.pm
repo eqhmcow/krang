@@ -35,7 +35,7 @@ use Carp qw(croak);
 use DBI;
 
 use Krang;
-use Krang::Conf qw(InstanceDBName DBUser DBPass KrangRoot);
+use Krang::Conf qw(InstanceDBName DBUser DBPass DBHost KrangRoot);
 use Krang::Log qw(info debug critical);
 
 
@@ -78,11 +78,13 @@ sub dbh {
     # check cache
     return $DBH{$name} if $DBH{$name} and $DBH{$name}->ping;
 
+    # check for MySQL hostname
+    my $dsn = "DBI:mysql:database=$name";
+    $dsn .= ";host=" . DBHost if DBHost;
+    $dsn .= ":mysql_read_default_group=krang";
+
     # connect to the defined database
-    $DBH{$name} = DBI->connect(
-                               "DBI:mysql:database=$name".
-                               ":mysql_read_default_group=krang", 
-                               DBUser, DBPass,
+    $DBH{$name} = DBI->connect($dsn, DBUser, DBPass,
                                { RaiseError           => 1, 
                                  AutoCommit           => 1,
                                  mysql_auto_reconnect => 1,

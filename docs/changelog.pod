@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added the ability to run Krang against a MySQL database on a different
+machine.  There is a new configuration parameter, C<DBHost>, and a new
+option to C<krang_install>, C<--DBHost>.  [Aaron Ross]
+
+=item *
+
 Fixed Krang::CGI::Publisher to not produce a nav-bar when preview
 results in an error. [Sam]
 

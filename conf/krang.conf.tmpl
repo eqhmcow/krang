@@ -17,6 +17,9 @@ KrangGroup <tmpl_var KrangGroup>
 #
 DBUser <tmpl_var DBUser>
 DBPass "<tmpl_var DBPass>"
+<tmpl_if DBHost>
+DBHost "<tmpl_var DBHost>"
+</tmpl_if>
 
 # 
 # ApacheAddr and ApachePort: the IP and port for the Apache server

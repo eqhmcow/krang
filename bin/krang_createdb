@@ -66,6 +66,11 @@ Do not prompt user for confirmation on any events
 If you configured MySQL to require a root password then you'll need to
 provide it here.
 
+=item --hostname [host]
+
+If you are running MySQL on another host then you'll need to
+provide it here.
+
 =item --verbose
 
 Once gives you a play-by-play.  Twice gets you full SQL.
@@ -116,7 +121,7 @@ use Getopt::Long;
 use Pod::Usage;
 use XML::Simple;
 
-my ($help, $man, $password, $destroy, $no_prompt, $no_create, $all);
+my ($help, $man, $password, $hostname, $destroy, $no_prompt, $no_create, $all);
 my $verbose = 0;
 GetOptions(help         => \$help,
            man          => \$man,
@@ -125,6 +130,7 @@ GetOptions(help         => \$help,
             no_prompt   => \$no_prompt,
             no_create   => \$no_create,
            'password=s' => \$password,
+           'hostname=s' => \$hostname,
            all          => \$all,
           );
 pod2usage(1)             if $help;
@@ -149,15 +155,21 @@ if ($all) {
 # make sure MySQL has what it needs
 my $test_mysql = qq{mysql -uroot -e "select 'world' as hello" };
 $test_mysql .= " -p$password" if defined $password;
+$test_mysql .= " -h$hostname" if defined $hostname;
 $test_mysql .= " 2>&1";
 my $output = `$test_mysql`;
 unless ($output =~ /hello.*world/s) {
     if ($output =~ /Access denied/) {
         if (defined $password) {
-            die("MySQL root password '$password' is not valid.\n");
+            my $msg = "MySQL root password '$password' is not valid";
+            $msg .= "for this host '$hostname'.\n" if defined $hostname;
+            die($msg);
         } else {
-            die("Unable to connect to MySQL as root with no password.  ".
-                "Maybe you need to use --password?\n");
+            my $msg = "Unable to connect to MySQL as root with no password.  ".
+                      "Maybe you need to use --password?";
+            $msg .=   " or --hostname?" if not defined $hostname;
+            $msg .=   "\n";
+            die($msg);
         }
     } else {
         die("Unable to access MySQL client.\n");
@@ -181,6 +193,7 @@ if ($destroy) {
         print STDERR "Dropping database '$name'...\n" if $verbose;
         my $cmd = "mysql -uroot -e 'DROP DATABASE IF EXISTS $name'";
         $cmd .= " -p$password" if defined $password;
+        $cmd .= " -h$hostname" if defined $hostname;
         $cmd .= " -v" if $verbose > 1;
         print "Running '$cmd'\n" if $verbose > 1;
         system($cmd) && die "Couldn't drop database: $?";
@@ -209,6 +222,7 @@ foreach my $instance (@instances) {
     # skip if database exists
     my $cmd = qq{mysql -uroot -e 'select "$name exists"' $name};
     $cmd .= " -p$password" if defined $password;
+    $cmd .= " -h$hostname" if defined $hostname;
     $cmd .= " -v" if $verbose > 1;
     $cmd .= " 2>&1";
     print "Running '$cmd'\n" if $verbose > 1;
@@ -221,6 +235,7 @@ foreach my $instance (@instances) {
     print STDERR "Creating database '$name'...\n" if $verbose;
     $cmd = "mysql -uroot -e 'CREATE DATABASE $name'";
     $cmd .= " -p$password" if defined $password;
+    $cmd .= " -h$hostname" if defined $hostname;
     $cmd .= " -v" if $verbose > 1;
     print "Running '$cmd'\n" if $verbose > 1;
     system($cmd) && die "Couldn't create database: $?";
@@ -230,6 +245,7 @@ foreach my $instance (@instances) {
     $cmd .= qq{ identified by "$pass" } if $pass;
     $cmd .= "'";
     $cmd .= " -p$password" if defined $password;
+    $cmd .= " -h$hostname" if defined $hostname;
     $cmd .= " -v" if $verbose > 1;
     print "Running '$cmd'\n" if $verbose > 1;
     system($cmd) && die "Couldn't grant all: $?";
@@ -239,14 +255,16 @@ foreach my $instance (@instances) {
     $cmd = "cat " . catfile(KrangRoot, 'sql', '*.sql') . 
       " | mysql -u$user $name ";
     $cmd .= " -p$pass" if $pass;
+    $cmd .= " -h$hostname" if defined $hostname;
     $cmd .= " -v" if $verbose > 1;
     print "Running '$cmd'\n" if $verbose > 1;
-    system($cmd) && die "Couldn't load SQL: $?";
+    system($cmd) && die "Couldn't load SQL: $?: $!";
 
     # Set the db_version
     my $krang_version = $Krang::VERSION;
     $cmd = qq{mysql -uroot -e 'UPDATE db_version set db_version=$krang_version' $name};
     $cmd .= " -p$password" if defined $password;
+    $cmd .= " -h$hostname" if defined $hostname;
     $cmd .= " -v" if $verbose > 1;
     print "Running '$cmd'\n" if $verbose > 1;
     system($cmd) && die "Couldn't update db_version: $?";

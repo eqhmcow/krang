@@ -119,6 +119,7 @@ Following is a list of the tasks the installer script will perform.
  Optional parameters:
   --FTPHostName          - Host name for FTP server, defaults to HostName.
   --MySQLRootPassword    - Password for the MySQL user "root"
+  --DBHost               - Host name for MySQL
   --InstallPath          - Directory for Krang install
   --KrangUser            - UNIX user for process ownership
   --KrangGroup           - UNIX group for process ownership
@@ -177,6 +178,7 @@ my @req_params = qw( HostName
 
 my @opt_params = qw( FromBackup
                      MySQLRootPassword 
+                     DBHost 
                      InstallPath 
                      KrangUser 
                      KrangGroup 
@@ -371,7 +373,11 @@ sub check_prereqs {
              exit_error("Will not proceed due to existing krang install.") unless prompt("y", "InstallPath '$InstallPath' already exists and seems to contain\nan existing Krang instance.\nThis program must totally and permanently\nremove this krang installation in order to proceed.\n\nIs this what you really want to do?", "y/n", "n");
              {
                  local $ENV{KRANG_ROOT} = $InstallPath;
-                 system(catfile($InstallPath,'bin','krang_uninstall').' --no_prompt --verbose') && die("Unable to uninstall existing Krang Instance at $InstallPath.  Please remove this directory manually before running krang_install again.\n\n");
+                 my $cmd = catfile($InstallPath,'bin','krang_uninstall') .
+                            ' --no_prompt --verbose';
+                 $cmd .= ' --MySQLRootPassword=' . $options{MySQLRootPassword} 
+                  if length($options{MySQLRootPassword});
+                 system($cmd) && die("Unable to uninstall existing Krang Instance at $InstallPath.  Please remove this directory manually before running krang_install again.\n\n");
              }
          } else { 
              exit_error("InstallPath '$InstallPath' already exists and does not appear to belong to an existing krang instance.  Cannot continue.");
@@ -380,9 +386,11 @@ sub check_prereqs {
 
     # MySQLRootPassword must be valid, and MySQL should be running
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
+    my $DBHost            = $options{'DBHost'};
     my $mysql_bin = $MYSQL_BIN;
     my $test_mysql = $ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
     $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+    $test_mysql .= " -h$DBHost" if (defined($DBHost));
     $test_mysql .= " 2>&1";
     my $mysql_test_output = `$test_mysql`;
 
@@ -401,6 +409,7 @@ sub check_prereqs {
     my $InstanceDBName = $options{InstanceDBName};
     my $db_exists_test = $ECHO_BIN ." 'select 1' | $mysql_bin -uroot";
     $db_exists_test .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+    $db_exists_test .= " -h$DBHost" if (defined($DBHost));
     $db_exists_test .= " $InstanceDBName 2>&1";
     my $db_exists_test_output = `$db_exists_test`;
     
@@ -450,12 +459,14 @@ sub create_mysql_user {
     my $InstanceDBName = $options{'InstanceDBName'};
     my $DBUser = $options{'DBUser'};
     my $DBPass = $options{'DBPass'};
+    my $DBHost = $options{'DBHost'};
 
     my $grant = "grant all on $InstanceDBName\.* to $DBUser\@localhost";
     $grant .= " identified by '$DBPass'" if ($DBPass);
 
     my $mysql_grant = $ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
     $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+    $mysql_grant .= " -h$DBHost" if (defined($DBHost));
 
     print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
     system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
@@ -471,6 +482,7 @@ sub create_mysql_user {
         
         my $mysql_grant = $ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
         $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+        $mysql_grant .= " -h$DBHost" if (defined($DBHost));
         print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
         system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
         print "  MySQL access granted.\n";
@@ -632,14 +644,18 @@ sub create_database {
             my $cmd = "cat $file | mysql -uroot ";
             $cmd .= " -p$options{'MySQLRootPassword'}" 
               if length $options{'MySQLRootPassword'};
+            $cmd .= " -h$options{'DBHost'}" 
+              if defined $options{'DBHost'};
             system($cmd);
         }
     } else {
         # Create DB
         print "Creating MySQL database and loading schema\n";
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
+        my $DBHost = $options{'DBHost'};
         my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb --all";
         $createdb .= " --password $MySQLRootPassword" if (length($MySQLRootPassword));
+        $createdb .= " --hostname $options{'DBHost'}" if (defined($DBHost));
         system($createdb) == 0 
           or die("Error calling krang_createdb.  Unable to continue");
     }

@@ -63,16 +63,17 @@ END
 }
 
 use Term::Prompt qw(prompt);
-use Krang::Conf qw(KrangRoot HostName InstanceDBName DBUser DBPass);
+use Krang::Conf qw(KrangRoot HostName InstanceDBName DBUser DBPass DBHost);
 
-my ($help, $man, $no_prompt);
+my ($help, $man, $no_prompt, $MySQLRootPassword);
 my $verbose;
 
 pod2usage(2) unless
   GetOptions(help         => \$help,
              man          => \$man,
              verbose => \$verbose,
-             no_prompt => \$no_prompt
+             no_prompt => \$no_prompt,
+             'MySQLRootPassword=s' => \$MySQLRootPassword
             );
 
 pod2usage(1)             if $help;
@@ -91,9 +92,14 @@ exit_error("Must be run as root.") unless ($> eq "0");
 system($ENV{KRANG_ROOT}."/bin/krang_ctl stop");
 
 # drop all databases
-my $v = $verbose ? '--verbose' : '';
+my $cmd = $ENV{KRANG_ROOT} . "/bin/krang_createdb" .
+          " --destroy --all --no_create --no_prompt";
+$cmd .= " --verbose --verbose" if $verbose;
+$cmd .= " --hostname=" . DBHost if DBHost;
+$cmd .= " --password=" . $MySQLRootPassword if $MySQLRootPassword;
 
-system($ENV{KRANG_ROOT}."/bin/krang_createdb --destroy --all --no_create --no_prompt $v");
+system($cmd) == 0
+  or die "Unable to remove existing database: $?";
 
 # now blow all files away!
 print "\nNow removing all files...\n\n" if $verbose;
