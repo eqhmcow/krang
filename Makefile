@@ -30,5 +30,8 @@ TAGS:
 test:
 	KRANG_ROOT=`pwd` perl -Ilib -Iext-lib -we 'use Test::Harness qw(&runtests $$verbose); $$verbose=$(TEST_VERBOSE); runtests @ARGV;' $(TEST_FILES)
 
-.PHONY : all test clean TAGS
+bench:
+	KRANG_ROOT=`pwd` perl -Ilib -Iext-lib -we 'while($$_ = shift) { do $$_ or die "$$_ : $$!" }' bench/*.pl
+
+.PHONY : all test clean TAGS bench
 
