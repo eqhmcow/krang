@@ -53,6 +53,17 @@ sub input_form {
     return $html;
 }
 
+# due to the unusual way that media links get their data, a story link
+# is invalid only if required and it doesn't already have a value.
+sub validate {
+    my ($self, %arg) = @_;
+    my ($query, $element) = @arg{qw(query element)};
+    if ($self->{required} and not defined $element->data) {
+        return (0, "$self->{display_name} requires a value.");
+    }
+    return 1;
+}
+
 # show a thumbnail in view mode
 sub view_data {
     my ($self, %arg) = @_;

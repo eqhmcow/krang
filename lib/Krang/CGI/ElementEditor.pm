@@ -876,12 +876,21 @@ sub element_save {
     my $clean = 1;
     my $index = 0;
     my @invalid;
+    my $rm = $self->get_current_runmode();
     foreach my $child ($element->children()) {
-        my ($valid, $msg) = $child->validate(query => $query);
-        if (not $valid) {
-            add_message('invalid_element_data', msg => $msg);
-            push @invalid, $index;
-            $clean = 0;
+        # ignore storylinks and medialinks if entering find_story or
+        # find_media modes.  Doing otherwise will make it impossible
+        # to satisfy their requirements.
+        unless (($rm eq 'save_and_find_story_link' or 
+                 $rm eq 'save_and_find_media_link') and 
+                ($child->class->isa('Krang::ElementClass::StoryLink') or
+                 $child->class->isa('Krang::ElementClass::MediaLink'))) {
+            my ($valid, $msg) = $child->validate(query => $query);
+            if (not $valid) {
+                add_message('invalid_element_data', msg => $msg);
+                push @invalid, $index;
+                $clean = 0;
+            }
         }
         $index++;
     }
