@@ -23,9 +23,8 @@ sub new {
 sub default {
     my $self = shift;
     $self->{default} = shift if @_;
-
-    return $self->{default} if exists $self->{default};
-    Time::Piece->new();
+    return $self->{default} if $self->{default};
+    return Time::Piece->new();
 }
 
 sub input_form {

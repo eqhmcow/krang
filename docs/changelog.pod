@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in Krang::ElementClass::Date which prevented the default
+method from returning the current date. [Sam]
+
+=item *
+
 Upgraded HTML::Template to the latest release, 2.7, to fix a bug where
 a stale template could be returned from the cache under unusual
 circumstances. [Sam]
