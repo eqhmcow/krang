@@ -74,27 +74,17 @@ html {
 }	
 
 #left-nav {
-	float:             left;
-	margin-top:        0px;
-	width:             157px;
-  height:             100%;
-  background-color: <tmpl_var background_color>;  
-}
-
-#space {
-	float:             left;
-	margin-top:        0px;
-	width:             12px;
-  height:             100%;
-  background-color: <tmpl_var background_color>;  
-	
+  position:         absolute;
+  left:             10px;
+  top:              67px;
+  width:            157px;
+  background-color: <tmpl_var background_color>;
 }
 
 #content {
-margin-top:          0px;
-float:               left;
-padding:        0px;
   width:            590px;
+  margin-left:      168px;
+  background-color: <tmpl_var background_color>;  
 } 
 
 #footer {
@@ -336,6 +326,7 @@ td, th {
   margin-left:      8px;
   margin-right:     8px;   
   vertical-align:   top;
+  background-color: <tmpl_var background_color>;
 }
 
 .tight-form-box {
