@@ -317,7 +317,7 @@ sub preview_media {
 
     my $internal_path = $media->file_path();
 
-    my $preview_path = catfile($media->category()->site()->preview_path(), $media->url());
+    my $preview_path = catfile($media->category()->site()->preview_path(), $media->preview_url());
 
     $preview_path =~ /^(.*\/)[^\/]+/;
 
@@ -341,7 +341,7 @@ sub preview_media {
                                                );
     }
 
-    return $media->url();
+    return $media->preview_url();
 
 
 }
