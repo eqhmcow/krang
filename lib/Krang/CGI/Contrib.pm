@@ -263,16 +263,26 @@ sub associate_search {
     my %contrib_types = Krang::Pref->get('contrib_type');
 
     my @contribs = $ass_obj->contribs();
-    my @associated_contributors = ( map {
-        {
-            contrib_id => $_->contrib_id(),
-            type => $contrib_types{$_->selected_contrib_type()},
-            contrib_type_id => $_->selected_contrib_type(),
-            first => $_->first(),
-            middle => $_->middle(),
-            last => $_->last(),
-        }
-    } @contribs );
+    my @associated_contributors = ();
+    my %associated_contrib_id_types = ();
+    foreach my $c (@contribs) {
+        my $contrib_id = $c->contrib_id();
+        my $contrib_type_id = $c->selected_contrib_type();
+
+        # Set up hash for associated removal from contrib list below
+        my $associated_contrib_id_type = sprintf("%d:%d", $contrib_id, $contrib_type_id);
+        $associated_contrib_id_types{$associated_contrib_id_type} = 1;
+
+        # Propagate to template loop
+        push(@associated_contributors, {
+                                        contrib_id => $contrib_id,
+                                        contrib_type_id => $contrib_type_id,
+                                        type => $contrib_types{$contrib_type_id},
+                                        first => $c->first(),
+                                        middle => $c->middle(),
+                                        last => $c->last(),
+                                       });
+    }
 
     # Propagate list of current contributors
     $t->param(associated_contributors => \@associated_contributors);
@@ -287,6 +297,11 @@ sub associate_search {
     foreach my $c (@contributors) {
         my @contrib_type_ids = ( $c->contrib_type_ids() );
         foreach my $contrib_type_id (@contrib_type_ids) {
+
+            # Skip this contrib if it's already associated
+            my $contrib_id_type = sprintf("%d:%d", $c->contrib_id, $contrib_type_id);
+            next if (exists($associated_contrib_id_types{$contrib_id_type}));
+
             push(@contrib_tmpl_data, {
                                       contrib_id => $c->contrib_id(),
                                       last => $c->last(),
@@ -539,6 +554,20 @@ sub save_add {
     return $self->add(%save_errors) if (%save_errors);
 
     $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
+
+    # Are we in associate_mode?  If so, this contributor should be automagically attached to $ass_obj.
+    if ($q->param('associate_mode')) {
+        # Build up list for each contrib_id/type_id combo
+        my $contrib_id = $c->contrib_id();
+        my @contrib_type_ids = ( $c->contrib_type_ids() );
+        my @contrib_associate_list = ( map { sprintf("%d:%d", $contrib_id, $_) } @contrib_type_ids);
+
+        # Add param for "associate_selected" run-mode
+        $q->param(contrib_associate_list => @contrib_associate_list);
+
+        # Jump to associate_selected mode -- do the associate
+        return $self->associate_selected();
+    }
 
     add_message('message_contrib_added');
     return $self->search();
