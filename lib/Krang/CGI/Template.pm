@@ -726,7 +726,7 @@ sub search {
               $self->make_history_return_params(@history_param_list));
 
     my $search_filter = $q->param('search_filter') || '';
-    my $find_params = {simple_search => $search_filter};
+    my $find_params = {simple_search => $search_filter, may_see=>1};
     my $persist_vars = {rm => 'search',
                         search_filter => $search_filter};
 
@@ -941,7 +941,9 @@ sub get_tmpl_params {
         }
         $tmpl_params{history_return_params} = join("\n", @history_params);
 
-        $tmpl_params{can_edit} = 1 unless ( $template->checked_out and ($template->checked_out_by ne $ENV{REMOTE_USER}) );
+        $tmpl_params{can_edit} = 1 unless ( not($template->may_edit)
+                                            or ($template->checked_out 
+                                                and ($template->checked_out_by ne $ENV{REMOTE_USER})) );
 
     }
 
@@ -1028,12 +1030,13 @@ sub search_row_handler {
     $row->{template_id} = $template->template_id;
     $row->{url} = format_url(url => $template->url, length => 50);
 
-       if (($template->checked_out) and ($template->checked_out_by ne $ENV{REMOTE_USER})) {
-        $row->{commands_column} = '<a href="javascript:view_template('."'".$template->template_id."'".')">View</a>'
+    if (not($template->may_edit()) or (($template->checked_out) and ($template->checked_out_by ne $ENV{REMOTE_USER}))) {
+        $row->{commands_column} = '<a href="javascript:view_template('."'".$template->template_id."'".')">View</a>';
+        $row->{checkbox_column} = "&nbsp;";
     } else {
         $row->{commands_column} = '<a href="javascript:edit_template('."'".$template->template_id."'".')">Edit</a>'
-        . '&nbsp;|&nbsp;'
-        . '<a href="javascript:view_template('."'".$template->template_id."'".')">View</a>'
+          . '&nbsp;|&nbsp;'
+            . '<a href="javascript:view_template('."'".$template->template_id."'".')">View</a>';
     }
 
 }
@@ -1107,11 +1110,20 @@ sub _save {
     eval {$template->save};
 
     if ($@) {
-        if (ref $@ && $@->isa('Krang::Template::DuplicateURL')) {
+        if (ref($@) && $@->isa('Krang::Template::DuplicateURL')) {
             add_message('duplicate_url',
                         url => $template->url);
             $q->param('errors', 1);
             return (duplicate_url => 1);
+        } elsif (ref($@) && $@->isa('Krang::Template::NoCategoryEditAccess')) {
+            my $category_id = $@->category_id;
+            my ($category) = Krang::Category->find(category_id=>$category_id);
+            croak ("Can't load category_id '$category_id'") unless (ref($category));
+            add_message( 'error_no_category_access',
+                         url => $category->url,
+                         cat_id => $category_id );
+            $q->param('errors', 1);
+            return (error_category_id => 1);
         } else {
             croak($@);
         }
