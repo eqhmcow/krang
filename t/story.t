@@ -289,8 +289,8 @@ END { $s2->delete() };
 eval { $s2->categories($s2->categories, $cat[0]); };
 ok($@);
 isa_ok($@, 'Krang::Story::DuplicateURL');
-                          
-# test find
+                         
+# setup three stories to test find
 my @find;
 push @find, Krang::Story->new(class => "article",
                               title => "title one",
@@ -300,6 +300,7 @@ push @find, Krang::Story->new(class => "article",
                               title => "title two",
                               slug => "slug two",
                               categories => [$cat[6], $cat[8]]);
+$find[-1]->contribs($contrib);
 push @find, Krang::Story->new(class => "article",
                               title => "title three",
                               slug => "slug three",
@@ -374,6 +375,14 @@ ok($count);
 @result = Krang::Story->find(simple_search => "",
                              order_by => "url");
 ok(@result);
+
+# find by contrib_simple
+@result = Krang::Story->find(category_id => $cat[8]->category_id,
+                             contrib_simple => 'matt', 
+                             ids_only => 1);
+is(@result, 1);
+is($result[0], $find[1]->story_id);
+
 
 # make sure count is accurate
 use Krang::DB qw(dbh);

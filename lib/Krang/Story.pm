@@ -738,6 +738,11 @@ C<undef>, specifying no limit in that direction.
 Set this to an element class name to limit results to only those
 containing that class.
 
+=item contrib_simple
+
+This performs a simple search against contributors and finds stories
+which link to the contributor.
+
 =item story_id
 
 Load a story by ID.  Given an array of story IDs, loads all the identified
@@ -919,6 +924,24 @@ sub find {
             next;
         }
 
+        # handle contrib_simple
+        if ($key eq 'contrib_simple') {
+            $from{"story_contrib as scon"} = 1;
+            $from{"contrib as con"} = 1;
+            push(@where, 's.story_id = scon.story_id');
+            push(@where, 'con.contrib_id = scon.contrib_id');
+            $need_distinct = 1;
+
+            my @words = split(/\s+/, $args{'contrib_simple'});
+            foreach my $word (@words){
+                push(@where, 
+                     q{concat(con.first,' ',con.middle,' ',con.last) LIKE ?});
+                push(@param, "%${word}%");
+            }
+            next;
+        }
+
+            
         # handle simple_search
         if ($key eq 'simple_search') {            
             $from{"story_category as sc"} = 1;
