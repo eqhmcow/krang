@@ -759,7 +759,7 @@ sub find {
     }
 
     debug(__PACKAGE__ . "::find() SQL: " . $sql);
-    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { $args{$_} } @where));
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { defined $args{$_} ? $args{$_} : 'undef' } @where));
 
     my $sth = $dbh->prepare($sql);
     $sth->execute(map { $args{$_} } @where) || croak("Unable to execute statement $sql");
