@@ -618,8 +618,6 @@ sub fill_template {
     my $self = shift;
     my %args = @_;
 
-    my %element_names = ();
-
     my $tmpl      = $args{tmpl};
     my $publisher = $args{publisher};
     my $element   = $args{element};
@@ -627,6 +625,12 @@ sub fill_template {
     my $story     = $publisher->story();
 
     my @element_children = $element->children();
+
+    # list of variable names in the template
+    my %tmpl_vars = map { $_ => 1 } $tmpl->query();
+
+    # list of child element names that have been seen
+    my %element_names = ();
 
     # build out params going to the template.
     my %params  = (
@@ -637,45 +641,72 @@ sub fill_template {
 
     # add story title, page break, and content-break tags, if needed.
     $params{title} = $publisher->story()->title()
-      if $tmpl->query(name => 'title');
+      if exists($tmpl_vars{title});
 
     $params{page_break} = $publisher->page_break()
-      if $tmpl->query(name => 'page_break');
+      if exists($tmpl_vars{page_break});
 
     $params{content} = $publisher->content()
-      if ($tmpl->query(name => 'content') && $element->name() eq 'category');
+      if (exists($tmpl_vars{content}) && $element->name() eq 'category');
 
     # add the contributors loop if desired
     $params{contrib_loop} = $self->_build_contrib_loop(@_)
-      if ($tmpl->query(name => 'contrib_loop'));
+      if exists($tmpl_vars{contrib_loop});
 
 
     # iterate over the children of the element -
     # This process creates @element_loop, and also creates the various
     # $child->name() _loop loops.
+    # it also creates scaler values for the first child of a given element name
+    # that are global to the template. (e.g. the first 'paragraph').
     foreach (@element_children) {
-        my $name = $_->name();
-        my $html = $_->class->publish(element => $_, publisher => $publisher);
-        my $loop_idx = 1;
+        my $name     = $_->name();
+        my $loopname = $name . '_loop';
 
-        unless (exists($element_names{$name})) {
+        # only call publish on a child element if there's a need for it.
+        # (e.g. one of the loop variables exists in the template, or 
+        # a scaler associated with the child name is needed, and hasn't been touched before.
+        next unless (exists($tmpl_vars{$loopname}) ||
+                     exists($tmpl_vars{element_loop}) ||
+                     (exists($tmpl_vars{$name}) && !exists($element_names{$name}))
+                     );
+
+
+        # need the content for the child element.
+        my $html = $_->class->publish(element => $_, publisher => $publisher);
+
+        # <tmpl_loop name=element_loop> exists in the template.
+        if (exists($tmpl_vars{element_loop})) {
+            push @{$params{element_loop}}, {
+                                            "is_$name" => 1,
+                                            $name      => $html
+                                           };
+        }
+
+
+        # <tmpl_loop name=$name_loop> exists in the template.
+        if (exists($tmpl_vars{$loopname})) {
+            my $loop_idx = 1;
+
+            if (exists($params{$loopname})) {
+                $loop_idx = scalar(@{$params{$loopname}}) + 1;
+            }
+
+            push @{$params{$loopname}}, {
+                                         $name . '_count' => $loop_idx,
+                                         $name            => $html,
+                                         "is_$name"       => 1
+                                        };
+        }
+
+        # assign the first instance of an element name to the main
+        # parameter hash.
+        # <tmpl_var name=$name> exists in the template, and we haven't
+        # done this before.
+        if (exists($tmpl_vars{$name}) && !exists($element_names{$name})) {
             $element_names{$name} = 1;
             $params{$name} = $html;
         }
-
-        if (exists($params{$name . '_loop'})) { 
-            $loop_idx = scalar(@{$params{$name . '_loop'}}) + 1;
-        }
-
-        push @{$params{element_loop}}, {
-                                        "is_$name" => 1,
-                                        $name      => $html
-                                       };
-        push @{$params{$name . '_loop'}}, {
-                                           $name . '_count' => $loop_idx,
-                                           $name            => $html,
-                                           "is_name"        => 1
-                                          };
     }
 
     $tmpl->param(%params);
