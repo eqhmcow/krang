@@ -35,7 +35,7 @@ size.
 The actual configuration directives used to configure Krang are
 documented inside the C<krang.conf>.
 
-B<NOTE:> When you changs F<krang.conf> don't forget to restart Krang
+B<NOTE:> After you edit F<krang.conf> don't forget to restart Krang
 so your changes can take effect:
 
   bin/krang_ctl restart
