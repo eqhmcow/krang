@@ -1947,8 +1947,8 @@ sub deserialize_xml {
     if ($story) {
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
-            message => "A story object with the url '$data->{url}' already ".
-                       "exists and no_update is set.")
+            message => "A story object with the url '$data->{url}[0]' already".
+                       " exists and no_update is set.")
             if $no_update;
 
         # check it out to make changes
