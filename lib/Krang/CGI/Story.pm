@@ -166,6 +166,13 @@ sub create {
     my $category_id = $query->param('category_id');
     my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
 
+    # determine whether slug is required or not
+    my $slug_req = 0;
+    if ($type) {
+        my $class = Krang::ElementLibrary->top_level(name => $type);
+        $slug_req = 1 if (grep { $_ eq 'slug' } $class->url_attributes);
+    }
+
     # detect bad fields
     my @bad;
     push(@bad, 'type'),        add_message('missing_type')
@@ -173,7 +180,7 @@ sub create {
     push(@bad, 'title'),       add_message('missing_title')
       unless $title;
     push(@bad, 'slug'),        add_message('missing_slug')
-      unless $slug;
+      unless not($slug_req) or $slug;
     push(@bad, 'category_id'), add_message('missing_category')
       unless $category_id;
     push(@bad, 'cover_date'),  add_message('missing_cover_date')
@@ -1038,11 +1045,14 @@ sub _save {
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
+        # determine whether slug is required or not
+        my $slug_req = (grep { $_ eq 'slug' } $story->element->class->url_attributes) ? 1 : 0;
+
         my @bad;
         push(@bad, 'title'),       add_message('missing_title')
           unless $title;
         push(@bad, 'slug'),        add_message('missing_slug')
-          unless $slug;
+          unless not($slug_req) or $slug;
         push(@bad, 'cover_date'),  add_message('missing_cover_date')
           unless $cover_date;
         # return to edit mode if there were problems
