@@ -206,29 +206,12 @@ sub preview_story {
     $self->{is_publish} = 0;
     $self->{is_preview} = 1;
 
-    info('Publisher.pm: Previewing story_id=' . $story->story_id());
-
-    my $file_root = $category->site()->preview_path();
-
-    # create output path.
-    my $path = catfile($file_root, $url);
-
     # build the story HTML.
     local $ENV{HTML_TEMPLATE_ROOT} = "";
-    my $story_pages = $self->_assemble_pages(story => $story, category => $category);
 
-    # iterate over story pages, writing them to disk.
-    for (my $p = 0; $p < @$story_pages; $p++) {
-        my $page_num = $p + 1;
+    info('Publisher.pm: Previewing story_id=' . $story->story_id());
 
-        # get the path & filename:
-        my $filename = $self->_build_filename(story => $story, page => $page_num);
-
-        # write the page to disk.
-        $self->_write_page(path => $path, filename => $filename, 
-                           story_id => $story->story_id(), data => $story_pages->[$p]);
-
-    }
+    $self->_build_story(story => $story, category => $category, url => $url);
 
     $preview_url = "$url/" . $self->_build_filename(story => $story, page => 1);
 
@@ -258,53 +241,12 @@ sub publish_story {
     $self->{is_publish} = 1;
     $self->{is_preview} = 0;
 
+    info('Publisher.pm: Publishing story_id=' . $story->story_id());
+
     $self->_output_story(story => $story);
 
 }
 
-
-sub _output_story {
-
-    my $self = shift;
-    my %args = @_;
-
-    my $story = $args{story};
-
-    # get story URLs.
-    my @story_urls = $story->urls();
-    my @categories = $story->categories();
-
-    info('Publisher.pm: Publishing story_id=' . $story->story_id());
-
-    # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
-    foreach (my $i = 0; $i <= $#categories; $i++) {
-        my $cat = $categories[$i];
-        my $uri = $story_urls[$i];
-
-        my $file_root = $cat->site()->publish_path();
-
-        info("Publisher.pm: publishing story under URI='$uri'");
-
-        # create output path.
-        my $path = catfile($file_root, $uri);
-
-        # build the story HTML.
-        my $story_pages = $self->_assemble_pages(story => $story, category => $cat);
-
-        # iterate over story pages, writing them to disk.
-        for (my $p = 0; $p < @$story_pages; $p++) {
-            my $page_num = $p + 1;
-
-            # get the path & filename:
-            my $filename = $self->_build_filename(story => $story, page => $page_num);
-
-            # write the page to disk.
-            $self->_write_page(path => $path, filename => $filename, 
-                               story_id => $story->story_id(), data => $story_pages->[$p]);
-
-        }
-    }
-}
 
 
 =item C<< $url = $publisher->preview_media(media => $media) >>
@@ -772,6 +714,80 @@ sub _process_linked_assets {
     }
 
     return @publish_list;
+}
+
+
+#
+# _output_story(story => $story);
+#
+# Handles the process for publishing a story out over all its various categories.
+# Used only in the publish process, not the preview process.
+#
+sub _output_story {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $story = $args{story};
+
+    # get story URLs.
+    my @story_urls = $story->urls();
+    my @categories = $story->categories();
+
+
+    # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
+    foreach (my $i = 0; $i <= $#categories; $i++) {
+        info("Publisher.pm: publishing story under URI='$story_urls[$i]'");
+
+        $self->_build_story(story    => $story, 
+                            category => $categories[$i],
+                            url      => $story_urls[$i]);
+    }
+}
+
+
+#
+# _build_story(story => $story, category => $category, url => $url);
+#
+# Used by both preview & publish processes.
+#
+# Given a story object, a category to publish under, and the url that
+# indicates a final output path, run through the publish process for
+# that story & category, and write out the resulting content under the
+# filename that's indicated by the submitted url.
+#
+sub _build_story {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $story    = $args{story};
+    my $category = $args{category};
+    my $url      = $args{url};
+
+    my $path;
+
+    # create output path.
+    if ($self->{is_publish}) {
+        $path = catfile($category->site()->publish_path(), $url);
+    } elsif ($self->{is_preview}) {
+        $path = catfile($category->site()->preview_path(), $url);
+    }
+
+    # build the story HTML.
+    my $story_pages = $self->_assemble_pages(story => $story, category => $category);
+
+    # iterate over story pages, writing them to disk.
+    for (my $p = 0; $p < @$story_pages; $p++) {
+        my $page_num = $p + 1;
+
+        # get the path & filename:
+        my $filename = $self->_build_filename(story => $story, page => $page_num);
+
+        # write the page to disk.
+        $self->_write_page(path => $path, filename => $filename,
+                           story_id => $story->story_id(), data => $story_pages->[$p]);
+    }
 }
 
 
