@@ -137,7 +137,7 @@ find({ no_chdir => 1,
              return unless 
                        m!^$name/tmp/.!o or           # skip contents of tmp
                        m!^$name/bench!o or          # skip bench
-                       m!^$name/conf/krang.conf!o or # skip krang.conf
+                       m!^$name/conf/krang.conf$!o or # skip krang.conf
                        m!/CVS! or                    # skip all CVS dirs
                        m!\.cvsignore! or             # skip all CVS dirs
                        m!~$! or                      # skip Emacs droppings
@@ -149,11 +149,17 @@ find({ no_chdir => 1,
          } }, $name);
 close LIST;
 
+# create INSTALL from docs/ops_install.pod
+system("pod2text --loose $ENV{KRANG_ROOT}/docs/ops_install.pod > $ENV{KRANG_ROOT}/INSTALL");
+
 # create tar file using exclude list
 print "Creating tar file '$name.tar.gz'...\n";
 my $dist_file = catfile($old_dir, $name . '.tar.gz');
 system("tar czf $dist_file -X $list_file $name/*") == 0
   or die "tar failed: $?";
+
+# remove INSTALL
+unlink("$ENV{KRANG_ROOT}/INSTALL") or die $!;
 
 # remove link
 unlink($name) or die $!;
