@@ -117,7 +117,9 @@ sub upload {
     # if file was uploaded 
     if (my $fh = $q->upload('media_file')) {
         my $filename = $q->param('media_file');
-        
+       
+        my $create_cats = $q->param('create_cats');
+ 
         # remove filename from potential path (IE)
         $filename = (split(/\\/, $filename))[-1];
         # get rid of spaces now
@@ -152,6 +154,7 @@ media!");
         # get chosen category_id, if one
         $chosen_cat_id = $q->param('category_id');
         $chosen_cat_url = (Krang::Category->find( category_id => $chosen_cat_id ))[0]->url if $chosen_cat_id; 
+        
         # find all files and dirs in archive 
         File::Find::find(\&build_image_list, $opened_root);    
 
@@ -159,7 +162,7 @@ media!");
 
         # check to see all dirs in archive match Krang site/cats,
         # return if not
-        rmtree($opened_root), return $self->choose if check_categories();
+        rmtree($opened_root), return $self->choose if check_categories($create_cats);
 
         # check media to see if already exist or checked out
         rmtree($opened_root), return $self->choose if check_media();
@@ -250,24 +253,50 @@ sub check_media {
     return $checked_out;
 }
 
-=item check_categories($root_category_id)
+=item check_categories($create_cats)
 
 Check to see if all categories in the archive correspond with Krang
-Categories. Takes a starting category as arg.
-Returns 1 if bad categories found, else undef. 
+Categories. 
+If true arg is passed in, create categories not found and return undef.
+Otherwise, returns 1 if bad categories found. 
 
 =cut
 
 sub check_categories {
     my $not_found;
-    
+    my $create_cats = shift;
+ 
     foreach my $cat (keys %category_list) {
         my $found_cat = (Krang::Category->find( url => $cat ))[0];
-        $category_list{$cat} = $found_cat->category_id if $found_cat;
 
-        if (not $found_cat) {
-            add_message("bad_category", url => $cat);
-            $not_found = 1;
+        if ($create_cats and not $found_cat) {
+            my $realcat = $cat;
+            $realcat =~ s/$chosen_cat_url//;
+            my @splitcat = split('/', $realcat);
+            $realcat = $chosen_cat_url;
+            my $count;
+
+            # add each subcat if it doesnt exist already
+            foreach my $splitcat  (@splitcat) {
+                my $f_cat = (Krang::Category->find( url => $realcat.$splitcat.'/' ))[0];
+                unless ($f_cat) {
+                    my $parent_cat = (Krang::Category->find( url => $realcat ))[0];
+                    my $new_cat = Krang::Category->new( dir => $splitcat, parent_id => $parent_cat->category_id );
+                    $new_cat->save; 
+
+                    $category_list{$new_cat->url} = $new_cat->category_id;
+
+                    add_message('new_category', new_cat => $realcat.$splitcat.'/');
+                }
+                $realcat = $realcat.$splitcat.'/';
+            }
+        } else {
+            $category_list{$cat} = $found_cat->category_id if $found_cat;
+
+            if (not $found_cat) {
+                add_message("bad_category", url => $cat);
+                $not_found = 1;
+            }
         }
     }
 
