@@ -1,4 +1,11 @@
 #!/usr/bin/perl 
+#
+# krang_ctl     Start Krang CMS
+#
+# chkconfig: 345 99 01
+# description: Starts and stops Krang CMS installation
+#
+#
 use warnings;
 use strict;
 
