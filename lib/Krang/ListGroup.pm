@@ -203,6 +203,7 @@ not $valid_params{$param};
     
     if ($args{name_like}) {
         $where_string = $where_string ? ' and name like ? ' : ' name like ?';
+        push (@where, 'name_like');
     }
 
     my $select_string;
