@@ -50,7 +50,7 @@ sub fill_template {
     # setup desk loop
     $template->param( nav_desk_loop => 
                       [ map {{desk_id => $_->desk_id, desk_name => $_->name}}
-                        grep { $desk_perms{$_->desk_id} ne 'hide' }
+                        grep { ($desk_perms{$_->desk_id} || "") ne 'hide' }
                         Krang::Desk->find() ]);
 
     # setup permissions vars
