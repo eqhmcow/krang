@@ -5,15 +5,8 @@ use Krang;
 use Krang::Conf qw (KrangRoot);
 use File::Spec::Functions qw(catdir catfile);
 use FileHandle;
-use Krang::Session qw(%session);
 
 BEGIN { use_ok('Krang::Media') }
-
-# open a new session
-Krang::Session->create();
-
-#simulate user being logged in
-$session{user_id}=1;
 
 # create new media object
 my $media = Krang::Media->new(title => 'test media object', category_id => 1);
@@ -99,10 +92,12 @@ $m2->save();
 # check version number
 is ($m2->version(), 3);
 
+# checkin
+$m2->checkin();
+
 # delete it now
 $m2->delete();
 
 # delete other media object also
 $medias[1]->delete();
 
-Krang::Session->unload();
