@@ -21,8 +21,8 @@ sub per_installation {
     # write out conf and add the new Skin line
     open(CONF, '>', catfile(KrangRoot, 'conf', 'krang.conf'))
       or die "Unable to open conf/krang.conf: $!";
-    print $conf;
-    print <<END;
+    print CONF $conf;
+    print CONF <<END;
 
 #
 # Select a skin which will determine the look of the UI.  Available
@@ -42,3 +42,5 @@ END
 # nothing to do yet
 sub per_instance {}
  
+
+1;
