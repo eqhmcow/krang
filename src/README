@@ -39,7 +39,7 @@ to the install.pod found in the docs directory.
         HTML-Template-2.6        
 	HTML-Template-Expr-0.04
         Parse-RecDescent-1.94
-	CGI-Application-3.0
+	CGI-Application-3.1
         Text-Tabs+Wrap-2001.0929 
         HTML-Tagset-3.03         
         HTML-Parser-3.27         
