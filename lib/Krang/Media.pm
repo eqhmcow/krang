@@ -563,6 +563,11 @@ sub save {
     foreach my $contrib (@{$self->{contrib_ids}}) {
         $dbh->do('insert into media_contrib (media_id, contrib_id, contrib_type_id, ord) values (?,?,?,?)', undef, $media_id, $contrib->{contrib_id}, $contrib->{contrib_type_id}, $count++);
     }
+
+    add_history(    object => $self,
+                    action => 'save',
+                );
+
 }
 
 =item @media = Krang::Media->find($param)
@@ -770,6 +775,11 @@ sub revert {
     my $filepath = catfile($path, $self->{filename});
     copy($old_filepath,$filepath); 
     $self->{tempfile} = $filepath;
+   
+    add_history(    object => $self,
+                    action => 'revert',
+                ); 
+
     return $self; 
 }
 
@@ -845,6 +855,10 @@ sub checkout {
     $dbh->do('UNLOCK tables');
 
     $self->{checked_out_by}= $user_id;
+
+    add_history(    object => $self,
+                    action => 'checkout',
+                );
 }
 
 =item $media->checkin() || Krang::Media->checkin($media_id)
@@ -865,6 +879,11 @@ sub checkin {
     $dbh->do('UPDATE media SET checked_out_by = NULL WHERE media_id = ?', undef, $media_id);
     
     $self->{checked_out_by}= $user_id;
+
+    add_history(    object => $self,
+                    action => 'checkin',
+                ); 
+
 }
 
 =item $media->prepare_for_edit() 
@@ -957,6 +976,13 @@ sub delete {
     $self->checkout($media_id);
      
     croak("No media_id specified for delete!") if not $media_id;
+
+    # first delete history for this object
+    if ($self->{media_id}) {
+        Krang::History->delete(object => $self);
+    } else {
+        Krang::History->delete( object => ((Krang::Media->find(media_id => $media_id))[0]) );
+    }
 
     $dbh->do('DELETE from media where media_id = ?', undef, $media_id); 
     $dbh->do('DELETE from media_version where media_id = ?', undef, $media_id); 
