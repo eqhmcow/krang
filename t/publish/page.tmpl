@@ -4,9 +4,9 @@
 <tmpl_if is_paragraph><p><tmpl_var paragraph></p></tmpl_if>
 </tmpl_loop>
 
-<P>Page number <tmpl_var current_page_number> of <tmpl_var total_pages>.</p>
+<P>Page number <tmpl_if current_page_number><tmpl_var current_page_number><tmpl_else>1</tmpl_if> of <tmpl_if total_pages><tmpl_var total_pages><tmpl_else>1</tmpl_if>.</p>
 
-<tmpl_unless is_first_page>
+<tmpl_if total_pages><tmpl_unless is_first_page>
 <a href="<tmpl_var previous_page_url>">Previous Page</a>
 </tmpl_unless>
 
@@ -23,3 +23,4 @@
 </tmpl_unless>
 
 <tmpl_unless is_last_page><tmpl_var page_break></tmpl_unless>
+</tmpl_if>
