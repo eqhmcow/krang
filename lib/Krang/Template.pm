@@ -922,7 +922,7 @@ sub save {
     # calculate url
     my $url = "";
     if ($self->{category_id}) {
-        my $cat = Krang::Category->find(category_id => $self->{category_id});
+        my ($cat) = Krang::Category->find(category_id => $self->{category_id});
         $url = $cat->url;
     }
     $self->{url} = _build_url($url, $self->{filename});
