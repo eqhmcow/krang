@@ -27,5 +27,5 @@ up2date.
 To install all of that (or just update to latest versions) with yum:
 
   yum install gcc cpp binutils  zlib-devel expat-devel glibc-kernheaders \
-              libjpeg-devel libungif-devel libpng
+              libjpeg-devel libungif-devel libpng-devel
 
