@@ -70,7 +70,7 @@ sub fill_template {
     my %matched;
 
     foreach my $key (@$keywords) {
-        my @stories = Krang::Story->find( site_id => $top_cat->site->site_id, class => 'article', published => 1, element_index_like => [ meta_keywords => "\%$key%" ] ); 
+        my @stories = Krang::Story->find( site_id => $top_cat->site->site_id, class => 'article', published => 1, element_index => [ meta_keywords => $key ] ); 
     
         foreach my $s (@stories) {
             next if ($s->story_id == $story->story_id);
