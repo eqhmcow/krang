@@ -17,6 +17,7 @@ my $site = Krang::Site->new(preview_path => './sites/test1/preview/',
                             publish_path => './sites/test1/',
                             url => 'testsite1.com');
 $site->save();
+END { $site->delete(); }
 isa_ok($site, 'Krang::Site');
 
 my ($category) = Krang::Category->find(site_id => $site->site_id());
@@ -26,6 +27,7 @@ my $category_id = $category->category_id();
 # create subcategory
 my $subcat = Krang::Category->new( dir => 'subcat', parent_id => $category_id );
 $subcat->save();
+END { $subcat->delete() }
 my $subcat_id = $subcat->category_id();
 
 # create new media object
@@ -125,9 +127,6 @@ is ($m2->mime_type(), 'image/jpeg');
 # mark as checked out
 $m2->checkout();
 
-# begin edit
-$m2->prepare_for_edit();
-
 # change the title
 $m2->title('new title');
 
@@ -146,9 +145,6 @@ ok(-f $m2->file_path);
 $m2->save();
 like($m2->file_path, qr/krang\.gif$/);
 ok(-f $m2->file_path);
-
-# continue with edit
-$m2->prepare_for_edit();
 
 # revert back to version 1
 $m2->revert(1);
@@ -174,8 +170,4 @@ $m2->delete();
 
 # delete other media object also
 $medias[1]->delete();
-
-# delete categories and site
-$subcat->delete();
-$site->delete();
 

@@ -68,9 +68,6 @@ use Exception::Class
     # mark as checked out by you (your user_id)
     $media->checkout();
 
-    # Now copy current version to versioning table to prepare for edit
-    $media->prepare_for_edit();
-
     # update caption for this media object
     $media->caption('new caption');
 
@@ -101,7 +98,8 @@ filesystem, as well as media object metadata in the database. Contributors (Kran
 
 Versioning in this system functions perhaps in a non-traditional
 way. A quick walk-thru of a media edit and revert may help
-understanding:
+understanding.  We'll assume the existing media object starts with
+version = 1.
 
 First, the media object is marked as 'checked out' by the current
 user.  After this call, only someone logged in with the same user_id
@@ -109,13 +107,8 @@ can edit this media object:
 
   $media->checkout();
 
-Now, call prepare_for_edit(). This method places a copy of the current version 
-of the media object into the 'media_version' table as version 1.
-
-  $media->prepare_for_edit();
-
-Now that the old version of the media object is safe, let's make a
-change to the title of this media object:
+Now that the media object cannot be edited by anyone else, let's make
+a change to the title of this media object:
 
   $media->title('new title');
 
@@ -124,38 +117,30 @@ Finally, we save the media object:
   $media->save();
 
 After save(), the in-memory object $media will be saved into the
-'media' table as version = 2.  So now there are 2 versions,
-version 1 in the 'media_version' table and version 2 in the 'media'
-table.
-
-Notice that the prepare_for_edit() method works with save to store
-versions of media objects.  If you would have called save() B<without>
-calling prepare_for_edit() first, you would have effectively lost all
-information from version one.
+'media' table as version = 2, and also saved in media_version for
+later use.
 
 To begin the explaination of 'revert', the most important thing to
 understand is that revert() simply just takes a copy of an older
-version and places it into the current in-memory object.  So, if we
-plan on saving the reverted object as current, we should probably call
+version and places it into the current in-memory object.
 
-  $media->prepare_for_edit()
-
-first, again copying the current object into the versioning table.
-Then we call:
+To revert to the contents of version 1, we call the revert() method:
 
   $media->revert(1)
 
-So now what do we have?  We now have version 1 and 2 in the versioning table.  
-We also have version 2 still in the 'media' table from the last save().  
-In memory ($media), we now have a copy of version 1.  So if we again 
+So now what do we have?  We now have version 1 and 2 in the versioning
+table.  We also have version 2 still in the 'media' table from the
+last save().  In memory ($media), we now have a copy of version 1 but
+with version = 2.
+
+So if we again
 
   $media->save()
 
-we now have a 3rd version - version 1 and 2 in the versioning table,
-and version 3 (which is actually just a copy of version 2, since we
-didn't change anything) in the 'media' table. Thus, revert() does not
-give you access to the actual original version, but instead gives you
-a copy of it.  
+now version = 3 and this is saved in both media and media_version.
+Thus, revert() does not give you access to the actual original
+version, but instead gives you a copy of it which will create a new
+version when saved.
 
 The reason for doing things this way is so you can always get back to
 a previous version no matter how many times you've saved and reverted.
@@ -222,6 +207,7 @@ sub init {
     my $filehandle = delete $args{'filehandle'};
     
     $self->{contrib_ids} = [];
+    $self->{version} = 0;  # versions start at 0
     
     # finish the object
     $self->hash_init(%args);
@@ -270,7 +256,7 @@ Returns id of user who has object checked out, if checked out.
 
 =item $media->published()
 
-Returns 1 if published version > 1.  (Unessicary convenience method)
+Returns 1 if published version > 1.  (Unnecessary convenience method)
 
 =cut
 
@@ -514,7 +500,7 @@ sub save {
         my @save_fields = grep {$_ ne 'media_id'} FIELDS;
 
         # update version
-        $self->{version} = ++$self->{version};
+        $self->{version} = $self->{version} + 1;
         
         my $sql = 'UPDATE media SET '.join(', ',map { "$_ = ?" } @save_fields).' WHERE media_id = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$media_id);
@@ -562,6 +548,14 @@ sub save {
     foreach my $contrib (@{$self->{contrib_ids}}) {
         $dbh->do('insert into media_contrib (media_id, contrib_id, contrib_type_id, ord) values (?,?,?,?)', undef, $media_id, $contrib->{contrib_id}, $contrib->{contrib_type_id}, $count++);
     }
+
+
+    # save a copy in the version table
+    my $serialized; 
+    eval { $serialized = freeze($self); };
+    croak ("Unable to serialize object: $@") if $@;
+    $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
+
 
     add_history(    object => $self,
                     action => 'save',
@@ -912,36 +906,6 @@ sub checkin {
                );
     }
 
-}
-
-=item $media->prepare_for_edit() 
-
-Copy current version of media from media table into versioning table.  Will only work for objects that have been save()ed (not new objects).
-
-=cut
-
-sub prepare_for_edit {
-    my $self = shift;
-    my $dbh = dbh;
-
-    # ASSERT that this is checked out by current user (not someone else)
-
-    my $media_id;
-    if ($self->media_id) {
-        $media_id = $self->media_id;
-    } else {
-        croak("No media_id specified for prepare_for_edit!");
-    }
-
-    my $serialized; 
-    eval {
-        $serialized = freeze($self);
-    };
-    croak ("Unable to serialize object: $@") if $@;
-
-    $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
-
-    return $self;
 }
 
 =item $media = $media->update_url( $url );

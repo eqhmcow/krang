@@ -289,7 +289,6 @@ sub close {
         # checkout and version media if not a new media
         if  ($object->media_id) {
             $object->checkout();
-            $object->prepare_for_edit();
         }
     
         my $filename = $object->filename();
