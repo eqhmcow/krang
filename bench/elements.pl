@@ -80,13 +80,15 @@ run_benchmark(module => 'Krang::Element',
                                               );
               });
 
-# time deleting element trees by id
+# time deleting elements
 $i = 0;
 run_benchmark(module => 'Krang::Element',
-              name   => 'delete',
+              name   => 'load and delete',
               count  => $n, 
               code   => sub {
-                  Krang::Element->delete($ids[$i++]);
+                  my $e = Krang::Element->load(element_id => $ids[$i++], 
+                                               object => $story);
+                  $e->delete;
               });
 
 # create a "normal" element tree

@@ -116,6 +116,16 @@ sub extension {
     return '.html';
 }
 
+=item C<< $class->delete_hook(element => $element) >>
+
+Called just before the story/category containing the element tree is
+deleted.  This routine can be used to do any necessary cleanup.  The
+default implementation does nothing.
+
+=cut
+
+sub delete_hook {}
+
 =back
 
 =cut

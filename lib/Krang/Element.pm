@@ -685,35 +685,32 @@ sub _load_tree {
 
 =item $element->delete()
 
-=item Krang::Element->delete($element_id)
-
 Delete the element, and all its children, from the database.  After
 this call the element is empty, without children, data or an id.  This
 call only works for top-level elements.  To remove elements from the
 middle of a tree, simply remove them from the C<children> list in the
 parent and then call C<save>.
 
-Returns 1 on success.
-
 =cut
 
 sub delete {
     my $self = shift;
     my $dbh  = dbh;
-    my $element_id;
 
-    if (ref $self) {
-        # check top-levelitude
-        croak("Unable to save() non-top-level element.")
-          unless $self->{class}->isa('Krang::ElementClass::TopLevel');
+    # check top-levelitude
+    croak("Unable to delete() non-top-level element.")
+      unless $self->{class}->isa('Krang::ElementClass::TopLevel');
 
-        # check for ID 
-        croak("Unable to delete() non-saved element.")    
-          unless $self->{element_id}; $element_id = $self->{element_id};
-    } else { $element_id = shift; }
+    # check for ID 
+    croak("Unable to delete() non-saved element.")    
+      unless $self->{element_id};
 
+    # call delete hook in the element class
+    $self->class->delete_hook(element => $self);
+
+    # delete all from the DB
     $dbh->do('DELETE FROM element WHERE root_id = ?', undef, 
-             $element_id);
+             $self->{element_id});
 
     # clear the object
     %{$self} = () if ref $self;

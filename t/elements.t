@@ -157,8 +157,14 @@ is($children[1]->name, "deck");
 is($children[2]->name, "fancy_keyword");
 is($children[3]->name, "page");
 
+# prepare to check that delete_hook is working
+my $delete_count = $TestSet1::article::DELETE_COUNT;
+
 # delete from the db
 ok($loaded->delete());
+
+# check that delete_hook is working
+is($TestSet1::article::DELETE_COUNT, $delete_count + 1);
 
 # make sure it's gone
 eval { $loaded = Krang::Element->load(element_id => $element_id, object => $story) };

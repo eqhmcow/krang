@@ -44,5 +44,8 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+# test delete_hook
+our $DELETE_COUNT = 0;
+sub delete_hook { $DELETE_COUNT++ };
 
 1;
