@@ -5,13 +5,13 @@ DROP TABLE IF EXISTS history;
 --
 
 CREATE TABLE history (
-    object_type varchar(255) default NULL,
-    object_id int(10) unsigned default NULL,
+    object_type varchar(255) NOT NULL,
+    object_id int(10) unsigned NOT NULL,
     action varchar(255) default NULL,
     version int(10) unsigned default NULL,
     desk_id int(10) unsigned default NULL,
     user_id int(10) unsigned not NULL,
     timestamp datetime default NULL,
-    PRIMARY KEY(object_type, object_id)
+    PRIMARY KEY (object_type, object_id)
 ) TYPE=MyISAM;
 
