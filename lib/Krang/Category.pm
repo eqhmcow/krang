@@ -1132,6 +1132,7 @@ sub deserialize_xml {
 
     # is there an existing category with this URL?
     my ($dup) = Krang::Category->find(url => $data->{url});
+    
     if ($dup) {
         Krang::DataSet::DeserializationFailed->throw(
             message => "A category with the URL ".
@@ -1163,6 +1164,8 @@ sub deserialize_xml {
         # get site_id for root category
         $site_id = $set->map_id(class => "Krang::Site",
                                 id    => $data->{site_id});
+        my ($new_c) = Krang::Category->find( url => $data->{url} );
+        return $new_c;
     }
 
     # create a new category
@@ -1180,7 +1183,6 @@ sub deserialize_xml {
                                                   object    => $cat);
     $cat->{element} = $element;
     $cat->{element_id} = $element->element_id;
-
     $cat->save();
 
     return $cat;
