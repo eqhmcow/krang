@@ -59,6 +59,10 @@ HREF[Software Requirements|requirements.html] - software dependencies for Krang
 
 HREF[Module Documentation|modules.html] - Krang module documentation
 
+=item *
+
+HREF[Building external Perl modules|building_perl_modules.html] - How to add or update modules from CPAN
+
 =back
 
 =head2 Project Management

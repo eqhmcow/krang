@@ -1,0 +1,170 @@
+=head1 How to build and install new Perl external modules for Krang
+
+Building new external (i.e., from CPAN) modules is a task which 
+is periodically required for the Krang environment.  It is necessary 
+to build and install new modules under the following circumstance:
+
+
+=over 4
+
+
+=item 1. New application requirements
+
+A new application is developed
+which requires functionality provided by modules which have not yet
+been installed.
+
+
+=item 2. Important upgrades
+
+New versions of installed modules have been 
+repleased which contain important upgrades in functionality and/or
+bug fixes.
+
+
+=back
+
+
+Under these circumstance you will need to install new modules or
+upgrade existing modules.
+
+
+=head1 Where the modules are located
+
+It is important to note that the external Perl modules are NOT stored in 
+the site_lib on the UNIX servers.  All modules are stored in 
+the project repository, located on the B<krang-services> server and 
+distributed to development servers via CVS.
+
+To install or upgrade a module you must install the module's
+files into the project repository.
+
+
+=head1 Architecture requirements
+
+The Krang environment currently is built on Intel-architecture 
+Linux 7.x servers.  The project repository, as a result, needs to have 
+architecture files for "i686-linux".
+
+
+=head1 To build modules
+
+To build modules for installation in project repository you must 
+first build the modules OUTSIDE of the repository and then copy 
+the important files into the repository.
+
+To do so requires creating temporary directories in which to
+build these modules, and then calling the build commands with 
+certain veriables set to actually install the modules into 
+these directories.
+
+For example, create temporary directories in your home
+directory, as follows:
+
+    mkdir -p $HOME/PERL_MOD_BUILD/perl_parts
+
+
+Once these directories have been created, set the following
+environment variables to make the next few tasks a bit easier:
+
+    export KRANG_ROOT=$HOME/krang
+    export PERL_PARTS=$HOME/PERL_MOD_BUILD/perl_parts
+    export PERL5LIB=$PERL_PARTS/lib/site_perl/5.6.1:$KRANG_ROOT/lib:$PERL5LIB
+
+
+To further simplify your task, set up the following aliases:
+
+    alias perlprep='perl Makefile.PL PREFIX=$PERL_PARTS INSTALLMAN3DIR=$PERL_PARTS/man/man3'
+    alias perlmake='perlprep && 
+        make && 
+        make test && 
+        make install && 
+        echo "################  SUCCESSFUL  ################"'
+
+
+Following are the steps to build modules in your temporary build
+directories.  Repeat these steps for each module.
+
+
+=over 4
+
+
+=item 1. Uncompress module tar file.  CD into the resultant directory.
+
+=item 2. Issue the "perlmake" command alias.
+
+=item 3. Look for "SUCCESSFUL" tag at end of output.  Resolve errors if any.
+
+
+=back
+
+
+
+=head1 Installation into project repository
+
+Once you're successfully compiled all your modules you have to copy
+all the new files into the repository.
+This is a two-step process.  First, the new files need to be physically
+copied into the proper place in a project working directory.  Second, 
+the new files need to be added, via cvs, to the project repository.
+
+
+NOTE: When you begin this task, make sure you have the latest 
+version of the repository in your working directory, and make sure
+you have B<NO UN-COMMITTED CHANGES> in your working directory!
+
+
+To copy files to a working directory, set up the following to make
+your task a bit easier:
+
+    export KRANG_MODULES=$KRANG_ROOT/lib
+    export NEW_MODULES_LIB=$PERL_PARTS/lib/site_perl/5.6.1
+
+
+Change these as necessary to reflect the particularities of your system.
+
+Next, issue the copy command:
+
+    cp -rvf $NEW_MODULES_LIB/* $KRANG_MODULES
+
+
+If this looks correct, then the new files have been successfully copied
+into the correct place in the hierarchy.
+
+You must now add these, via cvs, to the project repository:
+
+    cd $KRANG_MODULES
+    find . -type d | grep -v CVS | xargs cvs add
+    find . -type f | grep -v CVS | xargs cvs add
+
+
+Visually verify that the output looks correct.  If so, commit
+your changes to the repository:
+
+    cvs ci -m "Added new modules <list of modules>"
+
+
+You should now be finished adding modules.
+
+
+=head1 Save module tarfiles to src/
+
+In order to preserve the original state of the source code, 
+the tar-files from which the external Perl modules are built 
+should be preserved.  To this end, the B<$KRANG_ROOT/src/> 
+directory has been created.
+
+Once you have successfully compiled and installed your 
+modules, copy the tar-files into $KRANG_ROOT/src/ and 
+add/commit them to the repository via CVS.
+
+Make sure to update the B<$KRANG_ROOT/src/README> file.  This file
+contains a list of all the modules which have been installed.
+This list is in order of prerequisite.  If you are B<installing a 
+new module>, add it to the end of the list.
+
+If you are B<upgrading an existing module>, replace the reference to 
+the module in the list, preserving its position.  (This is 
+assuming that the new version has the same pre-requisites as the
+old version.)  In this case, remove the old version of the module
+from the repository via CVS.
