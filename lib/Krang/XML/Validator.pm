@@ -9,7 +9,7 @@ use File::Copy qw(copy);
 use Cwd qw(fastcwd);
 use File::Spec::Functions qw(catdir catfile splitdir);
 use Krang::Conf qw(KrangRoot);
-use XML::SAX::ParserFactory;
+use XML::SAX::Expat;
 use XML::Validator::Schema;
 
 =head1 NAME
@@ -92,11 +92,9 @@ sub validate {
                                                 cache => 1,
                                                );
 
-    my $parser = XML::SAX::ParserFactory->parser(Handler => $validator);
-
-    # make sure we didn't get the PurePerl parser
-    die "XML::SAX::ParserFactory returned an XML::SAX::PurePerl, which is too slow to use."
-      if $parser->isa('XML::SAX::PurePerl');
+    # explicitely use Expat. It's not worth the risk to use the
+    # ParserFactory.
+    my $parser = XML::SAX::Expat->new(Handler => $validator);
 
     eval { $parser->parse_uri($path); };
 

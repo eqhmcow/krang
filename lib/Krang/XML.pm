@@ -6,6 +6,8 @@ use XML::Writer;
 use IO::Scalar;
 use Carp qw(croak);
 use XML::Simple qw(XMLin);
+use XML::SAX::Expat;
+$XML::SAX::ParserPackage = 'XML::SAX::Expat';
 
 =head1 NAME
 
@@ -70,9 +72,6 @@ sub simple {
     my ($pkg, %args) = @_;
     my $xml = delete $args{xml};
     $args{keyattr} ||= [];
-
-    # XML::Simple will try to use SAX (badly) without this
-    local $XML::Simple::PREFERRED_PARSER = 'XML::Parser';
 
     return XMLin($xml, %args);
 }
