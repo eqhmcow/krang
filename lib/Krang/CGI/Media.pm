@@ -296,8 +296,11 @@ sub save_add {
     my %errors = $self->validate_media($m);
     return $self->_add(%errors) if (%errors);
 
-    # Save object to database and checkout to Workspace
-    $m->save();
+    # Save object to database
+    my %save_errors = ( $self->do_save_media($m) );
+    return $self->_add(%save_errors) if (%save_errors);
+
+    # Checkout to Workspace
     $m->checkout();
 
     # Notify user
@@ -370,8 +373,11 @@ sub save_stay_add {
     my %errors = $self->validate_media($m);
     return $self->_add(%errors) if (%errors);
 
-    # Save object to database and checkout to Workspace
-    $m->save();
+    # Save object to database
+    my %save_errors = ( $self->do_save_media($m) );
+    return $self->_add(%save_errors) if (%save_errors);
+
+    # Checkout to Workspace
     $m->checkout();
 
     # Notify user
@@ -482,8 +488,11 @@ sub save_edit {
     my %errors = $self->validate_media($m);
     return $self->edit(%errors) if (%errors);
 
-    # Save object to database and checkout to Workspace
-    $m->save();
+    # Save object to database
+    my %save_errors = ( $self->do_save_media($m) );
+    return $self->edit(%save_errors) if (%save_errors);
+
+    # Checkout to Workspace
     $m->checkout();
 
     # Notify user
@@ -519,7 +528,33 @@ sub save_stay_edit {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    my $m = $session{media};
+    die ("No media object in session") unless (ref($m));
+
+    # Update object in session
+    $self->update_media($m);
+
+    # Validate input.  Return errors, if any.
+    my %errors = $self->validate_media($m);
+    return $self->edit(%errors) if (%errors);
+
+    # Save object to database
+    my %save_errors = ( $self->do_save_media($m) );
+    return $self->edit(%save_errors) if (%save_errors);
+
+    # Checkout to Workspace
+    $m->checkout();
+
+    # Notify user
+    add_message("media_saved");
+
+    # Redirect to edit mode
+    my $url = $q->url(-relative=>1);
+    $url .= "?rm=edit&media_id=". $m->media_id();
+    $self->header_props(-url=>$url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$url\">$url</a>";
 }
 
 
@@ -944,10 +979,35 @@ sub find_media_row_handler {
     my $tp = $media->creation_date();
     $row->{creation_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
 
-    # pub_status  -- NOT YET IMPLEMENTED
+    # pub_status
     my $pub_status = ($media->published()) ? 'P' : '&nbsp;' ;
     $row->{pub_status} = '&nbsp;<b>'. $pub_status .'</b>&nbsp;';
 
+}
+
+
+# Actually save the media.  Catch exceptions
+# Return error hash if errors are encountered
+sub do_save_media {
+    my $self = shift;
+    my $m = shift;
+
+    # Attempt to write back to database
+    eval { $m->save() };
+
+    # Is it a dup?
+    if ($@) {
+        if (ref($@) and $@->isa('Krang::Media::DuplicateURL')) {
+            add_message('duplicate_url');
+            return (duplicate_url=>1);
+        } else {
+            # Not our error!
+            die($@);
+        }
+    }
+
+    # If everything is OK, rturn an empty array
+    return ();
 }
 
 
