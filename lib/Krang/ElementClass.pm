@@ -586,7 +586,7 @@ If successful, publish() will return a block of HTML.
 
 Generally, you will not want to override publish().  Changes to template-handling behavior should be done by overriding find_template().  Changes to the parameters being passed to the template should be done by overriding fill_template().  Override publish() only in the event that neither of the previous solutions work for you.
 
-=head3 A Note on Elements
+=head2 A Note on Elements
 
 Some elements are simply attributes with a value, and no formatting to be associated with them.  This can be because the developer of the element tree wants to handle formatting in the parent element's template, or that there should be no formatting of the data whatsoever (e.g. $element->data() might get embedded in an <input> tag).
 
