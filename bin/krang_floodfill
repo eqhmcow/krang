@@ -17,7 +17,8 @@ krang_floodfill - create fake Krang data the easy way
 =head1 DESCRIPTION
 
 This script creates fake Krang data for use during testing.  It uses
-the standard UNIX dict file in F</usr/dict/words> to generate random
+the standard UNIX dict file in F</usr/dict/words> (or
+F</usr/share/dict/words> if that's not available) to generate random
 text.
 
 =head1 OPTIONS
@@ -110,8 +111,8 @@ for(1 .. $cats) {
 # get a random word
 BEGIN {
     my @words;
-    open(WORDS, "/usr/dict/words") 
-      or die "Can't open /usr/dict/words: $!";
+    open(WORDS, "/usr/dict/words") or open(WORDS, "/usr/share/dict/words") or
+      or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
     while (<WORDS>) {
         chomp;
         push @words, $_;
