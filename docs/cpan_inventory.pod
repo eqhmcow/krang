@@ -43,282 +43,302 @@ exist without your hard work.
 =item CGI-Application-Generator
 
  Version: 1.0
- License: 
+ License: Perl License
 
 =item CGI.pm
 
  Version: 2.89
- License: 
-
-=item Cache-Mmap
-
- Version: 0.07
- License: 
+ License: Perl License
 
 =item Carp-Assert
 
  Version: 0.17
- License: 
+ License: None
 
 =item Class-MethodMaker
 
  Version: 1.08
- License: 
+ License: Perl License
 
 =item Class-XPath
 
  Version: 1.0
- License: 
+ License: Perl License
 
 =item Compress-Zlib
 
  Version: 1.31
- License: 
+ License: Perl License, zlib License
 
 =item Config-ApacheFormat
 
  Version: 1.2
- License: 
+ License: Perl License
 
 =item DBD-mysql
 
  Version: 2.9003
- License: 
+ License: Perl License
 
 =item DBI
 
  Version: 1.32
- License: 
+ License: Perl License
 
 =item Digest-MD5
 
  Version: 2.23
- License: 
+ License: Perl License
+
+=item File-MMagic
+
+ Verison: 1.21
+ License: Apache License, Custom Open-Source License
 
 =item HTML-Lint
 
  Version: 1.22
- License: 
+ License: Perl License
 
 =item HTML-Parser
 
  Version: 3.27
- License: 
+ License: Perl License
 
 =item HTML-PopupTreeSelect
 
  Version: 1.0
- License: 
+ License: Perl License
 
 =item HTML-Tagset
 
  Version: 3.03
- License: 
+ License: Perl License
 
 =item HTML-Template
 
  Version: 2.6
- License: 
+ License: Perl License
 
 =item HTML-Template-Expr
 
  Version: 0.04
- License: 
+ License: Perl License
 
 =item HTTP-BrowserDetect
 
  Version: 0.97
- License: 
+ License: Perl License
+
+=item Image-BioChrome
+
+ Version: 1.16
+ License: Perl License
 
 =item IO-String
 
  Version: 1.03
- License: 
+ License: Perl License
 
 =item IO-stringy
 
  Version: 2.108
- License: 
+ License: Perl License
 
 =item IPC-Run
 
  Version: 0.74
- License: 
+ License: Perl License
 
 =item Image-Info
 
  Version: 1.15
- License: 
+ License: Perl License
 
 =item Imager
 
  Version: 0.41
- License: 
+ License: Perl License
+
+=item Mail-Sender
+
+ Version: 0.8.10
+ License: Perl License
 
 =item MIME-Base64
 
  Version: 2.16
- License: 
+ License: Perl License
 
 =item Net-FTPServer
 
  Version: 1.115
- License: 
+ License: GNU General Public License
 
 =item Parse-RecDescent
 
  Version: 1.94
- License: 
+ License: Perl License
 
 =item Pod-Escapes
 
  Version: 1.03
- License: 
+ License: Perl License
 
 =item Pod-Simple
 
  Version: 0.96
- License: 
+ License: Perl License
+
+=item Proc-Daemon
+
+ Version: 0.03
+ License: Perl License
 
 =item Scalar-List-Utils
 
  Version: 1.09
- License: 
+ License: Perl License
 
 =item Set-IntRange
 
  Version: 5.1
- License: 
+ License: Perl License
 
 =item Storable
 
  Version: 2.06
- License: 
+ License: Perl License
 
 =item Term-Prompt
 
  Version: 0.11
- License: 
+ License: None
 
 =item TermReadKey
 
  Version: 2.21
- License: 
+ License: Custom Open-Source License
 
 =item Test-Builder-Tester
 
  Version: 0.09
- License: 
+ License: Perl License
 
 =item Test-Harness
 
  Version: 2.26
- License: 
+ License: Perl License
 
 =item Test-Manifest
 
  Version: 0.91
- License: 
+ License: Perl License
 
 =item Test-Pod
 
  Version: 0.95
- License: 
+ License: Perl License
 
 =item Test-Simple
 
  Version: 0.47
- License: 
+ License: Perl License
 
 =item Text-Balanced
 
  Version: 1.89
- License: 
+ License: Perl License
 
 =item Text-Tabs+Wrap
 
  Version: 2001.0929
- License: 
+ License: None
 
 =item Time-HiRes
 
  Version: 1.42
- License: 
+ License: Perl License
 
 =item Time-Piece
 
  Version: 1.08
- License: 
+ License: Perl License
 
 =item Time-Piece-MySQL
 
  Version: 0.02
- License: 
+ License: Perl License
 
 =item Tree-DAG_Node
 
  Version: 1.04
- License: 
+ License: Perl License
 
 =item URI
 
  Version: 1.23
- License: 
+ License: Perl License
+
+=item WWW-Bugzilla
+
+ Version: 0.2
+ License: Perl License
 
 =item XML-Filter-BufferText
 
  Version: 1.01
- License: 
+ License: Perl License
 
 =item XML-NamespaceSupport
 
  Version: 1.08
- License: 
+ License: Perl License
 
 =item XML-Parser
 
  Version: 2.31
- License: 
+ License: Perl License
 
 =item XML-SAX
 
  Version: 0.12
- License: 
+ License: Perl License
 
 =item XML-SAX-Expat
 
  Version: 0.37
- License: 
+ License: Perl License
 
 =item XML-Simple
 
  Version: 2.03
- License: 
+ License: Perl License
 
 =item XML-Validator-Schema
 
  Version: 1.04
- License: 
+ License: Perl License
 
 =item XML-Writer
 
  Version: 0.4
- License: 
+ License: Perl License
 
 =item libapreq
 
  Version: 1.1
- License: 
+ License: Apache License
 
 =item libnet
 
  Version: 1.12
- License: 
+ License: Perl License
 
 =item libwww-perl
 
  Version: 5.68
- License: 
+ License: Perl License
 
 =back
 
