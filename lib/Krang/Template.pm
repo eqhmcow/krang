@@ -778,9 +778,12 @@ sub find {
             push @templates, bless({%$row}, $self);
             foreach my $date_field (grep { /_date$/ } keys %{$templates[-1]}) {
                 my $val = $templates[-1]->{$date_field};
-                next unless defined $val;
-                $templates[-1]->{$date_field} =
-                  Time::Piece->from_mysql_datetime($val);
+                if (defined $val and $val ne '0000-00-00 00:00:00') {
+                    $templates[-1]->{$date_field} =
+                      Time::Piece->from_mysql_datetime($val);
+                } else {
+                    $templates[-1]->{$date_field} = undef;
+                }
             }
         }
     }
@@ -1008,14 +1011,14 @@ sub save {
     } else {
         $query = "INSERT INTO template (" .
           join(",", @save_fields) .
-            ") VALUES (?" . ",?" x (scalar @save_fields - 1) . ")";
+            ") VALUES (" . join(",", (("?")x@save_fields)) . ")";
     }
 
     # construct array of bind_parameters
     foreach my $field (@save_fields) {
         if ($field =~ /_date$/) {
-            push(@tmpl_params, $self->{$field} ? 
-                 $self->{$field}->mysql_datetime : localtime);
+            push(@tmpl_params, defined $self->{$field} ? 
+                               $self->{$field}->mysql_datetime : undef);
         } else {
             push(@tmpl_params, $self->{$field});
         }
