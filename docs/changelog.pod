@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+L<Krang::ElementClass::ListGroup> now handles multidimensional lists
+of arbitrary depth.  Further testing is needed, but so far things look
+good.  [Peter Leonard, Andrea Bonotto]
+
+=item *
+
 Fixed a bug in L<Krang::DataSet> with loading compressed C<.kds.gz> files
 and added a test for it.  Also fixed bug in dataset.t where it was not
 skipping all the tests that need TestSet1 when TestSet1 is not available
