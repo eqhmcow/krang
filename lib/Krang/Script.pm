@@ -54,8 +54,9 @@ BEGIN {
 
     $SIG{__DIE__} = sub {
         return if $^S;   # ignore die inside an eval
-        critical $_[0];
-        die $_[0];
+        my $err = shift;
+        critical $err;
+        die $err;
     };
 }
 
