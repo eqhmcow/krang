@@ -70,7 +70,6 @@ run_benchmark(module => 'Krang::Media',
               count  => $count,               
               code   =>
          sub {
-            $media_object[$i]->prepare_for_edit();
             my $fh = new FileHandle $filepath;
             $media_object[$i]->upload_file(filename => $i."krang.jpg", filehandle => $fh);
             $media_object[$i++]->save();
@@ -94,7 +93,6 @@ run_benchmark(module => 'Krang::Media',
               count  => $count,               
               code   =>
          sub {
-            $media_object[$i]->prepare_for_edit();
             $media_object[$i]->revert(1);
             $media_object[$i++]->save();
          });
