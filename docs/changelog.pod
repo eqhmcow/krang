@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Moved the final installation message out of bin/krang_install, created
+Krang::Platform->post_install_message() that generates the same output.
+This can now be overridden & extended on a platform-specific basis. [Peter]
+
+=item *
+
 Split the various checks out of Krang::Platform->verify_dependencies().
 This will simplify ports to other platforms, as individual checks can
 now be overridden, rather than the entire sub. [Peter]
