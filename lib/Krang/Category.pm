@@ -829,10 +829,10 @@ sub find {
                         LEFT JOIN user_category_permission_cache AS ucpc ON ucpc.category_id = cat.category_id
                   );
 
-    my $user_id = $ENV{REMOTE_USER}
-        || croak("No user_id set");
-
+    my $user_id = $ENV{REMOTE_USER};
     unless ($ignore_user) {
+        croak("No user_id set") unless $user_id;
+
         # Just need user_id.  Don't need user.
         # Assumes that user_id is valid and authenticated
         push(@wheres, "ucpc.user_id=?");
