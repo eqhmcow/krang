@@ -19,6 +19,15 @@ use constant RW_FIELDS => qw( name description );
 =head1 SYNOPSIS
 
     use Krang::ListGroup;
+
+    my $group = Krang::ListGroup->new(  name => 'testlistgroup',
+                                        description => 'desc here' );
+
+    $group->save;
+
+    my @groups_found = Krang::ListGroup->find( name => 'testlistgroup' );
+
+    $group->delete;
     
 =head1 DESCRIPTION
 

@@ -19,10 +19,35 @@ use constant RW_FIELDS => qw( name list_group_id parent_list_id );
 =head1 SYNOPSIS
 
     use Krang::List;
-    
+
+    # create and save new list in Krang::ListGroup 2
+    my $list = Krang::List->new(    name => 'list1',
+                                    list_group_id => 2,
+                                );
+
+    $list->save();
+   
+    # create new list in same group with first list as parent 
+    my $list2 = Krang::List->new(   name => 'list2',
+                                    list_group_id => 2,
+                                    parent_list_id => $list->list_id );
+
+    $list2->save();
+
+    # find and return lists in Krang;:ListGroup 2
+    my @found = Krang::List->find( list_group_id => 2 );
+
+    # delete them both
+    $list->delete;
+    $list2->delete;
+                                
 =head1 DESCRIPTION
 
-This class handles management of lists.
+This class handles management of krang lists. Each list must be a 
+member of a Krang::ListGroup, and may optionally have another 
+Krang::List as a parent.  Currently, krang lists should only be 
+created via load on database make as configured in an ElementSet's
+lists.conf file.
 
 =head1 INTERFACE
 
