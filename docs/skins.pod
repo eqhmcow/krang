@@ -1,14 +1,14 @@
 =head1 Skinning Krang
 
 Krang's appearance can be modified by creating a skin.  The simplest
-skins just change the Krang's color pallette, but more advanced skins
-can totally revise Krang's user interface.  This document will teach
-you how to build a Krang skin.
+skins just change Krang's color palette, but more advanced skins can
+totally revise Krang's user interface.  This document will teach you
+how to build a Krang skin.
 
-=head1 A Simple Skin
+=head2 A Simple Skin
 
 The simplest possible skin consists of a single file, called
-F<skin.conf> places in a directory underneath the F<skins/> directory.
+F<skin.conf> placed in a directory underneath the F<skins/> directory.
 For example, to create a skin called 'Red' a directory called
 F<skins/Red> must be created:
 
@@ -47,23 +47,54 @@ To activate the skin, restart Krang:
 
 Now when you login to Krang with your browser you'll see a red interface.
 
-=begin comment
+=head2 Replacing Images
 
-=head1 Dealing with Images
+If you look at your newly red Krang you'll see that not only are the
+HTML elements red, but the images are too.  For example, the arrow on
+the left nav is now colored with the dark red chosen for C<dark_color>
+above.  Thus you can change Krang's colors and the images will be
+colored to match.
 
-Actually, what you'll see after following the instructions in the last
- section is a red webpage with some blue images.  Krang uses images
-for interface highlights like the arrow that shows you which direction
-a column is being sorted.  These images will need special attention to
-match the current theme.
+In some cases this may not be what you want.  For example, you might
+want to change the logo displayed in the top-left corner to advertise
+your company instead of Krang.  To do so, simply create a directory
+called F<images/> inside the skin directory and add your replacement
+images there.  For example, if I wanted to create a special Red Krang
+logo, I would create a file called:
 
-One option is to simply set C<image_color> in your F<skin.conf>.  This
-will cause Krang to color in some default greyscale images with a
-color of your choice.  For example, the Red theme might contain:
+  skins/Red/images/logo.gif
 
-  # color the images dark red
-  image_color      #660002
+The names of the image files must match files in F<templates/images>.
+These are the source images used if the skin does not define
+replacements.
 
-=end comment
+=head2 Replacing Templates
 
+Changing colors and images is fine, but in the end Krang will still
+look pretty much like Krang.  By replacing templates you can
+accomplish much more radical alterations.  To do so, create a
+F<templates/> directory inside your skin.  Then copy HTML templates
+from F<templates/> into this directory and make alterations.
 
+For example, to create a new navigation layout for the Red theme, I
+would create this directory:
+
+  skins/Red/templates/
+
+Then copy in F<nav.tmpl>:
+
+  cp templates/nav.tmpl skins/Red/templates
+
+Now changes can be made to F<nav.tmpl> that will only be visible when
+the Red skin is active.
+
+B<WARNING:> replacing templates in your skin carries with it a
+significant drawback.  Your skin may need updating when you upgrade
+Krang since new template variables may have been added to Krang's
+code.
+
+=head2 Skins Make Great Add-Ons
+
+When you're done with your spiffy new skin, consider packaging it as
+an add-on for others to use.  You can find more information on
+building a Krang add-on here: HREF[Building a Krang Add-On|add_on.html].
