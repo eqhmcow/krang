@@ -6,6 +6,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed the v1.018 upgrade module to successfully upgrade instances from
+v1.016 and older.  Also made changes to allow repeated runs of the
+upgrade module to succeed even if the upgrade stops part way through.
+[Sam]
+
+=item *
+
 Changed C<krang_upgrade> to wait till the upgrade is complete before
 updating Krang's version number.  This means that failed upgrades can
 be re-run and the same upgrade modules will be run again. [Sam]
