@@ -1640,7 +1640,7 @@ sub serialize_xml {
     for my $category ($self->categories) {
         $writer->dataElement(category_id => $category->category_id);
 
-        $set->add(object => $category);
+        $set->add(object => $category, from => $self);
     }
 
     # urls
@@ -1655,7 +1655,7 @@ sub serialize_xml {
                              $contrib_type{$contrib->selected_contrib_type()});
         $writer->endTag('contrib');
 
-        $set->add(object => $contrib);
+        $set->add(object => $contrib, from => $self);
     }
 
 

@@ -21,7 +21,14 @@ use Exception::Class
   'Krang::DataSet::ValidationFailed' => 
     { fields => [ 'errors' ] },
   'Krang::DataSet::InvalidFile' => 
-    { fields => [ 'file', 'err' ] };
+    { fields => [ 'file', 'err' ] },
+  'Krang::DataSet::InvalidArchive' => 
+    { fields => [ 'file', 'err' ] },
+  'Krang::DataSet::DeserializationFailed' => 
+    { fields => [] },
+  'Krang::DataSet::ImportRejected' => 
+    { fields => [ 'set' ] },
+  ;
 
 =head1 NAME
 
@@ -126,50 +133,26 @@ sub new {
               Archive::Tar->error())
           unless $result;
 
-        # check the archive before going further
+        # validate the XML files before parsing
         $self->_validate;
 
         # load the index
         $self->_load_index;
-                                         
-
+                        
+        # checks that the index is complete
+        $self->_check_index;
     } else {
         $self->{objects} = {};
     }
     return $self;
 }
 
-# load index.xml into objects
-sub _load_index {
-    my $self = shift;
-    
-    # read in index
-    open(my $index, '<', catfile($self->{dir}, 'index.xml')) or 
-      croak("Unable to open $self->{dir}/index.xml: $!");
-    my $xml = join('', <$index>);
-    close $index or die $!;
-  
-    # parse'm up
-    my $data = Krang::XML->simple(xml => $xml, forcearray => 1);
-    my %index;
-    foreach my $class_rec (@{$data->{class}}) {
-        my $class = $class_rec->{name};
-        foreach my $object (@{$class_rec->{object}}) {
-            $index{$class}{$object->{id}} = $object->{content};
-            croak("index.xml refers to file '$object->{content}' which is ".
-                  "not in the archive.")
-              unless -e catfile($self->{dir}, $object->{content});
-        }
-    }
-    $self->{objects} = \%index;
-}
-
-
 # cleanup tempdir
 sub DESTROY {
     my $self = shift;
     rmtree(delete $self->{dir}) if $self->{dir};
 }
+
 
 # runs each file in the kds through a validating parser, matching up
 # documents with schemata in /schema
@@ -243,11 +226,15 @@ sub _validate_file {
          message => "File '$file' failed validation: \n$error\n");
 }
 
-=item C<< $set->add(object => $story) >>
+=item C<< $set->add(object => $story, from => $self) >>
 
 Adds an object to the data-set.  This operation will also add any
 linked objects necessary to later load the object.  If an object
 already exists in the data set then this call does nothing.
+
+The C<from> must contain the object calling add() when add() is called
+from within serialize_xml().  This is used by Krang::DataSet to
+include link information in the index.xml file.
 
 Objects added to data-sets with add() must support serialize_xml() and
 deserialize_xml().  For details, see REQUIRED METHODS below.
@@ -257,21 +244,31 @@ deserialize_xml().  For details, see REQUIRED METHODS below.
 Adds a file to a data-set.  This is used by media to store media files
 in the data set.  The file argument must be the full path to the file
 on disk.  Path must be the destination path of the file within the
-archive.
+archive.  The links array must contain a list of objects linked-to
+from the added object.
 
 =cut
 
 sub add {
     my ($self, %args) = @_;
     my $object = $args{object};
+    my $from   = $args{from};
     my $file   = $args{file};
     my $path   = $args{path};
 
     if ($object) {
         my ($class, $id) = _obj2id($object);
+
+        # register links if called with a from
+        if ($from) {
+            my ($from_class, $from_id) = _obj2id($from);
+            $self->{objects}{$from_class}{$from_id}{links} ||= [];
+            push(@{$self->{objects}{$from_class}{$from_id}{links}},
+                 [ $class, $id ]);
+        }
         
         # been there, done that?
-        return if $self->{objects}{$class}{$id};
+        return if $self->{objects}{$class}{$id}{xml};
 
         # notify add_callback
         $self->{add_callback}->(%args);
@@ -294,13 +291,18 @@ sub add {
             assert(-s $path, "XML file has stuff in it");
         }
         
-        $self->{objects}{$class}{$id} = $file;
+        $self->{objects}{$class}{$id}{xml} = $file;
 
-    } elsif ($file and $path) {
+    } elsif ($file and $path and $from) {
         my $full_path = catfile($self->{dir}, $path);
         mkpath((splitpath($full_path))[1]);
         copy($file, $full_path)
           or croak("Unable to copy file '$file' to '$full_path' : $!");
+        
+        # register file with caller
+        my ($from_class, $from_id) = _obj2id($from);
+        $self->{objects}{$from_class}{$from_id}{files} ||= [];
+        push(@{$self->{objects}{$from_class}{$from_id}{files}}, $path);
      } else {
         croak("Missing required object or file/path params");
     }
@@ -419,8 +421,22 @@ sub _write_index {
     foreach my $class (keys %{$self->{objects}}) {
         $writer->startTag('class', name => $class);
         foreach my $id (keys %{$self->{objects}{$class}}) {
-            $writer->startTag('object', id => $id);
-            $writer->characters($self->{objects}{$class}{$id});
+            $writer->startTag('object');
+            $writer->dataElement(id  => $id);
+            $writer->dataElement(xml => $self->{objects}{$class}{$id}{xml});
+            if (my $links = $self->{objects}{$class}{$id}{links}) {
+                foreach my $link (@$links) {
+                    $writer->startTag('link');
+                    $writer->dataElement(class => $link->[0]);
+                    $writer->dataElement(id    => $link->[1]);
+                    $writer->endTag('link');
+                }
+            }
+            if (my $files = $self->{objects}{$class}{$id}{files}) {
+                foreach my $file (@$files) {
+                    $writer->dataElement(file => $file);
+                }
+            }
             $writer->endTag('object');
         }
         $writer->endTag('class');
@@ -430,13 +446,89 @@ sub _write_index {
     close($fh);
 }
 
-=item C<< $set->import_all() >>
+# load index.xml into objects
+sub _load_index {
+    my $self = shift;
+    
+    # read in index
+    open(my $index, '<', catfile($self->{dir}, 'index.xml')) or 
+      croak("Unable to open $self->{dir}/index.xml: $!");
+    my $xml = join('', <$index>);
+    close $index or die $!;
+  
+    # parse'm up
+    my $data = Krang::XML->simple(xml => $xml, forcearray => 1);
+    my %index;
+    foreach my $class_rec (@{$data->{class}}) {
+        my $class = $class_rec->{name};
+        foreach my $object (@{$class_rec->{object}}) {
+            $index{$class}{$object->{id}[0]} = { xml => $object->{xml}[0] };
+            if ($object->{link}) {
+                $index{$class}{$object->{id}[0]}{links} =
+                  [(map {[ $_->{class}[0], $_->{id}[0] ]} @{$object->{link}})];
+            }
+            croak("index.xml refers to file '$object->{content}' which is ".
+                  "not in the archive.")
+              unless -e catfile($self->{dir}, $object->{content});
+        }
+    }
+    $self->{objects} = \%index;
+}
+
+
+# check the index
+sub _check_index {
+    my $self = shift;
+
+    foreach my $class (keys %{$self->{objects}}) {
+        foreach my $id (keys %{$self->{objects}{$class}}) {
+            Krang::DataSet::InvalidArchive->throw(
+                 message => "Data set 'index.xml' refers to a file '".
+                 $self->{objects}{$class}{$id}{xml} . 
+                 "' which does not exist.")
+                unless -e catfile($self->{dir}, 
+                                  $self->{objects}{$class}{$id}{xml});
+        }
+    }    
+}
+
+
+=item C<< $set->import_all(...) >>
 
 This method tells the set to deserialize all objects in the set and
-save them into the current system.
+save them into the current system.  The following optional parameters
+are available:
+
+=over
+
+=item no_update
+
+Normally import will attempt to update objects when creating a new
+object would create an invalid duplicate.  Set this parameter to 1 and
+duplicates will cause the object to fail to import.  (Note that the
+exact policy on updates is decided by the individual class'
+deserialize_xml() method.)
+
+=item create_callback
+
+Set this to a CODE ref to get a callback when an object is created
+during the import.  The call will recieve the imported object as a
+single parameter.
+
+=item update_callback
+
+Set this to a CODE ref to get a callback when an object is updated
+during the import.  The call will recieve the updated object as a
+single parameter.
+
+=back
 
 May throw a Krang::DataSet::ValidationFailed exception if the archive
-is found to contain errors.  See EXCEPTIONS below for details.
+is found to contain errors.  May also throw a
+Krang::DataSet::ImportRejects exception if one or more objects failed
+to import.
+
+See EXCEPTIONS below for details.
 
 =item C<< $real_id = $set->map_id(class => "Krang::Foo", id => $id) >>
 
@@ -478,7 +570,19 @@ reasonable textual representation of the error report.
 If basic sanity checks on the archive fail then this exception will be
 returned with C<message> set to an explanation of what went wrong.
 
-FIX: Implement this!
+=item Krang::DataSet::DeserializeFailed
+
+Modules implementing deserialze_xml() can use this method to
+communicate the fact that the import didn't work.  The 'message' field
+must be set to a description of why the import failed.
+
+=item Krang::DataSet::ImportRejected
+
+This exeception communicates to the caller of import_all() that one or
+more objects failed to import.  The 'message' field will describe the
+problems.  The 'set' field will contain a Krang::DataSet object
+containing the failed date and their dependencies.  This can be
+written out to a file, repaired and then reimported.
 
 =back
 

@@ -1188,7 +1188,7 @@ sub serialize_xml {
 
     # write media file into data set
     my $path = "media_$self->{media_id}/$self->{filename}";
-    $set->add(file => $self->file_path, path => $path);
+    $set->add(file => $self->file_path, path => $path, from => $self);
 
     my %media_type = Krang::Pref->get('media_type');
 
@@ -1212,7 +1212,7 @@ sub serialize_xml {
       if $self->{publish_date};
     
     # add category to set
-    $set->add(object => $self->category);
+    $set->add(object => $self->category, from => $self);
 
     # contributors
     my %contrib_type = Krang::Pref->get('contrib_type');
@@ -1223,7 +1223,7 @@ sub serialize_xml {
                              $contrib_type{$contrib->selected_contrib_type()});
         $writer->endTag('contrib');
 
-        $set->add(object => $contrib);
+        $set->add(object => $contrib, from => $self);
     }
 
     # all done

@@ -914,9 +914,9 @@ sub serialize_xml {
     $writer->dataElement(site_id => $self->site_id);
     if ($self->parent_id) {
         $writer->dataElement(parent_id => $self->parent_id);
-        $set->add(object => $self->parent);
+        $set->add(object => $self->parent, from => $self);
     }
-    $set->add(object => $self->site);
+    $set->add(object => $self->site, from => $self);
 
     # basic fields
     $writer->dataElement(dir => $self->dir);
