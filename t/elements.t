@@ -81,7 +81,9 @@ is($page->match('//paragraph'), 5);
 is($page->match('paragraph'), 5);
 is($element->match('paragraph'), 0);
 is($element->match('/page[1]/paragraph[6]'),0);
-
+is($element->match('/page[0]/paragraph[@data="' . ("bla4 " x 40) . '"]'), 1);
+is(($element->match('/page[0]/paragraph[@data="' . ("bla4 " x 40) . '"]'))[0],
+   ($element->match('/page[0]/paragraph[3]'))[0]);
 # fill in deck
 ($element->children())[1]->data("deck deck deck");
 is(($element->children())[1]->data, "deck deck deck");

@@ -812,10 +812,21 @@ use Class::XPath
   get_root   => 'root',       # call get_root($node) to get the root
   get_children => 'children', # get children with the 'kids' method
 
-  get_attr_names => sub {},   # no attribs (yet?)
-  get_attr_value => sub {},   # 
+  get_attr_names => '_xpath_attr_names',  # get attr names
+  get_attr_value => '_xpath_attr_value', # get attr values
   get_content    => 'data',   # get content from the 'data' method
   ;
+
+sub _xpath_attr_names {
+    my $self = shift;
+    return (keys(%{$self}), keys(%{$self->{class}}));
+}
+
+sub _xpath_attr_value {
+    my ($self, $attr) = @_;
+    return $self->$attr() if $self->can($attr);
+    return undef;    
+}
 
 # freeze element tree as a flattened array
 sub STORABLE_freeze {
