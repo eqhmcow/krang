@@ -9,6 +9,26 @@
     var new_count = 1;
     var change_log = new Array();
 
+    nav_edit_mode();
+                                                                               
+    function do_save () {
+        var myform = document.forms["edit_form"];
+        myform.rm.value = "save";
+        var change_string = change_log.join('%^%');
+        myform.changes.value = change_string;
+        myform.submit();
+    }
+                                                                               
+                                                                               
+    function do_save_stay () {
+        var myform = document.forms["edit_form"];
+        myform.rm.value = "save";
+        var change_string = change_log.join('%^%');
+        myform.changes.value = change_string;
+        myform.stay.value = 1;
+        myform.submit();
+    }
+
     function populate_list (list_count,sel_in_list,no_clear) {
         var next_list = list_count + 1;
 
@@ -58,27 +78,6 @@
         var lid = eval( 'document.forms["edit_form"].list_id_' + list_count + '.value' );
         return lid; 
     }
-
-    nav_edit_mode();
-
-    function do_save () {
-        var myform = document.forms["edit_form"];
-        myform.rm.value = "save";
-        var change_string = change_log.join('%^%');
-        myform.changes.value = change_string;
-        myform.submit();
-    }
-
-
-    function do_save_stay () {
-        var myform = document.forms["edit_form"];
-        myform.rm.value = "save";
-        var change_string = change_log.join('%^%');
-        myform.changes.value = change_string;
-        myform.stay.value = 1;
-        myform.submit();
-    }
-
 
     function do_delete (list_count) {
         var select_val = get_selected_val(list_count);
@@ -188,6 +187,11 @@
             // if this is not the first list, get the parent selected
             if (list_count - 1) {
                 select_val = get_selected_val(list_count - 1);
+        
+                // if parent isn't selected either, dont do a thing
+                if (select_val == 'undef') {
+                    return;
+                }
             } else {
                  select_val = 'undef';
             }
