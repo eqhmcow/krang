@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in L<Krang::Media> where thumbnails of certain images were
+causing segfaults.  [Peter]
+
+=item *
+
 Fixed L<Krang::Story>->C<preview_urls()> to return the correct preview
 URL for all sites when a story is associated with multiple sites.
 [Peter]

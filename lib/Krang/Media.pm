@@ -1217,9 +1217,9 @@ sub thumbnail_path {
     # thumbnail path is the same as the file path with t__ in front of
     # the filename
     my $path = catfile((splitpath($self->file_path(relative => $args{relative})))[1], "t__$filename");
-    
+
     # all done if it exists
-    return $path if -f $path;
+    return $path if (-s $path);
 
     # don't bother with none images
     return undef unless $self->{mime_type} =~ m!^image/!;
@@ -1232,9 +1232,17 @@ sub thumbnail_path {
                                 ypixels => THUMBNAIL_SIZE,
                                 type    =>'min',
                                 qtype   =>'preview' );
-        $thumb->write(file=>$path) or croak $thumb->errstr;
+
+        # patch to fix a bug in Imager - zero-dimension images cause segfaults.
+        if ($thumb->getwidth >= 1 && $thumb->getheight >= 1) {
+            $thumb->write(file=>$path) or croak $thumb->errstr;
+        } else {
+            debug(sprintf("%s: thumbnail not written for media_id=%i - dimensions too small",
+                          __PACKAGE__, $self->media_id));
+            return undef;
+        }
     };
-            
+
     # if it didn't work, log the problem and move on. Thumbnails are
     # optional.
     if ($@) {
