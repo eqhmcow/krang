@@ -137,7 +137,7 @@ sub run {
 
     while (1) {
 
-        info(__PACKAGE__ . "->run(): heartbeat. $CHILD_COUNT child processes active");
+        debug(__PACKAGE__ . "->run(): heartbeat. $CHILD_COUNT child processes active");
 
         # make sure there's nothing dead left out there.
         _reap_dead_children() if ($CHILD_COUNT);
