@@ -12,56 +12,51 @@ krang_makedist - make a release of Krang
 
 =head1 SYNOPSIS
 
-  $ krang_makedist
+Build a distribution from the contents of the current directory.
+
+  $ bin/krang_makedist
 
 
 =head1 DESCRIPTION
 
-This script will create a distribution tar file for Krang.
+This script will create a distribution tar file for Krang, using the
+contents of a Krang CVS checkout.
 
 
 =head2 What C<krang_makedist> does
 
 =over 4
 
-
 =item 1
 
 Extract version from Krang.pm
 
-
 =item 2
 
-Tag files in working directory
-
-If tag already exists (i.e., you're re-building a distribution
-due to a bug) you have to "force" a cvs tag manually (e.g., C<cvs tag -F 'V1_2'>).
-
+Look for data/build.db.  If found, use the information there to name
+the output file for a binary distribution.  If not, build a source
+distribution.
 
 =item 3
 
-Export krang from CVS using tagged version (to F</tmp> directory)
-
+Create list of files and directories to be excluded, bench/,
+conf/krang.conf, CVS/* and src/ in binary distributions.
 
 =item 4
 
-Delete excluded directories and files (i.e., bench/, src/, .cvsignore, conf/krang.conf).
-
+Build tar.gz archive.
 
 =back
 
-
-
 =head1 OPTIONS
 
-  --version   - Rebuild a dist file based on an old version
   --help      - Show usage
   --man       - Show full man page
 
-
 =head1 SEE ALSO
 
-Refer to F<docs/ops_release.pod>.
+Refer to F<docs/ops_release.pod> for information about building a new
+release.
 
 
 =cut
@@ -86,228 +81,82 @@ BEGIN {
     unshift @INC, $lib, "$lib/".$Config{archname};
 }
 
+use Krang::Conf qw(KrangRoot);
 use Krang;
+use Krang::Platform;
+use File::Find;
+use File::Temp qw(tempdir);
+use Cwd qw(cwd);
 
+my ($help, $man);
+pod2usage(2) unless
+  GetOptions(help       => \$help,
+             man        => \$man,
+            );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+pod2usage("Unrecognized options to krang_makedist: '".join(' ', @ARGV)."'\n")
+  if @ARGV;
 
-my $krang_version;
-my $uniqueness = time();
-my ($help, $man, $version);
+# make a temp directory to hold dist files
+my $temp = tempdir(DIR     => catdir(KrangRoot, 'tmp'),
+                   CLEANUP => 1);
 
-do_makedist();
-exit(0);
-
-
-#############################
-####  MAKE DIST METHODS  ####
-#############################
-
-sub do_makedist {
-    setup_getopts();
-
-    # Make dist    
-    get_krang_version();
-    create_cvs_tag() unless ($version);
-    export_krang();
-    exclude_directories();
-    exclude_files();
-    create_tarball();
-    cleanup_makedist();
-    output_report();
-
-
+# figure out name
+my $name;
+my $source_dist = 0;
+if (-e catfile(KrangRoot, 'data', 'build.db')) {
+    # get information for a binary distribution
+    my %params = Krang::Platform->build_params();
+    $name = 'krang-' . $Krang::VERSION . '-' . $params{Platform} . 
+      '-perl' . $params{Perl} . '-' . $params{Arch};
+} else {
+    $source_dist = 1;
+    $name = 'krang-' . $Krang::VERSION . '-src';
 }
 
+# make sure it's not already taken
+die "$name.tar.gz already exists.\n" if -e "$name.tar.gz";
 
-sub setup_getopts {
-    pod2usage(2) unless
-        GetOptions( 'help'      => \$help,
-                    'man'       => \$man,
-                    'version=s' => \$version );
+print "Building $name.\n";
 
-    pod2usage(1)             if $help;
-    pod2usage(-verbose => 2) if $man;
-}
+my $old_dir = cwd;
+chdir($temp) or die $!;
 
+# make a link so tar will extract right
+system('ln -s ' . KrangRoot . " $name");
+die "Unable to setup link." unless -e catfile($name, 'lib', 'Krang.pm');
 
-sub get_krang_version {
-    if (defined($version)) {
+# build file list in temp dir
+print "Computing exclude file list...\n";
+my $list_file = catfile($temp, 'list.txt');
+open(LIST, '>', $list_file) or die $!;
 
-        # Does supplied version look right?
-        unless ($version =~ /^\d+\.\d+$/) {
-            print STDERR "\nError:  Invalid version '$version'\n\n";
-            exit(0);
-        }
+find({ no_chdir => 1,
+       wanted => 
+         sub { 
+             return unless 
+                       m!^$name/tmp/.!o or           # skip contents of tmp
+                       m!^$name/bench!o or          # skip bench
+                       m!^$name/conf/krang.conf!o or # skip krang.conf
+                       m!/CVS! or                    # skip all CVS dirs
+                       m!\.cvsignore! or             # skip all CVS dirs
+                       m!~$! or                      # skip Emacs droppings
+                       m!#! or                       # skip Emacs droppings
+                       m!krang-[^/]+\.tar\.gz! or    # skip Krang distribs
+                       (not $source_dist and m!^$name/src!o); 
+             
+             print LIST "$_\n";
+         } }, $name);
+close LIST;
 
-        # Try to use supplied version
-        $krang_version = $version;
+# create tar file using exclude list
+print "Creating tar file '$name.tar.gz'...\n";
+my $dist_file = catfile($old_dir, $name . '.tar.gz');
+system("tar czf $dist_file -X $list_file $name/*") == 0
+  or die "tar failed: $?";
 
-        # Check for (and disallow) rebuilds on non-existent versions
-        my $ver_string = get_ver_string();
-        unless (cvs_tag_exists($ver_string)) {
-            print STDERR "\nError:  No such tagged version '$ver_string'\n\n";
-            exit(1);
-        }
-        print "Rebuilding dist for version: '$krang_version'\n";
+# remove link
+unlink($name) or die $!;
 
-    } else {
-
-        $krang_version = $Krang::VERSION;
-        print "Found version: '$krang_version'\n";
-
-    }
-}
-
-
-sub create_cvs_tag {
-    my $ver_string = get_ver_string();
-
-    # Go to working dir
-    chdir($ENV{KRANG_ROOT});
-
-    print "Checking for CVS tag '$ver_string'...\n";
-    if (cvs_tag_exists($ver_string)) {
-        print STDERR <<EOT;
-
-Error: TAG EXISTS!
-
-It appears that Krang has already been tagged with '$ver_string'.  This 
-is usually an indication that you did not update \$VERSION in Krang.pm.
-
-If you want to re-build a release for version $krang_version use the --version
-option as follows:
-
-  $0 --version $krang_version
-
-EOT
-        exit(1);
-    }
-
-    print "Tagging CVS repository: '$ver_string'...\n";
-
-    my $cvs_cmd = "cvs -q tag '$ver_string'";
-    my $cvs_output = `$cvs_cmd`;
-    print "Tagging done.\n"
-}
-
-
-sub export_krang {
-    my $ver_string = get_ver_string();
-
-    # Check for version and export if found
-    unless (cvs_tag_exists($ver_string)) {
-        print STDERR "Can't find CVS tag '$ver_string'.  Exiting.";
-        exit(1);
-    }
-
-    # make sure CVSROOT is set right, since cvs export won't use CVS/Root
-    open(CVSROOT, "CVS/Root") or die "Unable to open CVS/Root: $!";
-    my $CVSROOT = <CVSROOT>;
-    chomp($CVSROOT);
-    close CVSROOT or die $!;
-    $ENV{CVSROOT} = $CVSROOT;
-
-    # Make directory for work
-    my $export_dir = get_export_dir();
-    mkdir($export_dir);
-
-    # Go to working dir
-    chdir($export_dir);
-
-    # CVS export by tag
-    my $cvs_export_cmd = "cvs -z3 export -r $ver_string krang";
-    print "Exporting Krang to $export_dir...\n";
-    my $cvs_output = `$cvs_export_cmd`;
-    print "Export complete.\n";
-}
-
-
-sub exclude_directories {
-    my $export_dir = get_export_dir();
-    print "Excluding directories...\n";
-    system("rm -rf $export_dir/krang/bench");
-    system("rm -rf $export_dir/krang/src");
-    system("find $export_dir/krang/ -name '.cvsignore' | xargs rm");
-}
-
-sub exclude_files {
-    my $export_dir = get_export_dir();
-    print "Excluding files...\n";
-    unlink(catfile($export_dir, "krang", "conf", "krang.conf"))
-      or die "Unable to unlink conf/krang.conf: $!";
-}
-
-
-sub create_tarball {
-    # Go to working dir
-    my $export_dir = get_export_dir();
-    chdir($export_dir);
-
-    my $dist_file = get_dist_file_name();
-    my $tarball_file = $dist_file .".tar.gz";
-    my $krang_root = $ENV{KRANG_ROOT};
-
-    # Rename exported directory to version-style
-    system("mv krang $dist_file");
-
-    print "Creating tarball '$tarball_file'...\n";
-    system("tar czf $tarball_file $dist_file/*");
-
-    print "Done.  Copying tarball to $krang_root\n";
-    system("cp $tarball_file $krang_root");
-}
-
-
-sub cleanup_makedist {
-    my $export_dir = get_export_dir();
-    print "Removing build directory '$export_dir'...\n";
-    system("rm -rf $export_dir");
-}
-
-
-sub output_report {
-    my $tarball_file = get_dist_file_name() .".tar.gz";
-    my $krang_root = $ENV{KRANG_ROOT};
-    print <<EOF;
-
-A release of Krang version $krang_version has been created:
-
-  $krang_root/$tarball_file
-
-EOF
-}
-
-
-
-##########################
-####  IMPLEMENTATION  ####
-##########################
-
-# Return the name of the dist file/directory
-sub get_dist_file_name {
-    return "krang-". $krang_version;
-}
-
-
-# Return version string used by CVS for tag
-sub get_ver_string {
-    my $ver_string = "V". $krang_version;
-    $ver_string =~ tr/\./\_/;
-    return $ver_string;
-}
-
-
-# Return the export directory path
-sub get_export_dir {
-    my $export_dir = "/tmp/krang_". get_ver_string() ."_". $uniqueness;
-    return $export_dir;
-}
-
-# Return Boolean 1 if specified tag exists in Krang
-sub cvs_tag_exists {
-    my $tag = shift;
-
-    my $cvs_check_tag_cmd = "cvs -n update -r $tag lib/Krang.pm 2>\&1";
-    my $tagcheck_output = `cd \$KRANG_ROOT && $cvs_check_tag_cmd`;
-
-    return not($tagcheck_output =~ qr/no such tag/);
-}
+print "\n\nDistribution complete in $name.tar.gz\n";
