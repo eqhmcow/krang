@@ -21,13 +21,13 @@ if necessary
 
 =item Test release on separate machine
 
-=item Release to PIRT for production
+=item Release to PIRT for production use by putting it in /usr/local/apache/htdocs/releases on krang-services.ops.about.com.
 
 
 =back
 
 
-=head2 What release will do
+=head2 What C<krang_makedist> will do
 
 =over 4
 
