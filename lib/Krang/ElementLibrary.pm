@@ -101,6 +101,7 @@ use Krang::ElementClass::MediaLink;
 use Krang::ElementClass::PopupMenu;
 use Krang::ElementClass::RadioGroup;
 use Krang::ElementClass::StoryLink;
+use Krang::ElementClass::CategoryLink;
 use Krang::ElementClass::Textarea;
 use Krang::ElementClass::Text;
 use Krang::ElementClass::Date;
