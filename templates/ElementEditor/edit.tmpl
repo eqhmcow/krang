@@ -1,5 +1,13 @@
 <script language=javascript>
 
+  function preview_media(id) {
+        window.open("publisher.pl?rm=preview_media&media_id=" + id, "");
+  }
+
+  function preview_story(id) {
+        window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
+  }
+
   function find_story(p) {
         document.forms[0].rm.value = 'save_and_find_story_link';
         document.forms[0].jump_to.value = p;

@@ -2,6 +2,11 @@
 
 <script language="javascript">
   nav_edit_mode();
+
+  function preview_media(id) {
+        window.open("publisher.pl?rm=preview_media&media_id=" + id, "");
+  }
+
   function select_media(id) {
         document.forms[0].rm.value = 'select_media';
         document.forms[0].selected_media_id.value = id;

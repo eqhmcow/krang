@@ -2,6 +2,11 @@
 
 <script language="javascript">
   nav_edit_mode();
+
+  function preview_story(id) {
+        window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
+  }
+
   function select_story(id) {
         document.forms[0].rm.value = 'select_story';
         document.forms[0].selected_story_id.value = id;
