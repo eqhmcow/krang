@@ -1,0 +1,344 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use Getopt::Long;
+use Pod::Usage;
+
+=pod
+
+=head1 NAME
+
+krang_delete - interface to deletion of Krang objects
+
+=head1 SYNOPSIS
+
+  krang_delete --media --story_id 32
+
+=head1 DESCRIPTION
+
+This script provides a command-line interface to Krang
+object deletion.  It allows for deletion of an entire 
+class of objects (i.e. all media), and alternately by 
+object id.
+
+=head1 OPTIONS
+
+  --sites       - delete all sites
+
+  --site_id     - delete site specified by this id
+
+  --cats        - delete all categories (except site top level cats)
+
+  --category_id - delete category specified by this id
+
+  --contribs    - delete all contributors
+
+  --contrib_id  - delete contributor specified by this id
+
+  --media       - delete all media
+
+  --media_id    - delete media specified by this id
+
+  --stories     - delete all stories
+
+  --story_id    - delete story specified by this id
+
+  --templates   - delete all templates
+
+  --template_id - delete templates specified by this id  
+
+  --users       - delete all users (except user with login 'admin', if exists)
+
+  --user_id     - delete user specified by this id 
+
+  --recursive   - if this is set, all dependant objects will be deleted.
+                  Use this option with care!
+  
+  --verbose     - print a running dialogue of what happens, otherwise
+                  actions are performed silently.
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::Script;
+use Krang::Conf qw(KrangRoot SiteServerPort InstanceElementSet EnableSiteServer);
+use Krang::ElementLibrary;
+use Krang::Site;
+use Krang::Category;
+use Krang::Pref;
+use Krang::User;
+use Krang::Template;
+use Krang::Story;
+use Krang::Media;
+use Krang::Group;
+
+
+my ($help, $man);
+my $sites;
+my $cats;
+my $contribs;
+my $stories;
+my $media;
+my $users;
+my $templates;
+my @site_ids;
+my @cat_ids;
+my @contrib_ids;
+my @story_ids;
+my @media_ids;
+my @user_ids;
+my @template_ids;
+my $verbose;
+my $recursive;
+
+pod2usage(2) unless
+  GetOptions(help         => \$help,
+             man          => \$man,
+             verbose => \$verbose,
+             'sites'    => \$sites,
+             'site_id=s'  => \@site_ids,
+             'cats'     => \$cats,
+             'category_id=s' => \@cat_ids,
+             'contribs' => \$contribs,
+             'contrib_id=s' => \@contrib_ids,
+             'stories'  => \$stories,
+             'story_id=s' => \@story_ids,
+             'media'    => \$media,
+             'media_id=s' => \@media_ids,
+	     'users'	  => \$users,
+             'user_id=s' => \@user_ids,
+             'templates'=> \$templates,
+             'template_id=s' => \@template_ids,
+             'recursive' => \$recursive
+            );
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+#### First delete media
+
+if ($media) { 
+    @media_ids = Krang::Media->find( ids_only => 1 );
+} 
+
+if (@media_ids) {
+    foreach my $id (@media_ids) {
+       
+        my $exists;
+        if (not $media) {
+            $exists = Krang::Media->find( media_id => $id, ids_only => 1
+) || '';
+        } else {
+            $exists = 1;
+        }
+
+        if (not $exists) {
+            print "Media $id does not exist.\n" if $verbose;
+            next;
+        }
+        Krang::Media->delete($id);
+        print "Deleted media $id.\n" if $verbose;
+    }
+}
+
+#### Delete templates
+
+if ($templates) {
+    @template_ids = Krang::Template->find( ids_only => 1 );
+}
+                                                                                
+if (@template_ids) {
+    foreach my $id (@template_ids) {
+       
+        my $exists;
+        if (not $templates) {
+            $exists = Krang::Template->find( template_id => $id, ids_only => 1
+) || '';
+        } else {
+            $exists = 1;
+        }
+        
+        if (not $exists) {
+            print "Template $id does not exist.\n" if $verbose;
+            next;
+        }
+        Krang::Template->delete($id);
+        print "Deleted template $id.\n" if $verbose;
+    }
+}
+
+#### delete stories 
+
+if ($stories) {
+    @story_ids = Krang::Story->find( ids_only => 1 );
+}
+                                                                                
+if (@story_ids) {
+    foreach my $id (@story_ids) {
+        
+        my $exists;
+        if (not $stories) {
+            $exists = Krang::Story->find( story_id => $id, ids_only => 1
+) || '';
+        } else {
+            $exists = 1;
+        }
+        
+        if (not $exists) {
+            print "Story $id does not exist.\n" if $verbose;
+            next;
+        }
+        Krang::Story->delete($id);
+        print "Deleted story $id.\n" if $verbose;
+    }
+}
+
+#### delete contributors
+
+if ($contribs) {
+    @contrib_ids = Krang::Contrib->find( ids_only => 1 );
+}
+                                                                                
+if (@contrib_ids) {
+    foreach my $id (@contrib_ids) {
+        my $exists;
+        if (not $contribs) {
+            $exists = Krang::Contrib->find( contrib_id => $id, ids_only => 1
+) || '';
+        } else {
+            $exists = 1;
+        }
+
+        if (not $exists) {
+            print "Contrib $id does not exist.\n" if $verbose;
+            next;
+        }
+        Krang::Contrib->delete($id);
+        print "Deleted contrib $id.\n" if $verbose;
+    }
+}
+
+#### delete users
+                                                                                
+if ($users) {
+    @user_ids = Krang::User->find( ids_only => 1 );
+}
+                                                                                
+if (@user_ids) {
+
+    my ($admin_user_id) = Krang::User->find( login => 'admin') || '';
+
+    foreach my $id (@user_ids) {
+        my $exists;
+        if (not $users) {
+            $exists = Krang::User->find( user_id => $id, ids_only => 1
+) || '';
+        } else {
+            $exists = 1;
+        }
+        
+        if (not $exists) {
+            print "User $id does not exist.\n" if $verbose;
+            next;
+        }
+        if ($id ne $admin_user_id) {
+            Krang::User->delete($id);
+            print "Deleted user $id.\n" if $verbose;
+        }
+    }
+}
+
+#### delete categories
+my @categories;
+ 
+if ($cats) {
+    @categories = Krang::Category->find( order_desc => 1 );
+} elsif (@cat_ids) {
+    @categories = Krang::Category->find( category_id => \@cat_ids, order_desc => 1 );
+}
+                                                                                
+if (@categories) {
+                                                                                
+    foreach my $cat (@categories) {
+        if ( $cat->parent ) {
+            my @dep_cats;
+            push(@dep_cats, $cat);
+            
+            while (@dep_cats) {
+                $cat = shift @dep_cats;
+                eval {$cat->dependent_check()};
+                if ($@ and $@->isa('Krang::Category::Dependent')) {
+                    my $dependents = $@->dependents();
+                
+                    if ($recursive) {
+                        my $has_cats = 0;
+                        foreach my $d (keys %$dependents) {
+                            foreach my $oid (@{$dependents->{$d}}) {
+                                if ($d eq 'category') {
+                                    push (@dep_cats, (Krang::Category->find( category_id => $oid ))[0]); 
+                                    $has_cats = 1;
+                                } else {
+                                    my $pkg = "Krang::".ucfirst($d);
+                                    $pkg->delete($oid);
+                                    print "Deleted $d $oid.\n" if $verbose; 
+                                }
+                            }
+                        } 
+                        
+                        if (not $has_cats) {
+                            $cat->delete;
+                            print "Deleted category ".$cat->category_id.".\n" if $verbose;
+                        } else {
+                            push (@dep_cats, $cat);
+                        }
+
+                    } else {
+                        $dependents = join("\n\t", map{"$_: [" .
+                        join(",", @{$dependents->{$_}}) .
+                    "]"} keys %$dependents);
+    
+                        print "The following object classes and ids rely upon " .
+                    "category ". $cat->category_id." (skipping):\n\t$dependents\n";
+                        next;
+                    }
+                } else { 
+                    $cat->delete();
+                    print "Deleted category ".$cat->category_id.".\n" if $verbose;
+                }
+            }
+        } else {
+            print "Skipping category ".$cat->category_id.", it is a top level category.\n";
+        }
+    }
+}
+
+exit(0);
