@@ -797,6 +797,7 @@ sub make_pager {
 # Handles rows for search run mode
 sub search_row_handler {
     my ($row, $template) = @_;
+    $row->{deployed} = $template->deployed ? 'D' : '';
     $row->{element_class_name} = $template->element_class_name;
     $row->{template_id} = $template->template_id;
     $row->{url} = $template->url;
