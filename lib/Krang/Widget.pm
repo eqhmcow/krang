@@ -136,14 +136,13 @@ sub category_chooser {
                                              hide_root  => 1,
                                              button_label => $label||'Choose',
                                              include_css => 0,
-                                             form_field => $field,
-                                             form_field_form => $formname,
                                             );
 
     # send data to the template
     $template->param(chooser       => $chooser->output,
-                     name          => $name,
+                     name          => $field,
                      display       => defined $display ? $display : 1,
+                     formname      => $formname,
                      onchange      => $onchange);
 
     return $template->output;

@@ -13,6 +13,8 @@
          span.innerHTML = url;
      </tmpl_if>
 
+     document.<tmpl_if formname><tmpl_var formname><tmpl_else>forms[0]</tmpl_if>.elements["<tmpl_var name>"].value = id;
+
      <tmpl_if onchange><tmpl_var onchange>();</tmpl_if>
   }
 </script>
