@@ -113,6 +113,9 @@
   <input type="hidden" name="history_return_params" value="search_contrib_simple">
   <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_contrib_simple>">
 
+  <input type="hidden" name="history_return_params" value="search_creator_simple">
+  <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_creator_simple>">
+
   <input type="hidden" name="history_return_params" value="search_below_primary_category_id">
   <input type="hidden" name="history_return_params" value="<tmpl_var ESCAPE=HTML search_below_primary_category_id>">
 
@@ -201,6 +204,9 @@
 
   <input type="hidden" name="return_params" value="search_contrib_simple">
   <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_contrib_simple>">
+
+  <input type="hidden" name="return_params" value="search_creator_simple">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_creator_simple>">
 
   <input type="hidden" name="return_params" value="search_below_primary_category_id">
   <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_below_primary_category_id>">
@@ -291,12 +297,17 @@
 
       <tr>
         <td colspan="2">Story ID:</td>
-        <td colspan="2"><input size="40" type="textfield" name="search_story_id" value="<tmpl_var escape=HTML search_story_id>"></td>
+        <td colspan="2"><input size="5" type="textfield" name="search_story_id" value="<tmpl_var escape=HTML search_story_id>"></td>
       </tr>
 
       <tr>
         <td colspan="2">Contributor:</td>
         <td colspan="2"><input size="40" type="textfield" name="search_contrib_simple" value="<tmpl_var escape=HTML search_contrib_simple>"></td>
+      </tr>
+
+      <tr>
+        <td colspan="2">Creator:</td>
+        <td colspan="2"><input size="40" type="textfield" name="search_creator_simple" value="<tmpl_var escape=HTML search_creator_simple>"></td>
       </tr>
 
       <tr>

@@ -1262,6 +1262,7 @@ sub find {
                                     below_primary_category_id 
                                     story_id
                                     contrib_simple
+                                    creator_simple
                                    );
         for (@auto_search_params) {
             my $key = $_;
