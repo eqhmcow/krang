@@ -10,7 +10,7 @@ use Krang::Element qw(foreach_element);
 use File::Spec::Functions qw(catfile);
 BEGIN { use_ok('Krang::DataSet') }
 
-my $DEBUG = 1; # supresses deleting kds files at process end
+my $DEBUG = 0; # supresses deleting kds files at process end
 
 # try creating an empty dataset
 my $empty = Krang::DataSet->new();
