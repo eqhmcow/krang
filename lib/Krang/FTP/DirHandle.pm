@@ -215,10 +215,8 @@ sub open {
                                                 )->open($mode);
         } else {
             my $new_m = Krang::Media->new ( filename => $filename,
-                                            filehandle => (new IO::Scalar \$filename),
                                             title => $filename,
                                             category_id => $category_id );
-            $new_m->save;
 
             return new Krang::FTP::FileHandle(  $self->{ftps},
                                                     $new_m,

@@ -104,27 +104,19 @@ sub open {
         # check write access
         return undef unless $self->can_write;
 
-        if ($type eq 'template') {
-    
-            # first clear the data unless appending
-            $object->content('')
-            unless $mode eq 'a';
+        my $handle;
 
+        if ($type eq 'template') {
             # create a tied scalar and return an IO::Scalar attached to it
             my $data;
-            tie $data, 'Krang::FTP::FileHandle::SCALAR',
-                $object, $self->{ftps}{user_obj};
-            my $handle = new IO::Scalar \$data;
-            # seek if appending
-            $handle->seek(length($object->content))
-            if $mode eq 'a';
-
-            return $handle;
+            tie $data, 'Krang::FTP::FileHandle::SCALAR', $object;
+            $handle = new IO::Scalar \$data;
         } else {
-            my $path = $object->file_path();
-
-            return new IO::File $path, $mode;
+            tie(*FH, 'Krang::FTP::FileHandle::FILE', $object);
+            return \*FH;
         }
+        
+        return $handle;
     }
 }
 
@@ -183,15 +175,12 @@ sub status {
     if ($type eq 'template') {
         $data = $object->content;
         $size = length($data);
-        $date = $object->creation_date;
-        #$date = $date ? Time::Piece->from_mysql_datetime($date) : localtime;
     } else {
-        $date = $object->creation_date();
         $size = $object->file_size();
-        #$date = $date ? Time::Piece->from_mysql_date($date) : localtime;
     }
-    
-    $date = 1; #$date->epoch;
+    $date = $object->creation_date(); 
+    $date = $date ? Time::Piece->from_mysql_datetime($date) : localtime; 
+    $date->epoch;
 
     my $owner = $object->checked_out_by;
 
@@ -269,7 +258,7 @@ sub can_write  {
 =item Krang::FTP::FileHandle::SCALAR
 
 This class provides a tied scalar interface to a template object's
-data.  The TIESCALAR constructor takes a template object as a single
+data.  The TIESCALAR constructor takes a template object as an
 argument.  Writes to the tied scalar result in the template object
 being altered, saved, checked-in and deployed.
 
@@ -281,35 +270,33 @@ use warnings;
 
 sub TIESCALAR {
     my $pkg = shift;
-    my $object = shift;
-    my $user = shift;
-    my $self = { object => $object, user => $user };
+    my $template = shift;
+    my $self = { template => $template };
     return bless $self, $pkg;
 }
 
 sub FETCH {
     my $self = shift;
-    return $self->{object}->content();
+    return $self->{template}->content();
 }
 
 sub STORE {
     my $self = shift;
     my $data = shift;
-    my $object = $self->{object};
-    my $user = $self->{user};
+    my $template = $self->{template};
 
     # checkout and version template if not a new template
-    if  ($object->template_id) {
-        $object->checkout();
-        $object->prepare_for_edit();
+    if  ($template->template_id) {
+        $template->checkout();
+        $template->prepare_for_edit();
     }
  
     # save new content
-    $object->content($data);
-    $object->save();
+    $template->content($data);
+    $template->save();
 
     # checkin the template
-    $object->checkin();
+    $template->checkin();
 
     # deploy
 
@@ -318,6 +305,50 @@ sub STORE {
 }
 
 =back
+
+=over 4
+
+=item Krang::FTP::FileHandle::FILE
+
+This class provides a tied file interface to a media object.
+The TIEHANDLE constructor takes a media object as a single
+argument.  Writes to the tied filehandle in the media object
+being altered, saved, checked-in and published.
+
+=cut
+
+package Krang::FTP::FileHandle::FILE;
+use strict;
+use warnings;
+
+sub TIEHANDLE {
+    my $pkg = shift;
+    my $media = shift;
+    my $self = { media => $media };
+    return bless $self, $pkg;
+}
+
+sub WRITE {
+    my $self = shift;
+    my $data = shift;
+    my $media = $self->{media};
+    
+    # checkout and version media if not a new media
+    if  ($media->media_id) {
+        $media->checkout();
+        $media->prepare_for_edit();
+    }
+    
+    my $filename = $media->filename();
+
+    $media->upload_file( filename => $filename, filehandle => $data);
+
+    $media->save();
+    $media->checkin();
+
+    return syswrite $self, $data;
+    
+}
 
 =head1 SEE ALSO
 
