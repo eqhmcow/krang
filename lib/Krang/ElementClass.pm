@@ -6,6 +6,9 @@ use Carp qw(croak);
 use CGI ();
 
 use HTML::Template::Expr;
+use Krang::Log qw(debug info critical);
+
+
 
 =head1 NAME
 
@@ -450,7 +453,7 @@ Returns the file extension (see filename()) to be used when writing to disk data
 =cut
 
 sub extension {
-    return '.html';
+    return 'html';
 }
 
 
@@ -640,6 +643,10 @@ sub publish {
         }
     }
 
+    my $element_id = $args{element}->element_id();
+
+    debug(__PACKAGE__ . ': publish called for element_id=$element_id name=' . $args{element}->name());
+
     # try and find an appropriate template.
     eval { $html_template = $self->find_template(@_); };
 
@@ -647,12 +654,13 @@ sub publish {
         # no template found - if the element has children, this is an error.
         # otherwise, return the raw data stored in the element.
         if (scalar($args{element}->children())) {
+            critical(__PACKAGE__ . ": publish() cannot find template for element_id=$element_id");
             croak $@;
         } else {
             return $args{element}->data();
         }
-
     }
+
     $self->fill_template(tmpl => $html_template, @_);
 
     my $html = $html_template->output();
