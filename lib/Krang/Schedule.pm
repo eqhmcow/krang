@@ -125,15 +125,15 @@ use constant SCHEDULE_RW => qw(action
 
 # Globals
 ##########
-our %action_map = (media => {expire => '',
+our %action_map = (alert => {alert => '',},
+                   media => {expire => '',
                              alert => '',
                              publish => ''},
                    story => {expire => '',
                              alert => '',
-                             publish => ''},
+                             publish => '',},
                    user => {expire => '',
-                            alert => '',
-                            publish => ''},);
+                            alert => '',},);
 
 # Lexicals
 ###########
