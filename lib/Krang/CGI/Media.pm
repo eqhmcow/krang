@@ -223,23 +223,37 @@ sub advanced_find {
         $find_params->{below_category_id} = $search_below_category_id;
     }
 
-    my $search_creation_date = decode_datetime(
+    my $search_creation_date_from = decode_datetime(
                                            query => $q,
-                                           name => 'search_creation_date',
+                                           name => 'search_creation_date_from',
                                           );
-    if ($search_creation_date) {
-        # If date is valid send it to search and persist it.
-        $find_params->{creation_date} = $search_creation_date;
-        for (qw/day month year hour minute ampm/) {
-            my $varname = "search_creation_date_$_";
+     my $search_creation_date_to = decode_datetime(
+                                           query => $q,
+                                           name => 'search_creation_date_to',
+                                          );
+
+    if ($search_creation_date_from and $search_creation_date_to) {
+        $find_params->{creation_date} = [$search_creation_date_from, $search_creation_date_to];       
+    } elsif ($search_creation_date_from) { 
+            $find_params->{creation_date} = [$search_creation_date_from, undef];
+    } elsif ($search_creation_date_to) {
+            $find_params->{creation_date} = [undef, $search_creation_date_to];      }
+
+    # persist dates if set, delete them if not
+    for (qw/day month year hour minute ampm/) {
+        my $varname = "search_creation_date_from_$_";
+        if ($search_creation_date_from) {
             $persist_vars->{$varname} = $q->param($varname);
-        }
-    } else {
-        # Delete date chooser if date is incomplete
-        for (qw/day month year hour minute ampm/) {
-            my $varname = "search_creation_date_$_";
+        } else {
             $q->delete($varname);
         }
+    
+        $varname = "search_creation_date_to_$_";
+        if ($search_creation_date_to) {
+           $persist_vars->{$varname} = $q->param($varname);
+       } else {
+            $q->delete($varname);
+       }
     }
 
     # search_filename
@@ -283,9 +297,14 @@ sub advanced_find {
                                                  name => 'search_below_category_id',
                                                  formname => 'search_form',
                                                 ));
-    $t->param(date_chooser => datetime_chooser(
+    $t->param(date_from_chooser => datetime_chooser(
                                            query => $q,
-                                           name => 'search_creation_date',
+                                           name => 'search_creation_date_from',
+                                           nochoice =>1,
+                                          ));
+    $t->param(date_to_chooser => datetime_chooser(
+                                           query => $q,
+                                           name => 'search_creation_date_to',
                                            nochoice =>1,
                                           ));
 

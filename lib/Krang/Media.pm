@@ -768,7 +768,9 @@ count - return only a count if this is set to true. Cannot be used with ids_only
 
 =item *
 
-creation_date - Must be passed in as Time::Piece object.  If array of two dates passed in, will use to find media created between those dates.
+creation_date - May be either a single date (a L<Time::Piece> object) or an
+array of 2 dates specifying a range.  In ranges either member may be
+C<undef>, specifying no limit in that direction.
 
 =back
 
@@ -931,7 +933,15 @@ not $valid_params{$param};
     if ($args{'creation_date'}) {
         if (ref($args{'creation_date'}) eq 'ARRAY') {
             $where_string .= " and " if $where_string;
-            $where_string .= " media.creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'";
+            if ($args{'creation_date'}[0] and $args{'creation_date'}[1]) {
+                $where_string .= " media.creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'";
+            } elsif ($args{'creation_date'}[0]) {
+               $where_string .= " media.creation_date >= '".$args{'creation_date'}[0]->mysql_datetime."'"; 
+            } elsif ($args{'creation_date'}[1]) {
+                $where_string .= " media.creation_date <= '".$args{'creation_date'}[1]->mysql_datetime."'";
+            } else {
+                 croak("Bad date arguement for creation_date, must be either an array of two Time::Piece objects or one Time::Piece object."); 
+            }
         } else {
             $where_string .= " and " if $where_string;
             $where_string .= " media.creation_date = '".$args{'creation_date'}->mysql_datetime."'";
