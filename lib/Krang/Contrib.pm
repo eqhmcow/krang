@@ -318,6 +318,11 @@ sub find {
     my @contrib_object;
     my $where_string;
 
+    # check for invalid argument sets
+    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
+          "Only one can be present.")
+      if $args{count} and $args{ids_only};
+
     my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';    
     $args{order_by} ||= 'last,first';
     my $order_by =  join(',', 

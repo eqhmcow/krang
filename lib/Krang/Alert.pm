@@ -210,6 +210,11 @@ sub find {
     my @where;
     my @alert_object;
 
+    # check for invalid argument sets
+    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
+          "Only one can be present.")
+      if $args{count} and $args{ids_only};
+
     # set defaults if need be
     my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'alert_id';
     my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';

@@ -676,6 +676,11 @@ sub find {
     my $limit = $args{'limit'} ? $args{'limit'} : undef;
     my $offset = $args{'offset'} ? $args{'offset'} : 0;
 
+    # check for invalid argument sets
+    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
+          "Only one can be present.")
+      if $args{count} and $args{ids_only};
+
     croak(__PACKAGE__ . "->find(): can't use 'version' without 'media_id'.")
       if $args{version} and not $args{media_id};
 
