@@ -1,0 +1,160 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_ftpctl
+
+=head1 SYNOPSIS
+
+   krang_ftpctl start
+
+   krang_ftpctl stop
+
+   krang_ftpctl restart
+
+=head1 DESCRIPTION
+
+This script controls the Krang FTP server.  Instead of calling this
+script directly, call krang_ctl instead.
+
+=cut
+
+# how long to wait for stop on restart (in seconds)
+use constant MAX_RESTART_WAIT => 10;
+$|++;
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::Conf qw(KrangRoot);
+
+# the krang_ftpd command
+my $ftpd = rel2abs(catfile(KrangRoot, 'bin', 'krang_ftpd'));
+
+# get status from the pid file
+my $pid_file = catfile(KrangRoot, "tmp", "krang_ftpd.pid");
+my $running = 0;
+my $pid;
+if (-e $pid_file) {
+    $pid = `cat $pid_file`;
+    chomp $pid;
+    if ($pid and kill(0, $pid)) {
+        $running = 1;
+    }
+}
+
+# check for args
+usage() unless @ARGV;
+
+my $command = shift @ARGV;
+
+if ($command eq 'start') {
+    if ($running) {
+        die "krang_ftpctl $command: krang_ftpd (pid $pid) already running\n";
+    }
+
+    print "krang_ftpctl $command: starting krang_ftpd\n";
+    unless (system($ftpd)) {
+        print "krang_ftpctl $command: krang_ftpd started\n";
+        exit;
+    } else {
+        die "krang_ftpctl $command: krang_ftpd could not be started\n";
+    }
+}
+
+if ($command eq 'stop') {
+    unless ($running) {
+        die "krang_ftpctl $command: krang_ftpd not running\n";
+    }
+    if (kill 15, $pid) {
+        print "krang_ftpctl $command: krang_ftpd stopped\n";
+        exit;
+    } else {
+        die "krang_ftpctl $command: krang_ftpd could not be stopped\n";
+    }
+}
+
+if ($command eq 'restart') {
+    # stop
+    if ($running) {
+        if (kill 15, $pid) {
+            print "krang_ftpctl $command: waiting for krang_ftpd to stop";
+        } else {
+            die "krang_ftpctl $command: krang_ftpd could not be stopped\n";
+        }
+
+        # wait for stop - check pid file for removal
+        my $stopped = 0;
+        for my $wait (0 .. MAX_RESTART_WAIT) {
+            if (not -e $pid_file) {
+                $stopped = 1;
+                last;
+            }
+            print ".";
+            sleep 1;
+        }
+
+        if ($stopped) {
+            print "\nkrang_ftpctl $command: krang_ftpd stopped\n";
+        } else {
+            die "\nkrang_ftpctl $command: krang_ftpd not stopped in time\n";
+        }
+
+    }
+
+    # start
+    print "krang_ftpctl $command: starting krang_ftpd\n";
+    unless (system($ftpd)) {
+        print "krang_ftpctl $command: krang_ftpd started\n";
+        exit;
+    } else {
+        die "krang_ftpctl $command: krang_ftpd could not be started\n";
+    }
+}
+
+usage();
+
+sub usage {
+  print <<END;
+usage: krang_ftpctl (start|stop|restart|debug)
+
+  start      - start the ftp server
+  stop       - stop the ftp server
+  restart    - restart the ftp server if running
+
+END
+
+  exit;
+}
