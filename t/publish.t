@@ -19,15 +19,24 @@ use Data::Dumper;
 
 
 
+# skip all tests unless a TestSet1-using instance is available
 BEGIN {
-    if (InstanceElementSet eq 'TestSet1') {
-        eval 'use Test::More qw(no_plan)';
-    } else {
-        eval 'use Test::More skip_all=>"Publish tests only work for TestSet1"';
+    my $found;
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        if (InstanceElementSet eq 'TestSet1') {
+            $found = 1;
+            last;
+        }
     }
+                          
+    unless ($found) {
+        eval "use Test::More skip_all => 'test requires a TestSet1 instance';";
+    } else {
+        eval "use Test::More qw(no_plan);";
+    }
+    die $@ if $@;
 }
-
-
 
 # instantiate publisher
 use_ok('Krang::Publisher');
