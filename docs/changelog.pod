@@ -10,6 +10,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed L<Krang::Story>->C<preview_urls()> to return the correct preview
+URL for all sites when a story is associated with multiple sites.
+[Peter]
+
+
+=item *
+
 Made L<Krang::Publisher>->C<additional_content_block()> a lot easier
 to use from the developer perspective.  Rather than handling the
 result of the call, everything is now handled internally.  Overriding

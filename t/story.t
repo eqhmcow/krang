@@ -12,6 +12,8 @@ use Storable qw(freeze thaw);
 use Krang::Conf qw(KrangRoot instance InstanceElementSet);
 use Time::Piece;
 
+use Krang::Test::Content;
+
 BEGIN { use_ok('Krang::Story') }
 our $DELETE = 1;
 
@@ -23,49 +25,66 @@ foreach my $instance (Krang::Conf->instances) {
     }
 }
 
+
+# use Krang::Test::Content to create sites.
+my $creator = Krang::Test::Content->new;
+
+END {
+    $creator->cleanup();
+}
+
+
+my $site = $creator->create_site(
+                                 preview_url  => 'storytest.preview.com',
+                                 publish_url  => 'storytest.com',
+                                 preview_path => '/tmp/storytest_preview',
+                                 publish_path => '/tmp/storytest_publish'
+                                );
+
+isa_ok($site, 'Krang::Site');
+
+# create categories.
+my ($root_cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
+
+my @cat;
+for (0 .. 10) {
+    push @cat, $creator->create_category(dir => 'test_' .$_,
+                                         parent => $root_cat->category_id);
+}
+
+# create new contributor object to test associating with stories
+my $contrib = $creator->create_contrib(
+                                       prefix => 'Mr',
+                                       first  => 'Matthew',
+                                       middle => 'Charles',
+                                       last   => 'Vella',
+                                       email  => 'mvella@thepirtgroup.com'
+                                      );
+
+$contrib->contrib_type_ids(1,3);
+$contrib->save();
+
 # creation should fail without required fields
 my $story;
 eval { $story = Krang::Story->new() };
 ok($@);
 
-# create a site and some categories to put stories in
-my $site = Krang::Site->new(preview_url  => 'storytest.preview.com',
-                            url          => 'storytest.com',
-                            publish_path => '/tmp/storytest_publish',
-                            preview_path => '/tmp/storytest_preview');
-isa_ok($site, 'Krang::Site');
-$site->save();
-END { $site->delete() if $DELETE }
-my ($root_cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
-isa_ok($root_cat, 'Krang::Category');
-$root_cat->save();
-
-my @cat;
-for (0 .. 10) {
-    push @cat, Krang::Category->new(site_id   => $site->site_id,
-                                    parent_id => $root_cat->category_id,
-                                    dir       => 'test_' . $_);
-    isa_ok($root_cat, 'Krang::Category');
-    $cat[-1]->save();
-}
-
-# cleanup the mess
-END {
-    if ($DELETE) { $_->delete for @cat; }
-}
-
-# create new contributor object to test associating with stories
-my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
-isa_ok($contrib, 'Krang::Contrib');
-$contrib->contrib_type_ids(1,3);
-$contrib->save();
-END { $contrib->delete() if $DELETE; }
 
 # create a new story
 $story = Krang::Story->new(categories => [$cat[0], $cat[1]],
                            title      => "Test",
                            slug       => "test",
                            class      => "article");
+
+can_ok($story, qw/title slug cover_date priority class element category categories
+                  notes version priority desk_id published_version preview_version
+                  contribs url preview_url urls preview_urls find save
+                  checkin checkout checked_out checked_out_by revert
+                  linked_stories linked_media move_to_desk publish_path preview_path
+                  delete clone serialize_xml deserialize_xml/);
+
+
+
 is($story->title, "Test");
 is($story->slug, "test");
 is($story->class->display_name, "Article");
@@ -74,6 +93,7 @@ my @story_cat = $story->categories();
 is(@story_cat, 2);
 is($story_cat[0], $cat[0]);
 is($story_cat[1], $cat[1]);
+
 
 
 SKIP: {
@@ -106,36 +126,24 @@ $story->contribs($contrib);
 is($story->contribs, 1);
 is(($story->contribs)[0]->contrib_id, $contrib->contrib_id);
 
-# test schedules
-#my @sched = $story->schedules;
-#push(@sched, { type   => 'absolute',
-#                date   => Time::Piece->new(),
-#                action => 'expire' });
-#push(@sched, { type    => 'absolute',
-#                date    => Time::Piece->new(),
-#                action  => 'publish',
-#                version => 1,
-#              });
-#$story->schedules(@sched);
-#is_deeply(\@sched, [$story->schedules]);
-
+test_urls($creator);
 # test url production
-ok($story->url);
-is($story->urls, 2);
-my $site_url = $cat[0]->site->url;
-my $cat_url = $cat[0]->url;
-like($story->url, qr/^$cat_url/);
-like($story->url, qr/^$site_url/);
-like($story->url, qr/^${cat_url}test$/);
+# ok($story->url);
+# is($story->urls, 2);
+# my $site_url = $cat[0]->site->url;
+# my $cat_url = $cat[0]->url;
+# like($story->url, qr/^$cat_url/);
+# like($story->url, qr/^$site_url/);
+# like($story->url, qr/^${cat_url}test$/);
 
-# test preview url production
-ok($story->preview_url);
-is($story->preview_urls, 2);
-$site_url = $cat[0]->site->preview_url;
-$cat_url = $cat[0]->preview_url;
-like($story->preview_url, qr/^$cat_url/);
-like($story->preview_url, qr/^$site_url/);
-like($story->preview_url, qr/^${cat_url}test$/);
+# # test preview url production
+# ok($story->preview_url);
+# is($story->preview_urls, 2);
+# $site_url = $cat[0]->site->preview_url;
+# $cat_url = $cat[0]->preview_url;
+# like($story->preview_url, qr/^$cat_url/);
+# like($story->preview_url, qr/^$site_url/);
+# like($story->preview_url, qr/^${cat_url}test$/);
 
 # test preview and publish paths
 is($story->publish_path, "/tmp/storytest_publish/test_0/test");
@@ -155,7 +163,7 @@ is($story_cat[2]->category_id, $cat[4]->category_id);
 is($story->category, $story_cat[0]);
 my @urls = $story->urls;
 is(@urls, 3);
-$cat_url = $cat[2]->url;
+my $cat_url = $cat[2]->url;
 like($urls[0], qr/^$cat_url/);
 $cat_url = $cat[3]->url;
 like($urls[1], qr/^$cat_url/);
@@ -945,6 +953,60 @@ sub create_media {
 
 }
 
+
+
+
+# test URL functionality
+sub test_urls {
+    my $creator = shift;
+
+    my @sites;
+    my @cats;
+    # create multiple sites & cats.
+    for (1..5) {
+        my $site = $creator->create_site(
+                                         preview_url  => $_ . 'storytest.preview.com',
+                                         publish_url  => $_ . 'storytest.com',
+                                         preview_path => '/tmp/storytest_preview' . $_,
+                                         publish_path => '/tmp/storytest_publish' . $_
+                                        );
+        my ($cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
+        push @sites, $site;
+        push @cats, $cat;
+    }
+
+
+    # create a new story
+    my $story = Krang::Story->new(categories => \@cats,
+                               title      => "Test",
+                               slug       => "test",
+                               class      => "article");
+
+    # test primary URL
+    my $cat_url      = $cats[0]->url;
+    my $cat_prev_url = $cats[0]->preview_url;
+    ok($story->url =~ qr/^$cat_url/, 'Krang::Story->url');
+    ok($story->preview_url =~ qr/^$cat_prev_url/, 'Krang::Story->preview_url');
+
+    # test urls()
+    my @s_urls = $story->urls();
+    for (my $i = 0; $i <= $#s_urls; $i++) {
+        my $c_url = $cats[$i]->url;
+        ok($s_urls[$i] =~ qr/^$c_url/, 'Krang::Story->urls' . $i);
+    }
+
+    # test preview_urls()
+    my @p_urls = $story->preview_urls();
+    for (my $i = 0; $i <= $#p_urls; $i++) {
+        my $pre_url = $cats[$i]->preview_url;
+        ok($p_urls[$i] =~ qr/^$pre_url/, 'Krang::Story->preview_urls' . $i);
+    }
+
+    # cleanup.
+    foreach (@sites) {
+        $creator->delete_item(item => $_);
+    }
+}
 
 
 

@@ -372,10 +372,14 @@ sub preview_urls {
     croak "illegal attempt to set readonly attribute 'preview_url'.\n"
       if @_;
     my @urls = $self->urls;
-    my $site = $self->category->site;
-    my $site_url = $site->url;
-    my $site_preview_url = $site->preview_url;
-    @urls = map { s/^\Q$site_url\E/$site_preview_url/; $_ } @urls;
+    my @cats = $self->categories;
+
+    for (my $i = 0; $i <= $#urls; $i++) {
+        my $url         = $cats[$i]->url;
+        my $preview_url = $cats[$i]->preview_url;
+
+        $urls[$i] =~ s/^\Q$url\E/$preview_url/;
+    }
 
     return @urls;
 }
