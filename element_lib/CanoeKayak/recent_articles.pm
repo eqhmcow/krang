@@ -41,7 +41,8 @@ sub fill_template {
     my $tmpl = $args{tmpl};
 
     my $number = $element->child('number')->data;
-    my ($leadins, $src);
+    my $src;
+    my $leadins = [];
 
     my $type = $element->child('type')->data;
 
