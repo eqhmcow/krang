@@ -124,7 +124,10 @@ use constant SCHEDULE_RW => qw(action
 			       context
 			       object_id
 			       object_type
-			       repeat);
+			       repeat
+                               day_of_week
+                               hour
+                               minute);
 
 
 # Globals
@@ -133,8 +136,8 @@ our %action_map = (alert => {send => sub { Krang::Alert->send(@_) } },
                    media => {expire => '',
                              publish => ''},
                    story => {expire => '',
-                             publish => ''},
-                   user => {expire => ''});
+                             publish => ''}
+                   );
 
 # Lexicals
 ###########
@@ -143,7 +146,7 @@ my %repeat2seconds = (daily => ONE_DAY,
                       weekly => ONE_WEEK,
                       never => '');
 my %schedule_args = map {$_ => 1} SCHEDULE_RW,
-  qw/date day_of_week hour minute/;
+  qw/date/;
 my %schedule_cols = map {$_ => 1} SCHEDULE_RO, SCHEDULE_RW;
 
 # Constructor/Accessor/Mutator setup
@@ -170,7 +173,7 @@ The action to be performed.  Must be 'publish', 'expire' or 'alert'.
 =item C<object_type>
 
 The type of object which the action refers to.  Currently 'story',
-'media' or 'user'.
+'media'.
 
 =item C<object_id>
 
@@ -230,7 +233,10 @@ sub init {
     my %args = @_;
     my (@bad_args, $repeat);
     my ($date, $day_of_week, $hour, $minute, $test_date) =
-      map {delete $args{$_}} qw/date day_of_week hour minute test_date/;
+      map {$args{$_}} qw/date day_of_week hour minute test_date/;
+
+    delete $args{date};
+    delete $args{test_date};
 
     for (keys %args) {
         push @bad_args, $_ unless exists $schedule_args{$_};
