@@ -24,7 +24,8 @@ Krang::FTP::FileHandle - Virtual FTP Server FileHandle
 
 =head1 SYNOPSIS
 
-    
+None.
+
 =head1 DESCRIPTION
 
 This module provides a file handle object for use by
@@ -314,6 +315,8 @@ This class provides a tied file interface to a media object.
 The TIEHANDLE constructor takes a media object as a single
 argument.  Writes to the tied filehandle in the media object
 being altered, saved, checked-in and published.
+
+=back
 
 =cut
 
