@@ -147,7 +147,7 @@ exist without your hard work.
 
 =item HTTP-BrowserDetect
 
- Version: 0.97
+ Version: 0.98
  License: Perl License
 
 =item Image-BioChrome

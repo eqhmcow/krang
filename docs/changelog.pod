@@ -10,6 +10,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Updated L<HTTP::BrowserDetect> to the latest version, 0.98. [Peter]
+
+=item *
+
 Limited the directories being searched by C<bin/krang_install> when
 looking to change execute permissions on a newly-installed backup
 file.  There was no need to search a number of potentially large
