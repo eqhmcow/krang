@@ -220,7 +220,7 @@ ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- comp
 
 $publisher->publish_story(story => $story);
 
-my @story_paths = build_story_paths($story);
+my @story_paths = build_publish_paths($story);
 
 foreach (my $i = $#story_paths; $i >= 0; $i--) {
     my $story_txt = load_story_page($story_paths[$i]);
@@ -234,9 +234,22 @@ foreach (my $i = $#story_paths; $i >= 0; $i--) {
 
     } else {
         diag('Missing story content');
-        fail('Krang::Publisher->publish_story -- compare');
+        fail('Krang::Publisher->publish_story() -- compare');
     }
 }
+
+
+
+my $prevurl = $publisher->preview_story(story => $story);
+
+my $preview_path = build_preview_path($story);
+
+if (-e $preview_path) {
+    pass('Krang::Publisher->preview_story() -- exists');
+} else {
+    pass('Krang::Publisher->preview_story() -- exists');
+}
+
 
 
 #
@@ -379,7 +392,7 @@ sub create_story {
 }
 
 
-sub build_story_paths {
+sub build_publish_paths {
 
     my $story = shift;
 
@@ -391,6 +404,17 @@ sub build_story_paths {
     }
 
     return @paths;
+}
+
+sub build_preview_path {
+
+    my $story = shift;
+
+    my $url = $story->preview_url();
+    my @paths;
+
+    return File::Spec->catfile($site->preview_path(), $url, 'index.html');
+
 }
 
 
