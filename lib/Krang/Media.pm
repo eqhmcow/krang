@@ -849,16 +849,16 @@ not $valid_params{$param};
 
     my @where_fields = ();
     foreach my $field (@where) {
-        # Pre-pend table name -- either "cgpc" or "media"
-        my @cgpc_fields = qw( may_see may_edit );
-        my $fqfield = (grep {$field eq $_} @cgpc_fields) ? "cgpc." : "media." ;
+        # Pre-pend table name -- either "ucpc" or "media"
+        my @ucpc_fields = qw( may_see may_edit );
+        my $fqfield = (grep {$field eq $_} @ucpc_fields) ? "ucpc." : "media." ;
         $fqfield .= $field;
         push(@where_fields, $fqfield);
     }
 
     # Add user_id into the query
     my $user_id = $ENV{REMOTE_USER} || croak("No user_id in REMOTE_USER");
-    push(@where_fields, "ugp.user_id");
+    push(@where_fields, "ucpc.user_id");
     push(@where, "user_id");
     $args{user_id} = $user_id;
 
@@ -962,11 +962,11 @@ not $valid_params{$param};
         $select_string = 'media.media_id';
     } else {
         my @fields = map { "media.$_" } (grep {($_ ne 'media_id')} FIELDS);
-        push(@fields, "(sum(cgpc.may_see) > 0) as may_see");
+        push(@fields, "ucpc.may_see as may_see");
 
         # Handle asset_media/may_edit
         if ($media_access eq "edit") {
-            push(@fields, "(sum(cgpc.may_edit) > 0) as may_edit");
+            push(@fields, "ucpc.may_edit as may_edit");
         } else {
             push(@fields, $dbh->quote("0") ." as may_edit");
         }
@@ -978,10 +978,9 @@ not $valid_params{$param};
     }
     
     my $sql = qq( select $select_string from media
-                  left join category_group_permission_cache as cgpc
-                  ON cgpc.category_id = media.category_id
-                  left join user_group_permission as ugp
-                  ON cgpc.group_id = ugp.group_id );
+                  left join user_category_permission_cache as ucpc
+                  ON ucpc.category_id = media.category_id
+                  );
     $sql .= ", media_contrib" if $args{'contrib_id'};
     $sql .= " where ".$where_string if $where_string;
     $sql .= " group by media.media_id" if ($group_by);

@@ -506,8 +506,7 @@ sub save {
         $desks_sth->execute($group_id, $desk_id, $permission_type);
     }
 
-    # Rebuild category permissions cache for this group
-    $self->rebuild_group_permissions_cache();
+    $self->update_group_user_permissions();
 }
 
 
@@ -530,7 +529,6 @@ sub delete {
     # Blow away data
     my $dbh = dbh();
     my @delete_from_tables = qw( category_group_permission
-                                 category_group_permission_cache
                                  desk_group_permission
                                  user_group_permission
                                  group_permission );
@@ -683,8 +681,8 @@ category is added to the system.  As the nature of categories are
 hierarchal, it is expected that new categories have no descendants.
 
 Given a particular category object, this method will update the 
-category_group_permission_cache table to add this category for all 
-groups.
+user_category_permission_cache table to add this category for all 
+users.
 
 In the case of a "root" category (no parent_id, associated with a 
 site), permissions will be added to the category_group_permission
@@ -693,7 +691,7 @@ table for each group, defaulting to "edit".
 =cut
 
 sub add_category_permissions {
-    my $self = shift;
+    my $self = shift; 
     my ($category) = @_;
 
     croak ("No category provided") unless ($category && ref($category));
@@ -707,14 +705,14 @@ sub add_category_permissions {
     # Set up STHs for queries and update
     my $dbh = dbh();
     my $sth_get_parent_perm = $dbh->prepare(qq/
-                                            select may_see, may_edit from category_group_permission_cache 
-                                            where category_id=? and group_id=?
+                                            select may_see, may_edit from user_category_permission_cache 
+                                            where category_id=? and user_id=?
                                             /);
 
     # Insert into cache table for each category/group
     my $sth_set_perm = $dbh->prepare(qq/
-                                     insert into category_group_permission_cache
-                                     (category_id, group_id, may_see, may_edit) values (?,?,?,?)
+                                     insert into user_category_permission_cache
+                                     (category_id, user_id, may_see, may_edit) values (?,?,?,?)
                                      /);
 
     # Check for existing permissions
@@ -729,41 +727,140 @@ sub add_category_permissions {
                                            (category_id, group_id, permission_type) values (?,?,"edit")
                                            /);
 
-    # Iterate through groups, default to permission of parent category, or "edit"
-    my @group_ids = $self->find(ids_only=>1);
-    foreach my $group_id (@group_ids) {
-        # Default to "edit"
-        my $may_see = 1;
-        my $may_edit = 1;
+
+    my @users = Krang::User->find();
+   
+    foreach my $user (@users) {
+        my $may_see = 0;
+        my $may_edit = 0;
+        my $see_set = 0;
+        my $edit_set = 0;
+
+        my $user_id = $user->user_id;
 
         # Get parent category permissions, if any
         if ($parent_id) {
             # Non-root categories inherit permissions of their parent
-            $sth_get_parent_perm->execute($parent_id, $group_id);
-            ($may_see, $may_edit) = $sth_get_parent_perm->fetchrow_array();
+            $sth_get_parent_perm->execute($parent_id, $user_id);
+            my ($p_may_see, $p_may_edit) = $sth_get_parent_perm->fetchrow_array();
             $sth_get_parent_perm->finish();
+            $may_see = $p_may_see, $see_set = 1 if defined $p_may_see;
+            $may_edit = $p_may_edit, $edit_set = 1 if defined $p_may_edit;
         }
 
-        # Apply permissions if they exist (rebuild case)
-        $sth_check_group_perm->execute($category_id, $group_id);
-        my ($permission_type) = $sth_check_group_perm->fetchrow_array();
-        $sth_check_group_perm->finish();
+        # Iterate through groups, default to permission of parent category, or "edit"
+        my @user_group_ids = $user->group_ids;
+        my @group_ids = $self->find(ids_only=>1);
+    
+        foreach my $group_id (@group_ids) {
 
-        if ($permission_type) {
-            $may_edit = 0 unless ($permission_type eq "edit");
-            $may_see  = 0 if ($permission_type eq "hide");
-        } else {
-            # Root categories get added to category_group_permission
-            $sth_add_group_perm->execute($category_id, $group_id) unless ($parent_id);
+            # Apply permissions if they exist (rebuild case)
+            $sth_check_group_perm->execute($category_id, $group_id);
+            my ($permission_type) = $sth_check_group_perm->fetchrow_array();
+            $sth_check_group_perm->finish();
+
+            if ($permission_type) {
+                if (grep $group_id, @user_group_ids) {
+                    ($permission_type eq "edit") ? ($may_edit = 1, $edit_set = 1) :
+($may_edit = 0, $edit_set = 1);
+                    ($permission_type ne "hide") ? ($may_see  = 1, $see_set = 1) : ($may_see = 0, $see_set = 1);
+                }
+            } else {
+                # Root categories get added to category_group_permission
+                $sth_add_group_perm->execute($category_id, $group_id) unless ($parent_id);
+            }
         }
+       
+        $may_edit = 1 if not $edit_set;
+        $may_see = 1 if not $see_set;
+ 
+        # Update category perms cache for this user
+        $sth_set_perm->execute($category_id, $user_id, $may_see, $may_edit);
 
-        # Update category perms cache for this group
-        $sth_set_perm->execute($category_id, $group_id, $may_see, $may_edit);
     }
 
 }
 
+=item add_user_permissions()
 
+    Krang::Group->add_user_permissions($user)
+
+This method is expected to be called upon Krang::User save.
+It will add an entry to user_category_permission_cache for each
+category in the system, based on the user's permissions there.
+
+=cut 
+
+sub add_user_permissions {
+    my $self = shift;
+    my ($user) = @_;
+    
+    croak ("No user provided") unless ($user && ref($user));
+    my $user_id = $user->user_id;
+
+    my $dbh = dbh();
+
+    # Get rid of permissions cache entries for this user
+    $dbh->do( "delete from user_category_permission_cache where user_id=?",
+              undef, $user_id );
+ 
+    # Insert into cache table for each category/group
+    my $sth_set_perm = $dbh->prepare(qq/
+                                     insert into user_category_permission_cache
+                                     (category_id, user_id, may_see, may_edit) values (?,?,?,?)
+                                     /);
+               
+    # Check for existing permissions
+    my $sth_check_group_perm = $dbh->prepare(qq/
+                                             select permission_type from category_group_permission
+                                             where category_id=? and group_id=?
+                                             /);
+ 
+    my @category = Krang::Category->find( ignore_user => 1 );
+
+    foreach my $category (@category) {
+        my $may_see = 0;
+        my $may_edit = 0;
+        my $see_set = 0;
+        my $edit_set = 0;
+
+        # Get category parent -- needed for default perms
+        my $parent_id = $category->parent_id();
+
+        my @group_ids = $user->group_ids();
+
+        foreach my $group_id (@group_ids) {
+            if ($parent_id and ((not $may_see) or (not $may_edit))) {
+                # Non-root categories inherit permissions of their parent
+                $sth_check_group_perm->execute($parent_id, $group_id);
+                my ($permission_type) = $sth_check_group_perm->fetchrow_array();
+                $sth_check_group_perm->finish();
+                
+                if ($permission_type) {
+                    ($permission_type eq "edit") ? ($may_edit = 1, $edit_set = 1) : ($may_edit = 0, $edit_set = 1);
+                ($permission_type ne "hide") ? ($may_see  = 1, $see_set = 1) : ($may_see = 0, $see_set = 1);
+                }
+            }
+
+            # Apply permissions if they exist (rebuild case)
+            $sth_check_group_perm->execute($category->category_id, $group_id);
+            my ($permission_type) = $sth_check_group_perm->fetchrow_array();
+            $sth_check_group_perm->finish();
+                                                                                                                                       
+            if ($permission_type) {
+                ($permission_type eq "edit") ? ($may_edit = 1, $edit_set = 1) : ($may_edit = 0, $edit_set = 1);
+                ($permission_type ne "hide") ? ($may_see  = 1, $see_set = 1) : ($may_see = 0, $see_set = 1);
+            } 
+        }
+        
+        $may_edit = 1 if not $edit_set;
+        $may_see = 1 if not $see_set;
+ 
+        # Update category perms cache for this user
+        $sth_set_perm->execute($category->category_id, $user_id, $may_see, $may_edit);
+
+    }
+}
 
 =item delete_category_permissions()
 
@@ -773,7 +870,7 @@ This method is expected to be called by Krang::Category when a
 category is about to be removed from the system.  As the nature of categories are 
 hierarchal, it is expected that deleted categories have no descendants.
 
-Given a particular category object, update the category_group_permission_cache
+Given a particular category object, update the user_category_permission_cache
 table to delete this category for all groups.
 
 Also, delete from category_group_permission all references to this 
@@ -793,7 +890,7 @@ sub delete_category_permissions {
     my $dbh = dbh();
 
     # Get rid of permissions cache
-    $dbh->do( "delete from category_group_permission_cache where category_id=?",
+    $dbh->do( "delete from user_category_permission_cache where category_id=?",
               undef, $category_id );
 
     # Get rid of permissions
@@ -807,7 +904,7 @@ sub delete_category_permissions {
 
   Krang::Group->rebuild_category_cache();
 
-This class method will clear the table category_group_permission_cache 
+This class method will clear the table user_category_permission_cache 
 and rebuild it from the category_group_permission table.  This logically 
 iterates through each group and applying the permissions for each category 
 according to the configuration.
@@ -822,14 +919,14 @@ will default to "edit".
 
 sub rebuild_category_cache {
     my $self = shift;
-
     my $dbh = dbh();
 
     # Clear cache table
-    $dbh->do( "delete from category_group_permission_cache", undef);
+    $dbh->do( "delete from user_category_permission_cache", undef);
 
     # Traverse category hierarchy
-    my @root_cats = Krang::Category->find(parent_id=>undef);
+    my @root_cats = Krang::Category->find(parent_id=>undef, ignore_user => 1);
+
     foreach my $category (@root_cats) {
         $self->rebuild_category_cache_process_category($category);
     }
@@ -1225,6 +1322,16 @@ sub user_admin_permissions {
 ####  PRIVATE METHODS  ####
 ###########################
 
+# update user_category_permission_cache for users in this group only
+
+sub update_group_user_permissions {
+    my $self = shift;
+
+    my @users = Krang::User->find(  group_ids => [ $self->group_id ] );
+
+    foreach my $user (@users) { $self->add_user_permissions($user) };
+}
+
 # Re-build category cache for this category, and descend by recursion
 sub rebuild_category_cache_process_category {
     my $self = shift;
@@ -1234,69 +1341,11 @@ sub rebuild_category_cache_process_category {
     $self->add_category_permissions($category);
 
     # Descend and recurse
-    my @children = $category->children();
+    my @children = $category->children(ignore_user => 1);
     foreach my $category (@children) {
         $self->rebuild_category_cache_process_category($category);
     }
 }
-
-
-# Re-build category permissions cache for a particular group.
-# Used when a group is saved (added or edited)
-sub rebuild_group_permissions_cache {
-    my $self = shift;
-
-    # Get category permissions -- we're going to be passing this around
-    my %category_perms = $self->categories();
-
-    # Get $dbh -- we're passing this around, too
-    my $dbh = dbh();
-
-    # Traverse category hierarchy, selectively applying permissions as needed
-    my @root_cats = Krang::Category->find(parent_id=>undef);
-    foreach my $category (@root_cats) {
-        $self->rebuild_group_permissions_cache_process_category($category, \%category_perms, $dbh);
-    }
-}
-
-
-# Traverse category hierarchy, selectively applying permissions as needed
-sub rebuild_group_permissions_cache_process_category {
-    my $self = shift;
-    my ($category, $category_perms, $dbh) = @_;
-
-    my $category_id = $category->category_id();
-
-    # Is this category specified in the permissions table?
-    if (my $permission_type = $category_perms->{$category_id}) {
-        my $group_id = $self->group_id();
-
-        # Assemble list of category IDs to update -- all descendants
-        my @update_categories = ( $category_id, $category->descendants(ids_only=>1) );
-        my $update_categories_str = join(",", @update_categories);
-
-        # Set up permissions
-        my ($may_edit, $may_see) = (1, 1);
-        $may_edit = 0 unless ($permission_type eq "edit");
-        $may_see  = 0 if ($permission_type eq "hide");
-
-        my $update_sql = qq(
-                            update category_group_permission_cache
-                            set may_see=?, may_edit=?
-                            where group_id=? AND category_id IN ($update_categories_str)
-                           );
-
-        # Do update cache table
-        $dbh->do($update_sql, undef, $may_see, $may_edit, $group_id);
-    }
-
-    # Descend and recurse
-    my @children = $category->children();
-    foreach my $category (@children) {
-        $self->rebuild_group_permissions_cache_process_category($category, $category_perms, $dbh);
-    }
-}
-
 
 # Verify that the Krang::Object is valid prior to saving
 # Throw exceptions if not.
@@ -1371,16 +1420,6 @@ sub insert_new_group {
     my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
     foreach my $category_id (@root_cats) {
         $cat_perm_sth->execute($category_id, $group_id);
-    }
-
-    # Insert group/category permissions cache
-    my $cat_perm_cache_sql = qq/ insert into category_group_permission_cache
-                           (category_id, group_id, may_see, may_edit)
-                           values (?,?,1,1) /;
-    my $cat_perm_cache_sth = $dbh->prepare($cat_perm_cache_sql);
-    my @all_cats = Krang::Category->find(ids_only=>1);
-    foreach my $category_id (@all_cats) {
-        $cat_perm_cache_sth->execute($category_id, $group_id);
     }
 }
 

@@ -251,7 +251,6 @@ is($success, 1, 'delete() 6');
 $success = $site->delete();
 is($success, 1, 'site delete()');
 
-
 ### Permission tests #################
 #
 {
@@ -281,13 +280,13 @@ is($success, 1, 'site delete()');
     my ($tmp) = Krang::Category->find(category_id=>$ptest_categories[-1]->category_id);
     is($tmp->may_see, 1, "Found may_see");
     is($tmp->may_edit, 1, "Found may_edit");
-
+    
     # Change permissions to "read-only" for one of the branches by editing the Admin group
     my $ptest_cat_id = $ptest_categories[0]->category_id();
     my ($admin_group) = Krang::Group->find(group_id=>1);
     $admin_group->categories($ptest_cat_id => "read-only");
     $admin_group->save();
-
+    
     # Check permissions for that category
     ($tmp) = Krang::Category->find(category_id=>$ptest_cat_id);
     is($tmp->may_see, 1, "read-only may_see => 1");
@@ -298,7 +297,7 @@ is($success, 1, 'site delete()');
     $tmp->{may_edit} = {};
     is($tmp->may_see, 1, "read-only may_see => 1 loads");
     is($tmp->may_edit, 0, "read-only may_edit => 0 loads");
-
+    
     # Check permissions for descendant of that category
     $ptest_cat_id = $ptest_categories[1]->category_id();
     ($tmp) = Krang::Category->find(category_id=>$ptest_cat_id);

@@ -271,13 +271,10 @@ sub _load_permissions {
         
     ($self->{may_see}{$user_id}, $self->{may_edit}{$user_id}) 
       = $dbh->selectrow_array(
-        'SELECT (sum(cgpc.may_see) > 0), (sum(cgpc.may_edit) > 0)
-         FROM category AS cat
-         LEFT JOIN category_group_permission_cache AS cgpc 
-           ON cgpc.category_id = cat.category_id
-         LEFT JOIN user_group_permission AS ugp 
-           ON cgpc.group_id = ugp.group_id
-         WHERE ugp.user_id = ? AND cat.category_id = ?', 
+        'SELECT may_see, may_edit
+         FROM 
+         user_category_permission_cache  
+         WHERE user_id = ? AND category_id = ?', 
          undef, $user_id, $self->{category_id});
 }
 
@@ -634,7 +631,7 @@ sub descendants {
 
 =item * @categories = Krang::Category->children()
 
-=item * @category_ids = Krang::Category->children( ids_only => 1 )
+=item * @category_ids = Krang::Category->children( ids_only => 1, ignore_user => 1 )
 
 Returns array of Krang::Category objects or category_ids of immediate childen.
 Convenience method to find().
@@ -644,11 +641,9 @@ Convenience method to find().
 sub children {
     my $self = shift;
     my %args = @_;
-    my $ids_only = $args{ids_only} ? 1 : 0;
 
-    return $ids_only ?
-      Krang::Category->find(parent_id => $self->category_id, ids_only => 1) :
-          Krang::Category->find(parent_id => $self->category_id);
+    return 
+      Krang::Category->find(parent_id => $self->category_id, %args);
 }
 
 
@@ -715,6 +710,10 @@ results are sorted with the 'category_id' field.
 Set this flag to '1' to sort results relative to the 'order_by' field in
 descending order, by default results sort in ascending order
 
+=item ignore_user
+
+Will ignore user in ENV if set to 1.
+
 =back
 
 The method croaks if an invalid search criteria is provided or if both the
@@ -731,6 +730,7 @@ sub find {
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
     my $order_by = delete $args{order_by} || 'cat.category_id';
+    my $ignore_user = delete $args{ignore_user} || '';
 
     # set search fields
     my $count = delete $args{count} || '';
@@ -774,7 +774,7 @@ sub find {
         } else {
             # Preface $lookup_field with table name
             if (grep { $lookup_field eq $_ } qw(may_see may_edit)) {
-                $lookup_field = "cgpc.$lookup_field";
+                $lookup_field = "ucpc.$lookup_field";
             } else {
                 $lookup_field = "cat.$lookup_field";
             }
@@ -804,8 +804,8 @@ sub find {
     } else {
         push(@fields, (map { "cat.$_ as $_" } keys(%category_cols)));
         # Add fields for may_see and may_edit
-        push(@fields, "(sum(cgpc.may_see) > 0) as may_see");
-        push(@fields, "(sum(cgpc.may_edit) > 0) as may_edit");
+        push(@fields, "ucpc.may_see as may_see");
+        push(@fields, "ucpc.may_edit as may_edit");
     }
     my $fields_str = join(",", @fields);
 
@@ -815,26 +815,28 @@ sub find {
                    
                     FROM
                       category AS cat
-                        LEFT JOIN category_group_permission_cache AS cgpc ON cgpc.category_id = cat.category_id
-                        LEFT JOIN user_group_permission AS ugp ON cgpc.group_id = ugp.group_id
+                        LEFT JOIN user_category_permission_cache AS ucpc ON ucpc.category_id = cat.category_id
                   );
 
-    # Just need user_id.  Don't need user.
-    # Assumes that user_id is valid and authenticated
     my $user_id = $ENV{REMOTE_USER}
-      || croak("No user_id set");
-    push(@wheres, "ugp.user_id=?");
-    push(@where_data, $user_id);
+        || croak("No user_id set");
 
-    my $where_clause = "(". join(") AND\n  (", @wheres) .")";
-    $query .= "WHERE $where_clause" if $where_clause;
+    unless ($ignore_user) {
+        # Just need user_id.  Don't need user.
+        # Assumes that user_id is valid and authenticated
+        push(@wheres, "ucpc.user_id=?");
+        push(@where_data, $user_id);
+    }
+
+    my $where_clause = join(") AND\n  (", @wheres);
+    $query .= "WHERE ($where_clause)" if $where_clause;
 
     # Add Group-By for regular (non count) selects
     $query .= " GROUP BY cat.category_id" unless ($count);
 
     # Add order by, if specified
     $query .= " ORDER BY $order_by $ascend" if $order_by;
-
+    
     # add LIMIT clause, if any
     if ($limit) {
         $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
@@ -876,9 +878,11 @@ sub find {
         $new_category->{_old_dir} = $new_category->{dir};
         $new_category->{_old_url} = $new_category->{url};
 
-        # setup permissions
-        $new_category->{may_see}  = { $user_id => $row->{may_see}  };
-        $new_category->{may_edit} = { $user_id => $row->{may_edit} };
+        unless ($ignore_user) {
+            # setup permissions
+            $new_category->{may_see}  = { $user_id => $row->{may_see}  };
+            $new_category->{may_edit} = { $user_id => $row->{may_edit} };
+        }
 
         push(@categories, $new_category);
 

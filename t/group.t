@@ -222,13 +222,13 @@ my %categories = $load_group->categories();
 is($categories{$new_cat_id}, "edit", "New root categories create new category permissions");
 
 # Test permissions cache -- count(*) of category_group_permission_cache for $new_cat_id should == count(groups)
-my $group_count = Krang::Group->find(count=>1);
+my $user_count = Krang::User->find(count=>1);
 my $dbh = dbh();
 my ($perm_cache_count) = $dbh->selectrow_array( qq/ select count(*) from
-                                                category_group_permission_cache
+                                                user_category_permission_cache
                                                 where category_id=? /,
                                                 {RaiseError=>1}, $new_cat_id );
-is($perm_cache_count, $group_count, "Permissions cache created for new category for $group_count groups");
+is($perm_cache_count, $user_count, "Permissions cache created for new category for $user_count users");
 
 # Delete new site
 $new_site->delete();
@@ -238,7 +238,7 @@ is($categories{$new_cat_id}, undef, "Delete root categories delete category perm
 
 # Was permissions cache deleted?
 ($perm_cache_count) = $dbh->selectrow_array( qq/ select count(*) from
-                                                category_group_permission_cache
+                                                user_category_permission_cache
                                                 where category_id=? /,
                                                 {RaiseError=>1}, $new_cat_id );
 is($perm_cache_count, 0, "Permissions cache deleted");

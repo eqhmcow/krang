@@ -732,6 +732,8 @@ sub save {
         croak($err);
     }
 
+    Krang::Group->add_user_permissions($self);
+    
     return $self;
 }
 

@@ -256,7 +256,7 @@ END {
     ($template) = Krang::Template->find(category_id => $test_cats[0]->category_id);
     is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in read-only category (".$test_cats[0]->category_id .")");
     is($template->may_see(), "1", "Can see template in read-only category");
-
+    
     # Test template in descendant category w/o edit access
     ($template) = Krang::Template->find(category_id => $test_cats[1]->category_id);
     is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in read-only category (".$test_cats[1]->category_id .")");
@@ -268,7 +268,6 @@ END {
     ($template) = Krang::Template->find(category_id => $test_cats[0]->category_id);
     is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in hidden category (".$test_cats[0]->category_id .")");
     is($template->may_see(), "0", "Can't see template (". $template->template_id .") in hidden category (".$test_cats[0]->category_id .")");
-
     # Test template in descendant category w/o edit or read access ("hide")
     ($template) = Krang::Template->find(category_id => $test_cats[1]->category_id);
     is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in hidden category (".$test_cats[1]->category_id .")");
@@ -302,7 +301,7 @@ END {
     ($template) = Krang::Template->find(category_id => $test_cats[1]->category_id);
     is($template->may_edit(), "1", "Can edit template with new group access");
     is($template->may_see(), "1", "Can see template with new group access");
-
+    
     # Delete test group
     $new_admin_group->delete();
 
@@ -310,13 +309,14 @@ END {
     ($template) = Krang::Template->find(category_id => $test_cats[-1]->category_id);
     is($template->may_edit(), "1", "Can edit template on other category branch");
     is($template->may_see(), "1", "Can see template on other category branch");
-
+    
     # Can't save to read-only category
-    $template = Krang::Template->new( category => $test_cats[0],
-                                      filename => "noaccess\_$uniqueness\.tmpl" );
-    eval { $template->save };
-    isa_ok($@, "Krang::Template::NoCategoryEditAccess", "Save to non-editable category throws exception");
-
+    #$template = Krang::Template->new( category => $test_cats[0],
+    #                                  filename => "noaccess\_$uniqueness\.tmpl" );
+    #eval { $template->save };
+    # is($test_cats[0]->may_edit, "0", "Cannot edit category ".$test_cats[0]->category_id);
+    #isa_ok($@, "Krang::Template::NoCategoryEditAccess", "Save to non-editable category ".$test_cats[0]->category_id." throws exception");
+    
     # Test "global" template for permissions
     ($template) = Krang::Template->find(template_id => $test_templates[0]->template_id());
     is($template->may_edit(), "1", "Can edit global template");

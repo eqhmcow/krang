@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS asset_group_permission;
 /* Table for Krang groups */
 DROP TABLE IF EXISTS group_permission;  /* "group" is a reserved word. */
 CREATE TABLE group_permission (
-        group_id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        group_id            SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         name                VARCHAR(255) NOT NULL DEFAULT "",
         may_publish         BOOL NOT NULL DEFAULT 0,
         may_checkin_all     BOOL NOT NULL DEFAULT 0,
@@ -38,8 +38,8 @@ INSERT INTO group_permission VALUES (3, 'Default', 0,0,0,0,0,0,0,0,0,0, "read-on
 /* Join table: desk <-> group_permission */
 DROP TABLE IF EXISTS desk_group_permission;
 CREATE TABLE desk_group_permission (
-        desk_id  INT UNSIGNED NOT NULL,
-        group_id INT UNSIGNED NOT NULL,
+        desk_id  SMALLINT UNSIGNED NOT NULL,
+        group_id SMALLINT UNSIGNED NOT NULL,
         permission_type ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "edit",
         PRIMARY KEY (desk_id, group_id),
         INDEX (group_id)
@@ -56,8 +56,8 @@ INSERT INTO desk_group_permission VALUES (2, 3, "hide");
 /* Join table: user <-> group_permission */
 DROP TABLE IF EXISTS user_group_permission;
 CREATE TABLE user_group_permission (
-        user_id         INT UNSIGNED NOT NULL,
-        group_id	INT UNSIGNED NOT NULL,
+        user_id         SMALLINT UNSIGNED NOT NULL,
+        group_id	SMALLINT UNSIGNED NOT NULL,
         PRIMARY KEY (user_id, group_id),
         INDEX (group_id)
 );
@@ -68,8 +68,8 @@ INSERT INTO user_group_permission VALUES (1,1);
 /* Join table: category <-> group_permission */
 DROP TABLE IF EXISTS category_group_permission;
 CREATE TABLE category_group_permission (
-        category_id INT UNSIGNED NOT NULL,
-        group_id    INT UNSIGNED NOT NULL,
+        category_id SMALLINT UNSIGNED NOT NULL,
+        group_id    SMALLINT UNSIGNED NOT NULL,
         permission_type ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "edit",
         PRIMARY KEY (category_id, group_id),
         INDEX (group_id)
@@ -85,12 +85,12 @@ CREATE TABLE category_group_permission (
    only records of logical permission assignments, this table 
    will allow calling code to exactly find the permissions for
    a category/group without traversing the tree of categories. */
-DROP TABLE IF EXISTS category_group_permission_cache;
-CREATE TABLE category_group_permission_cache (
-        category_id INT UNSIGNED NOT NULL,
-        group_id    INT UNSIGNED NOT NULL,
+DROP TABLE IF EXISTS user_category_permission_cache;
+CREATE TABLE user_category_permission_cache (
+        category_id SMALLINT UNSIGNED NOT NULL,
+        user_id     SMALLINT UNSIGNED NOT NULL,
         may_see     BOOL NOT NULL DEFAULT "0",
         may_edit    BOOL NOT NULL DEFAULT "0",
-        PRIMARY KEY (category_id, group_id),
-        INDEX (group_id)
+        PRIMARY KEY (category_id, user_id),
+        INDEX (user_id)
 );

@@ -1151,14 +1151,14 @@ sub find {
 
         # handle may_see
         if ($key eq 'may_see') {
-            push(@where, 'cgpc.may_see = ?');
+            push(@where, 'ucpc.may_see = ?');
             push(@param, 1);
             next;
         }
 
         # handle may_edit
         if ($key eq 'may_edit') {
-            push(@where, 'cgpc.may_edit = ?');
+            push(@where, 'ucpc.may_edit = ?');
             push(@param, 1);
             next;
         }
@@ -1168,7 +1168,7 @@ sub find {
 
     # Add user_id into the query
     my $user_id = $ENV{REMOTE_USER} || croak("No user_id in REMOTE_USER");
-    push(@where, "ugp.user_id = ?");
+    push(@where, "ucpc.user_id = ?");
     push(@param, $user_id);
 
     # handle ordering by primary URL, which is in story_category
@@ -1189,10 +1189,8 @@ sub find {
     my $from = " FROM story AS s 
                  LEFT JOIN story_category AS sc_p 
                    ON s.story_id = sc_p.story_id
-                 LEFT JOIN category_group_permission_cache as cgpc
-                   ON sc_p.category_id = cgpc.category_id
-                 LEFT JOIN user_group_permission as ugp
-                   ON ugp.group_id = cgpc.group_id ";
+                 LEFT JOIN user_category_permission_cache as ucpc
+                   ON sc_p.category_id = ucpc.category_id ";
     my $group_by = 0;
 
     if ($count) {        
@@ -1203,14 +1201,14 @@ sub find {
         # Get user asset permissions -- overrides may_edit if false
         my $may_edit;
         if (Krang::Group->user_asset_permissions('story') eq "edit") {
-            $may_edit = "(sum(cgpc.may_edit) > 0) as may_edit";
+            $may_edit = "ucpc.may_edit as may_edit";
         } else {
             $may_edit = $dbh->quote("0") . " as may_edit";
         }
 
         $query = "SELECT " .
            join(', ', map { "s.$_" } STORY_FIELDS) .
-             ",(sum(cgpc.may_see) > 0) as may_see, $may_edit" .
+             ",ucpc.may_see as may_see, $may_edit" .
              $from;
         $group_by = 1;
     }

@@ -748,7 +748,7 @@ sub find {
                 push @params, $numeric ? $_ : "%" . $_ . "%";
             }
         } elsif (grep { $arg eq $_ } qw(may_see may_edit)) {
-            my $fqfield = "cgpc.$arg";
+            my $fqfield = "ucpc.$arg";
             # On may_see and may_edit, always return "global" templates -- templates w/o a category
             $where_clause .= " AND " if ($where_clause);
             if ($args{$arg}) {
@@ -783,9 +783,9 @@ sub find {
     # Add may_see and may_edit fields
     unless ($count) {
         my @may_fields = ();
-        push(@may_fields, "(sum(cgpc.may_see) > 0) as may_see");
+        push(@may_fields, "ucpc.may_see as may_see");
         if ($template_access eq "edit") {
-            push(@may_fields, "(sum(cgpc.may_edit) > 0) as may_edit");
+            push(@may_fields, "ucpc.may_edit as may_edit");
         } else {
             push(@may_fields, $dbh->quote("0") ." as may_edit");
         };
@@ -794,15 +794,14 @@ sub find {
 
     # construct base query
     my $query = qq( SELECT $fields FROM template t 
-                    left join category_group_permission_cache as cgpc
-                    ON cgpc.category_id = t.category_id
-                    left join user_group_permission as ugp
-                    ON cgpc.group_id = ugp.group_id );
+                    left join user_category_permission_cache as ucpc
+                    ON ucpc.category_id = t.category_id
+                    );
     $query .= ", category c" if $category;
 
     # Add user_id
     $where_clause .= " AND " if ($where_clause);
-    $where_clause .= "(ugp.user_id=? OR t.category_id IS NULL)";
+    $where_clause .= "(ucpc.user_id=? OR t.category_id IS NULL)";
     my $user_id = $ENV{REMOTE_USER};
     push(@params, $user_id);
 
