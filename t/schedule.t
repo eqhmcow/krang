@@ -10,10 +10,11 @@ use Time::Seconds;
 
 use Krang::Script;
 
-# set debug flag
-#$ENV{SCH_DEBUG} = 1;
-
-BEGIN {use_ok('Krang::Schedule');}
+BEGIN {
+    # set debug flag
+    $ENV{SCH_DEBUG} = 1;
+    use_ok('Krang::Schedule');
+}
 
 my ($date, $next_run);
 my $now = localtime;
