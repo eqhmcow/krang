@@ -113,17 +113,23 @@ true on success.
 sub load_set {
     my ($pkg, %arg) = @_;
     my ($set) = @arg{qw(set)};
-
+    local $_;
+    
     # get location of the element library, mixing in KrangRoot if non-absolute
     my $lib = file_name_is_absolute(ElementLibrary) ?
-                ElementLibrary :
-                catdir(KrangRoot, ElementLibrary);
-
+              ElementLibrary :
+              catdir(KrangRoot, ElementLibrary);
+    
     # don't load sets more than once
-    our %LOADED_SET;
+    our (%LOADED_SET, %PARENT_SETS);
     unless (exists $LOADED_SET{$set}) {
         my $conf = $pkg->_load_conf($lib, $set);
-        # FIX: load parentsets
+        
+        # load parent sets first
+        $PARENT_SETS{$set} = [ $conf->get('ParentSets') ];
+        Krang::ElementLibrary->load_set(set => $_) 
+            for (@{$PARENT_SETS{$set}});
+        
         $pkg->_load_classes($lib, $set, $conf);
         $pkg->_instantiate_top_levels($set, $conf);
         info("Loaded element set '$set'");
@@ -159,7 +165,7 @@ sub _load_classes {
     my ($pkg, $lib, $set, $conf) = @_;
     my $dir = catdir($lib, $set);
 
-    # require all .pm files
+    # require all .pm files in main set
     opendir(DIR, $dir) or die "Unable to open dir '$dir': $!";
     while($_ = readdir(DIR)) {
         next unless /([^\/]+).pm$/;
@@ -180,19 +186,13 @@ sub _instantiate_top_levels {
     croak("No TopLevels defined for element set '$set'.")
       unless @tops;
 
-    # FIX: look in ParentSets too
     foreach my $top (@tops) {
-        my $class_pkg = "${set}::$top";
-        croak("Unable to find element class '${set}::$top' while " .
-              "loading element set.")
-          unless $class_pkg->can('new');
-        $TOP_LEVEL{$set}{$top} = $class_pkg->new(top_level => 1);        
+        my $class_obj = $pkg->find_class(name => $top, set => $set);
+        croak("Unable to find top-level element class '${set}::$top' while loading element set.")
+          unless $class_obj;
+        $class_obj->top_level(1);
+        $TOP_LEVEL{$set}{$top} = $class_obj;
     }
-
-    # check that the set has the special category element class
-    #croak("Missing required 'category' top-level in element set '$set'.")
-    #  unless exists $TOP_LEVEL{category};
-
 }
 
 =item C<< @toplevels = Krang::ElementLibrary->top_levels() >>
@@ -231,10 +231,12 @@ sub top_level {
 
 =item C<< $class = Krang::ElementLibrary->find_class(name => "deck") >>
 
+=item C<< $class = Krang::ElementLibrary->find_class(name => "deck", set => "Flex") >>
+
 Finds an element class by name, looking in the configured ElementSet
-for the current instance.  If the ElementSet has ParentSets
-configured, will look there too.  Returns an object descended from
-Krang::ElementClass.
+for the current instance unless as set argument is passed.  If the
+ElementSet has ParentSets configured, will look there too.  Returns an
+object descended from Krang::ElementClass or undef on failure.
 
 For testing purposes, set $Krang::ElementLibrary::TESTING_SET and
 find_class() will look there rather than the current ElementSet.
@@ -242,26 +244,35 @@ find_class() will look there rather than the current ElementSet.
 =cut
 
 sub find_class {
-    my ($pkg, %arg) = @_;
-    my ($name) = @arg{qw(name)};
-    our $TESTING_SET;
-
-    my $set = $TESTING_SET || ElementSet();
+    my ($pkg, %args) = @_;
+    our ($TESTING_SET, %PARENT_SETS);
+    my ($name, $set) = @args{('name', 'set')};
+    $set ||= ($TESTING_SET || ElementSet);
+ 
+    # look in current set
     my $class_pkg = "${set}::$name";
     return $class_pkg->new() if $class_pkg->can('new');
-    croak("Unable to load element class named '$name' in set '$set'");
-}
 
+    # look through parent sets, recursing depth first
+    my @parent_sets = @{$PARENT_SETS{$set}};
+    while(@parent_sets) {
+        $set       = shift @parent_sets;
+        $class_pkg = "${set}::$name";
+
+        # if foundm return it
+        return $class_pkg->new() if $class_pkg->can('new');
+
+        # otherwise, look deeper
+        unshift(@parent_sets, @{$PARENT_SETS{$set}});
+    }
+
+    # failure
+    return;
+}
 
 =back
 
 =head1 TODO
-
-=over
-
-=item Implement ParentSets.
-
-=back
 
 =cut
 
