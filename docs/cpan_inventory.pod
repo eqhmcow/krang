@@ -63,11 +63,11 @@ exist without your hard work.
 =item Class-Data-Inheritable
 
  Version: 0.02
- License: 
+ License: Perl License
 
 =item Class-XPath
 
- Version: 1.0
+ Version: 1.4
  License: Perl License
 
 =item Compress-Zlib
@@ -92,8 +92,8 @@ exist without your hard work.
 
 =item Devel-StackTrace
 
- Version: 1.10
- License:
+ Version: 1.10_01
+ License: Perl License
 
 =item Digest-MD5
 
@@ -103,12 +103,12 @@ exist without your hard work.
 =item Exception-Class
 
  Version: 1.19
- License:
+ License: Perl License
 
 =item Expect
 
  Version: 1.15
- License: 
+ License: Perl License
 
 =item File-MMagic
 
@@ -183,12 +183,12 @@ exist without your hard work.
 =item IO-Tty
 
  Version: 1.02
- License:
+ License: Perl License
 
 =item IO-Zlib
 
  Version: 1.01
- License:
+ License: Perl License
 
 =item Mail-Sender
 
@@ -199,11 +199,6 @@ exist without your hard work.
 
  Version: 2.16
  License: Perl License
-
-=item Module-Build
-
- Version: 0.24
- License:
 
 =item Net-FTPServer
 
