@@ -1,13 +1,22 @@
 use strict;
 use warnings;
 
-use Test::More qw(no_plan);
 use Krang::Script;
+use Krang::Conf qw(KrangRoot instance InstanceElementSet);
 use Krang::Site;
 use Krang::Category;
 use Krang::Media;
 use Krang::Contrib;
 use Krang::Story;
+
+
+BEGIN {
+    if (InstanceElementSet eq 'TestSet1') {
+        eval 'use Test::More qw(no_plan)';
+    } else {
+        eval 'use Test::More skip_all=> "Content tests only work for TestSet1"';
+    }
+}
 
 
 use_ok('Krang::Test::Content');
@@ -16,8 +25,8 @@ my $creator = new Krang::Test::Content;
 isa_ok($creator, 'Krang::Test::Content');
 
 can_ok($creator, ('create_site', 'create_category', 'create_media', 
-                  'create_story', 'create_contrib', 'get_word', 
-                  'delete_item', 'cleanup'));
+                  'create_story', 'create_contrib',
+                  'get_word', 'delete_item', 'cleanup'));
 
 # this is by no means a comprehensive test of get_word()'s randomness.  Just a sanity check.
 my %words;
