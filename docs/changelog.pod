@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in Krang::Group which caused root-category permisssions to
+be randomized during rebuild_category_cache().  [Sam]
+
+=item *
+
 Added C<--no-backup> option to C<krang_upgrade>. [Sam]
 
 =item *
@@ -31,7 +36,6 @@ This results in a sorted list or article types in the UI.  [Sam]
 
 =item *
 
->>>>>>> 1.61
 Added a new hidden user called 'system' which is now used by
 Krang::Script.  This means you can now delete the 'admin' user with
 impunity. [Sam]

@@ -802,27 +802,28 @@ sub add_category_permissions {
             $sth_get_parent_perm->execute($parent_id, $user_id);
             my ($p_may_see, $p_may_edit) = $sth_get_parent_perm->fetchrow_array();
             $sth_get_parent_perm->finish();
-            $may_see = $p_may_see, $see_set = 1 if defined $p_may_see;
-            $may_edit = $p_may_edit, $edit_set = 1 if defined $p_may_edit;
+            if (defined $p_may_see) {
+                $may_see = $p_may_see;
+                $see_set = 1;
+            }
+            if (defined $p_may_edit) {
+                $may_edit = $p_may_edit;
+                $edit_set = 1;
+            }
         }
 
         # Iterate through groups, default to permission of parent category, or "edit"
         my @user_group_ids = $user->group_ids;
-        my @group_ids = $self->find(ids_only=>1);
-    
-        foreach my $group_id (@group_ids) {
-
+        foreach my $group_id (@user_group_ids) {
             # Apply permissions if they exist (rebuild case)
             $sth_check_group_perm->execute($category_id, $group_id);
             my ($permission_type) = $sth_check_group_perm->fetchrow_array();
             $sth_check_group_perm->finish();
 
             if ($permission_type) {
-                if (grep $group_id, @user_group_ids) {
-                    ($permission_type eq "edit") ? ($may_edit = 1, $edit_set = 1) :
-($may_edit = 0, $edit_set = 1);
-                    ($permission_type ne "hide") ? ($may_see  = 1, $see_set = 1) : ($may_see = 0, $see_set = 1);
-                }
+                ($permission_type eq "edit") ? ($may_edit = 1, $edit_set = 1) :
+                  ($may_edit = 0, $edit_set = 1);
+                ($permission_type ne "hide") ? ($may_see  = 1, $see_set = 1) : ($may_see = 0, $see_set = 1);
             } else {
                 # Root categories get added to category_group_permission
                 $sth_add_group_perm->execute($category_id, $group_id) unless ($parent_id);
