@@ -136,7 +136,7 @@ sub create {
     my $title = $query->param('title');
     my $slug = $query->param('slug');
     my $category_id = $query->param('category_id');
-    my $cover_date = decode_date(name=>'cover_date');
+    my $cover_date = decode_date(name=>'cover_date', query=>$query);
 
     # detect bad fields
     my @bad;
@@ -687,7 +687,7 @@ sub _save {
         and not $query->param('find_story_link')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug');
-        my $cover_date = decode_date(name=>'cover_date');
+        my $cover_date = decode_date(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
         my @bad;
@@ -901,50 +901,122 @@ sub find {
     my $self = shift;
 
     my $q = $self->query();
-    my $template = $self->load_tmpl('find.tmpl', associate=>$q);
-
-    my $search_filter = $q->param('search_filter');
-    $search_filter = '' unless (defined($search_filter));
+    my %tmpl_data = ();
 
     # Search mode
-    my $show_advanced_search = $q->param('show_advanced_search');
     my $do_advanced_search = $q->param('do_advanced_search');
 
-    # If we're showing an advanced search, set up the form
-    if ($show_advanced_search) {
-        $template->param(category_chooser => category_chooser(
-                                                              name => 'search_category',
-                                                              query => $q,
-                                                              formname => 'search_form',
-                                                             ));
+    # Set up persist_vars for pager
+    my %persist_vars = (
+                        rm => 'find',
+                        do_advanced_search => $do_advanced_search,
+                       );
+
+    # Set up find_params for pager
+    my %find_params = ();
+    if ($do_advanced_search) {
+
+        # Set up advanced search
+        my @auto_search_params = qw(
+                                    title
+                                    url
+                                    class 
+                                    below_category_id 
+                                    story_id
+                                    contrib_simple
+                                   );
+        for (@auto_search_params) {
+            my $key = $_;
+            my $val = $q->param("search_". $_);
+
+            # If no data, skip parameter
+            next unless (defined($val) && length($val));
+
+            # Persist parameter
+            $persist_vars{"search_". $_} = $val;
+
+            # Like search
+            if (grep {$_ eq $key} (qw/title url/)) {
+                $key .= '_like';
+                $val =~ s/\W+/\%/g;
+                $val = "\%$val\%";
+            }
+
+            # Set up search in pager
+            $find_params{$key} = $val;
+        }
+
+        # Set up cover and publish date search
+        for my $datetype (qw/cover publish/) {
+            my $from = decode_date(query=>$q, name => $datetype .'_from');
+            my $to =   decode_date(query=>$q, name => $datetype .'_to');
+            if ($from || $to) {
+                my $key = $datetype .'_date';
+                my $val = [$from, $to];
+            
+                # Set up search in pager
+                $find_params{$key} = $val;
+            }
+
+            # Persist parameter
+            for my $interval (qw/month day year/) {
+                my $from_pname = $datetype .'_from_'. $interval;
+                my $to_pname = $datetype .'_to_'. $interval;
+
+                # Only persist date vars if they are complete and valid
+                if ($from) {
+                    my $from_pname = $datetype .'_from_'. $interval;
+                    $persist_vars{$from_pname} = $q->param($from_pname);
+                } else {
+                    # Blow away var
+                    $q->delete($from_pname);
+                }
+
+                if ($to) {
+                    $persist_vars{$to_pname} = $q->param($to_pname);
+                } else {
+                    # Blow away var
+                    $q->delete($to_pname);
+                }
+            }
+
+        }
+
+        # If we're showing an advanced search, set up the form
+        $tmpl_data{category_chooser} = category_chooser(
+                                                        name => 'search_below_category_id',
+                                                        query => $q,
+                                                        formname => 'search_form',
+                                                       );
 
         # Date choosers
-        $template->param(date_chooser_cover_from   => date_chooser(query=>$q, name=>'cover_from', nochoice=>1));
-        $template->param(date_chooser_cover_to     => date_chooser(query=>$q, name=>'cover_to', nochoice=>1));
-        $template->param(date_chooser_publish_from => date_chooser(query=>$q, name=>'publish_from', nochoice=>1));
-        $template->param(date_chooser_publish_to   => date_chooser(query=>$q, name=>'publish_to', nochoice=>1));
+        $tmpl_data{date_chooser_cover_from}   = date_chooser(query=>$q, name=>'cover_from', nochoice=>1);
+        $tmpl_data{date_chooser_cover_to}     = date_chooser(query=>$q, name=>'cover_to', nochoice=>1);
+        $tmpl_data{date_chooser_publish_from} = date_chooser(query=>$q, name=>'publish_from', nochoice=>1);
+        $tmpl_data{date_chooser_publish_to}   = date_chooser(query=>$q, name=>'publish_to', nochoice=>1);
 
         # Story class
         my @classes = grep { $_ ne 'category' } Krang::ElementLibrary->top_levels;
         my %class_labels = map {
             $_ => Krang::ElementLibrary->top_level(name => $_)->display_name()
         } @classes;
-        $template->param(search_class_chooser => scalar($q->popup_menu(-name      => 'search_class',
-                                                                       -default   => '',
-                                                                       -values    => [ ('', @classes) ],
-                                                                       -labels    => \%class_labels)));    
+        $tmpl_data{search_class_chooser} = scalar($q->popup_menu(-name      => 'search_class',
+                                                                 -default   => '',
+                                                                 -values    => [ ('', @classes) ],
+                                                                 -labels    => \%class_labels));
+    } else {
+        # Set up simple search
+        my $search_filter = $q->param('search_filter');
+        $search_filter = '' unless (defined($search_filter));
+        $find_params{simple_search} = $search_filter;
+        $persist_vars{search_filter} = $search_filter;
     }
 
     my $pager = Krang::HTMLPager->new(
                                       cgi_query => $q,
-                                      persist_vars => {
-                                                       rm => 'find',
-                                                       show_advanced_search => $show_advanced_search,
-                                                       do_advanced_search => $do_advanced_search,
-                                                       search_filter => $search_filter,
-                                                      },
+                                      persist_vars => \%persist_vars,
                                       use_module => 'Krang::Story',
-                                      find_params => { simple_search => $search_filter },
+                                      find_params => \%find_params,
                                       columns => [qw(
                                                      pub_status 
                                                      story_id 
@@ -974,6 +1046,9 @@ sub find {
                                       id_handler => sub { return $_[0]->story_id },
                                      );
 
+    # Set up output
+    my $template = $self->load_tmpl('find.tmpl', associate=>$q);
+    $template->param(%tmpl_data);
     $template->param(pager_html => $pager->output());
     $template->param(row_count => $pager->row_count());
 

@@ -32,7 +32,7 @@
 
   function show_advanced_search (show_advanced) {
     var myform = document.krang_pager_form;
-    myform.show_advanced_search.value = show_advanced;
+    myform.do_advanced_search.value = show_advanced;
     myform.submit();
   }
 
@@ -52,11 +52,68 @@
 <input type="hidden" name="return_params" value="rm">
 <input type="hidden" name="return_params" value="find">
 
-<input type="hidden" name="return_params" value="search_filter">
-<input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_filter>">
+<tmpl_if do_advanced_search>
+  <input type="hidden" name="return_params" value="search_title">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_title>">
 
-<input type="hidden" name="return_params" value="show_advanced_search">
-<input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML show_advanced_search>">
+  <input type="hidden" name="return_params" value="search_url">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_url>">
+
+  <input type="hidden" name="return_params" value="search_cover_from_day">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_cover_from_day>">
+
+  <input type="hidden" name="return_params" value="search_cover_from_month">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_cover_from_month>">
+
+  <input type="hidden" name="return_params" value="search_cover_from_year">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_cover_from_year>">
+
+  <input type="hidden" name="return_params" value="search_cover_to_day">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_cover_to_day>">
+
+  <input type="hidden" name="return_params" value="search_cover_to_month">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_cover_to_month>">
+
+  <input type="hidden" name="return_params" value="search_cover_to_year">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_cover_to_year>">
+
+  <input type="hidden" name="return_params" value="search_publish_from_day">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_publish_from_day>">
+
+  <input type="hidden" name="return_params" value="search_publish_from_month">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_publish_from_month>">
+
+  <input type="hidden" name="return_params" value="search_publish_from_year">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_publish_from_year>">
+
+  <input type="hidden" name="return_params" value="search_publish_to_day">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_publish_to_day>">
+
+  <input type="hidden" name="return_params" value="search_publish_to_month">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_publish_to_month>">
+
+  <input type="hidden" name="return_params" value="search_publish_to_year">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_publish_to_year>">
+
+  <input type="hidden" name="return_params" value="search_class">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_class>">
+
+  <input type="hidden" name="return_params" value="search_story_id">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_story_id>">
+
+  <input type="hidden" name="return_params" value="search_contrib_simple">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_contrib_simple>">
+
+  <input type="hidden" name="return_params" value="search_below_category_id">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_below_category_id>">
+
+<tmpl_else>
+
+  <input type="hidden" name="return_params" value="search_filter">
+  <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML search_filter>">
+
+</tmpl_if>
+
 
 <input type="hidden" name="return_params" value="do_advanced_search">
 <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML do_advanced_search>">
@@ -74,18 +131,6 @@
 <input type="hidden" name="return_params" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 <!-- END Set up view mode return -->
 
-
-<!-- Search -->
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<input type="hidden" name="show_advanced_search" value="<tmpl_var ESCAPE=HTML show_advanced_search>">
-<input type="hidden" name="do_advanced_search" value="<tmpl_var ESCAPE=HTML do_advanced_search>">
-
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
 </form>
 
 <div class=dark-bar>Find Story</div>
@@ -97,10 +142,9 @@
 <tr><td class="form-head">
 SEARCH 
 
-<tmpl_if show_advanced_search>
+<tmpl_if do_advanced_search>
 
   (<a href="javascript:show_advanced_search('0')">Simple Search</a>)
-  <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
   <input type="hidden" name="do_advanced_search" value="1">
   </td></tr>
 
@@ -115,27 +159,7 @@ SEARCH
 
       <tr>
         <td colspan="2">URL:</td>
-        <td colspan="3"><input size="40" type="textfield" name="search_urls" value="<tmpl_var escape=HTML search_urls>"></td>
-      </tr>
-
-      <tr>
-        <td colspan="2">Story Type:</td>
-        <td colspan="3"><tmpl_var search_class_chooser></td>
-      </tr>
-
-      <tr>
-        <td colspan="2">Site/Category:</td>
-        <td colspan="3"><tmpl_var category_chooser></td>
-      </tr>
-
-      <tr>
-        <td colspan="2">Story ID:</td>
-        <td colspan="3"><input size="40" type="textfield" name="search_story_id" value="<tmpl_var escape=HTML search_story_id>"></td>
-      </tr>
-
-      <tr>
-        <td colspan="2">Contributor:</td>
-        <td colspan="3"><input size="40" type="textfield" name="search_contribs" value="<tmpl_var escape=HTML search_contribs>"></td>
+        <td colspan="3"><input size="40" type="textfield" name="search_url" value="<tmpl_var escape=HTML search_url>"></td>
       </tr>
 
       <tr>
@@ -155,6 +179,26 @@ SEARCH
       </tr>
 
       <tr>
+        <td colspan="2">Story Type:</td>
+        <td colspan="3"><tmpl_var search_class_chooser></td>
+      </tr>
+
+      <tr>
+        <td colspan="2">Story ID:</td>
+        <td colspan="3"><input size="40" type="textfield" name="search_story_id" value="<tmpl_var escape=HTML search_story_id>"></td>
+      </tr>
+
+      <tr>
+        <td colspan="2">Contributor:</td>
+        <td colspan="3"><input size="40" type="textfield" name="search_contrib_simple" value="<tmpl_var escape=HTML search_contrib_simple>"></td>
+      </tr>
+
+      <tr>
+        <td colspan="2">Site/Category:</td>
+        <td colspan="3"><tmpl_var category_chooser></td>
+      </tr>
+
+      <tr>
         <td colspan="2"></td>
         <td colspan="3"><input type="button" value="Clear" onClick="clear_advanced_search()">&nbsp;<input type="submit" value="Search"></td>
       </tr>
@@ -170,13 +214,15 @@ SEARCH
   <input type="submit" value="Search">
   </td></tr>
 
+  <!-- Search -->
+  <input type="hidden" name="do_advanced_search" value="<tmpl_var ESCAPE=HTML do_advanced_search>">
+
 </tmpl_if>
 
 
 
 
 <input type="hidden" name="rm" value="find">
-<input type="hidden" name="show_advanced_search" value="<tmpl_var ESCAPE=HTML show_advanced_search>">
 
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="">
