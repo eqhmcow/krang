@@ -1013,6 +1013,13 @@ sub _write_media {
                                                );
     }
 
+    # update published_version
+    $media->checkout if (not ($media->checked_out));
+    $media->published_version( $media->version );
+    my $t = localtime;
+    $media->publish_date( $t );
+    $media->save( keep_version => 1 );
+                                                                                
     # check media back in.
     if ($media->checked_out()) { $media->checkin(); }
 
