@@ -12,13 +12,20 @@ use Time::Piece;
 sub new {
     my $pkg = shift;
     my %args = ( 
-                default => Time::Piece->new(),
                 start_year => localtime()->year - 30,
                 end_year => localtime()->year + 10,
                 @_
                );
     
     return $pkg->SUPER::new(%args);
+}
+
+sub default {
+    my $self = shift;
+    $self->{default} = shift if @_;
+
+    return $self->{default} if exists $self->{default};
+    Time::Piece->new();
 }
 
 sub input_form {
