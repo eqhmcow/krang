@@ -98,7 +98,7 @@ sub input_form {
 </script>
 $field_html
 <div id="${param}_add_${index}_span"></div>
-<input type=button class=button value="Add More" onclick="add_more_$jparam('$param')">
+<input type="button" class="button" value="Add More" onclick="add_more_$jparam('$param')">
 END
 
     # debug $html;

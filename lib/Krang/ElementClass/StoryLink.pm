@@ -39,6 +39,7 @@ sub input_form {
     $html .= scalar $query->button(-name    => "find_story_$param",
                                    -value   => "Find Story",
                                    -onClick => "find_story('$param')",
+				   -class   => "button",
                                   );
     return $html;
 }
