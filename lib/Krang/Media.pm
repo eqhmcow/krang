@@ -22,7 +22,7 @@ use File::Temp qw/ tempdir /;
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
-use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes version url alt_tag published_version published_date checked_out_by);
+use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag published_version published_date checked_out_by);
 use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x-bmp);
 
 # setup exceptions
@@ -199,7 +199,7 @@ Date the media object was created.  Defaults to current time unless set.
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
-    get_set       => [ qw( title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename url ) ],
+    get_set       => [ qw( title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename ) ],
     get => [ qw( media_id creation_date published_date) ];
 
 sub init {
@@ -483,10 +483,7 @@ sub save {
     my $root = KrangRoot;
     my $media_id;
 
-    # calculate url
-    my $url =
-      (Krang::Category->find(category_id => $self->{category_id}))[0]->url();
-    $self->{url} = _build_url($url, $self->{filename});
+    $self->{url} = $self->url();
 
     # check for duplicate url and throw an exception if one found
     my $dup_media_id = $self->duplicate_check();
@@ -1028,19 +1025,20 @@ sub checkin {
 
 }
 
-=item $media = $media->update_url( $url );
+=item $media = $media->url();
 
-Method called on object to propagate changes to parent category's 'url'.
+Returns calculated url of media object based on category_id and filename
 
 =cut
 
-sub update_url {
-    my ($self, $url) = @_;
-    $self->{url} = _build_url($url, $self->{filename});
-    return $self;
+sub url {
+    my $self= shift;
+    
+    # calculate url
+    my $url =
+      (Krang::Category->find(category_id => $self->{category_id}))[0]->url();
+    return catdir($url, $self->{filename});
 }
-
-sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url;}
 
 =item $media_id = $media->duplicate_check()
 
@@ -1056,7 +1054,7 @@ sub duplicate_check {
     my $query = <<SQL;
 SELECT media_id
 FROM media
-WHERE url = '$self->{url}'
+WHERE url = '$self->url'
 SQL
     $query .= "AND media_id != $id" if $id;
     my $dbh = dbh();
