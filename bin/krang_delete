@@ -201,7 +201,7 @@ if (@template_ids) {
 #### delete stories 
 
 if ($stories) {
-    @story_ids = Krang::Story->find( ids_only => 1 );
+    @story_ids = Krang::Story->find( ids_only => 1, show_hidden => 1);
 }
                                                                                 
 if (@story_ids) {
@@ -209,8 +209,8 @@ if (@story_ids) {
         
         my $exists;
         if (not $stories) {
-            $exists = Krang::Story->find( story_id => $id, ids_only => 1
-) || '';
+            $exists = Krang::Story->find(story_id => $id,
+                                         ids_only => 1 ) || '';
         } else {
             $exists = 1;
         }
