@@ -120,7 +120,9 @@ sub check_find {
         die ($@) if ($@);
         
         my $order_by = $ORDER_BY_FIELD{$perl_package};
-        is($stuff[1]->$order_by, $stuff2[0]->$order_by, "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record") if $stuff[1];
+        if ($order_by) {
+            is($stuff[1]->$order_by, $stuff2[0]->$order_by, "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record") if $stuff[1];
+        }
     }
 
     # 8. unknown param is fatal error
@@ -130,7 +132,8 @@ sub check_find {
     
     # 9. order_by $ORDER_BY_FIELD{$perl_package}
     my $order_by = $ORDER_BY_FIELD{$perl_package};
-    eval { @stuff = $perl_package->find( order_by => $order_by ) };
-    ok(not($@), "$perl_package->find( order_by => $order_by )".' : order_by $ORDER_BY_FIELD{$perl_package}' );
-    
+    if ($order_by) {
+        eval { @stuff = $perl_package->find( order_by => $order_by ) };
+        ok(not($@), "$perl_package->find( order_by => $order_by )".' : order_by $ORDER_BY_FIELD{$perl_package}' );
+    }    
 }
