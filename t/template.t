@@ -29,13 +29,6 @@ $tmpl->content('<tmpl_var content>');
 my $content2 = $tmpl->content();
 is($content2, '<tmpl_var content>', 'Getter/Setter Test');
 
-#$tmpl->content(<<JUNK);
-#<html>
-#  <head><title>This Is Only A Test!!!</title></head>
-#  <body><h1>See the title.</h1></body>
-#</html>
-#JUNK
-
 # increment version
 $tmpl->save();
 is($tmpl->version(), 2, 'Version Check 2');
