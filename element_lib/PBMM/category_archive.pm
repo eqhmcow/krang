@@ -148,7 +148,7 @@ sub fill_template {
                             contrib_loop => [@contributors],
                             cover_date => $s->cover_date->strftime('%b %e, %Y') } ); 
 
-        if ($story_count == 10) {
+        if ($story_count == $args{element}->child('leadins_per_page')->data) {
             push (@page_loop, { page_count => ++$page_count, story_loop => [@story_loop] } );
             @story_loop = ();
             $story_count = 0;
@@ -158,7 +158,7 @@ sub fill_template {
 
     if ($story_count) {
         push (@page_loop, { page_count => ++$page_count, story_loop => [@story_loop] } );
-        push (@pnums, {page_number => $page_count } );
+        push (@pnums, {page_number => ($page_count-1) ? ($page_count-1) : ''} );
     }
         
     if ($page_count > 1) {
