@@ -188,8 +188,18 @@ $m2->save();
 # check version number
 is ($m2->version(), 3);
 
+# test that checked_out and checked_out_by return that the stuff is out.
+is($m2->checked_out, 1, 'Krang::Media->checked_out');
+ok(($m2->checked_out_by > 0), 'Krang::Media->checked_out_by');
+
 # checkin
 $m2->checkin();
+
+# test that checkin is working properly - should return that it is not checked out.
+is($m2->checked_out, undef, 'Krang::Media->checked_out');
+is($m2->checked_out_by, undef, 'Krang::Media->checked_out_by');
+
+
 
 
 # test mark_as_published
