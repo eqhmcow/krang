@@ -37,7 +37,7 @@ BEGIN {
     die <<"END" if $@;
 ######################################################################
 
-Cannot load Krang.  Do you need to set KRANG_ROOT?
+Cannot load Krang.
 
 Error message:
 
