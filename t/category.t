@@ -71,7 +71,7 @@ is($category->url() =~ /$dir/, 1, 'url()');
 
 is($category->element_id(), $element1->element_id(), 'element_id');
 
-#END {$element1->delete()};
+END {$element1->delete()};
 
 
 # dir()
