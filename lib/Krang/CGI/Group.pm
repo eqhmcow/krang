@@ -59,6 +59,7 @@ use constant GROUP_PROTOTYPE => {
                                  categories          => {},
                                  desks               => {},
                                  may_publish         => 1,
+                                 may_checkin_all     => 1,
                                  admin_users         => 1,
                                  admin_users_limited => 1,
                                  admin_groups        => 1,
@@ -870,6 +871,7 @@ sub get_group_tmpl {
         }
 
         if (grep { $gf eq $_} qw( may_publish
+                                  may_checkin_all
                                   admin_users
                                   admin_users_limited
                                   admin_groups

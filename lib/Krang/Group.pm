@@ -23,6 +23,7 @@ Krang::Group - Interface to manage Krang permissions
                                                  2 => 'edit', 
                                                  23 => 'hide' },
                                  may_publish         => 1,
+                                 may_checkin_all     => 1,
                                  admin_users         => 1,
                                  admin_users_limited => 1,
                                  admin_groups        => 1,
@@ -67,6 +68,7 @@ Krang::Group - Interface to manage Krang permissions
   # Accessors/Mutators
   my $name             = $group->name();
   my $may_publish      = $group->may_publish();
+  my $may_checkin_all  = $group->may_checkin_all();
   my $admin_users      = $group->admin_users();
   my $admin_users_limited = $group->admin_users_limited();
   my $admin_groups     = $group->admin_groups();
@@ -129,6 +131,7 @@ use Exception::Class ( 'Krang::Group::DuplicateName' => { fields => [ 'group_id'
 # Database fields in table group_permission, asidde from group_id
 use constant FIELDS => qw( name
                            may_publish
+                           may_checkin_all
                            admin_users
                            admin_users_limited
                            admin_groups
@@ -171,6 +174,7 @@ In addition to these properties, the following properties may be
 specified using Boolean (1 or 0) values:
 
   * may_publish
+  * may_checkin_all
   * admin_users
   * admin_users_limited
   * admin_groups
@@ -190,6 +194,7 @@ sub init {
     my %defaults = (
                     name => "",
                     may_publish         => 0,
+                    may_checkin_all     => 0,
                     admin_users         => 0,
                     admin_users_limited => 0,
                     admin_groups        => 0,
@@ -856,6 +861,7 @@ allowed to use that particular function.  Following is the list of
 functions:
 
   may_publish
+  may_checkin_all
   admin_users
   admin_users_limited
   admin_groups
@@ -871,6 +877,7 @@ a "most privilege" algorithm.  In other words, if a user is
 assigned to the following groups:
 
    Group A => may_publish         => 1
+              may_checkin_all     => 0
               admin_users         => 1
               admin_users_limited => 1
               admin_groups        => 0
@@ -882,6 +889,7 @@ assigned to the following groups:
 
 
    Group B => may_publish         => 0
+              may_checkin_all     => 1
               admin_users         => 1
               admin_users_limited => 0
               admin_groups        => 1
@@ -894,6 +902,7 @@ assigned to the following groups:
 In this case, the resultant permissions for this user will be:
 
    may_publish         => 1
+   may_checkin_all     => 1
    admin_users         => 1
    admin_users_limited => 0
    admin_groups        => 1

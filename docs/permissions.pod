@@ -94,6 +94,11 @@ system.
 Publish stories and media to the live server.
 
 
+=item * May check-in all (may_checkin_all)
+
+Check in objects checked out by any other user.
+
+
 =item * Manage users (admin_users)
 
 Add, edit, or delete users.

@@ -52,6 +52,7 @@ my %test_params = ( name => 'Car Editors',
                                              23 => 'hide' },
                     desks               => { },
                     may_publish         => 1,
+                    may_checkin_all     => 1,
                     admin_users         => 1,
                     admin_users_limited => 1,
                     admin_groups        => 1,
@@ -80,6 +81,7 @@ like($@, qr(Can't locate object method "no_such_param" via package "Krang::Group
 # Test scalar methods
 my @scalar_params = qw( name
                         may_publish
+                        may_checkin_all
                         admin_users
                         admin_users_limited
                         admin_groups
