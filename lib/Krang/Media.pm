@@ -1381,33 +1381,29 @@ sub delete {
     my $self = shift;
     my $media_id = shift;
 
+    my $is_object = $media_id ? 0 : 1;
+   
+    $self = (Krang::Media->find(media_id => $media_id))[0] if $media_id; 
+   
+    croak("No media_id specified for delete!") if not $self->{media_id};
+ 
     # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->{media_id} )
         unless ($self->may_edit);
 
     my $dbh = dbh;
     my $root = KrangRoot;
 
-    my $is_object = $media_id ? 0 : 1;
-
-    $media_id = $self->{media_id} if (not $media_id);
-  
-    $is_object ? $self->checkout() : Krang::Media->checkout($media_id);
+    $self->checkout();
      
-    croak("No media_id specified for delete!") if not $media_id;
-
     # first delete history for this object
-    if ($is_object) {
-        Krang::History->delete(object => $self);
-    } else {
-        Krang::History->delete( object => ((Krang::Media->find(media_id => $media_id))[0]) );
-    }
+    Krang::History->delete(object => $self);
 
-    my $file_dir = $is_object ? catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path) : catdir($root,'data','media',Krang::Conf->instance,(Krang::Media->find(media_id => $media_id))[0]->_media_id_path);
+    my $file_dir = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path);
 
-    $dbh->do('DELETE from media where media_id = ?', undef, $media_id); 
-    $dbh->do('DELETE from media_version where media_id = ?', undef, $media_id); 
-    $dbh->do('delete from media_contrib where media_id = ?', undef, $media_id);
+    $dbh->do('DELETE from media where media_id = ?', undef, $self->{media_id}); 
+    $dbh->do('DELETE from media_version where media_id = ?', undef, $self->{media_id}); 
+    $dbh->do('delete from media_contrib where media_id = ?', undef, $self->{media_id});
 
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
 

@@ -215,7 +215,7 @@ is($temp_media[0]->title, $m2->title);
 #is($temp_media[0]->title, $media->title);
 
 # delete it now
-$m2->delete();
+Krang::Media->delete($m2->media_id);
 
 # delete other media object also
 $medias[1]->delete();
