@@ -51,7 +51,7 @@ END
 use Term::Prompt qw(prompt);
 BEGIN {
     exit 1      
-      unless prompt("y", "This program will drop and recreate all Krang databases for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
+      unless prompt("y", "This program will drop and recreate all Krang databases (including content of data/*) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
 }
 
 
@@ -61,3 +61,7 @@ foreach my $instance (Krang::Conf->instances()) {
     Krang::Conf->instance($instance);
     create_db();
 }
+
+# Blow away data/*
+my $datadir = catfile($ENV{KRANG_ROOT}, "data", "*");
+system("rm -rf $datadir");
