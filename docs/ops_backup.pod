@@ -47,9 +47,11 @@ normal install:
 
   $ bin/krang_install --FromBackup mybackup.kba --InstallPath /path/to/krang
 
-If you're restoring onto a different machine then you'll need to edit
-C</path/to/krang/conf/krang.conf> after installation is complete to
-correct the C<HostName> and IP address settings.
+If you're restoring onto a different machine then you'll need to
+supply correct HostName and IPAddress settings on the command line:
+
+  $ bin/krang_install --FromBackup mybackup.kba --InstallPath /path/to/krang \
+                      --IPAddress 127.0.0.1  --HostName localhost.localdomain
 
 C<krang_install> will automatically call C<krang_uninstall> if the
 target C<InstallPath> already exists, so this procedure can be used to
