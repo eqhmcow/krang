@@ -9,11 +9,11 @@ Group                <tmpl_var KrangGroup>
 KeepAlive            Off
 MaxKeepAliveRequests 100
 KeepAliveTimeout     15
-MinSpareServers      2
-MaxSpareServers      6
-StartServers         2
+MinSpareServers      5
+MaxSpareServers      10
+StartServers         5
 MaxClients           150
-MaxRequestsPerChild  0
+MaxRequestsPerChild  100
 ErrorLog             <tmpl_var KrangRoot>/logs/apache_error_log
 LogFormat            "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-Agent}i\"" combined
 CustomLog            <tmpl_var KrangRoot>/logs/apache_access_log combined
