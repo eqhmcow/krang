@@ -654,6 +654,7 @@ sub fill_template {
         my $name     = $child->name;
         my $loopname = $name . '_loop';
         my $html;
+        my %fill_template_args;
 
         # skip this child unless something in the template references
         # it!  e.g. it exists in element loop, a name_loop, or
@@ -662,16 +663,18 @@ sub fill_template {
                      exists($template_vars{$loopname}) ||
                      (exists($template_vars{$name}) && !exists($params{$name})));
 
+        # Pass pagination variables along to child->publish if the
+        # child element is pageable (e.g. is used for determining what
+        # constitutes a page).
         if ($child->pageable) {
-            my $pagination = $self->_build_pagination_vars(page_list => \@page_urls,
-                                                           page_num => $page_number);
-            # publish the element - put the results in all the various loops.
-            $html = $child->publish(publisher => $publisher, fill_template_args => $pagination);
-            # increment the page number.
-            $page_number++;
-        } else {
-            $html = $child->publish(publisher => $publisher);
+            my $pagination_info = $self->_build_pagination_vars(page_list => \@page_urls,
+                                                                page_num => $page_number++);
+
+            map { $fill_template_args{$_} = $pagination_info->{$_} } keys %{$pagination_info};
+
         }
+
+        $html = $child->publish(publisher => $publisher, fill_template_args => \%fill_template_args);
 
         # build element_loop if it exists.
         if (exists($template_vars{element_loop})) {
