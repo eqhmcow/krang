@@ -224,6 +224,8 @@ sub init {
     my %args = @_;
     my @bad_args;
 
+    my $encrypted = delete $args{encrypted} || '';
+
     for (keys %args) {
         push @bad_args, $_ unless exists $user_args{$_};
 
@@ -240,7 +242,7 @@ sub init {
     $self->hash_init(%args);
 
     # set password
-    $self->password($args{password});
+    $self->password($args{password}, $encrypted);
 
     return $self;
 }
@@ -640,21 +642,23 @@ sub find {
 
 =item * $md5_digest = Krang::User->password( $password )
 
+=item * $md5_digest = Krang::User->password( $password, 1 )
+
 Method to get or set the password associated with a user object.  Returns
 Digest::MD5->md5( $SALT . $password_string ) as a getter. Stores the same
 in the DB as a setter. As a class method it returns an md5 digest of its
-argument.
+argument. If a true argument is passed in after the first 'password' arg,
+the password is not encrypted (assumed to be already).
 
 =cut
 
 sub password {
     my $self = shift;
     return $self->{password} unless @_;
-    my $pass = md5_hex($SALT, $_[0]);
+    my $pass = $_[1] ? $_[0] : md5_hex($SALT, $_[0]);
     $self->{password} = $pass if ((ref $self) && $pass);
     return $pass;
 }
-
 
 =item * $user = $user->save()
 
@@ -764,6 +768,80 @@ sub _validate_group_ids {
                                       group_id => \@bad_groups ) if @bad_groups;
 }
 
+=item $user->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+    
+    # open up <template> linked to schema/template.xsd
+    $writer->startTag('user',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'user.xsd');
+
+    $writer->dataElement( user_id => $self->{user_id} );
+    $writer->dataElement( login => $self->{login} );
+    $writer->dataElement( password => $self->{password} );
+    $writer->dataElement( first_name => $self->{first_name} );
+    $writer->dataElement( last_name => $self->{last_name} );
+    $writer->dataElement( email => $self->{email} );
+    $writer->dataElement( phone => $self->{phone} );
+    $writer->dataElement( mobile_phone => $self->{mobile_phone} );
+
+    my $group_ids = $self->{group_ids};
+    foreach my $group_id ( @$group_ids ) {
+        $writer->dataElement( group_id => $group_id );
+    } 
+
+    # all done
+    $writer->endTag('user');
+}
+
+=item C<< $user = Krang::User->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming user has the same login as an existing user then an
+update will occur, unless no_update is set.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    my %fields = map { ($_,1) } USER_RW;
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml,
+                                  suppressempty => 1);
+    
+    # is there an existing object?
+    my $user = (Krang::User->find(login => $data->{login}))[0] || '';
+
+    if ($user) {
+        debug (__PACKAGE__."->deserialize_xml : found user");
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A user object with the login '$data->{login}' already ".                       "exists and no_update is set.")
+            if $no_update;
+        
+        # update simple fields
+        $user->{$_} = $data->{$_} for keys %fields;
+        $user->password($data->{password}, 1);     
+    } else {
+        $user = Krang::User->new ( password => $data->{password}, encrypted => 1, (map { ($_,$data->{$_}) } keys %fields));
+    }
+
+    $user->save;
+}
 
 =back
 
