@@ -179,8 +179,9 @@ input[type="reset"] {
   background-color: #dbe9f4;
   color:            #333333;
   padding-left:     10px;
-  padding-top:      1px;
+  padding-top:      1px; 
   padding-bottom:   1px;
+  margin-top:       2px;
 }
 
 .nav3 {
