@@ -83,9 +83,12 @@ sub update_prefs {
     my $self = shift;
     my $q = $self->query();
 
-    # update search_page_size
-    Krang::MyPref->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size");
-    
+    my $set_sps = Krang::MyPref->get('search_page_size');
+    if ($set_sps ne  $q->param('search_results_page')) {
+        # update search_page_size
+        Krang::MyPref->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size");
+    } 
+
     if ($q->param('new_password')) {
         my $user_id = $ENV{REMOTE_USER};
         my $user = (Krang::User->find( user_id => $user_id ))[0];
