@@ -31,7 +31,7 @@ END { $subcat->delete() }
 my $subcat_id = $subcat->category_id();
 
 # create new media object
-my $media = Krang::Media->new(title => 'test media object', category_id => $category_id);
+my $media = Krang::Media->new(title => 'test media object', category_id => $category_id, media_type_id => 1);
 isa_ok($media, 'Krang::Media');
 
 # upload media file
@@ -99,7 +99,7 @@ ok(-f $copy->file_path);
 $fh = new FileHandle $filepath;
 
 # create another media object
-my $media2 = Krang::Media->new(title => 'test media object 2', category_id => $subcat_id, filename => 'krang.jpg', filehandle => $fh);
+my $media2 = Krang::Media->new(title => 'test media object 2', category_id => $subcat_id, filename => 'krang.jpg', filehandle => $fh, media_type_id => 1);
 isa_ok($media2, 'Krang::Media');
 
 # add 2 contributors to media
@@ -264,7 +264,8 @@ $medias[1]->delete();
                                   title => 'Root Cat media', 
                                   category_id => $ptest_root_cat->category_id(), 
                                   filename => 'krang.jpg', 
-                                  filehandle => $fh
+                                  filehandle => $fh,
+                                  media_type_id => 1
                                  );
     $media->save();
     my @medias = ($media);
@@ -284,7 +285,8 @@ $medias[1]->delete();
                                       title => $_ .' media', 
                                       category_id => $newcat->category_id(), 
                                       filename => 'krang.jpg', 
-                                      filehandle => $fh
+                                      filehandle => $fh,
+                                      media_type_id => 1
                                      );
         $media->save();
         push(@medias, $media);
@@ -326,7 +328,8 @@ $medias[1]->delete();
     $tmp = Krang::Media->new( title => "No media", 
                               category_id => $ptest_cat_id, 
                               filename => 'krang.jpg', 
-                              filehandle => $fh );
+                              filehandle => $fh,
+                              media_type_id => 1 );
     eval { $tmp->save() };
     isa_ok($@, "Krang::Media::NoCategoryEditAccess", "save() to read-only category throws exception");
 

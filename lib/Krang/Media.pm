@@ -613,6 +613,10 @@ sub save {
                                       media_id => $dup_media_id)
         if $dup_media_id;
 
+    # croak if media_type_id not defined
+    croak('media_type_id must be set before saving media object!') unless $self->{media_type_id};
+
+
     # if this is not a new media object
     if (defined $self->{media_id}) {
         $media_id = $self->{media_id}; 
