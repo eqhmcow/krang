@@ -285,7 +285,10 @@ sub check_prereqs {
     if (-e $InstallPath) {
         if (-e catfile($InstallPath,'bin','krang_uninstall')) {
              exit_error("Will not proceed due to existing krang install.") unless prompt("y", "InstallPath '$InstallPath' already exists and seems to contain an existing Krang instance.\nThis program must totally and permanently remove this krang installation in order to proceed.\n\nIs this what you really want to do?", "y/n", "n");
-            system(catfile($InstallPath,'bin','krang_uninstall'));
+            my $real_krang_root = $ENV{KRANG_ROOT};
+            $ENV{KRANG_ROOT} = $InstallPath;
+            system(catfile($InstallPath,'bin','krang_uninstall').' --no_prompt --verbose');
+            $ENV{KRANG_ROOT} = $real_krang_root;
         } else { 
             exit_error("InstallPath '$InstallPath' already exists and does not appear to belong to an existing krang instance.  Cannot continue.");
         }
