@@ -94,8 +94,10 @@ serve the live and preview sites:
 Of course, you'll probably want to put access control on your preview
 server to keep non-editors out, but that is beyond the scope of this
 document.  For more information on configuring Apache see
-http://httpd.apache.org .  Of course, you're not limited to using
-Apache to serve Krang-generated content.  Any web server will work!
+http://httpd.apache.org .  
+
+You're not limited to using Apache to serve Krang-generated content.
+Any web server will work.
 
 =head2 Testing Your Site Setup
 
@@ -128,7 +130,7 @@ that user and try to C<touch> a file in the path.  For example, to
 test if the C<krang> user can write to F</www/foo>:
 
   su krang
-  touch /www/foo
+  touch /www/foo/test
 
 If this returns an error message you know you have a file permission
 problem, and you'll need to fix it using C<chown> and/or C<chmod>.
@@ -142,6 +144,8 @@ is finding the right server, any remaining problems are likely in the
 preview or publish server itself.  Confirm that it's looking in the
 right place for its documents and that it's configured to serve URLs
 setup in Krang.
+
+=back
 
 =head2 Adding Categories
 
