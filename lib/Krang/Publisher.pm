@@ -1008,7 +1008,11 @@ sub _build_story_single_category {
 
     # write additional content to disk
     foreach my $block (@$additional_content) {
-        push @paths, $self->_write_page(data     => $block->{content},
+        my $content = $block->{content};
+        if ($block->{use_category}) {
+            $content = $cat_header . $content . $cat_footer;
+        }
+        push @paths, $self->_write_page(data     => $content,
                                         filename => $block->{filename},
                                         story_id => $story->story_id,
                                         path     => $self->_determine_output_path(object => $story,
