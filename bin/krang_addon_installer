@@ -14,13 +14,6 @@ To install an addon into this Krang installation:
 
   bin/krang_addon_installer AddOnName-1.23.tar.gz
 
-Alternately, you may unpack the addon and call the installer from
-within the add-on directory:
-
-  tar zxvf AddOnName-1.23.tar.gz
-  cd AddOnName-1.23
-  bin/krang_addon_installer
-
 =head1 DESCRIPTION
 
 This script installs addon packages into Krang.  For instructions on
@@ -85,45 +78,69 @@ $@
 END
 }
 
+# process command options
+use Pod::Usage;
+use Getopt::Long;
+our ($help, $man, $force, $source);
+our $verbose;
+BEGIN {
+    $verbose = 0;
+    pod2usage(2) unless
+      GetOptions(help       => \$help,
+                 man        => \$man,
+                 'verbose+' => \$verbose,
+                 force      => \$force,
+                );
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+    
+    # get source arg
+    if (@ARGV == 1) {
+        $source = $ARGV[0];
+    } else {
+        pod2usage("Bad arguments to krang_addon_installer: '" . 
+                  join(' ', @ARGV) . "'\n");
+    }
+}
+
+# must open the input file before loading Krang::Script which will su
+# to KrangUser, who may not have permission to read the file.
+# parse options
+BEGIN {
+    if (-f $source) {
+        open(SOURCE, '<', $source) or die "Unable to open '$source': $!";
+    } else {
+        pod2usage("Unable to open source '$source', file does not exist.");
+    }
+}        
+
+
 # use first instance if one isn't set.  Addons are installation wide
 # anyway.
 BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
-
 use Krang::Script;
+
 use Krang::Conf qw(KrangRoot);
 use File::Copy qw(copy);
 use File::Path qw(mkpath);
-use Pod::Usage;
-use Getopt::Long;
-use File::Temp qw(tempdir);
+
+use File::Temp qw(tempdir tempfile);
 use Archive::Tar;
 use Config::ApacheFormat;
 use File::Find qw(find);
 use Krang::AddOn;
 use Krang;
 
-# parse options
-my ($help, $man, $force);
-my $verbose = 0;
-pod2usage(2) unless
-  GetOptions(help       => \$help,
-             man        => \$man,
-             'verbose+' => \$verbose,
-             force      => \$force,
-            );
-pod2usage(1)             if $help;
-pod2usage(-verbose => 2) if $man;
-
-# get source arg
-my $source;
-if (@ARGV == 1) {
-    $source = $ARGV[0];
-} elsif (@ARGV == 0) {
-    $source = '.';
-} else {
-    pod2usage("Bad arguments to krang_addon_installer: '" . 
-              join(' ', @ARGV) . "'\n");
-}
+# copy source file into someplace it can be read
+my ($fh, $tempfile) = tempfile(DIR => catdir(KrangRoot, 'tmp'),
+                               SUFFIX => 
+                               ($source =~ /\.gz$/ ? '.tar.gz' : '.tar'),
+                               CLEANUP => 1);
+while (<SOURCE>) { print $fh $_; }
+close SOURCE;
+close $fh;
+print STDERR "Copied '$source' to '$tempfile'.\n" if $verbose > 1;
+$source = $tempfile;
 
 # find addon dir, opening the tar file if needed
 _find_dir();
