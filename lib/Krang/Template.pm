@@ -81,7 +81,7 @@ use Krang::DB qw(dbh);
 use Krang::History qw(add_history);
 use Krang::Session qw(%session);
 use Krang::Site;
-
+use Krang::Log qw(debug);
 
 #
 # Package Variables
@@ -1000,6 +1000,103 @@ sub update_url {
     return $self;
 }
 
+
+=item $template->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+                                                                                       
+    # open up <template> linked to schema/template.xsd
+    $writer->startTag('template',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'template.xsd');
+
+    $writer->dataElement( template_id => $self->{template_id} );
+    $writer->dataElement( url => $self->{url} );
+    $writer->dataElement( element_class_name => $self->{element_class_name} );
+    $writer->dataElement( category_id => $self->{category_id} );
+    $writer->dataElement( content => $self->{content} );
+    $writer->dataElement( creation_date => $self->{creation_date}->datetime );
+    $writer->dataElement( deploy_date => $self->{deploy_date}->datetime ) if $self->{deploy_date};
+    $writer->dataElement( deployed_version => $self->{deployed_version} ) if $self->{deployed_version};
+    $writer->dataElement( filename => $self->{filename} );
+    $writer->dataElement( version => $self->{version} );
+
+    # add category to set
+    $set->add(object => $self->category, from => $self);
+
+    # all done
+    $writer->endTag('template');
+}
+
+=item C<< $template = Krang::Media->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming template has the same URL as an existing template then an
+update will occur, unless no_update is set.
+
+Note that the creation_date, version, deploy_date, deployed_version
+fields are ignored when importing templates.
+
+=cut
+                                         
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # divide FIELDS into simple and complex groups
+    my (%complex, %simple);
+
+    # strip out all fields we don't want updated or used.
+    @complex{qw(template_id deploy_date creation_date url checked_out checked_out_by 
+                version deployed testing deployed_version category_id)} = ();
+    %simple = map { ($_,1) } grep { not exists $complex{$_} } (TEMPLATE_RO,TEMPLATE_RW, 'element_class_name');
+ 
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml,
+                                  suppressempty => 1);
+   
+    # is there an existing object?
+    my $template = (Krang::Template->find(url => $data->{url}))[0] || '';
+    my $updated;
+    if ($template) {
+
+         debug (__PACKAGE__."->deserialize_xml : found template");
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A template object with the url '$data->{url}' already ".
+                       "exists and no_update is set.")
+            if $no_update;
+       
+        $updated = 1; 
+
+        $template->checkout;
+
+        # update simple fields
+        $template->{$_} = $data->{$_} for keys %simple;
+    
+    } else {
+        # create a new template object with category and simple fields
+        $template = Krang::Template->new(category_id =>
+                                   $set->map_id(class => "Krang::Category",
+                                                id    => $data->{category_id}),
+                                   (map { ($_,$data->{$_}) } keys %simple));
+    }
+
+    $template->save();
+    $template->checkin if $updated;
+
+    return $template;
+}
 
 =item $template->verify_checkout()
 

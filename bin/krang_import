@@ -153,6 +153,8 @@ if ($@ and ref $@ and $@->isa('Krang::DataSet::ImportRejected')) {
     print STDERR "Import failed for the following reasons:\n\n",
       $@->message, "\n";
     exit 1;
+} elsif ($@) {
+    die $@;
 }
 
 print "Import completed.\n";
