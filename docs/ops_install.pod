@@ -1,5 +1,5 @@
 
-=head1 Installing PIRT CMS 2.0 (Krang)
+=head1 Installing Krang
 
 The following instructions will install Krang on a RedHat Linux 7.3 or
 Redhat Linux 9 system, on the i686 architecture.
