@@ -86,11 +86,17 @@ sub check_find {
     ok($@, "$perl_package->find(ids_only=>1, count=>1):  Is fatal error");
 
     # 5. order_desc=>1 reverses order_desc=>0
-    eval { @stuff = $perl_package->find(ids_only=>1, order_desc => 0) };
+    my %order_params = (ids_only => 1, order_desc => 0);
+
+    # Krang::List requires further grouping, or ordering will fail tests.
+    if ($perl_package eq 'Krang::List') { $order_params{list_group_id} = 1; }
+
+    eval { @stuff = $perl_package->find(%order_params) };
     ok(not($@), "$perl_package->find(ids_only=>1, order_desc => 0)");
     die ($@) if ($@);
 
-    eval { @stuff2 = $perl_package->find(ids_only=>1, order_desc => 1) };
+    $order_params{order_desc} = 1;
+    eval { @stuff2 = $perl_package->find(%order_params) };
     ok(not($@), "$perl_package->find(ids_only=>1, order_desc => 1)");
     die ($@) if ($@);
 
@@ -105,17 +111,17 @@ sub check_find {
         # actually check for one or less records, since may be no records in db
         ok(scalar @stuff <= 1, "$perl_package->find(limit=>1) : limit=>1 returns only one record");
     }
- 
+
     # 7. offset=>1, limit=>1 returns the next record
     unless ($perl_package eq 'Krang::Desk') { # Krang::Desk doesnt use offset
         eval { @stuff = $perl_package->find(limit=>2) };
         ok(not($@), "$perl_package->find(limit=>2)");
         die ($@) if ($@);
-    
+
         eval { @stuff2 = $perl_package->find(offset=>1, limit=>1) };
         ok(not($@), "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record");
         die ($@) if ($@);
-        
+
         my $order_by = $ORDER_BY_FIELD{$perl_package};
         if ($order_by) {
             is($stuff[1]->$order_by, $stuff2[0]->$order_by, "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record") if $stuff[1];

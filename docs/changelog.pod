@@ -8,6 +8,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in L<Krang::List> - default sort order for C<find> was by
+C<name>, it is now by C<parent_list_id>.  [Peter]
+
+=item *
+
+Added tutorial documentation on how to use Lists in an element library. [Peter]
+
+=item *
+
 Changed HTML in templates to use C<text> rather than C<textfield> in form 
 inputs. [Perrin]
 

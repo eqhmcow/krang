@@ -220,8 +220,8 @@ not $valid_params{$param};
           "Only one can be present.")
       if $args{count} and $args{ids_only};
 
-    # set defaults if need be
-    my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'name';
+    # set defaults if need be - default ordering preserves list hierarchy.
+    my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'parent_list_id';
     my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
     my $limit = $args{'limit'} ? $args{'limit'} : undef;
     my $offset = $args{'offset'} ? $args{'offset'} : 0;
