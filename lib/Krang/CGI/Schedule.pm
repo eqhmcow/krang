@@ -10,6 +10,7 @@ use Krang::Schedule;
 use Krang::Message qw(add_message);
 use Krang::Session qw(%session);
 use Krang::Widget qw(time_chooser datetime_chooser decode_datetime);
+use Krang::HTMLPager;
 
 our %ACTION_LABELS = (
                       publish  => 'Publish',
@@ -59,6 +60,7 @@ sub setup {
                             add
                             add_simple
                             delete
+                            list_all
                             save_and_view
                     )]);
 
@@ -164,6 +166,64 @@ sub edit {
     $template->param( 'existing_schedule_loop' => \@existing_schedule ) if @existing_schedule;
 
     return $template->output; 
+}
+
+# used by 'Jobs' admin tool
+sub list_all {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $template = $self->load_tmpl('list_all.tmpl', associate => $query);
+
+    my $pager = Krang::HTMLPager->new(
+                                        cgi_query => $query,
+                                        persist_vars => {
+                                                       rm => 'list_all' },
+                                        use_module => 'Krang::Schedule',
+                                        columns => [qw( asset schedule next_run action version checkbox_column )],
+                                        column_labels => {  asset => 'Asset',
+                                                            schedule => 'Schedule',
+                                                            next_run => 'Next Run',
+                                                            action => 'Action',
+                                                            version => 'Version'
+                                                            },
+                                        row_handler => \&list_all_row_handler,
+                                        id_handler => sub { return $_[0]->schedule_id },
+                                                            );
+
+    # Run pager
+    $template->param(pager_html =>  $pager->output());
+
+    return $template->output;
+}
+
+sub list_all_row_handler {
+    my ($row, $schedule) = @_;
+    $row->{asset} = ucfirst($schedule->object_type).' '.$schedule->object_id;
+    
+    my %context = $schedule->context ? @{$schedule->context} : ();
+    my $version = $context{'version'} ? $context{'version'} : '';
+    my $frequency = ($schedule->repeat eq 'never') ? 'One Time' : ucfirst($schedule->repeat);
+    my $s_params;
+
+    if ($frequency eq 'One Time') {
+       $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
+    } elsif ($frequency eq 'Hourly') {
+       ($schedule->minute eq '0') ? ($s_params = 'on the hour') : ($s_params = $schedule->minute." minutes past the hour");
+    } elsif ($frequency eq 'Daily') {
+        my ($hour, $ampm) = convert_hour($schedule->hour);
+        $s_params = "$hour:".convert_minute($schedule->minute)." $ampm";
+    } elsif ($frequency eq 'Weekly') {
+        my ($hour, $ampm) = convert_hour($schedule->hour);
+        $s_params = $WEEKDAYS{$schedule->day_of_week}." at $hour:".convert_minute($schedule->minute)." $ampm";
+    }
+                                                                                
+    $s_params = ($frequency eq 'Daily') ? ($frequency.' at '.$s_params) : ($frequency.', '.$s_params);
+
+    $row->{schedule} = $s_params;
+    $row->{next_run} = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
+    $row->{action} = $ACTION_LABELS{$schedule->action};
+    $row->{version} = $version;
 }
 
 # Get the media or story object from session or die() trying
@@ -434,11 +494,11 @@ Delete selected schedules from the database by schedule_id.
 sub delete {
     my $self = shift;
     my $q = $self->query();
-    my @delete_list = ( $q->param('schedule_delete_list') );
+    my @delete_list = $q->param('is_list_all') ? ($q->param('krang_pager_rows_checked')) : ( $q->param('schedule_delete_list') );
 
     unless (@delete_list) {
         add_message('missing_schedule_delete_list');
-        return $self->edit();
+        return $q->param('is_list_all') ? $self->list_all : $self->edit();
     }
 
     foreach my $schedule_id (@delete_list) {
@@ -446,7 +506,7 @@ sub delete {
     } 
     
     add_message('deleted_selected');
-    return $self->edit();      
+    return $q->param('is_list_all') ? $self->list_all : $self->edit();      
 }
 
 =item save_and_view()

@@ -1,0 +1,30 @@
+<tmpl_include header.tmpl>
+
+<script language=javascript>
+ function checkall(checkbox, prefix) {
+     for (var i = 0; i < checkbox.form.elements.length ; i++) {
+        var e = checkbox.form.elements[i];
+        if (e.name && e.name.indexOf(prefix) == 0) {
+           e.checked = checkbox.checked;
+        }
+     }
+  }
+
+  function delete_selected () {
+        var myform = document.forms["current_schedule_form"];
+        myform.rm.value = 'delete';
+        myform.submit();
+  }
+
+</script>
+
+<div class=dark-bar>Scheduled Jobs</div>
+
+<form name="current_schedule_form" method="POST">
+<input type="hidden" name="is_list_all" value="1" override='1'>
+<tmpl_var pager_html>  
+<div align="right">
+<input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+</form>                                                                      
+
+<tmpl_include footer.tmpl>
