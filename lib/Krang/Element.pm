@@ -127,9 +127,8 @@ the first C<save()>.
 
 use Krang::MethodMaker
   new_with_init => 'new',
-  new_hash_init => 'hash_init',
-  get_set       => [ qw( element_id parent ) ],
-  list          => [ qw( children ) ];  
+  new_hash_init => 'hash_init',  
+  get_set       => [ qw( element_id parent ) ];
 
 # initialize a new object, creating children as required by the class
 # unless no_expand is passed in
@@ -143,7 +142,7 @@ sub init {
       unless $args{class};
 
     # make sure we have a children array
-    $args{children} ||= [];
+    $self->{children} = delete $args{children} || [];
 
     # delay loading data since it needs a fully initialized object to
     # call class->check_data
@@ -233,6 +232,31 @@ sub root {
     return $self;
 }
 
+=item C<< @children = $element->children() >>
+
+Returns a list of child elements for this element.  These will be
+Krang::Element objects.  For adding a new child, see C<< add_child()
+>>.  To delete a child from the list of children, see 
+C<< remove_child() >>.  To reorder the list of children, use 
+C<< reorder_children() >>.
+
+=cut
+
+sub children { 
+    my $self = shift;
+    croak("Illegal attempt to set children with children()!  Use add_child(), remove_children() or reorder_children() instead.")
+      if @_;
+    return @{$self->{children}};
+}
+
+=item C<< $count = $element->children_count() >>
+
+Returns the number of children in the element.
+
+=cut
+
+sub children_count { return scalar @{shift->{children}} }
+
 =item C<< $child = $element->add_child(class => "paragraph", %args) >>
 
 =item C<< $child = $element->add_child(class => $class_obj, %args) >>
@@ -282,40 +306,80 @@ sub add_child {
     return ${$children}[-1];
 }
 
-=item C<< @children = $element->children() >>
+=item C<< $element->remove_children(10, 20) >>
 
-Returns a list of child elements for this element.  These will be
-Krang::Element objects.  For adding a new child, see 
-C<< add_child() >>.
+=item C<< $element->remove_children($child10, $child20) >>
 
-C<children> is a L<Krang::MethodMaker> list attribute.  Thus, the
-following methods are available to manipulate the list of children:
+This call removes children from the list of child elements.  You may
+call it with either a list of indexes into the list of children, or
+references to the children to be removed.  
 
-=over
+Note that removing a child will alter the xpath()s of children in the
+same class later in the list.  For example, removing the third page
+('/page[2]') will cause '/page[3]' and '/page[4]' to become '/page[2]'
+and '/page[3]'.
 
-=item C<< @children = $element->children() >>
+=cut
 
-=item C<< $children_ref = $element->children() >>
+sub remove_children {
+    my $self = shift;
+    my @list = @_;
+    my $children = $self->{children};
 
-=item C<< $element->children(@new_children) >>
+    # normalize to hash of indexes
+    my %to_delete;
+    foreach my $item (@_) {
+        if (ref $item) {
+            ($item) = grep { $children->[$_] == $item } (0 .. $#$children);
+            croak("Unable to find matching child!") unless $item;
+        }
+        $to_delete{$item} = 1;
+    }
 
-=item C<< $element->children_push($child) >>
+    # process list
+    my @new_children;
+    for my $x (0 .. $#$children) {
+        next if $to_delete{$x};
+        push @new_children, $children->[$x];
+    }
 
-=item C<< $child = $element->children_pop() >>
+    # make the change
+    @$children = @new_children;
+}
 
-=item C<< $child = $element->children_shift() >>
+=item C<< $element->reorder_children(0, 1, 2, 4, 3) >>
 
-=item C<< $element->children_unshift($child) >>
+=item C<< $element->reorder_children($child1, $child2, $child4, $child3) >>
 
-=item C<< $element->children_splice($offset, $len, @new_children) >>
+This call reorders the list of children.  You may pass either a list
+of indexes (0 based) into the list of children or a list of child
+objects.  You may not leave out any existing children in the list.
 
-=item C<< $element->children_clean() >>
+=cut
 
-=item C<< $count = $element->children_count() >>
+sub reorder_children {
+    my $self = shift;
+    my $children = $self->{children};
 
-=item C<< $element->children_set(2 => $child2, 5 => $child5) >>
+    # make sure list is unique
+    my %seen;
+    croak("reorder_children called with list containing duplicates: " . 
+          join(',', @_))
+      if grep { ++$seen{$_} != 1 } @_;
 
-=back
+    # check size
+    croak("reorder_children called with wrong sized list, or list containing ")
+      unless @$children == @_;
+
+    # normalize to a list of objects, in requested order
+    foreach my $x (0 .. $#_) {
+        $_[$x] = $children->[$_[$x]] unless ref $_[$x];
+        croak("Unable to find matching child!") unless $_[$x];
+    }
+
+    # make the change
+    @$children = @_;
+}
 
 =item C<< my $deck = $element->child('deck') >>
 

@@ -70,7 +70,7 @@ my $page = $story->element->child('page');
 isa_ok($page, "Krang::Element");
 is($page->name, $page->class->name);
 is($page->display_name, "Page");
-is(@{$page->children}, 2);
+is($page->children, 2);
 
 # add five paragraphs
 ok($page->add_child(class => "paragraph", data => "bla1 "x40));
@@ -78,7 +78,7 @@ ok($page->add_child(class => "paragraph", data => "bla2 "x40));
 ok($page->add_child(class => "paragraph", data => "bla3 "x40));
 ok($page->add_child(class => "paragraph", data => "bla4 "x40));
 ok($page->add_child(class => "paragraph", data => "bla5 "x40));
-is(@{$page->children}, 7);
+is($page->children, 7);
 
 # test contribs
 eval { $story->contribs($contrib); };
@@ -169,7 +169,7 @@ my $page2 = $story2->element->child('page');
 isa_ok($page2, "Krang::Element");
 is($page2->name, $page2->class->name);
 is($page2->display_name, "Page");
-is(@{$page2->children}, 7);
+is($page2->children, 7);
 
 # contribs made it?
 is($story2->contribs, 1);
@@ -440,7 +440,7 @@ $cover->element->add_child(class => 'leadin',
                            data  => $find[1]);
 $cover->element->add_child(class => 'leadin',
                            data  => $find[2]);
-is(@{$cover->element->children}, 4);
+is($cover->element->children, 4);
 $cover->save;
 
 # test linked stories
