@@ -823,7 +823,8 @@ sub init {
 
 This method sets the testing fields in the template table to allow for the
 testing of output of an undeployed template.  If the method call is successful,
-the 'testing' and 'testing_by' fields are updated in the db.
+the 'testing' field is updated in the db.  'checked_out_by' will identify the user
+that has flagged the template for testing.
 
 The method croaks if the template is not checked out or checked out by another
 user.
