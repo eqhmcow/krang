@@ -98,7 +98,7 @@ my ($tmpl4) = Krang::Template->find(limit => 1,
 
 is($tmpl4->filename(), 't_w_c.tmpl', "Find - limit, offset, order_by");
 
-my @tmpls5 = Krang::Template->find(ascend => 1,
+my @tmpls5 = Krang::Template->find(order_desc => 'asc',
                                    creation_date_like => '%2003%');
 is($tmpls5[0]->filename(), 'Bob.tmpl', "Find - ascend/descend");
 

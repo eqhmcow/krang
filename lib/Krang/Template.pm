@@ -484,19 +484,10 @@ The list valid search fields is:
 
 Additional criteria which affect the search results are:
 
-=item * ascend
-
-Result set is sorted in ascending order.
-
 =item * count
 
 If this argument is specified, the method will return a count of the templates
 matching the other search criteria provided.
-
-=item * descend
-
-Results set is sorted in descending order only if the 'ascend' option is not
-specified.
 
 =item * ids_only
 
@@ -516,6 +507,11 @@ Sets the offset from the first row of the results to return.
 Specify the field by means of which the results will be sorted.  By default
 results are sorted with the 'template_id' field.
 
+=item * order_desc
+
+Specify this option with a value of 'asc' or 'desc' to return the results in
+ascending or descending sort order relative to the 'order_by' field
+
 =back
 
 The method croaks if an invalid search criteria is provided or if both the
@@ -529,7 +525,7 @@ sub find {
     my ($fields, @params, $where_clause);
 
     # grab ascend/descending, limit, and offset args
-    my $ascend = delete $args{ascend} || '';
+    my $ascend = uc(delete $args{order_desc}) || ''; # its prettier w/uc() :)
     my $descend = delete $args{descend} || '';
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
@@ -578,8 +574,7 @@ sub find {
 
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE $where_clause" if $where_clause;
-    $query .= " ORDER BY $order_by" if $order_by;
-    $query .= $ascend ? " ASC" : ($descend ? " DESC" : "");
+    $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
     if ($limit) {
