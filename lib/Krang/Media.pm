@@ -1615,6 +1615,51 @@ sub deserialize_xml {
     return $media;
 }
 
+=item C<< $data = Storable::freeze($story) >>
+                                                                                
+Serialize media.  Krang::Media implements STORABLE_freeze() to
+ensure this works correctly.
+                                                                                
+=cut
+                                                                                
+sub STORABLE_freeze {
+    my ($self, $cloning) = @_;
+    return if $cloning;
+                                                                                
+    # avoid serializing category cache since they contain objects not
+    # owned by the story
+    my $category_cache = delete $self->{cat_cache};
+                                                                                
+    # serialize data in $self with Storable
+    my $data;
+    eval { $data = freeze({%$self}) };
+    croak("Unable to freeze story: $@") if $@;
+                                                                                
+    # reconnect cache
+    $self->{cat_cache} = $category_cache if defined $category_cache;
+                                                                                
+    return $data;
+}
+                                                                                
+=item C<< $media = Storable::thaw($data) >>
+                                                                                
+Deserialize frozen media.  Krang::Media implements STORABLE_thaw()
+to ensure this works correctly.
+
+=cut                                      
+
+sub STORABLE_thaw {
+    my ($self, $cloning, $data) = @_;
+                                                                                
+    # retrieve object
+    eval { %$self = %{thaw($data)} };
+    croak("Unable to thaw story: $@") if $@;
+                                                                                
+    return $self;
+}
+                                          
+=cut
+
 
 =back
 
