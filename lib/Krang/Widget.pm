@@ -99,7 +99,7 @@ sub category_chooser {
                                        die_on_bad_params => 1,
                                       );
 
-    my $category_id = $query->param($name) || 0;
+    my $category_id = $query->param($field) || 0;
 
     # setup category loop
     my %find_params = (order_by => 'url');
@@ -128,7 +128,7 @@ sub category_chooser {
     }
     
     # build the chooser
-    my $chooser = HTML::PopupTreeSelect->new(name       => 'ca',
+    my $chooser = HTML::PopupTreeSelect->new(name       => $name,
                                              title      => 'Choose a Category',
                                              data       => $data,
                                              image_path => 'images',
