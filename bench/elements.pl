@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-use Krang;
+use Krang::Script;
 use Krang::Element;
 use Krang::Benchmark qw(run_benchmark);
 

@@ -15,18 +15,18 @@ my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
 my $media;
 
 # set up site and category
-my $site = Krang::Site->new(preview_path => './sites/test1/preview/',
-                            preview_url => 'preview.testsite1.com',
-                            publish_path => './sites/test1/',
-                            url => 'testsite1.com');
+my $site = Krang::Site->new(preview_path => '/media_bench_preview',
+                            preview_url => 'preview.media_bench.com',
+                            publish_path => '/media_bench_publish',
+                            url => 'media_bench.com');
 $site->save();
+#END { $site->delete() };
 
 my ($category) = Krang::Category->find(site_id => $site->site_id());
-
 my $category_id = $category->category_id();
+#END { $category->delete() };
 
-my $i = 1;
-
+my $i = 0;
 run_benchmark(module => 'Krang::Media',
               name   => 'new, upload, save',
               count  => $count,               
@@ -72,7 +72,7 @@ run_benchmark(module => 'Krang::Media',
          sub {
             $media_object[$i]->prepare_for_edit();
             my $fh = new FileHandle $filepath;
-            $media_object[$i]->upload_file(filename => 'krang.jpg', filehandle => $fh);
+            $media_object[$i]->upload_file(filename => $i."krang.jpg", filehandle => $fh);
             $media_object[$i++]->save();
          });
 
@@ -129,7 +129,4 @@ run_benchmark(module => 'Krang::Media',
 
 rmtree(catdir(KrangRoot,'data','media')); 
 
-# delete categories and site
-$category->delete();
-$site->delete();
 
