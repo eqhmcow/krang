@@ -19,7 +19,6 @@ Krang::Story - the Krang story class
   $story->slug("life");
   $story->cover_date(Time::Piece->strptime("%D %R", "1/1/2004 12:00"));
 
-
   # get the root element for this story
   my $element = $story->element();
 
@@ -75,57 +74,90 @@ And accessed with:
 
   $title = $story->title();
 
+If an attribute is marked (readonly) then its value cannot be set.
+For example, you may not set C<checked_out> directly; instead, call
+the checkout() method.
+
 =over
 
-=item story_id (readonly)
+=cut
 
-=item title
+use Krang::MethodMaker 
+  new_with_init => 'new',
+  new_hash_init => 'hash_init',
+  get           => [ qw(
+                        story_id                        
+                        version
+                       ) ],
+  get_set       => [ qw(
+                        title
+                        slug
+                        notes
+                        cover_date                        
+                       ) ];
 
-=item slug
+=item C<story_id> (readonly)
 
-=item notes
+=item C<title>
 
-=item cover_date
+=item C<slug>
 
-=item version
+=item C<notes>
 
-=item category
+=item C<cover_date>
 
-The primary category for the story.
+A Time::Piece object representing an arbitrary cover date.
 
-=item uri (readonly)
+=item C<publish_date>
 
-The primary URI for the story.
+A Time::Piece object containing the date and time this story was last
+published.
 
-=item categories
+=item C<version> (readonly)
+
+=item C<category> (readonly)
+
+The primary category for the story.  C<undef> until at least one
+category is assigned.
+
+=item C<uri> (readonly)
+
+The primary URI for the story.  C<undef> until at least one category
+is assigned.
+
+=item C<categories>
 
 A list of category objects associated with the story.
 
-=item uris (readonly)
+=item C<uris> (readonly)
 
 A list of URIs for this story.
 
-=item contributors
+=item C<contributors>
 
 A list of contributor objects associated with the story.
 
-=item element
+=item C<element>
 
 The root element for this story.  The children of this element contain
 the content for the story.
 
-=item schedules
+=item C<class> (readonly)
+
+The element class of the root element (i.e. $story->element->class).
+
+=item C<schedules>
 
 A list of scheduled events for the story.  This is a list of hashes,
 each of which has the following keys:
 
 =over
 
-=item type
+=item C<type>
 
-Will be 'absolute', 'hourly', 'daily', or 'weekly'.
+Must be one of 'absolute', 'hourly', 'daily', or 'weekly'.
 
-=item date
+=item C<date>
 
 A Time::Piece object representing the time of the scheduled event.
 Its interpretation depends on the type of the schedule.  For
@@ -133,22 +165,24 @@ Its interpretation depends on the type of the schedule.  For
 the minute for the event.  For 'daily', this will contain the time for
 the event.  For 'weekly', this will contain the day of the event.
 
-=item action
+=item C<action>
 
 Either 'publish' or 'expire'.
 
-=item version
+=item C<version>
 
 For 'publish' events, a specific version may be specified.  If not,
 this will be C<undef>.
 
 =back
 
-=item checked_out (readonly)
+=item C<checked_out> (readonly)
 
-=item checked_out_by (readonly)
+=item C<checked_out_by> (readonly)
 
 =back
+
+=cut
 
 =head2 Methods
 
