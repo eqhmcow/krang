@@ -1,0 +1,72 @@
+=head1 Releasing Krang
+
+This document describes how to make a new release of Krang within
+PIRT.
+
+=head2 Release Checklist
+
+=over 4
+
+
+=item Update $VERSION in Krang.pm
+
+
+=item Verify that upgrade modules have been created for this release
+
+=over 4
+
+=item ...if necessary (located in KRANG_ROOT/upgrade/).
+
+=back
+
+
+=item C<make dist>
+
+=over 4
+
+=item Will create release file in KRANG_ROOT, "krang_V1_2.tar.gz"
+
+=back
+
+
+=item Test release on separate machine
+
+=item Release to PIRT for production
+
+
+=head2 What C<make dist> does
+
+=item Extract version from Krang.pm
+
+=item Tag files in working directory
+
+=over 4
+
+=item E.g., C<cvs tag 'V1_2'>
+
+=item If tag already exists (i.e., you're re-building a distribution
+due to a bug) you have to "force" a cvs tag manually
+
+=over 4
+
+=item E.g., C<cvs tag -F 'V1_2'>
+
+=back
+
+
+=back
+
+=item Export krang from CVS using tagged version
+
+=item Delete excluded directories
+
+=over 4
+
+=item bench/, src/
+
+=back
+
+
+
+=back
+

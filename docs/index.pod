@@ -58,6 +58,10 @@ HREF[Development Install|install.html] - how to install a new Krang instance for
 
 =item *
 
+HREF[Releasing Krang|release.html] - how to make a krang distribution
+
+=item *
+
 HREF[Configuration|configuration.html] - how to configure Krang
 
 =item *

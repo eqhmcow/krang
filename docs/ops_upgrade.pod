@@ -50,9 +50,16 @@ Following is a list of the tasks the upgrade script will perform.
 
 =item Copy krang.conf, data/* from backup to new KRANG_ROOT.
 
-=item Apply installation upgrade scripts.
+=item Apply upgrade scripts.
 
-=item Apply instance upgrade scripts.
+=over 4
+
+=item E.g., "KRANG_ROOT/upgrade/V1_2.pm"
+
+=item Run class methods C<per_installation()> and C<per_instance()>
+
+=back
+
 
 =item Clear out sessions from database.
 
@@ -64,6 +71,7 @@ Following is a list of the tasks the upgrade script will perform.
 
 =back
 
+
 =item Output results of upgrade to console.
 
 =over 4
@@ -71,7 +79,6 @@ Following is a list of the tasks the upgrade script will perform.
 =item Show rollback directory paths for KRANG_ROOT and database
 
 =back
-
 
 =back
 
