@@ -11,6 +11,8 @@ use Krang::Conf qw(ElementSet);
 use Time::Piece;
 
 BEGIN { use_ok('Krang::Story') }
+our $DELETE = 1;
+
 
 # creation should fail without required fields
 my $story;
@@ -24,7 +26,7 @@ my $site = Krang::Site->new(preview_url  => 'storytest.preview.com',
                             preview_path => '/tmp/storytest_preview');
 isa_ok($site, 'Krang::Site');
 $site->save();
-END { $site->delete() }
+END { $site->delete() if $DELETE }
 my ($root_cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
 isa_ok($root_cat, 'Krang::Category');
 $root_cat->save();
@@ -40,7 +42,7 @@ for (0 .. 10) {
 
 # cleanup the mess
 END {
-    $_->delete for @cat;
+    if ($DELETE) { $_->delete for @cat; }
 }
 
 # create new contributor object to test associating with stories
@@ -48,7 +50,7 @@ my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 
 isa_ok($contrib, 'Krang::Contrib');
 $contrib->contrib_type_ids(1,3);
 $contrib->save();
-END { $contrib->delete(); }
+END { $contrib->delete() if $DELETE; }
 
 # create a new story
 $story = Krang::Story->new(categories => [$cat[0], $cat[1]],
@@ -158,7 +160,7 @@ $story->save();
 ok($story->story_id);
 
 # cleanup later
-END { $story->delete() }
+END { $story->delete() if $DELETE }
 
 # try loading
 my ($story2) = Krang::Story->find(story_id => $story->{story_id});
@@ -231,7 +233,7 @@ for (qw( class
 
 # save the copy
 $copy->save();
-END { $copy->delete };
+END { $copy->delete if $DELETE };
 
 # make another copy, this should result in a slug ending in _copy2
 my $copy2;
@@ -294,7 +296,7 @@ SKIP: {
                               title      => "Foo",
                               slug       => "foo",
                               class      => "article");
-    END { $v->delete if $v };
+    END { $v->delete if $v and $DELETE };
     $v->element->child('deck')->data('Version 1 Deck');
     is($v->version, 0);
     $v->save(keep_version => 1);
@@ -338,7 +340,7 @@ my $s1 = Krang::Story->new(class => "article",
                            categories => [$cat[0]]);
 $s1->save();
 ok($s1->story_id);
-END { $s1->delete() };
+END { $s1->delete() if $DELETE };
 
 my $s2 = Krang::Story->new(class => "article",
                            title => "one",
@@ -346,7 +348,7 @@ my $s2 = Krang::Story->new(class => "article",
                            categories => [$cat[1]]);
 $s2->save();
 ok($s2->story_id);
-END { $s2->delete() };
+END { $s2->delete() if $DELETE };
 
 eval { $s2->categories($s2->categories, $cat[0]); };
 ok($@);
@@ -368,7 +370,7 @@ push @find, Krang::Story->new(class => "article",
                               slug => "slug three",
                               categories => [$cat[9]]);
 $_->save for @find;
-END { $_->delete for @find };
+END { if ($DELETE) { $_->delete for @find } };
 
 # find by category
 my @result = Krang::Story->find(category_id => $cat[8]->category_id,
@@ -462,7 +464,7 @@ SKIP: {
                                   title      => "Test Cover",
                                   slug       => "test cover",
                                   class      => "cover");
-    END { $cover->delete if $cover }
+    END { $cover->delete if $cover and $DELETE }
     $cover->element->add_child(class => 'leadin',
                                data  => $find[0]);
     $cover->element->add_child(class => 'leadin',
@@ -498,7 +500,7 @@ SKIP: {
     $cover2->categories([$cat[1]]);
     eval { $cover2->save };
     ok(not $@);
-    END { $cover2->delete if $cover2 };
+    END { $cover2->delete if $cover2 and $DELETE};
 };
 
 # test delete by ID
@@ -520,7 +522,7 @@ my $change = Krang::Story->new(class => "article",
                                slug => "change",
                                categories => [$cat[0]]);
 $change->save();
-END { $change->delete if $change };
+END { $change->delete if $change and $DELETE };
 
 is($change->url, $cat[0]->url . 'change');
 
@@ -534,3 +536,166 @@ $site->save();
 # did the story URL change?
 ($change) = Krang::Story->find(story_id => $change->story_id);
 is($change->url, 'storyzest.com/test_0/change');
+
+
+
+# permissions tests
+{
+    my $unique = time();
+
+    # create a new site for testing
+    my $ptest_site = Krang::Site->new( url          => "$unique.com",
+                                       preview_url  => "preview.$unique.com",
+                                       preview_path => 'preview/path/',
+                                       publish_path => 'publish/path/' );
+    $ptest_site->save();
+    my $ptest_site_id = $ptest_site->site_id();
+    my ($ptest_root_cat) = Krang::Category->find(site_id=>$ptest_site_id);
+
+    my $story = Krang::Story->new(title      => 'Root Cat story', 
+                                  categories => [$ptest_root_cat],
+                                  slug       => 'rootie',
+                                  class => 'article',
+                                  cover_date => scalar localtime,
+                                 );
+    $story->save();
+    my @stories = ($story);
+
+
+    # Create some descendant categories and story
+    my @ptest_cat_dirs = qw(A1 A2 B1 B2);
+    my @ptest_categories = ();
+    for (@ptest_cat_dirs) {
+        my $parent_id = ( /1/ ) ? $ptest_root_cat->category_id() : $ptest_categories[-1]->category_id() ;
+        my $newcat = Krang::Category->new( dir => $_,
+                                           parent_id => $parent_id );
+        $newcat->save();
+        push(@ptest_categories, $newcat);
+
+        # Add story in this category
+        my $story = Krang::Story->new(
+                                      title      => $_ .' story', 
+                                      categories => [$newcat],
+                                      slug       => 'slugo',
+                                      class => 'article',
+                                      cover_date => scalar localtime,
+                                     );
+        $story->save();
+        push(@stories, $story);
+    }
+
+
+    # Verify that we have permissions
+    my ($tmp) = Krang::Story->find(story_id=>$stories[-1]->story_id);
+    is($tmp->may_see, 1, "Found may_see");
+    is($tmp->may_edit, 1, "Found may_edit");
+
+    # Change group asset_story permissions to "read-only" and check permissions
+    my ($admin_group) = Krang::Group->find(group_id=>1);
+    $admin_group->asset_story("read-only");
+    $admin_group->save();
+
+    ($tmp) = Krang::Story->find(story_id=>$stories[-1]->story_id);
+    is($tmp->may_see, 1, "asset_story read-only may_see => 1");
+    is($tmp->may_edit, 0, "asset_story read-only may_edit => 0");
+
+    # Change group asset_story permissions to "hide" and check permissions
+    $admin_group->asset_story("hide");
+    $admin_group->save();
+
+    ($tmp) = Krang::Story->find(story_id=>$stories[-1]->story_id);
+    is($tmp->may_see, 1, "asset_story hide may_see => 1");
+    is($tmp->may_edit, 0, "asset_story hide may_edit => 0");
+
+    # Reset asset_story to "edit"
+    $admin_group->asset_story("edit");
+    $admin_group->save();
+
+    # Change permissions to "read-only" for one of the branches by editing the Admin group
+    my $ptest_cat_id = $ptest_categories[0]->category_id();
+    $admin_group->categories($ptest_cat_id => "read-only");
+    $admin_group->save();
+
+    my ($ptest_cat) = Krang::Category->find(category_id => $ptest_categories[0]->category_id());
+
+    # Try to save story to read-only catgory
+    $tmp = Krang::Story->new( title => "No story", 
+                              categories => [$ptest_cat],
+                              class => 'article',
+                              slug => 'sluggie',
+                              cover_date => scalar localtime);
+    eval { $tmp->save() };
+    isa_ok($@, "Krang::Story::NoCategoryEditAccess", "save() to read-only category throws exception");
+
+    # Check permissions for that category
+    ($tmp) = Krang::Story->find(story_id=>$stories[1]->story_id);
+    is($tmp->may_see, 1, "read-only may_see => 1");
+    is($tmp->may_edit, 0, "read-only may_edit => 0");
+
+    # Check permissions for descendant of that category
+    my $ptest_story_id = $stories[2]->story_id();
+    ($tmp) = Krang::Story->find(story_id=>$ptest_story_id);
+    is($tmp->may_see, 1, "descendant read-only may_see => 1");
+    is($tmp->may_edit, 0, "descendant read-only may_edit => 0");
+
+    # Check permissions for sibling
+    $ptest_story_id = $stories[3]->story_id();
+    ($tmp) = Krang::Story->find(story_id=>$ptest_story_id);
+    is($tmp->may_see, 1, "sibling edit may_see => 1");
+    is($tmp->may_edit, 1, "sibling edit may_edit => 1");
+
+    # Try to save "read-only" story -- should die
+    $ptest_story_id = $stories[2]->story_id();
+    ($tmp) = Krang::Story->find(story_id=>$ptest_story_id);
+    eval { $tmp->save() };
+    isa_ok($@, "Krang::Story::NoEditAccess", "save() on read-only story exception");
+
+    # Try to delete()
+    eval { $tmp->delete() };
+    isa_ok($@, "Krang::Story::NoEditAccess", "delete() on read-only story exception");
+
+    # Try to checkout()
+    eval { $tmp->checkout() };
+    isa_ok($@, "Krang::Story::NoEditAccess", "checkout() on read-only story exception");
+
+    # Try to checkin()
+    eval { $tmp->checkin() };
+    isa_ok($@, "Krang::Story::NoEditAccess", "checkin() on read-only story exception");
+
+    # Change other branch to "hide"
+    $ptest_cat_id = $ptest_categories[2]->category_id();
+    $admin_group->categories($ptest_cat_id => "hide");
+    $admin_group->save();
+
+    # Check permissions for that category
+    $ptest_story_id = $stories[3]->story_id();
+    ($tmp) = Krang::Story->find(story_id=>$ptest_story_id);
+    is($tmp->may_see, 0, "hide may_see => 0");
+    is($tmp->may_edit, 0, "hide may_edit => 0");
+
+    # Get count of all story below root category -- should return all (5)
+    my $ptest_count = Krang::Story->find(count=>1, below_category_id=>$ptest_root_cat->category_id());
+    is($ptest_count, 5, "Found all story by default");
+
+    # Get count with "may_see=>1" -- should return root + one branch (3)
+    $ptest_count = Krang::Story->find(may_see=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
+    is($ptest_count, 3, "Hide hidden story");
+
+    # Get count with "may_edit=>1" -- should return just root
+    $ptest_count = Krang::Story->find(may_edit=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
+    is($ptest_count, 1, "Hide un-editable story");
+
+    # Delete temp story
+    for (reverse @stories) {
+        $_->delete();
+    }
+
+    # Delete temp categories
+    for (reverse@ptest_categories) {
+        $_->delete();
+    }
+
+    # Delete site
+    $ptest_site->delete();
+}
+

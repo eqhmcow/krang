@@ -15,8 +15,11 @@ use Time::Piece::MySQL;
 
 # setup exceptions
 use Exception::Class 
-  'Krang::Story::DuplicateURL'    => { fields => [ 'story_id' ] },
-  'Krang::Story::MissingCategory' => { fields => [ ] };
+  'Krang::Story::DuplicateURL'         => { fields => [ 'story_id' ] },
+  'Krang::Story::MissingCategory'      => { fields => [ ] },
+  'Krang::Story::NoCategoryEditAccess' => { fields => [ 'category_id' ] },
+  'Krang::Story::NoEditAccess'         => { fields => [ 'story_id' ] },
+  ;
   
 # create accessors for object fields
 use Krang::MethodMaker 
@@ -27,6 +30,8 @@ use Krang::MethodMaker
                         version
                         checked_out
                         checked_out_by
+                        may_see 
+                        may_edit
                        ) ],
   get_set_with_notify => [ { 
                             method => '_notify',
@@ -455,6 +460,10 @@ sub init {
     $self->{checked_out_by} = $ENV{REMOTE_USER};
     $self->{cover_date}     = Time::Piece->new();
 
+    # Set up temporary permissions
+    $self->{may_see} = 1;
+    $self->{may_edit} = 1;
+
     # handle categories setup specially since it needs to call
     # _verify_unique which won't work right without an otherwise
     # complete object.
@@ -555,6 +564,13 @@ Will throw a Krang::Story::MissingCategory exception if this story
 doesn't have at least one category.  This can happen when a clone()
 results in a story with no categories.
 
+Will throw a Krang::Story::NoCategoryEditAccess exception if the
+current user doesn't have edit access to the primary category set for
+the story.
+
+Will throw a Krang::Story::NoEditAccess exception if the
+current user doesn't have edit access to the story.
+
 =cut
 
 sub save {
@@ -568,6 +584,16 @@ sub save {
     Krang::Story::MissingCategory->throw(message => "missing category")
         unless $self->category;
 
+    # Is user allowed to otherwise edit this object?
+    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
+        unless ($self->may_edit);
+
+    # make sure we have edit access to the primary category
+    Krang::Story::NoCategoryEditAccess->throw( 
+       message => "Not allowed to edit story in this category",
+       category_id => $self->category->category_id)
+        unless ($self->category->may_edit);
+    
     # make sure it's got a unique URI
     $self->_verify_unique();
 
@@ -861,6 +887,16 @@ looking only at primary category relationships.
 If set to 0, returns stories that are not published, set to 1 
 returns published stories.
 
+=item may_see
+
+If set to 1 then only items which the current user has at least read
+permissions to are returned.  Defaults to 0.
+
+=item may_edit
+
+If set to 1 then only items which the current user has edit
+permissions to are returned.  Defaults to 0.
+
 =back
 
 Options affecting the search and the results returned:
@@ -907,7 +943,7 @@ sub find {
     my $dbh = dbh();
 
     # get search parameters out of args, leaving just field specifiers
-    my $order_by  = delete $args{order_by} || 'story_id';
+    my $order_by  = delete $args{order_by} || 's.story_id';
     my $order_dir = delete $args{order_desc} ? 'DESC' : 'ASC';
     my $limit     = delete $args{limit}    || 0;
     my $offset    = delete $args{offset}   || 0;
@@ -928,7 +964,7 @@ sub find {
     return $pkg->_load_version($args{story_id}, $args{version})
       if $args{version};
     
-    my (@where, @param, %from, $like, $need_distinct);
+    my (@where, @param, %from, $like);
     while (my ($key, $value) = each %args) {
         # strip off and remember _like specifier
         $like = ($key =~ s/_like$//) ? 1 : 0;
@@ -936,7 +972,7 @@ sub find {
         # handle story_id => [1, 2, 3]
         if ($key eq 'story_id' and ref($value) and ref($value) eq 'ARRAY') {
             # an array of IDs selects a list of stories by ID
-            push @where, 'story_id IN (' . 
+            push @where, 's.story_id IN (' . 
               join(',', ("?") x @$value) . ')';
             push @param, @$value;
             next;
@@ -955,7 +991,6 @@ sub find {
         
         # handle search by category_id
         if ($key eq 'category_id') {
-            # need to bring in story_category
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
             push(@where, 'sc.category_id = ?');
@@ -965,7 +1000,6 @@ sub find {
 
         # handle search by primary_category_id
         if ($key eq 'primary_category_id') {
-            # need to bring in story_category
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
             push(@where, 'sc.category_id = ?', 'sc.ord = 0');
@@ -975,78 +1009,70 @@ sub find {
 
         # handle below_category_id
         if ($key eq 'below_category_id') {
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id');
             my ($cat) = Krang::Category->find(category_id => $value);
             my @ids = ($value, $cat->descendants( ids_only => 1 ));
-            # need to bring in story_category
-            $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
             push(@where, 
                  'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
             push(@param, @ids);
-            $need_distinct = 1;
             next;
         }
 
         # handle below_primary_category_id
         if ($key eq 'below_primary_category_id') {
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id');
             my ($cat) = Krang::Category->find(category_id => $value);
             my @ids = ($value, $cat->descendants( ids_only => 1 ));
-            # need to bring in story_category
-            $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id AND sc.ord = 0');
             push(@where, 
                  'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
             push(@param, @ids);
-            $need_distinct = 1;
             next;
         }
 
         # handle search by site_id
         if ($key eq 'site_id') {
-            # need to bring in story_category and category
+            # need to bring in category
             $from{"story_category as sc"} = 1;
             $from{"category as c"} = 1;
             push(@where, 's.story_id = sc.story_id');
             push(@where, 'sc.category_id = c.category_id');
             push(@where, 'c.site_id = ?');
             push(@param, $value);
-            $need_distinct = 1;
             next;
         }
 
         # handle search by primary_site_id
         if ($key eq 'primary_site_id') {
-            # need to bring in story_category and category
+            # need to bring in category
             $from{"story_category as sc"} = 1;
             $from{"category as c"} = 1;
             push(@where, 's.story_id = sc.story_id');
             push(@where, 'sc.category_id = c.category_id');
             push(@where, 'c.site_id = ?', 'sc.ord = 0');
             push(@param, $value);
-            $need_distinct = 1;
             next;
         }
 
         # handle search by url
         if ($key eq 'url') {
-            # need to bring in story_category
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
             push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'));
             push(@param, $value);
-            $need_distinct = 1;
             next;
         }
 
         # handle search by primary_url
         if ($key eq 'primary_url') {
-            # need to bring in story_category
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
             push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'),
                          'sc.ord = 0');
             push(@param, $value);
-            $need_distinct = 1;
             next;
         }
 
@@ -1056,7 +1082,6 @@ sub find {
             $from{"contrib as con"} = 1;
             push(@where, 's.story_id = scon.story_id');
             push(@where, 'con.contrib_id = scon.contrib_id');
-            $need_distinct = 1;
 
             my @words = split(/\s+/, $args{'contrib_simple'});
             foreach my $word (@words){
@@ -1072,7 +1097,6 @@ sub find {
         if ($key eq 'simple_search') {            
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
-            $need_distinct = 1;
 
             my @words = split(/\s+/, ($args{'simple_search'} || ""));
             foreach my $word (@words){
@@ -1125,8 +1149,27 @@ sub find {
             next;
         }
 
+        # handle may_see
+        if ($key eq 'may_see') {
+            push(@where, 'cgpc.may_see = ?');
+            push(@param, 1);
+            next;
+        }
+
+        # handle may_edit
+        if ($key eq 'may_edit') {
+            push(@where, 'cgpc.may_edit = ?');
+            push(@param, 1);
+            next;
+        }
+
         croak("Unknown find key '$key'");
     }
+
+    # Add user_id into the query
+    my $user_id = $ENV{REMOTE_USER} || croak("No user_id in REMOTE_USER");
+    push(@where, "ugp.user_id = ?");
+    push(@param, $user_id);
 
     # handle ordering by primary URL, which is in story_category
     if ($order_by eq 'url') {
@@ -1134,40 +1177,50 @@ sub find {
         push(@where, 's.story_id = sc.story_id');
         push(@where, 'sc.ord = 0');
         $order_by = 'sc.url';
+    } elsif ($order_by !~ /^s\./) {
+        $order_by = "s." . $order_by;
     }
+   
+    # always restrict perm checking to primary category
+    push(@where, 'sc_p.ord = 0');
         
     # construct base query
     my $query;
+    my $from = " FROM story AS s 
+                 LEFT JOIN story_category AS sc_p 
+                   ON s.story_id = sc_p.story_id
+                 LEFT JOIN category_group_permission_cache as cgpc
+                   ON sc_p.category_id = cgpc.category_id
+                 LEFT JOIN user_group_permission as ugp
+                   ON ugp.group_id = cgpc.group_id ";
+    my $group_by = 0;
+
     if ($count) {        
-        if ($need_distinct) {
-            $query = "SELECT COUNT(DISTINCT(s.story_id)) FROM story AS s";
-        } else {
-            $query = "SELECT COUNT(*) FROM story AS s";
-        }
+        $query = "SELECT COUNT(DISTINCT(s.story_id)) $from";
     } elsif ($ids_only) {
-        if ($need_distinct) {
-            $query = "SELECT DISTINCT(s.story_id) FROM story AS s";
-        } else {
-            $query = "SELECT s.story_id FROM story AS s";
-        }
+        $query = "SELECT DISTINCT(s.story_id) $from";
     } else {
-        if ($need_distinct) {
-            $query = "SELECT DISTINCT(s.story_id), " . 
-              join(', ', map { "s.$_" } 
-                   grep { $_ ne 'story_id' } STORY_FIELDS) . 
-                     " FROM story AS s";
+        # Get user asset permissions -- overrides may_edit if false
+        my $may_edit;
+        if (Krang::Group->user_asset_permissions('story') eq "edit") {
+            $may_edit = "(sum(cgpc.may_edit) > 0) as may_edit";
         } else {
-            $query = "SELECT " .
-              join(', ', map { "s.$_" } STORY_FIELDS) .
-                " FROM story AS s";
+            $may_edit = $dbh->quote("0") . " as may_edit";
         }
+
+        $query = "SELECT " .
+           join(', ', map { "s.$_" } STORY_FIELDS) .
+             ",(sum(cgpc.may_see) > 0) as may_see, $may_edit" .
+             $from;
+        $group_by = 1;
     }
 
     # add joins, if any
     $query .= ", " . join(', ', keys(%from)) if (%from);
     
-    # add WHERE and ORDER BY clauses, if any
+    # add WHERE, GROUP BY and ORDER BY clauses, if any
     $query .= " WHERE " . join(' AND ', @where) if @where;
+    $query .= " GROUP BY s.story_id" if $group_by;
     $query .= " ORDER BY $order_by $order_dir " if $order_by and not $count;
 
     # add LIMIT clause, if any
@@ -1200,7 +1253,7 @@ sub find {
     my ($row, @stories, $result);
     while ($row = $sth->fetchrow_arrayref()) {
         my $obj = bless({}, $pkg);
-        @{$obj}{(STORY_FIELDS)} = @$row;
+        @{$obj}{(STORY_FIELDS, 'may_see', 'may_edit')} = @$row;
 
         # objectify dates
         for (qw(cover_date publish_date)) {
@@ -1304,17 +1357,18 @@ sub checkout {
     my ($self, $story_id) = @_;
     croak("Invalid call: object method takes no parameters")
       if ref $self and @_ > 1;
-    
-    $self = undef unless ref $self;
-    $story_id = $self->{story_id} if $self;
-
+    $self = (Krang::Story->find(story_id => $story_id))[0]
+      unless $self;
     my $dbh      = dbh();
     my $user_id  = $ENV{REMOTE_USER};
 
-    # short circuit checkout on instance method version of call...
-    return if $self and
-              $self->{checked_out} and 
-              $self->{checked_out_by} == $user_id;
+    # Is user allowed to otherwise edit this object?
+    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
+        unless ($self->may_edit);
+
+    # short circuit checkout
+    return if  $self->{checked_out} and 
+      $self->{checked_out_by} == $user_id;
 
     eval {
         # lock story for an atomic test and set on checked_out
@@ -1323,16 +1377,16 @@ sub checkout {
         # check status
         my ($co, $uid) = $dbh->selectrow_array(
              'SELECT checked_out, checked_out_by FROM story
-              WHERE story_id = ?', undef, $story_id);
+              WHERE story_id = ?', undef, $self->{story_id});
         
-        croak("Story '$story_id' is already checked out by user '$uid'")
+        croak("Story '$self->{story_id}' is already checked out by user '$uid'")
           if ($co and $uid != $user_id);
 
 
         # checkout the story
         $dbh->do('UPDATE story
                   SET checked_out = ?, checked_out_by = ?
-                  WHERE story_id = ?', undef, 1, $user_id, $story_id);
+                  WHERE story_id = ?', undef, 1, $user_id, $self->{story_id});
 
         # unlock template table
         $dbh->do("UNLOCK TABLES");
@@ -1345,22 +1399,13 @@ sub checkout {
         croak($eval_error);
     }
 
-    # update checkout fields if this is an instance method call
-    if ($self) {
-        $self->{checked_out} = 1;
-        $self->{checked_out_by} = $user_id;
-    }
+    # update checkout fields
+    $self->{checked_out} = 1;
+    $self->{checked_out_by} = $user_id;
 
-    if ($self->isa('Krang::Story')) {
-        add_history(    object => $self,
-                        action => 'checkout',
+    add_history(    object => $self,
+                    action => 'checkout',
                );
-    } else {
-        add_history(    object => ((Krang::Story->find(story_id => $story_id))[0]),
-                        action => 'checkout',
-               );
-    }
-
 }
 
 =item C<< Krang::Story->checkin($story_id) >>
@@ -1373,45 +1418,31 @@ fail if the story is not checked out.
 =cut
 
 sub checkin {
-    my $self     = ref $_[0] ? $_[0]             : undef;
-    my $story_id = $self     ? $self->{story_id} : $_[0];
+    my $self     = ref $_[0] ? $_[0] : 
+      (Krang::Story->find(story_id => $_[1]))[0];
+    my $story_id = $self->{story_id};
     my $dbh      = dbh();
     my $user_id  = $ENV{REMOTE_USER};
 
-    if ($self) {
-        # make sure we're checked out
-        $self->_verify_checkout();
-    } else {
-        # check status
-        my ($co, $uid) = $dbh->selectrow_array(
-             'SELECT checked_out, checked_out_by FROM story
-              WHERE story_id = ?', undef, $story_id);
+    # Is user allowed to otherwise edit this object?
+    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
+        unless ($self->may_edit);
 
-        croak("Story '$story_id' is already checked out by user '$uid'")
-          if ($co and $uid != $user_id);
-    }
+    # make sure we're checked out
+    $self->_verify_checkout();
 
     # checkout the story
     $dbh->do('UPDATE story
               SET checked_out = ?, checked_out_by = ?
               WHERE story_id = ?', undef, 0, 0, $story_id);
 
-    # update checkout fields if this is an instance method call
-    if ($self) {
-        $self->{checked_out} = 0;
-        $self->{checked_out_by} = 0;
-    }
+    # update checkout fields
+    $self->{checked_out} = 0;
+    $self->{checked_out_by} = 0;
 
-    if ($self->isa('Krang::Story')) {
-        add_history(    object => $self,
-                        action => 'checkin',
+    add_history(    object => $self,
+                    action => 'checkin',
                );
-    } else {
-        add_history(    object => ((Krang::Story->find(story_id => $story_id))[0]),
-                        action => 'checkin',
-               );
-    }
-
 }
 
 # make sure the object is checked out, or croak
@@ -1480,6 +1511,10 @@ sub delete {
         croak("Unable to load story '$story_id'.") unless $self;
     }
     $self->checkout;
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
+        unless ($self->may_edit);
 
     # first delete history for this object
     Krang::History->delete(object => $self);
