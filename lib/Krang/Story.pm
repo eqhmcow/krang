@@ -1234,16 +1234,31 @@ sub revert {
 =item C<< Krang::Story->delete($story_id) >>
 
 Deletes a story from the database.  This is a permanent operation.
+Stories will be checked-out before they are deleted, which will fail
+if the story is checked out to another user.
 
 =cut
 
 sub delete {
     my $self = shift;
-    my $dbh = dbh;
+    unless(ref $self) {
+        my $story_id = $self;
+        ($self) = Krang::Story->find(story_id => $story_id);
+        croak("Unable to load story '$story_id'.") unless $self;
+    }
+    $self->checkout;
 
-    $dbh->do('DELETE FROM story WHERE story_id = ?', undef, $self->{story_id});
-    $dbh->do('DELETE FROM story_category WHERE story_id = ?', undef, $self->{story_id});
-    $dbh->do('DELETE FROM element WHERE root_id = ?', undef, $self->{element_id});
+    my $dbh = dbh;
+    $dbh->do('DELETE FROM story WHERE story_id = ?', 
+             undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_category WHERE story_id = ?', 
+             undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_version WHERE story_id = ?', 
+             undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_contrib WHERE story_id = ?',
+             undef, $self->{story_id});
+    $dbh->do('DELETE FROM element WHERE root_id = ?',
+             undef, $self->{element_id});
 }
 
 =item C<< $copy = Krang::Story->clone() >>
