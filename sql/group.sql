@@ -41,7 +41,8 @@ CREATE TABLE desk_group_permission (
         desk_id  INT UNSIGNED NOT NULL,
         group_id INT UNSIGNED NOT NULL,
         permission_type ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "edit",
-        PRIMARY KEY (desk_id, group_id)        
+        PRIMARY KEY (desk_id, group_id),
+        INDEX (group_id)
 );
 
 /* set up default desk permissions */
@@ -57,7 +58,8 @@ DROP TABLE IF EXISTS user_group_permission;
 CREATE TABLE user_group_permission (
         user_id         INT UNSIGNED NOT NULL,
         group_id	INT UNSIGNED NOT NULL,
-        PRIMARY KEY (user_id, group_id)
+        PRIMARY KEY (user_id, group_id),
+        INDEX (group_id)
 );
 
 /* set default (admin) user permissions */
@@ -69,7 +71,8 @@ CREATE TABLE category_group_permission (
         category_id INT UNSIGNED NOT NULL,
         group_id    INT UNSIGNED NOT NULL,
         permission_type ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "edit",
-        PRIMARY KEY (category_id, group_id)        
+        PRIMARY KEY (category_id, group_id),
+        INDEX (group_id)
 );
 
 
@@ -88,5 +91,6 @@ CREATE TABLE category_group_permission_cache (
         group_id    INT UNSIGNED NOT NULL,
         may_see     BOOL NOT NULL DEFAULT "0",
         may_edit    BOOL NOT NULL DEFAULT "0",
-        PRIMARY KEY (category_id, group_id)        
+        PRIMARY KEY (category_id, group_id),
+        INDEX (group_id)
 );
