@@ -170,7 +170,7 @@
     </td>
     <td><tmpl_var title></td>
     <td align="right">
-      <tmpl_var checkbox_column>
+      <tmpl_if may_edit><tmpl_var checkbox_column></tmpl_if>
     </td>
   </tr></table>
 
@@ -192,7 +192,8 @@
      </tr>
      <tr>
        <td colspan=<tmpl_if thumbnail>"3"<tmpl_else>"2"</tmpl_if> class="form-cell">
-           <span style="float:right; font-weight: bold;"><tmpl_var command_column></span>
+           <span style="float:right; font-weight: bold;"><tmpl_if may_edit><tmpl_var command_column><tmpl_else><a href="javascript:log('<tmpl_var id>')">Log</a></tmpl_if></span>
+           <tmpl_if may_edit>
            <tmpl_if is_story>
                <input type="button" value="Copy" onclick="copy('<tmpl_var id>')" class="button">
                <input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button">
@@ -212,6 +213,7 @@
                  <br><br>
                <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
                Test with: <input onchange="update_testing(this, '<tmpl_var id>')" type="checkbox" <tmpl_if testing>checked</tmpl_if> name=testing_<tmpl_var id> value='1'>
+           </tmpl_if>
            </tmpl_if>
        </td>
      </tr>

@@ -146,8 +146,11 @@ sub _row_handler {
         $row->{testing} = $obj->testing;
     }
 
-    # setup version, used by all types
+    # setup version, used by all type
     $row->{version} = $obj->version;
+
+    # permissions, used by everyone
+    $row->{may_edit} = $obj->may_edit;
 }
 
 =item delete
