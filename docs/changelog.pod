@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added platform support for Gentoo release 1.5.2, thanks to a patch 
+from Fred Moyer (fmoyer@plusthree.com) [Perrin]
+
+=item *
+
 Added support for passing a list of classes to Krang::Story->find().
 [Sam]
 

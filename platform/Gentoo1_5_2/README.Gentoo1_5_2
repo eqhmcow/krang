@@ -1,0 +1,19 @@
+Krang has been tested on a Gentoo 1.5.2 install.  Before you install
+Krang, you will need to install MySQL 4 and Perl 5.8:
+
+emerge mysql
+emerge perl
+
+Since you will be building Krang from source (it *is* Gentoo after
+all), all other dependencies should be taken care of by this point.
+
+
+Getting Krang to Start on Boot:
+
+During install, Krang adds a file to /etc/init.d called krang-HostName
+(where HostName is the --HostName argument passed to krang_install).
+To make Krang start on system boot, run the following command as root:
+
+rc-update add krang-HostName boot
+
+
