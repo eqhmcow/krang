@@ -50,8 +50,6 @@ our @history_param_list = ('rm',
                            'search_template_id',
                            'search_url',);
 
-our @elements = Krang::ElementLibrary->element_names();
-
 ##############################
 #####  OVERRIDE METHODS  #####
 ##############################
@@ -373,7 +371,7 @@ sub advanced_search {
 
     # Set up element select
     my @element_loop;
-    for (@elements) {
+    for (Krang::ElementLibrary->element_names()) {
         my $selected = $search_element eq $_ ? 1 : 0;
         push @element_loop, {name => $_, selected => $selected, value => $_};
     }
