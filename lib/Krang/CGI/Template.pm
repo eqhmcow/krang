@@ -541,10 +541,9 @@ sub deploy_selected {
     for my $t(@template_ids) {
         my $template = (Krang::Template->find( template_id => $t ))[0];
         $template->deploy;
+        add_message('deployed', id => $template->template_id);
     }
 
-    add_message('message_selected_deployed');
-    
     return $self->search;
 
 }
