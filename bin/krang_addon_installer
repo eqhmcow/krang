@@ -10,56 +10,47 @@ krang_addon_installer - installs extra functionality into Krang
 
 =head1 SYNOPSIS
 
-Unpack a Krang addon, enter its directory and run this script:
+To install an addon into this Krang installation:
 
- $ tar zxvf KrangTurboCharger-1.0.tar.gz
+  bin/krang_addon_installer AddOnName-1.23.tar.gz
 
- $ cd KrangTurboCharger-1.0
- 
- $ /path/to/krang/bin/krang_addon_installer
+Alternately, you may unpack the addon and call the installer from
+within the add-on directory:
+
+  tar zxvf AddOnName-1.23.tar.gz
+  cd AddOnName-1.23
+  bin/krang_addon_installer
 
 =head1 DESCRIPTION
 
-This script installs addon packages into Krang.  An addon package can
-contain new libraries and scripts for Krang, new element sets or even
-new CGI scripts for the frontend interface.
+This script installs addon packages into Krang.  For instructions on
+creating Krang addons, read the documentation:
 
-Each addon package must have a file called F<MANIFEST.krang_addon>
-which lists the files to be installed into Krang.  For example:
+  perldoc docs/add_on.pod
 
-  lib/Krang/Turbo.pm
-  bin/krang_turbo
-  docs/turbo.pod
+=head1 OPTIONS
 
-All files listed in F<MANIFEST.krang_addon> will be copied into
-Krang's root directory, following the directory structure specified.
-
-B<NOTE>: Krang addons do not need to include required CPAN modules
-which are already included in Krang.
-
-=head1 TODO
-
-Possible future developments, to be performed as needed:
+The following options are available:
 
 =over
 
-=item support diffs against Krang files
+=item --verbose
 
-=item uninstall
+Print information about what's happening.
 
-=item version checking
+=item --help
 
-=item SQL inclusion
+Show usage information.
 
-=item allow a script to run
+=item --man
 
-=item logging
+Show full manpage. 
 
 =back
 
 =cut
 
-use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
 
@@ -93,40 +84,233 @@ use Krang::Script;
 use Krang::Conf qw(KrangRoot);
 use File::Copy qw(copy);
 use File::Path qw(mkpath);
+use Pod::Usage;
+use Getopt::Long;
+use File::Temp qw(tempdir);
+use Archive::Tar;
+use Config::ApacheFormat;
+use File::Find qw(find);
+use Krang::AddOn;
+use Krang;
 
-# read the manifest
-die "Missing MANIFEST.krang_addon.  Krang addons must have this file.\n"
-  unless -e 'MANIFEST.krang_addon';
-open(MANIFEST, 'MANIFEST.krang_addon') or
-  die "Unable to open 'MANIFEST.krang_addon': $!\n";
-my @files = grep { not /^#/ } <MANIFEST>;
-close MANIFEST or die $!;
+# parse options
+my ($help, $man);
+my $verbose = 0;
+pod2usage(2) unless
+  GetOptions(help       => \$help,
+             man        => \$man,
+             'verbose+' => \$verbose,             
+            );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
 
-die "No files specified in MANIFEST.krang_addon!\n"
-  unless @files;
-
-chomp($_) for @files;
-
-# check the MANIFEST
-foreach my $file (@files) {
-    die "File named '$file' is in MANIFEST.krang_addon but does not exist."
-      unless -e $file and -f _;
+# get source arg
+my $source;
+if (@ARGV == 1) {
+    $source = $ARGV[0];
+} elsif (@ARGV == 0) {
+    $source = '.';
+} else {
+    pod2usage("Bad arguments to krang_addon_installer: '" . 
+              join(' ', @ARGV) . "'\n");
 }
 
-# copy the files, creating directories as necessary
-my $root = KrangRoot;
-foreach my $file (@files) {
-    my @parts = splitdir($file);
-    my $dir   = @parts > 1 ? catdir(@parts[0 .. $#parts - 1]) : '';
-    my $target_dir = catdir($root, $dir);
-    my $target = catfile($target_dir, $parts[-1]);
-    unless (-d $target_dir) {
-        mkpath([$target_dir]) 
-          or die "Unable to create directory '$target_dir': $!\n";
+# find addon dir, opening the tar file if needed
+_find_dir();
+
+# parse the config
+my $conf = _read_conf();
+
+# make sure that this is a positive upgrade, if the addon is already
+# installed
+my ($old) = Krang::AddOn->find(name => $conf->get('name'));
+if ($old and $old->version >= $conf->get('version')) {
+    die "Unable to install version " . $conf->get('version') . " of " . 
+      $conf->get('name') . ", version " . $old->version . 
+        " is already installed!\n";
+}
+
+# handle requirekrang
+if ($conf->get('requirekrang')) {
+    die "This addon required Krang version " . $conf->get('requirekrang') . " or greater, but this is only $Krang::VERSION.\n"
+      if $conf->get('requirekrang') > $Krang::VERSION;
+}
+
+# handle requireaddons
+if ($conf->get('requireaddons')) {
+    my @addons = $conf->get('requireaddons');
+    while(@addons) {
+        my ($req_name, $req_ver) = (shift(@addons), shift(@addons));
+        my ($req) = Krang::AddOn->find(name => $req_name);
+        die "This addon requires the '$req_name' addon, ".
+          "which is not installed!"
+            unless $req;
+        die "This addon requires the '$req_name' addon version '$req_ver' ".
+          "or greater, but only version '" . $req->version . "' is installed."
+            if $req_ver > $req->version;
     }
-    print "Copying $file to $target...\n";
-    copy($file, catfile($target_dir, $parts[-1]))
-      or die "Unable to copy '$file' to '$target': $!\n";
 }
+
+
+# figure out which files to copy
+my @files = _list_files();
+
+# copy files
+_copy_files(@files);
+
+# perform upgrades if necessary
+_upgrade() if $old;
+
+# register the new add-on
+Krang::AddOn->new(name    => $conf->get('name'),
+                  version => $conf->get('version'))->save;
+    
+# run the post install script if required
+system("KRANG_ROOT=" . KrangRoot . " " . $conf->get('postinstallscript'))
+  if $conf->get('postinstallscript');
 
 print "Installation complete.\n";
+
+#
+# subroutines
+#
+
+# do upgrades if necessary
+sub _upgrade {
+    return unless -d 'upgrade';
+    my $old_version = $old->version;
+    
+    # get list of potential upgrades
+    opendir(UDIR, 'upgrade') or die $!;
+    my @mod = grep { /^V(\d+)\_(\d+)\.pm$/ and "$1.$2" > $old_version } 
+      sort readdir(UDIR);
+    closedir(UDIR);
+
+    print STDERR "Found " . scalar(@mod) . " applicable upgrade modules: " .
+      join(", ", @mod) . "\n"
+        if $verbose;
+
+    # Run upgrade modules
+    foreach my $mod (@mod) {
+        # Get package name by trimming off ".pm"
+        my $package = $mod;
+        $package =~ s/\.pm$//;
+
+        require(catfile('upgrade', $mod));
+        $package->new()->upgrade();
+    }
+}
+
+# figure out which files to copy
+sub _list_files {
+    my %exclude = ( 'krang_addon.conf' => 1 );
+    my @files;
+    
+    if ($conf->get('Files')) {
+        @files = $conf->get('Files');
+    } else {
+        find({ wanted   => sub { push(@files, canonpath($_)) if -f $_ },
+               no_chdir => 1 },
+             '.');
+    }
+    
+    # add exclusions from ExcludeFiles
+    if ($conf->get('ExcludeFiles')) {
+        $exclude{$_} = 1 for $conf->get('ExcludeFiles');
+    }
+    @files = grep { not exists $exclude{$_} } @files;
+
+    # exclude upgrade files
+    @files = grep { not /^upgrade\// } @files;
+
+    return @files;
+}
+    
+sub _copy_files {
+    my @files = @_;
+
+    # copy the files, creating directories as necessary
+    my $root = KrangRoot;
+    foreach my $file (@files) {
+        my @parts = splitdir($file);
+        my $dir   = @parts > 1 ? catdir(@parts[0 .. $#parts - 1]) : '';
+        my $target_dir = catdir($root, $dir);
+        my $target = catfile($target_dir, $parts[-1]);
+        unless (-d $target_dir) {
+            print STDERR "Making directory $target_dir...\n"
+              if $verbose;
+            mkpath([$target_dir]) 
+              or die "Unable to create directory '$target_dir': $!\n";
+        }
+
+        print STDERR "Copying $file to $target...\n"
+          if $verbose;
+        copy($file, catfile($target_dir, $parts[-1]))
+          or die "Unable to copy '$file' to '$target': $!\n";
+    }
+}
+
+
+
+# verify that krang_addon.conf exists, and read it
+sub _read_conf {
+    
+    die("Source '$source' is missing required 'krang_addon.conf'.\n")
+      unless -f 'krang_addon.conf';
+    
+    my $conf = Config::ApacheFormat->new(
+                   valid_directives => [qw( name version files 
+                                            excludefiles requirekrang
+                                            requireaddons postinstallscript 
+                                          )],
+                   valid_blocks     => []);
+    eval { $conf->read('krang_addon.conf') };
+    die "Unable to read krang_addon.conf: $@\n" if $@;
+    
+    my $name = $conf->get('Name');
+    my $version = $conf->get('Version');
+    die "krang_addon.conf is missing required Name directive.\n"
+      unless defined $name;
+    die "krang_addon.conf is missing required Version directive.\n"
+      unless defined $version;
+
+    print STDERR "Read krang_addon.conf: Name=$name Version=$version\n"
+      if $verbose;
+    
+    return $conf;
+}
+
+# find the addon dir, one way or another
+sub _find_dir {
+    # if it's a file, treat it as a tar.gz and open it up in a temp directory
+    if (-f $source) {
+        # open up the tar file
+        my $tar = Archive::Tar->new();
+        my $ok = eval { $tar->read($source); 1 };
+        die("Unable to read addon archive '$source' : $@\n")
+          if $@;
+        die("Unable to read addon archive '$source' : ". Archive::Tar->error)
+          if not $ok;
+        
+        # extract in temp dir
+        my $dir = tempdir( DIR     => catdir(KrangRoot, 'tmp'),
+                           CLEANUP => 1 );
+        chdir($dir) or die "Unable to chdir to $dir: $!";
+        $tar->extract($tar->list_files) or
+          die("Unable to unpack archive '$source' : ". Archive::Tar->error);    
+        
+        # if there's just a single directory here then enter it
+        opendir(DIR, $dir) or die $!;
+        my @entries = grep { not /^\./ } readdir(DIR);
+        closedir(DIR);
+        if (@entries == 1 and -d $entries[0]) {
+            chdir($entries[0]) or die $!;
+        }
+        
+    } elsif (-d $source) {
+        chdir($source) or die "Unable to chdir to $source: $!";
+        
+    } else {
+        die("Bad source arguement '$source': must be a file or a directory.\n");
+    }
+}

@@ -31,7 +31,8 @@ Krang::AddOn - module to manage installed add-ons
 =head1 DESCRIPTION
 
 This module is responsible for maintaining the list of addons and
-their associated
+their associated versions.  See the add_ons.pod document in docs/ for
+a complete description of how add-ons work.
 
 =head1 INTERFACE
 

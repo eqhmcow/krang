@@ -33,9 +33,10 @@ performance.  It requires a new library (Krang::Turbo) supplies a new
 test file (turbo.t) and comes with some documentation (turbo.pod).  It
 has a version number of 1.00.  Its directory structure will look like:
 
-    Turbo-1.00/
+    Turbo-1.00
     |-- docs/
     |   `-- turbo.pod
+    |-- krang_addon.conf
     |-- lib/
     |   `-- Krang/
     |       `-- Turbo.pm
@@ -48,11 +49,16 @@ Notice that this structure is ready to be copied directly into Krang,
 because the 'docs', 'lib' and 't' directories match existing
 directories in Krang.
 
-That's all there is to producing a simple Krang add-on.  Just lay-out
-your files as you wish them to be in Krang, put them in a directory
-with the format "$name-$version" and make a .tar.gz.  The rest of this
-document will explain enchancements that can be used to create more
-complicated add-ons.
+The configuration file, C<krang_addon.conf> contains the name name and
+version of the addon:
+
+  Name Turbo
+  Version 1.00
+
+That's all there is to producing a simple Krang add-on.  Just layout
+your files, write a simple C<krang_addon.conf> and tar it up.  The
+rest of the document will explain enhancements which may be used to
+produce more complex add-ons.
 
 =head2 C<krang_addon.conf>
 
@@ -63,20 +69,16 @@ Krang's krang.conf file.  I'll explain each available directive.
 
 =over 4
 
-=item * C<Name> I<name>
+=item * C<Name> I<name> (required)
 
-You can declare the name of your add-on.  If you do not declare the
-name here it will be parsed from the name of your add-on directory
-(thus Turbo-1.00 has the name 'Turbo').  Names must match
+You must declare the name of your add-on.  Names must match
 C</^[-\w]$/>.  For example:
 
   Name Turbo
 
-=item * C<Version> I<x.y>
+=item * C<Version> I<x.y> (required)
 
-You can declare the version of your add-on.  If you do not declare the
-version here it will be parsed from the name of your add-on directory
-(thus Turbo-1.00 is assumed to be version 1.00).  A version must be a
+You must declare the version of your add-on.  A version must be a
 valid floating point number and will be treated as such (ie. 1.10 is
 the same as 1.1).  For example:
 
@@ -86,8 +88,8 @@ the same as 1.1).  For example:
 
 This directive allows you to specify a list of files to install into
 Krang.  If not present then all files (aside from those used for
-add-on installation) are installed into Krang.  For example,
-Turbo-1.00 might list:
+add-on installation, like C<krang_addon.conf>) are installed into
+Krang.  For example, Turbo-1.00 might list:
 
   Files docs/turbo.pod lib/Krang/Turbo.pm t/turbo.t
 
@@ -131,10 +133,9 @@ Krang add-ons support the same upgrade facility as Krang.  This means
 you can include an 'upgrade/' directory with standard
 L<Krang::Upgrade> modules.  For example, if Turbo-1.01 is released and
 must make changes to the database or filesystem then a file called
-'upgrade/V1.010.pm' must be created (note the required expansion to
-three decimal places).  This file may contain code to run on a
-per-installation or per-instance basis, just like other Krang upgrade
-scripts.
+'upgrade/V1.01.pm' must be created.  This file may contain code to run
+on a per-installation or per-instance basis, just like other Krang
+upgrade scripts.
 
 Krang's upgrade process is described in the 
 HREF[Operations Upgrade|ops_upgrade.html] document.

@@ -2,7 +2,6 @@ use strict;
 use warnings;
 
 use Krang::Script;
-use Krang::AddOn;
 use Test::More qw(no_plan);
 
 use_ok('Krang::AddOn') or exit;
