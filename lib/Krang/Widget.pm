@@ -524,14 +524,14 @@ sub decode_datetime {
     my $y = $query->param($name . '_year');
     my $h = $query->param($name . '_hour');
     my $min = $query->param($name . '_minute');
-    $min = 0 if ($min eq 'undef');
+    $min = 0 if ( (defined $min) and ($min eq 'undef') );
     my $ampm = $query->param($name . '_ampm');
 
     # deal with converting AM/PM to 24 hour time
     if ($h == 12) {
         $h = 0 if ($ampm eq 'AM'); 
     } else {
-        $h = $h + 12 if ($ampm eq 'PM');
+        $h = $h + 12 if ((defined $ampm) and ($ampm eq 'PM'));
     }
     return undef unless $m and $d and $y;
                                                                                 
