@@ -3,7 +3,9 @@ use strict;
 use warnings;
 
 use Krang::DB qw(dbh);
+use Krang::Log qw(critical);
 use Apache::Session::MySQL;
+use Carp qw(croak);
 
 =head1 NAME
 
@@ -94,11 +96,27 @@ sub load {
     my $session_id = shift;
     my $dbh = dbh();
 
-    tie %session, 'Apache::Session::MySQL', $session_id, 
-      { Handle     => $dbh,
-        LockHandle => $dbh }
-        or croak("Unable to create new session.");
-    $tied = 1;
+    # check if the session even exists
+    my ($exists) = $dbh->selectrow_array('SELECT 1 FROM sessions WHERE id = ?',
+                                         undef, $session_id);
+    croak("Session '$session_id' does not exist!")
+      unless $exists;
+
+    # try to tie the session
+    eval {
+        tie %session, 'Apache::Session::MySQL', $session_id, 
+          { Handle     => $dbh,
+            LockHandle => $dbh }
+            or croak("Unable to create new session.");
+        $tied = 1;
+    };
+
+    # delete session if it failed to load, which will prevent a broken
+    # session from totally breaking the application
+    if (my $err = $@) {
+        $dbh->do('DELETE FROM sessions WHERE id = ?', undef, $session_id);
+        croak("Unable to load session '$session_id': $err");
+    }
 
     # touch a key to make sure it gets saved on unload,
     # Apache::Session will miss a change several levels down unless a
