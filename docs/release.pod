@@ -12,9 +12,8 @@ PIRT.
 
 =item Update $VERSION in Krang.pm
 
-=item Update db_version in sql/db.sql
-
-=item Verify that upgrade modules have been created for this release
+=item Verify that upgrade modules have been created for this release,
+if necessary
 
 =item Make sure all changes are committed to CVS.
 
@@ -51,7 +50,7 @@ At the end of the build process, a file will be created in the format:
 
   krang-XX.YY.tar.gz
 
-Where XX.YY is the version of teh release.  For example, version 1.23 would result in a file:
+Where XX.YY is the version of the release.  For example, version 1.23 would result in a file:
 
   krang-1.23.tar.gz
 
@@ -60,3 +59,69 @@ This is the distribution tarball which should be released to PIRT.
 =back
 
 
+
+=head2 Creating Upgrade Modules
+
+Creating upgrade modules is one of the most critical and complicated
+tasks required for creating a Krang release.  Here are the required
+characteristics of upgrade module:
+
+=over 4
+
+=item Upgrade modules are Perl modules.
+
+=item They are stored in $KRANG_ROOT/upgrade/.
+
+=item They are named with the version number, e.g., version 1.2 would
+be named  'V1_2.pm'
+
+=item These Perl modules implement a same-named package (e.g.,
+'package V1_2;')
+
+=item A release may have either none, or exactly one upgrade module.
+
+=item Each upgrade module must implement two methods:
+C<per_installation()> and C<per_instance()>
+
+=item The C<per_installation()> method is called by the upgrade
+process once at the beginning.
+
+=item The C<per_instance()> method is called once for each Krang instance.
+
+=item The upgrade process will use each found upgrade module whose
+version number is between the previously installed Krang and the
+version to which we are upgrading.
+
+
+=back
+
+
+
+
+Fortunately, upgrade modules are not always required.  Here are some
+typical cases where you might want to create an upgrade module:
+
+=over 4
+
+=item Database Schema Changes
+
+A table or column has changed.  The upgrade script C<per_instance()>
+method will implement these changes.
+
+
+=item Data Transformation
+
+It is necessary to make a change to all data of a particular type on
+installed instances.  The upgrade script C<per_instance()> method will
+implement these changes.
+
+
+=item New F<krang.conf> directive
+
+A new directive is added to the F<krang.conf> file.  The
+C<per_installation()> method will interactively query the system
+administrator at upgrade time and add the directive to the new
+krang.conf.
+
+
+=back

@@ -223,16 +223,22 @@ exit(0);
 sub do_upgrade {
     setup_getopts();
 
-    # Do upgrade
+    # Check all pre-requisites for upgrade or rollback
     check_prereqs();
 
-    make_backups();
-    install_new_krang();
-    copy_data();
-    apply_upgrades();
-    update_db_version();
-    clear_sessions();
+    if ($rollback) {
+        do_rollback();
+    } else {
+        # Do upgrade
+        make_backups();
+        install_new_krang();
+        copy_data();
+        apply_upgrades();
+        update_db_version();
+        clear_sessions();
+    }
 
+    start_krang();
     make_test() unless ($no_krang_test);
     output_report();
 }
@@ -246,7 +252,7 @@ sub check_prereqs {
 
     # Can't test unless we have AdminPassword
     unless ($no_krang_test || $options{AdminPassword}) {
-        exit_error("Must specify AdminPassword, or disable Krang tests.  Cannot continue.");
+        exit_error("Must specify AdminPassword, or disable Krang tests (via --no-krang-test).  Cannot continue.");
     }
 
     # Validate path to KRANG_ROOT.
@@ -338,73 +344,104 @@ sub check_prereqs {
     $mysql_datadir = $1;
     print "  MySQL data directory: '$mysql_datadir'\n";
 
-    # Verify that no backup KRANG_ROOT exists.
-    my $krang_root_backup = $KrangRoot .".backup";
-    exit_error("$krang_root_backup already exists.  You must remove this before you perform an upgrade.")
-      if (-e $krang_root_backup);
+    #
+    # Check pre-reqs differently for upgrades and rollbacks
+    #
+    if ($rollback) {
 
-    # Verify that no .backup exists for instance databases.  Parse out instances and databases for later.
-    foreach my $instpair ($OLD_CONF->get("instance")) {
-        my $instance = $instpair->[1];
-        my $conf_block = $OLD_CONF->block(instance => $instance);
-        my $db = $conf_block->get("InstanceDBName");
-        $instance_dbs{$instance} = $db;
+        # Verify that backup KRANG_ROOT exists.
+        my $krang_root_backup = $KrangRoot .".backup";
+        exit_error("$krang_root_backup does not exist.  Cannot continue.")
+          unless (-e $krang_root_backup);
 
-        print STDERR "$instance: '$db'\n";
+        # Verify that backup exists for instance databases.  Parse out instances and databases for later.
+        foreach my $instpair ($OLD_CONF->get("instance")) {
+            my $instance = $instpair->[1];
+            my $conf_block = $OLD_CONF->block(instance => $instance);
+            my $db = $conf_block->get("InstanceDBName");
+            $instance_dbs{$instance} = $db;
 
-        my $mysql_instance_datadir_backup = $mysql_datadir . $db .".backup";
-        exit_error("$mysql_instance_datadir_backup already exists.  You must remove this before you perform an upgrade.")
-          if (-e $mysql_instance_datadir_backup);
-    }
+            my $mysql_instance_datadir_backup = $mysql_datadir . $db .".backup";
+            exit_error("$mysql_instance_datadir_backup does not exist.  Cannot continue.")
+              unless (-e $mysql_instance_datadir_backup);
+        }
 
-    # No Instances?
-    exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
+        # No Instances?
+        exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
 
-    print "  Found instances (database): ". 
-      join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
+        print "  Found instances (database): ". 
+          join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
     
-    # Calculate necessary disk space
-    my @curr_krang_paths = ( $KrangRoot, (map { $mysql_datadir . $_ } values(%instance_dbs)) );
-    my %path_info = ();
-    my %disk_avail = ();
-    foreach my $path (@curr_krang_paths) {
-        my $get_du = DU_BIN ." -sk $path";
-        my $du = `$get_du`;
-        exit_error ("Can't get disk usage for $path:  $du")
-          unless ($du =~ /^(\d+)\s+$path/);
-        $path_info{$path}->{du} = $1;
+    } else {
 
-        my $get_df = DF_BIN ." -k $path";
-        my $df = `$get_df`;
-        $df = (split/\n/, $df)[-1];
-        my (@df_data) = split(/\s+/, $df);
+        # Verify that no backup KRANG_ROOT exists.
+        my $krang_root_backup = $KrangRoot .".backup";
+        exit_error("$krang_root_backup already exists.  You must remove this before you perform an upgrade.")
+          if (-e $krang_root_backup);
 
-        exit_error ("Can't get df for $path:  $df")
-          unless (@df_data);
+        # Verify that no .backup exists for instance databases.  Parse out instances and databases for later.
+        foreach my $instpair ($OLD_CONF->get("instance")) {
+            my $instance = $instpair->[1];
+            my $conf_block = $OLD_CONF->block(instance => $instance);
+            my $db = $conf_block->get("InstanceDBName");
+            $instance_dbs{$instance} = $db;
 
-        $path_info{$path}->{partition} = $df_data[5];
-        $disk_avail{$df_data[5]} = $df_data[3] unless (exists($disk_avail{$df_data[5]}));
+            my $mysql_instance_datadir_backup = $mysql_datadir . $db .".backup";
+            exit_error("$mysql_instance_datadir_backup already exists.  You must remove this before you perform an upgrade.")
+              if (-e $mysql_instance_datadir_backup);
+        }
+
+        # No Instances?
+        exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
+
+        print "  Found instances (database): ". 
+          join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
+    
+        # Calculate necessary disk space
+        my @curr_krang_paths = ( $KrangRoot, (map { $mysql_datadir . $_ } values(%instance_dbs)) );
+        my %path_info = ();
+        my %disk_avail = ();
+        foreach my $path (@curr_krang_paths) {
+            my $get_du = DU_BIN ." -sk $path";
+            my $du = `$get_du`;
+            exit_error ("Can't get disk usage for $path:  $du")
+              unless ($du =~ /^(\d+)\s+$path/);
+            $path_info{$path}->{du} = $1;
+
+            my $get_df = DF_BIN ." -k $path";
+            my $df = `$get_df`;
+            $df = (split/\n/, $df)[-1];
+            my (@df_data) = split(/\s+/, $df);
+
+            exit_error ("Can't get df for $path:  $df")
+              unless (@df_data);
+
+            $path_info{$path}->{partition} = $df_data[5];
+            $disk_avail{$df_data[5]} = $df_data[3] unless (exists($disk_avail{$df_data[5]}));
+        }
+
+        # Verify sufficient disk space: KRANG_ROOT + Instance MySQL folders
+        foreach my $path (@curr_krang_paths) {
+            my $req_kbytes = $path_info{$path}->{du};
+            my $partition = $path_info{$path}->{partition};
+
+            # Subtract space on partition
+            $disk_avail{$partition} -= $req_kbytes;
+        }
+
+        my $insufficient_disk_space = 0;
+        while (my ($partition, $avail) = each(%disk_avail)) {
+            # Require 100 megs of headroom on every partition
+            next if ($avail > 100000);
+
+            my $need_additional = abs($avail - 100000);
+            print "  Insufficient space on partition '$partition'.  Need additional $need_additional kb.\n";
+            $insufficient_disk_space++;
+        }
+        exit_error ("Not enough disk space for upgrade.  Unable to continue.") if ($insufficient_disk_space);
     }
 
-    # Verify sufficient disk space: KRANG_ROOT + Instance MySQL folders
-    foreach my $path (@curr_krang_paths) {
-        my $req_kbytes = $path_info{$path}->{du};
-        my $partition = $path_info{$path}->{partition};
-
-        # Subtract space on partition
-        $disk_avail{$partition} -= $req_kbytes;
-    }
-
-    my $insufficient_disk_space = 0;
-    while (my ($partition, $avail) = each(%disk_avail)) {
-        # Require 100 megs of headroom on every partition
-        next if ($avail > 100000);
-
-        my $need_additional = abs($avail - 100000);
-        print "  Insufficient space on partition '$partition'.  Need additional $need_additional kb.\n";
-        $insufficient_disk_space++;
-    }
-    exit_error ("Not enough disk space for upgrade.  Unable to continue.") if ($insufficient_disk_space);
+    ## End of prereq check
 }
 
 
@@ -415,7 +452,7 @@ sub make_backups {
     #
     my $KrangRoot = $options{KrangRoot};
     print "  Moving KrangRoot to ". $KrangRoot .".backup\n";
-    rename($KrangRoot, $KrangRoot.".backup");
+    rename($KrangRoot, $KrangRoot.".backup") || die($!);
 
     ## Copy MySQL directories to *.backup
     #
@@ -423,6 +460,9 @@ sub make_backups {
     print "  Shutting down MySQL\n";
     my $mysql_init = MYSQL_INIT ." stop";
     system($mysql_init) && die("Error shutting down MySQL");
+
+    # Delay for MySQL shutdown
+    sleep(2);
 
     # Iterate through instances, making .backup files
     foreach my $db (values(%instance_dbs)) {
@@ -438,6 +478,56 @@ sub make_backups {
     print "  Restarting MySQL\n";
     $mysql_init = MYSQL_INIT ." start";
     system($mysql_init) && die("Error starting MySQL");
+
+    # Delay for MySQL startup
+    sleep(2);
+}
+
+
+sub do_rollback {
+    print "Restoring from backups\n";
+
+    ## Rename KRANG_ROOT to *.backup
+    #
+    my $KrangRoot = $options{KrangRoot};
+    my $KrangRootBackup = $KrangRoot .".backup";
+    print "  Deleting $KrangRoot";
+    my $rm_cmd = RM_BIN ." -rf $KrangRoot";
+    system($rm_cmd) && die("Can't delete $KrangRoot: $!");
+
+    print "  Moving $KrangRootBackup to $KrangRoot\n";
+    rename($KrangRootBackup, $KrangRoot) || die($!);
+
+    ## Copy MySQL directories to *.backup
+    #
+    # Shutdown MySQL
+    print "  Shutting down MySQL\n";
+    my $mysql_init = MYSQL_INIT ." stop";
+    system($mysql_init) && die("Error shutting down MySQL");
+
+    # Delay for MySQL shutdown
+    sleep(2);
+
+    # Iterate through instances, making .backup files
+    foreach my $db (values(%instance_dbs)) {
+        my $db_path = $mysql_datadir . $db;
+        my $db_backup = $db_path . ".backup";
+
+        print "  Deleting $db_path";
+        my $rm_cmd = RM_BIN ." -rf $db_path";
+        system($rm_cmd) && die("Can't delete $db_path: $!");
+
+        print "  Moving $db_backup to $db_path\n";
+        rename($db_backup, $db_path) || die($!);
+    }
+
+    # Re-start MySQL
+    print "  Restarting MySQL\n";
+    $mysql_init = MYSQL_INIT ." start";
+    system($mysql_init) && die("Error starting MySQL");
+
+    # Delay for MySQL startup
+    sleep(2);
 }
 
 
@@ -491,16 +581,62 @@ sub install_new_krang {
 }
 
 
-sub copy_data {}
+# Copy krang.conf, data/* from backup to new KRANG_ROOT.
+sub copy_data {
+    print "Copying settings and data from old installation\n";
+
+    my $KrangPath    = $options{KrangRoot};
+    my $OldKrangPath = $KrangPath .".backup";
+
+    # Copy krang.conf
+    my $old_conf = $OldKrangPath ."/conf/krang.conf";
+    my $new_conf = $KrangPath    ."/conf/krang.conf";
+    print "  Copying $old_conf to $new_conf\n";
+    my $conf_cp_cmd = CP_BIN ." -af $old_conf $new_conf";
+    system($conf_cp_cmd) && die("Error copying krang.conf: $!");
+
+    # Copy data/*
+    my $old_data = $OldKrangPath ."/data";
+    my $new_data = $KrangPath;
+    print "  Copying $old_data to $new_data\n";
+    my $data_cp_cmd = CP_BIN ." -af $old_data $new_data";
+    system($data_cp_cmd) && die("Error copying data/ directory: $!");
+}
 
 
-sub apply_upgrades {}
+# Run through upgrade module per_installation() and per_instance() methods.
+sub apply_upgrades {
+    print "Applying upgrades\n";
+
+    my $KrangRoot = $options{KrangRoot};
+
+    my $old_krang_version = get_krang_version($KrangRoot .".backup");
+    my $new_krang_version = get_krang_version($KrangRoot);
+    print "  Upgrading v$old_krang_version to v$new_krang_version\n";
+
+    # Find upgrade modules
+    my $upmod_path = $KrangRoot ."/upgrades/";
+    open(DIR, $upmod_path) || die ("Unable to open upgrade directory '$upmod_path': $!");
+    my @upmodules = (grep { -f $_ && /V\d+\_\d+\.pm$/} readdir(DIR));
+    close(DIR);
+
+    print STDERR "  FOUND ".scalar(@upmodules)." Upgrade modules:\n    ". join("\n    ", @upmodules) ."\n";
+}
 
 
 sub update_db_version {}
 
 
 sub clear_sessions {}
+
+
+sub start_krang {
+    my $HostName   = $OLD_CONF->get("HostName");
+    my $init_script = "krang-". $HostName .".init";
+    print "Starting Krang via init.d script '$init_script'\n";
+    my $start = "KRANG_ROOT='' PERL5LIB='' /etc/init.d/$init_script start";
+    system($start) && die("Can't start Krang: $!");
+}
 
 
 sub make_test {
@@ -518,31 +654,45 @@ sub make_test {
 
 
 sub output_report {
-    my $init_script = "/etc/init.d/krang-". $options{HostName} .".init";
-    my $krang_conf = $options{UpgradePath} ."/conf/krang.conf";
+    my $KrangRoot = $options{KrangRoot};
+
+    my $HostName   = $OLD_CONF->get("HostName");
+    my $IPAddress  = $OLD_CONF->get("ApacheAddr");
+    my $ApachePort = $OLD_CONF->get("ApachePort");
+    my $FTPPort    = $OLD_CONF->get("FTPPort");
+
+    my $init_script = "/etc/init.d/krang-". $HostName .".init";
+    my $krang_conf = $KrangRoot ."/conf/krang.conf";
+
+    my $AdminPassword = $options{AdminPassword};
+
+    my $report_title = ($rollback) ? "KRANG ROLLBACK COMPLETE" : "KRANG UPGRADE COMPLETE " ;
 
     print <<EOREPORT;
 
 
 #####                                                    #####
 ###                                                        ###
-##                  KRANG UPGRADE COMPLETE                  ##
+##                  $report_title                 ##
 ###                                                        ###
 #####                                                    #####
 
 
-   Upgraded at         :  $options{UpgradePath}
+   Krang root path     :  $KrangRoot
    Startup init script :  $init_script
    Krang conf file     :  $krang_conf
 
-   Running on $options{IPAddress} --
-     http://$options{HostName}:$options{ApachePort}/
-     ftp://$options{HostName}:$options{FTPPort}/
-
-   CMS admin user password:  "$options{AdminPassword}"
-
+   Running on $IPAddress --
+     http://$HostName:$ApachePort/
+     ftp://$HostName:$FTPPort/
 
 EOREPORT
+
+    # Print the admin password if we know it
+    if ($AdminPassword) {
+        print "   CMS admin user password:  \"AdminPassword\"\n\n\n";
+    } 
+
 }
 
 
@@ -598,3 +748,34 @@ sub set_param_defaults {
     }
 
 }
+
+
+# Get the version of Krang installed in a particular KRANG_ROOT
+sub get_krang_version {
+    my $KrangRoot = shift;
+
+    my $perl5lib = $KrangRoot ."/lib";
+
+    my $get_version_perl = qq( print \$Krang::VERSION. "\\n"; );
+    my $get_version_cmd = "PERL5LIB=$perl5lib ". PERL_BIN;
+    $get_version_cmd .= " -MKrang -e '$get_version_perl' && echo \"Success $uniqueness\"";
+
+    my $get_version_output = `$get_version_cmd`;
+
+    unless ($get_version_output =~ /Success\ $uniqueness/) {
+        print STDERR $get_version_output;
+        exit_error("Error getting Krang version in $KrangRoot.  Cannot continue.");
+    }
+
+    # Trim off the last line
+    my ($get_version_output_line1) = split(/\n/, $get_version_output);
+    chomp($get_version_output_line1);
+
+    return $get_version_output_line1;
+}
+
+
+
+###############
+####  EOF  ####
+###############
