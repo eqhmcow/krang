@@ -123,6 +123,10 @@ sub show {
 
     # Run the pager
     $pager->fill_template($template);
+
+    # instance_name is used for preview window targeting
+    $template->param(instance_name => Krang::Conf->instance);
+
     return $template->output;
 }
 
