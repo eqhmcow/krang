@@ -138,7 +138,7 @@ sub dump_html {
     $output .= Data::Dumper::Dumper(\%session);
     $output .= "</PRE></b>\n";
 
-    return $output;
+    return "<div style='text-align: left; margin-left: 170px'>$output</div>";
 }
 
 # check for HTML errors if HTMLLint is on
