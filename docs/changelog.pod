@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Re-generated templates.kds for the Default and Tutorial element
+libraries, making them architecture-independent (see nfreeze note
+below).  [Peter]
+
+=item *
+
 Krang now uses C<Storable::nfreeze> rather than C<Storable::freeze>
 when saving binary and object data.  The move to C<nfreeze> should
 make .kds files architecture-independent, allowing migrations between
