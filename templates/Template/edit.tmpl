@@ -18,6 +18,12 @@
         myform.submit();
     }
 
+                                                                                                       
+    function do_checkin () {
+        var myform = document.edit_template_form;
+        myform.rm.value = <tmpl_if add_mode>'add_checkin'<tmpl_else>'edit_checkin'</tmpl_if>;
+        myform.submit();
+    }
 
     function do_cancel () {
         var myform = document.edit_template_form;
@@ -181,6 +187,7 @@ Version: <tmpl_var version_chooser>
 <div class="button-bar">
   <input type="button" value="Save" onClick="do_save()">
   <input type="button" value="Save &amp; Stay" onClick="do_save_stay()">
+  <input type="button" value="Checkin" onClick="do_checkin()">
   <tmpl_unless add_mode>
   <input type="button" value="Delete" onClick="do_delete()">
   <input type="button" value="Deploy" onClick="do_deploy()">

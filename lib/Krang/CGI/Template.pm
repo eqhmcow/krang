@@ -65,6 +65,7 @@ sub setup {
 		add
 		add_cancel
 		add_save
+                add_checkin
 		add_save_stay
 		advanced_search
 		cancel_add
@@ -74,6 +75,7 @@ sub setup {
 		edit
 		edit_cancel
 		edit_save
+                edit_checkin
 		edit_save_stay
 		revert_version
 		save_and_view_log
@@ -189,7 +191,41 @@ sub add_save {
     return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
+=item add_checkin
 
+Saves changes to the template object the end-user enacted on the 'Add' 
+screen, then checks in.
+The user is sent to 'My Workspace' if save succeeds and back to the 'Add'
+screen if it fails.
+
+=cut
+
+sub add_checkin {
+    my $self = shift;
+    my $q = $self->query();
+    my $template = $session{template};
+    croak("No object in session") unless ref $template;
+                                                                             
+    # update template with CGI values
+    $self->update_template($template);
+                                                                             
+    # validate
+    my %errors = $self->validate($template);
+    return $self->add(%errors) if %errors;
+                                                                             
+    # save
+    %errors = $self->_save($template);
+    return $self->add(%errors) if %errors;
+
+    $template->checkin;                                                                             
+    add_message('message_saved');
+                                                                             
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri=> $uri);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$uri\">$uri</a>";
+}
 
 =item add_save_stay
 
@@ -467,7 +503,41 @@ sub edit_save {
     return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
+=item edit_checkin
+                                                                             
+Saves changes to the template object the end-user enacted on the 'Edit' screen, then checks in.
+The user is sent to 'My Workspace' if save succeeds and back to the 'Edit'
+screen if it fails.
+                                                                             
+=cut
+                                                                             
+sub edit_checkin {
+    my $self = shift;
+    my $q = $self->query();
+    my $template = $session{template};
+    croak("No object in session") unless ref $template;
+                                                                             
+    # update template with CGI values
+    $self->update_template($template);
+                                                                             
+    # validate
+    my %errors = $self->validate($template);
+    return $self->edit(%errors) if %errors;
+                                                                             
+    # save
+    %errors = $self->_save($template);
+    return $self->edit(%errors) if %errors;
 
+    $template->checkin;
+                                                
+    add_message('message_saved');
+                                                                             
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri=> $uri);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$uri\">$uri</a>";
+}
 
 =item edit_save_stay
 
@@ -721,6 +791,9 @@ sub get_tmpl_params {
                                              -override => 1);
         }
         $tmpl_params{history_return_params} = join("\n", @history_params);
+
+        $tmpl_params{can_edit} = 1 unless ( $template->checked_out and ($template->checked_out_by ne $session{user_id}) );
+
     }
 
     return \%tmpl_params;
@@ -766,12 +839,13 @@ sub make_pager {
                      template_id
 		     element_class_name
                      url
-                     command_column
+                     commands_column
                      checkbox_column
                     );
 
     my %column_labels = (deployed => '',
                          template_id => 'ID',
+                         commands_column => '',
                          element_class_name => 'Element',
                          url => 'URL',
                         );
@@ -788,11 +862,6 @@ sub make_pager {
                                       ['template_id',
                                        'element_class_name',
                                        'url',],
-                                      command_column_commands =>
-                                      [qw(edit_template view_template)],
-                                      command_column_labels =>
-                                      {edit_template => 'Edit',
-                                       view_template => 'View',},
                                       row_handler => \&search_row_handler,
                                       id_handler =>
                                       sub {return $_[0]->template_id},
@@ -809,6 +878,15 @@ sub search_row_handler {
     $row->{element_class_name} = $template->element_class_name;
     $row->{template_id} = $template->template_id;
     $row->{url} = format_url(url => $template->url, length => 50);
+
+       if (($template->checked_out) and ($template->checked_out_by ne $session{user_id})) {
+        $row->{commands_column} = '<a href="javascript:view_template('."'".$template->template_id."'".')">View</a>'
+    } else {
+        $row->{commands_column} = '<a href="javascript:edit_template('."'".$template->template_id."'".')">Edit</a>'
+        . '&nbsp;|&nbsp;'
+        . '<a href="javascript:view_template('."'".$template->template_id."'".')">View</a>'
+    }
+
 }
 
 

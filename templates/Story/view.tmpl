@@ -2,6 +2,13 @@
 
 <script language="javascript">
   nav_edit_mode();
+  
+  function edit_story() {
+    document.forms[0].rm.value = 'checkout_and_edit';
+    document.forms[0].submit();
+
+  }
+
 </script>
 
 <form method=post name=view>
@@ -112,6 +119,7 @@
 </form>
 
 <div class=button-bar>
+  <tmpl_if can_edit><input type=button value="Edit" onclick="edit_story()"></tmpl_if>
   <tmpl_if parent_path>
     <input type=button value="Return" onclick="view_path('<tmpl_var parent_path>')">
   <tmpl_else>

@@ -18,6 +18,11 @@
         myform.submit();
     }
 
+    function do_checkin () {
+        var myform = document.edit_media_form;
+        myform.rm.value = <tmpl_if add_mode>'checkin_add'<tmpl_else>'checkin_edit'</tmpl_if>;
+        myform.submit();
+    }
 
     function do_publish () {
         alert ("Not implemented yet");
@@ -201,6 +206,7 @@ Version: <tmpl_var media_version_chooser>
 <div class="button-bar">
   <input type="button" value="Save" onClick="do_save()">
   <input type="button" value="Save &amp; Stay" onClick="do_save_stay()">
+  <input type="button" value="Checkin" onClick="do_checkin()">
   <input type="button" value="Publish" onClick="do_publish()">
   <input type="reset" value="Reset">
   <input type="button" value="Delete" onClick="do_delete()">

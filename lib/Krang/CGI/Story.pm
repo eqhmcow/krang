@@ -51,7 +51,7 @@ sub setup {
                      create           => 'create',
                      edit             => 'edit',
                      checkout_and_edit => 'checkout_and_edit',
-                     check_in   => 'check_in',
+                     check_in   => 'check_in_and_save',
                      view             => 'view',
                      revert           => 'revert',
                      find             => 'find',
@@ -215,16 +215,20 @@ sub create {
     return $self->edit;
 }
 
-=item check_in 
+=item check_in_and_save
 
-Check-In story to a particular desk and redirects to that desk.
+Save, Check-In story to a particular desk and redirects to that desk.
 
 =cut
 
-sub check_in {
+sub check_in_and_save {
     my $self = shift;
     my $query = $self->query;
-                                                                             
+        
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+                                                                     
     my $story;
     if ($query->param('story_id')) {
         # load story from DB
@@ -239,9 +243,41 @@ sub check_in {
           unless $story;
     }
 
+    eval { $story->save() };
+
+    # is it a dup?
+    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+        # load duplicate story
+        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        add_message('duplicate_url',
+                    story_id => $dup->story_id,
+                    url      => $dup->url,
+                    which    => join(' and ',
+                                     join(', ', $story->class->url_attributes),
+                                     "site/category"),
+                   );
+                                                                                                       
+        return $self->edit;
+    } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
+        add_message('missing_category_on_save');
+        return $self->edit;
+    } elsif ($@) {
+        # rethrow
+        die($@);
+    }
+                                                                                                       
+    add_message('story_save', story_id => $story->story_id,
+                url      => $story->url,
+                version  => $story->version);
+                                                                                                       
+    # remove story from session
+    delete $session{story};
+
     $story->checkin();
     my $result = $story->move_to_desk($query->param('checkin_to'));
-  
+ 
+    $result ? add_message("moved_story", id => $story->story_id) : add_message("story_cant_move", id => $story->story_id);
+ 
     # redirect to that desk 
     $self->header_props(-uri => 'desk.pl?desk_id='.$query->param('checkin_to'));
     $self->header_type('redirect');
@@ -470,7 +506,8 @@ sub view {
     $template->param(return_script => $query->param('return_script'),
                      return_params_loop => 
                      [ map { { name => $_, value => $return_params{$_} } } keys %return_params ]);
-    
+
+    $template->param( can_edit => 1 ) unless ( $story->checked_out and ($story->checked_out_by ne $session{user_id}) );
 
     return $template->output();
 }

@@ -128,7 +128,7 @@
 
 <div class=button-bar>
   <input type="button" value="Return" onClick="javascript:do_return()">
-  <tmpl_unless is_old_version><input type="button" value="Edit" onClick="javascript:do_edit_media()"></tmpl_unless>
+  <tmpl_unless is_old_version><tmpl_if can_edit><input type="button" value="Edit" onClick="javascript:do_edit_media()"></tmpl_if></tmpl_unless>
 </div>
 
 

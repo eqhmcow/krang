@@ -67,6 +67,8 @@ sub setup {
                          add
                          save_add
                          cancel_add
+                         checkin_add
+                         checkin_edit
                          save_stay_add
                          edit
                          save_edit
@@ -352,8 +354,46 @@ sub save_add {
     return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
+=item checkin_add 
 
+Save the new media object, then check it in. Redirect to 
+My Workspace afterwards, even tho the media object will not be there.
 
+=cut
+
+sub checkin_add {
+    my $self = shift;
+                                                                             
+    my $q = $self->query();
+                                                                             
+    my $m = $session{media};
+    die ("No media object in session") unless (ref($m));
+                                                                             
+    # Update object in session
+    $self->update_media($m);
+                                                                             
+    # Validate input.  Return errors, if any.
+    my %errors = $self->validate_media($m);
+    return $self->_add(%errors) if (%errors);
+                                                                             
+    # Save object to database
+    my %save_errors = ( $self->do_save_media($m) );
+    return $self->_add(%save_errors) if (%save_errors);
+    
+    # check in
+    $m->checkin();
+
+    # Notify user
+    add_message("new_media_saved");
+
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri => $uri);
+    $self->header_type('redirect');
+                                                                             
+    return "Redirect: <a href=\"$uri\">$uri</a>";
+
+}
 
 
 =item cancel_add
@@ -540,7 +580,46 @@ sub save_edit {
     return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
+=item checkin_edit
 
+Validate and save the form content to the media object.
+Checkin media object.
+Redirect the user to their Workspace.
+
+=cut
+
+sub checkin_edit {
+    my $self = shift;
+                                                                             
+    my $q = $self->query();
+                                                                             
+    my $m = $session{media};
+    die ("No media object in session") unless (ref($m));
+                                                                             
+    # Update object in session
+    $self->update_media($m);
+                                                                             
+    # Validate input.  Return errors, if any.
+    my %errors = $self->validate_media($m);
+    return $self->edit(%errors) if (%errors);
+                                                                             
+    # Save object to database
+    my %save_errors = ( $self->do_save_media($m) );
+    return $self->edit(%save_errors) if (%save_errors);
+                                                                             
+    # Checkin
+    $m->checkin();
+                                                                             
+    # Notify user
+    add_message("media_saved");
+                                                                             
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri=>$uri);
+    $self->header_type('redirect');
+                                                                             
+    return "Redirect: <a href=\"$uri\">$uri</a>";
+}
 
 
 
@@ -1146,6 +1225,8 @@ sub make_media_view_tmpl_data {
     }
     $tmpl_data{return_params} = join("\n", @return_params_hidden);
 
+    $tmpl_data{can_edit} = 1 unless ( $m->checked_out and ($m->checked_out_by ne $session{user_id}) );
+
     # Send data back to caller for inclusion in template
     return \%tmpl_data;
 }
@@ -1191,7 +1272,7 @@ sub make_pager {
                      url
                      title 
                      creation_date
-                     command_column 
+                     commands_column
                      checkbox_column
                     );
 
@@ -1200,6 +1281,7 @@ sub make_pager {
                          media_id => 'ID',
                          thumbnail => 'Thumbnail',
                          url => 'URL',
+                         commands_column => '',
                          title => 'Title',
                          creation_date => 'Date',
                         );
@@ -1219,11 +1301,6 @@ sub make_pager {
                                       columns => \@columns,
                                       column_labels => \%column_labels,
                                       columns_sortable => [qw( media_id url title creation_date )],
-                                      command_column_commands => [qw( edit_media view_media )],
-                                      command_column_labels => {
-                                                                edit_media     => 'Edit',
-                                                                view_media     => 'View',
-                                                               },
                                       row_handler => sub { $self->find_media_row_handler($show_thumbnails, @_); },
                                       id_handler => sub { return $_[0]->media_id },
                                      );
@@ -1261,6 +1338,14 @@ sub find_media_row_handler {
     # pub_status
     my $pub_status = ($media->published()) ? 'P' : '&nbsp;' ;
     $row->{pub_status} = '&nbsp;<b>'. $pub_status .'</b>&nbsp;';
+
+    if (($media->checked_out) and ($media->checked_out_by ne $session{user_id})) {
+        $row->{commands_column} = '<a href="javascript:view_media('."'".$media->media_id."'".')">View</a>'
+    } else {
+        $row->{commands_column} = '<a href="javascript:edit_media('."'".$media->media_id."'".')">Edit</a>'
+        . '&nbsp;|&nbsp;'
+        . '<a href="javascript:view_media('."'".$media->media_id."'".')">View</a>'
+    }
 
 }
 
