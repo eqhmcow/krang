@@ -11,8 +11,22 @@ use Krang::Log qw(debug info critical);
 use Krang::Pref;
 
 use Exception::Class
-  'Krang::ElementClass::TemplateNotFound' => { fields => [ 'element_name', 'template_name', 'category_url', 'error_msg' ] },
-  'Krang::ElementClass::TemplateParseError' => {fields => [ 'element_name', 'template_name', 'category_url', 'error_msg' ] };
+  'Krang::ElementClass::TemplateNotFound' =>
+  {
+   fields => [ 'element_name', 'template_name',
+               'category_url', 'error_msg' ]
+  },
+
+  'Krang::ElementClass::TemplateParseError' =>
+  {
+   fields => [ 'element_name', 'template_name',
+               'category_url', 'error_msg' ]
+  },
+
+  'Krang::ElementClass::PublishProblem' =>
+  {
+   fields => [ 'element_name', 'error_msg' ]
+  };
 
 =head1 NAME
 
@@ -865,7 +879,6 @@ sub publish {
     }
 
     my $publisher = $args{publisher};
-    my $element_id = $args{element}->element_id();
 
     # try and find an appropriate template.
     eval { $html_template = $self->find_template(@_); };
@@ -906,10 +919,26 @@ sub publish {
                  category_url  => $publisher->category->url(),
                  error_msg     => $err
                 );
-        } else {
+        } elsif (ref $err) {
+            # something else, but not to be caught here.
             die $err;
+        } else {
+            # something completely unexpected.
+            Krang::ElementClass::PublishProblem->throw
+                (
+                 element_name => $args{element}->display_name,
+                 error_msg    => $err
+                );
         }
     }
+
+    # check to make sure the output isn't zero-length - this can be an
+    # indication of trouble.
+    unless ($html) {
+
+
+    }
+
 
     return $html;
 }
@@ -1025,11 +1054,11 @@ sub _build_page_url {
     my $base_url;
 
     if ($publisher->is_publish) {
-        $base_url = $self->build_url( story => $story,
-                                      category => $publisher->category);
+        $base_url = $story->class->build_url(story    => $story,
+                                             category => $publisher->category);
     } elsif ($publisher->is_preview) {
-        $base_url = $self->build_preview_url( story => $story,
-                                      category => $publisher->category);
+        $base_url = $story->class->build_preview_url(story    => $story,
+                                                     category => $publisher->category);
     } else {
         croak __PACKAGE__ . ": Mode unknown - are we in publish or preview mode?";
     }
