@@ -23,6 +23,9 @@ Krang::Log - Krang logging module
   should($nine, 9) if ASSERT;
   shouldnt($nine, 10) if ASSERT;
 
+  # reopen log file (usually after a fork)
+  reopen_log();
+
 =head1 DESCRIPTION
 
 This module logs messages to file based on the configuration
@@ -118,10 +121,10 @@ use constant LogFile => "logs/krang.log";
 # declare exportable functions
 use Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(debug info critical assert affirm should shouldnt ASSERT);
+our @EXPORT_OK = qw(debug info critical assert affirm should shouldnt ASSERT reopen_log);
 
 # log levels and acceptable function calls
-our ($reopen_log, %valid_functions, %valid_levels);
+our (%valid_functions, %valid_levels);
 
 # log level settings
 our $LOG_LEVEL_DEFAULT;
@@ -134,8 +137,6 @@ our $LOG;
 
 # instantiate a new log object so we are ready to go after compliation
 BEGIN {
-    # reopen the log on each write if the Schedule Daemon is running...
-    our $reopen_log = $ENV{SCH_DAEMON} || 0;
 
     our %valid_functions = (debug   	=> 3,
                             info    	=> 2,
@@ -224,12 +225,12 @@ BEGIN {
 
     # set PERL_NDEBUG to control Carp::Assert
     $ENV{PERL_NDEBUG} = not $assert_on;
+
 }
 
-# load Capr::Assert and rename DEBUG to ASSERT
+# load Carp::Assert and rename DEBUG to ASSERT
 use Carp::Assert qw(assert affirm should shouldnt DEBUG);
 use constant ASSERT => DEBUG;
-use constant REOPEN => $reopen_log;
 
 =pod
 
@@ -325,18 +326,7 @@ sub log {
     # make sure message ends in a newline
     $message .= "\n" unless $message =~ /\n\z/;
 
-    # reopen filehandle if we're running under the Daemon
-    $self->_reopen_log() if REOPEN;
-
-    # try to obtain an exclusive lock
-    # croak("Failed to obtain file lock : $!")
-    #   unless (flock($LOG->{fh}, LOCK_EX) || REOPEN);
-
     print LOG $message;
-
-    # release lock - does it have a return value?
-    # croak("Unable to unlock logfile: $!")
-    #  unless (flock($LOG->{fh}, LOCK_UN) || REOPEN);
 
     # return value for Tests...
     return $message;
@@ -373,11 +363,18 @@ L<Carp::Assert>.
 
 =cut
 
-# for some reason in the course of forking via Proc::Daemon some bad file
-# descriptors come out of the woodwork, this is the jury-rigging to attempt to
-# handle it
-sub _reopen_log {
-    my $self = shift;
+
+=item * C<< reopen_log() >>
+
+Closes and reopens the logfile.  This call should be used in the event that the running code is forking child processes.  Child processes cannot share the filehandle held by their parent, and need to make this call to C<reopen_log> to regain logging ability.
+
+Will croak if it cannot open the logfile.
+
+=cut
+
+sub reopen_log {
+
+    close(LOG);
 
     open(LOG, ">>", $LOG->{path}) or
       croak("Unable to open logfile, $LOG->{path}: $!\n");
@@ -386,6 +383,8 @@ sub _reopen_log {
     my $fh = select(LOG);
     $|++;
     select($fh);
+
+    debug(__PACKAGE__ . "->reopen_log(): Logfile reopened.");
 }
 
 
