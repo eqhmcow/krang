@@ -295,12 +295,18 @@ a:active {
      background-color: #ffffff;
 }
 
+.hpts-inner {
+     overflow:         scroll;
+     width:            225px;
+     height:           200px;
+}
+
 .hpts-title {
      padding:          2px;
      margin-bottom:    4px;     
      background-color: #04044c;
      color:            #dceaf5;
-     width:            200px;     
+     width:            225px;
 }
 
 .hpts-block {
