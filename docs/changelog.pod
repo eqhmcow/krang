@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where contributors created by C<krang_import> weren't
+searchable in the UI unless they had first, middle and last
+names. [Sam]
+
+=item *
+
 Added code to generate HTML documentation for the scripts in
 F<bin/>. [Sam]
 
