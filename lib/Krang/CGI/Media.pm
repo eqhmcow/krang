@@ -1295,7 +1295,7 @@ sub do_save_media {
 
 =head1 AUTHOR
 
-Author of Module <author@module>
+Jesse Erlbaum <jesse@erlbaum.net>
 
 
 =head1 SEE ALSO
