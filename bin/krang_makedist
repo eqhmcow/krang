@@ -84,9 +84,6 @@ BEGIN {
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
       "${lib}";
     unshift @INC, $lib, "$lib/".$Config{archname};
-
-    # load Krang::Conf (don't need to load Krang here because we won't
-    # be slinging elements)
 }
 
 use Krang;
