@@ -26,7 +26,6 @@ BEGIN {
         Krang::Conf->instance($instance);
         if (InstanceElementSet eq 'TestSet1') {
             $found = 1;
-#            $ENV{KRANG_INSTANCE} = $instance;
             last;
         }
     }
@@ -161,20 +160,29 @@ my $child_subcat = $creator->create_category(dir    => 'testdir_b',
                                             );
 
 
+############################################################
+# testing template seach path.
+
 # Directory structures for template paths.
 my @rootdirs = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
 
-my @dirs_a = (File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a', 'testdir_b'), File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a'), File::Spec->catfile(@rootdirs, $site->url()), File::Spec->catfile(@rootdirs));
+my @dirs_a = (
+              File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a', 'testdir_b'),
+              File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a'),
+              File::Spec->catfile(@rootdirs, $site->url()),
+              File::Spec->catfile(@rootdirs)
+             );
 
 
-############################################################
-# testing template seach path.
 
 $publisher->{category} = $child_subcat;  # internal hack - set currently running category.
 my @paths = $publisher->template_search_path();
 
 ok(@paths == @dirs_a, 'Krang::Publisher->template_search_path()');
-for (my $i = 0; $i <= $#paths; $i++) { ok($paths[$i] eq $dirs_a[$i], 'Krang::Publisher->template_search_path()'); }
+
+for (my $i = 0; $i <= $#paths; $i++) { 
+    ok($paths[$i] eq $dirs_a[$i], 'Krang::Publisher->template_search_path()');
+}
 
 
 ############################################################
@@ -200,7 +208,7 @@ my $story   = $creator->create_story(category  => [$category, $child_cat, $child
                                      deck      => $deck1,
                                      title     => $story_title
                                     );
-my $story2  = $creator->create_story(category => [$category],
+my $story2  = $creator->create_story(category       => [$category],
                                      linked_stories => [$story],
                                      linked_media   => [$media[0]],
                                      header         => $head1,
@@ -228,30 +236,25 @@ END {
 ############################################################
 # Testing the publish process.
 
-#test_multi_page_story($category);
+test_find_templates();
 
-test_find_templates($element);
-
-test_contributors($category);
+test_contributors();
 
 test_publish_status();
 
-test_linked_assets($category);
+test_linked_assets();
 
-# test story construction
 test_story_build($story, $category);
 
-# test publisher->publish_story
 test_publish_story($story);
 
-# test publisher->preview_story
 test_preview_story($story);
 
-test_media_deploy($media[0]);
+test_media_deploy();
 
-test_storylink($story2, $story);
+test_storylink();
 
-test_medialink($story2, $media[0]);
+test_medialink();
 
 test_template_testing($story, $category);
 
@@ -265,6 +268,10 @@ test_media_unpublish();
 
 test_additional_content_block();
 
+test_multi_page_story();
+
+test_publish_category_per_page();
+
 ############################################################
 #
 # SUBROUTINES.
@@ -277,7 +284,8 @@ test_additional_content_block();
 
 sub test_contributors {
 
-    my @categories = @_;
+    my $cat = $creator->create_category();
+    my @categories = ($cat);
 
     my %contributor = build_contrib_hash();
     my %contrib_types = Krang::Pref->get('contrib_type');
@@ -319,6 +327,11 @@ sub test_contributors {
 
     }
 
+    $creator->delete_item(item => $contrib);
+    $creator->delete_item(item => $media);
+    $creator->delete_item(item => $story);
+    $creator->delete_item(item => $cat);
+
 }
 
 
@@ -352,8 +365,7 @@ sub test_template_testing {
     $header->mark_for_testing();
 
     # test that directory paths returned include testing dirs in the right order
-    $publisher->{is_preview} = 1;
-    $publisher->{is_publish} = 0;
+    $publisher->_set_preview_mode();
 
     $publisher->_deploy_testing_templates();
     my @paths = $publisher->template_search_path(category => $category);
@@ -376,8 +388,8 @@ sub test_template_testing {
 
 
     # test that in publish mode, testing templates not are used.
-    $publisher->{is_preview} = 0;
-    $publisher->{is_publish} = 1;
+    $publisher->_set_publish_mode();
+
     $head_pub = $head->publish(element => $head, publisher => $publisher);
     ok($head_pub eq $head_output, 'Krang::Publisher testing templates');
 
@@ -430,14 +442,12 @@ sub test_full_publish {
 
 }
 
-
+# create a new story, create multiple pages for it.
+# publish it, find all the pages, compare them to what's expected.
 sub test_multi_page_story {
-    my @categories = @_;
 
-    # create a new story, create multiple pages for it.
-    # publish it, find all the pages, compare them to what's expected.
-
-    my $story = $creator->create_story(category => \@categories);
+    my $category = $creator->create_category();
+    my $story    = $creator->create_story(category => [$category]);
 
     $story->checkout();
 
@@ -451,20 +461,63 @@ sub test_multi_page_story {
     $story->save();
     $story->checkin();
 
-    my $category = $story->category();
+    $publisher->_set_publish_mode();
 
-    $publisher->{is_publish} = 1;
-    $publisher->{is_preview} = 0;
+    my @pages = $publisher->_build_story_single_category(story => $story, category => $category);
 
-    my $pages = $publisher->_assemble_pages(story => $story, category => $category);
+    is(@pages, 4, 'Krang::Publisher - multi-page story');
 
-    foreach (@$pages) {
-        $_ =~ s/\n//g;
+    $creator->delete_item(item => $story);
+    $creator->delete_item(item => $category);
+
+}
+
+
+#
+# test the publisher functionality of calling category->publish() for
+# each page of a story.
+#
+sub test_publish_category_per_page {
+
+    my $category = $creator->create_category();
+    my $story    = $creator->create_story(category => [$category],
+                                          class    => 'publish_test');
+
+    $story->checkout();
+
+    my $page2 = $story->element->add_child(class => 'page');
+    _add_page_data($page2);
+    my $page3 = $story->element->add_child(class => 'page');
+    _add_page_data($page3);
+    my $page4 = $story->element->add_child(class => 'page');
+    _add_page_data($page4);
+
+    $story->save();
+    $story->checkin();
+
+    $publisher->_set_publish_mode();
+
+    my @pages = $publisher->_build_story_single_category(story => $story, category => $category);
+
+    is(@pages, 4, 'Krang::Publisher - multi-page story');
+
+    # load each page, and make sure it has the page numbering at the end.
+    my $i = 1;
+    foreach (@pages) {
+        my $page = load_story_page($_);
+        my $string = "page number=$i total=4";
+        # find that page number!
+        if ($page =~ /$string/) {
+            pass('Krang::Publisher - publish_category_per_page');
+        } else {
+            diag("Cannot find '$string':\n\n$page");
+            fail('Krang::Publisher - publish_category_per_page');
+            die;
+        }
+        $i++;
     }
 
-    $story->delete();
 
-    die Dumper($pages);
 }
 
 ############################################################
@@ -851,7 +904,7 @@ sub test_publish_list {
 # Test to make sure Krang::Publisher->publish/preview_media works.
 sub test_media_deploy {
 
-    my $media = shift;
+    my $media = $creator->create_media();
 
     # test media deployment.
     my $pub_expected_path = catfile($publish_path, $media->url());
@@ -869,6 +922,8 @@ sub test_media_deploy {
     my $prev_media_path = catfile($preview_path, $prev_media_url);
 
     ok($prev_expected_path eq $prev_media_path, 'Krang::Publisher->preview_media()');
+
+    $creator->delete_item(item => $media);
 
 }
 
@@ -927,14 +982,15 @@ sub test_deploy_template {
 # test to make sure Krang::ElementClass::StoryLink->publish works as expected.
 sub test_storylink {
 
-    my ($src_story, $dest_story) = @_;
+    my $dest_story = $creator->create_story();
+    my $src_story  = $creator->create_story(linked_stories => [$dest_story]);
+
+    $publisher->_set_publish_mode();
 
     # test related story - add a storylink from one story to the other.
     $publisher->{story} = $src_story;
-    $publisher->{is_publish} = 1;
-    $publisher->{is_preview} = 0;
 
-    my $page = $src_story->element()->child('page');
+    my $page = $src_story->element->child('page');
     my $storylink = $page->child('leadin');
 
     # w/ deployed template - make sure it works w/ template.
@@ -944,8 +1000,7 @@ sub test_storylink {
 
     ok($story_href eq $resulting_link, 'Krang::ElementClass::StoryLink->publish() -- publish w/ template');
 
-    $publisher->{is_publish} = 0;
-    $publisher->{is_preview} = 1;
+    $publisher->_set_preview_mode();
 
     $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
     $resulting_link = '<a href="http://' . $dest_story->preview_url() . '">' . $dest_story->title() . '</a>';
@@ -954,8 +1009,7 @@ sub test_storylink {
     ok($story_href eq $resulting_link, 'Krang::ElementClass::StoryLink->publish() -- preview w/ template');
 
 
-    $publisher->{is_publish} = 1;
-    $publisher->{is_preview} = 0;
+    $publisher->_set_publish_mode();
 
     # undeploy template - make sure it works w/ no template.
     $publisher->undeploy_template(template => $template_deployed{leadin});
@@ -964,8 +1018,7 @@ sub test_storylink {
 
     ok($story_href eq 'http://' . $dest_story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
 
-    $publisher->{is_publish} = 0;
-    $publisher->{is_preview} = 1;
+    $publisher->_set_preview_mode();
 
     $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
 
@@ -974,18 +1027,22 @@ sub test_storylink {
     # re-deploy template.
     $publisher->deploy_template(template => $template_deployed{leadin});
 
+    $creator->delete_item(item => $src_story);
+    $creator->delete_item(item => $dest_story);
+
 
 }
 
 # test to make sure Krang::ElementClass::StoryLink->publish works as expected.
 sub test_medialink {
 
-    my ($story, $media) = @_;
+    my $media = $creator->create_media();
+    my $story = $creator->create_story(linked_media => [$media]);
 
     # test related media - add a medialink to a story.
     $publisher->{story} = $story;
-    $publisher->{is_publish} = 1;
-    $publisher->{is_preview} = 0;
+
+    $publisher->_set_publish_mode();
 
     my $page = $story->element()->child('page');
     my $medialink = $page->child('photo');
@@ -998,8 +1055,7 @@ sub test_medialink {
 
     ok($media_href eq $resulting_link, 'Krang::ElementClass::MediaLink->publish() -- publish w/ template');
 
-    $publisher->{is_publish} = 0;
-    $publisher->{is_preview} = 1;
+    $publisher->_set_preview_mode();
 
     $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
     $resulting_link = '<img src="http://' . $media->preview_url() . '">' . $media->caption() . '<BR>' . $media->title();
@@ -1007,8 +1063,7 @@ sub test_medialink {
 
     ok($media_href eq $resulting_link, 'Krang::ElementClass::MediaLink->publish() -- preview w/ template');
 
-    $publisher->{is_publish} = 1;
-    $publisher->{is_preview} = 0;
+    $publisher->_set_publish_mode();
 
     # undeploy template - make sure it works w/ no template.
     $publisher->undeploy_template(template => $template_deployed{photo});
@@ -1017,14 +1072,17 @@ sub test_medialink {
 
     ok($media_href eq "http://" . $media->url(), 'Krang::ElementClass::MediaLink->publish() -- publish-no template');
 
-    $publisher->{is_publish} = 0;
-    $publisher->{is_preview} = 1;
+    $publisher->_set_preview_mode();
 
     $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
 
     ok($media_href eq "http://" . $media->preview_url(), 'Krang::ElementClass::MediaLink->publish() -- preview-no template');
     # re-deploy template.
     $publisher->deploy_template(template => $template_deployed{photo});
+
+    $creator->delete_item(item => $media);
+    $creator->delete_item(item => $story);
+
 
 }
 
@@ -1238,17 +1296,23 @@ sub test_media_unpublish {
 #
 sub test_find_templates {
 
-    my ($element) = @_;
+    my $e = shift;
+    my $s;
+
+    unless ($e) {
+        $s = $creator->create_story();
+        $e = $s->element;
+    }
 
     my $tmpl;
 
     eval {
-        $tmpl = $element->class->find_template(publisher => $publisher, element => $element);
+        $tmpl = $e->class->find_template(publisher => $publisher, element => $e);
     };
     if ($@) {
-        if (scalar($element->children())) {
+        if (scalar($e->children())) {
             diag($@);
-            fail("Krang::ElementClass->find_template(" . $element->name() . ")");
+            fail("Krang::ElementClass->find_template(" . $e->name() . ")");
             die;
         } else {
             pass("Krang::ElementClass->find_template()");
@@ -1257,7 +1321,7 @@ sub test_find_templates {
         pass("Krang::ElementClass->find_template()");
     }
 
-    my @children = $element->children();
+    my @children = $e->children();
 
     return unless @children;
 
@@ -1265,6 +1329,8 @@ sub test_find_templates {
     foreach (@children) {
         &test_find_templates($_);
     }
+
+    $creator->delete_item(item => $s) if ($s);
 
 }
 

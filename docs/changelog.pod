@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added support for C<publish_category_per_page()> in the publish
+process.  This functionality allows element library developers to
+generate category template output customized for each page in a
+story. [Peter]
+
+=item *
+
 Fixed a bug where Krang::ElementClass would complain about a missing
 template for a sub-element that wasn't actually needed. [Sam]
 

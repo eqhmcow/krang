@@ -1454,7 +1454,7 @@ sub _build_story_single_category {
     $self->{category} = $category;
     $self->{story}    = $story;
 
-    # get root element for the story
+    # get root element for the story & category.
     my $story_element    = $story->element();
     my $category_element = $category->element();
 
@@ -1473,16 +1473,40 @@ sub _build_story_single_category {
 
     # check to see if category output is needed
     if ($story_element->use_category_templates()) {
-        my $category_output = $category_element->publish(publisher => $self);
 
-        # break the category into header & footer.
-        ($cat_header, $cat_footer) = split(/${\CONTENT}/, $category_output, 2);
+        # category pages must be published once for each story page.
+        if ($story_element->class->publish_category_per_page()) {
+            my $i = 0;
+            foreach my $p (@article_pages) {
+                my %tmpl_args = (page_index      => $i,
+                                 last_page_index => $#article_pages);
+                my $category_output =
+                  $category_element->publish(publisher          => $self,
+                                             fill_template_args => \%tmpl_args);
+                my ($head, $foot) = split(/${\CONTENT}/, $category_output, 2);
 
+                my $output = $head . $p . $foot;
+                push @pages, $output;
 
-        # assemble the components.
-        foreach (@article_pages) {
-            my $page = $cat_header . $_ . $cat_footer;
-            push @pages, $page;
+                # cat_header and cat_footer need to be set w/ first
+                # page tmpl for additional content needs.
+                unless ($i) {
+                    $cat_header = $head;
+                    $cat_footer = $foot;
+                }
+                $i++;
+            }
+        } else {
+            my $category_output = $category_element->publish(publisher => $self);
+
+            # break the category into header & footer.
+            ($cat_header, $cat_footer) = split(/${\CONTENT}/, $category_output, 2);
+
+            # assemble the components.
+            foreach (@article_pages) {
+                my $page = $cat_header . $_ . $cat_footer;
+                push @pages, $page;
+            }
         }
     } else {
         # no category templates being used.

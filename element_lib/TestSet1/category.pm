@@ -48,6 +48,31 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+sub fill_template {
+    my ($self, %args) = @_;
+
+    my $story = $args{publisher}->story;
+    my $tmpl  = $args{tmpl};
+
+    # add page info from publish tests if its in there.
+    if ($args{fill_template_args}) {
+        my $params = $args{fill_template_args};
+
+        if (defined($params->{page_index}) && $tmpl->query(name => 'page_number')) {
+            $tmpl->param(page_number => ($params->{page_index} + 1));
+        }
+
+        if (defined($params->{last_page_index}) && $tmpl->query(name => 'total_pages')) {
+            $tmpl->param(total_pages => ($params->{last_page_index} + 1));
+        }
+
+        delete $args{fill_template_args};
+    }
+
+    $self->SUPER::fill_template( %args ); 
+
+}
+
 1;
 
    
