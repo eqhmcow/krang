@@ -219,40 +219,56 @@ my $page_one = $assembled_ref->[0];
 $page_one =~ s/\n//g;
 ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');
 
+&check_publish_story($story);
 
-$publisher->publish_story(story => $story);
+&check_preview_story($story);
 
-my @story_paths = build_publish_paths($story);
 
-foreach (my $i = $#story_paths; $i >= 0; $i--) {
-    my $story_txt = load_story_page($story_paths[$i]);
-    $story_txt =~ s/\n//g;
-    if ($story_txt =~ /\w/) {
-        ok($article_output{($i+1)} eq $story_txt, 'Krang::Publisher->publish_story() -- compare');
-        if ($article_output{($i+1)} ne $story_txt) {
-            diag('Story content on filesystem does not match expected results');
-            die Dumper($article_output{($i+1)}, $story_txt);
+
+sub check_publish_story {
+
+    my $story = shift;
+
+    $publisher->publish_story(story => $story);
+
+    my @story_paths = build_publish_paths($story);
+
+    foreach (my $i = $#story_paths; $i >= 0; $i--) {
+        my $story_txt = load_story_page($story_paths[$i]);
+        $story_txt =~ s/\n//g;
+        if ($story_txt =~ /\w/) {
+            ok($article_output{($i+1)} eq $story_txt, 'Krang::Publisher->publish_story() -- compare');
+            if ($article_output{($i+1)} ne $story_txt) {
+                diag('Story content on filesystem does not match expected results');
+                die Dumper($article_output{($i+1)}, $story_txt);
+            }
+        } else {
+            diag('Missing story content');
+            fail('Krang::Publisher->publish_story() -- compare');
         }
-
-    } else {
-        diag('Missing story content');
-        fail('Krang::Publisher->publish_story() -- compare');
     }
 }
 
 
+sub check_preview_story {
+    my $story = shift;
 
-my $prevurl = $publisher->preview_story(story => $story);
+    my $prevurl = $publisher->preview_story(story => $story);
 
-my $preview_path_url = build_preview_path($story);
+    my $preview_path_url = build_preview_path($story);
 
-if (-e $preview_path_url) {
-    pass('Krang::Publisher->preview_story() -- exists');
-} else {
-    pass('Krang::Publisher->preview_story() -- exists');
+    if (-e $preview_path_url) {
+        my $story_txt = load_story_page($preview_path_url);
+        $story_txt =~ s/\n//g;
+        if ($story_txt =~ /\w/) {
+            ok($article_output{1} eq $story_txt, 'Krang::Publisher->preview_story() -- compare');
+        } else {
+            fail('Krang::Publisher->preview_story() -- content missing');
+        }
+    } else {
+        fail('Krang::Publisher->preview_story() -- exists');
+    }
 }
-
-
 
 #
 # find_templates()
@@ -429,7 +445,7 @@ sub load_story_page {
     my $filename = shift;
     my $data;
 
-    ok(-e $filename, 'Krang::Publisher->publish_story() -- exists');
+    ok(-e $filename, 'Krang::Publisher->publish/preview_story() -- exists');
 
     undef $/;
     if (open(PAGE, "<$filename")) {
