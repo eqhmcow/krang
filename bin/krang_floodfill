@@ -78,7 +78,7 @@ END
 }
 
 use Krang::Script;
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot SiteServerPort);
 use Krang::ElementLibrary;
 use Krang::Site;
 use Krang::Category;
@@ -120,14 +120,34 @@ $covers = defined $covers ? $covers : ($cats >= 2 ? int($cats / 2) : 0);
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
 
+# list of available sites, configured in developers /etc/hosts
+my @site_urls = qw(
+propositions.kra storeys.kra deallocations.kra wades.kra navigate.kra
+cannon.kra tribe.kra allocates.kra precipitate.kra vanquishing.kra
+vaticanizes.kra companies.kra expertness.kra crutch.kra fondles.kra
+orangutan.kra equilibrium.kra mystics.kra chirped.kra bogartian.kra
+backstitches.kra outset.kra certainly.kra possums.kra mercenariness.kra
+stationing.kra menstruate.kra collects.kra superscripted.kra forgivably.kra
+flo.kra checkerboarding.kra attainments.kra feud.kra spooler.kra shuttered.kra
+slurs.kra beautifying.kra farkas.kra outperformed.kra subtree.kra tautness.kra
+stella.kra renaults.kra synthesizers.kra toryizes.kra outlasts.kra limp.kra
+collision.kra taoist.kra
+);
+
 # create sites
 my (@sites, @cats);
 for(1 .. $sites) {
-    my $name = get_word();
-    my $site = Krang::Site->new(publish_path => "/tmp/${name}_publish/",
-                                preview_path => "/tmp/${name}_preview/",
-                                preview_url  => "preview.$name.com",
-                                url          => "$name.com");
+    my $name = $site_urls[int(rand(scalar(@site_urls)))];
+    my $site = Krang::Site->new(publish_path => 
+                                  catdir(KrangRoot, "tmp", "${name}_publish"),
+                                preview_path => 
+                                  catdir(KrangRoot, "tmp", "${name}_preview"),
+                                preview_url  => "preview.$name" .
+                                  (SiteServerPort eq '80' ? 
+                                   "" : ":" . SiteServerPort),
+                                url          => "$name" .
+                                  (SiteServerPort eq '80' ? 
+                                   "" : ":" . SiteServerPort));
     eval { $site->save() };
     redo if $@ and $@ =~ /duplicate/;
     print STDERR "Created site " . $site->url . "...\n";
