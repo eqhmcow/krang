@@ -149,7 +149,7 @@ BEGIN {
     my $log = File::Spec->catfile(KrangRoot, LogFile);
 
     my $log_exists = (-e $log) ? 1 : 0;
-    $LOG->{fh} = IO::File->new(">>$log") or
+    open(LOG, ">>", $log) or
       croak("Unable to open logfile, $log: $!\n");
     $LOG->{path} = $log;
 
@@ -324,15 +324,14 @@ sub log {
     $self->_reopen_log() if REOPEN;
 
     # try to obtain an exclusive lock
-    croak("Failed to obtain file lock : $!")
-      unless (flock($LOG->{fh}, LOCK_EX) || REOPEN);
+    # croak("Failed to obtain file lock : $!")
+    #   unless (flock($LOG->{fh}, LOCK_EX) || REOPEN);
 
-    $LOG->{fh}->print($message)
-      or croak("Unable to print to logfile: $!");
+    print LOG $message;
 
     # release lock - does it have a return value?
-    croak("Unable to unlock logfile: $!")
-      unless (flock($LOG->{fh}, LOCK_UN) || REOPEN);
+    # croak("Unable to unlock logfile: $!")
+    #  unless (flock($LOG->{fh}, LOCK_UN) || REOPEN);
 
     # return value for Tests...
     return $message;
@@ -375,7 +374,7 @@ L<Carp::Assert>.
 sub _reopen_log {
     my $self = shift;
 
-    $LOG->{fh} = IO::File->new(">>$LOG->{path}") or
+    open(LOG, ">>", $LOG->{path}) or
       croak("Unable to open logfile, $LOG->{path}: $!\n");
 }
 
@@ -386,7 +385,7 @@ sub _reopen_log {
 
 =over 4
 
-=item * Fix flock()ing for scheduled.  Disabled as of 12/16/2003 by adam.
+=item * Fix flock() bugs and re-enable flock() around print() to log.
 
 =item * Log tracing for errors.
 
