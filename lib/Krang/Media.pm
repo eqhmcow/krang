@@ -715,7 +715,7 @@ sub find {
     # add title_like to where_string if present
     if ($args{'title_like'}) {
         $where_string .= " and " if $where_string;
-        $where_string .= " and title like ?";
+        $where_string .= "title like ?";
         push @where, 'title_like';
     }
 
