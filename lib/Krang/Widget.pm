@@ -387,6 +387,14 @@ sub decode_datetime {
     my $y = $query->param($name . '_year');
     my $h = $query->param($name . '_hour');
     my $min = $query->param($name . '_minute');
+    my $ampm = $query->param($name . '_ampm');
+
+    # deal with converting AM/PM to 24 hour time
+    if ($h == 12) {
+        $h = 0 if ($ampm eq 'AM'); 
+    } else {
+        $h = $h + 12 if ($ampm eq 'PM');
+    }
     return undef unless $m and $d and $y;
                                                                                 
     return Time::Piece->strptime("$y-$m-$d $h:$min:00", '%Y-%m-%d %H:%M:%S');
