@@ -290,6 +290,9 @@ sub preview_story {
     $|++;
     print $template->output;
 
+    # start up the cache
+    Krang::Cache::start();
+
     my $publisher = Krang::Publisher->new();
     my $url;
     eval {
@@ -326,8 +329,17 @@ sub preview_story {
               "</div>\n";
         }
         clear_messages();
+
+        # make sure to turn off caching
+        Krang::Cache::stop();
+        debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
+
         return;
     }
+
+    # cache off
+    Krang::Cache::stop();
+    debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
 
     # this should always be true
     assert($url eq $story->preview_url) if ASSERT;
@@ -429,6 +441,9 @@ sub _build_asset_list {
     my @stories = ();
     my @media = ();
 
+    # start caching
+    Krang::Cache::start();
+
     my $publisher = Krang::Publisher->new();
 
     # retrieve all stories linked to the submitted list.
@@ -486,6 +501,10 @@ sub _build_asset_list {
         }
     }
 
+    # done caching
+    Krang::Cache::stop();
+    debug("Krang::Cache stats " . join(' : ', Krang::Cache::stats()));
+    
     return (\@stories, \@media, $checked_out_assets);
 
 }
