@@ -95,6 +95,7 @@ use Krang::MethodMaker
                         notes
                         cover_date                        
                        ) ];
+                        
 
 =item C<story_id> (readonly)
 
@@ -192,11 +193,6 @@ this will be C<undef>.
 
 Creates a new story object.  Any of the available attributes may be
 set with key/value pairs passed to new().
-
-=item C<< $copy = Krang::Story->clone() >>
-
-Creates a copy of the story object, with all fields identical except
-C<story_id> which will be C<undef>.
 
 =item C<< @stories = Krang::Story->find(title => "Turtle Soup") >>
 
@@ -319,6 +315,8 @@ changes).
 
 =item C<< $story->checkout() >>
 
+=item C<< Krang::Story->checkout($story_id) >>
+
 Checkout the story, preventing other users from editing it.  Croaks if
 the story is already checked out.
 
@@ -326,6 +324,29 @@ the story is already checked out.
 
 Checkin the story, allow other users to check it out.  This will only
 fail if the story is not checked out.
+
+=item C<< $story->prepare_for_edit() >>
+
+Copy current version of story into versioning table.  Will only work
+for objects that have been saved (not new objects).
+
+=item C<< $story->revert($version) >>
+
+Loads an old version of this story into the current story object.
+Saving this object will create a new version, but with the contents of
+the old version, thus reverting the contents of the story.
+
+=item C<< $story->delete() >>
+
+=item C<< Krang::Story->delete($story_id) >>
+
+Deletes a story from the database.  This is a permanent operation.
+
+=item C<< $copy = Krang::Story->clone() >>
+
+Creates a copy of the story object, with all fields identical except
+for C<story_id> and C<< element->element_id >> which will both be
+C<undef>.
 
 =back
 
