@@ -43,6 +43,8 @@ CREATE TABLE story_category (
         ord             SMALLINT UNSIGNED NOT NULL,
         url             VARCHAR(255) NOT NULL,
         PRIMARY KEY (story_id, category_id),
+        INDEX (category_id),
+        INDEX (url),
         INDEX (ord)
 );
 

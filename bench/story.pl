@@ -99,7 +99,7 @@ sub {
 $i = 0;
 run_benchmark(module => 'Krang::Story',
               name   => 'find by category ID',
-              count  => scalar(@stories) / 10,
+              count  => scalar(@stories) / 20,
               code   =>
 sub {
     my ($cat) = Krang::Story->find(category_id => $stories[($i % scalar(@stories))]->category->category_id);
