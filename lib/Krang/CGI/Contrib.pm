@@ -1006,6 +1006,16 @@ sub validate_contrib {
     $errors{error_invalid_last} = 1
       unless (defined($last) && ($last =~ /\S+/));
 
+
+    # Validate url
+    if ( $q->param('url') ) {
+        $errors{error_invalid_url} = 1 unless ($q->param('url') =~ /http:\/\/\S+\.\S+/);
+    }
+
+    if ( $q->param('email') ) {
+        $errors{error_invalid_email} = 1 unless ($q->param('email') =~ /\S+@\S+\.\S+/);
+    }
+
     # Validate contrib types
     # contrib_type_ids
     my @contrib_type_ids = ( $q->param('contrib_type_ids') );

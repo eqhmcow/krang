@@ -97,7 +97,7 @@
 
 <tr>
     <td align="left" valign="top">Email:</td>
-    <td align="left" valign="top"><input type="textfield" size="40" name="email" value="<tmpl_var escape=HTML email>"></td>
+    <td align="left" valign="top"><tmpl_if error_invalid_email><span class="invalid"></tmpl_if><input type="textfield" size="40" name="email" value="<tmpl_var escape=HTML email>"></td>
 </tr>
 
 <tr>
@@ -112,7 +112,7 @@
 
 <tr>
     <td align="left" valign="top">URL:</td>
-    <td align="left" valign="top"><input type="textfield" size="40" name="url" value="<tmpl_var escape=HTML url>"></td>
+    <td align="left" valign="top"><tmpl_if error_invalid_url><span class="invalid"></tmpl_if><input type="textfield" size="40" name="url" value="<tmpl_var escape=HTML url>"></td>
 </tr>
 </table>
   </td>
