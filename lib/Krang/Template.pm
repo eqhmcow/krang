@@ -320,15 +320,16 @@ sub checkin {
 
     my $query = <<SQL;
 UPDATE template
-SET checked_out = ?, checked_out_by = ?
+SET checked_out = ?, checked_out_by = ?, testing = ?
 WHERE template_id = ?
 SQL
 
-    $dbh->do($query, undef, 0, 0, $id);
+    $dbh->do($query, undef, 0, 0, 0, $id);
 
     # update checkout fields
     $self->{checked_out} = 0;
     $self->{checked_out_by} = 0;
+    $self->{testing} = 0;
     add_history(object => $self, action => 'checkin',);
 
     return $self;
@@ -1011,20 +1012,26 @@ sub save {
     }
 
     # construct array of bind_parameters
-    @tmpl_params = map { (/_date$/ and defined $self->{$_}) ?
-                           $self->{$_}->mysql_datetime :
-                             $self->{$_}
-                         } @save_fields;
-
+    foreach my $field (@save_fields) {
+        if ($field =~ /_date$/) {
+            push(@tmpl_params, $self->{$field} ? 
+                 $self->{$field}->mysql_datetime : localtime);
+        } else {
+            push(@tmpl_params, $self->{$field});
+        }
+    }
     push @tmpl_params, $id if $id;
 
     # get database handle
     my $dbh = dbh();
 
-    # croak if no rows are affected
-    croak(__PACKAGE__ . "->save(): Unable to save object to DB" .
-          ($id ? " for template id '$id'" : ""))
-      unless $dbh->do($query, undef, @tmpl_params);
+    
+    debug(__PACKAGE__ . "::save() SQL: " . $query);
+    debug(__PACKAGE__ . "::save() SQL ARGS: " . join(',', map { defined $_ ? $_ : 'undef' } @tmpl_params));
+
+
+    # do the save
+    $dbh->do($query, undef, @tmpl_params);
 
     # get template_id for new objects
     $self->{template_id} = $dbh->{mysql_insertid} unless $id;
