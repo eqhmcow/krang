@@ -9,6 +9,7 @@ use Krang::Category;
 use Krang::Site;
 use Krang::User;
 use Krang::Media;
+use Krang::Template;
 use Krang::Session qw(%session);
 use Net::FTP;
 use IPC::Run qw(start);
