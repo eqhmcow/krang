@@ -10,6 +10,7 @@ our %BAD_DEFAULT = map { ($_,1) }
        Krang::CGI::Schedule
        Krang::CGI::Desk
        Krang::CGI::Publisher
+       Krang::CGI::Help
      ));
 
 
