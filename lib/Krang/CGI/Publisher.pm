@@ -121,11 +121,14 @@ sub publish_story_list {
     my @id_list;
 
     foreach (@asset_id_list) {
-        $_ =~ /^(\w+)_(\d+)$/o;
-        ($1 eq 'story') ? ( push @story_id_list, $2 ) :
-          ($1 eq 'media') ? ( push @media_id_list, $2 ) : 
-            croak __PACKAGE__ . ": what to do with asset = '$1'??";
         push @id_list, { id => $_ };
+        push(@story_id_list, $1), next if /^(\d+)$/;
+
+        if (/^(\w+)_(\d+)$/) {
+            push(@story_id_list, $2), next if $1 eq 'story';
+            push(@media_id_list, $2), next if $1 eq 'media';
+        }
+        croak __PACKAGE__ . ": what to do with asset = '$1'??";
     }
 
 
@@ -176,10 +179,13 @@ sub publish_assets {
     my @media_list;
 
     foreach (@asset_id_list) {
-        $_ =~ /^(\w+)_(\d+)$/o;
-        ($1 eq 'story') ? ( push @story_id_list, $2 ) :
-          ($1 eq 'media') ? ( push @media_id_list, $2 ) : 
-            croak __PACKAGE__ . ": what to do with asset = '$1'??";
+        push(@story_id_list, $1), next if /^(\d+)$/;
+
+        if (/^(\w+)_(\d+)$/) {
+            push(@story_id_list, $2), next if $1 eq 'story';
+            push(@media_id_list, $2), next if $1 eq 'media';            
+        }
+        croak __PACKAGE__ . ": what to do with asset = '$1'??";
     }
 
     @story_list = Krang::Story->find(story_id => \@story_id_list) if @story_id_list;
