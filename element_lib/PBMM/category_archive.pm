@@ -34,6 +34,13 @@ sub new {
                 Krang::ElementClass::Text->new( name => 'leadins_per_page',
                                                 default => 25,
                                        @fixed),
+                Krang::ElementClass::PopupMenu->new(name => "order_by",
+                                                   @fixed,
+                                                   values => [ "AlphaNumeric",
+                                                               "Reverse Chronological"],
+                                                   default => "Reverse Chronological"
+                                                           ),
+
                 Krang::ElementClass::CheckBox->new(    name => 'link_to_top_of_page',
                                             default => 1,
                                             min => 1,
@@ -63,8 +70,14 @@ sub fill_template {
 
     if($args{element}->child('automatic_leadins')->data) {
 
+    my @s;
+
     # get stories in this category
-    my @s = Krang::Story->find( category_id => $story->category->category_id, published => '1', order_by => 'cover_date', order_desc => 1 );
+    if ($args{element}->child('order_by')->data eq 'AlphaNumeric') {
+        @s = Krang::Story->find( category_id => $story->category->category_id, published => '1', order_by => 'title' );
+    } else {
+         @s = Krang::Story->find( category_id => $story->category->category_id, published => '1', order_by => 'cover_date', order_desc => 1 );
+    }
 
     my @story_loop;
     my @page_loop;
