@@ -294,9 +294,6 @@ sub datetime_chooser {
     croak("Missing required args: name and query")
       unless $name and $query;
 
-    use Krang::Log qw(critical);
-    critical("@_");
-
     # Set date to today if it is NOT already set, AND if we do not allow "no choice"
     $date ||= localtime() unless ($nochoice);
                                                                                 
