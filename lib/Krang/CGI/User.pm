@@ -242,6 +242,17 @@ sub delete {
         }
     }
 
+    # suicidal?
+    if ($user_id == $ENV{REMOTE_USER}) {
+        # delete the session, since it's useless now
+        Krang::Session->delete($ENV{KRANG_SESSION_ID});
+
+        # redirect to login
+        $self->header_type('redirect');
+        $self->header_props(-url=>'login.pl');
+        return "";
+    }
+
     add_message('message_deleted');
 
     return $self->search();
