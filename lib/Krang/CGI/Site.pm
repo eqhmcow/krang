@@ -590,7 +590,7 @@ sub validate {
             }
 
             # check for other bad chars
-            if ($val !~ m!^[-\w.]+$!) {
+            if ($val !~ m!^[-\w.:]+$!) {
                 add_message("error_${name}_has_bad_chars");
                 $errors{"error_invalid_$name"} = 1;
             }

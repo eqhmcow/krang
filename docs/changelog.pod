@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed site editor to allow colons so that port numbers can be
+specified for preview URLs. [Perrin]
+
+=item *
+
 Synchronized Devel-StackTrace with latest from CPAN, so that we are
 now using the standard release. [Perrin]
 
