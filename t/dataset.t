@@ -328,6 +328,75 @@ $lset->import_all();
 ok($found);
 END { (Krang::Template->find(url => $ltemplate->url))[0]->delete() }
 
+# now test desks, groups, users
+my $ldesk= Krang::Desk->new(name => 'abc_test_desk');
+
+my $lgroup = Krang::Group->new( name => 'abc_test_group',
+                                categories => { $category->category_id => 'edit'},
+                                desks => { $ldesk->desk_id => 'edit' },
+                                may_publish         => 1,
+                                 may_checkin_all     => 1,
+                                 admin_users         => 1,
+                                 admin_users_limited => 1,
+                                 admin_groups        => 1,
+                                 admin_contribs      => 1,
+                                 admin_sites         => 1,
+                                 admin_categories    => 1,
+                                 admin_jobs          => 1,
+                                 admin_desks         => 1,
+                                 asset_story         => 'edit',
+                                 asset_media         => 'read-only',
+                                 asset_template      => 'hide' );
+
+$lgroup->save;
+
+my $luser = Krang::User->new(   email => 'a@b.com',
+                                first_name => 'fname',
+                                last_name => 'lname',
+                                group_ids => ($lgroup->group_id),
+                                login => 'abc_test_login',
+                                password => 'passwd' );
+
+$luser->save;
+
+$lset->add(object => $luser);
+
+# they live, yes?
+($found) = Krang::User->find(login => $luser->login, count => 1 );
+ok($found);
+($found) = Krang::Group->find(name => $lgroup->name, count => 1 );
+ok($found);
+($found) = Krang::Desk->find(name => $ldesk->name, count => 1 );
+ok($found);
+
+# this should fail
+eval { $lset->import_all(no_update => 1) };
+ok($@);
+
+# it dies
+$luser->delete();
+$lgroup->delete();
+$ldesk->delete();
+($found) = Krang::User->find(login => $luser->login, count => 1);
+ok(not $found);
+($found) = Krang::Group->find(name => $lgroup->name, count => 1 );
+ok(not $found);
+($found) = Krang::Desk->find(name => $ldesk->name, count => 1 );
+ok(not $found);
+
+# the resurection
+$lset->import_all();
+($found) = Krang::User->find(login => $luser->login, count => 1);
+ok($found);
+($found) = Krang::Group->find(name => $lgroup->name, count => 1 );
+ok($found);
+($found) = Krang::Desk->find(name => $ldesk->name, count => 1 );
+ok($found);
+
+END{ (Krang::Desk->find(name => $ldesk->name))[0]->delete() }
+END{ (Krang::Group->find(name => $lgroup->name))[0]->delete() }
+END{ (Krang::User->find(login => $luser->login))[0]->delete() }
+
 # create a story with an element tree and make sure it gets through an
 # export/import intact
 # create a new story
