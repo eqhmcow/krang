@@ -22,129 +22,130 @@
 
 </script>
 
-<div class=dark-bar><tmpl_if is_story>Story</tmpl_if><tmpl_if is_media>Media</tmpl_if> Schedule Editor <tmpl_if simple>(Simple)</tmpl_if></div>
-
-<div class=tight-form-box>
-<table width=100% cellpadding=2 cellspacing=0>
-                                                                        
-<tr class=light>
-<td>ID:</td>
-<td><tmpl_var id></td>
-</tr>
-
-<tmpl_if is_story>                                                     
-<tr class=light>
-<td>Story Type:</td>
-<td><tmpl_var story_type></td>
-</tr>
-</tmpl_if>
-                                                             
-<tr class=light>
-<td>Current Version:</td>
-<td><tmpl_var current_version></td>
-</tr>
-                                                                        
-<tr class=light>
-<td>Published Version:</td>
-<td><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td>
-</tr>
-                                                                        
-<tr class=light>
-<td>URL:</td>
-<td><tmpl_var url></td>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;<tmpl_if is_story>STORY</tmpl_if><tmpl_if is_media>MEDIA</tmpl_if> SCHEDULE EDITOR<tmpl_if simple> (Simple)</tmpl_if></td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
 </tr>
 </table>
-</div>
-<br>
-<TMPL_IF existing_schedule_loop>
-<form name="current_schedule_form" method="POST">
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellpadding="6" cellspacing="0" width="100%">
+  <tr class="light"><td>ID:</td><td><tmpl_var id></td></tr>
+<tmpl_if is_story>
+  <tr class="light"><td>Story Type:</td><td><tmpl_var story_type></td></tr>
+</tmpl_if>
+  <tr class="light"><td>Current Version:</td><td><tmpl_var current_version></td></tr>
+  <tr class="light"><td>Published Version:</td><td><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td>
+  </tr>
+  <tr class="light"><td>URL:</td><td><tmpl_var url></td></tr>
+  </table>
+
+<table border="0" cellspacing="0" cellpadding="8" width="100%">
+<tr><td>
+<TMPL_IF existing_schedule_loop><table border="0" cellspacing="0" width="100%">
+<tr><form name="current_schedule_form" method="POST"><td class="no-border">
 <input type="hidden" name="rm" value="delete" override='1'>
-<tmpl_if advanced><input type="hidden" name="advanced_schedule" value="1" override="1"></tmpl_if>
+<tmpl_if advanced><input type="hidden" name="advanced_schedule" value="1" override="1"></tmpl_if></td></tr>
+</table>
 <input type="hidden" name="object_type" value="<tmpl_var object_type>">
-  <table cellspacing="0" width="100%">
-                                                                        
-      <tr class="form-head">
-          <th>Schedule</th>
-          <th>Next Run</th>
-          <th>Action</th>
-          <th>Version</th>
-          <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'schedule_delete_list')"></th>
-      </tr>
-                                                                        
+  <table cellspacing="0" width="100%" cellpadding="2">
+<tr class="form-head">
+     <th width="130">Schedule</th>
+     <th width="130">Next Run</th>
+     <th width="130">Action</th>
+     <th width="130">Version</th>
+     <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'schedule_delete_list')"></th>
+   </tr></table>
+
+  <table cellspacing="0" width="100%" class="form-cell">                                                                        
   <tmpl_loop existing_schedule_loop>
-      <tr>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML schedule></td>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML next_run></td>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML action></td>
-          <td class="form-cell"><tmpl_if version><tmpl_var ESCAPE=HTML version><tmpl_else>&nbsp;</tmpl_if></td>          
-          <td class="form-cell"><input type="checkbox" name="schedule_delete_list" value="<tmpl_var ESCAPE=HTML schedule_id>"></td>
-      </tr>
+   <tr>
+     <td class="form-cell" width="130"><tmpl_var ESCAPE=HTML schedule></td>
+     <td class="form-cell" width="130"><tmpl_var ESCAPE=HTML next_run></td>
+     <td class="form-cell" width="130"><tmpl_var ESCAPE=HTML action></td>
+     <td class="form-cell" width="130"><tmpl_if version><tmpl_var ESCAPE=HTML version><tmpl_else>&nbsp;</tmpl_if></td>          
+     <td class="form-cell"><input type="checkbox" name="schedule_delete_list" value="<tmpl_var ESCAPE=HTML schedule_id>"></td>
+   </tr>
   </tmpl_loop>
   </table>
-  <div align="right">
-<input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+
+  <div style="text-align:right; padding-top:5px;">
+  <input type="button" value="Delete" onClick="delete_selected()" class="button"></div>
 </form>                                                                      
-<TMPL_ELSE>
-  <b>No Schedule Found</b><br><br>
+<TMPL_ELSE><table border="0" cellspacing="0" width="100%">
+<tr><td class="no-border">No Schedule Found</td></tr>
+</table>
 </TMPL_IF>
-<div class=form-box>
 
 <form name="add_schedule_form" method="POST">
 <input type="hidden" name="object_type" value="<tmpl_var object_type>">
-<table cellspacing="0" width="100%">
-<tmpl_if simple>
-<input type="hidden" name="rm" value="add_simple" override='1'>
-      <tr class="form-head">
-          <th colspan=2 align=left>Schedule Publication</th>
-      </tr>
-        <tr>
-            <td>Publish:</td>
-            <td <tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var publish_selector></td>
-        </tr>
-        <tr>
-            <td>Version:</td>
-            <td><tmpl_var version_selector> <input type=button value="View" onclick="save_and_view()"></td>
-        </tr>
+ <table cellspacing="0" width="100%" cellpadding="2">
+  <tmpl_if simple>
+  <input type="hidden" name="rm" value="add_simple" override='1'>
+  <tr class="form-head">
+    <th align="left">Schedule Publication</th>
+  </tr></table>
+  <table cellspacing="0" width="100%" class="form-cell">
+  <tr>
+    <td class="form-cell" width="80" style="border-bottom:none; border-right:none;">Publish:</td>
+    <td  class="form-cell" style="border-bottom:none; border-left:none;"<tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var publish_selector></td>
+  </tr>
+  <tr>
+     <td class="form-cell" width="80" style="border-top:none; border-right:none;">Version:</td>
+     <td class="form-cell" style="border-top:none; border-left:none;"><tmpl_var version_selector> <input type=button value="View" onclick="save_and_view()" class="button"></td>
+  </tr>
 <tmpl_else>
 <input type="hidden" name="advanced_schedule" value="1" override="1">
 <input type="hidden" name="rm" value="add" override='1'>
-      <tr class="form-head">
-          <th colspan=2 align=left>Add to Schedule</th>
-      </tr>
-    <tr class="form-cell">
-            <td class="form-cell">Date/Time</td>
-            <td class="form-cell">
-                <table>
-                <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="never" <tmpl_if repeat_never>CHECKED</tmpl_if>>Once at:</td><td <tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var full_date_selector><br></td>
-                <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="hourly" <tmpl_if repeat_hourly>CHECKED</tmpl_if>>Hourly at:</td><td><tmpl_var hourly_minute_selector> minutes after the hour</td></tr>
-                <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="daily" <tmpl_if repeat_daily>CHECKED</tmpl_if>>Daily at:</td><td <tmpl_if no_hour>class="invalid"</tmpl_if>><tmpl_var daily_time_selector></td></tr>
-                <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="weekly" <tmpl_if repeat_weekly>CHECKED</tmpl_if>>Weekly on:</td><td <tmpl_if no_weekly_hour>class="invalid"</tmpl_if>><tmpl_var weekly_day_selector>
+<table cellspacing="0" width="100%" cellpadding="2">
+   <tr class="form-head">
+      <th align="left">Add to Schedule</th>
+   </tr></table>
+	
+	 <table cellspacing="0" width="100%" class="form-cell">
+   <tr>
+      <td class="form-cell" width="80" style="border-left:none;">Date/Time</td>
+      <td class="form-cell" style="border-right:none;">
+      <table>
+      <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="never" <tmpl_if repeat_never>CHECKED</tmpl_if>>Once at:</td><td <tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var full_date_selector><br></td></tr>
+      <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="hourly" <tmpl_if repeat_hourly>CHECKED</tmpl_if>>Hourly at:</td><td><tmpl_var hourly_minute_selector> minutes after the hour</td></tr>
+      <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="daily" <tmpl_if repeat_daily>CHECKED</tmpl_if>>Daily at:</td><td <tmpl_if no_hour>class="invalid"</tmpl_if>><tmpl_var daily_time_selector></td></tr>
+      <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="weekly" <tmpl_if repeat_weekly>CHECKED</tmpl_if>>Weekly on:</td><td <tmpl_if no_weekly_hour>class="invalid"</tmpl_if>><tmpl_var weekly_day_selector>
 - <tmpl_var weekly_time_selector></td></tr>
                 </table>
     </td>
     </tr>
-    <tr class="form-cell">
-            <td class="form-cell">Version:</td>
-            <td class="form-cell"><tmpl_var version_selector> <input type=button value="View" onclick="save_and_view()"></td>
+    <tr>
+            <td class="form-cell" style="border-bottom:none; border-right:none;">Version:</td>
+            <td class="form-cell" style="border-bottom:none; border-left:none;"><tmpl_var version_selector> <input type=button value="View" onclick="save_and_view()"></td>
     </tr>
-    <tr class="form-cell">
-            <td class="form-cell">Action:</td>
-            <td class="form-cell"><tmpl_var action_selector></td>
+    <tr>
+            <td class="form-cell" style="border-top:none; border-right:none;">Action:</td>
+            <td class="form-cell" style="border-top:none; border-left:none;"><tmpl_var action_selector></td>
     </tr>
 </tmpl_if>
-<tr><td>&nbsp;</td><td><input type=button value="Add to Schedule" onclick="submit()"></td></tr>
+<tr><td>&nbsp;</td><td style="padding: 5px;"><input type="button" value="Add to Schedule" onclick="submit()" class="button"></td></tr>
+                </table>
 <tmpl_if simple>
-<tr><td colspan=2><a href="schedule.pl?advanced_schedule=1&rm=edit&object_type=<tmpl_var object_type>">Advanced Schedule</a></td></tr>
+<tr><td class="no-border"><a href="schedule.pl?advanced_schedule=1&rm=edit&object_type=<tmpl_var object_type>">Advanced Schedule</a></td></tr>
 <tmpl_else>
-<tr><td colspan=2><a href="schedule.pl?rm=edit&object_type=<tmpl_var object_type>">Simple Schedule</a></td></tr>
+<tr><td class="no-border"><a href="schedule.pl?rm=edit&object_type=<tmpl_var object_type>">Simple Schedule</a></td></tr>
 </tmpl_if>
-</table>
+
 </form>
-</div>
+ </td></tr>
+                </table>
+  </td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
 
 
-<div class=button-bar>
-  <input type=button value="Return" onclick="document.return_form.submit()">
+<div class="button-bar">
+  <input type="button" value="Return" onclick="document.return_form.submit()" class="button">&nbsp;
 </div>
 
 <form name="return_form" method="POST" action="<tmpl_if is_story>story.pl<tmpl_else>media.pl</tmpl_if>">

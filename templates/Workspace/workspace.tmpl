@@ -90,14 +90,9 @@
 
 <table border="0" cellpadding="2" cellspacing="0" width="100%">
 <tr class="dark-bar">
-  <td>&nbsp;My Workspace</td>
+  <td>&nbsp;MY WORKSPACE</td>
   <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
 </tr>
-</table>
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellpadding="5" cellspacing="0" width="100%"><tr class="light"><td valign="bottom">
 
 <!-- publish_story form -->
 <form name="publish_story_form" method="GET" action="publisher.pl">
@@ -115,12 +110,14 @@
 <form name="krang_pager_form" method="POST">
   <input type="hidden" name="rm">
   <input type="hidden" name="id">
-
+</table>
 <tmpl_include HTMLPager/pager-internals.tmpl>
 
 <tmpl_if krang_pager_rows>
 
-
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellpadding="5" cellspacing="0" width="100%"><tr class="light"><td valign="bottom">
   Sort By: &nbsp;&nbsp; <tmpl_var sort_select></td></tr>
 </table>
 
@@ -143,8 +140,8 @@
 
 <tr class="form-head">
     <td width="150"><tmpl_if is_story><b>Story</b> <tmpl_var story_id></tmpl_if>
-        <tmpl_if is_media>Media <tmpl_var media_id></tmpl_if>
-        <tmpl_if is_template>Template <tmpl_var template_id></tmpl_if></b>
+        <tmpl_if is_media><b>Media</b> <tmpl_var media_id></tmpl_if>
+        <tmpl_if is_template><b>Template</b> <tmpl_var template_id></tmpl_if>
         v<tmpl_var version>&nbsp;&nbsp;&nbsp;
     </td>
     <td><tmpl_var title></td>
@@ -176,19 +173,19 @@
                <input type="button" value="Copy" onclick="copy('<tmpl_var id>')" class="button">
                <input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button">
                <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
-               <p>
+               <br><br>
                Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_media>
                <input type="button" value="Publish" onclick="publish_media('<tmpl_var id>')" class="button">
                <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
-               <p>
+                 <br><br>
                <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_template>
                <input type="button" value="Deploy" onclick="deploy('<tmpl_var id>')" class="button">
                <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
-               <p>
+                 <br><br>
                <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
                Test with: <input onchange="update_testing(this, '<tmpl_var id>')" type="checkbox" <tmpl_if testing>checked</tmpl_if> name=testing_<tmpl_var id> value='1'>
            </tmpl_if>

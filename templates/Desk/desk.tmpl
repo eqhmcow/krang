@@ -58,23 +58,22 @@
 
 <table border="0" cellpadding="2" cellspacing="0" width="100%">
 <tr class="dark-bar">
-  <td><tmpl_var desk_name> Desk</td>
+  <td><tmpl_var desk_name> DESK</td>
   <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
 </tr>
-</table>
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellpadding="5" cellspacing="0" width="100%"><tr class="light"><td valign="bottom">
-
 <form name="krang_pager_form" method="POST">
   <input type="hidden" name="rm">
   <input type="hidden" name="id">
   <input type="hidden" name="desk_id" value="<tmpl_var desk_id>">
+</table>
 
 <tmpl_include HTMLPager/pager-internals.tmpl>
 
 <tmpl_if krang_pager_rows>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellpadding="5" cellspacing="0" width="100%"><tr class="light"><td valign="bottom">
 
   Sort By: &nbsp;&nbsp; <tmpl_var sort_select></td></tr>
 </table>
@@ -84,17 +83,14 @@
   <input type="button" value="Check Out" onclick='checkout_checked()' class="button">
   <input type="button" value="Publish" onclick='publish_checked()' class="button">
 </div>
-
-
 <table border="0" cellspacing="0" width="100%">
 <tr><td class="no-border">Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></td>
-  <td align="right" class="no-border"><tmpl_var colhead_checkbox_column></td>
+  <td align="right" class="no-border"><tmpl_var colhead_checkbox_column></td></tr>
 </table>
 
 <table border="0" cellspacing="0" cellpadding="8" width="100%">
 <tr><td>
 <tmpl_loop krang_pager_rows>
-
 <table cellspacing="0" width="100%" cellpadding="2">
 
 <tr class="form-head">
@@ -126,7 +122,7 @@
            <span style="float:right; font-weight: bold;"><tmpl_var command_column></span>
                <input type="button" value="Publish" onclick="publish('<tmpl_var id>')" class="button">
                <input type="button" value="Check Out" onclick="checkout('<tmpl_var id>')" class="button">
-               <p>
+                 <br><br>
                <input type="button" value="Move" onclick="move('<tmpl_var id>')" class="button"> to <select name="move_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>" <tmpl_if is_selected>SELECTED</tmpl_if>><tmpl_var choice_desk_name> Desk</tmpl_loop></select>
        </td>
      </tr>
