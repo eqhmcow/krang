@@ -5,6 +5,7 @@ use Krang::DB qw(dbh);
 use Krang::Conf qw(KrangRoot);
 use Krang::Session qw(%session);
 use Krang::Contrib;
+use Krang::Category;
 use Carp qw(croak);
 use Storable qw(freeze thaw);
 use File::Spec::Functions qw(catdir catfile);
@@ -451,6 +452,16 @@ sub save {
     my $session_id = $session{_session_id} || croak("No session id found"); 
     my $media_id;
 
+    # calculate url
+    my $url =
+      (Krang::Category->find(category_id => $self->{category_id}))[0]->url();
+    $self->{url} = _build_url($url, $self->{filename});
+
+    # check for duplicate url
+    my $dup_media_id = $self->duplicate_check();
+    croak(__PACKAGE__ . "->save(): 'url' field is a duplicate of media " .
+          "'$dup_media_id'") if $dup_media_id;
+
     # if this is not a new media object
     if (defined $self->{media_id}) {
         $media_id = $self->{media_id}; 
@@ -843,6 +854,47 @@ sub prepare_for_edit {
     $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
 
     return $self;
+}
+
+=item $media = $media->update_url( $url );
+
+Method called on object to propagate changes to parent category's 'url'.
+
+=cut
+
+sub update_url {
+    my ($self, $url) = @_;
+    $self->{url} = _build_url($url, $self->{filename});
+    return $self;
+}
+
+sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url;}
+
+=item $media_id = $media->duplicate_check()
+
+This method checks whether the url of a media object is unique.
+
+=cut
+
+sub duplicate_check {
+    my $self = shift;
+    my $id = $self->{media_id} || 0;
+    my $media_id = 0;
+
+    my $query = <<SQL;
+SELECT media_id
+FROM media
+WHERE url = '$self->{url}'
+SQL
+    $query .= "AND media_id != $id" if $id;
+    my $dbh = dbh();
+    my $sth = $dbh->prepare($query);
+    $sth->execute();
+    $sth->bind_col(1, \$media_id);
+    $sth->fetch();
+    $sth->finish();
+
+    return $media_id;
 }
 
 =item $media->delete() || Krang::Media->delete($media_id)
