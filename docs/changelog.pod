@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Bugfix for C<bin/krang_publish>, now correctly counts media total
+and time with --to-preview option.
+
+=item *
+
 Added C<bin/krang_expunge> - designed to work in conjunction with
 C<bin/krang_extract_subset>, it deletes a site from a multi-site Krang
 instance, and ensures that no dependencies are left hanging. [Peter]
