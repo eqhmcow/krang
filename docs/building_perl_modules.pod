@@ -61,20 +61,20 @@ these directories.
 For example, create temporary directories in your home
 directory, as follows:
 
-    mkdir -p $HOME/PERL_MOD_BUILD/perl_parts
+    mkdir -p $HOME/PERL_MOD_BUILD
 
 
 Once these directories have been created, set the following
 environment variables to make the next few tasks a bit easier:
 
     export KRANG_ROOT=$HOME/krang
-    export PERL_PARTS=$HOME/PERL_MOD_BUILD/perl_parts
-    export PERL5LIB=$PERL_PARTS/lib/site_perl/5.6.1:$KRANG_ROOT/lib:$PERL5LIB
+    export PERL_PARTS=$HOME/PERL_MOD_BUILD
+    export PERL5LIB=$PERL_PARTS/lib:$KRANG_ROOT/lib:$PERL5LIB
 
 
 To further simplify your task, set up the following aliases:
 
-    alias perlprep='perl Makefile.PL PREFIX=$PERL_PARTS INSTALLMAN3DIR=$PERL_PARTS/man/man3'
+    alias perlprep='perl Makefile.PL LIB=$PERL_PARTS/lib PREFIX=$PERL_PARTS'
     alias perlmake='perlprep && 
         make && 
         make test && 
@@ -118,7 +118,7 @@ To copy files to a working directory, set up the following to make
 your task a bit easier:
 
     export KRANG_MODULES=$KRANG_ROOT/lib
-    export NEW_MODULES_LIB=$PERL_PARTS/lib/site_perl/5.6.1
+    export NEW_MODULES_LIB=$PERL_PARTS/lib
 
 
 Change these as necessary to reflect the particularities of your system.

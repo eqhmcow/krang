@@ -58,4 +58,4 @@ to the install.pod found in the docs directory.
         XML-Parser-2.31          
         XML-Simple-2.03          
         CGI-Application-Generator-1.0
- 
+        Apache-DBI-0.91

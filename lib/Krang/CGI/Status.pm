@@ -47,8 +47,8 @@ sub status {
                               th("Directive"), th("Value"),
                               ( map { Tr(td($_), td(Krang::Conf->get($_))) }
                                 
-                                (qw( KrangRoot ElementLibrary ApacheBin
-                                     ApacheRoot ApacheUser ApacheGroup
+                                (qw( KrangRoot ElementLibrary
+                                     ApacheUser ApacheGroup
                                    ))),
                              ));
 

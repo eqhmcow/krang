@@ -56,36 +56,34 @@ BEGIN {
         Krang::ElementLibrary->load_set(set => ElementSet());
     }
     Krang::Conf->instance(undef);
-}        
+}
 
 
 BEGIN {
-    # get ready to handle CGI requests if running under Apache/mod_perl.
-    if ($ENV{MOD_PERL}) {
-        # load interface modules
-        use Krang::CGI;
-        use Krang::Handler;
 
-    # otherwise, setup the instance and session stuff which
-    # Krang::Handler handles for Apache
-    } else {
-        # setup default instance if not running under mod_perl or inside a CGI
+    # Set up environment for non-MOD_PERL operation
+    # Set instance, load/unload session
+    unless ($ENV{MODE_PERL}) {
+
+        # Set Krang instance if not running under mod_perl
         my $instance = exists $ENV{KRANG_INSTANCE} ? 
           $ENV{KRANG_INSTANCE} : (Krang::Conf->instances())[0];
-        debug "Setting instance to '$instance'";
+        debug("Krang.pm:  Setting instance to '$instance'");
         Krang::Conf->instance($instance);
 
 
-        # open up a session
-        my $session_id = Krang::Session->create();
+        # open up a temporary session for cli scripts
+        unless ( ($ENV{GATEWAY_INTERFACE} || '') =~ /^CGI/ ) {
+            my $session_id = Krang::Session->create();
 
-        # get a user_id from KRANG_USER_ID or default to 1
-        my $user_id = exists $ENV{KRANG_USER_ID} ? $ENV{KRANG_USER_ID} : 1;
-        $session{user_id} = $user_id;
-        debug "Setting user_id to $user_id";
+            # get a user_id from KRANG_USER_ID or default to 1
+            my $user_id = exists $ENV{KRANG_USER_ID} ? $ENV{KRANG_USER_ID} : 1;
+            $session{user_id} = $user_id;
+            debug "Setting user_id to $user_id";
 
-        # arrange for it to be deleted at process end
-        eval "END { Krang::Session->delete() }";
+            # arrange for it to be deleted at process end
+            eval "END { Krang::Session->delete() }";
+        }
     }
 }
 

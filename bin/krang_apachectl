@@ -25,6 +25,16 @@ stop and start since a SIGHUP isn't enough for mod_perl.
 
 Usage information can be obtained by running the script with no arguments.
 
+=head2 FOR DEVELOPERS
+
+The environment variable B<CGI_MODE> may be set to a true value
+(e.g., '1'), which will cause all CGI applications to be run as true
+CGIs, via mod_cgi.  If this environment variable is not present,
+or is false, then all CGI applications will run via Apache::Registry.
+
+CGI_MODE is only useful for debugging during development.  In production
+is it inadvisable to invoke this mode.
+
 =cut
 
 # how long to wait for stop on restart (in seconds)
@@ -188,6 +198,12 @@ sub write_conf {
 
     my $apache_root = rel2abs(catdir(KrangRoot, APACHE_ROOT));
     $template->param(ApacheRoot => $apache_root);
+
+    # Set "CGI MODE" (i.e., non-Apache::Registry) if env var "CGI_MODE is set to a true value"
+    my $cgi_mode = (defined($ENV{CGI_MODE}) ? $ENV{CGI_MODE} : '0');
+    print STDERR ($cgi_mode ? "CGI Mode activated" : "Apache::Registry Mode activated") . "\n";
+    $template->param(CGI_MODE => $cgi_mode);
+
     $template->param((map { ($_, Krang::Conf->get($_)) }
                       (qw(ApacheUser ApacheGroup 
                           ApacheAddr ApachePort
