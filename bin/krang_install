@@ -157,7 +157,7 @@ Following is a list of the tasks the installer script will perform.
 
   --do-perl-install      - Install Perl 5.6.1, i686-linux (if not already installed)
   --do-mysql-install     - Install MySQL 4 (if not already installed)
-  --no-krang-test        - Skip Krang "make test"
+  --run-tests            - run Krang "make test" (default is to not run them)
 
 
 =head1 SEE ALSO
@@ -194,7 +194,7 @@ use HTML::Template;
 
 my @original_args = ();
 my $uniqueness = time();
-my ($help, $man, $do_mysql_install, $do_perl_install, $no_krang_test);
+my ($help, $man, $do_mysql_install, $do_perl_install, $run_tests);
 my @req_params = qw( HostName
                      IPAddress
                      InstanceHostName
@@ -237,7 +237,7 @@ sub do_install {
     configure_krang();
     add_krang_init();
     start_krang();
-    make_test() unless ($no_krang_test);
+    make_test() if ($run_tests);
     output_report();
 }
 
@@ -680,7 +680,7 @@ sub setup_getopts {
                     'man'       => \$man,
                     'do-mysql-install' => \$do_mysql_install,
                     'do-perl-install' => \$do_perl_install,
-                    'no-krang-test' => \$no_krang_test,
+                    'run-tests' => \$run_tests,
                     (map { $_."=s" => \$options{$_} } @req_params, @opt_params) );
 
     pod2usage(1)             if $help;
