@@ -1,0 +1,203 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+use Getopt::Long;
+use Pod::Usage;
+
+=pod
+
+=head1 NAME
+
+krang_egraph - element class graph generator
+
+=head1 SYNOPSIS
+
+  krang_egraph --format png --output element.png
+
+=head1 DESCRIPTION
+
+This module creates pretty graphs of Krang element sets and the
+modules that power them.  Set the C<KRANG_INSTANCE> environment
+variable to pick the instance you want to work on.  If
+C<KRANG_INSTANCE> is not set then the first instance in F<krang.conf>
+will be used.
+
+You'll need the Perl GraphViz library installed to use this tool,
+which isn't a standard part of Krang because it requires graphviz.
+You can get graphviz here:
+
+   http://www.research.att.com/sw/tools/graphviz/
+
+Then you can install the Perl GraphViz libraries like:
+
+   perl -MCPAN -e 'install GraphViz'
+
+=head1 OPTIONS
+
+  --format  - Output format.  This can be 'png', 'gif', 'ps', or any of
+              the other GraphViz formats.  'png' is the default.
+
+  --output  - File to place output in.  Default is 'element.png'.
+
+  --modules - Set to 0 to disable output of the module tree.  This
+              shows just the element classes which is generally
+              prettier but tells you less about the element set.
+              Defaults to 1.
+
+  --class   - Name of a top-level element class to render.  If this
+              isn't set all top-level elements will be included in the
+              graph, but this might be too confusing for large element
+              sets.
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Getopt::Long;
+use Pod::Usage;
+my ($help, $man);
+my $format   = 'png';
+my $output   = "element.$format";
+my $contribs = 50;
+my $modules = 1;
+my $class_to_render = "";
+pod2usage(2) unless
+  GetOptions(help         => \$help,
+             man          => \$man,
+             'format=s'   => \$format,
+             'output=s'   => \$output,
+             'modules=i'  => \$modules,
+             'class=s'    => \$class_to_render,
+            );
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+use Krang::Script;
+use Krang::ElementLibrary;
+use GraphViz;
+
+my $g = GraphViz->new(rankdir => 1,
+                      concentrate => 1,
+                      node => { fontname => "courier",
+                                fontsize => 10,
+                             },
+                      edge => { fontname => "courier",
+                                fontsize => 8,
+                              });
+
+our %EDGES;
+
+my @top_names = Krang::ElementLibrary->top_levels();
+@top_names = ($class_to_render) if $class_to_render;
+foreach my $top_name (@top_names) {
+    my $top = Krang::ElementLibrary->top_level(name => $top_name);
+    $g->add_node($top->name, 
+                 label => $top->display_name, 
+                 shape => 'ellipse',
+                 rank  => 'top_levels');
+    my @children = $top->children();
+    _render_element_inheritence($top) if $modules;
+    _render_children($top, @children);
+}
+
+sub _render_element_inheritence {
+    my $element = shift;
+    my $class = ref($element);
+    if ($class =~ /^Krang/) {
+        $g->add_node($class, 
+                     rank  => 'krang_direct',
+                     shape => 'box',
+                     color => 'red');
+    } else {
+        $g->add_node($class, 
+                     rank  => 'set_direct', 
+                     shape => 'box',
+                     color => 'green');
+    }
+                     
+    $g->add_edge($class => $element->name, 
+                 weight => .5, 
+                 color  => 'grey')
+      unless $EDGES{$class}{$element->name}++;
+    _render_class_inheritence($class);
+}
+
+sub _render_class_inheritence {
+    my $class = shift;
+    no strict 'refs';
+    my @parents = @{"${class}::ISA"};
+    for my $parent (@parents) {
+        $g->add_node($parent, 
+                     shape => 'box',
+                     color => 'grey',);
+        $g->add_edge($parent => $class, 
+                     weight => .5,
+                     color  => 'grey')
+          unless $EDGES{$parent}{$class}++;
+        _render_class_inheritence($parent);
+    }
+}
+
+sub _render_children {
+    my ($parent, @children) = @_;
+    foreach my $element (@children) {
+        _render_element_inheritence($element) if $modules;
+        $g->add_node($element->name, 
+                     label => $element->name,
+                     shape => 'ellipse',
+                     color => 'blue',
+                    );
+
+        my $label;
+        if ($element->min == 1 and $element->max == 1) {
+            $label = "1";
+        } elsif ($element->max) {
+            $label = $element->min . " .. "  .$element->max;
+        } else {
+            $label = $element->min . " .. *";
+        }
+                       
+        $g->add_edge($parent->name, $element->name, 
+                     label  => $label, 
+                     weight => 2,
+                     style  => 'bold',
+                    )
+          unless $EDGES{$parent->name}{$element->name}++;
+        if ($element->children) {
+            _render_children($element, $element->children);
+        }
+    }
+}
+
+my $method = "as_$format";
+$g->$method($output);
