@@ -202,8 +202,9 @@ sub authen_handler ($$) {
     # Validate session by trying to load session
     debug("Krang::Handler:  Loading session '$session_id'");
     eval { Krang::Session->load($session_id); };
+
+    # Check for invalid session
     if ($@) {
-        # no cookie, redirect to login
         debug("Error loading session: $@");
         return OK;
     }
