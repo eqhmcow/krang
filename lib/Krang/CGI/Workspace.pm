@@ -225,7 +225,11 @@ sub checkin {
     if ($obj->isa('Krang::Story')) {
         my $select = 'checkin_to_'.$query->param('id');
         $obj->checkin();
-        $obj->move_to_desk($query->param($select));
+        my $result = $obj->move_to_desk($query->param($select));
+        my $id = $obj->story_id;
+        $id =~ s/story_//;
+        $result ? add_message("moved_story", id => $id) : add_message("story_cant_move", id => $query->param('id'));
+
     } else {
         $obj->checkin();
     }
@@ -247,7 +251,10 @@ sub checkin_checked {
         if ($obj->isa('Krang::Story')) {
             my $select = 'checkin_to_story_'.$obj->story_id;
             $obj->checkin();
-            $obj->move_to_desk($query->param($select));
+            my $result = $obj->move_to_desk($query->param($select));
+            my $id = $obj->story_id;
+            $id =~ s/story_//;
+            $result ? add_message("moved_story", id => $id) : add_message("story_cant_move", id => $obj->story_id);
         } else {
             $obj->checkin();
         }
