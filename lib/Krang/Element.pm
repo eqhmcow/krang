@@ -642,7 +642,9 @@ BEGIN {
                           load_query_data
                           freeze_data 
                           is_container
-                          thaw_data )) {
+                          thaw_data
+                          build_url
+                        )) {
         *{"Krang::Element::$meth"} = 
           sub { 
               my $self = shift;
