@@ -251,9 +251,9 @@ sub check_libgif {
     # if that fails, check for libungif (just as good).
     if ($@) {
         $pkg->_check_libs(%args,
-                          name => 'libpng',
-                          so   => 'libpng.so',
-                          h    => 'png.h');
+                          name => 'libungif',
+                          so   => 'libungif.so',
+                          h    => 'gif_lib.h');
     }
 
 
