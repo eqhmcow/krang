@@ -205,8 +205,10 @@ sub edit {
             @parents = map { "[".$_."]" } @parents;
 
             my $parent_string = join('', @parents);
+            my $li_data = $li->data;
+            $li_data =~ s/"/''/g;
             $js .= "\nlist_data$parent_string = new Array();";
-            $js .= "\nlist_data$parent_string\['__data__'] = '".$li->data."';";
+            $js .= "\nlist_data$parent_string\['__data__'] = ".'"'.$li_data.'";';
             $js .= "\nlist_data$parent_string\['__id__'] = '".$li->list_item_id."';";
  
             # prepopulate first list 
