@@ -181,6 +181,8 @@ sub fill_template {
     croak ("No HTML::Template object specified") unless (ref($t));
 
     $self->validate_pager();
+
+    $self->_fill_template($t);
 }
 
 
@@ -222,8 +224,85 @@ pager property.
 sub output {
     my $self = shift;
 
-    my $t = HTML::Template->new_file("HTMLPager/pager.tmpl", cache=>1);
-    $self->fill_template($t);
+    $self->validate_pager();
+
+    my $q = $self->cgi_query();
+
+    # Dynamically create template as scalar with proper columns
+    my $pager_tmpl = '';
+    $pager_tmpl .= '<form name="krang_pager_form" method="POST">';
+
+    # Include javascript and hidden data template elements
+    $pager_tmpl .= "\n\n<tmpl_include HTMLPager/pager-internals.tmpl>\n\n";
+
+    # Build up table and header row
+    my @columns = @{$self->columns()};
+
+    # Build up final array of column headers
+    my @column_header_labels = ();
+    foreach my $col (@columns) {
+        my $col_label = $self->column_labels()->{$col};
+
+        # Create col header for command_column
+        if ( $col eq 'command_column') {
+            push(@column_header_labels, ( defined($col_label) ? $col_label : "" ) );
+            next;
+        }
+
+        # Create col header for checkbox_column
+        if ( $col eq 'checkbox_column' ) {
+            push(@column_header_labels, ( defined($col_label) ? $col_label : $self->make_checkall() ) );
+            next;
+        }
+
+        # Copy label from column_labels or use column name
+        push(@column_header_labels, ( defined($col_label) ? $col_label : $col ) );
+    }
+
+    $pager_tmpl .= "<tmpl_if krang_pager_rows>\n\n";
+    $pager_tmpl .= '<table cellspacing="0" width="100%"><tr class="form-head"><th>'
+      . join("</th>\n<th>", @column_header_labels) ."</th></tr>\n\n\n";
+
+    # Build loop for data
+    my $row_tmpl = "<tr>\n<td class=\"form-cell\">"
+      . join("</td>\n    <td class=\"form-cell\">", (map { "<tmpl_var $_>" } @columns)) ."</td>\n</tr>";
+
+    $pager_tmpl .= <<EOF;
+  <tmpl_loop krang_pager_rows>
+    $row_tmpl
+  </tmpl_loop>
+ 
+  </table>
+EOF
+
+    # Make page jump, next/prev navigation tmpl
+    $pager_tmpl .= <<EOF;
+<tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
+
+<tmpl_loop page_numbers>
+  <tmpl_if is_current_page><b><tmpl_var page_number></b>
+  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number></a>
+  </tmpl_if>
+</tmpl_loop>
+
+<tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
+
+  <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a>
+  <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a>
+  </tmpl_if>
+
+<tmpl_else>
+  <br /><b>None Found</b>
+</tmpl_if>
+EOF
+
+
+    $pager_tmpl .= "\n</form>\n\n";
+
+    print STDERR "$pager_tmpl\n\n";
+
+    my $t = HTML::Template->new_scalar_ref(\$pager_tmpl, cache=>1, loop_context_vars=>1);
+    $self->_fill_template($t);
 
     return $t->output();
 }
@@ -458,6 +537,46 @@ creating the checkbox columns and command columns.
 ###########################
 ####  PRIVATE METHODS  ####
 ###########################
+
+# Actually run the pager and fill the template here
+sub _fill_template {
+    my $self = shift;
+    my $t = shift;
+
+    $t->param(
+              krang_pager_rows => [
+                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
+                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
+                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
+                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
+                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
+                                   { last=>'Lastname', first_middle=>'Firstname Middlename', type=>'type1, type2, type3' },
+                                  ],
+              user_page_size => 20,
+              show_big_view => 1,
+              page_numbers => [
+                               {page_number=>1},
+                               {page_number=>2, is_current_page=>1},
+                               {page_number=>3},
+                               {page_number=>4},
+                               {page_number=>5},
+                              ],
+              prev_page_number => '1',
+              next_page_number => '3',
+             );
+}
+
+
+# Return a scalar with "check all" interface for checkbox column head
+sub make_checkall {
+    my $self = shift;
+
+    my $check_all = '<input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, \'krang_pager_rows_checked\')">';
+
+    return $check_all;
+}
+
+
 
 # Verify that the pager is valid.  Croak if not.
 sub validate_pager {

@@ -95,6 +95,14 @@ sub run {
     my $cgiapp_errors = $@;
 
 
+    # In debug mode append dump_html()
+    if ($ENV{KRANG_DEBUG}) {
+        my $dump_html = $self->dump_html();
+        $output .= $dump_html;
+        print $dump_html;
+    }
+
+
     # Unload session if we loaded it
     if ($we_loaded_session) {
         debug("Krang::CGI:  UN-Loading Session");

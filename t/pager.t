@@ -166,5 +166,8 @@ eval { $pager->output() };
 like($@, qr/id_handler not a subroutine reference/, "Validate: id_handler subref");
 
 $pager->id_handler( sub { return $_[0]->contrib_id } );
-eval { $pager->output() };
+
+# Pager should be able to output now.
+my $output = $pager->output();
+print "====================>$output<====================\n\n";
 

@@ -1,5 +1,7 @@
 <tmpl_include /header.tmpl>
 
+<tmpl_include HTMLPager/pager-internals.tmpl>
+
 <script language="Javascript">
 <!-- //
 
@@ -72,7 +74,7 @@ SEARCH<br />
           <th>First, Middle Name</th>
           <th>Type</th>
           <th>Edit</th>
-          <th>[]</th>
+          <th><input type="checkbox" name="checkallbox" value="1" onClick="krang_pager_checkall(this)"></th>
       </tr>
 
   <tmpl_loop contributors>
@@ -81,7 +83,7 @@ SEARCH<br />
           <td class="form-cell"><tmpl_var ESCAPE=HTML first><tmpl_if middle>&nbsp;<tmpl_var ESCAPE=HTML middle></tmpl_if></td>
           <td class="form-cell"><tmpl_loop types><tmpl_var ESCAPE=HTML type_name><tmpl_unless __last__>, </tmpl_unless></tmpl_loop></td>
           <td class="form-cell"><a href="javascript:edit_contrib('<tmpl_var ESCAPE=HTML contrib_id>')">Edit</a></td>
-          <td class="form-cell"><input type="checkbox" name="contrib_delete_list" value="<tmpl_var ESCAPE=HTML contrib_id>"></td>
+          <td class="form-cell"><input type="checkbox" name="krang_pager_rows_checked" value="<tmpl_var ESCAPE=HTML contrib_id>"></td>
       </tr>
 
   </tmpl_loop>
