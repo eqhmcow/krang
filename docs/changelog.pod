@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed error message trapping in C<bin/krang_install> to get Krang to
+play nicer with MySQL 4.1.x [Peter]
+
+=item *
+
 C<bin/krang_install> and C<bin/krang_createdb> now handle the C<@localhost>
 in the MySQL user creation consistently. [Perrin]
 

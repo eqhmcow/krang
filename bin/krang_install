@@ -413,7 +413,7 @@ sub check_prereqs {
     $db_exists_test .= " $InstanceDBName 2>&1";
     my $db_exists_test_output = `$db_exists_test`;
 
-    unless ($db_exists_test_output =~ /ERROR 1049: Unknown database/) {
+    unless ($db_exists_test_output =~ /ERROR 1049[^:]*: Unknown database/) {
         exit_error("Database '$InstanceDBName' already exists.  Cannot continue.");
     }
 
