@@ -52,9 +52,9 @@ my $category3_tail = '---' . $category3 . 'THIS IS TAILS';
 my $category3_output = $category3_head . Krang::Publisher->content() . $category3_tail;
 #my $article3_output = 
 
-my %article_output = (3 => $category3_head .  '<title>Test Title</title><h1>Test Title</h1>' . $page_output . $category3_tail,
-                      2 => $category2_head .  '<title>Test Title</title><h1>Test Title</h1>' . $page_output . $category2_tail,
-                      1 => $category1_head .  '<title>Test Title</title><h1>Test Title</h1>' . $page_output . $category1_tail
+my %article_output = (3 => $category3_head .  "<title>Test Title</title><h1>Test Title</h1><b>$deck1</b>" . $page_output . $category3_tail,
+                      2 => $category2_head .  "<title>Test Title</title><h1>Test Title</h1><b>$deck1</b>" . $page_output . $category2_tail,
+                      1 => $category1_head .  "<title>Test Title</title><h1>Test Title</h1><b>$deck1</b>" . $page_output . $category1_tail
 );
 
 # list of templates to delete at the end of this all.
@@ -229,6 +229,7 @@ foreach (my $i = $#story_paths; $i >= 0; $i--) {
         ok($article_output{($i+1)} eq $story_txt, 'Krang::Publisher->publish_story() -- compare');
         if ($article_output{($i+1)} ne $story_txt) {
             diag('Story content on filesystem does not match expected results');
+            die Dumper($article_output{($i+1)}, $story_txt);
         }
 
     } else {
@@ -236,6 +237,7 @@ foreach (my $i = $#story_paths; $i >= 0; $i--) {
         fail('Krang::Publisher->publish_story -- compare');
     }
 }
+
 
 #
 # find_templates()
