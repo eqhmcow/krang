@@ -55,7 +55,6 @@ use Krang::Session qw/%session/;
 # set this to one to see HTML errors in a popup in the UI
 use constant HTMLLint => 0;
 
-# Set up HTML_TEMPLATE_ROOT for templates
 BEGIN {
     # setup instance if not running in mod_perl
     # needs to be set before import of Krang::ElementLibrary in
@@ -68,18 +67,31 @@ BEGIN {
     }
 }
 
-# load template and bless it into Krang::HTMLTemplate
+# load template using Krang::HTMLTemplate.  CGI::App doesn't provide a
+# way to specify a different class to use, so this code is copied in.
 sub load_tmpl {
-    my $pkg = shift;
-
-    # locally setup HTML_TEMPLATE_ROOT.  It can't be global because that
-    # would affect Krang's publisher.
-    local $ENV{HTML_TEMPLATE_ROOT} = catdir(KrangRoot, "templates");
-
-    my $template = $pkg->SUPER::load_tmpl(@_, cache => 1);
-    return bless($template, 'Krang::HTMLTemplate');
+    my $self = shift;
+    my ($tmpl_file, @extra_params) = @_;
+    
+    # add tmpl_path to path array of one is set, otherwise add a path arg
+    if (my $tmpl_path = $self->tmpl_path) {
+        my $found = 0;
+        for( my $x = 0; $x < @extra_params; $x += 2 ) {
+            if ($extra_params[$x] eq 'path' and 
+                ref $extra_params[$x+1]     and
+                ref $extra_params[$x+1] eq 'ARRAY') {
+                unshift @{$extra_params[$x+1]}, $tmpl_path;
+                $found = 1;
+                last;
+            }
+        }
+        use Krang::Log qw(debug);
+        push(@extra_params, path => [ $tmpl_path ]) unless $found;
+    }
+    
+    my $t = Krang::HTMLTemplate->new_file($tmpl_file, @extra_params);
+    return $t;
 }
-
 
 sub run {
     my $self = shift;
