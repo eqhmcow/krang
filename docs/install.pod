@@ -42,9 +42,9 @@ For Redhat 9:
    a. # tar -xzvf $KRANG_ROOT/install/Perl/perl-5.6.1.tar.gz
    b. # cd perl-5.6.1
    c. # rm -f config.sh Policy.sh \
-      && chmod +w makedepend.SH
-      && cp makedepend.SH makedepend.SH.orig
-      && sed 's/<stdin>/<.*>/' makedepend.SH.orig > makedepend.SH
+      && chmod +w makedepend.SH \
+      && cp makedepend.SH makedepend.SH.orig \
+      && sed 's/<stdin>/<.*>/' makedepend.SH.orig > makedepend.SH \
       && sh Configure -de \
       && make \
       && make test
