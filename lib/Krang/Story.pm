@@ -2,13 +2,43 @@ package Krang::Story;
 use strict;
 use warnings;
 
+use Krang::Element;
+use Krang::Category;
+use Krang::Log qw(assert ASSERT affirm debug info critical);
+
+use Carp qw(croak);
+
+# create accessors for object fields
+use Krang::MethodMaker 
+  new_with_init => 'new',
+  new_hash_init => 'hash_init',
+  get           => [ qw(
+                        story_id                        
+                        version
+                        class
+                        checked_out
+                        checked_out_by
+                       ) ],
+  get_set       => [ qw(
+                        title
+                        slug
+                        notes
+                        cover_date
+                        publish_date
+                        priority
+                        schedules
+                       ) ];
+
 =head1 NAME
 
 Krang::Story - the Krang story class
 
 =head1 SYNOPSIS
 
-  $story = Krang::Story->new();
+  $story = Krang::Story->new(title      => "Foo",
+                             slug       => 'foo',
+                             class      => 'article',
+                             categories => [10, 20]);
 
   # checkin/checkout
   $story->checkout();
@@ -18,6 +48,7 @@ Krang::Story - the Krang story class
   $story->title("Life is very long");
   $story->slug("life");
   $story->cover_date(Time::Piece->strptime("%D %R", "1/1/2004 12:00"));
+  $story->priority(3);
 
   # get the root element for this story
   my $element = $story->element();
@@ -48,16 +79,14 @@ element tree rooted in C<element>, an object of the L<Krang::Element>
 class.
 
 Stories may be associated with contributors (objects of
-L<Krang::Contributor>), assigned scheduled actions (objects of type
-L<Krang::CronTask>).
+L<Krang::Contributor>) and assigned scheduled actions (publish and expire).
 
 Stories are checked-in, checked-out and versioned like media
 (L<Krang::Media>) and templates (L<Krang::Template>).  However, unlike
 media and templates, they may also be moved to desks (L<Krang::Desk>).
 
-Stories, unlike media and templates, may be assigned to multiple
-categories.  However, one category is the primary category and
-determines the primary URL.
+Stories may be assigned to multiple categories.  However, one category
+is the primary category and determines the primary URL.
 
 =head1 INTERFACE
 
@@ -80,23 +109,6 @@ the checkout() method.
 
 =over
 
-=cut
-
-use Krang::MethodMaker 
-  new_with_init => 'new',
-  new_hash_init => 'hash_init',
-  get           => [ qw(
-                        story_id                        
-                        version
-                       ) ],
-  get_set       => [ qw(
-                        title
-                        slug
-                        notes
-                        cover_date                        
-                       ) ];
-                        
-
 =item C<story_id> (readonly)
 
 =item C<title>
@@ -104,6 +116,10 @@ use Krang::MethodMaker
 =item C<slug>
 
 =item C<notes>
+
+=item C<priority>
+
+A number from 1 (meaning low priority) to 3 (meaning high priority).
 
 =item C<cover_date>
 
@@ -119,7 +135,25 @@ published.
 =item C<category> (readonly)
 
 The primary category for the story.  C<undef> until at least one
-category is assigned.
+category is assigned.  This is just a convenience method that returns
+the first category in categories.
+
+=cut
+
+sub category {
+    my $self = shift;
+
+    # return from the category cache if available
+    return $self->{category_cache}[0]
+      if $self->{category_cache} and $self->{category_cache}[0];
+
+    # otherwise, lookup from id list
+    my ($category) = 
+      Krang::Category->find(category_id => $self->{category_ids}[0]);
+    $self->{category_cache}[0] = $category;
+
+    return $category;
+}
 
 =item C<url> (readonly)
 
@@ -128,7 +162,59 @@ is assigned.
 
 =item C<categories>
 
-A list of category objects associated with the story.
+A list of category objects associated with the story.  The first
+category in this list is the primary category.
+
+This attribute may be assigned with category_ids or Krang::Category
+objects.  Only objects will be returned.
+
+This attribute may be set with a list or an array-ref.  For example:
+
+  # same result
+  $story->categories(1024, 1028);
+  $story->categories([1024, 1028]);
+
+But a list of objects is always returned:
+
+  @categories = $story->categories;
+
+=cut
+
+sub categories {
+    my $self = shift;
+
+    # get
+    unless (@_) {
+        # load the cache as necessary
+        for (0 .. $#{$self->{category_ids}}) {
+            ($self->{category_cache}[$_]) = Krang::Category->find(category_id => $self->{category_ids}[$_])
+              unless $self->{category_cache}[$_];
+            croak("Unable to load category '$self->{category_ids}[$_]'")
+              unless $self->{category_cache}[$_];
+        }
+        return @{$self->{category_cache}};
+    }
+
+    # else, set
+
+    # transform array ref to list
+    @_ = @{$_[0]} if @_ == 1 and ref($_[0]) and ref($_[0]) eq 'ARRAY';
+    
+    # fill in category_id list
+    $self->{category_ids} = 
+      [ map { ref $_ ? $_->category_id : $_ } @_ ];
+    
+    # fill cache with objects passed in, delay loading if just passed IDs
+    $self->{category_cache} = 
+      [ map { ref $_ ? $_ : undef } @_ ];
+    
+    # invalidate url cahce
+    $self->{url_cache} = [];
+
+    # they should all fetch correctly now, which won't be true
+    # if a bad ID was passed in
+    assert($self->categories) if ASSERT;
+}
 
 =item C<urls> (readonly)
 
@@ -142,6 +228,10 @@ A list of contributor objects associated with the story.
 
 The root element for this story.  The children of this element contain
 the content for the story.
+
+=cut
+
+sub element { shift->{element} }
 
 =item C<class> (readonly)
 
@@ -189,10 +279,29 @@ this will be C<undef>.
 
 =over
 
-=item C<< $story = Krang::Story->new(key => 'val', ...) >>
+=item C<< $story = Krang::Story->new(class => 'Article', categories => [$cat, 1024, 1034], slug => "foo", title => "Foo") >>
 
-Creates a new story object.  Any of the available attributes may be
-set with key/value pairs passed to new().
+Creates a new story object.  Any object attribute listed can be set in
+new(), but C<class>, C<categories>, C<slug> and C<title> are all
+required.  After this call the object is guaranteed to be in a valid
+state and may be saved immediately with C<save()>.
+
+=cut
+
+sub init {
+    my ($self, %args) = @_;
+    exists $args{$_} or croak("Missing required parameter '$_'.")
+      for ('class', 'categories', 'slug', 'title');
+
+    # create a new element based on class
+    $self->{class} = delete $args{class};
+    $self->{element} = Krang::Element->new(class => $self->{class});
+
+    # finish the object, calling set methods for each key/value pair
+    $self->hash_init(%args);
+
+    return $self;
+}
 
 =item C<< @stories = Krang::Story->find(title => "Turtle Soup") >>
 

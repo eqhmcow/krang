@@ -8,7 +8,8 @@ CREATE TABLE story (
         slug            VARCHAR(255) NOT NULL,
         cover_date      DATETIME,
         notes           TEXT,
-
+        priority        TINYINT UNSIGNED NOT NULL DEFAULT 2,
+        
         element_id      INT UNSIGNED NOT NULL,
 
         checked_out     BOOL NOT NULL,
@@ -38,17 +39,20 @@ CREATE TABLE story_category (
         category_id     INT UNSIGNED NOT NULL,
         ord             SMALLINT UNSIGNED NOT NULL,
         uri             VARCHAR(255) NOT NULL,
-        PRIMARY KEY (story_id, category_id, ord)
+        PRIMARY KEY (story_id, category_id),
+        INDEX (ord)
 );
 
-/* story_category holds links between stories and contributors managed
+/* story_contrib holds links between stories and contributors managed
    by Krang::Story */
-DROP TABLE IF EXISTS story_contributor;
-CREATE TABLE story_contributor (
+DROP TABLE IF EXISTS story_contrib;
+CREATE TABLE story_contrib (
         story_id        INT UNSIGNED NOT NULL,
-        contributor_id  INT UNSIGNED NOT NULL,
+        contrib_id      INT UNSIGNED NOT NULL,
+        contrib_type_id INT UNSIGNED NOT NULL,
         ord             SMALLINT UNSIGNED NOT NULL,
-        PRIMARY KEY (story_id, contributor_id, ord)
+        PRIMARY KEY (story_id, contrib_id, contrib_type_id),
+        INDEX (ord)
 );
 
 /* story_schedule holds scheduled events for stories, managed by
