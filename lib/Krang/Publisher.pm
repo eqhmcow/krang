@@ -214,6 +214,7 @@ sub preview_story {
     my $path = catfile($file_root, $url);
 
     # build the story HTML.
+    local $ENV{HTML_TEMPLATE_ROOT} = "";
     my $story_pages = $self->_assemble_pages(story => $story, category => $category);
 
     # iterate over story pages, writing them to disk.
