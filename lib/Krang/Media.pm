@@ -316,13 +316,15 @@ Gets/sets the value.
 
 =item $media->checked_out()
 
-Returns 1 if checked out by a user (checked_out_by is set).  (Unessicary convenience method)
+Returns 1 if checked out by a user (checked_out_by is set), otherwise
+returns 0.
 
 =cut
 
 sub checked_out {
     my $self = shift;
     return 1 if $self->checked_out_by();
+    return 0;
 }
 
 =item $media->checked_out_by()
