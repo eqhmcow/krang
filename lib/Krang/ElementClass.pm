@@ -457,6 +457,7 @@ sub template_data {
     my $self = shift;
     my %args = @_;
 
+    croak("Element parameter not defined!") unless $args{element};
     return $args{element}->data();
 }
 
@@ -745,11 +746,12 @@ sub fill_template {
 
         }
 
-        # get html for element
-        $html = $child->publish(publisher => $publisher, fill_template_args => \%fill_template_args);
-
         # build element_loop if it exists.
-        if (exists($template_vars{element_loop})) {
+        if (exists($template_vars{element_loop}{$name})) {
+            # get html for element
+            $html = $child->publish(publisher => $publisher, 
+                                    fill_template_args =>\%fill_template_args);
+
             $element_count{$name} ? $element_count{$name}++ : ($element_count{$name} = 1);
             push @{$child_params{element_loop}}, {
                                             "is_$name" => 1,
@@ -760,6 +762,11 @@ sub fill_template {
 
         # does '$name_loop' exist?  build it.
         if (exists($template_vars{$loopname})) {
+            # get html for element, unless it's already built
+            $html ||= $child->publish(publisher => $publisher, 
+                                      fill_template_args =>
+                                      \%fill_template_args);
+
             my $loop_idx = 1;
             if (exists($child_params{$loopname})) {
                 $loop_idx = @{$child_params{$loopname}} + 1;
@@ -784,6 +791,10 @@ sub fill_template {
         # and hasn't been set (first child element takes precedence),
         # do it.
         if (exists($template_vars{$name}) && !exists($child_params{$name})) {
+            # get html for element, unless it's already built
+            $html ||= $child->publish(publisher => $publisher, 
+                                      fill_template_args =>
+                                      \%fill_template_args);
             $child_params{$name} = $html;
         }
     }

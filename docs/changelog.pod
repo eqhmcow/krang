@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug where Krang::ElementClass would complain about a missing
+template for a sub-element that wasn't actually needed. [Sam]
+
+=item *
+
 Fixed a bug related to the internal tracking of assets in
 L<Krang::Publisher>.  This finishes up a minor restructuring that
 ensures C<krang_publish> publishes each story/media object only once
