@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upped Apache timeout from 30 to 600.  30 seconds was too short to
+preview some extremely large stories.  [Peter]
+
+=item *
+
 Errors writing to the filesystem while executing a preview/publish
 through the Krang UI are now logged properly in C<logs/krang.log>.
 Previously, they were only reported in user-friendly (as opposed to
