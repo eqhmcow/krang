@@ -137,7 +137,8 @@ sub add_alert {
   
     # return error message on bad combination
     add_message("bad_desk_combo"), return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
-    add_message("move_needs_desk"),  return $self->edit() if ( ($params{action} eq 'move') and (not $params{desk_id}) );
+    add_message("move_needs_desk"),  return $self->edit() if ( ($params{action} eq 'move') and ($params{desk_id} eq 'NULL') );
+    add_message("desk_requires_move"),  return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
 
     my @found = Krang::Alert->find( %params );
 
