@@ -586,7 +586,7 @@ sub _publish {
         my @media = Krang::Media->find(media_id => [$id]);
 
         unless (@media) {
-            my $msg = sprintf("%s->_expire(): Can't find Media id '%i', skipping publish.",
+            my $msg = sprintf("%s->_publish(): Can't find Media id '%i', skipping publish.",
                               __PACKAGE__, $id);
             die($msg);
         }
@@ -605,14 +605,25 @@ sub _publish {
         my @stories = Krang::Story->find(story_id => [$id]);
 
         unless (@stories) {
-            my $msg = sprintf("%s->_expire(): Can't find Story id '%i', skipping publish.",
+            my $msg = sprintf("%s->_publish(): Can't find Story id '%i', skipping publish.",
                               __PACKAGE__, $id);
             die($msg);
         }
 
+        # Some stories may have scheduled publishing turned off.
+        my @story_publish;
+
+        foreach my $s (@stories) {
+            if ($s->element->publish_check()) {
+                push @story_publish, $s;
+            } else {
+                debug(sprintf("%s->_publish(): Story id '%i' has scheduled publish disabled.  Skipping.",
+                              __PACKAGE__, $s->story_id()));
+            }
+        }
 
         eval {
-            $publisher->publish_story(story => \@stories, version_check => 0);
+            $publisher->publish_story(story => \@story_publish, version_check => 0);
         };
 
         if (my $err = $@) {

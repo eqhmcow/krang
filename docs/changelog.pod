@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where Krang::ElementClass::TopLevel::publish_check() was not
+being checked by Krang::Schedule.  Stories that are marked to not be
+published by the scheduler will now have their wishes respected.
+[Peter]
+
+=item *
+
 Fixed bug where contributors created by C<krang_import> weren't
 searchable in the UI unless they had first, middle and last
 names. [Sam]
