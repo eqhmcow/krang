@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Modified Krang::Contrib::deserialize_xml() to create contributor types
+as needed.  [Sam]
+
+=item *
+
 Changed Krang::ElementClass::Date to store and load data in XML using
 an ISO-8601 date-time format. Also added missing template_data()
 method.  [Sam]

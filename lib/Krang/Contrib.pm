@@ -574,9 +574,11 @@ sub deserialize_xml {
     # get ids for contrib types
     my @contrib_type_ids;
     foreach my $type (@{$data->{contrib_type}}) {
-        Krang::DataSet::DeserializationFailed->throw(
-                                 "Unknown contrib_type '$type'.")
-            unless $contrib_types{$type};
+        unless (exists $contrib_types{$type}) {
+            # create the missing contrib type
+            $contrib_types{$type} = Krang::Pref->add_option('contrib_type',
+                                                            $type);
+        }
         push(@contrib_type_ids, $contrib_types{$type});
     }
 
