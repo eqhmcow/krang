@@ -76,7 +76,7 @@ my @addons = sort { $a->name cmp $b->name } Krang::AddOn->find();
 
 
 print STDOUT "######################################################################\n\n";
-print STDOUT "Krang\n\nVersion:\t\t$version\n\n";
+print STDOUT "Krang Version:\t\t$version\n\n";
 print STDOUT "Installed Addons:\n\n";
 foreach (@addons) {
     my $tabs = (length($_->{name}) > 8) ? "\t" : "\t\t";
