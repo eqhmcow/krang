@@ -23,6 +23,8 @@ Krang::Schedule - manage scheduled events in Krang
                                 context     => [ version => $version ],
                                 date        => $date);
 
+  # N.B - $date must be a Time::Piece object see POD for new() method
+
 
   # save the schedule to the database
   $sched->save();
