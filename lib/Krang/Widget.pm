@@ -11,7 +11,7 @@ use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 
 use base 'Exporter';
-our @EXPORT_OK = qw(category_chooser date_chooser decode_date format_url);
+our @EXPORT_OK = qw(category_chooser date_chooser datetime_chooser decode_date decode_datetime format_url);
 
 =head1 NAME
 
@@ -186,7 +186,7 @@ sub datetime_chooser {
     my @minute_values = (0..59);
     my %minute_labels = ();
     $minute_labels{0} = '00';
-    for (my $count = 0; $count <= 10; $count++) {
+    for (my $count = 0; $count <= 9; $count++) {
         $minute_labels{$count} = '0'.$count;
     }
     my @ampm_values = ('AM','PM');
@@ -208,7 +208,11 @@ sub datetime_chooser {
         
         # Hour
         unshift(@hour_values, 0);
-        $year_labels{0} = 'Hour';
+        $hour_labels{0} = 'Hour';
+
+        # Minute
+        unshift(@hour_values, '');
+        $minute_labels{0} = 'Minute';
 
     }
                                                                                 
@@ -228,7 +232,10 @@ sub datetime_chooser {
                                    -labels    => \%year_labels,
                                   );
 
-    my $hour_12 = ($date->hour() >= 13) ? ($date->hour() - 12) : $date->hour();
+    my $hour_12; 
+    if ($date) {
+        $hour_12 = ($date->hour() >= 13) ? ($date->hour() - 12) : $date->hour();
+    } 
 
     my $h_sel = $query->popup_menu(-name      => $name .'_hour',
                                    -default   => ($date) ? $hour_12 : 0,
@@ -356,6 +363,34 @@ sub date_chooser {
     return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
 }
 
+
+=item $datetime_object = decode_date(name => 'cover_datetime', query => $query)
+
+Reads CGI data submitted via a standard Krang datetime chooser
+and returns a datetime object (Time::Piece).  The C<name> and C<query>
+parameters are required.
+                                                                                
+If decode_datetime() is unable to retrieve a date it will return undef.
+                                                                                
+Standard Krang datetime choosers can be created via datetime_chooser().
+                                                                                
+=cut
+
+sub decode_datetime {
+    my %args = @_;
+    my ($name, $query) = @args{qw(name query)};
+    croak("Missing required args: name and query")
+      unless $name and $query;
+                                                                                
+    my $m = $query->param($name . '_month');
+    my $d = $query->param($name . '_day');
+    my $y = $query->param($name . '_year');
+    my $h = $query->param($name . '_hour');
+    my $min = $query->param($name . '_minute');
+    return undef unless $m and $d and $y;
+                                                                                
+    return Time::Piece->strptime("$y-$m-$d $h:$min:00", '%Y-%m-%d %H:%M:%S');
+}
 
 =item $date_obj = decode_date(name => 'cover_date', query => $query)
 

@@ -10,7 +10,7 @@ use Krang::Schedule;
 use Krang::Message qw(add_message);
 use Krang::Session qw(%session);
 use Krang::Log qw(debug);
-
+use Krang::Widget qw(datetime_chooser decode_datetime);
 use constant SCHEDULE_PROTOTYPE => {
                                     schedule_id => '',
                                     repeat => '',
@@ -116,8 +116,6 @@ sub edit {
     $template->param( is_media => 1 ) if ($object_type eq 'media');
     $template->param( object_type => $object_type );
     my $schedule_type = $query->param('advanced_schedule') ? 'advanced' : 'simple';
-    ($schedule_type eq 'simple') ? $template->param( 'simple' => 1 ) : $template->param( 'advanced' => 1 );
-
     # Get media or story object from session -- or die() trying
     my $object = $self->get_object($object_type);
     my $object_id = ($object_type eq 'story') ? $object->story_id  :  $object->media_id;
@@ -128,6 +126,25 @@ sub edit {
     $template->param( 'current_version' => $object->version );
     $template->param( 'published_version' => $object->published_version );
     $template->param( 'url' => $object->url );
+
+    if ($schedule_type eq 'simple') {
+        $template->param( 'simple' => 1 );
+                                                                                  
+        # setup date selector for publish
+        $template->param( publish_selector => datetime_chooser(name=>'publish_date', query=>$query, nochoice => 1));
+       
+        my %version_labels = map { $_ => $_ } [0 .. $object->version]; 
+        $version_labels{0} = 'Newest Version';
+
+        $template->param(version_selector => scalar
+                         $query->popup_menu(-name    => 'version',
+                                            -values  => [0 .. $object->version],
+                                            -labels => \%version_labels,
+                                            -default => 0));
+                                                                                  
+    } else {
+        $template->param( 'advanced' => 1 );
+    }
 
     # get existing scheduled actions for object
     my @existing_schedule = get_existing_schedule($object_type, $object_id);
@@ -202,6 +219,51 @@ sub convert_hour {
     } else {
         return $hour, 'AM'; 
     }
+}
+
+=item add_simple()
+
+Adds simple scheduling (publish only) to schedule.
+
+=cut
+
+sub add_simple {
+    my $self = shift;
+    my $q = $self->query();
+
+    my $date = decode_datetime(name=>'publish_date', query=>$q);
+
+    my $object_type = $q->param('object_type');
+
+    # Get media or story object from session -- or die() trying
+    my $object = $self->get_object($object_type);
+    my $object_id = ($object_type eq 'story') ? $object->story_id  :  $object->media_id;
+   
+    if ($date) { 
+        my $schedule;
+        if ($q->param('version')) {
+            $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                                object_id => $object_id,
+                                                action => 'publish',
+                                                repeat => 'never',
+                                                context => [ version => $q->param('version') ],
+                                                date => $date );
+        } else {
+            $schedule = Krang::Schedule->new(   object_type => $object_type,
+                                                object_id => $object_id,
+                                                action => 'publish',
+                                                repeat => 'never',
+                                                date => $date );
+        }
+ 
+        $schedule->save();
+   
+        add_message('scheduled_publish');
+    } else {
+        add_message('invalid_datetime');
+    }
+
+    return $self->edit(); 
 }
 
 =item delete()
