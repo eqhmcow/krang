@@ -499,7 +499,7 @@ sub save {
         $media_id = $self->{media_id}; 
 
         # get rid of media_id
-        my @save_fields = grep {$_ ne 'media_id'} FIELDS;
+        my @save_fields = grep {($_ ne 'media_id') && ($_ ne 'creation_date')} FIELDS;
 
         # update version
         $self->{version} = $self->{version} + 1;
@@ -605,7 +605,11 @@ filename
 
 =item *
 
-filename_like - case insensitive substring match on filename. Must include '%' on either end for substring match.
+filename_like - case insensitive match on filename. Must include '%' on either end for substring match.
+
+=item *
+
+simple_search - Performs a per-word LIKE substring match against title, filename, and url, and an exact match against media_id if value passed in is a number.
 
 =item *
 
@@ -624,6 +628,14 @@ limit - limits result to number passed in here, else no limit.
 offset - offset results by this number, else no offset.
 
 =item *
+
+=item * 
+
+url 
+
+=item *
+
+url_like - case insensitive match on url. Must include '%' on either end for substring match.
 
 only_ids - return only media_ids, not objects if this is set true.
 
@@ -666,7 +678,7 @@ sub find {
 
     # set simple keys
     foreach my $key (keys %args) {
-	if ( ($key eq 'title') || ($key eq 'category_id') || ($key eq 'media_type_id') || ($key eq 'filename') || ($key eq 'contrib_id' ) || ($key eq 'checked_out_by')) {
+	if ( ($key eq 'title') || ($key eq 'category_id') || ($key eq 'media_type_id') || ($key eq 'filename') || ($key eq 'url') || ($key eq 'contrib_id' ) || ($key eq 'checked_out_by')) {
             push @where, $key;
 	} 
     }
@@ -694,6 +706,12 @@ sub find {
         push @where, 'filename_like';
     }
 
+    # add url_like to where_string if present
+    if ($args{'url_like'}) {
+        $where_string ? ($where_string .= " and url like ?") : ($where_string = " url like ?");
+        push @where, 'url_like';
+    }
+
     if ($args{'creation_date'}) {
         if (ref($args{'creation_date'}) eq 'ARRAY') {
             $where_string ? ($where_string .= 'AND creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1]) : ($where_string = 'creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1]);
@@ -702,13 +720,30 @@ sub find {
         }
     }
 
+    if ($args{'simple_search'}) {
+       my @words = split(/\s+/, $args{'simple_search'});
+        foreach my $word (@words){
+                my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
+                my $joined = $numeric ? 'media_id = ?' : '('.join(' OR ', 'title LIKE ?', 'url LIKE ?', 'filename LIKE ?').')';
+                $where_string ? ($where_string .= 'AND '.$joined) : ($where_string = $joined);
+                if ($numeric) {
+                    push @where, 'simple_search';
+                } else {
+                    push @where, ($word, $word, $word);
+                    $args{$word} = '%'.$word.'%';
+                } 
+        } 
+    }
+
     my $select_string;
     if ($args{'count'}) {
         $select_string = 'count(*) as count';
     } elsif ($args{'only_ids'}) {
         $select_string = 'media_id';
     } else {
-        $select_string = join(',', FIELDS);
+        my @fields = grep {($_ ne 'media_id')} FIELDS;
+
+        $select_string = 'DISTINCT(media_id), '.join(',', @fields);
     }
     
     my $sql = "select $select_string from media";
