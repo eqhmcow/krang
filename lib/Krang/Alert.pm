@@ -4,7 +4,7 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Krang::Log qw( info );
-#use Krang::Schedule;
+use Krang::Schedule;
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -165,7 +165,7 @@ desk_id
 
 =item *
 
-category_id - will traverse the tree looking and also look for parent categories.
+category_id - will traverse the tree looking and also look for parent categories. an array of category ids can be passed in as well.
 
 =item *
 
@@ -187,6 +187,10 @@ offset - offset results by this number, else no offset.
 
 count - return only a count if this is set to true.
 
+=item *
+
+only_ids - return only alert_ids, not objects if this is set true.
+
 =back
 
 =cut
@@ -207,16 +211,35 @@ sub find {
     
     # set simple keys
     foreach my $key (keys %args) {
-        if ( ($key eq 'alert_id') || ($key eq 'user_id') || ($key eq 'action') || ($key eq 'desk_id') || ($key eq 'category_id') ) {   
+        if ( ($key eq 'alert_id') || ($key eq 'user_id') || ($key eq 'action') || ($key eq 'desk_id') ) {   
             push @where, $key;
         }
     }
 
     my $where_string = join ' and ', (map { "$_ = ?" } @where);
 
+    if ($args{'category_id'}) {
+        if (ref($args{'category_id'}) eq 'ARRAY') {
+            my @all_cats;
+            my @cats = {$args{'category_id'}};
+            foreach my $cat ( @cats ) {
+                my @ancestors = $cat->ancestors( $cat );
+                push @all_cats, @ancestors;
+            }
+
+            push @all_cats, @cats;
+
+            $where_string ? ($where_string .= 'AND '.(join ' OR ', (map { "category_id = $_"} @all_cats))) : ($where_string = (join ' OR ', (map { "category_id = $_"} @all_cats)));
+        } else {
+            $where_string ? ($where_string .= 'AND category_id = '.$args{'category_id'}) : ($where_string = 'category_id = '.$args{'category_id'});
+        }
+    }
+
     my $select_string;
     if ($args{'count'}) {
         $select_string = 'count(*)';
+    } elsif ($args{'only_ids'}) {
+        $select_string = 'alert_id';
     } else {
         $select_string = join(',', FIELDS);
     }
@@ -239,6 +262,8 @@ sub find {
         my $obj;
         if ($args{'count'}) {
             return $row->{count};
+        } elsif ($args{'only_ids'}) {
+            $obj = $row->{alert_id};
         } else {
             $obj = bless {%$row}, $self;
 
@@ -257,7 +282,29 @@ This method takes two arguments, a Krang::History object and a Krang::Story obje
 =cut 
 
 sub check_alert {
-    
+    my $self = shift;
+    my %args = @_;
+
+    my $history = $args{history};
+    my $story = $args{story};
+
+    my @cat_objects = $story->categories;
+    my @category_ids = [ map { $_->category_id } @cat_objects];
+
+    croak(__PACKAGE__."->check_alert requires a valid Krang::History object.") if (ref $history ne 'Krang::History');
+
+    croak(__PACKAGE__."->check_alert requires a valid Krang::Story object.") if (ref $history ne 'Krang::Story');
+ 
+    my @matched_alerts = Krang::Alert->find( only_ids => 1, action => $history->action, category_id => @category_ids );  
+
+    foreach my $alert_id ( @matched_alerts ) {
+        my $schedule = Krang::Schedule->new(    object_type => 'alert',
+                                                object_id => $alert_id,
+                                                action => 'send',
+                                                context     => [ user_id => $history->user_id ]
+                                            );   
+        $schedule->save(); 
+    }
 }
 
 =back 
