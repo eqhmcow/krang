@@ -514,7 +514,7 @@ SQL
     $self->{deployed} = 1;
     $self->{deployed_version} = $self->{version};
     $self->{testing} = 0;
-    $self->{deploy_date} = $deploy_date;
+    $self->{deploy_date} = $time;
 
     return $self;
 }
@@ -978,8 +978,9 @@ sub save {
     # construct array of bind_parameters
     @tmpl_params = map { (/_date$/ and defined $self->{$_}) ?
                            $self->{$_}->mysql_datetime :
-                           $self->{$_}
-                       } @save_fields;
+                             $self->{$_}
+                         } @save_fields;
+
     push @tmpl_params, $id if $id;
 
     # get database handle
