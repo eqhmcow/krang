@@ -49,7 +49,6 @@ for Krang::CGI::Contrib is 'search'.
 
 
 use Krang::Contrib;
-use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Krang::Pref;
 
@@ -128,14 +127,6 @@ sub search {
     my $t = $self->load_tmpl('list_view.tmpl', loop_context_vars=>1);
 
     $t->param(%ui_messages) if (%ui_messages);
-#     $t->param(
-#               message_contrib_added => 1,
-#               message_add_cancelled => 1,
-#               message_contrib_saved => 1,
-#               message_save_cancelled => 1,
-#               message_selected_deleted => 1,
-#               message_contrib_deleted => 1,
-#              );
 
     # To be replaced with Krang::Contrib->simple_find( $q->param('search_filter') );
     my @contributors = Krang::Contrib->find();
@@ -689,7 +680,7 @@ Jesse Erlbaum <jesse@erlbaum.net>
 
 =head1 SEE ALSO
 
-L<Krang::Contrib>, L<Krang::CGI>
+L<Krang::Contrib>, L<Krang::Pref>, L<Krang::Session>, L<Krang::CGI>
 
 =cut
 
