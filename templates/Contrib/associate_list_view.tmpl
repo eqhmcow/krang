@@ -2,7 +2,6 @@
 
 <script language="Javascript">
 <!-- //
-
     nav_edit_mode();
 
     function add_contrib () {
@@ -90,15 +89,17 @@ function update_order_sort_south (a, b) {
 // -->
 </script>
 
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;ASSOCIATE CONTRIBUTOR</td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
 
-<div class="dark-bar">Associate Contributor</div>
-
-
-<div class=form-box>
-
-
-Current Contributors
-
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellpadding="6" cellspacing="0" width="100%">
+<tr><td>Current Contributors:
 <form name="do_return_form" method="POST" action="<tmpl_if associate_story>story.pl<tmpl_else>media.pl</tmpl_if>">
 <input type="hidden" name="rm" value="edit">
 </form>
@@ -128,34 +129,32 @@ Current Contributors
 <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 
-
 <TMPL_IF associated_contributors>
 
   <table cellspacing="0" width="100%">
-
-      <tr class="form-head">
-          <th>Last Name</th>
-          <th>First,Middle Name</th>
-          <th>Type</th>
-          <th>Order</th>
-          <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'contrib_unassociate_list')"></th>
-      </tr>
+  <tr class="form-head">
+    <th>&nbsp;Last Name</th>
+    <th>&nbsp;First, Middle Name</th>
+    <th>&nbsp;Type</th>
+    <th>&nbsp;Order</th>
+    <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'contrib_unassociate_list')"></th>
+  </tr>
 
   <tmpl_loop associated_contributors>
-      <tr>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML last></td>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML first><tmpl_if middle>&nbsp;<tmpl_var ESCAPE=HTML middle></tmpl_if></td>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML type></td>
-          <td class="form-cell"><tmpl_var order_contrib_popup_menu></td>
-          <td class="form-cell"><input type="checkbox" name="contrib_unassociate_list" value="<tmpl_var ESCAPE=HTML contrib_id>:<tmpl_var ESCAPE=HTML contrib_type_id>"></td>
-      </tr>
+  <tr>
+    <td class="form-cell"><tmpl_var ESCAPE=HTML last></td>
+    <td class="form-cell"><tmpl_var ESCAPE=HTML first><tmpl_if middle>&nbsp;<tmpl_var ESCAPE=HTML middle></tmpl_if></td>
+    <td class="form-cell"><tmpl_var ESCAPE=HTML type></td>
+    <td class="form-cell"><tmpl_var order_contrib_popup_menu></td>
+    <td class="form-cell"><input type="checkbox" name="contrib_unassociate_list" value="<tmpl_var ESCAPE=HTML contrib_id>:<tmpl_var ESCAPE=HTML contrib_type_id>"></td>
+  </tr>
 
   </tmpl_loop>
  
   </table>
+  <div align="right"><input type="button" value="Reorder" onClick="reorder_contributors()" class="button">
+&nbsp;&nbsp;&nbsp;<input type="button" value="Delete" onClick="unassociate_selected()" class="button"></div>
 
-  <div align="right"><input type="button" value="Reorder" onClick="reorder_contributors()">
-<input type="button" value="Delete" onClick="unassociate_selected()"></div>
 
 <TMPL_ELSE>
 
@@ -165,20 +164,19 @@ Current Contributors
 
 </form>
 
+  </td></tr>
+</table>
 
-<table width="100%">
+<table border="0" cellspacing="0" cellpadding="2" width="100%">
 <form name="search_form" method="POST">
-
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="">
 <input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
 <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 
-
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
-<tr><td class="form-head">
-SEARCH<br />
+<tr><td class="form-head">SEARCH<br />
 <input type="hidden" name="rm" value="search">
 <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="submit" value="Search">
@@ -186,18 +184,10 @@ SEARCH<br />
 </form>
 </table>
 
-
-<br />
-
-Choose Contributors
-
-<br />
-
-<b><a href="javascript:add_contrib()">Add A Contributor</a></b>
-
-
-
-
+&nbsp;
+<table border="0" cellpadding="6" cellspacing="0" width="100%">
+<tr><td>Choose Contributors
+<p><a href="javascript:add_contrib()">Add A Contributor</a></p>
 
 <form name="krang_pager_form" method="POST">
 
@@ -247,21 +237,19 @@ Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row
 
 </form>
 
-
-<tmpl_if row_count>
-  <div align="right"><input type="button" value="Associate" onClick="associate_selected()"></div>
-</tmpl_if>
-
-
-
 <!-- End delete_selected_form -->
 </form>
+    </td></tr>
+  </table>
+  </td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
 
-</div>
 
-<div class="button-bar"><input type="button" value="Return" onClick="do_return()"></div>
-
-
+<div class="button-bar">
+<tmpl_if row_count><input type="button" value="Associate" onClick="associate_selected()" class="button"></tmpl_if>&nbsp;&nbsp;&nbsp;<input type="button" value="Return" onClick="do_return()" class="button"></div>
 
 <tmpl_include /footer.tmpl>
 

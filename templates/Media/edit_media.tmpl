@@ -25,11 +25,7 @@
     }
 
     function do_publish () {
-        if (confirm("Are you sure you want to publish this media?")) {
-            var myform = document.edit_media_form;
-            myform.rm.value = 'save_and_publish';
-            myform.submit();
-        }
+        alert ("Not implemented yet");
     }
 
 
@@ -218,7 +214,7 @@ Version: <tmpl_var media_version_chooser>
   <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
   <input type="button" value="Publish" onClick="do_publish()" class="button">
   <input type="reset" value="Reset" class="button">
-  <tmpl_unless add_mode><input type="button" value="Delete" onClick="do_delete()" class="button"></tmpl_unless>&nbsp;&nbsp;&nbsp;
+  <tmpl_unless add_mode><input type="button" value="Delete" onClick="do_delete()" class="button"></tmpl_unless>&nbsp;
 </div>
 
 </form>

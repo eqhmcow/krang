@@ -90,31 +90,30 @@
   <!-- Advanced Search Form -->
   <tr><td>
     <table border="0" cellspacing="5" cellpadding="2">
+    <tr>
+      <td>File:</td>
+      <td><input size="40" type="textfield" name="search_filename" value="<tmpl_var escape=HTML search_filename>"></td>
+    </tr>
 
-      <tr>
-        <td>File:</td>
-        <td><input size="40" type="textfield" name="search_filename" value="<tmpl_var escape=HTML search_filename>"></td>
-      </tr>
+    <tr>
+      <td>Title:</td>
+      <td><input type="textfield" size="40" name="search_title" value="<tmpl_var escape=HTML search_title>" class="button"></td>
+    </tr>
 
-      <tr>
-        <td>Title:</td>
-        <td><input size="40" type="textfield" name="search_title" value="<tmpl_var escape=HTML search_title>" class="button"></td>
-      </tr>
+    <tr>
+      <td>ID:</td>
+      <td><input type="textfield" size="40" name="search_media_id" value="<tmpl_var escape=HTML search_media_id>" class="button"></td>
+    </tr>
 
-      <tr>
-        <td>ID:</td>
-        <td><input size="40" type="textfield" name="search_media_id" value="<tmpl_var escape=HTML search_media_id>" class="button"></td>
-      </tr>
+    <tr>
+      <td>Site/Category:</td>
+      <td><tmpl_var category_chooser></td>
+    </tr>
 
-      <tr>
-        <td>Creation Date:</td>
-        <td><tmpl_var date_chooser></td>
-      </tr>
-
-      <tr>
-        <td>Site/Category:</td>
-        <td><tmpl_var category_chooser></td>
-      </tr>
+    <tr>
+      <td>Creation Date:</td>
+      <td><tmpl_var date_chooser></td>
+    </tr>
 
       <tr>
         <td>Has No Attributes:</td>
@@ -171,7 +170,7 @@
 </table>
 
 <tmpl_if row_count>
-  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button">&nbsp;&nbsp;&nbsp;</div>
+  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button">&nbsp;</div>
 </tmpl_if>
 
 <tmpl_include footer.tmpl>
