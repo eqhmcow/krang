@@ -186,6 +186,7 @@ sub thaw_data_xml {
 sub template_data {
     my $self = shift;
     my %args = @_;
+    return "" unless $args{element}->data;
 
     if ($args{publisher}->is_publish()) {
         return 'http://' . $args{element}->data()->url();

@@ -55,7 +55,12 @@ sub load_query_data {
     $element->data([$query->param($param)]);
 }
 
-
+sub template_data {
+    my ($self, %arg) = @_;
+    my $element = $arg{element};
+    return "" unless $element->data;
+    return join(', ', @{$element->data});
+}
 
 =head1 NAME
 
