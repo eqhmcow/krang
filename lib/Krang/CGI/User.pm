@@ -229,29 +229,29 @@ It expects a 'user_id' query param.
 =cut
 
 sub delete {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
-        my $user_id = $q->param('user_id');
-        return $self->search() unless $user_id;
-        eval {Krang::User->delete($user_id);};
-        if ($@) {
-            if (ref $@ && $@->isa('Krang::User::Dependency')) {
-                critical("Unable to delete user '$user_id': objects are " .
-                         "checked out by this user.");
-                my ($user) = Krang::User->find(user_id => $user_id);
-                add_message('error_deletion_failure',
-                            login => $user->login,
-                            user_id => $user->user_id,);
-                return $self->search();
-            } else {
-                croak($@);
-            }
+    my $q = $self->query();
+    my $user_id = $q->param('user_id');
+    return $self->search() unless $user_id;
+    eval {Krang::User->delete($user_id);};
+    if ($@) {
+        if (ref $@ && $@->isa('Krang::User::Dependency')) {
+            critical("Unable to delete user '$user_id': objects are " .
+                     "checked out by this user.");
+            my ($user) = Krang::User->find(user_id => $user_id);
+            add_message('error_deletion_failure',
+                        login => $user->login,
+                        user_id => $user->user_id,);
+            return $self->search();
+        } else {
+            croak($@);
         }
+    }
 
-        add_message('message_deleted');
+    add_message('message_deleted');
 
-        return $self->search();
+    return $self->search();
 }
 
 
@@ -313,27 +313,27 @@ fields, so errant values are preserved for correction.
 =cut
 
 sub edit {
-	my $self = shift;
-        my %ui_messages = @_;
-	my $q = $self->query();
-        my $user_id = $q->param('user_id');
-        my ($user) = Krang::User->find(user_id => $user_id);
+    my $self = shift;
+    my %ui_messages = @_;
+    my $q = $self->query();
+    my $user_id = $q->param('user_id');
+    my ($user) = Krang::User->find(user_id => $user_id);
 
-        croak(__PACKAGE__ . "->edit(): No Krang::User object found matching " .
-              "user_id '$user_id'")
-          unless defined $user;
+    croak(__PACKAGE__ . "->edit(): No Krang::User object found matching " .
+          "user_id '$user_id'")
+      unless defined $user;
 
-        # Store in session, just following Jesse's lead
-        $session{EDIT_USER} = $user;
+    # Store in session, just following Jesse's lead
+    $session{EDIT_USER} = $user;
 
-        my $t = $self->load_tmpl("edit_view.tmpl",
-                                 associate => $q);
+    my $t = $self->load_tmpl("edit_view.tmpl",
+                             associate => $q);
 
-        $t->param(%ui_messages) if %ui_messages;
+    $t->param(%ui_messages) if %ui_messages;
 
-        $t->param($self->get_user_params($user));
+    $t->param($self->get_user_params($user));
 
-        return $t->output();
+    return $t->output();
 }
 
 

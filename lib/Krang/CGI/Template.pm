@@ -86,10 +86,6 @@ sub setup {
 }
 
 
-sub teardown {
-	my $self = shift;
-}
-
 
 =head1 INTERFACE
 

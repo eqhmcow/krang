@@ -1,0 +1,75 @@
+<tmpl_include header.tmpl>
+
+<script language="javascript">
+  nav_edit_mode();
+</script>
+
+<div class=dark-bar>View Site</div>
+
+
+<table border="0" cellpadding="5" cellspacing="0" width="100%">
+
+<tr class="light">
+  <td>URL:</td>
+  <td colspan="2"><tmpl_var url></td>
+</tr>
+
+
+<tr class="light">
+  <td>Preview URL:</td>
+  <td colspan="2"><tmpl_var preview_url></td>
+</tr>
+
+
+<tr class="light">
+  <td>Preview Path:</td>
+  <td colspan="2"><tmpl_var preview_path></td>
+</tr>
+
+<tr class="light">
+  <td>Publish Path:</td>
+  <td colspan="2"><tmpl_var publish_path></td>
+</tr>
+
+<form name="return_form" method="POST">
+<tmpl_var history_return_params>
+</form>
+
+<form name="edit_site_form" method="POST">
+<input type="hidden" name="rm" value="edit">
+<input type="hidden" name="site_id" value="<tmpl_var escape=HTML site_id>">
+</form>
+
+<script language="javascript">
+<!-- //
+
+        function do_return () {
+            var myform = document.return_form;
+            myform.submit();
+        }
+
+
+        function do_edit_site () {
+                var myform = document.edit_site_form;
+                myform.submit();
+        }
+
+// -->
+</script>
+
+
+<tr class="light">
+  <td>&nbsp;</td>
+  <td colspan="2"></td>
+</tr>
+
+
+</table>
+
+<div class="button-bar">
+  <input type="button" value="Return" onClick="javascript:do_return()">
+  <input type="button" value="Edit" onClick="javascript:do_edit_site()">
+</div>
+
+
+<tmpl_include footer.tmpl>

@@ -58,7 +58,7 @@ like($@, qr/Duplicates of this site exist in the database/,
      'save() duplicate test');
 my $dupes = $@->duplicates;
 is(scalar keys %$dupes > 0, 1, "Exception 'duplicates' field test 1");
-is($_ =~ /^\d+$/ && (grep /_path|url/, $dupes->{$_}), 1,
+is($_ =~ /^\d+$/ && (grep /_path|url/, @{$dupes->{$_}}), 1,
    'Krang::Site::Duplicate test')
   for (keys %$dupes);
 
@@ -81,17 +81,17 @@ $site2->save();
 # find tests
 #############
 # setup a bunch of sites
-$site3 = Krang::Site->new(publish_path => 'publish/path3/',
+$site3 = Krang::Site->new(publish_path => 'pblish/path3/',
                           preview_path => 'preview/path3/',
                           preview_url => 'preview.testsite3.t',
                           url => 'testsite3.t');
 $site3->save();
-my $site4 = Krang::Site->new(publish_path => 'publish/path4/',
+my $site4 = Krang::Site->new(publish_path => 'pblish/path4/',
                              preview_path => 'preview/path4/',
                              preview_url => 'preview.testsite4.t',
                              url => 'testsite4.t');
 $site4->save();
-my $site5 = Krang::Site->new(publish_path => 'publish/path5/',
+my $site5 = Krang::Site->new(publish_path => 'pblish/path5/',
                              preview_path => 'preview/path5/',
                              preview_url => 'preview.testsite5.t',
                              url => 'testsite5.t');
@@ -113,7 +113,7 @@ is($count, 1, 'find() - count');
 
 # ids only
 my @site_ids = Krang::Site->find(ids_only => 1,
-                                 publish_path_like => '%publish/%');
+                                 publish_path_like => '%pblish/%');
 like($_, qr/^\d+$/, 'find() - valid ids') for @site_ids;
 
 # site_id
@@ -145,10 +145,10 @@ like($cats[0]->url(), qr/testsite2\.t/, 'update_child_categories() test');
 #################
 # deletion test - failure
 eval {$site2->delete()};
-isa_ok($@, 'Krang::Site::Dependent');
+isa_ok($@, 'Krang::Site::Dependency');
 like($@, qr/Site cannot be deleted/, 'delete() failure test');
 my $dependents = $@->category_id;
-is($_ =~ /^\d+$/, 1, 'Krang::Site::Dependent test') for @$dependents;
+is($_ =~ /^\d+$/, 1, 'Krang::Site::Dependency test') for @$dependents;
 
 # delete '/blah'
 my $result = $cats[1]->delete();

@@ -85,7 +85,7 @@ use warnings;
 use Carp qw(croak);
 use Exception::Class
   ('Krang::Site::Duplicate' => {fields => 'duplicates'},
-   'Krang::Site::Dependent' => {fields => 'category_id'});
+   'Krang::Site::Dependency' => {fields => 'category_id'});
 
 # Internal Modules
 ###################
@@ -104,16 +104,15 @@ use constant SITE_RO => qw(site_id);
 # Read-write fields
 use constant SITE_RW => qw(preview_path
 			   preview_url
-			   publish_path
-			   url);
+			   publish_path);
 
 # Globals
 ##########
 
 # Lexicals
 ###########
-my %site_args = map {$_ => 1} SITE_RW;
-my %site_cols = map {$_ => 1} SITE_RO, SITE_RW;
+my %site_args = map {$_ => 1} SITE_RW, 'url';
+my %site_cols = map {$_ => 1} SITE_RO, SITE_RW, 'url';
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
@@ -199,15 +198,14 @@ sub init {
     croak(__PACKAGE__ . "->init(): The following constructor args are " .
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
 
-    for (SITE_RW) {
+    for (keys %site_args) {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
           unless exists $args{$_};
     }
 
-    $self->hash_init(%args);
+    $self->url($args{url}) if exists $args{url};
 
-    # set field to track changes to 'url'
-    $self->{_old_url} = $self->{url};
+    $self->hash_init(%args);
 
     return $self;
 }
@@ -234,6 +232,9 @@ sub delete {
     my $self = shift;
     my $id = shift || $self->{site_id};
 
+    # get object if we don't have it
+    ($self) = Krang::Site->find(site_id => $id);
+
     # check for references to this site
     $self->dependent_check();
 
@@ -257,13 +258,13 @@ sub delete {
 
 Class or instance method that should be called before attempt to delete a Site.
 If any categories are found that depend rely upon this Site, then a
-Krang::Site::Dependent exception is thrown, otherwise, 0 is returned.
+Krang::Site::Dependency exception is thrown, otherwise, 0 is returned.
 
 The exception's 'category_id' field contains a list of the ids of depending
 categories.  You might wish to handle the exception thusly:
 
  eval {$site->dependent_check()};
- if ($@ and $@->isa('Krang::Site::Dependent')) {
+ if ($@ and $@->isa('Krang::Site::Dependency')) {
      croak("This Site cannot be deleted.  Categories with the following" .
 	   " ids depend upon it: " . join(",", $@->category_id) . "\n");
  }
@@ -285,7 +286,7 @@ sub dependent_check {
     $sth->bind_col(1, \$category_id);
     push @ids, $category_id while $sth->fetch();
 
-    Krang::Site::Dependent->throw(message => 'Site cannot be deleted. ' .
+    Krang::Site::Dependency->throw(message => 'Site cannot be deleted. ' .
                                   'Dependent categories found.',
                                   category_id => \@ids)
         if @ids;
@@ -307,7 +308,7 @@ One might obtain this info thusly:
  eval {$site->duplicate_check()};
  if ($@ and $@->isa('Krang::Site::Duplicate')) {
      my $info = $@->duplicates;
-     $info = join("\n\t", map {"$_: $info{$_}} keys %$info);
+     $info = join("\n\t", map {"$_: " . join ", ", @{$info{$_}}} keys %$info);
      croak("The following site_id, fieldname pairs specify which objects" .
 	   " are duplicated by this site:\n\t$info\n");
  }
@@ -343,7 +344,7 @@ sub duplicate_check {
         for (keys %$row) {
             if (exists $self->{$_} && exists $row->{$_}
                 && $self->{$_} eq $row->{$_}) {
-                $info{$row->{site_id}} = $_;
+                push @{$info{$row->{site_id}}}, $_;
             }
         }
     }
@@ -432,7 +433,7 @@ sub find {
     my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
-    my $order_by = delete $args{order_by} || 'site_id';
+    my $order_by = delete $args{order_by} || 'url';
 
     # set search fields
     my $count = delete $args{count} || '';
@@ -454,12 +455,29 @@ sub find {
         my $like = 1 if $arg =~ /_like$/;
         ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
 
-        push @invalid_cols, $arg unless exists $site_cols{$lookup_field};
+        push @invalid_cols, $arg unless exists $site_cols{$lookup_field} ||
+          $arg eq 'simple_search';
 
         if ($arg eq 'site_id' && ref $args{$arg} eq 'ARRAY') {
             my $tmp = join(" OR ", map {"site_id = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
+        } elsif ($arg eq 'simple_search') {
+            my @words = split(/\s+/, $args{$arg});
+            for my $word(@words) {
+                my $numeric = $word =~ /^\d+$/ ? 1 : 0;
+                if ($where_clause) {
+                    $where_clause .= $numeric ? " AND site_id LIKE ?" :
+                      " AND (preview_path LIKE ? OR preview_url LIKE ? OR " .
+                        "publish_path LIKE ? OR url LIKE ?)";
+                } else {
+                    $where_clause = $numeric ? "site_id LIKE ?" :
+                      "(preview_path LIKE ? OR preview_url LIKE ? OR " .
+                        "publish_path LIKE ? OR url LIKE ?)";
+                }
+                my $count = $numeric ? 1 : 4;
+                push @params, "%" . $word . "%" for (1..$count);
+            }
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
@@ -489,6 +507,7 @@ sub find {
     } elsif ($offset) {
         $query .= " LIMIT $offset, -1";
     }
+
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
@@ -624,6 +643,28 @@ SQL
     }
 
     return 1;
+}
+
+
+=item $url = $site->url()
+
+=item $site = $site->url( $url )
+
+Instance method that gets and sets the object 'url' field.  When called as a
+setter, the '_old_url' is updated as well.
+
+=cut
+
+sub url {
+    my $self = shift;
+    return $self->{url} unless @_;
+    if ($_[0]) {
+        my $val = exists $self->{url} && $self->{url} ne '' ?
+          $self->{url} : $_[0];
+        $self->{_old_url} = $val;
+        $self->{url} = $_[0];
+    }
+    return $self;
 }
 
 
