@@ -168,7 +168,24 @@
         if (! new_data) {
             return;
         }
-    
+ 
+        if (list_count != 1) {
+            var rlc = list_count - 1;
+           for(var key in list_data[rlc]) {
+               if (list_data[rlc][key]['__data__'] == new_data) {
+                    alert("'" + new_data  + "'" + " is already an item in this list. Not added.");
+                    return;
+                }
+            }
+        } else { 
+            for(var key in list_data) {
+               if (list_data[key]['__data__'] == new_data) {
+                    alert("'" + new_data  + "'" + " is already an item in this list. Not added.");
+                    return;
+                }
+            }
+        }
+
         // if list item is selected in list we are adding to
         if (select_val != 'undef' ) {
             var indexArray = select_val.split('][');
