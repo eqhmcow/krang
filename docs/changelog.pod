@@ -3,7 +3,7 @@
 This document contains a list of changes for each release of Krang.
 
 =head2 v1.019 - Jun 04, 2004
-        
+
 =over
 
 =item *
