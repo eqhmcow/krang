@@ -1,32 +1,7 @@
-<!-- ARTICLE TEMPLATE -->
- <tmpl_loop page_loop>
+<tmpl_loop page_loop>
+<title><tmpl_var title></title>
+<tmpl_if __first__><h1><tmpl_var title></h1><b><tmpl_var deck></b></tmpl_if>
+<tmpl_var page>
+<tmpl_unless __last__><tmpl_var page_break></tmpl_unless>
+</tmpl_loop>
 
-   <html>
-
-   <head>
-     <title><tmpl_var title></title>
-   </head>
-   <body>
-
-     <tmpl_if __first__>
-        <h1><tmpl_var title></h1>
-        <b><tmpl_var deck></b>
-     </tmpl_if>
-
-     <tmpl_var page>
-
-     <tmpl_unless __first__>
-     <a href="">Previous Page</a>
-     </tmpl_unless>
-
-     <tmpl_unless __last__>
-     <a href="">Next Page</a>
-     </tmpl_unless>
-
-   </body>
-   </html>
-
-   <tmpl_var page_break>
-
- </tmpl_loop>
-<!-- /ARTICLE TEMPLATE -->

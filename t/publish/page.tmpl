@@ -1,24 +1,5 @@
-<!-- PAGE TEMPLATE -->
-
- <tmpl_loop element_loop>
-    <tmpl_if is_wide_page>
-      <tmpl_if wide_page>
-         THIS IS A VERY WIDE PAGE
-      <tmpl_else>
-         A NARROW PAGE
-      </tmpl_if>
-    </tmpl_if>
-    <tmpl_if is_header>
-      <tmpl_var header>
-    </tmpl_if>
-    <tmpl_if is_paragraph>
-      <p><tmpl_var paragraph></p>
-    </tmpl_if>
-    <tmpl_if is_pull_quote>
-      <p><blockquote><i>
-    <tmpl_var pull_quote>
-      </i></blockquote></p>
-    </tmpl_if>
- </tmpl_loop>
-
-<!-- /PAGE -->
+<tmpl_loop element_loop>
+<tmpl_if is_wide_page><tmpl_if wide_page>THIS IS A VERY WIDE PAGE<tmpl_else>A NARROW PAGE</tmpl_if></tmpl_if>
+<tmpl_if is_header><tmpl_var header></tmpl_if>
+<tmpl_if is_paragraph><p><tmpl_var paragraph></p></tmpl_if>
+</tmpl_loop>
