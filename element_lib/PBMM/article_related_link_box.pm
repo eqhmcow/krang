@@ -20,7 +20,8 @@ sub new {
    my %args = ( name => 'article_related_link_box',
                 children => 
                 [ 
-                 Default::lead_in->new(),
+                 Default::lead_in->new( name => 'link_box_lead_in',
+                                        display_name => 'Lead In' ),
                  PBMM::external_lead_in->new(),
                 ],
                 @_);
