@@ -305,9 +305,12 @@ sub find {
     my @where;
     my @contrib_object;
     my $where_string;
-    
-    my $order_by =  $args{'order_by'} ? join(',',$args{'order_by'}) : 'last,first';
-    my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
+
+    my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';    
+    $args{order_by} ||= 'last,first';
+    my $order_by =  join(',', 
+                         map { "$_ $order_desc" } 
+                           split(',', $args{'order_by'}));
     my $limit = $args{'limit'} ? $args{'limit'} : undef;
     my $offset = $args{'offset'} ? $args{'offset'} : 0;
 
@@ -358,7 +361,7 @@ sub find {
 
     my $sql = "select $select_string from contrib";
     $sql .= " where ".$where_string if $where_string;
-    $sql .= " order by $order_by $order_desc";
+    $sql .= " order by $order_by ";
     
     # add limit and/or offset if defined
     if ($limit) {

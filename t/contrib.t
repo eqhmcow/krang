@@ -74,7 +74,38 @@ is(scalar(@ss_contribs), 1);
 @ss_contribs = Krang::Contrib->find(simple_search=>'George Carlin');
 is(scalar(@ss_contribs), 0);
 
-
 # Clean up added contrib
 $contrib2->delete();
+
+# create a few contribs to test ordering
+my @contribs;
+push(@contribs,
+     Krang::Contrib->new(first => 'Bohemia', last => 'Bolger'),
+     Krang::Contrib->new(first => 'Alvin', last => 'Arthur'),
+     Krang::Contrib->new(first => 'Conifer', last => 'Caligula'));
+$_->contrib_type_ids(1) for @contribs;
+$_->save for @contribs;
+END { $_->delete for @contribs };
+my %ids = map { $_->contrib_id, 1 } @contribs;
+
+my @results = grep { $ids{$_->contrib_id} } 
+  Krang::Contrib->find(order_by => 'first');
+is(@results, 3);
+is($results[0]->contrib_id, $contribs[1]->contrib_id);
+is($results[1]->contrib_id, $contribs[0]->contrib_id);
+is($results[2]->contrib_id, $contribs[2]->contrib_id);
+
+@results = grep { $ids{$_->contrib_id} } 
+  Krang::Contrib->find(order_by => 'first', order_desc => 1);
+is(@results, 3);
+is($results[2]->contrib_id, $contribs[1]->contrib_id);
+is($results[1]->contrib_id, $contribs[0]->contrib_id);
+is($results[0]->contrib_id, $contribs[2]->contrib_id);
+
+@results = grep { $ids{$_->contrib_id} } 
+  Krang::Contrib->find(order_by => 'last,first', order_desc => 1);
+is(@results, 3);
+is($results[2]->contrib_id, $contribs[1]->contrib_id);
+is($results[1]->contrib_id, $contribs[0]->contrib_id);
+is($results[0]->contrib_id, $contribs[2]->contrib_id);
 
