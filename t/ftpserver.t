@@ -9,6 +9,8 @@ use Krang::User;
 use Krang::Media;
 use Krang::Template;
 use Krang::Session qw(%session);
+use Krang::Test::Content;
+
 use Net::FTP;
 use IPC::Run qw(start);
 use File::Spec::Functions qw(catfile);
@@ -25,15 +27,17 @@ BEGIN {
     die $@ if $@;
 }
 
+my $creator = Krang::Test::Content->new;
+
+END { $creator->cleanup() }
+
 my @sites;
 
-# create a site and some categories to put media in
-$sites[0] = Krang::Site->new(preview_url  => 'preview.test.com',
-                            url          => 'test.com',
-                            publish_path => KrangRoot.'/tmp/test_publish',
-                            preview_path => KrangRoot.'/tmp/test_preview');
-isa_ok($sites[0], 'Krang::Site', 'is Krang::Site');
-$sites[0]->save();
+$sites[0] = $creator->create_site(preview_url  => 'preview.test.com',
+                                  publish_url  => 'test.com',
+                                  publish_path => KrangRoot.'/tmp/test_publish',
+                                  preview_path => KrangRoot.'/tmp/test_preview'
+                                 );
 
 my ($root_cat) = Krang::Category->find(site_id => $sites[0]->site_id, dir => "/");
 isa_ok($root_cat, 'Krang::Category', 'is Krang::Category');
@@ -41,20 +45,18 @@ $root_cat->save();
 
 my @cat;
 for (0 .. 10) {
-    push @cat, Krang::Category->new(site_id   => $sites[0]->site_id,
-                                    parent_id => $root_cat->category_id,
-                                    dir       => 'test_' . $_);
-    isa_ok($root_cat, 'Krang::Category', 'is Krang::Category');
-    $cat[-1]->save();
+    push @cat, $creator->create_category(
+                                         dir     => 'test_' . $_,
+                                         parent  => $root_cat->category_id
+                                        );
 }
 
 # create a site and some categories to put media in
-$sites[1] = Krang::Site->new(preview_url  => 'preview.test2.com',
-                            url          => 'test2.com',
-                            publish_path => KrangRoot.'/tmp/test2_publish',
-                            preview_path => KrangRoot.'/tmp/test2_preview');
-isa_ok($sites[1], 'Krang::Site', 'is Krang::Site');
-$sites[1]->save();
+$sites[1] = $creator->create_site(preview_url  => 'preview.test2.com',
+                                  publish_url  => 'test2.com',
+                                  publish_path => KrangRoot.'/tmp/test2_publish',
+                                  preview_path => KrangRoot.'/tmp/test2_preview'
+                                 );
 
 my ($root_cat2) = Krang::Category->find(site_id => $sites[1]->site_id, dir => "/");
 isa_ok($root_cat2, 'Krang::Category', 'is Krang::Category');
@@ -62,17 +64,13 @@ $root_cat2->save();
 
 my @cat2;
 for (0 .. 10) {
-    push @cat2, Krang::Category->new(site_id   => $sites[1]->site_id,
-                                    parent_id => $root_cat2->category_id,
-                                    dir       => 'test2_' . $_);
-    isa_ok($root_cat2, 'Krang::Category', 'is Krang::Category');
-    $cat2[-1]->save();
+    push @cat2, $creator->create_category(
+                                          dir     => 'test2_' . $_,
+                                          parent  => $root_cat2->category_id
+                                         );
+
 }
 
-# set up for cleanup 
-END {
-    $_->delete for (@cat, @cat2, @sites);
-}
 
 # set up Net::FTP session
 my $ftp = Net::FTP->new(FTPAddress, Port => FTPPort, Timeout => 10);
@@ -82,12 +80,10 @@ END { $ftp->quit; }
 
 isa_ok($ftp, 'Net::FTP', 'is Net::FTP');
 
-my ($username, $password);
+my $password = 'krangftptest';
+my $user = $creator->create_user(password => $password);
 
-$username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
-$password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
-
-is( $ftp->login( $username, $password ), '1', 'Login Test' );
+is( $ftp->login( $user->login, $password ), '1', 'Login Test' );
 
 my @auth_instances;
 my @instances = Krang::Conf->instances();
@@ -96,7 +92,7 @@ foreach my $instance (@instances) {
     # set instance
     Krang::Conf->instance($instance);
 
-    my $login_ok = Krang::User->check_auth($username,$password);
+    my $login_ok = Krang::User->check_auth($user->login,$password);
 
     if ($login_ok) {
        push @auth_instances, $instance;
@@ -127,7 +123,7 @@ foreach my $type (@types) {
     if ($type eq 'template') {
         my @templates = Krang::Template->find( category_id => undef);
         @templates = map { $_->filename } @templates;
-   
+
         my $list = $sitenames;
         $list .= " @templates" if @templates; 
         is("@ret_sites", $list, "Site listing in $type");
@@ -139,7 +135,7 @@ foreach my $type (@types) {
     } else {
         is("@ret_sites", $sitenames, "Site listing in $type");
     }
-    
+
     foreach my $site (@ret_sites) {
         next if ($site =~ /^\S*\.tmpl$/);
         $ftp->cwd($site);
@@ -167,7 +163,7 @@ foreach my $type (@types) {
             my @existing_templates = Krang::Template->find( category_id => $rc->category_id );
 
             my $tnames = join(" ",(map { $_->filename } @existing_templates));
-            
+
             if ($catnames) {
                 $list_string = $catnames;
                 $list_string .= " $tnames" if $tnames;
@@ -178,7 +174,7 @@ foreach my $type (@types) {
  
         my @ret_cats = $ftp->ls();
         is("@ret_cats", $list_string, "Category ls in site $site for type $type");
-       
+
         # go into each category and create, get, put, delete media/template
         foreach my $cat (@cat_list) {
             my $cat_dir = $cat->dir;
@@ -194,11 +190,11 @@ foreach my $type (@types) {
                 is($ftp->put( $template_path ), 'test.tmpl', "Put template test.tmpl in category $cat_dir" );
                 is($ftp->delete('test.tmpl'), 1, "Delete template test.tmpl in category $cat_dir");
             }
-            $ftp->cdup()            
+            $ftp->cdup()
         }
-        # back to site listings 
+        # back to site listings
         $ftp->cdup();
     }
-    # back into type level 
+    # back into type level
     $ftp->cdup();
 }
