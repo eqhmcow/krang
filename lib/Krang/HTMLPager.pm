@@ -785,7 +785,7 @@ sub make_sortable_column_html {
     my $krang_pager_sort_order_desc = $q->param('krang_pager_sort_order_desc') || ($session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'} ? $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'} : '0');
 
     # set into cache if was set in query this time
-    $session{'KRANG_'.$use_module.'_PAGER_SORT_FIELD'}  = $q->param('krang_pager_sort_field') if length($q->param('krang_pager_sort_field'));
+    $session{'KRANG_'.$use_module.'_PAGER_SORT_FIELD'}  = $q->param('krang_pager_sort_field') if (defined($q->param('krang_pager_sort_field')) and length($q->param('krang_pager_sort_field')));
     $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'}  = $q->param('krang_pager_sort_order_desc') if defined($q->param('krang_pager_sort_order_desc'));
 
     # No sort field set?  Use defaults...

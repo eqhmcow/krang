@@ -11,6 +11,7 @@ use File::Spec::Functions qw(catdir catfile splitdir);
 use Krang::Conf qw(KrangRoot);
 use XML::SAX::Expat;
 use XML::Validator::Schema;
+use Carp qw(croak);
 
 =head1 NAME
 

@@ -155,9 +155,6 @@ sub new {
         
         croak("Unable to open kds archive '$path': $?") if ($result);
 
-        # validate the XML files before parsing
-        $self->_validate;
-
         # load the index
         $self->_load_index;
                         
@@ -202,10 +199,25 @@ sub _validate {
     # cough up error, if we got one    
     Krang::DataSet::ValidationFailed->throw(errors => \%invalid,
                                             message =>
-           join("\n", 
-                map { "File '$_' failed validation: \n$invalid{$_}\n" } 
+           join("\n",
+                map { "File '$_' failed validation: \n$invalid{$_}\n" }
                 keys %invalid))
         if %invalid;
+}
+
+sub _validate_file {
+    my $self = shift;
+    my $path = shift;
+
+    my $validator = Krang::XML::Validator->new();
+
+    my ($ok, $err) = $validator->validate(path => $path);
+
+    # cough up error, if we got one
+    Krang::DataSet::ValidationFailed->throw(errors => $err,
+                                            message =>
+                "File '$path' failed validation: \n$err\n") if $err;
+
 }
 
 =item C<< $set->add(object => $story, from => $self) >>
@@ -469,12 +481,13 @@ sub _check_index {
 
     foreach my $class (keys %{$self->{objects}}) {
         foreach my $id (keys %{$self->{objects}{$class}}) {
+            my $path = catfile($self->{dir}, $self->{objects}{$class}{$id}{xml});
             Krang::DataSet::InvalidArchive->throw(
                  message => "Data set 'index.xml' refers to a file '".
                  $self->{objects}{$class}{$id}{xml} . 
                  "' which does not exist.")
-                unless -e catfile($self->{dir}, 
-                                  $self->{objects}{$class}{$id}{xml});
+                unless -e $path;
+            $self->_validate_file($path);
         }
     }    
 }

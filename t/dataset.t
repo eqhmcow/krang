@@ -443,8 +443,6 @@ my $cid = (Krang::Category->find( url => $category->url ))[0]->category_id;
 ($found) = Krang::Alert->find( user_id => $uid, desk_id => $did, category_id => $cid, action => 'move_to', count => 1 );
 ok($found);
 
-END{ (Krang::Alert->find( user_id => $uid, desk_id => $did, category_id =>
-$cid, action => 'move_to'))[0]->delete }
 END{ (Krang::Desk->find(name => $ldesk->name))[0]->delete() }
 END{ (Krang::Group->find(name => $lgroup->name))[0]->delete() }
 END{ (Krang::User->find(login => $luser->login))[0]->delete() }
