@@ -614,6 +614,14 @@ sub remember {
     $self->{memory} = $self->clone();
 }
 
+=item C<< $element->has_memory() >>
+
+Returns true if the element has a remembered state.
+
+=cut
+
+sub has_memory { shift->{memory} ? 1 : 0 }
+
 =item C<< $element->rollback() >>
 
 Rolls back to the last C<remember()>ed state.  Dies if called without
@@ -754,6 +762,10 @@ practically free here.
 
 sub match {
     my ($self, $xpath) = @_;
+
+    # / is the root.  This should probably work as part of the
+    # algorithm, but it doesn't.
+    return $self->root if $xpath eq '/';
 
     # break up an incoming xpath into a set of @patterns to match
     # against a list of @target elements
