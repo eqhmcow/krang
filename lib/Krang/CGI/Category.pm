@@ -184,6 +184,8 @@ sub create {
       unless $parent_id;
     push(@bad, 'dir'),        add_message('missing_dir')
       unless $dir;
+    push(@bad, 'dir'),        add_message('bad_dir')
+      unless $dir =~ /^[-\w]+$/;
     return $self->new_category(bad => \@bad) if @bad;
 
     # create the object
