@@ -102,6 +102,12 @@ The callback will recieve the same arguments as are passed to add().
 This is useful if you need to provide progress messages for the user.
 Note that the callback will only be called once for each object.
 
+=item import_callback
+
+Specify a subroutine to be call objects are imported from the data
+set.  The callback will recieve a single named parameter called object
+which contains the object imported.
+
 =back
 
 =cut
@@ -114,7 +120,12 @@ sub new {
     $self->{dir} = tempdir( DIR => catdir(KrangRoot, 'tmp'));
 
     # have an add_callback?  else, use an empty sub
-    $self->{add_callback} = $args{add_callback} ? $args{add_callback} : sub {};
+    $self->{add_callback} = $args{add_callback} ? 
+      $args{add_callback} : sub {};
+
+    # have an import_callback?  else, use an empty sub
+    $self->{import_callback} = $args{import_callback} ? 
+      $args{import_callback} : sub {};
 
     if (my $path = $args{path}) {
         croak("Path '$path' does not in .kds or .kds.gz")
@@ -515,11 +526,6 @@ duplicates will cause the object to fail to import.  (Note that the
 exact policy on updates is decided by the individual class'
 deserialize_xml() method.)
 
-=item create_callback
-
-Set this to a CODE ref to get a callback when an object is created
-during the import.  The call will recieve the imported object as a
-single parameter.
 
 =item update_callback
 
@@ -610,6 +616,9 @@ sub map_id {
     # deserialize
     my $object = $self->_deserialize($class, $id);
     my ($new_class, $new_id) = _obj2id($object);
+
+    # trigger the callback
+    $self->{import_callback}->(object => $object);
     
     # finished
     $self->{done}{$class}{$id} = $new_id;
