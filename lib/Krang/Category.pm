@@ -98,9 +98,11 @@ use warnings;
 ###################
 use Carp qw(verbose croak);
 use Exception::Class
-  ('Krang::Category::Dependent' => {fields => 'dependents'},
-   'Krang::Category::DuplicateURL' => {fields => 'category_id'},
-   'Krang::Category::RootDeletion');
+  ( 'Krang::Category::Dependent' => {fields => 'dependents'},
+    'Krang::Category::DuplicateURL' => {fields => 'category_id'},
+    'Krang::Category::RootDeletion',
+    'Krang::Category::NoEditAccess' );
+
 use File::Spec;
 use Storable qw(freeze thaw);
 
@@ -352,13 +354,26 @@ would have to know that he must add another root category before and
 subcategories could again be added to the Site.  This behavior is preferable to
 requiring so comprehensive an understanding of the API by the user :).
 
+This method will throw a Krang::Category::NoEditAccess exception if a user 
+without edit access tries to delete the category.
+
 =cut
 
 sub delete {
     my $self = shift;
     my $id = shift || $self->{category_id};
+
+    # This won't work if we don't have an ID from somewhere
+    croak("Category does not have an ID") unless ($id);
+
+    # Instantiate category object from ID, if need be
     ($self) = Krang::Category->find(category_id => $id)
       unless (ref $self && $self->isa('Krang::Category'));
+
+    # Throw exception if user is not allowed to edit this category
+    unless ($self->may_edit) {
+        Krang::Category::NoEditAccess->throw(message => "User does not have access to delete this category");
+    }
 
     # Throw RootDeletion exception unless called by Krang::Site
     if ($self->{dir} eq '/') {
@@ -829,10 +844,19 @@ The method croaks if the save would result in a duplicate category object (i.e.
 if the object has the 'dir' as another object).  It also croaks if its database
 query affects no rows in the database.
 
+This method will throw a Krang::Category::NoEditAccess exception if a user 
+without edit access tries to save the category.
+
 =cut
 
 sub save {
     my $self = shift;
+
+    # Throw exception if user is not allowed to edit this category
+    unless ($self->may_edit) {
+        Krang::Category::NoEditAccess->throw(message => "User does not have access to delete this category");
+    }
+
     my $id = $self->{category_id} || '';
     my @lookup_fields = qw/dir url/;
     my @save_fields =

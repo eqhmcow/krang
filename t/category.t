@@ -260,6 +260,103 @@ $success = $site->delete();
 is($success, 1, 'site delete()');
 
 
+### Permission tests #################
+#
+{
+    my $unique = time();
+
+    # create a new site for testing
+    my $ptest_site = Krang::Site->new( url => "$unique.com",
+                                       preview_url => "preview.$unique.com",
+                                       preview_path => 'preview/path/',
+                                       publish_path => 'publish/path/' );
+    $ptest_site->save();
+    my $ptest_site_id = $ptest_site->site_id();
+    my ($ptest_root_cat) = Krang::Category->find(site_id=>$ptest_site_id);
+
+    # Create some descendant categories
+    my @ptest_cat_dirs = qw(A1 A2 B1 B2);
+    my @ptest_categories = ();
+    for (@ptest_cat_dirs) {
+        my $parent_id = ( /1/ ) ? $ptest_root_cat->category_id() : $ptest_categories[-1]->category_id() ;
+        my $newcat = Krang::Category->new( dir => $_,
+                                           parent_id => $parent_id );
+        $newcat->save();
+        push(@ptest_categories, $newcat);
+    }
+
+    # Verify that we have permissions
+    my ($tmp) = Krang::Category->find(category_id=>$ptest_categories[-1]->category_id);
+    is($tmp->may_see, 1, "Found may_see");
+    is($tmp->may_edit, 1, "Found may_edit");
+
+    # Change permissions to "read-only" for one of the branches by editing the Admin group
+    my $ptest_cat_id = $ptest_categories[0]->category_id();
+    my ($admin_group) = Krang::Group->find(group_id=>1);
+    $admin_group->categories($ptest_cat_id => "read-only");
+    $admin_group->save();
+
+    # Check permissions for that category
+    ($tmp) = Krang::Category->find(category_id=>$ptest_cat_id);
+    is($tmp->may_see, 1, "read-only may_see => 1");
+    is($tmp->may_edit, 0, "read-only may_edit => 0");
+
+    # Check permissions for descendant of that category
+    $ptest_cat_id = $ptest_categories[1]->category_id();
+    ($tmp) = Krang::Category->find(category_id=>$ptest_cat_id);
+    is($tmp->may_see, 1, "descendant read-only may_see => 1");
+    is($tmp->may_edit, 0, "descendant read-only may_edit => 0");
+
+    # Check permissions for sibling
+    $ptest_cat_id = $ptest_categories[2]->category_id();
+    ($tmp) = Krang::Category->find(category_id=>$ptest_cat_id);
+    is($tmp->may_see, 1, "sibling edit may_see => 1");
+    is($tmp->may_edit, 1, "sibling edit may_edit => 1");
+
+    # Try to save "read-only" category -- should die
+    $ptest_cat_id = $ptest_categories[1]->category_id();
+    ($tmp) = Krang::Category->find(category_id=>$ptest_cat_id);
+    eval { $tmp->save() };
+    isa_ok($@, "Krang::Category::NoEditAccess", "save() on read-only category exception");
+
+    # Try to delete()
+    eval { $tmp->delete() };
+    isa_ok($@, "Krang::Category::NoEditAccess", "delete() on read-only category exception");
+
+    # Change other branch to "hide"
+    $ptest_cat_id = $ptest_categories[2]->category_id();
+    $admin_group->categories($ptest_cat_id => "hide");
+    $admin_group->save();
+
+    # Check permissions for that category
+    ($tmp) = Krang::Category->find(category_id=>$ptest_cat_id);
+    is($tmp->may_see, 0, "hide may_see => 0");
+    is($tmp->may_edit, 0, "hide may_edit => 0");
+
+    # Get count of all site categories -- should return all (5)
+    my $ptest_count = Krang::Category->find(count=>1, site_id=>$ptest_site_id);
+    is($ptest_count, 5, "Found all categories by default");
+
+    # Get count with "may_see=>1" -- should return root + one branch (3)
+    $ptest_count = Krang::Category->find(may_see=>1, count=>1, site_id=>$ptest_site_id);
+    is($ptest_count, 3, "Hide hidden categories");
+
+    # Get count with "may_edit=>1" -- should return just root
+    $ptest_count = Krang::Category->find(may_edit=>1, count=>1, site_id=>$ptest_site_id);
+    is($ptest_count, 1, "Hide un-editable categories");
+
+    # Delete temp categories
+    for (reverse@ptest_categories) {
+        $_->delete();
+    }
+
+    # Delete site
+    $ptest_site->delete();
+}
+
+
+
+
 
 
 # linked_stories linked_media tests
