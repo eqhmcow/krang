@@ -1,120 +1,84 @@
 =head1 Installing Krang As a Developer
 
-
 The purpose of this document is to walk a user through the process of
 installing a new Krang instance.  It is assumed that the user who
 installs this is (1) a knowledgable UNIX administrator, who (2) has
-root access to the machine on which he is installing Krang, has access
-to the CVS repository on the B<krang-services> server, and (3) he
+root access to the machine on which he is installing Krang, and (3) he
 has a basic understanding of what Krang does and how it looks when it
 is working.
 
-Note: there are only two supported operating systems for Krang,
-Redhat 7.3 and Redhat 9.  Starting with an "everything" install is
-advisable, although a "server" install should also work.
+Note: this probably won't work unless you're running on a supported
+platform.  See F<pod/ops_install.pod> for the list of supported
+platforms.
 
 =head1 Krang Install Check-list
 
+=over
 
-=over 2
+=item 1
 
+Create a user to own Krang instance (as root)
 
-=item 1. Create user to own Krang instance (as root)
+   useradd <username>
+   chmod +x ~<username>
 
-   a. # useradd <username>
-   b. # chmod +x ~<username>
+=item 2
 
+Check out Krang from CVS.  Instructions:
 
-
-=item 2. Check out Krang from CVS
-
-   a. % export CVSROOT=':ext:krang-services.ops.about.com:/usr/local/cvs'
-   b. % export CVS_RSH=`which ssh`
-   c. % cd $HOME && cvs co krang
+  http://krang.sourceforge.net/cvs.html
 
 
+=item 3
 
-=item 3. Compile Perl 5.6.1 from source (as root)
+Upgrade/Install MySQL 4
 
-For Redhat 9:
+You can find binaries for MySQL 4 here:
 
-   a. # tar -xzvf $KRANG_ROOT/install/Perl/perl-5.6.1.tar.gz
-   b. # cd perl-5.6.1
-   c. # rm -f config.sh Policy.sh \
-      && chmod +w makedepend.SH \
-      && cp makedepend.SH makedepend.SH.orig \
-      && sed 's/<stdin>/<.*>/' makedepend.SH.orig > makedepend.SH \
-      && sh Configure -de \
-      && make \
-      && make test
-   d. # make install
+  http://www.mysql.com/downloads/mysql-4.0.html
 
-For Redhat 7.x:
+Make sure you install the server, client, devel and shared packages,
+if you're using RPMs.
 
-   a. # tar -xzvf $KRANG_ROOT/install/Perl/perl-5.6.1.tar.gz
-   b. # cd perl-5.6.1
-   c. # rm -f config.sh Policy.sh \
-      && sh Configure -de \
-      && make \
-      && make test
-   d. # make install
+=item 4
 
-=item 4. Upgrade/Install MySQL (as root)
+Build Krang
 
-   a. Uninstall RedHat's MySQL...
-      i. # rpm -e \
-           libdbi-dbd-mysql \
-           MyODBC \
-           MySQL-python \
-           perl-DBD-MySQL \
-           php-mysql \
-           qt-MySQL \
-           tora \
-           mysql-server \
-           mysql-3.23.54a-11 \
-           mod_auth_mysql-1.11-12 \
-           mysql-devel-3.23.54a-11
+   bin/krang_build
 
-   b. Install MySQL from rpm...
-      i. # cd $KRANG_ROOT/install/MySQL/ \
-           && rpm -Uvh \
-           MySQL-server-4.0.14-0.i386.rpm \
-           MySQL-client-4.0.14-0.i386.rpm \
-           MySQL-devel-4.0.14-0.i386.rpm \
-           MySQL-shared-4.0.14-0.i386.rpm
+=item 5
 
-   c. Create MySQL user for Krang...
-      i. # echo 'grant all on * to krang@localhost' | mysql -uroot
+Configure Krang.  Edit F<conf/krang.conf> to use the username you
+created in step one as KrangUser and KrangGroup.
+
+=item 6 
+
+Build the Database.
+
+   make db
+
+=item 7
+
+Run tests.
+
+   make test
 
 
+=item 8
 
-=item 5. Add stuffit archive file support (optional)
+Authorize user to start Krang via SUDO (as root).  Add to F</etc/sudoers>:
 
-    a.  Included in $KRANG_ROOT/install/stuffit_linux is a .tgz
-        which contains binaries to compress/decompress stuffit
-        files.  Krang::CGI::Media::BulkUpload can take stuffit
-        files, if the 'unstuff' binary is found in the webserver's
-        $PATH.
-    b.  To include stuffit support, FIRST BE SURE to read the included
-        licence, register if nessicary, then copy the 'unstuff' binary
-        somewhere into the webserver's $PATH
-        (somewhere like /usr/local/bin).
+   "username  ALL=(root)  NOPASSWD: $KRANG_ROOT/bin/*"
 
-=item 6. Build Krang parts...
+=item 9
 
-   a. % cd $KRANG_ROOT && make db
-   b. % cd $KRANG_ROOT && make test
+Start Krang
 
+   bin/krang_ctl start
 
+=item 10
 
-=item 7. Authorize user to start Krang via SUDO (as root)
-
-   a. Add via visudo: "username  ALL=(root)  NOPASSWD: $KRANG_ROOT/bin/*"
-
-
-=item 8. Start Krang
-
-   a. % $KRANG_ROOT/bin/krang_ctl start
+Now visit the server in a web browser.  If it works, you're done!
 
 =back
 
