@@ -453,16 +453,23 @@ sub _skip_callback {
     my $object = $args{object};
     my $error  = $args{error};
 
-    my $id = $object->isa('Krang::Story') ? $object->story_id : $object->media_id;
+    my $id;
+    if (ref $object) {
+        $id = $object->isa('Krang::Story') ? $object->story_id : $object->media_id;
+    } else {
+        $id = '-1';
+    }
+
 
     if ($error eq 'checked_out') {
         print sprintf("WARNING: %s ID=%i was not published - it is currently checked out by User ID=%i\n",
-                      $object->isa(), $id, $object->checked_out_by);
+                      (ref $object), $id, $object->checked_out_by);
     } elsif ($error eq 'output_error') {
         print sprintf("WARNING: %s ID=%i was not published to '%s'.  The following error occurred: '%s'\n",
-                      $object->isa(), $id, $args{path}, $args{error_msg});
+                      (ref $object), $id, $args{path}, $args{error_msg});
     } else {
-        print sprintf("WARNING: %s ID=%i was not published for error='%s'", $object->isa, $id, $error);
+        print sprintf("WARNING: %s ID=%i was not published for error='%s'", 
+                      (ref $object), $id, $error);
     }
 
 }
@@ -487,7 +494,7 @@ sub _progress_callback {
         $mediacount++;
         $total_mediatime += $endtime;
     } else {
-        print "Unknown object type=" . $object->isa() . "\n";
+        print "Unknown object type=" . (ref $object) . "\n";
     }
 
     if ($verbose) {
