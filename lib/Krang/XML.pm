@@ -5,9 +5,10 @@ use warnings;
 use XML::Writer;
 use IO::Scalar;
 use Carp qw(croak);
-use XML::Simple qw(XMLin);
+use Krang::XML::Simple qw(XMLin);
 use XML::SAX::Expat;
 $XML::SAX::ParserPackage = 'XML::SAX::Expat';
+use Krang::XML::Writer;
 
 =head1 NAME
 
@@ -55,7 +56,7 @@ sub writer {
         croak("Missing fh or string arg.");
     }
 
-    return XML::Writer->new(OUTPUT      => $fh,
+    return Krang::XML::Writer->new(OUTPUT      => $fh,
                             DATA_MODE   => 1,
                             DATA_INDENT => 4);
 }
@@ -73,7 +74,7 @@ sub simple {
     my $xml = delete $args{xml};
     $args{keyattr} ||= [];
 
-    return XMLin($xml, %args);
+    return XMLin($xml, %args)
 }
 
 =back

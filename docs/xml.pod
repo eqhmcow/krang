@@ -51,6 +51,30 @@ For more examples, see the documentation for krang_export by typing:
 This section describes each XML file type which may be included in a
 Krang data set.
 
+=head2 Binary Encoding
+
+Krang was designed as an 8-bit clean system.  This means that Krang
+will allow any 8-bit character to appear in any data field.  The
+user is free to use any character encoding with the guarantee that
+what they put into Krang will be output verbatim during publishing.
+
+Unfortunately, XML does not work this way.  XML requires that all
+characters in a document belong to the same character set and that
+this character set must be known by the XML processor.
+
+The solution Krang uses is to encode using Base64 any character
+content which contains characters not allowed in XML.  These Base64
+encoded strigs are prefixed with a special marker - C<!!!BASE64!!!>.
+For example, a template containing illegal characters would have a
+C<< <content> >> element like:
+
+  <content>!!!BASE64!!!YWFhYWH/YmJiYg==</content>
+
+Systems which read the Krang XML format must decode strings beginning
+with the Base64 marker.  Krang includes a sub-class of L<XML::Simple>,
+L<Krang::XML::Simple>, which will automatically decode these Base64
+sections.
+
 =head2 Index
 
 Each Krang data set has one index file called F<index.xml>, which must
