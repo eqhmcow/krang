@@ -1608,7 +1608,7 @@ sub _check_asset_status {
     my $publish_ok  = 0;
     my $check_links = 0;
 
-    my $instance = $ENV{KRANG_INSTANCE};
+    my $instance = Krang::Conf->instance();
 
     if ($self->_mark_asset(object => $object)) {
         if ($initial_assets || !$version_check) {
@@ -1640,7 +1640,7 @@ sub _mark_asset {
 
     my $object = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
 
-    my $instance = $ENV{KRANG_INSTANCE};
+    my $instance = Krang::Conf->instance();
 
     my $set;
     my $id;
@@ -1687,7 +1687,7 @@ sub _mark_asset_links {
     # make sure the asset list exists - non-destructive init.
     $self->_init_asset_lists();
 
-    my $instance = $ENV{KRANG_INSTANCE};
+    my $instance = Krang::Conf->instance();
     my $story_id = $object->story_id();
 
     if ($self->{asset_list}{$instance}{checked_links_set}->contains($story_id)) {
@@ -1754,7 +1754,7 @@ sub _init_asset_lists {
 
     my $self = shift;
 
-    my $instance = $ENV{KRANG_INSTANCE};
+    my $instance = Krang::Conf->instance();
 
     foreach (qw(story_publish_set media_publish_set checked_links_set)) {
         $self->{asset_list}{$instance}{$_} = Set::IntRange->new(0, 4194304)
@@ -1773,7 +1773,7 @@ sub _clear_asset_lists {
 
     my $self = shift;
 
-    my $instance = $ENV{KRANG_INSTANCE};
+    my $instance = Krang::Conf->instance();
 
     foreach (keys %{$self->{asset_list}{$instance}}) {
         $self->{asset_list}{$instance}{$_}->Empty();
