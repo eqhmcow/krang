@@ -184,13 +184,16 @@ sub init {
 }
 
 
-=item C<< $url = $publisher->preview_story(story => $story, category => $category, callback => \&onpreview) >>
+=item C<< $url = $publisher->preview_story(story => $story, callback => \&onpreview) >>
 
-Generates a story, saving it to the preview doc root on the filesystem.  Returns a URL to the story if successful, or will throw one of several potential Exceptions (potential issues: filesystem problems, exceptions thrown by other objects, anything else?) in the event something goes wrong.
+Generates a story, saving it to the preview doc root on the
+filesystem.  Returns a URL to the story if successful, or will throw
+one of several potential Exceptions (potential issues: filesystem
+problems, exceptions thrown by other objects, anything else?) in the
+event something goes wrong.
 
-category is an optional attribute.  By default, preview() will build a story based on the default category for the Story, otherwise it will preview the story in the supplied category.
-
-As part of the publish process, all media and stories linked to by $story will be published to preview as well.
+As part of the publish process, all media and stories linked to by
+$story will be published to preview as well.
 
 The optional parameter C<callback> may point to a subroutine which is
 called when each object is published to the preview location.  It
@@ -210,20 +213,10 @@ sub preview_story {
 
     my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
+    $url = $story->preview_url();
+
     # set internal mode - preview, not publish.
     $self->_mode_is_preview();
-
-    # in the event the category argument has been added, preview the story
-    # using this category.
-    # Otherwise, use the story's primary category.
-    if (exists($args{category})) {
-        $category = $args{category};
-        croak "NOT IMPLEMENTED YET.\n";
-    } else {
-        $category = $story->category();
-        $url = $story->preview_url();
-    }
-
 
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
@@ -239,11 +232,7 @@ sub preview_story {
     foreach my $object (@$publish_list) {
 
         if ($object->isa('Krang::Story')) {
-            debug('Publisher.pm: Previewing story_id=' . $object->story_id());
-            @paths = $self->_build_story_single_category(story    => $object,
-                                                         category => $object->category,
-                                                         url      => $object->preview_url()
-                                                        );
+            my @paths = $self->_build_story_all_categories(story => $object);
 
             # fix up publish locations
             $self->_rectify_publish_locations(object  => $object,
@@ -988,21 +977,20 @@ sub _build_story_all_categories {
 
     my $story = $args{story};
 
-    # get story URLs.
-    my @story_urls = $story->urls();
     my @categories = $story->categories();
 
     # log history
-    add_history(object => $story, action => 'publish');
+    if ($self->{is_publish}) {
+        add_history(object => $story, action => 'publish');
+    }
 
     # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
     my @paths;
     foreach (my $i = 0; $i <= $#categories; $i++) {
-        debug("Publisher.pm: publishing story under URI='$story_urls[$i]'");
-
         push @paths, $self->_build_story_single_category(story    => $story,
                                                          category => $categories[$i]);
     }
+
     return @paths;
 }
 
@@ -1447,7 +1435,12 @@ sub _determine_output_path {
             $output_path = $object->publish_path();
         }
     } elsif ($self->{is_preview}) {
-        $output_path = $object->preview_path();
+        if ($object->isa('Krang::Story')) {
+            my $category = $args{category} || croak __PACKAGE__ . ": missing argument 'category'";
+            $output_path = $object->preview_path(category => $category);
+        } else {
+            $output_path = $object->preview_path();
+        }
     } else {
         croak __PACKAGE__ . ": Cannot determine preview/publish mode";
     }

@@ -29,7 +29,7 @@ BEGIN {
             last;
         }
     }
-                          
+
     unless ($found) {
         eval "use Test::More skip_all => 'test requires a TestSet1 instance';";
     } else {
@@ -396,8 +396,11 @@ sub test_full_preview {
     $publisher->preview_story(story => $story);
 
     foreach ($story, $story2, @stories) {
-        my $path = build_preview_path($_);
-        ok(-e $path, 'Krang::Publisher->preview_story() -- complete story writeout');
+        my @paths = build_preview_paths($_);
+        foreach my $path (@paths) {
+            diag("Missing $path")
+              unless (ok(-e $path, 'Krang::Publisher->preview_story() -- complete story writeout'))
+        }
     }
 
     foreach (@media) {
@@ -420,7 +423,7 @@ sub test_full_publish {
     }
 
     foreach (@media) {
-        my $path = $_->preview_path();
+        my $path = $_->publish_path();
         ok (-e $path, 'Krang::Publisher->publish_story() -- complete media writeout');
     }
 
@@ -863,13 +866,13 @@ sub test_preview_story {
 
     my $prevurl = $publisher->preview_story(story => $story);
 
-    my $preview_path_url = build_preview_path($story);
+    my $preview_path_url = (build_preview_paths($story))[0];
 
     if (-e $preview_path_url) {
         my $story_txt = load_story_page($preview_path_url);
         $story_txt =~ s/\n//g;
         if ($story_txt =~ /\w/) {
-            ok($article_output{1} eq $story_txt, 'Krang::Publisher->preview_story() -- compare');
+            is($story_txt, $article_output{1}, 'Krang::Publisher->preview_story() -- compare');
         } else {
             fail('Krang::Publisher->preview_story() -- content missing from ' . $preview_path_url);
         }
@@ -882,13 +885,13 @@ sub test_story_unpublish {
     # create a story in all three categories
     my $story   = $creator->create_story(category => [$category, $child_cat, $child_subcat]);
     $publisher->preview_story(story => $story);
-    my $preview_path_url = build_preview_path($story);
+    my $preview_path_url = (build_preview_paths($story))[0];
     ok(-e $preview_path_url);
 
     # remove the primary category and re-preview
     $story->categories($child_cat, $child_subcat);
     $publisher->preview_story(story => $story);
-    my $new_preview_path_url = build_preview_path($story);
+    my $new_preview_path_url = (build_preview_paths($story))[0];
     ok(-e $new_preview_path_url);
     ok((not -e $preview_path_url), 'expired preview path cleaned up');
 
@@ -1169,10 +1172,18 @@ sub build_publish_paths {
     return @paths;
 }
 
-sub build_preview_path {
+sub build_preview_paths {
 
     my $story = shift;
-    return catfile($story->preview_path, 'index.html');
+
+    my @cats = $story->categories;
+    my @paths;
+
+    foreach my $cat (@cats) {
+        push @paths, catfile($story->preview_path(category => $cat), 'index.html');
+    }
+
+    return @paths;
 
 }
 

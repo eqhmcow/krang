@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed the behavior of Krang::Publisher->preview_story().  Following
+the original spec, it now writes the story out to all categories in
+the preview path.  Fixed Krang::Story->preview_path as well. [Peter]
+
+=item *
+
 Upgraded Test::Harness to 2.40 to enable warnings during tests.  Fixed
 a number of warnings in the test files. [Perrin] [Sam]
 

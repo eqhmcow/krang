@@ -1564,7 +1564,7 @@ sub publish_path {
     my $path = $category->site->publish_path;
     my $url  = $self->element->build_url(story    => $self,
                                          category => $category);
-    
+
     # remove the site part
     $url =~ s![^/]+/!!;
 
@@ -1573,27 +1573,35 @@ sub publish_path {
 }
 
 
-=item $path = $story->preview_path()
+=item $path = $story->preview_path(category => $category)
 
 Returns the preview path for the story object, using the site's
 preview_path and the story's URL.  This is the filesystem path where
 the story object will be previewed.
 
-The primary category is always used to construct the preview_path.
+Takes an optional category argument, or will return a url based on the
+story's primary category.
 
 =cut
 
 sub preview_path {
     my $self = shift;
+    my %arg  = @_;
+
     my $path = $self->category->site->preview_path;
-    my $url  = $self->preview_url;
-    
+    my $category = $arg{category} ? $arg{category} : $self->category;
+
+    my $url  = $self->element->build_url(story    => $self,
+                                         category => $category);
+
     # remove the site part
     $url =~ s![^/]+/!!;
 
     # paste them together
     return canonpath(catdir($path, $url));
 }
+
+
 
 # make sure the object is checked out, or croak
 sub _verify_checkout {
