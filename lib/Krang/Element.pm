@@ -23,6 +23,8 @@ Krang::Element - element data objectcs
 
 =head1 SYNOPSIS
 
+  use Krang::Element;
+
   # create a new top-level element
   my $element = Krang::Element->new(class => "article");
 
@@ -46,14 +48,8 @@ Krang::Element - element data objectcs
   # save the element to the database, cascading through children
   $element->save();
 
-  # remember current state
-  $element->remember();
-
   # make some changes
   $element->add_child(class => "horizontal_rule");
-
-  # roll back to remembered state, the new child is gone!
-  $element->rollback();
 
   # make a copy of the element tree
   $copy = $element->clone();
@@ -64,6 +60,7 @@ Krang::Element - element data objectcs
   }
 
   # same thing, but recurses through children of children too
+  use Krang::Element qw(foreach_element);
   foreach_element { 
       print $_->display_name, " => ", $_->data, "\n";
   } $element;
@@ -87,7 +84,7 @@ Krang::Element - element data objectcs
 
 =head1 DESCRIPTION
 
-This is the class for elements in Krang.  Krang elements belong to a
+This module implements elements in Krang.  Krang elements belong to a
 single element class, see L<Krang::ElementClass> for details.  Krang
 elements exist to contain child elements and/or store data.  All
 complex functionality, like C<burn()> and C<display_form()> is proxied
@@ -619,7 +616,9 @@ sub foreach_element (&@) {
 
 Get an xpath to uniquely identify this element.  Can be used with
 match() to find the element later.  The xpath returned is guaranteed
-to be unqiue within the element tree.
+to be unqiue within the element tree.  For example, the third
+paragraph element inside the second page element has the xpath
+"/page[1]/paragraph[2]".
 
 =cut
 
@@ -785,8 +784,8 @@ sub _match {
 =head2 PROXIED Krang::ElementClass METHODS
 
 All L<Krang::ElementClass> methods are proxied to the C<class> object
-for convenience, with the exception of C<children>.  For example, you
-can write:
+for convenience, with the exception of C<children()> and C<child()>.  For
+example, you can write:
 
   $display = $element->display_name();
 
@@ -869,7 +868,8 @@ intended effect.
 
 Add STORABLE_freeze and STORABLE_thaw methods so that elements don't
 serialize their class objects.  This causes much irratation while
-doing element class development.
+doing element class development and will make element class upgrades
+needlessly difficult.
 
 =back
 

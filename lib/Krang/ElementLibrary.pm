@@ -23,7 +23,7 @@ Krang::ElementLibrary - the element class loader and indexer
 
 This module is responsible for loading the Krang Element Library and
 allowing access to the classes contained within it.  Each instance is
-configured with an element set:
+configured with an element set in F<krang.conf>:
 
   <Instance test>
      ElementSet Flex
@@ -49,7 +49,7 @@ The version number of element set.  Should be a floating point number.
 
 The version of Krang required by this element set.  This should be
 incremented when features are used that are not available in all
-versions of Krnag.
+versions of Krang.
 
 =item C<ParentSets> (optional)
 
@@ -129,7 +129,7 @@ sub load_set {
         $PARENT_SETS{$set} = [ $conf->get('ParentSets') ];
         Krang::ElementLibrary->load_set(set => $_) 
             for (@{$PARENT_SETS{$set}});
-        
+
         $pkg->_load_classes($lib, $set, $conf);
         $pkg->_instantiate_top_levels($set, $conf);
         info("Loaded element set '$set'");
@@ -202,7 +202,7 @@ element set for the active instance.  Use the C<type> parameter to
 select only story or category elements.  These names can be used in
 calls to C<top_level()>.
 
-Note that the top level element name 'Category' is special.  You must
+Note that the top level element name 'category' is special.  You must
 filter out this name to use the list for possible story types.
 
 =cut
@@ -273,6 +273,8 @@ sub find_class {
 =back
 
 =head1 TODO
+
+Implement KrangVersion checking.
 
 =cut
 

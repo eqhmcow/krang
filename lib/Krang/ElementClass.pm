@@ -109,7 +109,7 @@ not have a max value set.
 
 If set to 1 then the user must fill in a value for this element in the
 UI.  Sub-classes should use this flag within their validate() methods.
-Defaults to 0.
+See C<validate()> for more details.  Defaults to 0.
 
 =item reorderable
 
@@ -195,17 +195,6 @@ specialize the behavior of an element class.
 
 =over
 
-=item C<< @names = $class->param_names(element => $element) >>
-
-Returns the CGI parameter names that will be used for the element.
-The default implementation returns a single parameter name of 
-C<< $element->xpath() >>.  If you create a sub-class with multiple form
-inputs you will need to override this method.
-
-=cut
-
-sub param_names { $_[2]->xpath(); }
-
 =item C<< $html = $class->input_form(element => $element, query => $query) >>
 
 This call is used to display an HTML form element for data entry in
@@ -224,6 +213,17 @@ sub input_form {
                                  override => 1);
 }
 
+=item C<< @names = $class->param_names(element => $element) >>
+
+Returns the CGI parameter names that will be used for the element.
+The default implementation returns a single parameter name of 
+C<< $element->xpath() >>.  If you create a sub-class with multiple form
+inputs you will need to override this method.
+
+=cut
+
+sub param_names { $_[2]->xpath(); }
+
 =item C<< @data = $class->bulk_edit_data(element => $element) >>
 
 Return an array of text blocks suitable for bulk editing.  This method
@@ -240,8 +240,8 @@ sub bulk_edit_data {
 
 =item C<< @data = $class->bulk_edit_filter(data => \@data) >>
 
-Given an array of text blocks, return an array of data elements
-suitable for passing to data().  The data passed to this method comes
+Given an array of text blocks, return an array of scalars suitable for
+passing individually to data().  The data passed to this method comes
 from the bulk edit text field and has been pre-split on the chosen
 separator.  This method must transform this data into a format
 suitable for data().  The default implementation returns the data
@@ -296,7 +296,7 @@ sub validate {
 =item C<< $class->load_query_data(element => $element, query => $query) >>
 
 This call loads the data from the current query into the object.
-Which this call returns C<< $element->data() >> must return the value
+After this call, C<< $element->data() >> must return the value
 specified by the user in the form fields provided by
 C<display_form()>.
 
@@ -326,9 +326,10 @@ to templates.  See the template tutorial for more information.
 =item C<< $url = $class->build_url(story => $story, category => $category) >>
 
 Builds a URL for the given story and category.  The default
-implementation takes the category url, appends a URI encoded copy of
-the story slug.  This may be overriden by top_level elements to
-implement alternative URL schemes.
+implementation takes the category url and appends a URI encoded copy
+of the story slug.  This may be overriden by top level elements to
+implement alternative URL schemes.  See L<Krang::ElementClass::Cover>
+for an example.
 
 =cut
 
@@ -378,19 +379,6 @@ sub thaw_data {
     return $_[4]->data($_[2]);
 }
 
-=item C<< $class_copy = $class->clone() >>
-
-Creates a copy of this class instantiation.  The default
-implementation just does a hash copy.  Element classes with more
-complex internal structures will need to override this method.
-
-=cut
-
-sub clone {
-    my $self = shift;
-    return bless({%$self}, ref($self));
-}
-
 =item C<< $child = $class->child($name) >>
 
 Finds and returns a child by name.  This is faster than calling
@@ -405,6 +393,17 @@ sub child {
           $_[0]->display_name . "'")
       unless defined $class;
     return $class;
+}
+
+=item C<< $bool = $class->is_container >>
+
+Returns true if the element class has children.
+
+=cut
+
+sub is_container {
+    my $self = shift;
+    return @{$self->{children}} ? 1 : 0;
 }
 
 =back
@@ -443,16 +442,11 @@ sub init {
     return $self;
 }
 
-sub is_container {
-    my $self = shift;
-    return @{$self->{children}} ? 1 : 0;
-}
-
 =head1 TODO
 
 =over
 
-=item Add tests for build_url() once Krang::Category is in.
+=item Write a default burn() once the specs are in for Krang::Burner.
 
 =back
 
