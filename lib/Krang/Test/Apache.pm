@@ -96,26 +96,16 @@ sub _do_login {
 
                              username => $username ,
                              password => $password ]);
-    my $success = 1;
-
     # should get a redirect
-    $success = 0 unless $res->code == 302;
+    return 0 unless $res->code == 302;
     
-    # there should be a cookie for this site now with instance set to
-    # the current instance.  Is there a better way to make sure login
-    # succeeded?
-    my $found = 0;
-    my $hostname = HostName;
-    $cookies->scan(sub { 
-                       my ($domain, $val) = @_[4,2];
-                       $found = 1 
-                         if $domain =~ /^$hostname/ and
-                           $val =~ /instance&$instance/;
-                   });
-    $success = 0 unless $found;
-   
-    # all done
-    return $success;
+    # try to request env.pl, which will only work if the login succeeded
+    $res = $ua->request(GET _url('env.pl'));
+    return 0 unless $res->code == 200;
+    return 0 unless $res->content =~ /REMOTE_USER/;
+    
+    # success
+    return 1;
 }
 
 =item login_not_ok($username, $password)
