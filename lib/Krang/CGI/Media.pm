@@ -703,18 +703,28 @@ Display the specified media object in a view form.
 
 sub view {
     my $self = shift;
+    my $version = shift;
 
     my $q = $self->query();
+    my $t = $self->load_tmpl('view_media.tmpl');
 
     # Retrieve object from session or create it if it doesn't exist
     my $media_id = $q->param('media_id');
     die ("No media_id specified") unless ($media_id);
 
     # Load media object into session, or die trying
-    my ($m) = Krang::Media->find(media_id=>$media_id);
+    my %find_params = ();
+    $find_params{media_id} = $media_id;
+
+    # Handle viewing old version
+    if ($version) {
+        $find_params{version} = $version;
+        $t->param(is_old_version => 1);
+    }
+
+    my ($m) = Krang::Media->find(%find_params);
     die ("Can't find media object with media_id '$media_id'") unless (ref($m));
 
-    my $t = $self->load_tmpl('view_media.tmpl');
     my $media_view_tmpl_data = $self->make_media_view_tmpl_data($m);
     $t->param($media_view_tmpl_data);
 
@@ -736,8 +746,12 @@ sub view_version {
     my $self = shift;
 
     my $q = $self->query();
+    my $selected_version = $q->param('selected_version');
 
-    return $self->dump_html();
+    die ("Invalid selected version '$selected_version'") 
+      unless ($selected_version and $selected_version =~ /^\d+$/);
+
+    return $self->view($selected_version);
 }
 
 
