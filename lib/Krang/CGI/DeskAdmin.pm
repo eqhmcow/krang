@@ -181,6 +181,8 @@ sub delete {
         
         if ($@ and ref $@ and $@->isa('Krang::Desk::Occupied')) {
             add_message('stories_on_desk', desk_name => $desk_name);
+        } elsif ($@) {
+            die $@;
         } else {
             add_message('deleted_selected', desk_name => $desk_name); 
         }
