@@ -94,7 +94,7 @@ sub open {
 
         # return an IO::Scalar for template content or IO::File for media on read
         if ($type eq 'template') {
-            my $data = $object->content;
+            my $data = $object->content || '';
             return new IO::Scalar \$data;
         } else {
             my $path = $object->file_path();
@@ -179,7 +179,7 @@ sub status {
     my ($data,$size,$date,$mode);
 
     if ($type eq 'template') {
-        $data = $object->content;
+        $data = $object->content || '';
         $size = length($data);
         $date = $object->creation_date;
     } else {

@@ -181,11 +181,15 @@ sub open {
     my $filename    = shift;
     my $mode        = shift;
     my $category_id = $self->{category_id};
-    my $type = $self->{type};
+    my $type        = $self->{type};
+    my $instance    = $self->{instance};
+    
+    # get file extension
+    my ($name, $file_type) = split(/\./, $filename);
 
     debug(__PACKAGE__."::open($filename, $mode)\n"); 
 
-    if (not $category_id) {
+    if ((not $instance) || (not $category_id)) {
         return undef;
     }
     
@@ -202,16 +206,29 @@ sub open {
                                                 )->open($mode);
         }
     } elsif ($type eq 'template') {
-        # look for template with name = $filename in spec'd cat
-        my @template = Krang::Template->find(   filename => $filename,
-                                                category_id => $category_id );
+        if ($file_type eq 'tmpl') {
+            # look for template with name = $filename in spec'd cat
+            my @template = Krang::Template->find(   filename => $filename,
+                                                    category_id => $category_id );
 
-        if (@template) {
-            return new Krang::FTP::FileHandle(  $self->{ftps},
-                                                $template[0],
-                                                $type,
-                                                $category_id
-                                                )->open($mode);
+            if (@template) {
+                return new Krang::FTP::FileHandle(  $self->{ftps},
+                                                    $template[0],
+                                                    $type,
+                                                    $category_id
+                                                    )->open($mode);
+            } else { # else this must be a new template, create it
+                my $new_t = Krang::Template->new(   category_id => $category_id,
+                                                    filename => $filename );
+
+                $new_t->save();
+    
+                return new Krang::FTP::FileHandle(  $self->{ftps},
+                                                    $new_t,
+                                                    $type,
+                                                    $category_id
+                                                    )->open($mode);
+            }
         }
     }
 
