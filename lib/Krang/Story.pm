@@ -858,7 +858,8 @@ C<undef>, specifying no limit in that direction.
 =item class
 
 Set this to an element class name to limit results to only those
-containing that class.
+containing that class.  Multiple classes may be passed via an array
+ref.
 
 =item contrib_simple
 
@@ -1005,6 +1006,15 @@ sub find {
             next;
         }                      
 
+        # handle class => ['article', 'cover']
+        if ($key eq 'class' and ref($value) and ref($value) eq 'ARRAY') {
+            # an array of IDs selects a list of stories by ID
+            push @where, 's.class IN (' . 
+              join(',', ("?") x @$value) . ')';
+            push @param, @$value;
+            next;
+        }                      
+
         # handle simple fields
         if (exists $simple_fields{$key}) {
             if (defined $value) {
@@ -1015,7 +1025,7 @@ sub find {
             }
             next;
         }
-        
+
         # handle search by category_id
         if ($key eq 'category_id') {
             $from{"story_category as sc"} = 1;

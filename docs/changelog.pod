@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added support for passing a list of classes to Krang::Story->find().
+[Sam]
+
+=item *
+
 Added support for C<publish_category_per_page()> in the publish
 process.  This functionality allows element library developers to
 generate category template output customized for each page in a
