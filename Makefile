@@ -1,15 +1,12 @@
 # Krang master Makefile.  The following targets are supported: 
 #
-#   all   - runs ext
+#   all   - Show help text
 #
-#   ext   - builds the modules in ext-src and installs them in ext-lib
-# 
 #   test  - runs the test suite
 #
 #   TAGS  - builds an etags file from Krang module sources
 #
-#   clean - cleans up ext-src and ext-lib so that a subsequent make ext
-#           will rebuild all libraries.
+#   clean - cleans up benchmarks
 #
 #   bench - runs the benchmark scripts in bench/
 #
@@ -20,14 +17,10 @@
 #   elements - rebuild test element trees in t/elements from Bricolage 
 #              sources in t/eloader
 
-all: ext
-
-ext:
-	cd ext-src && $(MAKE)
+all:
+	@echo "Krang Makefile:  You're probably looking for 'make db' or 'make test'"
 
 clean:	bench_clean
-	cd ext-src && $(MAKE) clean
-	cd ext-lib && rm -rf 
 
 TAGS:	
 	find -name '*.pm' | etags --language="perl" --regex='/[ \\t]*[A-Za-z]+::[a-zA-Z:]+/' -
