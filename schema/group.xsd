@@ -35,6 +35,7 @@
 				<xs:element name="admin_categories" type="xs:boolean"/>
 				<xs:element name="admin_jobs" type="xs:boolean"/>
 				<xs:element name="admin_desks" type="xs:boolean"/>
+                                <xs:element name="admin_lists" type="xs:boolean"/>
 				<xs:element name="asset_story" type="xs:string"/>
 				<xs:element name="asset_media" type="xs:string"/>
 				<xs:element name="asset_template" type="xs:string"/>
