@@ -324,9 +324,16 @@ sub make_backups {
     my ($y, $m, $d) = (localtime)[5,4,3];
     $BACKUP_FILENAME = 
       sprintf('krang-upgrade-%04d%02d%02d.kba', ($y+1900), $m, $d);
-    die "Backup file '$BACKUP_FILENAME' already exists.  ".
-      "Remove this file and try again.\n"
-        if -e $BACKUP_FILENAME;
+
+    # find another name if this one exists
+    if(-e $BACKUP_FILENAME) {
+        my $x = 1;
+        $BACKUP_FILENAME =~ s!\.kba$!.$x.kba!;
+        while (-e $BACKUP_FILENAME and $x < 1024) {
+            $x++;
+            $BACKUP_FILENAME =~ s!\.\d+\.kba$!.$x.kba!;
+        }
+    }
 
     print "Creating backup in '$BACKUP_FILENAME'.\n";
 
@@ -378,7 +385,7 @@ sub apply_upgrades {
     my $KrangRoot = $options{KrangRoot};
 
     my $old_krang_version = $OLD_VERSION;
-    my $new_krang_version = get_krang_version($KrangRoot);
+    my $new_krang_version = get_krang_version($ENV{KRANG_ROOT});
     print "  Upgrading v$old_krang_version to v$new_krang_version\n";
 
     # Find upgrade modules
@@ -396,6 +403,7 @@ sub apply_upgrades {
     # Run upgrade modules
     my $perl5lib = $KrangRoot ."/upgrade:" . $KrangRoot ."/lib";
     foreach my $module (@upmodules) {
+        print "  Running $module...\n";
         # Get package name by trimming off ".pm"
         my $package = $module;
         $package =~ s/\.pm$//;
@@ -537,7 +545,7 @@ sub get_krang_version {
     my $text = do { local $/; <KRANG_PM> };
     close KRANG_PM;
 
-    my ($version) = $text =~ /^our\s+\$VERSION.*?(\d+\.\d+)/;
+    my ($version) = $text =~ /^our\s+\$VERSION.*?(\d+\.\d+)/m;
     die "Unable to extract version from Krang.pm in $KrangRoot/lib.\n"
       unless $version;
     return $version;
