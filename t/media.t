@@ -67,6 +67,22 @@ like($media->file_path(relative => 1), qr/krang\.jpg$/);
 is($media->file_path, catfile(KrangRoot, $media->file_path(relative => 1)));
 ok(-f $media->file_path);
 
+# save again
+$media->save();
+
+# test file_path
+like($media->file_path, qr/krang\.jpg$/);
+like($media->file_path(relative => 1), qr/krang\.jpg$/);
+is($media->file_path, catfile(KrangRoot, $media->file_path(relative => 1)));
+ok(-f $media->file_path);
+
+# try to load it again and see if the file is still available
+my ($copy) = Krang::Media->find(media_id => $media->media_id);
+is($media->file_path, $copy->file_path);
+ok(-f $copy->file_path);
+
+
+
 $fh = new FileHandle $filepath;
 
 # create another media object

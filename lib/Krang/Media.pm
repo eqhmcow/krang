@@ -519,7 +519,9 @@ sub save {
 	    my $old_path = $self->file_path;
             $self->{version}++;
 	    my $new_path = $self->file_path;
-	    link $old_path, $new_path || croak("Unable to create link $old_path to $new_path");	
+            mkpath((splitpath($new_path))[1]);     
+	    link $old_path, $new_path or
+              croak("Unable to create link $old_path to $new_path");	
 	}
     } else {
         croak('You must upload a file using upload_file() before saving media object!')
