@@ -264,9 +264,12 @@ not $valid_params{$param};
             
             push @all_cat_ids, @$cat_ids;
 
-            $where_string ? ($where_string .= 'AND ('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).')') : ($where_string = '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).')');
+            my %seen;
+            @all_cat_ids = grep { ++$seen{$_} == 1 } @all_cat_ids;
+
+            $where_string ? ($where_string .= 'AND ('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)') : ($where_string = '('.(join ' OR ', (map { "category_id = $_"} @all_cat_ids)).' OR category_id is NULL)');
         } else {
-            $where_string ? ($where_string .= 'AND category_id = '.$args{'category_id'}) : ($where_string = 'category_id = '.$args{'category_id'});
+            $where_string ? ($where_string .= 'AND (category_id = '.$args{'category_id'}.' OR category_id is NULL)') : ($where_string = '(category_id = '.$args{'category_id'}.' OR category_id is NULL)');
         }
     }
 
@@ -330,17 +333,23 @@ sub check_alert {
     my $history = $args{history};
     my $action = $history->action;
     my $story = $args{story};
+    my $desk_id = $history->desk_id || undef;
 
     my @cat_objects = $story->categories;
     my @category_ids = map { $_->category_id } @cat_objects;
+
+    my %search_criteria = ( ids_only => 1, action => $action );
+
+    $search_criteria{desk_id} = $desk_id if $desk_id;
+    $search_criteria{category_id} = \@category_ids if @category_ids;
 
     croak(__PACKAGE__."->check_alert requires a valid Krang::History object.") if (ref $history ne 'Krang::History');
 
     croak(__PACKAGE__."->check_alert requires a valid Krang::Story object.") if (ref $story ne 'Krang::Story');
 
     debug(__PACKAGE__."->check_alert() - checking for any alerts on action $action in categories @category_ids");
- 
-    my @matched_alerts = Krang::Alert->find( ids_only => 1, action => $action, category_id => \@category_ids );  
+
+    my @matched_alerts = Krang::Alert->find( %search_criteria );  
 
     debug(__PACKAGE__."->check_alert() - found alert_ids @matched_alerts for criteria (action $action in categories @category_ids).") if @matched_alerts;
 
