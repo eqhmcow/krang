@@ -55,6 +55,16 @@ use Krang::Session qw/%session/;
 BEGIN {
     # use $KRANG_ROOT/templates for templates
     $ENV{HTML_TEMPLATE_ROOT} = catdir(KrangRoot, "templates");
+
+    # setup instance if not running in mod_perl
+    # needs to be set before import of Krang::ElementLibrary in
+    # Krang::CGI::ElementEditor
+    unless($ENV{MOD_PERL}) {
+        my $instance = exists $ENV{KRANG_INSTANCE} ?
+          $ENV{KRANG_INSTANCE} : (Krang::Conf->instances())[0];
+        debug("Krang::CGI:  Setting instance to '$instance'");
+        Krang::Conf->instance($instance);
+    }
 }
 
 # load template and bless it into Krang::HTMLTemplate
@@ -68,14 +78,6 @@ sub load_tmpl {
 sub run {
     my $self = shift;
     my @args = ( @_ );
-
-    # setup instance if not running in mod_perl
-    unless($ENV{MOD_PERL}) {
-        my $instance = exists $ENV{KRANG_INSTANCE} ? 
-          $ENV{KRANG_INSTANCE} : (Krang::Conf->instances())[0];
-        debug("Krang::CGI:  Setting instance to '$instance'");
-        Krang::Conf->instance($instance);
-    }
 
     # Load and unload session ONLY if we have a session ID set
     my $we_loaded_session = 0;

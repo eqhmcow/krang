@@ -1,0 +1,86 @@
+<tmpl_include header.tmpl>
+
+<script language="javascript">
+  nav_edit_mode();
+</script>
+
+<div class=dark-bar>View Template</div>
+
+
+<table border="0" cellpadding="5" cellspacing="0" width="100%">
+
+<tr class="light">
+  <td>ID:</td>
+  <td><tmpl_var template_id></td>
+</tr>
+
+
+<tr class="light">
+  <td>Element:</td>
+  <td colspan="2"><tmpl_var element_class_name></td>
+</tr>
+
+
+<tr class="light">
+  <td>Site/Category:</td>
+  <td colspan="2"><tmpl_var category></td>
+</tr>
+
+
+<tr class="light">
+  <td>URL:</td>
+  <td colspan="2"><tmpl_var url></td>
+</tr>
+
+<tr class="light">
+  <td>Current Version:</td>
+  <td colspan="2"><tmpl_var version></td>
+</tr>
+
+<tr class="light">
+  <td>Template Code:</td>
+  <td colspan="2"><tmpl_var escape=HTML content></td>
+</tr>
+
+
+<form name="return_form" method="POST">
+<tmpl_var history_return_params>
+</form>
+
+<form name="edit_template_form" method="POST">
+<input type="hidden" name="rm" value="edit">
+<input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
+</form>
+
+<script language="javascript">
+<!-- //
+
+        function do_return () {
+            var myform = document.return_form;
+            myform.submit();
+        }
+
+
+        function do_edit_template () {
+                var myform = document.edit_template_form;
+                myform.submit();
+        }
+
+// -->
+</script>
+
+
+<tr class="light">
+  <td>&nbsp;</td>
+  <td colspan="2"></td>
+</tr>
+
+
+</table>
+
+<div class="button-bar">
+  <input type="button" value="Return" onClick="javascript:do_return()"><tmpl_unless is_old_version>&nbsp;<input type="button" value="Edit" onClick="javascript:do_edit_template()"></tmpl_unless>
+</div>
+
+
+<tmpl_include footer.tmpl>

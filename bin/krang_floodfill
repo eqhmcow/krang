@@ -33,6 +33,8 @@ text.
 
   --stories  - number of stories to create, defaults to 50
 
+  --templates- number of templates to create, defaults to 50
+
   --users    - number of users to create, defaults to 50
 
 =cut
@@ -48,7 +50,7 @@ BEGIN {
 
     # use $KRANG_ROOT/lib for modules
     my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
-    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
       "${lib}";
     unshift @INC, $lib, "$lib/".$Config{archname};
 
@@ -70,11 +72,12 @@ END
 
 use Krang::Script;
 use Krang::Conf qw(KrangRoot);
-        
+use Krang::ElementLibrary;
 use Krang::Site;
 use Krang::Category;
 use Krang::Pref;
 use Krang::User;
+use Krang::Template;
 
 use Time::Piece;
 use Imager;
@@ -86,6 +89,7 @@ my $contribs = 50;
 my $stories  = 50;
 my $media    = 25;
 my $users    = 50;
+my $templates = 50;
 pod2usage(2) unless
   GetOptions(help         => \$help,
              man          => \$man,
@@ -95,6 +99,7 @@ pod2usage(2) unless
              'stories=s'  => \$stories,
              'media=s'    => \$media,
 	     'users=s'	  => \$users,
+             'templates=s'=> \$templates,
             );
 
 pod2usage(1)             if $help;
@@ -152,15 +157,15 @@ for(1 .. $contribs) {
                                       email  => "$fname\@$lname.com",
                                       phone  => "1-800-$lname",
                                       bio    => join(' ',
-                                                     map { get_word() } 
+                                                     map { get_word() }
                                                          (0 .. 20)),
                                       url => "http://$fname.$lname.com");
     $contrib->contrib_type_ids(@types);
     eval { $contrib->save() };
     redo if $@ and $@ =~ /duplicate/;
     push(@contribs, $contrib);
-    print STDERR "Created contributor " . 
-      join(' ', grep { $_ } ($prefix, $fname, $mname, $lname, $suffix)) . 
+    print STDERR "Created contributor " .
+      join(' ', grep { $_ } ($prefix, $fname, $mname, $lname, $suffix)) .
         " (" . join(', ', map { $types{$_} } @types) . ")" .
            "\n";
 }
@@ -170,7 +175,7 @@ my @media;
 for my $media_count (1 .. $media) {
     # create a random image
     my ($x, $y);
-    my $img = Imager->new(xsize => $x = (int(rand(300) + 50)), 
+    my $img = Imager->new(xsize => $x = (int(rand(300) + 50)),
                           ysize => $y = (int(rand(300) + 50)),
                           channels => 3,
                          );
@@ -181,8 +186,8 @@ for my $media_count (1 .. $media) {
 
     # draw some boxes and circles
     for (0 .. (int(rand(8)) + 2)) {
-        if ((int(rand(2))) == 1) {        
-            $img->box(color => 
+        if ((int(rand(2))) == 1) {
+            $img->box(color =>
                       Imager::Color->new(map { int(rand(255)) } 1 .. 3),
                       xmin => (int(rand($x - ($x/2))) + 1),
                       ymin => (int(rand($y - ($y/2))) + 1),
@@ -190,7 +195,7 @@ for my $media_count (1 .. $media) {
                       ymax => (int(rand($y * 2)) + 1),
                       filled => 1);
         } else {
-            $img->circle(color => 
+            $img->circle(color =>
                          Imager::Color->new(map { int(rand(255)) } 1 .. 3),
                          r => (int(rand(100)) + 1),
                          x => (int(rand($x)) + 1),
@@ -206,14 +211,13 @@ for my $media_count (1 .. $media) {
       or die "Unable to open tmp/tmp.$format: $!";
 
     # create a media object
-    my $media = Krang::Media->new(title      => join(" ", 
-                                                     map {ucfirst(get_word())} 
+    my $media = Krang::Media->new(title      => join(" ",
+                                                     map {ucfirst(get_word())}
                                                      (1..(int(rand(3)) + 2))),
                                   filename   => get_word() . ".$format",
                                   filehandle => $fh,
-                                  category_id => 
+                                  category_id =>
                                   $cats[int(rand(scalar(@cats)))]->category_id);
-    
     eval { $media->save };
     if ($@) {
         if (ref($@) and ref($@) eq 'Krang::Media::DuplicateURL') {
@@ -221,14 +225,12 @@ for my $media_count (1 .. $media) {
         } else {
             die $@;
         }
-    }   
+    }
     push(@media, $media);
     unlink(catfile(KrangRoot, "tmp", "tmp.$format"));
     print STDERR "Created Media " . $media->url . "\n";
 }
 
-                     
-                     
 
 # create stories
 my @stories;
@@ -245,10 +247,10 @@ for my $story_count (1 .. $stories) {
 
     # create story
     my $story;
-    
-    eval { 
-        $story = Krang::Story->new(title     => join(" ", 
-                                                     map {ucfirst(get_word())} 
+
+    eval {
+        $story = Krang::Story->new(title     => join(" ",
+                                                     map {ucfirst(get_word())}
                                                      (1..(int(rand(3)) + 2))),
                                    slug       => get_word(),
                                    categories => \@c,
@@ -272,8 +274,8 @@ for my $story_count (1 .. $stories) {
         push(@con, $contrib)
           unless grep { $_->contrib_id == $contrib->contrib_id } @con;
     }
-    $story->contribs(@con);       
-    
+    $story->contribs(@con);
+
     # make a multi-page story
     my $element = $story->element;
     my $deck = join(" ", map { get_word() } (1 .. ((int(rand(100)))+1)));
@@ -288,7 +290,7 @@ for my $story_count (1 .. $stories) {
                 my $para = join(" ",
                                 map { get_word() } 
                                 (0 .. ((int(rand(100)))+1)));
-                $page->add_child(class => "paragraph", 
+                $page->add_child(class => "paragraph",
                                  data => $para);
             } else {
                 $page->add_child(class => "photo",
@@ -306,6 +308,25 @@ for my $story_count (1 .. $stories) {
     push(@stories, $story);
 }
 
+# create templates
+my @templates;
+for (1..$templates) {
+    my @elements = Krang::ElementLibrary->element_names;
+    my $blrplt = <<TMPL;
+I'm a %s and I'm OK.  I work all night and I play all day.
+<tmpl_var %s>
+TMPL
+    my $element = $elements[int(rand(scalar @elements))];
+    my $content = sprintf($blrplt, $element, $element);
+    my $category_id = $cats[int(rand(scalar(@cats)))]->category_id;
+    my $tmpl = Krang::Template->new(category_id		=> $category_id,
+                                    content		=> $content,
+                                    element_class_name	=> $element,);
+    eval {$tmpl->save};
+    redo if $@;
+    push @templates, $tmpl;
+    print STDERR "Created Template: ", $tmpl->url, "($element)\n";
+}
 
 # create users
 my %groups = %Krang::User::user_groups;
@@ -346,7 +367,7 @@ sub get_date {
 # get a random word
 BEGIN {
     my @words;
-    open(WORDS, "/usr/dict/words") 
+    open(WORDS, "/usr/dict/words")
       or open(WORDS, "/usr/share/dict/words")
         or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
     while (<WORDS>) {

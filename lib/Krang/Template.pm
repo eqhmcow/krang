@@ -67,6 +67,9 @@ use warnings;
 # External Module Dependencies
 ###############################
 use Carp qw(verbose croak);
+use Exception::Class
+  (Krang::Template::Checkout => {fields => [qw/template_id user_id/]},
+   Krang::Template::DuplicateURL => {fields => 'template_id'},);
 use Storable qw(freeze thaw);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -75,8 +78,10 @@ use Time::Piece::MySQL;
 ################################
 use Krang::Category;
 use Krang::DB qw(dbh);
+use Krang::History qw(add_history);
 use Krang::Session qw(%session);
-use Krang::History qw( add_history );
+use Krang::Site;
+
 
 #
 # Package Variables
@@ -98,7 +103,6 @@ use constant TEMPLATE_RO => qw(template_id
 # Read-write fields
 use constant TEMPLATE_RW => qw(category_id
 			       content
-			       element_class_name
 			       filename);
 
 # Fieldnames for template_version
@@ -109,10 +113,12 @@ use constant VERSION_COLS => qw(data
 # Globals
 ##########
 
+
 # Lexicals
 ###########
-my %template_args = map {$_ => 1} TEMPLATE_RW;
-my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW;
+my %template_args = map {$_ => 1} TEMPLATE_RW, 'element_class_name';
+my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW,
+  'element_class_name';
 
 
 # Interal Module Dependecies (con't)
@@ -194,6 +200,28 @@ Time::Piece object.
 
 Integer identifying the version of the template that is currently deployed.
 
+=item * site
+
+A reference to the Krang::Site object with which this object is associated.
+
+=cut
+
+sub site {
+    my $self = shift;
+    my $cat_id = $self->{category_id};
+    my ($cat) = Krang::Category->find(category_id => $cat_id);
+    return $cat->site();
+}
+
+=item * site_url
+
+=cut
+
+sub site_url {
+    my $self = shift;
+    return $self->site->url;
+}
+
 =item * template_id
 
 Integer id of the template object corresponding to its id in the template
@@ -239,7 +267,7 @@ valid keys to this hash are:
 
 =back
 
-Either of the args 'element_class_name' or 'filename' must be supplied.
+The 'element_class_name' argument must be supplied.
 
 =item $template = $template->checkin()
 
@@ -248,8 +276,7 @@ Either of the args 'element_class_name' or 'filename' must be supplied.
 Class or instance method for checking in a template object, as a class method
 a template id must be passed.
 
-This method croaks if the object is checked out by another user; it does
-nothing if the object is not checked out.
+If the call to verify_checkout() fails, a Checkout exception is thrown.
 
 =cut
 
@@ -257,49 +284,26 @@ sub checkin {
     my $self = shift;
     my $id = shift || $self->{template_id};
     my $dbh = dbh();
-    my $user_id = $session{user_id};
-    my $query;
 
-    if ($self->isa('Krang::Template')) {
-        $self->verify_checkout();
-    } else {
-        $query = <<SQL;
-SELECT checked_out, checked_out_by
-FROM template
-WHERE template_id = ?
-SQL
+    # get object if we don't have it
+    ($self) = Krang::Template->find(template_id => $id) unless ref $self;
 
-        my ($co, $uid) = $dbh->selectrow_arrayref($query, undef, ($id));
+    # make sure we have it checked out, an exception is throw otherwise
+    $self->verify_checkout();
 
-        croak(__PACKAGE__ . "->checkin(): Template id '$_' is checked " .
-              "out by the user '$uid'.")
-          if ($co && defined $uid && $uid != $user_id);
-
-    }
-
-    $query = <<SQL;
+    my $query = <<SQL;
 UPDATE template
 SET checked_out = ?, checked_out_by = ?
 WHERE template_id = ?
 SQL
 
-    $dbh->do($query, undef, (0, 0, $id));
+    $dbh->do($query, undef, 0, 0, $id);
 
-    # update checkout fields if this is an instance method call
-    if ($self->isa('Krang::Template')) {
-        $self->{checked_out} = 0;
-        $self->{checked_out_by} = 0;
-    }
-
-    if ($self->isa('Krang::Template')) {
-        add_history(    object => $self,
-                        action => 'checkin',
-               );
-    } else {
-        add_history(    object => ((Krang::Template->find(template_id => $id))[0]),
-                        action => 'checkin',
-               );
-    }
+    # update checkout fields
+    $self->{checked_out} = 0;
+    $self->{checked_out_by} = 0;
+    add_history(object => $self,
+                action => 'checkin',);
 
     return $self;
 }
@@ -321,32 +325,24 @@ sub checkout {
     my $id = shift || $self->{template_id};
     my $dbh = dbh();
     my $user_id = $session{user_id};
-    my $instance_meth = 0;
 
-    # short circuit checkout on instance method version of call...
-    if ($self->isa('Krang::Template')) {
-        $instance_meth = 1;
-        return $self if ($self->{checked_out} &&
-                         ($self->{checked_out_by} == $user_id));
+    # make sure we actually have an object
+    ($self) = Krang::Template->find(template_id => $id) unless ref $self;
+
+    # short circuit checkout, if possible
+    if ($self->{checked_out}) {
+        Krang::Template::Checkout->throw(message => "Template checked out " .
+                                         "by another user.",
+                                         template_id => $id,
+                                         user_id => $self->{checked_out_by})
+            if $self->{checked_out_by} != $user_id;
+        return $self;
     }
 
     eval {
         # lock template table
         $dbh->do("LOCK TABLES template WRITE");
-
         my $query = <<SQL;
-SELECT checked_out, checked_out_by
-FROM template
-WHERE template_id = ?
-SQL
-
-        my ($co, $uid) = $dbh->selectrow_array($query, undef, ($id));
-
-        croak(__PACKAGE__ . "->checkout(): Template id '$id' is " .
-              "already checked out by user '$uid'")
-          if ($co && $uid != $user_id);
-
-        $query = <<SQL;
 UPDATE template
 SET checked_out = ?, checked_out_by = ?
 WHERE template_id = ?
@@ -365,29 +361,19 @@ SQL
         croak($eval_error);
     }
 
-    # update checkout fields if this is an instance method call
-    if ($instance_meth) {
-        $self->{checked_out} = 1;
-        $self->{checked_out_by} = $user_id;
-    }
-
-    if ($self->isa('Krang::Template')) {
-        add_history(    object => $self,
-                        action => 'checkout',
-               );
-    } else {
-        add_history(    object => ((Krang::Template->find(template_id => $id))[0]),
-                        action => 'checkout',
-               );
-    }
+    # update checkout fields
+    $self->{checked_out} = 1;
+    $self->{checked_out_by} = $user_id;
+    add_history(object => $self,
+                action => 'checkout',);
 
     return $self;
 }
 
 
-=item $true = $template->delete()
+=item $template->delete()
 
-=item $true = Krang::Template->delete( $template_id )
+=item Krang::Template->delete( $template_id )
 
 Class or instance method for deleting template objects.  As a class method the
 method accepts either a single template id or array object ids.
@@ -398,7 +384,7 @@ well as the current version in the template.
 This method attempts to check out the template before deleting; checkout() will
 croak if the object is checked out by another user.
 
-Returns '1' on success.
+'1' is returned if the deletion was successful.
 
 =cut
 
@@ -407,19 +393,11 @@ sub delete {
     my $id = shift || $self->{template_id};
 
     # checkout the template
-    if ($self->isa('Krang::Template')) {
-        $self->checkout();
-    } else {
-        $self = Krang::Template->checkout($id);
-    }
+    ($self) = Krang::Template->find(template_id => $id) unless ref $self;
+    $self->checkout;
 
     # first delete history for this object
-    if ($self->{template_id}) {
-        Krang::History->delete(object => $self);
-    } else {
-        Krang::History->delete( object => ((Krang::Template->find(template_id => $id))[0]) );
-    }
-
+    Krang::History->delete(object => $self);
 
     my $t_query = "DELETE FROM template WHERE template_id = ?";
     my $v_query = "DELETE FROM template_version WHERE template_id = ?";
@@ -431,9 +409,10 @@ sub delete {
 }
 
 
-=item $template_id = $template->duplicate_check()
+=item $template->duplicate_check()
 
-This method checks whether the url of a template is unique.
+This method checks whether the url of a template is unique.  A DuplicateURL
+exception is thrown if a duplicate is found, '0' is returned otherwise.
 
 =cut
 
@@ -454,6 +433,10 @@ SQL
     $sth->bind_col(1, \$template_id);
     $sth->fetch();
     $sth->finish();
+
+    Krang::Template::DuplicateURL->throw(message => 'Duplicate URL',
+                                         template_id => $template_id)
+        if $template_id;
 
     return $template_id;
 }
@@ -494,10 +477,28 @@ SQL
 
     $dbh->do($query, undef, (1, $self->{version}, 0, $id));
 
-    add_history(    object => $self, 
-                    action => 'deploy',
-               );
+    add_history(object => $self,
+                action => 'deploy',);
 
+    return $self;
+}
+
+
+=item $element_class_name = $template->element_class_name()
+
+=item $template = $template->element_class_name( $element_class_name )
+
+Instance method that gets or sets the element name with which the template is
+associated.
+
+=cut
+
+sub element_class_name {
+    my $self = shift;
+    return $self->{element_class_name} unless @_;
+
+    $self->{element_class_name} = $self->{filename} = $_[0];
+    $self->{filename} .= '.tmpl';
     return $self;
 }
 
@@ -548,6 +549,8 @@ The list valid search fields is:
 =item * testing
 
 =item * version
+
+=item * simple_search
 
 =back
 
@@ -600,11 +603,15 @@ sub find {
     my $descend = delete $args{descend} || '';
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
-    my $order_by = delete $args{order_by} || 'template_id';
+    my $order_by = "t." . (delete $args{order_by} || 'template_id');
 
     # set search fields
     my $count = delete $args{count} || '';
     my $ids_only = delete $args{ids_only} || '';
+
+    # set bool to join with category table
+    my $category = exists $args{below_category_id} ? 1 : 0;
+    my $need_distinct = 0;
 
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
@@ -612,8 +619,9 @@ sub find {
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.") if ($count && $ids_only);
 
-    $fields = $count ? 'count(*)' :
-      ($ids_only ? 'template_id' : join(", ", keys %template_cols));
+    $fields = $count ? ($need_distinct ? 'count(t.template_id)' : 'count(*)') :
+      ($ids_only ? 'template_id' : join(", ", map {"t.$_"}
+                                        keys %template_cols));
 
     # handle version loading
     return $self->_load_version($args{template_id}, $args{version})
@@ -626,15 +634,36 @@ sub find {
         my $like = 1 if $arg =~ /_like$/;
         ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
 
-        push @invalid_cols, $arg unless exists $template_cols{$lookup_field};
+        push @invalid_cols, $arg unless exists $template_cols{$lookup_field} ||
+          $arg eq 'simple_search' || $arg eq 'below_category_id';
 
         if ($arg eq 'template_id' && ref $args{$arg} eq 'ARRAY') {
-            my $tmp = join(" OR ", map {"template_id = ?"} @{$args{$arg}});
+            my $tmp = join(" OR ", map {"t.template_id = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
+        } elsif ($arg eq 'below_category_id') {
+            $where_clause = "c.category_id = ? AND " .
+              "t.url LIKE ?" . ($where_clause ? " AND $where_clause" : '');
+            my ($cat) = Krang::Category->find(category_id => $args{$arg});
+            unshift @params, $cat->url . "%";
+            unshift @params, $args{$arg};
+        } elsif ($arg eq 'simple_search') {
+            my @words = split(/\s+/, $args{$arg});
+            for (@words) {
+                my $numeric = /^\d+$/ ? 1 : 0;
+                if ($where_clause) {
+                    $where_clause .= $numeric ? " AND t.template_id = ?" :
+                      " AND (t.element_class_name LIKE ? OR t.url LIKE ?)";
+                } else {
+                    $where_clause = $numeric ? "template_id = ?" :
+                      "(t.element_class_name LIKE ? OR t.url LIKE ?)";
+                }
+                push @params, $numeric ? $_ : "%" . $_ . "%", "%" . $_ . "%";
+            }
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
+            $lookup_field = "t." . $lookup_field;
             if (not defined $args{$arg}) {
                 $where_clause .= "$and $lookup_field IS NULL";
             } else {
@@ -649,7 +678,8 @@ sub find {
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
     # construct base query
-    my $query = "SELECT $fields FROM template";
+    my $query = "SELECT $fields FROM template t";
+    $query .= ", category c" if $category;
 
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE $where_clause" if $where_clause;
@@ -685,14 +715,13 @@ sub find {
         } else {
             push @templates, bless({%$row}, $self);
             foreach my $date_field (grep { /_date$/ } keys %{$templates[-1]}) {
-                next unless defined $templates[-1]->{$date_field};
-                $templates[-1]->{$date_field} = Time::Piece->from_mysql_datetime($templates[-1]->{$date_field});
+                my $val = $templates[-1]->{$date_field};
+                next unless defined $val;
+                $templates[-1]->{$date_field} =
+                  Time::Piece->from_mysql_datetime($val);
             }
         }
     }
-
-    # finish statement handle
-    $sth->finish();
 
     # return number of rows if count, otherwise an array of template ids or
     # objects
@@ -719,7 +748,6 @@ SQL
 
 
 # Validates the input from new(), and croaks if an arg isn't in %template_args
-# or if we don't have 'element_class_name' or 'filename'
 sub init {
     my $self = shift;
     my %args = @_;
@@ -733,17 +761,15 @@ sub init {
     croak(__PACKAGE__ . "->init(): The following invalid arguments were " .
           "supplied - " . join' ', @bad_args) if @bad_args;
 
-    # calculate filename
+    # set filename from element if that's what we have
     if (exists $args{element_class_name}) {
         $args{filename} = $args{element_class_name};
-    } else {
-        croak(__PACKAGE__ . "->init(): Either of the arguments " .
-              "'element_class_name' or 'filename' must be supplied.")
-          unless exists $args{filename};
     }
 
     # append file extension, if necessary
-    $args{filename} .= '.tmpl' unless $args{filename} =~ /\.tmpl$/;
+    if (exists $args{filename}) {
+        $args{filename} .= '.tmpl' unless $args{filename} =~ /\.tmpl$/;
+    }
 
     # setup defaults
     $self->{version}        = 0;
@@ -837,10 +863,8 @@ SQL
     # be preserved.
     %{$self} = (%$obj, %preserve);
 
-
-    add_history(    object => $self, 
-                    action => 'revert',
-               );
+    add_history(object => $self,
+                action => 'revert',);
 
     return $self;
 }
@@ -853,9 +877,10 @@ Saves template data in memory to the database.
 Stores a copy of the objects current contents to the template table. The
 version field is incremented on each save.
 
-The method croaks if the template's url is not unique, if the template is not
-checked out, checked out by another user, or if the executed SQL affects no
-rows in the DB.
+duplicate_check() throws an exception if the template's url isn't unique.
+verify_checkout() throws an exception if the template isn't checked out or if
+it's checked out to another user. The method croaks if its executed SQL affects
+no rows in the DB.
 
 =cut
 
@@ -873,9 +898,7 @@ sub save {
     $self->{url} = _build_url($url, $self->{filename});
 
     # check for duplicate url
-    my $template_id = $self->duplicate_check();
-    croak(__PACKAGE__ . "->save(): 'url' field is a duplicate of template " .
-          "'$template_id'") if $template_id;
+    $self->duplicate_check();
 
     # make sure we've checked out the object
     $self->verify_checkout() if $id;
@@ -895,10 +918,8 @@ sub save {
     }
 
     # construct array of bind_parameters
-    #use Data::Dumper;
-    #print STDERR Data::Dumper->Dumper($self);
     @tmpl_params = map { (/_date$/ and defined $self->{$_}) ?
-                           $self->{$_}->mysql_datetime : 
+                           $self->{$_}->mysql_datetime :
                            $self->{$_}
                        } @save_fields;
     push @tmpl_params, $id if $id;
@@ -923,11 +944,15 @@ sub save {
           "template id '$id' - $@") if $@;
 
     # do the insert
-    $dbh->do('INSERT INTO template_version (data, template_id, version) VALUES (?,?,?)', undef, $frozen, $self->{template_id}, $self->{version});
+    $dbh->do("INSERT INTO template_version (data, template_id, version) " .
+             "VALUES (?,?,?)",
+             undef,
+             $frozen,
+             $self->{template_id},
+             $self->{version});
 
-    add_history(    object => $self, 
-                    action => 'save',
-               );
+    add_history(object => $self,
+                action => 'save',);
 
     return $self;
 }
@@ -946,15 +971,13 @@ sub update_url {
 }
 
 
-=item $true = $template->verify_checkout()
+=item $template->verify_checkout()
 
 Instance method that verifies the given object is both checked out and checked
 out to the current user.
 
-It croaks if the given object is not checked out or if it is checked out by
-another user.
-
-Returns '1' on success.
+A Krang::Template::Checkout exception is thrown if the template isn't checked
+out or is checked out by another user, otherwise, '1' is returned.
 
 =back
 
@@ -965,13 +988,17 @@ sub verify_checkout {
     my $id = $self->{template_id};
     my $user_id = $session{user_id};
 
-    croak("Template '$id' is not checked out.")
-      unless $self->{checked_out};
+    Krang::Template::Checkout->throw(message => "Template isn't checked out.",
+                                     template_id => $id)
+        unless $self->{checked_out};
 
     my $cob = $self->{checked_out_by};
 
-    croak("Template '$id' is already checked out by user '$cob'")
-      unless $cob == $user_id;
+    Krang::Template::Checkout->throw(message => "Template checked out by " .
+                                     "another user.",
+                                     template_id => $id,
+                                     user_id => $cob)
+        unless $cob == $user_id;
 
     return 1;
 }

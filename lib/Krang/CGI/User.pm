@@ -478,7 +478,7 @@ sub search {
                                                             'First Name',
                                                            },
                                           columns_sortable =>
-                                          [qw(login last first)],# email)],
+                                          [qw(login last first)],
                                           columns_sort_map => {
                                                                last =>
                                                                'last_name',
