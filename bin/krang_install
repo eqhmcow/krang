@@ -92,8 +92,6 @@ Following is a list of the tasks the installer script will perform.
 
 
 
-=item Create MySQL Krang database user (if it does not already exist).
-
 =item Create Krang UNIX user and/or group
 
 
@@ -225,7 +223,6 @@ sub do_install {
     check_prereqs();
     do_perl_install() if ($do_perl_install);
     do_mysql_install() if ($do_mysql_install);
-    create_mysql_user();
     create_unix_user_group();
     install_krang();
     configure_krang();
@@ -418,27 +415,6 @@ sub do_mysql_install {
 }
 
 
-# Create mysql instance user, if necessary
-sub create_mysql_user {
-    # MySQLRootPassword must be valid, and MySQL should be running
-    my $mysql_bin = MYSQL_BIN;
-    my $MySQLRootPassword = $options{'MySQLRootPassword'};
-    my $InstanceDBName = $options{'InstanceDBName'};
-    my $DBUser = $options{'DBUser'};
-    my $DBPass = $options{'DBPass'};
-
-    my $grant = "grant all on $InstanceDBName\.* to $DBUser\@localhost";
-    $grant .= " identified by '$DBPass'" if ($DBPass);
-
-    my $mysql_grant = ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
-    $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
-
-    print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
-    system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
-    print "  MySQL access granted.\n";
-}
-
-
 sub create_unix_user_group {
     my $KrangUser = $options{'KrangUser'};
     my $KrangGroup = $options{'KrangGroup'};
@@ -560,22 +536,10 @@ sub configure_krang {
     print "  Conf written to '$output_conf'.\n";
 
     # Create DB
+    print "Creating MySQL database '$InstanceDBName' and loading schema\n";
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
-    my $InstanceDBName = $options{'InstanceDBName'};
-    my $createdb = MYSQLADMIN_BIN ." -uroot";
-    $createdb .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
-    $createdb .= " create $InstanceDBName";
-    print "Creating MySQL database '$InstanceDBName'\n";
-    system($createdb) && die("Error creating database $InstanceDBName: $!");
-
-    # Load SQL files
-    my $DBUser = $options{'DBUser'};
-    my $DBPass = $options{'DBPass'};
-    my $sql_files_path = "$InstallPath\/sql/*.sql";
-    print "  Creating schema from SQL files in '$sql_files_path'\n";
-    my $loadsql = CAT_BIN ." $sql_files_path | ";
-    $loadsql .= MYSQL_BIN ." -u$DBUser -p$DBPass $InstanceDBName";
-    system($loadsql) && die("Error loading SQL: $!");
+    my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb --password $MySQLRootPassword";
+    system($createdb) && die("Error calling krang_createdb.  Unable to continue");
 
     # Customize DB (Admin password)
     my $AdminPassword = $options{AdminPassword};
@@ -619,18 +583,34 @@ sub start_krang {
 
 sub make_test {
     print "Running Krang tests...\n";
+
+    my $AdminPassword = $options{AdminPassword};
+
     my $InstallPath =  $options{InstallPath};
     chdir($InstallPath);
+
     my $make_bin = MAKE_BIN;
-    my $make_test = "KRANG_ROOT='' PERL5LIB='' $make_bin test";
+    my $make_test = "KRANG_ROOT='' PERL5LIB='' KRANG_PASSWORD='$AdminPassword' $make_bin test";
     system($make_test) && die("Error running tests: $!");
 }
 
 
 sub output_report {
-    # Debug
-    use Data::Dumper;
-    print Dumper(\%options);
+    my $init_script = "krang-". $options{HostName} .".init";
+
+    print <<EOREPORT;
+
+Krang installation complete.
+
+  Installed at ..:  $options{InstallPath}
+  Init script ...:  $init_script
+  Configured to start at boot.
+
+  Running on $options{IPAddress}:
+    http://$options{HostName}:$options{ApachePort}/
+    ftp://$options{HostName}:$options{FTPPort}/
+
+EOREPORT
 }
 
 
