@@ -999,6 +999,7 @@ sub delete_element {
 
     my $root = $self->_get_element;
     my $element = _find_element($root, $path);
+    my $name    = $element->display_name;
 
     my $parent = $element->parent();
     if (not $parent) {
@@ -1007,10 +1008,10 @@ sub delete_element {
     }
 
     # remove this element from parent    
-    $parent->children(grep { $_ != $element } $parent->children());
+    $parent->remove_children($element);
     
     $query->param(path => $parent->xpath());
-    add_message('deleted_element', name => $element->display_name);
+    add_message('deleted_element', name => $name);
     return $self->edit();
 }
 
