@@ -75,6 +75,9 @@ Available parameters are as follows:
              not specified, will default to the first form in your 
              HTML document.
 
+  title    - the title on the chooser window.  Defaults to 'Choose a 
+             Category'.
+
 The template for the category chooser is located in
 F<Widget/category_chooser.tmpl>.
 
@@ -83,8 +86,9 @@ F<Widget/category_chooser.tmpl>.
 sub category_chooser {
     my %args = @_;
     my ($name, $query, $label, $display, $onchange, $formname, $site_id, 
-        $field) =
-      @args{qw(name query label display onchange formname site_id field)};
+        $field, $title) =
+      @args{qw(name query label display onchange formname site_id 
+               field title)};
     croak("Missing required args: name and query")
       unless $name and $query;
 
@@ -129,7 +133,7 @@ sub category_chooser {
     
     # build the chooser
     my $chooser = HTML::PopupTreeSelect->new(name       => $name,
-                                             title      => 'Choose a Category',
+                                             title      => $title || 'Choose a Category',
                                              data       => $data,
                                              image_path => 'images',
                                              onselect   => $name . '_choose_category',
