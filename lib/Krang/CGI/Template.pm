@@ -1046,8 +1046,8 @@ sub update_template {
     my $q = $self->query();
 
     for (qw/category_id content filename testing/) {
-        next if $_ eq 'filename' && $template->template_id;
-        next if $_ eq 'category_id' && $template->template_id;
+        next if ($_ eq 'filename') && $template->template_id;
+        next if ($_ eq 'category_id') && $template->template_id;
 
         my $val = $q->param($_) || '';
         if ($_ eq 'content' && $val) {
