@@ -63,8 +63,6 @@ use Krang::Session qw(%session);
 # Constants
 ############
 use constant TEMPLATE_BASEDIR => '';
-use constant TEMPLATE_TABLE => 'template';
-use constant VERSION_TABLE => 'template_version';
 use constant TEMPLATE_COLS => qw(id
 				 category_id
 				 checked_out
@@ -141,7 +139,7 @@ sub checkin {
     for (@ids) {
         my $query = <<SQL;
 SELECT checked_out, checked_out_by
-FROM TEMPLATE_TABLE
+FROM template
 WHERE id = ?
 SQL
         my ($co, $uid) = $dbh->selectrow_arrayref($query, undef, ($_));
@@ -156,7 +154,7 @@ SQL
         }
 
         $query = <<SQL;
-UPDATE TEMPLATE_TABLE
+UPDATE template
 SET checked_out = ?, checked_out_by = ?
 WHERE id = ?
 SQL
@@ -190,12 +188,12 @@ sub checkout {
 
     eval {
         # lock template table
-        $dbh->do("LOCK TABLES TEMPLATE_TABLE WRITE");
+        $dbh->do("LOCK TABLES template WRITE");
 
         for (@ids) {
             my $query = <<SQL;
 SELECT checked_out, checked_out_by
-FROM TEMPLATE_TABLE
+FROM template
 WHERE id = ?
 SQL
 
@@ -210,7 +208,7 @@ SQL
             }
 
             $query = <<SQL;
-UPDATE TEMPLATE_TABLE
+UPDATE template
 SET checked_out = ?, checked_out_by = ?
 WHERE id = ?
 SQL
@@ -242,7 +240,7 @@ Class or instance method for deleting template objects.  As a class method the
 method accepts either a single template id or array object ids.
 
 Deletion means deleting all instances of the object in the version table as
-well as the current version in the template.
+well as the current version in the template table.
 
 This method will croak if an object is checked out by another user.
 
@@ -255,9 +253,9 @@ sub delete {
     # checkout the objects
     Krang::Template->checkout(@ids);
 
-    my $t_query = "DELETE FROM TEMPLATE_TABLE WHERE " .
+    my $t_query = "DELETE FROM template WHERE " .
       join(" OR ", map {"id = ?"} @ids);
-    my $v_query = "DELETE FROM TEMPLATE_VERSION WHERE " .
+    my $v_query = "DELETE FROM template_version WHERE " .
       join(" OR ", map {"template_id = ?"} @ids);
 
     my $dbh = dbh();
@@ -284,7 +282,7 @@ is saved.
 The template content is output to the filesystem.  The path computed with
 TEMPLATE_BASEDIR, category_id, and filename fields.
 
-=item * Updating the deploy fields in the TEMPLATE_TABLE
+=item * Updating the deploy fields in the template table
 
 deployed is set to '1' and deploy_date is set to 'now()'.
 
@@ -321,7 +319,7 @@ sub deploy {
     my $dbh = dbh();
     my @params = (1, 'now()', $self->id());
     my $query = <<SQL;
-UPDATE TEMPLATE_TABLE
+UPDATE template
 SET deployed = ?, deploy_date = ?
 WHERE id = ?
 SQL
@@ -378,7 +376,7 @@ sub find {
 
     # construct base query
     my $query = "SELECT " . join(", ", TEMPLATE_COLS) .
-      " FROM " . TEMPLATE_TABLE;
+      " FROM " . template;
 
     # construct limit clause
     if ($limit) {
@@ -441,7 +439,7 @@ sub init {
 
 =item $template = $template->mark_for_testing()
 
-This method sets the testing fields in the template database to allow for the
+This method sets the testing fields in the template table to allow for the
 testing of output of an undeployed template.
 
 This method croaks if attempt to update the testing fields is unsuccessful.
@@ -459,7 +457,7 @@ sub mark_for_testing {
     my @params = qw/1 $user_id $self->id()/;
 
     my $query = <<SQL;
-UPDATE TEMPLATE_TABLE
+UPDATE template
 SET testing = ?, testing_by = ?
 WHERE id = ?
 SQL
@@ -503,7 +501,7 @@ sub prepare_for_edit {
     my @params = ('now()', $frozen, $self->id());
 
     my $query = <<SQL;
-INSERT INTO TEMPLATE_VERSION (creation_date,data)
+INSERT INTO template_version (creation_date,data)
 VALUES (?,?)
 WHERE id = ?
 SQL
@@ -541,7 +539,7 @@ sub revert {
 
     my $query = <<SQL;
 SELECT b.data
-FROM TEMPLATE_TABLE a, TEMPLATE_VERSION b
+FROM template a, template_version b
 WHERE a.id = ? AND a.id=b.template_id AND b.version = ?
 SQL
 
@@ -572,7 +570,7 @@ SQL
 
 Saves template data in memory to the database.
 
-Stores a copy of the objects current contents to the TEMPLATE_TABLE. The
+Stores a copy of the objects current contents to the template table. The
 version field (presently: current_version) is incremented on each save.
 
 The method croaks if the attempt to save is unsuccessful.
@@ -596,11 +594,11 @@ sub save {
     # set up query
     my ($last_param, $query, @tmpl_params);
     if ($self->version > 1) {
-        $query = "UPDATE TEMPLATE_TABLE SET " .
+        $query = "UPDATE template SET " .
           join(', ', map {"$_=?"} TEMPLATE_GET_SET) . "WHERE id = ?";
         $last_param = $self->id;
     } else {
-        $query = "INSERT into TEMPLATE_TABLE (" .
+        $query = "INSERT into template (" .
           join(",", (TEMPLATE_GET_SET, 'creation_date')) .
             ") values(?" . ",?" x (scalar TEMPLATE_GET_SET) . ")";
         $last_param = 'now()';
