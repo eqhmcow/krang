@@ -60,8 +60,9 @@ use constant STORY_FIELDS =>
 # invalidate the URL cache.
 sub _notify {
     my ($self, $which, $old, $new) = @_;
-    return unless exists $self->{url_attributes}{$which} and 
-      defined $old ? ($old ne $new) : (not defined $new);
+    return unless exists $self->{url_attributes}{$which};
+    return if defined $old and defined $new and $old eq $new;
+    return if not defined $old and not defined $new;
     $self->{url_cache} = [];
 }
 
@@ -279,6 +280,9 @@ sub categories {
     
     # invalidate url cahce
     $self->{url_cache} = [];
+
+    # make sure this change didn't cause a conflict
+    $self->_verify_unique();
 
     # they should all fetch correctly now, which won't be true
     # if a bad ID was passed in
@@ -687,18 +691,13 @@ sub _verify_unique {
     my $dbh    = dbh;
 
     # lookup dup
-    my $dup_id;
-    if ($self->{story_id}) {
-        ($dup_id) = $dbh->selectrow_array(
-                              'SELECT story_id FROM story_category '.
-                              'WHERE url = ? AND story_id != ?', 
-                               undef, $self->url, $self->{story_id});
-    } else {
-        ($dup_id) = $dbh->selectrow_array(
-                              'SELECT story_id FROM story_category '.
-                              'WHERE url = ?', 
-                               undef, $self->url);
-    }
+    my @urls  = $self->urls;
+    my $query = 'SELECT story_id FROM story_category WHERE ('.
+      join(' OR ', ('url = ?') x @urls) . ')' . 
+        ($self->{story_id} ? ' AND story_id != ?' : '');
+    my ($dup_id) = $dbh->selectrow_array($query, undef, $self->urls, 
+                                         ($self->{story_id} ? 
+                                          ($self->{story_id}) : ()));
 
     # throw exception on dup
     Krang::Story::DuplicateURL->throw(message => "duplicate URL",

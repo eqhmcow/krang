@@ -268,3 +268,25 @@ my ($v1) = Krang::Story->find(story_id => $v->story_id,
 is($v1->version, 1);
 is($v1->title, "Foo");
 
+
+# check that adding a new category can't cause a dup
+my $s1 = Krang::Story->new(class => "article",
+                           title => "one",
+                           slug => "slug",
+                           categories => [$cat[0]]);
+$s1->save();
+ok($s1->story_id);
+END { $s1->delete() };
+
+my $s2 = Krang::Story->new(class => "article",
+                           title => "one",
+                           slug => "slug",
+                           categories => [$cat[1]]);
+$s2->save();
+ok($s2->story_id);
+END { $s1->delete() };
+
+eval { $s2->categories($s2->categories, $cat[0]); };
+ok($@);
+isa_ok($@, 'Krang::Story::DuplicateURL');
+                          
