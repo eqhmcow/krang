@@ -1942,9 +1942,17 @@ sub deserialize_xml {
                                   suppressempty => 1);
     
     # is there an existing object?
-    my ($story) = Krang::Story->find(primary_url => $data->{url}[0]);
+    my ($story) = Krang::Story->find(url => $data->{url}[0]);
     my $update = 0;
     if ($story) {
+
+        # if primary url of this imported story matches a non-primary
+        # url of an existing story, reject
+        if ($story->url ne $data->{url}[0]) {
+            Krang::DataSet::DeserializationFailed->throw(
+                message => "A story object with a non-primary url '$data->{url}[0]' already exists.");
+        }
+
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
             message => "A story object with the url '$data->{url}[0]' already".
@@ -1962,6 +1970,15 @@ sub deserialize_xml {
         $update = 1;
 
     } else {
+
+        # check if any of the secondary urls match existing stories
+        # and fail if so
+        for (my $count = 1; $count < @{$data->{url}}; $count++) {
+            my ($found) = Krang::Story->find(url => $data->{url}[$count]);
+            Krang::DataSet::DeserializationFailed->throw(
+                message => "A story object with url '$data->{url}[$count]' already exists, which conflicts with one of this storys secondary URLs.") if $found;
+        }
+ 
         # get category objects for story
         my @categories = map { Krang::Category->find(category_id => $_) }
                            map { $set->map_id(class => "Krang::Category",
