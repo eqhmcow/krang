@@ -33,6 +33,9 @@ text.
 
   --stories  - number of stories to create, defaults to 50
 
+  --covers   - number of cover stories to create, defaults to (--cats/2)
+               (must be less than the number of categories)
+
   --templates- number of templates to create, defaults to 50
 
   --users    - number of users to create, defaults to 50
@@ -87,6 +90,7 @@ my $sites    = 3;
 my $cats     = 15;
 my $contribs = 50;
 my $stories  = 50;
+my $covers;
 my $media    = 25;
 my $users    = 50;
 my $templates = 50;
@@ -100,7 +104,9 @@ pod2usage(2) unless
              'media=s'    => \$media,
 	     'users=s'	  => \$users,
              'templates=s'=> \$templates,
+             'covers=s'   => \$covers,
             );
+$covers = defined $covers ? $covers : ($cats >= 2 ? int($cats / 2) : 0);
 
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
@@ -313,6 +319,46 @@ for my $story_count (1 .. $stories) {
     print STDERR "Created Story " . $story->url . "\n";
     push(@stories, $story);
 }
+
+# create covers
+my @covers;
+for my $cover_count (1 .. $covers) {
+    my $c = $cats[$cover_count];
+
+    # create story
+    my $cover;
+
+    $cover = Krang::Story->new(title     => join(" ",
+                                                 map {ucfirst(get_word())}
+                                                 (1..(int(rand(3)) + 2))),
+                               slug       => get_word(),
+                               categories => [$c],
+                               cover_date => get_date(),
+                               class      => "cover");
+
+    # add some photos and lead-ins to stories
+    my $element = $cover->element;
+    foreach my $obj_num (1 .. ((int(rand(30)))+1)) {
+        if ((int(rand(3))) != 1) {
+            $element->add_child(class => "leadin",
+                             data => $stories[int(rand(scalar(@stories)))]);
+        } else {
+            $element->add_child(class => "photo",
+                             data => $media[int(rand(scalar(@media)))]);
+        }
+    }
+
+    # setup a header
+    $element->child('header')->data(join(' ', map { get_word() } 
+                                         (0 .. ((int(rand(10)))+1))));
+
+    $cover->save;
+
+    print STDERR "Created Cover " . $cover->url . "\n";
+    push(@covers, $cover);
+}
+
+
 
 # create templates
 my @templates;
