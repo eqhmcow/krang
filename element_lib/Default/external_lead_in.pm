@@ -23,11 +23,11 @@ sub new {
                  Krang::ElementClass::ListBox->new(name => "type",
                                                    min => 1,
                                                    max => 1,
-                                                   size => '2',
+                                                   size => 2,
                                                    values => [ "Large",
                                                                "Small"],
-                                                   default => ["Small"
-                                                              ]),
+                                                   default => "Small"
+                                                              ),
                  Krang::ElementClass::Textarea->new(name => "title",
                                                     min => 1,
                                                     max => 1
