@@ -174,7 +174,9 @@ pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
 
 # figure out how these command-line options affect find criteria.
 my %find_options = (limit => $increment, offset => 0, checked_out_by => 0);
-my %publish_args = (callback => \&_progress_callback);
+my %publish_args = (callback => \&_progress_callback,
+                    skip_callback => \&_skip_callback
+                   );
 
 if ($republish_only) {
     $find_options{publish_status} = 1;
@@ -300,6 +302,22 @@ print sprintf("TOTAL:\t\t%i assets\t\t%.02f seconds\n\n", ($total_storycount+$to
 
 
 
+sub _skip_callback {
+    my %args = @_;
+
+    my $object = $args{object};
+
+    if ($object->isa('Krang::Story')) {
+        print sprintf("WARNING:  Story ID=%i was not published - it is currently checked out by User ID=%i\n", 
+                      $object->story_id, $object->checked_out_by);
+    } elsif ($object->isa('Krang::Media')) {
+        print sprintf("WARNING:  Media ID=%i was not published - it is currently checked out by User ID=%i\n", 
+                      $object->media_id, $object->checked_out_by);
+    } else {
+        print sprintf("WARNING: Unknown object of type=%s was not published.\n", $object->isa());
+    }
+
+}
 
 
 
@@ -316,10 +334,12 @@ sub _progress_callback {
         $string .= sprintf("Publishing story_id=%i (time=%.02f url=%s)", $object->story_id, $endtime, $object->url);
         $storycount++;
         $total_storytime += $endtime;
-    } else {
+    } elsif ($object->isa('Krang::Media')) {
         $string .= sprintf("Publishing media_id=%i (time=%.02f url=%s)", $object->media_id, $endtime, $object->url);
         $mediacount++;
         $total_mediatime += $endtime;
+    } else {
+        print "Unknown object type=" . $object->isa() . "\n";
     }
 
     if ($verbose) {
