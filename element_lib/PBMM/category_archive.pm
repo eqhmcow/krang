@@ -56,6 +56,7 @@ sub new {
                                                     bulk_edit => 1),
                 PBMM::image->new(),
                 PBMM::lead_in->new(), 
+                PBMM::external_lead_in->new(),
                 PBMM::table_of_contents->new(),
                 ],
                 @_);
