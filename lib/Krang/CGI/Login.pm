@@ -27,6 +27,7 @@ use Digest::MD5 qw(md5_hex md5);
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Krang::User;
+use Krang::Conf qw(InstanceDisplayName);
 
 # secret salt for creating login cookies
 our $SALT = <<END;
@@ -50,6 +51,7 @@ sub setup {
                      login     => \&login,
                      logout    => \&logout,
                     );
+    $self->tmpl_path('Login/');
 }
 
 # show the login form
@@ -57,9 +59,10 @@ sub show_form {
     my $self     = shift;
     my $query    = $self->query();
     my %arg      = @_;
-    my $template = $self->load_tmpl("login_form.tmpl",
+    my $template = $self->load_tmpl("login.tmpl",
                                     associate => $query);
     $template->param(alert => $arg{alert} || $query->param('alert'));
+    $template->param(instance_name => InstanceDisplayName);
     return $template->output();
 }
 

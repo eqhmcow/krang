@@ -1,0 +1,47 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<head>
+<title><tmpl_var instance_name> Login</title>
+<link rel="stylesheet" href="/krang.css" type="text/css" />
+</head>
+<body>
+
+<form method="POST" action="login.pl">
+
+<tmpl_if alert><font color=red><b><tmpl_var alert></b></font><p></tmpl_if>
+<div style='width: 40%'>
+
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;<tmpl_var instance_name> Login</td>
+</tr>
+</table>
+<div class='tight-form-box'>
+
+<table border="0" cellpadding="2" cellspacing="0" width="100%" class="form-cell">
+<tr>
+<td class="form-cell" width=10%>Username:</td>
+<td class="form-cell" width=90%><input type=text name=username value="<tmpl_var username>"></td>
+</tr>
+
+<tr>
+<td class="form-cell">Password:</td>
+<td class="form-cell"><input type=password name=password size=10></td>
+</tr>
+</table>
+
+</div>
+
+<div class=button-bar>
+<input class=button type=submit value="Login">
+</div>
+
+<input type=hidden name=rm value=login>
+<input type=hidden name=target value="<tmpl_var escape=html target>">
+
+</div>
+
+</form>
+</body>
+</html>
