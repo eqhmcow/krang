@@ -47,6 +47,11 @@ use Krang::CGI::ElementEditor;
 use Krang::CGI::Login;
 use Krang::Log qw(critical info debug);
 
+
+# Krang sessions
+use Krang::Session qw/%session/;
+
+
 # setup tmpl_path
 sub new {
     my $pkg = shift;
@@ -90,6 +95,39 @@ sub run {
     }
 
     die ("Krang::CGI caught exception: $cgiapp_errors") if ($cgiapp_errors);
+}
+
+
+# Krang-specific dump_html
+sub dump_html {
+    my $self = shift;
+    my $output = '';
+
+    # Dump Session state
+    $output .= "<P>\nSession State:<BR>\n<OL>\n";
+    foreach my $ek (sort(keys(%session))) {
+        $output .= "<LI> $ek => '<B>".$session{$ek}."</B>'\n";
+    }
+    $output .= "</OL>\n";
+
+    # Dump Params
+    $output .= "<P>\nQuery Parameters:<BR>\n<OL>\n";
+    my @params = $self->query->param();
+    foreach my $p (sort(@params)) {
+        my @data = $self->query->param($p);
+        my $data_str = "'<B>".join("</B>', '<B>", @data)."</B>'";
+        $output .= "<LI> $p => $data_str\n";
+    }
+    $output .= "</OL>\n";
+
+    # Dump ENV
+    $output .= "<P>\nQuery Environment:<BR>\n<OL>\n";
+    foreach my $ek (sort(keys(%ENV))) {
+        $output .= "<LI> $ek => '<B>".$ENV{$ek}."</B>'\n";
+    }
+    $output .= "</OL>\n";
+
+    return $output;
 }
 
 
