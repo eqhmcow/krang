@@ -135,17 +135,20 @@ sub find {
     $t->param(return_params => $self->make_return_params(@return_param_list));
 
     my $search_filter = defined($q->param('search_filter')) ? $q->param('search_filter') : $session{'KRANG_PERSIST_Media_search_filter'};
-    my $show_thumbnails = $q->param('show_thumbnails');
+    my $show_thumbnails;
+ 
+    if ($q->param('rm')) {
+        $show_thumbnails = $q->param('show_thumbnails');
+    } elsif (defined($session{'KRANG_PERSIST_Media_show_thumbnails'})) {
+        $show_thumbnails = $session{'KRANG_PERSIST_Media_show_thumbnails'};
+    } else {
+        $show_thumbnails = 1;
+    }
+
+    
     unless (defined($search_filter)) {
         # Define search_filter
         $search_filter = '';
-
-        # Undefined search_filter probably means it's the first time we're here.
-        # Set show_thumbnails to '1' by default
-        $show_thumbnails = 1;
-    } else {
-        # If search_filter is defined, but not show_thumbnails, assume show_thumbnails is false
-        $show_thumbnails = 0 unless (defined($show_thumbnails));
     }
 
     my $persist_vars = {
@@ -205,6 +208,7 @@ sub advanced_find {
                                        krang_pager_sort_field 
                                        krang_pager_sort_order_desc 
                                        show_thumbnails 
+                                       search_alt_tag
                                        search_below_category_id 
                                        search_filename 
                                        search_filter 
@@ -222,8 +226,16 @@ sub advanced_find {
     my $persist_vars = { rm => 'advanced_find', asset_type => 'media' };
     my $find_params = {};
 
-    my $show_thumbnails = $q->param('show_thumbnails');
-    $show_thumbnails = 0 unless (defined($show_thumbnails));
+    my $show_thumbnails;
+
+    if (defined($q->param('search_filename'))) {
+        $show_thumbnails = $q->param('show_thumbnails');
+    } elsif (defined($session{'KRANG_PERSIST_Media_show_thumbnails'})) {
+        $show_thumbnails = $session{'KRANG_PERSIST_Media_show_thumbnails'};
+    } else {
+        $show_thumbnails = 1;
+    }
+
     $persist_vars->{show_thumbnails} = $show_thumbnails;
 
     # Build find params
@@ -277,6 +289,17 @@ sub advanced_find {
         $t->param( search_filename => $search_filename );
     }
 
+     # search_alt_tag
+    my $search_alt_tag = defined($q->param('search_alt_tag')) ? $q->param('search_alt_tag') : $session{'KRANG_PERSIST_Media_search_alt_tag'};
+;
+    if (defined($search_alt_tag)) {
+        $search_alt_tag =~ s/\W+/\%/g;
+        $find_params->{alt_tag_like} = "\%$search_alt_tag\%";
+        $persist_vars->{search_alt_tag} = $search_alt_tag;
+        $t->param( search_alt_tag => $search_alt_tag );
+    }
+
+
     # search_title
     my $search_title = defined($q->param('search_title')) ? $q->param('search_title') : $session{'KRANG_PERSIST_Media_search_title'};
 
@@ -296,12 +319,10 @@ sub advanced_find {
     }
 
     # search_no_attributes
-    my $search_no_attributes = defined($q->param('search_no_attributes')) ? $q->param('search_no_attributes') : $session{'KRANG_PERSIST_Media_search_no_attributes'};
-    if (defined($search_no_attributes)) {
-        $find_params->{no_attributes} = $search_no_attributes;
-        $persist_vars->{search_no_attributes} = $search_no_attributes;
-        $t->param( search_no_attributes => $search_no_attributes );
-    }
+    my $search_no_attributes = ($q->param('rm') eq 'advanced_find') ? $q->param('search_no_attributes') : $session{'KRANG_PERSIST_Media_search_no_attributes'};
+    $find_params->{no_attributes} = $search_no_attributes;
+    $persist_vars->{search_no_attributes} = $search_no_attributes;
+    $t->param( search_no_attributes => $search_no_attributes );
 
     # Run pager
     my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails);

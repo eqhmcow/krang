@@ -745,6 +745,15 @@ either end for substring match.
 
 =item *
 
+alt_tag
+
+=item *
+
+alt_tag_like - case insensitive match on alt_tag. Must include '%' on
+either end for substring match.
+
+=item *
+
 category_id
 
 =item *
@@ -852,6 +861,8 @@ sub find {
                          version           => 1,
                          title             => 1,
                          title_like        => 1,
+                         alt_tag           => 1,
+                         alt_tag_like      => 1,
                          url               => 1,
                          url_like          => 1,
                          category_id       => 1,
@@ -914,7 +925,7 @@ sub find {
     }
 
     # set simple keys
-    my @simple_keys = qw( title category_id media_type_id filename url
+    my @simple_keys = qw( title alt_tag category_id media_type_id filename url
                           contrib_id checked_out_by may_see may_edit 
                           mime_type );
     foreach my $key (keys %args) {
@@ -963,6 +974,14 @@ sub find {
         $where_string .= "media.title like ?";
         push @where, 'title_like';
     }
+
+    # add alt_tag_like to where_string if present
+    if ($args{'alt_tag_like'}) {
+        $where_string .= " and " if $where_string;
+        $where_string .= "media.alt_tag like ?";
+        push @where, 'alt_tag_like';
+    }
+
 
     # add ids of category and cats below if below_category_id is passed in
     if ($args{'below_category_id'}) {
