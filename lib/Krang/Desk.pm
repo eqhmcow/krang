@@ -263,8 +263,8 @@ sub find {
         my $obj;
         if ($args{'count'}) {
             return $row->{count};
-        } elsif ($args{'only_ids'}) {
-            $obj = $row->{media_id};
+        } elsif ($args{'ids_only'}) {
+            $obj = $row->{desk_id};
         } else {
             $obj = bless {%$row}, $self;
         }
