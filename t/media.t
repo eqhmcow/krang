@@ -287,6 +287,14 @@ $medias[1]->delete();
     $admin_group->categories($ptest_cat_id => "read-only");
     $admin_group->save();
 
+    # Try to save media to read-only catgory
+    $tmp = Krang::Media->new( title => "No media", 
+                              category_id => $ptest_cat_id, 
+                              filename => 'krang.jpg', 
+                              filehandle => $fh );
+    eval { $tmp->save() };
+    isa_ok($@, "Krang::Media::NoCategoryEditAccess", "save() to read-only category throws exception");
+
     # Check permissions for that category
     ($tmp) = Krang::Media->find(media_id=>$medias[1]->media_id);
     is($tmp->may_see, 1, "read-only may_see => 1");
@@ -308,7 +316,7 @@ $medias[1]->delete();
     $ptest_media_id = $medias[2]->media_id();
     ($tmp) = Krang::Media->find(media_id=>$ptest_media_id);
     eval { $tmp->save() };
-    isa_ok($@, "Krang::Media::NoCategoryEditAccess", "save() on read-only media exception");
+    isa_ok($@, "Krang::Media::NoEditAccess", "save() on read-only media exception");
 
     # Try to delete()
     eval { $tmp->delete() };

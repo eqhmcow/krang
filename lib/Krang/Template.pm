@@ -51,6 +51,11 @@ Krang::Template - Interface for managing template objects
  # returns array of template objects matching criteria in %params
  my @templates = Krang::Template->find( %params );
 
+ # Get permissions for this object
+ $template->may_see() || croak("Not allowed to see");
+ $template->may_edit() || croak("Not allowed to edit");
+
+
 =head1 DESCRIPTION
 
 Templates determine the form of this system's output.  This module provides a
@@ -76,9 +81,12 @@ use warnings;
 # External Module Dependencies
 ###############################
 use Carp qw(verbose croak);
-use Exception::Class
-  (Krang::Template::Checkout => {fields => [qw/template_id user_id/]},
-   Krang::Template::DuplicateURL => {fields => 'template_id'},);
+use Exception::Class (
+                      Krang::Template::Checkout             => {fields => [qw/template_id user_id/]},
+                      Krang::Template::DuplicateURL         => {fields => 'template_id'},
+                      Krang::Template::NoCategoryEditAccess => {fields => 'category_id'},
+                      Krang::Template::NoEditAccess         => {fields => 'template_id'},
+                     );
 use Storable qw(freeze thaw);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -134,7 +142,8 @@ my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW;
 # had to define constants before we could use them
 use Krang::MethodMaker 	new_with_init => 'new',
   			new_hash_init => 'hash_init',
-  			get => [TEMPLATE_RO],
+  			get => [TEMPLATE_RO, qw( may_see
+                                                 may_edit )],
   			get_set => [grep { $_ ne 'filename'} TEMPLATE_RW];
 
 
@@ -303,6 +312,8 @@ The filename arguement is required.
 Class or instance method for checking in a template object, as a class method
 a template id must be passed.
 
+Will throw Krang::Template::NoEditAccess unless user has edit access.
+
 If the call to verify_checkout() fails, a Checkout exception is thrown.
 
 =cut
@@ -314,6 +325,10 @@ sub checkin {
 
     # get object if we don't have it
     ($self) = Krang::Template->find(template_id => $id) unless ref $self;
+
+    # Throw exception unless we have edit access
+    Krang::Template::NoEditAccess->throw( message=>"Not allowed to check in this template", template_id=>$id )
+        unless ($self->may_edit);
 
     # make sure we have it checked out, an exception is throw otherwise
     $self->verify_checkout();
@@ -355,6 +370,10 @@ sub checkout {
 
     # make sure we actually have an object
     ($self) = Krang::Template->find(template_id => $id) unless ref $self;
+
+    # Throw exception unless we have edit access
+    Krang::Template::NoEditAccess->throw( message=>"Not allowed to check out this template", template_id=>$id )
+        unless ($self->may_edit);
 
     # short circuit checkout, if possible
     if ($self->{checked_out}) {
@@ -420,6 +439,12 @@ sub delete {
 
     # checkout the template
     ($self) = Krang::Template->find(template_id => $id) unless ref $self;
+
+    # Throw exception unless we have edit access
+    Krang::Template::NoEditAccess->throw( message=>"Not allowed to delete this template", template_id=>$id )
+        unless ($self->may_edit);
+
+    # Check out first
     $self->checkout;
 
     # if the template has been deployed, undeploy it.
@@ -671,7 +696,6 @@ sub find {
 
     # set bool to join with category table
     my $category = exists $args{below_category_id} ? 1 : 0;
-    my $need_distinct = 0;
 
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
@@ -679,9 +703,8 @@ sub find {
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.") if ($count && $ids_only);
 
-    $fields = $count ? ($need_distinct ? 'count(t.template_id)' : 'count(*)') :
-      ($ids_only ? 'template_id' : join(", ", map {"t.$_"}
-                                        keys %template_cols));
+    $fields = $count ? 'count(DISTINCT t.template_id)' :
+      ($ids_only ? 't.template_id' : join(", ", map {"t.$_"} (keys %template_cols)));
 
     # handle version loading
     return $self->_load_version($args{template_id}, $args{version})
@@ -689,13 +712,17 @@ sub find {
 
     # set up WHERE clause and @params, croak unless the args are in
     # TEMPLATE_RO or TEMPLATE_RW
-    my @invalid_cols;
+    my @invalid_cols = ();
     for my $arg (keys %args) {
         my $like = 1 if $arg =~ /_like$/;
         ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
 
-        push @invalid_cols, $arg unless exists $template_cols{$lookup_field} ||
-          $arg eq 'simple_search' || $arg eq 'below_category_id';
+        push (@invalid_cols, $arg)
+          unless (grep { $lookup_field eq $_ } ( keys(%template_cols), 
+                                                 qw( simple_search 
+                                                     below_category_id 
+                                                     may_see
+                                                     may_edit )));
 
         if ($arg eq 'template_id' && ref $args{$arg} eq 'ARRAY') {
             my $tmp = join(" OR ", map {"t.template_id = ?"} @{$args{$arg}});
@@ -711,14 +738,20 @@ sub find {
             my @words = split(/\s+/, $args{$arg});
             for (@words) {
                 my $numeric = /^\d+$/ ? 1 : 0;
-                if ($where_clause) {
-                    $where_clause .= $numeric ? " AND t.template_id = ?" :
-                      " AND t.url LIKE ?";
-                } else {
-                    $where_clause = $numeric ? "template_id = ?" :
-                      "t.url LIKE ?";
-                }
+                $where_clause .= " AND " if ($where_clause);
+                $where_clause .= $numeric ? "t.template_id = ?" : "t.url LIKE ?";
                 push @params, $numeric ? $_ : "%" . $_ . "%";
+            }
+        } elsif (grep { $arg eq $_ } qw(may_see may_edit)) {
+            my $fqfield = "cgpc.$arg";
+            # On may_see and may_edit, always return "global" templates -- templates w/o a category
+            $where_clause .= " AND " if ($where_clause);
+            if ($args{$arg}) {
+                # If we're looking for true vals, accept 1 or NULL
+                $where_clause .= "($fqfield=1 OR $fqfield IS NULL)";
+            } else {
+                # If we're looking for false vals, accept only 0
+                $where_clause .= "$fqfield=0";
             }
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
@@ -737,12 +770,40 @@ sub find {
     croak("The following passed search parameters are invalid: '" .
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
+    # Get user asset permissions -- overrides may_edit if false
+    my $template_access = Krang::Group->user_asset_permissions('template');
+
+    my $dbh = dbh();
+
+    # Add may_see and may_edit fields
+    unless ($count) {
+        my @may_fields = ();
+        push(@may_fields, "(sum(cgpc.may_see) > 0) as may_see");
+        if ($template_access eq "edit") {
+            push(@may_fields, "(sum(cgpc.may_edit) > 0) as may_edit");
+        } else {
+            push(@may_fields, $dbh->quote("0") ." as may_edit");
+        };
+        $fields .= ", ". join(", ", @may_fields);
+    }
+
     # construct base query
-    my $query = "SELECT $fields FROM template t";
+    my $query = qq( SELECT $fields FROM template t 
+                    left join category_group_permission_cache as cgpc
+                    ON cgpc.category_id = t.category_id
+                    left join user_group_permission as ugp
+                    ON cgpc.group_id = ugp.group_id );
     $query .= ", category c" if $category;
+
+    # Add user_id
+    $where_clause .= " AND " if ($where_clause);
+    $where_clause .= "(ugp.user_id=? OR t.category_id IS NULL)";
+    my $user_id = $ENV{REMOTE_USER};
+    push(@params, $user_id);
 
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE $where_clause" if $where_clause;
+    $query .= " GROUP BY t.template_id" unless ($count);
     $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
@@ -754,7 +815,6 @@ sub find {
 
     debug(__PACKAGE__."->find: Executing query $query with params: @params");
 
-    my $dbh = dbh();
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
 
@@ -775,6 +835,12 @@ sub find {
         if ($single_column) {
             push @templates, $row;
         } else {
+            # Handle permissions for global templates -- set to asset permissions
+            unless (defined($row->{category_id})) {
+                $row->{may_edit} = 1 if ($template_access eq "edit");
+                $row->{may_see} = 1;
+            }
+
             push @templates, bless({%$row}, $self);
             foreach my $date_field (grep { /_date$/ } keys %{$templates[-1]}) {
                 my $val = $templates[-1]->{$date_field};
@@ -833,9 +899,8 @@ sub init {
 
     if ($category) {
         # make sure it's a category object before attempting to set
-        croak(__PACKAGE__ . "->init(): 'category' argument must be a " .
-              "'Krang::Category' object.")
-          if (not(ref($category) || $category->isa('Krang::Template')));
+        croak(__PACKAGE__ . "->init(): 'category' argument must be a 'Krang::Category' object.")
+          unless (ref($category) and $category->isa('Krang::Category'));
         $self->{category_id} = $category->category_id;
     }
 
@@ -848,6 +913,10 @@ sub init {
     $self->{creation_date}  = localtime();
 
     $self->hash_init(%args);
+
+    # Set up permissions
+    $self->{may_see} = 1;
+    $self->{may_edit} = 1;
 
     return $self;
 }
@@ -986,12 +1055,24 @@ sub save {
     # list of DB fields to insert or update; exclude 'template_id'
     my @save_fields = grep {$_ ne 'template_id'} keys %template_cols;
 
+    # Throw exception unless we have edit access
+    Krang::Template::NoEditAccess->throw( message=>"Not allowed to save this template", 
+                                          template_id=>$self->template_id )
+        unless ($self->may_edit);
+
     # calculate url
     my $url = "";
     if ($self->{category_id}) {
         my ($cat) = Krang::Category->find(category_id => $self->{category_id});
+
+        # Throw exception unless we have edit access
+        Krang::Template::NoCategoryEditAccess->throw( message => "Not allowed to save template in this category", 
+                                                      category_id => $self->{category_id} )
+            unless ($cat->may_edit);
+
         $url = $cat->url;
     }
+
     $self->{url} = _build_url($url, $self->{filename});
 
     # check for duplicate url

@@ -536,16 +536,16 @@ sub save {
     my $root = KrangRoot;
     my $media_id;
 
+    # Is user allowed to otherwise edit this object?
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
+        unless ($self->may_edit);
+
     # Check permissions: Is user allowed to edit the catent category?
     my $category_id = $self->{category_id};
     my ($category) = Krang::Category->find(category_id=>$category_id);
     Krang::Media::NoCategoryEditAccess->throw( message => "Not allowed to edit media in category $category_id",
                                                category_id => $category_id )
         unless ($category->may_edit);
-
-    # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
-        unless ($self->may_edit);
 
     $self->{url} = $self->url();
 

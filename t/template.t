@@ -4,6 +4,7 @@ use warnings;
 use Krang::Script;
 use Krang::Category;
 use Krang::Site;
+use Krang::Group;
 
 use Data::Dumper;
 use Test::More qw(no_plan);
@@ -182,5 +183,187 @@ END {
     is($tmpl2->delete(), 1, 'Deletion Test 2');
 
     # delete category and site
+    $site->delete();
+}
+
+
+# Test permissions
+{
+    my $uniqueness = time();
+
+    # Create site/category hierarchy for testing purposes
+    my $site = Krang::Site->new( preview_url  => $uniqueness .'preview.com',
+                                 preview_path => $uniqueness .'preview/path/',
+                                 publish_path => $uniqueness .'publish/path/',
+                                 url          => $uniqueness .'site.com' );
+    $site->save();
+    my ($root_category) = Krang::Category->find( parent_id => undef,
+                                                 site_id => $site->site_id() );
+    die ("No root category for site ". $site->site_id()) unless (ref($root_category));
+
+    # Array of test templates
+    my @test_templates = ();
+
+    # Add global template
+    my $template = Krang::Template->new( filename => "GLOBAL_$uniqueness\.tmpl" );
+    $template->save();
+    push(@test_templates, $template);
+
+    # Add template to root category
+    $template = Krang::Template->new( category => $root_category,
+                                         filename => "ROOT_$uniqueness\.tmpl" );
+    $template->save();
+    push(@test_templates, $template);
+
+
+    my @cat_names = qw(A1 A2 B1 B2);
+    my @test_cats = ();
+    foreach my $cat_name (@cat_names) {
+        my $parent_cat = ( $cat_name =~ /1$/ ) ? $root_category : $test_cats[-1] ;
+        die ("No cat available for cat_name '$cat_name'") unless (ref($parent_cat));
+
+        # Create test category
+        my $newcat = Krang::Category->new( dir => "$cat_name\_$uniqueness",
+                                           parent_id => $parent_cat->category_id() );
+        $newcat->save();
+        push(@test_cats, $newcat);
+
+        # Add template in this category
+        my $template = Krang::Template->new( category => $newcat,
+                                             filename => "$cat_name\_$uniqueness\.tmpl" );
+        $template->save();
+        push(@test_templates, $template);
+    }
+
+
+    # Do we have permissions at all?
+    is($test_templates[0]->may_edit(), "1", "Global template may_edit");
+    is($test_templates[0]->may_see(), "1", "Global template may_see");
+
+    # Test template in category for permissions
+    is($test_templates[1]->may_edit(), "1", "Root cat template may_edit");
+    is($test_templates[1]->may_see(), "1", "Root cat template may_see");
+
+    # Test template in descendant category for permissions
+    is($test_templates[2]->may_edit(), "1", "Root cat template may_edit");
+    is($test_templates[2]->may_see(), "1", "Root cat template may_see");
+
+    # Test template in category w/o edit access
+    my ($admin_group) = Krang::Group->find(group_id=>1);
+    die ("Can't load admin group") unless (ref($admin_group));
+    $admin_group->categories($test_cats[0]->category_id => "read-only");
+    $admin_group->save();
+    ($template) = Krang::Template->find(category_id => $test_cats[0]->category_id);
+    is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in read-only category (".$test_cats[0]->category_id .")");
+    is($template->may_see(), "1", "Can see template in read-only category");
+
+    # Test template in descendant category w/o edit access
+    ($template) = Krang::Template->find(category_id => $test_cats[1]->category_id);
+    is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in read-only category (".$test_cats[1]->category_id .")");
+    is($template->may_see(), "1", "Can see template in read-only category");
+
+    # Test template in category w/o edit or read access ("hide")
+    $admin_group->categories($test_cats[0]->category_id => "hide");
+    $admin_group->save();
+    ($template) = Krang::Template->find(category_id => $test_cats[0]->category_id);
+    is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in hidden category (".$test_cats[0]->category_id .")");
+    is($template->may_see(), "0", "Can't see template (". $template->template_id .") in hidden category (".$test_cats[0]->category_id .")");
+
+    # Test template in descendant category w/o edit or read access ("hide")
+    ($template) = Krang::Template->find(category_id => $test_cats[1]->category_id);
+    is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in hidden category (".$test_cats[1]->category_id .")");
+    is($template->may_see(), "0", "Can't see template (". $template->template_id .") in hidden category (".$test_cats[1]->category_id .")");
+
+    # Can't save() read-only template
+    eval { $template->save };
+    isa_ok($@, "Krang::Template::NoEditAccess", "Save non-editable template throws exception");
+
+    # Can't checkout() read-only template
+    eval { $template->checkout };
+    isa_ok($@, "Krang::Template::NoEditAccess", "Check-out non-editable template throws exception");
+
+    # Can't checkin() read-only template
+    eval { $template->checkin };
+    isa_ok($@, "Krang::Template::NoEditAccess", "Check-in non-editable template throws exception");
+
+    # Can't delete() read-only template
+    eval { $template->delete };
+    isa_ok($@, "Krang::Template::NoEditAccess", "Delete non-editable template throws exception");
+
+    # Test combined permissions -- add an additional group w/read-only access
+    my $new_admin_group = Krang::Group->new( name => "group $uniqueness" );
+    $new_admin_group->categories($test_cats[1]->category_id => "edit");
+    $new_admin_group->save();
+
+    my ($admin_user) = Krang::User->find(login=>"admin");
+    $admin_user->group_ids_push($new_admin_group->group_id());
+    $admin_user->save();
+
+    ($template) = Krang::Template->find(category_id => $test_cats[1]->category_id);
+    is($template->may_edit(), "1", "Can edit template with new group access");
+    is($template->may_see(), "1", "Can see template with new group access");
+
+    # Delete test group
+    $new_admin_group->delete();
+
+    # Test read and edit access to templates on other category branch
+    ($template) = Krang::Template->find(category_id => $test_cats[-1]->category_id);
+    is($template->may_edit(), "1", "Can edit template on other category branch");
+    is($template->may_see(), "1", "Can see template on other category branch");
+
+    # Can't save to read-only category
+    $template = Krang::Template->new( category => $test_cats[0],
+                                      filename => "noaccess\_$uniqueness\.tmpl" );
+    eval { $template->save };
+    isa_ok($@, "Krang::Template::NoCategoryEditAccess", "Save to non-editable category throws exception");
+
+    # Test "global" template for permissions
+    ($template) = Krang::Template->find(template_id => $test_templates[0]->template_id());
+    is($template->may_edit(), "1", "Can edit global template");
+    is($template->may_see(), "1", "Can see global template");
+
+    # Test "global" template w/ full access, but asset_template == "read-only"
+    $admin_group->asset_template("read-only");
+    $admin_group->save();
+    ($template) = Krang::Template->find(template_id => $test_templates[0]->template_id());
+    is($template->may_edit(), "0", "Can't edit global template (". $test_templates[0]->template_id() .") w/ asset_template == 'read-only'");
+    is($template->may_see(), "1", "Can see global template (". $test_templates[0]->template_id() .") w/ asset_template == 'read-only'");
+
+    # Test "global" template w/ full access, but asset_template == "hide"
+    $admin_group->asset_template("hide");
+    $admin_group->save();
+    ($template) = Krang::Template->find(template_id => $test_templates[0]->template_id());
+    is($template->may_edit(), "0", "Can't edit global template (". $test_templates[0]->template_id() .") w/ asset_template == 'hide'");
+    is($template->may_see(), "1", "Can still see global template (". $test_templates[0]->template_id() .") w/ asset_template == 'hide'");
+
+    # Test template in category w/ full access, but asset_template == "read-only"
+    $admin_group->asset_template("read-only");
+    $admin_group->save(); 
+    ($template) = Krang::Template->find(template_id => $test_templates[1]->template_id());
+    is($template->may_edit(), "0", "Can't edit template (". $test_templates[1]->template_id() .") w/ asset_template == 'read-only'");
+    is($template->may_see(), "1", "Can see template (". $test_templates[1]->template_id() .") w/ asset_template == 'read-only'");
+
+    # Test template in category w/ full access, but asset_template == "hide"
+    $admin_group->asset_template("hide");
+    $admin_group->save();
+    ($template) = Krang::Template->find(template_id => $test_templates[1]->template_id());
+    is($template->may_edit(), "0", "Can't edit template (". $test_templates[1]->template_id() .") w/ asset_template == 'hide'");
+    is($template->may_see(), "1", "Can see template (". $test_templates[1]->template_id() .") w/ asset_template == 'hide'");
+
+    # Re-set asset_template group permissions
+    $admin_group->asset_template("edit");
+    $admin_group->save();
+
+    # Delete test templates
+    for (reverse(@test_templates)) {
+        $_->delete();
+    }
+
+    # Delete test categories
+    for (reverse(@test_cats)) {
+        $_->delete();
+    }
+
+    # Delete test site
     $site->delete();
 }

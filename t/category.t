@@ -353,6 +353,10 @@ is($success, 1, 'site delete()');
     $ptest_count = Krang::Category->find(may_edit=>1, count=>1, site_id=>$ptest_site_id);
     is($ptest_count, 1, "Hide un-editable categories");
 
+    # Get count with "may_edit=>0" -- should return all but root (4)
+    $ptest_count = Krang::Category->find(may_edit=>0, count=>1, site_id=>$ptest_site_id);
+    is($ptest_count, 4, "Hide editable categories");
+
     # Delete temp categories
     for (reverse@ptest_categories) {
         $_->delete();
