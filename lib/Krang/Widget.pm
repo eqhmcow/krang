@@ -190,6 +190,7 @@ sub category_chooser {
                                              include_css => 0,
                                              width      => 225,
                                              height     => 200,
+                                             resizable  => 1,
                                              hide_textareas => 1,
                                             );
 
