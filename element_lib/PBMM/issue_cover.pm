@@ -27,13 +27,13 @@ sub new {
                                                                  "multisite",
                                                                  "custom"],                                                     default => "keyword"),
                     Default::lead_in->new(),
+                    PBMM::external_lead_in->new(),
                     PBMM::image->new(),
                     Krang::ElementClass::Text->new(name         => "small_header" ),
                     Krang::ElementClass::Text->new(name         => "large_header" ),   
                     Krang::ElementClass::Textarea->new(name => "paragraph",
                                                     bulk_edit => 1,
                                                    ),
-                    PBMM::double_cover_column->new(   name => "double_column" ), 
 
                 ],
                 @_);
