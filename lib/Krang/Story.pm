@@ -127,7 +127,8 @@ element tree rooted in C<element>, an object of the L<Krang::Element>
 class.
 
 Stories may be associated with contributors (objects of
-L<Krang::Contributor>) and assigned scheduled actions (publish and expire).
+L<Krang::Contrib>) and assigned scheduled actions (publish and
+expire).
 
 Stories are checked-in, checked-out and versioned like media
 (L<Krang::Media>) and templates (L<Krang::Template>).  However, unlike
