@@ -2,6 +2,8 @@ package Krang::ElementClass::TopLevel;
 use strict;
 use warnings;
 
+use Carp qw(croak);
+
 use Krang::Log qw(debug info critical);
 use base 'Krang::ElementClass';
 
