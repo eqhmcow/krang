@@ -177,7 +177,7 @@ SQL
 
 =item $template = $template->checkout()
 
-=item $template = Krang::Template->checkout( $template_id || @template_ids )>>
+=item $template = Krang::Template->checkout( $template_id || @template_ids )
 
 Class or instance method for checking out template objects, as a class method
 the either a list or single template id must be passed.
@@ -288,75 +288,36 @@ SQL
 }
 
 
-=item $template = $template->deploy()
+=item $template->delete()
 
-This method is responsible for deploying the template associated with the given
-template object.  Deployment, at present, consists of the of three tasks:
+=item Krang::Template->delete( $template_id || @template_ids )
 
-=over 4
+Class or instance method for deleting template objects.  As a class method the
+method accepts either a single template id or array object ids.
 
-=item * Saving the template to the DB
+Deletion means deleting all instances of the object in the version table as
+well as the current version in the template.
 
-If the template object has not previously been saved to the database, then it
-is saved.
-
-=item * Writing the template to file
-
-The template content is output to the filesystem.  The path computed with
-TEMPLATE_BASEDIR, category_id, and filename fields.
-
-=item * Updating the deploy fields in the template table
-
-deployed is set to '1' and deploy_date is set to 'now()'.
-
-=back
-
-This method croaks if any of these three following circumstances occur: if the
-module is unnable to write to the template's output path or if the module is
-unable to close the template's filehandle.
+This method will croak if an object is checked out by another user.
 
 =cut
 
-sub deploy {
+sub delete {
     my $self = shift;
+    my @ids = @_ || ($self->template_id());
 
-    # Has the object been saved yet?
-    $self->save() unless $self->version;
+    # checkout the objects
+    Krang::Template->checkout(@ids);
 
-    # Write out file
-    # expect to get category path in the following fashion:
-    # Krang::Category->find({id => $self->template_id()})->get_path();
-    my $category_path;
-    my $path = File::Spec->catfile(TEMPLATE_BASEDIR,
-                                   $category_path,
-                                   $self->filename());
-    my $fh = IO::File->new(">$path") or
-      croak(__PACKAGE__ . "->deploy(): Unable to create template path " .
-            "'$path' - $!");
-    $fh->print($self->content());
-    $fh->close() or croak(__PACKAGE__ . "->deploy: Unable to close " .
-                          "filehandle after writing - $!");
+    my $t_query = "DELETE FROM template WHERE " .
+      join(" OR ", map {"template_id = ?"} @ids);
+    my $v_query = "DELETE FROM template_version WHERE " .
+      join(" OR ", map {"template_id = ?"} @ids);
 
-    # Update deploy fields
     my $dbh = dbh();
-    my @params = (1, 'now()', $self->template_id());
-    my $query = <<SQL;
-UPDATE template
-SET deployed = ?, deploy_date = now()
-WHERE template_id = ?
-SQL
 
-    # print out debugging info
-#    Krang::debug(__PACKAGE__ . "->deploy() - query:\n$query");
-#    Krang::debug(__PACKAGE__ . "->deploy() - parameters:\n" .
-#                 join(",", @params));
-
-    $dbh->do($query, undef, @params);
-
-    # update deploy field if this is an instance method call
-    $self->{deployed} = 1 if $self->template_id();
-
-    return $self;
+    $dbh->do($t_query, undef, @ids);
+    $dbh->do($v_query, undef, @ids);
 }
 
 
