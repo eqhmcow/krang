@@ -56,7 +56,7 @@ $story = Krang::Story->new(categories => [$cat[0], $cat[1]],
                            class      => "article");
 is($story->title, "Test");
 is($story->slug, "test");
-is($story->class, "article");
+is($story->class->display_name, "Article");
 is($story->element->name, "article");
 my @story_cat = $story->categories();
 is(@story_cat, 2);

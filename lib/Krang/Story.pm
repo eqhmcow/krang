@@ -24,7 +24,6 @@ use Krang::MethodMaker
                         story_id                        
                         version
                         published_version
-                        class
                         checked_out
                         checked_out_by
                        ) ],
@@ -222,8 +221,8 @@ sub url {
       if $self->{url_cache} and $self->{url_cache}[0];
 
     # otherwise, compute using element 
-    my $url = $self->element->build_url(story => $self,
-                                        category => $self->category);
+    my $url = $self->class->build_url(story => $self,
+                                      category => $self->category);
     $self->{url_cache}[0] = $url;
 
     return $url;
@@ -346,7 +345,19 @@ sub element {
 
 =item C<class> (readonly)
 
-The element class of the root element (i.e. $story->element->class).
+The element class of the root element.  This may be set with a string
+or a Krang::ElementClass object, but only through new().  After new()
+this method returns the class object for the root element, a
+descendent of Krang::ElementClass.  Another way to access the same
+object is object is through C<< $story->element->class >>, but calling
+C<< $story->class >> avoids loading the element tree for the story if
+it hasn't already been loaded.
+
+=cut
+
+sub class {
+    return Krang::ElementLibrary->top_level(name => $_[0]->{class});
+}
 
 =item C<schedules>
 
@@ -383,6 +394,8 @@ sub init {
 
     # create a new element based on class
     $self->{class} = delete $args{class};
+    croak("Missing required 'class' parameter to Krang::Story->new()")
+      unless $self->{class};
     $self->{element} = Krang::Element->new(class => $self->{class});
 
     # get hash of url_attributes
