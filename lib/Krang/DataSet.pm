@@ -4,7 +4,8 @@ use warnings;
 
 use File::Temp qw(tempdir);
 use File::Path qw(mkpath rmtree);
-use File::Spec::Functions qw(catdir catfile splitpath);
+use File::Spec::Functions qw(catdir catfile splitpath 
+                             file_name_is_absolute rel2abs);
 use File::Copy qw(copy);
 use File::Find qw(find);
 use Krang::Conf qw(KrangRoot);
@@ -65,17 +66,30 @@ uses Krang::XML to serialize and deserialize individual objects.
 
 =over
 
-=item C<< $set = Krang::DataSet->new() >>
-
-=item C<< $set = Krang::DataSet->new(path => "foo.kds") >>
-
-=item C<< $set = Krang::DataSet->new(path => "foo.kds.gz") >>
+=item C<< $set = Krang::DataSet->new(...) >>
 
 Creates a new set object, either empty or by loading an existing data
 set previously created with write(). 
 
 May throw a Krang::DataSet::ValidationFailed exception if the archive
 is found to contain errors.  See EXCEPTIONS below for details.
+
+Available parameters:
+
+=over
+
+=item path
+
+Specify the path of an existing .kds or .kds.gz file to open.
+
+=item add_callback
+
+Specify a subroutine to be call objects are added to the data set.
+The callback will recieve the same arguments as are passed to add().
+This is useful if you need to provide progress messages for the user.
+Note that the callback will only be called once for each object.
+
+=back
 
 =cut
 
@@ -86,25 +100,29 @@ sub new {
     # create a temp directory to hold in-progress archive
     $self->{dir} = tempdir( DIR => catdir(KrangRoot, 'tmp'));
 
-    if ($args{path}) {
-        croak("Path '$args{path}' does not in .kds or .kds.gz")
-          unless $args{path} =~ /\.kds$/ or 
-                 $args{path} =~ /\.kds\.gz/;
-        croak("Unable to find kds archive '$args{path}'")
-          unless -e $args{path};
+    # have an add_callback?  else, use an empty sub
+    $self->{add_callback} = $args{add_callback} ? $args{add_callback} : sub {};
+
+    if (my $path = $args{path}) {
+        croak("Path '$path' does not in .kds or .kds.gz")
+          unless $path =~ /\.kds$/ or 
+                 $path =~ /\.kds\.gz/;
+        croak("Unable to find kds archive '$path'")
+          unless -e $path;
 
         my $kds = Archive::Tar->new();
-        $kds->read($args{path})
-          or croak("Unable to read kds archive '$args{path}' : " . 
+        $kds->read(file_name_is_absolute($path) ? 
+                   $path : rel2abs($path))
+          or croak("Unable to read kds archive '$path' : " . 
                    Archive::Tar->error());
 
         # extract in temp dir
         my $old_dir = fastcwd;
         chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
-        my $result = $kds->extract_archive($args{path});
+        my $result = $kds->extract($kds->list_files);
         chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
         
-        croak("Unable to open kds archive '$args{path}' : " . 
+        croak("Unable to open kds archive '$path' : " . 
               Archive::Tar->error())
           unless $result;
 
@@ -254,6 +272,9 @@ sub add {
         
         # been there, done that?
         return if $self->{objects}{$class}{$id};
+
+        # notify add_callback
+        $self->{add_callback}->(%args);
         
         # serialize it
         my ($file) = ($class =~ /^Krang::(.*)$/);
@@ -280,7 +301,6 @@ sub add {
         mkpath((splitpath($full_path))[1]);
         copy($file, $full_path)
           or croak("Unable to copy file '$file' to '$full_path' : $!");
-        print STDERR "WROTE: $full_path\n";
      } else {
         croak("Missing required object or file/path params");
     }
@@ -356,7 +376,7 @@ sub write {
 
     # add all files to the tar
     find({ wanted => sub { return unless -f;
-                           s/^$self->{dir}\/?//;
+                           s!^$self->{dir}/!!;
                            $kds->add_files($_)
                              or croak("Failed to add $_ to KDS : " .
                                       Archive::Tar->error());
@@ -364,21 +384,17 @@ sub write {
            no_chdir => 1 },
          $self->{dir});
 
-    $kds->write($path);
+    $kds->write((file_name_is_absolute($path) ? 
+                 $path : catfile($old_dir, $path)), 
+                $compress ? 9 : 0);
+
+    # gotta get back
+    chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
 
     # Do a validation pass in dev mode to make sure we didn't write
     # junk.  This is better done after writing so that there's
     # something on disk to look at if validation fails.
-    if (ASSERT) {
-        eval { $self->_validate };
-        if ($@) { 
-            chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
-            die $@;
-        }
-    }
-    
-    # gotta get back
-    chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
+    $self->_validate if ASSERT;
 }
 
 # write out the index XML
