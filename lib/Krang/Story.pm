@@ -37,6 +37,7 @@ use Krang::MethodMaker
                                          cover_date
                                          publish_date
                                          priority
+                                         desk_id
                                         ) ]
                            } ];
 
