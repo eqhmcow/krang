@@ -97,9 +97,24 @@ is(scalar @{$users[0]->group_ids()}, 3, 'group_ids - count');
 
 # check_user_pass() tests
 ##########################
+# make sure the admin's username and password are 'admin' and 'shredder'
+# preserve values for restoration
+my ($clogin, $cpass) = map {$admin->$_} qw/login password/;
+$admin->login('admin');
+$admin->password('shredder');
+eval {$admin->save();};
+croak("Won't complete tests bad things have happened: $@") if $@;
+
 is(Krang::User->check_auth('',''), 0, 'check_auth() - failure 1');
 is(Krang::User->check_auth('admin',''), 0, 'check_auth() - failure 2');
 is(Krang::User->check_auth('admin', 'shredder'), 1, 'check_auth() - success');
+
+# revert values
+$admin->login($clogin);
+$admin->{password} = $cpass;
+eval {$admin->save();};
+croak("Won't complete tests bad things have happened: $@") if $@;
+
 
 # delete() tests
 #################
