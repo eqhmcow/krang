@@ -46,7 +46,8 @@ sub setup {
 
 Publishes a story to preview and returns a redirect to the resulting
 page on the preview story.  Requires a story_id parameter with the ID
-for the story to be previewed.
+for the story to be previewed or a session parameter set to the
+session key containing the story to preview.
 
 =cut
 
@@ -54,11 +55,21 @@ sub preview_story {
     my $self = shift;
     my $query = $self->query;
 
-    my $story_id = $query->param('story_id');
-    croak("Missing required story_id parameter.") unless $story_id;
-    
-    my ($story) = Krang::Story->find(story_id => $story_id);
-    croak("Unable to find story '$story_id'")     unless $story;
+    my $session_key = $query->param('session');
+    my $story_id    = $query->param('story_id');
+    croak("Missing required story_id or session parameter.")
+      unless $story_id or $session_key;
+
+    my $story;
+    unless ($session_key) {
+        ($story) = Krang::Story->find(story_id => $story_id);
+        croak("Unable to find story '$story_id'")
+          unless $story;
+    } else {
+        $story = $session{$session_key};
+        croak("Unable to load story from sesssion '$session_key'")
+          unless $story;
+    }
 
     my $publisher = Krang::Publisher->new();
     my $url = $publisher->preview_story(story => $story);
