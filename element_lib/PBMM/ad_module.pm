@@ -75,6 +75,7 @@ sub fill_template {
         $tmpl->param( cdir => 'home' ); 
     }
 
+    $self->SUPER::fill_template( %args );
 }
 
 1;
