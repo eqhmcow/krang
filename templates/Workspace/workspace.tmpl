@@ -179,11 +179,21 @@
        <tr>
           <td class="form-cell" width="120" style="border-bottom:none;">Type</td>
           <td class="form-cell" style="border-bottom:none;"><tmpl_var story_type></td>
+		<tr>
+        <td class="form-cell" style="border-top:none;" width="120">URL</td>
+        <td class="form-cell" style="border-top:none;"><tmpl_var url></td>
        </tr>
      </tmpl_if>
+	   <tmpl_if is_media>
      <tr>
-        <td class="form-cell" width="120" style="border-top:none;">URL</td>
-        <td class="form-cell" style="border-top:none;"><tmpl_var url></td>
+        <td class="form-cell" width="120">URL</td>
+        <td class="form-cell"><tmpl_var url></td>
+		 </tmpl_if> 
+		 <tmpl_if is_template>
+     <tr>
+        <td class="form-cell" width="120">URL</td>
+        <td class="form-cell"><tmpl_var url></td>
+		 </tmpl_if>
         <tmpl_if thumbnail>
           <td width="50" align=center class="form-cell">
             <a href="javascript:preview_media(<tmpl_var media_id>)"><img src="<tmpl_var thumbnail>" border="0"></a>
@@ -208,6 +218,7 @@
                <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_template>
+               <input type="button" value="Copy" onclick="copy('<tmpl_var id>')" class="button">
                <input type="button" value="Deploy" onclick="deploy('<tmpl_var id>')" class="button">
                <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
                  <br><br>
