@@ -1,6 +1,9 @@
 use strict;
 use warnings;
 
+use Krang::Story;
+use Krang::Media;
+
 use Krang::Script;
 use Krang::Element;
 use Krang::Site;
@@ -210,6 +213,11 @@ eval { $clone = thaw($data); };
 ok(not $@);
 isa_ok($clone, 'Krang::Category');
 
+
+test_linked_assets($category);
+
+
+
 # deletion tests
 ################
 eval {$parent->delete()};
@@ -250,3 +258,40 @@ is($success, 1, 'delete() 6');
 # delete site
 $success = $site->delete();
 is($success, 1, 'site delete()');
+
+
+
+
+# linked_stories linked_media tests
+sub test_linked_assets {
+    my $category = shift;
+
+    my @test_stories;
+    push @test_stories, Krang::Story->new(class => "article",
+                                            title => "title one",
+                                            slug => "slug one",
+                                            categories => [$category]);
+    push @test_stories, Krang::Story->new(class => "article",
+                                            title => "title two",
+                                            slug => "slug two",
+                                            categories => [$category]);
+    push @test_stories, Krang::Story->new(class => "article",
+                                            title => "title three",
+                                            slug => "slug three",
+                                            categories => [$category]);
+
+    foreach (@test_stories) {
+        $_->save();
+        $category->element->add_child(class => 'leadin', data => $_);
+    }
+
+    my @linked_stories = $category->linked_stories();
+    is_deeply([sort(@test_stories)], [sort(@linked_stories)], 'Krang::Category->linked_stories()');
+
+    foreach (@test_stories) { $_->delete(); }
+
+
+
+}
+
+
