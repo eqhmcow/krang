@@ -569,7 +569,8 @@ sub checkout {
         my $sth= $dbh->prepare('SELECT checked_out_by FROM media WHERE media_id = ?');
         $sth->execute($media_id);
 
-        croak("Media asset $media_id already checked out!") if $sth->fetchrow_array();
+        my $checkout_id = $sth->fetchrow_array();
+        croak("Media asset $media_id already checked out by id $checkout_id!") if ($checkout_id && ($checkout_id ne $user_id));
 
         $sth->finish();
  
