@@ -72,6 +72,7 @@ sub setup {
                          save_stay_edit
                          delete
                          delete_selected
+                         save_and_associate_media
                          view
                         )]);
 
@@ -247,46 +248,12 @@ sub add {
     my $self = shift;
     my %args = ( @_ );
 
-    my $q = $self->query();
-    my $t = $self->load_tmpl('edit_media.tmpl', associate=>$q, loop_context_vars=>1);
-    $t->param(add_mode => 1);
+    # Create new temporary Media object to work on
+    my $m = Krang::Media->new();
+    $session{media} = $m;
 
-    # Build type drop-down
-    my %media_types = Krang::Pref->get('media_type');
-    my @media_type_ids = ( "", keys(%media_types) );
-    my $media_types_popup_menu = $q->popup_menu(
-                                                -name => 'media_type_id',
-                                                -values => \@media_type_ids,
-                                                -labels => \%media_types,
-                                                -default => "",
-                                               );
-    $t->param(type_chooser=>$media_types_popup_menu);
-
-    # Build category chooser
-    my $category_chooser = category_chooser(
-                                            query => $q,
-                                            name => 'category_id',
-                                            formname => 'edit_media_form',
-                                           );
-    $t->param(category_chooser => $category_chooser);
-
-    # Build upload field
-    my $upload_chooser = $q->filefield(
-                                       -name => 'media_file',
-                                       -default => 'starting value',
-                                       -size => 32,
-                                      );
-    $t->param(upload_chooser => $upload_chooser);
-
-    # Propagate messages, if we have any
-    $t->param(%args) if (%args);
-
-    $t->param(contribs => [
-                           {first=>'Jane', last=>'Doe', type=>'Writer'},
-                           {first=>'Joe', last=>'Blow', type=>'Illustrator'},
-                          ]);
-
-    return $t->output();
+    # Call and return the real add function
+    return $self->_add(%args);
 }
 
 
@@ -295,13 +262,9 @@ sub add {
 
 =item save_add
 
-Description of run-mode 'save_add'...
+Save the new media object, check it out, and redirect to Workspace.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+This run-mode expects to find media object in session.
 
 =cut
 
@@ -311,7 +274,23 @@ sub save_add {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    my $m = $session{media};
+    die ("No media object in session") unless (ref($m));
+
+    # Update object and save
+    $self->update_media($m);
+    $m->save();
+    $m->checkout();
+
+    # Notify user
+    add_message("new_media_saved");
+
+    # Redirect to workspace.pl
+    my $url = '/workspace.pl';
+    $self->header_props(-url=>$url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$url\">$url</a>";
 }
 
 
@@ -381,7 +360,48 @@ sub edit {
     my %args = ( @_ );
 
     my $q = $self->query();
+
+    # Retrieve object from session or create it if it doesn't exist
+    my $media_id = $q->param('media_id');
+    $media_id = '' unless (defined($media_id));
+
+    # Case 1:  We've been directed here via associate-return, with a new Media object
+    #           - Have object in session.
+    #           - No media_id in CGI form data.  No ID in object either.
+    # Case 2:  We've been directed here via associate-return, with an existing Media object
+    #           - Have object in session.
+    #           - No media_id in CGI form data.  We have ID in object.
+    # Case 3:  User hit back and went to edit a different object.
+    #           - Have media_id in CGI form data.
+    # Case 4:  User returned to edit because of form error
+    #           - Have media_id in CGI form data.
+    #
+    unless ($media_id || (ref($session{media}) && ($session{media}->media_id))) {
+        # In this case, we expect a Media object in the session
+        # which lacks an ID
+        my $m = $session{media};
+        die ("Missing media_id, but not in add mode") unless (ref($m) && not($m->media_id));
+
+        # Redirect to add mode
+        return $self->_add(%args);
+    }
+
+    # Load media object into session, or die trying
+    my $m;
+    if ($media_id) {
+        # If we have a media_id, force load using it.
+        ($m) = Krang::Media->find(media_id=>$media_id);
+        $session{media} = $m;
+    } else {
+        # Otherwise, expect to have a media object in the session
+        $m = $session{media};
+    }
+    die ("Can't find media object with media_id '$media_id'") unless (ref($m));
+
     my $t = $self->load_tmpl('edit_media.tmpl', associate=>$q);
+
+    my $media_tmpl_data = $self->make_media_tmpl_data($m);
+    $t->param($media_tmpl_data);
 
     # Propagate messages, if we have any
     $t->param(%args) if (%args);
@@ -518,6 +538,39 @@ sub delete_selected {
 
 
 
+=item save_and_associate_media
+
+The purpose of this mode is to hand the user off to the
+associate contribs screen.  This mode writes changes back 
+to the media object without calling save().  When done,
+it performs an HTTP redirect to:
+
+  contributor.pl?rm=associate_media
+
+=cut
+
+
+sub save_and_associate_media {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    # Update media object
+    my $m = $session{media};
+    $self->update_media($m);
+
+    # Redirect to associate screen
+    my $url = 'contributor.pl?rm=associate_media';
+    $self->header_props(-url=>$url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$url\">$url</a>";
+}
+
+
+
+
+
 =item view
 
 Description of run-mode 'view'...
@@ -548,6 +601,143 @@ sub view {
 #############################
 #####  PRIVATE METHODS  #####
 #############################
+
+# Return an add form.  This method expects a media object in the session.
+sub _add {
+    my $self = shift;
+    my %args = ( @_ );
+
+    my $q = $self->query();
+    my $t = $self->load_tmpl('edit_media.tmpl', associate=>$q, loop_context_vars=>1);
+    $t->param(add_mode => 1);
+
+    # Retrieve object from session or create it if it doesn't exist
+    # or if we've got a non-new object. (Case:  Abandoned edit object.)
+    my $m = $session{media};
+    die ("No media object in session") unless (ref($m));
+
+    my $media_tmpl_data = $self->make_media_tmpl_data($m);
+    $t->param($media_tmpl_data);
+
+    # Propagate messages, if we have any
+    $t->param(%args) if (%args);
+
+    return $t->output();
+}
+
+
+# Update the provided Media object with data from the CGI form\
+# Does NOT call save
+sub update_media {
+    my $self = shift;
+    my $m = shift;
+
+    my $q = $self->query();
+
+    my @m_fields = qw(
+                      title
+                      media_type_id 
+                      category_id 
+                      media_file 
+                      caption 
+                      copyright 
+                      alt_tag 
+                      notes 
+                     );
+    foreach my $mf (@m_fields) {
+        # Handle file upload
+        if ($mf eq 'media_file') {
+            my $media_file = $q->param('media_file');
+            next unless ($media_file);
+
+            $m->upload_file(filehandle => $media_file,
+                            filename => $media_file);
+
+            next;
+        }
+
+        # Default: Grab scalar value from CGI form
+        $m->$mf( $q->param($mf) );
+    }
+}
+
+
+# Given a media object, $m, return a hashref with all the data needed
+# for the edit template.
+sub make_media_tmpl_data {
+    my $self = shift;
+    my $m = shift;
+
+    my $q = $self->query();
+    my %tmpl_data = ();
+
+    # Build type drop-down
+    my %media_types = Krang::Pref->get('media_type');
+    my @media_type_ids = ( "", keys(%media_types) );
+    my $media_types_popup_menu = $q->popup_menu(
+                                                -name => 'media_type_id',
+                                                -values => \@media_type_ids,
+                                                -labels => \%media_types,
+                                                -default => $m->media_type_id(),
+                                               );
+    $tmpl_data{type_chooser} = $media_types_popup_menu;
+
+    # Build category chooser
+    my $category_id = $q->param('category_id');
+    $q->param('category_id', $m->category_id) unless ($category_id);
+    my $category_chooser = category_chooser(
+                                            query => $q,
+                                            name => 'category_id',
+                                            formname => 'edit_media_form',
+                                           );
+    $tmpl_data{category_chooser} = $category_chooser;
+
+    # Build upload field
+    my $upload_chooser = $q->filefield(
+                                       -name => 'media_file',
+                                       -default => 'starting value',
+                                       -size => 32,
+                                      );
+    $tmpl_data{upload_chooser} = $upload_chooser;
+
+    # If we already have a file, show it.
+    $tmpl_data{filename}  = $m->filename();
+    $tmpl_data{file_size} = $m->file_size();
+    $tmpl_data{file_path} = $m->file_path(relative => 1);
+
+    # Set up Contributors
+    my @contribs = ();
+    my %contrib_types = Krang::Pref->get('contrib_type');
+    foreach my $c ($m->contribs()) {
+        my %contrib_row = (
+                           first => $c->first(),
+                           last => $c->last(),
+                           type => $contrib_types{ $c->selected_contrib_type() },
+                          );
+        push(@contribs, \%contrib_row);
+    }
+    $tmpl_data{contribs} = \@contribs;
+
+    # Handle simple scalar fields
+    my @m_fields = qw(
+                      title
+                      caption 
+                      copyright 
+                      alt_tag 
+                      notes 
+                     );
+    foreach my $mf (@m_fields) {
+        # Copy data from object into %tmpl_data
+        # unless key exists in CGI data already
+        unless (defined($q->param($mf))) {
+            $tmpl_data{$mf} = $m->$mf();
+        }
+    }
+
+    # Send data back to caller for inclusion in template
+    return \%tmpl_data;
+}
+
 
 # Given a persist_vars and find_params, return the pager object
 sub make_pager {

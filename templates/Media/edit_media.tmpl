@@ -17,6 +17,9 @@
     }
 
     function edit_contribs () {
+        var myform = document.edit_media_form;
+        myform.rm.value = 'save_and_associate_media';
+        myform.submit();
     }
 
 // -->
@@ -34,7 +37,7 @@
 
 <tr>
   <td>*Title:</td>
-  <td colspan="2"><input type="textfield" size="45" name="title" value=""></td>
+  <td colspan="2"><input type="textfield" size="45" name="title" value="<tmpl_var escape=HTML title>"></td>
 </td>
 
 <tr>
@@ -48,28 +51,30 @@
 </td>
 
 <tr>
-  <td>*Upload File:</td>
+  <td>*Upload File:<tmpl_if filename><br />
+<a target="_blank" href="<tmpl_var escape=HTML file_path>"><tmpl_var escape=HTML filename></a>
+<tmpl_var escape=HTML file_size>k</tmpl_if></td>
   <td colspan="2"><tmpl_var upload_chooser></td>
 </td>
 
 <tr>
   <td>Default Caption:</td>
-  <td colspan="2"><input type="textfield" size="45" name="" value=""></td>
+  <td colspan="2"><input type="textfield" size="45" name="caption" value="<tmpl_var escape=HTML caption>"></td>
 </td>
 
 <tr>
   <td>Default Copyright:</td>
-  <td colspan="2"><input type="textfield" size="45" name="" value=""></td>
+  <td colspan="2"><input type="textfield" size="45" name="copyright" value="<tmpl_var escape=HTML copyright>"></td>
 </td>
 
 <tr>
   <td>Alt Tag:</td>
-  <td colspan="2"><input type="textfield" size="45" name="" value=""></td>
+  <td colspan="2"><input type="textfield" size="45" name="alt_tag" value="<tmpl_var escape=HTML alt_tag>"></td>
 </td>
 
 <tr>
   <td>Notes:</td>
-  <td colspan="2"><textarea rows="4" cols="35" name=""></textarea></td>
+  <td colspan="2"><textarea rows="4" cols="35" name="notes"><tmpl_var escape=HTML notes></textarea></td>
 </td>
 
 <tr>
