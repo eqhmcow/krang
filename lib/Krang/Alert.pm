@@ -54,7 +54,7 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
     # check to see if history event should trigger an alert
     # for specified object.  If a match is found, an alert 
     # will be scheduled to be mailed with Krang::Schedule
-    # This is a convenience method that sues Krang::Alert->find() 
+    # This is a convenience method that uses Krang::Alert->find() 
     # and Krang::Schedule->new()
     Krang::Alert->check_alert(  history_object => $history_object,  
                                 story_object => $story_object );
@@ -247,7 +247,7 @@ sub find {
 
     my $select_string;
     if ($args{'count'}) {
-        $select_string = 'count(*)';
+        $select_string = 'count(*) as count';
     } elsif ($args{'only_ids'}) {
         $select_string = 'alert_id';
     } else {
