@@ -149,7 +149,6 @@
 
             var t = new Array();
             t['__data__'] = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
-            eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''" );
             secondHalf.unshift(t);
             if (! select_val) {
                 list_data = firstHalf.concat(secondHalf);
@@ -157,14 +156,35 @@
                 eval( 'list_data[' + select_val + '] = firstHalf.concat(secondHalf)' );
             } 
         } else {
-            select_val = get_selected_val(list_count - 1);
-            
-            if( ! eval( 'list_data[' + select_val + '][0]') ) {
-                eval( 'list_data[' + select_val + '][0] = new Array()' );
-                eval( 'list_data[' + select_val + "][0]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
+            if (list_count - 1) {
+                select_val = get_selected_val(list_count - 1);
+            } else {
+                 select_val = 'undef';
             }
+
+            if (select_val == 'undef') {
+                if( ! list_data[0]) {
+                    list_data[0] = new Array();
+                    eval( "list_data[0]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" );
+                } else {
+                    var nitem = new Array();
+                    nitem['__data__'] = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+                    list_data.splice(0,0,nitem);
+                }
+            } else { 
+                if( ! eval( 'list_data[' + select_val + '][0]') ) {
+                    eval( 'list_data[' + select_val + '][0] = new Array()' );
+                    eval( 'list_data[' + select_val + "][0]['__data__'] = document.forms['edit_form'].new_item_" + list_count + ".value" ); 
+                } else {
+                    var nitem = new Array();
+                    nitem['__data__'] = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+                    eval( 'list_data[' + select_val + "].splice(0,0,nitem)" );
+                }
+            }
+            last_index = 0;
         }
-         
+        
+        eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''" );
         populate_list(list_count-1, last_index);
     }
     
