@@ -680,12 +680,8 @@ sub find {
         } elsif ($args{'only_ids'}) {
             $obj = $row->{media_id};
         } else {    
-            $obj = bless {}, $self;
-	    foreach my $field (FIELDS) {
-	        if ($row->{$field}) {
-		    $obj->{$field} = $row->{$field};
-	        } 
-	    }
+            $obj = bless {%$row}, $self;
+
             # add contrib ids to object
             my $sth2 = $dbh->prepare('select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord');
             $sth2->execute($row->{media_id});
@@ -728,7 +724,7 @@ sub revert {
     eval {
         %$self = %{thaw($data)};
     };
-    craok ("Unable to deserialize object: $@") if $@;
+    croak ("Unable to deserialize object: $@") if $@;
 
     my $old_filepath = $self->file_path();
     $self->{version} = $version;
