@@ -32,20 +32,15 @@
 
 </form>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;ACTIVE STORIES</td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
-
+<div class="dark-bar"><p class="left">&nbsp;Active Stories</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+<div class="box">
 <!-- Krang::HTMLPager -->
 <tmpl_var pager_html>
 <!-- Krang::HTMLPager -->
-
+</div>
 
 <tmpl_if row_count><tmpl_if may_checkin_all>
-  <div class="button-bar"><input type="button" value="Checkin" onClick="checkin_selected()" class="button">&nbsp;</div>
-</tmpl_if></tmpl_if>
-
+  <div class="button-bar"><input type="button" value="Check In" onClick="checkin_selected()" class="button">&nbsp;</div>
+</tmpl_if></tmpl_if></div>
+</div>
 <tmpl_include footer.tmpl>

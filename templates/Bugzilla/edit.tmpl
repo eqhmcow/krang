@@ -5,11 +5,12 @@
   <div class=alert>An internal server error has occurred.  This almost certainly indicates a bug in the system.  Please use the form below to file a bug report.</div><p>
 </tmpl_if>
 
-<div class=dark-bar>Submit a Bug</div>
+<div class="dark-bar"><p class="left">&nbsp;Submit a Bug</p></div>
 <form name="bug_form" method="post" action="bug.cgi">
-<table cellspacing="0" width="100%">
-<tr class="form-cell">
-<td class="form-cell">*<b>Summary</b> </td><td class="form-cell"><input type="text" size="60" name="summary" value="<tmpl_var escape=HTML summary>" <tmpl_if no_summary>class="invalid"</tmpl_if>><p>
+<div class="box"><br>
+<table cellspacing="0" width="571" class="form-cell">
+<tr>
+<td class="form-cell">*<b>Summary</b> </td><td class="form-cell"><input type="text" size="50" name="summary" value="<tmpl_var escape=HTML summary>" <tmpl_if no_summary>class="invalid"</tmpl_if>><p>
         A sentence which summarizes the problem.
         Please be descriptive and use lots of keywords.
       </p> 
@@ -31,7 +32,7 @@
       *<b>Description</b> 
     </td>
     <td class="form-cell">
-<textarea rows="6" cols="60" name="description" value="<tmpl_var escape=HTML description>" <tmpl_if no_description>class="invalid"</tmpl_if>
+<textarea rows="6" cols="50" name="description" value="<tmpl_var escape=HTML description>" <tmpl_if no_description>class="invalid"</tmpl_if>
                 wrap="hard"></textarea>
       <p>
         Expand on the Summary. Please be
@@ -82,7 +83,7 @@
       <b>Steps to Reproduce</b> 
     </td>
     <td class="form-cell">
-<textarea rows="4" cols="60" name="steps" wrap="hard">
+<textarea rows="4" cols="50" name="steps" wrap="hard">
 <tmpl_if steps><tmpl_var escape=HTML steps><tmpl_else>1.
 2.
 3.</tmpl_if>
@@ -100,7 +101,7 @@
       <b>Actual Results</b> 
     </td>
 <td class="form-cell">
-<textarea rows="4" cols="60" name="actual_results"
+<textarea rows="4" cols="50" name="actual_results"
                 wrap="hard"><tmpl_var escape=HTML actual_results></textarea>
       <p>
         What happened after you performed the steps above?
@@ -113,7 +114,7 @@
       <b>Expected Results</b> 
     </td>
     <td class="form-cell">
-<textarea rows="4" cols="60" name="expected_results"
+<textarea rows="4" cols="50" name="expected_results"
                 wrap="hard"><tmpl_var escape=HTML expected_results></textarea>
       <p>
 
@@ -126,7 +127,7 @@
       <b>Severity</b>
     </td>
     <td class="form-cell">
-      <select name="bug_severity">
+      <select name="bug_severity" style="width:420px;">
         <option name="normal" value="normal" <tmpl_if bug_severity_normal>selected</tmpl_if>>
           Normal: It's a bug that should be fixed.
         </option>
@@ -154,11 +155,13 @@
 
     </td>
   </tr>
-</table>
+</table><br>
+</div>
 <input type="hidden" name="rm" value="commit" override='1'>
 <div class=button-bar>
-  <input type=submit value="Submit Bug">
+  <input type=submit value="Submit Bug" class="button">
 </div>
 </form>
 </tmpl_unless>
+</div>
 <tmpl_include footer.tmpl>

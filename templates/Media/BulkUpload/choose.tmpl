@@ -1,66 +1,38 @@
 <tmpl_include header.tmpl>
 
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td>
-  <table border="0" cellpadding="2" cellspacing="0" width="100%">
-  <form name="upload_form" method="post" enctype="multipart/form-data">
-  <tr class="dark-bar">
-    <td>&nbsp;BULK MEDIA UPLOAD</td>
-    <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-  </tr>
-  </table>
-  <table border="0" cellpadding="0" cellspacing="0" width="100%">
-  <tr>
-    <td width="1" class="line"><img width="1" height="1"></td>
-    <td width="5">&nbsp;&nbsp;&nbsp;</td>
-    <td><img width="1" height="4"><br>&nbsp;<table border="0" cellspacing="0" cellpadding="0" width="100%">
-<tr class="line"><td colspan="5"><img width="1" height="1"></td></tr>
-<tr class="light-bar"><td colspan="5">&nbsp;&nbsp;FTP Upload</td></tr>
-<tr class="line"><td colspan="5"><img width="1" height="1"></td></tr>
+<div class="dark-bar"><p class="left">&nbsp;Bulk Media Upload</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+
+  <div class="box">
+<br>
+<table class="form-head">
+
 <tr>
-  <td width="1" class="line"><img width="1" height="1"></td>
-  <td>&nbsp;</td>
-  <td class="box" width="100%">&nbsp;<br>(Windows IE or for use with an external FTP client)<br>&nbsp;<br><a target="media_bulkupload" href="ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media">ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media</a><br>&nbsp;</td>
-<td>&nbsp;</td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr class="line"><td colspan="5"><img width="1" height="1"></td></tr>
+<td>FTP Upload</td>
+</tr></table>
+
+<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
+<tr>
+<td class="form-cell">&nbsp;<br>(Windows IE or for use with an external FTP client)<br>&nbsp;<br><a target="media_bulkupload" href="ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media">ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media</a><br>&nbsp;</td></tr>
 </table>
 
 <br>
 
-<table border="0" cellspacing="0" cellpadding="0" width="100%">
-<tr class="line"><td colspan="5"><img width="1" height="1"></td></tr>
-<tr class="light-bar"><td colspan="5">&nbsp;&nbsp;Archive Upload</td></tr>
-<tr class="line"><td colspan="5"><img width="1" height="1"></td></tr>
+<table class="form-head">
+
 <tr>
-  <td width="1" class="line"><img width="1" height="1"></td>
-  <td>&nbsp;</td>
-  <td width="100%">&nbsp;<br>
-    <table border="0" cellspacing="0" cellpadding="3">
-    <tr><td><tmpl_var upload_chooser></td></tr>
-    <tr><td><tmpl_var category_chooser></td></tr>
-    </table>&nbsp;
-  </td>
-  <td>&nbsp;</td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr class="line"><td colspan="5"><img width="1" height="1"></td></tr>
-</table>
-&nbsp;
-    </td>
-    <td width="5">&nbsp;&nbsp;&nbsp;</td>
-    <td width="1" class="line"><img width="1" height="1"></td>
-  </tr>
-  <tr class="line"><td colspan="5"><img width="1" height="1"></tr>
-  </table>
+<td>Archive Upload</td>
+</tr></table>
+
+<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
+<tr>
+<td class="form-cell"><tmpl_var upload_chooser></td></tr>
+    <tr><td class="form-cell"><tmpl_var category_chooser></td></tr>
+    </table><br>
+	 </div>
 <div class="button-bar">
 <input type="hidden" name="rm" value="upload" override="1">
   <input type="button" value="Upload" onclick="document.upload_form.submit()" class="button">&nbsp;
 </div>
-
-  </td>
-</tr>
 </form>
-</table>
+</div>
 <tmpl_include footer.tmpl>

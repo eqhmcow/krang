@@ -1,6 +1,6 @@
 <tmpl_include /header.tmpl>
 
-<script language="Javascript">
+<script language="javascript" type="text/javascript">
 <!-- //
     nav_edit_mode();
 
@@ -8,7 +8,6 @@
         Preview = window.open("publisher.pl?rm=preview_media&media_id=" + media_id, "<tmpl_var instance_name>");
         Preview.focus();
     }
-
 
     function save_stay () {
         var myform = document.forms["edit_contrib_form"];
@@ -120,10 +119,11 @@
     <td align="left" valign="top">URL:</td>
     <td align="left" valign="top"><tmpl_if error_invalid_url><span class="invalid"></tmpl_if><input type="textfield" size="40" name="url" value="<tmpl_var escape=HTML url>"></td>
 </tr>
+
 <tr>
     <td align="left" valign="top">Photograph:</td>
     <td align="left" valign="top">
-                <tmpl_if media_id>                  
+                <tmpl_if media_id>
                   <img src="<tmpl_var thumbnail_path>">
                   <a href="javascript:preview_media(<tmpl_var media_id>)">
                   <tmpl_var escape=HTML filename></a>
@@ -132,6 +132,7 @@
                 <input type="file" name="media_file" size="32" class="button">
     </td>
 </tr>
+
 </table>
   </td>
   <td width="1" class="line"><img width="1" height="1"></td>

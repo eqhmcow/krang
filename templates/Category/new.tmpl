@@ -19,25 +19,18 @@
 <input type=hidden name=rm>
 
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;NEW CATEGORY</td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar"><p class="left">&nbsp;New Category</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
 <tmpl_loop alerts_loop>
   <div class="alert">* <tmpl_var alert></div>
 </tmpl_loop>
 
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellspacing="0" cellpadding="8" width="100%">
-<tr><td><table cellspacing="0" width="100%" cellpadding="2">
-<tr><td class="form-head">Properties</td><td class="form-head">&nbsp;</td>
-      </tr></table>
+<div class="box">
+<br>
+<table cellspacing="0" cellpadding="4" class="form-head">
+<tr><td>Properties</td></tr></table>
 
-<table cellspacing="0" width="100%" class="form-cell">
+<table cellspacing="0" width="571" class="form-cell" cellpadding="4">
         <tr>
             <td class="form-cell">Parent</td>
             <td class="form-cell"><tmpl_if bad_parent_id><span class="invalid"></tmpl_if>
@@ -49,19 +42,14 @@
 <tr>
 <td class=form-cell>Directory</td>
 <td class=form-cell><input <tmpl_if bad_dir>class="invalid"</tmpl_if> type=text size=15 value="<tmpl_var escape=html dir>" name=dir></td>
-        </tr></table></td>
-        </tr></table>
+        </tr></table><br></div>
 
 <div class="button-bar">
   <input type=button value="Create" onclick="create()" class="button">
   <input type=reset value="Reset" class="button">
   <input type=button value="Cancel" onclick="cancel()" class="button">
 </div></form>
-</td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+</div>
 
 
 <tmpl_include footer.tmpl>

@@ -141,7 +141,7 @@ sub load_query_data {
                         filename => $filename);
 
             # use the dup instead of the new object
-            $element->data(Krang::Media->find(media_id => $err->media_id));
+            $element->data($err);
         } else {
             die $@;
         }

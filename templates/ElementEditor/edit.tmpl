@@ -145,7 +145,7 @@ function update_order_sort_south (a, b) {
   <input type="hidden" name=bulk_edit_child value="<tmpl_var bulk_edit_child>">
   <input type="hidden" name=bulk_edit_sep value="<tmpl_var bulk_edit_sep>">
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
   function update_bulk_edit_counts() {
       var words_span = document.getElementById("bulk_edit_words");
       var chars_span = document.getElementById("bulk_edit_chars");
@@ -168,43 +168,41 @@ function update_order_sort_south (a, b) {
 
 </script>
 
+<p style="margin-left:10px;">
 Bulk Edit
 
-<tmpl_if crumbs>&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if>
+<tmpl_if crumbs>&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if><br><br>
 
-<div class=tight-form-box>
-<textarea name=bulk_data rows=20 cols=60><tmpl_var escape=HTML bulk_data></textarea>
-</div>
+<textarea name=bulk_data rows="20" cols="60"><tmpl_var escape=HTML bulk_data></textarea>
 
-<br>
 
-Separator String
-<div class=tight-form-box>
+<br><br>
+
+<b>Separator String</b>&nbsp;&nbsp;&nbsp;
+
 <tmpl_var bulk_edit_sep_selector>
 <input type="hidden" name=bulk_edit_sep value="<tmpl_var bulk_edit_sep>">
 <input type="button" value="Change Separator" onclick="save_and_change_bulk_edit_sep()" class="button">
-</div>
 
-<br>
+<br><br>
 
-Statistics
-<div class=tight-form-box>
-Words: <span id=bulk_edit_words></span> &nbsp;Characters: <span id=bulk_edit_chars></span>
-</div>
+<b>Statistics</b>&nbsp;&nbsp;&nbsp;
+
+Words: <span id=bulk_edit_words></span> &nbsp;&nbsp;&nbsp;Characters: <span id=bulk_edit_chars></span>
+</p>
 
 <tmpl_else>
-
-&nbsp;Content 
+<p style="margin-left:10px;">Content</p>
 
 <tmpl_if crumbs>&nbsp;&nbsp;&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if>
-<br>
 
-<table border="0" width="100%" cellpadding="0" cellspacing="0" class="form-cell">
-  <tr class=form-head>
-    <td width=15%>Element</td>
-    <td width=55%>Data Entry</td>
-    <td width=15%>Order</td>
-    <td width=15% align=center><input type="checkbox" onclick="checkall(this, 'remove_')"></td>
+
+<table border="0" cellpadding="0" cellspacing="0" class="form-cell">
+  <tr class="form-head" style="border-bottom:1px solid #bababa;">
+    <td width="125">Element</td>
+    <td width="275">Data Entry</td>
+    <td width="85">Order</td>
+    <td width="75"><input type="checkbox" onclick="checkall(this, 'remove_')"></td>
   </tr> 
 
  <tmpl_loop child_loop>
@@ -225,7 +223,7 @@ Words: <span id=bulk_edit_words></span> &nbsp;Characters: <span id=bulk_edit_cha
          <tmpl_var order_select>
     </td>
 
-    <td align=center class="form-cell">
+    <td class="form-cell">
       <tmpl_if allow_delete><input type="checkbox" name=remove_<tmpl_var index>><tmpl_else>&nbsp;</tmpl_if>
     </td>
 
@@ -233,11 +231,11 @@ Words: <span id=bulk_edit_words></span> &nbsp;Characters: <span id=bulk_edit_cha
  </tmpl_loop>
 
  <tmpl_unless child_loop>
-   <tr><td colspan=4>No sub-elements defined.</td></tr>
+   <tr><td colspan="4">No sub-elements defined.</td></tr>
  </tmpl_unless>
 
-   <tr><td align=left colspan=2 class="form-cell">
-     <table border=0 cellspacing=1>
+   <tr><td align="left" colspan="2" class="form-cell">
+     <table border="0" cellspacing="1">
       <tmpl_if child_select> 
         <tr><td>
            <tmpl_var child_select>
@@ -254,9 +252,9 @@ Words: <span id=bulk_edit_words></span> &nbsp;Characters: <span id=bulk_edit_cha
       </tmpl_if>
      </table>
    </td>
-       <td align=center class="form-cell"><input type="button" value=Reorder onClick='reorder()' class="button"></td>
-       <td align=center class="form-cell"><input type="button" value=Delete onClick='remove_children()' class="button"></td>
+       <td align="center" class="form-cell"><input type="button" value="Reorder" onClick='reorder()' class="button"></td>
+       <td align="center" class="form-cell"><input type="button" value="Delete" onClick='remove_children()' class="button"></td>
    </tr>
 </table>
-
+<br>
 </tmpl_if>

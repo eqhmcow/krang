@@ -22,16 +22,10 @@
 
 </script>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;<tmpl_if is_story>STORY</tmpl_if><tmpl_if is_media>MEDIA</tmpl_if> SCHEDULE EDITOR<tmpl_if simple> (Simple)</tmpl_if></td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar"><p class="left">&nbsp;<tmpl_if is_story>Story</tmpl_if><tmpl_if is_media>Media</tmpl_if> Schedule Editor<tmpl_if simple> (Simple)</tmpl_if><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellpadding="6" cellspacing="0" width="100%">
+<div class="boxb">
+<table width="100%" cellpadding="5" cellspacing="0" border="0">
   <tr class="light"><td>ID:</td><td><tmpl_var id></td></tr>
 <tmpl_if is_story>
   <tr class="light"><td>Story Type:</td><td><tmpl_var story_type></td></tr>
@@ -41,25 +35,20 @@
   </tr>
   <tr class="light"><td>URL:</td><td><tmpl_var url></td></tr>
   </table>
-
-<table border="0" cellspacing="0" cellpadding="8" width="100%">
-<tr><td>
-<TMPL_IF existing_schedule_loop><table border="0" cellspacing="0" width="100%">
-<tr><form name="current_schedule_form" method="POST"><td class="no-border">
+  
+<TMPL_IF existing_schedule_loop><div class="no-border"><form name="current_schedule_form" method="POST">
 <input type="hidden" name="rm" value="delete" override='1'>
-<tmpl_if advanced><input type="hidden" name="advanced_schedule" value="1" override="1"></tmpl_if></td></tr>
-</table>
+<tmpl_if advanced><input type="hidden" name="advanced_schedule" value="1" override="1"></tmpl_if></div>
+
 <input type="hidden" name="object_type" value="<tmpl_var object_type>">
-  <table cellspacing="0" width="100%" cellpadding="2">
+  <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
 <tr class="form-head">
      <th width="130">Schedule</th>
      <th width="130">Next Run</th>
      <th width="130">Action</th>
      <th width="130">Version</th>
      <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'schedule_delete_list')"></th>
-   </tr></table>
-
-  <table cellspacing="0" width="100%" class="form-cell">                                                                        
+   </tr>                                                                       
   <tmpl_loop existing_schedule_loop>
    <tr>
      <td class="form-cell" width="130"><tmpl_var ESCAPE=HTML schedule></td>
@@ -71,23 +60,20 @@
   </tmpl_loop>
   </table>
 
-  <div style="text-align:right; padding-top:5px;">
+  <div style="text-align:right; padding-top:5px; padding-bottom:5px; padding-right: 10px;">
   <input type="button" value="Delete" onClick="delete_selected()" class="button"></div>
 </form>                                                                      
-<TMPL_ELSE><table border="0" cellspacing="0" width="100%">
-<tr><td class="no-border">No Schedule Found</td></tr>
-</table>
+<TMPL_ELSE><div class="no-border">No Schedule Found</div>
 </TMPL_IF>
 
 <form name="add_schedule_form" method="POST">
 <input type="hidden" name="object_type" value="<tmpl_var object_type>">
- <table cellspacing="0" width="100%" cellpadding="2">
+ <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
   <tmpl_if simple>
   <input type="hidden" name="rm" value="add_simple" override='1'>
   <tr class="form-head">
-    <th align="left">Schedule Publication</th>
-  </tr></table>
-  <table cellspacing="0" width="100%" class="form-cell">
+    <th align="left" colspan="2">Schedule Publication</th>
+  </tr>
   <tr>
     <td class="form-cell" width="80" style="border-bottom:none; border-right:none;">Publish:</td>
     <td  class="form-cell" style="border-bottom:none; border-left:none;"<tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var publish_selector></td>
@@ -99,12 +85,9 @@
 <tmpl_else>
 <input type="hidden" name="advanced_schedule" value="1" override="1">
 <input type="hidden" name="rm" value="add" override='1'>
-<table cellspacing="0" width="100%" cellpadding="2">
    <tr class="form-head">
-      <th align="left">Add to Schedule</th>
-   </tr></table>
-	
-	 <table cellspacing="0" width="100%" class="form-cell">
+      <th align="left" colspan="2">Add to Schedule</th>
+   </tr>
    <tr>
       <td class="form-cell" width="80" style="border-left:none;">Date/Time</td>
       <td class="form-cell" style="border-right:none;">
@@ -119,7 +102,7 @@
     </tr>
     <tr>
             <td class="form-cell" style="border-bottom:none; border-right:none;">Version:</td>
-            <td class="form-cell" style="border-bottom:none; border-left:none;"><tmpl_var version_selector> <input type=button value="View" onclick="save_and_view()"></td>
+            <td class="form-cell" style="border-bottom:none; border-left:none;"><tmpl_var version_selector> <input type=button value="View" onclick="save_and_view()" class="button"></td>
     </tr>
     <tr>
             <td class="form-cell" style="border-top:none; border-right:none;">Action:</td>
@@ -129,19 +112,15 @@
 <tr><td>&nbsp;</td><td style="padding: 5px;"><input type="button" value="Add to Schedule" onclick="submit()" class="button"></td></tr>
                 </table>
 <tmpl_if simple>
-<tr><td class="no-border"><a href="schedule.pl?advanced_schedule=1&rm=edit&object_type=<tmpl_var object_type>">Advanced Schedule</a></td></tr>
+<div class="no-border"><a href="schedule.pl?advanced_schedule=1&rm=edit&object_type=<tmpl_var object_type>">Advanced Schedule</a></div>
 <tmpl_else>
-<tr><td class="no-border"><a href="schedule.pl?rm=edit&object_type=<tmpl_var object_type>">Simple Schedule</a></td></tr>
+<div class="no-border"><a href="schedule.pl?rm=edit&object_type=<tmpl_var object_type>">Simple Schedule</a></div>
 </tmpl_if>
 
 </form>
  </td></tr>
                 </table>
-  </td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+  </div>
 
 
 <div class="button-bar">
@@ -151,5 +130,5 @@
 <form name="return_form" method="POST" action="<tmpl_if is_story>story.pl<tmpl_else>media.pl</tmpl_if>">
 <input type="hidden" name="rm" value="edit">
 </form>
-
+</div>
 <tmpl_include footer.tmpl>

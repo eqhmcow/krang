@@ -243,21 +243,13 @@
 <input type="hidden" name="do_advanced_search" value="1">
 </form>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;FIND STORY</td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
-
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellpadding="6" cellspacing="0" width="100%">
+<div class="dark-bar"><p class="left">&nbsp;Find Story<p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 <form name="search_form" method="POST">
-<tr class="light"><td>SEARCH 
-
 <tmpl_if do_advanced_search>
+<div class="box">
+<table border="0" cellpadding="6" cellspacing="0" width="571">
+
+<tr><td>SEARCH 
 
   (<a href="javascript:show_advanced_search('0')">Simple Search</a>)
   <input type="hidden" name="do_advanced_search" value="1">
@@ -323,20 +315,14 @@
 
     </table>
   </td></tr>
-
+</table>
 <tmpl_else>
 
-  
-  
-  (<a href="javascript:show_advanced_search('1')">Advanced Search</a>)<br />
-    <table border="0" cellspacing="2" cellpadding="2">
-    <tr><td><input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-  <input type="hidden" name="do_advanced_search" value="0"></td>
-        <td>&nbsp;</td>
-        <td><input type="submit" value="Search" class="button"></td>
-    </tr>
-    </table>
-  </td></tr>
+ <div class="boxb"> 
+ <div class="light"> 
+  <p>SEARCH (<a href="javascript:show_advanced_search('1')">Advanced Search</a>)</p>
+    <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">&nbsp;&nbsp;&nbsp;
+  <input type="hidden" name="do_advanced_search" value="0"><input type="submit" value="Search" class="button"></div>
 
 </tmpl_if>
 
@@ -351,23 +337,17 @@
 <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 </form>
-</table>
+
 
 <!-- Krang::HTMLPager -->
-<table border="0" cellspacing="0" cellpadding="8">
-<tr><td><tmpl_var pager_html></td></tr>
-</table>
+<tmpl_var pager_html>
 <!-- Krang::HTMLPager -->
 
-</td>
-<td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+</div>
 
 
 <tmpl_if row_count>
   <div class="button-bar"><input type="button" value="Checkout" onClick="checkout_selected()" class="button"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button">&nbsp;</div>
 </tmpl_if>
-
+</div>
 <tmpl_include footer.tmpl>

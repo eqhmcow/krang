@@ -32,31 +32,16 @@
 
 </form>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;ACTIVE MEDIA</td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellpadding="6" cellspacing="0" width="100%">
-  <tr><td>
+<div class="dark-bar"><p class="left">&nbsp;Active Media</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
+<div class="box">
 <!-- Krang::HTMLPager -->
 <tmpl_var pager_html>
 <!-- Krang::HTMLPager -->
-    </td>
-  </tr>
-  </table>
-  </td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+    </div>
 
 <tmpl_if row_count><tmpl_if may_checkin_all>
   <div class="button-bar"><input type="button" value="Check In" onClick="checkin_selected()" class="button">&nbsp;</div>
 </tmpl_if></tmpl_if>
-
+</div>
 <tmpl_include footer.tmpl>

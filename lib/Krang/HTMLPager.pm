@@ -272,12 +272,12 @@ sub make_internal_template {
     $pager_tmpl .= "<tmpl_if krang_pager_rows>\n\n";
 
     # Result count/page status display
-    $pager_tmpl .= "Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row>";
+    $pager_tmpl .= '<div class="no-border">&nbsp;Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row></div>';
 
     # Build up table and header row
     my @columns = @{$self->columns()};
-    $pager_tmpl .= '<table class="form-cell" border="0" cellspacing="0" cellpadding="0" width="100%"><tr class="form-head"><th>'
-      . join("</th>\n<th>", (map { "<tmpl_var colhead_$_><tmpl_unless colhead_$_>&nbsp;</tmpl_unless>" } @columns) ) ."</th></tr>\n\n\n";
+    $pager_tmpl .= '<table class="form-cell" border="0" cellspacing="0" cellpadding="0" width="568"><tr class="form-head"><td class="form-head2">'
+      . join("</td>\n<td class=\"form-head2\">", (map { "<tmpl_var colhead_$_><tmpl_unless colhead_$_>&nbsp;</tmpl_unless>" } @columns) ) ."</td></tr>\n\n\n";
 
     # Build loop for data
     my $row_tmpl = "<tr>\n<td class=\"form-cell\">"
@@ -293,7 +293,7 @@ EOF
 
     # Make page jump, next/prev navigation tmpl
     $pager_tmpl .= <<EOF;
-<tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
+<div class="no-border"><p class="left2">&nbsp;<tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
 
 <tmpl_loop page_numbers>
   <tmpl_if is_current_page><b><tmpl_var page_number></b>
@@ -305,11 +305,11 @@ EOF
 <tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
 
   <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a>
-  <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a>
+  <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a></p></div>
   </tmpl_if>
 
 <tmpl_else>
-  <br /><b>None Found</b>
+  <div class="no-border"><p class="left2"><b>&nbsp;None Found</b></p></div>
 </tmpl_if>
 EOF
 
@@ -893,7 +893,7 @@ sub get_pager_view {
     # This may be the case if a delete operation has reduced the number of pages.
     $curr_page_num = $total_pages if ($curr_page_num > $total_pages);
 
-    # Build page-jumper
+     # Build page-jumper
     my @page_numbers;
     my $max_page_links = $self->max_page_links;
     if ($max_page_links and $total_pages > $max_page_links) {

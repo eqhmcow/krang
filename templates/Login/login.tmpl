@@ -1,52 +1,154 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
 <html>
 <head>
-<title><tmpl_var instance_name> Login</title>
-<link rel="stylesheet" href="/krang.css" type="text/css" />
+<title><tmpl_var instance_name>Login</title>
+<style type="text/css">
+body {
+  background-color: #ffffff;
+  color:            #333333;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+  margin:			  0px 10px;
+  padding:          0px;
+}
+html {
+	width: 770px;
+	height: 100%;
+}
+/*** Positioning ***/
+
+#header {
+  padding: 			  10px; 
+  width:				  760px;
+  height:           47px; 
+  background-color: #ffffff;	
+}
+
+#header div.logo {
+	position: static;
+	left: 0px;
+	top: 15px;
+  background-color: #ffffff;	
+}
+#header div.dkblu {	
+  position: absolute;
+  top:         40px;
+  left:      180px; 
+  border-top: #04044c 1px solid;
+  background-color: #ffffff;  
+  height:           1px;
+  width:            590px; 
+}
+
+#header div.blue { 
+  position: absolute;
+  top:         43px;
+  left:      10px; 
+  height:          14px;  
+  background-color: #dbe9f4;
+  width: 760px;
+}	
+
+#header div.title { 
+	position: absolute;
+	left: 184px;
+	top: 23px; 
+  width:            240px;	
+  background-color: #ffffff;	
+}
+
+#footer {
+	position: absolute;
+	top:             282px;
+	left:             10px;
+	background-color: #dbe9f4;
+   color:            #333333;
+	width:            750px;
+	padding-left:     10px;
+	padding-top:      4px;
+	padding-bottom:   4px;
+	text-align:       left;
+}
+#login {
+	position:          absolute;
+	left:              220px;
+	top:               100px;
+	width:             340px; 
+}
+
+div.boxb {
+  border-right:     1px #bababa solid;
+  border-left:      1px #bababa solid;
+  border-bottom:    1px #bababa solid;
+  margin-top:       3px;
+}
+
+.dark-bar { 
+  background-color: #04044c;
+  color:            #dbeaf5;
+  padding:          4px 4px 0px 4px;
+  height:           20px;
+  font-weight:      bold;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+  text-align:       center;
+}
+
+.light { 
+  background-color: #dbe9f4;
+  color:            #333333;
+  padding-top:          3px;
+  padding-left:        40px;
+  padding-bottom:       6px;
+  margin-top:           0px;
+  text-align:        center;
+}
+
+.light p {
+	text-align:      right;
+	padding-right:     80px;
+}
+
+.button-bar {
+  background-color: #98ccfe;
+  color:            #333333;
+  text-align:       right;
+  padding:          3px;
+  margin-top:       7px;
+}
+
+.button-bar input {
+  margin-left:      15px;
+}
+.button {
+   background-color: #FFFFFF;
+   color:            #003466;
+   font-family:      Verdana,Helvetica,Arial,sans-serif;
+   font-size:        12px;
+}
+</style>
 </head>
 
-<body topmargin="0" leftmargin="0" marginheight="0" marginwidth="0">
-&nbsp;
-<table border="0" cellspacing="0" cellpadding="0" width="770">
-<tr><td width="8">&nbsp;</td>
-	<td valign="top" width="754"><span class="vs1">&nbsp;</span><br>
-	<table border="0" cellspacing="0" cellpadding="0">
-	<tr><td width="160"><img src="/images/logo.png" border="0" width="155" height="27" alt="<tmpl_var instance_name>"></td>
-		<td width="594" valign="bottom">
-		<table border="0" cellspacing="0" cellpadding="0" width="100%">
-		<tr><td class="dark">&nbsp;</td></tr>
-		</table></td></tr></table>
-<img width="1" height="3" border="0">
+<body onload="logform.username.focus();">
+<div id="header"><div class="logo"><img src="/images/logo.png" height="27" width="155" alt="logo"></div>
+<div class="title"><tmpl_var header_instance_name></div>
+
+<div class="dkblu"></div>
+<div class="blue"></div></div>
 
 
 &nbsp;<br>&nbsp;
 <div align="center">
 <p class="error"><tmpl_var alert></p> 
-<p>
 		
-<form method="POST" action="login.pl">
-
-<table border="0" cellspacing="0" cellpadding="1" width="340">
-<tr class="dark-bar"><td class="header" colspan="3">&nbsp;&nbsp;&nbsp;<tmpl_var instance_name> Log In</td></tr>
-<tr><td colspan="3"><img width="1" height="1" border="0"></td></tr>
-<tr class="light"><td colspan="3">&nbsp;</td></tr>
-<tr class="light"><td rowspan="2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>User Name:</td><td><input type="text" name="username" value="<tmpl_var username>" size="12"></td></tr>
-<tr class="light"><td>Password:</td><td><input type="password" name="password" size="12"></td></tr>
-<tr class="light"><td colspan="3">&nbsp;<br><span class="vs">&nbsp;</span></td></tr>
-<tr><td colspan="3" class="vs">&nbsp;</td></tr>
-<tr class="bright"><td colspan="2">&nbsp;</td><td align="left"><input class="button" type="submit" value="Log in"></td></tr>
-<input type="hidden" name="rm" value="login">
-</table>
-
+<form method="POST" action="login.pl" name="logform">
+<div id="login">
+<div class="dark-bar"><tmpl_var instance_name>Log In</div>
+<div class="boxb">
+<div class="light"><p>User Name:&nbsp;&nbsp;&nbsp;<input type="text" name="username" value="<tmpl_var username>" size="12"><br><br>Password:&nbsp;&nbsp;&nbsp;<input type="password" name="password" size="12"></p></div></div>
+<div class="button-bar"><input class="button" type="submit" value="Log in"></div><input type="hidden" name="rm" value="login"></div>
 </form>
- &nbsp;
-</div>
-&nbsp;<br>
-<table border="0" cellspacing="0" cellpadding="4" width="100%"><tr><td class="light">&nbsp;&nbsp;&nbsp;Copyright &copy; 2003 <a href="http://www.thepirtgroup.com" class="copyright">The PIRT Group</a>. All Rights Reserved.</td></tr></table><span class="vs1">&nbsp;</span>
-	</td>
-<td width="8">&nbsp;</td>
-</tr>
-</table>&nbsp;
+<div id="footer">&nbsp;&nbsp;&nbsp;Copyright &copy; 2003 The PIRT Group.  All Rights Reserved.</div>
 
 
 </body>

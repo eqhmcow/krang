@@ -1,61 +1,24 @@
 <tmpl_include /header.tmpl>
 
 
-<script language="Javascript">
+<script language="javascript" type="text/javascript">
 <!-- //
 
     <tmpl_var js_list_arrays>
+    function populate_list (list_count) {
 
-    var new_count = 1;
-    var change_log = new Array();
-
-    nav_edit_mode();
-                                                                               
-    function do_save () {
-        var myform = document.forms["edit_form"];
-        myform.rm.value = "save";
-        var change_string = change_log.join('%^%');
-        myform.changes.value = change_string;
-        myform.submit();
-    }
-                                                                               
-                                                                               
-    function do_save_stay () {
-        var myform = document.forms["edit_form"];
-        myform.rm.value = "save";
-        var change_string = change_log.join('%^%');
-        myform.changes.value = change_string;
-        myform.stay.value = 1;
-        myform.submit();
-    }
-
-    function populate_list (list_count,sel_in_list,no_clear) {
         var next_list = list_count + 1;
 
         // first, clear lists above one selected
-        if ( ! no_clear) {
-            clear_lists_above(next_list);
-        }
+        clear_lists_above(next_list);
 
-        if ( list_count != 0 ) {
-            var select_val = get_selected_val(list_count);
+        var select_val = eval ('document.forms["edit_form"].list_' + list_count + '.options[document.forms["edit_form"].list_' + list_count + '.selectedIndex].value');
         
-            var count = 0;
-            for(var key in eval('list_data[' + select_val + ']') ) {
-                if (eval('list_data[' + select_val + "][key]['__data__']") ) {
-                    eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + "'" + eval("list_data[" + select_val + "][key]['__data__']") + "', '" + select_val + '][' + key + "')");
-                }
-            }
-        } else {
-            var count = 0;
-            for(var key in list_data) {
-               if (list_data[key]['__data__']) {
-                    eval ('document.forms["edit_form"].list_1.options[' + count++ + '] = new Option(' + "'" + eval("list_data[key]['__data__']") +  "', '" + key + "')"); 
-               }
-            }
-        }
-        if (sel_in_list > -1) {
-            eval( 'document.forms["edit_form"].list_' + next_list + '.selectedIndex = sel_in_list');
+        var count = 0;
+        for(var key in eval('list_data[' + select_val + ']') ) {
+           if (eval('list_data[' + select_val + "][key]['__data__']") ) {
+                eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + "'" + eval("list_data[" + select_val + "][key]['__data__']") + "', '" + select_val + '][' + key + "')");
+           }
         }
     }
 
@@ -65,94 +28,25 @@
         }
     }
 
-    function get_selected_val (list_count) {
-        var sindex = eval( 'document.forms["edit_form"].list_' + list_count + '.selectedIndex' );
-        if (sindex > -1) {
-            return eval ('document.forms["edit_form"].list_' + list_count + '.options[' + sindex + '].value');
-        } else {
-            return('undef');
-        }
-    };
+    nav_edit_mode();
 
-    function get_list_id (list_count) {
-        var lid = eval( 'document.forms["edit_form"].list_id_' + list_count + '.value' );
-        return lid; 
+    function do_save () {
+        var myform = document.forms["edit_form"];
+        myform.rm.value = "save";
+        myform.submit();
     }
 
-    function do_delete (list_count) {
-        var select_val = get_selected_val(list_count);
-        log_entry( eval('list_data[' + select_val + "]['__id__']"), 'delete', '');
-        eval('list_data[' + select_val + "]['__data__'] = []");
-        eval('list_data[' + select_val + '] = []');
-        populate_list(list_count-1);
+
+    function save_stay () {
+        var myform = document.forms["edit_form"];
+        myform.rm.value = "save_stay";
+        myform.submit();
     }
 
-    function do_replace(list_count) {
-        var select_val = get_selected_val(list_count);
-        if ( eval("document.forms['edit_form'].new_item_" + list_count + ".value" ) ) {
-            var item = eval( 'list_data[' + select_val + ']');
-            var nv = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
-            item['__data__'] = nv;
-            var indexArray = select_val.split('][');
-            var current_index = indexArray.pop();
-            populate_list(list_count-1, current_index, 1);
-            eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''");
-            log_entry(item['__id__'], 'replace', nv);
-        }
-    }
 
-    function do_move(list_count, down) {
-        var select_val = get_selected_val(list_count);
-        var current_index;
-        if (select_val != 'undef' ) {
-            var indexArray = select_val.split('][');
-            current_index = indexArray.pop();
-            select_val = indexArray.join('][');
-            var firstHalf;
-            var secondHalf;
-            // if moving down, up current index
-            if (down) {
-                current_index = parseInt(current_index) + 1;
-            } else {
-                // if on first index and trying to move up do nothing
-                if (current_index == 0) {
-                    return;
-                } 
-            }
-            if (! select_val) {
-                firstHalf = list_data.slice(0, current_index);
-                secondHalf = list_data.slice(current_index);
-            } else {
-                firstHalf = eval('list_data[' + select_val + '].slice(0,current_index)');
-                secondHalf = eval('list_data[' + select_val + '].slice(current_index)');
-            }
-            if (down && (secondHalf.length == 0)) {
-                return;
-            }
-            var prev = firstHalf.pop();
-            var current = secondHalf.shift();
-
-            // log this change           
-            if (down) {
-                log_entry(prev['__id__'], 'move', parseInt(current_index) + 1);
-            } else {
-                log_entry(current['__id__'], 'move', parseInt(current_index));
-            }
- 
-            firstHalf.push(current);
-            secondHalf.unshift(prev);
-        
-            if (! select_val) {
-                list_data = firstHalf.concat(secondHalf);
-            } else {
-                eval('list_data[' + select_val + '] = firstHalf.concat(secondHalf)');
-            }
-
-            if (! down) {
-                current_index--;
-            }
-            populate_list((list_count-1), current_index, 1);
-
+    function do_delete (list_id) {
+        var select_val = eval ('document.forms["edit_form"].list_' + list_id + '.options[document.forms["edit_form"].list_' + list_id + '.selectedIndex].value');
+        alert(select_val);
         }
     }
 
@@ -251,41 +145,31 @@
 </script>
 
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;LIST GROUP EDIT - <tmpl_var list_group_name></td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
-
+<div class="dark-bar"><p class="left">&nbsp;List Group Edit - <tmpl_var list_group_name></p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+<div class="box">
 <form name="edit_form" method="GET" action="list_group.pl">
-<input type="hidden" name="list_group_id" value="<tmpl_var list_group_id>" overwrite="1">
-<input type="hidden" name="rm" overwrite="1">
-<input type="hidden" name="changes" overwrite="1">
-<input type="hidden" name="stay" overwrite="1">
 <table border="1" cellpadding="2" cellspacing="0" width="100%">
-<tr><td width="150">Description:</td><td width="400"><textarea name="list_group_description" rows="4" cols="60"><tmpl_var list_group_description></textarea></td></tr>
+<tr><td width="150">Description:</td><td width="400"><textarea rows="4" cols="60"><tmpl_var list_group_description></textarea></td></tr>
 <tr class="light-bar"><td colspan=2>LISTS</td></tr>
 <tmpl_loop list_loop>
-<tr><td><tmpl_var list_name></td><td><input type='hidden' name="list_id_<tmpl_var list_count>" value="<tmpl_var list_id>"><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
-<tmpl_if list_item_loop><tmpl_loop list_item_loop><option value="<tmpl_var order>"><tmpl_var data></tmpl_loop></tmpl_if></select>
-<br>&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:do_move(<tmpl_var list_count>, 1)"><img src="images/arrow-asc.gif" border="0"></a>
-<a href="javascript:do_move(<tmpl_var list_count>)"><img src="images/arrow-desc.gif" border="0"></a>
+<tr><td><tmpl_var list_name></td><td><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
+<option value=" " <tmpl_unless choice>SELECTED</tmpl_unless>>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tmpl_if list_item_loop><tmpl_loop list_item_loop><option value="<tmpl_var list_item_id>"><tmpl_var data></tmpl_loop></tmpl_if></select>
 <br><input type="text" name="new_item_<tmpl_var list_count>">
-<input type="button" value="Add" onClick="do_add(<tmpl_var list_count>)" class="button">
+<input type="submit" value="Add" onClick="do_add(<tmpl_var list_count>)" class="button">
 <input type="button" value="Replace" onClick="do_replace(<tmpl_var list_count>)" class="button">
 <input type="button" value="Delete Selected" onClick="do_delete(<tmpl_var list_count>)" class="button">
 </td></tr>
 </tmpl_loop>
 </table>
+</div>
 <div class="button-bar">
     <input type="submit" value="Save" onClick="do_save()" class="button">
-    <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
+    <input type="button" value="Save &amp; Stay" onClick="save_stay()" class="button">
 </div>
 
 
 <!-- End edit_form -->
 </form>
 
-
+</div>
 <tmpl_include /footer.tmpl>

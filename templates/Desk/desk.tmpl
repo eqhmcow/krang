@@ -1,6 +1,6 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
 
   /* returns true if the user has checked anything */
   function something_checked() {
@@ -95,11 +95,7 @@
 
 </script>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td><tmpl_var desk_name> Desk</td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
+<div class="dark-bar"><p class="left"><tmpl_var desk_name> Desk</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
 <!-- publish_story form -->
 <form name="publish_story_form" method="GET" action="publisher.pl">
@@ -111,36 +107,28 @@
   <input type="hidden" name="rm">
   <input type="hidden" name="id">
   <input type="hidden" name="desk_id" value="<tmpl_var desk_id>">
-</table>
+  
+
 
 <tmpl_include HTMLPager/pager-internals.tmpl>
 
 <tmpl_if krang_pager_rows>
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellpadding="5" cellspacing="0" width="100%"><tr class="light"><td valign="bottom">
-
-  Sort By: &nbsp;&nbsp; <tmpl_var sort_select></td></tr>
-</table>
+<div class="boxb">
+<div class="light">Sort By: &nbsp;&nbsp; <tmpl_var sort_select></div>
 
 <div class=button-bar>
   <input type="button" value="Move" onclick='move_checked()' class="button">
   <input type="button" value="Check Out" onclick='checkout_checked()' class="button">
   <tmpl_if may_publish><input type="button" value="Publish" onclick='publish_checked()' class="button"></tmpl_if>
 </div>
-<table border="0" cellspacing="0" width="100%">
-<tr><td class="no-border">Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></td>
-  <td align="right" class="no-border"><tmpl_var colhead_checkbox_column></td></tr>
-</table>
+<div class="no-border"><p class="left">Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></p><p class="right"><tmpl_var colhead_checkbox_column></p></div>
 
-<table border="0" cellspacing="0" cellpadding="8" width="100%">
-<tr><td>
+
 <tmpl_loop krang_pager_rows>
-<table cellspacing="0" width="100%" cellpadding="2">
+<table cellspacing="0" width="571" class="form-head">
 
 <tr class="form-head">
-    <td width="127"><b>Story</b> <tmpl_var story_id>
+    <td width="150"><b>Story</b> <tmpl_var story_id>
         v<tmpl_var version>&nbsp;&nbsp;&nbsp;
     </td>
     <td><tmpl_var title></td>
@@ -148,14 +136,13 @@
       <tmpl_if may_edit><tmpl_var checkbox_column></tmpl_if>
     </td>
   </tr></table>
-
-  <table cellspacing="0" width="100%" class="form-cell">
+  <table cellspacing="0" width="571" class="form-cell">
        <tr>
-          <td class="form-cell" width="120" style="border-bottom:none;">Type</td>
+          <td class="form-cell" width="138" style="border-bottom:none;">Type</td>
           <td class="form-cell" style="border-bottom:none;"><tmpl_var story_type></td>
        </tr>
      <tr>
-        <td class="form-cell" width="120" style="border-top:none;">URL</td>
+        <td class="form-cell" width="138" style="border-top:none;">URL</td>
         <td class="form-cell" style="border-top:none;"><tmpl_var url></td>
      </tr>
      <tr>
@@ -174,9 +161,7 @@
   <div style='height:15px'></div>
 
   </tmpl_loop>
-<table cellspacing="0" width="100%" cellpadding="2">
-<tr><td>
-<tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
+<div class="no-border"><p class="left2"><tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
 
 <tmpl_loop page_numbers>
   <tmpl_if is_current_page><b><tmpl_var page_number></b>
@@ -189,15 +174,7 @@
 
   <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a>
   <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a>
-  </tmpl_if>
-
-</td></tr></table>
-</td></tr></table>
-</td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+  </tmpl_if></div></div>
 
 <div class="button-bar">
   <input type="button" value="Move" onclick='move_checked()' class="button">
@@ -208,5 +185,5 @@
 </tmpl_if>
 
 </form>
-
+</div>
 <tmpl_include footer.tmpl>

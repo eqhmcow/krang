@@ -16,79 +16,35 @@
 <form method=post name=new_story>
 <input type=hidden name=rm>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;NEW STORY</td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar"><p class="left">&nbsp;New Story</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr>
-  <td class="line"><img width="1" height="1"></td>
-  <td><table border="0" cellpadding="5" cellspacing="0" width="100%">
-
-<tr>
-<td colspan=2>Properties</td>
-</tr>
-
-<tr>
-<td width="135">*Type:</td>
-<td>
+<div class="box">
+<table border="0" cellpadding="5" cellspacing="0" width="100%">
+<tr><td colspan="2">Properties</td></tr>
+<tr><td width="135" valign="top">*Type:</td><td valign="top">
     <tmpl_if bad_type><span class="invalid"></tmpl_if>
        <tmpl_var type_selector>
-    <tmpl_if bad_type></span></tmpl_if>
-</td>
-</tr>
-
-<tr>
-<td>*Title:</td>
-<td>
-   <input <tmpl_if bad_title>class="invalid"</tmpl_if> type=text size=40 value="<tmpl_var escape=html title>" name=title>
-</td>
-</tr>
-
-<tr>
-<td>Slug:</td>
-<td>
-   <input <tmpl_if bad_slug>class="invalid"</tmpl_if> type=text size=15 value="<tmpl_var escape=html slug>" name=slug>
-</td>
-</tr>
-
-<tr>
-<td>*Cover Date:</td>
-<td>
+    <tmpl_if bad_type></span></tmpl_if></td></tr>
+<tr> <td valign="top">*Title:</td> <td valign="top">
+   <input <tmpl_if bad_title>class="invalid"</tmpl_if> type=text size=40 value="<tmpl_var escape=html title>" name=title></td></tr>
+<tr> <td valign="top">Slug:</td> <td valign="top">
+   <input <tmpl_if bad_slug>class="invalid"</tmpl_if> type=text size=15 value="<tmpl_var escape=html slug>" name=slug></td></tr>
+<tr> <td valign="top">*Cover Date:</td> <td valign="top">
     <tmpl_if bad_cover_date><span class="invalid"></tmpl_if>
        <tmpl_var cover_date_selector>
-    <tmpl_if bad_cover_date></span></tmpl_if>
-</td>
-</tr>
-
-<tr>
-<td>*Site/Category:</td>
-<td valign=middle>
+    <tmpl_if bad_cover_date></span></tmpl_if></td></tr>
+<tr> <td valign="top">*Site/Category:</td><td valign="top">
     <tmpl_if bad_category_id><span class="invalid"></tmpl_if>
       <tmpl_var category_chooser>
-    <tmpl_if bad_category_id></span></tmpl_if>
-</td>
-</tr>
-
-<tr><td><img width="1" height="10"></td></tr>
-
-</table>
-</td>
-<td class="line"><img width="1" height="1"></td>
-</tr>
-
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+    <tmpl_if bad_category_id></span></tmpl_if></td></tr>
+</table></div>
 
 <div class="button-bar">
   <input type="button" value="Create" onclick="create()" class="button">
   <input type="reset" value="Reset" class="button">
   <input type="button" value="Cancel" onclick="cancel()" class="button">
 &nbsp;&nbsp;&nbsp;</div>
-
+</div>
 
 <tmpl_include footer.tmpl>
         

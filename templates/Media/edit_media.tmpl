@@ -66,14 +66,7 @@
 // -->
 </script>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;<tmpl_if add_mode>NEW<tmpl_else>EDIT</tmpl_if> MEDIA</span></td>
-  <td align="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>New<tmpl_else>Edit</tmpl_if> Media</p><p class="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
 <!-- publish_media form -->
 <form name="publish_media_form" method="GET" action="publisher.pl">
@@ -87,9 +80,11 @@
 </form>
 <form name="edit_media_form" method="POST" enctype="multipart/form-data">
 <input type="hidden" name="rm" value=<tmpl_if add_mode>"save_add"<tmpl_else>"save_edit"</tmpl_if>>
-<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>"><tr>
-  <td class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><tmpl_unless add_mode><table border="0" cellpadding="5" cellspacing="0" width="100%">
+<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
+
+<tmpl_unless add_mode>
+<div class="boxb">
+<table width="100%" cellpadding="5" cellspacing="0" border="0">
 <tr class="light">
   <td width="135">ID:</td>
   <td><tmpl_var media_id></td>
@@ -117,9 +112,9 @@
   <td colspan="2"><tmpl_var escape=HTML creation_date></td>
 </tr>
 
-</table>
+</table></div>
 </tmpl_unless>
-
+<div class="box">
 <table border="0" cellpadding="5" cellspacing="0" width="100%">
 <tr>
   <td>*Title:</td>
@@ -176,7 +171,7 @@
 <input type="hidden" name="return_script" value="media.pl">
 <tmpl_var return_params>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
 <!-- 
   function revert_version () {
     if (confirm("Are you sure you want to discard your work and revert to this old version?")) {
@@ -193,25 +188,15 @@
   }
 // -->
 </script>
-  </td>
-  <td class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
-
-<img width="1" height="4"><br>
-<div class=form-box>
+</div>
+<div class="boxc">
 Version: <tmpl_var media_version_chooser>
 <input type="button" value="Revert" onClick="revert_version()" class="button">
 <input type="button" value="View" onClick="view_version()" class="button">
 </div>
 </tmpl_unless>
 <tmpl_if add_mode>
-  </td>
-  <td class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+  </div>
 </tmpl_if>
 
 <!-- END Version Navigation -->
@@ -224,9 +209,9 @@ Version: <tmpl_var media_version_chooser>
   <tmpl_if may_publish><input type="button" value="Publish" onClick="publish_media('<tmpl_var media_id>')" class="button"></tmpl_if>
   <input type="reset" value="Reset" class="button">
   <tmpl_unless add_mode><input type="button" value="Delete" onClick="do_delete()" class="button"></tmpl_unless>&nbsp;
-</div>
+</div></div>
 
 </form>
-
+</div>
 
 <tmpl_include footer.tmpl>

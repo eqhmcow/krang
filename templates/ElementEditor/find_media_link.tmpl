@@ -1,6 +1,6 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
   nav_edit_mode();
 
   function preview_media(id) {
@@ -43,21 +43,20 @@
 <input type="hidden" name="advanced" value="<tmpl_var escape=1 advanced>">
 <input type="hidden" name="path" value="<tmpl_var escape=1 path>">
 
-<div class="dark-bar">Select Media</div>
-
-<div class="tight-form-box">
-<div class="light" style='padding-bottom: 3px; margin-bottom: 5px'>
-SEARCH
-
+<div class="dark-bar"><p class="left">&nbsp;Select Media</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 <tmpl_if advanced>
+<div class="box">
+<table border="0" cellpadding="6" cellspacing="0" width="571">
 
+<tr><td>SEARCH
   (<a href="javascript:simple_search()">Simple Search</a>)
+</td></tr>
 
   <!-- Advanced Search Form -->
-    <table border="0" cellspacing="5">
-
-      <tr>
-        <td>File:</td>
+  <tr><td>
+    <table border="0" cellspacing="5" cellpadding="2">
+    <tr>
+      <td>File:</td>
         <td><input size="40" type="textfield" name="search_filename" value="<tmpl_var escape=HTML search_filename>"></td>
       </tr>
 
@@ -93,16 +92,18 @@ SEARCH
 
       <input type="hidden" name="search_filter" value="">
 
-    </table>
+    </table></td></tr></table>
 
 <tmpl_else>
-
-  (<a href="javascript:advanced_search()">Advanced Search</a>)<br />
+<div class="boxb"> 
+ <div class="light">
+  <p>SEARCH
+  (<a href="javascript:advanced_search()">Advanced Search</a>)</p>
   <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-  <input type="button" value="Search" onclick="document.forms[0].submit()">
-
-</tmpl_if>
+  <input type="button" value="Search" onclick="document.forms[0].submit()" class="button">
 </div>
+</tmpl_if>
+
 
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="">
@@ -119,9 +120,7 @@ SEARCH
 <input type="hidden" name="search_filter" value="">
 </form>
 
-<div style='margin:4px'>
 <tmpl_var pager_html>
-</div>
 
 </div>
 
@@ -129,5 +128,5 @@ SEARCH
     <input type="button" value="Cancel" onclick="cancel_select()" class="button">
 </div>
 
-
+</div>
 <tmpl_include footer.tmpl>

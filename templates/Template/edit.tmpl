@@ -64,42 +64,36 @@
 </script>
 
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;<tmpl_if add_mode>NEW<tmpl_else>EDIT</tmpl_if> TEMPLATE</td>
-  <td align="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>New<tmpl_else>Edit</tmpl_if> Template</p><p class="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
 
 
-<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
-  <td class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><tmpl_unless add_mode><table border="0" cellpadding="5" cellspacing="0" width="100%">
+<tmpl_unless add_mode>
+<div class="boxb">
+<table width="100%" cellpadding="5" cellspacing="0" border="0">
 <tr class="light">
-  <td width="140">ID:</td>
-  <td width="440"><tmpl_var template_id></td>
-</tr>
+  <td width="150">ID:</td>
+  <td><tmpl_var media_id></td></tr>
 
 <tr class="light">
-  <td width="140">Filename:</td>
-  <td width="440"><tmpl_var filename></td>
+  <td width="150">Filename:</td>
+  <td><tmpl_var filename></td>
 </tr>
 
 <tr class="light">
-  <td width="140">URL:</td>
-  <td width="440"><tmpl_var url></td>
+  <td width="150">URL:</td>
+  <td><tmpl_var url></td>
 </tr>
 
 <tr class="light">
-  <td width="140">Current&nbsp;Version:</td>
-  <td width="440"><tmpl_var version></td>
+  <td width="150">Current&nbsp;Version:</td>
+  <td><tmpl_var version></td>
 </tr>
 
 <tr class="light">
-  <td width="140">Deployed&nbsp;Version:</td>
-  <td width="440"><tmpl_unless deployed_version>[n/a]</tmpl_unless><tmpl_var deployed_version></td></tr>
-
+  <td width="150">Deployed&nbsp;Version:</td>
+  <td><tmpl_unless deployed_version>[n/a]</tmpl_unless><tmpl_var deployed_version></td></tr>
+</table></div>
 </tmpl_unless>
 
 <form name="delete_template_form" method="post">
@@ -110,11 +104,10 @@
 <form name="edit_template_form" method="POST" enctype="multipart/form-data">
 <input type="hidden" name="rm" value=<tmpl_if add_mode>"save_add"<tmpl_else>"save_edit"</tmpl_if>>
 <input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
-
-<tmpl_if add_mode>
+<div class="box">
 <table border="0" cellpadding="5" cellspacing="0" width="100%">
-
-<script language="javascript">
+<tmpl_if add_mode>
+<script language="javascript" type="text/javascript">
   function update_filename (e) {
      var targ = e.form.elements["filename"];
      if (e.selectedIndex == 0) { 
@@ -130,7 +123,7 @@
 </script>
 
 <tr>
-  <td width="140">Element:</td>
+  <td width="150">Element:</td>
   <td><tmpl_if error_no_filename><span class="invalid"></tmpl_if><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
@@ -140,26 +133,26 @@
 </tr>
 
 <tr>
-  <td width="140">Site/Categories:</td>
+  <td width="150">Site/Categories:</td>
   <td><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_category_id><span class="invalid"></tmpl_if><tmpl_var category_chooser><tmpl_if error_category_id></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 </tmpl_if>
 
 <tr>
-  <td width="140">Upload template file:<tmpl_if filename><br />
+  <td width="150">Upload template file:<tmpl_if filename><br />
 <tmpl_if template_id><a href="javascript:preview_template('<tmpl_var escape=HTML template_id>')"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if template_id></a></tmpl_if>
 <tmpl_var escape=HTML file_size></tmpl_if></td>
   <td ><tmpl_if error_template_file><span class="invalid"></tmpl_if><tmpl_var upload_chooser><tmpl_if error_template_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 <tr>
-  <td valign="top" width="140">Template code:</td>
-  <td><textarea rows="30" cols="55" name="content"><tmpl_var escape=HTML content></textarea></td>
+  <td valign="top" width="150">Template code:</td>
+  <td valign="top"><textarea rows="30" cols="35" name="content"><tmpl_var escape=HTML content></textarea></td>
 </tr>
 
 <tr>
-  <td width="140">Test with Template:</td>
+  <td width="150">Test with Template:</td>
   <td><input name="testing" type="checkbox" value="1" <tmpl_if testing>checked</tmpl_if>></td>
 </tr>
 </table>
@@ -170,7 +163,7 @@
 <tmpl_unless add_mode>
 <tmpl_var history_return_params>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
 <!--
   function revert_version () {
     if (confirm("Are you sure you want to discard your work and revert to " +
@@ -188,25 +181,16 @@
   }
 // -->
 </script>
-</td>
-  <td class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+</div>
 
-<img width="1" height="4"><br>
-<div class=form-box>
+<div class="boxc">
 Version: <tmpl_var version_chooser>
 <input type="button" value="Revert" onClick="revert_version()" class="button">
 <input type="button" value="View" onClick="view_version()" class="button">
 </div>
 </tmpl_unless>
 <tmpl_if add_mode>
-  </td>
-  <td class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+   </div>
 </tmpl_if>
 <!-- END Version Navigation -->
 
@@ -220,8 +204,9 @@ Version: <tmpl_var version_chooser>
   </tmpl_unless>
   <input type="button" value="Deploy" onClick="do_deploy()" class="button">
   <input type="reset" value="Reset" class="button">
-</div>
+</div></div>
 
 
 </form>
+ </div>
 <tmpl_include footer.tmpl>

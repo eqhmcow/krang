@@ -1,6 +1,6 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
   nav_edit_mode();
 
   function preview_story_session() {
@@ -119,20 +119,10 @@
 <form method="post" name="edit" enctype="multipart/form-data">
 <input type="hidden" name="rm" value="edit">
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;EDIT STORY</td>
-  <td align="right"><tmpl_if is_root><tmpl_if story_id><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_if></tmpl_if><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar"><p class="left">&nbsp;Edit Story</p><p class="right"><tmpl_if is_root><tmpl_if story_id><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_if></tmpl_if><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr>
-
-  <td class="line"><img width="1" height="1"></td>
-
-  <td><img width="1" height="4"><table width="100%" cellpadding="5" cellspacing="0" border="0">
+<div class="boxb">
+<table width="100%" cellpadding="5" cellspacing="0" border="0">
 
 <tr class="light">
 <td width="135">ID:</td>
@@ -211,35 +201,20 @@
 </tmpl_if>
 
 </table>
-</td>
-  <td class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
-
-<img width="1" height="10"><br>
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-<tr>
-
-  <td class="line"><img width="1" height="1"></td>
-  <td><table border="0" cellpadding="5" cellspacing="0" width="100%">
-<tr>
-
-  <td>
-
+</div>
+<div class="boxc">
 <tmpl_include /ElementEditor/edit.tmpl>
-
+</div>
 <tmpl_if is_root>
-<img width="1" height="10"><br>
-&nbsp;Sites/Categories<br>
-<table border="0" width="100%" cellpadding="0" cellspacing="0" class="form-cell">
+
+<div class="boxc">
+<p>Sites/Categories</p>
+<table border="0" cellpadding="0" cellspacing="0" class="form-cell">
   <tr class="form-head">
-    <td width="15%">Site</td>
-    <td width="55%">Category</td>
-    <td width="15%" align="center">Primary</td>
-    <td width="15%" align="center"><input type="checkbox" onclick="checkall(this, 'cat_remove_')"></td>
+    <td width="125">Site</td>
+    <td width="275">Category</td>
+    <td width="85">Primary</td>
+    <td width="75"><input type="checkbox" onclick="checkall(this, 'cat_remove_')"></td>
   </tr> 
 
   <tmpl_unless category_loop>
@@ -252,8 +227,8 @@
   <tr>
     <td class="form-cell"><tmpl_var site></td>
     <td class="form-cell"><tmpl_var category></td>
-    <td class="form-cell" align="center"><input type="radio" name="primary_category_id" value="<tmpl_var category_id>" <tmpl_if __first__>checked</tmpl_if>></td>
-    <td class="form-cell" align="center"><tmpl_unless __first__><input type="checkbox" name="cat_remove_<tmpl_var category_id>"><tmpl_else>&nbsp;</tmpl_unless></td>
+    <td class="form-cell"><input type="radio" name="primary_category_id" value="<tmpl_var category_id>" <tmpl_if __first__>checked</tmpl_if>></td>
+    <td class="form-cell"><tmpl_unless __first__><input type="checkbox" name="cat_remove_<tmpl_var category_id>"><tmpl_else>&nbsp;</tmpl_unless></td>
   </tr>
   </tmpl_loop>
 
@@ -263,25 +238,20 @@
     <td align="center" class="form-cell"><input type="button" value="Delete" onClick='remove_categories()' class="button"></td>
   </tr>
 </table>
+</div>
 
-</tmpl_if>   
+</tmpl_if> 
 
-</td></tr></table>
 
-</td>
-  <td class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
 
 <tmpl_if is_root>
-<img width="1" height="10"><br>
-  <div class="form-box">
 
-    <table width="568" cellpadding="0" cellspacing="0" border="0"><tr>
+<div class="boxc">
+  
+  <table width="568" cellpadding="0" border="0" class="no-border"><tr>
     <td width="210">
       Desk: <select name="checkin_to"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select>&nbsp;
-      <input type="button" value="Check-in" onclick="check_in()" class="button">
+      <input type="button" value="Check In" onclick="check_in()" class="button">
     </td>
     <td align="right" width="348">
       Version: <tmpl_var version_selector>&nbsp;
@@ -289,8 +259,7 @@
       <input type="button" value="View" onclick="save_and_view()" class="button">
     </td></tr>
     </table>
-  </div>
-
+</div>
 </tmpl_if>
 
 <div class="button-bar">
@@ -316,5 +285,5 @@
 &nbsp;&nbsp;&nbsp;</div>
 
 </form>
-
+</div>
 <tmpl_include footer.tmpl>

@@ -12,94 +12,91 @@
 
 </script>
   
-  <div class="dark-bar">Publish Story</div>
+ <div class="dark-bar"><p class="left">Publish Story</p></div>
 
   <form method=get action="publisher.pl">
 
-  <div class=form-box>
-    
-    <table class=form-cell cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
-      <tr class=form-head>
-        <td colspan=5><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
+  <div class="box">
+    <br>
+    <table cellspacing="0" cellpadding="4" class="form-head">
+      <tr>
+        <td colspan="4"><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
       </tr>
-      <tr class=form-head>
-        <td>ID</td>
-        <td>URL</td>
+      <tr>
+        <td width="43">ID</td>
+        <td width="200">URL</td>
         <td>Title</td>
-        <td colspan=2>Status</td>
-      </tr>
+        <td width="50">Status</td>
+      </tr></table>
     
       <!-- stories loop -->
       <tmpl_loop stories>
+		<table cellspacing="0" width="571" class="form-cell" cellpadding="4">
         <tmpl_if checked_out><tr class="invalid"><tmpl_else><tr></tmpl_if>
-            <td class=form-cell><tmpl_var id></td>
-            <td class=form-cell><tmpl_var url></td>
-            <td class=form-cell><tmpl_var title></td>
-            <td class=form-cell colspan=2><tmpl_if status><tmpl_var status><tmpl_else>&nbsp;</tmpl_if></td>
-          </tr>
+            <td class="form-cell" width="40"><tmpl_var id></td>
+            <td class="form-cell" width="200"><tmpl_var url></td>
+            <td class="form-cell"><tmpl_var title></td>
+            <td class="form-cell" width="50"><tmpl_if status><tmpl_var status><tmpl_else>&nbsp;</tmpl_if></td>
+          </tr></table>
         </tmpl_loop>
         <!-- /stories loop -->
-
-        <p>
+ <table cellspacing="0" cellpadding="4" class="form-head">
         <tr>
-          <td colspan=4>&nbsp;</td>
+          <td colspan="5"><b>Media</b></td>
         </tr>
-        <tr class=form-head>
-          <td colspan=5><b>Media</b>&nbsp;&nbsp;&nbsp;</td>
-        </tr>
-        <tr class=form-head>
-          <td>ID</td>
-          <td>URL</td>
+        <tr>
+          <td width="43">ID</td>
+          <td width="200">URL</td>
           <td>Title</td>
-          <td>Thumbnail</td>
-          <td>Status</td>
-        </tr>
+          <td width="80">Thumbnail</td>
+          <td width="50">Status</td>
+      </tr></table>
         
         <!-- media loop -->
         <tmpl_loop media>
+		  <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
           <tmpl_if checked_out><tr class="invalid"><tmpl_else><tr></tmpl_if>
-              <td class=form-cell><tmpl_var id></td>
-              <td class=form-cell><tmpl_var url></td>
-              <td class=form-cell><tmpl_var title></td>
-              <td class=form-cell><tmpl_if thumbnail><a href="javascript:preview_media(<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border=0></a><tmpl_else>&nbsp;</tmpl_if></td>
-              <td class=form-cell><tmpl_if status><tmpl_var status><tmpl_else>&nbsp;</tmpl_if></td>
-            </tr>
+              <td class="form-cell" width="40"><tmpl_var id></td>
+              <td class="form-cell" width="200"><tmpl_var url></td>
+              <td class="form-cell"><tmpl_var title></td>
+              <td class="form-cell" width="80"><tmpl_if thumbnail><a href="javascript:preview_media(<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border="0"></a><tmpl_else>&nbsp;</tmpl_if></td>
+              <td class="form-cell" width="50"><tmpl_if status><tmpl_var status><tmpl_else>&nbsp;</tmpl_if></td>
+            </tr></table>
           </tmpl_loop>
     <!-- /media loop -->
-  </table>
+
 
   <input type=hidden name=rm value="publish_assets">
   <tmpl_loop name=asset_id_list>
     <input type=hidden name="asset_id_list" value="<tmpl_var id>">
   </tmpl_loop>
 
-  <p>
+  <br>
 
-  <table class=form-cell width=100% cellpadding=0 cellspacing=0>
-    <tr class=form-head-thin>
-      <td colspan=2>Schedule Publish Time</td>
-    </tr>
-    
+ <table cellspacing="0" cellpadding="4" class="form-head">
     <tr>
-      <td class=form-cell><input type="radio" name="publish_now" value="1" checked="checked"/></td>
-      <td class=form-cell>Now</td>
+      <td>Schedule Publish Time</td>
+    </tr></table>
+   <table cellspacing="0" width="571" class="form-cell" cellpadding="4"> 
+    <tr>
+      <td class="form-cell" width="40"><input type="radio" name="publish_now" value="1" checked="checked"/></td>
+      <td class="form-cell">Now</td>
     </tr>
     <tr>
-      <td class=form-cell><input type="radio" name="publish_now" value="0"/></td>
-      <td class=form-cell>At: <tmpl_if bad_publish_date><span class="invalid"></tmpl_if>
+      <td class="form-cell" width="40"><input type="radio" name="publish_now" value="0"/></td>
+      <td class="form-cell">At: <tmpl_if bad_publish_date><span class="invalid"></tmpl_if>
         <tmpl_var publish_date_chooser>
           <tmpl_if bad_publish_date></span></tmpl_if>
       </td>
-    </tr>
-    
+    </tr>    
   </table>
-
+<br>
 </div>
 
 <div class="button-bar">
-   <input type="submit" name="Publish" value="Publish">
+   <input type="submit" name="Publish" value="Publish" class="button">
 </div>
   
 </form>
-
+</div>
 <tmpl_include /footer.tmpl>

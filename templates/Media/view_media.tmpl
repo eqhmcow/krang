@@ -1,6 +1,6 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
   <tmpl_if was_edit>nav_edit_mode();</tmpl_if>
 
   function preview_media(id) {
@@ -9,93 +9,87 @@
   }
 </script>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;VIEW MEDIA</td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar"><p class="left">&nbsp;View Media</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellpadding="6" cellspacing="0" width="100%">
-    <tr class="light">
-      <td>ID:</td>
-      <td width="60%"><tmpl_var media_id></td>
-      <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"></tmpl_if><tmpl_if thumbnail_path><img border="0" src="<tmpl_var thumbnail_path>"></tmpl_if><tmpl_if media_id></a></tmpl_if></td>
+<div class="boxb">
+<div class="light">
+<table width="100%" cellspacing="10" border="0">
+    <tr><td>ID:</td>
+      <td width="50%"><tmpl_var media_id></td>
+      <td rowspan="4" align="center"><tmpl_if media_id><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"></tmpl_if><tmpl_if thumbnail_path><p>Thumbnail</p><img border="0" src="<tmpl_var thumbnail_path>"></tmpl_if><tmpl_if media_id></a></tmpl_if></td>
     </tr>
-    <tr class="light">
+    <tr>
       <td>Title:</td>
       <td><tmpl_var title></td>
     </tr>
 
-<tr class="light">
+<tr>
   <td>Type:</td>
   <td><tmpl_var type></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>Current&nbsp;Version:</td>
   <td><tmpl_var version></td>
 </tr>
 
-<tr class="light">
+<tr>
   <td>Published&nbsp;Version:</td>
   <td colspan="2"><tmpl_unless published_version>[n/a]</tmpl_unless><tmpl_var published_version></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>URL:</td>
   <td colspan="2"><tmpl_var url></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>Site/Category:</td>
   <td colspan="2"><tmpl_var category></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>File:</td>
   <td colspan="2"><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"><tmpl_var escape=HTML filename></a>
 <tmpl_var escape=HTML file_size></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>Default&nbsp;Caption:</td>
   <td colspan="2"><tmpl_var escape=HTML caption></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>Default&nbsp;Copyright:</td>
   <td colspan="2"><tmpl_var escape=HTML copyright></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>Alt&nbsp;tag:</td>
   <td colspan="2"><tmpl_var escape=HTML alt_tag></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>Creation&nbsp;Date:</td>
   <td colspan="2"><tmpl_var escape=HTML creation_date></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>Notes:</td>
   <td colspan="2"><tmpl_var escape=HTML notes></td>
 </tr>
 
 
-<tr class="light">
+<tr>
   <td>Contributors:</td>
   <td colspan="2"><tmpl_if contribs><tmpl_loop contribs><tmpl_var first> <tmpl_var last> (<tmpl_var type>)<tmpl_unless __last__>, </tmpl_unless></tmpl_loop><tmpl_else>None.</tmpl_if></td>
 </tr>
@@ -111,7 +105,7 @@
 <input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
 </form>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
 <!-- //
 
         function do_return () {
@@ -128,19 +122,14 @@
 // -->
 </script>
 
-</table>
+</table></div>
 
-  </td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td>
-</tr>
-</table>
+  </div>
 
 <div class="button-bar">
   <input type="button" value="Return" onClick="javascript:do_return()" class="button">
   <tmpl_unless is_old_version><tmpl_if can_edit><input type="button" value="Edit" onClick="javascript:do_edit_media()" class="button"></tmpl_if></tmpl_unless>&nbsp;
-</div>
+</div></div>
 
 
 

@@ -1,7 +1,7 @@
 <tmpl_include /header.tmpl>
 
 
-<script language="Javascript">
+<script language="javascript" type="text/javascript">
 <!-- //
 
     nav_edit_mode();
@@ -47,19 +47,9 @@
 </script>
 
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;GROUP <tmpl_if add_mode>ADD<tmpl_else>EDIT</tmpl_if></td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar"><p class="left">&nbsp;Group <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
-  <td class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4">
-
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
+<div class="box">
 <form name="edit_group_form" method="POST">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="rm" value="save">
@@ -72,20 +62,11 @@
 <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 
+<div class="no-border">Group Name:&nbsp;&nbsp;&nbsp;<tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_name><span class="invalid"></tmpl_if><input type="textfield" size="30" name="name" value="<tmpl_var escape=HTML name>"><tmpl_if error_invalid_name></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></div>
+
+<table cellspacing="0" cellpadding="4" class="form-head">
+
 <tr>
-  <td width="100">Group Name:</td>
-  <td><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_name><span class="invalid"></tmpl_if><input type="textfield" size="30" name="name" value="<tmpl_var escape=HTML name>"><tmpl_if error_invalid_name></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
-</tr>
-
-</table>
-
-<table border="0" cellspacing="0" cellpadding="8" width="100%">
-<tr><td>
-
-<!-- Site/Root Category permissions -->
-<table cellspacing="0" width="100%" cellpadding="2">
-
-<tr class="form-head">
    <td align="left">Sites</td>
     <td width="85" align="center">Categories</td>
     <td width="85" align="center">Edit</td>
@@ -93,7 +74,7 @@
     <td width="85" align="center">Hide</td>
 </tr></table>
 
-    <table cellspacing="0" width="100%" class="form-cell">
+    <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
 
 <tmpl_loop categories><tr>
     <td class="form-cell"><tmpl_var category_url></td>
@@ -105,19 +86,19 @@
 <!-- END Site/Root Category permissions -->
 
 
-<br />
+<br>
 
 <!-- Asset permissions -->
-<table cellspacing="0" width="100%" cellpadding="2">
+<table cellspacing="0" cellpadding="4" class="form-head">
 
-<tr class="form-head">
+<tr>
   <td align="left">Assets</td>
     <td width="85" align="center">Edit</td>
     <td width="85" align="center">Read-Only</td>
     <td width="85" align="center">Hide</td> 
 </tr></table>
 
-    <table cellspacing="0" width="100%" class="form-cell">
+    <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
 
 <tr>
     <td class="form-cell">Stories</td>
@@ -139,21 +120,21 @@
 <!-- END Asset permissions -->
 
 
-<br />
+<br>
 
 
 
 <!-- Desk permissions -->
-<table cellspacing="0" width="100%" cellpadding="2">
+<table cellspacing="0" cellpadding="4" class="form-head">
 
-<tr class="form-head">
+<tr>
   <td align="left">Desks</td>
     <td width="85" align="center">Edit</td>
     <td width="85" align="center">Read-Only</td>
     <td width="85" align="center">Hide</td>
 </tr></table>
 
-    <table cellspacing="0" width="100%" class="form-cell">
+ <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
 
 <tmpl_loop desks><tr>
     <td class="form-cell"><tmpl_var desk_name></td>
@@ -163,16 +144,16 @@
 </table>
 <!-- END Desk permissions -->
 
-<br />
+<br>
 
 <!-- Administration permissions -->
-<table cellspacing="0" width="100%" cellpadding="2">
+<table cellspacing="0" cellpadding="4" class="form-head">
 
-<tr class="form-head">
+<tr>
     <td width="40">&nbsp;</td><td align="left">Administration permissions</td>
 </tr></table>
 
-    <table cellspacing="0" width="100%" class="form-cell">
+    <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
 
 <tr>
     <td class="form-cell" align="center" width="30"><tmpl_var may_publish></td>
@@ -219,16 +200,10 @@
     <td class="form-cell" align="left">May Check In All</td>
 </tr>
  
-</table>
+</table><br>
 <!-- END Administration permissions -->
-</td></tr>
-</table>
 
-</td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+</div>
 
 <div class="button-bar">
     <input type="submit" value="Save" onClick="do_save()" class="button">
@@ -241,6 +216,6 @@
 
 <!-- End edit_group_form -->
 </form>
-
+</div>
 
 <tmpl_include /footer.tmpl>

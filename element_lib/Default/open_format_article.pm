@@ -50,7 +50,7 @@ sub new {
                                                         display_name => 'Open Format Page',
                                                         pageable => 1,
                                                         rows => 10,
-                                                        cols => 50,
+                                                        cols => 30,
                                                         min => 1 )
                 ],
                 @_);

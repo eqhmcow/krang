@@ -1,6 +1,6 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
   nav_edit_mode();
         
   function db_save() {
@@ -112,36 +112,18 @@
   <div class="alert">* <tmpl_var alert></div>
 </tmpl_loop>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;EDIT CATEGORY</td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar"><p class="left">&nbsp;Edit Category</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellpadding="6" cellspacing="0" width="100%">
-
-<!--
-  <tr class="light"><td>ID:</td><td><tmpl_var category_id></td></tr>
--->
+<div class="boxb">
+<table width="100%" cellpadding="5" cellspacing="0" border="0">
+<!-- <tr class="light"><td>ID:</td><td><tmpl_var category_id></td></tr> -->
 
 <tr class=light><td>URL:</td><td><tmpl_var url></td>
 </tr>
 </table>
+<tmpl_include /ElementEditor/edit.tmpl>
 
-<table border="0" cellspacing="0" cellpadding="8" width="100%">
-<tr><td><table border="0" cellspacing="0" width="100%">
-<tr><td class="no-border"><tmpl_include /ElementEditor/edit.tmpl></td></tr>
-                </table></td></tr>
-</table>
-  </td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+</div>
 
 <div class="button-bar">
   <tmpl_if is_root>
@@ -165,5 +147,5 @@
 </div>
 
 </form>
-
+</div>
 <tmpl_include footer.tmpl>

@@ -1,6 +1,6 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript">
+<script language="javascript" type="text/javascript">
   <tmpl_if was_edit>nav_edit_mode();</tmpl_if>
 
   function preview_story(id) {
@@ -31,78 +31,73 @@
       <input type=hidden name=return_params value="<tmpl_var escape=HTML name="value">">
    </tmpl_loop>
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;VIEW STORY</td>
-  <td align="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar"><p class="left">&nbsp;View Story</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+<div class="box">
+<br>
+<table class="form-head">
 
-<p>
+<tr>
+<td>Information</td>
+</tr></table>
 
-<table width=100% cellpadding=2 cellspacing=0 class="form-cell">
-
-<tr class=form-head>
-<td colspan=2>Information</td>
+<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
+<tr>
+<td width="160" class="form-cell">ID:</td>
+<td class="form-cell"><tmpl_var story_id></td>
 </tr>
 
 <tr>
-<td class=form-cell width=30%>ID:</td>
-<td class=form-cell width=70%><tmpl_var story_id></td>
+<td class="form-cell">Type:</td>
+<td class="form-cell"><tmpl_var type></td>
 </tr>
 
 <tr>
-<td class=form-cell>Type:</td>
-<td class=form-cell><tmpl_var type></td>
-</tr>
-
-<tr>
-<td class=form-cell>Version:</td>
-<td class=form-cell><tmpl_var version></td>
+<td class="form-cell">Version:</td>
+<td class="form-cell"><tmpl_var version></td>
 </tr>
 
 <tmpl_if is_root>
 <tr>
-<td class=form-cell>Published Version:</td>
-<td class=form-cell><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td>
+<td class="form-cell">Published Version:</td>
+<td class="form-cell"><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td>
 </tr>
 
 <tr>
-<td class=form-cell>Title:</td>
-<td class=form-cell><tmpl_var title></td>
+<td class="form-cell">Title:</td>
+<td class="form-cell"><tmpl_var title></td>
 </tr>
 
 <tr>
-<td class=form-cell>Slug:</td>
-<td class=form-cell><tmpl_var slug></td>
+<td class="form-cell">Slug:</td>
+<td class="form-cell"><tmpl_var slug></td>
 </td>
 </tr>
 </tmpl_if>
 
 <tr>
-<td class=form-cell>URL:</td>
-<td class=form-cell><tmpl_var url></td>
+<td class="form-cell">URL:</td>
+<td class="form-cell"><tmpl_var url></td>
 </tr>
 
 <tmpl_if is_root>
 <tr>
-<td class=form-cell>Categories:</td>
-<td class=form-cell><tmpl_loop category_loop><tmpl_var url><br></tmpl_loop></td>
+<td class="form-cell">Categories:</td>
+<td class="form-cell"><tmpl_loop category_loop><tmpl_var url><br></tmpl_loop></td>
 </tr>
 
 <tr>
-<td class=form-cell>Cover Date:</td>
-<td class=form-cell><tmpl_var cover_date></td>
+<td class="form-cell">Cover Date:</td>
+<td class="form-cell"><tmpl_var cover_date></td>
 </tr>
 
 <tr>
-<td class=form-cell>Priority:</td>
-<td class=form-cell><tmpl_var priority></td>
+<td class="form-cell">Priority:</td>
+<td class="form-cell"><tmpl_var priority></td>
 </tr>
 
 <tr>
-<td class=form-cell>Contributors:</td>
-<td class=form-cell>
+<td class="form-cell">Contributors:</td>
+<td class="form-cell">
 <tmpl_if contribs_loop>
   <tmpl_loop contribs_loop>
      <tmpl_var first_name> <tmpl_var last_name> (<tmpl_var type>)<tmpl_unless __last__>, </tmpl_unless>
@@ -121,23 +116,22 @@
 
 <tmpl_include /ElementEditor/view.tmpl>
 
-<p>
+</p>
 
 </form>
 <form name="ret" action=<tmpl_var return_script> method=post>
    <tmpl_loop return_params_loop>
       <input type=hidden name="<tmpl_var escape=HTML name="name">" value="<tmpl_var escape=HTML name="value">">
    </tmpl_loop>
-</form>
-
-<div class=button-bar>
+</form><br>
+</div>
+<div class="button-bar">
   <tmpl_unless old_version><tmpl_if can_edit><input type=button value="Edit" onclick="edit_story()" class="button"></tmpl_if></tmpl_unless>
   <tmpl_if parent_path>
     <input type="button" value="Return" onclick="view_path('<tmpl_var parent_path>')" class="button">
   <tmpl_else>
      <input type="button" value="Return" onclick="document.ret.submit()" class="button">
-  </tmpl_if>
-&nbsp;</div>
+  </tmpl_if></div>
 
 </form>
 
@@ -172,4 +166,5 @@
       <input type=hidden name=history_return_params value="<tmpl_var escape=HTML name="value">">
    </tmpl_loop>
 </form>
-
+</div>
+<tmpl_include footer.tmpl>

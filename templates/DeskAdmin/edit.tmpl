@@ -73,59 +73,51 @@ function update_order_sort_south (a, b) {
 
 </script>
 
-<div class=dark-bar>Desk Editor</div>
-<br>
+<div class="dark-bar"><p class="left">&nbsp;Desk Editor</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 <TMPL_IF existing_desk_loop>
 <form name="current_desk_form" method="POST">
 <input type="hidden" name="total_desks" value="<tmpl_var total_desks>" override='1'>
 <input type="hidden" name="rm" value="delete" override='1'>
-  <table cellspacing="0" width="100%">
-                                                                        
-      <tr class="form-head">
-          <th>Name</th>
-          <th>Order</th>
-          <th align="right"><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'desk_delete_list')"></th>
-      </tr>
-                                                                        
-  <tmpl_loop existing_desk_loop>
+<div class="box">
+<br>
+ <table cellspacing="0" class="form-head" cellpadding="4">                                                                        
       <tr>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML name></td>
-          <td class="form-cell" align="right"><select onchange="update_order(this, 'order_')" name="order_<tmpl_var desk_id>"><tmpl_loop desk_count_loop><option value="<tmpl_var count>" <tmpl_if selected>selected</tmpl_if>><tmpl_var count></tmpl_loop></td>
-          <td class="form-cell" align="right"><input type="checkbox" name="desk_delete_list" value="<tmpl_var ESCAPE=HTML desk_id>"></td>
-      </tr>
-  </tmpl_loop>
-  </table>
-  <div align="right">
-<input type="button" value="Reorder Desks" onClick="reorder()">&nbsp;
-<input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+          <th width="240">Name</th>
+          <th width="202">Order</th>
+          <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'desk_delete_list')"></th>
+      </tr></table>                                       
+		<table cellspacing="0" width="571" class="form-cell" cellpadding="4">
+		<tmpl_loop existing_desk_loop> 
+      <tr>
+          <td class="form-cell" width="240"><tmpl_var ESCAPE=HTML name></td>
+          <td class="form-cell" width="200"><select onchange="update_order(this, 'order_')" name="order_<tmpl_var desk_id>"><tmpl_loop desk_count_loop><option value="<tmpl_var count>" <tmpl_if selected>selected</tmpl_if>><tmpl_var count></tmpl_loop></td>
+          <td class="form-cell"><input type="checkbox" name="desk_delete_list" value="<tmpl_var ESCAPE=HTML desk_id>"></td>
+      </tr></tmpl_loop></table><br>
+
+ <div class="button-bar"><input type="button" value="Reorder Desks" onClick="reorder()" class="button">&nbsp;&nbsp;&nbsp;<input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div>
+
 </form>                                                                      
 <TMPL_ELSE>
-  <b>No Desks Found</b><br><br>
+ <div class="no-border">No Desks Found</div>
 </TMPL_IF>
-<div class=form-box>
-
+<br>
 <form name="add_desk_form" method="POST">
-<table cellspacing="0" width="100%">
 <input type="hidden" name="rm" value="add" override='1'>
-      <tr class="form-head">
+<table cellspacing="0" class="form-head" cellpadding="4">
+      <tr>
           <th colspan=2 align=left>Add New Desk</th>
-      </tr>
+      </tr></table>
+		<table cellspacing="0" width="571" class="form-cell">
         <tr>
-            <td>Name:</td>
-            <td><input <tmpl_if no_name>class="invalid"</tmpl_if> name="name" type="text" value="<tmpl_var name>"></td>
+            <td class="form-cell" width="240">Name:</td>
+            <td class="form-cell"><input <tmpl_if no_name>class="invalid"</tmpl_if> name="name" type="text" value="<tmpl_var name>"></td>
         </tr>
         <tr>
-            <td>Order:</td>
-            <td><tmpl_var order_selector></td>
-        </tr>
-<tr><td>&nbsp;</td><td><input type=button value="Add Desk" onclick="submit()"></td></tr>
-</table>
-</form>
-</div>
-
-
-<div class=button-bar>
-&nbsp;<br><br>
+            <td class="form-cell" width="240">Order:</td>
+            <td class="form-cell"><tmpl_var order_selector></td>
+        </tr></table><br></div>
+		  
+		  <div class="button-bar"><input type=button value="Add Desk" onclick="submit()" class="button"></div></form></div>
 </div>
 
 <tmpl_include footer.tmpl>

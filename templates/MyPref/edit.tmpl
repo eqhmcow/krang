@@ -11,36 +11,18 @@ function check_match() {
     }
 }
 </script>
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;MY PREFERENCES</td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
-
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
-<form name="edit_pref_form" method="POST">
-<tr><td width="1" class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4"><table border="0" cellspacing="0" cellpadding="8" width="100%">
-<tr><td><table cellspacing="0" width="100%" cellpadding="2">
-
+<div class="dark-bar"><p class="left">&nbsp;My Preferences</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+<div class="box">
+<br><form name="edit_pref_form" method="POST">
 <input type="hidden" name="rm" value="update_prefs" override='1'>
 <input type="hidden" name="search_page_size" value="<tmpl_var search_page_size>" override='1'>
-      <tr>
-          <td width="160" class="form-head">Preferences</td><td class="form-head">&nbsp;</td>
-      </tr></table>
+<table cellpadding="4" cellspacing="0" class="form-head">
+	<tr class="form-head"><td>Preferences</td></tr></table>
+	<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
+	<tr><td class="form-cell" width="160">Search Results/Page</td>
+            <td class="form-cell"><tmpl_var search_results_selector></td></tr>
+        <tr><td class="form-cell" width="160">Change Password:</td>
+        		<td class="form-cell"><input type="password" name="new_password"> (new password)<br><input type="password" name="new_password_repeat"> (repeat)</td></tr></table><br></div>
 
-    <table cellspacing="0" width="100%" class="form-cell">
-        <tr>
-            <td class="form-cell" width="160">Search Results/Page</td>
-            <td class="form-cell"><tmpl_var search_results_selector></td>
-        </tr>
-        <tr>
-            <td class="form-cell" width="160">Change Password:</td>
-        <td class="form-cell"><input type="password" name="new_password"> (new password)<br><input type="password" name="new_password_repeat"> (repeat)</td>
-        </tr></table></td>
-        </tr></table>
-</table>
-
-<div class="button-bar"><input type="button" value="Commit Changes" onclick="check_match()" class="button"></div></form>
+<div class="button-bar"><input type="button" value="Commit Changes" onclick="check_match()" class="button"></div></form></div>
 <tmpl_include footer.tmpl>
