@@ -63,6 +63,10 @@ A site is the basic organizational unit within a Krang instance.  A site may
 correspond to a web-site but only necessarily maps to a unique URL.  Content
 within the site is stored within categories; see L<Krang::Category>.
 
+On preview, site output is written to paths under 'preview_path' and then the
+user is redirected to 'publish_url' - it is the same for 'publish_path' and
+'publish_url' upon publishing an asset.
+
 This module serves as a means of adding, deleting, accessing site objects for a
 given Krang instance.  Site objects, at present, do little other than act
 as a means to determine the urls and path associated with a site.
