@@ -1,0 +1,89 @@
+Krang has been tested on developer installations of the following:
+
+FreeBSD 4.9
+FreeBSD 5.2.1
+
+It is entirely possible that Krang will work on other versions of
+FreeBSD, they just haven't been tested.  If you get Krang working on
+your system, let us know!
+
+Krang can be made to work on less comprehensive installations, but you
+will most likely need to install a number of dependencies not listed
+here.
+
+Krang has a number of dependencies that are not addressed by the
+developer install of FreeBSD.  It is reccomended that you use the
+FreeBSD ports system to install these packages, as there may be other
+crucial dependencies that the ports install will cover as well.
+
+Perl
+----------------------------------------
+Firstly, you need an installation of Perl >= 5.6.1.  If you're running
+FreeBSD 5.2.1, you're ok.  FreeBSD 4.9 (and potentially other releases
+<= 5.2.1) will require an upgrade.
+
+Perl 5.6.1:
+/usr/ports/lang/perl5
+
+
+MySQL
+----------------------------------------
+Krang needs MySQL 4.0.13 or greater.
+
+/usr/ports/databases/mysql40-client
+/usr/ports/databases/mysql40-server
+
+
+Additional Dependencies
+----------------------------------------
+
+Expat:
+/usr/ports/textproc/expat2
+
+libjpeg:
+/usr/ports/graphics/jpeg
+
+libgif:
+/usr/ports/graphics/libungif
+
+libpng:
+/usr/ports/graphics/png
+
+GNU Make:
+/usr/ports/devel/gmake
+
+It is also reccomended that you install sudo as well:
+
+/usr/ports/security/sudo
+
+
+Building on FreeBSD 4.9
+----------------------------------------
+
+Because the ports system installs perl 5.6.1 as to not clobber 5.005,
+problems arise when you try to 'make build' and run 'bin/krang_install'
+
+The way around this is to do the build as follows:
+
+/usr/local/bin/perl5 bin/krang_build
+
+And the install as:
+
+/usr/local/bin/perl5 bin/krang_install {args}
+
+The Krang installer will set up all scripts to use
+/usr/local/bin/perl5 (or whatever your /path/to/perl5 is).
+
+
+
+A Note on Makefiles:
+----------------------------------------
+
+Until someone who knows more about BSD make than I do comes in to
+help, GNU Make (gmake) is needed to work with Krang Makefiles.  All
+documentation talking about using 'make' should be translated to
+'gmake' for FreeBSD.  I'd love to make this dependency go away, but
+I've found little information on how to get Makefiles to work under
+both GNU make and BSD make.
+
+

@@ -8,6 +8,19 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+More comprehensive FreeBSD support.  Krang now works on FreeBSD 4.9
+and 5.2.1, and should work on versions between and previous to that
+(as long as the appropriate dependencies are in place).  [Peter]
+
+=item *
+
+ftpserver.t now uses Krang::Test::Content.  Simplifies cleanup, and
+fixes a bug where ftpserver tests would fail if krang_install used the
+--AdminPassword argument (a user is now created for the purposes of
+testing). [Peter]
+
+=item *
+
 Added Krang::User creation/destruction to Krang::Test::Content -
 furthering the goal that Krang::Test::Content should be able to create
 all parts of a site randomly, and clean up everything properly at the
