@@ -43,6 +43,12 @@
        document.krang_pager_form.submit();
   }
 
+  function publish_story(story_id) {
+    var pubform = document.forms["publish_story_form"];
+    pubform.story_id.value=story_id;
+    pubform.submit();
+  }
+
   function deploy(id) {
        document.krang_pager_form.rm.value = 'deploy';
        document.krang_pager_form.id.value = id;
@@ -64,6 +70,13 @@
 
 <div class=dark-bar><span class=left>My Workspace</span><span class=right><a href="#">Help</a></span></div>
 <p>
+
+<!-- publish_story form -->
+<form name="publish_story_form" method="GET" action="publisher.pl">
+<input type=hidden name="rm" value="publish_story">
+<input type=hidden name="story_id" value="">
+</form>
+
 
 <form name="krang_pager_form" method="POST">
   <input type=hidden name=rm>
@@ -125,7 +138,7 @@
            <span style='float:right'><tmpl_var command_column></span>
            <tmpl_if is_story>
                <input type=button value="Copy" onclick="copy('<tmpl_var id>')">
-               <input type=button value="Publish" onclick="publish('<tmpl_var id>')">
+               <input type=button value="Publish" onclick="publish_story('<tmpl_var story_id>')">
                <input type=button value="Delete" onclick="remove('<tmpl_var id>')">
                <p>
                Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">
