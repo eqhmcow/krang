@@ -1,73 +1,68 @@
-<tmpl_include header.tmpl>
-
 <script language=javascript>
   function edit_children(p) {
-        document.editor.e_rm.value = 'save_and_jump';
-        document.editor.jump_to.value = p;
-        document.editor.submit();
+        document.forms[0].rm.value = 'save_and_jump';
+        document.forms[0].jump_to.value = p;
+        document.forms[0].submit();
   }
 
   function add_child() {
-     document.editor.e_rm.value = 'add';
-     document.editor.submit();
+     document.forms[0].rm.value = 'add';
+     document.forms[0].submit();
   }
 
   function jump_to(p) {
-     document.editor.e_rm.value = 'save_and_jump';
-     document.editor.jump_to.value = p;
-     document.editor.submit();
+     document.forms[0].rm.value = 'save_and_jump';
+     document.forms[0].jump_to.value = p;
+     document.forms[0].submit();
   }
 
   function cancel_edit() {
         if (confirm("Really cancel changes?")) {
-           document.editor.e_rm.value = 'cancel';
-           document.editor.submit();
+           document.forms[0].rm.value = 'cancel';
+           document.forms[0].submit();
         }
   }
 
   function save() {
-        document.editor.e_rm.value = 'save';
-        document.editor.submit();
+        document.forms[0].rm.value = 'save';
+        document.forms[0].submit();
   }
 
   function save_and_stay() {
-        document.editor.e_rm.value = 'save_and_stay';
-        document.editor.submit();
+        document.forms[0].rm.value = 'save_and_stay';
+        document.forms[0].submit();
   }
 
   function remove_children() {
         if (confirm("Really delete sub-elements?")) {
-           document.editor.e_rm.value = 'delete_children';
-           document.editor.submit();
+           document.forms[0].rm.value = 'delete_children';
+           document.forms[0].submit();
         }
   }
 
 
   function remove() {
         if (confirm("Really delete this element?")) {
-           document.editor.e_rm.value = 'delete';
-           document.editor.submit();
+           document.forms[0].rm.value = 'delete';
+           document.forms[0].submit();
         }
   }
 
   function reorder() {
-        document.editor.e_rm.value = 'reorder';
-        document.editor.submit();
+        document.forms[0].rm.value = 'reorder';
+        document.forms[0].submit();
   }
 </script>
 
 <tmpl_if alert><div class=alert><tmpl_var alert></div></tmpl_if>
 
-<p><tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> >> </tmpl_if></tmpl_loop></p>
-
-<form name=editor method=post>
-  <input type=hidden name=e_rm>
   <input type=hidden name=path value="<tmpl_var path>">
   <input type=hidden name=jump_to>
 
-<div class=form-box>
+Content 
 
-Content<br>
+<tmpl_if crumbs>&nbsp;&nbsp;&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if>
+<br>
 <table border=0 width=100% cellpadding=0 cellspacing=0>
   <tr class=form-head>
     <td width=20%>             Element</td>
@@ -111,15 +106,3 @@ Content<br>
    </tr>
 </table>
 
-</div>
-
-<div class=button-bar>
-  <input type=button value="Save" onClick="save()">
-  <input type=button value="Save and Stay" onClick="save_and_stay()">
-  <input type=reset value="Reset">
-  <input type=button value="Delete" onclick="remove()">
-</div>
-
-</form>
-
-<tmpl_include footer.tmpl>
