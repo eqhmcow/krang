@@ -261,9 +261,29 @@ $medias[1]->delete();
     is($tmp->may_see, 1, "Found may_see");
     is($tmp->may_edit, 1, "Found may_edit");
 
+    # Change group asset_media permissions to "read-only" and check permissions
+    my ($admin_group) = Krang::Group->find(group_id=>1);
+    $admin_group->asset_media("read-only");
+    $admin_group->save();
+
+    ($tmp) = Krang::Media->find(media_id=>$medias[-1]->media_id);
+    is($tmp->may_see, 1, "asset_media read-only may_see => 1");
+    is($tmp->may_edit, 0, "asset_media read-only may_edit => 0");
+
+    # Change group asset_media permissions to "hide" and check permissions
+    $admin_group->asset_media("hide");
+    $admin_group->save();
+
+    ($tmp) = Krang::Media->find(media_id=>$medias[-1]->media_id);
+    is($tmp->may_see, 1, "asset_media hide may_see => 1");
+    is($tmp->may_edit, 0, "asset_media hide may_edit => 0");
+
+    # Reset asset_media to "edit"
+    $admin_group->asset_media("edit");
+    $admin_group->save();
+
     # Change permissions to "read-only" for one of the branches by editing the Admin group
     my $ptest_cat_id = $ptest_categories[0]->category_id();
-    my ($admin_group) = Krang::Group->find(group_id=>1);
     $admin_group->categories($ptest_cat_id => "read-only");
     $admin_group->save();
 

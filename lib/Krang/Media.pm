@@ -6,6 +6,7 @@ use Krang::Conf qw(KrangRoot);
 use Krang::Log qw(debug assert ASSERT);
 use Krang::Contrib;
 use Krang::Category;
+use Krang::Group;
 use Krang::History qw( add_history );
 use Krang::Publisher;
 use Carp qw(croak);
@@ -917,6 +918,9 @@ not $valid_params{$param};
         } 
     }
 
+    # Get user asset permissions -- overrides may_edit if false
+    my $media_access = Krang::Group->user_asset_permissions('media');
+
     my $select_string;
     my $group_by = 0;
     if ($args{'count'}) {
@@ -926,7 +930,13 @@ not $valid_params{$param};
     } else {
         my @fields = map { "media.$_" } (grep {($_ ne 'media_id')} FIELDS);
         push(@fields, "(sum(cgpc.may_see) > 0) as may_see");
-        push(@fields, "(sum(cgpc.may_edit) > 0) as may_edit");
+
+        # Handle asset_media/may_edit
+        if ($media_access eq "edit") {
+            push(@fields, "(sum(cgpc.may_edit) > 0) as may_edit");
+        } else {
+            push(@fields, $dbh->quote("0") ." as may_edit");
+        }
 
         $select_string = 'media.media_id, '.join(',', @fields);
 

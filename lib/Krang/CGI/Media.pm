@@ -1503,6 +1503,7 @@ sub find_media_row_handler {
     $row->{pub_status} = '&nbsp;<b>'. $pub_status .'</b>&nbsp;';
 
     if ( not($media->may_edit) or (($media->checked_out) and ($media->checked_out_by ne $ENV{REMOTE_USER})) ) {
+        $row->{checkbox_column} = "&nbsp;";
         $row->{commands_column} = '<a href="javascript:view_media('."'".$media->media_id."'".')">View</a>'
     } else {
         $row->{commands_column} = '<a href="javascript:edit_media('."'".$media->media_id."'".')">Edit</a>'
