@@ -1392,10 +1392,10 @@ sub find {
                                                                  -labels    => \%class_labels));
     } else {
         # Set up simple search
-        my $search_filter = $q->param('search_filter');
-        $search_filter = '' unless (defined($search_filter));
+        my $search_filter = defined($q->param('search_filter')) ? $q->param('search_filter') : $session{'KRANG_PERSIST_Story_search_filter'};
         $find_params{simple_search} = $search_filter;
         $persist_vars{search_filter} = $search_filter;
+        $template->param(search_filter => $search_filter);
     }
 
     my $pager = Krang::HTMLPager->new(

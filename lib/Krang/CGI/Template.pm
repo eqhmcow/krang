@@ -765,7 +765,8 @@ sub search {
     $t->param(history_return_params =>
               $self->make_history_return_params(@history_param_list));
 
-    my $search_filter = $q->param('search_filter') || '';
+    my $search_filter = defined($q->param('search_filter')) ? $q->param('search_filter') : $session{'KRANG_PERSIST_Template_search_filter'};
+
     my $find_params = {simple_search => $search_filter, may_see=>1};
     my $persist_vars = {rm => 'search',
                         search_filter => $search_filter};
@@ -778,6 +779,8 @@ sub search {
 
     # get counter params
     $t->param(row_count => $pager->row_count());
+
+    $t->param(search_filter => $search_filter);
 
     return $t->output();
 }
