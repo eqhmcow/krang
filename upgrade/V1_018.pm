@@ -16,6 +16,13 @@ sub per_instance {
     # add the new hidden column to 'user'
     $dbh->do("ALTER TABLE user ADD COLUMN hidden BOOL");
     $dbh->do("ALTER TABLE user ALTER COLUMN hidden SET DEFAULT 0");
+    
+    # rebuild permissions cache, moved here from V1_017 because it
+    # will fail with the current Krang::User before user.hidden is
+    # added
+    print "Rebuilding permissions cache...\n";
+    eval 'use Krang::Script';
+    Krang::Group->rebuild_category_cache();
 
     # add 'system' user
     my ($group_id) = Krang::Group->find(name => 'Admin', ids_only => 1);
@@ -28,6 +35,7 @@ sub per_instance {
                                 hidden     => 1,
                                );
     $user->group_ids($group_id);
+
     $user->save();
 }
 

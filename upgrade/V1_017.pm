@@ -20,10 +20,6 @@ sub per_instance {
     # add the new column to the table, there is no need to set a value at this time.
     $dbh->do("ALTER TABLE story ADD COLUMN preview_version INT UNSIGNED");
     $dbh->do("ALTER TABLE media ADD COLUMN preview_version INT UNSIGNED");
-
-    print "Rebuilding permissions cache...\n";
-    eval 'use Krang::Script';
-    Krang::Group->rebuild_category_cache();
 }
 
 # nothing yet
