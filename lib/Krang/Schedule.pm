@@ -161,12 +161,6 @@ use constant ACTIONS => qw(expire publish send clean);
 use constant TYPES => qw(alert media story tmp session);
 
 
-# how many schedule objects to process in one go
-use constant CHUNK_SIZE => 10;
-
-our $SCH_DEBUG;
-
-
 # Lexicals
 ###########
 my %actions = map {$_, 1} ACTIONS;
