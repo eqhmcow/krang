@@ -34,12 +34,10 @@ $@
 END
 }
 
-use Krang::Conf qw(FTPPort FTPAddress);
+use Krang::Conf qw(FTPPort FTPAddress KrangRoot FTPLog);
 
 # load the server
 use Krang::FTP::Server;
-
-# setup parameters
 
 # no conf file used
 push(@ARGV, '-C', '/dev/null');
@@ -49,5 +47,8 @@ push(@ARGV, '-p', FTPPort);
 if (FTPAddress ne "") {
   push(@ARGV, '-o', 'local address=' . FTPAddress);
 }
+
+# setup log
+push(@ARGV, '-o', 'error log=' . catfile(KrangRoot,"logs",FTPLog));
 
 Krang::FTP::Server->run;
