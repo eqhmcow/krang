@@ -199,16 +199,16 @@ sub publish_story {
     $self->{is_publish} = 1;
     $self->{is_preview} = 0;
 
-    info('Publish.pm: Publishing story_id=' . $story->story_id());
+    info('Publisher.pm: Publishing story_id=' . $story->story_id());
 
     # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
-    foreach (my $i = 0; $i < $#categories; $i++) {
+    foreach (my $i = 0; $i <= $#categories; $i++) {
         my $cat = $categories[$i];
         my $uri = $story_urls[$i];
 
         my $file_root = $cat->site()->publish_path();
 
-        info("Publish.pm: publishing story under URI='$uri'");
+        info("Publisher.pm: publishing story under URI='$uri'");
 
         # create output path.
         my $path = File::Spec->catfile($file_root, $uri);
