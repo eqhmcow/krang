@@ -1,16 +1,16 @@
-package Default::image;
+package Default::promo_image;
 use strict;
 use warnings;
 
 =head1 NAME
 
-Default::image
+Default::promo_image
 
 =head1 DESCRIPTION
 
-Default image element class for Krang. Image has a caption and copyright
+Default promo image element class for Krang. Image has a caption and copyright
 that will override assoicated media caption/copyright if set.
-It also has an alignment property.
+
 =cut
 
 
@@ -21,15 +21,6 @@ sub new {
    my %args = ( name => 'photo',
                 children => 
                 [ 
-                 Krang::ElementClass::ListBox->new(name => "alignment",
-                                                   min => 1,
-                                                   max => 1,
-                                                   size => '2',
-                                                   allow_delete => '0',
-                                                   values => [ "Left",
-                                                               "Right"],
-                                                   default => ["Left"
-                                                              ]),
                  Krang::ElementClass::Textarea->new(name => "caption",
                                                     min => 0,
                                                     max => 1

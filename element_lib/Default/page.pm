@@ -1,14 +1,14 @@
-package Default::cover_column;
+package Default::page;
 use strict;
 use warnings;
 
 =head1 NAME
 
-Default::cover_column
+Default::page
 
 =head1 DESCRIPTION
 
-Default cover_column element class for Krang. 
+Default page element class for Krang. 
 
 =cut
 
@@ -17,7 +17,7 @@ use base 'Krang::ElementClass';
 
 sub new {
    my $pkg = shift;
-   my %args = ( name => 'cover_column',
+   my %args = ( name => 'page',
                 min  => 1,
                 children => 
                 [ 
@@ -31,13 +31,12 @@ sub new {
                                                     required => 1,
                                                     bulk_edit => 1,
                                                    ),
-                 Krang::ElementClass::MediaLink->new(name => "header_image",
-                                                     display_name => 'Header Image'),
-                 Krang::ElementClass::StoryLink->new(name => "leadin"),
-                 Default::external_lead_in->new(),
                  Default::image->new(),
-                 Default::horizontal_line->new( display_name => 'Horizontal
-Line' )
+                 Default::inset_box->new(), 
+                 Krang::ElementClass::MediaLink->new(name => "section_header_image",
+                                                     display_name => 'Section Header Image'),
+                 Default::horizontal_line->new( display_name => 'Horizontal Line' )
+
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

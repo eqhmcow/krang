@@ -21,6 +21,17 @@ sub new {
                 min  => 1,
                 children => 
                 [ 
+                  Default::cover_column->new(   name => "left_column",
+                                                allow_delete => '0',
+                                                    display_name => 'Left Column',
+                                                    min => 1,
+                                                    max => 1 ),
+                Default::cover_column->new(   name => "right_column",
+                                                allow_delete => '0',
+                                                    display_name => 'Right Column',
+                                                    min => 1,
+                                                    max => 1 ),
+
                  Krang::ElementClass::Text->new(name         => "section_header",
                                                 display_name => 'Section Header',
                                                 ),
@@ -34,13 +45,9 @@ sub new {
                  Krang::ElementClass::MediaLink->new(name => "header_image",
                                                      display_name => 'Header Image'),
                  Krang::ElementClass::StoryLink->new(name => "leadin"),
+                 Default::image->new(),
                  Default::external_lead_in->new(),
-                 Default::cover_column->new(   name => "right_column",
-                                                    display_name => 'Right Column',
-                                                    max => 1 ),
-                Default::cover_column->new(   name => "left_column",
-                                                    display_name => 'Left Column',
-                                                    max => 1 ),
+                 Default::horizontal_line->new( display_name => 'Horizontal Line' )
 
                 ],
                 @_);
