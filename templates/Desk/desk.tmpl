@@ -1,0 +1,137 @@
+<tmpl_include header.tmpl>
+
+<script language="javascript">
+
+  function remove(id) {
+     if (confirm("Are you sure you wish to delete this item permanently?")) {
+       document.krang_pager_form.rm.value = 'delete';
+       document.krang_pager_form.id.value = id;
+       document.krang_pager_form.submit();
+     }
+  }
+
+  function move_checked() {
+     if (confirm("Are you sure you wish to delete these items permanently?")) {
+       document.krang_pager_form.rm.value = 'delete_checked';
+       document.krang_pager_form.submit();
+     }
+  }
+
+  function edit(id) {
+       document.krang_pager_form.rm.value = 'goto_edit';
+       document.krang_pager_form.id.value = id;
+       document.krang_pager_form.submit();
+  }
+
+  function view(id) {
+       document.krang_pager_form.rm.value = 'goto_view';
+       document.krang_pager_form.id.value = id;
+       document.krang_pager_form.submit();
+  }
+
+  function log(id) {
+       document.krang_pager_form.rm.value = 'goto_log';
+       document.krang_pager_form.id.value = id;
+       document.krang_pager_form.submit();
+  }
+
+</script>
+
+<div class=dark-bar><span class=left><tmpl_var desk_name> Desk</span><span class=right><a href="#">Help</a></span></div>
+<p>
+
+<form name="krang_pager_form" method="POST">
+  <input type=hidden name=rm>
+  <input type=hidden name=id>
+  <input type=hidden name='desk_id' value='<tmpl_var desk_id>'>
+
+<tmpl_include HTMLPager/pager-internals.tmpl>
+
+<tmpl_if krang_pager_rows>
+
+<div class=light style='padding: 10px'>
+  Sort By: &nbsp;&nbsp; <tmpl_var sort_select>
+</div>
+
+<div class=button-bar>
+  <input type=button value="Move" onclick='move_checked()'>
+  <input type=button value="Checkout" onclick='checkout_checked()'>
+  <input type=button value="Publish" onclick='publish_checked()'>
+</div>
+<div class=form-box-large>
+
+<table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%><tr>
+  <td align=left>Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></td>
+  <td align=right><tmpl_var colhead_checkbox_column></td>
+</table>
+
+<tmpl_loop krang_pager_rows>
+
+<div class=form-head-thin>
+  <table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%><tr>
+    <td width=150><b>Story <tmpl_var story_id>
+        v<tmpl_var version>&nbsp;&nbsp;&nbsp;
+    </td>
+    <td><tmpl_var title></td>
+    <td align=right>
+      <tmpl_var checkbox_column>
+    </td>
+  </tr></table>
+</div>
+  <table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
+       <tr>
+          <td class=form-cell width=120>Story Type</td>
+          <td class=form-cell><tmpl_var story_type></td>
+       </tr>
+     <tr>
+        <td class=form-cell width=120>URL</td>
+        <td class=form-cell><tmpl_var url></td>
+        <tmpl_if thumbnail>
+          <td width=50 align=center class=form-cell>
+            <a href="javascript:preview_media(<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border=0></a>
+          </td>
+        </tmpl_if>
+     </tr>
+     <tr>
+       <td colspan=<tmpl_if thumbnail>3<tmpl_else>2</tmpl_if> class=form-cell>
+           <span style='float:right'><tmpl_var command_column></span>
+               <input type=button value="Publish" onclick="publish('<tmpl_var id>')">
+               <input type=button value="Checkout" onclick="checkout('<tmpl_var id>')">
+               <p>
+               <input type=button value="Move" onclick="move('<tmpl_var id>')"> to <select></select> 
+       </td>
+     </tr>
+  </table>
+
+  <div style='height:15px'></div>
+
+  </tmpl_loop>
+
+<tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
+
+<tmpl_loop page_numbers>
+  <tmpl_if is_current_page><b><tmpl_var page_number></b>
+  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number></a>
+  </tmpl_if>
+  <tmpl_unless __last__>|</tmpl_unless>
+</tmpl_loop>
+
+<tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
+
+  <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a>
+  <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a>
+  </tmpl_if>
+
+</div>
+
+<div class=button-bar>
+  <input type=button value="Move" onclick='move_checked()'>
+  <input type=button value="Checkout" onclick='checkout_checked()'>
+  <input type=button value="Publish" onclick='publish_checked()'>
+</div>
+
+</tmpl_if>
+
+</form>
+
+<tmpl_include footer.tmpl>

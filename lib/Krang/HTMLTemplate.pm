@@ -27,10 +27,20 @@ use base 'HTML::Template';
 use Krang::Session qw(%session);
 use Krang::Conf qw(InstanceDisplayName);
 use Krang::Message qw(get_messages clear_messages);
+use Krang::Desk;
 
 # overload output() to setup template variables
 sub output {
     my $template = shift;
+
+    my @desks = Krang::Desk->find();
+    my @desk_loop;
+    
+    foreach my $desk (@desks) {
+        push (@desk_loop, { desk_id => $desk->desk_id, desk_name => $desk->name
+});
+    }
+    $template->param( desk_loop => \@desk_loop );
 
     # fill in header variables as necessary
     if ($template->query(name => 'header_user_name')) {

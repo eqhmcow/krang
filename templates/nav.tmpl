@@ -26,8 +26,9 @@
 <div class=nav3>Active Stories</div>
 
 <div class=nav3 style="margin-top: 5px">Desks</div>
-<div class=nav4>Edit</div>
-<div class=nav4>Publish</div>
+<tmpl_loop desk_loop>
+<div class=nav4><a href="desk.pl?desk_id=<tmpl_var desk_id>"><tmpl_var desk_name></a></div>
+</tmpl_loop>
 
 <div class=nav2>Media</div>
 <div class=nav3><a href="javascript:nav_goto('media.pl')">New Media</a></div>
