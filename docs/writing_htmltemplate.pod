@@ -36,6 +36,8 @@
 
 =item * C<<Working With Categories>>
 
+=item * C<Contributors>
+
 =item * Variables Provided by Krang
 
 =back
@@ -753,5 +755,107 @@ Generally, the default fill_template() will suffice.  For reference, here's a sa
 
 
 
+=head1 Contributors
+
+Contributors in Krang are attached directly to stories.  By default, they are made available to all templates as a list (tmpl_loop) of contributors, under the loop B<contrib_loop>.
+
+=head2 Template Example
+
+In this case, we want to publish contributors on every page of a given story.  Using the B<page.tmpl> from Example 4, the addition of a contributors loop goes as follows:
+
+B<Page.tmpl>
+
+ <tmpl_if first>
+    <h1><tmpl_var title></h1>
+    <b><tmpl_var deck></b>
+ </tmpl_if>
+
+ <tmpl_loop element_loop>
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+    <tmpl_if is_pull_quote>
+      <p><blockquote><i>
+    <tmpl_var pull_quote>
+      </i></blockquote></p>
+    </tmpl_if>
+ </tmpl_loop>
+
+ Contributors to this story:
+ <tmpl_if contrib_loop>
+   <tmpl_loop contrib_loop>
+      <tmpl_var prefix> <tmpl_var first> <tmpl_var last><br>
+      <tmpl_if contrib_type_loop>
+         <tmpl_loop contrib_type_loop>
+            Task ID:   <tmpl_var contrib_type_id><BR>
+            Task Name: <tmpl_var contrib_type_name>
+         </tmpl_loop>
+      </tmpl_if>
+   </tmpl_loop>
+ <tmpl_else>
+   None.
+ </tmpl_if>
+
+ <tmpl_unless first>
+   <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+ </tmpl_unless>
+
+ <tmpl_unless last>
+   <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+ </tmpl_unless>
 
 
+Now the contributors block can look confusing, but it's not.  The breakdown is as follows:
+
+=over
+
+=item *
+
+Each element in B<contrib_loop> corresponds to a single contributor.
+
+=item *
+
+Within each element, the following variables are available (corresponding to the parameters available within the Contributers interface):
+
+B<contrib_id>, B<prefix>, B<first>, B<middle>, B<last>, B<suffix> B<email>, B<phone>, B<bio>, B<url>
+
+=item *
+
+Finally, within each element, there is an additional loop: B<contrib_type_loop>.  This loop corresponds to the the various tasks a contributor may have performed (e.g. Writer, Illustrator).  Within this loop, there are two fields:
+
+B<contrib_type_id>, B<contrib_type_name>
+
+=back
+
+=head2 Code Example
+
+If you decide to override B<fill_template()> and still need contributors data, use the following example as your guide (again, derived from Example 4).
+
+
+ sub fill_template {
+
+  my $self = shift;
+  my %named_parms = @_;
+
+  my $template = $named_params{tmpl};
+  my $publisher = $named_params{publisher};
+  my $element   = $named_params{element};
+
+  my $story = $publisher->story();
+
+  $template->param(title => $story->title())
+    if $template->query(name => 'title');
+
+  # setup story slug
+  $template->param(slug => $story->slug())
+    if $template->query(name => 'slug');
+
+  # setup the page break variable
+  $template->param(page_break => Krang::Publisher::PAGE_BREAK)
+    if $template->query(name => 'page_break');
+
+  $template->param(contrib_loop => $self->_build_contrib_loop(@_))
+    if ($template->query(name => 'contrib_loop);
+
+
+ }
