@@ -809,6 +809,9 @@ sub _validate_group_ids {
         unless (defined($rgroup_ids) and @$rgroup_ids);
 
     foreach my $group_id (@$rgroup_ids) {
+        # lazy load Krang::Group so using Krang::User won't load element
+        # sets, which is sometimes bad
+        require Krang::Group;
         my ($found_group) = Krang::Group->find(group_id=>$group_id, count=>1);
         push (@bad_groups, $group_id) unless ($found_group);
     }
