@@ -135,7 +135,7 @@ sub authentication_hook {
     my $login_found;
 
     # log this attempt to login
-    info(__PACKAGE__."FTP Login attempt- Username:$user.");
+    info(__PACKAGE__." Login attempt- Username:$user.");
  
     # disallow anonymous access.
     return -1 if $user_is_anon;
@@ -153,7 +153,7 @@ sub authentication_hook {
 
         $user_objects{$instance} = $user_object[0];
 
-        debug(__PACKAGE__."User object found for login $user in instance $instance.");
+        debug(__PACKAGE__." User object found for login $user in instance $instance.");
  
         # return failure if authentication fails.
         my $login_ok = Krang::User->check_auth($user,$pass);
@@ -165,7 +165,7 @@ sub authentication_hook {
     }
 
     if (not $login_found) {
-            info(__PACKAGE__."FTP login/password denied for user $user.");
+            info(__PACKAGE__." login/password denied for user $user.");
             return -1;
     }
 
@@ -177,7 +177,7 @@ sub authentication_hook {
     $self->{user_objects} = \%user_objects;
 
     # successful login.
-    info(__PACKAGE__."FTP login/password accepted for user $user, instances: @auth_instances.");
+    info(__PACKAGE__." login/password accepted for user $user, instances: @auth_instances.");
      
     return 0;
 }
