@@ -14,18 +14,14 @@ our $MYSQL_BIN;
 
 krang_upgrade - upgrade Krang from a dist file
 
-
 =head1 SYNOPSIS
 
-  $ krang_upgrade
-
+  # bin/krang_upgrade
 
 =head1 DESCRIPTION
 
 This script will upgrade Krang on a RedHat 7.3 (i686-linux) 
 system from a dist file created by krang_makedist.
-
-
 
 =head2 What C<krang_upgrade> does
 
@@ -34,60 +30,73 @@ Following is a list of the tasks the upgrade script will perform.
 
 =over 4
 
-=item Check pre-requisites
+=item *
+
+Check pre-requisites
 
 =over 4
 
-=item Validate path to KRANG_ROOT.
+=item * 
 
-=item Locate and parse existing krang.conf file.
+Validate path to KRANG_ROOT.
 
-=item Verify that Krang has been shut down.
+=item * 
 
-=item MySQLRootPassword must be valid, and MySQL should be running
+Locate and parse existing krang.conf file.
 
-=back
+=item * 
 
-=item Make a backup of the existing Krang system using 'krang_backup'.
-
-=item Install new Krang system over the existing files in KRANG_ROOT.
-
-=item Apply upgrade scripts.
-
-=over 4
-
-=item E.g., "KRANG_ROOT/upgrade/V1_2.pm"
-
-=item Run class methods C<per_installation()> and C<per_instance()>
+Verify that Krang has been shut down.
 
 =back
 
-=item Update db_version for each instance
+=item * 
 
-=item Clear out sessions from database.
+Make a backup of the existing Krang system using 'krang_backup'.
 
-=item Start Krang
+=item * 
 
-=item Output results of upgrade to console.
+Install new Krang system over the existing files in KRANG_ROOT, with the exception of lib/Krang.pm which holds the Krang version number.
+
+=item * 
+
+Apply upgrade scripts.
+
+=item *
+
+Copy lib/Krang.pm into place, updating Krang's version number.
+
+=item * 
+
+Update db_version for each instance
+
+=item * 
+
+Clear out sessions from database.
+
+=item * 
+
+Start Krang
+
+=item * 
+
+Output results of upgrade to console.
 
 =back
-
-=back
-
-=back
-
-
 
 =head1 OPTIONS
 
-  --help                 - Show usage
-  --man                  - Show full man page
+ --KrangRoot         - Directory where Krang is installed, defaults to 
+                       /usr/local/krang.
 
-=head2 Optional parameters
+ --MySQLRootPassword - Password for the MySQL user "root".  Defaults to
+                       "".
 
-  --KrangRoot            - Directory where Krang is installed (KRANG_ROOT)
-  --MySQLRootPassword    - Password for the MySQL user "root"
-  --no-backup            - Skip making a backup before running the upgrade.
+ --no-backup         - Skip making a backup before running the upgrade.
+
+ --help              - Show usage
+
+ --man               - Show full man page
 
 =head1 SEE ALSO
 
@@ -113,6 +122,15 @@ BEGIN {
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
       "${lib}";
     unshift @INC, $lib, "$lib/".$Config{archname};
+}
+
+# fix results of killing an upgrade in the middle of copying files
+BEGIN {
+    if (-e "$ENV{KRANG_ROOT}/lib/Krang.new") {
+        rename("$ENV{KRANG_ROOT}/lib/Krang.new", 
+               "$ENV{KRANG_ROOT}/lib/Krang.pm") 
+          or die "Unable to rename lib/Krang.new to lib/Krang.pm\n";
+    }
 }
 
 use Krang;
@@ -156,6 +174,7 @@ sub do_upgrade {
     make_backups() unless $options{'no-backup'};
     install_new_krang();
     apply_upgrades();
+    update_version();
     update_db_version();
     clear_sessions();
 
@@ -327,16 +346,27 @@ sub install_new_krang {
     my $InstallPath = $options{KrangRoot};
 
     print "Installing new Krang files into '$InstallPath'\n";
-
     chdir($ENV{KRANG_ROOT});
-    my $copy = "$COPY_BIN -a * $InstallPath\/";
-    system($copy) && die("Can't copy: $!");
+
+    # change Krang.pm's name so it doesn't stomp the installed version
+    # before the upgrade is really finished
+    rename('./lib/Krang.pm', './lib/Krang.new') 
+      or die "Unable to rename ./lib/Krang.pm to ./lib/Krang.new: $!\n";
+
+    eval {
+        my $copy = "$COPY_BIN -a * $InstallPath\/";
+        system($copy) && die("Can't copy files, cp died with error code $?\n");
+    };
+    my $err = $@;    
+    rename('./lib/Krang.new', './lib/Krang.pm');
+    die $err if $err;
 
     print "  Fixing ownership\n";
     my $KrangUser = $OLD_CONF->get("KrangUser");
     my $KrangGroup = $OLD_CONF->get("KrangGroup");
     my $chown = "$CHOWN_BIN -R $KrangUser\.$KrangGroup $InstallPath";
-    system($chown) && die("Can't update ownership: $!");
+    system($chown) 
+      && die("Can't update ownership, chown exited with error code $?\n");
 
     print "  Krang files installed.\n";
 }
@@ -354,7 +384,7 @@ sub apply_upgrades {
     # Find upgrade modules
     my $upmod_path = $KrangRoot ."/upgrade/";
     print "  Upgrade path: $upmod_path\n";
-    opendir(DIR, $upmod_path) || die ("Unable to open upgrade directory '$upmod_path': $!");
+    opendir(DIR, $upmod_path) || die ("Unable to open upgrade directory '$upmod_path': $!\n");
     my @upmodules = (grep {
         (-f $upmod_path.$_) && (/^V(\d+)\_(\d+)\.pm$/) && ( "$1.$2" > $old_krang_version )
       } sort readdir(DIR));
@@ -377,6 +407,24 @@ sub apply_upgrades {
     
 }
 
+# copy lib/Krang.pm into place, effectively updating Krang's version
+sub update_version {
+    my $new_krang = $ENV{KRANG_ROOT};
+    my $InstallPath = $options{KrangRoot};    
+
+    print "Updating Krang version.\n";
+    my $copy = "$COPY_BIN -a $InstallPath/lib/Krang.new $InstallPath/lib/Krang.pm";
+    system($copy)
+      && die("Can't copy lib/Krang.pm: copy exited with error code: $?\n");
+    unlink("$InstallPath/lib/Krang.new") or die "Unable to unlink: $!\n";
+    
+
+    print "  Fixing ownership of lib/Krang.pm\n";
+    my $KrangUser = $OLD_CONF->get("KrangUser");
+    my $KrangGroup = $OLD_CONF->get("KrangGroup");
+    my $chown = "$CHOWN_BIN $KrangUser\.$KrangGroup $InstallPath/lib/Krang.pm";
+    system($chown) && die("Can't update ownership of lib/Krang.pm: chown exited with error code: $?\n");
+}
 
 sub update_db_version {
     my $KrangRoot = $options{KrangRoot};
@@ -416,7 +464,7 @@ sub start_krang {
     my $KrangRoot = $options{KrangRoot};
     print "Starting Krang using $KrangRoot/bin/krang_ctl\n";
     my $start = "KRANG_ROOT='' PERL5LIB='' $KrangRoot/bin/krang_ctl start";
-    system($start) && die("Can't start Krang: $!");
+    system($start) && die("Can't start Krang.\n");
 }
 
 
@@ -484,27 +532,16 @@ sub set_param_defaults {
 # Get the version of Krang installed in a particular KRANG_ROOT
 sub get_krang_version {
     my $KrangRoot = shift;
+    open(KRANG_PM, '<', $KrangRoot . '/lib/Krang.pm') 
+      or die "Unable to open Krang.pm: $!\n";
+    my $text = do { local $/; <KRANG_PM> };
+    close KRANG_PM;
 
-    my $perl5lib = $KrangRoot ."/lib";
-
-    my $get_version_perl = qq( print \$Krang::VERSION. "\\n"; );
-    my $get_version_cmd = "PERL5LIB=$perl5lib $PERL_BIN";
-    $get_version_cmd .= " -MKrang -e '$get_version_perl' && echo \"Success $uniqueness\"";
-
-    my $get_version_output = `$get_version_cmd`;
-
-    unless ($get_version_output =~ /Success\ $uniqueness/) {
-        print STDERR $get_version_output;
-        exit_error("Error getting Krang version in $KrangRoot.  Cannot continue.");
-    }
-
-    # Trim off the last line
-    my ($get_version_output_line1) = split(/\n/, $get_version_output);
-    chomp($get_version_output_line1);
-
-    return $get_version_output_line1;
+    my ($version) = $text =~ /^our\s+\$VERSION.*?(\d+\.\d+)/;
+    die "Unable to extract version from Krang.pm in $KrangRoot/lib.\n"
+      unless $version;
+    return $version;
 }
-
 
 
 ###############
