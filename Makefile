@@ -34,7 +34,7 @@ dist:
 	bin/krang_makedist
 
 clean:	bench_clean
-	- find lib/ -mindepth 1 -maxdepth 1 | grep -v Krang | xargs rm -rf
+	- find lib/ -mindepth 1 -maxdepth 1 | grep -v Krang | grep -v CVS | xargs rm -rf
 	- rm -rf apache/*
 	- rm data/build.db
 
