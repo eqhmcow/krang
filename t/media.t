@@ -39,12 +39,14 @@ my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
 my $fh = new FileHandle $filepath;
 $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
 
-is ($media->thumbnail_path(), catfile((splitpath($media->{tempfile}))[1],"t__".$media->filename));
+is ($media->thumbnail_path(),
+    catfile((splitpath($media->{tempfile}))[1], "t__".$media->filename),
+    "Thumbnail path looks right" );
 
 
 # check url and preview_url
-is($media->url, 'testsite1.com/krang.jpg');
-is($media->preview_url, 'preview.testsite1.com/krang.jpg');
+is($media->url, 'testsite1.com/krang.jpg', "URL looks right");
+is($media->preview_url, 'preview.testsite1.com/krang.jpg', "Preview URL looks right");
 
 # create new contributor object to test associating with media
 my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
@@ -56,29 +58,29 @@ END { $contrib->delete(); }
 # add contributor to media
 $media->contribs({ contrib_id      => $contrib->contrib_id, 
                    contrib_type_id => 3 });
-is($media->contribs, 1);
+is($media->contribs, 1, "add contributor to media");
 
 # same object?
-is(($media->contribs)[0]->contrib_id, $contrib->contrib_id);
-is(($media->contribs)[0]->selected_contrib_type, 3);
+is(($media->contribs)[0]->contrib_id, $contrib->contrib_id, "Contrib set");
+is(($media->contribs)[0]->selected_contrib_type, 3, "Contrib selected type set");
 
 # save it
 $media->save();
 
 # test file_path
-like($media->file_path, qr/krang\.jpg$/);
-like($media->file_path(relative => 1), qr/krang\.jpg$/);
-is($media->file_path, catfile(KrangRoot, $media->file_path(relative => 1)));
-ok(-f $media->file_path);
+like($media->file_path, qr/krang\.jpg$/, "Absolute path looks right after save");
+like($media->file_path(relative => 1), qr/krang\.jpg$/, "Relative path looks right after save");
+is($media->file_path, catfile(KrangRoot, $media->file_path(relative => 1)), "Filepath looks right");
+ok(-f $media->file_path, "Media file is found on hard disk");
 
 # save again
 $media->save();
 
 # test file_path
-like($media->file_path, qr/krang\.jpg$/);
-like($media->file_path(relative => 1), qr/krang\.jpg$/);
-is($media->file_path, catfile(KrangRoot, $media->file_path(relative => 1)));
-ok(-f $media->file_path);
+like($media->file_path, qr/krang\.jpg$/, "Path looks right after second save");
+like($media->file_path(relative => 1), qr/krang\.jpg$/, "Relative path looks right after second save");
+is($media->file_path, catfile(KrangRoot, $media->file_path(relative => 1)), "Filepath still looks right");
+ok(-f $media->file_path, "Media file is still found on hard disk");
 
 # try to load it again and see if the file is still available
 my ($copy) = Krang::Media->find(media_id => $media->media_id);
@@ -207,4 +209,133 @@ $m2->delete();
 
 # delete other media object also
 $medias[1]->delete();
+
+
+### Permission tests #################
+#
+{
+    my $unique = time();
+
+    # create a new site for testing
+    my $ptest_site = Krang::Site->new( url => "$unique.com",
+                                       preview_url => "preview.$unique.com",
+                                       preview_path => 'preview/path/',
+                                       publish_path => 'publish/path/' );
+    $ptest_site->save();
+    my $ptest_site_id = $ptest_site->site_id();
+    my ($ptest_root_cat) = Krang::Category->find(site_id=>$ptest_site_id);
+
+    my $media = Krang::Media->new(
+                                  title => 'Root Cat media', 
+                                  category_id => $ptest_root_cat->category_id(), 
+                                  filename => 'krang.jpg', 
+                                  filehandle => $fh
+                                 );
+    $media->save();
+    my @medias = ($media);
+
+    # Create some descendant categories and media
+    my @ptest_cat_dirs = qw(A1 A2 B1 B2);
+    my @ptest_categories = ();
+    for (@ptest_cat_dirs) {
+        my $parent_id = ( /1/ ) ? $ptest_root_cat->category_id() : $ptest_categories[-1]->category_id() ;
+        my $newcat = Krang::Category->new( dir => $_,
+                                           parent_id => $parent_id );
+        $newcat->save();
+        push(@ptest_categories, $newcat);
+
+        # Add media in this category
+        my $media = Krang::Media->new(
+                                      title => $_ .' media', 
+                                      category_id => $newcat->category_id(), 
+                                      filename => 'krang.jpg', 
+                                      filehandle => $fh
+                                     );
+        $media->save();
+        push(@medias, $media);
+    }
+
+
+    # Verify that we have permissions
+    my ($tmp) = Krang::Media->find(media_id=>$medias[-1]->media_id);
+    is($tmp->may_see, 1, "Found may_see");
+    is($tmp->may_edit, 1, "Found may_edit");
+
+    # Change permissions to "read-only" for one of the branches by editing the Admin group
+    my $ptest_cat_id = $ptest_categories[0]->category_id();
+    my ($admin_group) = Krang::Group->find(group_id=>1);
+    $admin_group->categories($ptest_cat_id => "read-only");
+    $admin_group->save();
+
+    # Check permissions for that category
+    ($tmp) = Krang::Media->find(media_id=>$medias[1]->media_id);
+    is($tmp->may_see, 1, "read-only may_see => 1");
+    is($tmp->may_edit, 0, "read-only may_edit => 0");
+
+    # Check permissions for descendant of that category
+    my $ptest_media_id = $medias[2]->media_id();
+    ($tmp) = Krang::Media->find(media_id=>$ptest_media_id);
+    is($tmp->may_see, 1, "descendant read-only may_see => 1");
+    is($tmp->may_edit, 0, "descendant read-only may_edit => 0");
+
+    # Check permissions for sibling
+    $ptest_media_id = $medias[3]->media_id();
+    ($tmp) = Krang::Media->find(media_id=>$ptest_media_id);
+    is($tmp->may_see, 1, "sibling edit may_see => 1");
+    is($tmp->may_edit, 1, "sibling edit may_edit => 1");
+
+    # Try to save "read-only" media -- should die
+    $ptest_media_id = $medias[2]->media_id();
+    ($tmp) = Krang::Media->find(media_id=>$ptest_media_id);
+    eval { $tmp->save() };
+    isa_ok($@, "Krang::Media::NoCategoryEditAccess", "save() on read-only media exception");
+
+    # Try to delete()
+    eval { $tmp->delete() };
+    isa_ok($@, "Krang::Media::NoEditAccess", "delete() on read-only media exception");
+
+    # Try to checkout()
+    eval { $tmp->checkout() };
+    isa_ok($@, "Krang::Media::NoEditAccess", "checkout() on read-only media exception");
+
+    # Try to checkin()
+    eval { $tmp->checkin() };
+    isa_ok($@, "Krang::Media::NoEditAccess", "checkin() on read-only media exception");
+
+    # Change other branch to "hide"
+    $ptest_cat_id = $ptest_categories[2]->category_id();
+    $admin_group->categories($ptest_cat_id => "hide");
+    $admin_group->save();
+
+    # Check permissions for that category
+    $ptest_media_id = $medias[3]->media_id();
+    ($tmp) = Krang::Media->find(media_id=>$ptest_media_id);
+    is($tmp->may_see, 0, "hide may_see => 0");
+    is($tmp->may_edit, 0, "hide may_edit => 0");
+
+    # Get count of all media below root category -- should return all (5)
+    my $ptest_count = Krang::Media->find(count=>1, below_category_id=>$ptest_root_cat->category_id());
+    is($ptest_count, 5, "Found all media by default");
+
+    # Get count with "may_see=>1" -- should return root + one branch (3)
+    $ptest_count = Krang::Media->find(may_see=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
+    is($ptest_count, 3, "Hide hidden media");
+
+    # Get count with "may_edit=>1" -- should return just root
+    $ptest_count = Krang::Media->find(may_edit=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
+    is($ptest_count, 1, "Hide un-editable media");
+
+    # Delete temp media
+    for (reverse@medias) {
+        $_->delete();
+    }
+
+    # Delete temp categories
+    for (reverse@ptest_categories) {
+        $_->delete();
+    }
+
+    # Delete site
+    $ptest_site->delete();
+}
 
