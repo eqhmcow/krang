@@ -828,7 +828,7 @@ sub _xpath_attr_value {
     return undef;    
 }
 
-=item C<< $element->serialize_xml(writer => $writer, set => $set)
+=item C<< $element->serialize_xml(writer => $writer, set => $set) >>
 
 Serialize as XML.  See Krang::DataSet for details.
 
@@ -1058,7 +1058,7 @@ BEGIN {
 
 =over
 
-=item
+=item *
 
 Make $element->child('foo') and match('foo') faster than grepping
 through $element->children() for 'foo'.  This probably means caching
@@ -1066,7 +1066,7 @@ the name to element mappings and updating them on changes to
 children().  That's not easy to do and still allow children() to
 return a reference that can be used to make changes.
 
-=item
+=item *
 
 Add call to an element class method on delete to allow for cleanup of
 external data.
