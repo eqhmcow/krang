@@ -835,6 +835,8 @@ BEGIN {
                           build_url
                           param_names
                           view_data
+                          bulk_edit_data
+                          bulk_edit_filter
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 
@@ -862,6 +864,12 @@ return a reference that can be used to make changes.
 
 Do leak testing to make sure the use of weaken() here is having the
 intended effect.
+
+=item
+
+Add STORABLE_freeze and STORABLE_thaw methods so that elements don't
+serialize their class objects.  This causes much irratation while
+doing element class development.
 
 =back
 

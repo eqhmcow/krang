@@ -279,7 +279,7 @@ sub element_bulk_edit {
                      bulk_data => join(($sep eq "__TWO_NEWLINE__" ? 
                                         "\n\n" : "\n" . $sep . "\n"), 
                                        grep { defined } 
-                                         map { $_->data } @children));
+                                       map { $_->bulk_edit_data } @children));
 
     # crumbs let the user jump up the tree
     my $pointer = $element;
@@ -384,6 +384,9 @@ sub element_bulk_save {
     my $name = $query->param('bulk_edit_child');
     my @children = grep { $_->name eq $name } $element->children;
     my @data     = split(/$sep/, $data);
+
+    # filter data through class's bulk_edit_filter
+    @data = $element->class->child($name)->bulk_edit_filter(data => \@data);
 
     # match up one to one as possible
     while(@children and @data) {

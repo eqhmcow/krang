@@ -224,6 +224,37 @@ sub input_form {
                                  override => 1);
 }
 
+=item C<< @data = $class->bulk_edit_data(element => $element) >>
+
+Return an array of text blocks suitable for bulk editing.  This method
+must work for all classes that set bulk_edit to 1.  The default
+implementation just returns $element->data.
+
+=cut
+
+sub bulk_edit_data {
+    my ($self, %arg) = @_;
+    my ($element) = @arg{qw(element)};
+    return $element->data;
+}
+
+=item C<< @data = $class->bulk_edit_filter(data => \@data) >>
+
+Given an array of text blocks, return an array of data elements
+suitable for passing to data().  The data passed to this method comes
+from the bulk edit text field and has been pre-split on the chosen
+separator.  This method must transform this data into a format
+suitable for data().  The default implementation returns the data
+as-is.
+
+=cut
+
+sub bulk_edit_filter {
+    my ($self, %arg) = @_;
+    my ($data) = @arg{qw(data)};
+    return @$data;
+}
+
 =item C<< $html = $class->view_data(element => $element) >>
 
 Called to return the HTML to use in the element view screen.  This is
@@ -281,7 +312,7 @@ sub load_query_data {
     $element->data(scalar $query->param($param));
 }
 
-=item C<< $html = $class->burn($element) >>
+=item C<< $html = $class->burn(element => $element) >>
 
 This call allows the class to implement custom code for the burn
 process.  This replaces the .pl files found in Bricolage.
