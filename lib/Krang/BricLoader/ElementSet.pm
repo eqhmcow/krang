@@ -15,19 +15,6 @@ Krang::BricLoader::ElementSet -
 =cut
 
 
-# Verify requisite Bric vars
-BEGIN {
-    {
-        no strict;
-        for (qw/password root server username/) {
-            my $var = "BRICOLAGE_" . uc $_;
-            my $val = $ENV{$var} || '';
-            die("$var must be defined!") unless $val;
-        }
-    }
-}
-
-
 #
 # Pragmas/Module Dependencies
 ##############################
