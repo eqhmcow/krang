@@ -5,9 +5,9 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="list_item_id" type="xs:int"/>
-                <xs:element name="order" type="xs:int"/>
-                <xs:element name="data" type="xs:string"/>
                 <xs:element name="list_id" type="xs:int"/>
+                <xs:element name="data" type="xs:string"/>
+                <xs:element name="order" type="xs:int"/>
                 <xs:element name="parent_list_item_id" type="xs:int" minOccurs="0"/>
             </xs:sequence>
         </xs:complexType>
