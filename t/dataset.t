@@ -306,6 +306,7 @@ my $ltemplate = Krang::Template->new(element_class_name => 'abcd_fake_element_cl
                                content => 'this is the content here' );
 
 $ltemplate->save();
+$ltemplate->mark_as_deployed();
 $lset->add(object => $ltemplate);
                                                                                      
 # it lives, yes?

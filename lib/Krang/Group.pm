@@ -541,6 +541,64 @@ sub delete {
     }
 }
 
+=item $group->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <template> linked to schema/template.xsd
+    $writer->startTag('group',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'group.xsd');
+
+    $writer->dataElement( group_id => $self->{group_id} );
+    $writer->dataElement( name => $self->{name} );
+   
+    # categories
+    my %cats = $self->categories;
+    foreach my $cat_id (keys %cats) {
+        $writer->startTag('category');
+        $writer->dataElement(category_id => $cat_id);
+        $writer->dataElement(security_level => $cats{$cat_id});
+        $writer->endTag('category');
+        $set->add(object => (Krang::Category->find( category_id => $cat_id))[0], from => $self);
+    }
+ 
+    # desks
+    my %desks = $self->desks;
+    foreach my $desk_id (keys %desks) {
+        $writer->startTag('desk');
+        $writer->dataElement(desk_id => $desk_id);
+        $writer->dataElement(security_level => $desks{$desk_id});
+        $writer->endTag('desk'); 
+        $set->add(object => (Krang::Desk->find( desk_id => $desk_id))[0], from => $self);
+    }
+
+    $writer->dataElement( may_publish => $self->{may_publish} );
+    $writer->dataElement( admin_users => $self->{admin_users} );
+    $writer->dataElement( admin_users_limited => $self->{admin_users_limited} );
+    $writer->dataElement( admin_groups => $self->{admin_groups} );
+    $writer->dataElement( admin_contribs => $self->{admin_contribs} );
+    $writer->dataElement( admin_sites => $self->{admin_sites} );
+    $writer->dataElement( admin_categories => $self->{admin_categories} );
+    $writer->dataElement( admin_jobs => $self->{admin_jobs} );
+    $writer->dataElement( admin_desks=> $self->{admin_desks} );
+    $writer->dataElement( asset_story => $self->{asset_story} );
+    $writer->dataElement( asset_media => $self->{asset_media} );
+    $writer->dataElement( asset_template => $self->{asset_template} );
+
+    # all done
+    $writer->endTag('group');
+
+}
 
 =item add_category_permissions()
 

@@ -798,6 +798,7 @@ sub serialize_xml {
     my $group_ids = $self->{group_ids};
     foreach my $group_id ( @$group_ids ) {
         $writer->dataElement( group_id => $group_id );
+        $set->add(object => (Krang::Group->find( group_id => $group_id))[0], from => $self);
     } 
 
     # all done

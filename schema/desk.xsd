@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) by rth77 (rth77) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="desk">
+		<xs:annotation>
+			<xs:documentation>Comment describing your root element</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="desk_id" type="xs:int"/>
+				<xs:element name="name" type="xs:string"/>
+				<xs:element name="order" type="xs:int"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

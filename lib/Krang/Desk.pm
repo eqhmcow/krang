@@ -320,6 +320,32 @@ sub delete {
     $sth->finish;
 }
 
+=item $desk->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <desk> linked to schema/desk.xsd
+    $writer->startTag('desk',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'desk.xsd');
+
+    $writer->dataElement( desk_id => $self->desk_id );
+    $writer->dataElement( name => $self->name );
+    $writer->dataElement( order => $self->order );
+
+    # all done
+    $writer->endTag('desk');
+}
+
 =back
 
 =cut

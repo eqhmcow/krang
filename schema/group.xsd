@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) by rth77 (rth77) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="group">
+		<xs:annotation>
+			<xs:documentation>Comment describing your root element</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="group_id" type="xs:int"/>
+				<xs:element name="name" type="xs:string"/>
+				<xs:element name="category" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="category_id" type="xs:int"/>
+							<xs:element name="security_level" type="xs:string"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="desk" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="desk_id" type="xs:int"/>
+							<xs:element name="security_level" type="xs:string"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="may_publish" type="xs:boolean"/>
+				<xs:element name="admin_users" type="xs:boolean"/>
+				<xs:element name="admin_users_limited" type="xs:boolean"/>
+				<xs:element name="admin_groups" type="xs:boolean"/>
+				<xs:element name="admin_contribs" type="xs:boolean"/>
+				<xs:element name="admin_sites" type="xs:boolean"/>
+				<xs:element name="admin_categories" type="xs:boolean"/>
+				<xs:element name="admin_jobs" type="xs:boolean"/>
+				<xs:element name="admin_desks" type="xs:boolean"/>
+				<xs:element name="asset_story" type="xs:string"/>
+				<xs:element name="asset_media" type="xs:string"/>
+				<xs:element name="asset_template" type="xs:string"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
