@@ -33,45 +33,36 @@ BEGIN {
     # create lasistes element set
     my $root = $ENV{KRANG_ROOT};
     my $set = 'lasites';
-    unless (-e catdir($root, 'element_lib', $set)) {
-        # will pull from Bric directly once something is modified to create a
-        # category element
-        my $xml = catfile($root, 't', 'bricloader', 'laelements.xml');
+    # will pull from Bric directly once something is modified to create a
+    # category element
+    my $xml = catfile($root, 't', 'bricloader', 'laelements.xml');
 
-        my @command = (catfile($root, "bin", "krang_bric_eloader"),
-                       "--set" => $set,
-                       "--xml" => $xml,
-                      );
-        my $in;
-        run(\@command, \$in, \*STDOUT, \*STDERR)
-          or die "Unable to run ". catfile($root, "bin", "krang_bric_eloader");
+    my @command = (catfile($root, "bin", "krang_bric_eloader"),
+                   "--set" => $set,
+                   "--xml" => $xml,
+                  );
+    my $in;
+    run(\@command, \$in, \*STDOUT, \*STDERR)
+      or eval "use Test::More skip_all => 'Unable to run ".
+        catfile($root, "bin", "krang_bric_eloader"). "';";
+
+    END {
+        # remove created element_lib
+        my $path = catdir($root, 'element_lib', $set);
+        rmtree([$path]) if -e $path;
     }
+
+    # use bogus krang.conf
+    $ENV{KRANG_CONF} = catfile($root, 't', 'bricloader', 'junk.conf');
 }
+
+use Test::More qw(no_plan);
 
 use Krang::Script;
 use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::DataSet;
 use Krang::ElementLibrary;
 
-BEGIN {
-    # lasites instance check
-    my $found;
-    foreach my $instance (Krang::Conf->instances) {
-        Krang::Conf->instance($instance);
-        if (InstanceElementSet eq 'lasites') {
-            $found = 1;
-            last;
-        }
-    }
-
-    unless ($found) {
-        eval "use Test::More skip_all => 'Cannot load lasites element_lib';";
-    } else {
-        eval "use Test::More qw(no_plan);";
-    }
-    die $@ if $@;
-
-}
 
 BEGIN {
     use_ok('Krang::BricLoader::DataSet');
@@ -80,6 +71,7 @@ BEGIN {
     use_ok('Krang::BricLoader::Site');
     use_ok('Krang::BricLoader::Story');
 }
+
 
 # instantiate a DataSet
 my $set = Krang::BricLoader::DataSet->new();
@@ -151,6 +143,7 @@ eval {
        'Verified imported Media count');
     is((grep {$_->isa('Krang::Story')} @imported), $stories,
        'Verified imported Story count');
+
     END {
         $_->delete for (grep {$_->isa('Krang::Story')} @imported);
         $_->delete for (grep {$_->isa('Krang::Media')} @imported);
@@ -161,15 +154,3 @@ eval {
 };
 
 croak $@ if $@;
-
-
-END {
-    # remove created element_lib
-    my $path = catdir(KrangRoot, 'element_lib', $set);
-    rmtree([$path]) if -e $path;
-}
-
-__END__
-
-
-
