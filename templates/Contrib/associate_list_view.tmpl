@@ -8,70 +8,87 @@
         myform.submit();
     }
 
-    function edit_contrib (contrib_id) {
-        var myform = document.forms["edit_contrib_form"];
-        myform.contrib_id.value = contrib_id;
+    function associate_selected () {
+        var myform = document.forms["associate_selected_form"];
         myform.submit();
     }
 
-    function delete_selected () {
-        if (confirm("Are you SURE you want to delete these contributors?")) {
-            var myform = document.forms["delete_selected_form"];
-            myform.submit();
-        }
+    function unassociate_selected () {
+        var myform = document.forms["current_contributors_form"];
+        myform.rm.value = "unassociate_selected";
+        myform.submit();
+    }
+
+    function reorder_contributors () {
+        var myform = document.forms["current_contributors_form"];
+        myform.rm.value = "reorder_contribs";
+        myform.submit();
+    }
+
+    function do_return () {
+        var myform = document.forms["do_return_form"];
+        myform.submit();
     }
 
 // -->
 </script>
 
+
+<div class="dark-bar">Associate Contributor</div>
+
+
+<!-- Start outline table -->
+<table border="1" cellpadding="5" cellspacing="0" width="100%"><tr><td>
+
+
+<form name="do_return_form" method="POST" action="<tmpl_if associate_story>story.pl<tmpl_else>media.pl</tmpl_if>">
+<input type="hidden" name="rm" value="edit">
+</form>
+
 <form name="add_contrib_form" method="POST">
 <input type="hidden" name="rm" value="add">
+<input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
 </form>
 
-<form name="edit_contrib_form" method="POST">
-<input type="hidden" name="rm" value="edit">
-<input type="hidden" name="contrib_id" value="">
-</form>
-
-<div class="dark-bar">Contributor List</div>
 
 
-<tmpl_if message_contrib_added><div class="alert">Contributor has been added.</div></tmpl_if>
-<tmpl_if message_add_cancelled><div class="alert">Add contributor cancelled.</div></tmpl_if>
-<tmpl_if message_contrib_saved><div class="alert">Contributor saved.</div></tmpl_if>
-<tmpl_if message_save_cancelled><div class="alert">Edit contributor cancelled.</div></tmpl_if>
-<tmpl_if message_selected_deleted><div class="alert">Checked contributors deleted.</div></tmpl_if>
-<tmpl_if message_contrib_deleted><div class="alert">Contributor deleted.</div></tmpl_if>
+
+Current Contributors
+
+<br />
+
+<form name="current_contributors_form" method="POST">
+<input type="hidden" name="rm" value="reorder_contribs">
+<input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
 
 
-<tmpl_if associate_mode>
-<!-- List of currently associated contribs -->
 <TMPL_IF associated_contributors>
 
   <table cellspacing="0" width="100%">
 
       <tr class="form-head">
           <th>Last Name</th>
-          <th>First Name</th>
+          <th>First,Middle Name</th>
           <th>Type</th>
           <th>Order</th>
           <th>[]</th>
       </tr>
 
-  <tmpl_loop contributors>
+  <tmpl_loop associated_contributors>
       <tr>
           <td class="form-cell"><tmpl_var ESCAPE=HTML last></td>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML first></td>
-          <td class="form-cell"><tmpl_loop types><tmpl_var ESCAPE=HTML type_name><tmpl_unless __last__>, </tmpl_unless></tmpl_loop></td>
-          <td class="form-cell"><a href="javascript:edit_contrib('<tmpl_var ESCAPE=HTML contrib_id>')">Edit</a></td>
-          <td class="form-cell"><input type="checkbox" name="contrib_delete_list" value="<tmpl_var ESCAPE=HTML contrib_id>"></td>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML first><tmpl_if middle>&nbsp;<tmpl_var ESCAPE=HTML middle></tmpl_if></td>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML type></td>
+          <td class="form-cell"><select name="order_contrib_<tmpl_var ESCAPE=HTML contrib_id>:<tmpl_var ESCAPE=HTML contrib_type_id>"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></td>
+          <td class="form-cell"><input type="checkbox" name="contrib_unassociate_list" value="<tmpl_var ESCAPE=HTML contrib_id>:<tmpl_var ESCAPE=HTML contrib_type_id>"></td>
       </tr>
 
   </tmpl_loop>
  
   </table>
 
-  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+  <div align="right"><input type="button" value="Reorder" onClick="reorder_contributors()">
+<input type="button" value="Delete" onClick="unassociate_selected()"></div>
 
 <TMPL_ELSE>
 
@@ -79,29 +96,35 @@
 
 </TMPL_IF>
 
+</form>
 
-</tmpl_if>
 
-
-SEARCH
+<table width="100%">
 <form name="search_form" method="POST">
+<input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
+<tr><td class="form-head">
+SEARCH<br />
 <input type="hidden" name="rm" value="search">
 <input type="hidden" name="search_page" value="<tmpl_var ESCAPE=HTML search_page>">
 <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="submit" value="Search">
+</td></tr>
 </form>
+</table>
 
+
+
+
+<form name="associate_selected_form" method="POST">
+<input type="hidden" name="rm" value="associate_selected">
+<input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
+
+
+Choose Contributors
 
 <br />
 
-<a href="javascript:add_contrib()">Add A Contributor</a><br />
-
-<br />
-
-
-
-<form name="delete_selected_form" method="POST">
-<input type="hidden" name="rm" value="delete_selected">
+<b><a href="javascript:add_contrib()">Add A Contributor</a></b>
 
 
 <TMPL_IF contributors>
@@ -110,26 +133,25 @@ SEARCH
 
       <tr class="form-head">
           <th>Last Name</th>
-          <th>First Name</th>
+          <th>First, Middle Name</th>
           <th>Type</th>
-          <th>Edit</th>
           <th>[]</th>
       </tr>
 
   <tmpl_loop contributors>
       <tr>
           <td class="form-cell"><tmpl_var ESCAPE=HTML last></td>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML first></td>
-          <td class="form-cell"><tmpl_loop types><tmpl_var ESCAPE=HTML type_name><tmpl_unless __last__>, </tmpl_unless></tmpl_loop></td>
-          <td class="form-cell"><a href="javascript:edit_contrib('<tmpl_var ESCAPE=HTML contrib_id>')">Edit</a></td>
-          <td class="form-cell"><input type="checkbox" name="contrib_delete_list" value="<tmpl_var ESCAPE=HTML contrib_id>"></td>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML first><tmpl_if middle>&nbsp;<tmpl_var ESCAPE=HTML middle></tmpl_if></td>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML type></td>
+          <td class="form-cell"><input type="checkbox" name="contrib_unassociate_list" value="<tmpl_var ESCAPE=HTML contrib_id>:<tmpl_var ESCAPE=HTML contrib_type_id>"></td>
       </tr>
 
   </tmpl_loop>
  
   </table>
 
-  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+  <div align="right"><input type="button" value="Associate" onClick="associate_selected()"></div>
+
 
 <TMPL_ELSE>
 
@@ -138,8 +160,17 @@ SEARCH
 </TMPL_IF>
 
 
+
+</td></tr></table>
+<!-- End outline table -->
+
+
 <!-- End delete_selected_form -->
 </form>
+
+
+<div class="button-bar"><input type="button" value="Return" onClick="do_return()"></div>
+
 
 
 <tmpl_include /footer.tmpl>

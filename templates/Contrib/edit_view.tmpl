@@ -41,16 +41,9 @@
 <div class="dark-bar">Contributor <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></div>
 
 
-<tmpl_if error_invalid_first><div class="alert">Please specify a valid first name.</div></tmpl_if>
-<tmpl_if error_invalid_last><div class="alert">Please specify a valid last name.</div></tmpl_if>
-<tmpl_if error_invalid_type><div class="alert">Please specify a valid contributor type.</div></tmpl_if>
-
-<tmpl_if message_contrib_added><div class="alert">Contributor has been added.</div></tmpl_if>
-<tmpl_if message_contrib_saved><div class="alert">Contributor saved.</div></tmpl_if>
-
-
 <form name="edit_contrib_form" method="POST">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+<input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
 <tmpl_if add_mode>
   <input type="hidden" name="rm" value="save_add">
 <tmpl_else>
@@ -68,17 +61,17 @@
 
 <tr>
     <td align="left" valign="top">First:</td>
-    <td align="left" valign="top"><tmpl_if error_invalid_first><span class="invalid"></tmpl_if><input type="textfield" size="40" name="first" value="<tmpl_var escape=HTML first>"><tmpl_if error_invalid_first></span></tmpl_if></td>
+    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_first><span class="invalid"></tmpl_if><input type="textfield" size="40" name="first" value="<tmpl_var escape=HTML first>"><tmpl_if error_invalid_first></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
 </tr>
 
 <tr>
     <td align="left" valign="top">Middle:</td>
-    <td align="left" valign="top"><input type="textfield" size="40" name="middle" value="<tmpl_var escape=HTML middle>"></td>
+    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="middle" value="<tmpl_var escape=HTML middle>"><tmpl_if duplicate_name></span></tmpl_if></td>
 </tr>
 
 <tr>
     <td align="left" valign="top">Last:</td>
-    <td align="left" valign="top"><tmpl_if error_invalid_last><span class="invalid"></tmpl_if><input type="textfield" size="40" name="last" value="<tmpl_var escape=HTML last>"><tmpl_if error_invalid_last></span></tmpl_if></td>
+    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_last><span class="invalid"></tmpl_if><input type="textfield" size="40" name="last" value="<tmpl_var escape=HTML last>"><tmpl_if error_invalid_last></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
 </tr>
 
 <tr>

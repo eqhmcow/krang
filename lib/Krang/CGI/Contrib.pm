@@ -49,8 +49,10 @@ for Krang::CGI::Contrib is 'search'.
 
 
 use Krang::Contrib;
-use Krang::Session qw(%session);
+use Krang::Message qw(add_message);
 use Krang::Pref;
+use Krang::Session qw(%session);
+
 
 # Fields in a contrib
 use constant CONTRIB_PROTOTYPE => {
@@ -82,6 +84,9 @@ sub setup {
                          search
                          associate_story
                          associate_media
+                         associate_selected
+                         unassociate_selected
+                         reorder_contribs
                          delete_selected
                          add
                          save_add
@@ -95,6 +100,9 @@ sub setup {
                         )]);
 
     $self->tmpl_path('Contrib/');
+
+    # Set param to be used in "associate" modes of operation
+    $self->param(ASSOCIATE_OBJECT => 0);
 }
 
 
@@ -124,7 +132,15 @@ sub search {
     my %ui_messages = ( @_ );
 
     my $q = $self->query();
-    my $t = $self->load_tmpl('list_view.tmpl', associate=>$q, loop_context_vars=>1);
+
+    # Send request to appropriate associate_* run-mode if we're associating
+    if (my $ass_type = ($q->param('associate_mode') || '')) {
+        return $self->associate_story(%ui_messages) if ($ass_type eq 'story');
+        return $self->associate_media(%ui_messages) if ($ass_type eq 'media');
+        die ("Invalid associate mode type '$ass_type'");
+    }
+
+    my $t = $self->load_tmpl("list_view.tmpl", associate=>$q, loop_context_vars=>1);
     $t->param(%ui_messages) if (%ui_messages);
 
     # Do simple search based on search field
@@ -136,6 +152,7 @@ sub search {
         contrib_id => $_->contrib_id(),
         last => $_->last(),
         first => $_->first(),
+        middle => $_->middle(),
         types => [ map { { type_name => $_ } } ($_->contrib_type_names()) ]
     } } @contributors );
 
@@ -167,11 +184,10 @@ returned to the "edit" run-mode of Krang::CGI::Story, e.g.:
 sub associate_story {
     my $self = shift;
 
-    my $q = $self->query();
+    $self->param(ASSOCIATE_OBJECT => $session{story});
 
-    return $self->dump_html();
+    return $self->associate_mode(@_);
 }
-
 
 
 =item associate_media
@@ -180,15 +196,70 @@ Invoked by direct link from Krang::CGI::Media,
 this run-mode provides an entry point through which
 Contributors may be associated with Media objects.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+It is expected that the media object with which we
+are to associate contributors be available via the 
+%session in the key 'media'.
+
+When the user clicks "save" or "cancel" they will be
+returned to the "edit" run-mode of Krang::CGI::Media, e.g.:
+
+  http://server/media.pl?rm=edit
 
 =cut
 
 
 sub associate_media {
+    my $self = shift;
+
+    $self->param(ASSOCIATE_OBJECT => $session{media});
+
+    return $self->associate_mode(@_);
+}
+
+
+
+=item associate_selected
+
+Remove the selected contributors from the current story or
+media object.  Return to associate_story or associate_media.
+
+=cut
+
+sub associate_selected {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    return $self->dump_html();
+}
+
+
+
+=item unassociate_selected
+
+Remove the selected contributors from the current story or
+media object.  Return to associate_story or associate_media.
+
+=cut
+
+sub unassociate_selected {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    return $self->dump_html();
+}
+
+
+
+=item reorder_contribs
+
+Reorder the contributors associated with the current story or
+media object.  Return to associate_story or associate_media.
+
+=cut
+
+sub reorder_contribs {
     my $self = shift;
 
     my $q = $self->query();
@@ -225,7 +296,8 @@ sub delete_selected {
         Krang::Contrib->delete($cid);
     }
 
-    return $self->search(message_selected_deleted=>1);
+    add_message('message_selected_deleted');
+    return $self->search();
 }
 
 
@@ -295,10 +367,13 @@ sub save_add {
     my $c = $session{EDIT_CONTRIB} || 0;
     die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
 
-    $self->do_update_contrib($c);
+    my %save_errors = ( $self->do_update_contrib($c) );
+    return $self->add(%save_errors) if (%save_errors);
+
     $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
 
-    return $self->search(message_contrib_added=>1);
+    add_message('message_contrib_added');
+    return $self->search();
 }
 
 
@@ -349,7 +424,8 @@ sub save_stay_add {
     my $c = $session{EDIT_CONTRIB} || 0;
     die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
 
-    $self->do_update_contrib($c);
+    my %save_errors = ( $self->do_update_contrib($c) );
+    return $self->add(%save_errors) if (%save_errors);
 
     # Set up for edit mode
     my $contrib_id = $c->contrib_id();
@@ -357,7 +433,8 @@ sub save_stay_add {
     $q->param(contrib_id => $contrib_id);
     $q->param(rm => 'edit');
 
-    return $self->edit(message_contrib_added=>1);
+    add_message('message_contrib_added');
+    return $self->edit();
 }
 
 
@@ -436,10 +513,13 @@ sub save_edit {
     my $c = $session{EDIT_CONTRIB} || 0;
     die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
 
-    $self->do_update_contrib($c);
+    my %save_errors = ( $self->do_update_contrib($c) );
+    return $self->edit(%save_errors) if (%save_errors);
+
     $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
 
-    return $self->search(message_contrib_saved=>1);
+    add_message('message_contrib_saved');
+    return $self->search();
 }
 
 
@@ -458,7 +538,8 @@ sub cancel_edit {
     my $q = $self->query();
     $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
 
-    return $self->search(message_save_cancelled=>1);
+    add_message('message_save_cancelled');
+    return $self->search();
 }
 
 
@@ -490,7 +571,8 @@ sub save_stay_edit {
     my $c = $session{EDIT_CONTRIB} || 0;
     die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
 
-    $self->do_update_contrib($c);
+    my %save_errors = ( $self->do_update_contrib($c) );
+    return $self->edit(%save_errors) if (%save_errors);
 
     # Set up for edit mode
     my $contrib_id = $c->contrib_id();
@@ -498,7 +580,8 @@ sub save_stay_edit {
     $q->param(contrib_id => $contrib_id);
     $q->param(rm => 'edit');
 
-    return $self->edit(message_contrib_saved=>1);
+    add_message('message_contrib_saved');
+    return $self->edit();
 }
 
 
@@ -533,7 +616,8 @@ sub delete {
         Krang::Contrib->delete($contrib_id);
     }
 
-    return $self->search(message_contrib_deleted=>1);
+    add_message('message_contrib_deleted');
+    return $self->search();
 }
 
 
@@ -542,6 +626,84 @@ sub delete {
 #############################
 #####  PRIVATE METHODS  #####
 #############################
+
+
+# Handle sub-modes for associating stories
+sub associate_mode {
+    my $self = shift;
+    my %ui_messages = ( @_ );
+
+    my $q = $self->query();
+    my $t = $self->load_tmpl("associate_list_view.tmpl", associate=>$q);
+    $t->param(%ui_messages) if (%ui_messages);
+
+    # Get media or story object from session -- or die() trying
+    my $ass_obj = $self->param('ASSOCIATE_OBJECT');
+    die ("No story or media object available for contributor association") unless (ref($ass_obj));
+
+    # Assume: "story" xor "media"
+    my $associate_mode = ($ass_obj->isa('Krang::Story')) ? 'story' : 'media' ;
+    $t->param(associate_mode => $associate_mode);
+
+    # Set Boolean for H::T
+    $t->param(associate_story=>($associate_mode eq 'story'));
+
+    $t->param(associated_contributors => [
+                                          {
+                                           contrib_id      => '1',
+                                           contrib_type_id => '1',
+                                           first           => 'Joe',
+                                           last            => 'Strummer',
+                                           type            => 'Songwriter',
+                                          },
+                                          {
+                                           contrib_id      => '2',
+                                           contrib_type_id => '1',
+                                           first           => 'Ian',
+                                           last            => 'Curtis',
+                                           type            => 'Songwriter',
+                                          },
+                                          {
+                                           contrib_id      => '2',
+                                           contrib_type_id => '2',
+                                           first           => 'Ian',
+                                           last            => 'Curtis',
+                                           type            => 'Singer',
+                                          },
+                                          {
+                                           contrib_id      => '3',
+                                           contrib_type_id => '3',
+                                           first           => 'Phil',
+                                           last            => 'Puleo',
+                                           type            => 'Drummer',
+                                          },
+                                         ]);
+
+    # Do simple search based on search field
+    my $search_filter = $q->param('search_filter') || '';
+    my @contributors = Krang::Contrib->find(simple_search=>$search_filter);
+
+    # To be replaced with paging
+    my %contrib_type_prefs = Krang::Pref->get('contrib_type');
+    my @contrib_tmpl_data = ();
+    foreach my $c (@contributors) {
+        my @contrib_type_ids = ( $c->contrib_type_ids() );
+        foreach my $contrib_type_id (@contrib_type_ids) {
+            push(@contrib_tmpl_data, {
+                                      contrib_id => $c->contrib_id(),
+                                      last => $c->last(),
+                                      first => $c->first(),
+                                      middle => $c->middle(),
+                                      contrib_type_id => $contrib_type_id,
+                                      type => $contrib_type_prefs{$contrib_type_id},
+                                     });
+        }
+    }
+
+    $t->param(contributors => \@contrib_tmpl_data);
+
+    return $t->output() . $self->dump_html();
+}
 
 
 # Updated the provided Contrib object with data
@@ -567,8 +729,21 @@ sub do_update_contrib {
         $contrib->$ck($q->param($ck));
     }
 
-    # Write back to database
-    $contrib->save();
+    # Attempt to write back to database
+    eval { $contrib->save() };
+
+    # Is it a dup?
+    if ($@) {
+        if (ref($@) and $@->isa('Krang::Contrib::DuplicateName')) {
+            add_message('duplicate_name');
+            return (duplicate_name=>1);
+        } else {
+            # Re-throw
+            die ($@);
+        }
+    }
+
+    return ();
 }
 
 
@@ -603,6 +778,11 @@ sub validate_contrib {
     $q->delete('contrib_type_ids');
     $q->param('contrib_type_ids', @valid_contrib_type_ids );
     $errors{error_invalid_type} = 1 unless (scalar(@valid_contrib_type_ids));
+
+    # Add messages
+    foreach my $error (keys(%errors)) {
+        add_message($error);
+    }
 
     return %errors;
 }

@@ -37,32 +37,22 @@
 
 <div class="dark-bar">Contributor List</div>
 
-
-<tmpl_if message_contrib_added><div class="alert">Contributor has been added.</div></tmpl_if>
-<tmpl_if message_add_cancelled><div class="alert">Add contributor cancelled.</div></tmpl_if>
-<tmpl_if message_contrib_saved><div class="alert">Contributor saved.</div></tmpl_if>
-<tmpl_if message_save_cancelled><div class="alert">Edit contributor cancelled.</div></tmpl_if>
-<tmpl_if message_selected_deleted><div class="alert">Checked contributors deleted.</div></tmpl_if>
-<tmpl_if message_contrib_deleted><div class="alert">Contributor deleted.</div></tmpl_if>
-
-
-<tmpl_if associate_mode>
-<!-- List of currently associated contribs -->
-</tmpl_if>
-
-
-SEARCH
+<table width="100%">
 <form name="search_form" method="POST">
+<tr><td class="form-head">
+SEARCH<br />
 <input type="hidden" name="rm" value="search">
 <input type="hidden" name="search_page" value="<tmpl_var ESCAPE=HTML search_page>">
 <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="submit" value="Search">
+</td></tr>
 </form>
+</table>
 
 
 <br />
 
-<a href="javascript:add_contrib()">Add A Contributor</a><br />
+<b><a href="javascript:add_contrib()">Add A Contributor</a></b>
 
 <br />
 
@@ -79,7 +69,7 @@ SEARCH
 
       <tr class="form-head">
           <th>Last Name</th>
-          <th>First Name</th>
+          <th>First, Middle Name</th>
           <th>Type</th>
           <th>Edit</th>
           <th>[]</th>
@@ -88,7 +78,7 @@ SEARCH
   <tmpl_loop contributors>
       <tr>
           <td class="form-cell"><tmpl_var ESCAPE=HTML last></td>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML first></td>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML first><tmpl_if middle>&nbsp;<tmpl_var ESCAPE=HTML middle></tmpl_if></td>
           <td class="form-cell"><tmpl_loop types><tmpl_var ESCAPE=HTML type_name><tmpl_unless __last__>, </tmpl_unless></tmpl_loop></td>
           <td class="form-cell"><a href="javascript:edit_contrib('<tmpl_var ESCAPE=HTML contrib_id>')">Edit</a></td>
           <td class="form-cell"><input type="checkbox" name="contrib_delete_list" value="<tmpl_var ESCAPE=HTML contrib_id>"></td>
