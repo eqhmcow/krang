@@ -47,7 +47,7 @@ Krang::Test::Apache - support module for testing against Apache
   login_not_ok('foo', 'bar');
 
   # login for real, now other tests can run
-  login_ok('admin', 'shredder');
+  login_ok('admin', 'whale');
 
   # test requesting a list of stories
   request_ok('story.pl', { rm => 'find' });

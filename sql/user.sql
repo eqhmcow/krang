@@ -14,8 +14,8 @@ CREATE TABLE user (
         KEY (login)
 );
 
-/* default account 'admin', password 'shredder' */
+/* default account 'admin', password 'whale' */
 INSERT INTO user (email, login, password, first_name, last_name) VALUES
-('Joe@Admin.com', 'admin', '36ca9aadabe4e2adcfcc9747dfb0ea10', 'Joe', 'Admin');
+('Joe@Admin.com', 'admin', 'f1a93f635e172bd5be55ae08dd41553a', 'Joe', 'Admin');
 
 DROP TABLE IF EXISTS usr_user_group;

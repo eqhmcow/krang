@@ -21,7 +21,7 @@ use Krang::Test::Apache;
 
 # get creds
 my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
-my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'shredder';
+my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
 
 foreach my $instance (Krang::Conf->instances()) {
     Krang::Conf->instance($instance);

@@ -27,7 +27,7 @@ is($@ =~ /constructor args are invalid: 'crunk'/, 1, 'new() - invalid field');
 # successes
 ############
 my $admin = Krang::User->new(login => 'admin',
-                             password => 'shredder');
+                             password => 'whale');
 $user = Krang::User->new(login => 'arobin',
                          password => 'gIMp');
 
@@ -119,17 +119,17 @@ is(scalar @{$users[0]->group_ids()}, 3, 'group_ids - count');
 
 # check_user_pass() tests
 ##########################
-# make sure the admin's username and password are 'admin' and 'shredder'
+# make sure the admin's username and password are 'admin' and 'whale'
 # preserve values for restoration
 my ($clogin, $cpass) = map {$admin->$_} qw/login password/;
 $admin->login('admin');
-$admin->password('shredder');
+$admin->password('whale');
 eval {$admin->save();};
 croak("Won't complete tests bad things have happened: $@") if $@;
 
 is(Krang::User->check_auth('',''), 0, 'check_auth() - failure 1');
 is(Krang::User->check_auth('admin',''), 0, 'check_auth() - failure 2');
-is(Krang::User->check_auth('admin', 'shredder'), 1, 'check_auth() - success');
+is(Krang::User->check_auth('admin', 'whale'), 1, 'check_auth() - success');
 
 # revert values
 $admin->login($clogin);

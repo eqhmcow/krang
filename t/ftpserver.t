@@ -85,7 +85,7 @@ isa_ok($ftp, 'Net::FTP', 'is Net::FTP');
 my ($username, $password);
 
 $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
-$password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'shredder';
+$password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
 
 is( $ftp->login( $username, $password ), '1', 'Login Test' );
 

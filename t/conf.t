@@ -22,7 +22,7 @@ SMTPServer localhost
 FromAddress krangmailer\@localhost.com
 BugzillaServer krang-services.ops.about.com/bugzilla
 BugzillaEmail krang_test\@yahoo.com
-BugzillaPassword shredder
+BugzillaPassword whale
 BugzillaComponent 'Auto-submitted Bugs'
 <Instance instance_one>
    InstanceDisplayName "Test Magazine One"
