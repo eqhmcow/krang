@@ -3,7 +3,7 @@
 
 HTML = changes.html coding.html goals.html \
        new_features.html element_system.html \
-       index.html install.html building_perl_modules.html requirements.html \
+       index.html install.html building_perl_modules.html \
        configuration.html tech_spec.html writing_htmltemplate.html \
        permissions.html xml.html performance.html ops_install.html \
        customizing_publish.html ops_upgrade.html release.html \
