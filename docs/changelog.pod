@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added storage of sort order and sort by to session cache in 
+L<Krang::HTMLPager>. [Matt]
+
+=item *
+
 Bugfix in L<Krang::Schedule> - alerts were not being run because 
 of some incomplete code meant to check for valid alert id. [Matt]
 

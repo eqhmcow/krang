@@ -6,6 +6,7 @@ use Carp qw(croak);
 use Krang::HTMLTemplate;
 use Krang::Conf qw(KrangRoot);
 use Krang::MyPref;
+use Krang::Session qw(%session);
 use File::Spec::Functions qw(catdir);
 
 =head1 NAME
@@ -776,9 +777,16 @@ sub make_sortable_column_html {
 
     my $q = $self->cgi_query();
 
-    # Is column currently selected?
-    my $krang_pager_sort_field = $q->param('krang_pager_sort_field');
-    my $krang_pager_sort_order_desc = $q->param('krang_pager_sort_order_desc') || '0';
+    my $use_module = $self->use_module();
+    $use_module =~ s/Krang:://;
+    
+    # Is column currently selected? If not, attempt to find in cache, or set default
+    my $krang_pager_sort_field = $q->param('krang_pager_sort_field') ? $q->param('krang_pager_sort_field') : $session{'KRANG_'.$use_module.'_PAGER_SORT_FIELD'};
+    my $krang_pager_sort_order_desc = $q->param('krang_pager_sort_order_desc') || ($session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'} ? $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'} : '0');
+
+    # set into cache if was set in query this time
+    $session{'KRANG_'.$use_module.'_PAGER_SORT_FIELD'}  = $q->param('krang_pager_sort_field') if length($q->param('krang_pager_sort_field'));
+    $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'}  = $q->param('krang_pager_sort_order_desc') if defined($q->param('krang_pager_sort_order_desc'));
 
     # No sort field set?  Use defaults...
     unless (defined($krang_pager_sort_field) && length($krang_pager_sort_field)) {
@@ -865,9 +873,15 @@ sub get_pager_view {
 
     my $q = $self->cgi_query();
 
+    my $use_module = $self->use_module();
+    
+    # the following is used to attempt to grab any sort criteria from the cache
+    my $use_module_truncate = $use_module;
+    $use_module_truncate =~ s/Krang:://;
+
     my $curr_page_num = ($q->param('krang_pager_curr_page_num') || '1');
-    my $sort_field = $q->param('krang_pager_sort_field') || $self->columns_sortable()->[0] || '';
-    my $sort_order_desc = ($q->param('krang_pager_sort_order_desc'));
+    my $sort_field = $q->param('krang_pager_sort_field') || $session{'KRANG_'.$use_module_truncate.'_PAGER_SORT_FIELD'} || $self->columns_sortable()->[0] || '';
+    my $sort_order_desc = $q->param('krang_pager_sort_order_desc') || $session{'KRANG_'.$use_module_truncate.'_PAGER_SORT_ORDER_DESC'} || '0';
 
     # Page size is either 100, or user preferred size.
     my $show_big_view = ($q->param('krang_pager_show_big_view') || '0');
@@ -875,7 +889,6 @@ sub get_pager_view {
     my $limit = ($show_big_view) ? 100 : $user_page_size ;
 
     # Count used to calculate page navigation
-    my $use_module = $self->use_module();
     my %find_params = %{$self->find_params()};
     my $found_count = $use_module->find(%find_params, count=>1);
     my $total_pages = int($found_count / $limit) + (($found_count % $limit) > 0);
