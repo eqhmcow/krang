@@ -2,19 +2,28 @@ use warnings;
 
 use File::Spec::Functions qw(catfile);
 
-BEGIN {
-    my $root = $ENV{KRANG_ROOT};
+use Krang::Script;
+use Krang::Conf qw(KrangRoot InstanceElementSet);
+use Krang::DataSet;
 
-    # load CanoeKayak elementset w/bogus conf
-    $ENV{KRANG_CONF} = catfile($root, 't', 'CanoeKayak', 'krang.conf');
+# skip all tests unless a CanoeKayak-using instance is available
+BEGIN {
+    my $found;
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        if (InstanceElementSet eq 'CanoeKayak') {
+            $found = 1;
+            last;
+        }
+    }
+    unless ($found) {
+        eval "use Test::More skip_all => 'test requires a PBMM instance';";
+    } else {
+        eval "use Test::More qw(no_plan);";
+    }
+    die $@ if $@;
 }
 
-use Test::More qw(no_plan);
-
-use Krang::Script;
-
-use Krang::Conf qw(KrangRoot);
-use Krang::DataSet;
 
 # Object Count
 use constant CATEGORIES => 9;
