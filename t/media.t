@@ -146,6 +146,12 @@ $m2->save();
 like($m2->file_path, qr/krang\.gif$/);
 ok(-f $m2->file_path);
 
+# test loading of old version with find()
+my $old_version = Krang::Media->find( media_id => $m2->media_id, version => 1);
+
+is($old_version->title(), 'test media object 2');
+is($old_version->version(), '1');
+
 # revert back to version 1
 $m2->revert(1);
 
