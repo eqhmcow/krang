@@ -89,8 +89,6 @@ END
 
 use Term::Prompt qw(prompt);
 use Krang::Conf qw (InstanceElementSet KrangRoot InstanceDBName DBUser DBPass);
-use Krang::ListGroup;
-use Krang::List;
 
 use Getopt::Long;
 use Pod::Usage;
