@@ -24,13 +24,15 @@ Krang::FTP::Server - Virtual FTP Server for Krang Templates and Media
 
 This module provides an FTP interface to Krang Templates and Media. The
 directory tree is the site/category tree created in Krang. 
-What appears to be directories residing at the top level (/) are 
+At the top level (/) there are two directories: /template and /media. 
+What appears to be directories below /template and /media 
 actually correspond with L<Krang::Site>s (if any exist).  Below the 
 site dir appears that site's L<Krang::Category> tree as a directory 
 structure.  If there are not multiple sites, the single category tree 
-appears starting at the top (/) level. Files within these directories 
-are L<Krang::Template> .tmpl files and media files associated with 
-L<Krang::Media> objects. When a user downloads a .tmpl or media file 
+appears starting below /template and /media. Files within these directories 
+are L<Krang::Template> .tmpl files (in the /template tree),and media 
+files associated with L<Krang::Media> objects (in the /media tree).
+When a user downloads a .tmpl or media file 
 with Krang::FTP::Server, they recieve the file from the most recent 
 checked-in version of Template/Media object. When a file is uploaded it
 is automatically checked in and published/deployed.
