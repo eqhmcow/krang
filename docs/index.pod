@@ -63,6 +63,10 @@ HREF[Module Documentation|modules.html] - Krang module documentation
 
 HREF[Building external Perl modules|building_perl_modules.html] - How to add or update modules from CPAN
 
+=item *
+
+HREF[Krang Permissions System|permissions.html] - How the Krang permissions system works.
+
 =back
 
 =head2 Project Management

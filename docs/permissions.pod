@@ -1,0 +1,422 @@
+=head1 Krang Permissions System
+
+Krang implements an authentication and authorization system which
+controls the users' ability to access different aspects of the
+system.  This system works by affiliating named "groups" with sets of
+privileges.  Users are then affiliated with these groups, through
+which they are granted authority.
+
+The purpose of this document is two-fold:
+
+=over 4
+
+=item 1. Functionality
+
+To describe the functionality of the Krang permissions system.
+
+
+=item 2. Implementation
+
+To describe how the Krang permissions system is implemented, and why.
+
+
+=back
+
+
+
+=head1 Functionality
+
+Krang's security is based on "groups".  Groups are logical containers
+which are affiliated with permission settings and users.  Permissions
+for a group are assigned in three major "security realms":
+
+
+=head2 Security Realms
+
+=over 4
+
+=item 1. Sites/Categories
+
+Sites, and the categories (e.g., directories) within each site.
+
+
+=item 2. Application Classes
+
+Includes four classes of applications: Story, Media, Templates, and Admin.
+
+
+=item 3. Desks
+
+Logical desks, such as "Edit" or "Publish"
+
+
+=back
+
+
+
+=head2 Security Levels
+
+Within these three security realms, authority is granted to one of
+three levels:
+
+
+=over 4
+
+=item A. Edit
+
+User may add, modify or delete.
+
+
+=item B. Read-Only
+
+User can view items but not make changes.
+
+
+=item C. Hide
+
+User may neither see nor change items.
+
+
+=back
+
+
+
+=head2 Global Permissions
+
+In addition to the realms and levels described above, there are two
+security items affiliated with a group which are global to the whole
+system.
+
+=over 4
+
+=item * Can Create Users
+
+Controls the ability of the user to access the edit functions of the
+Admin/User application.
+
+
+=item * Can Publish
+
+Controls the ability of the user to send content to the live site.
+
+
+=back
+
+
+
+=head2 Use Cases
+
+These permissions are applied intuitively based on their context.  For
+example:
+
+=over 4
+
+
+=item *
+
+A user is granted "Read-Only" access to a particular category.  As a
+result, they can see the contents of the category and its
+sub-categories, but may not add, modify or delete categories in the
+affected hierarchy.  Furthermore, the user may see but not edit media
+and story objects which are within the affected hierarchy.
+
+
+=item *
+
+A user is granted "Edit" access to desk "A", but "Read-Only" access to
+desk "B".  as a result, they can manipulate content on desk "A", and
+they may move it to desk "B" -- but once on desk "B" they cannot
+make any changes.
+
+
+=item *
+
+A user is granted "Hide" access to the "Admin" application class.  As
+a result, they cannot see or access any of the applications in that
+class, including Users, Groups, Contributors, Sites, Categories, Jobs,
+
+
+
+=item *
+
+A user is granted "Edit" access to "Story" and "Media" application
+classes, but not to "Templates".  As a result, they can manage
+content, but may not make changes to the templates which control the
+appearance of content.
+
+=back
+
+
+
+=head1 Implementation
+
+There are two primary tasks for which the Krang permissions system is
+responsible:
+
+
+=over 4
+
+=item 1. API security
+
+Limit access to Krang objects.
+
+
+=item 2. UI security
+
+Influence UI based on access to functionality.
+
+
+=back
+
+
+It is through these two mechanisms that Krang permissions are implemented.
+
+
+=head2 API security
+
+The purpose of API security is to limit access to Krang objects.  This
+mechanism is implemented by modifying the Krang object modules (e.g.,
+Krang::Media, Krang::Story, etc.).
+
+Typically, this means modifying the find() method to hide objects
+which the current user is not allowed to see and throwing exceptions
+when the user tries to perform an operation they are not allowed to
+perform, such as calling save() on an object to which they have
+"Read-Only" access.
+
+The implementation varies according to the security realm:
+
+=over 4
+
+
+=item * Sites/Categories
+
+Site/categories are the most complex aspect of the Krang
+permissions system.  Because categories touch so many different parts
+of the Krang system, and because they are so voluminous (possibly
+numbering around 10,000 per Krang instance) a special mechanism has
+been devised to handle category-based permissions.
+
+Primarily, a table called "category_group_permission" has been
+created.  This table stores the category permission configuration
+designated by the users.  For example, imagine the following was
+configured for the "Car Editors" group:
+
+  site1.com/, "Read-Only"
+  site1.com/departments/cars/, "Edit"
+
+The intention of the user who configured these permissions would be to
+grant "Car Editors" the ability to manage content within their
+section, but not anywhere else.  For example, if they wanted to add a
+story to the system they would be granted access as follows to the
+following categories:
+
+  Not allowed:  site1.com/
+  Allowed:      site1.com/departments/cars/
+  Allowed:      site1.com/departments/cars/toyota/prius/
+  Not allowed:  site1.com/departments/unicycles/
+
+In order to make a permissions decision about the category
+"site1.com/departments/cars/" there is an exact match in the
+"category_group_permission" table.  Unfortunately, in order to find
+permissions for "site1.com/departments/cars/toyota/prius/" it is
+necessary to ascend the hierarchy until we get to
+"site1.com/departments/cars/".
+
+The "category_group_permission" table is expected to be a very sparse
+matrix of categories and groups.  If we were to rely on this table for
+making all category permission decisions we would spend a considerable
+amount of time negotiating the category hierarchy, and performance
+would greatly suffer as a result.
+
+In order to avoid this problem, another table called
+"category_group_permission_cache" has been created.  Unlike
+"category_group_permission", this table stores every possible
+combination of group and category.  As a result, any look up for
+category/group permissions is certain to be resolved in a single
+query.
+
+Furthermore, in order to streamline the ability to integrate category
+permission checking into SQL, the permission levels "Edit",
+"Read-Only", and "Hide" have been implemented as two columns in
+"category_group_permission_cache": "may_see" and "may_edit".
+
+Finally, it is important to recognize that a user may be a member of
+more than one group.  The result of this is that the database may
+return more than one row per user/category.  In order to compensate
+for the possible 1:N nature of users to qualifying groups, a group-by
+SQL mechanism should be employeed when retrieving permissions, and a
+"select distinct" when doing a count.
+
+Put together with the rest of the system, here is how a count of media
+records might be implemented in SQL:
+
+  select
+    count(distinct media_id)
+
+  from
+    media
+      left join category_group_permission_cache as cgpc
+        ON cgpc.category_id = media.category_id
+      left join usr_user_group
+        ON cgpc.group_id = usr_user_group.user_group_id
+
+  where
+    usr_user_group.user_id = 1 AND
+    cgpc.may_see = 1 
+
+
+Here is how you would retrieve matching media records for the same
+query.  Note the use of sum() and "group by":
+
+  select
+    media.media_id,
+    media.title,
+    media.category_id,
+    (sum(cgpc.may_edit) > 0) as may_edit,
+    (sum(cgpc.may_edit) > 0) as may_edit
+
+  from
+    media
+      left join category_group_permission_cache as cgpc
+        ON cgpc.category_id = media.category_id
+      left join usr_user_group
+        ON cgpc.group_id = usr_user_group.user_group_id
+
+  where
+    usr_user_group.user_id = 1 AND
+    cgpc.may_see = 1 
+
+  group by
+    media.media_id
+
+Because may_see and may_edit columns will contain "1" if true and "0"
+if not, sum() will effectively be greater than zero if the user is
+allowed to see or edit, respectively.
+
+As you can see, this SQL will hide records to which the user has no
+authority to see.  This handles the "Hide" case, but does not handle
+the "Edit" verses "Read-Only" case.  To support this case, the
+"may_edit" property should be used.  When records are instantiated
+from the database the "may_edit" property should be stored with the
+object.
+
+This object property should be considered whenever the user attempts
+to trigger a write operation on the object, in which case the
+operation should croak().  Examples of methods which should implement
+this behavior are:
+
+  save()
+  delete()
+  checkout()
+  checkin()
+
+This will ensure that even if the calling code erroneously issues
+write operations, those operations will not be permitted thus
+corrupting the database.
+
+
+Maintenance of the category_group_permission_cache table is managed by
+the Krang::Group module which is called when categories or groups are
+changed.
+
+
+=item * Application Classes
+
+
+
+=item * Desks
+
+
+
+=item * Global Permissions
+
+
+
+=back
+
+
+=head2 UI security
+
+The purpose of UI security is to inform the various user interface
+applications so that features to which the user does not have access
+are hidden from view.  The goal of hiding these inaccessible features
+is to improve ease of use for the typical user.
+
+The UI security is expected to be back-stopped by the API security.
+There are two reasons for this dual implementation:  First is defense
+in depth.  Unauthorized actions should not simply be hidden from view
+-- they should be blocked from execution.  This prevents a malicious
+user who has reversed engineered UI functionality from issuing
+commands which should not be allowed.
+
+The second reason is quality assurance.  Both the UI and the API
+should implement the same logical authorization rules.  If the UI
+allows some functionality which is not permitted, the API will catch
+the error and croak().  This will offer a better opportunity to catch
+flaws in the software system before they create corrupted records in
+the database.
+
+
+=over 4
+
+
+=item * Sites/Categories
+
+Site/categories affect a most of the objects in the Krang system.  The
+web UI needs to decide whether or not to display buttons for write
+operations for a given object.  In order to inform the UI code of the
+ability to edit a particular object, every object should implement a
+method, may_edit(), which returns "1" or "0" indicating whether an
+object is editable or not, respectively.
+
+In practice, this would effect list views which display "edit" buttons
+or checkboxes to delete or checkout objects.  This would be
+implemented via the Krang::HTMLPager row handler function.  For
+example:
+
+  sub row_handler {
+    my ($row_hashref, $row_obj) = @_;
+
+    my @commands = qw(view log);
+
+    # Add "edit" function if user may edit
+    if ($row_obj->may_edit) {
+      unshift(@commands, 'edit');
+    }
+
+    # Build HTML for commands
+    my $row_id = $row_obj->story_id();
+    my @commands_html = ();
+    foreach my $command (@commands) {
+      my $href = "javascript:$command('$row_id')";
+      my $link = "<a href=\"$href\">$command</a>";
+      push(@commands_html, $link);
+    }
+
+    # Set up command column
+    my $command_column_html = join("&nbsp;|&nbsp;", @commands_html);
+    $row_data->{command_column} = $command_column_html;
+
+    # ...Rest of row handler here...
+  }
+
+This same technique can be used to remove delete and checkout
+checkboxes from rows which are not editable.
+
+
+=item * Application Classes
+
+
+
+=item * Desks
+
+
+
+=item * Global Permissions
+
+
+
+=back
+
+
