@@ -69,7 +69,10 @@ sub publish_story {
 
     $query->delete('story_id');
 
+    $story_id =~ s/^story_(\d+)$/$1/go;
+
     my ($story) = Krang::Story->find(story_id => $story_id);
+
     croak("Unable to load story for story_id '$story_id'")
       unless $story;
 
@@ -109,7 +112,6 @@ sub publish_story_list {
     my (@story_list,@media_list,@story_id_list,@media_id_list);
 
     my @asset_id_list = $query->param('krang_pager_rows_checked');
-#    $query->delete('krang_pager_rows_checked');
 
     my $t = $self->load_tmpl('publish_list.tmpl',
                              associate => $query,
@@ -119,7 +121,7 @@ sub publish_story_list {
     my @id_list;
 
     foreach (@asset_id_list) {
-        $_ =~ /(\w+)_(\d+)/;
+        $_ =~ /^(\w+)_(\d+)$/o;
         ($1 eq 'story') ? ( push @story_id_list, $2 ) :
           ($1 eq 'media') ? ( push @media_id_list, $2 ) : 
             croak __PACKAGE__ . ": what to do with asset = '$1'??";
@@ -184,59 +186,11 @@ sub publish_assets {
     @media_list = Krang::Media->find(media_id => \@media_id_list) if @media_id_list;
 
     if ($publish_now) {
-        # run things to the publisher
-        my $publisher = Krang::Publisher->new();
-        if (@story_list) {
-            # publish!
-            $publisher->publish_story(story => \@story_list);
-            foreach my $story (@story_list) {
-                # add a publish message for the UI
-                add_message('story_publish', story_id => $story->story_id,
-                            url => $story->url,
-                            version => $story->version);
-            }
-        }
-        if (@media_list) {
-            # publish!
-            $publisher->publish_media(media => \@media_list);
-            foreach my $media (@media_list) {
-                # add a publish message for the UI
-                add_message('media_publish', media_id => $media->media_id,
-                            url => $media->url,
-                            version => $media->version);
-            }
-        }
+        $self->_publish_assets_now(\@story_list, \@media_list);
     } else {
         # pass things to the scheduler
         my $date = decode_datetime(name => 'publish_date', query => $query);
-        foreach my $story (@story_list) {
-            my $sched = Krang::Schedule->new(object_type => 'story',
-                                             object_id   => $story->story_id,
-                                             action      => 'publish',
-                                             repeat      => 'never',
-                                             date        => $date);
-            $sched->save();
-            add_message('story_schedule',
-                        story_id => $story->story_id,
-                        version => $story->version,
-                        publish_datetime => $date->cdate()
-                       );
-        }
-        foreach my $media (@media_list) {
-            my $sched = Krang::Schedule->new(object_type => 'media',
-                                             object_id   => $media->media_id,
-                                             action      => 'publish',
-                                             repeat      => 'never',
-                                             date        => $date);
-            $sched->save();
-            add_message('media_schedule',
-                        media_id => $media->media_id,
-                        version => $media->version,
-                        publish_datetime => $date->cdate()
-                       );
-        }
-
-
+        $self->_schedule_assets(\@story_list, \@media_list, $date);
     }
 
     # return to my workspace
@@ -264,6 +218,7 @@ sub publish_media {
     my $media_id = $query->param('media_id');
     croak("Missing required media_id parameter") unless $media_id;
 
+    $media_id =~ s/^media_(\d+)$/$1/go;
     my ($media) = Krang::Media->find(media_id => $media_id);
 
     # run things to the publisher
@@ -418,7 +373,7 @@ sub _build_asset_list {
     push(@{$publish_list}, 
          @{$publisher->get_publish_list(story => $story_list)})
       if $story_list and @$story_list;
-    
+
     # add previously submitted media objects to the list.
     push(@{$publish_list}, @$media_list)
       if $media_list and @$media_list;
@@ -452,6 +407,118 @@ sub _build_asset_list {
     return (\@stories, \@media);
 
 }
+
+
+#
+# _publish_assets_now($story_list_ref, $media_list_ref);
+#
+# Given lists of story & media objects, start the publish process on both.
+# If errors occur, make entires in the message system & return.
+#
+sub _publish_assets_now {
+
+    my $self = shift;
+    my ($story_list, $media_list) = @_;
+
+    # run things to the publisher
+    my $publisher = Krang::Publisher->new();
+    if (@$story_list) {
+        # publish!
+        eval { $publisher->publish_story(story => $story_list); };
+
+        if ($@) {
+            # if there is an error, figure out what it is, create the appropriate message
+            # and return.
+            if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
+                add_message('missing_template',
+                            element_name  => $@->element_name,
+                            category_url   => $@->category_url
+                           );
+
+            } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
+                add_message('template_parse_error',
+                            element_name  => $@->element_name,
+                            template_name => $@->template_name,
+                            category_url  => $@->category_url,
+                            error_msg     => $@->error_msg
+                           );
+            } else {
+                # something not expected - throw the error
+                croak($@);
+            }
+            return;
+        }
+
+        # otherwise, we're good.
+        foreach my $story (@$story_list) {
+            # add a publish message for the UI
+            add_message('story_publish', story_id => $story->story_id,
+                        url => $story->url,
+                        version => $story->version);
+        }
+    }
+
+    if (@$media_list) {
+        # publish!
+        $publisher->publish_media(media => $media_list);
+        foreach my $media (@$media_list) {
+            # add a publish message for the UI
+            add_message('media_publish', media_id => $media->media_id,
+                        url => $media->url,
+                        version => $media->version);
+        }
+    }
+
+    return;
+}
+
+
+#
+# _schedule_assets($story_listref, $media_listref, $date);
+#
+# Takes lists of story & media objects and makes entries for them in the scheduler.
+#
+
+sub _schedule_assets {
+
+    my $self = shift;
+    my ($story_list, $media_list, $date) = @_;
+
+    foreach my $story (@$story_list) {
+        my $sched = Krang::Schedule->new(object_type => 'story',
+                                         object_id   => $story->story_id,
+                                         action      => 'publish',
+                                         repeat      => 'never',
+                                         date        => $date);
+        $sched->save();
+        add_message('story_schedule',
+                    story_id => $story->story_id,
+                    version => $story->version,
+                    publish_datetime => $date->cdate()
+                   );
+        # check scheduled story back in.
+        $story->checkin();
+
+    }
+    foreach my $media (@$media_list) {
+        my $sched = Krang::Schedule->new(object_type => 'media',
+                                         object_id   => $media->media_id,
+                                         action      => 'publish',
+                                         repeat      => 'never',
+                                         date        => $date);
+        $sched->save();
+        add_message('media_schedule',
+                    media_id => $media->media_id,
+                    version => $media->version,
+                    publish_datetime => $date->cdate()
+                   );
+        $media->checkin();
+    }
+
+    return;
+
+}
+
 
 1;
 
