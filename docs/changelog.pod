@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<bin/krang_expunge> - designed to work in conjunction with
+C<bin/krang_extract_subset>, it deletes a site from a multi-site Krang
+instance, and ensures that no dependencies are left hanging. [Peter]
+
+=item *
+
 Minor bugfix in C<bin/krang_extract_subset> - proper handling of
 StoryLink/MediaLink elements that do not point to anything.
 

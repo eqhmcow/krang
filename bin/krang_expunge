@@ -1,0 +1,583 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+=pod
+
+=head1 NAME
+
+krang_expunge - remove a site or series of sites from a Krang
+instance, ensuring that no dependencies to those sites exist in the
+remaining content.
+
+=head1 SYNOPSIS
+
+List the actions that would be taken by removing a site (no actions
+actually taken):
+
+  $ krang_expunge --site_id 1
+
+Go through with removing a site and cleaning up dependencies:
+
+  $ krang_expunge --site_id 1 --execute
+
+Display more output during the process:
+
+  $ krang_expunge --site_id 1 --execute --verbose
+
+Delete elements that link to deleted content, rather than zero them out:
+
+  $ krang_expunge --site_id 1 --delete-links --execute
+
+=head1 DESCRIPTION
+
+krang_expunge is designed to remove one or more sites from an existing
+Krang instance, and clean up any links outside of those sites,
+ensuring that no dependencies remain.
+
+This script was developed in conjunction with the
+C<bin/krang_extract_subset>, to make it possible to break up a Krang
+instance with multiple sites into multiple instances, with a minimum
+of breakage and manual labor.
+
+The idea is to use C<bin/krang_extract_subset> to export a single site
+or series of sites (which no longer link to content in surrounding
+sites).  Once exported, use C<bin/krang_import> to load those sites
+into a new Instance, and use C<bin/krang_expunge> to remove that
+content from the first Krang instance.
+
+B<WARNING>: Be careful using this script - all deletions and content
+modifications are final!
+
+Command line options are:
+
+=over
+
+=item --site_id
+
+The id of the site to be deleted.  Multiple C<--site_id> arguments can
+be used to delete multiple sites, e.g.
+
+  $ krang_expunge --site_id 1 --site_id 2
+
+=item --execute
+
+Tells C<krang_expunge> to actually go through with the deletion.
+Without this argument, C<krang_expunge> will simply display a list of
+the changes it will make.
+
+=item --delete-links
+
+If used, elements that link to stories or media objects within the
+target site will be deleted.
+
+Default behavior is to preserve the elements, but zero out the linked
+object, so they point to nothing.
+
+=item --verbose
+
+Display additional messages to the console.
+
+=back
+
+
+The steps taken by C<krang_expunge> are as follows:
+
+=over
+
+=item *
+
+All stories that have categories both inside and outside the target
+site(s) will have the categories within the target site(s) deleted.
+
+=item *
+
+All stories that link to stories or media objects within the target
+site(s) will have those links removed.  If the C<--delete-links>
+command-line argument is used, the element will be deleted entirely.
+
+=item *
+
+All templates within the target site(s) will be deleted.
+
+=item *
+
+All media objects within the target site(s) will be deleted.
+
+=item *
+
+All stories within the target site(s) will be deleted.
+
+=item *
+
+All categories within the target site(s) will be deleted.
+
+=item *
+
+The target site(s) will be deleted.
+
+=back
+
+=cut
+
+
+use FindBin qw($RealBin);
+use Config;
+use File::Spec::Functions qw(catdir splitdir canonpath);
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# process command-line args.
+use Getopt::Long;
+use Pod::Usage;
+
+my (%expunged_sites, $execute, $delete_links, $verbose, $man, $help);
+BEGIN {
+    eval {
+        $verbose      = 0;
+        $delete_links = 0;
+        $execute      = 0;
+
+        my @sites_to_go;
+
+        pod2usage(2) unless
+          GetOptions(help            => \$help,
+                     man             => \$man,
+                     'verbose+'      => \$verbose,
+                     'delete_links+' => \$delete_links,
+                     'execute+'      => \$execute,
+                     'site_id=i',    => \@sites_to_go
+                    );
+        pod2usage(1)             if $help;
+        pod2usage(-verbose => 2) if $man;
+        pod2usage("Unrecognized options to krang_expunge: '" . join(' ', @ARGV) . "'\n")
+          if @ARGV;
+        pod2usage(1) unless (@sites_to_go);
+
+        %expunged_sites = map { $_ => 1 } @sites_to_go;
+    };
+
+    # output errors without the BEGIN compilation failed message
+    if ($@) { 
+        warn $@;
+        exit(1);
+    }
+
+}
+
+# Krang Libs
+use Krang::Script;
+use Krang::Conf;
+use Krang::Story;
+use Krang::Media;
+use Krang::Category;
+use Krang::Template;
+use Krang::Site;
+
+# quick definition for numeric sorts
+sub bynumber { $a <=> $b }
+
+my @remove_cats;
+my @delete_story_links;
+my @delete_media_links;
+
+
+# find all sites in the instance.
+my @sites = Krang::Site->find();
+
+
+# build a list of the sites that will remain.
+my @remaining_sites;
+
+foreach my $s (@sites) {
+    if ($expunged_sites{$s->site_id}) {
+        # get the site URL for better explanations:
+        $expunged_sites{$s->site_id} = $s->url;
+    } else {
+        # this site is sticking around.
+        push @remaining_sites, $s->site_id
+    }
+}
+# sanity check
+foreach my $site_check (keys %expunged_sites) {
+    if ($expunged_sites{$site_check} eq 1) {
+        print sprintf("ERROR: Site ID=%i does not exist.  Exiting.\n\n", $site_check);
+        exit(1);
+    }
+}
+
+
+# iterate over stories in the sites not being deleted.
+my %checked_stories;
+my %checked_media;
+
+my $limit  = 100;
+my $offset = 0;
+
+my @stories_removed_cats;
+my @stories_removed_stories;
+my @stories_removed_media;
+my @checked_out_stories;
+my @checked_out_media;
+my @checked_out_tmpls;
+
+
+if (@remaining_sites) {
+    print "Removing dependencies from remaining sites...\n" if ($execute);
+    while (my @stories = Krang::Story->find(site_id => \@remaining_sites,
+                                            limit   => $limit,
+                                            offset  => $offset)) {
+        foreach my $s (@stories) {
+
+            if ($s->checked_out) {
+                if ($execute) {
+                    print STDOUT sprintf("ERROR: Cannot continue.  Story ID=%i is checked out by User ID=%i\n\n",
+                                         $s->story_id, $s->checked_out_by);
+                    exit(1);
+                } else {
+                    push @checked_out_stories, $s->story_id
+                }
+            }
+
+            # remove any categories in the sites slated for removal.
+            my @cats;
+            my @removed_cats;
+            foreach my $c ($s->categories()) {
+                if ($expunged_sites{$c->site_id}) {
+                    push @removed_cats, $c->category_id;
+                    push @stories_removed_cats, $s->story_id;
+                } else {
+                    push @cats, $c;
+                }
+            }
+
+            # make a note that we've looked at this story - it qualifies
+            # as 'good' because we know it exists in at least one site not
+            # being expunged.
+            $checked_stories{good}{$s->story_id} = 1;
+
+            my $e = $s->element();
+
+            my ($removed_m, $removed_s) = scrub_children(element    => $e,
+                                                         good_sites => \@remaining_sites);
+
+            push @stories_removed_stories, $s->story_id if (@$removed_s);
+            push @stories_removed_media, $s->story_id if (@$removed_m);
+
+            if ($verbose && (@removed_cats || @$removed_s || @$removed_m)) {
+                print STDERR sprintf("Story ID=%i:\n", $s->story_id);
+                print STDERR sprintf("\tremove cats=%s\n", join ',', sort bynumber @removed_cats)
+                  if (@removed_cats);
+                print STDERR sprintf("\tremove stories=%s\n", join ',', sort bynumber @$removed_s)
+                  if (@$removed_s);
+                print STDERR sprintf("\tremove media=%s\n", join ',', sort bynumber@$removed_m)
+                  if (@$removed_m);
+            }
+
+
+            # make these changes if the user says so.
+            if ($execute) {
+                print STDERR "Saving changes..\n" if ($verbose);
+                $s->checkout();
+                $s->categories(@cats);
+                $e->save();
+                $s->save();
+                $s->checkin();
+            }
+        }
+
+        $offset += $limit;
+    }
+} else {
+    print "\nWARNING: No sites will remain after deletion - skipping dependency checks.\n";
+}
+
+# now, delete all content in the sites being expunged.
+if ($execute) {
+    foreach my $site_id (keys %expunged_sites) {
+        print sprintf("\nStarting deletion of '%s':\n", $expunged_sites{$site_id});
+
+        print "\tDeleting templates...";
+
+        # Krang::Template cannot be searched by site, only by a list of categories.
+        my @site_cats = all_cats(site => $site_id);
+
+        foreach my $tmpl (Krang::Template->find(category_id => \@site_cats)) {
+            print $tmpl->template_id . ',' if ($verbose);
+            eval { $tmpl->delete(); };
+            delete_error(object => $tmpl, error => $@) if $@;
+        }
+        print "\n";
+
+        print "\tDeleting media...";
+        $offset = 0;
+        while (my @media = Krang::Media->find(site_id => $site_id,
+                                              limit   => $limit,
+                                              offset  => $offset)) {
+            foreach my $m (@media) {
+                print $m->media_id . ',' if ($verbose);
+                eval { $m->delete(); };
+                delete_error(object => $m, error => $@) if $@;
+            }
+            $offset += $limit;
+        }
+        print "\n";
+
+        print "\tDeleting stories...";
+        $offset = 0;
+        while (my @story = Krang::Story->find(primary_site_id => $site_id,
+                                              limit   => $limit,
+                                              offset  => $offset)) {
+            foreach my $s (@story) {
+                print $s->story_id . ',' if ($verbose);
+                eval { $s->delete(); };
+                delete_error(object => $s, error => $@) if $@;
+            }
+            $offset += $limit;
+        }
+        print "\n";
+
+
+        my ($site) = Krang::Site->find(site_id => $site_id);
+
+        print "\tDeleting categories...";
+        # need to recursively delete categories within the site.
+        my ($root_cat) = Krang::Category->find(site_id => $site->site_id(), dir => '/');
+
+        delete_category_children(category => $root_cat);
+
+        print "\n";
+
+        print "\tDeleting site...\n";
+
+        $site->delete();
+    }
+
+    print "Finished.  Exiting.\n\n";
+
+} else {
+    # build complete list of checked out objects.
+    foreach my $site_id (keys %expunged_sites) {
+
+        # Krang::Template cannot be searched by site, only by a list of categories.
+        my @site_cats = all_cats(site => $site_id);
+
+        push @checked_out_stories, Krang::Story->find(site_id     => $site_id,
+                                                      checked_out => 1,
+                                                      ids_only    => 1);
+        push @checked_out_media, Krang::Media->find(site_id     => $site_id,
+                                                    checked_out => 1,
+                                                    ids_only    => 1);
+        push @checked_out_tmpls, Krang::Template->find(category_id => \@site_cats,
+                                                       checked_out => 1,
+                                                       ids_only    => 1);
+    }
+
+    print "\n\nIf the '--execute' option is used, the following changes will be made\nto data within remaining sites:\n\n";
+
+    print sprintf("The following stories will have categories removed:\n%s\n\n",
+                  join ',', @stories_removed_cats) if (@stories_removed_cats);
+
+    print sprintf("The following stories will have story links removed:\n%s\n\n",
+                  join ',', @stories_removed_stories) if (@stories_removed_stories);
+
+    print sprintf("The following stories will have media links removed:\n%s\n\n",
+                  join ',', @stories_removed_media) if (@stories_removed_media);
+
+    print sprintf("WARNING: The following stories need to be checked in before krang_expunge can work:\n%s\n\n",
+                  join ',', @checked_out_stories) if (@checked_out_stories);
+
+    print sprintf("WARNING: The following media need to be checked in before krang_expunge can work:\n%s\n\n",
+                  join ',', @checked_out_media) if (@checked_out_media);
+
+    print sprintf("WARNING: The following templates need to be checked in before krang_expunge can work:\n%s\n\n",
+                  join ',', @checked_out_tmpls) if (@checked_out_tmpls);
+
+    print "\tNo data will be changed.\n\n" unless (@stories_removed_cats    ||
+                                                   @stories_removed_stories ||
+                                                   @stories_removed_media   ||
+                                                   @checked_out_stories     ||
+                                                   @checked_out_media       ||
+                                                   @checked_out_tmpls
+                                                  );
+}
+
+
+exit(0);
+
+#
+# @cats = all_cats(site => site_id);
+#
+# Given a Krang::Site ID, return a list of IDs corresponding to all
+# categories under that site.
+sub all_cats {
+    my %args = @_;
+
+    my $site_id = $args{site};
+
+    my @cats;
+
+    foreach my $cat (Krang::Category->find(site_id => $site_id)) {
+        push @cats, $cat->category_id;
+    }
+
+    return @cats;
+}
+
+
+#
+# delete_category_children(category => $category)
+#
+# recursively delete all category children under a Krang::Category object.
+#
+# does *not* delete the submitted category.
+sub delete_category_children {
+    my %args = @_;
+
+    my $cat = $args{category};
+
+    return unless defined($cat);
+
+    foreach my $child ($cat->children()) {
+        delete_category_children(category => $child);
+        print $child->category_id . ',' if ($verbose);
+        $child->delete;
+    }
+}
+
+#
+# complain that the object could not be deleted because it was checked out.
+#
+# exit.
+#
+sub delete_error {
+    my %args = @_;
+
+    my $obj = $args{object};
+    my $err = $args{error};
+
+    my $type;
+    my $id;
+    if ($obj->isa('Krang::Template')) { $type = 'Template'; $id = $obj->template_id; }
+    elsif ($obj->isa('Krang::Media')) { $type = 'Media'; $id = $obj->media_id; }
+    elsif ($obj->isa('Krang::Story')) { $type = 'Story'; $id = $obj->story_id; }
+
+    # first confirm the object is checked out.
+    if ($obj->checked_out) {
+        print sprintf("Krang %s ID=%i cannot be deleted - it is checked out by User ID=%i\n\nExiting...\n",
+                      $type, $id, $obj->checked_out_by);
+    } else {
+        print sprintf("Krang %s ID=%i cannot be deleted due to unknown Error='%s'\n\nExiting...\n",
+                      $type, $id, $err);
+
+    }
+
+    exit(1);
+}
+
+
+#
+# (\@remove_media, \@remove_story) = scrub_children(element => $e, good_sites => \@ids);
+#
+# Iterates over all the children of $e.  If any of the children are
+# Krang::ElementClass::StoryLink or Krang::ElementClass::MediaLink
+# objects, make sure that the stories/media they link to are ok -
+# e.g. part of the list of sites.
+#
+# If the story/media object is not ok, empty the element (let it
+# continue to exist, but no longer points to anything).
+#
+# Returns lists of media and story ids of those objects being de-linked.
+#
+sub scrub_children {
+    my %args = @_;
+
+    my $element    = $args{element};
+    my %good_sites = map { $_ => 1 } @{$args{good_sites}};
+
+    my @remove_media;
+    my @remove_story;
+
+    foreach my $child ($element->children) {
+        # check to confirm story has a cat in the site.
+        if ($child->class->isa('Krang::ElementClass::StoryLink')) {
+            my $s  = $child->data();
+
+            next unless defined($s);
+            next if ($checked_stories{good}{$s->story_id});
+
+            my $ok = 0;
+            # if we know it's bad, don't bother checking.
+            unless ($checked_stories{bad}{$s->story_id}) {
+                foreach my $cat ($s->categories) {
+                    if ($good_sites{$cat->site_id}) {
+                        $ok = 1;
+                        last;
+                    }
+                }
+            }
+
+            # if the story isn't part of the sites, nix it.
+            if ($ok) {
+                # the story is ok - make a note that we've looked at it.
+                $checked_stories{good}{$s->story_id} = 1;
+            } else {
+                # make a note that this story is going away.
+                $checked_stories{bad}{$s->story_id} = 1;
+                $delete_links ? $child->delete : $child->data(undef);
+                push @remove_story, $s->story_id;
+            }
+        }
+        # check media objects to see if they are in the site.
+        elsif ($child->class->isa('Krang::ElementClass::MediaLink')) {
+            my $m = $child->data();
+
+            next unless defined($m);
+            next if ($checked_media{good}{$m->media_id});
+
+            # remove the connection if the media object is going away.
+            if ($good_sites{$m->category->site_id}) {
+                $checked_media{good}{$m->media_id} = 1;
+            } else {
+                $delete_links ? $child->delete : $child->data(undef);
+                push @remove_media, $m->media_id;
+            }
+        }
+        # recurse further.
+        elsif ($child->children) {
+            my ($remove_m, $remove_s) = scrub_children(element    => $child,
+                                                       good_sites => $args{good_sites});
+
+            push @remove_media, @$remove_m;
+            push @remove_story, @$remove_s;
+        }
+    }
+
+    return (\@remove_media, \@remove_story);
+}
