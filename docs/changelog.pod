@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<slug> as a variable available to all templates at
+publish-time.  This was intended to be there all along, but somehow
+fell through the cracks.  [Peter]
+
+=item *
+
 L<Krang::ElementClass::ListGroup> now handles multidimensional lists
 of arbitrary depth.  Further testing is needed, but so far things look
 good.  [Peter Leonard, Andrea Bonotto]
