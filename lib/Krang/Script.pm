@@ -38,6 +38,7 @@ mighty hinky.  Fix it to use KRANG_USERNAME and KRANG_PASSWORD.
 
 =cut
 
+use Krang::ErrorHandler;
 use Krang::Conf qw(KrangUser KrangGroup KrangRoot);
 use Krang::Log qw(debug critical);
 use Krang::Session qw(%session);
@@ -95,13 +96,6 @@ BEGIN {
     my $user_id = exists $ENV{KRANG_USER_ID} ? $ENV{KRANG_USER_ID} : 1;
     $session{user_id} = $user_id;
     debug "Setting user_id to $user_id";
-
-    $SIG{__DIE__} = sub {
-        return if $^S;   # ignore die inside an eval
-        my $err = shift;
-        critical $err;
-        die $err;
-    };
 }
 
 # arrange for session to be deleted at process end

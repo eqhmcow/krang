@@ -37,6 +37,7 @@ See L<CGI::Application>.
 
 use base 'CGI::Application';
 
+use Krang::ErrorHandler;
 use Data::Dumper ();
 
 use Krang::Conf qw(KrangRoot InstanceDisplayName);
@@ -90,11 +91,9 @@ sub run {
 
 
     #
-    # Run CGI -- catch exception if we have one, save it for after session un-load
+    # Run CGI
     #
-    my $output = '';
-    eval {   $output = $self->SUPER::run(@args)   };
-    my $cgiapp_errors = $@;
+    my $output = $self->SUPER::run(@args);
 
 
     # In debug mode append dump_html()
@@ -109,12 +108,6 @@ sub run {
     if ($we_loaded_session) {
         debug("Krang::CGI:  UN-Loading Session");
         Krang::Session->unload();
-    }
-
-    if ($cgiapp_errors) {
-        my $error = "Krang::CGI caught exception: $cgiapp_errors";
-        critical ($error);
-        die ($error);
     }
 
     return $output;
