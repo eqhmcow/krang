@@ -1233,6 +1233,48 @@ sub checkin {
                  action => 'checkin' );
 }
 
+
+=item C<< $media->mark_as_published() >>
+
+Mark the media object as published.  This will update the C<publish_date> and
+C<published_version> attributes, and will also check the media object back
+in.
+
+This will also make an entry in the log that the media object has been published.
+
+=cut
+
+sub mark_as_published {
+    my $self = shift;
+
+    croak __PACKAGE__ . ": Cannot publish unsaved media object" unless ($self->{media_id});
+
+    $self->{published_version} = $self->{version};
+    $self->{publish_date} = localtime;
+
+    $self->{checked_out} = 0;
+    $self->{checked_out_by} = 0;
+
+    # update the DB.
+    my $dbh = dbh();
+    $dbh->do('UPDATE media
+              SET checked_out_by = ?,
+                  published_version = ?,
+                  publish_date = ?
+              WHERE media_id = ?',
+
+             undef,
+             $self->{checked_out_by},
+             $self->{published_version},
+             $self->{publish_date}->mysql_datetime,
+             $self->{media_id}
+            );
+
+    add_history(object => $self, action => 'publish');
+}
+
+
+
 =item $media = $media->url();
 
 Returns calculated url of media object based on category_id and filename

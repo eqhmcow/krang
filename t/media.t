@@ -191,6 +191,16 @@ is ($m2->version(), 3);
 # checkin
 $m2->checkin();
 
+
+# test mark_as_published
+$m2->mark_as_published();
+
+isnt($m2->publish_date, undef, 'Krang::Media->mark_as_published()');
+is($m2->published_version, $m2->version(), 'Krang::Media->mark_as_published()');
+is($m2->checked_out(), 0, 'Krang::Media->mark_as_published()');
+
+
+
 # test simple_search by id
 my @temp_media = Krang::Media->find( simple_search => $m2->media_id);
 
