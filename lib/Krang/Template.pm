@@ -1062,7 +1062,8 @@ sub serialize_xml {
     $writer->dataElement( template_id => $self->{template_id} );
     $writer->dataElement( url => $self->{url} );
     $writer->dataElement( element_class_name => $self->{element_class_name} );
-    $writer->dataElement( category_id => $self->{category_id} );
+    $writer->dataElement( category_id => $self->{category_id} )
+      if $self->{category_id};
     $writer->dataElement( content => $self->{content} );
     $writer->dataElement( creation_date => $self->{creation_date}->datetime );
     $writer->dataElement( deploy_date => $self->{deploy_date}->datetime ) if $self->{deploy_date};
@@ -1071,7 +1072,8 @@ sub serialize_xml {
     $writer->dataElement( version => $self->{version} );
 
     # add category to set
-    $set->add(object => $self->category, from => $self);
+    $set->add(object => $self->category, from => $self)
+      if $self->{category_id};
 
     # all done
     $writer->endTag('template');
@@ -1133,7 +1135,7 @@ sub deserialize_xml {
     }
 
     $template->save();
-    $template->checkin if $updated;
+    $template->checkin;
 
     return $template;
 }
