@@ -233,7 +233,7 @@ sub edit {
 
 =item save
 
-Save a
+Save altered list items and ListGroup description
 
 =cut
 
@@ -286,6 +286,8 @@ sub save {
         $lg->description($q->param('list_group_description'));
         $lg->save;
     }
+
+    add_message('lists_saved');
 
     if ($q->param('stay')) {
         return $self->edit();
