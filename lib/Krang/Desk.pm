@@ -4,6 +4,7 @@ use warnings;
 
 use Carp qw(croak);
 use Krang::DB qw(dbh);
+use Krang::Log qw(debug);
 
 =head1 NAME
 
@@ -222,7 +223,7 @@ sub find {
 
     # build select part of query
     if ($args{count}) {
-        $select = 'select count(*)';
+        $select = 'select count(*) as count';
     } elsif ($args{ids_only}) {
         $select = 'select desk_id';
     } else {
@@ -246,11 +247,14 @@ sub find {
         push @where, $args{order};
     }
 
-    my $query = "$select from desk $where_clause";
+    my $query = "$select from desk";
+    $query .= " $where_clause" if $where_clause;
     $query .= " order by $order_by $order_dir";
 
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
+    debug(__PACKAGE__."->find() - executing query '$query' with params '@where'");
+
     $sth->execute(@where) || croak("Unable to execute statement $query");
 
     my @desk_object;
@@ -268,7 +272,6 @@ sub find {
     }
     $sth->finish();
     return @desk_object;
- 
 }
 
 =item delete()
@@ -294,7 +297,7 @@ sub delete {
     } else {
         my $sth = $dbh->prepare('SELECT ord from desk where desk_id = ?');
         $sth->execute($desk_id);
-        $order = $sth->selectrow_array;
+        $order = $sth->fetchrow_array;
         $sth->finish;
     }
    
