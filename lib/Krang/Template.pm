@@ -26,9 +26,9 @@ package Krang::Template;
  # same template
  $template->mark_for_testing();
 
- # deploy template, will output template to '$dir/$template->filename()',
+ # Mark the template as having been deployed to the Krang publish path.
  # unsets testing flag in the database
- $template->deploy_to( $dir );
+ $template->mark_as_deployed();
 
  # reverts to template revision specified by $version
  $template->revert( $version );
@@ -458,42 +458,42 @@ SQL
 }
 
 
-=item $template = $template->deploy_to( $dir_path )
+=item $template = $template->mark_as_deployed()
 
-Instance method designed to work with Krang::Burner->deploy() to deploy
-templates.  The data in the 'content' field is written to $self->filename() in
-the '$dir_path' directory.
+Instance method designed to work with Krang::Publisher->deploy_template to deploy
+templates.
 
 The method updates the 'deployed', 'deploy_date', 'deployed_version', and
 'testing' fields in the db.
 
-An error is thrown if the method cannot write to the specified path.
-
 =cut
 
-sub deploy_to {
-    my ($self, $dir_path) = @_;
+sub mark_as_deployed {
+    my ($self) = @_;
+
     my $dbh = dbh();
-    my $path = File::Spec->catfile($dir_path, $self->{filename});
     my $id = $self->{template_id};
 
-    # write out file
-    my $fh = IO::File->new(">$path") or
-      croak(__PACKAGE__ . "->deploy_to(): Unable to write to '$path' for " .
-            "template id '$id': $!.");
-    $fh->print($self->{content});
-    $fh->close();
+    # get value of now() for DB.
+    my $time = localtime;
+    my $deploy_date = $time->mysql_datetime;
 
     # update deploy fields
     my $query = <<SQL;
 UPDATE template
-SET deployed = ?, deploy_date = now(), deployed_version = ?, testing = ?
+SET deployed = ?, deploy_date = ?, deployed_version = ?, testing = ?
 WHERE template_id = ?
 SQL
 
-    $dbh->do($query, undef, (1, $self->{version}, 0, $id));
+    $dbh->do($query, undef, (1, $deploy_date, $self->{version}, 0, $id));
 
     add_history(object => $self, action => 'deploy',);
+
+    # set internal flags as well.
+    $self->{deployed} = 1;
+    $self->{deployed_version} = $self->{version};
+    $self->{testing} = 0;
+    $self->{deploy_date} = $deploy_date;
 
     return $self;
 }
