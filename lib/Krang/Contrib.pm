@@ -94,7 +94,7 @@ All of the above are simply fields for storing arbitrary metadata
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
-    get_set       => [ qw( contrib_id prefix first middle last suffix email phone bio url selected_contrib_type )],
+    get_set       => [ qw( contrib_id prefix first middle last suffix email phone bio url )],
     list          => [ qw( contrib_type_ids ) ];
 
 sub init {
@@ -135,7 +135,19 @@ Gets/sets the value.
 
 =item $contrib->selected_contrib_type()
 
-Temporary storage space used by assets (media, story, etc) to show which contrib type the contrib object they are referring belongs to.
+Temporary value used by assets (media, story, etc) to show which
+contrib type the contrib object they are referring belongs to.
+Contains a single contrib_type_id from contrib_type_ids.
+
+=cut
+
+sub selected_contrib_type {
+    my $self = shift;
+    return $self->{selected_contrib_type} unless @_;
+    croak("bad value for selected_contrib_types: must be a memeber of contrib_type_ids.") 
+      unless (grep { $_[0] == $_ } $self->contrib_type_ids);
+    $self->{selected_contrib_type} = $_[0];
+}
 
 =item $contrib->contrib_type_ids()
 
@@ -334,11 +346,13 @@ sub find {
             $obj = $row->{contrib_id};
         } else {
             $obj = bless {}, $self;
-            foreach my $field (FIELDS) {
-                if ($row->{$field}) {
-                    $obj->{$field} = $row->{$field};
-                }
-            }
+            %$obj = %$row;
+
+            # load contrib_type ids
+            my $result = $dbh->selectcol_arrayref(
+                          'SELECT contrib_type_id FROM contrib_contrib_type
+                           WHERE contrib_id = ?', undef, $obj->{contrib_id});
+            $obj->{contrib_type_ids} = $result || [];
         }
         push (@contrib_object,$obj);
     }

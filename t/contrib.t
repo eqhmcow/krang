@@ -10,9 +10,14 @@ my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 
 isa_ok($contrib, 'Krang::Contrib');
 
 $contrib->contrib_type_ids(1,3);
+$contrib->selected_contrib_type(1);
 
 my @contrib_type_ids = $contrib->contrib_type_ids();
 is("@contrib_type_ids", "1 3");
+is($contrib->selected_contrib_type, 1);
+
+eval { $contrib->selected_contrib_type(2) };
+like($@, qr/bad/);
 
 $contrib->save();
 
@@ -23,6 +28,8 @@ my @contrib_object = Krang::Contrib->find( contrib_id => $contrib_id );
 my $contrib2 = $contrib_object[0];
 
 is($contrib2->first, 'Matthew');
+is($contrib2->contrib_type_ids()->[0], 1);
+is($contrib2->contrib_type_ids()->[1], 3);
 
 $contrib2->contrib_type_ids(2,4);
 
