@@ -169,13 +169,24 @@ for my $story_count (1 .. $stories) {
     @c = values(%c);
 
     # create story
-    my $story = Krang::Story->new(title      => join(" ", 
+    my $story;
+    
+    eval { 
+        $story = Krang::Story->new(title     => join(" ", 
                                                      map {ucfirst(get_word())} 
                                                      (1..(int(rand(3)) + 2))),
-                                  slug       => get_word(),
-                                  categories => \@c,
-                                  cover_date => Time::Piece->new,
-                                  class      => "article");
+                                   slug       => get_word(),
+                                   categories => \@c,
+                                   cover_date => Time::Piece->new,
+                                   class      => "article");
+    };
+    if ($@) {
+        if (ref($@) and ref($@) eq 'Krang::Story::DuplicateURL') {
+            redo;
+        } else {
+            die $@;
+        }
+    }
 
     # add some contribs, up to 5
     my @con;
@@ -209,14 +220,7 @@ for my $story_count (1 .. $stories) {
     # add some keywords
     $element->child('fancy_keyword')->data([ map { get_word() } (1 .. ((int(rand(10)))+1))]);
 
-    eval { $story->save };
-    if ($@) {
-        if (ref($@) and ref($@) eq 'Krang::Story::DuplicateURL') {
-            redo;
-        } else {
-            die $@;
-        }
-    }
+    $story->save;
 
     print STDERR "Created Story " . $story->url . "\n";
     push(@stories, $story);
