@@ -83,8 +83,9 @@ our $CONF;
 our $INSTANCE;
 our $INSTANCE_CONF;
 
-# load the configuration file during startup
-BEGIN {
+# internal routine to load the conf file.  Called by a BEGIN during
+# startup, and used during testing.
+sub _load {
     # find a default conf file
     my $conf_file;
     if (exists $ENV{KRANG_CONF}) {
@@ -98,9 +99,6 @@ Unable to find krang.conf.  Please set the KRANG_CONF environment
 variable to the location of the Krang configuration file, or KRANG_ROOT 
 to a directory containing conf/krang.conf.
 CROAK
-
-    # FIX: log "[krang] Loading configuration from $conf_file..." when
-    # logger is written
 
     # load conf file into package global
     eval {
@@ -119,6 +117,9 @@ CROAK
     my $extra_fh = IO::Scalar->new(\$extra);
     $CONF->read($extra_fh);
 }
+
+# load the configuration file during startup
+BEGIN { _load(); }
 
 =head1 INTERFACE
 
@@ -224,12 +225,61 @@ sub instances {
     return map { $_->[1] } @instances;
 }
 
+=item C<< Krang::Conf->check() >>
+
+Sanity-check Krang configuration.  This will die() with an error
+message if something is wrong with the configuration file.  This is
+run when the Krang::Conf loads.
+
+=cut
+
+sub check {
+    # check required directives
+    foreach my $dir (qw(KrangUser KrangGroup ApacheAddr ApachePort
+                        RootVirtualHost LogLevel FTPPort FTPAddress
+                        SMTPServer FromAddress BugzillaEmail BugzillaServer
+                        BugzillaPassword BugzillaComponent)) {
+        _broked("Missing required $dir directive") 
+          unless defined $CONF->get($dir);
+    }
+    
+    # make sure each instance has the necessary directives
+    foreach my $instance (Krang::Conf->instances()) {
+        my $block = $CONF->block(instance => $instance);
+        
+        foreach my $dir (qw(VirtualHost ElementSet InstanceDisplayName
+                            DBName DBPass DBUser)) {
+            _broked("Instance '$instance' missing required '$dir' directive")
+              unless defined $block->get($dir);
+        }
+    }
+
+    # make sure KrangUser and KrangGroup exist
+    _broked("KrangUser '" . $CONF->get("KrangUser") . "' does not exist") 
+      unless getpwnam($CONF->get("KrangUser"));
+    _broked("KrangGroup '" . $CONF->get("KrangGroup") . "' does not exist") 
+      unless getgrnam($CONF->get("KrangGroup"));
+
+    # make sure all instances have their own DB
+    my %seen;
+    foreach my $instance (Krang::Conf->instances()) {
+        my $block = $CONF->block(instance => $instance);
+        if ($seen{$block->get("DBName")}) {
+            _broked("More than one instance is using the '" . 
+                    $block->get("DBName") . "' database");
+        }
+        $seen{$block->get("DBName")} = 1;
+    }
+}
+
+sub _broked {
+    die("Error found in krang.conf: $_[0].\n");
+}
+ 
+# run the check ASAP
+BEGIN { Krang::Conf->check() }
+
 =back
-
-=head1 TODO
-
-Module needs to write conf file path to the log when the log module is
-available.
 
 =cut
 
