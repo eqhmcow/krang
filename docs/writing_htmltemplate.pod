@@ -39,17 +39,21 @@
 
 ----------------------------------------
 
+=item Varying Templates and Output by Category -- Overriding Templates
+
+----------------------------------------
+
 =item * Additional Publishing Components
 
 =over
 
 =item * Pagination
 
-=item * Links to Other Stories
+=item * Links to Other Stories in Krang
 
-=item * Media Objects
+=item * Links to Media Objects in Krang
 
-=item * How Categories and Category Templates Work
+=item * Category Templates
 
 =item * Contributors
 
@@ -477,11 +481,43 @@ B<Page.tmpl>
 
 
 
+=head1 Varying Templates and Output by Category -- Overriding Templates
+
+Every template created in Krang is associated with a category for a very specific reason:  When publishing a story, Krang uses the category under which that story is being published to determine where to look for element templates.
+
+The process by which an element's template is chosen works as follows:
+
+=over
+
+=item *
+
+You're publishing a story under the category C<www.foo.com/bar/baz/>.
+
+=item *
+
+For the element C<Page>, the Krang publish system will start looking in the template repository for C<page.tmpl> in C<www.foo.com/bar/baz/page.tmpl>.  As soon as it finds C<page.tmpl>, it will stop looking and continue the publish process using the newly-found template.
+
+=item *
+
+If C<page.tmpl> is not found there, it will move up directories, continuing to look for C<page.tmpl>.  C<www.foo.com/bar/page.tmpl>, followed by C<www.foo.com/page.tmpl>.
+
+=item *
+
+The last place it will check is the root category (underneath the site www.foo.com).  If it cannot find the required template at this point, an error message will be generated.
+
+=back
+
+As you build your site, you can now customize the appearance of your site on a site-by-site and category-by-category basis.
+
+A further example - you have a story publishing under two different categories:  C<www.foo.com/foo> and C<www.foo.com/foo/bar/baz/>.  The basic pull_quote.tmpl template doesn't do anything special, it simply returns the Pull Quote.  But for the purposes of better design, the second category requires Pull Quotes in an entirely different format.  But at the same time, you don't want to affect the look of the story as it's published in the first category.
+
+By creating a new pull_quote.tmpl for the category C<www.foo.com/foo/bar/baz/> with the necessary formatting, your job is done.  Only stories published under C<www.foo.com/foo/bar/baz/> (or the categories beneath it) will use that Pull Quote template, everything else will continue on unaffected.
+
+
+
 
 
 =head1 Additional Publishing Components
-
-With templates in place, you can now begin to take advantage of some of the other features available in Krang.
 
 =head2 Pagination
 
@@ -649,9 +685,13 @@ B<Note> - it is possible to move <tmpl_var page_break> into Page.tmpl as well, b
 
 
 
-=head2 Links to Other Stories
+=head2 Links to Other Stories in Krang
 
-Links to other stories are provided by whatever element subclasses Krang::Element::StoryLink - like all elements, the name is specific to that element set.  In this example, the element will be called 'leadin'.
+Links to other stories are provided by whatever element subclasses Krang::ElementClass::StoryLink.  Something to remember here is that Krang does not put forth any rules as to the naming of elements in an element library - so an element that subclasses to Krang::ElementClass::StoryLink could be called anything.
+
+B<NOTE:> While the lack of explicit element naming in Krang may sound odd, consider the possibilities - you can create multiple elements, all which provide links to other stories in Krang (e.g. they all subclass Krang::ElementClass::StoryLink), but each element can now have its own template, outputting links in its own way.
+
+For the purposes of this example, the element will be called 'leadin'.
 
 B<Story Tree>
 
@@ -663,7 +703,7 @@ Taking the story tree from C<Example 2>, we'll add a leadin element to the page:
              - Paragraph   (repeatable textbox attribute)
              - Pull Quote  (repeatable textbox attribute)
              - Paragraph   (repeatable textbox attribute)
-             - Leadin      (repeatable attribute)
+             - Leadin      (repeatable storylink attribute)
 
 B<Templates>
 
@@ -686,8 +726,7 @@ B<Leadin.tmpl>
 =back
 
 
-
-The Page.tmpl template will treat leadin like any other child element - <tmpl_var leadin>, within <tmpl_loop element_loop>.  Be careful - this example Page.tmpl assumes that leadin has no template - if leadin has a template like Leadin.tmpl above, the resulting HTML will be broken!
+The Page.tmpl template will treat leadin like any other child element - <tmpl_var leadin>, within <tmpl_loop element_loop>.  Be careful - this example Page.tmpl assumes that leadin is using the template above - if the leadin element has no template, the story URL will be displayed instead.
 
 B<Page.tmpl>
 
@@ -708,7 +747,7 @@ B<Page.tmpl>
     </tmpl_if>
 
     <tmpl_if is_leadin>
-      <p><a href="<tmpl_var leadin>">Related Story</a></p>
+      <p><tmpl_var leadin></p>
     </tmpl_if>
 
  </tmpl_loop>
@@ -717,6 +756,132 @@ B<Page.tmpl>
 
 
 
+
+
+=head2 Links to Media Objects in Krang
+
+Links to media objects are provided by whatever element (or elements) subclasses Krang::ElementClass::MediaLink.  In short, these elements will behave in the same way as elements that subclass Krang::ElementClass::StoryLink (see C<Links to Other Stories in Krang> in the section above).
+
+B<NOTE:> Expect to use more than one element in your handling of media objects in Krang, simply because different media objects require different HTML.  Consider this - do you really want the URL to your Flash or PDF file embedded in an <img src=> tag?
+
+For the purposes of this example, the element that handles links to Media Objects will be called 'image'.  
+
+B<Story Tree>
+
+Taking the story tree from C<Example 2>, we'll add a leadin element to the page:
+
+   Story
+        - Deck             (textbox attribute)
+        + Page             (repeatable element)
+             - Paragraph   (repeatable textbox attribute)
+             - Pull Quote  (repeatable textbox attribute)
+             - Paragraph   (repeatable textbox attribute)
+             - Image       (repeatable medialink attribute)
+
+
+B<Templates>
+
+StoryLink elements can function with or without their own templates.
+
+=over
+
+=item * Without a template
+
+If no corresponding template is found, the MediaLink object will simply return the URL to the object.
+
+=item * Constructing a template:
+
+If you decide to create a template, the following variables will be available as variables in the template: B<url>, B<title>, B<caption>
+
+B<Image.tmpl>
+
+ <img src="<tmpl_var escape=html url>">>
+ <br>
+
+ <tmpl_if title>
+   <tmpl_var title><br>
+ </tmpl_if>
+
+ <tmpl_if caption>
+   <tmpl_var caption><br>
+ </tmpl_if>
+
+=back
+
+
+The Page.tmpl template will treat image like any other child element - <tmpl_var image>, within <tmpl_loop element_loop>.  Be careful - this example Page.tmpl assumes that the image element is using the template above.  If the image element has no template, the resulting HTML will simply display a URL to the image, rather than the image itself!
+
+
+B<Page.tmpl>
+
+ <!-- Test for first page here -->
+ <tmpl_if is_first_page>
+    <h1><tmpl_var title></h1>
+    <b><tmpl_var deck></b>
+ </tmpl_if>
+
+ <tmpl_loop element_loop>
+
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+
+    <tmpl_if is_pull_quote>
+      <tmpl_var pull_quote>
+    </tmpl_if>
+
+    <tmpl_if is_image>
+      <p><tmpl_var image></p>
+    </tmpl_if>
+
+ </tmpl_loop>
+
+ <!-- Pagination Removed to shorten Example -->
+
+
+
+=head2 Category Templates
+
+Just as elements can have templates, category elements may have a template associated with it called C<category.tmpl>.
+
+For an example, let's imagine that we want to put a blue box around every page in our output. Instead of putting this HTML into our templates we'll do it in a category template.
+
+The way this all works is by using the tag <tmpl_var content>.  This tag is handled internally by Krang, where it will replace the tag with the output of the Story element (Story.tmpl).
+
+B<Templates>
+
+B<Category.tmpl>
+
+ <html>
+ <head><tmpl_var title></head>
+ <body>
+
+ <table bgcolor=blue cellspacing=5 border=0><tr><td>
+
+   <tmpl_var content>
+
+ </td></tr></table>
+
+ </body>
+ </html>
+
+
+Note that since the Category.tmpl template now makes up the header and footer of the document, Story.tmpl becomes greatly simplified:
+
+B<Story.tmpl>
+
+ <tmpl_loop page_loop>
+
+     <tmpl_var page>
+
+     <tmpl_unless __last__>
+       <tmpl_var page_break>
+     </tmpl_unless>
+
+ </tmpl_loop>
+
+
+B<NOTE:> Yes, the page-break logic is still correct in Story.tmpl.  Krang will take each page of output generated by Story.tmpl, and merge that page with Category.tmpl.
 
 
 
@@ -813,6 +978,8 @@ B<Page.tmpl>
     <h1><tmpl_var title></h1>
     <b><tmpl_var deck></b>
 
+    <!-- Contributors on the first page only! -->
+
     <p>Contributors to this story:
       <tmpl_if contrib_loop>
          <tmpl_loop contrib_loop>
@@ -828,6 +995,7 @@ B<Page.tmpl>
          None.
       </tmpl_if>
 
+    <!-- /Contributors -->
 
  </tmpl_if>
 
@@ -844,6 +1012,15 @@ B<Page.tmpl>
 
 
  <!-- Further Pagination information removed to keep the example short -->
+
+
+
+
+
+
+
+
+-------------------------------------------
 
 
 
@@ -1170,105 +1347,6 @@ B<Disadvantages>
 =back
 
 
-=head1 Handling Media Objects
-
-Links to media objects in Krang are all of the type Krang::ElementClass::MediaLink.  As a subclass of Krang::ElementClass, Krang::ElementClass::MediaLink objects do inherit all the methods of the parent class, but the publish() and fill_template() methods are overridden to handle the differences that exist within Krang::ElementClass::MediaLink objects.
-
-B<Default Functionality>
-
-=over
-
-=item * Without a template:
-
-If no corresponding template is found, the MediaLink object will simply return the URL to the referenced media file.
-
-=item * Constructing a template:
-
-If you decide to create a template, the following media attributes will be available as variables in the template: B<url>, B<title>, B<caption>
-
-B<Example:>
-
- <img src="<tmpl_var escape=html url>">>
-   <br>
-   <tmpl_if title>
-     <tmpl_var title>
-   </tmpl_if>
-   <br>
-   <tmpl_if caption>
-     <tmpl_var caption>
-   </tmpl_if>
-
-=back
-
-=head2 Templates
-
-B<Story.tmpl>
-
-Returning to the template in Example 2, a small addition is made:
-
-
- <tmpl_loop page_loop>
-
-   <html>
-
-   <head>
-     <title><tmpl_var title></title>
-   </head>
-   <body>
-
-     <tmpl_if __first__>
-        <h1><tmpl_var title></h1>
-        <b><tmpl_var deck></b>
-     </tmpl_if>
-
-     <tmpl_loop element_loop>
-        <tmpl_if is_paragraph>
-          <p><tmpl_var paragraph></p>
-        </tmpl_if>
-        <tmpl_if is_pull_quote>
-          <p><blockquote><i>
-            <tmpl_var pull_quote>
-          </i></blockquote></p>
-        </tmpl_if>
-        <tmpl_if is_photo>
-            <tmpl_var photo>
-        </tmpl_if>
-     </tmpl_loop>
-
-     <tmpl_unless __first__>
-     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
-     </tmpl_unless>
-
-     <tmpl_unless __last__>
-     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
-     </tmpl_unless>
-
-   </body>
-   </html>
-
-   <tmpl_var page_break>
-
- </tmpl_loop>
-
-
-If you missed it, the entry is here - as a conditional within <tmpl_var element_loop>:
-
-  <tmpl_if is_photo>
-     <tmpl_var photo>
-  </tmpl_if>
-
-
-
-B<Photo.tmpl>
-
-The template for the photo itself will be very small.  For example:
-
-
- <img src="<tmpl_var escape=html url>">
- <tmpl_if caption>
-  <br><font size=-1><tmpl_var caption></font>
- </tmpl_if>
-
 
 =head2 Methods
 
@@ -1291,30 +1369,6 @@ Generally, the default fill_template() method should be sufficient - but for ref
  }
 
 
-=head1 Working With Categories
-
-Just as elements can have templates, each category may have one template associated with it called "category.tmpl".
-
-For an example, let's imagine that we want to put a blue box around every page in our output. Instead of putting this HTML into our templates we'll do it in a category template.
-
-=head2 Template - Category.tmpl
-
- <html>
- <head><tmpl_var title></head>
- <body>
-
- <table bgcolor=blue cellspacing=5 border=0><tr><td>
-
-   <tmpl_var content>
-
- </td></tr></table>
-
- </body>
- </html>
-
-One thing to note is that do the wrapping we had to move the <head> setup with the title var into the category template. This is an unfortunate fact-of-life for HTML since the <head> section has to precede the <body> most category templates will have to include it.
-
-Internally, Krang will split this template into a header and footer, and replace the <tmpl_var content> with individual pages of Story content when it glues everything back together.
 
 
 =head2 Methods
