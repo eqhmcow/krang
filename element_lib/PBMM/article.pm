@@ -52,6 +52,7 @@ sub new {
                                        display_name => 'iCopywrite Link',
                                        max          => 1),       
         PBMM::article_related_link_box->new(max => 1),
+        PBMM::custom_targeting->new(max => 1),
         'page',
 
        ]);

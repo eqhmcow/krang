@@ -47,6 +47,7 @@ sub new {
                                                    ),
                     PBMM::double_cover_column->new(   name => "double_column" ), 
                     PBMM::table_of_contents->new(),
+                    PBMM::custom_targeting->new(max =>1)
 
                 ],
                 @_);

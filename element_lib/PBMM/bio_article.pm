@@ -41,6 +41,7 @@ sub new {
                                        display_name => 'iCopywrite Link',
                                        max          => 1),     
         'bio_page',
+        PBMM::custom_targeting->new(max =>1)
 
        ]);
     return $pkg->SUPER::new(%args);

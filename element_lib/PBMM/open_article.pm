@@ -53,6 +53,7 @@ sub new {
                                                         cols => 50,
                                                         min => 1 ),
                     PBMM::table_of_contents->new(),
+                    PBMM::custom_targeting->new(max =>1)
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

@@ -66,6 +66,14 @@ sub fill_template {
     my @split_site = split('.', $cat->site->url);
  
     $tmpl->param( site => $split_site[1] );
+
+    if ($story->element->child('custom_targeting')) {
+        $tmpl->param( keyword_1 => $story->element->child('custom_targeting')->child('keyword_1')->data );
+        $tmpl->param( keyword_2 => $story->element->child('custom_targeting')->child('keyword_2')->data );
+        $tmpl->param( keyword_3 => $story->element->child('custom_targeting')->child('keyword_3')->data );
+        $tmpl->param( keyword_4 => $story->element->child('custom_targeting')->child('keyword_4')->data );
+        $tmpl->param( keyword_5 => $story->element->child('custom_targeting')->child('keyword_5')->data );
+    }
     
     if ($cat->parent) {
         if ($cat->parent->parent) {
