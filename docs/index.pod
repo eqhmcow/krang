@@ -112,6 +112,10 @@ HREF[Krang Permissions System|permissions.html] - How the Krang permissions syst
 
 HREF[Upgrade System|upgrade_system.html] - How the Krang upgrade system works.
 
+=item *
+
+HREF[Skins|skins.html] - How to create a Krang skin
+
 =back
 
 

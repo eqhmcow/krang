@@ -1,0 +1,69 @@
+=head1 Skinning Krang
+
+Krang's appearance can be modified by creating a skin.  The simplest
+skins just change the Krang's color pallette, but more advanced skins
+can totally revise Krang's user interface.  This document will teach
+you how to build a Krang skin.
+
+=head1 A Simple Skin
+
+The simplest possible skin consists of a single file, called
+F<skin.conf> places in a directory underneath the F<skins/> directory.
+For example, to create a skin called 'Red' a directory called
+F<skins/Red> must be created:
+
+  mkdir skins/Red
+
+The F<skins/Red/skin.conf> file will contain the basic configuration
+information for the skin.  For example, here's one that changes
+Krang's colors to shades of red:
+
+  # based on the Default skin
+  Include ../Default/skin.conf
+
+  # change palette to reds
+  dark_color       #660002
+  light_color      #eba4a5
+  bright_color     #ff0004
+
+  # text colors to match the red palette
+  text_color       #333333
+  light_text_color #ffffff
+  link_color       #660002
+
+The C<Include> directive brings in all the default settings from the
+C<Default/skin.conf> file.  This is useful if you don't want to define
+all the required settings.  The remaining lines configure Krang to use
+shades of red in the UI.
+
+To use this skin, first change the configured skin in your
+F<conf/krang.conf> file:
+
+  Skin Red
+
+To activate the skin, restart Krang:
+
+  bin/krang_ctl restart
+
+Now when you login to Krang with your browser you'll see a red interface.
+
+=begin comment
+
+=head1 Dealing with Images
+
+Actually, what you'll see after following the instructions in the last
+ section is a red webpage with some blue images.  Krang uses images
+for interface highlights like the arrow that shows you which direction
+a column is being sorted.  These images will need special attention to
+match the current theme.
+
+One option is to simply set C<image_color> in your F<skin.conf>.  This
+will cause Krang to color in some default greyscale images with a
+color of your choice.  For example, the Red theme might contain:
+
+  # color the images dark red
+  image_color      #660002
+
+=end
+
+

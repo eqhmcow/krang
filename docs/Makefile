@@ -7,7 +7,8 @@ HTML = changes.html objects.html coding.html goals.html rationale.html \
        configuration.html tech_spec.html writing_htmltemplate.html \
        permissions.html xml.html performance.html ops_install.html \
        customizing_publish.html ops_upgrade.html release.html \
-       add_on.html addon_install.html upgrade_system.html ops_backup.html
+       add_on.html addon_install.html upgrade_system.html ops_backup.html \
+       skins.html
 
 all   : $(HTML) modules.html rm_modules
 
