@@ -24,6 +24,13 @@ uncompressed backup:
 
   $ bin/krang_backup --compress mybackup.kba.gz
 
+Full documentation for C<krang_backup> is available by typing:
+
+  $ bin/krang_backup --help
+
+Or you can read it here: HREF[Krang Backup|script_krang_backup.html]
+
+
 =head2 Restoring from Backup
 
 You can restore from a backup file using C<krang_install>.  To start,
@@ -56,3 +63,9 @@ supply correct HostName and IPAddress settings on the command line:
 C<krang_install> will automatically call C<krang_uninstall> if the
 target C<InstallPath> already exists, so this procedure can be used to
 restore a backup over an existing installation.
+
+Full documentation for C<krang_install> is available by typing:
+
+  $ bin/krang_install --help
+
+Or you can read it here: HREF[Krang Install|script_krang_install.html]
