@@ -1214,6 +1214,8 @@ update will occur, unless no_update is set.
 Note that the creation_date, version, deploy_date, deployed_version
 fields are ignored when importing templates.
 
+Also, all templates are deployed after deserialization.
+
 =cut
                                          
 sub deserialize_xml {
@@ -1262,6 +1264,9 @@ sub deserialize_xml {
 
     $template->save();
     $template->checkin;
+
+    my $publisher = Krang::Publisher->new();
+    $publisher->deploy_template(template => $template);
 
     return $template;
 }
