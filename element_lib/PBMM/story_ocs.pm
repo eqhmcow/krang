@@ -144,6 +144,20 @@ sub ocs_export_story {
          publish_date => ($story->publish_date || Time::Piece->new),
          %ocs,
     );
+
+    # look for protected media referenced by the story
+    my @media_links = ($element->match('//image/media'),
+                       $element->match('//document/file'));
+    foreach my $media_link (@media_links) {
+        my $media = $media_link->data;
+        next unless $media and ref $media and $media->isa('Krang::Media');
+
+        my $protected = $media_link->parent->child('protected');
+        next unless $protected and $protected->data;
+
+        OCS::Exporter->export_media(url       => $media->url,
+                                    story_url => $story->url);
+    }
 }
 
 sub publish {
