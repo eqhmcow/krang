@@ -59,8 +59,8 @@ sub fill_template {
     my $publisher = $args{publisher};
 
     $tmpl->param( title =>  $story->title );
-    $tmpl->param( meta_description =>  $story->element->child('meta_description')->data );
-    my $keywords = $story->element->child('meta_keywords')->data;
+    $tmpl->param( meta_description =>  $story->element->child('meta_description')->data ) if $story->element->child('meta_description');
+    my $keywords = $story->element->child('meta_keywords') ? $story->element->child('meta_keywords')->data : [];
     my @keys;
     foreach my $kw (@$keywords) {
         push (@keys, {meta_keyword => $kw});
