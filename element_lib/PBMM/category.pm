@@ -57,6 +57,27 @@ sub fill_template {
     my $tmpl      = $args{tmpl};
     my $element = $args{element};
     my $publisher = $args{publisher};
+    my $cat   =  $args{publisher}->category;
+
+    $tmpl->param( slug => $story->slug );
+
+    if ($cat->parent) {
+        if ($cat->parent->parent) {
+            if ($cat->parent->parent->parent) {
+                $tmpl->param( cdir => $cat->parent->parent->dir );
+                $tmpl->param( scdir => $cat->parent->dir );
+                $tmpl->param( sscdir => $cat->dir );
+                                                                                
+            } else {
+                $tmpl->param( cdir => $cat->parent->dir );
+                $tmpl->param( scdir => $cat->dir );
+            }
+        } else {
+            $tmpl->param( cdir => $cat->dir );
+        }
+    } else {
+        $tmpl->param( cdir => 'home' );
+    }
 
     $tmpl->param( title =>  $story->title );
     $tmpl->param( meta_description =>  $story->element->child('meta_description')->data ) if $story->element->child('meta_description');

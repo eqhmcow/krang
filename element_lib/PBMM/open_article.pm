@@ -59,4 +59,33 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+sub fill_template {
+    my ($self, %args) = @_;
+
+    my $cat   =  $args{publisher}->category;
+    my $tmpl      = $args{tmpl};
+    my $story   = $args{publisher}->story;   
+ 
+    $tmpl->param( slug => $story->slug );
+
+    if ($cat->parent) {
+        if ($cat->parent->parent) {
+            if ($cat->parent->parent->parent) {
+                $tmpl->param( cdir => $cat->parent->parent->dir );
+                $tmpl->param( scdir => $cat->parent->dir );
+                $tmpl->param( sscdir => $cat->dir );
+            } else {
+                $tmpl->param( cdir => $cat->parent->dir );
+                $tmpl->param( scdir => $cat->dir );
+            }
+        } else {
+            $tmpl->param( cdir => $cat->dir );
+        }
+    } else {
+        $tmpl->param( cdir => 'home' );
+    }
+                                                                                
+    $self->SUPER::fill_template( %args );
+}
+
 1;
