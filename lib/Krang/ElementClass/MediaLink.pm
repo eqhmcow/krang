@@ -6,7 +6,6 @@ use base 'Krang::ElementClass';
 
 use Krang::MethodMaker
   get_set => [ qw( allow_upload show_thumbnail ) ];
-use Krang::Session qw(%session);
 use Krang::Message qw(add_message);
 
 sub new {
@@ -95,7 +94,7 @@ sub load_query_data {
     
     my $media = Krang::Media->new(title => $filename,
                                   category_id => 
-                                  $session{story}->category()->category_id(),
+                                  $element->story()->category()->category_id(),
                                   filename => $filename,
                                   filehandle => $fh);
 
