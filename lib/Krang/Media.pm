@@ -649,7 +649,7 @@ count - return only a count if this is set to true. Cannot be used with only_ids
 
 =item *
 
-creation_date - in 'YYYYMMDD' format.  If array of two dates passed in, will use to find media created between those dates.
+creation_date - Must be passed in as Time::Piece object.  If array of two dates passed in, will use to find media created between those dates.
 
 =back
 
@@ -728,9 +728,9 @@ sub find {
 
     if ($args{'creation_date'}) {
         if (ref($args{'creation_date'}) eq 'ARRAY') {
-            $where_string ? ($where_string .= 'AND creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1]) : ($where_string = 'creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1]);
+            $where_string ? ($where_string .= 'AND creation_date BETWEEN '.$args{'creation_date'}[0]->mysql_datetime.' AND '.$args{'creation_date'}[1]->mysql_datetime) : ($where_string = 'creation_date BETWEEN '.$args{'creation_date'}[0]->mysql_datetime.' AND '.$args{'creation_date'}[1]->mysql_datetime);
         } else {
-            $where_string ? ($where_string .= 'AND creation_date = '.$args{'creation_date'}) : ($where_string = 'creation_date = '.$args{'creation_date'});
+            $where_string ? ($where_string .= 'AND creation_date = '.$args{'creation_date'}->mysql_datetime) : ($where_string = 'creation_date = '.$args{'creation_date'}->mysql_datetime);
         }
     }
 
