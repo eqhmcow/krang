@@ -517,7 +517,7 @@ sub import_all {
 
     # process classes in an order least likely to cause backrefs
     foreach my $class (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site Krang::Category Krang::Alert
-                          Krang::Group Krang::Media Krang::Template Krang::Story Krang::Schedule )) {
+                          Krang::Group Krang::Media Krang::Template Krang::Story Krang::Schedule Krang::ListGroup Krang::List Krang::ListItem )) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};
