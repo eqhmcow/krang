@@ -47,8 +47,7 @@ Krang::Publisher - Center of the Publishing Universe.
 
   # Place a template into the production path, to be used when publishing.
   $publisher->deploy_template(
-                              template => $template_object,
-                              category => $category_object,
+                              template => $template_object
                              );
 
 
@@ -68,17 +67,34 @@ In the publish (but not preview) process, stories will also be checked for linke
 
 =head1 INTERFACE
 
-=head2 Attributes
+=head2 FIELDS
+
+Access to fields for this object are provided by Krang::MethodMaker. All fields are accessible in a B<read-only> fashion.  The value of fields can be obtained in the following fashion:
+
+  $value = $publisher->field_name();
+
+The available fields for a publish object are:
 
 =over
 
-=item * None at this time.
+=item * is_preview
+
+Returns a 1 if the current publish run is in preview-mode, 0 otherwise.
+
+=item * is_publish
+
+Returns a 1 if the current publish run is in publish-mode (e.g. going live), 0 otherwise.
+
+=item * category
+
+Returns a Krang::Category object for the category currently being published.
+
 
 =back
 
 =cut
 
-=head2 Methods
+=head2 METHODS
 
 =over
 
@@ -98,7 +114,7 @@ As part of the publish process, all media and stories linked to by $story will b
 
 Publishes a story to the live webserver document root, as set by publish_path.
 
-When a story is published, it is published under all categories it is associated with (see L<Krang::Story::categories>).
+When a story is published, it is published under all categories it is associated with (see Krang::Story->categories()).
 
 As part of the publish process, all media and stories linked to by $story will be published as well.
 
@@ -140,7 +156,7 @@ If successful, it will return lists of Krang::Story and Krang::Media objects tha
 
 =cut
 
-=item C<< $filename = $publisher->deploy_template(template => $template, category => $category); >>
+=item C<< $filename = $publisher->deploy_template(template => $template); >>
 
 Deploys the template stored in a L<Krang::Template> object into the template publish_path under $KRANG_ROOT.
 
