@@ -4,13 +4,32 @@ use warnings;
 use Krang;
 use Krang::Conf qw (KrangRoot);
 use Krang::Contrib;
+use Krang::Site;
+use Krang::Category;
 use File::Spec::Functions qw(catdir catfile);
 use FileHandle;
 
 BEGIN { use_ok('Krang::Media') }
 
+# set up site and category
+my $site = Krang::Site->new(preview_path => './sites/test1/preview/',
+                            preview_url => 'preview.testsite1.com',
+                            publish_path => './sites/test1/',
+                            url => 'testsite1.com');
+$site->save();
+isa_ok($site, 'Krang::Site');
+
+my ($category) = Krang::Category->find(site_id => $site->site_id());
+
+my $category_id = $category->category_id();
+
+# create subcategory
+my $subcat = Krang::Category->new( dir => 'subcat', parent_id => $category_id );
+$subcat->save();
+my $subcat_id = $subcat->category_id();
+
 # create new media object
-my $media = Krang::Media->new(title => 'test media object', category_id => 1);
+my $media = Krang::Media->new(title => 'test media object', category_id => $category_id);
 isa_ok($media, 'Krang::Media');
 
 # upload media file
@@ -41,7 +60,7 @@ $media->save();
 $fh = new FileHandle $filepath;
 
 # create another media object
-my $media2 = Krang::Media->new(title => 'test media object 2', category_id => 1, filename => 'krang.jpg', filehandle => $fh);
+my $media2 = Krang::Media->new(title => 'test media object 2', category_id => $subcat_id, filename => 'krang.jpg', filehandle => $fh);
 isa_ok($media2, 'Krang::Media');
 
 # add 2 contributors to media
@@ -59,7 +78,7 @@ $media2->save();
 
 # find the media objects we just created, sorting in reverse order 
 # that they were created (media_id desc)
-my @medias = Krang::Media->find(filename => 'krang.jpg', order_by => 'media_id', order_desc => 1, category_id => 1);
+my @medias = Krang::Media->find(filename => 'krang.jpg', order_by => 'media_id', order_desc => 1);
 
 # make sure 2 are returned
 is(scalar @medias, 2);
@@ -138,4 +157,8 @@ $m2->delete();
 
 # delete other media object also
 $medias[1]->delete();
+
+# delete categories and site
+$subcat->delete();
+$site->delete();
 
