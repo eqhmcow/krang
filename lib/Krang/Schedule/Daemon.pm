@@ -293,7 +293,7 @@ sub _child_work {
         # child
         debug(sprintf("%s: Child PID=%i spawned with Schedule IDs=%s.",
                       __PACKAGE__, $$, (join ', ', (map { $_->schedule_id } @$tasks))));
-        
+
         foreach my $t (@$tasks) {
             debug(sprintf("%s->_child_work('%s'): Child PID=%i running schedule_id=%i",
                           __PACKAGE__, $instance, $$, $t->schedule_id()));
@@ -328,10 +328,6 @@ sub _child_work {
 sub _parent_work {
 
     my ($pid, $tasks) = @_;
-
-#    our $CHILD_COUNT;
-#    our %child_pids;
-#    our %assigned_jobs;
 
     my $instance = Krang::Conf->instance();
 
