@@ -473,8 +473,10 @@ sub find {
         $select_string = join(',', FIELDS);
     }
     
-    my $sql = "select $select_string from media where ".$where_string." order by $order_by $order_desc";
-   
+    my $sql = "select $select_string from contrib";
+    $sql .= " where ".$where_string if $where_string;
+    $sql .= " order by $order_by $order_desc";
+ 
     # add limit and/or offset if defined 
     if ($limit) {
        $sql .= " limit $offset, $limit";
