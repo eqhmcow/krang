@@ -44,11 +44,6 @@ sub new {
                                                         reorderable => 0,
                                                         allow_delete => 0,
                                                         ),
-
-                  Krang::ElementClass::StoryLink->new(name => 'leadin',
-                                                      display_name => 
-                                                      'Lead-In',
-                                                     ),
                   Default::promo_image->new(name => 'promo_image_large'),
                   Default::promo_image->new(name => 'promo_image_small'),
                   Default::cover_page->new()
