@@ -800,9 +800,10 @@ sub _add_to_publish_list {
     croak (__PACKAGE__ . ": 'stories' entry is not a Krang::Story object") unless ($story->isa('Krang::Story'));
 
     # add this story to the publish list.
-    $self->{stories_to_be_published}{$story->story_id()} = 1;
-    push @publish_list, $story;
-
+    unless (exists($self->{stories_to_be_published}{$story->story_id()})) {
+        $self->{stories_to_be_published}{$story->story_id()} = 1;
+        push @publish_list, $story;
+    }
     push @publish_list, $self->_process_linked_assets(story => $story);
 
     return @publish_list;
