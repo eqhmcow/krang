@@ -103,8 +103,8 @@ For Redhat 7.x:
 
 =item 6. Build Krang parts...
 
-   a. % cd $HOME/krang/ && make db
-   b. % cd $HOME/krang/ && make test
+   a. % cd $KRANG_ROOT && make db
+   b. % cd $KRANG_ROOT && make test
 
 
 
@@ -115,12 +115,7 @@ For Redhat 7.x:
 
 =item 8. Start Krang
 
-   a. % cd $KRANG_ROOT
-   b. % sudo $KRANG_ROOT/bin/krang_apachectl start
-
-
-
-
+   a. % $KRANG_ROOT/bin/krang_ctl start
 
 =back
 
