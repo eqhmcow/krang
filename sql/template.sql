@@ -13,7 +13,7 @@ CREATE TABLE template (
         deploy_date 		datetime,
         deployed 		tinyint(1) UNSIGNED NOT NULL,
         deployed_version 	int(11) UNSIGNED ,
-        element_classname 	varchar(255),
+        element_class_name 	varchar(255),
         filename 		tinytext NOT NULL,
         testing 		int(1) UNSIGNED NOT NULL,
         version 		smallint UNSIGNED NOT NULL,
