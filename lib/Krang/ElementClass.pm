@@ -9,7 +9,7 @@ use HTML::Template::Expr;
 use Krang::Log qw(debug info critical);
 
 use Exception::Class
-  'Krang::ElementClass::TemplateNotFound' => { fields => [ 'element_name', 'category_id' ] },
+  'Krang::ElementClass::TemplateNotFound' => { fields => [ 'element_name', 'category_id', 'error_msg' ] },
   'Krang::ElementClass::TemplateParseError' => {fields => [ 'element_name', 'template_name', 'category_id', 'error_msg']};
 
 =head1 NAME
@@ -529,14 +529,15 @@ sub find_template {
         # HTML::Template::Expr is having problems - throw an error
         # based on the problem reported.
         if ($err =~ /$filename : file not found/) {
-            Krang::ElementClass::TemplateNotFound->throw(message => 'Missing required output template',
+            Krang::ElementClass::TemplateNotFound->throw(message => "Missing required output template: '$err'",
                                                          element_name => $args{element}->display_name(),
-                                                         category_id => $category->category_id()
+                                                         category_id => $category->category_id(),
+                                                         error_msg => $err
                                                         );
         }
         # assuming remaining errors are parse errors at this time.
         else {
-            Krang::ElementClass::TemplateParseError->throw(message => 'Coding error found in template',
+            Krang::ElementClass::TemplateParseError->throw(message => "Coding error found in template: '$err'",
                                                            element_name => $args{element}->display_name(),
                                                            template_name => $filename,
                                                            category_id => $category->category_id(),
