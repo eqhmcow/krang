@@ -609,7 +609,7 @@ sub find {
 	push (@media_object,$obj);
     }
     $sth->finish();	
-    return wantarray ? @media_object: \@media_object; 
+    return @media_object; 
 }
 
 =item $media->revert($version)
