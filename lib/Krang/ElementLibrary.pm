@@ -174,20 +174,24 @@ sub _load_classes {
     my $dir = catdir($lib, $set);
 
     # setup @INC so element sets can load successfully
-    local @INC;
     unshift(@INC, $lib);
 
-    # require all .pm files in main set
-    opendir(DIR, $dir) or die "Unable to open dir '$dir': $!";
-    while($_ = readdir(DIR)) {
-        next if /#/; # skip emacs backup files
-        next unless /([^\/]+).pm$/;
-        my $name = $1;
-        eval "use ${set}::$name;";
-        die "Unable to load element class $dir/$_.  Error was:\n\n$@\n"
-          if $@;
-    }
-    closedir(DIR) or die $!;
+    # make sure to reset @INC before returning
+    eval {         
+        # require all .pm files in main set
+        opendir(DIR, $dir) or die "Unable to open dir '$dir': $!";
+        while($_ = readdir(DIR)) {
+            next if /#/; # skip emacs backup files
+            next unless /([^\/]+).pm$/;
+            my $name = $1;
+            eval "use ${set}::$name;";
+            die "Unable to load element class $dir/$_.  Error was:\n\n$@\n"
+              if $@;
+        }
+        closedir(DIR) or die $!;
+    };
+    shift(@INC);
+    die $@ if $@;
 }
 
 # load top-level element classes for stories and categories into
