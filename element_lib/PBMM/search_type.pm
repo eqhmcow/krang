@@ -76,16 +76,33 @@ sub fill_template {
                                                                                 
     $tmpl->param( category_loop => \@category_loop );
 
-    my @rel_prop_loop;
 
-    my $list = (Krang::List->find(name => 'Properties'))[0];
-    my @list_items = Krang::ListItem->find(list_id => $list->list_id);
-
-    foreach my $li (@list_items) {
-        push(@rel_prop_loop, {list_item_id => $li->list_item_id, display_name => $li->data});
+    if (not $cat->element->child('related_properties')) {
+        my $found = 0;
+        while (not $found) {
+            if($cat->parent) {
+                $cat = $cat->parent;
+                if ($cat->element->child('related_properties')) {
+                    $found = 1;
+                    my $keywords = $cat->element->child('related_properties')->data;
+                    my @k;
+                    foreach my $kw (@$keywords) {
+                        push (@k, {display_name => (Krang::ListItem->find(list_item_id => $kw))[0]->data, list_item_id => $kw});
+                    }
+                    $tmpl->param( related_properties_loop => [@k] );
+                }
+            } else {
+                last;
+            }
+        }
+    } else {
+        my $keywords = $cat->element->child('related_properties')->data;
+        my @k;
+        foreach my $kw (@$keywords) {
+            push (@k, {display_name => (Krang::ListItem->find(list_item_id => $kw))[0]->data, list_item_id => $kw});
+        }
+        $tmpl->param( related_properties_loop => [@k] );
     }
-
-    $tmpl->param(properties_loop => \@rel_prop_loop );
 
     $self->SUPER::fill_template( %args );
 }

@@ -96,6 +96,8 @@ sub fill_template {
                      last;
                 } 
             }
+        } else {
+            $tmpl->param( $el_name => $element->child($el_name)->publish( publisher => $publisher) );
         }
     }
  
