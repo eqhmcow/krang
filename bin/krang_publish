@@ -1,0 +1,82 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_publish - command-line publishing utility for Krang.
+
+=head1 SYNOPSIS
+
+Publish everything (all stories & media for all sites) in a krang installation:
+
+  $ krang_publish --everything
+
+Publish all assets of a single site, specified by site_id
+
+  $ krang_publish --site_id 10
+
+Publish all assets for a given category, specified by category_id
+
+  $ krang_publish --category_id 10
+
+Publish a specific story and all related assets (linked stories and media)
+
+  $ krang_publish --story_id 10
+
+
+=head1 DESCRIPTION
+
+This script provides a command-line tool for publishing content in
+Krang.  Large-scale publish jobs (e.g. entire sites, or moreso, entire
+installations) should use this tool rather than the web UI, as the web
+UI is not well-suited to larger publish runs.
+
+=head1 OPTIONS
+
+=over
+
+=item --everything
+
+Publish all content (stories and media) in a Krang installation.
+Using the --everything flag will cause krang_publish to ignore the
+--site_id, --category_id and --story_id options.
+
+=item --site_id
+
+Publish all content (stories and media) under the site specified by the site_id.
+
+=item --limited_to_site
+
+An option addendum to --site_id, any related stories or media that are outside of the specified site will not be published.
+
+B<WARNING>: The intended use case for this option would be an installation that is already in production and underwent template changes to a specific site, requiring a re-publish for that site *only*.  This option should not be used unless you are absolutely sure that stories and media outside of this site are in place in the publish path, or broken links in the publish path may result.
+
+=item --category_id
+
+Publish all content (stories and media) under the category specified by the category_id.
+
+=item --limited_to_category
+
+An option addendum to --category_id, any related stories or media that are outside of the specified category will not be published.
+
+B<WARNING>: The intended use case for this option would be an installation that is already in production and underwent template changes to a specific category, requiring a re-publish for that category *only*.  This option should not be used unless you are absolutely sure that stories and media outside of this category are in place in the publish path, or broken links in the publish path may result.
+
+=item --story_id
+
+Publish a single story specified by its story_id, and all its related stories and media.
+
+=item --media_id
+
+Publish a single media object, specified by its media_id.
+
+=item --verbose
+
+Increases the level of output to STDOUT to give a more in-depth explanation of what is going on.
+
+=back
+
+=cut
+
