@@ -89,6 +89,7 @@ sub open {
     my $mode = shift;
     my $object = $self->{object};
     my $type = $self->{type};
+    debug(__PACKAGE__."::open($mode) : ".$self->{filename}."\n");
 
     if ($mode eq "r") {
         # check write access
@@ -169,23 +170,22 @@ sub status {
     } else {
         $size = $object->file_size();
     }
-    $date = $object->creation_date(); 
-    $date = $date ? Time::Piece->from_mysql_datetime($date) : localtime; 
-    $date = $date->epoch;
+
+    $date = $object->creation_date()->epoch;
     
     my $owner = $object->checked_out_by;
 
     if ( $owner) { # if checked out, get the username, return read-only
         my @user = Krang::User->find( user_id => $owner );
         my $login = defined $user[0] ? $user[0]->login : "unknown";
-        return ( 'f', 0444, 1, $login, "co", $size,  $date);
+        return ( 'f', 0777, 1, $login, "co", $size,  $date);
     } else { # check for write privs - TODO
         my $priv = 1;
         if ($priv) {
-      $mode = 0777;
-    } else { 
-      $mode = 0400;
-    }
+            $mode = 0777;
+        } else { 
+            $mode = 0400;
+        }
     return ( 'f', $mode, 1, "nobody", "ci", $size,  $date);
   }
 
@@ -199,7 +199,7 @@ the object thru the UI.
 
 =cut
 
-sub delete {
+sub delete {    
     my $self = shift;
     my $object = $self->{object};
     my $type = $self->{type};
