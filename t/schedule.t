@@ -14,18 +14,45 @@ use Krang::Conf qw(KrangRoot);
 use Krang::Session;
 use Krang::DB qw(dbh);
 
+# 1. make sure that the scheduling daemon is actually running
+# 2. schedule a story publish and deletion
+# 3. sleep for the requisite period of time
+# 4. verify everything worked ala publish.t
+
 BEGIN {
     # only start if the schedule daemon is actually running....
-    unless (-e catfile(KrangRoot, 'tmp', 'schedule_daemon.pid')) {
+
+    # check for the pid file
+    my $pid_file = catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
+    unless (-e $pid_file) {
         eval "use Test::More skip_all => 'Schedule Daemon not running.';";
     } else {
-        eval "use Test::More qw(no_plan);";
+        # get pid
+        my $pid = `cat $pid_file`;
+        chomp $pid;
+
+        # verify pid is active
+        if ($pid and kill(0, $pid)) {
+            eval "use Test::More qw(no_plan);";
+        } else {
+            eval "use Test::More skip_all => 'Schedule Daemon not running.';";
+        }
     }
+
+    die $@ if $@;
 
     # set debug flag
     $ENV{SCH_DEBUG} = 1;
     use_ok('Krang::Schedule');
 }
+
+our (@non_test_deployed_templates, @test_templates_delete,
+     %test_template_lookup, %template_deployed, %template_paths);
+our $template_dir = "t/schedule";
+
+my $story_content = <<STORY;
+This is my rifle. There are many like it, but this one is mine. My rifle is my best friend. It is my life. I must master it, as I must master my life. Without me my rifle is useless. Without my rifle, I am useless. I must fire my rifle true. I must shoot straighter than my enemy who is trying to kill me. I must shoot him before he shoots me. I will. Before God I swear this creed. My rifle and myself are defenders of my country. We are the masters of our enemy. We are the saviours of my life. So be it ... until there is no enemy ... but peace. Amen.
+STORY
 
 my ($date, $next_run);
 my $now = localtime;
@@ -316,7 +343,25 @@ eval {$s1->save()};
 like($@, qr/'repeat' field set to invalid setting -/, 'save() failure test');
 
 
-# expire and publish tests
+################################
+# story expire and publish test
+#
+
+our $publisher = Krang::Publisher->new;
+
+@non_test_deployed_templates = Krang::Template->find(deployed => 1);
+
+foreach (@non_test_deployed_templates) {
+    &undeploy_template($_);
+}
+
+END {
+    # restore system templates.
+    foreach (@non_test_deployed_templates) {
+        $publisher->deploy_template(template => $_);
+    }
+}
+
 # turn off debugging
 is(Krang::Schedule->get_debug, 1, 'debugging on');
 Krang::Schedule->set_debug(0);
@@ -332,12 +377,19 @@ my $site = Krang::Site->new(preview_url  => 'scheduletest.preview.com',
 $site->save();
 my ($root_cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
 
+# put test templates out into the production path.
+deploy_test_templates($root_cat);
+
 # build story
 my $story = Krang::Story->new(categories => [$root_cat],
                               title	 => 'Schedule test story',
                               slug	 => 'slug',
                               class	 => 'article');
+my $page = $story->element->child('page');
+$page->add_child(class => 'paragraph', data => $story_content);
 $story->save;
+$story->checkin;
+
 our $s15 = Krang::Schedule->new(object_type => 'story',
                                 object_id => $story->story_id,
                                 action => 'publish',
@@ -346,7 +398,11 @@ our $s15 = Krang::Schedule->new(object_type => 'story',
 $s15->save;
 eval {$count = Krang::Schedule->run};
 is($@, '', 'Run did not fail :).');
-is($story->version, 1, 'publish version set');
+
+sleep($ENV{KRANG_DEBUG} ? 15 : 65);
+
+test_publish_story($story);
+
 
 our $s16 = Krang::Schedule->new(object_type => 'story',
                                 object_id => $story->story_id,
@@ -356,8 +412,12 @@ our $s16 = Krang::Schedule->new(object_type => 'story',
 $s16->save;
 eval {$count = Krang::Schedule->run};
 is($@, '', 'Run did not fail :).');
+
+sleep($ENV{KRANG_DEBUG} ? 15 : 65);
+
 my ($obj) = Krang::Story->find(story_id => $story->story_id);
 is($obj, undef, 'Story expiration is a success :).');
+
 
 SKIP: {
     skip "Tmp cleaner tests require touch version 4.5+", 2
@@ -376,10 +436,14 @@ SKIP: {
     }
 }
 
-
-# expire session test
-
 END {
+    # remove outstanding templates.
+    foreach (@test_templates_delete) {
+        # delete created templates
+        $publisher->undeploy_template(template => $_);
+        $_->delete();
+    }
+
     # delete site
     $site->delete();
 
@@ -387,5 +451,155 @@ END {
     for (1..14) {
         no strict;
         is(${"s$_"}->delete, 1, "deletion test $_") if ${"s$_"};
+    }
+}
+
+
+##### Code basically borrowed from publish.t #####
+sub build_publish_paths {
+    my $story = shift;
+    my @paths;
+
+    for ($story->categories) {
+        push @paths,
+          catfile($story->publish_path(category => $_), 'index.html');
+    }
+
+    return @paths;
+}
+
+
+sub deploy_template {
+    my $tmpl = shift;
+    my $result;
+
+    my $category = $tmpl->category();
+
+    my @tmpls = $publisher->template_search_path(category => $category);
+    my $path = $tmpls[0];
+
+    my $file = catfile($path, $tmpl->filename());
+
+    eval { $result = $publisher->deploy_template(template => $tmpl); };
+
+    if ($@) {
+        diag($@);
+        fail('deploy_template()');
+    }
+
+    return $file;
+}
+
+
+#
+# deploy_test_templates() - 
+# Places the template files found in t/publish/*.tmpl out on the filesystem
+# using Krang::Publisher->deploy_template().
+sub deploy_test_templates {
+    my ($category) = @_;
+
+    my $template;
+
+    local $/;
+
+    opendir(TEMPLATEDIR, $template_dir) or
+      die "ERROR: cannot open dir $template_dir: $!\n";
+
+    my @files = readdir(TEMPLATEDIR);
+    closedir(TEMPLATEDIR);
+
+    foreach my $file (@files) {
+        next unless ($file =~ s/^(.*)\.tmpl$/$template_dir\/$1\.tmpl/);
+
+        my $element_name = $1;
+
+        open (TMPL, "<$file") or die "ERROR: cannot open file $file: $!\n";
+        my $content = <TMPL>;
+        close TMPL;
+
+        $template = Krang::Template->new(content => $content,
+                                         filename => "$element_name.tmpl",
+                                         category => $category);
+
+        eval {$template->save();};
+
+        if ($@) {
+            diag("ERROR: $@");
+            fail('Krang::Template->new()');
+        } else {
+            push @test_templates_delete, $template;
+            $test_template_lookup{$element_name} = $template;
+
+            $template_paths{$element_name} = &deploy_template($template);
+
+            unless (exists($template_deployed{$element_name})) {
+                $template_deployed{$element_name} = $template;
+            }
+        }
+    }
+
+    return;
+}
+
+
+sub load_story_page {
+    my $filename = shift;
+    my $data;
+
+    local undef $/;
+
+    if (open(PAGE, "<$filename")) {
+        $data = <PAGE>;
+        close PAGE;
+    } else {
+        diag("Cannot open $filename: $!");
+        fail('Krang::Publisher->publish_story();');
+    }
+
+    return $data;
+}
+
+
+sub test_publish_story {
+    my $story = shift;
+
+    my @story_paths = build_publish_paths($story);
+
+    for (my $i = $#story_paths; $i >= 0; $i--) {
+        my $story_txt = load_story_page($story_paths[$i]);
+        $story_txt =~ s/\n//g;
+        $story_content =~ s/\n//g;
+        if ($story_txt =~ /\w/) {
+            ok($story_content eq $story_txt, 'Story page content correct');
+            if ($story_content ne $story_txt) {
+                diag('Story content does not match expected results');
+            }
+        } else {
+            diag('Missing story content in ' . $story_paths[$i]);
+            fail('Krang::Publisher->publish_story() -- compare');
+        }
+    }
+}
+
+
+# test to make sure that Krang::Template templates are removed from the
+# filesystem properly.
+sub undeploy_template {
+
+    my $tmpl = shift;
+
+    my $category = $tmpl->category();
+
+    my @tmpls = $publisher->template_search_path(category => $category);
+    my $path = $tmpls[0];
+
+    my $file = catfile($path, $tmpl->filename());
+
+    # undeploy template
+    eval { $publisher->undeploy_template(template => $tmpl); };
+
+    if ($@) {
+        diag($@);
+        fail('undeploy_template()');
     }
 }
