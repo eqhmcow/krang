@@ -535,7 +535,7 @@ sub find_template {
             Krang::ElementClass::TemplateNotFound->throw
                 (
                  message       => "Missing required output template: '$err'",
-                 element_name  =>  $element ? $element->display_name() : $filename),
+                 element_name  => ($element ? $element->display_name() : $filename),
                  template_name => $filename,
                  category_url  => $publisher->category->url(),
                  error_msg     => $err
@@ -550,7 +550,7 @@ sub find_template {
             Krang::ElementClass::TemplateParseError->throw
                 (
                  message       => "Coding error found in template: '$msg'",
-                 element_name  =>  $element ? $element->display_name() : $filename),
+                 element_name  =>  ($element ? $element->display_name() : $filename),
                  template_name => $filename,
                  category_url  => $publisher->category->url(),
                  error_msg     => $err
