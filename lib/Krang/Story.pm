@@ -1193,7 +1193,9 @@ sub find {
 
         # handle published flag
         if ($key eq 'published') {
-            my $ps = ($args{published} eq '1') ? 's.published_version IS NOT NULL' : 's.published_version IS NULL';
+            my $ps = ($args{published} eq '1') ? 
+	        's.published_version > 0' : 
+		'(s.published_version IS NULL OR s.published_version = 0)';
             push(@where, $ps);
             next;
         }
