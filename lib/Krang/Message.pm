@@ -6,6 +6,7 @@ use Krang::Conf qw(KrangRoot);
 use Krang::Session qw(%session);
 use File::Spec::Functions qw(catfile);
 use Carp qw(croak);
+use Krang::Log qw(debug);
 
 use base 'Exporter';
 our @EXPORT_OK = qw(add_message get_messages clear_messages);
@@ -91,7 +92,9 @@ an alternate module name to use to lookup the message definition.
 sub add_message {
     our ($CONF);
     my ($key, %args) = @_;
-    my $module = delete $args{from_module} || (caller)[0];
+    my @caller = caller;
+    my $module = delete $args{from_module} || $caller[0];
+    debug("add_message($key) called from $module, line $caller[2].");
 
     # get handle for the module block, if there is one
     my $conf;
