@@ -27,6 +27,10 @@ Gentoo Linux 1.4.3
 
 FreeBSD 5.2.1
 
+=item *
+
+Debian 3.0 (Woody)
+
 =back
 
 Krang will likely compile fine on other similar platforms, but you'll
