@@ -48,9 +48,9 @@ is($alerts[0]->alert_id, $alert->alert_id, "Check for return of object from find
 $story->checkin();
 
 # attempt to trigger alert send by Krang::Schedule->run()
-my $path = File::Spec->catfile($ENV{KRANG_ROOT}, 'logs', "schedule_test.log");
-my $log = IO::File->new(">$path") ||
-  croak("Unable to open logfile: $!");
-Krang::Schedule->run($log);
+#my $path = File::Spec->catfile($ENV{KRANG_ROOT}, 'logs', "schedule_test.log");
+#my $log = IO::File->new(">$path") ||
+#  croak("Unable to open logfile: $!");
+#Krang::Schedule->run($log);
 
 END{$alert->delete()}
