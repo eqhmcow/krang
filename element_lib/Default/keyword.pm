@@ -29,7 +29,7 @@ sub new {
    my %args = ( name         => 'keyword', 
                 display_name => 'Keywords',
                 fields       => 4,
-                size         => 10,
+                size         => 24,
                 maxlength    => 0,
                 bulk_edit    => 1,
                 @_
