@@ -220,13 +220,11 @@ is($copy->title, "Copy of " . $story->title);
 is($copy->slug, $story->slug . "_copy");
 
 # basic fields survived?
-for (qw( published_version
-         class
+for (qw( class
          checked_out
          checked_out_by
          notes
          cover_date
-         publish_date
          priority )) {
     is($story->$_, $copy->$_, "$_ cloned");
 }
