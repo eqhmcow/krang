@@ -67,6 +67,7 @@ use Krang::Script;
 
 use Krang;
 use Krang::AddOn;
+use Krang::Site;
 use Krang::Story;
 use Krang::Media;
 
@@ -75,15 +76,24 @@ my $version   = $Krang::VERSION;
 
 my @addons = sort { $a->name cmp $b->name } Krang::AddOn->find();
 
-my @instance_list;
+my %instance_stats;
 foreach my $i (@instances) {
+    my %site_list;
+
     Krang::Conf->instance($i);
-    my %instance_info = (
-                         instance    => $i,
-                         story_count => Krang::Story->find(count => 1),
-                         media_count => Krang::Media->find(count => 1),
-                        );
-    push @instance_list, \%instance_info;
+
+    foreach my $site (Krang::Site->find()) {
+        $site_list{$site->url}{story_count} =
+          Krang::Story->find(count   => 1,
+                             site_id => $site->site_id);
+        $site_list{$site->url}{media_count} =
+          Krang::Media->find(count   => 1,
+                             site_id => $site->site_id);
+
+    }
+
+    $instance_stats{$i} = \%site_list;
+
 }
 
 
@@ -97,13 +107,46 @@ foreach (@addons) {
 
 print STDOUT "\nConfigured instances (in conf/krang.conf):\n\n";
 
-foreach my $i (@instance_list) {
-    my $tabs = (length $i->{instance} <= 5) ? "\t\t" : "\t";
+my ($total_stories, $total_media) = (0,0);
 
-    print STDOUT sprintf("\t%s%s%i stories\t%i media\n",
-                         $i->{instance}, $tabs, $i->{story_count}, $i->{media_count});
+
+foreach my $i (keys %instance_stats) {
+
+    print STDOUT sprintf("$i\n");
+
+    unless (keys %{$instance_stats{$i}}) {
+        print STDOUT "\tNo configured sites.\n";
+        next;
+    }
+
+    my ($tot_s, $tot_m) = (0,0);
+
+    foreach my $s (keys %{$instance_stats{$i}}) {
+        my $len = length $s;
+
+        my $site_tabs = join '', ("\t") x ((32 - $len) / 8);
+
+        print STDOUT sprintf("\t%s%s%6i stories\t%6i media\n",
+                             $s, $site_tabs,
+                             $instance_stats{$i}{$s}{story_count},
+                             $instance_stats{$i}{$s}{media_count});
+
+        $tot_s += $instance_stats{$i}{$s}{story_count};
+        $tot_m += $instance_stats{$i}{$s}{media_count};
+
+    }
+
+    print STDOUT "\t----------------------------------------------------\n";
+    print STDOUT sprintf("\tTOTAL:\t\t\t%6i stories\t%6i media\n\n", $tot_s, $tot_m);
+
+    $total_stories += $tot_s;
+    $total_media   += $tot_m;
+
 }
 
-print STDOUT "\n######################################################################\n\n";
+print STDOUT "\n\n------------------------------------------------------------\n";
+print STDOUT sprintf("SYSTEMWIDE TOTAL:\t\t%6i stories\t%6i media\n\n",
+                     $total_stories, $total_media);
+
 
 exit;
