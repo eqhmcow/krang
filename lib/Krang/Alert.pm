@@ -448,6 +448,80 @@ sub delete {
 
 }
 
+=item $alert->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+    
+    # open up <alert> linked to schema/alert.xsd
+    $writer->startTag('alert',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'alert.xsd');
+
+    $writer->dataElement( alert_id => $self->{alert_id} );
+    $writer->dataElement( user_id => $self->{user_id} );
+    $writer->dataElement( action => $self->{action} );
+    $writer->dataElement( desk_id => $self->{desk_id} ) if $self->{desk_id};
+    $writer->dataElement( category_id => $self->{category_id} ) if $self->{category_id};
+     
+    # add category to set if needed
+    $set->add(object => (Krang::Category->find( category_id => $self->{category_id} ))[0], from => $self) if $self->{category_id};
+   
+    # add user to set
+    $set->add(object => (Krang::User->find( user_id => $self->{user_id} ))[0],from => $self);
+
+    # add desk to set if needed
+    $set->add(object => (Krang::Desk->find( desk_id => $self->{desk_id} ))[0], from => $self) if $self->{desk_id};
+ 
+    # all done
+    $writer->endTag('alert');
+}
+
+=item C<< $alert = Krang::Alert->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming alert has the same fields as an existing alert then 
+ it is ignored (not duplicated).
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set) = @args{qw(xml set)};
+
+    my %fields = map { ($_,1) } grep { ('alert_id') } FIELDS;
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml,
+                                  suppressempty => 1);
+
+    my %search_params = (    action => $data->{action},
+                            user_id => $set->map_id(class => "Krang::User", id => $data->{user_id}) );
+    
+    $search_params{desk_id} = $set->map_id(class => "Krang::Desk",
+id => $data->{desk_id}) if $data->{desk_id};
+    $search_params{category_id} = $set->map_id(class => "Krang::Category", id => $data->{category_id}) if $data->{category_id}; 
+
+    # is there an existing object?
+    my $alert = (Krang::Alert->find( %search_params ))[0] || '';
+
+    if (not $alert) {
+        $alert = Krang::Alert->new( %search_params );
+        $alert->save;
+    }
+    
+    return $alert;
+}
+
 =back 
 
 =cut

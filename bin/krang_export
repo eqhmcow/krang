@@ -79,6 +79,8 @@ media, templates, categories, sites, contribs, users and groups.
 
 =item --groups
 
+=item --alerts
+
 These select all available objects, and their dependencies, for
 export.  May not be combined with --everything.
 
@@ -97,6 +99,8 @@ export.  May not be combined with --everything.
 =item --user_id 10
 
 =item --group_id 10
+
+=item --alert_id 10
 
 These select a single object by ID, and its dependecies.  May be
 repeated multiple times to select multiple objects.
@@ -160,9 +164,9 @@ my ($help, $man, $append, $compress, $overwrite);
 my $output = 'export.kds';
 my $verbose = 0;
 my %all = map { ($_, 0) } qw(stories media templates contribs categories 
-                             sites users groups);
+                             sites users groups alerts );
 my %id  = map { ($_, [])} qw(story_id media_id template_id contrib_id 
-                             category_id site_id user_id group_id);
+                             category_id site_id user_id group_id alert_id );
 
 pod2usage(2) unless
   GetOptions(help       => \$help,
