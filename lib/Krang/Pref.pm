@@ -13,6 +13,9 @@ Krang::Pref - Krang Global Preference API
 			      default => 2,			# optional
 			      description => 'i do something',	# optional
 			      options => [1,2,6,24,120],	# optional
+			      option_field => 'fieldname',	# optional
+			      option_table => 'some_prefs',	# required
+			      selected_options => [1,2],	# optional
 			      type => 'list');			# required
 
   # saves object to the DB
@@ -446,11 +449,41 @@ sub find {
 }
 
 
+=item * $pref = $pref->add_option( $option, $unshift )
+
+Adds an option to the list of available options, nothing is done if the
+supplied option already exists.  The optional second arg if set to a true value
+will result in the option being unshifted onto the front of the 'options'
+array, otherwise, it is pushed onto the end.
+
+=cut
+
+sub add_option {
+    my ($self, $option) = @_[0..1];
+    my $unshift = pop || 0;
+    my %options = map {$_, 1} @{$self->{options}};
+
+    # do nothing if the option already exists
+    return $self if exists $options{$option};
+
+    if ($unshift) {
+        unshift @{$self->{options}}, $option;
+    } else {
+        push @{$self->{options}}, $option;
+    }
+
+    # add new option to the db?
+    my $dbh = dbh();
+    my ($table, $field) = map {$self->{$_}} qw/option_table option_field/;
+    $dbh->do("INSERT INTO $table ($field) VALUES (?)", undef, $option);
+
+    return $self;
+}
+
+
 =item * @options = $pref->options()
 
 =item * $pref = $pref->options( @options )
-
-=item * $pref = $pref->options( @option_id )
 
 Method that retrieves or sets the Krang::Pref::Opt objects associated with the
 given preference.  It will croak if is passed a heterogeneous array or if any
@@ -466,11 +499,16 @@ sub options {
 
 =item * $pref = $pref->options_pop()
 
-
+Removes the last option in the options array from memory and the database
 
 =cut
 
 sub options_pop {
+    my $self = shift;
+
+    
+
+    return $self;
 }
 
 
