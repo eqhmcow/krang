@@ -299,7 +299,7 @@ sub duplicate_check {
 
     if ($id) {
         $query .= " AND site_id != ?";
-        push @params, $_;
+        push @params, $id;
     }
 
     my $dbh = dbh();
