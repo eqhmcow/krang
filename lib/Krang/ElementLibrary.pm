@@ -99,6 +99,7 @@ use Krang::ElementClass::TopLevel;
 use Krang::ElementClass::Cover;
 use Krang::ElementClass::CheckBox;
 use Krang::ElementClass::ListBox;
+use Krang::ElementClass::ListGroup;
 use Krang::ElementClass::MediaLink;
 use Krang::ElementClass::PopupMenu;
 use Krang::ElementClass::RadioGroup;
