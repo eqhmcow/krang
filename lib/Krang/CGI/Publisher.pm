@@ -335,7 +335,7 @@ sub preview_story {
                 add_message('missing_template',
                             filename       => $error->template_name,
                             category_url   => $error->category_url
-                       );
+                           );
             } elsif (ref $error && $error->isa('Krang::ElementClass::TemplateParseError')) {
                 add_message('template_parse_error',
                             element_name  => $error->element_name,
@@ -344,8 +344,16 @@ sub preview_story {
                             error_msg     => $error->message
                            );
             } elsif (ref $error and $error->isa('Krang::Publisher::FileWriteError')) {
-                add_message('file_write_error',
-                            path          => $error->destination);
+                add_message(
+                            'file_write_error',
+                            path => $error->destination
+                           );
+                # pass a more informative message to the log file - ops should know.
+                my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
+                                      $error->destination,
+                                      $error->system_error);
+                critical($err_msg);
+
             } else {
                 # something not expected so log the error.  Can't croak()
                 # here because that will trigger bug.pl.
@@ -435,12 +443,19 @@ sub preview_media {
 
         if (ref $e and $e->isa('Krang::Publisher::FileWriteError')) {
             add_message('file_write_error',
-                        path          => $e->destination);
+                        path => $e->destination);
             # put the messages on the screen
             foreach my $err (get_messages()) {
                 push(@error_loop, { err => $err });
             }
             clear_messages();
+
+            # pass a more informative message to the log file - ops should know.
+            my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
+                                  $e->destination,
+                                  $e->system_error);
+            critical($err_msg);
+
         } else {
             # something not expected so log the error.  Can't croak()
             # here because that will trigger bug.pl.
@@ -591,11 +606,18 @@ sub _publish_assets_now {
                                 error_msg     => $err->message
                                );
                     critical($err->error_msg)
-                } elsif (ref $err &&
-                         $err->isa('Krang::Publisher::FileWriteError')) {
+                } elsif (
+                         ref $err &&
+                         $err->isa('Krang::Publisher::FileWriteError')
+                        ) {
+
                     add_message('file_write_error',
                                 path => $err->destination);
-                    critical(sprintf("Unable to write file to '%s'", $err->destination));
+                    # pass a more informative message to the log file - ops should know.
+                    my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
+                                          $err->destination,
+                                          $err->system_error);
+                    critical($err_msg);
                 } else {
                     # something not expected so log the error.  Can't croak()
                     # here because that will trigger bug.pl.

@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Errors writing to the filesystem while executing a preview/publish
+through the Krang UI are now logged properly in C<logs/krang.log>.
+Previously, they were only reported in user-friendly (as opposed to
+admin-friendly) fashion to the UI.  [Peter]
+
+=item *
+
 Added indexes on the C<class> and C<published_version> columns in the
 C<story> table.  This greatly speeds up searches against these fields.
 [Sam]
