@@ -19,9 +19,6 @@ package Krang::Template;
  # checkout object to work on it
  $template->checkout();
 
- # save version of object to version table in preparation for edits
- $template->prepare_for_edit();
-
  # saves to the db again, increments version field of the object
  $template->save();
 
@@ -71,6 +68,7 @@ use warnings;
 ###############################
 use Carp qw(verbose croak);
 use Storable qw(freeze thaw);
+use Time::Piece;
 use Time::Piece::MySQL;
 
 # Internal Module Depenedencies
@@ -179,7 +177,9 @@ corresponds to the id of an object in the user table.
 
 =item * creation_date
 
-Date stamp identifying when the object was created.
+Date stamp identifying when the object was created.  This is a
+Time::Piece object, initalized during new() to the current date and
+time.
 
 =item * deployed
 
@@ -187,7 +187,8 @@ Boolean that is true when the given object has been deployed.
 
 =item * deploy_date
 
-Date stamp identifying when the object was last deployed.
+Date stamp identifying when the object was last deployed.  This is a
+Time::Piece object.
 
 =item * deployed_version
 
@@ -212,8 +213,7 @@ purpose of this field is to ensure the uniqueness of a template.
 
 =item * version
 
-Integer identifying the version of the template object in memory, which implies
-the existence of n - 1 versions of the object in the template_version table
+Integer identifying the version of the template object in memory.
 
 =back
 
@@ -488,11 +488,11 @@ sub deploy_to {
     # update deploy fields
     my $query = <<SQL;
 UPDATE template
-SET deployed = ?, deploy_date = ?, deployed_version = ?, testing = ?
+SET deployed = ?, deploy_date = now(), deployed_version = ?, testing = ?
 WHERE template_id = ?
 SQL
 
-    $dbh->do($query, undef, (1, 'now()', $self->{version}, 0, $id));
+    $dbh->do($query, undef, (1, $self->{version}, 0, $id));
 
     add_history(    object => $self, 
                     action => 'deploy',
@@ -680,6 +680,10 @@ sub find {
             push @templates, $row;
         } else {
             push @templates, bless({%$row}, $self);
+            foreach my $date_field (grep { /_date$/ } keys %{$templates[-1]}) {
+                next unless defined $templates[-1]->{$date_field};
+                $templates[-1]->{$date_field} = Time::Piece->from_mysql_datetime($templates[-1]->{$date_field});
+            }
         }
     }
 
@@ -719,6 +723,14 @@ sub init {
     # append file extension, if necessary
     $args{filename} .= '.tmpl' unless $args{filename} =~ /\.tmpl$/;
 
+    # setup defaults
+    $self->{version}        = 0;
+    $self->{checked_out}    = 1;
+    $self->{checked_out_by} = $session{user_id};
+    $self->{deployed}       = 0;
+    $self->{testing}        = 0;
+    $self->{creation_date}  = localtime();
+
     $self->hash_init(%args);
 
     return $self;
@@ -757,45 +769,7 @@ SQL
     return $self;
 }
 
-
-=item $template = $template->prepare_for_edit()
-
-This instance method saves the data currently in the object to the version
-table to permit a call to subsequent call to save that does not lose data.
-
-The method croaks if the template is is not checked out, checked out by
-another user, or if it can't serialize the template object.
-
-=cut
-
-sub prepare_for_edit {
-    my $self = shift;
-    my $user_id = $session{user_id};
-    my $id = $self->{template_id};
-    my $frozen;
-
-    $self->verify_checkout();
-
-    eval {$frozen = freeze($self)};
-
-    # catch any exception thrown by Storable
-    croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object " .
-          "template id '$id' - $@") if $@;
-
-    my $query = <<SQL;
-INSERT INTO template_version (data, template_id, version)
-VALUES (?,?,?)
-SQL
-
-    my $dbh = dbh();
-
-    $dbh->do($query, undef, ($frozen, $id, $self->{version}));
-
-    return $self;
-}
-
-
-=item $template = $template->revert( $version )
+=item $template->revert( $version )
 
 Reverts template object data to that of a previous version.
 
@@ -824,22 +798,27 @@ SQL
 
     my @row = $dbh->selectrow_array($query, undef, ($id, $version));
 
-    # preserve version
-    my $prsvd_version = $self->{version};
+    # preserve version and checkout status
+    my %preserve = ( version        => $self->{version},
+                     checked_out_by => $self->{checked_out_by},
+                     checked_out    => $self->{checked_out} );
 
-    # overwrite current object
-    eval {$self = thaw($row[0])};
+    # get old version
+    my $obj;
+    eval {$obj = thaw($row[0])};
 
     # catch Storable exception
     croak(__PACKAGE__ . "->revert(): Unable to deserialize object for " .
           "template id '$id' - $@") if $@;
 
+    # copy old data into current object, perserving what is meant to
+    # be preserved.
+    %{$self} = (%$obj, %preserve);
+
+
     add_history(    object => $self, 
                     action => 'revert',
                );
-
-    # restore version number
-    $self->{version} = $prsvd_version;
 
     return $self;
 }
@@ -879,33 +858,28 @@ sub save {
     # make sure we've checked out the object
     $self->verify_checkout() if $id;
 
-    # increment version number, set to '1' if this the first call to save
-    # for this object
-    $self->{version} = exists $self->{version} ? ++$self->{version} : 1;
+    # increment version number
+    $self->{version} = $self->{version} + 1;
 
     # set up query
     my ($query, @tmpl_params);
-    if ($self->{version} > 1) {
+    if ($id) {
         $query = "UPDATE template SET " .
           join(', ', map {"$_=?"} @save_fields) . "WHERE template_id = ?";
     } else {
         $query = "INSERT INTO template (" .
           join(",", @save_fields) .
             ") VALUES (?" . ",?" x (scalar @save_fields - 1) . ")";
-        $self->{checked_out} = 1;
-        $self->{checked_out_by} = $user_id;
-        my $t = localtime();
-        $self->{creation_date} = $t->strftime("%Y-%m-%d %T");
     }
 
-    # checked_out, deployed, and testing fields cannot be NULL; checked_out
-    # is already handled above
-    $self->{$_} = $self->{$_} || 0 for (qw/deployed testing/);
-
     # construct array of bind_parameters
-    @tmpl_params = map {$self->{$_}} @save_fields;
-    push @tmpl_params, $id if $self->{version} > 1;
-
+    #use Data::Dumper;
+    #print STDERR Data::Dumper->Dumper($self);
+    @tmpl_params = map { (/_date$/ and defined $self->{$_}) ?
+                           $self->{$_}->mysql_datetime : 
+                           $self->{$_}
+                       } @save_fields;
+    push @tmpl_params, $id if $id;
 
     # get database handle
     my $dbh = dbh();
@@ -917,6 +891,17 @@ sub save {
 
     # get template_id for new objects
     $self->{template_id} = $dbh->{mysql_insertid} unless $id;
+
+    # save a copy in the version table
+    my $frozen;
+    eval {$frozen = freeze($self)};
+
+    # catch any exception thrown by Storable
+    croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object " .
+          "template id '$id' - $@") if $@;
+
+    # do the insert
+    $dbh->do('INSERT INTO template_version (data, template_id, version) VALUES (?,?,?)', undef, $frozen, $self->{template_id}, $self->{version});
 
     add_history(    object => $self, 
                     action => 'save',
@@ -957,14 +942,13 @@ sub verify_checkout {
     my $self = shift;
     my $id = $self->{template_id};
     my $user_id = $session{user_id};
-    my $caller = (caller(1))[3];
 
-    croak("$caller: Object id '$id' is not checked out.")
+    croak("Template '$id' is not checked out.")
       unless $self->{checked_out};
 
     my $cob = $self->{checked_out_by};
 
-    croak("$caller: Object id '$id' is already checked out by user '$cob'")
+    croak("Template '$id' is already checked out by user '$cob'")
       unless $cob == $user_id;
 
     return 1;

@@ -297,7 +297,6 @@ sub close {
     } else { # if template
         if  ($object->template_id) {
             $object->checkout();
-            $object->prepare_for_edit();
         }
 
         # save new content
