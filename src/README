@@ -31,8 +31,8 @@ to the install.pod found in the docs directory.
 	Storable-2.06            
         Apache-Session-1.54      
         DBI-1.32                 
-        DBD-mysql-2.1021         
-        Scalar-List-Utils-1.09   
+        DBD-mysql-2.9002
+	Scalar-List-Utils-1.09   
         IO-stringy-2.108         
         Class-MethodMaker-1.08   
         Text-Balanced-1.89       
