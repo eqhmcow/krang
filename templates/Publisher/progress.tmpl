@@ -9,7 +9,7 @@
 <script language='javascript'>
    function update_progress_bar (counter, total, string) {
       var bar = document.getElementById("progress_bar");
-      var prog = counter/total;
+      var prog = (counter + 1)/total;
       var width = Math.floor(prog * 300);
       bar.style.width = width + 'px';
       bar.innerHTML = Math.floor(prog * 100) + "%";
