@@ -1,0 +1,539 @@
+=head1 Creating an Element Library in Krang
+
+This document is a guide to creating an element library in Krang.
+Being able to build your own element library (or customize an existing
+element library) is a very important concept in Krang, as it unlocks
+most of the power and flexibility within Krang.
+
+This guide is aimed developers with experience working in Perl (Krang
+is a pure-Perl application).  Experience with Object-Oriented
+development, especially in Perl, will be extremely useful.  At the
+very least, be familiar with OO design methodologies.
+
+Before reading this document, you should be comfortable with how Krang
+works, and be able to set up a Krang installation for your own
+development use.
+
+With a working Krang installation, reccommended reading would be:
+
+=over
+
+=item *
+
+HREF[Element System|element_system.html] - An overview of the Krang
+Element System.
+
+=item *
+
+HREF[Writing Templates|writing_htmltemplate.html] - A guide to
+template creation in Krang.
+
+=back
+
+
+=head1 What an Element Set Looks Like
+
+This guide will use the C<Default> element set that comes with Krang -
+it can be found at C<KRANG_ROOT/element_lib/Default/>.  It will be
+helpful if you configure a Krang instance (see 
+HREF[Krang Configuration|configuration.html]) using the Default
+element set as well, to follow along within the Krang web interface.
+
+Borrowing from the
+HREF[Krang Element System Overview|element_system.html], an Element
+Set (or Library - the terms are interchangable) describes how all
+story and category data is structured and handled in a Krang instance.
+
+Every story within Krang has a number of standard fields - title,
+slug, category, publish date.  Beyond that, everything is defined by
+the Element set.
+
+When a story is created, a Type has to be chosen - this chooses a root
+element for the story, and determines what fields will be made
+available to the user.
+
+For example, if you create a story with a type of C<Article>, you will
+immediately have the following fields presented in the web UI:
+
+  - Metadata Title
+  - Metadata Description
+  - Metadata Keywords
+  - Promo Title
+  - Promo Teaser
+  - Deck
+  + Page
+
+
+Open up the file C<KRANG_ROOT/element_lib/Default/article.pm>.  What
+you will see in the subroutine C<new()> is a parameter C<children>
+that defines all of those elements, plus some additional ones.  The
+code begins with:
+
+  sub new {
+     my $pkg = shift;
+     my %args = ( name => 'article',
+                  children => [
+                      Krang::ElementClass::Text->new( name => 'metadata_title',
+                                                      display_name => 'Metadata Title',
+                                                      min => 1,
+                                                      max => 1,
+                                                      reorderable => 0,
+                                                      allow_delete => 0,
+                                                    ),
+
+This is where element relationships are set.  This defines the
+C<article> element as having a series of children, each one with its
+own settings as to its' appearance, its' name, how many of them exist,
+etc.
+
+These definitions are used by Krang as a guide during the process of
+content manipulation - both in the web UI and in the Krang API, users
+are limited to those actions that are deemed legal by the Element Set.
+For example, looking at the code sample above, a user will not be
+allowed to delete, re-order, or create additional C<metadata_title>
+elements.
+
+Other elements, however, will afford much greater flexibility to users.
+
+=head3 A Note on Element Manipulation
+
+One of the most important things to remember when working with element
+libraries is this:
+
+B<Maintain Compatibility with Existing Content>.
+
+It is quite easy to make changes to your element library that will
+break existing stories.  For example, if you were to remove the entry
+for C<metadata_title> in the above code sample, all existing stories
+of type C<Article> would immediately break, as they would all contain
+an element that is no longer in the definition of an article.
+
+If you are considering extensive changes to an element set currently
+in use, you may need to write a script to migrate existing content.
+This will be covered later.
+
+
+=head1 Elements in Krang
+
+Within Krang, an element is split into two parts, with separate APIs:
+
+=over
+
+=item 1
+
+The element itself, covered by L<Krang::Element>.  The
+L<Krang::Element> API covers general element behavior -
+creation/deletion, data storage/retrieval, children, tree location,
+etc.
+
+
+=item 2
+
+The second part is the element's class, covered
+by L<Krang::ElementClass> and the modules derived from it
+(e.g. L<Krang::ElementClass::TopLevel>,
+L<Krang::ElementClass::Textarea>, L<Krang::ElementClass::StoryLink>).
+
+=back
+
+It is the definitions in L<Krang::ElementClass> and its subclasses
+that determine how the element being created will behave - how it is
+be presented to the user in the UI, what data it will store, how it
+publishes itself, and so on.
+
+Every element in an Element Set is a subclass of either
+L<Krang::ElementClass> or one of its subclasses.
+
+=head1 Setting up an Element Set
+
+This section of the guide will walk through the creation of a very
+basic element set.
+
+=head2 Step 1 - The Element Set Spec
+
+The most important thing when creating an element set is deciding how
+all the elements will relate to eachother.  Once in use, making
+changes to an element set becomes much more difficult (see L<Revisions
+to a Live Element Set>).  Like all other development, spending the
+extra time in the design stage will save you a lot of time down the
+line.
+
+The example element set used here has the following requirements:
+
+=over
+
+=item *
+
+A multi-page story type (to be called C<simple_article>).
+
+The story will have a single headline and deck common to all pages.
+Each page in the story will have a page header, along with zero or
+more of the following: paragraphs, links to images, and links to other
+stories.
+
+
+=item *
+
+A cover story type (C<cover_story>).
+
+A cover story is an index page for a given category.  It is a
+single-page story, with a headline, and zero or more of the following:
+paragraphs, links to images, and links to other stories.
+
+
+=item *
+
+A category element (C<category>).
+
+The category will have a display_name, and nothing else at the moment.
+
+
+=back
+
+These requirements define a very basic element set - a real site would
+have a far more intricate element set, but this will suffice for
+educational purposes.
+
+These requirements can now be broken out into element trees, which
+would look something like this:
+
+  Multi-Page Story:
+
+  + basic_article
+     - headline       (textbox)
+     - deck           (textarea)
+     + page
+        - page_header (textbox)
+        - paragraph   (textarea)
+        - story_link  (storylink)
+        - image_link  (medialink)
+
+
+
+  Cover Story:
+
+  + cover_story
+     - headline    (textbox)
+     - paragraph   (textarea)
+     - story_link  (storylink)
+     - image_link  (medialink)
+
+
+
+  Category:
+
+  + category
+     - display_name  (textbox)
+
+
+By putting together this tree, we now have a much clearer idea of
+what's needed, how it's organized, and what modules need to be
+developed.
+
+We can see now take the tree above and turn it into a list of Krang
+elements.
+
+=over
+
+=item *
+
+C<basic_article> - a subclass of the L<Krang::ElementClass::TopLevel>
+(more on that later) element, with the following children:
+
+=over
+
+=item *
+
+C<headline> - a L<Krang::ElementClass::Text> element.
+
+=item *
+
+C<deck> - a L<Krang::ElementClass::Textarea> element.
+
+=item *
+
+C<page> - a subclass of L<Krang::ElementClass>.  C<page> stores no
+data of its own, but it has the following children:
+
+=over
+
+=item *
+
+C<page_header> - a L<Krang::ElementClass::Text> element.
+
+=item *
+
+C<paragraph> - a L<Krang::ElementClass::Textarea> element.
+
+=item *
+
+C<story_link> - a L<Krang::ElementClass::StoryLink> element.
+
+=item *
+
+C<image_link> - a L<Krang::ElementClass::MediaLink> element.
+
+=back
+
+=back
+
+=item *
+
+C<cover_story> - a subclass of the L<Krang::ElementClass::Cover>
+element, with the following children:
+
+=over
+
+=item *
+
+C<headline> - a L<Krang::ElementClass::Text> element.
+
+=item *
+
+C<paragraph> - a L<Krang::ElementClass::Textarea> element.
+
+=item *
+
+C<story_link> - a L<Krang::ElementClass::StoryLink> element.
+
+=item *
+
+C<image_link> - a L<Krang::ElementClass::MediaLink> element.
+
+=back
+
+=item *
+
+C<category> - a subclass of the L<Krang::ElementClass::TopLevel>
+element, with the following children:
+
+=over
+
+=item *
+
+C<display_name> - a L<Krang::ElementClass::Text> element.
+
+=back
+
+=back
+
+
+Anything that subclasses a Krang element will need to be written
+(C<basic_article>, C<page>, C<cover_story>, C<category>).
+
+Everything else has already been developed.  We simply need to list
+the children properly in the elements we are developing.
+
+
+=head2 Step 2 - Configuration Changes
+
+The first step is to create a directory for the new element library,
+and make some configuration changes so Krang knows to look for the new
+element library.
+
+We're going to call the new element set C<Tutorial>, so we create the
+directory C<KRANG_ROOT/element_lib/Tutorial/>.
+
+Now, edit C<KRANG_ROOT/conf/krang.conf> to create a new instance in
+Krang using the C<Tutorial> element set.  At the end of your
+C<krang.conf>, add the following:
+
+  <Instance tutorial>
+
+     # the UI display name for this instance
+     InstanceDisplayName "Tutorial"
+
+     # the virtual host users will use to access this instance
+     InstanceHostName cms.mytutorial.com
+
+     # MySQL database name for this instance
+     InstanceDBName tutorial
+
+     # the element set to be used in this instance.  Instances may share
+     # element sets.
+     InstanceElementSet Tutorial
+
+  </Instance>
+
+B<DO NOT RESTART KRANG YET!> The changes added to the config file will
+cause problems, because they direct Krang to look for an ElementSet
+(C<Tutorial>) that does not yet exist.  Patience, young jedi..
+
+Next, a configuration file for the element library needs to be created
+- The following should go into
+C<KRANG_ROOT/element_lib/Tutorial/set.conf>:
+
+  Version 1.0
+  TopLevels category cover_story
+
+What this tells Krang is that there are currently two Top-Level
+elements in the C<Tutorial> element set, C<category> and
+C<cover_story> (we will get to C<basic_article> later).  Krang will
+look for them at C<KRANG_ROOT/element_lib/Tutorial/category.pm> and
+C<KRANG_ROOT/element_lib/Tutorial/cover_story.pm>.
+
+
+=head2 Step 3 - Creating category.pm
+
+So now, we create C<KRANG_ROOT/element_lib/Tutorial/category.pm>.
+
+Every element set in Krang needs to have a category element.  Category
+elements are used to build category-specific output (e.g. nav bars,
+containers, etc), and as a result, are required.
+
+This category element is quite simple - it has a display_name field,
+something that a user can then populate, and have show up on output.
+category.pm looks like this:
+
+
+  package Tutorial::category;
+
+  use strict;
+  use warnings;
+
+  =head1 NAME
+
+  Tutorial::category
+
+  =head1 DESCRIPTION
+
+  category element class for Tutorial.  It has a display_name for a sub-element.
+
+  =cut
+
+  use base 'Krang::ElementClass::TopLevel';
+
+  sub new {
+
+      my $pkg  = shift;
+
+      my %args = ( name     => 'category',
+                   children => [
+                                Krang::ElementClass::Text->new(name => 'display_name',
+                                                               allow_delete => 0,
+                                                               min => 1,
+                                                               max => 1,
+                                                               reorderable => 0,
+                                                               required => 1),
+                               ],
+                   @_);
+      return $pkg->SUPER::new(%args);
+  }
+
+
+What this does is the following:
+
+=over
+
+=item *
+
+Define a C<Tutorial::category> object as being a subclass of
+L<Krang::ElementClass::TopLevel>.
+
+=item *
+
+The default name for a C<Tutorial::category> element is 'category'.
+
+=item *
+
+A C<Tutorial::category> element can have a single child,
+C<display_name>.  C<display_name> has the following properties:
+
+=over
+
+=item *
+
+it will be added by default (C<< min => 1 >>).
+
+=item *
+
+no additional C<display_name> elements can be added (C<< max => 1 >>).
+
+=item *
+
+it cannot be deleted (C<< allow_delete => 0 >>).
+
+=item *
+
+If there were additional elements here, you could not change its
+position in the order of elements (C<< reorderable => 0 >>).
+
+=item *
+
+The user is required to enter some data in it - it cannot be left
+empty (C<< required => 1 >>).
+
+=back
+
+=back
+
+There are many additional options that can be used at this point -
+read the API documentation on L<Krang::ElementClass> to get a further
+idea of what can be done.
+
+B<NOTE>: The C<@_> at the end of the C<%args> definition - what this
+does is allow you to add to or override any of the arguments that are
+listed here at element instantiation.  For example,
+
+  my $element = Tutorial::category->new(max => 5);
+
+Would create a C<Tutorial::category> element object, with all the
+parameters above, but direct Krang to not allow a user to create more
+than 5 of them in the location where this one is created.
+
+On the other hand,
+
+  my $element = Tutorial::category->new(name => 'new_category');
+
+Would change the name from 'category' (as defined originally) to
+'new_category'.
+
+=head2 Step 4 - Creating cover_story
+
+Repeating the process we started with C<category>, we now create
+C<KRANG_ROOT/element_lib/Tutorial/cover_story.pm>:
+
+  package Tutorial::cover_story;
+
+  use strict;
+  use warnings;
+
+  =head1 NAME
+
+  Tutorial::cover_story
+
+  =head1 DESCRIPTION
+
+  cover_story element class for Tutorial.  It has the following sub-elements:
+
+  headline, paragraph, story_link, image_link
+
+  =cut
+
+  use base 'Krang::ElementClass::Cover';
+
+  sub new {
+
+      my $pkg  = shift;
+
+      my %args = ( name     => 'cover_story',
+                   children => [
+                                Krang::ElementClass::Text->new(name => 'headline',
+                                                               allow_delete => 0,
+                                                               min => 1,
+                                                               max => 1,
+                                                               reorderable => 0,
+                                                               required => 1),
+
+                                Krang::ElementClass::Textarea->new(name => 'paragraph');
+
+                                Krang::ElementClass::StoryLink->new(name => 'story_link');
+
+                                Krang::ElementClass::MediaLink->new(name => 'media_link');
+
+                               ],
+                   @_);
+      return $pkg->SUPER::new(%args);
+  }
+
+
