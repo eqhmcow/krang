@@ -26,6 +26,7 @@ use base 'Krang::CGI';
 use Digest::MD5 qw(md5_hex md5);
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
+use Krang::User;
 
 # secret salt for creating login cookies
 our $SALT = <<END;
@@ -71,16 +72,14 @@ sub login {
     my $target   = $query->param('target') || './';
     my $dbh      = dbh();
 
-    return $self->show_form(alert => 
+    return $self->show_form(alert =>
                             "Username and password are required fields.")
       unless defined $username and length $username and
              defined $password and length $password;
 
     # check username and password
-    my ($user_id) = $dbh->selectrow_array('SELECT user_id FROM users 
-                                           WHERE login = ? AND password = MD5(?)',
-                                          undef, $username, $password);
-    
+    my $user_id = Krang::User->check_auth($username, $password);
+
     # failure
     return $self->show_form(alert => "Incorrect login, try again.")
       unless $user_id;
@@ -89,15 +88,15 @@ sub login {
     # an MD5 hash with $SALT to allow the PerlAuthenHandler to check
     # for tampering
     my $q = $self->query();
-    my $session_id = (defined($ENV{KRANG_SESSION_ID})) ? 
+    my $session_id = (defined($ENV{KRANG_SESSION_ID})) ?
       $ENV{KRANG_SESSION_ID} : Krang::Session->create();
     my $instance   = Krang::Conf->instance();
     my %filling    = ( user_id    => $user_id, 
                        session_id => $session_id,
                        instance   => $instance,
-                       hash       => md5_hex($user_id . $instance . 
+                       hash       => md5_hex($user_id . $instance .
                                              $session_id . $SALT) );
-    
+
     # save user info in new session hash
     $session{user_id}  = $user_id;
     $session{username} = $username;
