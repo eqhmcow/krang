@@ -4,7 +4,7 @@ use warnings;
 
 =head1 NAME
 
-Default::image
+PBMM::image
 
 =head1 DESCRIPTION
 
@@ -59,6 +59,20 @@ sub input_form {
         return $data;
     }
     return '';
+}
+
+sub fill_template {
+
+    my ($self, %args) = @_;
+
+    my $tmpl      = $args{tmpl};
+    my $element   = $args{element};
+    my $media = $element->child('media');
+
+    $tmpl->param( image_width => $media->data->width );
+    $tmpl->param( image_height => $media->data->height );
+
+     $self->SUPER::fill_template( %args );
 }
 
 1;

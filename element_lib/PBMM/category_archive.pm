@@ -37,7 +37,7 @@ sub new {
                 Krang::ElementClass::Text->new(name => "small_header"),
                 Krang::ElementClass::Textarea->new(name => "paragraph",
                                                     bulk_edit => 1),
-                Default::image->new(),
+                PBMM::image->new(),
                 Default::lead_in->new(), 
                 ],
                 @_);

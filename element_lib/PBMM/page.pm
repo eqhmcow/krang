@@ -26,7 +26,7 @@ sub new {
                  Krang::ElementClass::Text->new(name => "small_header"),
                  Krang::ElementClass::Textarea->new(name => "paragraph",
                                                     bulk_edit => 1),
-                 Default::image->new(),
+                 PBMM::image->new(),
                  'document',
                 Default::empty->new(name => "custom_search", max => 1),
                 ],
