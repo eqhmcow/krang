@@ -29,10 +29,8 @@
   }
 
   function save_and_publish() {
-        if (confirm("Are you sure you want to publish this story?")) {
-          document.forms[0].rm.value = 'save_and_publish';
-          document.forms[0].submit();
-        }
+        document.forms[0].rm.value = 'save_and_publish';
+        document.forms[0].submit();
   }
 
   function save_and_add() {
