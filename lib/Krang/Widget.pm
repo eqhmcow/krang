@@ -269,7 +269,8 @@ sub format_url {
     $length = 15 unless ($length);
 
     my @parts = split('/', $url);
-    my @url_lines = (shift(@parts), "");
+    my @url_lines = ();
+    push(@url_lines, shift(@parts) );
     for(@parts) {
         if ((length($url_lines[-1]) + length($_)) > $length) {
             push(@url_lines, "");

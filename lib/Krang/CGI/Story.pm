@@ -227,7 +227,11 @@ sub edit {
     # static data
     $template->param(story_id          => $story->story_id,
                      type              => $story->element->display_name,
-                     url               => $story->url);
+                     url               => format_url(
+                                                     url => $story->url,
+                                                     linkto => "javascript:preview_story('". $story->story_id() ."')",
+                                                     length => 50,
+                                                    ));
 
     # edit fields for top-level
     my $path  = $query->param('path') || '/';
@@ -329,7 +333,11 @@ sub view {
     # static data
     $template->param(story_id          => $story->story_id,
                      type              => $story->element->display_name,
-                     url               => $story->url,
+                     url               => format_url(
+                                                     url => $story->url,
+                                                     linkto => "javascript:preview_story('". $story->story_id() ."')",
+                                                     length => 50,
+                                                    ),
                      version           => $story->version);
 
     if (not $query->param('path') or $query->param('path') eq '/') {
