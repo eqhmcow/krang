@@ -14,7 +14,7 @@ CREATE TABLE media (
   notes text,
   uri varchar(255) default NULL,
   alt_tag varchar(255) default NULL,
-  version int(10) unsigned default NULL,
+  version SMALLINT unsigned default NULL,
   creation_date date default NULL,
   media_type_id int(10) unsigned default NULL,
   published_version int(10) unsigned default NULL,
@@ -31,10 +31,10 @@ DROP TABLE IF EXISTS media_version;
 --
 
 CREATE TABLE media_version (
-  media_id int(10) unsigned default NULL,
-  version int(10) unsigned default NULL,
+  media_id int(10) unsigned NOT NULL,
+  version SMALLINT unsigned NOT NULL,
   data longtext,
-  KEY media_id (media_id)
+  PRIMARY KEY (media_id, version)
 ) TYPE=MyISAM;
 
 DROP TABLE IF EXISTS media_type;
