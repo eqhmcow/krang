@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded HTML::Template to the latest release, 2.7, to fix a bug where
+a stale template could be returned from the cache under unusual
+circumstances. [Sam]
+
+=item *
+
 Fixed a bug in the installer which prevented installing using an
 element set contained within an add-on. [Sam]
 
