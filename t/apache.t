@@ -2,24 +2,20 @@ use strict;
 use warnings;
 
 use Krang::Script;
-use Test::More qw(no_plan);
+use Krang::Conf qw(KrangRoot RootVirtualHost ApachePort);
 use LWP::UserAgent;
 use HTTP::Request::Common;
-use Krang::Conf qw(KrangRoot RootVirtualHost ApachePort);
 use File::Spec::Functions qw(catfile);
 use HTTP::Cookies;
 
-# start up apache if it's not running
-my $started_apache;
-unless (-e catfile(KrangRoot, 'tmp', 'httpd.pid')) {
-    system(catfile(KrangRoot, 'bin', "krang_ctl") . " start");
-    $started_apache = 1;
-}
-
-# set up end block to kill server at the end if we started it
-END {
-    system(catfile(KrangRoot, 'bin', "krang_ctl") . " stop")
-      if $started_apache;
+# skip tests unless Apache running
+BEGIN {
+    unless (-e catfile(KrangRoot, 'tmp', 'httpd.pid')) {
+        eval "use Test::More skip_all => 'Krang Apache server not running.';";
+    } else {
+        eval "use Test::More qw(no_plan);"
+    }
+    die $@ if $@;
 }
 
 # get creds

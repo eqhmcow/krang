@@ -1,5 +1,3 @@
-use Test::More qw(no_plan);
-
 use strict;
 use warnings;
 use Krang::Conf qw(KrangRoot FTPPort FTPAddress);
@@ -16,21 +14,16 @@ use IPC::Run qw(start);
 use File::Spec::Functions qw(catfile);
 use IO::Scalar;
 
-# check for ftp server pid and start if not there
-my $started_ftpd;
-unless (-e catfile(KrangRoot, 'tmp', 'krang_ftpd.pid')) {
-    system(catfile(KrangRoot, 'bin', "krang_ctl") . " start");
-    $started_ftpd = 1;
-}
 
-# set up end block to kill server at the end if we started it
-END {
-    system(catfile(KrangRoot, 'bin', "krang_ctl") . " stop")
-      if $started_ftpd;
+# skip tests unless Apache running
+BEGIN {
+    unless (-e catfile(KrangRoot, 'tmp', 'krang_ftpd.pid')) {
+        eval "use Test::More skip_all => 'Krang FTP server not running.';";
+    } else {
+        eval "use Test::More qw(no_plan);"
+    }
+    die $@ if $@;
 }
-
-# wait 3 seconds for the server to have time to start
-sleep 3;
 
 my @sites;
 
