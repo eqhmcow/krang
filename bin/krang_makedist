@@ -55,10 +55,14 @@ Delete excluded directories and files (i.e., bench/, src/, .cvsignore).
 =head1 OPTIONS
 
   --version   - Rebuild a dist file based on an old version
-
   --help      - Show usage
-
   --man       - Show full man page
+
+
+=head1 SEE ALSO
+
+Refer to F<docs/ops_release.pod>.
+
 
 =cut
 
@@ -207,7 +211,7 @@ sub export_krang {
     chdir($export_dir);
 
     # CVS export by tag
-    my $cvs_export_cmd = "cvs export -r $ver_string krang";
+    my $cvs_export_cmd = "cvs -z3 export -r $ver_string krang";
     print "Exporting Krang to $export_dir...\n";
     my $cvs_output = `$cvs_export_cmd`;
     print "Export complete.";

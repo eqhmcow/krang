@@ -64,8 +64,19 @@ elements:
 	bin/krang_bric_eloader --set Bric_Default --xml t/eloader/Bric_Default.xml
 
 dist:
-	bin/krang_makedist
+	@echo "Use bin/krang_makedist to make a release."
+	@bin/krang_makedist --help
 
 
-.PHONY : all test clean TAGS bench docs bench_clean elements
+install:
+	@echo "Use bin/krang_install to install."
+	@bin/krang_install --help
+
+
+upgrade:
+	@echo "Use bin/krang_upgrade to upgrade."
+	@bin/krang_upgrade --help
+
+
+.PHONY : all test clean TAGS bench docs bench_clean elements dist install upgrade
 

@@ -1,0 +1,257 @@
+#!/usr/bin/perl -w
+use warnings;
+use strict;
+use Getopt::Long;
+use Pod::Usage;
+
+
+=head1 NAME
+
+krang_install - install Krang from a dist file
+
+
+=head1 SYNOPSIS
+
+  $ krang_install
+
+
+=head1 DESCRIPTION
+
+This script will install Krang on a RedHat 7.3 (i686-linux) 
+system from a dist file created by krang_makedist.
+
+
+
+=head2 What C<krang_makedist> does
+
+Following is a list of the tasks the installer script will perform.
+
+
+=over 4
+
+=item Check pre-requisites
+
+
+=over 4
+
+=item Must be running as root.
+
+=item IP address must be configured on host.
+
+=item InstanceElementSet must exist
+
+=item MySQLRootPassword must be valid for this box
+
+=item InstallPath must NOT exist.
+
+=item Check for proper version of MySQL.
+
+
+=over 4
+
+=item Suggest "--do-mysql-install" flag if not installed.
+
+=back
+
+
+=item Check for proper version of Perl.
+
+
+=over 4
+
+=item Suggest "--do-perl-install" flag if not installed.
+
+=back
+
+
+
+=back
+
+
+
+=item Create MySQL Krang database user (if it does not already exist).
+
+=item Create Krang UNIX user and/or group
+
+
+=over 4
+
+=item Create with no password (unless user already exists).
+
+=item Use C<useradd>, C<groupadd>, and C<usermod> to manage user account.
+
+=back
+
+
+
+=item Install Krang
+
+=item Configure Krang and first instance.
+
+=item Add Krang to init.d startup scripts.
+
+=item Start Krang
+
+=item Make test
+
+=item Output settings and URL of Krang installation to console.
+
+
+
+=back
+
+
+
+
+=head1 OPTIONS
+
+  --help                 - Show usage
+  --man                  - Show full man page
+
+=head2 Required parameters
+
+  --HostName             - Host name used for CMS
+  --IPAddress            - IP address used for HTTP and FTP
+  --InstanceVirtualHost  - Host name of CMS instance virtual server
+  --AdminPassword        - For CMS "admin" user
+  --InstanceDBName       - Name of MySQL database
+  --InstanceDBUser       - MySQL user used by CMS instance
+  --InstanceDBPass       - MySQL user password used by CMS instance
+  --InstanceElementSet   - Name of element set used by CMS instance
+
+
+=head2 Optional parameters
+
+  --MySQLRootPassword    - Password for the MySQL user "root"
+  --InstallPath          - Directory for Krang install
+  --KrangUser            - UNIX user for process ownership
+  --KrangGroup           - UNIX group for process ownership
+  --FTPPort              - Port on which FTP server should run
+  --ApachePort           - Port on which CMS HTTP server should run
+  --SMTPServer           - Address of SMTP mail server 
+  --InstanceDisplayName  - Name of the Instance for UI display
+
+
+=head1 SEE ALSO
+
+Refer to F<docs/ops_install.pod>.
+
+=cut
+
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+
+# Set up KRANG_ROOT and PERL5LIB
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+}
+
+use Krang;
+
+
+my $krang_version;
+my $uniqueness = time();
+my ($help, $man);
+my @req_params = qw( HostName
+                     IPAddress
+                     InstanceVirtualHost 
+                     AdminPassword 
+                     InstanceDBName 
+                     InstanceDBUser 
+                     InstanceDBPass 
+                     InstanceElementSet );
+
+my @opt_params = qw( MySQLRootPassword 
+                     InstallPath 
+                     KrangUser 
+                     KrangGroup 
+                     FTPPort 
+                     ApachePort 
+                     SMTPServer 
+                     InstanceDisplayName );
+
+my %options = ( map { $_ => undef } @req_params, @opt_params);
+
+do_install();
+exit(0);
+
+
+#############################
+####  MAKE DIST METHODS  ####
+#############################
+
+sub do_install {
+    setup_getopts();
+
+    use Data::Dumper;
+    print Dumper(\%options);
+    # Do installation
+}
+
+
+sub setup_getopts {
+    pod2usage(2) unless
+        GetOptions( 'help'      => \$help,
+                    'man'       => \$man, 
+                    (map { $_."=s" => \$options{$_} } @req_params, @opt_params) );
+
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+
+    # Enforce required params
+    my $error_output = "";
+    foreach my $p (@req_params) {
+        next if (defined($options{$p}));
+        $error_output .= "Missing --". $p ."\n";
+    }
+    if ($error_output) {
+        print "Error:\n\n$error_output\n";
+        pod2usage(1);
+    }
+
+    # Set opt defaults
+    set_param_defaults();
+}
+
+
+sub set_param_defaults {
+    my %defaults = (
+                    MySQLRootPassword => '',
+                    InstallPath => '/usr/local/krang',
+                    KrangUser => 'krang',
+                    KrangGroup => 'krang',
+                    FTPPort => '21',
+                    ApachePort => '80',
+                    SMTPServer => '127.0.0.1',
+                    );
+
+    # Set up defaults if value is not otherwise set
+    while (my ($k, $dv) = each(%defaults)) {
+        # Skip if value already defined
+        next if ($options{$k});
+
+        # Set default
+        $options{$k} = $dv;
+    }
+
+    # Default instancedisplayname => $instancevirtualhost
+    my $idn = "InstanceDisplayName";
+    unless ($options{$idn}) {
+        $options{$idn} = $options{'InstanceVirtualHost'};
+    }
+}

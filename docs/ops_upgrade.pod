@@ -9,7 +9,22 @@ To upgrade an existing Krang installation, do the following as root:
 
 
   # cd <new Krang src directory>
+  # ./bin/krang_upgrade
+
+
+=head2 Optional parameters
+
+=over
+
+=item krangRoot
+
+Defaults to F</usr/local/krang> if not specified.  May be used to 
+specify a different location if need be.
+
   # ./bin/krang_upgrade --krangRoot $KRANG_ROOT
+
+=back
+
 
 
 
