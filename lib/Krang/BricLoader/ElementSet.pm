@@ -73,6 +73,7 @@ sub create {
     my $path = $args{path};
     my $xml = $args{xml};
     $set = $args{set};
+    $verbose = $args{verbosity} || 0;
 
     # create dir for element set if it doesn't already exist
     $set_dir = catdir(KrangRoot, 'element_lib', $set);
@@ -92,6 +93,10 @@ sub create {
 # create an element set from a Bricolage element tree
 sub build_set {
     my $elements = parse_elements();
+
+    # add info to create an empty category element unless it's there...
+    $elements->{category} = {top_level => 1, type => 'Insets'}
+      unless exists $elements->{category};
 
     foreach my $name (keys %$elements) {
         create_class($name, $elements->{$name});
@@ -258,8 +263,9 @@ sub create_conf {
     print STDERR "Creating set.conf...\n" if $verbose;
 
     # get list of top-level elements
-    my @top_levels = grep { $elements->{$_}->{type} ne 'Media' and 
-                            $elements->{$_}->{top_level} } keys %$elements;
+    my @top_levels = grep { $elements->{$_}->{type} ne 'Media' and
+                              $elements->{$_}->{top_level} }
+      sort keys %$elements;
 
     open(CONF, ">", catfile($set_dir, "set.conf"))
       or die "Unable to open set.conf: $!\n";

@@ -220,16 +220,17 @@ END
               "-no-elements arg is supplied")
       unless($no_elements || $set_name);
 
+    # make sure site doc exists, if we need it
+    pod2usage(-msg => "\nSite info doc '$site_doc' not found.\n")
+      if (not($no_sites) && $site_doc && not -e $site_doc);
+
     # must have a site if we have categories, media, or stories
     pod2usage(-msg => "\nSite information is necessary to support " .
               "categories, media, and/or stories\n")
-      unless ($no_sites || $site_doc ||
+      unless (($site_doc && -e $site_doc) ||
               ($contributors || $elements ||
                ($no_categories && $no_media && $no_stories)));
 
-    # make sure site doc exists
-    pod2usage(-msg => "\nSite info doc '$site_doc' not found.\n")
-      if (not($no_sites) && $site_doc && not -e $site_doc);
 }
 
 use Krang::BricLoader::DataSet;
@@ -263,49 +264,69 @@ sub main {
     # set temp_path
     $temp_path = tempdir(DIR => catdir(KrangRoot, 'tmp'));
 
-    # start with our dataset
-    my $set = Krang::BricLoader::DataSet->new;
+    # create element library
+    unless ($no_elements) {
+        my @ids = split /\n/, bric_soap('element', 'list_ids');
+        my $xml = bric_soap('element', 'export', @ids);
+        Krang::BricLoader::ElementSet->create(set => $set_name,
+                                              verbosity => $verbose - 1,
+                                              xml => $xml);
+
+        print "Created ElementSet $set_name...\n";
+    }
+
+    # make a dataset
+    my $set = Krang::BricLoader::DataSet->new unless $elements;
 
     # load site info
     unless ($no_sites) {
         $set->add(object => $_)
           for (Krang::BricLoader::Site->new(path => $site_doc));
+
+        print STDERR "Added Sites to dataset...\n" if $verbose;
     }
 
     # get contributors
     unless ($no_contributors) {
         $set->add(object => $_) for Krang::BricLoader::Contrib->load;
-    }
 
-    # create element library
-    unless ($no_elements) {
-        my @ids = split /\n/, bric_soap('element', 'list_ids');
-        my $xml = bric_soap('element', 'export', @ids);
-        Krang::BricLoader::ElementSet->create(set => $set_name, xml => $xml);
+        print STDERR "Added Contributors to dataset...\n" if $verbose;
     }
 
     # pull in categories
     unless ($no_categories) {
         $set->add(object => $_) for get_assets('category');
+
+        print STDERR "Added Categories to dataset...\n" if $verbose;
     }
 
     # pull in media
     unless ($no_media) {
         $set->add(object => $_) for get_assets('media');
+
+        print STDERR "Added Media to dataset...\n" if $verbose;
     }
 
     # pull in stories
     unless ($no_stories) {
         $set->add(object => $_) for get_assets('story');
+
+        print STDERR "Added Stories to dataset...\n" if $verbose;
     }
 
     # pull in templates
     unless ($no_templates) {
         $set->add(object => $_) for get_assets('template');
+
+        print STDERR "Added Templates to dataset...\n" if $verbose;
     }
 
-    # generate .kds
-    $set->write(path => $output);
+    unless ($elements) {
+        # generate .kds
+        $set->write(path => $output);
+
+        print "\nOutput is in file: $output\n\n";
+    }
 
     # remove temp dir
     rmtree($temp_path) if $temp_path;
@@ -320,13 +341,13 @@ Returns a scalar containing the output of relevant SOAP call.
 
 sub bric_soap {
     my ($module, $command, @args) = @_;
-
+    my $verbosity = DEBUG ? $verbose : 0;
     my @command = ($soap,
                    "--username" => $username,
                    "--password" => $password,
                    "--server"   => $server,
                    "--timeout"  => $timeout,
-                   (("--verbose") x $verbose),
+                   (("--verbose") x $verbosity),
                    $module, $command, @args,);
 
     my $result;
