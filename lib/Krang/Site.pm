@@ -76,6 +76,7 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
+use Time::Piece::MySQL;
 
 # Internal Modules
 ###################
@@ -184,7 +185,7 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 # the method croaks if an invalid key is found in the hash passed to new()
 sub init {
     my $self = shift;
-    my %args = shift;
+    my %args = @_;
     my @bad_args;
 
     for (keys %args) {
@@ -401,9 +402,9 @@ its database query affects no rows in the database.
 sub save {
     my $self = shift;
     my $id = $self->{site_id} || '';
-    my @save_fields = map {$_ ne 'site_id'} keys %site_cols;
+    my @save_fields = grep {$_ ne 'site_id'} keys %site_cols;
 
-    # prevent creation of a new site that is a duplicate
+    # prevent creation of duplicate or saving of duplicate field
     my $query = "SELECT * FROM site";
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
@@ -426,7 +427,7 @@ sub save {
           join(", ", map {"$_ = ?"} @save_fields) .
             " WHERE site_id = ?";
     } else {
-        $query = "INSERT INTO site (" . join(',', @save_fields).
+        $query = "INSERT INTO site (" . join(',', @save_fields) .
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
         my $time = localtime();
         $self->{creation_date} = $time->strftime("%Y-%m-%d %T");
@@ -442,6 +443,8 @@ sub save {
     croak(__PACKAGE__ . "->save(): Unable to save site object " .
           ($id ? "id '$id' " : '') . "to the DB.")
       unless $dbh->do($query, undef, @params);
+
+    $self->{site_id} = $dbh->{mysql_insertid} unless $id;
 
     return $self;
 }
