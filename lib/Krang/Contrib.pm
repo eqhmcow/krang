@@ -458,7 +458,7 @@ sub serialize_xml {
                         'contrib.xsd');
 
     # basic fields
-    for (qw(contrib_id prefix first middle last suffix email phone bio url)) {
+    for (FIELDS) {
         $writer->dataElement($_ => $self->{$_});
     }
     
@@ -468,6 +468,68 @@ sub serialize_xml {
     # all done
     $writer->endTag('contrib');
 }
+
+
+=item C<< $contrib = Krang::Contrib->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml, 
+                                  forcearray    => ['contrib_type'],
+                                  suppressempty => 1);
+    
+    # create new contributor object
+    my $contrib = Krang::Contrib->new();
+
+    # set fields
+    $contrib->$_($data->{$_}) for (grep { $_ ne 'contrib_id' } (FIELDS));
+
+    # get hash of contrib type names to ids
+    my %contrib_types = reverse Krang::Pref->get('contrib_type');
+
+    # get ids for contrib types
+    my @contrib_type_ids;
+    foreach my $type (@{$data->{contrib_type}}) {
+        Krang::DataSet::DeserializationFailed->throw(
+                                 "Unknown contrib_type '$type'.")
+            unless $contrib_types{$type};
+        push(@contrib_type_ids, $contrib_types{$type});
+    }
+
+    # add contributor types
+    $contrib->contrib_type_ids(@contrib_type_ids);
+
+    # save this contributor to the database
+    eval { $contrib->save() };
+
+    # was it a dup?
+    if ($@ and ref $@ and $@->isa('Krang::Contrib::DuplicateName')) {
+        my $dup_id = $@->contrib_id;
+
+        # if not updating this fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A contributor with the name ".
+                       "$data->{first} $data->{last} already exists and ".
+                       "no_update is set.")
+            if $no_update;
+
+        # otherwise, switch to this ID and run the update
+        $contrib->{contrib_id} = $dup_id;
+        $contrib->save();
+    } elsif ($@) {
+        die $@;
+    }       
+
+    return $contrib;
+}
+
 
 
 ###########################
