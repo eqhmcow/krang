@@ -40,9 +40,6 @@ eval {
 };
 is($@ =~ /'url' field is a duplicate/, 1, 'duplicate_check()');
 
-# write version to version table
-$tmpl->prepare_for_edit();
-
 # save description for revert test
 my $content = $tmpl->content();
 
@@ -55,11 +52,8 @@ is($content2, '<tmpl_var content>', 'Getter/Setter Test');
 $tmpl->save();
 is($tmpl->version(), 2, 'Version Check 2');
 
-# write version 2 to the version table
-$tmpl->prepare_for_edit();
-
 # revert check
-$tmpl = $tmpl->revert(1);
+$tmpl->revert(1);
 is($tmpl->content(), $content, 'Revert Test');
 
 # increment version
@@ -82,7 +76,6 @@ my $tmpl2 = Krang::Template->new(category_id => $category->category_id(),
                                  filename => 't_w_c.tmpl');
 
 $tmpl2->save();
-$tmpl2->prepare_for_edit();
 
 # checkout deploy method
 my $dir = File::Spec->catdir($ENV{PWD});
@@ -118,11 +111,11 @@ is(ref $_, 'Krang::Template', "Find - _like " . $i++) for @tmpls2;
 my ($tmpl4) = Krang::Template->find(limit => 1,
                                     offset => 1,
                                     order_by => 'filename');
-
 is($tmpl4->filename(), 't_w_c.tmpl', "Find - limit, offset, order_by");
 
 my @tmpls5 = Krang::Template->find(order_desc => 1,
                                    creation_date_like => '%2003%');
+ok(@tmpls5);
 is($tmpls5[0]->filename(), 't_w_c.tmpl', "Find - ascend/descend");
 
 # clean up the mess

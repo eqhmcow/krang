@@ -54,7 +54,6 @@ is($events[0]->version, $media->version, "history version matches media version"
 # appropriate nuber of events returned from Krang::History->find
 
 $media->checkout();
-$media->prepare_for_edit();
 $media->save();
 $media->checkin();
 
