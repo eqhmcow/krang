@@ -16,6 +16,9 @@ Krang::XML - XML utility class
   # get a new XML::Writer object, setup to write into $xml
   $writer = Krang::XML->writer(string => \$xml);
 
+  # parse XML using XML::Simple
+  $data = Krang::XML->simple(xml => $xml, forcearray => 1);
+
 =head1 DESCRIPTION
 
 This module provides methods to assist in handling XML data in Krang.
