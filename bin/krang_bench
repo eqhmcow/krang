@@ -179,9 +179,9 @@ foreach my $module ( sort keys %data ) {
         my $change;
         if (defined $run1 and defined $run2) {
             if ($run1 > $run2) {
-                $change = sprintf("+ %2d%%", (($run1 - $run2) / $run1) * 100);
+                $change = sprintf("- %2d%%", (($run1 - $run2) / $run1) * 100);
             } else {
-                $change = sprintf("- %2d%%", (($run2 - $run1) / $run2) * 100);
+                $change = sprintf("+ %2d%%", (($run2 - $run1) / $run2) * 100);
             }
             $total1 += $run1;
             $total2 += $run2;
@@ -202,9 +202,9 @@ END
 # print total
 my $total_change;
 if ($total1 > $total2) {
-    $total_change = sprintf("+ %2d%%", (($total1 - $total2) / $total1) *100);
+    $total_change = sprintf("- %2d%%", (($total1 - $total2) / $total1) *100);
 } else {
-    $total_change = sprintf("- %2d%%", (($total2 - $total1) / $total2) *100);
+    $total_change = sprintf("+ %2d%%", (($total2 - $total1) / $total2) *100);
 }
 $total1 = sprintf("%d", $total1);
 $total2 = sprintf("%d", $total2);
