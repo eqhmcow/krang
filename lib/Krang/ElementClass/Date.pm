@@ -115,20 +115,17 @@ sub _date_input {
     return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
 }
 
-# decode a date from query input.  Takes a form name, returns a date
-# object.
-sub _decode_date {
-    my ($query, $name) = @_;
-    
-
-}
-
 sub fill_template {
     my ($self, %arg) = @_;
-    $arg{tmpl}->param($self->name, 
-                      $arg{element}->data->strftime('%b %e, %Y'))
-      if $arg{element}->data;
+    $arg{tmpl}->param($self->name, $self->template_data(%arg));
 }
+
+sub template_data {
+    my ($self, %arg) = @_;
+    return "" unless $arg{element}->data;
+    $arg{element}->data->strftime('%b %e, %Y')
+} 
+
 
 =head1 NAME
 
