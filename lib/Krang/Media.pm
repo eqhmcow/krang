@@ -16,6 +16,7 @@ use Imager;
 use File::stat;
 use Time::Piece;
 use Time::Piece::MySQL;
+use File::Temp qw/ tempdir /;
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
@@ -377,10 +378,10 @@ sub upload_file {
 
     my $session_id = $session{_session_id}; 
  
-    my $path = catdir($root,'tmp','media',$session_id);
-    mkpath($path);
+    my $path = tempdir( CLEANUP => 1);
     my $filepath = catfile($path, $filename);
-   
+    use Krang::Log qw(debug); 
+    debug($filepath); 
     open (FILE, ">$filepath") || croak("Unable to open $path for writing media!"); 
    
     my $buffer;
@@ -388,6 +389,7 @@ sub upload_file {
     close $filehandle;
     close FILE;
 
+    $self->{tempdir} = $path;
     $self->{filename} = $filename;
     return $self; 
 }
@@ -421,7 +423,7 @@ sub file_path {
     if ($media_id) { 
         return catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename});
     } else {
-        return catfile($root,'tmp','media',$session_id,$filename);
+        return catfile($self->{tempdir},$filename);
     }
 }
 
@@ -498,8 +500,8 @@ sub save {
         my $sql = 'UPDATE media SET '.join(', ',map { "$_ = ?" } @save_fields).' WHERE media_id = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$media_id);
 	# this file exists, new media was uploaded. copy to new position	
-	if (-f catfile($root,'tmp','media',$session_id,$self->{filename})) {
-	   my $old_path = catfile($root,'tmp','media',$session_id,$self->{filename});
+	if (-f catfile($self->{tempdir},$self->{filename})) {
+	   my $old_path = catfile($self->{tempdir},$self->{filename});
            my $new_path = catdir($root,'data','media',Krang::Conf->instance, $self->_media_id_path,$self->{version});
 	   mkpath($new_path);     
 	   $new_path = catfile($new_path,$self->{filename});
@@ -511,7 +513,7 @@ sub save {
 	    link $old_path, $new_path || croak("Unable to create link $old_path to $new_path");	
 	}
     } else {
-	if (not -f catfile($root,'tmp','media',$session_id,$self->{filename})) {
+	if (not -f catfile($self->{tempdir},$self->{filename})) {
             croak('You must upload a file using upload_file() before saving media object!')
 	} 
 	$self->{version} = 1;
@@ -527,7 +529,7 @@ sub save {
 
         $media_id = $self->{media_id};
 
-	my $old_path = catfile($root,'tmp','media',$session_id,$self->{filename});
+	my $old_path = catfile($self->{tempdir},$self->{filename});
 	my $new_path = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version}); 
 	mkpath($new_path);
 	$new_path = catfile($new_path,$self->{filename});		
@@ -743,10 +745,10 @@ sub revert {
     $self->{checked_out_by} = $checked_out_by;
 
     # copy old media file into tmp storage
-    my $path = catdir($root,'tmp','media',$session_id);
-    mkpath($path);
+    my $path = tempdir( CLEANUP => 1);
     my $filepath = catfile($path, $self->{filename});
     copy($old_filepath,$filepath); 
+    $self->{tempdir} = $path;
     return $self; 
 }
 
