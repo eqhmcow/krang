@@ -18,7 +18,7 @@ krang_convert_story_type - converts stories from one element class to another.
  --class-map classX=classY  - Descibe the mapping of stories from one class
                               to another.
 
- --ignore-slug-restriction  - if this is NOT set, only stories with no slugs
+ --no-slug                  - if this is set, only stories with no slugs
                               will be converted from classX to classY.
 
  --verbose                  - show running dialogue
@@ -31,9 +31,6 @@ are being converted to exists.  It also assumes that the element classes
 are pretty much identical.  Example of use: converting from a story type
 'table of contents' to 'table of contents cover'- each class having 
 identical element trees. 
-
-Important to note is that by default, only stories without slugs will be
-converted.
 
 =cut
 
@@ -80,17 +77,17 @@ use Krang::Script;
 use Krang::Conf qw(KrangRoot);
 
 
-our ($help, $man, $verbose, %class_map, $ignore_site_restriction );
+our ($help, $man, $verbose, %class_map, $no_slug );
 
 BEGIN {
     $verbose	= 0;
-    $ignore_site_restriction = 0;
+    $no_slug = 0;
 
     GetOptions(
                "help"			=> \$help,
                "man"			=> \$man,
                "verbose"		=> \$verbose,
-               "ignore_site_restriction" => \$ignore_site_restriction,
+               "no-slug"                => \$no_slug,
                "class-map=s"             => \%class_map)
       or pod2usage;
 
@@ -111,10 +108,10 @@ sub main {
     my $dbh = dbh;
 
     foreach my $class (keys %class_map) {
-        print "\n\nConverting class '$class' stories ". ($ignore_site_restriction ? '' : 'without slugs '). "to class '".$class_map{$class}."'...\n\n" if $verbose;
+        print "\n\nConverting class '$class' stories ". ($no_slug ? 'without slugs ' : ''). "to class '".$class_map{$class}."'...\n\n" if $verbose;
         
         my $query = 'SELECT story.story_id, element.element_id FROM story, element WHERE story.element_id = element.element_id AND story.class =  ? ';
-        $query .= " AND story.slug = ''" if not $ignore_site_restriction;
+        $query .= " AND story.slug = ''" if $no_slug;
         my $sth = $dbh->prepare($query);
         $sth->execute($class );
 
