@@ -19,6 +19,9 @@ Krang::ElementLibrary - the element class loader and indexer
   # get the object for the top level called "article" from the current set
   $class = Krang::ElementLibary->top_level(name => "article");
 
+  # find a class within the current set
+  $class = Krang::ElementLibrary->find_class(name => "deck")
+
   # get a list of all element names, anywhere in the element library
   @names = Krang::ElementLibrary->element_names();
 

@@ -39,7 +39,9 @@ F<docs/element_system.pod>.
 =head2 OBJECT ATTRIBUTES
 
 Krang::ElementClass objects have the following attributes, available
-through the standard Krang::MethodMaker accessors:
+through the standard Krang::MethodMaker accessors.  Sub-classes may
+add new attributes as needed to implement their functionality, but
+these will always be available.
 
 =cut
 
@@ -172,14 +174,17 @@ sub children {
     my @children;
     my %children_by_name;
     foreach my $arg (@{$_[0]}) {
-        if (ref $arg) {
+        if (ref $arg and UNIVERSAL::isa($arg, 'Krang::ElementClass')) {
             # it's an object already, push it along
             push(@children, $arg);
             $children_by_name{$arg->{name}} = $arg;
         } else {
             # it's the name of an element, load it
-            push(@children, Krang::ElementLibrary->find_class(name => $arg));
-            $children_by_name{$arg} = $children[-1];
+            my $class = Krang::ElementLibrary->find_class(name => $arg);
+            croak("Unable to find element class named '$arg' while instantiating '$self->{name}'.")
+              unless $class;
+            push(@children, $class);
+            $children_by_name{$arg} = $class;
         }
     }
 
@@ -187,7 +192,43 @@ sub children {
     return $self->{children} = \@children;
 }
 
-=head2 OBJECT METHODS
+=head2 STATIC OBJECT METHODS
+
+The following methods are available on all Krang::ElementClass
+objects, and should not be overriden in sub-classes.
+
+=over
+
+=item C<< $child = $class->child($name) >>
+
+Finds and returns a child by name.  This is faster than calling
+C<children()> and looping through the results calling C<name()> if all
+you need is a particular child class.
+
+=cut
+
+sub child { 
+    my $class = $_[0]->{children_by_name}{$_[1]};
+    croak("No class named '$_[1]' found in child class list for '" . 
+          $_[0]->display_name . "'")
+      unless defined $class;
+    return $class;
+}
+
+=item C<< $bool = $class->is_container >>
+
+Returns true if the element class has children.
+
+=cut
+
+sub is_container {
+    my $self = shift;
+    return @{$self->{children}} ? 1 : 0;
+}
+
+=back
+
+=head2 OBJECT METHODS TO OVERRIDE
 
 The following methods are available on all Krang::ElementClass
 objects.  All of these methods may be overridden in child classes to
@@ -352,6 +393,18 @@ story attributes in its C<build_url()>.
 
 sub url_attributes { ('slug') }
 
+=item C<< $class->check_data(element => $element, data => $data) >>
+
+This method is called when C<< $element->data() >> is called to set a
+new value for the element.  It may be used to validate the data, in
+which case it should croak() if the data is invalid.  Classes which
+require a particular data structure in C<< $element->data() >> should
+override this method.  The default implementation does nothing.
+
+=cut
+
+sub check_data {}
+
 =item C<< $text = $class->freeze_data(element => $element) >>
 
 Custom serialization of data from the element.  This is used to store
@@ -377,33 +430,6 @@ sub thaw_data {
     # I am a bad man
     return $_[2]->data($_[4]) if $_[1] eq 'element';
     return $_[4]->data($_[2]);
-}
-
-=item C<< $child = $class->child($name) >>
-
-Finds and returns a child by name.  This is faster than calling
-C<children()> and looping through the results calling C<name()> if all
-you need is a particular child class.
-
-=cut
-
-sub child { 
-    my $class = $_[0]->{children_by_name}{$_[1]};
-    croak("No class named '$_[1]' found in child class list for '" . 
-          $_[0]->display_name . "'")
-      unless defined $class;
-    return $class;
-}
-
-=item C<< $bool = $class->is_container >>
-
-Returns true if the element class has children.
-
-=cut
-
-sub is_container {
-    my $self = shift;
-    return @{$self->{children}} ? 1 : 0;
 }
 
 =back
@@ -446,7 +472,9 @@ sub init {
 
 =over
 
-=item Write a default burn() once the specs are in for Krang::Burner.
+=item *
+
+Modify validate() to throw an exception to indicate failure.
 
 =back
 

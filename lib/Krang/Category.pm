@@ -685,7 +685,7 @@ sub find {
         } else {
             # load 'element'
             ($row->{element}) =
-              Krang::Element->find(element_id => $row->{element_id});
+              Krang::Element->load(element_id => $row->{element_id});
             # set '_old_dir' and '_old_url'
             $row->{_old_dir} = $row->{dir};
             $row->{_old_url} = $row->{url};

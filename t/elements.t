@@ -95,7 +95,7 @@ undef $page;
 undef $element;
 
 # reload
-my $loaded = Krang::Element->find(element_id => $element_id);
+my $loaded = Krang::Element->load(element_id => $element_id);
 isa_ok($loaded, 'Krang::Element');
 is($loaded->name, "article");
 is(@{$loaded->children()}, 4);
@@ -117,7 +117,7 @@ foreach my $para ($lpage->children) {
 ok($loaded->delete());
 
 # make sure it's gone
-eval { $loaded = Krang::Element->find(element_id => $element_id) };
+eval { $loaded = Krang::Element->load(element_id => $element_id) };
 like($@, qr/No element found/);
 
 # leak test

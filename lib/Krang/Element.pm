@@ -77,7 +77,7 @@ Krang::Element - element data objectcs
   @classes = $element->available_child_classes();
 
   # load a top-level element by id
-  $element1 = Krang::Element->find(element_id => 1);
+  $element1 = Krang::Element->load(element_id => 1);
 
   # delete it from the database
   $element1->delete();
@@ -102,7 +102,7 @@ Creates a new element.  The 'class' parameter is required and may be
 either the name of a top-level element class or a Krang::ElementClass
 object.  Other options correspond to attribute methods below:
 
-=over 4
+=over
 
 =item element_id
 
@@ -114,7 +114,9 @@ object.  Other options correspond to attribute methods below:
 
 When an element is created, any child elements with 
 C<< $child->class->min >> greater than one will be automatically created
-as children of the new element.
+as children of the new element.  This may be supressed by passing 
+C<< no_expand => 1 >> to new(), but this should only be done from within 
+this class.
 
 =item C<< $element_id = $element->element_id() >>
 
@@ -126,7 +128,7 @@ the first C<save()>.
 use Krang::MethodMaker
   new_with_init => 'new',
   new_hash_init => 'hash_init',
-  get_set       => [ qw( element_id data parent ) ],
+  get_set       => [ qw( element_id parent ) ],
   list          => [ qw( children ) ];  
 
 # initialize a new object, creating children as required by the class
@@ -143,12 +145,16 @@ sub init {
     # make sure we have a children array
     $args{children} ||= [];
 
+    # delay loading data since it needs a fully initialized object to
+    # call class->check_data
+    my $have_data = exists $args{data};
+    my $data = delete $args{data};
+
     # finish the object
     $self->hash_init(%args);
 
-    # setup default value if available and data not set
-    $self->{data} = $self->{class}->default
-      unless defined $self->{data};
+    # setup data, using default value if set
+    $self->data($have_data ? $data : $self->{class}->default);
 
     # find children with min > 0 and create elements for them, unless
     # called from _load_tree, in which case no_expand will be passed
@@ -199,6 +205,16 @@ Depending on the element class it might be textual, numeric or even a
 complex data structure.  To get a flattened representation, call
 C<freeze_data()>.
 
+=cut
+
+sub data {
+    return $_[0]->{data} if (@_ == 1);
+    my ($self, $data) = @_;
+    $self->check_data(data => $data);
+    $self->{data} = $data;
+    return $data;
+}
+
 =item C<< $parent = $element->parent() >>
 
 Returns the parent element for this element, or C<undef> for the root
@@ -216,41 +232,6 @@ sub root {
       if defined $self->{parent};        
     return $self;
 }
-
-=item C<< @children = $element->children() >>
-
-Returns a list of child elements for this element.  These will be
-Krang::Element objects.  For adding a new child, see 
-C<< add_child() >>.
-
-C<children> is a L<Krang::MethodMaker> list attribute.  Thus, the
-following methods are available to manipulate the list of children:
-
-=over
-
-=item C<< @children = $element->children() >>
-
-=item C<< $children_ref = $element->children() >>
-
-=item C<< $element->children(@new_children) >>
-
-=item C<< $element->children_push($child) >>
-
-=item C<< $child = $element->children_pop() >>
-
-=item C<< $child = $element->children_shift() >>
-
-=item C<< $element->children_unshift($child) >>
-
-=item C<< $element->children_splice($offset, $len, @new_children) >>
-
-=item C<< $element->children_clean() >>
-
-=item C<< $count = $element->children_count() >>
-
-=item C<< $element->children_set(2 => $child2, 5 => $child5) >>
-
-=back
 
 =item C<< $child = $element->add_child(class => "paragraph", %args) >>
 
@@ -301,6 +282,40 @@ sub add_child {
     return ${$children}[-1];
 }
 
+=item C<< @children = $element->children() >>
+
+Returns a list of child elements for this element.  These will be
+Krang::Element objects.  For adding a new child, see 
+C<< add_child() >>.
+
+C<children> is a L<Krang::MethodMaker> list attribute.  Thus, the
+following methods are available to manipulate the list of children:
+
+=over
+
+=item C<< @children = $element->children() >>
+
+=item C<< $children_ref = $element->children() >>
+
+=item C<< $element->children(@new_children) >>
+
+=item C<< $element->children_push($child) >>
+
+=item C<< $child = $element->children_pop() >>
+
+=item C<< $child = $element->children_shift() >>
+
+=item C<< $element->children_unshift($child) >>
+
+=item C<< $element->children_splice($offset, $len, @new_children) >>
+
+=item C<< $element->children_clean() >>
+
+=item C<< $count = $element->children_count() >>
+
+=item C<< $element->children_set(2 => $child2, 5 => $child5) >>
+
+=back
 
 =item C<< my $deck = $element->child('deck') >>
 
@@ -450,14 +465,14 @@ sub available_child_classes {
     return grep { exists $max{$_->name} } $self->{class}->children;
 }
 
-=item C<< $element = Krang::Element->find(element_id => $id) >>
+=item C<< $element = Krang::Element->load(element_id => $id) >>
 
-Find a Krang::Element in the database and load it.  This will only
-find top-level elements and will load all child elements.
+Loads a Krang::Element object from the database.  This will only find
+top-level elements and will load all child elements.
 
 =cut
 
-sub find {
+sub load {
     my $pkg  = shift;
     my %arg  = @_;
     my $dbh = dbh;
@@ -480,7 +495,7 @@ SQL
         return $element;
     } 
    
-    croak("Unrecognized find parameters: " .
+    croak("Unrecognized load parameters: " .
           join(', ', map { "$_ => '$arg{$_}'" } keys %arg));
 } 
 
@@ -724,6 +739,7 @@ BEGIN {
                           view_data
                           bulk_edit_data
                           bulk_edit_filter
+                          check_data
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 
@@ -758,6 +774,11 @@ Add STORABLE_freeze and STORABLE_thaw methods so that elements don't
 serialize their class objects.  This causes much irratation while
 doing element class development and will make element class upgrades
 needlessly difficult.
+
+=item
+
+Add call to an element class method on delete to allow for cleanup of
+external data.
 
 =back
 

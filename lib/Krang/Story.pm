@@ -335,7 +335,7 @@ sub element {
     my $self = shift;
     return $self->{element} if $self->{element};
     ($self->{element}) = 
-      Krang::Element->find(element_id => $self->{element_id});
+      Krang::Element->load(element_id => $self->{element_id});
     return $self->{element};
 }
 
