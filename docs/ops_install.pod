@@ -34,6 +34,7 @@ within a particular Krang instance.  Unlike Installations and
 Instances, Sites are not installed via this installation process.
 Sites are configured from the Krang web interface.
 
+=back
 
 
 =head2 What Install Will Do
@@ -63,12 +64,6 @@ Following is a list of the tasks the installer script will perform.
 
 
 =back
-
-
-
-
-=back
-
 
 
 =head1 System Requirements
@@ -129,10 +124,11 @@ MySQL user password which is used by this CMS instance (e.g., "xyzzy").
 
 Name of element set used by this CMS instance (e.g., "Flex").
 
-
+=back
 
 =head2 Optional Variables
 
+=over 4
 
 =item MySQLRootPassword
 
@@ -183,7 +179,7 @@ the CMS interface for informational purposes.
 
 =head1 Pre-requisite Tasks
 
-=over4
+=over 4
 
 =item Download Krang installation tarball and uncompress
 
