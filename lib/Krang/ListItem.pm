@@ -139,7 +139,7 @@ sub save {
     my $dbh = dbh;
     my $list_item_id;
 
-    my $existing = Krang::ListItem->find( count => 1 );
+    my $existing = Krang::ListItem->find( count => 1, list_id => $self->{list_id} );
 
     # if this is not a new list item
     if (defined $self->{list_item_id}) {
@@ -182,8 +182,6 @@ sub save {
         my $sql = 'INSERT INTO list_item ('.join(',', @save_fields).') VALUES (?'.",?" x ((scalar @save_fields) - 1).")";
 
         my @save_vals = map { $self->{$_} } @save_fields;
-        debug(__PACKAGE__."->save() - $sql");
-        debug(__PACKAGE__ . "::save() SQL ARGS: ".join(',', @save_vals));
  
         $dbh->do($sql, undef, @save_vals);
         
