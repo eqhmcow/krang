@@ -6,6 +6,7 @@ use Krang::Site;
 use Krang::Category;
 use Krang::Story;
 use Krang::Conf qw(KrangRoot);
+use Krang::Element qw(foreach_element);
 use File::Spec::Functions qw(catfile);
 BEGIN { use_ok('Krang::DataSet') }
 
@@ -105,6 +106,10 @@ ok(grep { $_->[0] eq 'Krang::Story' and
 # try an import
 $loaded->import_all();
 
+# try an import with no_import, should fail
+eval { $loaded->import_all(no_update => 1); };
+isa_ok($@, 'Krang::DataSet::ImportRejected');
+
 # see if it will write again
 my $path2 = catfile(KrangRoot, 'tmp', 'test2.kds');
 $set->write(path => $path2);
@@ -131,8 +136,7 @@ END { unlink($path3) if -e $path3 and not $DEBUG };
 # create 10 stories
 my $count = Krang::Story->find(count => 1);
 my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');
-system("bin/krang_floodfill --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --undo_script $undo > /dev/null 2>&1");
-END { system("$undo > /dev/null 2>&1"); }
+system("bin/krang_floodfill --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --contribs 10 --undo_script $undo > /dev/null 2>&1");
 is(Krang::Story->find(count => 1), $count + 10);
 
 # see if we can serialize them
@@ -149,6 +153,72 @@ my $path10 = catfile(KrangRoot, 'tmp', '10stories.kds');
 $set10->write(path => $path10);
 ok(-e $path10 and -s $path10);
 END { unlink($path10) if -e $path10 and not $DEBUG };
+
+# delete the floodfilled stories
+END { system("$undo > /dev/null 2>&1"); }
+
+# load the dataset with an import handler to collect imported objects
+my @imported;
+my $import10 = Krang::DataSet->new(path => $path10,
+                                   import_callback => 
+                                     sub { push(@imported, $_[1]) });
+isa_ok($import10, 'Krang::DataSet');
+$import10->import_all();
+
+# should be 10 stories
+is((grep { $_->isa('Krang::Story') } @imported), 10);
+
+# check category content
+my %story_cats = map { ($_->url, $_) } map { $_->categories } @stories;
+my %import_cats = map { ($_->url, $_) } grep { $_->isa('Krang::Category') } @imported;
+foreach my $import_cat (values %import_cats) {
+    ok($story_cats{$import_cat->url});
+    if ($story_cats{$import_cat->url}->parent) {
+        is($story_cats{$import_cat->url}->parent->url,
+           $import_cat->parent->url);
+    }
+}
+
+# check story content
+my %imported = map { ($_->url, $_) } 
+  grep { $_->isa('Krang::Story') } @imported;
+foreach my $story (@stories) {
+    my $import = $imported{$story->url};
+
+    # there's a match
+    ok($import);
+
+    foreach_element { 
+        # check that element content is the same for all paragraphs
+        if ($_->name eq 'paragraph') {
+            is(($import->element->match($_->xpath))[0]->data(), $_->data);
+        }
+        
+        # check that story links point to stories with the right URLs
+        if ($_->class->isa('Krang::ElementClass::StoryLink')) {
+            is(($import->element->match($_->xpath))[0]->data()->url,
+               $_->data->url);
+        }
+
+        # check that media links point to stories with the right URLs
+        if ($_->class->isa('Krang::ElementClass::MediaLink')) {
+            is(($import->element->match($_->xpath))[0]->data()->url,
+               $_->data->url);
+        }
+    } $story->element;
+}
+
+# cleanup everything in the right order
+END { 
+    $_->delete for (grep { $_->isa('Krang::Media') } @imported);
+    $_->delete for (grep { $_->isa('Krang::Contrib') } @imported);
+    $_->delete for (grep { $_->isa('Krang::Story') } @imported);
+    $_->delete 
+      for (sort { length($b->url) cmp length($a->url) }
+           grep { defined $_->parent_id } 
+           grep { $_->isa('Krang::Category') } @imported);
+    $_->delete for (grep { $_->isa('Krang::Site') } @imported);
+};
 
 # try deleting a site a loading it from a data set
 my $lsite = Krang::Site->new(preview_url  => 'preview.lazarus.com',
@@ -210,3 +280,26 @@ ok($found);
 END { (Krang::Media->find(url_like => '%lazarus.jpg'))[0]->delete() }
 
 
+# create a story with an element tree and make sure it gets through an
+# export/import intact
+# create a new story
+my $big = Krang::Story->new(categories => [$category],
+                            title      => "Big",
+                            slug       => "big",
+                            class      => "article");
+$big->element->child('deck')->data("DECK DECK DECK");
+$big->save();
+
+my $bset = Krang::DataSet->new();
+$bset->add(object => $big);
+
+ok(Krang::Story->find(url => $big->url));
+$big->delete();
+ok(not Krang::Story->find(url => $big->url));
+
+$bset->import_all();
+($big) = Krang::Story->find(url => $big->url);
+ok($big);
+END { $big->delete };
+
+is($big->element->child('deck')->data, "DECK DECK DECK");

@@ -87,14 +87,27 @@ sub thaw_data {
 
 # do the normal XML serialization, but also include the linked story
 # object in the dataset
-sub serialize_xml {
+sub freeze_data_xml {
     my ($self, %arg) = @_;
     my ($element, $writer, $set) = @arg{qw(element writer set)};
-    $self->SUPER::serialize_xml(%arg);
+    $self->SUPER::freeze_data_xml(%arg);
 
     # add object
     my $story = $element->data;
     $set->add(object => $story, from => $element->object) if $story;
+}
+
+# translate the incoming story ID into a real ID
+sub thaw_data_xml {
+    my ($self, %arg) = @_;
+    my ($element, $data, $set) = @arg{qw(element data set)};
+
+    my $import_id = $data->[0];
+    return unless $import_id;
+    my $story_id = $set->map_id(class => 'Krang::Story',
+                                id    => $import_id);
+    $self->thaw_data(element => $element,
+                     data    => $story_id);
 }
 
 

@@ -828,6 +828,79 @@ sub _xpath_attr_value {
     return undef;    
 }
 
+=item C<< $element->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %arg) = @_;
+    my ($writer, $set) = @arg{qw(writer set)};
+
+    $writer->startTag('element');    
+    $writer->dataElement(class => $self->name());
+    $self->freeze_data_xml(writer => $writer, set => $set);
+    foreach my $child ($self->children) {
+        $child->serialize_xml(writer  => $writer,
+                              set     => $set);
+    }
+    $writer->endTag('element');
+}
+
+=item C<< $element = Krang::Element->deserialize_xml(data => $data, set => $set, no_update => 0, object => $story) >>
+
+Deserialize XML.  See Krang::DataSet for details.  This method differs
+only in that it takes a reference to the element data produced by
+XML::Simple rather than XML source.  Also takes an object parameter
+pointing to the enclosing object.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($data, $set, $object) = 
+      @args{qw(data set object)};
+
+    # create the root element
+    my $root = Krang::Element->new(class     => $data->{class},
+                                   object    => $object,
+                                   no_expand => 1);
+    $root->thaw_data_xml(data => $data->{data},
+                         set  => $set);
+
+    # recursively expand children
+    if ($data->{element}) {
+        $root->_deserialize_xml_children(data   => $data,
+                                         set    => $set);
+    }
+
+    return $root;
+}
+
+# recursively expand children from XML data
+sub _deserialize_xml_children {
+    my ($self, %args) = @_;
+    my ($data, $set) =  @args{qw(data set)};
+
+    foreach my $child_data (@{$data->{element}}) {
+        # create child
+        $self->add_child(class     => $child_data->{class},
+                         no_expand => 1);
+        # thaw child data
+        $self->{children}[-1]->thaw_data_xml(data => $child_data->{data},
+                                             set  => $set);
+
+        # recurse if needed
+        if ($child_data->{element}) {
+            $self->{children}[-1]->_deserialize_xml_children(data => 
+                                                              $child_data,
+                                                            set  => $set);
+        }
+    }
+}
+
+
 # freeze element tree as a flattened array
 sub STORABLE_freeze {
     my ($self, $cloning) = @_;
@@ -968,8 +1041,8 @@ BEGIN {
                           bulk_edit_filter
                           check_data
                           default_schedules
-                          serialize_xml
-                          deserialize_xml
+                          freeze_data_xml
+                          thaw_data_xml
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 

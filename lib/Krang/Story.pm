@@ -1706,6 +1706,80 @@ sub serialize_xml {
     $writer->endTag('story');
 }
 
+=item C<< $story = Krang::Story->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming story has the same primary URL as an existing story
+then an update will occur, unless no_update is set.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml, 
+                                  forcearray    => ['contrib',
+                                                    'category_id',
+                                                    'url',
+                                                    'element',
+                                                    'data',
+                                                   ],
+                                  suppressempty => 1);
+    
+    # is there an existing object?
+    my ($story) = Krang::Story->find(primary_url => $data->{url}[0]);
+    my $update = 0;
+    if ($story) {
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A story object with the url '$data->{url}' already ".
+                       "exists and no_update is set.")
+            if $no_update;
+
+        # update slug and title
+        $story->slug($data->{slug});
+        $story->title($data->{title});
+
+        # set the update flag
+        $update = 1;
+
+    } else {
+        # get category objects for story
+        my @categories = map { Krang::Category->find(category_id => $_) }
+                           map { $set->map_id(class => "Krang::Category",
+                                              id    => $_) }
+                             @{$data->{category_id}};
+
+        # create a new story object using categories, slug, title and class
+        $story = Krang::Story->new(categories => \@categories,
+                                   slug       => $data->{slug},
+                                   title      => $data->{title},
+                                   class      => $data->{class});
+    }
+    
+    $story->cover_date(Time::Piece->strptime($data->{cover_date},
+                                             '%Y-%m-%dT%T'))
+      if exists $data->{cover_date};
+    $story->priority($data->{priority})
+      if exists $data->{priority};
+    $story->notes($data->{notes})
+      if exists $data->{notes};
+
+    # deserialize elements
+    my $element = Krang::Element->deserialize_xml(data => $data->{element}[0],
+                                                  set       => $set,
+                                                  no_update => $no_update,
+                                                  object    => $story);
+    $story->{element} = $element;
+
+    # save changes
+    $story->save();
+
+    return $story;
+}
 
 =back
 

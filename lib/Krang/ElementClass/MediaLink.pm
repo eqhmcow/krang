@@ -141,14 +141,27 @@ sub thaw_data {
 
 # do the normal XML serialization, but also include the linked media
 # object in the dataset
-sub serialize_xml {
+sub freeze_data_xml {
     my ($self, %arg) = @_;
     my ($element, $writer, $set) = @arg{qw(element writer set)};
-    $self->SUPER::serialize_xml(%arg);
+    $self->SUPER::freeze_data_xml(%arg);
 
     # add object
     my $media = $element->data;
     $set->add(object => $media, from => $element->object) if $media;
+}
+
+# translate the incoming media ID into a real ID
+sub thaw_data_xml {
+    my ($self, %arg) = @_;
+    my ($element, $data, $set) = @arg{qw(element data set)};
+
+    my $import_id = $data->[0];
+    return unless $import_id;
+    my $media_id = $set->map_id(class => 'Krang::Media',
+                                id    => $import_id);
+    $self->thaw_data(element => $element,
+                     data    => $media_id);
 }
 
 =head1 NAME

@@ -694,38 +694,57 @@ sub publish {
     return $html;
 }
 
-=item C<< $class->serialize_xml(element => $element, writer => $writer, set => $set) >>
+=item C<< $class->freeze_data_xml(element => $element, writer => $writer, set => $set) >>
 
-This call must serialize the element as XML.  The default
+This call must serialize the element's data as XML.  The default
 implementation uses $element->freeze_data() to get a textual
 representation and then produces something like this:
 
-  <element>
-    <class>$class->name</class>
     <data>$element->freeze_data</data>   
-  </element>
 
-See the Story XML Schema documentation for more details on the
-possible forms for element XML.  Also, see the Krang::DataSet
-documentation for general information concerning the serialize_xml()
-method.
+The data element is the only valid element that may be written but it
+may be repeated multiple times.  For example, a keywords element might
+serialize as:
+
+    <data>keyword1</data>
+    <data>keyword2</data>
+    <data>keyword3</data>
 
 =cut
 
-sub serialize_xml {
+sub freeze_data_xml {
     my ($self, %arg) = @_;
-    my ($element, $writer, $set) = @arg{qw(element writer set)};
-
-    $writer->startTag('element');    
-    $writer->dataElement(class => $self->name());
+    my ($element, $writer) = @arg{qw(element writer)};
+    
     my $data = $element->freeze_data();
-    $writer->dataElement(data  => $data) if $data;
-    foreach my $child ($element->children) {
-        $child->serialize_xml(element => $child,
-                              writer  => $writer,
-                              set     => $set);
-    }
-    $writer->endTag('element');
+    $writer->dataElement(data => 
+                         (defined $data and length $data) ? $data : '');
+}
+
+
+=item C<< $class->thaw_data_xml(element => $element, data => $data, set => $set) >>
+
+This call must deserialize the element's data from XML source produced
+by freeze_data_xml. The data argument points to an array of strings
+produced by parsing the <data> tags with XML::Simple.  For example, if
+the source XML is:
+
+    <data>keyword1</data>
+    <data>keyword2</data>
+    <data>keyword3</data>
+
+Then data witll contain:
+
+  [ "keyword1", "keyword2", "keyword3" ]
+
+The default implementation calls thaw_data() on $data[0].
+
+=cut
+
+sub thaw_data_xml {
+    my ($self, %arg) = @_;
+    my ($element, $data) = @arg{qw(element data)};
+    $self->thaw_data(element => $element, data => $data->[0]);
 }
 
 =back

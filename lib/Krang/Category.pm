@@ -963,7 +963,8 @@ sub deserialize_xml {
 
     # parse it up
     my $data = Krang::XML->simple(xml           => $xml, 
-                                  suppressempty => 1);
+                                  suppressempty => 1,
+                                  forcearray    => ['element', 'data']);
     
 
     # is there an existing category with this URL?
@@ -975,7 +976,15 @@ sub deserialize_xml {
                        "no_update is set.")
             if $no_update;
 
-        # FIX: do element update here
+        # deserialize elements for update
+        my $element = Krang::Element->deserialize_xml(data => 
+                                                        $data->{element}[0],
+                                                      set       => $set,
+                                                      no_update => $no_update,
+                                                      object    => $dup);
+        $dup->{element} = $element;
+        $dup->save();
+        
         return $dup;
     }
 
@@ -999,6 +1008,13 @@ sub deserialize_xml {
                                     (site_id   => $site_id)   : ()),
                                    dir => $data->{dir},
                                   );
+    # deserialize elements
+    my $element = Krang::Element->deserialize_xml(data => $data->{element}[0],
+                                                  set       => $set,
+                                                  no_update => $no_update,
+                                                  object    => $cat);
+    $cat->{element} = $element;
+
     $cat->save();
 
     return $cat;
