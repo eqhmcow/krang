@@ -71,8 +71,10 @@ use Krang::Site;
 use Krang::Story;
 use Krang::Media;
 
-my @instances = Krang::Conf->instances;
-my $version   = $Krang::VERSION;
+my @instances  = Krang::Conf->instances;
+my $version    = $Krang::VERSION;
+my $ip_address = Krang::Conf->get('ApacheAddr');
+
 
 my @addons = sort { $a->name cmp $b->name } Krang::AddOn->find();
 
@@ -82,7 +84,7 @@ foreach my $i (@instances) {
 
     Krang::Conf->instance($i);
 
-    foreach my $site (Krang::Site->find()) {
+    foreach my $site (Krang::Site->find(order_by => 'url')) {
         $site_list{$site->url}{site_id} = $site->site_id;
         $site_list{$site->url}{story_count} =
           Krang::Story->find(count   => 1,
@@ -98,9 +100,17 @@ foreach my $i (@instances) {
 }
 
 
-print STDOUT "######################################################################\n\n";
-print STDOUT "Krang Version:\t\t$version\n\n";
-print STDOUT "Installed Addons:\n\n";
+print STDOUT<<END;
+######################################################################
+
+Krang Version:\t\t$version
+
+CMS Server IP Address:\t$ip_address
+
+Installed Addons:
+
+END
+
 foreach (@addons) {
     my $tabs = (length($_->{name}) > 8) ? "\t" : "\t\t";
     print STDOUT "\t$_->{name}$tabs$_->{version}\n";
@@ -113,7 +123,7 @@ my ($total_stories, $total_media) = (0,0);
 
 foreach my $i (keys %instance_stats) {
 
-    print STDOUT sprintf("$i\n");
+    print STDOUT sprintf("\n$i\n");
 
     unless (keys %{$instance_stats{$i}}) {
         print STDOUT "\tNo configured sites.\n";
@@ -123,13 +133,13 @@ foreach my $i (keys %instance_stats) {
     my ($tot_s, $tot_m) = (0,0);
 
     foreach my $s (keys %{$instance_stats{$i}}) {
-        my $sitename = sprintf("%s (id=%2i)", $s, $instance_stats{$i}{$s}{site_id});
+        my $sitename = sprintf("%s (id=%i)", $s, $instance_stats{$i}{$s}{site_id});
 
         my $len = length $sitename;
 
-        my $site_tabs = join '', ("\t") x ((32 - $len) / 8);
+        my $site_tabs = ((32 - $len) > 8) ? "\t\t" : "\t";
 
-        print STDOUT sprintf("\t%s%s%6i stories\t%6i media\n",
+        print STDOUT sprintf("\t%s%s%4i stories\t%4i media\n",
                              $sitename, $site_tabs,
                              $instance_stats{$i}{$s}{story_count},
                              $instance_stats{$i}{$s}{media_count});
@@ -139,16 +149,16 @@ foreach my $i (keys %instance_stats) {
 
     }
 
-    print STDOUT "\t----------------------------------------------------\n";
-    print STDOUT sprintf("\tTOTAL:\t\t\t%6i stories\t%6i media\n\n", $tot_s, $tot_m);
+    print STDOUT "\t----------------------------------------------------------\n";
+    print STDOUT sprintf("\tTOTAL:\t\t\t\t%4i stories\t%4i media\n\n", $tot_s, $tot_m);
 
     $total_stories += $tot_s;
     $total_media   += $tot_m;
 
 }
 
-print STDOUT "\n\n------------------------------------------------------------\n";
-print STDOUT sprintf("SYSTEMWIDE TOTAL:\t\t%6i stories\t%6i media\n\n",
+print STDOUT "\n\n------------------------------------------------------------------\n";
+print STDOUT sprintf("SYSTEMWIDE TOTAL:\t\t\t%4i stories\t%4i media\n\n",
                      $total_stories, $total_media);
 
 
