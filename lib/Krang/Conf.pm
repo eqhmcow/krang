@@ -32,6 +32,10 @@ ScheduleInterval
 ScheduleLog
 SMTPServer
 FromAddress
+BugzillaEmail
+BugzillaServer
+BugzillaPassword
+BugzillaComponent
 );
 }
 
