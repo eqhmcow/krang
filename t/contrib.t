@@ -56,6 +56,25 @@ my ($contrib2loaded) = Krang::Contrib->find( contrib_id => $contrib2->contrib_id
 is($contrib2loaded->first(), 'George');
 
 
+## Test simple_search()
+#
+# Should find one
+my @ss_contribs = Krang::Contrib->simple_search('George Vella');
+is(scalar(@ss_contribs), 1);
+
+# Should find one
+@ss_contribs = Krang::Contrib->simple_search('George');
+is(scalar(@ss_contribs), 1);
+
+# Should find one
+@ss_contribs = Krang::Contrib->simple_search('Vella');
+is(scalar(@ss_contribs), 1);
+
+# Should find NONE
+@ss_contribs = Krang::Contrib->simple_search('George Carlin');
+is(scalar(@ss_contribs), 0);
+
+
 # Clean up added contrib
 $contrib2->delete();
 

@@ -51,6 +51,10 @@ use constant FIELDS => qw(contrib_id prefix first middle last suffix email phone
     # delete contributor
     $contribs[0]->delete();
 
+    # Execute simple search from CGI on Contribs
+    my @contribs = Krang::Contrib->simple_search($search_string);
+
+
 =head1 DESCRIPTION
 
 This class handles the storage and retrieval of contributor data to/from the database. Contributor type ids come from Krang::AdminPrefs (??), but are associated to contributors here.
@@ -359,6 +363,27 @@ sub find {
     $sth->finish();
     return @contrib_object;
 }
+
+
+
+=item @contribs = Krang::Contrib->simple_search($search_string)
+
+The simple_search() method expects a scalar containing a "search string".
+Based on this string Krang::Contrib objects will be returned according
+to the business rules of the simple_search() implementation.
+
+The current rules for simple_search() are that $search_string will be
+used as a "full_name" query via find().
+
+=cut
+
+sub simple_search {
+    my $self = shift;
+    my $search_string = shift;
+    return $self->find(full_name=>$search_string);
+}
+
+
 
 =back
 
