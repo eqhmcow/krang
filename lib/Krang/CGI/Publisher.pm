@@ -92,7 +92,9 @@ sub publish_story {
 
     # add date chooser
     $t->param(publish_date_chooser => datetime_chooser(name => 'publish_date',
-                                                       query => $query));
+                                                       query => $query,
+                                                       onchange => 'document.forms[0].publish_now[1].checked = true;',
+                                                      ));
 
     return $t->output();
 
@@ -148,8 +150,8 @@ sub publish_story_list {
 
     # add date chooser
     $t->param(publish_date_chooser => datetime_chooser(name => 'publish_date',
-                                                       query => $query));
-
+                                                       query => $query,
+                                                       onchange => 'document.forms[0].publish_now[1].checked = true;'));                                                      
     return $t->output();
 
 }

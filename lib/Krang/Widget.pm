@@ -275,6 +275,9 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
+  onchange  - set this to a javascript function to run when the user
+              makes a selection in any of the dropdowns.
+
 The date_chooser() implements itself in HTML via six separate
 query parameters.  They are named based on the provided name,
 plus "_month", "_day", "_year", "_hour", "_minute", and 
@@ -286,11 +289,14 @@ object via decode_date().
 
 sub datetime_chooser {
     my %args = @_;
-    my ($name, $query, $date, $nochoice) =
-      @args{qw(name query date nochoice)};
+    my ($name, $query, $date, $nochoice, $onchange) =
+      @args{qw(name query date nochoice onchange)};
     croak("Missing required args: name and query")
       unless $name and $query;
-                                                                                
+
+    use Krang::Log qw(critical);
+    critical("@_");
+
     # Set date to today if it is NOT already set, AND if we do not allow "no choice"
     $date ||= localtime() unless ($nochoice);
                                                                                 
@@ -356,16 +362,19 @@ sub datetime_chooser {
                                    -default   => ($date) ? $date->mon() : 0,
                                    -values    => \@month_values,
                                    -labels    => \%month_labels,
+                                   ($onchange ? (-onChange => $onchange) : ())
                                   );
     my $d_sel = $query->popup_menu(-name      => $name .'_day',
                                    -default   => ($date) ? $date->mday() : 0,
                                    -values    => \@day_values,
                                    -labels    => \%day_labels,
+                                   ($onchange ? (-onChange => $onchange) : ())
                                   );
     my $y_sel = $query->popup_menu(-name      => $name .'_year',
                                    -default   => ($date) ? $date->year() : 0,
                                    -values    => \@year_values,
                                    -labels    => \%year_labels,
+                                   ($onchange ? (-onChange => $onchange) : ())
                                   );
 
     my $hour_12; 
@@ -378,12 +387,14 @@ sub datetime_chooser {
                                    -default   => ($date) ? $hour_12 : 0,
                                    -values    => \@hour_values,
                                    -labels    => \%hour_labels,
+                                   ($onchange ? (-onChange => $onchange) : ())
                                   );
 
     my $min_sel = $query->popup_menu(-name      => $name .'_minute',
                                    -default   => ($date) ? $date->minute() : 'undef',
                                    -values    => \@minute_values,
                                    -labels    => \%minute_labels,
+                                   ($onchange ? (-onChange => $onchange) : ())
                                   );
 
     my $ampm = 'AM';
