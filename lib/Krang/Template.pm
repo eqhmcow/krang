@@ -8,7 +8,7 @@ package Krang::Template;
 
  my $template = Krang::Template->new(category_id => 1,
 				     content => '<tmpl_var test>',
-				     element_classname => 'classname');
+				     element_class_name => 'class_name');
 
  # save contents of the object to the DB.
  $template->save();
@@ -96,7 +96,7 @@ use constant TEMPLATE_RO => qw(template_id
 # Read-write fields
 use constant TEMPLATE_RW => qw(category_id
 			       content
-			       element_classname
+			       element_class_name
 			       filename);
 
 # Fieldnames for template_version
@@ -147,7 +147,7 @@ Integer that identifies the parent category of the template object.
 
 The HTML::Template code that make up the template.
 
-=item * element_classname
+=item * element_class_name
 
 The element with which the object is associated and hence for which it
 generates output.
@@ -222,13 +222,13 @@ valid keys to this hash are:
 
 =item * content
 
-=item * element_classname
+=item * element_class_name
 
 =item * filename
 
 =back
 
-Either of the args 'element_classname' or 'filename' must be supplied.
+Either of the args 'element_class_name' or 'filename' must be supplied.
 
 =item $template = $template->checkin()
 
@@ -621,7 +621,7 @@ sub find {
 
 
 # Validates the input from new(), and croaks if an arg isn't in %template_args
-# or if we don't have 'element_classname' or 'filename'
+# or if we don't have 'element_class_name' or 'filename'
 sub init {
     my $self = shift;
     my %args = @_;
@@ -636,11 +636,11 @@ sub init {
           "supplied - " . join' ', @bad_args) if @bad_args;
 
     # calculate filename
-    if (exists $args{element_classname}) {
-        $args{filename} = $args{element_classname};
+    if (exists $args{element_class_name}) {
+        $args{filename} = $args{element_class_name};
     } else {
         croak(__PACKAGE__ . "->init(): Either of the arguments " .
-              "'element_classname' or 'filename' must be supplied.")
+              "'element_class_name' or 'filename' must be supplied.")
           unless exists $args{filename};
     }
 
