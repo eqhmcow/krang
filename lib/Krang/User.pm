@@ -19,7 +19,7 @@ Krang::User - a means to access information on users
 
   # setters
 
-  # delete the category from the database
+  # delete the user from the database
   $user->delete();
 
   # a hash of search parameters
@@ -34,7 +34,7 @@ Krang::User - a means to access information on users
   # any valid object field can be appended with '_like' to perform a
   # case-insensitive sub-string match on that field in the database
 
-  # returns an array of category objects matching criteria in %params
+  # returns an array of user objects matching criteria in %params
   my @users = Krang::User->find( %params );
 
 =head1 DESCRIPTION
@@ -94,10 +94,10 @@ use Krang::MethodMaker	new_with_init => 'new',
 Access to fields for this object is provided my Krang::MethodMaker.  The value
 of fields can be obtained and set in the following fashion:
 
- $value = $category->field_name();
- $category->field_name( $some_value );
+ $value = $user->field_name();
+ $user->field_name( $some_value );
 
-The available fields for a category object are:
+The available fields for a user object are:
 
 =over 4
 
@@ -229,13 +229,13 @@ sub duplicate_check {
 
 =item * @users = Krang::User->find( %params )
 
-=item * @users = Krang::User->find( category_id => [1, 1, 2, 3, 5] )
+=item * @users = Krang::User->find( user_id => [1, 1, 2, 3, 5] )
 
 =item * @user_ids = Krang::User->find( ids_only => 1, %params )
 
 =item * $count = Krang::User->find( count => 1, %params )
 
-Class method that returns an array of category objects, category ids, or a
+Class method that returns an array of user objects, user ids, or a
 count.  Case-insensitive sub-string matching can be performed on any valid
 field by passing an argument like: "fieldname_like => '%$string%'" (Note: '%'
 characters must surround the sub-string).  The valid search fields are:
@@ -266,12 +266,12 @@ specified.
 
 =item * ids_only
 
-Returns only category ids for the results found in the DB, not objects.
+Returns only user ids for the results found in the DB, not objects.
 
 =item * limit
 
-Specify this argument to determine the maximum amount of category objects or
-category ids to be returned.
+Specify this argument to determine the maximum amount of user objects or
+user ids to be returned.
 
 =item * offset
 
@@ -280,7 +280,7 @@ Sets the offset from the first row of the results to return.
 =item * order_by
 
 Specify the field by means of which the results will be sorted.  By default
-results are sorted with the 'category_id' field.
+results are sorted with the 'user_id' field.
 
 =back
 
@@ -298,7 +298,7 @@ sub find {
     my $ascend = uc(delete $args{order_desc}) || ''; # its prettier w/uc() :)
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
-    my $order_by = delete $args{order_by} || 'category_id';
+    my $order_by = delete $args{order_by} || 'user_id';
 
     # set search fields
     my $count = delete $args{count} || '';
@@ -327,7 +327,7 @@ sub find {
 
         push @invalid_cols, $arg unless exists $user_cols{$lookup_field};
 
-        if ($arg eq 'category_id' && ref $args{$arg} eq 'ARRAY') {
+        if ($arg eq 'user_id' && ref $args{$arg} eq 'ARRAY') {
             my $tmp = join(" OR ", map {"user_id = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
@@ -344,7 +344,7 @@ sub find {
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
     # construct base query
-    my $query = "SELECT $fields FROM category";
+    my $query = "SELECT $fields FROM user";
 
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE $where_clause" if $where_clause;
@@ -372,7 +372,7 @@ sub find {
         $sth->bind_columns(\( @$row{@{$sth->{NAME_lc}}} ));
     }
 
-    # construct category objects from results
+    # construct user objects from results
     while ($sth->fetchrow_arrayref()) {
         # if we just want count or ids
         if ($single_column) {
@@ -427,7 +427,7 @@ sub save {
     # bind parameters
     my @params = map {$self->{$_}} @save_fields;
 
-    # need category_id for updates
+    # need user_id for updates
     push @params, $id if $id;
 
     # croak if no rows are affected
