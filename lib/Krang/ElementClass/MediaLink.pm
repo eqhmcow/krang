@@ -166,6 +166,23 @@ sub thaw_data_xml {
 }
 
 
+
+# overriding Krang::ElementClass::template_data
+# checks the publish status, returns url or preview_url, depending.
+sub template_data {
+    my $self = shift;
+    my %args = @_;
+
+    if ($args{publisher}->is_publish()) {
+        return 'http://' . $args{element}->data()->url();
+    } elsif ($args{publisher}->is_preview()) {
+        return 'http://' . $args{element}->data()->preview_url();
+    } else {
+        croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
+    }
+}
+
+
 #
 # If fill_template() has been called, a template exists for this element.
 # Populate it with available attributes - story title & url.
@@ -187,64 +204,12 @@ sub fill_template {
     $params{caption} = $element->data()->caption()
       if $tmpl->query(name => 'caption');
 
-    if ($publisher->is_publish()) {
-        $params{url} = 'http://' . $element->data()->url();
-    } elsif ($publisher->is_preview()) {
-        $params{url} = 'http://' . $element->data()->preview_url();
-    } else {
-        croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
-    }
+    $params{url} = $element->template_data(publisher => $publisher);
 
     $tmpl->param(\%params);
 
 }
 
-# Publish - if no template exists, simply return the URL (based on publish/preview status)
-#
-# See Krang::ElementClass->publish for more information.
-sub publish {
-
-    my $self = shift;
-    my %args = @_;
-
-    my $html_template;
-
-    foreach (qw(element publisher)) {
-        unless (exists($args{$_})) {
-            croak(__PACKAGE__ . ": Missing argument '$_'.  Exiting.\n");
-        }
-    }
-
-    my $publisher = $args{publisher};
-
-    debug(__PACKAGE__ . ': publish called for element name=' . $args{element}->name());
-
-    # try and find an appropriate template.
-    eval { $html_template = $self->find_template(@_); };
-
-    if ($@ and $@->isa('Krang::ElementClass::TemplateNotFound')) {
-        # no template found.
-        # Return the story URL, depending on preview/publish.
-        if ($publisher->is_publish()) {
-            return 'http://' . $args{element}->data()->url();
-        } elsif ($publisher->is_preview()) {
-            return 'http://' . $args{element}->data()->preview_url();
-        } else {
-            croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
-        }
-    } elsif ($@) {
-        # some other error - pass it along.
-        die $@;
-    }
-
-    $self->fill_template(tmpl => $html_template, @_);
-
-    my $html = $html_template->output();
-
-    return $html;
-
-
-}
 
 
 =head1 NAME

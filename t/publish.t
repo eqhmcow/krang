@@ -351,58 +351,6 @@ sub test_media_deploy {
 }
 
 
-# test to make sure Krang::ElementClass::StoryLink->publish works as expected.
-sub test_medialink {
-
-    my ($story, $media) = @_;
-
-    # test related media - add a medialink to a story.
-    $publisher->{story} = $story;
-    $publisher->{is_publish} = 1;
-    $publisher->{is_preview} = 0;
-
-    my $page = $story->element()->child('page');
-    my $medialink = $page->child('photo');
-
-    # w/ deployed template - make sure it works w/ template.
-    my $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
-    my $resulting_link = '<img src="http://' . $media->url() . '">' . $media->caption() . '<BR>' . $media->title();
-
-    $media_href =~ s/\n//g;
-
-    ok($media_href eq $resulting_link, 'Krang::ElementClass::MediaLink->publish() -- publish w/ template');
-
-    $publisher->{is_publish} = 0;
-    $publisher->{is_preview} = 1;
-
-    $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
-    $resulting_link = '<img src="http://' . $media->preview_url() . '">' . $media->caption() . '<BR>' . $media->title();
-    chomp ($media_href);
-
-    ok($media_href eq $resulting_link, 'Krang::ElementClass::MediaLink->publish() -- preview w/ template');
-
-    $publisher->{is_publish} = 1;
-    $publisher->{is_preview} = 0;
-
-    # undeploy template - make sure it works w/ no template.
-    $publisher->undeploy_template(template => $template_deployed{photo});
-
-    $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
-
-    ok($media_href eq "http://" . $media->url(), 'Krang::ElementClass::MediaLink->publish() -- publish-no template');
-
-    $publisher->{is_publish} = 0;
-    $publisher->{is_preview} = 1;
-
-    $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
-
-    ok($media_href eq "http://" . $media->preview_url(), 'Krang::ElementClass::MediaLink->publish() -- preview-no template');
-
-    # re-deploy template.
-    $publisher->deploy_template(template => $template_deployed{photo});
-
-
-}
 
 
 # test to make sure that Krang::Template templates are removed from the filesystem properly.
@@ -469,7 +417,7 @@ sub test_storylink {
 
     # w/ deployed template - make sure it works w/ template.
     my $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
-    my $resulting_link = '<a href="' . $dest_story->url() . '">' . $dest_story->title() . '</a>';
+    my $resulting_link = '<a href="http://' . $dest_story->url() . '">' . $dest_story->title() . '</a>';
     chomp ($story_href);
 
     ok($story_href eq $resulting_link, 'Krang::ElementClass::StoryLink->publish() -- publish w/ template');
@@ -478,7 +426,7 @@ sub test_storylink {
     $publisher->{is_preview} = 1;
 
     $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
-    $resulting_link = '<a href="' . $dest_story->preview_url() . '">' . $dest_story->title() . '</a>';
+    $resulting_link = '<a href="http://' . $dest_story->preview_url() . '">' . $dest_story->title() . '</a>';
     chomp ($story_href);
 
     ok($story_href eq $resulting_link, 'Krang::ElementClass::StoryLink->publish() -- preview w/ template');
@@ -492,18 +440,69 @@ sub test_storylink {
 
     $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
 
-    ok($story_href eq $dest_story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
+    ok($story_href eq 'http://' . $dest_story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
 
     $publisher->{is_publish} = 0;
     $publisher->{is_preview} = 1;
 
     $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
 
-    ok($story_href eq $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
+    ok($story_href eq 'http://' . $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
 
     # re-deploy template.
     $publisher->deploy_template(template => $template_deployed{leadin});
 
+
+}
+
+# test to make sure Krang::ElementClass::StoryLink->publish works as expected.
+sub test_medialink {
+
+    my ($story, $media) = @_;
+
+    # test related media - add a medialink to a story.
+    $publisher->{story} = $story;
+    $publisher->{is_publish} = 1;
+    $publisher->{is_preview} = 0;
+
+    my $page = $story->element()->child('page');
+    my $medialink = $page->child('photo');
+
+    # w/ deployed template - make sure it works w/ template.
+    my $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
+    my $resulting_link = '<img src="http://' . $media->url() . '">' . $media->caption() . '<BR>' . $media->title();
+
+    $media_href =~ s/\n//g;
+
+    ok($media_href eq $resulting_link, 'Krang::ElementClass::MediaLink->publish() -- publish w/ template');
+
+    $publisher->{is_publish} = 0;
+    $publisher->{is_preview} = 1;
+
+    $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
+    $resulting_link = '<img src="http://' . $media->preview_url() . '">' . $media->caption() . '<BR>' . $media->title();
+    chomp ($media_href);
+
+    ok($media_href eq $resulting_link, 'Krang::ElementClass::MediaLink->publish() -- preview w/ template');
+
+    $publisher->{is_publish} = 1;
+    $publisher->{is_preview} = 0;
+
+    # undeploy template - make sure it works w/ no template.
+    $publisher->undeploy_template(template => $template_deployed{photo});
+
+    $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
+
+    ok($media_href eq "http://" . $media->url(), 'Krang::ElementClass::MediaLink->publish() -- publish-no template');
+
+    $publisher->{is_publish} = 0;
+    $publisher->{is_preview} = 1;
+
+    $media_href = $medialink->class->publish(element => $medialink, publisher => $publisher);
+
+    ok($media_href eq "http://" . $media->preview_url(), 'Krang::ElementClass::MediaLink->publish() -- preview-no template');
+    # re-deploy template.
+    $publisher->deploy_template(template => $template_deployed{photo});
 
 }
 

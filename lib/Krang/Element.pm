@@ -1043,6 +1043,7 @@ BEGIN {
                           default_schedules
                           freeze_data_xml
                           thaw_data_xml
+                          template_data
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 

@@ -455,9 +455,26 @@ Returns the file extension (see filename()) to be used when writing to disk data
 =cut
 
 sub extension {
-    return 'html';
+    return '.html';
 }
 
+
+=item C<< $template_data = $class->template_data() >>
+
+This attribute returns the data associated with the element, formatted
+for use in an output template.  In most cases, what
+$element->template_data() returns is identical to $element->data(),
+but some element classes may override this method to return something
+different.
+
+=cut
+
+sub template_data { 
+    my $self = shift;
+    my %args = @_;
+
+    return $args{element}->data();
+}
 
 
 =item C<< $html_tmpl = $class->find_template(element => $element, publisher => $publisher) >>
@@ -611,7 +628,7 @@ sub fill_template {
 
     # build out params going to the template.
     my %params  = (
-                   $element->name() => $element->data(),
+                   $element->name() => $element->template_data(publisher => $publisher),
                    $element->name() . '_total' => scalar(@element_children)
                   );
 
@@ -673,9 +690,9 @@ Generally, you will not want to override publish().  Changes to template-handlin
 
 =over
 
-Some elements are simply attributes with a value, and no formatting to be associated with them.  This can be because the developer of the element tree wants to handle formatting in the parent element's template, or that there should be no formatting of the data whatsoever (e.g. $element->data() might get embedded in an <input> tag).
+Some elements are simply attributes with a value, and no formatting to be associated with them.  This can be because the developer of the element tree wants to handle formatting in the parent element's template, or that there should be no formatting of the data whatsoever (e.g. $element->template_data() might get embedded in an <input> tag).
 
-In these cases, the element will have no template associated with it - which will cause find_template to fail.  If the element has no children, the value of $element->data() will be returned as the result of the publish() call.  If the element *does* have children, however, publish() will propegate the error thrown by find_template().
+In these cases, the element will have no template associated with it - which will cause find_template to fail.  If the element has no children, the value of $element->template_data() will be returned as the result of the publish() call.  If the element *does* have children, however, publish() will propegate the error thrown by find_template().
 
 
 =cut
@@ -694,6 +711,7 @@ sub publish {
         }
     }
 
+    my $publisher = $args{publisher};
     my $element_id = $args{element}->element_id();
 
     debug(__PACKAGE__ . ': publish called for element_id=$element_id name=' . $args{element}->name());
@@ -707,7 +725,7 @@ sub publish {
         if (scalar($args{element}->children())) {
             die $@;
         } else {
-            return $args{element}->data();
+            return $args{element}->template_data(publisher => $publisher);
         }
     } elsif ($@) {
         # another error occured with the template - re-throw.
