@@ -428,7 +428,7 @@ END
             $content .= "</tmpl_loop>";
         } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
             # media link
-            $content .= "<img src='<tmpl_var name='" . $element->name . "'>'>\n";
+            $content .= "<img src='<tmpl_var name='url'>'>\n";
         } else {
             # data
             $content .= "<tmpl_var name='" . $element->name . "'>\n";
