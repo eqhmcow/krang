@@ -205,8 +205,6 @@ Contains a single contrib_type_id from contrib_type_ids.
 sub selected_contrib_type {
     my $self = shift;
     return $self->{selected_contrib_type} unless @_;
-    croak("bad value for selected_contrib_types: must be a memeber of contrib_type_ids.") 
-      unless (grep { $_[0] == $_ } $self->contrib_type_ids);
     $self->{selected_contrib_type} = $_[0];
 }
 
