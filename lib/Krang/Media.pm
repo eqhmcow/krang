@@ -559,6 +559,11 @@ sub save {
 
 
     add_history(    object => $self,
+                    action => 'new',
+                )
+      if $self->{version} == 1;
+
+    add_history(    object => $self,
                     action => 'save',
                 );
 
@@ -953,6 +958,11 @@ sub checkout {
     my $media_id = shift;
     my $dbh = dbh;
     my $user_id = $session{user_id};
+
+    # short circuit checkout on instance method version of call...
+    return if $self and
+              $self->{checked_out_by} and 
+              $self->{checked_out_by} == $user_id;
    
     my $is_object = $media_id ? 0 : 1; 
     $media_id = $self->{media_id} if (not $media_id);
