@@ -20,7 +20,7 @@ CREATE TABLE template (
         testing int(1) NOT NULL,
         version int(11) NOT NULL,
         PRIMARY KEY  (id),
-        INDEX (category_id),
+        INDEX (category_id)
 ) TYPE=MyISAM;
 
 --
