@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed Krang::CGI::Publisher to leave error messages thrown during the
+publish process up on the screen, rather than quickly redirecting the
+user back to their previous page. [Peter]
+
+=item *
+
 Fixed Krang::ElementClass->publish() to trap errors thrown by
 HTML::Template::Expr->output(), and fixed Krang::CGI::Publisher to
 properly report errors and not try to redirect users when failures

@@ -151,13 +151,13 @@ sub publish_story_list {
             $template->checkin;
         }
     }
-    
+
     # if there are no stories and media, return to workspace directly
     unless (@story_id_list or @media_id_list) {
         $self->header_props(-uri => 'workspace.pl');
         $self->header_type('redirect');
         return "";
-    }       
+    }
 
     @story_list = Krang::Story->find(story_id => \@story_id_list) if @story_id_list;
     @media_list = Krang::Media->find(media_id => \@media_id_list) if @media_id_list;
@@ -169,9 +169,11 @@ sub publish_story_list {
     $t->param(stories => $stories, media => $media);
 
     # add date chooser
-    $t->param(publish_date_chooser => datetime_chooser(name => 'publish_date',
-                                                       query => $query,
-                                                       onchange => 'document.forms[0].publish_now[1].checked = true;'));                                                      
+    $t->param(publish_date_chooser => 
+              datetime_chooser(name => 'publish_date',
+                               query => $query,
+                               onchange => 'document.forms[0].publish_now[1].checked = true;')
+             );
     return $t->output();
 
 }
@@ -179,7 +181,7 @@ sub publish_story_list {
 
 =item publish_assets
 
-Starts the publish process for a given set of stories stories specified by the CGI parameter 'asset_publish_list'.  
+Starts the publish process for a given set of stories stories specified by the CGI parameter 'asset_publish_list'.
 
 B<NOTE>: 'asset_publish_list' does not necessarily contain all items listed when the publish process is initiated - it only lists 
 
@@ -416,7 +418,7 @@ sub preview_media {
         croak("Unable to load media from sesssion '$session_key'")
           unless $media;
     }
-    
+
     my $publisher = Krang::Publisher->new();
     my $url;
     eval { $url = $publisher->preview_media(media => $media); };
@@ -553,7 +555,7 @@ sub _publish_assets_now {
     # start caching and setup an eval{} to catch death
     Krang::Cache::start();
     eval {
-    
+
         # run things to the publisher
         my $publisher = Krang::Publisher->new();
         if (@$story_list) {
@@ -561,50 +563,51 @@ sub _publish_assets_now {
             eval { $publisher->publish_story(story => $story_list, 
                                              callback =>\&_progress_callback);
                  };
-    
-            if ($@) {
+
+            if (my $err = $@) {
                 # if there is an error, figure out what it is, create the
                 # appropriate message and return.
-                if (ref $@ && 
-                    $@->isa('Krang::ElementClass::TemplateNotFound')) {
+                if (ref $err &&
+                    $err->isa('Krang::ElementClass::TemplateNotFound')) {
                     add_message('missing_template',
-                                filename      => $@->template_name,
-                                category_url   => $@->category_url
+                                filename     => $err->template_name,
+                                category_url => $err->category_url
                                );
-                    
-                } elsif (ref $@ && 
-                         $@->isa('Krang::ElementClass::TemplateParseError')) {
+
+                } elsif (ref $err &&
+                         $err->isa('Krang::ElementClass::TemplateParseError')) {
                     add_message('template_parse_error',
-                                element_name  => $@->element_name,
-                                template_name => $@->template_name,
-                                category_url  => $@->category_url,
-                                error_msg     => $@->error_msg
+                                element_name  => $err->element_name,
+                                template_name => $err->template_name,
+                                category_url  => $err->category_url,
+                                error_msg     => $err->error_msg
                                );
-                } elsif (ref $@ and 
-                         $@->isa('Krang::Publisher::FileWriteError')) {
+                } elsif (ref $err &&
+                         $err->isa('Krang::Publisher::FileWriteError')) {
                     add_message('file_write_error',
-                                path          => $@->destination);
+                                path => $err->destination);
                 } else {
                     # something not expected so log the error.  Can't croak()
                     # here because that will trigger bug.pl.
                     print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
-                    critical($@);
+                    critical($err);
                 }
 
                 # put the messages on the screen
                 foreach my $error (get_messages()) {
                     print "<div class='alertp'>$error</div>\n";
                 }
+
                 clear_messages();
 
                 # make sure to turn off caching
                 Krang::Cache::stop();
                 debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
-                
-                return;
-                
+
+                die $err;
+
             } else {
-                
+
                 # otherwise, we're good.
                 foreach my $story (@$story_list) {
                     # add a publish message for the UI
@@ -614,7 +617,6 @@ sub _publish_assets_now {
                 }
             }
         }
-        
 
         if (@$media_list) {
             # publish!
@@ -638,7 +640,7 @@ sub _publish_assets_now {
 
     # dynamic redirect to workspace
     print "<form action=workspace.pl></form><script language='javascript'>document.forms[0].submit();</script>\n";
-    
+
     return;
 }
 
