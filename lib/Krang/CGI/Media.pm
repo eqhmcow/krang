@@ -49,7 +49,7 @@ use Krang::Session qw(%session);
 use Carp qw(croak);
 
 
-use constant WORKSPACE_URL => '/workspace.pl';
+use constant WORKSPACE_URI => 'workspace.pl';
 
 
 ##############################
@@ -340,11 +340,11 @@ sub save_add {
     add_message("new_media_saved");
 
     # Redirect to workspace.pl
-    my $url = '/workspace.pl';
-    $self->header_props(-url=>$url);
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri => $uri);
     $self->header_type('redirect');
 
-    return "Redirect: <a href=\"$url\">$url</a>";
+    return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
 
@@ -372,11 +372,11 @@ sub cancel_add {
     add_message('message_media_deleted');
 
     # Redirect to workspace
-    my $workspace_url = WORKSPACE_URL;
-    $self->header_props(-url=>$workspace_url);
+    my $workspace_uri = WORKSPACE_URI;
+    $self->header_props(-uri=>$workspace_uri);
     $self->header_type('redirect');
 
-    return "Redirect: <a href=\"$workspace_url\">$workspace_url</a>";
+    return "Redirect: <a href=\"$workspace_uri\">$workspace_uri</a>";
 }
 
 
@@ -528,11 +528,11 @@ sub save_edit {
     add_message("media_saved");
 
     # Redirect to workspace.pl
-    my $url = '/workspace.pl';
-    $self->header_props(-url=>$url);
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri=>$uri);
     $self->header_type('redirect');
 
-    return "Redirect: <a href=\"$url\">$url</a>";
+    return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
 
@@ -615,11 +615,11 @@ sub delete {
     add_message('message_media_deleted');
 
     # Redirect to workspace
-    my $workspace_url = WORKSPACE_URL;
-    $self->header_props(-url=>$workspace_url);
+    my $workspace_uri = WORKSPACE_URI;
+    $self->header_props(-uri => $workspace_uri);
     $self->header_type('redirect');
 
-    return "Redirect: <a href=\"$workspace_url\">$workspace_url</a>";
+    return "Redirect: <a href=\"$workspace_uri\">$workspace_uri</a>";
 }
 
 
@@ -683,7 +683,7 @@ sub save_and_associate_media {
 
     # Redirect to associate screen
     my $url = 'contributor.pl?rm=associate_media';
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri=>$url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
