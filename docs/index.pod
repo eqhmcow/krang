@@ -14,7 +14,13 @@ HREF[Install|ops_install.html] - how to install Krang
 
 =item *
 
-HREF[Running Krang|running.html] - a guide to getting Krang up and running after installation (unfinished)
+HREF[Running Krang|running.html] - a guide to getting Krang up and
+running after installation (unfinished)
+
+=item *
+
+HREF[Running Krang on Your Desktop|krang_on_desktop.html] - a guide to
+setting up Krang in a desktop environment.
 
 =item *
 
@@ -34,7 +40,8 @@ HREF[Add-On Installation|addon_install.html] - how to install Krang add-ons
 
 =item *
 
-HREF[Script Documentation|scripts.html] - documentation for all scripts in the C<bin/> directory.
+HREF[Script Documentation|scripts.html] - documentation for all
+scripts in the C<bin/> directory.
 
 =item *
 

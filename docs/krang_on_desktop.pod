@@ -1,0 +1,231 @@
+=head1 Running Krang on Your Local Desktop
+
+This document is a guide on how to set up Krang in your local desktop
+environment.
+
+If you are doing any sort of Krang development (element library,
+templates, Krang itself), this document is of interest to you.  Being
+able to run Krang locally can make development a much faster process,
+and you don't need to worry about clobbering other people if you make
+changes during development.
+
+Before you start, you should be comfortable with a Unix/Linux
+environment - you may need to install software packages that Krang
+depends on.
+
+B<NOTE:> This document assumes that you're not currently running a
+local webserver on port 80 (go to C<http://localhost:80> with any web
+browser to confirm if you're unsure - you should get a "Connection
+Refused"-type message).
+
+
+What you need:
+
+=over
+
+=item *
+
+root access on a Krang-friendly machine (A number of flavors of Linux,
+FreeBSD, Mac OSX and Solaris all fit the bill).
+
+It I<may> be possible to configure Krang without root access, but
+that's beyond the scope of this document at the moment.
+
+=item *
+
+A binary release of Krang tailored for your system, or the source tarball.
+
+=back
+
+=head1 Initial Setup
+
+The process for building and installing Krang is covered in
+HREF[Installing Krang|ops_install.html].  A few things to keep in
+mind as you go through the process.
+
+When running C<krang_install>:
+
+=over
+
+=item HostName
+
+C<localhost> is fine.
+
+=item IPAddress
+
+Use C<127.0.0.1> - C<127.0.0.1> is B<ALWAYS> the current machine.
+
+=item KrangUser
+
+Your user account is a good choice.  This will give your user account
+permissions to modify any file in your installed copy of Krang.
+
+=item KrangGroup
+
+The default group for your user account is also a good choice.
+
+=item InstanceHostName, InstanceDBName, InstanceElementSet
+
+Every Krang installation needs a minimum of one instance.  This guide
+will use "cms.testsite.kra", "testsite", and "Default", respectively.
+
+=back
+
+The resulting installation string should look something like this:
+
+  # ./bin/krang_install \
+         --HostName             localhost            \
+         --IPAddress            127.0.0.1            \
+         --AdminPassword        $AdminPassword       \
+         --DBUser               $DBUser              \
+         --DBPass               $DBPass              \
+         --InstanceDBName       testsite             \
+         --InstanceHostName     cms.testsite.kra     \
+         --InstanceElementSet   Default              \
+         --KrangUser            joeuser              \
+         --KrangGroup           users
+
+Once C<krang_install> is done, you should be on your way!
+
+Open up a web browser, and go to 
+
+  http://localhost
+
+You should be presented with a "Welcome to Krang" page, and a listing
+for C<cms.testsite.kra>.  Click on the link.  At the login, your
+username will be C<admin>, your password is the C<$AdminPassword> that
+you set when calling C<krang_install>.
+
+Congratulations, you are in!
+
+B<NOTE:> Don't worry about the C<.kra> extension - it was chosen
+simply to make sure that we wouldn't clobber a real site you might use
+- like testsite.com, testsite.net, you get the idea.
+
+=head1 Configuring a Site
+
+With Krang now up and running, the first thing you need to do is
+create a site.
+
+=over
+
+=item *
+
+Under the B<sites> menu (underneath B<Admin>), choose the "Add a site"
+option.
+
+=item URL
+
+The URL of your "live" site:
+
+  testsite.kra:8080
+
+=item Preview URL
+
+The URL for the preview version of your site:
+
+  preview.testsite.kra:8080
+
+=item Publish Path
+
+The website root for C<testsite.kra>.  You want to choose a directory
+path that C<KrangUser> has write-access to.
+
+I generally choose a path in C</tmp>, such as:
+
+  /tmp/krang/testsite.kra
+
+The drawback to using C</tmp> on some systems is that it may be too
+small for real use.  A directory in your home directory works just as
+well, or even a path in the Krang install path (e.g. C<KRANG_ROOT>)!
+
+  /path/to/installed/krang/tmp/testsite.kra
+
+Is a good choice as well.
+
+=item Preview Path
+
+Same as C<Publish Path> - put it in the same location, just call it
+C<preview.testsite.kra>.
+
+=back
+
+B<NOTE:> Notice the C<:8080> on the end of the publish and preview
+URLs?  That is intentional.  Pay attention to the next step.
+
+
+=head1 Configuring SiteServer
+
+C<SiteServer> was created to make it easy for developers to see
+preview/publish website functionality without having to delve into
+configuring Apache.
+
+C<SiteServer> is part of L<Krang::Handler>, and works as an apache
+transhandler, mapping requests to the preview and publish paths that
+we configured above.
+
+Add the following lines to the main section (before the C<< <Instance> >>
+section) of C<conf/krang.conf>:
+
+
+  #
+  # EnableSiteServer: the site server offers developers a means to test
+  # preview and publish without requiring a separate Apache setup.  If
+  # set to 1 then SiteServerAddr and SiteServerPort must be defined and
+  # must differ from the ApacheAddr and ApachePort settings.
+  #
+  EnableSiteServer 1
+  SiteServerAddr 127.0.0.1
+  SiteServerPort 8080
+
+
+This tells SiteServer to listen on port 8080 (consistent with the
+:8080 in the C<Publish URL> and C<Preview URL> directives above) and
+attempt to map incoming requests.
+
+Restart Krang to have the changes take effect.
+
+B<REMEMBER:> you most likely need to be root to restart Krang - look
+into using sudo to make things easier.
+
+As root:
+
+  # bin/krang_ctl restart
+
+As your everyday user w/ sudo properly configured:
+
+  $ sudo bin/krang_ctl restart
+
+
+=head1 The /etc/hosts file
+
+The last thing to change - the C</etc/hosts> file.
+
+The C</etc/hosts> file, if you're not familiar with it, is a way to
+shortcut DNS lookups.  When your system tries to resolve a machine
+name (e.g. C<krang.sourceforge.net>), the first place it will look is
+the C</etc/hosts> file.
+
+Add the following to your /etc/hosts file (you will most likely need
+to be root to do this):
+
+  # Local Krang CMS, and test publish/preview sites.
+  127.0.0.1     cms.testsite.kra
+  127.0.0.1     testsite.kra
+  127.0.0.1     preview.testsite.kra
+
+Re-start your web browser.  The reason is this - most web browsers (IE
+and Mozilla/Firefox included) cache IP addresses after a lookup.  If
+by any chance your browser already has an IP address for
+C<testsite.kra>, it will ignore the changes you just made to
+C</etc/hosts>.
+
+Log back into the Krang UI.  Rather than using http://localhost, try
+http://cms.testsite.kra - you should be taken directly to the login
+screen you saw previously.
+
+You now have a fully configured Krang instance running on your local
+machine.  Preview and Publish should now work as designed, and your
+setup should behave like any normal Krang setup.
+
+
