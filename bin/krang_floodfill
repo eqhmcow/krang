@@ -87,6 +87,7 @@ use Krang::User;
 use Krang::Template;
 use Krang::Story;
 use Krang::Media;
+use Krang::Group;
 
 use Time::Piece;
 use Imager;
@@ -389,7 +390,7 @@ TMPL
 }
 
 # create users
-my %groups = %Krang::User::user_groups;
+my %groups = map {$_->group_id, $_->name} Krang::Group->find();
 my @users;
 for(1 .. $users) {
     my $login = lc(get_word());

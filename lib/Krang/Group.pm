@@ -518,7 +518,7 @@ sub delete {
     my @delete_from_tables = qw( category_group_permission
                                  category_group_permission_cache
                                  desk_group_permission
-                                 usr_user_group
+                                 user_group_permission
                                  permission_group );
 
     foreach my $table (@delete_from_tables) {

@@ -33,12 +33,19 @@ $user = Krang::User->new(login => 'arobin',
 
 # save() tests
 ###############
-# failure
+# failure 1
 eval {$admin->save()};
 isa_ok($@, 'Krang::User::Duplicate');
 is($@ =~ /This object duplicates/s, 1, 'save() - duplicate check');
 
+# failure 2
+$user->group_ids_push('x');
+eval {$user->save()};
+isa_ok($@, 'Krang::User::InvalidGroup');
+is($@ =~ /Invalid group_id in object/s, 1, 'save() - invalid group_id check');
+
 # success
+$user->group_ids_clear();
 $user->save();
 like($user->user_id(), qr/^\d+$/, 'save() - success');
 

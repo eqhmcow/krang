@@ -92,15 +92,18 @@ use Carp qw(croak);
 use Digest::MD5 qw(md5_hex);
 use Exception::Class
   ('Krang::User::Duplicate' => {fields => 'duplicates'},
-   'Krang::User::Dependency' => {fields => 'dependencies'});
+   'Krang::User::Dependency' => {fields => 'dependencies'},
+   'Krang::User::InvalidGroup' => {fields => 'group_id'});
 require Exporter;
 
 # Internal Modules
 ###################
 use Krang::DB qw(dbh);
+use Krang::Log qw/critical debug info/;
 use Krang::Media;
 use Krang::Story;
 use Krang::Template;
+
 
 #
 # Package Variables
@@ -124,20 +127,11 @@ use constant USER_USER_GROUP => qw(user_id
 
 # Globals
 ##########
-our $SALT = <<SALT;
+my $SALT = <<SALT;
 Dulce et decorum est pro patria mori
 --Horace
 SALT
 
-our @ISA = qw/Exporter/;
-our @EXPORT_OK = ('$SALT');
-
-# hash equating group ids with groups
-our %user_groups = (1 => 'Global Admin',
-                    2 => 'Site Admin',
-                    3 => 'Category Admin',
-                    4 => 'Default',
-                    5 => 'XXX',);
 
 # Lexicals
 ###########
@@ -295,8 +289,9 @@ sub delete {
         $self->dependent_check($id);
     }
 
-    $dbh->do("DELETE FROM usr WHERE user_id = ?", undef, $id);
-    $dbh->do("DELETE FROM usr_user_group WHERE user_id = ?", undef, $id);
+    $dbh->do("DELETE FROM user WHERE user_id = ?", undef, $id);
+    $dbh->do("DELETE FROM user_group_permission WHERE user_id = ?",
+             undef, $id);
 
     return 1;
 }
@@ -370,7 +365,7 @@ sub duplicate_check {
     my $id = $self->{user_id};
     my $query = <<SQL;
 SELECT user_id, login, password, first_name, last_name
-FROM usr
+FROM user
 WHERE login = ? OR password = ? OR (first_name = ? AND last_name = ?)
 SQL
     my @params = map {$self->{$_}} qw/login password first_name last_name/;
@@ -580,9 +575,9 @@ sub find {
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
     # revise $from and/or $where_clause
-    my $from = "usr u";
+    my $from = "user u";
     if ($groups) {
-        $from .= ", usr_user_group ug";
+        $from .= ", user_group_permission ug";
         $where_clause = "u.user_id = ug.user_id AND " . $where_clause;
     }
 
@@ -639,24 +634,6 @@ sub find {
 }
 
 
-# looks up associate group_ids with the given User object
-sub _add_group_ids {
-    my ($users_href, $dbh) = @_;
-    my $query = <<SQL;
-SELECT group_id FROM usr_user_group
-WHERE user_id = ?
-SQL
-    my $sth = $dbh->prepare($query);
-
-    while (my($id, $obj) = each %$users_href) {
-        my $gid;
-        $sth->execute($id);
-        $sth->bind_col(1, \$gid);
-        push @{$obj->{group_ids}}, $gid while $sth->fetch();
-    }
-}
-
-
 =item * $md5_digest = $user->password()
 
 =item * $md5_digest = $user->password( $password )
@@ -698,16 +675,20 @@ sub save {
     # check for duplicates
     $self->duplicate_check();
 
+    # validate group ids, throws InvalidGroup exception if we've got a
+    # non-extant group in the 'group_ids' field
+    my %types = $self->_validate_group_ids();
+
     my $query;
     my $dbh = dbh();
 
     # the object has already been saved once if $id
     if ($id) {
-        $query = "UPDATE usr SET " . join(", ", map {"$_ = ?"} @save_fields) .
+        $query = "UPDATE user SET " . join(", ", map {"$_ = ?"} @save_fields) .
           " WHERE user_id = ?";
     } else {
         # build insert query
-        $query = "INSERT INTO usr (" . join(',', @save_fields) .
+        $query = "INSERT INTO user (" . join(',', @save_fields) .
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
@@ -727,16 +708,17 @@ sub save {
 
     # remove and add group associations
     eval {
-        $dbh->do("LOCK TABLES usr_user_group WRITE");
-        $dbh->do("DELETE FROM usr_user_group WHERE user_id = ?",
+        $dbh->do("LOCK TABLES user_group_permission WRITE");
+        $dbh->do("DELETE FROM user_group_permission WHERE user_id = ?",
                  undef, ($id));
 
-        # associate user with groups if any
-        my @gids = @{$self->{group_ids}} if $self->{group_ids};
-        if (@gids) {
-            my $sth = $dbh->prepare("INSERT INTO usr_user_group VALUES " .
-                                    "(?,?)");
-            $sth->execute(($id, $_)) for @gids;
+        if (keys %types) {
+            # associate user with groups
+            my $sth = $dbh->prepare("INSERT INTO user_group_permission " .
+                                    "VALUES (?,?,?)");
+            while (my($gid, $type) = each %types) {
+                $sth->execute(($id, $gid, $type));
+            }
         }
 
         $dbh->do("UNLOCK TABLES");
@@ -748,6 +730,51 @@ sub save {
     }
 
     return $self;
+}
+
+
+# looks up associate group_ids with the given User object
+sub _add_group_ids {
+    my ($users_href, $dbh) = @_;
+    my $query = <<SQL;
+SELECT group_id FROM user_group_permission
+WHERE user_id = ?
+SQL
+    my $sth = $dbh->prepare($query);
+
+    while (my($id, $obj) = each %$users_href) {
+        my $gid;
+        $sth->execute($id);
+        $sth->bind_col(1, \$gid);
+        push @{$obj->{group_ids}}, $gid while $sth->fetch();
+    }
+}
+
+
+# validate 'group_ids' field
+# returns either an exception or a hash of group_ids and permission_types
+sub _validate_group_ids {
+    my $self = shift;
+    my (@bad_groups, %types);
+
+    for (@{$self->{group_ids}}) {
+        my ($group) = Krang::Group->find(group_id => $_);
+          if (not(defined($group)) ||
+              not(ref($group)) ||
+              not(UNIVERSAL::isa($group, 'Krang::Group'))) {
+              push @bad_groups, $_;
+          } else {
+              my $type = $group->admin_users == 0 ? 'hide' :
+                ($group->admin_users_limited ? 'read-only' : 'edit');
+              $types{$group->group_id} = $type;
+          }
+    }
+
+    Krang::User::InvalidGroup->throw(message => 'Invalid group_id in object',
+                                     group_id => \@bad_groups)
+        if @bad_groups;
+
+    return %types;
 }
 
 

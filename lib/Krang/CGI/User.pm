@@ -43,12 +43,6 @@ use constant DELETE_FIELDS => qw(Krang::User::USER_RW
 				 password
 				 current_group_ids);
 
-# convenience alias
-my %user_groups = %Krang::User::user_groups;
-
-# number of possible options in group_id select
-my $size = scalar keys %user_groups;
-
 
 ##############################
 #####  OVERRIDE METHODS  #####
@@ -511,6 +505,9 @@ sub get_user_params {
     my $q = $self->query();
     my %user_tmpl;
 
+    # build hash of Krang::Group permission groups...
+    my %user_groups = map {$_->group_id => $_->name} Krang::Group->find();
+
     # make group_ids multi-select
     my @cgids = $q->param('errors') ? $q->param('current_group_ids') :
       $user->group_ids;
@@ -520,7 +517,7 @@ sub get_user_params {
       {id => $_, name => $user_groups{$_}} for @pgids;
     push @{$user_tmpl{current_group_ids}},
       {id => $_, name => $user_groups{$_}} for @cgids;
-    $user_tmpl{size} = $size;
+    $user_tmpl{size} = scalar keys %user_groups;
 
     # loop through User fields
     if ($q->param('errors')) {
@@ -572,7 +569,16 @@ sub update_user {
                 }
             }
             return %errors;
+        } elsif (ref $@ && $@->isa('Krang::User::InvalidGroup')) {
+            my $ids = $@->group_id;
+            my $error = (defined $ids && ref $ids) ? 'error_invalid_group_id' :
+              'error_null_group';
+            $errors{$error} = 1;
+            $q->param('errors', 1);
+            add_message($error);
+            return %errors;
         } else {
+            # it's somebody else's problem :)
             croak($@);
         }
     }

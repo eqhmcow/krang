@@ -50,6 +50,18 @@ INSERT INTO desk_group_permission VALUES (2, 2, "edit");
 INSERT INTO desk_group_permission VALUES (1, 3, "hide");
 INSERT INTO desk_group_permission VALUES (2, 3, "hide");
 
+/* Join table: user <-> permission_group */
+DROP TABLE IF EXISTS user_group_permission;
+CREATE TABLE user_group_permission (
+        user_id         INT UNSIGNED NOT NULL,
+        group_id	INT UNSIGNED NOT NULL,
+        permission_type	ENUM('edit','hide','read-only') NOT NULL DEFAULT "edit",
+        PRIMARY KEY (user_id, group_id)
+);
+
+/* set default user permissions */
+INSERT INTO user_group_permission VALUES (1,1,'edit');
+
 /* Join table: category <-> permission_group */
 DROP TABLE IF EXISTS category_group_permission;
 CREATE TABLE category_group_permission (
