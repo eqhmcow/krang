@@ -49,7 +49,7 @@ eval { Krang::Group->new(%test_params, no_such_param => 1) };
 like($@, qr(Can't locate object method "no_such_param" via package "Krang::Group"), 'Test invalid create param');
 
 
-# Test accessor/mutators
+# Test scalar methods
 my @scalar_params = qw( name
                         may_publish
                         admin_users
@@ -68,6 +68,7 @@ for (@scalar_params) {
     is($group->$_(), $val, "Get $_");
 }
 
+# Test hash methods
 my @hash_params = qw( categories
                       desks
                       applications );
@@ -78,6 +79,10 @@ for (@hash_params) {
     is($group->$_($val), "true", "Get $_");
 }
 
+
+# Test find() for invalid arg handling
+eval { Krang::Group->find( no_such_find_arg => 1) };
+like($@, qr(Invalid find arg), 'Test invalid find arg');
 
 
 ##  Debugging output

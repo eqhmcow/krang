@@ -373,7 +373,15 @@ corrupting the database.
 
 Maintenance of the category_group_permission_cache table is managed by
 the Krang::Group module which is called when categories or groups are
-changed.
+changed.  If it is necessary to rebuild the cache from the ground up, 
+the class function rebuild_catagory_cache() is provided.  This can be 
+invoked as follows:
+
+  perl -MKrang::Group -e 'Krang::Group->rebuild_catagory_cache()'
+
+This method may take some time to complete during which a running system will 
+not function normally.  If it is necessary to rebuild the cache table
+it is recommended that the Krang instance be shut down first.
 
 
 =item * Assets
