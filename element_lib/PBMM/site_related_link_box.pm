@@ -74,7 +74,7 @@ sub fill_template {
     
         foreach my $s (@stories) {
             next if ($s->story_id == $story->story_id);
-            next if ($matched{$s->story_id} == 1);
+            next if ($matched{$s->story_id});
             my %ps;
             $ps{title} = $s->element->child('promo_title')->data || $s->title;
             $ps{url} = $s->url;
