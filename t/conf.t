@@ -15,7 +15,8 @@ EnableSiteServer 1
 SiteServerAddr 127.0.0.1
 SiteServerPort 8080
 LogLevel 2
-FTPAddress localhost
+FTPAddress 127.0.0.1
+FTPHostName localhost
 FTPPort 2121
 SMTPServer localhost
 FromAddress krangmailer\@localhost.com
