@@ -248,7 +248,7 @@ sub associate_search {
     # Get media or story object from session -- or die() trying
     my $ass_obj = $self->get_ass_obj();
 
-    my $t = $self->load_tmpl("associate_list_view.tmpl", associate=>$q);
+    my $t = $self->load_tmpl("associate_list_view.tmpl", associate=>$q, loop_context_vars=>1);
     $t->param(%ui_messages) if (%ui_messages);
 
     # Set Boolean for H::T
@@ -303,22 +303,41 @@ sub associate_search {
     # To be replaced with paging
     my %contrib_type_prefs = Krang::Pref->get('contrib_type');
     my @contrib_tmpl_data = ();
+
+    # Iterate through each contributor
     foreach my $c (@contributors) {
         my @contrib_type_ids = ( $c->contrib_type_ids() );
+
+        # Iterate for each contrib TYPE
+        my $contrib_type_count = 0;
+        my %contrib_tmpl_data = (
+                                 last => $c->last(),
+                                 first => $c->first(),
+                                 middle => $c->middle(),
+                                 contrib_types => [],
+                                );
         foreach my $contrib_type_id (@contrib_type_ids) {
 
             # Skip this contrib if it's already associated
             my $contrib_id_type = sprintf("%d:%d", $c->contrib_id, $contrib_type_id);
             next if (exists($associated_contrib_id_types{$contrib_id_type}));
 
-            push(@contrib_tmpl_data, {
-                                      contrib_id => $c->contrib_id(),
-                                      last => $c->last(),
-                                      first => $c->first(),
-                                      middle => $c->middle(),
-                                      contrib_type_id => $contrib_type_id,
-                                      type => $contrib_type_prefs{$contrib_type_id},
-                                     });
+
+            # Push contrib-type data
+            push(@{$contrib_tmpl_data{contrib_types}}, {
+                                                        contrib_id => $c->contrib_id(),
+                                                        contrib_type_id => $contrib_type_id,
+                                                        type => $contrib_type_prefs{$contrib_type_id},
+                                                       });
+            $contrib_type_count++;
+        }
+
+        if ($contrib_type_count) {
+            # Set up ROW SPAN based on count of types for this contrib
+            $contrib_tmpl_data{contrib_row_span} = $contrib_type_count;
+
+            # Push contrib to template
+            push(@contrib_tmpl_data, \%contrib_tmpl_data);
         }
     }
 
