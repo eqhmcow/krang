@@ -21,7 +21,7 @@ my $page = $element->children()->[1];
 isa_ok($page, "Krang::Element");
 is($page->name, $page->class->name);
 is($page->display_name, "Page");
-is(@{$page->children}, 1);
+is(@{$page->children}, 2);
 
 # add five paragraphs
 ok($page->add_child(class => "paragraph", data => "bla1 "x40));
@@ -29,7 +29,7 @@ ok($page->add_child(class => "paragraph", data => "bla2 "x40));
 ok($page->add_child(class => "paragraph", data => "bla3 "x40));
 ok($page->add_child(class => "paragraph", data => "bla4 "x40));
 ok($page->add_child(class => "paragraph", data => "bla5 "x40));
-is(@{$page->children}, 6);
+is(@{$page->children}, 7);
 
 # fill in deck
 $element->children()->[0]->data("deck deck deck");
@@ -44,7 +44,7 @@ eval <<END;
   foreach_element { print \$_->name, "\n"; \$count++ } \$element;
 END
 die $@ if $@;
-is($count, 9);
+is($count, 10);
 
 # remember the current state of the page and make some changes
 $page->remember();
@@ -54,7 +54,7 @@ is(@{$page->children}, 1);
 
 # get back to where we once belonged
 $page->rollback();
-is(@{$page->children}, 6);
+is(@{$page->children}, 7);
 
 # can't forget or rollback with no memory
 eval { $page->rollback(); };
@@ -89,7 +89,7 @@ is($loaded->children()->[0]->name, "deck");
 my $lpage = $loaded->children()->[1];
 my $x = 0;
 foreach my $para ($lpage->children) {
-    if ($x) {
+    if ($x > 1) {
         ok($para->data);
         like($para->data, qr/bla$x/);
     }
