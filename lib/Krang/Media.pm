@@ -978,8 +978,13 @@ sub find {
     # add join to category table if site_id param is passed in.
     if ($args{site_id}) {
         $where_string .= ' and ' if $where_string;
-        $where_string .= "(media.category_id = category.category_id) AND (category.site_id=?)";
-        push @where, 'site_id';
+        $where_string .= "(media.category_id = category.category_id) AND ";
+        if (ref $args{site_id} eq 'ARRAY') {
+            $where_string .= '(' . join(" OR ", map { "(category.site_id = $_) " } @{$args{site_id}}) . ')';
+        } else {
+            $where_string .= "(category.site_id=?)";
+            push @where, 'site_id';
+        }
     }
 
     # add filename_like to where_string if present

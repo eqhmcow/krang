@@ -405,6 +405,9 @@ $medias[1]->delete();
     $ptest_count = Krang::Media->find(may_edit=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
     is($ptest_count, 1, "Hide un-editable media");
 
+    # test site_id as arrayref in find
+    $ptest_count = Krang::Media->find(site_id => [$ptest_root_cat->site_id, $subcat->site_id], count => 1);
+    ok($ptest_count, 'find(category_id => [ids])');
 
     # attempt to retrieve all media objects under the site
     my @all_media = Krang::Media->find(site_id => $ptest_site->site_id);
