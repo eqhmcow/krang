@@ -2,6 +2,9 @@ package PBMM::category;
 use strict;
 use warnings;
 
+use PBMM::category_ocs;
+use Carp qw(croak);
+
 =head1 NAME
 
 PBMM::category
@@ -19,6 +22,7 @@ sub new {
    my $pkg = shift;
    my %args = ( name => 'category',
                 children => [
+                             PBMM::category_ocs->new(),
                     Krang::ElementClass::Text->new(name => 'display_name',
                                                             allow_delete => 0,
                                                             min => 1,
@@ -96,6 +100,28 @@ sub fill_template {
     }
  
     $self->SUPER::fill_template( %args ); 
+}
+
+# export to OCS on save
+sub save_hook {
+    my $self = shift;
+    my %arg = @_;
+    my $element = $arg{element};
+    my ($category_ocs) = $element->match('/category_ocs[0]');
+    croak("Cannot find category_ocs child for article.")
+      unless $category_ocs;
+    $category_ocs->class->ocs_export_category(element => $category_ocs);
+}
+
+# remove from OCS on delete
+sub delete_hook {
+    my $self = shift;
+    my %arg = @_;
+    my $element = $arg{element};
+    my ($category_ocs) = $element->match('/category_ocs[0]');
+    croak("Cannot find category_ocs child for article.")
+      unless $category_ocs;
+    $category_ocs->class->ocs_unexport_category(element => $category_ocs);
 }
 
 1;

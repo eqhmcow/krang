@@ -6,6 +6,15 @@ use PBMM::promo;
 
 use base 'Krang::ElementClass::Cover';
 
+use PBMM::ocs_hooks qw(_publish delete_hook);
+
+# wrap ocs_hooks::_publish since SUPER doesn't work in exported methods
+sub publish {
+    my $self = shift;
+    
+    return $self->_publish(@_) . $self->SUPER::publish(@_);
+}
+
 sub new {
    my $pkg = shift;
    my @fixed = (min  => 1,
@@ -14,6 +23,7 @@ sub new {
                  allow_delete => 0);
    my %args = ( name => 'cover',
                 children => [
+                    PBMM::story_ocs->new(),
                     PBMM::meta->new(),
                     Krang::ElementClass::Text->new(name => 'issue_id',
                                        max  => 1),

@@ -4,6 +4,21 @@ use warnings;
 use base 'Krang::ElementClass::TopLevel';
 use PBMM::meta;
 use PBMM::promo;
+use OCS::Exporter;
+use Time::Piece;
+use Carp qw(croak);
+use Krang::Log qw(debug);
+
+use PBMM::ocs_hooks qw(_publish delete_hook);
+
+# wrap ocs_hooks::_publish since SUPER doesn't work in exported methods
+sub publish {
+    my $self = shift;
+    
+    return $self->_publish(@_) . $self->SUPER::publish(@_);
+}
+
+
 
 sub new {
     my $pkg = shift;
@@ -18,11 +33,12 @@ sub new {
        name => 'article',
        children => 
        [
-        PBMM::meta->new(),
         Krang::ElementClass::Text->new(name => 'issue_id',
                                        max  => 1),
         Krang::ElementClass::Text->new(name => 'article_id',
                                        max  => 1),
+        PBMM::story_ocs->new(),
+        PBMM::meta->new(),
         Krang::ElementClass::Text->new(name => 'source',
                                        max  => 1),
         Krang::ElementClass::Textarea->new(name => 'byline',

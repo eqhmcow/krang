@@ -6,6 +6,15 @@ use PBMM::promo;
 
 use base 'Krang::ElementClass::TopLevel';
 
+use PBMM::ocs_hooks qw(_publish delete_hook);
+
+# wrap ocs_hooks::_publish since SUPER doesn't work in exported methods
+sub publish {
+    my $self = shift;
+    
+    return $self->_publish(@_) . $self->SUPER::publish(@_);
+}
+
 sub new {
    my $pkg = shift;
    my @fixed = (min  => 1,
@@ -16,6 +25,7 @@ sub new {
    my %args = ( name => 'category_archive',
                 children =>
                 [
+                PBMM::story_ocs->new(),
                 Krang::ElementClass::CheckBox->new(name => 'enhanced_content',
                                            @fixed),
                 Krang::ElementClass::CheckBox->new(name => 'automatic_leadins',
@@ -46,8 +56,7 @@ sub new {
 
 sub fill_template {
     my ($self, %args) = @_;
-                                                                                
-    my $tmpl      = $args{tmpl};
+                                                                                    my $tmpl      = $args{tmpl};
     my $story   = $args{element}->object;
     my $publisher = $args{publisher};
 

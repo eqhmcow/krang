@@ -3,9 +3,19 @@ use strict;
 use warnings;
 use PBMM::meta;
 use PBMM::promo;
-                                                                           
+use PBMM::story_ocs;
 
 use base 'Krang::ElementClass::TopLevel';
+
+use PBMM::ocs_hooks qw(_publish delete_hook);
+
+# wrap ocs_hooks::_publish since SUPER doesn't work in exported methods
+sub publish {
+    my $self = shift;
+    
+    return $self->_publish(@_) . $self->SUPER::publish(@_);
+}
+
 
 sub new {
    my $pkg = shift;
@@ -20,6 +30,7 @@ sub new {
                                        max  => 1),
                     Krang::ElementClass::Text->new(name => 'article_id',
                                        max  => 1),
+                             PBMM::story_ocs->new(),
                     Krang::ElementClass::Textarea->new(name => 'byline',
                                            max => 1),
                     Krang::ElementClass::Textarea->new(name => 'deck',
