@@ -158,11 +158,13 @@ The following tasks will roll back an upgrade to the previously installed state.
 
   --KrangRoot            - Directory where Krang is installed (KRANG_ROOT)
   --MySQLRootPassword    - Password for the MySQL user "root"
+  --AdminPassword        - CMS "admin" user password -- needed for tests
 
 
 =head2 Upgrade flags
 
   --no-krang-test        - Skip Krang "make test"
+  --rollback             - Revert to last backup
 
 
 =head1 SEE ALSO
@@ -176,7 +178,6 @@ Refer to F<docs/ops_upgrade.pod>.
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
 use FindBin qw($RealBin);
 use Config;
-use Config::ApacheFormat;
 
 
 # Set up KRANG_ROOT and PERL5LIB
@@ -195,6 +196,7 @@ BEGIN {
 use Krang;
 use Getopt::Long;
 use Pod::Usage;
+use Config::ApacheFormat;
 
 
 my @original_args = ();
@@ -204,9 +206,9 @@ my $mysql_datadir;
 my $OLD_CONF;
 
 
-my ($help, $man, $no_krang_test);
+my ($help, $man, $no_krang_test, $rollback);
 
-my @opt_params = qw( KrangRoot MySQLRootPassword );
+my @opt_params = qw( KrangRoot MySQLRootPassword AdminPassword );
 
 my %options = ( map { $_ => "" } @opt_params);
 
@@ -242,6 +244,11 @@ sub check_prereqs {
     # Must be running as root.
     exit_error("Must be run as root.") unless ($> eq "0");
 
+    # Can't test unless we have AdminPassword
+    unless ($no_krang_test || $options{AdminPassword}) {
+        exit_error("Must specify AdminPassword, or disable Krang tests.  Cannot continue.");
+    }
+
     # Validate path to KRANG_ROOT.
     my $KrangRoot = $options{KrangRoot};
     unless (-e $KrangRoot) {
@@ -256,7 +263,7 @@ sub check_prereqs {
 
     # LOAD OLD KRANG_CONF
     # Start by getting old conf valid directives
-    my $get_directives_perl = qq( print join("\t", \@Krang::Conf::VALID_DIRECTIVES). "\n"; );
+    my $get_directives_perl = qq( print join("\\t", \@Krang::Conf::VALID_DIRECTIVES). "\\n"; );
     my $get_directives_cmd = "KRANK_CONF_NOCHECK=1 KRANG_CONF=$krang_conf ". PERL_BIN;
     $get_directives_cmd .= " -MKrang::Conf -e '$get_directives_perl' && echo \"Success $uniqueness\"";
 
@@ -267,7 +274,15 @@ sub check_prereqs {
         exit_error("Error getting valid directives.  Cannot continue.");
     }
 
-    my @old_valid_directives = (split(/\t/, $get_directives_output));
+    # Trim off the last line
+    my ($get_directives_output_line1) = split(/\n/, $get_directives_output);
+
+    my @old_valid_directives = ();
+    foreach my $dir (split(/\t/, $get_directives_output_line1)) {
+        push(@old_valid_directives, $dir);
+    }
+
+
     eval {
         $OLD_CONF = Config::ApacheFormat->new( valid_directives => \@old_valid_directives,
                                                valid_blocks => ['instance'] );
@@ -329,7 +344,8 @@ sub check_prereqs {
       if (-e $krang_root_backup);
 
     # Verify that no .backup exists for instance databases.  Parse out instances and databases for later.
-    foreach my $instance ($OLD_CONF->get("instance")) {
+    foreach my $instpair ($OLD_CONF->get("instance")) {
+        my $instance = $instpair->[1];
         my $conf_block = $OLD_CONF->block(instance => $instance);
         my $db = $conf_block->get("InstanceDBName");
         $instance_dbs{$instance} = $db;
@@ -492,8 +508,8 @@ sub make_test {
 
     my $AdminPassword = $options{AdminPassword};
 
-    my $UpgradePath =  $options{UpgradePath};
-    chdir($UpgradePath);
+    my $InstallPath = $options{KrangRoot};
+    chdir($InstallPath);
 
     my $make_bin = MAKE_BIN;
     my $make_test = "KRANG_ROOT='' PERL5LIB='' KRANG_PASSWORD='$AdminPassword' $make_bin test";
@@ -552,10 +568,11 @@ sub setup_getopts {
     @original_args = @ARGV;
 
     pod2usage(2) unless
-        GetOptions( 'help'      => \$help,
-                    'man'       => \$man,
+        GetOptions( 'help'          => \$help,
+                    'man'           => \$man,
                     'no-krang-test' => \$no_krang_test,
-                    (map { $_."=s" => \$options{$_} } @opt_params) );
+                    'rollback'      => \$rollback,
+                    (map { $_."=s"  => \$options{$_} } @opt_params) );
 
     pod2usage(1)             if $help;
     pod2usage(-verbose => 2) if $man;
