@@ -9,10 +9,11 @@ CREATE TABLE category (
         dir		varchar(255) NOT NULL,
         parent_id	int UNSIGNED,
         site_id		int UNSIGNED,
-        url		text NOT NULL,
+        url		varchar(255) NOT NULL,
         PRIMARY KEY (category_id),
         KEY (element_id),
         KEY (dir),
         KEY (parent_id),
-        KEY (site_id)
+        KEY (site_id),
+        KEY (url)
 ) TYPE=MyISAM;
