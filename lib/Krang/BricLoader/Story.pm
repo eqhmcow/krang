@@ -263,7 +263,7 @@ sub _map_simple {
     $self->{title} = delete $self->{name};
 
     # element becomes class
-    ($self->{class} = lc delete $self->{element}) =~ s/ /_/g;
+    $self->{class} = _process_name(delete $self->{element});
 
     # cover_date
     my $tmp = Time::Piece->strptime($self->{cover_date}, "%FT%TZ");
@@ -280,6 +280,17 @@ sub _map_simple {
         croak("No matching contributor found!") unless $contrib;
         push @{$self->{contribs}}, $contrib;
     }
+}
+
+# process name for use as an identifier
+sub _process_name {
+    my $name = shift;
+    $name = lc($name);
+    $name =~ s/\s+/_/g;
+    $name =~ s/-/_/g;
+    $name =~ s/[^\w]/_/g;
+    $name =~ s/_+/_/g;
+    return $name;
 }
 
 # serializes story subelements into xml similar to

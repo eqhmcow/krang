@@ -98,7 +98,9 @@ sub new {
     croak("\nNo Categories defined in input.\n")
       unless exists $ref->{category};
 
-    for my $c(@{$ref->{category}}) {
+    my @tmp = sort {$a->{path} cmp $b->{path}} @{$ref->{category}};
+
+    for my $c(@tmp) {
         # skip root categories, created by the Site object????
         next if exists $parent_info{$c->{path}};
 

@@ -181,11 +181,12 @@ sub add {
     } elsif ($file and $path and $from) {
         my $full_path = catfile($self->{dir}, $path);
         mkpath((splitpath($full_path))[1]);
-        copy($file, $full_path)
-          or croak("Unable to copy file '$file' to '$full_path' : $!");
 
-        # delete media tmpdir
-        rmtree($from->{dir});
+        # write file to $full_path
+        my $fh = IO::File->new(">$full_path") or
+          croak("Can't write to '$full_path'");
+        $fh->print($file);
+        $fh->close;
 
         # register file with caller
         my ($from_class, $from_id) = _obj2id($from);

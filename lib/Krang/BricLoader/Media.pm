@@ -70,15 +70,20 @@ sub new {
     my ($pkg, %args) = @_;
     my $self = bless({},$pkg);
     my $path = $args{path};
+    my $xml = $args{xml};
     my ($base, @media, $new_path, $ref);
 
     # set tmpdir
     $self->{dir} = tempdir(DIR => catdir(KrangRoot, 'tmp'));
 
-    croak("File '$path' not found on the system!") unless -e $path;
-    $base = (splitpath($path))[2];
-    $new_path = catfile($self->{dir}, $base);
-    link($path, $new_path);
+    if ($path) {
+        croak("File '$path' not found on the system!") unless -e $path;
+        $base = (splitpath($path))[2];
+        $new_path = catfile($self->{dir}, $base);
+        link($path, $new_path);
+    } elsif ($xml) {
+        $new_path = $xml;
+    }
 
     $ref = XMLin($new_path,
                  forcearray => ['media'],
@@ -100,7 +105,7 @@ sub new {
         $m->_build_url;
 
         # write file
-        $m->_write_file();
+#        $m->_write_file();
 
         push @media, $m;
     }
@@ -129,7 +134,7 @@ sub serialize_xml {
 
     # write media file into data set
     my $path = "media_$self->{media_id}/$self->{filename}";
-    $set->add(file => $self->{file_path}, path => $path, from => $self);
+    $set->add(file => $self->{file}->{data}, path => $path, from => $self);
 
     my %media_type = Krang::Pref->get('media_type');
 
@@ -163,6 +168,12 @@ sub serialize_xml {
 
     # all done
     $writer->endTag('media');
+}
+
+
+sub DESTROY {
+    my $self = shift;
+    rmtree($self->{dir}) if $self->{dir};
 }
 
 
@@ -215,17 +226,29 @@ sub _map_simple {
 
     # set version to 1
     $self->{version} = 1;
+
+    # file contents
+#    $self->{data} = delete $self->{file}->{data};
 }
 
 # Outputs file content
 sub _write_file {
     my ($self) = @_;
     my $path = $self->{file_path};
+    my $data = delete $self->{file}->{data};
 
     my $fh = IO::File->new(">$path") or
       croak("Unable to open '$path' for writing: $!.");
-    $fh->print(delete $self->{file}->{data});
+    $fh->print($data);
     $fh->close;
+
+    # DEBUG
+    if (-e $path) {
+        print STDERR "\n\nWrote image to: $path\n\n";
+
+    } else {
+        print STDERR "\n\n", __PACKAGE__, "->_write_file FAILED!\n\n";
+    }
 }
 
 

@@ -167,7 +167,7 @@ BEGIN {
                "set-name=s"		=> \$set_name,
                "site-doc=s"		=> \$site_doc,
                "timeout=s"		=> \$timeout,
-               "user=s"			=> \$username,
+               "username=s"		=> \$username,
                "verbose"		=> \$verbose)
       or pod2usage;
 
@@ -282,6 +282,7 @@ here based on the command-line options of the script.
 sub main {
     # set temp_path
     $temp_path = tempdir(DIR => catdir(KrangRoot, 'tmp'));
+    print STDERR "Temporary output is in: $temp_path\n" if DEBUG;
 
     # create element library
     unless ($no_elements) {
@@ -348,7 +349,8 @@ sub main {
     }
 
     # remove temp dir
-    rmtree($temp_path) if $temp_path;
+    rmtree($temp_path) unless DEBUG;
+
 }
 
 
@@ -396,7 +398,6 @@ sub get_assets {
 
     while (my @slice = splice(@ids, 0, 20)) {
         my $out = bric_soap($module, 'export', @slice);
-        push @objs, $pkg->new(xml => $out);
 
         if (DEBUG) {
             my $path = catfile($temp_path, "$module\_$i\.xml");
@@ -406,6 +407,9 @@ sub get_assets {
             $wh->close;
             $i++;
         }
+
+        push @objs, $pkg->new(xml => $out);
+
     }
 
     return @objs;
