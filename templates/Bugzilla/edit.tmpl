@@ -6,7 +6,7 @@
 </tmpl_if>
 
 <div class=dark-bar>Submit a Bug</div>
-<form name="bug_form" method="post">
+<form name="bug_form" method="post" action="bug.cgi">
 <table cellspacing="0" width="100%">
 <tr class="form-cell">
 <td class="form-cell">*<b>Summary</b> </td><td class="form-cell"><input type="text" size="60" name="summary" value="<tmpl_var escape=HTML summary>" <tmpl_if no_summary>class="invalid"</tmpl_if>><p>
