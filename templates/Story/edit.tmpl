@@ -120,7 +120,7 @@
 <tr>
 <td>Contributors:</td>
 <td>
-<tmpl_if contribs>
+<tmpl_if contribs_loop>
   <tmpl_loop contribs_loop>
      <tmpl_var first_name> <tmpl_var last_name> (<tmpl_var type>)
   </tmpl_loop>

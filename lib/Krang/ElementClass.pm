@@ -224,6 +224,21 @@ sub input_form {
                                  override => 1);
 }
 
+=item C<< $html = $class->view_data(element => $element) >>
+
+Called to return the HTML to use in the element view screen.  This is
+a static representation of the data in an element.  The default
+implementation returns the contents of C<< $element->data >> with all
+HTML tags escaped for display.
+
+=cut
+
+sub view_data {
+    my ($self, %arg) = @_;
+    my ($element) = @arg{qw(element)};
+    return CGI->escapeHTML($element->data || "");
+}
+
 =item C<< ($bool, $msg) = $class->validate(element => $element, query => $query) >>
 
 Given the CGI.pm query object from a form submission, this call must

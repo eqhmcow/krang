@@ -1,0 +1,106 @@
+<tmpl_include header.tmpl>
+
+<form method=post name=view>
+  <input type=hidden name=rm value=view>
+  <input type=hidden name=return_to value="<tmpl_var escape=html return_to>">
+  <input type=hidden name=story_id value="<tmpl_var story_id>">
+
+<div class="dark-bar">
+<span class="left">View Story</span>
+<span class="right"><a href="javascript:goto_log()">Log</a> | <a href="javascript:goto_help()">Help</a></span>
+</div>
+
+<p>
+
+<table width=100% cellpadding=2 cellspacing=0>
+
+<tr class=form-head>
+<td colspan=2>Information</td>
+</tr>
+
+<tr>
+<td class=form-cell width=30%>ID:</td>
+<td class=form-cell width=70%><tmpl_var story_id></td>
+</tr>
+
+<tr>
+<td class=form-cell>Type:</td>
+<td class=form-cell><tmpl_var type></td>
+</tr>
+
+<tr>
+<td class=form-cell>Version:</td>
+<td class=form-cell><tmpl_var version></td>
+</tr>
+
+<tmpl_if is_root>
+<tr>
+<td class=form-cell>Published Version:</td>
+<td class=form-cell><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td>
+</tr>
+
+<tr>
+<td class=form-cell>Title:</td>
+<td class=form-cell><tmpl_var title></td>
+</tr>
+
+<tr>
+<td class=form-cell>Slug:</td>
+<td class=form-cell><tmpl_var slug></td>
+</td>
+</tr>
+</tmpl_if>
+
+<tr>
+<td class=form-cell>URL:</td>
+<td class=form-cell><a href="#"><tmpl_var url></a></td>
+</tr>
+
+<tmpl_if is_root>
+<tr>
+<td class=form-cell>Categories:</td>
+<td class=form-cell><tmpl_loop category_loop><tmpl_var url><br></tmpl_loop></td>
+</tr>
+
+<tr>
+<td class=form-cell>Cover Date:</td>
+<td class=form-cell><tmpl_var cover_date></td>
+</tr>
+
+<tr>
+<td class=form-cell>Priority:</td>
+<td class=form-cell><tmpl_var priority></td>
+</tr>
+
+<tr>
+<td class=form-cell>Contributors:</td>
+<td class=form-cell>
+<tmpl_if contribs>
+  <tmpl_loop contribs_loop>
+     <tmpl_var first_name> <tmpl_var last_name> (<tmpl_var type>)
+  </tmpl_loop>
+<tmpl_else>
+  None.
+</tmpl_if>
+</td>
+</tr>
+
+</tmpl_if>
+
+</table>
+
+<p>
+
+<tmpl_include /element_editor_view.tmpl>
+
+<p>
+
+<div class=button-bar>
+  <tmpl_if parent_path>
+    <input type=button value="Return" onclick="view_path('<tmpl_var parent_path>')">
+  <tmpl_else>
+    <input type=button value="Return" onclick="return()">
+  </tmpl_if>
+</div>
+
+</form>

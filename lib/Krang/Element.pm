@@ -888,6 +888,7 @@ BEGIN {
                           thaw_data
                           build_url
                           param_names
+                          view_data
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 

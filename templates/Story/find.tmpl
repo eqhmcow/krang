@@ -6,6 +6,11 @@
     document.find_story.story_id.value = id;
     document.find_story.submit();
   }
+  function view_story (id) {
+    document.find_story.rm.value = 'view';
+    document.find_story.story_id.value = id;
+    document.find_story.submit();
+  }
 </script>
 
 <form method=post name=find_story>
@@ -31,7 +36,7 @@
 <td class=form-cell><tmpl_var story_id></td>
 <td class=form-cell><tmpl_var title></td>
 <td class=form-cell><tmpl_var url></td>
-<td class=form-cell><a href="javascript:edit_story(<tmpl_var story_id>)">Edit</a></td>
+<td class=form-cell><a href="javascript:edit_story(<tmpl_var story_id>)">Edit</a> <a href="javascript:view_story(<tmpl_var story_id>)">View</a></td>
 </tr>
 
 </tmpl_loop>

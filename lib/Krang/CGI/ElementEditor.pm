@@ -164,6 +164,46 @@ sub element_edit {
 }
 
 
+sub element_view {
+    my ($self, %args) = @_;
+    my $query    = $self->query();
+    my $template = $args{template};
+    my $root     = $args{element}; 
+    my $path    = $query->param('path') || '/';
+
+    # find the element being edited using path
+    my $element = _find_element($root, $path);
+
+    # crumbs let the user jump up the tree
+    my $pointer = $element;
+    my @crumbs;
+    do {
+        unshift(@crumbs, { name => $pointer->display_name,
+                           path => $pointer->xpath,
+                         });
+        $pointer = $pointer->parent;
+    } while ($pointer);
+    $template->param(crumbs => \@crumbs) unless @crumbs == 1;
+
+    my @child_loop;
+    my @children = $element->children;
+    
+    # figure out list of slots that are reorderable
+    foreach my $child (@children) {        
+        push(@child_loop, {
+                           data         => $child->view_data(),
+                           name         => $child->display_name(),
+                           path         => $child->xpath(),
+                           is_container => $child->is_container,
+                          });
+    }
+    $template->param(child_loop => \@child_loop,
+                     parent_path => ($element->parent ?
+                                     $element->parent->xpath : 0),
+                    );
+    
+}
+
 # add sub-elements
 sub add {
     my $self = shift;

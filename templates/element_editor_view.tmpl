@@ -1,0 +1,36 @@
+<script language=javascript>
+
+  function view_path(p) {
+    document.forms[0].path.value = p;
+    document.forms[0].submit();
+  }
+
+</script>
+
+<input type=hidden name=path value="<tmpl_var path>">
+
+<table border=0 width=100% cellpadding=0 cellspacing=0>
+  <tr class=form-head>
+    <td colspan=2>Content<tmpl_if crumbs>&nbsp;&nbsp;&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:view_path("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if>
+<br></td>
+  </tr> 
+
+ <tmpl_loop child_loop>
+  <tr>
+    <td width=30% align=left class="form-cell">
+      <tmpl_var name>
+    </td>
+
+    <td width=70% align=left class="form-cell">
+      <tmpl_if is_container><input type=button value=View onClick='view_path("<tmpl_var path>")'>&nbsp;</tmpl_if>
+      <tmpl_var data>
+    </td>
+  </tr>
+ </tmpl_loop>
+
+ <tmpl_unless child_loop>
+   <tr><td colspan=2 class=form-cell>No sub-elements defined.</td></tr>
+ </tmpl_unless>
+
+</table>
+

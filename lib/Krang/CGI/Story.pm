@@ -53,6 +53,7 @@ sub setup {
                      new_story        => 'new_story',
                      create           => 'create',
                      edit             => 'edit',
+                     view             => 'view',
                      find             => 'find',
                      save             => 'save',
                      save_and_jump    => 'save_and_jump',
@@ -206,13 +207,12 @@ sub edit {
     }
         
     # run the element editor edit
-    $self->SUPER::element_edit(template => $template);
+    $self->SUPER::element_edit(template => $template, 
+                               element => $story->element);
     
     # static data
     $template->param(story_id          => $story->story_id,
                      type              => $story->element->display_name,
-                     version           => $story->version,
-                     published_version => $story->published_version,
                      url               => $story->url);
 
     # edit fields for top-level
@@ -220,6 +220,8 @@ sub edit {
         $template->param(is_root           => 1,
                          title             => $story->title,
                          slug              => $story->slug,
+                         version           => $story->version,
+                         published_version => $story->published_version,
                         );
                              # select boxes
         $template->param(cover_date_selector =>
@@ -234,8 +236,8 @@ sub edit {
                                                          3 => "High" }));
         my @contribs_loop;
         foreach my $contrib ($story->contribs) {
-            push(@contribs_loop, { first_name => $contrib->first_name,
-                                   last_name  => $contrib->last_name,
+            push(@contribs_loop, { first_name => $contrib->first,
+                                   last_name  => $contrib->last,
                                    type       => $contrib->selected_contrib_type});
         }
         $template->param(contribs_loop => \@contribs_loop);
@@ -269,6 +271,72 @@ sub edit {
     return $template->output();
 }
 
+
+=item view
+
+The story viewing interface.  Expects to receive a story_id and,
+optionally, a version of the story to be viewed.
+
+=cut
+
+sub view {    
+    my $self = shift;
+    my $query = $self->query;
+    my $template = $self->load_tmpl('view.tmpl', 
+                                    associate         => $query,
+                                    die_on_bad_params => 0,
+                                    loop_context_vars => 1);
+    my %args = @_;
+              
+    # load story from DB
+    my $version = $query->param('version');
+    my ($story) = Krang::Story->find(story_id => $query->param('story_id'),
+                                     (defined $version ? 
+                                      (version => $version) : ()),
+                                    );
+    croak("Unable to load story '" . $query->param('story_id') . "'" . 
+          (defined $version ? ", version '$version'." : "."))
+      unless $story;
+    
+    # run the element editor edit
+    $self->SUPER::element_view(template => $template, 
+                               element  => $story->element);
+    
+    # static data
+    $template->param(story_id          => $story->story_id,
+                     type              => $story->element->display_name,
+                     url               => $story->url,
+                     version           => $story->version);
+
+    if (not $query->param('path') or $query->param('path') eq '/') {
+        # fields for top-level
+        $template->param(is_root           => 1,
+                         title             => $story->title,
+                         slug              => $story->slug,
+                         published_version => $story->published_version,
+                         priority => 
+                         ("Low","Medium","High")[$story->priority - 1],
+                        );
+
+        $template->param(cover_date => $story->cover_date->mdy("/"))
+          if $story->cover_date;
+
+        my @contribs_loop;
+        foreach my $contrib ($story->contribs) {
+            push(@contribs_loop, { first_name => $contrib->first_name,
+                                   last_name  => $contrib->last_name,
+                                   type       => $contrib->selected_contrib_type});
+        }
+        $template->param(contribs_loop => \@contribs_loop);
+        
+        $template->param(category_loop => 
+                         [ map { { url => $_->url } } $story->categories ]);
+        
+    }
+
+    return $template->output();
+}
+
 =item save
 
 If editing at the root (path = '/') then this mode saves the story to
@@ -292,7 +360,6 @@ sub save {
     # run element editor save and return to edit mode if errors were found.
     my $elements_ok = $self->element_save(@_);
     return $self->edit() unless $elements_ok;
-    debug "HERE";
 
     # if we're saving in the root then save the story itself
     if ($path eq '/') {
@@ -328,8 +395,11 @@ sub save {
         }
 
         # return to workspace if no jump or stay
-        return $self->Krang::CGI::Workspace::show_workspace()
-          unless $arg{stay} or $arg{jump_to};
+        unless ($arg{stay} or $arg{jump_to}) {
+            $self->header_props(-uri => 'workspace.pl');
+            $self->header_type('redirect');
+            return;
+        }
         
     }
     
