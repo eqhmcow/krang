@@ -505,6 +505,9 @@ sub find_template {
     my @search_path = $publisher->template_search_path();
     my $filename = $element->name() . '.tmpl';
 
+    # this is needed so that element templates don't get Krang's templates
+    local $ENV{HTML_TEMPLATE_ROOT} = "";
+
     # Attempt to instantiate an HTML::Template::Expr object with that
     # as the search path.
     my $template;
