@@ -417,15 +417,23 @@ sub get_publish_list {
     croak (__PACKAGE__ . ": Missing argument 'story'!\n") unless (exists($args{story}));
     my $story = $args{story};
 
+    # add this story to the publish list.
+    $self->{stories_to_be_published}{$story->story_id()} = 1;
     my @publish_list = ($story);
 
-    push @publish_list, $story->linked_stories();
+    push @publish_list, $self->_process_linked_assets(story => $story);
 
-    push @publish_list, $story->linked_media();
+    delete $self->{stories_to_be_published};
+    delete $self->{media_to_be_published};
+    delete $self->{stories_checked_for_links};
 
     return \@publish_list;
 
 }
+
+
+
+
 
 =item C<< $filename = $publisher->deploy_template(template => $template); >>
 
@@ -700,6 +708,58 @@ sub _build_filename {
 
     return $element->class()->filename() . $page . '.' . $element->class()->extension();
 
+}
+
+
+
+
+#
+# _process_linked_assets(story => $story);
+#
+#
+# This sub is the internal method used to walk the paths provided by
+# the lists of linked assets that every story contains.  This walk is
+# done recursively, the catch being that you do not want to add any
+# linked asset to the publish list more than once, and you don't want
+# to repeatedly process the same asset.
+#
+# This is a standard recursive walk - the internal hashes
+# 'stories_to_be_published', 'stories_checked_for_links', and
+# 'media_to_be_published' are used to make sure we're not getting
+# trapped in a cycle.
+#
+sub _process_linked_assets {
+
+    my $self = shift;
+    my %args = @_;
+
+    my @publish_list = ();
+
+    croak (__PACKAGE__ . ": Missing argument 'story'!\n") unless (exists($args{story}));
+    my $story = $args{story};
+
+    foreach ($story->linked_stories()) {
+        my $id = $_->story_id();
+        # check to see if this story has been added to the publish list.
+        next if (exists($self->{stories_to_be_published}{$id}));
+        $self->{stories_to_be_published}{$id} = 1;
+        push @publish_list, $_;
+        # check to see if we've examined this story for additional links.
+        next if (exists($self->{stories_checked_for_links}{$id}));
+        $self->{stories_checked_for_links}{$id} = 1;
+        # add whatever additional links it has to the list.
+        push @publish_list, $self->_process_linked_assets(story => $_);
+    }
+
+    foreach ($story->linked_media()) {
+        my $id = $_->media_id();
+        # check to see if this media object has been added to the publish list.
+        next if (exists($self->{media_to_be_published}{$id}));
+        $self->{media_to_be_published}{$id} = 1;
+        push @publish_list, $_;
+    }
+
+    return @publish_list;
 }
 
 
