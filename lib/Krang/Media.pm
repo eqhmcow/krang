@@ -535,11 +535,11 @@ sub file_size {
 }
 
 =item $width = $media->width()
-                                                                                
+
 Return width of image in pixels.
-                                                                                
+
 =cut
-                                                                                
+
 sub width {
     my $self = shift;
     if ($self->file_path()) {
@@ -551,11 +551,11 @@ sub width {
 }
 
 =item $width = $media->height()
-                                                                                
+
 Return height of image in pixels.
-                                                                                
+
 =cut
-                                                                                
+
 sub height {
     my $self = shift;
     if ($self->file_path()) {
