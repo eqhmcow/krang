@@ -191,8 +191,9 @@ our $s9 = Krang::Schedule->new(action => 'publish',
 eval {isa_ok($s9->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
 
+# day and week subtraction is off by an hour
 $next_run = Time::Piece->from_mysql_datetime($s9->{next_run}) - ONE_DAY +
-  ONE_HOUR + ONE_MINUTE;
+  ONE_MINUTE;
 ($next_run = $next_run->mysql_datetime) =~ s/:\d+$//;
 is($next_run, $now_mysql, 'next_run check 9');
 
@@ -228,8 +229,8 @@ our $s11 = Krang::Schedule->new(action => 'publish',
 eval {isa_ok($s11->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
 
-$next_run = Time::Piece->from_mysql_datetime($s11->{next_run}) - ONE_DAY +
-  ONE_HOUR;
+# day and week subtraction is off by an hour
+$next_run = Time::Piece->from_mysql_datetime($s11->{next_run}) - ONE_DAY;
 ($next_run = $next_run->mysql_datetime) =~ s/:\d+$//;
 is($next_run, $now_mysql, 'next_run check 11');
 
