@@ -474,6 +474,9 @@ sub deploy_template {
     $fh->print($template->{content});
     $fh->close();
 
+    # mark template as deployed.
+    $template->mark_as_deployed();
+
     info("Publisher.pm: template_id=$id deployed to '$file'");
 
     return $file;
@@ -515,6 +518,9 @@ sub undeploy_template {
         }
         unlink $file;
     }
+
+    # mark template as undeployed.
+    $template->mark_as_undeployed();
 
     info("Publisher.pm: template_id=$id removed (undeployed) from location '$file'");
 
