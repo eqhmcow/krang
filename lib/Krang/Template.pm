@@ -144,13 +144,16 @@ SELECT checked_out, checked_out_by
 FROM TEMPLATE_TABLE
 WHERE id = ?
 SQL
-        my $sth = $dbh->prepare($query);
-        $sth->execute($_);
-        my ($co, $uid) = $sth->fetchrow_arrayref();
+        my ($co, $uid) = $dbh->selectrow_arrayref($query, undef, ($_));
 
-        croak(__PACKAGE__ . "->checkin(): Template id '$_' is not checked " .
-              "out by the current user.")
-          if ($co && $uid != $user_id);
+        unless ($co) {
+            # prevent unnecessary calls to update
+            next;
+        } else {
+            croak(__PACKAGE__ . "->checkin(): Template id '$_' is checked " .
+                  "out by the user '$uid'.")
+              unless $uid == $user_id;
+        }
 
         $query = <<SQL;
 UPDATE TEMPLATE_TABLE
@@ -198,9 +201,13 @@ SQL
 
             my ($co, $uid) = $dbh->selectrow_array($query, undef, ($_));
 
-            croak(__PACKAGE__ . "->checkout(): Template id '$_' is already " .
-                  "checked out by user '$uid'")
-              if ($co && ($uid != $user_id));
+            if ($co) {
+                # no need to call update on a row that's already checked out
+                next if $uid == $user_id;
+
+                croak(__PACKAGE__ . "->checkout(): Template id '$_' is " .
+                      "already checked out by user '$uid'");
+            }
 
             $query = <<SQL;
 UPDATE TEMPLATE_TABLE
