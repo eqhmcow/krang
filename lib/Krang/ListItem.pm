@@ -468,7 +468,7 @@ sub deserialize_xml {
                                        id    => $data->{list_id});
 
     my ($list) = Krang::List->find( list_id => $list_id );
- 
+
     # get parent list item id if one
     my $parent;
     if ($data->{parent_list_item_id}) {
@@ -477,21 +477,28 @@ sub deserialize_xml {
         $parent = (Krang::ListItem->find( list_item_id => $parent_id ))[0];
     }
 
+    my %list_params = (data => $data->{data}, list_id => $list->list_id);
+
     if ($parent) {
-        my $dupe = (Krang::ListItem->find( data => $data->{data}, list_id => $list->list_id, parent_list_item_id => $parent->list_item_id ))[0] || '';
-        return $dupe if $dupe;
-
-        my $li = Krang::ListItem->new( data => $data->{data}, list => $list, parent_list_item => $parent );
-        $li->save;
-        return $li;
-    } else {
-        my $dupe = (Krang::ListItem->find( data => $data->{data}, list_id => $list->list_id ))[0] || '';
-        return $dupe if $dupe;
-
-        my $li = Krang::ListItem->new( data => $data->{data}, list => $list );
-        $li->save;
-        return $li;
+        $list_params{parent_list_item_id} = $parent->list_item_id;
     }
+
+    my $dupe = (Krang::ListItem->find(%list_params))[0] || '';
+    return $dupe if $dupe;
+
+    delete $list_params{list_id};
+    $list_params{list}  = $list;
+    $list_params{order} = $data->{order} if ($data->{order});
+
+    if ($parent) {
+        delete $list_params{parent_list_item_id};
+        $list_params{parent_list_item} = $parent;
+    }
+
+    my $li = Krang::ListItem->new( %list_params );
+    $li->save;
+    return $li;
+
 }
 
 =back 
