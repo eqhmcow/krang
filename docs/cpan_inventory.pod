@@ -92,7 +92,7 @@ exist without your hard work.
 
 =item Devel-StackTrace
 
- Version: 1.10_01
+ Version: 1.11
  License: Perl License
 
 =item Digest-MD5

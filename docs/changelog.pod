@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Synchronized Devel-StackTrace with latest from CPAN, so that we are
+now using the standard release. [Perrin]
+
+=item *
+
 t/group.t now uses Krang::Test::Content to generate random content,
 rather than bin/krang_floodfill. [Peter]
 
