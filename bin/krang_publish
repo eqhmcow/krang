@@ -418,6 +418,9 @@ sub publish_stories {
     # make sure offset is reset
     $find_options->{offset} = 0;
 
+    # add show_hidden option for stories.
+    $find_options->{show_hidden} = 1;
+
     while (my @stories = Krang::Story->find(%{$find_options})) {
 
         if (@stories == $increment) {
@@ -490,7 +493,9 @@ sub publish_stories {
         $find_options->{offset} += $increment;
     }
 
-    # offset cleanup, to be sure.
+    # cleanup
+    delete $find_options->{show_hidden};
+
     $find_options->{offset} = 0;
 
 }
