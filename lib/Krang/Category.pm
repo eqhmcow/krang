@@ -316,6 +316,7 @@ sub init {
     #################
     $self->{element} = Krang::Element->new(class => 'category',
                                            object => $self);
+    $self->{element_id} = $self->{element}->element_id();
 
     return $self;
 }
@@ -735,6 +736,8 @@ sub find {
             ($categories[-1]->{element}) =
               Krang::Element->load(element_id => $row->{element_id}, 
                                    object     => $categories[-1]);
+            $categories[-1]->{element_id} =
+              $categories[-1]->{element}->element_id;
         }
     }
 
@@ -982,7 +985,9 @@ sub deserialize_xml {
                                                       set       => $set,
                                                       no_update => $no_update,
                                                       object    => $dup);
+        $dup->{element}->delete if $dup->{element};
         $dup->{element} = $element;
+        $dup->{element_id} = $element->element_id;
         $dup->save();
         
         return $dup;
@@ -1014,6 +1019,7 @@ sub deserialize_xml {
                                                   no_update => $no_update,
                                                   object    => $cat);
     $cat->{element} = $element;
+    $cat->{element_id} = $element->element_id;
 
     $cat->save();
 

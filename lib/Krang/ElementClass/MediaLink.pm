@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use base 'Krang::ElementClass';
-use Krang::Log qw(debug info critical);
+use Krang::Log qw(debug info critical assert ASSERT);
 
 use Krang::MethodMaker
   get_set => [ qw( allow_upload show_thumbnail ) ];
@@ -161,6 +161,10 @@ sub thaw_data_xml {
     return unless $import_id;
     my $media_id = $set->map_id(class => 'Krang::Media',
                                 id    => $import_id);
+    assert(Krang::Media->find(media_id => $media_id, count => 1))
+      if ASSERT;
+    assert((Krang::Media->find(media_id => $media_id))[0]->url)
+      if ASSERT;
     $self->thaw_data(element => $element,
                      data    => $media_id);
 }

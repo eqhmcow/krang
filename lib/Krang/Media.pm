@@ -1104,9 +1104,11 @@ sub url {
     my $self= shift;
     
     # calculate url
-    my $url =
-      (Krang::Category->find(category_id => $self->{category_id}))[0]->url();
-    return catdir($url, $self->{filename});
+    my ($category) = Krang::Category->find(category_id =>$self->{category_id});
+    croak("Unable to load category $self->{category_id}")
+      unless $category;
+
+    return catdir($category->url, $self->{filename});
 }
 
 =item * preview_url (read-only)
@@ -1306,10 +1308,14 @@ sub deserialize_xml {
 
     } else {
         # create a new media object with category and simple fields
-        $media = Krang::Media->new(category_id => 
-                                   $set->map_id(class => "Krang::Category",
-                                                id    => $data->{category_id}),
+        my $category_id = $set->map_id(class => "Krang::Category",
+                                       id    => $data->{category_id});
+        assert(Krang::Category->find(category_id => $category_id, count => 1))
+          if ASSERT;
+
+        $media = Krang::Media->new(category_id => $category_id,
                                    (map { ($_,$data->{$_}) } keys %simple));
+
     }
         
     # upload the file

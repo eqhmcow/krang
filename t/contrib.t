@@ -140,3 +140,11 @@ is($results[0]->contrib_id, $contribs[2]->contrib_id);
     $_->delete() for (@new_contribs);
 }
 
+
+# make sure contribs without middle names are caught as dups
+my $con1 = Krang::Contrib->new(first => 'Bobby', last => 'Bob');
+$con1->save();
+END { $con1->delete() };
+my $con2 = Krang::Contrib->new(first => 'Bobby', last => 'Bob');
+eval { $con2->save() };
+isa_ok($@, 'Krang::Contrib::DuplicateName');

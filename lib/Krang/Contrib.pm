@@ -108,6 +108,7 @@ sub init {
     my %args = @_;
 
     $args{contrib_type_ids} ||= [];
+    $args{middle} ||= '';
 
     # finish the object
     $self->hash_init(%args);
@@ -529,7 +530,7 @@ sub deserialize_xml {
         $contrib->save();
     } elsif ($@) {
         die $@;
-    }       
+    }
 
     return $contrib;
 }
@@ -546,17 +547,13 @@ sub verify_unique {
 
     # lookup dup
     my $dup_id;
-    if ($self->{contrib_id}) {
-        ($dup_id) = $dbh->selectrow_array(
-                              'SELECT contrib_id FROM contrib '.
-                              'WHERE first=? AND middle=? AND last=? AND contrib_id!=?', 
-                               undef, $self->first, $self->middle, $self->last, $self->{contrib_id});
-    } else {
-        ($dup_id) = $dbh->selectrow_array(
-                              'SELECT contrib_id FROM contrib '.
-                              'WHERE first=? AND middle=? AND last=?', 
-                               undef, $self->first, $self->middle, $self->last);
-    }
+    ($dup_id) = $dbh->selectrow_array (
+       'SELECT contrib_id FROM contrib '.
+       'WHERE first=? AND middle=? AND last=? ' . 
+       ($self->{contrib_id} ? 'AND contrib_id!=?' : ''),
+       undef, $self->first, $self->middle || '' ,$self->last, 
+       ($self->{contrib_id} ? ($self->{contrib_id}) : ()));
+
 
     # throw exception on dup
     Krang::Contrib::DuplicateName->throw(

@@ -1458,8 +1458,7 @@ sub delete {
              undef, $self->{story_id});
     $dbh->do('DELETE FROM story_contrib WHERE story_id = ?',
              undef, $self->{story_id});
-    $dbh->do('DELETE FROM element WHERE root_id = ?',
-             undef, $self->{element_id});
+    $self->element->delete;
     
     # delete schedules for this story
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?', undef, 'story', $self->{story_id});
@@ -1787,12 +1786,15 @@ sub deserialize_xml {
     $set->register_id(class     => 'Krang::Story',
                       id        => $data->{story_id},
                       import_id => $story->story_id);
-    
+
     # deserialize elements, may contain circular references
     my $element = Krang::Element->deserialize_xml(data => $data->{element}[0],
                                                   set       => $set,
                                                   no_update => $no_update,
                                                   object    => $story);
+
+    # update element
+    $story->{element}->delete if $story->{element};   
     $story->{element} = $element;
 
     # finish the story, not incrementing version
