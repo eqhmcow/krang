@@ -10,7 +10,7 @@ use Time::Piece::MySQL;
 use Time::Seconds;
 
 use Krang::Script;
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot InstanceElementSet);
 use Krang::Session;
 use Krang::DB qw(dbh);
 
@@ -28,7 +28,11 @@ BEGIN {
 
         # verify pid is active
         if ($pid) {
-            eval "use Test::More qw(no_plan);";
+            if (InstanceElementSet eq 'TestSet1') {
+                eval 'use Test::More qw(no_plan)';
+            } else {
+                eval 'use Test::More skip_all=>"Schedule tests only work for TestSet1"';
+            }
         } else {
             eval "use Test::More skip_all => 'Schedule Daemon not running.';";
         }
