@@ -32,7 +32,7 @@ sub new {
                                                      values => [ "keyword",                                                                 "topic",
                                                                  "multisite",
                                                                  "custom"],                                                     default => "keyword"),
-                    Krang::ElementClass::Textarea->new(   name => 'content',
+                    Krang::ElementClass::Textarea->new(   name => 'body',
                                                         display_name => 'Content',
                                                         pageable => 1,
                                                         rows => 10,
