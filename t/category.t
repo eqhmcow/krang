@@ -154,6 +154,12 @@ my $tmpl = Krang::Template->new(category_id => $category->category_id(),
                                 filename => 'bob.tmpl');
 $tmpl->save();
 
+$category->dir('freddo');
+$category->save();
+
+my ($tmpl2) = Krang::Template->find(template_id => $tmpl->template_id);
+is($tmpl2->url() =~ /freddo/, 1, 'update_child_url() - template');
+
 eval {$success = $category->delete()};
 is($@ =~ /refers/, 1, 'delete() fail 1');
 
