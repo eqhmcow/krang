@@ -722,17 +722,17 @@ sub find {
                 push(@where_data, '%'.$word.'%', $word);
             }
         } else {
+            # Preface $lookup_field with table name
+            if (grep { $lookup_field eq $_ } qw(may_see may_edit)) {
+                $lookup_field = "cgpc.$lookup_field";
+            } else {
+                $lookup_field = "cat.$lookup_field";
+            }
+
             if (not defined $args{$arg}) {
                 # Handle NULL searches if data is undef
                 push(@wheres, "$lookup_field IS NULL");
             } else {
-                # Preface $lookup_field with table name
-                if (grep { $lookup_field eq $_ } qw(may_see may_edit)) {
-                    $lookup_field = "cgpc.$lookup_field";
-                } else {
-                    $lookup_field = "cat.$lookup_field";
-                }
-
                 # Handle default where case
                 my $where = $like ? 
                   "$lookup_field LIKE ?" : "$lookup_field = ?";
