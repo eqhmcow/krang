@@ -186,12 +186,16 @@ sub children {
         if (ref $arg and UNIVERSAL::isa($arg, 'Krang::ElementClass')) {
             # it's an object already, push it along
             push(@children, $arg);
+            croak("Unable to add child named '$arg->{name}' to $self->{name}: there is already a child with that name.")
+              if exists $children_by_name{$arg->{name}};
             $children_by_name{$arg->{name}} = $arg;
         } else {
             # it's the name of an element, load it
             my $class = Krang::ElementLibrary->find_class(name => $arg);
             croak("Unable to find element class named '$arg' while instantiating '$self->{name}'.")
               unless $class;
+            croak("Unable to add child named '$arg' to $self->{name}: there is already a child with that name.")
+              if exists $children_by_name{$arg};
             push(@children, $class);
             $children_by_name{$arg} = $class;
         }
