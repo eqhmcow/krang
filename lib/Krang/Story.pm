@@ -1113,7 +1113,11 @@ sub find {
             my @words = split(/\s+/, $args{'contrib_simple'});
             foreach my $word (@words){
                 push(@where, 
-                     q{concat(con.first,' ',con.middle,' ',con.last) LIKE ?});
+                    q{concat(
+		        coalesce(con.first,''), ' ',
+		        coalesce(con.middle,''), ' ',
+		        coalesce(con.last),'') LIKE ?
+		     });
                 push(@param, "%${word}%");
             }
             next;
