@@ -250,7 +250,7 @@ sub advanced_find {
         } else {
             $q->delete($varname);
         }
-    
+
         $varname = "search_creation_date_to_$_";
         if ($search_creation_date_to) {
            $persist_vars->{$varname} = $q->param($varname);
@@ -457,23 +457,23 @@ My Workspace afterwards, even tho the media object will not be there.
 
 sub checkin_add {
     my $self = shift;
-                                                                             
+
     my $q = $self->query();
-                                                                             
+
     my $m = $session{media};
     die ("No media object in session") unless (ref($m));
-                                                                             
+
     # Update object in session
     $self->update_media($m);
-                                                                             
+
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
     return $self->_add(%errors) if (%errors);
-                                                                             
+
     # Save object to database
     my %save_errors = ( $self->do_save_media($m) );
     return $self->_add(%save_errors) if (%save_errors);
-    
+
     # check in
     $m->checkin();
 
@@ -484,7 +484,7 @@ sub checkin_add {
     my $uri = WORKSPACE_URI;
     $self->header_props(-uri => $uri);
     $self->header_type('redirect');
-                                                                             
+
     return "Redirect: <a href=\"$uri\">$uri</a>";
 
 }
@@ -712,34 +712,34 @@ Redirect the user to their Workspace.
 
 sub checkin_edit {
     my $self = shift;
-                                                                             
+
     my $q = $self->query();
-                                                                             
+
     my $m = $session{media};
     die ("No media object in session") unless (ref($m));
-                                                                             
+
     # Update object in session
     $self->update_media($m);
-                                                                             
+
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
     return $self->edit(%errors) if (%errors);
-                                                                             
+
     # Save object to database
     my %save_errors = ( $self->do_save_media($m) );
     return $self->edit(%save_errors) if (%save_errors);
-                                                                             
+
     # Checkin
     $m->checkin();
-                                                                             
+
     # Notify user
     add_message("media_saved");
-                                                                             
+
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
     $self->header_props(-uri=>$uri);
     $self->header_type('redirect');
-                                                                             
+
     return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
@@ -863,19 +863,19 @@ sub delete_selected {
 }
 
 =item save_and_edit_schedule
-                                                                                
+
 This mode saves the current data to the session and passes control to
 edit schedule for story.
-                                                                                
+
 =cut
-                                                                                
+
 sub save_and_edit_schedule {
     my $self = shift;
-                                                                                
+
     # Update media object
     my $m = $session{media};
     $self->update_media($m);
-                                                                            
+
     $self->header_props(-uri => 'schedule.pl?rm=edit&object_type=media');
     $self->header_type('redirect');
     return;
@@ -920,23 +920,23 @@ then redirects to publisher.pl to publish the media object.
 
 sub save_and_publish {
     my $self = shift;
-                                                                             
+
     my $q = $self->query();
-                                                                             
+
     my $m = $session{media};
     die ("No media object in session") unless (ref($m));
-                                                                             
+
     # Update object in session
     $self->update_media($m);
-                                                                             
+
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
     return $self->edit(%errors) if (%errors);
-                                                                             
+
     # Save object to database
     my %save_errors = ( $self->do_save_media($m) );
     return $self->edit(%save_errors) if (%save_errors);
-                                                                             
+
     # Redirect to associate screen
     my $url = 'publisher.pl?rm=publish_media&media_id=' . $m->media_id;
     $self->header_props(-uri=>$url);
@@ -1092,20 +1092,20 @@ Checkin all the media which were checked on the list_active screen.
 
 sub checkin_selected {
      my $self = shift;
-     
+
     my $q = $self->query();
      my @media_checkin_list = ( $q->param('krang_pager_rows_checked') );
      $q->delete('krang_pager_rows_checked');
-                                                                                
+
      foreach my $media_id (@media_checkin_list) {
          my ($m) = Krang::Media->find(media_id=>$media_id);
          $m->checkin();
      }
-                                                                                
+
      if (scalar(@media_checkin_list)) {
          add_message('selected_media_checkin');
      }
-                                                                                
+
      return $self->list_active;
 }
 
@@ -1156,10 +1156,10 @@ sub validate_media {
 sub list_active_row_handler {
     my $self = shift;
     my ($row, $media) = @_;
-    
+
     # Columns:
     #
-    
+
     # media_id
     $row->{media_id} = $media->media_id();
 
@@ -1170,18 +1170,18 @@ sub list_active_row_handler {
     } else {
         $row->{thumbnail} = "&nbsp;";
     }
- 
+
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $media->url(),
                               linkto => "javascript:preview_media('". $row->{media_id} ."')" );
-    
+
     # title
     $row->{title} = $media->title();
-    
+
     # commands column
     $row->{commands_column} = '<a href="javascript:view_media(' .
       $media->media_id . ')">View</a>';
-    
+
     # user
     my ($user) = Krang::User->find(user_id => $media->checked_out_by);
     $row->{user} = $user->first_name . " " . $user->last_name;
@@ -1221,10 +1221,10 @@ sub update_media {
 
     my @m_fields = qw(
                       title
-                      media_type_id 
-                      category_id 
-                      media_file 
-                      caption 
+                      media_type_id
+                      category_id
+                      media_file
+                      caption
                       copyright 
                       alt_tag 
                       notes 
