@@ -242,9 +242,9 @@ foreach (my $i = $#story_paths; $i >= 0; $i--) {
 
 my $prevurl = $publisher->preview_story(story => $story);
 
-my $preview_path = build_preview_path($story);
+my $preview_path_url = build_preview_path($story);
 
-if (-e $preview_path) {
+if (-e $preview_path_url) {
     pass('Krang::Publisher->preview_story() -- exists');
 } else {
     pass('Krang::Publisher->preview_story() -- exists');

@@ -222,7 +222,7 @@ sub preview_story {
 
     }
 
-    my $preview_url = "$url/" . $self->_build_filename(story => $story, page => 1);
+    $preview_url = "$url/" . $self->_build_filename(story => $story, page => 1);
 
     return $preview_url;
 }
