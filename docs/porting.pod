@@ -28,20 +28,22 @@ try to build Krang:
 
   bin/krang_build PLATFORM_NAME
 
-If that works, try building a database and running the test suite:
-
-  make db test
-
-If that worked, start up Krang and take a stroll through the UI:
-
-  bin/krang_ctl start
-
-Finally, you need to test installing a binary distribution.  First
-make one:
+If that worked, build a distribution:
 
   bin/krang_makedist
 
-Then try installing it as usual.
+Now you can take that distribution and install it as usual:
+
+  tar zxvf krang-...tar.gz
+  cd krang-...
+  bin/krang_install ...
+
+If that worked, try running the test suite:
+
+  cd /path/to/krang
+  make test
+
+If all tests pass, you're done!
 
 =head2 Solving Problems
 

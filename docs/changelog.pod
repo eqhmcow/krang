@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Updated porting.pod with steps that might really work. [Sam]
+
+=item *
+
 Fixed a bug where an error occuring during preview triggered a
 Krang::Cache error which corrupted the display. [Sam]
 
