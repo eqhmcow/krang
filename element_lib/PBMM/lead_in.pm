@@ -103,7 +103,8 @@ sub input_form {
     $header = $element->child('story');
 
     if ($header->data) { 
-        $data   = "<br><b>Title:</b> ".$header->data->title."<br><b>URL:</b> ".$header->data->url;
+        $data   = "<br><b>Title:</b> ".$header->data->title."<br><b>URL:</b> ".
+          Krang::Widget::format_url(url => $header->data->url, length => 25);
         return $data;
     }
     return '';
