@@ -198,7 +198,6 @@ use Getopt::Long;
 use Pod::Usage;
 use HTML::Template;
 use File::Temp qw(tempdir);
-use Config::ApacheFormat;
 
 my @original_args = ();
 my $uniqueness = time();
@@ -293,6 +292,7 @@ sub unpack_backup {
     
     # load configuration file from backup to get defaults
     print "Loading backup configuration.\n";
+    require Config::ApacheFormat;
     $BACKUP_CONF = Config::ApacheFormat->new();
     $BACKUP_CONF->read(catfile($BACKUP_DIR, 'conf', 'krang.conf'));    
     
