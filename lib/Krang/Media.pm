@@ -426,6 +426,7 @@ sub upload_file {
     close FILE;
 
     $self->{tempfile} = $filepath;
+    $self->{tempdir} = $path;
     $self->{filename} = $filename;
 
     return $self; 
@@ -584,7 +585,8 @@ sub save {
 	   my $old_path = delete $self->{tempfile};
            my $new_path = $self->file_path;
 	   mkpath((splitpath($new_path))[1]);     
-	   move($old_path,$new_path) || croak("Cannot move to $new_path");	
+	   move($old_path,$new_path) || croak("Cannot move to $new_path");
+           rmtree(delete $self->{tempdir});	
 	} elsif (not $args{keep_version}) {
 	    # symbolically link to version dir, since it isnt changing 
             $self->{version}--;
@@ -616,6 +618,7 @@ sub save {
 	my $new_path = $self->file_path;
 	mkpath((splitpath($new_path))[1]);
 	move($old_path,$new_path) || croak("Cannot create $new_path");
+        rmtree(delete $self->{tempdir});
     }
 
     # remove any existing media_contrib relatinships and save any new relationships
@@ -1050,7 +1053,7 @@ sub revert {
     my $filepath = catfile($path, $self->{filename});
     copy($old_filepath,$filepath); 
     $self->{tempfile} = $filepath;
-   
+    $self->{tempdir} = $path; 
     return $self; 
 }
 
@@ -1077,7 +1080,7 @@ sub _load_version {
     my $filepath = catfile($path, $self->{filename});
     copy($old_filepath,$filepath);
     $self->{tempfile} = $filepath;
-  
+    $self->{tempdir} = $path; 
     return $self;
 }
 
