@@ -400,12 +400,8 @@ sub find_templates {
     };
     if ($@) {
         if (scalar($element->children())) {
-            foreach ($element->children()) {
-                diag(sprintf("BAD -- %s => %s", $element->name(), $_->name()));
-            }
-            diag($element->name());
-            diag(Dumper($element->children()));
-            fail("Krang::ElementClass->find_template()");
+            diag($@);
+            fail("Krang::ElementClass->find_template(" . $element->name() . ")");
         } else {
             pass("Krang::ElementClass->find_template()");
         }

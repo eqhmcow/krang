@@ -9,7 +9,8 @@ use HTML::Template::Expr;
 use Krang::Log qw(debug info critical);
 
 use Exception::Class
-  'Krang::ElementClass::MissingTemplate' => { fields => [ 'element_name', 'category_id' ] };
+  'Krang::ElementClass::TemplateNotFound' => { fields => [ 'element_name', 'category_id' ] },
+  'Krang::ElementClass::TemplateParseError' => {fields => [ 'element_name', 'template_name', 'category_id', 'error_msg']};
 
 =head1 NAME
 
@@ -497,6 +498,7 @@ sub find_template {
 
     my $self = shift;
     my %args = @_;
+    my $tmpl;
 
     # args for HTML::Template::Expr on instantiation.
     my %tmpl_args = (
@@ -510,15 +512,40 @@ sub find_template {
     my $element   = $args{element} || croak __PACKAGE__ . ":missing attribute 'element'.\n";
 
     my $category = $publisher->category();
-    my @path = $publisher->template_search_path();
+    my @search_path = $publisher->template_search_path();
 
     # Attempt to instantiate an HTML::Template::Expr object with that as the search path.
-    my $tmpl = HTML::Template::Expr->new(filename => $element->name() . '.tmpl',
-                                         path => \@path,
-                                         %tmpl_args
-                                        );
+    my $filename = $element->name() . '.tmpl';
 
-    # HTML::Template::Expr will gack if no template has been found.  return template.
+    eval {
+        $tmpl = HTML::Template::Expr->new(filename => $filename,
+                                          path => \@search_path,
+                                          %tmpl_args
+                                         );
+    };
+
+    if ($@) {
+        my $err = $@;
+        # HTML::Template::Expr is having problems - throw an error
+        # based on the problem reported.
+        if ($err =~ /$filename : file not found/) {
+            Krang::ElementClass::TemplateNotFound->throw(message => 'Missing required output template',
+                                                         element_name => $args{element}->display_name(),
+                                                         category_id => $category->category_id()
+                                                        );
+        }
+        # assuming remaining errors are parse errors at this time.
+        else {
+            Krang::ElementClass::TemplateParseError->throw(message => 'Coding error found in template',
+                                                           element_name => $args{element}->display_name(),
+                                                           template_name => $filename,
+                                                           category_id => $category->category_id(),
+                                                           error_msg => $err
+                                                          );
+        }
+    }
+
+    # if we've gotten this far, we have a valid template.
     return $tmpl;
 }
 
@@ -673,19 +700,19 @@ sub publish {
     # try and find an appropriate template.
     eval { $html_template = $self->find_template(@_); };
 
-    if ($@) {
-        my $err = $@;
-
+    if ($@ and $@->isa('Krang::ElementClass::TemplateNotFound')) {
         # no template found - if the element has children, this is an error.
         # otherwise, return the raw data stored in the element.
         if (scalar($args{element}->children())) {
-            Krang::ElementClass::MissingTemplate->throw(message => 'Missing required output template',
-                                                        element_name => $args{element}->display_name());
-
+            die $@;
         } else {
             return $args{element}->data();
         }
+    } elsif ($@) {
+        # another error occured with the template - re-throw.
+        die $@;
     }
+
 
     $self->fill_template(tmpl => $html_template, @_);
 
