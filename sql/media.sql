@@ -12,7 +12,7 @@ CREATE TABLE media (
   caption text,
   copyright text,
   notes text,
-  uri varchar(255) default NULL,
+  url varchar(255) default NULL,
   alt_tag varchar(255) default NULL,
   version SMALLINT unsigned default NULL,
   creation_date date default NULL,

@@ -18,7 +18,7 @@ use Time::Piece::MySQL;
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
-use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes version uri alt_tag published_version checked_out_by);
+use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes version url alt_tag published_version checked_out_by);
 use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x-bmp);
 
 =head1 NAME
@@ -202,7 +202,7 @@ Filehandle for uploaded media.
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
-    get_set       => [ qw( media_id title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename uri ) ];
+    get_set       => [ qw( media_id title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename url ) ];
 
 sub init {
     my $self = shift;
@@ -282,7 +282,7 @@ Returns the current version number.
 
 Returns the initial creation date of the media object.  Not settable here.
 
-=item $uri = $media->uri()
+=item $url = $media->url()
 
 Returns the path that the media object will preview/publish to. Not settable here.
 
