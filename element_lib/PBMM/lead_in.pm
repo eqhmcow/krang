@@ -125,6 +125,7 @@ sub fill_template {
     my $pteaser;
     if (($element->child('promo_text_type')->data eq 'promo teaser') || ($story->element->name ne 'article')) {
         $pteaser = $story->element->child('promo_teaser')->data;
+        $tmpl->param( from_promo_teaser => 1 );    
     } else {
         my $limit;
         if ($element->child('promo_text_type')->data eq 'full article') {
