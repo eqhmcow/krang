@@ -2,6 +2,15 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 v1.020 - Under Development
+
+=over
+
+=item *
+
+Fixed problem determining C<KRANG_ROOT> on Fedora Core 2 in all
+Krang scripts. [Sam]
+
 =head2 v1.019 - Jun 04, 2004
 
 =over

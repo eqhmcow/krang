@@ -106,7 +106,7 @@ Refer to F<docs/ops_upgrade.pod>.
 
 
 
-use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
 
@@ -114,7 +114,7 @@ use Config;
 # Set up KRANG_ROOT and PERL5LIB
 BEGIN {
     # Find a KRANG_ROOT based on path to bin
-    my @dir = splitdir($RealBin);
+    my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules

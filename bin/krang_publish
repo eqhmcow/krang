@@ -2,7 +2,7 @@
 use warnings;
 use strict;
 
-use File::Spec::Functions qw(catdir splitdir);
+use File::Spec::Functions qw(catdir splitdir canonpath);
 use FindBin qw($RealBin);
 use Getopt::Long;
 use Pod::Usage;
@@ -143,7 +143,7 @@ explanation of what is going on.
 
 BEGIN {
     # Find a KRANG_ROOT based on path to bin
-    my @dir = splitdir($RealBin);
+    my @dir = splitdir(canonpath($RealBin));
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
