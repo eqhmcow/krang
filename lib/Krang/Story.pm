@@ -743,6 +743,10 @@ set to the actual version number of the loaded object.
 Performs a per-word LIKE match against title and URL, and an exact
 match against story_id if a word is a number.
 
+=item exclude_story_ids
+
+Pass an array ref of IDs to be excluded from the result set
+
 =back
 
 Options affecting the search and the results returned:
@@ -946,6 +950,14 @@ sub find {
             }
             next;
         }
+
+        # handle exclude_story_ids => [1, 2, 3]
+        if ($key eq 'exclude_story_ids' and @$value) {
+            push(@where, ('s.story_id != ?') x @$value);
+            push(@param, @$value);
+            next;
+        }
+
 
         croak("Unknown find key '$key'");
     }
