@@ -195,13 +195,27 @@ published.
 
 =item C<desk_id>
 
-Returns the ID of the L<Krang::Desk> that the story is currently on, if any.  Also see $story->C<move_to_desk()> below.
+Returns the ID of the L<Krang::Desk> that the story is currently on,
+if any.  Also see $story->C<move_to_desk()> below.
 
 =item C<version> (readonly)
 
+The current version of the story.  Starts at 1, incremented every time
+the story is saved.
+
 =item C<published_version> (readonly)
 
+Returns the version of the story that is currently published on the
+website.
+
+Returns 0 if the story has never been published.
+
 =item C<preview_version> (readonly)
+
+Returns the version of the story that has most recently been
+previewed.
+
+Returns 0 if the story has never been previewed.
 
 =item C<category> (readonly)
 
