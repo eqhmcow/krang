@@ -37,6 +37,8 @@ sub new {
                 Krang::ElementClass::Text->new(name         => "ad_module",
                                                 min => 1,
                                                 ),
+                PBMM::auto_navigation->new( 
+                                        max => 1 ),
                 PBMM::html_include->new(),
                 PBMM::cat_paragraph->new(),
                  PBMM::site_related_link_box->new()
