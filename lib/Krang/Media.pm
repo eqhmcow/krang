@@ -526,12 +526,12 @@ sub save {
 
 	$self->{version} = 1;
         my $time = localtime();
-        $self->{creation_date} = $time->mysql_datetime();   
+        $self->{creation_date} = $time->mysql_date();   
      
 	$dbh->do('INSERT INTO media ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")", undef, map { $self->{$_} } FIELDS);
 
         # make date readable
-        $self->{creation_date} = Time::Piece->from_mysql_datetime( $self->{creation_date} );
+        $self->{creation_date} = Time::Piece->from_mysql_date( $self->{creation_date} );
 	
         $self->{media_id} = $dbh->{mysql_insertid};
 
@@ -735,9 +735,9 @@ sub find {
 
     if ($args{'creation_date'}) {
         if (ref($args{'creation_date'}) eq 'ARRAY') {
-            $where_string ? ($where_string .= 'AND creation_date BETWEEN '.$args{'creation_date'}[0]->mysql_datetime.' AND '.$args{'creation_date'}[1]->mysql_datetime) : ($where_string = 'creation_date BETWEEN '.$args{'creation_date'}[0]->mysql_datetime.' AND '.$args{'creation_date'}[1]->mysql_datetime);
+            $where_string ? ($where_string .= " AND creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'") : ($where_string = "creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'");
         } else {
-            $where_string ? ($where_string .= 'AND creation_date = '.$args{'creation_date'}->mysql_datetime) : ($where_string = 'creation_date = '.$args{'creation_date'}->mysql_datetime);
+            $where_string ? ($where_string .= " AND creation_date = '".$args{'creation_date'}->mysql_datetime."'") : ($where_string = "creation_date = '".$args{'creation_date'}->mysql_datetime."'");
         }
     }
 
