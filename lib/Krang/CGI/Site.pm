@@ -217,20 +217,21 @@ sub delete {
     my $q = $self->query();
     my $site_id = $q->param('site_id');
     return $self->search() unless $site_id;
-    eval {Krang::Site->delete($site_id);};
+    my ($site) = Krang::Site->find(site_id => $site_id);
+    eval {$site->delete();};
     if ($@) {
         if (ref $@ && $@->isa('Krang::Site::Dependency')) {
-            critical("Unable to delete site '$site_id'.  Categories depend " .
-                     "on this site.  You must delete them first.");
+            my $url = $site->url;
+            info("Unable to delete site id '$site_id': $url\n$@");
             add_message('error_deletion_failure',
-                        site_id => $site_id,);
+                        urls => $url,);
             return $self->search();
         } else {
             croak($@);
         }
     }
 
-    add_message('message_deleted');
+    add_message('message_deleted', url => $site->url);
 
     return $self->search();
 }
@@ -258,25 +259,28 @@ sub delete_selected {
     return $self->search() unless @site_delete_list;
 
     # destroy sites
-    my @bad_sites;
-    for my $s(@site_delete_list) {
-        eval {Krang::Site->delete($s);};
+    my (@bad_sites, @good_sites);
+    my (@sites) = Krang::Site->find(site_id => [@site_delete_list]);
+    for (@sites) {
+        eval {$_->delete();};
         if ($@) {
             if (ref $@ && $@->isa('Krang::Site::Dependency')) {
-                critical("Unable to delete site '$s': Categoriess depend on " .
-                         "this site.  You must delete them first.");
-                push @bad_sites, $s;
+                push @bad_sites, $_->url;
             } else {
                 croak($@);
             }
+        } else {
+            push @good_sites, $_->url;
         }
     }
 
     if (@bad_sites) {
+        info("Failed attempt to delete site(s): " . join(", ", @bad_sites));
         add_message('error_deletion_failure',
-                    site_id => join(", ", @bad_sites));
+                    urls => join(", ", @bad_sites));
     } else {
-        add_message('message_selected_deleted');
+        add_message('message_selected_deleted',
+                    urls => join(", ", @good_sites));
     }
 
     return $self->search();
