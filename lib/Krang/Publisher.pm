@@ -315,7 +315,7 @@ sub publish_story {
             $object->mark_as_published();
 
         } elsif ($object->isa('Krang::Media')) {
-            $self->publish_media(media => $object);
+            $self->publish_media(media => $object, %args);
             # publish_media() will mark the media object as published.
         }
 
