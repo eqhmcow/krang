@@ -1050,7 +1050,7 @@ sub search_row_handler {
     $row->{deployed} = $template->deployed ? 'D' : '';
     $row->{filename} = $template->filename;
     $row->{template_id} = $template->template_id;
-    $row->{url} = format_url(url => $template->url, length => 50);
+    $row->{url} = format_url(url => $template->url, length => 30);
 
     if (not($template->may_edit()) or
         (($template->checked_out) and
