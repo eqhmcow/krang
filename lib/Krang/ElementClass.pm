@@ -1025,9 +1025,11 @@ sub _build_page_url {
     my $base_url;
 
     if ($publisher->is_publish) {
-        $base_url = $story->url();
+        $base_url = $self->build_url( story => $story,
+                                      category => $publisher->category);
     } elsif ($publisher->is_preview) {
-        $base_url = $story->preview_url();
+        $base_url = $self->build_preview_url( story => $story,
+                                      category => $publisher->category);
     } else {
         croak __PACKAGE__ . ": Mode unknown - are we in publish or preview mode?";
     }
