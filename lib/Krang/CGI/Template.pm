@@ -554,7 +554,7 @@ sub edit_save {
     croak("No object in session") unless ref $template;
 
     # update template with CGI values
-    $self->update_template($template)
+    $self->update_template($template);
 
     # validate
     my %errors = $self->validate($template);
