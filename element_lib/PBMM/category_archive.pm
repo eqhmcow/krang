@@ -58,21 +58,103 @@ sub fill_template {
     my @page_loop;
     my $story_count = 0;
 
+    my $page_count;
+    my @pnums;
+
     foreach my $s (@s) {
+        next if ($s->story_id eq $story->story_id);
+
+        my $ptitle = $s->element->child('promo_title')->data || $story->title;
+        my $pteaser = $s->element->child('promo_teaser')->data || '';
+        my $image = $s->element->child('promo_image_small') || '';
+        $image = $image->template_data(publisher => $publisher) if $image;
+        my $byline = $s->element->child('byline') ? $s->element->child('byline')->data : '';
+        my $source = $s->element->child('source') ? $s->element->child('source')->data : '';
+        my $enhanced_content = $s->element->child('enhanced_content') ? $s->element->child('enhanced_content')->data : '';
+
+           my %contrib_types = Krang::Pref->get('contrib_type');
+                                                                           
+                                                                           
+        my %contribs = ();
+        my @contributors  = ();
+        my @contrib_order = ();
+                                                                           
+        # get the contributors for the story.
+        foreach my $contrib ($s->contribs()) {
+            my $cid = $contrib->contrib_id();
+                                                                           
+                                                                           
+            # check to see if this contributor exists - if so, save
+            # on querying for information you already know.
+            unless (exists($contribs{$cid})) {
+                # preserve the order in which the contributors arrive.
+                push @contrib_order, $cid;
+                $contribs{$cid}{contrib_id} = $cid;
+                $contribs{$cid}{prefix}     = $contrib->prefix();
+                $contribs{$cid}{first}      = $contrib->first();
+                $contribs{$cid}{middle}     = $contrib->middle();
+                $contribs{$cid}{last}       = $contrib->last();
+                $contribs{$cid}{suffix}     = $contrib->suffix();
+                $contribs{$cid}{email}      = $contrib->email();
+                $contribs{$cid}{phone}      = $contrib->phone();
+                $contribs{$cid}{bio}        = $contrib->bio();
+                $contribs{$cid}{url}        = $contrib->url();
+                $contribs{$cid}{full_name}  = $contrib->full_name();
+
+                my $media = $contrib->image();
+                if (defined($media)) {
+                    if ($publisher->is_preview) {
+                        $contribs{$cid}{image_url} = $media->preview_url();
+                    } elsif ($publisher->is_publish) {
+                        $contribs{$cid}{image_url} = $media->url();
+                    }
+                }
+            }
+                                                                           
+            # add the selected contributor type to the contrib_type_loop
+            my $contrib_type_id = $contrib->selected_contrib_type();
+            push @{$contribs{$cid}{contrib_type_loop}}, {contrib_type_id => $contrib_type_id,
+                                                     contrib_type_name => $contrib_types{$contrib_type_id}};
+                                                                           
+                                                                           
+        }
+                                                                           
+                                                                           
+        foreach my $contrib_id (@contrib_order) {
+            push @contributors, $contribs{$contrib_id};
+        }
+
         push (@story_loop, {page_story_count => ++$story_count, url => 'http://'.($publisher->is_preview ? $s->preview_url : $s->url).'/', 
-                            title => $s->title,
-                            cover_date => $s->cover_date->strftime('%b %e, %Y') } ) if ($s->story_id ne $story->story_id);
+                            promo_teaser => $pteaser,
+                            promo_title => $ptitle,
+                            promo_image => $image,
+                            byline => $byline,
+                            source => $source,
+                            enhanced_content => $enhanced_content,
+                            contrib_loop => \@contributors,
+                            cover_date => $s->cover_date->strftime('%b %e, %Y') } ); 
 
         if ($story_count == 10) {
-            push (@page_loop, { story_loop => [@story_loop] } );
+            push (@page_loop, { page_count => ++$page_count, story_loop => [@story_loop] } );
             @story_loop = ();
             $story_count = 0;
+            push (@pnums, {page_number => $page_count } );
         }
     } 
 
     if ($story_count) {
-        push (@page_loop, { story_loop => [@story_loop] } );
+        push (@page_loop, { page_count => ++$page_count, story_loop => [@story_loop] } );
+        push (@pnums, {page_number => $page_count } );
     }
+        
+    if ($page_count > 1) {
+        # finish the pnum_loop
+        $tmpl->param(pnum_loop => \@pnums);
+    } else {
+        @pnums = ();
+        $tmpl->param(pnum_loop => \@pnums);
+    }
+
 
     $tmpl->param( page_loop => \@page_loop );
 
