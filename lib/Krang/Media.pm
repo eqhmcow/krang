@@ -26,8 +26,11 @@ use constant FIELDS => qw(media_id title category_id media_type_id filename crea
 use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x-bmp);
 
 # setup exceptions
-use Exception::Class 
-  'Krang::Media::DuplicateURL' => { fields => [ 'media_id' ] };
+use Exception::Class (
+                      'Krang::Media::DuplicateURL' => { fields => [ 'media_id' ], },
+                      'Krang::Media::NoCategoryEditAccess' => { fields => ['category_id']},
+                      'Krang::Media::NoEditAccess',
+                     );
 
 =head1 NAME
 
@@ -209,8 +212,26 @@ Date the media object was created.  Defaults to current time unless set.
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
-    get_set       => [ qw( title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename ) ],
-    get => [ qw( media_id creation_date published_date may_see may_edit) ];
+    get_set       => [ qw(
+                          title 
+                          alt_tag 
+                          version 
+                          checked_out_by 
+                          published_version 
+                          caption copyright 
+                          notes 
+                          media_type_id 
+                          category_id 
+                          filename 
+                         ) ],
+    get => [ qw( 
+                media_id 
+                creation_date 
+                published_date 
+                may_see 
+                may_edit
+               ) ];
+
 
 sub init {
     my $self = shift;
@@ -499,6 +520,13 @@ If this media object has the same URL as an existing object then
 save() will throw a Krang::Media::DuplicateURL exception with a
 media_id field indicating the conflicting object.
 
+Users may only save media to categories to which they have edit access.
+If the user does not have access to the specified category, save()
+will throw a 'Krang::Media::NoCategoryEditAccess' exception.
+
+This method will throw a "Krang::Media::NoEditAccess" exception if a
+user does not otherwise have access to edit the media.
+
 =cut
 
 sub save {
@@ -506,6 +534,16 @@ sub save {
     my $dbh = dbh;
     my $root = KrangRoot;
     my $media_id;
+
+    # Check permissions: Is user allowed to edit the catent category?
+    my ($category) = Krang::Category->find(category_id=>$self->{category_id});
+    Krang::Media::NoCategoryEditAccess->throw( message => "Not allowed to edit media in category $category",
+                                               category_id => $category )
+        unless ($category->may_edit);
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media" )
+        unless ($self->may_edit);
 
     $self->{url} = $self->url();
 
@@ -727,7 +765,9 @@ sub find {
                          offset => 1,
                          count => 1,
                          creation_date => 1,
-                         ids_only => 1 );
+                         ids_only => 1,
+                         may_see => 1,
+                         may_edit => 1 );
                                                                                
     # check for invalid params and croak if one is found
     foreach my $param (keys %args) {
@@ -738,6 +778,11 @@ not $valid_params{$param};
     # set defaults if need be
     my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'media_id';
     my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
+
+    # Put table name "media." in front of each orderby, and $order_desc after
+    my @order_bys = split(/\s*\,\s*/, $order_by);
+    $order_by = join(", ", (map { "media.$_ $order_desc" } @order_bys));
+
     my $limit = $args{'limit'} ? $args{'limit'} : undef;
     my $offset = $args{'offset'} ? $args{'offset'} : 0;
 
@@ -759,33 +804,52 @@ not $valid_params{$param};
     }
 
     # set simple keys
+    my @simple_keys = qw( title category_id media_type_id filename url
+                          contrib_id checked_out_by may_see may_edit );
     foreach my $key (keys %args) {
-	if ( ($key eq 'title') || ($key eq 'category_id') || ($key eq 'media_type_id') || ($key eq 'filename') || ($key eq 'url') || ($key eq 'contrib_id' ) || ($key eq 'checked_out_by')) {
+	if ( grep { $key eq $_ } @simple_keys ) {
             push @where, $key;
 	} 
     }
-  
+
+    my @where_fields = ();
+    foreach my $field (@where) {
+        # Pre-pend table name -- either "cgpc" or "media"
+        my @cgpc_fields = qw( may_see may_edit );
+        my $fqfield = (grep {$field eq $_} @cgpc_fields) ? "cgpc." : "media." ;
+        $fqfield .= $field;
+        push(@where_fields, $fqfield);
+    }
+
+    # Add user_id into the query
+    my $user_id = $ENV{REMOTE_USER} || croak("No user_id in REMOTE_USER");
+    push(@where_fields, "ugp.user_id");
+    push(@where, "user_id");
+    $args{user_id} = $user_id;
+
+    # Build query
     my $where_string = "";
-    $where_string .= join(' and ', map { "$_ = ?" } @where);
+    $where_string .= join(' and ', map { "$_ = ?" } @where_fields);
+
     
     # add media_id(s) if needed
     if ($args{media_id}) {
         if (ref $args{media_id} eq 'ARRAY') {
             $where_string .= " and " if $where_string;
             $where_string .= "(" . 
-              join(" OR ",  map { " media_id = " . $dbh->quote($_) } 
+              join(" OR ",  map { " media.media_id = " . $dbh->quote($_) } 
                    @{$args{media_id} }) .
                      ')';
         } else {
             $where_string .= " and " if $where_string;
-            $where_string .= "media_id = ". $dbh->quote($args{media_id});
+            $where_string .= "media.media_id = ". $dbh->quote($args{media_id});
         }
     }
 
     # add title_like to where_string if present
     if ($args{'title_like'}) {
         $where_string .= " and " if $where_string;
-        $where_string .= "title like ?";
+        $where_string .= "media.title like ?";
         push @where, 'title_like';
     }
 
@@ -797,42 +861,42 @@ not $valid_params{$param};
 
         $where_string .= " and " if $where_string;
         $where_string .= "(".
-          join(" OR ", map { "category_id = $_" } @descendants) .")";
+          join(" OR ", map { "media.category_id = $_" } @descendants) .")";
  
     }
 
     # add filename_like to where_string if present
     if ($args{'filename_like'}) {
         $where_string .= " and " if $where_string;
-        $where_string .= "filename like ?";
+        $where_string .= "media.filename like ?";
         push @where, 'filename_like';
     }
 
     # add url_like to where_string if present
     if ($args{'url_like'}) {
         $where_string .= " and " if $where_string;
-        $where_string .= "url like ?";
+        $where_string .= "media.url like ?";
         push @where, 'url_like';
     }
 
     # checked out if checked_out_by is NULL
     if (defined $args{'checked_out'}) {
         $where_string .= " and " if $where_string;
-        $args{'checked_out'} ? ($where_string .= "checked_out_by is not NULL") : ($where_string .= "checked_out_by is NULL");
+        $args{'checked_out'} ? ($where_string .= "media.checked_out_by is not NULL") : ($where_string .= "media.checked_out_by is NULL");
     }
 
     if ($args{'no_attributes'}) {
         $where_string .= " and " if $where_string;
-        $where_string .= "((caption = '' or caption is NULL) AND (copyright = '' or copyright is NULL) AND (notes = '' or notes is NULL) AND (alt_tag = '' or alt_tag is NULL))";
+        $where_string .= "((media.caption = '' or media.caption is NULL) AND (media.copyright = '' or media.copyright is NULL) AND (media.notes = '' or media.notes is NULL) AND (media.alt_tag = '' or media.alt_tag is NULL))";
     }
 
     if ($args{'creation_date'}) {
         if (ref($args{'creation_date'}) eq 'ARRAY') {
             $where_string .= " and " if $where_string;
-            $where_string .= " creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'";
+            $where_string .= " media.creation_date BETWEEN '".$args{'creation_date'}[0]->mysql_datetime."' AND '".$args{'creation_date'}[1]->mysql_datetime."'";
         } else {
             $where_string .= " and " if $where_string;
-            $where_string .= " creation_date = '".$args{'creation_date'}->mysql_datetime."'";
+            $where_string .= " media.creation_date = '".$args{'creation_date'}->mysql_datetime."'";
         }
     }
 
@@ -840,7 +904,7 @@ not $valid_params{$param};
        my @words = split(/\s+/, $args{'simple_search'});
         foreach my $word (@words){
                 my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
-                my $joined = $numeric ? 'media_id = ?' : '('.join(' OR ', 'title LIKE ?', 'url LIKE ?', 'filename LIKE ?').')';
+                my $joined = $numeric ? 'media.media_id = ?' : '('.join(' OR ', 'media.title LIKE ?', 'media.url LIKE ?', 'media.filename LIKE ?').')';
                 $where_string .= " and " if $where_string;
                 $where_string .= $joined;
                 if ($numeric) {
@@ -853,20 +917,31 @@ not $valid_params{$param};
     }
 
     my $select_string;
+    my $group_by = 0;
     if ($args{'count'}) {
-        $select_string = 'count(*) as count';
+        $select_string = 'count(distinct media.media_id) as count';
     } elsif ($args{'ids_only'}) {
-        $select_string = 'media_id';
+        $select_string = 'media.media_id';
     } else {
-        my @fields = grep {($_ ne 'media_id')} FIELDS;
+        my @fields = map { "media.$_" } (grep {($_ ne 'media_id')} FIELDS);
+        push(@fields, "(sum(cgpc.may_see) > 0) as may_see");
+        push(@fields, "(sum(cgpc.may_edit) > 0) as may_edit");
 
-        $select_string = 'DISTINCT(media_id), '.join(',', @fields);
+        $select_string = 'media.media_id, '.join(',', @fields);
+
+        # Set up group by
+        $group_by++;
     }
     
-    my $sql = "select $select_string from media";
+    my $sql = qq( select $select_string from media
+                  left join category_group_permission_cache as cgpc
+                  ON cgpc.category_id = media.category_id
+                  left join user_group_permission as ugp
+                  ON cgpc.group_id = ugp.group_id );
     $sql .= ", media_contrib" if $args{'contrib_id'};
     $sql .= " where ".$where_string if $where_string;
-    $sql .= " order by $order_by $order_desc";
+    $sql .= " group by media.media_id" if ($group_by);
+    $sql .= " order by $order_by";
  
     # add limit and/or offset if defined 
     if ($limit) {
@@ -1042,6 +1117,8 @@ sub thumbnail_path {
 
 Marks media object as checked out by user_id.
 
+Will throw "Krang::Media::NoEditAccess" exception if user ius not allowed to edit this media.
+
 =cut
 
 sub checkout {
@@ -1050,14 +1127,26 @@ sub checkout {
     my $dbh = dbh;
     my $user_id = $ENV{REMOTE_USER};
 
-    # short circuit checkout on instance method version of call...
-    return if $self and
-              $self->{checked_out_by} and 
-              $self->{checked_out_by} == $user_id;
-   
-    my $is_object = $media_id ? 0 : 1; 
-    $media_id = $self->{media_id} if (not $media_id);
-    croak("No media_id specified for checkout!") if not $media_id;
+    # Load media if media is not already loaded
+    unless (ref($self)) {
+        croak ("No media_id specified") unless ($media_id);
+        my ($media) = Krang::Media->find(media_id=>$media_id);
+        croak ("Can't find media_id '$media_id'") unless ($media and ref($media));
+
+        # We got it.  Save it.
+        $self = $media;
+    } else {
+        # Set $media_id -- we need it later
+        $media_id = $self->{media_id};
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media" )
+        unless ($self->may_edit);
+
+    # Short circuit if media is checked out by current user
+    return if ( $self->{checked_out_by} and 
+                $self->{checked_out_by} == $user_id );
 
     $dbh->do('LOCK tables media WRITE');
 
@@ -1080,18 +1169,9 @@ sub checkout {
     
     $dbh->do('UNLOCK tables');
 
-    $self->{checked_out_by} = $user_id if $is_object;
-
-    if ($is_object) {
-        add_history(    object => $self,
-                        action => 'checkout',
-               );
-    } else {
-        add_history(    object => ((Krang::Media->find(media_id => $media_id))[0]),
-                        action => 'checkout',
-               );
-    }
-
+    $self->{checked_out_by} = $user_id;
+    add_history( object => $self,
+                 action => 'checkout' );
 }
 
 =item $media->checkin() || Krang::Media->checkin($media_id)
@@ -1106,24 +1186,28 @@ sub checkin {
     my $dbh = dbh;
     my $user_id = $ENV{REMOTE_USER};
 
-    my $is_object = $media_id ? 0 : 1;
-    $media_id = $self->{media_id} if (not $media_id);
-    croak("No media_id specified for checkin!") if not $media_id;
+    # Load media if media is not already loaded
+    unless (ref($self)) {
+        croak ("No media_id specified") unless ($media_id);
+        my ($media) = Krang::Media->find(media_id=>$media_id);
+        croak ("Can't find media_id '$media_id'") unless ($media and ref($media));
+
+        # We got it.  Save it.
+        $self = $media;
+    } else {
+        # Set $media_id -- we need it later
+        $media_id = $self->{media_id};
+    }
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media" )
+        unless ($self->may_edit);
 
     $dbh->do('UPDATE media SET checked_out_by = NULL WHERE media_id = ?', undef, $media_id);
     
-    $self->{checked_out_by}= $user_id if $is_object;
-
-    if ($is_object) {
-        add_history(    object => $self,
-                        action => 'checkin',
-               );
-    } else {
-        add_history(    object => ((Krang::Media->find(media_id => $media_id))[0]),
-                        action => 'checkin',
-               );
-    }
-
+    $self->{checked_out_by}= $user_id;
+    add_history( object => $self,
+                 action => 'checkin' );
 }
 
 =item $media = $media->url();
@@ -1223,11 +1307,19 @@ Permenantly delete media object or media object with given id.
 
 Attempts to checkout the media object, will croak if checked out by another user.
 
+Will throw "Krang::Media::NoEditAccess" exception if user ius not allowed to edit
+this media.
+
 =cut
 
 sub delete {
     my $self = shift;
     my $media_id = shift;
+
+    # Is user allowed to otherwise edit this object?
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media" )
+        unless ($self->may_edit);
+
     my $dbh = dbh;
     my $root = KrangRoot;
 
