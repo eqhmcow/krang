@@ -4,9 +4,6 @@ use strict;
 use warnings;
 
 
-
-=pod
-
 =head1 NAME
 
 Krang::CGI::Contrib - web interface to manage Contributors
@@ -39,6 +36,8 @@ The default run-mode (start_mode) for Krang::CGI::Contrib
 is 'search'.
 
 =head2 Run-Modes
+
+=over 4
 
 =cut
 
@@ -84,11 +83,6 @@ sub setup {
 
 
 
-
-=pod
-
-=over 4
-
 =item search
 
 Display a list of matching contributors, or all
@@ -99,9 +93,6 @@ contributors if no filter text is provided.
   * Function on success
   * Function on failure
 
-
-=back
-
 =cut
 
 
@@ -109,17 +100,37 @@ sub search {
     my $self = shift;
 
     my $q = $self->query();
+    my $t = $self->load_tmpl('list_view.tmpl', loop_context_vars=>1);
 
-    return $self->dump_html();
+    my @contributors = (
+                        {
+                         contrib_id => 1,
+                         last => 'Erlbaum',
+                         first => 'Jesse',
+                         types => [{type_name=>'Writer'}]
+                        },
+
+                        {
+                         contrib_id => 2,
+                         last => 'Evil',
+                         first => 'Dr.',
+                         types => [{type_name=>'Mad Scientist'}]
+                        },
+
+                        {
+                         contrib_id => 3,
+                         last => 'Man',
+                         first => 'Method',
+                         types => [{type_name=>'Rhymer'}, {type_name=>'Writer'}]
+                        },
+
+                       );
+    $t->param(contributors => \@contributors);
+
+    return $t->output() . $self->dump_html();
 }
 
 
-
-
-
-=pod
-
-=over 4
 
 =item associate_story
 
@@ -131,9 +142,6 @@ Contributors may be associated with Story objects.
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -148,12 +156,6 @@ sub associate_story {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item associate_media
 
 Invoked by direct link from Krang::CGI::Media, 
@@ -164,9 +166,6 @@ Contributors may be associated with Media objects.
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -181,12 +180,6 @@ sub associate_media {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item delete_selected
 
 Delete a set of contribuitors, specified by check-mark
@@ -197,9 +190,6 @@ run-mode.  Return to the "search" run-mode.
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -214,12 +204,6 @@ sub delete_selected {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item add
 
 Display an "Add Contributor" screen, through which
@@ -229,9 +213,6 @@ users may create a new Contributor object.
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -246,12 +227,6 @@ sub add {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item save_add
 
 Insert the Contributor object which was specified on the 
@@ -261,9 +236,6 @@ Insert the Contributor object which was specified on the
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -278,12 +250,6 @@ sub save_add {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item cancel_add
 
 Cancel the addition of a Contributor object which was specified on the 
@@ -293,9 +259,6 @@ Cancel the addition of a Contributor object which was specified on the
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -310,12 +273,6 @@ sub cancel_add {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item save_stay_add
 
 Insert the Contributor object which was specified on the 
@@ -326,9 +283,6 @@ screen ("edit" run-mode), so that further edits may be made.
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -343,12 +297,6 @@ sub save_stay_add {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item edit
 
 Display an "Edit Contributor" screen, through which
@@ -361,9 +309,6 @@ selected on the "Contributor List" screen.
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -378,12 +323,6 @@ sub edit {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item save_edit
 
 Update the Contributor object as specified on the 
@@ -393,9 +332,6 @@ Update the Contributor object as specified on the
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -410,12 +346,6 @@ sub save_edit {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item cancel_edit
 
 Cancel the edit of the Contributor object currently on the 
@@ -425,9 +355,6 @@ Cancel the edit of the Contributor object currently on the
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -442,12 +369,6 @@ sub cancel_edit {
 
 
 
-
-
-=pod
-
-=over 4
-
 =item save_stay_edit
 
 Update the Contributor object as specified on the 
@@ -458,9 +379,6 @@ screen ("edit" run-mode), so that further edits may be made.
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -475,11 +393,6 @@ sub save_stay_edit {
 
 
 
-
-=pod
-
-=over 4
-
 =item delete
 
 Delete the Contributor object currently on the
@@ -490,9 +403,6 @@ run-mode.
   * Expected parameters
   * Function on success
   * Function on failure
-
-
-=back
 
 =cut
 
@@ -508,9 +418,6 @@ sub delete {
 
 
 
-
-
-
 #############################
 #####  PRIVATE METHODS  #####
 #############################
@@ -520,8 +427,7 @@ sub delete {
 1;
 
 
-=pod
-
+=back
 
 =head1 AUTHOR
 
