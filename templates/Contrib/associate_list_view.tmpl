@@ -92,9 +92,10 @@ function update_order_sort_south (a, b) {
 <div class="dark-bar">Associate Contributor</div>
 
 
-<!-- Start outline table -->
-<table border="1" cellpadding="5" cellspacing="0" width="100%"><tr><td>
+<div class=form-box>
 
+
+Current Contributors
 
 <form name="do_return_form" method="POST" action="<tmpl_if associate_story>story.pl<tmpl_else>media.pl</tmpl_if>">
 <input type="hidden" name="rm" value="edit">
@@ -113,12 +114,6 @@ function update_order_sort_south (a, b) {
 
 </form>
 
-
-
-
-Current Contributors
-
-<br />
 
 <form name="current_contributors_form" method="POST">
 <input type="hidden" name="rm" value="reorder_contribs">
@@ -256,13 +251,11 @@ Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row
 </tmpl_if>
 
 
-</td></tr></table>
-<!-- End outline table -->
-
 
 <!-- End delete_selected_form -->
 </form>
 
+</div>
 
 <div class="button-bar"><input type="button" value="Return" onClick="do_return()"></div>
 
