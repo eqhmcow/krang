@@ -82,7 +82,9 @@ sub category_chooser {
     $template->param(category_loop => \@category_loop,
                      name          => $name,
                      label         => $label || 'Choose',
-                     display       => defined $display ? $display : 1);
+                     display       => defined $display ? $display : 1,
+                     onchange      => $onchange,
+                    );
 
     return $template->output();
 }

@@ -23,6 +23,23 @@
         }
   }
 
+  function add_category() {
+        document.forms[0].rm.value = 'add_category';
+        document.forms[0].submit();
+  }
+
+  function remove_categories() {
+        if (confirm("Really delete categories?")) {
+           document.forms[0].rm.value = 'delete_categories';
+           document.forms[0].submit();
+        }
+  }
+
+  function set_primary_category() {
+        document.forms[0].rm.value = 'set_primary_category';
+        document.forms[0].submit();
+  }
+
 </script>
 
 <form method=post name=edit>
@@ -136,15 +153,15 @@ Sites / Categories<br>
   <tr>
     <td class=form-cell><tmpl_var site></td>
     <td class=form-cell><tmpl_var category></td>
-    <td class=form-cell align=center><input type=radio name=primary_cat value=<tmpl_var category_id> <tmpl_if __first__>checked</tmpl_if>></td>
-    <td class=form-cell align=center><tmpl_unless __first__><input type=checkbox name=cat_remove_<tmpl_var index>></tmpl_unless></td>
+    <td class=form-cell align=center><input type=radio name=primary_category_id value=<tmpl_var category_id> <tmpl_if __first__>checked</tmpl_if>></td>
+    <td class=form-cell align=center><tmpl_unless __first__><input type=checkbox name=cat_remove_<tmpl_var category_id>></tmpl_unless></td>
   </tr>
   </tmpl_loop>
 
   <tr>
     <td align=left colspan=2 class="form-cell"><tmpl_var category_chooser></td>
     <td class="form-cell" align=center><input type=button value="Set" onclick="set_primary_category()"></td>
-    <td align=center class="form-cell"><input type=button value=Delete onClick='remove_children()'></td>
+    <td align=center class="form-cell"><input type=button value=Delete onClick='remove_categories()'></td>
   </tr>
 </table>
 

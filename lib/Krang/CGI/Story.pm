@@ -58,6 +58,9 @@ sub setup {
                      save_and_jump    => 'save_and_jump',
                      save_and_stay    => 'save_and_stay',
                      delete           => 'delete',
+                     delete_categories => 'delete_categories',
+                     add_category     => 'add_category',
+                     set_primary_category => 'set_primary_category',
                     );
 
     $self->tmpl_path('Story/');
@@ -254,7 +257,7 @@ sub edit {
                                           query    => $query,
                                           label    => 'Add Site / Category',
                                           display  => 0,
-                                          onchange => 'add_category()',
+                                          onchange => 'add_category',
                                          ));
 
     }
@@ -338,6 +341,134 @@ sub save_and_jump {
     my $self = shift;
     my $query = $self->query();
     return $self->save(jump_to => $query->param("jump_to"));
+}
+
+=item add_category
+
+Adds a category to the story.  Expects a category ID in
+new_category_id, which is filled in by the category chooser on the
+edit screen.  Returns to edit mode on success and on failure with an
+error message.
+
+=cut
+
+sub add_category {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $story = $session{story};
+    croak("Unable to load story from session!")
+      unless $story;
+
+    my $category_id = $query->param('new_category_id');
+    unless ($category_id) {
+        add_message("added_no_category");
+        return $self->edit();
+    }
+
+    # make sure this isn't a dup
+    my @categories = $story->categories();
+    if (grep { $_->category_id == $category_id } @categories) {
+        add_message("duplicate_category");
+        return $self->edit();
+    }
+
+    # look up category
+    my ($category) = Krang::Category->find(category_id => $category_id);
+    croak("Unable to load category '$category_id'!")
+      unless $category;
+
+    # push it on
+    push(@categories, $category);
+    $story->categories(@categories);
+    add_message('added_category', url => $category->url);
+
+    return $self->edit();
+}
+
+=item set_primary_category
+
+Sets the primary category for the story.  Expects a category ID in
+primary_category_id, which is filled in by the primary radio group in
+the edit screen.  Returns to edit mode on success and on failure with
+an error message.
+
+=cut
+
+sub set_primary_category {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $story = $session{story};
+    croak("Unable to load story from session!")
+      unless $story;
+
+    my $category_id = $query->param('primary_category_id');
+    return $self->edit() unless $category_id;
+
+    # shuffle list of categories to put new primary first
+    my (@categories, $url);
+    foreach my $cat ($story->categories()) {
+        if ($cat->category_id == $category_id) {
+            $url = $cat->url;
+            unshift(@categories, $cat);
+        } else {
+            push(@categories, $cat);
+        }
+    }
+
+    # set it
+    $story->categories(@categories);
+    add_message('set_primary_category', url => $url);
+
+    return $self->edit();
+}
+
+
+=item delete_categories
+
+Removes categories from the story.  Expects one or more cat_remove_$id
+variables set with checkboxes.  Returns to edit mode on success and on
+failure with an error message.
+
+=cut
+
+sub delete_categories {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $story = $session{story};
+    croak("Unable to load story from session!")
+      unless $story;
+
+    my %delete_ids = map { s/cat_remove_//; ($_, 1) } 
+                       grep { /^cat_remove/ } $query->param();
+
+    # shuffle list of categories to remove the deleted
+    my (@categories, @urls);
+    foreach my $cat ($story->categories()) {
+        if ($delete_ids{$cat->category_id}) {
+            push(@urls, $cat->url);
+        } else {
+            push(@categories, $cat);
+        }
+    }
+
+    # set remaining cats
+    $story->categories(@categories);
+
+    # put together a reasonable summary of what happened
+    if (@urls == 0) {
+        add_message('deleted_no_categories');
+    } elsif (@urls == 1) {
+        add_message('deleted_a_category', url => $urls[0]);
+    } else {
+        add_message('deleted_categories', 
+                    urls => join(', ', @urls[0..$#urls-1]) . 
+                              ' and ' . $urls[-1]);
+    }
+
+    return $self->edit();
 }
 
 =item delete
