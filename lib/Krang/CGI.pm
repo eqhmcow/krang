@@ -85,7 +85,7 @@ sub run {
     unless($ENV{MOD_PERL}) {
         my $instance = exists $ENV{KRANG_INSTANCE} ? 
           $ENV{KRANG_INSTANCE} : (Krang::Conf->instances())[0];
-        debug("Krang.pm:  Setting instance to '$instance'");
+        debug("Krang::CGI:  Setting instance to '$instance'");
         Krang::Conf->instance($instance);
     }
 
@@ -124,13 +124,6 @@ sub dump_html {
     my $self = shift;
     my $output = '';
 
-    # Dump Session state
-    $output .= "<P>\nSession State:<BR>\n<OL>\n";
-    foreach my $ek (sort(keys(%session))) {
-        $output .= "<LI> $ek => '<B>".$session{$ek}."</B>'\n";
-    }
-    $output .= "</OL>\n";
-
     # Dump Params
     $output .= "<P>\nQuery Parameters:<BR>\n<OL>\n";
     my @params = $self->query->param();
@@ -138,6 +131,13 @@ sub dump_html {
         my @data = $self->query->param($p);
         my $data_str = "'<B>".join("</B>', '<B>", @data)."</B>'";
         $output .= "<LI> $p => $data_str\n";
+    }
+    $output .= "</OL>\n";
+
+    # Dump Session state
+    $output .= "<P>\nSession State:<BR>\n<OL>\n";
+    foreach my $ek (sort(keys(%session))) {
+        $output .= "<LI> $ek => '<B>".$session{$ek}."</B>'\n";
     }
     $output .= "</OL>\n";
 
