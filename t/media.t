@@ -121,7 +121,7 @@ $m2->prepare_for_edit();
 # change the title
 $m2->title('new title');
 
-is ($m2->thumbnail_path(), catfile(KrangRoot,'data','media',$m2->_media_id_path,$m2->version,"t__".$m2->filename));
+is ($m2->thumbnail_path(), catfile(KrangRoot,'data','media',Krang::Conf->instance,$m2->_media_id_path,$m2->version,"t__".$m2->filename));
 
 # upload another media file
 $filepath = catfile(KrangRoot,'t','media','krang.gif');
