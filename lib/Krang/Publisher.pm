@@ -244,6 +244,8 @@ When a story is published, it is published under all categories it is associated
 
 As part of the publish process, all media and stories linked to by $story will be published as well.
 
+If you do not care about related assets (WARNING - You want to care!), you can set the argument I<disable_related_assets> =>1
+
 Will throw an exception if the current user ($ENV{REMOTE_USER})does not have permissions to publish.
 
 =cut
@@ -252,6 +254,7 @@ sub publish_story {
 
     my $self = shift;
     my %args = @_;
+    my $publish_list;
 
     my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
@@ -259,7 +262,16 @@ sub publish_story {
     $self->{is_publish} = 1;
     $self->{is_preview} = 0;
 
-    my $publish_list = $self->get_publish_list(story => $story);
+    if ($args{disable_related_assets}) {
+        debug(__PACKAGE__ . ": disabling related_assets checking for publish");
+        if (ref $story eq 'ARRAY') {
+            $publish_list = $story;
+        } else {
+            push @$publish_list, $story;
+        }
+    } else {
+        $publish_list = $self->get_publish_list(story => $story);
+    }
 
     foreach my $object (@$publish_list) {
         if ($object->isa('Krang::Story')) {

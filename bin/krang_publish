@@ -2,6 +2,12 @@
 use warnings;
 use strict;
 
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+#use Devel::Profiler bad_pkgs =>[qw(UNIVERSAL Time::HiRes B Carp Exporter Cwd Config CORE DynaLoader XSLoader AutoLoader Exception::Class)];
+
 =pod
 
 =head1 NAME
@@ -27,6 +33,10 @@ Publish a specific story and all related assets (linked stories and media)
   $ krang_publish --story_id 10
 
 
+Publish all assets of a single site, but only those assets that have been previously published
+
+  $ krang_publish --site_id 10 --republish_only
+
 =head1 DESCRIPTION
 
 This script provides a command-line tool for publishing content in
@@ -41,12 +51,15 @@ UI is not well-suited to larger publish runs.
 =item --everything
 
 Publish all content (stories and media) in a Krang installation.
+
 Using the --everything flag will cause krang_publish to ignore the
---site_id, --category_id and --story_id options.
+--site_id, --category_id, --story_id and --media_id options.
 
 =item --site_id
 
 Publish all content (stories and media) under the site specified by the site_id.
+
+Using the --site_id flag will cause krang_publish to ignore the --category_id, --story_id and --media_id options.
 
 =item --limited_to_site
 
@@ -57,6 +70,8 @@ B<WARNING>: The intended use case for this option would be an installation that 
 =item --category_id
 
 Publish all content (stories and media) under the category specified by the category_id.
+
+Using the --category_id flag will cause krang_publish to ignore the --story_id and --media_id options.
 
 =item --limited_to_category
 
@@ -72,6 +87,11 @@ Publish a single story specified by its story_id, and all its related stories an
 
 Publish a single media object, specified by its media_id.
 
+=item --republish_only
+
+This modifier will limit the publish process to assets that have been published previously.
+
+
 =item --verbose
 
 Increases the level of output to STDOUT to give a more in-depth explanation of what is going on.
@@ -79,4 +99,151 @@ Increases the level of output to STDOUT to give a more in-depth explanation of w
 =back
 
 =cut
+
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+
+# Krang Libs
+use Krang::Script;
+use Krang::Conf qw(KrangRoot ElementLibrary);
+use Krang::Story;
+use Krang::Media;
+use Krang::Category;
+use Krang::Site;
+use Krang::Publisher;
+
+use Time::HiRes qw(gettimeofday tv_interval);
+
+# Setup - grabbing all the command-line options.
+use Getopt::Long;
+use Pod::Usage;
+
+my %id  = map { ($_, [])} qw(story_id media_id category_id site_id);
+
+
+my ($help, $man, $everything, $verbose) = (0, 0, 0, 0);
+my $limited_to_site     = 0;
+my $limited_to_category = 0;
+my $republish_only      = 0;
+my $increment           = 25;
+
+pod2usage(2) unless
+  GetOptions(help                => \$help,
+             man                 => \$man,
+
+             verbose             => \$verbose,
+             everything          => \$everything,
+             limited_to_site     => \$limited_to_site,
+             limited_to_category => \$limited_to_category,
+             republish_only      => \$republish_only,
+
+             'increment=i'       => \$increment,
+
+             (map { ("$_=i", $id{$_}) } keys %id)
+
+            );
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
+  if @ARGV;
+
+
+# figure out how these command-line options affect find criteria.
+my %find_options = (limit => $increment, offset => 0);
+my %publish_args = ();
+
+if ($republish_only) {
+    $find_options{publish_status} = 1;
+}
+
+if ($everything) {
+    $publish_args{disable_related_assets} = 1;
+} else {
+    if ($id{site_id}) {
+        $find_options{site_id} = $id{site_id}[0];
+    } elsif ($id{category_id}) {
+        $find_options{category_id} = $id{category_id}[0];
+    } elsif ($id{story_id}) {
+        $find_options{story_id} = $id{story_id}[0];
+    }
+}
+
+
+# Start the publish process.
+my $publisher = Krang::Publisher->new();
+my $total_storytime = 0;
+my $total_storycount = 0;
+my $total_mediatime = 0;
+my $total_mediacount = 0;
+
+while (my @stories = Krang::Story->find(%find_options)) {
+
+    my @starttime = gettimeofday();
+
+    $publisher->publish_story(story => \@stories, %publish_args);
+
+    my $endtime = tv_interval(\@starttime);
+
+    print sprintf("STATUS: stories (%i - %i) published in %f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @stories), $endtime);
+
+    $total_storytime += $endtime;
+    $total_storycount += @stories;
+
+    last if (@stories < $increment);
+    $find_options{offset} += $increment;
+}
+
+# if the --everything option was specified, all media needs to be published as well.
+if ($everything) {
+    $find_options{offset} = 0;
+    while (my @media = Krang::Media->find(%find_options)) {
+        my @starttime = gettimeofday();
+        $publisher->publish_media(media => \@media, %publish_args);
+        my $endtime = tv_interval(\@starttime);
+
+        print sprintf("STATUS: media (%i - %i) published in %f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @media), $endtime);
+
+        $total_mediatime += $endtime;
+        $total_mediacount += @media;
+
+        last if (@media < $increment);
+        $find_options{offset} += $increment;
+    }
+}
+
+print "\n\nFINISHED\n==================================================\n";
+print "type\t\tnumber published\ttime(seconds)\n\n";
+
+print sprintf("stories\t\t%i\t\t\t%.04f\n", $total_storycount, $total_storytime);
+if ($everything) {
+    print sprintf("media\t\t%i\t\t\t%.04f\n", $total_mediacount, $total_mediatime);
+}
 
