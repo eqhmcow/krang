@@ -2,6 +2,13 @@ package Krang::Element;
 use strict;
 use warnings;
 
+
+# export before using other libs - prevents library load loop.
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(foreach_element);
+
+
 use Krang::ElementLibrary;
 use Krang::ElementClass;
 use Krang::DB qw(dbh);
@@ -15,9 +22,6 @@ use Krang::Cache;
 # declare prototypes
 sub foreach_element (&@);
 
-require Exporter;
-our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(foreach_element);
 
 =head1 NAME
 

@@ -10,6 +10,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Reordered subroutine exports in L<Krang::Element> to fix a library
+loading loop that cropped up under some circumstances.  Thanks to
+Michael Peters (mpeters@plusthree.com) for finding it.  [Peter]
+
+
+=item *
+
 Added support for hidden stories, based on class definitions.  A
 hidden story is one that, by default, does not show up in calls to
 C<find()>.  This is useful for auto-generated story lists where some
