@@ -201,8 +201,8 @@ for my $media_count (1 .. $media) {
     # pick a format
     my $format = (qw(jpg png gif))[int(rand(3))];
 
-    $img->write(file => "tmp/tmp.$format");
-    my $fh = IO::File->new("tmp/tmp.$format")
+    $img->write(file => catfile(KrangRoot, "tmp", "tmp.$format"));
+    my $fh = IO::File->new(catfile(KrangRoot, "tmp", "tmp.$format"))
       or die "Unable to open tmp/tmp.$format: $!";
 
     # create a media object
@@ -223,8 +223,7 @@ for my $media_count (1 .. $media) {
         }
     }   
     push(@media, $media);
-    #system("iv tmp.$format &");
-    unlink("tmp.$format");
+    unlink(catfile(KrangRoot, "tmp", "tmp.$format"));
     print STDERR "Created Media " . $media->url . "\n";
 }
 
