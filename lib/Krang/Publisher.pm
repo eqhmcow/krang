@@ -951,7 +951,7 @@ sub _build_story_single_category {
     # mark object as published - this will update status info,
     # check the object back in, and remove it from desks,
     # as needed.
-    $story->mark_as_published();
+    $story->mark_as_published() if $self->{is_publish};
 }
 
 
@@ -1088,7 +1088,7 @@ sub _clear_asset_lists {
 ##
 
 #
-# $url = $pub->_write_out_media($media)
+# $url = $pub->_write_media($media)
 #
 # Internal method for writing a media object to disk.  Returns media URL if successful.
 #
