@@ -776,6 +776,7 @@ sub make_sortable_column_html {
     unless (defined($krang_pager_sort_field) && length($krang_pager_sort_field)) {
         $krang_pager_sort_field = $self->columns_sortable()->[0];  # First sort column
         $krang_pager_sort_order_desc = ($self->default_sort_order_desc() ? '1' : '0');
+        $q->param('krang_pager_sort_order_desc', $krang_pager_sort_order_desc);
     }
 
     # If selected, show in bold, with arrow showing current sort order (ascending, descending)
