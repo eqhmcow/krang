@@ -40,7 +40,7 @@ Krang::User - a means to access information on users
   $user->last_name('last_name');
   $user->login( 'loginX' );
   $user->mobile_phone( $phone_number );
-  $user->password( $password );		# stores md5_hex of $SALT and $password
+  $user->password( $password );		# stores MD5 of $SALT and $password
   $user->phone( $phone_number );
 
 
@@ -64,7 +64,15 @@ Krang::User - a means to access information on users
 
 =head1 DESCRIPTION
 
-This module serves as a means of adding, deleting, and accessing these objects.
+Each user object corresponds to an authorized user of the system.  The degree
+of access a user is determined by the groups with which he is associated.
+
+N.B. - Passwords are MD5 digests of $SALT and the password string; the
+original password string in not retrievable once it is passed but can only be
+calculated and compared i.e.:
+
+  my $valid_password =
+    $user->{password} eq md5($SALT, $password_string) ? 1 : 0;
 
 =cut
 
@@ -80,7 +88,7 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(croak);
-use Digest::MD5 qw(md5_hex);
+use Digest::MD5 qw(md5);
 
 # Internal Modules
 ###################
@@ -250,9 +258,8 @@ sub delete {
               "this class:\n\t$info");
     }
 
-    my $query = "DELETE FROM user WHERE user_id = ?";
-
-    $dbh->do($query, undef, ($id));
+    $dbh->do("DELETE FROM user WHERE user_id = ?", undef, ($id));
+    $dbh->do("DELETE FROM user_user_group WHERE user_id = ?", undef, ($id));
 
     return 1;
 }
@@ -261,59 +268,56 @@ sub delete {
 =item * ($dependents, %info) = $user->dependent_check()
 
 This method returns the number of dependents and a hash of classes and their
-respective object ids that reference the current user object.  undef will be
-returned if no references are found.
+respective object ids that reference the current user object.  '0' and undef
+will be returned if no references are found.
 
 =cut
 
 sub dependent_check {
     my $self = shift;
+    my $id = $self->{user_id};
     my $dependents = 0;
-    my ($class, $dbh, $id, %info, $query, $sth);
+    my ($dbh, $uid, %info, $sth);
+    my $query = "SELECT %s_id FROM %s WHERE checked_out_by = ?";
 
-    $query = <<SQL;
-SELECT
-FROM
-WHERE
-SQL
-
-    $dbh = dbh();
-    $sth = $dbh->prepare($query);
-    $sth->execute(());
-    $sth->bind_columns(\$class, \$id);
-    while ($sth->fetch()) {
-        push @{$info{$class}}, $id;
-        $dependents++;
+    for (qw/media story template/) {
+        $dbh = dbh();
+        $sth = $dbh->prepare(sprintf($query, $_, $_));
+        $sth->execute(($id));
+        $sth->bind_columns(1, \$uid);
+        while ($sth->fetch()) {
+            push @{$info{$_}}, $uid;
+            $dependents++;
+        }
+        $sth->finish();
     }
-    $sth->finish();
 
     return ($dependents, %info);
 }
 
 
-=item * @info = $user->duplicate_check()
+=item * ($duplicates, %info) = $user->duplicate_check()
 
 This method checks the database to see if any existing site objects possess any
-of the same values as the one in memory.  If this is the case an array
-containing the 'user_id' and the name of the duplicate field is returned,
-otherwise, the array will be empty.
+of the same values as the one in memory.  If this is the case, the number of
+duplicates and a hash of ids and the duplicated fields is returned; otherwise,
+0 and undef are returned.
 
 =cut
 
 sub duplicate_check {
     my $self = shift;
     my $id = $self->{user_id};
-    my (@fields, @id_info, @params, $query, $row, @wheres);
+    my $duplicates = 0;
 
-    for (keys %user_cols) {
-        next if $_ eq 'user_id';
-        push @fields, $_;
-        push @wheres, "$_ = ?";
-        push @params, $self->{$_};
-    }
+    my $query = <<SQL;
+SELECT login, password, first_name || last_name AS name
+FROM user
+WHERE login = ? OR password = ? OR name = ?
+SQL
 
-    $query = "SELECT " . join(",", @fields) .
-      "FROM user WHERE " . join(" OR ", @wheres);
+    my @params = ($self->{login}, $self->{password},
+                  $self->{first_name} . $self->{last_name});
 
     # alter query if save() has already been called
     if ($id) {
@@ -324,16 +328,19 @@ sub duplicate_check {
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
+    my (%info, $row);
     $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     while ($sth->fetchrow_arrayref()) {
         for (keys %$row) {
-            push @id_info, $row->{user_id}, $row->{$_}
-              if ($self->{$_} && $self->{$_} eq $row->{$_});
+            if ($self->{$_} && $self->{$_} eq $row->{$_}) {
+                $info{$row->{user_id}} = $_;
+                $duplicates++;
+            }
         }
     }
     $sth->finish();
 
-    return @id_info;
+    return ($duplicates, %info);
 }
 
 
@@ -562,19 +569,39 @@ sub group_ids {
 }
 
 
-=item * $md5_hexdigest = $user->password();
+# Either the fieldname 'login' or this method would have to change, I thought
+# the method would be easier...
+=item * $true_or_false = Krang::User->logon( $login, $password )
 
-=item * $md5_hexdigest = $user->password( $password );
+Class method that retrieves the user object associated with $login and compares
+the value in the objects 'password' field with md5( $SALT, $password ).
+
+=cut
+
+sub logon {
+    my ($self, $login, $password) = @_;
+    my $retval = 0;
+
+    my ($user) = Krang::User->find(login => $login);
+    return 0 unless $user;
+
+    return md5($SALT, $password) eq $user->{password} ? 1 : 0;
+}
+
+
+=item * $md5_digest = $user->password()
+
+=item * $md5_digest = $user->password( $password )
 
 Method to get or set the password associated with a user object.  Returns
-Digest::MD5->md5_hex( $SALT . $password_string ) as a getter. Stores the same
+Digest::MD5->md5( $SALT . $password_string ) as a getter. Stores the same
 in the DB as a setter.
 
 =cut
 
 sub password {
     my $self = shift;
-    $self->{password} = md5_hex($SALT, $_[0]) if $_[0];
+    $self->{password} = md5($SALT, $_[0]) if $_[0];
     return $self->{password};
 }
 
@@ -596,9 +623,12 @@ sub save {
     my @save_fields = grep {$_ ne 'user_id'} keys %user_cols;
 
     # check for duplicates
-    my ($user_id, $field) = $self->duplicate_check();
-    croak(__PACKAGE__ . "->save(): '$field' is a duplicate of user id " .
-          "'$user_id'.") if $user_id;
+    my ($duplicates, %info) = $self->duplicate_check();
+    if ($duplicates) {
+        my $info = join("\n\t", map {"id '$_': $info{$_}"} keys %info) . "\n";
+        croak(__PACKAGE__ . "->save(): This object duplicates the following " .
+              "user objects:\n\t$info");
+    }
 
     my $query;
     my $dbh = dbh();
@@ -645,5 +675,72 @@ L<Krang>, L<Krang::DB>
 
 
 my $quip = <<END;
-1
+Casey At The Bat
+
+It looked extremely rocky for the Mudville nine that day;
+The score stood two to four, with but an inning left to play.
+So, when Cooney died at second, and Burrows did the same,
+A pallor wreathed the features of the patrons of the game.
+
+A straggling few got up to go, leaving there the rest,
+With that hope which springs eternal within the human breast.
+for they thought: "If only Casey could get a whack at that,"
+they'd put even money now, with Casey at the bat.
+
+But Flynn preceded Casey, and likewise so did Blake,
+And the former was a pudd'n and the latter was a fake.
+So on that stricken multitude a deathlike silence sat;
+For there seemed but little chance of Casey's getting to the bat.
+
+But Flynn let drive a "single," to the wonderment of all.
+And the much-despised Blakey "tore the cover off the ball."
+And when the dust had lifted, and they saw what had occurred,
+There was Blakey safe at second, and Flynn a-huggin' third.
+
+Then from the gladdened multitude went up a joyous yell--
+It rumbled in the mountaintops, it rattled in the dell;
+It struck upon the hillside and rebounded on the flat;
+For Casey, mighty Casey was advancing to the bat.
+
+There was ease in Casey's manner as he stepped into his place,
+There was pride in Casey's bearing and a smile on Casey's face;
+And when responding to the cheers he lightly doffed his hat.
+No stranger in the crowd could doubt 'twas Casey at the bat."
+
+Ten thousand eyes were on him as he rubbed his hands with dirt,
+Five thousand tongues applauded when he wiped them on his shirt;
+Then when the writhing pitcher ground the ball into his hip,
+Defiance glanced in Casey's eye, a sneer curled Casey's lip.
+
+And now the leather-covered sphere came hurtling through the air,
+And Casey stood a watching it in haughty grandeur there.
+Close by the sturdy batsman the ball unheeded sped;
+"That ain't my style," said Casey. "Strike one," the umpire said.
+
+From the benches, black with people, there went up a muffled roar,
+Like the beating of the storm waves on the stern and distant shore.
+"Kill him! kill the umpire!" shouted someone on the stand;
+And it's likely they'd have killed him had not Casey raised his hand.
+
+With a smile of Christian charity great Casey's visage shone;
+He stilled the rising tumault, he made the game go on;
+He signaled to the pitcher, and once more the spheroid flew;
+But Casey still ignored it, and the umpire said, "Strike Two."
+
+"Fraud!" cried the maddened thousands, and the echo answered "Fraud!"
+But one scornful look from Casey and the audience was awed;
+They saw his face grow stern and cold, they saw his muscles strain,
+And they knew that Casey wouldn't let the ball go by again.
+
+The sneer is gone from Casey's lips, his teeth are clenched in hate,
+He pounds with cruel violence his bat upon the plate;
+And now the pitcher holds the ball, and now he lets it go,
+And now the air is shattered by the force of Casey's blow.
+
+Oh, somewhere in this favored land the sun is shining bright,
+The band is playing somewhere, and somewhere hearts are light;
+And somewhere men are laughing, and somewhere children shout,
+But there is no joy in Mudville: Mighty Casey has struck out.
+
+-- Ernest Lawrence Thayer
 END
