@@ -529,7 +529,7 @@ sub execute {
 
         # check to make sure the object exists.
         if ($self->_object_exists) {
-            if ($self->_object_checked_out) {
+            if (($self->{action} ne 'send') and $self->_object_checked_out) {
                 info(sprintf("%s->execute(): Cannot run Schedule id '%i'.  %s id='%i' is checked out.",
                              __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
                 return;
@@ -681,7 +681,7 @@ sub _send {
     my $type    = $self->{object_type};
     my $id      = $self->{object_id};
     my $context = $self->{context};
-
+    
     eval {
         Krang::Alert->send(alert_id => $id, @$context);
     };
@@ -1387,8 +1387,8 @@ sub _object_exists {
     my $object;
 
     if ($self->{action} eq 'send') {
-        # object is saved in the context hash.
-
+        my $alert = (Krang::Alert->find( alert_id => $self->object_id ))[0];
+        return 1 if $alert; 
     } else {
         my $type = $self->object_type();
         my $id   = $self->object_id();

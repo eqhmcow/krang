@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Bugfix in L<Krang::Schedule> - alerts were not being run because 
+of some incomplete code meant to check for valid alert id. [Matt]
+
 =item * 
 
 Made changes in media UI to:
