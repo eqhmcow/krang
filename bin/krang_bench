@@ -172,6 +172,7 @@ END
 
 # print data, and collect total info
 my $total = 0;
+my $total_points = 0;
 foreach my $module ( sort keys %data ) {
     my $first = 1;
     foreach my $name ( sort keys %{$data{$module}} ) {
@@ -184,6 +185,7 @@ foreach my $module ( sort keys %data ) {
                 $change = (($run2 - $run1) / $run2) * 100;
             }
             $total += $change;
+            $total_points++;
             if ($change >= 0) {
                 $change = sprintf("+ %2d%%", $change);
             } else {
@@ -205,9 +207,9 @@ END
 
 # print total
 if ($total >= 0) {
-    $total = sprintf("+ %2d%%", $total);
+    $total = sprintf("+ %2d%%", $total / $total_points);
 } else {
-    $total = sprintf("- %2d%%", -$total);
+    $total = sprintf("- %2d%%", -($total / $total_points));
 }
 printf (<<END, $total);
 
