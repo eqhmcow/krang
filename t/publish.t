@@ -75,12 +75,12 @@ for (my $i = 0; $i <= $#paths; $i++) { ok($paths[$i] eq $dirs_a[$i]); }
 # create a new story -- get root element.
 my $story   = &create_story([$category, $child_cat, $child_subcat]);
 my $element = $story->element();
-#diag("story created");
 
+#diag("story created");
+#&walk_tree($element);
 
 # deploy templates in the t/publish/ dir.
 &deploy_templates();
-#diag("templates deployed");
 
 END {
     foreach (@delete_templates) {
@@ -94,12 +94,24 @@ END {
 
 
 # Attempt to publish the story.
-my $html = $publisher->_assemble_pages(story => $story, category => $category, mode => 'publish');
+#my $html = $publisher->_assemble_pages(story => $story, category => $category, mode => 'publish');
+
+my $page = $story->element->child('page');
+my $para = $page->child('paragraph');
+
+my @children = $page->children();
 
 
+$publisher->{story} = $story;
 
+#diag("calling publish");
+#my $html  = $page->class->publish(element => $page, publisher => $publisher);
+#my $html  = $para->class->publish(element => $para, publisher => $publisher);
 
-
+#diag($html);
+#foreach(@children) {
+#    diag(sprintf("%s => %s", $_->name(), $_->data()));
+#}
 
 
 
@@ -127,11 +139,18 @@ sub find_templates {
         $tmpl = $element->class->find_template(publisher => $publisher, element => $element);
     };
     if ($@) {
-        diag($@);
-        fail();
+        if (scalar($element->children())) {
+            foreach ($element->children()) {
+                diag(sprintf("BAD -- %s => %s", $element->name(), $_->name()));
+            }
+            diag($element->name());
+            diag(Dumper($element->children()));
+            fail("Krang::ElementClass->find_template()");
+        } else {
+            pass("Krang::ElementClass->find_template()");
+        }
     } else {
-#        diag("TEMPLATE " . $element->name() ." = " . $tmpl->output());
-        pass();
+        pass("Krang::ElementClass->find_template()");
     }
 
     my @children = $element->children();
@@ -149,8 +168,9 @@ sub find_templates {
 
 
 #
-# takes an element, creates its template.  
-# if the element has children, repeats the process.
+# deploy_templates() - 
+# Places the template files found in t/publish/*.tmpl out on the filesystem
+# using Krang::Publisher->deploy_template().
 #
 sub deploy_templates {
 
@@ -189,7 +209,7 @@ sub deploy_templates {
                 fail();
             } else {
 #                diag("DEPLOYED: " . $template_paths{$element_name});
-                pass();
+                pass("Krang::Publisher->deploy_template()");
             }
         }
 
@@ -219,6 +239,9 @@ sub create_story {
 
     my $page = $story->element->child('page');
 
+    $page->child('header')->data("header "x10);
+    $page->child('wide_page')->data(1);
+
     # add five paragraphs
     $page->add_child(class => "paragraph", data => "para1 "x40);
     $page->add_child(class => "paragraph", data => "para2 "x40);
@@ -233,14 +256,19 @@ sub create_story {
 
 
 # walk element tree, return child names at each point.
+# Debug - not used in actual testing at this point.
 sub walk_tree {
 
     my ($el) = shift;
 
+    my $level = shift || 0;
+
+    my $tabs = "\t"x$level;
+
     foreach ($el->children()) {
-        my $txt = sprintf("WALK: p='%s' n='%s'", $el->name(), $_->name());
+        my $txt = sprintf("WALK: $tabs p='%s' n='%s'", $el->name(), $_->name());
         diag($txt);
-        &walk_tree($_);
+        &walk_tree($_, ++$level);
     }
 
     return;
