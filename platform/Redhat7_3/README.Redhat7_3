@@ -1,0 +1,16 @@
+Krang has been tested on clean Redhat 7.3 "Server" and "Everything"
+installs.  After installing Redhat, you'll need to install three
+additional packages: MySQL 4, Perl 5.6.1 and libungif.
+
+MySQL 4 RPMs:
+
+  http://www.mysql.com/downloads/mysql-4.0.html
+
+Perl 5.6.1:
+
+  http://ftp.funet.fi/pub/CPAN/src/perl-5.6.1.tar.gz
+
+libungif-devel RPM:
+
+  http://mirrors.kernel.org/redhat/redhat/linux/7.3/en/os/i386/RedHat/RPMS/libungif-devel-4.1.0-10.i386.rpm
+
