@@ -63,6 +63,14 @@ run_benchmark(module => 'Krang::Media',
 
 ###################################
 
+$i = 0;
+run_benchmark(  module => 'Krang::Media',
+                name => 'create thumbnail, return thumnail path',
+                count => $count,
+                code =>
+                sub {
+                    $media_object[$i++]->thumbnail_path(); 
+                });
 ###################################
 
 $i = 0;
