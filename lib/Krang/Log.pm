@@ -37,9 +37,23 @@ Sets the path of the log.
 
 =item * LogLevel
 
-Determines the minimum log level to be recorded.  The acceptable values for
-this setting are the integers 1-3 which correspond to functions: critical,
-info, debug.
+Determines the minimum log level to be recorded.  This value may be
+set to a single integer.  The acceptable values for this setting are
+the integers 1-3 which correspond to functions: critical, info, debug.
+For example, to see all messages:
+
+  LogLevel 3
+
+Optionally, log levels may be set for specific modules.  For example,
+if you were working on Krang::CGI::Story and didn't want to see debug
+messages from other modules:
+
+  LogLevel 2,Krang::CGI::Story=3
+
+You can also specify a regex to match against module names.  For
+example, to suppress debug messages from all CGI modules:
+
+  LogLevel 3,/^Krang::CGI/=2
 
 =item * LogTimeStamp
 
@@ -135,8 +149,10 @@ our @EXPORT_OK = qw(debug info critical assert affirm should shouldnt ASSERT);
 # log levels and acceptable function calls
 our (%valid_functions, %valid_levels);
 
-# minimum log level
-our $LOG_LEVEL;
+# log level settings
+our $LOG_LEVEL_DEFAULT;
+our %LOG_LEVEL_PER_MODULE;
+our @LOG_LEVEL_REGEX;
 
 # Package ref to log object
 our $LOG;
@@ -162,18 +178,34 @@ BEGIN {
     # if we have a string
     my $level = Krang::Conf->loglevel();
     croak("Value required for LogLevel directive in 'krang.conf'.")
-        unless defined $level;
-    my $lvl_pv;
-    if ($level =~ /^[a-zA-z]+$/) {
-        croak("Invalid LogLevel: $level.")
-          unless exists $valid_functions{$level};
-        $lvl_pv = $level;
-        $level = $valid_functions{$level};
+        unless defined $level and length $level;
+
+    # handle default log level
+    my @parts = split(',', $level);
+    $LOG_LEVEL_DEFAULT = shift(@parts);
+    croak("Invalid LogLevel '$level': must begin with a number.")
+      unless $LOG_LEVEL_DEFAULT =~ /^\d+$/;
+    croak("Invalid LogLevel: '$level' : numbers must be valid log levels.")
+        unless exists $valid_levels{$LOG_LEVEL_DEFAULT};
+
+    # parse out extended log levels
+    for (@parts) {
+        if (m!^\s*/([^=\s]+)/\s*=\s*(\d+)\s*$!) {
+            my ($regex, $val) = ($1, $2);
+            croak("Invalid LogLevel: '$level' : " .
+                  "numbers must be valid log levels.")
+              unless exists $valid_levels{$val};
+            push(@LOG_LEVEL_REGEX, [ qr/$regex/ => $val ]);
+        } elsif (m!([\w:]+)\s*=\s*(\d+)\s*$!) {
+            my ($module, $val) = ($1, $2);
+            croak("Invalid LogLevel: '$level' : " .
+                  "numbers must be valid log levels.")
+              unless exists $valid_levels{$val};
+            $LOG_LEVEL_PER_MODULE{$module} =  $val;
+        } else {
+            croak("Unable to parse LogLevel '$level': bad token '$_'");
+        }
     }
-    croak("Invalid LogLevel setting: " .
-                (defined $lvl_pv ? $lvl_pv : $level))
-        unless exists $valid_levels{$level};
-    $LOG_LEVEL = $level;
 
     # turn assertions on or off based on KRANG_ASSERT or Assertions
     # conf setting
@@ -267,8 +299,23 @@ sub log {
         $level_IV = $valid_functions{$level_PV};
     }
 
+    # check caller against defined log level setters
+    my $log_level = $LOG_LEVEL_DEFAULT;
+    my $pkg = (caller)[0];
+    if (exists $LOG_LEVEL_PER_MODULE{$pkg}) {
+        $log_level = $LOG_LEVEL_PER_MODULE{$pkg};
+    } elsif (@LOG_LEVEL_REGEX) {
+        for my $test (@LOG_LEVEL_REGEX) {
+            my ($regex, $val) = @$test;
+            if ($pkg =~ /$regex/) {
+                $log_level = $val;
+                last;
+            }
+        }
+    }
+
     # don't bother to do anything if the log level is below muster
-    return unless $level_IV <= $LOG_LEVEL;
+    return unless $level_IV <= $log_level;
 
     # calculate timestamp
     $timestamp = '';
@@ -361,7 +408,7 @@ sub AUTOLOAD {
         $level =~ /^timestamp/) {
         if (defined $arg) {
             $LOG->{$level} = $arg;
-            $LOG_LEVEL = $arg if $level eq 'log_level';
+            $LOG_LEVEL_DEFAULT = $arg if $level eq 'log_level';
         } else {
             return $LOG->{$level};
         }
