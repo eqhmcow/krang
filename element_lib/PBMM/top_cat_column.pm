@@ -24,9 +24,7 @@ sub new {
                  allow_delete => 0);
  
    my %args = ( name => 'top_cat_column',
-                min  => 1,
                 max => 1,
-                reorderable => 0,
                 children => 
                 [
                  PBMM::search_type->new(min  => 1,
