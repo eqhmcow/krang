@@ -232,7 +232,7 @@ sub exclude_directories {
 sub exclude_files {
     my $export_dir = get_export_dir();
     print "Excluding files...\n";
-    unlink(catfile($export_dir, "conf", "krang.conf"))
+    unlink(catfile($export_dir, "krang", "conf", "krang.conf"))
       or die "Unable to unlink conf/krang.conf: $!";
 }
 
