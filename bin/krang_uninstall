@@ -111,3 +111,12 @@ print "\nNow removing all files...\n\n" if $verbose;
 system("rm -Rf $ENV{KRANG_ROOT}");
 
 exit(1);
+
+sub exit_error {
+    my $cmd = $0;
+    $cmd =~ s/.*\/(.+)$/$1/;
+
+    my $message = shift;
+    print STDERR "\nError: $cmd:  $message\n\n";
+    exit(1);
+}
