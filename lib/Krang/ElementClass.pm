@@ -289,7 +289,7 @@ implement alternative URL schemes.
 sub build_url {
     my ($self, %arg) = @_;
     my ($story, $category) = @arg{qw(story category)};
-    return $category->url . CGI->escape($story->slug);
+    return $category->url . CGI::Util::escape($story->slug || '');
 }
 
 =item C<< @fields = $class->url_attributes() >>
