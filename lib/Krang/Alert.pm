@@ -358,22 +358,26 @@ sub send {
 
     croak("No valid Krang::Story object found with id $story_id") if not ( ref $story eq 'Krang::Story');
 
-    my $message = "A Krang alert has been triggered for story $story_id (".$story->title.") \nby user $user_id (".$user->first_name.' '.$user->last_name.").\n\n";
+    my $message = "A Krang alert has been triggered for story $story_id ('".$story->title."') \nby user $user_id ('".$user->first_name.' '.$user->last_name."').\n\n";
 
     $message .= "Below is the criteria which triggered this alert:\n";
     $message .= "\nACTION: ".$alert->action;
-    $message .= "\nCATEGORY: ".$alert->category_id."(".(Krang::Category->find(category_id => $alert->category_id))[0]->dir.")" if $alert->category_id;
-    $message .= "\nDESK: ".$alert->desk_id."(".(Krang::Desk->find(desk_id => $alert->desk_id))[0]->name.")" if $alert->desk_id; 
-    $message .= "\nTRIGGERED BY USER: $user_id (".$user->first_name.' '.$user->last_name.")";   
+    $message .= "\nCATEGORY: ".$alert->category_id."('".(Krang::Category->find(category_id => $alert->category_id))[0]->dir."')" if $alert->category_id;
+    $message .= "\nDESK: ".$alert->desk_id."('".(Krang::Desk->find(desk_id => $alert->desk_id))[0]->name."')" if $alert->desk_id; 
+    $message .= "\nUSER TRIGGERED BY: $user_id ('".$user->first_name.' '.$user->last_name."')";   
 
     debug(__PACKAGE__."->send() - sending email to ".$to_user->email.": $message");
- 
-    my $sender = new Mail::Sender {smtp => SMTPServer, from => FromAddress};
 
-    $sender->MailFile({ to => $to_user->email, 
-                        subject => "Krang alert for action ".$alert->action,
-                        msg => $message 
-                    });  
+    # mail only if user has email address defined or being tested
+    my $email_to = $ENV{KRANG_TEST_EMAIL} || $to_user->email;
+    if ($email_to) { 
+        my $sender = new Mail::Sender {smtp => SMTPServer, from => FromAddress};
+
+        $sender->MailMsg({  to => $email_to, 
+                            subject => "Krang alert for action ".$alert->action,
+                            msg => $message,
+                        }); 
+    }
     
 }
 
