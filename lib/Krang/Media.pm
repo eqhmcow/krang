@@ -774,6 +774,10 @@ mime_type
 
 =item *
 
+published - only returns items that have been published previously.
+
+=item *
+
 filename_like - case insensitive match on filename. Must include '%' on either end for substring match.
 
 =item *
@@ -861,6 +865,7 @@ sub find {
                          no_attributes     => 1,
                          order_by          => 1,
                          order_desc        => 1,
+                         published         => 1,
                          checked_out       => 1,
                          checked_out_by    => 1,
                          limit             => 1,
@@ -982,6 +987,12 @@ sub find {
         $where_string .= " and " if $where_string;
         $where_string .= "media.filename like ?";
         push @where, 'filename_like';
+    }
+
+    # return only objects that have been published previously
+    if ($args{published}) {
+        $where_string .= " and " if $where_string;
+        $where_string .= "(published_version > 0)";
     }
 
     # add mime_type_like to where_string if present
