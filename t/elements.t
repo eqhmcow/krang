@@ -8,16 +8,18 @@ my $element = Krang::Element->new(class => "article");
 isa_ok($element, 'Krang::Element');
 
 # article has two default children, page and deck
-is(@{$element->children()}, 2);
-is($element->children()->[1]->name, "page");
+is(@{$element->children()}, 3);
 is($element->children()->[0]->name, "deck");
+is($element->children()->[1]->name, "fancy_keyword");
+is($element->children()->[2]->name, "page");
+
 
 # try push on another deck, should fail
 eval { $element->add_child(class => "deck") };
 like($@, qr/Unable to add another/);
 
 # poke around with page
-my $page = $element->children()->[1];
+my $page = $element->children()->[2];
 isa_ok($page, "Krang::Element");
 is($page->name, $page->class->name);
 is($page->display_name, "Page");
@@ -72,7 +74,7 @@ eval <<END;
   foreach_element { print \$_->name, "\n"; \$count++ } \$element;
 END
 die $@ if $@;
-is($count, 10);
+is($count, 11);
 
 # save to DB
 $element->save();
@@ -95,9 +97,10 @@ undef $element;
 my $loaded = Krang::Element->find(element_id => $element_id);
 isa_ok($loaded, 'Krang::Element');
 is($loaded->name, "article");
-is(@{$loaded->children()}, 2);
-is($loaded->children()->[1]->name, "page");
+is(@{$loaded->children()}, 3);
 is($loaded->children()->[0]->name, "deck");
+is($loaded->children()->[1]->name, "fancy_keyword");
+is($loaded->children()->[2]->name, "page");
 my $lpage = $loaded->children()->[1];
 my $x = 0;
 foreach my $para ($lpage->children) {
