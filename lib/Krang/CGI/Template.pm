@@ -35,6 +35,8 @@ use Krang::Session qw/%session/;
 use Krang::Template;
 use Krang::Widget qw/category_chooser/;
 
+use constant WORKSPACE_URI => 'workspace.pl';
+
 # Persist data for return from view in "history_return_params"
 our @history_param_list = ('rm',
                            'krang_pager_curr_page_num',
@@ -156,8 +158,8 @@ sub add_cancel {
 =item add_save
 
 Saves changes to the template object the end-user enacted on the 'Add' screen.
-The user is sent to 'search' if save succeeds and back to the 'Add' screen if
-it fails.
+The user is sent to 'My Workspace' if save succeeds and back to the 'Add'
+screen if it fails.
 
 =cut
 
@@ -180,7 +182,11 @@ sub add_save {
 
     add_message('message_saved');
 
-    return $self->search();
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri=> $uri);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
 
@@ -188,7 +194,7 @@ sub add_save {
 =item add_save_stay
 
 Validates changes to the template from the 'Add' screen, saves the updated
-object to the database, and returns to the 'Edit' screen.
+object to the database, and redirects to the 'Edit' screen.
 
 =cut
 
@@ -211,7 +217,12 @@ sub add_save_stay {
 
     add_message('message_saved');
 
-    return $self->edit();
+    # Redirect to edit
+    my $url = $q->url(-relative=>1);
+    $url .= "?rm=edit&template_id=". $template->template_id();
+    $self->header_props(-url=>$url);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$url\">$url</a>";
 }
 
 
@@ -292,7 +303,8 @@ sub advanced_search {
 
 =item delete
 
-Deletes a template object from the 'Edit' screen.
+Deletes a template object from the 'Edit' screen.  The user is sent back to the
+'search' mode afterwards.
 
 The mode expects the query parameter 'template_id'.
 
@@ -424,8 +436,8 @@ sub edit_cancel {
 =item edit_save
 
 Saves changes to the template object the end-user enacted on the 'Edit' screen.
-The user is sent to 'search' if save succeeds and back to the 'Edit' screen if
-it fails.
+The user is sent to 'My Workspace' if save succeeds and back to the 'Edit'
+screen if it fails.
 
 =cut
 
@@ -448,7 +460,11 @@ sub edit_save {
 
     add_message('message_saved');
 
-    return $self->search();
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri=> $uri);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
 
@@ -456,7 +472,7 @@ sub edit_save {
 =item edit_save_stay
 
 Validates changes to the template from the 'Edit' screen, saves the updated
-object to the database, and returns to the 'Edit' screen.
+object to the database, and redirects to the 'Edit' screen.
 
 =cut
 
@@ -479,14 +495,20 @@ sub edit_save_stay {
 
     add_message('message_saved');
 
-    return $self->edit();
+    # Redirect to edit
+    my $url = $q->url(-relative=>1);
+    $url .= "?rm=edit&template_id=". $template->template_id();
+    $self->header_props(-url=>$url);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$url\">$url</a>";
 }
 
 
 
 =item revert_version
 
-Reverts the template to a prior incarnation.
+Reverts the template to a prior incarnation then redirects to the 'Edit'
+screen.
 
 =cut
 
@@ -501,12 +523,18 @@ sub revert_version {
     # Perform revert
     my $template = $session{template};
     $template->revert($selected_version);
+    $session{template} = $template;
 
     # Inform user
     add_message("message_revert_version",
                 version => $selected_version);
 
-    return $self->edit();
+    # Redirect to edit
+    my $url = $q->url(-relative=>1);
+    $url .= "?rm=edit&template_id=". $template->template_id();
+    $self->header_props(-url=>$url);
+    $self->header_type('redirect');
+    return "Redirect: <a href=\"$url\">$url</a>";
 }
 
 
@@ -529,13 +557,10 @@ sub save_and_view_log {
     my $template = $session{template};
     $self->update_template($template);
 
-    my $template_id = $template->template_id;
-
     # Redirect to associate screen
-    my $url = "history.pl?history_return_script=template.pl&history_return_params=rm&history_return_params=edit&history_return_params=template_id&history_return_params=$template_id&template_id=$template_id";
+    my $url = "history.pl?history_return_script=template.pl&history_return_params=rm&history_return_params=edit&template_id=" . $template->template_id;
     $self->header_props(-uri=>$url);
     $self->header_type('redirect');
-
     return "Redirect: <a href=\"$url\">$url</a>";
 }
 
@@ -785,7 +810,7 @@ sub update_template {
     my $q = $self->query();
 
     for (qw/category_id content element_class_name testing/) {
-        next if $_ eq 'element_class_name' && $q->param('rm') =~ /edit/;
+        next if $_ eq 'element_class_name' && $q->param('rm') !~ /add/;
         my $val = $q->param($_) || '';
         if ($_ eq 'content' && $val) {
             if (my $fh = $q->upload('template_file')) {
@@ -814,12 +839,12 @@ sub validate {
     my $q = $self->query();
     my %errors;
 
-    if ($q->param('rm') =~ /add/) {
-        # validate element
-        my $element = $template->element_class_name || '';
-        $errors{error_element} = 1
-          unless ($element || grep {$_ eq $element} @elements);
+    # validate element
+    my $element = $template->element_class_name || '';
+    $errors{error_element} = 1
+      unless ($element || grep {$_ eq $element} @elements);
 
+    if ($q->param('rm') =~ /add/) {
         # validate category_id
         my $category_id = $template->category_id || 0;
         $errors{error_invalid_category_id} = 1
