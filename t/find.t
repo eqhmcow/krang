@@ -24,6 +24,7 @@ find({
            return unless /^lib\/(Krang\/.*)\.pm$/;
            return if /#/; # skip emacs droppings
            return if /^lib\/Krang\/CGI/;  # Skip CGIs
+           return if /^lib\/Krang\/Profiler/;  # Skip Profiler
 
            my $perl_package = join('::', (split(/\//, $1)));
            check_find($perl_package);

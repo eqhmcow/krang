@@ -27,6 +27,8 @@ by calling:
 You can override this behavior by setting the KRANG_INSTANCE
 environment variable.
 
+If you set KRANG_PROFILE to 1 then L<Krang::Profiler> will be used.
+
 =head1 INTERFACE
 
 None.
@@ -37,6 +39,11 @@ The way the session setup gets user_id 1 with no authentication is
 mighty hinky.  Fix it to use KRANG_USERNAME and KRANG_PASSWORD.
 
 =cut
+
+# activate profiling if requested
+BEGIN {
+    require Krang::Profiler if $ENV{KRANG_PROFILE};
+}
 
 use Krang::ErrorHandler;
 use Krang::Conf qw(KrangUser KrangGroup KrangRoot);

@@ -223,10 +223,12 @@ SKIP: {
 
 # deletion tests
 ################
-eval {$parent->delete()};
-isa_ok($@, 'Krang::Category::RootDeletion');
-like($@, qr/Root categories can only be removed by deleting their Site object/,
-     'RootDeletion exception test');
+unless ($ENV{KRANG_PROFILE}) {
+    eval {$parent->delete()};
+    isa_ok($@, 'Krang::Category::RootDeletion');
+    like($@, qr/Root categories can only be removed by deleting their Site object/,
+         'RootDeletion exception test');
+}
 
 eval {$success = $category->delete()};
 isa_ok($@, 'Krang::Category::Dependent');
