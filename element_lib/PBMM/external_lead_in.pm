@@ -20,7 +20,7 @@ sub new {
    my %args = ( name => 'external_lead_in',
                 children => 
                 [ 
-                 Krang::ElementClass::Textarea->new(name => "title",
+                 Krang::ElementClass::Textarea->new(name => "promo_title",
                                                     min => 1,
                                                     max => 1,
                                                     allow_delete => 0
@@ -30,7 +30,7 @@ sub new {
                                                     max => 1,
                                                     allow_delete => 0
                                                    ),
-                 Krang::ElementClass::Textarea->new(name => "url",
+                 Krang::ElementClass::Textarea->new(name => "promo_url",
                                                     display_name => 'URL',
                                                     min => 1,
                                                     max => 1,
