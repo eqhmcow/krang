@@ -72,8 +72,7 @@ $SIG{'TERM'} = sub {
     # remove pidfile if it exists
     unlink $pidfile if -e $pidfile;
 
-    debug("Removed Schedule Daemon pidfile.");
-    debug("SCHEDULE DAEMON ENDED");
+    debug(__PACKAGE__ . " ended.");
 
     # get out of here
     exit(0);
@@ -116,7 +115,7 @@ sub run {
 
     # print kickoff message
     my $now = localtime;
-    debug("SCHEDULE DAEMON STARTED");
+    debug(__PACKAGE__ . " started.");
 
     # count of cleanup_attempts
     my $cleanups = 0;
@@ -143,10 +142,8 @@ sub run {
 
         # log activity
         if (@schedule_ids) {
-            debug(__PACKAGE__ . ": RAN SCHEDULE OBJECT IDS: " .
-                 join(",", @schedule_ids));
-        } else {
-            debug(__PACKAGE__ . ": NO SCHEDULE OBJECTS RAN.");
+            debug(__PACKAGE__ . ": ran schedule objects: " .
+                  join(",", @schedule_ids));
         }
 
         $after = localtime;

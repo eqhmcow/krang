@@ -138,7 +138,7 @@ sub load_set {
 
         $pkg->_load_classes($lib, $set, $conf);
         $pkg->_instantiate_top_levels($set, $conf);
-        info("Loaded element set '$set'");
+        debug("Loaded element set '$set'");
     } 
 
     $LOADED_SET{$set} = 1;
