@@ -66,13 +66,14 @@ default for C<keyattr> is C<[]> instead of the absurd default.
 
 =cut
 
-# XML::Simple will try to use SAX (badly) without this
-$XML::Simple::PREFERRED_PARSER = 'XML::Parser';
-
 sub simple {
     my ($pkg, %args) = @_;
     my $xml = delete $args{xml};
     $args{keyattr} ||= [];
+
+    # XML::Simple will try to use SAX (badly) without this
+    local $XML::Simple::PREFERRED_PARSER = 'XML::Parser';
+
     return XMLin($xml, %args);
 }
 
