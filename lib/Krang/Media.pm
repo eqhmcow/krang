@@ -370,8 +370,6 @@ sub upload_file {
     my $filehandle = $args{'filehandle'} || croak('You must pass in a filehandle in order to upload a file');
     croak('You cannot use a / in a filename!') if $filename =~ /\//;
 
-    my $session_id = $session{_session_id}; 
- 
     my $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
     my $filepath = catfile($path, $filename);
     open (FILE, ">$filepath") || croak("Unable to open $path for writing media!"); 
@@ -422,7 +420,6 @@ sub file_path {
     } elsif ($self->{media_id}) {
         # return path based on media_id if object has been committed to db
         my $instance = Krang::Conf->instance;
-        my $session_id = $session{_session_id} || croak("No session id found");
 
         $path = catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename});
     }
@@ -484,7 +481,6 @@ sub save {
     my $self = shift;
     my $dbh = dbh;
     my $root = KrangRoot;
-    my $session_id = $session{_session_id} || croak("No session id found"); 
     my $media_id;
 
     # calculate url
@@ -579,6 +575,10 @@ Find and return media object(s) with parameters specified. Supported paramter ke
 
 media_id (can optionally take a list of ids)
 
+=item * 
+
+version - combined with a single C<media_id> (and only C<media_id>), loads a specific version of a media object.  Unlike C<revert()>, this object has C<version> set to the actual version number of the loaded object.
+
 =item *
 
 title
@@ -651,6 +651,18 @@ sub find {
     my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
     my $limit = $args{'limit'} ? $args{'limit'} : undef;
     my $offset = $args{'offset'} ? $args{'offset'} : 0;
+
+    croak(__PACKAGE__ . "->find(): can't use 'version' without 'media_id'.")
+      if $args{version} and not $args{media_id};
+
+    if ($args{version}) {
+        if (ref $args{media_id} eq 'ARRAY') {
+            croak(__PACKAGE__ . "->find(): can't use 'version' with an array of media_ids, must be a single media_id.");
+        } else {
+            # loading a past version is handled by _load_version()
+            return $self->_load_version($args{media_id}, $args{version});
+        }
+    }
 
     # set simple keys
     foreach my $key (keys %args) {
@@ -756,7 +768,6 @@ sub revert {
     my $dbh = dbh;
     my $version_number = shift;
     my $root = KrangRoot;
-    my $session_id = $session{_session_id};
 
     my $version = $self->{version}; # make sure to preserve this
     my $checked_out_by = $self->{checked_out_by};
@@ -791,6 +802,33 @@ sub revert {
     $self->{tempfile} = $filepath;
    
     return $self; 
+}
+
+sub _load_version {
+    my ($self, $media_id, $version) = @_;
+    my $dbh = dbh;
+    
+    my $sql = 'SELECT data from media_version where media_id = ? AND version = ?';
+    my $sth = $dbh->prepare($sql);
+    $sth->execute($media_id, $version);
+
+    my $data = $sth->fetchrow_array();
+    $sth->finish();
+
+    eval {
+        $self = thaw($data);
+    };
+    croak ("Unable to deserialize object: $@") if $@;
+
+    my $old_filepath = $self->file_path();
+
+    # copy old media file into tmp storage
+    my $path = tempdir( DIR => catdir(KrangRoot, "tmp") );
+    my $filepath = catfile($path, $self->{filename});
+    copy($old_filepath,$filepath);
+    $self->{tempfile} = $filepath;
+  
+    return $self;
 }
 
 =item $thumbnail_path = $media->thumbnail_path();
