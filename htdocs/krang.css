@@ -64,13 +64,13 @@ a:active          {
 .form-head {
   background-color: #dbe9f4;
   color:            #333333;
-  border-top:       3px solid #e2e1e7;
-  border-bottom:    3px solid #e2e1e7;
+  border-top:       2px solid #e2e1e7;
+  border-bottom:    2px solid #e2e1e7;
 }
 
 .form-head td {
-  border-top:       3px solid #e2e1e7;
-  border-bottom:    3px solid #e2e1e7;
+  border-top:       2px solid #e2e1e7;
+  border-bottom:    2px solid #e2e1e7;
 }
 
 .form-cell {
