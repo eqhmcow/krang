@@ -44,7 +44,16 @@ conf/krang.conf, CVS/* and src/ in binary distributions.
 
 =item 4
 
-Build tar.gz archive.
+Creates INSTALL using pod2text on docs/ops_install.pod.
+
+=item 5
+
+Copies platform README from platform directory into the distribution
+root, if present.
+
+=item 6
+
+Builds the tar.gz archive.
 
 =back
 
@@ -104,11 +113,13 @@ my $temp = tempdir(DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'),
 # figure out name
 my $name;
 my $source_dist = 0;
+my $platform;
 if (-e catfile($ENV{KRANG_ROOT}, 'data', 'build.db')) {
     # get information for a binary distribution
     my %params = Krang::Platform->build_params();
     $name = 'krang-' . $Krang::VERSION . '-' . $params{Platform} . 
       '-perl' . $params{Perl} . '-' . $params{Arch};
+    $platform = $params{Platform};
 } else {
     $source_dist = 1;
     $name = 'krang-' . $Krang::VERSION . '-src';
@@ -152,14 +163,22 @@ close LIST;
 # create INSTALL from docs/ops_install.pod
 system("pod2text --loose $ENV{KRANG_ROOT}/docs/ops_install.pod > $ENV{KRANG_ROOT}/INSTALL");
 
+# copy platform README if available
+if ($platform and 
+    -e "$ENV{KRANG_ROOT}/platform/$platform/README.$platform"){
+    system("cp $ENV{KRANG_ROOT}/platform/$platform/README.$platform $ENV{KRANG_ROOT}/README.$platform");
+}
+
 # create tar file using exclude list
 print "Creating tar file '$name.tar.gz'...\n";
 my $dist_file = catfile($old_dir, $name . '.tar.gz');
 system("tar czf $dist_file -X $list_file $name/*") == 0
   or die "tar failed: $?";
 
-# remove INSTALL
+# remove INSTALL and platform README
 unlink("$ENV{KRANG_ROOT}/INSTALL") or die $!;
+unlink("$ENV{KRANG_ROOT}/README.$platform") 
+  if $platform and -e "$ENV{KRANG_ROOT}/README.$platform";
 
 # remove link
 unlink($name) or die $!;
