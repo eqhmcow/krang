@@ -194,7 +194,7 @@ Krang::AddOn->new(name    => $conf->get('name'),
                   version => $conf->get('version'))->save;
     
 # run the post install script if required
-system("KRANG_ROOT=" . KrangRoot . " " . $conf->get('postinstallscript'))
+system("KRANG_ROOT=" . KrangRoot . " perl " . $conf->get('postinstallscript'))
   if $conf->get('postinstallscript');
 
 print "Installation complete.\n";
