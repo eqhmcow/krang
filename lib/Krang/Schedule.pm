@@ -92,10 +92,11 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
+use Storable qw/freeze thaw/;
 use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
-use Storable qw(freeze thaw);
+
 
 # Internal Modules
 ###################
@@ -141,8 +142,8 @@ my %repeat2seconds = (daily => ONE_DAY,
                       hourly => ONE_HOUR,
                       weekly => ONE_WEEK,
                       never => '');
-my %schedule_args = map {$_ => 1}
-  qw/action date day_of_week hour minute object_id object_type repeat context/;
+my %schedule_args = map {$_ => 1} SCHEDULE_RW,
+  qw/date day_of_week hour minute/;
 my %schedule_cols = map {$_ => 1} SCHEDULE_RO, SCHEDULE_RW;
 
 # Constructor/Accessor/Mutator setup
@@ -230,7 +231,7 @@ sub init {
     my (@bad_args, $repeat);
     my ($date, $day_of_week, $hour, $minute) = map {delete $args{$_}}
       qw/date day_of_week hour minute/;
-    
+
     for (keys %args) {
         push @bad_args, $_ unless exists $schedule_args{$_};
     }
@@ -646,6 +647,13 @@ sub run {
         if (SCH_DEBUG) {
             $log->print("[$now] Schedule object id '$obj->{schedule_id}' " .
                         "did something.\n");
+            if ($context) {
+                require Data::Dumper;
+                $log->print("Object should have run with the following " .
+                            "context: " .
+                            Data::Dumper->Dump([$context],['context']) .
+                            "\n");
+            }
         } else {
             my $call = $action_map{$type}->{$action};
             eval {
@@ -691,7 +699,8 @@ sub save {
     my $self = shift;
     my $id = $self->{schedule_id} || 0;
     my @save_fields = grep {$_ ne 'schedule_id'} keys %schedule_cols;
-    my $query;
+    my $context_flag = exists $self->{context} ? 1 : 0;
+    my ($context, $query);
 
     # validate 'repeat'
     croak(__PACKAGE__ . "->save(): 'repeat' field set to invalid setting - " .
@@ -709,20 +718,16 @@ sub save {
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
-    my $context_array;
-    if ($self->{context}) {
-        # freeze context for database store
-        $context_array = $self->{context};
-        $self->{context} = freeze($context_array);
+    # if we have a context, preserve in $context and serialize it for storage
+    if ($context_flag) {
+        $context = $self->{context};
+        eval {$self->{context} = freeze($self->{context})};
+        croak(__PACKAGE__ . "->save(): Unable to serialize context: $@")
+          if $@;
     }
- 
+
     # bind parameters
     my @params = map {$self->{$_}} @save_fields;
-
-    if ($self->{context}) {
-        # restore context in object
-        $self->{context} = $context_array;        
-    }
 
     # need user_id for updates
     push @params, $id if $id;
@@ -734,6 +739,9 @@ sub save {
       unless $dbh->do($query, undef, @params);
 
     $self->{schedule_id} = $dbh->{mysql_insertid} unless $id;
+
+    # restore context
+    $self->{context} = $context if $context_flag;
 
     return $self;
 }
