@@ -134,8 +134,8 @@
                 firstHalf = list_data.slice(0, current_index);
                 secondHalf = list_data.slice(current_index);
             } else {
-                firstHalf = eval('list_data[' + select_val + ']').slice(0,current_index);
-                secondHalf = eval('list_data[' + select_val + ']').slice(current_index);
+                firstHalf = eval( 'list_data[' + select_val + ']').slice(0, current_index);
+                secondHalf = eval( 'list_data[' + select_val + ']').slice(current_index);
             }
             if (down && (secondHalf.length == 0)) {
                 return;
@@ -156,7 +156,7 @@
             if (! select_val) {
                 list_data = firstHalf.concat(secondHalf);
             } else {
-                eval('list_data[' + select_val + ']') = firstHalf.concat(secondHalf);
+                eval( 'list_data[' + select_val + '] = firstHalf.concat(secondHalf)' );
             }
 
             if (! down) {
