@@ -39,8 +39,14 @@ use Krang::Conf qw(FTPPort FTPAddress KrangRoot FTPLog);
 # load the server
 use Krang::FTP::Server;
 
+# daemon mode
+push(@ARGV, '-S');
+
 # no conf file used
 push(@ARGV, '-C', '/dev/null');
+
+# pidfile in tmp/krang_ftpd.pid
+push(@ARGV, '-P', catfile(KrangRoot, 'tmp', 'krang_ftpd.pid'));
 
 # set port and address if specified
 push(@ARGV, '-p', FTPPort);
