@@ -358,7 +358,9 @@ SQL
 Class or instance method for checking out template objects, as a class method
 a template id must be passed.
 
-This method croaks if the object is already checked out by another user.
+Will throw Krang::Template::NoEditAccess unless user has edit access.
+
+This method throws Krang::Template::Checkout if the object is already checked out by another user.
 
 =cut
 
@@ -429,6 +431,8 @@ well as the current version in the template.
 This method attempts to check out the template before deleting; checkout() will
 croak if the object is checked out by another user.
 
+Will throw Krang::Template::NoEditAccess unless user has edit access.
+
 '1' is returned if the deletion was successful.
 
 =cut
@@ -483,7 +487,8 @@ sub deploy {
 
 =item $template->duplicate_check()
 
-This method checks whether the url of a template is unique.  A DuplicateURL
+This method checks whether the url of a template is unique.  A 
+Krang::Template::DuplicateURL
 exception is thrown if a duplicate is found, '0' is returned otherwise.
 
 =cut
@@ -1044,6 +1049,12 @@ duplicate_check() throws an exception if the template's url isn't unique.
 verify_checkout() throws an exception if the template isn't checked out or if
 it's checked out to another user. The method croaks if its executed SQL affects
 no rows in the DB.
+
+Will throw Krang::Template::NoEditAccess unless user has edit access.
+
+Will throw Krang::Template::NoCategoryEditAccess unless user has edit access
+to the specified category.
+
 
 =cut
 
