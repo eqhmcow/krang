@@ -91,7 +91,7 @@ Turbo-1.00 might list:
 
   Files docs/turbo.pod lib/Krang/Turbo.pm t/turbo.t
 
-=item C<ExcludeFiles> I<file> I<file> I<...>
+=item * C<ExcludeFiles> I<file> I<file> I<...>
 
 This directive allows you to exclude a set of files from installation.
 For example, if Turbo-1.00 included a I<README> file but wanted to
@@ -99,14 +99,14 @@ install everything else into Krang:
 
   ExcludeFiles README
 
-=item C<RequireKrang> I<x.y>
+=item * C<RequireKrang> I<x.y>
 
 Require a version of Krang.  For example, if Turbo will only work with
 Krag 1.00 or higher:
 
   RequireKrang 1.00
 
-=item C<RequireAddOns> I<name> I<x.y> [ I<name> I<x.y> ... ]
+=item * C<RequireAddOns> I<name> I<x.y> [ I<name> I<x.y> ... ]
 
 Require one or more addons, with versions.  Specifying a version of
 '0' will require the add-on to be present with any version.  For
@@ -116,7 +116,7 @@ and any version of RacingStripes:
   RequireAddOns Nitro         2 \
                 RacingStripes 0
 
-=item C<PostInstallScript> I<script>
+=item * C<PostInstallScript> I<script>
 
 A script to run after file installation is complete.  C<KRANG_ROOT>
 will be set in the environment for this script.  Note that this script

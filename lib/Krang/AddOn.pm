@@ -35,6 +35,8 @@ their associated
 
 =head1 INTERFACE
 
+=over
+
 =item C<< $addon = Krang::AddOn->new(name => 'foo', version => 1.00) >>
 
 Create a new addon.  Both C<name> and C<version> are required.
@@ -64,6 +66,8 @@ Get a list of addons.  Only one option is supported:
 =item name
 
 Find an addon based on name.
+
+=back
 
 =back
 
