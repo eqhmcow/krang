@@ -157,6 +157,8 @@ Following is a list of the tasks the installer script will perform.
   --InstanceDisplayName  - Name of the Instance for UI display
   --FromBackup           - the name of a backup file to use as source for 
                            the install.
+  --WithAddon            - Installs Krang with an addon.  May be repeated 
+                           for multiple addons.
 
 =head2 Installation flags
 
@@ -250,6 +252,8 @@ sub do_install {
     create_unix_user_group();
     install_krang();
     configure_krang();
+    install_addons();
+    update_password();
     add_krang_init();
     start_krang();
     make_test() if ($run_tests);
@@ -354,11 +358,14 @@ sub check_prereqs {
         exit_error("IPAddress '$IPAddress' not bound to machine");
     }
 
-    # InstanceElementSet must exist
-    my $InstanceElementSet = $options{'InstanceElementSet'};
-    unless (-d $ENV{KRANG_ROOT}."/element_lib/".$InstanceElementSet) {
-        exit_error("InstanceElementSet '$InstanceElementSet' does not exist");
+    # Addons files must exist
+    foreach my $addon (@{$options{'WithAddon'}}) {
+        exit_error("Addon file '$addon' does not exist")
+          unless -e $addon;
     }
+    
+    exit_error("InstanceElementSet '$options{InstanceElementSet}' does not exist in Krang.\nPerhaps you misspelled it, or forgot a --WithAddon option.\n")
+      unless _check_element_set($options{'InstanceElementSet'});
 
     my $perl_version = $Config{version};
     my $archname = $Config{archname};
@@ -376,7 +383,7 @@ sub check_prereqs {
     my $InstallPath = $options{InstallPath};
     if (-e $InstallPath) {
         if (-e catfile($InstallPath,'bin','krang_uninstall')) {
-             exit_error("Will not proceed due to existing krang install.") unless prompt("y", "InstallPath '$InstallPath' already exists and seems to contain an existing Krang instance.\nThis program must totally and permanently remove this krang installation in order to proceed.\n\nIs this what you really want to do?", "y/n", "n");
+             exit_error("Will not proceed due to existing krang install.") unless prompt("y", "InstallPath '$InstallPath' already exists and seems to contain\nan existing Krang instance.\nThis program must totally and permanently\nremove this krang installation in order to proceed.\n\nIs this what you really want to do?", "y/n", "n");
              {
                  local $ENV{KRANG_ROOT} = $InstallPath;
                  system(catfile($InstallPath,'bin','krang_uninstall').' --no_prompt --verbose');
@@ -752,7 +759,7 @@ sub configure_krang {
         my $t = HTML::Template->new(filename => $ENV{KRANG_ROOT} ."/conf/krang.conf.tmpl");
         foreach my $param (keys(%options)) {
             # Filter out params which are not in HTML::Template file 'krang.conf.tmpl'
-            unless ( grep { $param eq $_ } qw/AdminPassword MySQLRootPassword InstallPath FromBackup/ ) {
+            unless ( grep { $param eq $_ } qw/AdminPassword MySQLRootPassword InstallPath FromBackup WithAddon/ ) {
                 $t->param($param => $options{$param});
             }
         }
@@ -768,21 +775,41 @@ sub configure_krang {
         my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb";
         $createdb .= " --password $MySQLRootPassword" if (length($MySQLRootPassword));
         system($createdb) && die("Error calling krang_createdb.  Unable to continue");
-        
-        # Customize DB (Admin password)
-        my $AdminPassword = $options{AdminPassword};
-        print "  Changing 'admin' CMS login password to '$AdminPassword'\n";
-        my $update_pw_perl = qq(
+    }
+}
+
+
+sub install_addons {
+    my @addons = @{$options{WithAddon}};
+    my $InstallPath = $options{InstallPath};
+
+    foreach my $addon (@addons) {
+        print "Installing addon '$addon'.\n";
+        local $ENV{KRANG_ROOT} = $InstallPath;
+        my $cmd = catfile($InstallPath, 'bin', 'krang_addon_installer') .
+          ' ' . $addon;
+        my $result = `$cmd`;
+        exit_error("Unable to install addon '$addon':\n\n$result")
+          unless $result =~ /Installation complete\./;
+    }
+}
+
+sub update_password {
+    return if $options{FromBackup};
+
+    # Customize DB (Admin password)
+    my $InstallPath = $options{InstallPath};
+    my $AdminPassword = $options{AdminPassword};
+    print "  Changing 'admin' CMS login password to '$AdminPassword'\n";
+    my $update_pw_perl = qq(
                             my (\$user) = Krang::User->find(login=>"admin");
                             \$user->password("$AdminPassword");
                             \$user->save();
                            );
-        my $update_admin_pw = "KRANG_ROOT='$InstallPath' PERL5LIB='$InstallPath/lib' ";
-        $update_admin_pw .= PERL_BIN ." -MKrang::Script -MKrang::User -e '$update_pw_perl'";
-        system($update_admin_pw) && die("Error changing admin password: $!");
-    }
+    my $update_admin_pw = "KRANG_ROOT='$InstallPath' PERL5LIB='$InstallPath/lib' ";
+    $update_admin_pw .= PERL_BIN ." -MKrang::Script -MKrang::User -e '$update_pw_perl'";
+    system($update_admin_pw) && die("Error changing admin password.\n");    
 }
-
 
 sub add_krang_init {
     my $init_script = "krang-". $options{HostName} .".init";
@@ -874,12 +901,14 @@ sub setup_getopts {
     # Copy the original args for re-invoking later
     @original_args = @ARGV;
 
+    $options{WithAddon} = [];
     pod2usage(2) unless
         GetOptions( 'help'      => \$help,
                     'man'       => \$man,
                     'do-mysql-install' => \$do_mysql_install,
                     'do-perl-install' => \$do_perl_install,
                     'run-tests' => \$run_tests,
+                    'WithAddon=s' => $options{WithAddon},
                     (map { $_."=s" => \$options{$_} } @req_params, @opt_params) );
 
     pod2usage(1)             if $help;
@@ -943,4 +972,21 @@ sub set_param_defaults {
     unless (defined $options{$idn}) {
         $options{$idn} = $options{'InstanceHostName'};
     }
+}
+
+# check that the specified element set exists in Krang or in an addon
+# to be installed.  Returns 1 if ok, else 0.
+sub _check_element_set {
+    my $set = shift;
+
+    return 1 if -d catfile($ENV{KRANG_ROOT}, "element_lib", $set);
+
+    foreach my $addon (@{$options{WithAddon}}) {
+        my $tar = TAR_BIN . " t" . ($addon =~ /gz$/ ? "z" : "") . "f $addon";
+        my $contents = `$tar`;
+        if ($contents =~ m!element_lib/$set/set.conf!) {
+            return 1;
+        }
+    }
+    return 0;
 }

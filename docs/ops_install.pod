@@ -127,7 +127,11 @@ by Krang for sending email.
 Defaults to $InstanceHostName.  Name of the Instance, displayed on
 the CMS interface for informational purposes.
 
+=item WithAddon
 
+This option provides an addon which will be installed with Krang.
+Krang addons can provide element sets, libraries and other services.
+You can specify multiple addons to install.
 
 =back
 
