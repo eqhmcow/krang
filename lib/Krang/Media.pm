@@ -223,9 +223,13 @@ use Krang::MethodMaker
                           caption copyright 
                           notes 
                           media_type_id 
-                          category_id 
-                          filename 
                          ) ],
+    get_set_with_notify => [ { method => '_notify',
+                                attr => [ qw(
+                                            filename
+                                            category_id 
+                                        ) ]
+                            } ],
     get => [ qw( 
                 media_id 
                 creation_date 
@@ -233,6 +237,12 @@ use Krang::MethodMaker
                 may_edit
                ) ];
 
+sub _notify {
+    my ($self, $which, $old, $new) = @_;
+    return if defined $old and defined $new and $old eq $new;
+    return if not defined $old and not defined $new;
+    $self->{url_cache} = '';
+}
 
 sub init {
     my $self = shift;
@@ -1286,13 +1296,20 @@ Returns calculated url of media object based on category_id and filename
 
 sub url {
     my $self= shift;
-    
-    # calculate url
+    croak "illegal attempt to set readonly attribute 'url'.\n"  if @_;
+     
+    return undef unless ($self->{category_id} and $self->{filename});
+
+    return $self->{url_cache} if $self->{url_cache};
+ 
+    # else calculate url
     my ($category) = Krang::Category->find(category_id =>$self->{category_id});
     croak("Unable to load category $self->{category_id}")
       unless $category;
 
-    return catdir($category->url, $self->{filename});
+    my $url = catfile($category->url, $self->{filename});
+    $self->{url_cache} = $url;
+    return $url;
 }
 
 =item * preview_url (read-only)
