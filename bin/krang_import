@@ -39,6 +39,23 @@ Never attempt to update existing objects, even when duplicates exist.
 You probably don't want this option unless you're importing into an
 entirely empty system and you want to know if that's not the case.
 
+=item --skip sites
+
+=item --skip categories
+
+The --skip option tells the importer to not load a certain class of
+object from the KDS file.  This is primarly used to skip loading of
+sites and categories while loading stories, media or templates.  
+
+For example, to load a KDS file containing templates without loading
+the categories and sites that may be present in the file:
+
+  krang_import --skip sites --skip categories templates.kds
+
+Note that the sites and categories are still used to place the
+templates in the proper place on the target system, but they will not
+overwrite any existing data.
+
 =item --verbose
 
 Prints a running dialog of what's happening.  Repeat (--verbose
@@ -84,7 +101,7 @@ END
 use Getopt::Long;
 use Pod::Usage;
 
-our ($help, $man, $list, $no_update, $verbose, $file);
+our ($help, $man, $list, $no_update, $verbose, $file, @skip, @skip_classes);
 BEGIN {
     $verbose = 0;
     pod2usage(2) unless
@@ -93,6 +110,7 @@ BEGIN {
                  'verbose+' => \$verbose,
                  list       => \$list,
                  'no-update'=> \$no_update,
+                 'skip=s'   => \@skip,
                 );
     pod2usage(1)             if $help;
     pod2usage(-verbose => 2) if $man;
@@ -112,7 +130,17 @@ BEGIN {
     pod2usage("Unrecognized options to krang_export: '" . join(' ', @ARGV) . "'\n")
       if @ARGV;
 
-
+    # make up a list of skip classes
+    foreach my $skip (@skip) {
+        my $class = ucfirst lc $skip;
+        $class =~ s!ies$!y!;
+        $class =~ s!s$!!;
+        $class = "Krang::$class";
+        die "Unrecognized type '$skip' found in --skip option.  Should be 'sites' or 'categories'.\n" 
+          unless $class eq 'Krang::Site' or $class eq 'Krang::Category';
+        push(@skip_classes, $class);
+    }
+     
     # open file for later processing.  this has to happen before
     # Krang::Script loads and su's to KrangUser
     open(SOURCE, '<', $file) or warn "Unable to open '$file': $!" and exit(1);
@@ -177,8 +205,13 @@ foreach my $class (keys %classes) {
     $max_id{$class} = $max || 0;
 }
 
+
+    
+
 # do the import
-eval { $set->import_all(($no_update ? (no_update => 1) : ())); };
+eval { $set->import_all(($no_update ? (no_update => 1) : ()),
+                        (@skip_classes ? (skip_classes => \@skip_classes): ()),
+                       ); };
 if ($@ and ref $@ and $@->isa('Krang::DataSet::ImportRejected')) {
     print STDERR "Import failed for the following reasons:\n\n",
       $@->message, "\n";
@@ -198,7 +231,9 @@ sub import_callback {
         my ($class, $id) = Krang::DataSet::_obj2id($object);
         if ($id > $max_id{$class}) {
             print STDERR "Imported $class => $id\n";
-        } else {
+        } elsif (grep { $_ eq $class } @skip_classes) {
+            print STDERR "Skipped $class => $id\n";
+        } else {            
             print STDERR "Updated $class => $id\n";
         }
     }
