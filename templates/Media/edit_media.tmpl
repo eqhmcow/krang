@@ -25,9 +25,9 @@
     }
 
     function publish_media(media_id) {
-      var pubform = document.forms["publish_media_form"];
-      pubform.media_id.value=media_id;
-      pubform.submit();
+      var myform = document.edit_media_form;
+      myform.rm.value='save_and_publish';
+      myform.submit();
     }
 
     function do_delete () {
@@ -67,12 +67,6 @@
 </script>
 
 <div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>New Media</p><p class="right"><a href="javascript:openWin('help.pl?topic=media_new')">Help</a>&nbsp;</p></div><tmpl_else>Edit Media</p><p class="right"><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | <a href="javascript:openWin('help.pl?topic=media_edit')">Help</a>&nbsp;</p></div></tmpl_if>
-
-<!-- publish_media form -->
-<form name="publish_media_form" method="GET" action="publisher.pl">
-<input type=hidden name="rm" value="publish_media">
-<input type=hidden name="media_id" value="">
-</form>
 
 <form name="delete_media_form" method="post">
 <input type="hidden" name="rm" value="delete">

@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug where clicking Publish on the Edit Media screen didn't
+save changes. [Sam]
+
+=item *
+
 Fixed a bug where a story that failed to publish would still get a
 'published' log entry.  [Sam]
 
