@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+C<bin/krang_info> now gives story/media stats for each
+instance. [Peter]
+
+=item *
+
 Fixed a bug in L<Krang::ElementClass::StoryLink> where elements that
 were never linked to stories no longer throw an error, but return
 cleanly.  [Michael Peters]

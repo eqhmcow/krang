@@ -64,15 +64,27 @@ END
 BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
 
 use Krang::Script;
+
 use Krang;
 use Krang::AddOn;
-
-use Data::Dumper;
+use Krang::Story;
+use Krang::Media;
 
 my @instances = Krang::Conf->instances;
 my $version   = $Krang::VERSION;
 
 my @addons = sort { $a->name cmp $b->name } Krang::AddOn->find();
+
+my @instance_list;
+foreach my $i (@instances) {
+    Krang::Conf->instance($i);
+    my %instance_info = (
+                         instance    => $i,
+                         story_count => Krang::Story->find(count => 1),
+                         media_count => Krang::Media->find(count => 1),
+                        );
+    push @instance_list, \%instance_info;
+}
 
 
 print STDOUT "######################################################################\n\n";
@@ -85,8 +97,11 @@ foreach (@addons) {
 
 print STDOUT "\nConfigured instances (in conf/krang.conf):\n\n";
 
-foreach (@instances) {
-    print STDOUT "\t\t\t$_\n";
+foreach my $i (@instance_list) {
+    my $tabs = (length $i->{instance} <= 5) ? "\t\t" : "\t";
+
+    print STDOUT sprintf("\t%s%s%i stories\t%i media\n",
+                         $i->{instance}, $tabs, $i->{story_count}, $i->{media_count});
 }
 
 print STDOUT "\n######################################################################\n\n";
