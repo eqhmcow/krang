@@ -696,13 +696,29 @@ sub create_contrib {
 
 }
 
-=item C<< $template = $creator->create_template(element => $element) >>
+=item C<< $template = $creator->create_template() >>
 
-Creates a valid HTML template and Krang::Template object based on the Krang::Element $element.
+Creates a valid HTML template and Krang::Template object based on a Krang::Element object.
 
-Optional arguments as follows:
+The following arguments are taken:
 
 =over
+
+=item * C<element>
+
+A L<Krang::Element> element.  Unless the C<content> is also supplied,
+the template constructed will be based on the makeup of C<$element>.
+
+=item * C<element_name>
+
+The name of the element the template is being constructed for.  If
+this argument is used, C<content> must be supplied as well, as the
+template cannot be generated automatically in this case.
+
+=item * C<content>
+
+The content of the template.  If not set, the template will be built
+automatically, based on the makeup of the element and its children.
 
 =item * C<category>
 
@@ -710,10 +726,6 @@ Associates the template with the L<Krang::Category> object
 C<$category>.  Otherwise the template will be associated with the root
 category for the first L<Krang::Site> object created.
 
-=item * C<content>
-
-The content of the template.  If not set, the template will be built
-automatically, based on the makeup of the element and its children.
 
 =back
 
@@ -724,7 +736,13 @@ sub create_template {
     my $self = shift;
     my %args = @_;
 
-    my $element = $args{element} || croak __PACKAGE__ . "->create_template(): Missing required argument 'element'.";
+    my $element      = $args{element};
+    my $element_name = $args{element_name} || $element->name;
+    my $content      = $args{content};
+
+    croak __PACKAGE__ .
+      "->create_template(): Missing required argument(s) - either 'element' or 'element_name' and 'content'."
+        unless($element || ($element_name && $content));
 
     my $category;
 
@@ -735,9 +753,6 @@ sub create_template {
         $category = $self->_root_category();
     }
 
-
-    # create the template.
-    my $content = $args{content};
 
     unless ($content) {
 
@@ -801,7 +816,7 @@ END
 
     my $tmpl = Krang::Template->new(
                                     content  => $content,
-                                    filename => $element->name . ".tmpl",
+                                    filename => $element_name . ".tmpl",
                                     category => $category
                                    );
     $tmpl->save;
