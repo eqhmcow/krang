@@ -31,7 +31,7 @@ sub new {
                  Default::lead_in->new(),
                  Default::external_lead_in->new(),
                  Default::image->new(),
-                 Default::horizontal_line->new(),
+                 Default::empty->new( name => "horizontal_line" ),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

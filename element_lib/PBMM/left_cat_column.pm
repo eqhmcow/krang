@@ -37,8 +37,9 @@ sub new {
                                                                  "custom"],
                                                      default => "keyword"),
                 Krang::ElementClass::MediaLink->new(name => "navigation_include"),
-                Default::horizontal_line->new(name => "table_of_contents",
-                                                allow_delete => 0 ),
+               
+                PBMM::site_related_link_box->new( max => 1), 
+                Default::empty->new(name => "table_of_contents", max => 1 ), 
                  Krang::ElementClass::Text->new(name         => "ad_module",
                                                 min => 1,
                                                 allow_delete => 0),

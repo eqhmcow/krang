@@ -36,7 +36,7 @@ sub new {
                  Default::inset_box->new(), 
                  Krang::ElementClass::MediaLink->new(name => "section_header_image",
                                                      display_name => 'Section Header Image'),
-                 Default::horizontal_line->new( display_name => 'Horizontal Line' )
+                 Default::empty->new( name => 'horizontal_line' )
 
                 ],
                 @_);
