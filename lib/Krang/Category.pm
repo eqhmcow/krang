@@ -117,11 +117,6 @@ use Krang::Story;
 use Krang::Template;
 use Krang::Group;
 use Krang::Log qw(debug assert ASSERT);
-use Krang::Cache;
-
-# load the cache
-our $cache = Krang::Cache->new(name => 'category');
-
 
 #
 # Package Variables
@@ -462,9 +457,6 @@ sub delete {
     my $dbh = dbh();
     $dbh->do($query, undef, $id);
 
-    # delete from cache
-    $cache->delete($id);
-
     return 1;
 }
 
@@ -748,21 +740,6 @@ sub find {
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.") if ($count && $ids_only);
 
-    # if the is just a request for a single category object look in
-    # the cache first
-    if (exists $args{category_id} and
-        scalar(keys(%args)) == 1  and
-        not $count and
-        not $ids_only) {
-        debug("CACHE READ: Category $args{category_id}");
-        if (my $category = $cache->read($args{category_id})) {
-            debug("CACHE HIT: Category $args{category_id}");
-            assert(UNIVERSAL::isa($category, 'Krang::Category')) if ASSERT;
-            assert($category->category_id == $args{category_id}) if ASSERT;
-            return $category;
-        }
-    }
-
     # set up WHERE clause and @params, croak unless the args are in
     # CATEGORY_RO or CATEGORY_RW
     my @invalid_cols = ();
@@ -905,8 +882,6 @@ sub find {
 
         push(@categories, $new_category);
 
-        # save in the cache
-        $cache->write($new_category->{category_id}, $new_category);
     }
 
     # finish statement handle
@@ -1023,9 +998,6 @@ sub save {
         $self->{_old_url} = $self->{url};
     }
 
-    # save in the cache
-    $cache->write($self->{category_id}, $self);
-
     return $self;
 }
 
@@ -1093,9 +1065,6 @@ SQL
                   WHERE category_id = ?",
                  undef, $self->{url}, $self->{category_id});
     }
-
-    # clear the cache
-    $cache->clear();    
 
     return $failures ? 0 : 1;
 }

@@ -123,7 +123,6 @@ use Krang::Log qw(debug);
 use Krang::Desk;
 use Krang::Category;
 use Krang::Session qw(%session);
-use Krang::Cache;
 
 # Exceptions
 use Exception::Class ( 'Krang::Group::DuplicateName' => { fields => [ 'group_id' ] } );
@@ -834,10 +833,6 @@ sub rebuild_category_cache {
     foreach my $category (@root_cats) {
         $self->rebuild_category_cache_process_category($category);
     }
-
-    # blow away the category cache, since it caches permissions
-    # settings affected by groups
-    Krang::Cache->new(name => 'category')->clear();
 }
 
 
@@ -1262,10 +1257,6 @@ sub rebuild_group_permissions_cache {
     foreach my $category (@root_cats) {
         $self->rebuild_group_permissions_cache_process_category($category, \%category_perms, $dbh);
     }
-
-    # blow away the category cache, since it caches permissions
-    # settings affected by groups
-    Krang::Cache->new(name => 'category')->clear();
 }
 
 
