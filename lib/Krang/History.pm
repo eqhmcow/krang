@@ -132,8 +132,8 @@ sub add_history {
     my $object_type = ref $object;
     $history->{object_type} = $object_type;
   
-    my $media_id_type = lc((split('::', $object_type))[1]).'_id'; 
-    $history->{object_id} = $object->$media_id_type; 
+    my $object_id_type = lc((split('::', $object_type))[1]).'_id'; 
+    $history->{object_id} = $object->$object_id_type; 
     $history->save();
 }
 
@@ -145,11 +145,7 @@ Find and return Krang::History objects with parameters specified. Supported para
 
 =item *
 
-object_type
-
-=item *
-
-object_id 
+object
 
 =item * 
 
@@ -183,6 +179,13 @@ sub find {
     my $self = shift;
     my %args = @_;
     my $dbh = dbh;
+
+    my $object = delete $args{'object'};
+    $args{object_type} = ref $object;
+    
+    my $object_id_type = lc((split('::', $args{object_type}))[1]).'_id';
+    $args{object_id} = $object->$object_id_type;
+
 
     my @where;
     my @history_object;
@@ -239,6 +242,27 @@ sub find {
     $sth->finish();
     return @history_object;
     
+}
+
+=item delete()
+
+Deletes all entries from history with object_id and object_type from passed in $object.
+
+=cut
+
+sub delete {
+    my $self = shift;
+    my %args = @_;
+    my $dbh = dbh;
+
+    my $object = delete $args{'object'};
+    my $object_type = ref $object;
+
+    my $object_id_type = lc((split('::', $args{object_type}))[1]).'_id';
+    my $object_id = $object->$object_id_type;
+
+    $dbh->do('DELETE from history where object_id = ? and object_type = ?', undef, $object_id, $object_type);
+ 
 }
 
 =back
