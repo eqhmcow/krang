@@ -111,7 +111,7 @@ pod2usage( -verbose => 2 ) if $man;
 pod2usage("Wrong number of arguments.\n") if @ARGV > 1;
 my $platform;
 opendir(DIR, catdir($KrangRoot, 'platform')) or die $!;
-my @platforms = grep { $_ !~ /^\.\.?$/ } sort readdir DIR;
+my @platforms = grep { $_ !~ /^\.\.?$/ and $_ !~ /CVS/ } sort readdir DIR;
 
 if (@ARGV) {
     $platform = shift;
