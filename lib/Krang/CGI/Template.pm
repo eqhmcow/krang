@@ -70,6 +70,7 @@ sub setup {
 		advanced_search
 		cancel_add
 		cancel_edit
+                checkin_selected
 		delete
 		delete_selected
                 deploy
@@ -79,6 +80,7 @@ sub setup {
 		edit_save
                 edit_checkin
 		edit_save_stay
+                list_active
 		revert_version
 		save_and_view_log
 		search
@@ -777,7 +779,85 @@ sub view_version {
     return $self->view($selected_version);
 }
 
+=item list_active
 
+List all active templates.  Provide links to view each template.  If the
+user has 'checkin all' admin abilities then checkboxes are provided to
+allow the template to be checked-in.
+
+=cut
+
+sub list_active {
+    my $self = shift;
+    my $q = $self->query();
+    
+    # Set up persist_vars for pager
+    my %persist_vars = (rm => 'list_active');
+    
+    # Set up find_params for pager
+    my %find_params = (checked_out => 1);
+                                                                                
+    # FIX: this should look at user permissions
+    my $may_checkin_all = 1;
+                                                                                
+    my $pager = Krang::HTMLPager->new(
+       cgi_query => $q,
+       persist_vars => \%persist_vars,
+       use_module => 'Krang::Template',
+       find_params => \%find_params,
+       columns => [(qw(
+                       template_id
+                       url
+                       filename
+                       user
+                       commands_column
+                      )), ($may_checkin_all ? ('checkbox_column') : ())],
+       column_labels => {
+                         template_id => 'ID',
+                         url => 'URL',
+                         filename => 'Filename',
+                         user  => 'User',
+                         commands_column => '',
+                        },
+       columns_sortable => [qw( template_id url filename )],
+       row_handler => sub { $self->list_active_row_handler(@_); },
+       id_handler => sub { return $_[0]->template_id },
+      );
+
+    # Set up output
+    my $template = $self->load_tmpl('list_active.tmpl', associate=>$q);
+    $template->param(pager_html => $pager->output());
+    $template->param(row_count => $pager->row_count());
+    $template->param(may_checkin_all => $may_checkin_all);
+    
+    return $template->output;
+
+}
+
+=item checkin_selected
+
+Checkin all the templates which were checked on the list_active screen.
+
+=cut
+
+sub checkin_selected {
+    my $self = shift;
+    
+    my $q = $self->query();
+    my @template_checkin_list = ( $q->param('krang_pager_rows_checked') );
+    $q->delete('krang_pager_rows_checked');
+     
+    foreach my $template_id (@template_checkin_list) {
+         my ($m) = Krang::Template->find(template_id=>$template_id);
+         $m->checkin();
+     }
+                                                                                
+     if (scalar(@template_checkin_list)) {
+         add_message('selected_template_checkin');
+     }
+                                                                                
+     return $self->list_active;
+}
 
 #############################
 #####  PRIVATE METHODS  #####
@@ -1011,6 +1091,33 @@ sub _save {
     }
 
     return ();
+}
+
+# Pager row handler for template list active run-mode
+sub list_active_row_handler {
+    my $self = shift;
+    my ($row, $template) = @_;
+    
+    # Columns:
+    #
+    
+    # template_id
+    $row->{template_id} = $template->template_id();
+    
+    # format url to fit on the screen and to link to preview
+    $row->{url} = format_url( url => $template->url(),
+                              linkto => "javascript:preview_template('". $row->{template_id} ."')" );
+                                                                                
+    # filename
+    $row->{filename} = $template->filename();
+                                                                                
+    # commands column
+    $row->{commands_column} = '<a href="javascript:view_template(' .
+      $template->template_id . ')">View</a>';
+                                                                                
+    # user
+    my ($user) = Krang::User->find(user_id => $template->checked_out_by);
+    $row->{user} = $user->first_name . " " . $user->last_name;
 }
 
 

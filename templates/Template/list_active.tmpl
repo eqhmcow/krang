@@ -1,0 +1,45 @@
+<tmpl_include header.tmpl>
+
+<script language="JavaScript" type="text/javascript">
+
+  function preview_template(id) {
+        window.open("publisher.pl?rm=preview_template&template_id=" + id, "");
+  }
+
+  function view_template (id) {
+    document.find_template.rm.value = 'view';
+    document.find_template.template_id.value = id;
+    document.find_template.submit();
+  }
+
+  function checkin_selected () {
+    var myform = document.krang_pager_form;
+    myform.rm.value = 'checkin_selected';
+    myform.submit();
+  }
+
+</script>
+
+<form method=post name=find_template>
+<input type="hidden" name="rm" value="list_active">
+<input type="hidden" name="template_id">
+
+<!-- Set up view mode return -->
+<input type="hidden" name="return_script" value="template.pl">
+<input type="hidden" name="return_params" value="rm">
+<input type="hidden" name="return_params" value="list_active">
+
+</form>
+
+<div class=dark-bar>Active Templates</div>
+
+<!-- Krang::HTMLPager -->
+<tmpl_var pager_html>
+<!-- Krang::HTMLPager -->
+
+
+<tmpl_if row_count><tmpl_if may_checkin_all>
+  <div class="button-bar"><input type="button" value="Checkin" onClick="checkin_selected()"></div>
+</tmpl_if></tmpl_if>
+
+<tmpl_include footer.tmpl>
