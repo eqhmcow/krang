@@ -49,6 +49,9 @@ Then you can install the Perl GraphViz libraries like:
               graph, but this might be too confusing for large element
               sets.
 
+  --direction - Which direction to draw the graph in.  The default is
+                'right'.  Set to 'down' to produce a vertical layout.
+
 =cut
 
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
@@ -90,6 +93,7 @@ my $output   = "element.$format";
 my $contribs = 50;
 my $modules = 1;
 my $class_to_render = "";
+my $direction = 'right';
 pod2usage(2) unless
   GetOptions(help         => \$help,
              man          => \$man,
@@ -97,6 +101,7 @@ pod2usage(2) unless
              'output=s'   => \$output,
              'modules=i'  => \$modules,
              'class=s'    => \$class_to_render,
+             'direction=s'=> \$direction,
             );
 
 pod2usage(1)             if $help;
@@ -106,7 +111,7 @@ use Krang::Script;
 use Krang::ElementLibrary;
 use GraphViz;
 
-my $g = GraphViz->new(rankdir => 1,
+my $g = GraphViz->new(rankdir => ($direction eq 'down' ? 0 : 1),
                       concentrate => 1,
                       node => { fontname => "courier",
                                 fontsize => 10,
@@ -122,7 +127,6 @@ my @top_names = Krang::ElementLibrary->top_levels();
 foreach my $top_name (@top_names) {
     my $top = Krang::ElementLibrary->top_level(name => $top_name);
     $g->add_node($top->name, 
-                 label => $top->display_name, 
                  shape => 'ellipse',
                  rank  => 'top_levels');
     my @children = $top->children();
@@ -173,7 +177,6 @@ sub _render_children {
     foreach my $element (@children) {
         _render_element_inheritence($element) if $modules;
         $g->add_node($element->name, 
-                     label => $element->name,
                      shape => 'ellipse',
                      color => 'blue',
                     );
