@@ -113,6 +113,12 @@ my $platform;
 opendir(DIR, catdir($KrangRoot, 'platform')) or die $!;
 my @platforms = grep { $_ !~ /^\.\.?$/ and $_ !~ /CVS/ } sort readdir DIR;
 
+# check that we're not trying to build on top of an existing build
+die "A build of Krang already exists here.  Run 'make clean' to remove it".
+  "\nbefore trying again.\n" 
+  if -e catfile($KrangRoot, 'data', 'build.db');
+
+
 if (@ARGV) {
     $platform = shift;
 
