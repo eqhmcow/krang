@@ -48,7 +48,6 @@ sub new {
     my $type        = shift;
     my $site_id     = shift; 
     my $category_id = shift;
-    $type = 'template' if not $type;
 
     # create object
     my $self = Net::FTPServer::DirHandle->new($ftps, $pathname);
@@ -80,7 +79,7 @@ sub get {
     my $filename    = shift;
     my $site_id     = $self->{site_id};
     my $category_id = $self->{category_id};
-    my $type = $self->{type};
+    my $type = $self->{type} || '';
     
     if ($type eq 'media') {
         # look for media with name = $filename in spec'd cat
@@ -95,7 +94,7 @@ sub get {
                                                 $category_id
                                                 ); 
         }         
-    } else {
+    } elsif ($type eq 'template') {
         # look for template with name = $filename in spec'd cat
         my @template = Krang::Template->find(   filename => $filename,
                                                 category_id => $category_id );
@@ -108,18 +107,39 @@ sub get {
                                                 $category_id
                                                 );
         } 
-    }
-
-    # if no template/media found with this $filename, look for dirs 
-    my @cats = Krang::Category->find(   parent_id => $category_id,
-                                        dir => $filename );
-    
-    return Krang::FTP::DirHandle->new( $self->{ftps},
+    } elsif ( ($filename eq 'template') || ($filename eq 'media') ) {
+    # $type is not defined, and they are asking for template or media
+    # they want to see sites under template or media
+        $type = $filename;
+        return Krang::FTP::DirHandle->new( $self->{ftps},
                                             $self->pathname . $filename . "/",
                                             $type,
                                             $site_id,
                                             $category_id,
+                                           );
+    }
+
+    if ( $category_id == -1) {
+        my @sites = Krang::Site->find( url => $filename);
+
+        return Krang::FTP::DirHandle->new( $self->{ftps},
+                                            $self->pathname . $filename . "/",
+                                            $type,
+                                            $sites[0]->site_id,
+                                            $category_id,
+                                           ) if $sites[0];
+    } else {
+        # if no template/media found with this $filename, look for dirs 
+        my @cats = Krang::Category->find(   parent_id => $category_id,
+                                            dir => $filename );
+    
+        return Krang::FTP::DirHandle->new( $self->{ftps},
+                                            $self->pathname . $filename . "/",
+                                            $type,
+                                            $site_id,
+                                            $cats[0]->category_id,
                                            ) if $cats[0]; 
+    }
 
     # if no matching media/template or dir
     return undef;
@@ -198,7 +218,7 @@ sub list {
     my $ftps        = $self->{ftps};
 
     my @results;
-
+    
     # translate wildcard to like
     my $like;
     if ($wildcard and $wildcard ne '*') {
@@ -216,17 +236,23 @@ sub list {
                                                    "/$type/" . $site->url() . "/",
                                                     $type,
                                                     $site->site_id() );
-            push @results, [ $site->uri, $dirh ];
+            push @results, [ $site->url, $dirh ];
         }
         return \@results;
-    }
-
+    } 
+    
+    my @categories;
     # get subdirectories.
-    my $results = Krang::Category->find(    dir_like => ($like || '%'),
+    if ($category_id != -1) {
+        @categories = Krang::Category->find(    
                                                 parent_id => $category_id );
-
+    } else {
+        @categories = Krang::Category->find( parent_id => undef,   
+                                            site_id => $site_id );
+    }
+    
     # create dirhandles
-    foreach my $cat (@$results) {
+    foreach my $cat (@categories) {
         my $dirh = new Krang::FTP::DirHandle (  $self->{ftps},
                                                 $self->pathname."/".$cat->dir,
                                                 $type,
@@ -234,29 +260,31 @@ sub list {
                                                 $cat->category_id );
         push @results, [ $cat->dir, $dirh ];
     }
-   
-    # get templates or media 
-    if ($type eq 'media') {
-        my @media = Krang::Media->find( filename_like => ($like || '%'),
-                                        category_id => $category_id );
-        foreach my $media (@media) {
-            my $fileh = new Krang::FTP::FileHandle (    $self->{ftps},
-                                                        $media,
-                                                        $type,
-                                                        $site_id,
-                                                        $category_id );
-            push @results, [ $media->filename, $fileh ];
-        }
-    } else {
-        my @template = Krang::Template->find(   filename_like => ($like || '%'),
-                                                category_id => $category_id );
-        foreach my $template (@template) {
-            my $fileh = new Krang::FTP::FileHandle (    $self->{ftps},
-                                                        $template,
-                                                        $type,
-                                                        $site_id,
-                                                        $category_id );
-            push @results, [ $template->filename, $fileh ];
+  
+    if ($category_id != -1) { 
+        # get templates or media 
+        if ($type eq 'media') {
+            my @media = Krang::Media->find( filename_like => ($like || '%'),
+                                            category_id => $category_id );
+            foreach my $media (@media) {
+                my $fileh = new Krang::FTP::FileHandle (    $self->{ftps},
+                                                            $media,
+                                                            $type,
+                                                            $site_id,
+                                                            $category_id );
+                push @results, [ $media->filename, $fileh ];
+            }
+        } else {
+            my @template = Krang::Template->find(   filename_like => ($like || '%'),
+                                                    category_id => $category_id );
+            foreach my $template (@template) {
+                my $fileh = new Krang::FTP::FileHandle (    $self->{ftps},
+                                                            $template,
+                                                            $type,
+                                                            $site_id,
+                                                            $category_id );
+                push @results, [ $template->filename, $fileh ];
+            }
         }
     }
 
