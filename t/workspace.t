@@ -4,6 +4,15 @@ use warnings;
 use Krang::Script;
 use Krang::Site;
 use Krang::Category;
+use Krang::Conf qw(InstanceElementSet);
+
+# use the TestSet1 instance, if there is one
+foreach my $instance (Krang::Conf->instances) {
+    Krang::Conf->instance($instance);
+    if (InstanceElementSet eq 'TestSet1') {
+        last;
+    }
+}
 
 BEGIN { use_ok('Krang::Workspace') }
 
@@ -32,30 +41,34 @@ END {
     $_->delete for @cat;
 }
 
-# create 10 stories
-my @stories;
-for my $n (0 .. 9) {
-    my $story = Krang::Story->new(categories => [$cat[$n]],
-                                  title      => "Test$n",
-                                  slug       => "test$n",
-                                  class      => "article");
-    $story->save();
-    push(@stories, $story);
-}
-END { $_->delete for @stories }
+SKIP: {
+    skip('Story tests only work for TestSet1', 1)
+      unless (InstanceElementSet eq 'TestSet1');
 
+    # create 10 stories
+    my @stories;
+    for my $n (0 .. 9) {
+        my $story = Krang::Story->new(categories => [$cat[$n]],
+                                      title      => "Test$n",
+                                      slug       => "test$n",
+                                      class      => "article");
+        $story->save();
+        push(@stories, $story);
+    }
+    END { $_->delete for @stories }
 
-# test workspace find with just categories
-my @work = Krang::Workspace->find();
-ok(not grep { not defined $_ } @work);
-foreach my $story (@stories) {
-    ok(grep { ref $_ eq 'Krang::Story' and
-              $_->story_id == $story->story_id } @work);
-}
+    # test workspace find with just categories
+    my @work = Krang::Workspace->find();
+    ok(not grep { not defined $_ } @work);
+    foreach my $story (@stories) {
+        ok(grep { ref $_ eq 'Krang::Story' and
+                    $_->story_id == $story->story_id } @work);
+    }
           
-# checkin a story and make sure it's gone from workspace
-$stories[0]->checkin;
-@work = Krang::Workspace->find();
-ok(not grep { ref $_ eq 'Krang::Story' and
-              $_->story_id == $stories[0]->story_id } @work);
+    # checkin a story and make sure it's gone from workspace
+    $stories[0]->checkin;
+    @work = Krang::Workspace->find();
+    ok(not grep { ref $_ eq 'Krang::Story' and
+                    $_->story_id == $stories[0]->story_id } @work);
+};
 

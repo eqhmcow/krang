@@ -8,6 +8,15 @@ use Krang::Site;
 use Krang::Story;
 use Krang::Session qw(%session);
 use Krang::Schedule;
+use Krang::Conf qw(InstanceElementSet);
+
+# use the TestSet1 instance, if there is one
+foreach my $instance (Krang::Conf->instances) {
+    Krang::Conf->instance($instance);
+    if (InstanceElementSet eq 'TestSet1') {
+        last;
+    }
+}
 
 $ENV{KRANG_TEST_EMAIL} = '' if not $ENV{KRANG_TEST_EMAIL};
 
@@ -23,15 +32,21 @@ my ($root_cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
 isa_ok($root_cat, 'Krang::Category');
 $root_cat->save();
 
-# create a new story
-my $story = Krang::Story->new(categories => [$root_cat],
-                           title      => "Test",
-                           slug       => "test",
-                           class      => "article");
+my $story;
+SKIP: {
+    skip('Story tests only work for TestSet1', 1)
+      unless (InstanceElementSet eq 'TestSet1');
 
-$story->save();
-END { $story->delete() }
-
+    # create a new story
+    $story = Krang::Story->new(categories => [$root_cat],
+                                  title      => "Test",
+                                  slug       => "test",
+                                  class      => "article");
+    
+    $story->save();
+    END { $story->delete() if $story }
+}
+    
 my $alert = Krang::Alert->new(  user_id => $ENV{REMOTE_USER},
                                 action => 'checkin',
                                 category_id => $root_cat->category_id );
@@ -44,8 +59,12 @@ my @alerts = Krang::Alert->find( alert_id => $alert->alert_id );
 
 is($alerts[0]->alert_id, $alert->alert_id, "Check for return of object from find");
 
-# trigger alert
-$story->checkin();
+SKIP: {
+    skip('Story tests only work for TestSet1', 1)
+      unless (InstanceElementSet eq 'TestSet1');
+
+    $story->checkin();
+};
 
 # attempt to trigger alert send by Krang::Schedule->run()
 #my $path = File::Spec->catfile($ENV{KRANG_ROOT}, 'logs', "schedule_test.log");

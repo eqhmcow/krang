@@ -1,7 +1,27 @@
-use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::Script;
+use Krang::Conf qw(InstanceElementSet);
+
+# skip all tests unless a TestSet1-using instance is available
+BEGIN {
+    my $found;
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        if (InstanceElementSet eq 'TestSet1') {
+            $found = 1;
+            last;
+        }
+    }
+
+    unless ($found) {
+        eval "use Test::More skip_all => 'test requires a TestSet1 instance';";
+    } else {
+        eval "use Test::More qw(no_plan);";
+    }
+    die $@ if $@;
+}
+
 use Krang::Site;
 use Krang::Category;
 use Krang::Story;
@@ -29,6 +49,7 @@ $story->save();
 END { $story->delete(); }
 
 # export the story
+$ENV{KRANG_INSTANCE} = Krang::Conf->instance();
 my $krang_export = catfile(KrangRoot, 'bin', 'krang_export');
 my $kds = catfile(KrangRoot, 'tmp', 'export.kds');
 my ($in, $out, $err) = ("", "", "");
