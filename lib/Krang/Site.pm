@@ -108,7 +108,7 @@ my %site_cols = map {$_ => 1} SITE_RO, SITE_RW;
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
-			new_hash_init => 'init',
+			new_hash_init => 'hash_init',
 			get => [SITE_RO],
 			get_set => [SITE_RW];
 
@@ -192,6 +192,8 @@ sub init {
     }
     croak(__PACKAGE__ . "->init(): The following constructor args are " .
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
+
+    $self->hash_init(%args);
 
     return $self;
 }
