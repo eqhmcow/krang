@@ -5,6 +5,7 @@ use base 'Krang::Upgrade';
 
 use Krang::Conf qw(KrangRoot);
 use Krang::DB qw(dbh);
+use Krang::Group;
 
 
 sub per_instance {
@@ -21,6 +22,8 @@ sub per_instance {
     $dbh->do("ALTER TABLE story ADD COLUMN preview_version INT UNSIGNED");
     $dbh->do("ALTER TABLE media ADD COLUMN preview_version INT UNSIGNED");
 
+    print "Rebuilding permissions cache...\n";
+    Krang::Group->rebuild_category_cache();
 }
 
 # nothing yet
