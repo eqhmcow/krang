@@ -9,6 +9,8 @@ use Krang::Story;
 use Krang::Session qw(%session);
 use Krang::Schedule;
 
+$ENV{KRANG_TEST_EMAIL} = '' if not $ENV{KRANG_TEST_EMAIL};
+
 # create a site and some categories to put stories in
 my $site = Krang::Site->new(preview_url  => 'storytest.preview.com',
                             url          => 'storytest.com',

@@ -442,8 +442,11 @@ sub send {
 
     $template->param( desk => (Krang::Desk->find(desk_id => $alert->desk_id))[0]->name ) if $alert->desk_id; 
 
-    # mail only if user has email address defined or being tested
-    my $email_to = $ENV{KRANG_TEST_EMAIL} || $to_user->email;
+    # first check if should be using test email address,
+    # else use user email address 
+    my $email_to = $ENV{KRANG_TEST_EMAIL};
+    $email_to = $to_user->email if not defined $email_to;
+
     if ($email_to) { 
         debug(__PACKAGE__."->send() - sending email to ".$email_to.": ".$template->output);
         my $sender = new Mail::Sender {smtp => SMTPServer, from => FromAddress};
