@@ -444,7 +444,7 @@ END
         $content .= "</div>";
         
         my $tmpl = Krang::Template->new(content		   => $content,
-                                        filenname          => $element->name . ".tmpl");
+                                        filename          => $element->name . ".tmpl");
         eval { $tmpl->save; };
         next if $@;
         
