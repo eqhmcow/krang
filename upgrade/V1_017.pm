@@ -23,6 +23,8 @@ sub per_instance {
 
 }
 
+# nothing yet
+sub per_installation {}
 
 1;
 
