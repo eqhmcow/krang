@@ -67,6 +67,7 @@ sub show {
     my $desk_id = $query->param('desk_id');
     my $desk = (Krang::Desk->find( desk_id => $desk_id))[0];
     $template->param( desk_name => $desk->name );
+    $template->param( desk_name_uc => uc $desk->name );
     $template->param( desk_id => $desk_id );
 
     my @found_desks = Krang::Desk->find();
