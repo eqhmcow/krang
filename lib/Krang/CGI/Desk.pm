@@ -29,6 +29,7 @@ use Krang::Log qw(debug assert affirm ASSERT);
 use Krang::HTMLPager;
 use Krang::Widget qw(format_url);
 use Krang::Message qw(add_message);
+use Krang::Desk;
 
 use base 'Krang::CGI';
 
@@ -39,7 +40,6 @@ sub setup {
     $self->tmpl_path('Desk/');
     $self->run_modes([qw(
       show
-      checkout 
       checkout_checked
       goto_edit
       goto_log
@@ -66,6 +66,16 @@ sub show {
     my $desk = (Krang::Desk->find( desk_id => $desk_id))[0];
     $template->param( desk_name => $desk->name );
     $template->param( desk_id => $desk_id );
+
+    my @found_desks = Krang::Desk->find();
+    my @desk_loop;
+                                                                          
+    foreach my $found_desk (@found_desks) {
+        if ( $found_desk->desk_id ne $desk_id ) {
+            push (@desk_loop, { choice_desk_id => $desk->desk_id, choice_desk_name => $desk->name
+});
+        } 
+    }
 
     # setup sort selector
     my $sort = $query->param('krang_pager_sort_field') || 'story_id';
@@ -98,7 +108,7 @@ sub show {
                                     edit => 'Edit',
                                     log  => 'Log' },
        id_handler  => \&_obj2id,
-       row_handler => \&_row_handler,
+       row_handler => sub { _row_handler(@_,@desk_loop) },
       );
 
     # Run the pager
@@ -107,7 +117,8 @@ sub show {
 }
 
 sub _row_handler {
-    my ($row, $obj) = @_;
+    my ($row, $obj, @desk_loop) = @_;
+    $row->{desk_loop} = \@desk_loop;
     $row->{story_id} = $obj->story_id;
     $row->{id} = _obj2id($obj);
     $row->{title} = $obj->title;
@@ -121,36 +132,25 @@ sub _row_handler {
     $row->{version} = $obj->version;
 }
 
-=item delete
+=item checkout_checked
 
-Deletes a single object.  Requires an 'id'. 
-
-=cut
-
-sub delete {
-    my $self = shift;
-    my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
-    add_message('deleted_story');
-    $obj->delete;
-    return $self->show;
-}
-
-=item delete_checked
-
-Deletes a list of checked objects.  
+Checks out a list of checked objects.  
 
 =cut
 
-sub delete_checked {
+sub checkout_checked {
     my $self = shift;
     my $query = $self->query;
-    add_message('deleted_checked');
     foreach my $obj (map { _id2obj($_) }
                      $query->param('krang_pager_rows_checked')) {
-        $obj->delete;
+        $obj->checkout;
+        $obj->desk_id(undef);
+        $obj->save;
     }
-    return $self->show;
+    add_message('checkout_checked');
+    $self->header_props(-uri => 'workspace.pl');
+    $self->header_type('redirect');
+    return "";
 }
 
 =item goto_edit
@@ -163,7 +163,9 @@ sub goto_edit {
     my $self = shift;
     my $query = $self->query;
     my $obj = _id2obj($query->param('id'));
-
+    $obj->checkout;
+    $obj->desk_id(undef);
+    $obj->save;
     $self->header_props(-uri => 'story.pl?rm=edit&story_id=' .
                         $obj->story_id);
     

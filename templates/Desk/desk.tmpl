@@ -10,11 +10,20 @@
      }
   }
 
-  function move_checked() {
-     if (confirm("Are you sure you wish to delete these items permanently?")) {
-       document.krang_pager_form.rm.value = 'delete_checked';
+  function checkout(id) {
+    document.krang_pager_form.rm.value = 'goto_edit';
+    document.krang_pager_form.id.value = id;
+    document.krang_pager_form.submit();
+  }
+
+  function checkout_checked() {
+       document.krang_pager_form.rm.value = 'checkout_checked';
        document.krang_pager_form.submit();
-     }
+  }
+
+  function move_checked() {
+       document.krang_pager_form.rm.value = 'move_checked';
+       document.krang_pager_form.submit();
   }
 
   function edit(id) {
@@ -98,7 +107,7 @@
                <input type=button value="Publish" onclick="publish('<tmpl_var id>')">
                <input type=button value="Checkout" onclick="checkout('<tmpl_var id>')">
                <p>
-               <input type=button value="Move" onclick="move('<tmpl_var id>')"> to <select></select> 
+               <input type=button value="Move" onclick="move('<tmpl_var id>')"> to <select name="move_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> 
        </td>
      </tr>
   </table>
