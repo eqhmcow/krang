@@ -77,6 +77,9 @@ sub fill_template {
     }
 
     $tmpl->param( element_loop => \@element_loop ) if @element_loop;
+
+    $tmpl->param( table_title => $story->element->child('table_title')->data );
+    $tmpl->param( table_background => $story->element->child('table_background')->data);
 }
 
 1;
