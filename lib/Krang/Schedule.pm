@@ -99,7 +99,7 @@ use Time::Seconds;
 # Internal Modules
 ###################
 use Krang::DB qw(dbh);
-use Krang::Log qw/debug ASSERT assert/;
+use Krang::Log qw/ASSERT assert/;
 use Krang::Media;
 use Krang::Story;
 use Krang::Template;
@@ -649,9 +649,9 @@ sub run {
             my $call = $action_map{$type}->{$action};
             eval {
                 if (@args) {
-                    &$call($object_id, @args);
+                    &$call($type.'_id' => $object_id, @args);
                 } else {
-                    &$call($object_id);
+                    &$call($type.'_id' => $object_id);
                 }
             };
             $eval_err = $@;
