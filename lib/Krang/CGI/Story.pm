@@ -158,9 +158,6 @@ sub create {
                                         $story->element->url_attributes] );
     }
 
-    # prepare story for editing
-    $story->prepare_for_edit();   
-
     # store in session for edit
     $session{story} = $story;
 
@@ -187,9 +184,6 @@ sub edit {
         ($story) = Krang::Story->find(story_id => $query->param('story_id'));
         croak("Unable to load story '" . $query->param('story_id') . "'.")
           unless $story;
-
-        # prepare to edit
-        $story->prepare_for_edit();   
 
         $query->delete('story_id');
         $session{story} = $story;
