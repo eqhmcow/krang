@@ -46,9 +46,19 @@ This modules exports a set of generally useful CGI widgets.
 =item $chooser_html = category_chooser(name => 'category_id', query => $query)
 
 Returns a block of HTML implementing the standard Krang category
-chooser.  The C<name> and C<query> parameters are required.
+chooser.  
 
-Additional optional parameters are as follows:
+Available parameters are as follows:
+
+  name     - (required) Unique name of the chooser.  If you have multiple
+             choosers on the same page then they must have different
+             names.  Must be alphanumeric.
+
+  query    - (required) The CGI.pm query object for this request.
+
+  field    - The form field which will be set to the category_id of the
+             choosen category.  Defaults to the value set for C<name>
+             if not set.
 
   site_id  - If specified, chooser will limit selection to only
              this site and its descendant categories.
@@ -72,10 +82,14 @@ F<Widget/category_chooser.tmpl>.
 
 sub category_chooser {
     my %args = @_;
-    my ($name, $query, $label, $display, $onchange, $formname, $site_id) =
-      @args{qw(name query label display onchange formname site_id)};
+    my ($name, $query, $label, $display, $onchange, $formname, $site_id, 
+        $field) =
+      @args{qw(name query label display onchange formname site_id field)};
     croak("Missing required args: name and query")
       unless $name and $query;
+
+    # field defaults to name
+    $field ||= $name;
 
     my $template = HTML::Template->new(filename => 
                                        catfile(KrangRoot, "templates",
@@ -122,14 +136,15 @@ sub category_chooser {
                                              hide_root  => 1,
                                              button_label => $label||'Choose',
                                              include_css => 0,
+                                             form_field => $field,
+                                             form_field_form => $formname,
                                             );
 
     # send data to the template
     $template->param(chooser       => $chooser->output,
                      name          => $name,
                      display       => defined $display ? $display : 1,
-                     onchange      => $onchange,
-                     formname      => $formname);
+                     onchange      => $onchange);
 
     return $template->output;
 }
