@@ -59,7 +59,6 @@ use Krang::MethodMaker
                          default
                        ) ];
 
-
 =over 4
 
 =item name
@@ -103,7 +102,8 @@ existing stories or categories.  Defaults to 0.
 
 If set to 1 then this element will be available for bulk_editing.
 Sub-classes that set this to 1 must provide the bulk_load() method
-described below.
+described below.  Furthermore, classes marked for bulk editing must
+not have a max value set.
 
 =item required
 
