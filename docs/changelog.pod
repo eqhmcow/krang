@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed Krang::DB to always turn on mysql_auto_reconnect (it was already
+on by default under mod_perl).  This should prevent the schedule
+daemon from periodically dying when a database connections times out.
+[Sam]
+
+=item *
+
 Fixed bug in Krang::ElementClass which would fail to setup
 "is_$element" template vars if "$element" wasn't used as a template
 var itself. [Matt]

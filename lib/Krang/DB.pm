@@ -83,8 +83,9 @@ sub dbh {
                                "DBI:mysql:database=$name".
                                ":mysql_read_default_group=krang", 
                                DBUser, DBPass,
-                               { RaiseError         => 1, 
-                                 AutoCommit         => 1,
+                               { RaiseError           => 1, 
+                                 AutoCommit           => 1,
+                                 mysql_auto_reconnect => 1,
                                });
 
     # Check version, unless specifically asked not to
