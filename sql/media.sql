@@ -57,8 +57,19 @@ CREATE TABLE media_type (
 ) TYPE=MyISAM;
 
 -- Default data for media_type
+
 insert into media_type (name) values ('Image');           
+insert into media_type (name) values ('Text');
+insert into media_type (name) values ('HTML');
+insert into media_type (name) values ('PDF');
+insert into media_type (name) values ('Excel');
+insert into media_type (name) values ('Word');
 insert into media_type (name) values ('Video');
+insert into media_type (name) values ('Audio');
+insert into media_type (name) values ('Flash');
+insert into media_type (name) values ('JavaScript'); 
+insert into media_type (name) values ('Stylesheet'); 
+insert into media_type (name) values ('Include'); 
 
 --
 -- Table structure for table 'media_contrib'
