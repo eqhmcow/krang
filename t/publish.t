@@ -33,9 +33,29 @@ my $head1       = "header "x10;
 my $head_output = "<h1>$head1</h1>\n";
 my $deck1       = 'DECK DECK DECK';
 my $page_output = "<h1>$head1</h1>THIS IS A VERY WIDE PAGE<p>$para1</p><p>$para2</p>";
-my $category1   = 'CATEGORY 'x5;
-my $category_output = 'THIS IS HEADS' . $category1 . '---' . Krang::Publisher->content() .
-  '---' . $category1 . 'THIS IS TAILS';
+my $category1   = 'CATEGORY1 'x5;
+my $category2   = 'CATEGORY2 'x5;
+my $category3   = 'CATEGORY3 'x5;
+
+my $category1_head = 'THIS IS HEADS' . $category1 . '---';
+my $category1_tail = '---' . $category1 . 'THIS IS TAILS';
+my $category1_output = $category1_head . Krang::Publisher->content() . $category1_tail;
+#my $article1_output = 
+
+my $category2_head = 'THIS IS HEADS' . $category2 . '---';
+my $category2_tail = '---' . $category2 . 'THIS IS TAILS';
+my $category2_output = $category2_head . Krang::Publisher->content() . $category2_tail;
+#my $article2_output = 
+
+my $category3_head = 'THIS IS HEADS' . $category3 . '---';
+my $category3_tail = '---' . $category3 . 'THIS IS TAILS';
+my $category3_output = $category3_head . Krang::Publisher->content() . $category3_tail;
+#my $article3_output = 
+
+my %article_output = (3 => $category3_head .  '<title>Test Title</title><h1>Test Title</h1>' . $page_output . $category3_tail,
+                      2 => $category2_head .  '<title>Test Title</title><h1>Test Title</h1>' . $page_output . $category2_tail,
+                      1 => $category1_head .  '<title>Test Title</title><h1>Test Title</h1>' . $page_output . $category1_tail
+);
 
 # list of templates to delete at the end of this all.
 my @delete_templates = ();
@@ -60,12 +80,16 @@ END { $site->delete(); }
 
 
 my ($category) = Krang::Category->find(site_id => $site->site_id());
+$category->element()->data($category1);
+$category->save();
 
 # create child & subchild categories
 my $child_cat = new Krang::Category (dir => 'testdir_a', parent_id => $category->category_id());
+$child_cat->element()->data($category2);
 $child_cat->save();
 
 my $child_subcat = new Krang::Category (dir => 'testdir_b', parent_id => $child_cat->category_id());
+$child_subcat->element()->data($category3);
 $child_subcat->save();
 
 END { 
@@ -136,28 +160,28 @@ ok($para_pub eq $para1, 'Krang::ElementClass->publish()');
 # it should return $header_element->data() wrapped in <h1></h1>.
 # NOTE - HTML::Template::Expr throws in a newline at the end.
 my $head_pub = $head->class->publish(element => $head, publisher => $publisher);
-ok($head_pub eq $head_output, 'Krang::ElementClass->publish()');
+ok($head_pub eq $head_output, 'Krang::ElementClass->publish() -- header');
 
 # test publish() on page element -
 # it should contain header (formatted), note about wide page, 2 paragraphs.
 my $page_pub = $page->class->publish(element => $page, publisher => $publisher);
 $page_pub =~ s/\n//g;
-ok($page_pub eq $page_output, 'Krang::ElementClass->publish()');
+ok($page_pub eq $page_output, 'Krang::ElementClass->publish() -- page');
 
 # undeploy header tmpl & attempt to publish - should
 # return $header->data().
 $publisher->undeploy_template(template => $template_deployed{header});
 $head_pub = $head->class->publish(element => $head, publisher => $publisher);
-ok($head_pub eq $head1, 'Krang::ElementClass->publish()');
+ok($head_pub eq $head1, 'Krang::ElementClass->publish() -- no tmpl');
 
 # undeploy page tmpl & attempt to publish - should croak.
 $publisher->undeploy_template(template => $template_deployed{page});
 eval {$page_pub = $page->class->publish(element => $page, publisher => $publisher);};
 if ($@) {
-    pass('Krang::ElementClass->publish()');
+    pass('Krang::ElementClass->publish() -- missing tmpl');
 } else {
     diag('page.tmpl was undeployed - publish should croak.');
-    fail('Krang::ElementClass->publish()');
+    fail('Krang::ElementClass->publish() -- missing tmpl');
 }
 
 # redeploy page/header templates.
@@ -166,11 +190,11 @@ $publisher->deploy_template(template => $template_deployed{header});
 
 # test publish() for category element.
 my $category_el = $category->element();
-$category_el->data($category1);
+
 
 my $cat_pub = $category_el->class->publish(element => $category_el, publisher => $publisher);
 $cat_pub =~ s/\n//g;
-ok($cat_pub eq $category_output, 'Krang::ElementClass->publish()');
+ok($cat_pub eq $category1_output, 'Krang::ElementClass->publish() -- category');
 
 #
 # TEST REMOVED FOR NOW - Base element set has no support for children in category.
@@ -187,41 +211,44 @@ ok($cat_pub eq $category_output, 'Krang::ElementClass->publish()');
 
 # test _assemble_pages() - should return single-element array-ref.
 # category top/bottom & page content should both exist.
-#my $assembled_ref = $publisher->_assemble_pages(story => $story, category => $category);
+my $assembled_ref = $publisher->_assemble_pages(story => $story, category => $category);
+ok(@$assembled_ref == 1, 'Krang::Publisher->_assemble_pages() -- page count');
 
-#diag(Dumper($assembled_ref));
+my $page_one = $assembled_ref->[0];
+$page_one =~ s/\n//g;
+ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');
 
+$publisher->publish_story(story => $story);
 
+my @story_paths = build_story_paths($story);
 
+foreach (my $i = $#story_paths; $i >= 0; $i--) {
+    my $story_txt = load_story_page($story_paths[$i]);
+    $story_txt =~ s/\n//g;
+    if ($story_txt =~ /\w/) {
+        ok($article_output{($i+1)} eq $story_txt, 'Krang::Publisher->publish_story() -- compare');
+        if ($article_output{($i+1)} ne $story_txt) {
+            diag('Story content on filesystem does not match expected results');
+        }
 
-# test _build_filename()
+    } else {
+        diag('Missing story content');
+        fail('Krang::Publisher->publish_story -- compare');
+    }
+}
 
-# test publish_story() - it should write out a single page to each
-# category dir.  Check to see that the file exists on the filesystem.
-# remove files when done.
-
-
-
-
-
-############################################################
 #
-# SUBROUTINES
+# find_templates()
+# Run through all the elements in the story, attempting to find the
+# appropriate templates.  If the templates are not found, make sure
+# there's a good reason for there not being one (e.g. element has no
+# children).
 #
-
-#
-# find_templates
-# iterate over the elements, testing Krang::ElementClass->find_template()
-# Basically, 
-# 
-
 sub find_templates {
 
     my ($element) = @_;
 
     my $tmpl;
-
-#    diag("FINDING: " . $element->name());
 
     eval {
         $tmpl = $element->class->find_template(publisher => $publisher, element => $element);
@@ -253,6 +280,11 @@ sub find_templates {
 }
 
 
+
+############################################################
+#
+# SUBROUTINES.
+#
 
 
 #
@@ -323,7 +355,7 @@ sub create_story {
 
     my $story = Krang::Story->new(categories => \@categories,
                                   title      => "Test Title",
-                                  slug       => "test-publish-test",
+                                  slug       => "SLUG-TEST-SLUG",
                                   class      => "article");
 
     # add some content
@@ -341,6 +373,45 @@ sub create_story {
     $story->save();
 
     return ($story);
+
+}
+
+
+sub build_story_paths {
+
+    my $story = shift;
+
+    my @urls = $story->urls();
+    my @paths;
+
+    foreach (@urls) {
+        push @paths, File::Spec->catfile($site->publish_path(), $_, 'index.html');
+    }
+
+    return @paths;
+}
+
+
+# load a story from the filesystem, based on supplied filename.
+# return text string containing content
+sub load_story_page {
+
+    my $filename = shift;
+    my $data;
+
+    ok(-e $filename, 'Krang::Publisher->publish_story() -- exists');
+
+    undef $/;
+    if (open(PAGE, "<$filename")) {
+        $data = <PAGE>;
+        close PAGE;
+    } else {
+        diag("Cannot open $filename: $!");
+        fail('Krang::Publisher->publish_story();');
+    }
+
+    $/ = "\n";
+    return $data;
 
 }
 
