@@ -10,7 +10,7 @@ krang_category_rename - rename Krang categories
 
 =head1 SYNOPSIS
 
-  krang_category_rename foo.com/files/ foo.com/media/images/
+  krang_category_rename foo.com/from/files/ foo.com/to/media/images/
 
 =head1 DESCRIPTION
 
