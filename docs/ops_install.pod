@@ -1,0 +1,254 @@
+
+=head1 How to Install PIRT CMS 2.0 (Krang)
+
+
+This document describes how to install and upgrade Krang
+installations.
+
+
+
+=head2 Some definitions
+
+
+=over 4
+
+=item Installation
+
+A particular version of Krang installed on a server.  A single host
+server may have multiple installations, but this would be rare
+outside of development.  A single installation may have multiple
+"Instances".
+
+
+=item Instance
+
+A particular CMS database and element set.  Multiple instances may
+exist within a particular Krang installation.  A single instance may
+have multiple "Sites".
+
+
+=item Site
+
+A website managed by Krang.  Multiple sites may exist
+within a particular Krang instance.  Unlike Installations and
+Instances, Sites are not installed via this installation process.
+Sites are configured from the Krang web interface.
+
+
+
+=head2 What Install Will Do
+
+
+Following is a list of the tasks the installer script will perform.
+
+
+=over 4
+
+=item Check pre-requisites, versions, etc.
+
+=item Create MySQL Krang database user (if it does not already exist).
+
+=item Bind IP address to host server (if it is not already there).
+
+=item Create Krang UNIX user with no password (unless user already exists).
+
+=item Install Krang
+
+=item Add Krang to init.d startup scripts.
+
+=item Start Krang
+
+=item Output settings and URL of Krang installation to console.
+
+
+
+=back
+
+
+
+
+=back
+
+
+
+=head1 System Requirements
+
+Krang (and its installation system) is intended to run on RedHat 7.3.
+
+
+=head1 Install Worksheet
+
+Before you install you must gather the following information.  The
+following variables should be replaced in example shell commands with
+the appropriate values.
+
+
+
+
+
+=head2 Required Variables
+
+
+=over 4
+
+=item HostName
+
+Host name used for CMS Apache virtual host and FTP server (e.g., "cms23.thepirtgroup.com").
+
+
+=item IPAddress
+
+IP address used for CMS Apache server and FTP server.
+
+
+=item InstanceVirtualHost
+
+Host name of CMS virtual Apache server (e.g., "cms.motortrend.com")
+
+
+
+=item InstanceDBName
+
+Name of MySQL database which is used by this CMS instance (e.g., "krang").
+
+
+
+=item InstanceDBUser
+
+Name of MySQL user which is used by this CMS instance (e.g., "krang").
+
+
+
+=item InstanceDBPass
+
+MySQL user password which is used by this CMS instance (e.g., "xyzzy").
+
+
+
+=item InstanceElementSet
+
+Name of element set used by this CMS instance (e.g., "Flex").
+
+
+
+=head2 Optional Variables
+
+
+=item MySQLRootPassword
+
+Defaults to "" (none).  The password for the MySQL user "root" who is
+assumed to exist, and to have full access to MySQL.
+
+
+=item KrangUser
+
+Defaults to "krang".  UNIX user for process ownership (Apache, etc.), file ownership and
+install location.
+
+
+=item KrangGroup
+
+Defaults to "krang".  UNIX group for process ownership (Apache, etc.), file ownership and
+install location.
+
+
+=item FTPPort
+
+Defaults to 21.  Port on which FTP server should run.
+
+
+=item ApachePort
+
+
+Defaults to 80.  Port on which CMS Apache server should run.
+
+
+=item SMTPServer
+
+Defaults to localhost (127.0.0.1).  Address of SMTP mail server used
+by Krang for sending email.
+
+
+=item InstanceDisplayName
+
+Defaults to $InstanceVirtualHost.  Name of the Instance, displayed on
+the CMS interface for informational purposes.
+
+
+
+=back
+
+
+
+
+=head1 Pre-requisite Tasks
+
+=over4
+
+=item Download Krang installation tarball and uncompress
+
+  # wget http://www.thepirtgroup.com/krang/krang-1.x.tar.gz
+  # tar xzvf krang-1.x.tar.gz
+
+
+=item Compile and Install Perl 5.6.1 from provided source
+
+  # tar xzvf krang-1.x.tar.gz/install/Perl/perl-5.6.1.tar.gz
+  # cd perl-5.6.1
+  # rm -f config.sh Policy.sh \
+    && sh Configure -de \
+    && make \
+    && make test \
+    && make install
+
+
+=item Install/Upgrade MySQL
+
+   a. Uninstall RedHat's MySQL...
+      i. # rpm -e \
+           libdbi-dbd-mysql \
+           MyODBC \
+           MySQL-python \
+           perl-DBD-MySQL \
+           php-mysql \
+           qt-MySQL \
+           tora \
+           mysql-server \
+           mysql-3.23.54a-11 \
+           mod_auth_mysql-1.11-12 \
+           mysql-devel-3.23.54a-11
+
+   b. Install MySQL from rpm...
+      i. # cd krang-1.x.tar.gz/install/MySQL/ \
+           && rpm -Uvh \
+           MySQL-server-4.0.12-0.i386.rpm \
+           MySQL-client-4.0.12-0.i386.rpm \
+           MySQL-devel-4.0.12-0.i386.rpm \
+           MySQL-shared-4.0.12-0.i386.rpm
+
+
+=back
+
+
+
+
+=head1 To Install
+
+
+=over 4
+
+=item Run the install script
+
+  # cd <Krang src directory>
+  # ./bin/krang_install \
+         --HostName             $HostName            \
+         --IPAddress            $IPAddress           \
+         --InstanceVirtualHost  $InstanceVirtualHost \
+         --InstanceDBName       $InstanceDBName      \
+         --InstanceDBUser       $InstanceDBUser      \
+         --InstanceDBPass       $InstanceDBPass      \
+         --InstanceElementSet   $InstanceElementSet  
+
+
+
+=back
