@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 v1.101 - In Development
+
+=over
+
+=item *
+
+Upgraded L<Scalar-List-Utils> to 1.14 from 1.09 - this should fix some
+compilation issues with MacOSX. [Peter]
+
+=back
+
 =head2 v1.100 - January 4, 2005
 
 =over
