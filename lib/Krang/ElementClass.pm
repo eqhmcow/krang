@@ -501,7 +501,7 @@ sub find_template {
       || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
     my $element   = $args{element} 
       || croak __PACKAGE__ . ":missing attribute 'element'.\n";
-    
+
     my @search_path = $publisher->template_search_path();
     my $filename = $element->name() . '.tmpl';
 
@@ -527,17 +527,19 @@ sub find_template {
         # HTML::Template::Expr is having problems - throw an error
         # based on the problem reported.
         if ($err =~ /file not found/) {
-            Krang::ElementClass::TemplateNotFound->throw(
+            Krang::ElementClass::TemplateNotFound->throw
+                (
                  message       => "Missing required output template: '$err'",
                  element_name  => $element->display_name(),
                  template_name => $filename,
                  category_url  => $publisher->category->url(),
                  error_msg     => $err
-                                                        );
+                );
         }
         # assuming remaining errors are parse errors at this time.
         else {
-            Krang::ElementClass::TemplateParseError->throw(
+            Krang::ElementClass::TemplateParseError->throw
+                (
                  message       => "Coding error found in template: '$err'",
                  element_name  => $element->display_name(),
                  template_name => $filename,
@@ -829,24 +831,42 @@ sub publish {
     # try and find an appropriate template.
     eval { $html_template = $self->find_template(@_); };
 
-    if ($@ and $@->isa('Krang::ElementClass::TemplateNotFound')) {
-        my $err = $@;
-        # no template found - if the element has children, this is an error.
-        # otherwise, return the raw data stored in the element.
-        if (scalar($args{element}->children())) {
-            die $err;
+    if (my $err = $@) {
+        if ($err->isa('Krang::ElementClass::TemplateNotFound')) {
+            # no template found - if the element has children, this is an error.
+            # otherwise, return the raw data stored in the element.
+            if (scalar($args{element}->children())) {
+                die $err;
+            } else {
+                return $args{element}->template_data(publisher => $publisher);
+            }
         } else {
-            return $args{element}->template_data(publisher => $publisher);
+            # another error occured with the template - re-throw.
+            die $err;
         }
-    } elsif ($@) {
-        # another error occured with the template - re-throw.
-        die $@;
     }
 
-
     $self->fill_template(tmpl => $html_template, @_);
+    my $html;
 
-    my $html = $html_template->output();
+    # make sure publish returns cleanly
+    eval { $html = $html_template->output(); };
+
+    if (my $err = $@) {
+        # known output problems involve bad HTML::Template::Expr usage.
+        if ($err =~ /HTML::Template::Expr/) {
+            Krang::ElementClass::TemplateParseError->throw
+                (
+                 message       => "Error publishing with template: '$err'",
+                 element_name  => $args{element}->display_name,
+                 template_name => $args{element}->name . '.tmpl',
+                 category_url  => $publisher->category->url(),
+                 error_msg     => $err
+                );
+        } else {
+            die $err;
+        }
+    }
 
     return $html;
 }

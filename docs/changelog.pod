@@ -8,6 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed Krang::ElementClass->publish() to trap errors thrown by
+HTML::Template::Expr->output(), and fixed Krang::CGI::Publisher to
+properly report errors and not try to redirect users when failures
+occur in preview.  [Peter]
+
+
+=item *
+
 Fixed krang_ftpd to setup higher file and memory limits.  These limits
 were preventing the FTP server from operating on some systems. [Sam]
 

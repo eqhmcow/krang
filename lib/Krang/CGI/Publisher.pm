@@ -320,7 +320,7 @@ sub preview_story {
             $url = $publisher->preview_story(story => $story, 
                                              callback =>\&_progress_callback);
         };
-        if ($@) {
+        if (my $err = $@) {
             # if there is an error, figure out what it is, create the
             # appropriate message and return an error page.
             if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
@@ -328,7 +328,7 @@ sub preview_story {
                             filename       => $@->template_name,
                             category_url   => $@->category_url
                        );
-            } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {           
+            } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
                 add_message('template_parse_error',
                             element_name  => $@->element_name,
                             template_name => $@->template_name,
@@ -355,8 +355,8 @@ sub preview_story {
             # make sure to turn off caching
             Krang::Cache::stop();
             debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
-            
-            return;
+
+            die $err;
         }
     };
     my $err = $@;
