@@ -50,6 +50,10 @@ CREATE TABLE media_type (
   PRIMARY KEY  (media_type_id)
 ) TYPE=MyISAM;
 
+-- Default data for media_type
+insert into media_type (name) values ('Image');           
+insert into media_type (name) values ('Video');
+
 --
 -- Table structure for table 'media_contrib'
 --

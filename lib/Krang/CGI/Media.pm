@@ -237,23 +237,56 @@ sub advanced_find {
 
 =item add
 
-Description of run-mode 'add'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+The "add" run-mode displays the form through which
+new Media objects may be added to Krang.
 
 =cut
 
 
 sub add {
     my $self = shift;
+    my %args = ( @_ );
 
     my $q = $self->query();
+    my $t = $self->load_tmpl('edit_media.tmpl', associate=>$q, loop_context_vars=>1);
+    $t->param(add_mode => 1);
 
-    return $self->dump_html();
+    # Build type drop-down
+    my %media_types = Krang::Pref->get('media_type');
+    my @media_type_ids = ( "", keys(%media_types) );
+    my $media_types_popup_menu = $q->popup_menu(
+                                                -name => 'media_type_id',
+                                                -values => \@media_type_ids,
+                                                -labels => \%media_types,
+                                                -default => "",
+                                               );
+    $t->param(type_chooser=>$media_types_popup_menu);
+
+    # Build category chooser
+    my $category_chooser = category_chooser(
+                                            query => $q,
+                                            name => 'category_id',
+                                            formname => 'edit_media_form',
+                                           );
+    $t->param(category_chooser => $category_chooser);
+
+    # Build upload field
+    my $upload_chooser = $q->filefield(
+                                       -name => 'media_file',
+                                       -default => 'starting value',
+                                       -size => 32,
+                                      );
+    $t->param(upload_chooser => $upload_chooser);
+
+    # Propagate messages, if we have any
+    $t->param(%args) if (%args);
+
+    $t->param(contribs => [
+                           {first=>'Jane', last=>'Doe', type=>'Writer'},
+                           {first=>'Joe', last=>'Blow', type=>'Illustrator'},
+                          ]);
+
+    return $t->output();
 }
 
 
@@ -337,23 +370,23 @@ sub save_stay_add {
 
 =item edit
 
-Description of run-mode 'edit'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
-
+The "edit" mode displays the form through which
+users may edit existing Media objects.
 
 =cut
 
 
 sub edit {
     my $self = shift;
+    my %args = ( @_ );
 
     my $q = $self->query();
+    my $t = $self->load_tmpl('edit_media.tmpl', associate=>$q);
 
-    return $self->dump_html();
+    # Propagate messages, if we have any
+    $t->param(%args) if (%args);
+
+    return $t->output();
 }
 
 
