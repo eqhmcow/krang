@@ -188,6 +188,42 @@ is_deeply([$story->urls], [$story2->urls], 'url save/load');
 # element load
 is($story->element->element_id, $story2->element->element_id);
 
+# try making a copy
+my $copy;
+eval { $copy = $story->clone() };
+ok(not $copy->story_id);
+
+# mangled as expected?
+is($copy->title, "Copy of " . $story->title);
+is($copy->slug, $story->slug . "_copy");
+
+# basic fields survived?
+for (qw( published_version
+         class
+         checked_out
+         checked_out_by
+         notes
+         cover_date
+         publish_date
+         priority )) {
+    is($story->$_, $copy->$_, "$_ cloned");
+}
+
+# save the copy
+$copy->save();
+END { $copy->delete };
+
+# make another copy, this should result in a slug ending in _copy2
+my $copy2;
+eval { $copy2 = $story->clone() };
+ok(not $copy2->story_id);
+
+# mangled as expected?
+is($copy2->title, "Copy of " . $story->title);
+is($copy2->slug, $story->slug . "_copy2");
+
+
+
 # checkin/checkout
 $story->checkin();
 is($story->checked_out, 0);
@@ -222,10 +258,10 @@ is($story->checked_out_by, $session{user_id});
 my $data = freeze($story);
 ok($data);
 
-my $copy = thaw($data);
-ok($copy);
-isa_ok($copy, 'Krang::Story');
-is($copy->story_id, $story->story_id);
+my $thawed = thaw($data);
+ok($thawed);
+isa_ok($thawed, 'Krang::Story');
+is($thawed->story_id, $story->story_id);
 
 
 # test versioning
@@ -410,3 +446,27 @@ $cover->save;
 # test linked stories
 my @linked_stories = $cover->linked_stories;
 is_deeply([sort(@find)], [sort(@linked_stories)]);
+
+# clone a cover
+my $cover2 = $cover->clone();
+
+# should have no categories, oh my
+my @copy_cats = $cover2->categories;
+ok(@copy_cats == 0);
+my @copy_cat_ids = @{$cover2->{category_ids}};
+ok(@copy_cat_ids == 0);
+ok(not $cover2->url);
+@copy_cats = $cover2->categories;
+ok(@copy_cats == 0);
+@copy_cat_ids = @{$cover2->{category_ids}};
+ok(@copy_cat_ids == 0);
+
+# should fail to save as-is
+eval { $cover2->save };
+isa_ok($@, 'Krang::Story::MissingCategory');
+
+# assign a new category and save should work
+$cover2->categories([$cat[1]]);
+eval { $cover2->save };
+ok(not $@);
+END { $cover2->delete };
