@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded DBD-mysql to 2.9004.  [Peter]
+
+=item *
+
 Bugfix to L<Krang::Dataset> - now xml files are validated based on
 thier apperance in the index.xml file, as opposed to using File::Find
 in the xml dir. [Matt]

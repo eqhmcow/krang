@@ -82,7 +82,7 @@ exist without your hard work.
 
 =item DBD-mysql
 
- Version: 2.9003
+ Version: 2.9004
  License: Perl License
 
 =item DBI
