@@ -33,14 +33,6 @@ sub new {
         Krang::ElementClass::Text->new(name         => 'icopywrite_link',
                                        display_name => 'iCopywrite Link',
                                        max          => 1),       
-        Krang::ElementClass::PopupMenu->new(name => "search_type",
-                                                     @fixed,
-                                                     values => [ "keyword",
-                                                                 "topic",
-                                                                 "multisite",
-                                                                 "custom"],
-                                                     default => "keyword"),
- 
         PBMM::article_related_link_box->new(max => 1),
         'page',
 

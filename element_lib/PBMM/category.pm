@@ -34,8 +34,11 @@ sub new {
                     PBMM::top_cat_column->new(),
                     PBMM::left_cat_column->new(),
                     PBMM::right_cat_column->new(),
-                    Default::empty->new(    name => 'footer'
-                                            )
+                    Default::empty->new(    name => 'footer',
+                                            max => 1
+                                            ),
+                    Default::empty->new(    name => 'link_to_top_of_page',  
+                                            max => 1 )
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

@@ -28,6 +28,7 @@ sub new {
                                                     bulk_edit => 1),
                  Default::image->new(),
                  'document',
+                Default::empty->new(name => "custom_search", max => 1),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
