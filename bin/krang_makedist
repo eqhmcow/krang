@@ -198,6 +198,13 @@ sub export_krang {
         exit(1);
     }
 
+    # make sure CVSROOT is set right, since cvs export won't use CVS/Root
+    open(CVSROOT, "CVS/Root") or die "Unable to open CVS/Root: $!";
+    my $CVSROOT = <CVSROOT>;
+    chomp($CVSROOT);
+    close CVSROOT or die $!;
+    $ENV{CVSROOT} = $CVSROOT;
+
     # Make directory for work
     my $export_dir = get_export_dir();
     mkdir($export_dir);
