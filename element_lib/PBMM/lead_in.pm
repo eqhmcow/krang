@@ -36,6 +36,42 @@ sub new {
                                                                "small"],
                                                    default => "small"
                                                            ),
+                Krang::ElementClass::PopupMenu->new(name => "promo_text_type",
+                                                    reorderable => '0',
+                                                   min => 1,
+                                                   max => 1,
+                                                   allow_delete => '0',
+                                                   values => [ "promo teaser",
+                                                                "full article",
+                                                                "1 paragraph",
+                                                                "2 paragraphs",
+                                                                "3 paragraphs",
+                                                                "4 paragraphs",
+                                                                "5 paragraphs",
+                                                                "6 paragraphs",
+                                                                "7 paragraphs",
+                                                                "8 paragraphs",
+                                                                "9 paragraphs",
+                                                                "10 paragraphs",
+                                                                "11 paragraphs",
+                                                                "12 paragraphs",
+                                                                "13 paragraphs",
+                                                                "14 paragraphs",
+                                                                "15 paragraphs",
+                                                                "16 paragraphs",
+                                                                "17 paragraphs",
+                                                                "18 paragraphs",
+                                                                "19 paragraphs",
+                                                                "20 paragraphs",
+                                                                "21 paragraphs",
+                                                                "22 paragraphs",
+                                                                "23 paragraphs",
+                                                                "24 paragraphs",
+                                                                "25 paragraphs"],
+
+                                                   default => "promo_teaser"
+                                                           ),
+
                  Krang::ElementClass::PopupMenu->new(name => "header_size",
                                                     reorderable => '0',
                                                    min => 1,
@@ -79,13 +115,41 @@ sub fill_template {
     my $tmpl      = $args{tmpl};
     my $story   = $args{element}->child('story')->data;
     my $publisher = $args{publisher};
+    my $element = $args{element};
 
     return if not $story;
 
     my $ptitle = $story->element->child('promo_title')->data || $story->title;
     $tmpl->param( promo_title => $ptitle );
 
-    my $pteaser = $story->element->child('promo_teaser')->data || '';
+    my $pteaser;
+    if (($element->child('promo_text_type')->data eq 'promo teaser') || ($story->element->name ne 'article')) {
+        $pteaser = $story->element->child('promo_teaser')->data;
+    } else {
+        my $limit;
+        if ($element->child('promo_text_type')->data eq 'full article') {
+            $limit = 'none at all';
+        } else {
+            $limit = (split(' ', $element->child('promo_text_type')->data))[0];
+        }
+
+        my $count = 0;
+        my @pages =  grep { $_->name() eq 'page' } $story->element->children();
+
+ outer: foreach my $page (@pages) {
+            my @ps = grep { $_->name() eq 'paragraph' } $page->children();
+            foreach my $p (@ps) {
+                if ($count++ ne $limit) {
+                    $pteaser .= "<p>".$p->data."</p>";
+                } else {
+                    last outer;
+                }
+            }
+
+        }
+
+    }
+
     $tmpl->param( promo_teaser => $pteaser ) if $pteaser;
 
     # set cover date
