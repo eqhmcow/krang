@@ -1,31 +1,48 @@
-use Test::More tests => 14;
+use Test::More qw(no_plan);
 use strict;
 use warnings;
 
 use File::Temp qw(tempfile);
 
-# setup a test conf file
-my ($fh, $filename) = tempfile();
-print $fh <<CONF;
+# a basic working conf file
+my $base_conf = <<CONF;
+KrangUser nobody
+KrangGroup nobody
+ApacheAddr 127.0.0.1
+ApachePort 80
+RootVirtualHost localhost.localdomain
+EnableSiteServer 1
+SiteServerAddr 127.0.0.1
+SiteServerPort 8080
+LogLevel 2
+FTPAddress localhost
+FTPPort 2121
+SMTPServer localhost
+FromAddress krangmailer\@localhost.com
+BugzillaServer krang-services.ops.about.com/bugzilla
+BugzillaEmail krang_test\@yahoo.com
+BugzillaPassword shredder
+BugzillaComponent 'Auto-submitted Bugs'
 <Instance instance_one>
-  ElementSet Flex
-  DBName test
-  DBUser test
-  DBPass test
+   InstanceDisplayName "Test Magazine One"
+   VirtualHost cms.test1.com
+   DBName test
+   DBUser test
+   DBPass ""
+   ElementSet TestSet1
 </Instance>
-
 <Instance instance_two>
-  ElementSet LA
-  DBName test2
-  DBUser test2
-  DBPass test2
+   InstanceDisplayName "Test Magazine Two"
+   VirtualHost cms.test2.com
+   DBName test2
+   DBUser test2
+   DBPass ""
+   ElementSet TestSet1
 </Instance>
 CONF
-close($fh);
 
-# use this file as krang.conf
-$ENV{KRANG_CONF} = $filename;
-ok(-e $filename);
+# setup the test conf file
+_setup_conf($base_conf);
 
 eval "use_ok('Krang::Conf')";
 die $@ if $@;
@@ -33,10 +50,13 @@ die $@ if $@;
 # get the globals, all ways
 ok(Krang::Conf->get("KrangRoot"));
 ok(Krang::Conf->KrangRoot);
+ok(Krang::Conf->get("ApachePort"));
+ok(Krang::Conf->ApachePort);
 
-Krang::Conf->import(qw(KrangRoot DBName));
+Krang::Conf->import(qw(KrangRoot DBName ApachePort));
 ok(KrangRoot());
 ok(not defined DBName());
+ok(ApachePort());
 
 Krang::Conf->instance("instance_one");
 is(Krang::Conf->instance, "instance_one");
@@ -49,3 +69,46 @@ is(Krang::Conf->instance, "instance_two");
 ok(KrangRoot());
 is(Krang::Conf->get("DBName"), "test2");
 is(DBName(), "test2");
+
+
+# make sure KrangUser and KrangGroup are checked
+my $bad_conf = $base_conf;
+$bad_conf =~ s/KrangUser nobody/KrangUser foo/;
+_setup_conf($bad_conf);
+eval { Krang::Conf::_load(); Krang::Conf->check() };
+like($@, qr/KrangUser.*does not exist/);
+
+$bad_conf = $base_conf;
+$bad_conf =~ s/KrangGroup nobody/KrangGroup foo/;
+_setup_conf($bad_conf);
+eval { Krang::Conf::_load(); Krang::Conf->check() };
+like($@, qr/KrangGroup.*does not exist/);
+
+# make sure repeated DBNames are caught
+$bad_conf = $base_conf;
+$bad_conf .= <<CONF;
+<Instance instance_thre>
+   InstanceDisplayName "Test Magazine Three"
+   VirtualHost cms.test2.com
+   DBName test2
+   DBUser test3
+   DBPass ""
+   ElementSet TestSet1
+</Instance>
+CONF
+_setup_conf($bad_conf);
+eval { Krang::Conf::_load(); Krang::Conf->check() };
+like($@, qr/More than one instance/);
+
+# put an arbitary conf file into place so that Krang::Conf will load it
+sub _setup_conf {
+    my $conf = shift;
+    open(CONF, ">tmp/test.conf") or die $!;
+    print CONF $conf;
+    close(CONF);
+
+    # use this file as krang.conf
+    $ENV{KRANG_CONF} = "tmp/test.conf";
+}
+
+END { unlink("tmp/test.conf") }
