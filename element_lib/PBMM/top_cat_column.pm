@@ -30,9 +30,7 @@ sub new {
                  PBMM::search_type->new(
                                         max  => 1,
                                         ),
-                 Krang::ElementClass::Text->new(name         => "ad_module",
-                                                min => 1,
-                                                ),
+                 PBMM::ad_module->new(),
                  PBMM::auto_navigation->new(
                                         max => 1 ),
                  PBMM::html_include->new(),

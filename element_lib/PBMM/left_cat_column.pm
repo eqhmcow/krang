@@ -32,9 +32,7 @@ sub new {
                                        ),
                 PBMM::site_related_link_box->new( max => 1), 
                 PBMM::table_of_contents->new(), 
-                Krang::ElementClass::Text->new(name         => "ad_module",
-                                                min => 1,
-                                                ),
+                PBMM::ad_module->new(),
                 PBMM::auto_navigation->new( 
                                         max => 1 ),
                 PBMM::html_include->new(),
