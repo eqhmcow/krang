@@ -25,6 +25,7 @@ LogTimeStamp
 TimeStampFormat
 VirtualHost
 LogWrap
+Assertions
 );
 }
 
