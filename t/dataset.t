@@ -301,9 +301,9 @@ ok($found);
 END { (Krang::Media->find(url_like => '%lazarus.jpg'))[0]->delete() }
 
 # try the same with template
-my $ltemplate = Krang::Template->new(element_class_name => 'abcd_fake_element_class',
-                               category_id   => $category->category_id,
-                               content => 'this is the content here' );
+my $ltemplate = Krang::Template->new(filename => 'abcd_fake.tmpl',
+                                     category_id => $category->category_id,
+                                     content => 'this is the content here' );
 
 $ltemplate->save();
 $ltemplate->mark_as_deployed();

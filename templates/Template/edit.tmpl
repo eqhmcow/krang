@@ -76,8 +76,8 @@
 </tr>
 
 <tr class="light">
-  <td width="135">Element:</td>
-  <td><tmpl_var element_class_name></td>
+  <td width="135">Filename:</td>
+  <td><tmpl_var filename></td>
 </tr>
 
 <tr class="light">
@@ -115,16 +115,38 @@
 <input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
 
 <tmpl_if add_mode>
+
+<script language="javascript">
+  function update_filename (e) {
+     var targ = e.form.elements["filename"];
+     if (e.selectedIndex == 0) { 
+        targ.readOnly = false;
+        targ.style.backgroundColor = 'white';
+        targ.value = '';
+     } else {
+        targ.value = e.options[e.selectedIndex].value + ".tmpl";
+        targ.readOnly = true;
+        targ.style.backgroundColor = '#DDDDDD';
+     }
+  }
+</script>
+
 <tr>
-  <td>*Element:</td>
+  <td>Element:</td>
   <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
-</tmpl_if>
+
+<tr>
+  <td>*Filename:</td>
+  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_filename><span class="invalid"></tmpl_if><input type=text name="filename" size=30 value="<tmpl_var escape=html filename>"><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+</tr>
 
 <tr>
   <td>Site/Categories:</td>
   <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_category_id><span class="invalid"></tmpl_if><tmpl_var category_chooser><tmpl_if error_category_id></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
+
+</tmpl_if>
 
 <tr>
   <td>Upload File:<tmpl_if filename><br />

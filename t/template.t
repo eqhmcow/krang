@@ -25,20 +25,20 @@ my ($category) = Krang::Category->find(site_id => $site->site_id());
 my $tmpl;
 eval {$tmpl = Krang::Template->new(category => 'blah',
                                    content => 'blah',
-                                   element_class_name => 'A')};
+                                   filename => 'A.tmpl')};
 like($@, qr/'category' argument must be a 'Krang::Category'/s,
      'constructor failure');
 
 # constructor success 1 - tests category arg
 eval {$tmpl = Krang::Template->new(category => $category,
                                    content => '<blink><tmpl_var bob></blink>',
-                                   element_class_name => 'Bob')};
+                                   filename => 'bob.tmpl')};
 is($@, '', 'contructor good :)');
 
 # constructor success 2
 $tmpl = Krang::Template->new(category_id => $category->category_id(),
                              content => '<blink><tmpl_var bob></blink>',
-                             element_class_name => 'Bob');
+                             filename => 'bob.tmpl');
 isa_ok($tmpl, 'Krang::Template');
 
 # test category meth
@@ -52,7 +52,7 @@ is($tmpl->version(), 1, 'Version Check');
 # duplicate check
 eval {
     my $tmplX = Krang::Template->new(category_id => $category->category_id(),
-                                     element_class_name => 'Bob');
+                                     filename => 'bob.tmpl');
     $tmplX->save();
 };
 is($@ =~ /Duplicate URL/, 1, 'duplicate_check()');

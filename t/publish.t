@@ -739,7 +739,7 @@ sub deploy_test_templates {
 
         $template = Krang::Template->new(
                                          content => $content,
-                                         element_class_name => $element_name,
+                                         filename => "$element_name.tmpl",
                                          category => $category
                                         );
 

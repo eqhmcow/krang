@@ -296,7 +296,7 @@ sub advanced_search {
     # search_element
     my $search_element = $q->param('search_element') || '';
     if ($search_element) {
-        $find_params->{element_class_name_like} = "\%$search_element\%";
+        $find_params->{filename}        = "$search_element.tmpl";
         $persist_vars->{search_element} = $search_element;
     }
 
@@ -761,24 +761,27 @@ sub get_tmpl_params {
     my $self = shift;
     my $template = shift;
     my $q = $self->query();
-    my @fields = qw/content element_class_name template_id testing url
+    my @fields = qw/content filename template_id testing url
 		    version/;
     my $rm = $q->param('rm');
     my (%tmpl_params, $version);
 
     # loop through template fields
     $tmpl_params{$_} = $template->$_ for @fields;
+    debug("FILENAME: $tmpl_params{filename}");
     $version = $template->version;
 
     if ($q->param('add_mode')) {
-        my @values = ('', Krang::ElementLibrary->element_names);
+        my @values = (' ', Krang::ElementLibrary->element_names);
         my %labels = map {$_, $_} Krang::ElementLibrary->element_names;
-        my $default = $template->element_class_name || '';
+        my $default = '';
         $tmpl_params{element_chooser} = $q->popup_menu(-name =>
                                                        'element_class_name',
                                                        -values => \@values,
                                                        -labels => \%labels,
-                                                       -default => $default);
+                                                       -default => $default,
+                                                       -onchange => 'update_filename(this)',
+                                                      );
     }
 
     unless ($rm =~ /^view/) {
@@ -857,7 +860,7 @@ sub make_pager {
 
     my @columns = qw(deployed
                      template_id
-		     element_class_name
+                     filename
                      url
                      commands_column
                      checkbox_column
@@ -866,7 +869,7 @@ sub make_pager {
     my %column_labels = (deployed => '',
                          template_id => 'ID',
                          commands_column => '',
-                         element_class_name => 'Element',
+                         filename => 'Filename',
                          url => 'URL',
                         );
 
@@ -880,7 +883,7 @@ sub make_pager {
                                       column_labels => \%column_labels,
                                       columns_sortable =>
                                       ['template_id',
-                                       'element_class_name',
+                                       'filename',
                                        'url',],
                                       row_handler => \&search_row_handler,
                                       id_handler =>
@@ -895,7 +898,7 @@ sub make_pager {
 sub search_row_handler {
     my ($row, $template) = @_;
     $row->{deployed} = $template->deployed ? 'D' : '';
-    $row->{element_class_name} = $template->element_class_name;
+    $row->{filename} = $template->filename;
     $row->{template_id} = $template->template_id;
     $row->{url} = format_url(url => $template->url, length => 50);
 
@@ -916,8 +919,10 @@ sub update_template {
     my $template = shift;
     my $q = $self->query();
 
-    for (qw/category_id content element_class_name testing/) {
-        next if $_ eq 'element_class_name' && $q->param('rm') !~ /add/;
+    for (qw/category_id content filename testing/) {
+        next if $_ eq 'filename' && $q->param('rm') !~ /add/;
+        next if $_ eq 'category_id' && $q->param('rm') !~ /add/;
+
         my $val = $q->param($_) || '';
         if ($_ eq 'content' && $val) {
             if (my $fh = $q->upload('template_file')) {
@@ -931,7 +936,7 @@ sub update_template {
         } elsif ($_ eq 'category_id') {
             $template->$_($val) if $val ne '';
         } elsif ($_ eq 'testing') {
-            $template->mark_for_testing;
+            $template->mark_for_testing if $val;
         } else {
             $template->$_($val);
         }
@@ -945,11 +950,6 @@ sub validate {
     my ($self, $template) = @_;
     my $q = $self->query();
     my %errors;
-
-    # validate element
-    my $element = $template->element_class_name || '';
-    $errors{error_element} = 1
-      unless ($element || grep {$_ eq $element} @elements);
 
     if ($q->param('rm') =~ /add/) {
         # validate category_id

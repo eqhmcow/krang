@@ -2,13 +2,14 @@ package Krang::Template;
 
 =head1 NAME
 
-  Krang::Template - Interface for managing template objects.
+Krang::Template - Interface for managing template objects
 
 =head1 SYNOPSIS
 
- my $template = Krang::Template->new(category_id => 1,
-				     content => '<tmpl_var test>',
-				     element_class_name => 'class_name');
+ # create a new template
+ my $template = Krang::Template->new(category    => $category,
+				     content     => '<tmpl_var test>',
+                                     filename    => 'test.tmpl');
 
  # save contents of the object to the DB.
  $template->save();
@@ -54,9 +55,7 @@ its formatting or it may serve as some manner of miscellaneous utility
 whether formatting or otherwise.  Template data, i.e. the 'content' field, is,
 at present, intended to be in HTML::Template format.  All template filenames
 will end in the extension '.tmpl'.  Users have the ability to revert to any
-previous version of a template.  Past revisions of templates are maintained in
-a template versioning table.  The current version of a template is stored in
-the template table.
+previous version of a template.
 
 This module interfaces or will interface with Krang::CGI::Template,
 Krang::Burner, the FTP interface, and the SOAP interface.
@@ -107,7 +106,7 @@ use constant TEMPLATE_RO => qw(template_id
 # Read-write fields
 use constant TEMPLATE_RW => qw(category_id
 			       content
-			       filename);
+                               filename);
 
 # Fieldnames for template_version
 use constant VERSION_COLS => qw(data
@@ -120,10 +119,8 @@ use constant VERSION_COLS => qw(data
 
 # Lexicals
 ###########
-my %template_args = map {$_ => 1} TEMPLATE_RW, 'element_class_name';
-my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW,
-  'element_class_name';
-
+my %template_args = map {$_ => 1} TEMPLATE_RW;
+my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW;
 
 # Interal Module Dependecies (con't)
 ####################################
@@ -131,7 +128,7 @@ my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW,
 use Krang::MethodMaker 	new_with_init => 'new',
   			new_hash_init => 'hash_init',
   			get => [TEMPLATE_RO],
-  			get_set => [TEMPLATE_RW];
+  			get_set => [grep { $_ ne 'filename'} TEMPLATE_RW];
 
 
 =head1 INTERFACE
@@ -167,7 +164,6 @@ sub category {
     return $cat;
 }
 
-
 =item * category_id
 
 Integer that identifies the parent category of the template object.
@@ -176,15 +172,28 @@ Integer that identifies the parent category of the template object.
 
 The HTML::Template code that make up the template.
 
-=item * element_class_name
-
-The element with which the object is associated and hence for which it
-generates output.
-
 =item * filename
 
 The filename into which the 'content' will be output once the template is
 deployed.
+
+=cut
+
+sub filename {
+    my $self = shift;
+    return $self->{filename} unless @_;
+    my $filename = shift;
+
+    # make sure it's kosher
+    croak(__PACKAGE__ . "->init(): missing required filename parameter.")
+      unless $filename;
+    croak(__PACKAGE__ . "->init(): filename parameter '$filename' does not end in '.tmpl'.")
+      unless $filename =~ /\.tmpl$/;
+    croak(__PACKAGE__ . "->init(): filename parameter '$filename' contained invalid characters.")
+      unless $filename =~ /^[-\w]+\.tmpl$/;
+
+    return $self->{filename} = $filename;
+}
 
 =back
 
@@ -233,15 +242,6 @@ sub site {
     return $cat->site();
 }
 
-=item * site_url
-
-=cut
-
-sub site_url {
-    my $self = shift;
-    return $self->site->url;
-}
-
 =item * template_id
 
 Integer id of the template object corresponding to its id in the template
@@ -283,13 +283,11 @@ valid keys to this hash are:
 
 =item * content
 
-=item * element_class_name
-
 =item * filename
 
 =back
 
-The 'element_class_name' argument must be supplied.
+The filename arguement is required.
 
 =item $template = $template->checkin()
 
@@ -538,26 +536,6 @@ SQL
     return $self;
 }
 
-
-=item $element_class_name = $template->element_class_name()
-
-=item $template = $template->element_class_name( $element_class_name )
-
-Instance method that gets or sets the element name with which the template is
-associated.
-
-=cut
-
-sub element_class_name {
-    my $self = shift;
-    return $self->{element_class_name} unless @_;
-
-    $self->{element_class_name} = $self->{filename} = $_[0];
-    $self->{filename} .= '.tmpl';
-    return $self;
-}
-
-
 =item @templates = Krang::Template->find( %params )
 
 =item @template = Krang::Template->find( template_id => 1 )
@@ -594,8 +572,6 @@ The list valid search fields is:
 =item * deploy_date
 
 =item * deployed
-
-=item * element_class
 
 =item * filename
 
@@ -708,12 +684,12 @@ sub find {
                 my $numeric = /^\d+$/ ? 1 : 0;
                 if ($where_clause) {
                     $where_clause .= $numeric ? " AND t.template_id = ?" :
-                      " AND (t.element_class_name LIKE ? OR t.url LIKE ?)";
+                      " AND t.url LIKE ?";
                 } else {
                     $where_clause = $numeric ? "template_id = ?" :
-                      "(t.element_class_name LIKE ? OR t.url LIKE ?)";
+                      "t.url LIKE ?";
                 }
-                push @params, $numeric ? $_ : "%" . $_ . "%", "%" . $_ . "%";
+                push @params, $numeric ? $_ : "%" . $_ . "%";
             }
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
@@ -827,16 +803,6 @@ sub init {
               "'Krang::Category' object.")
           if (not(ref($category) || $category->isa('Krang::Template')));
         $self->{category_id} = $category->category_id;
-    }
-
-    # set filename from element if that's what we have
-    if (exists $args{element_class_name}) {
-        $args{filename} = $args{element_class_name};
-    }
-
-    # append file extension, if necessary
-    if (exists $args{filename}) {
-        $args{filename} .= '.tmpl' unless $args{filename} =~ /\.tmpl$/;
     }
 
     # setup defaults
@@ -1060,8 +1026,8 @@ sub serialize_xml {
                         'template.xsd');
 
     $writer->dataElement( template_id => $self->{template_id} );
+    $writer->dataElement( filename => $self->{filename} );
     $writer->dataElement( url => $self->{url} );
-    $writer->dataElement( element_class_name => $self->{element_class_name} );
     $writer->dataElement( category_id => $self->{category_id} )
       if $self->{category_id};
     $writer->dataElement( content => $self->{content} );
@@ -1069,7 +1035,6 @@ sub serialize_xml {
     my $deploy_date = $self->{deploy_date} || '';
     $deploy_date =~ s/\s/T/ if $deploy_date;
     $writer->dataElement( deploy_date => $deploy_date ) if $deploy_date;
-    $writer->dataElement( filename => $self->{filename} );
     $writer->dataElement( version => $self->{version} );
     $writer->dataElement( deployed_version => $self->{deployed_version} ) if $self->{deployed_version};
 
@@ -1103,7 +1068,7 @@ sub deserialize_xml {
     # strip out all fields we don't want updated or used.
     @complex{qw(template_id deploy_date creation_date url checked_out checked_out_by 
                 version deployed testing deployed_version category_id)} = ();
-    %simple = map { ($_,1) } grep { not exists $complex{$_} } (TEMPLATE_RO,TEMPLATE_RW, 'element_class_name');
+    %simple = map { ($_,1) } grep { not exists $complex{$_} } (TEMPLATE_RO,TEMPLATE_RW);
  
     # parse it up
     my $data = Krang::XML->simple(xml           => $xml,
