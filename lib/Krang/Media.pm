@@ -380,8 +380,6 @@ sub upload_file {
  
     my $path = tempdir( CLEANUP => 1);
     my $filepath = catfile($path, $filename);
-    use Krang::Log qw(debug); 
-    debug($filepath); 
     open (FILE, ">$filepath") || croak("Unable to open $path for writing media!"); 
    
     my $buffer;
