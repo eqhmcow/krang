@@ -24,23 +24,28 @@ sub new {
                  Krang::ElementClass::Textarea->new(name => "keyword_1",
                                                     min => 1,
                                                     max => 1,
+                                                    allow_delete => 0,
                                                     reorderable => 0
                                                    ),
                 Krang::ElementClass::Textarea->new(name => "keyword_2",                                                    min => 1,
                                                     max => 1,
-                                                    reorderable => 0
+                                                    reorderable => 0,
+                                                    allow_delete => 0
                                                    ),
                 Krang::ElementClass::Textarea->new(name => "keyword_3",                                                    min => 1,
                                                     max => 1,
-                                                    reorderable => 0
+                                                    reorderable => 0,
+                                                    allow_delete => 0
                                                    ),
                 Krang::ElementClass::Textarea->new(name => "keyword_4",                                                    min => 1,
                                                     max => 1,
-                                                    reorderable => 0
+                                                    reorderable => 0,
+                                                    allow_delete => 0
                                                    ),
                 Krang::ElementClass::Textarea->new(name => "keyword_5",                                                    min => 1,
                                                     max => 1,
-                                                    reorderable => 0
+                                                    reorderable => 0,
+                                                    allow_delete => 0
                                                    ),
 
                 ],
