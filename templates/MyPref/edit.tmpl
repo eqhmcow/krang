@@ -84,10 +84,10 @@ onClick="checkall(this, 'alert_delete_list')"></td></tr></table>
 <tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
 </table>
 <div class="button-bar"><input type="button" value="Delete Checked" onclick="submit()" class="button"></div>
-
-<tmpl_else><table border="0" cellspacing="0" cellpadding="8" width="100%">
-<tr><td>No Current Alerts</tmpl_if></td></tr>
 </form>
+<tmpl_else><table border="0" cellspacing="0" cellpadding="8" width="100%">
+<tr><td>No Current Alerts</td></tr></tmpl_if>
+
 <form name="add_alert_form" method="post">
 <tr><td>
 <table cellspacing="0" width="100%" cellpadding="2">
@@ -98,10 +98,10 @@ onClick="checkall(this, 'alert_delete_list')"></td></tr></table>
 		<table cellspacing="0" width="100%" class="form-cell">
         <tr>
             <td class="form-cell">Action:</td>
-            <td class="form-cell"><tmpl_var action_selector></td>
+            <td class="form-cell"><tmpl_var action_selector></td></tr>
         <tr>
             <td class="form-cell">Site/Category:</td>
-            <td class="form-cell"><tmpl_var category_chooser> (optional)</td>
+            <td class="form-cell"><tmpl_var category_chooser> (optional)</td></tr>
         <tr>
             <td class="form-cell">Desk:</td>
             <td class="form-cell"><tmpl_var desk_selector> (optional)</td>

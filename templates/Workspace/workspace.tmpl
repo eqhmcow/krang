@@ -43,26 +43,6 @@
        document.krang_pager_form.submit();
   }
 
-  function publish_checked() {
-    if (confirm("Are you sure you wish to publish all these items?")) {
-      document.krang_pager_form.action = 'publisher.pl';
-      document.krang_pager_form.rm.value = 'publish_story_list';
-      document.krang_pager_form.submit();
-    }
-  }
-
-  function publish_story(story_id) {
-    var pubform = document.forms["publish_story_form"];
-    pubform.story_id.value=story_id;
-    pubform.submit();
-  }
-
-  function publish_media(media_id) {
-    var pubform = document.forms["publish_media_form"];
-    pubform.media_id.value=media_id;
-    pubform.submit();
-  }
-
   function deploy(id) {
        document.krang_pager_form.rm.value = 'deploy';
        document.krang_pager_form.id.value = id;
@@ -92,19 +72,6 @@
 <table border="0" cellpadding="0" cellspacing="0" width="100%">
 <tr><td width="1" class="line"><img width="1" height="1"></td>
   <td><img width="1" height="4"><table border="0" cellpadding="5" cellspacing="0" width="100%"><tr class="light"><td valign="bottom">
-
-<!-- publish_story form -->
-<form name="publish_story_form" method="GET" action="publisher.pl">
-<input type=hidden name="rm" value="publish_story">
-<input type=hidden name="story_id" value="">
-</form>
-
-<!-- publish_media form -->
-<form name="publish_media_form" method="GET" action="publisher.pl">
-<input type=hidden name="rm" value="publish_media">
-<input type=hidden name="media_id" value="">
-</form>
-
 
 <form name="krang_pager_form" method="POST">
   <input type="hidden" name="rm">
@@ -136,7 +103,7 @@
   <table cellspacing="0" width="100%" cellpadding="2">
 
 <tr class="form-head">
-    <td width="150"><tmpl_if is_story><b>Story</b> <tmpl_var story_id></tmpl_if>
+    <td width="150"><b><tmpl_if is_story>Story <tmpl_var story_id></tmpl_if>
         <tmpl_if is_media>Media <tmpl_var media_id></tmpl_if>
         <tmpl_if is_template>Template <tmpl_var template_id></tmpl_if></b>
         v<tmpl_var version>&nbsp;&nbsp;&nbsp;
@@ -168,24 +135,23 @@
            <span style="float:right; font-weight: bold;"><tmpl_var command_column></span>
            <tmpl_if is_story>
                <input type="button" value="Copy" onclick="copy('<tmpl_var id>')" class="button">
-               <input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button">
+               <input type="button" value="Publish" onclick="publish('<tmpl_var id>')" class="button">
                <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
-               <p>
+        <div class="vs">&nbsp;</div>
                Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_media>
-               <input type="button" value="Publish" onclick="publish_media('<tmpl_var id>')" class="button">
+               <input type="button" value="Publish" onclick="publish('<tmpl_var id>')" class="button">
                <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
-               <p>
+             <div class="vs">&nbsp;</div>
                <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_template>
                <input type="button" value="Deploy" onclick="deploy('<tmpl_var id>')" class="button">
                <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
-               <p>
+             <div class="vs">&nbsp;</div>
                <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
-               Test with: <input type="checkbox" <tmpl_if testing>checked</tmpl_if>
-name=testing value='<tmpl_var id>'>
+               Test with: <input type="checkbox">
            </tmpl_if>
        </td>
      </tr>

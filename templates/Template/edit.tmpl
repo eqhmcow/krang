@@ -36,9 +36,7 @@
     }
 
     function do_deploy () {
-        var myform = document.edit_template_form;
-        myform.rm.value = 'deploy';
-        myform.submit();
+        alert ("Not implemented yet");
     }
 
 
@@ -71,8 +69,6 @@
 </tr>
 </table>
 
-
-
 <table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
   <td class="line"><img width="1" height="1"></td>
   <td><img width="1" height="4"><tmpl_unless add_mode><table border="0" cellpadding="5" cellspacing="0" width="100%">
@@ -82,8 +78,8 @@
 </tr>
 
 <tr class="light">
-  <td width="140">Filename:</td>
-  <td width="440"><tmpl_var filename></td>
+  <td width="140">Element:</td>
+  <td width="440"><tmpl_var element_class_name></td>
 </tr>
 
 <tr class="light">
@@ -98,52 +94,23 @@
 
 <tr class="light">
   <td width="140">Deployed&nbsp;Version:</td>
-  <td width="440"><tmpl_unless deployed_version>[n/a]</tmpl_unless><tmpl_var deployed_version></td></tr>
-
-</tmpl_unless>
-
+  <td width="440"><tmpl_unless deployed_version>[n/a]</tmpl_unless><tmpl_var deployed_version></td></tr></table>
+</tmpl_unless><table border="0" cellpadding="5" cellspacing="0" width="100%">
 <form name="delete_template_form" method="post">
 <input type="hidden" name="rm" value="delete">
 <input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
 </form>
-
 <form name="edit_template_form" method="POST" enctype="multipart/form-data">
 <input type="hidden" name="rm" value=<tmpl_if add_mode>"save_add"<tmpl_else>"save_edit"</tmpl_if>>
 <input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
-
 <tmpl_if add_mode>
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
-
-<script language="javascript">
-  function update_filename (e) {
-     var targ = e.form.elements["filename"];
-     if (e.selectedIndex == 0) { 
-        targ.readOnly = false;
-        targ.style.backgroundColor = 'white';
-        targ.value = '';
-     } else {
-        targ.value = e.options[e.selectedIndex].value + ".tmpl";
-        targ.readOnly = true;
-        targ.style.backgroundColor = '#DDDDDD';
-     }
-  }
-</script>
-
+<tr><td width="140" valign="top">Site/Categories:</td>
+  <td><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_category_id><span class="invalid"></tmpl_if><tmpl_var category_chooser><tmpl_if error_category_id></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+</tr>
 <tr>
   <td width="140">Element:</td>
   <td><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
-
-<tr>
-  <td>*Filename:</td>
-  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_filename><span class="invalid"></tmpl_if><input type=text name="filename" size=30 value="<tmpl_var escape=html filename>"><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
-</tr>
-
-<tr>
-  <td width="140">Site/Categories:</td>
-  <td><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_category_id><span class="invalid"></tmpl_if><tmpl_var category_chooser><tmpl_if error_category_id></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
-</tr>
-
 </tmpl_if>
 
 <tr>
@@ -157,6 +124,7 @@
   <td valign="top" width="140">Template code:</td>
   <td><textarea rows="4" cols="35" name="content"><tmpl_var escape=HTML content></textarea></td>
 </tr>
+
 
 <tr>
   <td width="140">Test with Template:</td>

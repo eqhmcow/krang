@@ -88,7 +88,7 @@
 
 <table border="0" cellspacing="0" width="100%">
 <tr><td class="no-border">Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></td>
-  <td align="right" class="no-border"><tmpl_var colhead_checkbox_column></td>
+  <td align="right" class="no-border"><tmpl_var colhead_checkbox_column></td></tr>
 </table>
 
 <table border="0" cellspacing="0" cellpadding="8" width="100%">
@@ -126,7 +126,7 @@
            <span style="float:right; font-weight: bold;"><tmpl_var command_column></span>
                <input type="button" value="Publish" onclick="publish('<tmpl_var id>')" class="button">
                <input type="button" value="Check Out" onclick="checkout('<tmpl_var id>')" class="button">
-               <p>
+             <div class="vs">&nbsp;</div>
                <input type="button" value="Move" onclick="move('<tmpl_var id>')" class="button"> to <select name="move_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>" <tmpl_if is_selected>SELECTED</tmpl_if>><tmpl_var choice_desk_name> Desk</tmpl_loop></select>
        </td>
      </tr>

@@ -176,7 +176,7 @@
     <td align="right" valign="top"><input type="textfield" size="20" name="mobile_phone" value="<tmpl_var escape=HTML mobile_phone>"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
 </tr>
 <tr>
-  <td align="left" valign="bottom"><span style="font=size: larger;">Groups:</span></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+  <td align="left" valign="bottom"><span style="font=size: larger;">Groups:</span></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <tr>
   <td align="left" valign="top">Available:</td>
   <td align="right" valign="top"><select name="possible_group_ids" size="<tmpl_var size>" multiple="multiple" style="width: 142px;">
@@ -185,9 +185,6 @@
 	</select></td>
         <td valign="top" align="center">Current:</td>
         <td align="right" valign="top">
-	<div align="center">
-	<b>Current Groups</b><br />
-<tmpl_if error_missing_group><span class="invalid"></tmpl_if>
 <tmpl_if error_null_group><span class="invalid"></tmpl_if>
 <tmpl_if error_invalid_group_id><span class="invalid"></tmpl_if>
 <select name="current_group_ids" size="<tmpl_var size>" multiple="multiple" style="width: 142px;">
@@ -195,11 +192,7 @@
 	</tmpl_loop>
 	</select>
 <tmpl_if error_null_group></span></tmpl_if>
-<tmpl_if error_invalid_group_id></span></tmpl_if>
-<tmpl_if error_missing_group></span></tmpl_if>
-	<br /><input name="rm_grp" onClick="remove_group();" type="button" value="Remove Group">
-	</div>
-	</td>
+<tmpl_if error_invalid_group_id></span></tmpl_if></td><td>&nbsp;</td>
       </tr>
 		<tr><td>&nbsp;</td><td align="right"><input name="add_grp" onClick="add_group();" type="button" value="Add" class="button"></td><td>&nbsp;</td><td align="right"><input name="rm_grp" onClick="remove_group();" type="button" value="Remove" class="button"></td><td>&nbsp;</td></tr>
 

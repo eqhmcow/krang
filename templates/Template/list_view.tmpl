@@ -3,7 +3,7 @@
 <script language="JavaScript" type="text/javascript">
 
   function edit_template (id) {
-    document.find_template.rm.value = 'checkout_and_edit';
+    document.find_template.rm.value = 'edit';
     document.find_template.template_id.value = id;
     document.find_template.submit();
   }
@@ -84,11 +84,11 @@
 
       <tr>
         <td>URL:</td>
-        <td><input size="40" type="textfield" name="search_url" value="<tmpl_var escape=HTML search_url>"></td>
+        <td><input size="30" type="textfield" name="search_url" value="<tmpl_var escape=HTML search_url>"></td>
       </tr>
 
       <tr>
-        <td>Site/Category:</td>
+        <td valign="top">Site/Category:</td>
         <td><tmpl_var category_chooser></td>
       </tr>
 
@@ -102,7 +102,7 @@
 
       <tr>
         <td>ID:</td>
-        <td><input size="40" type="textfield" name="search_template_id" value="<tmpl_var escape=HTML search_template_id>"></td>
+        <td><input size="30" type="textfield" name="search_template_id" value="<tmpl_var escape=HTML search_template_id>"></td>
       </tr>
 
       <tr>

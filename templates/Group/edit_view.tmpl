@@ -47,19 +47,14 @@
 </script>
 
 
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;Group <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></td>
-  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
-</tr>
-</table>
+<div class="dark-bar">Group <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></div>
 
 
-<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
-  <td class="line"><img width="1" height="1"></td>
-  <td><img width="1" height="4">
+<div class=form-box>
 
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
+<table cellpadding="5" cellspacing="0">
+
+
 <form name="edit_group_form" method="POST">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="rm" value="save">
@@ -72,28 +67,27 @@
 <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 
+
+
 <tr>
-  <td width="100">Group Name:</td>
-  <td><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="name" value="<tmpl_var escape=HTML name>"><tmpl_if error_invalid_name></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+    <td align="left" valign="top">Group Name:</td>
+    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="name" value="<tmpl_var escape=HTML name>"><tmpl_if error_invalid_name></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
 </tr>
 
 </table>
 
-<table border="0" cellspacing="0" cellpadding="8" width="100%">
-<tr><td>
+
 
 <!-- Site/Root Category permissions -->
-<table cellspacing="0" width="100%" cellpadding="2">
+<table cellspacing="0" width="100%">
 
 <tr class="form-head">
-    <td align="left">Sites</td>
-    <td width="100">Categories</td>
-    <td width="100">Edit</td>
-    <td width="100">Read-Only</td>
-    <td width="100">Hide</td>
-</tr></table>
-
-    <table cellspacing="0" width="100%" class="form-cell">
+    <th align="left">Sites</th>
+    <th width="100">Categories</th>
+    <th width="100">Edit</th>
+    <th width="100">Read-Only</th>
+    <th width="100">Hide</th>
+</tr>
 
 <tmpl_loop categories><tr>
     <td class="form-cell"><tmpl_var category_url></td>
@@ -108,16 +102,14 @@
 <br />
 
 <!-- Asset permissions -->
-<table cellspacing="0" width="100%" cellpadding="2">
+<table cellspacing="0" width="100%">
 
 <tr class="form-head">
-    <td align="left">Assets</td>
-    <td width="100">Edit</td>
-    <td width="100">Read-Only</td>
-    <td width="100">Hide</td>
-</tr></table>
-
-    <table cellspacing="0" width="100%" class="form-cell">
+    <th align="left">Assets</th>
+    <th width="100">Edit</th>
+    <th width="100">Read-Only</th>
+    <th width="100">Hide</th>
+</tr>
 
 <tr>
     <td class="form-cell">Stories</td>
@@ -144,16 +136,14 @@
 
 
 <!-- Desk permissions -->
-<table cellspacing="0" width="100%" cellpadding="2">
+<table cellspacing="0" width="100%">
 
 <tr class="form-head">
-    <td align="left">Desks</td>
-    <td width="100">Edit</td>
-    <td width="100">Read-Only</td>
-    <td width="100">Hide</td>
-</tr></table>
-
-    <table cellspacing="0" width="100%" class="form-cell">
+    <th align="left">Desks</th>
+    <th width="100">Edit</th>
+    <th width="100">Read-Only</th>
+    <th width="100">Hide</th>
+</tr>
 
 <tmpl_loop desks><tr>
     <td class="form-cell"><tmpl_var desk_name></td>
@@ -166,22 +156,15 @@
 <br />
 
 <!-- Administration permissions -->
-<table cellspacing="0" width="100%" cellpadding="2">
+<table cellspacing="0" width="100%">
 
 <tr class="form-head">
-    <td colspan="2" align="left">Administration permissions</td>
-</tr></table>
-
-    <table cellspacing="0" width="100%" class="form-cell">
+    <th colspan="2" align="left">Administration permissions</th>
+</tr>
 
 <tr>
     <td class="form-cell" align="center"><tmpl_var may_publish></td>
     <td class="form-cell" align="left">May Publish</td>
-</tr>
-
-<tr>
-    <td class="form-cell" align="center"><tmpl_var may_checkin_all></td>
-    <td class="form-cell" align="left">May Check-in All</td>
 </tr>
 
 <tr>
@@ -218,24 +201,26 @@
     <td class="form-cell" align="center"><tmpl_var admin_desks></td>
     <td class="form-cell" align="left">Manage Desks</td>
 </tr>
+
+<tr>
+    <td class="form-cell" align="center"><tmpl_var may_checkin_all></td>
+    <td class="form-cell" align="left">May Check In All</td>
+</tr>
  
 </table>
 <!-- END Administration permissions -->
-</td></tr>
-</table>
 
-</td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
+
+</div>
+
+
 
 <div class="button-bar">
-    <input type="submit" value="Save" onClick="do_save()" class="button">
-    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()" class="button"></tmpl_unless>
-    <input type="reset" value="Reset" class="button">
-    <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_group()" class="button"></tmpl_unless>
-    <input type="button" value="Cancel" onClick="cancel_group_change()" class="button">
+    <input type="submit" value="Save" onClick="do_save()">
+    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()"></tmpl_unless>
+    <input type="reset" value="Reset">
+    <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_group()"></tmpl_unless>
+    <input type="button" value="Cancel" onClick="cancel_group_change()">
 </div>
 
 
