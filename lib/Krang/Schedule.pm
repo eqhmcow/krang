@@ -581,9 +581,10 @@ sub _publish {
     my $type = $self->object_type();
     my $id   = $self->object_id();
     my $err;
+    my %context = defined($self->{context}) ? @{$self->{context}} : ();
 
     if ($type eq 'media') {
-        my @media = Krang::Media->find(media_id => [$id]);
+        my @media = Krang::Media->find(media_id => $id, %context);
 
         unless (@media) {
             my $msg = sprintf("%s->_publish(): Can't find Media id '%i', skipping publish.",
@@ -602,7 +603,7 @@ sub _publish {
     }
     elsif ($type eq 'story') {
 
-        my @stories = Krang::Story->find(story_id => [$id]);
+        my @stories = Krang::Story->find(story_id => $id, %context);
 
         unless (@stories) {
             my $msg = sprintf("%s->_publish(): Can't find Story id '%i', skipping publish.",

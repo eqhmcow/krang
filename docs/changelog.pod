@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in L<Krang::Schedule> - scheduling specific versions of a
+story or media object for publish now works again.  [Peter]
+
+=item *
+
 Additional documentation!  The long-awaited 
 HREF[Creating an Element Library in Krang|building_element_library.html]! [Peter]
 
