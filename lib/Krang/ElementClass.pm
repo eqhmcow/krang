@@ -537,6 +537,10 @@ The default implementation populates the template as follows:
 
 A single variable is created for $element->name().
 
+=item *
+
+A single variable called $child->name() is created for each B<UNIQUELY NAMED> child element.  For example, if the element contains children named (C<paragraph>, C<paragraph>, C<deck>), two variables would be created, C<paragraph> and C<deck>.  The value of C<paragraph> would correspond to the first paragraph child element.
+
 =item * 
 
 A loop is created for every child element named with the name of the element followed by _loop. The rows of the loop contain the variable described above and a _count variable.
@@ -565,6 +569,8 @@ sub fill_template {
 
     my $self = shift;
     my %args = @_;
+
+    my %element_names = ();
 
     my $tmpl      = $args{tmpl};
     my $publisher = $args{publisher};
@@ -600,13 +606,24 @@ sub fill_template {
         my $html = $_->class->publish(element => $_, publisher => $publisher);
         my $loop_idx = 1;
 
+        unless (exists($element_names{$name})) {
+            $element_names{$name} = 1;
+            $params{$name} = $html;
+        }
+
         if (exists($params{$name . '_loop'})) { 
             $loop_idx = scalar(@{$params{$name . '_loop'}}) + 1;
         }
 
-        push @{$params{element_loop}}, {"is_$name" => 1, $name => $html};
-        push @{$params{$name . '_loop'}}, {$name . '_count' => $loop_idx,
-                                           $name => $html};
+        push @{$params{element_loop}}, {
+                                        "is_$name" => 1,
+                                        $name      => $html
+                                       };
+        push @{$params{$name . '_loop'}}, {
+                                           $name . '_count' => $loop_idx,
+                                           $name            => $html,
+                                           "is_name"        => 1
+                                          };
     }
 
     $tmpl->param(%params);
