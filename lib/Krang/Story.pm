@@ -36,7 +36,6 @@ use Krang::MethodMaker
                                          cover_date
                                          publish_date
                                          priority
-                                         schedules
                                         ) ]
                            } ];
 
@@ -87,10 +86,11 @@ Krang::Story - the Krang story class
   my $element = $story->element();
 
   # add a schedule
-  my $sched = $story->schedules();
-  push(@$sched, { type   => "absolute",
-                  date   => Time::Piece->new(),
-                  action => "publish" });
+  my @sched = $story->schedules();
+  push(@sched, { type   => "absolute",
+                 date   => Time::Piece->new(),
+                 action => "publish" });
+  $story->schedules(@sched);
 
   # add contributors
   $story->contribs(@contribs);
@@ -184,7 +184,7 @@ published.
 
 The primary category for the story.  C<undef> until at least one
 category is assigned.  This is just a convenience method that returns
-the first category in categories.
+the first category in C<categories>.
 
 =cut
 
@@ -326,10 +326,11 @@ the content for the story.
 =cut
 
 sub element { 
-    return $_[0]->{element} if $_[0]->{element};
-    ($_[0]->{element}) = 
-      Krang::Element->find(element_id => $_[0]->{element_id});
-    return $_[0]->{element};
+    my $self = shift;
+    return $self->{element} if $self->{element};
+    ($self->{element}) = 
+      Krang::Element->find(element_id => $self->{element_id});
+    return $self->{element};
 }
 
 =item C<class> (readonly)
@@ -365,6 +366,46 @@ For 'publish' events, a specific version may be specified.  If not,
 this will be C<undef>.
 
 =back
+
+=cut
+
+sub schedules {
+    my $self = shift;
+    return @{$self->{schedules}} unless @_;
+
+    # check passed values
+    $self->{schedules} = [];
+    foreach my $sched (@_) {
+        next unless defined $sched;
+        croak("schedules requires an array of hash refs")
+          unless ref $sched and ref $sched eq 'HASH';
+
+        croak("Schedule 'type' field missing.")
+          unless $sched->{type};
+
+        croak("Schedule 'type' field invalid.")
+          unless ($sched->{type} eq 'absolute' or
+                  $sched->{type} eq 'hourly'   or
+                  $sched->{type} eq 'daily'    or
+                  $sched->{type} eq 'weekly');
+
+        croak("Schedule 'date' field missing.")
+          unless $sched->{date};
+
+        croak("Schedule 'date' field must be a Time::Piece object")
+          unless ref $sched->{date} and
+                 $sched->{date}->isa('Time::Piece');
+
+        croak("Schedule 'action' field missing.")
+          unless $sched->{action};
+
+        croak("Schedule 'action' field invalid.")
+          unless ($sched->{action} eq 'publish' or
+                  $sched->{action} eq 'expire');
+
+        push @{$self->{schedules}}, $sched;
+    }
+}
 
 =item C<checked_out> (readonly)
 
@@ -405,6 +446,7 @@ sub init {
     $self->{priority}       = 2;
     $self->{checked_out}    = 1;
     $self->{checked_out_by} = $session{user_id};
+    $self->{schedules}      = [];
 
     # finish the object, calling set methods for each key/value pair
     $self->hash_init(%args);
@@ -516,7 +558,7 @@ sub save {
     $self->_save_cat();
 
     # save schedules
-    # $self->_save_schedules;
+    $self->_save_schedules;
 
     # save contributors
     $self->_save_contrib;
@@ -607,6 +649,24 @@ sub _save_contrib {
              $self->{story_id}, $_->{contrib_id}, 
              $_->{contrib_type_id}, ++$ord)
       for @{$self->{contrib_ids}};
+}
+
+# save scheduled events
+sub _save_schedules {
+    my $self = shift;
+    my $dbh  = dbh;
+
+    # clear schedules
+    $dbh->do('DELETE FROM story_schedule WHERE story_id = ?',
+             undef, $self->{story_id});
+
+    my $ord = 0;
+    $dbh->do('INSERT INTO story_schedule
+                    (story_id, ord, type, date, action, version)
+                  VALUES (?,?,?,?,?,?)', undef,
+             $self->{story_id}, ++$ord, $_->{type}, $_->{date}->mysql_datetime,
+             $_->{action}, $_->{version})
+      for @{$self->{schedules}};
 }
 
 # save to the version table
@@ -934,10 +994,24 @@ sub find {
                  'SELECT contrib_id, contrib_type_id FROM story_contrib '.
                  'WHERE story_id = ? ORDER BY ord',
                                            undef, $obj->{story_id});
-        $obj->{contrib_ids} = 
+        $obj->{contrib_ids} = @$result ?
           [ map { { contrib_id      => $_->[0],
-                      contrib_type_id => $_->[1] 
-                  } } @$result ];
+                    contrib_type_id => $_->[1] 
+                  } } @$result ] :
+          [];
+
+        # load schedules
+        $result = $dbh->selectall_arrayref(
+                 'SELECT type, date, action, version FROM story_schedule '.
+                 'WHERE story_id = ? ORDER BY ord',
+                                           undef, $obj->{story_id});
+        $obj->{schedules} = @$result ? 
+          [ map { { type      => $_->[0],
+                    date      => Time::Piece->from_mysql_datetime($_->[1]),
+                    action    => $_->[2],
+                    (defined $_->[3] ? (version => $_->[3]) : ())
+                  } } @$result ] :
+          [];
         
         push @stories, $obj;
     }

@@ -7,6 +7,7 @@ use Krang::Site;
 use Krang::Contrib;
 use Krang::Session qw(%session);
 use Storable qw(freeze thaw);
+use Time::Piece;
 
 BEGIN { use_ok('Krang::Story') }
 
@@ -87,6 +88,19 @@ $story->contribs($contrib);
 is($story->contribs, 1);
 is(($story->contribs)[0]->contrib_id, $contrib->contrib_id);
 
+# test schedules
+my @sched = $story->schedules;
+push(@sched, { type   => 'absolute',
+                date   => Time::Piece->new(),
+                action => 'expire' });
+push(@sched, { type    => 'absolute',
+                date    => Time::Piece->new(),
+                action  => 'publish',
+                version => 1,
+              });
+$story->schedules(@sched);
+is_deeply(\@sched, [$story->schedules]);
+
 # test url production
 ok($story->url);
 is($story->urls, 2);
@@ -160,6 +174,9 @@ is(@{$page2->children}, 7);
 # contribs made it?
 is($story2->contribs, 1);
 is(($story2->contribs)[0]->contrib_id, $contrib->contrib_id);
+
+# schedules?
+is_deeply(\@sched, [$story2->schedules]);
 
 # categories and urls made it
 is_deeply([ map { $_->category_id } $story->categories ],
