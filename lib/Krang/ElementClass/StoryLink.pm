@@ -126,15 +126,20 @@ sub fill_template {
     my $publisher = $args{publisher};
     my $element   = $args{element};
 
-    $tmpl->param(title => $element->data()->title());
+    my %params = ();
+
+    $params{title} = $element->data()->title()
+      if $tmpl->query(name => 'title');
 
     if ($publisher->is_publish()) {
-        $tmpl->param(url => $element->data()->url());
+        $params{url} = $element->data()->url();
     } elsif ($publisher->is_preview()) {
-        $tmpl->param(url => $element->data()->preview_url());
+        $params{url} = $element->data()->preview_url();
     } else {
         croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
     }
+
+    $tmpl->param(\%params);
 
 }
 
@@ -161,9 +166,7 @@ sub publish {
     # try and find an appropriate template.
     eval { $html_template = $self->find_template(@_); };
 
-    if ($@) {
-        my $err = $@;
-
+    if ($@ and $@->isa('Krang::ElementClass::TemplateNotFound')) {
         # no template found.
         # Return the story URL, depending on preview/publish.
         if ($publisher->is_publish()) {
@@ -173,7 +176,11 @@ sub publish {
         } else {
             croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
         }
+    } elsif ($@) {
+        # some other error - pass it along.
+        die $@;
     }
+
 
     $self->fill_template(tmpl => $html_template, @_);
 
@@ -192,7 +199,7 @@ Krang::ElementClass::StoryLink - story link element class
 =head1 SYNOPSIS
 
    $class = Krang::ElementClass::StoryLink->new(name => "leadin")
-                                                
+
 =head1 DESCRIPTION
 
 Provides an element to link to a story.  Elements of this class store
