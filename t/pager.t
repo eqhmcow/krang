@@ -168,6 +168,3 @@ like($@, qr/id_handler not a subroutine reference/, "Validate: id_handler subref
 $pager->id_handler( sub { return $_[0]->contrib_id } );
 eval { $pager->output() };
 
-
-
-print STDERR "PAGER: '$@'\n";
