@@ -5,14 +5,16 @@
 <head>
 <title><tmpl_var header_instance_name> CMS</title>
 <script language="JavaScript" type="text/javascript">
-function openWin(url){  aWindow=window.open(url,"thewindow","width=500,height=600,left=300,top=0,status=no,toolbar=no,menubar=no,scrollbars=yes,location=no,directories=no,resizable=no");
+function openWin(url){  
+   aWindow=window.open(url,"thewindow","width=500,height=500,left=200,top=0,status=no,toolbar=no,menubar=no,scrollbars=yes,location=no,directories=no,resizable=no");
+   aWindow.focus();
 }
 </script>
-<link rel="stylesheet" href="/krang.css" type="text/css">
+<link rel="stylesheet" href="krang.css" type="text/css">
 </head>
 <body>
 <div id="frame">
-<div id="header"><div class="logo"><img src="/images/logo.png" height="27" width="155" alt="logo"></div>
+<div id="header"><div class="logo"><img src="images/logo.png" height="27" width="155" alt="logo"></div>
 <div class="title"><tmpl_var header_instance_name></div>
 <div class="log">Logged In as: <tmpl_var header_user_name> | <a href="login.pl?rm=logout">Log Out</a></div>
 <div class="dkblu"></div>
