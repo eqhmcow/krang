@@ -20,9 +20,10 @@ Import the contents of export.kds into the system:
 
 =head1 DESCRIPTION
 
-This script takes a Bricolage element tree and constructs a matching
-Krang element set.  The element set is output as a directory
-containing class files in the currently configured ElementDir.
+This script imports the contents of a Krang Data Set (.kds) file into
+a Krang instance.  Set the instance to work on using the
+KRANG_INSTANCE environment variable or the first one in krang.conf
+will be used.
 
 =head1 OPTIONS
 
