@@ -173,14 +173,17 @@ sub delete {
     }
                                                                                  
     foreach my $desk_id (@delete_list) {
-        my @stories = Krang::Story->find(desk_id => $desk_id);
-        if (@stories) {
-            add_message('stories_on_desk', desk_name => (Krang::Desk->find( desk_id => $desk_id ))[0]->name);
-            next;
-        }
+        my $desk_name = (Krang::Desk->find( desk_id => $desk_id ))[0]->name;
+        
         debug(__PACKAGE__."->delete: calling delete desk $desk_id");
-        add_message('deleted_selected', desk_name => (Krang::Desk->find( desk_id => $desk_id ))[0]->name);
-        Krang::Desk->delete($desk_id);
+        
+        eval { Krang::Desk->delete($desk_id) };
+        
+        if ($@ and ref $@ and $@->isa('Krang::Desk::Occupied')) {
+            add_message('stories_on_desk', desk_name => $desk_name);
+        } else {
+            add_message('deleted_selected', desk_name => $desk_name); 
+        }
     }
                                                                                  
     return $self->edit();

@@ -7,6 +7,10 @@ use Krang::DB qw(dbh);
 use Krang::Log qw(debug);
 use Krang::Group;
 
+use Exception::Class
+    (
+    'Krang::Desk::Occupied'
+    );
 
 =head1 NAME
 
@@ -299,6 +303,12 @@ sub delete {
     my $is_object = $desk_id ? 0 : 1;
     $desk_id = $self->{desk_id} if not $desk_id;
     croak(__PACKAGE__."->delete - No desk_id specified.") if not $desk_id; 
+
+    my @stories = Krang::Story->find(desk_id => $desk_id);
+
+    if (@stories) {
+        Krang::Desk::Occupied->throw(message => "Desk cannot be deleted, stories are on it.");
+    }
 
     my $order;
 
