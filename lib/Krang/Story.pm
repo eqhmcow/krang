@@ -104,7 +104,7 @@ Krang::Story - the Krang story class
   # load a group of stories by id
   my ($story) = Krang::Story->find(story_ids => [1, 20, 30, 100]);
 
-  # save a story
+  # save a story, incrementing version
   $story->save();
 
   # check it in, now other people can check it out
@@ -112,9 +112,6 @@ Krang::Story - the Krang story class
 
   # checkout the story, no one else can edit it now
   $story->checkout();
-
-  # prepare to edit the story, saving to the version table
-  $story->prepare_for_edit();
 
   # revert to version 1
   $story->revert(1);
@@ -487,9 +484,12 @@ sub clear_contribs { shift->{contrib_ids} = []; }
 
 =item C<< $story->save() >>
 
+=item C<< $story->save(keep_version => 1) >>
+
 Save the story to the database.  This is the only call which will make
 permanent changes in the database (checkin/checkout make transient
-changes).
+changes).  Increments the version number unless called with
+'keep_version' set to 1.
 
 Will throw a Krang::Story::DuplicateURL exception with a story_id
 field if saving this story would conflict with an existing story.
@@ -498,13 +498,13 @@ field if saving this story would conflict with an existing story.
 
 sub save {
     my $self = shift;
-    my $dbh  = shift;
+    my %args = @_;
 
     # make sure it's ok to save
-    $self->verify_checkout();
+    $self->_verify_checkout();
 
     # make sure it's got a unique URI
-    $self->verify_unique();
+    $self->_verify_unique();
 
     # save element tree, populating $self->{element_id}
     $self->_save_element();
@@ -520,31 +520,12 @@ sub save {
 
     # save contributors
     $self->_save_contrib;
-}
 
-sub verify_unique {
-    my $self   = shift;
-    my $dbh    = dbh;
-
-    # lookup dup
-    my $dup_id;
-    if ($self->{story_id}) {
-        ($dup_id) = $dbh->selectrow_array(
-                              'SELECT story_id FROM story_category '.
-                              'WHERE url = ? AND story_id != ?', 
-                               undef, $self->url, $self->{story_id});
-    } else {
-        ($dup_id) = $dbh->selectrow_array(
-                              'SELECT story_id FROM story_category '.
-                              'WHERE url = ?', 
-                               undef, $self->url);
-    }
-
-    # throw exception on dup
-    Krang::Story::DuplicateURL->throw(message => "duplicate URL",
-                                      story_id => $dup_id)
-        if $dup_id;
-
+    # save a serialized copy in the version table
+    $self->_save_version;
+    
+    # update the version number
+    $self->{version}++ unless $args{keep_version};
 }
 
 # save core Story data
@@ -628,7 +609,42 @@ sub _save_contrib {
       for @{$self->{contrib_ids}};
 }
 
+# save to the version table
+sub _save_version {
+    my $self = shift;
+    my $dbh  = dbh;
 
+    # save version
+    $dbh->do('REPLACE INTO story_version (story_id, version, data) 
+              VALUES (?,?,?)', undef, 
+            $self->{story_id}, $self->{version}, freeze($self));
+}
+
+# check for duplicate URLs
+sub _verify_unique {
+    my $self   = shift;
+    my $dbh    = dbh;
+
+    # lookup dup
+    my $dup_id;
+    if ($self->{story_id}) {
+        ($dup_id) = $dbh->selectrow_array(
+                              'SELECT story_id FROM story_category '.
+                              'WHERE url = ? AND story_id != ?', 
+                               undef, $self->url, $self->{story_id});
+    } else {
+        ($dup_id) = $dbh->selectrow_array(
+                              'SELECT story_id FROM story_category '.
+                              'WHERE url = ?', 
+                               undef, $self->url);
+    }
+
+    # throw exception on dup
+    Krang::Story::DuplicateURL->throw(message => "duplicate URL",
+                                      story_id => $dup_id)
+        if $dup_id;
+
+}
 
 =item C<< @stories = Krang::Story->find(title => "Turtle Soup") >>
 
@@ -722,6 +738,12 @@ C<undef>, specifying no limit in that direction.
 Load a story by ID.  Given an array of story IDs, loads all the identified
 stories.
 
+=item version
+
+Combined with C<story_id> (and only C<story_id), loads a specific
+version of a story.  Unlike C<revert()>, this object has C<version>
+set to the actual version number of the loaded object.
+
 =back
 
 Options affecting the search and the results returned:
@@ -782,7 +804,13 @@ sub find {
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.")
       if $count and $ids_only;
+    croak(__PACKAGE__ . "->find(): can't use 'version' without 'story_id'.")
+      if $args{version} and not $args{story_id};
 
+    # loading a past version is handled by _load_version()
+    return $pkg->_load_version($args{story_id}, $args{version})
+      if $args{version};
+    
     my (@where, @param, $like);
     while (my ($key, $value) = each %args) {
         # strip off and remember _like specifier
@@ -882,7 +910,6 @@ sub find {
 
         # objectify dates
         for (qw(cover_date publish_date)) {
-            debug("$_ : $obj->{$_}");
             if ($obj->{$_} and $obj->{$_} ne '0000-00-00 00:00:00') {
                 $obj->{$_} = Time::Piece->from_mysql_datetime($obj->{$_});
             } else {
@@ -920,6 +947,25 @@ sub find {
 
     return @stories;
 }}
+
+sub _load_version {
+    my ($pkg, $story_id, $version) = @_;
+    my $dbh = dbh;
+
+    my ($data) = $dbh->selectrow_array('SELECT data FROM story_version
+                                        WHERE story_id = ? AND version = ?',
+                                       undef, $story_id, $version);
+    croak("Unable to load version '$version' of story '$story_id'")
+      unless $data;
+
+    
+    my @result;
+    eval { @result = (thaw($data)) };
+    croak("Error loading version '$version' of story '$story_id' : $@")
+      unless @result;
+
+    return @result;
+}
 
 =item C<< $story->checkout() >>
 
@@ -999,7 +1045,7 @@ sub checkin {
 
     if ($self) {
         # make sure we're checked out
-        $self->verify_checkout();
+        $self->_verify_checkout();
     } else {
         # check status
         my ($co, $uid) = $dbh->selectrow_array(
@@ -1023,7 +1069,7 @@ sub checkin {
 }
 
 # make sure the object is checked out, or croak
-sub verify_checkout {
+sub _verify_checkout {
     my $self = shift;
 
     croak("Story '$self->{story_id}' is not checked out.")
@@ -1034,37 +1080,20 @@ sub verify_checkout {
 }
 
 
-=item C<< $story->prepare_for_edit() >>
-
-Copy current version of story into versioning table.  Will only work
-for objects that have been saved (not new objects).
-
-=cut
-
-sub prepare_for_edit {
-    my $self = shift;
-    $self->verify_checkout();
-
-    # save version
-    dbh->do('REPLACE INTO story_version (story_id, version, data) 
-             VALUES (?,?,?)', undef, 
-            $self->{story_id}, $self->{version}, freeze($self));
-
-    # up the version number
-    $self->{version}++;
-}
-
 =item C<< $story->revert($version) >>
 
 Loads an old version of this story into the current story object.
+This does not change the value returned by C<< $story->version >>.
 Saving this object will create a new version, but with the contents of
-the old version, thus reverting the contents of the story.
+the old version, thus reverting the contents of the story.  
+
+If you want to load an old version directly, see C<find()>.
 
 =cut
 
 sub revert {
     my ($self, $target) = @_;
-    $self->verify_checkout();
+    $self->_verify_checkout();
     my $dbh = dbh;
 
     # persist certain data from current version
@@ -1075,18 +1104,10 @@ sub revert {
                    published_version => $self->{published_version},
                    publish_date      => $self->{publish_date},
                   );
-
-    # retrieve object from version table
-    my ($data) = $dbh->selectrow_array('SELECT data FROM story_version 
-                                        WHERE story_id = ? AND version = ?',
-                                       undef, $self->{story_id}, $target);
-    croak("Unable to revert story '$self->{story_id}' to version '$target'")
-      unless $data;
-    my $obj = thaw($data);
+    my ($obj) = $self->_load_version($self->{story_id}, $target);
 
     # copy in data, preserving contents of %persist
     %$self = (%$obj, %persist);
-
 
     return $self; 
 }

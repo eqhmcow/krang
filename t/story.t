@@ -136,7 +136,6 @@ isa_ok($story2, 'Krang::Story');
 
 # basic fields survived?
 for (qw( story_id
-         version
          published_version
          class
          checked_out
@@ -219,31 +218,36 @@ my $v = Krang::Story->new(categories => [$cat[0], $cat[1]],
                           class      => "article");
 END { $v->delete };
 $v->element->child('deck')->data('Version 1 Deck');
-$v->save();
 is($v->version, 1);
+$v->save(keep_version => 1);
+is($v->version, 1);
+$v->save();
 
-$v->prepare_for_edit();
 is($v->version, 2);
 $v->title("Bar");
 
 $v->save();
-is($v->version, 2);
+is($v->version, 3);
 is($v->title(), "Bar");
-$v->element->child('deck')->data('Version 2 Deck');
-is($v->element->child('deck')->data, 'Version 2 Deck');
+$v->element->child('deck')->data('Version 3 Deck');
+is($v->element->child('deck')->data, 'Version 3 Deck');
 
-$v->prepare_for_edit();
 $v->revert(1);
 is($v->version, 3);
 is($v->element->child('deck')->data, 'Version 1 Deck');
 
-$v->prepare_for_edit();
 is($v->title(), "Foo");
 $v->save();
+is($v->version, 4);
 
-$v->prepare_for_edit();
 $v->revert(2);
-is($v->version, 5);
-$v->prepare_for_edit();
 is($v->title(), "Bar");
 $v->save();
+is($v->version, 5);
+
+# try loading old versions
+my ($v1) = Krang::Story->find(story_id => $v->story_id,
+                              version  => 1);
+is($v1->version, 1);
+is($v1->title, "Foo");
+
