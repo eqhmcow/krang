@@ -18,7 +18,7 @@ use Krang::DB qw(dbh forget_dbh);
 
 use Krang::Cache;
 
-our $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
+my $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
 
 use constant CHUNK_SIZE   => 5;
 use constant SLEEP_INTERVAL => 5;
@@ -144,9 +144,14 @@ sub run {
         _reap_dead_children() if ($CHILD_COUNT);
 
         foreach my $instance (Krang::Conf->instances) {
+
             Krang::Conf->instance($instance);
 
             my @jobs = _query_for_jobs();
+
+            if (@jobs) {
+                debug(sprintf("%s: %i Pending jobs found.", __PACKAGE__, ($#jobs+1)));
+            }
 
             if (@jobs) {
                 scheduler_pass(@jobs);
@@ -181,7 +186,7 @@ sub scheduler_pass {
 
     my @jobs = @_;
 
-    our $CHILD_COUNT;
+#    our $CHILD_COUNT;
 
     my $instance = Krang::Conf->instance();
 
@@ -199,6 +204,8 @@ sub scheduler_pass {
             push @tasks, shift @jobs;
         }
 
+        debug(sprintf("%s->scheduler_pass(): Allocating %i jobs, %i remaining.", __PACKAGE__, ($#tasks + 1), ($#jobs + 1)));
+
         # wait for a child to return.
         if ($CHILD_COUNT >= SchedulerMaxChildren) {
             _reap_dead_children(1);
@@ -207,7 +214,6 @@ sub scheduler_pass {
         # fork a child to take care of the work.
         if ($pid = fork) {
             _parent_work($pid, \@tasks);
-
         } elsif (defined($pid)) {
             # change handling of SIGTERM -- don't act like your parents!
             $SIG{'TERM'} = sub {
@@ -265,18 +271,18 @@ sub _child_work {
 
     my $instance = Krang::Conf->instance();
 
-    # reopen the log file
-    reopen_log();
-
     # lose the parent's DB handle.
     forget_dbh();
+
+    # reopen the log file
+    reopen_log();
 
     # start the cache
     Krang::Cache::start();
 
     # child
-    debug(sprintf("%s: Child PID=%i spawned with %i tasks.",
-                 __PACKAGE__, $$, ($#$tasks+1)));
+    debug(sprintf("%s: Child PID=%i spawned with Schedule IDs=%s.",
+                 __PACKAGE__, $$, (join ', ', (map { $_->schedule_id } @$tasks))));
 
     foreach my $t (@$tasks) {
         debug(sprintf("%s->_child_work('%s'): Child PID=%i running schedule_id=%i",
@@ -290,6 +296,8 @@ sub _child_work {
 
     # turn cache off
     Krang::Cache::stop();
+
+    debug(sprintf("%s: Child PID=%i finished.  Exiting.", __PACKAGE__, $$));
 
     exit(0);
 
@@ -308,9 +316,9 @@ sub _parent_work {
 
     my ($pid, $tasks) = @_;
 
-    our $CHILD_COUNT;
-    our %child_pids;
-    our %assigned_jobs;
+#    our $CHILD_COUNT;
+#    our %child_pids;
+#    our %assigned_jobs;
 
     my $instance = Krang::Conf->instance();
 
@@ -336,7 +344,7 @@ sub _parent_work {
 sub _reap_dead_children {
 
     my $block = shift || 0;
-    our $CHILD_COUNT;
+#    our $CHILD_COUNT;
 
     debug(__PACKAGE__ . "->_reap_dead_children(): $CHILD_COUNT children out there.");
 
@@ -357,10 +365,12 @@ sub _reap_dead_children {
 
         # cleanup - reap everything that returns.
         while (($child_pid = waitpid(-1, &WNOHANG)) != -1) {
-            last if ($child_pid == 0 || $child_pid == 1);
+
+            last if ($child_pid == 0);
+
             _cleanup_tables($child_pid);
-            # decrement counter.
             $CHILD_COUNT--;
+
         }
     }
 
@@ -383,7 +393,7 @@ sub _reap_dead_children {
 
 sub _kill_children {
 
-    our %child_pids;
+#    our %child_pids;
 
     _reap_dead_children();
 
@@ -417,8 +427,8 @@ sub _cleanup_tables {
 
     my $child_pid = shift;
 
-    our %child_pids;
-    our %assigned_jobs;
+#    our %child_pids;
+#    our %assigned_jobs;
 
     my @sched_ids;
     my $instance = $child_pids{$child_pid}{instance};
@@ -432,6 +442,34 @@ sub _cleanup_tables {
     debug(sprintf("%s: child PID=%i reaped.  Completed schedule IDs ('%s'): %s", __PACKAGE__, $child_pid, $instance, (join ',', @sched_ids)));
 
 }
+
+
+#
+# _cull_running_jobs(\@schedules);
+#
+# Given a list of schedule objects, check %assigned_jobs to make sure
+# none of them are already being processed.  Return a list of schedule
+# objects that have not already been assigned.
+#
+
+sub _cull_running_jobs {
+
+    my $schedules = shift;
+
+#    our %assigned_jobs;
+
+    my $instance = Krang::Conf->instance();
+
+    my @new_jobs;
+
+    foreach my $sched (@$schedules) {
+        next if (exists($assigned_jobs{$instance}{$sched->schedule_id}));
+        push @new_jobs, $sched;
+    }
+
+    return @new_jobs;
+}
+
 
 
 #
@@ -451,11 +489,7 @@ sub _query_for_jobs {
                                        order_by => 'priority'
                                       );
 
-    if (@schedules) {
-        debug(sprintf("%s: %i Pending jobs found.", __PACKAGE__, ($#schedules+1)));
-    }
-
-    return @schedules;
+    return _cull_running_jobs(\@schedules);
 
 }
 
