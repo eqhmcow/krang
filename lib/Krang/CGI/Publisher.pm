@@ -328,34 +328,34 @@ sub preview_story {
                                              unsaved  => $unsaved
                                             );
         };
-        if (my $err = $@) {
+        if (my $error = $@) {
             # if there is an error, figure out what it is, create the
             # appropriate message and return an error page.
-            if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
+            if (ref $error && $error->isa('Krang::ElementClass::TemplateNotFound')) {
                 add_message('missing_template',
-                            filename       => $@->template_name,
-                            category_url   => $@->category_url
+                            filename       => $error->template_name,
+                            category_url   => $error->category_url
                        );
-            } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
+            } elsif (ref $error && $error->isa('Krang::ElementClass::TemplateParseError')) {
                 add_message('template_parse_error',
-                            element_name  => $@->element_name,
-                            template_name => $@->template_name,
-                            category_url  => $@->category_url,
-                            error_msg     => $@->message
+                            element_name  => $error->element_name,
+                            template_name => $error->template_name,
+                            category_url  => $error->category_url,
+                            error_msg     => $error->message
                            );
-            } elsif (ref $@ and $@->isa('Krang::Publisher::FileWriteError')) {
+            } elsif (ref $error and $error->isa('Krang::Publisher::FileWriteError')) {
                 add_message('file_write_error',
-                            path          => $@->destination);
+                            path          => $error->destination);
             } else {
                 # something not expected so log the error.  Can't croak()
                 # here because that will trigger bug.pl.
                 print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
-                critical($@);
+                critical($error);
             }
 
             # put the messages on the screen
-            foreach my $error (get_messages()) {
-                print "<div class='alertp'>" . $query->escapeHTML($error) . 
+            foreach my $msg (get_messages()) {
+                print "<div class='alertp'>" . $query->escapeHTML($msg) . 
                   "</div>\n";
             }
             clear_messages();
@@ -363,8 +363,6 @@ sub preview_story {
             # make sure to turn off caching
             Krang::Cache::stop();
             debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
-
-            die $err;
         }
     };
     my $err = $@;
@@ -379,8 +377,9 @@ sub preview_story {
     # this should always be true
     assert($url eq $story->preview_url) if ASSERT;
 
-    # dynamic redirect to preview
-    print "<script language='javascript'>window.location = 'http://$url'</script>\n";
+    # dynamic redirect to preview if we've got a url to redirect to
+    print "<script language='javascript'>window.location = 'http://$url'</script>\n"
+      if $url;
 }
 
 # update the progress bar during preview or publish

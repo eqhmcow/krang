@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed Krang::CGI::Publisher to not produce a nav-bar when preview
+results in an error. [Sam]
+
+=item *
+
 Fixed Krang::User to not load Krang::Group unless it needs to interact
 with groups.  This is needed because Krang::Script now uses
 Krang::User to run as the 'system' user.  Loading Krang::Group will
