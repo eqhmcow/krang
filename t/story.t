@@ -46,7 +46,7 @@ my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 
 isa_ok($contrib, 'Krang::Contrib');
 $contrib->contrib_type_ids(1,3);
 $contrib->save();
-END { if(0) { $contrib->delete(); } }
+END { $contrib->delete(); }
 
 # create a new story
 $story = Krang::Story->new(categories => [$cat[0], $cat[1]],
