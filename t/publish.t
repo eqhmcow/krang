@@ -1,7 +1,9 @@
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use File::Spec;
+use Imager;
+use File::Spec::Functions;
+use File::Path;
 use Krang::Conf qw(KrangRoot instance);
 use Krang::Site;
 use Krang::Category;
@@ -76,7 +78,11 @@ my $site = Krang::Site->new(preview_url  => $preview_url,
                            );
 $site->save();
 
-END { $site->delete(); }
+END {
+    $site->delete();
+    rmtree $preview_path;
+    rmtree $publish_path;
+}
 
 
 my ($category) = Krang::Category->find(site_id => $site->site_id());
@@ -219,9 +225,40 @@ my $page_one = $assembled_ref->[0];
 $page_one =~ s/\n//g;
 ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');
 
+# test publisher->publish_story
 &check_publish_story($story);
 
+# test publisher->preview_story
 &check_preview_story($story);
+
+my $media = &create_media();
+
+END { $media->delete(); }
+
+# test media deployment.
+my $expected_path = catfile($publish_path, $media->url());
+
+my $media_url = $publisher->publish_media(media => $media);
+
+my $result_path = catfile($publish_path, $media_url);
+
+ok($expected_path eq $result_path, 'Krang::Publisher->publish_media()');
+
+
+
+
+
+
+
+
+
+
+
+
+############################################################
+#
+# SUBROUTINES.
+#
 
 
 
@@ -312,14 +349,6 @@ sub find_templates {
 
 }
 
-
-
-############################################################
-#
-# SUBROUTINES.
-#
-
-
 #
 # deploy_templates() - 
 # Places the template files found in t/publish/*.tmpl out on the filesystem
@@ -346,7 +375,6 @@ sub deploy_templates {
         close TMPL;
 
         $template = Krang::Template->new(
-#                                         category_id => $category->category_id(),
                                          content => $content,
                                          element_class_name => $element_name
                                         );
@@ -411,6 +439,73 @@ sub create_story {
 
 }
 
+#
+# create a media object - stolen from floodfill.
+#
+sub create_media {
+
+    # create a random image
+    my ($x, $y);
+    my $img = Imager->new(xsize => $x = (int(rand(300) + 50)),
+                          ysize => $y = (int(rand(300) + 50)),
+                          channels => 3,
+                         );
+
+    # fill with a random color
+    $img->box(color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+              filled => 1);
+
+    # draw some boxes and circles
+    for (0 .. (int(rand(8)) + 2)) {
+        if ((int(rand(2))) == 1) {
+            $img->box(color =>
+                      Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                      xmin => (int(rand($x - ($x/2))) + 1),
+                      ymin => (int(rand($y - ($y/2))) + 1),
+                      xmax => (int(rand($x * 2)) + 1),
+                      ymax => (int(rand($y * 2)) + 1),
+                      filled => 1);
+        } else {
+            $img->circle(color =>
+                         Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                         r => (int(rand(100)) + 1),
+                         x => (int(rand($x)) + 1),
+                         'y' => (int(rand($y)) + 1));
+        }
+    }
+
+    # pick a format
+    my $format = (qw(jpg png gif))[int(rand(3))];
+
+    $img->write(file => catfile(KrangRoot, "tmp", "tmp.$format"));
+    my $fh = IO::File->new(catfile(KrangRoot, "tmp", "tmp.$format"))
+      or die "Unable to open tmp/tmp.$format: $!";
+
+    # Pick a type
+    my %media_types = Krang::Pref->get('media_type');
+    my @media_type_ids = keys(%media_types);
+    my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
+
+    # create a media object
+    my $media = Krang::Media->new(title      => 'random publishtest image',
+                                  filename   => "random.$format",
+                                  filehandle => $fh,
+                                  category_id => $category->category_id,
+                                  media_type_id => $media_type_id,
+                                  );
+    eval { $media->save };
+    if ($@) {
+        if (ref($@) and ref($@) eq 'Krang::Media::DuplicateURL') {
+            redo;
+        } else {
+            die $@;
+        }
+    }
+    unlink(catfile(KrangRoot, "tmp", "tmp.$format"));
+
+    return $media;
+
+}
 
 sub build_publish_paths {
 
