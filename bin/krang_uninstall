@@ -66,21 +66,24 @@ use Term::Prompt qw(prompt);
 use Krang::Script;
 use Krang::Conf qw(KrangRoot HostName InstanceDBName DBUser DBPass);
 
-my ($help, $man);
+my ($help, $man, $no_prompt);
 my $verbose;
 
 pod2usage(2) unless
   GetOptions(help         => \$help,
              man          => \$man,
              verbose => \$verbose,
+             no_prompt => \$no_prompt
             );
 
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
 
-exit 1
+unless ($no_prompt) {
+    exit 1
       unless prompt("y", "This program will totally and permanently remove this krang installation.\n\nAre you sure you
 want to proceed?", "y/n", "y");
+}
 
 # will need sudo?
 my $sudo = "";
@@ -109,6 +112,6 @@ system($ENV{KRANG_ROOT}."/bin/krang_createdb --destroy --no_create --no_prompt $
 
 # now blow all files away!
 print "\nNow removing all files...\n\n" if $verbose;
-system("rm -rf $ENV{KRANG_ROOT}");
+system("rm -Rf $ENV{KRANG_ROOT}");
 
 exit(1);
