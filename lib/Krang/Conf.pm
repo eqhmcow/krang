@@ -26,6 +26,7 @@ LogWrap
 Assertions
 FTPPort
 FTPAddress
+FTPLog
 InstanceDisplayName
 );
 }
