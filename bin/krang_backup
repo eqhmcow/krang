@@ -138,13 +138,7 @@ foreach my $instance (Krang::Conf->instances) {
     print STDERR "Dumping " . InstanceDBName . " database with command:" .
       "\n\t$cmd\n\n"
         if $verbose;
-    system($cmd);
-    if ($?) {
-       die die die "\nWhat good is a back up when part of the back up failes, ".
-       "I ask you?  Well the mysql portion of your backup is fscked, so I ".
-       "shall steadfastly refuse to continue\n\n".
-       "Aieeee! I die that france may live!! \n";
-    }
+    system($cmd) && die "Dump of the MySQL databae failed.  Please correct the error and try your backup again.\n";
 }
 
 # create .kba tar file
@@ -158,8 +152,7 @@ print STDERR "Creating backup archive with command:\n\t$cmd\n\n"
 
 # go to KrangRoot if not already there and run the tar command
 chdir(KrangRoot) or die $!;
-system($cmd);
-if ($?) { die "taring of data failed... Please try again\n"}
+system($cmd) &&die "taring of data failed... Please try again\n";
 
 # clean up backup dir
 rmtree([$dir]);
