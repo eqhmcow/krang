@@ -5,7 +5,6 @@ use Data::Dumper;
 use File::Spec::Functions qw(catfile catdir);
 use IO::File;
 use Storable qw/freeze thaw/;
-use Test::More qw(no_plan);
 use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
@@ -16,6 +15,13 @@ use Krang::Session;
 use Krang::DB qw(dbh);
 
 BEGIN {
+    # only start if the schedule daemon is actually running....
+    unless (-e catfile(KrangRoot, 'tmp', 'schedule_daemon.pid')) {
+        eval "use Test::More skip_all => 'Schedule Daemon not running.';";
+    } else {
+        eval "use Test::More qw(no_plan);";
+    }
+
     # set debug flag
     $ENV{SCH_DEBUG} = 1;
     use_ok('Krang::Schedule');
