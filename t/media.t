@@ -171,6 +171,19 @@ is ($m2->version(), 3);
 # checkin
 $m2->checkin();
 
+# test simple_search by id
+my @temp_media = Krang::Media->find( simple_search => $m2->media_id);
+
+is($temp_media[0]->media_id, $m2->media_id);
+is($temp_media[0]->title, $m2->title);
+
+# test simple_search by word in title 
+# COMMENTED OUT FOR NOW b/c this could fail with preexisting media
+#@temp_media = Krang::Media->find( simple_search => 'test media object' );
+
+#is($temp_media[0]->media_id, $media->media_id);
+#is($temp_media[0]->title, $media->title);
+
 # delete it now
 $m2->delete();
 
