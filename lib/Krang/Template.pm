@@ -1250,10 +1250,14 @@ sub deserialize_xml {
     
     } else {
         # create a new template object with category and simple fields
-        $template = Krang::Template->new(category_id =>
+        if ($data->{category_id}) {
+            $template = Krang::Template->new(category_id =>
                                    $set->map_id(class => "Krang::Category",
                                                 id    => $data->{category_id}),
                                    (map { ($_,$data->{$_}) } keys %simple));
+        } else {
+            $template = Krang::Template->new( (map { ($_,$data->{$_}) } keys %simple) );
+        }
     }
 
     $template->save();
