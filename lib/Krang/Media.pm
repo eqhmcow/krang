@@ -11,7 +11,7 @@ use File::Spec::Functions qw(catdir catfile);
 use File::Path;
 use File::Copy;
 use LWP::MediaTypes qw(guess_media_type);
-use Image::Thumbnail;
+use Imager;
 use File::stat;
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -675,15 +675,12 @@ sub thumbnail_path {
             }
         }
         if ($is_image) {    
-            my $path = catfile($root,'data','media',$self->{media_id},$self->{version},"t__".$self->{filename});
+            my $path = catfile($root,'data','media',$self->_media_id_path,$self->{version},"t__".$self->{filename});
             if (not -f $path) {
-	        new Image::Thumbnail(
-                       module     => 'ImageMagick',
-                       size       => THUMBNAIL_SIZE,
-                       create     => 1,
-                       inputpath  => $self->file_path(),
-                       outputpath => $path,
-                );
+                my $img = Imager->new();
+                $img->open(file=>$self->file_path()) || croak $img->errstr();
+                my $thumb = $img->scale(xpixels=>THUMBNAIL_SIZE,ypixels=>THUMBNAIL_SIZE,type=>'min');
+                $thumb->write(file=>$path) || croak $thumb->errstr;
             } 
             return $self->{thumbnail_path} = $path;
         }
