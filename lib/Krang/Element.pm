@@ -478,6 +478,9 @@ sub save {
     # check top-levelitude
     croak("Unable to save() non-top-level element.")
       unless $self->{class}->isa('Krang::ElementClass::TopLevel');
+    
+    # call the save hook
+    $self->{class}->save_hook(element => $self);
 
     if (defined $self->{element_id}) {
         # update data
@@ -1076,7 +1079,7 @@ BEGIN {
         *{"Krang::Element::$meth"} = 
           sub { 
               my $self = shift;
-              $self->{class}->$meth(element => $self, @_) 
+              $self->{class}->$meth(@_, element => $self) 
           };
     }
 }

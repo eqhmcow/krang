@@ -116,6 +116,15 @@ sub extension {
     return '.html';
 }
 
+=item C<< $class->save_hook(element => $element) >>
+
+Called just before the story/category containing the element tree is
+deleted.  The default implementation does nothing.
+
+=cut
+
+sub save_hook {}
+
 =item C<< $class->delete_hook(element => $element) >>
 
 Called just before the story/category containing the element tree is
