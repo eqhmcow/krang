@@ -2,7 +2,7 @@ package Krang;
 use strict;
 use warnings;
 
-our $VERSION = "1.020";
+our $VERSION = "1.021";
 
 =head1 NAME
 
