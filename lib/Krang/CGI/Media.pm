@@ -1341,7 +1341,7 @@ sub find_media_row_handler {
     # thumbnail
     if ($show_thumbnails) {
         my $thumbnail_path = $media->thumbnail_path(relative => 1) || '';
-        $row->{thumbnail} = "<img src=\"$thumbnail_path\">";
+        $row->{thumbnail} = "<a href='javascript:preview_media($media_id)'><img src=\"$thumbnail_path\" border=0></a>";
     }
 
     # creation_date

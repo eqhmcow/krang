@@ -253,7 +253,7 @@ sub checkin {
         add_message("checkin_media", id => $obj->media_id);
         $obj->checkin();
     } else {
-        add_message("checkin_template", id => $obj->media_id);
+        add_message("checkin_template", id => $obj->template_id);
         $obj->checkin();
     }
 
@@ -278,7 +278,11 @@ sub checkin_checked {
             my $id = $obj->story_id;
             $id =~ s/story_//;
             $result ? add_message("moved_story", id => $id) : add_message("story_cant_move", id => $obj->story_id);
+        } elsif ($obj->isa('Krang::Media')) {
+            add_message("checkin_media", id => $obj->media_id);
+            $obj->checkin();
         } else {
+            add_message("checkin_template", id => $obj->template_id);
             $obj->checkin();
         }
     }

@@ -72,6 +72,7 @@ sub setup {
 		cancel_edit
 		delete
 		delete_selected
+                checkout_and_edit
 		edit
 		edit_cancel
 		edit_save
@@ -412,7 +413,26 @@ sub delete_selected {
     return $self->search;
 }
 
+=item checkout_and_edit
 
+Checks out the template object identified by template_id and sends the user
+to edit.
+
+=cut
+
+sub checkout_and_edit {
+    my $self = shift;
+    my $q = $self->query();
+
+    my $template_id = $q->param('template_id');
+    croak("Missing required template_id parameter.") unless $template_id;
+
+    my ($t) = Krang::Template->find(template_id=>$template_id);
+    croak("Unable to load template_id '$template_id'") unless $t;
+
+    $t->checkout;
+    return $self->edit;
+}
 
 =item edit
 
