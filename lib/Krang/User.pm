@@ -760,12 +760,12 @@ sub _validate_group_ids {
     my $self = shift;
     my (@bad_groups, %types);
 
-    my @group_ids = @{$self->{group_ids}};
+    my $rgroup_ids = $self->{group_ids};
     # Throw exception if no groups
     Krang::User::MissingGroup->throw( message => 'No groups specified for this user')
-        unless (@group_ids);
+        unless (defined($rgroup_ids) and @$rgroup_ids);
 
-    foreach my $group_id (@group_ids) {
+    foreach my $group_id (@$rgroup_ids) {
         my ($found_group) = Krang::Group->find(group_id=>$group_id, count=>1);
         push (@bad_groups, $group_id) unless ($found_group);
     }

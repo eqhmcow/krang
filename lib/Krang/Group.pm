@@ -1201,11 +1201,11 @@ sub user_admin_permissions {
         foreach my $group (@groups) {
             my $curr_permission_type = $admin_perm_access{$admin_perm};
             $curr_permission_type = "" unless (defined($curr_permission_type));
-            my $curr_access_level = $levels{$curr_permission_type};
+            my $curr_access_level = $levels{$curr_permission_type} || 0;
             my $permission_type = $group->$admin_perm_method();
             my $new_access_level = $levels{$permission_type};
 
-            if (not(defined($curr_access_level)) or ($new_access_level > $curr_access_level)) {
+            if ($new_access_level > $curr_access_level) {
                 $admin_perm_access{$admin_perm} = $permission_type;
             }
         }
