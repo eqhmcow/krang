@@ -111,7 +111,7 @@ use strict;
 use warnings;
 
 # Krang Modules
-use Krang::Conf qw(assertions logfile loglevel logtimestamp timestampformat
+use Krang::Conf qw(assertions logfile loglevel
 		   logwrap KrangUser KrangGroup KrangRoot);
 
 # Module Dependencies
@@ -213,20 +213,6 @@ BEGIN {
 
     # set PERL_NDEBUG to control Carp::Assert
     $ENV{PERL_NDEBUG} = not $assert_on;
-
-    # turn on/off timestamp - on by default
-    $LOG->{timestamp} = Krang::Conf->logtimestamp() || 1;
-
-    # set timestamp format if any
-    my $fmt = Krang::Conf->timestampformat();
-    if (defined $fmt) {
-        eval {
-            my $t = localtime();
-            $t->strftime($fmt);
-        };
-        croak("Invalid timestamp format '$fmt': $@") if $@;
-    }
-    $LOG->{timestamp_format} = $fmt || '%D %r';
 }
 
 # load Capr::Assert and rename DEBUG to ASSERT
@@ -244,10 +230,6 @@ use constant ASSERT => DEBUG;
 Most of the work for this module is done here.  All calls to convenience
 methods are routed through AUTOLOAD() to here; function calls exported via
 import() are redirected to AUTOLOAD() which in turn end up here.
-
-Time::Piece->strftime() is used to stringify the timestamp formats.  An error
-is thrown unless a valid format is provided.  See also L<Time::Piece> for
-information on the strftime() method.
 
 This method takes two arguments:
 
@@ -402,26 +384,6 @@ sub _reopen_log {
     my $self = shift;
     $LOG->{fh} = IO::File->new(">>$LOG->{path}") or
       croak("Unable to open logfile, $LOG->{path}: $!\n");
-}
-
-
-sub AUTOLOAD {
-    our $AUTOLOAD;
-    my ($self, $arg) = @_;
-    my ($level) = $AUTOLOAD =~ /::([^:]+)$/;
-
-    return if $level =~ /DESTROY$/;
-
-    # getter/setter for log_level, timestamp and timestamp_format
-    if ($level eq 'log_level' ||
-        $level =~ /^timestamp/) {
-        if (defined $arg) {
-            $LOG->{$level} = $arg;
-            $LOG_LEVEL_DEFAULT = $arg if $level eq 'log_level';
-        } else {
-            return $LOG->{$level};
-        }
-    }
 }
 
 my $quote = <<END;
