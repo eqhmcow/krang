@@ -187,62 +187,21 @@ END {
 # Testing the publish process.
 
 # test story construction
-&test_story_build($story, $category);
+test_story_build($story, $category);
 
 # test publisher->publish_story
-&check_publish_story($story);
+check_publish_story($story);
 
 # test publisher->preview_story
-&check_preview_story($story);
+check_preview_story($story);
 
-&test_media_deploy($media[0]);
+test_media_deploy($media[0]);
 
-&test_storylink($story2, $story);
+test_storylink($story2, $story);
 
-&test_medialink($story2, $media[0]);
+test_medialink($story2, $media[0]);
 
-
-############################################################
-# Testing related stories/media list.
-
-# test that get_publish_list(story) returns story.
-my $publish_list = $publisher->get_publish_list(story => $story);
-my %expected = (media => {}, story => {$story->story_id => $story});
-
-&test_publish_list($publish_list, \%expected);
-
-
-# test that get_publish_list(story2) returns story2 + story + media
-
-$publish_list = $publisher->get_publish_list(story => $story2);
-%expected = (media => { $media[0]->media_id => $media[0] },
-             story => { $story->story_id => $story,
-                        $story2->story_id => $story2});
-
-&test_publish_list($publish_list, \%expected);
-
-# add links to all of @stories to story2.
-# test that get_publish_list(story2) returns story2 + story + @stories + media
-foreach (@stories) {
-    &link_story($story2, $_);
-    $expected{story}{$_->story_id} = $_;
-}
-$publish_list = $publisher->get_publish_list(story => $story2);
-&test_publish_list($publish_list, \%expected);
-
-# add links to all of @stories to story.
-# test that get_publish_list(story2) returns story2 + story + @stories + media
-
-# add links to all of @media to story2.
-# test that get_publish_list(story2) returns story2 + story + @stories + media + @media
-
-# add links to all of @media to story.
-# test that get_publish_list(story2) returns story2 + story + @stories + media + @media
-
-# add link to story2 to story.
-# test that get_publish_list(story2) returns story2 + story + @stories + media + @media
-
-
+test_linked_assets();
 
 
 
@@ -250,6 +209,83 @@ $publish_list = $publisher->get_publish_list(story => $story2);
 #
 # SUBROUTINES.
 #
+
+
+############################################################
+# Testing related stories/media list.
+
+sub test_linked_assets {
+
+    # test that get_publish_list(story) returns story.
+    my $publish_list = $publisher->get_publish_list(story => $story);
+    my %expected = (media => {}, story => {$story->story_id => $story});
+    test_publish_list($publish_list, \%expected);
+
+    # link story to story.
+    # nothing changes in terms of what's expected.
+    link_story($story, $story);
+    $publish_list = $publisher->get_publish_list(story => $story);
+    test_publish_list($publish_list, \%expected);
+
+    # test that get_publish_list(story2) returns story2 + story + media
+    $publish_list = $publisher->get_publish_list(story => $story2);
+    %expected = (media => { $media[0]->media_id => $media[0] },
+                 story => { $story->story_id => $story,
+                            $story2->story_id => $story2});
+
+    test_publish_list($publish_list, \%expected);
+
+    # add links to all of @stories to story2.
+    # test that get_publish_list(story2) returns story2 + story + @stories + media
+    foreach (@stories) {
+        &link_story($story2, $_);
+        $expected{story}{$_->story_id} = $_;
+    }
+    $publish_list = $publisher->get_publish_list(story => $story2);
+    test_publish_list($publish_list, \%expected);
+
+    # add links to all of @stories to story -- duplicates story requirements.
+    # test that get_publish_list(story2) returns story2 + story + @stories + media
+    foreach (@stories) {
+        link_story($story, $_);
+    }
+    $publish_list = $publisher->get_publish_list(story => $story2);
+    test_publish_list($publish_list, \%expected);
+
+
+    # add links to all of @media to story2.
+    # test that get_publish_list(story2) returns story2 + story + @stories + media + @media
+    foreach (@media) {
+        link_media($story2, $_);
+        $expected{media}{$_->media_id} = $_;
+    }
+    $publish_list = $publisher->get_publish_list(story => $story2);
+    test_publish_list($publish_list, \%expected);
+
+    # add links to all of @media to story -- duplicates media requirements.
+    # test that get_publish_list(story2) returns story2 + story + @stories + media + @media
+    foreach (@media) {
+        link_media($story, $_);
+    }
+    $publish_list = $publisher->get_publish_list(story => $story2);
+    test_publish_list($publish_list, \%expected);
+
+    # add link to story2 to story -- creates a full cycle.
+    # test that get_publish_list(story2) returns story2 + story + @stories + media + @media
+    link_story($story, $story2);
+    $publish_list = $publisher->get_publish_list(story => $story2);
+    test_publish_list($publish_list, \%expected);
+
+    # stress test - create multiple cycles, create as many interlinking dependencies as possible.
+    # final publish list shouldn't change.
+    foreach (@stories) {
+        link_story($_, $story);
+        link_story($_, $story2);
+    }
+    $publish_list = $publisher->get_publish_list(story => $story2);
+    test_publish_list($publish_list, \%expected);
+
+}
 
 
 # test to confirm the publish list returned is the list expected.
