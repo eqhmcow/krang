@@ -1,0 +1,59 @@
+Krang has been ported to SUN SPARC hardware running Solaris 9 [SunOS 5.9].  
+Earlier versions of Solaris should also work.
+
+In order to build Krang under Solaris certain applications, utilities, libraries and their 
+associated include files must be present.  These may actually be present already, depending 
+upon the version of the OS and what optional packages were installed. Solaris  8 and 9, 
+for example, come with a Companion CD that contains a number of open source packages.
+
+In addition, the site,
+
+    http://www.sunfreeware.com
+
+offers an extensive inventory of pre-built open source software for:
+
+    SPARC/Solaris 2.5
+    INTEL/Solaris 2.5
+    SPARC/Solaris 2.6
+    INTEL/Solaris 2.6
+    SPARC/Solaris 7
+    INTEL/Solaris 7
+    SPARC/Solaris 8
+    INTEL/Solaris 8
+    SPARC/Solaris 9
+    INTEL/Solaris 9
+
+* Development Tools
+	- C preprocessor, compiler, assembler, linker
+	- make, sed
+
+ GNU tools were used to build Krang.
+
+* PERL
+Krang was built using perl-5.8.2. Other versions may also work.
+Perl for SPARC is available from the sun freeware site as well as 
+
+	http://www.activestate.com
+
+* MySQL
+Krang was built using mysql-4.0.21. Other versions may also work.  MySQL binaries
+are available from
+
+	http://www.mysql.com
+
+* Additional Libraries and associated include files:
+The perl modules used by Krang require various libraries and their associated include
+files to be present:
+	- libpng
+	- libtiff
+	- libjpeg
+	- libungif
+	- libfreetype
+	- libexpat
+
+The Krang build process will expose any deficiencies in this list. 
+
+* Platform package
+A platform package was created for Solaris to deal with platform specific issues. 
+The FreeBSD platform package was used as a starting point since SunOS has its roots
+in BSD.

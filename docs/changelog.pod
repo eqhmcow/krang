@@ -6,6 +6,13 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+
+=item *
+
+Solaris support added!  Tested against Solaris 9, this should also
+work against previous versions as well.  Thanks to Joseph Sacco
+(jsacco@earthlink.net). [Peter]
+
 =item *
 
 Support for Mac OSX has been added!  Currently tested against 10.3.5,
