@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Removed "Delete Checked" button from List Admin screen.  Lists cannot
+be deleted. [Sam]
+
+=item *
+
 Added Krang::Story->preview_version(), Krang::Media->preview_version
 and Krang::ElementClass::TopLevel->force_republish() in anticipation
 of forthcoming improvements to the publishing system. [Peter]
