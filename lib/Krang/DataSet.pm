@@ -15,6 +15,11 @@ use Krang::Log qw(debug assert ASSERT);
 use Carp qw(croak);
 use Krang::XML;
 use Krang;
+use Krang::Contrib;
+use Krang::Story;
+use Krang::Media;
+use Krang::Category;
+use Krang::Site;
 
 # setup exceptions
 use Exception::Class 
@@ -41,13 +46,14 @@ Creating data sets:
   # create a new data set
   my $set = Krang::DataSet->new();
 
-  # add some objects to it
+  # add an objects to it
   $set->add(object => $story);
-  $set->add(object => $media);
-  $set->add(object => $desk);
+
+  # add an object linked from another object
+  $set->add(object => $media, from => $story);
 
   # add a file (used by media to include their files)
-  $set->add(file => $file, path => $path);
+  $set->add(file => $file, path => $path, from => $media);
 
   # write it out to a kds file
   $set->write(path => "foo.kds");
@@ -526,9 +532,36 @@ single parameter.
 May throw a Krang::DataSet::ValidationFailed exception if the archive
 is found to contain errors.  May also throw a
 Krang::DataSet::ImportRejects exception if one or more objects failed
-to import.
+to import.  See EXCEPTIONS below for details.
 
-See EXCEPTIONS below for details.
+=cut
+
+sub import_all {
+    my ($self, %arg) = @_;
+    my $objects = $self->{objects};
+
+    # read to go
+    $self->{in_import} = 1;
+    $self->{done}      = {};
+    $self->{no_update} = $arg{no_update} || 0;
+
+    # process classes in an order least likely to cause backrefs
+    foreach my $class (qw(Krang::Contrib)) { # Krang::Site Krang::Category 
+                                             # Krang::Media Krang::Story)) {
+        foreach my $id (keys %{$objects->{$class} || {}}) {
+            # might have already loaded through a call to map_id
+            next if $self->{done}{$class}{$id};
+
+            # get the ID and store it in 'done'
+            my $import_id = $self->map_id(class => $class,
+                                          id    => $id);
+            $self->{done}{$class}{$id} = $import_id;
+        }
+    }
+
+    # all done
+    $self->{in_import} = 0;
+}
 
 =item C<< $real_id = $set->map_id(class => "Krang::Foo", id => $id) >>
 
@@ -539,6 +572,48 @@ found in the data set.
 
 This call will trigger a deserialization if the object has not yet
 been deserialized.
+
+=cut
+
+sub map_id {
+    my ($self, %arg) = @_;
+    my ($class, $id) = @arg{qw(class id)};
+    croak("Missing required 'class' and 'id' params.")
+      unless $class and $id;
+    croak("Called map_id outside of an import run!")
+      unless $self->{in_import};
+
+    # already got it?
+    return $self->{done}{$class}{$id} if $self->{done}{$class}{$id};
+    
+    # deserialize
+    my $object = $self->_deserialize($class, $id);
+    my ($new_class, $new_id) = _obj2id($object);
+    
+    # finished
+    $self->{done}{$class}{$id} = $new_id;
+    return $new_id;
+}
+
+sub _deserialize {
+    my ($self, $class, $id) = @_;
+
+    my $file = catfile($self->{dir}, $self->{objects}{$class}{$id}{xml});
+    open(XML, '<', $file) or croak("Unable to open '$file': $!");
+    my $xml = join('',<XML>);
+    close(XML) or croak("Unable to close '$file': $!");
+    croak("Unable to load XML from $file") unless $xml;
+
+    my $obj = $class->deserialize_xml(xml       => $xml, 
+                                      set       => $self, 
+                                      no_update => $self->{no_update});
+    croak("Call to $class->deserialize failed!")
+      unless $obj;
+    croak("Call to $class->deserialize didn't return a $class object!")
+      unless ref $obj and UNIVERSAL::isa($obj, $class);
+
+    return $obj;
+}
 
 =item C<< $object = $set->map_object(class => "Krang::Foo", id => $id) >>
 
@@ -603,12 +678,12 @@ serialized object will be packaged.  The object is responsible for
 calling C<< $set->add() >> on any objects referenced by ID in the
 output XML.
 
-=item C<< $object = Krang::Foo->deserialize_xml(xml => $xml, set => $set, attempt_update => 1); >>
+=item C<< $object = Krang::Foo->deserialize_xml(xml => $xml, set => $set, no_update => 0); >>
 
 This call must instantiate a new object using the XML provided.  If
-C<attempt_update> is set to 1 then the method should make an effort to
-use the data to update an existing record if creating it as a new
-record would result in an invalid duplicate.
+C<no_update> is false then the method should make an effort to use the
+data to update an existing record if creating it as a new record would
+result in an invalid duplicate.
 
 This call must use C<< $set->map_id() >> (or C<< $set->map_object() >>)
 to request ID mappings for linked objects (the same ones the object
