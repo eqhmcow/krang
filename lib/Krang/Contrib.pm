@@ -93,7 +93,7 @@ All of the above are simply fields for storing arbitrary metadata
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
-    get_set       => [ qw( contrib_id prefix first middle last suffix email phone bio url )],
+    get_set       => [ qw( contrib_id prefix first middle last suffix email phone bio url selected_contrib_type )],
     list          => [ qw( contrib_types ) ];
 
 sub init {
