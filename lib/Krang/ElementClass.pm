@@ -1113,6 +1113,8 @@ sub _build_contrib_loop {
     return \@contributors;
 }
 
+=back
+
 =head1 TODO
 
 =over
