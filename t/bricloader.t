@@ -33,7 +33,7 @@ BEGIN {
     # create lasistes element set
     my $root = $ENV{KRANG_ROOT};
     my $set = 'lasites';
-    unless (catdir($root, 'element_lib', $set)) {
+    unless (-e catdir($root, 'element_lib', $set)) {
         # will pull from Bric directly once something is modified to create a
         # category element
         my $xml = catfile($root, 't', 'bricloader', 'laelements.xml');
@@ -65,7 +65,7 @@ BEGIN {
     }
 
     unless ($found) {
-        eval "use Test::More skip_all => 'lasites instance not present';";
+        eval "use Test::More skip_all => 'Cannot load lasites element_lib';";
     } else {
         eval "use Test::More qw(no_plan);";
     }
