@@ -52,4 +52,29 @@ sub input_form {
     return $element->child('type')->data;
 }
 
+sub fill_template {
+    my ($self, %args) = @_;
+    my $tmpl      = $args{tmpl};
+    my $cat   = $args{element}->object;
+
+    my @category_loop;
+                                                                                
+    my $top_cat = $cat;
+                                                                                
+    # get true top level category for site
+    while ( $top_cat->parent ) {
+        $top_cat = $top_cat->parent;
+    }
+                                                                                
+    push(@category_loop, { name => 'Home', url => $top_cat->url });
+                                                                                
+    foreach my $child ($top_cat->children(order_by => 'dir')) {
+        push(@category_loop, { name => $child->element->child('display_name')->data, url => $child->url });
+    }
+                                                                                
+    $tmpl->param( category_loop => \@category_loop );
+
+    $self->SUPER::fill_template( %args );
+}
+
 1;
