@@ -123,8 +123,10 @@ use constant CONTENT            => "<<<<<<<<<<<<<<<<<< CONTENT >>>>>>>>>>>>>>>>>
 use constant ADDITIONAL_CONTENT => "KRANG_ADDITIONAL_CONTENT";
 
 use Exception::Class
-  'Krang::Publisher::FileWriteError' => {fields => [ 'story_id', 'media_id', 'template_id',
-                                                     'source', 'destination', 'system_error' ] };
+  'Krang::Publisher::FileWriteError' => { fields => [ 'story_id', 'media_id', 'template_id',
+                                                      'source', 'destination', 'system_error' ] },
+  'Krang::Publisher::ZeroSizeOutput' => { fields => [ 'story_id', 'url' ] }
+  ;
 
 
 use Krang::MethodMaker (new_with_init => 'new',
@@ -1543,12 +1545,17 @@ sub _build_story_single_category {
     # break the story into pages
     my @article_pages = split(/${\PAGE_BREAK}/, $article_output);
 
-    # if nothing returned, we have a problem.  Log a message, and
-    # create a nominal array entry.
+    # if nothing returned, we have a problem.  Throw an error.
     if ($#article_pages < 0) {
-        info(sprintf("%s: publishing story id=%i, category=%s returned zero-length output.",
-                     __PACKAGE__, $story->story_id, $category->url));
-        push @article_pages, '';
+        my $url = $self->is_preview() ? $category->preview_url : $category->url;
+
+        Krang::Publisher::ZeroSizeOutput->throw
+            (message      => sprintf("Story %i output for %s is zero-length",
+                                     $story->story_id, $url),
+             story_id     => $story->story_id,
+             category_url => $url,
+             story_class  => $story->class->name
+            );
     }
 
     # chuck the last page if it's only whitespace.

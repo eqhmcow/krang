@@ -636,8 +636,8 @@ sub _publish {
         };
 
         if (my $err = $@) {
-            my $msg = sprintf("%s->_publish(): error publishing Story ID=%i: %s",
-                              __PACKAGE__, $object->story_id, $err);
+            my $msg = sprintf("%s->_publish(): error publishing Story ID=%i: ERR=%s",
+                              __PACKAGE__, $object->story_id, (ref $err ? ref $err : $err));
             die $msg;
         }
 

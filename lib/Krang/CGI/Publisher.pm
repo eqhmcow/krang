@@ -363,6 +363,13 @@ sub preview_story {
                                       $error->system_error);
                 critical($err_msg);
 
+            } elsif (ref $error and $error->isa('Krang::Publisher::ZeroSizeOutput')) {
+                add_message('zero_size_output',
+                            story_id     => $error->story_id,
+                            category_url => $error->category_url,
+                            story_class  => $error->story_class
+                           );
+
             } else {
                 # something not expected so log the error.  Can't croak()
                 # here because that will trigger bug.pl.
@@ -643,6 +650,16 @@ sub _publish_assets_now {
                                           $err->destination,
                                           $err->system_error);
                     critical($err_msg);
+                } elsif (
+                         ref $err &&
+                         $err->isa('Krang::Publisher::ZeroSizeOutput')
+                        ) {
+                    add_message('zero_size_output',
+                                story_id     => $err->story_id,
+                                category_url => $err->category_url,
+                                story_class  => $err->story_class
+                               );
+                    critical($err->message);
                 } else {
                     # something not expected so log the error.  Can't croak()
                     # here because that will trigger bug.pl.

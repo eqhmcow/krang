@@ -538,7 +538,13 @@ sub _skip_callback {
                           (ref $object), $id, $error->destination, $error->system_error);
             $skipcount{$type}{FileWriteError}++;
             return;
+        } elsif ($error->isa('Krang::Publisher::ZeroSizeOutput')) {
+            print sprintf("ERROR: %s ID=%i not published to '%s' - the output is zero-size",
+                          (ref $object), $error->story_id, $error->category_url);
+            $skipcount{$type}{ZeroSizeOutput}++;
+            return;
         }
+
 
         # no other error object handled right now.
         print sprintf("WARNING: %s ID=%i was not published for error='%s'\n",
