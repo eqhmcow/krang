@@ -110,11 +110,13 @@ BEGIN {
   
     # set REMOTE_USER to the user_id for the 'system' user
     unless (exists($ENV{REMOTE_USER})) {
-        ($ENV{REMOTE_USER}) = Krang::User->find(ids_only => 1,
-                                                login    => 'system');
-        unless ($ENV{REMOTE_USER}) {
-            warn("Unable to find 'system' user.  All Krang instances must contain the special 'system' account.\n");
-            exit(1);
+        my @user = (Krang::User->find(ids_only => 1,
+                                      login    => 'system'));
+        if (@user) {
+            $ENV{REMOTE_USER} = $user[0];
+        } else {
+            warn("Unable to find 'system' user.  All Krang instances must contain the special 'system' account.  Falling back to using special user_id 1.\n");
+            $ENV{REMOTE_USER} = 1;
         }
     }
 }
