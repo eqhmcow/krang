@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug which caused scheduler problems in upgraded Krang
+installs.  Krang::Schedule::Daemon was missing code to reset
+REMOTE_USER for each instance.  [Sam]
+
+=item *
+
 Added directory hashing to Krang::Media's XML serialization system.
 This allows a single KDS file to contain any number of media files.
 The previous limit was 32,000. [Sam]

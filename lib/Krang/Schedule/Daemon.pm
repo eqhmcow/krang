@@ -136,6 +136,9 @@ sub run {
     my $now = localtime;
     info(__PACKAGE__ . " started.");
 
+    # keep a hash of system users
+    my %system_user;
+
     while (1) {
 
         debug(__PACKAGE__ . "->run(): heartbeat. $CHILD_COUNT child processes active");
@@ -143,9 +146,15 @@ sub run {
         # make sure there's nothing dead left out there.
         _reap_dead_children() if ($CHILD_COUNT);
 
-        foreach my $instance (Krang::Conf->instances) {
-
+        foreach my $instance (Krang::Conf->instances) {            
+            # switch instance and reset REMOTE_USER to the system user
+            # for this instance, needed for permissions checks
             Krang::Conf->instance($instance);
+            unless ($system_user{$instance}) {
+                ($system_user{$instance})= Krang::User->find(login => 'system',
+                                                             ids_only => 1);
+            }
+            $ENV{REMOTE_USER} = $system_user{$instance};
 
             my @jobs = _query_for_jobs();
 
