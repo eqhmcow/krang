@@ -500,13 +500,17 @@ table.
 sub prepare_for_edit {
     my $self = shift;
     my $user_id = $session{user_id};
+    my $frozen;
 
     # checkout template if it isn't already
     $self->checkout() unless($self->checked_out() &&
                              ($user_id == $self->checked_out_by()));
 
-    my $frozen = freeze($self) or
-      croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object.");
+    eval {$frozen = freeze($self)};
+
+    # catch any exception thrown by Storable
+    croak(__PACKAGE__ . "->prepare_for_edit(): Unable to serialize object " .
+          "- $@") if $@;
 
     my $dbh = dbh();
 
@@ -568,8 +572,11 @@ SQL
             "'" . $self->id() . "'");
 
     # overwrite current object
-    $self = thaw($row_ref->[0]) or
-      croak(__PACKAGE__ . "->revert(): Unable to deserialize object.");
+    eval {$self = thaw($row_ref->[0])};
+
+    # catch Storable exception
+    croak(__PACKAGE__ . "->revert(): Unable to deserialize object - $@")
+      if $@;
 
     return $self;
 }
