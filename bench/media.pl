@@ -63,7 +63,7 @@ my $i = 0;
 my $div = $count / 5;
 run_benchmark(  module => 'Krang::Media',
                 name   => "find with limit $div, offset",
-                count => $count,
+                count => $count / 10,
                 code =>
             sub {
                 Krang::Media->find( limit => $div, offset => $i );
