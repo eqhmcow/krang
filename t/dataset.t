@@ -177,72 +177,72 @@ SKIP: {
       unless (InstanceElementSet eq 'TestSet1' or 
               InstanceElementSet eq 'Default');
 
-# create 10 stories
-my $count = Krang::Story->find(count => 1);
-my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');
-$ENV{KRANG_INSTANCE} = Krang::Conf->instance;
-system("bin/krang_floodfill --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --contribs 10 --undo_script $undo > /dev/null 2>&1");
-is(Krang::Story->find(count => 1), $count + 10);
+    # create 10 stories
+    my $count = Krang::Story->find(count => 1);
+    my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');
+    $ENV{KRANG_INSTANCE} = Krang::Conf->instance;
+    system("bin/krang_floodfill --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --contribs 10 --undo_script $undo > /dev/null 2>&1");
+    is(Krang::Story->find(count => 1), $count + 10);
 
-# see if we can serialize them
-my @stories = Krang::Story->find(limit    => 10, 
-                                 offset   => $count, 
-                                 order_by => 'story_id');
+    # see if we can serialize them
+    my @stories = Krang::Story->find(limit    => 10, 
+                                     offset   => $count, 
+                                     order_by => 'story_id');
 
-# create a data set containing the stories
-my $set10 = Krang::DataSet->new();
-isa_ok($set10, 'Krang::DataSet');
-$set10->add(object => $_) for @stories;
+    # create a data set containing the stories
+    my $set10 = Krang::DataSet->new();
+    isa_ok($set10, 'Krang::DataSet');
+    $set10->add(object => $_) for @stories;
 
-my $path10 = catfile(KrangRoot, 'tmp', '10stories.kds');
-$set10->write(path => $path10);
-ok(-e $path10 and -s $path10);
-END { unlink($path10) if $path10 and -e $path10 and not $DEBUG };
+    my $path10 = catfile(KrangRoot, 'tmp', '10stories.kds');
+    $set10->write(path => $path10);
+    ok(-e $path10 and -s $path10);
+    END { unlink($path10) if $path10 and -e $path10 and not $DEBUG };
 
-# delete the floodfilled stories
-system("$undo > /dev/null 2>&1");
+    # delete the floodfilled stories
+    system("$undo > /dev/null 2>&1");
 
-# load the dataset with an import handler to collect imported objects
-my @imported;
-my $import10 = Krang::DataSet->new(path => $path10,
-                                   import_callback => 
-                                   sub { push(@imported, $_[1]) });
-isa_ok($import10, 'Krang::DataSet');
-$import10->import_all();
+    # load the dataset with an import handler to collect imported objects
+    my @imported;
+    my $import10 = Krang::DataSet->new(path => $path10,
+                                       import_callback => 
+                                       sub { push(@imported, $_[1]) });
+    isa_ok($import10, 'Krang::DataSet');
+    $import10->import_all();
 
-# should be 10 stories
-is((grep { $_->isa('Krang::Story') } @imported), 10);
+    # should be 10 stories
+    is((grep { $_->isa('Krang::Story') } @imported), 10);
 
-# check category content
-my %story_cats = map { ($_->url, $_) } map { $_->categories } @stories;
-my %import_cats = map { ($_->url, $_) } grep { $_->isa('Krang::Category') } @imported;
-foreach my $import_cat (values %import_cats) {
-    ok($story_cats{$import_cat->url});
-    if ($story_cats{$import_cat->url}->parent) {
-        is($story_cats{$import_cat->url}->parent->url,
-           $import_cat->parent->url);
+    # check category content
+    my %story_cats = map { ($_->url, $_) } map { $_->categories } @stories;
+    my %import_cats = map { ($_->url, $_) } grep { $_->isa('Krang::Category') } @imported;
+    foreach my $import_cat (values %import_cats) {
+        ok($story_cats{$import_cat->url});
+        if ($story_cats{$import_cat->url}->parent) {
+            is($story_cats{$import_cat->url}->parent->url,
+               $import_cat->parent->url);
+        }
     }
-}
 
-# check story content
-my %imported = map { ($_->url, $_) } 
-  grep { $_->isa('Krang::Story') } @imported;
-foreach my $story (@stories) {
-    my $import = $imported{$story->url};
+    # check story content
+    my %imported = map { ($_->url, $_) } 
+      grep { $_->isa('Krang::Story') } @imported;
+    foreach my $story (@stories) {
+        my $import = $imported{$story->url};
 
-    # there's a match
-    ok($import);
+        # there's a match
+        ok($import);
 
-    foreach_element { 
-        # check that element content is the same for all paragraphs
-        if ($_->name eq 'paragraph') {
-            is(($import->element->match($_->xpath))[0]->data(), $_->data);
-        }
+        foreach_element { 
+            # check that element content is the same for all paragraphs
+            if ($_->name eq 'paragraph') {
+                is(($import->element->match($_->xpath))[0]->data(), $_->data);
+            }
 
-        if ($_->name eq 'issue_date') {
-            is(($import->element->match($_->xpath))[0]->data()->mysql_datetime,
-               $_->data->mysql_datetime);
-        }
+            if ($_->name eq 'issue_date') {
+                is(($import->element->match($_->xpath))[0]->data()->mysql_datetime,
+                   $_->data->mysql_datetime);
+            }
 
         # BROKEN: this doesn't work because Krang::Media and
         # Krang::ElementClass may need to do a find() on categories to
@@ -260,28 +260,29 @@ foreach my $story (@stories) {
         #    is(($import->element->match($_->xpath))[0]->data()->url,
         #       $_->data->url);
         #}
-    } $story->element;
-}
+        }
+#          $story->element;
+    }
 
-# cleanup everything in the right order
-END { 
-    $_->delete for (grep { $_->isa('Krang::Media') } @imported);
-    $_->delete for (grep { $_->isa('Krang::Story') } @imported);
-    $_->delete 
-      for (sort { length($b->url) cmp length($a->url) }
-           grep { defined $_->parent_id } 
-           grep { $_->isa('Krang::Category') } @imported);
-    $_->delete for (grep { $_->isa('Krang::Site') } @imported);
-    $_->delete for (grep { $_->isa('Krang::Contrib') } @imported);
-};
+    # cleanup everything in the right order
+    END { 
+        $_->delete for (grep { $_->isa('Krang::Media') } @imported);
+        $_->delete for (grep { $_->isa('Krang::Story') } @imported);
+        $_->delete 
+          for (sort { length($b->url) cmp length($a->url) }
+               grep { defined $_->parent_id } 
+               grep { $_->isa('Krang::Category') } @imported);
+        $_->delete for (grep { $_->isa('Krang::Site') } @imported);
+        $_->delete for (grep { $_->isa('Krang::Contrib') } @imported);
+    };
 
 }
 
 # try deleting a site a loading it from a data set
 my $lsite = Krang::Site->new(preview_url  => 'preview.lazarus.com',
-                            url          => 'lazarus.com',
-                            publish_path => '/tmp/lazarus',
-                            preview_path => '/tmp/lazarus');
+                             url          => 'lazarus.com',
+                             publish_path => '/tmp/lazarus',
+                             preview_path => '/tmp/lazarus');
 $lsite->save();
 
 my $lset = Krang::DataSet->new();
@@ -344,20 +345,20 @@ my $ltemplate = Krang::Template->new(filename => 'abcd_fake.tmpl',
 $ltemplate->save();
 $ltemplate->mark_as_deployed();
 $lset->add(object => $ltemplate);
-                                                                                     
+
 # it lives, yes?
 ($found) = Krang::Template->find(url => $ltemplate->url, count => 1 );
 ok($found);
-                                                                                     
+
 # this should fail
 eval { $lset->import_all(no_update => 1) };
 ok($@);
-                                                                                     
+
 # it dies
 $ltemplate->delete();
 ($found) = Krang::Template->find(url => $ltemplate->url, count => 1);
 ok(not $found);
-                                                                                     
+
 # the resurection
 $lset->import_all();
 ($found) = Krang::Template->find(url => $ltemplate->url, count => 1);
@@ -371,18 +372,18 @@ my $lgroup = Krang::Group->new( name => 'abc_test_group',
                                 categories => { $category->category_id => 'edit'},
                                 desks => { $ldesk->desk_id => 'edit' },
                                 may_publish         => 1,
-                                 may_checkin_all     => 1,
-                                 admin_users         => 1,
-                                 admin_users_limited => 1,
-                                 admin_groups        => 1,
-                                 admin_contribs      => 1,
-                                 admin_sites         => 1,
-                                 admin_categories    => 1,
-                                 admin_jobs          => 1,
-                                 admin_desks         => 1,
-                                 asset_story         => 'edit',
-                                 asset_media         => 'read-only',
-                                 asset_template      => 'hide' );
+                                may_checkin_all     => 1,
+                                admin_users         => 1,
+                                admin_users_limited => 1,
+                                admin_groups        => 1,
+                                admin_contribs      => 1,
+                                admin_sites         => 1,
+                                admin_categories    => 1,
+                                admin_jobs          => 1,
+                                admin_desks         => 1,
+                                asset_story         => 'edit',
+                                asset_media         => 'read-only',
+                                asset_template      => 'hide' );
 
 $lgroup->save;
 
@@ -472,9 +473,9 @@ ok(not Krang::Story->find(url => $big->url));
 
 # first test to see if story URL conflict is caught
 my $cstory = Krang::Story->new(categories => [$category2, $category],
-                            title      => "Big",
-                            slug       => "big",
-                            class      => "article");
+                               title      => "Big",
+                               slug       => "big",
+                               class      => "article");
 
 $cstory->save;
 
@@ -501,14 +502,14 @@ SKIP: {
                                  slug       => "jack",
                                  class      => "cover");
     $jack->save();
-    
+
     # create a pair of stories that point to each other in a circle
     my $jill = Krang::Story->new(categories => [Krang::Category->find(category_id => $category2->category_id)],
                                  title      => "Jill",
                                  slug       => "jill",
                                  class      => "cover");
     $jill->save();
-    
+
     $jack->element->add_child(class => 'leadin',
                               data  => $jill);
     $jill->element->add_child(class => 'leadin',
@@ -524,31 +525,31 @@ SKIP: {
 
     # should be just two stories
     is((grep { $_->[0] eq 'Krang::Story' } $j2set->list), 2);
-    
+
     # write it out
     my $j2path = catfile(KrangRoot, 'tmp', 'j2.kds');
     $j2set->write(path => $j2path);
     ok(-e $j2path and -s $j2path);
     END { unlink($j2path) if $j2path and -e $j2path and not $DEBUG };
-    
+
     $jack->delete();
     $jill->delete();
 
     # try an import
     $j2set->import_all;
-    
+
     # should have them back
     my ($imported_jack) = Krang::Story->find(url => $jack->url);
     isa_ok($imported_jack, 'Krang::Story');
     my ($imported_jill) = Krang::Story->find(url => $jill->url);
     isa_ok($imported_jill, 'Krang::Story');
-    
+
     # do they point to each other?
     is($imported_jack->element->child('leadin')->data->story_id, 
        $imported_jill->story_id);
     is($imported_jill->element->child('leadin')->data->story_id,
        $imported_jack->story_id);
-    
+
     END { $imported_jack->delete() if $imported_jack;
           $imported_jill->delete() if $imported_jill; }
 
