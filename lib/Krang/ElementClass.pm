@@ -210,7 +210,7 @@ you need is a particular child class.
 sub child { 
     my $class = $_[0]->{children_by_name}{$_[1]};
     croak("No class named '$_[1]' found in child class list for '" . 
-          $_[0]->display_name . "'")
+          $_[0]->name . "'")
       unless defined $class;
     return $class;
 }
@@ -353,9 +353,6 @@ sub load_query_data {
     $element->data(scalar $query->param($param));
 }
 
-
-
-
 =item C<< $url = $class->build_url(story => $story, category => $category) >>
 
 Builds a URL for the given story and category.  The default
@@ -424,6 +421,15 @@ sub thaw_data {
     return $_[4]->data($_[2]);
 }
 
+=item C<< @schedules = $class->default_schedules(element => $element, story_id ==> $story_id) >>
+
+Called when a top-level object is created.  May return a list of
+Krang::Schedule objects.  The default implementation returns and empty
+list.
+
+=cut
+
+sub default_schedules { return (); }
 
 =item C<< $html_tmpl = $class->find_template(element => $element, publisher => $publisher) >>
 

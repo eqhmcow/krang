@@ -967,6 +967,7 @@ BEGIN {
                           bulk_edit_data
                           bulk_edit_filter
                           check_data
+                          default_schedules
                         )) {
         *{"Krang::Element::$meth"} = 
           sub { 

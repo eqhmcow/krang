@@ -360,8 +360,6 @@ sub class {
     return Krang::ElementLibrary->top_level(name => $_[0]->{class});
 }
 
-=item C<schedules>
-
 =item C<checked_out> (readonly)
 
 =item C<checked_out_by> (readonly)
@@ -409,7 +407,6 @@ sub init {
     $self->{priority}       = 2;
     $self->{checked_out}    = 1;
     $self->{checked_out_by} = $session{user_id};
-    $self->{schedules}      = [];
 
     # handle categories setup specially since it needs to call
     # _verify_unique which won't work right without an otherwise
@@ -421,7 +418,7 @@ sub init {
 
     # setup categories
     $self->categories(@$categories);
-    
+
     return $self;
 }
 
@@ -605,6 +602,17 @@ sub _save_element {
     $self->{element_id} = $self->{element}->element_id;
 }
 
+# save schedules
+sub _save_schedules {
+    my $self = shift;
+    
+    # if this is the first save, save default schedules with story
+    return unless $self->{version} == 1;
+    foreach my $sched ($self->element->default_schedules) {
+        $sched->save();
+    }
+}
+
 # save category assignments
 sub _save_cat {
     my $self = shift;
@@ -639,13 +647,6 @@ sub _save_contrib {
              $self->{story_id}, $_->{contrib_id}, 
              $_->{contrib_type_id}, ++$ord)
       for @{$self->{contrib_ids}};
-}
-
-# save scheduled events
-sub _save_schedules {
-    my $self = shift;
-    my $dbh  = dbh;
-
 }
 
 # save to the version table
