@@ -1,0 +1,557 @@
+=head1 Customizing the Publish Process in Krang
+
+=over
+
+=item * Introduction
+
+=item * Why Customize Publish Behavior in the Element Library
+
+=item * Changing the data returned by an element
+
+=over
+
+=item * template_data()
+
+=item * Story and Media Links
+
+=back
+
+=item * Changing how an element populates a template
+
+=over
+
+=item * fill_template()
+
+=item * Option 1 - Make Small Changes, Let Krang Finish Template Population
+
+=item * Option 2 - Populating the Template Manually
+
+=back
+
+=item * Changing How an Element Chooses a Template
+
+=over
+
+=item * find_template()
+
+=back
+
+
+=item * Changing the Publish Process for an Element
+
+=over
+
+=item * publish()
+
+=back
+
+=item * Contributors
+
+=item * Pagination
+
+=item * Categories
+
+=back
+
+
+=head1 Introduction
+
+This document covers the concept of customizing the publish process by making changes to the element library.  It assumes that you've already got an understanding of templates and element libraries in Krang.  If you're not familiar with these concepts, read B<Creating an Element Library> and HREF[Writing HTML::Template Templates in Krang|writing_htmltemplate.html].
+
+
+=head1 Why Customize Publish Behavior in the Element Library
+
+Out of the box, Krang populates element templates according to a fixed set of rules.  The standard publish process should be sufficient for publication of most sites.  That being said, choices in how data is returned and how data is organized in the templates have been made - if these choices don't work with what you're attempting to accomplish, your next step is to change the behavior of the elements themselves.
+
+
+=head1 Changing the data returned by the element
+
+The simplest thing to change in an element is the form the element's data takes when returned.  With a few exceptions (see below) elements return data in the same form as it was when stored.  The advantage to this technique is that the results will be seen, regardless of whether or not a template is used.
+
+=over
+
+=item * template_data()
+
+This returns the data stored in the element.  In most cases, it's the actual data stored in the element, unformatted.  In the case of L<Krang::ElementClass::StoryLink> or L<Krang::ElementClass::MediaLink> objects, C<template_data()> will return the fully-qualified URL of the object.
+
+=back
+
+Suppose you wanted all header elements to return their data in all-caps when published, regardless of how they were entered into the system.  At the same time, you don't want to actually make that change to the content itself, in case you change your mind later.  Overriding C<template_data()> in your element library's header.pm as follows will do the trick:
+
+ sub template_data {
+   my $self = shift;
+   my %args = @_;
+
+   my $element = $args{element};
+
+   return uc($element->data());
+
+ }
+
+
+
+=head2 Story and Media Links
+
+Elements that handle links to Stories and Media need to be handled a little bit differently - they need to return the URL of the object being pointed to, rather than the data itself, and they need to return a URL that's consistent with the current output mode - publish or preview.  Keep this in mind if you consider changing the behavior for either of these two.
+
+Here is how template_data() currently works for elements using L<Krang::ElementClass::StoryLink> -
+
+ sub template_data {
+    my $self = shift;
+    my %args = @_;
+
+    my $element = $args{element};
+
+    if ($args{publisher}->is_publish()) {
+        return 'http://' . $element->data()->url();
+    } elsif ($args{publisher}->is_preview()) {
+        return 'http://' . $element->data()->preview_url();
+    } else {
+        croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
+    }
+ }
+
+In short, it queries the publisher (C<$args{publisher}>) to determine if the mode is publish or preview (returning an error if it's neither).  C<$element->data()> returns a L<Krang::Story> object (if this was L<Krang::ElementClass::MediaLink>, it would be a L<Krang::Media> object).  Depending on the mode. the appropriate URL is returned.
+
+
+=head1 Changing how an element populates a template
+
+The next option is more ambitious - changing how an element goes about populating the variables in a template.  At this point, you have two options - you can piggyback your changes on top of the work that Krang does, or you can choose to do it all yourself.
+
+=over
+
+=item * fill_template()
+
+fill_template() is responsible for filling the template object with data built from the element tree.  Generally, it traverses the element tree, creating scalars and loops on an as-needed basis, populating the template objects with the results.  The rules by which fill_template() operates can be found in the section HREF[How Krang Builds Template Data|writing_htmltemplate.html#how%20krang%20builds%20template%20data] in HREF[Writing HTML::Template Templates in Krang|writing_htmltemplate.html].
+
+If you are familiar with Bricolage, fill_template() functions using the same rules as the autofill() functionality found in Bricolage.
+
+=back
+
+=head2 Option 1 - Make Small Changes, Let Krang Finish Template Population
+
+With the object hierarchy Krang provides, you can make small additions to fill_template() and then let Krang pick things up from there by calling the parent method's C<fill_template()>.
+
+As an example, we'd like to know what the current time on the server is when the publish process is started.  This can be done by overriding C<fill_template> in the article element, and adding a variable C<publish_time> to the template.  Other than this variable, the template should be populated as usual.
+
+
+ sub fill_template {
+   my $self = shift;
+   my %args = @_;
+
+   my $template = $args{template};
+
+   $template->param(publish_time => localtime());
+
+   return $self->SUPER::fill_template(@_);
+
+ }
+
+
+In short, add the C<publish_time> variable to the template, and then call the C<fill_template()> method that was overridden by this method (passing the original set of parameters along).  The rest of the publish process is unaffected, and nothing will be noticed on output until the article template uses C<publish_time>.
+
+
+=head2 Option 2 - Populating the Template Manually
+
+
+=head1 Changing How an Element Chooses a Template
+
+
+=head1 Changing the Publish Process for an Element
+
+
+
+
+
+
+
+
+
+
+
+
+OLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLDOLD
+
+
+=head1 Overriding Krang::ElementClass Methods in Your Element Library
+
+If you do decide to make changes to the publish process, the following methods exist in Krang::ElementClass as part of the publish process, and can be overridden as needed:
+
+=over
+
+
+
+=item * find_template()
+
+Returns an HTML::Template::Expr object with the template to be used by the element.  Follows a specific procedure for locating the template on the filesystem.
+
+Unless you need to alter the process for loading templates (e.g. you don't want a template to get loaded under certain circumstances), this method should generally be left alone.
+
+=item * publish()
+
+Ties the above methods together and returns HTML for the current element (and therefore, any children beneath it).  Overriding publish() is a pretty drastic action, and should only be done if absolutely needed. 
+
+publish() takes a hash as an argument, allowing for named parameters.  Anything passed in will subsuquently be passed into the above methods.
+
+=back
+
+Read the POD for C< Krang::ElementClass > if you want to learn more about how these methods work, and how to use them.
+
+
+
+
+=head1 Example 3: Using One Large Template
+
+In this case, we have a very simple system, a single story template made up of basic elements:
+
+=head2 The Template - Story.tmpl
+
+ #
+ # NOTE - need notes on how to save template properly in the Krang::Template hierarchy..
+ #
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_if __first__>
+        <h1><tmpl_var title></h1>
+        <b><tmpl_var deck></b>
+     </tmpl_if>
+
+     <tmpl_loop element_loop>
+        <tmpl_if paragraph>
+          <p><tmpl_var paragraph></p>
+        </tmpl_if>
+        <tmpl_if name eq "pull quote">
+          <p><blockquote><i>
+            <tmpl_var name="pull quote">
+          </i></blockquote></p>
+        </tmpl_if>
+     </tmpl_loop>
+
+     <tmpl_unless __first__>
+     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+     </tmpl_unless>
+
+     <tmpl_unless __last__>
+     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+     </tmpl_unless>
+
+   </body>
+   </html>
+
+   <tmpl_var page_break>
+
+ </tmpl_loop>
+
+
+
+=head2 The Overridden Element Method
+
+In the Package that describes the Story element, we'll override the fill_template() method.  For the time being, the find_template() and publish() methods will be left alone (see Krang::ElementClass POD for more info).
+
+ sub fill_template {
+
+  my $self = shift;
+  my (%named_params) = @_;
+
+  my $template = $named_params{template};
+  my $story    = $named_params{story};
+
+  # setup story title
+  $template->param(title => $story->title());
+
+  # setup story slug
+  $template->param(slug => $story->slug());
+
+  # setup the page break variable
+  $template->param(page_break => Krang::Publisher::PAGE_BREAK);
+
+  my $deck_element = $self->children('deck');
+  $template->param(deck => $deck_element->publish());
+
+  # Build up @page_loop
+  my @page_list = $self->match('/page'); # returns all elements
+  my @page_loop;
+  my $page_count = 1;
+
+  foreach my $page (@page_list) {
+
+    # build per-page element loop
+    my @element_loop;
+    foreach my $e ($page->children()) {
+        # push on a row for this element
+        push(@element_loop, { $e->name() => $e->publish(@_) });
+    }
+
+    # push element_loop and a page_count on this loop
+    push(@page_loop, { 
+                      element_loop => \@element_loop,
+                      page_count   => $page_count++
+                     });
+  }
+
+  # finish the page_loop
+  $template->param(page_loop => \@page_loop);
+
+ }
+
+
+
+=head2 RESULTS
+
+Using the basic element set, we now have a single story template that can be used when generating content.
+
+Advanteges:
+
+* Single page, single element.  Everything's centrally located, and easy to manipulate.
+
+Disadvanteges:
+
+* With a single template, customization for individual stories is very difficult - there's no possibility of re-using this element in a different tree - it would need to be re-written.
+
+
+
+
+
+=head1 Example 4: Multiple Templates, Multiple Publish Methods
+
+The last example takes everything done so far, and rolls it all up - using templates for individual elements, and overloading the publish() method within elements, rather than relying on the default publish() method.
+
+One of the advanteges of this rolling your own publish() methods in this case is the ability to pass variables to the sub-element template that would otherwise not exist.  In Example 3, there was no way to use __first__ and __last__ logic in Page.tmpl, because that information was not available.  This can be fixed here.
+
+
+=head2 The Templates
+
+B<Story.tmpl>
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_var page>
+
+   </body>
+   </html>
+
+   <tmpl_var page_break>
+
+ </tmpl_loop>
+
+MUCH smaller.  All the logic involving __first__ and __last__ has now been moved over to Page.tmpl, where it really belongs.  
+
+
+B<Page.tmpl>
+
+ <tmpl_if first>
+    <h1><tmpl_var title></h1>
+    <b><tmpl_var deck></b>
+ </tmpl_if>
+
+ <tmpl_loop element_loop>
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+    <tmpl_if is_pull_quote>
+      <p><blockquote><i>
+    <tmpl_var pull_quote>
+      </i></blockquote></p>
+    </tmpl_if>
+ </tmpl_loop>
+
+ <tmpl_unless first>
+   <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+ </tmpl_unless>
+
+ <tmpl_unless last>
+   <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+ </tmpl_unless>
+
+
+So Page.tmpl is larger than before, but it makes more sense - all the Page logic is now in one place.
+
+
+=head2 The publish() Methods
+
+As Page.tmpl now needs to know about what page is currently being processed, the publish() method for both the Story element and then Page element needs to be overloaded.
+
+B<Story>
+
+The fill_template() method for Story needs to be able to pass page_count information to the publish() method for Page.  In turn, publish() will pass it to the fill_template() for Page.
+
+
+ sub fill_template {
+
+  my ($self, $story, $publisher) = @_;
+
+  my $template = $named_params{template};
+
+  # Get the list of pages into @pages
+  my @pages = $self->match('/page');
+  my @page_loop = ();
+  my $page_count = 1;
+
+  foreach my $page (@pages) {
+    # each $page is an element
+    push @page_loop, { page => $page->publish(story => $story,
+                                              page_count => $page_count++,
+                                              pages      => scaler @pages
+                                             )
+                     };
+  }
+
+  # populate template.
+  $template->param(page_loop => \@page_loop);
+
+ }
+
+
+B<Page>
+
+So now that the fill_template() method for Story has passed the page count information along, the fill_template() method for Page needs to use that information.
+
+ sub fill_template {
+
+  my $self = shift;
+  my %named_parms = @_;
+
+  my $template = $named_params{template};
+
+  my $story = $named_params{story};
+  my $page_count = $named_params{page_count};
+  my $page_total = $named_params{page_total};
+
+  # setup params
+  if ($page_count == 0) {
+     $template->param(first => 1);
+  }
+  if ($page_count == $page_total) {
+     $template->param(last => 1);
+  }
+
+  $template->param(title => $story->title());
+
+  # setup story slug
+  $template->param(slug => $story->slug());
+
+  # setup the page break variable
+  $template->param(page_break => Krang::Publisher::PAGE_BREAK);
+
+ }
+
+
+
+
+=head2 Conclusion
+
+B<Advantages>
+
+=over
+
+=item * This style is very flexible - the programmer can add functionality to the autofilled content without having to re-invent the wheel.
+
+=item * Elements that are broken out into discrete scripts and templates can be reused between element trees.
+
+=item * In this particular case bending the rules a bit allows the page formatting to be more logically grouped and easier to edit.
+
+=back
+
+B<Disadvantages>
+
+=over
+
+=item * Requires coding.
+
+=item * Requires communication between template programmer and template designer since the variables and loops are somewhat different from the normal autofill setup.
+
+=back
+
+
+
+=head2 Methods
+
+Generally, the default fill_template() method should be sufficient - but for reference purposes, overriding it would go as follows:
+
+ sub fill_template {
+    my $self = shift;
+    my %named_params = @_;
+    my $template = $named_params{template};
+    my $element  = $named_params{element};
+
+    # get linked object from element
+    my $media = $self->data();
+
+    # fill in URL to link to media  -- creates a varable based on element name.
+    $template->param($element->name . "_url" => $media->url);
+    # fill in image caption
+    $template->param(caption => $media->caption);
+
+ }
+
+
+
+
+=head2 Methods
+
+B<fill_template();>
+
+Generally, the default fill_template() will suffice.  For reference, here's a sample:
+
+ sub fill_template {
+
+  my $self = shift;
+  my %named_params = @_;
+
+  my $story = $named_params{story};
+  my $template = $named_params{template};
+
+  $template->param(title => $story->title());
+
+ }
+
+
+
+
+=head2 Code Example
+
+If you decide to override B<fill_template()> and still need contributors data, use the following example as your guide (again, derived from Example 4).
+
+
+ sub fill_template {
+
+  my $self = shift;
+  my %named_parms = @_;
+
+  my $template = $named_params{tmpl};
+  my $publisher = $named_params{publisher};
+  my $element   = $named_params{element};
+
+  my $story = $publisher->story();
+
+  $template->param(title => $story->title())
+    if $template->query(name => 'title');
+
+  # setup story slug
+  $template->param(slug => $story->slug())
+    if $template->query(name => 'slug');
+
+  # setup the page break variable
+  $template->param(page_break => Krang::Publisher::PAGE_BREAK)
+    if $template->query(name => 'page_break');
+
+  $template->param(contrib_loop => $self->_build_contrib_loop(@_))
+    if ($template->query(name => 'contrib_loop);
+
+
+ }
