@@ -4,7 +4,7 @@ use warnings;
 
 =head1 NAME
 
-Krang::ElementLibrary - the element classes loader and indexer
+Krang::ElementLibrary - the element class loader and indexer
 
 =head1 SYNOPSIS
 
@@ -34,9 +34,10 @@ and responding to requests to find individual element classes.
 
 =head2 Element Sets
 
-An element set consists of a configuration file, F<set.conf>, a series
-of Perl modules implementing the element classes.  The configuration
-file is in Apache format and may contain the following directives:
+An element set consists of a configuration file, F<set.conf>, and a
+series of Perl modules implementing the element classes.  The
+configuration file is in Apache format and may contain the following
+directives:
 
 =over 4
 
@@ -70,7 +71,7 @@ set, or in one of the inherited element sets.  For example, if you
 specify in F<Flex/set.conf>:
 
   ParentSets Default
-  TopLevels article cover category_archive author_archive
+  TopLevels article cover category_archive author_archive category
 
 Then either F<Flex/article.pm> or F<Default/article.pm> must exist
 (and so on for each item in C<TopLevels>).

@@ -168,7 +168,7 @@ sub children {
         if (ref $arg) {
             # it's an object already, push it along
             push(@children, $arg);
-            $children_by_name{$arg->name} = $arg;
+            $children_by_name{$arg->{name}} = $arg;
         } else {
             # it's the name of an element, load it
             push(@children, Krang::ElementLibrary->find_class(name => $arg));

@@ -156,24 +156,23 @@ sub init {
 =item C<< $class = $element->class() >>
 
 An object descended from L<Krang::ElementClass> which controls the
-functionality of the element.  You can set this with either the C<name>
-of an element class (ex. "paragraph") or an object.  The return value
-is always an object.
+functionality of the element.  You can set this with either the
+C<name> of a top-level element class (ex. "article") or an object.
+The return value is always an object.
 
 B<NOTE:> Setting this after the object is created is not a good idea.
 
 =cut
 
 sub class {
-    my $self = shift;
-    return $self->{class} unless @_;
-    my $val = shift;
+    return $_[0]->{class} if (@_ == 1);
+    my ($self, $val) = @_;
 
     # it's an element class object, store it
     return $self->{class} = $val 
       if ref $val and UNIVERSAL::isa($val, "Krang::ElementClass");
 
-    # it's an element name, fetch it
+    # it's an element name, fetch it from the library
     return $self->{class} = Krang::ElementLibrary->top_level(name => $val);
 }
 
@@ -228,8 +227,8 @@ following methods are available to manipulate the list of children:
 Create a new element object and add it as a child in the C<children>
 list.  If called with a string then the class will be looked up in the
 list of child classes for this element class.  An object may be
-passed, in which case it must belong to 
-C<< $element->class->children >>.
+passed, in which case it must belong to the 
+C<< $element->class->children >> list of element classes.
 
 Extra C<%args> are passed along to C<< Krang::Element->new() >>
 unchanged.
@@ -241,6 +240,7 @@ Returns the newly created child object.
 sub add_child {
     my $self = shift;
     my %arg  = @_;
+    my $children = $self->{children};
 
     unless (ref $arg{class}) {
         # lookup the child class in our class
@@ -248,19 +248,21 @@ sub add_child {
     }
 
     # enforce max, if set
-    if ($arg{class}->max) {
+    my $max = $arg{class}->max;
+    if ($max) {
+        my $name  = $arg{class}->name;
         my $count = 1;
-        for (@{$self->{children}}) {
-            $count++ if $_->class->name eq $arg{class}->name;
+        for (@$children) {
+            $count++ if $_->class->name eq $name;
         }
-        croak("Unable to add another '" . $arg{class}->name . "' to '" .
-              $self->name . "' - max allowed is " . $arg{class}->max)
-          if $count > $arg{class}->max;
+        croak("Unable to add another '$name' to '" .
+              $self->name . "' - max allowed is $max")
+          if $count > $max;
     }
 
     # push on the child and return it
-    push @{$self->{children}}, ref($self)->new(%arg);
-    return $self->{children}[-1];
+    push @$children, ref($self)->new(%arg);
+    return ${$children}[-1];
 }
 
 
