@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in Krang::ElementClass which would fail to setup
+"is_$element" template vars if "$element" wasn't used as a template
+var itself. [Matt]
+
+=item *
+
 Changed site editor to allow colons so that port numbers can be
 specified for preview URLs. [Perrin]
 

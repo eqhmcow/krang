@@ -719,6 +719,7 @@ sub fill_template {
         # it!  e.g. it exists in element loop, a name_loop, or
         # directly in the template, not seen before.
         next unless (exists($template_vars{element_loop}{$name}) || 
+                     exists($template_vars{element_loop}{"is_$name"}) ||
                      exists($template_vars{$loopname}) ||
                      (exists($template_vars{$name}) && !exists($child_params{$name})));
 
