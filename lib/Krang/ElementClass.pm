@@ -500,7 +500,8 @@ sub find_template {
     # args for HTML::Template::Expr on instantiation.
     my %tmpl_args = (
                      die_on_bad_params => 0,
-                     loop_context_vars => 1
+                     loop_context_vars => 1,
+                     global_vars       => 1
                     );
 
     # get the category dir from publisher;
