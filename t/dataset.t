@@ -87,6 +87,14 @@ my $story2 = Krang::Story->new(categories => [$category],
 $story2->save();
 END { $story2->delete() }
 
+# add schedule for story
+my $sched =  Krang::Schedule->new(object_type => 'story',
+                                object_id   => $story->story_id,
+                                action      => 'publish',
+                                repeat      => 'hourly',
+                                minute      => '0'
+                                );
+
 # create a data set containing the story
 my $set = Krang::DataSet->new();
 isa_ok($set, 'Krang::DataSet');
@@ -114,7 +122,7 @@ ok(grep { $_->[0] eq 'Krang::Story' and
 # try an import
 $loaded->import_all();
 
-# try an import with no_import, should fail
+# try an import with no_update, should fail
 eval { $loaded->import_all(no_update => 1); };
 isa_ok($@, 'Krang::DataSet::ImportRejected');
 
