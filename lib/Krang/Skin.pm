@@ -146,7 +146,7 @@ sub _install_images {
         # otherwise open up the template image and color it with
         # Image::BioChrome
         my $template = catfile(KrangRoot, 'templates', 'images', $image);
-        $Image::BioChrome::VERBOSE = 1;
+        $Image::BioChrome::VERBOSE = 0;
         $Image::BioChrome::DEBUG = 0;
         my $bio = Image::BioChrome->new($template);
         croak("Unable to load image $template.") unless $bio;
