@@ -538,6 +538,7 @@ sub execute {
             info(sprintf("%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found.  Deleting scheduled job.",
                          __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
             $self->delete();
+            return;
         }
 
 
