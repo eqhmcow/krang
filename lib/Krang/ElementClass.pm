@@ -597,124 +597,71 @@ sub fill_template {
         }
     }
 
-    my %template_loops;
-    my @page_urls;
-    my @reverse_lookups;
-    my $pageable_loopname;
+    #
+    # Walking the children
+    #
+    # Walking the children requires two passes - the first to determine if there
+    # are any pageable elements, the second to publish.
+    #
 
-    # Note - the following code is somewhat intricate - the
-    # explanation is as follows:
+    my @page_urls   = ();
+    my $page_number = 1;
 
-    # Publishing an element is a potentially expensive operation (it
-    # could involve walking a very large tree underneath it).
-    # Therefore, we want to do it only once per element.  The catch
-    # is that for pagination, you need to know about all related
-    # elements (e.g. of the same name) before you start publishing,
-    # because those elements need to know things like
-    # previous_page_url and next_page_url, things that are not
-    # available unless you've already walked the full set of child
-    # elements.
-
-    # So what's happening - we walk the set of children first, and if
-    # they're used in loops, store the array index as a placeholder in
-    # that loop, and store a record in a reverse-lookup table.  If
-    # not, simply publish the element.  Once everything is done, walk
-    # @reverse_lookups, calling publish() once for each entry, and
-    # place the results (with pagination info if needed) into the
-    # appropriate loops.
-
-    # Step by step:
-
-    # Adding loops and element variables to the template
-    # 1) iterate over @element_children
-    # 2) If there are loops that use this element, make a note of it in %template_loops,
-    #    And make a corresponding entry in the @reverse_lookups for further processing.
-    # 3) If the element is not used in any loops, publish it and add it to %params, if needed.
-    # 4) If the element is pagable (e.g. requires pagination) and has a loop, build its URL.
-
-    for (my $idx = 0; $idx <= $#element_children; $idx++) {
-
-        my $child  = $element_children[$idx];
-
-        my $name     = $child->name;
-        my $loopname = $name . '_loop';
-
-        my %rev;
-        my $is_loop = 0;
-
-        foreach ('element_loop', $loopname) {
-            if (exists($template_vars{$_})) {
-                $is_loop = 1;
-                push @{$template_loops{$_}}, $idx;
-                $rev{index} = $idx unless exists($rev{index});
-                $rev{loops}{$_} = @{$template_loops{$_}};
-
-                if ($child->pageable) {
-                    # The URL at $page_urls[n] corresponds to the element
-                    # pointed to by the array index in $template_loops{$pageable_loopname}[x].
-                    $pageable_loopname = $_ unless ($pageable_loopname);
-                    my $count = @page_urls;
-                    push @page_urls, $self->_build_page_url(page => $count,
-                                                            publisher => $publisher);
-
-                }
-            }
-            unless ($is_loop) {  # not in a loop
-                if (exists($template_vars{$name}) && !exists($params{$name})) {
-                    $params{$name} = $child->publish(publisher => $publisher);
-                }
-            }
+    # scan the children for pageable elements.
+    foreach my $child (@element_children) {
+        if ($child->pageable) {
+            # build the URL for this 'page' - will be used in the publish pass.
+            my $count = @page_urls;
+            push @page_urls, $self->_build_page_url(page => $count,
+                                                    publisher => $publisher);
         }
-
-        push @reverse_lookups, \%rev if ($is_loop);
-
     }
 
-    # At this point - anything that is not in a loop has been published & is in %params.
-    # Anything in a loop exists in %template_loops, and the position
-    # in the loop is pointed to by @reverse_lookups.
-    # Anything pagable has its urls in %page_urls.
 
-    foreach my $loop_element (@reverse_lookups) {
-        my $child = $element_children[$loop_element->{index}];
-        my $name = $child->name;
-        my $page_urls;
-        my $loopname;
-        my $pages;
+    foreach my $child (@element_children) {
+        my $name     = $child->name;
+        my $loopname = $name . '_loop';
         my $html;
 
-        # if the element is pageable, find the loopname
         if ($child->pageable) {
             my $pagination = $self->_build_pagination_vars(page_list => \@page_urls,
-                                                           page_num => ($loop_element->{loops}{$pageable_loopname}));
-
+                                                           page_num => $page_number);
             # publish the element - put the results in all the various loops.
             $html = $child->publish(publisher => $publisher, template_args => $pagination);
-
+            # increment the page number.
+            $page_number++;
         } else {
             $html = $child->publish(publisher => $publisher);
         }
 
-
-
-        foreach my $loops (keys %{$loop_element->{loops}}) {
-            if ($loops eq 'element_loop') {
-                push @{$params{element_loop}}, {
-                                                "is_$name" => 1,
-                                                $name      => $html
-                                               };
-            } else {
-                my $loop_idx = $loop_element->{loops}{$loops} + 1;
-                push @{$params{$loops}}, {
-                                             $name . '_count' => $loop_idx,
-                                             $name            => $html,
-                                             "is_$name"       => 1
-                                            };
-            }
-
+        # build element_loop if it exists.
+        if (exists($template_vars{element_loop})) {
+            push @{$params{element_loop}}, {
+                                            "is_$name" => 1,
+                                            $name      => $html
+                                           };
         }
 
+        # does '$name_loop' exist?  build it.
+        if (exists($template_vars{$loopname})) {
+            my $loop_idx = 1;
+            if (exists($params{$loopname})) {
+                $loop_idx = @{$params{$loopname}} + 1;
+            }
+            push @{$params{$loopname}}, {
+                                      $name . '_count' => $loop_idx,
+                                      $name            => $html,
+                                      "is_$name"       => 1
+                                     };
+        }
+
+        # if the element is used in the template outside of a loop, and hasn't been set
+        # (first child element takes precedence), do it.
+        if (exists($template_vars{$name}) && !exists($params{$name})) {
+            $params{$name} = $child->publish(publisher => $publisher);
+        }
     }
+
 
     $tmpl->param(%params);
 }
