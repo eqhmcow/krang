@@ -30,6 +30,12 @@
       myform.submit();
     }
 
+    function preview_media(media_id) {
+      var myform = document.edit_media_form;
+      myform.rm.value='save_and_preview';
+      myform.submit();
+    }
+
     function do_delete () {
         if (confirm("Are you sure you want to delete this media?")) {
             var myform = document.delete_media_form;<tmpl_if add_mode>
@@ -202,7 +208,7 @@ Version: <tmpl_var media_version_chooser>
   <input type="button" value="Save" onClick="do_save()" class="button">
   <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
   <tmpl_if may_publish><input type="button" value="Publish" onClick="publish_media('<tmpl_var media_id>')" class="button"></tmpl_if>
-  <input type="reset" value="Reset" class="button">
+  <input type="button" value="Publish to Preview" onClick="preview_media('<tmpl_var media_id>')" class="button">
   <tmpl_unless add_mode><input type="button" value="Delete" onClick="do_delete()" class="button"></tmpl_unless>&nbsp;
 </div></div>
 

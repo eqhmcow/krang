@@ -81,6 +81,7 @@ sub setup {
                          save_and_associate_media
                          save_and_view_log
                          save_and_publish
+                         save_and_preview
                          view
                          view_version
                          revert_version
@@ -937,8 +938,46 @@ sub save_and_publish {
     my %save_errors = ( $self->do_save_media($m) );
     return $self->edit(%save_errors) if (%save_errors);
 
+    # publish should also send to preview
+    $m->preview;
+
     # Redirect to associate screen
     my $url = 'publisher.pl?rm=publish_media&media_id=' . $m->media_id;
+    $self->header_props(-uri=>$url);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$url\">$url</a>";
+}
+
+=item save_and_preview
+
+This mode writes changes back to the media object, calls save() and
+then redirects to publisher.pl to preview the media object.
+
+=cut
+
+
+sub save_and_preview {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    my $m = $session{media};
+    die ("No media object in session") unless (ref($m));
+
+    # Update object in session
+    $self->update_media($m);
+
+    # Validate input.  Return errors, if any.
+    my %errors = $self->validate_media($m);
+    return $self->edit(%errors) if (%errors);
+
+    # Save object to database
+    my %save_errors = ( $self->do_save_media($m) );
+    return $self->edit(%save_errors) if (%save_errors);
+
+    # Redirect to associate screen
+    my $url = 'publisher.pl?rm=preview_media&no_view=1&media_id=' . $m->media_id;
     $self->header_props(-uri=>$url);
     $self->header_type('redirect');
 
@@ -1203,6 +1242,10 @@ sub _add {
 
     my $media_tmpl_data = $self->make_media_tmpl_data($m);
     $t->param($media_tmpl_data);
+
+    # permissions
+    my %admin_perms = Krang::Group->user_admin_permissions();
+    $t->param(may_publish => $admin_perms{may_publish});
 
     # Propagate messages, if we have any
     $t->param(%args) if (%args);

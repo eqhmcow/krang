@@ -420,6 +420,9 @@ sub preview_media {
     my $media_id    = $query->param('media_id');
     croak("Missing required media_id or session parameter.")
       unless $media_id or $session_key;
+    
+    # if this is set, don't redirect to preview server
+    my $no_view = $query->param('no_view');
 
     my $media;
     unless ($session_key) {
@@ -468,10 +471,23 @@ sub preview_media {
         return $template->output;
     }
 
-    # redirect to preview
-    $self->header_type('redirect');
-    $self->header_props(-url=>"http://$url");
-    return "Redirecting to <a href='http://$url'>http://$url</a>.";
+    if ($no_view) {
+
+        # add a message
+        add_message('media_preview', media_id => $media_id,
+                url => $media->preview_url,
+                version => $media->version);
+
+        # return to my workspace
+        $self->header_props(-uri => 'workspace.pl');
+        $self->header_type('redirect');
+        return "";
+    } else {
+        # redirect to preview
+        $self->header_type('redirect');
+        $self->header_props(-url=>"http://$url");
+        return "Redirecting to <a href='http://$url'>http://$url</a>.";
+    }
 }
 
 
