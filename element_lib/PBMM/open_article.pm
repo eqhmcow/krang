@@ -50,7 +50,7 @@ sub new {
                                                         display_name => 'Page Content',
                                                         pageable => 1,
                                                         rows => 10,
-                                                        cols => 50,
+                                                        cols => 38,
                                                         min => 1 ),
                     PBMM::table_of_contents->new(),
                     PBMM::custom_targeting->new(max =>1)
