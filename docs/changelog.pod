@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<bin/krang_addon_framework> - a new script to create a
+supporting framework to simplify development of Krang addons. [Peter]
+
+=item *
+
 Added C<--rebuild> option to C<bin/krang_build> allowing it to build modules
 even if there an existing Krang build there already. [Perrin]
 

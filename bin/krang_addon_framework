@@ -1,0 +1,503 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+=head1 NAME
+
+krang_addon_framework - Autogenerate the support skeleton for a Krang addon
+
+=head1 SYNOPSIS
+
+  krang_addon_framework --name <addon name> --path <path> [ OPTIONS ]
+
+
+Options are as follows:
+
+=over
+
+=item --element_lib
+
+Generates a directory structure for a new element library, adds it to
+the support scripts.
+
+=item --skin
+
+Generates a directory structure for a new Krang skin, adds it to the
+support scripts.
+
+=item --version
+
+Specify a certain minimum version of Krang to use.  If not specified,
+will default to the version the script is installed within.
+
+=item --verbose
+
+Get a better idea of what is going on.
+
+
+=back
+
+
+=head1 DESCRIPTION
+
+krang_addon_framework builds a support framework to speed the
+development process when constructing an addon.
+
+In short, it does the following:
+
+=over
+
+=item *
+
+Creates a directory (specified by the C<--name> argument) under the
+path specified by C<--path>.  All subsuquent files are created within
+this new directory.
+
+=item *
+
+Autogenerates a C<krang_addon.conf> file that will be used by Krang
+when installing the addon.
+
+=item *
+
+Autogenerates a makedist script to create the addon tarball.
+
+=item *
+
+Autogenerates a postinstall script to announce the installation.
+
+=item *
+
+Autogenerates a Makefile to tie everything together.
+
+=item *
+
+Autogenerates a skeleton element library if the --element_lib
+parameter is supplied.
+
+
+
+=back
+
+=head1 SEE ALSO
+
+  C<bin/krang_addon_installer>
+
+  HREF[docs/add_on.html|Building a Krang Addon]
+
+=cut
+
+
+use FindBin qw($RealBin);
+use Config;
+use File::Spec::Functions qw(catdir splitdir canonpath);
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# process command-line args.
+use Getopt::Long;
+use Pod::Usage;
+
+use Krang;
+
+my ($addon_name, $output_path, $element_lib, $skin, $krang_version, $verbose, $man, $help);
+
+BEGIN {
+    eval {
+        $verbose       = 0;
+        $addon_name    = '';
+        $output_path   = '';
+        $element_lib   = 0;
+        $skin          = 0;
+        $krang_version = $Krang::VERSION;
+
+        pod2usage(2) unless
+          GetOptions(help            => \$help,
+                     man             => \$man,
+                     'verbose+'      => \$verbose,
+                     'name=s'        => \$addon_name,
+                     'path=s'        => \$output_path,
+                     'element_lib+'  => \$element_lib,
+                     'skin+'         => \$skin,
+                     'version=s'     => \$krang_version
+                    );
+
+        pod2usage(1)             if $help;
+        pod2usage(-verbose => 2) if $man;
+        pod2usage("Unrecognized options to krang_addon_framework: '" . join(' ', @ARGV) . "'\n")
+          if @ARGV;
+        pod2usage(1) unless
+          ($addon_name && $output_path &&
+           ($element_lib || $skin)
+          );
+    };
+
+    # output errors without the BEGIN compilation failed message
+    if ($@) { 
+        warn $@;
+        exit(1);
+    }
+
+
+
+}
+
+use File::Path qw/mkpath/;
+use File::Spec::Functions qw/catdir catfile/;
+use Time::Piece;
+
+use IO::File;
+
+# get a timestamp
+my $timestamp = localtime;
+my $cdate     = $timestamp->cdate;
+
+# create the root dir.
+my $root_dir = create_root_dir();
+
+# create krang_addon.conf
+krang_addon_conf();
+
+# create Makefile
+makefile();
+
+# create element_lib files if needed.
+element_lib_files() if $element_lib;
+
+# create skin files if needed.
+skin_files() if $skin;
+
+# create makedist script
+makedist_script();
+
+# create the postinstall script
+postinstall_script();
+
+print "\nFinished.  Framework for the $addon_name addon has been written to:\n$root_dir\n\n";
+
+sub makedist_script {
+
+    my $bindir = catdir($root_dir, 'bin');
+
+    unless (-e $bindir) {
+        my @dirs = mkpath([$bindir], 0, 0755);
+
+        if ($verbose) { foreach (@dirs) { print "Created: '$_'\n"; } }
+    }
+
+    my @copy_list = ('krang_addon.conf', 'bin/postinstall');
+    push (@copy_list, 'element_lib') if $element_lib;
+    push (@copy_list, 'skins') if $skin;
+
+    my $copy_files = join ' ', @copy_list;
+
+    my $distname = 'krang-' . $addon_name . '-$version';
+
+
+
+    my $makedist =<<MAKEDIST;
+#!/usr/bin/perl -w
+
+# makedist for $addon_name
+# Autogenerated by krang_addon_framework $cdate
+
+use strict;
+use warnings;
+
+use File::Find qw(find);
+
+# build a distribution of the $addon_name addon
+
+# figure out version
+open(CONF, 'krang_addon.conf') or die;
+my \$version;
+while(<CONF>) {
+    next unless /Version\\s+(\\S+)/;
+    \$version = \$1;
+}
+close CONF;
+die "Can't figure version..." unless \$version;
+
+my \$dist = "$distname";
+
+mkdir(\$dist) or die \$1;
+
+system("cp -av $copy_files \$dist");
+# remove CVS or emacs droppings.
+system("find \$dist -name CVS | xargs rm -rf");
+system("find \$dist -name \\*~ | xargs rm");
+
+# create the tarball
+system("tar czvpf \$dist.tar.gz \$dist");
+system("rm -rf \$dist");
+
+print "\\n\\nCreated distribution in \$dist.tar.gz\\n";
+
+
+MAKEDIST
+  ;
+
+    my $makedist_path = catfile($bindir, 'makedist');
+
+    write_file($makedist_path, $makedist);
+
+    # make sure ownership is correct
+    chmod 0755, $makedist_path;
+
+}
+
+sub postinstall_script {
+
+    my $bindir = catdir($root_dir, 'bin');
+
+    unless (-e $bindir) {
+        my @dirs = mkpath([$bindir], 0, 0755);
+
+        if ($verbose) { foreach (@dirs) { print "Created: '$_'\n"; } }
+    }
+
+    my $postinstall =<<POSTINSTALL;
+# $addon_name postinstall script
+# Autogenerated by krang_addon_framework $cdate
+
+print <<EOM;
+
+########################################
+
+  Krang Addon: $addon_name
+
+  Installation Completed.
+
+  Add Additional User Notes Here.
+
+########################################
+
+EOM
+
+
+POSTINSTALL
+  ;
+
+    my $postinstall_path = catfile($bindir, 'postinstall');
+
+    write_file($postinstall_path, $postinstall);
+
+    # make sure ownership is correct
+    chmod 0755, $postinstall_path;
+
+
+}
+
+
+sub skin_files {
+
+    my $skin_root = catdir($root_dir, 'skins', $addon_name);
+
+    die "ERROR: Cannot create '$skin_root': - already exists!\n\n"
+      if (-e $skin_root);
+
+    my @dirs = mkpath([$skin_root], 0, 0755);
+
+    if ($verbose) { foreach (@dirs) { print "Created: '$_'\n"; } }
+
+    my $skin_conf =<<SKINCONF;
+# $addon_name skin.conf
+# Autogenerated by krang_addon_framework $cdate
+
+# screen background
+background_color #ffffff
+
+# basic palette
+dark_color       #5a6952
+light_color      #acba94
+bright_color     #7b855a
+border_color     #c5c6c5
+
+# logo colors
+logo_color1      #83a139
+logo_color2      #bdd27b
+logo_color3      #4a7541
+
+# text colors
+text_color       #5a695a
+light_text_color #e6eacd
+link_color       #5a695a
+button_color     #5a6952
+alert_color      #ff2800
+invalid_color    #ffffac
+
+SKINCONF
+  ;
+
+    my $skin_conf_path = catfile($skin_root, 'skin.conf');
+
+    write_file($skin_conf_path, $skin_conf);
+
+}
+
+
+
+
+sub element_lib_files {
+
+    my $element_lib_root = catdir($root_dir, 'element_lib', $addon_name);
+
+    die "ERROR: Cannot create '$element_lib_root': - already exists!\n\n"
+      if (-e $element_lib_root);
+
+    my @dirs = mkpath([$element_lib_root], 0, 0755);
+
+    if ($verbose) { foreach (@dirs) { print "Created: '$_'\n"; } }
+
+    my $set_conf =<<SETCONF
+# $addon_name set.conf
+# Autogenerated by krang_addon_framework $cdate
+
+Version 1.0
+SETCONF
+  ;
+
+    my $set_conf_path = catfile($element_lib_root, 'set.conf');
+
+    write_file($set_conf_path, $set_conf);
+
+}
+
+
+
+
+sub makefile {
+
+    my $makefile_path = catfile($root_dir, 'Makefile');
+
+    die "ERROR: Cannot create '$makefile_path': - already exists!\n\n"
+      if (-e $makefile_path);
+
+    my @clean_list = ('krang-' . $addon_name . '-*.tar.gz', '*~', 'bin/*~');
+
+    push @clean_list, (catfile('element_lib', $addon_name, '*~')) if $element_lib;
+
+    push @clean_list, (catfile('skins', $addon_name, '*~')) if $skin;
+
+
+    my $clean = join ' ', @clean_list;
+
+
+    my $makefile =<<ENDMAKE;
+# $addon_name Makefile
+# Autogenerated by krang_addon_framework $cdate
+
+all:
+\t\@echo "You're probably looking for 'make dist'"
+
+dist:
+\tbin/makedist
+
+clean:
+\trm -rf $clean
+
+.PHONY : all
+
+ENDMAKE
+  ;
+
+    write_file($makefile_path, $makefile);
+}
+
+
+#
+# create $root_dir/krang_addon.conf for $addon_name.
+#
+sub krang_addon_conf {
+
+    my $addon_conf_path = catfile($root_dir, 'krang_addon.conf');
+
+    die "ERROR: Cannot create '$addon_conf_path': - already exists!\n\n"
+      if (-e $addon_conf_path);
+
+    my $addon_conf =<<ENDCONF;
+# krang_addon.conf
+# Autogenerated by krang_addon_framework $cdate
+
+# addon name
+Name $addon_name
+
+# addon version
+Version 1.0
+
+# minimum version of Krang required
+RequireKrang $krang_version
+
+# files to be excluded on install
+ExcludeFiles Makefile README postinstall
+
+# script to run after installation is complete
+PostInstallScript postinstall
+
+ENDCONF
+  ; # this comma keeps emacs from getting confused.  :)
+
+
+    write_file($addon_conf_path, $addon_conf);
+}
+
+
+
+sub create_root_dir {
+    my $root_dir = catdir($output_path, $addon_name);
+
+    die "ERROR: Cannot create '$root_dir' - already exists\n\n" if (-e $root_dir);
+
+    my @dirs = mkpath([$root_dir], 0, 0755);
+
+    if ($verbose) { foreach (@dirs) { print "Created: '$_'\n"; } }
+
+    return $root_dir;
+}
+
+
+sub write_file {
+
+    my ($filename, $content) = @_;
+
+    print "Created: '$filename'\n" if ($verbose);
+
+    my $fh = IO::File->new(">$filename") or
+      die "ERROR: Cannot create '$filename': $!\n\n";
+
+    $fh->print($content);
+
+    $fh->close;
+
+}
+
+
+
+
+1;
