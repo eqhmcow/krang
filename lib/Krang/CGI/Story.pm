@@ -53,6 +53,7 @@ sub setup {
                      view             => 'view',
                      revert           => 'revert',
                      find             => 'find',
+                     cancel           => 'cancel',
                      delete           => 'delete',
                      delete_selected  => 'delete_selected',
                      checkout_selected => 'checkout_selected',
@@ -119,6 +120,24 @@ sub new_story {
     $template->param(cover_date_selector => date_chooser(name=>'cover_date', query=>$query));
 
     return $template->output();
+}
+
+=item cancel
+
+Returns to My Workspace without creating a new story.
+
+=cut
+
+sub cancel {
+    my $self = shift;
+
+    # add a message for the kids
+    add_message('cancel_new_story');
+
+    # return to my workspace
+    $self->header_props(-uri => 'workspace.pl');
+    $self->header_type('redirect');
+    return;
 }
 
 =item create
