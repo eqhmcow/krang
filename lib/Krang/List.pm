@@ -115,12 +115,12 @@ sub save {
         # get rid of list_id 
         my @save_fields = grep {$_ ne 'list_id'} RO_FIELDS,RW_FIELDS;
 
-        my $sql = 'UPDATE list_group set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE list_id = = ?';
+        my $sql = 'UPDATE list set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE list_id = = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$list_id);
 
     } else {
         my @save_fields =  (RO_FIELDS,RW_FIELDS);
-        my $sql = 'INSERT INTO list_group ('.join(',', @save_fields).') VALUES (?'.",?" x ((scalar @save_fields) - 1).")";
+        my $sql = 'INSERT INTO list ('.join(',', @save_fields).') VALUES (?'.",?" x ((scalar @save_fields) - 1).")";
         debug(__PACKAGE__."->save() - $sql");
         
         $dbh->do($sql, undef, map { $self->{$_} } @save_fields);
