@@ -129,8 +129,16 @@ sub logout {
     # delete the session
     Krang::Session->delete($ENV{KRANG_SESSION_ID});
 
+    # build a poison cookie
+    my $cookie = $query->cookie(
+                            -name   => Krang::Conf->instance,
+                            -value  => "",
+                            -expires=>'-90d',
+                           );
+    
     # redirect to login
-    $self->header_props(-uri => 'login.pl');
+    $self->header_props(-uri    => 'login.pl',
+                        -cookie => $cookie->as_string);
     $self->header_type('redirect');
     return "";
 }
