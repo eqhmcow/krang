@@ -172,6 +172,61 @@ category is an optional attribute.  By default, preview() will build a story bas
 
 As part of the publish process, all media and stories linked to by $story will be published to preview as well.
 
+=cut
+
+sub preview_story {
+
+    my $self = shift;
+    my %args = @_;
+    my $category;
+    my $url;
+
+    my $preview_url;
+
+    my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
+
+    # in the event the category argument has been added, preview the story
+    # using this category.
+    # Otherwise, use the story's primary category.
+    if (exists($args{category})) {
+        $category = $args{category};
+        croak "NOT IMPLEMENTED YET.\n";
+    } else {
+        $category = $story->category();
+        $url = $story->preview_url();
+    }
+
+    # set internal mode - publish, not preview.
+    $self->{is_publish} = 0;
+    $self->{is_preview} = 1;
+
+    info('Publisher.pm: Previewing story_id=' . $story->story_id());
+
+    my $file_root = $category->site()->preview_path();
+
+    # create output path.
+    my $path = File::Spec->catfile($file_root, $url);
+
+    # build the story HTML.
+    my $story_pages = $self->_assemble_pages(story => $story, category => $category);
+
+    # iterate over story pages, writing them to disk.
+    for (my $p = 0; $p < @$story_pages; $p++) {
+        my $page_num = $p + 1;
+
+        # get the path & filename:
+        my $filename = $self->_build_filename(story => $story, page => $page_num);
+
+        # write the page to disk.
+        $self->_write_page(path => $path, filename => $filename, data => $story_pages->[$p]);
+
+    }
+
+    my $preview_url = "$url/" . $self->_build_filename(story => $story, page => 1);
+
+    return $preview_url;
+}
+
 =item C<< $publisher->publish_story(story => $story, user => $user) >>
 
 Publishes a story to the live webserver document root, as set by publish_path.
@@ -242,6 +297,7 @@ Returns a url to the media file on the preview website if successful.
 Will throw an exception if there are problems with the copy.
 
 =cut
+
 
 =item C<< $url = $publisher->publish_media(media => $media, user => $user) >>
 
