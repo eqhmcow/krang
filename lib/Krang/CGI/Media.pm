@@ -981,6 +981,10 @@ sub make_media_tmpl_data {
         $tmpl_data{published_version} = $m->published_version();
         $tmpl_data{version} = $m->version();
 
+        # Display creation_date
+        my $creation_date = $m->creation_date();
+        $tmpl_data{creation_date} = $creation_date->strftime('%b %e, %Y %l:%M %p');
+
         # Set up versions drop-down
         my $curr_version = $tmpl_data{version};
         my $media_version_chooser = $q->popup_menu(
