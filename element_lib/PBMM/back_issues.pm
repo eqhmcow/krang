@@ -38,7 +38,7 @@ sub fill_template {
     foreach my $s (@s) {
         next if ($s->story_id eq $story->story_id);
 
-        my $ptitle = $s->element->child('promo_title')->data || $s->title;
+        my $ptitle = $s->element->child('promo_title') ? $s->element->child('promo_title')->data : $s->title;
                                                                            
         push (@story_loop, {story_count => ++$story_count, 
                             url => 'http://'.($publisher->is_preview ? $s->preview_url : $s->url).'/', 
