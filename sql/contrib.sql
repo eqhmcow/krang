@@ -2,6 +2,7 @@ DROP TABLE IF EXISTS contrib;
 
 --
 -- Table structure for table 'contrib'
+-- This table stores contributor information.
 --
 
 CREATE TABLE contrib (
@@ -23,12 +24,14 @@ DROP TABLE IF EXISTS contrib_type;
 
 --
 -- Table structure for table 'contrib_type'
+-- This table stores contributor types.  
+-- It has a many:many relationship with 'contrib'.
 --
 
 CREATE TABLE contrib_type (
-    contrib_type_id SMALLINT unsigned NOT NULL auto_increment,
-    type varchar(255) NOT NULL,
-    PRIMARY KEY contrib_type_id (contrib_type_id)
+    contrib_type_id     SMALLINT unsigned NOT NULL auto_increment,
+    type varchar(255)   NOT NULL,
+    PRIMARY KEY         contrib_type_id (contrib_type_id)
 ) TYPE=MyISAM;
 
 -- Insert base types
@@ -40,11 +43,12 @@ DROP TABLE IF EXISTS contrib_contrib_type;
 
 --
 -- Table structure for table 'contrib_contrib_type'
+-- This is the join table between 'contrib' and 'contrib_type'.
 --
 
 CREATE TABLE contrib_contrib_type (
-    contrib_id int(10) unsigned NOT NULL,
-    contrib_type_id int(10) unsigned NOT NULL,
-    PRIMARY KEY (contrib_id, contrib_type_id)
+    contrib_id          int(10) unsigned NOT NULL,
+    contrib_type_id     int(10) unsigned NOT NULL,
+    PRIMARY KEY         (contrib_id, contrib_type_id)
 ) TYPE=MyISAM;
 
