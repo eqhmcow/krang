@@ -10,7 +10,9 @@ use Time::Piece;
 
 sub new {
     my $pkg = shift;
-    my %args = ( @_
+    my %args = ( 
+                default => Time::Piece->new(),
+                @_
                );
     
     return $pkg->SUPER::new(%args);
@@ -20,7 +22,7 @@ sub input_form {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
-    my $date = $element->data() || Time::Piece->new();
+    my $date = $element->data();
     return _date_input($query, $param, $date);
 }
 
@@ -30,12 +32,43 @@ sub param_names {
     return ($xpath . "_month", $xpath . "_day", $xpath . "_year");
 }
 
+sub validate {
+    my ($self, %arg) = @_;
+    my ($query, $element) = @arg{qw(query element)};
+    my ($param) = $self->param_names(element => $element);
+
+    my $m = $query->param($param . '_month');
+    my $d = $query->param($param . '_day');
+    my $y = $query->param($param . '_year');
+
+    if (not $m and not $d and not $y) {
+        if ($self->{required}) {
+            return (0, "$self->{display_name} requires a value.");
+        } else {
+            return (1, undef);
+        }
+    } elsif ($m and $d and $y) {
+        return (1, undef);
+    } elsif ($m or $d or $y) {
+        return (0, "$self->{display_name} selection incomplete.");
+    }
+
+    return (1, undef);
+}
+
 sub load_query_data {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
-    my $data = _decode_date($query, $param);
-    $element->data($data);
+
+    my $m = $query->param($param . '_month');
+    my $d = $query->param($param . '_day');
+    my $y = $query->param($param . '_year');
+    if ($m and $d and $y) {
+        $element->data(Time::Piece->strptime("$m/$d/$y", '%m/%d/%Y'));
+    } else {
+        $element->data(undef);
+    }
 }
 
 sub view_data {
@@ -45,16 +78,15 @@ sub view_data {
 }
 
 # takes a name and an optional date object (Time::Piece::MySQL).
-# returns HTML for the widget interface.  If no date is passed
-# defaults to now.
+# returns HTML for the widget interface.
 sub _date_input {
     my ($query, $name, $date) = @_;
-    $date ||= localtime;
 
     my $m_sel = $query->popup_menu(-name      => $name . "_month",
-                                   -default   => $date->mon,
-                                   -values    => [ 1 .. 12 ],
-                                   -labels    => { 1  => 'Jan',
+                                   -default   => $date ? $date->mon : 0,
+                                   -values    => [ 0 .. 12 ],
+                                   -labels    => { 0  => ' ',
+                                                   1  => 'Jan',
                                                    2  => 'Feb',
                                                    3  => 'Mar',
                                                    4  => 'Apr',
@@ -67,12 +99,16 @@ sub _date_input {
                                                    11 => 'Nov',
                                                    12 => 'Dec' });
     my $d_sel = $query->popup_menu(-name      => $name . "_day",
-                                   -default   => $date->mday,
-                                   -values    => [ 1 .. 31 ]);
+                                   -default   => $date ? $date->mday : 0,
+                                   -values    => [ 0 .. 31 ],
+                                   -labels    => { 0 => ' ' },
+                                  );
     my $y_sel = $query->popup_menu(-name      => $name . "_year",
-                                   -default   => $date->year,
-                                   -values    => [ $date->year - 30 .. 
-                                                   $date->year + 10 ]);
+                                   -default   => $date ? $date->year : 0,
+                                   -values    => [ 0, 
+                                                   localtime()->year - 30 .. 
+                                                   localtime()->year + 10 ],
+                                   -labels    => { 0 => ' ' });
 
 
     return $m_sel . " " . $d_sel . " " . $y_sel;
@@ -83,14 +119,8 @@ sub _date_input {
 sub _decode_date {
     my ($query, $name) = @_;
     
-    my $m = $query->param($name . '_month');
-    my $d = $query->param($name . '_day');
-    my $y = $query->param($name . '_year');
-    return undef unless $m and $d and $y;
 
-    return Time::Piece->strptime("$m/$d/$y", '%m/%d/%Y');
 }
-
 
 sub fill_template {
     my ($self, %arg) = @_;
