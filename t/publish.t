@@ -203,6 +203,7 @@ test_medialink($story2, $media[0]);
 
 test_linked_assets();
 
+test_full_publish();
 
 
 ############################################################
@@ -210,6 +211,24 @@ test_linked_assets();
 # SUBROUTINES.
 #
 
+
+sub test_full_publish {
+
+    $publisher->publish_story(story => $story);
+
+    foreach ($story, $story2, @stories) {
+        my @paths = build_publish_paths($_);
+        foreach my $p (@paths) {
+            ok(-e $p, 'Krang::Publisher->publish_story() -- complete story writeout');
+        }
+    }
+
+    foreach (@media) {
+        my $path = catfile($publish_path , $_->url());
+        ok (-e $path, 'Krang::Publisher->publish_story() -- complete media writeout');
+    }
+
+}
 
 ############################################################
 # Testing related stories/media list.
@@ -581,7 +600,7 @@ sub test_story_build {
     # category top/bottom & page content should both exist.
     my $assembled_ref = $publisher->_assemble_pages(story => $story, category => $category);
     ok(@$assembled_ref == 1, 'Krang::Publisher->_assemble_pages() -- page count');
-    
+
     my $page_one = $assembled_ref->[0];
     $page_one =~ s/\n//g;
     ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');

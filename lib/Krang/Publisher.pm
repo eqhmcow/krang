@@ -241,10 +241,16 @@ sub publish_story {
     $self->{is_publish} = 1;
     $self->{is_preview} = 0;
 
-    info('Publisher.pm: Publishing story_id=' . $story->story_id());
+    my $publish_list = $self->get_publish_list(story => $story);
 
-    $self->_output_story(story => $story);
-
+    foreach (@$publish_list) {
+        if ($_->isa('Krang::Story')) {
+            info('Publisher.pm: Publishing story_id=' . $_->story_id());
+            $self->_output_story(story => $_);
+        } elsif ($_->isa('Krang::Media')) {
+            $self->publish_media(media => $_);
+        }
+    }
 }
 
 
@@ -353,7 +359,7 @@ sub publish_media {
 }
 
 
-=item C<< ($stories, $media) = $publisher->get_publish_list(story => $story) >>
+=item C<< $publish_list_ref = $publisher->get_publish_list(story => $story) >>
 
 Returns the list of stories and media objects that will get published if publish_story(story => $story) is called.
 
