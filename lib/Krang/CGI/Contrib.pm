@@ -45,6 +45,11 @@ is 'search'.
 use Krang::Contrib;
 
 
+# Fields in a contrib
+use constant CONTRIB_FIELDS => [qw(
+                                  )];
+
+
 
 ##############################
 #####  OVERRIDE METHODS  #####
@@ -225,10 +230,17 @@ users may create a new Contributor object.
 
 sub add {
     my $self = shift;
+    my %ui_messages = ( @_ );
 
     my $q = $self->query();
     my $t = $self->load_tmpl("edit_view.tmpl");
     $t->param(add_mode => 1);
+    $t->param(%ui_messages) if (%ui_messages);
+#     $t->param(
+#               error_invalid_first => 1,
+#               error_invalid_last => 1,
+#               error_invalid_type => 1,
+#              );
 
     return $t->output() . $self->dump_html();
 }
@@ -253,7 +265,11 @@ sub save_add {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    return $self->add(
+                      error_invalid_first => 1,
+                      error_invalid_last => 1,
+                      error_invalid_type => 1,
+                     );
 }
 
 
@@ -322,9 +338,11 @@ parameter is missing or invalid.
 
 sub edit {
     my $self = shift;
+    my %ui_messages = ( @_ );
 
     my $q = $self->query();
     my $t = $self->load_tmpl("edit_view.tmpl");
+    $t->param(%ui_messages) if (%ui_messages);
 
     return $t->output() . $self->dump_html();
 }
@@ -349,7 +367,11 @@ sub save_edit {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    return $self->edit(
+                      error_invalid_first => 1,
+                      error_invalid_last => 1,
+                      error_invalid_type => 1,
+                     );
 }
 
 

@@ -19,7 +19,9 @@
 <div class="dark-bar">Contributor <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></div>
 
 
-<tmpl_if message_contrib_added><div class="alert">Contributor has been added.</div></tmpl_if>
+<tmpl_if error_invalid_first><div class="alert">Please specify a valid first name.</div></tmpl_if>
+<tmpl_if error_invalid_last><div class="alert">Please specify a valid last name.</div></tmpl_if>
+<tmpl_if error_invalid_type><div class="alert">Please specify a valid contributor type.</div></tmpl_if>
 
 
 <form name="edit_contrib_form" method="POST">
@@ -40,7 +42,7 @@
 
 <tr>
     <td align="left" valign="top">First:</td>
-    <td align="left" valign="top"><input type="textfield" size="40" name="first" value="<tmpl_var escape=HTML first>"></td>
+    <td align="left" valign="top"><tmpl_if error_invalid_first><span class="invalid"></tmpl_if><input type="textfield" size="40" name="first" value="<tmpl_var escape=HTML first>"><tmpl_if error_invalid_first></span></tmpl_if></td>
 </tr>
 
 <tr>
@@ -50,7 +52,7 @@
 
 <tr>
     <td align="left" valign="top">Last:</td>
-    <td align="left" valign="top"><input type="textfield" size="40" name="last" value="<tmpl_var escape=HTML last>"></td>
+    <td align="left" valign="top"><tmpl_if error_invalid_last><span class="invalid"></tmpl_if><input type="textfield" size="40" name="last" value="<tmpl_var escape=HTML last>"><tmpl_if error_invalid_last></span></tmpl_if></td>
 </tr>
 
 <tr>
@@ -60,9 +62,9 @@
 
 <tr>
     <td align="left" valign="top">Contributor Type:</td>
-    <td align="left" valign="top"><select name="contrib_type_ids" size="3" multiple="multiple"><tmpl_loop contrib_types>
+    <td align="left" valign="top"><tmpl_if error_invalid_type><span class="invalid"></tmpl_if><select name="contrib_type_ids" size="3" multiple="multiple"><tmpl_loop contrib_types>
         <option value="<tmpl_var escape=HTML contrib_type_id>"><tmpl_var escape=HTML contrib_type_name></option></tmpl_loop>
-    </select></td>
+    </select><tmpl_if error_invalid_type></span></tmpl_if></td>
 </tr>
 
 <tr>
