@@ -121,9 +121,7 @@ and any version of RacingStripes:
 =item * C<PostInstallScript> I<script>
 
 A script to run after file installation is complete.  C<KRANG_ROOT>
-will be set in the environment for this script.  Note that this script
-is run for installation, not for upgrades.  See L<"Upgrades"> for
-information on scripting upgrades.
+will be set in the environment for this script.  
 
 =back
 
