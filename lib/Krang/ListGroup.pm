@@ -268,6 +268,73 @@ sub delete {
     
 }
 
+=item $list_group->serialize_xml(writer => $writer, set => $set)
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <list_group> linked to schema/list_group.xsd
+    $writer->startTag('list_group',
+                      "xmlns:xsi" =>
+                        "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                        'list_group.xsd');
+
+    $writer->dataElement( list_group_id => $self->list_group_id );
+    $writer->dataElement( name => $self->name );
+    $writer->dataElement( description => $self->description );
+
+    # all done
+    $writer->endTag('list_group');
+}
+
+=item C<< $list_group = Krang::ListGroup->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming list group has the same name as an existing list group then an
+update will occur, unless no_update is set.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml,
+                                  suppressempty => 1);
+
+
+    # is there an existing object?
+    my $lg = (Krang::ListGroup->find(name => $data->{name}))[0] || '';
+
+    if ($lg) {
+
+        debug (__PACKAGE__."->deserialize_xml : found list group");
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A list group object with the name '$data->{name}' already ".
+                       "exists and no_update is set.")
+            if $no_update;
+
+        # update simple fields
+        Krang::ListGroup->description($data->{description});
+
+    } else {
+        $lg = Krang::ListGroup->new( name => $data->{name}, description => $data->{description} );
+    }
+
+    return $lg;
+
+
 =back 
 
 =cut
