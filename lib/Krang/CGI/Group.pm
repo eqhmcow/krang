@@ -465,27 +465,28 @@ sub edit_categories {
     my $g = $session{EDIT_GROUP};
     die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
 
-    # Get permission categories
-    my %categories = $g->categories();
-
     my $q = $self->query();
     my $t = $self->load_tmpl('edit_categories.tmpl', associate=>$q);
 
     my $category_id = $q->param('category_id');
     croak ("No category ID specified") unless ($category_id);
 
-    my $root_category_permissions = $categories{$category_id};
+    # Get permission categories
+    my %categories = $g->categories();
 
     my ($root_category) = Krang::Category->find(category_id=>$category_id);
     croak ("Can't retrieve root category ID '$category_id'") unless ($root_category);
-    my @descendant_category_ids = ( $root_category->descendants(ids_only=>1) );
+    my @site_category_ids = ( Krang::Category->find(site_id=>$root_category->site_id, order_by=>"url", ids_only=>1) );
 
     # Extract IDs of descendant categories for which permissions have been set
-    my @perm_categories = ( grep { exists($categories{$_}) } @descendant_category_ids );
+    my @perm_categories = ( grep { ($_ ne $category_id) and exists($categories{$_}) } @site_category_ids );
+
+    my $site_url = $root_category->url();
+    $t->param(site_url => $site_url);
 
     # Build up tmpl loop
     my @categories = ( {
-                        category_url => $root_category->url(),
+                        category_url => "Default",
                         permission_radio => $self->make_permissions_radio("category_".$category_id),
                         is_root => 1,
                         category_id => $category_id,
@@ -493,8 +494,10 @@ sub edit_categories {
     foreach my $cid (@perm_categories) {
         my ($c) = Krang::Category->find( category_id=>$cid );
         my $param_name = "category_".$cid;
+        my $url = $c->url();
+        $url =~ s/^$site_url/\//;
         my $row = {
-                   category_url => format_url(url=>$c->url(), length=>30) ,
+                   category_url => format_url(url=>$url, length=>30) ,
                    permission_radio => $self->make_permissions_radio($param_name),
                    category_id => $cid,
                   };
