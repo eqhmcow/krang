@@ -87,8 +87,8 @@ sub dbh () {
     return $DBH{$name} if exists $DBH{$name};
 
     # does this db exist?  create if not
-    create_db() 
-      unless first { "DBI:mysql:$name" eq $_ }  DBI->data_sources("mysql");
+    # create_db() 
+    #  unless first { "DBI:mysql:$name" eq $_ }  DBI->data_sources("mysql");
     
     $DBH{$name} = DBI->connect("DBI:mysql:database=$name", DBUser, DBPass,
                                { RaiseError         => 1, 
