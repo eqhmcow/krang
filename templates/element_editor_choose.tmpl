@@ -4,19 +4,19 @@
 <tmpl_if alert><p><font color=red><b><tmpl_var alert></b></font></p></tmpl_if>
 <form method=post>
 <tmpl_var top_level_select> <input type=submit value="Create">
-<input type=hidden name=rm value=create>
+<input type=hidden name=e_rm value=create>
 </form>
 
 <script language=javascript>
    function edit (id) {
-     document.edit_form.rm.value = "edit";
+     document.edit_form.e_rm.value = "edit";
      document.edit_form.root_id.value = id;
      document.edit_form.submit();
    }
 </script>
 
 <form name=edit_form method=post>
-   <input type=hidden name=rm>
+   <input type=hidden name=e_rm>
    <input type=hidden name=root_id>
 
 <p>
