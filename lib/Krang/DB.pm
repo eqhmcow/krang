@@ -9,7 +9,7 @@ Krang::DB - provides access to Krang database
 =head1 SYNOPSIS
 
   # get a database handle
-  use Krang::DB qw(dbh create_db disconnect_dbh);
+  use Krang::DB qw(dbh create_db forget_dbh);
   $dbh = dbh();
 
   # create an empty database for an instance
