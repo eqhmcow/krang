@@ -45,7 +45,7 @@ Export krang from CVS using tagged version (to F</tmp> directory)
 
 =item 4
 
-Delete excluded directories and files (i.e., bench/, src/, .cvsignore).
+Delete excluded directories and files (i.e., bench/, src/, .cvsignore, conf/krang.conf).
 
 
 =back
@@ -109,6 +109,7 @@ sub do_makedist {
     create_cvs_tag() unless ($version);
     export_krang();
     exclude_directories();
+    exclude_files();
     create_tarball();
     cleanup_makedist();
     output_report();
@@ -225,6 +226,11 @@ sub exclude_directories {
     print STDERR `rm -rf $export_dir/krang/bench`;
     print STDERR `rm -rf $export_dir/krang/src`;
     print STDERR `find $export_dir/krang/ -name '.cvsignore' | xargs rm`;
+}
+
+sub exclude_files {
+    my $export_dir = get_export_dir();
+    print STDERR `rm -rf $export_dir/conf/krang.conf`;
 }
 
 
