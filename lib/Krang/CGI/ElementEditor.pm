@@ -678,8 +678,12 @@ sub find_media_link_row_handler {
     $row->{url} = join('<br>', 
                        map { qq{<a href="javascript:preview_media($row->{media_id})">$_</a>} } @url_lines);
 
-
-    $row->{thumbnail} = qq{<a href="javascript:preview_media($row->{media_id})"><img src="} . $media->thumbnail_path(relative => 1) . qq{" border=0></a>};
+    my $thumbnail_path = $media->thumbnail_path(relative => 1);
+    if ($thumbnail_path) {
+        $row->{thumbnail} = qq{<a href="javascript:preview_media($row->{media_id})"><img src="$thumbnail_path" border=0></a>};
+    } else {
+        $row->{thumbnail} = "&nbsp;";
+    }
 
     # creation_date
     my $tp = $media->creation_date();

@@ -22,7 +22,7 @@
     <tr class="light">
       <td>ID:</td>
       <td width="60%"><tmpl_var media_id></td>
-      <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"></tmpl_if><img border="0" src="<tmpl_var thumbnail_path>"><tmpl_if media_id></a></tmpl_if></td>
+      <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"></tmpl_if><tmpl_if thumbnail_path><img border="0" src="<tmpl_var thumbnail_path>"></tmpl_if><tmpl_if media_id></a></tmpl_if></td>
     </tr>
     <tr class="light">
       <td>Title:</td>
