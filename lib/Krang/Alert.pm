@@ -196,7 +196,7 @@ count - return only a count if this is set to true.
 
 =item *
 
-only_ids - return only alert_ids, not objects if this is set true.
+ids_only - return only alert_ids, not objects if this is set true.
 
 =back
 
@@ -248,7 +248,7 @@ sub find {
     my $select_string;
     if ($args{'count'}) {
         $select_string = 'count(*) as count';
-    } elsif ($args{'only_ids'}) {
+    } elsif ($args{'ids_only'}) {
         $select_string = 'alert_id';
     } else {
         $select_string = join(',', FIELDS);
@@ -275,7 +275,7 @@ sub find {
         my $obj;
         if ($args{'count'}) {
             return $row->{count};
-        } elsif ($args{'only_ids'}) {
+        } elsif ($args{'ids_only'}) {
             $obj = $row->{alert_id};
             push (@alert_object,$obj);
         } else {
@@ -313,7 +313,7 @@ sub check_alert {
 
     debug(__PACKAGE__."->check_alert() - checking for any alerts on action $action in categories @category_ids");
  
-    my @matched_alerts = Krang::Alert->find( only_ids => 1, action => $action, category_id => \@category_ids );  
+    my @matched_alerts = Krang::Alert->find( ids_only => 1, action => $action, category_id => \@category_ids );  
 
     debug(__PACKAGE__."->check_alert() - found alert_ids @matched_alerts for criteria (action $action in categories @category_ids).") if @matched_alerts;
 

@@ -649,11 +649,11 @@ url
 
 url_like - case insensitive match on url. Must include '%' on either end for substring match.
 
-only_ids - return only media_ids, not objects if this is set true.
+ids_only - return only media_ids, not objects if this is set true.
 
 =item *
 
-count - return only a count if this is set to true. Cannot be used with only_ids.
+count - return only a count if this is set to true. Cannot be used with ids_only.
 
 =item *
 
@@ -779,7 +779,7 @@ sub find {
     my $select_string;
     if ($args{'count'}) {
         $select_string = 'count(*) as count';
-    } elsif ($args{'only_ids'}) {
+    } elsif ($args{'ids_only'}) {
         $select_string = 'media_id';
     } else {
         my @fields = grep {($_ ne 'media_id')} FIELDS;
@@ -808,7 +808,7 @@ sub find {
         my $obj;
         if ($args{'count'}) {
             return $row->{count};
-        } elsif ($args{'only_ids'}) {
+        } elsif ($args{'ids_only'}) {
             $obj = $row->{media_id};
         } else {    
             $obj = bless {%$row}, $self;

@@ -298,12 +298,12 @@ offset - offset results by this number, else no offset.
 
 =item *
 
-only_ids - return only contrib_ids, not objects if this is set true.
+ids_only - return only contrib_ids, not objects if this is set true.
 
 
 =item *
 
-count - return only a count if this is set to true. Cannot be used with only_ids.
+count - return only a count if this is set to true. Cannot be used with ids_only.
 
 
 =back
@@ -374,7 +374,7 @@ sub find {
     my $select_string;
     if ($args{'count'}) {
         $select_string = 'count(*)';
-    } elsif ($args{'only_ids'}) {
+    } elsif ($args{'ids_only'}) {
         $select_string = 'contrib_id';
     } else {
         $select_string = join(',', FIELDS);
@@ -397,7 +397,7 @@ sub find {
         my $obj;
         if ($args{'count'}) {
             return $row->{'count(*)'};
-        } elsif ($args{'only_ids'}) {
+        } elsif ($args{'ids_only'}) {
             $obj = $row->{contrib_id};
         } else {
             $obj = bless {}, $self;
