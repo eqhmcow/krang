@@ -68,6 +68,7 @@ my @delete_templates = ();
 my %template_paths = ();
 my %template_deployed = ();
 
+my %slug_id_list;
 
 ############################################################
 
@@ -130,10 +131,23 @@ for (my $i = 0; $i <= $#paths; $i++) { ok($paths[$i] eq $dirs_a[$i], 'Krang::Pub
 ############################################################
 # testing Krang::ElementClass->find_template().
 
-# create a new story -- get root element.
-my $media   = &create_media();
+# create new stories -- get root element.
+my @media;
+my @stories;
+for (1..10) {
+    push @media, &create_media();
+}
+for (1..10) {
+    push @stories, &create_story([$category]);
+}
+
+
+my @story_linklist = ();
+my @media_linklist = ();
+
 my $story   = &create_story([$category, $child_cat, $child_subcat]);
-my $story2  = &create_story([$category], [$story], [$media]);
+my $story2  = &create_story([$category], [$story], [$media[0]]);
+
 my $element = $story->element();
 
 
@@ -148,9 +162,15 @@ END {
         $publisher->undeploy_template(template => $_);
         $_->delete();
     }
+
     $story2->delete();
     $story->delete();
-    $media->delete();
+    foreach (@stories) {
+        $_->delete();
+    }
+    foreach (@media) {
+        $_->delete();
+    }
 }
 
 
@@ -166,11 +186,11 @@ END {
 # test publisher->preview_story
 &check_preview_story($story);
 
-&test_media_deploy($media);
+&test_media_deploy($media[0]);
 
 &test_storylink($story2, $story);
 
-&test_medialink($story2, $media);
+&test_medialink($story2, $media[0]);
 
 
 
@@ -551,9 +571,16 @@ sub create_story {
 
     my ($categories, $linked_story, $linked_media) = @_;
 
+    my $slug_id;
+    do {
+        $slug_id = int(rand(16777216));
+    } until (!exists($slug_id_list{$slug_id}));
+
+    $slug_id_list{$slug_id};
+
     my $story = Krang::Story->new(categories => $categories,
                                   title      => $story_title,
-                                  slug       => 'TEST-SLUG-' . int(rand(255)),
+                                  slug       => 'TEST-SLUG-' . $slug_id,
                                   class      => "article");
 
     # add some content
@@ -571,20 +598,44 @@ sub create_story {
     # add storylink if it exists
     if (defined($linked_story)) {
         foreach (@$linked_story) {
-            $page->add_child(class => "leadin", data => $_);
+            &link_story($story, $_);
         }
     }
 
     # add medialink if it exists
     if (defined($linked_media)) {
         foreach (@$linked_media) {
-            $page->add_child(class => "photo", data => $_);
+            &link_media($story, $_);
         }
     }
 
     $story->save();
 
     return ($story);
+
+}
+
+
+# create a storylink in $story to $dest
+sub link_story {
+
+    my ($story, $dest) = @_;
+
+    my $page = $story->element->child('page');
+
+    $page->add_child(class => "leadin", data => $dest);
+
+}
+
+
+# create a medialink in $story to $media.
+sub link_media {
+
+    my ($story, $media) = @_;
+
+    my $page = $story->element->child('page');
+
+    $page->add_child(class => "photo", data => $media);
 
 }
 
@@ -636,9 +687,9 @@ sub create_media {
     my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
 
     # create a media object
-    my $media = Krang::Media->new(title      => 'random publishtest image',
-                                  filename   => "random.$format",
-                                  caption    => 'random caption',
+    my $media = Krang::Media->new(title      => &get_word(),
+                                  filename   => &get_word . ".$format",
+                                  caption    => &get_word,
                                   filehandle => $fh,
                                   category_id => $category->category_id,
                                   media_type_id => $media_type_id,
@@ -724,4 +775,24 @@ sub walk_tree {
     }
 
     return;
+}
+
+
+
+
+# get a random word
+BEGIN {
+    my @words;
+    open(WORDS, "/usr/dict/words")
+      or open(WORDS, "/usr/share/dict/words")
+        or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
+    while (<WORDS>) {
+        chomp;
+        push @words, $_;
+    }
+    srand (time ^ $$);
+
+    sub get_word {
+        return lc $words[int(rand(scalar(@words)))];
+    }
 }
