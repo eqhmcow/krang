@@ -84,7 +84,7 @@ sub dbh () {
       unless defined $name;
 
     # check cache
-    return $DBH{$name} if exists $DBH{$name};
+    return $DBH{$name} if $DBH{$name} and $DBH{$name}->ping;
 
     # does this db exist?  create if not
     # create_db() 
