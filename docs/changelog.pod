@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added support for Fedora Core 2. [Sam]
+
+=item *
+
 Fixed problem determining C<KRANG_ROOT> on Fedora Core 2 in all
 Krang scripts. [Sam]
 
