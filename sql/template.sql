@@ -11,7 +11,6 @@ CREATE TABLE template (
         checked_out_by int(11),
         content longtext,
         creation_date timestamp(14) NOT NULL,
-        current_version int(11) NOT NULL,
         deploy_date timestamp(14),
         deployed tinyint(1) NOT NULL,
         description tinytext,
@@ -19,6 +18,7 @@ CREATE TABLE template (
         name tinytext NOT NULL,
         notes text,
         testing int(1) NOT NULL,
+        version int(11) NOT NULL,
         PRIMARY KEY  (id),
         INDEX (category_id),
 ) TYPE=MyISAM;
