@@ -130,6 +130,7 @@ for (my $i = 0; $i <= $#paths; $i++) { ok($paths[$i] eq $dirs_a[$i], 'Krang::Pub
 
 # create a new story -- get root element.
 my $story   = &create_story([$category, $child_cat, $child_subcat]);
+my $story2  = &create_story([$category], [$story]);
 my $element = $story->element();
 
 &deploy_templates();
@@ -143,7 +144,7 @@ END {
         $publisher->undeploy_template(template => $_);
         $_->delete();
     }
-
+    $story2->delete();
     $story->delete();
 }
 
@@ -254,6 +255,24 @@ my $prev_media_path = catfile($preview_path, $prev_media_url);
 ok($prev_expected_path eq $prev_media_path, 'Krang::Publisher->preview_media()');
 
 
+# test related story - add a storylink from one story to the other.
+$publisher->{story} = $story2;
+$publisher->{is_publish} = 1;
+$publisher->{is_preview} = 0;
+
+my $page2 = $story2->element()->child('page');
+my $storylink = $page2->child('leadin');
+
+my $story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+
+ok($story_href eq $story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
+
+$publisher->{is_publish} = 0;
+$publisher->{is_preview} = 1;
+
+$story_href = $storylink->class->publish(element => $storylink, publisher => $publisher);
+
+ok($story_href eq $story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
 
 
 
@@ -422,11 +441,11 @@ sub deploy_templates {
 #
 sub create_story {
 
-    my @categories = @_;
+    my ($categories, $linked_story) = @_;
 
-    my $story = Krang::Story->new(categories => \@categories,
+    my $story = Krang::Story->new(categories => $categories,
                                   title      => "Test Title",
-                                  slug       => "SLUG-TEST-SLUG",
+                                  slug       => 'TEST-SLUG-' . int(rand(255)),
                                   class      => "article");
 
     # add some content
@@ -440,6 +459,13 @@ sub create_story {
     # add two paragraphs
     $page->add_child(class => "paragraph", data => $para1);
     $page->add_child(class => "paragraph", data => $para2);
+
+    # add storylink if it exists
+    if (defined($linked_story)) {
+        foreach (@$linked_story) {
+            $page->add_child(class => "leadin", data => $_);
+        }
+    }
 
     $story->save();
 
