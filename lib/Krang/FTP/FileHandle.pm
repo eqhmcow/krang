@@ -104,9 +104,8 @@ sub open {
         # check write access
         return undef unless $self->can_write;
 
-        my $handle;
-
         if ($type eq 'template') {
+    
             # first clear the data unless appending
             $object->content('')
             unless $mode eq 'a';
@@ -115,14 +114,17 @@ sub open {
             my $data;
             tie $data, 'Krang::FTP::FileHandle::SCALAR',
                 $object, $self->{ftps}{user_obj};
-            $handle = new IO::Scalar \$data;
+            my $handle = new IO::Scalar \$data;
             # seek if appending
             $handle->seek(length($object->content))
             if $mode eq 'a';
-        } else {
 
+            return $handle;
+        } else {
+            my $path = $object->file_path();
+
+            return new IO::File $path, $mode;
         }
-        return $handle;
     }
 }
 
@@ -182,12 +184,14 @@ sub status {
         $data = $object->content;
         $size = length($data);
         $date = $object->creation_date;
+        #$date = $date ? Time::Piece->from_mysql_datetime($date) : localtime;
     } else {
         $date = $object->creation_date();
         $size = $object->file_size();
+        #$date = $date ? Time::Piece->from_mysql_date($date) : localtime;
     }
-    $date = $date ? Time::Piece->from_mysql_datetime($date) : localtime;
-    $date = $date->epoch;
+    
+    $date = 1; #$date->epoch;
 
     my $owner = $object->checked_out_by;
 
