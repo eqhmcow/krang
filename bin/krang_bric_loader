@@ -11,8 +11,16 @@ and optionally imports that dataset.
 
  Options:
 
+ --dbname		- The name of the Bricolage DB to reach to obtain
+			  contributor info (default: PGDATABASE)
+
  --debug		- Displays debugging information and preserves
 			  all intermediate output.
+
+ --get-xml		- Set this flag to have this application make the
+			  bric_soap calls to obtain Bricolage XML.  N.B.
+			  the --root or BRICOLAGE root must be defined
+			  in this case
 
  --help			- Displays this menu.
 
@@ -76,6 +84,13 @@ and optionally imports that dataset.
 			  --verbose args to achieve the maximum level of
 			  verbosity
 
+ --xml-path		- Path where to find XML files containing
+			  category, element, media, story, and template
+			  info (default $PWD/bric_xml).  N.B. XML for
+			  each object type is expected to be found in
+			  files named for the given type (i.e. stories
+			  must be found in files beginning with 'story')
+
 
 =head1 DESCRIPTION
 
@@ -117,8 +132,23 @@ $@
 
 ######################################################################
 END
+
+    eval "use DBD::Pg";
+    die <<END if $@;
+######################################################################
+
+Cannot load DBD::Pg
+
+DBD::Pg is required to connect the Bricolage database containing
+contributor information.  Please install.
+
+$@
+
+######################################################################
+END
 }
 
+use DBI;
 use File::Temp qw(tempdir);
 use Getopt::Long;
 use IPC::Run qw(finish pump run start);
@@ -128,14 +158,15 @@ use Krang::Script;
 use Krang::Conf qw(KrangRoot);
 
 
-my ($debug, $help, $import, $man, $non_site_dep, $output, $set_name, $site_doc,
-    $soap, $temp_path, $timeout, $verbose);
+my ($debug, $dbname, $get_xml, $help, $import, $man, $non_site_dep, $output,
+    $set_name, $site_doc, $soap, $temp_path, $timeout, $verbose, $xml_path);
 our ($contributors, $elements, $no_categories, $no_contributors, $no_elements,
      $no_media, $no_sites, $no_stories, $no_templates, $password, $root,
      $server, $sites, $username);
 
 BEGIN {
     my $data  	= 0;
+    $dbname	= $ENV{BRICOLAGE_DB} || '';
     $debug	= 0;
     $output	= catfile($ENV{PWD},'bric.kds');
     $site_doc	= catfile($ENV{PWD},'sites.xml');
@@ -145,8 +176,11 @@ BEGIN {
     $root 	= $ENV{BRICOLAGE_ROOT};
     $server 	= $set_name = $ENV{BRICOLAGE_SERVER};
     $username 	= $ENV{BRICOLAGE_USERNAME};
+    $xml_path	= catfile($ENV{PWD}, 'bric_xml');
 
-    GetOptions("debug"		        => \$debug,
+    GetOptions("dbname=s"		=> \$dbname,
+               "debug"		        => \$debug,
+               "get-xml"		=> \$get_xml,
                "help"			=> \$help,
                "just-contributors"	=> \$contributors,
                "just-elements"		=> \$elements,
@@ -168,7 +202,8 @@ BEGIN {
                "site-doc=s"		=> \$site_doc,
                "timeout=s"		=> \$timeout,
                "username=s"		=> \$username,
-               "verbose"		=> \$verbose)
+               "verbose"		=> \$verbose,
+               "xml-path=s"		=> \$xml_path)
       or pod2usage;
 
     pod2usage() if defined $help;
@@ -179,8 +214,8 @@ BEGIN {
               "alternative output location.\n")
       if -e $output;
 
-    # check that environment vars are defined
-    {
+    # check that environment vars are defined if we're getting the XML
+    if ($get_xml) {
         no strict qw/refs/;
         for (qw/password root server username/) {
             my $key = "BRICOLAGE_" . uc $_;
@@ -192,26 +227,15 @@ BEGIN {
                 $ENV{$key} = $$_ unless $val;
             }
         }
+
+        # resolve path to bric_soap
+        $soap = catfile($root, 'bin', 'bric_soap');
+        pod2usage("\nUnable to find 'bric_soap' at: $soap\n") unless -e $soap;
+    } else {
+        # xml-path must exist
+        pod2usage("XML directory '$xml_path' does not exist.")
+          unless -e $xml_path;
     }
-
-    # add $BRICOLAGE_ROOT/lib to module search paths and attempt to load
-    unshift @INC, catdir($root, 'lib');
-    eval "use Bric";
-    die <<"END" if $@;
-######################################################################
-
-Cannot load Bricolage.
-
-Error message:
-
-$@
-
-######################################################################
-END
-
-    # resolve path to bric_soap
-    $soap = catfile($root, 'bin', 'bric_soap');
-    pod2usage("\nUnable to find 'bric_soap' at: $soap\n") unless -e $soap;
 
     # if we just have contributors, elements, sites, or templates
     if ($contributors) {
@@ -227,6 +251,12 @@ END
         $no_categories = $no_contributors = $no_elements = $no_media =
           $no_stories = $no_templates = $data = 1;
     }
+
+    # dbname has to be defined
+    pod2usage("Either the --dbname argument must be specified or the " .
+              "environment var BRICOLAGE_DB must be defined to obtain " .
+              "contributor information.")
+      unless ($dbname || $no_contributors);
 
     # make sure we have some data for the .kds
     if ($data == 0) {
@@ -286,20 +316,26 @@ sub main {
 
     # create element library
     unless ($no_elements) {
-        my @ids = split /\n/, bric_soap('element', 'list_ids');
-        my $xml = bric_soap('element', 'export', @ids);
+        my ($param, $xml, $xmlpath);
+        if ($get_xml) {
+            my @ids = split /\n/, bric_soap('element', 'list_ids');
+            $xml = bric_soap('element', 'export', @ids);
 
-        if (DEBUG) {
-            my $xmlpath = catfile($temp_path, 'elements.xml');
-            my $fh = IO::File->new(">$xmlpath") or
-              die "Can't write to '$xmlpath': $!";
-            $fh->print($xml);
-            $fh->close;
+            if (DEBUG) {
+                $xmlpath = catfile($temp_path, 'elements.xml');
+                my $fh = IO::File->new(">$xmlpath") or
+                  die "Can't write to '$xmlpath': $!";
+                $fh->print($xml);
+                $fh->close;
+            }
+            $param->{xml} = $xmlpath
+        } else {
+            $param->{dir} = $xml_path;
         }
 
         Krang::BricLoader::ElementSet->create(set => $set_name,
                                               verbosity => $verbose - 1,
-                                              xml => $xml);
+                                              %$param);
 
         print "Created ElementSet $set_name...\n";
     }
@@ -317,7 +353,21 @@ sub main {
 
     # get contributors
     unless ($no_contributors) {
-        $set->add(object => $_) for Krang::BricLoader::Contrib->load;
+        my $dbh =
+          DBI->connect("dbi:Pg:dbname=$dbname", undef, undef,
+                       {RaiseError => 1})
+            or die("Unable to connect to database '$dbname': " . $DBI::errstr);
+
+        my $contrib_ref;
+        eval {$contrib_ref = Krang::BricLoader::Contrib->load($dbh)};
+        $dbh->disconnect;
+
+        if (my $err = $@) {
+            die "Fatal error occurred while gathering Contributors: $err";
+        }
+
+        $set->add(object => $_) for @$contrib_ref;
+
 
         print STDERR "Added Contributors to dataset...\n" if $verbose;
     }
@@ -403,27 +453,44 @@ sub get_assets {
     my @objs;
     my $i = 0 if DEBUG;
 
-    my @ids = split(/\n/, bric_soap($module, 'list_ids'));
+    # use bric_soap
+    if ($get_xml) {
+        my @ids = split(/\n/, bric_soap($module, 'list_ids'));
 
-    while (my @slice = splice(@ids, 0, 20)) {
-        my $out = bric_soap($module, 'export', @slice);
+        while (my @slice = splice(@ids, 0, 20)) {
+            my $out = bric_soap($module, 'export', @slice);
 
-        if (DEBUG) {
-            my $path = catfile($temp_path, "$module\_$i\.xml");
-            my $wh = IO::File->new(">$path") or
-              croak("Can't write to '$path': $!");
-            $wh->print($out);
-            $wh->close;
-            $i++;
+            if (DEBUG) {
+                my $path = catfile($temp_path, "$module\_$i\.xml");
+                my $wh = IO::File->new(">$path") or
+                  croak("Can't write to '$path': $!");
+                $wh->print($out);
+                $wh->close;
+                $i++;
+            }
+
+            if ($set) {
+                push @objs, $pkg->new(xml => $out, dataset => $set);
+            } else {
+                push @objs, $pkg->new(xml => $out);
+
+            }
         }
+    } else {
+        # build a list of xml files to grab
+        opendir(DIR, $xml_path) or die("Can't open directory '$xml_path': $!");
+        my @files = grep /$module.*\.xml$/, readdir(DIR);
+        closedir(DIR) or die("Can't closedir '$xml_path': $!");
 
-        if ($set) {
-            push @objs, $pkg->new(xml => $out, dataset => $set);
-        } else {
-            push @objs, $pkg->new(xml => $out);
+        for (@files) {
+            my $out = catfile($xml_path, $_);
+            if ($set) {
+                push @objs, $pkg->new(xml => $out, dataset => $set);
+            } else {
+                push @objs, $pkg->new(xml => $out);
 
+            }
         }
-
     }
 
     return @objs;

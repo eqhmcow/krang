@@ -4,32 +4,23 @@ use warnings;
 use Carp qw(croak);
 use Config::ApacheFormat;
 use Data::Dumper;
+use DBI;
 use File::Path qw(rmtree);
 use File::Spec::Functions qw(catdir catfile);
 use IO::File;
 use IPC::Run qw(run);
 
+our $db;
 BEGIN {
-    # check for Bricolage environment vars
-    for (qw/PASSWORD ROOT SERVER USERNAME/) {
-        my $var = "BRICOLAGE_$_";
-        eval "use Test::More skip_all => '$var is not defined.'"
-          unless exists $ENV{$var};
-    }
+    # Must have DBD::Pg and environment var BRICOLAGE_DB must be defined to
+    # obtain contributor info
+    $db = $ENV{BRICOLAGE_DB} || '';
+    eval "use Test::More skip_all => 'The BRICOLAGE_DB environment var must" .
+      " be defined.'" unless $db;
 
-    ##### Running Bric Check #####
-    # make sure we've got Bric
-    unshift(@INC, catdir($ENV{BRICOLAGE_ROOT}, "lib"));
-    eval "use Bric";
-    eval "use Test::More skip_all => 'Cannot Load Bricolage'" if $@;
-
-    # assume it's running if the pid_file is present, can't call kill do verify
-    # if we don't own the process :(.
-    my $conf = Config::ApacheFormat->new();
-    $conf->read(catfile($ENV{BRICOLAGE_ROOT}, 'conf', 'httpd.conf'));
-    eval "use Test::More skip_all => 'Bricolage is not running';"
-      unless -e $conf->get("PidFile");
-    ##### Running Bric Check #####
+    eval "use DBD::Pg";
+    eval "use Test::More skip_all => 'DBD::Pg required for contributor info'"
+      if $@;
 
     # ElementSet has no Krang module dependecies...:)
     require Krang::BricLoader::ElementSet;
@@ -99,15 +90,23 @@ $set->add(object => $_) for @categories;
 
 
 # add media
+# non-extant category here will force addition of new category
+my $cat_count = Krang::BricLoader::Category::count;
 my $media_path = catfile(KrangRoot, 't', 'bricloader', 'lamedia.xml');
 eval {@media = Krang::BricLoader::Media->new(dataset => $set,
                                              path => $media_path);};
 is($@, '', 'Media constructor did not croak :)');
 $set->add(object => $_) for @media;
 
+# verify count has increased by one
+is(Krang::BricLoader::Category::count, $cat_count + 1,
+   'New category count confirmed.');
 
-# add contributors
-$set->add(object => $_) for Krang::BricLoader::Contrib->load;
+# get the contributors
+my $dbh = DBI->connect("dbi:Pg:dbname=$db", undef, undef, {RaiseError => 1}) or
+  die "Couldn't connect to '$db': " . $DBI::errstr;
+$set->add(object => $_) for Krang::BricLoader::Contrib->load($dbh);
+$dbh->disconnect;
 
 
 # add templates

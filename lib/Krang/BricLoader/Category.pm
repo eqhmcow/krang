@@ -215,6 +215,9 @@ sub _build_url {
     $self->{url} =~ s#/+#/#g;
 }
 
+# returns the next id to be assigned to a category == current # of categories
+sub count {$id;}
+
 sub _fixup_object {
     my $self = shift;
     my $path = $self->{path};

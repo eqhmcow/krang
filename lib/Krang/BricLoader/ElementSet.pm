@@ -69,10 +69,15 @@ configuration file listing the top-level elements.
 
 sub create {
     my ($pkg, %args) = @_;
+    my $dir = $args{dir};
     my $path = $args{path};
     my $xml = $args{xml};
     $set = $args{set};
     $verbose = $args{verbosity} || 0;
+
+    # DEBUG
+#    require Data::Dumper;
+#    print STDERR Data::Dumper->Dump([\%args],['args']), "\n";
 
     # create dir for element set if it doesn't already exist
     $set_dir = catdir($ENV{KRANG_ROOT}, 'element_lib', $set);
@@ -83,7 +88,7 @@ sub create {
     die("Unable to create dir '$set_dir': $@") if $@;
 
     # retrieve XML and store is in global $doc
-    $xml_doc = $path ? get_xml($path) : $xml;
+    $xml_doc = $path ? get_xml($path) : ( $dir ? cat_docs($dir) : $xml);
 
     build_set();
 }
@@ -91,7 +96,7 @@ sub create {
 
 # create an element set from a Bricolage element tree
 sub build_set {
-    my $elements = parse_elements();
+    my $elements = parse_elements(@_);
 
     # add info to create an empty category element unless it's there...
     $elements->{category} = {top_level => 1, type => 'Insets'}
@@ -106,6 +111,37 @@ sub build_set {
 }
 
 
+# concatenate a set of xml docs into one, assuming they're all well-formed
+sub cat_docs {
+    my $dir = shift;
+    my ($doc, @lines);
+
+    opendir(DIR, $dir) or croak("Can't open directory '$dir': $!");
+    my @files = grep /element_\d+\.xml$/i, readdir(DIR);
+    closedir(DIR) or croak("Can't close directory '$dir': $!");
+
+    croak("No files matching the regex, " . '/element_\d+\.xml/' . ", found.")
+      unless @files;
+
+    my $first = 1;
+    for my $f(@files) {
+        my $file = catfile($dir, $f);
+        my $fh = IO::File->new("<$file") or croak("Couldn't open '$file': $!");
+        while (<$fh>) {
+            next if $_ =~ m#</assets>#;
+            unless ($first) {
+                next if $_ =~ m#<(?:assets|\?xml)#;
+            }
+            $doc .= $_;
+        }
+        $fh->close;
+        $first = 0 if $first;
+    }
+
+    $doc .= '</assets>';
+    return $doc;
+}
+
 # create a class module for a Bricolage container class
 sub create_class {
     my ($ename, $data) = @_;
@@ -119,7 +155,7 @@ sub create_class {
     # compute module name
     my $module = "${set}::${ename}";
 
-    print STDERR "Creating $module...\n" if $verbose;
+#    print STDERR "Creating $module...\n" if $verbose;
 
     # collect list of subelement declarations in @sub
     my @sub;
@@ -337,11 +373,13 @@ sub parse_elements {
 # process name for use as an identifier
 sub process_name {
     my $name = shift;
-    $name = lc($name);
+
+    $name =~ tr/A-Z/a-z/;
     $name =~ s/\s+/_/g;
     $name =~ s/-/_/g;
     $name =~ s/[^\w]/_/g;
     $name =~ s/_+/_/g;
+
     return $name;
 }
 
