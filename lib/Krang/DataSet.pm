@@ -548,8 +548,8 @@ sub import_all {
     my @failed;
 
     # process classes in an order least likely to cause backrefs
-    foreach my $class (qw(Krang::Contrib Krang::Site Krang::Category)) {
-                                             # Krang::Media Krang::Story)) {
+    foreach my $class (qw(Krang::Contrib Krang::Site Krang::Category
+                          Krang::Media )) { #Krang::Story)) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};
@@ -636,13 +636,21 @@ sub _deserialize {
     return $obj;
 }
 
-=item C<< $object = $set->map_object(class => "Krang::Foo", id => $id) >>
+=item C<< $full_path = $set->map_file(path => $path) >>
 
-This call is used during import to return the mapping from an ID in
-the import data to an object on the target system.  This method will
-croak if called outside of an import_all() run or if the object can't
-be found in the data set.  Call map_id() if you don't need the full
-object.
+Get the full path to a file within a set previously added with add().
+
+=cut
+
+sub map_file {
+    my ($self, %arg) = @_;
+    my $path = $arg{path};
+    croak("Missing required 'path' arg!") unless $path;
+    my $full_path = catfile($self->{dir}, $path);
+    croak("Unable to find file '$path' in the data set.")
+      unless -e $full_path;
+    return $full_path;
+}
 
 =back
 
@@ -706,11 +714,11 @@ C<no_update> is false then the method should make an effort to use the
 data to update an existing record if creating it as a new record would
 result in an invalid duplicate.
 
-This call must use C<< $set->map_id() >> (or C<< $set->map_object() >>)
-to request ID mappings for linked objects (the same ones the object
-calls $set->add() on during serialize_xml()).  For example,
-Krang::Media would use this call to translate from the category_id in
-the XML file into the ID to be used by the media object:
+This call must use C<< $set->map_id() >> to request ID mappings for
+linked objects (the same ones the object calls $set->add() on during
+serialize_xml()).  For example, Krang::Media would use this call to
+translate from the category_id in the XML file into the ID to be used
+by the media object:
 
   $category = $set->get_object(class => "Krang::Category",
                                id    => $xml->{category_id});

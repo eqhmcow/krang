@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use Krang::DB qw(dbh);
 use Krang::Conf qw(KrangRoot);
-use Krang::Log qw(debug);
+use Krang::Log qw(debug assert ASSERT);
 use Krang::Session qw(%session);
 use Krang::Contrib;
 use Krang::Category;
@@ -684,6 +684,8 @@ sub find {
                          version => 1,
                          title => 1,
                          title_like => 1,
+                         url => 1,
+                         url_like => 1,
                          category_id => 1,
                          below_category_id => 1,
                          media_type_id => 1,
@@ -1247,6 +1249,86 @@ sub serialize_xml {
 
     # all done
     $writer->endTag('media');
+}
+
+
+=item C<< $media = Krang::Media->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming media has the same URL as an existing media then an
+update will occur, unless no_update is set.
+
+Note that the creation_date, version, published_version and
+publish_date fields are ignored when importing media.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # divide FIELDS into simple and complex groups
+    my (%complex, %simple);
+    @complex{qw(media_id filename published_date creation_date checked_out_by
+                version published_version category_id)} = ();
+    %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
+    
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml, 
+                                  suppressempty => 1);
+
+    # is there an existing object?
+    my ($media) = Krang::Media->find(url => $data->{url});
+    my $update = 0;
+    if ($media) {
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A media object with the url '$data->{url}' already ".
+                       "exists and no_update is set.")
+            if $no_update;
+
+        # update simple fields
+        $media->{$_} = $data->{$_} for keys %simple;
+        
+        # set the update flag
+        $update = 1;
+
+    } else {
+        # create a new media object with category and simple fields
+        $media = Krang::Media->new(category_id => 
+                                   $set->map_id(class => "Krang::Category",
+                                                id    => $data->{category_id}),
+                                   (map { ($_,$data->{$_}) } keys %simple));
+    }
+        
+    # upload the file
+    my $path = "media_$data->{media_id}/$data->{filename}";
+    my $full_path = $set->map_file(path => $path);
+    my $fh = IO::File->new($full_path) or 
+      croak("Unable to open $full_path: $!");
+    $media->upload_file(filehandle => $fh,
+                        filename   => $data->{filename});
+    
+    # get hash of media type names to ids
+    my %media_types = reverse Krang::Pref->get('media_type');
+    
+    # get ids for media types
+    Krang::DataSet::DeserializationFailed->throw(
+             "Unknown media_type '$data->{media_type}'.")
+        unless $media_types{$data->{media_type}};
+    
+    # add media type
+    $media->media_type_id($media_types{$data->{media_type}});
+        
+    # save changes
+    $media->save();
+
+    # make sure there's a file on the other end
+    assert($media->file_path and -e $media->file_path,
+           "Media saved successfully") if ASSERT;
+
+    return $media;
 }
 
 

@@ -131,8 +131,8 @@ END { unlink($path3) if -e $path3 and not $DEBUG };
 # create 10 stories
 my $count = Krang::Story->find(count => 1);
 my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');
-system("bin/krang_floodfill --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --undo_script $undo 2>&1 /dev/null");
-END { system("$undo 2>&1 /dev/null"); }
+system("bin/krang_floodfill --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --undo_script $undo > /dev/null 2>&1");
+END { system("$undo > /dev/null 2>&1"); }
 is(Krang::Story->find(count => 1), $count + 10);
 
 # see if we can serialize them
@@ -140,7 +140,7 @@ my @stories = Krang::Story->find(limit    => 10,
                                  offset   => $count, 
                                  order_by => 'story_id');
 
-# create a data set containing the story
+# create a data set containing the stories
 my $set10 = Krang::DataSet->new();
 isa_ok($set10, 'Krang::DataSet');
 $set10->add(object => $_) for @stories;
@@ -150,7 +150,63 @@ $set10->write(path => $path10);
 ok(-e $path10 and -s $path10);
 END { unlink($path10) if -e $path10 and not $DEBUG };
 
+# try deleting a site a loading it from a data set
+my $lsite = Krang::Site->new(preview_url  => 'preview.lazarus.com',
+                            url          => 'lazarus.com',
+                            publish_path => '/tmp/lazarus',
+                            preview_path => '/tmp/lazarus');
+$lsite->save();
 
+my $lset = Krang::DataSet->new();
+$lset->add(object => $lsite);
 
+# it lives, yes?
+my ($found) = Krang::Site->find(url => 'lazarus.com', count => 1);
+ok($found);
+
+# this should fail
+eval { $lset->import_all(no_update => 1) };
+ok($@);
+
+# it dies
+$lsite->delete();
+($found) = Krang::Site->find(url => 'lazarus.com', count => 1);
+ok(not $found);
+
+# the resurection
+$lset->import_all();
+($found) = Krang::Site->find(url => 'lazarus.com', count => 1);
+ok($found);
+END { (Krang::Site->find(url => 'lazarus.com'))[0]->delete() };
+
+# try the same with media
+$filepath = catfile(KrangRoot,'t','media','krang.jpg');
+$fh = new FileHandle $filepath;
+my $lmedia = Krang::Media->new(title         => 'test media object', 
+                               category_id   => $category->category_id, 
+                               media_type_id => 1,
+                               filename      => 'lazarus.jpg', 
+                               filehandle    => $fh);
+$lmedia->save();
+$lset->add(object => $lmedia);
+
+# it lives, yes?
+($found) = Krang::Media->find(url_like => '%lazarus.jpg', count => 1);
+ok($found);
+
+# this should fail
+eval { $lset->import_all(no_update => 1) };
+ok($@);
+
+# it dies
+$lmedia->delete();
+($found) = Krang::Media->find(url_like => '%lazarus.jpg', count => 1);
+ok(not $found);
+
+# the resurection
+$lset->import_all();
+($found) = Krang::Media->find(url_like => '%lazarus.jpg', count => 1);
+ok($found);
+END { (Krang::Media->find(url_like => '%lazarus.jpg'))[0]->delete() }
 
 
