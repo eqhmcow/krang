@@ -505,22 +505,26 @@ sub publish_story {
             };
 
             if (my $err = $@) {
-                if ($skip_callback && ref $err) {
-                    if ($@->isa('Krang::Publisher::FileWriteError')) {
-                        $skip_callback->(object => $object,
-                                         error  => 'output_error',
-                                         path   => $@->destination,
-                                         error_msg => $@->system_error);
+                if ($skip_callback) {
+                    if (ref $err) {
+                        if ($@->isa('Krang::Publisher::FileWriteError')) {
+                            $skip_callback->(object => $object,
+                                             error  => 'output_error',
+                                             path   => $err->destination,
+                                             error_msg => $err->system_error);
+                        } else {
+                            # call generic skip_callback.
+                            $skip_callback->(object => $object, error => $err->isa);
+                        }
                     } else {
-                        # call generic skip_callback.
-                        $skip_callback->(object => $object, error => $@->isa);
+                        # call generic skip_callback with the error as string.
+                        $skip_callback->(object => $object, error => $err);
                     }
                 }
                 # the skip_callback is not used by the CGIs, re-propegate the error so the UI
                 # can handle it.
-                # Other concern is that the error is not an object.
                 else {
-                    die ($@);
+                    die ($err);
                 }
             }
 

@@ -7,6 +7,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in the error-handling section of Krang::Publisher that was
+hiding the real cause of errors during publish.  [Peter]
+
+=item *
+
 Fixed broken --republish_only flag in bin/krang_publish. [Peter]
 
 =item *
