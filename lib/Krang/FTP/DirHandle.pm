@@ -4,7 +4,6 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Conf;
 use Krang::Category;
-use Krang::Site;
 use Krang::Template;
 use Krang::Media;
 use Net::FTPServer::DirHandle;
@@ -33,10 +32,10 @@ required methods.  This class is used internally by Krang::FTP::Server.
 
 =over
 
-=item Krang::FTP::DirHandle->new($ftps, [$pathname, $type, $site_id, $category_id])
+=item Krang::FTP::DirHandle->new($ftps, [$pathname, $type, $category_id])
 
 Creates a new Krang::FTP::DirHandle object.  Requires a Krang::FTP::Server
-object as its first parameter.  Optionally takes a pathname, is_media, site_id, 
+object as its first parameter.  Optionally takes a pathname, is_media,  
 and category_id. Type must correspond with media or template, defaults to template. If not supplied the pathname defaults to "/".
 
 =cut
@@ -46,15 +45,13 @@ sub new {
     my $ftps        = shift;       # FTP server object.
     my $pathname    = shift || "/";
     my $type        = shift;
-    my $site_id     = shift; 
     my $category_id = shift;
 
     # create object
     my $self = Net::FTPServer::DirHandle->new($ftps, $pathname);
     bless $self, $class;
   
-    # set site and category ids, default to dummy value.  
-    $self->{site_id}       = defined $site_id       ? $site_id       : -1;
+    # set category id, default to dummy value.  
     $self->{category_id} = defined $category_id ? $category_id : -1;
    
     # set type
@@ -77,7 +74,6 @@ that, undef is returned.
 sub get {
     my $self        = shift;
     my $filename    = shift;
-    my $site_id     = $self->{site_id};
     my $category_id = $self->{category_id};
     my $type = $self->{type} || '';
     
@@ -90,7 +86,6 @@ sub get {
             return new Krang::FTP::FileHandle(  $self->{ftps},
                                                 $media[0],
                                                 $type,
-                                                $site_id,
                                                 $category_id
                                                 ); 
         }         
@@ -103,42 +98,36 @@ sub get {
             return new Krang::FTP::FileHandle(  $self->{ftps},
                                                 $template[0],
                                                 $type,
-                                                $site_id,
                                                 $category_id
                                                 );
         } 
     } elsif ( ($filename eq 'template') || ($filename eq 'media') ) {
     # $type is not defined, and they are asking for template or media
-    # they want to see sites under template or media
+    # they want to see sites (top level cats) under template or media
         $type = $filename;
         return Krang::FTP::DirHandle->new( $self->{ftps},
                                             $self->pathname . $filename . "/",
                                             $type,
-                                            $site_id,
-                                            $category_id,
+                                            $category_id
                                            );
     }
-
-    if ( $category_id == -1) {
-        my @sites = Krang::Site->find( url => $filename);
+   
+    if ($category_id == -1) { 
+        my @categories = Krang::Category->find( url => $filename.'/' );
 
         return Krang::FTP::DirHandle->new( $self->{ftps},
-                                            $self->pathname . $filename . "/",
-                                            $type,
-                                            $sites[0]->site_id,
-                                            $category_id,
-                                           ) if $sites[0];
+                                           $self->pathname . $filename . "/",
+                                           $type,
+                                           $categories[0]->category_id,
+                                          ) if $categories[0];
     } else {
-        # if no template/media found with this $filename, look for dirs 
-        my @cats = Krang::Category->find(   parent_id => $category_id,
-                                            dir => $filename );
-    
+        my @categories = Krang::Category->find( dir => $filename,
+                                                parent_id => $category_id );
         return Krang::FTP::DirHandle->new( $self->{ftps},
-                                            $self->pathname . $filename . "/",
-                                            $type,
-                                            $site_id,
-                                            $cats[0]->category_id,
-                                           ) if $cats[0]; 
+                                           $self->pathname . $filename . "/",
+                                           $type,
+                                           $categories[0]->category_id,
+                                          ) if $categories[0];
     }
 
     # if no matching media/template or dir
@@ -158,7 +147,6 @@ sub open {
     my $self        = shift;
     my $filename    = shift;
     my $mode        = shift;
-    my $site_id     = $self->{site_id};
     my $category_id = $self->{category_id};
     my $type = $self->{type};
 
@@ -175,7 +163,6 @@ sub open {
             return new Krang::FTP::FileHandle(  $self->{ftps},
                                                 $media[0],
                                                 $type,
-                                                $site_id,
                                                 $category_id
                                                 );
         }
@@ -188,7 +175,6 @@ sub open {
             return new Krang::FTP::FileHandle(  $self->{ftps},
                                                 $template[0],
                                                 $type,
-                                                $site_id,
                                                 $category_id
                                                 );
         }
@@ -212,7 +198,6 @@ the wildcard then a reference to an empty array is returned.
 sub list {
     my $self        = shift;
     my $wildcard    = shift;
-    my $site_id     = $self->{site_id};
     my $category_id = $self->{category_id};
     my $type        = $self->{type};
     my $ftps        = $self->{ftps};
@@ -224,39 +209,34 @@ sub list {
     if ($wildcard and $wildcard ne '*') {
         $like = $ftps->wildcard_to_sql_like($wildcard);
     }
+    $like = '%' if not $like;
 
     # if no $type, return 'media' and 'template'
     if (not $type) {
         @results = ( ['media', Krang::FTP::DirHandle->new( $self->{ftps}, '/media', 'media') ], ['template', Krang::FTP::DirHandle->new( $self->{ftps}, '/template', 'template') ] );
         return \@results;
-    } elsif ( $site_id == -1 ) { # if site not defined, just return sites
-        my @sites = Krang::Site->find( url_like => ($like || '%'), order_by => 'url' );
-        foreach my $site ( @sites ) {
+    } elsif ( $category_id == -1 ) { # if category not defined, return top level cats
+        my @categories = Krang::Category->find( url_like => $like, order_by => 'url', parent_id => undef );
+        foreach my $cat ( @categories ) {
             my $dirh = Krang::FTP::DirHandle->new( $self->{ftps},
-                                                   "/$type/" . $site->url() . "/",
+                                                   "/$type/" . $cat->url() ,
                                                     $type,
-                                                    $site->site_id() );
-            push @results, [ $site->url, $dirh ];
+                                                    $cat->category_id() );
+            my $url = $cat->url;
+            chop $url;
+            push @results, [ $url, $dirh ];
         }
         return \@results;
     } 
     
-    my @categories;
     # get subdirectories.
-    if ($category_id != -1) {
-        @categories = Krang::Category->find(    
-                                                parent_id => $category_id );
-    } else {
-        @categories = Krang::Category->find( parent_id => undef,   
-                                            site_id => $site_id );
-    }
+    my @categories = Krang::Category->find( parent_id => $category_id );   
     
     # create dirhandles
     foreach my $cat (@categories) {
         my $dirh = new Krang::FTP::DirHandle (  $self->{ftps},
                                                 $self->pathname."/".$cat->dir,
                                                 $type,
-                                                $site_id,
                                                 $cat->category_id );
         push @results, [ $cat->dir, $dirh ];
     }
@@ -264,24 +244,22 @@ sub list {
     if ($category_id != -1) { 
         # get templates or media 
         if ($type eq 'media') {
-            my @media = Krang::Media->find( filename_like => ($like || '%'),
+            my @media = Krang::Media->find( filename_like => $like,
                                             category_id => $category_id );
             foreach my $media (@media) {
                 my $fileh = new Krang::FTP::FileHandle (    $self->{ftps},
                                                             $media,
                                                             $type,
-                                                            $site_id,
                                                             $category_id );
                 push @results, [ $media->filename, $fileh ];
             }
         } else {
-            my @template = Krang::Template->find(   filename_like => ($like || '%'),
+            my @template = Krang::Template->find(   filename_like => $like,
                                                     category_id => $category_id );
             foreach my $template (@template) {
                 my $fileh = new Krang::FTP::FileHandle (    $self->{ftps},
                                                             $template,
                                                             $type,
-                                                            $site_id,
                                                             $category_id );
                 push @results, [ $template->filename, $fileh ];
             }
@@ -321,20 +299,20 @@ For the root dir it returns itself.
 sub parent {
     my $self = shift;
     my $category_id = $self->{category_id};
-    my $site_id = $self->{site_id};
     my $type = $self->{type};
     my $dirh;
 
     return $self if $self->is_root;
 
     # get parent category_id for category
-    my @cat = Krang::Category->find( category_id => $category_id );
-  
+    my @cats;
+    @cats = Krang::Category->find( category_id => $category_id );
     $dirh = $self->SUPER::parent;
  
-    if (@cat) { 
+    if ($cats[0]) { 
         # get a new directory handle and change category_id to parent's
-        $dirh->{category_id} = $cat[0]->parent_id();
+        $dirh->{category_id} = $cats[0]->parent_id();
+        $dirh->{type} = $type;
     } 
    
     return bless $dirh, ref $self; 
@@ -364,11 +342,10 @@ In this case all of these values are fixed for all categories: ( 'd',
 
 sub status {
     my $self        = shift;
-    my $site_id       = $self->{site_id} || -1;
     my $category_id = $self->{category_id} || -1;
     my $type = $self->{type} || -1;
 
-    print STDERR __PACKAGE__, "::status() : $type : $site_id : $category_id \n";
+    print STDERR __PACKAGE__, "::status() : $type : $category_id \n";
 
     return ( 'd', 0777, 2, "nobody", "nobody", 0, 0 );
 }
