@@ -541,38 +541,34 @@ sub fill_template {
     my $publisher = $args{publisher};
     my $element   = $args{element};
 
-    my %child_loops  = (); # item 2 from POD
-    my @element_loop = (); # item 3 from POD.
-
-    # iterate over children, building out @element_loop.
-    foreach ($element->children()) {
-        my %el = ('is_' . $_->name() => 1,
-                  $_->name()         => $_->class->publish(
-                                                           element => $_,
-                                                           publisher => $publisher
-                                                          )
-                  );
-        push @element_loop, \%el;
-    }
-
+    my @element_children = $element->children();
 
     # build out params going to the template.
     my %params  = (
-                   $element->name() => $element->data(),
                    title            => $publisher->story()->title(),
                    page_break       => $publisher->page_break(),
-                   element_loop     => \@element_loop
+
+                   $element->name() => $element->data(),
+                   $element->name() . '_total' => scalar(@element_children)
                   );
 
 
-#    foreach (keys %child_loops) {
-#        # loops for each child type
-#        my $loopname  = $_ . '_loop';
-#        my $totalname = $_ . '_total'; 
-#        $params{$loopname}  = $child_loops{$_};
-#        $params{$totalname} = @{$child_loops{$_}};
-#    }
+    # iterate over the children of the element - 
+    # This process creates @element_loop, and also creates the various
+    # $child->name() _loop loops.
+    foreach (@element_children) {
+        my $name = $_->name();
+        my $html = $_->class->publish(element => $_, publisher => $publisher);
+        my $loop_idx = 1;
 
+        if (exists($params{$name . '_loop'})) { 
+            $loop_idx = scalar(@{$params{$name . '_loop'}}) + 1;
+        }
+
+        push @{$params{element_loop}}, {"is_$name" => 1, $name => $html};
+        push @{$params{$name . '_loop'}}, {$name . '_count' => $loop_idx,
+                                           $name => $html};
+    }
 
     $tmpl->param(%params);
 }
