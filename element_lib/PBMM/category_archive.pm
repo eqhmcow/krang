@@ -73,9 +73,11 @@ sub fill_template {
     foreach my $s (@s) {
         next if ($s->story_id eq $story->story_id);
 
-        my $ptitle = $s->element->child('promo_title')->data || $story->title;
+        my $ptitle = $s->element->child('promo_title')->data || $s->title;
         my $pteaser = $s->element->child('promo_teaser')->data || '';
         my $image = $s->element->child('promo_image_small') || '';
+        my $promo_image_width = $image->data->width if $image;
+        my $promo_image_height = $image->data->height if $image;
         $image = $image->template_data(publisher => $publisher) if $image;
         my $byline = $s->element->child('byline') ? $s->element->child('byline')->data : '';
         my $source = $s->element->child('source') ? $s->element->child('source')->data : '';
@@ -137,10 +139,12 @@ sub fill_template {
                             promo_teaser => $pteaser,
                             promo_title => $ptitle,
                             promo_image => $image,
+                            promo_image_width => $promo_image_width,
+                            promo_image_height => $promo_image_height,
                             byline => $byline,
                             source => $source,
                             enhanced_content => $enhanced_content,
-                            contrib_loop => \@contributors,
+                            contrib_loop => [@contributors],
                             cover_date => $s->cover_date->strftime('%b %e, %Y') } ); 
 
         if ($story_count == 10) {
