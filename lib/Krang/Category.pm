@@ -499,6 +499,9 @@ sub save {
     my @save_fields = grep {$_ ne 'category_id' && $_ ne 'element'}
       keys %category_cols;
 
+    # set flag if url must change; only applies to objects after first save...
+    my $new_url = ($id && ($self->{dir} ne $self->{_old_dir})) ? 1 : 0;
+
     # check for duplicates
     my $category_id = $self->duplicate_check();
     croak(__PACKAGE__ . "->save(): 'dir' is a duplicate of category " .
@@ -516,7 +519,7 @@ sub save {
     # the object has already been saved once if $id
     if ($id) {
         # recalculate url if we have a new dir...
-        if ($self->{dir} ne $self->{_old_dir}) {
+        if ($new_url) {
             if ($self->{_old_dir} eq '/') {
                 $self->{url} = $self->{url} . $self->{dir};
             } else {
@@ -564,7 +567,7 @@ sub save {
     $self->{category_id} = $dbh->{mysql_insertid} unless $id;
 
     # update child URLs if url has changed
-    if ($id && ($self->{url} ne $self->{_old_url})) {
+    if ($new_url) {
         $self->update_child_urls();
         $self->{_old_dir} = $self->{dir};
         $self->{_old_url} = $self->{url};
@@ -623,6 +626,7 @@ SQL
 
     # lock the table to prevent checkouts while we're doing the update
     eval {
+        # 'url' field not implemented yet for media or stories
         for my $table(qw/template/) { #media story_category
             $dbh->do("LOCK TABLES $table WRITE");
 
@@ -648,7 +652,7 @@ SQL
     if (my $eval_err = $@) {
         # make sure to unlock the table
         $dbh->do("UNLOCK TABLES");
-        croak(__PACKAGE__ . "->update_child_urls(): $@");
+        croak(__PACKAGE__ . "->update_child_urls(): $eval_err");
     }
 
     return 1;
