@@ -495,33 +495,33 @@ sub ancestors {
 }
 
 
-=item * @categories = Krang::Category->decendants()
+=item * @categories = Krang::Category->descendants()
 
-=item * @category_ids = Krang::Category->decendants( ids_only => 1 )
+=item * @category_ids = Krang::Category->descendants( ids_only => 1 )
 
 
 
 =cut
 
-sub decendants {
+sub descendants {
     my $self = shift;
     my %args = @_;
     my $ids_only = $args{ids_only} ? 1 : 0;
-    my @decendants;
+    my @descendants;
     my @children_found = $self->children;
 
     return if not $children_found[0];
 
-    $ids_only ? (push @decendants, (map { $_->category_id } @children_found)) :
-      (push @decendants, @children_found);
+    $ids_only ? (push @descendants, (map { $_->category_id } @children_found)) :
+      (push @descendants, @children_found);
 
     foreach my $child (@children_found) {
         my @c_cs = $child->children();
-        $ids_only ? (push @decendants, (map { $_->category_id } @c_cs) ) :
-          (push @decendants, @c_cs);
+        $ids_only ? (push @descendants, (map { $_->category_id } @c_cs) ) :
+          (push @descendants, @c_cs);
         push @children_found, @c_cs;
     }
-    return @decendants;
+    return @descendants;
 }
 
 

@@ -168,13 +168,13 @@ foreach my $ancestor (@ancestors) {
 
 # test for decendant ids
 #####################
-my @decendants = $parent->decendants(ids_only => 1);
-is( join(' ', @decendants), $category->category_id.' '.$category3->category_id.' '.$category4->category_id.' '.$category5->category_id.' '.$subcat->category_id);
+my @descendants = $parent->descendants(ids_only => 1);
+is( join(' ', @descendants), $category->category_id.' '.$category3->category_id.' '.$category4->category_id.' '.$category5->category_id.' '.$subcat->category_id);
 
 # test for decendant objects
 ############################
-@decendants = $parent->decendants();
-foreach my $dec (@decendants) {
+@descendants = $parent->descendants();
+foreach my $dec (@descendants) {
     isa_ok($dec, 'Krang::Category');
 }
 

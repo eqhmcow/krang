@@ -922,7 +922,7 @@ sub find {
         # handle below_category_id
         if ($key eq 'below_category_id') {
             my ($cat) = Krang::Category->find(category_id => $value);
-            my @ids = ($value, $cat->decendants( ids_only => 1 ));
+            my @ids = ($value, $cat->descendants( ids_only => 1 ));
             # need to bring in story_category
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');

@@ -134,11 +134,6 @@ Add, edit or delete jobs.
 Add, edit or delete desks.
 
 
-=item * Manage system preferences
-
-Add, edit or delete system-wide preference settings.
-
-
 =back
 
 

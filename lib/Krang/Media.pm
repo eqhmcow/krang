@@ -763,12 +763,12 @@ not $valid_params{$param};
     # add ids of category and cats below if below_category_id is passed in
     if ($args{'below_category_id'}) {
         my $specd_cat = (Krang::Category->find(category_id => $args{below_category_id}))[0];
-        my @decendants = $specd_cat->decendants( ids_only => 1 );
-        unshift @decendants, $specd_cat->category_id;
+        my @descendants = $specd_cat->descendants( ids_only => 1 );
+        unshift @descendants, $specd_cat->category_id;
 
         $where_string .= " and " if $where_string;
         $where_string .= "(".
-          join(" OR ", map { "category_id = $_" } @decendants) .")";
+          join(" OR ", map { "category_id = $_" } @descendants) .")";
  
     }
 

@@ -28,7 +28,7 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
     use Krang::Alert;
     
     # add new alert scenario - user 1 will be notified when any new stary is 
-    # created in category 3 (or its decendants)
+    # created in category 3 (or its descendants)
     my $alert = Krang::Alert->new(  user_id => '1',
                                     action => 'new',
                                     category_id => '3' ); 

@@ -31,7 +31,6 @@ Krang::Group - Interface to manage Krang permissions
                                  admin_categories    => 1,
                                  admin_jobs          => 1,
                                  admin_desks         => 1,
-                                 admin_prefs         => 1,
                                  asset_story         => 'edit',
                                  asset_media         => 'read-only',
                                  asset_template      => 'hide' );
@@ -76,7 +75,6 @@ Krang::Group - Interface to manage Krang permissions
   my $admin_categories = $group->admin_categories();
   my $admin_jobs       = $group->admin_jobs();
   my $admin_desks      = $group->admin_desks();
-  my $admin_prefs      = $group->admin_prefs();
   my $asset_story      = $group->asset_story();
   my $asset_media      = $group->asset_media();
   my $asset_template   = $group->asset_template();
@@ -130,7 +128,6 @@ use constant FIELDS => qw( name
                            admin_categories
                            admin_jobs
                            admin_desks
-                           admin_prefs
                            asset_story
                            asset_media
                            asset_template );
@@ -173,7 +170,6 @@ specified using Boolean (1 or 0) values:
   * admin_categories
   * admin_jobs
   * admin_desks
-  * admin_prefs
 
 =cut
 
@@ -193,7 +189,6 @@ sub init {
                     admin_categories    => 0,
                     admin_jobs          => 0,
                     admin_desks         => 0,
-                    admin_prefs         => 0,
                     asset_story         => 'edit',
                     asset_media         => 'edit',
                     asset_template      => 'edit',
@@ -498,6 +493,8 @@ sub save {
         $desks_sth->execute($group_id, $desk_id, $permission_type);
     }
 
+    # Rebuild category permissions cache for this group
+    $self->rebuild_group_permissions_cache();
 }
 
 
@@ -569,9 +566,9 @@ sub add_catagory_permissions {
                                             where category_id=? and group_id=?
                                             /);
 
-    # Insert into cache table for each category/group (Replace in update case)
+    # Insert into cache table for each category/group
     my $sth_set_perm = $dbh->prepare(qq/
-                                     replace into category_group_permission_cache
+                                     insert into category_group_permission_cache
                                      (category_id, group_id, may_see, may_edit) values (?,?,?,?)
                                      /);
 
@@ -711,6 +708,66 @@ sub rebuild_catagory_cache_process_category {
     my @children = $category->children();
     foreach my $category (@children) {
         $self->rebuild_catagory_cache_process_category($category);
+    }
+}
+
+
+# Re-build category permissions cache for a particular group.
+# Used when a group is saved (added or edited)
+sub rebuild_group_permissions_cache {
+    my $self = shift;
+
+    # Get category permissions -- we're going to be passing this around
+    my %category_perms = $self->categories();
+
+    # Get $dbh -- we're passing this around, too
+    my $dbh = dbh();
+
+    # Traverse category hierarchy, selectively applying permissions as needed
+    my @root_cats = Krang::Category->find(parent_id=>undef);
+    foreach my $category (@root_cats) {
+        $self->rebuild_group_permissions_cache_process_category($category, \%category_perms, $dbh);
+    }
+}
+
+
+# Traverse category hierarchy, selectively applying permissions as needed
+sub rebuild_group_permissions_cache_process_category {
+    my $self = shift;
+    my ($category, $category_perms, $dbh) = @_;
+
+    my $category_id = $category->category_id();
+
+    # Is this category specified in the permissions table?
+    if (my $permission_type = $category_perms->{$category_id}) {
+        my $group_id = $self->group_id();
+
+        # Assemble list of category IDs to update -- all descendants
+        my @update_categories = ( $category_id, $category->descendants(ids_only=>1) );
+        my $update_categories_str = join(",", @update_categories);
+
+        # Set up permissions
+        my ($may_edit, $may_see) = (1, 1);
+        $may_edit = 0 unless ($permission_type eq "edit");
+        $may_see  = 0 if ($permission_type eq "hide");
+
+        my $update_sql = qq(
+                            update category_group_permission_cache
+                            set may_see=?, may_edit=?
+                            where group_id=? AND category_id IN ($update_categories_str)
+                           );
+
+        #print STDERR "update_sql (category_id => $category_id):\n$update_sql\n";
+        #print STDERR "\tmay_see => $may_see\n\tmay_edit => $may_edit\n\tgroup_id => $group_id\n\n";
+
+        # Do update cache table
+        $dbh->do($update_sql, {RaiseError=>1}, $may_see, $may_edit, $group_id);
+    }
+
+    # Descend and recurse
+    my @children = $category->children();
+    foreach my $category (@children) {
+        $self->rebuild_group_permissions_cache_process_category($category, $category_perms, $dbh);
     }
 }
 
