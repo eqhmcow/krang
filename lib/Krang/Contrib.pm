@@ -139,6 +139,32 @@ Returns the unique id assigned the contributor object.  Will not be populated un
 
 Gets/sets the value.
 
+=item $contrib->full_name()
+
+A read-only method that returns a concatenated string containing all attributes that make up the contributor's name.  Any unassigned attributes will be omitted.
+
+full_name takes the form of: B<prefix() first() middle() last(), suffix()>
+
+=cut
+
+sub full_name {
+
+    my $self = shift;
+    my $name;
+
+    foreach (qw(prefix first middle last)) {
+        if (defined($self->{$_}) && $self->{$_} =~ /\w/) {
+            $name .= "$self->{$_} ";
+        }
+    }
+    $name =~ s/\s*$//o;
+
+    if (defined($self->{suffix})) {
+        $name .= ", $self->{suffix}";
+    }
+    return $name;
+}
+
 =item $contrib->selected_contrib_type()
 
 Temporary value used by assets (media, story, etc) to show which

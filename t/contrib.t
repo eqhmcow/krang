@@ -148,3 +148,26 @@ END { $con1->delete() };
 my $con2 = Krang::Contrib->new(first => 'Bobby', last => 'Bob');
 eval { $con2->save() };
 isa_ok($@, 'Krang::Contrib::DuplicateName');
+
+
+# test Krang::Contrib->full_name()
+my $contrib4 = Krang::Contrib->new(prefix => 'Mr', first => 'Homer', middle => '', last => 'Simpson', email => 'homer@thepirtgroup.com');
+my $name1 = 'Mr Homer Simpson';
+my $name2 = 'Mr Homer Jay Simpson';
+my $name3 = 'Mr Homer Jay Simpson, MD';
+
+ok($contrib4->full_name() eq $name1, 'Krang::Contrib->full_name()');
+
+$contrib4->middle('Jay');
+
+ok($contrib4->full_name() eq $name2, 'Krang::Contrib->full_name()');
+
+$contrib4->suffix('MD');
+
+ok($contrib4->full_name() eq $name3, 'Krang::Contrib->full_name()');
+
+$contrib4->suffix(undef);
+$contrib4->middle(undef);
+
+ok($contrib4->full_name() eq $name1, 'Krang::Contrib->full_name()');
+
