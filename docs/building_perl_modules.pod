@@ -158,13 +158,10 @@ Once you have successfully compiled and installed your
 modules, copy the tar-files into $KRANG_ROOT/src/ and 
 add/commit them to the repository via CVS.
 
-Make sure to update the B<$KRANG_ROOT/src/README> file.  This file
-contains a list of all the modules which have been installed.
-This list is in order of prerequisite.  If you are B<installing a 
-new module>, add it to the end of the list.
+Make sure to update the B<$KRANG_ROOT/docs/cpan_inventory.pod> file.
+This file contains a list of all the modules which have been
+installed, listing their version and license.
 
-If you are B<upgrading an existing module>, replace the reference to 
-the module in the list, preserving its position.  (This is 
-assuming that the new version has the same pre-requisites as the
-old version.)  In this case, remove the old version of the module
-from the repository via CVS.
+If you are B<upgrading an existing module>, replace the reference to
+the module in the list.  In this case, remove the old version of the
+module from the repository via CVS.
