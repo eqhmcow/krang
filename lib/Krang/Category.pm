@@ -26,6 +26,8 @@ Krang::Category - a means to access information on categories
   my $parent	= $category->parent();
   my $id 	= $category->site_id();
   my $site 	= $category->site();
+  my $may_see   = $category->may_see();
+  my $may_edit  = $category->may_edit();
 
   my $id 	= $category->category_id(); # undef until after save()
   my $id 	= $category->element_id();  # undef until after save()
@@ -112,6 +114,7 @@ use Krang::Story;
 use Krang::Template;
 use Krang::Group;
 use Krang::Log qw(debug);
+use Krang::Session qw(%session);
 
 #
 # Package Variables
@@ -119,15 +122,15 @@ use Krang::Log qw(debug);
 # Constants
 ############
 # Read-only fields
-use constant CATEGORY_RO => qw(category_id
-			       element_id
-			       parent_id
-			       url);
+use constant CATEGORY_RO => qw( category_id
+			        element_id
+			        parent_id
+			        url );
 
 # Read-write fields
-use constant CATEGORY_RW => qw(dir
-			       element
-			       site_id);
+use constant CATEGORY_RW => qw( dir
+                                element
+			        site_id );
 
 # Globals
 ##########
@@ -140,7 +143,7 @@ my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW, 'parent_id';
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
 			new_hash_init => 'hash_init',
-			get => [CATEGORY_RO],
+			get => [CATEGORY_RO, qw(may_see may_edit)],
 			get_set => [CATEGORY_RW];
 
 
@@ -320,6 +323,10 @@ sub init {
     $self->{element} = Krang::Element->new(class => 'category',
                                            object => $self);
     $self->{element_id} = $self->{element}->element_id();
+
+    # Set up permissions
+    $self->{may_see} = 1;
+    $self->{may_edit} = 1;
 
     return $self;
 }
@@ -644,32 +651,27 @@ The method croaks if an invalid search criteria is provided or if both the
 sub find {
     my $self = shift;
     my %args = @_;
-    my ($fields, @params, $where_clause);
 
     # grab ascend/descending, limit, and offset args
     my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
-    my $order_by = delete $args{order_by} || 'category_id';
+    my $order_by = delete $args{order_by} || 'cat.category_id';
 
     # set search fields
     my $count = delete $args{count} || '';
     my $ids_only = delete $args{ids_only} || '';
 
-    # set bool to determine whether to use $row or %row for binding below
-    my $single_column = $ids_only || $count ? 1 : 0;
-
+    # Can't get count and ids_only at the same time
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.") if ($count && $ids_only);
 
-    # exclude 'element'
-    $fields = $count ? 'count(*)' :
-      ($ids_only ? 'category_id' : join(", ", grep {$_ ne 'element'}
-                                        keys %category_cols));
-
     # set up WHERE clause and @params, croak unless the args are in
     # CATEGORY_RO or CATEGORY_RW
-    my @invalid_cols;
+    my @invalid_cols = ();
+    my @wheres = ();
+    my @where_data = ();
+
     for my $arg (keys %args) {
         # don't use element
         next if $arg eq 'element';
@@ -677,32 +679,41 @@ sub find {
         my $like = 1 if $arg =~ /_like$/;
         ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
 
-        push @invalid_cols, $arg unless exists $category_cols{$lookup_field}
-          or $lookup_field eq 'simple_search';
+        my @addl_valid_cols = qw(simple_search may_edit may_see);
+        push (@invalid_cols, $arg) 
+          unless ( exists($category_cols{$lookup_field})
+                   or (grep { $lookup_field eq $_ } @addl_valid_cols ));
 
         if ($arg eq 'category_id' && ref $args{$arg} eq 'ARRAY') {
-            my $tmp = join(" OR ", map {"category_id = ?"} @{$args{$arg}});
-            $where_clause .= " ($tmp)";
-            push @params, @{$args{$arg}};
+            # Handle search for multiple category_ids
+            my $cat_ids_where = join(" OR ", map {"cat.category_id = ?"} @{$args{$arg}});
+            push(@wheres, $cat_ids_where);
+            push @where_data, @{$args{$arg}};
         } elsif ($arg eq 'simple_search') {
+            # Handle "simple_search" case
             my @words = split(/\s+/, $args{'simple_search'});            
             foreach my $word (@words) {
-                my $and = defined $where_clause && $where_clause ne '' ?
-                  ' AND' : '';
-                $where_clause .= 
-                  "$and (" . join(" OR ", 
-                                  "url LIKE ?", "category_id = ?") . ")";
-                push(@params, '%'.$word.'%', $word);
+                my $simple_search_where = "cat.url LIKE ? OR cat.category_id = ?";
+                push(@wheres, $simple_search_where);
+                push(@where_data, '%'.$word.'%', $word);
             }
         } else {
-            my $and = defined $where_clause && $where_clause ne '' ?
-              ' AND' : '';
             if (not defined $args{$arg}) {
-                $where_clause .= "$and $lookup_field IS NULL";
+                # Handle NULL searches if data is undef
+                push(@wheres, "$lookup_field IS NULL");
             } else {
-                $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-                  "$and $lookup_field = ?";
-                push @params, $args{$arg};
+                # Preface $lookup_field with table name
+                if (grep { $lookup_field eq $_ } qw(may_see may_edit)) {
+                    $lookup_field = "cgpc.$lookup_field";
+                } else {
+                    $lookup_field = "cat.$lookup_field";
+                }
+
+                # Handle default where case
+                my $where = $like ? 
+                  "$lookup_field LIKE ?" : "$lookup_field = ?";
+                push(@wheres, $where);
+                push(@where_data, $args{$arg});
             }
         }
     }
@@ -711,10 +722,44 @@ sub find {
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
     # construct base query
-    my $query = "SELECT $fields FROM category";
+    my @fields = ();
+    if ($count) {
+        push(@fields, "count(distinct cat.category_id) as count");
+    } elsif ($ids_only) {
+        push(@fields, "cat.category_id");
+    } else {
+        # Get all fields -- exclude 'element'
+        push(@fields, (map { "cat.$_ as $_" } grep { $_ ne "element" } keys(%category_cols)));
+        # Add fields for may_see and may_edit
+        push(@fields, "(sum(cgpc.may_see) > 0) as may_see");
+        push(@fields, "(sum(cgpc.may_edit) > 0) as may_edit");
+    }
+    my $fields_str = join(",", @fields);
 
-    # add WHERE and ORDER BY clauses, if any
-    $query .= " WHERE $where_clause" if $where_clause;
+    my $query = qq(
+                    SELECT
+                      $fields_str
+                   
+                    FROM
+                      category AS cat
+                        LEFT JOIN category_group_permission_cache AS cgpc ON cgpc.category_id = cat.category_id
+                        LEFT JOIN user_group_permission AS ugp ON cgpc.group_id = ugp.group_id
+                  );
+
+    # Just need user_id.  Don't need user.
+    # Assumes that user_id is valid and authenticated
+    my $user_id = $session{'user_id'}
+      || croak("No user_id in session");
+    push(@wheres, "ugp.user_id=?");
+    push(@where_data, $user_id);
+
+    my $where_clause = "(". join(") AND\n  (", @wheres) .")";
+    $query .= "WHERE $where_clause" if $where_clause;
+
+    # Add Group-By for regular (non count) selects
+    $query .= " GROUP BY cat.category_id" unless ($count);
+
+    # Add order by, if specified
     $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
@@ -725,48 +770,50 @@ sub find {
     }
 
     debug(__PACKAGE__ . "::find() SQL: " . $query);
-    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @params));
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @where_data));
 
     my $dbh = dbh();
+
+    # Handle count(*) case and get out
+    if ($count) {
+        my ($cat_count) = $dbh->selectrow_array($query, undef, @where_data);
+        return $cat_count;
+    }
+
     my $sth = $dbh->prepare($query);
-    $sth->execute(@params);
+    $sth->execute(@where_data);
 
-    # holders for query results and new objects
-    my ($row, @categories);
-
-    # bind fetch calls to $row or %$row
-    # a possibly insane micro-optimization :)
-    if ($single_column) {
-        $sth->bind_col(1, \$row);
-    } else {
-        $sth->bind_columns(\( @$row{@{$sth->{NAME_lc}}} ));
+    # Handle $ids_only and get out
+    if ($ids_only) {
+        my @cat_ids = ();
+        while (my ($cat_id) = $sth->fetchrow_array()) {
+            push(@cat_ids, $cat_id);
+        }
+        $sth->finish();
+        return @cat_ids;
     }
 
     # construct category objects from results
-    while ($sth->fetchrow_arrayref()) {
-        # if we just want count or ids
-        if ($single_column) {
-            push @categories, $row;
-        } else {
-            # set '_old_dir' and '_old_url'
-            $row->{_old_dir} = $row->{dir};
-            $row->{_old_url} = $row->{url};
-            push @categories, bless({%$row}, $self);
+    my @categories = ();
+    while (my $row = $sth->fetchrow_hashref()) {
+        # Make an object
+        my $new_category = bless($row, $self);
 
-            # load 'element'
-            ($categories[-1]->{element}) =
-              Krang::Element->load(element_id => $row->{element_id}, 
-                                   object     => $categories[-1]);
-            $categories[-1]->{element_id} =
-              $categories[-1]->{element}->element_id;
-        }
+        # set '_old_dir' and '_old_url'
+        $new_category->{_old_dir} = $new_category->{dir};
+        $new_category->{_old_url} = $new_category->{url};
+
+        # load 'element'
+        $new_category->{element} = Krang::Element->load( element_id => $new_category->{element_id}, 
+                                                         object     => $new_category );
+        push(@categories, $row);
     }
 
     # finish statement handle
     $sth->finish();
 
-    # return number of rows if count, otherwise an array of ids or objects
-    return $count ? $categories[0] : @categories;
+    # Return categories
+    return @categories;
 }
 
 

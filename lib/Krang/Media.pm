@@ -42,6 +42,10 @@ use Exception::Class
                                    media_type_id => $media_type_id, 
                                    category_id => $category_id );
 
+    # Find permissions for this media (for this user)
+    $media->may_see();
+    $media->may_edit();
+
     # add actual media file to media object
     $media->upload_file( filehandle => $filehandle, filename => 'media.jpg' );
 
@@ -200,7 +204,7 @@ use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get_set       => [ qw( title alt_tag version checked_out_by published_version caption copyright notes media_type_id category_id filename ) ],
-    get => [ qw( media_id creation_date published_date) ];
+    get => [ qw( media_id creation_date published_date may_see may_edit) ];
 
 sub init {
     my $self = shift;
@@ -214,6 +218,10 @@ sub init {
     $self->{version} = 0;  # versions start at 0
     $self->{checked_out_by} = $session{user_id};   
     $self->{creation_date} = localtime unless defined $self->{creation_date};
+
+    # Set up temporary permissions
+    $self->{may_see} = 1;
+    $self->{may_edit} = 1;
     
     # finish the object
     $self->hash_init(%args);

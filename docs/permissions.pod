@@ -332,11 +332,11 @@ records to which a user has access to see might be implemented in SQL:
     media
       left join category_group_permission_cache as cgpc
         ON cgpc.category_id = media.category_id
-      left join usr_user_group
-        ON cgpc.group_id = usr_user_group.user_group_id
+      left join user_group_permission
+        ON cgpc.group_id = user_group_permission.group_id
 
   where
-    usr_user_group.user_id = 1 AND
+    user_group_permission.user_id = 1 AND
     cgpc.may_see = 1 
 
 
@@ -354,11 +354,11 @@ access to see.  Note the use of sum() and "group by":
     media
       left join category_group_permission_cache as cgpc
         ON cgpc.category_id = media.category_id
-      left join usr_user_group
-        ON cgpc.group_id = usr_user_group.user_group_id
+      left join user_group_permission
+        ON cgpc.group_id = user_group_permission.group_id
 
   where
-    usr_user_group.user_id = 1 AND
+    user_group_permission.user_id = 1 AND
     cgpc.may_see = 1 
 
   group by
