@@ -601,33 +601,33 @@ sub find {
     }
   
     my $where_string = join ' and ', (map { "$_ = ?" } @where);
-
+    
     # add media_id(s) if needed
     if ($args{media_id}) {
         if (ref $args{media_id} eq 'ARRAY') {
-            $where_string ? $where_string .= " and media_id = ".join( ' or media_id = ', @{$args{media_id}} ) : $where_string = "media_id = ".join( ' or media_id = ', @{$args{media_id}} );
+            $where_string ? ($where_string .= " and media_id = ".join( ' or media_id = ', @{$args{media_id}} )) : ($where_string = "media_id = ".join( ' or media_id = ', @{$args{media_id}} ));
         } else {
-            $where_string ? $where_string .= " and media_id = ".$args{media_id} : $where_string = "media_id = ".$args{media_id};
+            $where_string ? ($where_string .= " and media_id = ".$args{media_id}) : ($where_string = "media_id = ".$args{media_id});
         }        
     }
 
     # add title_like to where_string if present
     if ($args{'title_like'}) {
-        $where_string ? $where_string .= " and title like ?" : $where_string = " title like ?";
+        $where_string ? ($where_string .= " and title like ?") : ($where_string = " title like ?");
         push @where, $args{'title_like'};
     }
 
     # add filename_like to where_string if present
     if ($args{'filename_like'}) {
-        $where_string ? $where_string .= " and filename like ?" : $where_string = " filename like ?";
+        $where_string ? ($where_string .= " and filename like ?") : ($where_string = " filename like ?");
         push @where, $args{'filename_like'};
     }
 
     if ($args{'creation_date'}) {
         if (ref($args{'creation_date'}) eq 'ARRAY') {
-            $where_string ? $where_string .= 'AND creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1] : $where_string = 'creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1];
+            $where_string ? ($where_string .= 'AND creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1]) : ($where_string = 'creation_date BETWEEN '.$args{'creation_date'}[0].' AND '.$args{'creation_date'}[1]);
         } else {
-            $where_string ? $where_string .= 'AND creation_date = '.$args{'creation_date'} : $where_string = 'creation_date = '.$args{'creation_date'};
+            $where_string ? ($where_string .= 'AND creation_date = '.$args{'creation_date'}) : ($where_string = 'creation_date = '.$args{'creation_date'});
         }
     }
 
