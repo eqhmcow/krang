@@ -2,8 +2,6 @@ package Krang::Contrib;
 use strict;
 use warnings;
 use Krang::DB qw(dbh);
-use Krang::Conf qw(KrangRoot);
-use Krang::Session qw(%session);
 use Carp qw(croak);
 
 # constants
@@ -27,7 +25,7 @@ use constant FIELDS => qw(contrib_id prefix first middle last suffix email phone
 
     # add contributor types (lets pretend contrib_type 1 is 'Writer' and 
     # type 3 is 'Photographer')
-    $contrib->contrib_types(1,3);
+    $contrib->contrib_type_ids(1,3);
 
     # save this contributor to the database
     $contrib->save();
@@ -36,23 +34,26 @@ use constant FIELDS => qw(contrib_id prefix first middle last suffix email phone
     my $contrib_id = $contrib->contrib_id();
 
     # find this contributor by id
-    my @contributors = Krang::Contrib->find( contrib_id => $contrib_id );
+    my @contribs = Krang::Contrib->find( contrib_id => $contrib_id );
 
-    # list contributor types (will return 1,3)
-    $contributors[0]->contrib_types();
+    # list contributor type ids (will return 1,3)
+    @contrib_type_ids = $contribs[0]->contrib_type_ids();
 
-    # change contributor contrib types, effectively removing writer type (1)
-    $contributors[0]->contrib_types(3);
+    # list contrib type names (will return 'Writer', 'Photographer');
+    @contrib_type_names = $contribs[0]->contrib_type_names();
+
+    # change contributor contrib type ids, effectively removing writer type (1)
+    $contribs[0]->contrib_type_ids(3);
 
     # save contributor, making changes permanent
-    $contributors[0]->save();
+    $contribs[0]->save();
 
     # delete contributor
-    $contributors[0]->delete();
+    $contribs[0]->delete();
 
 =head1 DESCRIPTION
 
-This class handles the storage and retrieval of contributor data to/from the database. Contributor type ids come from Krang::ContribTyoes, but are associated to contributors here.
+This class handles the storage and retrieval of contributor data to/from the database. Contributor type ids come from Krang::AdminPrefs (??), but are associated to contributors here.
 
 =head1 INTERFACE
 
@@ -94,13 +95,13 @@ use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get_set       => [ qw( contrib_id prefix first middle last suffix email phone bio url selected_contrib_type )],
-    list          => [ qw( contrib_types ) ];
+    list          => [ qw( contrib_type_ids ) ];
 
 sub init {
     my $self = shift;
     my %args = @_;
 
-    $args{contrib_types} ||= [];
+    $args{contrib_type_ids} ||= [];
 
     # finish the object
     $self->hash_init(%args);
@@ -132,11 +133,29 @@ Returns the unique id assigned the contributor object.  Will not be populated un
 
 Gets/sets the value.
 
-=item $contrib->contrib_types()
+=item $contrib->contrib_type_ids()
 
 Returns an array of contrib_type_id's associated with this contributor.  Passing in array of ids sets them (overwriting any current type ids).
 
+=item $contrib->contrib_type_names()
+
+Returns array of contrib type names, matching order of contrib_type_ids.
+
 =cut
+
+sub contrib_type_names {
+    my $self = shift;
+    my $dbh = dbh;
+    my @contrib_type_names;
+
+    foreach my $type_id (@{$self->{contrib_type_ids}}) {
+        my $sth = $dbh->prepare('SELECT type from contrib_type where contrib_type_id = ?');
+        $sth->execute($type_id);
+        push @contrib_type_names, $sth->fetchrow_array(); 
+    }
+
+    return @contrib_type_names;
+}
 
 =item $contrib->save()
 
@@ -147,9 +166,6 @@ Save contributor oject to the database. Will set contrib_id if first save.
 sub save {
     my $self = shift;
     my $dbh = dbh;
-    my $root = KrangRoot;
-    my $session_id = $session{_session_id} || croak("No session id found");
-
 
     # if this is not a new contrib object
     if (defined $self->{contrib_id}) {
@@ -163,7 +179,7 @@ sub save {
        
         # remove all contributor - contributor tyoe relations, we are going to re-add them 
         $dbh->do('DELETE from contrib_contrib_type where contrib_id = ?', undef, $contrib_id);
-        foreach my $type_id (@{$self->{contrib_types}}) {
+        foreach my $type_id (@{$self->{contrib_type_ids}}) {
             $dbh->do('INSERT into contrib_contrib_type (contrib_id, contrib_type_id) VALUES (?,?)', undef, $contrib_id, $type_id);
         }
     } else {
@@ -172,7 +188,7 @@ sub save {
         $self->{contrib_id} = $dbh->{mysql_insertid};
         my $contrib_id = $self->{contrib_id};
 
-        foreach my $type_id (@{$self->{contrib_types}}) {
+        foreach my $type_id (@{$self->{contrib_type_ids}}) {
             $dbh->do('INSERT into contrib_contrib_type (contrib_id, contrib_type_id) VALUES (?,?)', undef, $contrib_id, $type_id);
         }
   
