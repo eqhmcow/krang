@@ -965,8 +965,9 @@ The C<Cars> list is a three-dimensional list, where the contents of
 each pulldown will be dependent on the item chosen in the list above
 it.
 
+=back
 
-=item B<NOTE:>
+B<NOTE:>
 
 The C<lists.conf> file is only read automatically when a
 database is set up using C<bin/krang_createdb>.
@@ -975,7 +976,7 @@ If your database is already set up, you can use
 C<bin/krang_create_lists> to create the lists in Krang specified by
 your C<lists.conf> file.
 
-=back
+
 
 =head3 Using Lists in the Element System
 
