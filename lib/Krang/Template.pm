@@ -158,7 +158,7 @@ sub category {
     my $self = shift;
     croak("No category associated with template id '$self->{template_id}'.")
       unless $self->{category_id};
-    my $cat = (Krang::Category->find(category_id => $self->{category_id}));
+    my ($cat) = Krang::Category->find(category_id => $self->{category_id});
     return $cat;
 }
 
