@@ -242,6 +242,7 @@ sub _notify {
     return if defined $old and defined $new and $old eq $new;
     return if not defined $old and not defined $new;
     $self->{url_cache} = '';
+    $self->{cat_cache} = () if ($which eq 'category_id');
 }
 
 sub init {
@@ -284,7 +285,14 @@ Returns to category object matching category_id.
 =cut
 
 sub category {
-    return (Krang::Category->find(category_id => shift->{category_id}))[0];
+    my $self = shift;
+
+    return undef unless $self->{category_id};
+                                                                                                       
+    return $self->{cat_cache} if $self->{cat_cache};
+
+    $self->{cat_cache} = (Krang::Category->find(category_id => $self->{category_id}))[0];
+   
 }
 
 =item $media->filename()
@@ -557,7 +565,7 @@ sub save {
 
     # Check permissions: Is user allowed to edit the catent category?
     my $category_id = $self->{category_id};
-    my ($category) = Krang::Category->find(category_id=>$category_id);
+    my $category = $self->category;
     Krang::Media::NoCategoryEditAccess->throw( message => "Not allowed to edit media in category $category_id",
                                                category_id => $category_id )
         unless ($category->may_edit);
@@ -1303,7 +1311,7 @@ sub url {
     return $self->{url_cache} if $self->{url_cache};
  
     # else calculate url
-    my ($category) = Krang::Category->find(category_id =>$self->{category_id});
+    my $category = $self->category;
     croak("Unable to load category $self->{category_id}")
       unless $category;
 
