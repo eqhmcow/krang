@@ -33,8 +33,9 @@ media and stories semi-consistant in size.
 
   --media    - number of media objects to create, defaults and minimum of 50
 
-  --stories  - number of stories to create, defaults and minimum of 50 (10 articles, 10 covers).  Story/Cover ratio is approx 5:1 if enough cats exist, else number of covers = 
-numbers of cats.
+  --stories  - number of stories to create, defaults and minimum of 50 
+  (10 articles, 10 covers).  Story/Cover ratio is approx 5:1 if enough cats 
+  exist, else number of covers = numbers of cats.
 
   --contribs - number of contribs to create, defaults and minimum of 50.
 
@@ -108,7 +109,12 @@ my $covers = (($sites + $cats) > int($stories/5)) ? int($stories/5) : ($sites + 
 $stories = $stories - $covers;
 
 my $cats_per_site = ($cats && $stories && $sites) ? int($cats / $sites) : 0;
-my $stories_per_cat = $stories ? int($stories / ($cats + $sites)) : 0;
+
+my $stories_per_cat = $stories;
+if (($cats + $sites) > 0 ) {
+    $stories_per_cat = $stories ? int($stories / ($cats + $sites)) : 0;
+} 
+
 my $media_per_cat = $media ? int($media / ($cats + $sites)) : 0;
 
 my $super_count = 0;
@@ -230,8 +236,8 @@ while ($contribs) {
 
 my ($first_cat) = Krang::Category->find( limit => 1);
 
-# dump the remaining media, stories into a category.
-
+# dump the remaining media, stories (leftovers from bad division) into a category.
+# remaining covers count will get added to articles.
 $stories = $stories + $covers;
 $covers = 0;
 
