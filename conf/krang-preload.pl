@@ -13,7 +13,7 @@ find({
       wanted => sub {
           return unless m!(Krang/.*).pm$!;
           my $path = $1;
-          return if /#/; # skip emacs droppings
+          return if /^\.?#/; # skip emacs droppings
           return if /$skip/;
 
           my $pkg = join('::', (split(/\//, $path)));
@@ -28,6 +28,7 @@ find({
 print STDERR "Pre-loading HTML Templates...\n";
 find(
      sub {
+         return if /^\.?#/; # skip emacs droppings
          return unless /\.tmpl$/;
          HTML::Template->new(
                              filename => "$File::Find::dir/$_",
