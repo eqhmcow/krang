@@ -229,6 +229,7 @@ sub do_install {
     check_prereqs();
     do_perl_install() if ($do_perl_install);
     do_mysql_install() if ($do_mysql_install);
+    create_mysql_user();
     create_unix_user_group();
     install_krang();
     configure_krang();
@@ -421,6 +422,26 @@ sub do_mysql_install {
 }
 
 
+sub create_mysql_user {
+    # MySQLRootPassword must be valid, and MySQL should be running
+    my $mysql_bin = MYSQL_BIN;
+    my $MySQLRootPassword = $options{'MySQLRootPassword'};
+    my $InstanceDBName = $options{'InstanceDBName'};
+    my $DBUser = $options{'DBUser'};
+    my $DBPass = $options{'DBPass'};
+
+    my $grant = "grant all on $InstanceDBName\.* to $DBUser\@localhost";
+    $grant .= " identified by '$DBPass'" if ($DBPass);
+
+    my $mysql_grant = ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
+    $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+
+    print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
+    system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
+    print "  MySQL access granted.\n";
+}
+
+
 sub create_unix_user_group {
     my $KrangUser = $options{'KrangUser'};
     my $KrangGroup = $options{'KrangGroup'};
@@ -544,7 +565,8 @@ sub configure_krang {
     # Create DB
     print "Creating MySQL database and loading schema\n";
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
-    my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb --password $MySQLRootPassword";
+    my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb";
+    $createdb .= " --password $MySQLRootPassword" if (length($MySQLRootPassword));
     system($createdb) && die("Error calling krang_createdb.  Unable to continue");
 
     # Customize DB (Admin password)

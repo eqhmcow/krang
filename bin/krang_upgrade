@@ -3,6 +3,10 @@ use warnings;
 use strict;
 
 
+# Location of MYSQL init, as per RPM install
+use constant MYSQL_INIT => '/etc/init.d/mysql';
+
+
 # Path to pre-req binaries
 use constant MYSQL_BIN      => '/usr/bin/mysql';
 use constant GROUPADD_BIN   => '/usr/sbin/groupadd';
@@ -28,6 +32,8 @@ use constant MYSQLADMIN_BIN => '/usr/bin/mysqladmin';
 use constant PERL_BIN       => '/usr/bin/perl';
 use constant DU_BIN         => '/usr/bin/du';
 use constant DF_BIN         => '/bin/df';
+use constant CP_BIN         => '/bin/cp';
+
 
 =head1 NAME
 
@@ -104,7 +110,7 @@ Following is a list of the tasks the upgrade script will perform.
 
 =item Clear out sessions from database.
 
-=item Start MySQL and Krang, and 'make test' on new system.
+=item Start Krang, and 'make test' on new system.
 
 =over 4
 
@@ -213,8 +219,15 @@ exit(0);
 sub do_upgrade {
     setup_getopts();
 
-    # Do upgradeation
+    # Do upgrade
     check_prereqs();
+
+    make_backups();
+    install_new_krang();
+    copy_data();
+    apply_upgrades();
+    update_db_version();
+    clear_sessions();
 
     make_test() unless ($no_krang_test);
     output_report();
@@ -368,6 +381,101 @@ sub check_prereqs {
 
     exit(1);
 }
+
+
+sub make_backups {
+    print "Making backups\n";
+
+    ## Rename KRANG_ROOT to *.backup
+    #
+    my $KrangRoot = $options{KrangRoot};
+    print "  Moving KrangRoot to ". $KrangRoot .".backup\n";
+    rename($KrangRoot, $KrangRoot.".backup");
+
+    ## Copy MySQL directories to *.backup
+    #
+    # Shutdown MySQL
+    print "  Shutting down MySQL\n";
+    my $mysql_init = MYSQL_INIT ." stop";
+    system($mysql_init) && die("Error shutting down MySQL");
+
+    # Iterate through instances, making .backup files
+    foreach my $db (values(%instance_dbs)) {
+        my $db_path = $mysql_datadir . $db;
+        my $db_backup = $db_path . ".backup";
+
+        print "  Copying $db_path to $db_backup\n";
+        my $cp_cmd = CP_BIN ." -a $db_path $db_backup";
+        system($cp_cmd) && die("$cp_cmd\nError copying $db_path: $!");
+    }
+
+    # Re-start MySQL
+    print "  Restarting MySQL\n";
+    $mysql_init = MYSQL_INIT ." start";
+    system($mysql_init) && die("Error starting MySQL");
+}
+
+
+sub install_new_krang {
+    my $new_krang = $ENV{KRANG_ROOT};
+    my $InstallPath = $options{KrangRoot};
+    mkdir($InstallPath) || die($!);
+
+    print "Installing new Krang files into '$InstallPath'\n";
+
+    chdir($ENV{KRANG_ROOT});
+    my $copy = COPY_BIN ." -r * $InstallPath\/";
+    system($copy) && die("Can't copy: $!");
+
+    print "  Fixing ownership\n";
+    my $KrangUser = $options{KrangUser};
+    my $KrangGroup = $options{KrangGroup};
+    my $chown = CHOWN_BIN ." -R $KrangUser\.$KrangGroup $InstallPath";
+    system($chown) && die("Can't update ownership: $!");
+
+    # For commands
+    my $chmod;
+
+    print "  Setting group write permissions\n";
+    $chmod = CHMOD_BIN ." -R g+w $InstallPath";
+    system($chmod) && die("Can't set group write permissions: $!");
+
+    print "  Fixing directory read permissions\n";
+    $chmod = FIND_BIN ." $InstallPath -type d | ". XARGS_BIN ." ". CHMOD_BIN ." +rx";
+    system($chmod) && die("Can't fix directory read permissions: $!");
+
+    print "  Fixing file read permissions\n";
+    $chmod = FIND_BIN ." $InstallPath -type f | ". XARGS_BIN ." ". CHMOD_BIN ." +r";
+    system($chmod) && die("Can't fix file read permissions: $!");
+
+    print "  Setting execute bits on scripts\n";
+
+    # Set all *.pl files
+    $chmod = FIND_BIN ." $InstallPath -type f -name '*.pl' | ". XARGS_BIN ." ". CHMOD_BIN ." +x";
+    system($chmod) && die("Can't set execite bits: $!");
+
+    # Set all *.cgi files
+    $chmod = FIND_BIN ." $InstallPath -type f -name '*.cgi' | ". XARGS_BIN ." ". CHMOD_BIN ." +x";
+    system($chmod) && die("Can't set execite bits: $!");
+
+    # Set all files in krang/bin/*
+    $chmod = CHMOD_BIN ." +x $InstallPath/bin/*";
+    system($chmod) && die("Can't set execite bits: $!");
+
+    print "  Krang files installed.\n";
+}
+
+
+sub copy_data {}
+
+
+sub apply_upgrades {}
+
+
+sub update_db_version {}
+
+
+sub clear_sessions {}
 
 
 sub make_test {
