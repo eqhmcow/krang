@@ -3,11 +3,18 @@ use strict;
 use warnings;
 use Krang::DB qw(dbh);
 use Carp qw(croak);
+use Time::Piece;
+use Time::Piece::MySQL;
 
 # constants
-use constant FIELDS qw( object_type object_id action version desk user_id timestamp );
-use constant OBJECT_TYPES qw( story media template user category );
-use constant ACTIONS qw( new save check_in check_out publish deploy );
+use constant FIELDS => qw( object_type object_id action version desk user_id timestamp );
+use constant OBJECT_TYPES => qw( story media template user category );
+use constant ACTIONS => qw( new save check_in check_out publish deploy );
+
+# declare exportable functions
+use Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw( add_history );
 
 =head1 NAME
 
@@ -82,10 +89,9 @@ In addition to tracking actions on objects, the user who performed the action is
 
 =cut
 
-use Krang::MethodMaker
-    new_with_init => 'add_history',
-    new_hash_init => 'hash_init',
-    get_set       => FIELDS;
+use Krang::MethodMaker  new_with_init => 'add_history',
+                        new_hash_init => 'hash_init',
+                        get_set       => [FIELDS];
 
 sub init {
     my $self = shift;
