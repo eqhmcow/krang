@@ -75,7 +75,8 @@ Krang::Element - element data objectcs
   # get the first paragraph of the second page
   ($para) = $element->match('/page[1]/paragraph[0]');
 
-  # get a list of potential child classes, taking into account max setting
+  # get a list of potential additional child classes, taking into
+  # account max setting
   @classes = $element->available_child_classes();
 
   # load a top-level element by id
