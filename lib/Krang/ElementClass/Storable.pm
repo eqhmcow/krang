@@ -5,6 +5,7 @@ use warnings;
 use base 'Krang::ElementClass';
 use Storable qw(freeze thaw);
 use MIME::Base64 qw(encode_base64 decode_base64);
+use Carp qw( croak );
 
 sub thaw_data {
     my ($class, %arg) = @_;
