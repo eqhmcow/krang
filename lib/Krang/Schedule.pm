@@ -226,6 +226,12 @@ The day of the week to run a repeating action at.  Required for
 An optional array ref containing extra data pertaining to the action
 to be performed.
 
+=item C<test_date>
+
+An argument used for testing to abritrarily set the comparison date for
+calculating 'next_run' to any point in the past or future.  N.B. - this is only
+used when the debugging var $SCH_DEBUG has been set.
+
 =back
 
 =cut
@@ -259,8 +265,15 @@ sub init {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
           unless exists $args{$_};
 
-        # conditionally required args
-        if ($_ eq 'repeat') {
+        # arg validation...
+        if ($_ eq 'action') {
+            # lowercase for safety
+            my $action = lc $args{$_};
+            croak(__PACKAGE__ . "->init(): '$action' is not a valid 'action'.")
+              unless ($action eq 'alert' || $action eq 'expire' ||
+                      $action eq 'publish');
+            $args{$_} = $action;
+        } elsif ($_ eq 'repeat') {
             $repeat = $args{$_};
             croak(__PACKAGE__ . "->init(): invalid value for 'repeat' field.")
               unless exists $repeat2seconds{$repeat};
@@ -289,10 +302,10 @@ sub init {
             $self->{_frozen_context} = '';
         } elsif ($_ eq 'object_type') {
             # lowercase object_type to insure consistency for subsequent type
-            # testing
+            # testing see lines 792-6
             my $type = lc $args{$_};
             croak("Invalid object type '$args{$_}'!") unless
-              ($type eq 'media' || $type eq 'story' || $type eq 'alert');
+              ($type eq 'alert' || $type eq 'media' || $type eq 'story');
             $args{$_} = $type;
         }
     }
