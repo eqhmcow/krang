@@ -879,6 +879,7 @@ sub get_pager_view {
     my %find_params = %{$self->find_params()};
     my $found_count = $use_module->find(%find_params, count=>1);
     my $total_pages = int($found_count / $limit) + (($found_count % $limit) > 0);
+    $total_pages ||= 1; # For the case when 0 == $found_count.
 
     # Is the current page beyond the $total_pages?  Bring it back in.
     # This may be the case if a delete operation has reduced the number of pages.
