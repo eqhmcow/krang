@@ -612,6 +612,10 @@ sub fill_template {
       if exists($template_vars{contrib_loop});
 
 
+    # add the category trail loop
+    $params{category_trail_loop} = $self->_build_cat_trail_loop(@_)
+      if exists($template_vars{category_trail_loop});
+
     # add variables passed in by whatever called $self->publish().
     if (defined($args{fill_template_args})) {
         foreach my $key (keys %{$args{fill_template_args}}) {
@@ -1033,6 +1037,28 @@ sub _build_pagination_vars {
     }
 
     return \%page_info;
+}
+
+# 
+# builds loop of story's category and parent categories
+
+sub _build_cat_trail_loop {
+    my $self = shift;
+    my %args = @_;
+
+    my @category_loop;
+
+    my $story   = $args{element}->object;
+    my $base_cat   = $story->category;
+
+    push (@category_loop, { display_name => $base_cat->element->child('display_name')->data, url => $base_cat->url } );
+
+    while ( $base_cat->parent ) {
+        $base_cat = $base_cat->parent;
+        unshift (@category_loop, { display_name => $base_cat->element->child('display_name')->data, url => $base_cat->url } );
+    }
+   
+    return \@category_loop; 
 }
 
 #
