@@ -1218,6 +1218,7 @@ sub delete {
     add_message('story_delete', story_id => $story->story_id,
                                 url      => $story->url);
     $story->delete();
+    delete $session{story};
 
     # return to my workspace
     $self->header_props(-uri => 'workspace.pl');
