@@ -210,14 +210,20 @@ for my $media_count (1 .. $media) {
     my $fh = IO::File->new(catfile(KrangRoot, "tmp", "tmp.$format"))
       or die "Unable to open tmp/tmp.$format: $!";
 
+    # Pick a type
+    my %media_types = Krang::Pref->get('media_type');
+    my @media_type_ids = keys(%media_types);
+    my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
+
     # create a media object
     my $media = Krang::Media->new(title      => join(" ",
                                                      map {ucfirst(get_word())}
                                                      (1..(int(rand(3)) + 2))),
                                   filename   => get_word() . ".$format",
                                   filehandle => $fh,
-                                  category_id =>
-                                  $cats[int(rand(scalar(@cats)))]->category_id);
+                                  category_id => $cats[int(rand(scalar(@cats)))]->category_id,
+                                  media_type_id => $media_type_id,
+                                  );
     eval { $media->save };
     if ($@) {
         if (ref($@) and ref($@) eq 'Krang::Media::DuplicateURL') {
