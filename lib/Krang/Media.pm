@@ -29,8 +29,8 @@ use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x
 # setup exceptions
 use Exception::Class (
                       'Krang::Media::DuplicateURL' => { fields => [ 'media_id' ], },
-                      'Krang::Media::NoCategoryEditAccess' => { fields => ['category_id']},
-                      'Krang::Media::NoEditAccess',
+                      'Krang::Media::NoCategoryEditAccess' => { fields => ['category_id'] },
+                      'Krang::Media::NoEditAccess' => { fields => 'media_id' },
                      );
 
 =head1 NAME
@@ -544,7 +544,7 @@ sub save {
         unless ($category->may_edit);
 
     # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media" )
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
         unless ($self->may_edit);
 
     $self->{url} = $self->url();
@@ -1152,7 +1152,7 @@ sub checkout {
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media" )
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
         unless ($self->may_edit);
 
     # Short circuit if media is checked out by current user
@@ -1211,7 +1211,7 @@ sub checkin {
     }
 
     # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media" )
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
         unless ($self->may_edit);
 
     $dbh->do('UPDATE media SET checked_out_by = NULL WHERE media_id = ?', undef, $media_id);
@@ -1328,7 +1328,7 @@ sub delete {
     my $media_id = shift;
 
     # Is user allowed to otherwise edit this object?
-    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media" )
+    Krang::Media::NoEditAccess->throw( message => "Not allowed to edit media", media_id => $self->media_id )
         unless ($self->may_edit);
 
     my $dbh = dbh;
