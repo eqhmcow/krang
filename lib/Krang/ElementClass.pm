@@ -5,7 +5,7 @@ use warnings;
 use Carp qw(croak);
 use CGI ();
 
-use HTML::Template;
+use HTML::Template::Expr;
 
 =head1 NAME
 
@@ -480,9 +480,10 @@ sub find_template {
     my @path = $publisher->template_search_path();
 
     # Attempt to instantiate an HTML::Template::Expr object with that as the search path.
-    my $tmpl = HTML::Template->new(filename => $element->name() . '.tmpl',
-                                   path => \@path);
+    my $tmpl = HTML::Template::Expr->new(filename => $element->name() . '.tmpl',
+                                         path => \@path);
 
+    # HTML::Template::Expr will gack if no template has been found.  return template.
     return $tmpl;
 }
 
