@@ -41,7 +41,6 @@ sub new {
                                         max => 1 ),
                 PBMM::html_include->new(),
                 PBMM::cat_paragraph->new(),
-                 PBMM::site_related_link_box->new()
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
