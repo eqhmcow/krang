@@ -373,21 +373,37 @@ ascending (up arrow) or descending (down arrow).
 
 A hashref mapping the name of a sortable column to
 the string which should be passed to find() via the 
-"order_by" parameter.
+"order_by" parameter.  If a particular sortable column
+is not specified, its name will be used instead.  This
+is probably adequate in most cases.
 
 
 =item row_handler
 
   row_handler => \&my_row_handler
 
-Bleh bleh bleh...
+A subroutine reference pointing to a custom function to process each
+row of data.  This function will receive, as arguments, a hashref into
+which row data should be placed and a reference to the object to be
+displayed on this row.  The job of your custom function is to convert
+the object attributes into template data and set that data in the 
+hashref.  For example:
+
+  sub my_row_handler {
+    my ($row_hashref, $row_obj) = @_;
+    $row_hashref->{first_middle} = $row_obj->first() . " " . $row_obj->middle();
+    $row_hashref->{last} = $row_obj->last();
+    $row_hashref->{type} = join(", ", ($row_obj->contrib_type_names()) );
+  }
 
 
 =item id_handler
 
   id_handler => sub { return $_[0]->contrib_id }
 
-Bleh bleh bleh...
+A subroutine reference pointing to a custom function to return a
+unique identifier for each row of data.  This ID is needed for
+creating the checkbox columns and command columns.
 
 
 =back
