@@ -41,6 +41,7 @@ sub setup {
       delete_checked
       goto_edit
       goto_log
+      copy
     )]);
 
 }
@@ -151,6 +152,34 @@ sub delete {
                           'Template')));
     $obj->delete;
     return $self->show;
+}
+
+=item copy
+
+Copies an object.  Will redirect to the appropriate edit screen with
+the copy loaded for editing.
+
+=cut
+
+sub copy {
+    my $self = shift;
+    my $query = $self->query;
+    my $obj = _id2obj($query->param('id'));
+    
+    # redirect as appropriate
+    if ($obj->isa('Krang::Story')) {
+        $self->header_props(-uri => 'story.pl?rm=copy&story_id=' .
+                            $obj->story_id);
+    } elsif ($obj->isa('Krang::Media')) {
+        $self->header_props(-uri => 'media.pl?rm=copy&media_id=' .
+                            $obj->media_id);
+    } else {
+        $self->header_props(-uri => 'template.pl?rm=copy&template_id=' .
+                            $obj->template_id);
+    }
+    
+    $self->header_type('redirect');
+    return "";
 }
 
 =item delete_checked

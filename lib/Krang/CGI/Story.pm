@@ -60,6 +60,7 @@ sub setup {
                      delete_categories    => 'delete_categories',
                      add_category         => 'add_category',
                      set_primary_category => 'set_primary_category',
+                     copy                 => 'copy',
 
                      db_save          => 'db_save',
                      db_save_and_stay => 'db_save_and_stay',
@@ -245,13 +246,14 @@ sub edit {
                         element => $story->element);
     
     # static data
-    $template->param(story_id          => $story->story_id,
+    $template->param(story_id          => $story->story_id || "",
                      type              => $story->element->display_name,
-                     url               => format_url(
-                                                     url => $story->url,
-                                                     linkto => "javascript:preview_story('". $story->story_id() ."')",
-                                                     length => 50,
-                                                    ));
+                     url               => $story->url ? 
+                                            format_url(
+                                                       url => $story->url,
+                                                       linkto => "javascript:preview_story('". ($story->story_id() || "") ."')",
+                                                       length => 50,
+                                                      ) : "");
 
     # edit fields for top-level
     my $path  = $query->param('path') || '/';
@@ -421,6 +423,45 @@ sub revert {
     return $self->edit();
 }
 
+=item copy
+
+Creates a clone of the current story identfied by the passed story_id
+and redirects to edit mode.  The story is not saved.
+
+=cut
+
+sub copy {
+    my $self = shift;
+    my $query = $self->query;
+
+    # load story from DB
+    my ($story) = Krang::Story->find(story_id => $query->param('story_id'));
+    croak("Unable to load story '" . $query->param('story_id') . "'.")
+      unless $story;
+
+    # make a copy and story it in the session
+    my $clone = $session{story} = $story->clone();
+
+    # talk about it, get it all out
+    if ($clone->categories) {
+        add_message('copied_story',
+                    id    => $story->story_id,
+                    title => $clone->title,
+                    slug  => $clone->slug,
+                   );
+    } else {
+        add_message('copied_story_no_cats',
+                    id    => $story->story_id,
+                    title => $clone->title);
+    }                    
+
+    # go edit the copy
+    $query->delete_all;
+    return $self->edit();
+}
+
+
+
 =item db_save
 
 This mode saves the story to the database and leaves the story editor,
@@ -437,7 +478,28 @@ sub db_save {
 
     # save story to the database
     my $story = $session{story};
-    $story->save();
+    eval { $story->save() };
+
+    # is it a dup?
+    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+        # load duplicate story
+        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        add_message('duplicate_url', 
+                    story_id => $dup->story_id,
+                    url      => $dup->url,
+                    which    => join(' and ', 
+                                     join(', ', $story->class->url_attributes),
+                                     "site/category"),
+                   );
+
+        return $self->edit;
+    } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
+        add_message('missing_category_on_save');
+        return $self->edit;
+    } elsif ($@) {
+        # rethrow
+        die($@);
+    }
     
     add_message('story_save', story_id => $story->story_id,
                 url      => $story->url,
@@ -449,8 +511,9 @@ sub db_save {
     # return to my workspace
     $self->header_props(-uri => 'workspace.pl');
     $self->header_type('redirect');
-    return;
+    return "";
 }
+
 
 
 =item db_save_and_stay
@@ -468,7 +531,29 @@ sub db_save_and_stay {
 
     # save story to the database
     my $story = $session{story};
-    $story->save();
+    eval { $story->save() };
+
+    # is it a dup?
+    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+        # load duplicate story
+        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        add_message('duplicate_url', 
+                    story_id => $dup->story_id,
+                    url      => $dup->url,
+                    which    => join(' and ', 
+                                     join(', ', $story->class->url_attributes),
+                                     "site/category"),
+                   );
+
+        return $self->edit;
+    } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
+        add_message('missing_category_on_save');
+        return $self->edit;
+    } elsif ($@) {
+        # rethrow
+        die($@);
+    }
+
     
     add_message('story_save', story_id => $story->story_id,
                 url      => $story->url,
@@ -556,6 +641,7 @@ sub save_and_view_log {
 
     $self->header_props(-uri => 'history.pl?history_return_script=story.pl&history_return_params=rm&history_return_params=edit&story_id=' . $session{story}->story_id);
     $self->header_type('redirect');
+    return "";
 }
 
 =item save_and_edit_schedule
@@ -574,7 +660,7 @@ sub save_and_edit_schedule {
                                                                         
     $self->header_props(-uri => 'schedule.pl?rm=edit&object_type=story');
     $self->header_type('redirect');
-    return;
+    return "";
 }
 
 =item save_and_edit_contribs
@@ -594,7 +680,7 @@ sub save_and_edit_contribs {
     # send to contrib editor
     $self->header_props(-uri => 'contributor.pl?rm=associate_story');
     $self->header_type('redirect');
-    return;    
+    return "";
 }
 
 =item save_and_stay
@@ -961,7 +1047,7 @@ sub delete {
     # return to my workspace
     $self->header_props(-uri => 'workspace.pl');
     $self->header_type('redirect');
-    return;
+    return "";
 }
 
 =item find

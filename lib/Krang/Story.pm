@@ -14,7 +14,8 @@ use Time::Piece::MySQL;
 
 # setup exceptions
 use Exception::Class 
-  'Krang::Story::DuplicateURL' => { fields => [ 'story_id' ] };
+  'Krang::Story::DuplicateURL'    => { fields => [ 'story_id' ] },
+  'Krang::Story::MissingCategory' => { fields => [ ] };
   
 # create accessors for object fields
 use Krang::MethodMaker 
@@ -60,6 +61,8 @@ use constant STORY_FIELDS =>
 # invalidate the URL cache.
 sub _notify {
     my ($self, $which, $old, $new) = @_;
+    $self->{url_attributes} ||=
+      { map { $_ => 1 } $self->class->url_attributes };
     return unless exists $self->{url_attributes}{$which};
     return if defined $old and defined $new and $old eq $new;
     return if not defined $old and not defined $new;
@@ -191,7 +194,8 @@ the first category in C<categories>.
 
 sub category {
     my $self = shift;
-
+    return undef unless @{$self->{category_ids}};
+    
     # return from the category cache if available
     return $self->{category_cache}[0]
       if $self->{category_cache} and $self->{category_cache}[0];
@@ -215,6 +219,7 @@ sub url {
     my $self = shift;
     croak "illegal attempt to set readonly attribute 'url'.\n"
       if @_;
+    return undef unless @{$self->{category_ids}};
     
     # return from the url cache if available
     return $self->{url_cache}[0]
@@ -267,7 +272,7 @@ sub categories {
             croak("Unable to load category '$self->{category_ids}[$_]'")
               unless $self->{category_cache}[$_];
         }
-        return @{$self->{category_cache}};
+        return $self->{category_cache} ? @{$self->{category_cache}} : ();
     }
 
     # else, set
@@ -282,16 +287,12 @@ sub categories {
     # fill cache with objects passed in, delay loading if just passed IDs
     $self->{category_cache} = 
       [ map { ref $_ ? $_ : undef } @_ ];
-    
-    # invalidate url cahce
+
+    # invalidate url cache
     $self->{url_cache} = [];
 
     # make sure this change didn't cause a conflict
     $self->_verify_unique();
-
-    # they should all fetch correctly now, which won't be true
-    # if a bad ID was passed in
-    assert($self->categories) if ASSERT;
 }
 
 =item C<urls> (readonly)
@@ -400,7 +401,7 @@ sub init {
 
     # get hash of url_attributes
     $self->{url_attributes} = 
-      { map { $_ => 1 } $self->{element}->url_attributes };
+      { map { $_ => 1 } $self->class->url_attributes };
 
     # setup defaults
     $self->{version}        = 0;
@@ -505,6 +506,10 @@ changes).  Increments the version number unless called with
 Will throw a Krang::Story::DuplicateURL exception with a story_id
 field if saving this story would conflict with an existing story.
 
+Will throw a Krang::Story::MissingCategory exception if this story
+doesn't have at least one category.  This can happen when a clone()
+results in a story with no categories.
+
 =cut
 
 sub save {
@@ -513,6 +518,10 @@ sub save {
 
     # make sure it's ok to save
     $self->_verify_checkout();
+
+    # make sure we've got at least one category
+    Krang::Story::MissingCategory->throw(message => "missing category")
+        unless $self->category;
 
     # make sure it's got a unique URI
     $self->_verify_unique();
@@ -657,6 +666,8 @@ sub _verify_unique {
 
     # lookup dup
     my @urls  = $self->urls;
+    return unless @urls;
+
     my $query = 'SELECT story_id FROM story_category WHERE ('.
       join(' OR ', ('url = ?') x @urls) . ')' . 
         ($self->{story_id} ? ' AND story_id != ?' : '');
@@ -1363,9 +1374,55 @@ sub delete {
 
 =item C<< $copy = $story->clone() >>
 
-Creates a copy of the story object, with all fields identical except
+Creates a copy of the story object, with most fields identical except
 for C<story_id> and C<< element->element_id >> which will both be
-C<undef>.
+C<undef>.  Sets to title to "Copy of $title".  Sets slug to
+"$slug_copy" if slug is set.  Will remove categories as necessary to
+generate a story without duplicate URLs.
+
+=cut
+
+sub clone {
+    my $self = shift;
+    my $copy = bless({ %$self }, ref($self));
+
+    # clone the element tree
+    $copy->{element} = $self->element->clone();
+
+    # zap ids
+    $copy->{story_id} = undef;
+    $copy->{element}{element_id} = undef;
+
+    # mangle title
+    $copy->{title} = "Copy of $copy->{title}";
+
+    # returns 1 if there is a dup, 0 otherwise
+    my $is_dup = sub {  
+        eval { shift->_verify_unique; };
+        return 1 if $@ and ref $@ and $@->isa('Krang::Story::DuplicateURL');
+        die($@) if $@;
+        return 0;
+    };
+
+    # if changing the slug will help, do that until it works
+    my @url_attributes = $copy->element->class->url_attributes;
+    if (grep { $_ eq 'slug' } @url_attributes) {
+        # find a slug that works
+        my $x = 1;
+        do {
+            $copy->slug("$self->{slug}_copy" . ($x > 1 ? $x : ""));
+            $x++;
+            print STDERR "TESTING: $copy->{slug} : " . $copy->url . "\n";
+        } while ($is_dup->($copy));
+    } else {
+        # erase category associations
+        $copy->{category_ids} = [];
+        $copy->{category_cache} = [];
+        $copy->{url_cache} = [];
+    }
+
+    return $copy;
+}
 
 =item C<< @linked_stories = $story->linked_stories >>
 

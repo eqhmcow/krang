@@ -6,7 +6,7 @@ use base 'Krang::ElementClass';
 
 sub build_url {
     my ($self, %arg) = @_;
-    return $arg{category}->url;
+    return $arg{category} ? $arg{category}->url : "";
 }
 
 sub url_attributes { () }
