@@ -249,6 +249,9 @@ sub save {
         my @c_params = split('#&#', $c);
         if ($c_params[1] eq 'new') {
             my ($data,$order,$lid,$pid) = split('\^\*\^', $c_params[2]);
+            if ($pid =~ /^new_\S+/) {
+                $pid = $new_ids{$pid};
+            }
             my %s_params;
             $s_params{data} = $data;
             $s_params{order} = $order;
