@@ -23,9 +23,11 @@ text.
 
 =head1 OPTIONS
 
-  --sites - number of sites to create, defaults to 3
+  --sites    - number of sites to create, defaults to 3
 
-  --cats  - number of categories to create, defaults to 15
+  --cats     - number of categories to create, defaults to 15
+
+  --contribs - number of contributors to create, defaults to 50
 
 =cut
 
@@ -65,15 +67,18 @@ use Krang::Conf qw(KrangRoot);
         
 use Krang::Site;
 use Krang::Category;
+use Krang::Pref;
 
 my ($help, $man);
-my $sites = 3;
-my $cats  = 15;
+my $sites    = 3;
+my $cats     = 15;
+my $contribs = 50;
 pod2usage(2) unless
-  GetOptions(help      => \$help,
-             man       => \$man,
-             'sites=s' => \$sites,
-             'cats=s'  => \$cats,
+  GetOptions(help         => \$help,
+             man          => \$man,
+             'sites=s'    => \$sites,
+             'cats=s'     => \$cats,
+             'contribs=s' => \$contribs,
             );
 
 pod2usage(1)             if $help;
@@ -107,6 +112,37 @@ for(1 .. $cats) {
     push(@cats, $cat);
 }
 
+
+# create contribs
+my %types = Krang::Pref->get('contrib_type');
+for(1 .. $contribs) {
+    my $fname = ucfirst(get_word());
+    my $lname = ucfirst(get_word());
+    my $mname = int(rand(2)) ? ucfirst(get_word()) : "";
+    my $prefix = ("Sir", "General", "Her Royal Highness",
+                  ("") x 20)[int(rand(23))];
+    my $suffix = ("Jr.", "Sr.", "III", "IV",
+                  ("") x 20)[int(rand(24))];
+    my @types = grep { int(rand(2)) } keys %types;
+    @types = (keys %types)[0] unless @types;
+
+    my $contrib = Krang::Contrib->new(prefix => $prefix,
+                                      first  => $fname,
+                                      middle => $mname,
+                                      last   => $lname,
+                                      email  => "$fname\@$lname.com",
+                                      phone  => "1-800-$lname",
+                                      bio    => join(' ',
+                                                     map { get_word() } 
+                                                         (0 .. 20)),
+                                      url => "http://$fname.$lname.com");
+    $contrib->contrib_type_ids(@types);
+    $contrib->save();
+    print STDERR "Created contributor " . 
+      join(' ', grep { $_ } ($prefix, $fname, $mname, $lname, $suffix)) . 
+        " (" . join(', ', map { $types{$_} } @types) . ")" .
+           "\n";
+}
 
 # get a random word
 BEGIN {
