@@ -10,47 +10,74 @@
 
 =item * Publish Methods and Templates
 
-=item * A Note on Sites
+=item * Choosing a Strategy
 
-=item * C<<An Example Story Type>>
-
-=item * C<<Choosing a Strategy>>
-
-=item * C<<Overriding Methods in Krang::ElementClass>>
 
 ----------------------------------------
 
-=item * C<<Example 1: One Template, No Publish Method>>
+=item * Publishing With Stock Krang Publish Methods 
 
-=item * C<<Example 2: One Template, One Publish Method>>
+=over
 
-=item * C<<Example 3: Multiple Templates, No Publish Methods>>
+=item * An Example Story Type
 
-=item * C<<Example 4: Multiple Templates, Multiple Publish Methods>>
+=item * How Krang Builds Template Data
+
+=item * Elements Without Templates
+
+=item * Example 1: Using One Large Template
+
+=item * Example 2: Using Multiple Templates
+
+=back
 
 ----------------------------------------
 
-=item * C<<Handling Links to Other Stories>>
+=item * Publishing With Customized Publish Methods
 
-=item * C<<Handling Media Objects>>
+=over
 
-=item * C<<Working With Categories>>
+=item * Overriding Krang::ElementClass Methods in Your Element Library
 
-=item * C<Pagination>
+=over
 
-=item * C<Contributors>
+=item * template_data()
 
-=item * Variables Provided by Krang
+=item * fill_template()
+
+=item * find_template()
+
+=item * publish()
+
+=back
+
+=item * Example 3: Using One Large Template
+
+=item * Example 4: Using Multiple Templates
+
+=back
+
+----------------------------------------
+
+=item * How Categories and Category Templates Work
+
+=item * Using Pagination
+
+=item * Links to Other Stories
+
+=item * Media Objects
+
+=item * Contributors
 
 =back
 
 =head1 Name
 
-Krang::HTMLTemplate - writing templates for Krang using HTML::Template
+Writing HTML::Templates in Krang - A guide to using the Krang templating system.
 
 =head1 Introduction
 
-This document goes describes how to use templating system in Krang, which is based on HTML::Template.  An understanding of the way stories are constructed in Krang will be helpful in getting the most out of this document.  A general understanding of how the HTML::Template templating language works will help as well.
+This document describes how to use templating system in Krang, which is based on HTML::Template.  An understanding of the way stories are constructed in Krang will be helpful in getting the most out of this document.  A general understanding of how the HTML::Template templating language works will help as well.
 
 =head1 Templates in Krang
 
@@ -59,16 +86,31 @@ Krang uses templates to generate output for stories when they're published.  The
 
 =head1 Publish Methods and Templates
 
-The HTML::Template templating system in Krang works by separating code and HTML design.  In the event that 
+Krang uses the HTML::Template templating system.  The philosophy behind HTML::Template is to separate the code required to build the content of a page from the template used for the layout of the final page.  Krang takes this philosophy one step further - by using the element tree of a story to automate the construction of a story's content, template developers can do their work with minimal programmer involvement.
 
-The templating system in Krang does not make use of separate scripts, the way that Bricolage did.  In Krang, every element in the element tree contains code to publish itself.  If customization is required, you can override the default publish methods within the element.
+If you are migrating from Bricolage, the templating system in Krang does not make use of separate publish scripts, the way that Bricolage did.  In Krang, every element in the element tree contains code to publish itself.  If customization is required, you can override the default publish methods within the element.
 
-Need further notes here on how templates are stored on the filesystem, and the process by which they're retrieved by elements in the publish process.
+For further information on Krang's element tree, see C<Creating Element Libraries in Krang>.
 
 
-=head1 An Example Story Type
+=head1 Choosing a Strategy
 
-We'll examine a simple example story type called "Story". Here's the element tree for "Story":
+When first building templates for Krang, try and use the stock publish methods with one or more templates (See C<Publishing With Stock Krang Publish Methods>, below).  As you get more familiar with Krang, you will discover that using many templates will allow you to customize the appearance of various sections of your site, without doing anything more than template development.
+
+The publish methods that exist in Krang were designed with flexibility and performance in mind.  Consider overriding methods (C<Publishing With Customized Publish Methods>) in the publish process only in the event that you cannot get the behavior you need out of the standard methods.
+
+Realize that overriding publish methods can potentially affect the performance of the preview/publish process, as any given method may be called a large number of times.
+
+
+=head1 Publishing With Stock Krang Publish Methods
+
+The publish methods provided by Krang should be sufficient for just about everyone.  Get familiar with the standard publish process and use it for a little while before getting into the more advanced techniques in the publish process - chances are you won't need to use them.
+
+The most important things to understand when getting into template development in Krang are the relationships that elements have to eachother (the element tree), and how those relationships are used to build out the data structures used in your templates.
+
+=head2 An Example Story Type
+
+We'll examine a simple example story type called C<Story>. Here's the element tree for C<Story>:
 
    Story
         - Deck             (textbox attribute)
@@ -76,44 +118,280 @@ We'll examine a simple example story type called "Story". Here's the element tre
              - Paragraph   (repeatable textbox attribute)
              - Pull Quote  (repeatable textbox attribute)
 
-The Story element has one attribute called Deck and can contain any number of Page elements. Pages are composed of Paragraph attributes and Pull Quote attributes, both of which can be repeated.
+The Story element has an attribute called Deck, and can contain any number of Page elements. Pages are composed of Paragraph attributes and Pull Quote attributes, both of which can be repeated.
+
+When the publish process is called on this story, Krang will walk this element tree, starting from the top (C<Story>), recursively touching every element in the tree to construct the final output.
+
+Each element within C<Story> contains methods to retrieve the appropriate template, build the appropriate data to populate that template, and return the output that results from the merger of the data and template.
+
+No element can return until it's children have returned.  Using the above tree as an example, a C<Page> element will not return its output until its children, the C<Paragraph> and C<Pull Quote> elements, have returned their output.
 
 
-=head1 Choosing a Strategy
+=head2 How Krang Builds Template Data
 
-Empty for now.
+Krang uses an internal method, C<< Krang::ElementClass->fill_template() >> (see more in C<Publishing With Customized Publish Methods>) to buld the data available to a template.  fill_template() will fill in the variables and loops in your template in a predictable fashion.
 
-=head1 Overriding Methods in Krang::ElementClass
-
-The following methods exist in Krang::ElementClass as part of the publish process, and can be overridden as needed:
+Several types of variables and loops are created.  Using the element tree for C<Story> above as an example, the follwoing variables will be created:
 
 =over
 
-=item * find_template(category => $category_id)
+=item *
 
-Returns an HTML::Template::Expr object with the template to be used by the element.  Follows a definied protocol (required in this doc?) for locating the template on the filesystem.
+B<NOTE>: All variable names are lower case, and any spaces in between words will be replaced with underscores.
 
-Unless you need to alter the process for loading templates, this method can generally be left alone.
+=item *
 
-=item * fill_template(story => $story, template => $template, category => $category_id)
+A single variable is created for every element using C<< $element->name() >>
 
-Works in the same fashion as the old autofill() behavior under Bricolage.  Navigates the element tree, creates scalers & loops based on what it traverses, and adds them to the template object.
+An examples would be <tmpl_var deck>.
+
+=item *
+
+A loop is created for every element named with the name of the element followed by _loop. The rows of the loop contain the variable described above and a _count variable.
+
+The <tmpl_loop page_loop> is an example of this type of loop.  Each element in C<page_loop> will contain <tmpl_var page> and <tmpl_var page_count>.
+
+=item *
+
+A loop called C<element_loop> is created with a row for every element contained. The values are the same as for the loop above with the addition of a boolean is_ variable.
+
+For example, <tmpl_loop element_loop> would contain the variables <tmpl_var is_deck>, <tmpl_var deck>, <tmpl_var is_page>, <tmpl_var page>.
+
+=item *
+
+A variable for the total number of elements named with the element name and a trailing _total.
+
+<tmpl_var deck_total> would return 1, as would <tmpl_var page_total>.
+
+
+=item *
+
+A variable called C<title> containing $story->title.
+
+This is available to all templates, regardless of where in the element tree you are.
+
+Accessed in the template as <tmpl_var title>.
+
+=item * 
+
+A variable called C<page_break> that forces Krang to create a new page.
+
+This is available to all templates.  Careful as to where this is implemented, as you could find yourself creating far more pages than you intend to.
+
+<tmpl_var page_break>
+
+=item *
+
+A loop called C<contrib_loop> containing all contributors to a story.
+
+See the section C<Contributors>, further on in this document, for more information on Contributors.
+
+=item *
+
+A loop called C<pagination_loop> containing links to other pages in the story.
+
+See the section C<Using Pagination>, further on in this document, for more information on Pagination.  This variable is only available to elements marked as I<pageable>.
+
+=back
+
+=head2 Example 1: Using One Large Template
+
+
+
+
+Overriding the various methods in the element tree is not always required.  If no methods are overridden, the methods found in Krang::ElementClass are used.
+
+
+
+B<Additional notes>
+
+The template being used in this strategy is almost exactly the same as for strategy 1. There are a couple changes.  First, the variable names used in the template must correspond to what $element->name() will return.  Second, the default fill_template() method provides "is_$element->name()" variables inside the element_loops to make testing for the type of row more obvious and more fool-proof.  In STRATEGY 1 a paragraph with the sole contents "0" wouldn't have been printed.
+
+B<The Template - Story.tmpl>
+
+ #
+ # Note: Need to explain how to save in Krang::Template
+ #
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_if __first__>
+        <h1><tmpl_var title></h1>
+        <b><tmpl_var deck></b>
+     </tmpl_if>
+
+     <tmpl_loop element_loop>
+        <tmpl_if is_paragraph>
+          <p><tmpl_var paragraph></p>
+        </tmpl_if>
+        <tmpl_if is_pull_quote>
+          <p><blockquote><i>
+            <tmpl_var pull_quote>
+          </i></blockquote></p>
+        </tmpl_if>
+     </tmpl_loop>
+
+     <tmpl_unless __first__>
+     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+     </tmpl_unless>
+
+     <tmpl_unless __last__>
+     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+     </tmpl_unless>
+
+   </body>
+   </html>
+
+   <tmpl_var page_break>
+
+ </tmpl_loop>
+
+
+
+=head2 Example 2: Using Multiple Templates
+
+If your building an element that will be used as a sub-element in more than one tree, you can save a lot of time and effort by splitting out the functionality of that element from the rest of the system.
+
+This example will take what we did in Example 2 (single template, no fill_template() method), and break out the construction of the Page element into a separate template.  The publish() method will not be overloaded in this example, so the default publish() method will be relied upon to build the loops and variables.  All behavior of the default publish() method talked about in Example 2 still applies.
+
+
+B<The Templates>
+
+B<Story.tmpl>
+
+The Story template (taken from Story.tmpl in Example 2 above) sees one major revision - the entire <tmpl_loop element_loop> section has been removed and replaced with a single B<<tmpl_var page>>.  The default publish() method (or the one you roll on your own, see Example 4, below) will see this and now make a call to the publish() method for the page element to generate the HTML needed by <tmpl_var>.
+
+# Note: Need to explain how to save in Krang::Template
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_if __first__>
+        <h1><tmpl_var title></h1>
+        <b><tmpl_var deck></b>
+     </tmpl_if>
+
+     <tmpl_var page>
+
+     <tmpl_unless __first__>
+     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+     </tmpl_unless>
+
+     <tmpl_unless __last__>
+     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+     </tmpl_unless>
+
+   </body>
+   </html>
+
+   <tmpl_var page_break>
+
+ </tmpl_loop>
+
+
+B<Page.tmpl>
+
+Page.tmpl is simply the inner loop @element_loop that was found in the Story.tmpl of Example 2.  By removing it from Story.tmpl, we now have a small, easy-to-maintain template with very simple functionality.
+
+Notice that the header and footer logic found in the previous template (using __first__ and __last__) is not present here - those variables are internal HTML::Template variables that correspond to the current location in @page_loop, which doesn't exist here.  
+
+# Note: Need to explain how to save in Krang::Template
+
+ <tmpl_loop element_loop>
+   <tmpl_if paragraph>
+     <p><tmpl_var paragraph></p>
+   </tmpl_if>
+   <tmpl_if name="pull quote">
+     <p><blockquote><i>
+       <tmpl_var name="pull quote">
+     </i></blockquote></p>
+   </tmpl_if>
+ </tmpl_loop>
+
+
+
+
+
+=head2 RESULTS
+
+
+B<Advanteges:>
+
+=over
+
+=item * Two simplified templates easier to understand than one large complex one.
+
+=item * Customizability - multiple implementations of the Page template can be used to provide different layouts, all without touching the Story template.
+
+=item * Use of the default publish() method means that no custom perl code is required.
+
+=back
+
+B<Disadvanteges:>
+
+=over
+
+=item * Everything is no longer in a single spot - the developer is now forced to look in multiple locations for all template information.
+
+=back
+
+=head1 Publishing with Customized Publish Methods
+
+=head1 Overriding Krang::ElementClass Methods in Your Element Library
+
+If you do decide to make changes to the publish process, the following methods exist in Krang::ElementClass as part of the publish process, and can be overridden as needed:
+
+=over
+
+=item * template_data()
+
+This returns the data stored in the element.  In most cases, it's the actual data stored in the element, unformatted.  In the case of C<Krang::ElementClass::StoryLink> or C<Krang::ElementClass::MediaLink> objects, C<template_data()> will return the fully-qualified URL of the object.
+
+If you want to change the form of the returned data for a single class of element in your element library, overriding template_data() for that element should be the first thing you try.
+
+
+=item * fill_template()
+
+fill_template() is responsible for filling the template object with data built from the element tree.  Generally, it traverses the element tree, creating scalars and loops on an as-needed basis, populating the template objects with the results.  The rules by which fill_template() operates can be found in C<Example 1>.
+
+If you are familiar with Bricolage, fill_template() functions using the same rules as the autofill() functionality found in Bricolage.
+
+This method is the most likely candidate for overriding, as this is the method that actually determines what goes into the template.
 
 This method is responsible for calling publish() on all children of the current element.  If you decide to override fill_template, but don't want to deal with the manual work of walking the element tree, make sure to make a call to $self->SUPER::fill_template().
 
 
-=item * publish(story => $story, category => $category_id)
+=item * find_template()
 
-Ties the above methods together.  Returns HTML for the current element (and therefore, any children beneath it).  Any reason to ever override it?
+Returns an HTML::Template::Expr object with the template to be used by the element.  Follows a specific procedure for locating the template on the filesystem.
+
+Unless you need to alter the process for loading templates (e.g. you don't want a template to get loaded under certain circumstances), this method should generally be left alone.
+
+=item * publish()
+
+Ties the above methods together and returns HTML for the current element (and therefore, any children beneath it).  Overriding publish() is a pretty drastic action, and should only be done if absolutely needed. 
 
 publish() takes a hash as an argument, allowing for named parameters.  Anything passed in will subsuquently be passed into the above methods.
 
-Krang::ElementClass POD should contain more information on overriding these methods.
-
 =back
 
+Read the POD for C< Krang::ElementClass > if you want to learn more about how these methods work, and how to use them.
 
-=head1 Example 1: One Template, No Publish Method
+
+=head1 Example 3: Using One Large Template
 
 In this case, we have a very simple system, a single story template made up of basic elements:
 
@@ -230,184 +508,6 @@ Disadvanteges:
 * With a single template, customization for individual stories is very difficult - there's no possibility of re-using this element in a different tree - it would need to be re-written.
 
 
-=head1 Example 2: One Template, One Publish Method
-
-Overriding the various methods in the element tree is not always required.  If no methods are overridden, the methods found in Krang::ElementClass are used.
-
-=head2 The Default fill_template() Method
-
-The default fill_template() from Krang::ElementClass will fill in the variables and loops in your template in a predictable fashion.
-
-Several types of variables and loops are created:
-
-=over
-
-=item * A single variable is created for every element using $element->name().
-
-The <tmpl_var deck> variable in the previous example is an example of this type of variable.
-
-=item * A loop is created for every element named with the name of the element followed by _loop. The rows of the loop contain the variable described above and a _count variable.
-
-The <tmpl_loop page_loop> is an example of this type of loop.
-
-=item * A loop called "element_loop" is created with a row for every element contained. The values are the same as for the loop above with the addition of a boolean is_ variable.
-
-The <tmpl_loop element_loop> used within the <tmpl_loop page_loop> is this type of loop.
-
-=item * A variable for the total number of elements named with the element name and a trailing _total.
-
-=item * A variable called "title" containing $story->title.
-
-=item * A variable called "page_break" containing $burner->page_break.   --- (Krang::Publisher::PAGE_BREAK?)
-
-
-=back
-
-
-B<Additional notes>
-
-The template being used in this strategy is almost exactly the same as for strategy 1. There are a couple changes.  First, the variable names used in the template must correspond to what $element->name() will return.  Second, the default fill_template() method provides "is_$element->name()" variables inside the element_loops to make testing for the type of row more obvious and more fool-proof.  In STRATEGY 1 a paragraph with the sole contents "0" wouldn't have been printed.
-
-=head2 The Template - Story.tmpl
-
- #
- # Note: Need to explain how to save in Krang::Template
- #
-
- <tmpl_loop page_loop>
-
-   <html>
-
-   <head>
-     <title><tmpl_var title></title>
-   </head>
-   <body>
-
-     <tmpl_if __first__>
-        <h1><tmpl_var title></h1>
-        <b><tmpl_var deck></b>
-     </tmpl_if>
-
-     <tmpl_loop element_loop>
-        <tmpl_if is_paragraph>
-          <p><tmpl_var paragraph></p>
-        </tmpl_if>
-        <tmpl_if is_pull_quote>
-          <p><blockquote><i>
-            <tmpl_var pull_quote>
-          </i></blockquote></p>
-        </tmpl_if>
-     </tmpl_loop>
-
-     <tmpl_unless __first__>
-     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
-     </tmpl_unless>
-
-     <tmpl_unless __last__>
-     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
-     </tmpl_unless>
-
-   </body>
-   </html>
-
-   <tmpl_var page_break>
-
- </tmpl_loop>
-
-
-
-=head1 Example 3: Multiple Templates, No Publish Methods
-
-If your building an element that will be used as a sub-element in more than one tree, you can save a lot of time and effort by splitting out the functionality of that element from the rest of the system.
-
-This example will take what we did in Example 2 (single template, no fill_template() method), and break out the construction of the Page element into a separate template.  The publish() method will not be overloaded in this example, so the default publish() method will be relied upon to build the loops and variables.  All behavior of the default publish() method talked about in Example 2 still applies.
-
-
-=head2 The Templates
-
-B<Story.tmpl>
-
-The Story template (taken from Story.tmpl in Example 2 above) sees one major revision - the entire <tmpl_loop element_loop> section has been removed and replaced with a single B<<tmpl_var page>>.  The default publish() method (or the one you roll on your own, see Example 4, below) will see this and now make a call to the publish() method for the page element to generate the HTML needed by <tmpl_var>.
-
-# Note: Need to explain how to save in Krang::Template
-
- <tmpl_loop page_loop>
-
-   <html>
-
-   <head>
-     <title><tmpl_var title></title>
-   </head>
-   <body>
-
-     <tmpl_if __first__>
-        <h1><tmpl_var title></h1>
-        <b><tmpl_var deck></b>
-     </tmpl_if>
-
-     <tmpl_var page>
-
-     <tmpl_unless __first__>
-     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
-     </tmpl_unless>
-
-     <tmpl_unless __last__>
-     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
-     </tmpl_unless>
-
-   </body>
-   </html>
-
-   <tmpl_var page_break>
-
- </tmpl_loop>
-
-
-B<Page.tmpl>
-
-Page.tmpl is simply the inner loop @element_loop that was found in the Story.tmpl of Example 2.  By removing it from Story.tmpl, we now have a small, easy-to-maintain template with very simple functionality.
-
-Notice that the header and footer logic found in the previous template (using __first__ and __last__) is not present here - those variables are internal HTML::Template variables that correspond to the current location in @page_loop, which doesn't exist here.  
-
-# Note: Need to explain how to save in Krang::Template
-
- <tmpl_loop element_loop>
-   <tmpl_if paragraph>
-     <p><tmpl_var paragraph></p>
-   </tmpl_if>
-   <tmpl_if name="pull quote">
-     <p><blockquote><i>
-       <tmpl_var name="pull quote">
-     </i></blockquote></p>
-   </tmpl_if>
- </tmpl_loop>
-
-
-
-
-
-=head2 RESULTS
-
-
-B<Advanteges:>
-
-=over
-
-=item * Two simplified templates easier to understand than one large complex one.
-
-=item * Customizability - multiple implementations of the Page template can be used to provide different layouts, all without touching the Story template.
-
-=item * Use of the default publish() method means that no custom perl code is required.
-
-=back
-
-B<Disadvanteges:>
-
-=over
-
-=item * Everything is no longer in a single spot - the developer is now forced to look in multiple locations for all template information.
-
-=back
 
 
 
