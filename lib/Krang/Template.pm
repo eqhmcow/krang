@@ -890,11 +890,11 @@ sub save {
     my $id = $self->{template_id} || 0;
 
     # list of DB fields to insert or update; exclude 'template_id'
-    my @save_fields = grep {$_ ne 'template_id'} TEMPLATE_RO, TEMPLATE_RW;
+    my @save_fields = grep {$_ ne 'template_id'} keys %template_cols;
 
     # calculate url
-    my $url =
-      (Krang::Category->find(category_id => $self->{category_id}))[0]->url();
+    my ($url) = Krang::Category->find(category_id => $self->{category_id});
+    $url = ref $url ? $url->url() : '';
     $self->{url} = _build_url($url, $self->{filename});
 
     # check for duplicate url
