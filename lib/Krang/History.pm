@@ -4,6 +4,7 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
 use Krang::Log qw( info );
+use Krang::Alert;
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -138,6 +139,11 @@ sub add_history {
     $info_string  .= " (version ".$history->{version}.")" if $history->{version};
     $info_string  .= " to desk '".$history->{desk_id}."'" if $history->{desk_id};
     info(__PACKAGE__." - ".$info_string);
+
+    # check if should trigger alert
+    if ($object_type eq 'Krang::Story') {
+        #Krang::Alert->check_alert( $history, $object);
+    }
 }
 
 =item find()
