@@ -8,7 +8,7 @@ CREATE TABLE list_group (
   list_group_id mediumint unsigned NOT NULL auto_increment,
   name varchar(255) NOT NULL,
   description text,
-  PRIMARY KEY  (list_group_id),
+  PRIMARY KEY  (list_group_id,name),
   KEY (name)
 ) TYPE=MyISAM;
 
@@ -30,16 +30,16 @@ CREATE TABLE list (
 DROP TABLE IF EXISTS list_data;
                                                                                 
 --
--- Table structure for table 'list_data'
+-- Table structure for table 'list_item'
 --
                                                                                 
-CREATE TABLE list_data (
-  list_data_id mediumint unsigned NOT NULL auto_increment,
+CREATE TABLE list_item (
+  list_item_id mediumint unsigned NOT NULL auto_increment,
   list_id mediumint unsigned NOT NULL,
-  parent_list_data_id  mediumint unsigned,
+  parent_list_item_id  mediumint unsigned,
   data varchar(255) NOT NULL,
   ord smallint NOT NULL,
-  PRIMARY KEY (list_data_id) 
+  PRIMARY KEY (list_item_id) 
 ) TYPE=MyISAM;
 
 
