@@ -857,6 +857,12 @@ sub _assemble_pages {
 
     # break the story into pages
     my @article_pages = split(/${\PAGE_BREAK}/, $article_output);
+
+    # chuck the last page if it's only whitespace.
+    if ($article_pages[$#article_pages] =~ /^\s*$/) {
+        pop @article_pages;
+    }
+
     # break the category into header & footer.
     my ($cat_header, $cat_footer) = split(/${\CONTENT}/, $category_output, 2);
 
