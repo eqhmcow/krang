@@ -80,10 +80,7 @@ sub auth_handler ($$) {
     unless ($cookies{$r->auth_name}) {        
         # no cookie, redirect to login
         debug("No cookie found, redirecting to login");
-        $r->headers_out->set(Location => ($flavor eq 'instance' ? 
-                                          '/login' : "/$instance/login") .
-                                         '?target=' . $r->uri);
-        return REDIRECT;
+        return _redirect_to_login($r, $flavor, $instance);
     }
 
     # validate cookie
@@ -94,18 +91,32 @@ sub auth_handler ($$) {
         # invalid cookie, send to login
         critical("Invalid cookie found, possible breakin attempt from IP " . 
                  $r->connection->remote_ip . ".  Redirecting to login.");
-        $r->headers_out->set(Location => ($flavor eq 'instance' ? 
-                                          '/login' : "/$instance/login") .
-                             '?alert=Invalid+Cookie&target=' . $r->uri);
-        return REDIRECT;
+        return _redirect_to_login($r, $flavor, $instance);
     }
 
-    # setup REMOTE_USER and load the session
+    # setup REMOTE_USER
     $ENV{REMOTE_USER} = $cookie{user_id};
-    Krang::Session->load($cookie{session_id});
+
+    # try to load the session, if it fails send to login.  Usually
+    # this means the session is no longer there.
+    eval { Krang::Session->load($cookie{session_id}); };
+    if ($@) {
+        # no cookie, redirect to login
+        debug("Error loading session: $@");
+        return _redirect_to_login($r, $flavor, $instance);
+    }
 
     return OK;
 }
+
+sub _redirect_to_login {
+    my ($r, $flavor, $instance) = @_;
+    $r->headers_out->set(Location => ($flavor eq 'instance' ? 
+                                      '/login' : "/$instance/login") .
+                         '?target=' . $r->uri);
+    return REDIRECT;
+}
+
 
 # content handler, finds a CGI module to call and calls it
 sub handler ($$) {
