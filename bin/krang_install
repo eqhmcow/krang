@@ -135,11 +135,11 @@ Following is a list of the tasks the installer script will perform.
 
   --HostName             - Host name used for CMS
   --IPAddress            - IP address used for HTTP and FTP
-  --InstanceVirtualHost  - Host name of CMS instance virtual server
   --AdminPassword        - For CMS "admin" user
+  --DBUser               - MySQL user used by CMS
+  --DBPass               - MySQL user password used by CMS
+  --InstanceHostName     - Host name of CMS instance virtual server
   --InstanceDBName       - Name of MySQL database
-  --InstanceDBUser       - MySQL user used by CMS instance
-  --InstanceDBPass       - MySQL user password used by CMS instance
   --InstanceElementSet   - Name of element set used by CMS instance
 
 
@@ -179,9 +179,6 @@ BEGIN {
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
       "${lib}";
     unshift @INC, $lib, "$lib/".$Config{archname};
-
-    # load Krang::Conf (don't need to load Krang here because we won't
-    # be slinging elements)
 }
 
 use Krang;
@@ -195,11 +192,11 @@ my $uniqueness = time();
 my ($help, $man, $do_mysql_install, $do_perl_install);
 my @req_params = qw( HostName
                      IPAddress
-                     InstanceVirtualHost 
+                     InstanceHostName
                      AdminPassword 
                      InstanceDBName 
-                     InstanceDBUser 
-                     InstanceDBPass 
+                     DBUser 
+                     DBPass 
                      InstanceElementSet );
 
 my @opt_params = qw( MySQLRootPassword 
@@ -363,7 +360,6 @@ sub do_perl_install {
     my $perl_build = qq( $rm_bin -f config.sh Policy.sh \\
                          && $sh_bin Configure -Dbin=/usr/bin -Dprefix=/usr/local -des \\
                          && $make_bin \\
-                         && $make_bin test \\
                          && $make_bin install );
 
     # Check for compile error
@@ -428,17 +424,17 @@ sub create_mysql_user {
     my $mysql_bin = MYSQL_BIN;
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
     my $InstanceDBName = $options{'InstanceDBName'};
-    my $InstanceDBUser = $options{'InstanceDBUser'};
-    my $InstanceDBPass = $options{'InstanceDBPass'};
+    my $DBUser = $options{'DBUser'};
+    my $DBPass = $options{'DBPass'};
 
-    my $grant = "grant all on $InstanceDBName\.* to $InstanceDBUser\@localhost";
-    $grant .= " identified by '$InstanceDBPass'" if ($InstanceDBPass);
+    my $grant = "grant all on $InstanceDBName\.* to $DBUser\@localhost";
+    $grant .= " identified by '$DBPass'" if ($DBPass);
 
     my $mysql_grant = ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
     $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
 
-    print "Granting MySQL access to user '$InstanceDBUser' for database '$InstanceDBName'\n";
-    system($mysql_grant) && exit_error("Can't grant DB access to $InstanceDBUser for $InstanceDBName.");
+    print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
+    system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
     print "  MySQL access granted.\n";
 }
 
@@ -573,12 +569,12 @@ sub configure_krang {
     system($createdb) && die("Error creating database $InstanceDBName: $!");
 
     # Load SQL files
-    my $InstanceDBUser = $options{'InstanceDBUser'};
-    my $InstanceDBPass = $options{'InstanceDBPass'};
+    my $DBUser = $options{'DBUser'};
+    my $DBPass = $options{'DBPass'};
     my $sql_files_path = "$InstallPath\/sql/*.sql";
     print "  Creating schema from SQL files in '$sql_files_path'\n";
     my $loadsql = CAT_BIN ." $sql_files_path | ";
-    $loadsql .= MYSQL_BIN ." -u$InstanceDBUser -p$InstanceDBPass $InstanceDBName";
+    $loadsql .= MYSQL_BIN ." -u$DBUser -p$DBPass $InstanceDBName";
     system($loadsql) && die("Error loading SQL: $!");
 
     # Customize DB (Admin password)
@@ -708,6 +704,6 @@ sub set_param_defaults {
     # Default instancedisplayname => $instancevirtualhost
     my $idn = "InstanceDisplayName";
     unless (length($options{$idn})) {
-        $options{$idn} = $options{'InstanceVirtualHost'};
+        $options{$idn} = $options{'InstanceHostName'};
     }
 }

@@ -11,13 +11,11 @@ To install, do the following as root:
          --HostName             $HostName            \
          --IPAddress            $IPAddress           \
          --AdminPassword        $AdminPassword       \
-         --InstanceVirtualHost  $InstanceVirtualHost \
+         --DBUser               $DBUser              \
+         --DBPass               $DBPass              \
          --InstanceDBName       $InstanceDBName      \
-         --InstanceDBUser       $InstanceDBUser      \
-         --InstanceDBPass       $InstanceDBPass      \
+         --InstanceHostName     $InstanceHostName    \
          --InstanceElementSet   $InstanceElementSet  
-
-
 
 
 =head1 Install Worksheet
@@ -43,15 +41,21 @@ Host name used for CMS Apache virtual host (e.g., "cms23.thepirtgroup.com").
 IP address used for CMS Apache server and FTP server.
 
 
-=item InstanceVirtualHost
-
-Host name of CMS virtual Apache server (e.g., "cms.motortrend.com")
-
-
-
 =item AdminPassword
 
 Password assigned to the "Admin" CMS user (e.g., "shredder").
+
+
+=item DBUser
+
+Name of MySQL user which is used by this CMS instance (e.g., "motortrend").
+
+
+
+=item DBPass
+
+MySQL user password which is used by this CMS instance (e.g., "xyzzy").
+
 
 
 =item InstanceDBName
@@ -60,16 +64,9 @@ Name of MySQL database which is used by this CMS instance (e.g., "motortrend").
 
 
 
-=item InstanceDBUser
+=item InstanceHostName
 
-Name of MySQL user which is used by this CMS instance (e.g., "motortrend").
-
-
-
-=item InstanceDBPass
-
-MySQL user password which is used by this CMS instance (e.g., "xyzzy").
-
+Host name of CMS virtual Apache server (e.g., "cms.motortrend.com")
 
 
 =item InstanceElementSet
@@ -127,7 +124,7 @@ by Krang for sending email.
 
 =item InstanceDisplayName
 
-Defaults to $InstanceVirtualHost.  Name of the Instance, displayed on
+Defaults to $InstanceHostName.  Name of the Instance, displayed on
 the CMS interface for informational purposes.
 
 
