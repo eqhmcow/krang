@@ -53,9 +53,8 @@ sub view_data {
     my $story = $element->data();
     if ($story) {
         my $story_id = $story->story_id;
-        my ($story) = Krang::Story->find(story_id => $story_id);
         $html .= qq{Title: "} . $story->title . qq{"<br>} . 
-          qq{URL: <a href="#">} . $story->url . qq{</a>};
+          qq{URL: <a href="javascript:preview_story($story_id)">} . $story->url . qq{</a>};
     }
 
     return $html;
