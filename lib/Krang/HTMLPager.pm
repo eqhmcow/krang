@@ -905,6 +905,8 @@ sub get_pager_view {
 
         # output page numbers and elipses
         push(@page_numbers, 
+             { page_number => 1,
+               page_number_label => "1" },
              { page_number => $start - 1,
                page_number_label => "..." }) if $start != 1;
         push(@page_numbers,
@@ -914,7 +916,9 @@ sub get_pager_view {
             ($start..$end));
         push(@page_numbers, 
              { page_number => $end + 1,
-               page_number_label => "..." }) if $end != $total_pages;
+               page_number_label => "..." },
+             { page_number => $total_pages,
+               page_number_label => $total_pages }) if $end != $total_pages;
     } else {
         @page_numbers = 
           map { { page_number      => $_, 
