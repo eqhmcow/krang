@@ -135,8 +135,6 @@ use Krang::Category;
 use Krang::Site;
 use Krang::Publisher;
 
-use Krang::Profiler;  # only activated if $ENV{KRANG_PROFILE} == 1
-
 use Time::HiRes qw(gettimeofday tv_interval);
 
 # Setup - grabbing all the command-line options.
@@ -144,7 +142,6 @@ use Getopt::Long;
 use Pod::Usage;
 
 my %id  = map { ($_, [])} qw(story_id media_id category_id site_id);
-
 
 my ($help, $man, $everything, $verbose) = (0, 0, 0, 0);
 my $limited_to_site     = 0;
@@ -176,14 +173,15 @@ pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
 
 
 # figure out how these command-line options affect find criteria.
-my %find_options = (limit => $increment, offset => 0);
-my %publish_args = ();
+my %find_options = (limit => $increment, offset => 0, checked_out => 0);
+my %publish_args = (callback => \&_progress_callback);
 
 if ($republish_only) {
     $find_options{publish_status} = 1;
 }
 
 if ($everything) {
+    # removes checking for related stories/media.
     $publish_args{disable_related_assets} = 1;
 } else {
     if (@{$id{site_id}}) {
@@ -203,15 +201,42 @@ my $total_storycount = 0;
 my $total_mediatime = 0;
 my $total_mediacount = 0;
 
+
 while (my @stories = Krang::Story->find(%find_options)) {
+
+    if (@stories == $increment) {
+        $publish_args{keep_asset_list} = 1;
+    } else { 
+        $publish_args{keep_asset_list} = 0;
+    }
 
     my @starttime = gettimeofday();
 
-    $publisher->publish_story(story => \@stories, %publish_args);
+    eval { $publisher->publish_story(story => \@stories, %publish_args); };
+
+    if ($@) {
+        # if there is an error, figure out what it is, create the
+        # appropriate message and return.
+        if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
+            add_message('missing_template',
+                        filenname      => $@->template_name,
+                        category_url   => $@->category_url
+                       );
+        } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
+            add_message('template_parse_error',
+                        element_name  => $@->element_name,
+                        template_name => $@->template_name,
+                        category_url  => $@->category_url,
+                        error_msg     => $@->error_msg
+                       );
+        }
+        die($@);
+    }
+
 
     my $endtime = tv_interval(\@starttime);
 
-    print sprintf("STATUS: stories (%i - %i) published in %f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @stories), $endtime);
+    print sprintf("STATUS: stories (%i - %i) published in %.02f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @stories), $endtime);
 
     $total_storytime += $endtime;
     $total_storycount += @stories;
@@ -228,7 +253,7 @@ if ($everything) {
         $publisher->publish_media(media => \@media, %publish_args);
         my $endtime = tv_interval(\@starttime);
 
-        print sprintf("STATUS: media (%i - %i) published in %f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @media), $endtime);
+        print sprintf("STATUS: media (%i - %i) published in %.02f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @media), $endtime);
 
         $total_mediatime += $endtime;
         $total_mediacount += @media;
@@ -238,11 +263,32 @@ if ($everything) {
     }
 }
 
-print "\n\nFINISHED\n==================================================\n";
+
+print "\n\nSTATUS: Publish completed.\n==================================================\n";
 print "type\t\tnumber published\ttime(seconds)\n\n";
 
-print sprintf("stories\t\t%i\t\t\t%.04f\n", $total_storycount, $total_storytime);
+print sprintf("stories\t\t%i\t\t\t%.02f\n", $total_storycount, $total_storytime);
 if ($everything) {
-    print sprintf("media\t\t%i\t\t\t%.04f\n", $total_mediacount, $total_mediatime);
+    print sprintf("media\t\t%i\t\t\t%.02f\n", $total_mediacount, $total_mediatime);
 }
 
+print "\n";
+
+
+
+
+
+
+# update the progress bar during preview or publish
+sub _progress_callback {
+    my %arg = @_;
+    my ($object, $counter, $total) = @arg{qw(object counter total)};
+    my $string;
+    if ($object->isa('Krang::Story')) {
+        $string .= 'Publishing story_id = ' . $object->story_id . ' (' . $object->url . ')';
+    } else {
+        $string .= 'Publishing media_id = ' . $object->media_id . ' (' . $object->url . ')';
+    }
+    if ($verbose) { print "$string\n"; }
+
+}
