@@ -1051,15 +1051,11 @@ sub duplicate_check {
     my $id = $self->{media_id} || 0;
     my $media_id = 0;
 
-    my $query = <<SQL;
-SELECT media_id
-FROM media
-WHERE url = '$self->url'
-SQL
+    my $query = 'SELECT media_id FROM media WHERE url = ?';
     $query .= "AND media_id != $id" if $id;
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
-    $sth->execute();
+    $sth->execute($self->url);
     $sth->bind_col(1, \$media_id);
     $sth->fetch();
     $sth->finish();
