@@ -899,12 +899,21 @@ sub thumbnail_path {
             # the filename
             my $path = catfile((splitpath($self->file_path(relative => $args{relative})))[1], "t__$filename");
             if (not -f $path) {
-                my $img = Imager->new();
-                $img->open(file=>$self->file_path()) || croak $img->errstr();
-                my $thumb = $img->scale(xpixels=>THUMBNAIL_SIZE,ypixels=>THUMBNAIL_SIZE,type=>'min');
-                $thumb->write(file=>$path) || croak $thumb->errstr;
+                # problems creating thumbnails shouldn't be fatal
+                eval {
+                    my $img = Imager->new();
+                    $img->open(file=>$self->file_path()) || croak $img->errstr();
+                    my $thumb = $img->scale(xpixels=>THUMBNAIL_SIZE,ypixels=>THUMBNAIL_SIZE,type=>'min');
+                    $thumb->write(file=>$path) || croak $thumb->errstr;
+                };
+ 
+                # if it didn't work, log the problem and move on.
+                # Thumbnails are optional.
+                if ($@) {
+                    debug(__PACKAGE__ . " - problem creating thumbnail for $filename : $@");
+                    return undef;
+                }
             } 
-
 
             return $path;
         }
