@@ -12,16 +12,10 @@ use Krang::Script;
 
 use Data::Dumper;
 
-my @rootdirs = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
-
-my @dirs_a = (File::Spec->catfile(@rootdirs, 'publishtest.com', 'testdir_a', 'testdir_b'), File::Spec->catfile(@rootdirs, 'publishtest.com', 'testdir_a'), File::Spec->catfile(@rootdirs, 'publishtest.com'));
-
-
-
-
 # list of templates to delete at the end of this all.
 my @delete_templates = ();
 
+# file path of element template
 my %element_paths = ();
 
 # create a site and category for dummy story
@@ -33,36 +27,46 @@ $site->save();
 
 END { $site->delete(); }
 
+
 my ($category) = Krang::Category->find(site_id => $site->site_id());
 
-# create child categories
-my $child_cat = new Krang::Category (dir => '/testdir_a', parent_id => $category->category_id());
+# create child & subchild categories
+my $child_cat = new Krang::Category (dir => 'testdir_a', parent_id => $category->category_id());
 $child_cat->save();
 
 my $child_subcat = new Krang::Category (dir => 'testdir_b', parent_id => $child_cat->category_id());
 $child_subcat->save();
-
-#die Dumper($category->url(), $child_cat->url(), $child_subcat->url());
 
 END { 
     $child_subcat->delete();
     $child_cat->delete();
 }
 
+# Directory structures for template paths.
+my @rootdirs = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
+
+my @dirs_a = (File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a', 'testdir_b'), File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a'), File::Spec->catfile(@rootdirs, $site->url()));
+
 
 # instantiate publisher
 use_ok('Krang::Publisher');
 
-my $publisher = new Krang::Publisher (category => $child_subcat);
+my $publisher = new Krang::Publisher ();
 
 isa_ok($publisher, 'Krang::Publisher');
 
-# testing template search path.
+############################################################
+# testing template seach path.
+
+$publisher->category($child_subcat);  # dev - set currently running category
 my @paths = $publisher->template_search_path();
 
 ok(@paths == @dirs_a);
-
 for (my $i = 0; $i <= $#paths; $i++) { ok($paths[$i] eq $dirs_a[$i]); }
+
+
+############################################################
+# testing Krang::ElementClass->find_template().
 
 # create a new story -- get root element.
 my $story = Krang::Story->new(categories => [$category],
@@ -71,7 +75,6 @@ my $story = Krang::Story->new(categories => [$category],
                               class      => "article");
 
 my $element = $story->element();
-
 
 # iterate over the elements of the article, creating templates.
 &create_templates($element);
@@ -113,7 +116,9 @@ sub create_templates {
     my ($el) = @_;
     my $cat;
 
-    (rand(100) % 2) ? $cat = $category : $cat = $child_cat;
+    (rand(100) % 2) ? ($cat = $category) : ($cat = $child_cat);
+
+#    diag("CATEGORY = " . $cat->category_id . "\tURL = " . $cat->url());
 
     my $template = Krang::Template->new(category_id => $cat->category_id(),
                                         content => "TEMPLATE NAME=" . $el->name() . "\n",
@@ -122,7 +127,7 @@ sub create_templates {
     $template->save();
     push @delete_templates, $template;
 
-
+    # deploy template to the publish path.
     $element_paths{$el->name()} = $publisher->deploy_template(template => $template);
 #    diag($template->template_id(), $element_paths{$el->name()});
 
