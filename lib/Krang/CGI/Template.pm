@@ -759,7 +759,7 @@ sub search {
     my $self = shift;
     my $q = $self->query();
 
-    return $self->advanced_search() if ( not $q->param('rm') and ($session{'KRANG_PERSIST_Template_rm'} eq 'advanced_search') );
+    return $self->advanced_search() if ( not $q->param('rm') and ($session{'KRANG_PERSIST_Template_rm'} and ($session{'KRANG_PERSIST_Template_rm'} eq 'advanced_search')) );
  
     my $t = $self->load_tmpl("list_view.tmpl",
                              associate => $q,

@@ -118,7 +118,7 @@ sub find {
 
     my $q = $self->query();
 
-    return $self->advanced_find() if ( not $q->param('rm') and ($session{'KRANG_PERSIST_Media_rm'} eq 'advanced_find') );
+    return $self->advanced_find() if ( not $q->param('rm') and ($session{'KRANG_PERSIST_Media_rm'} and ($session{'KRANG_PERSIST_Media_rm'} eq 'advanced_find')) );
 
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
 

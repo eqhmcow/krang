@@ -113,6 +113,8 @@ sub category_chooser {
                                             die_on_bad_params => 1,
                                            );
 
+    $formname = '' if not $formname;
+    $name = '' if not $name;
     my $category_id = defined($query->param($field)) ? $query->param($field) : $session{'KRANG_PERSIST_cat_chooser_id_'.$formname."_".$name};
     $category_id = 0 if not $category_id;
 
