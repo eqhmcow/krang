@@ -1314,6 +1314,7 @@ sub make_media_tmpl_data {
                                             query => $q,
                                             name => 'category_id',
                                             formname => 'edit_media_form',
+                                            may_edit => 1,
                                            );
     $tmpl_data{category_chooser} = $category_chooser;
 

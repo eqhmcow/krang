@@ -523,6 +523,7 @@ sub edit_categories {
                                                    name => "add_category_id",
                                                    site_id => $root_category->site_id,
                                                    onchange => 'add_category',
+                                                   may_see => 0,
                                                   ));
 
     return $t->output();

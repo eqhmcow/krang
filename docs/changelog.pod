@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Modified Krang::Widget::category_chooser() to take into account
+category permissions when building the category chooser.  Also took
+advantage of the multiple-root support in HTML::PopupTreeSelect 1.4 to
+remove to empty root node from the widget.  [Sam]
+
+=item *
+
 Upgraded HTML::PopupTreeSelect to the latest released version,
 1.4. [Sam]
 

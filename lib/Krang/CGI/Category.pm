@@ -156,7 +156,9 @@ sub new_category {
     $template->param(parent_chooser =>
                      category_chooser(name => 'parent_id',
                                       title => 'Choose Parent Category',
-                                      query => $query));
+                                      query => $query,
+                                      may_edit => 1,
+                                     ));
 
     return $template->output();
 }

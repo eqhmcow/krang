@@ -80,6 +80,12 @@ Available parameters are as follows:
   title    - the title on the chooser window.  Defaults to 'Choose a 
              Category'.
 
+  may_see  - Hide categories which are hidden to the current user.
+             Defaults to 1.
+
+  may_edit - Hide categoriew which are read-only to the current user.
+             Defaults to 0.
+
 The template for the category chooser is located in
 F<Widget/category_chooser.tmpl>.
 
@@ -88,14 +94,17 @@ F<Widget/category_chooser.tmpl>.
 sub category_chooser {
     my %args = @_;
     my ($name, $query, $label, $display, $onchange, $formname, $site_id, 
-        $field, $title) =
+        $field, $title, $may_see, $may_edit) =
       @args{qw(name query label display onchange formname site_id 
-               field title)};
+               field title may_see may_edit)};
     croak("Missing required args: name and query")
       unless $name and $query;
 
     # field defaults to name
     $field ||= $name;
+
+    # may_see is on by default
+    $may_see = 1 unless defined $may_see;
 
     my $template = Krang::HTMLTemplate->new(filename => 
                                             "Widget/category_chooser.tmpl",
@@ -108,6 +117,8 @@ sub category_chooser {
     # setup category loop
     my %find_params = (order_by => 'url');
     $find_params{site_id} = $site_id if ($site_id);
+    $find_params{may_see} = 1 if $may_see;
+    $find_params{may_edit} = 1 if $may_edit;
 
     # get list of all cats
     my @cats = Krang::Category->find(%find_params);
@@ -121,15 +132,29 @@ sub category_chooser {
     # build up data structure used by HTML::PopupTreeSelect
     my $data = { children => [], label => "", open => 1};
     my %nodes;
-    foreach my $cat (@cats) {
+    while (@cats) {
+        my $cat = shift @cats;
+
         my $parent_id = $cat->parent_id;
         my $parent_node = $parent_id ? $nodes{$parent_id} : $data;
 
+        # maybe they don't have permissions to the parent, so it
+        # wasn't returned from the initial find().  Fill it in
+        # deactivated.
+        unless ($parent_node) {
+            unshift(@cats, $cat);
+            unshift(@cats, Krang::Category->find(category_id => $parent_id));
+            $cats[0]->{_inactive} = 1;
+            next;
+        }
+            
         push(@{$parent_node->{children}}, 
              {
               label    => ($cat->dir eq '/' ? $cat->url : $cat->dir),
               value    => $cat->category_id . "," . $cat->url,
               children => [],
+              ($cat->{_inactive} ? 
+               (inactive => 1) : ()),
              });
         $nodes{$cat->category_id} = $parent_node->{children}[-1];
 
@@ -142,7 +167,7 @@ sub category_chooser {
     # build the chooser
     my $chooser = HTML::PopupTreeSelect->new(name       => $name,
                                              title      => $title || 'Choose a Category',
-                                             data       => $data,
+                                             data       => $data->{children},
                                              image_path => 'images',
                                              onselect   => $name . '_choose_category',
                                              hide_root  => 1,

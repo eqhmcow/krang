@@ -122,7 +122,9 @@ sub new_story {
 
     $template->param(category_chooser => 
                      category_chooser(name => 'category_id',
-                                      query => $query));
+                                      query => $query,
+                                      may_edit => 1,
+                                     ));
     
     # setup date selector
     $template->param(cover_date_selector => datetime_chooser(name=>'cover_date', query=>$query));
@@ -417,6 +419,7 @@ sub edit {
                                           label    => 'Add Site / Category',
                                           display  => 0,
                                           onchange => 'add_category',
+                                          may_edit => 1,
                                          ));
 
         $template->param(version_selector => scalar

@@ -934,7 +934,9 @@ sub get_tmpl_params {
         $tmpl_params{category_chooser} =
           category_chooser(query => $q,
                            name => 'category_id',
-                           formname => 'edit_template_form');
+                           formname => 'edit_template_form',
+                           may_edit => 1,
+                          );
 
         # we don't need it anymore
         $q->delete('category_id');

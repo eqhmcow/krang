@@ -83,7 +83,7 @@ sub choose {
     
     my $template = $self->load_tmpl('choose.tmpl', associate => $query );
 
-    $template->param( category_chooser => category_chooser(name=>'category_id', query=>$query) );
+    $template->param( category_chooser => category_chooser(name=>'category_id', query=>$query, may_edit => 1) );
 
     $template->param( upload_chooser => scalar $query->filefield(-name => 'media_file',
                                                      -size => 32) );
