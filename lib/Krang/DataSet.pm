@@ -14,6 +14,13 @@ use Carp qw(croak);
 use Krang::XML;
 use Krang;
 
+# setup exceptions
+use Exception::Class 
+  'Krang::DataSet::ValidationFailed' => 
+    { fields => [ 'errors' ] },
+  'Krang::DataSet::InvalidFile' => 
+    { fields => [ 'file', 'err' ] };
+
 =head1 NAME
 
 Krang::DataSet - Krang interface to XML data sets
@@ -31,24 +38,18 @@ Creating data sets:
   $set->add(object => $desk);
 
   # write it out to a kds file
-  $set->write(filename => "foo.kds");
+  $set->write(path => "foo.kds");
 
 Loading data sets:
 
   # load a data set from a file on disk
-  my $set = Krang::DataSet->new(filename => "foo.kds");
+  my $set = Krang::DataSet->new(path => "foo.kds");
 
   # get a list of objects in the set
   my @objects = $set->list();
 
   # import objects from the set, solving dependencies and updating links
   $set->import_all();
-
-  # if there were errors, get a reject set and write it out
-  if ($set->import_errors) {
-     my $reject = $set->reject_set();
-     $reject->write(filename => "reject.kds");
-  }
 
 =head1 DESCRIPTION
 
@@ -62,13 +63,15 @@ uses Krang::XML to serialize and deserialize individual objects.
 
 =item C<< $set = Krang::DataSet->new() >>
 
-=item C<< $set = Krang::DataSet->new(filename => "foo.kds") >>
+=item C<< $set = Krang::DataSet->new(path => "foo.kds") >>
 
-=item C<< $set = Krang::DataSet->new(filename => "foo.kds.gz") >>
+=item C<< $set = Krang::DataSet->new(path => "foo.kds.gz") >>
 
 Creates a new set object, either empty or by loading an existing data
-set previously created with write().  This will croak if
-inconsistencies are found in the data set archive.
+set previously created with write(). 
+
+May throw a Krang::DataSet::ValidationFailed exception if the archive
+is found to contain errors.  See EXCEPTIONS below for details.
 
 =cut
 
@@ -79,35 +82,66 @@ sub new {
     # create a temp directory to hold in-progress archive
     $self->{dir} = tempdir( DIR => catdir(KrangRoot, 'tmp'));
 
-    if ($args{filename}) {
-        croak("Filename '$args{filename}' does not in .kds or .kds.gz")
-          unless $args{filename} =~ /\.kds$/ or 
-                 $args{filename} =~ /\.kds\.gz/;
-        croak("Unable to find kds archive '$args{filename}'")
-          unless -e $args{filename};
+    if ($args{path}) {
+        croak("Path '$args{path}' does not in .kds or .kds.gz")
+          unless $args{path} =~ /\.kds$/ or 
+                 $args{path} =~ /\.kds\.gz/;
+        croak("Unable to find kds archive '$args{path}'")
+          unless -e $args{path};
 
         my $kds = Archive::Tar->new();
-        $kds->read($args{filename})
-          or croak("Unable to read kds archive '$args{filename}' : " . 
+        $kds->read($args{path})
+          or croak("Unable to read kds archive '$args{path}' : " . 
                    Archive::Tar->error());
 
         # extract in temp dir
         my $old_dir = fastcwd;
-        chdir($self->{dir}) or die $!;
-        my $result = $kds->extract_archive($args{filename});
-        chdir($old_dir) or die $!;
+        chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
+        my $result = $kds->extract_archive($args{path});
+        chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
         
-        croak("Unable to open kds archive '$args{filename}' : " . 
+        croak("Unable to open kds archive '$args{path}' : " . 
               Archive::Tar->error())
           unless $result;
 
+        # check the archive before going further
         $self->_validate;
+
+        # load the index
+        $self->_load_index;
+                                         
 
     } else {
         $self->{objects} = {};
     }
     return $self;
 }
+
+# load index.xml into objects
+sub _load_index {
+    my $self = shift;
+    
+    # read in index
+    open(my $index, '<', catfile($self->{dir}, 'index.xml')) or 
+      croak("Unable to open $self->{dir}/index.xml: $!");
+    my $xml = join('', <$index>);
+    close $index or die $!;
+  
+    # parse'm up
+    my $data = Krang::XML->simple(xml => $xml, forcearray => 1);
+    my %index;
+    foreach my $class_rec (@{$data->{class}}) {
+        my $class = $class_rec->{name};
+        foreach my $object (@{$class_rec->{object}}) {
+            $index{$class}{$object->{id}} = $object->{content};
+            croak("index.xml refers to file '$object->{content}' which is ".
+                  "not in the archive.")
+              unless -e catfile($self->{dir}, $object->{content});
+        }
+    }
+    $self->{objects} = \%index;
+}
+
 
 # cleanup tempdir
 sub DESTROY {
@@ -123,7 +157,7 @@ sub _validate {
 
     # switch into directory with XML
     my $old_dir = fastcwd;
-    chdir($self->{dir}) or die $!;
+    chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
     
     # prepare links to schema documents so schema processing can work
     my @links;
@@ -131,33 +165,60 @@ sub _validate {
              return unless /\.xsd$/; 
              push(@links, catfile($self->{dir}, $_));
              link(catfile(KrangRoot, "schema", $_), $links[-1])
-               or die $!;
+               or die "Unable to link $_ to $links[-1] : $!";
          }, catdir(KrangRoot, "schema"));
 
     # validate the files
+    my %invalid;
     find(sub { 
              return unless /\.xml$/;
-             $self->_validate_file($_) 
+             eval { $self->_validate_file($_) };
+             if ($@ and ref $@ and $@->isa('Krang::DataSet::InvalidFile')) {
+                 $invalid{$@->file()} = $@->err;
+             } elsif ($@) {
+                 die $@;
+             }
          }, $self->{dir});
 
     # remove the links
     unlink($_) for @links;
 
     # get back
-    chdir($old_dir) or die $!;
+    chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
+
+    # cough up error, if we got one    
+    Krang::DataSet::ValidationFailed->throw(errors => \%invalid,
+                                            message =>
+           join("\n", 
+                map { "File '$_' failed validation: \n$invalid{$_}\n" } 
+                keys %invalid))
+        if %invalid;
 }
 
-# FIX: use XML::Xerces if I can ever get it working
+# validate a single file, producing an InvalidFile exception if
+# validation fails
 sub _validate_file {
     my ($self, $file) = @_;
 
+    # FIX: use XML::Xerces if I can ever get it working
     my $DOMCount = catfile(KrangRoot, 'xerces', 'DOMCount');
     local $ENV{LD_LIBRARY_PATH} = catdir(KrangRoot, 'xerces', 'lib') . 
       ($ENV{LD_LIBRARY_PATH} ? ":$ENV{LD_LIBRARY_PATH}" : "");
-    my $results = `$DOMCount -n -s -f $file 2>&1`;
+    my $error = `$DOMCount -n -s -f $file 2>&1`;
 
-    croak("$file failed validation:\n$results\n")
-      if ($results =~ /Error/);
+    return unless $error =~ /Error/;
+
+    # fixup error message
+    $error =~ s{\Q$self->{dir}\E/?}{}g;
+    $error =~ s!Errors occurred, no output available!!g;
+    $error =~ s!^\s+!!;
+    $error =~ s{\s+$}{};
+
+    # toss invalid file exception
+    Krang::DataSet::InvalidFile->throw(
+         file    => $file,
+         err     => $error,
+         message => "File '$file' failed validation: \n$error\n");
 }
 
 =item C<< $set->add(object => $story) >>
@@ -221,8 +282,8 @@ example:
 
   @objects = ( [ Krang::Story    => 1 ],
                [ Krang::Story    => 2 ],
-               [ Krang::Category => 3 ],
-               [ Krang::Site     => 4 ] );
+               [ Krang::Category => 1 ],
+               [ Krang::Site     => 5 ] );
 
 =cut
 
@@ -243,6 +304,9 @@ sub list {
 
 Writes out the set in a kds file named in the path provided.  
 
+May throw a Krang::DataSet::ValidationFailed exception if the archive
+is found to contain errors.  See EXCEPTIONS below for details.
+
 =cut
 
 sub write {
@@ -259,16 +323,13 @@ sub write {
 
     # go to the kds dir
     my $old_dir = fastcwd;
-    chdir($self->{dir}) or die $!;
+    chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
 
     # open up a new archive
     my $kds = Archive::Tar->new();
 
     # write the index
     $self->_write_index;
-
-    # do a validation pass in dev mode to make sure we're not writing junk
-    $self->_validate if ASSERT;
 
     # build the KDS
     $kds->add_files('index.xml')
@@ -285,9 +346,16 @@ sub write {
     }
     $kds->write($path);
 
+    # do a validation pass in dev mode to make sure we're not writing junk
+    eval { $self->_validate } if ASSERT;
+    if ($@) { 
+        print STDERR "Caught $@\n";
+        chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
+        die $@;
+    }
     
     # gotta get back
-    chdir($old_dir) or die $!;
+    chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
 }
 
 # write out the index XML
@@ -328,6 +396,9 @@ sub _write_index {
 This method tells the set to deserialize all objects in the set and
 save them into the current system.
 
+May throw a Krang::DataSet::ValidationFailed exception if the archive
+is found to contain errors.  See EXCEPTIONS below for details.
+
 =item C<< $real_id = $set->map_id(class => "Krang::Foo", id => $id) >>
 
 This call is used during import to return the mapping from an ID in
@@ -345,6 +416,30 @@ the import data to an object on the target system.  This method will
 croak if called outside of an import_all() run or if the object can't
 be found in the data set.  Call map_id() if you don't need the full
 object.
+
+=back
+
+=head1 EXCEPTIONS
+
+As documented above, the methods in this class may throw the following
+exceptions:
+
+=over 4
+
+=item Krang::DataSet::ValidationFailed
+
+This exception indicates that the data set failed schema validation
+against the XML Schema files in schema/.  This exception contains a
+single field, C<errors>, which is a hash mapping filenames inside the
+data set to error message.  Note that C<message> already contains a
+reasonable textual representation of the error report.
+
+=item Krang::DataSet::InvalidArchive
+
+If basic sanity checks on the archive fail then this exception will be
+returned with C<message> set to an explanation of what went wrong.
+
+FIX: Implement this!
 
 =back
 
