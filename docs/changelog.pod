@@ -10,6 +10,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Updated L<Imager> to 0.43. [Peter]
+
+=item *
+
 Updated L<HTTP::BrowserDetect> to the latest version, 0.98. [Peter]
 
 =item *
