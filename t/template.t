@@ -39,8 +39,11 @@ is($@, '', 'contructor good :)');
 $tmpl = Krang::Template->new(category_id => $category->category_id(),
                              content => '<blink><tmpl_var bob></blink>',
                              element_class_name => 'Bob');
-
 isa_ok($tmpl, 'Krang::Template');
+
+# test category meth
+my $cat = $tmpl->category;
+is($cat->dir, $category->dir, 'category() method test');
 
 # increment version
 $tmpl->save();
