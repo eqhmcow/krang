@@ -13,6 +13,8 @@ use File::Copy;
 use LWP::MediaTypes qw(guess_media_type);
 use Image::Thumbnail;
 use File::stat;
+use Time::Piece;
+use Time::Piece::MySQL;
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
@@ -382,9 +384,16 @@ sub save {
     # if this is not a new media object
     if (defined $self->{media_id}) {
         $media_id = $self->{media_id}; 
-	
+
+        # get rid of media_id
+        my @save_fields = FIELDS;
+        @save_fields = splice(@save_fields,1); 	
+
+        # update version
         $self->{version} = ($self->{version} + 1);
-	$dbh->do('UPDATE media SET category_id = ?, title = ?, filename = ?, caption = ?, copyright = ?, notes = ?, version = ?, media_type_id = ? WHERE media_id = ?', undef, $self->{category_id}, $self->{title}, $self->{filename}, $self->{caption}, $self->{copyright}, $self->{notes}, $self->{version}, $self->{media_type_id}, $media_id);
+        
+        my $sql = 'UPDATE media SET '.join(', ',map { "$_ = ?" } @save_fields).' WHERE media_id = ?';
+	$dbh->do($sql, undef, map { $self->{$_} } @save_fields,$media_id);
 
 	# this file exists, new media was uploaded. copy to new position	
 	if (-f catfile($root,'tmp','media',$session_id,'tempfile')) {
@@ -404,8 +413,15 @@ sub save {
             croak('You must upload a file using upload_file() before saving media object!')
 	} 
 	$self->{version} = 1;
-	$dbh->do('INSERT INTO media (category_id, title, filename, caption, copyright, notes, version, media_type_id, creation_date) VALUES (?,?,?,?,?,?,?,?,now())', undef, $self->{category_id}, $self->{title}, $self->{filename}, $self->{caption}, $self->{copyright}, $self->{notes}, $self->{version}, $self->{media_type_id});
-	$self->{media_id} = $dbh->{mysql_insertid};
+        my $time = localtime();
+        $self->{creation_date} = $time->mysql_date();   
+     
+	$dbh->do('INSERT INTO media ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")", undef, map { $self->{$_} } FIELDS);
+
+        # make date readable
+        $self->{creation_date} = Time::Piece->from_mysql_date( $self->{creation_date} );
+	
+        $self->{media_id} = $dbh->{mysql_insertid};
 
         $media_id = $self->{media_id};
 
@@ -449,6 +465,10 @@ category_id
 =item *
 
 media_type_id
+
+=item * 
+
+contrib_id 
 
 =item *
 
@@ -497,13 +517,15 @@ sub find {
     my @where;
     my @media_object;
 
+    # set defaults if need be
     my $order_by =  $args{'order_by'} ? $args{'order_by'} : 'media_id';
     my $order_desc = $args{'order_desc'} ? 'desc' : 'asc';
     my $limit = $args{'limit'} ? $args{'limit'} : undef;
     my $offset = $args{'offset'} ? $args{'offset'} : 0;
 
+    # set simple keys
     foreach my $key (keys %args) {
-	if ( ($key eq 'title') || ($key eq 'category_id') || ($key eq 'media_type_id') || ($key eq 'filename') || ($key eq 'creation_date') ) {
+	if ( ($key eq 'title') || ($key eq 'category_id') || ($key eq 'media_type_id') || ($key eq 'filename') || ($key eq 'creation_date') || ($key eq 'contrib_id' ) ) {
             push @where, $key;
 	} 
     }
@@ -549,6 +571,7 @@ sub find {
     }
     
     my $sql = "select $select_string from media";
+    $sql .= ", media_contrib" if $args{'contrib_id'};
     $sql .= " where ".$where_string if $where_string;
     $sql .= " order by $order_by $order_desc";
  
