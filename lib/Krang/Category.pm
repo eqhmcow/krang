@@ -2,7 +2,7 @@ package Krang::Category;
 
 =head1 NAME
 
-Krang::Category - a means access to information on categories
+Krang::Category - a means to access information on categories
 
 =head1 SYNOPSIS
 
@@ -85,9 +85,7 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
-use Data::Dumper;
 use File::Spec;
-use Time::Piece::MySQL;
 
 # Internal Modules
 ###################
@@ -215,8 +213,7 @@ sub init {
 
     # make sure 'name' is a good path
     # set '_old_name' to 'name' to make changes to 'name' detectable
-    $self->{_old_name} = $self->{name} =
-      File::Spec->catdir('/', $self->{name});
+    $self->{_old_name} = $self->{name};
 
     # define element
     $self->{element} = Krang::Element->new(class => 'category');
@@ -470,7 +467,7 @@ sub find {
         } else {
             # calculate '_site_root', set '_old_name', put in memory
             $row->{_old_name} = $row->{name};
-            ($row->{_site_root} = $row->{url}) =~ s/$row->{name}\$//;
+            ($row->{_site_root} = $row->{url}) =~ s|$row->{name}\$||;
             push @categories, bless({%$row}, $self);
         }
     }
@@ -556,9 +553,10 @@ sub save {
         my ($url) = $dbh->selectrow_array($query, undef, ($param));
         $self->{url} = File::Spec->catdir($url, $self->{name});
 
-        # postfix '/' for root category so its 'name' can be changed like
-        # other categories
-        $self->{url} .= '/' if $self->{name} eq '/';
+        # postfix '/' for root category or the formula
+        # File::Spec->catdir(site_url, $name) is not true and
+        # update_child_urls() will fail
+        $self->{url} .= '/' unless $self->{url} =~ m|/$|;
 
         # store root path in a hidden field
         $self->{_site_root} = $url;
@@ -583,7 +581,7 @@ sub save {
 
     # update child URLs if name has changed
     if ($new_url) {
-        $self->update_child_url();
+        $self->update_child_urls();
         $self->{_old_name} = $self->{name};
     }
 
@@ -591,14 +589,14 @@ sub save {
 }
 
 
-=item * $success = $category->update_child_url()
+=item * $success = $category->update_child_urls()
 
 Instance method that will search through the category table and replace all
 occurrences of the categorys old name with the new one.
 
 =cut
 
-sub update_child_url {
+sub update_child_urls {
     my $self = shift;
     my $id = $self->{category_id};
     my (%ids, $row);
