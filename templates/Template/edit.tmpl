@@ -131,12 +131,12 @@
 
 <tr>
   <td width="140">Element:</td>
-  <td><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+  <td><tmpl_if error_no_filename><span class="invalid"></tmpl_if><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 <tr>
   <td>*Filename:</td>
-  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_filename><span class="invalid"></tmpl_if><input type=text name="filename" size=30 value="<tmpl_var escape=html filename>"><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_no_filename><span class="invalid"></tmpl_if><input type=text name="filename" size=30 value="<tmpl_var escape=html filename>"><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 <tr>

@@ -197,7 +197,7 @@ sub add_save {
 
 =item deploy
 
-Deploys a template and checks it in.  Redirects to My Workspace.
+Saves, deploys and checks in template.  Redirects to My Workspace.
 
 =cut
 
@@ -206,7 +206,26 @@ sub deploy {
     my $query = $self->query;
 
     my $obj = $session{template};
-    croak("No object in session") unless $obj;
+    croak("No object in session") unless ref $obj;
+
+    # update template with CGI values
+    $self->update_template($obj);
+                                                                               
+    if ($obj->template_id) {
+        my %errors = $self->validate($obj);
+        return $self->edit(%errors) if %errors;
+
+        %errors = $self->_save($obj);
+        return $self->edit(%errors) if %errors;
+    } else {
+        my %errors = $self->validate($obj);
+        return $self->add(%errors) if %errors;
+
+        %errors = $self->_save($obj);
+        return $self->add(%errors) if %errors;
+    }
+
+    add_message('message_saved');
 
     my $publisher = Krang::Publisher->new();
     $publisher->deploy_template(template => $obj);
@@ -1027,8 +1046,8 @@ sub update_template {
     my $q = $self->query();
 
     for (qw/category_id content filename testing/) {
-        next if $_ eq 'filename' && $q->param('rm') !~ /add/;
-        next if $_ eq 'category_id' && $q->param('rm') !~ /add/;
+        next if $_ eq 'filename' && $template->template_id;
+        next if $_ eq 'category_id' && $template->template_id;
 
         my $val = $q->param($_) || '';
         if ($_ eq 'content' && $val) {
@@ -1045,7 +1064,7 @@ sub update_template {
         } elsif ($_ eq 'testing') {
             $template->mark_for_testing if $val;
         } else {
-            $template->$_($val);
+            $template->$_($val) if $val ne '';
         }
         $q->delete($_);
     }
@@ -1058,11 +1077,15 @@ sub validate {
     my $q = $self->query();
     my %errors;
 
-    if ($q->param('rm') =~ /add/) {
+    unless ($template->template_id) {
         # validate category_id
         my $category_id = $template->category_id || 0;
         $errors{error_invalid_category_id} = 1
           unless $category_id =~ /^\d+$/;
+
+        # see if filename is set
+         $errors{error_no_filename} = 1
+            unless $template->filename;
     }
 
     add_message($_) for keys %errors;
