@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug where elements using the default Krang::ElementClass
+input_form() implementation would eventually cause browsers to slow to
+a crawl and eventually crash.  The whole sordid tale is here:
+http://perlmonks.org/index.pl?node_id=363214 [Sam]
+
+=item *
+
 Fixed a bug where clicking Publish on the Edit Media screen didn't
 save changes. [Sam]
 

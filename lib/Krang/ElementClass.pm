@@ -270,9 +270,9 @@ sub input_form {
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
     
-    return scalar $query->hidden(name     => $param,
-                                 default  => ($element->data() || ""),
-                                 override => 1);
+    return scalar $query->hidden(-name     => $param,
+                                 -default  => ($element->data() || ""),
+                                 -override => 1);
 }
 
 =item C<< @names = $class->param_names(element => $element) >>
