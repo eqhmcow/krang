@@ -22,6 +22,10 @@ use constant THUMBNAIL_SIZE => 35;
 use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes version url alt_tag published_version published_date checked_out_by);
 use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x-bmp);
 
+# setup exceptions
+use Exception::Class 
+  'Krang::Media::DuplicateURL' => { fields => [ 'media_id' ] };
+
 =head1 NAME
 
     Krang::Media - Media and media metadata storage and access methods
@@ -83,7 +87,7 @@ use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x
     my $media_id = $media->media_id();
 
     # return object by id
-    $media_obj = Krang::Media->find( media_id => $media_id );
+    ($media_obj) = Krang::Media->find( media_id => $media_id );
 
 =head1 DESCRIPTION
 
@@ -413,7 +417,7 @@ sub file_path {
 
     # return path based on if object has been committed to db yet
     if ($media_id) { 
-        return catfile($root,'data','media',$self->_media_id_path(),$self->{version},$self->{filename});
+        return catfile($root,'data','media', $self->_media_id_path(),$self->{version},$self->{filename});
     } else {
         return catfile($root,'tmp','media',$session_id,'tempfile');
     }
@@ -449,10 +453,15 @@ sub file_size {
         return 0;
     }
 }
- 
+
 =item $media->save()
 
-Commits media object to the database. Will set media_id to unique id if not already defined (first save).
+Commits media object to the database. Will set media_id to unique id
+if not already defined (first save).
+
+If this media object has the same URL as an existing object then
+save() will throw a Krang::Media::DuplicateURL exception with a
+media_id field indicating the conflicting object.
 
 =cut
 
@@ -468,10 +477,11 @@ sub save {
       (Krang::Category->find(category_id => $self->{category_id}))[0]->url();
     $self->{url} = _build_url($url, $self->{filename});
 
-    # check for duplicate url
+    # check for duplicate url and throw an exception if one found
     my $dup_media_id = $self->duplicate_check();
-    croak(__PACKAGE__ . "->save(): 'url' field is a duplicate of media " .
-          "'$dup_media_id'") if $dup_media_id;
+    Krang::Media::DuplicateURL->throw(message => "duplicate URL",
+                                      media_id => $dup_media_id)
+        if $dup_media_id;
 
     # if this is not a new media object
     if (defined $self->{media_id}) {
