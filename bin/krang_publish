@@ -239,6 +239,8 @@ my $arg_string = "Publishing content with the following options:\n$0";
 
 my $has_options = 0;
 
+$arg_string .= " --to-preview" if $to_preview;
+
 if ($everything) {
     # removes checking for related stories/media.
     $publish_args{disable_related_assets} = 1;
@@ -411,6 +413,12 @@ sub publish_media {
         my $endtime = tv_interval(\@starttime);
 
         print sprintf("STATUS: media %i - %i published in %.02f seconds.\n", ($find_options->{offset}+1), ($find_options->{offset} + @media), $endtime);
+
+        # because Krang::Publisher does not have callback implemented 
+        # for preview_media, need to keep track of media preview time
+        # and # of media previewed here...
+        $mediacount += @media if $to_preview;
+        $total_mediatime += $endtime if $to_preview;
 
         $increment_time  += $endtime;
         $increment_count += @media;
