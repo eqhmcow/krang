@@ -1,0 +1,327 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+=head1 NAME
+
+krang_template_patch - apply a patch to a set of templates
+
+=head1 SYNOPSIS
+
+Apply changes in templates.diff to templates.kds:
+
+  $ krang_template_patch templates.kds < templates.diff
+
+Make a diff of changes from old_templates.kds to new_templates.kds and apply
+them to old_templates.kds:
+
+  $ krang_template_diff old_templates.kds new_templates.kds | \
+    bric_template_patch old_tempaltes.kds
+
+=head1 OPTIONS
+
+krang_template_patch [options] template_dataset
+
+Arguments:
+
+  template_dataset  - the path to the dataset to which the passed in
+		      changes should be applied
+
+Options:
+
+  --patch-options   - options to pass to patch, defaults to "-p1",
+                      which is a good setting for patches produced by
+                      bric_template_diff.
+
+  --force           - complete the patch operation even if patch returns a
+                      non-0 result code.  Defaults off.
+
+  --help            - shows this screen
+
+  --man             - shows the full documentation
+
+  --verbose         - print a running dialogue of operations.  Repeat
+                      up to three times of successively larger amounts
+                      of debugging information.  If verbose isn't turned
+                      on then the -s option is passed to patch to supress
+                      extraneous output.
+
+=head1 DESCRIPTION
+
+This program applies a patch produced by C<krang_template_diff> to the
+templates in the specified .kds file.  This is useful in a situation where
+you need to distribute a limited change across a number of Krang
+instance which have slightly different templates.
+
+=head1 CAVEATS
+
+=over 4
+
+=item *
+
+This program requires GNU C<patch> to be installed and in your path.
+
+=item *
+
+This program will neither create new templates nor delete existing
+ones.
+
+=back
+
+=cut
+
+use Config;
+use Cwd qw(cwd);
+use File::Path qw(mkpath);
+use File::Spec::Functions qw(catdir splitdir catfile);
+use File::Temp qw(tempdir);
+use FindBin qw($RealBin);
+use Getopt::Long;
+use Pod::Usage;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+
+    # get parameters from command line.  do this during compile so
+    # $VERBOSE can effect use options and such.  also so errors get
+    # detected as quick as possible - people are waiting out there!
+    our $kds;
+    our $VERBOSE              = 0;
+    our ($help, $man);
+    our $patch_options        = '-p1';
+    our $force                = 0;
+    GetOptions("help"                   => \$help,
+	       "man"                    => \$man,
+	       "verbose+"               => \$VERBOSE,
+               "patch-options=s"        => \$patch_options,
+               "force"                  => \$force,
+	      ) or  pod2usage(2);
+
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+
+    # get $kds
+    $kds = shift @ARGV;
+    pod2usage("Missing required template dataset parameter")
+      unless defined $kds;
+};
+
+our (%filename_map, $VERBOSE);
+our ($in, $out, $err);
+
+require Data::Dumper if $VERBOSE;
+use IPC::Run qw(run);
+use Time::Piece;
+use XML::Simple qw(XMLin);
+
+use Krang::Conf qw(KrangRoot);
+use Krang::DataSet;
+
+main();
+
+# main is where it's at
+sub main {
+    our ($kds);
+
+    # read in the diff from STDIN
+    read_diff();
+
+    # extract .kds file and write out .tmpl files
+    my $dir = catdir(KrangRoot, 'tmp');
+    my $temp = tempdir(CLEANUP => 1, DIR => $dir);
+    extract($temp, $kds);
+    write_out($temp);
+
+    # perform patch operation in temp
+    do_patch($temp);
+
+    # build dataset w/from patched .tmpl files
+    my $set = build_set($temp);
+
+    # backup old .kds
+    my $bak = "$kds\.bak";
+    my @cmd = ("cp", $kds, $bak);
+    run(\@cmd, \$in, \$out, \$err) or
+      die("Unable to copy '$kds' to '$bak': $!");
+
+    # write out  .kds file
+    eval {$set->write(path => $kds);};
+    die $@ if $@;
+
+    # delete backup
+    unlink $bak;
+
+    exit 0;
+}
+
+
+# perform the patch
+sub do_patch {
+    my $dir = shift;
+    our $diff;
+    our $patch_options;
+    our $force;
+
+    my $old_dir = cwd;
+    chdir($dir) or die "Can't change to $dir: $!";
+
+    # tell patch to be quiet?
+    unless ($VERBOSE or $patch_options =~ /\b-s\b/) {
+        $patch_options .= " -s";
+    }
+
+    print STDERR "Running 'patch $patch_options' in $dir.\n"
+      if $VERBOSE;
+    open(PATCH, "| patch $patch_options > .patch.out.$$ 2>&1")
+      or die "Unable to start patch: $!";
+    print PATCH $diff;
+    close PATCH;
+    my $err = $?;
+
+    # read in output and print it
+    open(OUT, "<", ".patch.out.$$") or die "Unable to read .patch.out.$$ : $!";
+    while (<OUT>) {
+        print "patch: $_";
+    }
+    close OUT;
+
+    # gotta get back
+    chdir($old_dir) or die "Can't get back to $old_dir: $!";
+
+    # evaluate patch status
+    if (($err >> 8) != 0) {
+        die "\nPatch didn't complete 100% successfully.  Try again with --force if you want to ignore the problems described above.\n"
+          unless $force;
+        print STDERR "Patch found problems, but --force is set.  Continuing.\n"
+          if $VERBOSE;
+    }
+}
+
+
+# read the diff from STDIN
+sub read_diff {
+    our ($diff, @filenames);
+
+    while(<STDIN>) {
+        $diff .= $_;
+
+        # collect filenames in the diff
+        if (m!^\+\+\+ to(/\S+)!) {
+            my $filename = $1;
+            push(@filenames, $filename);
+        }
+    }
+
+    die "Failed to read diff from STDIN!\n"
+      unless length($diff);
+    die "Didn't find any filenames in diff read from STDIN!  Maybe that wasn't a unified diff?\n"
+      unless @filenames;
+
+    print STDERR "Read filenames from diff: " . join(', ', @filenames) . "\n"
+      if $VERBOSE;
+}
+
+
+# get all templates from a server
+sub extract {
+    my ($dir, $kds) = @_;
+
+    mkpath([$dir]) unless -d $dir;
+
+    my @cmd = ("tar", "-C" => $dir, "-xf" => $kds, "template_*.xml");
+    run(\@cmd, \$in, \$out, \$err) or
+      die("Unable to extract '$kds' to '$dir': $!");
+
+    # DEBUG
+    print STDERR "Extracted '$kds' to '$dir'\n" if $VERBOSE;
+}
+
+
+sub build_set {
+    my ($dir) = @_;
+
+    my $set = Krang::DataSet->new;
+
+    while (my ($k, $v) = each %filename_map) {
+        my $xmlfile = "template_$v\.xml";
+        my $fpath = catfile($dir, $k);
+        my $xmlpath = catfile($dir, $xmlfile);
+        my $xml = XMLin($xmlpath);
+        my $tmpl;
+
+        local $/ = undef;
+        open(TEMPLATE, "<$fpath") or die "Unable to open $fpath : $!";
+        $tmpl = <TEMPLATE>;
+        close TEMPLATE or die $!;
+
+        # replace w/patched content
+        $xml->{content} = $tmpl;
+
+        # fix datetime fields for deserialization
+        my $fmt = '%FT%T';
+        $xml->{creation_date} =
+          Time::Piece->strptime($xml->{creation_date}, $fmt);
+        $xml->{deploy_date} =
+          Time::Piece->strptime($xml->{deploy_date}, $fmt)
+              if $xml->{deploy_date};
+
+        # add object to dataset
+        my $obj = bless($xml, 'Krang::Template');
+        $set->add(object => $obj);
+
+        # DEBUG
+        print STDERR "Updated '$xmlfile' with '$k'\n" if $VERBOSE;
+    }
+
+    return $set;
+}
+
+
+sub write_out {
+    my ($dir) = @_;
+    my @files;
+
+    opendir(DIR, $dir);
+    @files = grep /\.xml$/, readdir DIR;
+    closedir(DIR);
+
+    for (@files) {
+        my $fpath = catfile($dir, $_);
+        my $xml = XMLin($fpath);
+        my $npath = catfile($dir, $xml->{filename});
+        my $data = $xml->{content} || '';
+
+        # build map of .tmpl filenames to .xml filenames
+        $filename_map{$xml->{filename}} = $xml->{template_id};
+
+        open(TEMPLATE, ">$npath") or die "Unable to open $npath : $!";
+        print TEMPLATE $data;
+        close TEMPLATE or die $!;
+
+        # DEBUG
+        print STDERR "Wrote to '$npath'\n" if $VERBOSE;
+    }
+}
