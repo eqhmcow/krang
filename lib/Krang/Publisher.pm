@@ -23,7 +23,6 @@ Krang::Publisher - Center of the Publishing Universe.
   # Outputs a story in the previously-set publish path.
   $publisher->publish_story(
                             story    => $story_object,
-                            user     => $user_object
                            );
 
 
@@ -37,7 +36,6 @@ Krang::Publisher - Center of the Publishing Universe.
   # Returns the media URL if successful.
   $url = $publisher->publish_media(
                                    media    => $media_object,
-                                   user     => $user_object
                                   );
 
 
@@ -84,6 +82,7 @@ use Carp;
 use File::Spec::Functions;
 use File::Copy qw(copy);
 use File::Path;
+use File::Temp qw(tempdir);
 
 use Krang::Conf qw(KrangRoot instance);
 use Krang::Story;
@@ -93,6 +92,7 @@ use Krang::Template;
 use Krang::History qw(add_history);
 
 use Krang::Log qw(debug);
+
 
 use constant PUBLISHER_RO => qw(is_publish is_preview story category);
 
@@ -210,6 +210,9 @@ sub preview_story {
     # build the story HTML.
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
+    # deploy any templates flagged as testing for this user
+    $self->_deploy_testing_templates();
+
     my $publish_list = $self->get_publish_list(story => [$story]);
 
     foreach my $object (@$publish_list) {
@@ -224,12 +227,16 @@ sub preview_story {
         }
     }
 
+
+    # cleanup - remove any testing templates.
+    $self->_undeploy_testing_templates();
+
     $preview_url = "$url/" . $self->_build_filename(story => $story, page => 1);
 
     return $preview_url;
 }
 
-=item C<< $publisher->publish_story(story => $story, user => $user) >>
+=item C<< $publisher->publish_story(story => $story) >>
 
 Publishes a story to the live webserver document root, as set by publish_path.
 
@@ -237,7 +244,7 @@ When a story is published, it is published under all categories it is associated
 
 As part of the publish process, all media and stories linked to by $story will be published as well.
 
-Will throw an exception if the user does not have permissions to publish.
+Will throw an exception if the current user ($ENV{REMOTE_USER})does not have permissions to publish.
 
 =cut
 
@@ -320,7 +327,7 @@ sub preview_media {
 }
 
 
-=item C<< $url = $publisher->publish_media(media => $media, user => $user) >>
+=item C<< $url = $publisher->publish_media(media => $media) >>
 
 Copies a media file out to the webserver doc root for the publish website.
 
@@ -407,33 +414,10 @@ sub deploy_template {
 
     croak (__PACKAGE__ . ": Missing argument 'template'!\n") unless (exists($args{template}));
 
-    my $template   = $args{template};
-    my $id         = $template->template_id();
+    my $template = $args{template};
 
-    my $category   = $template->category();
-
-    my @tmpl_dirs = $self->template_search_path(category => $category);
-
-    my $path = $tmpl_dirs[0];
-
-    eval {mkpath($path, 0, 0755); };
-    if ($@) {
-        Krang::Publisher::FileWriteError->throw(message => 'Could not create publish directory',
-                                                destination => $path,
-                                                system_error => $@);
-    }
-
-
-    my $file = catfile($path, $template->filename());
-
-    # write out file
-    my $fh = IO::File->new(">$file") or
-      Krang::Publisher::FileWriteError->throw(message => 'Cannot deploy template',
-                                              template_id => $id,
-                                              destination => $file,
-                                              system_error => $!);
-    $fh->print($template->{content});
-    $fh->close();
+    # write the template out.
+    my $filename = $self->_write_template(template => $template);
 
     # mark template as deployed.
     $template->mark_as_deployed();
@@ -441,7 +425,7 @@ sub deploy_template {
     # log event.
     add_history(object => $template, action => 'deploy');
 
-    return $file;
+    return $filename;
 
 }
 
@@ -465,7 +449,6 @@ sub undeploy_template {
     croak (__PACKAGE__ . ": Missing argument 'template'!\n") unless (exists($args{template}));
 
     my $template   = $args{template};
-    my $id         = $template->template_id();
 
     my $category   = $template->category();
 
@@ -498,6 +481,8 @@ Given the current category, returns the list of directories that may contain a t
 
 L<category> is an optional argument - if not supplied, the current category in the publish run is used (usually the best choice).
 
+A note on preview:  In preview mode, this method will check to see if the user has a testing-template temporary directory (created if the user has templates checked out & flagged for testing).  If so, the testing-template temporary directory paths will be interspersed with the deployed-template dirs (in the order of TEST/PROD/TEST/PROD).
+
 =cut
 
 sub template_search_path {
@@ -507,13 +492,25 @@ sub template_search_path {
     my @subdirs      = ();
     my @paths        = ();
     my $category;
+    my $preview_root;
+
+    my $user_id = $ENV{REMOTE_USER};
+
 
     # Root dir for this instance.
     my @root = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
 
     if (exists($args{category})) {
-        # if category arg is not defined, return root dir for instance.
-        return catfile(@root) unless (defined($args{category}));
+        if (!defined($args{category})) {
+            # if category arg is not defined, return root dir for instance.
+            # (but check for template testing)
+            if ($self->{is_preview} &&
+                exists($self->{testing_template_path}{$user_id})) {
+                return ($self->{testing_template_path}{$user_id}, catfile(@root));
+            }
+            return catfile(@root);
+        }
+
         $category = $args{category};
     } else {
         $category = $self->{category};
@@ -523,15 +520,24 @@ sub template_search_path {
 
     @subdirs = split '/', $category->url();
 
-#    @subdirs = ('/') unless @subdirs;   # if $cat_dir == '/', @subdirs is empty.
-
     while (@subdirs > 0) {
-        my $path = catfile(@root, @subdirs);
-        push @paths, $path;
+        # if in preview mode, check to see if there's a template testing dir.
+        # add it if there is.
+        if ($self->{is_preview} &&
+            exists($self->{testing_template_path}{$user_id})) {
+            push @paths, catfile($self->{testing_template_path}{$user_id}, @subdirs);
+        }
+
+        push @paths, catfile(@root, @subdirs);
         pop @subdirs;
     }
 
-    # add root dir as well.
+    # add root (possibly preview too) dir as well.
+    if ($self->{is_preview} &&
+        exists($self->{testing_template_path}{$user_id})) {
+        push @paths, $self->{testing_template_path}{$user_id};
+    }
+
     push @paths, catfile(@root);
 
     return @paths;
@@ -582,6 +588,114 @@ L<Krang::ElementClass>, L<Krang::Category>, L<Krang::Media>
 =cut
 
 
+#
+# _deploy_testing_templates()
+#
+#
+# Used soley in preview, searches for any templates checked out by the
+# current user that are flagged as 'testing'.  If it finds any,
+# deploys them in a temporary directory path.  The rest of the preview
+# process will pick up these templates on an as-needed basis.
+# (see template_search_path()
+#
+# Takes no arguments.  Requires that $ENV{REMOTE_USER} exists.
+#
+
+sub _deploy_testing_templates {
+
+    my $self = shift;
+    my $path;
+
+    my $user_id = $ENV{REMOTE_USER} || croak __PACKAGE__ . ": 'REMOTE_USER' environment variable is not set!\n";
+
+    # find any templates checked out by this user that are marked for testing.
+    my @templates = Krang::Template->find(testing => 1, checked_out_by => $user_id);
+
+    # if there are no templates, there's nothing left to do here.
+    return unless (@templates);
+
+    # there are templates - create a tempdir & deploy these bad boys.
+    $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
+    $self->{testing_template_path}{$user_id} = $path;
+
+    foreach (@templates) {
+        $self->_write_template(template => $_);
+    }
+
+}
+
+
+#
+# _undeploy_testing_templates()
+#
+# Removes the template files & temporary directory used by the current
+# user for previewing the templates they have flagged for testing.
+# This is a cleanup method, nothing more.
+#
+# Will croak if there's a system error or it cannot determine the user.
+#
+sub _undeploy_testing_templates {
+
+    my $self = shift;
+
+    my $user_id = $ENV{REMOTE_USER} || croak __PACKAGE__ . ": 'REMOTE_USER' environment variable is not set!\n";
+
+    # there's no work if there's no dir.
+    return unless exists($self->{testing_template_path}{$user_id});
+
+    eval { rmtree($self->{testing_template_path}{$user_id}); };
+
+    if ($@) { croak __PACKAGE__ . ": error removing temporary dir '$self->{testing_template_path}{$user_id}': $@"; }
+
+    delete $self->{testing_template_path}{$user_id};
+
+    return;
+}
+
+#
+# $filename = _write_template(template => $template);
+#
+# Given a template, determines the full path of the template and writes it to disk.
+# Will croak in the event of an error in the process.
+# Returns the full path + filename if successful.
+#
+
+sub _write_template {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $template   = $args{template};
+    my $id         = $template->template_id();
+
+    my $category   = $template->category();
+
+    my @tmpl_dirs = $self->template_search_path(category => $category);
+
+    my $path = $tmpl_dirs[0];
+
+    eval {mkpath($path, 0, 0755); };
+    if ($@) {
+        Krang::Publisher::FileWriteError->throw(message => 'Could not create publish directory',
+                                                destination => $path,
+                                                system_error => $@);
+    }
+
+
+    my $file = catfile($path, $template->filename());
+
+    # write out file
+    my $fh = IO::File->new(">$file") or
+      Krang::Publisher::FileWriteError->throw(message => 'Cannot deploy template',
+                                              template_id => $id,
+                                              destination => $file,
+                                              system_error => $!);
+    $fh->print($template->{content});
+    $fh->close();
+
+    return $file;
+
+}
 
 
 

@@ -69,7 +69,8 @@ my %article_output = (3 => $category3_head .  "<title>$story_title</title><h1>$s
 );
 
 # list of templates to delete at the end of this all.
-my @delete_templates = ();
+my @test_templates_delete = ();
+my %test_template_lookup = ();
 
 # file path of element template
 my %template_paths = ();
@@ -170,14 +171,13 @@ my $story2  = &create_story([$category], [$story], [$media[0]]);
 
 my $element = $story->element();
 
-# put test templates out there.
-&deploy_test_templates($category);
+# put test templates out into the production path.
+deploy_test_templates($category);
 
-# test finding templates.
-&find_templates($element);
 
+# cleanup - removing all outstanding assets.
 END {
-    foreach (@delete_templates) {
+    foreach (@test_templates_delete) {
         # delete created templates
         $publisher->undeploy_template(template => $_);
         $_->delete();
@@ -197,17 +197,19 @@ END {
 ############################################################
 # Testing the publish process.
 
-# test contributors
+# test finding templates.
+find_templates($element);
+
 test_contributors($category);
 
 # test story construction
 test_story_build($story, $category);
 
 # test publisher->publish_story
-check_publish_story($story);
+test_publish_story($story);
 
 # test publisher->preview_story
-check_preview_story($story);
+test_preview_story($story);
 
 test_media_deploy($media[0]);
 
@@ -216,6 +218,8 @@ test_storylink($story2, $story);
 test_medialink($story2, $media[0]);
 
 test_linked_assets();
+
+test_template_testing($story, $category);
 
 test_full_preview();
 
@@ -267,6 +271,76 @@ sub test_contributors {
 
     $story->delete();
     $contrib->delete();
+
+}
+
+
+#
+# test_template_testing()
+#
+# When a user previews content, any templates they have in the system that have been flagged as
+# 'testing' should be used.
+# The priority of 'testing' templates works as follows:
+# in any dir/cat structure site/a/b/c:
+#   testing template:  test/site/a/b/c/template.tmpl
+#   has priority over: prod/site/a/b/c/template.tmpl
+# but:
+#   prod template:     prod/site/a/b/c/template.tmpl
+#   has priority over: test/site/a/b/template.tmpl
+#
+# Got it?  good.
+#
+sub test_template_testing {
+
+    my ($story, $category) = @_;
+
+    # take header template, update content, flag for testing.
+    my $header = $test_template_lookup{header};
+
+    my $header_content = $header->content();
+
+    $header->content('TESTING' . $header_content);
+    $header->save();
+
+    $header->mark_for_testing();
+
+    # test that directory paths returned include testing dirs in the right order
+    $publisher->{is_preview} = 1;
+    $publisher->{is_publish} = 0;
+
+    $publisher->_deploy_testing_templates();
+    my @paths = $publisher->template_search_path(category => $category);
+    my $base = catdir(KrangRoot, 'tmp');
+
+    ok($paths[0] =~ /^$base\/\w+/, 'Krang::Publisher->_deploy_testing_templates');
+    # test that testing templates are deployed properly.
+    ok(-e catfile($paths[0], 'header.tmpl'), 'Krang::Publisher->_deploy_testing_templates'); 
+
+
+    # test that in preview mode, testing templates are used.
+    $publisher->{story}    = $story;
+    $publisher->{category} = $category;
+
+    my $page = $element->child('page');
+    my $head = $page->child('header');
+
+    my $head_pub = $head->class->publish(element => $head, publisher => $publisher);
+    ok($head_pub eq ('TESTING' . $head_output), 'Krang::Publisher testing templates');
+
+
+    # test that in publish mode, testing templates not are used.
+    $publisher->{is_preview} = 0;
+    $publisher->{is_publish} = 1;
+    $head_pub = $head->class->publish(element => $head, publisher => $publisher);
+    ok($head_pub eq $head_output, 'Krang::Publisher testing templates');
+
+    # remove testing templates & test.
+    $publisher->_undeploy_testing_templates();
+    isnt(-e catfile($paths[0], 'header.tmpl'), 'Krang::Publisher->_undeploy_testing_templates()');
+
+    # cleanup.
+    $header->content($header_content);
+    $header->save();  # clears testing flag
 
 }
 
@@ -683,7 +757,7 @@ sub test_story_build {
 
 }
 
-sub check_publish_story {
+sub test_publish_story {
 
     my $story = shift;
 
@@ -708,7 +782,7 @@ sub check_publish_story {
 }
 
 
-sub check_preview_story {
+sub test_preview_story {
     my $story = shift;
 
     my $prevurl = $publisher->preview_story(story => $story);
@@ -806,7 +880,8 @@ sub deploy_test_templates {
             diag("ERROR: $@");
             fail('Krang::Template->new()');
         } else {
-            push @delete_templates, $template;
+            push @test_templates_delete, $template;
+            $test_template_lookup{$element_name} = $template;
 
             $template_paths{$element_name} = &test_deploy_template($template);
 
