@@ -799,6 +799,10 @@ match against story_id if a word is a number.
 
 Pass an array ref of IDs to be excluded from the result set
 
+=item below_category_id
+
+Returns stories in the category and in categories below as well.
+
 =back
 
 Options affecting the search and the results returned:
@@ -908,6 +912,20 @@ sub find {
             push(@where, 's.story_id = sc.story_id');
             push(@where, 'sc.category_id = ?', 'sc.ord = 0');
             push(@param, $value);
+            next;
+        }
+
+        # handle below_category_id
+        if ($key eq 'below_category_id') {
+            my ($cat) = Krang::Category->find(category_id => $value);
+            my @ids = ($value, $cat->decendants( ids_only => 1 ));
+            # need to bring in story_category
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id');
+            push(@where, 
+                 'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
+            push(@param, @ids);
+            $need_distinct = 1;
             next;
         }
 
