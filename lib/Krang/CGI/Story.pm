@@ -534,6 +534,7 @@ sub revert {
     $story->revert($version);
     add_message('reverted_story', version => $version);
 
+    $query->delete_all();
     return $self->edit();
 }
 
