@@ -111,7 +111,7 @@
 
 <div class="button-bar">
     <input type="submit" value="Save">
-    <input type="button" value="Save &amp; Stay" onClick="save_stay()">
+    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()"></tmpl_unless>
     <input type="reset" value="Reset">
     <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_contrib()"></tmpl_unless>
     <input type="button" value="Cancel" onClick="cancel_contrib_change()">

@@ -151,7 +151,7 @@ sub search {
 
     $t->param(contributors => \@contrib_tmpl_data);
 
-    return $t->output() . $self->dump_html();
+    return $t->output();
 }
 
 
@@ -245,24 +245,24 @@ sub associate_search {
 
     my $q = $self->query();
 
-    # Check for "associate_mode".
-    my $associate_mode = $q->param('associate_mode') || '';
-    die("Invalid associate_mode '$associate_mode'") unless (grep { $associate_mode eq $_ } qw( story media ));
-
     # Get media or story object from session -- or die() trying
-    my $ass_obj = $session{$associate_mode};
-    die ("No story or media object available for contributor association") unless (ref($ass_obj));
+    my $ass_obj = $self->get_ass_obj();
 
     my $t = $self->load_tmpl("associate_list_view.tmpl", associate=>$q);
     $t->param(%ui_messages) if (%ui_messages);
 
     # Set Boolean for H::T
-    $t->param(associate_story=>($associate_mode eq 'story'));
+    $t->param(associate_story=>($q->param('associate_mode') eq 'story'));
 
     # Get table of contrib types
     my %contrib_types = Krang::Pref->get('contrib_type');
 
     my @contribs = $ass_obj->contribs();
+
+    # Set up vars for re-order drop-down
+    my $ass_contrib_count = scalar(@contribs);
+    my $curr_contrib_pos = 0;
+
     my @associated_contributors = ();
     my %associated_contrib_id_types = ();
     foreach my $c (@contribs) {
@@ -273,6 +273,14 @@ sub associate_search {
         my $associated_contrib_id_type = sprintf("%d:%d", $contrib_id, $contrib_type_id);
         $associated_contrib_id_types{$associated_contrib_id_type} = 1;
 
+        # Make re-order drop-down for this contrib
+        my $order_contrib_popup_menu = $q->popup_menu(
+                                                      -name => 'order_contrib_' . $associated_contrib_id_type,
+                                                      -values => [ (1..$ass_contrib_count) ],
+                                                      -default => ++$curr_contrib_pos,
+                                                      -override => 1,
+                                                     );
+
         # Propagate to template loop
         push(@associated_contributors, {
                                         contrib_id => $contrib_id,
@@ -281,6 +289,7 @@ sub associate_search {
                                         first => $c->first(),
                                         middle => $c->middle(),
                                         last => $c->last(),
+                                        order_contrib_popup_menu => $order_contrib_popup_menu,
                                        });
     }
 
@@ -315,7 +324,7 @@ sub associate_search {
 
     $t->param(contributors => \@contrib_tmpl_data);
 
-    return $t->output() . $self->dump_html();
+    return $t->output();
 }
 
 
@@ -337,13 +346,8 @@ sub associate_selected {
         return $self->associate_search();
     }
 
-    # Check for "associate_mode".
-    my $associate_mode = $q->param('associate_mode') || '';
-    die("Invalid associate_mode '$associate_mode'") unless (grep { $associate_mode eq $_ } qw( story media ));
-
     # Get media or story object from session -- or die() trying
-    my $ass_obj = $session{$associate_mode};
-    die ("No story or media object available for contributor association") unless (ref($ass_obj));
+    my $ass_obj = $self->get_ass_obj();
 
     # Get list of current contributors -- we have to append to this list
     my @current_contribs = ( $ass_obj->contribs() );
@@ -361,7 +365,7 @@ sub associate_selected {
         my ($contrib_id, $contrib_type_id) = split(/:/, $ct_ids);
 
         # Verify data "looks" right
-        die ("Invalid new $associate_mode contrib_id '$contrib_id', contrib_type_id '$contrib_type_id'") 
+        die ("Invalid new contrib_id '$contrib_id', contrib_type_id '$contrib_type_id'") 
           unless (($contrib_id =~ /^\d+$/) && ($contrib_type_id =~ /^\d+$/));
 
         push(@new_contribs, {
@@ -397,13 +401,8 @@ sub unassociate_selected {
         return $self->associate_search();
     }
 
-    # Check for "associate_mode".
-    my $associate_mode = $q->param('associate_mode') || '';
-    die("Invalid associate_mode '$associate_mode'") unless (grep { $associate_mode eq $_ } qw( story media ));
-
     # Get media or story object from session -- or die() trying
-    my $ass_obj = $session{$associate_mode};
-    die ("No story or media object available for contributor association") unless (ref($ass_obj));
+    my $ass_obj = $self->get_ass_obj();
 
     # Build up list of contribs, skipping over contribs who are in @contrib_unassociate_list
     my @new_contribs = ();
@@ -447,7 +446,30 @@ sub reorder_contribs {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    # Get media or story object from session -- or die() trying
+    my $ass_obj = $self->get_ass_obj();
+
+    # Get params related to re-ordering
+    my @reorder_params = ( grep { /^order\_contrib\_\d+\:\d+$/ } ($q->param()) );
+
+    # Build up a sorted list of contribs
+    my @ordered_contrib_params = ( sort { $q->param($a) <=> $q->param($b) } @reorder_params );
+
+    # Update the $ass_obj with the new sorted contribs list
+    my @ordered_contribs = ();
+    foreach my $contrib_param (@ordered_contrib_params) {
+        $contrib_param =~ /^order\_contrib\_(\d+)\:(\d+)$/;
+        my $contrib_id = $1;
+        my $contrib_type_id = $2;
+        push(@ordered_contribs, {
+                                 contrib_id => $contrib_id,
+                                 contrib_type_id => $contrib_type_id,
+                                });
+    }
+    $ass_obj->contribs(@ordered_contribs);
+
+    add_message('message_contribs_reordered');
+    return $self->associate_search();
 }
 
 
@@ -514,7 +536,7 @@ sub add {
     # Propagate to template
     $t->param($contrib_tmpl);
 
-    return $t->output() . $self->dump_html();
+    return $t->output();
 }
 
 
@@ -676,7 +698,7 @@ sub edit {
     # Propagate to template
     $t->param($contrib_tmpl);
 
-    return $t->output() . $self->dump_html();
+    return $t->output();
 }
 
 
@@ -824,6 +846,24 @@ sub delete {
 #############################
 #####  PRIVATE METHODS  #####
 #############################
+
+
+# Get the media or story object from session or die() trying
+sub get_ass_obj {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    # Check for "associate_mode".
+    my $associate_mode = $q->param('associate_mode') || '';
+    die("Invalid associate_mode '$associate_mode'") unless (grep { $associate_mode eq $_ } qw( story media ));
+
+    # Get media or story object from session -- or die() trying
+    my $ass_obj = $session{$associate_mode};
+    die ("No story or media object available for contributor association") unless (ref($ass_obj));
+
+    return $ass_obj
+}
 
 
 # Updated the provided Contrib object with data
