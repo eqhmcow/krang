@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(foreach_element);
 
 =head1 NAME
 
-Krang::Element - element data objectcs
+Krang::Element - element data objects
 
 =head1 SYNOPSIS
 
@@ -89,7 +89,7 @@ Krang::Element - element data objectcs
 This module implements elements in Krang.  Krang elements belong to a
 single element class, see L<Krang::ElementClass> for details.  Krang
 elements exist to contain child elements and/or store data.  All
-complex functionality, like C<burn()> and C<display_form()> is proxied
+complex functionality, like C<burn()> and C<display_form()>, is proxied
 to the element class.
 
 =head1 INTERFACE
@@ -253,7 +253,7 @@ $element->object->isa('Krang::Story') and croaks otherwise.
 
 sub story { 
     my $self = shift;
-    my $object = $self->{object};
+    my $object = $self->object;
     croak("Expected a Krang::Story in element->object, but didn't find on!")
       unless $object and $object->isa('Krang::Story');
     return $object;
@@ -268,7 +268,7 @@ $element->object->isa('Krang::Category') and croaks otherwise.
 
 sub category { 
     my $self = shift;
-    my $object = $self->{object};
+    my $object = $self->object;
     croak("Expected a Krang::Category in element->object, but didn't find on!")
       unless $object and $object->isa('Krang::Category');
     return $object;
