@@ -56,10 +56,28 @@ BEGIN {
 
 
 use Krang::DB qw(create_db dbh);
+use Krang::Script;
 
 foreach my $instance (Krang::Conf->instances()) {
     Krang::Conf->instance($instance);
     create_db();
+
+    # load in templates if desired in conf
+    use Krang::Conf qw ( ElementSet KrangRoot AutoLoadTemplates );
+   
+    my $e_set = ElementSet;
+                                                                                   
+    if (AutoLoadTemplates) {
+        my $import_bin = KrangRoot.'/bin/krang_import';
+        my $import_file = KrangRoot."/element_lib/$e_set/templates.kds";
+    
+        if (-f $import_file) {
+            # perform import from templates.kds file
+            `$import_bin $import_file`;
+        } else {
+            print STDERR "Unable to locate $import_file.\nWill not load templates for $e_set.\n";
+        }
+    }                                                                               
 }
 
 # Blow away data/*
