@@ -102,22 +102,12 @@ sub open {
             my $path = $object->file_path();
             return new IO::File $path;        
         }
-    } elsif ($mode eq "w" or $mode eq "a") {
+    } elsif ($mode eq "w") {
         # check write access
         return undef unless $self->can_write;
 
-        my $handle;
-
-        if ($type eq 'template') {
-            # create a tied scalar and return an IO::Scalar attached to it
-            my $data;
-            tie $data, 'Krang::FTP::FileHandle::SCALAR', $object;
-            $handle = new IO::Scalar \$data;
-        } else {
-            return Krang::FTP::FileHandle::FILE->new($object);
-        }
+        return Krang::FTP::FileHandle::Handle->new($object,$type);
         
-        return $handle;
     }
 }
 
@@ -256,71 +246,17 @@ sub can_write  {
 
 =over 4
 
-=item Krang::FTP::FileHandle::SCALAR
+=item Krang::FTP::FileHandle::Handle
 
-This class provides a tied scalar interface to a template object's
-data.  The TIESCALAR constructor takes a template object as an
-argument.  Writes to the tied scalar result in the template object
-being altered, saved, checked-in and deployed.
-
-=cut
-
-package Krang::FTP::FileHandle::SCALAR;
-use strict;
-use warnings;
-
-sub TIESCALAR {
-    my $pkg = shift;
-    my $template = shift;
-    my $self = { template => $template };
-    return bless $self, $pkg;
-}
-
-sub FETCH {
-    my $self = shift;
-    return $self->{template}->content();
-}
-
-sub STORE {
-    my $self = shift;
-    my $data = shift;
-    my $template = $self->{template};
-
-    # checkout and version template if not a new template
-    if  ($template->template_id) {
-        $template->checkout();
-        $template->prepare_for_edit();
-    }
- 
-    # save new content
-    $template->content($data);
-    $template->save();
-
-    # checkin the template
-    $template->checkin();
-
-    # deploy
-
-    
-    return $data;
-}
-
-=back
-
-=over 4
-
-=item Krang::FTP::FileHandle::FILE
-
-This class provides a tied file interface to a media object.
-The TIEHANDLE constructor takes a media object as a single
-argument.  Writes to the tied filehandle in the media object
-being altered, saved, checked-in and published.
+This class provides a filehandle interface to a media/template object.
+Overrides IO::Handle methods syswrite and close().
+Takes a media/template object and type as arguments.
 
 =back
 
 =cut
 
-package Krang::FTP::FileHandle::FILE;
+package Krang::FTP::FileHandle::Handle;
 use strict;
 use warnings;
 
@@ -328,8 +264,10 @@ use base 'IO::Handle';
 
 sub new {
     my $class = shift;
-    my $media = shift;
-    my $self = bless { media => $media, buffer => '' }, $class;
+    my $object = shift;
+    my $type = shift;
+ 
+    my $self = bless { object => $object, type => $type, buffer => '' }, $class;
 
     return $self;
 }
@@ -344,20 +282,31 @@ sub syswrite {
 
 sub close {
     my $self = shift;
-    my $media = $self->{media};
+    my $object = $self->{object};
+    my $type = $self->{type};
+ 
+    if ($type eq 'media') { 
+        # checkout and version media if not a new media
+        if  ($object->media_id) {
+            $object->checkout();
+            $object->prepare_for_edit();
+        }
     
-    # checkout and version media if not a new media
-    if  ($media->media_id) {
-        $media->checkout();
-        $media->prepare_for_edit();
+        my $filename = $object->filename();
+
+        $object->upload_file( filename => $filename, filehandle => (new IO::Scalar \$self->{buffer}) );
+    } else { # if template
+        if  ($object->template_id) {
+            $object->checkout();
+            $object->prepare_for_edit();
+        }
+
+        # save new content
+        $object->content($self->{buffer});
     }
-    
-    my $filename = $media->filename();
 
-    $media->upload_file( filename => $filename, filehandle => (new IO::Scalar \$self->{buffer}) );
-
-    $media->save();
-    $media->checkin();
+    $object->save();
+    $object->checkin();
 
     return 1;
     
