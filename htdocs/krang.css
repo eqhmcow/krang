@@ -327,9 +327,10 @@ a:active {
 }
 
 .hpts-button {
-    background-color: #FFFFFF;
-    color:            #003466;
-    font-family:      Verdana,Helvetica,Arial,sans-serif;
+   background-color: #FFFFFF;
+   color:            #003466;
+   font-family:      Verdana,Helvetica,Arial,sans-serif;
+   font-size:        12px;
 }
 
 .hpts-label-selected {
