@@ -14,7 +14,7 @@ Krang::Site - a means to access information on sites
 			      publish_path => 'publish/path/',# required
 			      url => 'site.com'); 	      # required
 
-  # saves object to the DB
+  # saves object to the DB and creates the root category '/' of the site
   $site->save();
 
   # getters
@@ -67,6 +67,8 @@ user is redirected to 'preview_url' - it is the same for 'publish_path' and
 This module serves as a means of adding, deleting, accessing site objects for a
 given Krang instance.  Site objects, at present, do little other than act
 as a means to determine the urls and path associated with a site.
+
+N.B - On save(), the root category for the site '/' is created.
 
 =cut
 
@@ -214,9 +216,10 @@ sub init {
 
 =item * $success = Krang::Site->delete( $site_id )
 
-Instance or class method that deletes the given site from the database.  It
-croaks if any categories reference this site.  It returns '1' following a
-successful deletion.
+Instance or class method that deletes the given site from the database and its
+root category that gets instantiated on save().  It croaks if any categories
+reference this site other than '/'.  It returns '1' following a successful
+deletion.
 
 =cut
 
@@ -232,6 +235,12 @@ sub delete {
           . "] rely on this site.")
       if keys %info;
 
+    # delete root category
+    my ($root) = Krang::Category->find(dir => '/',
+                                       site_id => $id);
+    $root->delete();
+
+    # remove record from the site table
     my $dbh = dbh();
     $dbh->do("DELETE FROM site WHERE site_id = ?", undef, ($id));
 
@@ -244,7 +253,8 @@ sub delete {
 =item * %info = Krang::Site->dependent_check( $site_id )
 
 Class or instance method that returns a hash of category ids relying upon the
-given site object.
+given site object.  N.B. - the root category of the site is excluded from this
+lookup.
 
 =cut
 
@@ -255,7 +265,8 @@ sub dependent_check {
 
     my $dbh = dbh();
     my $sth =
-      $dbh->prepare("SELECT category_id FROM category WHERE site_id = ?");
+      $dbh->prepare("SELECT category_id FROM category WHERE dir != '/' AND " .
+                    "site_id = ?");
     $sth->execute(($id));
     $sth->bind_col(1, \$category_id);
     $info{$category_id} = 1 while $sth->fetch();
@@ -421,7 +432,7 @@ sub find {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
             $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-              " $lookup_field = ?";
+              "$and $lookup_field = ?";
             push @params, $args{$arg};
         }
     }
@@ -480,9 +491,10 @@ sub find {
 
 =item * $site = $site->save()
 
-Saves the contents of the site object in memory to the database.  The method
-also updates the urls of categories that reference it via
-update_child_categories() if its 'url' field has changed since the last save.
+Saves the contents of the site object in memory to the database and creates its
+root category.  The method also updates the urls of categories that reference
+it via update_child_categories() if its 'url' field has changed since the last
+save.
 
 The method croaks if the save would result in a duplicate site object (i.e.
 if the object has the same path or url as another object).  It also croaks if
@@ -527,7 +539,14 @@ sub save {
           ($id ? "id '$id' " : '') . "to the DB.")
       unless $dbh->do($query, undef, @params);
 
-    $self->{site_id} = $dbh->{mysql_insertid} unless $id;
+    unless ($id) {
+        $self->{site_id} = $dbh->{mysql_insertid};
+
+        # create root category if it doesn't exist...
+        my $category = Krang::Category->new(dir => '/',
+                                            site_id => $self->{site_id});
+        $category->save();
+    }
 
     # update category urls if necessary
     if ($update) {

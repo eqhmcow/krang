@@ -491,7 +491,7 @@ sub find {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
             $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-              " $lookup_field = ?";
+              "$and $lookup_field = ?";
             push @params, $args{$arg};
         }
     }
@@ -639,19 +639,33 @@ new one.
 sub update_child_urls {
     my $self = shift;
     my $id = $self->{category_id};
-    my (%ids, $row);
+    my (%ids, @params, $query, $row);
     my $dbh = dbh();
 
+    # flag to see if this call was made by Krang::Site
+    my $lookup_self = $self->{url} eq $self->{_old_url} ? 1 : 0;
+    if ($lookup_self) {
+        $query = "SELECT url FROM site WHERE site_id = ?";
+        my ($url) = $dbh->selectrow_array($query, undef, ($self->{site_id}));
+        $self->{url} = join("/", $url, $self->{dir});
+        $self->{url} =~ s|//|/|g;
+    }
+
     # build hash of category_id and old urls
-    my $query = <<SQL;
+    $query = <<SQL;
 SELECT category_id, url
 FROM category
-WHERE site_id = ? AND category_id != ? AND url LIKE ?
+WHERE site_id = ?
 SQL
 
+    @params = ($self->{site_id});
+    unless ($lookup_self) {
+        $query .= "AND category_id != ?";
+        push @params, $id;
+    }
+
     my $sth = $dbh->prepare($query);
-    $sth->execute(($self->{site_id}, $self->{category_id},
-                   $self->{_old_url} . '%'));
+    $sth->execute(@params);
     $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     while($sth->fetch()) {
         $ids{$row->{category_id}} = $row->{url};

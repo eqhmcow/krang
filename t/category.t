@@ -27,7 +27,7 @@ my $site_id = $site->site_id();
 # constructor tests
 ####################
 # make the top level category
-my $category = Krang::Category->new(dir => '/',
+my $category = Krang::Category->new(dir => '/blah',
                                     site_id => $site_id);
 
 isa_ok($category, 'Krang::Category');
@@ -58,7 +58,7 @@ my $element = $category->element();
 isa_ok($element, 'Krang::Element');
 is($category->element_id() =~ /^\d+$/, 1, 'element_id()');
 my $dir = $category->dir();
-is($dir eq '/', 1, 'dir()');
+is($dir eq '/blah', 1, 'dir()');
 is($category->site_id() =~ /^\d+$/, 1, 'site_id');
 is($category->url() =~ /$dir/, 1, 'url()');
 
@@ -105,9 +105,9 @@ $category5->save();
 my @categories = Krang::Category->find(url_like => '%.com%',
                                        order_by => 'url',
                                        order_desc => 'asc');
-is(scalar @categories, 4, 'find() - quantity');
+is(scalar @categories, 5, 'find() - quantity');
 isa_ok($_, 'Krang::Category') for @categories;
-is($categories[0]->url() =~ 'bob3', 1, 'find() - ordering');
+is($categories[0]->url() =~ '/$', 1, 'find() - ordering');
 
 # count test
 my $count = Krang::Category->find(count => 1,

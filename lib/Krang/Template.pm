@@ -599,8 +599,8 @@ sub find {
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
-            $where_clause .= $like ? " $lookup_field LIKE ?" :
-              " $lookup_field = ?";
+            $where_clause .= $like ? "$and $lookup_field LIKE ?" :
+              "$and $lookup_field = ?";
             push @params, $args{$arg};
         }
     }

@@ -9,15 +9,40 @@ Krang::User - a means to access information on users
   use Krang::User;
 
   # construct object
-  my $user = Krang::User->new();		# required
+  my $user = Krang::User->new(email => 'a@b.com',		#optional
+			      first_name => 'fname',		#optional
+			      group_id => [1, 2, 3],		#optional
+			      last_name => 'lname',		#optional
+			      login => 'login',			#required
+			      mobile_phone => '112-358-1321'	#optional
+			      password => 'passwd',		#required
+			      phone => '123-456-8901');		#optional
 
   # saves object to the DB
   $user->save();
 
   # getters
-  my $id = $user->user_id();	# undef until after save()
+  ##########
+  my $email 	= $user->email();
+  my $first_name= $user->first_name();
+  my \@group_ids = $user->group_id();
+  my $last_name = $user->last_name();
+  my $login	= $user->login();
+  my $password	= $user->password();
+  my $phone	= $user->phone();
+
+  my $id 	= $user->user_id();	# undef until save()
 
   # setters
+  ##########
+  $user->first_name( 'first_name' );
+  $user->group_id( \@ids );
+  $user->last_name('last_name');
+  $user->login( 'loginX' );
+  $user->mobile_phone( $phone_number );
+  $user->password( $password );		# stores md5_hex of $SALT and $password
+  $user->phone( $phone_number );
+
 
   # delete the user from the database
   $user->delete();
@@ -54,7 +79,8 @@ use warnings;
 
 # External Modules
 ###################
-use Carp qw(verbose croak);
+use Carp qw(croak);
+use Digest::MD5 qw(md5_hex);
 
 # Internal Modules
 ###################
@@ -70,15 +96,28 @@ use Krang::DB qw(dbh);
 use constant USER_RO => qw(user_id);
 
 # Read-write fields
-use constant USER_RW => qw();
+use constant USER_RW => qw(email
+			   first_name
+			   last_name
+			   login
+			   mobile_phone
+			   phone);
+
+# user_user_group table fields
+use constant USER_USER_GROUP => qw(user_id
+			   	   user_group_id);
 
 # Globals
 ##########
+our $SALT = <<SALT;
+Dulce et decorum est pro patria mori
+--Horace
+SALT
 
 # Lexicals
 ###########
-my %user_args = map {$_ => 1} qw//;
-my %user_cols = map {$_ => 1} USER_RO, USER_RW;
+my %user_args = map {$_ => 1} USER_RW, qw/group_id password/;
+my %user_cols = map {$_ => 1} USER_RO, USER_RW, 'password';
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
@@ -101,6 +140,22 @@ The available fields for a user object are:
 
 =over 4
 
+=item * email
+
+=item * first_name
+
+=item * group_id
+
+=item * last_name
+
+=item * login
+
+=item * mobile_phone
+
+=item * password
+
+=item * phone
+
 =item * user_id (read-only)
 
 The id of the current object in the database's user table
@@ -118,7 +173,21 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 
 =over 4
 
-=item *
+=item * email
+
+=item * first_name
+
+=item * group_id
+
+=item * last_name
+
+=item * login
+
+=item * mobile_phone
+
+=item * password
+
+=item * phone
 
 =back
 
@@ -140,12 +209,16 @@ sub init {
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
 
     # required arg check...
-    for (qw/name site_id/) {
+    for (qw/first_name last_name login password/) {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
           unless exists $args{$_};
     }
 
     $self->hash_init(%args);
+
+    # set password and group_ids
+    $self->password($args{password});
+    $self->{group_id} = [$args{group_id}];
 
     return $self;
 }
@@ -167,17 +240,54 @@ sub delete {
     my $id = shift || $self->{user_id};
     my $dbh = dbh();
 
-    my $query = <<SQL;
-SQL
-
-    croak(__PACKAGE__ . "->delete(): Objects refering to user '$id' exist")
-      if $dbh->selectrow_array($query, undef, ($id));
+    # object reference lookup
+    my ($dependents, %info) = $self->dependent_check();
+    if ($dependents) {
+        my $info = join("\n\t",
+                        map {"$_: [" . join(",", @{$info{$_}}). "]"}
+                        keys %info);
+        croak(__PACKAGE__ . "->delete(): The following objects reference " .
+              "this class:\n\t$info");
+    }
 
     $query = "DELETE FROM user WHERE user_id = '$id'";
 
     $dbh->do($query);
 
     return 1;
+}
+
+
+=item * ($dependents, %info) = $user->dependent_check()
+
+This method returns the number of dependents and a hash of classes and their
+respective object ids that reference the current user object.  undef will be
+returned if no references are found.
+
+=cut
+
+sub dependent_check {
+    my $self = shift;
+    my $dependents = 0;
+    my ($class, $dbh, $id, %info, $query, $sth);
+
+    $query = <<SQL;
+SELECT
+FROM
+WHERE
+SQL
+
+    $dbh = dbh();
+    $sth = $dbh->prepare($query);
+    $sth->execute(());
+    $sth->bind_columns(\$class, \$id);
+    while ($sth->fetch()) {
+        push @{$info{$class}}, $id;
+        $dependents++;
+    }
+    $sth->finish();
+
+    return ($dependents, %info);
 }
 
 
@@ -231,6 +341,8 @@ sub duplicate_check {
 
 =item * @users = Krang::User->find( user_id => [1, 1, 2, 3, 5] )
 
+=item * @users = Krang::User->find( group_id => [1, 1, 2, 3, 5] )
+
 =item * @user_ids = Krang::User->find( ids_only => 1, %params )
 
 =item * $count = Krang::User->find( count => 1, %params )
@@ -242,7 +354,21 @@ characters must surround the sub-string).  The valid search fields are:
 
 =over 4
 
-=item *
+=item * email
+
+=item * first_name
+
+=item * group_id
+
+=item * last_name
+
+=item * login
+
+=item * mobile_phone
+
+=item * phone
+
+=item * user_id
 
 =back
 
@@ -294,6 +420,9 @@ sub find {
     my %args = @_;
     my ($fields, @params, $where_clause);
 
+    # are we looking up group ids as well
+    my $groups = exists $args{group_id} ? 1 : 0;
+
     # grab ascend/descending, limit, and offset args
     my $ascend = uc(delete $args{order_desc}) || ''; # its prettier w/uc() :)
     my $limit = delete $args{limit} || '';
@@ -323,19 +452,22 @@ sub find {
         next if $arg eq 'element';
 
         my $like = 1 if $arg =~ /_like$/;
-        ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
+        ( my $lookup_field = $arg ) =~
+          s/^(.+)_like$/($arg eq 'group' ? 'ug' : 'u'). $1/e;
 
         push @invalid_cols, $arg unless exists $user_cols{$lookup_field};
 
-        if ($arg eq 'user_id' && ref $args{$arg} eq 'ARRAY') {
-            my $tmp = join(" OR ", map {"user_id = ?"} @{$args{$arg}});
+        if (($arg eq 'user_id' || $arg eq 'group_id') &&
+            ref $args{$arg} eq 'ARRAY') {
+            my $field = $arg eq 'user_id' ? "u.user_id" : "ug.user_group_id";
+            my $tmp = join(" OR ", map {"$field = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
             $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-              " $lookup_field = ?";
+              "$and $lookup_field = ?";
             push @params, $args{$arg};
         }
     }
@@ -344,7 +476,8 @@ sub find {
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
     # construct base query
-    my $query = "SELECT $fields FROM user";
+    my $query = "SELECT $fields FROM user u";
+    $query .= ", user_user_group ug" if $groups;
 
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE $where_clause" if $where_clause;
@@ -387,6 +520,62 @@ sub find {
 
     # return number of rows if count, otherwise an array of ids or objects
     return $count ? $users[0] : @users;
+}
+
+
+=item * \@group_ids = $user->group_ids()
+
+=item * $user = $user->group_ids( \@group_ids )
+
+Method that returns a list of group ids as getter.  As a setter it accepts a
+list of group ids and returns the user object.  The method may croak if it is
+unable to lock the user_user_group table on write.
+
+=cut
+
+sub group_ids {
+    my $self = shift;
+    my $gids = shift || 0;
+
+    if ($gids) {
+        my $id = $self->{user_id};
+        my $dbh = dbh();
+        eval {
+            $dbh->do("LOCK TABLES user_user_group WRITE");
+            $dbh->do("DELETE FROM user_user_group WHERE user_id = ?",
+                     undef, ($id));
+            my $sth = $dbh->prepare("INSERT INTO user_user_group VALUES " .
+                                    "(?,?)");
+            $sth->execute(($id, $_)) for @$gids;
+            $dbh->do("UNLOCK TABLES");
+
+            $self->{group_ids} = $gids;
+        };
+
+        if (my $err = $@) {
+            $dbh->do("UNLOCK TABLES");
+            croak($err);
+        }
+    }
+
+    return $gids ? $self : $self->{group_ids};
+}
+
+
+=item * $md5_hexdigest = $user->password();
+
+=item * $md5_hexdigest = $user->password( $password );
+
+Method to get or set the password associated with a user object.  Returns
+Digest::MD5->md5_hex( $SALT . $password_string ) as a getter. Stores the same
+in the DB as a setter.
+
+=cut
+
+sub password {
+    my $self = shift;
+    $self->{password} = md5_hex($SALT, $_[0]) if $_[0];
+    return $self->{password};
 }
 
 
@@ -436,6 +625,9 @@ sub save {
       unless $dbh->do($query, undef, @params);
 
     $self->{user_id} = $dbh->{mysql_insertid} unless $id;
+
+    # associate user with groups if any
+    $self->group_id($self->{group_id}) if exists $self->{group_id};
 
     return $self;
 }

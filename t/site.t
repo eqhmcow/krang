@@ -68,8 +68,8 @@ is($site2->preview_url(), 'url', 'preview_url()');
 $site2->publish_path('sites/test2/');
 is($site2->publish_path(), 'sites/test2/', 'publish_path()');
 
-$site2->url('testsite2.com');
-is($site2->url(), 'testsite2.com', 'url()');
+$site2->url('testsite1.com');
+is($site2->url(), 'testsite1.com', 'url()');
 
 $site2->save();
 
@@ -99,7 +99,7 @@ my @sites = Krang::Site->find(url_like => '%.com%',
                               order_desc => 'asc');
 is(scalar @sites, 4, 'find() - quantity');
 isa_ok($_, 'Krang::Site') for @sites;
-is($sites[0]->url(), 'testsite2.com', 'find() - ordering');
+is($sites[0]->url(), 'testsite1.com', 'find() - ordering');
 
 # count test
 my $count = Krang::Site->find(count => 1,
@@ -129,13 +129,19 @@ is($sites[0]->url() =~ /4/, 1, 'find - limit/offset 2');
 
 
 # update category test
-my $category = Krang::Category->new(dir => '/',
+my $category = Krang::Category->new(dir => '/blah',
                                     site_id => $site2->site_id());
 $category->save();
+#my ($category) = Krang::Category->find(dir => '/',
+#                                       site_id => $site2->site_id());
+
+# DEBUG
+#print STDERR "\n_old_url: $site2->{_old_url}\n\n";
+
 $site2->url('testsite2.com');
 $site2->save();
-my ($new_cat) = Krang::Category->find(site_id => $site2->site_id());
-is($new_cat->url() =~ /testsite2\.com/, 1, 'update_child_categories() test');
+my @cats = Krang::Category->find(site_id => $site2->site_id());
+is($cats[0]->url() =~ /testsite2\.com/, 1, 'update_child_categories() test');
 
 
 # deletion tests
@@ -144,11 +150,12 @@ is($new_cat->url() =~ /testsite2\.com/, 1, 'update_child_categories() test');
 eval {$site2->delete()};
 is($@ =~ /rely on this site/, 1, 'delete() failure test');
 
-# delete category
-$new_cat->delete();
+# delete '/blah'
+my $result = $cats[1]->delete();
+is($result, 1, 'delete() category test');
 
 # deletion
-my $result = $site2->delete();
+$result = $site2->delete();
 is($result, 1, 'delete() test 2');
 
 $result = $site3->delete();
