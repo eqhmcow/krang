@@ -221,7 +221,7 @@ sub test_media_deploy {
     ok($pub_expected_path eq $pub_media_path, 'Krang::Publisher->publish_media()');
 
 
-    my $prev_expected_path = catfile($preview_path, $media->url());
+    my $prev_expected_path = catfile($preview_path, $media->preview_url());
 
     my $prev_media_url = $publisher->preview_media(media => $media);
 
