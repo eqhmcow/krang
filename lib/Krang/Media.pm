@@ -4,6 +4,7 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Conf qw(KrangRoot);
 use Krang::Session qw(%session);
+use Krang::Contrib;
 use Carp qw(croak);
 use Storable qw(freeze thaw);
 use File::Spec::Functions qw(catdir catfile);
@@ -346,10 +347,11 @@ sub save {
     my $dbh = dbh;
     my $root = KrangRoot;
     my $session_id = $session{_session_id} || croak("No session id found"); 
+    my $media_id;
 
     # if this is not a new media object
     if (defined $self->{media_id}) {
-        my $media_id = $self->{media_id}; 
+        $media_id = $self->{media_id}; 
 	
         $self->{version} = ($self->{version} + 1);
 	$dbh->do('UPDATE media SET category_id = ?, title = ?, filename = ?, caption = ?, copyright = ?, notes = ?, version = ?, media_type_id = ? WHERE media_id = ?', undef, $self->{category_id}, $self->{title}, $self->{filename}, $self->{caption}, $self->{copyright}, $self->{notes}, $self->{version}, $self->{media_type_id}, $media_id);
@@ -375,13 +377,20 @@ sub save {
 	$dbh->do('INSERT INTO media (category_id, title, filename, caption, copyright, notes, version, media_type_id, creation_date) VALUES (?,?,?,?,?,?,?,?,now())', undef, $self->{category_id}, $self->{title}, $self->{filename}, $self->{caption}, $self->{copyright}, $self->{notes}, $self->{version}, $self->{media_type_id});
 	$self->{media_id} = $dbh->{mysql_insertid};
 
-        my $media_id = $self->{media_id};
+        $media_id = $self->{media_id};
 
 	my $old_path = catfile($root,'tmp','media',$session_id,'tempfile');
 	my $new_path = catdir($root,'data','media',$self->_media_id_path,$self->{version}); 
 	mkpath($new_path);
 	$new_path = catfile($new_path,$self->{filename});		
 	move($old_path,$new_path) || croak("Cannot create $new_path");
+    }
+
+    # remove any existing media_contrib relatinships and save any new relationships
+    $dbh->do('delete from media_contrib where media_id = ?', undef, $media_id);
+    my $count; 
+    foreach my $contrib ($self->contrib_ids()) {
+        $dbh->do('insert into media_contrib (media_id, contrib_id, contrib_type_id, ord) values (?,?,?,?)', undef, $media_id, $contrib->{contrib_id}, $contrib->{contrib_type_id}, $count++);
     }
 }
 
@@ -510,6 +519,14 @@ sub find {
 		    $obj->{$field} = $row->{$field};
 	        } 
 	    }
+            # add contrib ids to object
+            my $sth2 = $dbh->prepare('select contrib_id, contrib_type_id from media_contrib where media_id = ? order by ord');
+            $sth2->execute($row->{media_id});
+            my @contrib_ids;
+            while (my ($contrib_id, $contrib_type_id) = $sth2->fetchrow_array()) {
+                push @contrib_ids, {contrib_id => $contrib_id, contrib_type_id => $contrib_type_id};
+            }
+            $obj->contrib_ids(@contrib_ids); 
         }
 	push (@media_object,$obj);
     }
@@ -704,6 +721,7 @@ sub delete {
 
     $dbh->do('DELETE from media where media_id = ?', undef, $media_id); 
     $dbh->do('DELETE from media_version where media_id = ?', undef, $media_id); 
+    $dbh->do('delete from media_contrib where media_id = ?', undef, $media_id);
 
     my $file_dir = catdir($root,'data','media',$self->_media_id_path);
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
@@ -718,8 +736,16 @@ Return list of contributor (Krang::Contrib) objects.
 sub list_contrib_objects {
     my $self = shift;
     my @args = shift;
+    my @contribs;
 
-    
+    foreach my $contrib ($self->contrib_ids()) {
+        my @c = Krang::Contrib->find(contrib_id => $contrib->{contrib_id});
+        croak ("No contributor found with contrib_id ".$contrib->{contrib_id}) if not $c[0];
+        $c[0]->selected_contrib_type($contrib->{contrib_type_id});
+        push @contribs, $c[0];             
+    }
+   
+    return @contribs; 
 }
 
 =back
