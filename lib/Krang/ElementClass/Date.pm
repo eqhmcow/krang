@@ -92,6 +92,13 @@ sub _decode_date {
 }
 
 
+sub fill_template {
+    my ($self, %arg) = @_;
+    $arg{tmpl}->param($self->name, 
+                      $arg{element}->data->strftime('%b %e, %Y'))
+      if $arg{element}->data;
+}
+
 =head1 NAME
 
 Krang::ElementClass::Date - date element class
