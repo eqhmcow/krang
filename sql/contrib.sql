@@ -39,7 +39,6 @@ DROP TABLE IF EXISTS contrib_contrib_type;
 CREATE TABLE contrib_contrib_type (
     contrib_id int(10) unsigned NOT NULL,
     contrib_type_id int(10) unsigned NOT NULL,
-    KEY contrib_id (contrib_id),
-    KEY contrib_type_id (contrib_type_id)
+    PRIMARY KEY (contrib_id, contrib_type_id)
 ) TYPE=MyISAM;
 
