@@ -4,6 +4,88 @@
 <script language="Javascript">
 <!-- //
 
+    /* Start Krangolage */
+    function cleanOpt (field) {
+        for (var i = 0; i < field.length; i++) {
+            if (field[i].value == "__") {
+                field[i] = null;
+            }
+        }
+    }
+
+    function add_group () {
+        var myform = document.forms["edit_user_form"];
+        var right = myform['current_group_ids'];
+        var left = myform['possible_group_ids'];
+        var new_left = new Array();
+        new_left.length = 0;
+        cleanOpt(left);
+
+        for (var i = 0; i < left.length; i++) {
+            var opt = new Option(left[i].text, left[i].value);
+            if (left[i].selected) {
+                right[right.length] = opt;
+            } else {
+                new_left[new_left.length] = opt;
+            }
+        }
+
+        for (var i = 0; i < left.length; i++) {
+            left[i] = null;
+        }
+
+        if (new_left.length == 0) {
+            left.length = 1;
+            left[0] = new Option('','__');
+        } else {
+            left.length = new_left.lengt;
+        }
+
+        for (var i = 0; i < new_left.length; i++) {
+            left[i] = new_left[i];
+        }
+
+        cleanOpt(left);
+    }
+
+    function remove_group () {
+        var myform = document.forms["edit_user_form"];
+        var right = myform['current_group_ids'];
+        var left = myform['possible_group_ids'];
+        var new_left = new Array();
+        var new_right = new Array();
+        var count = 0;
+        cleanOpt(left);
+
+        for (var i = 0; i < right.length; i++) {
+            var opt = new Option(right[i].text, right[i].value);
+            if (right[i].selected) {
+                new_left[new_left.length] = opt;
+            } else {
+                new_right[count++] = opt;
+            }
+        }
+
+        right.length = new_right.length;
+
+        for (var i = 0; i < count; i++) {
+            right[i] = new_right[i];
+        }
+
+        for (var i = 0; i < new_left.length; i++) {
+            left[left.length] = new_left[i];
+        }
+    }
+
+    function get_group_ids () {
+        var myform = document.forms["edit_user_form"];
+        var right = myform['current_group_ids'];
+        for (var i = 0; i < right.length; i++) {
+            right[i].selected = 1;
+        }
+    }
+    /* End Krangolage */
+
     function save_stay () {
         var myform = document.forms["edit_user_form"];
       <tmpl_if add_mode>
@@ -11,6 +93,7 @@
       <tmpl_else>
         myform.rm.value = "save_stay_edit";
       </tmpl_if>
+        get_group_ids();
         myform.submit();
     }
 
@@ -72,17 +155,6 @@
 </tr>
 
 <tr>
-  <td align="left" valign="top">User Groups:</td>
-  <td align="left" valign="top">
-  <tmpl_if error_invalid_login><span class="invalid"></tmpl_if>
-  <select name="group_ids" size="<tmpl_var group_id_size>" multiple="multiple">
-  <tmpl_loop group_id_loop><option value="<tmpl_var id>" <tmpl_if selected>selected</tmpl_if>><tmpl_var name></option></tmpl_loop>
-  </select>
-  <tmpl_if error_invalid_login></span></tmpl_if>
-  </td>
-</tr>
-
-<tr>
     <td align="left" valign="top">Email:</td>
     <td align="left" valign="top"><input type="textfield" size="40" name="email" value="<tmpl_var escape=HTML email>"></td>
 </tr>
@@ -97,7 +169,38 @@
     <td align="left" valign="top"><input type="textfield" size="40" name="mobile_phone" value="<tmpl_var escape=HTML mobile_phone>"></td>
 </tr>
 
-<tr><td colspan="2">&nbsp;</td></tr>
+<input name="bs" type="hidden" value="this is bs">
+
+<tr>
+  <td align="left" valign="top">User Groups:</td>
+  <td align="left" valign="top">
+    <table align="center" border="0" valign="top">
+      <tr>
+        <td align="left" valign="top">
+	<div align="center">
+	<b>Available Groups</b><br />
+	<select name="possible_group_ids" size="<tmpl_var size>" multiple="multiple">
+	<tmpl_loop possible_group_ids><option value="<tmpl_var id>"><tmpl_var name></option>
+	</tmpl_loop>
+	</select>
+	<br /><input name="add_grp" onClick="add_group();" type="button" value="Add Group">
+	</div>
+        </td>
+        <td width="25">&nbsp;</td>
+        <td align="right" valign="top">
+	<div align="center">
+	<b>Current Groups</b><br />
+<select name="current_group_ids" size="<tmpl_var size>" multiple="multiple">
+	<tmpl_loop current_group_ids><option value="<tmpl_var id>"><tmpl_var name></option>
+	</tmpl_loop>
+	</select>
+	<br /><input name="rm_grp" onClick="remove_group();" type="button" value="Remove Group">
+	</div>
+	</td>
+      </tr>
+    </table>
+  </td>
+</tr>
 
 <tr>
     <td align="left" valign="top">Login:</td>
@@ -117,7 +220,7 @@
 </div>
 
 <div class="button-bar">
-    <input type="submit" value="Save">
+    <input type="submit" onClick="get_group_ids()" value="Save">
     <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()"></tmpl_unless>
     <input type="reset" value="Reset">
     <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_user()"></tmpl_unless>

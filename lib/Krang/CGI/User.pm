@@ -36,23 +36,19 @@ use Krang::Pref;
 use Krang::Session qw(%session);
 use Krang::User;
 
+# query fields to delete
+use constant DELETE_FIELDS => qw(Krang::User::USER_RW
+				 confirm_password
+				 new_password
+				 password
+				 current_group_ids
+				 possible_group_ids);
 
-# convenience alias for %Krang::User::user_groups
-my %user_groups;
-
-# array of hash refs for group_id multi-select
-my $group_id_tmpl;
+# convenience alias
+my %user_groups = %Krang::User::user_groups;
 
 # number of possible options in group_id select
-my $size;
-
-BEGIN {
-    %user_groups = %Krang::User::user_groups;
-    while (my($id, $name) = each %user_groups) {
-        push @$group_id_tmpl, {id => $id, name => $name, selected => 0};
-        ++$size;
-    }
-}
+my $size = scalar keys %user_groups;
 
 
 ##############################
@@ -180,8 +176,7 @@ sub save_add {
         %errors = $self->update_user($user);
         return $self->edit(%errors) if %errors;
 
-        $q->delete(Krang::User::USER_RW, 'group_ids', 'password',
-                   'new_password', 'confirm_password');
+        $q->delete(DELETE_FIELDS);
 
         add_message('message_user_saved');
 
@@ -216,8 +211,7 @@ sub save_stay_add {
         return $self->add(%errors) if %errors;
 
         # preserve, set vals for 'edit' run mode
-        $q->delete(Krang::User::USER_RW, 'group_ids', 'password',
-                   'new_password', 'confirm_password');
+        $q->delete(DELETE_FIELDS);
         $q->param(user_id => $user->user_id());
         $q->param(rm => 'edit');
 
@@ -388,8 +382,7 @@ sub save_edit {
         %errors = $self->update_user($user);
         return $self->edit(%errors) if %errors;
 
-        $q->delete(Krang::User::USER_RW, 'group_ids', 'password',
-                   'new_password', 'confirm_password');
+        $q->delete(DELETE_FIELDS);
 
         add_message('message_user_saved');
 
@@ -424,8 +417,7 @@ sub save_stay_edit {
         return $self->edit(%errors) if %errors;
 
         # preserve, set vals for 'edit' run mode
-        $q->delete(Krang::User::USER_RW, 'group_ids', 'password',
-                   'new_password', 'confirm_password');
+        $q->delete(DELETE_FIELDS);
         $q->param(user_id => $user->user_id());
         $q->param(rm => 'edit');
 
@@ -470,9 +462,6 @@ sub search {
                                                       'login',
                                                       'last',
                                                       'first',
-                                                      'email',
-                                                      'phone',
-                                                      'groups',
                                                       'command_column',
                                                       'checkbox_column',
                                                      ],
@@ -482,13 +471,9 @@ sub search {
                                                             'Last Name',
                                                             first =>
                                                             'First Name',
-                                                            email => 'Email',
-                                                            phone => 'Phone #',
-                                                            groups =>
-                                                            'User Groups',
                                                            },
                                           columns_sortable =>
-                                          [qw(login last first email)],
+                                          [qw(login last first)],# email)],
                                           columns_sort_map => {
                                                                last =>
                                                                'last_name',
@@ -522,14 +507,21 @@ sub get_user_params {
     my %user_tmpl;
 
     # make group_ids multi-select
-    my $id_tmpl = $group_id_tmpl;
-    my @group_ids = $q->param('group_ids') || $user->group_ids;
-    for my $i(@group_ids) {
-        $id_tmpl->[$i - 1]->{selected} = 1;
+    my @pgids = $q->param('possible_group_ids');
+    my @cgids = $q->param('current_group_ids');
+
+    if (@pgids == 0 && @cgids == 0) {
+        @cgids = $user->group_ids;
+        my %cgids = map {$_, 1} @cgids;
+        @pgids = grep {not exists $cgids{$_}} keys %user_groups;
     }
 
-    $user_tmpl{group_id_size} = $size;
-    $user_tmpl{group_id_loop} = $id_tmpl;
+    push @{$user_tmpl{possible_group_ids}},
+      {id => $_, name => $user_groups{$_}} for @pgids;
+    push @{$user_tmpl{current_group_ids}},
+      {id => $_, name => $user_groups{$_}} for @cgids;
+
+    $user_tmpl{size} = $size;
 
     # loop through User fields
     $user_tmpl{$_} = $q->param($_) || $user->$_ for Krang::User::USER_RW;
@@ -546,7 +538,14 @@ sub update_user {
 
     # overwrite object fields
     $user->$_($q->param($_))
-      for (Krang::User::USER_RW, 'group_ids', 'password');
+      for (Krang::User::USER_RW, 'password');
+
+    my $gids = $q->param('current_group_ids');
+    unless ($gids) {
+        $user->group_ids_clear();
+    } else {
+        $user->group_ids($gids);
+    }
 
     # attempt to save
     eval {$user->save()};
@@ -596,18 +595,6 @@ sub validate_user {
     $errors{error_invalid_login} = 1
       unless (defined $login || $login =~ /^\s+$/);
 
-    # validate group_ids
-    my @group_ids = $q->param('group_ids');
-    my @valid_group_ids;
-    for (@group_ids) {
-        push @valid_group_ids, $_ if exists $user_groups{$_};
-    }
-    $errors{error_invalid_group_id} = 1
-      unless scalar @group_ids == scalar @valid_group_ids;
-
-    # only propagate valid group_ids
-    $q->param('group_ids', @valid_group_ids);
-
     # Add error messages
     add_message($_) for keys %errors;
 
@@ -626,10 +613,6 @@ sub search_row_handler {
     $row->{login} = $user->login();
     $row->{last} = $user->last_name();
     $row->{first} = $user->first_name();
-    $row->{email} = $user->email();
-    $row->{phone} = $user->phone();
-    $row->{groups} = join(", ", map {$Krang::User::user_groups{$_}}
-                          $user->group_ids());
 }
 
 

@@ -725,23 +725,26 @@ sub save {
     $self->{user_id} = $dbh->{mysql_insertid} unless $id;
     $id = $self->{user_id};
 
-    # associate user with groups if any
-    my @gids = @{$self->{group_ids}} if $self->{group_ids};
-    if (@gids) {
-        eval {
-            $dbh->do("LOCK TABLES usr_user_group WRITE");
-            $dbh->do("DELETE FROM usr_user_group WHERE user_id = ?",
-                     undef, ($id));
+    # remove and add group associations
+    eval {
+        $dbh->do("LOCK TABLES usr_user_group WRITE");
+        $dbh->do("DELETE FROM usr_user_group WHERE user_id = ?",
+                 undef, ($id));
+
+        # associate user with groups if any
+        my @gids = @{$self->{group_ids}} if $self->{group_ids};
+        if (@gids) {
             my $sth = $dbh->prepare("INSERT INTO usr_user_group VALUES " .
                                     "(?,?)");
             $sth->execute(($id, $_)) for @gids;
-            $dbh->do("UNLOCK TABLES");
-        };
-
-        if (my $err = $@) {
-            $dbh->do("UNLOCK TABLES");
-            croak($err);
         }
+
+        $dbh->do("UNLOCK TABLES");
+    };
+
+    if (my $err = $@) {
+        $dbh->do("UNLOCK TABLES");
+        croak($err);
     }
 
     return $self;
