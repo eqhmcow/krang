@@ -1445,6 +1445,54 @@ sub checkin {
                );
 }
 
+
+=item C<< $story->mark_as_published() >>
+
+Mark the story as published.  This will update the C<publish_date> and
+C<published_version> attributes, and will also check the story back
+in, removing it from any desk it's currently on.
+
+This will also make an entry in the log that the story has been published.
+
+=cut
+
+sub mark_as_published {
+    my $self = shift;
+
+    croak __PACKAGE__ . ": Cannot publish unsaved story" unless ($self->{story_id});
+
+    $self->{published_version} = $self->{version};
+    $self->{publish_date} = localtime;
+
+    $self->{desk_id} = undef;
+
+    $self->{checked_out} = 0;
+    $self->{checked_out_by} = 0;
+
+    # update the DB.
+    my $dbh = dbh();
+    $dbh->do('UPDATE story
+              SET checked_out = ?,
+                  checked_out_by = ?,
+                  desk_id = ?,
+                  published_version = ?,
+                  publish_date = ?
+              WHERE story_id = ?',
+
+             undef,
+             $self->{checked_out},
+             $self->{checked_out_by},
+             $self->{desk_id},
+             $self->{published_version},
+             $self->{publish_date}->mysql_datetime,
+             $self->{story_id}
+            );
+
+    add_history(object => $self, action => 'publish');
+}
+
+
+
 # make sure the object is checked out, or croak
 sub _verify_checkout {
     my $self = shift;

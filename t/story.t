@@ -278,6 +278,18 @@ is($story->checked_out_by, $ENV{REMOTE_USER});
 is($story->checked_out, 1);
 is($story->checked_out_by, $ENV{REMOTE_USER});
 
+# test mark_as_published
+
+$story->mark_as_published();
+
+isnt($story->publish_date, undef, 'Krang::Story->mark_as_published()');
+is($story->published_version, $story->version(), 'Krang::Story->mark_as_published()');
+is($story->checked_out(), 0, 'Krang::Story->mark_as_published()');
+is($story->desk_id(), undef, 'Krang::Story->mark_as_published()');
+
+
+
+
 # test serialization
 my $data = freeze($story);
 ok($data);
