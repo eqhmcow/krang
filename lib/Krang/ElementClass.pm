@@ -493,7 +493,7 @@ sub find_template {
       || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
     my $element   = $args{element} 
       || croak __PACKAGE__ . ":missing attribute 'element'.\n";
-
+    
     my @search_path = $publisher->template_search_path();
     my $filename = $element->name() . '.tmpl';
 
@@ -544,9 +544,16 @@ sub find_template {
 
 =item C<< $class->fill_template(element => $element, tmpl => $html_template, publisher => $publisher) >>
 
-Part of the publish/output section of Krang::ElementClass.  This call is responsible for populating the otuput template of the element with the content stored within.  This replaces the "autofill" and .pl files that were found in Bricolage.
+Part of the publish/output section of Krang::ElementClass.  This call
+is responsible for populating the otuput template of the element with
+the content stored within.  This replaces the "autofill" and .pl files
+that were found in Bricolage.
 
-The default implementation walks the element tree by calling $child->publish() on all children of the current element.  If you decide to override fill_template, but don't want to deal with the manual work of walking the element tree, make sure to make a call to $self->SUPER::fill_template().
+The default implementation walks the element tree by calling
+$child->publish() on all children of the current element.  If you
+decide to override fill_template, but don't want to deal with the
+manual work of walking the element tree, make sure to make a call to
+$self->SUPER::fill_template().
 
 The default implementation populates the template as follows:
 
@@ -558,27 +565,38 @@ A single variable is created for $element->name().
 
 =item *
 
-A single variable called $child->name() is created for each B<UNIQUELY NAMED> child element.  For example, if the element contains children named (C<paragraph>, C<paragraph>, C<deck>), two variables would be created, C<paragraph> and C<deck>.  The value of C<paragraph> would correspond to the first paragraph child element.
+A single variable called $child->name() is created for each 
+B<UNIQUELY NAMED> child element.  For example, if the element contains 
+children named (C<paragraph>, C<paragraph>, C<deck>), two variables 
+would be created, C<paragraph> and C<deck>.  The value of C<paragraph> 
+would correspond to the first paragraph child element.
 
 =item * 
 
-A loop is created for every child element named with the name of the element followed by _loop. The rows of the loop contain the variable described above and a _count variable.
+A loop is created for every child element named with the name of the
+element followed by _loop. The rows of the loop contain the variable
+described above and a _count variable.
 
 =item * 
 
-A loop called "element_loop" is created with a row for every child element contained. The values are the same as for the loop above with the addition of a boolean is_ variable.
+A loop called "element_loop" is created with a row for every child
+element contained. The values are the same as for the loop above with
+the addition of a boolean is_ variable.
 
 =item *
 
-A loop C<contrib_loop> that contains all contributor information.  See the section on L<Contributors>
+A loop C<contrib_loop> that contains all contributor information.  See
+the section on L<Contributors>
 
 =item *
 
-If the element is pageable (see L<Krang::Element>), a series of variables relating to Pagination.  See the section on L<Pagination>.
+If the element is pageable (see L<Krang::Element>), a series of
+variables relating to Pagination.  See the section on L<Pagination>.
 
 =item * 
 
-A variable for the total number of child elements named with the element name and a trailing _total.
+A variable for the total number of child elements named with the
+element name and a trailing _total.
 
 =item * 
 
@@ -701,6 +719,7 @@ sub fill_template {
 
         }
 
+        # get html for element
         $html = $child->publish(publisher => $publisher, fill_template_args => \%fill_template_args);
 
         # build element_loop if it exists.
@@ -735,10 +754,11 @@ sub fill_template {
 
         }
 
-        # if the element is used in the template outside of a loop, and hasn't been set
-        # (first child element takes precedence), do it.
+        # if the element is used in the template outside of a loop,
+        # and hasn't been set (first child element takes precedence),
+        # do it.
         if (exists($template_vars{$name}) && !exists($params{$name})) {
-            $params{$name} = $child->publish(publisher => $publisher);
+            $params{$name} = $html;
         }
     }
 
