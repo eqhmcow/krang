@@ -4,6 +4,12 @@
 <!-- //
     nav_edit_mode();
 
+    function preview_media(media_id) {
+        Preview = window.open("publisher.pl?rm=preview_media&media_id=" + media_id, "<tmpl_var instance_name>");
+        Preview.focus();
+    }
+
+
     function save_stay () {
         var myform = document.forms["edit_contrib_form"];
       <tmpl_if add_mode>
@@ -47,7 +53,7 @@
 <table border="0" cellpadding="0" cellspacing="0" width="100%">
 <tr><td width="1" class="line"><img width="1" height="1"></td>
   <td><img width="1" height="4"><table border="0" cellspacing="0" cellpadding="5">
-<form name="edit_contrib_form" method="POST">
+<form name="edit_contrib_form" method="POST" enctype="multipart/form-data">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
 <tmpl_if add_mode>
@@ -113,6 +119,18 @@
 <tr>
     <td align="left" valign="top">URL:</td>
     <td align="left" valign="top"><tmpl_if error_invalid_url><span class="invalid"></tmpl_if><input type="textfield" size="40" name="url" value="<tmpl_var escape=HTML url>"></td>
+</tr>
+<tr>
+    <td align="left" valign="top">Photograph:</td>
+    <td align="left" valign="top">
+                <tmpl_if media_id>                  
+                  <img src="<tmpl_var thumbnail_path>">
+                  <a href="javascript:preview_media(<tmpl_var media_id>)">
+                  <tmpl_var escape=HTML filename></a>
+                  <tmpl_var escape=HTML file_size>
+                  <br></tmpl_if>
+                <input type="file" name="media_file" size="32" class="button">
+    </td>
 </tr>
 </table>
   </td>

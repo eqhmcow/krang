@@ -49,10 +49,13 @@ for Krang::CGI::Contrib is 'search'.
 
 
 use Krang::Contrib;
+use Krang::Conf;
 use Krang::Message qw(add_message);
 use Krang::Pref;
 use Krang::Session qw(%session);
 use Krang::HTMLPager;
+use Krang::Site;
+use Krang::Category;
 
 
 # Fields in a contrib
@@ -736,6 +739,9 @@ sub edit {
     # Convert Krang::Contrib object to tmpl data
     my $contrib_tmpl = $self->get_contrib_tmpl($c);
 
+    # instance_name needed for preview media
+    $t->param(instance_name => Krang::Conf->instance);
+
     # Propagate to template
     $t->param($contrib_tmpl);
 
@@ -969,11 +975,17 @@ sub do_update_contrib {
         $contrib->$ck($q->param($ck));
     }
 
+    my $media = $self->upload_image($contrib);
+
+    $contrib->image($media) if defined($media);
+
     # Attempt to write back to database
     eval { $contrib->save() };
 
     # Is it a dup?
     if ($@) {
+        # delete the media object if it exists
+
         if (ref($@) and $@->isa('Krang::Contrib::DuplicateName')) {
             add_message('duplicate_name');
             return (duplicate_name=>1);
@@ -1092,6 +1104,19 @@ sub get_contrib_tmpl {
     }
     $contrib_tmpl{contrib_type_ids} = \@contrib_types_tmpl;
 
+    # Display associated media image if it exists
+    if (ref($c)) {
+        my $image = $c->image();
+        if (defined($image)) {
+            $contrib_tmpl{media_id}  = $image->media_id;
+            $contrib_tmpl{filename}  = $image->filename;
+            $contrib_tmpl{file_size} = sprintf("%.1fk", ($image->file_size() / 1024));
+            $contrib_tmpl{thumbnail_path} = $image->thumbnail_path(relative => 1) || '';
+        }
+    }
+#    my $media_file = $q->param('media_file');
+#    $contrib_tmpl{media_file} = $media_file if (defined($media_file));
+
     # Return a reference to the tmpl-compat data
     return \%contrib_tmpl;
 }
@@ -1102,6 +1127,75 @@ sub get_contrib_types {
     my %pref = Krang::Pref->get('contrib_type');
     return [ map { [ $_, $pref{$_} ] } keys %pref ];
 }
+
+
+#
+# Handle uploaded image
+#
+# If the contributor already has an image associated, replace the file in the existing Media object.
+# Otherwise, create a new media object.
+#
+sub upload_image {
+
+    my $self = shift;
+    my ($contrib) = @_;
+
+    my $q = $self->query();
+
+    # add image to the mix, if it exists
+    my $fh = $q->upload('media_file');
+
+    return undef unless ($fh);
+
+    my $media_file = $q->param('media_file');
+
+    # Coerce a reasonable name from what we get
+    my @filename_parts = split(/[\/\\\:]/, $media_file);
+    my $filename = $filename_parts[-1];
+
+    my $media = $contrib->image();
+
+    unless (defined($media)) {
+        # Need to save object under a category.
+        # Use first category of first site - user can always change it later.
+        my ($site) = Krang::Site->find(limit => 1);
+        my ($category) = Krang::Category->find(site_id => $site->site_id, limit => 1);
+
+        $media = Krang::Media->new(
+                                   title => 'Contributor Photo:' . $contrib->full_name,
+                                   category_id => $category->category_id
+                                  );
+    }
+
+    # Put the file in the Media object
+    $media->upload_file(
+                        filehandle => $fh,
+                        filename   => $filename,
+                       );
+
+    eval { $media->save(); };
+
+    # if the media file has existed previously, toss this one and use the old one.
+    if (ref $@ and ref $@ eq 'Krang::Media::DuplicateURL') {
+        my $err = $@;
+
+        # tell all about it
+        add_message('duplicate_media_upload',
+                    filename => $filename);
+
+        # use the dup instead of the new object
+        ($media) = Krang::Media->find(media_id => $err->media_id);
+    } elsif ($@) {
+        die $@;
+    }
+
+
+    $q->delete('media_file');
+
+    return $media;
+
+}
+
 
 
 1;
