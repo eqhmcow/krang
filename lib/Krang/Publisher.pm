@@ -220,7 +220,7 @@ sub preview_story {
     $self->_deploy_testing_templates();
 
     my $publish_list = $self->get_publish_list(story => [$story]);
-    
+
     my $total = @$publish_list;
     my $counter = 0;
     foreach my $object (@$publish_list) {
@@ -297,32 +297,17 @@ sub publish_story {
                     counter => $counter++) if $callback;
         if ($object->isa('Krang::Story')) {
             $self->_build_story_all_categories(story => $object);
-
-            # update published_version
-            $object->checkout if (not ($object->checked_out));
-            $object->published_version( $object->version );
-            my $t = localtime;
-            $object->publish_date( $t );
-            $object->save( keep_version => 1 );
-
-            # check the object back in.
-            if ($object->checked_out()) { $object->checkin(); }
-
-            # remove from desk
-            if ($object->desk_id()) { $object->desk_id(undef) }
+            # mark object as published - this will update status info,
+            # check the object back in, and remove it from desks,
+            # as needed.
+            $object->mark_as_published();
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object);
+            # publish_media() will mark the media object as published.
         }
 
-        # update published_version
-        $object->checkout if (not ($object->checked_out));
-        $object->published_version( $object->version );
-        my $t = localtime;
-        $object->publish_date( $t );
-        $object->save( keep_version => 1 );
-                                                                                  
-        # check the object back in.
-        if ($object->checked_out()) { $object->checkin(); }
+
+
     }
 }
 
@@ -401,12 +386,19 @@ sub publish_media {
     croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
 
     if (ref $args{media} eq 'ARRAY') {
-        foreach (@{$args{media}}) {
-            push @urls, $self->_write_media($_);
+        foreach my $media_object (@{$args{media}}) {
+            push @urls, $self->_write_media($media_object);
+            $media_object->mark_as_published();
         }
         return @urls;
     }
-    return $self->_write_media($args{media});
+
+    my $url = $self->_write_media($args{media});
+
+    $args{media}->mark_as_published();
+
+    return $url;
+
 }
 
 
@@ -1056,7 +1048,7 @@ sub _write_page {
 
     eval {mkpath($args{path}, 0, 0755); };
     if ($@) {
-        Krang::Publisher::FileWriteError->throw(message => 'Could not create directory',
+        Krang::Publisher::FileWriteError->throw(message => "Could not create directory '$args{path}'",
                                                 destination => $args{path},
                                                 system_error => $@);
     }
