@@ -2,6 +2,15 @@
 
 This document contains a list of changes for each release of Krang.
 
+=over
+
+=item *
+
+Replaced Archive::Tar in Krag::DataSet->new with the system 'tar' for a 50x 
+speedup in untaring
+
+=back
+
 =head2 v1.018 - May 10, 2004
 
 =over

@@ -142,21 +142,18 @@ sub new {
         croak("Unable to find kds archive '$path'")
           unless -e $path;
 
-        my $kds = Archive::Tar->new();
-        $kds->read(file_name_is_absolute($path) ? 
-                   $path : rel2abs($path))
-          or croak("Unable to read kds archive '$path' : " . 
-                   Archive::Tar->error());
-
         # extract in temp dir
         my $old_dir = fastcwd;
         chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
-        my $result = $kds->extract($kds->list_files);
+
+	my $z = "";
+	$z = "z" if $path =~ /\.gz$/;
+	my $result = system("tar -xf$z ". 
+	  (file_name_is_absolute($path) ? $path : rel2abs($path)));
+	
         chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
         
-        croak("Unable to open kds archive '$path' : " . 
-              Archive::Tar->error())
-          unless $result;
+        croak("Unable to open kds archive '$path': $?") if ($result);
 
         # validate the XML files before parsing
         $self->_validate;
