@@ -1,23 +1,70 @@
 <tmpl_include help_header.tmpl>
 <div class="boxh">
-<span class="helptitle">New Story</span><br><br>
-Within the PIRT CMS, all written content is considered a Story. Whether it's a feature article or your web site's Homepage, using this tool will get you started creating new content.<br><br>
+<span class="helptitle">Edit Story</span> <br><br>
+The Edit Story page is where you enter and edit all story content. <br><br>
 
-Each Story that is created in the PIRT CMS will have unique elements and specific features that you pick and choose from as you build your Story.<br><br>
+The elements included on the Edit Story page are the body of your Story, such as paragraphs, images, and links to other stories.<br><br>
 
-The first items associated with a Story are the Properties that you select/enter on the 'New Story' page.<br><br>
+On the Edit Story page, there are four parts. They are:<br><br>
 
-<b>Type:</b> Type refers to your Story Type. Select the type of Story you'd like to create, such as Feature Article. Story Type is a required field.<br>
-<b>Title:</b> This is the Title of your Story. Depending on the Story Type it may appear directly in the output. The Title is a required field.<br>
-<b>Slug:</b> A one-word identifier used as the last part of the Story's URI, and the directory in which the story resides.  Some Story Types require a slug. Essentially, this is the story's filename and will appear in the URL of the page. The slug must be unique.<br>
-<b>Cover Date:</b> When creating a New Story, select a Cover Date. The cover Date defaults to the current date and time, but it can be modified to a future or previous date. The cover date is a required field and may appear on some Story Types directly in the URL or the page.<br>
+1)	Properties<br>
+2)	Content<br>
+3)	Sites/Categories<br>
+4)	Actions<br><br>
 
-<b>Site/Category:</b> Every Story must be located in a site and category. Select the appropriate file path by clicking <i>Choose</i>. Then select a site and category from the popup window. A site/category is a required field.<br><br>
+<span class="helpsubhead">Properties</span><br><br>
+The top box on the Edit Story page has the Story's properties and its Contributors. Some of this information is not editable.  <br><br>
 
-After the above information is entered, click on <i>Create</i>, this will take you to the next step in Creating a New Story.<br><br>
 
-<i>Reset</i> and <i>Cancel</i> are also available. Resetting will delete all text from the text boxes on this page. Canceling will return you to My Workspace and not Save any of the information entered.<br><br>
+<b>Id: </b> Story ID. Set by the CMS on creation of a New Story. This field cannot be changed.<br>
+<b>Type:  </b>
+Each Story has a Type. This is set by the CMS on creation of a New Story and is not an editable field. If you selected the incorrect Story Type, you will need to return to 'New Story.' Story Type selection determines the elements that are available on the Edit Story page.<br>
+<b>Current Version: </b>
+Field set by the CMS. This is a non-editable field, reflects the version number of the Story.<br>
+<b>Published Version: </b>Version of the Story that was last published. This may be different from the Current Version if changes were made to the Story after the last publish. This field is controlled automatically by the CMS.<br>
+<b>URL:</b> The URL field is controlled by the CMS. Although it appears as a non-editable field, it can be changed by modifying the fields that make up the URL. These fields are the site and category. <br>
+<b>Title: </b> This is the Title of your Story. Depending on the Story Type it may appear directly in the output. The Title is a required field.<br>
+<b>Slug: </b> A one-word identifier used as the last part of the Story's URI, and the directory in which the story resides.  Some Story Types require a slug. Essentially, this is the story's filename and will appear in the URL of the page. The slug must be unique.<br>
+<b>Cover Date: </b> As on the New Story page, the cover Date defaults to the current date and time, but it can be modified to a future or previous date. The cover date is a required field and may appear on some Story Types directly in the URL or the page.<br>
+<b>Priority: </b> This is a required field that defaults to Medium. You can denote a story as a High Priority. <br>
+<b>Contributors: </b> A contributor can be any person, ex. Writer or photographer who contributed to the Story. Click on <i>Edit Contributors</i> to associate, or un-associate your contributors. See <a href="help.pl?topic=contributor_associate" class="helplink">Associate Contributors</a> for additional Help.
 
-<a href="#top">Back to the Top</a></div>
+<br><br>
+
+
+<span class="helpsubhead">Content</span><Br><br>
+Below the Properties box, is the Content box. This is where you give shape to the Story, by editing its existing elements and adding new ones. Each different Story type has its own set of elements -- some are automatically included and some are optional.<br><br>
+
+Click the <i>Edit</i> button next to an element to go to its Element Profile page, which is where you can insert text and choose attributes. To include a new element, select one from the pulldown menu and click the <i>Add Element</i> button. You will automatically be sent to the new element's profile page, where you can enter its data.<br><br>
+
+<b>Reorder: </b> To change the order of the elements, use the pulldowns to adjust the position numbers, then click the <i>Reorder</i> button. <br>
+<b>Delete:  </b>To delete an item, check the box next to it and the click the <i>Delete</i> button. You can delete more than one item at a time. 
+<br><br>
+
+
+<span class="helpsubhead">Sites/Categories</span><Br><br>
+Categories determine where on the site an item is published. An item can live in one Category or in several, but only one is designated as the primary category. On your first time through, a Story's only category will be the one you chose on the New Story page. To add a category, click on the <i>Add Site/Category</i> button and choose one from the list.<br><br>
+
+<b>Primary:</b> To choose a new category as the primary one, click the circle next to it, then click on <i>Save</i> or <i>Save and Stay</i> at the bottom of the page. <br>
+<b>Delete: </b>To delete a category, check the box next to it and then click the <i>Delete</i> button. You can delete more than one category at a time.<br><br>
+
+
+<span class="helpsubhead">Actions</span><Br><br>
+At the bottom of the edit story page, there are buttons and different actions to choose from. <br><br>
+
+<b>Check In: </b> After completing your Story, you can Check it in for another editor. Select the desk you want to check the Story into and click <i>Check In</i>.<br>
+<b>Revert: </b>You can revert to a previously saved version. Select the version number from the drop-down and click on <i>Revert</i>. If you prefer, you can also <i>View</i> a previously saved version.<br>
+<b>Save: </b>Click on <i>Save</i> to save your Story. Clicking on this button will take you up a level to 'My Workspace'.<br>
+<b>Save & Stay:</b> Click on <i>Save & Stay</i> to save your Story and remain on the Edit Story screen.<br>
+<b>Publish:</b> Click on <i>Publish</i> and your Story is published immediately. If you would like to schedule your Story to publish at a later date, click on <i>Schedule</i> at the top of the page. See <a href="help.pl?topic=schedule" class="helplink">Schedule Editor</a> for more information.<br>
+<b>Reset:</b> Clicking on <i>Reset</i> will reset all text fields to last Saved version.<br>
+<b>Delete: </b>Click on <i>Delete</i> to delete your Story from the CMS.<br><br>
+
+In addition to the Action buttons featured at the bottom of the page, the following two actions are available at the top:<br><br>
+
+<b>Log:</b> Please see <a href="help.pl?topic=log" class="helplink">Log</a> for more information.<br>
+<b>Schedule:</b> Please see <a href="help.pl?topic=schedule" class="helplink">Schedule</a> for more information.
+
+<br><br></div>
 
 <tmpl_include help_footer.tmpl>
