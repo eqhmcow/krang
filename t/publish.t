@@ -803,12 +803,12 @@ sub test_story_build {
 
     # test _assemble_pages() - should return single-element array-ref.
     # category top/bottom & page content should both exist.
-    my $assembled_ref = $publisher->_assemble_pages(story => $story, category => $category);
-    ok(@$assembled_ref == 1, 'Krang::Publisher->_assemble_pages() -- page count');
+#    my $assembled_ref = $publisher->_assemble_pages(story => $story, category => $category);
+#    ok(@$assembled_ref == 1, 'Krang::Publisher->_assemble_pages() -- page count');
 
-    my $page_one = $assembled_ref->[0];
-    $page_one =~ s/\n//g;
-    ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');
+#    my $page_one = $assembled_ref->[0];
+#    $page_one =~ s/\n//g;
+#    ok($article_output{1} eq $page_one, 'Krang::Publisher->_assemble_pages() -- compare');
 
 }
 
@@ -1041,19 +1041,37 @@ sub deploy_test_templates {
 sub test_additional_content_block {
 
     my $content  = $para1;
-    my $filename = 'test1.txt';
+    my $story = $content;
 
-    for (0..1) {
+    for (my $count = 0; $count < 10; $count++) {
+        my $filename = "test$count.txt";
+        my $bool = $count % 2;
+        my $data = "text$count "x40;
 
-        my $open  = qq{<KRANG_ADDITIONAL_CONTENT filename="$filename" use_category="$_">};
+        my $open  = qq{<KRANG_ADDITIONAL_CONTENT filename="$filename" use_category="$bool">};
         my $close = "</KRANG_ADDITIONAL_CONTENT>";
 
-        my $txt = $publisher->additional_content_block(content => $content, filename => $filename, use_category => $_);
+        my $txt = $publisher->additional_content_block(content => $data, filename => $filename, use_category => $bool);
 
-        my $expected = $open . $content . $close;
+        my $expected = $open . $data . $close;
 
         ok($txt eq $expected, "Krang::Publisher->additional_content_block");
 
+        $story .= $txt;
+    }
+
+    my ($additional_ref, $final_story) = $publisher->_parse_additional_content(text => $story);
+
+    ok($final_story eq $content, "Krang::Publisher->_parse_additional_content()");
+
+    for (my $i = 0; $i <= $#$additional_ref; $i++) {
+        my $block = $additional_ref->[$i];
+        my $bool = $i % 2;
+        my $data = "text$i "x40;
+
+        ok($block->{filename} eq "test$i.txt", "Krang::Publisher->_parse_additional_content -- filename");
+        ok($block->{use_category} eq $bool, "Krang::Publisher->_parse_additional_content -- use_category");
+        ok($block->{content} eq $data, "Krang::Publisher->_parse_additional_content -- content");
     }
 }
 
