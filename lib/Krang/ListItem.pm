@@ -498,7 +498,8 @@ sub deserialize_xml {
 
 =head1 SEE ALSO
 
-L<Krang::List>, L<Krang::ListGroup>, HREF[The Krang Element System|element_system.html]
+L<Krang::List>, L<Krang::ListGroup>, L<Krang::ElementClass::ListGroup>,
+HREF[The Krang Element System|element_system.html]
 
 
 =cut

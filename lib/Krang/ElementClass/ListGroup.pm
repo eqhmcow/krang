@@ -152,6 +152,11 @@ if you set C<multiple> to true.
 
 =back
 
+=head1 SEE ALSO
+
+L<Krang::ListGroup>, L<Krang::List>, L<Krang::ListItem>,
+HREF[The Krang Element System|element_system.html]
+
 =cut
 
 1;

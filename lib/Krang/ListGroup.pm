@@ -340,7 +340,8 @@ sub deserialize_xml {
 
 =head1 SEE ALSO
 
-L<Krang::List>, L<Krang::ListItem>, HREF[The Krang Element System|element_system.html]
+L<Krang::List>, L<Krang::ListItem>, L<Krang::ElementClass::ListGroup>, 
+HREF[The Krang Element System|element_system.html]
 
 
 
