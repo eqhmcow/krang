@@ -120,7 +120,7 @@
     </td>
     <td><tmpl_var title></td>
  <td align="right">
-      <tmpl_var checkbox_column>
+      <tmpl_if may_edit><tmpl_var checkbox_column></tmpl_if>
     </td>
   </tr></table>
 
@@ -132,19 +132,16 @@
      <tr>
         <td class="form-cell" width="120" style="border-top:none;">URL</td>
         <td class="form-cell" style="border-top:none;"><tmpl_var url></td>
-        <tmpl_if thumbnail>
-          <td width="50" align=center class="form-cell">
-            <a href="javascript:preview_media(<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border="0"></a>
-          </td>
-        </tmpl_if>
      </tr>
      <tr>
        <td colspan=<tmpl_if thumbnail>"3"<tmpl_else>"2"</tmpl_if> class="form-cell">
-           <span style="float:right; font-weight: bold;"><tmpl_var command_column></span>
+           <span style="float:right; font-weight: bold;"><tmpl_if may_edit><tmpl_var command_column><tmpl_else><a href="javascript:log(<tmpl_var id>)">Log</a>&nbsp;|&nbsp;<a href="javascript:view(<tmpl_var id>)">View</a></tmpl_if></span>
+           <tmpl_if may_edit>
                <input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button">
                <input type="button" value="Check Out" onclick="checkout('<tmpl_var id>')" class="button">
                  <br><br>
                <input type="button" value="Move" onclick="move('<tmpl_var id>')" class="button"> to <select name="move_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>" <tmpl_if is_selected>SELECTED</tmpl_if>><tmpl_var choice_desk_name> Desk</tmpl_loop></select>
+          </tmpl_if>
        </td>
      </tr>
   </table>

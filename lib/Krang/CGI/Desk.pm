@@ -106,7 +106,7 @@ sub show {
        columns     => [ 'id', 'version', 'url', 'title', 'story_type', 
                         'command_column', 'checkbox_column'],
        columns_sortable => [ ],
-       find_params => { desk_id => $desk_id, checked_out => 0 },
+       find_params => { desk_id => $desk_id, may_see => 1, checked_out => 0 },
        command_column_commands => [ 'log', 'view', 'edit' ],
        command_column_labels => {   view => 'View',
                                     edit => 'Edit',
@@ -131,6 +131,7 @@ sub _row_handler {
                              linkto => 
                              "javascript:preview_story($row->{id})",
                              length => 50);
+    $row->{may_edit} = $obj->may_edit;
 
     # setup version
     $row->{version} = $obj->version;
