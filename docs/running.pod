@@ -5,6 +5,14 @@ working order.  It goes beyond merely installing the application,
 covering publishing setup and basic operation.  You should read this
 after installing Krang for the first time.
 
+=head2 What Krang Does
+
+Before getting into how to configure Krang you need to understand what
+Krang I<does>.  Krang is a B<static publisher>.  That means Krang
+doesn't serve content directly to your end users.  Instead, it
+publishes I<static> files onto the filesystem.  You'll have to
+configure some other system to serve those files to your users.
+
 =head2 Creating a Site
 
 Every Krang instance needs at least one site to do anything
@@ -23,22 +31,30 @@ You must fill in four fields:
 
 =over
 
-=item * URL
+=item *
+
+URL
 
 This is the primary URL of your site, where users go to access live
 content.
 
-=item * Preview URL
+=item *
+
+Preview URL
 
 This is the private URL where editors will go to see pre-production
 output from Krang.
 
-=item * Publish Path
+=item *
+
+Publish Path
 
 This is the path where Krang will write files which must be served by
 the configured URL.
 
-=item * Preview Path
+=item * 
+
+Preview Path
 
 This is the path where Krang will write files which must be served by
 the configured Preview URL.
@@ -48,17 +64,12 @@ the configured Preview URL.
 Now when an editor previews or publishes a story it will be written to
 the paths you configured.
 
-=head2 Preview and Publish Setup
+=head2 Site Preview and Publish Setup
 
 The values configured for a site must correspond to the setup of
-another web server.  This is because Krang is not a front-end web
-server.  Krang works by publishing stories and media to the
-file-system, allowing another server to serve this content to
-end-users.
-
-This external server can be on same machine as Krang or on another
-machine which is able to read from the configured preview and publish
-paths (by NFS, for example).
+another web server.  This external server can be on same machine as
+Krang or on another machine which is able to read from the configured
+preview and publish paths (by NFS, for example).
 
 For example, if I setup a site with:
 
@@ -86,10 +97,51 @@ document.  For more information on configuring Apache see
 http://httpd.apache.org .  Of course, you're not limited to using
 Apache to serve Krang-generated content.  Any web server will work!
 
+=head2 Testing Your Site Setup
+
 To test your preview and publish setup, create a story and add some
 content.  Try previewing the story.  Then try publishing the story and
 entering the URL for the story in your browser's location bar.  If you
 got the story both times, you're done!
+
+If not, here's a few things that could be wrong:
+
+=over
+
+=item *
+
+DNS
+
+In order for your browser to be able to find your live and preview
+servers their IP addresses must be in DNS.  If you enter the URL in
+your browser and you get back an error about finding the server then
+you've got a DNS problem.
+
+=item *
+
+File Permissions
+
+The paths you entered in Preview Path and Publish Path must be
+writable by the user configured as KrangUser in your
+F<conf/krang.conf> file.  To find out if this is the case, C<su> to
+that user and try to C<touch> a file in the path.  For example, to
+test if the C<krang> user can write to F</www/foo>:
+
+  su krang
+  touch /www/foo
+
+If this returns an error message you know you have a file permission
+problem, and you'll need to fix it using C<chown> and/or C<chmod>.
+
+=item *
+
+Preview or Publish Server Misconfiguration
+
+If you've confirmed that Krang is writing out files and your browser
+is finding the right server, any remaining problems are likely in the
+preview or publish server itself.  Confirm that it's looking in the
+right place for its documents and that it's configured to serve URLs
+setup in Krang.
 
 =head2 Adding Categories
 

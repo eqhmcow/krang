@@ -14,6 +14,10 @@ HREF[Install|ops_install.html] - how to install Krang
 
 =item *
 
+HREF[Running Krang|running.html] - a guide to getting Krang up and running after installation (unfinished)
+
+=item *
+
 HREF[Upgrade|ops_upgrade.html] - how to upgrade an existing Krang installation
 
 =item *
