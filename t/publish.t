@@ -94,15 +94,14 @@ END {
 
 
 # Attempt to publish the story.
-#my $html = $publisher->_assemble_pages(story => $story, category => $category, mode => 'publish');
+my $html = $publisher->_assemble_pages(story => $story, category => $category, mode => 'publish');
 
-my $page = $story->element->child('page');
-my $para = $page->child('paragraph');
+#my $page = $story->element->child('page');
+#my $para = $page->child('paragraph');
 
-my @children = $page->children();
+#my @children = $page->children();
 
 
-$publisher->{story} = $story;
 
 #diag("calling publish");
 #my $html  = $page->class->publish(element => $page, publisher => $publisher);
@@ -113,6 +112,7 @@ $publisher->{story} = $story;
 #    diag(sprintf("%s => %s", $_->name(), $_->data()));
 #}
 
+#$publisher->publish_story(story => $story, category => $category);
 
 
 
