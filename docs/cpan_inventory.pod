@@ -177,7 +177,7 @@ exist without your hard work.
 
 =item Imager
 
- Version: 0.41
+ Version: 0.43
  License: Perl License
 
 =item IO-Tty
