@@ -862,6 +862,13 @@ sub _build_url {
 }
 
 
+
+=item C<< $html = $category->publish(publisher => $publisher) >>
+
+The public interface to publishing for Krang::Category.  Will go on to call $category->element->publish().
+
+If successful, publish() will return a block of HTML.
+
 =back
 
 =head1 TO DO
