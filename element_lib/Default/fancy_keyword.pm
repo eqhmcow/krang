@@ -116,22 +116,26 @@ sub bulk_edit_filter {
 sub fill_template {
     my ($self, %arg) = @_;
 
-    $arg{tmpl}->param($self->name, join(', ', @{$arg{element}->data}))
-      if $arg{element}->data;
+    my $tmpl = $arg{tmpl};
+
+    return unless $arg{element}->data();
+
+    # determine whether to populate as array or scalar
+    if ($tmpl->query(name => [$self->name]) eq 'LOOP') {
+        $tmpl->param($self->name => $arg{element}->data);
+    } else {
+        $tmpl->param($self->name => join(', ', @{$arg{element}->data}))
+    }
+
 
 }
 
 # return a list of fields if no template exists.
 sub template_data {
-   my ($self, %args) = @_;
+    my ($self, %args) = @_;
 
     if (my $data = $args{element}->data) {
-        my @words;
-        foreach my $k (@$data) {
-            push @words, $k if $k;
-        }
-
-        return join ',', @words;
+        return join ', ', @$data;
     }
 }
 
