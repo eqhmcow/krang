@@ -1186,6 +1186,35 @@ sub _load_version {
     return @result;
 }
 
+=item C<< $story->move_to_desk($desk_id) >>
+
+Move story to selected desk.  Cannot move it if checked out. 
+Will return 1 if successful, else 0.
+
+=cut
+
+sub move_to_desk {
+    my ($self, $desk_id) = @_;
+    my $dbh      = dbh();
+
+    croak(__PACKAGE__."->move_to_desk requires a desk_id") if not $desk_id;
+
+    # check status
+    my ($co) = $dbh->selectrow_array(
+         'SELECT checked_out FROM story
+           WHERE story_id = ?', undef, $self->story_id);
+
+    return 0 if $co;
+
+    $dbh->do('UPDATE story SET desk_id = ? where story_id = ?', undef, $desk_id, $self->story_id);
+
+    $self->{desk_id} = $desk_id;
+    add_history(    action => 'move',
+                    object => $self,
+                    desk_id => $desk_id );
+    return 1;     
+}
+
 =item C<< $story->checkout() >>
 
 =item C<< Krang::Story->checkout($story_id) >>

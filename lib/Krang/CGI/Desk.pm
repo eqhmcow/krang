@@ -44,6 +44,8 @@ sub setup {
       goto_edit
       goto_log
       goto_view
+      move
+      move_checked
     )]);
 
 }
@@ -72,7 +74,8 @@ sub show {
                                                                           
     foreach my $found_desk (@found_desks) {
         if ( $found_desk->desk_id ne $desk_id ) {
-            push (@desk_loop, { choice_desk_id => $desk->desk_id, choice_desk_name => $desk->name
+            my $is_selected = ($found_desk->order eq ($desk->order + 1)) ? 1 : 0;
+            push (@desk_loop, { choice_desk_id => $found_desk->desk_id, choice_desk_name => $found_desk->name, is_selected => $is_selected
 });
         } 
     }
@@ -108,7 +111,7 @@ sub show {
                                     edit => 'Edit',
                                     log  => 'Log' },
        id_handler  => \&_obj2id,
-       row_handler => sub { _row_handler(@_,@desk_loop) },
+       row_handler => sub { _row_handler(@_,\@desk_loop) },
       );
 
     # Run the pager
@@ -117,8 +120,8 @@ sub show {
 }
 
 sub _row_handler {
-    my ($row, $obj, @desk_loop) = @_;
-    $row->{desk_loop} = \@desk_loop;
+    my ($row, $obj, $desk_loop) = @_;
+    $row->{desk_loop} = $desk_loop;
     $row->{story_id} = $obj->story_id;
     $row->{id} = _obj2id($obj);
     $row->{title} = $obj->title;
@@ -151,6 +154,39 @@ sub checkout_checked {
     $self->header_props(-uri => 'workspace.pl');
     $self->header_type('redirect');
     return "";
+}
+
+=item move
+
+Moves story to selected desk,
+
+=cut 
+
+sub move {
+    my $self = shift;
+    my $query = $self->query;
+    my $obj = _id2obj($query->param('id'));
+    my $result = $obj->move_to_desk($query->param('move_'.$query->param('id')));
+    $result ? add_message("moved_story", id => $query->param('id')) : add_message("story_cant_move", id => $query->param('id')); 
+    return $self->show;
+}
+
+=item move_checked
+
+Moves list of checked stories to desks.
+
+=cut
+
+sub move_checked {
+    my $self = shift;
+    my $query = $self->query;
+    foreach my $obj (map { _id2obj($_) }
+                     $query->param('krang_pager_rows_checked')) {
+        my $result = $obj->move_to_desk($query->param('move_'.$obj->story_id));
+        $result ? add_message("moved_story", id => $obj->story_id) : add_message("story_cant_move", id => $obj->story_id);
+    }
+
+    return $self->show;
 }
 
 =item goto_edit
