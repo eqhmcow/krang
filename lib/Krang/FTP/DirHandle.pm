@@ -7,6 +7,7 @@ use Krang::Session qw(%session);
 use Krang::Category;
 use Krang::Template;
 use Krang::Media;
+use Krang::Log qw(debug info critical);
 use Net::FTPServer::DirHandle;
 use Krang::FTP::FileHandle;
 
@@ -88,7 +89,8 @@ sub get {
             if ($filename eq $inst) {
                 Krang::Conf->instance($inst);
                 my $session_id = Krang::Session->create();
-                my $user_id = $ENV{USER_ID};
+                my $user_id = ${$self->{ftps}{user_objects}}{$inst}->user_id;
+                $self->{ftps}{user_obj} = ${$self->{ftps}{user_objects}}{$inst};
                 $session{user_id} = $user_id;
     
                 # arrange for it to be deleted at process end
@@ -181,6 +183,8 @@ sub open {
     my $category_id = $self->{category_id};
     my $type = $self->{type};
 
+    debug(__PACKAGE__."::open($filename, $mode)\n"); 
+
     if (not $category_id) {
         return undef;
     }
@@ -195,9 +199,9 @@ sub open {
                                                 $media[0],
                                                 $type,
                                                 $category_id
-                                                );
+                                                )->open($mode);
         }
-    } else {
+    } elsif ($type eq 'template') {
         # look for template with name = $filename in spec'd cat
         my @template = Krang::Template->find(   filename => $filename,
                                                 category_id => $category_id );
@@ -207,7 +211,7 @@ sub open {
                                                 $template[0],
                                                 $type,
                                                 $category_id
-                                                );
+                                                )->open($mode);
         }
     }
 
