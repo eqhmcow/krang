@@ -1,0 +1,21 @@
+<html>
+<head><title>Welcome To Krang</title></head>
+<body>
+<h1>Welcome to Krang</h1>
+
+<p>
+This is the Krang root server menu.  Here you will find a list of
+available Krang instances served by this Krang installation.  Click on
+the links below to enter the Krang of your choice.
+</p>
+
+<ul>
+<tmpl_loop instance_loop>
+<li><a href="/<tmpl_var InstanceName>"><tmpl_var InstanceName></a></li>
+</tmpl_loop>
+</ul>
+</body>
+</html>
+
+
+

@@ -1,0 +1,266 @@
+=head1 Krang New Features
+
+This document identifies new features to be added to the base
+Bricolage-compatible implementation.
+
+Included with each item is a rough guess as to the difficulty of
+implementing each feature.  This is intended to help in the process of
+deciding which features will go in the first version.  The ratings
+used are:
+
+=over 4
+
+=item easy
+
+Less than 3 days of work required with little or no specification work.
+
+=item moderate
+
+3 to 10 days of work, plus some amount of technical specification.
+
+=item hard
+
+A significant development effort of at least 10 days.  Will require
+complete technical specification to obtain a better estimate.
+
+=back
+
+=head2 Story
+
+=over
+
+=item *
+
+Preview stories from the search results screen.  [ easy ]
+
+=item *
+
+Search for stories by creator. [ easy ]
+
+=item *
+
+Search for stories by ID. [ easy ]
+
+=item *
+
+Copy (clone) stories.  [ medium ]
+
+=item *
+
+Create advanced publish scheduling interface capable of scheduling
+particular versions (ex. "publish version 2 tomorrow") and repeated
+publishing schedules (ex. "every day"). [ hard ]
+
+=item *
+
+Invent new combined notes/description feature to obviate the need for
+a description field on the main story edit screen.  [ moderate ]
+
+=item *
+
+Save immediately on create.  [ easy ]
+
+=item *
+
+Ability to add a new contributor from the select contributor page.  [ medium ]
+
+=item *
+
+The cancel button in the element editor will actually cancel any and
+all changes made up to that point but not explicitely saved with the
+save button.  This is significantly different from the cancel button
+in Bricolage, which mearly goes up a level ignoring any edits on the
+screen.  [ hard ]
+
+=back
+
+=head2 Media
+
+=over 
+
+=item *
+
+Bulk upload of Media using FTP with a searchable bulk-uploaded flag.  [ hard ]
+
+=item *
+
+Publishing Media should also publish to preview.  Additionally, a
+Publish to Preview button should be available to only publish to
+preview.  [ easy ]
+
+=item *
+
+Create a new data type and interface for Includes separate from Media.
+[ hard ]
+
+=back
+
+=head2 Templates
+
+=over
+
+=item *
+
+Create a template testing facility to allow template changes to be
+tested in preview.  Basic design calls for having a "test this
+template" checkbox on templates in My Workspace.  With this box
+checked all stories previewed will be formatted using this template.
+Note that this design will "corrupt" the preview destination with the
+results of template testing.  [ moderate ]
+
+=back
+
+=head2 Desks
+
+=over
+
+=item *
+
+Redesign desk interface to improve usability.  Make "edit" more
+prominent, add paging to handle large numbers of stories, etc.  
+[ hard ]
+
+=back
+
+=head2 Admin
+
+=over
+
+=item *
+
+When a user is deleted automatically checkin any objects the user had
+checked out.  Make sure admin knows what happened.  [ easy ]
+
+=item *
+
+Add a new User Preferences section for settings specific to each user.
+This will include Alerts and paging, at least.
+
+=back
+
+=head2 Categories
+
+=over
+
+=item *
+
+All categories to have element trees of their own.  [ hard ]
+
+=item *
+
+Create a better UI element for selecting a category from a large list.
+[ hard ]
+
+=item *
+
+Add a "site" abstraction to allow Krang to easily handle multiple
+sites in one CMS instance.  The idea is for there to be a list of
+sites, each with a name and a URL.  Each site has its own category
+tree.  In many ways the site will function as a top-level category but
+differentiating them in the UI will give us a number of advantages.
+
+Templates may be of three types - global, site specific or
+category specific.
+
+Stories and Media will be assigned to one or more sites and one or
+more categories within each site.  When a story or media object is
+linked to the full URL will be constructed using the site's URL and the
+category.  This will remove the need to do nasty Apache rewrite rules
+and will satisfy clients that care about their URLs.
+
+The permissions system will provide a means to limit access and
+visibility by site.
+
+[ hard ]
+
+=item *
+
+Prevent category from being deleted while stories, media or templates
+exist in the category.  [ easy ]
+
+=back
+
+=head2 Elements
+
+=over
+
+=item *
+
+The element system will undergo radical changes in Krang.  To start,
+the element admin tool will not exist in the end-user UI.  It will be
+redesigned as a tool for the developers, primarily working through
+files on disk and in CVS.
+
+High-level goals for the new element system include:
+
+=over
+
+=item *
+
+Ability to create new classes of elements and fields easily.
+
+=item *
+
+Separation of data modeling from UI modeling.  This will allow us to
+properly present complex controls (ex: keyword dropdown for LA)
+without resorting to ugly workarounds.  It will also enable us to more
+precisely control the behavior of elements in the story UI.  Elements
+that don't offer bulk editing, that don't allow more than a fixed
+number of items, etc.
+
+=item *
+
+Support for a global element library where reusable components can be
+shared.
+
+=item *
+
+Provide the ability to add documentation to elements.
+
+=back
+
+Dev will be working on the design of the element system during the
+technical specification phase of the project.
+
+[ hard ]
+
+=back
+
+=head2 General
+
+=over 
+
+=item *
+
+A check-all button should be added to screens which list assets (find,
+desks).  [ moderate ]
+
+=item *
+
+Story and media expiration needs to work.  This will require
+coordination with Ops. [ hard ]
+
+=item *
+
+Need Javascript confirm box for publish actions, both from desks or
+from Story/Media edit screen. [ easy ]
+
+=item *
+
+Protect user from accidentally losing data by leaving an editor
+without saving.  Use javascript confirms.  [ moderate ]
+
+=item *
+
+Create a bug-reporting facility that is activated on errors, and may
+be accessed manually.  It will consist of a reporting form and will
+automatically submit bugs to Bugzilla.  The Bugzilla bug will include
+detailed logs that should significantly cut down on bug hunting time.
+[ moderate ]
+
+=item *
+
+Create a tool to migrate existing Bricolage installations to Krang
+with the minimum amount of manual labor possible.  [ hard ]
+
+=back

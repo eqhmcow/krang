@@ -1,0 +1,107 @@
+<html>
+<head><title>Krang Element Editor</title></head>
+
+<script language=javascript>
+  function edit_children(index) {
+        document.editor.rm.value = 'save_and_jump';
+        if (document.editor.path.value.length > 0) {
+           document.editor.jump_to.value = document.editor.path.value + ',' + index;
+        } else {
+            document.editor.jump_to.value = index;
+        }
+        document.editor.submit();
+  }
+
+  function add_child() {
+     document.editor.rm.value = 'add';
+     document.editor.submit();
+  }
+
+  function jump_to(p) {
+     document.editor.rm.value = 'save_and_jump';
+     document.editor.jump_to.value = p;
+     document.editor.submit();
+  }
+
+  function cancel_jump(p) {
+        if (confirm("Really cancel changes?")) {
+           document.editor.rm.value = 'edit';
+           document.editor.path.value = p;
+           document.editor.submit();
+        }
+  }
+
+  function save() {
+        document.editor.rm.value = 'save';
+        document.editor.submit();
+  }
+
+  function save_and_stay() {
+        document.editor.rm.value = 'save_and_stay';
+        document.editor.submit();
+  }
+
+  function remove() {
+        if (confirm("Really delete elements?")) {
+           document.editor.rm.value = 'delete';
+           document.editor.submit();
+        }
+  }
+
+  function reorder() {
+        document.editor.rm.value = 'reorder';
+        document.editor.submit();
+  }
+
+</script>
+
+<body>
+<h1>Krang Element Editor</h1>
+
+<tmpl_if alert><p><font color=red><b><tmpl_var alert></b></font></p></tmpl_if>
+
+<p><tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> >> </tmpl_if></tmpl_loop></p>
+
+<form name=editor method=post>
+  <input type=hidden name=rm>
+  <input type=hidden name=path value="<tmpl_var path>">
+  <input type=hidden name=jump_to>
+  <input type=hidden name=root_id value="<tmpl_var root_id>">
+
+
+<table border=1 bgcolor=777777 width=80% cellpadding=3>
+  <tr>
+    <th bgcolor=D5E5FF width=20% align=right>Element</th>
+    <th bgcolor=DDEEFF width=70%>Data Entry</th>
+    <th bgcolor=E5F5FF width=10%>Order</th>
+    <th bgcolor=E5F5FF width=10%>Delete</th>
+  </tr> 
+
+ <tmpl_loop child_loop>
+  <tr>
+    <td bgcolor=CCDDEE align=right valign=top><tmpl_if invalid><font color=red><b>*</b></font></a></tmpl_if><tmpl_var name></td>
+    <td bgcolor=DDEEFF align=left valign=top><tmpl_if is_container><input type=button value=Edit onClick='edit_children("<tmpl_var index>")'><tmpl_else><tmpl_var form></tmpl_if></td>
+    <td bgcolor=E5F5FF align=center valign=top><tmpl_if reorderable><tmpl_var order_select></tmpl_if></td>
+    <td bgcolor=EAFAFF align=center valign=top><tmpl_if allow_delete><input type=checkbox name=remove_<tmpl_var index>></tmpl_if></td>
+  </tr>
+ </tmpl_loop>
+
+ <tmpl_unless child_loop>
+   <tr><td bgcolor=white colspan=4>No sub-elements defined.</td></tr>
+ </tmpl_unless>
+
+   <tr><td bgcolor=DDEEFF align=left colspan=2><tmpl_var child_select><input type=submit value="Add" onClick='add_child()'></td>
+       <td bgcolor=EAFAFF align=center><input type=button value=Reorder onClick='reorder()'></td>
+       <td bgcolor=EAFAFF align=center><input type=button value=Delete onClick='remove()'></td>
+   </tr>
+
+   <tr>
+       <td bgcolor=FFFFFF align=right colspan=4><input type=button value="Save" onClick="save()"> <input type=button value="Save and Stay" onClick="save_and_stay()"> <input type=button value="Cancel" onClick='cancel_jump("<tmpl_var return_path>")'></td></tr>
+
+</table>
+
+
+
+</form>
+</body>
+</html>

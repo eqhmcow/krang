@@ -1,0 +1,21 @@
+# docs/Makefile - process POD format documentation into HTML.  Uses
+# both pod2html and custom scripts stored in bin/
+
+HTML = changes.html objects.html coding.html goals.html rationale.html \
+       cpan.html new_features.html paper_screen.html element_system.html \
+       index.html requirements.html configuration.html tech_spec.html
+
+all   : $(HTML) modules.html rm_modules
+
+%.html : %.pod Makefile docs.css bin/*.pl
+	bin/pod2html.pl $< $@
+
+modules.pod :
+	bin/lib_docs.pl
+
+rm_modules :
+	rm modules.pod
+
+clean :
+	- rm $(HTML)
+	- rm pod2*

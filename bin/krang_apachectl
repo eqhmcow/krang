@@ -1,0 +1,205 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_apachectl
+
+=head1 SYNOPSIS
+
+   krang_apachectl start
+
+   krang_apachectl stop
+
+   krang_apachectl restart
+
+=head1 DESCRIPTION
+
+This script controls the Krang Apache server. The usage of the script
+is the same as the normal apache "apachectl" script but only "start",
+"stop" and "restart" are supported. Also, "restart" performs a hard
+stop and start since a SIGHUP isn't enough for mod_perl.
+
+Usage information can be obtained by running the script with no arguments.
+
+=cut
+
+# how long to wait for stop on restart (in seconds)
+use constant MAX_RESTART_WAIT => 10;
+
+$|++;
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib and $KRANG_ROOT/ext-lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    my $extlib = catdir($ENV{KRANG_ROOT}, "ext-lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}:$extlib" : 
+      "${lib}:$extlib";
+    unshift @INC, $lib, $extlib;
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.  Do you need to set KRANG_ROOT?
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::Conf qw(ApacheBin KrangRoot VirtualHost);
+
+# the httpd command
+my $httpd = ApacheBin . ' -f ' . 
+  rel2abs(catfile(KrangRoot, "tmp", "httpd.conf"));
+
+# get status from the pid file
+my $pid_file = catfile(KrangRoot, "tmp", "httpd.pid");
+my $running = 0;
+my $pid;
+if (-e $pid_file) {
+    $pid = `cat $pid_file`;
+    chomp $pid;
+    if ($pid and kill(0, $pid)) {
+        $running = 1;
+    }
+}
+
+# check for args
+usage() unless @ARGV;
+
+my $command = shift @ARGV;
+
+if ($command eq 'start') {
+    if ($running) {
+        die "krang_apachectl $command: httpd (pid $pid) already running\n";
+    }
+
+    write_conf();
+    print "krang_apachectl $command: starting httpd\n";
+    unless (system($httpd)) {
+        print "krang_apachectl $command: httpd started\n";
+        exit;
+    } else {
+        die "krang_apachectl $command: httpd could not be started\n";
+    }
+}
+
+if ($command eq 'stop') {
+    unless ($running) {
+        die "krang_apachectl $command: httpd not running\n";
+    }
+    if (kill 15, $pid) {
+        print "krang_apachectl $command: httpd stopped\n";
+        exit;
+    } else {
+        die "krang_apachectl $command: httpd could not be stopped\n";
+    }
+}
+
+if ($command eq 'restart') {
+    # stop
+    if ($running) {
+        if (kill 15, $pid) {
+            print "krang_apachectl $command: waiting for httpd to stop";
+        } else {
+            die "krang_apachectl $command: httpd could not be stopped\n";
+        }
+
+        # wait for stop - check pid file for removal
+        my $stopped = 0;
+        for my $wait (0 .. MAX_RESTART_WAIT) {
+            if (not -e $pid_file) {
+                $stopped = 1;
+                last;
+            }
+            print ".";
+            sleep 1;
+        }
+
+        if ($stopped) {
+            print "\nkrang_apachectl $command: httpd stopped\n";
+        } else {
+            die "\nkrang_apachectl $command: httpd not stopped in time\n";
+        }
+
+    }
+
+    # start
+    write_conf();
+    print "krang_apachectl $command: starting httpd\n";
+    unless (system($httpd)) {
+        print "krang_apachectl $command: httpd started\n";
+        exit;
+    } else {
+        die "krang_apachectl $command: httpd could not be started\n";
+    }
+}
+
+usage();
+
+sub usage {
+  print <<END;
+usage: krang_apachectl (start|stop|restart|debug)
+
+start      - start httpd
+stop       - stop httpd
+restart    - restart httpd if running
+
+END
+
+  exit;
+}
+
+sub write_conf {
+    require HTML::Template;
+
+    # create the httpd.conf by processing it as a template, using conf
+    # directives as params
+    my $template = HTML::Template->new(filename => catfile(KrangRoot, 
+                                                           "conf",
+                                                           "httpd.conf.tmpl"),
+                                       global_vars => 1,
+                                       die_on_bad_params => 0,
+                                      );
+    $template->param((map { ($_, Krang::Conf->get($_)) }
+                      (qw(ApacheRoot ApacheUser ApacheGroup 
+                          ApacheAddr ApachePort
+                          RootVirtualHost
+                         ))),
+                     KrangRoot => rel2abs(Krang::Conf->get("KrangRoot")));
+    
+    # setup the instance loop
+    my @loop;
+    foreach my $instance (Krang::Conf->instances()) {
+        Krang::Conf->instance($instance);
+        push(@loop,
+             {
+              InstanceName => $instance,
+              VirtualHost  => VirtualHost,
+             });
+    }
+    $template->param(InstanceLoop => \@loop);
+    
+    # write out the config
+    open(CONF, '>' . catfile(KrangRoot, "tmp", "httpd.conf")) 
+      or die "Unable to open " . catfile(KrangRoot, "tmp", "httpd.conf") . ": $!";
+    print CONF $template->output();
+    close CONF;
+}

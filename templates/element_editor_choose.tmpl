@@ -1,0 +1,39 @@
+<html>
+<body>
+<h1>Krang Element Editor</h1>
+<tmpl_if alert><p><font color=red><b><tmpl_var alert></b></font></p></tmpl_if>
+<form method=post>
+<tmpl_var top_level_select> <input type=submit value="Create">
+<input type=hidden name=rm value=create>
+</form>
+
+<script language=javascript>
+   function edit (id) {
+     document.edit_form.rm.value = "edit";
+     document.edit_form.root_id.value = id;
+     document.edit_form.submit();
+   }
+</script>
+
+<form name=edit_form method=post>
+   <input type=hidden name=rm>
+   <input type=hidden name=root_id>
+
+<p>
+<table border=1 bgcolor=777777 width=80% cellpadding=3>
+  <tr>
+    <th bgcolor=D5E5FF width=10%>ID</th>
+    <th bgcolor=DDEEFF width=70%>Element Class</th>
+    <th bgcolor=E5F5FF width=20%>&nbsp;</th>
+  </tr> 
+<tmpl_loop element_loop>
+<tr>
+<td bgcolor=CCDDEE align=right valign=top><tmpl_var element_id></td>
+<td bgcolor=DDEEFF align=left valign=top><tmpl_var name></td>
+<td bgcolor=E5F5FF align=center valign=top><input type=button onClick="edit(<tmpl_var element_id>)" value="Edit"></td>
+</tr>
+</tmpl_loop>
+</table>
+</form>
+</body>
+</html>

@@ -1,0 +1,179 @@
+=head1 Krang Rationale
+
+Bricolage has reached the natural end of its working lifespan.  It is
+time for a new system.  In this document I'll explain why this is
+necessary, what we stand to gain from building a new system and how we
+might go about it.
+
+=head2 Why?
+
+Bricolage works most of the time, so why do we need a new system?
+Couldn't we keep building on the existing system until we reach the
+point where we have everything we want?  No, I don't think so.  Here's
+why:
+
+=over
+
+=item *
+
+Bricolage was designed to serve a small number of unrelated sites.  We
+have several hundred potential sites that need content management with
+centralized administration.  Bricolage will only become harder and
+harder to manage as we roll out more installations.
+
+=item *
+
+Bricolage will always be buggy.  It is both extremely complicated and
+roughly impossible to automatically test.  Each time we add a new
+feature we are quite likely to introduce more bugs.  Even if we
+stopped all new development there are likely to be enough bugs in the
+current system to keep us working almost indefinitely.
+
+=item *
+
+Bricolage cannot scale.  The fundamental architecture of Bricolage is
+basically unscalable.  Only incremental improvements can be expected,
+either through time-consuming coding or faster hardware.  At present
+using a system with just a few thousand stories on a very fast machine
+is difficult.  This will improve, but each improvement will come at a
+large cost.
+
+=item *
+
+Bricolage was designed for sites with very simple navigation and
+category systems.  No work was put into making covers easy to build.
+Many things we would like to do with categories are either hard or
+impossible in Bricolage.
+
+=item *
+
+Bricolage was designed for a deep, regimented workflow with writers
+and artists working independently.  This hardly describes the work of
+most Primedia magazines and certainly fits poorly with the About
+guides.
+
+=item *
+
+Bricolage was designed to expose programming features (element
+administration and template development) through the same UI that is
+used by end users.  This leads to a middle-of-the-road interface that
+is neither sufficiently powerful for use by developers nor
+sufficiently simple for use by end users.  We've added some elaborate
+work-arounds - the FTP and SOAP interfaces - but the problem persists
+in the element system.
+
+=item *
+
+Bricolage was designed to have a single look-and-feel that cannot be
+customized for a particular usage.  Do we want to look at the same
+earth-tones for the next year that we looked at this year?  Do all our
+clients?
+
+=item *
+
+Bricolage's system administration requirements are daunting.  We've
+devoted a great deal of development to this problem, both in the SOAP
+interface and in the installation system.  The improvements have been
+incremental at best.
+
+=item *
+
+Bricolage will always be hard to develop.  We've spent a great deal of
+time developing new features and fixing bugs in Bricolage.  It is
+still very hard work, even for experienced developers.  Bricolage has
+no central design and each expedition encounters new problems and
+requires more time than expected.
+
+=back
+
+=head2 What?
+
+I am not proposing that we build a better Bricolage.  Instead we
+should take the lessons we've learned from Bricolage and build the
+system we've needed all along.  We should build a simple, targeted CMS
+that will support Primedia Magazines.  We can expect to gain:
+
+=over
+
+=item *
+
+User Interface improvements.  We can use the lessons of Bricolage to
+design a simpler and more direct user interface.  By designing a
+system to directly meet the needs of our clients we will deliver a
+higher quality product.
+
+=item *
+
+Test-ability.  We will design the new system to be tested
+automatically at every level below the UI.
+
+=item *
+
+Simplicity.  The new system will be no more complicated than is
+required.  No system will be created merely to satisfy vague plans
+concerning the future.  The result will be a system that is easier to
+debug and easier to develop, even when old systems must be revised to
+support new features.
+
+=item *
+
+Performance.  The system will be tested under load at the earliest
+possible point.  Performance tests will be part of the basic
+regression tests to determine correctness.
+
+=item *
+
+Administration.  The system will be designed to support many sites
+within a single installation, with a simple administrative interface
+above the level of single installation.  Development workflow will be
+carefully designed, unlike the tacked-on systems we rely on now.
+
+=item *
+
+Sizzle.  I'm certain that our art department can produce something
+easier on the eyes than Bricolage.  In addition, the UI will be
+implemented using templates so that modifying the look-and-feel will
+be possible.
+
+=back
+
+=head2 How?
+
+This will not be a simple project.  Here are the tasks that we should
+complete to begin it:
+
+=over
+
+=item *
+
+Requirements gathering.  We must determine what features the new
+system will have.  This will involve culling the Bricolage feature set
+as well as dreaming up a limited number of new features.
+
+=item *
+
+Interface design.  Paper prototypes and mock-ups should be developed
+exploring the interface and functionality of the new system.
+
+=item *
+
+System design.  Based on the above two pieces the developers can
+produce a technical specification for the software to be developed.
+
+=back
+
+All three of these are iterative processes; changes in one area will
+necessitate changes in others.  When we finish, we'll have a solid
+design for a new system that will be both simple, more powerful and
+more reliable than Bricolage.  From there we'll proceed to scheduling,
+development, testing, fixing and, finally, our summer fruit of
+pleasure.
+
+
+=head2 Conclusion
+
+Did I convince you we need to replace Bricolage?  If so, help me
+answer the final question - when.  Do we have the momentum to break
+ground on Bricolage II?  Do we need more clients first?  How many?
+What additional steps are necessary to make this project a reality?
+

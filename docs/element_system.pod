@@ -1,0 +1,117 @@
+=head1 Krang Element System
+
+This document describes the Krang Element System at a technical level.
+
+=head2 Element Library
+
+The element library is a directory in CVS containing all existing
+element sets available for use with Krang.  The intent is to support
+the maximum possible degree of reusability in Krang elements.
+
+The element library will be developed and versioned separately from
+Krang.  Element sets will be able to declare dependencies of Krang
+versions as necessary to make use of new features.
+
+For example, the root directory of the element library might contain:
+
+  /Default
+  /Flex
+  /LA
+  /Anaheim
+
+Each instance will declare the element sets they wish to use with the
+ElementSet configuration option in krang.conf.  For example, a Flex
+site would use:
+
+  ElementSet Flex
+
+Each element set can be configured to inherit elements from other
+element sets.  For example, Flex might inherit from the Default set.
+
+=head2 Element Set
+
+An element set contains element classes that define the elements for a
+site.  It also contains a configuration file, F<set.conf>, which
+contains a version number and a list of top-level elemets.
+
+An upgrade directory may contain sub-directories with upgrade scripts
+for each version of the element set.  Using this mechanism, changes to
+element sets can be made without damaging existing assets.
+
+=head2 Element Classes
+
+An element class is a Perl module that describes how the element data
+will be edited, stored and displayed.  Element class modules inherits
+from Krang::ElementClass or one of Krang::ElementClass's subclasses.
+Here's an example container element, Flex::Page:
+
+  package Flex::page;
+  use base q(Krang::ElementClass);
+
+  sub new {
+      my $pkg = shift;
+      my %opt = (
+         name         => "page",  # unique name for the element
+         display_name => "Page",  # display name for the UI
+         min          => 1,       # always have one page
+         max          => undef,   # allow any number of pages
+
+         # list of potential child elements, specified as
+         # names or with Krang::ElementClass objects
+         children     => [
+             # looks for a paragraph element across defined element
+             # sets
+             "paragraph",
+
+             # passes parameters to the constructor, modifying
+             # the created element for this usage
+             [ "header", size => 2 ],
+             
+             # instantiate using a direct reference to an
+             # element class, with parameters for the constructor
+             Flex::horizontal_line->new(width => 1),
+             
+             # create sub-elements dynamically without
+             # requiring new module
+             Krang::ElementClass::Image->new(name => "inline_image"),
+            ],
+          @_,
+      );
+ 
+      return $pkg->SUPER::new(%opt); 
+  }
+
+  1;
+
+As you can see above, data elements are also classes in the element
+set.  Here's an example data element, Flex::paragraph, which inherits
+from Krang::ElementClass::TextBox:
+
+  package Flex::paragraph;
+  use base q(Krang::ElementClass::TextBox);
+
+  sub new {
+      my $pkg = shift;
+      my %opt = (
+                 name           => "paragraph",
+                 display_name   => "Paragraph",
+                 rows           => 4,
+                 cols           => 40,
+                 min            => 0,
+                 max            => undef,
+                 bulk_edit      => 1,
+                 
+                 @_,
+                );
+      return $pkg->SUPER::new(%opt);
+  }
+
+  1;
+
+Most usages of Krang will not require more code in the element classes
+than is shown above.  In most cases it will be enough to inherit from
+one of the provided element classes.  However, overriding methods
+inside the element class can give you control over every operation
+involving the element.  See L<Krang::ElementClass> for more details.
+
+=cut

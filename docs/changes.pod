@@ -1,0 +1,225 @@
+=head1 Krang Changes
+
+This document sketches requirements for Krang in terms of differences
+from Bricolage.  This list is written from an end-user perspective;
+the internals will necessarily be an entirely new design.
+
+=head2 Media
+
+Media in Krang will be vastly simpler than Media in Bricolage.  The
+model here will be a file-store rather than a full workflow as in
+Bricolage.  Media will have a fixed set of attributes, rather than the
+full element trees supported by Bricolage.  No checkin and checkout
+will be available for Media and Media will not be part of workflow.
+
+The main benefit to making this change will be to simplify the user
+experience.  Additionally, we will save time by avoiding implementing
+a second workflow for Media.
+
+The downside here is that a large organization might have a separate
+art department that could benefit from a dedicated media workflow.  My
+supposition is that most Primedia magazines are not in this category.
+
+These operations will be supported on Media and will behave similarly
+to their current behavior in Bricolage:
+
+=over 4
+
+=item create
+
+=item delete
+
+=item find
+
+=item edit
+
+=item publish
+
+=back
+
+Unsupported features currently available in Bricolage:
+
+=over 4
+
+=item checkin
+
+=item checkout
+
+=item move to desk
+
+=item keywords
+
+=item trail
+
+=item notes
+
+=back
+
+=head2 Story
+
+The story interface will see the least changes from Bricolage to
+Krang.  Krang's element system will be significantly enhanced and this
+will result in new features in the story interface, but no major 
+interface changes to existing features are expected.
+
+The builtin keyword system will be removed from the story interface.
+Instead, keywords will be implemented as elements as needed.
+
+=head2 Templates
+
+Krang's template support will be different in a number of ways.
+First, the element scripting facilities will be built into the element
+system rather than working through the templating system.  The
+templates managed through the UI will be solely the .tmpl files
+containing HTML.
+
+Second, Krang's template system will not support a workflow.  This
+workflow has been largely useless in Bricolage and not building it
+will save significant development time.
+
+Templates will support a revision system similar to the existing
+system in Bricolage.
+
+=head2 Output Channels
+
+Output channels will be entirely absent from Krang.  We never used
+them in Bricolage and most likely never would.
+
+=head2 Global Preferences
+
+A global preference system will exist in Krang but it will have less
+entries than Bricolage's system.  Some preferences will be moved to
+the configuration file managed by Ops, others will become user-level
+preferences and some will be deleted entirely.  
+
+[ TODO: evaluate the status of each existing Bricolage preference in
+Krang ]
+
+=head2 Distribution Administration
+
+The corpulent distribution admin system in Bricolage will be replaced
+by three configuration variables:
+
+=over 4
+
+=item *
+
+publish directory
+
+=item *
+
+preview directory
+
+=item *
+
+preview URL
+
+=back
+
+=head2 Jobs
+
+The jobs administrative interface will be replaced by a system to view
+stories pending for a scheduled publish.  A generalized job system
+will not be part of Krang.
+
+=head2 Contributors
+
+The contributor system will be significantly simplified.  It will be
+designed to support a list of people identified by name.  Each
+contributor may have data in a fixed set of attributes (email, phone
+number, etc).
+
+Additionally, each contributor will be assigned to one or more roles
+selected from a fixed list (Writer, Photographer, etc).  These roles
+will have no data assigned to them specifically, unlike Bricolage.
+When a contributor is added to a story the editor will be able to pick
+their role from the list of available roles for the contributor.  When
+editing a contributor, the roles available for the contributor may be
+easily changed.
+
+=head2 Sources
+
+The sources feature will not be part of Krang.  We have never used
+this feature in Bricolage and it is unlikely that we will in the
+future.
+
+It has been suggested that a working Sources and Story Expiration
+system would be highly desirable.  This would supposedly allow us to
+deal with the "Reuters Feed Stories Must Expire In 30 Days" case.
+However, as Len pointed out, only Story Expiration is required to make
+this work.  This is because a Reuters feed would obviously be coming
+from an automated importer.  This importer could easily setup
+expiration when importing the story even without a Source feature.
+
+=head2 Categories
+
+Categories will be simplified by the removal of keywords and ad
+strings
+
+=head2 Workflows
+
+The workflows admin tool will not exist in Krang.  Instead, a simple
+set of configuration settings will allow dev and ops to adjust
+workflows on a per-instance basis.
+
+=head2 Permissions
+
+The permissions system will be designed to support the following use
+cases:
+
+=over 4
+
+=item *
+
+Assign a user to a group and create permissions by user group.
+
+=item *
+
+Restrict access and visibility by desk.
+
+=item *
+
+Restrict access and visibility by category.
+
+=item *
+
+Restrict ability to publish.
+
+=item *
+
+Restrict access and vibility of top-level Nav items - Story, Media,
+Tempate, Admin.
+
+=item *
+
+Grant ability to create other users with permissions less than or
+equal to the user's.
+
+=item *
+
+Grant super-user status with no restrictions.
+
+=back
+
+=head2 Groups
+
+The Groups admin tool will not be present in Krang.  It is expected
+that we can arrive at a Permissions system that is not so complicated
+as to require such a facility.
+
+=head2 User Override
+
+This feature will exist in Krang but will not be the only way to
+checkin stories checked out to a user.
+
+=head2 Alert Types
+
+Alert Types will be removed in favor of a simple set of user
+preferences to send e-mail alerts as required.
+
+=head2 Desks
+
+Desks will work roughly the same way in Krang as they do in Bricolage.
+We might consider enhancing the UI in two directions: replacing links
+with buttons to enhance usability and adding paging to allow for desks
+with many stories.

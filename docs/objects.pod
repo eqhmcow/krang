@@ -1,0 +1,84 @@
+=head1 Krang Objects
+
+This document describes the fundamental Krang objects at a high level.
+Not all of these will be real Perl objects, but most probably will.
+The goal is to break down functionality into modular units that can be
+implemeneted separately.
+
+The attributes and methods below are in addition to the "standard set"
+that will be supported by all objects.  The only standard attribute
+currently planned is C<id>.  Standard methods will include C<new()>,
+C<find()>, C<delete()>, C<clone()>, C<freeze()> and C<thaw()>.
+
+=head2 Story
+
+The story is the most important Krang object.  Editors edit stories,
+developers design elements for stories, the publisher publishes
+stories, end users read stories.
+
+Attibutes:
+
+  - title
+  - cover date
+  - publish date
+  - categories
+  - urls
+  - version
+  - published version
+  - root element
+  - desk
+  - creator
+  - locker
+  - contributors
+  - keywords (needed?)
+
+Methods:
+
+  - lock
+  - unlock
+  - revert
+  - publish
+
+=head2 Media
+
+Media embodies all "binary" content in the system: images, movies, CSS
+docs, etc.  Media objects are created by editors, included in stories,
+and published with stories by the publisher.
+
+Attibutes:
+
+  - title
+  - filename
+  - size
+  - data
+  - mime type
+  - root element
+  - category
+  - url
+  - desk
+  - creator
+  - locker
+  - contributors
+  - keywords (needed?)
+
+Methods:
+
+  - lock
+  - unlock
+  - publish
+
+=head2 Category
+
+Categories exist in a hierarchical tree like directories on a
+filesystem.  They contain stories and media.  Like stories and media
+they can have configurable elements attached to them.
+
+Attributes:
+
+  - path
+  - name
+  - root element
+  - keywords (needed?)
+
+Methods:
+

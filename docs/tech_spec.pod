@@ -1,0 +1,424 @@
+=head1 Krang Technical Specification
+
+This document describes the technical details of the Krang project at
+a high level.  As more detailed documents are created they will be
+linked to from this document.  
+
+=head1 Modules
+
+This section contains a catalogue all code modules to be written.  The
+descriptions of these modules are kept brief, relying the module
+documentation to provide in depth treatment.
+
+
+
+=head2 Core Systems
+
+=over
+
+=item L<Krang::Handler> 
+
+Apache/mod_perl handler for Krang.  Sets up the appropriate instance
+and passes the request to a Krang::CGI module.  Also handles
+authentication.
+
+=item L<Krang::Session>
+
+Sessions in Krang maintain state between browser hits.
+
+=item L<Krang::DB>
+
+Responsible for managing connections to Krang databases.  Also
+contains routines to create new databases.  Any database convenience
+functions we create will live here.
+
+=item L<Krang::Conf>
+
+Provides access to the configuration file in F<conf/krang.conf>.
+
+=item L<Krang::CGI>
+
+Base class for all CGI::Application modules which provide the web
+interface for Krang.
+
+=back
+
+
+
+=head2 Element System
+
+See HREF[the Krang Element System overview|element_system.html] for
+more details.
+
+=over
+
+=item L<Krang::ElementLibrary>
+
+Responsible for loading and configuring sets of Element Classes
+contained in the Element Library.
+
+=item L<Krang::ElementClass>
+
+The base class for all Krang element classes.  Provides the
+functionality that allows Krang::Element objects to accept user input,
+persist in the database and render in published documents.
+
+=item L<Krang::Element>
+
+Manages element data created through the story and category editors.
+Each Krang::Element object contains a reference to a
+Krang::ElementClass object which controls its behavior.
+
+=item L<Krang::CGI::ElementEditor>
+
+Provides the element editor web interface, used by Krang::CGI::Story
+and Krang::CGI::Category.
+
+=back
+
+
+
+=head2 Stories
+
+=over
+
+=item L<Krang::Story>
+
+Krang story object API.  Manages the creation, listing and storage of
+Story objects.
+
+=item L<Krang::CGI::StoryEditor>
+
+Provides the Story creation and editing interface.
+
+=back
+
+
+
+=head2 Media
+
+=over
+
+=item L<Krang::Media>
+
+Krang media object API.  Manages the creation, listing and storage of
+Media objects.
+
+=item L<Krang::CGI::MediaEditor>
+
+Provides the Media creation and editing interface.
+
+=item L<Krang::CGI::MediaBulkUpload>
+
+Provides the Media bulk upload interface, not including the virtual FTP server.
+
+=back
+
+
+
+=head2 Templates
+
+=over
+
+=item L<Krang::Template>
+
+Krang template object API.  Manages the creation, listing and storage of
+Template objects.
+
+=item L<Krang::CGI::TemplateEditor>
+
+Provides the Story creation and editing interface.
+
+=back
+
+
+
+=head2 Contributors
+
+=over
+
+=item L<Krang::Contributor>
+
+Krang contributor object API.  Manages the creation, listing and
+storage of contributors.
+
+=item L<Krang::CGI::ContributorAdmin>
+
+Allows users to manage contributors.  Also provides run-modes for use
+by the Story and Media interfaces in picking contributors.
+
+=back
+
+
+
+=head2 Workflow
+
+=over
+
+=item L<Krang::Burner>
+
+The burner contains the code that runs the publish process for Stories
+and Media.
+
+=item L<Krang::CGI::Publish>
+
+The publishing interface.
+
+=item L<Krang::Desk>
+
+API for Krang desks, contains methods for moving objects between desks.
+
+=item L<Krang::CGI::Desk>
+
+Desk interface module.  Also manages My Workspace, which is a special
+kind of desk.
+
+=back
+
+
+
+=head2 Category
+
+=over
+
+=item L<Krang::Category>
+
+Provides the API for Krang categories.
+
+=item L<Krang::CGI::CategoryAdmin>
+
+Provides the admin interface for categories.
+
+=back
+
+
+
+=head2 Site
+
+=over
+
+=item L<Krang::Site>
+
+Provides the API for sites within Krang.
+
+=item L<Krang::CGI::SiteAdmin>
+
+Provides the admin interface for sites.
+
+=back
+
+
+
+=head2 Search
+
+=over
+
+=item L<Krang::Pager>
+
+Provides paging for lists of items in Krang.
+
+=item L<Krang::CGI::Search>
+
+Provides the search interface for Story, Media and Template.
+
+=back
+
+
+
+=head2 User
+
+=over
+
+=item L<Krang::User>
+
+Provides the API for Krang users.
+
+=item L<Krang::CGI::UserAdmin>
+
+Provides the admin interface for users.
+
+=item L<Krang::CGI::Login>
+
+The login screen.
+
+=back
+
+
+
+=head2 User Groups
+
+=over
+
+=item L<Krang::UserGroup>
+
+The core API for the user group system, which controls permissions.
+
+=item L<Krang::CGI::UserGroupAdmin>
+
+Provides the admin interface for setting up user groups.
+
+=back
+
+
+
+=head2 Logging and Error Handling
+
+=over
+
+=item L<Krang::Log>
+
+Provides unified logging services for all Krang processes with output
+going to F<logs/krang.log>.
+
+=item L<Krang::Event>
+
+Mantains a per-object log of important events for stories, media and
+template objects.
+
+=item L<Krang::CGI::BugReport>
+
+Provides an interface for filling out a bug report inside Krang, which
+will automatically collect all necessary state information.
+
+=back
+
+
+
+=head2 Logging and Error Handling
+
+=over
+
+=item L<Krang::Log>
+
+Provides unified logging services for all Krang processes with output
+going to F<logs/krang.log>.
+
+=item L<Krang::Event>
+
+Mantains a per-object log of important events for stories, media and
+template objects.
+
+=item L<Krang::CGI::BugReport>
+
+Provides an interface for filling out a bug report inside Krang, which
+will automatically collect all necessary state information.
+
+=back
+
+
+
+=head2 Alerts
+
+=over
+
+=item L<Krang::Alert>
+
+The core alert API.  Users can configure alerts to send them emails
+when certain events occur within Krang.
+
+=item L<Krang::CGI::AlertAdmin>
+
+User interface for creating alerts.
+
+=back
+
+
+
+=head2 SOAP
+
+=over
+
+=item L<Krang::SOAP>
+
+Provides a SOAP interface for the Krang API.
+
+=back
+
+
+
+=head2 FTP
+
+=over
+
+=item L<Krang::FTPServer>
+
+Provides an FTP interface to templates and media for bulk operations
+using L<Net::FTPServer>.
+
+=back
+
+
+
+
+=head2 Miscellaneous
+
+=over
+
+=item L<Krang::CGI::Navigation>
+
+Interface class to manage the navigation bar.
+
+=back
+
+
+=head1 Programs
+
+This list contains all command-line programs to be created for Krang.
+The main part of the logic for these programs will reside in the
+modules listed above.
+
+=over
+
+=item C<make install>
+
+Krang installation process.
+
+=item C<make upgrade>
+
+Krang installation process.
+
+=item C<make clone>
+
+Krang clone process, produces an installable image of an existing
+Krang installation.
+
+=item C<krang_crond>
+
+Daemon to handles Krang's scheduled tasks.
+
+=item C<krang_apachectl>
+
+Script to start, stop and restart Apache.
+
+=item C<krang_ftpd>
+
+Krang FTP daemon.
+
+=item C<krang_ctl>
+
+Script to start, stop and restart all of the Krang daemons in one
+operation.
+
+=item C<krang_soap>
+
+Access to the Krang SOAP API from the command-line.
+
+=item C<krang_copy>
+
+Script designed for doing bulk copying of objects between Krang
+instances via SOAP.
+
+=item C<krang_publish>
+
+Script to publish stories via SOAP, with support for options similar
+to bric_republish.
+
+=item C<krang_bric_loader>
+
+Take a Bricolage instance and copies as much data into Krang as is
+feasible.  At least categories, elements, templates, stories and media
+will be copied.  This might require more module development, or it
+might be developed as a single large script.
+
+=back
+

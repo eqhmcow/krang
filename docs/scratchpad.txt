@@ -1,0 +1,111 @@
+Krang Scratchpad
+
+Functional Goals
+----------------
+
+ - Manage publication of Primedia magazine websites.
+
+ - Maintain similar interface and feature-set to our usage of
+   Bricolage.
+
+ - Remove features and interfaces found in Bricolage which we do not
+   use.
+
+Functional Ideas
+----------------
+
+ - Better access to categories - tree widget?  Category selection?
+
+ - Improved access to story element trees.
+
+ - Easier media handling - ability to upload media within stories.
+
+ - Enhanced element system, following the goals of my wayward Element
+   System Revision for Bricolage.  Support for both data modeling and
+   interface modeling.
+
+
+Process Goals
+-------------
+
+ - Schedule predictability
+
+ - Reasonable feature stability during development
+
+
+Process Ideas
+-------------
+
+ - Brain-storm ideas for the new system
+
+ - Write from a list of requirements and paper-prototypes of the new
+   UI.  Rehash until reasonably table.
+
+ - Create technical specs including names and short description of all
+   classes, rough database schema with table names and relationships,
+   high-level description of major sub-systems.
+
+ - Rolling small-scale code-reviews.  Each completed body of code
+   should be read by no less than two people.  We can't afford XP
+   (would we want it if we could?) but we can get the best benefits of
+   the open source project cheaply enough.
+
+ - Periodic large-scale code-reviews.  Completed sub-systems should be
+   reviewed by all developers.
+
+
+Technical Goals
+---------------
+
+ - Simplicity - in the API modules, application modules, frontend
+   interface, database design, system setup
+
+ - Clarity - in API documentation, in API interfaces
+
+ - Efficiency - in the database design, in publishing system but
+   not in the code.  The code itself should be as simple and direct as
+   possible.  We'll optimize based on performance analysis and only
+   spend time in the bottlenecks.
+
+ - Modularization - in the API modules, in the application modules, in
+   the frontend interface.  Information hiding will be an important
+   goal.  I think one way we can work towards this is by breaking the
+   system up into a group of smaller applications with clearly defined
+   boundaries.
+
+Technical Ideas
+---------------
+
+ - Support many instances from one code-base in one Apache.  This will
+   require careful use of global state, but if we design it in from
+   the start it shouldn't be a problem.  The upside is that it will
+   vastly decrease the setup costs and maintainance work.
+
+ - Use CGI::Application to code the frontend interface.  The interface
+   will be a collection of CGI::Application modules.  How should they
+   call each other?  Two options: direct method calls, HTTP
+   redirects.
+
+ - Keep frontend HTML very simple.  Use CSS exclusively to control
+   styling.  Possible?
+
+ - Should we create web interfaces to development objects (templates
+   and elements)?  Or should the interface be entirely textual -
+   configuration files and modules?
+
+   We might save a lot of time on the schedule by not building these
+   UIs.  The element system in particular could be seens as large
+   waste of time if a file-based system is just as easy to manage.
+   But a high-quality UI can have benefits in terms of ease of
+   development.
+
+ - Use inheritence to allow the easy creation of new Element types and
+   new Field types.  Custom field types are the answer to a great
+   number of "impossible" questions posed to Bricolage.
+
+ - Use MySQL.  Benefits: simpler database model,, more complete
+   toolset, better Perl interface, more stable, easier backups, easier
+   failover, better performance (CMS is generally not the kind of
+   highly concurrent task that PostgreSQL is marginally better at).
+
+

@@ -1,0 +1,22 @@
+=head1 Krang CPAN Modules
+
+The Krang project will not, at least to begin with, be an open source
+project.  However, whenever possible we should take the opportunity to
+create new CPAN modules as part of our work on Krang.  This document
+collects ideas for possible CPAN modules that would aid in the
+development of Krang.
+
+=over 4
+
+=item DBIx::Profiler
+
+DBI needs a real profiler, in the spirit of Devel::DProf and
+Devel::Profiler.  The only existing DBI profiling module,
+DBIx::Profile, appears to be a toy.  It only provides a single view of
+the profile data and it is highly inflexible.  Possible prior-art can
+be found in Bricolage's bric_dbprof code, although a new module would
+need to be written from scratch.
+
+=back
+
+

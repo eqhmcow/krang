@@ -1,0 +1,74 @@
+ServerType           standalone
+ServerName           localhost
+ServerRoot           <tmpl_var ApacheRoot>
+ServerAdmin          root@localhost
+ServerSignature      Email
+PidFile              <tmpl_var KrangRoot>/tmp/httpd.pid
+DocumentRoot         <tmpl_var KrangRoot>/htdocs
+Listen               80
+User                 <tmpl_var ApacheUser>
+Group                <tmpl_var ApacheGroup>
+KeepAlive            Off
+MaxKeepAliveRequests 100
+KeepAliveTimeout     15
+MinSpareServers      2
+MaxSpareServers      6
+StartServers         2
+MaxClients           150
+MaxRequestsPerChild  0
+ErrorLog             <tmpl_var KrangRoot>/logs/apache_error_log
+LogLevel             info
+TypesConfig          <tmpl_var ApacheRoot>/conf/mime.types
+UseCanonicalName     On
+HostNameLookups      Off
+Timeout              30
+
+PerlPassEnv KRANG_ROOT
+PerlPassEnv KRANG_CONF
+PerlModule Krang
+
+NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
+
+<VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
+   ServerName <tmpl_var RootVirtualHost>
+
+   <Location />
+      PerlSetVar        flavor root
+      PerlInitHandler   Krang::Handler->init_handler
+      PerlHandler       Krang::Handler->handler
+   </Location>
+
+   <tmpl_loop InstanceLoop>
+      <Location /<tmpl_var InstanceName>>
+         SetHandler        perl-script
+         PerlSetVar        flavor root
+         PerlSetVar        instance <tmpl_var InstanceName>
+         PerlInitHandler   Krang::Handler->init_handler
+         PerlHandler       Krang::Handler->handler
+
+         AuthType          Krang::Handler
+         AuthName          <tmpl_var InstanceName>
+         PerlAuthenHandler Krang::Handler->auth_handler
+         require           valid-user
+      </Location>
+   </tmpl_loop>
+</VirtualHost>
+
+<tmpl_loop InstanceLoop>
+<VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
+   ServerName      <tmpl_var VirtualHost>
+   <Location />
+       SetHandler      perl-script
+       PerlSetVar      flavor instance   
+       PerlSetVar      instance <tmpl_var InstanceName>
+       PerlInitHandler Krang::Handler->init_handler
+       PerlHandler     Krang::Handler->handler    
+
+       AuthType Krang::Handler
+       AuthName <tmpl_var InstanceName>
+       PerlAuthenHandler Krang::Handler->auth_handler
+       require valid-user
+   </Location>
+</VirtualHost>
+</tmpl_loop>
+  
