@@ -44,17 +44,14 @@ my $story_title = 'Test Title';
 my $category1_head = 'THIS IS HEADS' . $category1 . '---';
 my $category1_tail = '---' . $category1 . 'THIS IS TAILS';
 my $category1_output = $category1_head . Krang::Publisher->content() . $category1_tail;
-#my $article1_output = 
 
 my $category2_head = 'THIS IS HEADS' . $category2 . '---';
 my $category2_tail = '---' . $category2 . 'THIS IS TAILS';
 my $category2_output = $category2_head . Krang::Publisher->content() . $category2_tail;
-#my $article2_output = 
 
 my $category3_head = 'THIS IS HEADS' . $category3 . '---';
 my $category3_tail = '---' . $category3 . 'THIS IS TAILS';
 my $category3_output = $category3_head . Krang::Publisher->content() . $category3_tail;
-#my $article3_output = 
 
 my %article_output = (3 => $category3_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $category3_tail,
                       2 => $category2_head .  "<title>$story_title</title><h1>$story_title</h1><b>$deck1</b>" . $page_output . $category2_tail,
@@ -70,8 +67,29 @@ my %template_deployed = ();
 
 my %slug_id_list;
 
-############################################################
+my @non_test_deployed_templates = ();
 
+my $publisher = new Krang::Publisher ();
+
+isa_ok($publisher, 'Krang::Publisher');
+
+############################################################
+# remove all currently deployed templates from the system
+#
+@non_test_deployed_templates = Krang::Template->find(deployed => 1);
+
+foreach (@non_test_deployed_templates) {
+    &test_undeploy_template($_);
+}
+
+END {
+    # restore system templates.
+    foreach (@non_test_deployed_templates) {
+        $publisher->deploy_template(template => $_);
+    }
+}
+#
+############################################################
 
 # create a site and category for dummy story
 my $site = Krang::Site->new(preview_url  => $preview_url,
@@ -112,12 +130,6 @@ my @rootdirs = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
 my @dirs_a = (File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a', 'testdir_b'), File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a'), File::Spec->catfile(@rootdirs, $site->url()), File::Spec->catfile(@rootdirs));
 
 
-
-my $publisher = new Krang::Publisher ();
-
-isa_ok($publisher, 'Krang::Publisher');
-
-
 ############################################################
 # testing template seach path.
 
@@ -147,8 +159,8 @@ my $story2  = &create_story([$category], [$story], [$media[0]]);
 
 my $element = $story->element();
 
-
-&deploy_templates();
+# put test templates out there.
+&deploy_test_templates($category);
 
 # test finding templates.
 &find_templates($element);
@@ -341,6 +353,55 @@ sub test_medialink {
     $publisher->deploy_template(template => $template_deployed{photo});
 
 
+}
+
+
+# test to make sure that Krang::Template templates are removed from the filesystem properly.
+sub test_undeploy_template {
+
+    my $tmpl = shift;
+
+    my $category = $tmpl->category();
+
+    my @tmpls = $publisher->template_search_path(category => $category);
+    my $path = $tmpls[0];
+
+    my $file = catfile($path, $tmpl->filename());
+
+    # undeploy template
+    eval { $publisher->undeploy_template(template => $tmpl); };
+
+    if ($@) {
+        diag($@);
+        fail('Krang::Publisher->undeploy_template()');
+    } else {
+        ok(!(-e $file), 'Krang::Publisher->undeploy_template()');
+    }
+}
+
+
+sub test_deploy_template {
+
+    my $tmpl = shift;
+    my $result;
+
+    my $category = $tmpl->category();
+
+    my @tmpls = $publisher->template_search_path(category => $category);
+    my $path = $tmpls[0];
+
+    my $file = catfile($path, $tmpl->filename());
+
+    eval { $result = $publisher->deploy_template(template => $tmpl); };
+
+    if ($@) {
+        diag($@);
+        fail('Krang::Publisher->deploy_template()');
+    } else {
+        ok(-e $file && ($file eq $result), 'Krang::Publisher->deploy_template()');
+    }
+
+    return $file;
 }
 
 
@@ -544,6 +605,7 @@ sub find_templates {
         if (scalar($element->children())) {
             diag($@);
             fail("Krang::ElementClass->find_template(" . $element->name() . ")");
+            die;
         } else {
             pass("Krang::ElementClass->find_template()");
         }
@@ -563,11 +625,13 @@ sub find_templates {
 }
 
 #
-# deploy_templates() - 
+# deploy_test_templates() - 
 # Places the template files found in t/publish/*.tmpl out on the filesystem
 # using Krang::Publisher->deploy_template().
 #
-sub deploy_templates {
+sub deploy_test_templates {
+
+    my ($category) = @_;
 
     my $template;
 
@@ -589,22 +653,19 @@ sub deploy_templates {
 
         $template = Krang::Template->new(
                                          content => $content,
-                                         element_class_name => $element_name
+                                         element_class_name => $element_name,
+                                         category => $category
                                         );
 
         eval { $template->save(); };
 
-        unless ($@) {  # can only deply saved templates.
+        if ($@) {  
+            diag("ERROR: $@");
+            fail('Krang::Template->new()');
+        } else {
             push @delete_templates, $template;
 
-            $template_paths{$element_name} = $publisher->deploy_template(template => $template); 
-
-            if ($@) {
-                diag($@);
-                fail();
-            } else {
-                pass("Krang::Publisher->deploy_template()");
-            }
+            $template_paths{$element_name} = &test_deploy_template($template);
 
             unless (exists($template_deployed{$element_name})) {
                 $template_deployed{$element_name} = $template;
@@ -814,6 +875,7 @@ sub load_story_page {
     return $data;
 
 }
+
 
 
 # walk element tree, return child names at each point.
