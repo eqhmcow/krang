@@ -827,8 +827,6 @@ children, however, publish() will propegate the error thrown by
 find_template().
 
 
-=over
-
 =cut
 
 
@@ -948,7 +946,6 @@ sub thaw_data_xml {
     $self->thaw_data(element => $element, data => $data->[0]);
 }
 
-=back
 
 =cut
 
