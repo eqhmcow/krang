@@ -40,6 +40,8 @@ and optionally imports that dataset.
 
  --no-stories		- Prevents export of stories
 
+ --no-templates		- No templates are exported from Bricolage
+
  --password		- The password associated with the user
 			  specified by the --username argument
 			  (default: BRICOLAGE_PASSWORD)
@@ -124,13 +126,14 @@ use Krang::Script;
 use Krang::Conf qw(KrangRoot);
 
 
-my ($contributors, $debug, $elements, $help, $import, $man, $media,
-    $no_categories, $no_contributors, $no_elements, $no_media, $no_sites,
-    $no_stories, $no_templates, $output, $set_name, $sites, $site_doc, $soap,
+my ($debug, $help, $import, $man, $output, $set_name, $site_doc, $soap,
     $temp_path, $timeout, $verbose);
-our ($password, $root, $server, $username);
+our ($contributors, $elements, $no_categories, $no_contributors, $no_elements,
+     $no_media, $no_sites, $no_stories, $no_templates, $password, $root,
+     $server, $sites, $username);
 
 BEGIN {
+    my $data  	= 0;
     $debug	= 0;
     $output	= catfile($ENV{PWD},'bric.kds');
     $site_doc	= catfile($ENV{PWD},'sites.xml');
@@ -168,15 +171,20 @@ BEGIN {
     pod2usage() if defined $help;
     pod2usage(-verbose => 2) if defined $man;
 
+    # don't overwrite pre-existing .kds
+    pod2usage("\n'$output' already exists.\nPlease remove it or specify an " .
+              "alternative output location.\n")
+      if -e $output;
+
     # check that environment vars are defined
     {
         no strict qw/refs/;
         for (qw/password root server username/) {
+            my $key = "BRICOLAGE_" . uc $_;
             unless ($$_) {
-                pod2usage(-msg => "\nRequire arg --$_ is undefined!\n");
+                pod2usage("\nNeither --$_ or $key has been specified!\n");
             } else {
                 # export environment vars for Contrib and Element modules
-                my $key = "BRICOLAGE_$_";
                 my $val = $ENV{$key} || '';
                 $ENV{$key} = $$_ unless $val;
             }
@@ -200,33 +208,43 @@ END
 
     # resolve path to bric_soap
     $soap = catfile($root, 'bin', 'bric_soap');
-    pod2usage(-msg => "\nUnable to find 'bric_soap' at: $soap\n\n")
-      unless -e $soap;
+    pod2usage("\nUnable to find 'bric_soap' at: $soap\n") unless -e $soap;
 
     # if we just have contributors, elements, sites, or templates
     if ($contributors) {
         $no_categories = $no_elements = $no_media = $no_sites =
-          $no_stories = $no_templates = 1;
+          $no_stories = $no_templates = $data = 1;
     } elsif ($elements) {
         $no_categories = $no_contributors = $no_media = $no_sites =
-          $no_stories = $no_templates = 1;
+          $no_stories = $no_templates = $data = 1;
     } elsif ($sites) {
         $no_categories = $no_contributors = $no_elements = $no_media =
-          $no_stories = $no_templates = 1;
+          $no_stories = $no_templates = $data = 1;
+    }
+
+    # make sure we have some data for the .kds
+    if ($data == 0) {
+        my $no_count = 0;
+        my @vars = qw/categories contributors elements media sites stories
+		      templates/;
+        for (@vars) {no strict; ++$no_count if defined ${"no_$_"};}
+        pod2usage("\nRefusing to create an empty dataset!\nSpecify options " .
+                  "that do not exclude all datatypes.\n")
+          if @vars == $no_count;
     }
 
     # must have a set-name unless -no-elements has been supplied
-    pod2usage("The -set-name argument must be supplied unless the " .
-              "-no-elements arg is supplied")
+    pod2usage("\nThe -set-name argument must be supplied unless the " .
+              "-no-elements arg is supplied\n")
       unless($no_elements || $set_name);
 
     # make sure site doc exists, if we need it
-    pod2usage(-msg => "\nSite info doc '$site_doc' not found.\n")
+    pod2usage("\nSite info doc '$site_doc' not found.\n")
       if (not($no_sites) && $site_doc && not -e $site_doc);
 
     # must have a site if we have categories, media, or stories
-    pod2usage(-msg => "\nSite information is necessary to support " .
-              "categories, media, and/or stories\n")
+    pod2usage("\nSite information is necessary to support categories, " .
+              "media,and/or stories\n")
       unless (($site_doc && -e $site_doc) ||
               ($contributors || $elements ||
                ($no_categories && $no_media && $no_stories)));
