@@ -24,6 +24,8 @@ my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
 my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'shredder';
 
 foreach my $instance (Krang::Conf->instances()) {
+    Krang::Conf->instance($instance);
+
     # try logging in with a bad password
     login_not_ok(rand(), rand());
     
