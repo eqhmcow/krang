@@ -55,12 +55,12 @@
     <table border="0" cellspacing="5" cellpadding="2">
       <tr>
         <td colspan="2">Title:</td>
-        <td colspan="3"><input size="40" type="textfield" name="search_title" value="<tmpl_var escape=HTML search_title>"></td>
+        <td colspan="3"><input size="40" type="text" name="search_title" value="<tmpl_var escape=HTML search_title>"></td>
       </tr>
 
       <tr>
         <td colspan="2">URL:</td>
-        <td colspan="3"><input size="40" type="textfield" name="search_url" value="<tmpl_var escape=HTML search_url>"></td>
+        <td colspan="3"><input size="40" type="text" name="search_url" value="<tmpl_var escape=HTML search_url>"></td>
       </tr>
 
       <tr>
@@ -86,12 +86,12 @@
 
       <tr>
         <td colspan="2">Story ID:</td>
-        <td colspan="3"><input size="40" type="textfield" name="search_story_id" value="<tmpl_var escape=HTML search_story_id>"></td>
+        <td colspan="3"><input size="40" type="text" name="search_story_id" value="<tmpl_var escape=HTML search_story_id>"></td>
       </tr>
 
       <tr>
         <td colspan="2">Contributor:</td>
-        <td colspan="3"><input size="40" type="textfield" name="search_contrib_simple" value="<tmpl_var escape=HTML search_contrib_simple>"></td>
+        <td colspan="3"><input size="40" type="text" name="search_contrib_simple" value="<tmpl_var escape=HTML search_contrib_simple>"></td>
       </tr>
 
       <tr>
@@ -111,7 +111,7 @@
  <div class="light">
   <p>SEARCH
   (<a href="javascript:advanced_search()">Advanced Search</a>)</p>
-  <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+  <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
   <input type="button" value="Search" onclick="document.forms[0].submit()">
 
 </tmpl_if>

@@ -112,22 +112,22 @@
     <table border="0" cellspacing="5" cellpadding="2">
     <tr>
       <td>File:</td>
-      <td><input size="40" type="textfield" name="search_filename" value="<tmpl_var escape=HTML search_filename>"></td>
+      <td><input size="40" type="text" name="search_filename" value="<tmpl_var escape=HTML search_filename>"></td>
     </tr>
 
     <tr>
       <td>Title:</td>
-      <td><input type="textfield" size="40" name="search_title" value="<tmpl_var escape=HTML search_title>" class="button"></td>
+      <td><input type="text" size="40" name="search_title" value="<tmpl_var escape=HTML search_title>" class="button"></td>
     </tr>
 
     <tr>
       <td>ID:</td>
-      <td><input type="textfield" size="40" name="search_media_id" value="<tmpl_var escape=HTML search_media_id>" class="button"></td>
+      <td><input type="text" size="40" name="search_media_id" value="<tmpl_var escape=HTML search_media_id>" class="button"></td>
     </tr>
 
     <tr>
       <td>Alt Tag:</td>
-      <td><input type="textfield" size="40" name="search_alt_tag" value="<tmpl_var escape=HTML search_alt_tag>" class="button"></td>
+      <td><input type="text" size="40" name="search_alt_tag" value="<tmpl_var escape=HTML search_alt_tag>" class="button"></td>
     </tr>
 
     <tr>
@@ -158,7 +158,7 @@
 <div class="boxb"> 
  <div class="light">
   <p>SEARCH (<a href="javascript:advanced_search()">Advanced Search</a>)&nbsp;&nbsp;&nbsp;<input type="hidden" name="rm" value="find"><input type="checkbox" name="show_thumbnails" value="1"<tmpl_if show_thumbnails> checked</tmpl_if>>Show Thumbnails</p>
-  <input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">&nbsp;&nbsp;&nbsp;<input type="submit" value="Search" class="button">
+  <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">&nbsp;&nbsp;&nbsp;<input type="submit" value="Search" class="button">
   </div>
 
 </tmpl_if>

@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed HTML in templates to use C<text> rather than C<textfield> in form 
+inputs. [Perrin]
+
+=item *
+
 Updated several modules: DBI to 1.47, WWW-Mechanize to 1.10,
 URI to 1.35, and libwww-perl to 5.803. [Perrin]
 
