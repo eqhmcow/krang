@@ -1,0 +1,206 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+=head1 NAME
+
+krang_template_diff - describe differences between template sets
+
+=head1 SYNOPSIS
+
+Produce a diff of all changes from KRANG1 to KRANG2:
+
+  $ krang_template_diff $KRANG_ROOT1 $KRANG_ROOT2 > diff.txt
+
+Produce a diff of the changes to template_id 5:
+
+  $ krang_template_diff --template_id 5 $KRANG_ROOT1 $KRANG_ROOT2 > diff.txt
+
+Same thing, ignoring changes in whitespace
+
+  $ krang_template_diff --diff-options -urbB --template_id 5 \
+    $KRANG_ROOT1 $KRANG_ROOT2 > diff.txt
+
+=head1 OPTIONS
+
+krang_template_diff [options] from_root to_root
+
+Arguments:
+
+  from_root         - the base path of the Krang from instance
+
+  to_root           - the base path of the Krang to instance
+
+Options:
+
+  --template_id     - pass the id of a template here and only this template
+                      will be included in the diff.
+
+  --diff-options    - options to pass to diff, defaults to "-ur".  Note
+                      that bric_template_patch requires '-ur' and won't
+                      work with '-N'.
+
+  --help            - shows this screen
+
+  --man             - shows the full documentation
+
+  --verbose         - print a running dialogue of operations.  Repeat
+                      up to three times of successively larger amounts
+                      of debugging information.
+
+=head1 DESCRIPTION
+
+This program produces a standard diff file describing the differences
+between the templates on two Bricolage servers.  This file may be used
+with C<bric_template_patch> to effect the changes described in the
+diff.
+
+=head1 CAVEATS
+
+=over 4
+
+=item *
+
+This program requires GNU C<diff> to be installed and in your path.
+
+=back
+
+=cut
+
+use Config;
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Getopt::Long;
+use Pod::Usage;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+
+
+    # get parameters from command line.  do this during compile so
+    # $VERBOSE can effect use options and such.  also so errors get
+    # detected as quick as possible - people are waiting out there!
+    our ($from_root, $to_root);
+    our $VERBOSE              = 0;
+    our ($help, $man);
+    our $template_id;
+    our $diff_options         = '-ur';
+    GetOptions("help"                   => \$help,
+	       "man"                    => \$man,
+	       "verbose+"               => \$VERBOSE,
+               "template_id=s"          => \$template_id,
+               "diff-options=s"         => \$diff_options,
+	      ) or  pod2usage(2);
+
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+
+    # get from and tos
+    $from_root = shift @ARGV;
+    pod2usage("Missing required from_root and to_root parameters")
+      unless defined $from_root;
+    $to_root = shift @ARGV;
+    pod2usage("Missing required to_root parameter")
+	unless $to_root;
+};
+
+our $VERBOSE;
+require Data::Dumper if $VERBOSE;
+
+use Cwd qw(cwd);
+use File::Temp qw(tempdir);
+use File::Spec::Functions qw(catdir splitdir);
+use File::Path qw(mkpath);
+use IPC::Run qw(run);
+
+main();
+
+# main is where it's at
+sub main {
+    our ($from_root, $to_root);
+
+    # fetch templates from from and to
+    my $root = catdir($from_root, 'tmp');
+    my $temp = tempdir(DIR => $root, CLEANUP => 1);
+    fetch_templates($from_root, catdir($temp, 'from'), 'from');
+    fetch_templates($to_root, catdir($temp, 'to'), 'to');
+
+    # make'um diff'um
+    make_diff($temp);
+
+    exit 0;
+}
+
+# make a diff of the templates
+sub make_diff {
+    my $dir = shift;
+    our $diff_options;
+
+    my $old_dir = cwd;
+    chdir($dir) or die "Can't change to $dir: $!";
+
+    my $cmd = "diff $diff_options from to |";
+    print STDERR "Running '$cmd' in $dir.\n"
+      if $VERBOSE;
+    open(DIFF, $cmd)
+      or die "Unable to start diff: $!";
+    while(<DIFF>) {
+        print;
+    }
+    close DIFF;
+
+    # gotta get back
+    chdir($old_dir) or die "Can't get back to $old_dir: $!";
+}
+
+# get all templates from a server
+sub fetch_templates {
+    my ($root, $dir, $kds) = @_;
+    our $template_id;
+    mkpath([$dir]) unless -d $dir;
+
+    $ENV{KRANG_ROOT} = $root;
+
+    my @cmd;
+    my $output = catfile($dir, $kds . ".kds");
+    my $cmd = catfile($root, 'bin', 'krang_export');
+
+    if ($template_id) {
+        @cmd = ($cmd, "--template_id" => $template_id, "--output" => $output);
+    } else {
+        @cmd = ($cmd, "--templates", "--output" => $output);
+    }
+
+    # get template .kds
+    my ($in, $out, $err);
+    run(\@cmd, \$in, \$out, \$err) or
+      die("Unable to run '" . join(' ', @cmd) ."': $!");
+
+    # extract .kds file
+    @cmd = ("tar", "-C" => $dir, "-xf" => $output);
+    run(\@cmd, \$in, \$out, \$err) or
+      die("Unable to run '" . join(' ', @cmd) . "': $!");
+}
