@@ -254,13 +254,25 @@ sub publish_story {
 
     my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
-    # get story URLs.
-    my @story_urls = $story->urls();
-    my @categories = $story->categories();
-
     # set internal mode - publish, not preview.
     $self->{is_publish} = 1;
     $self->{is_preview} = 0;
+
+    $self->_output_story(story => $story);
+
+}
+
+
+sub _output_story {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $story = $args{story};
+
+    # get story URLs.
+    my @story_urls = $story->urls();
+    my @categories = $story->categories();
 
     info('Publisher.pm: Publishing story_id=' . $story->story_id());
 
@@ -706,7 +718,7 @@ sub _build_filename {
 
     if ($page == 1) { $page = ''; }
 
-    return $element->class()->filename() . $page . '.' . $element->class()->extension();
+    return $element->class()->filename() . $page . $element->class()->extension();
 
 }
 
