@@ -2,6 +2,7 @@ package Krang::DataSet;
 use strict;
 use warnings;
 
+use Exporter;
 use File::Temp qw(tempdir);
 use File::Path qw(mkpath rmtree);
 use File::Spec::Functions qw(catdir catfile splitpath 
@@ -35,6 +36,11 @@ use Exception::Class
   'Krang::DataSet::ImportRejected' => 
     { fields => [ 'set' ] },
   ;
+
+# allow methods to be exported for the BricLoader Classes
+our @ISA = qw(Exporter);
+our @EXPORT_OK = qw(write _write_index _validate _validate_file);
+
 
 =head1 NAME
 

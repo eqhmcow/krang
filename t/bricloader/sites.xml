@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sites xmlns:xsi="http://www.w3.org/2001/XMLSchema"
+ xsi:noNameSpaceSchemaLocation="bric_sites.xsd">
+	<site>
+		<category>/bricolage_category/</category>
+		<preview_path>/full/preview/path</preview_path>
+		<publish_path>relative/publish/path</publish_path>
+		<preview_url>preview.site.com</preview_url>
+		<url>site.com</url>
+	</site>
+</sites>

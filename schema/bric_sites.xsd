@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://krang.kra/b/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+    <xs:element name="sites">
+        <xs:complexType>
+            <xs:sequence>
+		<xs:element name="site" minOccurs="1" maxOccurs="unbounded">
+		    <xs:complexType>
+  			<xs:sequence>
+                	    <xs:element name="site_id" type="xs:int"/>
+                	    <xs:element name="url" type="xs:string"/>
+                	    <xs:element name="preview_url" type="xs:string"/>
+                	    <xs:element name="publish_path" type="xs:string"/>
+                	    <xs:element name="preview_path" type="xs:string"/>
+  			</xs:sequence>
+		    </xs:complexType>
+		</xs:element>
+            </xs:sequence>
+         </xs:complexType>
+    </xs:element>
+</xs:schema>
