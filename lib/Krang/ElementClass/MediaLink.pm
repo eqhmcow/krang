@@ -101,6 +101,10 @@ sub load_query_data {
     $filename = "$filename"; # otherwise it's a filehandle/string
                              # dualvar which pisses off Storable
 
+    # Coerce a reasonable name from what we get
+    my @filename_parts = split(/[\/\\\:]/, $filename);
+    $filename = $filename_parts[-1];
+
     my $fh = $query->upload($param);
     return unless $fh;
 
