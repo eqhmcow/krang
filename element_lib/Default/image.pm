@@ -21,15 +21,13 @@ sub new {
    my %args = ( name => 'image',
                 children => 
                 [ 
-                 Krang::ElementClass::ListBox->new(name => "alignment",
-                                                   min => 1,
-                                                   max => 1,
-                                                   size => '2',
-                                                   allow_delete => '0',
-                                                   values => [ "Left",
-                                                               "Right"],
-                                                   default => ["Left"
-                                                              ]),
+                 Krang::ElementClass::PopupMenu->new(name => "alignment",
+                                                     min => 1,
+                                                     max => 1,
+                                                     allow_delete => '0',
+                                                     values => [ "Left",
+                                                                 "Right"],
+                                                     default => "Left"),
                  Krang::ElementClass::Textarea->new(name => "caption",
                                                     min => 0,
                                                     max => 1

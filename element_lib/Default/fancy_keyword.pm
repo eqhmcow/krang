@@ -113,4 +113,11 @@ sub bulk_edit_filter {
     return [ @$data ];
 }
 
+sub fill_template {
+    my ($self, %arg) = @_;
+    $arg{tmpl}->param($self->name, join(', ', @{$arg{element}->data}))
+      if $arg{element}->data;
+}
+
+
 1;

@@ -32,17 +32,14 @@ sub new {
                                                     bulk_edit => 1,
                                                    ),
                  Default::image->new(),
-                 Krang::ElementClass::ListBox->new(name => "alignment",
-                                                   min => 1,
-                                                   max => 1,
-                                                   allow_delete => 0,
-                                                   size => '3',
-                                                   values => [ "Left",
-                                                               "Middle",
-                                                               "Right"],
-                                                   default => ["Left"
-                                                              ]),
-
+                 Krang::ElementClass::PopupMenu->new(name => "alignment",
+                                                     min => 1,
+                                                     max => 1,
+                                                     allow_delete => 0,
+                                                     values => [ "Left",
+                                                                 "Middle",
+                                                                 "Right"],
+                                                     default => "Left"),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
