@@ -54,7 +54,7 @@ our $s2 = Krang::Schedule->new(action => 'publish',
 eval {isa_ok($s2->save(), 'Krang::Schedule')};
 is($@, '', 'save() works :)');
 
-$next_run = Time::Piece->from_mysql_datetime($s2->{next_run}) + 2;
+$next_run = Time::Piece->from_mysql_datetime($s2->{next_run}) + ONE_DAY;
 is($next_run->day_of_week, $date->day_of_week, 'next_run check 2');
 
 
@@ -294,9 +294,11 @@ is($next_run, $now_mysql, 'next_run check 14');
 
 # run test - 1 tests should run
 my $path = File::Spec->catfile($ENV{KRANG_ROOT}, 'logs', "schedule_test.log");
-my $log = IO::File->new(">>$path") ||
+my $log = IO::File->new(">$path") ||
   croak("Unable to open logfile: $!");
-my $count = Krang::Schedule->run($log);
+my $count;
+eval {$count = Krang::Schedule->run($log);};
+is($@, '', "run() didn't fail");
 is($count, 1, 'run() succeeded :).');
 
 # force a save failure
@@ -312,5 +314,5 @@ for (1..14) {
 
 END {
     $log->close();
-#    unlink $path;
+    unlink $path;
 }

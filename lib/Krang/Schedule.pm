@@ -212,6 +212,9 @@ The day of the week to run a repeating action at.  Required for
 An optional array ref containing extra data pertaining to the action
 to be performed.
 
+N.B. - this gets frozen by Storable after save(), afterwards it must thaw()'d
+for use.
+
 =back
 
 =cut
@@ -588,9 +591,6 @@ sub find {
         }
     }
 
-    # finish statement handle
-    $sth->finish();
-
     # return number of rows if count, otherwise an array of ids or objects
     return $count ? $schedules[0] : @schedules;
 }
@@ -699,7 +699,6 @@ sub save {
     my $self = shift;
     my $id = $self->{schedule_id} || 0;
     my @save_fields = grep {$_ ne 'schedule_id'} keys %schedule_cols;
-    my $context_flag = exists $self->{context} ? 1 : 0;
     my ($context, $query);
 
     # validate 'repeat'
@@ -718,8 +717,10 @@ sub save {
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
-    # if we have a context, preserve in $context and serialize it for storage
-    if ($context_flag) {
+    # if we have a context, check to see if it's a ref; if so, preserve a
+    # copy and then serialize it, otherwise it's a scalar or must've already
+    # been serialized
+    if (exists $self->{context} && $self->{context} && ref $self->{context}) {
         $context = $self->{context};
         eval {$self->{context} = freeze($self->{context})};
         croak(__PACKAGE__ . "->save(): Unable to serialize context: $@")
@@ -739,9 +740,6 @@ sub save {
       unless $dbh->do($query, undef, @params);
 
     $self->{schedule_id} = $dbh->{mysql_insertid} unless $id;
-
-    # restore context
-    $self->{context} = $context if $context_flag;
 
     return $self;
 }
