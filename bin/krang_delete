@@ -27,7 +27,7 @@ object id.
 
   --site_id     - delete site specified by this id
 
-  --cats        - delete all categories (except site top level cats)
+  --categories  - delete all categories (except site top level cats)
 
   --category_id - delete category specified by this id
 
@@ -127,6 +127,7 @@ pod2usage(2) unless
              verbose => \$verbose,
              'sites'    => \$sites,
              'site_id=s'  => \@site_ids,
+             'cateories'     => \$cats,
              'cats'     => \$cats,
              'category_id=s' => \@cat_ids,
              'contribs' => \$contribs,
