@@ -93,8 +93,9 @@ All of the above are simply fields for storing arbitrary metadata
 =cut
 
 # setup exceptions
-use Exception::Class 
-  'Krang::Contrib::DuplicateName' => { fields => [ 'contrib_id' ] };
+use Exception::Class (
+                      'Krang::Contrib::DuplicateName' => { fields => [ 'contrib_id' ] },
+                     );
   
 use Krang::MethodMaker
     new_with_init => 'new',

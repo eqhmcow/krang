@@ -858,8 +858,8 @@ sub do_update_contrib {
             add_message('duplicate_name');
             return (duplicate_name=>1);
         } else {
-            # Re-throw
-            die ($@);
+            # Not our error!
+            $@->rethrow();
         }
     }
 
