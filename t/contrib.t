@@ -46,5 +46,16 @@ my $count = Krang::Contrib->find( full_name => 'matt vella',
                                   count     => 1 );
 is($count, 1);
 
+
+# Test ability to make a change to an existing record and save()
+$contrib2->first('George');
+$contrib2->save();
+
+# Has contrib2 been updated in database?
+my ($contrib2loaded) = Krang::Contrib->find( contrib_id => $contrib2->contrib_id() );
+is($contrib2loaded->first(), 'George');
+
+
+# Clean up added contrib
 $contrib2->delete();
 
