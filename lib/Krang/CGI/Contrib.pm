@@ -112,19 +112,16 @@ sub setup {
 ##############################
 
 
-
 =item search
 
 Display a list of matching contributors, or all
 contributors if no filter text is provided.
 
-This run-mode expects two optional parameters:
-
-  1. search_filter - Text string which is used to query contributors
-  2. search_page   - Page number (0-based) of results to display.
+This run-mode expects an optional parameters "search_filter"
+wich is expected to contain the text string which is used to 
+query contributors.
 
 =cut
-
 
 sub search {
     my $self = shift;
@@ -155,7 +152,6 @@ sub search {
 }
 
 
-
 =item associate_story
 
 Invoked by direct link from Krang::CGI::Story, 
@@ -172,7 +168,6 @@ returned to the "edit" run-mode of Krang::CGI::Story, e.g.:
   http://server/story.pl?rm=edit
 
 =cut
-
 
 sub associate_story {
     my $self = shift;
@@ -206,7 +201,6 @@ returned to the "edit" run-mode of Krang::CGI::Media, e.g.:
 
 =cut
 
-
 sub associate_media {
     my $self = shift;
 
@@ -220,7 +214,6 @@ sub associate_media {
 
     return "Redirect: <a href=\"$new_url\">$new_url</a>";
 }
-
 
 
 =item associate_search
@@ -257,6 +250,7 @@ sub associate_search {
     # Get table of contrib types
     my %contrib_types = Krang::Pref->get('contrib_type');
 
+    # Build up list of currently associated contributors
     my @contribs = $ass_obj->contribs();
 
     # Set up vars for re-order drop-down
@@ -350,7 +344,13 @@ sub associate_search {
 =item associate_selected
 
 Remove the selected contributors from the current story or
-media object.  Return to associate_story or associate_media.
+media object.  Return to associate_search mode.
+
+This run-mode expects the parameter "associate_mode" to 
+exist in the query, and for it to contain either "story"
+or "media".  It also expects that a story or media object
+will be stored in the %session in a key "story" or "media",
+respectively.
 
 =cut
 
@@ -401,11 +401,16 @@ sub associate_selected {
 }
 
 
-
 =item unassociate_selected
 
 Remove the selected contributors from the current story or
-media object.  Return to associate_story or associate_media.
+media object.  Return to associate_search.
+
+This run-mode expects the parameter "associate_mode" to 
+exist in the query, and for it to contain either "story"
+or "media".  It also expects that a story or media object
+will be stored in the %session in a key "story" or "media",
+respectively.
 
 =cut
 
@@ -452,11 +457,16 @@ sub unassociate_selected {
 }
 
 
-
 =item reorder_contribs
 
 Reorder the contributors associated with the current story or
-media object.  Return to associate_story or associate_media.
+media object.  Return to associate_search.
+
+This run-mode expects the parameter "associate_mode" to 
+exist in the query, and for it to contain either "story"
+or "media".  It also expects that a story or media object
+will be stored in the %session in a key "story" or "media",
+respectively.
 
 =cut
 
@@ -492,7 +502,6 @@ sub reorder_contribs {
 }
 
 
-
 =item delete_selected
 
 Delete a set of contribuitors, specified by check-mark
@@ -504,7 +513,6 @@ to contain an array of contrib_id values which correspond
 to contributor records to be deleted.
 
 =cut
-
 
 sub delete_selected {
     my $self = shift;
@@ -525,14 +533,12 @@ sub delete_selected {
 }
 
 
-
 =item add
 
 Display an "Add Contributor" screen, through which
 users may create a new Contributor object.
 
 =cut
-
 
 sub add {
     my $self = shift;
@@ -559,7 +565,6 @@ sub add {
 }
 
 
-
 =item save_add
 
 Insert the Contributor object which was specified on the 
@@ -575,7 +580,6 @@ This mode expects to receive parameters which match the name
 of the contrib properties, excluding "contrib_id".
 
 =cut
-
 
 sub save_add {
     my $self = shift;
@@ -615,14 +619,12 @@ sub save_add {
 }
 
 
-
 =item cancel_add
 
 Cancel the addition of a Contributor object which was specified on the 
 "Add Contributor" screen.  Return to the "search" run-mode.
 
 =cut
-
 
 sub cancel_add {
     my $self = shift;
@@ -633,7 +635,6 @@ sub cancel_add {
     add_message('message_add_cancelled');
     return $self->search();
 }
-
 
 
 =item save_stay_add
@@ -647,7 +648,6 @@ the exception that the user is returned to the "edit" mode
 when they are done.
 
 =cut
-
 
 sub save_stay_add {
     my $self = shift;
@@ -677,7 +677,6 @@ sub save_stay_add {
 }
 
 
-
 =item edit
 
 Display an "Edit Contributor" screen, through which
@@ -690,7 +689,6 @@ parameter "contrib_id".  It will croak() if this
 parameter is missing or invalid.
 
 =cut
-
 
 sub edit {
     my $self = shift;
@@ -721,7 +719,6 @@ sub edit {
 }
 
 
-
 =item save_edit
 
 Update the Contributor object as specified on the 
@@ -736,7 +733,6 @@ the properties of the contributor which are in the database,
 except for "contrib_id" which cannot be changed.
 
 =cut
-
 
 sub save_edit {
     my $self = shift;
@@ -762,14 +758,12 @@ sub save_edit {
 }
 
 
-
 =item cancel_edit
 
 Cancel the edit of the Contributor object currently on the 
 "Edit Contributor" screen.  Return to the "search" run-mode.
 
 =cut
-
 
 sub cancel_edit {
     my $self = shift;
@@ -780,7 +774,6 @@ sub cancel_edit {
     add_message('message_save_cancelled');
     return $self->search();
 }
-
 
 
 =item save_stay_edit
@@ -794,7 +787,6 @@ the exception that the user is returned to the "edit" mode
 when they are done.
 
 =cut
-
 
 sub save_stay_edit {
     my $self = shift;
@@ -824,7 +816,6 @@ sub save_stay_edit {
 }
 
 
-
 =item delete
 
 Delete the Contributor object currently on the
@@ -836,7 +827,6 @@ This mode expects to receive a query parameter
 be deleted.
 
 =cut
-
 
 sub delete {
     my $self = shift;
@@ -1045,7 +1035,7 @@ Jesse Erlbaum <jesse@erlbaum.net>
 
 =head1 SEE ALSO
 
-L<Krang::Contrib>, L<Krang::Pref>, L<Krang::Session>, L<Krang::CGI>
+L<Krang::Contrib>, L<Krang::Message>, L<Krang::Pref>, L<Krang::Session>, L<Krang::CGI>
 
 =cut
 
