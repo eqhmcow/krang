@@ -250,9 +250,9 @@ sub delete {
               "this class:\n\t$info");
     }
 
-    $query = "DELETE FROM user WHERE user_id = '$id'";
+    my $query = "DELETE FROM user WHERE user_id = ?";
 
-    $dbh->do($query);
+    $dbh->do($query, undef, ($id));
 
     return 1;
 }
