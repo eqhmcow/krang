@@ -148,11 +148,12 @@ if ($conf->get('requireaddons')) {
         my ($req_name, $req_ver) = (shift(@addons), shift(@addons));
         my ($req) = Krang::AddOn->find(name => $req_name);
         die "This addon requires the '$req_name' addon, ".
-          "which is not installed!"
+          "which is not installed!\n"
             unless $req;
         die "This addon requires the '$req_name' addon version '$req_ver' ".
-          "or greater, but only version '" . $req->version . "' is installed."
-            if $req_ver > $req->version;
+          "or greater, but only version '" . $req->version . 
+            "' is installed.\n"
+              if $req_ver > $req->version;
     }
 }
 
@@ -250,8 +251,11 @@ sub _copy_files {
 
         print STDERR "Copying $file to $target...\n"
           if $verbose;
-        copy($file, catfile($target_dir, $parts[-1]))
+        my $target_file = catfile($target_dir, $parts[-1]);
+        copy($file, $target_file)
           or die "Unable to copy '$file' to '$target': $!\n";
+        chmod((stat($file))[2], $target_file)
+          or die "Unable to chmod '$target' to match '$file': $!\n";
     }
 }
 
