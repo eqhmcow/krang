@@ -71,6 +71,8 @@ use Krang::Site;
 use Krang::Category;
 use Krang::Pref;
 
+use Time::Piece;
+
 my ($help, $man);
 my $sites    = 3;
 my $cats     = 15;
@@ -172,6 +174,7 @@ for my $story_count (1 .. $stories) {
                                                      (1..(int(rand(3)) + 2))),
                                   slug       => get_word(),
                                   categories => \@c,
+                                  cover_date => Time::Piece->new,
                                   class      => "article");
 
     # add some contribs, up to 5
