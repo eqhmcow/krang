@@ -8,7 +8,7 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Upgrade XML::Validator::Schema to the latest release, 1.06. [Sam]
+Upgraded XML::Validator::Schema to the latest release, 1.06. [Sam]
 
 =item *
 
