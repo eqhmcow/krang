@@ -119,6 +119,15 @@ END {
     rmtree $publish_path;
 }
 
+# make sure the default schedule objects are present
+my ($tmp) = Krang::Schedule->find(object_type => 'tmp');
+ok($tmp, 'tmp cleaner is present');
+my ($session) = Krang::Schedule->find(object_type => 'session');
+ok($session, 'session cleaner is present');
+my ($analyze) = Krang::Schedule->find(object_type => 'analyze');
+ok($analyze, 'db analyzer is present');
+                                  
+
 
 # 03/01 - is a saturday hence day_of_week - 6
 my $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');

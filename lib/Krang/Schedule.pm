@@ -158,7 +158,7 @@ use constant SCHEDULE_RW_NOTIFY => qw(
 # valid actions
 use constant ACTIONS => qw(expire publish send clean);
 # valid object_types
-use constant TYPES => qw(alert media story tmp session);
+use constant TYPES => qw(alert media story tmp session analyze);
 
 
 # Lexicals
@@ -532,6 +532,9 @@ sub execute {
         }
         elsif ($self->{object_type} eq 'session') {
             $self->_expire_sessions();
+        } 
+        elsif ($self->{object_type} eq 'analyze') {
+            $self->_analyze_db();
         }
         else {
             my $msg = sprintf("%s->execute('clean'): unknown object '%s'", __PACKAGE__, $self->{object_type});
@@ -937,6 +940,18 @@ SQL
     }
 }
 
+#
+# _analyze_db() - analyzes all database tables for maximum performance
+#
+sub _analyze_db {
+    my $dbh = dbh();
+    
+    my $tables = $dbh->selectcol_arrayref('show tables');
+    foreach my $table (@$tables) {
+        debug("Analyzing table $table.");
+        $dbh->do("ANALYZE TABLE $table");
+    }
+}
 
 =item @schedules = Krang::Schedule->find(...)
 

@@ -8,6 +8,16 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added new default scheduled job to analyze DB tables nightly.  This
+greatly improves performance for large databases. [Sam]
+
+=item *
+
+Fixed bug where default scheduled jobs (tmp cleaner and session
+expiration) weren't being run for new installations. [Sam]
+
+=item *
+
 Fixed krang_createdb to stop after the first failed system
 call. [Scott Lanning]
 
