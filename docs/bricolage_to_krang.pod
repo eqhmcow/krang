@@ -3,14 +3,14 @@
 =head2 DESCRIPTION
 
 The purpose of this document is to enumerate in excruciating detail all the
-programatic steps necessary to convert Bricolage instance to a Krang install.
+programatic steps necessary to convert Bricolage instance to a Krang dataset.
 Furthermore, it will describe the krang_bric_loader script as well as all of
 the modules necessary to constitute it.
 
 =head2 CONVERSION OUTLINE
 
-In the simplest terms in order to populate a Krang install with Bricolage data
-it is necessary to:
+In the simplest terms to generate a Krang dataset from a Bricolage instance it
+is necessary to:
 
 =over
 
@@ -21,11 +21,9 @@ and krang scripts
 
 =item * Extract the remaining requisite data from the Bricolage database
 
-=item * Construct a valid Krang Dataset from this information
+=item * Map this data to the Krang data equivalents
 
-=item * Import the dataset via krang_import
-
-=item * Publish the content, if necessary
+=item * Construct the dataset
 
 =back
 
@@ -56,7 +54,7 @@ To access the bricolage database we need the following:
 From bric_soap we should be able to obtain easily parseable XML to which we
 need only apply some sort of mapping to yield a valid Krang object description
 
-=item * Obtain Contributors, Groups, and Users from the database
+=item * Obtain Contributors, Desks, Groups, and Users from the database
 
 Given all the connection info, this will entail replicating the sql generated
 by the Bricolage API to obtain each object.  At present, there are no plans to
@@ -64,20 +62,19 @@ migrate user groups.
 
 =item * Obtaining info on Sites
 
-Bricolage, at least the incarnation we use, does not contain information on the
-sites to which top-level categories may map.  This information will have to
-be obtained by the user via a series of questions and answers or by supplying a
-mapping file through a command-line option.
+Information about Sites will obtained from a mapping file specified a command-
+line option.
 
 =item * Generating the Krang dataset
 
 Element, Media, Story, and Template output is already obtained in XML, parsing
 this data and converting it to Krang XML should only be a matter of applying a
-map.  Contributors, Groups, and Users, however, will require the additional
-step of constructing a data structure upon which this mapping can be performed.
+map.  Contributors, Desks, Groups, and Users, however, will require the
+additional step of constructing a data structure upon which the mapping can be
+performed.
 
-Is all of this done in memory or are files output at various points in the
-process?  If there are intermediate files, is their output path configurable?
+Intermediate output will be stored in temporary files or the user supplies an
+output path as a command-line option it will be preserved there.
 
 =back
 
@@ -92,26 +89,26 @@ each Bricolage object type to Krang XML.
 
 Bricolage story objects possess the following fields for which there appears to
 be no compliment in Krang: active, publish_status, and source.  Conversely, the
-notes and version fields have no compliment in Bricolage XML.
+version field has no compliment in Bricolage XML.
 
 There is also a set of fields for which compliments exist but the expected data
-is of a different type or form.  Categories are expressed as text in Bricolage
-XML but are 'category_id's in Krang.  How is one able to reference a category
-that does not yet exist and still produce importable XML?  Contributors also
-share this problem.  'cover_date' represents a minor example of this problem,
-they all possess a trailing 'Z' that is absent in Krang.
+is of a different type or form.  Where Krang requires an id in the place of an
+entity in place it will have to be provided if on hand or generated on the fly
+along with it's complimentary XML doc.  Dates in Bricolage are stored in UTC
+they will be converted to locale specific timestamps.
 
 The priority and slug fields have exact duplicates.  The element attribute of
 the story entity in Bricolage maps the class entity in Krang.  Name maps to
 title, primary_uri to the first url entity (a url will have to be
-generated for each associated category), description to metadata_description,
-and keywords to metadata_keywords.
+generated for each associated category), description to notes, and keywords to
+metadata_keywords.
 
 Elements do not appear to present extraordinary difficulty.  Ordering is
 represented by physical prominence within the 'element' entity as opposed to
 their explicity expression as an attribute in Bricolage.  The element attribute
 of the data entity maps to the class entity and its content maps to an entity
-of the same name within an 'element' entity.
+of the same name within an 'element' entity.  The only wrinkle with elements
+concerns related media and stories.
 
 =item * Categories
 
@@ -124,6 +121,9 @@ site_id entity of this object as well as to calculate its url.
 The active, adstring, adstring2, description, and keywords entities have no
 compliment in Krang and the element entity is not present in Bricolage.
 
+It is desirable to preserve the display name and keywords for a category, how
+do we accomplish this?
+
 =item * Media
 
 The active, description, contributors, elements, priorty, publish_status,
@@ -132,7 +132,7 @@ alt_tag, caption, copyright, notes, and version entities in Krang appear to
 have no compliment in Bricolage.  The category dilema present in stories is
 also present here.
 
-The principle difference between the XML representations is that the actual
+The principal difference between the XML representations is that the actual
 content of the image is present in base64 encoded form in Bricolage.  To solve
 this, the content should be extracted and writen out to the location we intend
 to supply to the 'path' entity.
@@ -154,26 +154,44 @@ The file_name field maps to the url field in Krang; to obtain the appropriate
 value for the filename entity the category must be extracted from the
 Bricolage file_name entity.
 
-=item * Contributors, Groups, and Users
+=item * Contributors, Desks, Groups, and Users
 
 There is still debate as to whether Users and Groups will be imported from
-Bricolage in whole or in part.  Despite this both they and contributors have to
+Bricolage in whole or in part.  Despite this all of these objects will have to
 be pulled directly from the Bricolage database.
-
-Where are the custom fields associated with contributor objects in Bricolage
-stored?
 
 =back
 
 =head2 THE MODULE STRATEGY
 
-The one Object one Module strategy is the current vogue.
+At present I imagine one module per object type.  The module that will require
+the most links to the others is the Story module as it references categories,
+contributors, media, and other story object.  To address this, I imagine that
+each class will have a hash that serves as means of looking up each of its
+instances' ids (sensibly this hash would be updated with the addition of each
+new object).
+
+As far as the interface goes, I imagine that each objects' constructor will
+accept an array of hashes with each element in the hash corresponding to a
+Bricolage Asset.  The data will be mapped and a corrected array of hashes will
+be returned.  The resulting array can be passed to XML output module that can
+handle each of the object types.  Finally all of the output will be tar'd into
+one file.
 
 =head2 CONSIDERATIONS
 
 =over
 
-=item * The problem of .pl files
+=item * Lotsa little or one really big .kds file
+
+The easiest approach to construct a single .kds file that contains all the XML
+that represents the Bricolage instance, but, it may not be the case that the
+importer can handle a file of this size.  Furthermore, in the course of
+testing, it is desirable to create datasets of limited size so the entire day
+isn't spent waiting for program to complete its run.  I believe this problem
+can be solved by using the Story object to construct the other assets on
+demand, the only consequence of this is that the contents of the desks will be
+limited to the stories actually output.
 
 =back
 
