@@ -91,9 +91,11 @@ sub setup {
                          cancel
                          delete
                          delete_selected
+                         save_and_edit_categories
                          edit_categories
                          add_category
                          delete_category
+                         edit_categories_return
                         )]);
 
     $self->tmpl_path('Group/');
@@ -434,14 +436,42 @@ sub delete_selected {
 
 
 
+=item save_and_edit_categories
+
+Save the CGI query params to the group and redirect the user 
+to the edit category permissions screen.
+
+=cut
+
+
+sub save_and_edit_categories {
+    my $self = shift;
+
+    # Retrieve working group object from session
+    my $g = $session{EDIT_GROUP};
+    die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
+
+    # Save CGI query to group
+    $self->update_group_from_query($g);
+
+    # Redirect to edit_categories
+    my $q = $self->query();
+    my $url = $q->url(-relative=>1) . '?rm=edit_categories';
+    $self->header_type('redirect');
+    $self->header_props(-url=>$url);
+
+    return "Away we go!: <a href=\"$url\">$url</a>";
+}
+
+
+
+
+
 =item edit_categories
 
-Description of run-mode 'edit_categories'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Present a list of categories and assigned permissions.
+Allow the user to edit permissions for categories, 
+add, and remove categories.
 
 
 =cut
@@ -451,8 +481,9 @@ sub edit_categories {
     my $self = shift;
 
     my $q = $self->query();
+    my $t = $self->load_tmpl('edit_categories.tmpl', associate=>$q);
 
-    return $self->dump_html();
+    return $t->output();
 }
 
 
@@ -461,12 +492,7 @@ sub edit_categories {
 
 =item add_category
 
-Description of run-mode 'add_category'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Add category to group permissions.
 
 
 =cut
@@ -486,12 +512,7 @@ sub add_category {
 
 =item delete_category
 
-Description of run-mode 'delete_category'...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Remove category from group permissions.
 
 
 =cut
@@ -506,6 +527,24 @@ sub delete_category {
 }
 
 
+
+
+=item edit_categories_return
+
+Save category permissions to group object in session and return to 
+edit group mode.
+
+
+=cut
+
+
+sub edit_categories_return {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    return $self->dump_html();
+}
 
 
 
@@ -566,46 +605,13 @@ sub validate_group {
 
 
 # Updated the provided group object with data
-# from the CGI query
+# from the CGI query and attempt to save.
 sub do_update_group {
     my $self = shift;
     my $group = shift;
 
-    my $q = $self->query();
-
-    # Get prototype for the purpose of update
-    my %group_prototype = ( %{&GROUP_PROTOTYPE} );
-
-    # We can't update group_id
-    delete($group_prototype{group_id});
-
-    my @query_params = $q->param();
-
-    foreach my $qp (@query_params) {
-        my $value = $q->param($qp);
-
-        # Process category permissions
-        if ($qp =~ /^category\_(\d+)$/) {
-            my $category_id = $1;
-            $group->categories($category_id=>$value);
-            next;
-        }
-
-        # Process desk perms
-        if ($qp =~ /^category\_(\d+)$/) {
-            my $desk_id = $1;
-            $group->desks($desk_id=>$value);
-            next;
-        }
-    }
-    delete($group_prototype{categories});
-    delete($group_prototype{desks});
-
-    # Grab each CGI query param and set the corresponding Krang::Group property
-    foreach my $gk (keys(%group_prototype)) {
-        # Presumably, query data is already validated and un-tainted
-        $group->$gk($q->param($gk));
-    }
+    # Update group from CGI query
+    $self->update_group_from_query($group);
 
     # Attempt to write back to database
     eval { $group->save() };
@@ -622,6 +628,53 @@ sub do_update_group {
     }
 
     return ();
+}
+
+
+# Given a particular group object, update it with parameters from
+# the CGI query object
+sub update_group_from_query {
+    my $self = shift;
+    my $group = shift;
+
+    croak ("No group specified") unless ($group and ref($group));
+
+    # Get prototype for the purpose of update
+    my %group_prototype = ( %{&GROUP_PROTOTYPE} );
+
+    # We can't update group_id
+    delete($group_prototype{group_id});
+
+    # Get CGI query params
+    my $q = $self->query();
+    my @query_params = $q->param();
+
+    # Handle desk and category permissions
+    foreach my $qp (@query_params) {
+        my $value = $q->param($qp);
+
+        # Process category permissions
+        if ($qp =~ /^category\_(\d+)$/) {
+            my $category_id = $1;
+            $group->categories($category_id=>$value);
+            next;
+        }
+
+        # Process desk perms
+        if ($qp =~ /^desk\_(\d+)$/) {
+            my $desk_id = $1;
+            $group->desks($desk_id=>$value);
+            next;
+        }
+    }
+    delete($group_prototype{categories});
+    delete($group_prototype{desks});
+
+    # Grab each CGI query param and set the corresponding Krang::Group property
+    foreach my $gk (keys(%group_prototype)) {
+        # Presumably, query data is already validated and un-tainted
+        $group->$gk($q->param($gk));
+    }
 }
 
 

@@ -6,6 +6,13 @@
 
     nav_edit_mode();
 
+    function do_save () {
+        var myform = document.forms["edit_group_form"];
+        myform.rm.value = "save";
+        myform.submit();
+    }
+
+
     function save_stay () {
         var myform = document.forms["edit_group_form"];
         myform.rm.value = "save_stay";
@@ -22,7 +29,7 @@
 
     function edit_categories () {
         var myform = document.forms["edit_group_form"];
-        myform.rm.value = "edit_categories";
+        myform.rm.value = "save_and_edit_categories";
         myform.submit();
     }
 
@@ -202,7 +209,7 @@
 
 
 <div class="button-bar">
-    <input type="submit" value="Save">
+    <input type="submit" value="Save" onClick="do_save()">
     <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()"></tmpl_unless>
     <input type="reset" value="Reset">
     <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_group()"></tmpl_unless>

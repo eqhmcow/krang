@@ -1,0 +1,105 @@
+<tmpl_include /header.tmpl>
+
+
+<script language="Javascript">
+<!-- //
+
+    nav_edit_mode();
+
+    function delete_category (cat_id) {
+        if (confirm("Are you sure you want to remove this category?")) {
+            var myform = document.forms["edit_categories_form"];
+            myform.rm.value = "delete_category";
+            myform.category_id.value = cat_id;
+            myform.submit();
+        }
+    }
+
+
+    function add_category () {
+        var myform = document.forms["edit_categories_form"];
+        myform.rm.value = "add_category";
+        myform.submit();
+    }
+
+
+    function do_return () {
+        var myform = document.forms["edit_categories_form"];
+        myform.rm.value = "edit_categories_return";
+        myform.submit();
+    }
+
+
+// -->
+</script>
+
+
+<div class="dark-bar">Group Category Permissions Edit</div>
+
+
+<div class=form-box>
+
+<table cellpadding="5" cellspacing="0">
+
+
+<form name="edit_categories_form" method="POST">
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+<input type="hidden" name="rm" value="save">
+<input type="hidden" name="group_id" value="<tmpl_var escape=HTML group_id>">
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+
+
+<tr>
+    <td align="left" valign="top">Group Name:</td>
+    <td align="left" valign="top"><tmpl_var escape=HTML name></td>
+</tr>
+
+</table>
+
+
+
+<!-- Category permissions -->
+<table cellspacing="0" width="100%">
+
+<tr class="form-head">
+    <th align="left">Category</th>
+    <th width="100">Edit</th>
+    <th width="100">Read-Only</th>
+    <th width="100">Hide</th>
+    <th width="100">&nbsp;</th>
+</tr>
+
+<tmpl_loop categories><tr>
+    <td class="form-cell"><tmpl_var category_url></td>
+    <tmpl_loop permission_radio><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+    <td class="form-cell" align="center"><a href="javascript:delete_category('<tmpl_var category_id>')">Delete</a></td>
+</tr></tmpl_loop>
+ 
+</table>
+<!-- END Category permissions -->
+
+
+<br />
+
+
+
+</div>
+
+
+
+<div class="button-bar">
+    <input type="button" value="Return" onClick="do_return()">
+</div>
+
+
+<!-- End edit_categories_form -->
+</form>
+
+
+<tmpl_include /footer.tmpl>
