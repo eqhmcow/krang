@@ -71,6 +71,11 @@ is(($media->contribs)[0]->selected_contrib_type, 3, "Contrib selected type set")
 # save it
 $media->save();
 
+# test width and height
+is ($media->width(), 68, "Width test");
+# test width and height
+is ($media->height(), 68, "Height test");
+
 # test file_path
 like($media->file_path, qr/krang\.jpg$/, "Absolute path looks right after save");
 like($media->file_path(relative => 1), qr/krang\.jpg$/, "Relative path looks right after save");

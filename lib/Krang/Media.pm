@@ -20,6 +20,7 @@ use File::stat;
 use Time::Piece;
 use Time::Piece::MySQL;
 use File::Temp qw/ tempdir /;
+use Image::Info qw( image_info dim );
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
@@ -530,6 +531,38 @@ sub file_size {
         return $st->size;
     } else {
         return 0;
+    }
+}
+
+=item $width = $media->width()
+                                                                                
+Return width of image in pixels.
+                                                                                
+=cut
+                                                                                
+sub width {
+    my $self = shift;
+    if ($self->file_path()) {
+       my ($w,$h) = dim(image_info($self->file_path()));
+       return $w;
+    } else {
+        return;
+    }
+}
+
+=item $width = $media->height()
+                                                                                
+Return height of image in pixels.
+                                                                                
+=cut
+                                                                                
+sub height {
+    my $self = shift;
+    if ($self->file_path()) {
+        my ($w,$h) = dim(image_info($self->file_path()));
+        return $h;
+    } else {
+        return;
     }
 }
 
