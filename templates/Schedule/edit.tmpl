@@ -11,7 +11,12 @@
   function delete_selected () {
         var myform = document.forms["current_schedule_form"];
         myform.submit();
-    }
+  }
+
+ function save_and_view() {
+        document.forms[0].rm.value = 'save_and_view';
+        document.forms[0].submit();
+  }
 
 </script>
 

@@ -60,6 +60,7 @@ sub setup {
                             add
                             add_simple
                             delete
+                            save_and_view
                     )]);
 
     $self->tmpl_path('Schedule/');    
@@ -444,6 +445,29 @@ sub delete {
     
     add_message('deleted_selected');
     return $self->edit();      
+}
+
+=item save_and_view()
+
+Preserve params and view version of story
+
+=cut
+
+sub save_and_view {
+    my $self = shift;
+    my $q = $self->query();
+
+    $q->param('return_script' => 'schedule.pl');
+    $q->param('return_params' => rm => $q->param('rm'));
+
+    my $version = $q->param('version');
+    $version ? ($version = '&version='.$version) : ($version = '&version=');
+    
+    my $object_type = $q->param('object_type'); 
+    $self->header_props(-uri => $object_type.'.pl?rm=view&return_script=schedule.pl&return_params=rm&return_params=edit&return_params=object_type&return_params='.$object_type.'&return_params=advanced_schedule&return_params='.$q->param('advanced_schedule').$version);
+    $self->header_type('redirect');
+    return;
+
 }
 
 =back
