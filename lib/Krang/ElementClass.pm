@@ -1121,11 +1121,26 @@ sub _build_contrib_loop {
 
 =item *
 
-Modify validate() to throw an exception to indicate failure.
+Element classes should be able to control linked_stories and linked_media
 
 =item *
 
-Implement output (find_template(), fill_template(), publish()).
+Element deserializer should enforce min/max rules.
+
+
+=item *
+
+malformed element tree in category doesn't throw an error right
+
+=item *
+
+Krang::DataSet should check for element set mismatches since
+Krang::Element is lazy now
+
+=item *
+
+deserialize_xml methods are trusting incoming urls, but they don't
+actually use them...
 
 =back
 
