@@ -2,7 +2,7 @@ package Krang::FTP::Server;
 use strict;
 use warnings;
 use Carp qw(croak);
-use Krang::Conf;
+use Krang::Conf qw(KrangUser KrangGroup);
 use Krang::User;
 use Krang::Log qw(debug info critical);
 use Net::FTPServer;
@@ -113,6 +113,51 @@ sub pre_configuration_hook {
   # add to version info
   $self->{version_string} .= " Krang::FTP::Server";
   
+}
+
+=item post_accept_hook()
+
+This method is called by Net::FTPServer after a connection is accepted
+and a child process has been forked.  It's used by this class to
+change to uid/gid to KrangUser/KrangGroup.
+
+=cut
+
+sub post_accept_hook {
+    # get current uid/gid
+    my $uid = $>;
+    my %gid = map { ($_ => 1) } split( ' ', $) );
+
+    # extract desired uid/gid
+    my @uid_data = getpwnam(KrangUser);
+    croak("Unable to find user for KrangUser '" . KrangUser . "'.")
+      unless @uid_data;
+    my $krang_uid = $uid_data[2];
+    my @gid_data = getgrnam(KrangGroup);
+    croak("Unable to find user for KrangGroup '" . KrangGroup . "'.")
+      unless @gid_data;
+    my $krang_gid = $gid_data[2];
+
+    # become KrangUser/KrangGroup if necessary
+    if ($gid{$krang_gid}) {
+        eval { $) = $krang_gid; };
+        die("Unable to become KrangGroup '" . KrangGroup . "' : $@\n" . 
+            "Maybe you need to start this process as root.\n")
+          if $@;
+        die("Failed to become KrangGroup '" . KrangGroup . "' : $!.\n" .
+            "Maybe you need to start this process as root.\n")
+          unless $) == $krang_gid;
+    }
+
+    if ($uid != $krang_uid) {
+        eval { $> = $krang_uid; };
+        die("Unable to become KrangUser '" . KrangUser . "' : $@\n" .
+            "Maybe you need to start this process as root.\n")
+          if $@;
+        die("Failed to become KrangUser '" . KrangUser . "' : $!\n" .
+            "Maybe you need to start this process as root.\n")
+          unless $> == $krang_uid;
+    }
 }
 
 =item authenticaton_hook($user, $pass, $user_is_anon)
