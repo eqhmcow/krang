@@ -42,61 +42,65 @@
         
             var count = 0;
             for(var key in eval('list_data[' + select_val + ']') ) {
-                if (eval('list_data[' + select_val + "][key]['__data__']") ) {
-                    eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + "'" + eval("list_data[" + select_val + "][key]['__data__']") + "', '" + select_val + '][' + key + "')");
+                if (eval('list_data[' + select_val + "]")[key]['__data__']) {
+                    var new_val = eval("list_data[" + select_val + "]")[key]['__data__'];
+                    new_val = new_val.replace(/\"/g, '``');
+                    eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + '"' + new_val + '", "' + select_val + '][' + key + '")');
                 }
             }
         } else {
             var count = 0;
             for(var key in list_data) {
                if (list_data[key]['__data__']) {
-                    eval ('document.forms["edit_form"].list_1.options[' + count++ + '] = new Option(' + "'" + eval("list_data[key]['__data__']") +  "', '" + key + "')"); 
+                   var new_val = list_data[key]['__data__'];
+                    new_val = new_val.replace(/\"/g, '``');
+                   document.forms["edit_form"].list_1.options[count++] = new Option(new_val , key); 
                }
             }
         }
         if (sel_in_list > -1) {
-            eval( 'document.forms["edit_form"].list_' + next_list + '.selectedIndex = sel_in_list');
+            eval( 'document.forms["edit_form"].list_' + next_list).selectedIndex = sel_in_list;
         }
     }
 
     function clear_lists_above(list_count) {
         for ( var c = list_count; c <= <tmpl_var list_levels>; c++ ) {
-            eval ('document.forms["edit_form"].list_' + c + '.options.length = 0'); 
+            eval ('document.forms["edit_form"].list_' + c).options.length = 0; 
         }
     }
 
     function get_selected_val (list_count) {
-        var sindex = eval( 'document.forms["edit_form"].list_' + list_count + '.selectedIndex' );
+        var sindex = eval( 'document.forms["edit_form"].list_' + list_count).selectedIndex;
         if (sindex > -1) {
-            return eval ('document.forms["edit_form"].list_' + list_count + '.options[' + sindex + '].value');
+            return eval ('document.forms["edit_form"].list_' + list_count).options[sindex].value;
         } else {
             return('undef');
         }
     };
 
     function get_list_id (list_count) {
-        var lid = eval( 'document.forms["edit_form"].list_id_' + list_count + '.value' );
+        var lid = eval( 'document.forms["edit_form"].list_id_' + list_count).value;
         return lid; 
     }
 
     function do_delete (list_count) {
         var select_val = get_selected_val(list_count);
-        log_entry( eval('list_data[' + select_val + "]['__id__']"), 'delete', '');
-        eval('list_data[' + select_val + "]['__data__'] = []");
-        eval('list_data[' + select_val + '] = []');
+        log_entry( eval('list_data[' + select_val + "]")['__id__'], 'delete', '');
+        eval('list_data[' + select_val + ']')['__data__'] = [];
+        eval('list_data[' + select_val + ']') = [];
         populate_list(list_count-1);
     }
 
     function do_replace(list_count) {
         var select_val = get_selected_val(list_count);
-        if ( eval("document.forms['edit_form'].new_item_" + list_count + ".value" ) ) {
+        if ( eval("document.forms['edit_form'].new_item_" + list_count).value ) {
             var item = eval( 'list_data[' + select_val + ']');
-            var nv = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+            var nv = eval( "document.forms['edit_form'].new_item_" + list_count).value;
             item['__data__'] = nv;
             var indexArray = select_val.split('][');
             var current_index = indexArray.pop();
             populate_list(list_count-1, current_index, 1);
-            eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''");
+            eval( "document.forms['edit_form'].new_item_" + list_count).value = '';
             log_entry(item['__id__'], 'replace', nv);
         }
     }
@@ -123,8 +127,8 @@
                 firstHalf = list_data.slice(0, current_index);
                 secondHalf = list_data.slice(current_index);
             } else {
-                firstHalf = eval('list_data[' + select_val + '].slice(0,current_index)');
-                secondHalf = eval('list_data[' + select_val + '].slice(current_index)');
+                firstHalf = eval('list_data[' + select_val + ']').slice(0,current_index);
+                secondHalf = eval('list_data[' + select_val + ']').slice(current_index);
             }
             if (down && (secondHalf.length == 0)) {
                 return;
@@ -145,7 +149,7 @@
             if (! select_val) {
                 list_data = firstHalf.concat(secondHalf);
             } else {
-                eval('list_data[' + select_val + '] = firstHalf.concat(secondHalf)');
+                eval('list_data[' + select_val + ']') = firstHalf.concat(secondHalf);
             }
 
             if (! down) {
@@ -158,7 +162,7 @@
 
     function do_add(list_count) {
         var select_val = get_selected_val(list_count);
-        var new_data = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+        var new_data = eval( "document.forms['edit_form'].new_item_" + list_count).value;
 
         // do nothing if no value is entered in textbox
         if (! new_data) {
@@ -180,12 +184,12 @@
                 list_data.splice(current_index, 0, t);
             } else {
                 // else this is not first list
-                eval('list_data[' + select_val + '].splice(current_index, 0, t)');
+                eval('list_data[' + select_val + ']').splice(current_index, 0, t);
             }
 
             var parent;
             if (indexArray.length) {
-                parent = eval("list_data[" + select_val + "]['__id__']");
+                parent = eval("list_data[" + select_val + "]")['__id__'];
             }
             log_entry(t['__id__'], 'new', new_data + '^*^' + (parseInt(current_index) + 1) + '^*^' + get_list_id(list_count) + '^*^' + parent );
         } else {
@@ -219,25 +223,25 @@
                 }
             } else { 
                 // if this list has no current items
-                if( ! eval('list_data[' + select_val + '][0]') ) {
-                    eval('list_data[' + select_val + '][0] = new Array()');
-                    var it = eval('list_data[' + select_val + '][0]');
+                if( ! eval('list_data[' + select_val + ']')[0] ) {
+                    eval('list_data[' + select_val + ']')[0] = new Array();
+                    var it = eval('list_data[' + select_val + ']')[0];
                     it['__data__'] = new_data; 
                     it['__id__'] = "new_" + new_count++;
                     log_entry(it['__id__'], 'new', new_data + '^*^'
-+ 1 + '^*^' + get_list_id(list_count) + '^*^' + eval('list_data[' + select_val + "]['__id__']"));
++ 1 + '^*^' + get_list_id(list_count) + '^*^' + eval('list_data[' + select_val + ']')['__id__']);
                 } else {
                     var nitem = new Array();
                     nitem['__data__'] = new_data;
                     nitem['__id__'] = 'new_' + new_count++;
-                    eval('list_data[' + select_val + '].splice(0,0,nitem)');
-                    log_entry(nitem['__id__'], 'new', new_data + '^*^' + 1 + '^*^' + get_list_id(list_count) + '^*^' + eval('list_data[' + select_val + ']["__id__"]'));
+                    eval('list_data[' + select_val + ']').splice(0,0,nitem);
+                    log_entry(nitem['__id__'], 'new', new_data + '^*^' + 1 + '^*^' + get_list_id(list_count) + '^*^' + eval('list_data[' + select_val + ']')["__id__"]);
                 }
             }
             current_index = 0;
         }
         
-        eval( "document.forms['edit_form'].new_item_" + list_count + ".value = ''" );
+        eval( "document.forms['edit_form'].new_item_" + list_count).value = '';
         populate_list(list_count-1, current_index);
     }
 
