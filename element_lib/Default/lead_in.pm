@@ -1,7 +1,7 @@
 package Default::lead_in;
 use strict;
 use warnings;
-use base 'Krang::ElementClass::StoryLink';
+use base 'Krang::ElementClass';
 
 =head1 NAME
 
@@ -10,7 +10,7 @@ Default::lead_in
 =head1 DESCRIPTION
 
 Default lead-in element class for Krang. This element uses
-Krang::ElementClass::StoryLink as a base.
+Krang::ElementClass as a base.
 
 =cut
 
@@ -21,7 +21,13 @@ sub new {
    my %args = ( name => 'lead_in', 
                 children =>
                 [
+                 Krang::ElementClass::StoryLink->new( name => 'story',
+                                                    min => 1,
+                                                    max => 1,
+                                                    allow_delete => '0',
+                                                    reorderable => '0' ),    
                  Krang::ElementClass::PopupMenu->new(name => "type",
+                                                    reorderable => '0',
                                                    min => 1,
                                                    max => 1,
                                                    allow_delete => '0',
@@ -29,8 +35,8 @@ sub new {
                                                                "Small"],
                                                    default => "Small"
                                                            ),
-                 Krang::ElementClass::PopupMenu->new(name => "alignment",
-
+                 Krang::ElementClass::PopupMenu->new(name => "image_alignment",
+                                                    reorderable => '0',
                                                      min => 1,
                                                      max => 1,
                                                      allow_delete => '0',
@@ -44,11 +50,22 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+sub input_form {
+    my ($self, %arg) = @_;
+    my ($query, $element) = @arg{qw(query element)};
+    my ($header, $data);
+    if ($header = $element->child('story') and
+        $data   = "<br><b>Title:</b> ".$header->data->title."<br><b>URL:</b> ".$header->data->url ) {
+        return $data;
+    }
+    return '';
+}
+
 sub fill_template {
     my ($self, %args) = @_;
 
     my $tmpl      = $args{tmpl};
-    my $story   = $args{element}->data;
+    my $story   = $args{element}->child('story')->data;
     my $publisher = $args{publisher};
 
     my $ptitle = $story->element->child('promo_title')->data || $story->title;
@@ -60,7 +77,11 @@ sub fill_template {
     my $image = $story->element->child('promo_image_small')->child('media')->template_data(publisher => $publisher) || '';
     $tmpl->param( promo_image => $image) if $image;
 
-    $tmpl->param( url => $args{element}->template_data(publisher => $publisher) );
+    $tmpl->param( url => $args{element}->child('story')->template_data(publisher => $publisher) );
+   
+    $tmpl->param( image_alignment => $args{element}->child('image_alignment')->data ); 
+    $tmpl->param( type => $args{element}->child('type')->data );
+
 }
 
 
