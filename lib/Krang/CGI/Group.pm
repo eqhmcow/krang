@@ -41,7 +41,7 @@ is 'search'.
 
 use Krang::Group;
 use Krang::Widget;
-use Krang::Message;
+use Krang::Message qw(add_message);
 use Krang::HTMLPager;
 use Krang::Pref;
 use Krang::Session;
@@ -293,12 +293,13 @@ sub delete {
 
 =item delete_selected
 
-Description of run-mode 'delete_selected'...
+Delete a set of groups, specified by check-mark
+on the "Group List" screen provided by the "search" 
+run-mode.  Return to the "search" run-mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This mode expects the query param "krang_pager_rows_checked"
+to contain an array of group_id values which correspond
+to group records to be deleted.
 
 
 =cut
@@ -308,8 +309,19 @@ sub delete_selected {
     my $self = shift;
 
     my $q = $self->query();
+    my @group_delete_list = ( $q->param('krang_pager_rows_checked') );
+    $q->delete('krang_pager_rows_checked');
 
-    return $self->dump_html();
+    # No selected groups?  Just return to list view without any message
+    return $self->search() unless (@group_delete_list);
+
+    foreach my $id (@group_delete_list) {
+        my ($g) = Krang::Group->find(group_id=>$id);
+        $g->delete($id) if ($g);
+    }
+
+    add_message('message_selected_deleted');
+    return $self->search();
 }
 
 
