@@ -103,7 +103,7 @@ require Exporter;
 use Krang::DB qw(dbh);
 use Krang::Log qw/critical debug info/;
 use Krang::Group;
-
+use Krang::Cache;
 
 #
 # Package Variables
@@ -517,6 +517,14 @@ sub find {
     my $where_clause = '';
     $lookup_cols{group_ids} = 1;
 
+    # check the cache if we're looking for a single user    
+    my $cache_worthy = (keys(%args) == 1 and exists $args{user_id}) ? 1 : 0;
+    if ($cache_worthy) {
+        my $user = Krang::Cache::get(Krang::User => $args{user_id});
+        return ($user) if $user;
+    }
+        
+
     # are we looking up group ids as well
     my $groups = exists $args{group_ids} ? 1 : 0;
 
@@ -652,6 +660,10 @@ sub find {
         _add_group_ids(\%user_hash, $dbh);
     }
 
+    # set in the cache if this was a simple find
+    Krang::Cache::set(Krang::User => $args{user_id} => $users[0])
+      if $cache_worthy and $users[0];
+
     # return number of rows if count, otherwise an array of ids or objects
     return $count ? $users[0] : @users;
 }
@@ -696,6 +708,10 @@ sub save {
     my $self = shift;
     my $id = $self->{user_id} || 0;
     my @save_fields = grep {$_ ne 'user_id'} keys %user_cols;
+
+    # saving with the cache on is verboten
+    croak("Cannot save users while cache is on!")
+      if Krang::Cache::active();
 
     # check for duplicates
     $self->duplicate_check();

@@ -124,6 +124,7 @@ use Krang::Log qw(debug);
 use Krang::Desk;
 use Krang::Category;
 use Krang::Session qw(%session);
+use Krang::Cache;
 
 # Exceptions
 use Exception::Class ( 'Krang::Group::DuplicateName' => { fields => [ 'group_id' ] },
@@ -285,6 +286,16 @@ sub find {
     my $self = shift;
     my %args = @_;
 
+    # check the cache if we're looking for a single group
+    my $cache_worthy = (keys(%args) == 1 and 
+                        (exists $args{group_id} or 
+                         exists $args{group_ids})) ? 1 : 0;
+    if ($cache_worthy) {
+        my @ids = (exists $args{group_ids} ? @{$args{group_ids}} : 
+                   ($args{group_id}));
+        my @groups = map { Krang::Cache::get(Krang::Group => $_) } @ids;
+        return @groups unless not @groups or grep { not defined } @groups;
+    }
 
     # Check for invalid args and croak() if any
     my @valid_find_params = qw(
@@ -423,8 +434,14 @@ sub find {
             push(@groups, $self->new_from_db($group_data));
         };
         $sth->finish();
-        return @groups;
 
+        # set in the cache if this was a simple find
+        if ($cache_worthy) {
+            Krang::Cache::set(Krang::Group => $_->{group_id} => $_)
+                for @groups;
+        }
+
+        return @groups;
     }
 }
 
