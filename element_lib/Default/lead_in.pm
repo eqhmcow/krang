@@ -55,8 +55,10 @@ sub input_form {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
     my ($header, $data);
-    if ($header = $element->child('story') and
-        $data   = "<br><b>Title:</b> ".$header->data->title."<br><b>URL:</b> ".$header->data->url ) {
+    $header = $element->child('story');
+
+    if ($header->data) { 
+        $data   = "<br><b>Title:</b> ".$header->data->title."<br><b>URL:</b> ".$header->data->url;
         return $data;
     }
     return '';
