@@ -272,6 +272,9 @@ sub preview_story {
     my $self = shift;
     my %args = @_;
 
+    # set internal mode - preview, not publish.
+    $self->_set_preview_mode();
+
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
@@ -282,14 +285,11 @@ sub preview_story {
     my $unsaved       = (exists($args{unsaved})) ? $args{unsaved} : 0;
     my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
 
-    # set internal mode - preview, not publish.
-    $self->_set_preview_mode();
 
     # deploy any templates flagged as testing for this user
     $self->_deploy_testing_templates();
 
     my $publish_list = $self->asset_list(story         => [$story],
-                                         mode          => 'preview',
                                          version_check => $version_check);
 
     my $total = @$publish_list;
@@ -438,6 +438,9 @@ sub publish_story {
     my $self = shift;
     my %args = @_;
 
+    # set internal mode - publish, not preview.
+    $self->_set_publish_mode();
+
     my $story         = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
     my $unsaved       = (exists($args{unsaved})) ? $args{unsaved} : 0;
     my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
@@ -452,10 +455,6 @@ sub publish_story {
 
     my $publish_list;
 
-
-    # set internal mode - publish, not preview.
-    $self->_set_publish_mode();
-
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
@@ -469,7 +468,6 @@ sub publish_story {
         }
     } else {
         $publish_list = $self->asset_list(story         => $story,
-                                          mode          => 'publish',
                                           version_check => $version_check);
     }
 
@@ -641,11 +639,10 @@ sub preview_media {
     my $self = shift;
     my %args = @_;
 
+    $self->_set_preview_mode();
+
     my $media    = $args{media} || croak __PACKAGE__ . ": Missing argument 'media'!\n";
     my $unsaved  = (exists($args{unsaved})) ? $args{unsaved} : 0;
-
-
-    $self->_set_preview_mode();
 
     $media->mark_as_previewed(unsaved => $unsaved);
 
@@ -792,9 +789,9 @@ to true.
 
 =item * C<mode>
 
-Either 'preview' or 'publish'.  If not set, checks to see if either
-C<is_preview()> or C<is_publish> is true.  If neither are true, will
-croak.
+Optional.  Either 'preview' or 'publish'.  If not set, checks to see
+if either C<is_preview()> or C<is_publish> is true.  If neither are
+true, will croak.
 
 
 =item * C<version_check>
@@ -828,10 +825,16 @@ sub asset_list {
     my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
 
     # check publish mode.
-    unless ($mode) {
-        if ($self->is_preview()) { $mode = 'preview' }
-        elsif ($self->is_publish()) { $mode = 'publish' }
-        else { croak "Publish mode unknown.  Set the 'mode' argument'"; }
+    if ($mode) {
+        if ($mode eq 'preview') { $self->_set_preview_mode(); }
+        elsif ($mode eq 'publish') { $self->_set_publish_mode(); }
+        else { croak __PACKAGE__ . ": unknown output mode '$mode'\n"; }
+    } else {
+        if ($self->is_preview()) { $mode = 'preview'; }
+        elsif ($self->is_publish()) { $mode = 'publish'; }
+        else {
+            croak "Publish mode unknown.  Set the 'mode' argument'";
+        }
     }
 
     $self->_init_asset_lists();
@@ -839,7 +842,6 @@ sub asset_list {
     my @publish_list = $self->_build_asset_list(object         => $story,
                                                 version_check  => $version_check,
                                                 initial_assets => 1,
-                                                mode           => $mode
                                                );
 
     unless ($keep_list) {
@@ -931,11 +933,27 @@ sub undeploy_template {
 
 =item C<< $dir = $publisher->template_search_path(category => $category) >>
 
-Given the current category, returns the list of directories that may contain a template.  The first element in the returning array contains the directory of the current category, the last element contains the directory of the root category (parent of all categories in the site).
+Given the current category, returns the list of directories that may
+contain a template.  The first element in the returning array contains
+the directory of the current category, the last element contains the
+directory of the root category (parent of all categories in the site).
 
-L<category> is an optional argument - if not supplied, the current category in the publish run is used (usually the best choice).
+Arguments:
 
-A note on preview:  In preview mode, this method will check to see if the user has a testing-template temporary directory (created if the user has templates checked out & flagged for testing).  If so, the testing-template temporary directory paths will be interspersed with the deployed-template dirs (in the order of TEST/PROD/TEST/PROD).
+=over
+
+=item * C<category>
+
+An optional argument - if not supplied, the current L<Krang::Category>
+category in the publish run is used (usually the best choice).
+
+=back
+
+A note on preview: In preview mode, this method will check to see if
+the user has a testing-template temporary directory (created if the
+user has templates checked out & flagged for testing).  If so, the
+testing-template temporary directory paths will be interspersed with
+the deployed-template dirs (in the order of TEST/PROD/TEST/PROD).
 
 =cut
 
@@ -1058,11 +1076,23 @@ sub additional_content_block {
 
 =item C<< $filename = $publisher->story_filename(page => $page_num); >>
 
-Returns the filename (B<NOT> the path + filename, just the filename) of the current story being published, given the page number.
+Returns the filename (B<NOT> the path + filename, just the filename)
+of the current story being published, given the page number.
 
-page argument will default to 0 if not passed in.
+Arguments:
 
-arguments C<story> can be submitted if you want a filename for something other than what is currently being published.
+=over
+
+=item * C<page>
+
+The page number of the story.  Defaults to 0.
+
+=item * C<story>
+
+Optional.  Defaults to L<story()>.  Use it if you want a filename for
+something other than what is currently being published.
+
+=back
 
 =cut
 
@@ -1124,21 +1154,31 @@ sub test_publish_status {
 
     my $publish_yes = 0;
 
-    unless ($mode) {
-        if ($self->is_preview()) { $mode = 'preview' }
-        elsif ($self->is_publish()) { $mode = 'publish' }
-        else { croak "Publish mode unknown.  Set the 'mode' argument'"; }
+    if ($mode) {
+        if ($mode eq 'preview') { $self->_set_preview_mode(); }
+        elsif ($mode eq 'publish') { $self->_set_publish_mode(); }
+        else { croak __PACKAGE__ . ": unknown output mode '$mode'\n"; }
+    } else {
+        if ($self->is_preview()) { $mode = 'preview'; }
+        elsif ($self->is_publish()) { $mode = 'publish'; }
+        else {
+            croak "Publish mode unknown.  Set the 'mode' argument'";
+        }
     }
 
+    # check versioning.
     if ($mode eq 'preview') {
         $publish_yes = 1 unless ($object->preview_version == $object->version);
-    } elsif ($mode eq 'publish') {
-        $publish_yes = 1 unless ($object->published_version == $object->version);
     } else {
-        croak "Unknown mode '$mode'.  Re-check the 'mode' argument";
+        $publish_yes = 1 unless ($object->published_version == $object->version);
     }
 
     return $publish_yes if $publish_yes;
+
+    # otherwise, check on the filesystem for missing files.
+    $publish_yes = $self->_check_object_missing(object => $object);
+    return $publish_yes if $publish_yes;
+
 
     # for stories, can check force_republish.
     if ($object->isa('Krang::Story')) {
@@ -1394,7 +1434,7 @@ sub _build_story_single_category {
 ##
 
 #
-# @assets = _build_asset_list(object => \@story, version_check => 1, initial_assets => 1, mode => $mode);
+# @assets = _build_asset_list(object => \@story, version_check => 1, initial_assets => 1);
 #
 # Recursively builds the list of assets to be published, called by
 # asset_list().
@@ -1408,8 +1448,6 @@ sub _build_story_single_category {
 # initial_assets will skip that check when true - used for the first
 # call from asset_list().  Defaults false.
 #
-# mode is either 'preview' or 'publish'.
-#
 # Returns a list of Krang::Story and Krang::Media objects.
 #
 sub _build_asset_list {
@@ -1419,15 +1457,14 @@ sub _build_asset_list {
     my $object         = $args{object};
     my $version_check  = (exists($args{version_check})) ? $args{version_check} : 1;
     my $initial_assets = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
-    my $mode           = $args{mode};
 
     my @asset_list;
     my @check_list;
 
     if (ref $object eq 'ARRAY') {
         foreach my $o (@$object) {
-            my ($publish_ok, $check_links) = $self->_check_asset_status(object => $o,
-                                                                        mode   => $mode,
+            my ($publish_ok, $check_links) = $self->_check_asset_status(
+                                                                        object => $o,
                                                                         version_check  => $version_check,
                                                                         initial_assets => $initial_assets
                                                                        );
@@ -1440,8 +1477,8 @@ sub _build_asset_list {
         }
 
     } else {
-        my ($publish_ok, $check_links) = $self->_check_asset_status(object => $object,
-                                                                    mode   => $mode,
+        my ($publish_ok, $check_links) = $self->_check_asset_status(
+                                                                    object => $object,
                                                                     version_check  => $version_check,
                                                                     initial_assets => $initial_assets
                                                                    );
@@ -1457,7 +1494,7 @@ sub _build_asset_list {
     push @asset_list, $self->_build_asset_list(object         => \@check_list,
                                                version_check  => $version_check,
                                                initial_assets => 0,
-                                               mode           => $mode) if (@check_list);
+                                              ) if (@check_list);
 
     return @asset_list;
 }
@@ -1466,7 +1503,6 @@ sub _build_asset_list {
 
 #
 # ($publish_ok, $check_links) = _check_object_status(object => $object,
-#                                                    mode   => $mode,
 #                                                    initial_assets => 1
 #                                                    version_check  => 1);
 #
@@ -1476,15 +1512,13 @@ sub _build_asset_list {
 #
 # object - a Krang::Story or Krang::Media object
 #
-# mode - 'publish' or 'preview'.
 #
 
 sub _check_asset_status {
 
     my ($self, %args) = @_;
 
-    my $object = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
-    my $mode   = $args{mode};
+    my $object         = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
     my $version_check  = (exists($args{version_check})) ? $args{version_check} : 1;
     my $initial_assets = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
 
@@ -1497,6 +1531,7 @@ sub _check_asset_status {
         my $story_id = $object->story_id;
         unless ($self->{story_publish_set}->contains($story_id)) {
             $self->{story_publish_set}->Bit_On($story_id);
+
             if ($initial_assets) {
                 $publish_ok = 1;
             } elsif (!$version_check) {
@@ -1529,6 +1564,45 @@ sub _check_asset_status {
     return ($publish_ok, $check_links);
 }
 
+
+
+#
+# $bool = _check_object_missing(object => $object);
+#
+# Checks all possible filesystem locations for an object (e.g. where
+# they could get published to), returns false if they all exist, true
+# if any of them cannot be found on the filesystem
+#
+# object is a Krang::Story or Krang::Media object
+#
+
+sub _check_object_missing {
+
+    my ($self, %args) = @_;
+
+    my $object = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
+
+    my $bool = 0;
+
+    if ($object->isa('Krang::Story')) {
+        # check all categories
+        foreach my $cat ($object->categories) {
+            my $path = $self->_determine_output_path(object => $object, category => $cat);
+            my $filename = $self->story_filename(story => $object);
+            my $output_filename = catfile($path, $filename);
+            unless (-e $output_filename) {
+                # if any are missing, true.
+                $bool = 1;
+                last;
+            }
+        }
+    } else {
+        my $path = $self->_determine_output_path(object=> $object);
+        $bool = 1 unless (-e $path);
+    }
+
+    return $bool;
+}
 
 
 #
@@ -1782,7 +1856,10 @@ sub _write_template {
 #
 # $path = $self->_determine_output_path(object => $object, category => $category);
 #
-# Returns preview/publish path depending on publish mode.
+# For Krang::Story objects, returns the directory under which the
+# story will be written on the filesystem for a given category.
+#
+# For Krang::Media objects, returns the full path to file.
 #
 
 sub _determine_output_path {

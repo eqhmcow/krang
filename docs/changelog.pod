@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added filesystem sanity checks to the Publish checks - If the
+story/media object being tested does not exist on the filesystem in
+all locations that it should, it's flagged for output, regardless of
+versioning.  Also cleaned up some unneeded API cruft.  [Peter]
+
+=item *
+
 Large changes to the publishing engine.  When publishing/previewing a
 story, Krang::Publisher will now check all related stories/media to
 see if the most recent version of each object has been

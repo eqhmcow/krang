@@ -476,6 +476,23 @@ sub test_publish_status {
     my $story = $creator->create_story(category => [$category]);
     my $pub   = Krang::Publisher->new();
 
+    # need to create filesystem paths to handle FS checks.
+    my @pub_paths = build_publish_paths($story);
+    foreach (@pub_paths) {
+        $_ =~ /^(.*\/)[^\/]+/;
+        my $dir = $1;
+        mkpath($dir, 0, 0755);
+        `touch $_`;
+    }
+    my @pre_paths = build_preview_paths($story);
+    foreach (@pre_paths) {
+        $_ =~ /^(.*\/)[^\/]+/;
+        my $dir = $1;
+        mkpath($dir, 0, 0755);
+        `touch $_`;
+    }
+
+
     eval {
         # this should croak - no publish status set.
         $pub->test_publish_status(object => $story);
@@ -517,7 +534,6 @@ sub test_publish_status {
     $bool = $pub->test_publish_status(object => $story, mode => 'preview');
     is($bool, 1, 'Krang::Publisher->test_publish_status()');
 
-
     $pub->_init_asset_lists();
     my ($publish_ok, $check_links) = $pub->_check_asset_status(object => $story,
                                                                mode   => 'publish',
@@ -534,6 +550,32 @@ sub test_publish_status {
                                                             initial_assets => 0);
     is($publish_ok, 0, 'Krang::Publisher: version_check on');
 
+
+    # add the file to the filesystem - should return false.
+    $story->mark_as_published();
+
+    $bool = $pub->test_publish_status(object => $story, mode => 'publish');
+    is($bool, 0, 'test_publish_status() - filesystem check');
+
+
+    # remove one file from the filesystem - should return true.
+    unlink $pub_paths[0];
+    $bool = $pub->test_publish_status(object => $story, mode => 'publish');
+    is($bool, 1, 'test_publish_status() - filesystem check');
+
+    # test with preview too.
+    unlink $pre_paths[0];
+    $bool = $pub->test_publish_status(object => $story, mode => 'preview');
+    is($bool, 1, 'test_publish_status() - filesystem check');
+
+    # cleanup
+    foreach (@pub_paths, @pre_paths) {
+        $_ =~ /^(.*\/)[^\/]+/;
+        my $dir = $1;
+        unlink $_ if -e $_;
+        rmtree($dir);
+    }
+
 }
 
 
@@ -542,6 +584,23 @@ sub test_publish_status {
 sub test_linked_assets {
 
     my $publisher = Krang::Publisher->new();
+
+    # touch filesystem locations to simulate publishing story.
+    my @paths;
+    foreach ($story, $story2, @stories) {
+        push @paths, build_publish_paths($_);
+        push @paths, build_preview_paths($_);
+    }
+    foreach(@media) {
+        push @paths, $_->preview_path(), $_->publish_path();
+    }
+    foreach (@paths) {
+        $_ =~ /^(.*\/)[^\/]+/;
+        my $dir = $1;
+        mkpath($dir, 0, 0755);
+        `touch $_`;
+    }
+
 
     # test that asset_list(story) returns story.
     my $publish_list = $publisher->asset_list(story => $story, mode => 'preview', version_check => 1);
@@ -680,6 +739,14 @@ sub test_linked_assets {
 
     $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
     test_publish_list($publish_list, \%expected);
+
+    # cleanup
+    foreach (@paths) {
+        $_ =~ /^(.*\/)[^\/]+/;
+        my $dir = $1;
+        unlink $_ if -e $_;
+        rmtree($dir);
+    }
 
 }
 
