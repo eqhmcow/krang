@@ -108,6 +108,17 @@ sub save {
     my $self = shift;
     my $dbh = dbh;
 
+    # check for valid object type and valid action
+    my %valid_types = map {$_ => 1} OBJECT_TYPES;
+    my %valid_actions = map {$_ => 1} ACTIONS;
+    my @invalid;
+
+    push @invalid, $self->{object_type} unless exists $valid_types{$self->{object_type}};
+    push @invalid, $self->{action} unless exists $valid_actions{$self->{action}};
+
+    croak("The following parameters are invalid: '" .
+          join("', '", @invalid) . "'") if @invalid;
+
     my $time = localtime();   
     $self->{timestamp} = $time->mysql_datetime();
  
@@ -128,7 +139,7 @@ sub add_history {
 
     $history->{version} = $object->version() if (($args{action} eq 'save') || ($args{action} eq 'revert'));
     $history->{user_id} = $session{user_id};
-    
+   
     my $object_type = ref $object;
     $history->{object_type} = $object_type;
   
