@@ -162,11 +162,12 @@ sub _build_url {
 # map simple fields to Krang equivalents
 sub _map {
     my ($self) = @_;
+    my $data = delete $self->{data} || '';
 
     $self->{version} = 1;
     $self->{template_id} = delete $self->{id};
     ($self->{filename} = delete $self->{file_name}) =~ s#^/##;
-    $self->{content} = decode_base64 delete $self->{data};
+    $self->{content} = $data ? decode_base64($data) : $data;
     $self->{creation_date} = localtime;
 
     my $path = delete $self->{category};

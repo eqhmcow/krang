@@ -100,7 +100,7 @@ sub new {
 
     for my $c(@{$ref->{category}}) {
         # skip root categories, created by the Site object????
-        next if ($c->{path} eq '/' || exists $parent_info{$c->{path}});
+        next if exists $parent_info{$c->{path}};
 
         $c = bless($c, $pkg);
         $c->_fixup_object;
@@ -207,14 +207,21 @@ sub _fixup_object {
         $self->{parent_path} = Krang::BricLoader::Site->get_url($path);
         $self->{site_id} = Krang::BricLoader::Site->get_site_id($path);
     } else {
-        # set parent path
+        # calculate parent lookup/mapping path
         (my $lookup_path = $path) =~ s#/\Q$self->{dir}\E$##;
+
+        # '/' is the only top-level category in single site installs
+        # thus if $lookup_path eq '' $path must be a direct subcategory
+        # of '/' :)
+        $lookup_path = '/'
+          if ($self->{dir} ne '' && $lookup_path eq '' &&
+              not Krang::BricLoader::Site->multiple_sites);
 
         # get parent_info hash
         my $info = $parent_info{$lookup_path};
 
-        croak("No info about category with parent_path " .
-              "'$self->{parent_path}'.") unless ref $info eq 'HASH';
+        croak("No info about category with precalculated parent_path " .
+              "'$lookup_path'.") unless ref $info eq 'HASH';
 
         # set parent_id, parent_path, site_id
         $self->{parent_id} = $info->{category_id};
