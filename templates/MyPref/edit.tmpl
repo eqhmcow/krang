@@ -10,16 +10,6 @@ function check_match() {
         document.forms["edit_pref_form"].submit();
     }
 }
-
-function checkall(checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
-}
-
 </script>
 <table border="0" cellpadding="2" cellspacing="0" width="100%">
 <tr class="dark-bar">
@@ -52,57 +42,4 @@ function checkall(checkbox, prefix) {
         </tr></table>
 
 <div class="button-bar"><input type="button" value="Commit Changes" onclick="check_match()" class="button"></div></form>
-<table border="0" cellspacing="0" cellpadding="8" width="100%">
-<tmpl_if alert_loop>
-<tr><td>Current Alerts</td></tr>
-<form name="current_alert_form" method="post">
-<input type="hidden" name="rm" value="delete_alerts" override='1'>
-<tr><td>
-<table cellspacing="0" width="100%" cellpadding="2">
-<tr><td width="160" class="form-head">Action</td><td class="form-head" width="300">Site/Category</td><td class="form-head" width="55">Desk</td><td align="right" class="form-head"><input type="checkbox" name="checkallbox" value="1"
-onClick="checkall(this, 'alert_delete_list')"></td></tr></table>
-
-    <table cellspacing="0" width="100%" class="form-cell">
-	 <tmpl_loop alert_loop>
-<tr>
-<td class="form-cell" width="160"><tmpl_var action></td>
-<td class="form-cell" width="300"><tmpl_var category></td>
-<td class="form-cell" width="55"><tmpl_var desk></td>
-<td class="form-cell" align="right"><input type="checkbox" name="alert_delete_list" value="<tmpl_var ESCAPE=HTML alert_id>"></td>
-</tr></tmpl_loop></table>
-</td></tr></table>
-
-
-<div class="button-bar"><input type="button" value="Delete Checked" onclick="submit()" class="button"></div>
-<table border="0" cellspacing="0" cellpadding="8" width="100%">
-
-<tmpl_else>
-<tr><td>No Current Alerts</td></tr></tmpl_if>
-</form>
-<form name="add_alert_form" method="post">
-<tr><td>
-<table cellspacing="0" width="100%" cellpadding="2">
-<input type="hidden" name="rm" value="add_alert" override='1'>
-      <tr class="form-head">
-          <td width="160" align="left">Add New Alert</td><td>&nbsp;</td>
-      </tr></table>
-		<table cellspacing="0" width="100%" class="form-cell">
-        <tr>
-            <td class="form-cell" width="160">Action:</td>
-            <td class="form-cell"><tmpl_var action_selector></td></tr>
-        <tr>
-            <td class="form-cell" width="160">Site/Category:</td>
-            <td class="form-cell"><tmpl_var category_chooser> (optional)</td></tr>
-        <tr>
-            <td class="form-cell" width="160">Desk:</td>
-            <td class="form-cell"><tmpl_var desk_selector> (optional)</td>
-</tr></table></td>
-</tr></table>
-
-<div class="button-bar"><input type="button" value="Add Alert" onclick="submit()" class="button"></div></form>
-</td>
-  <td width="1" class="line"><img width="1" height="1"></td>
-</tr>
-<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
-</table>
 <tmpl_include footer.tmpl>

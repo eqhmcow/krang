@@ -5,16 +5,14 @@ use warnings;
 
 use Carp qw(croak);
 use Krang::MyPref;
-use Krang::Alert;
 use Krang::User;
 use Krang::Message qw(add_message);
 use Krang::Session qw(%session);
-use Krang::Widget qw(category_chooser);
 
 =head1 NAME
 
-Krang::CGI::MyPref - interface to edit Krang user preferences,
-alerts and password.
+Krang::CGI::MyPref - interface to edit Krang user preferences
+ and password.
 
 =head1 SYNOPSIS
   
@@ -25,7 +23,7 @@ alerts and password.
 =head1 DESCRIPTION
 
 Krang::CGI::MyPref provides a form in which a krang user
-can view and change thier preferences and alerts.  See Krang::MyPref
+can view and change thier preferences.  See Krang::MyPref
 for which prefs are available.
 
 =head1 INTERFACE
@@ -43,8 +41,6 @@ sub setup {
     
     $self->run_modes([qw(
                             edit
-                            add_alert
-                            delete_alerts
                             update_prefs
                     )]);
 
@@ -55,7 +51,7 @@ sub setup {
 
 =item edit
 
-Displays current preferences/alerts edit form.
+Displays current preferences edit form.
 
 =cut
 
@@ -67,13 +63,6 @@ sub edit {
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
     $template->param( $error => 1 ) if $error;
     
-    my %alert_types = ( new => 'New', 
-                        save => 'Save',
-                        checkin => 'Check In',
-                        checkout => 'Check Out',
-                        publish => 'Publish',
-                        move => 'Move To' );    
-    
     my $set_sps = Krang::MyPref->get('search_page_size');
 
     $template->param(search_results_selector => scalar
@@ -81,79 +70,7 @@ sub edit {
                                          -values  => [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95 ],
                                          -default => $set_sps));
 
-    # get current alerts
-    my @current_alerts = Krang::Alert->find( user_id => $user_id );
-
-    my @alert_loop;
-    foreach my $alert (@current_alerts) {
-        my $desk = $alert->desk_id ? (Krang::Desk->find( desk_id => $alert->desk_id))[0]->name : '';
-        my $category = $alert->category_id ? (Krang::Category->find( category_id => $alert->category_id))[0]->url : '';
-
-        push (@alert_loop, {        action => $alert_types{$alert->action}, 
-                                    alert_id => $alert->alert_id,
-                                    desk => $desk,
-                                    category => $category } );
-    }
-
-    $template->param( alert_loop => \@alert_loop );
-
-    my @desks = Krang::Desk->find;
-
-    my %desk_labels;
-    foreach my $d (@desks) {
-        $desk_labels{$d->desk_id} = $d->name;
-    }
-    
-    $template->param(desk_selector => scalar 
-                    $q->popup_menu( -name    => 'desk_list', 
-                                    -values  => ['',keys %desk_labels],
-                                    -labels  => \%desk_labels ) );
-
-    $template->param(action_selector => scalar
-                    $q->popup_menu( -name    => 'action_list',
-                                    -values  => [sort keys %alert_types],
-                                    -labels  => \%alert_types ) );
-     
-    $template->param( category_chooser => category_chooser(name => 'category_id', query => $q, formname => "add_alert_form") );
- 
     return $template->output; 
-}
-
-=item add_alert() 
-
-Commits new Krang::Alert to server.
-
-=cut
-
-sub add_alert {
-    my $self = shift;
-    my $q = $self->query();
-    my %params;
-    
-    $params{user_id} = $ENV{REMOTE_USER};
-    $params{action} = $q->param('action_list');
-    $params{desk_id} = $q->param('desk_list') ? $q->param('desk_list') : 'NULL';
-    $params{category_id} = $q->param('category_id') ? $q->param('category_id') : 'NULL'; 
-  
-    # return error message on bad combination
-    add_message("bad_desk_combo"), return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
-    add_message("move_needs_desk"),  return $self->edit() if ( ($params{action} eq 'move') and ($params{desk_id} eq 'NULL') );
-    add_message("desk_requires_move"),  return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
-
-    my @found = Krang::Alert->find( %params );
-
-    if (not @found) { 
-        $params{category_id} = undef if ($params{category_id} eq 'NULL');
-        $params{desk_id} = undef if ($params{desk_id} eq 'NULL');
-
-        my $alert = Krang::Alert->new( %params );
-        $alert->save();
-        add_message("alert_added");
-    } else {
-        add_message("duplicate_alert");
-    }
- 
-    return $self->edit();
 }
 
 =item update_prefs()
@@ -178,31 +95,6 @@ sub update_prefs {
     }
  
     return $self->edit();
-}
-
-=item update_alerts()
-
-Deletes selected alerts.
-
-=cut
-
-sub delete_alerts {
-    my $self = shift;
-    my $q = $self->query();
-    my @delete_list = ( $q->param('alert_delete_list') );
-    
-    unless (@delete_list) {
-        add_message('missing_alert_delete_list');
-        return $self->edit();
-    }
-    
-    foreach my $alert_id (@delete_list) {
-        Krang::Alert->delete($alert_id);
-    }
-    
-    add_message('deleted_selected');
-    return $self->edit();
-
 }
 
 =back
