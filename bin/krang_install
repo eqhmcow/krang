@@ -3,19 +3,18 @@ use warnings;
 use strict;
 use IO::Socket;
 
-# Path to pre-req binaries
-use constant MYSQL_BIN      => 'mysql';
-use constant PERL_BIN       => $^X;
-use constant COPY_BIN       => 'cp';
-use constant CHOWN_BIN      => 'chown';
-use constant CHMOD_BIN      => 'chmod';
-use constant XARGS_BIN      => 'xargs';
-use constant FIND_BIN       => 'find';
-use constant MAKE_BIN       => 'make';
-use constant ECHO_BIN       => 'echo';
-use constant TAR_BIN        => 'tar';
-use constant IFCONFIG_BIN   => 'ifconfig';
-use constant LN_BIN         => 'ln';
+# Path to pre-req binaries, filled in by Krang::Platform->find_bin later
+our $MYSQL_BIN;
+our $PERL_BIN = $^X;
+our $COPY_BIN;
+our $CHOWN_BIN;
+our $CHMOD_BIN;
+our $XARGS_BIN;
+our $FIND_BIN;
+our $MAKE_BIN;
+our $ECHO_BIN;
+our $TAR_BIN;
+our $LN_BIN;
 
 $|++;
 
@@ -250,7 +249,7 @@ sub unpack_backup {
                           DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'));
 
     print "Unpacking backup file '$kba'.\n";
-    my $cmd = TAR_BIN . " -x" . ($kba =~ /gz$/ ? 'z' : '') . "f $kba -C $BACKUP_DIR";
+    my $cmd = "tar -x" . ($kba =~ /gz$/ ? 'z' : '') . "f $kba -C $BACKUP_DIR";
     system($cmd) && die("Error un-tarring file '$kba' to '$BACKUP_DIR'.\n");
     exit_error("FromBackup file '$kba' is not a valid Krang backup - missing conf/krang.conf.")
       unless -e catfile($BACKUP_DIR, 'conf', 'krang.conf');
@@ -328,6 +327,18 @@ sub load_platform {
     eval "use $PLATFORM;";
     die "Unable to load $PLATFORM: $@"
       if $@;
+
+    # find paths to binaries
+    $MYSQL_BIN = $PLATFORM->find_bin(bin => 'mysql');
+    $COPY_BIN  = $PLATFORM->find_bin(bin => 'cp');
+    $CHOWN_BIN = $PLATFORM->find_bin(bin => 'chown');
+    $CHMOD_BIN = $PLATFORM->find_bin(bin => 'chmod');
+    $XARGS_BIN = $PLATFORM->find_bin(bin => 'xargs');
+    $FIND_BIN  = $PLATFORM->find_bin(bin => 'find');
+    $MAKE_BIN  = $PLATFORM->find_bin(bin => 'make');
+    $ECHO_BIN  = $PLATFORM->find_bin(bin => 'echo');
+    $TAR_BIN   = $PLATFORM->find_bin(bin => 'tar');
+    $LN_BIN    = $PLATFORM->find_bin(bin => 'ln');
 }
 
 sub check_prereqs {
@@ -369,8 +380,8 @@ sub check_prereqs {
 
     # MySQLRootPassword must be valid, and MySQL should be running
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
-    my $mysql_bin = MYSQL_BIN;
-    my $test_mysql = ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
+    my $mysql_bin = $MYSQL_BIN;
+    my $test_mysql = $ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
     $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
     $test_mysql .= " 2>&1";
     my $mysql_test_output = `$test_mysql`;
@@ -388,7 +399,7 @@ sub check_prereqs {
 
     # InstanceDBName should NOT exist in MySQL
     my $InstanceDBName = $options{InstanceDBName};
-    my $db_exists_test = ECHO_BIN ." 'select 1' | $mysql_bin -uroot";
+    my $db_exists_test = $ECHO_BIN ." 'select 1' | $mysql_bin -uroot";
     $db_exists_test .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
     $db_exists_test .= " $InstanceDBName 2>&1";
     my $db_exists_test_output = `$db_exists_test`;
@@ -434,7 +445,7 @@ sub prompt {
 
 sub create_mysql_user {
     # MySQLRootPassword must be valid, and MySQL should be running
-    my $mysql_bin = MYSQL_BIN;
+    my $mysql_bin = $MYSQL_BIN;
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
     my $InstanceDBName = $options{'InstanceDBName'};
     my $DBUser = $options{'DBUser'};
@@ -443,7 +454,7 @@ sub create_mysql_user {
     my $grant = "grant all on $InstanceDBName\.* to $DBUser\@localhost";
     $grant .= " identified by '$DBPass'" if ($DBPass);
 
-    my $mysql_grant = ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
+    my $mysql_grant = $ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
     $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
 
     print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
@@ -458,7 +469,7 @@ sub create_mysql_user {
         $grant = "grant all on $InstanceDBName\.* to $DBUser\@localhost";
         $grant .= " identified by '$DBPass'" if ($DBPass);
         
-        my $mysql_grant = ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
+        my $mysql_grant = $ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
         $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
         print "Granting MySQL access to user '$DBUser' for database '$InstanceDBName'\n";
         system($mysql_grant) && exit_error("Can't grant DB access to $DBUser for $InstanceDBName.");
@@ -485,7 +496,7 @@ sub install_krang {
     print "Installing Krang files into '$InstallPath'\n";
 
     chdir($ENV{KRANG_ROOT});
-    my $copy = COPY_BIN ." -r * $InstallPath\/";
+    my $copy = $COPY_BIN ." -r * $InstallPath\/";
     system($copy) && die("Can't copy: $!");
 
     # remove scripts that won't do anything useful in an installed
@@ -495,25 +506,25 @@ sub install_krang {
     print "  Fixing ownership\n";
     my $KrangUser = $options{KrangUser};
     my $KrangGroup = $options{KrangGroup};
-    my $chown = CHOWN_BIN ." -R $KrangUser\:$KrangGroup $InstallPath";
+    my $chown = $CHOWN_BIN ." -R $KrangUser\:$KrangGroup $InstallPath";
     system($chown) && die("Can't update ownership: $!");
 
     # For commands
     my $chmod;
 
     print "  Setting group write permissions\n";
-    $chmod = CHMOD_BIN ." -R g+w $InstallPath";
+    $chmod = $CHMOD_BIN ." -R g+w $InstallPath";
     system($chmod) && die("Can't set group write permissions: $!");
 
     print "  Fixing file read permissions\n";
-    $chmod = CHMOD_BIN ." -R +r $InstallPath";
+    $chmod = $CHMOD_BIN ." -R +r $InstallPath";
     system($chmod) && die("Can't fix file read permissions: $!");
 
     print "  Fixing directory read permissions\n";
-    $chmod = FIND_BIN ." $InstallPath -type d | ". XARGS_BIN ." ". CHMOD_BIN ." +rx";
+    $chmod = $FIND_BIN ." $InstallPath -type d | ". $XARGS_BIN ." ". $CHMOD_BIN ." +rx";
     system($chmod) && die("Can't fix directory read permissions: $!");
 
-    print "  Setting #! on scripts to " . PERL_BIN . "\n";
+    print "  Setting #! on scripts to " . $PERL_BIN . "\n";
     opendir(DIR, catdir($InstallPath, "bin")) or die $!;
     my @scripts = grep { -f $_ }
                     map { catfile($InstallPath, "bin", $_) } readdir(DIR);
@@ -522,7 +533,7 @@ sub install_krang {
         open(SOURCE, $script) or die "Unable to $script: $!";
         my $source = do { local $/; <SOURCE> };
 
-        $source =~ s/^#!.*$/#!${\ PERL_BIN}/m or
+        $source =~ s/^#!.*$/#!$PERL_BIN/m or
           die "Couldn't find shebang line in $script to replace!";
 
         open(SOURCE, '>', $script) or die "Unable to write $script: $!";
@@ -533,15 +544,15 @@ sub install_krang {
     print "  Setting execute bits on scripts\n";
 
     # Set all *.pl files
-    $chmod = FIND_BIN ." $InstallPath -type f -name '*.pl' | ". XARGS_BIN ." ". CHMOD_BIN ." +x";
+    $chmod = $FIND_BIN ." $InstallPath -type f -name '*.pl' | ". $XARGS_BIN ." ". $CHMOD_BIN ." +x";
     system($chmod) && die("Can't set execite bits: $!");
 
     # Set all *.cgi files
-    $chmod = FIND_BIN ." $InstallPath -type f -name '*.cgi' | ". XARGS_BIN ." ". CHMOD_BIN ." +x";
+    $chmod = $FIND_BIN ." $InstallPath -type f -name '*.cgi' | ". $XARGS_BIN ." ". $CHMOD_BIN ." +x";
     system($chmod) && die("Can't set execite bits: $!");
 
     # Set all files in krang/bin/*
-    $chmod = CHMOD_BIN ." +x $InstallPath/bin/*";
+    $chmod = $CHMOD_BIN ." +x $InstallPath/bin/*";
     system($chmod) && die("Can't set execite bits: $!");
 
     print "  Krang files installed.\n";
@@ -662,7 +673,7 @@ sub update_password {
                             \$user->save();
                            );
     my $update_admin_pw = "KRANG_ROOT='$InstallPath' PERL5LIB='$InstallPath/lib' ";
-    $update_admin_pw .= PERL_BIN ." -MKrang::Script -MKrang::User -e '$update_pw_perl'";
+    $update_admin_pw .= $PERL_BIN ." -MKrang::Script -MKrang::User -e '$update_pw_perl'";
     system($update_admin_pw) && die("Error changing admin password.\n");    
 }
 
@@ -687,7 +698,7 @@ sub make_test {
     my $InstallPath =  $options{InstallPath};
     chdir($InstallPath);
 
-    my $make_bin = MAKE_BIN;
+    my $make_bin = $MAKE_BIN;
     my $make_test = "KRANG_ROOT='' PERL5LIB='' KRANG_PASSWORD='$AdminPassword' $make_bin test";
     system($make_test) && die("Error running tests: $!");
 }
@@ -800,7 +811,7 @@ sub _check_element_set {
     return 1 if -d catfile($ENV{KRANG_ROOT}, "element_lib", $set);
 
     foreach my $addon (@{$options{WithAddon}}) {
-        my $tar = TAR_BIN . " t" . ($addon =~ /gz$/ ? "z" : "") . "f $addon";
+        my $tar = $TAR_BIN . " t" . ($addon =~ /gz$/ ? "z" : "") . "f $addon";
         my $contents = `$tar`;
         if ($contents =~ m!element_lib/$set/set.conf!) {
             return 1;
