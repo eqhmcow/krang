@@ -14,6 +14,7 @@ our %ORDER_BY_FIELD = (
                        Krang::Contrib  => 'contrib_id',
                        Krang::Group    => 'group_id',
                        Krang::List     => 'list_id',
+                       Krang::ListGroup => 'list_group_id',
                        Krang::Media    => 'media_id',
                        Krang::Site     => 'site_id',
                        Krang::Story    => 'story_id',
