@@ -193,9 +193,36 @@ The user may still associate contributors with stories or media, but
 they cannot access the edit screen for existing contributors or delete 
 contributors.
 
-
 =back
 
+
+=head2 How Permissions Combine
+
+Generally speaking, permissions combine in two ways:  Group-wise and
+realm-wise.
+
+A user may be a member of more than one group.  When evaluating
+permissions, multiple group permissions are combined according to the
+principles of "most priviledge".  This is the nature of group-wise
+combination of permissions.  If one of a user's groups allows them to
+perform an action, then they are deemed to be allowed to perform that
+action.
+
+Different security realms have intersecting functions.  For example,
+category permission affects access to stories, as does asset
+permissions.  When evaluating permission intersection between security
+realms, the principle of "least priviledge" should be used.  This is
+the nature of realm-wise permission combination.
+
+For example, if category permissions allow a user to edit a particular
+story, but that user is prohibited because of asset security
+(asset_story == "read-only"), then they are deemed to be prohibited
+from editing that story.  Similarly, if category permissions prohibit
+a user from seeing a particular piece of media, but asset permissions
+allow the user to edit media, the user may not see that media.
+
+Realm-wise permission mostly affects the intersection of category
+permissions and asset permissions.
 
 
 =head1 Implementation
@@ -219,11 +246,6 @@ Influence UI based on access to functionality.
 =back
 
 
-It is through these two mechanisms that Krang permissions are implemented.
-
-
-=head2 API security
-
 The purpose of API security is to limit access to Krang objects.  This
 mechanism is implemented by modifying the Krang object modules (e.g.,
 Krang::Media, Krang::Story, etc.).
@@ -234,12 +256,17 @@ when the user tries to perform an operation they are not allowed to
 perform, such as calling save() on an object to which they have
 "Read-Only" access.
 
-The implementation varies according to the security realm:
+The purpose of UI security is to prevent the web interface from
+displaying options to which the user does not have access.  The
+permissions system provides access to security settings so that user
+interface elements may hide functions as necessary.
 
-=over 4
+Following describes how API and UI security are to be implemented for
+the four major permissions systems in Krang:  Sites/Categories,
+Assets, Desks, and Administration permissions.
 
 
-=item * Sites/Categories
+=head2 Sites/Categories
 
 Site/categories are the most complex aspect of the Krang
 permissions system.  Because categories touch so many different parts
@@ -413,41 +440,27 @@ to rebuild the cache table it is recommended that the Krang instance be shut
 down first.
 
 
-=item * Assets
+=head2 Assets
 
 In Krang, "assets" refer to stories, media, or templates.  Permissions
 are assigned independently to these three different asset types, for
 each group.
 
-Access to the permission settings are provided via the Krang::User
-module.  For each asset type, a group may be granted "edit",
-"read-only", or "hide" access.
+Access to the permission settings are provided via a function in
+Krang::Group --
 
-A user may be a member of more than one group.  The asset permissions
-work on a basis of "most permissive", meaning that if a user is
-allowed to "edit" an asset because of their membership in one group,
-they are then allowed to edit that asset, regardless of whether
-another group of which they are a member does not have "edit" access.
+  my %asset_perms = Krang::Group->user_asset_permissions($user);
 
-These asset permission settings are implemented as enumerated fields
-in the "permission_groups" table.  In order to more easily use these
-permissions, they are logically converted into two Boolean permissions
-for each asset type:  may_edit and may_see.  For example:
+This method will combine the permissions for all the groups to which
+the specified $user is assigned and return a hash of net permissions.
 
- If asset_story == edit, then...
-   ...may_edit_story == 1
-   ...may_see_story == 1
-
- If asset_media == read-only, then...
-   ...may_edit_media == 0
-   ...may_see_media == 1
-
- If asset_template == hide, then...
-   ...may_edit_template == 0
-   ...may_see_template == 0
-
-These six properties are provided as read-only methods of Krang::User
-objects.
+For each asset type, a group may be granted "edit", "read-only", or
+"hide" access.  A user may be a member of more than one group.  The
+asset permissions work on a basis of "most permissive", meaning that
+if a user is allowed to "edit" an asset because of their membership in
+one group, they are then allowed to edit that asset, regardless of
+whether another group of which they are a member does not have "edit"
+access.
 
 Functionally, there are two significant differences between asset
 permissions and category permissions.  The first difference is that
@@ -463,8 +476,6 @@ called.  These methods include:
   checkout()
   checkin()
 
-This methods should all croak() if "may_edit_media" is false.
-
 The second difference between category and asset permissions is that
 "hide" permissions for a particular asset class have no effect on
 the behavior of the find() method.  Unlike category permissions which
@@ -478,147 +489,107 @@ edit stories must be able to see the media associated with the
 stories.  If the behavior of find() were modified to hide all media,
 the story interface would break.
 
-Instead, the semantics of "hide" with regards to assets will be that
+Instead, the sole function of "hide" asset security is to remove
 the link to the web interfaces to managing the hidden assets will be 
-removed from view.  This is discussed more in the UI section of this 
-document.
+removed from view.  It is the respnsibility of the UI to read asset
+permissions for the current user and show or hide links to
+functionality according to these permissions.
 
 
-=item * Desks
+=head2 Desks
 
+Desks, in Krang, are used to implement CMS work flow.  Stories may be
+moved from one desk to another where different sets of users may
+interact with them.  For example, consider the following desks:
 
+  1. Edit
+  2. Publish
 
-=item * Administration permissions
+New stories might be created and manipulated on the "Edit" desk.  When
+the staff who work on the Edit desk believe that a story is ready to
+be published they may move the story to the "Publish" desk.  Once on
+the Publish desk, the story might be reviewed by a more specialized
+staffer for fact-checking or final editing.  From that desk, stories
+(once approved) would be published to the live site.
 
+Desk permissions are implemented via the "desk_group_permission"
+table, which joins to the "permission_group" table.  For each
+desk/group one of the following security levels may be assigned:
+"edit", "read-only", or "hide".
 
+Because users may be members of more than one group, permissions must
+be combined.  This is done in accordance to the principle of "most
+privilege".  In other words, if a user is assigned to the following
+groups:
 
-=back
+   Group A =>  Desk 1 => "edit"
+               Desk 2 => "read-only"
+               Desk 3 => "read-only"
 
+   Group B =>  Desk 1 => "read-only"
+               Desk 2 => "hide"
+               Desk 3 => "edit"
 
-=head2 User Interface (UI) security
+In this case, the resultant permissions for this user will be:
 
-The purpose of UI security is to inform the various user interface
-applications so that features to which the user does not have access
-are hidden from view.  The goal of hiding these inaccessible features
-is to improve ease of use for the typical user.
+   Desk 1 => "edit"
+   Desk 2 => "read-only"
+   Desk 3 => "edit"
 
-The UI security is expected to be back-stopped by the API security.
-There are two reasons for this dual implementation:  First is defense
-in depth.  Unauthorized actions should not simply be hidden from view
--- they should be blocked from execution.  This prevents a malicious
-user who has reversed engineered UI functionality from issuing
-commands which should not be allowed.
+For convenience, a class method is provided:
 
-The second reason is quality assurance.  Both the UI and the API
-should implement the same logical authorization rules.  If the UI
-allows some functionality which is not permitted, the API will catch
-the error and croak().  This will offer a better opportunity to catch
-flaws in the software system before they create corrupted records in
-the database.
+  my %desk_perms = Krang::Group->user_desk_permissions($user);
 
+The hash which is returned will contain a map of desks to security
+levels.  This method is expected to be called wherever security
+decisions regarding desks must be made.
 
-=over 4
+In the Krang::Story API, the move_to_desk() is expected to respect
+desk permissions.  If a user attempts to move a story FROM a desk to
+which they do NOT have "edit" access, move_to_desk() should croak().
+If a user attempts to move a story TO a desk to which they have "hide"
+access, they move_to_desk() should croak().  For example, consider the
+user who has the following permissions:
 
+  Desk    => Security Level
+ ---------------------------------
+  Edit    => "edit"
+  Publish => "read-only"
 
-=item * Sites/Categories
-
-Site/categories affect a most of the objects in the Krang system.  The
-web UI needs to decide whether or not to display buttons for write
-operations for a given object.  In order to inform the UI code of the
-ability to edit a particular object, every object should implement a
-method, may_edit(), which returns "1" or "0" indicating whether an
-object is editable or not, respectively.
-
-In practice, this would effect list views which display "edit" buttons
-or check boxes to delete or checkout objects.  This would be
-implemented via the Krang::HTMLPager row handler function.  For
-example:
-
-  sub row_handler {
-    my ($row_hashref, $row_obj) = @_;
-
-    my @commands = qw(view log);
-
-    # Add "edit" function if user may edit
-    if ($row_obj->may_edit) {
-      unshift(@commands, 'edit');
-    }
-
-    # Build HTML for commands
-    my $row_id = $row_obj->story_id();
-    my @commands_html = ();
-    foreach my $command (@commands) {
-      my $href = "javascript:$command('$row_id')";
-      my $link = "<a href=\"$href\">$command</a>";
-      push(@commands_html, $link);
-    }
-
-    # Set up command column
-    my $command_column_html = join("&nbsp;|&nbsp;", @commands_html);
-    $row_data->{command_column} = $command_column_html;
-
-    # ...Rest of row handler here...
-  }
-
-This same technique can be used to remove delete and checkout
-check boxes from rows which are not editable.
-
-
-=item * Assets
-
-As described previously in this document, for each asset type, a 
-group may be granted "edit", "read-only", or "hide" access which 
-are accessible via logical Boolean values stored in the %session:
-
-  $session{permissions}->{may_edit_story};
-  $session{permissions}->{may_see_story};
-
-  $session{permissions}->{may_edit_media};
-  $session{permissions}->{may_see_media};
-
-  $session{permissions}->{may_edit_template};
-  $session{permissions}->{may_see_template};
-
-Unlike category permissions, asset permissions UI security is 
-not entirely back-stopped by API security.  The "edit" functions are
-secured in the API, but "hide" security is exclusively the
-responsibility of the UI to implement.
-
-The "hide" permission setting is implemented, for all asset classes,
-as a Boolean "may see" variable, as specified above.  It is expected
-that this will be respected by the "left navigation" system.  If
-"may_see_media" is false ("0"), the left navigation system should hide
-the links to "New Media" and "Find Media".  The "may_see_story" and
-"may_see_template" should function similarly.
-
-There may be other places where it is intuitive to hide functional
-links based on "may_see_*" values.  It is *NOT* expected that a false
-"may_see_*" value would hide a record from display in another object
-view of which the hidden object class is a constituent.  When in
-doubt, consult the paper prototyping team.
-
-The "may_edit_*" properties function similarly to "may_see_*", but
-they have more complex requirements.  For example, if "may_edit_media"
-is false, this should result in all interfaces to adding, editing, or
-deleting media be hidden from view.  This affects multiple
-applications throughout Krang, such as Krang::CGI::Story, which
-provide contextual links to manipulate media objects.
-
-Unlike "may_see_*", "may_edit_*" is back-stopped by API security.  If
-a link to a write operation is made accessible to a user who does not
-have "edit" permissions to that particular object, an internal server
-error will result if the user clicks on that button.
+This user can move stories to the Edit or Publish desk.  However, they
+CANNOT move stories FROM the Publish desk.  It is the responsibility
+of the UI to hide links to desk functionality which is prohibited by
+the desk permissions system.
 
 
 
-=item * Desks
+=head2 Administration permissions
 
+Administration permissions affect access to functionality throughout
+Krang.  These permissions are stored as Boolean (0 or 1) values within
+the "permission_group" table.
 
+As with desks and assets, the multiple group affiliations by a user
+must be reconciled assorting to the principle of "most privilege".  To
+simplify and encapculate this function, the following method is provided:
 
-=item * Administration permissions
+  my %admin_perms = Krang::Group->user_admin_permissions($user);
 
+This method will combine admin permissions for a particular user and
+return a hash containing permission types as keys and Boolean values
+allowing (1) or disallowing (0) that function.  The admin permission
+keys are specified elsewhere in this document.
 
+It is the function of the API to croak() if a call is made to an admin
+function to which the user does not have access.  For example, if a
+user has access to manage users but does not have access to create
+users who are in permission groups other than those affiliated with
+the current user (admin_users_limited == 1), save() will croak().
 
-=back
-
+It is the responsibility of the UI to use the admin permissions to
+hide links to functionality to which the user does not have access.
+For example, users who do not have access to manage users (admin_users
+== 0) should not see the link to the User manager application.  Users
+who do not have access to publish (may_publish == 0) should not see
+"Publish" buttons anywhere in the UI.
 

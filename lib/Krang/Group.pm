@@ -91,6 +91,11 @@ Krang::Group - Interface to manage Krang permissions
   Krang::Group->add_desk_permissions($desk);
   Krang::Group->delete_desk_permissions($desk);
 
+  # Evaluate permissions for a particular user
+  my %desk_perms = Krang::Group->user_desk_permissions($user);
+  my %asset_perms = Krang::Group->user_asset_permissions($user);
+  my %admin_perms = Krang::Group->user_admin_permissions($user);
+
 
 =head1 DESCRIPTION
 
@@ -762,6 +767,151 @@ sub delete_desk_permissions {
               {RaiseError=>1}, $desk_id );
 }
 
+
+
+
+
+=item user_desk_permissions()
+
+  my %desk_perms = Krang::Group->user_desk_permissions($user);
+
+This method is expected to be used by Krang::Story and any other 
+modules which need to know if a user has access to a particular desk.
+This method returns a hash table which maps desk_id values to 
+security levels, "edit", "read-only", or "hide".
+
+This method combines the permissions of all the groups with which
+the user is affiliated.  Group permissions are combined using
+a "most privilege" algorithm.  In other words, if a user is 
+assigned to the following groups:
+
+   Group A =>  Desk 1 => "edit"
+               Desk 2 => "read-only"
+               Desk 3 => "read-only"
+
+   Group B =>  Desk 1 => "read-only"
+               Desk 2 => "hide"
+               Desk 3 => "edit"
+
+In this case, the resultant permissions for this user will be:
+
+   Desk 1 => "edit"
+   Desk 2 => "read-only"
+   Desk 3 => "edit"
+
+=cut
+
+
+sub user_desk_permissions {}
+
+
+
+
+=item user_asset_permissions()
+
+  my %asset_perms = Krang::Group->user_asset_permissions($user);
+
+This method is expected to be used by all modules which need to know 
+if a user has access to a particular asset class.  This method returns 
+a hash table which maps asset types ("story", "media", and "template") 
+to security levels, "edit", "read-only", or "hide".
+
+This method combines the permissions of all the groups with which
+the user is affiliated.  Group permissions are combined using
+a "most privilege" algorithm.  In other words, if a user is 
+assigned to the following groups:
+
+   Group A =>  Story    => "read-only"
+               Media    => "edit"
+               Template => "read-only"
+
+   Group B =>  Story    => "edit"
+               Media    => "read-only"
+               Template => "hide"
+
+In this case, the resultant permissions for this user will be:
+
+   Story    => "edit"
+   Media    => "edit"
+   Template => "read-only"
+
+=cut
+
+
+sub user_asset_permissions {}
+
+
+
+
+=item user_admin_permissions()
+
+  my %admin_perms = Krang::Group->user_admin_permissions($user);
+
+This method is expected to be used by all modules which need to know 
+if a user has access to a particular administrative function.
+
+This method returns a hash table which maps admin functions
+to Boolean values (1 or 0) designating whether or not the user is 
+allowed to use that particular function.  Following is the list of 
+functions:
+
+  may_publish
+  admin_users
+  admin_users_limited
+  admin_groups
+  admin_contribs
+  admin_sites
+  admin_categories
+  admin_jobs
+  admin_desks
+
+This method combines the permissions of all the groups with which
+the user is affiliated.  Group permissions are combined using
+a "most privilege" algorithm.  In other words, if a user is 
+assigned to the following groups:
+
+   Group A => may_publish         => 1
+              admin_users         => 1
+              admin_users_limited => 1
+              admin_groups        => 0
+              admin_contribs      => 1
+              admin_sites         => 0
+              admin_categories    => 1
+              admin_jobs          => 1
+              admin_desks         => 0
+
+
+   Group B => may_publish         => 0
+              admin_users         => 1
+              admin_users_limited => 0
+              admin_groups        => 1
+              admin_contribs      => 0
+              admin_sites         => 0
+              admin_categories    => 0
+              admin_jobs          => 1
+              admin_desks         => 1
+
+In this case, the resultant permissions for this user will be:
+
+   may_publish         => 1
+   admin_users         => 1
+   admin_users_limited => 0
+   admin_groups        => 1
+   admin_contribs      => 1
+   admin_sites         => 0
+   admin_categories    => 1
+   admin_jobs          => 1
+   admin_desks         => 1
+
+
+N.B.:  The admin function "admin_users_limited" is deemed to be
+a high privilege when it is set to 0 -- not 1.
+
+
+=cut
+
+
+sub user_admin_permissions {}
 
 
 
