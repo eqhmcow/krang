@@ -10,14 +10,17 @@ use Krang::Script;
 
 BEGIN {use_ok('Krang::Schedule');}
 
-our $date = localtime;
+my $date = localtime;
+my $day_factor = $date->day_of_week == 0 ? 6 : $date->day_of_week - 1;
+my $hour_factor = $date->hour == 0 ? 19 : $date->hour - 4;
+my $min_factor = $date->minute == 0 ? 56 : $date->minute - 4;
 
 # I.A
 our $s1 = Krang::Schedule->new(action => 'publish',
                               object_id => 1,
                               object_type => 'story',
                               repeat => 'weekly',
-                              day_of_week => $date->day_of_week - 1,
+                              day_of_week => $day_factor,
                               hour => $date->hour,
                               minute => 15);
 
@@ -45,7 +48,7 @@ our $s4 = Krang::Schedule->new(action => 'publish',
                               object_type => 'story',
                               repeat => 'weekly',
                               day_of_week => $date->day_of_week,
-                              hour => $date->hour - 4,
+                              hour => $hour_factor,
                               minute => 15);
 
 # I.D.ii
@@ -54,7 +57,7 @@ our $s5 = Krang::Schedule->new(action => 'publish',
                               object_type => 'story',
                               repeat => 'weekly',
                               day_of_week => $date->day_of_week + 1,
-                              hour => $date->hour - 4,
+                              hour => $hour_factor,
                               minute => 15);
 
 # I.F
@@ -73,7 +76,7 @@ our $s7 = Krang::Schedule->new(action => 'publish',
                               repeat => 'weekly',
                               day_of_week => $date->day_of_week,
                               hour => $date->hour,
-                              minute => $date->minute - 4);
+                              minute => $min_factor);
 
 # I.G.ii
 our $s8 = Krang::Schedule->new(action => 'publish',
@@ -82,7 +85,7 @@ our $s8 = Krang::Schedule->new(action => 'publish',
                               repeat => 'weekly',
                               day_of_week => $date->day_of_week,
                               hour => $date->hour + 1,
-                              minute => $date->minute - 4);
+                              minute => $min_factor);
 
 # I.H
 our $s9 = Krang::Schedule->new(action => 'publish',
@@ -98,8 +101,8 @@ our $s10 = Krang::Schedule->new(action => 'publish',
                                object_id => 1,
                                object_type => 'story',
                                repeat => 'daily',
-                               hour => $date->hour - 4,
-                               minute => $date->minute - 4);
+                               hour => $hour_factor,
+                               minute => $min_factor);
 
 # II.B
 our $s11 = Krang::Schedule->new(action => 'publish',
@@ -115,7 +118,7 @@ our $s12 = Krang::Schedule->new(action => 'publish',
                                object_type => 'story',
                                repeat => 'daily',
                                hour => $date->hour,
-                               minute => $date->minute - 4);
+                               minute => $min_factor);
 
 # II.E
 our $s13 = Krang::Schedule->new(action => 'publish',
@@ -130,18 +133,26 @@ our $s14 = Krang::Schedule->new(action => 'publish',
                                object_id => 1,
                                object_type => 'story',
                                repeat => 'hourly',
-                               minute => $date->minute - 4);
+                               minute => $min_factor);
 
 # III.B
 our $s15 = Krang::Schedule->new(action => 'publish',
                                object_id => 1,
                                object_type => 'story',
                                repeat => 'hourly',
-                               minute => $date->minute + 4);
+                               minute => $date->minute);
 
 {
     no strict;
     for (1..15) {
         isa_ok(${"s$_"}, 'Krang::Schedule');
+        my $obj = ${"s$_"}->save();
+        isa_ok($obj, 'Krang::Schedule');
     }
 }
+
+eval {Krang::Schedule->run()};
+is($@ eq '', 1, 'run() test did not fail');
+
+# delete
+is($_->delete, 1, 'deletion test') for Krang::Schedule->find;

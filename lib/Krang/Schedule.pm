@@ -80,6 +80,7 @@ mail-sending scheduled jobs.
 
 =cut
 
+BEGIN {use constant DEBUG => $ENV{DEBUG} || 0;}
 
 #
 # Pragmas/Module Dependencies
@@ -92,8 +93,6 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
-use Exception::Class
-  (Krang::Schedule::Duplicate => {fields => 'schedule_id'});
 use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
@@ -101,6 +100,7 @@ use Time::Seconds;
 # Internal Modules
 ###################
 use Krang::DB qw(dbh);
+use Krang::Log qw/critical debug info/;
 use Krang::Media;
 use Krang::Story;
 use Krang::Template;
@@ -126,13 +126,13 @@ use constant SCHEDULE_RW => qw(action
 # Globals
 ##########
 our %action_map = (media => {expire => '',
-                             mail => '',
+                             alert => '',
                              publish => ''},
                    story => {expire => '',
-                             mail => '',
+                             alert => '',
                              publish => ''},
                    user => {expire => '',
-                            mail => '',
+                            alert => '',
                             publish => ''},);
 
 # Lexicals
@@ -164,7 +164,7 @@ Create a new schedule object.  The following keys are required:
 
 =item C<action>
 
-The action to be performed.  Must be 'publish', 'expire' or 'mail'.
+The action to be performed.  Must be 'publish', 'expire' or 'alert'.
 
 =item C<object_type>
 
@@ -215,6 +215,15 @@ to be performed.
 
 =cut
 
+# de facto constructor:
+# It croaks if an unexpected argument is passed or if fields necessary for a
+# particular schedule type are not passed.  The rules are as follows:
+# -if a 'repeat' value of never is passed, a 'date' arg must be supplied with a
+#  values that is a Time::Piece object
+# -for all other acceptable values for 'repeat', the 'minute' arg must be
+#  supplied
+# -weekly and daily schedules also require an 'hour' argument
+# -weekly schedules require a 'day_of_week' arg
 sub init {
     my $self = shift;
     my %args = @_;
@@ -267,6 +276,8 @@ sub init {
 }
 
 
+# The all-important date calculating sub..
+# It returns a datetime to be stored in the object's next_run field
 sub _next_run {
     my ($now, $repeat, $day_of_week, $hour, $minute) = @_;
     my $next = localtime;
@@ -360,7 +371,9 @@ sub _next_run {
 }
 
 
-=item C<< $sched->delete >>
+=item C<< $success = $sched->delete >>
+
+=item C<< $success = Krang::Schedule->delete( $schedule_id ) >>
 
 Removes the schedule from the database.  It will never run again.
 This happens to repeat => 'never' schedules automatically after they
@@ -369,36 +382,12 @@ are run.
 =cut
 
 sub delete {
-}
-
-
-=item C<< $sched->duplicate_check >>
-
-This method is called by save() to determine whether a successful save will
-result in two duplicate Schedule objects.  If a duplicate is found a
-Krang::Schedule::Duplicate exception is thrown.  The 'schedule_id' field
-of the exception indicates the Schedule object the would have been duplicated.
-
-=cut
-
-sub duplicate_check {
     my $self = shift;
-    my $id = $self->{schedule_id} || 0;
+    my $schedule_id = shift || $self->{schedule_id};
+    my $query = "DELETE FROM schedule WHERE schedule_id = ?";
     my $dbh = dbh();
-    my @params = map {$self->{$_}} qw/action object_id object_type repeat/;
-    my $query = <<QUERY;
-SELECT id
-FROM schedule
-WHERE action = ? AND object_id = ? AND object_type = ? AND repeat = ?
-QUERY
-
-
-    my ($schedule_id) = $dbh->selectrow_array($query, undef, @params) || 0;
-    Krang::Schedule::Duplicate->throw(message => 'Duplicate Schedule exists.',
-                                      schedule_id => $schedule_id)
-        if $schedule_id;
-
-    return $schedule_id;
+    $dbh->do($query, undef, $schedule_id);
+    return Krang::Schedule->find(schedule_id => $schedule_id) ? 0 : 1;
 }
 
 
@@ -414,6 +403,24 @@ Available search options are:
 =over
 
 =item action
+
+=item last_run
+
+=item next_run
+
+'next_run' also supports the following variations for date comparisons:
+
+=over
+
+=item next_run_greater
+
+=item next_run_less
+
+=item next_run_greater_than_or_equal
+
+=item next_run_less_than_or_equal
+
+=back
 
 =item object_id
 
@@ -479,25 +486,44 @@ sub find {
 
     # exclude 'element'
     $fields = $count ? 'count(*)' :
-      ($ids_only ? 'schedule_id' : join(", ", grep {$_ ne 'element'}
-                                        keys %schedule_cols));
+      ($ids_only ? 'schedule_id' : join(", ", keys %schedule_cols));
 
     # set up WHERE clause and @params, croak unless the args are in
     # SCHEDULE_RO or SCHEDULE_RW
     my @invalid_cols;
     for my $arg (keys %args) {
-        # don't use element
-        next if $arg eq 'element';
-
         my $like = 1 if $arg =~ /_like$/;
         ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
 
-        push @invalid_cols, $arg unless exists $schedule_cols{$lookup_field};
+        push @invalid_cols, $arg
+          unless (exists $schedule_cols{$lookup_field} || $arg =~ /^next_run/);
 
         if ($arg eq 'schedule_id' && ref $args{$arg} eq 'ARRAY') {
             my $tmp = join(" OR ", map {"schedule_id = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
+        }
+        # handle next_run date comparisons
+        elsif ($arg =~ /^next_run_(.+)$/) {
+            my @gtltargs = split(/_/, $1);
+
+            croak("'$arg' is and invalid 'next_run' field comparison.")
+              unless ($gtltargs[0] eq 'greater' ||
+                      $gtltargs[0] eq 'less' ||
+                      scalar @gtltargs == 1 ||
+                      scalar @gtltargs == 3);
+
+            my $operator = $gtltargs[0] eq 'greater' ? '>' : '<';
+            $operator .= '=' if scalar @gtltargs == 3;
+
+            $where_clause .= "next_run $operator ";
+            if ($args{$arg} eq 'now()') {
+                $where_clause .= 'now()';
+            } else {
+                $where_clause .= '?';
+                push @params, $args{$arg};
+            }
+
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
@@ -578,7 +604,8 @@ will be deleted after its action is performed.
 =cut
 
 sub run {
-    my @objs = Krang::Schedule->find(next_run => "<= now()");
+    my $now = localtime();
+    my @objs = Krang::Schedule->find(next_run_less_or_equal => 'now()');
 
     for my $obj(@objs) {
         my ($action, $context, $schedule_id, $object_id, $type, $repeat) =
@@ -588,22 +615,34 @@ sub run {
         # how do we handle context?  thaw it and pass it to the call
         # we're about to make
         my @args;
-        eval {@args = thaw($context)};
-        critical("Error thawing 'context' for Krang::Schedule " .
-                 "'$schedule_id': $@")
-          if $@;
+        if ($context) {
+            eval {@args = thaw($context)};
+            critical("Error thawing 'context' for Krang::Schedule " .
+                     "'$schedule_id': $@")
+              if $@;
+        }
 
         # what do we do in case of a failure
-        my $call = $action_map{$type}->{$action};
-        eval {&$call($object_id, @args)};
-        critical("'$action' for Krang::$type id '$object_id' failed: $@")
-          if $@;
+        if (DEBUG) {
+            debug("[$now] Schedule object id '$obj->{schedule_id}' " .
+                  "did something.");
+        } else {
+            my $call = $action_map{$type}->{$action};
+            eval {
+                if (@args) {
+                    &$call($object_id, @args);
+                } else {
+                    &$call($object_id);
+                }
+            };
+            critical("'$action' for Krang::$type id '$object_id' failed: $@")
+              if $@;
+        }
 
         if ($repeat eq 'never') {
             $obj->delete();
         } else {
-            my $now = localtime();
-            my $next = Time::Piece->from_mysql_date_time($obj->{next_run}) +
+            my $next = Time::Piece->from_mysql_datetime($obj->{next_run}) +
               $repeat2seconds{$repeat};
             $obj->{last_run} = $now->mysql_datetime;
             $obj->{next_run} = $next->mysql_datetime;
@@ -626,13 +665,16 @@ sub save {
     my @save_fields = grep {$_ ne 'schedule_id'} keys %schedule_cols;
     my $query;
 
-    # validate 'repeat' and date settings
+    # validate 'repeat'
+    croak(__PACKAGE__ . "->save(): 'repeat' field set to invalid setting - " .
+          "$self->{repeat}")
+      unless exists $repeat2seconds{$self->{repeat}};
 
     # the object has already been saved once if $id
     if ($id) {
         $query = "UPDATE schedule SET " .
           join(", ", map {"$_ = ?"} @save_fields) .
-            " WHERE user_id = ?";
+            " WHERE schedule_id = ?";
     } else {
         # build insert query
         $query = "INSERT INTO schedule (" . join(',', @save_fields) .
@@ -661,11 +703,11 @@ sub save {
 
 =head1 TO DO
 
-=head1 SEE ALSO
+Action mappings need to be defined and then tested.
 
 =cut
 
 
-my $quip = <<END;
+my $quip = <<QUIP;
 1
-END
+QUIP
