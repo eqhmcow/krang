@@ -19,7 +19,7 @@ story C<max> is set to 1.
 
 =cut
 
-our @ISA = ('Default::keyword');
+use base 'Default::keyword';
 use Carp qw(croak);
 use Storable qw(freeze thaw);
 use Krang::Log qw(debug);
