@@ -214,7 +214,7 @@ sub publish_story {
         my $path = File::Spec->catfile($file_root, $uri);
 
         # build the story HTML.
-        my $story_pages = $self->_assemble_pages(story => $story, category => $cat, mode => 'publish');
+        my $story_pages = $self->_assemble_pages(story => $story, category => $cat);
 
         # iterate over story pages, writing them to disk.
         for (my $p = 0; $p < @$story_pages; $p++) {
