@@ -57,7 +57,6 @@ sub new {
         Krang::ElementClass::Text->new(name         => 'icopyright_link',
                                        display_name => 'iCopyright Link',
                                        max          => 1),       
-        PBMM::article_related_link_box->new(max => 1),
         PBMM::custom_targeting->new(max => 1),
         'page',
 

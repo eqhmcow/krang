@@ -31,7 +31,7 @@ sub new {
                 PBMM::custom_search->new(max => 1),
                 PBMM::page_ad_module->new(display_name => 'Ad Module' ),
                 PBMM::table_of_contents->new(),
-
+                PBMM::article_related_link_box->new(max => 1),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
