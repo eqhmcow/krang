@@ -242,6 +242,7 @@ foreach my $instance (@instances) {
 
     # grant access to the database to DBUser
     $cmd = qq{mysql -uroot -e 'grant all on $name.* to "$user"};
+    $cmd .= q{@localhost} if !defined $hostname;
     $cmd .= qq{ identified by "$pass" } if $pass;
     $cmd .= "'";
     $cmd .= " -p$password" if defined $password;

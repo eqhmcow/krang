@@ -8,6 +8,16 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+C<bin/krang_install> and C<bin/krang_createdb> now handle the C<@localhost>
+in the MySQL user creation consistently. [Perrin]
+
+=item *
+
+C<bin/krang_ctl> no longer uses sudo for starting things on unprivileged
+ports. [Perrin]
+
+=item *
+
 Upgraded L<Scalar-List-Utils> to 1.14 from 1.09 - this should fix some
 compilation issues with MacOSX. [Peter]
 

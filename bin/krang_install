@@ -461,7 +461,8 @@ sub create_mysql_user {
     my $DBPass = $options{'DBPass'};
     my $DBHost = $options{'DBHost'};
 
-    my $grant = "grant all on $InstanceDBName\.* to $DBUser\@localhost";
+    my $grant = "grant all on $InstanceDBName\.* to $DBUser";
+    $grant .= '@localhost' if (!defined($DBHost));
     $grant .= " identified by '$DBPass'" if ($DBPass);
 
     my $mysql_grant = $ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";

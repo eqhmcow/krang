@@ -24,10 +24,10 @@ krang_ctl
 =head1 DESCRIPTION
 
 This is the control script for Krang.  You can use this script to
-start, stop and restart all the services offered by Krang.  This
-script must be run as root, unless you have a working 'sudo' with
-NOPASSWD setup in which case krang_ctl will use that to start
-processes as root.
+start, stop and restart all the services offered by Krang.  If you
+have services set to run on privileged ports (i.e. below 1024), and
+you run this script as a user other than root, it will try to run
+the individual commands with 'sudo' where necessary.
 
 This script calls krang_apachectl, krang_ftpctl and krang_schedulectl
 to do its work.  See their respective manpages for details concerning
@@ -79,20 +79,24 @@ usage() unless $command eq 'start' or
                $command eq 'stop' or
                $command eq 'restart';
 
-# will need sudo?
-my $sudo = "";
-if ($< != 0 or $> != 0) {
-    $sudo = "sudo ";
-}
-
-my @ctl = (qw(krang_apachectl krang_ftpctl krang_schedulectl));
-push(@ctl, 'krang_siteserverctl') if EnableSiteServer;
+my @ctl = (
+           { name => 'krang_apachectl',   port => 'ApachePort' },
+           { name => 'krang_ftpctl',      port => 'FTPPort'    },
+	   { name => 'krang_schedulectl', port => 'ApachePort' },
+          );
+push(@ctl, { name => 'krang_siteserverctl', port => 'SiteServerPort' })
+    if EnableSiteServer;
 
 # call ctl scripts
-for (@ctl) {
-    my $script = catfile(KrangRoot, 'bin', $_);
-    print STDERR "=> krang_ctl calling '$sudo$script $command'...\n";
-    system("$sudo$script $command");
+foreach my $service (@ctl) {
+    my $script = catfile(KrangRoot, 'bin', $service->{'name'});
+    # will need sudo?
+    if (($< != 0 or $> != 0) and 
+        Krang::Conf->get($service->{'port'}) <= 1024) {
+        $script = "sudo $script";
+    }
+    print STDERR "=> krang_ctl calling '$script $command'...\n";
+    system("$script $command");
     print STDERR "\n";
 }
 
