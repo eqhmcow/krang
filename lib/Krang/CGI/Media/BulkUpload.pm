@@ -12,6 +12,7 @@ use Krang::Widget qw(category_chooser);
 use Krang::Conf qw(KrangRoot FTPAddress FTPPort);
 use Krang::Session qw(%session);
 use Krang::Log qw(debug);
+use Krang::User;
 use File::Temp qw/ tempdir /;
 use File::Spec::Functions qw(catdir catfile abs2rel);
 use File::Find;
@@ -83,8 +84,12 @@ sub choose {
 
     $template->param( upload_chooser => scalar $query->filefield(-name => 'media_file',
                                                      -size => 32) );
-    # FTP Settings
-    $template->param( ftp_server => FTPAddress, ftp_port => FTPPort, username => $session{username}, instance => $ENV{KRANG_INSTANCE} );
+    # FTP Settings    
+    my ($user) = Krang::User->find(user_id => $ENV{REMOTE_USER});    
+    $template->param( ftp_server => FTPAddress, 
+                      ftp_port   => FTPPort, 
+                      username   => $user->login, 
+                      instance   => $ENV{KRANG_INSTANCE} );
     return $template->output; 
 }
 
