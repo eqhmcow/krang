@@ -34,6 +34,9 @@ EOSQL
 
     # Insert base data
     $dbh->do("INSERT INTO db_version (db_version) VALUES ('0')");
+
+    # Add mime_type column to media table
+    $dbh->do("ALTER TABLE media ADD COLUMN mime_type varchar(255)");
 }
 
 
