@@ -26,18 +26,60 @@ Krang::FTP::Server - Virtual FTP Server for Krang Templates and Media
 
 This module provides an FTP interface to Krang Templates and Media. The
 directory tree is the site/category tree created in Krang. 
-At the top level (/) there are two directories: /template and /media. 
+At the top level (/) will be displayed all instances in which the user 
+who has logged in has a valid login/password.
+Below each instance there are two directories: /template and /media. 
 What appears to be directories below /template and /media 
-actually correspond with L<Krang::Site>s (if any exist).  Below the 
+actually correspond with L<Krang::Site>s.  Below the 
 site dir appears that site's L<Krang::Category> tree as a directory 
-structure.  If there are not multiple sites, the single category tree 
-appears starting below /template and /media. Files within these directories 
+structure. Files within these directories  
 are L<Krang::Template> .tmpl files (in the /template tree),and media 
 files associated with L<Krang::Media> objects (in the /media tree).
 When a user downloads a .tmpl or media file 
 with Krang::FTP::Server, they recieve the file from the most recent 
 checked-in version of Template/Media object. When a file is uploaded it
-is automatically checked in and published/deployed.
+is automatically checked in and published/deployed. 
+
+Below is a sample directory tree as it might appear when logged in to
+Krang::FTP::Server-
+
+    /instance1/
+        media/
+            site1/
+                test.jpg
+                category1/
+                    test.png
+                category2/
+                    test.gif
+                    test2.gif
+            site2/
+                category1/
+        template/
+            site1/
+                test.tmpl
+                category1/
+                    template2.tmpl
+                category2/
+            site2/
+                category1/
+    /instance2/
+        media/
+            siteA/
+                whatever.jpg
+                category1/
+            siteB/
+                category1/
+                    graphic.gif
+                category2/
+        template/
+            siteA/
+                category1/
+                    template.tmpl
+            siteB/
+                story.tmpl
+                category1/
+                category2/
+                    lastpage.tmpl
 
 For installation and configuration instructions see L<Krang::Admin>
 
