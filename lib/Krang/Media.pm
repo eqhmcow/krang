@@ -175,7 +175,7 @@ $media->new() supports the following name-value arguments:
 
 =item title, caption, copyright, notes, alt_tag
 
-Fields for storing arbitrary metadata
+Fields for storing arbitrary metadata -- B<title> is required.
 
 =item media_type_id
 
@@ -591,7 +591,7 @@ sub save {
         # format publish_date for mysql
         my $old_pub_date = $self->{publish_date} || undef;
         $self->{publish_date} = $self->{publish_date}->mysql_datetime if $self->{publish_date};
-    
+
         my $sql = 'UPDATE media SET '.join(', ',map { "$_ = ?" } @save_fields).' WHERE media_id = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$media_id);
 
