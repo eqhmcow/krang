@@ -109,6 +109,7 @@ if ($command eq 'start') {
     }
 
     write_conf();
+    make_links();
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
         print "krang_apachectl $command: httpd started\n";
@@ -160,6 +161,7 @@ if ($command eq 'restart') {
 
     # start
     write_conf();
+    make_links();
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
         print "krang_apachectl $command: httpd started\n";
@@ -229,3 +231,14 @@ sub write_conf {
     print CONF $template->output();
     close CONF;
 }
+
+# setup symlinks (FIX: when Apache::Handler supports aliases this can go away)
+sub make_links {
+    unless (-l catfile(KrangRoot, 'htdocs', 'data')) {
+        system("ln -s " . catfile(KrangRoot, 'data') . " " . catfile(KrangRoot, 'htdocs', 'data'));
+    }
+    unless (-l catfile(KrangRoot, 'htdocs', 'tmp')) {
+        system("ln -s " . catfile(KrangRoot, 'tmp') . " " . catfile(KrangRoot, 'htdocs', 'tmp'));
+    }
+}
+
