@@ -561,8 +561,15 @@ sub fill_template {
 
     my @element_children = $element->children();
 
-    # list of variable names in the template
+    # list of variable names in the template -- add element_loop vars if needed
     my %template_vars = map { $_ => 1 } $tmpl->query();
+    if (exists($template_vars{element_loop})) {
+        delete $template_vars{element_loop};
+        foreach ($tmpl->query(loop => 'element_loop')) {
+            $template_vars{element_loop}{$_} = 1;
+        }
+    }
+
 
     # list of child element names that have been seen
     my %element_names = ();
@@ -622,6 +629,13 @@ sub fill_template {
         my $name     = $child->name;
         my $loopname = $name . '_loop';
         my $html;
+
+        # skip this child unless something in the template references
+        # it!  e.g. it exists in element loop, a name_loop, or
+        # directly in the template, not seen before.
+        next unless (exists($template_vars{element_loop}{$name}) || 
+                     exists($template_vars{$loopname}) ||
+                     (exists($template_vars{$name}) && !exists($params{$name})));
 
         if ($child->pageable) {
             my $pagination = $self->_build_pagination_vars(page_list => \@page_urls,
