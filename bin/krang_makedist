@@ -223,6 +223,7 @@ sub export_krang {
 
 sub exclude_directories {
     my $export_dir = get_export_dir();
+    print "Excluding directories...\n";
     system("rm -rf $export_dir/krang/bench");
     system("rm -rf $export_dir/krang/src");
     system("find $export_dir/krang/ -name '.cvsignore' | xargs rm");
@@ -230,7 +231,9 @@ sub exclude_directories {
 
 sub exclude_files {
     my $export_dir = get_export_dir();
-    system("rm -rf $export_dir/conf/krang.conf");
+    print "Excluding files...\n";
+    unlink(catfile($export_dir, "conf", "krang.conf"))
+      or die "Unable to unlink conf/krang.conf: $!";
 }
 
 
