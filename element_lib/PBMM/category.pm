@@ -62,6 +62,9 @@ sub fill_template {
     $tmpl->param( meta_description =>  $story->element->child('meta_description')->data ) if $story->element->child('meta_description');
     $tmpl->param( promo_title =>  $story->element->child('promo_title')->data ) if $story->element->child('promo_title');
 
+    # see about link_to_top_of_page
+     $tmpl->param( link_to_top_of_page =>  $story->element->child('link_to_top_of_page')->data ) if $story->element->child('link_to_top_of_page');
+
     # pass no_index var if this not the primary category
     $tmpl->param( no_index => 1 ) unless ($publisher->category->category_id == $story->category->category_id );
  
