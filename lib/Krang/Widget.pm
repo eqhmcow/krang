@@ -32,27 +32,37 @@ This modules exports a set of generally useful CGI widgets.
 
 =over 4
 
-=item $chooser = category_chooser(name => 'category_id', query => $query, onchange => 'add_category')
+=item $chooser_html = category_chooser(name => 'category_id', query => $query)
 
 Returns a block of HTML implementing the standard Krang category
 chooser.  The C<name> and C<query> parameters are required.
 
-Optionally, an 'onchange' handler can be set to the name of a
-javascript function that will be called when the user picks a
-category.  Setting the 'label' variable will change the label on the
-button which defaults to 'Choose'.  Finally, setting 'display' to
-false will supress displaying the chosen category URL next to the
-button.
+Additional optional parameters are as follows:
+
+  onchange - can be set to the name of a javascript function
+             that will be called when the user picks a category.  
+
+  label    - change the label on the button which defaults to 'Choose'. 
+
+  display  - setting to false will supress displaying the chosen 
+             category URL next to the button.
+
+  formname - the name of the form in which the chooser appears.  If 
+             not specified, will default to the first form in your 
+             HTML document.
+
 
 The template for the category chooser is located in
 F<Widget/category_chooser.tmpl>.
+
+=back
 
 =cut
 
 sub category_chooser {
     my %args = @_;
-    my ($name, $query, $label, $display, $onchange) =
-      @args{qw(name query label display onchange)};
+    my ($name, $query, $label, $display, $onchange, $formname) =
+      @args{qw(name query label display onchange formname)};
     croak("Missing required args: name and query")
       unless $name and $query;
 
@@ -87,6 +97,7 @@ sub category_chooser {
                      label         => $label || 'Choose',
                      display       => defined $display ? $display : 1,
                      onchange      => $onchange,
+                     formname      => $formname,
                     );
 
     return $template->output();

@@ -79,7 +79,7 @@
   function category_chooser_ok() {
         if (selected_id) {
            /* save selection */
-           document.forms[0].<tmpl_var name>.value = selected_id;
+           document.<tmpl_if formname><tmpl_var formname><tmpl_else>forms[0]</tmpl_if>.<tmpl_var name>.value = selected_id;
         <tmpl_if display>
            var span = document.getElementById("category_url");
            span.innerHTML = selected_url;
