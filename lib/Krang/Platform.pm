@@ -102,15 +102,32 @@ END
 
     # get ready to look for libs and include files
     my @libs = split(" ", $Config{libpth});
+    my @lib_files;
+    foreach my $lib (@libs) {
+        opendir(DIR, $lib) or die $!;
+        push(@lib_files, grep { not -d $_ } readdir(DIR));
+        closedir(DIR);
+    }
     my @incs = ($Config{usrinc}, '/include', '/usr/local/include');
     
     # look for Expat
-    unless (grep { -e catfile($_, 'libexpat.so') } @libs or
-            grep { -e catfile($_, 'libexpat.so.0') } @libs) {
+    unless (grep { /^libexpat\./ } @lib_files) {
         die <<END;
 
 Expat XML parser library not found.  Install expat
 (http://expat.sf.net) and try again.
+
+END
+    }
+
+    # look for Expat headers, if building
+    if ($mode eq 'build' and not 
+        ( grep { -e catfile($_, 'expat.h') } @incs  )) {
+        die <<END;
+
+Expat XML parser header files not found, although the library is
+present.  Re-install expat (http://expat.sf.net), or install the
+appropriate devel package and try again.
 
 END
     }
@@ -126,9 +143,10 @@ END
                 so   => 'libpng.so',
                 h    => 'png.h', } );
     foreach my $l (@l) {
+        my $re = qr/^$l->{so}/;
         die "\n\n$l->{name} is missing from your system.\n".
           "This library is required by Krang.\n\n"
-            unless grep { -e catfile($_, $l->{so}) } @libs;
+            unless grep { /^$re/ } @lib_files;
         die <<END unless $mode eq 'install' or grep { -e catfile($_, $l->{h}) } @incs;
 
 The header file for $l->{name}, '$l->{h}', is missing from your system.
@@ -337,6 +355,10 @@ sub build_apache_modperl {
       or die "Apache make failed: $?";
     system("make install") == 0
       or die "Apache make install failed: $?";
+
+    # clean up unneeded apache directories
+    my $KrangRoot = $ENV{KRANG_ROOT};
+    system("rm -rf $KrangRoot/apache/man $KrangRoot/apache/htdocs/*");
     
 }
 
