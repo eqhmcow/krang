@@ -82,7 +82,7 @@ END
 }
 
 use Krang::Script;
-use Krang::Conf qw(KrangRoot SiteServerPort);
+use Krang::Conf qw(KrangRoot SiteServerPort ElementSet);
 use Krang::ElementLibrary;
 use Krang::Site;
 use Krang::Category;
@@ -125,7 +125,18 @@ $covers = defined $covers ? $covers : ($cats >= 2 ? int($cats / 2) : 0);
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
 
-# list of available sites, configured in developers /etc/hosts
+# make sure element set is supported
+if (($stories or $covers or $cats) and 
+    (ElementSet ne 'TestSet1' and ElementSet ne 'Default')) {
+    die "Unknown element set '" . ElementSet . "'.  I only know how to create stories and categories for 'TestSet1' and 'Default'.\n";
+}
+
+# covers each need a category
+unless ($covers <= $cats) {
+    die "--cats must be <= --covers since each cover needs a category of its own.\n";
+}
+
+# list of available sites, configured in a developer's /etc/hosts
 my @site_urls = qw(
 propositions.kra storeys.kra deallocations.kra wades.kra navigate.kra
 cannon.kra tribe.kra allocates.kra precipitate.kra vanquishing.kra
@@ -169,7 +180,12 @@ for(1 .. $cats) {
     my $cname = get_word();
     my $cat = Krang::Category->new(dir       => $cname,
                                    parent_id => $cats[int(rand(scalar(@cats)))]->category_id);
-    $cat->element->child('display_name')->data(ucfirst($cname) . "!");
+
+    # TestSet1 categories have display names
+    if (ElementSet eq 'TestSet1') {
+        $cat->element->child('display_name')->data(ucfirst($cname) . "!");
+    }
+
     eval { $cat->save() };
     redo if $@ and $@ =~ /duplicate/;
     print STDERR "Created category " . $cat->url . "...\n";
@@ -197,9 +213,7 @@ for(1 .. $contribs) {
                                       last   => $lname,
                                       email  => "$fname\@$lname.com",
                                       phone  => "1-800-$lname",
-                                      bio    => join(' ',
-                                                     map { get_word() }
-                                                         (0 .. 20)),
+                                      bio    => get_words(20),
                                       url => "http://$fname.$lname.com");
     $contrib->contrib_type_ids(@types);
     eval { $contrib->save() };
@@ -329,32 +343,87 @@ for my $story_count (1 .. $stories) {
           unless grep { $_->contrib_id == $contrib->contrib_id } @con;
     }
     $story->contribs(@con);
-
+    
     # make a multi-page story
     my $element = $story->element;
-    my $deck = join(" ", map { get_word() } (1 .. ((int(rand(100)))+1)));
-    $element->child('deck')->data($deck);
-    $element->add_child(class => "page") for (1 .. ((int(rand(5)))+1));
 
-    # foreach page, add some paragraphs and photos
-    foreach my $page (grep { $_->name eq 'page' } $element->children()) {
-        $page->child('header')->data(join(" ", map { ucfirst(get_word()) } (1 .. ((int(rand(6)))+1))));
-        foreach my $obj_num (1 .. ((int(rand(20)))+1)) {
-            if ((int(rand(3))) != 1) {
-                my $para = join(" ",
-                                map { get_word() } 
-                                (0 .. ((int(rand(100)))+1)));
-                $page->add_child(class => "paragraph",
-                                 data => $para);
-            } else {
-                $page->add_child(class => "photo",
-                                 data => $media[int(rand(scalar(@media)))]);
+    if (ElementSet eq 'TestSet1') {
+        my $deck = get_words(100);
+        $element->child('deck')->data($deck);
+        $element->add_child(class => "page") for (1 .. ((int(rand(5)))+1));
+        
+        # foreach page, add some paragraphs and photos
+        foreach my $page (grep { $_->name eq 'page' } $element->children()) {
+            $page->child('header')->data(get_words(6));
+            foreach my $obj_num (1 .. ((int(rand(20)))+1)) {
+                if ((int(rand(3))) != 1) {
+                    $page->add_child(class => "paragraph",
+                                     data => get_words(100));
+                } else {
+                    $page->add_child(class => "photo",
+                                     data => $media[int(rand(scalar(@media)))]);
+                }
+            }
+        }
+        # add some keywords
+        $element->child('fancy_keyword')->data([ map { get_word() } (1 .. ((int(rand(10)))+1))]);
+
+    } elsif (ElementSet eq 'Default') {
+        $element->child('metadata_title')->data($story->title);
+        $element->child('promo_title')->data($story->title);
+        $element->child('metadata_description')->data(get_words(50));
+        $element->child('metadata_keywords')
+          ->data([map { get_word() } (0 .. ((int(rand(25)))+1))]);
+        $element->child('promo_teaser')->data(get_words(25));
+        $element->child('deck')->data(get_words(25));
+
+        my $pil = $element->add_child(class => 'promo_image_large');
+        $pil->child('media')->data($media[int(rand(scalar(@media)))]);
+        my $pis = $element->add_child(class => 'promo_image_small');
+        $pis->child('media')->data($media[int(rand(scalar(@media)))]);
+
+        # add a few pages
+        $element->add_child(class => "page") for (1 .. ((int(rand(5)))+1));
+        
+        # foreach page, add some element data
+        foreach my $page (grep { $_->name eq 'page' } $element->children()) {
+            foreach my $obj_num (1 .. ((int(rand(30)))+1)) {
+                my $num = int(rand(13));
+                if ($num < 5) {
+                    $page->add_child(class => "paragraph",
+                                     data => get_words(100));
+                } elsif ($num == 5) {
+                    $page->add_child(class => 'section_header',
+                                     data => get_words(10));
+                } elsif ($num == 6) {
+                    $page->add_child(class => 'large_header',
+                                     data => get_words(10));
+                } elsif ($num == 7) {
+                    $page->add_child(class => 'horizontal_line');
+                } elsif ($num == 8) {
+                    my $box = $page->add_child(class => 'inset_box');
+                    $box->child('title')->data(get_words(5));
+                    $box->add_child(class => 'paragraph',
+                                    data  => get_words(100));
+                } elsif ($num == 9) {
+                    $page->add_child(class => 'section_header_image',
+                                     data =>$media[int(rand(scalar(@media)))]);
+                } else {
+                    my $image = $page->add_child(class => 'image');
+                    $image->child('alignment')
+                      ->data(('Left','Right')[int(rand(1))]);
+                    $image->child('media')
+                      ->data($media[int(rand(scalar(@media)))]);
+                    if (int(rand(3)) > 1) {
+                        $image->add_child(class => 'caption',
+                                          data  => get_words(5));
+                        $image->add_child(class => 'copyright',
+                                          data  => get_words(5));
+                    }
+                }
             }
         }
     }
-
-    # add some keywords
-    $element->child('fancy_keyword')->data([ map { get_word() } (1 .. ((int(rand(10)))+1))]);
 
     $story->save;
     $story->checkin;
@@ -381,19 +450,108 @@ for my $cover_count (1 .. $covers) {
 
     # add some photos and lead-ins to stories
     my $element = $cover->element;
-    foreach my $obj_num (1 .. ((int(rand(30)))+1)) {
-        if ((int(rand(3))) != 1) {
-            $element->add_child(class => "leadin",
-                             data => $stories[int(rand(scalar(@stories)))]);
-        } else {
-            $element->add_child(class => "photo",
-                             data => $media[int(rand(scalar(@media)))]);
+
+    if (ElementSet eq 'TestSet1') {
+        foreach my $obj_num (1 .. ((int(rand(30)))+1)) {
+            if ((int(rand(3))) != 1) {
+                $element->add_child(class => "leadin",
+                                    data => $stories[int(rand(scalar(@stories)))]);
+            } else {
+                $element->add_child(class => "photo",
+                                    data => $media[int(rand(scalar(@media)))]);
+            }
+        }
+
+        # setup a header
+        $element->child('header')->data(get_words(10));
+
+    } elsif (ElementSet eq 'Default') {
+        $element->child('metadata_title')->data(get_words(10));
+        $element->child('promo_title')->data(get_words(10));
+        $element->child('metadata_description')->data(get_words(50));
+        $element->child('metadata_keywords')
+          ->data([map { get_word() } (0 .. ((int(rand(25)))+1))]);
+        $element->child('promo_teaser')->data(get_words(25));
+
+        my $pil = $element->add_child(class => 'promo_image_large');
+        $pil->child('media')->data($media[int(rand(scalar(@media)))]);
+        my $pis = $element->add_child(class => 'promo_image_small');
+        $pis->child('media')->data($media[int(rand(scalar(@media)))]);
+
+        # add a few cover pages
+
+        # add a few pages
+        $element->add_child(class => "cover_page") for (1 .. ((int(rand(5)))+1));
+
+        # foreach page, add some element data
+        foreach my $page (grep { $_->name eq 'cover_page' } $element->children()) {
+            foreach my $obj_num (1 .. ((int(rand(10)))+1)) {
+                my $num = int(rand(12));
+                if ($num < 5) {
+                    $page->add_child(class => "lead_in",
+                                     data => $stories[int(rand(scalar(@stories)))]);
+                } elsif ($num == 5) {
+                    $page->add_child(class => 'section_header',
+                                     data => get_words(10));
+                } elsif ($num == 6) {
+                    $page->add_child(class => 'large_header',
+                                     data => get_words(10));
+                } elsif ($num == 7) {
+                    $page->add_child(class => 'horizontal_line');
+                } elsif ($num == 8) {
+                    $page->add_child(class => 'paragraph',
+                                     data => get_words(50));
+                } elsif ($num == 9 or $num == 10) {
+                    my $double = $page->add_child(class => 'double_column');
+                    foreach my $col ($double->children) {
+                        foreach my $obj_num (1 .. ((int(rand(10)))+1)) {
+                            my $num = int(rand(11));
+                            if ($num < 5) {
+                                $col->add_child(class => "lead_in",
+                                                data => 
+                                     $stories[int(rand(scalar(@stories)))]);
+                            } elsif ($num == 5) {
+                                $col->add_child(class => 'section_header',
+                                                 data => get_words(10));
+                            } elsif ($num == 6) {
+                                $col->add_child(class => 'large_header',
+                                                data => get_words(10));
+                            } elsif ($num == 7) {
+                                $col->add_child(class => 'horizontal_line');
+                            } elsif ($num == 8) {
+                                $col->add_child(class => 'paragraph',
+                                                data => get_words(50));
+                            } else {
+                                my $image = $col->add_child(class => 'image');
+                                $image->child('alignment')
+                                  ->data(('Left','Right')[int(rand(1))]);
+                                $image->child('media')
+                                  ->data($media[int(rand(scalar(@media)))]);
+                                if (int(rand(3)) > 1) {
+                                    $image->add_child(class => 'caption',
+                                                      data  => get_words(5));
+                                    $image->add_child(class => 'copyright',
+                                                      data  => get_words(5));
+                                }
+                            }
+                        }                        
+                    }
+                } else {
+                    my $image = $page->add_child(class => 'image');
+                    $image->child('alignment')
+                      ->data(('Left','Right')[int(rand(1))]);
+                    $image->child('media')
+                      ->data($media[int(rand(scalar(@media)))]);
+                    if (int(rand(3)) > 1) {
+                        $image->add_child(class => 'caption',
+                                          data  => get_words(5));
+                        $image->add_child(class => 'copyright',
+                                          data  => get_words(5));
+                    }
+                }
+            }
         }
     }
-
-    # setup a header
-    $element->child('header')->data(join(' ', map { get_word() } 
-                                         (0 .. ((int(rand(10)))+1))));
 
     $cover->save;
     $cover->checkin;
@@ -548,7 +706,6 @@ sub get_date {
 }
 
 
-# get a random word
 BEGIN {
     my @words;
     open(WORDS, "/usr/dict/words")
@@ -560,8 +717,16 @@ BEGIN {
     }
     srand (time ^ $$);
 
+    # get a random word
     sub get_word {
         return lc $words[int(rand(scalar(@words)))];
+    }
+
+    # get $num random words, joined by $sep, defaulting to " "
+    sub get_words {
+        my ($num, $sep) = @_;
+        $sep = " " unless defined $sep and length $sep;
+        return join($sep, map { get_word() } (0 .. ((int(rand($num)))+1)));
     }
 }
 
