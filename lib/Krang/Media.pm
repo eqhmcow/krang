@@ -379,7 +379,7 @@ sub upload_file {
  
     my $path = catdir($root,'tmp','media',$session_id);
     mkpath($path);
-    my $filepath = catfile($path, "tempfile");
+    my $filepath = catfile($path, $filename);
    
     open (FILE, ">$filepath") || croak("Unable to open $path for writing media!"); 
    
@@ -413,13 +413,15 @@ sub file_path {
     my $self = shift;
     my $root = KrangRoot;
     my $media_id = $self->{media_id};
+    my $filename = $self->{filename};
+    my $instance = Krang::Conf->instance;
     my $session_id = $session{_session_id} || croak("No session id found");
 
     # return path based on if object has been committed to db yet
     if ($media_id) { 
-        return catfile($root,'data','media', $self->_media_id_path(),$self->{version},$self->{filename});
+        return catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename});
     } else {
-        return catfile($root,'tmp','media',$session_id,'tempfile');
+        return catfile($root,'tmp','media',$session_id,$filename);
     }
 }
 
@@ -496,20 +498,20 @@ sub save {
         my $sql = 'UPDATE media SET '.join(', ',map { "$_ = ?" } @save_fields).' WHERE media_id = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$media_id);
 	# this file exists, new media was uploaded. copy to new position	
-	if (-f catfile($root,'tmp','media',$session_id,'tempfile')) {
-	   my $old_path = catfile($root,'tmp','media',$session_id,'tempfile');
-           my $new_path = catdir($root,'data','media',$self->_media_id_path,$self->{version});
+	if (-f catfile($root,'tmp','media',$session_id,$self->{filename})) {
+	   my $old_path = catfile($root,'tmp','media',$session_id,$self->{filename});
+           my $new_path = catdir($root,'data','media',Krang::Conf->instance, $self->_media_id_path,$self->{version});
 	   mkpath($new_path);     
 	   $new_path = catfile($new_path,$self->{filename});
 	   move($old_path,$new_path) || croak("Cannot move to $new_path");	
 	} else {
 	    # symbolically link to version dir, since it isnt changing 
-	    my $old_path = catdir($root,'data','media',$self->_media_id_path,($self->{version} - 1));
-	    my $new_path = catdir($root,'data','media',$self->_media_id_path,$self->{version});
+	    my $old_path = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path,($self->{version} - 1));
+	    my $new_path = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version});
 	    link $old_path, $new_path || croak("Unable to create link $old_path to $new_path");	
 	}
     } else {
-	if (not -f catfile($root,'tmp','media',$session_id,'tempfile')) {
+	if (not -f catfile($root,'tmp','media',$session_id,$self->{filename})) {
             croak('You must upload a file using upload_file() before saving media object!')
 	} 
 	$self->{version} = 1;
@@ -525,8 +527,8 @@ sub save {
 
         $media_id = $self->{media_id};
 
-	my $old_path = catfile($root,'tmp','media',$session_id,'tempfile');
-	my $new_path = catdir($root,'data','media',$self->_media_id_path,$self->{version}); 
+	my $old_path = catfile($root,'tmp','media',$session_id,$self->{filename});
+	my $new_path = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version}); 
 	mkpath($new_path);
 	$new_path = catfile($new_path,$self->{filename});		
 	move($old_path,$new_path) || croak("Cannot create $new_path");
@@ -743,7 +745,7 @@ sub revert {
     # copy old media file into tmp storage
     my $path = catdir($root,'tmp','media',$session_id);
     mkpath($path);
-    my $filepath = catfile($path, "tempfile");
+    my $filepath = catfile($path, $self->{filename});
     copy($old_filepath,$filepath); 
     return $self; 
 }
@@ -769,7 +771,7 @@ sub thumbnail_path {
             }
         }
         if ($is_image) {    
-            my $path = catfile($root,'data','media',$self->_media_id_path,$self->{version},"t__".$self->{filename});
+            my $path = catfile($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version},"t__".$self->{filename});
             if (not -f $path) {
                 my $img = Imager->new();
                 $img->open(file=>$self->file_path()) || croak $img->errstr();
@@ -935,7 +937,7 @@ sub delete {
     $dbh->do('DELETE from media_version where media_id = ?', undef, $media_id); 
     $dbh->do('delete from media_contrib where media_id = ?', undef, $media_id);
 
-    my $file_dir = catdir($root,'data','media',$self->_media_id_path);
+    my $file_dir = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path);
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
 }
 
