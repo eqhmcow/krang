@@ -47,14 +47,19 @@
 </script>
 
 
-<div class="dark-bar">Group <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></div>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;Group <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
 
 
-<div class=form-box>
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
+  <td class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4">
 
-<table cellpadding="5" cellspacing="0">
-
-
+<table border="0" cellpadding="5" cellspacing="0" width="100%">
 <form name="edit_group_form" method="POST">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="rm" value="save">
@@ -67,32 +72,33 @@
 <input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 
-
-
 <tr>
-    <td align="left" valign="top">Group Name:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="name" value="<tmpl_var escape=HTML name>"><tmpl_if error_invalid_name></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+  <td width="100">Group Name:</td>
+  <td><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_name><span class="invalid"></tmpl_if><input type="textfield" size="30" name="name" value="<tmpl_var escape=HTML name>"><tmpl_if error_invalid_name></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
 </tr>
 
 </table>
 
-
+<table border="0" cellspacing="0" cellpadding="8" width="100%">
+<tr><td>
 
 <!-- Site/Root Category permissions -->
-<table cellspacing="0" width="100%">
+<table cellspacing="0" width="100%" cellpadding="2">
 
 <tr class="form-head">
-    <th align="left">Sites</th>
-    <th width="100">Categories</th>
-    <th width="100">Edit</th>
-    <th width="100">Read-Only</th>
-    <th width="100">Hide</th>
-</tr>
+   <td align="left">Sites</td>
+    <td width="85" align="center">Categories</td>
+    <td width="85" align="center">Edit</td>
+    <td width="85" align="center">Read-Only</td>
+    <td width="85" align="center">Hide</td>
+</tr></table>
+
+    <table cellspacing="0" width="100%" class="form-cell">
 
 <tmpl_loop categories><tr>
     <td class="form-cell"><tmpl_var category_url></td>
-    <td class="form-cell" align="center"><a href="javascript:edit_categories('<tmpl_var category_id>')">Edit</a></td>
-    <tmpl_loop permission_radio><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+    <td class="form-cell" align="center" width="80"><a href="javascript:edit_categories('<tmpl_var category_id>')">Edit</a></td>
+    <tmpl_loop permission_radio><td class="form-cell" align="center" width="80"><tmpl_var radio_select></td></tmpl_loop>
 </tr></tmpl_loop>
  
 </table>
@@ -102,28 +108,30 @@
 <br />
 
 <!-- Asset permissions -->
-<table cellspacing="0" width="100%">
+<table cellspacing="0" width="100%" cellpadding="2">
 
 <tr class="form-head">
-    <th align="left">Assets</th>
-    <th width="100">Edit</th>
-    <th width="100">Read-Only</th>
-    <th width="100">Hide</th>
-</tr>
+  <td align="left">Assets</td>
+    <td width="85" align="center">Edit</td>
+    <td width="85" align="center">Read-Only</td>
+    <td width="85" align="center">Hide</td> 
+</tr></table>
+
+    <table cellspacing="0" width="100%" class="form-cell">
 
 <tr>
     <td class="form-cell">Stories</td>
-    <tmpl_loop asset_story><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+    <tmpl_loop asset_story><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
 </tr>
 
 <tr>
     <td class="form-cell">Media</td>
-    <tmpl_loop asset_media><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+    <tmpl_loop asset_media><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
 </tr>
 
 <tr>
     <td class="form-cell">Templates</td>
-    <tmpl_loop asset_template><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+    <tmpl_loop asset_template><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
 </tr>
 
  
@@ -136,18 +144,20 @@
 
 
 <!-- Desk permissions -->
-<table cellspacing="0" width="100%">
+<table cellspacing="0" width="100%" cellpadding="2">
 
 <tr class="form-head">
-    <th align="left">Desks</th>
-    <th width="100">Edit</th>
-    <th width="100">Read-Only</th>
-    <th width="100">Hide</th>
-</tr>
+  <td align="left">Desks</td>
+    <td width="85" align="center">Edit</td>
+    <td width="85" align="center">Read-Only</td>
+    <td width="85" align="center">Hide</td>
+</tr></table>
+
+    <table cellspacing="0" width="100%" class="form-cell">
 
 <tmpl_loop desks><tr>
     <td class="form-cell"><tmpl_var desk_name></td>
-    <tmpl_loop permission_radio><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
+    <tmpl_loop permission_radio><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
 </tr></tmpl_loop>
  
 </table>
@@ -156,14 +166,16 @@
 <br />
 
 <!-- Administration permissions -->
-<table cellspacing="0" width="100%">
+<table cellspacing="0" width="100%" cellpadding="2">
 
 <tr class="form-head">
-    <th colspan="2" align="left">Administration permissions</th>
-</tr>
+    <td width="40">&nbsp;</td><td align="left">Administration permissions</td>
+</tr></table>
+
+    <table cellspacing="0" width="100%" class="form-cell">
 
 <tr>
-    <td class="form-cell" align="center"><tmpl_var may_publish></td>
+    <td class="form-cell" align="center" width="30"><tmpl_var may_publish></td>
     <td class="form-cell" align="left">May Publish</td>
 </tr>
 
@@ -209,18 +221,21 @@
  
 </table>
 <!-- END Administration permissions -->
+</td></tr>
+</table>
 
-
-</div>
-
-
+</td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
 
 <div class="button-bar">
-    <input type="submit" value="Save" onClick="do_save()">
-    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()"></tmpl_unless>
-    <input type="reset" value="Reset">
-    <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_group()"></tmpl_unless>
-    <input type="button" value="Cancel" onClick="cancel_group_change()">
+    <input type="submit" value="Save" onClick="do_save()" class="button">
+    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()" class="button"></tmpl_unless>
+    <input type="reset" value="Reset" class="button">
+    <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_group()" class="button"></tmpl_unless>
+    <input type="button" value="Cancel" onClick="cancel_group_change()" class="button">
 </div>
 
 

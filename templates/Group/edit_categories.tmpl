@@ -87,17 +87,17 @@
 <table cellspacing="0" width="100%" cellpadding="2" border="0">
 
 <tr class="form-head">
-    <td align="left" width="189">Category</td>
-    <td width="102" align="center">Edit</td>
-    <td width="103" align="center">Read-Only</td>
-    <td width="103" align="center">Hide</td>
-    <td>&nbsp;</td>
+    <td align="left">Category</td>
+    <td width="85" align="center">Edit</td>
+    <td width="85" align="center">Read-Only</td>
+    <td width="85" align="center">Hide</td>
+    <td width="85" align="center">&nbsp;</td>
 </tr></table>
  <table cellspacing="0" width="100%" class="form-cell">
 <tmpl_loop categories><tr>
     <td class="form-cell"><tmpl_var category_url></td>
-    <tmpl_loop permission_radio><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
-    <td class="form-cell" align="center"><tmpl_unless is_root><a href="javascript:delete_category('<tmpl_var category_id>')">Delete</a><tmpl_else>&nbsp;</tmpl_unless></td>
+    <tmpl_loop permission_radio><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
+    <td class="form-cell" width="80" align="center"><tmpl_unless is_root><a href="javascript:delete_category('<tmpl_var category_id>')">Delete</a><tmpl_else>&nbsp;</tmpl_unless></td>
 </tr></tmpl_loop>
  
 </table>

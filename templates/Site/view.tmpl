@@ -4,31 +4,38 @@
   nav_edit_mode();
 </script>
 
-<div class=dark-bar>View Site</div>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;View Site</td>
+  <td align="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
 
 
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
-
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+  <td class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellpadding="5" cellspacing="0" width="100%">
 <tr class="light">
-  <td>URL:</td>
-  <td colspan="2"><tmpl_var url></td>
+<td width="135">URL:</td>
+  <td width="445"><tmpl_var url></td>
 </tr>
 
 
 <tr class="light">
   <td>Preview URL:</td>
-  <td colspan="2"><tmpl_var preview_url></td>
+  <td><tmpl_var preview_url></td>
 </tr>
 
 
 <tr class="light">
   <td>Preview Path:</td>
-  <td colspan="2"><tmpl_var preview_path></td>
+  <td><tmpl_var preview_path></td>
 </tr>
 
 <tr class="light">
   <td>Publish Path:</td>
-  <td colspan="2"><tmpl_var publish_path></td>
+  <td><tmpl_var publish_path></td>
 </tr>
 
 <form name="return_form" method="POST">
@@ -58,17 +65,18 @@
 </script>
 
 
-<tr class="light">
-  <td>&nbsp;</td>
-  <td colspan="2"></td>
+</table>
+
+  </td>
+  <td width="1" class="line"><img width="1" height="1"></td>
 </tr>
-
-
+<tr><td colspan="3" class="line"><img width="1" height="1"></td>
+</tr>
 </table>
 
 <div class="button-bar">
-  <input type="button" value="Return" onClick="javascript:do_return()">
-  <input type="button" value="Edit" onClick="javascript:do_edit_site()">
+  <input type="button" value="Return" onClick="javascript:do_return()" class="button">
+  <input type="button" value="Edit" onClick="javascript:do_edit_site()" class="button">
 </div>
 
 
