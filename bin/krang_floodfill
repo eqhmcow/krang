@@ -694,7 +694,7 @@ if ($undo_script) {
     print STDERR "Writing undo script to '$undo_script'...\n";
     open(UNDO, '>', $undo_script) or die "Unable to open '$undo_script': $!";
     print UNDO <<UNDOEND;
-#!/usr/bin/perl -w 
+#!$^X -w
 use strict;
 BEGIN { \$ENV{KRANG_ROOT} = '$ENV{KRANG_ROOT}' }
 use lib '$ENV{KRANG_ROOT}/lib';
