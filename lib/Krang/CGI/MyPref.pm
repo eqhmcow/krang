@@ -9,6 +9,7 @@ use Krang::Alert;
 use Krang::User;
 use Krang::Message qw(add_message);
 use Krang::Session qw(%session);
+use Krang::Widget qw(category_chooser);
 
 =head1 NAME
 
@@ -66,6 +67,12 @@ sub edit {
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
     $template->param( $error => 1 ) if $error;
     
+    my %alert_types = ( new => 'New', 
+                        save => 'Save',
+                        checkin => 'Check In',
+                        checkout => 'Check Out',
+                        publish => 'Publish',
+                        move => 'Move To' );    
     
     my $set_sps = Krang::MyPref->get('search_page_size') || '';
 
@@ -83,13 +90,32 @@ sub edit {
         my $desk = $alert->desk_id ? (Krang::Desk->find( desk_id => $alert->desk_id))[0]->name : '';
         my $category = $alert->category_id ? (Krang::Category->find( category_id => $alert->category_id))[0]->url : '';
 
-        push (@alert_loop, {        action => ucfirst($alert->action), 
+        push (@alert_loop, {        action => $alert_types{$alert->action}, 
                                     alert_id => $alert->alert_id,
                                     desk => $desk,
                                     category => $category } );
     }
 
     $template->param( alert_loop => \@alert_loop );
+
+    my @desks = Krang::Desk->find;
+
+    my %desk_labels;
+    foreach my $d (@desks) {
+        $desk_labels{$d->desk_id} = $d->name;
+    }
+    
+    $template->param(desk_selector => scalar 
+                    $q->popup_menu( -name    => 'desk_list', 
+                                    -values  => ['',keys %desk_labels],
+                                    -labels  => \%desk_labels ) );
+
+    $template->param(action_selector => scalar
+                    $q->popup_menu( -name    => 'action_list',
+                                    -values  => [sort keys %alert_types],
+                                    -labels  => \%alert_types ) );
+     
+    $template->param( category_chooser => category_chooser(name => 'category_id', query => $q, formname => "add_alert_form") );
  
     return $template->output; 
 }
@@ -103,7 +129,21 @@ Commits new Krang::Alert to server.
 sub add_alert {
     my $self = shift;
     my $q = $self->query();
-
+    my %params;
+    
+    $params{user_id} = $session{user_id};
+    $params{action} = $q->param('action_list');
+    $params{desk_id} = $q->param('desk_list') if $q->param('desk_list');
+    $params{category_id} = $q->param('category_id') if $q->param('category_id'); 
+  
+    # return error message on bad combination
+    add_message("bad_desk_combo"), return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id}) );
+    add_message("move_needs_desk"),  return $self->edit() if ( ($params{action} eq 'move') and (not $params{desk_id}) );
+ 
+    my $alert = Krang::Alert->new( %params );
+    $alert->save();
+    add_message("alert_added");
+ 
     return $self->edit();
 }
 
@@ -138,7 +178,7 @@ Deletes selected alerts.
 =cut
 
 sub delete_alerts {
-        my $self = shift;
+    my $self = shift;
     my $q = $self->query();
     my @delete_list = ( $q->param('alert_delete_list') );
     

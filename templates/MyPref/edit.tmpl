@@ -20,12 +20,6 @@ function checkall(checkbox, prefix) {
      }
 }
 
-function delete_checked () {
-        var myform = document.forms["current_alert_form"];
-        myform.rm.value = 'delete_alerts';
-        myform.submit();
-}
-
 </script>
 <div class=dark-bar>My Preferences</div>
 <form name="edit_pref_form" method="POST">
@@ -49,6 +43,7 @@ function delete_checked () {
 </form>
 <tmpl_if alert_loop>Current Alerts
 <form name="current_alert_form" method="post">
+<input type="hidden" name="rm" value="delete_alerts" override='1'>
 <table cellspacing="0" width="100%">
 <tr class="form-head"><th>Action</th><th>Site/Category</th><th>Desk</th><th align="right"><input type="checkbox" name="checkallbox" value="1"
 onClick="checkall(this, 'alert_delete_list')"></th></tr>
@@ -60,8 +55,27 @@ onClick="checkall(this, 'alert_delete_list')"></th></tr>
 <td class="form-cell" align="right"><input type="checkbox" name="alert_delete_list" value="<tmpl_var ESCAPE=HTML alert_id>"></td>
 </tr>
 </tmpl_loop>
-<tr><td class="form-head" colspan=4 align=right><input type=button value="Delete Checked" onclick="delete_checked()"></td></tr>
+<tr><td class="form-head" colspan=4 align=right><input type=button value="Delete Checked" onclick="submit()"></td></tr>
 </table>
 <tmpl_else>No Current Alerts</tmpl_if>
+</form>
+<form name="add_alert_form" method="post">
+<table cellspacing="0" width="100%">
+<input type="hidden" name="rm" value="add_alert" override='1'>
+      <tr class="form-head">
+          <th colspan=2 align=left>Add New Alert</th>
+      </tr>
+        <tr>
+            <td class=form-cell>Action:</td>
+            <td class=form-cell><tmpl_var action_selector></td>
+        <tr>
+            <td class=form-cell>Site/Category:</td>
+            <td class=form-cell><tmpl_var category_chooser> (optional)</td>
+        <tr>
+            <td class=form-cell>Desk:</td>
+            <td class=form-cell><tmpl_var desk_selector> (optional)</td>
+        </tr>
+<tr><td class="form-head" colspan=2 align=right><input type=button value="Add Alert" onclick="submit()"></td></tr>
+</table>
 </form>
 <tmpl_include footer.tmpl>
