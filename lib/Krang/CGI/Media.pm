@@ -1116,13 +1116,6 @@ sub make_media_tmpl_data {
                                            );
     $tmpl_data{category_chooser} = $category_chooser;
 
-    # Build upload field
-    my $upload_chooser = $q->filefield(
-                                       -name => 'media_file',
-                                       -size => 32,
-                                      );
-    $tmpl_data{upload_chooser} = $upload_chooser;
-
     # If we have a filename, show it.
     $tmpl_data{file_size} = sprintf("%.1fk", ($m->file_size() / 1024))
       if ($tmpl_data{filename}  = $m->filename());

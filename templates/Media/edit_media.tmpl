@@ -138,7 +138,7 @@
   <td>*Upload File:<tmpl_if filename><br />
 <tmpl_if media_id><a href="javascript:preview_media_session()"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if media_id></a></tmpl_if>
 <tmpl_var escape=HTML file_size></tmpl_if></td>
-  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_media_file><span class="invalid"></tmpl_if><tmpl_var upload_chooser><tmpl_if error_media_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_media_file><span class="invalid"></tmpl_if><input type="file" name="media_file"  size="32" /><tmpl_if error_media_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 <tr>
