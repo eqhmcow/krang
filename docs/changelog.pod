@@ -6,6 +6,17 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Fixed a bug in L<Krang::CGI::Site> that would cause ISE on attempted 
+delete if a site had content in its root directory but no had no
+other categories [Matt]
+
+=item *
+
+Added population of 'width', 'height', and 'image_dimensions' for 
+Krang::ElementClass::MediaLink fill_template. [Matt]
+
 =item *
 
 Bugfixes to L<Krang::CGI::Template> that prevented files from being
