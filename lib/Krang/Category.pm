@@ -103,13 +103,12 @@ use Krang::Element;
 # Read-only fields
 use constant CATEGORY_RO => qw(category_id
 			       element_id
-			       parent_id
-			       site_id
 			       url);
 
 # Read-write fields
 use constant CATEGORY_RW => qw(element
-			       name);
+			       parent_id
+			       site_id);
 
 # Globals
 ##########
@@ -117,7 +116,7 @@ use constant CATEGORY_RW => qw(element
 # Lexicals
 ###########
 my %category_args = map {$_ => 1} qw(name parent_id site_id);
-my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW;
+my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW, 'name';
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
@@ -148,7 +147,7 @@ The object's id in the category table
 
 Element object associated with the given category object
 
-=item * element_id (read-only)
+=item * element_id
 
 Id in the element table of this object's element
 
@@ -156,17 +155,17 @@ Id in the element table of this object's element
 
 The display name of the category i.e. '/gophers'
 
-=item * parent_id (read-only)
+=item * parent_id
 
 Id of this categories parent category, if any
 
-=item * path (read-only)
-
-The full system path for this category
-
-=item * site_id (read-only)
+=item * site_id
 
 Id in the site table of this object's site
+
+=item * url (read-only)
+
+The full URL to this category
 
 =back
 
@@ -192,22 +191,32 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 =cut
 
 # validates arguments passed to new(), see Class::MethodMaker
-# the method croaks if an invalid key is found in the hash passed to new()
+# the method croaks if we haven't been provied a name and site_id or if an
+# invalid key is found in the hash passed to new()
 sub init {
     my $self = shift;
     my %args = @_;
-    my @bad_args;
+    my (@bad_args, @required_args);
 
     for (keys %args) {
         push @bad_args, $_ unless exists $category_args{$_};
+
     }
     croak(__PACKAGE__ . "->init(): The following constructor args are " .
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
 
+    # required arg check...
+    for (qw/name site_id/) {
+        croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
+          unless exists $args{$_};
+    }
+
     $self->hash_init(%args);
 
-    # set checker for changes to 'name'
-    $self->{_old_name} = $self->{name};
+    # make sure 'name' is a good path
+    # set '_old_name' to 'name' to make changes to 'name' detectable
+    $self->{_old_name} = $self->{name} =
+      File::Spec->catdir('/', $self->{name});
 
     # define element
     $self->{element} = Krang::Element->new(class => 'category');
@@ -234,14 +243,17 @@ sub delete {
       (Krang::Category->find(id => $id))[0]->{element_id};
     my $dbh = dbh();
 
-    # First pass...
     my $query = <<SQL;
-SELECT 1
-FROM category c, media m, story s, template t
-WHERE c.parent_id = ? OR m.category_id = ? OR s.category_id = ? t.category = ?
+SELECT c.category_id, m.category_id, sc.category_id, t.category_id
+FROM category c
+LEFT JOIN media m ON m.category_id = ?
+LEFT JOIN story_category sc ON sc.category_id = ?
+LEFT JOIN template t ON t.category_id = ?
+WHERE c.parent_id = ?
 SQL
+
     croak(__PACKAGE__ . "->delete(): Objects refering to category still exist")
-      if $dbh->do($query, undef, ($id, $id, $id, $id));
+      if $dbh->selectrow_array($query, undef, ($id, $id, $id, $id));
 
     $query = "DELETE FROM category WHERE category_id = '$id'";
     my $e_query = "DELETE FROM element WHERE element_id = '$element_id'";
@@ -265,29 +277,33 @@ otherwise the array will be empty.
 sub duplicate_check {
     my $self = shift;
     my $id = $self->{category_id};
-    my @id_info;
-    my @save_fields = grep {$_ ne 'category_id'} keys %category_cols;
+    my $category_id = 0;
+    my $query = <<SQL;
+SELECT category_id
+FROM category
+WHERE name = ? AND site_id = ?
+SQL
 
-    my $query = "SELECT category_id, name, path FROM category WHERE " .
-      join(" OR ", map {"$_ = ?"} @save_fields) . " LIMIT 1";
+    my @params = ($self->{name}, $self->{site_id});
+
+    # alter query if save() has already been called
+    if ($id) {
+        $query .=  "AND category_id != ?\n";
+        push @params, $id;
+    }
+    if ($self->{parent_id}) {
+        $query .= "AND parent_id = ?";
+        push @params, $self->{parent_id};
+    }
+
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
-    $sth->execute(map {$self->{$_}} @save_fields);
-
-    # reference into which result are fetched
-    my $row;
-    $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
-    while ($sth->fetch()) {
-        for (@save_fields) {
-            if ($self->{$_} eq $row->{$_}) {
-                push @id_info, $row->{category_id}, $_;
-                last;
-            }
-        }
-    }
+    $sth->execute(@params);
+    $sth->bind_col(1, \$category_id);
+    $sth->fetchrow_arrayref();
     $sth->finish();
 
-    return @id_info;
+    return $category_id;
 }
 
 
@@ -384,13 +400,18 @@ sub find {
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.") if ($count && $ids_only);
 
+    # exclude 'element'
     $fields = $count ? 'count(*)' :
-      ($ids_only ? 'category_id' : join(", ", keys %category_cols));
+      ($ids_only ? 'category_id' : join(", ", grep {$_ ne 'element'}
+                                        keys %category_cols));
 
     # set up WHERE clause and @params, croak unless the args are in
     # CATEGORY_RO or CATEGORY_RW
     my @invalid_cols;
     for my $arg (keys %args) {
+        # don't use element
+        next if $arg eq 'element';
+
         my $like = 1 if $arg =~ /_like$/;
         ( my $lookup_field = $arg ) =~ s/^(.+)_like$/$1/;
 
@@ -447,6 +468,9 @@ sub find {
         if ($single_column) {
             push @categories, $row;
         } else {
+            # calculate '_site_root', set '_old_name', put in memory
+            $row->{_old_name} = $row->{name};
+            ($row->{_site_root} = $row->{url}) =~ s/$row->{name}\$//;
             push @categories, bless({%$row}, $self);
         }
     }
@@ -459,10 +483,24 @@ sub find {
 }
 
 
+=item $name = $category->name()
+
+Returns the value of 'name' field currently in memory for the category object.
+It prepends '/' on setter calls if one is not present.
+
+=cut
+
+sub name {
+    my $self = shift;
+    $self->{name} = File::Spec->catdir('/' . $_[0]) if @_;
+    return $self->{name};
+}
+
+
 =item * $category = $category->save()
 
 Saves the contents of the category object in memory to the database.  Both
-'category_id' and 'path' will be defined if the call is successful. If the
+'category_id' and 'url' will be defined if the call is successful. If the
 'name' field has changed since the last save, the 'url' field will be
 reconstructed and update_child_url() is called to update the category urls
 underneath the present object.
@@ -476,19 +514,21 @@ its database query affects no rows in the database.
 sub save {
     my $self = shift;
     my $id = $self->{category_id} || '';
-    my @lookup_fields = qw/name path/;
-    my @save_fields = grep {$_ ne 'category_id'} keys %category_cols;
+    my @lookup_fields = qw/name url/;
+    my @save_fields = grep {$_ !~ /^(category_id|element)$/}
+      keys %category_cols;
 
     # flag for change in 'name' field
     my $new_url = $self->{name} ne $self->{_old_name} ? 1 : 0;
 
     # check for duplicates
-    my ($site_id, $field) = $self->duplicate_check();
-    croak(__PACKAGE__ . "->save(): field '$field' is a duplicate of site id" .
-          " '$site_id'.") if defined $site_id;
+    my $site_id = $self->duplicate_check();
+    croak(__PACKAGE__ . "->save(): 'name' is a duplicate of site id " .
+          "'$site_id'.")
+      if $site_id;
 
     # save element, get id back
-    my $element = $self->{element};
+    my ($element) = $self->{element};
     $element->save();
     $self->{element_id} = $element->element_id();
 
@@ -498,22 +538,30 @@ sub save {
     # the object has already been saved once if $id
     if ($id) {
         # recalculate url if we have a new name...
-        $self->{url} =~ s/$self->{_old_name}\$/$self->{name}\$/ if $new_url;
+        $self->{url} =~ s|^(.+)$self->{_old_name}|$1 . $self->{name}|e
+          if ($new_url);
         $query = "UPDATE category SET " .
           join(", ", map {"$_ = ?"} @save_fields) .
             " WHERE category_id = ?";
     } else {
-        # calculate path...
+        # calculate url...
+        my $param;
         if ($self->{parent_id}) {
-            $query = "SELECT url FROM category WHERE category_id = " .
-              "'$self->{parent_id}'";
+            $query = "SELECT url FROM category WHERE category_id = ?";
+            $param = $self->{parent_id};
         } else {
-            # i guess publish_path is right...
-            $query = "SELECT url FROM site WHERE site_id = " .
-              "'$self->{site_id}'";
+            $query = "SELECT url FROM site WHERE site_id = ?";
+            $param = $self->{site_id};
         }
-        my ($url) = $dbh->selectrow_array($query);
+        my ($url) = $dbh->selectrow_array($query, undef, ($param));
         $self->{url} = File::Spec->catdir($url, $self->{name});
+
+        # postfix '/' for root category so its 'name' can be changed like
+        # other categories
+        $self->{url} .= '/' if $self->{name} eq '/';
+
+        # store root path in a hidden field
+        $self->{_site_root} = $url;
 
         # build query
         $query = "INSERT INTO category (" . join(',', @save_fields) .
@@ -546,7 +594,7 @@ sub save {
 =item * $success = $category->update_child_url()
 
 Instance method that will search through the category table and replace all
-occurrences of the category's old name with the new one.
+occurrences of the categorys old name with the new one.
 
 =cut
 
@@ -555,10 +603,18 @@ sub update_child_url {
     my $id = $self->{category_id};
     my (%ids, $row);
     my $dbh = dbh();
+    my $root_path =
+      File::Spec->catdir($self->{_site_root}, $self->{_old_name});
 
-    # build hash of category_id and old urls 
-    my $sth = $dbh->prepare("SELECT category_id, url FROM category WHERE " .
-                            "url LIKE '$self->{url}%'");
+    # build hash of category_id and old urls
+    my $query = <<SQL;
+SELECT category_id, url
+FROM category
+WHERE site_id = '$self->{site_id}' AND category_id != '$self->{category_id}'
+      AND url LIKE '$root_path%'
+SQL
+
+    my $sth = $dbh->prepare($query);
     $sth->execute();
     $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     while($sth->fetch()) {
@@ -566,8 +622,7 @@ sub update_child_url {
     }
     $sth->finish();
 
-    (my $new_root = $self->{url}) =~ s/$self->{name}/$self->{_old_name}/;
-    my $query = <<SQL;
+    $query = <<SQL;
 UPDATE category
 SET url = ?
 WHERE category_id = ?
@@ -576,8 +631,10 @@ SQL
     $sth = $dbh->prepare($query);
 
     for (keys %ids) {
+        my ($obj) = Krang::Category->find(category_id => $_);
         (my $url = $ids{$_}) =~
-          s/^$self->{url}(.+)$/File::Spec->catdir($new_root, $1)/e;
+          s|^$root_path/?(.+)$|
+            File::Spec->catdir($self->{_site_root}, $self->{name}, $1)|e;
         $sth->execute(($url, $_));
     }
 
@@ -592,6 +649,9 @@ SQL
 =over
 
 =item * Provide a means to bubble down changes to the 'name' field
+
+Have to figure out a way to update url field of antoher object after a call to
+update_child_url()
 
 =item * Provide a means to bubble down chages in a sites 'url' field
 
