@@ -652,6 +652,11 @@ sub install_addons {
     foreach my $addon (@addons) {
         print "Installing addon '$addon'.\n";
         local $ENV{KRANG_ROOT} = $InstallPath;
+
+        # needed to keep Krang::Script from loading Krang::User which
+        # isn't necessarily available yet
+        local $ENV{REMOTE_USER} = 1;
+
         my $cmd = catfile($InstallPath, 'bin', 'krang_addon_installer') .
           ' ' . $addon;
         my $result = `$cmd`;

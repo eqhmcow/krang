@@ -109,7 +109,7 @@ BEGIN {
     Krang::Conf->instance($instance);
   
     # set REMOTE_USER to the user_id for the 'system' user
-    unless (exists($ENV{REMOTE_USER})) {
+    unless ($ENV{REMOTE_USER}) {
         my @user = (Krang::User->find(ids_only => 1,
                                       login    => 'system'));
         if (@user) {
