@@ -215,8 +215,8 @@ my @media;
 for my $media_count (1 .. $media) {
     # create a random image
     my ($x, $y);
-    my $img = Imager->new(xsize => $x = (int(rand(300) + 50)),
-                          ysize => $y = (int(rand(300) + 50)),
+    my $img = Imager->new(xsize => $x = (int(rand(600) + 25)),
+                          ysize => $y = (int(rand(600) + 25)),
                           channels => 3,
                          );
 
@@ -224,8 +224,8 @@ for my $media_count (1 .. $media) {
     $img->box(color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
               filled => 1);
 
-    # draw some boxes and circles
-    for (0 .. (int(rand(8)) + 2)) {
+    # draw some boxes, circles and polygons
+    for (0 .. (int(rand(10)) + 2)) {
         if ((int(rand(2))) == 1) {
             $img->box(color =>
                       Imager::Color->new(map { int(rand(255)) } 1 .. 3),
@@ -234,6 +234,12 @@ for my $media_count (1 .. $media) {
                       xmax => (int(rand($x * 2)) + 1),
                       ymax => (int(rand($y * 2)) + 1),
                       filled => 1);
+        } elsif ((int(rand(3))) == 1) {
+            my $points = int(rand(5)) + 3;
+            $img->polygon(color => 
+                            Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                          x => [ map { int(rand($x) + 1) } (0 .. $points) ],
+                          y => [ map { int(rand($x) + 1) } (0 .. $points) ]);
         } else {
             $img->circle(color =>
                          Imager::Color->new(map { int(rand(255)) } 1 .. 3),
