@@ -70,6 +70,7 @@ sub setup {
                          checkin_add
                          checkin_edit
                          save_stay_add
+                         checkout_and_edit
                          edit
                          save_edit
                          save_stay_edit
@@ -471,7 +472,26 @@ sub save_stay_add {
 }
 
 
+=item checkout_and_edit
 
+Checks out the media object identified by media_id and sends the user
+to edit.
+
+=cut
+
+sub checkout_and_edit {
+    my $self = shift;
+    my $q = $self->query();
+
+    my $media_id = $q->param('media_id');
+    croak("Missing required media_id parameter.") unless $media_id;
+
+    my ($m) = Krang::Media->find(media_id=>$media_id);
+    croak("Unable to load media_id '$media_id'") unless $m;
+
+    $m->checkout;
+    return $self->edit;
+}
 
 
 =item edit
@@ -1055,7 +1075,7 @@ sub make_media_tmpl_data {
         my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
         $tmpl_data{thumbnail_path} = $thumbnail_path;
         $tmpl_data{url} = format_url( url => $m->url(),
-                                      linkto => "javascript:preview_media('". $tmpl_data{media_id} ."')",
+                                      linkto => "javascript:preview_media_session()",
                                       length => 50 );
         $tmpl_data{published_version} = $m->published_version();
         $tmpl_data{version} = $m->version();

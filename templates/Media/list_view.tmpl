@@ -3,7 +3,7 @@
 <script language="JavaScript" type="text/javascript">
 
   function edit_media (id) {
-    document.find_media.rm.value = 'edit';
+    document.find_media.rm.value = 'checkout_and_edit';
     document.find_media.media_id.value = id;
     document.find_media.submit();
   }
@@ -37,6 +37,10 @@
   function clear_advanced_search () {
     var myform = document.clear_advanced_search_form;
     myform.submit();
+  }
+
+  function preview_media(id) {
+        window.open("publisher.pl?rm=preview_media&media_id=" + id, "");
   }
 
 </script>

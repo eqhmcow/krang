@@ -131,10 +131,10 @@ sub _row_handler {
         $row->{title} = $obj->title;
         $row->{thumbnail} = $obj->thumbnail_path(relative => 1);
         $row->{is_media} = 1;
-        $row->{url} = format_url(url    => $obj->url,
-                                 linkto => 
-                                 "javascript:preview_media($row->{id})",
-                                 length => 50);
+        $row->{url} =format_url(url    => $obj->url,
+                                linkto => 
+                                "javascript:preview_media(".$obj->media_id.")",
+                                length => 50);
     } else {
         $row->{template_id} = $obj->template_id;
         $row->{id} = _obj2id($obj);
@@ -249,7 +249,11 @@ sub checkin {
         $id =~ s/story_//;
         $result ? add_message("moved_story", id => $id) : add_message("story_cant_move", id => $query->param('id'));
 
+    } elsif ($obj->isa('Krang::Media')) {
+        add_message("checkin_media", id => $obj->media_id);
+        $obj->checkin();
     } else {
+        add_message("checkin_template", id => $obj->media_id);
         $obj->checkin();
     }
 

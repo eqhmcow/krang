@@ -57,6 +57,10 @@
         myform.submit();
     }
 
+    function preview_media_session() {
+        window.open("publisher.pl?rm=preview_media&session=media");
+    }
+
 // -->
 </script>
 
@@ -73,7 +77,7 @@
   <td width="135">ID:</td>
   <td width="10%"><tmpl_var media_id></td>
 
-  <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"></tmpl_if><img border="0" src="<tmpl_var thumbnail_path>"><tmpl_if media_id></a></tmpl_if></td>
+  <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media_session()"></tmpl_if><img border="0" src="<tmpl_var thumbnail_path>"><tmpl_if media_id></a></tmpl_if></td>
 </tr>
 
 <tr class="light">
@@ -132,7 +136,7 @@
 
 <tr>
   <td>*Upload File:<tmpl_if filename><br />
-<tmpl_if media_id><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if media_id></a></tmpl_if>
+<tmpl_if media_id><a href="javascript:preview_media_session()"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if media_id></a></tmpl_if>
 <tmpl_var escape=HTML file_size></tmpl_if></td>
   <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_media_file><span class="invalid"></tmpl_if><tmpl_var upload_chooser><tmpl_if error_media_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>

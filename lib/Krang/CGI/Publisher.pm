@@ -37,6 +37,7 @@ sub setup {
     $self->tmpl_path('Publisher/');
     $self->run_modes([qw(
         preview_story
+        preview_media
     )]);
 
 }
@@ -64,6 +65,47 @@ sub preview_story {
 
     # this should always be true
     assert($url eq $story->preview_url) if ASSERT;
+
+    # redirect to preview
+    $self->header_type('redirect');
+    $self->header_props(-url=>"http://$url");
+    return "Redirecting to <a href='http://$url'>http://$url</a>.";
+}
+
+=item preview_media
+
+Publishes a media object to preview and returns a redirect to the
+resulting URL.  Requires a media_id parameter with the ID for the
+media to be previewed, or a parameter called session set to the
+session key containing the media object.
+
+=cut
+
+sub preview_media {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $session_key = $query->param('session');
+    my $media_id    = $query->param('media_id');
+    croak("Missing required media_id or session parameter.")
+      unless $media_id or $session_key;
+
+    my $media;
+    unless ($session_key) {
+        ($media) = Krang::Media->find(media_id => $media_id);
+        croak("Unable to find media '$media_id'")
+          unless $media;
+    } else {
+        $media = $session{$session_key};
+        croak("Unable to load media from sesssion '$session_key'")
+          unless $media;
+    }
+
+    my $publisher = Krang::Publisher->new();
+    my $url = $publisher->preview_media(media => $media);
+
+    # this should always be true
+    assert($url eq $media->preview_url) if ASSERT;
 
     # redirect to preview
     $self->header_type('redirect');
