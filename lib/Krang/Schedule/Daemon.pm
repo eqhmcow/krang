@@ -230,9 +230,9 @@ sub scheduler_pass {
     }
 
     if ($CHILD_COUNT) {
-        debug(sprintf("%s STATUS: Waiting on %i children to return.", __PACKAGE__, $CHILD_COUNT));
+        debug(sprintf("%s: All jobs assigned, waiting on %i children to return.", __PACKAGE__, $CHILD_COUNT));
     } else {
-        debug(sprintf("%s STATUS: no work pending.", __PACKAGE__));
+        debug(sprintf("%s: All jobs completed.", __PACKAGE__));
     }
 
 }
@@ -471,8 +471,35 @@ L<Krang::Schedule>, L<Krang::Alert>, L<Krang::Publisher>
 
 =cut
 
+my $quip = <<END;
 
-1;
+There is a Reaper whose name is Death, And, with his sickle keen,
+He reaps the bearded grain at a breath, And the flowers that grow between.
+
+"Shall I have nought that is fair?" saith he; "Have nought but the bearded grain?
+Though the breath of these flowers is sweet to me, I will give them all back again."
+
+He gazed at the flowers with tearful eyes, He kissed their drooping leaves;
+It was for the Lord of Paradise He bound them in his sheaves.
+
+"My Lord has need of these flowers gay," The Reaper said, and smiled;
+"Dear tokens of the earth are they, Where he was once a child.
+
+"They shall all bloom in fields of light, Transplanted by my care,
+And saints, upon their garments white, These sacred blossoms wear."
+
+And the mother gave, in tears and pain, The flowers she most did love;
+She knew she should find them all again In the fields of light above.
+
+O, not in cruelty, not in wrath, The Reaper came that day;
+'Twas an angel visited the green earth, And took the flowers away.
+
+
+            "The Reaper And The Flowers"
+            Henry Wadsworth Longfellow
+
+END
+
 
 
 
