@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed Krang::ElementClass::Date to store and load data in XML using
+an ISO-8601 date-time format. Also added missing template_data()
+method.  [Sam]
+
+=item *
+
 Added support for Debian. [Jason Purdy]
 
 =item *

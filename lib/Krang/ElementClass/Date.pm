@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use base 'Krang::ElementClass::Storable';
+use Carp qw(croak);
 
 use Krang::MethodMaker
   get_set => [ qw( size maxlength start_year end_year ) ];
@@ -126,6 +127,47 @@ sub template_data {
     $arg{element}->data->strftime('%b %e, %Y')
 } 
 
+sub thaw_data_xml {
+    my ($self, %arg) = @_;
+    my $element = $arg{element};
+    my ($data) = $arg{qw(data)}->[0];
+    return undef unless $data;
+
+    croak("Bad date format '$data' found during XML data parsing.")
+      unless $data =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/;
+
+    my $format = "%Y-%m-%dT%H:%M:%SZ";
+    my $time = Time::Piece->strptime($data,$format);
+
+    # adjust for timezone
+    $time -= $time->tzoffset;
+
+    return $element->data($time);
+}
+
+sub freeze_data_xml {
+    my ($self, %arg) = @_;
+    my ($element, $writer) = @arg{'element', 'writer'};
+    my $data = $element->data;
+    return $writer->dataElement(data => '') unless $data;
+    
+    # adjust for timezone
+    $data += $data->tzoffset;
+
+    # build XML
+    my $xml = $writer->dataElement(data => 
+                                   $data->strftime("%Y-%m-%dT%H:%M:%SZ"));
+    
+    # undo adjustment
+    $data -= $data->tzoffset;
+
+    return $xml;
+}
+
+
+
+
+
 
 =head1 NAME
 
@@ -146,6 +188,14 @@ Provides a date field element class.
 
 All the normal L<Krang::ElementClass> attributes are available.  The
 data() field for elements of this class stores a Time::Piece object.
+
+The XML format for the data of this element in an ISO-8601 date-time
+like:
+
+  2004-10-01T12:53:01Z
+
+The date must be expressed in UTC with the timezone specifier "Z".  It
+will be transformed into local-time when loaded.
 
 =cut
 

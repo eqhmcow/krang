@@ -233,6 +233,11 @@ foreach my $story (@stories) {
             is(($import->element->match($_->xpath))[0]->data(), $_->data);
         }
 
+        if ($_->name eq 'issue_date') {
+            is(($import->element->match($_->xpath))[0]->data()->mysql_datetime,
+               $_->data->mysql_datetime);
+        }
+
         # BROKEN: this doesn't work because Krang::Media and
         # Krang::ElementClass may need to do a find() on categories to
         # load its URL.  Since the category object is already deleted
