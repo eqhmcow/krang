@@ -67,7 +67,7 @@ sub edit {
 
     $template->param(search_results_selector => scalar
                       $q->popup_menu(-name    => 'search_results_page',
-                                         -values  => [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95 ],
+                                         -values  => [5, 10, 20, 30, 40, 50 ],
                                          -default => $set_sps));
 
     return $template->output; 
