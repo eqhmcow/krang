@@ -180,6 +180,8 @@ In the Package that describes the Story element, we'll override the fill_templat
   # setup the page break variable
   $template->param(page_break => Krang::Publisher::PAGE_BREAK);
 
+  my $deck_element = $self->children('deck');
+  $template->param(deck => $deck_element->publish());
 
   # Build up @page_loop
   my @page_list = $self->match('/page'); # returns all elements
