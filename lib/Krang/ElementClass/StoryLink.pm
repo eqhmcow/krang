@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use base 'Krang::ElementClass';
+use Krang::Log qw(debug info critical);
 
 #use Krang::MethodMaker
 #  get_set => [ qw( ) ];
@@ -12,7 +13,7 @@ sub new {
     my %args = ( 
                 @_
                );
-    
+
     return $pkg->SUPER::new(%args);
 }
 
@@ -33,7 +34,7 @@ sub input_form {
           qq{URL: <a href="#">} . $story->url . qq{</a></div>};
     }
 
-    
+
     $html .= scalar $query->button(-name    => "find_story_$param",
                                    -value   => "Find Story",
                                    -onClick => "find_story('$param')",
@@ -94,6 +95,58 @@ sub serialize_xml {
     # add object
     my $story = $element->data;
     $set->add(object => $story, from => $element->object) if $story;
+}
+
+
+# If fill_template() has been called, a template exists for this element.
+# Populate it with available attributes
+
+#sub fill_template {
+#}
+
+# Publish - if no template exists, simply return the URL (based on publish/preview status)
+
+sub publish {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $html_template;
+
+    foreach (qw(element publisher)) {
+        unless (exists($args{$_})) {
+            croak(__PACKAGE__ . ": Missing argument '$_'.  Exiting.\n");
+        }
+    }
+
+    my $publisher = $args{publisher};
+
+    debug(__PACKAGE__ . ': publish called for element name=' . $args{element}->name());
+
+    # try and find an appropriate template.
+    eval { $html_template = $self->find_template(@_); };
+
+    if ($@) {
+        my $err = $@;
+
+        # no template found.
+        # Return the story URL, depending on preview/publish.
+        if ($publisher->is_publish()) {
+            return $args{element}->data()->url();
+        } elsif ($publisher->is_preview()) {
+            return $args{element}->data()->preview_url();
+        } else {
+            croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
+        }
+    }
+
+    $self->fill_template(tmpl => $html_template, @_);
+
+    my $html = $html_template->output();
+
+    return $html;
+
+
 }
 
 
