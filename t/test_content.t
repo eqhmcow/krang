@@ -114,7 +114,7 @@ $story = $creator->create_story(category => [$category]);
 isa_ok($story, 'Krang::Story');
 
 # further testing to make sure that the story params are supported.
-my $story2 = $creator->create_story(category => [$category],
+my $story2 = $creator->create_story(category => [$root, $category],
                                     title    => 'title',
                                     deck     => 'deck',
                                     header   => 'header',
@@ -129,6 +129,17 @@ is($tmppage->child('header')->data(), 'header', "create_story() - param('header'
 
 my @pages = $story2->element->match('//page');
 is($#pages, 4, "create_story() - param('pages')");
+
+
+my @story_paths = $creator->story_paths(story => $story2);
+my @story_cats = $story2->categories();
+
+for (my $i = 0; $i <= $#story_cats; $i++) {
+    is($story_paths[$i], catfile($story2->publish_path(category => $story_cats[$i]), 'index.html'),
+       'story_paths()');
+}
+
+
 
 
 ##################################################
