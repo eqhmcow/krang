@@ -8,14 +8,16 @@ PIRT.
 =over 4
 
 
-=item Update $VERSION in Krang.pm
+=item Make sure your CVS working directory is up to daye (C<cvs update -d>)
+
+=item Update $VERSION in Krang.pm and commit change to CVS
 
 
 =item Verify that upgrade modules have been created for this release
 
 =over 4
 
-=item ...if necessary (located in KRANG_ROOT/upgrade/).
+=item Located in F<KRANG_ROOT/upgrade/>
 
 =back
 
@@ -60,7 +62,7 @@ due to a bug) you have to "force" a cvs tag manually
 
 =back
 
-=item Export krang from CVS using tagged version
+=item Export krang from CVS using tagged version (to F</tmp> directory)
 
 =item Delete excluded directories
 
