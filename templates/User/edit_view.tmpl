@@ -63,17 +63,23 @@
 
 <tr>
     <td align="left" valign="top">First:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_first><span class="invalid"></tmpl_if><input type="textfield" size="40" name="first_name" value="<tmpl_var escape=HTML first_name>"><tmpl_if error_invalid_first></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+    <td align="left" valign="top"><tmpl_if duplicate_first_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="first_name" value="<tmpl_var escape=HTML first_name>"><tmpl_if duplicate_first_name></span></tmpl_if></td>
 </tr>
 
 <tr>
     <td align="left" valign="top">Last:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_last><span class="invalid"></tmpl_if><input type="textfield" size="40" name="last_name" value="<tmpl_var escape=HTML last_name>"><tmpl_if error_invalid_last></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+    <td align="left" valign="top"><tmpl_if duplicate_last_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="last_name" value="<tmpl_var escape=HTML last_name>"><tmpl_if duplicate_last_name></span></tmpl_if></td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">User Groups:</td>
-    <td align="left" valign="top"><tmpl_var group_ids></td>
+  <td align="left" valign="top">User Groups:</td>
+  <td align="left" valign="top">
+  <tmpl_if error_invalid_login><span class="invalid"></tmpl_if>
+  <select name="group_ids" size="<tmpl_var group_id_size>" multiple="multiple">
+  <tmpl_loop group_id_loop><option value="<tmpl_var id>" <tmpl_if selected>selected</tmpl_if>><tmpl_var name></option></tmpl_loop>
+  </select>
+  <tmpl_if error_invalid_login></span></tmpl_if>
+  </td>
 </tr>
 
 <tr>
@@ -95,19 +101,19 @@
 
 <tr>
     <td align="left" valign="top">Login:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_login><span class="invalid"></tmpl_if><input type="textfield" size="40" name="login" value="<tmpl_var escape=HTML login>"><tmpl_if error_invalid_login></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+    <td align="left" valign="top"><tmpl_if duplicate_login><span class="invalid"></tmpl_if><tmpl_if error_invalid_login><span class="invalid"></tmpl_if><input type="textfield" size="40" name="login" value="<tmpl_var escape=HTML login>"><tmpl_if error_invalid_login></span></tmpl_if><tmpl_if duplicate_login></span></tmpl_if></td>
 </tr>
 
 <tr>
     <td align="left" valign="top">New Password:</td>
-    <td align="left" valign="top"><input type="password" size="40" name="new_password" value=""></td>
+    <td align="left" valign="top"><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="40" name="new_password" value="<tmpl_var new_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if></td>
 </tr>
 
 <tr>
     <td align="left" valign="top">Confirm New Password:</td>
-    <td align="left" valign="top"><input type="password" size="40" name="confirm_password" value=""></td>
+    <td align="left" valign="top"><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="40" name="confirm_password" value="<tmpl_var confirm_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if></td>
 </tr>
-
+</table>
 </div>
 
 <div class="button-bar">

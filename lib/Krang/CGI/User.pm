@@ -2,7 +2,7 @@ package Krang::CGI::User;
 
 =head1 NAME
 
-Krang::CGI::User - 
+Krang::CGI::User -
 Abstract of web application....
 
 
@@ -15,7 +15,7 @@ Abstract of web application....
 
 =head1 DESCRIPTION
 
-Overview of functionality and purpose of 
+Overview of functionality and purpose of
 web application module Krang::CGI::User...
 
 =cut
@@ -27,18 +27,33 @@ use warnings;
 
 use base qw/Krang::CGI/;
 
-
+use Carp qw(verbose croak);
 use Krang::History;
 use Krang::HTMLPager;
-use Krang::Log;
+use Krang::Log qw/critical/;
 use Krang::Message qw(add_message);
 use Krang::Pref;
 use Krang::Session qw(%session);
 use Krang::User;
 
 
-# alias user_groups hash, for convenience :)
-my %user_groups = %Krang::User::user_groups;
+# convenience alias for %Krang::User::user_groups
+my %user_groups;
+
+# array of hash refs for group_id multi-select
+my $group_id_tmpl;
+
+# number of possible options in group_id select
+my $size;
+
+BEGIN {
+    %user_groups = %Krang::User::user_groups;
+    while (my($id, $name) = each %user_groups) {
+        push @$group_id_tmpl, {id => $id, name => $name, selected => 0};
+        ++$size;
+    }
+}
+
 
 ##############################
 #####  OVERRIDE METHODS  #####
@@ -89,32 +104,36 @@ sub teardown {
 
 =item * add
 
-Description of run-mode add...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Displays the "Add User" screen by means of which a new user object can be added
+to the system.
 
 =cut
 
 sub add {
 	my $self = shift;
-
+        my %ui_messages = @_;
 	my $q = $self->query();
+        my $t = $self->load_tmpl("edit_view.tmpl", associate => $q);
 
-	return $self->dump_html();
+        $t->param(add_mode => 1);
+        $t->param(%ui_messages) if %ui_messages;
+
+        # make new User object
+        my $user = Krang::User->new(login => '', password => '');
+
+        # store object in session
+        $session{EDIT_USER} = $user;
+
+        $t->param($self->get_user_params($user));
+
+        return $t->output();
 }
 
 
 =item * cancel_add
 
-Description of run-mode cancel_add...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Cancels edit of user object on "Add User" screen and returns to 'search' run
+mode.
 
 =cut
 
@@ -123,18 +142,24 @@ sub cancel_add {
 
 	my $q = $self->query();
 
-	return $self->dump_html();
+        add_message('message_add_cancelled');
+
+	return $self->search();
 }
 
 
 =item * save_add
 
-Description of run-mode save_add...
+Saves user object visible on 'add' screen.  Returns to 'search' run mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+It retrieves the user from the session object and overwrites the fields of this
+object with the query parameters passed to this run mode, with the exception of
+the 'user_id'.
+
+The 'new_password' field and 'confirm_password' fields are compared for
+equality is they are equal the value in 'new_password' will be MD5'd and stored
+in the password field, otherwise the end-user will be returned to the 'edit'
+screen.
 
 =cut
 
@@ -143,18 +168,33 @@ sub save_add {
 
 	my $q = $self->query();
 
-	return $self->dump_html();
+        my %errors = $self->validate_user();
+
+        # Return to edit screen if there are errors
+        return $self->add(%errors) if %errors;
+
+        # Get user from session
+        my $user = $session{EDIT_USER} || 0;
+        croak("Can't retrieve EDIT_USER from session") unless $user;
+
+        %errors = $self->update_user($user);
+        return $self->edit(%errors) if %errors;
+
+        $q->delete(Krang::User::USER_RW, 'group_ids', 'password',
+                   'new_password', 'confirm_password');
+
+        add_message('message_user_saved');
+
+        return $self->search();
 }
 
 
 =item * save_stay_add
 
-Description of run-mode save_stay_add...
+Saves user object to the database and redirects to the "Edit User" screen.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This mode function just like the 'save_add' run mode except for redirecting
+the user to 'edit' run mode.
 
 =cut
 
@@ -163,7 +203,27 @@ sub save_stay_add {
 
 	my $q = $self->query();
 
-	return $self->dump_html();
+        my %errors = $self->validate_user();
+
+        # Return to edit screen if there are errors
+        return $self->add(%errors) if %errors;
+
+        # Get user from session
+        my $user = $session{EDIT_USER} || 0;
+        croak("Can't retrieve EDIT_USER from session") unless $user;
+
+        %errors = $self->update_user($user);
+        return $self->add(%errors) if %errors;
+
+        # preserve, set vals for 'edit' run mode
+        $q->delete(Krang::User::USER_RW, 'group_ids', 'password',
+                   'new_password', 'confirm_password');
+        $q->param(user_id => $user->user_id());
+        $q->param(rm => 'edit');
+
+        add_message('message_user_saved');
+
+	return $self->edit();
 }
 
 
@@ -180,8 +240,22 @@ sub delete {
 
 	my $q = $self->query();
         my $user_id = $q->param('user_id');
+        return $self->search() unless $user_id;
+        eval {Krang::User->delete($user_id);};
+        if ($@) {
+            if (ref $@ && $@->isa('Krang::User::Dependency')) {
+                critical("Unable to delete user '$user_id': objects are " .
+                         "checked out by this user.");
+                add_message('error_deletion_failure');
+                return $self->search();
+            } else {
+                croak($@);
+            }
+        }
 
-	return $self->dump_html();
+        add_message('message_deleted');
+
+        return $self->search();
 }
 
 
@@ -206,7 +280,19 @@ sub delete_selected {
         return $self->search() unless @user_delete_list;
 
         # destroy users
-        Krang::User->delete($_) for @user_delete_list;
+        for my $u(@user_delete_list) {
+            eval {Krang::User->delete($u);};
+            if ($@) {
+                if (ref $@ && $@->isa('Krang::User::Dependency')) {
+                    critical("Unable to delete user '$u': objects are " .
+                             "checked out by this user.");
+                    add_message('error_deletion_failure');
+                    return $self->search();
+                } else {
+                    croak($@);
+                }
+            }
+        }
 
         add_message('message_selected_deleted');
 
@@ -221,6 +307,9 @@ the 'search' screen.
 
 This run mode expects a 'user_id' query param and it will croak if it's missing
 or invalid.
+
+N.B - propagate query params supercede object field values in populating form
+fields, so errant values are preserved for correction.
 
 =cut
 
@@ -243,23 +332,7 @@ sub edit {
 
         $t->param(%ui_messages) if %ui_messages;
 
-        # make group_ids checkbox
-        my $default = $user->group_ids;
-        my @values = keys %user_groups;
-        my $size = scalar @values;
-        my $group_ids = $q->scrolling_list(-name => 'group_ids',
-                                           -values => \@values,
-                                           -default => $default,
-                                           -size => $size,
-                                           -multiple => 'true',
-                                           -labels => \%user_groups,);
-        $t->param(group_ids => $group_ids);
-
-        # loop through User fields
-        for (Krang::User::USER_RO, Krang::User::USER_RW) {
-            no strict;
-            $t->param($_ => $user->$_);
-        }
+        $t->param($self->get_user_params($user));
 
         return $t->output();
 }
@@ -267,12 +340,8 @@ sub edit {
 
 =item * cancel_edit
 
-Description of run-mode cancel_edit...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Cancels edit of user object on "Edit User" screen and returns to 'search' run
+mode.
 
 =cut
 
@@ -281,18 +350,24 @@ sub cancel_edit {
 
 	my $q = $self->query();
 
-	return $self->dump_html();
+        add_message('message_save_cancelled');
+
+	return $self->search();
 }
 
 
 =item * save_edit
 
-Description of run-mode save_edit...
+Updates user object visible on 'edit' screen.  Returns to 'search' run mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+It retrieves the user from the session object and overwrites the fields of this
+object with the query parameters passed to this run mode, with the exception of
+the 'user_id'.
+
+The 'new_password' field and 'confirm_password' fields are compared for
+equality is they are equal the value in 'new_password' will be MD5'd and stored
+in the password field, otherwise the end-user will be returned to the 'edit'
+screen.
 
 =cut
 
@@ -301,18 +376,33 @@ sub save_edit {
 
 	my $q = $self->query();
 
-	return $self->dump_html();
+        my %errors = $self->validate_user();
+
+        # Return to edit screen if there are errors
+        return $self->edit(%errors) if %errors;
+
+        # Get user from session
+        my $user = $session{EDIT_USER} || 0;
+        croak("Can't retrieve EDIT_USER from session") unless $user;
+
+        %errors = $self->update_user($user);
+        return $self->edit(%errors) if %errors;
+
+        $q->delete(Krang::User::USER_RW, 'group_ids', 'password',
+                   'new_password', 'confirm_password');
+
+        add_message('message_user_saved');
+
+        return $self->search();
 }
 
 
 =item * save_stay_edit
 
-Description of run-mode save_stay_edit...
+Updates user object in database and returns/remains on the "Edit User" screen.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This mode function just like the 'save_edit' run mode except for redirecting
+the user to 'edit' run mode.
 
 =cut
 
@@ -321,7 +411,27 @@ sub save_stay_edit {
 
 	my $q = $self->query();
 
-	return $self->dump_html();
+        my %errors = $self->validate_user();
+
+        # Return to edit screen if there are errors
+        return $self->edit(%errors) if %errors;
+
+        # Get user from session
+        my $user = $session{EDIT_USER} || 0;
+        croak("Can't retrieve EDIT_USER from session") unless $user;
+
+        %errors = $self->update_user($user);
+        return $self->edit(%errors) if %errors;
+
+        # preserve, set vals for 'edit' run mode
+        $q->delete(Krang::User::USER_RW, 'group_ids', 'password',
+                   'new_password', 'confirm_password');
+        $q->param(user_id => $user->user_id());
+        $q->param(rm => 'edit');
+
+        add_message('message_user_saved');
+
+	return $self->edit();
 }
 
 
@@ -329,13 +439,8 @@ sub save_stay_edit {
 
 Display a list of all users or those matching the supplied search criteria.
 
-
-Description of run-mode search...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This run mode accepts the optional parameter "search_filter" which is expected
+to contain a text string which will in turn be used to query users.
 
 =cut
 
@@ -409,6 +514,106 @@ sub search {
 }
 
 
+# Construct param hashref to be used for edit template output
+sub get_user_params {
+    my $self = shift;
+    my $user = shift;
+    my $q = $self->query();
+    my %user_tmpl;
+
+    # make group_ids multi-select
+    my $id_tmpl = $group_id_tmpl;
+    my @group_ids = $q->param('group_ids') || $user->group_ids;
+    for my $i(@group_ids) {
+        $id_tmpl->[$i - 1]->{selected} = 1;
+    }
+
+    $user_tmpl{group_id_size} = $size;
+    $user_tmpl{group_id_loop} = $id_tmpl;
+
+    # loop through User fields
+    $user_tmpl{$_} = $q->param($_) || $user->$_ for Krang::User::USER_RW;
+
+    return \%user_tmpl;
+}
+
+
+# Update the user object with the values in the CGI query
+sub update_user {
+    my $self = shift;
+    my $user = shift;
+    my $q = $self->query();
+
+    # overwrite object fields
+    $user->$_($q->param($_))
+      for (Krang::User::USER_RW, 'group_ids', 'password');
+
+    # attempt to save
+    eval {$user->save()};
+
+    # Did we get a duplicate exception
+    if ($@) {
+        my %errors;
+        if (ref $@ && $@->isa('Krang::User::Duplicate')) {
+            my %dupes = %{$@->duplicates};
+            for my $v(values %dupes) {
+                for (@$v) {
+                    my $error = "duplicate_" . $_;
+                    $errors{$error} = 1;
+                    add_message($error);
+                }
+            }
+            return %errors;
+        } else {
+            croak($@);
+        }
+    }
+
+    return ();
+}
+
+
+# Ensure the validity of parameters passed while attempting to save or update
+# the user object
+sub validate_user {
+    my $self = shift;
+    my $q = $self->query();
+    my %errors;
+
+    # validate new_password and confirm_password
+    my $pass = $q->param('new_password');
+    my $cpass = $q->param('confirm_password');
+    if (defined $pass && defined $cpass) {
+        if ($pass ne $cpass) {
+            $errors{error_password_mismatch} = 1
+        } else {
+                $q->param('password', $pass) unless $pass eq '';
+        }
+    }
+
+    # login cannot be null
+    my $login = $q->param('login');
+    $errors{error_invalid_login} = 1
+      unless (defined $login || $login =~ /^\s+$/);
+
+    # validate group_ids
+    my @group_ids = $q->param('group_ids');
+    my @valid_group_ids;
+    for (@group_ids) {
+        push @valid_group_ids, $_ if exists $user_groups{$_};
+    }
+    $errors{error_invalid_group_id} = 1
+      unless scalar @group_ids == scalar @valid_group_ids;
+
+    # only propagate valid group_ids
+    $q->param('group_ids', @valid_group_ids);
+
+    # Add error messages
+    add_message($_) for keys %errors;
+
+    return %errors;
+}
+
 
 
 ##############################
@@ -437,7 +642,8 @@ Author of Module <author@module>
 
 =head1 SEE ALSO
 
-L<Krang::History>, L<Krang::HTMLPager>, L<Krang::Log>, L<Krang::Message>, L<Krang::Pref>, L<Krang::Session>, L<Krang::User>, L<Krang::CGI>
+L<Krang::History>, L<Krang::HTMLPager>, L<Krang::Log>, L<Krang::Message>,
+L<Krang::Pref>, L<Krang::Session>, L<Krang::User>, L<Krang::CGI>
 
 =cut
 

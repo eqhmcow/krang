@@ -84,18 +84,16 @@ isa_ok($_, 'Krang::User') for @users;
 is(scalar @users, 2, 'find - count');
 
 @users = Krang::User->find(order_by => 'login');
-is($users[0]->login, 'admin', 'find - order_by');
+my @u = sort {$a->{login} cmp $b->{login}} @users;
+is($users[0]->login, $u[0]->login, 'find - order_by');
 
 @users = Krang::User->find(limit => 1);
 is(scalar @users, 1, 'find - limit');
 
-@users = Krang::User->find(offset => 1);
-is($users[0]->login, 'arobin', 'find - offset');
-
-@users = Krang::User->find(group_ids => [1,2,3]);
+@users = Krang::User->find(group_ids => [1,2,3], login => 'arobin');
 isa_ok($_, 'Krang::User') for @users;
-is(scalar @users, 2, 'find - group_ids');
-is(scalar @{$users[1]->group_ids()}, 3, 'group_ids - count');
+is($users[0]->login, 'arobin', 'find - group_ids');
+is(scalar @{$users[0]->group_ids()}, 3, 'group_ids - count');
 
 # check_user_pass() tests
 ##########################

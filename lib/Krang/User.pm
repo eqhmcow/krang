@@ -377,8 +377,9 @@ SQL
 
     # alter query if save() has already been called
     if ($id) {
-        $query =~ s/login/user_id != ? AND login/;
-        push @params, $id;
+        $query =~ s/WHERE /WHERE user_id != ? AND (/;
+        $query .= ")";
+        unshift @params, $id;
     }
 
     my $dbh = dbh();
@@ -541,11 +542,13 @@ sub find {
         push @invalid_cols, $arg unless exists $lookup_cols{$lookup_field} ||
           $arg eq 'simple_search';
 
+        my $and = defined $where_clause && $where_clause ne '' ? ' AND' : '';
+
         if (($arg eq 'user_id' || $arg eq 'group_ids') &&
             ref $args{$arg} eq 'ARRAY') {
             my $field = $arg eq 'user_id' ? "u.user_id" : "ug.user_group_id";
             my $tmp = join(" OR ", map {"$field = ?"} @{$args{$arg}});
-            $where_clause .= " ($tmp)";
+            $where_clause .= "$and ($tmp)";
             push @params, @{$args{$arg}};
         } elsif ($arg eq 'simple_search') {
             my @words = split(/\s+/, $args{$arg});
@@ -563,8 +566,6 @@ sub find {
             # prepend 'u' or 'ug'
             $lookup_field = ($arg eq 'group_id' ? "ug." : "u.") .
               $lookup_field;
-            my $and = defined $where_clause && $where_clause ne '' ?
-              ' AND' : '';
             if (not defined $args{$arg}) {
                 $where_clause .= "$and $lookup_field IS NULL";
             } else {
@@ -660,16 +661,21 @@ SQL
 
 =item * $md5_digest = $user->password( $password )
 
+=item * $md5_digest = Krang::User->password( $password )
+
 Method to get or set the password associated with a user object.  Returns
 Digest::MD5->md5( $SALT . $password_string ) as a getter. Stores the same
-in the DB as a setter.
+in the DB as a setter. As a class method it returns an md5 digest of its
+argument.
 
 =cut
 
 sub password {
     my $self = shift;
-    $self->{password} = md5_hex($SALT, $_[0]) if $_[0];
-    return $self->{password};
+    return $self->{password} unless @_;
+    my $pass = md5_hex($SALT, $_[0]);
+    $self->{password} = $pass if ((ref $self) && $pass);
+    return $pass;
 }
 
 
