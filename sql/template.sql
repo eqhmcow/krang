@@ -13,10 +13,8 @@ CREATE TABLE template (
         creation_date timestamp(14) NOT NULL,
         deploy_date timestamp(14),
         deployed tinyint(1) NOT NULL,
-        description tinytext,
+        element_class varchar(255),
         filename tinytext NOT NULL,
-        name tinytext NOT NULL,
-        notes text,
         testing int(1) NOT NULL,
         version int(11) NOT NULL,
         PRIMARY KEY  (template_id),
@@ -37,7 +35,6 @@ DROP TABLE IF EXISTS template_version;
 
 CREATE TABLE template_version (
         template_version_id int(11) NOT NULL auto_increment,
-        creation_date timestamp(14) NOT NULL,
         data longtext NOT NULL,
         template_id int(11) NOT NULL,
         version int(11) NOT NULL,
