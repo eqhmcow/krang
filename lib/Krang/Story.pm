@@ -1189,7 +1189,7 @@ sub find {
         @{$obj}{('category_ids', 'urls')} = ([], []);
         foreach my $row (@$result) {
             push @{$obj->{category_ids}}, $row->[0];
-            push @{$obj->{urls}},         $row->[1];
+            push @{$obj->{url_cache}},         $row->[1];
         }
 
         # load contribs
