@@ -4,6 +4,7 @@ use warnings;
 
 use Krang::Element;
 use Krang::Category;
+use Krang::History qw( add_history );
 use Krang::Log     qw(assert ASSERT affirm debug info critical);
 use Krang::DB      qw(dbh);
 use Krang::Session qw(%session);
@@ -518,6 +519,11 @@ sub save {
 
     # save a serialized copy in the version table
     $self->_save_version;
+
+    add_history(    object => $self, 
+                    action => 'save',
+               );
+
 }
 
 # save core Story data
@@ -1155,6 +1161,17 @@ sub checkout {
         $self->{checked_out} = 1;
         $self->{checked_out_by} = $user_id;
     }
+
+    if ($self->isa('Krang::Story')) {
+        add_history(    object => $self,
+                        action => 'checkout',
+               );
+    } else {
+        add_history(    object => ((Krang::Story->find(story_id => $story_id))[0]),
+                        action => 'checkout',
+               );
+    }
+
 }
 
 =item C<< Krang::Story->checkin($story_id) >>
@@ -1195,6 +1212,17 @@ sub checkin {
         $self->{checked_out} = 0;
         $self->{checked_out_by} = 0;
     }
+
+    if ($self->isa('Krang::Story')) {
+        add_history(    object => $self,
+                        action => 'checkin',
+               );
+    } else {
+        add_history(    object => ((Krang::Story->find(story_id => $story_id))[0]),
+                        action => 'checkin',
+               );
+    }
+
 }
 
 # make sure the object is checked out, or croak
@@ -1238,6 +1266,10 @@ sub revert {
     # copy in data, preserving contents of %persist
     %$self = (%$obj, %persist);
 
+    add_history(    object => $self, 
+                    action => 'revert',
+               );
+
     return $self; 
 }
 
@@ -1259,6 +1291,9 @@ sub delete {
         croak("Unable to load story '$story_id'.") unless $self;
     }
     $self->checkout;
+
+    # first delete history for this object
+    Krang::History->delete(object => $self);
 
     my $dbh = dbh;
     $dbh->do('DELETE FROM story WHERE story_id = ?', 
