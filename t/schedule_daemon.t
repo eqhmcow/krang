@@ -35,24 +35,41 @@ foreach my $instance (Krang::Conf->instances) {
 
 
 BEGIN {
+
+    my $found;
+
     $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
     $schedulectl = File::Spec->catfile(KrangRoot, 'bin', 'krang_schedulectl');
     $stop_daemon = 0;
 
-    use Test::More qw(no_plan);
-
-    unless (-e $pidfile) {
-        diag("Starting Scheduler Daemon for tests..");
-        `$schedulectl start`;
-        $stop_daemon = 1;
-        sleep 5;
-
-        unless (-e $pidfile) {
-            diag('Scheduler Daemon Startup failed.  Exiting.');
-            exit(1);
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        if (InstanceElementSet eq 'TestSet1') {
+            eval 'use Test::More qw(no_plan)';
+            $found = 1;
+            last;
         }
     }
+
+
+    if ($found) {
+        unless (-e $pidfile) {
+            diag("Starting Scheduler Daemon for tests..");
+            `$schedulectl start`;
+            $stop_daemon = 1;
+            sleep 5;
+
+            unless (-e $pidfile) {
+                diag('Scheduler Daemon Startup failed.  Exiting.');
+                exit(1);
+            }
+        }
+        eval 'use Test::More qw(no_plan)';
+    } else {
+        eval "use Test::More skip_all => 'test requires a TestSet1 instance';";
+    }
 }
+
 
 END {
     if ($stop_daemon) {
