@@ -236,14 +236,22 @@ my $media = &create_media();
 END { $media->delete(); }
 
 # test media deployment.
-my $expected_path = catfile($publish_path, $media->url());
+my $pub_expected_path = catfile($publish_path, $media->url());
 
-my $media_url = $publisher->publish_media(media => $media);
+my $pub_media_url = $publisher->publish_media(media => $media);
 
-my $result_path = catfile($publish_path, $media_url);
+my $pub_media_path = catfile($publish_path, $pub_media_url);
 
-ok($expected_path eq $result_path, 'Krang::Publisher->publish_media()');
+ok($pub_expected_path eq $pub_media_path, 'Krang::Publisher->publish_media()');
 
+
+my $prev_expected_path = catfile($preview_path, $media->url());
+
+my $prev_media_url = $publisher->preview_media(media => $media);
+
+my $prev_media_path = catfile($preview_path, $prev_media_url);
+
+ok($prev_expected_path eq $prev_media_path, 'Krang::Publisher->preview_media()');
 
 
 
