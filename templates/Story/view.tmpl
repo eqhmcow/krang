@@ -2,6 +2,10 @@
 
 <script language="javascript">
   nav_edit_mode();
+
+  function preview_story(id) {
+        window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
+  }
   
   function edit_story() {
     document.forms[0].rm.value = 'checkout_and_edit';

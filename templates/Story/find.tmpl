@@ -2,6 +2,10 @@
 
 <script language="JavaScript" type="text/javascript">
 
+  function preview_story(id) {
+        window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
+  }
+
   function edit_story (id) {
     document.find_story.rm.value = 'checkout_and_edit';
     document.find_story.story_id.value = id;

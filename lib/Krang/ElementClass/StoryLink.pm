@@ -31,7 +31,7 @@ sub input_form {
         my ($story) = Krang::Story->find(story_id => $story_id);
         $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .
           qq{Title: "} . $story->title . qq{"<br>} . 
-          qq{URL: <a href="#">} . $story->url . qq{</a></div>};
+          qq{URL: <a href="javascript:preview_story($story_id)">} . $story->url . qq{</a></div>};
     }
 
 
