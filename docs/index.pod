@@ -68,6 +68,9 @@ HREF[Database Schema Diagram|database_schema.gif] - graphical overview of the da
 
 HREF[Module Documentation|modules.html] - complete Krang module documentation
 
+=item *
+
+HREF[Script Documentation|scripts.html] - complete Krang script documentation
 
 =item *
 

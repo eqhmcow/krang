@@ -11,7 +11,7 @@ HTML = changelog.html changes.html coding.html goals.html porting.html \
        skins.html cpan_inventory.html scheduler.html build_tech_spec.html \
        running.html
 
-all   : $(HTML) modules.html rm_modules
+all   : $(HTML) modules.html scripts.html rm_modules rm_scripts
 
 %.html : %.pod Makefile docs.css bin/*.pl
 	bin/pod2html.pl $< $@
@@ -19,8 +19,14 @@ all   : $(HTML) modules.html rm_modules
 modules.pod :
 	bin/lib_docs.pl
 
+scripts.pod :
+	bin/script_docs.pl
+
 rm_modules :
 	rm modules.pod
+
+rm_scripts :
+	rm scripts.pod
 
 clean :
 	- rm $(HTML)
