@@ -18,10 +18,13 @@ my $filepath2 = catfile(KrangRoot,'t','media','krang.gif');
 my $media;
 
 # set up site and category
-my $site = Krang::Site->new(preview_path => '/standard_bench_preview',
+my $site;
+($site) = Krang::Site->find( limit => 1 );
+
+$site = Krang::Site->new(preview_path => '/standard_bench_preview',
                             preview_url => 'preview.standard_bench.com',
                             publish_path => '/standard_bench_publish',
-                            url => 'standard_bench.com');
+                            url => 'standard_bench.com') if not $site;
 $site->save();
 END { $site->delete() };
 

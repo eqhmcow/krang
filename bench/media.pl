@@ -10,21 +10,28 @@ use Krang::Category;
 use Krang::Site;
 use File::Path;
 
-my $count = 1000;
+my $count = 100;
 my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
 my $media;
 
 # set up site and category
-my $site = Krang::Site->new(preview_path => '/media_bench_preview',
+my $site;
+
+($site) = Krang::Site->find(limit => 1);
+my $found = $site ? 1 : 0;
+
+unless ($found) {
+    $site = Krang::Site->new(preview_path => '/media_bench_preview',
                             preview_url => 'preview.media_bench.com',
                             publish_path => '/media_bench_publish',
                             url => 'media_bench.com');
-$site->save();
-END { $site->delete() };
+    $site->save();
+}
+
+END { $site->delete() if not $found };
 
 my ($category) = Krang::Category->find(site_id => $site->site_id());
 my $category_id = $category->category_id();
-#END { $category->delete() };
 
 my $i = 0;
 run_benchmark(module => 'Krang::Media',
@@ -124,7 +131,5 @@ run_benchmark(module => 'Krang::Media',
          });
 
 ###################################
-
-rmtree(catdir(KrangRoot,'data','media')); 
 
 
