@@ -506,20 +506,15 @@ sub get_user_params {
     my %user_tmpl;
 
     # make group_ids multi-select
-    my @pgids = $q->param('possible_group_ids');
-    my @cgids = $q->param('current_group_ids');
-
-    if (@pgids == 0 && @cgids == 0) {
-        @cgids = $user->group_ids;
-        my %cgids = map {$_, 1} @cgids;
-        @pgids = grep {not exists $cgids{$_}} keys %user_groups;
-    }
-
+    my (@cgids, %cgids, @pgids);
+    @cgids = $user->group_ids
+      unless @cgids = $q->param('current_group_ids');
+    %cgids = map {$_, 1} @cgids;
+    @pgids = grep {not exists $cgids{$_}} keys %user_groups;
     push @{$user_tmpl{possible_group_ids}},
       {id => $_, name => $user_groups{$_}} for @pgids;
     push @{$user_tmpl{current_group_ids}},
       {id => $_, name => $user_groups{$_}} for @cgids;
-
     $user_tmpl{size} = $size;
 
     # loop through User fields
@@ -536,7 +531,7 @@ sub update_user {
     my $q = $self->query();
 
     # overwrite object fields
-    $user->$_($q->param($_))
+    $user->$_($q->param($_) ? $q->param($_) : undef)
       for (Krang::User::USER_RW, 'password');
 
     # handle group ids
