@@ -30,13 +30,15 @@ my %assigned_jobs = ();
 
 # handle SIGTERM
 $SIG{'TERM'} = sub {
-    _reap_dead_children();
 
-    info(__PACKAGE__ . " caught SIGTERM.  Exiting.");
+    info(__PACKAGE__ . " caught SIGTERM.");
+
+    _kill_children();
 
     # remove pidfile if it exists
     unlink $pidfile if -e $pidfile;
 
+    info(__PACKAGE__ . " Exiting.");
     # get out of here
     exit(0);
 };
@@ -207,6 +209,12 @@ sub scheduler_pass {
             _parent_work($pid, \@tasks);
 
         } elsif (defined($pid)) {
+            # change handling of SIGTERM -- don't act like your parents!
+            $SIG{'TERM'} = sub {
+                debug(__PACKAGE__ . ": Child caught SIGTERM.  Exiting."); 
+                exit(0) 
+            };
+
             _child_work(\@tasks);
 
         } else {
@@ -299,7 +307,10 @@ sub _child_work {
 sub _parent_work {
 
     my ($pid, $tasks) = @_;
+
     our $CHILD_COUNT;
+    our %child_pids;
+    our %assigned_jobs;
 
     my $instance = Krang::Conf->instance();
 
@@ -358,10 +369,56 @@ sub _reap_dead_children {
 }
 
 
+#
+# _kill_children()
+#
+# Such violence!
+#
+#
+# Called when the parent needs to exit.
+# Attempts to reap dead children first, and then sends SIGTERM to all
+# children.  Checks to see if they're still around, and follows up
+# with a SIGKILL if needed.
+#
+
+sub _kill_children {
+
+    our %child_pids;
+
+    _reap_dead_children();
+
+    my @kids;
+
+    @kids = keys %child_pids;
+
+    if (@kids) {
+
+        info(__PACKAGE__ . " killing child processes.");
+
+        kill 'TERM', @kids;
+
+        # wait a couple of seconds to see if kids are dead.
+        # if they're still alive, send SIGKILL.
+
+        sleep 3;
+
+        foreach my $kid (@kids) {
+            if (kill 0 => $_) {
+                debug(__PACKAGE__ . ": child PID=$kid ignored TERM signal.");
+                kill 'KILL', $kid;
+            }
+        }
+    }
+
+}
+
 
 sub _cleanup_tables {
 
     my $child_pid = shift;
+
+    our %child_pids;
+    our %assigned_jobs;
 
     my @sched_ids;
     my $instance = $child_pids{$child_pid}{instance};
