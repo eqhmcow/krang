@@ -74,13 +74,15 @@ sub fill_template {
     my $pteaser = $story->element->child('promo_teaser')->data || '';
     $tmpl->param( promo_teaser => $pteaser ) if $pteaser;
 
-    my $image = $story->element->child('promo_image_small')->child('media')->template_data(publisher => $publisher) || '';
+    my $type = lc($args{element}->child('type')->data);
+
+    my $image = $story->element->child('promo_image_'.$type)->child('media')->template_data(publisher => $publisher) || '';
     $tmpl->param( promo_image => $image) if $image;
 
     $tmpl->param( url => $args{element}->child('story')->template_data(publisher => $publisher) );
    
     $tmpl->param( image_alignment => $args{element}->child('image_alignment')->data ); 
-    $tmpl->param( type => $args{element}->child('type')->data );
+    $tmpl->param( type => $type );
 
 }
 
