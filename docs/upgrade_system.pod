@@ -3,47 +3,85 @@
 This document describes the Krang upgrade system for developers.  If
 you just want to upgrade Krang, see HREF[Upgrade|ops_upgrade.html].
 
-I<This document is incomplete.>
+=head2 Introduction
 
-=head2 Design Considerations
+Krang provides an upgrade system to allow existing Krang installations
+to use new code without losing data and configuration.  When you make
+changes to Krang you may need to add commands to an upgrade module.
+This document will show you how.
 
-There are a number of sub-systems which have to be considered when
-upgrading a Krang installation.
+=head2 Automatic Code Upgrades
 
-=over 4
+The only thing that Krang does automatically is overwrite old source
+files with new source files.  For example, if you fix a bug in
+C<lib/Krang/Story.pm> and the fix doesn't require a database update
+then your work is almost certainly done.
 
-=item Krang System
+=head2 Database Upgrades
 
-Stored in KRANG_ROOT, the system is that which is not otherwise
-specified.  This includes the Perl libraries (internal and external),
-Apache, htdocs, element set libraries, etc.
+If you make a change to the DB schema, or the contents of the database
+then you need to add code to affect that change during the upgrade.
+For example, let's say I've added a new property for stories called
+'foo_id'.  That will naturally require a new column in the C<story>
+table, which I will add to C<story.sql>:
+
+  foo_id      INT UNSIGNED NOT NULL,
+
+That's fine for new installations, which will use C<story.sql> to
+construct the C<story> table, but for upgrades I need to make that
+change to the live database.  To do so I add a line to the
+C<per_instance()> subroutine in the upgrade module for this release,
+C<upgrade/V0_022.pm>:
+
+  sub per_instance {
+      my $self = shift;
+      my $dbh = dbh();
+
+      # add the foo_id column
+      $dbh->do("ALTER TABLE story ADD COLUMN foo_id INT UNSIGNED NOT NULL");
+  }
+
+If an upgrade module for the current version doesn't exist yet just
+copy an older one and use it as a template.  For more details, see
+L<Krang::Upgrade>.
 
 
-=item krang.conf
+=head2 Data Changes
 
-The elements in the krang.conf file may have changed since the
-previous version.  The installer must create a new krang.conf,
-incorporating the existing directives but installing the new
-directives.  This is usually accomplished by appending new directives
-to the end of the existing krang.conf. 
+Krang does nothing with the C<data/> directory during upgrade unless
+you write code to do it.  If you make a change to how files are stored
+under C<data/> then you'll need to add code to make the change.  
 
+For example, lets say I decided to rename the directory storing addon
+details from C<addons/> to C<addon-db/>.  I would add code to the
+C<per_installation()> method in upgrade module:
 
-=item Instance Databases
+  sub per_installation {
+      my $self = shift;
 
-Database tables may have changed, and data may have to be transformed
-during upgrade.  The upgrade system will start with the existing
-database and apply progressive upgrades in order to bring each
-database up to date.
+      # rename data/addons to data/addon-db
+      system("mv", catdir(KrangRoot, 'data', 'addons'),
+                   catdir(KrangRoot, 'data', 'addon-db'));
+  }
 
-N.B.:  Each instance has its own database which must be upgraded.
+This is done in C<per_installation()> rather than C<per_instance()>
+because it should be done once during install, not once for each
+instance.
 
+=head2 Other Changes
 
-=item Data files
+Virtually any change you can write can be accomodated by the upgrade
+module.  Just decide whether the change requires per-instance activity
+or per-installation and put your code in the proper method.
 
-Media and Templates are stored in the KRANG_ROOT/data directory.  They
-will be copied over from the existing installation.  Upgrade scripts
-may alter the content of the data directory.
+=head2 How Krang Uses Upgrade Modules
 
+When Krang is running an upgrade it determines which upgrade modules
+to run by looking at the source and target versions.  For example, to
+upgrade from v1.001 to v1.004 Krang would run, if available: 
+
+   upgrade/V1_002.pm
+   upgrade/V1_003.pm
+   upgrade/V1_004.pm
 
 =back
-
