@@ -70,6 +70,7 @@ sub setup {
                      db_save_and_stay => 'db_save_and_stay',
                      save_and_jump    => 'save_and_jump',
                      save_and_add     => 'save_and_add',
+                     save_and_publish => 'save_and_publish',
                      save_and_view    => 'save_and_view',
                      save_and_view_log => 'save_and_view_log',
                      save_and_stay    => 'save_and_stay',
@@ -716,6 +717,58 @@ sub save_and_add {
     return $output if length $output;
 
     return $self->add();
+}
+
+=item save_and_publish
+
+This mode saves the current data to the database and passes control to
+publisher.pl to publish the story.
+
+=cut
+
+sub save_and_publish {
+    my $self = shift;
+    
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    # save story to the database
+    my $story = $session{story};
+    eval { $story->save() };
+
+    # is it a dup?
+    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+        # load duplicate story
+        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        add_message('duplicate_url', 
+                    story_id => $dup->story_id,
+                    url      => $dup->url,
+                    which    => join(' and ', 
+                                     join(', ', $story->class->url_attributes),
+                                     "site/category"),
+                   );
+
+        return $self->edit;
+    } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
+        add_message('missing_category_on_save');
+        return $self->edit;
+    } elsif ($@) {
+        # rethrow
+        die($@);
+    }
+    
+    add_message('story_save', story_id => $story->story_id,
+                url      => $story->url,
+                version  => $story->version);
+
+    # remove story from session
+    delete $session{story};
+
+    # return to my workspace
+    $self->header_props(-uri => 'publisher.pl?rm=publish_story&story_id=' . $story->story_id);
+    $self->header_type('redirect');
+    return "";
 }
 
 =item save_and_view
