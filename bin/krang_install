@@ -1,15 +1,26 @@
 #!/usr/bin/perl -w
 use warnings;
 use strict;
-use Getopt::Long;
-use Pod::Usage;
-
 
 
 # Path to pre-req binaries
-use constant MYSQL_BIN => '/usr/bin/mysql';
-use constant PERL_BIN => '/usr/bin/perl';
-
+use constant MYSQL_BIN    => '/usr/bin/mysql';
+use constant PERL_BIN     => '/usr/bin/perl';
+use constant GROUPADD_BIN => '/usr/sbin/groupadd';
+use constant USERADD_BIN  => '/usr/sbin/useradd';
+use constant USERMOD_BIN  => '/usr/sbin/usermod';
+use constant COPY_BIN     => '/bin/cp';
+use constant CHOWN_BIN    => '/bin/chown';
+use constant CHMOD_BIN    => '/bin/chmod';
+use constant XARGS_BIN    => '/usr/bin/xargs';
+use constant FIND_BIN     => '/usr/bin/find';
+use constant SH_BIN       => '/bin/sh';
+use constant MAKE_BIN     => '/usr/bin/make';
+use constant RM_BIN       => '/bin/rm';
+use constant ECHO_BIN     => '/bin/echo';
+use constant TAR_BIN      => '/bin/tar';
+use constant RPM_BIN      => '/bin/rpm';
+use constant IFCONFIG_BIN => '/sbin/ifconfig';
 
 
 =head1 NAME
@@ -169,6 +180,9 @@ BEGIN {
 }
 
 use Krang;
+use Getopt::Long;
+use Pod::Usage;
+use HTML::Template;
 
 
 my @original_args = ();
@@ -221,11 +235,14 @@ sub do_install {
 
 
 sub check_prereqs {
+    print "Checking prerequisites...\n";
+
     # Must be running as root.
     exit_error("Must be run as root.") unless ($> eq "0");
 
     # IP address must be configured on host.
-    my $ifconfig = `/sbin/ifconfig`;
+    my $ifconfig_bin = IFCONFIG_BIN;
+    my $ifconfig = `$ifconfig_bin`;
     my @ip_addrs = ();
     foreach my $if_line (split(/\n/, $ifconfig)) {
         next unless ($if_line =~ /inet\ addr\:(\d+\.\d+\.\d+\.\d+)/);
@@ -286,7 +303,7 @@ sub check_prereqs {
 
         # MySQLRootPassword must be valid, and MySQL should be running
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
-        my $test_mysql = qq/\/bin\/echo 'select "world" as hello' | $mysql_bin -uroot/;
+        my $test_mysql = ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
         $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
         $test_mysql .= " 2>&1";
         my $mysql_test_output = `$test_mysql`;
@@ -314,25 +331,26 @@ sub do_perl_install {
     chdir($build_dir);
 
     print "Un-tarring Perl source...\n";
-    my $perl_untar = "/bin/tar -xzf ". $ENV{KRANG_ROOT} ."/install/Perl/perl-5.6.1.tar.gz";
-    `$perl_untar`;
+    my $perl_untar = TAR_BIN ." -xzf ". $ENV{KRANG_ROOT} ."/install/Perl/perl-5.6.1.tar.gz";
+    system($perl_untar) && die("Error un-tarring Perl source: $!");
 
     print "Building Perl from source...\n";
-    my $perl_build = qq( cd perl-5.6.1 \\
-                         && rm -f config.sh Policy.sh \\
-                         && sh Configure -Dprefix=/usr -des \\
-                         && make \\
-                         && make test \\
-                         && make install );
+    chdir("perl-5.6.1");
+    my $rm_bin = RM_BIN;
+    my $make_bin = MAKE_BIN;
+    my $sh_bin = SH_BIN;
+    my $perl_build = qq( $rm_bin -f config.sh Policy.sh \\
+                         && $sh_bin Configure -Dprefix=/usr -des \\
+                         && $make_bin \\
+                         && $make_bin test \\
+                         && $make_bin install );
 
     # Check for compile error
-    if (system($perl_build)) {
-        exit_error("There was a problem building Perl.  Unable to continue.");
-    }
+    system($perl_build) && die("There was a problem building Perl: $!");
  
     # Blow away build directory
     chdir($ENV{KRANG_ROOT});
-    `rm -rf $build_dir`;
+    system(RM_BIN ." -rf $build_dir") && die("Error deleting build directory: $!");
 
     # Re-exec process w/o --do-perl-install and exit
     print "Perl install complete.  Re-running krang_install without --do-perl-install\n";
@@ -349,7 +367,7 @@ sub do_mysql_install {
 
     # Start MySQL
     print "Installing/upgrading MySQL 4...\n";
-    my $rpm_upgrade = "/bin/rpm -Uvh *.rpm";
+    my $rpm_upgrade = RPM_BIN ." -Uvh *.rpm";
     if (system($rpm_upgrade)) {
         exit_error("There was a problem installing MySQL.  Unable to continue.");
     }
@@ -357,7 +375,7 @@ sub do_mysql_install {
     # MySQLRootPassword must be valid, and MySQL should be running
     my $mysql_bin = MYSQL_BIN;
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
-    my $test_mysql = qq/\/bin\/echo 'select "world" as hello' | $mysql_bin -uroot/;
+    my $test_mysql = ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
     $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
     $test_mysql .= " 2>&1";
     my $mysql_test_output = `$test_mysql`;
@@ -390,21 +408,139 @@ sub create_mysql_user {
     my $grant = "grant all on $InstanceDBName\.* to $InstanceDBUser\@localhost";
     $grant .= " identified by '$InstanceDBPass'" if ($InstanceDBPass);
 
-    my $mysql_grant = "echo \"$grant\" | $mysql_bin -uroot";
+    my $mysql_grant = ECHO_BIN ." \"$grant\" | $mysql_bin -uroot";
     $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
 
-    print "$mysql_grant\n";
+    print "Granting MySQL access to user '$InstanceDBUser' for database '$InstanceDBName'...\n";
     system($mysql_grant) && exit_error("Can't grant DB access to $InstanceDBUser for $InstanceDBName.");
+    print "MySQL access granted.\n";
 }
 
 
-sub create_unix_user_group {}
+sub create_unix_user_group {
+    my $KrangUser = $options{'KrangUser'};
+    my $KrangGroup = $options{'KrangGroup'};
+    my $InstallPath = $options{InstallPath};
+
+    # Create user, if necessary
+    print "Creating UNIX user ('$KrangUser')...\n";
+    my ($uname,$upasswd,$uid,$ugid,$uquota,$ucomment,$ugcos,$udir,$ushell,$uexpire) = getpwnam($KrangUser);
+    unless (defined($uid)) {
+        my $useradd = USERADD_BIN;
+        $useradd .= " -d $InstallPath -M $KrangUser";
+        system($useradd) && die("Can't add user: $!");
+
+        # Update user data
+        ($uname,$upasswd,$uid,$ugid,$uquota,$ucomment,$ugcos,$udir,$ushell,$uexpire) = getpwnam($KrangUser);
+        print "User created (uid $uid).\n";
+    } else {
+        print "User already exists (uid $uid).\n";
+    }
+
+    # Create group, if necessary
+    print "Creating UNIX group ('$KrangGroup')...\n";
+    my ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+    unless (defined($gid)) {
+        my $groupadd = GROUPADD_BIN;
+        $groupadd .= " $KrangGroup";
+        system($groupadd) && die("Can't add group: $!");
+
+        # Update group data for later
+        ($gname,$gpasswd,$gid,$gmembers) = getgrnam($KrangGroup);
+        print "Group created (gid $gid).\n";
+    } else {
+        print "Group already exists (gid $gid).\n";
+    }
+
+    # Add user to group, if user not already a member
+    print "Adding user $KrangUser to group $KrangGroup...\n";
+    my @group_members = ( split(/\s+/, $gmembers) );
+    my $user_is_group_member = ( grep { $_ eq $KrangUser } @group_members );
+    unless (($ugid eq $gid) or $user_is_group_member) {
+        my $usermod = USERMOD_BIN;
+        $usermod .= " -G $KrangGroup $KrangUser";
+        system($usermod) && die("Can't add user $KrangUser to group $KrangGroup: $!");
+        print "User added to group.\n";
+    } else {
+        print "User already in group.\n";
+    }
+}
 
 
-sub install_krang {}
+sub install_krang {
+    my $InstallPath = $options{InstallPath};
+    mkdir($InstallPath) || die($!);
+
+    print "Installing Krang files into '$InstallPath'...\n";
+
+    chdir($ENV{KRANG_ROOT});
+    my $copy = COPY_BIN ." -r * $InstallPath\/";
+    system($copy) && die("Can't copy: $!");
+
+    print "Finished installing Krang files.  Fixing ownership...\n";
+    my $KrangUser = $options{KrangUser};
+    my $KrangGroup = $options{KrangGroup};
+    my $chown = CHOWN_BIN ." -R $KrangUser\.$KrangGroup $InstallPath";
+    system($chown) && die("Can't update ownership: $!");
+
+    # For commands
+    my $chmod;
+
+    print "Setting group write permissions...\n";
+    $chmod = CHMOD_BIN ." -R g+w $InstallPath";
+    system($chmod) && die("Can't set group write permissions: $!");
+
+    print "Fixing directory read permissions...\n";
+    $chmod = FIND_BIN ." $InstallPath -type d | ". XARGS_BIN ." ". CHMOD_BIN ." +rx";
+    system($chmod) && die("Can't fix directory read permissions: $!");
+
+    print "Fixing file read permissions...\n";
+    $chmod = FIND_BIN ." $InstallPath -type f | ". XARGS_BIN ." ". CHMOD_BIN ." +r";
+    system($chmod) && die("Can't fix file read permissions: $!");
+
+    print "Setting execute bits on scripts...\n";
+
+    # Set all *.pl files
+    $chmod = FIND_BIN ." $InstallPath -type f -name '*.pl' | ". XARGS_BIN ." ". CHMOD_BIN ." +x";
+    system($chmod) && die("Can't set execite bits: $!");
+
+    # Set all *.cgi files
+    $chmod = FIND_BIN ." $InstallPath -type f -name '*.cgi' | ". XARGS_BIN ." ". CHMOD_BIN ." +x";
+    system($chmod) && die("Can't set execite bits: $!");
+
+    # Set all files in krang/bin/*
+    $chmod = CHMOD_BIN ." +x $InstallPath/bin/*";
+    system($chmod) && die("Can't set execite bits: $!");
+
+    print "Krang files installed.\n";
+}
 
 
-sub configure_krang {}
+sub configure_krang {
+    print "Configuring Krang installation...\n";
+
+    my $InstallPath = $options{InstallPath};
+    chdir($InstallPath);
+
+    # Make custom krang.conf
+    print "Creating krang.conf from specification...\n";
+    my $t = HTML::Template->new(filename => $ENV{KRANG_ROOT} ."/conf/krang.conf.tmpl");
+    foreach my $param (keys(%options)) {
+        # Filter out params which are not in HTML::Template file 'krang.conf.tmpl'
+        unless ( grep { $param eq $_ } qw/AdminPassword MySQLRootPassword InstallPath/ ) {
+            $t->param($param => $options{$param});
+        }
+    }
+    my $output_conf = $InstallPath ."/conf/krang.conf";
+    open(OUTPUT, ">$output_conf") || die("Can't open '$output_conf' for writing: $!");
+    print OUTPUT $t->output();
+    close(OUTPUT);
+    print "Conf written to '$output_conf'.\n";
+
+    # Make DB
+
+    # Customize DB (Admin password)
+}
 
 
 sub add_krang_init {}
