@@ -198,12 +198,33 @@ sub open {
         my @media = Krang::Media->find( filename => $filename,
                                         category_id => $category_id );
 
-        if (@media) {
+        if ($media[0]) {
+            # if media exists, first version and and upload dummy media
+            # then write to the filesystem itself
+            $media[0]->checkout();
+            $media[0]->prepare_for_edit();
+            $media[0]->upload_file(filename=> $filename,
+                                    filehandle => (new IO::Scalar \$filename));
+            $media[0]->save();
+            $media[0]->checkin();
+        
             return new Krang::FTP::FileHandle(  $self->{ftps},
                                                 $media[0],
                                                 $type,
                                                 $category_id
                                                 )->open($mode);
+        } else {
+            my $new_m = Krang::Media->new ( filename => $filename,
+                                            filehandle => (new IO::Scalar \$filename),
+                                            title => $filename,
+                                            category_id => $category_id );
+            $new_m->save;
+
+            return new Krang::FTP::FileHandle(  $self->{ftps},
+                                                    $new_m,
+                                                    $type,
+                                                    $category_id
+                                                    )->open($mode);  
         }
     } elsif ($type eq 'template') {
         if ($file_type eq 'tmpl') {
@@ -222,8 +243,6 @@ sub open {
                                                     filename => $filename,
                                                     content => '' );
 
-                #$new_t->save();
-    
                 return new Krang::FTP::FileHandle(  $self->{ftps},
                                                     $new_t,
                                                     $type,
