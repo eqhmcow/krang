@@ -23,7 +23,9 @@ CREATE TABLE media (
   PRIMARY KEY  (media_id),
   KEY (category_id),
   KEY (media_type_id),
-  KEY (url)
+  KEY (url),
+  KEY (title),
+  KEY (checked_out_by)
 ) TYPE=MyISAM;
 
 DROP TABLE IF EXISTS media_version;

@@ -12,7 +12,6 @@ CREATE TABLE history (
     desk_id int(10) unsigned default NULL,
     user_id int(10) unsigned not NULL,
     timestamp datetime default NULL,
-    KEY object_type (object_type),
-    KEY object_id (object_id)
+    PRIMARY KEY(object_type, object_id)
 ) TYPE=MyISAM;
 

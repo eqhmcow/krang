@@ -19,7 +19,8 @@ CREATE TABLE template (
         url			text NOT NULL,
         version 		smallint UNSIGNED NOT NULL,
         PRIMARY KEY  (template_id),
-        INDEX (category_id)
+        INDEX (category_id),
+        INDEX (checked_out_by)
 ) TYPE=MyISAM;
 
 
