@@ -336,7 +336,7 @@ sub publish_media {
             }
         };
         if (my $err = $@) {
-            if ($err->isa('Krang::Publisher::FileWriteError')) {
+            if (ref $err && $err->isa('Krang::Publisher::FileWriteError')) {
                 print STDOUT sprintf("ERROR:\n%s\:\nsource='%s'\ndestination='%s'\nerror='%s'\n",
                                      $err->{message}, $err->{source}, $err->{destination},
                                      $err->{system_error});
