@@ -18,7 +18,7 @@ use base 'Krang::ElementClass';
 
 sub new {
    my $pkg = shift;
-   my %args = ( name => 'photo',
+   my %args = ( name => 'image',
                 children => 
                 [ 
                  Krang::ElementClass::ListBox->new(name => "alignment",

@@ -48,5 +48,11 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+sub input_form {
+    my ($self, %arg) = @_;
+    my ($query, $element, $order) = @arg{qw(query element order)};
+    return $element->child('title')->data;
+}
+
 
 1;
