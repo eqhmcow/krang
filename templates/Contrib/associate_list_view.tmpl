@@ -47,6 +47,7 @@
 
 <form name="add_contrib_form" method="POST">
 <input type="hidden" name="rm" value="add">
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
 </form>
 
@@ -59,6 +60,7 @@ Current Contributors
 
 <form name="current_contributors_form" method="POST">
 <input type="hidden" name="rm" value="reorder_contribs">
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
 
 
@@ -92,7 +94,7 @@ Current Contributors
 
 <TMPL_ELSE>
 
-  <b>No Contributors Found</b>
+  <br /><b>No Contributors Found</b>
 
 </TMPL_IF>
 
@@ -117,6 +119,7 @@ SEARCH<br />
 
 <form name="associate_selected_form" method="POST">
 <input type="hidden" name="rm" value="associate_selected">
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
 
 
@@ -143,7 +146,7 @@ Choose Contributors
           <td class="form-cell"><tmpl_var ESCAPE=HTML last></td>
           <td class="form-cell"><tmpl_var ESCAPE=HTML first><tmpl_if middle>&nbsp;<tmpl_var ESCAPE=HTML middle></tmpl_if></td>
           <td class="form-cell"><tmpl_var ESCAPE=HTML type></td>
-          <td class="form-cell"><input type="checkbox" name="contrib_unassociate_list" value="<tmpl_var ESCAPE=HTML contrib_id>:<tmpl_var ESCAPE=HTML contrib_type_id>"></td>
+          <td class="form-cell"><input type="checkbox" name="contrib_associate_list" value="<tmpl_var ESCAPE=HTML contrib_id>:<tmpl_var ESCAPE=HTML contrib_type_id>"></td>
       </tr>
 
   </tmpl_loop>

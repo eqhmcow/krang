@@ -84,6 +84,7 @@ sub setup {
                          search
                          associate_story
                          associate_media
+                         associate_search
                          associate_selected
                          unassociate_selected
                          reorder_contribs
@@ -101,8 +102,6 @@ sub setup {
 
     $self->tmpl_path('Contrib/');
 
-    # Set param to be used in "associate" modes of operation
-    $self->param(ASSOCIATE_OBJECT => 0);
 }
 
 
@@ -132,12 +131,8 @@ sub search {
 
     my $q = $self->query();
 
-    # Send request to appropriate associate_* run-mode if we're associating
-    if (my $ass_type = ($q->param('associate_mode') || '')) {
-        return $self->associate_story() if ($ass_type eq 'story');
-        return $self->associate_media() if ($ass_type eq 'media');
-        die ("Invalid associate mode type '$ass_type'");
-    }
+    # Shunt to associate_search if we're in associate mode
+    return $self->associate_search() if ($q->param('associate_mode'));
 
     my $t = $self->load_tmpl("list_view.tmpl", associate=>$q, loop_context_vars=>1);
 
@@ -182,9 +177,15 @@ returned to the "edit" run-mode of Krang::CGI::Story, e.g.:
 sub associate_story {
     my $self = shift;
 
-    $self->param(ASSOCIATE_OBJECT => $session{story});
+    my $q = $self->query();
+    my $new_url = $q->url();
+    $new_url .= "?associate_mode=story";
 
-    return $self->associate_mode(@_);
+    # Redirect back to search
+    $self->header_type('redirect');
+    $self->header_props(-url=>$new_url);
+
+    return "Redirect: <a href=\"$new_url\">$new_url</a>";
 }
 
 
@@ -209,11 +210,99 @@ returned to the "edit" run-mode of Krang::CGI::Media, e.g.:
 sub associate_media {
     my $self = shift;
 
-    $self->param(ASSOCIATE_OBJECT => $session{media});
+    my $q = $self->query();
+    my $new_url = $q->url();
+    $new_url .= "?associate_mode=media";
 
-    return $self->associate_mode(@_);
+    # Redirect back to search
+    $self->header_type('redirect');
+    $self->header_props(-url=>$new_url);
+
+    return "Redirect: <a href=\"$new_url\">$new_url</a>";
 }
 
+
+
+=item associate_search
+
+This run-mode is activated in place of run-mode "search"
+when CGI parameter "associate_mode" is set.  It builds
+the "edit contributors" screen, which contains a search
+interface, as well as a means to add or remove contributors
+from either media or story objects.
+
+This run-mode expects the parameter "associate_mode" to 
+exist in the query, and for it to contain either "story"
+or "media".  It also expects that a story or media object
+will be stored in the %session in a key "story" or "media",
+respectively.
+
+=cut
+
+
+sub associate_search {
+    my $self = shift;
+    my %ui_messages = ( @_ );
+
+    my $q = $self->query();
+
+    # Check for "associate_mode".  Retrieve object from session or die() trying
+    my $associate_mode = $q->param('associate_mode') || '';
+    die("Invalid associate_mode '$associate_mode'") unless (grep { $associate_mode eq $_ } qw( story media ));
+
+    # Get media or story object from session -- or die() trying
+    my $ass_obj = $session{$associate_mode};
+    die ("No story or media object available for contributor association") unless (ref($ass_obj));
+
+    my $t = $self->load_tmpl("associate_list_view.tmpl", associate=>$q);
+    $t->param(%ui_messages) if (%ui_messages);
+
+    # Set Boolean for H::T
+    $t->param(associate_story=>($associate_mode eq 'story'));
+
+    # Get table of contrib types
+    my %contrib_types = Krang::Pref->get('contrib_type');
+
+    my @contribs = $ass_obj->contribs();
+    my @associated_contributors = ( map {
+        {
+            contrib_id => $_->contrib_id(),
+            type => $contrib_types{$_->selected_contrib_type()},
+            contrib_type_id => $_->selected_contrib_type(),
+            first => $_->first(),
+            middle => $_->middle(),
+            last => $_->last(),
+        }
+    } @contribs );
+
+    # Propagate list of current contributors
+    $t->param(associated_contributors => \@associated_contributors);
+
+    # Do simple search based on search field
+    my $search_filter = $q->param('search_filter') || '';
+    my @contributors = Krang::Contrib->find(simple_search=>$search_filter);
+
+    # To be replaced with paging
+    my %contrib_type_prefs = Krang::Pref->get('contrib_type');
+    my @contrib_tmpl_data = ();
+    foreach my $c (@contributors) {
+        my @contrib_type_ids = ( $c->contrib_type_ids() );
+        foreach my $contrib_type_id (@contrib_type_ids) {
+            push(@contrib_tmpl_data, {
+                                      contrib_id => $c->contrib_id(),
+                                      last => $c->last(),
+                                      first => $c->first(),
+                                      middle => $c->middle(),
+                                      contrib_type_id => $contrib_type_id,
+                                      type => $contrib_type_prefs{$contrib_type_id},
+                                     });
+        }
+    }
+
+    $t->param(contributors => \@contrib_tmpl_data);
+
+    return $t->output() . $self->dump_html();
+}
 
 
 =item associate_selected
@@ -227,8 +316,51 @@ sub associate_selected {
     my $self = shift;
 
     my $q = $self->query();
+    my @contrib_associate_list = ( $q->param('contrib_associate_list') );
 
-    return $self->dump_html();
+    unless (@contrib_associate_list) {
+        add_message('missing_contrib_associate_list');
+        return $self->search();
+    }
+
+    # Check for "associate_mode".  Retrieve object from session or die() trying
+    my $associate_mode = $q->param('associate_mode') || '';
+    die("Invalid associate_mode '$associate_mode'") unless (grep { $associate_mode eq $_ } qw( story media ));
+
+    # Get media or story object from session -- or die() trying
+    my $ass_obj = $session{$associate_mode};
+    die ("No story or media object available for contributor association") unless (ref($ass_obj));
+
+    # Get list of current contributors -- we have to append to this list
+    my @current_contribs = ( $ass_obj->contribs() );
+
+    # Unfortunately, there is no add_contrib() method.  We have to re-add the whole list
+    # Worse, we can't mix objects and IDs via the contribs() method.  Must choose one or
+    # the other.  Fastest way is to flatten to IDs
+    my @new_contribs = ( map { {
+                              contrib_id      => $_->contrib_id(),
+                              contrib_type_id => $_->selected_contrib_type(),
+                            } } @current_contribs );
+
+    # Append selected contrbutors and types to end of list
+    foreach my $ct_ids (@contrib_associate_list) {
+        my ($contrib_id, $contrib_type_id) = split(/:/, $ct_ids);
+
+        # Verify data "looks" right
+        die ("Invalid new $associate_mode contrib_id '$contrib_id', contrib_type_id '$contrib_type_id'") 
+          unless (($contrib_id =~ /^\d+$/) && ($contrib_type_id =~ /^\d+$/));
+
+        push(@new_contribs, {
+                             contrib_id => $contrib_id,
+                             contrib_type_id => $contrib_type_id,
+                            });
+    }
+
+    # Update list of contribs in story or media object
+    $ass_obj->contribs(@new_contribs);
+
+    add_message('message_selected_associated');
+    return $self->associate_search();
 }
 
 
@@ -625,84 +757,6 @@ sub delete {
 #############################
 #####  PRIVATE METHODS  #####
 #############################
-
-
-# Handle sub-modes for associating stories
-sub associate_mode {
-    my $self = shift;
-    my %ui_messages = ( @_ );
-
-    my $q = $self->query();
-    my $t = $self->load_tmpl("associate_list_view.tmpl", associate=>$q);
-    $t->param(%ui_messages) if (%ui_messages);
-
-    # Get media or story object from session -- or die() trying
-    my $ass_obj = $self->param('ASSOCIATE_OBJECT');
-    die ("No story or media object available for contributor association") unless (ref($ass_obj));
-
-    # Assume: "story" xor "media"
-    my $associate_mode = ($ass_obj->isa('Krang::Story')) ? 'story' : 'media' ;
-    $t->param(associate_mode => $associate_mode);
-
-    # Set Boolean for H::T
-    $t->param(associate_story=>($associate_mode eq 'story'));
-
-    $t->param(associated_contributors => [
-                                          {
-                                           contrib_id      => '1',
-                                           contrib_type_id => '1',
-                                           first           => 'Joe',
-                                           last            => 'Strummer',
-                                           type            => 'Songwriter',
-                                          },
-                                          {
-                                           contrib_id      => '2',
-                                           contrib_type_id => '1',
-                                           first           => 'Ian',
-                                           last            => 'Curtis',
-                                           type            => 'Songwriter',
-                                          },
-                                          {
-                                           contrib_id      => '2',
-                                           contrib_type_id => '2',
-                                           first           => 'Ian',
-                                           last            => 'Curtis',
-                                           type            => 'Singer',
-                                          },
-                                          {
-                                           contrib_id      => '3',
-                                           contrib_type_id => '3',
-                                           first           => 'Phil',
-                                           last            => 'Puleo',
-                                           type            => 'Drummer',
-                                          },
-                                         ]);
-
-    # Do simple search based on search field
-    my $search_filter = $q->param('search_filter') || '';
-    my @contributors = Krang::Contrib->find(simple_search=>$search_filter);
-
-    # To be replaced with paging
-    my %contrib_type_prefs = Krang::Pref->get('contrib_type');
-    my @contrib_tmpl_data = ();
-    foreach my $c (@contributors) {
-        my @contrib_type_ids = ( $c->contrib_type_ids() );
-        foreach my $contrib_type_id (@contrib_type_ids) {
-            push(@contrib_tmpl_data, {
-                                      contrib_id => $c->contrib_id(),
-                                      last => $c->last(),
-                                      first => $c->first(),
-                                      middle => $c->middle(),
-                                      contrib_type_id => $contrib_type_id,
-                                      type => $contrib_type_prefs{$contrib_type_id},
-                                     });
-        }
-    }
-
-    $t->param(contributors => \@contrib_tmpl_data);
-
-    return $t->output() . $self->dump_html();
-}
 
 
 # Updated the provided Contrib object with data
