@@ -92,7 +92,8 @@ for(1 .. $sites) {
                                 preview_path => "/tmp/${name}_preview/",
                                 preview_url  => "preview.$name.com",
                                 url          => "$name.com");
-    $site->save();
+    eval { $site->save() };
+    redo if $@ and $@ =~ /duplicate/;
     print STDERR "Created site " . $site->url . "...\n";
     push(@sites, $site);
 
@@ -107,7 +108,8 @@ for(1 .. $cats) {
     my $cname = get_word();
     my $cat = Krang::Category->new(dir       => $cname,
                                    parent_id => $cats[int(rand(scalar(@cats)))]->category_id);
-    $cat->save();
+    eval { $cat->save() };
+    redo if $@ and $@ =~ /duplicate/;
     print STDERR "Created category " . $cat->url . "...\n";
     push(@cats, $cat);
 }
@@ -137,7 +139,8 @@ for(1 .. $contribs) {
                                                          (0 .. 20)),
                                       url => "http://$fname.$lname.com");
     $contrib->contrib_type_ids(@types);
-    $contrib->save();
+    eval { $contrib->save() };
+    redo if $@ and $@ =~ /duplicate/;
     print STDERR "Created contributor " . 
       join(' ', grep { $_ } ($prefix, $fname, $mname, $lname, $suffix)) . 
         " (" . join(', ', map { $types{$_} } @types) . ")" .
