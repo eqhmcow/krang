@@ -81,7 +81,6 @@ BEGIN {
     unshift @INC, $lib, "$lib/".$Config{archname};
 }
 
-use Krang::Conf qw(KrangRoot);
 use Krang;
 use Krang::Platform;
 use File::Find;
@@ -99,13 +98,13 @@ pod2usage("Unrecognized options to krang_makedist: '".join(' ', @ARGV)."'\n")
   if @ARGV;
 
 # make a temp directory to hold dist files
-my $temp = tempdir(DIR     => catdir(KrangRoot, 'tmp'),
+my $temp = tempdir(DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'),
                    CLEANUP => 1);
 
 # figure out name
 my $name;
 my $source_dist = 0;
-if (-e catfile(KrangRoot, 'data', 'build.db')) {
+if (-e catfile($ENV{KRANG_ROOT}, 'data', 'build.db')) {
     # get information for a binary distribution
     my %params = Krang::Platform->build_params();
     $name = 'krang-' . $Krang::VERSION . '-' . $params{Platform} . 
@@ -124,7 +123,7 @@ my $old_dir = cwd;
 chdir($temp) or die $!;
 
 # make a link so tar will extract right
-system('ln -s ' . KrangRoot . " $name");
+system('ln -s ' . $ENV{KRANG_ROOT} . " $name");
 die "Unable to setup link." unless -e catfile($name, 'lib', 'Krang.pm');
 
 # build file list in temp dir
