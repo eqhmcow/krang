@@ -12,7 +12,7 @@ sub per_instance {
     my $dbh  = dbh();
 
     # fix NULL values for hidden to be 0
-    $dbh->do("ALTER TABLE user ALTER COLUMN hidden SET DEFAULT 0");
+    $dbh->do("ALTER TABLE user CHANGE hidden hidden BOOL NOT NULL DEFAULT 0");
 }
 
 sub per_installation {}
