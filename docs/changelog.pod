@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded L<Imager> to 0.44 from 0.43, which fixes a bug involving
+thumbnailing of extreme-aspect-ratio images. [Peter]
+
+=item *
+
 Fixed error message trapping in C<bin/krang_install> to get Krang to
 play nicer with MySQL 4.1.x [Peter]
 
