@@ -92,6 +92,10 @@ All of the above are simply fields for storing arbitrary metadata
 
 =cut
 
+# setup exceptions
+use Exception::Class 
+  'Krang::Contrib::DuplicateName' => { fields => [ 'contrib_id' ] };
+  
 use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
@@ -178,11 +182,19 @@ sub contrib_type_names {
 
 Save contributor oject to the database. Will set contrib_id if first save.
 
+Contributor names much be unique.  Specifically, no two contributors many have the same
+first, middle, and last name.  If you attempt to save a duplicate contributor
+$contrib->save() will throw an exception or type Krang::Contrib::DuplicateName.
+This exception provides a contrib_id of the existing contributor who already has this name.
+
 =cut
 
 sub save {
     my $self = shift;
     my $dbh = dbh;
+
+    # make sure it's got a unique URI
+    $self->verify_unique();
 
     # if this is not a new contrib object
     if (defined $self->{contrib_id}) {
@@ -376,6 +388,37 @@ sub find {
     }
     $sth->finish();
     return @contrib_object;
+}
+
+
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+sub verify_unique {
+    my $self   = shift;
+    my $dbh    = dbh;
+
+    # lookup dup
+    my $dup_id;
+    if ($self->{contrib_id}) {
+        ($dup_id) = $dbh->selectrow_array(
+                              'SELECT contrib_id FROM contrib '.
+                              'WHERE first=? AND middle=? AND last=? AND contrib_id!=?', 
+                               undef, $self->first, $self->middle, $self->last, $self->{contrib_id});
+    } else {
+        ($dup_id) = $dbh->selectrow_array(
+                              'SELECT contrib_id FROM contrib '.
+                              'WHERE first=? AND middle=? AND last=?', 
+                               undef, $self->first, $self->middle, $self->last);
+    }
+
+    # throw exception on dup
+    Krang::Contrib::DuplicateName->throw(
+                                         message => "duplicate name",
+                                         contrib_id => $dup_id
+                                        ) if $dup_id;
 }
 
 
