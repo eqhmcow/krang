@@ -34,7 +34,7 @@ Krang::Site - a means to access information on sites
 
   # a hash of search parameters
   my %params =
-  ( order_desc => 'asc',	  # sort results in ascending order
+  ( order_desc => 1,		# result ascend unless this flag is set
     limit => 5,       		  # return 5 or less site objects
     offset => 1, 	          # start counting result from the
 				  # second row
@@ -83,6 +83,9 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(croak);
+use Exception::Class
+  ('Krang::Site::Duplicate' => {fields => 'duplicates'},
+   'Krang::Site::Dependent' => {fields => 'category_id'});
 
 # Internal Modules
 ###################
@@ -219,6 +222,12 @@ root category that gets instantiated on save().  It croaks if any categories
 reference this site other than '/'.  It returns '1' following a successful
 deletion.
 
+This method's underlying call to dependent_check() may result in a
+Krang::Site::Dependency exception if an object in the system is found that
+relies upon the Site in question.
+
+N.B. - This call will result in the deletion of the Site's root category.
+
 =cut
 
 sub delete {
@@ -226,12 +235,7 @@ sub delete {
     my $id = shift || $self->{site_id};
 
     # check for references to this site
-    my %info = $id ? $self->dependent_check() :
-      Krang::Site->dependent_check();
-
-    croak(__PACKAGE__ . "->delete(): Category(ies): [" . join(',', keys %info)
-          . "] rely on this site.")
-      if keys %info;
+    $self->dependent_check();
 
     # delete root category
     my ($root) = Krang::Category->find(dir => '/',
@@ -242,43 +246,71 @@ sub delete {
     my $dbh = dbh();
     $dbh->do("DELETE FROM site WHERE site_id = ?", undef, ($id));
 
-    return 1;
+    # verify deletion was successful
+    return Krang::Site->find(site_id => $id) ? 0 : 1;
 }
 
 
-=item * %info = $site->dependent_check()
+=item * $site->dependent_check()
 
-=item * %info = Krang::Site->dependent_check( $site_id )
+=item * Krang::Site->dependent_check( $site_id )
 
-Class or instance method that returns a hash of category ids relying upon the
-given site object.  N.B. - the root category of the site is excluded from this
-lookup.
+Class or instance method that should be called before attempt to delete a Site.
+If any categories are found that depend rely upon this Site, then a
+Krang::Site::Dependent exception is thrown, otherwise, 0 is returned.
+
+The exception's 'category_id' field contains a list of the ids of depending
+categories.  You might wish to handle the exception thusly:
+
+ eval {$site->dependent_check()};
+ if ($@ and $@->isa('Krang::Site::Dependent')) {
+     croak("This Site cannot be deleted.  Categories with the following" .
+	   " ids depend upon it: " . join(",", $@->category_id) . "\n");
+ }
+
+N.B. - the root category of the site is excluded from this lookup.
 
 =cut
 
 sub dependent_check {
     my $self = shift;
     my $id = shift || $self->{site_id};
-    my ($category_id, %info);
+    my ($category_id, @ids);
 
     my $dbh = dbh();
     my $sth =
       $dbh->prepare("SELECT category_id FROM category WHERE dir != '/' AND " .
                     "site_id = ?");
-    $sth->execute(($id));
+    $sth->execute($id);
     $sth->bind_col(1, \$category_id);
-    $info{$category_id} = 1 while $sth->fetch();
+    push @ids, $category_id while $sth->fetch();
 
-    return %info;
+    Krang::Site::Dependent->throw(message => 'Site cannot be deleted. ' .
+                                  'Dependent categories found.',
+                                  category_id => \@ids)
+        if @ids;
+
+    return 0;
 }
 
 
-=item * %info = $site->duplicate_check()
+=item * $site->duplicate_check()
 
 This method checks the database to see if any existing site objects possess any
-of the same values as the one in memory.  If this is the case an array
-containing the 'site_id' and the name of the duplicate field is returned
-otherwise the array will be empty.
+of the same values as the object in memory.  If this is the case, a
+Krang::Site::Duplicate exception is thrown, otherwise, 0 is returned.
+
+Krang::Site::Duplicate exceptions have a 'duplicate' field that contains a
+hashref of the site_id's and fieldnames duplicated by the given Site object.
+One might obtain this info thusly:
+
+ eval {$site->duplicate_check()};
+ if ($@ and $@->isa('Krang::Site::Duplicate')) {
+     my $info = $@->duplicates;
+     $info = join("\n\t", map {"$_: $info{$_}} keys %$info);
+     croak("The following site_id, fieldname pairs specify which objects" .
+	   " are duplicated by this site:\n\t$info\n");
+ }
 
 =cut
 
@@ -315,9 +347,13 @@ sub duplicate_check {
             }
         }
     }
-    $sth->finish();
 
-    return %info;
+    Krang::Site::Duplicate->throw(message => 'Duplicates of this site exist' .
+                                  ' in the database',
+                                  duplicates => \%info)
+        if keys %info;
+
+    return 0;
 }
 
 
@@ -508,11 +544,8 @@ sub save {
     # flag to force update of child categories
     my $update = $self->{url} ne $self->{_old_url} ? 1 : 0;
 
-    # check for duplicates
-    my %info = $self->duplicate_check();
-    croak(__PACKAGE__ . "->save(): The following duplicates exits:\n\t" .
-          join("\n\t", map {"Site id '$_': $info{$_}"} keys %info))
-      if keys %info;
+    # check for duplicates - an exception is thrown if necessary...
+    $self->duplicate_check();
 
     my $query;
     if ($id) {

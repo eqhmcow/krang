@@ -90,8 +90,9 @@ is($category->url() =~ /fred/, 1, 'dir() - setter');
 my $dupe = Krang::Category->new(dir => 'fred',
                                 parent_id => $parent->category_id);
 eval {$dupe->save()};
-is($@ =~ /duplicate/, 1, 'duplicate_check() - dir');
-
+isa_ok($@, 'Krang::Category::DuplicateURL');
+like($@, qr/Duplicate URL/, 'DuplicateURL exception test 1');
+like($@->category_id, qr/^\d+$/, 'DuplicateURL exception test 2');
 
 # find() tests
 ###############
@@ -142,7 +143,7 @@ is(scalar @categories, 2, 'find() - limit/offset 1');
 isa_ok($_, 'Krang::Category') for @categories;
 is($categories[0]->url() =~ /4/, 1, 'find - limit/offset 2');
 
-# deletion tests
+# update tests
 #################
 # add a subcat to make deletion fail
 my $subcat = Krang::Category->new(dir => 'stuff',
@@ -170,14 +171,27 @@ $category->save();
 my ($tmpl2) = Krang::Template->find(template_id => $tmpl->template_id);
 is($tmpl2->url() =~ /freddo/, 1, 'update_child_urls() - template');
 
+# deletion tests
+################
+eval {$parent->delete()};
+isa_ok($@, 'Krang::Category::RootDeletion');
+like($@, qr/Root categories can only be removed by deleting their Site object/,
+     'RootDeletion exception test');
+
 eval {$success = $category->delete()};
-is($@ =~ /rely on this category/, 1, 'delete() fail 1');
+isa_ok($@, 'Krang::Category::Dependent');
+like($@, qr/Category cannot be deleted/, 'delete() fail 1');
+my $dependents = $@->dependents;
+is($_ =~ /Category|Media|Story|Template/i && $dependents->{$_}->[0] =~ /^\d+$/,
+   1, 'Krang::Category::Dependent test')
+  for keys %$dependents;
 
 $success = $subcat->delete();
 is($success, 1, 'delete() 1');
 
 eval {$success = $category->delete()};
-is($@ =~ /rely on this category/, 1, 'delete() fail 2');
+isa_ok($@, 'Krang::Category::Dependent');
+like($@, qr/Category cannot be deleted/, 'delete() fail 2');
 
 $success = $tmpl->delete();
 is($success, 1, 'delete() 2');

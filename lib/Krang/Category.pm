@@ -91,6 +91,10 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
+use Exception::Class
+  ('Krang::Category::Dependent' => {fields => 'dependents'},
+   'Krang::Category::DuplicateURL' => {fields => 'category_id'},
+   'Krang::Category::RootDeletion');
 use File::Spec;
 
 # Internal Modules
@@ -292,26 +296,38 @@ sub init {
 
 Instance or class method that deletes the given category and its associated
 element from the database.  It returns '1' following a successful deletion.
-The method will croak if the category has subcategories or if any objects
-refer to it (media, stories, templates).
+
+This method's underlying call to dependent_check() may result in a
+Krang::Category::Dependency exception if an object in the system is found that
+relies upon the Category in question.
+
+N.B. - If this call attempts to remove a root category (i.e. a category whose
+'dir' field eq '/') and the call is not made by Krang::Site, a
+Krang::Category::RootDeletion exception will be thrown.  This behavior exists
+because the deletion of a root category results in a disabled Site.  The user
+would be unable to add categories to this given Site and to correct this he
+would have to know that he must add another root category before and
+subcategories could again be added to the Site.  This behavior is preferable to
+requiring so comprehensive an understanding of the API by the user :).
 
 =cut
 
 sub delete {
     my $self = shift;
-    my $id = $self->{category_id};
-    ($self) = Krang::Category->find(category_id => $id) if $id;
+    my $id = shift || $self->{category_id};
+    ($self) = Krang::Category->find(category_id => $id)
+      unless (ref $self && $self->isa('Krang::Category'));
 
-    # find dependents
-    my ($dependents, %dependent_info) = $self->dependent_check();
-    if ($dependents) {
-        my $info = "\n\t" . join("\n\t",
-                                 map{ucfirst($_) . ": " .
-                                       join(",", @{$dependent_info{$_}})}
-                                 keys %dependent_info);
-        croak(__PACKAGE__ . "->delete(): The following objects rely on this " .
-              "category:$info");
+    # Throw RootDeletion exception unless called by Krang::Site
+    if ($self->{dir} eq '/') {
+        Krang::Category::RootDeletion->throw(message => 'Root categories ' .
+                                             'can only be removed by ' .
+                                             'deleting their Site object')
+            unless (caller)[0] eq 'Krang::Site';
     }
+
+    # throws dependent exception if one exists
+    $self->dependent_check();
 
     # delete element
     $self->element()->delete();
@@ -321,16 +337,32 @@ sub delete {
     my $dbh = dbh();
     $dbh->do($query, undef, $id);
 
+    # verify deletion was successful
     return Krang::Category->find(category_id => $id) ? 0 : 1;
 }
 
 
-=item * ($dependents, %info) = $category->dependent_check()
+=item * $category->dependent_check()
 
-=item * ($dependents, %info) = Krang::Category->dependent_check()
+=item * Krang::Category->dependent_check(category_id => $category_id )
 
-Class or instance method that returns a hash of object types and the ids of
-that object type that rely upon the given category.
+Class or instance method that should be called before attempting to delete the
+given category object.  If dependents are found a Krang::Category::Duplicate
+exception is thrown, otherwise, 0 is returned.
+
+Krang::Category::Duplicate exceptions have one field 'dependents' that
+contains a hashref of the classnames and ids of the objects which depend upon
+the given category object.  You might want to handle the exception thusly:
+
+ eval {$category->dependent_check()};
+ if ($@ and $@->isa('Krang::Category::Dependent')) {
+     my $dependents = $@->dependents();
+     $dependents = join("\n\t", map{"$_: [" .
+       join(",", @{$dependents->{$_}}) .
+       "]"} keys %$dependents);
+     croak("The following object classes and ids rely upon this " .
+	   "category:\n\t$dependents);
+ }
 
 =cut
 
@@ -352,7 +384,7 @@ sub dependent_check {
     }
 
     # get other dependencies
-    for my $type(qw/Media Template/) { # Story find() not implemented yet
+    for my $type(qw/Media Story Template/) {
         no strict 'subs';
         for ("Krang::$type"->find(category_id => $id)) {
             my $field = lc $type . "_id";
@@ -361,15 +393,29 @@ sub dependent_check {
         }
     }
 
-    return $dependents, %info;
+    Krang::Category::Dependent->throw(message => "Category cannot be deleted.".
+                                      "  Objects depend on its exsitence.",
+                                      dependents => \%info)
+        if $dependents;
+
+    return $dependents;
 }
 
 
-=item * $category_id = $category->duplicate_check()
+=item * $category->duplicate_check()
 
-This method checks the database to see if any existing site objects possess any
-of the same values as the one in memory.  If a duplicate is found, the
-category_id of the dupe is returned, otherwise, undef is returned.
+This method checks the database to see if an existing category already possess
+the same values in its 'url' as the object in memory.  If a duplicate is found,
+a Krang::Category::DuplicateURL exception is thrown, otherwise, 0 is returned.
+
+Krang::Category::DuplicateURL excpetions have a single field 'category_id' that
+indicates the id of the Category object that would be duplicated:
+
+ eval {$self->duplicate_check()};
+ if ($@ and $@->isa('Krang::Category::DuplicateURL')) {
+     croak("The 'url' of this category duplicates that of category id: " .
+       $@->category_id\n");
+ }
 
 =cut
 
@@ -391,8 +437,14 @@ SQL
     }
 
     my $dbh = dbh();
-    my ($category_id) = $dbh->selectrow_array($query, undef, @params);
+    my ($category_id) = $dbh->selectrow_array($query, undef, @params) || 0;
 
+    # throw exception
+    Krang::Category::DuplicateURL->throw(message => 'Duplicate URL',
+                                         category_id => $category_id)
+        if $category_id;
+
+    # otherwise return 0
     return $category_id;
 }
 
@@ -600,11 +652,9 @@ sub save {
     # set flag if url must change; only applies to objects after first save...
     my $new_url = ($id && ($self->{dir} ne $self->{_old_dir})) ? 1 : 0;
 
-    # check for duplicates
-    my $category_id = $self->duplicate_check();
-    croak(__PACKAGE__ . "->save(): 'dir' is a duplicate of category id " .
-          "'$category_id'")
-      if $category_id;
+    # check for duplicates: a DuplicateURL exception will be thrown if a
+    # duplicate is found
+    $self->duplicate_check();
 
     # save element, get id back
     my ($element) = $self->{element};
@@ -740,8 +790,8 @@ sub _build_url {
 
 =head1 TO DO
 
- * Optimize performance of update_child_urls(); this operation may potentially
-   be run on 1 million+ objects.
+ * Optimize performance of update_child_urls(); this operation may
+   potentially be run on 1 million+ objects.
 
 =head1 SEE ALSO
 

@@ -19,20 +19,20 @@ eval {
                                 publish_path => 'sites/test1/',
                                 url => 'testsite.t');
 };
-is($@ =~ /invalid: 'preview'/, 1, 'init() test');
+like($@, qr/invalid: 'preview'/, 'init() test');
 
 # missing 'publish_path' failure
 eval {my $siteX = Krang::Site->new(preview_path => 'preview/path3/',
                                    preview_url => 'preview.testsite3.t',
                                    url => 'testfailure.t')};
-is($@ =~ /Required argument 'publish_path'/, 1,
-   "init() failure - publish_path");
+like($@, qr/Required argument 'publish_path'/,
+     "init() failure - publish_path");
 
 # missing 'publish_path' failure
 eval {my $siteX = Krang::Site->new(preview_path => 'preview/path3/',
                                    preview_url => 'preview.testsite3.t',
                                    publish_path => 'path/')};
-is($@ =~ /Required argument 'url'/, 1, "init() failure - url");
+like($@, qr/Required argument 'url'/, "init() failure - url");
 
 # create new object
 my $site2 = Krang::Site->new(publish_path => 'sites/test1/',
@@ -53,8 +53,14 @@ my $site3 = Krang::Site->new(publish_path => 'sites/test2/',
                              preview_url => 'preview.testsite2.t',
                              url => 'testsite.t');
 eval {$site3->save();};
-is($@ =~ /duplicates/, 1, 'save() duplicate test');
-
+isa_ok($@, 'Krang::Site::Duplicate');
+like($@, qr/Duplicates of this site exist in the database/,
+     'save() duplicate test');
+my $dupes = $@->duplicates;
+is(scalar keys %$dupes > 0, 1, "Exception 'duplicates' field test 1");
+is($_ =~ /^\d+$/ && (grep /_path|url/, $dupes->{$_}), 1,
+   'Krang::Site::Duplicate test')
+  for (keys %$dupes);
 
 # accessor/mutator tests
 #########################
@@ -108,7 +114,7 @@ is($count, 1, 'find() - count');
 # ids only
 my @site_ids = Krang::Site->find(ids_only => 1,
                                  publish_path_like => '%publish/%');
-is($_ =~ /^\d+$/, 1, 'find() - valid ids') for @site_ids;
+like($_, qr/^\d+$/, 'find() - valid ids') for @site_ids;
 
 # site_id
 @sites = Krang::Site->find(site_id => [$site3->site_id, $site4->site_id]);
@@ -122,7 +128,7 @@ like($sites[0]->url(), qr/3/, 'find() - ordering 2');
                            order_desc => 1);
 is(scalar @sites, 2, 'find() - limit/offset 1');
 isa_ok($_, 'Krang::Site') for @sites;
-is($sites[0]->url() =~ /4/, 1, 'find - limit/offset 2');
+like($sites[0]->url(), qr/4/, 'find - limit/offset 2');
 
 # update category test
 my $category = Krang::Category->new(dir => '/blah',
@@ -132,14 +138,17 @@ $category->save();
 $site2->url('testsite2.t');
 $site2->save();
 my @cats = Krang::Category->find(site_id => $site2->site_id());
-is($cats[0]->url() =~ /testsite2\.t/, 1, 'update_child_categories() test');
+like($cats[0]->url(), qr/testsite2\.t/, 'update_child_categories() test');
 
 
 # deletion tests
 #################
 # deletion test - failure
 eval {$site2->delete()};
-is($@ =~ /rely on this site/, 1, 'delete() failure test');
+isa_ok($@, 'Krang::Site::Dependent');
+like($@, qr/Site cannot be deleted/, 'delete() failure test');
+my $dependents = $@->category_id;
+is($_ =~ /^\d+$/, 1, 'Krang::Site::Dependent test') for @$dependents;
 
 # delete '/blah'
 my $result = $cats[1]->delete();
