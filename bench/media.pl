@@ -60,14 +60,15 @@ run_benchmark(module => 'Krang::Media',
 
 ###################################
 my $i = 0;
+my $div = $count / 5;
 run_benchmark(  module => 'Krang::Media',
-                name   => 'find with limit, offset',
+                name   => "find with limit $div, offset",
                 count => $count,
                 code =>
             sub {
-                Krang::Media->find( limit => 20, offset => $i );
-                $i = $i + 20;
-                $i = 0 if ($i == 120);
+                Krang::Media->find( limit => $div, offset => $i );
+                $i = $i + $div;
+                $i = 0 if ($i > $count);
             });
 ###################################
 

@@ -319,6 +319,8 @@ is( Krang::Group->user_desk_permissions($desk_perm_test_desk_id),
     "Admin has 'edit' desk access" );
 
 # Clean up
+$admin_user->group_ids_pop();
+$admin_user->save();
 $desk_perm_test_group->delete();
 $desk_perm_test_desk->delete();
 
@@ -376,6 +378,8 @@ is( Krang::Group->user_asset_permissions("media"),
     "Admin has 'edit' access to media" );
 
 # Clean up
+$admin_user->group_ids_pop;
+$admin_user->save();
 $asset_perm_test_group->delete();
 
 
@@ -447,6 +451,8 @@ is( Krang::Group->user_admin_permissions("admin_users_limited"),
     "Admin has admin_users_limited=>0 access" );
 
 # Clean up
+$admin_user->group_ids_pop();
+$admin_user->save();
 $admin_perm_test_group->delete();
 
 

@@ -125,7 +125,8 @@ use Krang::Category;
 use Krang::Session qw(%session);
 
 # Exceptions
-use Exception::Class ( 'Krang::Group::DuplicateName' => { fields => [ 'group_id' ] } );
+use Exception::Class ( 'Krang::Group::DuplicateName' => { fields => [ 'group_id' ] },
+                        'Krang::Group::Dependent' => {fields => 'dependents'} );
 
 
 # Database fields in table group_permission, asidde from group_id
@@ -526,6 +527,9 @@ sub delete {
     # Unsaved group?  Bail right away
     return unless ($group_id);
 
+    # throws dependent exception if one exists
+    $self->dependent_check();
+
     # Blow away data
     my $dbh = dbh();
     my @delete_from_tables = qw( category_group_permission
@@ -537,6 +541,37 @@ sub delete {
         $dbh->do( "delete from $table where group_id=?",
                   undef, $group_id );
     }
+}
+
+=item dependent_check()
+    
+Check to see if any users are associated with this group.  If there are, 
+this group should not be deleted- and an exception is thrown.
+
+=cut
+
+sub dependent_check {
+    my $self = shift;
+    my $id = shift || $self->{group_id};
+    my $dependents = 0;
+    my (@info, $login);
+
+    my $query = "SELECT user.login from user, user_group_permission where user.user_id = user_group_permission.user_id AND user_group_permission.group_id = ?";
+    my $dbh = dbh();
+    my $sth = $dbh->prepare($query);
+    $sth->execute($id);
+    $sth->bind_col(1, \$login);
+    while ($sth->fetch()) {
+        push @info, $login;
+        $dependents++;
+    }
+
+    Krang::Group::Dependent->throw(message => "Group cannot be deleted ".
+                                      "while users still belong to group.",
+                                      dependents => \@info)
+        if $dependents;
+
+    return $dependents;
 }
 
 =item $group->serialize_xml(writer => $writer, set => $set)

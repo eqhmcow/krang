@@ -21,12 +21,14 @@ my $media;
 my $site;
 ($site) = Krang::Site->find( limit => 1 );
 
+my $found_site = $site ? 1 : 0;
+
 $site = Krang::Site->new(preview_path => '/standard_bench_preview',
                             preview_url => 'preview.standard_bench.com',
                             publish_path => '/standard_bench_publish',
                             url => 'standard_bench.com') if not $site;
 $site->save();
-END { $site->delete() };
+END { $site->delete() if not $found_site };
 
 my ($category) = Krang::Category->find(site_id => $site->site_id());
 my $category_id = $category->category_id();
@@ -51,6 +53,20 @@ sub {
     $media->save();
     push (@media_ids, $media->media_id);
 } );
+
+###################################
+$i = 0;
+my $div = $media_upload_count / 5;
+run_benchmark(  module => 'Krang::Media',
+                name   => "find with limit $div, offset",
+                count => 100,
+                code =>
+            sub {
+                Krang::Media->find( limit => $div, offset => $i );
+                $i = $i + $div;
+                $i = 0 if ($i > $media_upload_count);
+            });
+###################################
 
 ###########################################################
 $i = 0;

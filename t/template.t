@@ -303,6 +303,8 @@ END {
     is($template->may_see(), "1", "Can see template with new group access");
     
     # Delete test group
+    $admin_user->group_ids_pop();
+    $admin_user->save();
     $new_admin_group->delete();
 
     # Test read and edit access to templates on other category branch
@@ -311,11 +313,10 @@ END {
     is($template->may_see(), "1", "Can see template on other category branch");
     
     # Can't save to read-only category
-    #$template = Krang::Template->new( category => $test_cats[0],
-    #                                  filename => "noaccess\_$uniqueness\.tmpl" );
-    #eval { $template->save };
-    # is($test_cats[0]->may_edit, "0", "Cannot edit category ".$test_cats[0]->category_id);
-    #isa_ok($@, "Krang::Template::NoCategoryEditAccess", "Save to non-editable category ".$test_cats[0]->category_id." throws exception");
+    $template = Krang::Template->new( category => $test_cats[0],
+                                      filename => "noaccess\_$uniqueness\.tmpl" );
+    eval { $template->save };
+    isa_ok($@, "Krang::Template::NoCategoryEditAccess", "Save to non-editable category ".$test_cats[0]->category_id." throws exception");
     
     # Test "global" template for permissions
     ($template) = Krang::Template->find(template_id => $test_templates[0]->template_id());

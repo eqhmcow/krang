@@ -376,7 +376,13 @@ sub delete {
     $session{EDIT_GROUP} = 0;
 
     # Do the delete
-    $g->delete();
+    eval { $g->delete() };
+
+    if ($@ and ref $@ and $@->isa('Krang::Group::Dependent')) {
+        my $dep = $@->dependents;
+        add_message('group_has_users', name => $g->name, logins => join(", ",@$dep)); 
+        return $self->edit;
+    }
 
     add_message('message_group_deleted');
 
@@ -411,10 +417,17 @@ sub delete_selected {
     # No selected groups?  Just return to list view without any message
     return $self->search() unless (@group_delete_list);
 
+    my $dupe = 0;
     foreach my $id (@group_delete_list) {
         my ($g) = Krang::Group->find(group_id=>$id);
-        $g->delete($id) if ($g);
+        eval{ $g->delete() if ($g) };
+        if ($@ and ref $@ and $@->isa('Krang::Group::Dependent')) {
+            my $dep = $@->dependents;
+            add_message('group_has_users', name => $g->name, logins => "@$dep");
+            $dupe = 1;
+        }
     }
+    return $self->search() if $dupe;
 
     add_message('message_selected_deleted');
     return $self->search();
