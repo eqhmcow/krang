@@ -448,14 +448,14 @@ SKIP: {
       unless (ElementSet eq 'TestSet1');
 
     # create a pair of stories that point to each other in a circle
-    my $jack = Krang::Story->new(categories => [$category],
+    my $jack = Krang::Story->new(categories => [Krang::Category->find(category_id => $category->category_id)],
                                  title      => "Jack",
                                  slug       => "jack",
                                  class      => "cover");
     $jack->save();
     
     # create a pair of stories that point to each other in a circle
-    my $jill = Krang::Story->new(categories => [$category2],
+    my $jill = Krang::Story->new(categories => [Krang::Category->find(category_id => $category2->category_id)],
                                  title      => "Jill",
                                  slug       => "jill",
                                  class      => "cover");
@@ -473,7 +473,7 @@ SKIP: {
     $j2set->add(object => $jack);
     $j2set->add(object => $jill);
     isa_ok($j2set, 'Krang::DataSet');
-    
+
     # should be just two stories
     is((grep { $_->[0] eq 'Krang::Story' } $j2set->list), 2);
     

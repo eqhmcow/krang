@@ -34,7 +34,6 @@ Krang::Category - a means to access information on categories
   my $url 	= $category->url();	    # undef until after save()
 
   # setters
-  $category->element( $element );
   $category->dir( $some_single_level_dirname );
 
   # delete the category from the database
@@ -117,7 +116,7 @@ use Krang::Media;
 use Krang::Story;
 use Krang::Template;
 use Krang::Group;
-use Krang::Log qw(debug);
+use Krang::Log qw(debug assert ASSERT);
 
 #
 # Package Variables
@@ -334,7 +333,6 @@ sub init {
     #################
     $self->{element} = Krang::Element->new(class => 'category',
                                            object => $self);
-    $self->{element_id} = $self->{element}->element_id();
 
     # Set up permissions
     $self->{may_see} = 1;
@@ -754,8 +752,7 @@ sub find {
     } elsif ($ids_only) {
         push(@fields, "cat.category_id");
     } else {
-        # Get all fields -- exclude 'element'
-        push(@fields, (map { "cat.$_ as $_" } grep { $_ ne "element" } keys(%category_cols)));
+        push(@fields, (map { "cat.$_ as $_" } keys(%category_cols)));
         # Add fields for may_see and may_edit
         push(@fields, "(sum(cgpc.may_see) > 0) as may_see");
         push(@fields, "(sum(cgpc.may_edit) > 0) as may_edit");
@@ -849,7 +846,8 @@ sub element {
     my $self = shift;
     return $self->{element} if $self->{element};
     ($self->{element}) =
-      Krang::Element->load(element_id => $self->{element_id}, object => $self);
+      Krang::Element->load(element_id => $self->{element_id}, 
+                           object     => $self);
     return $self->{element};
 }
 
@@ -883,7 +881,7 @@ sub save {
     my $id = $self->{category_id} || '';
     my @lookup_fields = qw/dir url/;
     my @save_fields =
-      grep {$_ ne 'category_id' && $_ ne 'element' && $_ ne 'parent_id'}
+      grep {$_ ne 'category_id' && $_ ne 'parent_id'}
         keys %category_cols;
 
     # set flag if url must change; only applies to objects after first save...
@@ -894,7 +892,7 @@ sub save {
     $self->duplicate_check();
 
     # save element, get id back
-    my ($element) = $self->element;
+    my $element = $self->element;
     $element->save();
     $self->{element_id} = $element->element_id();
 
@@ -1150,17 +1148,21 @@ sub deserialize_xml {
                        "no_update is set.")
             if $no_update;
 
+        # remove existing element tree
+        $dup->element->delete;
+        $dup->{element}    = undef;
+        $dup->{element_id} = undef;
+
         # deserialize elements for update
         my $element = Krang::Element->deserialize_xml(data => 
                                                         $data->{element}[0],
                                                       set       => $set,
                                                       no_update => $no_update,
                                                       object    => $dup);
-        $dup->{element}->delete if $dup->{element};
-        $dup->{element} = $element;
-        $dup->{element_id} = $element->element_id;
+        $dup->{element}    = $element;
+        $dup->{element_id} = undef;
         $dup->save();
-        
+
         return $dup;
     }
 
