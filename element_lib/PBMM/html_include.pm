@@ -45,5 +45,20 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+sub fill_template {
+                                                                                
+    my ($self, %args) = @_;
+                                                                                
+    my $tmpl      = $args{tmpl};
+    my $element   = $args{element};
+    my $media = $element->child('file');
+    
+    my $sru = $media->data->url;
+    $sru =~ s/\S+\//\//;     
+                                                                           
+    $tmpl->param( site_relative_url => $sru );
+                                                                                
+    $self->SUPER::fill_template( %args );
+}
 
 1;
