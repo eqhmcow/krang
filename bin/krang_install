@@ -246,9 +246,11 @@ sub check_prereqs {
     if ($do_mysql_install) {
         # Bail if version 4 is already installed
         my $mysql_bin = MYSQL_BIN;
-        my $mysql_version = `$mysql_bin -V`;
-        if ((-f $mysql_bin) and ($mysql_version =~ /Distrib\ 4\./)) {
-            exit_error("MySQL version 4.* already installed!  Try again without --do-mysql-install");
+        if (-f $mysql_bin) {
+            my $mysql_version = `$mysql_bin -V`;
+            if ($mysql_version =~ /Distrib\ 4\./) {
+                exit_error("MySQL version 4.* already installed!  Try again without --do-mysql-install");
+            }
         }
     } else {
         # Check for proper version of MySQL.
@@ -302,6 +304,41 @@ sub check_prereqs {
         exit_error("InstallPath '$InstallPath' already exists.  Cannot continue.");
     }
 }
+
+
+# Compile and install Perl, then re-exec w/o "--do-perl-install" flag
+sub do_perl_install {
+    my $uniqueness = time();
+    my $build_dir = "/tmp/krang_perl_". $uniqueness;
+    mkdir($build_dir) || die ($!);
+    chdir($build_dir);
+
+    print "Un-tarring Perl source...\n";
+    my $perl_untar = "/bin/tar -xzf ". $ENV{KRANG_ROOT} ."/install/Perl/perl-5.6.1.tar.gz";
+    `$perl_untar`;
+
+    print "Building Perl from source...\n";
+    my $perl_build = qq( cd perl-5.6.1 \\
+                         && rm -f config.sh Policy.sh \\
+                         && sh Configure -Dprefix=/usr -des \\
+                         && make \\
+                         && make test \\
+                         && make install \\
+                         && /bin/true );
+
+    system($perl_build) || exit_error("There was a problem building Perl.  Unable to continue.");
+ 
+    # Blow away build directory
+    chdir($ENV{KRANG_ROOT});
+    `rm -rf $build_dir`;
+
+    # Re-exec process w/o --do-perl-install
+    print "Perl install complete.  Please re-run krang_install w/o --do-perl-install.\n";
+    exit(0);
+}
+
+
+sub do_mysql_install {}
 
 
 sub create_mysql_user {}
@@ -363,7 +400,7 @@ sub setup_getopts {
     # Enforce required params
     my $error_output = "";
     foreach my $p (@req_params) {
-        next if (defined($options{$p}));
+        next if (length($options{$p}));
         $error_output .= "Missing --". $p ."\n";
     }
     if ($error_output) {
