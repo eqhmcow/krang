@@ -108,7 +108,6 @@ sub init {
     my %args = @_;
 
     $args{contrib_type_ids} ||= [];
-    $args{middle} ||= '';
 
     # finish the object
     $self->hash_init(%args);
@@ -545,15 +544,26 @@ sub verify_unique {
     my $self   = shift;
     my $dbh    = dbh;
 
-    # lookup dup
-    my $dup_id;
-    ($dup_id) = $dbh->selectrow_array (
-       'SELECT contrib_id FROM contrib '.
-       'WHERE first=? AND middle=? AND last=? ' . 
-       ($self->{contrib_id} ? 'AND contrib_id!=?' : ''),
-       undef, $self->first, $self->middle || '' ,$self->last, 
-       ($self->{contrib_id} ? ($self->{contrib_id}) : ()));
+    my $query = 'SELECT contrib_id FROM contrib WHERE first = ? AND last = ? ';
+    my @param = ($self->{first}, $self->{last});
 
+    # exception for self if saved
+    if ($self->{contrib_id}) {
+        $query .= " AND contrib_id != ? ";
+        push(@param, $self->{contrib_id});
+    }
+
+    # missing middle name could be '' or NULL
+    if ($self->{middle}) {
+        $query .= " AND middle = ? ";
+        push(@param, $self->{middle});
+    } else {
+        $query .= " AND (middle = ? OR middle IS NULL)";
+        push(@param, "");
+    }
+
+    # lookup dup
+    my ($dup_id) = $dbh->selectrow_array($query, undef, @param);
 
     # throw exception on dup
     Krang::Contrib::DuplicateName->throw(
