@@ -161,17 +161,23 @@ ok(not(ref($load_group)), "Can't find deleted object");
 
 
 # Test saving category & desk permissions
+my @all_cats = Krang::Category->find(ids_only=>1);
+my $test_cat_1 = $all_cats[-1];
+my $test_cat_2 = $root_cats[0];
+my $test_desk_1 = $all_desks[-1];
+my $test_desk_2 = $all_desks[0];
+
 $group = Krang::Group->new(
                            name       => $unique_group_name, 
-                           desks      => { 222 => "hide", 1 => "hide" }, 
-                           categories => { 333 => "hide", 2 => "hide" },
+                           desks      => { $test_desk_1 => "hide", $test_desk_2 => "hide" }, 
+                           categories => { $test_cat_1 => "hide", $test_cat_2 => "hide" },
                           );
 $group->save();
 ($load_group) = Krang::Group->find(name=>$unique_group_name);
-is($load_group->categories("333"), "hide", "Category permissions saved correctly");
-is($load_group->categories("2"), "hide", "Category permissions default override");
-is($load_group->desks("222"), "hide", "Desk permissions saved correctly");
-is($load_group->desks("1"), "hide", "Desk permissions default override");
+is($load_group->categories($test_cat_1), "hide", "Category permissions saved correctly");
+is($load_group->categories($test_cat_2), "hide", "Category permissions default override");
+is($load_group->desks($test_desk_1), "hide", "Desk permissions saved correctly");
+is($load_group->desks($test_desk_2), "hide", "Desk permissions default override");
 
 
 # Test invalid security levels
@@ -191,7 +197,7 @@ ok(not($@), "desks_delete() and categories_delete()");
 die ($@) if ($@);
 
 # Remove test group -- we're done.
-$load_group->delete();
+#$load_group->delete();
 
 
 

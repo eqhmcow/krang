@@ -757,9 +757,6 @@ sub rebuild_group_permissions_cache_process_category {
                             where group_id=? AND category_id IN ($update_categories_str)
                            );
 
-        #print STDERR "update_sql (category_id => $category_id):\n$update_sql\n";
-        #print STDERR "\tmay_see => $may_see\n\tmay_edit => $may_edit\n\tgroup_id => $group_id\n\n";
-
         # Do update cache table
         $dbh->do($update_sql, {RaiseError=>1}, $may_see, $may_edit, $group_id);
     }
@@ -791,15 +788,25 @@ sub validate_group {
     # Check categories
     my %categories = $self->categories;
     while (my ($cat, $level) = each(%categories)) {
+        # Make sure permission level makes sense
         croak ("Invalid security level '$level' for category_id '$cat'")
           unless (grep { $level eq $_ } @valid_levels);
+
+        # Make sure category exists
+        croak ("No such category_id '$cat'") 
+          unless (Krang::Category->find(category_id=>$cat, count=>1));
     }
 
     # Check desks
     my %desks = $self->desks;
     while (my ($desk, $level) = each(%desks)) {
+        # Make sure permission level makes sense
         croak ("Invalid security level '$level' for desk_id '$desk'")
           unless (grep { $level eq $_ } @valid_levels);
+
+        # Make sure desk exists
+        croak ("No such desk_id '$desk'") 
+          unless (Krang::Desk->find(desk_id=>$desk, count=>1));
     }
 
     # Is the name unique?
@@ -824,8 +831,30 @@ sub insert_new_group {
     my $dbh = dbh();
     $dbh->do("insert into permission_group (group_id) values (NULL)") || die($dbh->errstr);
 
-    $self->{group_id} = $dbh->{'mysql_insertid'};
+    my $group_id = $dbh->{'mysql_insertid'};
+    $self->{group_id} = $group_id;
+
+    # Insert group/category permissions
+    my $cat_perm_sql = qq/ insert into category_group_permission
+                           (category_id, group_id, permission_type)
+                           values (?,?,"edit") /;
+    my $cat_perm_sth = $dbh->prepare($cat_perm_sql);
+    my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
+    foreach my $category_id (@root_cats) {
+        $cat_perm_sth->execute($category_id, $group_id);
+    }
+
+    # Insert group/category permissions cache
+    my $cat_perm_cache_sql = qq/ insert into category_group_permission_cache
+                           (category_id, group_id, may_see, may_edit)
+                           values (?,?,1,1) /;
+    my $cat_perm_cache_sth = $dbh->prepare($cat_perm_cache_sql);
+    my @all_cats = Krang::Category->find(ids_only=>1);
+    foreach my $category_id (@all_cats) {
+        $cat_perm_cache_sth->execute($category_id, $group_id);
+    }
 }
+
 
 # Static function: Given a SQL query and an array ref with
 # query data, send query to Krang log.
