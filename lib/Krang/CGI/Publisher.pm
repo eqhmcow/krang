@@ -107,7 +107,7 @@ sub publish_story_list {
     my (@story_list,@media_list,@story_id_list,@media_id_list);
 
     my @asset_id_list = $query->param('krang_pager_rows_checked');
-    $query->delete('krang_pager_rows_checked');
+#    $query->delete('krang_pager_rows_checked');
 
     my $t = $self->load_tmpl('publish_list.tmpl',
                              associate => $query,
@@ -130,7 +130,6 @@ sub publish_story_list {
     @story_list = Krang::Story->find(story_id => \@story_id_list) if @story_id_list;
     @media_list = Krang::Media->find(media_id => \@media_id_list) if @media_id_list;
 
-
     my ($stories, $media) = $self->_build_asset_list(\@story_list, \@media_list);
 
     $t->param(stories => $stories, media => $media);
@@ -139,14 +138,16 @@ sub publish_story_list {
     $t->param(publish_date_chooser => datetime_chooser(name => 'publish_date',
                                                        query => $query));
 
-    return $t->output();
+    return $t->output() . $self->dump_html();
 
 }
 
 
 =item publish_assets
 
-Starts the publish process for a given set of stories stories specified by the CGI parameter 'asset_publish_list'.
+Starts the publish process for a given set of stories stories specified by the CGI parameter 'asset_publish_list'.  
+
+B<NOTE>: 'asset_publish_list' does not necessarily contain all items listed when the publish process is initiated - it only lists 
 
 Requires the following parameters: story_ids, publish_now, publish_date_xxx (if publish_now == 0)
 
@@ -184,18 +185,20 @@ sub publish_assets {
         # run things to the publisher
         my $publisher = Krang::Publisher->new();
         if (@story_list) {
+            # publish!
             $publisher->publish_story(story => \@story_list);
             foreach my $story (@story_list) {
-                # add a message
+                # add a publish message for the UI
                 add_message('story_publish', story_id => $story->story_id,
                             url => $story->url,
                             version => $story->version);
             }
         }
         if (@media_list) {
+            # publish!
             $publisher->publish_media(media => \@media_list);
             foreach my $media (@media_list) {
-                # add a message
+                # add a publish message for the UI
                 add_message('media_publish', media_id => $media->media_id,
                             url => $media->url,
                             version => $media->version);
@@ -370,13 +373,19 @@ sub _build_asset_list {
     my $self = shift;
     my ($story_list, $media_list) = @_;
 
-    my $publisher = Krang::Publisher->new();
-    my $publish_list = $publisher->get_publish_list(story => $story_list);
-
-    # build @stories and @media.
+    my $publish_list;
     my @stories = ();
     my @media = ();
 
+    my $publisher = Krang::Publisher->new();
+
+    # retrieve all stories linked to the submitted list.
+    $publish_list = $publisher->get_publish_list(story => $story_list) if @$story_list;
+
+    # add previously submitted media objects to the list.
+    push @{$publish_list}, @$media_list if (@$media_list);
+
+    # iterate over asset list to create display list.
     foreach my $asset (@$publish_list) {
         if ($asset->isa('Krang::Story')) {
             push @stories, {id    => $asset->story_id,
@@ -397,6 +406,7 @@ sub _build_asset_list {
                          };
 
         } else {
+            # Nothing else should make it this far.
             croak sprintf("%s: I have no idea what to do with this: ISA='%s'", __PACKAGE__, $_->isa());
         }
     }
