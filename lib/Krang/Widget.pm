@@ -553,14 +553,14 @@ sub date_chooser {
 Reads CGI data submitted via a standard Krang datetime chooser
 and returns a datetime object (Time::Piece).  The C<name> and C<query>
 parameters are required.
-                                                                                
+
 If decode_datetime() is unable to retrieve a date it will return undef.
-                                                                                
+
 Standard Krang datetime choosers can be created via datetime_chooser().
 
 If 'no_time_is_end' is set to 1, then datetimes with no Hour/Min/Sec
 will translate to date:23:59:59 (defualt is to date:00:00:00)
- 
+
 =cut
 
 sub decode_datetime {
@@ -570,7 +570,7 @@ sub decode_datetime {
 
     croak("Missing required args: name and query")
       unless $name and $query;
-                                                                                
+
     my $m = $query->param($name . '_month');
     my $d = $query->param($name . '_day');
     my $y = $query->param($name . '_year');
@@ -581,9 +581,9 @@ sub decode_datetime {
     if ( (defined $min) and ($min eq 'undef') ) {
         if ($ntie and ($h eq 0)) {
             $ampm = 'na';
-            $min = 59;
-            $h = 23; 
-            $sec = '59';           
+            $min  = 59;
+            $h    = 23;
+            $sec  = '59';
         } else {
             $min = 0;
         }
@@ -591,13 +591,18 @@ sub decode_datetime {
     $ampm = $query->param($name . '_ampm') unless $ampm;
 
     # deal with converting AM/PM to 24 hour time
-    if ($h == 12) {
-        $h = 0 if ($ampm eq 'AM'); 
-    } else {
-        $h = $h + 12 if ((defined $ampm) and ($ampm eq 'PM'));
+    if (defined($h)) {
+        if ($h == 12) {
+            $h = 0 if ($ampm eq 'AM'); 
+        } else {
+            $h = $h + 12 if ((defined $ampm) and ($ampm eq 'PM'));
+        }
+    } else { 
+        $h = 12 if ((defined $ampm) and ($ampm eq 'PM'));
     }
+
     return undef unless $m and $d and $y;
-                                                                                
+
     return Time::Piece->strptime("$y-$m-$d $h:$min:$sec", '%Y-%m-%d %H:%M:%S');
 }
 
