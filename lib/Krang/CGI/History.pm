@@ -22,7 +22,7 @@ use Krang::HTMLPager;
 
 =head1 NAME
 
-Krang::CGI::History - web interface to manage Contributors
+Krang::CGI::History - web interface to view history logs
 
 
 =head1 SYNOPSIS
@@ -31,7 +31,6 @@ Krang::CGI::History - web interface to manage Contributors
   my $app = Krang::CGI::History->new();
   $app->run();
 
-
 =head1 DESCRIPTION
 
 Krang::CGI::History provides the log screen in Krang which displays
@@ -39,17 +38,9 @@ the history entries associated with a given object.
 
 =head1 INTERFACE
 
-Krang::CGI::History is expected to be invoked via a CGI "instance
-script".  The requested run-mode is specified via the query parameter
-"history_rm".  For example, the following request would invoke the
-"show_history" run-mode:
-
-  http://server-name/history.pl?history_rm=show
-
 Following are descriptions of all the run-modes provided by
 Krang::CGI::History.  The default (and sole) run-mode for
 Krang::CGI::History is 'show'.
-
 
 =head2 Run-Modes
 
