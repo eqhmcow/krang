@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use Time::Piece;
+use Time::Piece::MySQL;
 use Krang::Schedule;
 use Krang::Message qw(add_message);
 use Krang::Session qw(%session);
@@ -25,23 +27,33 @@ our %ACTION_LABELS = (
                       expire   => 'Expire',
                      );
 
+our %WEEKDAYS = (
+                    0 => 'Sunday',
+                    1 => 'Monday',
+                    2 => 'Tuesday',
+                    3 => 'Wednesday',
+                    4 => 'Thursday',
+                    5 => 'Friday',
+                    6 => 'Saturday'
+                );
+
 =head1 NAME
 
 Krang::CGI::Schedule - web interface to manage scheduling for stories and media.
 
 =head1 SYNOPSIS
-                                                                                
-  use Krang::CGI::History;
+  
+  use Krang::CGI::Schedule;
   my $app = Krang::CGI::Schedule->new();
   $app->run();
-                                                                                
+
 =head1 DESCRIPTION
 
 Krang::CGI::Schedule provides a user interface to add and delete
  scheduled actions for Krang::Media and Krang::Story objects.
 
 =head1 INTERFACE
-                                                                                
+
 Following are descriptions of all the run-modes provided by
 Krang::CGI::Schedule.
 
@@ -56,13 +68,17 @@ sub setup {
     $self->run_modes([qw(
                             edit
                             add
+                            add_simple
                             delete
                     )]);
 
     $self->tmpl_path('Schedule/');    
 }
+
+=over 
+
 =item edit
-                              
+
 Displays the current schedule associated with the story/media object and
 allow deletions and additions to the schedule. 
 
@@ -76,14 +92,14 @@ screen of the media/story object.
 The following parameters are used with this runmode:
 
 =over 4
-                                                                                
+
 =item object_type
 
 Must be 'media' or 'story' - specifies which object to look for in 
 session.
 
 =back
-                                                                                
+
 =cut
 
 sub edit {
@@ -92,13 +108,13 @@ sub edit {
     my $template = $self->load_tmpl('edit.tmpl', associate => $query);
 
     # load params
-    my $object_type = $query->param('object_type');
-    croak("Missing or invalid object type - must be 'story' or 'media'")
+    my $object_type = $query->param('object_type') || croak("No object type was specified. Need 'story' or 'media'.");
+    croak("Invalid object type - must be 'story' or 'media'")
       if ( ($object_type ne 'story') and ($object_type ne 'media') );
 
     $template->param( is_story => 1 ) if ($object_type eq 'story');
     $template->param( is_media => 1 ) if ($object_type eq 'media');
-
+    $template->param( object_type => $object_type );
     my $schedule_type = $query->param('advanced_schedule') ? 'advanced' : 'simple';
     ($schedule_type eq 'simple') ? $template->param( 'simple' => 1 ) : $template->param( 'advanced' => 1 );
 
@@ -139,11 +155,29 @@ sub get_existing_schedule {
     my @existing_schedule_loop = ();
 
     foreach my $schedule (@schedules) {
-        my %context = $schedule->context ? @{$schedule->context} : {};
+        my %context = $schedule->context ? @{$schedule->context} : ();
         my $version = $context{'version'} ? $context{'version'} : '';
+        my $frequency = ($schedule->repeat eq 'never') ? 'One Time' : ucfirst($schedule->repeat);
+        my $s_params;
+
+        if ($frequency eq 'One Time') {
+            $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->cdate;
+        } elsif ($frequency eq 'Hourly') {
+            ($schedule->minute eq '0') ? ($s_params = 'on the hour') : ($s_params = $schedule->minute." minutes past the hour"); 
+        } elsif ($frequency eq 'Daily') {
+            my ($hour, $ampm) = convert_hour($schedule->hour);
+            $s_params = "$hour:".convert_minute($schedule->minute)." $ampm"; 
+        } elsif ($frequency eq 'Weekly') {
+            my ($hour, $ampm) = convert_hour($schedule->hour);
+            $s_params = $WEEKDAYS{$schedule->day_of_week}." at $hour:".convert_minute($schedule->minute)." $ampm";        
+        }
+        
+        $s_params = ($frequency eq 'Daily') ? ($frequency.' at '.$s_params) : ($frequency.', '.$s_params);
+        
         push(@existing_schedule_loop, {
                                                 'schedule_id' => $schedule->schedule_id,
-                                                'time' => $schedule->next_run,
+                                                'schedule' => $s_params,
+                                                'next_run' => Time::Piece->from_mysql_datetime($schedule->next_run)->cdate,
                                                 'action' => $ACTION_LABELS{$schedule->action},
                                                 'version' => $version
                                             });
@@ -151,5 +185,51 @@ sub get_existing_schedule {
 
     return @existing_schedule_loop;
 }
+
+sub convert_minute {
+    my $minute = shift;
+    $minute = "0".$minute if ($minute <= 9);
+    return $minute;
+}
+
+sub convert_hour {
+    my $hour = shift;
+
+    if ($hour >= 13) {
+        return ($hour - 12), 'PM'; 
+    } elsif ($hour == 0) {
+        return 12, 'AM';
+    } else {
+        return $hour, 'AM'; 
+    }
+}
+
+=item delete()
+
+Delete selected schedules from the database by schedule_id.
+
+=cut
+
+sub delete {
+    my $self = shift;
+    my $q = $self->query();
+    my @delete_list = ( $q->param('schedule_delete_list') );
+
+    unless (@delete_list) {
+        add_message('missing_schedule_delete_list');
+        return $self->edit();
+    }
+
+    foreach my $schedule_id (@delete_list) {
+        Krang::Schedule->delete($schedule_id);
+    } 
+    
+    add_message('deleted_selected');
+    return $self->edit();      
+}
+
+=back
+
+=cut
 
 1;

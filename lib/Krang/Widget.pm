@@ -114,6 +114,149 @@ sub category_chooser {
 }
 
 
+=item $chooser_html = datetime_chooser(name => 'date', query => $query)
+                                                                                
+Returns a block of HTML implementing the standard Krang datetime
+chooser.  The C<name> and C<query> parameters are required.
+                                                                                
+Additional optional parameters are as follows:
+                                                                                
+  date      - if set to a date object (Time::Piece), chooser will
+              be prepopulated with that datetime.  If not set to a
+              date object, will default to current date (localtime)
+              unless "nochoice" is true, in which case chooser
+              will be set to blank. Please note that seconds are
+              ALWAYS set to '00', regardless of what seconds may
+              actually be.
+                                                                                
+  nochoice  - if set to a true value, Month/Day/Year/Hour/00/AM
+              will be provided as default choices in the chooser.
+              Used in conjunction with the "date" parameter, the
+              chooser may be set to default to no date.
+                                                                                
+              The value "0" will be returned if a user chooses
+              the "no choice" option.
+                                                                                
+                                                                                
+The date_chooser() implements itself in HTML via six separate
+query parameters.  They are named based on the provided name,
+plus "_month", "_day", "_year", "_hour", "_minute", and 
+"_ampm" respectively. CGI query data from
+date_chooser can be retrieved and converted back into a date
+object via decode_date().
+
+=cut
+                                                                                
+sub datetime_chooser {
+    my %args = @_;
+    my ($name, $query, $date, $nochoice) =
+      @args{qw(name query date nochoice)};
+    croak("Missing required args: name and query")
+      unless $name and $query;
+                                                                                
+    # Set date to today if it is NOT already set, AND if we do not allow "no choice"
+    $date ||= localtime() unless ($nochoice);
+                                                                                
+    # Set up month input
+    my @month_values = (1..12);
+    my %month_labels = (
+                        1  => 'Jan',
+                        2  => 'Feb',
+                        3  => 'Mar',
+                        4  => 'Apr',
+                        5  => 'May',
+                        6  => 'Jun',
+                        7  => 'Jul',
+                        8  => 'Aug',
+                        9  => 'Sep',
+                        10 => 'Oct',
+                        11 => 'Nov',
+                        12 => 'Dec'
+                       );
+                                                                                
+    my @day_values = (1..31);
+    my %day_labels = ();
+                                                                                
+    my @year_values = (1970..(localtime()->year() + 10));
+    my %year_labels = ();
+
+    my @hour_values = (1..12);
+    my %hour_labels = ();
+
+    my @minute_values = (0..59);
+    my %minute_labels = ();
+    $minute_labels{0} = '00';
+    for (my $count = 0; $count <= 10; $count++) {
+        $minute_labels{$count} = '0'.$count;
+    }
+    my @ampm_values = ('AM','PM');
+    my %ampm_labels = (AM => 'AM', PM => 'PM');
+
+    # Set up dummy vals if "no choice" IS allowed
+    if ($nochoice) {
+        # Month
+        unshift(@month_values, 0);
+        $month_labels{0} = 'Month';
+                                                                                
+        # Day
+        unshift(@day_values, 0);
+        $day_labels{0} = 'Day';
+                                                                                
+        # Year
+        unshift(@year_values, 0);
+        $year_labels{0} = 'Year';
+        
+        # Hour
+        unshift(@hour_values, 0);
+        $year_labels{0} = 'Hour';
+
+    }
+                                                                                
+    my $m_sel = $query->popup_menu(-name      => $name .'_month',
+                                   -default   => ($date) ? $date->mon() : 0,
+                                   -values    => \@month_values,
+                                   -labels    => \%month_labels,
+                                  );
+    my $d_sel = $query->popup_menu(-name      => $name .'_day',
+                                   -default   => ($date) ? $date->mday() : 0,
+                                   -values    => \@day_values,
+                                   -labels    => \%day_labels,
+                                  );
+    my $y_sel = $query->popup_menu(-name      => $name .'_year',
+                                   -default   => ($date) ? $date->year() : 0,
+                                   -values    => \@year_values,
+                                   -labels    => \%year_labels,
+                                  );
+
+    my $hour_12 = ($date->hour() >= 13) ? ($date->hour() - 12) : $date->hour();
+
+    my $h_sel = $query->popup_menu(-name      => $name .'_hour',
+                                   -default   => ($date) ? $hour_12 : 0,
+                                   -values    => \@hour_values,
+                                   -labels    => \%hour_labels,
+                                  );
+
+    my $min_sel = $query->popup_menu(-name      => $name .'_minute',
+                                   -default   => ($date) ? $date->minute() : 0,
+                                   -values    => \@minute_values,
+                                   -labels    => \%minute_labels,
+                                  );
+
+    my $ampm = 'AM';
+    if ($date) {
+        $ampm = 'PM' if ($date->hour >= 12);
+    }
+
+    my $ampm_sel = $query->popup_menu(-name      => $name .'_ampm',
+                                   -default   => $ampm,
+                                   -values    => \@ampm_values,
+                                   -labels    => \%ampm_labels,
+                                  );
+                                                                                
+                                                                                
+    return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel . "&nbsp;" . $h_sel . "&nbsp;" . $min_sel . "&nbsp;" . $ampm_sel;
+}
+
 
 =item $chooser_html = date_chooser(name => 'cover_date', query => $query)
 

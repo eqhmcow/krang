@@ -1,3 +1,20 @@
+<script language=javascript>
+ function checkall(checkbox, prefix) {
+     for (var i = 0; i < checkbox.form.elements.length ; i++) {
+        var e = checkbox.form.elements[i];
+        if (e.name && e.name.indexOf(prefix) == 0) {
+           e.checked = checkbox.checked;
+        }
+     }
+  }
+
+  function delete_selected () {
+        var myform = document.forms["current_schedule_form"];
+        myform.submit();
+    }
+
+</script>
+
 <tmpl_include header.tmpl>
 
 <div class=dark-bar><tmpl_if is_story>Story<tmpl_else>Media</tmpl_if> Schedule Editor <tmpl_if simple>(Simple)</tmpl_if></div>
@@ -36,40 +53,57 @@
 </div>
 <br>
 <TMPL_IF existing_schedule_loop>
-                                                                        
+<form name="current_schedule_form" method="POST">
+<input type="hidden" name="rm" value="delete" override='1'>
+<tmpl_if advanced><input type="hidden" name="advanced_schedule" value="1" override="1"></tmpl_if>
+<input type="hidden" name="object_type" value="<tmpl_var object_type>">
   <table cellspacing="0" width="100%">
                                                                         
       <tr class="form-head">
-          <th>Date</th>
-          <th>Time</th>
-          <th>Version</th>
+          <th>Schedule</th>
+          <th>Next Run</th>
           <th>Action</th>
+          <th>Version</th>
           <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'schedule_delete_list')"></th>
       </tr>
                                                                         
   <tmpl_loop existing_schedule_loop>
       <tr>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML time></td>
-          <td class="form-cell"><tmpl_var ESCAPE=HTML time></td>
-          <td class="form-cell"><tmpl_if version><tmpl_var ESCAPE=HTML version></tmpl_if></td>
-          <td class="form-cell"><tmpl_var action></td>          
+          <td class="form-cell"><tmpl_var ESCAPE=HTML schedule></td>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML next_run></td>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML action></td>
+          <td class="form-cell"><tmpl_if version><tmpl_var ESCAPE=HTML version><tmpl_else>&nbsp;</tmpl_if></td>          
           <td class="form-cell"><input type="checkbox" name="schedule_delete_list" value="<tmpl_var ESCAPE=HTML schedule_id>"></td>
       </tr>
-                                                                        
   </tmpl_loop>
-                                                                        
   </table>
-                                                                        
   <div align="right">
-<input type="button" value="Delete" onClick="delete_selected()"></div>
-                                                                        
+<input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+</form>                                                                      
 <TMPL_ELSE>
   <b>No Schedule Found</b>
 </TMPL_IF>
 <div class=form-box>
 
-<input type="hidden" name="rm" value="find">
-
+<form name="add_schedule_form" method="POST">
+<input type="hidden" name="object_type" value="<tmpl_var object_type>">
+<tmpl_if simple>
+<input type="hidden" name="rm" value="add_simple" override='1'>
+<table cellspacing="0" width="100%">
+      <tr class="form-head">
+          <th>Schedule Publication</th>
+      </tr>
+</table>
+<tmpl_else>
+<input type="hidden" name="advanced_schedule" value="1" override="1">
+<input type="hidden" name="rm" value="add" override='1'>
+<table cellspacing="0" width="100%">
+      <tr class="form-head">
+          <th>Add to Schedule</th>
+      </tr>
+</table>
+</tmpl_if>
+</form>
 </div></div>
 
 
