@@ -5,7 +5,7 @@ This POD file is used to generate INSTALL in distribution archives.
 
 This document describes how to install Krang on your system.
 
-=head1 Supported Platforms
+=head2 Supported Platforms
 
 Krang supports the following operating system platforms:
 
@@ -13,15 +13,27 @@ Krang supports the following operating system platforms:
 
 =item *
 
-Redhat Linux 7.3 on x86
+Redhat Linux 7.3 and 9
 
 =item *
 
-Redhat Linux 9 on x86
+Fedora Core 1
+
+=item *
+
+Gentoo Linux 1.4.3
+
+=item *
+
+FreeBSD 5.2.1
 
 =back
 
-=head1 Software Requirements
+Krang will likely compile fine on other similar platforms, but you'll
+need to download the source distribution and build it yourself.  See
+L<"Building Krang from Source">.
+
+=head2 Software Requirements
 
 Before you can install Krang you'll need Perl version 5.6.1 or later
 and MySQL version 4.0.13 or later.  You can download Perl here:
@@ -36,7 +48,7 @@ Krang may require additional software, depending on your operating
 system.  Be sure to read the platform-specific README (eg.
 F<README.Redhat9>) included with Krang.
 
-=head1 Choosing a Distribution
+=head2 Choosing a Distribution
 
 When you download Krang you must choose a distribution that matches
 your operating system and version of Perl.  If you don't know what
@@ -57,12 +69,48 @@ Using this information, if you wanted to install Krang 1.013 on Redhat
 Krang also has a special source distribution with F<-src> instead of a
 platform description (ex: F<krang-1.013-src.tar.gz>).  You can
 download this release and attempt to build Krang from source.  Of
-course, this will require porting work if Krang doesn't support your
+course, this may require porting work if Krang doesn't support your
 platform.
 
-=head1 Installation
+=head2 Building Krang from Source
 
-Once you've downloaded Krang, un-tar it and enter the directory:
+If you downloaded the source distribution (ex:
+F<krang-1.013-src.tar.gz>) then you'll need to build Krang before you
+can install it.  If you've got a binary distribution, skip ahead to
+the L<"Installation"> section.
+
+First, untar the source tar-ball and enter the directory:
+
+  tar zxvf krang-1.013-src.tar.gz
+  cd krang-1.013-src
+
+If there's a README file for your platform (ex: README.FreeBSD5), read
+that now.  It will tell you about software you'll need to install
+before building Krang.
+
+Now try building Krang using the bin/krang_build script:
+
+  bin/krang_build
+
+If Krang complains that it doesn't know what platform to build for you
+can pass it a platform name:
+
+  bin/krang_build Redhat9
+
+If that works, you can now build a binary distribution for your
+platform and proceed to the next step:
+
+  bin/krang_makedist
+
+If not, you'll have to do some porting work to get Krang working on
+your system.  To learn more about porting Krang, read this:
+
+  http://krang.sourceforge.net/docs/porting.html
+
+=head2 Installation
+
+Once you've downloaded a Krang binary distribution, or built one from
+source, un-tar it and enter the directory created:
 
   tar zxvf krang-1.013-Redhat7_3-perl5.6.1-i686-linux.tar.gz
   cd krang-1.013-Redhat7_3-perl5.6.1-i686-linux
