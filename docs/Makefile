@@ -5,7 +5,8 @@ HTML = changes.html objects.html coding.html goals.html rationale.html \
        cpan.html new_features.html paper_screen.html element_system.html \
        index.html install.html building_perl_modules.html requirements.html \
        configuration.html tech_spec.html writing_htmltemplate.html \
-       permissions.html xml.html performance.html ops_install.html
+       permissions.html xml.html performance.html ops_install.html \
+       ops_upgrade.html
 
 all   : $(HTML) modules.html rm_modules
 

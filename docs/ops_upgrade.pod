@@ -1,0 +1,132 @@
+
+=head1 Upgrading PIRT CMS 2.0 (Krang)
+
+
+This document describes how to upgrade Krang.
+
+
+To upgrade an existing Krang installation, do the following as root:
+
+
+  # cd <new Krang src directory>
+  # ./bin/krang_upgrade --krangRoot $KRANG_ROOT
+
+
+
+=head2 What Upgrade Will Do
+
+
+Following is a list of the tasks the upgrade script will perform.
+
+
+=over 4
+
+=item Validate path to KRANG_ROOT.
+
+=item Locate and parse existing krang.conf file.
+
+=item Verify that this Krang has been shut down.
+
+=item Back up existing Krang assets, databases, and data files.
+
+=item Install new Krang assets to KRANG_ROOT.
+
+=item Upgrade krang.conf.
+
+=item Upgrade database for each instance.
+
+=item Copy external element libraries from old KRANG_ROOT.
+
+=item Copy data files from old KRANG_ROOT.
+
+=item Clear out sessions from database
+
+=item Output results of upgrade to console.
+
+
+=back
+
+
+
+
+=head2 Components to consider when upgrading
+
+There are a number of sub-systems which have to be considered when
+upgrading a Krang installation.
+
+=over 4
+
+=item krang.conf
+
+The elements in the krang.conf file may have changed since the
+previous version.  The installer must create a new krang.conf,
+incorporating the existing directives but installing the new
+directives.
+
+If necessary, the upgrade script may need to receive parameters or
+query the user for these new settings.
+
+
+=item messages.conf
+
+The elements in the messages.conf file may have changed since the
+previous version.  The upgrade script will overwrite the old version
+with the contents of the new version.  The rationale is that this is a
+file which is intended to be edited in development only.
+
+
+=item Database
+
+Database tables may have changed, and data may have to be transformed
+during upgrade.  The upgrade system will start with the existing
+database and apply progressive upgrades in order to bring each
+database up to date.
+
+N.B.:  Each instance has its own database which must be upgraded.
+
+
+=item Data files
+
+Media and Templates are stored in the /krang/data directory.  
+
+
+
+=item External element libraries
+
+Media and Templates
+
+
+
+=item Library files
+
+Perl libraries (both internal and CPAN-based) may have been added,
+modified or deleted since the previous installation.  The upgrade
+script will replace the entire KRANG_ROOT hierarchy, thereby handling
+the addition, modification and removal of all library files.
+
+
+=back
+
+
+
+=head1 System Requirements
+
+This upgrade is intended for sites which are already running Krang, aka
+PIRT CMS 2.0.
+
+Upgrade from Bricolage is handled through a different system.
+
+
+=head1 To Upgrade
+
+
+=over 4
+
+=item Down load and uncompress new Krang to temporary folder (e.g., /tmp/new_krang/)
+
+=item Run the upgrade script as root
+
+  # cd <new Krang src directory>
+  # ./bin/krang_upgrade --krangRoot $KRANG_ROOT
+
+=back

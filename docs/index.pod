@@ -50,6 +50,10 @@ HREF[Operations Install|ops_install.html] - how to install a new Krang instance 
 
 =item *
 
+HREF[Operations Upgrade|ops_upgrade.html] - how to upgrade an existing Krang instance for operations
+
+=item *
+
 HREF[Development Install|install.html] - how to install a new Krang instance for developers
 
 =item *
