@@ -565,15 +565,22 @@ sub checkout {
 
     $dbh->do('LOCK tables media WRITE');
 
-    my $sth= $dbh->prepare('SELECT checked_out_by FROM media WHERE media_id = ?');
-    $sth->execute($media_id);
+    eval {
+        my $sth= $dbh->prepare('SELECT checked_out_by FROM media WHERE media_id = ?');
+        $sth->execute($media_id);
 
-    croak("Media asset $media_id already checked out!") if $sth->fetchrow_array();
+        croak("Media asset $media_id already checked out!") if $sth->fetchrow_array();
 
-    $sth->finish();
+        $sth->finish();
  
-    $dbh->do('update media set checked_out_by = ? where media_id = ?', undef, $user_id, $media_id);
+        $dbh->do('update media set checked_out_by = ? where media_id = ?', undef, $user_id, $media_id);
+    };
 
+    if ($@) {
+        $dbh->do('UNLOCK tables');
+        croak("Error in checkout: $@");
+    }
+    
     $dbh->do('UNLOCK tables');
 
     $self->{checked_out_by}= $user_id;
