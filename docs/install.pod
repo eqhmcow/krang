@@ -79,10 +79,10 @@ For Redhat 7.x:
    b. Install MySQL from rpm...
       i. # cd $KRANG_ROOT/install/MySQL/ \
            && rpm -Uvh \
-           MySQL-server-4.0.12-0.i386.rpm \
-           MySQL-client-4.0.12-0.i386.rpm \
-           MySQL-devel-4.0.12-0.i386.rpm \
-           MySQL-shared-4.0.12-0.i386.rpm
+           MySQL-server-4.0.13-0.i386.rpm \
+           MySQL-client-4.0.13-0.i386.rpm \
+           MySQL-devel-4.0.13-0.i386.rpm \
+           MySQL-shared-4.0.13-0.i386.rpm
 
    c. Create MySQL user for Krang...
       i. # echo 'grant all on * to krang@localhost' | mysql -uroot
