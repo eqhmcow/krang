@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded HTML::PopupTreeSelect to the latest released version,
+1.4. [Sam]
+
+=item *
+
 Fixed a bug in Krang::Group where the category permissions cache
 wasn't being correctly rebuilt after group changes were saved. [Sam]
 
