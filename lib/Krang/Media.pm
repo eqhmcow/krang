@@ -237,6 +237,36 @@ Returns the unique id assigned the media object.  Will not be populated until $m
 
 Gets/sets the value.
 
+=item $media->checked_out()
+
+Returns 1 if checked out by a user (checked_out_by is set).  (Unessicary convenience method)
+
+=cut
+
+sub checked_out {
+    my $self = shift;
+    return 1 if $self->checked_out_by();
+}
+
+=item $media->checked_out_by()
+
+Returns id of user who has object checked out, if checked out.
+
+=item $media->published()
+
+Returns 1 if published version > 1.  (Unessicary convenience method)
+
+=cut
+
+sub published {
+    my $self = shift;
+    return 1 if $self->published_version();
+}
+
+=item $media->published_version()
+
+Returns version number of published version of this object (if has been published).
+
 =item $version = $media->version()
 
 Returns the current version number.
@@ -402,7 +432,7 @@ Find and return media object(s) with parameters specified. Supported paramter ke
 
 =item *
 
-media_id
+media_id (can optionally take a list of ids)
 
 =item *
 
@@ -410,7 +440,7 @@ title
 
 =item *
 
-title_like - case insensitive substring match on title.
+title_like - case insensitive match on title. Must include '%' on either end for substring match.
 
 =item *
 
@@ -426,7 +456,7 @@ filename
 
 =item *
 
-filename_like - case insensitive substring match on filename.
+filename_like - case insensitive substring match on filename. Must include '%' on either end for substring match.
 
 =item *
 
@@ -473,23 +503,32 @@ sub find {
     my $offset = $args{'offset'} ? $args{'offset'} : 0;
 
     foreach my $key (keys %args) {
-	if ( ($key eq 'media_id') || ($key eq 'title') || ($key eq 'category_id') || ($key eq 'media_type_id') || ($key eq 'filename') || ($key eq 'creation_date') ) {
+	if ( ($key eq 'title') || ($key eq 'category_id') || ($key eq 'media_type_id') || ($key eq 'filename') || ($key eq 'creation_date') ) {
             push @where, $key;
 	} 
     }
   
     my $where_string = join ' and ', (map { "$_ = ?" } @where);
 
+    # add media_id(s) if needed
+    if ($args{media_id}) {
+        if (ref $args{media_id} eq 'ARRAY') {
+            $where_string ? $where_string .= " and media_id = ".join( ' or media_id = ', @{$args{media_id}} ) : $where_string = "media_id = ".join( ' or media_id = ', @{$args{media_id}} );
+        } else {
+            $where_string ? $where_string .= " and media_id = ".$args{media_id} : $where_string = "media_id = ".$args{media_id};
+        }        
+    }
+
     # add title_like to where_string if present
     if ($args{'title_like'}) {
         $where_string ? $where_string .= " and title like ?" : $where_string = " title like ?";
-        push @where, '%'.$args{'title_like'}.'%';
+        push @where, $args{'title_like'};
     }
 
     # add filename_like to where_string if present
     if ($args{'filename_like'}) {
         $where_string ? $where_string .= " and filename like ?" : $where_string = " filename like ?";
-        push @where, '%'.$args{'filename_like'}.'%';
+        push @where, $args{'filename_like'};
     }
 
     if ($args{'creation_date'}) {
@@ -720,6 +759,8 @@ sub prepare_for_edit {
 =item $media->delete() || Krang::Media->delete($media_id)
 
 Permenantly delete media object or media object with given id.
+
+Attempts to checkout the media object, will croak if checked out by another user.
 
 =cut
 
