@@ -450,6 +450,18 @@ ok(Krang::Story->find(url => $big->url));
 $big->delete();
 ok(not Krang::Story->find(url => $big->url));
 
+# first test to see if story URL conflict is caught
+my $cstory = Krang::Story->new(categories => [$category, $category2],
+                            title      => "Big",
+                            slug       => "big",
+                            class      => "article");
+
+$cstory->save;
+
+like( $bset->import_all(), 'A story object with a non-primary url');
+
+$cstory->delete;
+
 $bset->import_all();
 ($big) = Krang::Story->find(url => $big->url);
 ok($big);
