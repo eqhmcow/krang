@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS template;
 --
 
 CREATE TABLE template (
-        id int(11) NOT NULL auto_increment,
+        template_id int(11) NOT NULL auto_increment,
         category_id int(11) NOT NULL,
         checked_out tinyint(1) NOT NULL,
         checked_out_by int(11),
@@ -19,7 +19,7 @@ CREATE TABLE template (
         notes text,
         testing int(1) NOT NULL,
         version int(11) NOT NULL,
-        PRIMARY KEY  (id),
+        PRIMARY KEY  (template_id),
         INDEX (category_id)
 ) TYPE=MyISAM;
 
@@ -36,12 +36,12 @@ DROP TABLE IF EXISTS template_version;
 --
 
 CREATE TABLE template_version (
-        id int(11) NOT NULL auto_increment,
+        template_version_id int(11) NOT NULL auto_increment,
         creation_date timestamp(14) NOT NULL,
         data longtext NOT NULL,
         template_id int(11) NOT NULL,
         version int(11) NOT NULL,
-        PRIMARY KEY (id),
+        PRIMARY KEY (template_version_id),
         INDEX (template_id),
         INDEX (version)
 ) TYPE=MyISAM;
