@@ -36,7 +36,7 @@ sub new {
                                             allow_delete => 0,
                                             reorderable => 0 ),
                     PBMM::promo->new(),
-                    Default::lead_in->new(),
+                    PBMM::lead_in->new(),
                     PBMM::external_lead_in->new(),
                     PBMM::image->new(),
                     PBMM::custom_search->new(max => 1),

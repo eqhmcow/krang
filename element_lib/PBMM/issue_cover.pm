@@ -38,7 +38,7 @@ sub new {
                                             reorderable => 0 ),
                     PBMM::promo->new(),
                     PBMM::custom_search->new(max => 1),
-                    Default::lead_in->new(),
+                    PBMM::lead_in->new(),
                     PBMM::external_lead_in->new(),
                     PBMM::image->new(),
                     Krang::ElementClass::Text->new(name         => "small_header" ),

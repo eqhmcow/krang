@@ -48,7 +48,7 @@ sub new {
                 Krang::ElementClass::Textarea->new(name => "paragraph",
                                                     bulk_edit => 1),
                 PBMM::image->new(),
-                Default::lead_in->new(), 
+                PBMM::lead_in->new(), 
                 PBMM::table_of_contents->new(),
                 ],
                 @_);

@@ -35,7 +35,7 @@ sub new {
                                         max => 1 ),
                  PBMM::html_include->new(),
                  PBMM::cat_paragraph->new(),
-                 Default::lead_in->new(),
+                 PBMM::lead_in->new(),
                  PBMM::image->new(),
                 ],
                 @_);

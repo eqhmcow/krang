@@ -27,7 +27,7 @@ sub new {
                                                     required => 1,
                                                     bulk_edit => 1,
                                                    ),
-                 Default::lead_in->new(),
+                 PBMM::lead_in->new(),
                  PBMM::external_lead_in->new(),
                  PBMM::image->new(),
                 ],
