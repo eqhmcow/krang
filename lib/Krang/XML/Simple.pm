@@ -23,6 +23,10 @@ will automatically decode Base64 character content prefixed by the
 C<!!!BASE64!!!> marker.  This is the marker emited by
 L<Krang::XML::Writer> when characters must be encoded for output.
 
+=head1 INTERFACE
+
+Same as L<XML::Simple>.
+
 =cut
 
 sub XMLin {

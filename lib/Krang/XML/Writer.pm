@@ -21,6 +21,10 @@ will automatically encode XML-illegal character content as Base64 and
 add the C<!!!BASE64!!!> marker.  This marker is used by
 Krang::XML::Simple to automatically decode Base64 data.
 
+=head1 INTERFACE
+
+Same as L<XML::Writer>.
+
 =head1 CAVEAT
 
 This sub-class won't work if you make multiple calls to characters()
