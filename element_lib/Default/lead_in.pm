@@ -94,7 +94,9 @@ sub fill_template {
     $tmpl->param( type => $type );
 
     $tmpl->param( byline => $story->element->child('byline')->data ) if $story->element->child('byline');
-                                                    
+    
+    $tmpl->param( byline => $story->element->child('source')->data ) if $story->element->child('source');
+                                                
     my %contrib_types = Krang::Pref->get('contrib_type');
                                                                                 
     my %contribs = ();

@@ -23,6 +23,8 @@ sub new {
                                        max  => 1),
         Krang::ElementClass::Text->new(name => 'article_id',
                                        max  => 1),
+        Krang::ElementClass::Text->new(name => 'source',
+                                       max  => 1),
         Krang::ElementClass::Textarea->new(name => 'byline',
                                            max => 1),
         Krang::ElementClass::CheckBox->new(name => 'enhanced_content',
