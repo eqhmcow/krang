@@ -38,15 +38,15 @@
 </script>
 
 <form name=select_media method=post>
-<input type=hidden name="selected_media_id">
-<input type=hidden name="rm" value="find_media_link">
-<input type=hidden name="advanced" value="<tmpl_var escape=1 advanced>">
-<input type=hidden name="path" value="<tmpl_var escape=1 path>">
+<input type="hidden" name="selected_media_id">
+<input type="hidden" name="rm" value="find_media_link">
+<input type="hidden" name="advanced" value="<tmpl_var escape=1 advanced>">
+<input type="hidden" name="path" value="<tmpl_var escape=1 path>">
 
-<div class=dark-bar>Select Media</div>
+<div class="dark-bar">Select Media</div>
 
-<div class=tight-form-box>
-<div class=light style='padding-bottom: 3px; margin-bottom: 5px'>
+<div class="tight-form-box">
+<div class="light" style='padding-bottom: 3px; margin-bottom: 5px'>
 SEARCH
 
 <tmpl_if advanced>
@@ -88,7 +88,7 @@ SEARCH
 
       <tr>
         <td></td>
-        <td><input type="button" value="Clear" onClick="clear_advanced_search()">&nbsp;<input type="button" value="Search" onclick="document.forms[0].submit()"></td>
+        <td><input type="button" value="Clear" onClick="clear_advanced_search()" class="button">&nbsp;<input type="button" value="Search" onclick="document.forms[0].submit()" class="button"></td>
       </tr>
 
       <input type="hidden" name="search_filter" value="">
@@ -125,8 +125,8 @@ SEARCH
 
 </div>
 
-<div class=button-bar>
-    <input type=button value="Cancel" onclick="cancel_select()">
+<div class="button-bar">
+    <input type="button" value="Cancel" onclick="cancel_select()" class="button">
 </div>
 
 

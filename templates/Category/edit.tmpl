@@ -112,52 +112,51 @@
   <div class="alert">* <tmpl_var alert></div>
 </tmpl_loop>
 
-<div class="dark-bar">
-<span class="left">Edit Category</span>
-<span class="right"><a href="javascript:goto_help()">Help</a></span>
-</div>
-
-
-<div class=tight-form-box>
-
-<table width=100% cellpadding=2 cellspacing=0>
-
-<tr class=light>
-<td>ID:</td>
-<td><tmpl_var category_id></td>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;EDIT CATEGORY</td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
 </tr>
-
-<tr class=light>
-<td>URL:</td>
-<td><tmpl_var url></td>
-</tr>
-
 </table>
 
-<p>
 
-<div class=form-box>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellpadding="6" cellspacing="0" width="100%">
+  <tr class="light"><td>ID:</td><td><tmpl_var category_id></td>
+</tr>
 
-<tmpl_include /ElementEditor/edit.tmpl>
+<tr class=light><td>URL:</td><td><tmpl_var url></td>
+</tr>
+</table>
 
-</div>
+<table border="0" cellspacing="0" cellpadding="8" width="100%">
+<tr><td><table border="0" cellspacing="0" width="100%">
+<tr><td class="no-border"><tmpl_include /ElementEditor/edit.tmpl></td></tr>
+                </table></td></tr>
+</table>
+  </td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
 
-<div class=button-bar>
+<div class="button-bar">
   <tmpl_if is_root>
-    <input type=button value="Save" onclick="db_save()">
-    <input type=button value="Save &amp; Stay" onclick="db_save_and_stay()">
-    <input type=reset value="Reset">
-     <input type=button value="Delete" onclick="remove()">
+    <input type="button" value="Save" onclick="db_save()" class="button">
+    <input type="button" value="Save &amp; Stay" onclick="db_save_and_stay()" class="button">
+    <input type="reset" value="Reset" class="button">
+     <input type="button" value="Delete" onclick="remove()" class="button">
   <tmpl_else>
     <tmpl_if bulk_edit>
-      <input type=button value="Save" onclick="save_and_leave_bulk_edit()">
+      <input type="button" value="Save" onclick="save_and_leave_bulk_edit()" class="button">
     <tmpl_else>
-      <input type=button value="Save" onclick="save_and_go_up()">
+      <input type="button" value="Save" onclick="save_and_go_up()" class="button">
     </tmpl_if>
-    <input type=button value="Save &amp; Stay" onclick="save_and_stay()">
-    <input type=reset value="Reset">
+    <input type="button" value="Save &amp; Stay" onclick="save_and_stay()" class="button">
+    <input type="reset" value="Reset" class="button">
     <tmpl_unless bulk_edit>
-      <input type=button value="Delete" onclick="remove_element()">
+      <input type="button" value="Delete" onclick="remove_element()" class="button">
     </tmpl_unless>
   </tmpl_if>
 

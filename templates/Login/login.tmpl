@@ -1,47 +1,54 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html401/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
 <html>
 <head>
 <title><tmpl_var instance_name> Login</title>
 <link rel="stylesheet" href="/krang.css" type="text/css" />
 </head>
-<body>
 
+<body topmargin="0" leftmargin="0" marginheight="0" marginwidth="0">
+&nbsp;
+<table border="0" cellspacing="0" cellpadding="0" width="770">
+<tr><td width="8">&nbsp;</td>
+	<td valign="top" width="754"><span class="vs1">&nbsp;</span><br>
+	<table border="0" cellspacing="0" cellpadding="0">
+	<tr><td width="160"><img src="/images/logo.png" border="0" width="155" height="27" alt="PIRT Support"></td>
+		<td width="594" valign="bottom">
+		<table border="0" cellspacing="0" cellpadding="0" width="100%">
+		<tr><td class="dark"><img src="/images/s.gif" width="1" height="1"></td></tr>
+		</table></td></tr></table>
+<img width="1" height="3" border="0"><div align="right">&nbsp;<!--#config timefmt="%B %d, %Y" --><!--#echo var="DATE_LOCAL" --></div>
+
+
+&nbsp;<br>&nbsp;
+<div align="center">
+<p class="error"><tmpl_var alert></p> 
+<p>
+		
 <form method="POST" action="login.pl">
 
-<tmpl_if alert><font color=red><b><tmpl_var alert></b></font><p></tmpl_if>
-<div style='width: 40%'>
-
-<table border="0" cellpadding="2" cellspacing="0" width="100%">
-<tr class="dark-bar">
-  <td>&nbsp;<tmpl_var instance_name> Login</td>
-</tr>
+<table border="0" cellspacing="0" cellpadding="1" width="340">
+<tr class="dark-bar"><td class="header" colspan="3">&nbsp;&nbsp;&nbsp;<tmpl_var instance_name> Log In</td></tr>
+<tr><td colspan="3"><img width="1" height="1" border="0"></td></tr>
+<tr class="light"><td colspan="3">&nbsp;</td></tr>
+<tr class="light"><td rowspan="2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>User Name:</td><td><input type="text" name="username" value="<tmpl_var username>" size="12"></td></tr>
+<tr class="light"><td>Password:</td><td><input type="password" name="password" size="12"></td></tr>
+<tr class="light"><td colspan="3">&nbsp;<br><span class="vs">&nbsp;</span></td></tr>
+<tr><td colspan="3" class="vs">&nbsp;</td></tr>
+<tr class="bright"><td colspan="2"><img src="/images/s.gif" border="0" width="1" height="25" alt=""></td><td align="left"><input class="button" type="submit" value="Log in"></td></tr>
+<input type="hidden" name="rm" value="login">
+<input type="hidden" name="target" value="<tmpl_var escape="html target">">
 </table>
-<div class='tight-form-box'>
-
-<table border="0" cellpadding="2" cellspacing="0" width="100%" class="form-cell">
-<tr>
-<td class="form-cell" width=10%>Username:</td>
-<td class="form-cell" width=90%><input type=text name=username value="<tmpl_var username>"></td>
-</tr>
-
-<tr>
-<td class="form-cell">Password:</td>
-<td class="form-cell"><input type=password name=password size=10></td>
-</tr>
-</table>
-
-</div>
-
-<div class=button-bar>
-<input class=button type=submit value="Login">
-</div>
-
-<input type=hidden name=rm value=login>
-<input type=hidden name=target value="<tmpl_var escape=html target>">
-
-</div>
 
 </form>
+ &nbsp;
+</div>
+&nbsp;<br>
+<table border="0" cellspacing="0" cellpadding="4" width="100%"><tr><td class="light">&nbsp;&nbsp;&nbsp;Copyright &copy; 2003 <a href="http://www.thepirtgroup.com" class="copyright">The PIRT Group</a>. All Rights Reserved.</td></tr></table><span class="vs1">&nbsp;</span>
+	</td>
+<td width="8">&nbsp;</td>
+</tr>
+</table>&nbsp;
+
+
 </body>
 </html>
