@@ -24,6 +24,10 @@ HREF[Changes|changes.html] - a list of differences between Bricolage and Krang
 
 HREF[Krang VS Bricolage|krang_vs_bric.html] - Krang/Bricolage comparison document
 
+=item *
+
+HREF[Performance|performance.html] - Performance test results
+
 
 =item *
 

@@ -1,0 +1,90 @@
+=head1 Krang Performance Tests
+
+=head2 Introduction
+
+This document provides the results of performance tests performed on
+Krang.
+
+These tests were run a dual-P4/2.8Ghz machine with 4GB of RAM.  MySQL
+was tuned to use XGB of memory.  
+
+The content used in the tests was randomly generated to simulate the
+contents of a typical Krang instance.  The content used is similar to
+that generated with the krang_floodfill script included with Krang.
+
+=head1 Tests
+
+=head2 Light Load
+
+This system is similar to many small websites which will run Krang.
+
+  Sites:        1
+  Categories:   10
+  Stories:      3,000
+  Media:        5,000
+  Contributors: 50
+
+Results:
+
+  Average Publish Time: X seconds
+  Total Site Publish:   X minutes
+  Story Import:         X per second
+  Media Load:           X per second
+  Story Find Time:      X seconds
+
+=head2 Medium Load
+
+This system has as much content as the largest sites currently running
+in our organization.
+
+  Sites:        3
+  Categories:   300
+  Stories:      10,000
+  Media:        100,000
+  Contributors: 500
+
+Results:
+
+  Average Publish Time: X seconds
+  Total Site Publish:   X minutes
+  Story Import:         X per second
+  Media Load:           X per second
+  Story Find Time:      X seconds
+
+=head2 High Load
+
+This system contains enough content to publish several very large sites.
+
+  Sites:        20
+  Categories:   2,000
+  Stories:      100,000
+  Media:        1,000,000
+  Contributors: 5000
+
+Results:
+
+  Average Publish Time: X seconds
+  Total Site Publish:   X minutes
+  Story Import:         X per second
+  Media Load:           X per second
+  Story Find Time:      X seconds
+
+=head2 Extreme Load
+
+This system contains enough content to publish many gargantuan web
+sites.  It exists to test the limits of the system, not to simulate a
+known use-case.
+
+  Sites:        40
+  Categories:   8,000
+  Stories:      400,000
+  Media:        4,000,000
+  Contributors: 20,000
+
+Results:
+
+  Average Publish Time: X seconds
+  Total Site Publish:   X minutes
+  Story Import:         X per second
+  Media Load:           X per second
+  Story Find Time:      X seconds
