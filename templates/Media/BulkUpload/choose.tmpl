@@ -1,6 +1,6 @@
 <tmpl_include header.tmpl>
 <div class=dark-bar>Media Bulk Upload</div>
-<form name="upload_form">
+<form name="upload_form" method="post" enctype="multipart/form-data">
 <table cellspacing="0" width="100%" class="form-box">
 <tr><th class="form-head" align="left">FTP Upload</th></tr>
 <tr><td>(Windows IE or for use with an external FTP client)<br><a href="ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>">ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance></a></td></td>
@@ -11,5 +11,9 @@
 <tr><td><tmpl_var upload_chooser></td></tr>
 <tr><td><tmpl_var category_chooser></td></tr>
 </table>
+<div class=button-bar>
+<input type="hidden" name="rm" value="upload" override="1">
+  <input type=button value="Upload" onclick="document.upload_form.submit()">
+</div>
 </form>
 <tmpl_include footer.tmpl>
