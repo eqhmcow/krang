@@ -25,6 +25,7 @@ sub new {
                  children => [
                               Krang::ElementClass::Text->new(name => 'headline',
                                                              allow_delete => 0,
+                                                             size => 40,
                                                              min => 1,
                                                              max => 1,
                                                              reorderable => 0,
