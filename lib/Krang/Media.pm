@@ -215,7 +215,7 @@ sub init {
     my $filehandle = delete $args{'filehandle'};
     
     $self->{contrib_ids} = [];
-
+    
     # finish the object
     $self->hash_init(%args);
 
@@ -478,15 +478,13 @@ sub save {
         $media_id = $self->{media_id}; 
 
         # get rid of media_id
-        my @save_fields = FIELDS;
-        @save_fields = splice(@save_fields,1); 	
+        my @save_fields = grep {$_ ne 'media_id'} FIELDS;
 
         # update version
-        $self->{version} = ($self->{version} + 1);
+        $self->{version} = ++$self->{version};
         
         my $sql = 'UPDATE media SET '.join(', ',map { "$_ = ?" } @save_fields).' WHERE media_id = ?';
-	$dbh->do($sql, undef, map { $self->{$_} } @save_fields,$media_id);
-
+        $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$media_id);
 	# this file exists, new media was uploaded. copy to new position	
 	if (-f catfile($root,'tmp','media',$session_id,'tempfile')) {
 	   my $old_path = catfile($root,'tmp','media',$session_id,'tempfile');
