@@ -1,0 +1,67 @@
+<tmpl_include header.tmpl>
+<script language=javascript>
+function check_match() {
+    var newpass = document.forms["edit_pref_form"].new_password.value;
+    var repeat = document.forms["edit_pref_form"].new_password_repeat.value;
+
+    if (newpass != repeat) {
+        alert("New passwords do not match.");
+    } else {
+        document.forms["edit_pref_form"].submit();
+    }
+}
+
+function checkall(checkbox, prefix) {
+     for (var i = 0; i < checkbox.form.elements.length ; i++) {
+        var e = checkbox.form.elements[i];
+        if (e.name && e.name.indexOf(prefix) == 0) {
+           e.checked = checkbox.checked;
+        }
+     }
+}
+
+function delete_checked () {
+        var myform = document.forms["current_alert_form"];
+        myform.rm.value = 'delete_alerts';
+        myform.submit();
+}
+
+</script>
+<div class=dark-bar>My Preferences</div>
+<form name="edit_pref_form" method="POST">
+<br><br>
+<table cellspacing="0" width="100%">
+<input type="hidden" name="rm" value="update_prefs" override='1'>
+<input type="hidden" name="search_page_size" value="<tmpl_var search_page_size>" override='1'>
+      <tr class="form-head">
+          <th colspan=2 align=left>Preferences</th>
+      </tr>
+        <tr>
+            <td class="form-cell">Search Results/Page<br>(will override global preference if set)</td>
+            <td class="form-cell"><tmpl_var search_results_selector></td>
+        </tr>
+        <tr>
+            <td class="form-cell">Change Password:</td>
+        <td class="form-cell"><input type="password" name="new_password"> (new password)<br><input type="password" name="new_password_repeat"> (repeat)</td>
+        </tr>
+<tr><td class="form-head">&nbsp;</td><td class="form-head"><input type=button value="Commit Changes" onclick="check_match()"></td></tr>
+</table>
+</form>
+<tmpl_if alert_loop>Current Alerts
+<form name="current_alert_form" method="post">
+<table cellspacing="0" width="100%">
+<tr class="form-head"><th>Action</th><th>Site/Category</th><th>Desk</th><th align="right"><input type="checkbox" name="checkallbox" value="1"
+onClick="checkall(this, 'alert_delete_list')"></th></tr>
+<tmpl_loop alert_loop>
+<tr>
+<td class="form-cell"><tmpl_var action></td>
+<td class="form-cell"><tmpl_var category></td>
+<td class="form-cell"><tmpl_var desk></td>
+<td class="form-cell" align="right"><input type="checkbox" name="alert_delete_list" value="<tmpl_var ESCAPE=HTML alert_id>"></td>
+</tr>
+</tmpl_loop>
+<tr><td class="form-head" colspan=4 align=right><input type=button value="Delete Checked" onclick="delete_checked()"></td></tr>
+</table>
+<tmpl_else>No Current Alerts</tmpl_if>
+</form>
+<tmpl_include footer.tmpl>
