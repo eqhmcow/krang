@@ -28,7 +28,7 @@ sub new {
                                                     bulk_edit => 1,
                                                    ),
                  Krang::ElementClass::MediaLink->new(name => "header_image" ),
-                 Krang::ElementClass::StoryLink->new(name => "lead_in"),
+                 Default::lead_in->new(),
                  Default::external_lead_in->new(),
                  Default::image->new(),
                  Default::horizontal_line->new(),
