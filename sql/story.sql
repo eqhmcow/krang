@@ -11,6 +11,7 @@ CREATE TABLE story (
         priority        TINYINT UNSIGNED NOT NULL DEFAULT 2,
         
         element_id      INT UNSIGNED NOT NULL,
+        class           VARCHAR(255) NOT NULL,
 
         checked_out     BOOL NOT NULL,
         checked_out_by  INT UNSIGNED NOT NULL,
@@ -38,7 +39,7 @@ CREATE TABLE story_category (
         story_id        INT UNSIGNED NOT NULL,
         category_id     INT UNSIGNED NOT NULL,
         ord             SMALLINT UNSIGNED NOT NULL,
-        uri             VARCHAR(255) NOT NULL,
+        url             VARCHAR(255) NOT NULL,
         PRIMARY KEY (story_id, category_id),
         INDEX (ord)
 );

@@ -4,6 +4,7 @@ use warnings;
 use Krang;
 use Krang::Category;
 use Krang::Site;
+use Krang::Session qw(%session);
 
 BEGIN { use_ok('Krang::Story') }
 
@@ -89,4 +90,70 @@ $story->slug("foobar");
 ok($old ne $story->url);
 like($story->url, qr/foobar$/);
 
+# test save
+$story->save();
+ok($story->story_id);
+
+# cleanup later
+END { $story->delete() }
+
+# try loading
+my $story2 = Krang::Story->load($story->{story_id});
+isa_ok($story2, 'Krang::Story');
+
+# basic fields survived?
+for (qw( story_id
+         version
+         published_version
+         class
+         checked_out
+         checked_out_by
+         title
+         slug
+         notes
+         cover_date
+         publish_date
+         priority )) {
+    is($story->$_, $story2->$_, "$_ save/load");
+}
+
+# categories and urls made it
+is_deeply([ map { $_->category_id } $story->categories ],
+          [ map { $_->category_id } $story2->categories ],
+          "category save/load");
+
+is_deeply([$story->urls], [$story2->urls], 'url save/load');
+
+# element load
+is($story->element->element_id, $story2->element->element_id);
+
+# checkin/checkout
+$story->checkin();
+is($story->checked_out, 0);
+is($story->checked_out_by, 0);
+
+eval { $story->checkin() };
+ok($@, 'double checkin fails');
+is($story->checked_out, 0);
+is($story->checked_out_by, 0);
+
+eval { $story->save() };
+like($@, qr/not checked out/);
+
+$story->checkout();
+is($story->checked_out, 1);
+is($story->checked_out_by, $session{user_id});
+
+# become someone else and try to checkout the story
+{
+    local $session{user_id} = $session{user_id} + 1;
+    eval { $story->checkout };
+    like($@, qr/already checked out/);
+    eval { $story->checkin };
+    ok($@);
+    eval { $story->save() };
+    like($@, qr/checked out/);
+}
+is($story->checked_out, 1);
+is($story->checked_out_by, $session{user_id});
 

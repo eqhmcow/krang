@@ -5,7 +5,8 @@ use warnings;
 use Krang::Element;
 use Krang::Category;
 use Krang::Log qw(assert ASSERT affirm debug info critical);
-
+use Krang::DB qw(dbh);
+use Krang::Session qw(%session);
 use Carp qw(croak);
 
 # create accessors for object fields
@@ -15,6 +16,7 @@ use Krang::MethodMaker
   get           => [ qw(
                         story_id                        
                         version
+                        published_version
                         class
                         checked_out
                         checked_out_by
@@ -29,7 +31,23 @@ use Krang::MethodMaker
                               schedules
                              ) ];
 
-# catch changes that must invalidate the URL cache
+# fields in the story table, aside from story_id
+use constant STORY_FIELDS => 
+  qw( version
+      title
+      slug
+      cover_date
+      notes
+      priority
+      element_id
+      class
+      checked_out
+      checked_out_by
+      desk_id
+    );
+
+# called by get_set_with_notify attibutes.  Catches changes that must
+# invalidate the URL cache.
 sub _notify {
     my ($self, $which) = @_;
     return unless exists $self->{url_attributes}{$which};
@@ -136,6 +154,8 @@ A Time::Piece object containing the date and time this story was last
 published.
 
 =item C<version> (readonly)
+
+=item C<published_version> (readonly)
 
 =item C<category> (readonly)
 
@@ -274,14 +294,19 @@ sub urls {
 
 A list of contributor objects associated with the story.
 
-=item C<element>
+=item C<element> (readonly)
 
 The root element for this story.  The children of this element contain
 the content for the story.
 
 =cut
 
-sub element { shift->{element} }
+sub element { 
+    return $_[0]->{element} if $_[0]->{element};
+    ($_[0]->{element}) = 
+      Krang::Element->find(element_id => $_[0]->{element_id});
+    return $_[0]->{element};
+}
 
 =item C<class> (readonly)
 
@@ -351,11 +376,150 @@ sub init {
     $self->{url_attributes} = 
       { map { $_ => 1 } $self->{element}->url_attributes };
 
+    # setup defaults
+    $self->{version}        = 1;
+    $self->{priority}       = 2;
+    $self->{checked_out}    = 1;
+    $self->{checked_out_by} = $session{user_id};
+
     # finish the object, calling set methods for each key/value pair
     $self->hash_init(%args);
 
     return $self;
 }
+
+=item C<< $story->save() >>
+
+Save the story to the database.  This is the only call which will make
+permanent changes in the database (checkin/checkout make transient
+changes).
+
+=cut
+
+sub save {
+    my $self = shift;
+    my $dbh  = shift;
+
+    # make sure it's ok to save
+    $self->verify_checkout();
+
+    # save element tree, populating $self->{element_id}
+    $self->_save_element();
+
+    # save core data, populating story_id
+    $self->_save_core();
+
+    # save categories
+    $self->_save_cat();
+
+    # save schedules
+    # $self->_save_schedules;
+
+    # save contributors
+    # $self->_save_contrib;
+}
+
+# save core Story data
+sub _save_core {
+    my $self   = shift;
+    my $dbh    = dbh();
+    my $update = $self->{story_id} ? 1 : 0;
+
+    # write an insert or update query for the story
+    my $query;
+    if ($update) {
+        $query = 'UPDATE story SET ' . 
+          join(', ', map { "$_ = ?" } STORY_FIELDS) . 'WHERE story_id = ?';
+    } else {
+        $query = 'INSERT INTO story (' . join(', ', STORY_FIELDS) .
+          ') VALUES (' . join(',', ("?") x STORY_FIELDS) . ')';
+    }
+
+    # do the insert or update
+    $dbh->do($query, undef, @{$self}{(STORY_FIELDS)}, 
+             ($update ? $self->{story_id} : ()));
+
+    # extract the ID on insert
+    $self->{story_id} = $dbh->{mysql_insertid}
+      unless $update;
+}
+
+
+# save the element tree
+sub _save_element {
+    my $self = shift;
+    return unless $self->{element}; # if the element tree was never
+                                    # loaded, it can't have changed
+    $self->{element}->save();
+    $self->{element_id} = $self->{element}->element_id;
+}
+
+# save category assignments
+sub _save_cat {
+    my $self = shift;
+    my $dbh = dbh();
+
+    # delete existing relations
+    $dbh->do('DELETE FROM story_category WHERE story_id = ?',
+             undef, $self->{story_id});
+
+    # insert category relations, including urls
+    my @urls       = $self->urls;
+    my @cat_ids    = @{$self->{category_ids}};
+    for (0 .. $#cat_ids) {
+        $dbh->do('INSERT INTO story_category (story_id, category_id, ord, url)
+                  VALUES (?,?,?,?)', undef,
+                 $self->{story_id}, $cat_ids[$_], $_, $urls[$_]);
+    }
+}
+
+    
+
+=item C<< $story = Krang::Story->load($story_id) >>
+
+=item C<< $story = Krang::Story->load($story_id, version => 1) >>
+
+Load a story by ID, optionally specifying a version other than the
+current version.  Returns the object from the database or croaks if
+the object cannot be found.
+
+=cut
+
+sub load {
+    my ($pkg, $story_id, %args) = @_;
+    my $dbh = dbh;
+   
+    # load core data
+    my $result = $dbh->selectrow_arrayref('SELECT ' .
+                                          join(', ', STORY_FIELDS) .
+                                          ' FROM story WHERE story_id = ?', 
+                                          undef, $story_id);
+    croak("Unable to load story '$story_id'.")
+      unless $result and @$result;
+
+    # load object with fields from story table
+    my $self = bless({}, $pkg);
+    @{$self}{(STORY_FIELDS)} = @$result;
+
+    $self->{story_id} = $story_id;
+
+    # load category_ids and urls
+    $result = $dbh->selectall_arrayref('SELECT category_id, url '.
+                                       'FROM story_category '.
+                                       'WHERE story_id = ? ORDER BY ord', 
+                                       undef, $story_id);
+    my (@category_ids, @urls);
+    foreach my $row (@$result) {
+        push @category_ids, $row->[0];
+        push @urls, $row->[1];
+    }
+    $self->{category_ids} = \@category_ids;
+    $self->{urls}         = \@urls;
+
+    return $self;
+}
+
+
 
 =item C<< @stories = Krang::Story->find(title => "Turtle Soup") >>
 
@@ -470,12 +634,6 @@ Return just a count of the results for this query.
 
 =back
 
-=item C<< $story->save() >>
-
-Save the story to the database.  This is the only call which will make
-permanent changes in the database (checkin/checkout make transient
-changes).
-
 =item C<< $story->checkout() >>
 
 =item C<< Krang::Story->checkout($story_id) >>
@@ -483,10 +641,112 @@ changes).
 Checkout the story, preventing other users from editing it.  Croaks if
 the story is already checked out.
 
+=cut
+
+sub checkout {
+    my ($self, $story_id) = @_;
+    croak("Invalid call: object method takes no parameters")
+      if ref $self and @_ > 1;
+    
+    $self = undef unless ref $self;
+    $story_id = $self->{story_id} if $self;
+
+    my $dbh      = dbh();
+    my $user_id  = $session{user_id};
+
+    # short circuit checkout on instance method version of call...
+    return if $self and
+              $self->{checked_out} and 
+              $self->{checked_out_by} == $user_id;
+
+    eval {
+        # lock story for an atomic test and set on checked_out
+        $dbh->do("LOCK TABLES story WRITE");
+
+        # check status
+        my ($co, $uid) = $dbh->selectrow_array(
+             'SELECT checked_out, checked_out_by FROM story
+              WHERE story_id = ?', undef, $story_id);
+        
+        croak("Story '$story_id' is already checked out by user '$uid'")
+          if ($co and $uid != $user_id);
+
+
+        # checkout the story
+        $dbh->do('UPDATE story
+                  SET checked_out = ?, checked_out_by = ?
+                  WHERE story_id = ?', undef, 1, $user_id, $story_id);
+
+        # unlock template table
+        $dbh->do("UNLOCK TABLES");
+    };
+
+    if ($@) {
+        my $eval_error = $@;
+        # unlock the table, so it's not locked forever
+        $dbh->do("UNLOCK TABLES");
+        croak($eval_error);
+    }
+
+    # update checkout fields if this is an instance method call
+    if ($self) {
+        $self->{checked_out} = 1;
+        $self->{checked_out_by} = $user_id;
+    }
+}
+
+=item C<< Krang::Story->checkin($story_id) >>
+
 =item C<< $story->checkin() >>
 
 Checkin the story, allow other users to check it out.  This will only
 fail if the story is not checked out.
+
+=cut
+
+sub checkin {
+    my $self     = ref $_[0] ? $_[0]             : undef;
+    my $story_id = $self     ? $self->{story_id} : $_[0];
+    my $dbh      = dbh();
+    my $user_id  = $session{user_id};
+
+    if ($self) {
+        # make sure we're checked out
+        $self->verify_checkout();
+    } else {
+        # check status
+        my ($co, $uid) = $dbh->selectrow_array(
+             'SELECT checked_out, checked_out_by FROM story
+              WHERE story_id = ?', undef, $story_id);
+
+        croak("Story '$story_id' is already checked out by user '$uid'")
+          if ($co and $uid != $user_id);
+    }
+
+    # checkout the story
+    $dbh->do('UPDATE story
+              SET checked_out = ?, checked_out_by = ?
+              WHERE story_id = ?', undef, 0, 0, $story_id);
+
+    # update checkout fields if this is an instance method call
+    if ($self) {
+        $self->{checked_out} = 0;
+        $self->{checked_out_by} = 0;
+    }
+}
+
+# make sure the object is checked out, or croak
+sub verify_checkout {
+    my $self = shift;
+
+    croak("Story '$self->{story_id}' is not checked out.")
+      unless $self->{checked_out};
+
+    croak("Story '$self->{story_id}' is already checked out by another user '$self->{checked_out_by}'")
+      unless $self->{checked_out_by} == $session{user_id};
+}
+
+
 
 =item C<< $story->prepare_for_edit() >>
 
@@ -504,6 +764,17 @@ the old version, thus reverting the contents of the story.
 =item C<< Krang::Story->delete($story_id) >>
 
 Deletes a story from the database.  This is a permanent operation.
+
+=cut
+
+sub delete {
+    my $self = shift;
+    my $dbh = dbh;
+
+    $dbh->do('DELETE FROM story WHERE story_id = ?', undef, $self->{story_id});
+    $dbh->do('DELETE FROM story_category WHERE story_id = ?', undef, $self->{story_id});
+    $dbh->do('DELETE FROM element WHERE root_id = ?', undef, $self->{element_id});
+}
 
 =item C<< $copy = Krang::Story->clone() >>
 
