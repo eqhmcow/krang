@@ -69,6 +69,10 @@ sub fill_template {
     $template->param(nav_hide_admin => 1) 
       unless grep { $admin_perms{$_} } @admin_apps;
 
+    # can they see all admin tools?
+    $template->param(nav_global_admin => 1) 
+      unless grep { not $admin_perms{$_} } @admin_apps;
+
     # setup template FTP link
     my ($user) = Krang::User->find(user_id => $ENV{REMOTE_USER});
     $template->param(nav_ftp_server => FTPHostName, 

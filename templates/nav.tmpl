@@ -16,6 +16,22 @@
         window.location = loc;
      }
    }
+
+   <tmpl_if nav_global_admin>
+     document.onkeypress = debug_catcher;
+     function debug_catcher (evt) {
+        evt = (evt) ? evt : ((event) ? event : null);
+        if (evt == null) return;
+        if (!evt.altKey) return;
+        if (!evt.ctrlKey) return;
+        var code = evt.keyCode ? evt.keyCode : evt.charCode;
+        if (code == 100) {
+            window.open("debug.pl", "", "width=800, height=700");
+        }
+     }
+
+   </tmpl_if>
+
 </script>
 <div class="dark-bar"><a href="javascript:nav_goto('workspace.pl')">My Workspace</a></div>
 <div class="plain-cell"><a href="javascript:nav_goto('my_pref.pl')">My Preferences</a><br>

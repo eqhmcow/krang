@@ -1,0 +1,56 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
+<html>
+<head>
+<title>Krang Debugger</title>
+<link rel="stylesheet" href="krang.css" type="text/css">
+</head>
+<body style="background-image: none">
+
+<form action="debug.pl" method="post">
+
+<div class="dark-bar">Krang Debugger</div>
+
+<p>
+
+This is the Krang Debugger.  You can type Perl code into the Perl
+Console and see the results in the Perl Screen.  The code you type is
+compiled into a subroutine and the return value is shown using
+Data::Dumper.  If your code die()s then the message is shown.  Both
+strict and warnings are off for your code.
+
+</p>
+
+<div class="form-box">
+<table width="100%" cellpadding="5" cellspacing="0" border="0">
+
+<tr class="light">
+<td width="135" valign=top>Perl Screen:</td>
+<td><textarea readonly name=eval cols=80 rows=5><tmpl_var output></textarea>
+</td>
+</tr>
+
+<tr class="light">
+<td width="135" valign=top>Perl Console:</td>
+<td><textarea name=perl cols=60 rows=3></textarea><br>
+<input class=button type=submit value="eval">
+</td>
+</tr>
+
+<tr class="light">
+<td width="135" valign=top>tail -n300 krang.log:</td>
+<td><textarea readonly name=log cols=80 rows=5><tmpl_var escape=html log></textarea></td>
+</tr>
+
+<tr class="light">
+<td width="135" valign=top>krang.conf:</td>
+<td><textarea readonly name=conf cols=80 rows=10><tmpl_var escape=html conf></textarea></td>
+</tr>
+
+
+</table>
+</div>
+
+</form>
+
+</body>
+</html>
