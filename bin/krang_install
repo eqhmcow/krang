@@ -378,7 +378,24 @@ sub do_mysql_install {
 }
 
 
-sub create_mysql_user {}
+# Create mysql instance user, if necessary
+sub create_mysql_user {
+    # MySQLRootPassword must be valid, and MySQL should be running
+    my $mysql_bin = MYSQL_BIN;
+    my $MySQLRootPassword = $options{'MySQLRootPassword'};
+    my $InstanceDBName = $options{'InstanceDBName'};
+    my $InstanceDBUser = $options{'InstanceDBUser'};
+    my $InstanceDBPass = $options{'InstanceDBPass'};
+
+    my $grant = "grant all on $InstanceDBName\.* to $InstanceDBUser\@localhost";
+    $grant .= " identified by '$InstanceDBPass'" if ($InstanceDBPass);
+
+    my $mysql_grant = "echo \"$grant\" | $mysql_bin -uroot";
+    $mysql_grant .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+
+    print "$mysql_grant\n";
+    system($mysql_grant) && exit_error("Can't grant DB access to $InstanceDBUser for $InstanceDBName.");
+}
 
 
 sub create_unix_user_group {}
