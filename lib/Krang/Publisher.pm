@@ -315,10 +315,6 @@ sub publish_story {
                         counter => $counter++) if $callback;
 
             $self->_build_story_all_categories(story => $object);
-            # mark object as published - this will update status info,
-            # check the object back in, and remove it from desks,
-            # as needed.
-            $object->mark_as_published();
 
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object, %args);
@@ -432,7 +428,6 @@ sub publish_media {
                     total  => $total,
                     counter => $counter++) if $callback;
         push @urls, $self->_write_media($media_object);
-        $media_object->mark_as_published();
     }
 
     return @urls;
@@ -952,6 +947,11 @@ sub _build_story_single_category {
         $self->_write_page(path => $path, filename => $filename,
                            story_id => $story->story_id(), data => $story_pages->[$p]);
     }
+   
+    # mark object as published - this will update status info,
+    # check the object back in, and remove it from desks,
+    # as needed.
+    $story->mark_as_published();
 }
 
 
@@ -1121,18 +1121,13 @@ sub _write_media {
                                                );
     }
 
-    # update published_version
-    $media->checkout if (not ($media->checked_out));
-    $media->published_version( $media->version );
-    my $t = localtime;
-    $media->publish_date( $t );
-    $media->save( keep_version => 1 );
-
-    # check media back in.
-    if ($media->checked_out()) { $media->checkin(); }
-
     # log event
     add_history(object => $media, action => 'publish');
+
+    # mark object as published - this will update status info,
+    # check the object back in, and remove it from desks,
+    # as needed.
+    $media->mark_as_published();
 
     return $media->url();
 }
