@@ -33,9 +33,6 @@ Krang::CGI::Story - web interface to manage stories
 Following are descriptions of all the run-modes
 provided by Krang::CGI::Story.
 
-The default run-mode (start_mode) for Krang::CGI::Contrib
-is 'new_story'.
-
 =head2 Run-Modes
 
 =over 4
@@ -53,28 +50,36 @@ sub setup {
                      new_story        => 'new_story',
                      create           => 'create',
                      edit             => 'edit',
-                     save_and_view    => 'save_and_view',
                      view             => 'view',
                      revert           => 'revert',
                      find             => 'find',
-                     save             => 'save',
-                     save_and_jump    => 'save_and_jump',
-                     save_and_stay    => 'save_and_stay',
                      delete           => 'delete',
-                     delete_categories => 'delete_categories',
-                     add_category     => 'add_category',
+                     delete_categories    => 'delete_categories',
+                     add_category         => 'add_category',
                      set_primary_category => 'set_primary_category',
+
+                     db_save          => 'db_save',
+                     db_save_and_stay => 'db_save_and_stay',
+                     save_and_jump    => 'save_and_jump',
+                     save_and_add     => 'save_and_add',
+                     save_and_view    => 'save_and_view',
+                     save_and_stay    => 'save_and_stay',
+                     save_and_edit_contribs => 'save_and_edit_contribs',
+                     save_and_stay    => 'save_and_stay',
+                     save_and_go_up   => 'save_and_go_up',
+                     save_and_bulk_edit => 'save_and_bulk_edit',
+                     save_and_leave_bulk_edit => 'save_and_leave_bulk_edit',
+                     save_and_change_bulk_edit_sep => 'save_and_change_bulk_edit_sep',
                     );
 
     $self->tmpl_path('Story/');
 }
 
-=item new_story
+=item new_story (default)
 
 Allows the user to create a new story.  Users choose the type, title,
 slug, site/category and cover date on this screen.  Requires no
-parameters.  On success, sends user to edit_story with a new story in
-their session.  On error, returns to new_story with an error message.
+parameters.  Produces a form which is submitted to the create runmode.
 
 =cut
 
@@ -209,8 +214,8 @@ sub edit {
     }
         
     # run the element editor edit
-    $self->SUPER::element_edit(template => $template, 
-                               element => $story->element);
+    $self->element_edit(template => $template, 
+                        element => $story->element);
     
     # static data
     $template->param(story_id          => $story->story_id,
@@ -218,7 +223,8 @@ sub edit {
                      url               => $story->url);
 
     # edit fields for top-level
-    if ($self->is_root()) {
+    my $path  = $query->param('path') || '/';
+    if ($path eq '/' and not $query->param('bulk_edit')) {
         $template->param(is_root           => 1,
                          title             => $story->title,
                          slug              => $story->slug,
@@ -310,8 +316,8 @@ sub view {
       unless $story;
     
     # run the element editor edit
-    $self->SUPER::element_view(template => $template, 
-                               element  => $story->element);
+    $self->element_view(template => $template, 
+                        element  => $story->element);
     
     # static data
     $template->param(story_id          => $story->story_id,
@@ -380,32 +386,261 @@ sub revert {
     return $self->edit();
 }
 
-=item save
+=item db_save
 
-If editing at the root (path = '/') then this mode saves the story to
-the database and leaves the story editor.  Otherwise the
-Krang::CGI::ElementEditor::save controls the action.
+This mode saves the story to the database and leaves the story editor,
+sending control to workspace.pl.
 
 =cut
 
-sub save {
+sub db_save {
     my $self = shift;
-    my %arg  = @_;
-    my $query = $self->query;
 
-    # get current path, before element_save gets to it
-    my $path  = $query->param('path') || '/';
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    # save story to the database
+    my $story = $session{story};
+    $story->save();
+    
+    add_message('story_save', story_id => $story->story_id,
+                url      => $story->url,
+                version  => $story->version);
+
+    # remove story from session
+    delete $session{story};
+
+    # return to my workspace
+    $self->header_props(-uri => 'workspace.pl');
+    $self->header_type('redirect');
+    return;
+}
+
+
+=item db_save_and_stay
+
+This mode saves the story to the database and returns to edit.
+
+=cut
+
+sub db_save_and_stay {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    # save story to the database
+    my $story = $session{story};
+    $story->save();
+    
+    add_message('story_save', story_id => $story->story_id,
+                url      => $story->url,
+                version  => $story->version);
+
+    # return to edit
+    return $self->edit();
+}
+
+=item save_and_jump
+
+This mode saves the current data to the session and jumps to editing
+an element within the story.
+
+=cut
+
+sub save_and_jump {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    # get target
+    my $query = $self->query;
+    my $jump_to = $query->param('jump_to');
+    croak("Missing jump_to on save_and_jump!") unless $jump_to;
+    
+    # set target and show edit screen
+    $query->param(path => $jump_to);
+    $query->param(bulk_edit => 0);
+    return $self->edit();
+}
+
+=item save_and_add
+
+This mode saves the current data to the session and passes control to
+Krang::ElementEditor::add to add a new element.
+
+=cut
+
+sub save_and_add {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    return $self->add();
+}
+
+=item save_and_view
+
+This mode saves the current data to the session and passes control to
+view to view a version of the story.
+
+=cut
+
+sub save_and_view {
+    my $self = shift;
+    
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    my $query = $self->query;
+    $query->param('return_script' => 'story.pl');
+    $query->param('return_params' => rm => 'edit');
+    return $self->view();
+}
+
+=item save_and_edit_contribs
+
+This mode saves the current data to the session and passes control to
+Krang::CGI::Contrib to edit contributors
+
+=cut
+
+sub save_and_edit_contribs {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    # send to contrib editor
+    $self->header_props(-uri => 'contributor.pl?rm=associate_story');
+    $self->header_type('redirect');
+    return;    
+}
+
+=item save_and_stay
+
+This mode saves the current element data to the session and returns to
+edit.
+
+=cut
+
+sub save_and_stay {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    return $self->edit();
+}
+
+=item save_and_bulk_edit
+
+This mode saves the current element data to the session and goes to
+the bulk edit mode.
+
+=cut
+
+sub save_and_bulk_edit {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    $self->query->param(bulk_edit => 1);
+    return $self->edit();
+}
+
+=item save_and_change_bulk_edit_sep
+
+Saves and changes the bulk edit separator, returning to edit.
+
+=cut
+
+sub save_and_change_bulk_edit_sep {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    my $query = $self->query;
+    $query->param(bulk_edit_sep => $query->param('new_bulk_edit_sep'));
+    $query->delete('new_bulk_edit_sep');
+    return $self->edit();
+}
+
+
+=item save_and_leave_bulk_edit
+
+This mode saves the current element data to the session and goes to
+the edit mode.
+
+=cut
+
+sub save_and_leave_bulk_edit {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    $self->query->param(bulk_edit => 0);
+    return $self->edit();
+}
+
+
+=item save_and_go_up
+
+This mode saves the current element data to the session and jumps to
+edit the parent of this element.
+
+=cut
+
+sub save_and_go_up {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    # compute target
+    my $query = $self->query;
+    my $path = $query->param('path');
+    $path =~ s!/.+$!!;
+
+    # set target and show edit screen
+    $query->param(path => $path);
+    return $self->edit();
+}
+
+
+# underlying save routine.  returns false on success or HTML to show
+# to the user on failure.
+sub _save {
+    my $self = shift;
+    my $query = $self->query;
 
     my $story = $session{story};
     croak("Unable to load story from session!")
       unless $story;
 
     # run element editor save and return to edit mode if errors were found.
-    my $elements_ok = $self->element_save(@_);
+    my $elements_ok = $self->element_save(element => $story->element);
     return $self->edit() unless $elements_ok;
 
-    # if we're saving in the root then save the story itself
-    if ($path eq '/') {
+    # if we're saving in the root then save the story data
+    my $path = $query->param('path') || '/';
+    if ($path eq '/' and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug');
         my $cover_date = $self->_decode_date('cover_date');
@@ -426,49 +661,10 @@ sub save {
         $story->slug($slug);
         $story->cover_date($cover_date);
         $story->priority($priority);
-
-        # jump to view now
-        if ($arg{view}) {
-            $query->param('return_script' => 'story.pl');
-            $query->param('return_params' => rm => 'edit');
-            return $self->view();
-        }
-
-        my $dest_path = $query->param('path') || '/';
-        if ($dest_path eq '/') {
-            $story->save();
-            
-            add_message('story_save', story_id => $story->story_id,
-                        url      => $story->url,
-                        version  => $story->version);
-        }
-
-        # return to workspace if no jump or stay
-        unless ($arg{stay} or $arg{jump_to}) {
-            $self->header_props(-uri => 'workspace.pl');
-            $self->header_type('redirect');
-            return;
-        }
-        
     }
     
-    return $self->edit();
-}
-
-sub save_and_stay {
-    my $self = shift;
-    return $self->save(stay => 1);
-}
-
-sub save_and_view {
-    my $self = shift;
-    return $self->save(view => 1);
-}
-
-sub save_and_jump {
-    my $self = shift;
-    my $query = $self->query();
-    return $self->save(jump_to => $query->param("jump_to"));
+    # success, no output
+    return '';
 }
 
 =item add_category
@@ -617,7 +813,10 @@ sub delete {
                                 url      => $story->url);
     $story->delete();
 
-    return $self->Krang::CGI::Workspace::show_workspace();
+    # return to my workspace
+    $self->header_props(-uri => 'workspace.pl');
+    $self->header_type('redirect');
+    return;
 }
 
 =item find

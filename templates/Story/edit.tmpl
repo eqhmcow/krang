@@ -37,6 +37,17 @@
         document.forms[0].submit();
   }
 
+  function save_and_bulk_edit() {
+        document.forms[0].rm.value = 'save_and_bulk_edit';
+        document.forms[0].submit();
+  }
+
+
+  function save_and_leave_bulk_edit() {
+        document.forms[0].rm.value = 'save_and_leave_bulk_edit';
+        document.forms[0].submit();
+  }
+
   function save_and_edit_contribs() {
         document.forms[0].rm.value = 'save_and_edit_contribs';
         document.forms[0].submit();
@@ -87,7 +98,7 @@
 
 <div class="dark-bar">
 <span class="left">Edit Story</span>
-<span class="right"><a href="javascript:goto_log()">Log</a> | <a href="javascript:goto_schedule()">Schedule</a> | <a href="javascript:goto_help()">Help</a></span>
+<span class="right"><tmpl_if is_root><a href="javascript:goto_log()">Log</a> | <a href="javascript:goto_schedule()">Schedule</a> | </tmpl_if><a href="javascript:goto_help()">Help</a></span>
 </div>
 
 
@@ -188,7 +199,7 @@ Sites / Categories<br>
     <td width=15%>Site</td>
     <td width=55%>Category</td>
     <td width=15% align=center>Primary</td>
-    <td width=15% align=center><input type=checkbox onchange="checkall(this, 'cat_remove_')"></td>
+    <td width=15% align=center><input type=checkbox onclick="checkall(this, 'cat_remove_')"></td>
   </tr> 
 
   <tmpl_loop category_loop>
@@ -238,9 +249,16 @@ Sites / Categories<br>
     <input type=reset value="Reset">
      <input type=button value="Delete" onclick="remove()">
   <tmpl_else>
-    <input type=button value="Save" onclick="save_and_go_up()">
+    <tmpl_if bulk_edit>
+      <input type=button value="Save" onclick="save_and_leave_bulk_edit()">
+    <tmpl_else>
+      <input type=button value="Save" onclick="save_and_go_up()">
+    </tmpl_if>
     <input type=button value="Save &amp; Stay" onclick="save_and_stay()">
-    <input type=button value="Delete" onclick="remove_element()">
+    <input type=reset value="Reset">
+    <tmpl_unless bulk_edit>
+      <input type=button value="Delete" onclick="remove_element()">
+    </tmpl_unless>
   </tmpl_if>
 
 </div>

@@ -28,8 +28,7 @@ This module implements the following run modes:
 =item add
 
 Called when the user clicks the "Add Element" button in the element
-editor.  Returns to the 'edit' mode when complete without modifying
-'path'.
+editor.  Returns to the 'edit' mode when complete.
 
 =item delete_children
 
@@ -46,6 +45,80 @@ complete without modifying 'path'.
 Called to delete an element.  This should called when the user clicks
 the delete button, except on the root screen where delete refers to
 the containing object.
+
+=back
+
+=head2 Provided Methods
+
+The following methods are available to perform interface tasks
+involving elements.  These should be called from within the child
+class' run-modes.
+
+=over
+
+=item $self->element_edit(template => $template, element  => $element)
+
+Called to fill in template parameters for the element editor
+(F<ElementEditor/edit.tmpl>).  Both the template and element are
+required parameters.  When it returns the template will contain all
+necessary parameters to display the element editor.
+
+=item $self->element_view(template => $template, element  => $element)
+
+Called to fill in template parameters for the element viewer
+(F<element_editor_view.tmpl>).  Both the template and element are
+required parameters.  When it returns the template will contain all
+necessary parameters to display the element viewer.
+
+=item $ok = $self->element_save(element  => $element)
+
+Called to save element data to the element passed to the method.  Will
+return a boolean value indicating whether or not the save was
+successful.  If the save was not successful then messages will have
+been registered with Krang::Message to explain the problem to the
+user.
+
+=back
+
+=head2 Required Runmodes
+
+You must implement the following run-modes in any child class:
+
+=over 4
+
+=item edit
+
+The edit run mode is called after a number of the run-modes available
+complete their work.
+
+=item save_and_add
+
+This mode should do a save and then go to the add run-mode described
+above.  It will only be called when adding container elements.
+
+=item save_and_jump
+
+This mode is called with a 'jump_to' parameter set.  It must save,
+substitute the 'jump_to' value for 'path' in query and return to edit.
+
+=item save_and_go_up
+
+This mode should save, hack off the last part of path (s!/.*$!!) and
+return to edit.
+
+=back
+
+=head2 Required Methods
+
+Your sub-class must define the following helper methods:
+
+=over
+
+=item _get_element
+
+Must return the element currently being edited from the session.
+
+=back
 
 =cut
 
@@ -71,30 +144,18 @@ sub setup {
                     );
 }
 
-sub is_root {
-    my $self    = shift;
-    my $query   = $self->query;
-    my $rm      = $query->param('rm');
-    my $path    = $query->param('path') || '/';
-    my $jump_to = $query->param('jump_to');
-
-    return 1 if $path eq '/' and $rm !~ /^save/;
-    return 1 if $rm eq 'save' and $path eq '/';
-    return 1 if $rm eq 'save_and_stay' and $path eq '/';
-    return 1 if $rm eq 'save_and_jump' and $jump_to eq '/';
-    return 0;
-}
-
 # show the edit screen
 sub element_edit {
     my ($self, %args) = @_;
     my $query = $self->query();
     my $template = $args{template};
     my $path    = $query->param('path') || '/';
-    my $root_id = $query->param('root_id');
+
+    # pass to bulk edit it bulk editing
+    return $self->element_bulk_edit(%args) if $query->param('bulk_edit');
 
     # find the root element, loading from the session or the DB
-    my $root = $self->_get_element;
+    my $root = $args{element};
     croak("Unable to load element from session.") 
       unless defined $root;
 
@@ -153,14 +214,82 @@ sub element_edit {
     }
     $template->param(child_loop => \@child_loop);
 
-    # whip up top level picker
+    # whip up child element picker from available classes
     my @available =  $element->available_child_classes();
-    my @values = map { $_->name } @available;
-    my %labels = map { ($_->name, $_->display_name) } @available;
-    $template->param(child_select => 
-                     $query->popup_menu(-name   => "child",
-                                        -values => \@values,
-                                        -labels => \%labels));
+    if (@available) {
+        my @values = map { $_->name } @available;
+        my %labels = map { ($_->name, $_->display_name) } @available;
+        $template->param(child_select => 
+                         $query->popup_menu(-name   => "child",
+                                            -values => \@values,
+                                            -labels => \%labels));
+    }
+
+    # bulk edit selector
+    my @bulk_edit = grep { $_->bulk_edit } $element->class->children;
+    if (@bulk_edit) {
+        my @values = map { $_->name } @bulk_edit;
+        my %labels = map { ($_->name, $_->display_name) } @bulk_edit;
+        $template->param(bulk_edit_select => 
+                         $query->popup_menu(-name   => "bulk_edit_child",
+                                            -values => \@values,
+                                            -labels => \%labels));
+    }
+
+    $template->param(container_loop => 
+                     [ map { { name => $_->name } } 
+                         grep { $_->is_container } @available ]);
+
+}
+
+sub element_bulk_edit {
+    my ($self, %args) = @_;
+    my $query = $self->query();
+    my $template = $args{template};
+    my $path    = $query->param('path') || '/';
+
+    # find the root element, loading from the session or the DB
+    my $root = $args{element};
+    croak("Unable to load element from session.") 
+      unless defined $root;
+
+    # find the element being edited using path
+    my $element = _find_element($root, $path);
+
+    # get list of existing elements to be bulk edited
+    my $name = $query->param('bulk_edit_child');
+    my @children = grep { $_->name eq $name } $element->children;
+
+    my $sep = $query->param('bulk_edit_sep');
+    $sep = (defined $sep and length $sep) ? $sep : "__TWO_NEWLINE__";
+
+    $template->param(bulk_edit_sep_selector => scalar
+                     $query->radio_group(-name => 'new_bulk_edit_sep',
+                                         -values => [ "__TWO_NEWLINE__",
+                                                      "<p>",
+                                                      "<br>" ],
+                                         -labels => { "__TWO_NEWLINE__" =>
+                                                      "One Blank Line" },
+                                         -default => $sep,
+                                         -override => 1,
+                                        ),
+                     bulk_edit_sep => $sep);
+    
+    $template->param(bulk_edit => 1,
+                     bulk_data => join(($sep eq "__TWO_NEWLINE__" ? 
+                                        "\n\n" : "\n" . $sep . "\n"), 
+                                       grep { defined } 
+                                         map { $_->data } @children));
+
+    # crumbs let the user jump up the tree
+    my $pointer = $element;
+    my @crumbs = ({ name => $element->class->child($name)->display_name });
+    do {
+        unshift(@crumbs, { name => $pointer->display_name,
+                           path => $pointer->xpath });
+        $pointer = $pointer->parent;
+    } while ($pointer);
+    $template->param(crumbs => \@crumbs) unless @crumbs == 1;
 }
 
 
@@ -221,7 +350,7 @@ sub add {
     my $kid = $element->add_child(class => $child);
 
     # start editing the new element if it has children
-    # $query->param(path => $kid->xpath()) if $kid->is_container;
+    $query->param(path => $kid->xpath()) if $kid->is_container;
     
     add_message('added_element', child  => $kid->display_name(),
                                  parent => $element->display_name());
@@ -241,16 +370,66 @@ sub _find_element {
     return $element;
 }
 
-sub element_save {
-    my $self = shift;
-    my %arg = @_;
+sub element_bulk_save {
+    my ($self, %args) = @_;
     my $query = $self->query();
-
     my $path    = $query->param('path') || '/';
-    my $root_id = $query->param('root_id');
 
-    my $root = $self->_get_element;
+    my $root = $args{element};
     my $element = _find_element($root, $path);
+
+    my $sep = $query->param('bulk_edit_sep');
+    $sep = ($sep eq "__TWO_NEWLINE__") ? "\r?\n\r?\n" : "\r?\n?$sep\r?\n?";
+    my $data = $query->param('bulk_data');
+    my $name = $query->param('bulk_edit_child');
+    debug("SEP: '$sep'");
+    my @children = grep { $_->name eq $name } $element->children;
+    my @data     = split(/$sep/, $data);
+    debug("DATA: " . join(', ', @data));
+
+    # match up one to one as possible
+    while(@children and @data) {
+        my $child = shift @children;
+        my $data  = shift @data;
+        $child->data($data);
+    }
+
+    # left over data, create new children
+    if (@data) {
+        $element->add_child(class => $name,
+                            data  => $_)
+          for @data;
+    }
+
+    # left over children, remove them from this element
+    elsif (@children) { 
+        my %to_delete = map { ($_->xpath, 1) } @children;
+        debug("DELETE LIST: " . join(', ', keys %to_delete));
+        my @old = $element->children();
+        my @new;
+        foreach (@old) {
+            push(@new, $_) 
+              unless $to_delete{$_->xpath};
+        }
+        $element->children_clear();
+        $element->children(@new);
+    }
+
+    add_message('saved_bulk', 
+                name => $element->class->child($name)->display_name);
+}
+
+
+sub element_save {
+    my ($self, %args) = @_;
+    my $query = $self->query();
+    my $path    = $query->param('path') || '/';
+
+    my $root = $args{element};
+    my $element = _find_element($root, $path);
+
+    # pass to bulk edit it bulk editing
+    return $self->element_bulk_save(%args) if $query->param('bulk_edit');
 
     # validate data
     my @msgs;
@@ -281,26 +460,11 @@ sub element_save {
         $index++;
     }
 
-    # save element tree to DB
-    # $root->save();
+    # notify user of the save
     add_message('saved_element', name => $element->display_name())
-      if $element->parent();
-    
+      if $element->parent();    
 
-    # save and stay?
-    return 1 if exists $arg{stay};
-
-    # save and jump?
-    if (exists $arg{jump_to}) {
-        $query->param(path => $arg{jump_to});
-        return 1;
-    }
-
-    # go up a level
-    if ($element->parent()) {
-        $query->param(path => $element->parent->xpath);
-    }
-
+    # success
     return 1;
 }
 
@@ -380,17 +544,14 @@ sub delete_element {
     my $query = $self->query();
 
     my $path = $query->param('path') || '/';
-    my $root_id = $query->param('root_id');
 
     my $root = $self->_get_element;
     my $element = _find_element($root, $path);
 
     my $parent = $element->parent();
     if (not $parent) {
-        # this is the root, delete it from the DB if it has an ID
-        $element->delete()
-          if $element->element_id;
-        return $self->choose_top_level();
+        # this is the root, aw crap
+        croak("Element editor can't delete the root element!");
     }
 
     # remove this element from parent    
