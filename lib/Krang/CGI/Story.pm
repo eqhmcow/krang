@@ -97,7 +97,6 @@ sub new_story {
     
     # setup the type selector
     my @types = grep { $_ ne 'category' } Krang::ElementLibrary->top_levels;
-    debug("TYPES: " . join(', ', @types));
     my %type_labels = 
       map { ($_, Krang::ElementLibrary->top_level(name => $_)->display_name) }
         @types;
@@ -891,7 +890,6 @@ sub _decode_date {
     my $d = $query->param($name . '_day');
     my $y = $query->param($name . '_year');
     return undef unless $m and $d and $y;
-    debug("$m/$d/$y");
 
     return Time::Piece->strptime("$m/$d/$y", '%m/%d/%Y');
 }

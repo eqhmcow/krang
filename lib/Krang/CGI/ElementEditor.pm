@@ -382,10 +382,8 @@ sub element_bulk_save {
     $sep = ($sep eq "__TWO_NEWLINE__") ? "\r?\n\r?\n" : "\r?\n?$sep\r?\n?";
     my $data = $query->param('bulk_data');
     my $name = $query->param('bulk_edit_child');
-    debug("SEP: '$sep'");
     my @children = grep { $_->name eq $name } $element->children;
     my @data     = split(/$sep/, $data);
-    debug("DATA: " . join(', ', @data));
 
     # match up one to one as possible
     while(@children and @data) {
@@ -404,7 +402,6 @@ sub element_bulk_save {
     # left over children, remove them from this element
     elsif (@children) { 
         my %to_delete = map { ($_->xpath, 1) } @children;
-        debug("DELETE LIST: " . join(', ', keys %to_delete));
         my @old = $element->children();
         my @new;
         foreach (@old) {
@@ -563,5 +560,3 @@ sub delete_element {
 }
 
 1;
-
-=back
