@@ -453,9 +453,9 @@ sub _load_index {
         my $class = $class_rec->{name};
         foreach my $object (@{$class_rec->{object}}) {
             $index{$class}{$object->{id}[0]} = { xml => $object->{xml}[0] };
-            croak("index.xml refers to file '$object->{content}' which is ".
+            croak("index.xml refers to file '$object->{xml}[0]' which is ".
                   "not in the archive.")
-              unless -e catfile($self->{dir}, $object->{content});
+              unless -e catfile($self->{dir}, $object->{xml}[0]);
         }
     }
     $self->{objects} = \%index;
