@@ -74,7 +74,7 @@ $SIG{'TERM'} = sub {
     # remove pidfile if it exists
     unlink $pidfile if -e $pidfile;
 
-    debug(__PACKAGE__ . " ended.");
+    info(__PACKAGE__ . " ended.");
 
     # get out of here
     exit(0);
@@ -117,7 +117,7 @@ sub run {
 
     # print kickoff message
     my $now = localtime;
-    debug(__PACKAGE__ . " started.");
+    info(__PACKAGE__ . " started.");
 
     # count of cleanup_attempts
     my $cleanups = 0;
@@ -144,8 +144,8 @@ sub run {
 
         # log activity
         if (@schedule_ids) {
-            debug(__PACKAGE__ . ": ran schedule objects: " .
-                  join(",", @schedule_ids));
+            info(__PACKAGE__ . ": ran schedule objects: " .
+                 join(",", @schedule_ids));
         }
 
         $after = localtime;

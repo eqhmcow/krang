@@ -86,6 +86,9 @@ Krang.  Stories and Media have user-editable publishing and expiration
 schedules.  Events which are attached to alerts may trigger
 mail-sending scheduled jobs.
 
+N.B - The 'context' arg is ignored for 'publish' actions as they are run in
+aggregate by object type.
+
 =cut
 
 
@@ -284,6 +287,13 @@ sub init {
 
             # setup field for holding frozen value
             $self->{_frozen_context} = '';
+        } elsif ($_ eq 'object_type') {
+            # lowercase object_type to insure consistency for subsequent type
+            # testing
+            my $type = lc $args{$_};
+            croak("Invalid object type '$args{$_}'!") unless
+              ($type eq 'media' || $type eq 'story');
+            $args{$_} = $type;
         }
     }
 
@@ -771,8 +781,41 @@ sub run {
     my $self = shift;
     my $now = localtime();
     my @objs = Krang::Schedule->find(next_run_less_or_equal => 'now()');
-    my @schedule_ids_run;
+    my (@schedule_ids_run);
 
+    my @pubs = grep {$_->{action} eq 'publish'} @objs;
+    my @media_ids = map {$_->{object_id}} grep {$_->{object_type} eq 'media'}
+      @pubs;
+    my @story_ids = map {$_->{object_id}} grep {$_->{object_type} eq 'story'}
+      @pubs;
+
+    # publish accumulated stories and/or media if any
+    # publish supercedes expiration
+    unless ($SCH_DEBUG) {
+        if (@media_ids || @story_ids) {
+            my $publisher = Krang::Publisher->new;
+            if (@media_ids) {
+                my @media = Krang::Media->find(media_id => [@media_ids]);
+                eval {$publisher->publish_media(media => \@media);};
+                if ($@) {
+                    critical("Attempt to publish failed: $@");
+                } else {
+                    info("Published media id(s): " . join(", ", @media_ids));
+                }
+            }
+            if (@story_ids) {
+                my @stories = Krang::Story->find(story_id => [@story_ids]);
+                eval {$publisher->publish_story(story => \@stories);};
+                if ($@) {
+                    critical("Attempt to publish failed: $@");
+                } else {
+                    info("Published story id(s): " . join(", ", @story_ids));
+                }
+            }
+        }
+    }
+
+    # expire, do alerts, and set next run
     for my $obj(@objs) {
         my $eval_err;
         my ($action, $context, $schedule_id, $object_id, $type, $repeat) =
@@ -793,7 +836,7 @@ sub run {
                                          @$context)};
                 critical("Attempt to send alert failed: $eval_err")
                   if ($eval_err = $@);
-            } elsif ($action eq 'expire' || $action eq 'publish') {
+            } elsif ($action eq 'expire') {
                 my $url;
                 my $class = "Krang::" . ucfirst $type;
                 my ($obj) = $class->find("$type\_id" => $object_id);
@@ -802,31 +845,16 @@ sub run {
                       "skipping $action.";
                     critical($eval_err);
                 } else {
-                    if ($action eq 'expire') {
-                        eval {$obj->delete;};
-                        if ($eval_err = $@) {
-                            critical("Unable to expire $class id " .
-                                     "'$object_id': $eval_err");
-                        } else {
-                            info("Deleted $class id '$object_id'.");
-                        }
+                    eval {$obj->delete;};
+                    if ($eval_err = $@) {
+                        critical("Unable to expire $class id " .
+                                 "'$object_id': $eval_err");
                     } else {
-                        my $meth = "publish_$type";
-                        my $publisher = Krang::Publisher->new;
-                        eval {$url = $publisher->$meth($type => $obj,
-                                                       @$context);};
-                        if ($eval_err = $@) {
-                            critical("$action failed for $class id " .
-                                     "'$object_id': $eval_err");
-                        } else {
-                            my $call = ucfirst $action . "ed";
-                            my $msg = "$call $class id '$object_id'" .
-                              ($type eq 'media' ? " to '$url'." : ".");
-                            info($msg);
-                        }
+                        info("Deleted $class id '$object_id'.");
                     }
                 }
             }
+            # publish already handled above :)
         }
 
         # we're assuming the action was successful unless we've gotten an
