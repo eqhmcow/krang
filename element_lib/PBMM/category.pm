@@ -37,8 +37,6 @@ sub new {
                     Default::empty->new(    name => 'footer',
                                             max => 1
                                             ),
-                    Default::empty->new(    name => 'link_to_top_of_page',  
-                                            max => 1 )
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

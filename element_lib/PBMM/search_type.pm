@@ -46,5 +46,10 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+sub input_form {
+    my ($self, %arg) = @_;
+    my $element = $arg{element};
+    return $element->child('type')->data;
+}
 
 1;

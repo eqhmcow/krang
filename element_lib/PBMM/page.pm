@@ -29,6 +29,14 @@ sub new {
                  PBMM::image->new(),
                  'document',
                 PBMM::custom_search->new(max => 1),
+                PBMM::page_ad_module->new(display_name => 'Ad Module' ),
+                Krang::ElementClass::CheckBox->new(    name => 'link_to_top_of_page',
+                                            default => 1,
+                                            min => 1,
+                                            max => 1,
+                                            allow_delete => 0,
+                                            reorderable => 0 )
+
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
