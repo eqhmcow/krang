@@ -312,7 +312,7 @@ exist without your hard work.
 
 =item XML-Simple
 
- Version: 2.03
+ Version: 2.11
  License: Perl License
 
 =item XML-Validator-Schema
