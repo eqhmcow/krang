@@ -1,0 +1,53 @@
+#!/usr/bin/perl -w
+use strict;
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf  and Krang::Log 
+    # (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf};
+    die <<"END" if $@;
+
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::Conf qw(FTPPort FTPAddress);
+
+# load the server
+use Krang::FTP::Server;
+
+# setup parameters
+
+# no conf file used
+push(@ARGV, '-C', '/dev/null');
+
+# set port and address if specified
+push(@ARGV, '-p', FTPPort);
+if (FTPAddress ne "") {
+  push(@ARGV, '-o', 'local address=' . FTPAddress);
+}
+
+Krang::FTP::Server->run;
