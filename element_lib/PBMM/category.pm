@@ -31,9 +31,9 @@ sub new {
                     Krang::ElementClass::Text->new(name => 'secondary_css',
                                                             max => 1,
                                                             ),
-                    PBMM::top_cat_column->new(),
-                    PBMM::left_cat_column->new(),
-                    PBMM::right_cat_column->new(),
+                    PBMM::top_cat_column->new(allow_delete => 0),
+                    PBMM::left_cat_column->new(allow_delete => 0),
+                    PBMM::right_cat_column->new(allow_delete => 0),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

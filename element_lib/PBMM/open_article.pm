@@ -1,4 +1,4 @@
-package PBMM::open_format_article;
+package PBMM::open_article;
 use strict;
 use warnings;
 use PBMM::meta;
@@ -14,7 +14,7 @@ sub new {
                  reorderable => 0,
                  allow_delete => 0);
 
-   my %args = ( name => 'open_format_article',
+   my %args = ( name => 'open_article',
                 children => [
                     Krang::ElementClass::Text->new(name => 'issue_id',
                                        max  => 1),
@@ -32,8 +32,8 @@ sub new {
                                                      values => [ "keyword",                                                                 "topic",
                                                                  "multisite",
                                                                  "custom"],                                                     default => "keyword"),
-                    Krang::ElementClass::Textarea->new(   name => 'open_format_page',
-                                                        display_name => 'Open Format Page',
+                    Krang::ElementClass::Textarea->new(   name => 'content',
+                                                        display_name => 'Content',
                                                         pageable => 1,
                                                         rows => 10,
                                                         cols => 50,
