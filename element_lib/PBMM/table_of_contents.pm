@@ -47,8 +47,11 @@ sub fill_template {
 
     # if this is an issue cover, dont show it on side
     return if ($story->class->name eq 'issue_cover');
-    
-    my $issue_id = $story->element->child('issue_id')->data || '';
+   
+     
+    my $issue_id = $story->element->child('issue_id') || '';
+    return if not $issue_id;
+    $issue_id = $issue_id->data;
 
     return if (not $issue_id);
     
