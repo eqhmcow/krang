@@ -9,82 +9,82 @@ Krang::Test::Content - a package to simplify content handling in Krang tests.
   use Krang::Test::Content;
 
   my $creator = Krang::Test::Content->new();
-
-
+  
+  
   # create a Krang::Site object
   my $site = $creator->create_site(preview_url => 'preview.fluffydogs.com',
                                    publish_url => 'www.fluffydogs.com',
                                    preview_path => '/tmp/preview_dogs',
                                    publish_path => '/tmp/publish_dogs');
-
+  
   my ($root) = Krang::Category->find(site_id => $site->site_id);
-
+  
   # create a Krang::Category object.
   my $poodle_cat = $creator->create_category(dir    => 'poodles',
                                              parent => $root->category_id,
                                              data   => 'Fluffy Poodles of the World');
-
+  
   # create another Krang::Category object w/ $poodle_cat as parent.
   my $french_poodle_cat = $creator->create_category(dir    => 'french',
                                                     parent => $poodle_cat,
                                                     data   => 'French Poodles Uber Alles');
-
+  
   # create a Krang::User user.
   my $user = $creator->create_user();
-
+  
   # get the login username if you don't know it
   my $login = $user->login();
   # get the pw
   my $password = $user->password();
-
+  
   # create a Krang::Media object.
   my $media = $creator->create_media(category => $poodle_cat);
-
+  
   # create a Krang::Story object under various categories, with media object.
   my $story1 = $creator->create_story(category     => [$poodle_cat, $french_poodle_cat],
                                       linked_media => [$media]);
-
+  
   # create Story object linking to media and previous story.
   my $story2 = $creator->create_story(category     => [$poodle_cat, $french_poodle_cat],
                                       linked_story => [$story1],
                                       linked_media => [$media]);
-
+  
   # Where to find the published story on the filesystem
   my @paths = $creator->publish_paths(story => $story);
-
+  
   # create a Krang::Contrib object
   my $contributor = $creator->create_contrib();
-
+  
   # create a Krang::Template object for root element of story
   my $template = $creator->create_template(element => $story->element);
-
+  
   # create a Krang::Template associated with a specific cat
   $template = $creator->create_template(element => $story->element, category => $poodle_cat);
-
+  
   # get a Krang::Publisher object
   my $publisher = $creator->publisher();
-
+  
   # create and deploy test templates
   my @templates = $creator->deploy_test_templates();
-
+  
   # undeploy test templates
   $creator->undeploy_test_templates();
-
-
+  
+  
   # undeploy all live templates
   $ok = $creator->undeploy_live_templates();
-
+  
   # restore previously live templates
   $ok = $creator->redeploy_live_templates();
-
-
+  
+  
   # get a random word.
   my $word = $creator->get_word();
-
-
+  
+  
   # delete a previously created object
   $creator->delete_item(item => $story);
-
+  
   # clean up after the mess you made.  Leave things where you found them.
   $creator->cleanup();
 
@@ -696,11 +696,26 @@ sub create_contrib {
 
 }
 
-=item C<< $template = $creator->create_template(element => $element, category => $category) >>
+=item C<< $template = $creator->create_template(element => $element) >>
 
 Creates a valid HTML template and Krang::Template object based on the Krang::Element $element.
 
-Takes the optional argument C<category>, which associates the template with the L<Krang::Category> object C<$category>.  Otherwise the template will be associated with the root category for the first L<Krang::Site> object created.
+Optional arguments as follows:
+
+=over
+
+=item * C<category>
+
+Associates the template with the L<Krang::Category> object
+C<$category>.  Otherwise the template will be associated with the root
+category for the first L<Krang::Site> object created.
+
+=item * C<content>
+
+The content of the template.  If not set, the template will be built
+automatically, based on the makeup of the element and its children.
+
+=back
 
 =cut
 
@@ -722,44 +737,46 @@ sub create_template {
 
 
     # create the template.
+    my $content = $args{content};
 
-    my $bgcolor = "#" . 
-      join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
+    unless ($content) {
 
-    # draw a labeled box for the element
-    my $display_name = $element->display_name;
-    my $content = <<END;
+        my $bgcolor = "#" . 
+          join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
+
+        # draw a labeled box for the element
+        my $display_name = $element->display_name;
+        $content = <<END;
 <div style='border: 1px solid black; margin-left: 3px; margin-top: 10px; margin-right: 5px; padding-left: 3px; padding-right: 3px; padding-bottom: 3px; background-color: $bgcolor'>
   <span style='border: 1px; border-style: dashed; border-color: #AAA; padding-left: 5px; padding-right: 5px; background-color: white; text-color: whte; top: -7px; left: 5px; position: relative; width: 150px;'>$display_name</span><br>
 END
 
-    if ($element->children) {
-        # container
-        $content .= "<tmpl_loop element_loop>\n";
-        foreach my $child ($element->children) {
-            $content .= "<tmpl_if is_" . $child->name . ">".
-              "<tmpl_var name='" . $child->name . "'>".
-                "</tmpl_if>\n";
+        if ($element->children) {
+            # container
+            $content .= "<tmpl_loop element_loop>\n";
+            foreach my $child ($element->children) {
+                $content .= "<tmpl_if is_" . $child->name . ">".
+                  "<tmpl_var name='" . $child->name . "'>".
+                    "</tmpl_if>\n";
+            }
+            $content .= "</tmpl_loop>";
+        } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
+            # media link
+            $content .= "<img src='<tmpl_var name='url'>'>\n";
+        } elsif ($element->isa('Krang::ElementClass::StoryLink')) {
+            # story link
+            $content .= "<a href='<tmpl_var name='url'>/'><tmpl_var url></a>\n";
+        } else {
+            # data
+            $content .= "<tmpl_var name='" . $element->name . "'>\n";
         }
-        $content .= "</tmpl_loop>";
-    } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
-        # media link
-        $content .= "<img src='<tmpl_var name='url'>'>\n";
-    } elsif ($element->isa('Krang::ElementClass::StoryLink')) {
-        # story link
-        $content .= "<a href='<tmpl_var name='url'>/'><tmpl_var url></a>\n";
-    } else {
-        # data
-        $content .= "<tmpl_var name='" . $element->name . "'>\n";
-    }
+        if ($element->name eq 'category') {
+            $content .= "<tmpl_var content>";
+        }
 
-    if ($element->name eq 'category') {
-        $content .= "<tmpl_var content>";
-    }
-
-    if ($element->name eq 'page') {
-        # add pagination
-        $content .=<<END;
+        if ($element->name eq 'page') {
+            # add pagination
+            $content .=<<END;
 <P>Page number <tmpl_var current_page_number> of <tmpl_var total_pages>.</p>
 <tmpl_unless is_first_page>
 <a href="<tmpl_var previous_page_url>">Previous Page</a>&lt;&lt;
@@ -778,8 +795,9 @@ END
 <tmpl_unless is_last_page><tmpl_var page_break></tmpl_unless>
 END
 
+        }
+        $content .= "</div>";
     }
-    $content .= "</div>";
 
     my $tmpl = Krang::Template->new(
                                     content  => $content,
