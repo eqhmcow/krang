@@ -6,9 +6,6 @@ use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
 use FindBin qw($RealBin);
 use Config;
 
-#use Devel::Profiler bad_pkgs =>[qw(UNIVERSAL Time::HiRes B Carp Exporter Cwd Config CORE DynaLoader XSLoader AutoLoader Exception::Class)];
-
-=pod
 
 =head1 NAME
 
@@ -138,6 +135,8 @@ use Krang::Category;
 use Krang::Site;
 use Krang::Publisher;
 
+use Krang::Profiler;  # only activated if $ENV{KRANG_PROFILE} == 1
+
 use Time::HiRes qw(gettimeofday tv_interval);
 
 # Setup - grabbing all the command-line options.
@@ -187,9 +186,9 @@ if ($republish_only) {
 if ($everything) {
     $publish_args{disable_related_assets} = 1;
 } else {
-    if ($id{site_id}) {
+    if (@{$id{site_id}}) {
         $find_options{site_id} = $id{site_id}[0];
-    } elsif ($id{category_id}) {
+    } elsif (@{$id{category_id}}) {
         $find_options{category_id} = $id{category_id}[0];
     } elsif ($id{story_id}) {
         $find_options{story_id} = $id{story_id}[0];
