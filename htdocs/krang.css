@@ -43,7 +43,25 @@ a:active          {
   background-color: #04044c;
   color:            #dceaf5;
   padding:          2px;
+  height:           14pt;
 }
+
+.dark-bar .left {
+  width:            49%;
+  float:            left;
+  text-align:       left; 
+}
+
+.dark-bar .right {
+  width:            49%;
+  float:            right;
+  text-align:       right;
+}
+
+.dark-bar .right a { 
+  color:            #FFFFFF;
+}
+
 
 .dark-bar a { 
   color:            #FFFFFF;
