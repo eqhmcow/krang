@@ -1,0 +1,141 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+krang_convert_story_type - converts stories from one element class to another.
+
+=head1 SYNOPSIS
+
+ krang_bric_loader [options]
+
+ Options:
+
+ --help			    - Displays this menu.
+
+ --man			    - Displays this menu and detailed application
+			        documentation
+
+ --class-map classX=classY  - Descibe the mapping of stories from one class
+                              to another.
+
+ --ignore-slug-restriction  - if this is NOT set, only stories with no slugs
+                              will be converted from classX to classY.
+
+ --verbose                  - show running dialogue
+
+=head1 DESCRIPTION
+
+This is a potentially dangerous script that will convert stories from one 
+element class to another.  It assumes that the element class that stories 
+are being converted to exists.  It also assumes that the element classes
+are pretty much identical.  Example of use: converting from a story type
+'table of contents' to 'table of contents cover'- each class having 
+identical element trees. 
+
+Important to note is that by default, only stories without slugs will be
+converted.
+
+=cut
+
+use strict;
+use warnings;
+
+use Carp qw(verbose croak);
+use Config;
+use File::Path qw(rmtree);
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+
+}
+
+use Getopt::Long;
+use Pod::Usage;
+
+use Krang::Script;
+use Krang::Conf qw(KrangRoot);
+
+
+our ($help, $man, $verbose, %class_map, $ignore_site_restriction );
+
+BEGIN {
+    $verbose	= 0;
+    $ignore_site_restriction = 0;
+
+    GetOptions(
+               "help"			=> \$help,
+               "man"			=> \$man,
+               "verbose"		=> \$verbose,
+               "ignore_site_restriction" => \$ignore_site_restriction,
+               "class-map=s"             => \%class_map)
+      or pod2usage;
+
+    pod2usage() if defined $help;
+    pod2usage(-verbose => 2) if defined $man;
+
+    # site-map must have at least one entry
+    die("Missing required option --class-map.\n")
+      unless keys %class_map;
+
+}
+
+use Krang::DB qw(dbh);
+
+main();
+
+sub main {
+    my $dbh = dbh;
+
+    foreach my $class (keys %class_map) {
+        print "\n\nConverting class '$class' stories ". ($ignore_site_restriction ? '' : 'without slugs '). "to class '".$class_map{$class}."'...\n\n" if $verbose;
+        
+        my $query = 'SELECT story.story_id, element.element_id FROM story, element WHERE story.element_id = element.element_id AND story.class =  ? ';
+        $query .= " AND story.slug = ''" if not $ignore_site_restriction;
+        my $sth = $dbh->prepare($query);
+        $sth->execute($class );
+
+        while (my ($story_id, $element_id) = $sth->fetchrow_array()) {        
+            print "Updating story $story_id..." if $verbose;
+            
+            $query = 'UPDATE story set class = ? where story_id = ?';
+            my $sth2 = $dbh->prepare($query);
+            $sth2->execute($class_map{$class}, $story_id);
+            $sth2->finish;
+
+            $query = 'UPDATE element set class = ? where element_id = ?';
+            $sth2 = $dbh->prepare($query);
+            $sth2->execute($class_map{$class}, $element_id);
+            $sth2->finish;
+        
+            print " done.\n" if $verbose;
+
+        }
+
+        $sth->finish();
+    }
+}
+
