@@ -8,7 +8,7 @@ use Krang::DB qw(dbh);
 use List::Util qw(first);
 use Scalar::Util qw(weaken);
 use Carp qw(croak);
-use Carp::Assert qw(assert DEBUG);
+use Krang::Log qw(assert ASSERT debug);
 use Storable qw(freeze thaw);
 
 # declare prototypes
@@ -299,8 +299,8 @@ Returns the root element for this element tree.
 
 sub root {
     my $self = shift;
-    return $self->parent->root()
-      if $self->parent;
+    return $self->{parent}->root()
+      if $self->{parent};
     return $self;
 }
 
@@ -370,10 +370,7 @@ sub add_child {
     }
 
     # push on the child and return it
-    push @$children, ref($self)->new(%arg);
-
-    # assign parent
-    $children->[-1]->parent($self);
+    push @$children, ref($self)->new(%arg, parent => $self);
 
     return ${$children}[-1];
 }
@@ -594,7 +591,7 @@ sub available_child_classes {
     foreach my $child ($self->children()) {
         $name = $child->name;
         $max  = $child->max;
-        assert(exists($max{$name})) if DEBUG;
+        assert(exists($max{$name})) if ASSERT;
         delete $max{$name} if --$max{$name} == 0;
     }
 
@@ -820,7 +817,7 @@ use Class::XPath
   get_content    => 'data',   # get content from the 'data' method
   ;
 
-
+# freeze element tree as a flattened array
 sub STORABLE_freeze {
     my ($self, $cloning) = @_;
     return if $cloning;
@@ -829,15 +826,7 @@ sub STORABLE_freeze {
     my %ref_to_index;
     my $i = 0;
     my @data;
-    foreach_element {
-        $ref_to_index{$_} = $i;
-        $data[$i] = [ $_->{element_id},
-                      $_->parent ? $ref_to_index{$_->parent()} : undef,
-                      $_->{class}->name,
-                      $_->freeze_data, 
-                    ];          
-        $i++;
-    } $self;
+    $self->_freeze_tree(0, \@data);
 
     # freeze it
     my $data;
@@ -847,8 +836,25 @@ sub STORABLE_freeze {
     return $data;
 }
 
+# recursively freeze elements
+sub _freeze_tree {
+    my ($self, $parent_at, $data) = @_;
+    push @$data, [ $self->{element_id},
+                   $parent_at,
+                   $self->name,
+                   $self->freeze_data, 
+                 ];          
+
+    $parent_at = $#$data;
+    foreach my $child ($self->children) {
+        $child->_freeze_tree($parent_at, $data);
+    }
+}
+
+        
+# thaw the frozen element array
 sub STORABLE_thaw {
-    my ($self, $cloning, $data) = @_;
+    my ($self, $cloning, $frozen) = @_;
 
     # FIX: is there a better way to do this?
     # Krang::Element::STORABLE_thaw needs a reference to the story in
@@ -858,35 +864,37 @@ sub STORABLE_thaw {
 
     # retrieve data stack
     my @data;
-    eval { @data = @{thaw($data)} };
+    eval { @data = @{thaw($frozen)} };
     croak("Unable to thaw element: $@") if $@;
-  
-    # start out with the root
-    my $d = $data[0][3];
-    $data[0] = 
-      Krang::Element->new(element_id => $data[0][0],
-                          class      => $data[0][2],
-                          object     => $THAWING_OBJECT,
-                          no_expand  => 1,
-                         );
-    $data[0]->thaw_data(data => $d);
+
+    # thaw out the root
+    my $root =  Krang::Element->new(element_id => $data[0][0],
+                                    class      => $data[0][2],
+                                    object     => $THAWING_OBJECT,
+                                    no_expand  => 1,
+                                   );
+    $root->thaw_data(data => $data[0][3]);
+
+    # copy into $self
+    %$self = %{$root};
+
+    # copy it into location 0 so kids can find it
+    $data[0] = $self;
 
     # boom through children, since they're guaranteed to contain no
     # forward references and to be in the correct order for calls to
     # add_child()
     for my $i (1 .. $#data) {
-        $d = $data[$i][3];
-        $data[$i] = 
+        # all rows should have parent pointers
+        assert(defined($data[$i][1])) if ASSERT;
+        my $element = 
           $data[$data[$i][1]]->add_child(element_id => $data[$i][0],
                                          class      => $data[$i][2],
                                          no_expand => 1
                                         );
-        $data[$i]->thaw_data(data => $d);
+        $element->thaw_data(data => $data[$i][3]);
+        $data[$i] = $element;
     }
-
-    # all done, set $self to root and return it
-    %$self = %{$data[0]};
-    # return $self;
 }
 
 
