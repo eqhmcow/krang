@@ -66,6 +66,10 @@ HREF[Configuration|configuration.html] - how to configure Krang
 
 =item *
 
+HREF[Writing Templates|writing_htmltemplate.html] - guide to template creation
+
+=item *
+
 HREF[Coding Standards|coding.html] - rules for Krang development
 
 =item *
