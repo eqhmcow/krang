@@ -620,7 +620,7 @@ sub apply_upgrades {
     opendir(DIR, $upmod_path) || die ("Unable to open upgrade directory '$upmod_path': $!");
     my @upmodules = (grep {
         (-f $upmod_path.$_) && (/^V(\d+)\_(\d+)\.pm$/) && ( "$1.$2" > $old_krang_version )
-      } readdir(DIR));
+      } sort readdir(DIR));
     closedir(DIR);
 
     print "  Found ".scalar(@upmodules)." applicable upgrade modules.\n";
