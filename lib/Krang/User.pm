@@ -49,7 +49,7 @@ Krang::User - a means to access information on users
 
   # a hash of search parameters
   my %params =
-  ( order_desc => 'asc',	# sort results in ascending order
+  ( order_desc => 1,		# result ascend unless this flag is set
     limit => 5,			# return 5 or less user objects
     offset => 1, 	        # start counting result from the
 				# second row
@@ -421,10 +421,10 @@ Result set is sorted in ascending order.
 If this argument is specified, the method will return a count of the categories
 matching the other search criteria provided.
 
-=item * descend
+=item * order_desc
 
-Results set is sorted in descending order only if the 'ascend' option is not
-specified.
+Set this flag to '1' to sort results relative to the 'order_by' field in
+descending order, by default results sort in ascending order
 
 =item * ids_only
 
@@ -462,7 +462,7 @@ sub find {
     my $groups = exists $args{group_ids} ? 1 : 0;
 
     # grab ascend/descending, limit, and offset args
-    my $ascend = uc(delete $args{order_desc}) || ''; # its prettier w/uc() :)
+    my $ascend = delete $args{order_desc} ? 'DESC' : 'ASC';
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
     my $order_by = delete $args{order_by} || 'user_id';
@@ -509,7 +509,7 @@ sub find {
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
-            if ($args{$arg} eq '') {
+            if (exists $args{$arg} && not defined $args{$arg}) {
                 $where_clause .= "$and $lookup_field IS NULL";
             } else {
                 $where_clause .= $like ? "$and $lookup_field LIKE ?" :

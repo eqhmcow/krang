@@ -70,15 +70,15 @@ for (qw/email first_name last_name mobile_phone phone/) {
 ($admin) = Krang::User->find(login => 'admin');
 isa_ok($admin, 'Krang::User', 'find() - login');
 
-my $count = Krang::User->find(email => '',
-                              first_name => '',
-                              last_name => '',
+my $count = Krang::User->find(email => undef,
+                              first_name => undef,
+                              last_name => undef,
                               login => 'admin',
-                              mobile_phone => '',
-                              phone => '');
+                              mobile_phone => undef,
+                              phone => undef);
 is($count, 1, 'find - all fields');
 
-my @users = Krang::User->find(email => '');
+my @users = Krang::User->find(email => undef);
 isa_ok($_, 'Krang::User') for @users;
 is(scalar @users, 2, 'find - count');
 
