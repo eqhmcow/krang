@@ -819,10 +819,10 @@ sub test_linked_media {
     }
 
     END {
-        $media->delete();
-        $media2->delete();
-        $contrib->delete();
-        $story->delete();
+        $media->delete() if $media;
+        $media2->delete() if $media2;
+        $contrib->delete() if $contrib;
+        $story->delete() if $story;
     }
 
 }
