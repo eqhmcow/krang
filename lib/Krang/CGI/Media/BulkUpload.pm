@@ -15,6 +15,7 @@ use Krang::Log qw(debug);
 use File::Temp qw/ tempdir /;
 use File::Spec::Functions qw(catdir catfile abs2rel);
 use File::Find;
+use File::Path;
 use IO::File;
 
 # these have to be global because of File::Find processing
@@ -121,6 +122,10 @@ media!");
 
         # open media source 
         my $opened_root = open_media_source($filepath, $archive_type);
+
+        # remove file and tempdir cause we are done with it now that
+        # it tried to unzip
+        rmtree($path);
         return $self->choose() if not $opened_root;
   
         # get chosen category_id, if one
@@ -129,14 +134,14 @@ media!");
         # find all files and dirs in archive 
         File::Find::find(\&build_image_list, $opened_root);    
 
-        add_message('media_in_root'), return $self->choose() if $media_in_root;
+        add_message('media_in_root'), rmtree($opened_root),  return $self->choose() if $media_in_root;
 
         # check to see all dirs in archive match Krang site/cats,
         # return if not
-        return $self->choose if check_categories();
+        rmtree($opened_root), return $self->choose if check_categories();
 
         # check media to see if already exist or checked out
-        return $self->choose if check_media();
+        rmtree($opened_root), return $self->choose if check_media();
 
         # if we have gotten this far, upload the files as Krang::Media
         my ($create_count, $update_count) = create_media();
@@ -145,10 +150,12 @@ media!");
         # reset category_id
         $q->param('category_id' => '');
         
+        # remove tempdir 
+        rmtree($opened_root);    
     } else {
         add_message('no_file');
     } 
- 
+
     return $self->choose();
 }
 
