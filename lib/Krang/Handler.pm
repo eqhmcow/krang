@@ -388,11 +388,6 @@ sub _redirect_to_login {
     my $login_app = LOGIN_APP;
     my $new_uri = ($flavor eq 'instance' ? "/$login_app" : "/$instance/$login_app");
 
-    my $orig_uri = $r->uri();
-    $orig_uri .= '?' . $r->args() if ($r->args());
-    my $esc_orig_uri = CGI->escape( $orig_uri );
-    $new_uri .= '?target=' . $esc_orig_uri;
-
     return $self->_do_redirect($r, $new_uri);
 }
 
