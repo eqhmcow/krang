@@ -10,11 +10,50 @@ krang_createdb
 
 =head1 SYNOPSIS
 
+Build databases which do not exist:
+
    krang_createdb
+
+Destroy and recreate all databases:
+
+   krang_createdb --destroy
+
+Provide the MySQL root password, required if MySQL is configured to
+need one:
+
+   krang_createdb --password foobar
 
 =head1 DESCRIPTION
 
-Drops and creates all Krang databases configured in F<conf/krang.conf>.
+Creates databases using information in F<krang.conf>.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --destroy
+
+By default the script only creates databases that do not already
+exist.  This option tells krang_createdb to destroy and recreate any
+existing databases.  You will be prompted to confirm your dangerous
+request.
+
+=item --password [pass]
+
+If you configured MySQL to require a root password then you'll need to
+provide it here.
+
+=item --verbose
+
+Once gives you a play-by-play.  Twice gets you full SQL.
+
+=item --help
+
+=item --man
+
+=back
 
 =cut
 
@@ -49,33 +88,122 @@ END
 }
 
 use Term::Prompt qw(prompt);
-BEGIN {
-    exit 1      
-      unless prompt("y", "This program will drop and recreate all Krang databases (including content of data/*) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
+use Krang::Conf qw (InstanceElementSet KrangRoot InstanceDBName DBUser DBPass);
+
+use Getopt::Long;
+use Pod::Usage;
+
+my ($help, $man, $password, $destroy);
+my $verbose = 0;
+GetOptions(help         => \$help,
+           man          => \$man,
+           'verbose+'   => \$verbose,
+           destroy      => \$destroy,
+           'password=s' => \$password,
+          );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+# make sure MySQL has what it needs
+my $test_mysql = qq{mysql -uroot -e "select 'world' as hello" };
+$test_mysql .= " -p$password" if defined $password;
+$test_mysql .= " 2>&1";
+my $output = `$test_mysql`;
+unless ($output =~ /hello.*world/s) {
+    if ($output =~ /Access denied/) {
+        if (defined $password) {
+            die("MySQL root password '$password' is not valid.\n");
+        } else {
+            die("Unable to connect to MySQL as root with no password.  ".
+                "Maybe you need to use --password?\n");
+        }
+    } else {
+        die("Unable to access MySQL client.\n");
+    }
 }
 
-use Krang::DB qw(create_db dbh);
-use Krang::Script;
-use Krang::Conf qw ( InstanceElementSet KrangRoot );
 
-# Blow away data/*
-my $datadir = catfile($ENV{KRANG_ROOT}, "data", "*");
-system("rm -rf $datadir");
+# leave no database standing
+if ($destroy) {
 
+    # make sure they really meant --destroy
+    exit 1      
+      unless prompt("y", "This program will drop and recreate all Krang databases (including the contents of data/*) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
+
+    # blow away data/*
+    my $datadir = catfile($ENV{KRANG_ROOT}, "data", "*");
+    system("rm -rf $datadir");
+
+    # drop all databases
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        my $name = InstanceDBName;
+        print STDERR "Dropping database '$name'...\n" if $verbose;
+        my $cmd = "mysql -uroot -e 'DROP DATABASE IF EXISTS $name'";
+        $cmd .= " -p$password" if defined $password;
+        $cmd .= " -v" if $verbose > 1;
+        print "Running '$cmd'\n" if $verbose > 1;
+        system($cmd);
+    }
+}
+
+# create databases
 foreach my $instance (Krang::Conf->instances()) {
     Krang::Conf->instance($instance);
-      create_db();
-      
-      # load in templates if desired in conf
-      my $e_set = InstanceElementSet;
-      die("No InstanceElementSet specified") unless ($e_set);
-      
-      my $import_bin = KrangRoot.'/bin/krang_import';
-      my $import_file = KrangRoot."/element_lib/$e_set/templates.kds";
-      
-      if (-f $import_file) {
-          # perform import from templates.kds file
-          `$import_bin $import_file`;
-      }
+    my $name = InstanceDBName;
+    my $user = DBUser;
+    my $pass = DBPass;
+
+    # skip if database exists
+    my $cmd = qq{mysql -uroot -e 'select "$name exists"' $name};
+    $cmd .= " -p$password" if defined $password;
+    $cmd .= " -v" if $verbose > 1;
+    $cmd .= " 2>&1";
+    print "Running '$cmd'\n" if $verbose > 1;
+    next if `$cmd` =~ /$name exists/;
+
+    # create the database
+    print STDERR "Creating database '$name'...\n" if $verbose;
+    $cmd = "mysql -uroot -e 'CREATE DATABASE $name'";
+    $cmd .= " -p$password" if defined $password;
+    $cmd .= " -v" if $verbose > 1;
+    print "Running '$cmd'\n" if $verbose > 1;
+    system($cmd);
+    
+    # grant access to the database to DBUser
+    $cmd = qq{mysql -uroot -e 'grant all on $name.* to "$user\@localhost"};
+    $cmd .= qq{ identified by "$pass" } if $pass;
+    $cmd .= "'";
+    $cmd .= " -p$password" if defined $password;
+    $cmd .= " -v" if $verbose > 1;
+    print "Running '$cmd'\n" if $verbose > 1;
+    system($cmd);
+
+    # load all sql files as the DBUser
+    print STDERR "Loading SQL for '$name'...\n" if $verbose;
+    $cmd = "cat " . catfile(KrangRoot, 'sql', '*.sql') . 
+      " | mysql -u$user $name ";
+    $cmd .= " -p$pass" if $pass;
+    $cmd .= " -v" if $verbose > 1;
+    print "Running '$cmd'\n" if $verbose > 1;
+    system($cmd);
+  
+    # populate default template set, if it exists
+    my $e_set = InstanceElementSet;
+    my $import_file = catfile(KrangRoot, 'element_lib', 
+                              InstanceElementSet, 'templates.kds');
+    
+    if (-f $import_file) {
+        # perform import from templates.kds file
+        $cmd = catdir(KrangRoot, 'bin', 'krang_import') . " ";
+        $cmd .= "--verbose " if $verbose;
+        $cmd .= "--verbose " if $verbose > 1;
+        $cmd .= $import_file;
+        local $ENV{KRANG_INSTANCE} = $instance;
+        print "Running '$cmd'\n" if $verbose > 1;
+        system($cmd);
+    }
 }
+
+print "Databases created successfully.\n";
 

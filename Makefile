@@ -52,7 +52,7 @@ bench_clean:
 	- rm bench.out
 
 db:
-	bin/krang_createdb
+	bin/krang_createdb --destroy
 
 docs:
 	cd docs && $(MAKE)
