@@ -484,12 +484,6 @@ sub edit_categories {
     my @perm_categories = ( grep { exists($categories{$_}) } @descendant_category_ids );
 
     # Build up tmpl loop
-    #
-    # <tmpl_loop categories><tr>
-    #     <td class="form-cell"><tmpl_var category_url></td>
-    #     <tmpl_loop permission_radio><td class="form-cell" align="center"><tmpl_var radio_select></td></tmpl_loop>
-    #     <td class="form-cell" align="center"><tmpl_unless is_root><a href="javascript:delete_category('<tmpl_var category_id>')">Delete</a></tmpl_unless></td>
-    # </tr></tmpl_loop>
     my @categories = ( {
                         category_url => $root_category->url(),
                         permission_radio => $self->make_permissions_radio("category_".$category_id),
@@ -523,7 +517,7 @@ sub edit_categories {
 
 =item add_category
 
-Add category to group permissions.
+Add category to group permissions.  Return to edit_categories mode.
 
 
 =cut
@@ -532,9 +526,29 @@ Add category to group permissions.
 sub add_category {
     my $self = shift;
 
-    my $q = $self->query();
+    # Retrieve working group object from session
+    my $g = $session{EDIT_GROUP};
+    die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
 
-    return $self->dump_html();
+    my $q = $self->query();
+    my $add_category_id = $q->param('add_category_id');
+
+    unless ($add_category_id) {
+        add_message("added_category_none");
+        return $self->edit_categories();
+    }
+
+    if ($g->categories($add_category_id)) {
+        add_message("added_category_exists");
+        return $self->edit_categories();
+    }
+
+    # OK to add category (default to "edit")
+    add_message("added_category");
+    $g->categories($add_category_id => "edit");
+    $q->delete('add_category_id');
+
+    return $self->edit_categories();
 }
 
 
@@ -543,7 +557,7 @@ sub add_category {
 
 =item delete_category
 
-Remove category from group permissions.
+Remove category from group permissions.  Return to edit_categories mode.
 
 
 =cut
@@ -552,9 +566,25 @@ Remove category from group permissions.
 sub delete_category {
     my $self = shift;
 
-    my $q = $self->query();
+    # Retrieve working group object from session
+    my $g = $session{EDIT_GROUP};
+    die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
 
-    return $self->dump_html();
+    my $q = $self->query();
+    my $delete_category_id = $q->param('delete_category_id');
+    croak ("No delete_category_id specified") unless ($delete_category_id);
+
+    unless ($g->categories($delete_category_id)) {
+        # Category already deleted.  Don't bother sending a message.
+        return $self->edit_categories();
+    }
+
+    # OK to delete category
+    add_message("deleted_category");
+    $g->categories_delete($delete_category_id);
+    $q->delete('delete_category_id');
+
+    return $self->edit_categories();
 }
 
 
@@ -572,7 +602,20 @@ edit group mode.
 sub edit_categories_return {
     my $self = shift;
 
+    # Retrieve working group object from session
+    my $g = $session{EDIT_GROUP};
+    die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
+
     my $q = $self->query();
+
+    # Iterate through all params, updating permissions in object
+    my @params = $q->param();
+    foreach my $param (@params) {
+        next unless ($param =~ /^category\_(\d+)$/);
+        my $category_id = $1;
+        my $sec_level = $q->param($param);
+        $g->categories($category_id => $sec_level);
+    }
 
     add_message("category_perms_updated");
 
@@ -823,14 +866,14 @@ sub get_group_tmpl {
         }
 
         if (grep { $gf eq $_} qw( may_publish
-                        admin_users
-                        admin_users_limited
-                        admin_groups
-                        admin_contribs
-                        admin_sites
-                        admin_categories
-                        admin_jobs
-                        admin_desks )) {
+                                  admin_users
+                                  admin_users_limited
+                                  admin_groups
+                                  admin_contribs
+                                  admin_sites
+                                  admin_categories
+                                  admin_jobs
+                                  admin_desks )) {
             my $default = $g->$gf();
             $group_tmpl{$gf} = $q->checkbox( -name => $gf, 
                                              -value => "1",
@@ -864,7 +907,7 @@ sub get_group_tmpl {
 
 =head1 SEE ALSO
 
-L<Krang::Group>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Krang::Pref>, L<Krang::Session>, L<Krang::Category>, L<Krang::Desk>, L<Krang::Log>, L<Carp>, L<Krang::CGI>
+L<Krang::Group>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Krang::Pref>, L<Krang::Session>, L<Krang::Category>, L<Krang::Desk>, L<Krang::Widget>, L<Krang::Log>, L<Carp>, L<Krang::CGI>
 
 =cut
 
@@ -892,7 +935,7 @@ L<Krang::Group>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Kra
 #                  add_category
 #                  delete_category
 #                 ));
-# $c->use_modules(qw/Krang::Group Krang::Widget Krang::Message Krang::HTMLPager Krang::Pref Krang::Session Krang::Category Krang::Desk Krang::Log Carp/);
+# $c->use_modules(qw/Krang::Group Krang::Widget Krang::Message Krang::HTMLPager Krang::Pref Krang::Session Krang::Category Krang::Desk Krang::Widget Krang::Log Carp/);
 # $c->tmpl_path('Group/');
 
 # print $c->output_app_module();
