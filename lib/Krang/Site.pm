@@ -81,8 +81,6 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
-use Data::Dumper;
-use Time::Piece::MySQL;
 
 # Internal Modules
 ###################
@@ -189,7 +187,7 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 
 =cut
 
-# validates arguments passed to new(), see Class::MethodMaker
+# validates arguments passed to new(), see Class::MethodMaker, sets '_old_url'
 # the method croaks if an invalid key is found in the hash passed to new()
 sub init {
     my $self = shift;
@@ -204,6 +202,9 @@ sub init {
 
     $self->hash_init(%args);
 
+    # set field to track changes to 'url'
+    $self->{_old_url} = $self->{url};
+
     return $self;
 }
 
@@ -213,7 +214,8 @@ sub init {
 =item * $success = Krang::Site->delete( $site_id )
 
 Instance or class method that deletes the given site from the database.  It
-returns '1' following a successful deletion.
+croaks if any categories reference this site.  It returns '1' following a
+successful deletion.
 
 =cut
 
@@ -221,8 +223,20 @@ sub delete {
     my $self = shift;
     my $id = shift || $self->{site_id};
     my $dbh = dbh();
+    my $category_id = 0;
 
-    my $query = "DELETE FROM site WHERE site_id = '$id'";
+    # check for any references to this site in the category table
+    my $query = "SELECT category_id FROM category WHERE site_id = $id";
+    my $sth = $dbh->prepare($query);
+    $sth->execute();
+    $sth->bind_col(1, \$category_id);
+    $sth->fetch();
+    $sth->finish();
+
+    croak(__PACKAGE__ . "->delete(): Category '$category_id' refers to " .
+          "this site.") if $category_id;
+
+    $query = "DELETE FROM site WHERE site_id = '$id'";
     $dbh->do($query);
 
     return 1;
@@ -242,20 +256,28 @@ sub duplicate_check {
     my $self = shift;
     my $id = $self->{site_id};
     my @id_info;
-    my @save_fields = grep {$_ ne 'site_id'} keys %site_cols;
+    my (@fields, @params);
 
-    my $query = "SELECT * FROM site WHERE " .
-      join(" OR ", map {"$_ = ?"} @save_fields) . " LIMIT 1";
+    for (keys %site_cols) {
+        if ($_ ne 'site_id' && exists $self->{$_} && $self->{$_} ne '') {
+            push @fields, "$_ = ?";
+            push @params, $self->{$_};
+        }
+    }
+
+    my $query = "SELECT * FROM site WHERE (" . join(" OR ", @fields) . ")";
+    $query .= " AND site_id != $id" if $id;
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
-    $sth->execute(map {$self->{$_}} @save_fields);
+    $sth->execute(@params);
 
     # reference into which result are fetched
     my $row;
     $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     while ($sth->fetch()) {
-        for (@save_fields) {
-            if ($self->{$_} eq $row->{$_}) {
+        for (keys %$row) {
+            if (exists $self->{$_} && exists $row->{$_}
+                && $self->{$_} eq $row->{$_}) {
                 push @id_info, $row->{site_id}, $_;
                 last;
             }
@@ -419,6 +441,8 @@ sub find {
         if ($single_column) {
             push @sites, $row;
         } else {
+            # set _old_url
+            $row->{_old_url} = $row->{url};
             push @sites, bless({%$row}, $self);
         }
     }
@@ -433,7 +457,9 @@ sub find {
 
 =item * $site = $site->save()
 
-Saves the contents of the site object in memory to the database.
+Saves the contents of the site object in memory to the database.  The method
+also updates the urls of categories that reference it via
+update_child_categories() if its 'url' field has changed since the last save.
 
 The method croaks if the save would result in a duplicate site object (i.e.
 if the object has the same path or url as another object).  It also croaks if
@@ -445,6 +471,9 @@ sub save {
     my $self = shift;
     my $id = $self->{site_id} || '';
     my @save_fields = grep {$_ ne 'site_id'} keys %site_cols;
+
+    # flag to force update of child categories
+    my $update = $self->{url} ne $self->{_old_url} ? 1 : 0;
 
     # check for duplicates
     my ($site_id, $field) = $self->duplicate_check();
@@ -476,7 +505,58 @@ sub save {
 
     $self->{site_id} = $dbh->{mysql_insertid} unless $id;
 
+    # update category urls if necessary
+    if ($update) {
+        $self->update_child_categories();
+        $self->{_old_url} = $self->{url};
+    }
+
     return $self;
+}
+
+
+=item * $success = $site->update_child_categories()
+
+This method updates child categories' urls provided the 'url' field of the
+object has recently been changes (see save()).  It returns 1 on the success of
+the update.
+
+=cut
+
+sub update_child_categories {
+    my $self = shift;
+    my $id = $self->{site_id};
+    my ($category_id, $url, %urls);
+
+    my $query = <<SQL;
+SELECT category_id, url
+FROM category
+WHERE site_id = $id
+SQL
+
+    my $dbh = dbh();
+    my $sth = $dbh->prepare($query);
+    $sth->execute();
+    $sth->bind_columns(\$category_id, \$url);
+    while ($sth->fetch) {
+        $urls{$category_id} = $url;
+    }
+    $sth->finish();
+
+    $query = <<SQL;
+UPDATE category
+SET url = ?
+WHERE category_id = ?
+SQL
+
+    $sth = $dbh->prepare($query);
+    for (keys %urls) {
+        (my $new_url = $urls{$_}) =~ s|^$self->{_old_url}|$self->{url}|;
+        $sth->execute(($new_url, $_));
+    }
+    $sth->finish();
+
+    return 1;
 }
 
 
@@ -484,7 +564,7 @@ sub save {
 
 =head1 TO DO
 
-Describe what the hell a Site is.
+ * Describe what the hell a Site is.
 
 =head1 SEE ALSO
 
