@@ -617,6 +617,10 @@ simple_search - Performs a per-word LIKE substring match against title, filename
 
 =item *
 
+no_attributes - returns objects where the fields caption, copyright, notes, and alt_tag are empty if this is set.
+
+=item *
+
 order_by - field to order search by, defaults to media_id
 
 =item *
@@ -724,6 +728,10 @@ sub find {
     if ($args{'url_like'}) {
         $where_string ? ($where_string .= " and url like ?") : ($where_string = " url like ?");
         push @where, 'url_like';
+    }
+
+    if ($args{'no_attributes'}) {
+        $where_string ? ($where_string .= " AND (caption = '' AND copyright = '' and notes = '' and alt_tag = NULL)") : ($where_string = "(caption = '' and copyright = '' and notes = '' and alt_tag = NULL)"); 
     }
 
     if ($args{'creation_date'}) {
