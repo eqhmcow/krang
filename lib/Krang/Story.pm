@@ -1428,8 +1428,11 @@ sub checkin {
     Krang::Story::NoEditAccess->throw( message => "Not allowed to edit story", story_id => $self->story_id )
         unless ($self->may_edit);
 
-    # make sure we're checked out
-    $self->_verify_checkout();
+    # get admin permissions
+    my %admin_perms = Krang::Group->user_admin_permissions();
+
+    # make sure we're checked out, unless we have may_checkin_all powers
+    $self->_verify_checkout() unless $admin_perms{may_checkin_all};
 
     # checkout the story
     $dbh->do('UPDATE story

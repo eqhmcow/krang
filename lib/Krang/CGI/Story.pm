@@ -1401,8 +1401,8 @@ sub list_active {
     # Set up find_params for pager
     my %find_params = (checked_out => 1);
 
-    # FIX: this should look at user permissions
-    my $may_checkin_all = 1;
+    # get admin permissions
+    my %admin_perms = Krang::Group->user_admin_permissions();
 
     my $pager = Krang::HTMLPager->new(
        cgi_query => $q,
@@ -1415,7 +1415,7 @@ sub list_active {
                        title 
                        user
                        commands_column
-                      )), ($may_checkin_all ? ('checkbox_column') : ())],
+                      )), ($admin_perms{may_checkin_all} ? ('checkbox_column') : ())],
        column_labels => {
                          story_id => 'ID',
                          url => 'URL',
@@ -1432,7 +1432,7 @@ sub list_active {
     my $template = $self->load_tmpl('list_active.tmpl', associate=>$q);
     $template->param(pager_html => $pager->output());
     $template->param(row_count => $pager->row_count());
-    $template->param(may_checkin_all => $may_checkin_all);
+    $template->param(may_checkin_all => $admin_perms{may_checkin_all});
 
     return $template->output;
 }
