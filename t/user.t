@@ -71,8 +71,8 @@ for (qw/email first_name last_name mobile_phone phone/) {
 isa_ok($admin, 'Krang::User', 'find() - login');
 
 my $count = Krang::User->find(email => undef,
-                              first_name => undef,
-                              last_name => undef,
+                              first_name => 'Joe',
+                              last_name => 'Admin',
                               login => 'admin',
                               mobile_phone => undef,
                               phone => undef);

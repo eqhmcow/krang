@@ -24,6 +24,7 @@ TimeStampFormat
 VirtualHost
 LogWrap
 Assertions
+InstanceDisplayName
 );
 }
 

@@ -1,0 +1,68 @@
+.invalid textarea { background-color: #FFFF99 }
+.invalid input    { background-color: #FFFF99 }
+.invalid select   { background-color: #FFFF99 }
+
+.light { 
+  background-color: #dbe9f4;
+  color:            #333333;
+}
+
+.dark { 
+  background-color: #04044c;
+  color:            #dceaf5;
+}
+
+.bright {
+  background-color: #98ccfe;
+  color:            #333333;
+}
+
+.line {
+  color:            #e2e1e7;
+  background-color: #e2e1e7;
+}
+
+.form-cell {
+  border:         1px solid #e2e1e7;
+  padding:        2px
+}
+
+body {
+  background-color: #FFFFFF;
+  color:            #333333;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        9.5pt;
+}
+
+input[type=button] {
+  color:            #003466;
+  background-color: #FFFFFF;
+  font-size:        8pt;
+}
+
+input[type=reset] {
+  color:            #003466;
+  background-color: #FFFFFF;
+  font-size:        8pt;
+}
+
+a:link            { 
+  color:            #05034c;
+}
+a:visited         { 
+  color:            #05034c;
+}
+a:active          {
+  color:            #98ccfe;
+}
+
+
+.dark a:link            { 
+  color:            #FFFFFF;
+}
+.dark a:visited         { 
+  color:            #FFFFFF;
+}
+.dark a:active          {
+  color:            #FFFFFF;
+}

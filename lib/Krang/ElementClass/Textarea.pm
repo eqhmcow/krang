@@ -10,7 +10,7 @@ use Krang::MethodMaker
 sub new {
     my $pkg = shift;
     my %args = ( rows => 4,
-                 cols => 40,
+                 cols => 30,
                  @_
                );
     

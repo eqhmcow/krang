@@ -39,14 +39,14 @@ use base 'CGI::Application';
 # Load Krang to set instance
 use Krang;
 
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot InstanceDisplayName);
 use File::Spec::Functions qw(catdir rel2abs);
 
 use Krang::CGI::Status;
 use Krang::CGI::ElementEditor;
 use Krang::CGI::Login;
 use Krang::Log qw(critical info debug);
-
+use Krang::User;
 
 # Krang sessions
 use Krang::Session qw/%session/;
@@ -63,7 +63,19 @@ sub new {
 
 sub load_tmpl {
     my $pkg = shift;
-    return $pkg->SUPER::load_tmpl(@_, cache => 1);
+    my $template = $pkg->SUPER::load_tmpl(@_, cache => 1);
+
+    # fill in header variables as necessary
+    if ($template->query(name => 'header_user_name')) {
+        my ($user) = Krang::User->find(user_id => $session{user_id});
+        $template->param(header_user_name => $user->first_name . " " . 
+                                             $user->last_name) if $user;
+    }
+    
+    $template->param(header_instance_name => InstanceDisplayName)
+      if $template->query(name => 'header_instance_name');
+
+    return $template;
 }
 
 

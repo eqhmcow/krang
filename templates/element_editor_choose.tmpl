@@ -1,7 +1,5 @@
-<html>
-<body>
-<h1>Krang Element Editor</h1>
-<tmpl_if alert><p><font color=red><b><tmpl_var alert></b></font></p></tmpl_if>
+<tmpl_include header.tmpl>
+
 <form method=post>
 <tmpl_var top_level_select> <input type=submit value="Create">
 <input type=hidden name=e_rm value=create>
@@ -19,7 +17,6 @@
    <input type=hidden name=e_rm>
    <input type=hidden name=root_id>
 
-<p>
 <table border=1 bgcolor=777777 width=80% cellpadding=3>
   <tr>
     <th bgcolor=D5E5FF width=10%>ID</th>
@@ -35,5 +32,6 @@
 </tmpl_loop>
 </table>
 </form>
-</body>
-</html>
+
+<tmpl_include footer.tmpl>
+

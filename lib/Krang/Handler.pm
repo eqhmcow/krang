@@ -117,7 +117,7 @@ sub trans_handler ($$) {
         $r->cgi_env('KRANG_INSTANCE' => $instance_name);
 
         # Handle DirectoryIndex case...
-        $uri .= 'index.html' if ($uri =~ /\/$/);
+        $uri .= 'workspace.pl' if ($uri =~ /\/$/);
         $r->uri($uri);
 
         # Our work is done -- we outta 'ere
@@ -143,8 +143,8 @@ sub trans_handler ($$) {
         my $new_uri = $uri;
         $new_uri =~ s/^\/$instance_name//;
 
-        # Handle root case: index.html
-        $new_uri = "/index.html" if (($new_uri eq '/') || $new_uri eq '');
+        # Handle root case: workspace.pl
+        $new_uri = "/workspace.pl" if (($new_uri eq '/') || $new_uri eq '');
 
         my $fq_filename = $r->document_root() . $new_uri;
         $r->filename($fq_filename);

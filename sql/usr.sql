@@ -14,8 +14,8 @@ CREATE TABLE usr (
 );
 
 /* default account 'admin', password 'shredder' */
-INSERT INTO usr (login, password) VALUES ('admin',
-'36ca9aadabe4e2adcfcc9747dfb0ea10');
+INSERT INTO usr (login, password, first_name, last_name) VALUES ('admin',
+'36ca9aadabe4e2adcfcc9747dfb0ea10', 'Joe', 'Admin');
 
 DROP TABLE IF EXISTS usr_user_group;
 CREATE TABLE usr_user_group (
