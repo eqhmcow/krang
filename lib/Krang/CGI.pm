@@ -27,7 +27,7 @@ Krang::CGI - Krang base class for CGI modules
 =head1 DESCRIPTION
 
 Krang::CGI is a subclass of L<CGI::Application>.  All the usual
-CGI::Application features are available.  
+CGI::Application features are available.
 
 =head1 INTERFACE
 
@@ -37,12 +37,10 @@ See L<CGI::Application>.
 
 use base 'CGI::Application';
 
-# Load Krang to set instance
-use Krang;
+use Data::Dumper ();
 
 use Krang::Conf qw(KrangRoot InstanceDisplayName);
 use File::Spec::Functions qw(catdir rel2abs);
-
 use Krang::CGI::Status;
 use Krang::CGI::ElementEditor;
 use Krang::CGI::Login;
@@ -55,8 +53,7 @@ use Krang::Session qw/%session/;
 # Set up HTML_TEMPLATE_ROOT for templates
 BEGIN {
     # use $KRANG_ROOT/templates for templates
-    my $html_template_root = catdir(KrangRoot, "templates");
-    $ENV{HTML_TEMPLATE_ROOT} = $html_template_root unless (defined($ENV{HTML_TEMPLATE_ROOT}));
+    $ENV{HTML_TEMPLATE_ROOT} = catdir(KrangRoot, "templates");
 }
 
 sub load_tmpl {
@@ -113,7 +110,11 @@ sub run {
         Krang::Session->unload();
     }
 
-    die ("Krang::CGI caught exception: $cgiapp_errors") if ($cgiapp_errors);
+    if ($cgiapp_errors) {
+        my $error = "Krang::CGI caught exception: $cgiapp_errors";
+        critical ($error);
+        die ($error);
+    }
 
     return $output;
 }
@@ -134,19 +135,17 @@ sub dump_html {
     }
     $output .= "</OL>\n";
 
-    # Dump Session state
-    $output .= "<P>\nSession State:<BR>\n<OL>\n";
-    foreach my $ek (sort(keys(%session))) {
-        $output .= "<LI> $ek => '<B>".$session{$ek}."</B>'\n";
-    }
-    $output .= "</OL>\n";
-
     # Dump ENV
     $output .= "<P>\nQuery Environment:<BR>\n<OL>\n";
     foreach my $ek (sort(keys(%ENV))) {
         $output .= "<LI> $ek => '<B>".$ENV{$ek}."</B>'\n";
     }
     $output .= "</OL>\n";
+
+    # Dump Session state
+    $output .= "<P>\nSession State:<BR>\n<b><PRE>";
+    $output .= Data::Dumper::Dumper(\%session);
+    $output .= "</PRE></b>\n";
 
     return $output;
 }

@@ -62,7 +62,7 @@ None.
 
 use Krang;
 use Krang::CGI::Login;
-use Apache::URI;
+use Apache;
 use Apache::Constants qw(:response);
 use Apache::Cookie;
 use File::Spec::Functions qw(splitdir rel2abs catdir);
@@ -71,7 +71,7 @@ use Krang::Conf qw(KrangRoot);
 use HTML::Template;
 use Digest::MD5 qw(md5_hex md5);
 use Krang::Log qw(critical info debug);
-
+use CGI ();
 
 # Login app name
 use constant LOGIN_APP => 'login.pl';
@@ -107,7 +107,11 @@ sub trans_handler ($$) {
 
     # Are we in the context of an Instance server?
     if ($flavor eq 'instance') {
-        die ("No instance name set for this Krang instance") unless (length($instance_name));
+        unless (length($instance_name)) {
+            my $error = "No instance name set for this Krang instance";
+            critical ($error);
+            die ($error);
+        }
 
         # Set current instance, or die trying
         debug("Krang::Handler:  Setting instance to '$instance_name'");
@@ -129,8 +133,11 @@ sub trans_handler ($$) {
     if (length($instance_name)) {
 
         # We have an instance name.  We should be in a matching path
-        die ("Expected uri like '/$instance_name\*', got '$uri' instead") 
-          unless ($uri =~ /^\/$instance_name/);
+        unless ($uri =~ /^\/$instance_name/) {
+            my $error = "Expected uri like '/$instance_name\*', got '$uri' instead";
+            critical ($error);
+            die ($error);
+        }
 
         # Set current instance, or die trying
         debug("Krang::Handler:  Setting instance to '$instance_name'");
@@ -233,7 +240,7 @@ sub authz_handler ($$) {
         return DECLINED;
     }
 
-    my $path      = $r->parsed_uri()->path();
+    my $path      = $r->uri();
     my $instance  = Krang::Conf->instance();
     my $flavor    = $r->dir_config('flavor');
 
@@ -296,7 +303,11 @@ sub _redirect_to_login {
 
     my $login_app = LOGIN_APP;
     my $new_uri = ($flavor eq 'instance' ? "/$login_app" : "/$instance/$login_app");
-    $new_uri .= '?target=' . $self->escape_url( $r->uri() );
+
+    my $orig_uri = $r->uri();
+    $orig_uri .= '?' . $r->args() if ($r->args());
+    my $esc_orig_uri = CGI->escape( $orig_uri );
+    $new_uri .= '?target=' . $esc_orig_uri;
 
     return $self->_do_redirect($r, $new_uri);
 }
@@ -308,23 +319,8 @@ sub _do_redirect {
 
     $r->err_header_out(Location => $new_uri);
     my $output = "Redirect: <a href=\"$new_uri\">$new_uri</a>";
-    # $r->custom_response(REDIRECT, $output);
 
     return REDIRECT;
-}
-
-
-sub escape_url {
-    my $self = shift;
-    my ($text) = @_;
-
-    # URL-escape string
-    $text =~ s/\=/\%3d/g;
-    $text =~ s/\&/\%26/g;
-    $text =~ s/\?/\%3f/g;
-    $text =~ s/\//\%2f/g;
-
-    return $text;
 }
 
 
