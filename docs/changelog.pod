@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in Krang::ListItem::find() which prevented C<ids_only>
+from working. [Sam]
+
+=item *
+
 Added missing indexes to the list tables, providing an impressive
 speedup in working on large lists. [Sam]
 

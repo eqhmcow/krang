@@ -312,7 +312,7 @@ not $valid_params{$param};
     if ($args{'count'}) {
         $select_string = 'count(*) as count';
     } elsif ($args{'ids_only'}) {
-        $select_string = 'list_id';
+        $select_string = 'list_item_id';
     } else {
         $select_string = join(',', (RO_FIELDS,RW_FIELDS));
     }
