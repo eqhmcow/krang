@@ -140,6 +140,10 @@ sub search {
     # Configure pager
     my $pager = Krang::HTMLPager->new(
                                       cgi_query => $q,
+                                      persist_vars => {
+                                                       rm => 'search',
+                                                       search_filter => $search_filter,
+                                                      },
                                       use_module => 'Krang::Contrib',
                                       find_params => { simple_search => $search_filter },
                                       columns => [qw(last first_middle type command_column checkbox_column)],

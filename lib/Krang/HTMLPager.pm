@@ -28,7 +28,10 @@ Krang::HTMLPager - Web-paginate lists of records
   # Instantiate new template
   my $pager = Krang::HTMLPager->new(
     cgi_query => $query,
-    persist_vars => [ qw( rm search_filter ) ],
+    persist_vars => {
+                      rm => 'search',
+                      search_filter => $search_filter,
+                    },
     use_module => 'Krang::Contrib',
     find_params => { simple_search => $q->param('search_filter') },
 
@@ -145,7 +148,7 @@ sub init {
 
     # Set up default values
     my %defaults = (
-                    persist_vars => [],
+                    persist_vars => {},
                     find_params => {},
                     columns => [],
                     column_labels => {},
@@ -210,7 +213,7 @@ sub output {
 
     # Dynamically create template as scalar with proper columns
     my $pager_tmpl = '';
-    # $pager_tmpl .= '<form name="krang_pager_form" method="POST">';
+    $pager_tmpl .= '<form name="krang_pager_form" method="POST">';
 
     # Include javascript and hidden data template elements
     $pager_tmpl .= "\n\n<tmpl_include HTMLPager/pager-internals.tmpl>\n\n";
@@ -219,7 +222,7 @@ sub output {
     $pager_tmpl .= "<tmpl_if krang_pager_rows>\n\n";
 
     # Result count/page status display
-    $pager_tmpl .= "Found <tmpl_var found_count>.  Viewing <tmpl_var start_row> to <tmpl_var end_row>";
+    $pager_tmpl .= "Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row>";
 
     # Build up table and header row
     my @columns = @{$self->columns()};
@@ -246,6 +249,7 @@ EOF
   <tmpl_if is_current_page><b><tmpl_var page_number></b>
   <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number></a>
   </tmpl_if>
+  <tmpl_unless __last__>|</tmpl_unless>
 </tmpl_loop>
 
 <tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
@@ -259,7 +263,7 @@ EOF
 </tmpl_if>
 EOF
 
-    # $pager_tmpl .= "\n</form>\n\n";
+    $pager_tmpl .= "\n</form>\n\n";
 
     # print STDERR "$pager_tmpl\n\n";
 
@@ -343,12 +347,19 @@ krang_pager_curr_page_num, krang_pager_sort_field, and krang_pager_sort_order.
 
 =item persist_vars
 
-  persist_vars => [ qw( rm search_filter ) ]
+  persist_vars => {
+                    rm => 'search',
+                    search_filter => $search_filter,
+                  }
 
-An arrayref containing the names of CGI parameters which should be
+A hashref containing the names and values of CGI parameters which should be
 remembered as hidden data within the pager form.  This is necessary
 for maintaining web application state.  The pager expects to have its 
 own form for paging through data and re-sorting results.
+
+Values set in persist_vars will be implemented via CGI.pm's hidden() method
+with "-override=>1" set.  This will ensure that the value you specify will be
+set regardless of the current state of that form parameter.
 
 
 =item use_module
@@ -643,12 +654,22 @@ sub _fill_template {
         # Set the final column label HTML
         $column_header_labels{$col_tmpl_name} = $col_label;
     }
+    $t->param(%column_header_labels);
 
     # Process pager and get rows
     my $pager_view = $self->get_pager_view();
-
-    $t->param(%column_header_labels);
     $t->param($pager_view);
+
+    # Set up persist_vars
+    my @pager_persist_data = ();
+    while (my ($k, $v), each(%{$self->persist_vars()})) {
+        push(@pager_persist_data, $q->hidden(
+                                             -name => $k,
+                                             -value => $v,
+                                             -override => 1
+                                            ));
+    }
+    $t->param(pager_persist_data => join("\n", @pager_persist_data));
 }
 
 
@@ -789,6 +810,9 @@ sub validate_pager {
 
     # cgi_query
     croak ("No cgi_query specified") unless (ref($self->cgi_query));
+
+    # persist_vars
+    croak ("persist_vars is not a hash") unless (ref($self->persist_vars) eq 'HASH');
 
     # use_module
     my $use_module = $self->use_module();

@@ -5,7 +5,7 @@ use warnings;
 
 # Needed for Pager
 use CGI;
-
+use Krang::Script;
 
 BEGIN { use_ok('Krang::HTMLPager') }
 
@@ -22,7 +22,10 @@ isa_ok($pager, 'Krang::HTMLPager');
 my $q = CGI->new("search_filter=asd");
 my %pager_props = (
                    cgi_query => $q,
-                   persist_vars => [ qw( rm search_filter ) ],
+                   persist_vars => {
+                                    rm => 'search',
+                                    search_filter => '',
+                                   },
                    use_module => 'Krang::Contrib',
                    find_params => { simple_search => $q->param('search_filter') },
                    columns => [qw( last first_middle type command_column checkbox_column )],
@@ -52,7 +55,6 @@ for (keys(%pager_props)) {
 # Test default values
 $pager = Krang::HTMLPager->new();
 my @array_props = qw(
-                     persist_vars
                      columns
                      columns_sortable
                      command_column_commands
@@ -63,6 +65,7 @@ for (@array_props) {
 
 my @hash_props = qw(
                     find_params
+                    persist_vars
                     column_labels
                     columns_sort_map
                     command_column_labels
@@ -90,6 +93,10 @@ eval { $pager->output() };
 like($@, qr/No cgi_query specified/, "Validate: No CGI query");
 
 $pager->cgi_query(CGI->new(""));
+eval { $pager->output() };
+like($@, qr/persist_vars is not a hash/, "Validate: persist_vars hash");
+
+$pager->persist_vars({});
 eval { $pager->output() };
 like($@, qr/No use_module specified/, "Validate: No use_module");
 
@@ -174,5 +181,4 @@ $pager->id_handler( sub { return $_[0]->contrib_id } );
 
 # Pager should be able to output now.
 my $output = $pager->output();
-print "====================>$output<====================\n\n";
-
+like($output, qr/krang_pager_curr_page_num/, "Pager output looks right");

@@ -16,7 +16,7 @@
 
     function delete_selected () {
         if (confirm("Are you SURE you want to delete these contributors?")) {
-            var myform = document.forms["delete_selected_form"];
+            var myform = document.forms["krang_pager_form"];
             myform.rm.value = 'delete_selected';
             myform.submit();
         }
@@ -59,10 +59,11 @@ SEARCH<br />
 
 
 
+<!--
 <form name="delete_selected_form" method="POST">
 <input type="hidden" name="rm" value="search">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-
+-->
 
 
 <!-- START Krang::HTMLPager output -->
@@ -81,7 +82,7 @@ SEARCH<br />
 
 
 <!-- End delete_selected_form -->
-</form>
+<!-- </form> -->
 
 
 <tmpl_include /footer.tmpl>
