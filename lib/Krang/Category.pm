@@ -9,8 +9,7 @@ Krang::Category - a means access to information on categories
   use Krang::Category;
 
   # construct object
-  my $category = Krang::Category->new(element_id => 1, 		# optional
-			      	      name => '/category/X/',	# required
+  my $category = Krang::Category->new(name => '/category/X/',	# required
 			      	      parent_id => 1,	  	# optional
 			      	      site_id => 1);		# required
 
@@ -18,14 +17,17 @@ Krang::Category - a means access to information on categories
   $category->save();
 
   # getters
-  my $id = $category->category_id();	# undef until after save()
+  my $element = $category->element();
   my $name = $category->name();
   my $id = $category->parent_id();
+  my $id = $category->site_id();
+
+  my $id = $category->category_id();	# undef until after save()
+  my $id = $category->element_id();	# undef until after save()
   my $path = $category->path();		# undef until after save()
-  my $id = $site->id();
 
   # setter
-  $category->element_id( 33 );
+  $category->element( $element );
 
   # delete the category from the database
   $category->delete();
@@ -74,6 +76,7 @@ use Time::Piece::MySQL;
 ###################
 use Krang;
 use Krang::DB qw(dbh);
+use Krang::Element;
 
 #
 # Package Variables
@@ -82,20 +85,21 @@ use Krang::DB qw(dbh);
 ############
 # Read-only fields
 use constant CATEGORY_RO => qw(category_id
+			       element_id
 			       name
 			       parent_id
 			       path
 			       site_id);
 
 # Read-write fields
-use constant CATEGORY_RW => qw(element_id);
+use constant CATEGORY_RW => qw(element);
 
 # Globals
 ##########
 
 # Lexicals
 ###########
-my %category_args = qw(element_id name parent_id site_id);
+my %category_args = map {$_ => 1} qw(name parent_id site_id);
 my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW;
 
 # Constructor/Accessor/Mutator setup
@@ -123,7 +127,11 @@ The available fields for a category object are:
 
 The object's id in the category table
 
-=item * element_id
+=item * element
+
+Element object associated with the given category object
+
+=item * element_id (read-only)
 
 Id in the element table of this object's element
 
@@ -156,8 +164,6 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 
 =over 4
 
-=item * element_id
-
 =item * name
 
 =item * parent_id
@@ -183,6 +189,9 @@ sub init {
 
     $self->hash_init(%args);
 
+    # define element
+    $self->{element} = Krang::Element->new(class => 'category');
+
     return $self;
 }
 
@@ -191,16 +200,18 @@ sub init {
 
 =item * $success = Krang::Category->delete( $category_id )
 
-Instance or class method that deletes the given category from the database.  It
-returns '1' following a successful deletion.  The method will croak if the
-category has subcategories or if any objects refer to it (media, stories,
-templates).
+Instance or class method that deletes the given category and its associated
+element from the database.  It returns '1' following a successful deletion.
+The method will croak if the category has subcategories or if any objects
+refer to it (media, stories, templates).
 
 =cut
 
 sub delete {
     my $self = shift;
     my $id = shift || $self->{category_id};
+    my $element_id = $self->{element_id} ||
+      (Krang::Category->find(id => $id))[0]->{element_id};
     my $dbh = dbh();
 
     # First pass...
@@ -213,7 +224,10 @@ SQL
       if $dbh->do($query, undef, ($id, $id, $id, $id));
 
     $query = "DELETE FROM category WHERE category_id = '$id'";
+    my $e_query = "DELETE FROM element WHERE element_id = '$element_id'";
+
     $dbh->do($query);
+    $dbh->do($e_query);
 
     return 1;
 }
@@ -447,6 +461,11 @@ sub save {
     croak(__PACKAGE__ . "->save(): field '$field' is a duplicate of site id" .
           " '$site_id'.") if defined $site_id;
 
+    # save element, get id back
+    my $element = $self->{element};
+    $element->save();
+    $self->{element_id} = $element->element_id();
+
     my $query;
     my $dbh = dbh();
     if ($id) {
@@ -492,7 +511,7 @@ sub save {
 
 =head1 TO DO
 
-Lots.
+Write a much better DESCRIPTION section.
 
 =head1 SEE ALSO
 
@@ -502,5 +521,11 @@ L<Krang>, L<Krang::DB>
 
 
 my $quip = <<END;
-Nothing yet...
+Life's but a walking shadow, a poor player
+That struts and frets his hour upon the stage
+And then is heard no more: it is a tale
+Told by an idiot, full of sound and fury,
+Signifying nothing.
+
+--Shakespeare (Macbeth Act V, Scene 5)
 END
