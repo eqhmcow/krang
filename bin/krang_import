@@ -121,7 +121,7 @@ BEGIN {
 
 
 use Krang::Script;
-use Krang::Conf qw(KrangRoot ElementLibrary);
+use Krang::Conf qw(KrangRoot);
 use Krang::DataSet;
 use Krang::Story;
 use Krang::Media;
