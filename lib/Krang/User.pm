@@ -90,6 +90,9 @@ use warnings;
 ###################
 use Carp qw(croak);
 use Digest::MD5 qw(md5_hex);
+use Exception::Class
+  ('Krang::User::Duplicate' => {fields => 'duplicates'},
+   'Krang::User::Dependency' => {fields => 'dependencies'});
 require Exporter;
 
 # Internal Modules
@@ -128,6 +131,13 @@ SALT
 
 our @ISA = qw/Exporter/;
 our @EXPORT_OK = ('$SALT');
+
+# hash equating group ids with groups
+our %user_groups = (1 => 'Global Admin',
+                    2 => 'Site Admin',
+                    3 => 'Category Admin',
+                    4 => 'Default',
+                    5 => 'XXX',);
 
 # Lexicals
 ###########
@@ -267,8 +277,9 @@ sub check_auth {
 
 Instance or class method that deletes the given user object from the database.
 It returns '1' following a successful deletion.
-# TO DO: what should we do if items belong to or are checked out by the current
-# user
+
+N.B. - this call may result in an exception as it precipitates a call to
+dependent check.  See $user->dependent_check().
 
 =cut
 
@@ -277,14 +288,11 @@ sub delete {
     my $id = shift || $self->{user_id};
     my $dbh = dbh();
 
-    # object reference lookup
-    my ($dependents, %info) = $self->dependent_check();
-    if ($dependents) {
-        my $info = join("\n\t",
-                        map {"$_: [" . join(",", @{$info{$_}}). "]"}
-                        keys %info);
-        croak(__PACKAGE__ . "->delete(): The following objects reference " .
-              "this class:\n\t$info");
+    # don't delete if the user has something checked out
+    if (ref $self) {
+        $self->dependent_check();
+    } else {
+        $self->dependent_check($id);
     }
 
     $dbh->do("DELETE FROM usr WHERE user_id = ?", undef, $id);
@@ -294,21 +302,31 @@ sub delete {
 }
 
 
-=item * ($dependents, %info) = $user->dependent_check()
+=item * $user->dependent_check()
 
-This method returns the number of dependents and a hash of classes and their
-respective object ids that reference the current user object.  '0' and undef
-will be returned if no references are found.
+This method checks whether an objects are checked out by the current user.  If
+this is the case a Krang::User::Dependency exception is thrown.
+Krang::User::Dependency exceptions contain a 'dependencies' field that contains
+a hash of class names and id of that class that depend on this User object.
+One can handle such an exception thusly:
+
+ eval {$user->dependent_check()};
+ if ($@ && $@->isa('Krang::User::Dependency')) {
+     my %dependencies = $@->dependencies;
+     croak("The following objects depend on this user:\n\t" .
+	   join("\n\t", map {"$_: " . join(",", @{$dependencies{$_}})}
+		keys %dependencies));
+ }
 
 =cut
 
 sub dependent_check {
     my $self = shift;
-    my $id = $self->{user_id};
+    my $id = shift || $self->{user_id};
     my $dependents = 0;
-    my ($dbh, %info, $oid, $sth);
+    my %info;
 
-    for my $class(qw/media template/) { # no find in Krang::Story yet
+    for my $class(qw/media story template/) {
         my $module = ucfirst $class;
         no strict 'subs';
         my @objects = "Krang::$module"->find(checked_out_by => $id);
@@ -319,32 +337,43 @@ sub dependent_check {
         }
     }
 
-    return ($dependents, %info);
+    Krang::User::Dependency->throw(message => 'Objects depend on this user',
+                                   dependencies => \%info)
+        if $dependents;
+
+    return 0;
 }
 
 
-=item * ($duplicates, %info) = $user->duplicate_check()
+=item * $user->duplicate_check()
 
 This method checks the database to see if any existing site objects possess any
-of the same values as the one in memory.  If this is the case, the number of
-duplicates and a hash of ids and the duplicated fields is returned; otherwise,
-0 and undef are returned.
+of the same values as the one in memory.  If this is the case, a
+Krang::User::Duplicate exception is throw; otherwise, 0 and undef are returned.
+
+Krang::User::Duplicate exception have a 'duplicates' field that contains info
+about the object that would be duplicated.  One can handle the exception
+thusly:
+
+ eval {$user->duplicate_check()};
+ if ($@ && $@->isa('Krang::User::Duplicate')) {
+     my %duplicates = $@->duplicates;
+     croak("The following objects are duplicated on this object:\n\t" .
+	   join("\n\t", map {"$_: " . join(",", @{$duplicates{$_}})}
+		keys %duplicates));
+ }
 
 =cut
 
 sub duplicate_check {
     my $self = shift;
     my $id = $self->{user_id};
-    my $duplicates = 0;
-
     my $query = <<SQL;
 SELECT user_id, login, password, first_name, last_name
 FROM usr
 WHERE login = ? OR password = ? OR (first_name = ? AND last_name = ?)
 SQL
-
-    my @params = ($self->{login}, $self->{password},
-                  $self->{first_name}, $self->{last_name});
+    my @params = map {$self->{$_}} qw/login password first_name last_name/;
 
     # alter query if save() has already been called
     if ($id) {
@@ -355,7 +384,10 @@ SQL
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
+
     my (%info, $row);
+    my $duplicates = 0;
+
     $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     while ($sth->fetchrow_arrayref()) {
         for (keys %$row) {
@@ -366,9 +398,13 @@ SQL
             }
         }
     }
-    $sth->finish();
 
-    return ($duplicates, %info);
+    Krang::User::Duplicate->throw(message => 'This object duplicates one or ' .
+                                  'more User objects',
+                                  duplicates => \%info)
+        if $duplicates;
+
+    return $duplicates;
 }
 
 
@@ -404,6 +440,10 @@ characters must surround the sub-striqng).  The valid search fields are:
 =item * phone
 
 =item * user_id
+
+=item * simple_search
+
+Seaches first_name, last_name for matching LIKE strings
 
 =back
 
@@ -453,8 +493,9 @@ The method croaks if an invalid search criteria is provided or if both the
 sub find {
     my $self = shift;
     my %args = @_;
-    my ($fields, @params, $where_clause);
+    my ($fields, @params);
     my %lookup_cols = %user_cols;
+    my $where_clause = '';
     $lookup_cols{group_ids} = 1;
 
     # are we looking up group ids as well
@@ -465,6 +506,7 @@ sub find {
     my $limit = delete $args{limit} || '';
     my $offset = delete $args{offset} || '';
     my $order_by = delete $args{order_by} || 'user_id';
+    $order_by = ($order_by eq 'group_id' ? "ug." : "u.") . $order_by;
 
     # set search fields
     my $count = delete $args{count} || '';
@@ -497,7 +539,8 @@ sub find {
         ( my $lookup_field = $arg ) =~
           s/^(.+)_like$/($arg eq 'group' ? 'ug' : 'u'). $1/e;
 
-        push @invalid_cols, $arg unless exists $lookup_cols{$lookup_field};
+        push @invalid_cols, $arg unless exists $lookup_cols{$lookup_field} ||
+          $arg eq 'simple_search';
 
         if (($arg eq 'user_id' || $arg eq 'group_ids') &&
             ref $args{$arg} eq 'ARRAY') {
@@ -505,7 +548,22 @@ sub find {
             my $tmp = join(" OR ", map {"$field = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
+        } elsif ($arg eq 'simple_search') {
+            my @words = split(/\s+/, $args{$arg});
+            for (@words) {
+                if ($where_clause) {
+                    $where_clause .= " AND concat(u.first_name, ' ', " .
+                      "u.last_name) LIKE ?";
+                } else {
+                    $where_clause = "concat(u.first_name, ' ', u.last_name) " .
+                      "LIKE ?";
+                }
+                push @params, "%" . $_ . "%";
+            }
         } else {
+            # prepend 'u' or 'ug'
+            $lookup_field = ($arg eq 'group_id' ? "ug." : "u.") .
+              $lookup_field;
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
             if (not defined $args{$arg}) {
@@ -521,15 +579,20 @@ sub find {
     croak("The following passed search parameters are invalid: '" .
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
-    # construct base query
-    my $query = "SELECT $fields FROM usr u";
-    $query .= ", usr_user_group ug" if $groups;
+    # revise $from and/or $where_clause
+    my $from = "usr u";
+    if ($groups) {
+        $from .= ", usr_user_group ug";
+        $where_clause = "u.user_id = ?" . $where_clause
+          if $where_clause !~ /u.user_id = \?/;
+        $where_clause = "u.user_id = ug.user_id AND " . $where_clause;
+    }
+
+    # setup base query
+    my $query = "SELECT $fields FROM $from";
 
     # add WHERE and ORDER BY clauses, if any
-    if ($where_clause) {
-        $query .= " WHERE " . ($groups ? "u.user_id = ug.user_id AND" : "")
-          . "$where_clause";
-    }
+    $query .= " WHERE $where_clause" if $where_clause;
     $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
@@ -561,25 +624,36 @@ sub find {
         if ($single_column) {
             push @users, $row;
         } else {
-            if ($groups) {
-                if ($id != $row->{user_id}) {
-                    my %$hashref = map {$_ => $row->{$_}}
-                      grep {$_ ne 'user_group_id'} keys %$row;
-                    push @users, bless($hashref, $self);
-                }
-                push @{$users[$#users]->{group_ids}}, $row->{user_group_id};
-
-                $id = $row->{user_id}
-                  if ($id != $row->{user_id} || !defined $id);
-            } else {
             push @users, bless({%$row}, $self);
-            }
-
         }
+    }
+
+    # associate group_ids with user objects
+    unless ($count) {
+        my %user_hash = map {$_->{user_id} => $_} @users;
+        _add_group_ids(\%user_hash, $dbh);
     }
 
     # return number of rows if count, otherwise an array of ids or objects
     return $count ? $users[0] : @users;
+}
+
+
+# looks up associate group_ids with the given User object
+sub _add_group_ids {
+    my ($users_href, $dbh) = @_;
+    my $query = <<SQL;
+SELECT user_group_id FROM usr_user_group
+WHERE user_id = ?
+SQL
+    my $sth = $dbh->prepare($query);
+
+    while (my($id, $obj) = each %$users_href) {
+        my $gid;
+        $sth->execute($id);
+        $sth->bind_col(1, \$gid);
+        push @{$obj->{group_ids}}, $gid while $sth->fetch();
+    }
 }
 
 
@@ -617,15 +691,7 @@ sub save {
     my @save_fields = grep {$_ ne 'user_id'} keys %user_cols;
 
     # check for duplicates
-    my ($duplicates, %info) = $self->duplicate_check();
-    if ($duplicates) {
-        my $info = join("\n\t",
-                        map {"id '$_': " .
-                               join(", ", sort @{$info{$_}})}
-                        keys %info) . "\n";
-        croak(__PACKAGE__ . "->save(): This object duplicates the following " .
-              "user objects:\n\t$info");
-    }
+    $self->duplicate_check();
 
     my $query;
     my $dbh = dbh();
@@ -652,16 +718,18 @@ sub save {
       unless $dbh->do($query, undef, @params);
 
     $self->{user_id} = $dbh->{mysql_insertid} unless $id;
+    $id = $self->{user_id};
 
     # associate user with groups if any
-    if (exists $self->{group_ids}) {
+    my @gids = @{$self->{group_ids}};
+    if (@gids) {
         eval {
             $dbh->do("LOCK TABLES usr_user_group WRITE");
             $dbh->do("DELETE FROM usr_user_group WHERE user_id = ?",
                      undef, ($id));
             my $sth = $dbh->prepare("INSERT INTO usr_user_group VALUES " .
                                     "(?,?)");
-            $sth->execute(($id, $_)) for @{$self->{group_ids}};
+            $sth->execute(($id, $_)) for @gids;
             $dbh->do("UNLOCK TABLES");
         };
 

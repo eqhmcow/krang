@@ -621,7 +621,7 @@ will be deleted after its action is performed.
 sub run {
     my ($self, $log) = @_;
     croak(__PACKAGE__ . "->run(): \$log handle is undefined or not an " .
-          "object.")
+          "IO::File object.")
       unless (defined $log || ref $log || $log->isa('IO::File'));
     my $now = localtime();
     my @objs = Krang::Schedule->find(next_run_less_or_equal => 'now()');

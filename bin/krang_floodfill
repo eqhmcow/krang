@@ -33,6 +33,8 @@ text.
 
   --stories  - number of stories to create, defaults to 50
 
+  --users    - number of users to create, defaults to 50
+
 =cut
 
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
@@ -72,6 +74,7 @@ use Krang::Conf qw(KrangRoot);
 use Krang::Site;
 use Krang::Category;
 use Krang::Pref;
+use Krang::User;
 
 use Time::Piece;
 use Imager;
@@ -82,6 +85,7 @@ my $cats     = 15;
 my $contribs = 50;
 my $stories  = 50;
 my $media    = 25;
+my $users    = 50;
 pod2usage(2) unless
   GetOptions(help         => \$help,
              man          => \$man,
@@ -90,6 +94,7 @@ pod2usage(2) unless
              'contribs=s' => \$contribs,
              'stories=s'  => \$stories,
              'media=s'    => \$media,
+	     'users=s'	  => \$users,
             );
 
 pod2usage(1)             if $help;
@@ -196,9 +201,9 @@ for my $media_count (1 .. $media) {
     # pick a format
     my $format = (qw(jpg png gif))[int(rand(3))];
 
-    $img->write(file => "tmp.$format");
-    my $fh = IO::File->new("tmp.$format") 
-      or die "Unable to open tmp.$format: $!";
+    $img->write(file => "tmp/tmp.$format");
+    my $fh = IO::File->new("tmp/tmp.$format")
+      or die "Unable to open tmp/tmp.$format: $!";
 
     # create a media object
     my $media = Krang::Media->new(title      => join(" ", 
@@ -303,6 +308,33 @@ for my $story_count (1 .. $stories) {
 }
 
 
+# create users
+my %groups = %Krang::User::user_groups;
+my @users;
+for(1 .. $users) {
+    my $login = lc(get_word());
+    my $fname = ucfirst(get_word());
+    my $lname = ucfirst(get_word());
+    my $password = lc(get_word());
+    my @groups = grep { int(rand(5)) } keys %groups;
+    @groups = (keys %groups)[0] unless @groups;
+
+    my $user = Krang::User->new(login 		=> $login,
+                                first_name  	=> $fname,
+                                last_name   	=> $lname,
+                                email  		=> "$fname\@$lname.com",
+                                password	=> $password,
+                                phone		=> "1-800-$lname",);
+    $user->group_ids(@groups);
+    eval { $user->save() };
+    redo if $@ and $@ =~ /duplicate/;
+    push(@users, $user);
+    print STDERR "Created user " .
+      join(' ', grep { $_ } ("$login:", $fname, $lname)) .
+        " (" . join(', ', map { $groups{$_} } @groups) . ")" .
+          "\n";
+}
+
 # get a random date, with time set to midnight
 sub get_date {
     my $m = int rand(11) + 1;
@@ -328,7 +360,6 @@ BEGIN {
         return lc $words[int(rand(scalar(@words)))];
     }
 }
-                      
 
 # we outy
 exit(0);

@@ -23,3 +23,6 @@ CREATE TABLE usr_user_group (
         user_group_id   INT UNSIGNED NOT NULL,
         PRIMARY KEY (user_id, user_group_id)        
 );
+
+/* associate 'admin' is in group '1' */
+INSERT INTO usr_user_group VALUES (1,1);

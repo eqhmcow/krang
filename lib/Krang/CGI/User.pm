@@ -31,7 +31,7 @@ use base qw/Krang::CGI/;
 use Krang::History;
 use Krang::HTMLPager;
 use Krang::Log;
-use Krang::Message;
+use Krang::Message qw(add_message);
 use Krang::Pref;
 use Krang::Session;
 use Krang::User;
@@ -60,7 +60,6 @@ sub setup {
 		save_edit
 		save_stay_edit
 		search
-		view
 	/]);
 
 	$self->tmpl_path('User/');
@@ -166,12 +165,9 @@ sub save_stay_add {
 
 =item * delete
 
-Description of run-mode delete...
+Deletes the user from 'edit' screen and redirects to 'search' run mode.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+It expects a 'user_id' query param.
 
 =cut
 
@@ -179,6 +175,11 @@ sub delete {
 	my $self = shift;
 
 	my $q = $self->query();
+        my $user_id = $q->param('user_id');
+
+        eval {Krang::User->delete($user_id)};
+        if ($@) {
+        }
 
 	return $self->dump_html();
 }
@@ -186,12 +187,11 @@ sub delete {
 
 =item * delete_selected
 
-Description of run-mode delete_selected...
+Deletes User objects selected from the 'search' screen.  Returns to 'search'
+afterwards.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+This mode expects the 'krang_pager_rows_checked' param which should contain an
+array of 'user_id's signifying the user objects to be deleted.
 
 =cut
 
@@ -199,8 +199,18 @@ sub delete_selected {
 	my $self = shift;
 
 	my $q = $self->query();
+        my @user_delete_list = ($q->param('krang_pager_rows_checked'));
+        $q->delete('krang_pager_rows_checked');
 
-	return $self->dump_html();
+        # return to search if no ids were passed
+        return $self->search() unless @user_delete_list;
+
+        # destroy users
+        Krang::User->delete($_) for @user_delete_list;
+
+        add_message('message_selected_deleted');
+
+	return $self->search();
 }
 
 
@@ -286,6 +296,9 @@ sub save_stay_edit {
 
 =item * search
 
+Display a list of all users or those matching the supplied search criteria.
+
+
 Description of run-mode search...
 
   * Purpose
@@ -300,27 +313,68 @@ sub search {
 
 	my $q = $self->query();
 
-	return $self->dump_html();
-}
+        my $t = $self->load_tmpl("list_view.tmpl",
+                                 associate => $q,
+                                 loop_context_vars => 1);
 
+        # simple search
+        my $search_filter = $q->param('search_filter') || '';
 
-=item * view
+        # setup pager
+        my $pager = Krang::HTMLPager->new(cgi_query => $q,
+                                          persist_vars => {
+                                                           rm => 'search',
+                                                           search_filter =>
+                                                           $search_filter,
+                                                          },
+                                          use_module => 'Krang::User',
+                                          find_params =>
+                                          {simple_search => $search_filter},
+                                          columns => [
+                                                      'login',
+                                                      'last',
+                                                      'first',
+                                                      'email',
+                                                      'phone',
+                                                      'groups',
+                                                      'command_column',
+                                                      'checkbox_column',
+                                                     ],
+                                          column_labels => {
+                                                            login => 'Login',
+                                                            last =>
+                                                            'Last Name',
+                                                            first =>
+                                                            'First Name',
+                                                            email => 'Email',
+                                                            phone => 'Phone #',
+                                                            groups =>
+                                                            'User Groups',
+                                                           },
+                                          columns_sortable =>
+                                          [qw(login last first email)],
+                                          columns_sort_map => {
+                                                               last =>
+                                                               'last_name',
+                                                               first =>
+                                                               'first_name'
+                                                              },
+                                          command_column_commands =>
+                                          [qw(edit_user)],
+                                          command_column_labels =>
+                                          {edit_user => 'Edit'},
+                                          row_handler => \&search_row_handler,
+                                          id_handler =>
+                                          sub {return $_[0]->user_id},
+                                         );
 
-Description of run-mode view...
+        # get pager output
+        $t->param(pager_html => $pager->output());
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+        # get counter params
+        $t->param(row_count => $pager->row_count());
 
-=cut
-
-sub view {
-	my $self = shift;
-
-	my $q = $self->query();
-
-	return $self->dump_html();
+        return $t->output();
 }
 
 
@@ -330,6 +384,17 @@ sub view {
 #####  PRIVATE METHODS   #####
 ##############################
 
+# Handles rows for search run mode
+sub search_row_handler {
+    my ($row, $user) = @_;
+    $row->{login} = $user->login();
+    $row->{last} = $user->last_name();
+    $row->{first} = $user->first_name();
+    $row->{email} = $user->email();
+    $row->{phone} = $user->phone();
+    $row->{groups} = join(", ", map {$Krang::User::user_groups{$_}}
+                          $user->group_ids());
+}
 
 
 =back
@@ -351,5 +416,5 @@ my $quip = <<END;
 I do not feel obliged to believe that the same God who has endowed us
 with sense, reason, and intellect has intended us to forgo their use.
 
--- Galileo Galilei 
+-- Galileo Galilei
 END
