@@ -6,7 +6,7 @@ body {
   font-size:        12px;
   margin:			  0px 10px;
   padding:          0px;
-  background-image: url("/images/left_bg.jpg");
+  background-image: url("/images/left-bg.gif");
   background-repeat: repeat-y;
 }
 
@@ -361,34 +361,34 @@ td, th {
 /*** prettier buttons ***/
 .button {
    background-color: <tmpl_var background_color>;
-   color:            #003466;
+   color:            <tmpl_var button_color>;
    font-family:      Verdana,Helvetica,Arial,sans-serif;
    font-size:        12px;
 }
 
 /*** form field classes ***/
 .invalid { 
-    background-color: #FFFF99 
+    background-color: <tmpl_var invalid_color>
 }
 .invalid textarea { 
-    background-color: #FFFF99 
+    background-color: <tmpl_var invalid_color>
 }
 .invalid input    { 
-    background-color: #FFFF99
+    background-color: <tmpl_var invalid_color>
 }
 .invalid select   {
-    background-color: #FFFF99 
+    background-color: <tmpl_var invalid_color>
 }
 
 .alert {
-  color:          red;
+  color:          <tmpl_var alert_color>;
   font-weight:    bold;
   margin-bottom:  5px;
 }
 
 .alertp {
   position:      absolute;
-  color:         red;
+  color:         <tmpl_var alert_color>;
   font-weight:   bold;
   width:        400px;
   left:         275px;
@@ -444,7 +444,7 @@ a:active {
      padding:          2px;
      margin-bottom:    4px;     
      background-color: <tmpl_var dark_color>;
-     color:            #dceaf5;
+     color:            <tmpl_var light_text_color>;
      width:            225px;
 }
 
@@ -468,7 +468,7 @@ a:active {
 
 .hpts-button {
     background-color: <tmpl_var background_color>;
-    color:            #003466;
+    color:            <tmpl_var button_color>;
     font-family:      Verdana,Helvetica,Arial,sans-serif;
 }
 
@@ -622,11 +622,11 @@ div.boxh {
 }
 
 a.helplink: { 
-  color:            #05034c;
+  color:            <tmpl_var link_color>;
   text-decoration:  underline; 
 }
 a.helplink:visited { 
-  color:            #05034c;
+  color:            <tmpl_var link_color>;
   text-decoration:  underline;
 }
 a.helplink:active {
