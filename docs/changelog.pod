@@ -2,7 +2,18 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 v1.016 - Under Development
+=head2 v1.017 - Under Development
+
+=over
+
+=item *
+
+Fixed krang_ftpd to setup higher file and memory limits.  These limits
+were preventing the FTP server from operating on some systems. [Sam]
+
+=back
+
+=head2 v1.016 - April 20, 2004
 
 =over
 
