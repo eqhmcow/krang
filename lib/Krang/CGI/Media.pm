@@ -334,8 +334,11 @@ sub list_active {
     # Set up find_params for pager
     my %find_params = (checked_out => 1);
 
-    # FIX: this should look at user permissions
-    my $may_checkin_all = 1;
+    # can checkin all?
+    my %admin_perms = Krang::Group->user_admin_permissions();
+    my %asset_perms = Krang::Group->user_asset_permissions();
+    my $may_checkin_all = ($admin_perms{may_checkin_all} and
+                           $asset_perms{media} eq 'edit') ? 1 : 0;
 
     my $pager = Krang::HTMLPager->new(
        cgi_query => $q,
