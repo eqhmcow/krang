@@ -5,16 +5,17 @@ DROP TABLE IF EXISTS contrib;
 --
 
 CREATE TABLE contrib (
-    contrib_id int(10) unsigned NOT NULL auto_increment,
-    prefix varchar(255) default NULL,
-    first varchar(255) default NULL,
-    middle varchar(255) default NULL,
-    last varchar(255) default NULL,
-    suffix varchar(255) default NULL,
-    email varchar(255) default NULL,
-    phone varchar(255) default NULL,
-    bio text,
-    url text,
+    contrib_id  int(10) unsigned NOT NULL auto_increment,
+    prefix      varchar(255) default NULL,
+    first       varchar(255) default NULL,
+    middle      varchar(255) default NULL,
+    last        varchar(255) default NULL,
+    suffix      varchar(255) default NULL,
+    email       varchar(255) default NULL,
+    phone       varchar(255) default NULL,
+    media_id    mediumint unsigned default NULL,
+    bio         text,
+    url         text,
     PRIMARY KEY contrib_id (contrib_id)
 ) TYPE=MyISAM;
 

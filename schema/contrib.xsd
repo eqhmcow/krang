@@ -15,6 +15,7 @@
                 <xs:element name="bio" type="xs:string"/>
                 <xs:element name="url" type="xs:string"/>
                 <xs:element name="contrib_type" type="xs:string" maxOccurs="unbounded"/>
+                <xs:element name="media_id" type="xs:int" minOccurs="0"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>

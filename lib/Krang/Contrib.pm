@@ -5,7 +5,7 @@ use Krang::DB qw(dbh);
 use Carp qw(croak);
 
 # constants
-use constant FIELDS => qw(contrib_id prefix first middle last suffix email phone bio url);
+use constant FIELDS => qw(contrib_id prefix first middle last suffix email phone media_id bio url);
 
 =head1 NAME
 
@@ -165,6 +165,35 @@ sub full_name {
     return $name;
 }
 
+
+=item $contrib->image()
+
+Returns the Krang::Media object associated with this contributor.  Passing a Krang::Media object sets the media object associated with this contributor (overwriting any current image).
+
+=cut
+
+sub image {
+    my $self  = shift;
+    unless (@_) {
+        if (exists($self->{media_id})) {
+            my ($image) = Krang::Media->find(media_id => $self->{media_id});
+            return $image;
+        } else {
+            return undef;
+        }
+    }
+
+    my $image = shift;
+    unless ($image->isa('Krang::Media')) {
+        croak __PACKAGE__ . ": parameter is not a Krang::Media object";
+    }
+
+    $self->{media_id} = $image->media_id;
+
+    return;
+}
+
+
 =item $contrib->selected_contrib_type()
 
 Temporary value used by assets (media, story, etc) to show which
@@ -239,7 +268,7 @@ sub save {
             $dbh->do('INSERT into contrib_contrib_type (contrib_id, contrib_type_id) VALUES (?,?)', undef, $contrib_id, $type_id);
         }
     } else {
-        $dbh->do('INSERT INTO contrib ('.join(',', FIELDS).') VALUES (?,?,?,?,?,?,?,?,?,?)', undef, map { $self->{$_} } FIELDS);
+        $dbh->do('INSERT INTO contrib ('.join(',', FIELDS).') VALUES (' . join(',', ('?') x FIELDS) . ')', undef, map { $self->{$_} } FIELDS);
 
         $self->{contrib_id} = $dbh->{mysql_insertid};
         my $contrib_id = $self->{contrib_id};
@@ -485,14 +514,21 @@ sub serialize_xml {
                       "xsi:noNamespaceSchemaLocation" =>
                         'contrib.xsd');
 
-    # basic fields
-    for (FIELDS) {
-        $writer->dataElement($_ => $self->{$_});
-    }
-    
+    # basic fields -- media handled below.
+    $writer->dataElement($_ => $self->{$_}) for (grep { $_ ne 'media_id' } (FIELDS));
+
     # contrib types
     $writer->dataElement(contrib_type => $_) for $self->contrib_type_names;
-    
+
+    # media
+    if (exists($self->{media_id}) && defined($self->{media_id})) {
+        my ($media) = Krang::Media->find(media_id => $self->{media_id});
+        if (defined($media)) {
+            $writer->dataElement(media_id => $self->{media_id});
+            $set->add(object => $media, from => $self);
+        }
+    }
+
     # all done
     $writer->endTag('contrib');
 }
@@ -516,12 +552,21 @@ sub deserialize_xml {
     my $data = Krang::XML->simple(xml           => $xml, 
                                   forcearray    => ['contrib_type'],
                                   suppressempty => 1);
-    
+
     # create new contributor object
     my $contrib = Krang::Contrib->new();
 
     # set fields
-    $contrib->$_($data->{$_}) for (grep { $_ ne 'contrib_id' } (FIELDS));
+    $contrib->$_($data->{$_}) for (grep { $_ ne 'contrib_id' && $_ ne 'media_id' } (FIELDS));
+
+    # get media object
+    if (exists($data->{media_id})) {
+        my $media_id = $set->map_id(class => "Krang::Media",
+                                    id    => $data->{media_id});
+        my $media = Krang::Media->find(media_id => $media_id);
+        $contrib->image($media);
+    }
+
 
     # get hash of contrib type names to ids
     my %contrib_types = reverse Krang::Pref->get('contrib_type');
@@ -537,6 +582,7 @@ sub deserialize_xml {
 
     # add contributor types
     $contrib->contrib_type_ids(@contrib_type_ids);
+
 
     # save this contributor to the database
     eval { $contrib->save() };
