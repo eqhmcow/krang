@@ -130,7 +130,7 @@ sub find {
                                       );
     $t->param(return_params => $self->make_return_params(@return_param_list));
 
-    my $search_filter = $q->param('search_filter');
+    my $search_filter = defined($q->param('search_filter')) ? $q->param('search_filter') : $session{'KRANG_PERSIST_Media_search_filter'};
     my $show_thumbnails = $q->param('show_thumbnails');
     unless (defined($search_filter)) {
         # Define search_filter
@@ -159,6 +159,7 @@ sub find {
     $t->param(pager_html => $pager->output());
     $t->param(row_count => $pager->row_count());
     $t->param(show_thumbnails => $show_thumbnails);
+    $t->param(search_filter => $search_filter);
 
     # instance_name is used for preview window targeting
     my $instance_name = Krang::Conf->instance;
@@ -220,8 +221,8 @@ sub advanced_find {
     $persist_vars->{show_thumbnails} = $show_thumbnails;
 
     # Build find params
-    my $search_below_category_id = $q->param('search_below_category_id');
-    if ($search_below_category_id) {
+    my $search_below_category_id = defined($q->param('search_below_category_id')) ? $q->param('search_below_category_id') : $session{'KRANG_PERSIST_cat_chooser_id_search_form_search_below_category_id'};
+    if (defined($search_below_category_id)) {
         $persist_vars->{search_below_category_id} = $search_below_category_id;
         $find_params->{below_category_id} = $search_below_category_id;
     }
@@ -261,33 +262,39 @@ sub advanced_find {
     }
 
     # search_filename
-    my $search_filename = $q->param('search_filename');
-    if ($search_filename) {
+    my $search_filename = defined($q->param('search_filename')) ? $q->param('search_filename') : $session{'KRANG_PERSIST_Media_search_filename'};
+;
+    if (defined($search_filename)) {
         $search_filename =~ s/\W+/\%/g;
         $find_params->{filename_like} = "\%$search_filename\%";
         $persist_vars->{search_filename} = $search_filename;
+        $t->param( search_filename => $search_filename );
     }
 
     # search_title
-    my $search_title = $q->param('search_title');
-    if ($search_title) {
+    my $search_title = defined($q->param('search_title')) ? $q->param('search_title') : $session{'KRANG_PERSIST_Media_search_title'};
+
+    if (defined($search_title)) {
         $search_title =~ s/\W+/\%/g;
         $find_params->{title_like} = "\%$search_title\%";
         $persist_vars->{search_title} = $search_title;
+        $t->param( search_title => $search_title );
     }
 
     # search_media_id
-    my $search_media_id = $q->param('search_media_id');
-    if ($search_media_id) {
+    my $search_media_id = defined($q->param('search_media_id')) ? $q->param('search_media_id') : $session{'KRANG_PERSIST_Media_search_media_id'};
+    if (defined($search_media_id)) {
         $find_params->{media_id} = $search_media_id;
         $persist_vars->{search_media_id} = $search_media_id;
+        $t->param( search_media_id => $search_media_id );
     }
 
     # search_no_attributes
-    my $search_no_attributes = $q->param('search_no_attributes');
-    if ($search_no_attributes) {
+    my $search_no_attributes = defined($q->param('search_no_attributes')) ? $q->param('search_no_attributes') : $session{'KRANG_PERSIST_Media_search_no_attributes'};
+    if (defined($search_no_attributes)) {
         $find_params->{no_attributes} = $search_no_attributes;
         $persist_vars->{search_no_attributes} = $search_no_attributes;
+        $t->param( search_no_attributes => $search_no_attributes );
     }
 
     # Run pager
@@ -1508,7 +1515,7 @@ sub make_return_params {
                                                        -override => 1));
 
         # Store param value
-        my $pval = $q->param($hrp);
+        my $pval = $q->param($hrp) || $session{'KRANG_PERSIST_Media_search_filter'};
         $pval = '' unless (defined($pval));
         push(@return_params_hidden, $q->hidden(-name => 'return_params',
                                                        -value => $pval,

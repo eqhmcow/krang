@@ -60,7 +60,7 @@
 
 <form name="clear_advanced_search_form" method="POST">
 <input type="hidden" name="rm" value="advanced_find">
-<input type="hidden" name="search_filter" value="">
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="show_thumbnails" value="<tmpl_var escape=HTML show_thumbnails>">
 </form>
 
@@ -112,7 +112,7 @@
       <tr>
         <td></td>
         <td><input type="button" value="Clear" onClick="clear_advanced_search()" class="button">&nbsp;&nbsp;&nbsp;&nbsp;<input type="submit" value="Search" class="button"></td>
-      <input type="hidden" name="search_filter" value="">
+      <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 </tr>
 
     </table>

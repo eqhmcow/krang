@@ -1281,6 +1281,7 @@ sub find {
     my $self = shift;
 
     my $q = $self->query();
+    my $template = $self->load_tmpl('find.tmpl', associate=>$q);
     my %tmpl_data = ();
 
     # Search mode
@@ -1309,13 +1310,16 @@ sub find {
                                    );
         for (@auto_search_params) {
             my $key = $_;
-            my $val = $q->param("search_". $_);
+            my $val = defined($q->param("search_".$_)) ? $q->param("search_".$_) : $session{"KRANG_PERSIST_Story_search_$_"};
+ 
+            $template->param("search_$key" => $val);
 
-            # If no data, skip parameter
-            next unless (defined($val) && length($val));
 
             # Persist parameter
             $persist_vars{"search_". $_} = $val;
+
+            # If no data, skip parameter
+            next unless (defined($val) && length($val));
 
             # Like search
             if (grep {$_ eq $key} (qw/title url/)) {
@@ -1383,7 +1387,7 @@ sub find {
             $_ => Krang::ElementLibrary->top_level(name => $_)->display_name()
         } @classes;
         $tmpl_data{search_class_chooser} = scalar($q->popup_menu(-name      => 'search_class',
-                                                                 -default   => '',
+                                                                 -default   => ($persist_vars{"search_class"} || ''),
                                                                  -values    => [ ('', @classes) ],
                                                                  -labels    => \%class_labels));
     } else {
@@ -1424,7 +1428,6 @@ sub find {
                                      );
 
     # Set up output
-    my $template = $self->load_tmpl('find.tmpl', associate=>$q);
     $template->param(%tmpl_data);
     $template->param(pager_html => $pager->output());
     $template->param(row_count => $pager->row_count());

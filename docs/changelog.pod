@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added session caching of search/advanced search options for 
+Story/Media/Template. [Matt]
+
+=item *
+
 Added L<Krang::Publisher>->publish_context() - a means of storing
 arguments during the publish of a given story. [Peter]
 

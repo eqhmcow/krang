@@ -295,36 +295,38 @@ sub advanced_search {
     $t->param(history_return_params =>
               $self->make_history_return_params(@history_param_list));
 
-    my $persist_vars = { rm => 'advanced_find' };
+    my $persist_vars = { rm => 'advanced_search' };
     my $find_params = {};
 
     # Build find params
-    my $search_below_category_id = $q->param('search_below_category_id');
+    my $search_below_category_id = defined($q->param('search_below_category_id')) ? $q->param('search_below_category_id') : $session{'KRANG_PERSIST_cat_chooser_id_template_search_form_search_below_category_id'};
     if ($search_below_category_id) {
         $persist_vars->{search_below_category_id} = $search_below_category_id;
         $find_params->{below_category_id} = $search_below_category_id;
     }
 
     # search_element
-    my $search_element = $q->param('search_element') || '';
+    my $search_element = defined($q->param('search_element')) ? $q->param('search_element') : $session{'KRANG_PERSIST_Template_search_element'};
     if ($search_element) {
         $find_params->{filename}        = "$search_element.tmpl";
-        $persist_vars->{search_element} = $search_element;
+        $persist_vars->{search_element} = $q->param('search_element');
     }
 
     # search_template_id
-    my $search_template_id = $q->param('search_template_id');
+    my $search_template_id = defined($q->param('search_template_id')) ? $q->param('search_template_id') : $session{'KRANG_PERSIST_Template_search_template_id'};
     if ($search_template_id) {
         $find_params->{template_id} = $search_template_id;
-        $persist_vars->{search_template_id} = $search_template_id;
+        $persist_vars->{search_template_id} = $q->param('search_template_id');
+        $t->param( search_template_id => $search_template_id );
     }
 
     # search_url
-    my $search_url = $q->param('search_url');
+    my $search_url = defined($q->param('search_url')) ? $q->param('search_url') : $session{'KRANG_PERSIST_Template_search_url'};
     if ($search_url) {
         $search_url =~ s/\W+/\%/g;
         $find_params->{url_like} = "\%$search_url\%";
-        $persist_vars->{search_url} = $search_url;
+        $persist_vars->{search_url} = $q->param('search_url');
+        $t->param( search_url => $search_url );
     }
 
     # Run pager
@@ -344,7 +346,7 @@ sub advanced_search {
     $t->param(category_chooser => category_chooser(query => $q,
                                                    name =>
                                                    'search_below_category_id',
-                                                   formname => 'search_form'));
+                                                   formname => 'template_search_form'));
     return $t->output();
 }
 

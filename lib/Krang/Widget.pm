@@ -11,6 +11,7 @@ use Krang::Log qw(debug);
 use HTML::PopupTreeSelect;
 use Text::Wrap qw(wrap);
 use Krang::Message qw(add_message);
+use Krang::Session qw(%session);
 
 use File::Spec::Functions qw(catfile);
 
@@ -112,7 +113,10 @@ sub category_chooser {
                                             die_on_bad_params => 1,
                                            );
 
-    my $category_id = $query->param($field) || 0;
+    my $category_id = defined($query->param($field)) ? $query->param($field) : $session{'KRANG_PERSIST_cat_chooser_id_'.$formname."_".$name};
+    $category_id = 0 if not $category_id;
+
+    $session{'KRANG_PERSIST_cat_chooser_id_'.$formname."_".$name} = $query->param($field) if defined($query->param($field));
 
     # setup category loop
     my %find_params = (order_by => 'url');

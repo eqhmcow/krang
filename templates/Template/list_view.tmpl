@@ -23,13 +23,13 @@
   }
 
   function advanced_search () {
-    var myform = document.search_form;
+    var myform = document.template_search_form;
     myform.rm.value = 'advanced_search';
     myform.submit();
   }
 
   function simple_search () {
-    var myform = document.search_form;
+    var myform = document.template_search_form;
     myform.rm.value = 'search';
     myform.submit();
   }
@@ -59,7 +59,7 @@
 </form>
 
 <div class="dark-bar"><p class="left">&nbsp;Find Template<p class="right"><a href="javascript:openWin('help.pl?topic=template_find')">Help</a>&nbsp;</p></div>
-<form name="search_form" method="POST">
+<form name="template_search_form" method="POST">
 <tmpl_if do_advanced_search>
 <div class="box">
 <table border="0" cellpadding="6" cellspacing="0" width="571">

@@ -857,13 +857,19 @@ sub _fill_template {
 
     # Set up persist_vars
     my @pager_persist_data = ();
+    my $use_module = $self->use_module();
+    $use_module =~ s/Krang:://;
+
     while (my ($k, $v) = each(%{$self->persist_vars()})) {
         push(@pager_persist_data, $q->hidden(
                                              -name => $k,
                                              -value => $v,
                                              -override => 1
                                             ));
+
+        $session{'KRANG_PERSIST_'.$use_module."_$k"} = $v;
     }
+    
     $t->param(pager_persist_data => join("\n", @pager_persist_data));
 }
 
