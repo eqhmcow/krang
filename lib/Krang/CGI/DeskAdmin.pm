@@ -71,6 +71,7 @@ sub edit {
      $template->param( 'order_selector' => scalar 
                         $q->popup_menu( -name    => 'order',
                                             -values => [1 ..($total_desks + 1) ],
+                                            -override => 1,
                                             -default => ($total_desks + 1) )); 
     return $template->output; 
 }
