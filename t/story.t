@@ -390,3 +390,23 @@ my ($real_count) = dbh->selectrow_array('SELECT COUNT(*) FROM story');
 $count = Krang::Story->find(simple_search => "",
                             count => 1);
 is($count, $real_count);
+
+
+# create a cover to test links between stories
+my $cover = Krang::Story->new(categories => [$cat[0]],
+                              title      => "Test Cover",
+                              slug       => "test cover",
+                              class      => "cover");
+END { $cover->delete }
+$cover->element->add_child(class => 'leadin',
+                           data  => $find[0]);
+$cover->element->add_child(class => 'leadin',
+                           data  => $find[1]);
+$cover->element->add_child(class => 'leadin',
+                           data  => $find[2]);
+is(@{$cover->element->children}, 4);
+$cover->save;
+
+# test linked stories
+my @linked_stories = $cover->linked_stories;
+is_deeply([sort(@find)], [sort(@linked_stories)]);

@@ -2,7 +2,7 @@ package Krang::Story;
 use strict;
 use warnings;
 
-use Krang::Element;
+use Krang::Element qw(foreach_element);
 use Krang::Category;
 use Krang::History qw( add_history );
 use Krang::Log     qw(assert ASSERT affirm debug info critical);
@@ -112,6 +112,11 @@ Krang::Story - the Krang story class
   # revert to version 1
   $story->revert(1);
 
+  # get list of stories linked to from this story
+  my @linked_stories = $story->linked_stories;
+
+  # get list of media linked to from this story
+  my @linked_media = $story->linked_media;
 
 =head1 DESCRIPTION
 
@@ -1343,11 +1348,63 @@ sub delete {
              undef, $self->{element_id});
 }
 
-=item C<< $copy = Krang::Story->clone() >>
+=item C<< $copy = $story->clone() >>
 
 Creates a copy of the story object, with all fields identical except
 for C<story_id> and C<< element->element_id >> which will both be
 C<undef>.
+
+=item C<< @linked_stories = $story->linked_stories >>
+
+Returns a list of stories linked to from this story.  These will be
+Krang::Story objects.  If no stories are linked, returns an empty
+list.  This list will not contain any duplicate stories, even if a
+story is linked more than once.
+
+=cut
+
+sub linked_stories {
+    my $self = shift;
+    my $element = $self->element;
+
+    # find StoryLinks and index by id
+    my %story_links;
+    my $story;
+    foreach_element { 
+        if ($_->class->isa('Krang::ElementClass::StoryLink') and 
+            $story = $_->data) {
+            $story_links{$story->story_id} = $story;
+        }
+    } $element;
+
+    return values %story_links;
+}
+
+=item C<< @linked_media = $story->linked_media >>
+
+Returns a list of media linked to from this story.  These will be
+Krang::Media objects.  If no media are linked, returns an empty list.
+This list will not contain any duplicate media, even if a media object
+is linked more than once.
+
+=cut
+
+sub linked_media {
+    my $self = shift;
+    my $element = $self->element;
+
+    # find StoryLinks and index by id
+    my %media_links;
+    my $media;
+    foreach_element { 
+        if ($_->class->isa('Krang::ElementClass::MediaLink') and 
+            $media = $_->data) {
+            $media_links{$media->media_id} = $media;
+        }
+    } $element;
+
+    return values %media_links;
+}
 
 =item C<< $data = Storable::freeze($story) >>
 
