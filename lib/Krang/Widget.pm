@@ -242,13 +242,20 @@ sub decode_date {
 
 
 
-=item $url_html = format_url(url => 'http://my.host/url.html', linkto => 'url.html' );
+=item $url_html = format_url(url => 'http://my.host/url.html', linkto => 'url.html', length => 15);
 
 Returns a block of HTML implementing the standard Krang url
-display/link style.  The C<url> parameter is required.  The 
-optional C<linkto> parameter, if provided, will be used as
+display/link style.  The C<url> parameter is required.
+
+The optional C<linkto> parameter, if provided, will be used as
 the HTML "href" to which users are directed when they click 
-any line in the URL.
+any line in the URL.  If not specified, the URL will be 
+displayed as non-linking HTML.
+
+The optional C<length> parameter, if provided, will be used 
+as number of characters after which a new line should be 
+created.  If not specified, the default length of 15 will be used.
+
 
 =cut
 
@@ -256,13 +263,15 @@ sub format_url {
     my %args = @_;
 
     # Validate calling input
-    my ($url, $linkto) = @args{qw/url linkto/};
+    my ($url, $linkto, $length) = @args{qw/url linkto length/};
     croak ("Missing required argument 'url'") unless ($url);
+
+    $length = 15 unless ($length);
 
     my @parts = split('/', $url);
     my @url_lines = (shift(@parts), "");
     for(@parts) {
-        if ((length($url_lines[-1]) + length($_)) > 15) {
+        if ((length($url_lines[-1]) + length($_)) > $length) {
             push(@url_lines, "");
         }
         $url_lines[-1] .= "/" . $_;
