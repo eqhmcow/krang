@@ -25,7 +25,8 @@ story types.
 sub new {
     my @meta = 
       (
-        Krang::ElementClass::Text->new( name => 'promo_title',
+        Krang::ElementClass::Text->new( display_name => 'Promo/SEO Title',
+                                        name => 'promo_title',
                                         min  => 1,
                                         max  => 1,
                                         reorderable => 0,
