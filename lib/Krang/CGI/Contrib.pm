@@ -51,7 +51,7 @@ for Krang::CGI::Contrib is 'search'.
 use Krang::Contrib;
 use Krang::DB qw(dbh);
 use Krang::Session qw(%session);
-
+use Krang::Pref;
 
 # Fields in a contrib
 use constant CONTRIB_PROTOTYPE => {
@@ -672,12 +672,8 @@ sub get_contrib_tmpl {
 
 # Replace with Krang::Prefs(?)
 sub get_contrib_types {
-    my $self = shift;
-
-    my $dbh = dbh();
-    my $contrib_types = $dbh->selectall_arrayref("select contrib_type_id, type from contrib_type order by type");
-
-    return $contrib_types;
+    my %pref = Krang::Pref->get('contrib_type');
+    return [ map { [ $_, $pref{$_} ] } keys %pref ];
 }
 
 
