@@ -3,18 +3,23 @@ body {
   background-color: #FFFFFF;
   color:            #333333;
   font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        9.5pt;
+  font-size:        12px;
+}
+
+td, th {
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
 }
 
 /*** default link styles ***/
-a:link            { 
+a:link { 
   color:            #05034c;
 }
-a:visited         { 
+a:visited { 
   color:            #05034c;
 }
-a:active          {
-  color:            #05034c;
+a:active {
+  color:            #98ccfe;
 }
 
 /*** generic style palette ***/
@@ -33,17 +38,23 @@ a:active          {
   color:            #333333;
 }
 
+
 .line {
-  color:            #e2e1e7;
-  background-color: #e2e1e7;
+  color:            #bababa;
+  background-color: #bababa;
+}
+
+.darkborder {
+  color:            #bababa;
+  background-color: #bababa;
 }
 
 /*** Colored UI elements ***/
 .light-bar { 
   background-color: #dbe9f4;
   color:            #333333;
-  padding:          2px;
-  height:           14pt;
+  padding:          4px;
+  height:           12px;
 }
 
 .light-bar .left {
@@ -60,9 +71,23 @@ a:active          {
 
 .dark-bar { 
   background-color: #04044c;
-  color:            #dceaf5;
-  padding:          2px;
-  height:           14pt;
+  color:            #dbeaf5;
+  padding:          4px;
+  height:           20px;
+  font-weight:      bold;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+}
+
+.dark-bar2 { 
+  background-color: #04044c;
+  color:            #dbeaf5;
+  padding:          4px;
+  height:           20px;
+  font-weight:      bold;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+  width: 580px;
 }
 
 .dark-bar .left {
@@ -115,43 +140,46 @@ a:active          {
   margin-left:      15px;
 }
 
+.box {
+  padding:          3px;
+}
+
 .form-head-thin {
   background-color: #dbe9f4;
   color:            #333333;
-  border-top:       1px solid #e2e1e7;
-  border-bottom:    1px solid #e2e1e7;
+  border-top:       1px solid #bababa;
+  border-bottom:    1px solid #bababa;
 }
 
 .form-head-thin td {
-  border-top:       1px solid #e2e1e7;
-  border-bottom:    1px solid #e2e1e7;
+  border-top:       1px solid #bababa;
+  border-bottom:    1px solid #bababa;
 }
 
 .form-head {
   background-color: #dbe9f4;
   color:            #333333;
-  border-top:       2px solid #e2e1e7;
-  border-bottom:    2px solid #e2e1e7;
+  border-top:       1px solid #bababa;
 }
 
 .form-head td {
-  border-top:       2px solid #e2e1e7;
-  border-bottom:    2px solid #e2e1e7;
+  border-top:       1px solid #bababa;
 }
 
 .form-cell {
-  border:         1px solid #e2e1e7;
-  padding:        2px;
+  border:         1px solid #bababa;
+  border-collapse:collapse;
+  padding:        4px;
   vertical-align: top;
 }
 
 .form-box {
-  border:         1px solid #e2e1e7;
+  border:         1px solid #bababa;
   padding:        5px;
 }
 
 .form-box-large {
-  border:         1px solid #e2e1e7;
+  border:         1px solid #bababa;
   padding-top:    5px;
   padding-bottom: 5px;
   padding-left:   15px;
@@ -159,7 +187,7 @@ a:active          {
 }
 
 .tight-form-box {
-  border:         1px solid #e2e1e7;
+  border:         1px solid #bababa;
 }
 
 .alert {
@@ -167,15 +195,19 @@ a:active          {
   font-weight:    bold;
 }
 
-/*** prettier buttons only works in Mozilla...) ***/
-input[type="button"] {
-  color:            #003466;
-  background-color: #FFFFFF;
+.no-border {
+  padding-top:    2px;
+  padding-bottom: 2px;
+  padding-left:   8px;
+  padding-right:  10px;
 }
 
-input[type="reset"] {
-  color:            #003466;
-  background-color: #FFFFFF;
+/*** prettier buttons ***/
+.button {
+   background-color: #FFFFFF;
+   color:            #003466;
+   font-family:      Verdana,Helvetica,Arial,sans-serif;
+   font-size:        12px;
 }
 
 /*** form field classes ***/

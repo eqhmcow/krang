@@ -21,15 +21,26 @@ function checkall(checkbox, prefix) {
 }
 
 </script>
-<div class=dark-bar>My Preferences</div>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;My Preferences</td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
 <form name="edit_pref_form" method="POST">
-<br><br>
-<table cellspacing="0" width="100%">
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellspacing="0" cellpadding="8" width="100%">
+<tr><td><table cellspacing="0" width="100%" cellpadding="2">
+
 <input type="hidden" name="rm" value="update_prefs" override='1'>
 <input type="hidden" name="search_page_size" value="<tmpl_var search_page_size>" override='1'>
       <tr class="form-head">
-          <th colspan=2 align=left>Preferences</th>
-      </tr>
+          <td align="left"><b>Preferences</b></td>
+      </tr></table>
+
+    <table cellspacing="0" width="100%" class="form-cell">
         <tr>
             <td class="form-cell">Search Results/Page</td>
             <td class="form-cell"><tmpl_var search_results_selector></td>
@@ -37,45 +48,70 @@ function checkall(checkbox, prefix) {
         <tr>
             <td class="form-cell">Change Password:</td>
         <td class="form-cell"><input type="password" name="new_password"> (new password)<br><input type="password" name="new_password_repeat"> (repeat)</td>
-        </tr>
-<tr><td class="form-head">&nbsp;</td><td class="form-head"><input type=button value="Commit Changes" onclick="check_match()"></td></tr>
+        </tr></table></td></tr></table>
+</td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
 </table>
-</form>
-<tmpl_if alert_loop>Current Alerts
-<form name="current_alert_form" method="post">
+<div class="button-bar"><input type="button" value="Commit Changes" onclick="check_match()" class="button"></div></form>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4">
+<tmpl_if alert_loop><table border="0" cellspacing="0" cellpadding="8" width="100%">
+<tr><td>Current Alerts</td>
+        </tr><form name="current_alert_form" method="post">
 <input type="hidden" name="rm" value="delete_alerts" override='1'>
-<table cellspacing="0" width="100%">
-<tr class="form-head"><th>Action</th><th>Site/Category</th><th>Desk</th><th align="right"><input type="checkbox" name="checkallbox" value="1"
-onClick="checkall(this, 'alert_delete_list')"></th></tr>
+		  <tr><td>
+<table cellspacing="0" width="100%" cellpadding="2">
+<tr class="form-head"><td><b>Action</b></td><td><b>Site/Category</b></td><td><b>Desk</b></td><td align="right"><input type="checkbox" name="checkallbox" value="1"
+onClick="checkall(this, 'alert_delete_list')"></td></tr></table>
 <tmpl_loop alert_loop>
+    <table cellspacing="0" width="100%" class="form-cell">
 <tr>
 <td class="form-cell"><tmpl_var action></td>
 <td class="form-cell"><tmpl_var category></td>
 <td class="form-cell"><tmpl_var desk></td>
 <td class="form-cell" align="right"><input type="checkbox" name="alert_delete_list" value="<tmpl_var ESCAPE=HTML alert_id>"></td>
-</tr>
+</tr></table></td>
+</tr></table>
 </tmpl_loop>
-<tr><td class="form-head" colspan=4 align=right><input type=button value="Delete Checked" onclick="submit()"></td></tr>
+</td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
 </table>
-<tmpl_else>No Current Alerts</tmpl_if>
+<div class="button-bar"><input type="button" value="Delete Checked" onclick="submit()" class="button"></div>
+
+<tmpl_else><table border="0" cellspacing="0" cellpadding="8" width="100%">
+<tr><td>No Current Alerts</tmpl_if></td></tr>
 </form>
 <form name="add_alert_form" method="post">
-<table cellspacing="0" width="100%">
+<tr><td>
+<table cellspacing="0" width="100%" cellpadding="2">
 <input type="hidden" name="rm" value="add_alert" override='1'>
       <tr class="form-head">
-          <th colspan=2 align=left>Add New Alert</th>
-      </tr>
+          <td colspan="2" align="left"><b>Add New Alert</b></td>
+      </tr></table>
+		<table cellspacing="0" width="100%" class="form-cell">
         <tr>
-            <td class=form-cell>Action:</td>
-            <td class=form-cell><tmpl_var action_selector></td>
+            <td class="form-cell">Action:</td>
+            <td class="form-cell"><tmpl_var action_selector></td>
         <tr>
-            <td class=form-cell>Site/Category:</td>
-            <td class=form-cell><tmpl_var category_chooser> (optional)</td>
+            <td class="form-cell">Site/Category:</td>
+            <td class="form-cell"><tmpl_var category_chooser> (optional)</td>
         <tr>
-            <td class=form-cell>Desk:</td>
-            <td class=form-cell><tmpl_var desk_selector> (optional)</td>
-        </tr>
-<tr><td class="form-head" colspan=2 align=right><input type=button value="Add Alert" onclick="submit()"></td></tr>
+            <td class="form-cell">Desk:</td>
+            <td class="form-cell"><tmpl_var desk_selector> (optional)</td>
+        </tr></table></td>
+</tr></table>
+</td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
 </table>
-</form>
+<div class="button-bar"><input type="button" value="Add Alert" onclick="submit()" class="button"></div></form>
+
 <tmpl_include footer.tmpl>

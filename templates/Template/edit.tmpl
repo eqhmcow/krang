@@ -64,48 +64,43 @@
 </script>
 
 
-<div class="dark-bar">
-<span class="left"><tmpl_if add_mode>New<tmpl_else>Edit</tmpl_if> Template</span>
-<span class="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a></span>
-</div>
-
-<tmpl_unless add_mode>
-
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
-<tr class="light">
-  <td width="135">ID:</td>
-  <td><tmpl_var template_id></td>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;<tmpl_if add_mode>NEW<tmpl_else>EDIT</tmpl_if> TEMPLATE</td>
+  <td align="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a>&nbsp;</td>
 </tr>
-
-<tr class="light">
-  <td width="135">Filename:</td>
-  <td><tmpl_var filename></td>
-</tr>
-
-<tr class="light">
-  <td width="135">URL:</td>
-  <td><tmpl_var url></td>
-</tr>
-
-<tr class="light">
-  <td width="135">Current&nbsp;Version:</td>
-  <td><tmpl_var version></td>
-</tr>
-
-<tr class="light">
-  <td width="135">Deployed&nbsp;Version:</td>
-  <td><tmpl_unless deployed_version>[n/a]</tmpl_unless><tmpl_var deployed_version></td>
-</tr>
-
 </table>
 
+
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%"><tr>
+  <td class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><tmpl_unless add_mode><table border="0" cellpadding="5" cellspacing="0" width="100%">
+<tr class="light">
+  <td width="140">ID:</td>
+  <td width="440"><tmpl_var template_id></td>
+</tr>
+
+<tr class="light">
+  <td width="140">Filename:</td>
+  <td width="440"><tmpl_var filename></td>
+</tr>
+
+<tr class="light">
+  <td width="140">URL:</td>
+  <td width="440"><tmpl_var url></td>
+</tr>
+
+<tr class="light">
+  <td width="140">Current&nbsp;Version:</td>
+  <td width="440"><tmpl_var version></td>
+</tr>
+
+<tr class="light">
+  <td width="140">Deployed&nbsp;Version:</td>
+  <td width="440"><tmpl_unless deployed_version>[n/a]</tmpl_unless><tmpl_var deployed_version></td></tr>
+
 </tmpl_unless>
-
-
-
-<div class=form-box>
-
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
 
 <form name="delete_template_form" method="post">
 <input type="hidden" name="rm" value="delete">
@@ -117,6 +112,7 @@
 <input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
 
 <tmpl_if add_mode>
+<table border="0" cellpadding="5" cellspacing="0" width="100%">
 
 <script language="javascript">
   function update_filename (e) {
@@ -134,8 +130,8 @@
 </script>
 
 <tr>
-  <td>Element:</td>
-  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+  <td width="140">Element:</td>
+  <td><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 <tr>
@@ -144,31 +140,29 @@
 </tr>
 
 <tr>
-  <td>Site/Categories:</td>
-  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_category_id><span class="invalid"></tmpl_if><tmpl_var category_chooser><tmpl_if error_category_id></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+  <td width="140">Site/Categories:</td>
+  <td><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_category_id><span class="invalid"></tmpl_if><tmpl_var category_chooser><tmpl_if error_category_id></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 </tmpl_if>
 
 <tr>
-  <td>Upload File:<tmpl_if filename><br />
+  <td width="140">Upload template file:<tmpl_if filename><br />
 <tmpl_if template_id><a href="javascript:preview_template('<tmpl_var escape=HTML template_id>')"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if template_id></a></tmpl_if>
 <tmpl_var escape=HTML file_size></tmpl_if></td>
-  <td colspan="2"><tmpl_if error_template_file><span class="invalid"></tmpl_if><tmpl_var upload_chooser><tmpl_if error_template_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+  <td ><tmpl_if error_template_file><span class="invalid"></tmpl_if><tmpl_var upload_chooser><tmpl_if error_template_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 <tr>
-  <td>Template code:</td>
-  <td colspan="2"><textarea rows="4" cols="35" name="content"><tmpl_var escape=HTML content></textarea></td>
+  <td valign="top" width="140">Template code:</td>
+  <td><textarea rows="4" cols="35" name="content"><tmpl_var escape=HTML content></textarea></td>
 </tr>
 
 <tr>
-  <td>Test with Template:</td>
-  <td colspan="2"><input name="testing" type="checkbox" value="1" <tmpl_if testing>checked</tmpl_if>></td>
+  <td width="140">Test with Template:</td>
+  <td><input name="testing" type="checkbox" value="1" <tmpl_if testing>checked</tmpl_if>></td>
 </tr>
-
 </table>
-</div>
 
 
 
@@ -194,32 +188,40 @@
   }
 // -->
 </script>
+</td>
+  <td class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
 
-
+<img width="1" height="4"><br>
 <div class=form-box>
 Version: <tmpl_var version_chooser>
-<input type="button" value="Revert" onClick="revert_version()">
-<input type="button" value="View" onClick="view_version()">
+<input type="button" value="Revert" onClick="revert_version()" class="button">
+<input type="button" value="View" onClick="view_version()" class="button">
 </div>
 </tmpl_unless>
+<tmpl_if add_mode>
+  </td>
+  <td class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
+</tmpl_if>
 <!-- END Version Navigation -->
 
 
 
 <div class="button-bar">
-  <input type="button" value="Save" onClick="do_save()">
-  <input type="button" value="Save &amp; Stay" onClick="do_save_stay()">
-  <input type="button" value="Checkin" onClick="do_checkin()">
+  <input type="button" value="Save" onClick="do_save()" class="button">
+  <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
   <tmpl_unless add_mode>
-  <input type="button" value="Delete" onClick="do_delete()">
-  <input type="button" value="Deploy" onClick="do_deploy()">
+  <input type="button" value="Delete" onClick="do_delete()" class="button">
   </tmpl_unless>
-  <input type="reset" value="Reset">
-  <input type="button" value="Cancel" onClick="do_cancel()">
+  <input type="button" value="Deploy" onClick="do_deploy()" class="button">
+  <input type="reset" value="Reset" class="button">
 </div>
 
 
 </form>
-
-
 <tmpl_include footer.tmpl>

@@ -8,24 +8,25 @@
   }
 </script>
 
-<div class=dark-bar>View Media</div>
-
-
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
-
-<tr class="light">
-  <td>ID:</td>
-  <td width="60%"><tmpl_var media_id></td>
-
-  <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"></tmpl_if><img border="0" src="<tmpl_var thumbnail_path>"><tmpl_if media_id></a></tmpl_if></td>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;VIEW MEDIA</td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
 </tr>
+</table>
 
-
-<tr class="light">
-  <td>Title:</td>
-  <td><tmpl_var title></td>
-</tr>
-
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellpadding="6" cellspacing="0" width="100%">
+    <tr class="light">
+      <td>ID:</td>
+      <td width="60%"><tmpl_var media_id></td>
+      <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"></tmpl_if><img border="0" src="<tmpl_var thumbnail_path>"><tmpl_if media_id></a></tmpl_if></td>
+    </tr>
+    <tr class="light">
+      <td>Title:</td>
+      <td><tmpl_var title></td>
+    </tr>
 
 <tr class="light">
   <td>Type:</td>
@@ -37,7 +38,6 @@
   <td>Current&nbsp;Version:</td>
   <td><tmpl_var version></td>
 </tr>
-
 
 <tr class="light">
   <td>Published&nbsp;Version:</td>
@@ -126,16 +126,19 @@
 // -->
 </script>
 
-
 </table>
 
+  </td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td>
+</tr>
+</table>
 
-<div class=button-bar>
-  <input type="button" value="Return" onClick="javascript:do_return()">
-  <tmpl_unless is_old_version><tmpl_if can_edit><input type="button" value="Edit" onClick="javascript:do_edit_media()"></tmpl_if></tmpl_unless>
+<div class="button-bar">
+  <input type="button" value="Return" onClick="javascript:do_return()" class="button">
+  <tmpl_unless is_old_version><tmpl_if can_edit><input type="button" value="Edit" onClick="javascript:do_edit_media()" class="button"></tmpl_if></tmpl_unless>&nbsp;&nbsp;&nbsp;
 </div>
-
-
 
 
 

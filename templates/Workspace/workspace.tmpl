@@ -82,8 +82,16 @@
 
 </script>
 
-<div class=dark-bar><span class=left>My Workspace</span><span class=right><a href="#">Help</a></span></div>
-<p>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;My Workspace</td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellpadding="5" cellspacing="0" width="100%"><tr class="light"><td valign="bottom">
 
 <!-- publish_story form -->
 <form name="publish_story_form" method="GET" action="publisher.pl">
@@ -99,91 +107,95 @@
 
 
 <form name="krang_pager_form" method="POST">
-  <input type=hidden name=rm>
-  <input type=hidden name=id>
+  <input type="hidden" name="rm">
+  <input type="hidden" name="id">
 
 <tmpl_include HTMLPager/pager-internals.tmpl>
 
 <tmpl_if krang_pager_rows>
 
-<div class=light style='padding: 10px'>
-  Sort By: &nbsp;&nbsp; <tmpl_var sort_select>
-</div>
 
-<div class=button-bar>
-  <input type=button value="Checkin" onclick='checkin_checked()'>
-  <input type=button value="Delete" onclick='delete_checked()'>
-  <input type=button value="Publish" onclick='publish_checked()'>
-</div>
-<div class=form-box-large>
-
-<table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%><tr>
-  <td align=left>Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></td>
-  <td align=right><tmpl_var colhead_checkbox_column></td>
+  Sort By: &nbsp;&nbsp; <tmpl_var sort_select></td></tr>
 </table>
 
-<tmpl_loop krang_pager_rows>
+<div class="button-bar">
+  <input type="button" value="Check In" onclick="checkin_checked()" class="button">
+  <input type="button" value="Delete" onclick="delete_checked()" class="button">
+  <input type="button" value="Publish" onclick="publish_checked()" class="button">
+</div>
+<table border="0" cellspacing="0" width="100%">
+<tr><td class="no-border">Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></td>
+  <td align="right" class="no-border"><tmpl_var colhead_checkbox_column></td>
+  </tr>
+</table>
 
-<div class=form-head-thin>
-  <table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%><tr>
-    <td width=150><b><tmpl_if is_story>Story <tmpl_var story_id></tmpl_if>
+
+<table border="0" cellspacing="0" cellpadding="8" width="100%">
+<tr><td>
+<tmpl_loop krang_pager_rows>
+  <table cellspacing="0" width="100%" cellpadding="2">
+
+<tr class="form-head">
+    <td width="150"><tmpl_if is_story><b>Story</b> <tmpl_var story_id></tmpl_if>
         <tmpl_if is_media>Media <tmpl_var media_id></tmpl_if>
         <tmpl_if is_template>Template <tmpl_var template_id></tmpl_if></b>
         v<tmpl_var version>&nbsp;&nbsp;&nbsp;
     </td>
     <td><tmpl_var title></td>
-    <td align=right>
+    <td align="right">
       <tmpl_var checkbox_column>
     </td>
   </tr></table>
-</div>
-  <table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
+
+    <table cellspacing="0" width="100%" class="form-cell">
      <tmpl_if is_story>
        <tr>
-          <td class=form-cell width=120>Story Type</td>
-          <td class=form-cell><tmpl_var story_type></td>
+          <td class="form-cell" width="120" style="border-bottom:none;">Type</td>
+          <td class="form-cell" style="border-bottom:none;"><tmpl_var story_type></td>
        </tr>
      </tmpl_if>
      <tr>
-        <td class=form-cell width=120>URL</td>
-        <td class=form-cell><tmpl_var url></td>
+        <td class="form-cell" width="120" style="border-top:none;">URL</td>
+        <td class="form-cell" style="border-top:none;"><tmpl_var url></td>
         <tmpl_if thumbnail>
-          <td width=50 align=center class=form-cell>
-            <a href="javascript:preview_media(<tmpl_var media_id>)"><img src="<tmpl_var thumbnail>" border=0></a>
+          <td width="50" align=center class="form-cell">
+            <a href="javascript:preview_media(<tmpl_var media_id>)"><img src="<tmpl_var thumbnail>" border="0"></a>
           </td>
         </tmpl_if>
      </tr>
      <tr>
-       <td colspan=<tmpl_if thumbnail>3<tmpl_else>2</tmpl_if> class=form-cell>
-           <span style='float:right'><tmpl_var command_column></span>
+       <td colspan=<tmpl_if thumbnail>"3"<tmpl_else>"2"</tmpl_if> class="form-cell">
+           <span style="float:right; font-weight: bold;"><tmpl_var command_column></span>
            <tmpl_if is_story>
-               <input type=button value="Copy" onclick="copy('<tmpl_var id>')">
-               <input type=button value="Publish" onclick="publish_story('<tmpl_var story_id>')">
-               <input type=button value="Delete" onclick="remove('<tmpl_var id>')">
+               <input type="button" value="Copy" onclick="copy('<tmpl_var id>')" class="button">
+               <input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button">
+               <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
                <p>
-               Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">
+               Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_media>
-               <input type=button value="Publish" onclick="publish_media('<tmpl_var media_id>')">
-               <input type=button value="Delete" onclick="remove('<tmpl_var id>')">
+               <input type="button" value="Publish" onclick="publish_media('<tmpl_var id>')" class="button">
+               <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
                <p>
-               <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">
+               <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_template>
-               <input type=button value="Deploy" onclick="deploy('<tmpl_var id>')">
-               <input type=button value="Delete" onclick="remove('<tmpl_var id>')">
+               <input type="button" value="Deploy" onclick="deploy('<tmpl_var id>')" class="button">
+               <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
                <p>
-               <input type=button value="Checkin" onclick="checkin('<tmpl_var id>')">
-               Test with: <input type=checkbox <tmpl_if testing>checked</tmpl_if> name=testing value='<tmpl_var id>'>
+               <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
+               Test with: <input type="checkbox" <tmpl_if testing>checked</tmpl_if>
+name=testing value='<tmpl_var id>'>
            </tmpl_if>
        </td>
      </tr>
   </table>
 
-  <div style='height:15px'></div>
+  <div style="height:15px"></div>
 
   </tmpl_loop>
-
+<table cellspacing="0" width="100%" cellpadding="2">
+<tr><td>
 <tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
 
 <tmpl_loop page_numbers>
@@ -199,12 +211,18 @@
   <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a>
   </tmpl_if>
 
-</div>
+</td></tr></table>
+</td></tr></table>
+</td>
+  <td width="1" class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
 
-<div class=button-bar>
-  <input type=button value="Checkin" onclick='checkin_checked()'>
-  <input type=button value="Delete" onclick='delete_checked()'>
-  <input type=button value="Publish" onclick='publish_checked()'>
+<div class="button-bar">
+  <input type="button" value="Check In" onclick="checkin_checked()" class="button">
+  <input type="button" value="Delete" onclick="delete_checked()" class="button">
+  <input type="button" value="Publish" onclick="publish_checked()" class="button">
 </div>
 
 </tmpl_if>

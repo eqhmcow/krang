@@ -182,7 +182,7 @@ Separator String
 <div class=tight-form-box>
 <tmpl_var bulk_edit_sep_selector>
 <input type=hidden name=bulk_edit_sep value="<tmpl_var bulk_edit_sep>">
-<input type=button value="Change Separator" onclick="save_and_change_bulk_edit_sep()">
+<input type=button value="Change Separator" onclick="save_and_change_bulk_edit_sep()" class="button">
 </div>
 
 <br>
@@ -194,16 +194,16 @@ Words: <span id=bulk_edit_words></span> &nbsp;Characters: <span id=bulk_edit_cha
 
 <tmpl_else>
 
-Content 
+&nbsp;Content 
 
 <tmpl_if crumbs>&nbsp;&nbsp;&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if>
 <br>
 
 <table border=0 width=100% cellpadding=0 cellspacing=0>
   <tr class=form-head>
-    <td width=15%>             Element</td>
-    <td width=55%>             Data Entry</td>
-    <td width=15% align=center>Order</td>
+    <td width=15%>&nbsp;Element</td>
+    <td width=55%>&nbsp;Data Entry</td>
+    <td width=15%>&nbsp;Order</td>
     <td width=15% align=center><input type=checkbox onclick="checkall(this, 'remove_')"></td>
   </tr> 
 
@@ -215,7 +215,7 @@ Content
     </td>
 
     <td align=left class="form-cell">
-      <tmpl_if is_container><input type=button value=Edit onClick='edit_children("<tmpl_var path>")'>&nbsp;</tmpl_if>
+      <tmpl_if is_container><input type=button value=Edit onClick='edit_children("<tmpl_var path>")' class="button">&nbsp;</tmpl_if>
       <tmpl_if invalid><span class="invalid"></tmpl_if>
         <tmpl_var form>
       <tmpl_if invalid></span></tmpl_if>
@@ -242,20 +242,20 @@ Content
         <tr><td>
            <tmpl_var child_select>
         </td><td>
-           <input type=button value="Add Element" onClick='add_child()'>
+           <input type=button value="Add Element" onClick='add_child()' class="button">
         </td><tr>
       </tmpl_if>
       <tmpl_if bulk_edit_select> 
         <tr><td>
           <tmpl_var bulk_edit_select>
         </td><td>
-          <input type=button value="Bulk Edit" onClick='save_and_bulk_edit()'>
+          <input type=button value="Bulk Edit" onClick='save_and_bulk_edit()' class="button">
         </td></tr>           
       </tmpl_if>
      </table>
    </td>
-       <td align=center class="form-cell"><input type=button value=Reorder onClick='reorder()'></td>
-       <td align=center class="form-cell"><input type=button value=Delete onClick='remove_children()'></td>
+       <td align=center class="form-cell"><input type=button value=Reorder onClick='reorder()' class="button"></td>
+       <td align=center class="form-cell"><input type=button value=Delete onClick='remove_children()' class="button"></td>
    </tr>
 </table>
 

@@ -123,12 +123,17 @@
 </script>
 
 
-<div class="dark-bar">User <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></div>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;<tmpl_if add_mode>ADD<tmpl_else>EDIT</tmpl_if> USER</td>
+  <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
 
 
-<div class=form-box>
-
-<table cellpadding="5" cellspacing="0">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr><td width="1" class="line"><img width="1" height="1"></td>
+  <td><table border="0" cellpadding="5" cellspacing="0" width="100%">
 
 
 <form name="edit_user_form" method="POST">
@@ -147,53 +152,45 @@
 <input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
 
 <tr>
-    <td align="left" valign="top">*First:</td>
-    <td align="left" valign="top"><tmpl_if error_invalid_first_name><span class="invalid"></tmpl_if><tmpl_if duplicate_first_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="first_name" value="<tmpl_var escape=HTML first_name>"><tmpl_if error_invalid_first_name></span></tmpl_if><tmpl_if duplicate_first_name></span></tmpl_if></td>
+    <td align="left" valign="bottom" width="130">First Name:</td>
+    <td align="right" valign="top" width="150"><tmpl_if error_invalid_first_name><span class="invalid"></tmpl_if><tmpl_if duplicate_first_name><span class="invalid"></tmpl_if><input type="textfield" size="20" name="first_name" value="<tmpl_var escape=HTML first_name>"><tmpl_if error_invalid_first_name></span></tmpl_if><tmpl_if duplicate_first_name></span></tmpl_if></td><td width="70">&nbsp;</td><td width="150">&nbsp;</td><td>&nbsp;</td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">*Last:</td>
-    <td align="left" valign="top"><tmpl_if error_invalid_last_name><span class="invalid"></tmpl_if><tmpl_if duplicate_last_name><span class="invalid"></tmpl_if><input type="textfield" size="40" name="last_name" value="<tmpl_var escape=HTML last_name>"><tmpl_if error_invalid_last_name></span></tmpl_if><tmpl_if duplicate_last_name></span></tmpl_if></td>
+    <td align="left" valign="bottom">Last Name:</td>
+    <td align="right" valign="top"><tmpl_if error_invalid_last_name><span class="invalid"></tmpl_if><tmpl_if duplicate_last_name><span class="invalid"></tmpl_if><input type="textfield" size="20" name="last_name" value="<tmpl_var escape=HTML last_name>"><tmpl_if error_invalid_last_name></span></tmpl_if><tmpl_if duplicate_last_name></span></tmpl_if></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">*Email:</td>
-    <td align="left" valign="top"><tmpl_if error_invalid_email><span class="invalid"></tmpl_if><input type="textfield" size="40" name="email" value="<tmpl_var escape=HTML email>"><tmpl_if error_invalid_email></span></tmpl_if></td>
+    <td align="left" valign="bottom">Email:</td>
+    <td align="right" valign="top"><tmpl_if error_invalid_email><span class="invalid"></tmpl_if><input type="textfield" size="20" name="email" value="<tmpl_var escape=HTML email>"><tmpl_if error_invalid_email></span></tmpl_if></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">Phone:</td>
-    <td align="left" valign="top"><input type="textfield" size="40" name="phone" value="<tmpl_var escape=HTML phone>"></td>
+    <td align="left" valign="bottom">Phone:</td>
+    <td align="right" valign="top"><input type="textfield" size="20" name="phone" value="<tmpl_var escape=HTML phone>"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">Mobile Phone:</td>
-    <td align="left" valign="top"><input type="textfield" size="40" name="mobile_phone" value="<tmpl_var escape=HTML mobile_phone>"></td>
+    <td align="left" valign="bottom">Mobile Phone:</td>
+    <td align="right" valign="top"><input type="textfield" size="20" name="mobile_phone" value="<tmpl_var escape=HTML mobile_phone>"></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
 </tr>
-
 <tr>
-  <td align="left" valign="top">User Groups:</td>
-  <td align="left" valign="top">
-    <table align="center" border="0" valign="top">
-      <tr>
-        <td align="left" valign="top">
-	<div align="center">
-	<b>Available Groups</b><br />
-	<select name="possible_group_ids" size="<tmpl_var size>" multiple="multiple">
+  <td align="left" valign="bottom"><span style="font=size: larger;">Groups:</span></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+<tr>
+  <td align="left" valign="top">Available:</td>
+  <td align="right" valign="top"><select name="possible_group_ids" size="<tmpl_var size>" multiple="multiple" style="width: 142px;">
 	<tmpl_loop possible_group_ids><option value="<tmpl_var id>"><tmpl_var name></option>
 	</tmpl_loop>
-	</select>
-	<br /><input name="add_grp" onClick="add_group();" type="button" value="Add Group">
-	</div>
-        </td>
-        <td width="25">&nbsp;</td>
+	</select></td>
+        <td valign="top" align="center">Current:</td>
         <td align="right" valign="top">
 	<div align="center">
 	<b>Current Groups</b><br />
 <tmpl_if error_missing_group><span class="invalid"></tmpl_if>
 <tmpl_if error_null_group><span class="invalid"></tmpl_if>
 <tmpl_if error_invalid_group_id><span class="invalid"></tmpl_if>
-<select name="current_group_ids" size="<tmpl_var size>" multiple="multiple">
+<select name="current_group_ids" size="<tmpl_var size>" multiple="multiple" style="width: 142px;">
 	<tmpl_loop current_group_ids><option value="<tmpl_var id>"><tmpl_var name></option>
 	</tmpl_loop>
 	</select>
@@ -204,33 +201,35 @@
 	</div>
 	</td>
       </tr>
-    </table>
-  </td>
+		<tr><td>&nbsp;</td><td align="right"><input name="add_grp" onClick="add_group();" type="button" value="Add" class="button"></td><td>&nbsp;</td><td align="right"><input name="rm_grp" onClick="remove_group();" type="button" value="Remove" class="button"></td><td>&nbsp;</td></tr>
+
+<tr>
+    <td align="left" valign="bottom">Login:</td>
+    <td align="left" valign="top"><tmpl_if duplicate_login><span class="invalid"></tmpl_if><tmpl_if error_invalid_login><span class="invalid"></tmpl_if><input type="textfield" size="20" name="login" value="<tmpl_var escape=HTML login>"><tmpl_if error_invalid_login></span></tmpl_if><tmpl_if duplicate_login></span></tmpl_if></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">*Login:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_login><span class="invalid"></tmpl_if><tmpl_if error_invalid_login><span class="invalid"></tmpl_if><input type="textfield" size="40" name="login" value="<tmpl_var escape=HTML login>"><tmpl_if error_invalid_login></span></tmpl_if><tmpl_if duplicate_login></span></tmpl_if></td>
+    <td align="left" valign="bottom"><tmpl_if add_mode></tmpl_if>Password:</td>
+    <td align="left" valign="top"><tmpl_if error_null_password><span class="invalid"></tmpl_if><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="20" name="new_password" value="<tmpl_var new_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if><tmpl_if error_null_password></span></tmpl_if></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
 </tr>
 
 <tr>
-    <td align="left" valign="top"><tmpl_if add_mode>*</tmpl_if>New Password:</td>
-    <td align="left" valign="top"><tmpl_if error_null_password><span class="invalid"></tmpl_if><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="40" name="new_password" value="<tmpl_var new_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if><tmpl_if error_null_password></span></tmpl_if></td>
-</tr>
-
-<tr>
-    <td align="left" valign="top"><tmpl_if add_mode>*</tmpl_if>Confirm New Password:</td>
-    <td align="left" valign="top"><tmpl_if error_null_password><span class="invalid"></tmpl_if><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="40" name="confirm_password" value="<tmpl_var confirm_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if><tmpl_if error_null_password></span></tmpl_if></td>
+    <td align="left" valign="bottom"><tmpl_if add_mode></tmpl_if>Repeat Password:</td>
+    <td align="left" valign="top"><tmpl_if error_null_password><span class="invalid"></tmpl_if><tmpl_if duplicate_password><span class="invalid"></tmpl_if><tmpl_if error_password_mismatch><span class="invalid"></tmpl_if><input type="password" size="20" name="confirm_password" value="<tmpl_var confirm_password>"><tmpl_if duplicate_password></span></tmpl_if><tmpl_if error_password_mismatch></span></tmpl_if><tmpl_if error_null_password></span></tmpl_if></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
 </tr>
 </table>
-</div>
+</td>
+  <td class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
 
 <div class="button-bar">
-    <input type="submit" onClick="get_group_ids()" value="Save">
-    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()"></tmpl_unless>
-    <input type="reset" value="Reset">
-    <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_user()"></tmpl_unless>
-    <input type="button" value="Cancel" onClick="cancel_user_change()">
+    <input type="submit" onClick="get_group_ids()" value="Save" class="button">
+    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()" class="button"></tmpl_unless>
+    <input type="reset" value="Reset" class="button">
+    <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_user()" class="button"></tmpl_unless>
+    <input type="button" value="Cancel" onClick="cancel_user_change()" class="button">
 </div>
 
 

@@ -4,16 +4,21 @@
   nav_edit_mode();
 </script>
 
-<div class=dark-bar>View Template</div>
-
-
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
-
-<tr class="light">
-  <td width=30%>ID:</td>
-  <td><tmpl_var template_id></td>
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;View Template</td>
+  <td align="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a>&nbsp;</td>
 </tr>
+</table>
 
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<tr>
+  <td class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><table border="0" cellpadding="5" cellspacing="0" width="100%">
+
+  <td width="135">ID:</td>
+  <td width="445"><tmpl_var template_id></td>
 
 <tr class="light">
   <td>Filename:</td>
@@ -32,8 +37,8 @@
 </tr>
 
 <tr class="light">
-  <td valign=top>Template Code:</td>
-  <td colspan="2"><textarea readonly rows=10 cols=40><tmpl_var escape=HTML content></textarea></td>
+  <td valign="top">Template Code:</td>
+  <td colspan="2"><tmpl_var escape=HTML content></td>
 </tr>
 
 
@@ -63,17 +68,17 @@
 // -->
 </script>
 
+</table>
 
-<tr class="light">
-  <td>&nbsp;</td>
-  <td colspan="2"></td>
+  </td>
+  <td width="1" class="line"><img width="1" height="1"></td>
 </tr>
-
-
+<tr><td colspan="3" class="line"><img width="1" height="1"></td>
+</tr>
 </table>
 
 <div class="button-bar">
-  <input type="button" value="Return" onClick="javascript:do_return()"><tmpl_unless is_old_version>&nbsp;<tmpl_if can_edit><input type="button" value="Edit" onClick="javascript:do_edit_template()"></tmpl_if></tmpl_unless>
+  <input type="button" value="Return" onClick="javascript:do_return()" class="button"><tmpl_unless is_old_version>&nbsp;<tmpl_if can_edit><input type="button" value="Edit" onClick="javascript:do_edit_template()" class="button"></tmpl_if></tmpl_unless>
 </div>
 
 

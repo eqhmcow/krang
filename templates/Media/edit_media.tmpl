@@ -64,18 +64,26 @@
 // -->
 </script>
 
+<table border="0" cellpadding="2" cellspacing="0" width="100%">
+<tr class="dark-bar">
+  <td>&nbsp;<tmpl_if add_mode>NEW<tmpl_else>EDIT</tmpl_if> MEDIA</span></td>
+  <td align="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a>&nbsp;</td>
+</tr>
+</table>
 
-<div class="dark-bar">
-<span class="left"><tmpl_if add_mode>New<tmpl_else>Edit</tmpl_if> Media</span>
-<span class="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | </tmpl_unless><a href="javascript:goto_help()">Help</a></span>
-</div>
-
-<tmpl_unless add_mode>
-
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<form name="delete_media_form" method="post">
+<input type="hidden" name="rm" value="delete">
+<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
+</form>
+<form name="edit_media_form" method="POST" enctype="multipart/form-data">
+<input type="hidden" name="rm" value=<tmpl_if add_mode>"save_add"<tmpl_else>"save_edit"</tmpl_if>>
+<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>"><tr>
+  <td class="line"><img width="1" height="1"></td>
+  <td><img width="1" height="4"><tmpl_unless add_mode><table border="0" cellpadding="5" cellspacing="0" width="100%">
 <tr class="light">
   <td width="135">ID:</td>
-  <td width="10%"><tmpl_var media_id></td>
+  <td><tmpl_var media_id></td>
 
   <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media_session()"></tmpl_if><img border="0" src="<tmpl_var thumbnail_path>"><tmpl_if media_id></a></tmpl_if></td>
 </tr>
@@ -101,24 +109,9 @@
 </tr>
 
 </table>
-
 </tmpl_unless>
 
-
-
-<div class=form-box>
-
-<table cellpadding="5" cellspacing="0" width="100%">
-
-<form name="delete_media_form" method="post">
-<input type="hidden" name="rm" value="delete">
-<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
-</form>
-
-<form name="edit_media_form" method="POST" enctype="multipart/form-data">
-<input type="hidden" name="rm" value=<tmpl_if add_mode>"save_add"<tmpl_else>"save_edit"</tmpl_if>>
-<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
-
+<table border="0" cellpadding="5" cellspacing="0" width="100%">
 <tr>
   <td>*Title:</td>
   <td colspan="2"><tmpl_if error_invalid_title><span class="invalid"></tmpl_if><input type="textfield" size="45" name="title" value="<tmpl_var escape=HTML title>"><tmpl_if error_invalid_title></span></tmpl_if></td>
@@ -138,7 +131,7 @@
   <td>*Upload File:<tmpl_if filename><br />
 <tmpl_if media_id><a href="javascript:preview_media_session()"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if media_id></a></tmpl_if>
 <tmpl_var escape=HTML file_size></tmpl_if></td>
-  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_media_file><span class="invalid"></tmpl_if><input type="file" name="media_file"  size="32" /><tmpl_if error_media_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_media_file><span class="invalid"></tmpl_if><input type="file" name="media_file" size="32" class="button"><tmpl_if error_media_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 <tr>
@@ -164,13 +157,9 @@
 <tr>
   <td>Contributors:</td>
   <td width="250"><tmpl_if contribs><tmpl_loop contribs><tmpl_var first> <tmpl_var last> (<tmpl_var type>)<tmpl_unless __last__>, </tmpl_unless></tmpl_loop><tmpl_else>None.</tmpl_if></td>
-  <td><input type="button" value="Edit Contributors" onClick="edit_contribs()"></td>
+  <td><input type="button" value="Edit Contributors" onClick="edit_contribs()" class="button"></td>
 </tr>
-
-
 </table>
-</div>
-
 
 
 <!-- Version Navigation -->
@@ -195,27 +184,38 @@
   }
 // -->
 </script>
+  </td>
+  <td class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
 
-
+<img width="1" height="4"><br>
 <div class=form-box>
 Version: <tmpl_var media_version_chooser>
-<input type="button" value="Revert" onClick="revert_version()">
-<input type="button" value="View" onClick="view_version()">
+<input type="button" value="Revert" onClick="revert_version()" class="button">
+<input type="button" value="View" onClick="view_version()" class="button">
 </div>
 </tmpl_unless>
+<tmpl_if add_mode>
+  </td>
+  <td class="line"><img width="1" height="1"></td>
+</tr>
+<tr><td colspan="3" class="line"><img width="1" height="1"></td></tr>
+</table>
+</tmpl_if>
+
 <!-- END Version Navigation -->
 
 
 
 <div class="button-bar">
-  <input type="button" value="Save" onClick="do_save()">
-  <input type="button" value="Save &amp; Stay" onClick="do_save_stay()">
-  <input type="button" value="Checkin" onClick="do_checkin()">
-  <input type="button" value="Publish" onClick="do_publish()">
-  <input type="reset" value="Reset">
-  <input type="button" value="Delete" onClick="do_delete()">
+  <input type="button" value="Save" onClick="do_save()" class="button">
+  <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
+  <input type="button" value="Publish" onClick="do_publish()" class="button">
+  <input type="reset" value="Reset" class="button">
+  <tmpl_unless add_mode><input type="button" value="Delete" onClick="do_delete()" class="button"></tmpl_unless>&nbsp;&nbsp;&nbsp;
 </div>
-
 
 </form>
 

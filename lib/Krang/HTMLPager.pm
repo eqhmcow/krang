@@ -274,7 +274,7 @@ sub make_internal_template {
 
     # Build up table and header row
     my @columns = @{$self->columns()};
-    $pager_tmpl .= '<table cellspacing="0" width="100%"><tr class="form-head"><th>'
+    $pager_tmpl .= '<table border="0" cellspacing="0" cellpadding="0" width="100%"><tr class="form-head"><th>'
       . join("</th>\n<th>", (map { "<tmpl_var colhead_$_>" } @columns) ) ."</th></tr>\n\n\n";
 
     # Build loop for data
