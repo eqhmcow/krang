@@ -20,7 +20,7 @@ use Time::Piece::MySQL;
 # constants
 use constant FIELDS => qw( object_type object_id action version desk_id user_id timestamp );
 use constant OBJECT_TYPES => qw( Krang::Story Krang::Media Krang::Template );
-use constant ACTIONS => qw( new save checkin checkout publish deploy move revert );
+use constant ACTIONS => qw( new save checkin checkout publish deploy undeploy move revert );
 
 =head1 NAME
 

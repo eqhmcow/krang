@@ -90,8 +90,9 @@ use Krang::Story;
 use Krang::Category;
 use Krang::ElementClass;
 use Krang::Template;
+use Krang::History qw(add_history);
 
-use Krang::Log qw(debug info critical);
+use Krang::Log qw(debug);
 
 use constant PUBLISHER_RO => qw(is_publish is_preview story category);
 
@@ -213,11 +214,12 @@ sub preview_story {
 
     foreach my $object (@$publish_list) {
         if ($object->isa('Krang::Story')) {
-            info('Publisher.pm: Previewing story_id=' . $object->story_id());
+            debug('Publisher.pm: Previewing story_id=' . $object->story_id());
             $self->_build_story_single_category(story    => $object,
                                                 category => $object->category,
                                                 url      => $object->preview_url());
         } elsif ($object->isa('Krang::Media')) {
+            debug('Publisher.pm: Previewing media_id=' . $object->media_id());
             $self->preview_media(media => $object);
         }
     }
@@ -254,7 +256,6 @@ sub publish_story {
 
     foreach my $object (@$publish_list) {
         if ($object->isa('Krang::Story')) {
-            info('Publisher.pm: Publishing story_id=' . $object->story_id());
             $self->_build_story_all_categories(story => $object);
             # check the object back in.
             if ($object->checked_out()) { $object->checkin(); }
@@ -368,6 +369,9 @@ sub publish_media {
     # check media back in.
     if ($media->checked_out()) { $media->checkin(); }
 
+    # log event
+    add_history(object => $media, action => 'publish');
+
     return $media->url();
 
 }
@@ -461,7 +465,8 @@ sub deploy_template {
     # mark template as deployed.
     $template->mark_as_deployed();
 
-    info("Publisher.pm: template_id=$id deployed to '$file'");
+    # log event.
+    add_history(object => $template, action => 'deploy');
 
     return $file;
 
@@ -506,7 +511,8 @@ sub undeploy_template {
     # mark template as undeployed.
     $template->mark_as_undeployed();
 
-    info("Publisher.pm: template_id=$id removed (undeployed) from location '$file'");
+    # log event.
+    add_history(object => $template, action => 'undeploy');
 
     return;
 
@@ -750,9 +756,12 @@ sub _build_story_all_categories {
     my @story_urls = $story->urls();
     my @categories = $story->categories();
 
+    # log history
+    add_history(object => $story, action => 'publish');
+
     # Categories & Story URLs are in identical order.  Move in lockstep w/ both of them.
     foreach (my $i = 0; $i <= $#categories; $i++) {
-        info("Publisher.pm: publishing story under URI='$story_urls[$i]'");
+        debug("Publisher.pm: publishing story under URI='$story_urls[$i]'");
 
         $self->_build_story_single_category(story    => $story,
                                             category => $categories[$i],
@@ -845,7 +854,7 @@ sub _write_page {
     $fh->print($args{data});
     $fh->close();
 
-    info("Publisher.pm: wrote page '$output_filename'");
+    debug("Publisher.pm: wrote page '$output_filename'");
 
     return;
 }
