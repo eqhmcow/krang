@@ -197,7 +197,7 @@ if ($destroy) {
     }
 }
 
-exit 1 if $no_create;
+exit 0 if $no_create;
 
 # create databases
 foreach my $instance (@instances) {
