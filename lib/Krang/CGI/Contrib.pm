@@ -407,8 +407,8 @@ sub save_edit {
 
     my %errors = ( $self->validate_contrib() );
 
-    # Return to add screen if we have errors
-    return $self->add( %errors ) if (%errors);
+    # Return to edit screen if we have errors
+    return $self->edit( %errors ) if (%errors);
 
     # Retrieve new contrib object
     my $c = $session{EDIT_CONTRIB};
@@ -517,8 +517,6 @@ sub do_update_contrib {
 
     # Grab each CGI query param and set the corresponding Krang::Contrib property
     foreach my $ck (keys(%contrib_prototype)) {
-        print STDERR "UPDATE: '$ck'\n";
-
         # Presumably, query data is already validated and un-tainted
         $contrib->$ck($q->param($ck));
     }
