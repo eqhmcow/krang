@@ -9,8 +9,8 @@ DROP TABLE IF EXISTS asset_group_permission;
 
 
 /* Table for Krang groups */
-DROP TABLE IF EXISTS permission_group;  /* "group" is a reserved word. */
-CREATE TABLE permission_group (
+DROP TABLE IF EXISTS group_permission;  /* "group" is a reserved word. */
+CREATE TABLE group_permission (
         group_id            INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         name                VARCHAR(255) NOT NULL DEFAULT "",
         may_publish         BOOL NOT NULL DEFAULT 0,
@@ -28,12 +28,12 @@ CREATE TABLE permission_group (
 );
 
 /* set up default groups */
-INSERT INTO permission_group VALUES (1, 'Admin'  , 1,1,0,1,1,1,1,1,1, "edit", "edit", "edit");
-INSERT INTO permission_group VALUES (2, 'Editor' , 1,1,1,0,1,0,1,1,0, "edit", "edit", "read-only");
-INSERT INTO permission_group VALUES (3, 'Default', 0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
+INSERT INTO group_permission VALUES (1, 'Admin'  , 1,1,0,1,1,1,1,1,1, "edit", "edit", "edit");
+INSERT INTO group_permission VALUES (2, 'Editor' , 1,1,1,0,1,0,1,1,0, "edit", "edit", "read-only");
+INSERT INTO group_permission VALUES (3, 'Default', 0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
 
 
-/* Join table: desk <-> permission_group */
+/* Join table: desk <-> group_permission */
 DROP TABLE IF EXISTS desk_group_permission;
 CREATE TABLE desk_group_permission (
         desk_id  INT UNSIGNED NOT NULL,
@@ -50,19 +50,18 @@ INSERT INTO desk_group_permission VALUES (2, 2, "edit");
 INSERT INTO desk_group_permission VALUES (1, 3, "hide");
 INSERT INTO desk_group_permission VALUES (2, 3, "hide");
 
-/* Join table: user <-> permission_group */
+/* Join table: user <-> group_permission */
 DROP TABLE IF EXISTS user_group_permission;
 CREATE TABLE user_group_permission (
         user_id         INT UNSIGNED NOT NULL,
         group_id	INT UNSIGNED NOT NULL,
-        permission_type	ENUM('edit','hide','read-only') NOT NULL DEFAULT "edit",
         PRIMARY KEY (user_id, group_id)
 );
 
-/* set default user permissions */
-INSERT INTO user_group_permission VALUES (1,1,'edit');
+/* set default (admin) user permissions */
+INSERT INTO user_group_permission VALUES (1,1);
 
-/* Join table: category <-> permission_group */
+/* Join table: category <-> group_permission */
 DROP TABLE IF EXISTS category_group_permission;
 CREATE TABLE category_group_permission (
         category_id INT UNSIGNED NOT NULL,

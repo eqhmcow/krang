@@ -126,7 +126,7 @@ use Krang::Category;
 use Exception::Class ( 'Krang::Group::DuplicateName' => { fields => [ 'group_id' ] } );
 
 
-# Database fields in table permission_group, asidde from group_id
+# Database fields in table group_permission, asidde from group_id
 use constant FIELDS => qw( name
                            may_publish
                            admin_users
@@ -368,7 +368,7 @@ sub find {
     my @order_by_dirs = map { "$_ $order_dir" } @order_bys;
 
     # Build SQL where, order by and limit clauses as string -- same for all situations
-    my $sql_from_where_str = "from permission_group ";
+    my $sql_from_where_str = "from group_permission ";
     $sql_from_where_str .= "where ". join(" and ", @sql_wheres) ." "  if (@sql_wheres);
     $sql_from_where_str .= "order by ". join(",", @order_by_dirs) ." ";
     $sql_from_where_str .= "limit $offset,$limit"  if ($limit);
@@ -381,7 +381,7 @@ sub find {
         my $sql = "select count(*) $sql_from_where_str";
         debug_sql($sql, \@sql_where_data);
 
-        my ($group_count) = $dbh->selectrow_array($sql, {RaiseError=>1}, @sql_where_data);
+        my ($group_count) = $dbh->selectrow_array($sql, undef, @sql_where_data);
         return $group_count;
 
 
@@ -457,7 +457,7 @@ sub save {
     my $group_id = $self->group_id();
 
     # Update group object primary fields in database
-    my $update_sql = "update permission_group set ";
+    my $update_sql = "update group_permission set ";
     $update_sql .= join(", ", map { "$_=?" } FIELDS);
     $update_sql .= " where group_id=?";
 
@@ -467,7 +467,7 @@ sub save {
     debug_sql($update_sql, \@update_data);
 
     my $dbh = dbh();
-    $dbh->do($update_sql, {RaiseError=>1}, @update_data);
+    $dbh->do($update_sql, undef, @update_data);
 
     # Sanitize categories: Make sure all root categories are specified
     my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
@@ -478,7 +478,7 @@ sub save {
 
     # Blow away all category perms in database and re-build
     $dbh->do( "delete from category_group_permission where group_id=?",
-              {RaiseError=>1}, $group_id );
+              undef, $group_id );
     my $cats_sql = "insert into category_group_permission (group_id,category_id,permission_type) values (?,?,?)";
     my $cats_sth = $dbh->prepare($cats_sql);
     while (my ($category_id, $permission_type) = each(%categories)) {
@@ -494,7 +494,7 @@ sub save {
 
     # Blow away all desk perms in database and re-build
     $dbh->do( "delete from desk_group_permission where group_id=?",
-              {RaiseError=>1}, $group_id );
+              undef, $group_id );
     my $desks_sql = "insert into desk_group_permission (group_id,desk_id,permission_type) values (?,?,?)";
     my $desks_sth = $dbh->prepare($desks_sql);
     while (my ($desk_id, $permission_type) = each(%desks)) {
@@ -528,11 +528,11 @@ sub delete {
                                  category_group_permission_cache
                                  desk_group_permission
                                  user_group_permission
-                                 permission_group );
+                                 group_permission );
 
     foreach my $table (@delete_from_tables) {
         $dbh->do( "delete from $table where group_id=?",
-                  {RaiseError=>1}, $group_id );
+                  undef, $group_id );
     }
 }
 
@@ -657,11 +657,11 @@ sub delete_category_permissions {
 
     # Get rid of permissions cache
     $dbh->do( "delete from category_group_permission_cache where category_id=?",
-              {RaiseError=>1}, $category_id );
+              undef, $category_id );
 
     # Get rid of permissions
     $dbh->do( "delete from category_group_permission where category_id=?",
-              {RaiseError=>1}, $category_id );
+              undef, $category_id );
 }
 
 
@@ -689,7 +689,7 @@ sub rebuild_category_cache {
     my $dbh = dbh();
 
     # Clear cache table
-    $dbh->do( "delete from category_group_permission_cache", {RaiseError=>1});
+    $dbh->do( "delete from category_group_permission_cache", undef);
 
     # Traverse category hierarchy
     my @root_cats = Krang::Category->find(parent_id=>undef);
@@ -764,7 +764,7 @@ sub delete_desk_permissions {
 
     # Get rid of permissions
     $dbh->do( "delete from desk_group_permission where desk_id=?",
-              {RaiseError=>1}, $desk_id );
+              undef, $desk_id );
 }
 
 
@@ -983,7 +983,7 @@ sub rebuild_group_permissions_cache_process_category {
                            );
 
         # Do update cache table
-        $dbh->do($update_sql, {RaiseError=>1}, $may_see, $may_edit, $group_id);
+        $dbh->do($update_sql, undef, $may_see, $may_edit, $group_id);
     }
 
     # Descend and recurse
@@ -1039,8 +1039,8 @@ sub validate_group {
     my $name = $self->name();
 
     my $dbh = dbh();
-    my $is_dup_sql = "select group_id from permission_group where name = ? and group_id != ?";
-    my ($dup_id) = $dbh->selectrow_array($is_dup_sql, {RaiseError=>1}, $name, $group_id);
+    my $is_dup_sql = "select group_id from group_permission where name = ? and group_id != ?";
+    my ($dup_id) = $dbh->selectrow_array($is_dup_sql, undef, $name, $group_id);
 
     # If dup, throw exception
     if ($dup_id) {
@@ -1054,7 +1054,7 @@ sub insert_new_group {
     my $self = shift;
 
     my $dbh = dbh();
-    $dbh->do("insert into permission_group (group_id) values (NULL)") || die($dbh->errstr);
+    $dbh->do("insert into group_permission (group_id) values (NULL)") || die($dbh->errstr);
 
     my $group_id = $dbh->{'mysql_insertid'};
     $self->{group_id} = $group_id;

@@ -677,7 +677,7 @@ sub save {
 
     # validate group ids, throws InvalidGroup exception if we've got a
     # non-extant group in the 'group_ids' field
-    my %types = $self->_validate_group_ids();
+    $self->_validate_group_ids();
 
     my $query;
     my $dbh = dbh();
@@ -712,13 +712,10 @@ sub save {
         $dbh->do("DELETE FROM user_group_permission WHERE user_id = ?",
                  undef, ($id));
 
-        if (keys %types) {
-            # associate user with groups
-            my $sth = $dbh->prepare("INSERT INTO user_group_permission " .
-                                    "VALUES (?,?,?)");
-            while (my($gid, $type) = each %types) {
-                $sth->execute(($id, $gid, $type));
-            }
+        # associate user with groups, if any
+        foreach my $gid (@{$self->{group_ids}}) {
+            $dbh->do( qq/ INSERT INTO user_group_permission (user_id,group_id) VALUES (?,?) /,
+                      undef, $id, $gid );
         }
 
         $dbh->do("UNLOCK TABLES");
@@ -757,24 +754,14 @@ sub _validate_group_ids {
     my $self = shift;
     my (@bad_groups, %types);
 
-    for (@{$self->{group_ids}}) {
-        my ($group) = Krang::Group->find(group_id => $_);
-          if (not(defined($group)) ||
-              not(ref($group)) ||
-              not(UNIVERSAL::isa($group, 'Krang::Group'))) {
-              push @bad_groups, $_;
-          } else {
-              my $type = $group->admin_users == 0 ? 'hide' :
-                ($group->admin_users_limited ? 'read-only' : 'edit');
-              $types{$group->group_id} = $type;
-          }
+    foreach my $group_id (@{$self->{group_ids}}) {
+        my ($found_group) = Krang::Group->find(group_id=>$group_id, count=>1);
+        push (@bad_groups, $group_id) unless ($found_group);
     }
 
-    Krang::User::InvalidGroup->throw(message => 'Invalid group_id in object',
-                                     group_id => \@bad_groups)
-        if @bad_groups;
-
-    return %types;
+    # Throw exception if bad groups
+    Krang::User::InvalidGroup->throw( message => 'Invalid group_id in object',
+                                      group_id => \@bad_groups ) if @bad_groups;
 }
 
 
