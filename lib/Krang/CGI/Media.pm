@@ -292,7 +292,7 @@ sub advanced_find {
      # search_alt_tag
     my $search_alt_tag = defined($q->param('search_alt_tag')) ? $q->param('search_alt_tag') : $session{'KRANG_PERSIST_Media_search_alt_tag'};
 ;
-    if (defined($search_alt_tag)) {
+    if ($search_alt_tag) {
         $search_alt_tag =~ s/\W+/\%/g;
         $find_params->{alt_tag_like} = "\%$search_alt_tag\%";
         $persist_vars->{search_alt_tag} = $search_alt_tag;
