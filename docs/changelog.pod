@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed krang_upgrade to use Krang::Platform.  Added a new method to
+Krang::Platform, post_upgrade_message(). [Sam]
+
+=item *
+
 Upgraded XML-Writer, HTML-Parser, and Tar-Archive to get rid of warnings.
 [Perrin]
 

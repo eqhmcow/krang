@@ -749,6 +749,41 @@ EOREPORT
 
 }
 
+=item C<post_upgrade_message(options => \%options)>
+
+Called by bin/krang_upgrade, returns upgrade information once everything
+is complete.
+
+=cut
+
+sub post_upgrade_message {
+
+    my ($pkg, %args) = @_;
+
+    my %options = %{$args{options}};
+
+    print <<EOREPORT;
+
+
+#####                                                         #####
+###                                                             ###
+##                  KRANG UPGRADE COMPLETE                       ##
+###                                                             ###
+#####                                                         #####
+
+
+   Installed at        :  $options{InstallPath}
+   Control script      :  $options{InstallPath}/bin/krang_ctl
+   Krang conf file     :  $options{InstallPath}/conf/krang.conf
+
+   Running on $options{IPAddress} --
+     http://$options{HostName}:$options{ApachePort}/
+     ftp://$options{HostName}:$options{FTPPort}/
+
+EOREPORT
+
+}
+
 
 
 =item C<guess_platform()>

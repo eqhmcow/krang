@@ -3,37 +3,12 @@ use warnings;
 use strict;
 
 
-# Location of MYSQL init, as per RPM install
-use constant MYSQL_INIT => '/etc/init.d/mysql';
-
-
 # Path to pre-req binaries
-use constant MYSQL_BIN      => '/usr/bin/mysql';
-use constant GROUPADD_BIN   => '/usr/sbin/groupadd';
-use constant USERADD_BIN    => '/usr/sbin/useradd';
-use constant USERMOD_BIN    => '/usr/sbin/usermod';
-use constant COPY_BIN       => '/bin/cp';
-use constant CHOWN_BIN      => '/bin/chown';
-use constant CHMOD_BIN      => '/bin/chmod';
-use constant XARGS_BIN      => '/usr/bin/xargs';
-use constant FIND_BIN       => '/usr/bin/find';
-use constant SH_BIN         => '/bin/sh';
-use constant MAKE_BIN       => '/usr/bin/make';
-use constant RM_BIN         => '/bin/rm';
-use constant ECHO_BIN       => '/bin/echo';
-use constant TAR_BIN        => '/bin/tar';
-use constant RPM_BIN        => '/bin/rpm';
-use constant IFCONFIG_BIN   => '/sbin/ifconfig';
-use constant CAT_BIN        => '/bin/cat';
-use constant CHKCONFIG_BIN  => '/sbin/chkconfig';
-use constant LN_BIN         => '/bin/ln';
-
-use constant MYSQLADMIN_BIN => '/usr/bin/mysqladmin';
-use constant PERL_BIN       => '/usr/bin/perl';
-use constant DU_BIN         => '/usr/bin/du';
-use constant DF_BIN         => '/bin/df';
-use constant CP_BIN         => '/bin/cp';
-
+our $COPY_BIN;
+our $CHOWN_BIN;
+our $ECHO_BIN;
+our $PERL_BIN = $^X;
+our $MYSQL_BIN;
 
 =head1 NAME
 
@@ -170,6 +145,9 @@ exit(0);
 sub do_upgrade {
     setup_getopts();
 
+    # load the platform file
+    load_platform();
+
     # Check all pre-requisites for upgrade
     check_prereqs();
 
@@ -191,6 +169,10 @@ sub check_prereqs {
     # Must be running as root.
     exit_error("Must be run as root.") unless ($> eq "0");
 
+    # make sure the platform is happy
+    our $PLATFORM;
+    $PLATFORM->verify_dependencies(mode => 'install');
+
     # Validate path to KRANG_ROOT.
     my $KrangRoot = $options{KrangRoot};
     unless (-e $KrangRoot) {
@@ -206,7 +188,7 @@ sub check_prereqs {
     # LOAD OLD KRANG_CONF
     # Start by getting old conf valid directives
     my $get_directives_perl = qq( print join("\\t", \@Krang::Conf::VALID_DIRECTIVES). "\\n"; );
-    my $get_directives_cmd = "KRANK_CONF_NOCHECK=1 KRANG_CONF=$krang_conf ". PERL_BIN;
+    my $get_directives_cmd = "KRANK_CONF_NOCHECK=1 KRANG_CONF=$krang_conf $PERL_BIN";
     $get_directives_cmd .= " -MKrang::Conf -e '$get_directives_perl' && echo \"Success $uniqueness\"";
 
     my $get_directives_output = `$get_directives_cmd`;
@@ -254,9 +236,9 @@ sub check_prereqs {
       if ($running);
 
     # MySQLRootPassword must be valid, and MySQL should be running
-    my $mysql_bin = MYSQL_BIN;
+    my $mysql_bin = $MYSQL_BIN;
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
-    my $test_mysql = ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
+    my $test_mysql = "$ECHO_BIN 'select \"world\" as hello' | $mysql_bin -uroot";
     $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
     $test_mysql .= " 2>&1";
     my $mysql_test_output = `$test_mysql`;
@@ -289,6 +271,34 @@ sub check_prereqs {
 }
 
 
+# load the platform module for this dist
+sub load_platform {
+    our $PLATFORM;
+
+    exit_error("Can't find data/build.db.  Do you need to run 'make build'?")
+      unless -e catfile($ENV{KRANG_ROOT}, 'data', 'build.db');
+    require Krang::Platform;
+    my %build_params = Krang::Platform->build_params;
+
+    # add in $KRANG_ROOT/platform for platform build modules
+    my $plib    = catdir($ENV{KRANG_ROOT}, "platform");
+    $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
+    unshift @INC, $plib;
+
+    print "Loading platform module for '$build_params{Platform}...\n";
+    $PLATFORM = "$build_params{Platform}::Platform";
+    eval "use $PLATFORM;";
+    die "Unable to load $PLATFORM: $@"
+      if $@;
+
+    # find binaries
+    $COPY_BIN  = $PLATFORM->find_bin(bin => 'cp');
+    $CHOWN_BIN = $PLATFORM->find_bin(bin => 'chown');
+    $ECHO_BIN  = $PLATFORM->find_bin(bin => 'echo');
+    $MYSQL_BIN = $PLATFORM->find_bin(bin => 'mysql');
+}
+
+
 sub make_backups {
     # compute a backup filename
     my ($y, $m, $d) = (localtime)[5,4,3];
@@ -315,13 +325,13 @@ sub install_new_krang {
     print "Installing new Krang files into '$InstallPath'\n";
 
     chdir($ENV{KRANG_ROOT});
-    my $copy = COPY_BIN ." -a * $InstallPath\/";
+    my $copy = "$COPY_BIN -a * $InstallPath\/";
     system($copy) && die("Can't copy: $!");
 
     print "  Fixing ownership\n";
     my $KrangUser = $OLD_CONF->get("KrangUser");
     my $KrangGroup = $OLD_CONF->get("KrangGroup");
-    my $chown = CHOWN_BIN ." -R $KrangUser\.$KrangGroup $InstallPath";
+    my $chown = "$CHOWN_BIN -R $KrangUser\.$KrangGroup $InstallPath";
     system($chown) && die("Can't update ownership: $!");
 
     print "  Krang files installed.\n";
@@ -356,7 +366,7 @@ sub apply_upgrades {
         my $package = $module;
         $package =~ s/\.pm$//;
 
-        my $upgrade_cmd = "KRANG_ROOT=$KrangRoot PERL5LIB=$perl5lib ". PERL_BIN;
+        my $upgrade_cmd = "KRANG_ROOT=$KrangRoot PERL5LIB=$perl5lib $PERL_BIN";
         $upgrade_cmd .= " -M$package -e 'my \$ug = $package->new(); \$ug->upgrade()'";
         system($upgrade_cmd) && die("Error using upgrade module '$module'");
     }
@@ -372,7 +382,7 @@ sub update_db_version {
     # Iterate through instances, making .backup files
     while (my ($instance, $db) = each(%instance_dbs)) {
         print "  Updating $instance ($db)\n";
-        my $mysql_bin = MYSQL_BIN;
+        my $mysql_bin = $MYSQL_BIN;
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
         my $update_db_version_cmd = "$mysql_bin -uroot";
         $update_db_version_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
@@ -388,7 +398,7 @@ sub clear_sessions {
     # Iterate through instances, making .backup files
     while (my ($instance, $db) = each(%instance_dbs)) {
         print "  Deleting sessions for $instance ($db)\n";
-        my $mysql_bin = MYSQL_BIN;
+        my $mysql_bin = $MYSQL_BIN;
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
         my $update_db_version_cmd = "$mysql_bin -uroot";
         $update_db_version_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
@@ -407,44 +417,15 @@ sub start_krang {
 
 
 sub output_report {
-    my $KrangRoot = $options{KrangRoot};
-
-    my $HostName   = $OLD_CONF->get("HostName");
-    my $IPAddress  = $OLD_CONF->get("ApacheAddr");
-    my $ApachePort = $OLD_CONF->get("ApachePort");
-    my $FTPPort    = $OLD_CONF->get("FTPPort");
-
-    my $init_script = "/etc/init.d/krang-". $HostName .".init";
-    my $krang_conf = $KrangRoot ."/conf/krang.conf";
-
-    print <<EOREPORT;
-
-
-#####                                                    #####
-###                                                        ###
-##                  KRANG UPGRADE COMPLETE                  ##
-###                                                        ###
-#####                                                    #####
-
-
-   Krang root path     :  $KrangRoot
-   Startup init script :  $init_script
-   Krang conf file     :  $krang_conf
-
-   Running on $IPAddress --
-     http://$HostName:$ApachePort/
-     ftp://$HostName:$FTPPort/
-
-   A backup of your system before the upgrade is here:
-     $BACKUP_FILENAME
-
-EOREPORT
-
+    our $PLATFORM;
+    $PLATFORM->post_upgrade_message(options => {
+                            InstallPath => $options{KrangRoot},
+                            HostName    => $OLD_CONF->get("HostName"),
+                            IPAddress   => $OLD_CONF->get("ApacheAddr"),
+                            ApachePort  => $OLD_CONF->get("ApachePort"),
+                            FTPPort     => $OLD_CONF->get("FTPPort"),
+                                               });
 }
-
-
-
-
 
 ###########################
 ####  PRIVATE METHODS  ####
@@ -502,7 +483,7 @@ sub get_krang_version {
     my $perl5lib = $KrangRoot ."/lib";
 
     my $get_version_perl = qq( print \$Krang::VERSION. "\\n"; );
-    my $get_version_cmd = "PERL5LIB=$perl5lib ". PERL_BIN;
+    my $get_version_cmd = "PERL5LIB=$perl5lib $PERL_BIN";
     $get_version_cmd .= " -MKrang -e '$get_version_perl' && echo \"Success $uniqueness\"";
 
     my $get_version_output = `$get_version_cmd`;
