@@ -569,11 +569,11 @@ The default implementation populates the template as follows:
 
 =item * 
 
-A single variable is created for $element->name().
+A single variable is created for C<< $element->name() >>.
 
 =item *
 
-A single variable called $child->name() is created for each 
+A single variable called C<< $child->name() >> is created for each 
 B<UNIQUELY NAMED> child element.  For example, if the element contains 
 children named (C<paragraph>, C<paragraph>, C<deck>), two variables 
 would be created, C<paragraph> and C<deck>.  The value of C<paragraph> 
@@ -587,7 +587,7 @@ described above and a _count variable.
 
 =item * 
 
-A loop called "element_loop" is created with a row for every child
+A loop called C<element_loop> is created with a row for every child
 element contained. The values are the same as for the loop above with
 the addition of a boolean is_ variable.
 
@@ -608,13 +608,15 @@ element name and a trailing _total.
 
 =item * 
 
-A variable called "title" containing $story->title.
+A variable called C<title> containing C<< $story->title() >>.
 
 =item * 
 
-A variable called "page_break" containing Krang::Publisher->page_break()
+A variable called C<page_break> containing C<< Krang::Publisher->page_break() >>
 
 =back
+
+B<NOTE:> If you're developing your own elements, be aware that there exists the potential for naming collisions.  For example, if you create a child element named C<title>, you create a collsion with C<< $story->title >>.  Default behavior is that element children take precedence over everything else in a naming collision.  Avoid this by choosing better names for your elements.
 
 =cut
 
@@ -702,6 +704,7 @@ sub fill_template {
 
 
     my %element_count;
+    my %child_params;
 
     foreach my $child (@element_children) {
         my $name     = $child->name;
@@ -714,7 +717,7 @@ sub fill_template {
         # directly in the template, not seen before.
         next unless (exists($template_vars{element_loop}{$name}) || 
                      exists($template_vars{$loopname}) ||
-                     (exists($template_vars{$name}) && !exists($params{$name})));
+                     (exists($template_vars{$name}) && !exists($child_params{$name})));
 
         # Pass pagination variables along to child->publish if the
         # child element is pageable (e.g. is used for determining what
@@ -733,7 +736,7 @@ sub fill_template {
         # build element_loop if it exists.
         if (exists($template_vars{element_loop})) {
             $element_count{$name} ? $element_count{$name}++ : ($element_count{$name} = 1);
-            push @{$params{element_loop}}, {
+            push @{$child_params{element_loop}}, {
                                             "is_$name" => 1,
                                             $name      => $html,
                                             $name.'_count' => $element_count{$name}
@@ -743,8 +746,8 @@ sub fill_template {
         # does '$name_loop' exist?  build it.
         if (exists($template_vars{$loopname})) {
             my $loop_idx = 1;
-            if (exists($params{$loopname})) {
-                $loop_idx = @{$params{$loopname}} + 1;
+            if (exists($child_params{$loopname})) {
+                $loop_idx = @{$child_params{$loopname}} + 1;
             }
             my %loop_entry = ($name . '_count' => $loop_idx,
                               $name            => $html,
@@ -753,25 +756,25 @@ sub fill_template {
             # fix to make contrib_loop available - this is because
             # HTML::Template does not support global loops - only global_vars
             if ($tmpl->query(name => [$loopname,'contrib_loop'])) {
-                $params{contrib_loop} = $self->_build_contrib_loop(@_) unless
-                  exists($params{contrib_loop});
-                $loop_entry{contrib_loop} = $params{contrib_loop};
+                $child_params{contrib_loop} = $self->_build_contrib_loop(@_) unless
+                  exists($child_params{contrib_loop});
+                $loop_entry{contrib_loop} = $child_params{contrib_loop};
             }
 
-            push @{$params{$loopname}}, \%loop_entry;
+            push @{$child_params{$loopname}}, \%loop_entry;
 
         }
 
         # if the element is used in the template outside of a loop,
         # and hasn't been set (first child element takes precedence),
         # do it.
-        if (exists($template_vars{$name}) && !exists($params{$name})) {
-            $params{$name} = $html;
+        if (exists($template_vars{$name}) && !exists($child_params{$name})) {
+            $child_params{$name} = $html;
         }
     }
 
 
-    $tmpl->param(%params);
+    $tmpl->param(%params, %child_params);
 }
 
 
