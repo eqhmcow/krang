@@ -123,8 +123,11 @@ sub run {
 
     # drop off pidfile
     my $pidfile = IO::File->new(">$pidfile");
-    croak(__PACKAGE__ . "->run() unable to write pidfile.")
-      unless defined $pidfile;
+    unless (defined($pidfile)) {
+        my $msg = __PACKAGE__ . "->run() unable to write '$pidfile'.  Exiting.";
+        critical($msg);
+        exit();
+    }
     $pidfile->print($$);
     $pidfile->close();
 
@@ -132,7 +135,6 @@ sub run {
     my $now = localtime;
     info(__PACKAGE__ . " started.");
 
-    my $foo=0;
     while (1) {
 
         info(__PACKAGE__ . "->run(): heartbeat. $CHILD_COUNT child processes active");
@@ -221,9 +223,9 @@ sub scheduler_pass {
     }
 
     if ($CHILD_COUNT) {
-        info(sprintf("%s STATUS: Waiting on %i children to return.", __PACKAGE__, $CHILD_COUNT));
+        debug(sprintf("%s STATUS: Waiting on %i children to return.", __PACKAGE__, $CHILD_COUNT));
     } else {
-        info(sprintf("%s STATUS: no work pending.", __PACKAGE__));
+        debug(sprintf("%s STATUS: no work pending.", __PACKAGE__));
     }
 
 }
@@ -266,7 +268,7 @@ sub _child_work {
     Krang::Cache::start();
 
     # child
-    info(sprintf("%s: Child PID=%i spawned with %i tasks.",
+    debug(sprintf("%s: Child PID=%i spawned with %i tasks.",
                  __PACKAGE__, $$, ($#$tasks+1)));
 
     foreach my $t (@$tasks) {
@@ -367,7 +369,7 @@ sub _cleanup_tables {
 
     foreach my $sched_id (@{$child_pids{$child_pid}{jobs}}) {
         push @sched_ids, $sched_id;
-        delete $assigned_jobs{instance}{$sched_id};
+        delete $assigned_jobs{$instance}{$sched_id};
     }
     delete $child_pids{$child_pid};
 
@@ -394,7 +396,7 @@ sub _query_for_jobs {
                                       );
 
     if (@schedules) {
-        info(sprintf("%s: %i Pending jobs found.", __PACKAGE__, ($#schedules+1)));
+        debug(sprintf("%s: %i Pending jobs found.", __PACKAGE__, ($#schedules+1)));
     }
 
     return @schedules;
