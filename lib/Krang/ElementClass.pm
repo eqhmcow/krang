@@ -260,6 +260,24 @@ The default implementation loads a template named C<$class->name
 . ".tmpl">.  It then sets up the standard variables and loops provided
 to templates.  See the template tutorial for more information.
 
+=cut
+
+=item C<< $url = $class->build_url(story => $story, category => $category) >>
+
+Builds a URL for the given story and category.  The default
+implementation takes the site URL, appends the category path and the
+story slug.  This may be overriden by top_level elements to implement
+alternative URL schemes.
+
+=cut
+
+sub build_url {
+    my ($self, %arg) = @_;
+    my ($story, $category) = @arg{qw(story category)};
+    return join('/', $category->url, $story->slug);
+}
+
+
 =item C<< $text = $class->freeze_data(element => $element) >>
 
 Custom serialization of data from the element.  This is used to store
@@ -356,5 +374,15 @@ sub is_container {
     my $self = shift;
     return @{$self->{children}} ? 1 : 0;
 }
+
+=head1 TODO
+
+=over
+
+=item Add tests for build_url() once Krang::Category is in.
+
+=back
+
+=cut
 
 1;
