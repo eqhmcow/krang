@@ -5,6 +5,13 @@ use Getopt::Long;
 use Pod::Usage;
 
 
+
+# Path to pre-req binaries
+use constant MYSQL_BIN => '/usr/bin/mysql';
+use constant PERL_BIN => '/usr/bin/perl';
+
+
+
 =head1 NAME
 
 krang_install - install Krang from a dist file
@@ -40,10 +47,6 @@ Following is a list of the tasks the installer script will perform.
 
 =item InstanceElementSet must exist
 
-=item MySQLRootPassword must be valid for this box
-
-=item InstallPath must NOT exist.
-
 =item Check for proper version of MySQL.
 
 
@@ -52,6 +55,8 @@ Following is a list of the tasks the installer script will perform.
 =item Suggest "--do-mysql-install" flag if not installed.
 
 =back
+
+=item MySQLRootPassword must be valid for this box
 
 
 =item Check for proper version of Perl.
@@ -63,6 +68,8 @@ Following is a list of the tasks the installer script will perform.
 
 =back
 
+
+=item InstallPath must NOT exist.
 
 
 =back
@@ -166,7 +173,7 @@ use Krang;
 
 my $krang_version;
 my $uniqueness = time();
-my ($help, $man);
+my ($help, $man, $do_mysql_install, $do_perl_install);
 my @req_params = qw( HostName
                      IPAddress
                      InstanceVirtualHost 
@@ -198,16 +205,135 @@ exit(0);
 sub do_install {
     setup_getopts();
 
+    # Do installation
+    check_prereqs();
+    create_mysql_user();
+    create_unix_user_group();
+    install_krang();
+    configure_krang();
+    add_krang_init();
+    start_krang();
+    make_test();
+    output_report();
+}
+
+
+sub check_prereqs {
+    # Must be running as root.
+    exit_error("Must be run as root.") unless ($> eq "0");
+
+    # IP address must be configured on host.
+    my $ifconfig = `/sbin/ifconfig`;
+    my @ip_addrs = ();
+    foreach my $if_line (split(/\n/, $ifconfig)) {
+        next unless ($if_line =~ /inet\ addr\:(\d+\.\d+\.\d+\.\d+)/);
+        my $ip = $1;
+        push(@ip_addrs, $ip);
+    }
+    my $IPAddress = $options{'IPAddress'};
+    unless (grep {$_ eq $IPAddress} @ip_addrs) {
+        exit_error("IPAddress '$IPAddress' not bound to machine");
+    }
+
+    # InstanceElementSet must exist
+    my $InstanceElementSet = $options{'InstanceElementSet'};
+    unless (-d $ENV{KRANG_ROOT}."/element_lib/".$InstanceElementSet) {
+        exit_error("InstanceElementSet '$InstanceElementSet' does not exist");
+    }
+
+    if ($do_mysql_install) {
+        # Bail if version 4 is already installed
+        my $mysql_bin = MYSQL_BIN;
+        my $mysql_version = `$mysql_bin -V`;
+        if ((-f $mysql_bin) and ($mysql_version =~ /Distrib\ 4\./)) {
+            exit_error("MySQL version 4.* already installed!  Try again without --do-mysql-install");
+        }
+    } else {
+        # Check for proper version of MySQL.
+        #     Suggest ""--do-mysql-install"" flag if not
+        #     installed.
+        my $mysql_bin = MYSQL_BIN;
+        unless (-f $mysql_bin) {
+            exit_error("MySQL not installed.  Try again with --do-mysql-install");
+        }
+
+        my $mysql_version = `$mysql_bin -V`;
+        unless ((-f $mysql_bin) and ($mysql_version =~ /Distrib\ 4\./)) {
+            exit_error("MySQL version 4.* not installed.  Try again with --do-mysql-install");
+        }
+
+        # MySQLRootPassword must be valid for this box
+        my $MySQLRootPassword = $options{'MySQLRootPassword'};
+        my $test_mysql = qq/\/bin\/echo 'select "world" as hello' | $mysql_bin -uroot/;
+        $test_mysql .= " -p$MySQLRootPassword" if ($MySQLRootPassword);
+        $test_mysql .= ' && echo "### OK ###"';
+        my $mysql_test_output = `$test_mysql`;
+        unless ($mysql_test_output =~ /\#\#\#\ OK\ \#\#\#/) {
+            exit_error("MySQL not running.  Start MySQL and try again.");
+        }
+    }
+
+    unless ($do_perl_install) {
+        # Check for proper version of Perl.
+        #     Suggest ""--do-perl-install"" flag if not
+        #     installed.
+    }
+
+    # InstallPath must NOT exist.
+}
+
+
+sub create_mysql_user {}
+
+
+sub create_unix_user_group {}
+
+
+sub install_krang {}
+
+
+sub configure_krang {}
+
+
+sub add_krang_init {}
+
+
+sub start_krang {}
+
+
+sub make_test {}
+
+
+sub output_report {
+    # Debug
     use Data::Dumper;
     print Dumper(\%options);
-    # Do installation
+}
+
+
+
+
+
+###########################
+####  PRIVATE METHODS  ####
+###########################
+
+sub exit_error {
+    my $cmd = $0;
+    $cmd =~ s/.*\/(.+)$/$1/;
+
+    my $message = shift;
+    print STDERR "\nError: $cmd:  $message\n\n";
+    exit(1);
 }
 
 
 sub setup_getopts {
     pod2usage(2) unless
         GetOptions( 'help'      => \$help,
-                    'man'       => \$man, 
+                    'man'       => \$man,
+                    'do-mysql-install' => \$do_mysql_install,
+                    'do-perl-install' => \$do_perl_install,
                     (map { $_."=s" => \$options{$_} } @req_params, @opt_params) );
 
     pod2usage(1)             if $help;
