@@ -340,7 +340,7 @@ sub element {
     my $self = shift;
     return $self->{element} if $self->{element};
     ($self->{element}) = 
-      Krang::Element->load(element_id => $self->{element_id});
+      Krang::Element->load(element_id => $self->{element_id}, object => $self);
     return $self->{element};
 }
 
@@ -397,7 +397,8 @@ sub init {
     $self->{class} = delete $args{class};
     croak("Missing required 'class' parameter to Krang::Story->new()")
       unless $self->{class};
-    $self->{element} = Krang::Element->new(class => $self->{class});
+    $self->{element} = Krang::Element->new(class => $self->{class}, 
+                                           object => $self);
 
     # get hash of url_attributes
     $self->{url_attributes} = 
@@ -557,7 +558,6 @@ sub save {
     add_history(    object => $self, 
                     action => 'save',
                );
-
 }
 
 # save core Story data
@@ -1517,7 +1517,7 @@ sub STORABLE_freeze {
     croak("Unable to freeze story: $@") if $@;
 
     # reconnect cache
-    $self->{category_cache} = $category_cache;
+    $self->{category_cache} = $category_cache if defined $category_cache;
 
     return $data;
 }
@@ -1531,6 +1531,12 @@ to ensure this works correctly.
 
 sub STORABLE_thaw {
     my ($self, $cloning, $data) = @_;
+
+    # FIX: is there a better way to do this?
+    # Krang::Element::STORABLE_thaw needs a reference to the story in
+    # order to thaw the element tree, but thaw() doesn't let you pass
+    # extra arguments.
+    local $Krang::Element::THAWING_OBJECT = $self;
 
     # retrieve object
     eval { %$self = %{thaw($data)} };

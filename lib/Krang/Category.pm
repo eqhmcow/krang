@@ -284,7 +284,8 @@ sub init {
 
     # define element
     #################
-    $self->{element} = Krang::Element->new(class => 'category');
+    $self->{element} = Krang::Element->new(class => 'category', 
+                                           object => $self);
 
     return $self;
 }
@@ -683,13 +684,15 @@ sub find {
         if ($single_column) {
             push @categories, $row;
         } else {
-            # load 'element'
-            ($row->{element}) =
-              Krang::Element->load(element_id => $row->{element_id});
             # set '_old_dir' and '_old_url'
             $row->{_old_dir} = $row->{dir};
             $row->{_old_url} = $row->{url};
             push @categories, bless({%$row}, $self);
+
+            # load 'element'
+            ($categories[-1]->{element}) =
+              Krang::Element->load(element_id => $row->{element_id}, 
+                                   object     => $categories[-1]);
         }
     }
 

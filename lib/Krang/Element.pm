@@ -9,6 +9,7 @@ use List::Util qw(first);
 use Scalar::Util qw(weaken);
 use Carp qw(croak);
 use Carp::Assert qw(assert DEBUG);
+use Storable qw(freeze thaw);
 
 # declare prototypes
 sub foreach_element (&@);
@@ -25,8 +26,9 @@ Krang::Element - element data objectcs
 
   use Krang::Element;
 
-  # create a new top-level element
-  my $element = Krang::Element->new(class => "article");
+  # create a new top-level element, passing in the class name and
+  # containing object
+  my $element = Krang::Element->new(class => "article", object => $story);
 
   # add a sub-element
   my $para = $element->add_child(class => "paragraph");
@@ -77,7 +79,7 @@ Krang::Element - element data objectcs
   @classes = $element->available_child_classes();
 
   # load a top-level element by id
-  $element1 = Krang::Element->load(element_id => 1);
+  $element1 = Krang::Element->load(element_id => 1, object => $story);
 
   # delete it from the database
   $element1->delete();
@@ -96,11 +98,16 @@ to the element class.
 
 =over
 
-=item C<< $element = Krang::Element->new(class => "article") >>
+=item C<< $element = Krang::Element->new(class => "article", object => $object) >>
 
 Creates a new element.  The 'class' parameter is required and may be
 either the name of a top-level element class or a Krang::ElementClass
-object.  Other options correspond to attribute methods below:
+object.  
+
+The 'object' parameter is required for top-level elements and must
+contain a reference to the object containing this element.
+
+Other options correspond to attribute methods below:
 
 =over
 
@@ -127,7 +134,7 @@ the first C<save()>.
 
 use Krang::MethodMaker
   new_with_init => 'new',
-  new_hash_init => 'hash_init',  
+  new_hash_init => 'hash_init',    
   get_set       => [ qw( element_id parent ) ];
 
 # initialize a new object, creating children as required by the class
@@ -151,6 +158,10 @@ sub init {
 
     # finish the object
     $self->hash_init(%args);
+
+    # make sure we've got an object if this is a top_level
+    croak("Krang::Element->new() called without object parameter!")
+      unless not($self->class->top_level) or $self->object;
 
     # setup data, using default value if set
     $self->data($have_data ? $data : $self->{class}->default);
@@ -212,6 +223,55 @@ sub data {
     $self->check_data(data => $data);
     $self->{data} = $data;
     return $data;
+}
+
+
+=item C<< $object = $element->object() >>
+
+Returns the object containing this element tree.  This will be either
+a Krang::Story or a Krang::Category object.
+
+=cut
+
+sub object {
+    my $self = shift;
+    return $self->root->object(@_) if $self->{parent};
+    return $self->{object} unless @_;    
+    $self->{object} = shift;
+    
+    # make sure not to create a circular reference
+    weaken($self->{object});
+}
+
+
+=item C<< $object = $element->story() >>
+
+Convenience method which returns $element->object() if
+$element->object->isa('Krang::Story') and croaks otherwise.
+
+=cut
+
+sub story { 
+    my $self = shift;
+    my $object = $self->{object};
+    croak("Expected a Krang::Story in element->object, but didn't find on!")
+      unless $object and $object->isa('Krang::Story');
+    return $object;
+}
+
+=item C<< $object = $element->category() >>
+
+Convenience method which returns $element->object() if
+$element->object->isa('Krang::Category') and croaks otherwise.
+
+=cut
+
+sub category { 
+    my $self = shift;
+    my $object = $self->{object};
+    croak("Expected a Krang::Category in element->object, but didn't find on!")
+      unless $object and $object->isa('Krang::Category');
+    return $object;
 }
 
 =item C<< $parent = $element->parent() >>
@@ -529,10 +589,12 @@ sub available_child_classes {
     return grep { exists $max{$_->name} } $self->{class}->children;
 }
 
-=item C<< $element = Krang::Element->load(element_id => $id) >>
+=item C<< $element = Krang::Element->load(element_id => $id, object => $object) >>
 
 Loads a Krang::Element object from the database.  This will only find
-top-level elements and will load all child elements.
+top-level elements and will load all child elements.  The 'object'
+parameter is required and must contain a reference to the object
+containing this element.
 
 =cut
 
@@ -553,7 +615,7 @@ SQL
           unless $data and @$data;
        
         my $element;
-        eval { $element = $pkg->_load_tree($data) };
+        eval { $element = $pkg->_load_tree($data, $arg{object}) };
         croak("Unable to load element tree with id '$arg{element_id}':\n$@")
           if $@;
         return $element;
@@ -571,7 +633,7 @@ use constant PARENT_ID  => 1;
 use constant CLASS      => 2;
 use constant DATA       => 3;
 sub _load_tree {
-    my ($pkg, $data) = @_;
+    my ($pkg, $data, $object) = @_;
 
     # root must be first
     my $root = shift @$data;
@@ -583,7 +645,8 @@ sub _load_tree {
     $ehash{$root->[ELEMENT_ID]} =
       Krang::Element->new(element_id => $root->[ELEMENT_ID],
                           class      => $root->[CLASS],
-                          no_expand  => 1
+                          object     => $object,
+                          no_expand  => 1,
                          );
     # deserialize data
     $ehash{$root->[ELEMENT_ID]}->thaw_data(data => $root->[DATA]);
@@ -685,7 +748,7 @@ export.
 sub foreach_element (&@) {
     my $code = shift;
     while (@_) {
-        $_ = shift;
+        local $_ = shift;
         push(@_, $_->children);
         $code->();
     }
@@ -745,6 +808,76 @@ use Class::XPath
   get_attr_value => sub {},   # 
   get_content    => 'data',   # get content from the 'data' method
   ;
+
+
+sub STORABLE_freeze {
+    my ($self, $cloning) = @_;
+    return if $cloning;
+
+    # build packed array of element data
+    my %ref_to_index;
+    my $i = 0;
+    my @data;
+    foreach_element {
+        $ref_to_index{$_} = $i;
+        $data[$i] = [ $_->{element_id},
+                      $_->{parent} ? $ref_to_index{$_->{parent}} : undef,
+                      $_->{class}->name,
+                      $_->freeze_data, 
+                    ];          
+        $i++;
+    } $self;
+
+    # freeze it
+    my $data;
+    eval { $data = freeze(\@data) };
+    croak("Unable to freeze element: $@") if $@;
+
+    return $data;
+}
+
+sub STORABLE_thaw {
+    my ($self, $cloning, $data) = @_;
+
+    # FIX: is there a better way to do this?
+    # Krang::Element::STORABLE_thaw needs a reference to the story in
+    # order to thaw the element tree, but thaw() doesn't let you pass
+    # extra arguments.
+    our $THAWING_OBJECT;
+
+    # retrieve data stack
+    my @data;
+    eval { @data = @{thaw($data)} };
+    croak("Unable to thaw element: $@") if $@;
+  
+    # start out with the root
+    my $d = $data[0][3];
+    $data[0] = 
+      Krang::Element->new(element_id => $data[0][0],
+                          class      => $data[0][2],
+                          object     => $THAWING_OBJECT,
+                          no_expand  => 1,
+                         );
+    $data[0]->thaw_data(data => $d);
+
+    # boom through children, since they're guaranteed to contain no
+    # forward references and to be in the correct order for calls to
+    # add_child()
+    for my $i (1 .. $#data) {
+        $d = $data[$i][3];
+        $data[$i] = 
+          $data[$data[$i][1]]->add_child(element_id => $data[$i][0],
+                                         class      => $data[$i][2],
+                                         no_expand => 1
+                                        );
+        $data[$i]->thaw_data(data => $d);
+    }
+
+    # all done, set $self to root and return it
+    %$self = %{$data[0]};
+    # return $self;
+}
+
 
 =back
 
@@ -831,13 +964,6 @@ return a reference that can be used to make changes.
 
 Do leak testing to make sure the use of weaken() here is having the
 intended effect.
-
-=item
-
-Add STORABLE_freeze and STORABLE_thaw methods so that elements don't
-serialize their class objects.  This causes much irratation while
-doing element class development and will make element class upgrades
-needlessly difficult.
 
 =item
 

@@ -2,9 +2,29 @@ use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::Script;
+use Krang::Site;
+use Krang::Category;
+use Krang::Story;
 BEGIN { use_ok('Krang::Element') }
 
-my $element = Krang::Element->new(class => "article");
+# create a site and category for dummy story
+my $site = Krang::Site->new(preview_url  => 'storytest.preview.com',
+                            url          => 'storytest.com',
+                            publish_path => '/tmp/storytest_publish',
+                            preview_path => '/tmp/storytest_preview');
+isa_ok($site, 'Krang::Site');
+$site->save();
+END { $site->delete() }
+my ($category) = Krang::Category->find(site_id => $site->site_id());
+
+# create a new story
+my $story = Krang::Story->new(categories => [$category],
+                              title      => "Test",
+                              slug       => "test",
+                              class      => "article");
+
+
+my $element = Krang::Element->new(class => "article", object => $story);
 isa_ok($element, 'Krang::Element');
 
 # article has two default children, page and deck
@@ -94,7 +114,7 @@ undef $page;
 undef $element;
 
 # reload
-my $loaded = Krang::Element->load(element_id => $element_id);
+my $loaded = Krang::Element->load(element_id => $element_id, object => $story);
 isa_ok($loaded, 'Krang::Element');
 is($loaded->name, "article");
 @children = $loaded->children();
@@ -134,7 +154,7 @@ is($children[3]->name, "page");
 ok($loaded->delete());
 
 # make sure it's gone
-eval { $loaded = Krang::Element->load(element_id => $element_id) };
+eval { $loaded = Krang::Element->load(element_id => $element_id, object => $story) };
 like($@, qr/No element found/);
 
 # leak test

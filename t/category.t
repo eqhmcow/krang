@@ -68,7 +68,7 @@ is($category->url() =~ /$dir/, 1, 'url()');
 # setter tests
 ###############
 # element()
-my $element = Krang::Element->new(class => 'category');
+my $element = Krang::Element->new(class => 'category', object => $category);
 $element->save();
 $category->element($element);
 $category->save();
