@@ -132,7 +132,6 @@ use constant CATEGORY_RO => qw( category_id
 
 # Read-write fields
 use constant CATEGORY_RW => qw( dir
-                                element
 			        site_id );
 
 # Globals
@@ -830,9 +829,6 @@ sub find {
         $new_category->{_old_dir} = $new_category->{dir};
         $new_category->{_old_url} = $new_category->{url};
 
-        # load 'element'
-        $new_category->{element} = Krang::Element->load( element_id => $new_category->{element_id}, 
-                                                         object     => $new_category );
         push(@categories, $row);
     }
 
@@ -841,6 +837,20 @@ sub find {
 
     # Return categories
     return @categories;
+}
+
+=item C<element> (readonly)
+
+The element for this category. 
+
+=cut
+
+sub element {
+    my $self = shift;
+    return $self->{element} if $self->{element};
+    ($self->{element}) =
+      Krang::Element->load(element_id => $self->{element_id}, object => $self);
+    return $self->{element};
 }
 
 
@@ -884,7 +894,7 @@ sub save {
     $self->duplicate_check();
 
     # save element, get id back
-    my ($element) = $self->{element};
+    my ($element) = $self->element;
     $element->save();
     $self->{element_id} = $element->element_id();
 
