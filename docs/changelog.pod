@@ -6,6 +6,18 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where C<krang_export> could only write output in directories
+where C<KrangUser> had write permissions.  The output file is now
+opened before su'ing to C<KrangUser>. [Sam]
+
+=item *
+
+Removed support for C<--append> from C<krang_export>.  This option was
+never, to my knowledge, used and it didn't work after the permissions
+fix above.  [Sam]
+
+=item *
+
 Changed the schema for the Krang::User XML format to make the new
 'hidden' field optional.  This allows data files from pre-v1.017 Krang
 to load in later Krangs. [Sam]

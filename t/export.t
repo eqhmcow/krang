@@ -73,36 +73,3 @@ ok(grep { $_->[0] eq 'Krang::Category' and
           $_->[1] eq $story->category->category_id  } @obj);
 ok(grep { $_->[0] eq 'Krang::Site' and
           $_->[1] eq $story->category->site->site_id  } @obj);
-
-# create a media object
-my $media = Krang::Media->new(title => 'test media object', category_id => $category->category_id, media_type_id => 1);
-my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
-my $fh = new FileHandle $filepath;
-$media->upload_file(filename => 'krang.jpg', filehandle => $fh);
-$media->save();
-END { $media->delete if $media };
-
-# append the media object to the export
-($in, $out, $err) = ("", "", "");
-@cmd = ($krang_export, '--append', $kds, '--media_id', $media->media_id);
-run(\@cmd, \$in, \$out, \$err);
-ok(length($err) == 0);  
-like($out, qr/Export completed/);
-ok(-s $kds);
-
-# try loading it with Krang::DataSet
-$set = Krang::DataSet->new(path => $kds);
-isa_ok($set, 'Krang::DataSet');
-
-# there should be five objects here, the story, the category, the
-# site and the media object
-@obj = $set->list;
-is(@obj, 4);
-ok(grep { $_->[0] eq 'Krang::Story' and
-          $_->[1] eq $story->story_id  } @obj);
-ok(grep { $_->[0] eq 'Krang::Category' and
-          $_->[1] eq $story->category->category_id  } @obj);
-ok(grep { $_->[0] eq 'Krang::Site' and
-          $_->[1] eq $story->category->site->site_id  } @obj);
-ok(grep { $_->[0] eq 'Krang::Media' and
-          $_->[1] eq $media->media_id  } @obj);

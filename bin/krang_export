@@ -23,11 +23,6 @@ called F<cool_stories.kds>:
 
   $ krang_export --story_id 10 --output cool_stories.kds
 
-Export another story (ID: 20), appending it to the existing
-C<cool_stories.kds> archive:
-
-  $ krang_export --story_id 10 --append cool_stories.kds
-
 For more options see the OPTIONS section below.
 
 =head1 DESCRIPTION
@@ -43,10 +38,6 @@ into another system.
 =item --output filename.kds
 
 Choose the name of the output file.  Defaults to 'export.kds'.
-
-=item --append filename.kds
-
-Append to an existing file.  If you set this, --output is ignored.
 
 =item --compress
 
@@ -150,11 +141,71 @@ $@
 END
 }
 
-use Krang::Script;
-use Krang::Conf qw(KrangRoot ElementLibrary);
 use Getopt::Long;
 use Pod::Usage;
 use Krang::DataSet;
+
+# process args and open the output file before dropping privs
+our ($help, $man, $compress, $overwrite, $output, $verbose, 
+     %all, %id, $file, $set);
+BEGIN { 
+    eval {
+        $output = 'export.kds';
+        $verbose = 0;
+        %all = map { ($_, 0) } qw(stories media templates contribs categories 
+                                  sites users groups alerts list_items );
+        %id  = map { ($_, [])} qw(story_id media_id template_id contrib_id 
+                                  category_id site_id user_id group_id 
+                                  alert_id list_item_id );
+
+        pod2usage(2) unless
+          GetOptions(help       => \$help,
+                     man        => \$man,
+                     
+                     'verbose+' => \$verbose,
+                     'compress' => \$compress,
+                     'overwrite'=> \$overwrite,
+                     
+                     'output=s' => \$output,
+                     
+                     everything => sub { $all{$_} = 1 for keys %all },
+                     
+                     (map { ($_,    \$all{$_}) } keys %all),
+                     (map { ("$_=i", $id{$_})  } keys %id),
+                     
+                    );
+        pod2usage(1)             if $help;
+        pod2usage(-verbose => 2) if $man;
+        pod2usage("Unrecognized options to krang_export: '" . 
+                  join(' ', @ARGV) . "'\n")
+          if @ARGV;
+        
+        # figure out target filename
+        $file = $output;
+        
+        # validate filename
+        die "Output filename must end in .kds\n"
+          if not $compress and $file !~ /\.kds$/;
+        die "Output filename must end in .kds.gz\n"
+          if $compress and $file !~ /\.kds.gz$/;
+        die "File '$file' exists!  ".
+          "Use --overwrite if you want to replace it.\n"
+            if -e $file and not $overwrite;
+        
+        # open up an output filehandle before using Krang::Script and switching
+        # privs
+        open(OUTPUT, '>', $file) 
+          or die "Unable to open '$file' for output: $!\n";
+    };
+
+    # output errors without the BEGIN compilation failed message
+    if ($@) { 
+        warn $@;
+        exit(1);
+    }
+}
+
+use Krang::Script;
 use Krang::Story;
 use Krang::Media;
 use Krang::Template;
@@ -165,62 +216,12 @@ use Krang::User;
 use Krang::ListGroup;
 use Krang::List;
 use Krang::ListItem;
-
-
-my ($help, $man, $append, $compress, $overwrite);
-my $output = 'export.kds';
-my $verbose = 0;
-my %all = map { ($_, 0) } qw(stories media templates contribs categories 
-                             sites users groups alerts list_items );
-my %id  = map { ($_, [])} qw(story_id media_id template_id contrib_id 
-                             category_id site_id user_id group_id alert_id list_item_id );
-
-pod2usage(2) unless
-  GetOptions(help       => \$help,
-             man        => \$man,
-
-             'verbose+' => \$verbose,
-             'compress' => \$compress,
-             'overwrite'=> \$overwrite,
-
-             'output=s' => \$output,
-             'append=s' => \$append,
-
-             everything => sub { $all{$_} = 1 for keys %all },
-
-             (map { ($_,    \$all{$_}) } keys %all),
-             (map { ("$_=i", $id{$_})  } keys %id),
-             
-            );
-pod2usage(1)             if $help;
-pod2usage(-verbose => 2) if $man;
-pod2usage("Unrecognized options to krang_export: '" . join(' ', @ARGV) . "'\n")
-  if @ARGV;
-
-# figure out target filename
-my $file = $append ? $append : $output;
-
-# validate filename
-die "Output filename must end in .kds\n"
-  if not $compress and $file !~ /\.kds$/;
-die "Output filename must end in .kds.gz\n"
-  if $compress and $file !~ /\.kds.gz$/;
+use Krang::Conf qw(KrangRoot);
+use File::Temp qw(tempfile);
 
 # open up the data set
-my $set;
-if ($append) {
-    die "File '$file' does not exist.  Can't --append to a nonexistent file.\n"
-      unless -e $file;
-    print STDERR "Reading in '$file' for append...\n" if $verbose;
-    $set = Krang::DataSet->new(path => $file, 
-                               ($verbose ?
-                                (add_callback => \&add_callback) : ()));
-} else {
-    die "File '$file' exists!  Use --overwrite if you want to replace it.\n"
-      if -e $file and not $overwrite;
-    $set = Krang::DataSet->new($verbose ? 
-                               (add_callback => \&add_callback) : ());
-}
+$set = Krang::DataSet->new($verbose ? 
+                           (add_callback => \&add_callback) : ());
 
 # keep a count of things added
 my $added = 0;
@@ -265,7 +266,23 @@ die "Nothing selected for export!  Did you mean to use --everything?\n"
 
 
 print STDERR "Packing $file...\n" if $verbose;
-$set->write(path => $file, compress => $compress);
+
+# write file to a temp location and copy down the OUTPUT pipe.  This
+# is necessary if $file can't be written to by KrangUser
+my (undef, $temp) = tempfile(DIR    => catdir(KrangRoot, 'tmp'),
+                             SUFFIX => '.kds' . ($compress ? '.gz' : ''), 
+                            );
+$set->write(path => $temp, compress => $compress);
+
+# do a buffered copy from TEMP to OUTPUT
+open(TEMP, '<', $temp) or die "Unable to open '$temp': $!\n";
+my $buffer = "";
+while(read(TEMP, $buffer, 10240)) {
+    print OUTPUT $buffer;
+}
+close TEMP;
+close OUTPUT;
+unlink $temp or die $!;
 
 print "Export completed.  Output is in $file.\n";
 
