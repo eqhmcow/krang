@@ -111,8 +111,8 @@ sub find {
     my $q = $self->query();
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
 
-    # Persist data for return from view in "history_return_params"
-    my @history_return_param_list = qw(
+    # Persist data for return from view in "return_params"
+    my @return_param_list = qw(
                                        rm
                                        krang_pager_curr_page_num 
                                        krang_pager_show_big_view 
@@ -121,7 +121,7 @@ sub find {
                                        search_filter 
                                        show_thumbnails 
                                       );
-    $t->param(history_return_params => $self->make_history_return_params(@history_return_param_list));
+    $t->param(return_params => $self->make_return_params(@return_param_list));
 
     my $search_filter = $q->param('search_filter');
     my $show_thumbnails = $q->param('show_thumbnails');
@@ -177,8 +177,8 @@ sub advanced_find {
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
     $t->param(do_advanced_search=>1);
 
-    # Persist data for return from view in "history_return_params"
-    my @history_return_param_list = qw(
+    # Persist data for return from view in "return_params"
+    my @return_param_list = qw(
                                        rm
                                        krang_pager_curr_page_num 
                                        krang_pager_show_big_view 
@@ -194,7 +194,7 @@ sub advanced_find {
                                        search_creation_date_month 
                                        search_creation_date_year 
                                       );
-    $t->param(history_return_params => $self->make_history_return_params(@history_return_param_list));
+    $t->param(return_params => $self->make_return_params(@return_param_list));
 
     my $persist_vars = { rm => 'advanced_find' };
     my $find_params = {};
@@ -727,7 +727,7 @@ sub save_and_view_log {
     $self->update_media($m);
 
     # Redirect to associate screen
-    my $url = 'history.pl?history_return_script=media.pl&history_return_params=rm&history_return_params=edit&media_id=' . $m->media_id;
+    my $url = 'history.pl?history_return_script=media.pl&return_params=rm&return_params=edit&media_id=' . $m->media_id;
     $self->header_props(-uri=>$url);
     $self->header_type('redirect');
 
@@ -1050,8 +1050,8 @@ sub make_media_tmpl_data {
         }
     }
 
-    # Persist data for return from view in "history_return_params"
-    $tmpl_data{history_return_params} = $self->make_history_return_params('rm');
+    # Persist data for return from view in "return_params"
+    $tmpl_data{return_params} = $self->make_return_params('rm');
 
     # Send data back to caller for inclusion in template
     return \%tmpl_data;
@@ -1107,6 +1107,7 @@ sub make_media_view_tmpl_data {
         push(@contribs, \%contrib_row);
     }
     $tmpl_data{contribs} = \@contribs;
+    $tmpl_data{return_script} = $q->param('return_script');
 
     # Display creation_date
     my $creation_date = $m->creation_date();
@@ -1132,14 +1133,14 @@ sub make_media_view_tmpl_data {
     }
 
     # Set up return state
-    my %history_return_params = $q->param('history_return_params');
-    my @history_return_params_hidden = ();
-    while (my ($k, $v) = each(%history_return_params)) {
-        push(@history_return_params_hidden, $q->hidden(-name => $k,
+    my %return_params = $q->param('return_params');
+    my @return_params_hidden = ();
+    while (my ($k, $v) = each(%return_params)) {
+        push(@return_params_hidden, $q->hidden(-name => $k,
                                                        -value => $v,
                                                        -override=>1));
     }
-    $tmpl_data{history_return_params} = join("\n", @history_return_params_hidden);
+    $tmpl_data{return_params} = join("\n", @return_params_hidden);
 
     # Send data back to caller for inclusion in template
     return \%tmpl_data;
@@ -1148,29 +1149,29 @@ sub make_media_view_tmpl_data {
 
 # Given an array of parameter names, return HTML hidden
 # input fields suitible for setting up a return link
-sub make_history_return_params {
+sub make_return_params {
     my $self = shift;
-    my @history_return_param_list = ( @_ );
+    my @return_param_list = ( @_ );
 
     my $q = $self->query();
 
-    my @history_return_params_hidden = ();
-    foreach my $hrp (@history_return_param_list) {
+    my @return_params_hidden = ();
+    foreach my $hrp (@return_param_list) {
         # Store param name
-        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
+        push(@return_params_hidden, $q->hidden(-name => 'return_params',
                                                        -value => $hrp,
                                                        -override => 1));
 
         # Store param value
         my $pval = $q->param($hrp);
         $pval = '' unless (defined($pval));
-        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
+        push(@return_params_hidden, $q->hidden(-name => 'return_params',
                                                        -value => $pval,
                                                        -override => 1));
     }
 
-    my $history_return_params = join("\n", @history_return_params_hidden);
-    return $history_return_params;
+    my $return_params = join("\n", @return_params_hidden);
+    return $return_params;
 }
 
 

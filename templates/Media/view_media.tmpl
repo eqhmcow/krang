@@ -96,8 +96,8 @@
 </tr>
 
 
-<form name="return_form" method="POST">
-<tmpl_var history_return_params>
+<form name="return_form" method="POST" action="<tmpl_var escape="URL" return_script>">
+<tmpl_var return_params>
 </form>
 
 <form name="edit_media_form" method="POST">
