@@ -223,14 +223,14 @@ sub export_krang {
 
 sub exclude_directories {
     my $export_dir = get_export_dir();
-    print STDERR `rm -rf $export_dir/krang/bench`;
-    print STDERR `rm -rf $export_dir/krang/src`;
-    print STDERR `find $export_dir/krang/ -name '.cvsignore' | xargs rm`;
+    system("rm -rf $export_dir/krang/bench");
+    system("rm -rf $export_dir/krang/src");
+    system("find $export_dir/krang/ -name '.cvsignore' | xargs rm");
 }
 
 sub exclude_files {
     my $export_dir = get_export_dir();
-    print STDERR `rm -rf $export_dir/conf/krang.conf`;
+    system("rm -rf $export_dir/conf/krang.conf");
 }
 
 
@@ -244,20 +244,20 @@ sub create_tarball {
     my $krang_root = $ENV{KRANG_ROOT};
 
     # Rename exported directory to version-style
-    print STDERR `mv krang $dist_file`;
+    system("mv krang $dist_file");
 
     print "Creating tarball '$tarball_file'...\n";
-    print STDERR `tar czf $tarball_file $dist_file/*`;
+    system("tar czf $tarball_file $dist_file/*");
 
     print "Done.  Copying tarball to $krang_root\n";
-    print STDERR `cp $tarball_file $krang_root`;
+    system("cp $tarball_file $krang_root");
 }
 
 
 sub cleanup_makedist {
     my $export_dir = get_export_dir();
     print "Removing build directory '$export_dir'...\n";
-    print STDERR `rm -rf $export_dir`;
+    system("rm -rf $export_dir");
 }
 
 
