@@ -159,6 +159,11 @@
     function do_add(list_count) {
         var select_val = get_selected_val(list_count);
         var new_data = eval( "document.forms['edit_form'].new_item_" + list_count + ".value" );
+
+        // do nothing if no value is entered in textbox
+        if (! new_data) {
+            return;
+        }
     
         // if list item is selected in list we are adding to
         if (select_val != 'undef' ) {
