@@ -26,6 +26,7 @@ BEGIN {
         Krang::Conf->instance($instance);
         if (InstanceElementSet eq 'TestSet1') {
             $found = 1;
+#            $ENV{KRANG_INSTANCE} = $instance;
             last;
         }
     }
@@ -502,7 +503,7 @@ sub test_publish_status {
 
     my $bool;
     eval {
-        # this should return true.
+        # this should return true - the story should be published.
         $bool = $pub->test_publish_status(object => $story, mode => 'publish');
     };
 
@@ -514,7 +515,8 @@ sub test_publish_status {
     }
 
 
-    # 'preview' the story - the next test should return 0.
+    # 'preview' the story - the next test should return 0, as the
+    # current version of the story has now been previewed.
     $story->mark_as_previewed();
 
     $bool = $pub->test_publish_status(object => $story, mode => 'preview');
@@ -607,11 +609,18 @@ sub test_linked_assets {
     my %expected = (media => {}, story => {$story->story_id => $story});
     test_publish_list($publish_list, \%expected);
 
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
     # link story to story.
     # nothing changes in terms of what's expected.
     link_story($story, $story);
     $publish_list = $publisher->asset_list(story => $story, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
+
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
 
     # test that asset_list(story2) returns story2 + story + media
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
@@ -621,11 +630,17 @@ sub test_linked_assets {
 
     test_publish_list($publish_list, \%expected);
 
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
     # mark story as previewed - it should no longer show up when story2 is 'previewed'.
     $story->mark_as_previewed();
     delete $expected{story}{$story->story_id};
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
+
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
 
     # undo the preview by marking as an unsaved preview (which forces preview next time).
     $story->mark_as_previewed(unsaved => 1);
@@ -640,6 +655,9 @@ sub test_linked_assets {
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
     # add links to all of @stories to story -- duplicates story requirements.
     # test that asset_list(story2) returns story2 + story + @stories + media
     foreach (@stories) {
@@ -647,6 +665,9 @@ sub test_linked_assets {
     }
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
+
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
 
 
     # add links to all of @media to story2.
@@ -658,6 +679,9 @@ sub test_linked_assets {
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
     # add links to all of @media to story -- duplicates media requirements.
     # test that asset_list(story2) returns story2 + story + @stories + media + @media
     foreach (@media) {
@@ -666,11 +690,17 @@ sub test_linked_assets {
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
     # add link to story2 to story -- creates a full cycle.
     # test that asset_list(story2) returns story2 + story + @stories + media + @media
     link_story($story, $story2);
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
+
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
 
     # stress test - create multiple cycles, create as many interlinking dependencies as possible.
     # final publish list shouldn't change.
@@ -681,6 +711,9 @@ sub test_linked_assets {
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
     # asset test - mark all @stories as previewed - they shouldn't show up in the publish list.
     foreach (@stories) {
         $_->mark_as_previewed();
@@ -689,12 +722,18 @@ sub test_linked_assets {
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
     foreach (@media) {
         $_->mark_as_previewed();
         delete $expected{media}{$_->media_id};
     }
     $publish_list = $publisher->asset_list(story => $story2, mode => 'preview', version_check => 1);
     test_publish_list($publish_list, \%expected);
+
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
 
     # undo the marking
     foreach (@stories, @media) {
@@ -710,6 +749,9 @@ sub test_linked_assets {
     $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
     # mark @stories as published - they should not show up in $publish_list.
     foreach (@stories) {
         $_->mark_as_published();
@@ -718,6 +760,9 @@ sub test_linked_assets {
     $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
+
     # mark @media as published - they too should no longer show up.
     foreach (@media) {
         $_->mark_as_published();
@@ -725,6 +770,9 @@ sub test_linked_assets {
     }
     $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
     test_publish_list($publish_list, \%expected);
+
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
 
     # restore everything, test one last time.
     foreach (@stories, @media) {
@@ -740,6 +788,7 @@ sub test_linked_assets {
     $publish_list = $publisher->asset_list(story => $story2, mode => 'publish', version_check => 1);
     test_publish_list($publish_list, \%expected);
 
+
     # cleanup
     foreach (@paths) {
         $_ =~ /^(.*\/)[^\/]+/;
@@ -747,6 +796,9 @@ sub test_linked_assets {
         unlink $_ if -e $_;
         rmtree($dir);
     }
+
+    # clear asset lists to not interfere with tests.
+    $publisher->_clear_asset_lists();
 
 }
 
