@@ -145,19 +145,21 @@ open(LIST, '>', $list_file) or die $!;
 find({ no_chdir => 1,
        wanted => 
          sub { 
+             # print "Considering $_...\n";
              return unless 
-                       m!^$name/tmp/.!o or           # skip contents of tmp
-                       m!^$name/bench!o or          # skip bench
-                       m!^$name/conf/krang.conf$!o or # skip krang.conf
+                       m!^$name/\./tmp/.!o or            # skip tmp contents
+                       m!^$name/\./bench!o or            # skip bench
+                       m!^$name/\./conf/krang.conf$!o or # skip krang.conf
                        m!/CVS! or                    # skip all CVS dirs
                        m!\.cvsignore! or             # skip all CVS dirs
                        m!~$! or                      # skip Emacs droppings
                        m!#! or                       # skip Emacs droppings
                        m!krang-[^/]+\.tar\.gz! or    # skip Krang distribs
-                       (not $source_dist and m!^$name/src!o); 
-             
+                       (not $source_dist and m!^$name/./src!o); 
+
+             # print "Excluding $_.\n";
              print LIST "$_\n";
-         } }, $name);
+         } }, "$name/.");
 close LIST;
 
 # create INSTALL from docs/ops_install.pod
@@ -172,7 +174,7 @@ if ($platform and
 # create tar file using exclude list
 print "Creating tar file '$name.tar.gz'...\n";
 my $dist_file = catfile($old_dir, $name . '.tar.gz');
-system("tar czf $dist_file -X $list_file $name/*") == 0
+system("tar czf $dist_file -X $list_file $name/./*") == 0
   or die "tar failed: $?";
 
 # remove INSTALL and platform README
