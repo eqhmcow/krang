@@ -251,7 +251,7 @@ sub save {
     return $self->_edit(%save_errors) if (%save_errors);
 
     # Delete group object from session
-    $session{EDIT_GROUP} = 0;
+    # $session{EDIT_GROUP} = 0;
 
     if ($add_mode) {
         add_message('message_group_added');
@@ -294,7 +294,7 @@ sub save_stay {
     return $self->_edit(%save_errors) if (%save_errors);
 
     # Delete group object from session
-    $session{EDIT_GROUP} = 0;
+    # $session{EDIT_GROUP} = 0;
 
     if ($add_mode) {
         add_message('message_group_added');
@@ -338,7 +338,7 @@ sub cancel {
     my $add_mode = not($g->group_id);
 
     # Delete group object from session
-    $session{EDIT_GROUP} = 0;
+    # $session{EDIT_GROUP} = 0;
 
     if ($add_mode) {
         add_message('message_add_cancelled');
@@ -373,7 +373,7 @@ sub delete {
     croak ("Attempt to delete un-saved group") unless ($g->group_id);
 
     # Delete group object from session
-    $session{EDIT_GROUP} = 0;
+    # $session{EDIT_GROUP} = 0;
 
     # Do the delete
     eval { $g->delete() };
