@@ -176,6 +176,7 @@ Refer to F<docs/ops_upgrade.pod>.
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
 use FindBin qw($RealBin);
 use Config;
+use Config::ApacheFormat;
 
 
 # Set up KRANG_ROOT and PERL5LIB
@@ -200,6 +201,7 @@ my @original_args = ();
 my $uniqueness = time();
 my %instance_dbs = ();
 my $mysql_datadir;
+my $OLD_CONF;
 
 
 my ($help, $man, $no_krang_test);
@@ -252,6 +254,30 @@ sub check_prereqs {
         exit_error("'$krang_conf' does not exists.  Cannot continue.");
     }
 
+    # LOAD OLD KRANG_CONF
+    # Start by getting old conf valid directives
+    my $get_directives_perl = qq( print join("\t", \@Krang::Conf::VALID_DIRECTIVES). "\n"; );
+    my $get_directives_cmd = "KRANK_CONF_NOCHECK=1 KRANG_CONF=$krang_conf ". PERL_BIN;
+    $get_directives_cmd .= " -MKrang::Conf -e '$get_directives_perl' && echo \"Success $uniqueness\"";
+
+    my $get_directives_output = `$get_directives_cmd`;
+
+    unless ($get_directives_output =~ /Success\ $uniqueness/) {
+        print STDERR $get_directives_output;
+        exit_error("Error getting valid directives.  Cannot continue.");
+    }
+
+    my @old_valid_directives = (split(/\t/, $get_directives_output));
+    eval {
+        $OLD_CONF = Config::ApacheFormat->new( valid_directives => \@old_valid_directives,
+                                               valid_blocks => ['instance'] );
+        $OLD_CONF->read($krang_conf);
+    };
+    exit_error("Unable to read config file '$krang_conf'.  Error was: $@")
+      if $@;
+    exit_error("Unable to read config file '$krang_conf'.")
+      unless $OLD_CONF;
+
     # Verify that this Krang has been shut down.
     # get status from the pid file
     my $pid_file = catfile($KrangRoot, "tmp", "httpd.pid");
@@ -302,28 +328,13 @@ sub check_prereqs {
     exit_error("$krang_root_backup already exists.  You must remove this before you perform an upgrade.")
       if (-e $krang_root_backup);
 
-    # Start by loading instances from $krang_conf
-    my $get_instances_perl = qq( for (Krang::Conf->instances) {
-                                     print ">>>". \$_ ."<<<";
-                                     Krang::Conf->instance(\$_);
-                                     print ">>>". Krang::Conf->InstanceDBName ."<<<\n";
-                                 } );
-    my $get_instances_cmd = "KRANK_CONF_NOCHECK=1 KRANG_CONF=$krang_conf ". PERL_BIN;
-    $get_instances_cmd .= " -MKrang::Conf -e '$get_instances_perl' && echo \"Success $uniqueness\"";
-
-    my $get_instances_output = `$get_instances_cmd`;
-
-    unless ($get_instances_output =~ /Success\ $uniqueness/) {
-        print STDERR $get_instances_output;
-        exit_error("Error getting instances.  Cannot continue.");
-    }
-
     # Verify that no .backup exists for instance databases.  Parse out instances and databases for later.
-    foreach my $get_instances_output_row (split(/\n/, $get_instances_output)) {
-        next unless ($get_instances_output_row =~ />>>(.*)<<<>>>(.*)<<</);
-        my $instance = $1;
-        my $db = $2;
+    foreach my $instance ($OLD_CONF->get("instance")) {
+        my $conf_block = $OLD_CONF->block(instance => $instance);
+        my $db = $conf_block->get("InstanceDBName");
         $instance_dbs{$instance} = $db;
+
+        print STDERR "$instance: '$db'\n";
 
         my $mysql_instance_datadir_backup = $mysql_datadir . $db .".backup";
         exit_error("$mysql_instance_datadir_backup already exists.  You must remove this before you perform an upgrade.")
@@ -378,8 +389,6 @@ sub check_prereqs {
         $insufficient_disk_space++;
     }
     exit_error ("Not enough disk space for upgrade.  Unable to continue.") if ($insufficient_disk_space);
-
-    exit(1);
 }
 
 
@@ -428,8 +437,8 @@ sub install_new_krang {
     system($copy) && die("Can't copy: $!");
 
     print "  Fixing ownership\n";
-    my $KrangUser = $options{KrangUser};
-    my $KrangGroup = $options{KrangGroup};
+    my $KrangUser = $OLD_CONF->get("KrangUser");
+    my $KrangGroup = $OLD_CONF->get("KrangGroup");
     my $chown = CHOWN_BIN ." -R $KrangUser\.$KrangGroup $InstallPath";
     system($chown) && die("Can't update ownership: $!");
 

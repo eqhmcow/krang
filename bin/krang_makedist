@@ -172,12 +172,10 @@ Error: TAG EXISTS!
 It appears that Krang has already been tagged with '$ver_string'.  This 
 is usually an indication that you did not update \$VERSION in Krang.pm.
 
-To continue WITHOUT updating the \$Krang::VERSION you must first delete 
-this tag from CVS.
+If you want to re-build a release for version $krang_version use the --version
+option as follows:
 
-To delete tag:
-
-  cvs tag -d '$ver_string'
+  $0 --version $krang_version
 
 EOT
         exit(1);

@@ -12,6 +12,8 @@ PIRT.
 
 =item Update $VERSION in Krang.pm
 
+=item Update db_version in sql/db.sql
+
 =item Verify that upgrade modules have been created for this release
 
 =item Make sure all changes are committed to CVS.
@@ -45,6 +47,15 @@ will detect that the tag already exists and will abort.
 
 =item Create tar-ball
 
+At the end of the build process, a file will be created in the format:
+
+  krang-XX.YY.tar.gz
+
+Where XX.YY is the version of teh release.  For example, version 1.23 would result in a file:
+
+  krang-1.23.tar.gz
+
+This is the distribution tarball which should be released to PIRT.
 
 =back
 
