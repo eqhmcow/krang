@@ -62,6 +62,13 @@ sub template_data {
     return join(', ', @{$element->data});
 }
 
+sub view_data {
+    my ($self, %arg) = @_;
+    my $element = $arg{element};
+    return "" unless $element->data;
+    return join("<br>", @{$element->data});
+}
+
 =head1 NAME
 
 Krang::ElementClass::ListBox - list box element class
