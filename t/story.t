@@ -235,32 +235,32 @@ my $v = Krang::Story->new(categories => [$cat[0], $cat[1]],
                           class      => "article");
 END { $v->delete };
 $v->element->child('deck')->data('Version 1 Deck');
-is($v->version, 1);
+is($v->version, 0);
 $v->save(keep_version => 1);
-is($v->version, 1);
+is($v->version, 0);
 $v->save();
 
-is($v->version, 2);
+is($v->version, 1);
 $v->title("Bar");
 
 $v->save();
-is($v->version, 3);
+is($v->version, 2);
 is($v->title(), "Bar");
 $v->element->child('deck')->data('Version 3 Deck');
 is($v->element->child('deck')->data, 'Version 3 Deck');
 
 $v->revert(1);
-is($v->version, 3);
+is($v->version, 2);
 is($v->element->child('deck')->data, 'Version 1 Deck');
 
 is($v->title(), "Foo");
 $v->save();
-is($v->version, 4);
+is($v->version, 3);
 
 $v->revert(2);
 is($v->title(), "Bar");
 $v->save();
-is($v->version, 5);
+is($v->version, 4);
 
 # try loading old versions
 my ($v1) = Krang::Story->find(story_id => $v->story_id,
