@@ -40,6 +40,15 @@ exist.  This option tells krang_createdb to destroy and recreate any
 existing databases.  You will be prompted to confirm your dangerous
 request.
 
+=item --no_create
+
+Do not create new databases.  Can be useful if used in conjunction with
+--destroy.
+
+=item --no_prompt
+
+Do not prompt user for confirmation on any events
+
 =item --password [pass]
 
 If you configured MySQL to require a root password then you'll need to
@@ -95,12 +104,14 @@ use Getopt::Long;
 use Pod::Usage;
 use XML::Simple;
 
-my ($help, $man, $password, $destroy);
+my ($help, $man, $password, $destroy, $no_prompt, $no_create);
 my $verbose = 0;
 GetOptions(help         => \$help,
            man          => \$man,
            'verbose+'   => \$verbose,
            destroy      => \$destroy,
+            no_prompt   => \$no_prompt,
+            no_create   => \$no_create,
            'password=s' => \$password,
           );
 pod2usage(1)             if $help;
@@ -129,8 +140,10 @@ unless ($output =~ /hello.*world/s) {
 if ($destroy) {
 
     # make sure they really meant --destroy
-    exit 1      
-      unless prompt("y", "This program will drop and recreate all Krang databases (including the contents of data/*) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
+    unless ($no_prompt) {
+        exit 1      
+        unless prompt("y", "This program will drop and recreate all Krang databases (including the contents of data/*) for this installation.\n\nAre you sure you want to proceed?", "y/n", "y");
+    }
 
     # blow away data/*
     my $datadir = catfile($ENV{KRANG_ROOT}, "data", "*");
@@ -148,6 +161,8 @@ if ($destroy) {
         system($cmd);
     }
 }
+
+exit 1 if $no_create;
 
 # create databases
 foreach my $instance (Krang::Conf->instances()) {
