@@ -9,27 +9,24 @@ Krang::Site - a means to access information on sites
   use Krang::Site;
 
   # construct object
-  my $site = Krang::Site->new(preview_url => 'preview.com',   # optional
-			      publish_url => 'publish.com',   # optional
-			      preview_path => 'preview/path/',# optional
+  my $site = Krang::Site->new(preview_url => 'preview.com',   # required
+			      preview_path => 'preview/path/',# required
 			      publish_path => 'publish/path/',# required
 			      url => 'site.com'); 	      # required
 
   # saves object to the DB
   $site->save();
 
-  # get or set the site objects fields
-  my $id = $site->site_id();	# save() must have been called for this to
-				# be defined
+  # getters
+  my $id = $site->site_id();			# undef until save()
+  my $path = $site->preview_path();
+  my $path = $site->publish_path();
+  my $url = $site->preview_url();
+  my $url = $site->url();
 
-  my $path = $site->preview_path() || $site->publish_path();
-
-  $site->preview_path( $path . '_bob' );
-
-  my $url = $site->preview_url() || $site->publish_url() || $site->url();
-
-  $url =~ s/foo/bar/;
-
+  # setters
+  $site->preview_path( $new_preview_path );
+  $site->publish_path( $new_publish_path );
   $site->url( $url );
 
   # delete the site from the database
@@ -64,8 +61,8 @@ correspond to a web-site but only necessarily maps to a unique URL.  Content
 within the site is stored within categories; see L<Krang::Category>.
 
 On preview, site output is written to paths under 'preview_path' and then the
-user is redirected to 'publish_url' - it is the same for 'publish_path' and
-'publish_url' upon publishing an asset.
+user is redirected to 'preview_url' - it is the same for 'publish_path' and
+'url' upon publishing an asset.
 
 This module serves as a means of adding, deleting, accessing site objects for a
 given Krang instance.  Site objects, at present, do little other than act
@@ -84,12 +81,14 @@ use warnings;
 
 # External Modules
 ###################
-use Carp qw(verbose croak);
+use Carp qw(croak);
 
 # Internal Modules
 ###################
 use Krang;
+use Krang::Category;
 use Krang::DB qw(dbh);
+use Krang::Log qw/affirm assert should shouldnt ASSERT/;
 
 #
 # Package Variables
@@ -103,7 +102,6 @@ use constant SITE_RO => qw(site_id);
 use constant SITE_RW => qw(preview_path
 			   preview_url
 			   publish_path
-			   publish_url
 			   url);
 
 # Globals
@@ -150,11 +148,6 @@ of 'preview_path'.
 
 Full filesystem path under which the media and stories are published.
 
-=item * publish_url
-
-URL relative to which one is redirected after a media object or story is
-published.  The document root of this server is the value of 'publish_path'.
-
 =item * site_id (read-only)
 
 Integer which identifies the database rows associated with this site object.
@@ -183,8 +176,6 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 
 =item * publish_path
 
-=item * publish_url
-
 =item * url
 
 =back
@@ -205,7 +196,7 @@ sub init {
     croak(__PACKAGE__ . "->init(): The following constructor args are " .
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
 
-    for (qw/publish_path url/) {
+    for (SITE_RW) {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
           unless exists $args{$_};
     }
@@ -232,28 +223,48 @@ successful deletion.
 sub delete {
     my $self = shift;
     my $id = shift || $self->{site_id};
+
+    # check for references to this site
+    my %info = $id ? $self->dependant_check() :
+      Krang::Site->dependant_check();
+
+    croak(__PACKAGE__ . "->delete(): Category(ies): [" . join(',', keys %info)
+          . "] rely on this site.")
+      if keys %info;
+
     my $dbh = dbh();
-    my $category_id = 0;
-
-    # check for any references to this site in the category table
-    my $query = "SELECT category_id FROM category WHERE site_id = $id";
-    my $sth = $dbh->prepare($query);
-    $sth->execute();
-    $sth->bind_col(1, \$category_id);
-    $sth->fetch();
-    $sth->finish();
-
-    croak(__PACKAGE__ . "->delete(): Category '$category_id' refers to " .
-          "this site.") if $category_id;
-
-    $query = "DELETE FROM site WHERE site_id = '$id'";
-    $dbh->do($query);
+    $dbh->do("DELETE FROM site WHERE site_id = ?", undef, ($id));
 
     return 1;
 }
 
 
-=item * @info = $site->duplicate_check()
+=item * %info = $site->dependant_check()
+
+=item * %info = Krang::Site->dependant_check( $site_id )
+
+Class or instance method that returns a hash of category ids relying upon the
+given site object.
+
+=cut
+
+sub dependant_check {
+    my $self = shift;
+    my $id = shift || $self->{site_id};
+    my ($category_id, %info);
+
+    my $dbh = dbh();
+    my $sth =
+      $dbh->prepare("SELECT category_id FROM category WHERE site_id = ?");
+    $sth->execute(($id));
+    $sth->bind_col(1, \$category_id);
+    $info{$category_id} = 1 while $sth->fetch();
+
+    return %info;
+}
+
+
+=item * %info = $site->duplicate_check()
 
 This method checks the database to see if any existing site objects possess any
 of the same values as the one in memory.  If this is the case an array
@@ -265,37 +276,39 @@ otherwise the array will be empty.
 sub duplicate_check {
     my $self = shift;
     my $id = $self->{site_id};
-    my @id_info;
-    my (@fields, @params);
+    my (@fields, %info, @params, @wheres);
 
     for (keys %site_cols) {
-        if ($_ ne 'site_id' && exists $self->{$_} && $self->{$_} ne '') {
-            push @fields, "$_ = ?";
-            push @params, $self->{$_};
-        }
+        push @fields, $_;
+        push @wheres, "$_ = ?";
+        push @params, $self->{$_};
     }
 
-    my $query = "SELECT * FROM site WHERE (" . join(" OR ", @fields) . ")";
-    $query .= " AND site_id != $id" if $id;
+    my $query = "SELECT " . join(",", @fields).
+      " FROM site WHERE (" . join(" OR ", @wheres) . ")";
+
+    if ($id) {
+        $query .= " AND site_id != ?";
+        push @params, $_;
+    }
+
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
 
-    # reference into which result are fetched
     my $row;
     $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     while ($sth->fetch()) {
         for (keys %$row) {
             if (exists $self->{$_} && exists $row->{$_}
                 && $self->{$_} eq $row->{$_}) {
-                push @id_info, $row->{site_id}, $_;
-                last;
+                $info{$row->{site_id}} = $_;
             }
         }
     }
     $sth->finish();
 
-    return @id_info;
+    return %info;
 }
 
 
@@ -486,9 +499,10 @@ sub save {
     my $update = $self->{url} ne $self->{_old_url} ? 1 : 0;
 
     # check for duplicates
-    my ($site_id, $field) = $self->duplicate_check();
-    croak(__PACKAGE__ . "->save(): field '$field' is a duplicate of site id" .
-          " '$site_id'.") if defined $site_id;
+    my %info = $self->duplicate_check();
+    croak(__PACKAGE__ . "->save(): The following duplicates exits:\n\t" .
+          join("\n\t", map {"Site id '$_': $info{$_}"} keys %info))
+      if keys %info;
 
     my $query;
     if ($id) {
@@ -536,35 +550,28 @@ the update.
 sub update_child_categories {
     my $self = shift;
     my $id = $self->{site_id};
-    my ($category_id, $url, %urls);
+    my ($category_id, @ids);
 
     my $query = <<SQL;
-SELECT category_id, url
+SELECT category_id
 FROM category
-WHERE site_id = $id
+WHERE site_id = ?
 SQL
 
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
-    $sth->execute();
-    $sth->bind_columns(\$category_id, \$url);
-    while ($sth->fetch) {
-        $urls{$category_id} = $url;
-    }
+    $sth->execute(($id));
+    $sth->bind_columns(\$category_id);
+    push @ids, $category_id while $sth->fetch;
     $sth->finish();
 
-    $query = <<SQL;
-UPDATE category
-SET url = ?
-WHERE category_id = ?
-SQL
-
-    $sth = $dbh->prepare($query);
-    for (keys %urls) {
-        (my $new_url = $urls{$_}) =~ s|^$self->{_old_url}|$self->{url}|;
-        $sth->execute(($new_url, $_));
+    # update all the children :)
+    if (@ids) {
+        should(scalar @ids, scalar Krang::Category->find(category_id => \@ids))
+          if ASSERT;
+        $_->update_child_urls()
+          for Krang::Category->find(category_id => \@ids);
     }
-    $sth->finish();
 
     return 1;
 }

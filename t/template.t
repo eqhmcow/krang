@@ -12,7 +12,9 @@ use Test::More qw(no_plan);
 BEGIN {use_ok('Krang::Template');}
 
 # set up site and category
-my $site = Krang::Site->new(publish_path => './sites/test1/',
+my $site = Krang::Site->new(preview_path => './sites/test1/preview/',
+                            preview_url => 'preview.testsite1.com',
+                            publish_path => './sites/test1/',
                             url => 'testsite1.com');
 $site->save();
 isa_ok($site, 'Krang::Site');

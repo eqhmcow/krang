@@ -15,7 +15,10 @@ BEGIN {
 
 # need a site id
 my $path = File::Spec->catdir($ENV{KRANG_ROOT}, 'sites/test1/publish');
-my $site = Krang::Site->new(publish_path => "$path",
+my $path2 = File::Spec->catdir($ENV{KRANG_ROOT}, 'sites/test1/preview');
+my $site = Krang::Site->new(preview_path => $path2,
+                            preview_url => 'preview.test.com',
+                            publish_path => $path,
                             url => 'test.com');
 $site->save();
 my $site_id = $site->site_id();
