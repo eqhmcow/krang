@@ -392,16 +392,15 @@ and '/page[3]'.
 =cut
 
 sub remove_children {
-    my $self = shift;
-    my @list = @_;
+    my ($self, @list) = @_;
     my $children = $self->{children};
 
     # normalize to hash of indexes
     my %to_delete;
-    foreach my $item (@_) {
+    foreach my $item (@list) {
         if (ref $item) {
             ($item) = grep { $children->[$_] == $item } (0 .. $#$children);
-            croak("Unable to find matching child!") unless $item;
+            croak("Unable to find matching child!") unless defined $item;
         }
         $to_delete{$item} = 1;
     }
