@@ -113,7 +113,10 @@ use Time::Seconds;
 use Krang::Conf qw(KrangRoot);
 use Krang::DB qw(dbh);
 use Krang::Log qw/ASSERT assert critical debug info/;
+
+use Krang::Alert;
 use Krang::Media;
+use Krang::Publisher;
 use Krang::Story;
 use Krang::Template;
 
@@ -122,9 +125,6 @@ use Krang::Template;
 ####################
 # Constants
 ############
-# Debugging constant
-use constant SCH_DEBUG => $ENV{SCH_DEBUG} || 0;
-
 # Read-only fields
 use constant SCHEDULE_RO => qw(last_run
 			       next_run
@@ -144,12 +144,7 @@ use constant SCHEDULE_RW => qw(action
 
 # Globals
 ##########
-our %action_map = (alert => {send => sub { Krang::Alert->send(@_) } },
-                   media => {expire  => sub {},
-                             publish => sub {}},
-                   story => {expire  => sub {},
-                             publish => sub {}}
-                   );
+our $SCH_DEBUG = $ENV{SCH_DEBUG} || 0;
 
 # Lexicals
 ###########
@@ -295,10 +290,10 @@ sub init {
     $self->hash_init(%args);
 
     # calculate next run
-    my $now = SCH_DEBUG ? $test_date : localtime;
+    my $now = $SCH_DEBUG ? $test_date : localtime;
     $self->{next_run} = $repeat eq 'never' ? $date :
       _next_run($now, $repeat, $day_of_week, $hour, $minute);
-    
+
     $self->{initial_date} = $self->{next_run};
 
     return $self;
@@ -709,7 +704,7 @@ sub find {
 
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
-    
+
     debug(__PACKAGE__."->find() SQL: $query");
     debug(__PACKAGE__."->find() SQL ARGS: @params");
 
@@ -785,7 +780,7 @@ sub run {
             qw/action context schedule_id object_id object_type repeat/;
 
         # what do we do in case of a failure
-        if (SCH_DEBUG) {
+        if ($SCH_DEBUG) {
             debug("Schedule object id '$obj->{schedule_id}' did something.\n");
             if ($context) {
                 require Data::Dumper;
@@ -793,18 +788,47 @@ sub run {
                       Data::Dumper->Dump([$context],['context']) . "\n");
             }
         } else {
-            my $call = $action_map{$type}->{$action};
-            eval {
-                if ($context) {
-                    $call->($type.'_id' => $object_id, @$context );
+            if ($action eq 'alert') {
+                eval {Krang::Alert->send($type . '_id' => $object_id,
+                                         @$context)};
+                info("Attempt to send alert failed: $eval_err")
+                  if ($eval_err = $@);
+            } elsif ($action eq 'expire' || $action eq 'publish') {
+                my $url;
+                my $class = "Krang::" . ucfirst $type;
+                my ($obj) = $class->find("$type\_id" => $object_id);
+                unless ($obj) {
+                    $eval_err = "Can't find $class id '$object_id', " .
+                      "skipping $action.";
+                    info($eval_err);
                 } else {
-                    $call->($type.'_id' => $object_id);
+                    if ($action eq 'expire') {
+                        eval {$obj->delete;};
+                        if ($eval_err = $@) {
+                            info("Unable to expire $class id '$object_id': ".
+                                 $eval_err);
+                        } else {
+                            info("Deleted $class id '$object_id'.");
+                        }
+                    } else {
+                        my $meth = "publish_$type";
+                        my $publisher = Krang::Publisher->new;
+                        eval {$url = $publisher->$meth($type => $obj,
+                                                       @$context);};
+                        if ($eval_err = $@) {
+                            info("$action failed for $class id '$object_id': ".
+                                 $eval_err);
+                        } else {
+                            my $call = ucfirst $action . "ed";
+                            my $msg = "$call $class id '$object_id'" .
+                              ($type eq 'media' ? " to '$url'." : ".");
+                            info($msg);
+                        }
+                    }
                 }
-            };
-            $eval_err = $@;
-            critical("ERROR: '$action' for Krang::$type id '$object_id' " .
-                     "failed: $eval_err")
-              if $eval_err;
+
+            }
+
         }
 
         # we're assuming the action was successful unless we've gotten an
@@ -885,12 +909,31 @@ sub save {
     return $self;
 }
 
+
+=item C<< $on_or_off = Krang::Schedule->get_debug >>
+
+=item C<< Krang::Schedule->set_debug(0 || 1) >>
+
+Get and set respectively the $SCH_DEBUG global.  If it is set run() only
+prints out debugging messages instead actually doing something.
+
+=cut
+
+sub set_debug {
+    my $self = shift;
+    return $SCH_DEBUG unless @_;
+    $SCH_DEBUG = $_[0];
+}
+
+*get_debug = *set_debug;
+
+
 =item $schedule->serialize_xml(writer => $writer, set => $set)
 
 Serialize as XML.  See Krang::DataSet for details.
 
 =cut
-                                                                                     
+
 sub serialize_xml {
     my ($self, %args) = @_;
     my ($writer, $set) = @args{qw(writer set)};
@@ -918,9 +961,11 @@ sub serialize_xml {
     $initial_date =~ s/\s/T/;
     $writer->dataElement( initial_date => $initial_date );
     $writer->dataElement( hour => $self->{hour} ) if defined $self->{hour};
-    $writer->dataElement( minute => $self->{minute} ) if defined $self->{minute};
-    $writer->dataElement( day_of_week => $self->{day_of_week} ) if defined $self->{day_of_week};
-    
+    $writer->dataElement( minute => $self->{minute} )
+      if defined $self->{minute};
+    $writer->dataElement( day_of_week => $self->{day_of_week} )
+      if defined $self->{day_of_week};
+
     # context
     if (my $context = $self->{context}) {
         my %c_hash = @$context;
@@ -929,15 +974,18 @@ sub serialize_xml {
             $writer->dataElement( key => $key );
             $writer->dataElement( value => $c_hash{$key} );
             $writer->endTag('context');
-                                                                                     
-            $set->add(object => ($Krang::User->find( user_id => $c_hash{user_id}))[0], from => $self) if ($key eq 'user_id');
-            # $set->add(object => ($Krang::Alert->find( alert_id => $c_hash{alert_id}))[0], from => $self) if ($key eq 'alert_id');
+
+            $set->add(object =>($Krang::User->find(user_id =>
+                                                   $c_hash{user_id}))[0],
+                      from => $self)
+              if ($key eq 'user_id');
         }
     }
 
     # all done
     $writer->endTag('schedule');
 }
+
 
 =item C<< $schedule = Krang::Schedule->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
 
@@ -947,30 +995,33 @@ If an incoming schedule has matching fields with an existing schedule, it
 is ignored (not duplicated).
 
 Note that last_run is not imported, next_run is translated to 'date'.
-                                                                                     
+
 =cut
-                                                                                     
+
 sub deserialize_xml {
     my ($pkg, %args) = @_;
     my ($xml, $set) = @args{qw(xml set)};
 
     # divide FIELDS into simple and complex groups
     my (%complex, %simple);
-                                                                                     
+
     # strip out all fields we don't want updated or used.
-    @complex{qw(schedule_id object_id last_run context next_run initial_date)} = ();
-    %simple = map { ($_,1) } grep { not exists $complex{$_} } (SCHEDULE_RO,SCHEDULE_RW);
+    @complex{qw(schedule_id object_id last_run context next_run initial_date)}
+      = ();
+    %simple = map { ($_,1) } grep { not exists $complex{$_} }
+      (SCHEDULE_RO,SCHEDULE_RW);
 
     # parse it up
     my $data = Krang::XML->simple(xml           => $xml,
                                   suppressempty => 1);
-    
-    my $new_id = $set->map_id(class => "Krang::".ucfirst($data->{object_type}), id => $data->{object_id});
 
-    my $initial_date = $data->{initial_date}; 
+    my $new_id = $set->map_id(class => "Krang::".ucfirst($data->{object_type}),
+                              id => $data->{object_id});
+
+    my $initial_date = $data->{initial_date};
     $initial_date =~ s/T/ /;
 
-    my %search_params = ( object_type => $data->{object_type}, 
+    my %search_params = ( object_type => $data->{object_type},
                           object_id => $new_id,
                           action => $data->{action},
                           repeat => $data->{repeat},
@@ -978,10 +1029,11 @@ sub deserialize_xml {
 
     $initial_date = Time::Piece->from_mysql_datetime($initial_date);
     $search_params{hour} = $data->{hour} if $data->{hour};
-    $search_params{minute} = $data->{minute} if $data->{minute};   
-    $search_params{day_of_week} = $data->{day_of_week} if $data->{day_of_week}; 
+    $search_params{minute} = $data->{minute} if $data->{minute};
+    $search_params{day_of_week} = $data->{day_of_week} if $data->{day_of_week};
 
-    debug(__PACKAGE__."->deserialize_xml() : finding schedules with params- ".join(',', (map { $search_params{$_} } keys %search_params) ));
+    debug(__PACKAGE__."->deserialize_xml() : finding schedules with params- ".
+          join(',', (map { $search_params{$_} } keys %search_params) ));
 
     # is there an existing object?
     my $schedule = (Krang::Schedule->find( %search_params ))[0] || '';
@@ -989,18 +1041,16 @@ sub deserialize_xml {
     if (not $schedule) {
         $schedule = Krang::Schedule->new(   object_id => $new_id,
                                             date => $initial_date,
-                                            (map { ($_,$data->{$_}) } keys %simple));
+                                            (map {($_,$data->{$_})}
+                                             keys %simple));
         $schedule->save;
     }
 
     return $schedule;
 }
 
+
 =back
-
-=head1 TO DO
-
-Action mappings need to be defined and then tested.
 
 =cut
 
