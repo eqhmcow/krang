@@ -1304,7 +1304,9 @@ Returns calculated url of media object based on category_id and filename
 
 sub url {
     my $self= shift;
-    croak "illegal attempt to set readonly attribute 'url'.\n"  if @_;
+
+    croak "illegal attempt to set readonly attribute 'url'.\n"
+      if @_;
      
     return undef unless ($self->{category_id} and $self->{filename});
 
@@ -1528,7 +1530,7 @@ sub deserialize_xml {
     # divide FIELDS into simple and complex groups
     my (%complex, %simple);
     @complex{qw(media_id filename publish_date creation_date checked_out_by
-                version published_version category_id)} = ();
+                version url published_version category_id)} = ();
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
     
     # parse it up
