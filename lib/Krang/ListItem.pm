@@ -202,7 +202,7 @@ sub order {
 
 =item find()
 
-Find and return lists with parameters specified.
+Find and return list items with parameters specified.
 
 Supported keys:
 
@@ -210,23 +210,23 @@ Supported keys:
 
 =item *
 
+list_item_id
+
+=item *
+
 list_id
 
 =item *
 
-name
+parent_list_item_id 
+
+=item * 
+
+data
 
 =item *
 
-name_like 
-
-=item * 
-
-list_group_id
-
-=item * 
-
-parent_list_id
+order
 
 =item * 
 
@@ -235,10 +235,6 @@ order_by
 =item * 
 
 order_desc 
-
-=item * 
-
-limit
 
 =item *
 
@@ -266,13 +262,13 @@ sub find {
     my $dbh = dbh;
 
     my @where;
-    my @alert_object;
+    my @list_item_object;
 
-    my %valid_params = ( list_id => 1,
-                         list_group_id => 1,
-                         parent_list_id => 1,
-                         name => 1,
-                         name_like => 1,
+    my %valid_params = ( list_item_id => 1,
+                         list_id => 1,
+                         parent_list_item_id => 1,
+                         data => 1,
+                         order => 1,
                          order_by => 1,
                          order_desc => 1,
                          limit => 1,
@@ -299,17 +295,13 @@ not $valid_params{$param};
     
     # set simple keys
     foreach my $key (keys %args) {
-        if ( ($key eq 'name') || ($key eq 'list_id') || ($key eq 'parent_list_id') || ($key eq 'list_group_id') ) {   
+        if ( ($key eq 'list_item_id') || ($key eq 'list_id') || ($key eq 'parent_list_item_id') || ($key eq 'data') || ($key eq 'order') ) {   
             push @where, $key;
         }
     }
 
     my $where_string = join ' and ', (map { "$_ = ? " } @where);
     
-    if ($args{name_like}) {
-        $where_string = $where_string ? ' and name like ? ' : ' name like ?';
-    }
-
     my $select_string;
     if ($args{'count'}) {
         $select_string = 'count(*) as count';
@@ -342,33 +334,33 @@ not $valid_params{$param};
             return $row->{count};
         } elsif ($args{'ids_only'}) {
             $obj = $row->{list_id};
-            push (@alert_object,$obj);
+            push (@list_item_object,$obj);
         } else {
             $obj = bless {%$row}, $self;
 
-            push (@alert_object,$obj);
+            push (@list_item_object,$obj);
         }
     }
     $sth->finish();
-    return @alert_object;
+    return @list_item_object;
 
 }
 
 =item delete()
 
-Delete list specified.
+Delete list item specified.
 
 =cut
 
 sub delete {
     my $self = shift;
-    my $list_id = shift;
+    my $list_item_id = shift;
     my $dbh = dbh;                                                                             
-    my $is_object = $list_id ? 0 : 1;
+    my $is_object = $list_item_id ? 0 : 1;
 
-    $list_id = $self->{list_id} if $is_object;
+    $list_item_id = $self->{list_item_id} if $is_object;
 
-    $dbh->do('DELETE from list where list_id = ?', undef, $list_id);
+    $dbh->do('DELETE from list_item where list_item_id = ?', undef, $list_item_id);
     
 }
 
