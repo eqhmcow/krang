@@ -10,6 +10,8 @@ use Net::FTPServer::FileHandle;
 use Krang::FTP::DirHandle;
 use IO::Scalar;
 use IO::File;
+use Time::Piece;
+use Time::Piece::MySQL;
 
 ################################################################################
 # Inheritance
@@ -37,7 +39,7 @@ required methods.  This class is used internally by Krang::FTP::Server.
 
 =over
 
-=item krang::FTP::FileHandle->new($ftps, $object, $type, $category_id)
+=item Krang::FTP::FileHandle->new($ftps, $object, $type, $category_id)
 
 Creates a new Krang::FTP::FileHandle object.  Requires 4 arguments:
 the Krang::FTP::Server object, the Krang::Media or Krang::Template object,
@@ -87,43 +89,41 @@ sub open {
     my $type = $self->{type};
 
     if ($mode eq "r") {
-    # check write access
-    return undef unless $self->can_read;
+        # check write access
+        return undef unless $self->can_read;
 
-    # reads are easy - just return an IO::Scalar with the template data
-    if ($type eq 'template') {
-        my $data = $object->content;
-        return new IO::Scalar \$data;
-    } else {
-        my $path = $object->file_path();
-        return new IO::File $path;        
+        # return an IO::Scalar for template content or IO::File for media on read
+        if ($type eq 'template') {
+            my $data = $object->content;
+            return new IO::Scalar \$data;
+        } else {
+            my $path = $object->file_path();
+            return new IO::File $path;        
+        }
+    } elsif ($mode eq "w" or $mode eq "a") {
+        # check write access
+        return undef unless $self->can_write;
+
+        my $handle;
+
+        if ($type eq 'template') {
+            # first clear the data unless appending
+            $object->content('')
+            unless $mode eq 'a';
+
+            # create a tied scalar and return an IO::Scalar attached to it
+            my $data;
+            tie $data, 'Krang::FTP::FileHandle::SCALAR',
+                $object, $self->{ftps}{user_obj};
+            $handle = new IO::Scalar \$data;
+            # seek if appending
+            $handle->seek(length($object->content))
+            if $mode eq 'a';
+        } else {
+
+        }
+        return $handle;
     }
-  } elsif ($mode eq "w" or $mode eq "a") {
-    # check write access
-    return undef unless $self->can_write;
-
-    my $handle;
-
-    if ($type eq 'template') {
-        # first clear the data unless appending
-        $object->content('')
-        unless $mode eq 'a';
-
-        # create a tied scalar and return an IO::Scalar attached to it
-        my $data;
-        tie $data, 'Krang::FTP::FileHandle::SCALAR',
-            $object, $self->{ftps}{user_obj};
-        my $handle = new IO::Scalar \$data;
-
-        # seek if appending
-        $handle->seek(length($object->content))
-        if $mode eq 'a';
-    } else {
-
-    }
-    
-    return $handle;
-  }
 }
 
 =item dir()
@@ -181,15 +181,18 @@ sub status {
     if ($type eq 'template') {
         $data = $object->content;
         $size = length($data);
-        $date = $object->deploy_date;
+        $date = $object->creation_date;
     } else {
         $date = $object->creation_date();
         $size = $object->file_size();
     }
+    
+    $date = Time::Piece->from_mysql_datetime($date);
+    $date = $date->epoch;
 
     my $owner = $object->checked_out_by;
 
-    if (defined $owner) { # if checked out, get the username, return read-only
+    if ( $owner) { # if checked out, get the username, return read-only
         my @user = Krang::User->find( user_id => $owner );
         my $login = defined $user[0] ? $user[0]->login : "unknown";
         return ( 'f', 0444, 1, $login, "co", $size,  $date);
