@@ -11,7 +11,7 @@ use File::Temp qw/ tempdir /;
 use WWW::Bugzilla;
 use Krang::Message qw(add_message);
 use Krang::Session qw(%session);
-use Krang::Conf qw(KrangRoot BugzillaServer BugzillaEmail BugzillaPassword BugzillaComponent);
+use Krang::Conf qw(KrangRoot BugzillaServer BugzillaEmail BugzillaPassword BugzillaComponent EnableBugzilla);
 
 =head1 NAME
 
@@ -65,6 +65,7 @@ sub edit {
     my $error = shift || '';
     my $q = $self->query;
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
+    $template->param( enable_bugzilla => EnableBugzilla );
     $template->param( $error => 1 ) if $error;
     $template->param( "reproduce_".$q->param('reproduce') => 1 ) if $q->param('reproduce');
     $template->param( "bug_severity_".$q->param('bug_severity') => 1 ) if $q->param('reproduce');

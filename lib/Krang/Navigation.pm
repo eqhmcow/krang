@@ -3,7 +3,7 @@ use strict;
 use warnings;
 
 use Krang::Desk;
-use Krang::Conf qw(FTPHostName FTPPort);
+use Krang::Conf qw(FTPHostName FTPPort EnableBugzilla);
 use Krang::Session qw(%session);
 
 =head1 NAME
@@ -64,6 +64,9 @@ sub fill_template {
                          admin_sites admin_categories admin_jobs
                          admin_desks admin_lists));
     $template->param(map { ("nav_$_", $admin_perms{$_}) } @admin_apps);
+
+    # hide bugzilla link if it's not enabled
+    $template->param(nav_hide_bugzilla => 1) unless EnableBugzilla;
 
     # can they see any admin tools?
     $template->param(nav_hide_admin => 1) 

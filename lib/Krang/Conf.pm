@@ -15,6 +15,7 @@ BugzillaPassword
 BugzillaServer
 DBPass
 DBUser
+EnableBugzilla
 EnableSiteServer
 FromAddress
 FTPAddress

@@ -2,8 +2,10 @@
 <tmpl_unless bug_added>
 
 <tmpl_if ise>
-  <div class=alert>An internal server error has occurred.  This almost certainly indicates a bug in the system.  Please use the form below to file a bug report.</div><p>
+  <div class=alert>An internal server error has occurred.  This almost certainly indicates a bug in the system.  <tmpl_if enable_bugzilla>Please use the form below to file a bug report.<tmpl_else>Please contact the administrator.</tmpl_if> </div><p>
 </tmpl_if>
+
+<tmpl_if enable_bugzilla>
 
 <div class="dark-bar"><p class="left">&nbsp;Submit a Bug</p></div>
 <form name="bug_form" method="post" action="bug.cgi">
@@ -162,6 +164,9 @@
   <input type=submit value="Submit Bug" class="button">
 </div>
 </form>
+
+</tmpl_if>
 </tmpl_unless>
 </div>
+
 <tmpl_include footer.tmpl>

@@ -58,8 +58,10 @@ SMTPServer <tmpl_var SMTPServer>
 FromAddress krangmailer@<tmpl_var HostName>
 
 #
-# Configure Bugzilla settings here.
+# Configure Bugzilla settings here.  Unless EnableBugzilla is 1, none
+# of the rest will be used.
 #
+EnableBugzilla 0
 BugzillaServer krang-services.ops.about.com/bugzilla
 BugzillaEmail krang_test@yahoo.com
 BugzillaPassword shredder
