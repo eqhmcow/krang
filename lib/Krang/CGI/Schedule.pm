@@ -9,7 +9,6 @@ use Time::Piece::MySQL;
 use Krang::Schedule;
 use Krang::Message qw(add_message);
 use Krang::Session qw(%session);
-use Krang::Log qw(debug);
 use Krang::Widget qw(time_chooser datetime_chooser decode_datetime);
 
 our %ACTION_LABELS = (

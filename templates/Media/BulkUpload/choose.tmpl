@@ -1,0 +1,15 @@
+<tmpl_include header.tmpl>
+<div class=dark-bar>Media Bulk Upload</div>
+<form name="upload_form">
+<table cellspacing="0" width="100%" class="form-box">
+<tr><th class="form-head" align="left">FTP Upload</th></tr>
+<tr><td>(Windows IE or for use with an external FTP client)<br><a href="ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>">ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance></a></td></td>
+</table>
+<br>
+<table cellspacing="0" width="100%" class="form-box">
+<th class="form-head" align="left">Archive Upload</th>
+<tr><td><tmpl_var upload_chooser></td></tr>
+<tr><td><tmpl_var category_chooser></td></tr>
+</table>
+</form>
+<tmpl_include footer.tmpl>
