@@ -1718,6 +1718,7 @@ then an update will occur, unless no_update is set.
 sub deserialize_xml {
     my ($pkg, %args) = @_;
     my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+    local $_;
 
     # parse it up
     my $data = Krang::XML->simple(xml           => $xml, 
@@ -1771,15 +1772,24 @@ sub deserialize_xml {
     $story->notes($data->{notes})
       if exists $data->{notes};
 
-    # deserialize elements
+    # save changes
+    $story->save();
+
+    # register id before deserializing elements, since they may
+    # contain circular references
+    $set->register_id(class     => 'Krang::Story',
+                      id        => $data->{story_id},
+                      import_id => $story->story_id);
+    
+    # deserialize elements, may contain circular references
     my $element = Krang::Element->deserialize_xml(data => $data->{element}[0],
                                                   set       => $set,
                                                   no_update => $no_update,
                                                   object    => $story);
     $story->{element} = $element;
 
-    # save changes
-    $story->save();
+    # finish the story, not incrementing version
+    $story->save(keep_version => 1);
 
     return $story;
 }

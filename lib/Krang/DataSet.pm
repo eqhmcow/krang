@@ -288,6 +288,9 @@ sub add {
         my $path = catfile($self->{dir}, $file);
         open(my $fh, '>', $path)
           or croak("Unable to open '$path': $!");
+
+        # register mapping before calling serialize_xml to break cycles
+        $self->{objects}{$class}{$id}{xml} = $file;
         
         my $writer = Krang::XML->writer(fh => $fh);
         $writer->xmlDecl();
@@ -300,8 +303,6 @@ sub add {
             assert(-s $path, "XML file has stuff in it");
         }
         
-        $self->{objects}{$class}{$id}{xml} = $file;
-
     } elsif ($file and $path and $from) {
         my $full_path = catfile($self->{dir}, $path);
         mkpath((splitpath($full_path))[1]);
@@ -616,6 +617,28 @@ sub _deserialize {
       unless ref $obj and UNIVERSAL::isa($obj, $class);
 
     return $obj;
+}
+
+=item C<< $set->register_id(class => $class, id => $id, import_id => $import_id) >>
+
+An object which points to objects which may contain circular
+references must call register_id() before calling map_id() on those
+objects.  For example, Krang::Story::deserialize_xml() calls
+register_id() before deserializing its element tree since those
+elements might point to stories which may point back to the original
+story.
+
+=cut
+
+sub register_id {
+    my ($self, %arg) = @_;
+    my ($class, $id, $import_id) = @arg{qw(class id import_id)};
+    croak("Missing required 'class', 'id' and 'import_id' params.")
+      unless $class and $id and $import_id;
+    croak("Called map_id outside of an import run!")
+      unless $self->{in_import};
+
+    $self->{done}{$class}{$id} = $import_id;   
 }
 
 =item C<< $full_path = $set->map_file(path => $path) >>
