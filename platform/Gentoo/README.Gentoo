@@ -1,12 +1,16 @@
-Krang has been tested on a Gentoo 1.4.3 install.  Before you install
-Krang, you will need to install MySQL 4 and Perl 5.8:
+Krang has been tested on Gentoo installations from 1.4.2 onwards.
+Before you install Krang, you will need to install MySQL 4 and Perl
+5.8, along with the libraries for jpeg, gif, and png image
+manipulation:
 
 emerge mysql
 emerge perl
+emerge jpeg
+emerge libungif
+emerge libpng
 
 Since you will be building Krang from source (it *is* Gentoo after
 all), all other dependencies should be taken care of by this point.
-
 
 Getting Krang to Start on Boot:
 

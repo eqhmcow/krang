@@ -1,4 +1,4 @@
-package Gentoo1_4_3::Platform;
+package Gentoo::Platform;
 use strict;
 use warnings;
 
@@ -11,7 +11,7 @@ sub guess_platform {
     open(RELEASE, '/etc/gentoo-release') or return 0;
     my $release = <RELEASE>;
     close RELEASE;
-    return 1 if $release =~ /Gentoo Base System version 1.4.\d+/;
+    return 1 if $release =~ /Gentoo/;
     return 0;
 }
 
@@ -19,13 +19,11 @@ sub guess_platform {
 sub verify_dependencies {
     my ($pkg, %arg) = @_;
 
-
-    # make sure we're running 5.8.2 or 5.8.3
+    # make sure we're running at least 5.8.2
     my $perl = join('.', (map { ord($_) } split("", $^V, 3)));
 
-    unless ($perl eq '5.8.2' || $perl eq '5.8.3') {
-        die sprintf("Your version of perl (%s) is not supported at the moment.\nPlease upgrade to 5.8.2 or 5.8.3.\n",
-                    $perl);
+    unless ($perl =~ m/5.8.\d+/ ) {
+        die sprintf("Your version of perl (%s) is not supported at the moment.\nPlease upgrade to at least 5.8.2\n", $perl);
     }
 
     return $pkg->SUPER::verify_dependencies(%arg);
