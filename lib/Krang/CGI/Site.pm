@@ -220,7 +220,7 @@ sub delete {
     my ($site) = Krang::Site->find(site_id => $site_id);
     eval {$site->delete();};
     if ($@) {
-        if (ref $@ && $@->isa('Krang::Site::Dependency')) {
+        if (ref $@ and ($@->isa('Krang::Site::Dependency') or $@->isa('Krang::Category::Dependent'))) {
             my $url = $site->url;
             info("Unable to delete site id '$site_id': $url\n$@");
             add_message('error_deletion_failure',
@@ -264,8 +264,9 @@ sub delete_selected {
     for (@sites) {
         eval {$_->delete();};
         if ($@) {
-            if (ref $@ && $@->isa('Krang::Site::Dependency')) {
+            if (ref $@ and ($@->isa('Krang::Site::Dependency') or $@->isa('Krang::Category::Dependent'))) {
                 push @bad_sites, $_->url;
+                info(ref $@);
             } else {
                 croak($@);
             }
