@@ -97,8 +97,9 @@ sub show {
     $template->param(may_publish => $admin_perms{may_publish});
 
     # instance_name is used for preview window targeting
-    $template->param(instance_name => Krang::Conf->instance);
-
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $template->param(instance_name => $instance_name);
 
     # setup paging list of objects
     my $pager = Krang::HTMLPager->new

@@ -160,7 +160,9 @@ sub find {
     $t->param(show_thumbnails => $show_thumbnails);
 
     # instance_name is used for preview window targeting
-    $t->param(instance_name => Krang::Conf->instance);
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $t->param(instance_name => $instance_name);
 
     return $t->output();
 }
@@ -367,7 +369,9 @@ sub list_active {
     $template->param(may_checkin_all => $may_checkin_all);
 
     # instance_name is used for preview window targeting
-    $template->param(instance_name => Krang::Conf->instance);
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $template->param(instance_name => $instance_name);
 
     return $template->output;
 
@@ -642,8 +646,9 @@ sub edit {
     $t->param(%args) if (%args);
 
     # instance_name is used for preview window targeting
-    $t->param(instance_name => Krang::Conf->instance);
-
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $t->param(instance_name => $instance_name);
 
     return $t->output();
 }
@@ -1001,7 +1006,9 @@ sub view {
     $t->param($media_view_tmpl_data);
 
     # instance_name is used for preview window targeting
-    $t->param(instance_name => Krang::Conf->instance);
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $t->param(instance_name => $instance_name);
 
     return $t->output();
 }

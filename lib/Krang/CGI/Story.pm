@@ -438,7 +438,9 @@ sub edit {
     $template->param( desk_loop => \@desk_loop);
 
     # instance_name is used for preview window targeting
-    $template->param(instance_name => Krang::Conf->instance);
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $template->param(instance_name => $instance_name);
 
     return $template->output();
 }
@@ -535,7 +537,9 @@ sub view {
 
 
     # instance_name is used for preview window targeting
-    $template->param(instance_name => Krang::Conf->instance);
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $template->param(instance_name => $instance_name);
 
     return $template->output();
 }
@@ -1408,7 +1412,9 @@ sub find {
     $template->param(row_count => $pager->row_count());
 
     # instance_name is used for preview window targeting
-    $template->param(instance_name => Krang::Conf->instance);
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $template->param(instance_name => $instance_name);
 
     return $template->output;
 }
@@ -1465,7 +1471,9 @@ sub list_active {
     $template->param(may_checkin_all => $admin_perms{may_checkin_all});
 
     # instance_name is used for preview window targeting
-    $template->param(instance_name => Krang::Conf->instance);
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $template->param(instance_name => $instance_name);
 
     return $template->output;
 }

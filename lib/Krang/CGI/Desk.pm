@@ -124,7 +124,9 @@ sub show {
     $pager->fill_template($template);
 
     # instance_name is used for preview window targeting
-    $template->param(instance_name => Krang::Conf->instance);
+    my $instance_name = Krang::Conf->instance;
+    $instance_name =~ s![^\w]!_!g;
+    $template->param(instance_name => $instance_name);
 
     return $template->output;
 }
