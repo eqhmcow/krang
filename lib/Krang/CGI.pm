@@ -54,9 +54,6 @@ use Krang::Session qw/%session/;
 
 # Set up HTML_TEMPLATE_ROOT for templates
 BEGIN {
-    # use $KRANG_ROOT/templates for templates
-    $ENV{HTML_TEMPLATE_ROOT} = catdir(KrangRoot, "templates");
-
     # setup instance if not running in mod_perl
     # needs to be set before import of Krang::ElementLibrary in
     # Krang::CGI::ElementEditor
