@@ -71,7 +71,7 @@ use Krang::CGI::Login;
 use Apache;
 use Apache::Constants qw(:response);
 use Apache::Cookie;
-use File::Spec::Functions qw(splitdir rel2abs catdir);
+use File::Spec::Functions qw(splitdir rel2abs catdir catfile);
 use Carp qw(croak);
 use Krang::Conf qw(KrangRoot);
 use HTML::Template;
@@ -100,8 +100,9 @@ sub trans_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    # Only handle main requests
-    unless ( $r->is_initial_req() ) {
+    # Only handle main requests, unless this is a request for bug.pl
+    # which happens on redirects from ISEs
+    unless ( $r->is_initial_req() or $r->uri =~ /\/bug.pl/) {
         return DECLINED;
     }
 
@@ -185,8 +186,9 @@ sub authen_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    # Only handle main requests
-    unless ( $r->is_initial_req() ) {
+    # Only handle main requests, unless this is a request for bug.pl
+    # which happens on redirects from ISEs
+    unless ( $r->is_initial_req() or $r->uri =~ /\/bug.pl/) {
         return DECLINED;
     }
 
@@ -241,8 +243,9 @@ sub authz_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    # Only handle main requests
-    unless ( $r->is_initial_req() ) {
+    # Only handle main requests, unless this is a request for bug.pl
+    # which happens on redirects from ISEs
+    unless ( $r->is_initial_req() or $r->uri =~ /\/bug.pl/) {
         return DECLINED;
     }
 
@@ -311,6 +314,49 @@ sub log_handler ($$) {
 
     return OK;
 }
+
+# the site-server transhandler maps requests to a site's preview or
+# publish path
+sub siteserver_trans_handler ($$) {
+    my $self = shift;
+    my ($r) = @_;
+    my $host = $r->hostname;
+    my $port = $r->get_server_port;
+    
+    # add in port number if necessary
+    $host .= ":$port" unless $port == 80;
+
+    # find a site for this hostname, looking in all instances
+    require Krang::Site;
+    my $path;
+  INSTANCE: foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        my @sites = Krang::Site->find();
+        foreach my $site (@sites) {
+            my $url         = $site->url;
+            my $preview_url = $site->preview_url;
+            
+            # is it a match?
+            if ($url eq $host) {
+                $path = catdir($site->publish_path, $site->url);
+                last INSTANCE;
+            } elsif ($preview_url eq $host) {
+                $path = catdir($site->preview_path, $site->preview_url);
+                last INSTANCE;
+            }
+        }
+    }
+
+    # didn't find a path?
+    return DECLINED unless $path;
+
+    # map the URI to a filename    
+    my $filename = catfile($path, $r->uri);
+    $r->filename($filename);
+    return OK;
+}
+
+
 
 ###########################
 ####  PRIVATE METHODS  ####
