@@ -79,6 +79,9 @@ Krang::HTMLPager - Web-paginate lists of records
     $row_hashref->{first_middle} = $row_obj->first() . " " . $row_obj->middle();
   }
 
+  # Utility function to build and return internal template
+  my $template = $pager->make_internal_template();
+
 =cut
 
 
@@ -207,12 +210,88 @@ pager property.
 sub output {
     my $self = shift;
 
+    # Dynamically create template as scalar with proper columns
+    my $pager_tmpl = $self->make_internal_template();
+
+    my $t = HTML::Template->new_scalar_ref(\$pager_tmpl, loop_context_vars=>1);
+    $self->_fill_template($t);
+
+    return $t->output();
+}
+
+
+=item fill_template()
+
+  $pager->fill_template($template_object);
+
+The fill_template() method is one of two ways to execute a paged view
+and utilize the output.  This method is used in the context of a 
+custom pager template.  The section later in this POD, "Creating
+Creating Custom Pager Templates", more fully describes how and why you 
+would want to use a custom template.
+
+The fill_template() method runs the Krang::HTMLPager and sets template 
+variables in the $template_object you provide.  It is then your 
+responsibility to output that $template_object.
+
+=cut
+
+sub fill_template {
+    my $self = shift;
+    my $t = shift;
+
+    # Did we get a template object?
+    croak ("No HTML::Template object specified") unless (ref($t));
+
+    $self->validate_pager();
+
+    $self->_fill_template($t);
+}
+
+
+
+=item row_count()
+
+    my $row_count = $pager->row_count();
+
+The row_count() method returns the number of rows output
+by the pager.  It is expected to be called after output()
+or fill_template().  Until one of those methods are called
+row_count() will return undef.
+
+This method is useful for changing the UI based on whether 
+or not any results were found.
+
+
+=cut
+
+### row_count() in implemented via Krang::MethodMaker
+
+
+=item make_internal_template()
+
+  my $template = $pager->make_internal_template();
+
+The make_internal_template() method returns a dynamically created template
+for use with Krang::HTMLPager.  This method is used internally by output()
+to generate a template based on your specification.
+
+This method is made public to assist in the creation of custom pager
+templates.  Using this method you can specify and create a template which can
+be saved to a file and customized as needed.
+
+=cut
+
+sub make_internal_template {
+    my $self = shift;
+
+    # Verify that pager specification is sane before proceeding
     $self->validate_pager();
 
     my $q = $self->cgi_query();
-
-    # Dynamically create template as scalar with proper columns
     my $pager_tmpl = '';
+
+    # Start pager form 'krang_pager_form'
     $pager_tmpl .= '<form name="krang_pager_form" method="POST">';
 
     # Include javascript and hidden data template elements
@@ -263,64 +342,11 @@ EOF
 </tmpl_if>
 EOF
 
+    # Close pager form
     $pager_tmpl .= "\n</form>\n\n";
 
-    # print STDERR "$pager_tmpl\n\n";
-
-    my $t = HTML::Template->new_scalar_ref(\$pager_tmpl, loop_context_vars=>1);
-    $self->_fill_template($t);
-
-    return $t->output();
+    return $pager_tmpl;
 }
-
-
-
-=item fill_template()
-
-  $pager->fill_template($template_object);
-
-The fill_template() method is one of two ways to execute a paged view
-and utilize the output.  This method is used in the context of a 
-custom pager template.  The section later in this POD, "Creating
-Creating Custom Pager Templates", more fully describes how and why you 
-would want to use a custom template.
-
-The fill_template() method runs the Krang::HTMLPager and sets template 
-variables in the $template_object you provide.  It is then your 
-responsibility to output that $template_object.
-
-=cut
-
-sub fill_template {
-    my $self = shift;
-    my $t = shift;
-
-    # Did we get a template object?
-    croak ("No HTML::Template object specified") unless (ref($t));
-
-    $self->validate_pager();
-
-    $self->_fill_template($t);
-}
-
-
-
-=item row_count()
-
-    my $row_count = $pager->row_count();
-
-The row_count() method returns the number of rows output
-by the pager.  It is expected to be called after output()
-or fill_template().  Until one of those methods are called
-row_count() will return undef.
-
-This method is useful for changing the UI based on whether 
-or not any results were found.
-
-
-=cut
-
-# row_count() in implemented via Krang::MethodMaker
 
 
 
@@ -662,7 +688,7 @@ sub _fill_template {
 
     # Set up persist_vars
     my @pager_persist_data = ();
-    while (my ($k, $v), each(%{$self->persist_vars()})) {
+    while (my ($k, $v) = each(%{$self->persist_vars()})) {
         push(@pager_persist_data, $q->hidden(
                                              -name => $k,
                                              -value => $v,

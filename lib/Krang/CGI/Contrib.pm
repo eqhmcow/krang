@@ -160,12 +160,13 @@ sub search {
                                       id_handler => sub { return $_[0]->contrib_id },
                                      );
 
+    # print STDERR "==============================>\n". $pager->make_internal_template() ."<==============================\n\n";
+
     # Run pager
     $t->param(pager_html =>  $pager->output());
 
     # Propagate other params
     $t->param(row_count => $pager->row_count());
-    $t->param(search_filter => $search_filter);
 
     return $t->output();
 }
