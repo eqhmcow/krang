@@ -738,6 +738,11 @@ Combined with C<story_id> (and only C<story_id>), loads a specific
 version of a story.  Unlike C<revert()>, this object has C<version>
 set to the actual version number of the loaded object.
 
+=item simple_search
+
+Performs a per-word LIKE match against title and URL, and an exact
+match against story_id if a word is a number.
+
 =back
 
 Options affecting the search and the results returned:
@@ -888,6 +893,24 @@ sub find {
                          'sc.ord = 0');
             push(@param, $value);
             $need_distinct = 1;
+            next;
+        }
+
+        # handle simple_search
+        if ($key eq 'simple_search') {            
+            push(@join, 'LEFT JOIN story_category AS sc USING (story_id)');
+            $need_distinct = 1;
+
+            my @words = split(/\s+/, $args{'simple_search'});
+            foreach my $word (@words){
+                my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
+                  push(@where, '(' .                      
+                     join(' OR ', 
+                          ($numeric ? 's.story_id = ?' : ()),
+                          's.title LIKE ?', 
+                          'sc.url LIKE ?') . ')');
+                push(@param, $word, $word, ($numeric ? ($word) : ()));
+            }
             next;
         }
 

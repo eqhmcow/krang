@@ -348,3 +348,19 @@ is(@result, 0);
                              ids_only => 1);
 is(@result, 1);
 is($result[0], $find[1]->story_id);
+
+# find by simple search
+@result = Krang::Story->find(simple_search => $find[1]->url,
+                             ids_only => 1);
+is(@result, 1);
+is($result[0], $find[1]->story_id);
+
+@result = Krang::Story->find(simple_search => $find[1]->url . " " . $find[1]->story_id,
+                             ids_only => 1);
+is(@result, 1);
+is($result[0], $find[1]->story_id);
+
+@result = Krang::Story->find(simple_search => $find[1]->url . " " . $find[1]->story_id . " foo",
+                             ids_only => 1);
+is(@result, 0);
+
