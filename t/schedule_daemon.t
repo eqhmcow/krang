@@ -54,7 +54,6 @@ BEGIN {
 
     if ($found) {
         unless (-e $pidfile) {
-            diag("Starting Scheduler Daemon for tests..");
             `$schedulectl start`;
             $stop_daemon = 1;
             sleep 5;
@@ -73,7 +72,6 @@ BEGIN {
 
 END {
     if ($stop_daemon) {
-        diag("Stopping Krang Scheduler Daemon..");
         `$schedulectl stop`;
     }
 }
@@ -119,9 +117,8 @@ use_ok('Krang::Schedule::Daemon');
 
 # create story objects
 
-my $num_stories = 30;
+my $num_stories = 5;
 
-diag("Creating stories for Schedule Tests...");
 my $now = localtime;
 my @stories;
 for (1..$num_stories) {
@@ -140,9 +137,8 @@ for (1..$num_stories) {
     push @schedules, $sched;
 }
 
-diag("Waiting for the Schedule Daemon to pick up test jobs... $num_stories seconds.");
 # wait to see if it got published.
-sleep $num_stories;
+sleep 10 + $num_stories;
 
 foreach my $story (@stories) {
     my @paths = $creator->publish_paths(story => $story);
@@ -169,7 +165,6 @@ foreach my $story (@stories) {
 
 }
 
-diag("Waiting for the Schedule Daemon to pick up test jobs... 10 seconds.");
 # wait to see if it got published.
 sleep 10;
 

@@ -71,6 +71,8 @@ if (-e $pid_file) {
     chomp $pid;
     if ($pid and kill(0, $pid)) {
         $running = 1;
+    } elsif ($pid) {
+        unlink $pid_file;
     }
 }
 

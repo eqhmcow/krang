@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where schedule tests would fail frequently due to
+krang_schedulectl leaving bad PID files around.  Also made the
+schedule tests quiet unless an error occurs. [Sam]
+
+=item *
+
 Fixed a bug where using a category_trail_loop in a category element
 template produced an ISE. [Sam]
 

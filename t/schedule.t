@@ -41,14 +41,12 @@ BEGIN {
     if ($found) {
         my $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
         if (-e $pidfile) {
-            diag("Shutting down Krang Scheduler Daemon for tests..");
             `$schedulectl stop`;
             sleep 5;
             if (-e $pidfile) {
                 diag('Shutdown failed.  Exiting.');
                 exit(1);
             } else {
-                diag('Shutdown successful.  Continuing with tests..');
                 $restart = 1;
             }
         }
@@ -61,7 +59,6 @@ BEGIN {
 
 END {
     if ($restart) {
-        diag("Restarting Krang Scheduler Daemon..");
         `$schedulectl start`;
     }
 }
