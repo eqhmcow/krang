@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use Krang::Conf qw(KrangRoot);
+use Krang::Session qw(%session);
 use File::Spec::Functions qw(catfile);
 use Carp qw(croak);
 
@@ -88,7 +89,7 @@ an alternate module name to use to lookup the message definition.
 =cut
 
 sub add_message {
-    our ($CONF, @MESSAGES);
+    our ($CONF);
     my ($key, %args) = @_;
     my $module = delete $args{from_module} || (caller)[0];
 
@@ -110,7 +111,8 @@ sub add_message {
     }
 
     # push message
-    push(@MESSAGES, [ $key, $message ]);
+    $session{messages} ||= [];
+    push(@{$session{messages}}, [ $key, $message ]);
 }
 
 =item @messages = get_messages();
@@ -128,19 +130,19 @@ returns a hash of messages keyed by message identifier.
 
 sub get_messages {
     my %args = (dups => 0, keys => 0, @_);
-    our @MESSAGES;
+    my $messages = $session{messages} || [];
     
     # return key=>message mapping
-    return map { @$_ } @MESSAGES
+    return map { @$_ } @$messages
       if $args{keys};
 
     # return all messages, including duplicates
-    return map { $_->[1] } @MESSAGES
+    return map { $_->[1] } @$messages
       if $args{dups};
 
     # return unique messages
     my %seen;
-    return grep { not $seen{$_}++ } map { $_->[1] } @MESSAGES;
+    return grep { not $seen{$_}++ } map { $_->[1] } @$messages;
 }
 
 =item clear_messages();
@@ -151,7 +153,7 @@ outputing the messages to the user.
 =cut
 
 sub clear_messages {
-    our @MESSAGES = ();
+    $session{messages} = [];
 }
 
 # load the configuration file
