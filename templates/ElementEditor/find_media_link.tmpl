@@ -1,0 +1,54 @@
+<tmpl_include header.tmpl>
+
+<script language="javascript">
+  function select_media(id) {
+        document.forms[0].rm.value = 'select_media';
+        document.forms[0].selected_media_id.value = id;
+        document.forms[0].submit();
+  }
+
+  function cancel_select() {
+        document.forms[0].rm.value = 'edit';
+        document.forms[0].path.value = '<tmpl_var parent_path>';
+        document.forms[0].submit();
+  }  
+
+
+</script>
+
+<form name=select_media method=post>
+<input type=hidden name="selected_media_id">
+<input type=hidden name="rm" value="find_media_link">
+<input type=hidden name="path" value="<tmpl_var escape=1 path>">
+
+<div class=dark-bar>Select Media</div>
+
+<div class=tight-form-box>
+<div class=light style='padding-bottom: 3px; margin-bottom: 5px'>
+SEARCH<br>
+<input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
+<input type="submit" value="Search">
+</div>
+
+</form>
+
+<!-- Krang::HTMLPager params -->
+<input type="hidden" name="krang_pager_curr_page_num" value="">
+<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
+<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
+<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+
+</form>
+
+<div style='margin:4px'>
+<tmpl_var pager_html>
+</div>
+
+</div>
+
+<div class=button-bar>
+    <input type=button value="Cancel" onclick="cancel_select()">
+</div>
+
+
+<tmpl_include footer.tmpl>

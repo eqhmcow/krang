@@ -46,6 +46,20 @@ Called to delete an element.  This should called when the user clicks
 the delete button, except on the root screen where delete refers to
 the containing object.
 
+=item find_story_link
+
+Called to find a story to link to a Krang::ElementClass::StoryLink (or
+subclass) element.  Requires a path to the element and will set
+$element->data() to the chosen story.  When finished, returns to the
+edit mode.
+
+=item find_media_link
+
+Called to find a media to link to a Krang::ElementClass::MediaLink (or
+subclass) element.  Requires a path to the element and will set
+$element->data() to the chosen media.  When finished, returns to the
+edit mode.
+
 =back
 
 =head2 Provided Methods
@@ -64,9 +78,7 @@ required parameters.  When it returns the template will contain all
 necessary parameters to display the element editor.
 
 This method will show the bulk edit interface if the CGI param
-'bulk_edit' is set true.  When 'find_story_link' is set true a story
-search will be shown.  When 'find_media_link' is set true a media
-search will be show.n
+'bulk_edit' is set true.
 
 =item $self->element_view(template => $template, element  => $element)
 
@@ -111,6 +123,18 @@ substitute the 'jump_to' value for 'path' in query and return to edit.
 This mode should save, hack off the last part of path (s!/.*$!!) and
 return to edit.
 
+=item save_and_find_media
+
+This mode is called with a 'jump_to' parameter set.  It must save,
+substitute the 'jump_to' value for 'path' in query and return to the
+find_media_link mode.
+
+=item save_and_find_story
+
+This mode is called with a 'jump_to' parameter set.  It must save,
+substitute the 'jump_to' value for 'path' in query and return to the
+find_story_link mode.
+
 =back
 
 =head2 Required Methods
@@ -146,7 +170,9 @@ sub setup {
                      delete_children  => sub { shift->revise('delete') },
                      reorder          => sub { shift->revise('reorder') },
                      delete_element   => 'delete_element',
+                     find_story_link  => 'find_story_link',
                      select_story     => 'select_story',
+                     find_media_link  => 'find_media_link',
                      select_media     => 'select_media',
                     );
 }
@@ -160,11 +186,6 @@ sub element_edit {
 
     # pass to bulk edit it bulk editing
     return $self->element_bulk_edit(%args) if $query->param('bulk_edit');
-
-    # pass to find_story if finding a story link
-    return $self->element_find_story(%args) if $query->param('find_story_link');
-    # pass to find_media if finding a media link
-    return $self->element_find_media(%args) if $query->param('find_media_link');
 
     # find the root element, loading from the session or the DB
     my $root = $args{element};
@@ -306,35 +327,32 @@ sub element_bulk_edit {
     $template->param(crumbs => \@crumbs) unless @crumbs == 1;
 }
 
-sub element_find_story {
+sub find_story_link {
     my ($self, %args) = @_;
     my $query = $self->query();
-    my $template = $args{template};
+    my $template = $self->load_tmpl('/ElementEditor/find_story_link.tmpl',
+                                    associate => $query
+                                   );
     my $path    = $query->param('path') || '/';
 
     # find the root element, loading from the session or the DB
-    my $root = $args{element};
-    croak("Unable to load element from session.") 
-      unless defined $root;
-
-    # find the element being edited using path
+    my $root = $self->_get_element;
     my $element = _find_element($root, $path);
 
     # determine appropriate find params for search
     my $search_filter = $query->param('search_filter');
     my %find_params = ( simple_search => $search_filter);
 
-    # FIX: won't work for category!
-    if ($session{story} and $session{story}->story_id) {
+    # exclude this story when editing a story
+    if ($self->isa('Krang::CGI::Story') and $session{story}->story_id) {
         $find_params{exclude_story_ids} = [ $session{story}->story_id ];
     }
 
     my $pager = Krang::HTMLPager->new      (cgi_query     => $query,
        persist_vars  => {
-                         rm => 'edit',
+                         rm => 'find_story_link',
                          search_filter => $search_filter,
                          path => $query->param('path'),
-                         find_story_link => 1,
                         },
        use_module    => 'Krang::Story',
        find_params   => \%find_params,
@@ -364,16 +382,6 @@ sub element_find_story {
     
     $template->param(pager_html => $pager->output());
 
-    # crumbs let the user jump up the tree
-    my $pointer = $element;
-    my @crumbs = ();
-    do {
-        unshift(@crumbs, { name => $pointer->display_name,
-                           path => $pointer->xpath });
-        $pointer = $pointer->parent;
-    } while ($pointer);
-    $template->param(crumbs => \@crumbs) unless @crumbs == 1;
-
     return $template->output;
 }
 
@@ -389,8 +397,19 @@ sub find_story_link_row_handler {
     # story_id
     $row->{story_id} = $story->story_id();
 
-    # url
-    $row->{url} = $story->url();
+    # format url to fit on the screen and to link to preview
+    my $url = $story->url();
+    my @parts = split('/', $url);
+    my @url_lines = (shift(@parts), "");
+    for(@parts) {
+        if ((length($url_lines[-1]) + length($_)) > 15) {
+            push(@url_lines, "");
+        }
+        $url_lines[-1] .= "/" . $_;
+    }
+    $row->{url} = join('<br>', 
+                       map { qq{<a href="javascript:preview_story($row->{story_id})">$_</a>} } @url_lines);
+
 
     # title
     $row->{title} = $story->title();
@@ -404,34 +423,33 @@ sub find_story_link_row_handler {
       '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
 }
 
-sub element_find_media {
+sub find_media_link {
     my ($self, %args) = @_;
     my $query = $self->query();
-    my $template = $args{template};
+    my $template = $self->load_tmpl('/ElementEditor/find_media_link.tmpl',
+                                    associate => $query
+                                   );
     my $path    = $query->param('path') || '/';
 
     # find the root element, loading from the session or the DB
-    my $root = $args{element};
-    croak("Unable to load element from session.") 
-      unless defined $root;
-
-    # find the element being edited using path
+    my $root = $self->_get_element;
     my $element = _find_element($root, $path);
+
+    $template->param(parent_path => $element->parent->xpath());
 
     # determine appropriate find params for search
     my $search_filter = $query->param('search_filter');
 
     my $pager = Krang::HTMLPager->new      (cgi_query     => $query,
        persist_vars  => {
-                         rm => 'edit',
+                         rm => 'find_media_link',
                          search_filter => $search_filter,
                          path => $query->param('path'),
-                         find_media_link => 1,
                         },
        use_module    => 'Krang::Media',
 
        # FIX: should be simple_search
-       find_params   => { url_like => '%' },
+       find_params   => { simple_search => $search_filter },
        columns       => [qw(
                             pub_status 
                             media_id 
@@ -458,16 +476,6 @@ sub element_find_media {
     
     $template->param(pager_html => $pager->output());
 
-    # crumbs let the user jump up the tree
-    my $pointer = $element;
-    my @crumbs = ();
-    do {
-        unshift(@crumbs, { name => $pointer->display_name,
-                           path => $pointer->xpath });
-        $pointer = $pointer->parent;
-    } while ($pointer);
-    $template->param(crumbs => \@crumbs) unless @crumbs == 1;
-
     return $template->output;
 }
 
@@ -483,12 +491,21 @@ sub find_media_link_row_handler {
     # media_id
     $row->{media_id} = $media->media_id();
 
-    # url
-    $row->{url} = $media->url();
+    # format url to fit on the screen and to link to preview
+    my $url = $media->url();
+    my @parts = split('/', $url);
+    my @url_lines = (shift(@parts), "");
+    for(@parts) {
+        if ((length($url_lines[-1]) + length($_)) > 15) {
+            push(@url_lines, "");
+        }
+        $url_lines[-1] .= "/" . $_;
+    }
+    $row->{url} = join('<br>', 
+                       map { qq{<a href="javascript:preview_media($row->{media_id})">$_</a>} } @url_lines);
 
-    $row->{thumbnail} = '<img src="' . 
-      $media->thumbnail_path(relative => 1) .
-        '">';
+
+    $row->{thumbnail} = qq{<a href="javascript:preview_media($row->{media_id})"><img src="} . $media->thumbnail_path(relative => 1) . qq{" border=0></a>};
 
     # creation_date
     my $tp = $media->creation_date();
@@ -504,7 +521,7 @@ sub select_story {
     my $query = $self->query;
 
     # gather params
-    my $path    = $query->param('path') || '/';
+    my $path    = $query->param('path');
     my $story_id = $self->query->param('selected_story_id');
 
     my $root    = $self->_get_element;

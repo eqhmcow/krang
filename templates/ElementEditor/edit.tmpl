@@ -2,29 +2,15 @@
 
   function find_story(p) {
         document.forms[0].rm.value = 'save_and_find_story_link';
-        document.forms[0].path.value = p;
+        document.forms[0].jump_to.value = p;
         document.forms[0].submit();
-  }
-
-  function select_story(id) {
-        document.forms[0].rm.value = 'select_story';
-        document.forms[0].selected_story_id.value = id;
-        document.forms[0].submit();
-  
   }
 
   function find_media(p) {
         document.forms[0].rm.value = 'save_and_find_media_link';
-        document.forms[0].path.value = p;
+        document.forms[0].jump_to.value = p;
         document.forms[0].submit();
   }
-
-  function select_media(id) {
-        document.forms[0].rm.value = 'select_media';
-        document.forms[0].selected_media_id.value = id;
-        document.forms[0].submit();
-  }
-
 
   function edit_children(p) {
         document.forms[0].rm.value = 'save_and_jump';
@@ -146,63 +132,6 @@ function update_order_sort_south (a, b) {
   <input type=hidden name=jump_to>
   <input type=hidden name=bulk_edit value="<tmpl_var bulk_edit>">
 
-<tmpl_if find_media_link>
-
-<input type=hidden name=selected_media_id>
-
-Select Media
-
-<tmpl_if crumbs>&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if>
-
-<div class=tight-form-box>
-
-<input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<input type="submit" value="Search">
-
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
-</form>
-
-<!-- Krang::HTMLPager -->
-<tmpl_var pager_html>
-<!-- Krang::HTMLPager -->
-
-</div>
-<tmpl_else>
-
-<tmpl_if find_story_link>       
-
-<input type=hidden name=selected_story_id>
-
-Select Story
-
-<tmpl_if crumbs>&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if>
-
-<div class=tight-form-box>
-
-<input type="textfield" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<input type="submit" value="Search">
-
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
-</form>
-
-<!-- Krang::HTMLPager -->
-<tmpl_var pager_html>
-<!-- Krang::HTMLPager -->
-
-</div>
-
-<tmpl_else>
-
 <tmpl_if bulk_edit>
 
   <input type=hidden name=bulk_edit_child value="<tmpl_var bulk_edit_child>">
@@ -322,7 +251,4 @@ Content
    </tr>
 </table>
 
-</tmpl_if>
-
-</tmpl_if>
 </tmpl_if>

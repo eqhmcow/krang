@@ -31,13 +31,15 @@ sub input_form {
     if ($media_id) {
         my ($media) = Krang::Media->find(media_id => $media_id);
         my $size = $media->file_size;
-        $size = $size ? int($size / 1024) : 0;
+        $size = $size > 1024 ? int($size / 1024) . 'k' : $size . 'b';
+        my $thumbnail_path = $media->thumbnail_path(relative => 1);
         $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .
-          qq{<a href="#"><img src="} . 
-          $media->thumbnail_path(relative => 1) . 
-            qq{" align=bottom border=0></a> <a href="#">} . 
-              $media->filename . qq{</a> ${size}k} . 
-                qq{</div>};
+          ($thumbnail_path ? 
+           qq{<a href="javascript:preview_media($media_id)"><img src="$thumbnail_path" align=bottom border=0></a> } :
+           "") . 
+             qq{<a href="javascript:preview_media($media_id)">} . 
+               $media->filename . qq{</a> ${size}} . 
+                 qq{</div>};
     }
 
     # add interface for find/upload
@@ -63,11 +65,14 @@ sub view_data {
     if ($media_id) {
         my ($media) = Krang::Media->find(media_id => $media_id);
         my $size = $media->file_size;
-        $size = $size ? int($size / 1024) : 0;
-        $html .= qq{<a href="#"><img src="} . 
-          $media->thumbnail_path(relative => 1) . 
-            qq{" align=bottom border=0></a></span> <a href="#">} . 
-              $media->filename . qq{</a> ${size}k};
+        $size = $size > 1024 ? int($size / 1024) . 'k' : $size . 'b';
+        my $path = $media->file_path(relative => 1);
+        my $thumbnail_path = $media->thumbnail_path(relative => 1);       
+        $html .= ($thumbnail_path ? 
+                  qq{<a href="javascript:preview_media($media_id)"><img src="$thumbnail_path" align=bottom border=0></a> }  : 
+                  "") .
+                    qq{<a href="javascript:preview_media($media_id)">} . 
+                      $media->filename . qq{</a> ${size}};
     } else {
         $html = "No media object assigned.";
     }
@@ -82,6 +87,8 @@ sub load_query_data {
 
     my $filename = $query->param($param);
     return unless defined $filename and length $filename;
+    $filename = "$filename"; # otherwise it's a filehandle/string
+                             # dualvar which pisses off Storable
 
     my $fh = $query->upload($param);
     return unless $fh;

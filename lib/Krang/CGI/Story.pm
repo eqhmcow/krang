@@ -608,7 +608,7 @@ sub save_and_leave_bulk_edit {
 =item save_and_find_story_link
 
 This mode saves the current element data to the session and goes to
-edit with find_story_link set to 1
+the find_story_link mode in Krang::CGI::ElementEditor.
 
 =cut
 
@@ -619,14 +619,20 @@ sub save_and_find_story_link {
     my $output = $self->_save();
     return $output if length $output;
 
-    $self->query->param(find_story_link => 1);
-    return $self->edit();
+    # get target
+    my $query = $self->query;
+    my $jump_to = $query->param('jump_to');
+    croak("Missing jump_to on save_and_find_story_link!") unless $jump_to;
+    
+    # set target and show find screen
+    $query->param(path => $jump_to);
+    return $self->find_story_link();
 }
 
 =item save_and_find_media_link
 
 This mode saves the current element data to the session and goes to
-edit with find_media_link set to 1
+the find_media_link mode in Krang::CGI::ElementEditor.
 
 =cut
 
@@ -637,8 +643,14 @@ sub save_and_find_media_link {
     my $output = $self->_save();
     return $output if length $output;
 
-    $self->query->param(find_media_link => 1);
-    return $self->edit();
+    # get target
+    my $query = $self->query;
+    my $jump_to = $query->param('jump_to');
+    croak("Missing jump_to on save_and_find_media_link!") unless $jump_to;
+    
+    # set target and show find screen
+    $query->param(path => $jump_to);
+    return $self->find_media_link();
 }
 
 =item save_and_go_up
@@ -683,8 +695,7 @@ sub _save {
     # if we're saving in the root then save the story data
     my $path = $query->param('path') || '/';
     if ($path eq '/' 
-        and not $query->param('bulk_edit') 
-        and not $query->param('find_story_link')) {
+        and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug');
         my $cover_date = decode_date(name=>'cover_date', query=>$query);
