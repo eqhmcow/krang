@@ -5,6 +5,7 @@ use warnings;
 use Carp qw(croak);
 use HTML::Template;
 use Krang::Conf qw(KrangRoot);
+use Krang::Pref;
 use File::Spec::Functions qw(catdir);
 
 
@@ -755,8 +756,8 @@ Custom size (set by user preference) and "Show 100 rows".  The
 
 # Return the user-preferred page size
 sub get_user_page_size {
-    # When implemented, replace this with the appropriate call to Krang::Prefs
-    return 7;
+    my $page_size = Krang::Pref->get('search_page_size');
+    return $page_size;
 }
 
 
