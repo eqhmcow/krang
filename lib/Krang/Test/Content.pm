@@ -421,14 +421,14 @@ sub create_story {
     # add storylink if it exists
     if ($args{linked_stories}) {
         foreach (@{$args{linked_stories}}) {
-            $self->link_story($story, $_);
+            $self->_link_story($story, $_);
         }
     }
 
     # add medialink if it exists
     if ($args{linked_media}) {
         foreach (@{$args{linked_media}}) {
-            $self->link_media($story, $_);
+            $self->_link_media($story, $_);
         }
     }
 
@@ -489,6 +489,7 @@ sub create_contrib {
     $c_args{email}  = $args{email}  || sprintf("%s\@%s.com", $self->get_word, $self->get_word);
     $c_args{bio}    = $args{bio}    || join(' ', map { $self->get_word() } (0 .. 20));
     $c_args{url}    = $args{url}    || sprintf("http://www.%s.com", $self->get_word());
+    $c_args{phone}  = $args{phone}  || sprintf("(%03i) %03i-%04i", int(rand(999)), int(rand(999)), int(rand(9999)));
 
     my %contrib_types = Krang::Pref->get('contrib_type');
 
@@ -655,7 +656,7 @@ sub cleanup {
 
 =head1 TODO
 
-Write it.
+Flesh out the various create_ methods to support more of the test code in Krang.  Ideally, this module would also support bin/krang_floodfill, so that all test suites and dummy data are coming from the same source.
 
 =head1 SEE ALSO
 
