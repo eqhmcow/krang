@@ -1,6 +1,5 @@
 /* user table holds data managed by Krang::User and accessed by
    Krang::CGI::Login */
-DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS usr;
 CREATE TABLE usr (
         user_id         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
