@@ -118,13 +118,12 @@ run_benchmark(  module => 'Krang::Story',
 ##############################################################
 my $krang_publish = catfile(KrangRoot, 'bin', 'krang_publish');
 $i = 0;
-
+my $publisher = Krang::Publisher->new;
 run_benchmark(  module => 'Krang::Story',
                 name => 'Publish 100 stories, one at a time',
                 count => 100,
                 code => sub {
-                    my $sid = $found_stories[$i++]->story_id;
-                   `$krang_publish --story_id $sid`;
+                    $publisher->publish_story(story => $found_stories[$i++]);
                 } ); 
 ##############################################################
 
