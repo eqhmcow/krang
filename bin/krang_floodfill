@@ -216,7 +216,8 @@ for my $media_count (1 .. $media) {
         } else {
             die $@;
         }
-    }    
+    }   
+    $media->checkin(); 
     push(@media, $media);
     #system("iv tmp.$format &");
     unlink("tmp.$format");
