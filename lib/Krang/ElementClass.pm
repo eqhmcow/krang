@@ -474,6 +474,8 @@ The default process by which a template is loaded goes as follows:
 =item * 
 
 The name of the template being searched for is $class->name() . ".tmpl"
+Instead of element, filename arg can be passed in, which should correspond 
+to the template name you are looking for.
 
 =item * 
 
@@ -499,11 +501,13 @@ sub find_template {
     my ($self, %args) = @_;
     my $publisher = $args{publisher} 
       || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
-    my $element   = $args{element} 
-      || croak __PACKAGE__ . ":missing attribute 'element'.\n";
+    my $element   = $args{element};
+    my $filename = $args{filename};
+
+    croak __PACKAGE__ . ":missing attribute 'element' or 'filename'.\n" if (not $element and not $filename);
 
     my @search_path = $publisher->template_search_path();
-    my $filename = $element->name() . '.tmpl';
+    $filename = $element->name() . '.tmpl' if not $filename;
 
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
@@ -531,7 +535,7 @@ sub find_template {
             Krang::ElementClass::TemplateNotFound->throw
                 (
                  message       => "Missing required output template: '$err'",
-                 element_name  => $element->display_name(),
+                 element_name  =>  $element ? $element->display_name() : $filename),
                  template_name => $filename,
                  category_url  => $publisher->category->url(),
                  error_msg     => $err
@@ -546,7 +550,7 @@ sub find_template {
             Krang::ElementClass::TemplateParseError->throw
                 (
                  message       => "Coding error found in template: '$msg'",
-                 element_name  => $element->display_name(),
+                 element_name  =>  $element ? $element->display_name() : $filename),
                  template_name => $filename,
                  category_url  => $publisher->category->url(),
                  error_msg     => $err
