@@ -27,6 +27,7 @@ use constant LN_BIN         => '/bin/ln';
 use constant MYSQLADMIN_BIN => '/usr/bin/mysqladmin';
 use constant PERL_BIN       => '/usr/bin/perl';
 use constant DU_BIN         => '/usr/bin/du';
+use constant DF_BIN         => '/bin/df';
 
 =head1 NAME
 
@@ -58,7 +59,9 @@ Following is a list of the tasks the upgrade script will perform.
 
 =item Validate path to KRANG_ROOT.
 
-=item Verify that no '.backup' versions exist
+=item Verify that no backup KRANG_ROOT exists.
+
+=item Verify that no backup MySQL instance databases exist
 
 =item Locate and parse existing krang.conf file.
 
@@ -70,9 +73,9 @@ Following is a list of the tasks the upgrade script will perform.
 
 =back
 
-=item Verify that this Krang has been shut down.
+=item Verify that Krang has been shut down.
 
-=item Verify that no backup KRANG_ROOT exists.
+=item MySQLRootPassword must be valid, and MySQL should be running
 
 
 =back
@@ -81,11 +84,7 @@ Following is a list of the tasks the upgrade script will perform.
 
 =item Rename existing KRANG_ROOT to KRANG_ROOT + '.backup'.
 
-=item Shut down MySQL
-
 =item Copy existing Krang MySQL database folders to folder + '.backup'.
-
-=item Restart MySQL
 
 =item Install new Krang system to KRANG_ROOT.
 
@@ -105,7 +104,7 @@ Following is a list of the tasks the upgrade script will perform.
 
 =item Clear out sessions from database.
 
-=item Make test on new system.
+=item Start MySQL and Krang, and 'make test' on new system.
 
 =over 4
 
@@ -132,8 +131,6 @@ Following is a list of the tasks the upgrade script will perform.
 The following tasks will roll back an upgrade to the previously installed state.
 
 =over 4
-
-=item Shut down Krang and MySQL
 
 =item Replace KRANG_ROOT with KRANG_ROOT + '.backup'
 
@@ -195,7 +192,9 @@ use Pod::Usage;
 
 my @original_args = ();
 my $uniqueness = time();
-my %INSTANCE_DBS = ();
+my %instance_dbs = ();
+my $mysql_datadir;
+
 
 my ($help, $man, $no_krang_test);
 
@@ -240,18 +239,52 @@ sub check_prereqs {
         exit_error("'$krang_conf' does not exists.  Cannot continue.");
     }
 
+    # Verify that this Krang has been shut down.
+    # get status from the pid file
+    my $pid_file = catfile($KrangRoot, "tmp", "httpd.pid");
+    my $running = 0;
+    my $pid;
+    if (-e $pid_file) {
+        $pid = `cat $pid_file`;
+        chomp $pid;
+        if ($pid and kill(0, $pid)) {
+            $running = 1;
+        }
+    }
+    exit_error ("Krang is still running.  You must shut down Krang before upgrading.")
+      if ($running);
+
+    # MySQLRootPassword must be valid, and MySQL should be running
+    my $mysql_bin = MYSQL_BIN;
+    my $MySQLRootPassword = $options{'MySQLRootPassword'};
+    my $test_mysql = ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
+    $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+    $test_mysql .= " 2>&1";
+    my $mysql_test_output = `$test_mysql`;
+
+    unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
+        print STDERR "$mysql_test_output";
+        if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
+            exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
+        } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
+            exit_error("Can't connect to MySQL.  Start MySQL and try again.");
+        } else {
+            exit_error("Unable to verify MySQLRootPassword.");
+        }
+    }
+
     # Get MySQL datadir
     my $mysql_datadir_cmd = MYSQLADMIN_BIN ." -uroot";
-    $mysql_datadir_cmd .= " -p". $options{MySQLRootPassword} if (length($options{MySQLRootPassword}));
+    $mysql_datadir_cmd .= " -p". $MySQLRootPassword if (length($MySQLRootPassword));
     $mysql_datadir_cmd .= " variables";
     my $mysql_datadir_output = `$mysql_datadir_cmd`;
     unless ($mysql_datadir_output =~ /\s+datadir\s+\|\s+(\S+)\s+/) {
         exit_error("Can't get datadir from MySQL.  Cannot continue.");
     }
-    my $mysql_datadir = $1;
-    print STDERR "mysql_datadir: '$mysql_datadir'\n";
+    $mysql_datadir = $1;
+    print "  MySQL data directory: '$mysql_datadir'\n";
 
-    # Verify that no '.backup' versions exist for KRANG_ROOT
+    # Verify that no backup KRANG_ROOT exists.
     my $krang_root_backup = $KrangRoot .".backup";
     exit_error("$krang_root_backup already exists.  You must remove this before you perform an upgrade.")
       if (-e $krang_root_backup);
@@ -265,7 +298,6 @@ sub check_prereqs {
     my $get_instances_cmd = "KRANK_CONF_NOCHECK=1 KRANG_CONF=$krang_conf ". PERL_BIN;
     $get_instances_cmd .= " -MKrang::Conf -e '$get_instances_perl' && echo \"Success $uniqueness\"";
 
-    print STDERR "$get_instances_cmd\n\n=======\n\n";
     my $get_instances_output = `$get_instances_cmd`;
 
     unless ($get_instances_output =~ /Success\ $uniqueness/) {
@@ -278,18 +310,61 @@ sub check_prereqs {
         next unless ($get_instances_output_row =~ />>>(.*)<<<>>>(.*)<<</);
         my $instance = $1;
         my $db = $2;
-        $INSTANCE_DBS{$instance} = $db;
-        print "## Instance: '$instance'    Database: '$db'\n";
+        $instance_dbs{$instance} = $db;
 
         my $mysql_instance_datadir_backup = $mysql_datadir . $db .".backup";
         exit_error("$mysql_instance_datadir_backup already exists.  You must remove this before you perform an upgrade.")
           if (-e $mysql_instance_datadir_backup);
     }
+
+    # No Instances?
+    exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
+
+    print "  Found instances (database): ". 
+      join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
     
+    # Calculate necessary disk space
+    my @curr_krang_paths = ( $KrangRoot, (map { $mysql_datadir . $_ } values(%instance_dbs)) );
+    my %path_info = ();
+    my %disk_avail = ();
+    foreach my $path (@curr_krang_paths) {
+        my $get_du = DU_BIN ." -sk $path";
+        my $du = `$get_du`;
+        exit_error ("Can't get disk usage for $path:  $du")
+          unless ($du =~ /^(\d+)\s+$path/);
+        $path_info{$path}->{du} = $1;
+
+        my $get_df = DF_BIN ." -k $path";
+        my $df = `$get_df`;
+        $df = (split/\n/, $df)[-1];
+        my (@df_data) = split(/\s+/, $df);
+
+        exit_error ("Can't get df for $path:  $df")
+          unless (@df_data);
+
+        $path_info{$path}->{partition} = $df_data[5];
+        $disk_avail{$df_data[5]} = $df_data[3] unless (exists($disk_avail{$df_data[5]}));
+    }
 
     # Verify sufficient disk space: KRANG_ROOT + Instance MySQL folders
-    # Verify that this Krang has been shut down.
-    # Verify that no backup KRANG_ROOT exists.
+    foreach my $path (@curr_krang_paths) {
+        my $req_kbytes = $path_info{$path}->{du};
+        my $partition = $path_info{$path}->{partition};
+
+        # Subtract space on partition
+        $disk_avail{$partition} -= $req_kbytes;
+    }
+
+    my $insufficient_disk_space = 0;
+    while (my ($partition, $avail) = each(%disk_avail)) {
+        # Require 100 megs of headroom on every partition
+        next if ($avail > 100000);
+
+        my $need_additional = abs($avail - 100000);
+        print "  Insufficient space on partition '$partition'.  Need additional $need_additional kb.\n";
+        $insufficient_disk_space++;
+    }
+    exit_error ("Not enough disk space for upgrade.  Unable to continue.") if ($insufficient_disk_space);
 
     exit(1);
 }
