@@ -8,9 +8,9 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Fixed bug where unknown errors during story publish would trigger an
-exit without any kind of useful message.  The error is now printed to
-STDERR. [Peter]
+Fixed bug in C<bin/krang_publish> where unknown errors during story
+publish would trigger an exit without any kind of useful message.  The
+error is now printed to STDERR. [Peter]
 
 =item *
 
