@@ -730,7 +730,7 @@ sub find {
     }
 
     if ($args{'no_attributes'}) {
-        $where_string ? ($where_string .= " AND (caption = '' AND copyright = '' and notes = '' and alt_tag = NULL)") : ($where_string = "(caption = '' and copyright = '' and notes = '' and alt_tag = NULL)"); 
+        $where_string ? ($where_string .= " AND ((caption = '' or caption = NULL) AND (copyright = '' or copyright = NULL) AND (notes = '' or notes = NULL) AND (alt_tag = '' or alt_tag = NULL))") : ($where_string = "((caption = '' or caption = NULL) AND (copyright = '' or copyright = NULL) AND (notes = '' or notes = NULL) AND (alt_tag = '' or alt_tag = NULL))");
     }
 
     if ($args{'creation_date'}) {
