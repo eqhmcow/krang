@@ -808,6 +808,12 @@ sub serialize_xml {
         $set->add(object => (Krang::Group->find( group_id => $group_id))[0], from => $self);
     } 
 
+    # get alerts for this user
+    my @alerts = Krang::Alert->find( user_id => $self->{user_id} );
+    foreach my $alert ( @alerts ) {
+        $set->add(object => $alert, from => $self);
+    }
+
     # all done
     $writer->endTag('user');
 }
