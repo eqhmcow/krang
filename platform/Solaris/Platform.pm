@@ -59,6 +59,7 @@ sub create_krang_group {
 
 # Solaris also creates users in a different fashion.
 sub create_krang_user {
+    my ($pkg, %args) = @_;
     my %options = %{$args{options}};
 
     my $useradd_bin = $pkg->find_bin(bin => 'useradd');

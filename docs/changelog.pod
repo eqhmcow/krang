@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Small bugfix to the Solaris C<Platform.pm> [Joseph Sacco]
+
+=item *
+
 C<bin/krang_upgrade> now supports remote MySQL databases.  [Aaron
 Ross]
 
