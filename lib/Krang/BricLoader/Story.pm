@@ -16,14 +16,14 @@ my $story = Krang::BricLoader::Story->new(path => $filepath);
 
 Krang::BricLoader::Story serves as a means to create from source XML a set of
 Krang pseudo-objects necessary to fully articulate the story within a
-Krang::BricLoader::Dataset.  Other than a pseudo-stories themselves,
+Krang::BricLoader::DataSet.  Other than a pseudo-stories themselves,
 categories, contributors, media and sites will be created as needed to
 accomodate the story.
 
 The constructor accepts input in the form of a reference to an XML string or
 the path to an XML file.  In the course of the constructor the input is parsed
 and mapped and the resulting object is suitable for addition to a
-Krang::BricLoader::Dataset.
+Krang::BricLoader::DataSet.
 
 =cut
 
@@ -84,7 +84,7 @@ A scalar ref to the XML desired to be parsed.
 Any other passed arguments will result in a croak.  Internally the passed XML
 is parsed and mapped.  In the course of mapping, any requisite categories,
 contributors, media or sites are created and attached to the Story.  The
-resulting output is suitable for addition to a Krang::BricLoader::Dataset
+resulting output is suitable for addition to a Krang::BricLoader::DataSet
 object.
 
 =cut

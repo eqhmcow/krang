@@ -58,7 +58,9 @@ use warnings;
 
 # Internal Modules
 ###################
-
+use Krang::BricLoader::Category;
+use Krang::BricLoader::Site;
+use Krang::BricLoader::Story;
 
 #
 # Package Variables
@@ -129,5 +131,10 @@ sub _write_index {
 
 
 my $quip = <<QUIP;
+April is the cruellest month, breeding
+Lilacs out of the dead land, mixing
+Memory and desire, stirring
+Dull roots with spring rain.
 
+--T. S. Elliot, from 'The Wasteland'
 QUIP
