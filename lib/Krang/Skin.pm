@@ -43,7 +43,9 @@ which reflect the skin settings.
 use Carp qw(croak);
 use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catdir catfile);
-use HTML::Template;
+use Krang::HTMLTemplate;
+use Image::BioChrome;
+use File::Copy qw(copy);
 
 # parameters from skin.conf that go to the CSS template
 our @CSS_PARAMS = 
@@ -55,6 +57,18 @@ our @CSS_PARAMS =
        text_color
        light_text_color                               
        link_color
+       button_color
+       alert_color
+       invalid_color
+     ));
+
+# images processed by the skin
+our @IMAGES =
+  (qw( arrow.gif 
+       logo.gif 
+       arrow-asc.gif
+       arrow-desc.gif
+       left-bg.gif
      ));
 
 # required params in skin.conf
@@ -88,20 +102,62 @@ sub new {
 
 sub install {
     my $self = shift;
+
+    $self->_install_css;
+    $self->_install_images;
+}
+
+sub _install_css {
+    my $self = shift;
+    my $conf = $self->{conf};   
+    
+    foreach my $css (qw(krang krang_login krang_help)) {
+        # load the css template
+        my $template = Krang::HTMLTemplate->new(filename => "$css.css.tmpl",
+                                                die_on_bad_params => 0,
+                                               );
+    
+        # pass in params
+        $template->param({ map { ($_, $conf->get($_)) } @CSS_PARAMS });
+        
+        # put output in htdocs/krang.css
+        open(CSS, '>', catfile(KrangRoot, 'htdocs', "$css.css"))
+          or croak("Unable to open htdocs/krang.css: $!");
+        print CSS $template->output;
+        close CSS;
+    }
+}
+
+sub _install_images {
+    my $self = shift;
     my $conf = $self->{conf};
 
-    # load the css template
-    my $template = HTML::Template->new(filename => 'krang.css.tmpl',
-                                       path => catdir(KrangRoot, 'templates'));
+    # process each image in turn
+    foreach my $image (@IMAGES) {
+        my $src = catfile(KrangRoot, 'skins', $self->{name}, 'images',$image);
+        my $targ = catfile(KrangRoot, 'htdocs', 'images',$image);
+
+        # if the skin supplies this image, copy it into place
+        if (-e $src) {
+            copy($src, $targ);
+            next;
+        }
+
+        # otherwise open up the template image and color it with
+        # Image::BioChrome
+        my $template = catfile(KrangRoot, 'templates', 'images', $image);
+        $Image::BioChrome::VERBOSE = 1;
+        $Image::BioChrome::DEBUG = 0;
+        my $bio = Image::BioChrome->new($template);
+        croak("Unable to load image $template.") unless $bio;
+
+        $bio->alphas($conf->get('background_color'), 
+                     $conf->get('light_color'), 
+                     $conf->get('bright_color'), 
+                     $conf->get('dark_color'));
     
-    # pass in params
-    $template->param({ map { ($_, $conf->get($_)) } @CSS_PARAMS });
-    
-    # put output in htdocs/krang.css
-    open(CSS, '>', catfile(KrangRoot, 'htdocs', 'krang.css'))
-      or croak("Unable to open htdocs/krang.css: $!");
-    print CSS $template->output;
-    close CSS;
+        $bio->write_file($targ);
+    }
 }
 
 1;
