@@ -64,6 +64,6 @@ color of your choice.  For example, the Red theme might contain:
   # color the images dark red
   image_color      #660002
 
-=end
+=end comment
 
 
