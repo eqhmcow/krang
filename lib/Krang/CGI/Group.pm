@@ -53,24 +53,25 @@ use Carp;
 
 
 # Fields in a group object
+use constant CHECKBOX_FIELDS => qw( may_publish
+                                    may_checkin_all
+                                    admin_users
+                                    admin_users_limited
+                                    admin_groups
+                                    admin_contribs
+                                    admin_sites
+                                    admin_categories
+                                    admin_jobs
+                                    admin_desks );
 use constant GROUP_PROTOTYPE => {
                                  group_id            => '',
                                  name                => '',
                                  categories          => {},
                                  desks               => {},
-                                 may_publish         => 1,
-                                 may_checkin_all     => 1,
-                                 admin_users         => 1,
-                                 admin_users_limited => 1,
-                                 admin_groups        => 1,
-                                 admin_contribs      => 1,
-                                 admin_sites         => 1,
-                                 admin_categories    => 1,
-                                 admin_jobs          => 1,
-                                 admin_desks         => 1,
                                  asset_story         => 'edit',
                                  asset_media         => 'edit',
-                                 asset_template      => 'edit'
+                                 asset_template      => 'edit',
+                                 map { $_ => 1 } CHECKBOX_FIELDS
                                 };
 
 
@@ -753,8 +754,15 @@ sub update_group_from_query {
 
     # Grab each CGI query param and set the corresponding Krang::Group property
     foreach my $gk (keys(%group_prototype)) {
+        my $value = $q->param($gk);
+
+        # Handle checkboxes
+        if (grep { $gk eq $_ } CHECKBOX_FIELDS) {
+            $value = 0 unless (defined($value));            
+        }
+
         # Presumably, query data is already validated and un-tainted
-        $group->$gk($q->param($gk));
+        $group->$gk($value);
     }
 }
 
@@ -870,16 +878,7 @@ sub get_group_tmpl {
             next;
         }
 
-        if (grep { $gf eq $_} qw( may_publish
-                                  may_checkin_all
-                                  admin_users
-                                  admin_users_limited
-                                  admin_groups
-                                  admin_contribs
-                                  admin_sites
-                                  admin_categories
-                                  admin_jobs
-                                  admin_desks )) {
+        if (grep { $gf eq $_} CHECKBOX_FIELDS) {
             my $default = $g->$gf();
             $group_tmpl{$gf} = $q->checkbox( -name => $gf, 
                                              -value => "1",
