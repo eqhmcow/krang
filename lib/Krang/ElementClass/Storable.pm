@@ -4,12 +4,13 @@ use warnings;
 
 use base 'Krang::ElementClass';
 use Storable qw(freeze thaw);
+use MIME::Base64 qw(encode_base64 decode_base64);
 
 sub thaw_data {
     my ($class, %arg) = @_;
     my ($element, $data) = @arg{qw(element data)};
     if (defined $data and length $data) {
-        eval { $element->data(thaw($data)) };
+        eval { $element->data(thaw(decode_base64($data))) };
         croak("Problem thawing data '$data': $@") if $@;
     }
 }
@@ -18,11 +19,12 @@ sub freeze_data {
     my $element = $_[2];
     my $ret;
     if ($element->data) {
-        eval { $ret = freeze($element->data) };
+        eval { $ret = encode_base64(freeze($element->data)) };
         croak("Problem freezing data: $@") if $@;
     }
     return $ret;
 }
+
 
 =head1 NAME
 
