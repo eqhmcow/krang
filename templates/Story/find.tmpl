@@ -1,0 +1,41 @@
+<tmpl_include header.tmpl>
+
+<script language="JavaScript" type="text/javascript">
+  function edit_story (id) {
+    document.find_story.rm.value = 'edit';
+    document.find_story.story_id.value = id;
+    document.find_story.submit();
+  }
+</script>
+
+<form method=post name=find_story>
+<input type=hidden name=rm>
+<input type=hidden name=story_id>
+</form>
+
+<div class=dark-bar>Find Story</div>
+<p>
+
+<table width=100% cellpadding=0 cellspacing=0>
+
+<tr class=form-head>
+<td>ID</td>
+<td>Title</td>
+<td>URL</td>
+<td>&nbsp;</td>
+</tr>
+
+<tmpl_loop story_loop>
+
+<tr class=form-cell>
+<td class=form-cell><tmpl_var story_id></td>
+<td class=form-cell><tmpl_var title></td>
+<td class=form-cell><tmpl_var url></td>
+<td class=form-cell><a href="javascript:edit_story(<tmpl_var story_id>)">Edit</a></td>
+</tr>
+
+</tmpl_loop>
+
+</table>
+
+<tmpl_include footer.tmpl>

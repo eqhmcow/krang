@@ -9,6 +9,7 @@ use Krang::Session qw(%session);
 use Krang::Message qw(add_message);
 use Krang::Widget qw(category_chooser);
 use Time::Piece;
+use Carp qw(croak);
 
 # use base qw(Krang::CGI);
 use base 'Krang::CGI::ElementEditor';
@@ -49,7 +50,9 @@ sub setup {
     # add story specific modes to existing set
     $self->run_modes($self->run_modes(),
                      'new_story' => 'new_story',
-                     'create'    => 'create');
+                     'create'    => 'create',
+                     'find'      => 'find',
+                    );
 
     $self->tmpl_path('Story/');
 }
@@ -172,16 +175,30 @@ $session{story}.
 
 =cut
 
-sub edit {
+sub edit {    
     my $self = shift;
     my $query = $self->query;
     my $template = $self->load_tmpl('edit.tmpl', associate => $query, die_on_bad_params => 0, loop_context_vars => 1);
     my %args = @_;
-    
-    my $story = $session{story};
-    croak("Unable to load story from session!")
-      unless $story;
+              
+    my $story;
+    if ($query->param('story_id')) {
+        # load story from DB
+        ($story) = Krang::Story->find(story_id => $query->param('story_id'));
+        croak("Unable to load story '" . $query->param('story_id') . "'.")
+          unless $story;
 
+        # prepare to edit
+        $story->prepare_for_edit();   
+
+        $query->delete('story_id');
+        $session{story} = $story;
+    } else {
+        $story = $session{story};
+        croak("Unable to load story from session!")
+          unless $story;
+    }
+        
     # run the element editor edit
     $self->SUPER::element_edit(template => $template);
     
@@ -220,6 +237,31 @@ sub edit {
     }
 
     return $template->output();
+}
+
+=item find
+
+Temporary find stories run-mode.  Just lists all stories and provides
+edit links.
+
+=cut
+
+sub find {
+    my $self = shift;
+    my $template = $self->load_tmpl('find.tmpl');
+    
+    my @stories = Krang::Story->find();
+    my @loop;
+    foreach my $story (@stories) {
+        push(@loop, {
+                     story_id => $story->story_id,
+                     url      => $story->url,
+                     title    => $story->title,
+                    });
+    }
+    $template->param(story_loop => \@loop);
+
+    return $template->output;
 }
 
 

@@ -1046,7 +1046,7 @@ sub prepare_for_edit {
     $self->verify_checkout();
 
     # save version
-    dbh->do('INSERT into story_version (story_id, version, data) 
+    dbh->do('REPLACE INTO story_version (story_id, version, data) 
              VALUES (?,?,?)', undef, 
             $self->{story_id}, $self->{version}, freeze($self));
 
