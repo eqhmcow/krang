@@ -31,7 +31,6 @@ BugzillaComponent
 EnableSiteServer
 SiteServerAddr
 SiteServerPort
-AutoLoadTemplates
 );
 }
 
