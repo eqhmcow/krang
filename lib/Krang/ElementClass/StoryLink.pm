@@ -97,6 +97,7 @@ sub freeze_data_xml {
     $set->add(object => $story, from => $element->object) if $story;
 }
 
+
 # translate the incoming story ID into a real ID
 sub thaw_data_xml {
     my ($self, %arg) = @_;
@@ -111,14 +112,35 @@ sub thaw_data_xml {
 }
 
 
+#
 # If fill_template() has been called, a template exists for this element.
-# Populate it with available attributes
+# Populate it with available attributes - story title & url.
+#
+# See Krang::ElementClass->fill_template for more information.
+#
+sub fill_template {
+    my $self = shift;
+    my %args = @_;
 
-#sub fill_template {
-#}
+    my $tmpl      = $args{tmpl};
+    my $publisher = $args{publisher};
+    my $element   = $args{element};
+
+    $tmpl->param(title => $element->data()->title());
+
+    if ($publisher->is_publish()) {
+        $tmpl->param(url => $element->data()->url());
+    } elsif ($publisher->is_preview()) {
+        $tmpl->param(url => $element->data()->preview_url());
+    } else {
+        croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
+    }
+
+}
 
 # Publish - if no template exists, simply return the URL (based on publish/preview status)
-
+#
+# See Krang::ElementClass->publish for more information.
 sub publish {
 
     my $self = shift;
