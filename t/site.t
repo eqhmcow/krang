@@ -31,14 +31,14 @@ isa_ok($site2, 'Krang::Site', 'save() test');
 my $site3 = Krang::Site->new(publish_path => 'sites/test2/',
                              url => 'testsite.com');
 eval {$site3->save();};
-is($@ =~ /'url' is the same/, 1, 'save() duplicate test');
+is($@ =~ /'url' is a duplicate/, 1, 'save() duplicate test');
 
 # find test
 my ($site4) = Krang::Site->find(url_like => '%.com%',
-                               publish_path_like => '%sites/%',
-                               ascend => 1,
-                               limit => 1,
-                               order_by => 'url');
+                                publish_path_like => '%sites/%',
+                                order_desc => 'asc',
+                                limit => 1,
+                                order_by => 'url');
 isa_ok($site4, 'Krang::Site', 'find() test');
 
 # deletion
