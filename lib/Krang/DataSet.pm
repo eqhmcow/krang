@@ -526,13 +526,6 @@ duplicates will cause the object to fail to import.  (Note that the
 exact policy on updates is decided by the individual class'
 deserialize_xml() method.)
 
-
-=item update_callback
-
-Set this to a CODE ref to get a callback when an object is updated
-during the import.  The call will recieve the updated object as a
-single parameter.
-
 =back
 
 May throw a Krang::DataSet::ValidationFailed exception if the archive
