@@ -445,47 +445,70 @@ B<Arguments:>
 
 =over
 
+=item class
+
+The class of story (e.g. article, cover).  This determines the root
+element of the story object being created.
+
+If not specified, it will default to 'article', which may or may not
+work, depending on the element library being used.
+
+
 =item category
 
-An array reference containing Krang::Category objects under which the story will appear.
+An array reference containing Krang::Category objects under which the
+story will appear.
 
 If not specified, one will be assigned randomly.
 
 =item linked_stories
 
-An array reference containing Krang::Story objects.  Each Story object in the array will be linked to in the new story.
+An array reference containing Krang::Story objects.  Each Story object
+in the array will be linked to in the new story.
 
 =item linked_media
 
-An array reference containing Krang::Media objects.  Each Media object in the array will be linked to in the new story.
+An array reference containing Krang::Media objects.  Each Media object
+in the array will be linked to in the new story.
 
 =item pages
 
-Determines how many pages will exist in the story.  Each page will contain a header and 3 paragraphs.  By Default, one page is created.
+Determines how many pages will exist in the story.  Each page will
+contain a header and 3 paragraphs.  By Default, one page is created.
 
 =item paras_per_page
 
-Determines how many paragraphs will be created on each page.  Defaults to 3.
+Determines how many paragraphs will be created on each page.  Defaults
+to 3.
 
 =item C<< title => 'Confessions of a Poodle Lover' >>
 
-The title for the story being created.  By default, a randomly-generated title will be used.
+The title for the story being created.  By default, a
+randomly-generated title will be used.
 
 =item C<< deck => 'Why fluffy dogs make me happy' >>
 
-The deck for the story being created.  By default, a randomly-generated deck will be used.
+The deck for the story being created.  By default, a
+randomly-generated deck will be used.
 
 =item C<< header => 'In the beginning' >>
 
-The first header in the story.  By default, a randomly-generated header will be used.
+The first header in the story.  By default, a randomly-generated
+header will be used.
 
-This header only applies to the first page.  If more than one page is being created in this story, subsuquent pages will have randomly-generated headers.
+This header only applies to the first page.  If more than one page is
+being created in this story, subsuquent pages will have
+randomly-generated headers.
 
 =item C<< paragraph => [$p1, $p2, $p3, $p4] >>
 
-The paragraph content for the paragraphs on the first page.  One paragraph will be created for each element in the list reference passed in.  By default, three randomly-generated paragraphs will be created.
+The paragraph content for the paragraphs on the first page.  One
+paragraph will be created for each element in the list reference
+passed in.  By default, three randomly-generated paragraphs will be
+created.
 
-This only applies to the first page of a story - additional pages will have three randomly-generated paragraphs each.
+This only applies to the first page of a story - additional pages will
+have three randomly-generated paragraphs each.
 
 =back
 
@@ -506,6 +529,8 @@ sub create_story {
         $categories = [ $self->_root_category() ];
     }
 
+
+    my $class = $args{class} || 'article',
     my $title = $args{title} || join(' ', map { $self->get_word() } (0 .. 5));
     my $deck  = $args{deck} || join(' ', map { $self->get_word() } (0 .. 5));
     my $head  = $args{header} || join(' ', map { $self->get_word() } (0 .. 5));
@@ -523,7 +548,7 @@ sub create_story {
     my $story = Krang::Story->new(categories => $categories,
                                   title      => $title,
                                   slug       => 'TEST-SLUG-' . $slug_id,
-                                  class      => "article");
+                                  class      => $class);
 
 
     # add content - first page no matter what.
