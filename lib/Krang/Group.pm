@@ -93,10 +93,10 @@ Krang::Group - Interface to manage Krang permissions
   Krang::Group->add_desk_permissions($desk);
   Krang::Group->delete_desk_permissions($desk);
 
-  # Evaluate permissions for a particular user
-  my %desk_perms = Krang::Group->user_desk_permissions($user);
-  my %asset_perms = Krang::Group->user_asset_permissions($user);
-  my %admin_perms = Krang::Group->user_admin_permissions($user);
+  # Evaluate permissions for the currently logged-in user
+  my %desk_perms = Krang::Group->user_desk_permissions();
+  my %asset_perms = Krang::Group->user_asset_permissions();
+  my %admin_perms = Krang::Group->user_admin_permissions();
 
 
 =head1 DESCRIPTION
@@ -778,10 +778,10 @@ sub delete_desk_permissions {
 
 =item user_desk_permissions()
 
-  my %desk_perms = Krang::Group->user_desk_permissions($user);
+  my %desk_perms = Krang::Group->user_desk_permissions();
 
 This method is expected to be used by Krang::Story and any other 
-modules which need to know if a user has access to a particular desk.
+modules which need to know if the current user has access to a particular desk.
 This method returns a hash table which maps desk_id values to 
 security levels, "edit", "read-only", or "hide".
 
@@ -804,6 +804,11 @@ In this case, the resultant permissions for this user will be:
    Desk 2 => "read-only"
    Desk 3 => "edit"
 
+
+You can also request permissions for a particular desk by specifying it by ID:
+
+  my $desk1_access = Krang::Group->user_desk_permissions($desk_id);
+
 =cut
 
 
@@ -814,10 +819,10 @@ sub user_desk_permissions {}
 
 =item user_asset_permissions()
 
-  my %asset_perms = Krang::Group->user_asset_permissions($user);
+  my %asset_perms = Krang::Group->user_asset_permissions();
 
 This method is expected to be used by all modules which need to know 
-if a user has access to a particular asset class.  This method returns 
+if the current user has access to a particular asset class.  This method returns 
 a hash table which maps asset types ("story", "media", and "template") 
 to security levels, "edit", "read-only", or "hide".
 
@@ -826,19 +831,24 @@ the user is affiliated.  Group permissions are combined using
 a "most privilege" algorithm.  In other words, if a user is 
 assigned to the following groups:
 
-   Group A =>  Story    => "read-only"
-               Media    => "edit"
-               Template => "read-only"
+   Group A =>  story    => "read-only"
+               media    => "edit"
+               template => "read-only"
 
-   Group B =>  Story    => "edit"
-               Media    => "read-only"
-               Template => "hide"
+   Group B =>  story    => "edit"
+               media    => "read-only"
+               template => "hide"
 
 In this case, the resultant permissions for this user will be:
 
-   Story    => "edit"
-   Media    => "edit"
-   Template => "read-only"
+   story    => "edit"
+   media    => "edit"
+   template => "read-only"
+
+
+You can also request permissions for a particular asset by specifying it:
+
+  my $media_access = Krang::Group->user_desk_permissions('media');
 
 =cut
 
@@ -853,7 +863,7 @@ sub user_asset_permissions {}
   my %admin_perms = Krang::Group->user_admin_permissions($user);
 
 This method is expected to be used by all modules which need to know 
-if a user has access to a particular administrative function.
+if the current user has access to a particular administrative function.
 
 This method returns a hash table which maps admin functions
 to Boolean values (1 or 0) designating whether or not the user is 
@@ -913,8 +923,13 @@ In this case, the resultant permissions for this user will be:
    admin_desks         => 1
 
 
-N.B.:  The admin function "admin_users_limited" is deemed to be
-a high privilege when it is set to 0 -- not 1.
+(N.B.:  The admin function "admin_users_limited" is deemed to be
+a high privilege when it is set to 0 -- not 1.)
+
+
+You can also request permissions for a particular admin function by specifying it:
+
+  my $may_publish = Krang::Group->user_desk_permissions('may_publish');
 
 
 =cut

@@ -170,16 +170,8 @@ make any changes.
 
 =item *
 
-A user is granted "Hide" access to the "Admin" application class.  As
-a result, they cannot see or access any of the applications in that
-class, including Users, Groups, Contributors, Sites, Categories, Jobs,
-
-
-
-=item *
-
-A user is granted "Edit" access to "Story" and "Media" application
-classes, but not to "Templates".  As a result, they can manage
+A user is granted "Edit" access to "Story" and "Media" assets
+but "Read-Only" to "Templates".  As a result, they can manage
 content, but may not make changes to the templates which control the
 appearance of content.
 
@@ -383,16 +375,23 @@ access, but that story uses media which is in a category to which the
 user does NOT have access, it is expected that the media will appear
 in the context of the story, nonetheless.  This requires that the API
 only hide hidden records when specifically requested to do so.  To
-this end, a new parameter to find() is provided, "hide".  For example:
+this end, a new parameter to find() is provided, "use_permissions".  For example:
 
-  my @media = Krang::Media->find( hide=>1 );
+  my @media = Krang::Media->find( use_permissions=>1 );
 
-If "hide" is not specified (or is set to "0"), all records will be
+If "use_permissions" is not specified (or is set to "0"), all records will be
 shown.  It is expected that objects will only be hidden when viewed by
 applications which are specifically for managing that object type.
 For example, story objects will only be hidden when accessed via the
 story manager application.  When non hidden, the "may_see" property
 will be propagated to the object, and may be used as needed.
+
+The following modules implement "use_permissions" in their find() method:
+
+  Krang::Story
+  Krang::Media
+  Krang::Templates
+  Krang::Category
 
 This handles the "Hide" case, but does not handle
 the "Edit" verses "Read-Only" case.  To support this case, the
@@ -454,10 +453,14 @@ each group.
 Access to the permission settings are provided via a function in
 Krang::Group --
 
-  my %asset_perms = Krang::Group->user_asset_permissions($user);
+  my %asset_perms = Krang::Group->user_asset_permissions();
 
 This method will combine the permissions for all the groups to which
-the specified $user is assigned and return a hash of net permissions.
+the currently logged in user is assigned and return a hash of net permissions.
+
+Alternatively, you may ask for a specific asset:
+
+  my $story_access = Krang::Group->user_asset_permissions('story');
 
 For each asset type, a group may be granted "edit", "read-only", or
 "hide" access.  A user may be a member of more than one group.  The
@@ -543,11 +546,17 @@ In this case, the resultant permissions for this user will be:
 
 For convenience, a class method is provided:
 
-  my %desk_perms = Krang::Group->user_desk_permissions($user);
+  my %desk_perms = Krang::Group->user_desk_permissions();
 
 The hash which is returned will contain a map of desks to security
-levels.  This method is expected to be called wherever security
-decisions regarding desks must be made.
+levels for the user who is currently logged in.  This method is
+expected to be called wherever security decisions regarding desks must
+be made.
+
+You can retrieve permissions for a particular desk by specifying it by
+ID:
+
+  my $desk1_access = Krang::Group->user_desk_permissions($desk_id);
 
 In the Krang::Story API, the move_to_desk() is expected to respect
 desk permissions.  If a user attempts to move a story FROM a desk to
@@ -578,12 +587,16 @@ As with desks and assets, the multiple group affiliations by a user
 must be reconciled assorting to the principle of "most privilege".  To
 simplify and encapculate this function, the following method is provided:
 
-  my %admin_perms = Krang::Group->user_admin_permissions($user);
+  my %admin_perms = Krang::Group->user_admin_permissions();
 
-This method will combine admin permissions for a particular user and
+This method will combine admin permissions for the current user and
 return a hash containing permission types as keys and Boolean values
 allowing (1) or disallowing (0) that function.  The admin permission
 keys are specified elsewhere in this document.
+
+You can also request permissions for a particular function:
+
+  my $may_publish = Krang::Group->user_admin_permissions('may_publish');
 
 It is the function of the API to croak() if a call is made to an admin
 function to which the user does not have access.  For example, if a
