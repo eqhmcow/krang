@@ -38,6 +38,12 @@ which reflect the skin settings.
 
 =back
 
+=head1 TODO
+
+The colors that come out of Image::BioChrome are never exactly right.
+I might be using alpha() wrong or there might be a bug in
+Image::BioChrome.
+
 =cut
 
 use Carp qw(croak);
@@ -72,7 +78,10 @@ our @IMAGES =
      ));
 
 # required params in skin.conf
-our @REQ = (@CSS_PARAMS);
+our @REQ = (@CSS_PARAMS, 
+            qw(logo_color1
+               logo_color2
+               logo_color3));
 
 sub new {
     my $pkg = shift;
@@ -150,13 +159,24 @@ sub _install_images {
         $Image::BioChrome::DEBUG = 0;
         my $bio = Image::BioChrome->new($template);
         croak("Unable to load image $template.") unless $bio;
-
-        $bio->alphas($conf->get('background_color'), 
-                     $conf->get('light_color'), 
-                     $conf->get('bright_color'), 
-                     $conf->get('dark_color'));
-    
-        $bio->write_file($targ);
+        
+        if ($image eq 'logo.gif') {
+            $bio->alphas(
+                         $conf->get('background_color'),
+                         $conf->get('logo_color1'),
+                         $conf->get('logo_color2'),
+                         $conf->get('logo_color3'), 
+                        );
+        } else {
+            $bio->alphas(
+                         $conf->get('background_color'),
+                         $conf->get('light_color'),
+                         $conf->get('bright_color'),
+                         $conf->get('dark_color'), 
+                        );
+            
+         }
+        $bio->write_file($targ); 
     }
 }
 
