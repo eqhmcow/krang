@@ -15,7 +15,7 @@
 
 ----------------------------------------
 
-=item * Publishing With Stock Krang Publish Methods 
+=item * Publishing With Stock Krang Publish Methods
 
 =over
 
@@ -47,48 +47,25 @@
 
 =over
 
-=item * Pagination
+=item * Contributors
 
 =item * Links to Other Stories in Krang
 
 =item * Links to Media Objects in Krang
 
+=item * Pagination
+
 =item * Category Templates
 
-=item * Contributors
-
-=back
-
-----------------------------------------
-
-=item * Publishing With Customized Publish Methods
-
 =over
 
-=item * Overriding Krang::ElementClass Methods in Your Element Library
-
-=over
-
-=item * template_data()
-
-=item * fill_template()
-
-=item * find_template()
-
-=item * publish()
+=item * Category Child Elements
 
 =back
 
-=item * Example 3: Using One Large Template
-
-=item * Example 4: Using Multiple Templates
-
-=item * Story and Media Links
-
 =back
 
-
-
+=item * Conclusion
 
 =back
 
@@ -109,7 +86,7 @@ Krang uses templates to generate output for stories when they're published.  The
 
 Krang uses the HTML::Template templating system.  The philosophy behind HTML::Template is to separate the code required to build the content of a page from the template used for the layout of the final page.  Krang takes this philosophy one step further - by using the element tree of a story to automate the construction of a story's content, template developers can do their work with minimal programmer involvement.
 
-If you are migrating from Bricolage, the templating system in Krang does not make use of separate publish scripts, the way that Bricolage did.  In Krang, every element in the element tree contains code to publish itself.  If customization is required, you can override the default publish methods within the element.
+If you are migrating from Bricolage, the templating system in Krang does not make use of separate .pl templates, the way that Bricolage did.  In Krang, every element in the element tree contains code to publish itself.  If customization is required, you can override the default publish methods within the element.
 
 For further information on Krang's element tree, see C<Creating Element Libraries in Krang>.
 
@@ -134,14 +111,14 @@ The most important things to understand when getting into template development i
 We'll examine an example story type called C<Story>. Here's the element tree for C<Story>:
 
    Story
-        - Deck             (textbox attribute)
-        + Page             (repeatable element)
-             - Paragraph   (repeatable textbox attribute)
-             - Pull Quote  (repeatable textbox attribute)
-             - Paragraph   (repeatable textbox attribute)
+        - Deck             (subclass of Krang::ElementClass::Text)
+        + Page             (subclass of Krang::ElementClass)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Pull Quote  (subclass of Krang::ElementClass::Text)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
 
 
-The Story element has an attribute called Deck, and can contain any number of Page elements. Pages are composed of Paragraph and Pull Quote attributes, both of which can be repeated.
+The Story element has a child element called Deck, and can contain any number of Page elements. Pages are composed of Paragraph and Pull Quote child elements, both of which can be repeated.
 
 When the publish process is called on this story, Krang will walk this element tree, starting from the top (C<Story>), recursively touching every element in the tree to construct the final output.
 
@@ -160,13 +137,13 @@ Several types of variables and loops are created.  Using the element tree for C<
 
 =item *
 
-B<NOTE>: All variable names are lower case, and any spaces in between words will be replaced with underscores.
+B<NOTE>: Any spaces in between words in the element's name will be replaced with underscores.
 
 =item *
 
-A single variable is created for every element using C<< $element->name() >>
+A single variable is created for every element, based on the element's name.  If there are several elements with the same name (e.g. multiple Paragraph elements), the value of the first one will be used.
 
-An examples would be <tmpl_var deck>.
+An example would be <tmpl_var deck>.
 
 =item *
 
@@ -224,10 +201,10 @@ With very simple stories, you can use a single template to handle the entire pub
 For the purposes of this example, imagine the following element tree for a story:
 
    Story
-        - Deck        (textbox attribute)
-        - Paragraph   (repeatable textbox attribute)
-        - Pull Quote  (repeatable textbox attribute)
-        - Paragraph   (repeatable textbox attribute)
+        - Deck        (subclass of Krang::ElementClass::Text)
+        - Paragraph   (subclass of Krang::ElementClass::TextArea)
+        - Pull Quote  (subclass of Krang::ElementClass::Text)
+        - Paragraph   (subclass of Krang::ElementClass::TextArea)
 
 
 B<The Template - Story.tmpl>
@@ -261,7 +238,7 @@ B<The Template - Story.tmpl>
    </html>
 
 
-This is a pretty boring example, but it illustrates the basic concepts of variable construction in Krang.  Because there are no elements containing children, the only loop that is available to the template is C<element_loop>.  While <tmpl_var paragraph> exists only once in the template, because it is within the context of <tmpl_loop element_loop>, both paragraphs will be built.
+This is a pretty boring example, but it illustrates the basic concepts of variable construction in Krang.  <tmpl_loop element_loop> provides access to all child elements.  <tmpl_loop paragraph_loop> and <tmpl_loop pull_quote_loop> are available, but are really not of much use.  While <tmpl_var paragraph> exists only once in the template, because it is within the context of <tmpl_loop element_loop>, both paragraphs will be built.
 
 B<Results:>
 
@@ -312,11 +289,11 @@ B<The Example Story Tree>
 Going back to the original example Story Tree:
 
    Story
-        - Deck             (textbox attribute)
-        + Page             (repeatable element)
-             - Paragraph   (repeatable textbox attribute)
-             - Pull Quote  (repeatable textbox attribute)
-             - Paragraph   (repeatable textbox attribute)
+        - Deck             (subclass of Krang::ElementClass::Text)
+        + Page             (subclass of Krang::ElementClass)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Pull Quote  (subclass of Krang::ElementClass::Text)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
 
 While this may not look like a big step up from the element tree in Example 1, we're now making use of an important concept in Krang - elements that contain other elements as their children.
 
@@ -519,6 +496,320 @@ By creating a new pull_quote.tmpl for the category C<www.foo.com/foo/bar/baz/> w
 
 =head1 Additional Publishing Components
 
+
+
+=head2 Contributors
+
+Contributors in Krang are attached directly to stories.  They are made available to all elements as a list (tmpl_loop) of contributors, under the loop B<contrib_loop>.
+
+B<Variables>
+
+The variables that make up the contributors are as follows:
+
+=over 4
+
+=item contrib_loop
+
+Each element in B<contrib_loop> corresponds to a single contributor.
+
+Within each element, the following variables are available (corresponding to the parameters available within the Contributers interface):
+
+=over 
+
+=item contrib_id
+
+The internal ID attached to the specific contributor.
+
+=item prefix
+
+The prefix of the contributor's name.
+
+=item first
+
+The contributor's first name.
+
+=item middle
+
+The contributor's middle name.
+
+=item last
+
+The contributor's last name.
+
+=item suffix
+
+The suffix of the contributor's name.
+
+=item email
+
+The contributor's email address.
+
+=item phone
+
+The contributor's phone number.
+
+=item bio
+
+The contributor's biography.
+
+=item url
+
+The url to the contributor's website.
+
+=item contrib_type_loop
+
+This loop corresponds to the the various tasks a contributor may have performed (e.g. Photographer, Illustrator).  The loop exists because a single contributor may have performed multiple tasks for a given story.
+
+Within this loop, there are two fields:
+
+=over
+
+=item contrib_type_id
+
+The internal id of the task performed.
+
+=item contrib_type_name
+
+The name of the job performed (e.g. Illustrator).
+
+
+=back
+
+=back
+
+=back
+
+B<Usage>
+
+For the purposes of this example, we have three contributors - two writers, Felix D. Cat and John Johnz, and a photographer, V. Molleux.  The template stub that we would use might look something like this:
+
+  <tmpl_if contrib_loop>
+     By:
+     <tmpl_loop contrib_loop>
+
+        <!-- Determine whether we need a comma or an "and" to separate -->
+        <tmpl_unless __first__>
+         <tmpl_if __last__>
+          and
+         <tmpl_else>
+          ,
+         </tmpl_if>
+        </tmpl_unless>
+
+        <!-- First Middle Last (Job) -->
+        <tmpl_var first> <tmpl_var middle> <tmpl_var last>
+        <tmpl_if contrib_type_loop>
+           (
+           <tmpl_loop contrib_type_loop>
+              <tmpl_var contrib_type_name>
+              <tmpl_if __last__>)</tmpl_if>
+           </tmpl_loop>
+        </tmpl_if>
+     </tmpl_loop>
+  </tmpl_if>
+
+The end result would be a line that read like this:
+
+ By: Felix D. Cat (Writer), John Johnz (Writer) and V. Molleux (Photographer)
+
+
+B<Templates>
+
+In the context of a larger template, like Page.tmpl, it might look as follows:
+
+B<Page.tmpl>
+
+  <h1><tmpl_var title></h1>
+  <b><tmpl_var deck></b>
+
+  <!-- Contributors -->
+
+  <tmpl_if contrib_loop>
+     By:
+     <tmpl_loop contrib_loop>
+
+        <!-- Determine whether we need a comma or an "and" to separate -->
+        <tmpl_unless __first__>
+         <tmpl_if __last__>
+          and
+         <tmpl_else>
+          ,
+         </tmpl_if>
+        </tmpl_unless>
+
+        <!-- First Middle Last (Job) -->
+        <tmpl_var first> <tmpl_var middle> <tmpl_var last>
+        <tmpl_if contrib_type_loop>
+           (
+           <tmpl_loop contrib_type_loop>
+              <tmpl_var contrib_type_name>
+              <tmpl_if __last__>)</tmpl_if>
+           </tmpl_loop>
+        </tmpl_if>
+     </tmpl_loop>
+  </tmpl_if>
+
+  <!-- /Contributors -->
+
+
+  <tmpl_loop element_loop>
+     <tmpl_if is_paragraph>
+       <p><tmpl_var paragraph></p>
+     </tmpl_if>
+     <tmpl_if is_pull_quote>
+       <p><blockquote><i>
+     <tmpl_var pull_quote>
+       </i></blockquote></p>
+     </tmpl_if>
+  </tmpl_loop>
+
+
+
+
+
+=head2 Links to Other Stories in Krang
+
+Links to other stories are provided by whatever element subclasses Krang::ElementClass::StoryLink.  Something to remember here is that Krang does not put forth any rules as to the naming of elements in an element library - so an element that subclasses to Krang::ElementClass::StoryLink could be called anything.
+
+B<NOTE:> While the lack of explicit element naming in Krang may sound odd, consider the possibilities - you can create multiple elements, all which provide links to other stories in Krang (e.g. they all subclass Krang::ElementClass::StoryLink), but each element can now have its own template, outputting links in its own way.
+
+For the purposes of this example, the element will be called 'leadin'.
+
+B<Story Tree>
+
+Taking the story tree from C<Example 2>, we'll add a leadin element to the page:
+
+   Story
+        - Deck             (subclass of Krang::ElementClass::Text)
+        + Page             (subclass of Krang::ElementClass)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Pull Quote  (subclass of Krang::ElementClass::Text)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Leadin      (subclass of Krang::ElementClass::StoryLink)
+
+B<Templates>
+
+StoryLink elements can function with or without their own templates.
+
+=over
+
+=item * Without a template
+
+If no corresponding template is found, the StoryLink object will simply return the URL to the connected story.
+
+=item * Constructing a template:
+
+If you decide to create a template, the following variables will be available as variables in the template: B<url>, B<title>
+
+B<Leadin.tmpl>
+
+ <a href="<tmpl_var escape=html url>"><tmpl_var title></a>
+
+=back
+
+
+The Page.tmpl template will treat leadin like any other child element - <tmpl_var leadin>, within <tmpl_loop element_loop>.  Be careful - this example Page.tmpl assumes that leadin is using the template above - if the leadin element has no template, the story URL will be displayed instead.
+
+B<Page.tmpl>
+
+ <h1><tmpl_var title></h1>
+ <b><tmpl_var deck></b>
+
+ <tmpl_loop element_loop>
+
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+
+    <tmpl_if is_pull_quote>
+      <tmpl_var pull_quote>
+    </tmpl_if>
+
+    <tmpl_if is_leadin>
+      <p><tmpl_var leadin></p>
+    </tmpl_if>
+
+ </tmpl_loop>
+
+
+
+
+=head2 Links to Media Objects in Krang
+
+Links to media objects are provided by whatever element (or elements) subclasses Krang::ElementClass::MediaLink.  In short, these elements will behave in the same way as elements that subclass Krang::ElementClass::StoryLink (see C<Links to Other Stories in Krang> in the section above).
+
+B<NOTE:> Expect to use more than one element in your handling of media objects in Krang, simply because different media objects require different HTML.  Consider this - do you really want the URL to your Flash or PDF file embedded in an <img src=> tag?
+
+For the purposes of this example, the element that handles links to Media Objects will be called 'image'.  
+
+B<Story Tree>
+
+Taking the story tree from C<Example 2>, we'll add a leadin element to the page:
+
+   Story
+        - Deck             (subclass of Krang::ElementClass::Text)
+        + Page             (subclass of Krang::ElementClass)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Pull Quote  (subclass of Krang::ElementClass::Text)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Image       (subclass of Krang::ElementClass::MediaLink)
+
+
+B<Templates>
+
+StoryLink elements can function with or without their own templates.
+
+=over
+
+=item * Without a template
+
+If no corresponding template is found, the MediaLink object will simply return the URL to the object.
+
+=item * Constructing a template:
+
+If you decide to create a template, the following variables will be available as variables in the template: B<url>, B<title>, B<caption>
+
+B<Image.tmpl>
+
+ <img src="<tmpl_var escape=html url>">>
+ <br>
+
+ <tmpl_if title>
+   <tmpl_var title><br>
+ </tmpl_if>
+
+ <tmpl_if caption>
+   <tmpl_var caption><br>
+ </tmpl_if>
+
+=back
+
+
+The Page.tmpl template will treat image like any other child element - <tmpl_var image>, within <tmpl_loop element_loop>.  Be careful - this example Page.tmpl assumes that the image element is using the template above.  If the image element has no template, the resulting HTML will simply display a URL to the image, rather than the image itself!
+
+
+B<Page.tmpl>
+
+ <h1><tmpl_var title></h1>
+ <b><tmpl_var deck></b>
+
+ <tmpl_loop element_loop>
+
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+
+    <tmpl_if is_pull_quote>
+      <tmpl_var pull_quote>
+    </tmpl_if>
+
+    <tmpl_if is_image>
+      <p><tmpl_var image></p>
+    </tmpl_if>
+
+ </tmpl_loop>
+
+
 =head2 Pagination
 
 A whole set of template variables relating to pagination are created by Krang for specific elements.  These variables are built whenever Krang encounters an element with the attribute C<pageable> set to 1 (Generally the C<page> element -- See C<Creating Element Libraries in Krang> for more information).
@@ -593,16 +884,16 @@ B<Updated Story Tree>
 Since pagination isn't very interesting with only one page, let's add a second page to the previous Story Tree.  Furthermore, since the two pages are entirely separate constructs, there's no reason why the second page has to be identical to the first in structure.
 
    Story
-        - Deck             (textbox attribute)
-        + Page             (repeatable element)
-             - Paragraph   (repeatable textbox attribute)
-             - Pull Quote  (repeatable textbox attribute)
-             - Paragraph   (repeatable textbox attribute)
-        + Page             (repeatable element)
-             - Pull Quote  (repeatable textbox attribute)
-             - Paragraph   (repeatable textbox attribute)
-             - Paragraph   (repeatable textbox attribute)
-             - Paragraph   (repeatable textbox attribute)
+        - Deck             (subclass of Krang::ElementClass::Text)
+        + Page             (subclass of Krang::ElementClass)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Pull Quote  (subclass of Krang::ElementClass::Text)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+        + Page             (subclass of Krang::ElementClass)
+             - Pull Quote  (subclass of Krang::ElementClass::Text)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Paragraph   (subclass of Krang::ElementClass::TextArea)
 
 
 B<Templates>
@@ -685,158 +976,6 @@ B<Note> - it is possible to move <tmpl_var page_break> into Page.tmpl as well, b
 
 
 
-=head2 Links to Other Stories in Krang
-
-Links to other stories are provided by whatever element subclasses Krang::ElementClass::StoryLink.  Something to remember here is that Krang does not put forth any rules as to the naming of elements in an element library - so an element that subclasses to Krang::ElementClass::StoryLink could be called anything.
-
-B<NOTE:> While the lack of explicit element naming in Krang may sound odd, consider the possibilities - you can create multiple elements, all which provide links to other stories in Krang (e.g. they all subclass Krang::ElementClass::StoryLink), but each element can now have its own template, outputting links in its own way.
-
-For the purposes of this example, the element will be called 'leadin'.
-
-B<Story Tree>
-
-Taking the story tree from C<Example 2>, we'll add a leadin element to the page:
-
-   Story
-        - Deck             (textbox attribute)
-        + Page             (repeatable element)
-             - Paragraph   (repeatable textbox attribute)
-             - Pull Quote  (repeatable textbox attribute)
-             - Paragraph   (repeatable textbox attribute)
-             - Leadin      (repeatable storylink attribute)
-
-B<Templates>
-
-StoryLink elements can function with or without their own templates.
-
-=over
-
-=item * Without a template
-
-If no corresponding template is found, the StoryLink object will simply return the URL to the connected story.
-
-=item * Constructing a template:
-
-If you decide to create a template, the following variables will be available as variables in the template: B<url>, B<title>
-
-B<Leadin.tmpl>
-
- <a href="<tmpl_var escape=html url>"><tmpl_var title></a>
-
-=back
-
-
-The Page.tmpl template will treat leadin like any other child element - <tmpl_var leadin>, within <tmpl_loop element_loop>.  Be careful - this example Page.tmpl assumes that leadin is using the template above - if the leadin element has no template, the story URL will be displayed instead.
-
-B<Page.tmpl>
-
- <!-- Test for first page here -->
- <tmpl_if is_first_page>
-    <h1><tmpl_var title></h1>
-    <b><tmpl_var deck></b>
- </tmpl_if>
-
- <tmpl_loop element_loop>
-
-    <tmpl_if is_paragraph>
-      <p><tmpl_var paragraph></p>
-    </tmpl_if>
-
-    <tmpl_if is_pull_quote>
-      <tmpl_var pull_quote>
-    </tmpl_if>
-
-    <tmpl_if is_leadin>
-      <p><tmpl_var leadin></p>
-    </tmpl_if>
-
- </tmpl_loop>
-
- <!-- Pagination Removed to shorten Example -->
-
-
-
-
-
-=head2 Links to Media Objects in Krang
-
-Links to media objects are provided by whatever element (or elements) subclasses Krang::ElementClass::MediaLink.  In short, these elements will behave in the same way as elements that subclass Krang::ElementClass::StoryLink (see C<Links to Other Stories in Krang> in the section above).
-
-B<NOTE:> Expect to use more than one element in your handling of media objects in Krang, simply because different media objects require different HTML.  Consider this - do you really want the URL to your Flash or PDF file embedded in an <img src=> tag?
-
-For the purposes of this example, the element that handles links to Media Objects will be called 'image'.  
-
-B<Story Tree>
-
-Taking the story tree from C<Example 2>, we'll add a leadin element to the page:
-
-   Story
-        - Deck             (textbox attribute)
-        + Page             (repeatable element)
-             - Paragraph   (repeatable textbox attribute)
-             - Pull Quote  (repeatable textbox attribute)
-             - Paragraph   (repeatable textbox attribute)
-             - Image       (repeatable medialink attribute)
-
-
-B<Templates>
-
-StoryLink elements can function with or without their own templates.
-
-=over
-
-=item * Without a template
-
-If no corresponding template is found, the MediaLink object will simply return the URL to the object.
-
-=item * Constructing a template:
-
-If you decide to create a template, the following variables will be available as variables in the template: B<url>, B<title>, B<caption>
-
-B<Image.tmpl>
-
- <img src="<tmpl_var escape=html url>">>
- <br>
-
- <tmpl_if title>
-   <tmpl_var title><br>
- </tmpl_if>
-
- <tmpl_if caption>
-   <tmpl_var caption><br>
- </tmpl_if>
-
-=back
-
-
-The Page.tmpl template will treat image like any other child element - <tmpl_var image>, within <tmpl_loop element_loop>.  Be careful - this example Page.tmpl assumes that the image element is using the template above.  If the image element has no template, the resulting HTML will simply display a URL to the image, rather than the image itself!
-
-
-B<Page.tmpl>
-
- <!-- Test for first page here -->
- <tmpl_if is_first_page>
-    <h1><tmpl_var title></h1>
-    <b><tmpl_var deck></b>
- </tmpl_if>
-
- <tmpl_loop element_loop>
-
-    <tmpl_if is_paragraph>
-      <p><tmpl_var paragraph></p>
-    </tmpl_if>
-
-    <tmpl_if is_pull_quote>
-      <tmpl_var pull_quote>
-    </tmpl_if>
-
-    <tmpl_if is_image>
-      <p><tmpl_var image></p>
-    </tmpl_if>
-
- </tmpl_loop>
-
- <!-- Pagination Removed to shorten Example -->
 
 
 
@@ -884,543 +1023,70 @@ B<Story.tmpl>
 B<NOTE:> Yes, the page-break logic is still correct in Story.tmpl.  Krang will take each page of output generated by Story.tmpl, and merge that page with Category.tmpl.
 
 
+=head2 Category Child Elements
+
+The above example shows how to integrate category templates with your story templates, but isn't the end of things.  Like stories, categories can (and usually do) have child elements as well.  How do they work?  In exactly the same fashion as child elements in the Story tree.
+
+B<Sample Story Tree>
+
+Here we have a category which displays its own name, two links for the left-side navigation, and one link for the foother.
+
+  - category        (subclasses Krang::ElementClass::TopLevel)
+    - display_name  (subclasses Krang::ElementClass::Text)
+    - left_nav_link (subclasses Krang::ElementClass::CategoryLink)
+    - left_nav_link (subclasses Krang::ElementClass::CategoryLink)
+    - footer_link   (subclasses Krang::ElementClass::CategoryLink)
 
 
-=head2 Contributors
+The template using this element tree might look as follows:
 
-Contributors in Krang are attached directly to stories.  They are made available to all elements as a list (tmpl_loop) of contributors, under the loop B<contrib_loop>.
+B<Category.tmpl>
 
-B<Variables>
+ <html>
+ <head><tmpl_var title></head>
+ <body>
 
-The variables that make up the contributors are as follows:
+ <table border=0>
+ <tr>
 
-=over 4
-
-=item contrib_loop
-
-Each element in B<contrib_loop> corresponds to a single contributor.
-
-Within each element, the following variables are available (corresponding to the parameters available within the Contributers interface):
-
-=over 
-
-=item contrib_id
-
-The internal ID attached to the specific contributor.
-
-=item prefix
-
-The prefix of the contributor's name.
-
-=item first
-
-The contributor's first name.
-
-=item middle
-
-The contributor's middle name.
-
-=item last
-
-The contributor's last name.
-
-=item suffix
-
-The suffix of the contributor's name.
-
-=item email
-
-The contributor's email address.
-
-=item phone
-
-The contributor's phone number.
-
-=item bio
-
-The contributor's biography.
-
-=item url
-
-The url to the contributor's website.
-
-=item contrib_type_loop
-
-This loop corresponds to the the various tasks a contributor may have performed (e.g. Writer, Illustrator).  The loop exists because a single contributor may have performed multiple tasks for a given story.
-
-Within this loop, there are two fields:
-
-=over
-
-=item contrib_type_id
-
-The internal id of the task performed.
-
-=item contrib_type_name
-
-The name of the task performed (e.g. Writer).
-
-
-=back
-
-=back
-
-=back
-
-B<Templates>
-
-In this case, we want to publish contributors on the first page of the story.  Because of this, the contributors loop should be placed in Page.tmpl.
-
-
-B<Page.tmpl>
-
- <tmpl_if is_first_page>
-    <h1><tmpl_var title></h1>
-    <b><tmpl_var deck></b>
-
-    <!-- Contributors on the first page only! -->
-
-    <p>Contributors to this story:
-      <tmpl_if contrib_loop>
-         <tmpl_loop contrib_loop>
-            <tmpl_var prefix> <tmpl_var first> <tmpl_var last><br>
-            <tmpl_if contrib_type_loop>
-               <tmpl_loop contrib_type_loop>
-                  Task ID:   <tmpl_var contrib_type_id><BR>
-                  Task Name: <tmpl_var contrib_type_name>
-               </tmpl_loop>
-            </tmpl_if>
-         </tmpl_loop>
-      <tmpl_else>
-         None.
-      </tmpl_if>
-
-    <!-- /Contributors -->
-
- </tmpl_if>
-
+ <!-- Left Nav -->
+ <td>
  <tmpl_loop element_loop>
-    <tmpl_if is_paragraph>
-      <p><tmpl_var paragraph></p>
-    </tmpl_if>
-    <tmpl_if is_pull_quote>
-      <p><blockquote><i>
-    <tmpl_var pull_quote>
-      </i></blockquote></p>
-    </tmpl_if>
+   <tmpl_if is_display_name>
+     <tmpl_var display_name><BR>
+   </tmpl_if>
+   <tmpl_if is_left_nav_link>
+     <tmpl_var is_left_nav_link><BR>
+   </tmpl_if>
  </tmpl_loop>
+ </td>
+ <!-- /Left Nav -->
 
+ <!-- Story -->
+ <td>
+   <tmpl_var content>
+ </td>
+ <!-- /Story -->
 
- <!-- Further Pagination information removed to keep the example short -->
+ </tr>
+ </table>
 
-
-
-
-
-
-
-
--------------------------------------------
-
-
-
-
-
-=head1 Publishing with Customized Publish Methods
-
-=head1 Overriding Krang::ElementClass Methods in Your Element Library
-
-If you do decide to make changes to the publish process, the following methods exist in Krang::ElementClass as part of the publish process, and can be overridden as needed:
-
-=over
-
-=item * template_data()
-
-This returns the data stored in the element.  In most cases, it's the actual data stored in the element, unformatted.  In the case of C<Krang::ElementClass::StoryLink> or C<Krang::ElementClass::MediaLink> objects, C<template_data()> will return the fully-qualified URL of the object.
-
-If you want to change the form of the returned data for a single class of element in your element library, overriding template_data() for that element should be the first thing you try.
-
-
-=item * fill_template()
-
-fill_template() is responsible for filling the template object with data built from the element tree.  Generally, it traverses the element tree, creating scalars and loops on an as-needed basis, populating the template objects with the results.  The rules by which fill_template() operates can be found in C<Example 1>.
-
-If you are familiar with Bricolage, fill_template() functions using the same rules as the autofill() functionality found in Bricolage.
-
-This method is the most likely candidate for overriding, as this is the method that actually determines what goes into the template.
-
-This method is responsible for calling publish() on all children of the current element.  If you decide to override fill_template, but don't want to deal with the manual work of walking the element tree, make sure to make a call to $self->SUPER::fill_template().
-
-
-=item * find_template()
-
-Returns an HTML::Template::Expr object with the template to be used by the element.  Follows a specific procedure for locating the template on the filesystem.
-
-Unless you need to alter the process for loading templates (e.g. you don't want a template to get loaded under certain circumstances), this method should generally be left alone.
-
-=item * publish()
-
-Ties the above methods together and returns HTML for the current element (and therefore, any children beneath it).  Overriding publish() is a pretty drastic action, and should only be done if absolutely needed. 
-
-publish() takes a hash as an argument, allowing for named parameters.  Anything passed in will subsuquently be passed into the above methods.
-
-=back
-
-Read the POD for C< Krang::ElementClass > if you want to learn more about how these methods work, and how to use them.
-
-
-=head1 Example 3: Using One Large Template
-
-In this case, we have a very simple system, a single story template made up of basic elements:
-
-=head2 The Template - Story.tmpl
-
- #
- # NOTE - need notes on how to save template properly in the Krang::Template hierarchy..
- #
-
- <tmpl_loop page_loop>
-
-   <html>
-
-   <head>
-     <title><tmpl_var title></title>
-   </head>
-   <body>
-
-     <tmpl_if __first__>
-        <h1><tmpl_var title></h1>
-        <b><tmpl_var deck></b>
+ <!-- Footer -->
+   <table border=0>
+   <tr>
+   <tmpl_loop element_loop>
+     <tmpl_if footer_link>
+        <td><tmpl_var footer_link></td>
      </tmpl_if>
+   </tmpl_loop>
+   </tr>
+   </table>
+ <!-- /Footer -->
 
-     <tmpl_loop element_loop>
-        <tmpl_if paragraph>
-          <p><tmpl_var paragraph></p>
-        </tmpl_if>
-        <tmpl_if name eq "pull quote">
-          <p><blockquote><i>
-            <tmpl_var name="pull quote">
-          </i></blockquote></p>
-        </tmpl_if>
-     </tmpl_loop>
+ </body>
+ </html>
 
-     <tmpl_unless __first__>
-     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
-     </tmpl_unless>
 
-     <tmpl_unless __last__>
-     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
-     </tmpl_unless>
+=head1 Conclusion
 
-   </body>
-   </html>
-
-   <tmpl_var page_break>
-
- </tmpl_loop>
-
-
-
-=head2 The Overridden Element Method
-
-In the Package that describes the Story element, we'll override the fill_template() method.  For the time being, the find_template() and publish() methods will be left alone (see Krang::ElementClass POD for more info).
-
- sub fill_template {
-
-  my $self = shift;
-  my (%named_params) = @_;
-
-  my $template = $named_params{template};
-  my $story    = $named_params{story};
-
-  # setup story title
-  $template->param(title => $story->title());
-
-  # setup story slug
-  $template->param(slug => $story->slug());
-
-  # setup the page break variable
-  $template->param(page_break => Krang::Publisher::PAGE_BREAK);
-
-  my $deck_element = $self->children('deck');
-  $template->param(deck => $deck_element->publish());
-
-  # Build up @page_loop
-  my @page_list = $self->match('/page'); # returns all elements
-  my @page_loop;
-  my $page_count = 1;
-
-  foreach my $page (@page_list) {
-
-    # build per-page element loop
-    my @element_loop;
-    foreach my $e ($page->children()) {
-        # push on a row for this element
-        push(@element_loop, { $e->name() => $e->publish(@_) });
-    }
-
-    # push element_loop and a page_count on this loop
-    push(@page_loop, { 
-                      element_loop => \@element_loop,
-                      page_count   => $page_count++
-                     });
-  }
-
-  # finish the page_loop
-  $template->param(page_loop => \@page_loop);
-
- }
-
-
-
-=head2 RESULTS
-
-Using the basic element set, we now have a single story template that can be used when generating content.
-
-Advanteges:
-
-* Single page, single element.  Everything's centrally located, and easy to manipulate.
-
-Disadvanteges:
-
-* With a single template, customization for individual stories is very difficult - there's no possibility of re-using this element in a different tree - it would need to be re-written.
-
-
-
-
-
-=head1 Example 4: Multiple Templates, Multiple Publish Methods
-
-The last example takes everything done so far, and rolls it all up - using templates for individual elements, and overloading the publish() method within elements, rather than relying on the default publish() method.
-
-One of the advanteges of this rolling your own publish() methods in this case is the ability to pass variables to the sub-element template that would otherwise not exist.  In Example 3, there was no way to use __first__ and __last__ logic in Page.tmpl, because that information was not available.  This can be fixed here.
-
-
-=head2 The Templates
-
-B<Story.tmpl>
-
- <tmpl_loop page_loop>
-
-   <html>
-
-   <head>
-     <title><tmpl_var title></title>
-   </head>
-   <body>
-
-     <tmpl_var page>
-
-   </body>
-   </html>
-
-   <tmpl_var page_break>
-
- </tmpl_loop>
-
-MUCH smaller.  All the logic involving __first__ and __last__ has now been moved over to Page.tmpl, where it really belongs.  
-
-
-B<Page.tmpl>
-
- <tmpl_if first>
-    <h1><tmpl_var title></h1>
-    <b><tmpl_var deck></b>
- </tmpl_if>
-
- <tmpl_loop element_loop>
-    <tmpl_if is_paragraph>
-      <p><tmpl_var paragraph></p>
-    </tmpl_if>
-    <tmpl_if is_pull_quote>
-      <p><blockquote><i>
-    <tmpl_var pull_quote>
-      </i></blockquote></p>
-    </tmpl_if>
- </tmpl_loop>
-
- <tmpl_unless first>
-   <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
- </tmpl_unless>
-
- <tmpl_unless last>
-   <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
- </tmpl_unless>
-
-
-So Page.tmpl is larger than before, but it makes more sense - all the Page logic is now in one place.
-
-
-=head2 The publish() Methods
-
-As Page.tmpl now needs to know about what page is currently being processed, the publish() method for both the Story element and then Page element needs to be overloaded.
-
-B<Story>
-
-The fill_template() method for Story needs to be able to pass page_count information to the publish() method for Page.  In turn, publish() will pass it to the fill_template() for Page.
-
-
- sub fill_template {
-
-  my ($self, $story, $publisher) = @_;
-
-  my $template = $named_params{template};
-
-  # Get the list of pages into @pages
-  my @pages = $self->match('/page');
-  my @page_loop = ();
-  my $page_count = 1;
-
-  foreach my $page (@pages) {
-    # each $page is an element
-    push @page_loop, { page => $page->publish(story => $story,
-                                              page_count => $page_count++,
-                                              pages      => scaler @pages
-                                             )
-                     };
-  }
-
-  # populate template.
-  $template->param(page_loop => \@page_loop);
-
- }
-
-
-B<Page>
-
-So now that the fill_template() method for Story has passed the page count information along, the fill_template() method for Page needs to use that information.
-
- sub fill_template {
-
-  my $self = shift;
-  my %named_parms = @_;
-
-  my $template = $named_params{template};
-
-  my $story = $named_params{story};
-  my $page_count = $named_params{page_count};
-  my $page_total = $named_params{page_total};
-
-  # setup params
-  if ($page_count == 0) {
-     $template->param(first => 1);
-  }
-  if ($page_count == $page_total) {
-     $template->param(last => 1);
-  }
-
-  $template->param(title => $story->title());
-
-  # setup story slug
-  $template->param(slug => $story->slug());
-
-  # setup the page break variable
-  $template->param(page_break => Krang::Publisher::PAGE_BREAK);
-
- }
-
-
-
-
-=head2 Conclusion
-
-B<Advantages>
-
-=over
-
-=item * This style is very flexible - the programmer can add functionality to the autofilled content without having to re-invent the wheel.
-
-=item * Elements that are broken out into discrete scripts and templates can be reused between element trees.
-
-=item * In this particular case bending the rules a bit allows the page formatting to be more logically grouped and easier to edit.
-
-=back
-
-B<Disadvantages>
-
-=over
-
-=item * Requires coding.
-
-=item * Requires communication between template programmer and template designer since the variables and loops are somewhat different from the normal autofill setup.
-
-=back
-
-
-
-=head2 Methods
-
-Generally, the default fill_template() method should be sufficient - but for reference purposes, overriding it would go as follows:
-
- sub fill_template {
-    my $self = shift;
-    my %named_params = @_;
-    my $template = $named_params{template};
-    my $element  = $named_params{element};
-
-    # get linked object from element
-    my $media = $self->data();
-
-    # fill in URL to link to media  -- creates a varable based on element name.
-    $template->param($element->name . "_url" => $media->url);
-    # fill in image caption
-    $template->param(caption => $media->caption);
-
- }
-
-
-
-
-=head2 Methods
-
-B<fill_template();>
-
-Generally, the default fill_template() will suffice.  For reference, here's a sample:
-
- sub fill_template {
-
-  my $self = shift;
-  my %named_params = @_;
-
-  my $story = $named_params{story};
-  my $template = $named_params{template};
-
-  $template->param(title => $story->title());
-
- }
-
-
-
-
-=head2 Code Example
-
-If you decide to override B<fill_template()> and still need contributors data, use the following example as your guide (again, derived from Example 4).
-
-
- sub fill_template {
-
-  my $self = shift;
-  my %named_parms = @_;
-
-  my $template = $named_params{tmpl};
-  my $publisher = $named_params{publisher};
-  my $element   = $named_params{element};
-
-  my $story = $publisher->story();
-
-  $template->param(title => $story->title())
-    if $template->query(name => 'title');
-
-  # setup story slug
-  $template->param(slug => $story->slug())
-    if $template->query(name => 'slug');
-
-  # setup the page break variable
-  $template->param(page_break => Krang::Publisher::PAGE_BREAK)
-    if $template->query(name => 'page_break');
-
-  $template->param(contrib_loop => $self->_build_contrib_loop(@_))
-    if ($template->query(name => 'contrib_loop);
-
-
- }
+This document only begins to cover what you can do in Krang.  If you are comfortable with programming in Perl, consider learning more about the construction and customization of elements and element libraries by reading B<INSERT DOCUMENT NAMES HERE>.
