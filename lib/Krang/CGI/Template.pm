@@ -210,7 +210,7 @@ sub deploy {
 
     # update template with CGI values
     $self->update_template($obj);
-                                                                               
+
     if ($obj->template_id) {
         my %errors = $self->validate($obj);
         return $self->edit(%errors) if %errors;
@@ -242,7 +242,7 @@ sub deploy {
 
 =item add_checkin
 
-Saves changes to the template object the end-user enacted on the 'Add' 
+Saves changes to the template object the end-user enacted on the 'Add'
 screen, then checks in.
 The user is sent to 'My Workspace' if save succeeds and back to the 'Add'
 screen if it fails.
@@ -254,21 +254,21 @@ sub add_checkin {
     my $q = $self->query();
     my $template = $session{template};
     croak("No object in session") unless ref $template;
-                                                                             
+
     # update template with CGI values
     $self->update_template($template);
-                                                                             
+
     # validate
     my %errors = $self->validate($template);
     return $self->add(%errors) if %errors;
-                                                                             
+
     # save
     %errors = $self->_save($template);
     return $self->add(%errors) if %errors;
 
-    $template->checkin;                                                                             
+    $template->checkin;
     add_message('checkin_template', id => $template->template_id);
-                                                                             
+
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
     $self->header_props(-uri=> $uri);
@@ -482,6 +482,7 @@ sub checkout_and_edit {
     return $self->edit;
 }
 
+
 =item edit
 
 Displays the properties of a template object and allows the user to modify the
@@ -549,10 +550,11 @@ sub edit_save {
     my $self = shift;
     my $q = $self->query();
     my $template = $session{template};
+
     croak("No object in session") unless ref $template;
 
     # update template with CGI values
-    $self->update_template($template);
+    $self->update_template($template)
 
     # validate
     my %errors = $self->validate($template);
@@ -571,35 +573,33 @@ sub edit_save {
     return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
+
 =item edit_checkin
-                                                                             
-Saves changes to the template object the end-user enacted on the 'Edit' screen, then checks in.
-The user is sent to 'My Workspace' if save succeeds and back to the 'Edit'
-screen if it fails.
+Saves changes to the template object the end-user enacted on the 'Edit' screen,
+then checks in.  The user is sent to 'My Workspace' if save succeeds and back
+to the 'Edit' screen if it fails.
 
 =cut
-                                             
 sub edit_checkin {
     my $self = shift;
     my $q = $self->query();
     my $template = $session{template};
     croak("No object in session") unless ref $template;
-                                                                             
+
     # update template with CGI values
     $self->update_template($template);
-                                                                             
+
     # validate
     my %errors = $self->validate($template);
     return $self->edit(%errors) if %errors;
-                                                                             
+
     # save
     %errors = $self->_save($template);
     return $self->edit(%errors) if %errors;
 
     $template->checkin;
-                                                
     add_message('checkin_template', id => $template->template_id);
-                                                                             
+
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
     $self->header_props(-uri=> $uri);
@@ -809,16 +809,16 @@ allow the template to be checked-in.
 sub list_active {
     my $self = shift;
     my $q = $self->query();
-    
+
     # Set up persist_vars for pager
     my %persist_vars = (rm => 'list_active');
-    
+
     # Set up find_params for pager
     my %find_params = (checked_out => 1);
-                                                                                
+
     # FIX: this should look at user permissions
     my $may_checkin_all = 1;
-                                                                                
+
     my $pager = Krang::HTMLPager->new(
        cgi_query => $q,
        persist_vars => \%persist_vars,
@@ -848,9 +848,8 @@ sub list_active {
     $template->param(pager_html => $pager->output());
     $template->param(row_count => $pager->row_count());
     $template->param(may_checkin_all => $may_checkin_all);
-    
-    return $template->output;
 
+    return $template->output;
 }
 
 =item checkin_selected
@@ -861,20 +860,18 @@ Checkin all the templates which were checked on the list_active screen.
 
 sub checkin_selected {
     my $self = shift;
-    
     my $q = $self->query();
     my @template_checkin_list = ( $q->param('krang_pager_rows_checked') );
     $q->delete('krang_pager_rows_checked');
-     
+
     foreach my $template_id (@template_checkin_list) {
          my ($m) = Krang::Template->find(template_id=>$template_id);
          $m->checkin();
      }
-                                                                                
+
      if (scalar(@template_checkin_list)) {
          add_message('selected_template_checkin');
      }
-                                                                                
      return $self->list_active;
 }
 
@@ -906,7 +903,8 @@ sub get_tmpl_params {
                                                        -values => \@values,
                                                        -labels => \%labels,
                                                        -default => $default,
-                                                       -onchange => 'update_filename(this)',
+                                                       -onchange =>
+                                                       'update_filename(this)',
                                                       );
     }
 
@@ -941,10 +939,10 @@ sub get_tmpl_params {
         }
         $tmpl_params{history_return_params} = join("\n", @history_params);
 
-        $tmpl_params{can_edit} = 1 unless ( not($template->may_edit)
-                                            or ($template->checked_out 
-                                                and ($template->checked_out_by ne $ENV{REMOTE_USER})) );
-
+        $tmpl_params{can_edit} = 1 unless (not($template->may_edit) or
+                                           ($template->checked_out and
+                                            ($template->checked_out_by ne
+                                             $ENV{REMOTE_USER})) );
     }
 
     return \%tmpl_params;
@@ -1030,15 +1028,19 @@ sub search_row_handler {
     $row->{template_id} = $template->template_id;
     $row->{url} = format_url(url => $template->url, length => 50);
 
-    if (not($template->may_edit()) or (($template->checked_out) and ($template->checked_out_by ne $ENV{REMOTE_USER}))) {
-        $row->{commands_column} = '<a href="javascript:view_template('."'".$template->template_id."'".')">View</a>';
+    if (not($template->may_edit()) or
+        (($template->checked_out) and
+         ($template->checked_out_by ne $ENV{REMOTE_USER}))) {
+        $row->{commands_column} = '<a href="javascript:view_template('."'".
+          $template->template_id."'".')">View</a>';
         $row->{checkbox_column} = "&nbsp;";
     } else {
-        $row->{commands_column} = '<a href="javascript:edit_template('."'".$template->template_id."'".')">Edit</a>'
-          . '&nbsp;|&nbsp;'
-            . '<a href="javascript:view_template('."'".$template->template_id."'".')">View</a>';
+        $row->{commands_column} = '<a href="javascript:edit_template('."'".
+          $template->template_id."'".')">Edit</a>'
+            . '&nbsp;|&nbsp;'
+              . '<a href="javascript:view_template('."'".
+                $template->template_id."'".')">View</a>';
     }
-
 }
 
 
@@ -1118,10 +1120,11 @@ sub _save {
         } elsif (ref($@) && $@->isa('Krang::Template::NoCategoryEditAccess')) {
             my $category_id = $@->category_id;
             my ($category) = Krang::Category->find(category_id=>$category_id);
-            croak ("Can't load category_id '$category_id'") unless (ref($category));
-            add_message( 'error_no_category_access',
-                         url => $category->url,
-                         cat_id => $category_id );
+            croak ("Can't load category_id '$category_id'")
+              unless (ref($category));
+            add_message('error_no_category_access',
+                        url => $category->url,
+                        cat_id => $category_id );
             $q->param('errors', 1);
             return (error_category_id => 1);
         } else {
@@ -1132,28 +1135,30 @@ sub _save {
     return ();
 }
 
+
 # Pager row handler for template list active run-mode
 sub list_active_row_handler {
     my $self = shift;
     my ($row, $template) = @_;
-    
+
     # Columns:
     #
-    
+
     # template_id
     $row->{template_id} = $template->template_id();
-    
+
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $template->url(),
-                              linkto => "javascript:preview_template('". $row->{template_id} ."')" );
-                                                                                
+                              linkto => "javascript:preview_template('".
+                              $row->{template_id} ."')" );
+
     # filename
     $row->{filename} = $template->filename();
-                                                                                
+
     # commands column
     $row->{commands_column} = '<a href="javascript:view_template(' .
       $template->template_id . ')">View</a>';
-                                                                                
+
     # user
     my ($user) = Krang::User->find(user_id => $template->checked_out_by);
     $row->{user} = $user->first_name . " " . $user->last_name;
