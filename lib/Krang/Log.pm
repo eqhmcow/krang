@@ -153,6 +153,11 @@ BEGIN {
       croak("Unable to open logfile, $log: $!\n");
     $LOG->{path} = $log;
 
+    # make sure LOG isn't buffered
+    my $fh = select(LOG);
+    $|++;
+    select($fh);
+
     # if the log file is freshly created
     if (not $log_exists) {
         my ($uid) = (getpwnam(KrangUser))[2];
@@ -376,6 +381,11 @@ sub _reopen_log {
 
     open(LOG, ">>", $LOG->{path}) or
       croak("Unable to open logfile, $LOG->{path}: $!\n");
+
+    # make sure LOG isn't buffered
+    my $fh = select(LOG);
+    $|++;
+    select($fh);
 }
 
 
