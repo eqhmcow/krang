@@ -57,6 +57,7 @@ use warnings;
 # External Module Dependencies
 use Carp qw(verbose croak);
 use Storable qw(freeze thaw);
+use Time::Piece;
 
 # Internal Module Depenedencies
 use Krang;
@@ -690,7 +691,8 @@ sub save {
             ") VALUES (?" . ",?" x (scalar @save_fields - 1) . ")";
         $self->checked_out(1);
         $self->checked_out_by($user_id);
-        $self->creation_date('now()');
+        my $t = localtime();
+        $self->creation_date($t->strftime("%Y-%m-%d %T"));
     }
 
     {
