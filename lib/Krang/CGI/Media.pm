@@ -430,15 +430,13 @@ sub edit {
     }
 
     # Load media object into session, or die trying
-    my $m;
-    if ($media_id) {
+    my $m = $session{media};
+    if ( $media_id  &&  not(ref($m) && ($media_id eq $m->media_id)) ) {
         # If we have a media_id, force load using it.
         ($m) = Krang::Media->find(media_id=>$media_id);
         $session{media} = $m;
-    } else {
-        # Otherwise, expect to have a media object in the session
-        $m = $session{media};
     }
+
     die ("Can't find media object with media_id '$media_id'") unless (ref($m));
 
     my $t = $self->load_tmpl('edit_media.tmpl', associate=>$q);
@@ -726,7 +724,7 @@ sub _add {
 }
 
 
-# Update the provided Media object with data from the CGI form\
+# Update the provided Media object with data from the CGI form.
 # Does NOT call save
 sub update_media {
     my $self = shift;
@@ -766,6 +764,8 @@ sub update_media {
         # Default: Grab scalar value from CGI form
         $m->$mf( $q->param($mf) );
     }
+
+    # Done!
 }
 
 
@@ -777,6 +777,27 @@ sub make_media_tmpl_data {
 
     my $q = $self->query();
     my %tmpl_data = ();
+
+    # Set up details only found on edit (not add) view
+    if ($tmpl_data{media_id} = $m->media_id()) {
+        my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
+        $tmpl_data{thumbnail_path} = $thumbnail_path;
+        $tmpl_data{url} = format_url( url => $m->url(),
+                                      linkto => "javascript:preview_media('". $tmpl_data{media_id} ."')",
+                                      length => 50 );
+        $tmpl_data{published_version} = $m->published_version();
+        $tmpl_data{version} = $m->version();
+
+        # Set up versions drop-down
+        my $curr_version = $tmpl_data{version};
+        my $media_version_chooser = $q->popup_menu(
+                                                   -name => 'selected_version',
+                                                   -values => [1..$curr_version],
+                                                   -default => $curr_version,
+                                                   -override => 1,
+                                                  );
+        $tmpl_data{media_version_chooser} = $media_version_chooser;
+    }
 
     # Build type drop-down
     my %media_types = Krang::Pref->get('media_type');
@@ -809,12 +830,6 @@ sub make_media_tmpl_data {
     # If we have a filename, show it.
     $tmpl_data{file_size} = sprintf("%.1f", ($m->file_size() / 1024))
       if ($tmpl_data{filename}  = $m->filename());
-
-    # Set up details only found on edit (not add) view
-    if ($tmpl_data{media_id} = $m->media_id()) {
-        my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
-        $tmpl_data{thumbnail_path} = $thumbnail_path;
-    }
 
     # Set up Contributors
     my @contribs = ();
@@ -930,7 +945,8 @@ sub find_media_row_handler {
     $row->{creation_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
 
     # pub_status  -- NOT YET IMPLEMENTED
-    $row->{pub_status} = '&nbsp;<b>P</b>&nbsp;';
+    my $pub_status = ($media->published()) ? 'P' : '&nbsp;' ;
+    $row->{pub_status} = '&nbsp;<b>'. $pub_status .'</b>&nbsp;';
 
 }
 
