@@ -5,7 +5,7 @@ ServerAdmin          root@localhost
 ServerSignature      Email
 PidFile              <tmpl_var KrangRoot>/tmp/httpd.pid
 DocumentRoot         <tmpl_var KrangRoot>/htdocs
-Listen               80
+Listen               127.0.0.1:80
 User                 <tmpl_var ApacheUser>
 Group                <tmpl_var ApacheGroup>
 KeepAlive            Off
@@ -75,6 +75,7 @@ PerlPassEnv KRANG_ROOT
 PerlPassEnv KRANG_CONF
 PerlModule Krang
 
+Listen <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 
 <VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
