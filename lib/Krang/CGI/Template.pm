@@ -938,6 +938,7 @@ sub get_tmpl_params {
             push @history_params, $q->hidden(-name => $k,
                                              -value => $v,
                                              -override => 1);
+            $tmpl_params{was_edit} = 1 if (($k eq 'rm') and ($v eq 'checkout_and_edit'));
         }
         $tmpl_params{history_return_params} = join("\n", @history_params);
 
@@ -946,7 +947,7 @@ sub get_tmpl_params {
                                             ($template->checked_out_by ne
                                              $ENV{REMOTE_USER})) );
     }
-
+             
     return \%tmpl_params;
 }
 

@@ -514,7 +514,7 @@ sub view {
     $template->param(return_script => $query->param('return_script'),
                      return_params_loop => 
                      [ map { { name => $_, value => $return_params{$_} } } keys %return_params ]);
-
+    $template->param( was_edit => 1 ) if ($return_params{rm} eq 'edit');
     $template->param( can_edit => 1 ) 
       unless ( $story->checked_out and 
                ($story->checked_out_by ne $ENV{REMOTE_USER})) or 

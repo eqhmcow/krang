@@ -1388,6 +1388,7 @@ sub make_media_view_tmpl_data {
         push(@return_params_hidden, $q->hidden(-name => $k,
                                                        -value => $v,
                                                        -override=>1));
+        $tmpl_data{was_edit} = 1 if (($k eq 'rm') and ($v eq 'checkout_and_edit'));
     }
     $tmpl_data{return_params} = join("\n", @return_params_hidden);
 
