@@ -68,7 +68,7 @@ sub characters {
 
 sub _fix_val {
     return unless defined ${$_[0]} and 
-      (${$_[0]} =~ /[^\x20-\x7E\n]/s or 
+      (${$_[0]} =~ /[^\x20-\x7E\n\t]/s or 
        ${$_[0]} =~ /^\s+$/ or
        ${$_[0]} =~ /^!!!BASE64!!!/);
     ${$_[0]} = '!!!BASE64!!!'.encode_base64(${$_[0]}, "");

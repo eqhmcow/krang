@@ -6,6 +6,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed Krang::XML::Writer to allow raw tabs in XML without Base64
+encoding. [Sam]
+
+=item *
+
+Added a workaround for a very strange seg-fault bug.  [Sam]
+
+=item *
+
 Fixed bug where aftrer upgrading to v1.018 old users don't show up in
 the User Admin list screen. [Sam]
 
