@@ -93,6 +93,17 @@ run_benchmark(  module => 'Krang::DataSet',
                         $done = 1;
                     } } );
 
+my @siteurls = ('collects.kra:8080', 'shuttered.kra:8080', 'vaticanizes.kra:8080');
+
+foreach my $siteurl ( @siteurls ) {
+# now update site preview and publish path for this installation
+    my ($site1) = Krang::Site->find( url => $siteurl );
+    $siteurl =~ s/:8080//;
+    $site1->preview_path( catdir(KrangRoot, "tmp", $siteurl.'_preview') );
+    $site1->publish_path( catdir(KrangRoot, "tmp", $siteurl.'_publish') );
+    $site1->save();
+}
+
 ############################################################
 my @found_stories = Krang::Story->find( limit => 100 );
 $i = 0;
