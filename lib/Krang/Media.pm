@@ -593,6 +593,10 @@ category_id
 
 =item *
 
+below_category_id - will return stories in category and in categories below as well.
+
+=item *
+
 media_type_id
 
 =item * 
@@ -698,6 +702,16 @@ sub find {
     if ($args{'title_like'}) {
         $where_string ? ($where_string .= " and title like ?") : ($where_string = " title like ?");
         push @where, 'title_like';
+    }
+
+    # add ids of category and cats below if below_category_id is passed in
+    if ($args{'below_category_id'}) {
+        my $specd_cat = (Krang::Category->find(category_id => $args{below_category_id}))[0];
+        my @decendants = $specd_cat->decendants( ids_only => 1 );
+        unshift @decendants, $specd_cat->category_id;
+
+        $where_string ? ($where_string .= " and (".join(" OR ",(map { "category = $_" } @decendants)).")") : ($where_string .= "(".join(" OR ",(map { "category = $_" } @decendants)).")"); 
+ 
     }
 
     # add filename_like to where_string if present
@@ -932,7 +946,8 @@ sub checkout {
     my $media_id = shift;
     my $dbh = dbh;
     my $user_id = $session{user_id};
-    
+   
+    my $is_object = $media_id ? 0 : 1; 
     $media_id = $self->{media_id} if (not $media_id);
     croak("No media_id specified for checkout!") if not $media_id;
 
@@ -957,9 +972,9 @@ sub checkout {
     
     $dbh->do('UNLOCK tables');
 
-    $self->{checked_out_by}= $user_id;
+    $self->{checked_out_by} = $user_id if $is_object;
 
-    if ($self->isa('Krang::Media')) {
+    if ($is_object) {
         add_history(    object => $self,
                         action => 'checkout',
                );
@@ -982,15 +997,16 @@ sub checkin {
     my $media_id = shift;
     my $dbh = dbh;
     my $user_id = $session{user_id};
-    
+
+    my $is_object = $media_id ? 0 : 1;
     $media_id = $self->{media_id} if (not $media_id);
     croak("No media_id specified for checkin!") if not $media_id;
 
     $dbh->do('UPDATE media SET checked_out_by = NULL WHERE media_id = ?', undef, $media_id);
     
-    $self->{checked_out_by}= $user_id;
+    $self->{checked_out_by}= $user_id if $is_object;
 
-    if ($self->isa('Krang::Media')) {
+    if ($is_object) {
         add_history(    object => $self,
                         action => 'checkin',
                );
@@ -1057,25 +1073,29 @@ sub delete {
     my $dbh = dbh;
     my $root = KrangRoot;
 
+    my $is_object = $media_id ? 0 : 1;
+
     $media_id = $self->{media_id} if (not $media_id);
   
-    $self->checkout($media_id);
+    $is_object ? $self->checkout() : Krang::Media->checkout($media_id);
      
     croak("No media_id specified for delete!") if not $media_id;
 
     # first delete history for this object
-    if ($self->{media_id}) {
+    if ($is_object) {
         Krang::History->delete(object => $self);
     } else {
         Krang::History->delete( object => ((Krang::Media->find(media_id => $media_id))[0]) );
     }
 
+    my $file_dir = $is_object ? catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path) : catdir($root,'data','media',Krang::Conf->instance,(Krang::Media->find(media_id => $media_id))[0]->_media_id_path);
+
     $dbh->do('DELETE from media where media_id = ?', undef, $media_id); 
     $dbh->do('DELETE from media_version where media_id = ?', undef, $media_id); 
     $dbh->do('delete from media_contrib where media_id = ?', undef, $media_id);
 
-    my $file_dir = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path);
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
+
 }
 
 =back
