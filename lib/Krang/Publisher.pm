@@ -278,13 +278,10 @@ sub preview_story {
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
-    my $category;
-
     my $story         = $args{story}   || croak __PACKAGE__ . ": missing required argument 'story'";
     my $callback      = $args{callback};
     my $unsaved       = (exists($args{unsaved})) ? $args{unsaved} : 0;
     my $version_check = (exists($args{version_check})) ? $args{version_check} : 1;
-
 
     # deploy any templates flagged as testing for this user
     $self->_deploy_testing_templates();
@@ -1373,11 +1370,13 @@ sub _build_story_single_category {
     my %args = @_;
 
     my @paths;
+    my @pages;
+
+    my $additional_content;
+    my ($cat_header, $cat_footer);
 
     my $story    = $args{story}    || croak __PACKAGE__ . "missing argument 'story'";
     my $category = $args{category} || croak __PACKAGE__ . "missing argument 'category'";
-
-    my $additional_content;
 
     my $output_path = $self->_determine_output_path(object => $story, category => $category);
 
@@ -1389,44 +1388,49 @@ sub _build_story_single_category {
     my $story_element    = $story->element();
     my $category_element = $category->element();
 
-    # get the HTML content for the story & category..
+    # get story output
     my $article_output  = $story_element->publish(publisher => $self);
-    my $category_output = $category_element->publish(publisher => $self);
-
-    # break the category into header & footer.
-    my ($cat_header, $cat_footer) = split(/${\CONTENT}/, $category_output, 2);
-
     # parse out additional content
     ($additional_content, $article_output) = $self->_parse_additional_content(text => $article_output);
-
-    # write additional content to disk
-    foreach my $block (@$additional_content) {
-        my $content = $block->{content};
-        if ($block->{use_category}) {
-            $content = $cat_header . $content . $cat_footer;
-        }
-        push @paths, $self->_write_page(data     => $content,
-                                        filename => $block->{filename},
-                                        story_id => $story->story_id,
-                                        path     => $output_path
-                                       );
-
-    }
 
     # break the story into pages
     my @article_pages = split(/${\PAGE_BREAK}/, $article_output);
 
-    # chuck the last page if it's only whitespace.
+    # chuck the last page if it's only whitespace
     if ($article_pages[$#article_pages] =~ /^\s*$/ and $#article_pages != 0) {
         pop @article_pages;
     }
 
+    # check to see if category output is needed
+    if ($story_element->use_category_templates()) {
+        my $category_output = $category_element->publish(publisher => $self);
 
-    my @pages;
-    # assemble the components.
-    foreach (@article_pages) {
-        my $page = $cat_header . $_ . $cat_footer;
-        push @pages, $page
+        # break the category into header & footer.
+        ($cat_header, $cat_footer) = split(/${\CONTENT}/, $category_output, 2);
+
+
+        # assemble the components.
+        foreach (@article_pages) {
+            my $page = $cat_header . $_ . $cat_footer;
+            push @pages, $page;
+        }
+    } else {
+        # no category templates being used.
+        @pages = @article_pages;
+    }
+
+    # write additional content to disk
+    foreach my $block (@$additional_content) {
+        my $content = $block->{content};
+        if ($block->{use_category} && $story_element->use_category_templates()) {
+            $content = $cat_header . $content . $cat_footer;
+        }
+        push @paths, $self->_write_page(
+                                        data     => $content,
+                                        filename => $block->{filename},
+                                        story_id => $story->story_id,
+                                        path     => $output_path
+                                       );
     }
 
     push @paths, $self->_write_story(story => $story, pages => \@pages, path => $output_path);

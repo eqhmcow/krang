@@ -163,6 +163,21 @@ The default implementation returns 0 in all cases.
 
 sub force_republish { 0 }
 
+
+=item C<< $bool = $class->use_category_templates(element => $element) >>
+
+This method is called during the publish/preview process.  If true, it
+will wrap the story output with the output of the category templates
+before writing the result to the filesystem.  If false, the story
+output is the final output.
+
+The default implementation returns 1 (true) in all cases.
+
+=cut
+
+sub use_category_templates { 1 }
+
+
 =back
 
 =cut
