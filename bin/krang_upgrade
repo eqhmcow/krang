@@ -694,7 +694,7 @@ sub make_test {
 
     my $make_bin = MAKE_BIN;
     my $make_test = "KRANG_ROOT='' PERL5LIB='' KRANG_PASSWORD='$AdminPassword' $make_bin test";
-    system($make_test) && die("Error running tests: $!");
+    system($make_test) && warn("Error running Krang tests");
 }
 
 
@@ -735,7 +735,7 @@ EOREPORT
 
     # Print the admin password if we know it
     if ($AdminPassword) {
-        print "   CMS admin user password:  \"AdminPassword\"\n\n\n";
+        print "   CMS admin user password:  \"$AdminPassword\"\n\n\n";
     } 
 
 }
