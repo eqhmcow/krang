@@ -173,7 +173,7 @@ pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
 
 
 # figure out how these command-line options affect find criteria.
-my %find_options = (limit => $increment, offset => 0, checked_out_by => 0);
+my %find_options = (limit => $increment, offset => 0);
 my %publish_args = (callback => \&_progress_callback,
                     skip_callback => \&_skip_callback
                    );
@@ -291,7 +291,7 @@ if ($everything) {
 
 
 print "\n\nSTATUS: Publish completed.\n======================================================================\n";
-print "type\t\tnumber published\ttime(seconds)\tseconds/asset\n\n";
+print "\ntype\t\tnumber published\ttime(seconds)\tseconds/asset\n";
 print "----------------------------------------------------------------------\n";
 print sprintf("stories\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_storycount, $total_storytime, (($total_storytime > 0) ? ($total_storytime/$total_storycount) : 0));
 print sprintf("media\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_mediacount, $total_mediatime, (($total_mediatime > 0) ? ($total_mediatime/$total_mediacount) : 0));
