@@ -907,11 +907,10 @@ sub _run_chunk {
                       Data::Dumper->Dump([$context],['context']) . "\n");
             }
         } else {
-            if ($action eq 'alert') {
+            if ($action eq 'send') {
                 eval {Krang::Alert->send($type . '_id' => $object_id,
                                          @$context)};
-                critical("Attempt to send alert failed: $eval_err")
-                  if ($eval_err = $@);
+                critical("Attempt to send alert failed: $@") if $@;
             } elsif ($action eq 'expire') {
                 my $url;
                 my $class = "Krang::" . ucfirst $type;
@@ -929,8 +928,11 @@ sub _run_chunk {
                         info("Deleted $class id '$object_id'.");
                     }
                 }
+            } elsif ($action eq 'publish') {
+                # publish already handled above :)
+            } else {
+                croak("What am I supposed to do with '$action'?");
             }
-            # publish already handled above :)
         }
 
         if ($repeat eq 'never') {

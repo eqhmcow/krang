@@ -449,7 +449,9 @@ sub send {
 
     if ($email_to) { 
         debug(__PACKAGE__."->send() - sending email to ".$email_to.": ".$template->output);
-        my $sender = new Mail::Sender {smtp => SMTPServer, from => FromAddress};
+        my $sender = Mail::Sender->new({smtp => SMTPServer, 
+                                        from => FromAddress,
+                                        on_errors => 'die'});
 
         $sender->MailMsg({  to => $email_to, 
                             subject => "Krang alert for action '".$alert->action."'",
