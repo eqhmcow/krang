@@ -220,11 +220,17 @@ C<freeze_data()>.
 =cut
 
 sub data {
-    return $_[0]->{data} if (@_ == 1);
     my ($self, $data) = @_;
+    if (@_ == 1) {
+        return $self->{data} unless $self->{_lazy_data};
+
+        # thaw out lazy loaded data and return that
+        $self->thaw_data(data => delete $self->{_lazy_data});
+        return $self->{data};
+    }    
     $self->check_data(data => $data);
-    $self->{data} = $data;
-    return $data;
+    delete $self->{_lazy_data};
+    return $self->{data} = $data;
 }
 
 
@@ -718,7 +724,6 @@ sub _load_tree {
     # deserialize data
     $ehash{$root->[ELEMENT_ID]}->thaw_data(data => $root->[DATA]);
 
-
     # boom through children, since they're sorted on parent_id and
     # ord, the rows are guaranteed to contain no forward references
     # and to be in the correct order for calls to add_child()
@@ -739,7 +744,13 @@ sub _load_tree {
                                                    no_expand => 1
                                                   );
 
-            $ehash{$row->[ELEMENT_ID]}->thaw_data(data => $row->[DATA]);
+            if ($ehash{$row->[ELEMENT_ID]}->lazy_loaded) {
+                # store data for later loading
+                $ehash{$row->[ELEMENT_ID]}->{_lazy_data} = $row->[DATA];
+            } else {
+                $ehash{$row->[ELEMENT_ID]}->thaw_data(data => $row->[DATA]);
+            }
+            
         };
         if ($@ and $@ =~ /No class named/) {
             # this is the result of a missing class definition,
@@ -1065,7 +1076,6 @@ sub STORABLE_thaw {
     }
 }
 
-
 =back
 
 =head2 PROXIED Krang::ElementClass METHODS
@@ -1108,6 +1118,7 @@ BEGIN {
                           url_attributes
                           pageable
                           indexed
+                          lazy_loaded
                         )) {
         *{"Krang::Element::$attr"} = sub { $_[0]->{class}->$attr() };
     }

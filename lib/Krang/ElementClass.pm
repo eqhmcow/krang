@@ -69,6 +69,7 @@ use Krang::MethodMaker
                          default
                          pageable
                          indexed
+                         lazy_loaded
                        ) ];
 
 =over 4
@@ -137,6 +138,13 @@ data slot on creation, so this must be a valid value for the element.
 
 If set to 1 then the contents of this element will be indexed.
 Defaults to 0.  See L<index_data()> for more details.
+
+=item lazy_loaded
+
+If set to 1 then the contents of this element will be thawed only when
+needed.  This means that L<thaw_data()> is called when C<data()> is
+first called on the object, not when the object is loaded.  Defaults
+to 0.
 
 =item children
 
@@ -912,6 +920,7 @@ sub init {
     $args{allow_delete} = 1  unless exists $args{allow_delete};
     $args{default}      = undef  unless exists $args{default};
     $args{indexed}      = 0 unless exists $args{indexed};
+    $args{lazy_loaded}  = 0 unless exists $args{lazy_loaded};
 
     # call generated inititalizer
     $self->hash_init(%args);

@@ -11,6 +11,7 @@ use Krang::Log qw(debug info critical);
 sub new {
     my $pkg = shift;
     my %args = ( 
+                lazy_loaded => 1,
                 @_
                );
 

@@ -13,6 +13,7 @@ sub new {
     my $pkg = shift;
     my %args = ( allow_upload   => 1,
                  show_thumbnail => 1,
+                 lazy_loaded    => 1,
                  @_
                );
     
