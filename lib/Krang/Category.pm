@@ -78,9 +78,8 @@ template and may be used to derive category-specific layout behavior.
 
 This module serves as a means of adding, deleting, and accessing these objects.
 
-N.B. Categories must be associated with a site via the 'site_id' constructor
-arg or a 'parent_id' equal to the category idea of a valid object must be
-passed.  Once the Category object is saved, 'parent_id' cannot be altered.
+N.B. Categories must be associated with a site via the 'site_id'
+constructor arg or a 'parent_id' must be passed.
 
 =cut
 
@@ -126,12 +125,12 @@ use Krang::Log qw(debug assert ASSERT);
 # Read-only fields
 use constant CATEGORY_RO => qw( category_id
 			        element_id
-			        parent_id
 			        url );
 
 # Read-write fields
 use constant CATEGORY_RW => qw( dir
-			        site_id );
+			        site_id
+			        parent_id );
 
 # Globals
 ##########
@@ -139,13 +138,13 @@ use constant CATEGORY_RW => qw( dir
 # Lexicals
 ###########
 my %category_args = map {$_ => 1} qw(dir parent_id site_id);
-my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW, 'parent_id';
+my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW;
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
 			new_hash_init => 'hash_init',
 			get => [CATEGORY_RO],
-			get_set => [CATEGORY_RW];
+			get_set => [grep { $_ ne 'parent_id' } CATEGORY_RW];
 
 
 =head1 INTERFACE
@@ -179,9 +178,21 @@ Id in the element table of this object's element
 
 The display name of the category i.e. '/gophers'
 
-=item * parent_id (read-only)
+=item * parent_id
 
-Id of this categories parent category, if any
+Id of this categories parent category, if any.  This may be changed to
+alter the parent of a category.  This will result in an error for root
+categories.
+
+=cut
+
+sub parent_id {
+    my ($self, $value) = @_;
+    return $self->{parent_id} unless $value;
+    croak("Illegal attempt to change parent of root category.\n")
+      unless $self->{parent_id};
+    return $self->{parent_id} = $value;
+}
 
 =item * parent
 
@@ -346,6 +357,7 @@ sub init {
 
     # set '_old_dir' to 'dir' to make changes to 'dir' detectable
     $self->{_old_dir} = $self->{dir};
+    $self->{_old_parent_id} = $self->{parent_id};
 
     # construct 'url'
     #################
@@ -875,6 +887,7 @@ sub find {
 
         # set '_old_dir' and '_old_url'
         $new_category->{_old_dir} = $new_category->{dir};
+        $new_category->{_old_parent_id} = $new_category->{parent_id};
         $new_category->{_old_url} = $new_category->{url};
 
         unless ($ignore_user) {
@@ -939,11 +952,15 @@ sub save {
     my $id = $self->{category_id} || '';
     my @lookup_fields = qw/dir url/;
     my @save_fields =
-      grep {$_ ne 'category_id' && $_ ne 'parent_id'}
+      grep { $_ ne 'category_id' }
         keys %category_cols;
 
     # set flag if url must change; only applies to objects after first save...
-    my $new_url = ($id && ($self->{dir} ne $self->{_old_dir})) ? 1 : 0;
+    my $new_url = ($id && 
+                   (($self->{dir} ne $self->{_old_dir}) ||
+                    ($self->{parent_id} and 
+                     $self->{parent_id} ne $self->{_old_parent_id}))
+                  ) ? 1 : 0;
 
     # check for duplicates: a DuplicateURL exception will be thrown if a
     # duplicate is found
@@ -959,18 +976,16 @@ sub save {
 
     # the object has already been saved once if $id
     if ($id) {
-        # recalculate url if we have a new dir...
+        # recalculate url if we have a new dir or a new parent
         if ($new_url) {
-            $self->{url} =~ s|\Q$self->{_old_dir}\E/?$||
-              unless $self->{_old_dir} eq '/';
-            $self->{url} = _build_url($self->{url}, $self->{dir});
+            my $parent = $self->parent;
+            $self->{url} = _build_url($parent->url, $self->{dir});
+            $self->{site_id} = $parent->site_id;
         }
         $query = "UPDATE category SET " .
           join(", ", map {"$_ = ?"} @save_fields) .
             " WHERE category_id = ?";
     } else {
-        # set 'parent_id' on initial save
-        push @save_fields, 'parent_id';
         $query = "INSERT INTO category (" . join(',', @save_fields) .
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
@@ -998,6 +1013,7 @@ sub save {
     if ($new_url) {
         $self->update_child_urls();
         $self->{_old_dir} = $self->{dir};
+        $self->{_old_parent_id} = $self->{parent_id};
         $self->{_old_url} = $self->{url};
     }
 
@@ -1040,11 +1056,11 @@ sub update_child_urls {
     $query = <<SQL;
 SELECT category_id, url
 FROM category
-WHERE parent_id = ?
+WHERE url LIKE ?
 SQL
 
     $sth = $dbh->prepare($query);
-    $sth->execute($id);
+    $sth->execute($self->{_old_url} . '%');
     $sth->bind_columns(\$category_id, \$url);
     $ids{$category_id} = $url while $sth->fetch();
 
@@ -1067,8 +1083,8 @@ SQL
     foreach my $table (qw/story_category template media/) {
         $dbh->do("UPDATE $table 
                   SET url=CONCAT(?, SUBSTRING(url, $url_offset)) 
-                  WHERE category_id = ?",
-                 undef, $self->{url}, $self->{category_id});
+                  WHERE url LIKE ?",
+                 undef, $self->{url}, $self->{_old_url} . '%');
     }
 
     return $failures ? 0 : 1;
