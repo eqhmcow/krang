@@ -782,8 +782,8 @@ sub create_database {
         # Create DB
         print "Creating MySQL database and loading schema\n";
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
-        my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb";
-        $createdb .= " --all --password $MySQLRootPassword" if (length($MySQLRootPassword));
+        my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb --all";
+        $createdb .= " --password $MySQLRootPassword" if (length($MySQLRootPassword));
         system($createdb) && die("Error calling krang_createdb.  Unable to continue");
     }
 }
