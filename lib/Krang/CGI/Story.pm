@@ -1604,8 +1604,12 @@ sub find_story_row_handler {
     my $tp = $story->cover_date();
     $row->{cover_date} = (ref($tp)) ? $tp->strftime('%b %e, %Y %l:%M %p') : '[n/a]';
 
-    # pub_status  -- NOT YET IMPLEMENTED
-    $row->{pub_status} = '&nbsp;<b>P</b>&nbsp;';
+    # pub_status
+    if ($story->published_version) {
+        $row->{pub_status} = '&nbsp;<b>P</b>&nbsp;';
+    } else {
+        $row->{pub_status} = '&nbsp;&nbsp;&nbsp;';
+    }
 
     if (($story->checked_out) and 
         ($story->checked_out_by ne $ENV{REMOTE_USER}) 
