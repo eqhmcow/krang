@@ -8,8 +8,10 @@
      document.new_category.submit();
   }
   function cancel() {
-     document.new_category.rm.value = 'cancel';
-     document.new_category.submit();
+     if (confirm("Are you sure?")) {
+        document.new_category.rm.value = 'find';
+        document.new_category.submit();
+     }
   }
 </script>
 
