@@ -947,8 +947,6 @@ sub thaw_data_xml {
 }
 
 
-=cut
-
 # setup defaults and check for required paramters
 sub init {
     my $self = shift;
