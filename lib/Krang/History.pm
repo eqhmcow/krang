@@ -32,17 +32,6 @@ our @EXPORT_OK = qw( add_history );
                     action => 'new',
                );
 
-    # create record that a story 2001 was created by user 2 
-    # (this and save is actually what add_history calls)
-    my $history = Krang::History->new(  object_type => 'Krang::Story',
-                                        object_id   => '2001',
-                                        action => 'new',
-                                        user_id => 2 i
-                                    );
-
-    # you must also call save() after new() to record in database
-    $history->save();
-
     # record that story was saved (user_id pulled from session, 
     # object id, type and version from object passed in)
     add_history(    object => $story, 
@@ -73,21 +62,13 @@ our @EXPORT_OK = qw( add_history );
 
 =head1 DESCRIPTION
 
-This class handles the storage and retrieval of historical events in a Krang object's life.  Four methods exist- new, save, add_history, find, and delete.
+This class handles the storage and retrieval of historical events in a Krang object's life.  Three interface methods exist- add_history, find, and delete.
 
 =head1 INTERFACE
 
 =head2 METHODS
 
 =over 
-
-=item new()
-
-This method adds an entry into the database of an action taken on an object
-
-The valid trackable objects are: Krang::Story, Krang::Media, and Krang::Template. These correspond to 'object_type', and 'object_id' is used to record the unique object id.  The valid actions (specified by 'action') performed on an object are new, save, checkin, checkout, revert, move, publish, and deploy.  
-
-In addition to tracking actions on objects, the user who performed the action is tracked by 'user_id'.  'version' can be used to track which version of a template, story, or media object was affected.  'desk' can be used to track which desk an action was performed on.  A timestamp is added to each history event, and will appear in the field 'timestamp' on objects returned from find.
 
 =cut
 
@@ -105,7 +86,7 @@ sub init {
     return $self;
 }
 
-sub save {
+sub _save {
     my $self = shift;
     my $dbh = dbh;
 
@@ -133,7 +114,11 @@ sub save {
 
 =item add_history()
 
-This method is a convenience method for new() and save(), the difference being that instead of taking an object_type and object_id, it takes a Krang::Story, Krang::Media, or Krang::Template object and determines object type directly.  If the 'action' is  'save' or 'revert', version is also derived from the object.  In addition, the user_id is taken from the session.
+This method adds an entry into the database of an action taken on an object.
+
+The valid trackable objects are: Krang::Story, Krang::Media, and Krang::Template. These are passed in as 'object' - 'object_type', and 'object_id' are derived from the object.  The valid actions (specified by 'action') performed on an object are new, save, checkin, checkout, revert, move, publish, and deploy.  
+
+In addition to tracking actions on objects, the user who performed the action is tracked by 'user_id', which is found in the session object.  If the 'action' is  'save' or 'revert', version is also derived from the object. 'desk' can be used to track which desk an action was performed on.  A timestamp is added to each history event, and will appear in the field 'timestamp' on objects returned from find. 
 
 =cut
 
@@ -150,7 +135,7 @@ sub add_history {
   
     my $object_id_type = lc((split('::', $object_type))[1]).'_id'; 
     $history->{object_id} = $object->$object_id_type; 
-    $history->save();
+    $history->_save();
 }
 
 =item find()
@@ -161,7 +146,7 @@ Find and return Krang::History objects with parameters specified. Supported para
 
 =item *
 
-object
+object - Krang::Story, Krang::Media, or Krang::Template object
 
 =item * 
 
