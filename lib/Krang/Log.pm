@@ -55,17 +55,6 @@ example, to suppress debug messages from all CGI modules:
 
   LogLevel 3,/^Krang::CGI/=2
 
-=item * LogTimeStamp
-
-Turns on the printing of timestamps before each log message.  1 or 0 are the
-valid settings.
-
-=item * TimeStampFormat
-
-Sets the format of the timestamps prepended to messages.  See Posix::strftime
-in the L<POSIX> manpage for a list of the valid formatting tokens.  Formats
-are stringified using Time::Piece->strftime().  See L<Time::Piece>.
-
 =item * LogWrap
 
 If set to true, turns on wrapping for log messages over 80 columns
@@ -283,17 +272,18 @@ sub log {
     my $self = shift;
     my %args = @_;
 
-    my ($level_IV, $level_PV, $message, $timestamp);
-
     # check for the required arguments
-    for (qw/level message/) {
-        croak("The required argument '$_' was not passed.")
-          unless exists $args{$_};
-    }
+    my $level = $args{level};
+    my $message = $args{message};    
+    croak("Required argument level parameter was not passed.")
+      unless $level;
+    croak("Required argument level parameter was not passed.")
+      unless $message;
 
     # check for valid log level
-    if ($args{level} =~ /^\d+$/) {
-        $level_IV = $args{level};
+    my ($level_IV, $level_PV);
+    if ($level =~ /^\d+$/) {
+        $level_IV = $level;
 
         croak("Invalid log level '$level_IV'.")
           unless exists $valid_levels{$level_IV};
@@ -301,7 +291,7 @@ sub log {
         # retrieve string equivalent
         $level_PV = $valid_levels{$level_IV};
     } else {
-        $level_PV = $args{level};
+        $level_PV = $level;
 
         croak("Invalid method call '$level_PV'.")
           unless exists $valid_functions{$level_PV};
@@ -333,21 +323,10 @@ sub log {
     return unless $level_IV <= $log_level;
 
     # calculate timestamp
-    $timestamp = '';
-    if (exists $LOG->{timestamp} && $LOG->{timestamp}) {
-        $timestamp = $LOG->{timestamp_format} || '%D %r';
-
-        # get time object see L<Time::Piece>
-        my $t = localtime();
-
-        # make sure the timestamp_format is valid
-        eval {$timestamp = "[" . $t->strftime($timestamp) . "] "};
-
-        croak($@) if $@;
-    }
+    my $timestamp = "[" . localtime()->strftime('%D %T') . "] ";
 
     # print message to file
-    $message = $timestamp . "[" . lc($level_PV) . "] $args{message}";
+    $message = $timestamp . "[" . lc($level_PV) . "] $message";
 
     # make sure message ends in a newline
     $message .= "\n" unless $message =~ /\n\z/;
@@ -359,18 +338,18 @@ sub log {
 
     # reopen filehandle if necessary
     my $filehandle = $LOG->{fh};
-    $self->_reopen_log() if
-      (not(defined $filehandle && isa($filehandle, 'IO::File')));
+    $self->_reopen_log() unless
+      defined $filehandle and UNIVERSAL::isa($filehandle, 'IO::File');
 
     # try to obtain an exclusive lock
     croak("Failed to obtain file lock : $!")
-      unless (flock($LOG->{fh}, LOCK_EX));
+      unless (flock($filehandle, LOCK_EX));
 
-    $LOG->{fh}->print($message)
+    $filehandle->print($message)
       or croak("Unable to print to logfile: $!");
 
     # release lock - does it have a return value?
-    flock($LOG->{fh}, LOCK_UN)
+    flock($filehandle, LOCK_UN)
       or croak("Unable to unlock logfile: $!");
 
     # return value for Tests...
