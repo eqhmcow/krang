@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 Replaced Archive::Tar in Krag::DataSet->new with the system 'tar' for a 50x 
 speedup in untaring
 
+=item *
+
+Removed code from Krang::Contrib that disallowed stories with existing historical
+contrib-contrib_type pairs to preview/publish.
+
 =back
 
 =head2 v1.018 - May 10, 2004
