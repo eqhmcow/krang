@@ -60,6 +60,8 @@ sub fill_template {
 
     $tmpl->param( title =>  $story->title );
     $tmpl->param( meta_description =>  $story->element->child('meta_description')->data ) if $story->element->child('meta_description');
+    $tmpl->param( promo_title =>  $story->element->child('promo_title')->data ) if $story->element->child('promo_title');
+ 
     my $keywords = $story->element->child('meta_keywords') ? $story->element->child('meta_keywords')->data : [];
     my @keys;
     foreach my $kw (@$keywords) {
