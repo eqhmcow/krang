@@ -20,7 +20,7 @@ my $site = Krang::Site->new(preview_path => '/media_bench_preview',
                             publish_path => '/media_bench_publish',
                             url => 'media_bench.com');
 $site->save();
-#END { $site->delete() };
+END { $site->delete() };
 
 my ($category) = Krang::Category->find(site_id => $site->site_id());
 my $category_id = $category->category_id();

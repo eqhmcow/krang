@@ -191,6 +191,8 @@ for(1 .. $sites) {
         }
     }
 
+    print STDERR "$stories stories left, $covers covers left, $media media left\n";
+
     for(1 .. $cats_per_site) {
         my $cname = 'testcat'.++$super_count;
          my $new_c  = Krang::Category->new(  dir       => $cname,
@@ -217,9 +219,9 @@ for(1 .. $sites) {
                 last if not $media;
             }
         }
+        print STDERR "$stories stories left, $covers covers left, $media media left\n";
     }
 
-    print STDERR "$stories stories left, $covers covers left, $media media left\n";
 }
 
 while ($contribs) {
