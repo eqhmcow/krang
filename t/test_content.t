@@ -61,12 +61,11 @@ isa_ok($site, 'Krang::Site');
 ##################################################
 # Krang::Category
 
+# don't need any options to create a category.
 my $category;
-eval {
-    $category = $creator->create_category();
-};
+$category = $creator->create_category();
 
-ok($@ && !defined($category), 'create_category()');
+isa_ok($category, 'Krang::Category');
 
 my ($root) = Krang::Category->find(site_id => $site->site_id);
 
@@ -88,11 +87,11 @@ isa_ok($contrib, 'Krang::Contrib');
 ##################################################
 # Krang::Media
 my $media;
-eval {
-    $media = $creator->create_media();
-};
+# no longer need category arg.
+$media = $creator->create_media();
 
-ok($@ && !defined($media), 'create_media()');
+
+isa_ok($media, 'Krang::Media');
 
 $media = $creator->create_media(category => $category);
 
@@ -103,11 +102,12 @@ isa_ok($media, 'Krang::Media');
 # Krang::Story
 
 my $story;
-eval {
-    $story = $creator->create_story();
-};
 
-ok($@ && !defined($story), 'create_story()');
+# category not required.
+$story = $creator->create_story();
+
+isa_ok($story, 'Krang::Story');
+
 
 $story = $creator->create_story(category => [$category]);
 

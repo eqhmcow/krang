@@ -122,7 +122,7 @@ use Krang::Log qw(debug info critical);
 
 =item C<< $creator = Krang::Test::Content->new() >>
 
-Instantias a Krang::Test::Content object.  No arguments are needed/supported at this time.
+Instantiates a Krang::Test::Content object.  No arguments are needed/supported at this time.
 
 new() will croak with an error if the InstanceElementSet is not C<Default> or C<TestSet1>.  At this time, those are the only element sets supported.
 
@@ -144,7 +144,7 @@ sub init {
 
 =item C<< $site = $creator->create_site() >>
 
-Creates and returns a Krang::Site object.  If unsuccessful, it will croak.
+Creates and returns a L<Krang::Site object>.  If unsuccessful, it will croak.
 
 B<Arguments:>
 
@@ -194,7 +194,7 @@ sub create_site {
 
 =item C<< $category = $creator->create_category() >>
 
-Creates and returns a Krang::Category object for the directory specified, underneath the parent category described by parent.  It will croak if unable to create the object.
+Creates and returns a L<Krang::Category> object for the directory specified, underneath the parent category described by C<parent>.  It will croak if unable to create the object.
 
 B<Arguments:>
 
@@ -203,6 +203,9 @@ B<Arguments:>
 =item parent
 
 The parent category for this category.  This must be an integer corresponding to the ID of a valid Krang::Category object, or a Krang::Category object.
+
+If C<parent> is not set, it will default to the root category of the first C<Krang::Site> object created by C<create_site>.
+
 
 =item dir
 
@@ -221,11 +224,16 @@ sub create_category {
    my $self = shift;
    my %args = @_;
 
-   croak "create_category() missing required argument 'parent'\n." unless exists($args{parent});
-
-   my $parent = $args{parent};
+   my $parent;
    my $dir    = $args{dir} || $self->get_word();
    my $data   = $args{data} || $self->get_word();
+
+   if ($args{parent}) {
+       $parent = $args{parent};
+   } else {
+       $parent = $self->_root_category();
+   }
+
 
    my $parent_id;
 
@@ -254,7 +262,7 @@ B<Arguments:>
 
 =item category
 
-A single Krang::Category object, to which the Media object will belong.
+A single Krang::Category object, to which the Media object will belong.  If not specified, it will be assigned one randomly.
 
 =item title
 
@@ -290,7 +298,7 @@ sub create_media {
    my $self = shift;
    my %args = @_;
 
-   my $category = $args{category} || croak "create_media() missing required argument 'category'\n.";
+   my $category = $args{category} || $self->_root_category();
 
    my $x   = $args{x_size} || int(rand(300) + 50);
    my $y   = $args{y_size} || int(rand(300) + 50);
@@ -369,7 +377,9 @@ B<Arguments:>
 
 =item category
 
-An array reference containing Krang::Category objects under which the story will appear.  This is the only required argument, and there must be at least one entry in the array.
+An array reference containing Krang::Category objects under which the story will appear.
+
+If not specified, one will be assigned randomly.
 
 =item linked_stories
 
@@ -416,9 +426,15 @@ sub create_story {
     my $self = shift;
     my %args = @_;
 
-    my $categories = $args{category} || croak "create_media() missing required argument 'category'\n.";
-    croak "'category' argument must be a list of Krang::Category objects'\n" 
-      unless ref($categories) eq 'ARRAY';
+    my $categories;
+
+    if ($args{category}) {
+        $categories = $args{category};
+        croak "'category' argument must be a list of Krang::Category objects'\n" 
+          unless ref($categories) eq 'ARRAY';
+    } else {
+        $categories = [ $self->_root_category() ];
+    }
 
     my $title = $args{title} || join(' ', map { $self->get_word() } (0 .. 5));
     my $deck  = $args{deck} || join(' ', map { $self->get_word() } (0 .. 5));
@@ -606,10 +622,7 @@ sub create_template {
         $category = $args{category};
     } else {
         # use root cat for first site.
-        my $site = $self->{stack}{site}[0];
-        croak __PACKAGE__ . "->deploy_test_templates(): Must create site before deploying templates!\n" 
-          unless defined($site);
-        ($category) = Krang::Category->find(site_id => $site->site_id, dir => '/');
+        $category = $self->_root_category();
     }
 
 
@@ -1025,6 +1038,29 @@ L<Krang::Category>, L<Krang::Story>, L<Krang::Media>, L<Krang::Contrib>
 =cut
 
 
+#
+# Returns the root category for one of the Krang::Site objects created by create_site().
+# If no Krang::Site objects have been created, it will croak.
+#
+sub _root_category {
+
+    my $self = shift;
+    my $root;
+
+    my $site = $self->{stack}{site}[0];
+    croak __PACKAGE__ . "->_root_category(): Must create site before creating categories!"
+      unless defined($site);
+    # set parent to root category of first site created.
+    ($root) = Krang::Category->find(site_id => $site->site_id, dir => '/');
+
+    return $root;
+
+}
+
+
+#
+# inits the words file.
+#
 sub _init_words {
 
     my $self = shift;
