@@ -11,15 +11,7 @@ knowlegable HTML people, without any interaction with perl code.
 
 =over
 
-=item Enlarge Contributor Bio box on Contributor page (1.027)
-
-=item Enlarge Template Text Area box in Template editor pages (1.027)
-
-=item Making the Category Chooser Box resizeable (1.027)
-
-This may require perl work in L<Krang::Widget> as well.
-
-=item Changes to Save functionality (1.027)
+=item Changes to Save functionality (1.101?)
 
 To help prevent lost saves, the message in the JavaScript window should
 say:
@@ -44,20 +36,6 @@ Cancel, will not save changes and you will remain on the same page
 
 =back
 
-=item Moving the Delete Button (1.027)
-
-The delete button will be moved on the following pages:
-
-  My Workspace
-  Find Stories ('Delete Checked)
-  Find Templates ('Delete Checked')
-  Find Media ('Delete Checked')
-  Edit Story page
-  Edit Element page
-
-The Delete Button will be removed from the file box on the My
-Workspace page.
-
 =back
 
 =head2 HTML/Perl Items
@@ -67,82 +45,7 @@ code to make them happen.
 
 =over
 
-
-
-=item Adding Publish Buttons (1.027)
-
-Publish buttons will be added to the following pages:
-
-  Find Media
-  Find Stories
-  Find Templates
-
-
-=item Adding Checkout to Find Media (1.027)
-
-
-=item Media Publish to Preview (1.027)
-
-Publishing a media object to the live site should also publish it in
-the preview site.
-
-=item Element Re-Order Function (1.027)
-
-Clicking the "Save" button after re-ordering story elements should
-save the new order as well as the story content.
-
-Note that the Re-Order button should not be removed until
-Dev changes the save function.
-
-=item Sort Keywords (1.027)
-
-Keywords should sort alphabetically in list manager.
-
-=item Search Functionality (1.027)
-
-These are enhancements to how Find Stories/Find Media is handled in
-the Krang CMS User Interface.
-
-=over
-
-=item Remember Search type (Advanced vs. Simple).
-
-=item Remember previous find and populate search results.
-
-=item Remember sort order of search results
-
-=item Media Advanced Search should be able to search on Alt Tags.
-
-=item Searching on Alt Tags in Media Advanced Search
-
-=item Advanced search on Text Box fields in Story Advanced Search (1.027)
-
-The fields will be where users can search for 'NULL" will be:
-
-   Title
-   URL
-   Story ID
-   Contributor
-   Creator
-   Meta Title
-   Meta Description
-   Meta Keywords
-
-
-=item Advanced Search on Text Box fields in Media Advanced Search (1.027)
-
-The fields will be where users can search for 'NULL" will be:
-
-   Title
-   URL
-   Media ID
-   Contributor
-   Creator
-   Alt Tag
-
-=back
-
-=item New Template - Element Chooser (future)
+=item New Template - Element Chooser (1.200?)
 
 When creating a new template - the element chooser pulldown is nearly
 useless - it doesn't offer any concept of context.
@@ -152,7 +55,7 @@ Chooser, one that shows the hierarchtical relationships between
 elements.  The current category chooser (built by L<Krang::Widget>)
 can be used as a guide.
 
-=item Template UI - variable browser (future)
+=item Template UI - variable browser (1.200?)
 
 One of the hardest parts of template development in Krang is that the
 CMS provides no way for template developers to see what variables are
@@ -164,7 +67,7 @@ determined, but something useful should be possible.
 
 
 
-=item Fixing Stylesheet issues in the Krang UI/Making Krang resizeable (future).
+=item Fixing Stylesheet issues in the Krang UI/Making Krang resizeable (1.200?).
 
 At the moment, the Krang UI is fixed at 800 pixels wide, and has
 chunks that make it incompatible with certain browsers (IE 5 on the
@@ -194,12 +97,12 @@ The Story-Type pulldown should be in alphabetical order.
 
 =over
 
-=item Full publish via Krang Scheduler (1.027)
+=item Full publish via Krang Scheduler (1.101?)
 
 Allow Krang Scheduler to specify C<site_id> or C<category_id> for
 scheduled publish.
 
-=item krang_publish Enhancements (1.027)
+=item krang_publish Enhancements (1.101?)
 
 Allow the C<--media-only> option to work in conjunction with the
 C<--site_id> option and publish only media in that site.
@@ -207,7 +110,7 @@ C<--site_id> option and publish only media in that site.
 =back
 
 
-=item Krang::ElementClass::HTMLArea (1.027?)
+=item Krang::ElementClass::HTMLArea (1.10x?)
 
 Adding a new elementclass of HTMLArea.  Behavior would be akin to
 Krang::ElementClass::TextArea, but it would use
@@ -216,7 +119,7 @@ developers a limited (but configurable by element developers) set of
 HTML widgets for formatting.
 
 
-=item FTP Publish (future)
+=item FTP Publish (1.200?)
 
 Sending preview/publish output to a remote FTP server.
 
@@ -227,7 +130,7 @@ L<Krang::ElementClass>->fill_template() will be expanded to make it
 possible to populate an element's template with all children down to
 an arbitrary depth.
 
-=item Cleaning MD5 Salt issues (1.027?).
+=item Cleaning MD5 Salt issues (1.200?).
 
 The MD5 Salt should be built at install.  Care is needed to make sure
 this doesn't break existing installs on upgrade.
