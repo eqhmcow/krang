@@ -30,11 +30,11 @@ sub new {
                                                              reorderable => 0,
                                                              required => 1),
 
-                              Krang::ElementClass::Textarea->new(name => 'paragraph');
+                              Krang::ElementClass::Textarea->new(name => 'paragraph'),
 
-                              Krang::ElementClass::StoryLink->new(name => 'story_link');
+                              Krang::ElementClass::StoryLink->new(name => 'story_link'),
 
-                              Krang::ElementClass::MediaLink->new(name => 'media_link');
+                              Krang::ElementClass::MediaLink->new(name => 'media_link'),
 
                              ],
                  @_);
