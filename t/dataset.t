@@ -26,6 +26,12 @@ my $DEBUG = 0; # supresses deleting kds files at process end
 my $empty = Krang::DataSet->new();
 isa_ok($empty, 'Krang::DataSet');
 
+# test to make sure dataset can do everything it says it can.
+can_ok($empty, ('find', 'add', 'list', 'write', 'import_all',
+                'map_id', 'register_id', 'map_file'));
+
+
+
 my $empty_path = catfile(KrangRoot, 'tmp', 'empty.kds');
 eval { $empty->write(path => $empty_path); };
 like($@, qr/empty dataset/);
@@ -545,5 +551,56 @@ SKIP: {
     
     END { $imported_jack->delete() if $imported_jack;
           $imported_jill->delete() if $imported_jill; }
+
+    ####
+    # test circular handling with respect to categories.
+    my $c_cat = Krang::Category->new(dir => '/circtest',
+                                     parent_id => $category->category_id);
+
+    $c_cat->save();
+
+    # create a media object
+    my $c_media = Krang::Media->new(title         => 'test media object',
+                                    category_id   => $c_cat->category_id,
+                                    media_type_id => 1);
+    my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
+    my $fh = new FileHandle $filepath;
+    $c_media->upload_file(filename => 'krang.jpg', filehandle => $fh);
+    $c_media->save();
+
+    # add an element to the category, linking to the media object.
+    $c_cat->element->add_child(class => 'photo', data => $c_media);
+    $c_cat->save();
+
+    # serialize them
+    my $circular_set = Krang::DataSet->new();
+    $circular_set->add(object => $c_cat);
+    $circular_set->add(object => $c_media);
+
+    # write it out
+    my $circ_path = catfile(KrangRoot, 'tmp', 'circular_test.kds');
+    $circular_set->write(path => $circ_path);
+    ok(-e $circ_path and -s $circ_path);
+    END { unlink($circ_path) if $circ_path and -e $circ_path and not $DEBUG };
+
+    $c_media->delete();
+    $c_cat->delete();
+
+    # attempt an import.
+    $circular_set->import_all();
+    my ($imported_cat) = Krang::Category->find(url => $c_cat->url);
+    isa_ok($imported_cat, 'Krang::Category');
+    my ($imported_med) = Krang::Media->find(url => $c_media->url);
+    isa_ok($imported_med, 'Krang::Media');
+
+    # are the relationships correct?
+    is($imported_cat->element->child('photo')->data->media_id,
+       $imported_med->media_id, 'circular category check');
+    is($imported_med->category_id,
+       $imported_cat->category_id, 'circular category check');
+
+    END { $imported_med->delete if $imported_med;
+          $imported_cat->delete if $imported_cat; }
+
 };
 

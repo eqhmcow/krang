@@ -1267,6 +1267,15 @@ sub deserialize_xml {
                                     (site_id   => $site_id)   : ()),
                                    dir => $data->{dir},
                                   );
+    # save the new category.
+    $cat->save();
+
+    # register id before deserializing elements, since they may
+    # contain circular references
+    $set->register_id(class     => 'Krang::Category',
+                      id        => $data->{category_id},
+                      import_id => $cat->category_id);
+
     # deserialize elements
     my $element = Krang::Element->deserialize_xml(data => $data->{element}[0],
                                                   set       => $set,

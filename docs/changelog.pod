@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Bugfix to L<Krang::Category>->deserialize_xml().  Circular
+dependencies were not being handled properly, causing imports of some
+.kds files to fail. [Peter]
+
+=item *
+
 Upgraded DBD-mysql to 2.9004.  [Peter]
 
 =item *
