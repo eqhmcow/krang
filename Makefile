@@ -16,6 +16,9 @@
 #   db    - recreates databases by calling bin/krang_createdb
 #
 #   docs  - build HTML docs from pod
+#
+#   elements - rebuild test element trees in t/elements from Bricolage 
+#              sources in t/eloader
 
 all: ext
 
@@ -52,5 +55,12 @@ db:
 docs:
 	cd docs && $(MAKE)
 
-.PHONY : all test clean TAGS bench docs bench_clean
+elements:
+	rm -rf t/elements/Bric_Default t/elements/LA t/elements/NYM
+	bin/krang_bric_eloader --set LA --xml t/eloader/LA.xml
+	bin/krang_bric_eloader --set NYM --xml t/eloader/NYM.xml
+	bin/krang_bric_eloader --set Bric_Default --xml t/eloader/Bric_Default.xml
+
+
+.PHONY : all test clean TAGS bench docs bench_clean elements
 
