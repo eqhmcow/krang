@@ -690,6 +690,48 @@ sub serialize_xml {
     $writer->endTag('site');
 }
 
+=item C<< $site = Krang::Site->deserialize_xml(xml => $xml, set => $set, no_update => 0) >>
+
+Deserialize XML.  See Krang::DataSet for details.
+
+If an incoming site has the same URL as an existing site then the
+incoming site is skipped.  This change from the usual
+deserialize_xml() behavior was made on the theory that preview_path
+and publish_path are likely to vary between alpha, beta and production
+instances of the same site.
+
+=cut
+
+sub deserialize_xml {
+    my ($pkg, %args) = @_;
+    my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
+
+    # parse it up
+    my $data = Krang::XML->simple(xml           => $xml, 
+                                  suppressempty => 1);
+    
+
+    # is there an existing site with this URL?
+    my ($dup) = Krang::Site->find(url => $data->{url});
+    
+    if ($dup) {
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A site with the URL ".
+                       "$data->{url} already exists and ".
+                       "no_update is set.")
+            if $no_update;
+        
+        # otherwise, skip the import
+        return $dup;
+    }
+
+    # create a new site
+    my $site = Krang::Site->new(map { ($_, $data->{$_}) } keys %site_args);
+    $site->save();
+
+    return $site;
+}
+
 =back
 
 =head1 TO DO

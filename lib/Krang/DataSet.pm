@@ -545,22 +545,43 @@ sub import_all {
     $self->{done}      = {};
     $self->{no_update} = $arg{no_update} || 0;
 
+    my @failed;
+
     # process classes in an order least likely to cause backrefs
-    foreach my $class (qw(Krang::Contrib)) { # Krang::Site Krang::Category 
+    foreach my $class (qw(Krang::Contrib Krang::Site Krang::Category)) {
                                              # Krang::Media Krang::Story)) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};
 
             # get the ID and store it in 'done'
-            my $import_id = $self->map_id(class => $class,
-                                          id    => $id);
-            $self->{done}{$class}{$id} = $import_id;
+            eval {
+                my $import_id = $self->map_id(class => $class,
+                                              id    => $id);
+                $self->{done}{$class}{$id} = $import_id;
+            };
+
+            # did it fail?
+            if ($@ and ref $@ and 
+                $@->isa('Krang::DataSet::DeserializationFailed')) {
+                push(@failed, { class   => $class, 
+                                id      => $id, 
+                                message => $@->message });
+            } elsif ($@) {
+                die $@;
+            }
         }
     }
 
     # all done
     $self->{in_import} = 0;
+
+    # did any imports fail?
+    if (@failed) {
+        Krang::DataSet::ImportRejected->throw(
+             message => join("\n", map { $_->{message} } @failed)
+                                             );
+    }
 }
 
 =item C<< $real_id = $set->map_id(class => "Krang::Foo", id => $id) >>

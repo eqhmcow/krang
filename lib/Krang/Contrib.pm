@@ -474,6 +474,10 @@ sub serialize_xml {
 
 Deserialize XML.  See Krang::DataSet for details.
 
+If an incoming contributor has the same first, middle and last name as
+an existing contributor then deserialize_xml() will update the
+contributor object rather than create a new one.
+
 =cut
 
 sub deserialize_xml {

@@ -976,18 +976,19 @@ sub deserialize_xml {
             if $no_update;
 
         # FIX: do element update here
+        return $dup;
     }
 
     # get import site_id
     my ($site_id, $parent_id);
     if ($data->{parent_id}) {
         # get import parent_id
-        $parent_id = Krang::DataSet->map_id(class => "Krang::Category",
-                                            id    => $data->{parent_id});
+        $parent_id = $set->map_id(class => "Krang::Category",
+                                  id    => $data->{parent_id});
     } else {
         # get site_id for root category
-        $site_id = Krang::DataSet->map_id(class => "Krang::Site",
-                                          id    => $data->{site_id});
+        $site_id = $set->map_id(class => "Krang::Site",
+                                id    => $data->{site_id});
     }
 
     # create a new category

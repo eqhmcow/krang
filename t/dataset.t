@@ -25,10 +25,18 @@ END { $contrib->delete() };
 my $cset = Krang::DataSet->new();
 isa_ok($cset, 'Krang::DataSet');
 $cset->add(object => $contrib);
-$cset->write(path => 'jjj.kds');
 
-# try an import
+my $jpath = catfile(KrangRoot, 'tmp', 'jjj.kds');
+$cset->write(path => $jpath);
+ok(-e $jpath and -s $jpath);
+END { unlink($jpath) if -e $jpath and not $DEBUG };
+
+# try an import, should work
 $cset->import_all();
+
+# try an import with no_update, should fail
+eval { $cset->import_all(no_update => 1); };
+isa_ok($@, 'Krang::DataSet::ImportRejected');
 
 # make a change and see if it gets overwritten
 $contrib->bio('The greatest editor of the Daily Bugle, ever.');
@@ -43,7 +51,6 @@ $cset->import_all();
 my ($loaded_contrib2) = Krang::Contrib->find(contrib_id => 
                                              $contrib->contrib_id);
 is($loaded_contrib2->bio, 'The editor of the Daily Bugle.');
-
 
 
 # create a site and category for dummy story
@@ -95,6 +102,9 @@ ok(grep { $_->[0] eq 'Krang::Story' and
 ok(grep { $_->[0] eq 'Krang::Story' and
           $_->[1] eq $story2->story_id } @objects);
 
+# try an import
+$loaded->import_all();
+
 # see if it will write again
 my $path2 = catfile(KrangRoot, 'tmp', 'test2.kds');
 $set->write(path => $path2);
@@ -118,27 +128,27 @@ $loaded->write(path => $path3);
 ok(-e $path3 and -s $path3);
 END { unlink($path3) if -e $path3 and not $DEBUG };
 
-# create 25 stories
+# create 10 stories
 my $count = Krang::Story->find(count => 1);
 my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');
-system("bin/krang_floodfill --stories 20 --sites 1 --cats 5 --templates 0 --media 5 --users 0 --covers 5 --undo_script $undo 2>&1 /dev/null");
+system("bin/krang_floodfill --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --undo_script $undo 2>&1 /dev/null");
 END { system("$undo 2>&1 /dev/null"); }
-is(Krang::Story->find(count => 1), $count + 25);
+is(Krang::Story->find(count => 1), $count + 10);
 
 # see if we can serialize them
-my @stories = Krang::Story->find(limit    => 25, 
+my @stories = Krang::Story->find(limit    => 10, 
                                  offset   => $count, 
                                  order_by => 'story_id');
 
 # create a data set containing the story
-my $set25 = Krang::DataSet->new();
-isa_ok($set25, 'Krang::DataSet');
-$set25->add(object => $_) for @stories;
+my $set10 = Krang::DataSet->new();
+isa_ok($set10, 'Krang::DataSet');
+$set10->add(object => $_) for @stories;
 
-my $path25 = catfile(KrangRoot, 'tmp', '25stories.kds');
-$set25->write(path => $path25);
-ok(-e $path25 and -s $path25);
-END { unlink($path25) if -e $path25 and not $DEBUG };
+my $path10 = catfile(KrangRoot, 'tmp', '10stories.kds');
+$set10->write(path => $path10);
+ok(-e $path10 and -s $path10);
+END { unlink($path10) if -e $path10 and not $DEBUG };
 
 
 
