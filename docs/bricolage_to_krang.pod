@@ -81,6 +81,90 @@ process?  If there are intermediate files, is their output path configurable?
 
 =back
 
+=head2 MAPPING OBJECTS
+
+This seeks to detail the specific challenges presented by attempting to map
+each Bricolage object type to Krang XML.
+
+=over
+
+=item * Stories
+
+Bricolage story objects possess the following fields for which there appears to
+be no compliment in Krang: active, publish_status, and source.  Conversely, the
+notes and version fields have no compliment in Bricolage XML.
+
+There is also a set of fields for which compliments exist but the expected data
+is of a different type or form.  Categories are expressed as text in Bricolage
+XML but are 'category_id's in Krang.  How is one able to reference a category
+that does not yet exist and still produce importable XML?  Contributors also
+share this problem.  'cover_date' represents a minor example of this problem,
+they all possess a trailing 'Z' that is absent in Krang.
+
+The priority and slug fields have exact duplicates.  The element attribute of
+the story entity in Bricolage maps the class entity in Krang.  Name maps to
+title, primary_uri to the first url entity (a url will have to be
+generated for each associated category), description to metadata_description,
+and keywords to metadata_keywords.
+
+Elements do not appear to present extraordinary difficulty.  Ordering is
+represented by physical prominence within the 'element' entity as opposed to
+their explicity expression as an attribute in Bricolage.  The element attribute
+of the data entity maps to the class entity and its content maps to an entity
+of the same name within an 'element' entity.
+
+=item * Categories
+
+Site information is not present in Bricolage 1.4.6, though this may not be the
+case for subsequent versions (do we intend to support conversion from all
+Bricolage versions?).  Presuming we have somehow determined the site to which
+this category belongs, its site_id and url will be necessary to populate the
+site_id entity of this object as well as to calculate its url.
+
+The active, adstring, adstring2, description, and keywords entities have no
+compliment in Krang and the element entity is not present in Bricolage.
+
+=item * Media
+
+The active, description, contributors, elements, priorty, publish_status,
+and source entities appear to have no compliments in Krang.  Likewise, the
+alt_tag, caption, copyright, notes, and version entities in Krang appear to
+have no compliment in Bricolage.  The category dilema present in stories is
+also present here.
+
+The principle difference between the XML representations is that the actual
+content of the image is present in base64 encoded form in Bricolage.  To solve
+this, the content should be extracted and writen out to the location we intend
+to supply to the 'path' entity.
+
+As far as the remaining fields go, the element attribute of the media entity
+maps to media_type, uri to url, cover_date to creation_date, and the name
+entity within the file entity maps to filename.
+
+=item * Templates
+
+Templates like media contain their content in base64 encoded form.  In Krang,
+the content is merely html encoded (data entity maps to content).
+
+The fields active, deploy_status, description, generic, output_channel,
+and priority have no analog in Krang and Bricolage has no answer for
+creation_date, deployed_version, or version fields found in Krang XML.
+
+The file_name field maps to the url field in Krang; to obtain the appropriate
+value for the filename entity the category must be extracted from the
+Bricolage file_name entity.
+
+=item * Contributors, Groups, and Users
+
+There is still debate as to whether Users and Groups will be imported from
+Bricolage in whole or in part.  Despite this both they and contributors have to
+be pulled directly from the Bricolage database.
+
+Where are the custom fields associated with contributor objects in Bricolage
+stored?
+
+=back
+
 =head2 THE MODULE STRATEGY
 
 The one Object one Module strategy is the current vogue.
