@@ -44,13 +44,19 @@ Krang::Test::Content - a package to simplify content handling in Krang tests.
   # create a Krang::Contrib object
   my $contributor = $creator->create_contrib();
 
+  # create a Krang::Template object for root element of story
+  my $template = $creator->create_template(element => $story->element);
+
+  # create a Krang::Template associated with a specific cat
+  $template = $creator->create_template(element => $story->element, category => $poodle_cat);
+
   # get a Krang::Publisher object
   my $publisher = $creator->publisher();
 
-  # deploy test templates
+  # create and deploy test templates
   my @templates = $creator->deploy_test_templates();
 
-  # undeploy a template
+  # undeploy test templates
   $creator->undeploy_test_templates();
 
 
@@ -539,6 +545,110 @@ sub create_contrib {
 
 }
 
+=item C<< $template = $creator->create_template(element => $element, category => $category) >>
+
+Creates a valid HTML template and Krang::Template object based on the Krang::Element $element.
+
+Takes the optional argument C<category>, which associates the template with the L<Krang::Category> object C<$category>.  Otherwise the template will be associated with the root category for the first L<Krang::Site> object created.
+
+=cut
+
+sub create_template {
+
+    my $self = shift;
+    my %args = @_;
+
+    my $element = $args{element} || croak __PACKAGE__ . "->create_template(): Missing required argument 'element'.";
+
+    my $category;
+
+    if (exists($args{category})) {
+        $category = $args{category};
+    } else {
+        my $site = $self->{stack}{site}[0];
+        croak __PACKAGE__ . "->deploy_test_templates(): Must create site before deploying templates!\n" 
+          unless defined($site);
+        ($category) = Krang::Category->find(site_id => $site->site_id);
+    }
+
+
+    # create the template.
+
+    my $bgcolor = "#" . 
+      join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
+
+    # draw a labeled box for the element
+    my $display_name = $element->display_name;
+    my $content = <<END;
+<div style='border: 1px solid black; margin-left: 3px; margin-top: 10px; margin-right: 5px; padding-left: 3px; padding-right: 3px; padding-bottom: 3px; background-color: $bgcolor'>
+  <span style='border: 1px; border-style: dashed; border-color: #AAA; padding-left: 5px; padding-right: 5px; background-color: white; text-color: whte; top: -7px; left: 5px; position: relative; width: 150px;'>$display_name</span><br>
+END
+
+    if ($element->children) {
+        # container
+        $content .= "<tmpl_loop element_loop>\n";
+        foreach my $child ($element->children) {
+            $content .= "<tmpl_if is_" . $child->name . ">".
+              "<tmpl_var name='" . $child->name . "'>".
+                "</tmpl_if>\n";
+        }
+        $content .= "</tmpl_loop>";
+    } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
+        # media link
+        $content .= "<img src='<tmpl_var name='url'>'>\n";
+    } elsif ($element->isa('Krang::ElementClass::StoryLink')) {
+        # story link
+        $content .= "<a href='<tmpl_var name='url'>/'><tmpl_var url></a>\n";
+    } else {
+        # data
+        $content .= "<tmpl_var name='" . $element->name . "'>\n";
+    }
+
+    if ($element->name eq 'category') {
+        $content .= "<tmpl_var content>";
+    }
+
+    if ($element->name eq 'page') {
+        # add pagination
+        $content .=<<END;
+<P>Page number <tmpl_var current_page_number> of <tmpl_var total_pages>.</p>
+<tmpl_unless is_first_page>
+<a href="<tmpl_var previous_page_url>">Previous Page</a>&lt;&lt;
+</tmpl_unless>
+<tmpl_loop pagination_loop>
+<tmpl_if is_current_page>
+<tmpl_var page_number>
+<tmpl_else>
+<a href="<tmpl_var page_url>"><tmpl_var page_number></a>
+</tmpl_if>
+<tmpl_unless __last__>&nbsp;|&nbsp;</tmpl_unless>
+</tmpl_loop>
+<tmpl_unless is_last_page>
+&gt;&gt;<a href="<tmpl_var next_page_url>">Next Page</a>
+</tmpl_unless>
+<tmpl_unless is_last_page><tmpl_var page_break></tmpl_unless>
+END
+
+    }
+    $content .= "</div>";
+
+    my $tmpl = Krang::Template->new(
+                                    content  => $content,
+                                    filename => $element->name . ".tmpl",
+                                    category => $category
+                                   );
+    $tmpl->save;
+
+    # list of generated templates
+    push @{$self->{stack}{template}}, $tmpl;
+
+
+    $tmpl->checkin;
+
+    return $tmpl;
+
+}
+
 
 =item C<< $publisher = $creator->publisher() >>
 
@@ -580,14 +690,23 @@ sub deploy_test_templates {
     my $self = shift;
     my %args = @_;
 
+    my @template_list;
+
     my $publisher = (exists($self->{publisher})) ? $self->{publisher} : $self->publisher();
 
+    # make sure live templates have been undeployed
+    $self->undeploy_live_templates() unless (exists($self->{live_templates}));
+
     my $site = $self->{stack}{site}[0];
+    my ($category) = Krang::Category->find(site_id => $site->site_id);
+
+    # ensuring parent cat.
+    while ($category->parent_id) {
+        $category = $category->parent;
+    }
 
     croak __PACKAGE__ . "->deploy_test_templates(): Must create site before deploying templates!\n" 
       unless defined($site);
-
-    my ($category) = Krang::Category->find(site_id => $site->site_id);
 
     my @estack = map { Krang::ElementLibrary->top_level(name => $_) }
       Krang::ElementLibrary->top_levels;
@@ -595,79 +714,26 @@ sub deploy_test_templates {
         my $element = pop(@estack);
         push(@estack, $element->children);
 
-        my $bgcolor = "#" . 
-          join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
+        my $tmpl;
 
-        # draw a labeled box for the element
-        my $display_name = $element->display_name;
-        my $content = <<END;
-<div style='border: 1px solid black; margin-left: 3px; margin-top: 10px; margin-right: 5px; padding-left: 3px; padding-right: 3px; padding-bottom: 3px; background-color: $bgcolor'>
-  <span style='border: 1px; border-style: dashed; border-color: #AAA; padding-left: 5px; padding-right: 5px; background-color: white; text-color: whte; top: -7px; left: 5px; position: relative; width: 150px;'>$display_name</span><br>
-END
-
-        if ($element->children) {
-            # container
-            $content .= "<tmpl_loop element_loop>\n";
-            foreach my $child ($element->children) {
-                $content .= "<tmpl_if is_" . $child->name . ">".
-                  "<tmpl_var name='" . $child->name . "'>".
-                    "</tmpl_if>\n";
+        # make sure not to create another test template if one already exists
+        # for the root category.
+        foreach my $t (@{$self->{stack}{template}}) {
+            if (($t->filename eq $element->name() . '.tmpl' ) &&
+                $t->category_id == $category->category_id) {
+                $tmpl = $t;
+                last;
             }
-            $content .= "</tmpl_loop>";
-        } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
-            # media link
-            $content .= "<img src='<tmpl_var name='url'>'>\n";
-        } elsif ($element->isa('Krang::ElementClass::StoryLink')) {
-            # story link
-            $content .= "<a href='<tmpl_var name='url'>/'><tmpl_var url></a>\n";
-        } else {
-            # data
-            $content .= "<tmpl_var name='" . $element->name . "'>\n";
         }
 
-        if ($element->name eq 'category') {
-            $content .= "<tmpl_var content>";
-        }
-
-        if ($element->name eq 'page') {
-            # add pagination
-            $content .=<<END;
-<P>Page number <tmpl_var current_page_number> of <tmpl_var total_pages>.</p>
-<tmpl_unless is_first_page>
-<a href="<tmpl_var previous_page_url>">Previous Page</a>&lt;&lt;
-</tmpl_unless>
-<tmpl_loop pagination_loop>
-<tmpl_if is_current_page>
-<tmpl_var page_number>
-<tmpl_else>
-<a href="<tmpl_var page_url>"><tmpl_var page_number></a>
-</tmpl_if>
-<tmpl_unless __last__>&nbsp;|&nbsp;</tmpl_unless>
-</tmpl_loop>
-<tmpl_unless is_last_page>
-&gt;&gt;<a href="<tmpl_var next_page_url>">Next Page</a>
-</tmpl_unless>
-<tmpl_unless is_last_page><tmpl_var page_break></tmpl_unless>
-END
-
-        }
-        $content .= "</div>";
-
-        my $tmpl = Krang::Template->new(
-                                        content	 => $content,
-                                        filename => $element->name . ".tmpl",
-                                        category => $category
-                                       );
-        eval { $tmpl->save; };
-        next if $@;
-
-        push @{$self->{stack}{template}}, $tmpl;
+        $tmpl = $self->create_template(element => $element) unless ($tmpl);
 
         $publisher->deploy_template(template => $tmpl);
-        $tmpl->checkin;
+
+        push @template_list, $tmpl;
     }
 
-    return @{$self->{stack}{template}};
+    return @template_list;;
 
 }
 
@@ -688,6 +754,52 @@ sub undeploy_test_templates {
     }
 }
 
+
+=item C<< @templates = $creator->undeploy_live_templates() >>
+
+A preventative measure to make sure that live templates don't cause problems, or are otherwise clobbered by test templates.
+
+Searches the template root for potentially problematic templates, and undeploys them.
+
+=cut
+
+sub undeploy_live_templates {
+
+    my $self = shift;
+
+    my $publisher = $self->publisher();
+
+    my @live_templates = Krang::Template->find(deployed => 1);
+
+    foreach my $t (@live_templates) {
+        $publisher->undeploy_template(template => $t);
+        push @{$self->{live_templates}}, $t;
+    }
+
+    return @live_templates;
+
+}
+
+
+=item C<< $creator->redeploy_live_templates() >>
+
+Redeploys any live templates that were taken down previously.
+
+=cut
+
+sub redeploy_live_templates {
+
+    my $self = shift;
+
+    my $publisher = $self->publisher();
+
+    return unless (defined($self->{live_templates}));
+
+    while (my $t = pop @{$self->{live_templates}}) {
+        $publisher->deploy_template(template => $t);
+    }
+
+}
 
 =item C<< $word = get_word() >>
 
@@ -802,6 +914,22 @@ sub delete_item {
         }
         unshift @{$self->{stack}{contrib}}, @front;
 
+    } elsif ($item->isa('Krang::Template')) {
+        while (my $tmpl = shift @{$self->{stack}{template}}) {
+            if ($tmpl->template_id == $item->template_id) {
+                last;
+            }
+            push @front, $tmpl;
+        }
+        # attempt to delete
+        eval { $item->delete(); };
+        if (my $e = $@) {
+            # put it back on the stack & throw the error.
+            unshift @{$self->{stack}{template}}, @front, $item;
+            croak($e);
+        }
+        unshift @{$self->{stack}{template}}, @front;
+
     }
 
     return;
@@ -830,6 +958,9 @@ sub cleanup {
             }
         }
     }
+
+    # make sure live templates are in their place.
+    $self->redeploy_live_templates();
 
 }
 
