@@ -590,6 +590,10 @@ sub map_id {
 sub _deserialize {
     my ($self, $class, $id) = @_;
 
+    # check that we've got a $class with $id
+    croak("Can't find XML file for $class with ID $id!") 
+      unless $self->{objects}{$class}{$id}{xml};
+
     my $file = catfile($self->{dir}, $self->{objects}{$class}{$id}{xml});
     open(XML, '<', $file) or croak("Unable to open '$file': $!");
     my $xml = join('',<XML>);
