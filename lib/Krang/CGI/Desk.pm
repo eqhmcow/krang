@@ -219,11 +219,12 @@ sub goto_log {
     my $self = shift;
     my $query = $self->query;
     my $obj = _id2obj($query->param('id'));
+    my $desk_id = $query->param('desk_id');
 
     # redirect as appropriate
     my $id_param = 'story_id=' . $obj->story_id;
 
-    my $uri = "history.pl?${id_param}&history_return_script=desk.pl&history_return_params=rm&history_return_params=show";
+    my $uri = "history.pl?${id_param}&history_return_script=desk.pl&history_return_params=rm&history_return_params=show&history_return_params=desk_id&history_return_params=$desk_id";
     
     # mix in pager params for return
     foreach my $name (grep { /^krang_pager/ } $query->param) {
@@ -246,9 +247,9 @@ sub goto_view {
     my $self = shift;
     my $query = $self->query;
     my $obj = _id2obj($query->param('id'));
-                                                                                
-    $self->header_props(-uri => 'story.pl?return_script=desk.pl&return_params=rm&return_params=show&rm=view&story_id=' .
-                            $obj->story_id);
+    my $desk_id = $query->param('desk_id');
+ 
+    $self->header_props(-uri => "story.pl?return_script=desk.pl&return_params=rm&return_params=show&return_params=desk_id&return_params=$desk_id&rm=view&story_id=" . $obj->story_id);
                                                                                 
     $self->header_type('redirect');
     return "";
