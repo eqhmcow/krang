@@ -1168,11 +1168,6 @@ the name to element mappings and updating them on changes to
 children().  That's not easy to do and still allow children() to
 return a reference that can be used to make changes.
 
-=item *
-
-Add call to an element class method on delete to allow for cleanup of
-external data.
-
 =back
 
 =cut
