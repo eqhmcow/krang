@@ -119,5 +119,14 @@ sub fill_template {
       if $arg{element}->data;
 }
 
+# return all keywords for indexing
+sub index_data {
+    my ($self, %arg) = @_;
+    my ($element) = @arg{qw(element)};
+    my $data = $element->data;
+    return @$data if $data;
+    return ();
+}
+
 
 1;

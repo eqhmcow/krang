@@ -63,15 +63,6 @@ sub input_form {
     return $html;
 }
 
-# return all keywords for indexing
-sub index_data {
-    my ($self, %arg) = @_;
-    my ($element) = @arg{qw(element)};
-    my $data = $element->data;
-    return @$data if $data;
-    return ();
-}
-
 sub param_names {
     my $self = $_[0];
     my $element = $_[2];
