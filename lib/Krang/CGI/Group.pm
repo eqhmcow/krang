@@ -44,8 +44,29 @@ use Krang::Widget;
 use Krang::Message qw(add_message);
 use Krang::HTMLPager;
 use Krang::Pref;
-use Krang::Session;
+use Krang::Session qw(%session);
 use Carp;
+
+
+# Fields in a group object
+use constant GROUP_PROTOTYPE => {
+                                 group_id            => '',
+                                 name                => '',
+                                 categories          => {},
+                                 desks               => {},
+                                 may_publish         => 1,
+                                 admin_users         => 1,
+                                 admin_users_limited => 1,
+                                 admin_groups        => 1,
+                                 admin_contribs      => 1,
+                                 admin_sites         => 1,
+                                 admin_categories    => 1,
+                                 admin_jobs          => 1,
+                                 admin_desks         => 1,
+                                 asset_story         => 'edit',
+                                 asset_media         => 'edit',
+                                 asset_template      => 'edit'
+                                };
 
 
 
@@ -126,7 +147,10 @@ sub search {
                                       columns_sortable => [qw( name may_publish )],
                                       command_column_commands => [qw( edit_group )],
                                       command_column_labels => {edit_group => 'Edit'},
-                                      row_handler => sub { $_[0]->{name} = $_[1]->name(); $_[0]->{may_publish} = $_[1]->may_publish() ? 'Yes' : 'No'; },
+                                      row_handler => sub {
+                                          $_[0]->{name} = $_[1]->name();
+                                          $_[0]->{may_publish} = $_[1]->may_publish() ? 'Yes' : 'No';
+                                      },
                                       id_handler => sub { return $_[0]->group_id },
                                      );
 
@@ -156,10 +180,26 @@ Description of run-mode 'add'...
 
 sub add {
     my $self = shift;
+    my %ui_messages = ( @_ );
 
     my $q = $self->query();
+    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
+    $t->param(add_mode => 1);
+    $t->param(%ui_messages) if (%ui_messages);
 
-    return $self->dump_html();
+    # Make new Group, but don't save it
+    my $g = Krang::Group->new();
+
+    # Stash it in the session for later
+    $session{EDIT_GROUP} = $g;
+
+    # Convert Krang::Contrib object to tmpl data
+    my $group_tmpl = $self->get_group_tmpl($g);
+
+    # Propagate to template
+    $t->param($group_tmpl);
+
+    return $t->output();
 }
 
 
@@ -181,10 +221,35 @@ Description of run-mode 'edit'...
 
 sub edit {
     my $self = shift;
+    my %ui_messages = ( @_ );
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    my $group_id = $q->param('group_id');
+    my ( $g ) = Krang::Group->find( group_id=>$group_id);
+
+    # Did we get our group?  Presumbably, users get here from a list.  IOW, there is 
+    # no valid (non-fatal) case where a user would be here with an invalid group_id
+    die ("No such group_id '$group_id'") unless (defined($g));
+
+    # Stash it in the session for later
+    $session{EDIT_GROUP} = $g;
+
+    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
+    $t->param(%ui_messages) if (%ui_messages);
+
+
+    # For testing
+    return $t->output();
+
+
+    # Convert Krang::Group object to tmpl data
+    my $group_tmpl = $self->get_group_tmpl($g);
+
+    # Propagate to template
+    $t->param($group_tmpl);
+
+    return $t->output();
 }
 
 
@@ -408,6 +473,47 @@ sub delete_category {
 #############################
 #####  PRIVATE METHODS  #####
 #############################
+
+# Return a hashref based on group properties, suitible
+# to be passed to an HTML::Template edit/add screen.
+# If a $group object is supplied, use its properties
+# for default values.
+sub get_group_tmpl {
+    my $self = shift;
+    my $g = shift || 0;
+
+    my $q = $self->query();
+
+    my %group_tmpl = ( %{&GROUP_PROTOTYPE} );
+
+    # For each group prop, convert to HTML::Template compatible data
+    foreach my $gf (keys(%group_tmpl)) {
+        # Handle radio groups
+        if (grep { $gf eq $_ } qw(asset_story asset_media asset_template)) {
+            delete($group_tmpl{$gf});
+            next;
+        }
+
+        # Handle compound properties
+        if (grep { $gf eq $_ } qw(categories desks)) {
+            delete($group_tmpl{$gf});
+            next;
+        }
+
+        # Handle simple (text) fields
+        my $query_val = $q->param($gf);
+        if (defined($query_val)) {
+            # Overlay query params
+            $group_tmpl{$gf} = $query_val;
+        } else {
+            $group_tmpl{$gf} = $g->$gf if (ref($g));
+        }
+    }
+
+    # Return a reference to the tmpl-compat data
+    return \%group_tmpl;
+}
+
 
 
 
