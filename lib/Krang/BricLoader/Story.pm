@@ -38,10 +38,16 @@ use warnings;
 
 # External Modules
 ###################
+use Carp qw(verbose croak);
+use File::Path qw(mkpath rmtree);
+use File::Spec::Functions qw(catdir catfile splitpath);
+use File::Temp qw(tempdir);
 use XML::Simple qw(XMLin);
 
 # Internal Modules
 ###################
+use Krang::Conf qw(KrangRoot);
+use Krang::Pref;
 
 
 #
@@ -90,6 +96,112 @@ object.
 =cut
 
 sub new {
+    my ($pkg, %args) = @_;
+    my $self = bless({},$pkg);
+    my $xml = $args{xml};
+    my $path = $args{path};
+    my ($new_path, @stories);
+
+    # set tmpdir
+    $self->{dir} = tempdir(DIR => catdir(KrangRoot, 'tmp'));
+
+    if ($xml) {
+        # write out file to tmpdir
+        $new_path = catfile($self->{dir}, 'bric_stories.xml');
+        my $wh = IO::File->new(">$new_path");
+        $wh->print($$xml);
+        $wh->close();
+    } elsif ($path) {
+        croak("File '$path' not found on the system!") unless -e $path;
+        my $base = (splitpath($path))[2];
+        $new_path = catfile($self->{dir}, $base);
+        link($path, $new_path);
+    } else {
+        croak("A value must be passed with either the 'path' or 'xml' arg.");
+    }
+
+    my $ref = XMLin($new_path,
+                    forcearray => ['story'],
+                    keyattr => 'hobbittses');
+    unlink($new_path);
+    croak("\nNo Stories defined in input.\n") unless exists $ref->{story};
+
+    for (@{$ref->{story}}) {
+        # check for duplicates
+
+        # associate media
+
+        # associate stories
+
+        push @stories, bless($_, $pkg);
+    }
+
+    return @stories;
+}
+
+
+=item C<< $category->serialize_xml(writer => $writer, set => $set) >>
+
+Serialize as XML.  See Krang::DataSet for details.
+
+=cut
+
+sub serialize_xml {
+    my ($self, %args) = @_;
+    my ($writer, $set) = @args{qw(writer set)};
+    local $_;
+
+    # open up <story> linked to schema/story.xsd
+    $writer->startTag('story',
+                      "xmlns:xsi" =>
+                      "http://www.w3.org/2001/XMLSchema-instance",
+                      "xsi:noNamespaceSchemaLocation" =>
+                      'story.xsd');
+
+    # basic fields
+    $writer->dataElement(story_id   => $self->{story_id});
+#?    $writer->dataElement(class      => $self->class->name);
+    $writer->dataElement(title      => $self->{title});
+    $writer->dataElement(slug       => $self->{slug});
+    $writer->dataElement(version    => $self->{version});
+    $writer->dataElement(cover_date => $self->cover_date->datetime);
+    $writer->dataElement(priority   => $self->{priority});
+    $writer->dataElement(notes      => $self->notes);
+
+    # categories
+    for my $category ($self->{categories}) {
+        $writer->dataElement(category_id => $category->{category_id});
+
+        $set->add(object => $category, from => $self);
+    }
+
+    # urls
+    $writer->dataElement(url => $_) for $self->{urls};
+
+    # contributors
+#    my %contrib_type = Krang::Pref->get('contrib_type');
+#    for my $contrib ($self->{contribs}) {
+#        $writer->startTag('contrib');
+#        $writer->dataElement(contrib_id => $contrib->contrib_id);
+#        $writer->dataElement(contrib_type =>
+#                             $contrib_type{$contrib->selected_contrib_type()});
+#        $writer->endTag('contrib');
+
+#        $set->add(object => $contrib, from => $self);
+#    }
+
+    # serialize elements
+#    $self->element->serialize_xml(writer => $writer,
+#                                  set    => $set);
+
+    # all done
+    $writer->endTag('story');
+}
+
+
+sub DESTROY {
+    my $self = shift;
+    rmtree($self->{dir}) if $self->{dir};
 }
 
 
@@ -107,15 +219,6 @@ sub _map {
 }
 
 
-# employs XML::Simple to derive a hash structure from an XML string
-sub _parse {
-}
-
-
-# constructor that is passed a 'path' argument is directed here to load the
-# contents specified by the arg
-sub _read_in {
-}
 
 
 my $poem = <<POEM;

@@ -83,7 +83,7 @@ sub new {
 
     if ($xml) {
         # write out file to tmpdir
-        $new_path = catfile($self->{dir}, 'bric_sites.xml');
+        $new_path = catfile($self->{dir}, 'bric_categories.xml');
         my $wh = IO::File->new(">$new_path");
         $wh->print($$xml);
         $wh->close();
@@ -97,7 +97,7 @@ sub new {
     }
 
     my $ref = XMLin($new_path,
-                    forcearray => ['site'],
+                    forcearray => ['category'],
                     keyattr => 'hobbittses');
     unlink($new_path);
     croak("\nNo Categories defined in input.\n")
