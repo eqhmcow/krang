@@ -4,9 +4,11 @@ use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::Script;
+use Krang::Site;
 use Krang::Category;
 use Krang::Desk;
 use Krang::Conf qw(KrangRoot);
+use Krang::DB qw(dbh);
 use File::Spec::Functions qw(catfile);
 
 BEGIN { use_ok('Krang::Group') }
@@ -198,31 +200,63 @@ like($@, qr(Invalid security level 'no_such_permission' for category_id '777'), 
 $load_group->categories_delete("777");
 
 
-
-##  TO-DO
-#
-# 1. Test invalid category permissions
-# 2. Test invalid desk permissions
-# 3. Fix tests to create categories for testing
-# 4. Test cache table by selecting directly on data if necessary
-#
-
-
-
-
 # Test x_delete MethodMaker hash method
 eval { $load_group->save() };
 ok(not($@), "desks_delete() and categories_delete()");
 die ($@) if ($@);
 
 
+# * Test root category creation (new site) and deletion
+my $new_site_uniqueness = "Test". time();
+my $new_site = Krang::Site->new( preview_url  => $new_site_uniqueness. 'preview.com',
+                                 preview_path => $new_site_uniqueness. 'preview/path/',
+                                 publish_path => $new_site_uniqueness. 'publish/path/',
+                                 url          => $new_site_uniqueness. 'site.com' );
+$new_site->save();
+my ($new_cat_id) = Krang::Category->find( site_id=>$new_site->site_id, parent_id=>undef, ids_only=>1 );
+($load_group) = Krang::Group->find(name=>$unique_group_name);
+my %categories = $load_group->categories();
+is($categories{$new_cat_id}, "edit", "New root categories create new category permissions");
+
+# Test permissions cache -- count(*) of category_group_permission_cache for $new_cat_id should == count(groups)
+my $group_count = Krang::Group->find(count=>1);
+my $dbh = dbh();
+my ($perm_cache_count) = $dbh->selectrow_array( qq/ select count(*) from
+                                                category_group_permission_cache
+                                                where category_id=? /,
+                                                {RaiseError=>1}, $new_cat_id );
+is($perm_cache_count, $group_count, "Permissions cache created for new category for $group_count groups");
+
+# Delete new site
+$new_site->delete();
+($load_group) = Krang::Group->find(name=>$unique_group_name);
+%categories = $load_group->categories();
+is($categories{$new_cat_id}, undef, "Delete root categories delete category permissions");
+
+# Was permissions cache deleted?
+($perm_cache_count) = $dbh->selectrow_array( qq/ select count(*) from
+                                                category_group_permission_cache
+                                                where category_id=? /,
+                                                {RaiseError=>1}, $new_cat_id );
+is($perm_cache_count, 0, "Permissions cache deleted");
+
+
+# * Test desk creation and deletion
+my $new_desk_uniqueness = "Test". time();
+my $new_desk = Krang::Desk->new( name => $new_desk_uniqueness );
+my $new_desk_id = $new_desk->desk_id();
+
+($load_group) = Krang::Group->find(name=>$unique_group_name);
+my %desks = $load_group->desks();
+is($desks{$new_desk_id}, "edit", "New desks create new desk permissions");
+
+# Delete new desk
+$new_desk->delete();
+($load_group) = Krang::Group->find(name=>$unique_group_name);
+%desks = $load_group->desks();
+is($desks{$new_desk_id}, undef, "Delete desks deletes new desk permissions");
 
 
 # Remove test group -- we're done.
 $load_group->delete();
 
-
-
-##  Debugging output
-use Data::Dumper;
-print Dumper($group);

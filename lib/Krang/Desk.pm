@@ -5,6 +5,8 @@ use warnings;
 use Carp qw(croak);
 use Krang::DB qw(dbh);
 use Krang::Log qw(debug);
+use Krang::Group;
+
 
 =head1 NAME
 
@@ -82,6 +84,9 @@ sub init {
 
     # insert record into db
     $self->_insert(%args);
+
+    # Set up permissions for this new desk
+    Krang::Group->add_desk_permissions($self);
 
     return $self;
 }
@@ -305,6 +310,9 @@ sub delete {
     my $sth = $dbh->prepare('UPDATE desk set ord = (ord - 1) where ord > ?');
     $sth->execute($order);
     $sth->finish;
+
+    # Delete permissions for this desk
+    Krang::Group->delete_desk_permissions($self);
 
     # fianlly, delete the desk
     $sth = $dbh->prepare('DELETE from desk where desk_id = ?');

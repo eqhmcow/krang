@@ -87,6 +87,10 @@ Krang::Group - Interface to manage Krang permissions
   Krang::Group->delete_category_permissions($category);
   Krang::Group->rebuild_category_cache();
 
+  # Krang::Desk permission management
+  Krang::Group->add_desk_permissions($desk);
+  Krang::Group->delete_desk_permissions($desk);
+
 
 =head1 DESCRIPTION
 
@@ -688,6 +692,78 @@ sub rebuild_category_cache {
         $self->rebuild_category_cache_process_category($category);
     }
 }
+
+
+
+=item add_desk_permissions()
+
+  Krang::Group->add_desk_permissions($desk);
+
+This method is expected to be called by Krang::Desk when a new 
+desk is added to the system.
+
+Given a particular desk object, this method will update the 
+desk_group_permission table to add this desk for all 
+groups.
+
+=cut
+
+sub add_desk_permissions {
+    my $self = shift;
+    my ($desk) = @_;
+
+    croak ("No desk provided") unless ($desk && ref($desk));
+
+    # Get desk_id -- needed for update
+    my $desk_id = $desk->desk_id();
+
+    # Set up STHs for queries and update
+    my $dbh = dbh();
+    my $sth_add_group_perm = $dbh->prepare(qq/
+                                           insert into desk_group_permission
+                                           (desk_id, group_id, permission_type) values (?,?,"edit")
+                                           /);
+
+    # Iterate through groups, default to "edit"
+    my @group_ids = $self->find(ids_only=>1);
+    foreach my $group_id (@group_ids) {
+        # Set permissions for this new desk
+        $sth_add_group_perm->execute($desk_id, $group_id);
+    }
+}
+
+
+
+=item delete_desk_permissions()
+
+  Krang::Group->delete_desk_permissions($desk);
+
+This method is expected to be called by Krang::Desk when a  
+desk is about to be removed from the system.
+
+Given a particular desk object, update the desk_group_permission
+table to delete this desk for all groups.
+
+=cut
+
+sub delete_desk_permissions {
+    my $self = shift;
+    my ($desk) = @_;
+
+    croak ("No desk provided") unless ($desk && ref($desk));
+
+    # Get desk_id from object
+    my $desk_id = $desk->desk_id();
+
+    my $dbh = dbh();
+
+    # Get rid of permissions
+    $dbh->do( "delete from desk_group_permission where desk_id=?",
+              {RaiseError=>1}, $desk_id );
+}
+
+
+
 
 
 
