@@ -40,18 +40,18 @@ use constant RW_FIELDS => qw( name list_group_id parent_list_id );
     # delete them both
     $list->delete;
     $list2->delete;
-                                
+
 =head1 DESCRIPTION
 
 This class handles management of krang lists. Each list must be a 
-member of a Krang::ListGroup, and may optionally have another 
-Krang::List as a parent.  
+member of a L<Krang::ListGroup>, and may optionally have another 
+L<Krang::List> as a parent.  
 
-The actual contents of a list is handles by Krang::ListItem.
+The actual contents of a list is handles by L<Krang::ListItem>.
 
 Currently, krang lists should only be 
 created via load on database make as configured in an ElementSet's
-lists.conf file.
+HREF[lists.conf|element_system.html] file.
 
 =head1 INTERFACE
 
@@ -388,6 +388,10 @@ sub deserialize_xml {
 }
 
 =back 
+
+=head1 SEE ALSO
+
+L<Krang::ListGroup>, L<Krang::ListItem>, HREF[The Krang Element System|element_system.html]
 
 =cut
 

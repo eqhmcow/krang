@@ -57,7 +57,7 @@ use constant RW_FIELDS => qw( data list_id parent_list_item_id );
     # delete them both
     $list_item->delete;
     $list_item2->delete;
-                                
+
 =head1 DESCRIPTION
 
 This class handles management of data items within krang lists. 
@@ -80,11 +80,11 @@ data
 
 =item *
 
-list - Krang::List object
+list - L<Krang::List> object
 
 =item *
 
-parent_list_item (optional) - a Krang::ListItem object
+parent_list_item (optional) - a L<Krang::ListItem> object
 
 =item *
 
@@ -495,6 +495,11 @@ sub deserialize_xml {
 }
 
 =back 
+
+=head1 SEE ALSO
+
+L<Krang::List>, L<Krang::ListGroup>, HREF[The Krang Element System|element_system.html]
+
 
 =cut
 

@@ -27,7 +27,7 @@ use constant RW_FIELDS => qw( name description );
     my @groups_found = Krang::ListGroup->find( name => 'testlistgroup' );
 
     $group->delete;
-    
+
 =head1 DESCRIPTION
 
 This class handles the management of list groups.
@@ -269,7 +269,7 @@ sub delete {
 
 =item $list_group->serialize_xml(writer => $writer, set => $set)
 
-Serialize as XML.  See Krang::DataSet for details.
+Serialize as XML.  See L<Krang::DataSet> for details.
 
 =cut
 
@@ -337,6 +337,12 @@ sub deserialize_xml {
 }
 
 =back 
+
+=head1 SEE ALSO
+
+L<Krang::List>, L<Krang::ListItem>, HREF[The Krang Element System|element_system.html]
+
+
 
 =cut
 
