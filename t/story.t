@@ -67,3 +67,5 @@ is($story_cat[2]->category_id, $cat[4]->category_id);
 # test category shortcut
 is($story->category, $story_cat[0]);
 
+# test url production
+ok($story->url);

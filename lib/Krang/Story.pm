@@ -160,6 +160,25 @@ sub category {
 The primary URL for the story.  C<undef> until at least one category
 is assigned.
 
+=cut
+
+sub url {
+    my $self = shift;
+    croak "illegal attempt to set readonly attribute 'url'.\n"
+      if @_;
+    
+    # return from the url cache if available
+    return $self->{url_cache}[0]
+      if $self->{url_cache} and $self->{url_cache}[0];
+
+    # otherwise, compute using element 
+    my $url = $self->element->build_url(story => $self,
+                                        category => $self->category);
+    $self->{url_cache}[0] = $url;
+
+    return $url;
+}
+
 =item C<categories>
 
 A list of category objects associated with the story.  The first
@@ -187,8 +206,9 @@ sub categories {
     unless (@_) {
         # load the cache as necessary
         for (0 .. $#{$self->{category_ids}}) {
-            ($self->{category_cache}[$_]) = Krang::Category->find(category_id => $self->{category_ids}[$_])
-              unless $self->{category_cache}[$_];
+            next if  $self->{category_cache}[$_];
+            ($self->{category_cache}[$_]) =
+              Krang::Category->find(category_id => $self->{category_ids}[$_]);
             croak("Unable to load category '$self->{category_ids}[$_]'")
               unless $self->{category_cache}[$_];
         }
@@ -218,7 +238,32 @@ sub categories {
 
 =item C<urls> (readonly)
 
-A list of URLs for this story.
+A list of URLs for this story, in order by category.
+
+=cut
+
+sub urls {
+    my $self = shift;
+    croak "illegal attempt to set readonly attribute 'urls'.\n"
+      if @_;
+
+    # load the url cache as necessary
+    for (0 .. $#{$self->{category_ids}}) {
+        next if $self->{url_cache}[$_];
+
+        # load category if needed
+        unless ($self->{category_cache}[$_]) {
+            ($self->{category_cache}[$_]) =
+              Krang::Category->find(category_id => $self->{category_ids}[$_]);
+        }
+
+        # build url
+        $self->{url_cache}[$_] = 
+          $self->element->build_url(story => $self,
+                                    category => $self->{category_cache}[$_]);
+    }
+    return @{$self->{url_cache}};
+}
 
 =item C<contributors>
 
