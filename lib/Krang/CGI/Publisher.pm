@@ -461,9 +461,6 @@ sub _build_asset_list {
     my @stories = ();
     my @media = ();
 
-    # start caching
-    Krang::Cache::start();
-
     my $publisher = Krang::Publisher->new();
 
     # retrieve all stories linked to the submitted list.
@@ -521,10 +518,6 @@ sub _build_asset_list {
         }
     }
 
-    # done caching
-    Krang::Cache::stop();
-    debug("Krang::Cache stats " . join(' : ', Krang::Cache::stats()));
-    
     return (\@stories, \@media, $checked_out_assets);
 
 }
@@ -549,6 +542,9 @@ sub _publish_assets_now {
     my $template = $self->load_tmpl('progress.tmpl');
     $|++;
     print $template->output;
+
+    # start caching
+    Krang::Cache::start();
 
     # run things to the publisher
     my $publisher = Krang::Publisher->new();
@@ -613,6 +609,10 @@ sub _publish_assets_now {
                         version => $media->version);
         }
     }
+
+    # done caching
+    Krang::Cache::stop();
+    debug("Krang::Cache stats " . join(' : ', Krang::Cache::stats()));
 
     # dynamic redirect to workspace
     print "<form action=workspace.pl></form><script language='javascript'>document.forms[0].submit();</script>\n";
