@@ -9,22 +9,27 @@ Krang::Category - a means to access information on categories
   use Krang::Category;
 
   # construct object
-  my $category = Krang::Category->new(dir => 'category',	# required
-			      	      parent_id => 1,	  	# optional
-			      	      site_id => 1);		# required
+  my $category = Krang::Category->new(dir => 'category', # required
+			      	      parent_id => 1,
+			      	      site_id => 1);
+
+  # 'parent_id' must be present for all categories except '/' 'site_id'
+  # must be present for '/'
 
   # saves object to the DB
   $category->save();
 
   # getters
-  my $element = $category->element();
-  my $dir = $category->dir();
-  my $id = $category->parent_id();
-  my $id = $category->site_id();
+  my $element 	= $category->element();
+  my $dir 	= $category->dir();
+  my $id 	= $category->parent_id();
+  my $parent	= $category->parent();
+  my $id 	= $category->site_id();
+  my $site 	= $category->site();
 
-  my $id = $category->category_id();	# undef until after save()
-  my $id = $category->element_id();	# undef until after save()
-  my $url = $category->url();		# undef until after save()
+  my $id 	= $category->category_id(); # undef until after save()
+  my $id 	= $category->element_id();  # undef until after save()
+  my $url 	= $category->url();	    # undef until after save()
 
   # setter
   $category->element( $element );
@@ -93,6 +98,9 @@ use File::Spec;
 use Krang;
 use Krang::DB qw(dbh);
 use Krang::Element;
+use Krang::Media;
+use Krang::Story;
+use Krang::Template;
 
 #
 # Package Variables
@@ -116,7 +124,7 @@ use constant CATEGORY_RW => qw(dir
 # Lexicals
 ###########
 my %category_args = map {$_ => 1} qw(dir parent_id site_id);
-my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW, 'dir';
+my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW;
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
@@ -148,7 +156,7 @@ The object's id in the category table
 Element object associated with the given category object belonging to the
 special element class 'category'
 
-=item * element_id
+=item * element_id (read-only)
 
 Id in the element table of this object's element
 
@@ -159,6 +167,18 @@ The display name of the category i.e. '/gophers'
 =item * parent_id
 
 Id of this categories parent category, if any
+
+=item * parent
+
+The parent object of the present category if any.
+
+=cut
+
+sub parent {
+    my $self = shift;
+    return unless $self->{parent_id};
+    (Krang::Category->find(category_id => $self->{parent_id}))[0];
+}
 
 =item * site_id
 
@@ -195,6 +215,8 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 
 =item * site_id
 
+Either a 'parent_id' or a 'site_id' must be passed but not both.
+
 =back
 
 =cut
@@ -218,14 +240,18 @@ sub init {
     croak(__PACKAGE__ . "->init(): The following constructor args are " .
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
 
-    for (qw/dir site_id/) {
-        croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
-          unless exists $args{$_};
-    }
+    # check required fields
+    croak(__PACKAGE__ . "->init(): Required argument 'dir' not present.")
+      unless exists $args{dir};
 
     croak(__PACKAGE__ . "->init(): 'dir' names can only represent a " .
           "directory directly beneath its parent.")
-      if $args{dir} =~ m|/[^/]+/|;
+      if $args{dir} =~ m|^/[^/]+/|;
+
+    # site or parent id must be present
+    croak(__PACKAGE__ . "->init(): Either the 'parent_id' or 'site_id' arg " .
+          "must be present.")
+      unless ($args{site_id} || $args{parent_id});
 
     $self->hash_init(%args);
 
@@ -234,21 +260,21 @@ sub init {
 
     # construct 'url'
     #################
-    my ($param, $query);
-    if (exists $self->{parent_id}) {
-        $query = "SELECT url FROM category WHERE category_id = ?";
-        $param = $self->{parent_id};
+    my ($url);
+    if ($self->{parent_id}) {
+        my ($cat) = Krang::Category->find(category_id => $self->{parent_id});
+        croak(__PACKAGE__ . "->init(): No category object found corresponding".
+              " to id '$self->{parent_id}'") unless defined $cat;
+        $url = $cat->url();
+        $self->{site_id} = $cat->site_id;
     } else {
-        $query = "SELECT url FROM site WHERE site_id = ?";
-        $param = $self->{site_id};
+        my ($site) = Krang::Site->find(site_id => $self->{site_id});
+        croak(__PACKAGE__ . "->init(): site_id '$self->{site_id}' does not " .
+              "correspond to any object in the database.") unless $site;
+        $url = $site->url();
     }
 
-    my $dbh = dbh();
-    my ($url) = $dbh->selectrow_array($query, undef, ($param));
-    $self->{url} = join('/', $url, $self->{dir});
-
-    # prevent '//' string from being stored...
-    $self->{url} =~ s|//|/|g;
+    $self->{url} = _build_url($url, $self->{dir});
 
     # set '_old_url' for use in update_child_urls()
     $self->{_old_url} = $self->{url};
@@ -274,9 +300,8 @@ refer to it (media, stories, templates).
 
 sub delete {
     my $self = shift;
-    my $id = shift || $self->{category_id};
-    my $element_id = $self->{element_id} ||
-      (Krang::Category->find(category_id => $id))[0]->{element_id};
+    my $id = $self->{category_id};
+    ($self) = Krang::Category->find(category_id => $id) if $id;
 
     # find dependents
     my ($dependents, %dependent_info) = $self->dependent_check();
@@ -289,14 +314,15 @@ sub delete {
               "category:$info");
     }
 
+    # delete element
+    $self->element()->delete();
+
+    # delete category
     my $query = "DELETE FROM category WHERE category_id = ?";
-    my $e_query = "DELETE FROM element WHERE element_id = ? ";
     my $dbh = dbh();
+    $dbh->do($query, undef, $id);
 
-    $dbh->do($query, undef, ($id));
-    $dbh->do($e_query, undef, ($element_id));
-
-    return 1;
+    return Krang::Category->find(category_id => $id) ? 0 : 1;
 }
 
 
@@ -313,28 +339,27 @@ sub dependent_check {
     my $self = shift;
     my $id = shift || $self->{category_id};
     my $dependents = 0;
-    my %info;
+    my (%info, $oid);
 
-    my $query = "SELECT %s FROM %s WHERE %s = ?";
-
-    my @queries = ([qw/category_id category parent_id/],
-                   [qw/media_id media category_id/],
-                   [qw/story_id story_category category_id/],
-                   [qw/template_id template category_id/]);
-
+    # get dependent categories
+    my $query = "SELECT category_id FROM category WHERE parent_id = ?";
     my $dbh = dbh();
+    my $sth = $dbh->prepare($query);
+    $sth->execute($id);
+    $sth->bind_col(1, \$oid);
+    while ($sth->fetch()) {
+        push @{$info{category}}, $oid;
+        $dependents++;
+    }
 
-    for (@queries) {
-        my $oid;
-        (my $name = $_->[1]) =~ s/^([^_]+)_.+$/$1/;
-        my $sth = $dbh->prepare(sprintf($query, @$_));
-        $sth->execute(($id));
-        $sth->bind_col(1, \$oid);
-        while ($sth->fetch()) {
-            push @{$info{$name}}, $oid;
+    # get other dependencies
+    for my $type(qw/Media Template/) { # Story find() not implemented yet
+        no strict 'subs';
+        for ("Krang::$type"->find(category_id => $id)) {
+            my $field = lc $type . "_id";
+            push @{$info{lc($type)}}, $_->$field;
             $dependents++;
         }
-        $sth->finish();
     }
 
     return $dependents, %info;
@@ -355,19 +380,15 @@ sub duplicate_check {
     my $query = <<SQL;
 SELECT category_id
 FROM category
-WHERE dir = ? AND site_id = ?
+WHERE url = ?
 SQL
 
-    my @params = ($self->{dir}, $self->{site_id});
+    my @params = ($self->{url});
 
     # alter query if save() has already been called
     if ($id) {
         $query .=  "AND category_id != ?\n";
         push @params, $id;
-    }
-    if ($self->{parent_id}) {
-        $query .= "AND parent_id = ?";
-        push @params, $self->{parent_id};
     }
 
     my $dbh = dbh();
@@ -400,9 +421,9 @@ characters must surround the sub-string).  The valid search fields are:
 
 =item * parent_id
 
-=item * path
-
 =item * site_id
+
+=item * url
 
 =back
 
@@ -490,9 +511,13 @@ sub find {
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
-            $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-              "$and $lookup_field = ?";
-            push @params, $args{$arg};
+            if ($args{$arg} eq '') {
+                $where_clause .= "$and $lookup_field IS NULL";
+            } else {
+                $where_clause .= $like ? "$and $lookup_field LIKE ?" :
+                  "$and $lookup_field = ?";
+                push @params, $args{$arg};
+            }
         }
     }
 
@@ -561,8 +586,8 @@ reconstructed and update_child_url() is called to update the urls underneath
 the present object.
 
 The method croaks if the save would result in a duplicate category object (i.e.
-if the object has the same path or url as another object).  It also croaks if
-its database query affects no rows in the database.
+if the object has the 'dir' as another object).  It also croaks if its database
+query affects no rows in the database.
 
 =cut
 
@@ -578,7 +603,8 @@ sub save {
 
     # check for duplicates
     my $category_id = $self->duplicate_check();
-    croak(__PACKAGE__ . "->save(): 'dir' is a duplicate of category id '$id'")
+    croak(__PACKAGE__ . "->save(): 'dir' is a duplicate of category id " .
+          "'$category_id'")
       if $category_id;
 
     # save element, get id back
@@ -593,11 +619,9 @@ sub save {
     if ($id) {
         # recalculate url if we have a new dir...
         if ($new_url) {
-            if ($self->{_old_dir} eq '/') {
-                $self->{url} = $self->{url} . $self->{dir};
-            } else {
-                $self->{url} =~ s|\Q$self->{_old_dir}\E$|$self->{dir}|;
-            }
+            $self->{url} =~ s|\Q$self->{_old_dir}\E$||
+              unless $self->{_old_dir} eq '/';
+            $self->{url} = _build_url($self->{url}, $self->{dir});
         }
         $query = "UPDATE category SET " .
           join(", ", map {"$_ = ?"} @save_fields) .
@@ -633,6 +657,8 @@ sub save {
 
 =item * $success = $category->update_child_urls()
 
+=item * $success = $category->update_child_urls( $site )
+
 Instance method that will search through the category, media, story, and
 template tables and replaces all occurrences of the category's old dir with the
 new one.
@@ -641,39 +667,32 @@ new one.
 
 sub update_child_urls {
     my $self = shift;
+    my $site = shift;
     my $id = $self->{category_id};
-    my (%ids, @params, $query, $row);
+    my ($category_id, %ids, @params, $query, $sth, $url);
+    my $failures = 0;
     my $dbh = dbh();
 
-    # flag to see if this call was made by Krang::Site
-    my $lookup_self = $self->{url} eq $self->{_old_url} ? 1 : 0;
-    if ($lookup_self) {
-        $query = "SELECT url FROM site WHERE site_id = ?";
-        my ($url) = $dbh->selectrow_array($query, undef, ($self->{site_id}));
-        $self->{url} = join("/", $url, $self->{dir});
-        $self->{url} =~ s|//|/|g;
+    # update 'url' if call was made by site
+    if ($site && UNIVERSAL::isa($site, 'Krang::Site')) {
+        $self->{url} = _build_url($site->url(), $self->{dir});
+
+        # save new url
+        $dbh->do("UPDATE category SET url = ? WHERE category_id = ?",
+                 undef, $self->{url}, $id);
     }
 
     # build hash of category_id and old urls
     $query = <<SQL;
 SELECT category_id, url
 FROM category
-WHERE site_id = ?
+WHERE parent_id = ?
 SQL
 
-    @params = ($self->{site_id});
-    unless ($lookup_self) {
-        $query .= "AND category_id != ?";
-        push @params, $id;
-    }
-
-    my $sth = $dbh->prepare($query);
-    $sth->execute(@params);
-    $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
-    while($sth->fetch()) {
-        $ids{$row->{category_id}} = $row->{url};
-    }
-    $sth->finish();
+    $sth = $dbh->prepare($query);
+    $sth->execute($id);
+    $sth->bind_columns(\$category_id, \$url);
+    $ids{$category_id} = $url while $sth->fetch();
 
     $query = <<SQL;
 UPDATE category
@@ -683,49 +702,35 @@ SQL
 
     $sth = $dbh->prepare($query);
 
-    for (keys %ids) {
+    # update category 'url's
+    for (sort keys %ids) {
         (my $url = $ids{$_}) =~  s|^\Q$self->{_old_url}\E|$self->{url}|;
         $sth->execute(($url, $_));
     }
 
     # update the 'url's of media, stories, and templates
-    # only implemented in template so far...
-    $query = "SELECT %s_id, url FROM %s WHERE category_id = ?";
-
-    # lock the table to prevent checkouts while we're doing the update
-    eval {
-        # 'url' field not implemented yet for media or stories
-        for my $table(qw/template/) { #media story_category
-            $dbh->do("LOCK TABLES $table WRITE");
-
-            my ($oid, $url);
-            $sth = $dbh->prepare(sprintf($query, $table, $table));
-            $sth->execute(($id));
-            $sth->bind_columns(\$oid, \$url);
-            $ids{$oid} = $url while $sth->fetchrow_arrayref();
-            $sth->finish();
-
-            $sth = $dbh->prepare("UPDATE $table SET url = ? WHERE " .
-                                 "$table\_id = ?");
-            for (keys %ids) {
-                ($url = $ids{$_}) =~ s|^\Q$self->{_old_url}\E|$self->{url}|;
-                $sth->execute(($url, $_));
-            }
-            $sth->finish();
-
-            $dbh->do("UNLOCK TABLES");
+    # only implemented in Krang::Template so far...
+    for (qw/Template/) { # Media Story
+        no strict 'subs';
+        for my $obj("Krang::$_"->find(category_id => $id)) {
+            $obj->update_url($self->{url});
+            $obj->save();
+            $failures++ unless $obj->url =~ /$self->{url}/;
         }
-    };
-
-    if (my $eval_err = $@) {
-        # make sure to unlock the table
-        $dbh->do("UNLOCK TABLES");
-        croak(__PACKAGE__ . "->update_child_urls(): $eval_err");
     }
 
-    return 1;
+    if (keys %ids) {
+        for (Krang::Category->find(category_id => [keys %ids])) {
+            $failures++ unless $_->url =~ /^$self->{url}/;
+        }
+    }
+
+    return $failures ? 0 : 1;
 }
 
+
+# constructs a url by joining parts by '/'
+sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url; }
 
 =back
 

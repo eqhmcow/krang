@@ -599,9 +599,13 @@ sub find {
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
-            $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-              "$and $lookup_field = ?";
-            push @params, $args{$arg};
+            if ($args{$arg} eq '') {
+                $where_clause .= "$and $lookup_field IS NULL";
+            } else {
+                $where_clause .= $like ? "$and $lookup_field LIKE ?" :
+                  "$and $lookup_field = ?";
+                push @params, $args{$arg};
+            }
         }
     }
 
@@ -829,7 +833,7 @@ sub save {
     # calculate url
     my $url =
       (Krang::Category->find(category_id => $self->{category_id}))[0]->url();
-    $self->{url} = File::Spec->catfile($url, $self->{filename});
+    $self->{url} = _build_url($url, $self->{filename});
 
     # check for duplicate url
     my $template_id = $self->duplicate_check();
@@ -882,6 +886,19 @@ sub save {
 }
 
 
+=item $template = $template->update_url( $url );
+
+Method called on object to propagate changes to parent category's 'url'.
+
+=cut
+
+sub update_url {
+    my ($self, $url) = @_;
+    $self->{url} = _build_url($url, $self->{filename});
+    return $self;
+}
+
+
 =item $true = $template->verify_checkout()
 
 Instance method that verifies the given object is both checked out and checked
@@ -913,6 +930,8 @@ sub verify_checkout {
     return 1;
 }
 
+
+sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url;}
 
 =head1 TO DO
 

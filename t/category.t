@@ -21,14 +21,15 @@ my $site = Krang::Site->new(preview_path => $path2,
                             publish_path => $path,
                             url => 'test.com');
 $site->save();
-my $site_id = $site->site_id();
+my ($parent) = Krang::Category->find(site_id => $site->site_id);
+isa_ok($parent, 'Krang::Category', 'find() parent');
 
 
 # constructor tests
 ####################
 # make the top level category
 my $category = Krang::Category->new(dir => '/blah',
-                                    site_id => $site_id);
+                                    parent_id => $parent->category_id);
 
 isa_ok($category, 'Krang::Category');
 
@@ -42,7 +43,8 @@ is($@ =~ /'dir' not present/, 1, "new() - missing 'dir'");
 
 # missing site_id
 eval {my $cat2 = Krang::Category->new(dir => 1)};
-is($@ =~ /'site_id' not present/, 1, "new() - missing 'site_id'");
+is($@ =~ /Either the 'parent_id' or 'site_id' arg/, 1,
+   "new() - missing 'site_id'");
 
 
 # save test
@@ -79,14 +81,14 @@ $element1->delete();
 my $d = $category->dir('fred');
 my $u = $category->url();
 $category->save();
-$u = $category->url();
+my $u2 = $category->url();
 is($category->url() =~ /fred/, 1, 'dir() - setter');
 
 
 # duplicate test
 #################
 my $dupe = Krang::Category->new(dir => 'fred',
-                                site_id => $site_id);
+                                parent_id => $parent->category_id);
 eval {$dupe->save()};
 is($@ =~ /duplicate/, 1, 'duplicate_check() - dir');
 
@@ -95,13 +97,13 @@ is($@ =~ /duplicate/, 1, 'duplicate_check() - dir');
 ###############
 # setup a bunch of categorys
 my $category3 = Krang::Category->new(dir => '/bob3',
-                                     site_id => $site_id);
+                                     parent_id => $parent->category_id);
 $category3->save();
 my $category4 = Krang::Category->new(dir => '/bob4',
-                                     site_id => $site_id);
+                                     parent_id => $parent->category_id);
 $category4->save();
 my $category5 = Krang::Category->new(dir => '/bob5',
-                                     site_id => $site_id);
+                                     parent_id => $parent->category_id);
 $category5->save();
 
 # we should get an array of 5 objects back
@@ -142,8 +144,7 @@ is($categories[0]->url() =~ /4/, 1, 'find - limit/offset 2');
 #################
 # add a subcat to make deletion fail
 my $subcat = Krang::Category->new(dir => 'stuff',
-                                  parent_id => $category->category_id(),
-                                  site_id => $site_id);
+                                  parent_id => $category->category_id());
 $subcat->save();
 
 # another getter
@@ -153,6 +154,7 @@ is($subcat->parent_id() =~ /^\d+$/, 1, 'parent_id()');
 $category->dir('bob');
 $category->save();
 my ($sub) = Krang::Category->find(category_id => $subcat->category_id());
+isa_ok($sub, 'Krang::Category');
 is($sub->url() =~ /bob/, 1, 'dir() => update_child_urls()');
 
 my $success = 0;

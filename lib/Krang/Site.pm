@@ -431,9 +431,13 @@ sub find {
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
-            $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-              "$and $lookup_field = ?";
-            push @params, $args{$arg};
+            if ($args{$arg} eq '') {
+                $where_clause .= "$and $lookup_field IS NULL";
+            } else {
+                $where_clause .= $like ? "$and $lookup_field LIKE ?" :
+                  "$and $lookup_field = ?";
+                push @params, $args{$arg};
+            }
         }
     }
 
@@ -588,7 +592,7 @@ SQL
     if (@ids) {
         should(scalar @ids, scalar Krang::Category->find(category_id => \@ids))
           if ASSERT;
-        $_->update_child_urls()
+        $_->update_child_urls($self)
           for Krang::Category->find(category_id => \@ids);
     }
 

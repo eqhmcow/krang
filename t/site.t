@@ -132,11 +132,6 @@ is($sites[0]->url() =~ /4/, 1, 'find - limit/offset 2');
 my $category = Krang::Category->new(dir => '/blah',
                                     site_id => $site2->site_id());
 $category->save();
-#my ($category) = Krang::Category->find(dir => '/',
-#                                       site_id => $site2->site_id());
-
-# DEBUG
-#print STDERR "\n_old_url: $site2->{_old_url}\n\n";
 
 $site2->url('testsite2.com');
 $site2->save();

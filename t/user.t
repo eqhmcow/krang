@@ -53,6 +53,7 @@ is(scalar @{$user->group_ids} <= 0, 1, 'getter - group_ids()');
 # setters
 ##########
 $user->group_ids(1, 2, 3);
+$user->save();
 my @gids = $user->group_ids();
 for my $i(0..$#gids) {
     is($gids[$i] == $i + 1, 1, "setter - group_ids $i");
@@ -74,7 +75,6 @@ my $count = Krang::User->find(email => '',
                               last_name => '',
                               login => 'admin',
                               mobile_phone => '',
-                              password => 'shredder',
                               phone => '');
 is($count, 1, 'find - all fields');
 
@@ -91,7 +91,19 @@ is(scalar @users, 1, 'find - limit');
 @users = Krang::User->find(offset => 1);
 is($users[0]->login, 'arobin', 'find - offset');
 
-#@users = Krang::User->find();
+@users = Krang::User->find(group_ids => [1,2,3]);
+isa_ok($_, 'Krang::User') for @users;
+is(scalar @users, 1, 'find - group_ids');
+is(scalar @{$users[0]->group_ids()}, 3, 'group_ids - count');
+
+# check_user_pass() tests
+##########################
+is(Krang::User->check_user_pass('',''), 0,
+   'check_user_pass() - failure 1');
+is(Krang::User->check_user_pass('admin',''), 0,
+   'check_user_pass() - failure 2');
+is(Krang::User->check_user_pass('admin', 'shredder'), 1,
+   'check_user_pass() - success');
 
 # delete() tests
 #################

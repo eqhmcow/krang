@@ -25,7 +25,7 @@ Krang::User - a means to access information on users
   ##########
   my $email 	= $user->email();
   my $first_name= $user->first_name();
-  my @group_ids = $user->group_ids();	# returns arrayref or array by context
+  my @group_ids = $user->group_ids();	# returns arrayref or array
   my $last_name = $user->last_name();
   my $login	= $user->login();
   my $password	= $user->password();
@@ -40,7 +40,7 @@ Krang::User - a means to access information on users
   $user->last_name('last_name');
   $user->login( 'loginX' );
   $user->mobile_phone( $phone_number );
-  $user->password( $password );		# stores MD5 of $SALT and $password
+  $user->password( $password );		# stores MD5 of $SALT, $password
   $user->phone( $phone_number );
 
 
@@ -243,6 +243,25 @@ sub init {
 }
 
 
+=item * $user_id = Krang::User->check_user_pass( $login, $password )
+
+Class method that retrieves the user object associated with $login and compares
+the value in the objects 'password' field with md5_hex( $SALT, $password ).
+If it is successful, the 'user_id' is returned, otherwise '0' is returned.
+
+=cut
+
+sub check_user_pass {
+    my ($self, $login, $password) = @_;
+
+    my ($user) = Krang::User->find(login => $login);
+    return 0 unless $user;
+
+    return md5_hex($SALT, $password) eq $user->{password} ?
+      $user->{user_id} : 0;
+}
+
+
 =item * $success = $user->delete()
 
 =item * $success = Krang::user->delete( $user_id )
@@ -330,7 +349,7 @@ SQL
 
     # alter query if save() has already been called
     if ($id) {
-        $query .=  "AND user_id != ?\n";
+        $query =~ s/login/user_id != ? AND login/;
         push @params, $id;
     }
 
@@ -358,7 +377,7 @@ SQL
 
 =item * @users = Krang::User->find( user_id => [1, 1, 2, 3, 5] )
 
-=item * @users = Krang::User->find( group_id => [1, 1, 2, 3, 5] )
+=item * @users = Krang::User->find( group_ids => [1, 1, 2, 3, 5] )
 
 =item * @user_ids = Krang::User->find( ids_only => 1, %params )
 
@@ -367,7 +386,7 @@ SQL
 Class method that returns an array of user objects, user ids, or a
 count.  Case-insensitive sub-string matching can be performed on any valid
 field by passing an argument like: "fieldname_like => '%$string%'" (Note: '%'
-characters must surround the sub-string).  The valid search fields are:
+characters must surround the sub-striqng).  The valid search fields are:
 
 =over 4
 
@@ -436,9 +455,11 @@ sub find {
     my $self = shift;
     my %args = @_;
     my ($fields, @params, $where_clause);
+    my %lookup_cols = %user_cols;
+    $lookup_cols{group_ids} = 1;
 
     # are we looking up group ids as well
-    my $groups = exists $args{group_id} ? 1 : 0;
+    my $groups = exists $args{group_ids} ? 1 : 0;
 
     # grab ascend/descending, limit, and offset args
     my $ascend = uc(delete $args{order_desc}) || ''; # its prettier w/uc() :)
@@ -456,28 +477,30 @@ sub find {
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.") if ($count && $ids_only);
 
-    # exclude 'element'
-    $fields = $count ? 'count(*)' :
-      ($ids_only ? 'user_id' : join(", ", grep {$_ ne 'element'}
-                                        keys %user_cols));
+    # build list of fields to select
+    if ($count) {
+        $fields = 'count(*)';
+    } elsif ($ids_only) {
+        $fields = 'u.user_id';
+    } else {
+        $fields = join(", ", map {"u.$_"} keys %user_cols);
+        $fields .= ", ug.user_group_id" if $groups;
+    }
 
     # set up WHERE clause and @params, croak unless the args are in
     # USER_RO or USER_RW
     my @invalid_cols;
     for my $arg (keys %args) {
         # don't use element
-        next if $arg eq 'element';
+        next if $arg eq 'password';
 
         my $like = 1 if $arg =~ /_like$/;
         ( my $lookup_field = $arg ) =~
           s/^(.+)_like$/($arg eq 'group' ? 'ug' : 'u'). $1/e;
 
-        push @invalid_cols, $arg unless exists $user_cols{$lookup_field};
+        push @invalid_cols, $arg unless exists $lookup_cols{$lookup_field};
 
-        # compute password for lookup
-        $args{$arg} = md5_hex($SALT, $args{$arg}) if $arg eq 'password';
-
-        if (($arg eq 'user_id' || $arg eq 'group_id') &&
+        if (($arg eq 'user_id' || $arg eq 'group_ids') &&
             ref $args{$arg} eq 'ARRAY') {
             my $field = $arg eq 'user_id' ? "u.user_id" : "ug.user_group_id";
             my $tmp = join(" OR ", map {"$field = ?"} @{$args{$arg}});
@@ -504,7 +527,10 @@ sub find {
     $query .= ", usr_user_group ug" if $groups;
 
     # add WHERE and ORDER BY clauses, if any
-    $query .= " WHERE $where_clause" if $where_clause;
+    if ($where_clause) {
+        $query .= " WHERE " . ($groups ? "u.user_id = ug.user_id AND" : "")
+          . "$where_clause";
+    }
     $query .= " ORDER BY $order_by $ascend" if $order_by;
 
     # add LIMIT clause, if any
@@ -530,41 +556,31 @@ sub find {
     }
 
     # construct user objects from results
-    while ($sth->fetchrow_arrayref()) {
+    my $id = 0;
+    while ($sth->fetch()) {
         # if we just want count or ids
         if ($single_column) {
             push @users, $row;
         } else {
+            if ($groups) {
+                if ($id != $row->{user_id}) {
+                    my %$hashref = map {$_ => $row->{$_}}
+                      grep {$_ ne 'user_group_id'} keys %$row;
+                    push @users, bless($hashref, $self);
+                }
+                push @{$users[$#users]->{group_ids}}, $row->{user_group_id};
+
+                $id = $row->{user_id}
+                  if ($id != $row->{user_id} || !defined $id);
+            } else {
             push @users, bless({%$row}, $self);
+            }
+
         }
     }
 
-    # finish statement handle
-    $sth->finish();
-
     # return number of rows if count, otherwise an array of ids or objects
     return $count ? $users[0] : @users;
-}
-
-
-# Either the fieldname 'login' or this method would have to change, I thought
-# the method would be easier...
-=item * $user_id = Krang::User->logon( $login, $password )
-
-Class method that retrieves the user object associated with $login and compares
-the value in the objects 'password' field with md5_hex( $SALT, $password ).
-If it is successful, the 'user_id' is returned, otherwise '0' is returned.
-
-=cut
-
-sub logon {
-    my ($self, $login, $password) = @_;
-
-    my ($user) = Krang::User->find(login => $login);
-    return 0 unless $user;
-
-    return md5_hex($SALT, $password) eq $user->{password} ?
-      $user->{user_id} : 0;
 }
 
 
@@ -639,14 +655,14 @@ sub save {
     $self->{user_id} = $dbh->{mysql_insertid} unless $id;
 
     # associate user with groups if any
-    if (exists $self->{group_id}) {
+    if (exists $self->{group_ids}) {
         eval {
             $dbh->do("LOCK TABLES usr_user_group WRITE");
             $dbh->do("DELETE FROM usr_user_group WHERE user_id = ?",
                      undef, ($id));
             my $sth = $dbh->prepare("INSERT INTO usr_user_group VALUES " .
                                     "(?,?)");
-            $sth->execute(($id, $_)) for @{$self->{group_id}};
+            $sth->execute(($id, $_)) for @{$self->{group_ids}};
             $dbh->do("UNLOCK TABLES");
         };
 
