@@ -709,15 +709,20 @@ sub save {
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
-    # freeze context for database store
-    my $context_array = $self->{context};
-    $self->{context} = freeze($context_array);
+    my $context_array;
+    if ($self->{context}) {
+        # freeze context for database store
+        $context_array = $self->{context};
+        $self->{context} = freeze($context_array);
+    }
  
     # bind parameters
     my @params = map {$self->{$_}} @save_fields;
 
-    # restore context in object
-    $self->{context} = $context_array;        
+    if ($self->{context}) {
+        # restore context in object
+        $self->{context} = $context_array;        
+    }
 
     # need user_id for updates
     push @params, $id if $id;
