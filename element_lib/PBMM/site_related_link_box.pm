@@ -20,6 +20,14 @@ sub new {
    my %args = ( name => 'site_related_link_box',
                 children => 
                 [
+                     Krang::ElementClass::Text->new(name         => "number_to_display",
+                                                    min => 1,
+                                                        max => 1,
+                                                        allow_delete => 1,
+                                                        reorderable => 0,
+                                                        required => 1,
+                                                        default => '10' ),
+                                                                                
                     Krang::ElementClass::CheckBox->new(name => 'table_background',
                                                        min => 1,
                                                         max => 1,

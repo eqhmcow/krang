@@ -15,8 +15,9 @@ sub new {
    my %args = ( name => 'issue_cover',
                 children => [
                     PBMM::meta->new(),
-                    Krang::ElementClass::Text->new(name => 'issue_id',
-                                       max  => 1),
+                    Krang::ElementClass::Text->new( name => 'issue_id',
+                                                    indexed => 1,
+                                                    @fixed),
                     Krang::ElementClass::CheckBox->new(name => 'enhanced_content',
                                            @fixed),
                     PBMM::promo->new(),
