@@ -1,0 +1,124 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+use Getopt::Long;
+use Pod::Usage;
+
+=pod
+
+=head1 NAME
+
+krang_floodfill - create fake Krang data the easy way
+
+=head1 SYNOPSIS
+
+  krang_floodfill --sites 5 --cats 10
+
+=head1 DESCRIPTION
+
+This script creates fake Krang data for use during testing.  It uses
+the standard UNIX dict file in F</usr/dict/words> to generate random
+text.
+
+=head1 OPTIONS
+
+  --sites - number of sites to create, defaults 7to 3
+
+  --cats  - number of categories to create per site, defaults to 5
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::Script;
+use Krang::Conf qw(KrangRoot);
+        
+use Krang::Site;
+use Krang::Category;
+
+my ($help, $man);
+my $sites = 3;
+my $cats  = 5;
+pod2usage(2) unless
+  GetOptions(help      => \$help,
+             man       => \$man,
+             'sites=s' => \$sites,
+             'cats=s'  => \$cats,
+            );
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+# create sites
+my (@sites, @cats);
+for(1 .. $sites) {
+    my $name = get_word();
+    print STDERR "Creating site $name.com...\n";
+    my $site = Krang::Site->new(publish_path => "/tmp/${name}_publish/",
+                                preview_path => "/tmp/${name}_preview/",
+                                preview_url  => "preview.$name.com",
+                                url          => "$name.com");
+    $site->save();
+    push(@sites, $site);
+
+    # create categories
+    my ($root) = Krang::Category->find(site_id => $site->site_id);
+    for(1 .. $cats) {
+        my $cname = get_word();
+        print STDERR "Creating category $name.com/$cname...\n";
+        my $cat = Krang::Category->new(dir       => $cname,
+                                       parent_id => $root->category_id);
+        $cat->save();
+        push(@cats, $cat);
+    }
+}
+
+
+# get a random word
+BEGIN {
+    my @words;
+    open(WORDS, "/usr/dict/words") 
+      or die "Can't open /usr/dict/words: $!";
+    while (<WORDS>) {
+        chomp;
+        push @words, $_;
+    }
+    srand (time ^ $$);
+
+    sub get_word {
+        return lc $words[int(rand(scalar(@words)))];
+    }
+}
+                      
+
+# we outy
+exit(0);
