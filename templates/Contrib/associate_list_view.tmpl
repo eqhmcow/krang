@@ -26,13 +26,11 @@
 
 <form name="add_contrib_form" method="POST">
 <input type="hidden" name="rm" value="add">
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 </form>
 
 <form name="edit_contrib_form" method="POST">
 <input type="hidden" name="rm" value="edit">
 <input type="hidden" name="contrib_id" value="">
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 </form>
 
 <div class="dark-bar">Contributor List</div>
@@ -48,6 +46,40 @@
 
 <tmpl_if associate_mode>
 <!-- List of currently associated contribs -->
+<TMPL_IF associated_contributors>
+
+  <table cellspacing="0" width="100%">
+
+      <tr class="form-head">
+          <th>Last Name</th>
+          <th>First Name</th>
+          <th>Type</th>
+          <th>Order</th>
+          <th>[]</th>
+      </tr>
+
+  <tmpl_loop contributors>
+      <tr>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML last></td>
+          <td class="form-cell"><tmpl_var ESCAPE=HTML first></td>
+          <td class="form-cell"><tmpl_loop types><tmpl_var ESCAPE=HTML type_name><tmpl_unless __last__>, </tmpl_unless></tmpl_loop></td>
+          <td class="form-cell"><a href="javascript:edit_contrib('<tmpl_var ESCAPE=HTML contrib_id>')">Edit</a></td>
+          <td class="form-cell"><input type="checkbox" name="contrib_delete_list" value="<tmpl_var ESCAPE=HTML contrib_id>"></td>
+      </tr>
+
+  </tmpl_loop>
+ 
+  </table>
+
+  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()"></div>
+
+<TMPL_ELSE>
+
+  <b>No Contributors Found</b>
+
+</TMPL_IF>
+
+
 </tmpl_if>
 
 
@@ -70,7 +102,6 @@ SEARCH
 
 <form name="delete_selected_form" method="POST">
 <input type="hidden" name="rm" value="delete_selected">
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 
 
 <TMPL_IF contributors>

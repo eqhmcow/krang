@@ -50,6 +50,7 @@
 
 
 <form name="edit_contrib_form" method="POST">
+<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <tmpl_if add_mode>
   <input type="hidden" name="rm" value="save_add">
 <tmpl_else>

@@ -124,12 +124,12 @@ sub search {
     my %ui_messages = ( @_ );
 
     my $q = $self->query();
-    my $t = $self->load_tmpl('list_view.tmpl', loop_context_vars=>1);
-
+    my $t = $self->load_tmpl('list_view.tmpl', associate=>$q, loop_context_vars=>1);
     $t->param(%ui_messages) if (%ui_messages);
 
-    # To be replaced with Krang::Contrib->simple_find( $q->param('search_filter') );
-    my @contributors = Krang::Contrib->find();
+    # Do simple search based on search field
+    my $search_filter = $q->param('search_filter') || '';
+    my @contributors = Krang::Contrib->find(simple_search=>$search_filter);
 
     # To be replaced with paging
     my @contrib_tmpl_data = ( map { {
@@ -141,7 +141,7 @@ sub search {
 
     $t->param(contributors => \@contrib_tmpl_data);
 
-    return $t->output();
+    return $t->output() . $self->dump_html();
 }
 
 
@@ -152,10 +152,14 @@ Invoked by direct link from Krang::CGI::Story,
 this run-mode provides an entry point through which
 Contributors may be associated with Story objects.
 
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+It is expected that the story object with which we
+are to associate contributors be available via the 
+%session in the key 'story'.
+
+When the user clicks "save" or "cancel" they will be
+returned to the "edit" run-mode of Krang::CGI::Story, e.g.:
+
+  http://server/story.pl?rm=edit
 
 =cut
 
@@ -239,7 +243,7 @@ sub add {
     my %ui_messages = ( @_ );
 
     my $q = $self->query();
-    my $t = $self->load_tmpl("edit_view.tmpl");
+    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
     $t->param(add_mode => 1);
     $t->param(%ui_messages) if (%ui_messages);
 
@@ -255,7 +259,7 @@ sub add {
     # Propagate to template
     $t->param($contrib_tmpl);
 
-    return $t->output();
+    return $t->output() . $self->dump_html();
 }
 
 
@@ -292,6 +296,7 @@ sub save_add {
     die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
 
     $self->do_update_contrib($c);
+    $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
 
     return $self->search(message_contrib_added=>1);
 }
@@ -310,7 +315,7 @@ sub cancel_add {
     my $self = shift;
 
     my $q = $self->query();
-    $q->delete( $q->param() );
+    $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
 
     return $self->search(message_add_cancelled=>1);
 }
@@ -348,7 +353,7 @@ sub save_stay_add {
 
     # Set up for edit mode
     my $contrib_id = $c->contrib_id();
-    $q->delete( $q->param() );
+    $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
     $q->param(contrib_id => $contrib_id);
     $q->param(rm => 'edit');
 
@@ -387,7 +392,7 @@ sub edit {
     # Stash it in the session for later
     $session{EDIT_CONTRIB} = $c;
 
-    my $t = $self->load_tmpl("edit_view.tmpl");
+    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
     $t->param(%ui_messages) if (%ui_messages);
 
     # Convert Krang::Contrib object to tmpl data
@@ -396,7 +401,7 @@ sub edit {
     # Propagate to template
     $t->param($contrib_tmpl);
 
-    return $t->output();
+    return $t->output() . $self->dump_html();
 }
 
 
@@ -432,6 +437,7 @@ sub save_edit {
     die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
 
     $self->do_update_contrib($c);
+    $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
 
     return $self->search(message_contrib_saved=>1);
 }
@@ -450,7 +456,7 @@ sub cancel_edit {
     my $self = shift;
 
     my $q = $self->query();
-    $q->delete( $q->param() );
+    $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
 
     return $self->search(message_save_cancelled=>1);
 }
@@ -488,7 +494,7 @@ sub save_stay_edit {
 
     # Set up for edit mode
     my $contrib_id = $c->contrib_id();
-    $q->delete( $q->param() );
+    $q->delete( keys(%{&CONTRIB_PROTOTYPE}) );
     $q->param(contrib_id => $contrib_id);
     $q->param(rm => 'edit');
 
