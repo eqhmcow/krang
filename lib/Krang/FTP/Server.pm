@@ -4,6 +4,7 @@ use warnings;
 use Krang::DB qw(dbh);
 use Krang::Conf;
 use Krang::User;
+use Krang::Log qw(debug info critical);
 use Net::FTPServer;
 use Krang::FTP::FileHandle;
 use Krang::FTP::DirHandle;
@@ -41,7 +42,7 @@ For installation and configuration instructions see L<Krang::Admin>
 
 =head1 LIMITATIONS
 
-Only GET, PUT and DELETE are implemented for templates.  No
+Only GET, PUT and DELETE are implemented for templates and media.  No
 modification of categories is supported.
 
 =head1 INTERFACE
@@ -69,7 +70,6 @@ sub pre_configuration_hook {
   # add to version info
   $self->{version_string} .= " Krang::FTP::Server";
   
-  print STDERR "Bricolage FTP Server Started\n" if FTP_DEBUG;
 }
 
 =item authenticaton_hook($user, $pass, $user_is_anon)
@@ -77,30 +77,46 @@ sub pre_configuration_hook {
 When a user logs in authentication_hook() is called to check their
 username and password.  This method calls
 Krang::User->find() using the given username and then
-checks the password.  Returns -1 on login failure or 0 on success.  As
-a side-effect this method stashes the Krang::User object
-into $self->{user_obj}.
+checks the password.  Also stores the Krang::User object into
+$self->{user_obj}. Returns -1 on login failure or 0 on success.
 
 =cut
 
 sub authentication_hook {
-  my $self = shift;
-  my $user = shift;
-  my $pass = shift;
-  my $user_is_anon = shift;
- 
-  # disallow anonymous access.
-  return -1 if $user_is_anon;
- 
-  # lookup user and store in object
-  my $u = Krang::User->find({ login => $user });
-  $self->{user_obj} = $u;
+    my $self = shift;
+    my $user = shift;
+    my $pass = shift;
+    my $user_is_anon = shift;
 
-  # return failure if authentication fails.
-  return -1 unless $u && $u->chk_password($pass);
+    # log this attempt to login
+    info("Username=$user, password=$pass attempting to login to FTP Server.");
  
-  # successful login.
-  return 0;
+    # disallow anonymous access.
+    return -1 if $user_is_anon;
+
+
+    # get user object
+    my @users = Krang::User->find( login => $user );
+    
+    $self->{user_obj} = $users[0];
+ 
+    # return failure if authentication fails.
+#    return -1 unless Krang::User->logon($user,$pass);
+ 
+    # successful login.
+    return 0;
+}
+
+=item root_directory_hook()
+
+Net::FTPServer calls this method to get a DirHandle for the root
+directory.  This method just calls Krang::FTP::DirHandle->new().
+
+=cut
+
+sub root_directory_hook {
+  my $self = shift;
+  return new Bric::Util::FTP::DirHandle ($self);
 }
 
 =item system_error_hook()
@@ -115,7 +131,6 @@ it never really gets called!)
 
 sub system_error_hook {
   my $self = shift;
-  print STDERR __PACKAGE__, "::system_error_hook()\n" if FTP_DEBUG;
   return delete $self->{error}
     if exists $self->{error};
   return "Unknown error occurred.";
