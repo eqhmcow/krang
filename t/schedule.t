@@ -1,5 +1,6 @@
 use strict;
 
+use Carp qw/verbose croak/;
 use Data::Dumper;
 use File::Spec;
 use IO::File;
@@ -291,8 +292,9 @@ is($next_run, $now_mysql, 'next_run check 14');
 
 
 # run test - 1 tests should run
-my $path = File::Spec->catfile($ENV{KRANG_ROOT}, "schedule_test.log");
-my $log = IO::File->new(">$path");
+my $path = File::Spec->catfile($ENV{KRANG_ROOT}, 'logs', "schedule_test.log");
+my $log = IO::File->new(">$path") ||
+  croak("Unable to open logfile: $!");
 my $count = Krang::Schedule->run($log);
 is($count, 1, 'run() succeeded :).');
 
