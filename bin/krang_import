@@ -1,0 +1,172 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_import - import Krang data sets (.kds files)
+
+=head1 SYNOPSIS
+
+List the contents of export.kds, but don't import anything:
+
+  $ krang_import --list export.kds
+
+Import the contents of export.kds into the system:
+
+  $ krang_import export.kds
+
+=head1 DESCRIPTION
+
+This script takes a Bricolage element tree and constructs a matching
+Krang element set.  The element set is output as a directory
+containing class files in the currently configured ElementDir.
+
+=head1 OPTIONS
+
+=over 4
+
+=item --list
+
+Just list the contents of the data set, don't import.
+
+=item --no-update
+
+Never attempt to update existing objects, even when duplicates exist.
+You probably don't want this option unless you're importing into an
+entirely empty system and you want to know if that's not the case.
+
+=item --verbose
+
+Prints a running dialog of what's happening.  Repeat (--verbose
+--verbose) and you'll be treated to a directory listing of the created
+.kds at the end.
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::Script;
+use Krang::Conf qw(KrangRoot ElementLibrary);
+use Getopt::Long;
+use Pod::Usage;
+use Krang::DataSet;
+use Krang::Story;
+use Krang::Media;
+use Krang::Template;
+use Krang::Contrib;
+use Krang::Category;
+use Krang::Site;
+use Krang::User;
+
+my ($help, $man, $list, $no_update);
+my $verbose = 0;
+pod2usage(2) unless
+  GetOptions(help       => \$help,
+             man        => \$man,
+             'verbose+' => \$verbose,
+             list       => \$list,
+             'no-update'=> \$no_update,
+            );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+# get input file
+my $file = shift(@ARGV);
+pod2usage("Missing filename command-line parameter!\n")
+  unless $file;
+
+# validate filename
+die "Specified file '$file' does not exist."
+  unless -e $file;
+die "Input filename must end in .kds or .kds.gz\n"
+  unless $file =~ /\.kds$/ or $file =~ /\.kds\.gz$/;
+
+# make sure that's it
+pod2usage("Unrecognized options to krang_export: '" . join(' ', @ARGV) . "'\n")
+  if @ARGV;
+
+my $set = Krang::DataSet->new(path            => $file, 
+                              import_callback => \&import_callback);
+
+# produce a listing?
+if ($list) {
+    foreach my $row ($set->list) {
+        my ($class, $id) = @$row;
+        printf("%15s => %6d\n", $class, $id);
+    }
+    exit(0);
+}
+
+# get a hash of maximum IDs for each class in the import.  Used to
+# detect updates.
+my %classes = map { ($_->[0], 1) } $set->list;
+my %max_id;
+foreach my $class (keys %classes) {
+    my $id_field = $class;
+    $id_field =~ s/^Krang:://;
+    $id_field = lc($id_field) . "_id";
+    my ($max) = $class->find(ids_only   => 1, 
+                             order_by   => $id_field, 
+                             order_desc => 1, 
+                             limit      => 1);
+    $max_id{$class} = $max || 0;
+}
+
+# do the import
+eval { $set->import_all(($no_update ? (no_update => 1) : ())); };
+if ($@ and ref $@ and $@->isa('Krang::DataSet::ImportRejected')) {
+    print STDERR "Import failed for the following reasons:\n\n",
+      $@->message, "\n";
+    exit 1;
+}
+
+print "Import completed.\n";
+exit 0;
+
+sub import_callback {
+    my %arg = @_;
+    my $object = $arg{object};
+
+    if ($verbose) {
+        my ($class, $id) = Krang::DataSet::_obj2id($object);
+        if ($id > $max_id{$class}) {
+            print STDERR "Imported $class => $id\n";
+        } else {
+            print STDERR "Updated $class => $id\n";
+        }
+    }
+}
