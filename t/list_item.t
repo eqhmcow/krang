@@ -57,9 +57,27 @@ is($li_3->order, 2, 'second list item in list is order 2');
 $li_3->order( 1 );
 $li_3->save();
 
-is($li_3->order, 1, 'second list item added to list is now order 1');
+is($li_3->order, 1, 'second list item added to list is now swapped to order 1');
 
 # reload $li_2;
 $li_2 = (Krang::ListItem->find( list_item_id => $li_2->list_item_id ))[0];
-is($li_2->order, 2, 'first list item added to list is now order 2');
+is($li_2->order, 2, 'first list item added to list is now swapped to order 2');
+
+my $li_4 = Krang::ListItem->new(  list => $list2,
+                                  parent_list_item => $li_1,
+                                  data => '3rd 2nd level data here',
+                                  order => 1 );
+
+$li_4->save();
+END { $li_4->delete };
+
+is($li_4->order, 1, 'third list item added to list is placed at order 1');
+
+# reload $li_2;
+$li_3 = (Krang::ListItem->find( list_item_id => $li_3->list_item_id ))[0];
+is($li_3->order, 2, 'second list item added to list is now shifted to order 2');
+
+# reload $li_2;
+$li_2 = (Krang::ListItem->find( list_item_id => $li_2->list_item_id ))[0];
+is($li_2->order, 3, 'first list item added to list is now shifted to order 3');
 
