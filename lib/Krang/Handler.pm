@@ -35,6 +35,10 @@ Both requests:
 
   /path/to/document/root/someasset.gif
 
+=item Krang::Handler->access_handler
+
+Access Control.  Checks to make sure the user has a browser that will
+work with Krang.
 
 =item Krang::Handler->authen_handler
 
@@ -78,6 +82,7 @@ use HTML::Template;
 use Digest::MD5 qw(md5_hex md5);
 use Krang::Log qw(critical info debug);
 use CGI ();
+use HTTP::BrowserDetect;
 
 # Login app name
 use constant LOGIN_APP => 'login.pl';
@@ -177,6 +182,25 @@ sub trans_handler ($$) {
         return DECLINED;
 
     }
+}
+
+# Check the browser using HTTP::BrowserDetect and bounce old browsers
+# before they can get into trouble.
+sub access_handler ($$) {
+    my $self = shift;
+    my ($r) = @_;
+
+    # is it Netscape 6+ or IE 5+?
+    my $bd = HTTP::BrowserDetect->new($r->header_in('User-Agent'));
+    if (($bd->browser_string eq 'Netscape' and $bd->major >= 5) or 
+        ($bd->browser_string eq 'MSIE'     and $bd->major >= 5)) {
+        return OK;
+    }
+
+    # failure
+    critical("Unsupported browser detected: " . $r->header_in('User-Agent'));
+    $r->custom_response(FORBIDDEN,  "<h1>Unsupported browser detected.</h1>This application requires Netscape 6+ or Internet Explorer 5+.");
+    return FORBIDDEN;
 }
 
 

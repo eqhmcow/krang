@@ -139,6 +139,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 
          AuthType          Krang::Handler
          AuthName          <tmpl_var InstanceName>
+         PerlAccessHandler Krang::Handler->access_handler
          PerlAuthenHandler Krang::Handler->authen_handler
          PerlAuthzHandler  Krang::Handler->authz_handler
          PerlLogHandler    Krang::Handler->log_handler
@@ -162,6 +163,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 
        AuthType Krang::Handler
        AuthName <tmpl_var InstanceName>
+       PerlAccessHandler Krang::Handler->access_handler
        PerlAuthenHandler Krang::Handler->authen_handler
        PerlAuthzHandler  Krang::Handler->authz_handler
        PerlLogHandler    Krang::Handler->log_handler
