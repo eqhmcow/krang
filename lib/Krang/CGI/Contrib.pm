@@ -119,7 +119,7 @@ Display a list of matching contributors, or all
 contributors if no filter text is provided.
 
 This run-mode expects an optional parameters "search_filter"
-wich is expected to contain the text string which is used to 
+which is expected to contain the text string which is used to 
 query contributors.
 
 =cut
@@ -526,7 +526,7 @@ Delete a set of contribuitors, specified by check-mark
 on the "Contributor List" screen provided by the "search" 
 run-mode.  Return to the "search" run-mode.
 
-This mode expects the query param "contrib_delete_list"
+This mode expects the query param "krang_pager_rows_checked"
 to contain an array of contrib_id values which correspond
 to contributor records to be deleted.
 
@@ -936,7 +936,7 @@ sub do_update_contrib {
             return (duplicate_name=>1);
         } else {
             # Not our error!
-            $@->rethrow();
+            die($@);
         }
     }
 
