@@ -227,7 +227,7 @@ exist without your hard work.
 
 =item Scalar-List-Utils
 
- Version: 1.09
+ Version: 1.14
  License: Perl License
 
 =item Set-IntRange
