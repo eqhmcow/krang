@@ -671,7 +671,7 @@ sub template_search_path {
 
 
     # Root dir for this instance.
-    my @root = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
+    my $root = catdir(KrangRoot, 'data', 'templates', Krang::Conf->instance());
 
     if (exists($args{category})) {
         if (!defined($args{category})) {
@@ -679,9 +679,9 @@ sub template_search_path {
             # (but check for template testing)
             if ($self->{is_preview} &&
                 exists($self->{testing_template_path}{$user_id})) {
-                return ($self->{testing_template_path}{$user_id}, catfile(@root));
+                return ($self->{testing_template_path}{$user_id}, $root);
             }
-            return catfile(@root);
+            return $root;
         }
 
         $category = $args{category};
@@ -701,7 +701,7 @@ sub template_search_path {
             push @paths, catfile($self->{testing_template_path}{$user_id}, @subdirs);
         }
 
-        push @paths, catfile(@root, @subdirs);
+        push @paths, catfile($root, @subdirs);
         pop @subdirs;
     }
 
@@ -711,7 +711,7 @@ sub template_search_path {
         push @paths, $self->{testing_template_path}{$user_id};
     }
 
-    push @paths, catfile(@root);
+    push @paths, $root;
 
     return @paths;
 
