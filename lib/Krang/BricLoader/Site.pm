@@ -12,8 +12,9 @@ Krang::BricLoader::Site -
 	OR
  my @sites = Krang::BricLoader::Site->new(path => $filepath);
 
- # where $set is a Krang::BricLoader::DataSet
- $set->add(object => $site);
+ # add set of sites to dataset or one at a time
+ $set->add_site(\@sites);
+ $set->add_site($site);
 
  # obtain Krang XML representation of the Site
  my $xml = $site->serialize_xml;
@@ -25,6 +26,23 @@ in their own right within Krang.  This receives user-generated XML input that
 explicity describes the relationships between 'Site's and categories so that
 each set of asset types may be successfully related within a
 Krang::BricLoader::DataSet.
+
+Input should be of the following form:
+
+<?xml version="1.0" encoding="UTF-8"?>
+<sites xmlns:xsi="http://www.w3.org/2001/XMLSchema"
+ xsi:noNameSpaceSchemaLocation="sites.xsd">
+	<site>
+		<category>bricolage_category/</category>
+		<preview_path>/full/preview/path</preview_path>
+		<publish_path>relative/publish/path</publish_path>
+		<preview_url>preview.site.com</preview_url>
+		<url>site.com</url>
+	</site>
+	<site>
+	...
+	</site>
+</sites>
 
 =cut
 
@@ -40,10 +58,14 @@ use warnings;
 
 # External Modules
 ###################
+use XML::Simple qw(XMLin);
 
 # Internal Modules
 ###################
-
+use Krang::Conf;
+# BricLoader mods :)
+use Krang::BricLoader::Category;
+use Krang::BricLoader::DataSet;
 
 #
 # Package Variables
@@ -65,15 +87,36 @@ use warnings;
 =over
 
 
-=item C<< new >>
+=item C<< $site = Krang::BricLoader::Site->new(xml => $xml_ref) >>
 
+=item C<< @sites = Krang::BricLoader::Site->new(path => 'sites.xml') >>
 
+Constructs a single or set of objects from a reference to an xml string or
+an xml file respectively.  XML must be of the form describe in DESCRIPTION or
+an exception will be thrown.
 
 =cut
 
 sub new {
+    my ($pkg, %args) = @_;
+    my $self = bless({}, $pkg);
+    my $xml = $args{xml};
+    my $path = $args{path};
+
+    if ($xml || ($path && -e $path)) {
+        _validate_input(string => $xml) if $xml;
+        _validate_input(file => $path) if $path;
+    } else {
+        croak("A value must be passed with either the 'path' or 'xml' arg.");
+    }
+
+    return $path;
 }
 
+# make sure input conforms to the xml schema
+sub _validate_input {
+    my ($self, %args) = @_;
+}
 
 =item C<< serialize_xml >>
 
