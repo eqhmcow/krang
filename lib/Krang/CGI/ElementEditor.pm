@@ -887,14 +887,14 @@ sub element_save {
     my $query = $self->query();
     my $path    = $query->param('path') || '/';
 
+    # pass to bulk edit if bulk editing
+    return $self->element_bulk_save(%args) if $query->param('bulk_edit');
+
     # saving should check for reorder, else confusing to the editor
     $self->revise('reorder');
 
-    my $root = $args{element};
+    my $root    = $args{element};
     my $element = _find_element($root, $path);
-
-    # pass to bulk edit it bulk editing
-    return $self->element_bulk_save(%args) if $query->param('bulk_edit');
 
     # validate data
     my @msgs;
@@ -971,7 +971,7 @@ sub revise {
         for (0 .. $#old) {
             $new[$query->param("order_$_") - 1] = $old[$_];
             $old_to_new[$_] = $query->param("order_$_") - 1;
-        }        
+        }
     } elsif ($op eq 'delete') {
         for (0 .. $#old) {
             if ($query->param("remove_$_")) {

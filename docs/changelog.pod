@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in L<Krang::CGI::ElementEditor> - the new "save always
+reorders" functionality that is part of 1.100 was breaking bulk-edit,
+where reordering never happens.  This now works properly.  [Peter]
+
+
+=item *
+
 Added error-handling for Stories that return a zero-length string when
 previewed/published.  [Peter]
 
