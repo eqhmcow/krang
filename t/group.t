@@ -502,6 +502,78 @@ is( Krang::Group->user_admin_permissions("admin_users_limited"),
 $admin_group->may_publish(1);
 $admin_group->save();
 
+
+# try creating a four level deep category hierarchy, setting the
+# second level hidden.  All categories below should be hidden too.
+{
+    my $site = Krang::Site->new(preview_url  => 'prev.hubba.com',
+                                url          => 'hubba.com',
+                                preview_path => '/tmp/hubba.pre',
+                                publish_path => '/tmp/hubba',
+                               );
+    $site->save();
+    my ($root) = Krang::Category->find(site_id => $site->site_id());
+
+    my $one = Krang::Category->new(dir => 'one',
+                                   parent_id => $root->category_id);
+    $one->save();
+    my $two = Krang::Category->new(dir => 'two',
+                                   parent_id => $one->category_id);
+    $two->save();
+    my $three = Krang::Category->new(dir => 'three',
+                                     parent_id => $two->category_id);
+    $three->save();
+    my $four = Krang::Category->new(dir => 'four',
+                                    parent_id => $three->category_id);
+    $four->save();
+    
+    # make sure that worked out
+    is($one->url, 'hubba.com/one/');
+    is($two->url, 'hubba.com/one/two/');
+    is($three->url, 'hubba.com/one/two/three/');
+    is($four->url, 'hubba.com/one/two/three/four/');
+
+    # set one to be hidden
+    my $group = Krang::Group->new(name => 'hubba');
+    $group->categories($one->category_id => 'hide');
+    $group->save();
+    $admin_user->group_ids_push( $group->group_id );
+    $admin_user->save();
+
+    # now make sure the kids don't come back from find
+    my @cats = Krang::Category->find(may_see => 1);
+    ok(grep { $_->category_id == $root->category_id } @cats);
+    ok(not(grep { $_->category_id == $one->category_id } @cats),
+       '/one should be hidden');
+    ok(not(grep { $_->category_id == $two->category_id } @cats),
+       '/one/two should be hidden');
+    ok(not(grep { $_->category_id == $three->category_id } @cats),
+       '/one/two/three should be hidden');
+    ok(not(grep { $_->category_id == $four->category_id } @cats),
+      '/one/two/three/four should be hidden');
+
+    # try rebuilding
+    Krang::Group->rebuild_category_cache;
+    @cats = Krang::Category->find(may_see => 1);
+    ok(grep { $_->category_id == $root->category_id } @cats);
+    ok(not(grep { $_->category_id == $one->category_id } @cats),
+       '/one should be hidden');
+    ok(not(grep { $_->category_id == $two->category_id } @cats),
+       '/one/two should be hidden');
+    ok(not(grep { $_->category_id == $three->category_id } @cats),
+       '/one/two/three should be hidden');
+    ok(not(grep { $_->category_id == $four->category_id } @cats),
+      '/one/two/three/four should be hidden');
+
+
+    $admin_user->group_ids_pop();
+    $admin_user->save();
+    $group->delete();
+    $_->delete for ($four, $three, $two, $one, $site);
+}
+
+
+
 # Clean up
 $admin_user->group_ids_pop();
 $admin_user->save();
