@@ -2,7 +2,9 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 v1.022 - Under Development
+
+
+=head2 v1.023 - Under Development
 
 =over
 
@@ -10,6 +12,13 @@ This document contains a list of changes for each release of Krang.
 
 Added platform support for Gentoo release 1.5.2, thanks to a patch 
 from Fred Moyer (fmoyer@plusthree.com) [Perrin]
+
+=back
+
+
+=head2 v1.022
+
+=over
 
 =item *
 
