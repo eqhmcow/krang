@@ -18,7 +18,7 @@ use Krang;
 
 Krang::DataSet - Krang interface to XML data sets
 
-=head2 SYNOPSIS
+=head1 SYNOPSIS
 
 Creating data sets:
 
