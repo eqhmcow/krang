@@ -367,7 +367,7 @@ sub preview_urls {
     my $site = $self->category->site;
     my $site_url = $site->url;
     my $site_preview_url = $site->preview_url;
-    @urls = map { s/^\Q$site_url\E/$site_preview_url/ } @urls;
+    @urls = map { s/^\Q$site_url\E/$site_preview_url/; $_ } @urls;
 
     return @urls;
 }
