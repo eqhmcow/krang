@@ -109,25 +109,31 @@ This screen allows the end-user to add a new Template object.
 =cut
 
 sub add {
-	my $self = shift;
-        my %args = @_;
-	my $q = $self->query();
-        $q->param('add_mode', 1);
+    my $self = shift;
+    my %args = @_;
+    my $q = $self->query();
+    my $template;
 
-        my $template = Krang::Template->new();
+    $q->param('add_mode', 1);
 
-        # add template to session
-        $session{template} = $template;
+    if ($q->param('errors')) {
+        $template = $session{template};
+    } else {
+        $template = Krang::Template->new();
+    }
 
-        my $t = $self->load_tmpl('edit.tmpl',
-                                 associate => $q,
-                                 loop_context_vars => 1);
+    # add template to session
+    $session{template} = $template;
 
-        $t->param($self->get_tmpl_params($template));
+    my $t = $self->load_tmpl('edit.tmpl',
+                             associate => $q,
+                             loop_context_vars => 1);
 
-        $t->param(%args) if %args;
+    $t->param($self->get_tmpl_params($template));
 
-	return $t->output();
+    $t->param(%args) if %args;
+
+    return $t->output();
 }
 
 
@@ -139,59 +145,77 @@ mode.
 
 =cut
 
-
 sub add_cancel {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
+    my $q = $self->query();
 
-        add_message('message_add_cancelled');
+    add_message('message_add_cancelled');
 
-	return $self->search();
+    return $self->search();
 }
 
 
 
 =item add_save
 
-Description of run-mode add_save...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Saves changes to the template object the end-user enacted on the 'Add' screen.
+The user is sent to 'search' if save succeeds and back to the 'Add' screen if
+it fails.
 
 =cut
 
-
 sub add_save {
-	my $self = shift;
+    my $self = shift;
+    my $q = $self->query();
+    my $template = $session{template};
+    croak("No object in session") unless ref $template;
 
-	my $q = $self->query();
+    # update template with CGI values
+    $self->update_template($template);
 
-	return $self->dump_html();
+    # validate
+    my %errors = $self->validate($template);
+    return $self->add(%errors) if %errors;
+
+    # save
+    %errors = $self->_save($template);
+    return $self->add(%errors) if %errors;
+
+    add_message('message_saved');
+
+    return $self->search();
 }
 
 
 
 =item add_save_stay
 
-Description of run-mode add_save_stay...
-
-  * Purpose
-  * Expected parameters
-  * Function on success
-  * Function on failure
+Validates changes to the template from the 'Add' screen, saves the updated
+object to the database, and returns to the 'Edit' screen.
 
 =cut
 
-
 sub add_save_stay {
-	my $self = shift;
+    my $self = shift;
+    my $q = $self->query();
+    my $template = $session{template};
+    croak("No object in session") unless ref $template;
 
-	my $q = $self->query();
+    # update template with CGI values
+    $self->update_template($template);
 
-	return $self->dump_html();
+    # validate
+    my %errors = $self->validate($template);
+    return $self->add(%errors) if %errors;
+
+    # save
+    %errors = $self->_save($template);
+    return $self->add(%errors) if %errors;
+
+    add_message('message_saved');
+
+    return $self->edit();
 }
 
 
@@ -279,24 +303,24 @@ The mode expects the query parameter 'template_id'.
 =cut
 
 sub delete {
-	my $self = shift;
-	my $q = $self->query();
-        my $template_id = $q->param('template_id');
+    my $self = shift;
+    my $q = $self->query();
+    my $template_id = $q->param('template_id');
 
-        eval {Krang::Template->delete($template_id)};
-        if ($@){
-            if (ref $@ && $@->isa('Krang::Template::Checkout')) {
-                critical("Unable to delete template id '$template_id': $@");
-                add_message('error_deletion_failure',
-                            template_id => 'template_id');
-            } else {
-                croak($@);
-            }
+    eval {Krang::Template->delete($template_id)};
+    if ($@){
+        if (ref $@ && $@->isa('Krang::Template::Checkout')) {
+            critical("Unable to delete template id '$template_id': $@");
+            add_message('error_deletion_failure',
+                        template_id => 'template_id');
         } else {
-            add_message('message_deleted');
+            croak($@);
         }
+    } else {
+        add_message('message_deleted');
+    }
 
-	return $self->search();
+    return $self->search();
 }
 
 
@@ -314,34 +338,34 @@ the 'search' screen.
 =cut
 
 sub delete_selected {
-	my $self = shift;
-	my $q = $self->query();
+    my $self = shift;
+    my $q = $self->query();
 
-        my @template_ids = $q->param('krang_pager_rows_checked');
+    my @template_ids = $q->param('krang_pager_rows_checked');
 
-        return $self->search unless @template_ids;
+    return $self->search unless @template_ids;
 
-        my @bad_ids;
-        for my $t(@template_ids) {
-            debug(__PACKAGE__ . ": attempting to delete template id '$t'.");
-            eval {Krang::Template->delete($t);};
-            if ($@) {
-                if (ref $@ && $@->isa('Krang::Template::Checkout')) {
-                    critical("Unable to delete template id '$t': $@");
-                    push @bad_ids, $t;
-                } else {
-                    croak($@)
-                }
+    my @bad_ids;
+    for my $t(@template_ids) {
+        debug(__PACKAGE__ . ": attempting to delete template id '$t'.");
+        eval {Krang::Template->delete($t);};
+        if ($@) {
+            if (ref $@ && $@->isa('Krang::Template::Checkout')) {
+                critical("Unable to delete template id '$t': $@");
+                push @bad_ids, $t;
+            } else {
+                croak($@)
             }
         }
+    }
 
-        if (@bad_ids) {
-            add_message('error_deletion_failure',
-                        template_id => join(", ", @bad_ids));
-        } else {
-            add_message('message_selected_deleted');
-        }
-        return $self->search;
+    if (@bad_ids) {
+        add_message('error_deletion_failure',
+                    template_id => join(", ", @bad_ids));
+    } else {
+        add_message('message_selected_deleted');
+    }
+    return $self->search;
 }
 
 
@@ -356,28 +380,28 @@ This runmode expects the query parameter 'template_id'.
 =cut
 
 sub edit {
-	my $self = shift;
-        my %args = @_;
-	my $q = $self->query();
-        my $template_id = $q->param('template_id');
-        my $template = $session{template};
+    my $self = shift;
+    my %args = @_;
+    my $q = $self->query();
+    my $template_id = $q->param('template_id');
+    my $template = $session{template};
 
-        if ($template_id &&
-            (not(ref($template)) ||
-             $template->template_id != $template_id)) {
-            ($template) = Krang::Template->find(template_id => $template_id);
-            $session{template} = $template;
-        }
-        croak("No template object.") unless ref $template;
+    if ($template_id &&
+        (not(ref($template)) ||
+         $template->template_id != $template_id)) {
+        ($template) = Krang::Template->find(template_id => $template_id);
+        $session{template} = $template;
+    }
+    croak("No template object.") unless ref $template;
 
-        my $t = $self->load_tmpl("edit.tmpl",
-                                 associate => $q,);
+    my $t = $self->load_tmpl("edit.tmpl",
+                             associate => $q,);
 
-        $t->param(%args) if %args;
+    $t->param(%args) if %args;
 
-        $t->param($self->get_tmpl_params($template));
+    $t->param($self->get_tmpl_params($template));
 
-        return $t->output();
+    return $t->output();
 }
 
 
@@ -389,15 +413,14 @@ mode.
 
 =cut
 
-
 sub edit_cancel {
-	my $self = shift;
+    my $self = shift;
 
-	my $q = $self->query();
+    my $q = $self->query();
 
-        add_message('message_edit_cancelled');
+    add_message('message_edit_cancelled');
 
-	return $self->search();
+    return $self->search();
 }
 
 
@@ -410,27 +433,26 @@ it fails.
 
 =cut
 
-
 sub edit_save {
-	my $self = shift;
-	my $q = $self->query();
-        my $template = $session{template};
-        croak("No object in session") unless ref $template;
+    my $self = shift;
+    my $q = $self->query();
+    my $template = $session{template};
+    croak("No object in session") unless ref $template;
 
-        # update template with CGI values
-        $self->update_template($template);
+    # update template with CGI values
+    $self->update_template($template);
 
-        # validate
-        my %errors = $self->validate($template);
-        return $self->edit(%errors) if %errors;
+    # validate
+    my %errors = $self->validate($template);
+    return $self->edit(%errors) if %errors;
 
-        # save
-        %errors = $self->_save($template);
-        return $self->edit(%errors) if %errors;
+    # save
+    %errors = $self->_save($template);
+    return $self->edit(%errors) if %errors;
 
-        add_message('message_saved');
+    add_message('message_saved');
 
-	return $self->search();
+    return $self->search();
 }
 
 
@@ -535,32 +557,30 @@ simple searches.
 =cut
 
 sub search {
-	my $self = shift;
+    my $self = shift;
+    my $q = $self->query();
+    my $t = $self->load_tmpl("list_view.tmpl",
+                             associate => $q,
+                             loop_context_vars => 1);
 
-	my $q = $self->query();
+    $t->param(history_return_params =>
+              $self->make_history_return_params(@history_param_list));
 
-        my $t = $self->load_tmpl("list_view.tmpl",
-                                  associate => $q,
-                                 loop_context_vars => 1);
+    my $search_filter = $q->param('search_filter') || '';
+    my $find_params = {simple_search => $search_filter};
+    my $persist_vars = {rm => 'search',
+                        search_filter => $search_filter};
 
-        $t->param(history_return_params =>
-                  $self->make_history_return_params(@history_param_list));
+    # setup pager
+    my $pager = $self->make_pager($persist_vars, $find_params);
 
-        my $search_filter = $q->param('search_filter') || '';
-        my $find_params = {simple_search => $search_filter};
-        my $persist_vars = {rm => 'search',
-                            search_filter => $search_filter};
+    # get pager output
+    $t->param(pager_html => $pager->output());
 
-        # setup pager
-        my $pager = $self->make_pager($persist_vars, $find_params);
+    # get counter params
+    $t->param(row_count => $pager->row_count());
 
-        # get pager output
-        $t->param(pager_html => $pager->output());
-
-        # get counter params
-        $t->param(row_count => $pager->row_count());
-
-        return $t->output();
+    return $t->output();
 }
 
 
@@ -572,27 +592,27 @@ View the attributes of the template object.
 =cut
 
 sub view {
-	my $self = shift;
-        my $version = shift;
-	my $q = $self->query();
-        my $t = $self->load_tmpl('view.tmpl');
-        my $template_id = $q->param('template_id') ||
-          croak("No 'template_id' specified.");
-        my %find;
+    my $self = shift;
+    my $version = shift;
+    my $q = $self->query();
+    my $t = $self->load_tmpl('view.tmpl');
+    my $template_id = $q->param('template_id') ||
+      croak("No 'template_id' specified.");
+    my %find;
 
-        $find{template_id} = $template_id;
+    $find{template_id} = $template_id;
 
-        if ($version) {
-            $find{version} = $version;
-            $t->param(is_old_version => 1);
-        }
-        my ($template) = Krang::Template->find(%find);
-        croak("Can't find template with template_id '$template_id'.")
-          unless ref $template;
+    if ($version) {
+        $find{version} = $version;
+        $t->param(is_old_version => 1);
+    }
+    my ($template) = Krang::Template->find(%find);
+    croak("Can't find template with template_id '$template_id'.")
+      unless ref $template;
 
-        $t->param($self->get_tmpl_params($template));
+    $t->param($self->get_tmpl_params($template));
 
-	return $t->output();
+    return $t->output();
 }
 
 
@@ -635,21 +655,18 @@ sub get_tmpl_params {
     my (%tmpl_params, $version);
 
     # loop through template fields
-    if ($q->param('errors')) {
-        $tmpl_params{$_} = $q->param($_) for @fields;
-        $version = $q->param('version');
-    } else {
-        $tmpl_params{$_} = $template->$_ for @fields;
-        $version = $template->version;
-    }
+    $tmpl_params{$_} = $template->$_ for @fields;
+    $version = $template->version;
 
     if ($q->param('add_mode')) {
         my @values = ('', Krang::ElementLibrary->element_names);
         my %labels = map {$_, $_} Krang::ElementLibrary->element_names;
+        my $default = $template->element_class_name || '';
         $tmpl_params{element_chooser} = $q->popup_menu(-name =>
                                                        'element_class_name',
                                                        -values => \@values,
-                                                       -labels => \%labels);
+                                                       -labels => \%labels,
+                                                       -default => $default);
     }
 
     unless ($rm =~ /^view/) {
@@ -771,7 +788,8 @@ sub update_template {
     my $template = shift;
     my $q = $self->query();
 
-    for (qw/category_id content testing/) {
+    for (qw/category_id content element_class_name testing/) {
+        next if $_ eq 'element_class_name' && $q->param('rm') =~ /edit/;
         my $val = $q->param($_) || '';
         if ($_ eq 'content' && $val) {
             if (my $fh = $q->upload('template_file')) {
@@ -797,12 +815,23 @@ sub update_template {
 # Validates input from the CGI
 sub validate {
     my ($self, $template) = @_;
+    my $q = $self->query();
     my %errors;
 
-    # validate element
-    my $element = $template->element_class_name || '';
-    $errors{error_element} = 1
-      unless ($element || grep {$_ eq $element} @elements);
+    if ($q->param('rm') =~ /add/) {
+        # validate element
+        my $element = $template->element_class_name || '';
+        $errors{error_element} = 1
+          unless ($element || grep {$_ eq $element} @elements);
+
+        # validate category_id
+        my $category_id = $template->category_id || 0;
+        $errors{error_invalid_category_id} = 1
+          unless $category_id =~ /^\d+$/;
+    }
+
+    add_message($_) for keys %errors;
+    $q->param('errors', 1) if keys %errors;
 
     return %errors;;
 }
@@ -811,12 +840,15 @@ sub validate {
 # does the actual saving of the object to the DB
 sub _save {
     my ($self, $template) = @_;
+    my $q = $self->query();
 
     eval {$template->save};
 
     if ($@) {
         if (ref $@ && $@->isa('Krang::Template::DuplicateURL')) {
-            add_message('duplicate_url');
+            add_message('duplicate_url',
+                        url => $template->url);
+            $q->param('errors', 1);
             return (duplicate_url => 1);
         } else {
             croak($@);

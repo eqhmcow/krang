@@ -111,7 +111,7 @@
 <tmpl_if add_mode>
 <tr>
   <td>*Element:</td>
-  <td colspan="2"><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if></td>
+  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 </tmpl_if>
 
@@ -124,7 +124,7 @@
   <td>Upload File:<tmpl_if filename><br />
 <tmpl_if template_id><a href="javascript:preview_template('<tmpl_var escape=HTML template_id>')"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if template_id></a></tmpl_if>
 <tmpl_var escape=HTML file_size></tmpl_if></td>
-  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_template_file><span class="invalid"></tmpl_if><tmpl_var upload_chooser><tmpl_if error_template_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
+  <td colspan="2"><tmpl_if error_template_file><span class="invalid"></tmpl_if><tmpl_var upload_chooser><tmpl_if error_template_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 
 <tr>
