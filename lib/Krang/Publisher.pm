@@ -1535,46 +1535,95 @@ sub _check_asset_status {
     my $version_check  = (exists($args{version_check})) ? $args{version_check} : 1;
     my $initial_assets = (exists($args{initial_assets})) ? $args{initial_assets} : 0;
 
-    my $publish_ok = 0;
+    my $publish_ok  = 0;
     my $check_links = 0;
 
-    if ($object->isa('Krang::Story')) {
-        # if we haven't seen this story before, check to see if it
-        # should be published.
-        my $story_id = $object->story_id;
-        unless ($self->{story_publish_set}->contains($story_id)) {
-            $self->{story_publish_set}->Bit_On($story_id);
+    my $instance = $ENV{KRANG_INSTANCE};
 
-            if ($initial_assets) {
-                $publish_ok = 1;
-            } elsif (!$version_check) {
-                $publish_ok = 1;
-            } elsif ($self->test_publish_status(%args)) {
-                $publish_ok = 1;
-            }
-        }
-        # see if this story needs to be checked for related assets.
-        unless ($self->{checked_links_set}->contains($story_id)) {
-            $self->{checked_links_set}->Bit_On($story_id);
-            $check_links = 1;
-        }
-    } elsif ($object->isa('Krang::Media')) {
-        # if we haven't seen this media object before, check to see if
-        # it should be published.
-        my $media_id = $object->media_id();
-        unless ($self->{media_publish_set}->contains($media_id)) {
-            $self->{media_publish_set}->Bit_On($media_id);
-            if ($initial_assets) {
-                $publish_ok = 1;
-            } elsif (!$version_check) {
-                $publish_ok = 1;
-            } elsif ($self->test_publish_status(%args)) {
-                $publish_ok = 1;
-            }
+    if ($self->_mark_asset(object => $object)) {
+        if ($initial_assets || !$version_check) {
+            $publish_ok = 1;
+        } elsif ($self->test_publish_status(%args)) {
+            $publish_ok = 1;
         }
     }
 
+    if ($self->_mark_asset_links(object => $object)) {
+        $check_links = 1;
+    }
+
     return ($publish_ok, $check_links);
+}
+
+#
+# $bool = _mark_asset(object => $object)
+#
+# Checks to see if the object exists in the asset list.
+#
+# If it does not exist, the object is added to the asset list, and 1 is returned.
+# If it does exist, 0 is returned.
+#
+
+sub _mark_asset {
+
+    my ($self, %args) = @_;
+
+    my $object = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
+
+    my $instance = $ENV{KRANG_INSTANCE};
+
+    my $set;
+    my $id;
+
+    if ($object->isa('Krang::Story')) {
+        $set = 'story_publish_set';
+        $id  = $object->story_id();
+    } elsif ($object->isa('Krang::Media')) {
+        $set = 'media_publish_set';
+        $id  = $object->media_id();
+    } else {
+        # should never get here.
+        croak sprintf("%s->_mark_asset: unknown object type: %s\n", __PACKAGE__, $object->isa);
+    }
+
+    unless (exists($self->{asset_list}{$instance}{$set})) {
+        use Data::Dumper;
+        croak Dumper($instance, $set);
+    }
+    if ($self->{asset_list}{$instance}{$set}->contains($id)) {
+        return 0;
+    }
+    # not seen before.
+    $self->{asset_list}{$instance}{$set}->Bit_On($id);
+    return 1;
+
+}
+
+#
+# $bool = _mark_asset_links(object => $object)
+#
+# Returns 1 if the object has not been checked previously for related links.
+# Returns 0 if the object has been checked before.
+#
+# Returns 0 if the object is not a Krang::Story object (and therefore has no related assets).
+#
+
+sub _mark_asset_links {
+    my ($self, %args) = @_;
+
+    my $object = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
+
+    return 0 unless ($object->isa('Krang::Story'));
+
+    my $instance = $ENV{KRANG_INSTANCE};
+    my $story_id = $object->story_id();
+
+    if ($self->{asset_list}{$instance}{checked_links_set}->contains($story_id)) {
+        return 0;
+    }
+    $self->{asset_list}{$instance}{checked_links_set}->Bit_On($story_id);
+    return 1;
+
 }
 
 
@@ -1633,23 +1682,33 @@ sub _init_asset_lists {
 
     my $self = shift;
 
+    my $instance = $ENV{KRANG_INSTANCE};
+
     foreach (qw(story_publish_set media_publish_set checked_links_set)) {
-        $self->{$_} = Set::IntRange->new(0, 4194304) unless (exists ($self->{$_}));
+        $self->{asset_list}{$instance}{$_} = Set::IntRange->new(0, 4194304)
+          unless (exists ($self->{asset_list}{$instance}{$_}));
     }
 }
+
 
 #
 # _clear_asset_lists()
 #
 # Nukes all content in the asset lists.
 #
+
 sub _clear_asset_lists {
 
     my $self = shift;
 
-    foreach (qw(story_publish_set media_publish_set checked_links_set)) {
-        $self->{$_}->Empty();
+    my $instance = $ENV{KRANG_INSTANCE};
+
+    foreach (keys %{$self->{asset_list}{$instance}}) {
+        $self->{asset_list}{$instance}{$_}->Empty();
+        delete $self->{asset_list}{$instance}{$_};
     }
+
+    delete $self->{asset_list};
 }
 
 

@@ -6,6 +6,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Cleaned up the code handling the management of internal asset lists in
+L<Krang::Publisher>.  This code is used to ensure the same asset is
+not published more than once during a publish run. [Peter]
+
+=item *
+
 Added support for searching on C<site_id> in Krang::Media->find().
 [Peter]
 
