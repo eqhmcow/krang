@@ -1,7 +1,7 @@
 /*** default text setup ***/
 body {
-  background-color: #ffffff;
-  color:            #333333;
+  background-color: <tmpl_var background_color>;
+  color:            <tmpl_var text_color>;
   font-family:      Verdana,Helvetica,Arial,sans-serif;
   font-size:        12px;
   margin:			  0px 10px;
@@ -27,14 +27,14 @@ html {
   padding: 			  10px; 
   width:				  760px;
   height:           47px; 
-  background-color: #ffffff;	
+  background-color: <tmpl_var background_color>;	
 }
 
 #header div.logo {
 	position: static;
 	left: 0px;
 	top: 15px;
-  background-color: #ffffff;	
+  background-color: <tmpl_var background_color>;	
 }
 
 #header div.title { 
@@ -42,7 +42,7 @@ html {
 	left: 184px;
 	top: 23px; 
   width:            240px;	
-  background-color: #ffffff;	
+  background-color: <tmpl_var background_color>;	
 }
 
 #header div.log {
@@ -51,15 +51,15 @@ html {
 	left: 400px;
 	width: 370px;
   text-align:       right;
-  background-color: #ffffff;	 
+  background-color: <tmpl_var background_color>;	 
   }
 
 #header div.dkblu {	
   position: absolute;
   top:         40px;
   left:      180px; 
-  border-top: #04044c 1px solid;
-  background-color: #ffffff;  
+  border-top: <tmpl_var dark_color> 1px solid;
+  background-color: <tmpl_var background_color>;  
   height:           1px;
   width:            590px; 
 }
@@ -69,7 +69,7 @@ html {
   top:         43px;
   left:      10px; 
   height:          14px;  
-  background-color: #dbe9f4;
+  background-color: <tmpl_var light_color>;
   width: 760px;
 }	
 
@@ -78,7 +78,7 @@ html {
 	margin-top:        0px;
 	width:             157px;
   height:             100%;
-  background-color: #ffffff;  
+  background-color: <tmpl_var background_color>;  
 }
 
 #space {
@@ -86,7 +86,7 @@ html {
 	margin-top:        0px;
 	width:             12px;
   height:             100%;
-  background-color: #ffffff;  
+  background-color: <tmpl_var background_color>;  
 	
 }
 
@@ -99,15 +99,15 @@ padding:        0px;
 
 #footer {
 	background-color: transparent;
-   color:            #333333;
+   color:            <tmpl_var text_color>;
 	width:            760px;
 	margin-top:        3px;
 	clear:            both;
 }
 
 #copy {
-	background-color: #dbe9f4;
-   color:            #333333;
+	background-color: <tmpl_var light_color>;
+   color:            <tmpl_var text_color>;
 	padding-top:      4px;
 	padding-bottom:   4px;
 	float:            right;
@@ -155,22 +155,22 @@ div.publish {
 }
 
 div.box {
-  border-right:     1px #bababa solid;
-  border-left:      1px #bababa solid;
-  border-bottom:    1px #bababa solid;
+  border-right:     1px <tmpl_var border_color> solid;
+  border-left:      1px <tmpl_var border_color> solid;
+  border-bottom:    1px <tmpl_var border_color> solid;
   width:            588px;
 }
 
 div.boxb {
-  border-right:     1px #bababa solid;
-  border-left:      1px #bababa solid;
-  border-bottom:    1px #bababa solid;
+  border-right:     1px <tmpl_var border_color> solid;
+  border-left:      1px <tmpl_var border_color> solid;
+  border-bottom:    1px <tmpl_var border_color> solid;
   margin-top:       3px;
   width:            588px;
 }
 
 div.boxc {
-  border:          1px #bababa solid;
+  border:          1px <tmpl_var border_color> solid;
   margin-top:      6px;
   padding-top:     6px;
   padding-bottom:  6px;
@@ -183,14 +183,14 @@ div.boxc p{
 }
 
 div.boxd {
-  border:     1px #bababa solid;
+  border:     1px <tmpl_var border_color> solid;
   margin-top:       6px;
   padding-top:      6px;
   width:            588px;
 }
 
 div.boxe {
-  border:          1px #bababa solid;
+  border:          1px <tmpl_var border_color> solid;
   margin-top:      6px;
   width:           588px;
 }
@@ -219,8 +219,8 @@ td, th {
 /*** generic style palette ***/
 
 .light { 
-  background-color: #dbe9f4;
-  color:            #333333;
+  background-color: <tmpl_var light_color>;
+  color:            <tmpl_var text_color>;
   padding-top:          3px;
   padding-left:        10px;
   padding-bottom:       6px;
@@ -232,14 +232,14 @@ td, th {
 }
 
 .bright {
-  background-color: #98ccfe;
-  color:            #333333;
+  background-color: <tmpl_var bright_color>;
+  color:            <tmpl_var text_color>;
 }
 
 /*** Colored UI elements ***/
 .light-bar { 
-  background-color: #dbe9f4;
-  color:            #333333;
+  background-color: <tmpl_var light_color>;
+  color:            <tmpl_var text_color>;
   padding:          4px;
   height:           12px;
 }
@@ -257,8 +257,8 @@ td, th {
 }
 
 .dark-bar { 
-  background-color: #04044c;
-  color:            #dbeaf5;
+  background-color: <tmpl_var dark_color>;
+  color:            <tmpl_var light_text_color>;
   padding:          4px 4px 0px 4px;
   height:           20px;
   font-weight:      bold;
@@ -282,8 +282,8 @@ td, th {
 }
 
 .dark-bar2 { 
-  background-color: #04044c;
-  color:            #dbeaf5;
+  background-color: <tmpl_var dark_color>;
+  color:            <tmpl_var light_text_color>;
   padding:          4px;
   height:           20px;
   font-weight:      bold;
@@ -293,8 +293,8 @@ td, th {
 }
 
 .button-bar {
-  background-color: #98ccfe;
-  color:            #333333;
+  background-color: <tmpl_var bright_color>;
+  color:            <tmpl_var text_color>;
   text-align:       right;
   padding:          3px;
   margin-top:       10px;
@@ -305,9 +305,9 @@ td, th {
 }
 
 .form-head {
-  background-color: #dbe9f4;
-  color:            #333333;
-  border-top:       1px solid #bababa;
+  background-color: <tmpl_var light_color>;
+  color:            <tmpl_var text_color>;
+  border-top:       1px solid <tmpl_var border_color>;
   text-align:       left;
   padding: 			  4px;
   margin-left:      8px;
@@ -318,9 +318,9 @@ td, th {
 }
 
 .form-head2 {
-  background-color: #dbe9f4;
-  color:            #333333;
-  border-top:       1px solid #bababa;
+  background-color: <tmpl_var light_color>;
+  color:            <tmpl_var text_color>;
+  border-top:       1px solid <tmpl_var border_color>;
   text-align:       left;
   padding: 			  4px;
   margin-left:      8px;
@@ -329,7 +329,7 @@ td, th {
      
 }
 .form-cell {
-  border:         1px solid #bababa;
+  border:         1px solid <tmpl_var border_color>;
   border-collapse:collapse;
   text-align:       left;
   padding:          4px;
@@ -339,12 +339,12 @@ td, th {
 }
 
 .tight-form-box {
-  border:         1px solid #bababa;
+  border:         1px solid <tmpl_var border_color>;
 }
 
 .no-border { 
-  background-color: #ffffff;
-  color:            #333333;
+  background-color: <tmpl_var background_color>;
+  color:            <tmpl_var text_color>;
   padding: 3px 12px 3px 10px;
   height:           auto;
 }
@@ -360,7 +360,7 @@ td, th {
 
 /*** prettier buttons ***/
 .button {
-   background-color: #FFFFFF;
+   background-color: <tmpl_var background_color>;
    color:            #003466;
    font-family:      Verdana,Helvetica,Arial,sans-serif;
    font-size:        12px;
@@ -397,29 +397,29 @@ td, th {
 
 /*** link styles ***/
 a:link { 
-  color:            #05034c;
+  color:            <tmpl_var link_color>
 }
 a:visited { 
-  color:            #05034c;
+  color:            <tmpl_var link_color>
 }
 a:active {
-  color:            #98ccfe;
+  color:            <tmpl_var bright_color>
 }
 
 .dark-bar a { 
-  color:            #dbeaf5;
+  color:            <tmpl_var light_text_color>;
   text-decoration:   none;
 }
 .dark-bar a:link { 
-  color:            #dbeaf5;
+  color:            <tmpl_var light_text_color>;
   text-decoration:   none;
 }
 .dark-bar a:visited { 
-  color:            #dbeaf5;
+  color:            <tmpl_var light_text_color>;
   text-decoration:   none;
 }
 .dark-bar a:active {
-  color:            #dbeaf5;
+  color:            <tmpl_var light_text_color>;
   text-decoration:   none;
 }
 
@@ -429,8 +429,8 @@ a:active {
      position:         absolute;
      top:              0px;
      left:             0px;
-     border:           2px outset #333333;
-     background-color: #ffffff;
+     border:           2px outset <tmpl_var text_color>;
+     background-color: <tmpl_var background_color>;
      filter:           progid:DXImageTransform.Microsoft.dropShadow( Color=bababa,offx=3,offy=3,positive=true);
 }
 
@@ -443,7 +443,7 @@ a:active {
 .hpts-title {
      padding:          2px;
      margin-bottom:    4px;     
-     background-color: #04044c;
+     background-color: <tmpl_var dark_color>;
      color:            #dceaf5;
      width:            225px;
 }
@@ -454,8 +454,8 @@ a:active {
 }
 
 .hpts-bbar {
-    background-color: #98ccfe;
-    color:            #333333;
+    background-color: <tmpl_var bright_color>;
+    color:            <tmpl_var text_color>;
     text-align:       right;
     padding:          3px;
     margin-top:       10px;
@@ -467,25 +467,25 @@ a:active {
 }
 
 .hpts-button {
-    background-color: #FFFFFF;
+    background-color: <tmpl_var background_color>;
     color:            #003466;
     font-family:      Verdana,Helvetica,Arial,sans-serif;
 }
 
 .hpts-label-selected {
-     background:       #dbe9f4;
+     background:       <tmpl_var light_color>;
 }
 
 .hpts-label-unselected {
-     background:       #ffffff;
+     background:       <tmpl_var background_color>;
 }
 
 
 /*** New Left Nav Styles ***/
 
 .dark-bar-nav { 
-  background-color: #04044c;
-  color:            #dbeaf5;
+  background-color: <tmpl_var dark_color>;
+  color:            <tmpl_var light_text_color>;
   margin-top:       4px;
   padding:          4px 25px 0px 25px;
   height:           20px;
@@ -495,29 +495,29 @@ a:active {
 }
 
 .dark-bar-nav a:link { 
-  background-color: #04044c;
-  color:            #dbeaf5;
+  background-color: <tmpl_var dark_color>;
+  color:            <tmpl_var light_text_color>;
   font-weight:      bold;
   font-family:      Verdana,Helvetica,Arial,sans-serif;
   font-size:        12px;
 }
 .dark-bar-nav a:visited { 
-  background-color: #04044c;
-  color:            #dbeaf5;
+  background-color: <tmpl_var dark_color>;
+  color:            <tmpl_var light_text_color>;
   font-weight:      bold;
   font-family:      Verdana,Helvetica,Arial,sans-serif;
   font-size:        12px;
 }
 .dark-bar-nav a:active { 
-  background-color: #04044c;
-  color:            #dbeaf5;
+  background-color: <tmpl_var dark_color>;
+  color:            <tmpl_var light_text_color>;
   font-weight:      bold;
   font-family:      Verdana,Helvetica,Arial,sans-serif;
   font-size:        12px;
 }
 .light-bar-nav { 
-  background-color: #dbe9f4;
-  color:            #333333;
+  background-color: <tmpl_var light_color>;
+  color:            <tmpl_var text_color>;
   padding:          4px 4px 0px 4px;
   height:           20px;
   font-weight:      bold;
@@ -527,7 +527,7 @@ a:active {
 	margin-right:   5px;
 }
 .form-cell-nav {
-  border:         1px solid #bababa;
+  border:         1px solid <tmpl_var border_color>;
   border-top:     none;
   padding:        4px 24px;
   line-height:    150%;
@@ -539,7 +539,7 @@ a:active {
   margin-bottom:       3px;
 }
 .blue-border {
-	background:    #ffffff;
+	background:    <tmpl_var background_color>;
    height:       3px;
 }
 
@@ -549,22 +549,22 @@ a:active {
   margin: 			  10px; 
   width:				  460px;
   height:           47px; 
-  background-color: #ffffff;	
+  background-color: <tmpl_var background_color>;	
 }
 
 #hheader div.logo {
 	position: static;
 	left: 0px;
 	top: 15px;
-  background-color: #ffffff;	
+  background-color: <tmpl_var background_color>;	
 }
 
 #hheader div.dkblu {	
   position: absolute;
   top:         38px;
   left:      180px; 
-  border-top: #04044c 1px solid;
-  background-color: #ffffff;  
+  border-top: <tmpl_var dark_color> 1px solid;
+  background-color: <tmpl_var background_color>;  
   height:           1px;
   width:            300px; 
 }
@@ -574,7 +574,7 @@ a:active {
   top:         43px;
   left:      20px; 
   height:          14px;  
-  background-color: #dbe9f4;
+  background-color: <tmpl_var light_color>;
   width: 460px;
 }	
 
@@ -582,8 +582,8 @@ a:active {
   position: absolute;
   top:         65px;
   left:      20px; 
-  background-color: #04044c;
-  color:            #dbeaf5;
+  background-color: <tmpl_var dark_color>;
+  color:            <tmpl_var light_text_color>;
   padding:          4px 4px 0px 4px;
   height:           20px;
   font-weight:      bold;
@@ -595,9 +595,9 @@ a:active {
 div.boxh {
   margin-left:      10px;
   padding:          5px; 
-  border-right:     1px #bababa solid;
-  border-left:      1px #bababa solid;
-  border-bottom:    1px #bababa solid;
+  border-right:     1px <tmpl_var border_color> solid;
+  border-left:      1px <tmpl_var border_color> solid;
+  border-bottom:    1px <tmpl_var border_color> solid;
   width:            449px;
 }
 
@@ -630,19 +630,19 @@ a.helplink:visited {
   text-decoration:  underline;
 }
 a.helplink:active {
-  color:            #98ccfe;
+  color:            <tmpl_var bright_color>;
   text-decoration:  underline;
 } 
 #hfooter {
 	background-color: transparent;
-   color:            #333333;
+   color:            <tmpl_var text_color>;
 	width:            461px;
 	margin-top:        10px;
 	margin-left:      10px;
 }
 #hcopy {
-	background-color: #dbe9f4;
-   color:            #333333;
+	background-color: <tmpl_var light_color>;
+   color:            <tmpl_var text_color>;
 	padding-top:      4px;
 	padding-bottom:   4px;
 	width:            460px;

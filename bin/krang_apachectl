@@ -79,7 +79,7 @@ $@
 END
 }
 
-use Krang::Conf qw(KrangRoot InstanceHostName);
+use Krang::Conf qw(KrangRoot InstanceHostName Skin);
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
@@ -110,6 +110,8 @@ if ($command eq 'start') {
 
     write_conf();
     make_links();
+    apply_skin();
+
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
         print "krang_apachectl $command: httpd started\n";
@@ -162,6 +164,7 @@ if ($command eq 'restart') {
     # start
     write_conf();
     make_links();
+    apply_skin();
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
         print "krang_apachectl $command: httpd started\n";
@@ -242,3 +245,8 @@ sub make_links {
     }
 }
 
+# setup the configured skin
+sub apply_skin {
+    print "Loading configured skin: " . Skin . "\n";
+    system(catfile(KrangRoot, 'bin', 'krang_load_skin'), Skin);
+}
