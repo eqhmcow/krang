@@ -152,7 +152,7 @@ if ($@) {
 #
 
 my $site_id = $site->site_id;
-my $cat_id  = $category->category_id;
+$cat_id  = $category->category_id;
 my @story_ids;
 my @media_ids;
 my @contrib_ids;
