@@ -190,7 +190,7 @@ use Krang;
 use Getopt::Long;
 use Pod::Usage;
 use HTML::Template;
-
+use Term::Prompt qw(prompt);
 
 my @original_args = ();
 my $uniqueness = time();
@@ -283,7 +283,12 @@ sub check_prereqs {
     # InstallPath must NOT exist.
     my $InstallPath = $options{InstallPath};
     if (-e $InstallPath) {
-        exit_error("InstallPath '$InstallPath' already exists.  Cannot continue.");
+        if (-e catfile($InstallPath,'bin','krang_uninstall')) {
+             exit_error("Will not proceed due to existing krang install.") unless prompt("y", "InstallPath '$InstallPath' already exists and seems to contain an existing Krang instance.\nThis program must totally and permanently remove this krang installation in order to proceed.\n\nIs this what you really want to do?", "y/n", "n");
+            system(catfile($InstallPath,'bin','krang_uninstall'));
+        } else { 
+            exit_error("InstallPath '$InstallPath' already exists and does not appear to belong to an existing krang instance.  Cannot continue.");
+        }
     }
 
     # Start-up (init.d) script must NOT exist.
