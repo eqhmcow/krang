@@ -81,7 +81,7 @@ sub new {
                                                                "small"],
                                                    default => "small"
                                                            ),
-                 Krang::ElementClass::PopupMenu->new(name => "image_alignment",
+                 Krang::ElementClass::PopupMenu->new(name => "alignment",
                                                     reorderable => '0',
                                                      min => 1,
                                                      max => 1,
@@ -165,7 +165,7 @@ sub fill_template {
   
     $tmpl->param( header_size => $args{element}->child('header_size')->data ) if $args{element}->child('header_size');
  
-    $tmpl->param( image_alignment => $args{element}->child('image_alignment')->data ); 
+    $tmpl->param( alignment => $args{element}->child('alignment')->data ); 
     $tmpl->param( type => $type );
 
     $tmpl->param( byline => $story->element->child('byline')->data ) if $story->element->child('byline');
