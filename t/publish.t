@@ -1,4 +1,3 @@
-use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Imager;
@@ -6,15 +5,24 @@ use File::Spec::Functions;
 use File::Path;
 use Krang::Contrib;
 use Krang::Pref;
-use Krang::Conf qw(KrangRoot instance);
+use Krang::Conf qw(KrangRoot instance ElementSet);
 use Krang::Site;
 use Krang::Category;
 use Krang::Story;
 use Krang::Element;
 use Krang::Template;
 use Krang::Script;
-
 use Data::Dumper;
+
+BEGIN {
+    if (ElementSet eq 'TestSet1') {
+        eval 'use Test::More qw(no_plan)';
+    } else {
+        eval 'use Test::More skip_all=>"Publish tests only work for TestSet1"';
+    }
+}
+
+
 
 # instantiate publisher
 use_ok('Krang::Publisher');

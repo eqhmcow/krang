@@ -5,7 +5,7 @@ use Krang::Script;
 use Krang::Site;
 use Krang::Category;
 use Krang::Story;
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot ElementSet);
 use Krang::Element qw(foreach_element);
 use File::Spec::Functions qw(catfile);
 BEGIN { use_ok('Krang::DataSet') }
@@ -443,59 +443,65 @@ END { $big->delete };
 
 is($big->element->child('deck')->data, "DECK DECK DECK");
 
-# create a pair of stories that point to each other in a circle
-my $jack = Krang::Story->new(categories => [$category],
-                             title      => "Jack",
-                             slug       => "jack",
-                             class      => "cover");
-$jack->save();
+SKIP: {
+    skip('Element tests only work for TestSet1', 1)
+      unless (ElementSet eq 'TestSet1');
 
-# create a pair of stories that point to each other in a circle
-my $jill = Krang::Story->new(categories => [$category2],
-                             title      => "Jill",
-                             slug       => "jill",
-                             class      => "cover");
-$jill->save();
+    # create a pair of stories that point to each other in a circle
+    my $jack = Krang::Story->new(categories => [$category],
+                                 title      => "Jack",
+                                 slug       => "jack",
+                                 class      => "cover");
+    $jack->save();
+    
+    # create a pair of stories that point to each other in a circle
+    my $jill = Krang::Story->new(categories => [$category2],
+                                 title      => "Jill",
+                                 slug       => "jill",
+                                 class      => "cover");
+    $jill->save();
+    
+    $jack->element->add_child(class => 'leadin',
+                              data  => $jill);
+    $jill->element->add_child(class => 'leadin',
+                              data  => $jack);
+    $jack->save();
+    $jill->save();
 
-$jack->element->add_child(class => 'leadin',
-                          data  => $jill);
-$jill->element->add_child(class => 'leadin',
-                          data  => $jack);
-$jack->save();
-$jill->save();
+    # serialize them
+    my $j2set = Krang::DataSet->new();
+    $j2set->add(object => $jack);
+    $j2set->add(object => $jill);
+    isa_ok($j2set, 'Krang::DataSet');
+    
+    # should be just two stories
+    is((grep { $_->[0] eq 'Krang::Story' } $j2set->list), 2);
+    
+    # write it out
+    my $j2path = catfile(KrangRoot, 'tmp', 'j2.kds');
+    $j2set->write(path => $j2path);
+    ok(-e $j2path and -s $j2path);
+    END { unlink($j2path) if $j2path and -e $j2path and not $DEBUG };
+    
+    $jack->delete();
+    $jill->delete();
 
-# serialize them
-my $j2set = Krang::DataSet->new();
-$j2set->add(object => $jack);
-$j2set->add(object => $jill);
-isa_ok($j2set, 'Krang::DataSet');
+    # try an import
+    $j2set->import_all;
+    
+    # should have them back
+    my ($imported_jack) = Krang::Story->find(url => $jack->url);
+    isa_ok($imported_jack, 'Krang::Story');
+    my ($imported_jill) = Krang::Story->find(url => $jill->url);
+    isa_ok($imported_jill, 'Krang::Story');
+    
+    # do they point to each other?
+    is($imported_jack->element->child('leadin')->data->story_id, 
+       $imported_jill->story_id);
+    is($imported_jill->element->child('leadin')->data->story_id,
+       $imported_jack->story_id);
+    
+    END { $imported_jack->delete() if $imported_jack;
+          $imported_jill->delete() if $imported_jill; }
+};
 
-# should be just two stories
-is((grep { $_->[0] eq 'Krang::Story' } $j2set->list), 2);
-
-# write it out
-my $j2path = catfile(KrangRoot, 'tmp', 'j2.kds');
-$j2set->write(path => $j2path);
-ok(-e $j2path and -s $j2path);
-END { unlink($j2path) if -e $j2path and not $DEBUG };
-
-$jack->delete();
-$jill->delete();
-
-# try an import
-$j2set->import_all;
-
-# should have them back
-my ($imported_jack) = Krang::Story->find(url => $jack->url);
-isa_ok($imported_jack, 'Krang::Story');
-my ($imported_jill) = Krang::Story->find(url => $jill->url);
-isa_ok($imported_jill, 'Krang::Story');
-
-# do they point to each other?
-is($imported_jack->element->child('leadin')->data->story_id, 
-   $imported_jill->story_id);
-is($imported_jill->element->child('leadin')->data->story_id,
-   $imported_jack->story_id);
-
-END { $imported_jack->delete();
-      $imported_jill->delete(); };

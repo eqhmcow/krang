@@ -5,6 +5,7 @@ use Krang::Script;
 use Krang::Site;
 use Krang::Category;
 use Krang::Story;
+use Krang::Conf qw(ElementSet);
 BEGIN { use_ok('Krang::Element') }
 
 # create a site and category for dummy story
@@ -28,6 +29,10 @@ my $element = Krang::Element->new(class => "article", object => $story);
 isa_ok($element, 'Krang::Element');
 
 # article has two default children, page and deck
+SKIP: {
+    skip('Element tests only work for TestSet1', 100)
+      unless (ElementSet eq 'TestSet1');
+
 my @children = $element->children();
 is(@children , 4);
 is($children[0]->name, "issue_date");
@@ -159,5 +164,4 @@ ok($loaded->delete());
 eval { $loaded = Krang::Element->load(element_id => $element_id, object => $story) };
 like($@, qr/No element found/);
 
-# leak test
-#for(0 .. 1000) {
+};

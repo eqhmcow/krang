@@ -9,6 +9,7 @@ use Krang::Element;
 use Krang::Site;
 use Krang::Template;
 use Storable qw(freeze thaw);
+use Krang::Conf qw(ElementSet);
 
 use Test::More qw(no_plan);
 
@@ -214,9 +215,11 @@ ok(not $@);
 isa_ok($clone, 'Krang::Category');
 
 
-test_linked_assets($category);
-
-
+SKIP: {
+    skip('Element tests only work for TestSet1', 1)
+      unless (ElementSet eq 'TestSet1');
+    test_linked_assets($category);
+}
 
 # deletion tests
 ################

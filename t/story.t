@@ -7,6 +7,7 @@ use Krang::Site;
 use Krang::Contrib;
 use Krang::Session qw(%session);
 use Storable qw(freeze thaw);
+use Krang::Conf qw(ElementSet);
 use Time::Piece;
 
 BEGIN { use_ok('Krang::Story') }
@@ -63,22 +64,28 @@ is(@story_cat, 2);
 is($story_cat[0], $cat[0]);
 is($story_cat[1], $cat[1]);
 
-# add some content
-$story->element->child('deck')->data('DECK DECK DECK');
-is($story->element->child('deck')->data(), "DECK DECK DECK");
-my $page = $story->element->child('page');
-isa_ok($page, "Krang::Element");
-is($page->name, $page->class->name);
-is($page->display_name, "Page");
-is($page->children, 2);
 
-# add five paragraphs
-ok($page->add_child(class => "paragraph", data => "bla1 "x40));
-ok($page->add_child(class => "paragraph", data => "bla2 "x40));
-ok($page->add_child(class => "paragraph", data => "bla3 "x40));
-ok($page->add_child(class => "paragraph", data => "bla4 "x40));
-ok($page->add_child(class => "paragraph", data => "bla5 "x40));
-is($page->children, 7);
+SKIP: {
+    skip('Element tests only work for TestSet1', 10)
+      unless (ElementSet eq 'TestSet1');
+
+    # add some content
+    $story->element->child('deck')->data('DECK DECK DECK');
+    is($story->element->child('deck')->data(), "DECK DECK DECK");
+    my $page = $story->element->child('page');
+    isa_ok($page, "Krang::Element");
+    is($page->name, $page->class->name);
+    is($page->display_name, "Page");
+    is($page->children, 2);
+
+    # add five paragraphs
+    ok($page->add_child(class => "paragraph", data => "bla1 "x40));
+    ok($page->add_child(class => "paragraph", data => "bla2 "x40));
+    ok($page->add_child(class => "paragraph", data => "bla3 "x40));
+    ok($page->add_child(class => "paragraph", data => "bla4 "x40));
+    ok($page->add_child(class => "paragraph", data => "bla5 "x40));
+    is($page->children, 7);
+};
 
 # test contribs
 eval { $story->contribs($contrib); };
@@ -172,13 +179,19 @@ for (qw( story_id
     is($story->$_, $story2->$_, "$_ save/load");
 }
 
-# elements ok?
-is($story2->element->child('deck')->data(), "DECK DECK DECK");
-my $page2 = $story2->element->child('page');
-isa_ok($page2, "Krang::Element");
-is($page2->name, $page2->class->name);
-is($page2->display_name, "Page");
-is($page2->children, 7);
+
+SKIP: {
+    skip('Element tests only work for TestSet1', 5)
+      unless (ElementSet eq 'TestSet1');
+
+    # elements ok?
+    is($story2->element->child('deck')->data(), "DECK DECK DECK");
+    my $page2 = $story2->element->child('page');
+    isa_ok($page2, "Krang::Element");
+    is($page2->name, $page2->class->name);
+    is($page2->display_name, "Page");
+    is($page2->children, 7);
+};
 
 # contribs made it?
 is($story2->contribs, 1);
@@ -274,47 +287,51 @@ ok($thawed);
 isa_ok($thawed, 'Krang::Story');
 is($thawed->story_id, $story->story_id);
 
-
-# test versioning
-my $v = Krang::Story->new(categories => [$cat[0], $cat[1]],
-                          title      => "Foo",
-                          slug       => "foo",
-                          class      => "article");
-END { $v->delete };
-$v->element->child('deck')->data('Version 1 Deck');
-is($v->version, 0);
-$v->save(keep_version => 1);
-is($v->version, 0);
-$v->save();
-
-is($v->version, 1);
-$v->title("Bar");
-
-$v->save();
-is($v->version, 2);
-is($v->title(), "Bar");
-$v->element->child('deck')->data('Version 3 Deck');
-is($v->element->child('deck')->data, 'Version 3 Deck');
-
-$v->revert(1);
-is($v->version, 2);
-is($v->element->child('deck')->data, 'Version 1 Deck');
-
-is($v->title(), "Foo");
-$v->save();
-is($v->version, 3);
-
-$v->revert(2);
-is($v->title(), "Bar");
-$v->save();
-is($v->version, 4);
-
-# try loading old versions
-my ($v1) = Krang::Story->find(story_id => $v->story_id,
-                              version  => 1);
-is($v1->version, 1);
-is($v1->title, "Foo");
-
+SKIP: {
+    skip('Element tests only work for TestSet1', 1)
+      unless (ElementSet eq 'TestSet1');
+    
+    # test versioning
+    my $v = Krang::Story->new(categories => [$cat[0], $cat[1]],
+                              title      => "Foo",
+                              slug       => "foo",
+                              class      => "article");
+    END { $v->delete if $v };
+    $v->element->child('deck')->data('Version 1 Deck');
+    is($v->version, 0);
+    $v->save(keep_version => 1);
+    is($v->version, 0);
+    $v->save();
+    
+    is($v->version, 1);
+    $v->title("Bar");
+    
+    $v->save();
+    is($v->version, 2);
+    is($v->title(), "Bar");
+    $v->element->child('deck')->data('Version 3 Deck');
+    is($v->element->child('deck')->data, 'Version 3 Deck');
+    
+    $v->revert(1);
+    is($v->version, 2);
+    is($v->element->child('deck')->data, 'Version 1 Deck');
+    
+    is($v->title(), "Foo");
+    $v->save();
+    is($v->version, 3);
+    
+    $v->revert(2);
+    is($v->title(), "Bar");
+    $v->save();
+    is($v->version, 4);
+    
+    # try loading old versions
+    my ($v1) = Krang::Story->find(story_id => $v->story_id,
+                                  version  => 1);
+    is($v1->version, 1);
+    is($v1->title, "Foo");
+};
+    
 
 # check that adding a new category can't cause a dup
 my $s1 = Krang::Story->new(class => "article",
@@ -438,49 +455,53 @@ $count = Krang::Story->find(simple_search => "",
                             count => 1);
 is($count, $real_count);
 
+SKIP: {
+    skip('Element tests only work for TestSet1', 1)
+      unless (ElementSet eq 'TestSet1');
 
-# create a cover to test links between stories
-my $cover = Krang::Story->new(categories => [$cat[0]],
-                              title      => "Test Cover",
-                              slug       => "test cover",
-                              class      => "cover");
-END { $cover->delete }
-$cover->element->add_child(class => 'leadin',
-                           data  => $find[0]);
-$cover->element->add_child(class => 'leadin',
-                           data  => $find[1]);
-$cover->element->add_child(class => 'leadin',
-                           data  => $find[2]);
-is($cover->element->children, 4);
-$cover->save;
+    # create a cover to test links between stories
+    my $cover = Krang::Story->new(categories => [$cat[0]],
+                                  title      => "Test Cover",
+                                  slug       => "test cover",
+                                  class      => "cover");
+    END { $cover->delete if $cover }
+    $cover->element->add_child(class => 'leadin',
+                               data  => $find[0]);
+    $cover->element->add_child(class => 'leadin',
+                               data  => $find[1]);
+    $cover->element->add_child(class => 'leadin',
+                               data  => $find[2]);
+    is($cover->element->children, 4);
+    $cover->save;
+    
+    # test linked stories
+    my @linked_stories = $cover->linked_stories;
+    is_deeply([sort(@find)], [sort(@linked_stories)]);
+    
+    # clone a cover
+    my $cover2 = $cover->clone();
+    
+    # should have no categories, oh my
+    my @copy_cats = $cover2->categories;
+    ok(@copy_cats == 0);
+    my @copy_cat_ids = @{$cover2->{category_ids}};
+    ok(@copy_cat_ids == 0);
+    ok(not $cover2->url);
+    @copy_cats = $cover2->categories;
+    ok(@copy_cats == 0);
+    @copy_cat_ids = @{$cover2->{category_ids}};
+    ok(@copy_cat_ids == 0);
 
-# test linked stories
-my @linked_stories = $cover->linked_stories;
-is_deeply([sort(@find)], [sort(@linked_stories)]);
+    # should fail to save as-is
+    eval { $cover2->save };
+    isa_ok($@, 'Krang::Story::MissingCategory');
 
-# clone a cover
-my $cover2 = $cover->clone();
-
-# should have no categories, oh my
-my @copy_cats = $cover2->categories;
-ok(@copy_cats == 0);
-my @copy_cat_ids = @{$cover2->{category_ids}};
-ok(@copy_cat_ids == 0);
-ok(not $cover2->url);
-@copy_cats = $cover2->categories;
-ok(@copy_cats == 0);
-@copy_cat_ids = @{$cover2->{category_ids}};
-ok(@copy_cat_ids == 0);
-
-# should fail to save as-is
-eval { $cover2->save };
-isa_ok($@, 'Krang::Story::MissingCategory');
-
-# assign a new category and save should work
-$cover2->categories([$cat[1]]);
-eval { $cover2->save };
-ok(not $@);
-END { $cover2->delete };
+    # assign a new category and save should work
+    $cover2->categories([$cat[1]]);
+    eval { $cover2->save };
+    ok(not $@);
+    END { $cover2->delete if $cover2 };
+};
 
 # test delete by ID
 my $doomed = Krang::Story->new(categories => [$cat[0], $cat[1]],
