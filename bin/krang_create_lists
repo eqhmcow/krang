@@ -14,8 +14,8 @@ krang_create_lists
 
 =head1 DESCRIPTION
 
-Creates Krang::ListGroups and Krang::Lists based on conf
-file(s) in ElementSet(s):
+Creates Krang::ListGroups and Krang::Lists based on lists.conf files in
+element sets.  Usually called from C<krang_createdb>.
 
 =cut
 
@@ -49,44 +49,39 @@ $@
 END
 }
 
+use Krang::Script;
 use Krang::Conf qw (InstanceElementSet KrangRoot);
 use Krang::DB qw(dbh);
 use Krang::ListGroup;
 use Krang::List;
-
 use XML::Simple;
 
 my ($help, $man, $password, $destroy);
 my $verbose = 0;
 
-foreach my $instance (Krang::Conf->instances()) {
-    Krang::Conf->instance($instance);
+# populate Krang::ListGroup and Krang::List info in
+# db from lists.conf file, if exists.
+my $list_conf_file = catfile(KrangRoot, 'element_lib',
+                             InstanceElementSet, 'lists.conf');
 
-    # populate Krang::ListGroup and Krang::List info in
-    # db from lists.conf file, if exists.
-    my $list_conf_file = catfile(KrangRoot, 'element_lib',
-                              InstanceElementSet, 'lists.conf');
-
-    if (-f $list_conf_file) {
-        my $config = XMLin($list_conf_file, suppressempty => 1, forcearray => 1);
-        my $dbh = dbh;
-
-        foreach my $list_group (@{$config->{list_group}}) {
-            my $lg = Krang::ListGroup->new( name => $list_group->{list_group_name}, description => $list_group->{description} );
-            $lg->save;
-            my $prev_list_id;
-            foreach my $list (@{$list_group->{list}}) {
-                my %params;
-                $params{name} = $list->{list_name};
-                $params{list_group_id} = $lg->list_group_id;
-                $params{parent_list_id} = $prev_list_id if $prev_list_id; 
-                my $new_list = Krang::List->new( %params );
-                $new_list->save;
-                $prev_list_id = $new_list->list_id 
-            }
+if (-f $list_conf_file) {
+    my $config = XMLin($list_conf_file, suppressempty => 1, forcearray => 1);
+    my $dbh = dbh;
+    
+    foreach my $list_group (@{$config->{list_group}}) {
+        my $lg = Krang::ListGroup->new( name => $list_group->{list_group_name}, description => $list_group->{description} );
+        $lg->save;
+        my $prev_list_id;
+        foreach my $list (@{$list_group->{list}}) {
+            my %params;
+            $params{name} = $list->{list_name};
+            $params{list_group_id} = $lg->list_group_id;
+            $params{parent_list_id} = $prev_list_id if $prev_list_id; 
+            my $new_list = Krang::List->new( %params );
+            $new_list->save;
+            $prev_list_id = $new_list->list_id 
         }
     }
-
 }
 
 print "Krang::ListGroups and Krang::Lists created successfully.\n";

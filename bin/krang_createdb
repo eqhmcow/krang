@@ -233,13 +233,14 @@ foreach my $instance (Krang::Conf->instances()) {
         print "Running '$cmd'\n" if $verbose > 1;
         system($cmd);
     }
-    
+
+    # have Krang::ListGroups and Krang::Lists created
+    $cmd = catdir(KrangRoot, 'bin', 'krang_create_lists');
+    local $ENV{KRANG_INSTANCE} = $instance;
+    print "Running '$cmd'\n" if $verbose > 1;
+    system($cmd);
 }
 
-# have Krang::ListGroups and Krang::Lists created
-my $cmd = catdir(KrangRoot, 'bin', 'krang_create_lists');
-print "Running '$cmd'\n" if $verbose > 1;
-system($cmd);
 
 print "Databases created successfully.\n";
 
