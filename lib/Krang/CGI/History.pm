@@ -18,7 +18,7 @@ our %ACTION_LABELS = (
 use Carp qw(croak);
 use Krang::History;
 use Krang::HTMLPager;
-
+use Krang::Desk;
 
 =head1 NAME
 
@@ -206,6 +206,7 @@ sub show_row_handler {
     my $attr = "";
     $attr .= "Version: " . $history->version
       if $history->version;
+    $attr .= "Desk: " . (Krang::Desk->find( desk_id => $history->desk_id))[0]->name if $history->desk_id;
     $row->{attr} = $attr;
 }
 
