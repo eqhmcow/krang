@@ -187,7 +187,7 @@ sub create {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = Krang::Story->find(story_id => $@->story_id);
-        my $class = Krang::ElementLibrary->find_class(name => $type);
+        my $class = Krang::ElementLibrary->top_level(name => $type);
         add_message('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,                    
