@@ -2,7 +2,7 @@
 # both pod2html and custom scripts stored in bin/
 
 HTML = changes.html objects.html coding.html goals.html rationale.html \
-       new_features.html paper_screen.html element_system.html \
+       new_features.html element_system.html \
        index.html install.html building_perl_modules.html requirements.html \
        configuration.html tech_spec.html writing_htmltemplate.html \
        permissions.html xml.html performance.html ops_install.html \
