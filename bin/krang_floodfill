@@ -29,6 +29,8 @@ text.
 
   --contribs - number of contributors to create, defaults to 50
 
+  --media    - number of media objects to create, defaults to 25
+
   --stories  - number of stories to create, defaults to 50
 
 =cut
@@ -72,12 +74,14 @@ use Krang::Category;
 use Krang::Pref;
 
 use Time::Piece;
+use Imager;
 
 my ($help, $man);
 my $sites    = 3;
 my $cats     = 15;
 my $contribs = 50;
 my $stories  = 50;
+my $media    = 25;
 pod2usage(2) unless
   GetOptions(help         => \$help,
              man          => \$man,
@@ -85,6 +89,7 @@ pod2usage(2) unless
              'cats=s'     => \$cats,
              'contribs=s' => \$contribs,
              'stories=s'  => \$stories,
+             'media=s'    => \$media,
             );
 
 pod2usage(1)             if $help;
@@ -155,6 +160,72 @@ for(1 .. $contribs) {
            "\n";
 }
 
+# create media
+my @media;
+for my $media_count (1 .. $media) {
+    # create a random image
+    my ($x, $y);
+    my $img = Imager->new(xsize => $x = (int(rand(300) + 50)), 
+                          ysize => $y = (int(rand(300) + 50)),
+                          channels => 3,
+                         );
+
+    # fill with a random color
+    $img->box(color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+              filled => 1);
+
+    # draw some boxes and circles
+    for (0 .. (int(rand(8)) + 2)) {
+        if ((int(rand(2))) == 1) {        
+            $img->box(color => 
+                      Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                      xmin => (int(rand($x - ($x/2))) + 1),
+                      ymin => (int(rand($y - ($y/2))) + 1),
+                      xmax => (int(rand($x * 2)) + 1),
+                      ymax => (int(rand($y * 2)) + 1),
+                      filled => 1);
+        } else {
+            $img->circle(color => 
+                         Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                         r => (int(rand(100)) + 1),
+                         x => (int(rand($x)) + 1),
+                         'y' => (int(rand($y)) + 1));
+        }
+    }
+
+    # pick a format
+    my $format = (qw(jpg png gif))[int(rand(3))];
+
+    $img->write(file => "tmp.$format");
+    my $fh = IO::File->new("tmp.$format") 
+      or die "Unable to open tmp.$format: $!";
+
+    # create a media object
+    my $media = Krang::Media->new(title      => join(" ", 
+                                                     map {ucfirst(get_word())} 
+                                                     (1..(int(rand(3)) + 2))),
+                                  filename   => get_word() . ".$format",
+                                  filehandle => $fh,
+                                  category_id => 
+                                  $cats[int(rand(scalar(@cats)))]->category_id);
+    
+    eval { $media->save };
+    if ($@) {
+        if (ref($@) and ref($@) eq 'Krang::Media::DuplicateURL') {
+            redo;
+        } else {
+            die $@;
+        }
+    }    
+    push(@media, $media);
+    #system("iv tmp.$format &");
+    unlink("tmp.$format");
+    print STDERR "Created Media " . $media->url . "\n";
+}
+
+                     
+                     
+
 # create stories
 my @stories;
 for my $story_count (1 .. $stories) {
@@ -205,15 +276,20 @@ for my $story_count (1 .. $stories) {
     $element->child('deck')->data($deck);
     $element->add_child(class => "page") for (1 .. ((int(rand(5)))+1));
 
-    # foreach page, add 10 paragraphs
+    # foreach page, add some paragraphs and photos
     foreach my $page (grep { $_->name eq 'page' } $element->children()) {
         $page->child('header')->data(join(" ", map { ucfirst(get_word()) } (1 .. ((int(rand(6)))+1))));
-        foreach my $para_num (1 .. ((int(rand(20)))+1)) {
-            my $para = join(" ",
-                            map { get_word() } 
-                            (0 .. ((int(rand(100)))+1)));
-            $page->add_child(class => "paragraph", 
-                             data => $para);
+        foreach my $obj_num (1 .. ((int(rand(20)))+1)) {
+            if ((int(rand(3))) != 1) {
+                my $para = join(" ",
+                                map { get_word() } 
+                                (0 .. ((int(rand(100)))+1)));
+                $page->add_child(class => "paragraph", 
+                                 data => $para);
+            } else {
+                $page->add_child(class => "photo",
+                                 data => $media[int(rand(scalar(@media)))]->media_id);
+            }
         }
     }
 
