@@ -132,10 +132,21 @@ sub run {
     # loop forever :)
     while (1) {
         $before = localtime;
+            
+        # run scheduled jobs for each instance
+        foreach my $instance (Krang::Conf->instances) {
+            Krang::Conf->instance($instance);
 
-        # run schedule objects every minute
-        my @schedule_ids = Krang::Schedule->run();
-
+            # run schedule objects every minute
+            my @schedule_ids = Krang::Schedule->run();
+            
+            # log activity
+            if (@schedule_ids) {
+                info(__PACKAGE__ . ": ran schedule objects for $instance: " .
+                     join(",", @schedule_ids));
+            }
+        }
+            
         # attempt to clean_tmp and expire_sessions every
         # CLEANUP_INTERVAL minutes
         if (($cleanups == 0 ) ||
@@ -146,17 +157,11 @@ sub run {
             $cleanups++;
         }
 
-        # log activity
-        if (@schedule_ids) {
-            info(__PACKAGE__ . ": ran schedule objects: " .
-                 join(",", @schedule_ids));
-        }
-
         $after = localtime;
         $sleep = SLEEP_INTERVAL - ($after - $before);
-
+            
         # only sleep if $sleep is a positive integer
-        sleep($sleep) if $sleep;
+        sleep($sleep) if $sleep > 0;
     }
 }
 
@@ -167,7 +172,4 @@ sub run {
 
 =cut
 
-
-my $quip = <<QUIP;
-1
-QUIP
+1;
