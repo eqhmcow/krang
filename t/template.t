@@ -38,7 +38,7 @@ eval {
                                      element_class_name => 'Bob');
     $tmplX->save();
 };
-is($@ =~ /'url' field is a duplicate/, 1, 'duplicate_check()');
+is($@ =~ /Duplicate URL/, 1, 'duplicate_check()');
 
 # save description for revert test
 my $content = $tmpl->content();
@@ -66,7 +66,7 @@ is($tmpl->checked_out, 0, 'Checkin Test');
 
 # verify save fails on a checked-in object
 eval{$tmpl->save()};
-is($@ =~ /not checked out/i, 1, 'verify_checkout() Test');
+like($@, qr/Template isn't checked out/i, 'verify_checkout() Test');
 
 # verify checkout works
 is($tmpl->checkout()->isa('Krang::Template'), 1, 'Checkout Test');
@@ -110,12 +110,14 @@ is(ref $_, 'Krang::Template', "Find - _like " . $i++) for @tmpls2;
 
 my ($tmpl4) = Krang::Template->find(limit => 1,
                                     offset => 1,
-                                    order_by => 'filename');
+                                    order_by => 'filename',
+                                    category_id => $category->category_id);
 is($tmpl4->filename(), 't_w_c.tmpl', "Find - limit, offset, order_by");
 
 my @tmpls5 = Krang::Template->find(order_desc => 1,
-                                   creation_date_like => '%2003%');
-ok(@tmpls5);
+                                   creation_date_like => '%2003%',
+                                   category_id => $category->category_id);
+isa_ok($_, 'Krang::Template') for @tmpls5;
 is($tmpls5[0]->filename(), 't_w_c.tmpl', "Find - ascend/descend");
 
 # version find
