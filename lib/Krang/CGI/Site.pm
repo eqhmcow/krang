@@ -500,6 +500,7 @@ sub view {
       unless ref $site;
 
     $t->param($self->get_tmpl_params($site));
+    $t->param(site_id => $site_id);
 
     return $t->output();
 }
