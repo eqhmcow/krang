@@ -90,22 +90,14 @@ END {
     }
 }
 
+# test finding templates.
 &find_templates($element);
+
+#diag("URL=" . $story->url());
+#diag("URL=" . $element->class()->build_url(story => $story, category => $category));
 
 
 # Attempt to publish the story.
-my $html = $publisher->_assemble_pages(story => $story, category => $category, mode => 'publish');
-
-#my $page = $story->element->child('page');
-#my $para = $page->child('paragraph');
-
-#my @children = $page->children();
-
-
-
-#diag("calling publish");
-#my $html  = $page->class->publish(element => $page, publisher => $publisher);
-#my $html  = $para->class->publish(element => $para, publisher => $publisher);
 
 #diag($html);
 #foreach(@children) {
