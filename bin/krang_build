@@ -1,0 +1,253 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_build - build a Krang binary distribution from source
+
+=head1 SYNOPSIS
+
+To automatically determine the platform:
+
+  krang_build
+
+Or specify it explicitely:
+
+  krang_build [platform]
+
+=head1 DESCRIPTION
+
+This script builds Krang from source for the specified platform.  In
+most cases you must be running the platform for which you're building
+(i.e. no cross-compilation).
+
+Available platforms are the set of directories in F<platform/>.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --no-apache
+
+By default the script will build apache and mod_perl for you.  This
+option skips that step.
+
+=item --module
+
+Specify a specific CPAN module to build.  The string you provide will
+be checked as a substring against the distribution file names, so
+C<DBD-mysql> works, but C<DBD::mysql> does not.  You can specify this
+option multiple times to build a specific set of modules.
+
+=item --skip-module
+
+Same as C<module> above, but skips the specified modules and builds
+everything else.  The C<module> and C<skip-module> options are not
+intended to be used together.
+
+=item --help
+
+=item --man
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # add in $KRANG_ROOT/platform for platform build modules
+    my $plib    = catdir($ENV{KRANG_ROOT}, "platform");
+    $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
+    unshift @INC, $plib;
+}
+use Pod::Usage;
+use Getopt::Long;
+use File::Temp qw(tempdir);
+
+# setup path variables
+my $KrangRoot       = $ENV{KRANG_ROOT};
+my $src_dir         = catdir( $ENV{KRANG_ROOT}, 'src' );
+my $dest_dir        = catdir( $ENV{KRANG_ROOT}, 'lib' );
+my $apache_dest_dir = catdir( $ENV{KRANG_ROOT}, 'apache' );
+my $build_dir       = tempdir(DIR     => catdir( $ENV{KRANG_ROOT}, 'tmp' ));
+
+# a few useful constants
+my $APACHE       = 'Apache-MOD_PERL/apache_1.3.27.tar.gz';
+my $MOD_PERL     = 'Apache-MOD_PERL/mod_perl-1.27.tar.gz';
+my $LIBAPREQ     = 'libapreq';
+my $ALWAYS_SKIP  = '^(Expect|IO-Tty)';
+
+# options
+my $skip_apache = 0;
+my ( @modules, @skip_modules, $help, $man );
+GetOptions(
+    'no-apache'     => \$skip_apache,
+    'module=s'      => \@modules,
+    'skip-module=s' => \@skip_modules,
+    'help'          => \$help,
+    'man'           => \$man,
+  )
+  or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage( -verbose => 2 ) if $man;
+
+# get platform arg
+pod2usage("Wrong number of arguments.\n") if @ARGV > 1;
+my $platform;
+opendir(DIR, catdir($KrangRoot, 'platform')) or die $!;
+my @platforms = grep { $_ !~ /^\.\.?$/ } sort readdir DIR;
+
+if (@ARGV) {
+    $platform = shift;
+
+    # check for bad platform
+    unless (-d catdir($KrangRoot, 'platform', $platform)) {
+        die "Platform '$platform' is not supported.  " . 
+          "Available platforms are:\n\n\t"
+            . join("\n\t", @platforms) . "\n\n";
+    }
+} else {
+    # look for a platform that wants to handle this
+    my $found;
+    foreach my $plat (@platforms) {
+        my $pkg = $plat . '::Platform';
+        eval "use $pkg";
+        die "Unable to load platform modules '$pkg': $@\n" if $@;
+
+        if ($pkg->guess_platform) {
+            $found = 1;
+            $platform = $plat;
+            print "Building for platform '$plat'.\n";
+            last;
+        }
+    }
+    die "Unable to automatically determine your platform, you must\n".
+      "provide one on the command line.  Available platforms are:\n\n\t".
+        join("\n\t", @platforms) . "\n\n"
+          unless $found;
+}
+
+# load the platform build module, reference via $pkg
+my $pkg = $platform . '::Platform';
+eval "use $pkg";
+die "Unable to load platform modules '$pkg': $@\n" if $@;
+
+# verify the platform
+$pkg->verify_dependencies(mode => 'build');
+
+# get list of files to build, considering --module and --skip-module opts
+opendir( SRC, $src_dir ) or die "Can't open $src_dir for reading: $!";
+my @files = sort readdir(SRC);
+
+if (@modules) {
+    @files = grep { contains( \@modules, $_ ) } @files;
+} elsif (@skip_modules) {
+    @files = grep { !contains( \@skip_modules, $_ ) } @files;
+}
+
+# shuffle some to the back to get proper build order
+foreach my $distribution qw(DBD-mysql Image-BioChrome) {
+    my ($file) = grep( /$distribution/, @files );
+    @files = grep( !/$distribution/, @files );
+    push @files, $file if $file;
+}
+
+# loop through files, unpacking and calling build_perl_module()
+foreach my $file (@files) {
+    next unless $file =~ /gz$/;
+    next if $file =~ /$ALWAYS_SKIP/o;
+
+    # wait to build libapreq till after building Apache
+    next if $file =~ /^$LIBAPREQ/o;
+
+    build_module($file);
+}
+
+
+# build Apache/mod_perl
+unless ($skip_apache) {
+    chdir $build_dir or die "Unable to chdir($build_dir): $!";
+
+    my $apache_gz = catfile($src_dir, $APACHE);
+    system("tar zxf $apache_gz") == 0 or die "Couldn't unpack file: $?";
+    my ($apache_dir) = $apache_gz =~ m!/([^/]+)\.tar\.gz$!;
+    die "Can't find Apache dir '$apache_dir'." unless -d $apache_dir;
+
+    my $mod_perl_gz = catfile($src_dir, $MOD_PERL);
+    system("tar zxf $mod_perl_gz") == 0 or die "Couldn't unpack file: $?";
+    my ($mod_perl_dir) = $mod_perl_gz =~ m!/([^/]+)\.tar\.gz$!;
+    die "Can't find Mod_perl dir '$mod_perl_dir'." unless -d $mod_perl_dir;
+
+    $pkg->build_apache_modperl(apache_dir   => $apache_dir,
+                               mod_perl_dir => $mod_perl_dir);
+}
+
+# build libapreq now that mod_perl is in place
+if ( my ($libapreq) = grep /^$LIBAPREQ/, @files ) {
+    build_module($libapreq);
+}
+
+
+# drop a build.db file describing the build, used by krang_makedist
+# and krang_install
+print "Writing data/build.db\n";
+open(DB, '>', catfile($ENV{KRANG_ROOT}, 'data', 'build.db'))
+  or die "Unable to open 'data/build.db': $!";
+print DB "Platform $platform\n";
+print DB sprintf "Perl \"%d.%d.%d\"\n", (map { ord($_) } split("", $^V, 3));
+print DB "Arch \"$Config{archname}\"\n";
+close DB;
+
+# all done, cleanup build dir
+print "Cleaning temporary build directory.\n";
+system("rm -rf $build_dir");
+
+print "\n\nBuild complete!\n";
+
+#
+# Subroutines
+#
+
+# unpack a distribution and use the platform module to build it
+sub build_module {
+    my $file = shift;
+
+    # unpack distribution
+    my $dist_file = catfile( $src_dir, $file );
+    print "Unpacking $dist_file...\n";
+    chdir $build_dir or die "Unable to chdir($build_dir): $!";
+    system("tar zxf $dist_file") == 0 or die "Couldn't unpack file: $?";
+
+    $dist_file =~ m!([^/]+)\.(tar\.|t)gz!;
+    my $dist_dir = $1;
+    die "Can't determine dist_dir for '$dist_file'." unless $dist_dir;
+    chdir $dist_dir or die "Unable to chdir($dist_dir): $!";
+
+    eval { $pkg->build_perl_module(name => $dist_dir); };
+    die "Problem building $dist_dir in $build_dir:\n\n$@\n"
+      if $@;
+}
+
+
+# returns true if list contains a string which contains the target string
+sub contains {
+    my ( $list, $string ) = @_;
+    return grep { index( $string, $_ ) > -1 } @{$list};
+}
+
