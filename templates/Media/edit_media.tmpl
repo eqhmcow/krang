@@ -25,7 +25,11 @@
     }
 
     function do_publish () {
-        alert ("Not implemented yet");
+        if (confirm("Are you sure you want to publish this media?")) {
+            var myform = document.edit_media_form;
+            myform.rm.value = 'save_and_publish';
+            myform.submit();
+        }
     }
 
 
