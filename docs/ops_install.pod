@@ -1,8 +1,8 @@
 
 =head1 Installing PIRT CMS 2.0 (Krang)
 
-The following instructions will install Krang on a RedHat Linux 7.3
-system, i686 architecture.
+The following instructions will install Krang on a RedHat Linux 7.3 or
+Redhat Linux 9 system, on the i686 architecture.
 
 To install, do the following as root:
 
@@ -43,7 +43,7 @@ IP address used for CMS Apache server and FTP server.
 
 =item AdminPassword
 
-Password assigned to the "Admin" CMS user (e.g., "shredder").
+Password assigned to the "admin" CMS user (e.g., "shredder").
 
 
 =item DBUser

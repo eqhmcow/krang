@@ -1,0 +1,12 @@
+=head1 Add-on Installation
+
+To install an add-on, simply run the C<krang_addon_installer> on the
+add-on package.  For example, if you installed Krang into
+C</usr/local/krang> and you want to install C<Turbo-1.000.tar.gz>:
+
+  /usr/local/krang/bin/krang_addon_installer Turbo-1.000.tar.gz
+
+For more information about add-ons see 
+HREF[Building a Krang Add-On|add_on.html].
+
+

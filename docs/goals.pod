@@ -1,42 +1,42 @@
 =head1 Krang Goals
 
-This document collects the high-level goals of the Krang development project.
+This document states the goals of the Krang project.
 
 =over
 
 =item *
 
-Manage publication of Primedia magazine websites
+Krang will manage the publication of magazine websites.  A magazine
+website is a site primarily consisting of static pages (stories)
+linked from index pages (covers), created by users known as editors.
 
 =item *
 
-Maintains a similar interface and feature-set to our usage of Bricolage
+Krang will provide a similar interface and feature-set to Bricolage.
 
 =item *
 
-Removes features and interfaces found in Bricolage which we do not use
-
-=item *
-
-Prepare a base for adding desirable new features in the future
+Krang will exclude features and interfaces found in Bricolage which do
+not serve our goals.
 
 =item * 
 
-Lowest possible operational overhead
+Krang will have the lowest possible system management overhead.  It
+should be easy to install and require little effort to configure and
+upgrade.
 
 =item *
 
-A maintainable system that is easy to understand for programmers and
-administrators
+Krang will be a maintainable system that is easily understand by
+programmers.
 
 =item *
 
-An efficient system, reducing hardware costs and improving the user
-experience
+Krang will be an efficient system, reducing hardware costs and
+improving the user experience.
 
 =item *
 
-A less buggy system, which will be attained by building in automated
-tests at every level below the UI
+Krang will be a stable system, with a complete automated test suite.
 
 =back

@@ -1,0 +1,49 @@
+=head1 Krang Upgrade System
+
+This document describes the Krang upgrade system for developers.  If
+you just want to upgrade Krang, see HREF[Upgrade|ops_upgrade.html].
+
+I<This document is incomplete.>
+
+=head2 Design Considerations
+
+There are a number of sub-systems which have to be considered when
+upgrading a Krang installation.
+
+=over 4
+
+=item Krang System
+
+Stored in KRANG_ROOT, the system is that which is not otherwise
+specified.  This includes the Perl libraries (internal and external),
+Apache, htdocs, element set libraries, etc.
+
+
+=item krang.conf
+
+The elements in the krang.conf file may have changed since the
+previous version.  The installer must create a new krang.conf,
+incorporating the existing directives but installing the new
+directives.  This is usually accomplished by appending new directives
+to the end of the existing krang.conf. 
+
+
+=item Instance Databases
+
+Database tables may have changed, and data may have to be transformed
+during upgrade.  The upgrade system will start with the existing
+database and apply progressive upgrades in order to bring each
+database up to date.
+
+N.B.:  Each instance has its own database which must be upgraded.
+
+
+=item Data files
+
+Media and Templates are stored in the KRANG_ROOT/data directory.  They
+will be copied over from the existing installation.  Upgrade scripts
+may alter the content of the data directory.
+
+
+=back
+

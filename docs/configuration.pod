@@ -1,19 +1,12 @@
 =head1 Krang Configuration
 
-=head2 Introduction
-
 Krang is configured through a single configuration file called
-F<krang.conf>.  Krang finds its configuration file by first looking
-for the C<KRANG_CONF> environment variable.  If this is unset, Krang
-will look for C<KRANG_ROOT> and append F<conf/krang.conf> to it.  In
-most cases Krang can figure out C<KRANG_ROOT> automatically by looking
-at the way you started Krang.
+F<krang.conf>.  This file is stored in the F<conf/> directory inside
+Krang.  Krang's configuration file is in the same format as Apache.
+Simple directives are set using the name and value, separated by a
+space.  For example:
 
-Krang's configuration file is in the same format as Apache.  Simple
-directives are set using the name and value, separated by a space.
-For example:
-
-  KrangRoot /usr/local/krang
+  ApachePort 8000
 
 Multiple values are separated by spaces.  Example:
 
@@ -28,16 +21,23 @@ Instance blocks in Krang work like VirtualHost blocks in Apache.  For
 example, the instance called "truckin" would have a block like:
 
   <Instance truckin>
-     InstanceName truckin
-     VirtualHost cms.truckin.com
+     InstanceDBName truckin
+     InstanceHostName cms.truckin.com
      # ...
   </Instance>
 
 Just like Apache, configuration directives defined outside the
-Instance blocks are inherited by the instances.  This means that
+C<Instance> blocks are inherited by the instances.  This means that
 common settings can be defined globally and then selectively
 overridden inside the Instance blocks, reducing overall configuration
 size.
 
 The actual configuration directives used to configure Krang are
 documented inside the C<krang.conf>.
+
+B<NOTE:> When you changs F<krang.conf> don't forget to restart Krang
+so your changes can take effect:
+
+  bin/krang_ctl restart
+
+

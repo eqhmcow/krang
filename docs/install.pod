@@ -1,5 +1,4 @@
-
-=head1 Installing Krang
+=head1 Installing Krang As a Developer
 
 
 The purpose of this document is to walk a user through the process of

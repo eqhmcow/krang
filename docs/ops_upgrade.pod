@@ -1,93 +1,16 @@
+=head1 Upgrading Krang
 
-=head1 Upgrading PIRT CMS 2.0 (Krang)
+To upgrade an existing Krang installation, first unpack the new
+version of Krang and enter the created directory
 
+  $ tar zxvf krang-1.000.tar.gz
+  $ cd krang-1.000
 
-This document describes how to upgrade Krang.
+Then, as root, run the Krang upgrade script:
 
-
-To upgrade an existing Krang installation, do the following as root:
-
-
-  # cd <new Krang src directory>
   # ./bin/krang_upgrade
 
+If Krang isn't installed in C</usr/local/krang> then you'll need to
+point C<krang_upgrade> in the right direction:
 
-=head2 Optional parameters
-
-=over
-
-=item krangRoot
-
-Defaults to F</usr/local/krang> if not specified.  May be used to 
-specify a different location if need be.
-
-  # ./bin/krang_upgrade --krangRoot $KRANG_ROOT
-
-=back
-
-
-=head2 Components to consider when upgrading
-
-There are a number of sub-systems which have to be considered when
-upgrading a Krang installation.
-
-=over 4
-
-=item Krang System
-
-Stored in KRANG_ROOT, the system is that which is not otherwise
-specified.  This includes the Perl libraries (internal and external),
-Apache, htdocs, element set libraries, etc.
-
-
-=item krang.conf
-
-The elements in the krang.conf file may have changed since the
-previous version.  The installer must create a new krang.conf,
-incorporating the existing directives but installing the new
-directives.  This is usually accomplished by appending new directives
-to the end of the existing krang.conf. 
-
-
-=item Instance Databases
-
-Database tables may have changed, and data may have to be transformed
-during upgrade.  The upgrade system will start with the existing
-database and apply progressive upgrades in order to bring each
-database up to date.
-
-N.B.:  Each instance has its own database which must be upgraded.
-
-
-=item Data files
-
-Media and Templates are stored in the KRANG_ROOT/data directory.  They
-will be copied over from the existing installation.  Upgrade scripts
-may alter the content of the data directory.
-
-
-=back
-
-
-
-=head1 System Requirements
-
-This upgrade is intended for sites which are already running Krang, aka
-PIRT CMS 2.0.
-
-Upgrade from Bricolage is handled through a different system.
-
-
-=head1 To Upgrade
-
-
-=over 4
-
-=item Down load and uncompress new Krang to temporary folder (e.g., /tmp/new_krang/)
-
-=item Run the upgrade script as root
-
-  # cd <new Krang src directory>
-  # ./bin/krang_upgrade --krangRoot $KRANG_ROOT
-
-=back
+  # ./bin/krang_upgrade --krangRoot /path/to/krang/install

@@ -16,7 +16,7 @@ find({ wanted => \&process,
 
 sub process {
     return unless /.pm$/;
-    return if /^\./ or /^#/; # ignore emacs droppings
+    return if /#/; # ignore emacs droppings
 
     my ($name) = /lib\/(.*?)\.pm/;
     my $fname = lc($name);
