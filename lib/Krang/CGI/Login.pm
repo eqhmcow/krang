@@ -79,7 +79,7 @@ sub login {
              defined $password and length $password;
 
     # check username and password
-    my ($user_id) = $dbh->selectrow_array('SELECT user_id FROM usr 
+    my ($user_id) = $dbh->selectrow_array('SELECT user_id FROM users 
                                            WHERE login = ? AND password = MD5(?)',
                                           undef, $username, $password);
     
