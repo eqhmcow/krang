@@ -99,7 +99,8 @@ system($ENV{KRANG_ROOT}."/bin/krang_createdb --destroy --all --no_create --no_pr
 print "\nNow removing all files...\n\n" if $verbose;
 system("rm -Rf $ENV{KRANG_ROOT}");
 
-exit(1);
+# it worked.
+exit(0);
 
 sub exit_error {
     my $cmd = $0;
