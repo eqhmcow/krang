@@ -10,7 +10,10 @@
 #
 #   clean - cleans up ext-src and ext-lib so that a subsequent make ext
 #           will rebuild all libraries.
- 
+#
+#   bench - runs the benchmark scripts in bench/
+#
+
 # test section, ripped from Makefile.PL output
 TEST_VERBOSE=0
 TEST_FILES = t/*.t
