@@ -1,0 +1,707 @@
+=head1 Writing HTML::Template Templates in Krang
+
+=over
+
+=item * Name
+
+=item * Introduction
+
+=item * Templates in Krang
+
+=item * Publish Methods and Templates
+
+=item * A Note on Sites
+
+=item * C<<An Example Story Type>>
+
+=item * C<<Choosing a Strategy>>
+
+=item * C<<Overriding Methods in Krang::ElementClass>>
+
+----------------------------------------
+
+=item * C<<Example 1: One Template, No Publish Method>>
+
+=item * C<<Example 2: One Template, One Publish Method>>
+
+=item * C<<Example 3: Multiple Templates, No Publish Methods>>
+
+=item * C<<Example 4: Multiple Templates, Multiple Publish Methods>>
+
+----------------------------------------
+
+=item * C<<Handling Media Objects>>
+
+=item * C<<Working With Categories>>
+
+=item * Variables Provided by Krang
+
+=back
+
+=head1 Name
+
+Krang::HTMLTemplate - writing templates for Krang using HTML::Template
+
+=head1 Introduction
+
+This document goes describes how to use templating system in Krang, which is based on HTML::Template.  An understanding of the way stories are constructed in Krang will be helpful in getting the most out of this document.  A general understanding of how the HTML::Template templating language works will help as well.
+
+=head1 Templates in Krang
+
+Krang uses templates to generate output for stories when they're published.  These templates are organized on the filesystem in the same category tree that is used for arranging stories and media.  When a story is published, the category tree is searched for appropriate templates, starting at the story's current category.  If no match is found immediately, Krang will then proceed up the category tree until a matching template is found.
+
+
+=head1 Publish Methods and Templates
+
+The HTML::Template templating system in Krang works by separating code and HTML design.  In the event that 
+
+The templating system in Krang does not make use of separate scripts, the way that Bricolage did.  In Krang, every element in the element tree contains code to publish itself.  If customization is required, you can override the default publish methods within the element.
+
+Need further notes here on how templates are stored on the filesystem, and the process by which they're retrieved by elements in the publish process.
+
+
+=head1 An Example Story Type
+
+We'll examine a simple example story type called "Story". Here's the element tree for "Story":
+
+   Story
+        - Deck             (textbox attribute)
+        + Page             (repeatable element)
+             - Paragraph   (repeatable textbox attribute)
+             - Pull Quote  (repeatable textbox attribute)
+
+The Story element has one attribute called Deck and can contain any number of Page elements. Pages are composed of Paragraph attributes and Pull Quote attributes, both of which can be repeated.
+
+
+=head1 Choosing a Strategy
+
+Empty for now.
+
+=head1 Overriding Methods in Krang::ElementClass
+
+The following methods exist in Krang::ElementClass as part of the publish process, and can be overridden as needed:
+
+=over
+
+=item * find_template(category => $category_id)
+
+Returns an HTML::Template::Expr object with the template to be used by the element.  Follows a definied protocol (required in this doc?) for locating the template on the filesystem.
+
+Unless you need to alter the process for loading templates, this method can generally be left alone.
+
+=item * fill_template(story => $story, template => $template, category => $category_id)
+
+Works in the same fashion as the old autofill() behavior under Bricolage.  Navigates the element tree, creates scalers & loops based on what it traverses, and adds them to the template object.
+
+This method is responsible for calling publish() on all children of the current element.  If you decide to override fill_template, but don't want to deal with the manual work of walking the element tree, make sure to make a call to $self->SUPER::fill_template().
+
+
+=item * publish(story => $story, category => $category_id)
+
+Ties the above methods together.  Returns HTML for the current element (and therefore, any children beneath it).  Any reason to ever override it?
+
+publish() takes a hash as an argument, allowing for named parameters.  Anything passed in will subsuquently be passed into the above methods.
+
+Krang::ElementClass POD should contain more information on overriding these methods.
+
+=back
+
+
+=head1 Example 1: One Template, No Publish Method
+
+In this case, we have a very simple system, a single story template made up of basic elements:
+
+=head2 The Template - Story.tmpl
+
+ #
+ # NOTE - need notes on how to save template properly in the Krang::Template hierarchy..
+ #
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_if __first__>
+        <h1><tmpl_var title></h1>
+        <b><tmpl_var deck></b>
+     </tmpl_if>
+
+     <tmpl_loop element_loop>
+        <tmpl_if paragraph>
+          <p><tmpl_var paragraph></p>
+        </tmpl_if>
+        <tmpl_if name eq "pull quote">
+          <p><blockquote><i>
+            <tmpl_var name="pull quote">
+          </i></blockquote></p>
+        </tmpl_if>
+     </tmpl_loop>
+
+     <tmpl_unless __first__>
+     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+     </tmpl_unless>
+
+     <tmpl_unless __last__>
+     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+     </tmpl_unless>
+
+   </body>
+   </html>
+
+   <tmpl_var page_break>
+
+ </tmpl_loop>
+
+
+
+=head2 The Overridden Element Method
+
+In the Package that describes the Story element, we'll override the fill_template() method.  For the time being, the find_template() and publish() methods will be left alone (see Krang::ElementClass POD for more info).
+
+ sub fill_template {
+
+  my $self = shift;
+  my (%named_params) = @_;
+
+  my $template = $named_params{template};
+  my $story    = $named_params{story};
+
+  # setup story title
+  $template->param(title => $story->title());
+
+  # setup story slug
+  $template->param(slug => $story->slug());
+
+  # setup the page break variable
+  $template->param(page_break => Krang::Publisher::PAGE_BREAK);
+
+
+  # Build up @page_loop
+  my @page_list = $self->match('/page'); # returns all elements
+  my @page_loop;
+  my $page_count = 1;
+
+  foreach my $page (@page_list) {
+
+    # build per-page element loop
+    my @element_loop;
+    foreach my $e ($page->children()) {
+        # push on a row for this element
+        push(@element_loop, { $e->name() => $e->publish(@_) });
+    }
+
+    # push element_loop and a page_count on this loop
+    push(@page_loop, { 
+                      element_loop => \@element_loop,
+                      page_count   => $page_count++
+                     });
+  }
+
+  # finish the page_loop
+  $template->param(page_loop => \@page_loop);
+
+ }
+
+
+
+=head2 RESULTS
+
+Using the basic element set, we now have a single story template that can be used when generating content.
+
+Advanteges:
+
+* Single page, single element.  Everything's centrally located, and easy to manipulate.
+
+Disadvanteges:
+
+* With a single template, customization for individual stories is very difficult - there's no possibility of re-using this element in a different tree - it would need to be re-written.
+
+
+=head1 Example 2: One Template, One Publish Method
+
+Overriding the various methods in the element tree is not always required.  If no methods are overridden, the methods found in Krang::ElementClass are used.
+
+=head2 The Default fill_template() Method
+
+The default fill_template() from Krang::ElementClass will fill in the variables and loops in your template in a predictable fashion.
+
+Several types of variables and loops are created:
+
+=over
+
+=item * A single variable is created for every element using $element->name().
+
+The <tmpl_var deck> variable in the previous example is an example of this type of variable.
+
+=item * A loop is created for every element named with the name of the element followed by _loop. The rows of the loop contain the variable described above and a _count variable.
+
+The <tmpl_loop page_loop> is an example of this type of loop.
+
+=item * A loop called "element_loop" is created with a row for every element contained. The values are the same as for the loop above with the addition of a boolean is_ variable.
+
+The <tmpl_loop element_loop> used within the <tmpl_loop page_loop> is this type of loop.
+
+=item * A variable for the total number of elements named with the element name and a trailing _total.
+
+=item * A variable called "title" containing $story->title.
+
+=item * A variable called "page_break" containing $burner->page_break.   --- (Krang::Publisher::PAGE_BREAK?)
+
+
+=back
+
+
+B<Additional notes>
+
+The template being used in this strategy is almost exactly the same as for strategy 1. There are a couple changes.  First, the variable names used in the template must correspond to what $element->name() will return.  Second, the default fill_template() method provides "is_$element->name()" variables inside the element_loops to make testing for the type of row more obvious and more fool-proof.  In STRATEGY 1 a paragraph with the sole contents "0" wouldn't have been printed.
+
+=head2 The Template - Story.tmpl
+
+ #
+ # Note: Need to explain how to save in Krang::Template
+ #
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_if __first__>
+        <h1><tmpl_var title></h1>
+        <b><tmpl_var deck></b>
+     </tmpl_if>
+
+     <tmpl_loop element_loop>
+        <tmpl_if is_paragraph>
+          <p><tmpl_var paragraph></p>
+        </tmpl_if>
+        <tmpl_if is_pull_quote>
+          <p><blockquote><i>
+            <tmpl_var pull_quote>
+          </i></blockquote></p>
+        </tmpl_if>
+     </tmpl_loop>
+
+     <tmpl_unless __first__>
+     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+     </tmpl_unless>
+
+     <tmpl_unless __last__>
+     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+     </tmpl_unless>
+
+   </body>
+   </html>
+
+   <tmpl_var page_break>
+
+ </tmpl_loop>
+
+
+
+=head1 Example 3: Multiple Templates, No Publish Methods
+
+If your building an element that will be used as a sub-element in more than one tree, you can save a lot of time and effort by splitting out the functionality of that element from the rest of the system.
+
+This example will take what we did in Example 2 (single template, no fill_template() method), and break out the construction of the Page element into a separate template.  The publish() method will not be overloaded in this example, so the default publish() method will be relied upon to build the loops and variables.  All behavior of the default publish() method talked about in Example 2 still applies.
+
+
+=head2 The Templates
+
+B<Story.tmpl>
+
+The Story template (taken from Story.tmpl in Example 2 above) sees one major revision - the entire <tmpl_loop element_loop> section has been removed and replaced with a single B<<tmpl_var page>>.  The default publish() method (or the one you roll on your own, see Example 4, below) will see this and now make a call to the publish() method for the page element to generate the HTML needed by <tmpl_var>.
+
+# Note: Need to explain how to save in Krang::Template
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_if __first__>
+        <h1><tmpl_var title></h1>
+        <b><tmpl_var deck></b>
+     </tmpl_if>
+
+     <tmpl_var page>
+
+     <tmpl_unless __first__>
+     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+     </tmpl_unless>
+
+     <tmpl_unless __last__>
+     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+     </tmpl_unless>
+
+   </body>
+   </html>
+
+   <tmpl_var page_break>
+
+ </tmpl_loop>
+
+
+B<Page.tmpl>
+
+Page.tmpl is simply the inner loop @element_loop that was found in the Story.tmpl of Example 2.  By removing it from Story.tmpl, we now have a small, easy-to-maintain template with very simple functionality.
+
+Notice that the header and footer logic found in the previous template (using __first__ and __last__) is not present here - those variables are internal HTML::Template variables that correspond to the current location in @page_loop, which doesn't exist here.  
+
+# Note: Need to explain how to save in Krang::Template
+
+ <tmpl_loop element_loop>
+   <tmpl_if paragraph>
+     <p><tmpl_var paragraph></p>
+   </tmpl_if>
+   <tmpl_if name="pull quote">
+     <p><blockquote><i>
+       <tmpl_var name="pull quote">
+     </i></blockquote></p>
+   </tmpl_if>
+ </tmpl_loop>
+
+
+
+
+
+=head2 RESULTS
+
+
+B<Advanteges:>
+
+=over
+
+=item * Two simplified templates easier to understand than one large complex one.
+
+=item * Customizability - multiple implementations of the Page template can be used to provide different layouts, all without touching the Story template.
+
+=item * Use of the default publish() method means that no custom perl code is required.
+
+=back
+
+B<Disadvanteges:>
+
+=over
+
+=item * Everything is no longer in a single spot - the developer is now forced to look in multiple locations for all template information.
+
+=back
+
+
+
+=head1 Example 4: Multiple Templates, Multiple Publish Methods
+
+The last example takes everything done so far, and rolls it all up - using templates for individual elements, and overloading the publish() method within elements, rather than relying on the default publish() method.
+
+One of the advanteges of this rolling your own publish() methods in this case is the ability to pass variables to the sub-element template that would otherwise not exist.  In Example 3, there was no way to use __first__ and __last__ logic in Page.tmpl, because that information was not available.  This can be fixed here.
+
+
+=head2 The Templates
+
+B<Story.tmpl>
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_var page>
+
+   </body>
+   </html>
+
+   <tmpl_var page_break>
+
+ </tmpl_loop>
+
+MUCH smaller.  All the logic involving __first__ and __last__ has now been moved over to Page.tmpl, where it really belongs.  
+
+
+B<Page.tmpl>
+
+ <tmpl_if first>
+    <h1><tmpl_var title></h1>
+    <b><tmpl_var deck></b>
+ </tmpl_if>
+
+ <tmpl_loop element_loop>
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+    <tmpl_if is_pull_quote>
+      <p><blockquote><i>
+    <tmpl_var pull_quote>
+      </i></blockquote></p>
+    </tmpl_if>
+ </tmpl_loop>
+
+ <tmpl_unless first>
+   <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+ </tmpl_unless>
+
+ <tmpl_unless last>
+   <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+ </tmpl_unless>
+
+
+So Page.tmpl is larger than before, but it makes more sense - all the Page logic is now in one place.
+
+
+=head2 The publish() Methods
+
+As Page.tmpl now needs to know about what page is currently being processed, the publish() method for both the Story element and then Page element needs to be overloaded.
+
+B<Story>
+
+The fill_template() method for Story needs to be able to pass page_count information to the publish() method for Page.  In turn, publish() will pass it to the fill_template() for Page.
+
+
+ sub fill_template {
+
+  my ($self, $story, $publisher) = @_;
+
+  my $template = $named_params{template};
+
+  # Get the list of pages into @pages
+  my @pages = $self->match('/page');
+  my @page_loop = ();
+  my $page_count = 1;
+
+  foreach my $page (@pages) {
+    # each $page is an element
+    push @page_loop, { page => $page->publish(story => $story,
+                                              page_count => $page_count++,
+                                              pages      => scaler @pages
+                                             )
+                     };
+  }
+
+  # populate template.
+  $template->param(page_loop => \@page_loop);
+
+ }
+
+
+B<Page>
+
+So now that the fill_template() method for Story has passed the page count information along, the fill_template() method for Page needs to use that information.
+
+ sub fill_template {
+
+  my $self = shift;
+  my %named_parms = @_;
+
+  my $template = $named_params{template};
+
+  my $story = $named_params{story};
+  my $page_count = $named_params{page_count};
+  my $page_total = $named_params{page_total};
+
+  # setup params
+  if ($page_count == 0) {
+     $template->param(first => 1);
+  }
+  if ($page_count == $page_total) {
+     $template->param(last => 1);
+  }
+
+  $template->param(title => $story->title());
+
+  # setup story slug
+  $template->param(slug => $story->slug());
+
+  # setup the page break variable
+  $template->param(page_break => Krang::Publisher::PAGE_BREAK);
+
+ }
+
+
+
+
+=head2 Conclusion
+
+B<Advantages>
+
+=over
+
+=item * This style is very flexible - the programmer can add functionality to the autofilled content without having to re-invent the wheel.
+
+=item * Elements that are broken out into discrete scripts and templates can be reused between element trees.
+
+=item * In this particular case bending the rules a bit allows the page formatting to be more logically grouped and easier to edit.
+
+=back
+
+B<Disadvantages>
+
+=over
+
+=item * Requires coding.
+
+=item * Requires communication between template programmer and template designer since the variables and loops are somewhat different from the normal autofill setup.
+
+=back
+
+
+
+=head1 Handling Media Objects
+
+Media elements in Krang are all of the type Krang::ElementClass::MediaLink.  What this means is that while it inherits all the methods of Krang::ElementClass, it also provides a connection to Krang::Media objects.  
+As a subclass of Krang::ElementClass, Krang::ElementClass::MediaLink objects use the same publish process, templates, overrideable methods and all.
+
+=head2 Templates
+
+B<Story.tmpl>
+
+Returning to the template in Example 2, a small addition is made:
+
+
+ <tmpl_loop page_loop>
+
+   <html>
+
+   <head>
+     <title><tmpl_var title></title>
+   </head>
+   <body>
+
+     <tmpl_if __first__>
+        <h1><tmpl_var title></h1>
+        <b><tmpl_var deck></b>
+     </tmpl_if>
+
+     <tmpl_loop element_loop>
+        <tmpl_if is_paragraph>
+          <p><tmpl_var paragraph></p>
+        </tmpl_if>
+        <tmpl_if is_pull_quote>
+          <p><blockquote><i>
+            <tmpl_var pull_quote>
+          </i></blockquote></p>
+        </tmpl_if>
+        <tmpl_if is_image>
+            <tmpl_var image>
+        </tmpl_if>
+     </tmpl_loop>
+
+     <tmpl_unless __first__>
+     <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
+     </tmpl_unless>
+
+     <tmpl_unless __last__>
+     <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
+     </tmpl_unless>
+
+   </body>
+   </html>
+
+   <tmpl_var page_break>
+
+ </tmpl_loop>
+
+
+If you missed it, the entry is here - as a conditional within <tmpl_var element_loop>:
+
+  <tmpl_if is_image>
+     <tmpl_var image>
+  </tmpl_if>
+
+
+
+B<Image.tmpl>
+
+The template for the image itself will be very small.  For example:
+
+
+ <img src="<tmpl_var escape=html image_url>">
+ <tmpl_if caption>
+  <br><font size=-1><tmpl_var caption></font>
+ </tmpl_if>
+
+
+=head2 Methods
+
+Generally, the default fill_template() method should be sufficient - but for reference purposes, overriding it would go as follows:
+
+ sub fill_template {
+    my $self = shift;
+    my %named_params = @_;
+    my $template = $named_params{template};
+
+    # get linked object from element
+    my $media = $self->data();
+
+    # fill in URL to link to media
+    $template->param($self->name . "_url" => $media->url);
+    # fill in image caption
+    $template->param(caption => $media->caption);
+
+ }
+
+
+=head1 Working With Categories
+
+Just as elements can have templates, each category may have one template associated with it called "category.tmpl".
+
+For an example, let's imagine that we want to put a blue box around every page in our output. Instead of putting this HTML into our templates we'll do it in a category template.
+
+=head2 Template - Category.tmpl
+
+ <html>
+ <head><tmpl_var title></head>
+ <body>
+
+ <table bgcolor=blue cellspacing=5 border=0><tr><td>
+
+   <tmpl_var content>
+
+ </td></tr></table>
+
+ </body>
+ </html>
+
+One thing to note is that do the wrapping we had to move the <head> setup with the title var into the category template. This is an unfortunate fact-of-life for HTML since the <head> section has to precede the <body> most category templates will have to include it.
+
+Internally, Krang will split this template into a header and footer, and replace the <tmpl_var content> with individual pages of Story content when it glues everything back together.
+
+
+=head2 Methods
+
+B<fill_template();>
+
+Generally, the default fill_template() will suffice.  For reference, here's a sample:
+
+ sub fill_template {
+
+  my $self = shift;
+  my %named_params = @_;
+
+  my $story = $named_params{story};
+  my $template = $named_params{template};
+
+  $template->param(title => $story->title());
+
+ }
+
+
+
+
+
