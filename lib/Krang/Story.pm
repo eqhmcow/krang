@@ -1460,6 +1460,9 @@ sub delete {
              undef, $self->{story_id});
     $dbh->do('DELETE FROM element WHERE root_id = ?',
              undef, $self->{element_id});
+    
+    # delete schedules for this story
+    $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?', undef, 'story', $self->{story_id});
 }
 
 =item C<< $copy = $story->clone() >>

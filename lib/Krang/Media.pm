@@ -1188,6 +1188,10 @@ sub delete {
 
     rmtree($file_dir) || croak("Cannot delete $file_dir and contents.");
 
+    # delete schedules for this story
+    $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
+undef, 'media', $self->{media_id});
+
 }
 
 =item C<< $media->serialize_xml(writer => $writer, set => $set) >>
