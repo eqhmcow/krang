@@ -851,6 +851,11 @@ Pass an array ref of IDs to be excluded from the result set
 
 Returns stories in the category and in categories below as well.
 
+=item below_primary_category_id
+
+Returns stories in the category and in categories below as well,
+looking only at primary category relationships.
+
 =item published
 
 If set to 0, returns stories that are not published, set to 1 
@@ -975,6 +980,20 @@ sub find {
             # need to bring in story_category
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
+            push(@where, 
+                 'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
+            push(@param, @ids);
+            $need_distinct = 1;
+            next;
+        }
+
+        # handle below_primary_category_id
+        if ($key eq 'below_primary_category_id') {
+            my ($cat) = Krang::Category->find(category_id => $value);
+            my @ids = ($value, $cat->descendants( ids_only => 1 ));
+            # need to bring in story_category
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id AND sc.ord = 0');
             push(@where, 
                  'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
             push(@param, @ids);

@@ -1251,7 +1251,7 @@ sub find {
                                     title
                                     url
                                     class 
-                                    below_category_id 
+                                    below_primary_category_id 
                                     story_id
                                     contrib_simple
                                    );
@@ -1314,7 +1314,7 @@ sub find {
 
         # If we're showing an advanced search, set up the form
         $tmpl_data{category_chooser} = category_chooser(
-                                                        name => 'search_below_category_id',
+                                                        name => 'search_below_primary_category_id',
                                                         query => $q,
                                                         formname => 'search_form',
                                                        );
