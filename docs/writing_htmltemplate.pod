@@ -36,6 +36,8 @@
 
 =item * C<<Working With Categories>>
 
+=item * C<Pagination>
+
 =item * C<Contributors>
 
 =item * Variables Provided by Krang
@@ -754,6 +756,113 @@ Generally, the default fill_template() will suffice.  For reference, here's a sa
  }
 
 
+=head1 Pagination
+
+Variables for pagination will be built as a part of the Krang autofill process whenever it encounters a story element with the attribute C<pageable> set to 1 (Generally the C<page> element).  The following variables are made available:
+
+=over 4
+
+=item current_page_number
+
+Contains the number (starting at 1) of the current page being built.
+
+=item total_pages
+
+Contains the total number of pages in the story.
+
+=item previous_page_url
+
+Contains the URL of the previous page in the story.  Will be empty if on the first page of the story.
+
+=item next_page_url
+
+Contains the URL of the next page in the story.  Will be empty if on the last page of the story.
+
+=item first_page_url
+
+Contains the URL for the first page in the story.
+
+=item last_page_url
+
+Contains the URL for the last page in the story.
+
+=item is_first_page
+
+Boolean that will be true if the current page is the first page.
+
+=item is_last_page
+
+Boolean that will be true if the current page is the last page.
+
+=item pagination_loop
+
+Each element in the loop contains variables that correspond to pages in the story, in page order.
+
+The variables in each loop element are as follows:
+
+=over 4
+
+=item is_current_page
+
+Boolean that will be true if C<page_number> = C<current_page_number>.
+
+=item page_number
+
+The number of the page in the story, starting at 1.
+
+=item page_url
+
+The URL for the page.  Will be empty if C<page_number> = C<current_page_number>.
+
+=back
+
+=back
+
+=head2 Template Example
+
+Again, using page.tmpl:
+
+B<Page.tmpl>
+
+ <!-- Test for first page here -->
+ <tmpl_if is_first_page>
+    <h1><tmpl_var title></h1>
+    <b><tmpl_var deck></b>
+ </tmpl_if>
+
+ <tmpl_loop element_loop>
+    <tmpl_if is_paragraph>
+      <p><tmpl_var paragraph></p>
+    </tmpl_if>
+    <tmpl_if is_pull_quote>
+      <p><blockquote><i>
+    <tmpl_var pull_quote>
+      </i></blockquote></p>
+    </tmpl_if>
+ </tmpl_loop>
+
+ <!-- Pagination at the bottom of the page -->
+
+ <P>Currently reading page <tmpl_var current_page_number> of <tmpl_var total_pages>.<BR>
+
+ <tmpl_if is_first_page>
+   <a href="<tmpl_var previous_page_url>">Previous Page</a>
+ </tmpl_if>
+
+ <tmpl_loop pagination_loop>
+   <tmpl_if is_current_page>
+     <tmpl_var page_number>
+   <tmpl_else>
+     <a href="<tmpl_var page_url>"><tmpl_var page_number></a>
+   </tmpl_if>
+ </tmpl_loop>
+
+ <tmpl_if is_next_page>
+   <a href="<tmpl_var next_page_url>">Next Page</a>
+ </tmpl_if>
+
+ <!-- /Pagination -->
+
 
 =head1 Contributors
 
@@ -795,15 +904,6 @@ B<Page.tmpl>
  <tmpl_else>
    None.
  </tmpl_if>
-
- <tmpl_unless first>
-   <a href=<tmpl_var expr="prev_page_link(page_count)">>Previous Page</a>
- </tmpl_unless>
-
- <tmpl_unless last>
-   <a href=<tmpl_var expr="next_page_link(page_count)">>Next Page</a>
- </tmpl_unless>
-
 
 Now the contributors block can look confusing, but it's not.  The breakdown is as follows:
 
