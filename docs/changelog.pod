@@ -6,6 +6,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Bugfix related to the publish changes made in 1.017 - assets linked to
+a story being previewed from an edit interface are now marked
+properly.  Media objects are now marked properly when previewed. [Peter]
+
+
+=item *
+
 Replaced Archive::Tar in Krag::DataSet->new with the system 'tar' for a 50x 
 speedup in untaring
 

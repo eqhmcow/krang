@@ -305,12 +305,16 @@ sub preview_story {
                                               paths   => \@paths,
                                               preview => 1);
 
-            # mark as previewed.
-            $object->mark_as_previewed(unsaved => $unsaved);
-
+            # make a note on preview status.  Initial story may be in
+            # edit mode, the rest are not.
+            if ($object->story_id == $story->story_id) {
+                $object->mark_as_previewed(unsaved => $unsaved);
+            } else {
+                $object->mark_as_previewed(unsaved => 0);
+            }
         } elsif ($object->isa('Krang::Media')) {
             debug('Publisher.pm: Previewing media_id=' . $object->media_id());
-            $self->preview_media(media => $object, unsaved => $unsaved);
+            $self->preview_media(media => $object);
         }
 
         $callback->(object  => $object,
@@ -1463,12 +1467,12 @@ sub _build_asset_list {
 
     if (ref $object eq 'ARRAY') {
         foreach my $o (@$object) {
-            my ($publish_ok, $check_links) = $self->_check_asset_status(
-                                                                        object => $o,
-                                                                        version_check  => $version_check,
-                                                                        initial_assets => $initial_assets
-                                                                       );
-
+            my ($publish_ok, $check_links) =
+              $self->_check_asset_status(
+                                         object => $o,
+                                         version_check  => $version_check,
+                                         initial_assets => $initial_assets
+                                        );
             push @asset_list, $o if ($publish_ok);
             if ($check_links) {
                 push @check_list, $o->linked_stories;
@@ -1477,12 +1481,12 @@ sub _build_asset_list {
         }
 
     } else {
-        my ($publish_ok, $check_links) = $self->_check_asset_status(
-                                                                    object => $object,
-                                                                    version_check  => $version_check,
-                                                                    initial_assets => $initial_assets
-                                                                   );
-
+        my ($publish_ok, $check_links) =
+          $self->_check_asset_status(
+                                     object => $object,
+                                     version_check  => $version_check,
+                                     initial_assets => $initial_assets
+                                    );
         push @asset_list, $object if ($publish_ok);
         if ($check_links) {
             push @check_list, $object->linked_stories;

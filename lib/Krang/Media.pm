@@ -1391,7 +1391,7 @@ sub mark_as_previewed {
     $dbh->do('UPDATE media SET preview_version = ? WHERE media_id = ?',
              undef,
              $self->{preview_version},
-             $self->{story_id}
+             $self->{media_id}
             );
 
 }
@@ -1409,11 +1409,11 @@ sub url {
 
     croak "illegal attempt to set readonly attribute 'url'.\n"
       if @_;
-     
+
     return undef unless ($self->{category_id} and $self->{filename});
 
     return $self->{url_cache} if $self->{url_cache};
- 
+
     # else calculate url
     my $category = $self->category;
     croak("Unable to load category $self->{category_id}")
