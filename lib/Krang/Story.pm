@@ -4,12 +4,17 @@ use warnings;
 
 use Krang::Element;
 use Krang::Category;
-use Krang::Log qw(assert ASSERT affirm debug info critical);
-use Krang::DB qw(dbh);
+use Krang::Log     qw(assert ASSERT affirm debug info critical);
+use Krang::DB      qw(dbh);
 use Krang::Session qw(%session);
-use Carp qw(croak);
-use Storable qw(freeze thaw);
+use Carp           qw(croak);
+use Storable       qw(freeze thaw);
+use Time::Piece::MySQL;
 
+# setup exceptions
+use Exception::Class 
+  'Krang::Story::DuplicateURL' => { fields => [ 'story_id' ] };
+  
 # create accessors for object fields
 use Krang::MethodMaker 
   new_with_init => 'new',
@@ -22,22 +27,27 @@ use Krang::MethodMaker
                         checked_out
                         checked_out_by
                        ) ],
-  get_set_with_notify => [ qw(
-                              title
-                              slug
-                              notes
-                              cover_date
-                              publish_date
-                              priority
-                              schedules
-                             ) ];
+  get_set_with_notify => [ { 
+                            method => '_notify',
+                            attr => [ qw(
+                                         title
+                                         slug
+                                         notes
+                                         cover_date
+                                         publish_date
+                                         priority
+                                         schedules
+                                        ) ]
+                           } ];
 
 # fields in the story table, aside from story_id
 use constant STORY_FIELDS => 
-  qw( version
+  qw( story_id
+      version
       title
       slug
       cover_date
+      publish_date
       notes
       priority
       element_id
@@ -61,14 +71,11 @@ Krang::Story - the Krang story class
 
 =head1 SYNOPSIS
 
+  # create a new story
   $story = Krang::Story->new(title      => "Foo",
                              slug       => 'foo',
                              class      => 'article',
                              categories => [10, 20]);
-
-  # checkin/checkout
-  $story->checkout();
-  $story->checkin();
 
   # basic setable fields
   $story->title("Life is very long");
@@ -96,6 +103,22 @@ Krang::Story - the Krang story class
 
   # load a group of stories by id
   my ($story) = Krang::Story->find(story_ids => [1, 20, 30, 100]);
+
+  # save a story
+  $story->save();
+
+  # check it in, now other people can check it out
+  $story->checkin();
+
+  # checkout the story, no one else can edit it now
+  $story->checkout();
+
+  # prepare to edit the story, saving to the version table
+  $story->prepare_for_edit();
+
+  # revert to version 1
+  $story->revert(1);
+
 
 =head1 DESCRIPTION
 
@@ -468,6 +491,9 @@ Save the story to the database.  This is the only call which will make
 permanent changes in the database (checkin/checkout make transient
 changes).
 
+Will throw a Krang::Story::DuplicateURL exception with a story_id
+field if saving this story would conflict with an existing story.
+
 =cut
 
 sub save {
@@ -476,6 +502,9 @@ sub save {
 
     # make sure it's ok to save
     $self->verify_checkout();
+
+    # make sure it's got a unique URI
+    $self->verify_unique();
 
     # save element tree, populating $self->{element_id}
     $self->_save_element();
@@ -493,6 +522,31 @@ sub save {
     $self->_save_contrib;
 }
 
+sub verify_unique {
+    my $self   = shift;
+    my $dbh    = dbh;
+
+    # lookup dup
+    my $dup_id;
+    if ($self->{story_id}) {
+        ($dup_id) = $dbh->selectrow_array(
+                              'SELECT story_id FROM story_category '.
+                              'WHERE url = ? AND story_id != ?', 
+                               undef, $self->url, $self->{story_id});
+    } else {
+        ($dup_id) = $dbh->selectrow_array(
+                              'SELECT story_id FROM story_category '.
+                              'WHERE url = ?', 
+                               undef, $self->url);
+    }
+
+    # throw exception on dup
+    Krang::Story::DuplicateURL->throw(message => "duplicate URL",
+                                      story_id => $dup_id)
+        if $dup_id;
+
+}
+
 # save core Story data
 sub _save_core {
     my $self   = shift;
@@ -503,7 +557,6 @@ sub _save_core {
     my $query;
     if ($update) {
         # update version
-        $self->{version}++;
         $query = 'UPDATE story SET ' . 
           join(', ', map { "$_ = ?" } STORY_FIELDS) . ' WHERE story_id = ?';
     } else {
@@ -564,62 +617,6 @@ sub _save_contrib {
              $self->{story_id}, $_->{contrib_id}, 
              $_->{contrib_type_id}, ++$ord)
       for @{$self->{contrib_ids}};
-
-}
-
-=item C<< $story = Krang::Story->load($story_id) >>
-
-=item C<< $story = Krang::Story->load($story_id, version => 1) >>
-
-Load a story by ID, optionally specifying a version other than the
-current version.  Returns the object from the database or croaks if
-the object cannot be found.
-
-=cut
-
-sub load {
-    my ($pkg, $story_id, %args) = @_;
-    my $dbh = dbh;
-   
-    # load core data
-    my $result = $dbh->selectrow_arrayref('SELECT ' .
-                                          join(', ', STORY_FIELDS) .
-                                          ' FROM story WHERE story_id = ?', 
-                                          undef, $story_id);
-    croak("Unable to load story '$story_id'.")
-      unless $result and @$result;
-
-    # load object with fields from story table
-    my $self = bless({}, $pkg);
-    @{$self}{(STORY_FIELDS)} = @$result;
-
-    $self->{story_id} = $story_id;
-
-    # load category_ids and urls
-    $result = $dbh->selectall_arrayref('SELECT category_id, url '.
-                                       'FROM story_category '.
-                                       'WHERE story_id = ? ORDER BY ord', 
-                                       undef, $story_id);
-    my (@category_ids, @urls);
-    foreach my $row (@$result) {
-        push @category_ids, $row->[0];
-        push @urls, $row->[1];
-    }
-    $self->{category_ids} = \@category_ids;
-    $self->{urls}         = \@urls;
-
-
-    # load contribs
-    $result = $dbh->selectall_arrayref('SELECT contrib_id, contrib_type_id '.
-                                       'FROM story_contrib '.
-                                       'WHERE story_id = ? ORDER BY ord', 
-                                       undef, $story_id);
-    $self->{contrib_ids} = 
-      [ map { { contrib_id      => $_->[0],
-                contrib_type_id => $_->[1] 
-            } } @$result ];
-    
-    return $self;
 }
 
 
@@ -701,17 +698,20 @@ object.
 
 =item cover_date
 
-May be either a single date (a L<Time::Piece> object) or an array of
-dates specifying a range.  In ranges either member may be C<undef>,
-specifying no limit in that direction.
+May be either a single date (a L<Time::Piece::MySQL> object) or an
+array of dates specifying a range.  In ranges either member may be
+C<undef>, specifying no limit in that direction.
+
+=item publish_date
+
+May be either a single date (a L<Time::Piece::MySQL> object) or an
+array of dates specifying a range.  In ranges either member may be
+C<undef>, specifying no limit in that direction.
 
 =item story_id
 
-Load a story by ID.
-
-=item story_ids
-
-Given an array of story IDs, loads the identified stories.
+Load a story by ID.  Given an array of story IDs, loads all the identified
+stories.
 
 =back
 
@@ -729,13 +729,177 @@ Return just a count of the results for this query.
 
 =item limit
 
+Return no more than this many results.
+
 =item offset
+
+Start return results at this offset into the result set.
 
 =item order_by
 
+Output field to sort by.  Defaults to 'story_id'.
+
 =item order_desc
 
+Results will be in sorted in ascending order unless this is set to 1
+(making them descending).
+
 =back
+
+=cut
+
+{
+
+# used to detect normal story fields versus more exotic searches
+my %simple_fields = map { $_ => 1 } grep { $_ !~ /_date$/ } STORY_FIELDS;
+
+sub find {
+    my $pkg = shift;
+    my %args = @_;
+    my $dbh = dbh();
+
+    # get search parameters out of args, leaving just field specifiers
+    my $order_by  = delete $args{order_by} || 'story_id';
+    my $order_dir = delete $args{order_desc} ? 'DESC' : 'ASC';
+    my $limit     = delete $args{limit}    || 0;
+    my $offset    = delete $args{offset}   || 0;
+    my $count     = delete $args{count}    || 0;
+    my $ids_only  = delete $args{ids_only} || 0;
+
+    # set bool to determine whether to use $row or %row for binding below
+    my $single_column = $ids_only || $count ? 1 : 0;
+
+    # check for invalid argument sets
+    croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
+          "Only one can be present.")
+      if $count and $ids_only;
+
+    my (@where, @param, $like);
+    while (my ($key, $value) = each %args) {
+        # strip off and remember _like specifier
+        $like = ($key =~ s/_like$//) ? 1 : 0;
+
+        # handle story_id => [1, 2, 3]
+        if ($key eq 'story_id' and ref($value) and ref($value) eq 'ARRAY') {
+            # an array of IDs selects a list of stories by ID
+            push @where, 'story_id IN (' . 
+              join(',', ("?") x @$value) . ')';
+            push @param, @$value;
+            next;
+        }                      
+
+        # handle simple fields
+        if (exists $simple_fields{$key}) {
+            if (defined $value) {
+                push @where, $like ? "$key LIKE ?" : "$key = ?";
+                push @param, $value;
+            } else {
+                push @where, "$key IS NULL";
+            }
+            next;
+        }
+
+        # handle dates
+        if ($key eq 'cover_date' or $key eq 'publish_date') {
+            if (ref $value and UNIVERSAL::isa($value, 'Time::Piece::MySQL')) {
+                push @where, "$key = ?";
+                push @param, $value->mysql_datetime;
+            } elsif (ref $value and UNIVERSAL::isa($value, 'ARRAY')) {
+                if ($value->[0] and $value->[1]) {
+                    push @where, "$key BETWEEN ? AND ?";
+                    push @param, $value->[0]->mysql_datetime,
+                                 $value->[1]->mysql_datetime;
+                } elsif ($value->[0]) {
+                    push @where, "$key >= ?";
+                    push @param, $value->[0]->mysql_datetime;
+                } elsif ($value->[1]) {
+                    push @where, "$key <= ?";
+                    push @param, $value->[0]->mysql_datetime;
+                }
+            } else {
+                croak("Bad date aguement, must be either an array of two Time::Piece::MySQL objects or one Time::Piece::MySQL object.");
+            }
+            next;
+        }
+
+        croak("Unknown find key '$key'");
+    }
+        
+    # construct base query
+    my $query;
+    if ($count) {
+        $query = "SELECT count(*) FROM story ";
+    } elsif ($ids_only) {
+        $query = "SELECT story_id FROM story ";
+    } else {
+        $query = "SELECT " . join(', ', STORY_FIELDS) . " FROM story ";
+    }
+
+    # add WHERE and ORDER BY clauses, if any
+    $query .= " WHERE " . join(' AND ', @where) if @where;
+    $query .= " ORDER BY $order_by $order_dir " if $order_by and not $count;
+
+    # add LIMIT clause, if any
+    if ($limit) {
+        $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
+    } elsif ($offset) {
+        $query .= " LIMIT $offset, -1";
+    }
+
+    debug(__PACKAGE__ . "::find() SQL: " . $query);
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @param));
+    
+    # return count results
+    if ($count) {
+        my ($result) = $dbh->selectrow_array($query, undef, @param);
+        return $result;
+    }
+
+    # return ids
+    if ($ids_only) {
+        my $result = $dbh->selectcol_arrayref($query, undef, @param);
+        return $result ? @$result : ();
+    }
+    
+    # execute an object search
+    my $sth = $dbh->prepare($query);
+    $sth->execute(@param);
+
+    # construct objects from results
+    my ($row, @stories, $result);
+    while ($row = $sth->fetchrow_arrayref()) {
+        my $obj = bless({}, $pkg);
+        @{$obj}{(STORY_FIELDS)} = @$row;
+
+        # load category_ids and urls
+        $result = $dbh->selectall_arrayref('SELECT category_id, url '.
+                                           'FROM story_category '.
+                                           'WHERE story_id = ? ORDER BY ord', 
+                                           undef, $obj->{story_id});
+        @{$obj}{('category_ids', 'urls')} = ([], []);
+        foreach my $row (@$result) {
+            push @{$obj->{category_ids}}, $row->[0];
+            push @{$obj->{urls}},         $row->[1];
+        }
+
+        # load contribs
+        $result = $dbh->selectall_arrayref(
+                 'SELECT contrib_id, contrib_type_id FROM story_contrib '.
+                 'WHERE story_id = ? ORDER BY ord',
+                                           undef, $obj->{story_id});
+        $obj->{contrib_ids} = 
+          [ map { { contrib_id      => $_->[0],
+                      contrib_type_id => $_->[1] 
+                  } } @$result ];
+        
+        push @stories, $obj;
+    }
+
+    # finish statement handle
+    $sth->finish();
+
+    return @stories;
+}}
 
 =item C<< $story->checkout() >>
 
@@ -861,9 +1025,13 @@ sub prepare_for_edit {
     my $self = shift;
     $self->verify_checkout();
 
+    # save version
     dbh->do('INSERT into story_version (story_id, version, data) 
              VALUES (?,?,?)', undef, 
             $self->{story_id}, $self->{version}, freeze($self));
+
+    # up the version number
+    $self->{version}++;
 }
 
 =item C<< $story->revert($version) >>
@@ -881,7 +1049,7 @@ sub revert {
 
     # persist certain data from current version
     my %persist = (
-                   version           => $self->{version} + 1,
+                   version           => $self->{version},
                    checked_out_by    => $self->{checked_out_by},
                    checked_out       => $self->{checked_out_by},
                    published_version => $self->{published_version},

@@ -288,7 +288,7 @@ alternative URL schemes.
 sub build_url {
     my ($self, %arg) = @_;
     my ($story, $category) = @arg{qw(story category)};
-    return join('/', $category->url, $story->slug);
+    return $category->url . $story->slug;
 }
 
 =item C<< @fields = $class->url_attributes() >>
