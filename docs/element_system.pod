@@ -120,6 +120,62 @@ one of the provided element classes.  However, overriding methods
 inside the element class can give you control over every operation
 involving the element.  See L<Krang::ElementClass> for more details.
 
+=head2 List Groups and Lists
+
+Krang has support for groups of lists wherein the items contained in
+the lists are configurable by Krang users with permission. These 
+lists and thier contents are then usuable in elements.
+
+The structure for Krang::ListGroups and Krang::Lists associated with 
+an element set are configured via an XML-like conf file format.  If
+a file with this format and the name 'lists.conf' exists in the 
+root directory of an element library, the configuration wil be read
+and automatically loaded into the Krang database upon 'make db'.
+
+Below is an example of the lists.conf format:
+
+----------------------------------------------------------------------
+
+<list_groups>
+                                                                                
+<list_group list_group_name="Make/Model/Year" description="blah blah blah">
+    <list list_name="Make" />
+    <list list_name="Model" />
+    <list list_name="Year" />
+</list_group>
+                                                                                
+<list_group list_group_name="Segments">
+    <list list_name="Segments" />
+</list_group>
+                                                                                
+</list_groups>
+
+-----------------------------------------------------------------------
+
+1. All lists.conf files must begin with the <list_groups> tag and end 
+with the closing </list_groups> tag.
+
+2. <list_group> blocks appear within.
+
+    A. valid parameters are as follows:
+
+        a. list_group_name (required) - the name of the list group.
+
+        b. description (optional) - text decribing the list group. This
+            may be user configured later from the Krang UI.
+
+    B. Within list_group blocks, lists are configured via <list> blocks.
+
+        a. the only valid (and required) parameter is list_name, the 
+            name of the list.
+
+        b. The order of the <list> blocks implies inheritance.  In the 
+            example above, the list group 'Make/Model/Year' contains 3
+            lists.  'Year' belongs to 'Model', which belongs to 'Make'.
+
+See L<Krang::ListGroup>, L<Krang::List>, and L<Krang::ListItem> for
+further details.
+
 =head1 Element
 
 An element is a piece of a story.  Every element is a
