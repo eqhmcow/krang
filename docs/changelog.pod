@@ -8,6 +8,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded XML-Writer, HTML-Parser, and Tar-Archive to get rid of warnings.
+[Perrin]
+
+=item *
+
+Upgraded mod_perl and apache to latest releases. [Perrin]
+
+=item *
+
 Fixed the behavior of Krang::Publisher->preview_story().  Following
 the original spec, it now writes the story out to all categories in
 the preview path.  Fixed Krang::Story->preview_path as well. [Peter]
