@@ -111,11 +111,7 @@ Following is a list of the tasks the installer script will perform.
 
 =head1 OPTIONS
 
-  --help                 - Show usage
-  --man                  - Show full man page
-
-=head2 Required parameters
-
+ Required parameters:
   --HostName             - Host name used for CMS
   --IPAddress            - IP address used for HTTP and FTP
   --AdminPassword        - For CMS "admin" user
@@ -125,27 +121,21 @@ Following is a list of the tasks the installer script will perform.
   --InstanceDBName       - Name of MySQL database
   --InstanceElementSet   - Name of element set used by CMS instance
 
-=head2 Optional parameters
-
+ Optional parameters:
   --FTPHostName          - Host name for FTP server, defaults to HostName.
   --MySQLRootPassword    - Password for the MySQL user "root"
   --InstallPath          - Directory for Krang install
   --KrangUser            - UNIX user for process ownership
   --KrangGroup           - UNIX group for process ownership
-  --FTPPort              - Port on which FTP server should run, defaults 
-                            to 21 if available, else 2121
+  --FTPPort              - Port for FTP server, 21 by default. 
   --ApachePort           - Port on which CMS HTTP server should run
   --SMTPServer           - Address of SMTP mail server 
   --InstanceDisplayName  - Name of the Instance for UI display
-  --FromBackup           - the name of a backup file to use as source for 
-                           the install.
-  --WithAddon            - Installs Krang with an addon.  May be repeated 
-                           for multiple addons.
-
-=head2 Installation flags
-
-  --run-tests            - run Krang "make test" (default is to not run them)
-
+  --FromBackup           - the name of a backup file to restore from.
+  --WithAddon            - Installs Krang with an addon.  May be repeated.
+  --run-tests            - run Krang "make test", defaults off
+  --help                 - Show usage
+  --man                  - Show full man page
 
 =head1 SEE ALSO
 
