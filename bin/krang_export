@@ -280,5 +280,8 @@ sub add_callback {
     my $class = ref $object;
     my ($type) = $class =~ /^Krang::(.*)$/;
     my $id_meth = lc($type) . "_id";
+    $id_meth = 'list_item_id' if ($id_meth eq 'listitem_id');
+    $id_meth = 'list_group_id' if ($id_meth eq 'listgroup_id');
+
     print STDERR "Adding $type " . $object->$id_meth . " to $file...\n";
 }
