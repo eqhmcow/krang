@@ -34,6 +34,10 @@ The following options are available:
 
 =over
 
+=item --force
+
+Force reinstallation even if already installed.
+
 =item --verbose
 
 Print information about what's happening.
@@ -94,12 +98,13 @@ use Krang::AddOn;
 use Krang;
 
 # parse options
-my ($help, $man);
+my ($help, $man, $force);
 my $verbose = 0;
 pod2usage(2) unless
   GetOptions(help       => \$help,
              man        => \$man,
-             'verbose+' => \$verbose,             
+             'verbose+' => \$verbose,
+             force      => \$force,
             );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
@@ -124,7 +129,7 @@ my $conf = _read_conf();
 # make sure that this is a positive upgrade, if the addon is already
 # installed
 my ($old) = Krang::AddOn->find(name => $conf->get('name'));
-if ($old and $old->version >= $conf->get('version')) {
+if ($old and $old->version >= $conf->get('version') and not $force) {
     die "Unable to install version " . $conf->get('version') . " of " . 
       $conf->get('name') . ", version " . $old->version . 
         " is already installed!\n";
