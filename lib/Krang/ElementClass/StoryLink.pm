@@ -126,16 +126,22 @@ sub thaw_data_xml {
 
 # overriding Krang::ElementClass::template_data
 # checks the publish status, returns url or preview_url, depending.
+#
+# If the element is not properly linked to a story, returns nothing.
+#
 sub template_data {
     my $self = shift;
     my %args = @_;
 
-    if ($args{publisher}->is_publish()) {
-        return 'http://' . $args{element}->data()->url();
-    } elsif ($args{publisher}->is_preview()) {
-        return 'http://' . $args{element}->data()->preview_url();
-    } else {
-        croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
+    my $data = $args{element}->data();
+    if( $data ) {
+        if ($args{publisher}->is_publish()) {
+            return 'http://' . $data->url();
+        } elsif ($args{publisher}->is_preview()) {
+            return 'http://' . $data->preview_url();
+        } else {
+            croak (__PACKAGE__ . ': Not in publish or preview mode. Cannot return proper URL.');
+        }
     }
 }
 

@@ -4,6 +4,14 @@ This document contains a list of changes for each release of Krang.
 
 =head2 v1.026 - Under Development
 
+=over
+
+=item *
+
+Fixed a bug in L<Krang::ElementClass::StoryLink> where elements that
+were never linked to stories no longer throw an error, but return
+cleanly.  [Michael Peters]
+
 =item *
 
 Mandrake support has been added!  [Matt]
@@ -12,6 +20,8 @@ Mandrake support has been added!  [Matt]
 
 Fixed browser detection to deal with 1.0 prerelease of Firefox, which
 gives a version number of 0.10.  [Aaron Ross]
+
+=back
 
 =head2 v1.025 - October 1, 2004
 
