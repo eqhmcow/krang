@@ -1791,7 +1791,15 @@ sub linked_media {
         }
     } $element;
 
+    # check contributors for additional media objects
+    foreach my $contrib ($self->contribs()) {
+        if ($media = $contrib->image()) {
+            $media_links{$media->media_id} = $media;
+        }
+    }
+
     return values %media_links;
+
 }
 
 =item C<< $data = Storable::freeze($story) >>

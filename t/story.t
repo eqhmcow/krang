@@ -6,8 +6,10 @@ use Krang::Category;
 use Krang::Site;
 use Krang::Contrib;
 use Krang::Session qw(%session);
+use Krang::Media;
+use File::Spec::Functions;
 use Storable qw(freeze thaw);
-use Krang::Conf qw(InstanceElementSet);
+use Krang::Conf qw(KrangRoot instance InstanceElementSet);
 use Time::Piece;
 
 BEGIN { use_ok('Krang::Story') }
@@ -569,6 +571,10 @@ SKIP: {
     eval { $cover2->save };
     ok(not $@);
     END { $cover2->delete if $cover2 and $DELETE};
+
+    # test linked media
+    test_linked_media();
+
 };
 
 # test delete by ID
@@ -767,3 +773,153 @@ is($change->url, 'storyzest.com/test_0/change');
     $ptest_site->delete();
 }
 
+
+
+
+sub test_linked_media {
+
+    # create a new story
+    my $story = Krang::Story->new(categories => [$cat[0], $cat[1]],
+                                  title      => "Test",
+                                  slug       => "test",
+                                  class      => "article");
+
+
+
+    my $media = create_media($cat[0]);
+    $story->save();
+
+    my @photos = $story->linked_media();
+    ok(@photos == 0, 'Krang::Story->linked_media()');
+
+    my $page = $story->element->child('page');
+
+    $page->add_child(class => "photo", data => $media);
+
+    @photos = $story->linked_media();
+    ok(@photos == 1, 'Krang::Story->linked_media()');
+
+
+    my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Joe', middle => 'E', last => 'Buttafuoco', email => 'joey@buttafuoco.com');
+    $contrib->contrib_type_ids(1,3);
+
+    my $media2 = create_media($cat[0]);
+    $contrib->image($media2);
+    $contrib->selected_contrib_type(1);
+
+    $contrib->save();
+
+    $story->contribs($contrib);
+
+    @photos = $story->linked_media();
+    ok(@photos == 2, 'Krang::Story->linked_media()');
+
+    foreach (@photos) {
+        ok(($_->media_id == $media->media_id) || ($_->media_id == $media2->media_id), 'Krang::Story->linked_media()');
+    }
+
+    END {
+        $media->delete();
+        $media2->delete();
+        $contrib->delete();
+        $story->delete();
+    }
+
+}
+
+
+
+#
+# create a media object - stolen from floodfill.
+#
+sub create_media {
+
+    my $category = shift;
+
+    # create a random image
+    my ($x, $y);
+    my $img = Imager->new(xsize => $x = (int(rand(300) + 50)),
+                          ysize => $y = (int(rand(300) + 50)),
+                          channels => 3,
+                         );
+
+    # fill with a random color
+    $img->box(color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+              filled => 1);
+
+    # draw some boxes and circles
+    for (0 .. (int(rand(8)) + 2)) {
+        if ((int(rand(2))) == 1) {
+            $img->box(color =>
+                      Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                      xmin => (int(rand($x - ($x/2))) + 1),
+                      ymin => (int(rand($y - ($y/2))) + 1),
+                      xmax => (int(rand($x * 2)) + 1),
+                      ymax => (int(rand($y * 2)) + 1),
+                      filled => 1);
+        } else {
+            $img->circle(color =>
+                         Imager::Color->new(map { int(rand(255)) } 1 .. 3),
+                         r => (int(rand(100)) + 1),
+                         x => (int(rand($x)) + 1),
+                         'y' => (int(rand($y)) + 1));
+        }
+    }
+
+    # pick a format
+    my $format = (qw(jpg png gif))[int(rand(3))];
+
+    $img->write(file => catfile(KrangRoot, "tmp", "tmp.$format"));
+    my $fh = IO::File->new(catfile(KrangRoot, "tmp", "tmp.$format"))
+      or die "Unable to open tmp/tmp.$format: $!";
+
+    # Pick a type
+    my %media_types = Krang::Pref->get('media_type');
+    my @media_type_ids = keys(%media_types);
+    my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
+
+    # create a media object
+    my $media = Krang::Media->new(title      => get_word(),
+                                  filename   => get_word() . ".$format",
+                                  caption    => get_word(),
+                                  filehandle => $fh,
+                                  category_id => $category->category_id,
+                                  media_type_id => $media_type_id,
+                                  );
+    eval { $media->save };
+    if ($@) {
+        if (ref($@) and ref($@) eq 'Krang::Media::DuplicateURL') {
+            redo;
+        } else {
+            die $@;
+        }
+    }
+    unlink(catfile(KrangRoot, "tmp", "tmp.$format"));
+
+
+    $media->checkin();
+
+    return $media;
+
+}
+
+
+
+
+
+# get a random word
+BEGIN {
+    my @words;
+    open(WORDS, "/usr/dict/words")
+      or open(WORDS, "/usr/share/dict/words")
+        or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
+    while (<WORDS>) {
+        chomp;
+        push @words, $_;
+    }
+    srand (time ^ $$);
+
+    sub get_word {
+        return lc $words[int(rand(scalar(@words)))];
+    }
+}
