@@ -727,9 +727,12 @@ Find and return media object(s) with parameters specified. Supported paramter ke
 
 media_id (can optionally take a list of ids)
 
-=item * 
+=item *
 
-version - combined with a single C<media_id> (and only C<media_id>), loads a specific version of a media object.  Unlike C<revert()>, this object has C<version> set to the actual version number of the loaded object.
+version - combined with a single C<media_id> (and only C<media_id>),
+loads a specific version of a media object.  Unlike C<revert()>, this
+object has C<version> set to the actual version number of the loaded
+object.
 
 =item *
 
@@ -737,7 +740,8 @@ title
 
 =item *
 
-title_like - case insensitive match on title. Must include '%' on either end for substring match.
+title_like - case insensitive match on title. Must include '%' on
+either end for substring match.
 
 =item *
 
@@ -745,7 +749,12 @@ category_id
 
 =item *
 
-below_category_id - will return media in category and in categories below as well.
+below_category_id - will return media in category and in categories
+below as well.
+
+=item *
+
+site_id - returns all media objects associated with a given site.
 
 =item *
 
@@ -835,39 +844,40 @@ sub find {
     my @where;
     my @media_object;
 
-    my %valid_params = ( media_id => 1,
-                         version => 1,
-                         title => 1,
-                         title_like => 1,
-                         url => 1,
-                         url_like => 1,
-                         category_id => 1,
+    my %valid_params = ( media_id          => 1,
+                         version           => 1,
+                         title             => 1,
+                         title_like        => 1,
+                         url               => 1,
+                         url_like          => 1,
+                         category_id       => 1,
                          below_category_id => 1,
-                         media_type_id => 1,
-                         contrib_id => 1,
-                         filename => 1,
-                         filename_like => 1,
-                         simple_search => 1,
-                         no_attributes => 1,
-                         order_by => 1,
-                         order_desc => 1,
-                         checked_out => 1,
-                         checked_out_by => 1,
-                         limit => 1,
-                         offset => 1,
-                         count => 1,
-                         creation_date => 1,
-                         ids_only => 1,
-                         may_see => 1,
-                         may_edit => 1,
-                         mime_type => 1,
-                         mime_type_like => 1,
+                         site_id           => 1,
+                         media_type_id     => 1,
+                         contrib_id        => 1,
+                         filename          => 1,
+                         filename_like     => 1,
+                         simple_search     => 1,
+                         no_attributes     => 1,
+                         order_by          => 1,
+                         order_desc        => 1,
+                         checked_out       => 1,
+                         checked_out_by    => 1,
+                         limit             => 1,
+                         offset            => 1,
+                         count             => 1,
+                         creation_date     => 1,
+                         ids_only          => 1,
+                         may_see           => 1,
+                         may_edit          => 1,
+                         mime_type         => 1,
+                         mime_type_like    => 1,
                        );
-                                                                               
+
     # check for invalid params and croak if one is found
     foreach my $param (keys %args) {
-        croak (__PACKAGE__."->find() - Invalid parameter '$param' called.") if
-not $valid_params{$param};
+        croak (__PACKAGE__."->find() - Invalid parameter '$param' called.")
+          unless ($valid_params{$param});
     }
 
     # set defaults if need be
@@ -927,7 +937,7 @@ not $valid_params{$param};
     my $where_string = "";
     $where_string .= join(' and ', map { "$_ = ?" } @where_fields);
 
-    
+
     # add media_id(s) if needed
     if ($args{media_id}) {
         if (ref $args{media_id} eq 'ARRAY') {
@@ -958,7 +968,13 @@ not $valid_params{$param};
         $where_string .= " and " if $where_string;
         $where_string .= "(".
           join(" OR ", map { "media.category_id = $_" } @descendants) .")";
- 
+    }
+
+    # add join to category table if site_id param is passed in.
+    if ($args{site_id}) {
+        $where_string .= ' and ' if $where_string;
+        $where_string .= "(media.category_id = category.category_id) AND (category.site_id=?)";
+        push @where, 'site_id';
     }
 
     # add filename_like to where_string if present
@@ -1058,6 +1074,7 @@ not $valid_params{$param};
                   ON ucpc.category_id = media.category_id
                   );
     $sql .= ", media_contrib" if $args{'contrib_id'};
+    $sql .= ', category' if $args{site_id};
     $sql .= " where ".$where_string if $where_string;
     $sql .= " group by media.media_id" if ($group_by);
     $sql .= " order by $order_by";

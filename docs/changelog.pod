@@ -4,6 +4,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Added support for searching on C<site_id> in Krang::Media->find().
+[Peter]
 
 =item *
 

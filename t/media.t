@@ -405,10 +405,22 @@ $medias[1]->delete();
     $ptest_count = Krang::Media->find(may_edit=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
     is($ptest_count, 1, "Hide un-editable media");
 
+
+    # attempt to retrieve all media objects under the site
+    my @all_media = Krang::Media->find(site_id => $ptest_site->site_id);
+
+    ok(@all_media == @medias, 'Krang::Media->find(site_id)');
+
+
+
     # Delete temp media
     for (reverse@medias) {
         $_->delete();
     }
+
+    # make sure they're gone.
+    my @deleted_media = Krang::Media->find(site_id => $ptest_site->site_id);
+    is($#deleted_media, -1, 'deleted media from ptest site');
 
     # Delete temp categories
     for (reverse@ptest_categories) {
