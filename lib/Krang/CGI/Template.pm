@@ -1088,13 +1088,7 @@ sub update_template {
         } elsif ($_ eq 'category_id') {
             $template->$_($val) if $val ne '';
         } else {
-            eval {$template->$_($val);};
-            if ($@) {
-                # this case will eventually get caught at validate()
-                if (($_ eq 'filename') && ($@ =~ /invalid characters|'.tmpl'/)) {
-                    $template->{filename} = $val;
-                } 
-            }
+            $template->{filename} = $val;
         }
         $q->delete($_);
     }

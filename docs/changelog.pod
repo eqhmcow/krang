@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Bugfixes to L<Krang::CGI::Template> that prevented files from being
+uploaded to the edit template screen, and caused ISE when no filename
+present. [Matt]
+
+=item *
+
 Bugfixes to L<Krang::Schedule> - checked out or missing objects will
 no longer drop large perl-heavy error messages in the logs.  Thanks
 for Michael Peters for the initial work to fix it.  [Peter]
