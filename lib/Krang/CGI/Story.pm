@@ -7,9 +7,8 @@ use Krang::ElementLibrary;
 use Krang::Log qw(debug assert ASSERT);
 use Krang::Session qw(%session);
 use Krang::Message qw(add_message);
-use Krang::Widget qw(category_chooser);
+use Krang::Widget qw(category_chooser date_chooser decode_date);
 use Krang::CGI::Workspace;
-use Time::Piece;
 use Carp qw(croak);
 use Krang::Pref;
 use Krang::HTMLPager;
@@ -116,7 +115,7 @@ sub new_story {
                                       query => $query));
     
     # setup date selector
-    $template->param(cover_date_selector => $self->_date_input('cover_date'));
+    $template->param(cover_date_selector => date_chooser(name=>'cover_date', query=>$query));
 
     return $template->output();
 }
@@ -137,7 +136,7 @@ sub create {
     my $title = $query->param('title');
     my $slug = $query->param('slug');
     my $category_id = $query->param('category_id');
-    my $cover_date = $self->_decode_date('cover_date');
+    my $cover_date = decode_date(name=>'cover_date');
 
     # detect bad fields
     my @bad;
@@ -240,7 +239,7 @@ sub edit {
                         );
                              # select boxes
         $template->param(cover_date_selector =>
-                         $self->_date_input('cover_date', $story->cover_date));
+                         date_chooser(name=>'cover_date', date=>$story->cover_date, query=>$query));
         
         $template->param(priority_selector => scalar
                          $query->popup_menu(-name => 'priority',
@@ -688,7 +687,7 @@ sub _save {
         and not $query->param('find_story_link')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug');
-        my $cover_date = $self->_decode_date('cover_date');
+        my $cover_date = decode_date(name=>'cover_date');
         my $priority = $query->param('priority');
         
         my @bad;
@@ -911,6 +910,31 @@ sub find {
     my $show_advanced_search = $q->param('show_advanced_search');
     my $do_advanced_search = $q->param('do_advanced_search');
 
+    # If we're showing an advanced search, set up the form
+    if ($show_advanced_search) {
+        $template->param(category_chooser => category_chooser(
+                                                              name => 'search_category',
+                                                              query => $q,
+                                                              formname => 'search_form',
+                                                             ));
+
+        # Date choosers
+        $template->param(date_chooser_cover_from   => date_chooser(query=>$q, name=>'cover_from', nochoice=>1));
+        $template->param(date_chooser_cover_to     => date_chooser(query=>$q, name=>'cover_to', nochoice=>1));
+        $template->param(date_chooser_publish_from => date_chooser(query=>$q, name=>'publish_from', nochoice=>1));
+        $template->param(date_chooser_publish_to   => date_chooser(query=>$q, name=>'publish_to', nochoice=>1));
+
+        # Story class
+        my @classes = grep { $_ ne 'category' } Krang::ElementLibrary->top_levels;
+        my %class_labels = map {
+            $_ => Krang::ElementLibrary->top_level(name => $_)->display_name()
+        } @classes;
+        $template->param(search_class_chooser => scalar($q->popup_menu(-name      => 'search_class',
+                                                                       -default   => '',
+                                                                       -values    => [ ('', @classes) ],
+                                                                       -labels    => \%class_labels)));    
+    }
+
     my $pager = Krang::HTMLPager->new(
                                       cgi_query => $q,
                                       persist_vars => {
@@ -1066,56 +1090,6 @@ sub find_story_row_handler {
     
 }
 
-
-# takes a name and an optional date object (Time::Piece::MySQL).
-# returns HTML for the widget interface.  If no date is passed
-# defaults to now.
-sub _date_input {
-    my $self = shift;
-    my $query = $self->query;
-    my ($name, $date) = @_;
-    $date ||= localtime;
-
-    my $m_sel = $query->popup_menu(-name      => $name . "_month",
-                                   -default   => $date->mon,
-                                   -values    => [ 1 .. 12 ],
-                                   -labels    => { 1  => 'Jan',
-                                                   2  => 'Feb',
-                                                   3  => 'Mar',
-                                                   4  => 'Apr',
-                                                   5  => 'May',
-                                                   6  => 'Jun',
-                                                   7  => 'Jul',
-                                                   8  => 'Aug',
-                                                   9  => 'Sep',
-                                                   10 => 'Oct',
-                                                   11 => 'Nov',
-                                                   12 => 'Dec' });
-    my $d_sel = $query->popup_menu(-name      => $name . "_day",
-                                   -default   => $date->mday,
-                                   -values    => [ 1 .. 31 ]);
-    my $y_sel = $query->popup_menu(-name      => $name . "_year",
-                                   -default   => $date->year,
-                                   -values    => [ $date->year - 30 .. 
-                                                   $date->year + 10 ]);
-
-
-    return $m_sel . " " . $d_sel . " " . $y_sel;
-}
-
-# decode a date from query input.  Takes a form name, returns a date
-# object.
-sub _decode_date {
-    my ($self, $name) = @_;
-    my $query = $self->query;
-    
-    my $m = $query->param($name . '_month');
-    my $d = $query->param($name . '_day');
-    my $y = $query->param($name . '_year');
-    return undef unless $m and $d and $y;
-
-    return Time::Piece->strptime("$m/$d/$y", '%m/%d/%Y');
-}
 
 1;
 

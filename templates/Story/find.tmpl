@@ -36,6 +36,10 @@
     myform.submit();
   }
 
+  function clear_advanced_search () {
+    alert("Not implemented yet!");
+  }
+
 </script>
 
 <form method=post name=find_story>
@@ -106,61 +110,53 @@ SEARCH
 
       <tr>
         <td colspan="2">Title:</td>
-        <td colspan="7">INPUT HERE</td>
+        <td colspan="3"><input size="40" type="textfield" name="search_title" value="<tmpl_var escape=HTML search_title>"></td>
       </tr>
 
       <tr>
         <td colspan="2">URL:</td>
-        <td colspan="7">INPUT HERE</td>
+        <td colspan="3"><input size="40" type="textfield" name="search_urls" value="<tmpl_var escape=HTML search_urls>"></td>
       </tr>
 
       <tr>
         <td colspan="2">Story Type:</td>
-        <td colspan="7">INPUT HERE</td>
+        <td colspan="3"><tmpl_var search_class_chooser></td>
       </tr>
 
       <tr>
         <td colspan="2">Site/Category:</td>
-        <td colspan="7">INPUT HERE</td>
+        <td colspan="3"><tmpl_var category_chooser></td>
       </tr>
 
       <tr>
         <td colspan="2">Story ID:</td>
-        <td colspan="7">INPUT HERE</td>
+        <td colspan="3"><input size="40" type="textfield" name="search_story_id" value="<tmpl_var escape=HTML search_story_id>"></td>
       </tr>
 
       <tr>
         <td colspan="2">Contributor:</td>
-        <td colspan="7">INPUT HERE</td>
+        <td colspan="3"><input size="40" type="textfield" name="search_contribs" value="<tmpl_var escape=HTML search_contribs>"></td>
       </tr>
 
       <tr>
         <td>Cover Date:</td>
         <td>from</td>
-        <td>INPUT</td>
-        <td>INPUT</td>
-        <td>INPUT</td>
+        <td><tmpl_var date_chooser_cover_from></td>
         <td>To</td>
-        <td>INPUT</td>
-        <td>INPUT</td>
-        <td>INPUT</td>
+        <td><tmpl_var date_chooser_cover_to></td>
       </tr>
 
       <tr>
         <td>Publish Date:</td>
         <td>from</td>
-        <td>INPUT</td>
-        <td>INPUT</td>
-        <td>INPUT</td>
+        <td><tmpl_var date_chooser_publish_from></td>
         <td>To</td>
-        <td>INPUT</td>
-        <td>INPUT</td>
-        <td>INPUT</td>
+        <td><tmpl_var date_chooser_publish_to></td>
       </tr>
 
       <tr>
         <td colspan="2"></td>
-        <td colspan="7"><input type="reset" value="Clear">&nbsp;<input type="submit" value="Search"></td>
+        <td colspan="3"><input type="button" value="Clear" onClick="clear_advanced_search()">&nbsp;<input type="submit" value="Search"></td>
       </tr>
 
     </table>
