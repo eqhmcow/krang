@@ -8,13 +8,11 @@
     document.find_media.submit();
   }
 
-
   function view_media (id) {
     document.find_media.rm.value = 'view';
     document.find_media.media_id.value = id;
     document.find_media.submit();
   }
-
 
   function delete_selected () {
     if (confirm("Are you SURE you want to delete the checked media?")) {
@@ -47,6 +45,11 @@
 <form method="POST" name="find_media">
 <input type="hidden" name="rm" value="view">
 <input type="hidden" name="media_id">
+
+<!-- Persist return data for search and paging -->
+<tmpl_var history_return_params>
+<!-- END Persist return data for search and paging -->
+
 </form>
 
 

@@ -39,7 +39,7 @@ is 'add'.
 
 =cut
 
-
+use Krang::Category;
 use Krang::Media;
 use Krang::Widget qw(category_chooser date_chooser decode_date format_url);
 use Krang::Message qw(add_message);
@@ -107,6 +107,25 @@ sub find {
     my $q = $self->query();
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
 
+    # Persist data for return from view in "history_return_params"
+    my @history_return_param_list = qw(
+                                       rm
+                                       krang_pager_curr_page_num 
+                                       krang_pager_show_big_view 
+                                       krang_pager_sort_field 
+                                       krang_pager_sort_order_desc 
+                                       search_filter 
+                                       show_thumbnails 
+                                      );
+    my @history_return_params_hidden = ();
+    foreach my $hrp (@history_return_param_list) {
+        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
+                                                       -value => $hrp));
+        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
+                                                       -value => $q->param($hrp)));
+    }
+    $t->param(history_return_params => join("\n", @history_return_params_hidden));
+
     my $search_filter = $q->param('search_filter');
     my $show_thumbnails = $q->param('show_thumbnails');
     unless (defined($search_filter)) {
@@ -160,6 +179,32 @@ sub advanced_find {
     my $q = $self->query();
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
     $t->param(do_advanced_search=>1);
+
+    # Persist data for return from view in "history_return_params"
+    my @history_return_param_list = qw(
+                                       rm
+                                       krang_pager_curr_page_num 
+                                       krang_pager_show_big_view 
+                                       krang_pager_sort_field 
+                                       krang_pager_sort_order_desc 
+                                       show_thumbnails 
+                                       search_below_category_id 
+                                       search_filename 
+                                       search_filter 
+                                       search_media_id 
+                                       search_title 
+                                       search_creation_date_day 
+                                       search_creation_date_month 
+                                       search_creation_date_year 
+                                      );
+    my @history_return_params_hidden = ();
+    foreach my $hrp (@history_return_param_list) {
+        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
+                                                       -value => $hrp));
+        push(@history_return_params_hidden, $q->hidden(-name => 'history_return_params',
+                                                       -value => $q->param($hrp)));
+    }
+    $t->param(history_return_params => join("\n", @history_return_params_hidden));
 
     my $persist_vars = { rm => 'advanced_find' };
     my $find_params = {};
@@ -686,7 +731,19 @@ sub view {
 
     my $q = $self->query();
 
-    return $self->dump_html();
+    # Retrieve object from session or create it if it doesn't exist
+    my $media_id = $q->param('media_id');
+    die ("No media_id specified") unless ($media_id);
+
+    # Load media object into session, or die trying
+    my ($m) = Krang::Media->find(media_id=>$media_id);
+    die ("Can't find media object with media_id '$media_id'") unless (ref($m));
+
+    my $t = $self->load_tmpl('view_media.tmpl');
+    my $media_view_tmpl_data = $self->make_media_view_tmpl_data($m);
+    $t->param($media_view_tmpl_data);
+
+    return $t->output();
 }
 
 
@@ -863,7 +920,7 @@ sub make_media_tmpl_data {
     $tmpl_data{upload_chooser} = $upload_chooser;
 
     # If we have a filename, show it.
-    $tmpl_data{file_size} = sprintf("%.1f", ($m->file_size() / 1024))
+    $tmpl_data{file_size} = sprintf("%.1fk", ($m->file_size() / 1024))
       if ($tmpl_data{filename}  = $m->filename());
 
     # Set up Contributors
@@ -894,6 +951,94 @@ sub make_media_tmpl_data {
             $tmpl_data{$mf} = $m->$mf();
         }
     }
+
+    # Send data back to caller for inclusion in template
+    return \%tmpl_data;
+}
+
+
+# Given a media object, $m, return a hashref with all the data needed
+# for the view template
+sub make_media_view_tmpl_data {
+    my $self = shift;
+    my $m = shift;
+
+    my $q = $self->query();
+    my %tmpl_data = ();
+
+    $tmpl_data{media_id} = $m->media_id();
+
+    my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
+    $tmpl_data{thumbnail_path} = $thumbnail_path;
+
+    $tmpl_data{url} = format_url( url => $m->url(),
+                                  linkto => "javascript:preview_media('". $tmpl_data{media_id} ."')",
+                                  length => 50 );
+
+    $tmpl_data{published_version} = $m->published_version();
+
+    $tmpl_data{version} = $m->version();
+
+    # Display media type name
+    my %media_types = Krang::Pref->get('media_type');
+    my $media_type_id = $m->media_type_id();
+    $tmpl_data{type} = $media_types{$media_type_id} if ($media_type_id);
+
+    # Display category
+    my $category_id = $m->category_id();
+    my ($category) = Krang::Category->find(category_id => $category_id);
+    $tmpl_data{category} = format_url( url => $category->url(),
+                                       length => 50 );
+
+    # If we have a filename, show it.
+    $tmpl_data{file_size} = sprintf("%.1fk", ($m->file_size() / 1024))
+      if ($tmpl_data{filename}  = $m->filename());
+
+    # Set up Contributors
+    my @contribs = ();
+    my %contrib_types = Krang::Pref->get('contrib_type');
+    foreach my $c ($m->contribs()) {
+        my %contrib_row = (
+                           first => $c->first(),
+                           last => $c->last(),
+                           type => $contrib_types{ $c->selected_contrib_type() },
+                          );
+        push(@contribs, \%contrib_row);
+    }
+    $tmpl_data{contribs} = \@contribs;
+
+    # Display creation_date
+    my $creation_date = $m->creation_date();
+    $tmpl_data{creation_date} = sprintf("%s %d %d", 
+                                        $creation_date->month, 
+                                        $creation_date->mday, 
+                                        $creation_date->year);
+
+    # Handle simple scalar fields
+    my @m_fields = qw(
+                      title
+                      caption 
+                      copyright 
+                      alt_tag 
+                      notes 
+                     );
+    foreach my $mf (@m_fields) {
+        # Copy data from object into %tmpl_data
+        # unless key exists in CGI data already
+        unless (defined($q->param($mf))) {
+            $tmpl_data{$mf} = $m->$mf();
+        }
+    }
+
+    # Set up return state
+    my %history_return_params = $q->param('history_return_params');
+    my @history_return_params_hidden = ();
+    while (my ($k, $v) = each(%history_return_params)) {
+        push(@history_return_params_hidden, $q->hidden(-name => $k,
+                                                       -value => $v,
+                                                       -override=>1));
+    }
+    $tmpl_data{history_return_params} = join("\n", @history_return_params_hidden);
 
     # Send data back to caller for inclusion in template
     return \%tmpl_data;
@@ -1026,7 +1171,7 @@ Author of Module <author@module>
 
 =head1 SEE ALSO
 
-L<Krang::Media>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Krang::Pref>, L<Krang::Session>, L<Carp>, L<Krang::CGI>
+L<Krang::Category>, L<Krang::Media>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Krang::Pref>, L<Krang::Session>, L<Carp>, L<Krang::CGI>
 
 =cut
 
@@ -1055,6 +1200,6 @@ L<Krang::Media>, L<Krang::Widget>, L<Krang::Message>, L<Krang::HTMLPager>, L<Kra
 #                  delete_selected
 #                  view
 #                 ));
-# $c->use_modules(qw/Krang::Media Krang::Widget Krang::Message Krang::HTMLPager Krang::Pref Krang::Session Carp/);
+# $c->use_modules(qw/Krang::Category Krang::Media Krang::Widget Krang::Message Krang::HTMLPager Krang::Pref Krang::Session Carp/);
 # $c->tmpl_path('Media/');
 # print $c->output_app_module();

@@ -1,0 +1,174 @@
+<tmpl_include header.tmpl>
+
+<script language="JavaScript" type="text/javascript">
+<!-- //
+
+    function do_save_stay () {
+        var myform = document.edit_media_form;
+        myform.rm.value = <tmpl_if add_mode>'save_stay_add'<tmpl_else>'save_stay_edit'</tmpl_if>;
+        myform.submit();
+    }
+
+
+    function do_save () {
+        var myform = document.edit_media_form;
+        myform.rm.value = <tmpl_if add_mode>'save_add'<tmpl_else>'save_edit'</tmpl_if>;
+        myform.submit();
+    }
+
+
+    function do_publish () {
+    }
+
+
+    function do_delete () {
+        if (confirm("Are you sure you want to delete this media?")) {
+            var myform = document.delete_media_form;<tmpl_if add_mode>
+            myform.rm.value = 'cancel_add';</tmpl_if>
+            myform.submit();
+        }
+    }
+
+    function edit_contribs () {
+        var myform = document.edit_media_form;
+        myform.rm.value = 'save_and_associate_media';
+        myform.submit();
+    }
+
+// -->
+</script>
+
+
+<div class=dark-bar>View Media</div>
+
+
+<table border="0" cellpadding="5" cellspacing="0" width="100%">
+
+<tr class="light">
+  <td>ID:</td>
+  <td width="60%"><tmpl_var media_id></td>
+
+  <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"></tmpl_if><img border="0" src="<tmpl_var thumbnail_path>"><tmpl_if media_id></a></tmpl_if></td>
+</tr>
+
+
+<tr class="light">
+  <td>Title:</td>
+  <td><tmpl_var title></td>
+</tr>
+
+
+<tr class="light">
+  <td>Type:</td>
+  <td><tmpl_var type></td>
+</tr>
+
+
+<tr class="light">
+  <td>Current&nbsp;Version:</td>
+  <td><tmpl_var version></td>
+</tr>
+
+
+<tr class="light">
+  <td>Published&nbsp;Version:</td>
+  <td colspan="2"><tmpl_unless published_version>[n/a]</tmpl_unless><tmpl_var published_version></td>
+</tr>
+
+
+<tr class="light">
+  <td>URL:</td>
+  <td colspan="2"><tmpl_var url></td>
+</tr>
+
+
+<tr class="light">
+  <td>Site/Category:</td>
+  <td colspan="2"><tmpl_var category></td>
+</tr>
+
+
+<tr class="light">
+  <td>File:</td>
+  <td colspan="2"><a href="javascript:preview_media('<tmpl_var escape=HTML media_id>')"><tmpl_var escape=HTML filename></a>
+<tmpl_var escape=HTML file_size></td>
+</tr>
+
+
+<tr class="light">
+  <td>Default&nbsp;Caption:</td>
+  <td colspan="2"><tmpl_var escape=HTML caption></td>
+</tr>
+
+
+<tr class="light">
+  <td>Default&nbsp;Copyright:</td>
+  <td colspan="2"><tmpl_var escape=HTML copyright></td>
+</tr>
+
+
+<tr class="light">
+  <td>Alt&nbsp;tag:</td>
+  <td colspan="2"><tmpl_var escape=HTML alt_tag></td>
+</tr>
+
+
+<tr class="light">
+  <td>Creation&nbsp;Date:</td>
+  <td colspan="2"><tmpl_var escape=HTML creation_date></td>
+</tr>
+
+
+<tr class="light">
+  <td>Notes:</td>
+  <td colspan="2"><tmpl_var escape=HTML notes></td>
+</tr>
+
+
+<tr class="light">
+  <td>Contributors:</td>
+  <td colspan="2"><tmpl_if contribs><tmpl_loop contribs><tmpl_var first> <tmpl_var last> (<tmpl_var type>)<tmpl_unless __last__>, </tmpl_unless></tmpl_loop><tmpl_else>None.</tmpl_if></td>
+</tr>
+
+
+<form name="return_form" method="POST">
+<tmpl_var history_return_params>
+</form>
+
+<form name="edit_media_form" method="POST">
+<input type="hidden" name="rm" value="edit">
+<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
+</form>
+
+<script language="javascript">
+<!-- //
+
+        function do_return () {
+                var myform = document.return_form;
+                myform.submit();
+        }
+
+
+        function do_edit_media () {
+                var myform = document.edit_media_form;
+                myform.submit();
+        }
+
+// -->
+</script>
+
+
+<tr class="light">
+  <td>&nbsp;</td>
+  <td colspan="2"><input type="button" value="Return" onClick="javascript:do_return()">&nbsp;<input type="button" value="Edit" onClick="javascript:do_edit_media()"></td>
+</tr>
+
+
+
+</table>
+
+
+
+
+
+<tmpl_include footer.tmpl>
