@@ -14,7 +14,7 @@ use constant RW_FIELDS => qw( name description );
 
 =head1 NAME
 
-    Krang::ListGroup -  interface to retrieve list groups.
+    Krang::ListGroup -  interface to manage list groups.
 
 =head1 SYNOPSIS
 
@@ -22,7 +22,7 @@ use constant RW_FIELDS => qw( name description );
     
 =head1 DESCRIPTION
 
-This class handles the retrival of list groups.
+This class handles the management of list groups.
 
 =head1 INTERFACE
 
@@ -185,7 +185,7 @@ not $valid_params{$param};
     
     # set simple keys
     foreach my $key (keys %args) {
-        if ( ($key eq 'name') || ($key eq 'group_id') ) {   
+        if ( ($key eq 'name') || ($key eq 'list_group_id') ) {   
             push @where, $key;
         }
     }
