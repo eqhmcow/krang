@@ -245,7 +245,7 @@ sub preview_story {
     # cleanup - remove any testing templates.
     $self->_undeploy_testing_templates();
 
-    $preview_url = "$url/" . $self->_build_filename(story => $story, page => 1);
+    $preview_url = "$url/" . $self->_build_filename(story => $story);
 
     return $preview_url;
 }
@@ -853,11 +853,11 @@ sub _build_filename {
     my %args = @_;
 
     my $story = $args{story};
-    my $page  = $args{page};
+    my $page  = $args{page} || 0;
 
     my $element = $story->element();
 
-    if ($page == 1) { $page = ''; }
+    if ($page == 0) { $page = ''; }
 
     return $element->class()->filename() . $page . $element->class()->extension();
 
@@ -930,10 +930,9 @@ sub _build_story_single_category {
 
     # iterate over story pages, writing them to disk.
     for (my $p = 0; $p < @$story_pages; $p++) {
-        my $page_num = $p + 1;
 
         # get the path & filename:
-        my $filename = $self->_build_filename(story => $story, page => $page_num);
+        my $filename = $self->_build_filename(story => $story, page => $p);
 
         # write the page to disk.
         $self->_write_page(path => $path, filename => $filename,
