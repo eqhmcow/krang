@@ -67,7 +67,7 @@ BEGIN {
     # load Krang::Conf (don't need to load Krang here because we won't
     # be slinging elements)
     eval { require Krang::Conf };
-    die <<"END" if $@;
+    warn << "END" and exit(1) if $@;
 ######################################################################
 
 Cannot load Krang.
@@ -103,9 +103,9 @@ BEGIN {
       unless $file;
 
     # validate filename
-    die "Specified file '$file' does not exist."
+    warn "Specified file '$file' does not exist.\n" and exit(1)
       unless -e $file;
-    die "Input filename must end in .kds or .kds.gz\n"
+    warn "Input filename must end in .kds or .kds.gz\n" and exit(1)
       unless $file =~ /\.kds$/ or $file =~ /\.kds\.gz$/;
 
     # make sure that's it
@@ -115,7 +115,7 @@ BEGIN {
 
     # open file for later processing.  this has to happen before
     # Krang::Script loads and su's to KrangUser
-    open(SOURCE, '<', $file) or die "Unable to open '$file': $!";
+    open(SOURCE, '<', $file) or warn "Unable to open '$file': $!" and exit(1);
 }
 
 

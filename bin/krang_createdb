@@ -95,7 +95,7 @@ BEGIN {
 
     # load Krang
     eval { require Krang };
-    die <<"END" if $@;
+    warn << "END" and exit(1) if $@;
 ######################################################################
 
 Cannot load Krang.

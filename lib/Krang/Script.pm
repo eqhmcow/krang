@@ -60,32 +60,32 @@ BEGIN {
 
     # extract desired uid/gid
     my @uid_data = getpwnam(KrangUser);
-    croak("Unable to find user for KrangUser '" . KrangUser . "'.")
+    warn("Unable to find user for KrangUser '" . KrangUser . "'."), exit(1)
       unless @uid_data;
     my $krang_uid = $uid_data[2];
     my @gid_data = getgrnam(KrangGroup);
-    croak("Unable to find user for KrangGroup '" . KrangGroup . "'.")
+    warn("Unable to find user for KrangGroup '" . KrangGroup . "'."), exit(1)
       unless @gid_data;
     my $krang_gid = $gid_data[2];
 
     # become KrangUser/KrangGroup if necessary
     if ($gid{$krang_gid}) {
         eval { $) = $krang_gid; };
-        die("Unable to become KrangGroup '" . KrangGroup . "' : $@\n" . 
-            "Maybe you need to start this process as root.\n")
+        warn("Unable to become KrangGroup '" . KrangGroup . "' : $@\n" . 
+            "Maybe you need to start this process as root.\n") and exit(1)
           if $@;
-        die("Failed to become KrangGroup '" . KrangGroup . "' : $!.\n" .
-            "Maybe you need to start this process as root.\n")
+        warn("Failed to become KrangGroup '" . KrangGroup . "' : $!.\n" .
+            "Maybe you need to start this process as root.\n") and exit(1)
           unless $) == $krang_gid;
     }
 
     if ($uid != $krang_uid) {
         eval { $> = $krang_uid; };
-        die("Unable to become KrangUser '" . KrangUser . "' : $@\n" .
-            "Maybe you need to start this process as root.\n")
+        warn("Unable to become KrangUser '" . KrangUser . "' : $@\n" .
+            "Maybe you need to start this process as root.\n") and exit(1)
           if $@;
-        die("Failed to become KrangUser '" . KrangUser . "' : $!\n" .
-            "Maybe you need to start this process as root.\n")
+        warn("Failed to become KrangUser '" . KrangUser . "' : $!\n" .
+             "Maybe you need to start this process as root.\n") and exit(1)
           unless $> == $krang_uid;
     }
 }
@@ -96,9 +96,10 @@ BEGIN {
     if (not defined $instance) {
         my @instances = Krang::Conf->instances();
         if (@instances > 1) {
-            die "\nYour Krang configuration contains multiple instances, please set the\nKRANG_INSTANCE environment variable.\n\nAvailable instances are: " . 
+            warn "\nYour Krang configuration contains multiple instances, please set the\nKRANG_INSTANCE environment variable.\n\nAvailable instances are: " . 
               join(', ', @instances[0 .. $#instances - 1]) . 
                 " and $instances[-1].\n\n";
+            exit(1);
         } else {
             $instance = $instances[0];
         }
