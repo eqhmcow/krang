@@ -272,7 +272,10 @@ sub publish_story {
 
     my $self = shift;
     my %args = @_;
-    my $callback = $args{callback};
+    # callbacks
+    my $callback      = $args{callback};
+    my $skip_callback = $args{skip_callback};
+
     my $publish_list;
     my $user_id = $ENV{REMOTE_USER};
 
@@ -300,6 +303,7 @@ sub publish_story {
             if ($object->checked_out) {
                 if ($user_id != $object->checked_out_by) {
                     debug(__PACKAGE__ . ": skipping checked out story id=" . $object->story_id);
+                    $skip_callback->(object => $object) if $skip_callback;
                     next;
                 }
             }
@@ -394,53 +398,47 @@ sub publish_media {
     my $self = shift;
     my %args = @_;
 
-    my $callback = $args{callback};
+    # callbacks
+    my $callback      = $args{callback};
+    my $skip_callback = $args{skip_callback};
+
+    my $publish_list;
+
     my $user_id  = $ENV{REMOTE_USER};
     my @urls;
 
     croak (__PACKAGE__ . ": Missing argument 'media'!\n") unless (exists($args{media}));
 
     if (ref $args{media} eq 'ARRAY') {
-        my $total = @{$args{media}};
-        my $counter = 0;
+        $publish_list = $args{media};
+    } else {
+        push @$publish_list, $args{media};
+    }
 
-        foreach my $media_object (@{$args{media}}) {
-            # cannot publish assets checked out by other users.
-            if ($media_object->checked_out) {
-                if ($user_id != $media_object->checked_out_by) {
-                    debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $media_object->media_id);
-                    next;
-                }
+    my $total = @$publish_list;
+    my $counter = 0;
+
+    foreach my $media_object (@$publish_list) {
+        # cannot publish assets checked out by other users.
+        if ($media_object->checked_out) {
+            if ($user_id != $media_object->checked_out_by) {
+                debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $media_object->media_id);
+                $skip_callback->(object => $media_object) if $skip_callback;
+                next;
             }
-
-            $callback->(object => $media_object,
-                        total  => $total,
-                        counter => $counter++) if $callback;
-
-            push @urls, $self->_write_media($media_object);
-            $media_object->mark_as_published();
         }
-        return @urls;
+
+        $callback->(object => $media_object,
+                    total  => $total,
+                    counter => $counter++) if $callback;
+        push @urls, $self->_write_media($media_object);
+        $media_object->mark_as_published();
     }
 
-    # cannot publish assets checked out by other users.
-    if ($args{media}->checked_out) {
-        if ($user_id != $args{media}->checked_out_by) {
-            debug(__PACKAGE__ . ": skipping publish on checked out media object id=" . $args{media}->media_id);
-            return;
-        }
-    }
-
-    $callback->(object => $args{media},
-                total  => 1,
-                counter => 1) if $callback;
-
-    my $url = $self->_write_media($args{media});
-    $args{media}->mark_as_published();
-
-    return $url;
+    return @urls;
 
 }
+
 
 
 

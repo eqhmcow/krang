@@ -505,12 +505,11 @@ sub test_media_deploy {
     # test media deployment.
     my $pub_expected_path = catfile($publish_path, $media->url());
 
-    my $pub_media_url = $publisher->publish_media(media => $media);
+    my ($pub_media_url) = $publisher->publish_media(media => $media);
 
     my $pub_media_path = catfile($publish_path, $pub_media_url);
 
     ok($pub_expected_path eq $pub_media_path, 'Krang::Publisher->publish_media()');
-
 
     my $prev_expected_path = catfile($preview_path, $media->preview_url());
 
