@@ -235,15 +235,23 @@ sub write_conf {
     close CONF;
 }
 
-# setup symlinks (FIX: when Apache::Handler supports aliases this can go away)
+# setup symlinks - remove the old ones first if they exist.
+# (FIX: when Apache::Handler supports aliases this can go away)
+
 sub make_links {
-    unless (-l catfile(KrangRoot, 'htdocs', 'data')) {
-        system("ln -s " . catfile(KrangRoot, 'data') . " " . catfile(KrangRoot, 'htdocs', 'data'));
+
+    if (-l catfile(KrangRoot, 'htdocs', 'data')) {
+        unlink(catfile(KrangRoot, 'htdocs', 'data'));
     }
-    unless (-l catfile(KrangRoot, 'htdocs', 'tmp')) {
-        system("ln -s " . catfile(KrangRoot, 'tmp') . " " . catfile(KrangRoot, 'htdocs', 'tmp'));
+    system("ln -s " . catfile(KrangRoot, 'data') . " " . catfile(KrangRoot, 'htdocs', 'data'));
+
+    if (-l catfile(KrangRoot, 'htdocs', 'tmp')) {
+        unlink(catfile(KrangRoot, 'htdocs', 'tmp'));
     }
+    system("ln -s " . catfile(KrangRoot, 'tmp') . " " . catfile(KrangRoot, 'htdocs', 'tmp'));
+
 }
+
 
 # setup the configured skin
 sub apply_skin {

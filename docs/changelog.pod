@@ -10,6 +10,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed symlink bug that caused thumbnails to disappear from the UI
+after a Krang instance was moved to a different location on the
+filesystem.  [Peter]
+
+=item *
+
 Fixed a bug where deleting a newly-copied story threw an error in the
 UI. [Peter]
 
