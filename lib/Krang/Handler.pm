@@ -318,6 +318,7 @@ sub instance_menu {
     $template->param(instance_loop => \@loop);
 
     # output HTML
+    $r->send_http_header('text/html');
     print $template->output();
 
     return OK;

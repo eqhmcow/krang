@@ -10,6 +10,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Send HTTP header with root menu. [Aaron Ross]
+
+=item *
+
 Escape values on login page to foil cross-site scripting attacks. [Perrin]
 
 =item *
