@@ -293,6 +293,7 @@ a:active {
      left:             0px;
      border:           2px outset #333333;
      background-color: #ffffff;
+     filter:           progid:DXImageTransform.Microsoft.dropShadow( Color=bababa,offx=3,offy=3,positive=true);
 }
 
 .hpts-inner {

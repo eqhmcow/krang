@@ -140,6 +140,8 @@ sub category_chooser {
                                              hide_root  => 1,
                                              button_label => $label||'Choose',
                                              include_css => 0,
+                                             width      => 225,
+                                             height     => 200,
                                             );
 
     # send data to the template
