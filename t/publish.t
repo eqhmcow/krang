@@ -142,9 +142,6 @@ for (1..10) {
 }
 
 
-my @story_linklist = ();
-my @media_linklist = ();
-
 my $story   = &create_story([$category, $child_cat, $child_subcat]);
 my $story2  = &create_story([$category], [$story], [$media[0]]);
 
@@ -193,8 +190,32 @@ END {
 &test_medialink($story2, $media[0]);
 
 
+############################################################
+# Testing related stories/media list.
+
+# test that get_publish_list(story) returns story.
+my $publish_list = $publisher->get_publish_list(story => $story);
+my %expected = (media => {}, story => {$story->story_id => $story});
+
+&test_publish_list($publish_list, \%expected);
 
 
+# test that get_publish_list(story2) returns story2 + story + media
+
+# add links to all of @stories to story2.
+# test that get_publish_list(story2) returns story2 + story + @stories + media
+
+# add links to all of @stories to story.
+# test that get_publish_list(story2) returns story2 + story + @stories + media
+
+# add links to all of @media to story2.
+# test that get_publish_list(story2) returns story2 + story + @stories + media + @media
+
+# add links to all of @media to story.
+# test that get_publish_list(story2) returns story2 + story + @stories + media + @media
+
+# add link to story2 to story.
+# test that get_publish_list(story2) returns story2 + story + @stories + media + @media
 
 
 
@@ -204,6 +225,43 @@ END {
 #
 # SUBROUTINES.
 #
+
+
+# test to confirm the publish list returned is the list expected.
+# confirm that each element exists in %expected, and then 
+# confirm that %expected does not contain anything not in the publish list.
+
+sub test_publish_list {
+
+    my ($publist, $expected) = @_;
+    my %lookup = ();
+
+    # test to see if what returned was expected
+    foreach (@$publist) {
+        if ($_->isa('Krang::Story')) {
+            ok(exists($expected->{story}{$_->story_id}), 'Krang::Publisher->get_publish_list() - expected story');
+            $lookup{story}{$_->story_id} = 1;
+        }
+        elsif ($_->isa('Krang::Media')) {
+            ok(exists($expected->{media}{$_->media_id}), 'Krang::Publisher->get_publish_list() - expected media');
+            $lookup{media}{$_->media_id} = 1;
+        } else {
+            fail("Krang::Publisher->get_publish_list - returned '" . $_->isa() . "'");
+        }
+    }
+
+    # test to see if everything expected was returned
+    foreach (qw(story media)) {
+        foreach my $key (keys %{$expected->{$_}}) {
+            my $obj = $expected->{$_}{$key};
+            if ($_ eq 'story') {
+                ok(exists($lookup{story}{$obj->story_id}), 'Krang::Publisher->get_publish_list() - found story'); 
+            } elsif ($_ eq 'media') {
+                ok(exists($lookup{media}{$obj->media_id}), 'Krang::Publisher->get_publish_list() - found media'); 
+            }
+        }
+    }
+}
 
 
 # Test to make sure Krang::Publisher->publish/preview_media works.
@@ -576,7 +634,7 @@ sub create_story {
         $slug_id = int(rand(16777216));
     } until (!exists($slug_id_list{$slug_id}));
 
-    $slug_id_list{$slug_id};
+    $slug_id_list{$slug_id} = 1;
 
     my $story = Krang::Story->new(categories => $categories,
                                   title      => $story_title,
