@@ -11,7 +11,7 @@ Krang::User - a means to access information on users
   # construct object
   my $user = Krang::User->new(email => 'a@b.com',		#optional
 			      first_name => 'fname',		#optional
-			      group_id => [1, 2, 3],		#optional
+			      group_ids => (1, 2, 3),		#optional
 			      last_name => 'lname',		#optional
 			      login => 'login',			#required
 			      mobile_phone => '112-358-1321'	#optional
@@ -25,7 +25,7 @@ Krang::User - a means to access information on users
   ##########
   my $email 	= $user->email();
   my $first_name= $user->first_name();
-  my \@group_ids = $user->group_id();
+  my @group_ids = $user->group_ids();	# returns arrayref or array by context
   my $last_name = $user->last_name();
   my $login	= $user->login();
   my $password	= $user->password();
@@ -36,7 +36,7 @@ Krang::User - a means to access information on users
   # setters
   ##########
   $user->first_name( 'first_name' );
-  $user->group_id( \@ids );
+  $user->group_ids( @ids );
   $user->last_name('last_name');
   $user->login( 'loginX' );
   $user->mobile_phone( $phone_number );
@@ -54,7 +54,8 @@ Krang::User - a means to access information on users
     offset => 1, 	        # start counting result from the
 				# second row
     order_by => 'user_id'	# sort on the 'user_id' field
-    _like => '%fred%' );
+    login_like => '%fred%',	# match rows with 'login's LIKE '%fred'
+    phone_like => '718%' );	# match rows with phone#'s LIKE '718%'
 
   # any valid object field can be appended with '_like' to perform a
   # case-insensitive sub-string match on that field in the database
@@ -72,7 +73,7 @@ original password string in not retrievable once it is passed but can only be
 calculated and compared i.e.:
 
   my $valid_password =
-    $user->{password} eq md5($SALT, $password_string) ? 1 : 0;
+    $user->{password} eq md5_hex($SALT, $password_string) ? 1 : 0;
 
 =cut
 
@@ -88,12 +89,16 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(croak);
-use Digest::MD5 qw(md5);
+use Digest::MD5 qw(md5_hex);
+require Exporter;
 
 # Internal Modules
 ###################
 use Krang;
 use Krang::DB qw(dbh);
+use Krang::Media;
+use Krang::Story;
+use Krang::Template;
 
 #
 # Package Variables
@@ -122,16 +127,20 @@ Dulce et decorum est pro patria mori
 --Horace
 SALT
 
+our @ISA = qw/Exporter/;
+our @EXPORT_OK = ('$SALT');
+
 # Lexicals
 ###########
-my %user_args = map {$_ => 1} USER_RW, qw/group_id password/;
+my %user_args = map {$_ => 1} USER_RW, qw/group_ids password/;
 my %user_cols = map {$_ => 1} USER_RO, USER_RW, 'password';
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
 			new_hash_init => 'hash_init',
 			get => [USER_RO],
-			get_set => [USER_RW];
+			get_set => [USER_RW],
+			list => 'group_ids';
 
 
 =head1 INTERFACE
@@ -152,7 +161,10 @@ The available fields for a user object are:
 
 =item * first_name
 
-=item * group_id
+=item * group_ids
+
+All the list utility methods provided by Class::MethodMaker are also available
+for this field see L<Class::MethodMaker>
 
 =item * last_name
 
@@ -185,7 +197,7 @@ Constructor for the module that relies on Krang::MethodMaker.  Validation of
 
 =item * first_name
 
-=item * group_id
+=item * group_ids
 
 =item * last_name
 
@@ -217,16 +229,15 @@ sub init {
           "invalid: '" . join("', '", @bad_args) . "'") if @bad_args;
 
     # required arg check...
-    for (qw/first_name last_name login password/) {
+    for (qw/login password/) {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
           unless exists $args{$_};
     }
 
     $self->hash_init(%args);
 
-    # set password and group_ids
+    # set password
     $self->password($args{password});
-    $self->{group_id} = [$args{group_id}];
 
     return $self;
 }
@@ -258,8 +269,8 @@ sub delete {
               "this class:\n\t$info");
     }
 
-    $dbh->do("DELETE FROM user WHERE user_id = ?", undef, ($id));
-    $dbh->do("DELETE FROM user_user_group WHERE user_id = ?", undef, ($id));
+    $dbh->do("DELETE FROM usr WHERE user_id = ?", undef, $id);
+    $dbh->do("DELETE FROM usr_user_group WHERE user_id = ?", undef, $id);
 
     return 1;
 }
@@ -277,19 +288,17 @@ sub dependent_check {
     my $self = shift;
     my $id = $self->{user_id};
     my $dependents = 0;
-    my ($dbh, $uid, %info, $sth);
-    my $query = "SELECT %s_id FROM %s WHERE checked_out_by = ?";
+    my ($dbh, %info, $oid, $sth);
 
-    for (qw/media story template/) {
-        $dbh = dbh();
-        $sth = $dbh->prepare(sprintf($query, $_, $_));
-        $sth->execute(($id));
-        $sth->bind_columns(1, \$uid);
-        while ($sth->fetch()) {
-            push @{$info{$_}}, $uid;
-            $dependents++;
+    for my $class(qw/media template/) { # no find in Krang::Story yet
+        my $module = ucfirst $class;
+        no strict 'subs';
+        my @objects = "Krang::$module"->find(checked_out_by => $id);
+        if (@objects) {
+            my $id_field = $class . "_id";
+            $dependents += scalar @objects;
+            push @{$info{$class}}, map {$_->$id_field} @objects;
         }
-        $sth->finish();
     }
 
     return ($dependents, %info);
@@ -311,13 +320,13 @@ sub duplicate_check {
     my $duplicates = 0;
 
     my $query = <<SQL;
-SELECT login, password, first_name || last_name AS name
-FROM user
-WHERE login = ? OR password = ? OR name = ?
+SELECT user_id, login, password, first_name, last_name
+FROM usr
+WHERE login = ? OR password = ? OR (first_name = ? AND last_name = ?)
 SQL
 
     my @params = ($self->{login}, $self->{password},
-                  $self->{first_name} . $self->{last_name});
+                  $self->{first_name}, $self->{last_name});
 
     # alter query if save() has already been called
     if ($id) {
@@ -332,8 +341,9 @@ SQL
     $sth->bind_columns(\(@$row{@{$sth->{NAME_lc}}}));
     while ($sth->fetchrow_arrayref()) {
         for (keys %$row) {
-            if ($self->{$_} && $self->{$_} eq $row->{$_}) {
-                $info{$row->{user_id}} = $_;
+            no warnings;
+            if ($self->{$_} eq $row->{$_}) {
+                push @{$info{$row->{user_id}}}, $_;
                 $duplicates++;
             }
         }
@@ -464,6 +474,9 @@ sub find {
 
         push @invalid_cols, $arg unless exists $user_cols{$lookup_field};
 
+        # compute password for lookup
+        $args{$arg} = md5_hex($SALT, $args{$arg}) if $arg eq 'password';
+
         if (($arg eq 'user_id' || $arg eq 'group_id') &&
             ref $args{$arg} eq 'ARRAY') {
             my $field = $arg eq 'user_id' ? "u.user_id" : "ug.user_group_id";
@@ -473,9 +486,13 @@ sub find {
         } else {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
-            $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-              "$and $lookup_field = ?";
-            push @params, $args{$arg};
+            if ($args{$arg} eq '') {
+                $where_clause .= "$and $lookup_field IS NULL";
+            } else {
+                $where_clause .= $like ? "$and $lookup_field LIKE ?" :
+                  "$and $lookup_field = ?";
+                push @params, $args{$arg};
+            }
         }
     }
 
@@ -483,8 +500,8 @@ sub find {
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
     # construct base query
-    my $query = "SELECT $fields FROM user u";
-    $query .= ", user_user_group ug" if $groups;
+    my $query = "SELECT $fields FROM usr u";
+    $query .= ", usr_user_group ug" if $groups;
 
     # add WHERE and ORDER BY clauses, if any
     $query .= " WHERE $where_clause" if $where_clause;
@@ -530,62 +547,24 @@ sub find {
 }
 
 
-=item * \@group_ids = $user->group_ids()
-
-=item * $user = $user->group_ids( \@group_ids )
-
-Method that returns a list of group ids as getter.  As a setter it accepts a
-list of group ids and returns the user object.  The method may croak if it is
-unable to lock the user_user_group table on write.
-
-=cut
-
-sub group_ids {
-    my $self = shift;
-    my $gids = shift || 0;
-
-    if ($gids) {
-        my $id = $self->{user_id};
-        my $dbh = dbh();
-        eval {
-            $dbh->do("LOCK TABLES user_user_group WRITE");
-            $dbh->do("DELETE FROM user_user_group WHERE user_id = ?",
-                     undef, ($id));
-            my $sth = $dbh->prepare("INSERT INTO user_user_group VALUES " .
-                                    "(?,?)");
-            $sth->execute(($id, $_)) for @$gids;
-            $dbh->do("UNLOCK TABLES");
-
-            $self->{group_ids} = $gids;
-        };
-
-        if (my $err = $@) {
-            $dbh->do("UNLOCK TABLES");
-            croak($err);
-        }
-    }
-
-    return $gids ? $self : $self->{group_ids};
-}
-
-
 # Either the fieldname 'login' or this method would have to change, I thought
 # the method would be easier...
-=item * $true_or_false = Krang::User->logon( $login, $password )
+=item * $user_id = Krang::User->logon( $login, $password )
 
 Class method that retrieves the user object associated with $login and compares
-the value in the objects 'password' field with md5( $SALT, $password ).
+the value in the objects 'password' field with md5_hex( $SALT, $password ).
+If it is successful, the 'user_id' is returned, otherwise '0' is returned.
 
 =cut
 
 sub logon {
     my ($self, $login, $password) = @_;
-    my $retval = 0;
 
     my ($user) = Krang::User->find(login => $login);
     return 0 unless $user;
 
-    return md5($SALT, $password) eq $user->{password} ? 1 : 0;
+    return md5_hex($SALT, $password) eq $user->{password} ?
+      $user->{user_id} : 0;
 }
 
 
@@ -601,7 +580,7 @@ in the DB as a setter.
 
 sub password {
     my $self = shift;
-    $self->{password} = md5($SALT, $_[0]) if $_[0];
+    $self->{password} = md5_hex($SALT, $_[0]) if $_[0];
     return $self->{password};
 }
 
@@ -625,7 +604,10 @@ sub save {
     # check for duplicates
     my ($duplicates, %info) = $self->duplicate_check();
     if ($duplicates) {
-        my $info = join("\n\t", map {"id '$_': $info{$_}"} keys %info) . "\n";
+        my $info = join("\n\t",
+                        map {"id '$_': " .
+                               join(", ", sort @{$info{$_}})}
+                        keys %info) . "\n";
         croak(__PACKAGE__ . "->save(): This object duplicates the following " .
               "user objects:\n\t$info");
     }
@@ -635,11 +617,11 @@ sub save {
 
     # the object has already been saved once if $id
     if ($id) {
-        $query = "UPDATE user SET " . join(", ", map {"$_ = ?"} @save_fields) .
+        $query = "UPDATE usr SET " . join(", ", map {"$_ = ?"} @save_fields) .
           " WHERE user_id = ?";
     } else {
         # build insert query
-        $query = "INSERT INTO user (" . join(',', @save_fields) .
+        $query = "INSERT INTO usr (" . join(',', @save_fields) .
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
 
@@ -657,7 +639,22 @@ sub save {
     $self->{user_id} = $dbh->{mysql_insertid} unless $id;
 
     # associate user with groups if any
-    $self->group_id($self->{group_id}) if exists $self->{group_id};
+    if (exists $self->{group_id}) {
+        eval {
+            $dbh->do("LOCK TABLES usr_user_group WRITE");
+            $dbh->do("DELETE FROM usr_user_group WHERE user_id = ?",
+                     undef, ($id));
+            my $sth = $dbh->prepare("INSERT INTO usr_user_group VALUES " .
+                                    "(?,?)");
+            $sth->execute(($id, $_)) for @{$self->{group_id}};
+            $dbh->do("UNLOCK TABLES");
+        };
+
+        if (my $err = $@) {
+            $dbh->do("UNLOCK TABLES");
+            croak($err);
+        }
+    }
 
     return $self;
 }
@@ -675,72 +672,14 @@ L<Krang>, L<Krang::DB>
 
 
 my $quip = <<END;
-Casey At The Bat
+Epitaph on a tyrant
 
-It looked extremely rocky for the Mudville nine that day;
-The score stood two to four, with but an inning left to play.
-So, when Cooney died at second, and Burrows did the same,
-A pallor wreathed the features of the patrons of the game.
+Perfection, of a kind, was what he was after
+And the poetry he invented was easy to understand;
+He knew human folly like the back of his hand,
+And was greatly interested in armies and fleets;
+When he laughed, respectable senators burst with laughter,
+And when he cried the little children died in the streets.
 
-A straggling few got up to go, leaving there the rest,
-With that hope which springs eternal within the human breast.
-for they thought: "If only Casey could get a whack at that,"
-they'd put even money now, with Casey at the bat.
-
-But Flynn preceded Casey, and likewise so did Blake,
-And the former was a pudd'n and the latter was a fake.
-So on that stricken multitude a deathlike silence sat;
-For there seemed but little chance of Casey's getting to the bat.
-
-But Flynn let drive a "single," to the wonderment of all.
-And the much-despised Blakey "tore the cover off the ball."
-And when the dust had lifted, and they saw what had occurred,
-There was Blakey safe at second, and Flynn a-huggin' third.
-
-Then from the gladdened multitude went up a joyous yell--
-It rumbled in the mountaintops, it rattled in the dell;
-It struck upon the hillside and rebounded on the flat;
-For Casey, mighty Casey was advancing to the bat.
-
-There was ease in Casey's manner as he stepped into his place,
-There was pride in Casey's bearing and a smile on Casey's face;
-And when responding to the cheers he lightly doffed his hat.
-No stranger in the crowd could doubt 'twas Casey at the bat."
-
-Ten thousand eyes were on him as he rubbed his hands with dirt,
-Five thousand tongues applauded when he wiped them on his shirt;
-Then when the writhing pitcher ground the ball into his hip,
-Defiance glanced in Casey's eye, a sneer curled Casey's lip.
-
-And now the leather-covered sphere came hurtling through the air,
-And Casey stood a watching it in haughty grandeur there.
-Close by the sturdy batsman the ball unheeded sped;
-"That ain't my style," said Casey. "Strike one," the umpire said.
-
-From the benches, black with people, there went up a muffled roar,
-Like the beating of the storm waves on the stern and distant shore.
-"Kill him! kill the umpire!" shouted someone on the stand;
-And it's likely they'd have killed him had not Casey raised his hand.
-
-With a smile of Christian charity great Casey's visage shone;
-He stilled the rising tumault, he made the game go on;
-He signaled to the pitcher, and once more the spheroid flew;
-But Casey still ignored it, and the umpire said, "Strike Two."
-
-"Fraud!" cried the maddened thousands, and the echo answered "Fraud!"
-But one scornful look from Casey and the audience was awed;
-They saw his face grow stern and cold, they saw his muscles strain,
-And they knew that Casey wouldn't let the ball go by again.
-
-The sneer is gone from Casey's lips, his teeth are clenched in hate,
-He pounds with cruel violence his bat upon the plate;
-And now the pitcher holds the ball, and now he lets it go,
-And now the air is shattered by the force of Casey's blow.
-
-Oh, somewhere in this favored land the sun is shining bright,
-The band is playing somewhere, and somewhere hearts are light;
-And somewhere men are laughing, and somewhere children shout,
-But there is no joy in Mudville: Mighty Casey has struck out.
-
--- Ernest Lawrence Thayer
+-- W. H. Auden
 END
