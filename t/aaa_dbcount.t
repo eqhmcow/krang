@@ -16,7 +16,11 @@ ok(@$tables);
 
 # make an exception for my_pref, which harmlessly adds a row the first
 # time my_pref.t is run.  Maybe fix some day...
-@$tables = grep { $_ ne 'my_pref' } @$tables;
+
+# also, ignore sessions since new sessions will get cleaned up
+# automatically anyway
+
+@$tables = grep { $_ ne 'my_pref' and $_ ne 'sessions' } @$tables;
 
 foreach my $table (sort @$tables) {
     my ($count) = $dbh->selectrow_array("select count(*) from $table");
