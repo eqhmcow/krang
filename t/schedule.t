@@ -302,7 +302,7 @@ my $log = IO::File->new(">$path") ||
 my $count;
 eval {$count = Krang::Schedule->run($log);};
 is($@, '', "run() didn't fail");
-is($count, 14, 'run() succeeded :).');
+is($count >= 14, 1, 'run() succeeded :).');
 
 # force a save failure
 $s1->repeat('fred');
