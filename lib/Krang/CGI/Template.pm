@@ -246,7 +246,7 @@ sub add_checkin {
     return $self->add(%errors) if %errors;
 
     $template->checkin;                                                                             
-    add_message('message_saved');
+    add_message('checkin_template', id => $template->template_id);
                                                                              
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
@@ -577,7 +577,7 @@ sub edit_checkin {
 
     $template->checkin;
                                                 
-    add_message('message_saved');
+    add_message('checkin_template', id => $template->template_id);
                                                                              
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
