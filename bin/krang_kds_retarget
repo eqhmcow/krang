@@ -1,0 +1,170 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_kds_retarget - change the site targeted by a KDS file
+
+=head1 SYNOPSIS
+
+Export some media files from site foo.com:
+
+  krang_export --media_id 1 --media_id 2 --output foo.kds
+
+Retarget the media for use in bar.com:
+
+  krang_kds_retarget --from foo --to bar foo.kds bar.kds
+
+Import the newly created bar.kds:
+
+  krang_import bar.kds
+
+=head1 DESCRIPTION
+
+This script takes a KDS file and creates a copy with the target site
+replaced with a new one.  This allows you to export content from one
+site and copy it to another site.
+
+=head1 OPTIONS
+
+=over 4
+
+=item --from site1
+
+The unique part of the url, preview_url, publish_path and preview_path
+fields to be changed.
+
+=item --to site2
+
+The name to substitute for --from in the new file.
+
+=item --verbose
+
+Prints a running dialog of what's happening.
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Getopt::Long;
+use Pod::Usage;
+use File::Temp qw(tempdir);
+
+my ($help, $man, $from, $to);
+my $verbose = 0;
+
+pod2usage(2) unless
+  GetOptions(help       => \$help,
+             man        => \$man,
+             'verbose+' => \$verbose,
+             'from=s'   => \$from,
+             'to=s'     => \$to,
+            );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+pod2usage("Bad number of arguments - should have source and target filenames.")
+  unless @ARGV == 2;
+pod2usage("Missing required option --from.")
+  unless $from;
+pod2usage("Missing required option --to.")
+  unless $to;
+
+# figure out the source and target filenames
+my ($source, $target) = @ARGV;
+
+# validate filenames
+die "Source filename '$source' must end in .kds or .kds.gz\n"
+  if $source !~ /\.kds(\.gz)?$/;
+die "Source '$source' does not exist.\n"
+  unless -e $source;
+die "Target 'filename '$target' must end in .kds or .kds.gz\n"
+  if $target !~ /\.kds(\.gz)?$/;
+die "Target '$target' already exists.\n"
+  if -e $target;
+
+# get absolute paths
+$source = rel2abs($source);
+$target = rel2abs($target);
+
+# open up the data set in a temp directory
+my $dir = tempdir( CLEANUP => 1 );
+chdir($dir) or die $!;
+
+print STDERR "Unpacking '$source'...\n" if $verbose;
+system("tar x" . ($source =~ /gz$/ ? 'z' : '') . "f $source");
+die "Failed to untar source '$source' - no index.xml created."
+  unless -e 'index.xml';
+
+opendir(DIR, '.') or die $!;
+my @xml = grep { /\.xml$/ and not /index\.xml/ } readdir(DIR);
+closedir(DIR);
+
+# go through files substituting $from for $to in urls
+foreach my $file (@xml) {
+    open(XML, '<', $file) or die "Unable to open '$file': $!";
+    my $xml = do { local $/; <XML> };
+    close XML;
+
+    # update URLs
+    my $count = $xml =~ s/<url>$from/<url>$to/g;
+    
+    # apply changes in preview_url and paths for sites
+    if ($file =~ /site/) {
+        $count += $xml =~ s/(<preview_url>.*?)$from/$1$to/;
+        $count += $xml =~ s/(<preview_path>.*?)$from/$1$to/;
+        $count += $xml =~ s/(<publish_path>.*?)$from/$1$to/;
+    }
+    print STDERR "Made $count changed in $file.\n" if $verbose;
+
+    # write out new file
+    open(XML, '>', $file) or die "Unable to open '$file': $!";
+    print XML $xml;
+    close XML;
+}
+
+# create new KDS file
+print STDERR "Packing '$target'...\n";
+system("tar c" . ($target =~ /gz$/ ? 'z' : '') . "f $target .");
+die "Unable to create '$target'.\n"
+  unless -e $target;
+
+print "Re-targeting complete in '$target'.\n";
+exit 0;
