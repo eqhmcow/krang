@@ -7,6 +7,7 @@ use base 'Krang::ElementClass';
 use Krang::MethodMaker
   get_set => [ qw( allow_upload show_thumbnail ) ];
 use Krang::Session qw(%session);
+use Krang::Message qw(add_message);
 
 sub new {
     my $pkg = shift;
@@ -90,8 +91,27 @@ sub load_query_data {
                                   $session{story}->category()->category_id(),
                                   filename => $filename,
                                   filehandle => $fh);
-    $media->save();
-    $element->data($media->media_id);
+
+    # this could be a dup
+    eval { $media->save(); };
+    if ($@) {
+        if (ref $@ and ref $@ eq 'Krang::Media::DuplicateURL') {
+            my $err = $@;
+
+            # tell all about it
+            add_message(duplicate_media_upload => 
+                        id => $err->media_id,
+                        filename => $filename);
+
+            # use the dup instead of the new object
+            $element->data($err->media_id);
+        } else {
+            die $@;
+        }
+    } else {
+        # the save worked
+        $element->data($media->media_id);
+    }
 }
 
 

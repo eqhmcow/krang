@@ -21,7 +21,7 @@ sub input_form {
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
-        my $html = "";
+    my $html = "";
 
     # include thumbnail if media is available
     my $story_id = $element->data();
@@ -39,6 +39,10 @@ sub input_form {
                                   );
     return $html;
 }
+
+# data isn't loaded from the query.  Instead it arrives indirectly as
+# a result of the find_story() routine.
+ sub load_query_data { } 
 
 
 =head1 NAME
