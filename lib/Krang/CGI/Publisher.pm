@@ -26,7 +26,9 @@ use Krang::Session qw(%session);
 use Krang::Publisher;
 use Krang::Story;
 use Krang::Log qw(debug assert ASSERT);
-use Krang::Widget qw(format_url);
+use Krang::Widget qw(format_url datetime_chooser decode_datetime);
+use Krang::Message qw(add_message);
+use Time::Piece;
 
 use Carp qw(croak);
 
@@ -41,6 +43,7 @@ sub setup {
                          preview_story
                          preview_media
                          publish_story
+                         publish_assets
     )]);
 
 }
@@ -66,31 +69,35 @@ sub publish_story {
 
     my $t = $self->load_tmpl('publish_list.tmpl',
                              associate => $query,
-                             loop_context_vars => 1);
+                             loop_context_vars => 1,
+                             die_on_bad_params => 0
+                            );
 
     my $publisher = Krang::Publisher->new();
     my $publish_list = $publisher->get_publish_list(story => $story);
 
     # build @stories and @media.
 
-#    my @stories = ({id          => $story_id,
-#                    url         => format_url(url => $story->url, linkto => $story->preview_url),
-#                    title       => $story->title,
-#                   });
     my @stories = ();
     my @media = ();
 
-
     foreach my $asset (@$publish_list) {
         if ($asset->isa('Krang::Story')) {
-            push @stories, {id          => $asset->story_id,
-                            url         => format_url(url => $asset->url, linkto => $asset->preview_url),
-                            title       => $asset->title
+            push @stories, {id    => $asset->story_id,
+                            url   => format_url(url    => $asset->url,
+                                                linkto => "javascript:preview_story('" . $asset->story_id . "')",
+                                                length => 40
+                                               ),
+                            title => $asset->title
                            };
         } elsif ($asset->isa('Krang::Media')) {
-            push @media, {id          => $asset->media_id,
-                          url         => format_url(url => $asset->url, linkto => $asset->preview_url),
-                          title       => $asset->title
+            push @media, {id        => $asset->media_id,
+                          url       => format_url(url    => $asset->url,
+                                                  linkto => "javascript:preview_media('" . $asset->media_id . "')",
+                                                  length => 40
+                                                 ),
+                          title     => $asset->title,
+                          thumbnail => $asset->thumbnail_path(relative => 1) || ''
                          };
 
         } else {
@@ -100,10 +107,68 @@ sub publish_story {
 
     $t->param(stories => \@stories, media => \@media);
 
+    # add date chooser
+    $t->param(publish_date_chooser => datetime_chooser(name => 'publish_date',
+                                                       query => $query));
+
     return $t->output();
 
 }
 
+
+=item publish_assets
+
+Starts the publish process for a given story specified by the CGI parameter 'story_id'.
+
+Requires the following parameters: story_id, publish_now, publish_date_xxx (if publish_now == 0)
+
+If publish_now == 1, start publish & redirect to workspace.
+
+If putlist_now == 0, schedule publish & redirect to workspace.
+
+=cut
+
+sub publish_assets {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $story_id = $query->param('story_id');
+    croak("Missing required story_id parameter") unless $story_id;
+    my $publish_now = $query->param('publish_now');
+
+    my ($story) = Krang::Story->find(story_id => $story_id);
+
+    if ($publish_now) {
+        # run things to the publisher
+        my $publisher = Krang::Publisher->new();
+        $publisher->publish_story(story => $story);
+        # add a message
+        add_message('story_publish', story_id => $story_id,
+                    url => $story->url,
+                    version => $story->version);
+    } else {
+        # pass things to the scheduler
+        my $date = decode_datetime(name => 'publish_date', query => $query);
+        my $sched = Krang::Schedule->new(object_type => 'story',
+                                         object_id   => $story_id,
+                                         action      => 'publish',
+                                         repeat      => 'never',
+                                         date        => $date);
+        $sched->save();
+        add_message('story_schedule',
+                    story_id => $story_id,
+                    version => $story->version,
+                    publish_datetime => $date->cdate()
+                   );
+
+    }
+
+    # return to my workspace
+    $self->header_props(-uri => 'workspace.pl');
+    $self->header_type('redirect');
+    return "";
+
+}
 
 =item preview_story
 

@@ -1,47 +1,85 @@
 <tmpl_include /header.tmpl>
 
-<div class="dark-bar">Publish</div>
+<script language="JavaScript" type="text/javascript">
+
+    function preview_story(id) {
+      window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
+    }
+    
+    function preview_media(id) {
+      window.open("publisher.pl?rm=preview_media&media_id=" + id, "");
+    }
+
+</script>
+  
+  <div class="dark-bar">Publish Story</div>
 
 
-<div class=form-head-thin>
-  <table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
-  <tr>
-    <td width=150><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
-    <td><tmpl_var title></td>
-  </tr>
+  <table border=1 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
+    <tr class=form-head-thin>
+      <td colspan=3><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
+    </tr>
+    <tr class=form-head>
+      <td>ID</td>
+      <td>URL</td>
+      <td>Title</td>
+    </tr>
+    
+    <!-- stories loop -->
+    <tmpl_loop stories>
+      <tr>
+        <td><tmpl_var id></td><td><tmpl_var url></td><td><tmpl_var title></td>
+      </tr>
+    </tmpl_loop>
+    <!-- /stories loop -->
   </table>
-</div>
 
-<table border=1>
-
-<!-- stories loop -->
-<tmpl_loop stories>
-<tr>
-<td>ID=<tmpl_var id></td><td>URL=<tmpl_var url></td><td>TITLE=<tmpl_var title></td>
-</tr>
-</tmpl_loop>
-<!-- /stories loop -->
-</table>
-
-<div class=form-head-thin>
-  <table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
-  <tr>
-    <td width=150><b>Media</b>&nbsp;&nbsp;&nbsp;</td>
-    <td><tmpl_var title></td>
-  </tr>
+  <table border=1 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
+    <tr class=form-head-thin>
+      <td colspan=4><b>Media</b>&nbsp;&nbsp;&nbsp;</td>
+    </tr>
+    <tr class=form-head-thin>
+      <td>ID</td>
+      <td>URL</td>
+      <td>Title</td>
+      <td>Thumbnail</td>
+    </tr>
+    
+    <!-- media loop -->
+    <tmpl_loop media>
+      <tr>
+        <td><tmpl_var id></td><td><tmpl_var url></td><td><tmpl_var title></td>
+        <td><tmpl_if thumbnail><img src="<tmpl_var thumbnail>"><tmpl_else>&nbsp;</tmpl_if></td>
+      </tr>
+    </tmpl_loop>
+    <!-- /media loop -->
   </table>
-</div>
 
-<table border=1>
+  <form method=get action="publisher.pl">
+    <input type=hidden name=story_id value="<tmpl_var story_id>">
+    <input type=hidden name=rm value="publish_assets">
 
-<!-- media loop -->
-<tmpl_loop media>
-<tr>
-<td>ID=<tmpl_var id></td><td>URL=<tmpl_var url></td><td>TITLE=<tmpl_var title></td>
-</tr>
-</tmpl_loop>
-<!-- /media loop -->
-</table>
+    <table width=100% cellpadding=0 cellspacing=0>
+      <tr class=form-head-thin>
+        <td colspan=2>Schedule Publish Time</td>
+      </tr>
+      
+      <tr>
+        <td class=form-cell><input type="radio" name="publish_now" value="1" checked="checked"/></td><td class=form-cell>Now</td>
+      </tr>
+      <tr>
+        <td class=form-cell><input type="radio" name="publish_now" value="0"/></td>
+        <td class=form-cell>At: <tmpl_if bad_publish_date><span class="invalid"></tmpl_if>
+          <tmpl_var publish_date_chooser>
+            <tmpl_if bad_publish_date></span></tmpl_if>
+        </td>
+      </tr>
+      
+    </table>
 
+    <!-- <div class="button-bar"><input type="button" value="Publish" onclick="publish_assets"></div> -->
+    <div class="button-bar"><input type="submit" name="Publish"></div>
+
+</form>
 
 <tmpl_include /footer.tmpl>
