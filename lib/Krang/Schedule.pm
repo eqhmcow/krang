@@ -99,7 +99,7 @@ use Time::Seconds;
 # Internal Modules
 ###################
 use Krang::DB qw(dbh);
-use Krang::Log qw/ASSERT assert/;
+use Krang::Log qw/debug ASSERT assert/;
 use Krang::Media;
 use Krang::Story;
 use Krang::Template;
@@ -127,15 +127,12 @@ use constant SCHEDULE_RW => qw(action
 
 # Globals
 ##########
-our %action_map = (alert => {alert => '',},
+our %action_map = (alert => {send => ''},
                    media => {expire => '',
-                             alert => '',
                              publish => ''},
                    story => {expire => '',
-                             alert => '',
-                             publish => '',},
-                   user => {expire => '',
-                            alert => '',},);
+                             publish => ''},
+                   user => {expire => ''});
 
 # Lexicals
 ###########
@@ -144,7 +141,7 @@ my %repeat2seconds = (daily => ONE_DAY,
                       weekly => ONE_WEEK,
                       never => '');
 my %schedule_args = map {$_ => 1}
-  qw/action date day_of_week hour minute object_id object_type repeat/;
+  qw/action date day_of_week hour minute object_id object_type repeat context/;
 my %schedule_cols = map {$_ => 1} SCHEDULE_RO, SCHEDULE_RW;
 
 # Constructor/Accessor/Mutator setup
@@ -232,7 +229,7 @@ sub init {
     my (@bad_args, $repeat);
     my ($date, $day_of_week, $hour, $minute) = map {delete $args{$_}}
       qw/date day_of_week hour minute/;
-
+    
     for (keys %args) {
         push @bad_args, $_ unless exists $schedule_args{$_};
     }
