@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Imager;
+
 use File::Spec::Functions;
 use File::Path;
 use Krang::Contrib;
@@ -12,7 +12,12 @@ use Krang::Story;
 use Krang::Element;
 use Krang::Template;
 use Krang::Script;
+
+use Krang::Test::Content;
+
 use Data::Dumper;
+
+
 
 BEGIN {
     if (InstanceElementSet eq 'TestSet1') {
@@ -89,6 +94,10 @@ my $publisher = new Krang::Publisher ();
 
 isa_ok($publisher, 'Krang::Publisher');
 
+can_ok($publisher, ('publish_story', 'preview_story', 'unpublish_story',
+                    'publish_media', 'preview_media', 'unpublish_media',
+                    'get_publish_list', 'deploy_template', 'undeploy_template',
+                    'PAGE_BREAK', 'story', 'category', 'story_filename'));
 
 ############################################################
 # remove all currently deployed templates from the system
@@ -108,16 +117,19 @@ END {
 
 ############################################################
 
+my $creator = Krang::Test::Content->new;
+
+
 # create a site and category for dummy story
-my $site = Krang::Site->new(preview_url  => $preview_url,
-                            url          => $publish_url,
-                            preview_path => $preview_path,
-                            publish_path => $publish_path
-                           );
-$site->save();
+my $site = $creator->create_site(
+                                 preview_url  => $preview_url,
+                                 publish_url  => $publish_url,
+                                 preview_path => $preview_path,
+                                 publish_path => $publish_path
+                                );
 
 END {
-    $site->delete();
+    $creator->cleanup();
     rmtree $preview_path;
     rmtree $publish_path;
 }
@@ -128,18 +140,16 @@ $category->element()->data($category1);
 $category->save();
 
 # create child & subchild categories
-my $child_cat = new Krang::Category (dir => 'testdir_a', parent_id => $category->category_id());
-$child_cat->element()->data($category2);
-$child_cat->save();
+my $child_cat = $creator->create_category(dir    => 'testdir_a', 
+                                          parent => $category->category_id,
+                                          data   => $category2
+                                         );
 
-my $child_subcat = new Krang::Category (dir => 'testdir_b', parent_id => $child_cat->category_id());
-$child_subcat->element()->data($category3);
-$child_subcat->save();
+my $child_subcat = $creator->create_category(dir    => 'testdir_b',
+                                             parent => $child_cat->category_id,
+                                             data   => $category3
+                                            );
 
-END { 
-    $child_subcat->delete();
-    $child_cat->delete();
-}
 
 # Directory structures for template paths.
 my @rootdirs = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
@@ -164,18 +174,30 @@ for (my $i = 0; $i <= $#paths; $i++) { ok($paths[$i] eq $dirs_a[$i], 'Krang::Pub
 my @media;
 my @stories;
 for (1..10) {
-    push @media, &create_media();
+    push @media, $creator->create_media(category => $category);
 }
 
 for (1..10) {
-    push @stories, &create_story([$category]);
+    push @stories, $creator->create_story(category => [$category]);
 }
 
 
 
 
-my $story   = &create_story([$category, $child_cat, $child_subcat]);
-my $story2  = &create_story([$category], [$story], [$media[0]]);
+my $story   = $creator->create_story(category  => [$category, $child_cat, $child_subcat],
+                                     paragraph => [$para1, $para2, $para3],
+                                     header    => $head1,
+                                     deck      => $deck1,
+                                     title     => $story_title
+                                    );
+my $story2  = $creator->create_story(category => [$category],
+                                     linked_stories => [$story],
+                                     linked_media   => [$media[0]],
+                                     header         => $head1,
+                                     deck           => $deck1,
+                                     paragraph      => [$para1, $para2, $para3],
+                                     title          => $story_title
+                                    );
 
 my $element = $story->element();
 
@@ -190,15 +212,6 @@ END {
         $publisher->undeploy_template(template => $_);
         $_->delete();
     }
-
-    $story2->delete();
-    $story->delete();
-    foreach (@stories) {
-        $_->delete();
-    }
-    foreach (@media) {
-        $_->delete();
-    }
 }
 
 
@@ -208,8 +221,9 @@ END {
 #test_multi_page_story($category);
 
 # test finding templates.
-find_templates($element);
+test_find_templates($element);
 
+# test contrib loop
 test_contributors($category);
 
 # test story construction
@@ -260,9 +274,9 @@ sub test_contributors {
 
     $publisher->_mode_is_publish();
 
-    my $story   = create_story(\@categories);
-    my $contrib = create_contributor(%contributor);
-    my $media   = create_media();
+    my $story   = $creator->create_story(category => \@categories);
+    my $contrib = $creator->create_contrib(%contributor);
+    my $media   = $creator->create_media(category => $categories[0]);
 
     $contrib->image($media);
     $contrib->save();
@@ -295,11 +309,6 @@ sub test_contributors {
 
     }
 
-    END {
-        $story->delete();
-        $contrib->delete();
-        $media->delete();
-    };
 }
 
 
@@ -415,7 +424,7 @@ sub test_multi_page_story {
     # create a new story, create multiple pages for it.
     # publish it, find all the pages, compare them to what's expected.
 
-    my $story = create_story(\@categories);
+    my $story = $creator->create_story(category => \@categories);
 
     $story->checkout();
 
@@ -862,7 +871,7 @@ sub test_preview_story {
 
 sub test_story_unpublish {
     # create a story in all three categories
-    my $story   = &create_story([$category, $child_cat, $child_subcat]);
+    my $story   = $creator->create_story(category => [$category, $child_cat, $child_subcat]);
     $publisher->preview_story(story => $story);
     my $preview_path_url = build_preview_path($story);
     ok(-e $preview_path_url);
@@ -878,7 +887,7 @@ sub test_story_unpublish {
     $publisher->publish_story(story => $story);
     my @paths = build_publish_paths($story);
     ok(-e $_) for @paths;
-   
+
     # remove another category and republish
     $story->categories($child_subcat);
     $publisher->publish_story(story => $story);
@@ -891,7 +900,7 @@ sub test_story_unpublish {
     }
 
     # delete it
-    $story->delete;
+    $creator->delete_item(item => $story);
 
     # make sure it's really gone
     ok((not -e $_), 'delete removed dead paths') for @new_paths;    
@@ -899,7 +908,7 @@ sub test_story_unpublish {
 
 sub test_media_unpublish {
     # create media
-    my $media   = &create_media();
+    my $media = $creator->create_media(category => $category);
 
     # preview
     $publisher->preview_media(media => $media);   
@@ -933,7 +942,7 @@ sub test_media_unpublish {
     ok((not -e $old_publish_path), 'changed URL removed obsolete file');
 
     # delete it
-    $media->delete;
+    $creator->delete_item(item => $media);
 
     # make sure it's really gone
     ok((not -e $preview_path), 'delete removed published media');
@@ -941,13 +950,13 @@ sub test_media_unpublish {
 }
 
 #
-# find_templates()
+# test_find_templates()
 # Run through all the elements in the story, attempting to find the
 # appropriate templates.  If the templates are not found, make sure
 # there's a good reason for there not being one (e.g. element has no
 # children).
 #
-sub find_templates {
+sub test_find_templates {
 
     my ($element) = @_;
 
@@ -974,7 +983,7 @@ sub find_templates {
 
     # iterate over the children, repeating the process.
     foreach (@children) {
-        &find_templates($_);
+        &test_find_templates($_);
     }
 
 }
@@ -1079,53 +1088,6 @@ sub test_additional_content_block {
 }
 
 
-#
-# create a fleshed-out story for testing purposes.
-#
-sub create_story {
-
-    my ($categories, $linked_story, $linked_media) = @_;
-
-    my $slug_id;
-    do {
-        $slug_id = int(rand(16777216));
-    } until (!exists($slug_id_list{$slug_id}));
-
-    $slug_id_list{$slug_id} = 1;
-
-    my $story = Krang::Story->new(categories => $categories,
-                                  title      => $story_title,
-                                  slug       => 'TEST-SLUG-' . $slug_id,
-                                  class      => "article");
-
-    # add some content
-    $story->element->child('deck')->data($deck1);
-
-    my $page = $story->element->child('page');
-
-    _add_page_data($page);
-
-    # add storylink if it exists
-    if (defined($linked_story)) {
-        foreach (@$linked_story) {
-            &link_story($story, $_);
-        }
-    }
-
-    # add medialink if it exists
-    if (defined($linked_media)) {
-        foreach (@$linked_media) {
-            &link_media($story, $_);
-        }
-    }
-
-    $story->save();
-
-    $story->checkin();
-
-    return ($story);
-
-}
 
 sub _add_page_data {
 
@@ -1142,35 +1104,17 @@ sub _add_page_data {
 }
 
 
-# create a contributor for testing of contrib section.
-sub create_contributor {
-
-    my %contrib_hash = @_;
-
-    my %contrib_types = Krang::Pref->get('contrib_type');
-
-    my $contrib = Krang::Contrib->new(%contrib_hash);
-
-    # add contrib types - let's make them all 3.
-    $contrib->contrib_type_ids(keys %contrib_types);
-
-    $contrib->save();
-
-    return $contrib;
-
-}
-
 sub build_contrib_hash {
 
     my %contrib =   (prefix => 'Mr.',
-                     first => get_word(),
-                     middle => get_word(),
-                     last => get_word(),
+                     first => $creator->get_word(),
+                     middle => $creator->get_word(),
+                     last => $creator->get_word(),
                      suffix => 'MD',
-                     email => get_word() . '@' . get_word() . '.com',
+                     email => $creator->get_word() . '@' . $creator->get_word() . '.com',
                      phone => '111-222-3333',
-                     bio => join(' ', map { get_word() } (0 .. 20)),
-                     url => 'http://www.' . get_word() . '.com'
+                     bio => join(' ', map { $creator->get_word() } (0 .. 20)),
+                     url => 'http://www.' . $creator->get_word() . '.com'
                     );
 
     return %contrib;
@@ -1201,77 +1145,6 @@ sub link_media {
 
 }
 
-#
-# create a media object - stolen from floodfill.
-#
-sub create_media {
-
-    # create a random image
-    my ($x, $y);
-    my $img = Imager->new(xsize => $x = (int(rand(300) + 50)),
-                          ysize => $y = (int(rand(300) + 50)),
-                          channels => 3,
-                         );
-
-    # fill with a random color
-    $img->box(color => Imager::Color->new(map { int(rand(255)) } 1 .. 3),
-              filled => 1);
-
-    # draw some boxes and circles
-    for (0 .. (int(rand(8)) + 2)) {
-        if ((int(rand(2))) == 1) {
-            $img->box(color =>
-                      Imager::Color->new(map { int(rand(255)) } 1 .. 3),
-                      xmin => (int(rand($x - ($x/2))) + 1),
-                      ymin => (int(rand($y - ($y/2))) + 1),
-                      xmax => (int(rand($x * 2)) + 1),
-                      ymax => (int(rand($y * 2)) + 1),
-                      filled => 1);
-        } else {
-            $img->circle(color =>
-                         Imager::Color->new(map { int(rand(255)) } 1 .. 3),
-                         r => (int(rand(100)) + 1),
-                         x => (int(rand($x)) + 1),
-                         'y' => (int(rand($y)) + 1));
-        }
-    }
-
-    # pick a format
-    my $format = (qw(jpg png gif))[int(rand(3))];
-
-    $img->write(file => catfile(KrangRoot, "tmp", "tmp.$format"));
-    my $fh = IO::File->new(catfile(KrangRoot, "tmp", "tmp.$format"))
-      or die "Unable to open tmp/tmp.$format: $!";
-
-    # Pick a type
-    my %media_types = Krang::Pref->get('media_type');
-    my @media_type_ids = keys(%media_types);
-    my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
-
-    # create a media object
-    my $media = Krang::Media->new(title      => get_word(),
-                                  filename   => get_word() . ".$format",
-                                  caption    => get_word(),
-                                  filehandle => $fh,
-                                  category_id => $category->category_id,
-                                  media_type_id => $media_type_id,
-                                  );
-    eval { $media->save };
-    if ($@) {
-        if (ref($@) and ref($@) eq 'Krang::Media::DuplicateURL') {
-            redo;
-        } else {
-            die $@;
-        }
-    }
-    unlink(catfile(KrangRoot, "tmp", "tmp.$format"));
-
-
-    $media->checkin();
-
-    return $media;
-
-}
 
 sub build_publish_paths {
 
@@ -1342,19 +1215,3 @@ sub walk_tree {
 
 
 
-# get a random word
-BEGIN {
-    my @words;
-    open(WORDS, "/usr/dict/words")
-      or open(WORDS, "/usr/share/dict/words")
-        or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
-    while (<WORDS>) {
-        chomp;
-        push @words, $_;
-    }
-    srand (time ^ $$);
-
-    sub get_word {
-        return lc $words[int(rand(scalar(@words)))];
-    }
-}
