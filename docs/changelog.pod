@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed Krang::ElementLibrary to return a sorted list from top_levels().
+This results in a sorted list or article types in the UI.  [Sam]
+
+=item *
+
 Added a new hidden user called 'system' which is now used by
 Krang::Script.  This means you can now delete the 'admin' user with
 impunity. [Sam]

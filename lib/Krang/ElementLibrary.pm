@@ -228,7 +228,7 @@ filter out this name to use the list for possible story types.
 
 sub top_levels {
     our %TOP_LEVEL;
-    return keys %{$TOP_LEVEL{InstanceElementSet()}};
+    return sort keys %{$TOP_LEVEL{InstanceElementSet()}};
 }
 
 =item C<< $class = Krang::ElementLibrary->top_level(name => "article") >>
