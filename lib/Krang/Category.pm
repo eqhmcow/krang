@@ -1157,7 +1157,6 @@ sub deserialize_xml {
                                                       no_update => $no_update,
                                                       object    => $dup);
         $dup->{element}->delete if $dup->{element};
-        $dup->{element} = $element;
         $dup->{element_id} = $element->element_id;
         $dup->save();
         
@@ -1191,7 +1190,6 @@ sub deserialize_xml {
                                                   set       => $set,
                                                   no_update => $no_update,
                                                   object    => $cat);
-    $cat->{element} = $element;
     $cat->{element_id} = $element->element_id;
     $cat->save();
 
