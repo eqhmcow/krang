@@ -30,6 +30,11 @@ exist without your hard work.
  Version: 6.3
  License: Perl License
 
+=item BSD-Resource
+
+ Version: 1.24
+ License: Perl License
+
 =item CGI-Application
 
  Version: 3.1
