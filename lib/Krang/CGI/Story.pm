@@ -351,7 +351,7 @@ sub edit {
                      url               => $story->url ? 
                                             format_url(
                                                        url => $story->url,
-                                                       linkto => "javascript:preview_story('". ($story->story_id() || "") ."')",
+                                                       linkto => "javascript:preview_story_session()",
                                                        length => 50,
                                                       ) : "");
 
@@ -1434,7 +1434,18 @@ sub find_story_row_handler {
     }
  
     # status 
-    $row->{status} = $story->checked_out ? "Checked out by <b>".(Krang::User->find(user_id => $story->checked_out_by))[0]->login.'</b>' : "On <b> ".(Krang::Desk->find(desk_id => $story->desk_id))[0]->name.'</b> desk';
+    debug("STORY $story->{story_id} : " . (defined $story->{desk_id} ? $story->{desk_id} : 'undef'));
+    if ($story->checked_out) {
+        $row->{status} = "Checked out by <b>" . 
+          (Krang::User->find(user_id => $story->checked_out_by))[0]->login.
+            '</b>';
+    } elsif ($story->desk_id) {
+        $row->{status} = "On <b> " . 
+          (Krang::Desk->find(desk_id => $story->desk_id))[0]->name . 
+            '</b> desk';
+    } else {
+        $row->{status} = '&nbsp;';
+    }
     
 }
 
