@@ -5,6 +5,11 @@
      document.edit.rm.value = 'edit';
      document.edit.submit();
   }
+
+  function edit_contribs () {
+     document.contrib.submit();
+  }
+
 </script>
 
 <form method=post name=edit>
@@ -114,6 +119,11 @@
   <input type=button value="Delete" onclick="remove()">
 </div>
 
+</form>
+
+<form name="contrib" action="contributor.pl" method="post">
+   <input type=hidden name=rm value=associate_story>
+</form>
+
 
 <tmpl_include footer.tmpl>
-        
