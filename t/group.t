@@ -169,15 +169,15 @@ my $test_desk_2 = $all_desks[0];
 
 $group = Krang::Group->new(
                            name       => $unique_group_name, 
-                           desks      => { $test_desk_1 => "hide", $test_desk_2 => "hide" }, 
-                           categories => { $test_cat_1 => "hide", $test_cat_2 => "hide" },
+                           desks      => { $test_desk_1 => "hide", $test_desk_2 => "read-only" }, 
+                           categories => { $test_cat_1 => "hide", $test_cat_2 => "read-only" },
                           );
 $group->save();
 ($load_group) = Krang::Group->find(name=>$unique_group_name);
 is($load_group->categories($test_cat_1), "hide", "Category permissions saved correctly");
-is($load_group->categories($test_cat_2), "hide", "Category permissions default override");
+is($load_group->categories($test_cat_2), "read-only", "Category permissions default override");
 is($load_group->desks($test_desk_1), "hide", "Desk permissions saved correctly");
-is($load_group->desks($test_desk_2), "hide", "Desk permissions default override");
+is($load_group->desks($test_desk_2), "read-only", "Desk permissions default override");
 
 
 # Test invalid security levels
@@ -191,13 +191,29 @@ eval { $load_group->save() };
 like($@, qr(Invalid security level 'no_such_permission' for category_id '777'), "Die on invalid category security level");
 $load_group->categories_delete("777");
 
+
+
+##  TO-DO
+#
+# 1. Test invalid category permissions
+# 2. Test invalid desk permissions
+# 3. Fix tests to create categories for testing
+# 4. Test cache table by selecting directly on data if necessary
+#
+
+
+
+
 # Test x_delete MethodMaker hash method
 eval { $load_group->save() };
 ok(not($@), "desks_delete() and categories_delete()");
 die ($@) if ($@);
 
+
+
+
 # Remove test group -- we're done.
-#$load_group->delete();
+$load_group->delete();
 
 
 
