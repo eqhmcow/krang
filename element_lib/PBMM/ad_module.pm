@@ -54,8 +54,10 @@ sub fill_template {
     my $parent = $args{element}->parent();
     
     $tmpl->param( "is_".$parent->name => 1);
-    
-    $tmpl->param( site => $cat->site()->url );
+   
+    my @split_site = split('.', $cat->site->url);
+ 
+    $tmpl->param( site => $split_site[1] );
     
     if ($cat->parent) {
         if ($cat->parent->parent) {
