@@ -408,6 +408,24 @@ If successful, it will return lists of Krang::Story and Krang::Media objects tha
 
 =cut
 
+sub get_publish_list {
+
+    my $self = shift;
+    my %args = @_;
+
+    croak (__PACKAGE__ . ": Missing argument 'story'!\n") unless (exists($args{story}));
+    my $story = $args{story};
+
+    my @publish_list = ($story);
+
+    push @publish_list, $story->linked_stories();
+
+    push @publish_list, $story->linked_media();
+
+    return \@publish_list;
+
+}
+
 =item C<< $filename = $publisher->deploy_template(template => $template); >>
 
 Deploys the template stored in a L<Krang::Template> object into the template publish_path under $KRANG_ROOT.
