@@ -22,9 +22,6 @@ Assertions
 FTPPort
 FTPAddress
 InstanceDisplayName
-CleanupInterval
-ScheduleInterval
-ScheduleLog
 SMTPServer
 FromAddress
 BugzillaEmail
