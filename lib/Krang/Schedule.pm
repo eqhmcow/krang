@@ -292,7 +292,7 @@ sub init {
             # testing
             my $type = lc $args{$_};
             croak("Invalid object type '$args{$_}'!") unless
-              ($type eq 'media' || $type eq 'story');
+              ($type eq 'media' || $type eq 'story' || $type eq 'alert');
             $args{$_} = $type;
         }
     }
