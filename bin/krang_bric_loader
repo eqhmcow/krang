@@ -1,0 +1,359 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+krang_bric_loader - creates a Krang dataset from a Bricolage installation
+and optionally imports that dataset.
+
+=head1 SYNOPSIS
+
+ krang_bric_loader [options]
+
+ Options:
+
+ --debug		- Displays debugging information and preserves
+			  all intermediate output.
+
+ --help			- Displays this menu.
+
+ --just-contributors	- Only contributors are exported
+
+ --just-elements	- Only elements are exported
+
+ --just-sites		- Prevents the export of any asset from
+			  Bricolage.  Only sites are expected
+
+ --man			- Displays this menu and detailed application
+			  documentation
+
+ --no-categories	- Prevents export of categories
+
+ --no-contributors	- Prevents contributors from being imported or
+			  associated with media and stories
+
+ --no-elements		- Prevents export of elements
+
+ --no-media		- Prevents media from being imported or related
+			  to stories
+
+ --no-sites		- No site information will be expected
+
+ --no-stories		- Prevents export of stories
+
+ --password		- The password associated with the user
+			  specified by the --username argument
+			  (default: BRICOLAGE_PASSWORD)
+
+ --output		- Saves Dataset to path supplied with option
+			  by default the dataset is output to
+			  $PWD/bric.kds
+
+ --root			- The directory root of the Bricolage install on
+			  the system (default: BRICOLAGE_ROOT)
+
+ --server		- The ip address or hostname assigned to the
+			  Bricolage install (default: BRICOLAGE_SERVER)
+
+ --site_doc		- The path to the XML file containing the
+			  relevant Category to Site mapping info
+			  (default: $PWD/sites.xml)
+
+ --timeout		- The HTTP timeout for Bricolage SOAP calls
+			  (default: 30)
+
+ --username		- The username to employ when attempting to
+			  access Bricolage services
+			  (default: BRICOLAGE_USERNAME)
+
+ --verbose		- Prints debugging info to STDERR.  Add two more
+			  --verbose args to achieve the maximum level of
+			  verbosity
+
+
+=head1 DESCRIPTION
+
+Given the appropriate setup options, this script will extract data from a
+Bricolage install and import it into Krang.
+
+=cut
+
+use strict;
+use warnings;
+
+use Carp qw(verbose croak);
+use Config;
+use File::Path qw(rmtree);
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use FindBin qw($RealBin);
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir($RealBin);
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use File::Temp qw(tempdir);
+use Getopt::Long;
+use IPC::Run qw(finish pump run start);
+use Pod::Usage;
+
+use Krang::Script;
+use Krang::Conf qw(KrangRoot);
+
+
+my ($contributors, $debug, $elements, $help, $import, $man, $media,
+    $no_categories, $no_contributors, $no_elements, $no_media, $no_sites,
+    $no_stories, $output, $sites, $site_doc, $soap, $temp_path, $timeout,
+    $verbose);
+our ($password, $root, $server, $username);
+
+BEGIN {
+    $debug	= 0;
+    $output	= catfile($ENV{PWD},'bric.kds');
+    $site_doc	= catfile($ENV{PWD},'sites.xml');
+    $timeout 	= 300;
+    $verbose	= 0;
+    $password	= $ENV{BRICOLAGE_PASSWORD};
+    $root 	= $ENV{BRICOLAGE_ROOT};
+    $server 	= $ENV{BRICOLAGE_SERVER};
+    $username 	= $ENV{BRICOLAGE_USERNAME};
+
+    GetOptions("debug"		        => \$debug,
+               "help"			=> \$help,
+               "just-contributors"	=> \$contributors,
+               "just-elements"		=> \$elements,
+               "just-sites"		=> \$sites,
+               "man"			=> \$man,
+               "no-categories"		=> \$no_categories,
+               "no-contributors"	=> \$no_contributors,
+               "no-elements"		=> \$no_elements,
+               "no-media"		=> \$no_media,
+               "no-sites"		=> \$no_sites,
+               "no-stories"		=> \$no_stories,
+               "output=s"		=> \$output,
+               "password=s"		=> \$password,
+               "root=s"			=> \$root,
+               "server=s"		=> \$server,
+               "sites=s"		=> \$site_doc,
+               "timeout=s"		=> \$timeout,
+               "user=s"			=> \$username,
+               "verbose"		=> \$verbose)
+      or pod2usage;
+
+    pod2usage() if defined $help;
+    pod2usage(-verbose => 2) if defined $man;
+
+    # check that environment vars are defined
+    {
+        no strict qw/refs/;
+        for (qw/password root server username/) {
+            unless ($$_) {
+                pod2usage(-msg => "\nRequire arg --$_ is undefined!\n");
+            } else {
+                # export environment vars for Contrib and Element modules
+                my $key = "BRICOLAGE_$_";
+                my $val = $ENV{$key} || '';
+                $ENV{$key} = $$_ unless $val;
+            }
+        }
+    }
+
+    # add $BRICOLAGE_ROOT/lib to module search paths and attempt to load
+    unshift @INC, catdir($root, 'lib');
+    eval "use Bric";
+    die <<"END" if $@;
+######################################################################
+
+Cannot load Bricolage.
+
+Error message:
+
+$@
+
+######################################################################
+END
+
+    # resolve path to bric_soap
+    $soap = catfile($root, 'bin', 'bric_soap');
+    pod2usage(-msg => "\nUnable to find 'bric_soap' at: $soap\n\n")
+      unless -e $soap;
+
+    # if we just have contributors or elements or sites
+    if ($contributors) {
+        $no_categories = $no_elements = $no_media = $no_sites =
+          $no_stories = 1;
+    } elsif ($elements) {
+        $no_categories = $no_contributors = $no_media = $no_sites =
+          $no_stories = 1;
+    } elsif ($sites) {
+        $no_categories = $no_contributors = $no_elements = $no_media =
+          $no_stories = 1;
+    }
+
+    # must have a site if we have categories, media, or stories
+    pod2usage(-msg => "\nSite information is necessary to support " .
+              "categories, media, and/or stories\n")
+      unless ($no_sites || $site_doc ||
+              ($contributors || $elements ||
+               ($no_categories && $no_media && $no_stories)));
+
+    # make sure site doc exists
+    pod2usage(-msg => "\nSite info doc '$site_doc' not found.\n")
+      if (not($no_sites) && $site_doc && not -e $site_doc);
+}
+
+use Krang::BricLoader::DataSet;
+use Krang::BricLoader::Category;
+use Krang::BricLoader::Contrib;
+use Krang::BricLoader::Element;
+use Krang::BricLoader::Site;
+use Krang::BricLoader::Story;
+
+use constant DEBUG => $debug;
+
+
+
+main();
+
+
+
+=head1 SUBROUTINES
+
+=over
+
+=item C<main()>
+
+Begining of program execution.  Tasks to be performed at runtime are determined
+here based on the command-line options of the script.
+
+=cut
+
+sub main {
+    # set temp_path
+    $temp_path = tempdir(DIR => catdir(KrangRoot, 'tmp'));
+
+    # start with our dataset
+    my $set = Krang::BricLoader::DataSet->new;
+
+    # load site info
+    unless ($no_sites) {
+        $set->add(object => $_)
+          for (Krang::BricLoader::Site->new(path => $site_doc));
+    }
+
+    # get contributors
+    unless ($no_contributors) {
+        $set->add(object => $_) for Krang::BricLoader::Contrib->load;
+    }
+
+    # get elements
+
+    # pull in categories
+    unless ($no_categories) {
+        $set->add(object => $_) for get_assets('category');
+    }
+
+    # pull in media
+    unless ($no_media) {
+        $set->add(object => $_) for get_assets('media');
+    }
+
+    # pull in stories
+    unless ($no_stories) {
+        $set->add(object => $_) for get_assets('story');
+    }
+
+    # generate .kds
+    $set->write(path => $output);
+
+    # remove temp dir
+    rmtree($temp_path) if $temp_path;
+}
+
+
+=item C<< $output = bric_soap($module, $command, @args) >>
+
+Returns a scalar containing the output of relevant SOAP call.
+
+=cut
+
+sub bric_soap {
+    my ($module, $command, @args) = @_;
+
+    my @command = ($soap,
+                   "--username" => $username,
+                   "--password" => $password,
+                   "--server"   => $server,
+                   "--timeout"  => $timeout,
+                   (("--verbose") x $verbose),
+                   $module, $command, @args,);
+
+    my $result;
+    my $in;
+    run(\@command, \$in, \$result, \*STDERR)
+      or die "Error running bric_soap command: '" .
+        join(' ', @command) . "'\n";
+
+    return $result;
+}
+
+
+=item C<< @assets = get_assets($object_type) >>
+
+Return an array of Krang::BricLoader::Category, Media, or Story objects based
+on whether $object_type eq 'category' || 'media' || 'story'.
+
+=cut
+
+sub get_assets {
+    my ($module) = @_;
+    my $ids = catfile($temp_path, 'ids.txt');
+    my $pkg = "Krang::BricLoader::" . ucfirst $module;
+    my @objs;
+    my $i = 0 if DEBUG;
+
+    my @ids = split(/\n/, bric_soap($module, 'list_ids'));
+
+    while (my @slice = splice(@ids, 0, 20)) {
+        my $out = bric_soap($module, 'export', @slice);
+        push @objs, $pkg->new(xml => $out);
+
+        if (DEBUG) {
+            my $path = catfile($temp_path, "$module\_$i\.xml");
+            my $wh = IO::File->new(">$path") or
+              croak("Can't write to '$path': $!");
+            $wh->print($out);
+            $wh->close;
+            $i++;
+        }
+    }
+
+    return @objs;
+}
+
+
+=back
+
+=cut
+
+__END__
