@@ -8,6 +8,17 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added a new Krang::ElementClass method, mark_form_invalid().  This
+method may be overriden to alter how Krang marks element form fields
+invalid.  The default behvior, wrapping the field in a span set to the
+"invalid" class remains. [Sam]
+
+=item *
+
+Upgraded to the latest release of HTML::PopupTreeSelect, v1.5. [Sam]
+
+=item *
+
 Improved support for Mac OSX, both in compilation and
 documentation. [Aaron Ross]
 
