@@ -182,6 +182,7 @@ isa_ok($story2, 'Krang::Story');
 # basic fields survived?
 for (qw( story_id
          published_version
+         preview_version
          class
          checked_out
          checked_out_by
@@ -297,6 +298,18 @@ is($story->checked_out(), 0, 'Krang::Story->mark_as_published()');
 is($story->desk_id(), undef, 'Krang::Story->mark_as_published()');
 
 
+# test mark_as_previewed
+$story->checkout();
+
+$story->mark_as_previewed();
+is($story->preview_version, $story->version(), 'Krang::Story->mark_as_previewed()');
+
+# check with unsaved content.
+$story->mark_as_previewed(unsaved => 1);
+is($story->preview_version, -1, 'Krang::Story->mark_as_previewed()');
+
+
+
 
 
 # test serialization
@@ -311,7 +324,7 @@ is($thawed->story_id, $story->story_id);
 SKIP: {
     skip('Element tests only work for TestSet1', 1)
       unless (InstanceElementSet eq 'TestSet1');
-    
+
     # test versioning
     my $v = Krang::Story->new(categories => [$cat[0], $cat[1]],
                               title      => "Foo",
@@ -323,36 +336,36 @@ SKIP: {
     $v->save(keep_version => 1);
     is($v->version, 0);
     $v->save();
-    
+
     is($v->version, 1);
     $v->title("Bar");
-    
+
     $v->save();
     is($v->version, 2);
     is($v->title(), "Bar");
     $v->element->child('deck')->data('Version 3 Deck');
     is($v->element->child('deck')->data, 'Version 3 Deck');
-    
+
     $v->revert(1);
     is($v->version, 2);
     is($v->element->child('deck')->data, 'Version 1 Deck');
-    
+
     is($v->title(), "Foo");
     $v->save();
     is($v->version, 3);
-    
+
     $v->revert(2);
     is($v->title(), "Bar");
     $v->save();
     is($v->version, 4);
-    
+
     # try loading old versions
     my ($v1) = Krang::Story->find(story_id => $v->story_id,
                                   version  => 1);
     is($v1->version, 1);
     is($v1->title, "Foo");
 };
-    
+
 
 # check that adding a new category can't cause a dup
 my $s1 = Krang::Story->new(class => "article",

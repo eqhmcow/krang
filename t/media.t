@@ -224,6 +224,16 @@ isnt($m2->publish_date, undef, 'Krang::Media->mark_as_published()');
 is($m2->published_version, $m2->version(), 'Krang::Media->mark_as_published()');
 is($m2->checked_out(), 0, 'Krang::Media->mark_as_published()');
 
+# test mark_as_previewed
+$m2->checkout();
+
+$m2->mark_as_previewed();
+is($m2->preview_version, $m2->version(), 'Krang::Media->mark_as_previewed()');
+
+# check with unsaved content.
+$m2->mark_as_previewed(unsaved => 1);
+is($m2->preview_version, -1, 'Krang::Media->mark_as_previewed()');
+
 
 
 # test simple_search by id

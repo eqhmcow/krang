@@ -148,6 +148,21 @@ The default implementation just returns 1 in all cases.
 
 sub publish_check { 1 }
 
+
+=item C<< $bool = $class->force_republish(element => $element) >>
+
+This method is called at the beginning of the publish process.  If
+true, all other checks are ignored and the story is published.  If
+false, other versioning and sanity checks (see L<Krang::Publisher> and
+L<Krang::Story>) are made to determine whether or not to publish the
+story.
+
+The default implementation returns 0 in all cases.
+
+=cut
+
+sub force_republish { 0 }
+
 =back
 
 =cut

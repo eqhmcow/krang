@@ -27,11 +27,11 @@ use Krang::MethodMaker
   new_with_init => 'new',
   new_hash_init => 'hash_init',
   get           => [ qw(
-                        story_id                        
+                        story_id
                         version
                         checked_out
                         checked_out_by
-                        may_see 
+                        may_see
                         may_edit
                        ) ],
   get_set_with_notify => [ { 
@@ -43,13 +43,14 @@ use Krang::MethodMaker
                                          cover_date
                                          publish_date
                                          published_version
+                                         preview_version
                                          priority
                                          desk_id
                                         ) ]
                            } ];
 
 # fields in the story table, aside from story_id
-use constant STORY_FIELDS => 
+use constant STORY_FIELDS =>
   qw( story_id
       version
       title
@@ -57,6 +58,7 @@ use constant STORY_FIELDS =>
       cover_date
       publish_date
       published_version
+      preview_version
       notes
       priority
       element_id
@@ -197,6 +199,8 @@ Returns the ID of the L<Krang::Desk> that the story is currently on, if any.  Al
 
 =item C<published_version> (readonly)
 
+=item C<preview_version> (readonly)
+
 =item C<category> (readonly)
 
 The primary category for the story.  C<undef> until at least one
@@ -208,7 +212,7 @@ the first category in C<categories>.
 sub category {
     my $self = shift;
     return undef unless @{$self->{category_ids}};
-    
+
     # return from the category cache if available
     return $self->{category_cache}[0]
       if $self->{category_cache} and $self->{category_cache}[0];
@@ -233,7 +237,7 @@ sub url {
     croak "illegal attempt to set readonly attribute 'url'.\n"
       if @_;
     return undef unless @{$self->{category_ids}};
-    
+
     # return from the url cache if available
     return $self->{url_cache}[0]
       if $self->{url_cache} and $self->{url_cache}[0];
@@ -1544,6 +1548,37 @@ sub mark_as_published {
              $self->{story_id}
             );
 }
+
+=item C<< $story->mark_as_previewed(unsaved => 1) >>
+
+Mark the story as previewed.  This will update the C<preview_version>
+attribute, setting it equal to C<version>.  This is used as a sanity
+check by L<Krang::Publisher> to prevent re-generation of content.
+
+The argument C<unsaved> defaults to 0.  If true, it indicates that the
+story being previewed is in the process of being edited, in which case
+any previews made cannot be trusted for future use.  In that case,
+preview_version is set to -1.
+
+=cut
+
+sub mark_as_previewed {
+    my ($self, %args) = @_;
+
+    my $unsaved = $args{unsaved} || 0;
+
+    $self->{preview_version} = $unsaved ? -1 : $self->{version};
+
+    # update the DB
+    my $dbh = dbh();
+    $dbh->do('UPDATE story SET preview_version = ? WHERE story_id = ?',
+             undef,
+             $self->{preview_version},
+             $self->{story_id}
+            );
+
+}
+
 
 =item $path = $story->publish_path(category => $category)
 

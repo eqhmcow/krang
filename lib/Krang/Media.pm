@@ -24,7 +24,7 @@ use Image::Info qw( image_info dim );
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
-use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version publish_date checked_out_by);
+use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by);
 
 # setup exceptions
 use Exception::Class (
@@ -194,6 +194,10 @@ User id of person who has media object checked out, undef if not checked out.
 
 Last published version
 
+=item preview_version
+
+Last preview version
+
 =item filename
 
 The filename of the uploaded media.
@@ -219,6 +223,7 @@ use Krang::MethodMaker
                           version 
                           checked_out_by 
                           published_version
+                          preview_version
                           publish_date
                           caption copyright 
                           notes 
@@ -346,6 +351,10 @@ sub published {
 =item $media->published_version()
 
 Returns version number of published version of this object (if has been published).
+
+=item $media->preview_version()
+
+Returns version number of the last version previewed.
 
 =item $version = $media->version()
 
@@ -1349,6 +1358,39 @@ sub mark_as_published {
              $self->{publish_date}->mysql_datetime,
              $self->{media_id}
             );
+}
+
+
+
+=item C<< $media->mark_as_previewed(unsaved => 1) >>
+
+Mark the media object as previewed.  This will update the
+C<preview_version> attribute, setting it equal to C<version>.  This is
+used as a sanity check by L<Krang::Publisher> to prevent re-generation
+of content.
+
+The argument C<unsaved> defaults to 0.  If true, it indicates that the
+media being previewed is in the process of being edited, in which case
+any previews made cannot be trusted for future use.  In that case,
+preview_version is set to -1.
+
+=cut
+
+sub mark_as_previewed {
+    my ($self, %args) = @_;
+
+    my $unsaved = $args{unsaved} || 0;
+
+    $self->{preview_version} = $unsaved ? -1 : $self->{version};
+
+    # update the DB
+    my $dbh = dbh();
+    $dbh->do('UPDATE media SET preview_version = ? WHERE media_id = ?',
+             undef,
+             $self->{preview_version},
+             $self->{story_id}
+            );
+
 }
 
 

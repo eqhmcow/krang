@@ -9,6 +9,7 @@ CREATE TABLE story (
         cover_date      DATETIME,
         publish_date    DATETIME,
         published_version INT UNSIGNED,
+        preview_version INT UNSIGNED,
         notes           TEXT,
         priority        TINYINT UNSIGNED NOT NULL DEFAULT 2,
         
