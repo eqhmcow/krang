@@ -323,10 +323,15 @@ a:active {
     margin-top:       10px;
 }
 
+.hpts-bbar .hpts-button {
+    margin-left:      15px;
+
+}
+
 .hpts-button {
-     margin-left:      15px;
-     background-color: #ffffff;
-     color:            #000000;
+    background-color: #FFFFFF;
+    color:            #003466;
+    font-family:      Verdana,Helvetica,Arial,sans-serif;
 }
 
 .hpts-label-selected {
