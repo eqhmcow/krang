@@ -369,7 +369,7 @@ sub check_prereqs {
         # No Instances?
         exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
 
-        print "  Found instances (database): ". 
+        print "  Found instances: ". 
           join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
     
     } else {
@@ -394,7 +394,7 @@ sub check_prereqs {
         # No Instances?
         exit_error("No instances found.  Unable to continue.") unless (keys(%instance_dbs));
 
-        print "  Found instances (database): ". 
+        print "  Found instances: ". 
           join(", ", (map { "$_ (". $instance_dbs{$_} .")" } sort(keys(%instance_dbs)))) ."\n";
     
         # Calculate necessary disk space
@@ -615,23 +615,40 @@ sub apply_upgrades {
     print "  Upgrading v$old_krang_version to v$new_krang_version\n";
 
     # Find upgrade modules
-    my $upmod_path = $KrangRoot ."/upgrades/";
-    open(DIR, $upmod_path) || die ("Unable to open upgrade directory '$upmod_path': $!");
-    my @upmodules = (grep { -f $_ && /V\d+\_\d+\.pm$/} readdir(DIR));
-    close(DIR);
+    my $upmod_path = $KrangRoot ."/upgrade/";
+    print "  Upgrade path: $upmod_path\n";
+    opendir(DIR, $upmod_path) || die ("Unable to open upgrade directory '$upmod_path': $!");
+    my @upmodules = (grep {
+        (-f $upmod_path.$_) && (/^V(\d+)\_(\d+)\.pm$/) && ( "$1.$2" > $old_krang_version )
+      } readdir(DIR));
+    closedir(DIR);
 
-    print STDERR "  FOUND ".scalar(@upmodules)." Upgrade modules:\n    ". join("\n    ", @upmodules) ."\n";
+    print "  Found ".scalar(@upmodules)." applicable upgrade modules.\n";
+    print "    ". join("\n    ", @upmodules) ."\n" if (@upmodules);
+
+    # Run upgrade modules
+    my $perl5lib = $KrangRoot ."/upgrade:" . $KrangRoot ."/lib";
+    foreach my $module (@upmodules) {
+        # Get package name by trimming off ".pm"
+        my $package = $module;
+        $package =~ s/\.pm$//;
+
+        my $upgrade_cmd = "KRANG_ROOT=$KrangRoot PERL5LIB=$perl5lib ". PERL_BIN;
+        $upgrade_cmd .= " -M$package -e 'my \$ug = $package->new(); \$ug->upgrade()'";
+        system($upgrade_cmd) && die("Error using upgrade module '$module'");
+    }
+    
 }
 
 
 sub update_db_version {
     my $KrangRoot = $options{KrangRoot};
     my $new_krang_version = get_krang_version($KrangRoot);
-    print "Updating db_version to $new_krang_version";
+    print "Updating db_version to $new_krang_version\n";
 
     # Iterate through instances, making .backup files
     while (my ($instance, $db) = each(%instance_dbs)) {
-        print "  Updating $instance ($db)";
+        print "  Updating $instance ($db)\n";
         my $mysql_bin = MYSQL_BIN;
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
         my $update_db_version_cmd = "$mysql_bin -uroot";

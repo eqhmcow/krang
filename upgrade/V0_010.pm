@@ -1,8 +1,7 @@
-package V0_011;
+package V0_010;
 use strict;
 use warnings;
 use base 'Krang::Upgrade';
-
 
 use Krang::Conf qw(InstanceDBName DBUser DBPass KrangRoot);
 use Krang::DB qw(dbh);
@@ -23,17 +22,6 @@ sub per_instance {
     my $dbh = dbh();
     my $instance = Krang::Conf->instance();
     print STDERR "$pkg::per_instance:  instance => '$instance' ($dbh)\n";
-
-    print "Creating db_version table";
-    my $create_sql = <<EOSQL;
-CREATE TABLE db_version (
-        db_version VARCHAR(255) NOT NULL
-)
-EOSQL
-    $dbh->do($create_sql);
-
-    # Insert base data
-    $dbh->do("INSERT INTO db_version (db_version) VALUES ('0')");
 }
 
 

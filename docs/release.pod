@@ -70,6 +70,8 @@ characteristics of upgrade module:
 
 =item Upgrade modules are Perl modules.
 
+=item They are subclasses of Krang::Upgrade.
+
 =item They are stored in $KRANG_ROOT/upgrade/.
 
 =item They are named with the version number, e.g., version 1.2 would

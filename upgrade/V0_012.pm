@@ -1,4 +1,7 @@
 package V0_012;
+use strict;
+use warnings;
+use base 'Krang::Upgrade';
 
 
 use Krang::Conf qw(InstanceDBName DBUser DBPass KrangRoot);
