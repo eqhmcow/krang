@@ -141,17 +141,24 @@ sub new_category {
     my $query = $self->query;
     my $template = $self->load_tmpl('new.tmpl', associate => $query);
     my %args = @_;
-    
+
+    # throw error if there are no sites in the system
+    my $site_count = Krang::Site->find(count => 1);
+    unless ($site_count) {
+        add_message('no_sites');
+        return $self->find;
+    }
+
     # setup error message if passed in
     if ($args{bad}) {
         $template->param("bad_$_" => 1) for @{$args{bad}}
     }
 
     # setup parent selector
-    $template->param(parent_chooser => 
+    $template->param(parent_chooser =>
                      category_chooser(name => 'parent_id',
                                       query => $query));
-    
+
     return $template->output();
 }
 
@@ -166,10 +173,6 @@ an error message.  Upon success, goes to edit_category.
 sub create {
     my $self = shift;
     my $query = $self->query;
-
-    # throw error if there are no sites in the system
-    my $site_count = Krang::Site->find(count => 1);
-    add_message('no_sites') unless $site_count;
 
     my $parent_id = $query->param('parent_id');
     my $dir       = $query->param('dir');
