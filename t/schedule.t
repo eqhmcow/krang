@@ -309,17 +309,23 @@ eval {$s1->save()};
 like($@, qr/'repeat' field set to invalid setting -/, 'save() failure test');
 
 
-# clean_tmp tests
-my $path = catfile($ENV{KRANG_ROOT}, 'tmp', 'bob172800x');
-my $path2 = catfile($ENV{KRANG_ROOT}, 'tmp', 'bob3600x');
-if (system("touch -B 172800 $path") == 0 &&
-    system("touch -B 3600 $path2") == 0) {
-    my @deletions = Krang::Schedule->clean_tmp(max_age => 47);
-    my $sof = grep /bob172800x$/, @deletions;
-    is($sof >= 1, 1, 'clean_tmp deletion successful');
-    is(-e $path2, 1, 'clean_tmp appropriately abstemious');
-    unlink $path2;
+SKIP: {
+    skip "Tmp cleaner tests require touch version 4.5+", 2
+      unless `touch --version` =~ /(\d+\.\d+)/ and $1 >= 4.5;
+
+    # clean_tmp tests
+    my $path = catfile($ENV{KRANG_ROOT}, 'tmp', 'bob172800x');
+    my $path2 = catfile($ENV{KRANG_ROOT}, 'tmp', 'bob3600x');
+    if (system("touch -B 172800 $path") == 0 &&
+        system("touch -B 3600 $path2") == 0) {
+        my @deletions = Krang::Schedule->clean_tmp(max_age => 47);
+        my $sof = grep /bob172800x$/, @deletions;
+        is($sof >= 1, 1, 'clean_tmp deletion successful');
+        is(-e $path2, 1, 'clean_tmp appropriately abstemious');
+        unlink $path2;
+    }
 }
+
 
 # expire session test
 
