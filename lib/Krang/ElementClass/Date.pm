@@ -5,13 +5,15 @@ use warnings;
 use base 'Krang::ElementClass::Storable';
 
 use Krang::MethodMaker
-  get_set => [ qw( size maxlength ) ];
+  get_set => [ qw( size maxlength start_year end_year ) ];
 use Time::Piece;
 
 sub new {
     my $pkg = shift;
     my %args = ( 
                 default => Time::Piece->new(),
+                start_year => localtime()->year - 30,
+                end_year => localtime()->year + 10,
                 @_
                );
     
@@ -22,7 +24,7 @@ sub input_form {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
     my $date = $element->data();
-    return _date_input($query, $element->xpath, $date);
+    return $self->_date_input($query, $element->xpath, $date);
 }
 
 sub param_names { 
@@ -79,7 +81,7 @@ sub view_data {
 # takes a name and an optional date object (Time::Piece::MySQL).
 # returns HTML for the widget interface.
 sub _date_input {
-    my ($query, $name, $date) = @_;
+    my ($self, $query, $name, $date) = @_;
 
     my $m_sel = $query->popup_menu(-name      => $name . "_month",
                                    -default   => $date ? $date->mon : 0,
@@ -105,8 +107,8 @@ sub _date_input {
     my $y_sel = $query->popup_menu(-name      => $name . "_year",
                                    -default   => $date ? $date->year : 0,
                                    -values    => [ '', 
-                                                   localtime()->year - 30 .. 
-                                                   localtime()->year + 10 ],
+                                                   $self->start_year ..
+                                                   $self->end_year ],
                                    -labels    => { '' => ' ' });
 
 
@@ -135,7 +137,9 @@ Krang::ElementClass::Date - date element class
 =head1 SYNOPSIS
 
   $class = Krang::ElementClass::Date->new(name         => "issue_date",
-                                          default      => Time::Piece->new())
+                                          default      => Time::Piece->new(),
+                                          start_year   => 1990,
+                                          end_year     => 2020);
 
 =head1 DESCRIPTION
 
