@@ -28,7 +28,7 @@
 
     function delete_contrib () {
         var myform = document.forms["edit_contrib_form"];
-        if (confirm("Are you SURE you want to delete this contributor?")) {
+        if (confirm("Are you SURE you want to delete this contributor?\n\nIf any stories or media are associated with this contributor then the association will be removed.")) {
             myform.rm.value = "delete";
             myform.submit();
         }

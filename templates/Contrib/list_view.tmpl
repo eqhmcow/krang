@@ -15,7 +15,7 @@
     }
 
     function delete_selected () {
-        if (confirm("Are you SURE you want to delete these contributors?")) {
+        if (confirm("Are you SURE you want to delete this contributor?\n\nIf any stories or media are associated with these contributors then the association will be removed.")) {
             var myform = document.forms["krang_pager_form"];
             myform.rm.value = 'delete_selected';
             myform.submit();

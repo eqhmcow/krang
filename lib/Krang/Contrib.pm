@@ -265,7 +265,9 @@ sub delete {
     $contrib_id = $self->{contrib_id} if (not $contrib_id);
 
     croak("No contrib_id specified for delete!") if not $contrib_id;
-    
+
+    $dbh->do('DELETE from story_contrib where contrib_id = ?', undef, $contrib_id);
+    $dbh->do('DELETE from media_contrib where contrib_id = ?', undef, $contrib_id);
     $dbh->do('DELETE from contrib where contrib_id = ?', undef, $contrib_id);
     $dbh->do('DELETE from contrib_contrib_type where contrib_id = ?', undef, $contrib_id);
 }
