@@ -93,11 +93,6 @@ use Krang::BricLoader::Story;
 
 # Globals
 ##########
-our (%category, %category_map, %site, %site_url, %story);
-our $category = our $site = our $story = 1;
-our %unique_field = ('category' => 'url',
-                     'site'	=> 'url',
-                     'story'	=> 'url');
 
 # Lexicals
 ###########
@@ -160,11 +155,9 @@ sub add {
         # been there, done that?
         return if $self->{objects}{$class}{$id}{xml};
 
-        # set object id field
-        $object->{lc $class . "_id"} = $id;
-
         # serialize it
-        my $file = lc($class) . '_' . $id . '.xml';
+        my ($file) = ($class =~ /^Krang::(.*)$/);
+        $file = lc($file) . '_' . $id . '.xml';
         my $path = catfile($self->{dir}, $file);
         open(my $fh, '>', $path)
           or croak("Unable to open '$path': $!");
@@ -262,7 +255,7 @@ sub write {
 # returns a pre-existing or new id to identify object
 sub _obj2id {
     my $object = shift;
-    (my $class = ref $object) =~ s/^.+::(.*)$/$1/;
+    (my $class = ref $object) =~ s/^Krang::BricLoader::(.*)$/$1/;
     my $field = lc $class . "_id";
     my $id = $object->{$field};
     $class = "Krang::" . ucfirst $class;
@@ -311,19 +304,7 @@ sub _write_index {
 
 sub DESTROY {
     my $self = shift;
-    # DEBUG
-#    print STDERR "\nOutput dir: $self->{dir}\n\n";
     rmtree($self->{dir}) if $self->{dir};
-
-    # DEBUG
-    use Data::Dumper;
-#    print STDERR "\n", Data::Dumper->Dump([\%category],['category']),
-#      "\n\n";
-#    print STDERR "\n", Data::Dumper->Dump([\%category_map],['category_map']),
-#      "\n\n";
-#    print STDERR "\n", Data::Dumper->Dump([\%site],['site']), "\n\n";
-#    print STDERR "\n", Data::Dumper->Dump([\%site_url],['site_url']), "\n\n";
-#    print STDERR "\n", Data::Dumper->Dump([\%story],['story']), "\n\n";
 }
 
 

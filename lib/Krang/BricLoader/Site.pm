@@ -69,7 +69,6 @@ use XML::Simple qw(XMLin);
 # Internal Modules
 ###################
 use Krang::Conf qw(KrangRoot);
-#use Krang::DataSet qw(_validate_file);
 # BricLoader mods :)
 use Krang::BricLoader::Category;
 use Krang::BricLoader::DataSet;

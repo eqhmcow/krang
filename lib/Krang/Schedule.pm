@@ -1005,6 +1005,21 @@ Action mappings need to be defined and then tested.
 =cut
 
 
-my $quip = <<QUIP;
-1
-QUIP
+my $poem = <<POEM;
+This Is Just to Say
+
+I have eaten
+the plums
+that were in
+the icebox
+
+and which
+you were probably
+saving
+for breakfast
+
+Forgive me
+they were delicious
+so sweet
+and so cold
+POEM

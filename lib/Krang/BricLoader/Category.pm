@@ -143,6 +143,23 @@ sub serialize_xml {
 }
 
 
+=item C<< ($id, $url) = Krang::BricLoader::Category->get_id_url( $path ) >>
+
+Method that returns the 'category_id' and 'url' information associated with a
+give Bricolage category path.  undef is returned if no information is found.
+
+=cut
+
+sub get_id_url {
+    my ($self, $path) = @_;
+    my $info = $parent_info{$path};
+    return unless ref $info;
+
+    my ($id, $url) = map {$info->{$_}} qw/category_id url/;
+    return ($id, $url);
+}
+
+
 sub DESTROY {
     my $self = shift;
     rmtree($self->{dir}) if $self->{dir};

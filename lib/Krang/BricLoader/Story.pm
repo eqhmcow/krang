@@ -8,8 +8,6 @@ Krang::BricLoader::Story - Bricolage to Krang Story object mapping module
 
 use Krang::BricLoader::Story;
 
-my $story = Krang::BricLoader::Story->new(xml => $xml_ref);
-	OR
 my $story = Krang::BricLoader::Story->new(path => $filepath);
 
 =head1 DESCRIPTION
@@ -39,16 +37,19 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
+#use DateTime::Format::ISO8601;
 use File::Path qw(mkpath rmtree);
 use File::Spec::Functions qw(catdir catfile splitpath);
 use File::Temp qw(tempdir);
+use Time::Piece;
 use XML::Simple qw(XMLin);
 
 # Internal Modules
 ###################
 use Krang::Conf qw(KrangRoot);
 use Krang::Pref;
-
+# BricLoader Modules
+use Krang::BricLoader::Category;
 
 #
 # Package Variables
@@ -61,7 +62,7 @@ use Krang::Pref;
 
 # Lexicals
 ###########
-
+my $id = 1;
 
 
 
@@ -69,21 +70,15 @@ use Krang::Pref;
 
 =over
 
-=item C<< $story = Krang::BricLoader->new(xml => $xml_ref) >>
-
 =item C<< $story = Krang::BricLoader->new(path => $filepath) >>
 
-The constructor requires one of the following arguments:
+The constructor requires the following arguments:
 
 =over
 
 =item * path
 
 The absolute path to file containing the XML to be parsed.
-
-=item * xml
-
-A scalar ref to the XML desired to be parsed.
 
 =back
 
@@ -100,40 +95,37 @@ sub new {
     my $self = bless({},$pkg);
     my $xml = $args{xml};
     my $path = $args{path};
-    my ($new_path, @stories);
+    my ($base, @stories, $new_path, $ref);
 
     # set tmpdir
     $self->{dir} = tempdir(DIR => catdir(KrangRoot, 'tmp'));
 
-    if ($xml) {
-        # write out file to tmpdir
-        $new_path = catfile($self->{dir}, 'bric_stories.xml');
-        my $wh = IO::File->new(">$new_path");
-        $wh->print($$xml);
-        $wh->close();
-    } elsif ($path) {
-        croak("File '$path' not found on the system!") unless -e $path;
-        my $base = (splitpath($path))[2];
-        $new_path = catfile($self->{dir}, $base);
-        link($path, $new_path);
-    } else {
-        croak("A value must be passed with either the 'path' or 'xml' arg.");
-    }
+    croak("File '$path' not found on the system!") unless -e $path;
+    $base = (splitpath($path))[2];
+    $new_path = catfile($self->{dir}, $base);
+    link($path, $new_path);
 
-    my $ref = XMLin($new_path,
-                    forcearray => ['story'],
-                    keyattr => 'hobbittses');
+    $ref = XMLin($new_path,
+                 forcearray => ['category', 'story'],
+                 keyattr => 'hobbittses');
     unlink($new_path);
     croak("\nNo Stories defined in input.\n") unless exists $ref->{story};
 
-    for (@{$ref->{story}}) {
+    for my $s(@{$ref->{story}}) {
         # check for duplicates
 
-        # associate media
+        $s = bless($s, $pkg);
 
-        # associate stories
+        # map simple fields
+        $s->_map_simple;
 
-        push @stories, bless($_, $pkg);
+        # fix categories and urls
+        $s->_build_urls;
+
+        # handle elements
+        $s->{elements} = _deserialize_elements(delete $s->{elements});
+
+        push @stories, $s;
     }
 
     return @stories;
@@ -158,41 +150,51 @@ sub serialize_xml {
                       "xsi:noNamespaceSchemaLocation" =>
                       'story.xsd');
 
+    my $tmp = Time::Piece->strptime($self->{cover_date}, "%FT%TZ");
+    my $t = localtime($tmp->epoch);
+
     # basic fields
     $writer->dataElement(story_id   => $self->{story_id});
-#?    $writer->dataElement(class      => $self->class->name);
+    $writer->dataElement(class      => $self->{class});
     $writer->dataElement(title      => $self->{title});
     $writer->dataElement(slug       => $self->{slug});
     $writer->dataElement(version    => $self->{version});
-    $writer->dataElement(cover_date => $self->cover_date->datetime);
+    $writer->dataElement(cover_date => $t->datetime);
     $writer->dataElement(priority   => $self->{priority});
-    $writer->dataElement(notes      => $self->notes);
+    $writer->dataElement(notes      => $self->{notes});
 
     # categories
-    for my $category ($self->{categories}) {
-        $writer->dataElement(category_id => $category->{category_id});
+    for my $c (@{$self->{categories}}) {
+        $writer->dataElement(category_id => $c);
 
-        $set->add(object => $category, from => $self);
+#        $set->add(object => $category, from => $self);
     }
 
     # urls
-    $writer->dataElement(url => $_) for $self->{urls};
+    $writer->dataElement(url => $_) for @{$self->{urls}};
 
     # contributors
-#    my %contrib_type = Krang::Pref->get('contrib_type');
-#    for my $contrib ($self->{contribs}) {
-#        $writer->startTag('contrib');
-#        $writer->dataElement(contrib_id => $contrib->contrib_id);
-#        $writer->dataElement(contrib_type =>
-#                             $contrib_type{$contrib->selected_contrib_type()});
-#        $writer->endTag('contrib');
+    my %contrib_type = Krang::Pref->get('contrib_type');
+    for my $contrib ($self->{contribs}) {
+        next unless defined $contrib && $contrib->isa('Krang::Contributor');
+        $writer->startTag('contrib');
+        $writer->dataElement(contrib_id => $contrib->contrib_id);
+        $writer->dataElement(contrib_type =>
+                             $contrib_type{$contrib->selected_contrib_type()});
+        $writer->endTag('contrib');
 
-#        $set->add(object => $contrib, from => $self);
-#    }
+        $set->add(object => $contrib, from => $self);
+    }
 
     # serialize elements
-#    $self->element->serialize_xml(writer => $writer,
-#                                  set    => $set);
+    $writer->startTag('element');
+    $writer->dataElement(class => $self->{class});
+    $writer->dataElement(data => $self->{data});
+    for my $e(@{$self->{elements}}) {
+        next unless ref $e;
+        $self->_serialize_element($writer, $e);
+    }
+    $writer->endTag('element');
 
     # all done
     $writer->endTag('story');
@@ -212,13 +214,92 @@ sub DESTROY {
 
 # PRIVATE METHODS
 #################
-# applies a set of transformation rules to the parsed output and makes the
-# necessary calls to the other BricLoader modules to construct the necessary
-# objects
-sub _map {
+# sets category_id and url entities based on 'categories' entity
+sub _build_urls {
+    my $self = shift;
+    my $tmp = delete $self->{categories};
+    my $cats = $tmp->{category};
+
+      for my $i(0..$#$cats) {
+        my $path = $i == 0 ? $cats->[$i]->{content} : $cats->[$i];
+        my ($id, $url) = Krang::BricLoader::Category->get_id_url($path);
+
+        croak("No category id and/or url found associated with Bricolage" .
+              " category '$path'") unless ($id && $url);
+
+        if (exists $self->{slug} && $self->{slug} ne '') {
+            $url = join('/', $url, $self->{slug});
+            $url =~ s#/+#/#g;
+            $url .= '/' if $url !~ m#/$#;
+        }
+
+        push @{$self->{categories}}, $id;
+        push @{$self->{urls}}, $url;
+    }
 }
 
+# fix subelements
+sub _deserialize_elements {
+    my $elements = shift;
+    my $data = $elements->{data};
+    my $obj = $elements->{container};
+    my $tmp;
 
+    if ($data) {
+        $data = ref $data eq 'ARRAY' ? $data : [$data];
+        for my $d(@$data) {
+            my $class = lc $d->{element};
+            my $data = $d->{content} || '';
+            $tmp->[$d->{order}] = {class => $class, data => $data};
+        }
+    }
+
+    if ($obj) {
+        $obj = ref $obj eq 'ARRAY' ? $obj : [$obj];
+        for my $o(@$obj) {
+            next if exists $o->{related_media_id};
+            my $class = lc $o->{element};
+            my $data = exists $o->{related_story_id} ? $o->{related_story_id} :
+              '';
+            $tmp->[$o->{order}] = {class => $class, data => $data,
+                                   elements => _deserialize_elements($o)};
+        }
+    }
+
+    return $tmp;
+}
+
+# map bricolage fields to krang equivalents
+sub _map_simple {
+    my $self = shift;
+
+    # id => story_id
+    $self->{story_id} = $self->{id};
+
+    # name becomes title
+    $self->{title} = delete $self->{name};
+
+    # element becomes class
+    $self->{class} = lc delete $self->{element};
+
+    # set version to 1
+    $self->{version} = 1;
+}
+
+#
+sub _serialize_element {
+    my ($self, $writer, $e) = @_;
+    $writer->startTag('element');
+    $writer->dataElement(class => $e->{class});
+    $writer->dataElement(data => $e->{data});
+    if ($e->{elements}) {
+        for (@{$e->{elements}}) {
+            next unless exists $_->{class} && $_->{class};
+            $self->_serialize_element($writer, $_);
+        }
+    }
+    $writer->endTag('element');
+}
 
 
 my $poem = <<POEM;
