@@ -226,6 +226,30 @@ my @assettime;
 my $storycount = 0;
 my $mediacount = 0;
 
+# if the --everything option was specified, all media needs to be published first.
+if ($everything) {
+                                                                                  
+    while (my @media = Krang::Media->find(%find_options)) {
+        my @starttime = gettimeofday();
+        @assettime = @starttime;
+                                                                                  
+        $publisher->publish_media(media => \@media, %publish_args);
+        my $endtime = tv_interval(\@starttime);
+                                                                                  
+        print sprintf("STATUS: media (%i - %i) published in %.02f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @media), $endtime);
+                                                                                  
+        $increment_time  += $endtime;
+        $increment_count += @media;
+                                                                                 
+        $total_mediacount += $mediacount;
+        $mediacount = 0;
+                                                                                  
+        last if (@media < $increment);
+        $find_options{offset} += $increment;
+    }
+}
+
+$find_options{offset} = 0;
 while (my @stories = Krang::Story->find(%find_options)) {
 
     if (@stories == $increment) {
@@ -276,31 +300,6 @@ while (my @stories = Krang::Story->find(%find_options)) {
     last if (@stories < $increment);
     $find_options{offset} += $increment;
 }
-
-# if the --everything option was specified, all media needs to be published as well.
-if ($everything) {
-    $find_options{offset} = 0;
-
-    while (my @media = Krang::Media->find(%find_options)) {
-        my @starttime = gettimeofday();
-        @assettime = @starttime;
-
-        $publisher->publish_media(media => \@media, %publish_args);
-        my $endtime = tv_interval(\@starttime);
-
-        print sprintf("STATUS: media (%i - %i) published in %.02f seconds.\n", ($find_options{offset}+1), ($find_options{offset} + @media), $endtime);
-
-        $increment_time  += $endtime;
-        $increment_count += @media;
-
-        $total_mediacount += $mediacount;
-        $mediacount = 0;
-
-        last if (@media < $increment);
-        $find_options{offset} += $increment;
-    }
-}
-
 
 print "\n\nSTATUS: Publish completed.\n======================================================================\n";
 print "\ntype\t\tnumber published\ttime(seconds)\tseconds/asset\n";
