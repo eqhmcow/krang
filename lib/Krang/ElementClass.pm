@@ -579,9 +579,11 @@ sub fill_template {
                   );
 
 
-    # add story title, page break, and content-break tags, if needed.
+    # add story title, cover date, page break, and content-break tags, if needed.
     $params{title} = $publisher->story()->title()
       if exists($template_vars{title});
+
+    $params{cover_date} = $publisher->story()->cover_date()->strftime('%b %e, %Y %l:%M %p') if exists($template_vars{cover_date});
 
     $params{page_break} = $publisher->page_break()
       if exists($template_vars{page_break});
