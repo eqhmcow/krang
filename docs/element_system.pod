@@ -35,22 +35,45 @@ An element set contains element classes that power the elements for an
 instance.  Elements provide the building blocks for stories.
 
 Each element set contains a configuration file, F<set.conf>, which
-contains a version number and a list of top-level element classes in
-the set.
+contains a list of top-level element classes in the set.  Each element
+set can be configured to inherit elements from other element sets.
+For example, Flex might inherit from the Default set.
 
-An upgrade directory may contain sub-directories with upgrade scripts
-for each version of the element set.  Using this mechanism, changes to
-element sets can be made without damaging existing assets.
+An element set may also contain a file with default templates, called
+F<templates.kds>.  This file must be a valid HREF[Krang
+Dataset|xml.html] file containing only L<Krang::Template> objects.  If
+present, it will be loaded into the database by C<krang_createdb>.
 
-Each element set can be configured to inherit elements from other
-element sets.  For example, Flex might inherit from the Default set.
+Finally, elements sets may include a F<lists.conf> file describing
+lists available for use by the element set and in the user interface.
+The F<lists.conf> file is an XML file containing a description of each
+list group.  For example:
+
+  <list_groups>
+    <list_group list_group_name="Make/Model/Year">
+      <list list_name="Make" />
+      <list list_name="Model" />
+      <list list_name="Year" />
+    </list_group>
+
+    <list_group list_group_name="Segments">
+      <list list_name="Segments" />
+     </list_group>
+  </list_groups>
+
+This configuration file describes a three-level tree of
+make/model/year values as well as a flat list of segments.  See
+L<Krang::ListGroup>, L<Krang::List>, and L<Krang::ListItem> for
+further details.
 
 =head2 Element Classes
 
 An element class is a Perl module that controls how the element data
-will be edited, stored and displayed.  Element class modules inherits
-from Krang::ElementClass or one of Krang::ElementClass's sub-classes.
-Here's an example container element, Flex::Page:
+will be edited, stored and published.  Element class modules inherits
+from L<Krang::ElementClass> or one of L<Krang::ElementClass>'s
+sub-classes like L<Krang::ElementClass::Textarea>. 
+
+Here's an example container element, Flex::page:
 
   package Flex::page;
   use base qw(Krang::ElementClass);
@@ -89,9 +112,14 @@ Here's an example container element, Flex::Page:
 
   1;
 
+Flex::page is considered a 'container element' because its purpose is
+to contain other elements - paragraphs, images and keywords in this
+case.
+
 As you can see above, data elements are also classes in the element
-set.  Here's an example data element, Flex::paragraph, which inherits
-from Krang::ElementClass::TextBox:
+set.  A data element allows users to enter data, and usually does not
+contain sub-elements.  Here's an example data element,
+Flex::paragraph, which inherits from Krang::ElementClass::TextBox:
 
   package Flex::paragraph;
   use base q(Krang::ElementClass::TextBox);
@@ -100,11 +128,8 @@ from Krang::ElementClass::TextBox:
       my $pkg = shift;
       my %opt = (
                  name           => "paragraph",
-                 display_name   => "Paragraph",
                  rows           => 4,
                  cols           => 40,
-                 min            => 0,
-                 max            => undef,
                  bulk_edit      => 1,
                  
                  @_,
@@ -119,62 +144,6 @@ than is shown above.  In most cases it will be enough to inherit from
 one of the provided element classes.  However, overriding methods
 inside the element class can give you control over every operation
 involving the element.  See L<Krang::ElementClass> for more details.
-
-=head2 List Groups and Lists
-
-Krang has support for groups of lists wherein the items contained in
-the lists are configurable by Krang users with permission. These 
-lists and thier contents are then usuable in elements.
-
-The structure for Krang::ListGroups and Krang::Lists associated with 
-an element set are configured via an XML-like conf file format.  If
-a file with this format and the name 'lists.conf' exists in the 
-root directory of an element library, the configuration wil be read
-and automatically loaded into the Krang database upon 'make db'.
-
-Below is an example of the lists.conf format:
-
-----------------------------------------------------------------------
-
-<list_groups>
-                                                                                
-<list_group list_group_name="Make/Model/Year" description="blah blah blah">
-    <list list_name="Make" />
-    <list list_name="Model" />
-    <list list_name="Year" />
-</list_group>
-                                                                                
-<list_group list_group_name="Segments">
-    <list list_name="Segments" />
-</list_group>
-                                                                                
-</list_groups>
-
------------------------------------------------------------------------
-
-1. All lists.conf files must begin with the <list_groups> tag and end 
-with the closing </list_groups> tag.
-
-2. <list_group> blocks appear within.
-
-    A. valid parameters are as follows:
-
-        a. list_group_name (required) - the name of the list group.
-
-        b. description (optional) - text decribing the list group. This
-            may be user configured later from the Krang UI.
-
-    B. Within list_group blocks, lists are configured via <list> blocks.
-
-        a. the only valid (and required) parameter is list_name, the 
-            name of the list.
-
-        b. The order of the <list> blocks implies inheritance.  In the 
-            example above, the list group 'Make/Model/Year' contains 3
-            lists.  'Year' belongs to 'Model', which belongs to 'Make'.
-
-See L<Krang::ListGroup>, L<Krang::List>, and L<Krang::ListItem> for
-further details.
 
 =head1 Element
 
@@ -218,4 +187,6 @@ add another paragraph with the content "foo":
 See L<Krang::Element> for more information about how to work with
 elements.
 
-=cut
+=head2 List Groups and Lists
+
+
