@@ -498,7 +498,10 @@ sub find_template {
     my %args = @_;
 
     # args for HTML::Template::Expr on instantiation.
-    my %tmpl_args = (die_on_bad_params => 0);
+    my %tmpl_args = (
+                     die_on_bad_params => 0,
+                     loop_context_vars => 1
+                    );
 
     # get the category dir from publisher;
     my $publisher = $args{publisher} || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
@@ -575,6 +578,7 @@ sub fill_template {
                    $element->name() => $element->data(),
                    $element->name() . '_total' => scalar(@element_children)
                   );
+
 
     # add story title, page break, and content-break tags, if needed.
     $params{title} = $publisher->story()->title()
