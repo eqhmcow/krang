@@ -1105,4 +1105,4 @@ B<Category.tmpl>
 
 =head1 Conclusion
 
-This document only begins to cover what you can do in Krang.  If you are comfortable with programming in Perl, consider learning more about the construction and customization of elements and element libraries by reading B<INSERT DOCUMENT NAMES HERE>.
+This document only begins to cover what you can do in Krang.  If you are comfortable with programming in Perl, consider learning more about the construction and customization of elements and element libraries by reading HREF[Customizing the Publish Process in Krang|customizing_publish.html].
