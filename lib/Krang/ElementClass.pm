@@ -5,6 +5,8 @@ use warnings;
 use Carp qw(croak);
 use CGI ();
 
+use HTML::Template;
+
 =head1 NAME
 
 Krang::ElementClass - base class for Krang element classes
@@ -465,6 +467,26 @@ If the root directory is reached, no template exists.  Croak.
 
 =cut
 
+sub find_template {
+
+    my $self = shift;
+    my %args = @_;
+
+    # get the category dir from publisher;
+    my $publisher = $args{publisher} || croak __PACKAGE__ . ":missing attribute 'publisher'.\n";
+    my $element   = $args{element} || croak __PACKAGE__ . ":missing attribute 'element'.\n";
+
+    my $category = $publisher->category();
+    my @path = $publisher->template_search_path();
+
+    # Attempt to instantiate an HTML::Template::Expr object with that as the search path.
+    my $tmpl = HTML::Template->new(filename => $element->name() . '.tmpl',
+                                   path => \@path);
+
+    return $tmpl;
+}
+
+
 
 =item C<< $class->fill_template(element => $element, template => $template, publisher => $publisher) >>
 
@@ -515,6 +537,17 @@ Generally, you will not want to override publish().  Changes to template-handlin
 =back
 
 =cut
+
+sub publish {
+
+    my $self = shift;
+    my %args = @_;
+    my $html = "NOT IMPLEMENTED YET\n";
+
+
+    return $html;
+}
+
 
 
 # setup defaults and check for required paramters
