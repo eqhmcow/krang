@@ -51,7 +51,8 @@ sub new {
                                                         pageable => 1,
                                                         rows => 10,
                                                         cols => 50,
-                                                        min => 1 )
+                                                        min => 1 ),
+                    PBMM::table_of_contents->new(),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

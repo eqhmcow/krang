@@ -35,7 +35,8 @@ sub new {
                                             min => 1,
                                             max => 1,
                                             allow_delete => 0,
-                                            reorderable => 0 )
+                                            reorderable => 0 ),
+                PBMM::table_of_contents->new(),
 
                 ],
                 @_);

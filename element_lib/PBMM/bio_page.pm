@@ -39,6 +39,7 @@ sub new {
                  PBMM::image->new( max => 1 ),
                  PBMM::image->new( name => 'logo', max => 1 ),
                  'document',
+                PBMM::table_of_contents->new(),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

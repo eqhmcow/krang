@@ -46,6 +46,7 @@ sub new {
                     Krang::ElementClass::Textarea->new(name => "paragraph",
                                                     bulk_edit => 1,
                                                    ),
+                    PBMM::table_of_contents->new(),
 
                 ],
                 @_);

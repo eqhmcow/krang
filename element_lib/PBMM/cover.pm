@@ -46,6 +46,7 @@ sub new {
                                                     bulk_edit => 1,
                                                    ),
                     PBMM::double_cover_column->new(   name => "double_column" ), 
+                    PBMM::table_of_contents->new(),
 
                 ],
                 @_);

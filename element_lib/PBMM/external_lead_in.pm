@@ -37,7 +37,7 @@ sub new {
                                                     required => 1,
                                                     allow_delete => 0
                                                    ),
-                 PBMM::image->new(name => "promo_image",
+                 Krang::ElementClass::MediaLink->new(name => "promo_image",
                                                      min => 1,
                                                      max => 1,
                                                      allow_delete => 0),
