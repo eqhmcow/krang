@@ -154,6 +154,9 @@ use constant TYPES	=> qw(alert
 			      media
 			      story);
 
+# how many schedule objects to process in one go
+use constant CHUNK_SIZE => 10;
+
 # Globals
 ##########
 our $SCH_DEBUG = $ENV{SCH_DEBUG} || 0;
@@ -511,6 +514,7 @@ are run.
 sub delete {
     my $self = shift;
     my $schedule_id = shift || $self->{schedule_id};
+
     my $query = "DELETE FROM schedule WHERE schedule_id = ?";
     my $dbh = dbh();
     $dbh->do($query, undef, $schedule_id);
@@ -802,9 +806,28 @@ will be deleted after its action is performed.
 
 sub run {
     my $self = shift;
+
+    # get a list of all pending schedule object IDs
+    my @ids = Krang::Schedule->find(next_run_less_or_equal => 'now()',
+                                    ids_only => 1,
+                                   );
+    return unless @ids;
+
+    # process by chunks of CHUNK_SIZE
+    for (my $start = 0; $start <= @ids; $start += CHUNK_SIZE + 1) {
+        my $end = $start + CHUNK_SIZE;
+        $end = $#ids if $end > $#ids;
+        $self->_run_chunk(map { Krang::Schedule->find(schedule_id => $_) } 
+                          @ids[$start .. $end]);
+    }
+
+    return @ids;
+}
+
+# run a chunk of schedule objects
+sub _run_chunk {
+    my ($self, @objs) = @_;
     my $now = localtime();
-    my @objs = Krang::Schedule->find(next_run_less_or_equal => 'now()');
-    my (@schedule_ids_run);
 
     my @pubs = grep {$_->{action} eq 'publish'} @objs;
     my @media_ids = map {$_->{object_id}} grep {$_->{object_type} eq 'media'}
@@ -910,22 +933,15 @@ sub run {
             # publish already handled above :)
         }
 
-        # we're assuming the action was successful unless we've gotten an
-        # EVAL_ERR
-        push @schedule_ids_run, $obj->{schedule_id} unless $eval_err;
-
         if ($repeat eq 'never') {
             $obj->delete();
         } else {
-            my $next = Time::Piece->from_mysql_datetime($obj->{next_run}) +
-              $repeat2seconds{$repeat};
+            my $next = $now + $repeat2seconds{$repeat};
             $obj->{last_run} = $now->mysql_datetime;
             $obj->{next_run} = $next->mysql_datetime;
-            $obj->save();
+            $obj->save();            
         }
     }
-
-    return wantarray ? @schedule_ids_run : scalar @schedule_ids_run;
 }
 
 
