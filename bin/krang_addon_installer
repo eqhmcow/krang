@@ -253,9 +253,9 @@ sub _copy_files {
           if $verbose;
         my $target_file = catfile($target_dir, $parts[-1]);
         copy($file, $target_file)
-          or die "Unable to copy '$file' to '$target': $!\n";
+          or die "Unable to copy '$file' to '$target_file': $!\n";
         chmod((stat($file))[2], $target_file)
-          or die "Unable to chmod '$target' to match '$file': $!\n";
+          or die "Unable to chmod '$target_file' to match '$file': $!\n";
     }
 }
 
