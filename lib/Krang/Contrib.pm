@@ -168,13 +168,15 @@ Returns array of contrib type names, matching order of contrib_type_ids.
 sub contrib_type_names {
     my $self = shift;
     my $dbh = dbh;
-    my @ids = @{$self->{contrib_type_ids}};
-    return () unless @ids;
+    my @contrib_type_names;
 
-    return $dbh->selectcol_array(
-           'SELECT type FROM contrib_type 
-            WHERE contrib_type_id IN ('. join(',', ('?')x@ids) .')', 
-                                 undef, @ids);
+    foreach my $type_id (@{$self->{contrib_type_ids}}) {
+        my $sth = $dbh->prepare('SELECT type from contrib_type where contrib_type_id = ?');
+        $sth->execute($type_id);
+        push @contrib_type_names, $sth->fetchrow_array(); 
+    }
+
+    return @contrib_type_names;
 }
 
 =item $contrib->save()
