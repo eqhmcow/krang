@@ -1,7 +1,27 @@
-<div class=nav1><a href="workspace.pl">My Workspace</a></div>
+<script language="javascript">
+   var nav_emode = 0;
+   var nav_emsg  = "Are you sure you want to discard your unsaved changes?";
+
+   /* Call to set edit mode with a particular message.  If msg is */
+   /* empty will use the default message. */
+   function nav_edit_mode(msg) {
+     nav_emode = 1;
+     if (msg && msg.length) {
+        nav_emsg = msg;
+     }
+   }
+
+   function nav_goto(loc) {
+     if (!nav_emode || confirm(nav_emsg)) {
+        window.location = loc;
+     }
+   }
+</script>
+        
+<div class=nav1><a href="javascript:nav_goto('workspace.pl')">My Workspace</a></div>
 <div class=nav2>Story</div>
-<div class=nav3><a href="story.pl">New Story</a></div>
-<div class=nav3><a href="story.pl?rm=find">Find Stories</a></div>
+<div class=nav3><a href="javascript:nav_goto('story.pl')">New Story</a></div>
+<div class=nav3><a href="javascript:nav_goto('story.pl?rm=find')">Find Stories</a></div>
 <div class=nav3>Active Stories</div>
 
 <div class=nav3 style="margin-top: 5px">Desks</div>
@@ -9,8 +29,8 @@
 <div class=nav4>Publish</div>
 
 <div class=nav2>Media</div>
-<div class=nav3><a href="media.pl">New Media</a></div>
-<div class=nav3><a href="media.pl?rm=find">Find Media</a></div>
+<div class=nav3><a href="javascript:nav_goto('media.pl')">New Media</a></div>
+<div class=nav3><a href="javascript:nav_goto('media.pl?rm=find')">Find Media</a></div>
 <div class=nav3>Active Media</div>
 <div class=nav3>Bulk Upload</div>
 
@@ -21,9 +41,9 @@
 <div class=nav3>FTP</div>
 
 <div class=nav2>Admin</div>
-<div class=nav3><a href="user.pl">Users</a></div>
+<div class=nav3><a href="javascript:nav_goto('user.pl')">Users</a></div>
 <div class=nav3>Groups</div>
-<div class=nav3><a href="contributor.pl">Contributors</a></div>
+<div class=nav3><a href="javascript:nav_goto('contributor.pl')">Contributors</a></div>
 <div class=nav3>Sites</div>
 <div class=nav3>Categories</div>
 <div class=nav3>Jobs</div>
@@ -31,7 +51,7 @@
 <div class=nav3>My Preferences</div>
 
 <div class=nav2>Dev</div>
-<div class=nav3><a href="status.pl">Instance Status</a></div>
-<div class=nav3><a href="env.pl">Dump Environment</a></div>
+<div class=nav3><a href="javascript:nav_goto('status.pl')">Instance Status</a></div>
+<div class=nav3><a href="javascript:nav_goto('env.pl')">Dump Environment</a></div>
 <div class=nav3>Submit Bug</div>
 
