@@ -225,7 +225,7 @@ sub build_perl_module {
     
     # We only want the libs, not the executables or man pages
     my $command =
-      Expect->spawn("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir");
+      Expect->spawn("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir MAN1PODS=\\{\\} MAN3PODS=\\{\\}");
 
     # setup command to answer questions modules ask
     my @responses = qw(n n n n n y !);
