@@ -51,21 +51,36 @@ The F<lists.conf> file is an XML file containing a description of each
 list group.  For example:
 
   <list_groups>
-    <list_group list_group_name="Make/Model/Year">
+    <list_group list_group_name="Cars">
       <list list_name="Make" />
       <list list_name="Model" />
       <list list_name="Year" />
     </list_group>
 
-    <list_group list_group_name="Segments">
+    <list_group list_group_name="Segments" description="This list group just contains one list">
       <list list_name="Segments" />
      </list_group>
   </list_groups>
 
-This configuration file describes a three-level tree of
-make/model/year values as well as a flat list of segments.  See
-L<Krang::ListGroup>, L<Krang::List>, and L<Krang::ListItem> for
-further details.
+This configuration file describes two list groups.
+A list group is a group of linked lists.
+The first list group on the example describes a three-level tree of
+make/model/year values- meaning each 'Make' can be associated with a 
+list of 'Model's, and each 'Model' can be associated with a list of
+'Year's.   The second list group in the example contains just a single
+flat list.  Note that a default description for the list group can 
+be set within the list_group tag.
+Below is an example of how a ListGroup would be added to an element in 
+your element library:
+
+  Krang::ElementClass::ListGroup->new(  name => 'auto_segments',
+                                        list_group => 'Segments',
+                                        multiple => 1 )
+
+'multiple' allows for multiple selections from a flat list.
+
+See L<Krang::ElementClass::ListGroup>, L<Krang::ListGroup>, L<Krang::List>
+and L<Krang::ListItem> for further details.
 
 =head2 Element Classes
 
