@@ -60,11 +60,13 @@
 
 =back
 
-=item * Creating a Specialty Page
+=item * Generating Additional Content
 
 =over
 
-=item * Example - Generating a Specialty First Page
+=item * Example - Creating an RSS File
+
+=item * Example - Generating a Wall Page
 
 =back
 
@@ -755,26 +757,52 @@ While we use C<fill_template_args> in the previous examples, you can call
 And the additional parameter(s) will get passed along to C<fill_template()> method of the child object.  It is up to you, of course, to make use of it on that end - the standard Krang implementation only makes use of C<fill_template_args>.
 
 
-=head1 Creating A Wall Page
+=head1 Generating Additional Content
 
-(Need further explanation of what a Specialty/Wall page is here)
+While publishing a given story, you may want to publish additional files containing data related to the story.  For example, an RDF file for syndication, or an XML file containing keywords for search-engines, or an article preview page for subscription purposes.
 
-To create a wall page in Krang, you need to take the content that will make up the page (minus any header/footers that are added by the category), wrap it in delimiters (using a function provided by Krang), and include it in the HTML stream that makes up the full output from a published story.  During post-processing, Krang will take the wall page from the block of HTML, wrap it in category headers/footers as needed, and write the page out to disk on its own accord.
+While Krang doesn't provide direct support for such things within the UI, it provides a framework for you to use within your element library, allowing you to build the content in any way you see fit.
 
-The process by which the Wall page is created is roughly as follows:
+What you're attempting to do is add your additional content into the block of HTML that the elements return during the publish process.  Roughly, it works as follows:
 
- my $html = $publish_results_to_this_point;
+ my $html = results_of_publish();
 
- my $wall_html = generate_wall_page();
+ my $additional_content = results_of_additional_work();
 
- $html .= $publisher->begin_special_content() . $wall_html . $publisher->end_special_content();
+ return $html . $publisher->additional_content_block(content => $additional_content,
+                                                     filename => 'extra.html');
 
- return $html;
+At the end of the publish process, Krang will separate $additional_content out from the rest of the text, and write it to disk as 'extra.html'.
 
+B<What is Supported:>
 
-=head2 Example - Generating a Wall First Page
+=over
 
-In this case we have a story consisting of three pages, with the following element tree:
+=item *
+
+An arbitrary number of additional files can be added created - just be careful filenames do not overlap.
+
+=item *
+
+You have the option to add (or not add) the current Category templates (e.g. header/footer) to your output.
+
+=back
+
+B<Restrictions:>
+
+=over
+
+=item *
+
+No pagination - you can only create single-page files.
+
+=item *
+
+The file will get written out to the same directory as the story itself - writing to other directories is not supported (L<Krang::Category> does a lot of work to protect against directory conflicts, don't want to interfere with that).
+
+=back
+
+For the following examples, we're going to use the following Story element tree:
 
    Story
         - Deck             (subclass of Krang::ElementClass::Text)
@@ -783,6 +811,9 @@ In this case we have a story consisting of three pages, with the following eleme
              - Paragraph   (subclass of Krang::ElementClass::TextArea)
              - Pull Quote  (subclass of Krang::ElementClass::Text)
              - Paragraph   (subclass of Krang::ElementClass::TextArea)
+             - Leadin      (subclass of Krang::ElementClass::StoryLink)
+             - Leadin      (subclass of Krang::ElementClass::StoryLink)
+             - Leadin      (subclass of Krang::ElementClass::StoryLink)
         + Page             (subclass of Krang::ElementClass)
              - Paragraph   (subclass of Krang::ElementClass::TextArea)
              - Paragraph   (subclass of Krang::ElementClass::TextArea)
@@ -793,9 +824,59 @@ In this case we have a story consisting of three pages, with the following eleme
              - Paragraph   (subclass of Krang::ElementClass::TextArea)
              - Paragraph   (subclass of Krang::ElementClass::TextArea)
 
+
+=head2 Example - Creating an RSS File
+
+If you aren't familiar with RSS (RDF Site Summary), take a look here: HREF[RDF Site Summary 1.0|http://www.purl.org/rss/]
+
+This example uses L<XML::RSS>, which is not part of Krang - it would have to be installed separately.
+
+To generate the RSS file, we're going to override the C<fill_template()> method for the Story element to generate the RSS file, and then continue the publish process, adding the RSS file to the final output.
+
+ sub fill_template {
+
+     my $self = shift;
+     my %args = @_;
+
+     my $rss = new XML::RSS;
+
+     my $publisher = $args{publisher};
+     my $story     = $publisher->story();
+
+     $rss->channel(title        => $story->title(),
+                   link         => 'http://' . $story->url(),
+                   description  => $story->slug()
+                  );
+
+     foreach my $leadin ($story->linked_stories()) {
+         $rss->add_item(title => $leadin->title(),
+                        link  => 'http://' . $leadin->url());
+
+     }
+
+     my $rss_output = $rss->as_string();
+
+     return $self->SUPER::fill_template(@_) .
+       $publisher->additional_content_block(content  => $rss_output,
+                                            filename => 'rss.xml',
+                                            use_category => 0);
+
+
+ }
+
+
+As you can see, the regular publish work is still done by Krang, in the call at the bottom, C<< $self->SUPER::fill_template(@_) >>.  That output is concatenated with the output generated by the XML::RSS module (after being tagged properly by C<< $publisher->additional_content_block() >>), and returned to the Publisher, which will then write the two files out.
+
+The C<use_category> option to C<< Krang::Publisher->additional_content_block() >> tells the Publisher to not combine the output from XML::RSS with any template output from the categories (e.g. headers/footers).  While this is a desireable feature sometimes, we don't want to mix HTML templates with XML output in this case.
+
+
+
+
+=head2 Example - Generating a Wall Page
+
 We want have two goals here - first, we want to build a three-page story out of this tree.  Second, we want to create a wall page using the content of the first page, and a wall template.
 
-The best angle of attack here will be to work from the Story element - we want to manipulate content depending on which page element we're on, and page elements don't know about eachother.  Additionally, we need access to elements that won't be available to Page elements.
+Again, the best angle of attack here will be to work from the Story element - we want to manipulate content depending on which page element we're on, and page elements don't know about eachother.  Additionally, we need access to elements that won't be available to Page elements.
 
 =head3 fill_template() - Story Element
 
@@ -848,13 +929,19 @@ In overriding the C<fill_template()> method in the story element, we're going to
      my $html = $template->output();
      my $wall_html = $wall_template->output();
 
-     $html .= $publisher->begin_special_content(filename => 'wall.html') . $wall_html . $publisher->end_special_content();
+     $html .= $publisher->additional_content_block(filename     => 'wall.html',
+                                                   content      => $wall_html,
+                                                   use_category => 1
+                                                  );
 
      return $html;
 
  }
 
 
+The end result is the original three-page story, along with a wall.html file.
+
+Note - using the approach of the first example, calling C<< $self->SUPER::fill_template() >> to generate the content for the story itself could have been done here as well, but it would have incurred additional overhead, as some elements would have been published multiple times (the first page and all its child elements), creating a performance penalty.  While the penalty is negligible in this case, be careful.
 
 
 
