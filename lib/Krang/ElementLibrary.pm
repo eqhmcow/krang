@@ -179,8 +179,10 @@ sub _load_classes {
     # require all .pm files in main set
     opendir(DIR, $dir) or die "Unable to open dir '$dir': $!";
     while($_ = readdir(DIR)) {
+        next if /#/; # skip emacs backup files
         next unless /([^\/]+).pm$/;
-        eval { require(catfile($dir, $_)); };
+        my $name = $1;
+        eval "use ${set}::$name;";
         die "Unable to load element class $dir/$_.  Error was:\n\n$@\n"
           if $@;
     }
