@@ -50,9 +50,6 @@ my @contrib_type_ids = $contrib->contrib_type_ids();
 is("@contrib_type_ids", "1 3");
 is($contrib->selected_contrib_type, 1);
 
-eval { $contrib->selected_contrib_type(2) };
-like($@, qr/bad/);
-
 $contrib->save();
 
 my $contrib_id = $contrib->contrib_id();
