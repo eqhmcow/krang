@@ -80,7 +80,6 @@ mail-sending scheduled jobs.
 
 =cut
 
-BEGIN {use constant SCH_DEBUG => $ENV{SCH_DEBUG} || 0;}
 
 #
 # Pragmas/Module Dependencies
@@ -100,7 +99,7 @@ use Time::Seconds;
 # Internal Modules
 ###################
 use Krang::DB qw(dbh);
-use Krang::Log qw/critical debug info/;
+use Krang::Log qw/ASSERT assert critical debug info/;
 use Krang::Media;
 use Krang::Story;
 use Krang::Template;
@@ -110,6 +109,9 @@ use Krang::Template;
 ####################
 # Constants
 ############
+# Debugging constant
+use constant SCH_DEBUG => $ENV{SCH_DEBUG} || 0;
+
 # Read-only fields
 use constant SCHEDULE_RO => qw(last_run
 			       next_run
@@ -249,11 +251,11 @@ sub init {
             unless ($repeat eq 'never') {
                 croak("'minute' argument required for hourly, daily, and " .
                       "weekly tasks.")
-                  unless $minute;
+                  unless defined $minute;
                 croak("'hour' argument required for daily and weekly tasks")
-                  unless ($repeat eq 'hourly' || $hour);
+                  unless ($repeat eq 'hourly' || defined $hour);
                 croak("'day_of_week' required for weekly tasks.")
-                  if ($repeat eq 'weekly' && !$day_of_week);
+                  if ($repeat eq 'weekly' && not defined $day_of_week);
               } else {
                   croak("'date' argument required for non-repetitive " .
                         "Schedule objects")
@@ -371,9 +373,9 @@ sub _next_run {
 }
 
 
-=item C<< $success = $sched->delete >>
+=item C<< $sched->delete >>
 
-=item C<< $success = Krang::Schedule->delete( $schedule_id ) >>
+=item C<< Krang::Schedule->delete( $schedule_id ) >>
 
 Removes the schedule from the database.  It will never run again.
 This happens to repeat => 'never' schedules automatically after they
@@ -387,7 +389,15 @@ sub delete {
     my $query = "DELETE FROM schedule WHERE schedule_id = ?";
     my $dbh = dbh();
     $dbh->do($query, undef, $schedule_id);
-    return Krang::Schedule->find(schedule_id => $schedule_id) ? 0 : 1;
+
+    if (ASSERT) {
+        my $count = Krang::Schedule->find(schedule_id => $schedule_id,
+                                          count => 1);
+        assert($count == 0);
+    }
+
+    # return 1 by default for testing
+    return 1;
 }
 
 
@@ -587,7 +597,9 @@ sub find {
 }
 
 
-=item C<< Krang::Schedule->run >>
+=item C<< @schedule_ids_run = Krang::Schedule->run >>
+
+=item C<< $object_run_count = Krang::Schedule->run >>
 
 This method runs all pending schedules.  It works by pulling a list of
 schedules with next_run greater than current time.  It runs these
@@ -598,6 +610,9 @@ Non-repeating tasks are deleted after they are run.  Hourly tasks get
 next_run = next_run + 60 minutes.  Daily tasks get next_run = next_run
 + 1 day.  Weekly tasks get next_run = next_run + 1 week.
 
+The method returns an array of the ids that have run succesfully in list
+context and a count of those ids in a scalar context.
+
 * N.B. - if the repeat field for a given object is set to 'never' the object
 will be deleted after its action is performed.
 
@@ -606,6 +621,7 @@ will be deleted after its action is performed.
 sub run {
     my $now = localtime();
     my @objs = Krang::Schedule->find(next_run_less_or_equal => 'now()');
+    my @schedule_ids_run;
 
     for my $obj(@objs) {
         my ($action, $context, $schedule_id, $object_id, $type, $repeat) =
@@ -639,6 +655,8 @@ sub run {
               if $@;
         }
 
+        push @schedule_ids_run, $obj->{schedule_id};
+
         if ($repeat eq 'never') {
             $obj->delete();
         } else {
@@ -649,6 +667,8 @@ sub run {
             $obj->save();
         }
     }
+
+    return wantarray ? @schedule_ids_run : scalar @schedule_ids_run;
 }
 
 
