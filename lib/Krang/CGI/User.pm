@@ -30,7 +30,7 @@ use base qw/Krang::CGI/;
 use Carp qw(verbose croak);
 use Krang::History;
 use Krang::HTMLPager;
-use Krang::Log qw/critical/;
+use Krang::Log qw/critical debug info/;
 use Krang::Message qw(add_message);
 use Krang::Pref;
 use Krang::Session qw(%session);
@@ -43,6 +43,10 @@ use constant DELETE_FIELDS => qw(Krang::User::USER_RW
 				 password
 				 current_group_ids);
 
+use constant SHORT_NAMES	=> qw(adam
+				      arobin
+				      matt
+				      sam);
 
 ##############################
 #####  OVERRIDE METHODS  #####
@@ -593,9 +597,21 @@ sub validate_user {
     # login, first, last, and email cannot be '' or just whitespace
     for (qw/login first_name last_name email/) {
         my $val = $q->param($_);
-        $errors{"error_invalid_$_"} = 1 if ($val eq '' || $val =~ /^\s+$/);
-        $errors{error_invalid_email} = 1
-          if ($_ eq 'email' && $val !~ /[\w.-]+\@[\w.-]+\.\w+/);
+
+        unless ($_ eq 'email') {
+            $errors{"error_invalid_$_"} = 1 if ($val eq '' || $val =~ /^\s+$/);
+
+            # check login and pass length
+            if ($_ eq 'login') {
+                $errors{"error_login\_length"} = 1
+                  unless (length($val) >= 6 || grep $val eq $_, SHORT_NAMES);
+            }
+        } else {
+            $errors{error_invalid_email} = 1
+              if ($_ eq 'email' && $val ne ''
+                  && $val !~ /[\w.-]+\@[\w.-]+\.\w+/);
+        }
+
     }
 
     my ($mode, $pass, $cpass) = map {$q->param($_)}
@@ -615,6 +631,8 @@ sub validate_user {
             $q->param('password', $pass);
         }
     }
+
+    $errors{error_password_length} = 1 if length $pass < 6;
 
     # Add error messages
     add_message($_) for keys %errors;
