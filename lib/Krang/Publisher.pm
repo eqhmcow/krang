@@ -246,7 +246,7 @@ sub preview_story {
     return $preview_url;
 }
 
-=item C<< $publisher->publish_story(story => $story) >>
+=item C<< $publisher->publish_story(story => $story, callback => \%onpublish) >>
 
 Publishes a story to the live webserver document root, as set by publish_path.
 
@@ -258,12 +258,17 @@ If you do not care about related assets (WARNING - You want to care!), you can s
 
 Will throw an exception if the current user ($ENV{REMOTE_USER})does not have permissions to publish.
 
+The optional parameter C<callback> may point to a subroutine which is
+called when each object is published.  It recieves three named
+parameters - object, counter and total.
+
 =cut
 
 sub publish_story {
 
     my $self = shift;
     my %args = @_;
+    my $callback = $args{callback};
     my $publish_list;
 
     my $story = $args{story} || croak __PACKAGE__ . ": missing required argument 'story'";
@@ -283,7 +288,12 @@ sub publish_story {
         $publish_list = $self->get_publish_list(story => $story);
     }
 
+    my $total = @$publish_list;
+    my $counter = 0;
     foreach my $object (@$publish_list) {
+        $callback->(object => $object,
+                    total  => $total,
+                    counter => $counter++) if $callback;
         if ($object->isa('Krang::Story')) {
             $self->_build_story_all_categories(story => $object);
             # check the object back in.

@@ -27,7 +27,7 @@ use Krang::Publisher;
 use Krang::Story;
 use Krang::Log qw(debug assert ASSERT);
 use Krang::Widget qw(format_url datetime_chooser decode_datetime);
-use Krang::Message qw(add_message);
+use Krang::Message qw(add_message get_messages clear_messages);
 use Time::Piece;
 
 use Carp qw(croak);
@@ -155,7 +155,7 @@ B<NOTE>: 'asset_publish_list' does not necessarily contain all items listed when
 
 Requires the following parameters: story_ids, publish_now, publish_date_xxx (if publish_now == 0)
 
-If publish_now == 1, start publish & redirect to workspace.
+If publish_now == 1, start publish, show a status bar then redirect to workspace.
 
 If putlist_now == 0, schedule publish & redirect to workspace.
 
@@ -191,12 +191,12 @@ sub publish_assets {
         # pass things to the scheduler
         my $date = decode_datetime(name => 'publish_date', query => $query);
         $self->_schedule_assets(\@story_list, \@media_list, $date);
-    }
 
-    # return to my workspace
-    $self->header_props(-uri => 'workspace.pl');
-    $self->header_type('redirect');
-    return "";
+        # return to my workspace
+        $self->header_props(-uri => 'workspace.pl');
+        $self->header_type('redirect');
+        return "";
+    }
 
 }
 
@@ -281,19 +281,17 @@ sub preview_story {
     my $url;
     eval {
         $url = $publisher->preview_story(story => $story, 
-                                         callback =>\&_preview_story_callback);
+                                         callback =>\&_progress_callback);
     };
     if ($@) {
         # if there is an error, figure out what it is, create the appropriate message
         # and return an error page.
         if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
             add_message('missing_template',
-                        element_name  => $@->element_name,
+                        filename       => $@->template_name,
                         category_url   => $@->category_url
                        );
-
-        } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {
-            add_message('template_parse_error',
+        } elsif (ref $@ && $@->isa('Krang::ElementClass::TemplateParseError')) {            add_message('template_parse_error',
                         element_name  => $@->element_name,
                         template_name => $@->template_name,
                         category_url  => $@->category_url,
@@ -301,16 +299,16 @@ sub preview_story {
                        );
         } else {
             # something not expected - throw the error
+            print "<div class=alert>An internal server error occurred.  Please check the error logs for details.</div>\n";
             croak($@);
         }
-        # return the error template & get outta here.
-        my $t = $self->load_tmpl('error_popup.tmpl',
-                                 associate => $query,
-                                 loop_context_vars => 1,
-                                 die_on_bad_params => 0
-                                );
 
-        return $t->output();
+        # put the messages on the screen
+        foreach my $error (get_messages()) {
+            print "<div class=alert>$error</div>\n";
+        }
+        clear_messages();
+        return;
     }
 
     # this should always be true
@@ -320,8 +318,8 @@ sub preview_story {
     print "<script language='javascript'>window.location = 'http://$url'</script>\n";
 }
 
-# update the progress bar during preview
-sub _preview_story_callback {
+# update the progress bar during preview or publish
+sub _progress_callback {
     my %arg = @_;
     my ($object, $counter, $total) = @arg{qw(object counter total)};
     my $string;
@@ -437,22 +435,32 @@ sub _build_asset_list {
 # If errors occur, make entires in the message system & return.
 #
 sub _publish_assets_now {
-
     my $self = shift;
     my ($story_list, $media_list) = @_;
+    my $query = $self->query;
+
+    # this is a no-parse header script
+    $self->header_type('none');
+    print $query->header;
+
+    # output the progress header
+    my $template = $self->load_tmpl('progress.tmpl');
+    $|++;
+    print $template->output;
 
     # run things to the publisher
     my $publisher = Krang::Publisher->new();
     if (@$story_list) {
         # publish!
-        eval { $publisher->publish_story(story => $story_list); };
-
+        eval { $publisher->publish_story(story => $story_list, 
+                                         callback =>\&_progress_callback); };
+    
         if ($@) {
-            # if there is an error, figure out what it is, create the appropriate message
-            # and return.
+            # if there is an error, figure out what it is, create the
+            # appropriate message and return.
             if (ref $@ && $@->isa('Krang::ElementClass::TemplateNotFound')) {
                 add_message('missing_template',
-                            element_name  => $@->element_name,
+                            filenname      => $@->template_name,
                             category_url   => $@->category_url
                            );
 
@@ -465,19 +473,29 @@ sub _publish_assets_now {
                            );
             } else {
                 # something not expected - throw the error
+                print "<div class=alert>An internal server error occurred.  Please check the error logs for details.</div>\n";
                 croak($@);
             }
-            return;
-        }
 
-        # otherwise, we're good.
-        foreach my $story (@$story_list) {
-            # add a publish message for the UI
-            add_message('story_publish', story_id => $story->story_id,
-                        url => $story->url,
-                        version => $story->version);
+            # put the messages on the screen
+            foreach my $error (get_messages()) {
+                print "<div class=alert>$error</div>\n";
+            }
+            clear_messages();
+            return;
+
+        } else {
+            
+            # otherwise, we're good.
+            foreach my $story (@$story_list) {
+                # add a publish message for the UI
+                add_message('story_publish', story_id => $story->story_id,
+                            url => $story->url,
+                            version => $story->version);
+            }
         }
     }
+
 
     if (@$media_list) {
         # publish!
@@ -490,6 +508,9 @@ sub _publish_assets_now {
         }
     }
 
+    # dynamic redirect to workspace
+    print "<form action=workspace.pl></form><script language='javascript'>document.forms[0].submit();</script>\n";
+    
     return;
 }
 
