@@ -2,8 +2,10 @@
 use warnings;
 use strict;
 
-use File::Spec::Functions qw(catdir catfile splitdir rel2abs);
+use File::Spec::Functions qw(catdir splitdir);
 use FindBin qw($RealBin);
+use Getopt::Long;
+use Pod::Usage;
 use Config;
 
 
@@ -28,6 +30,14 @@ Publish all assets for a given category, specified by category_id
 Publish a specific story and all related assets (linked stories and media)
 
   $ krang_publish --story_id 10
+
+Publish a series of stories and their related assets
+
+  $ krang_publish --story_id 10,11,12
+
+The alternative form for multiple-story publish
+
+  $ krang_publish --story_id 10 --story_id 11 --story_id 12
 
 
 Publish all assets of a single site, but only those assets that have been previously published
@@ -78,11 +88,11 @@ B<WARNING>: The intended use case for this option would be an installation that 
 
 =item --story_id
 
-Publish a single story specified by its story_id, and all its related stories and media.
+Publishes the story and related media objects associated with the story_id.  Supports multiple --story_id arguments, or a single --story_id argument with a comma-separated list of IDs to publish more than one story.
 
 =item --media_id
 
-Publish a single media object, specified by its media_id.
+Publish a single media object, specified by its media_id.  B<CURRENTLY BROKEN>
 
 =item --republish_only
 
@@ -138,8 +148,6 @@ use Krang::Publisher;
 use Time::HiRes qw(gettimeofday tv_interval);
 
 # Setup - grabbing all the command-line options.
-use Getopt::Long;
-use Pod::Usage;
 
 my %id  = map { ($_, [])} qw(story_id media_id category_id site_id);
 
@@ -161,7 +169,7 @@ pod2usage(2) unless
 
              'increment=i'       => \$increment,
 
-             (map { ("$_=i", $id{$_}) } keys %id)
+             (map { ("$_=s", $id{$_}) } keys %id)
 
             );
 
@@ -191,7 +199,10 @@ if ($everything) {
     } elsif (@{$id{category_id}}) {
         $find_options{category_id} = $id{category_id}[0];
     } elsif ($id{story_id}) {
-        $find_options{story_id} = $id{story_id}[0];
+        if ((@{$id{story_id}} == 1 && $id{story_id}[0] =~ /,/)) {
+            $id{story_id} = [ split /,/, $id{story_id}[0] ];
+        }
+        $find_options{story_id} = $id{story_id};
     }
 }
 
