@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Updated several modules: DBI to 1.47, WWW-Mechanize to 1.10,
+URI to 1.35, and libwww-perl to 5.803. [Perrin]
+
+=item *
+
 Added C<bin/krang_addon_framework> - a new script to create a
 supporting framework to simplify development of Krang addons. [Peter]
 
