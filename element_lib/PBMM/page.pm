@@ -58,7 +58,7 @@ sub fill_template {
         $tmpl->param( article_related_link_box => $rel_articles->publish(publisher => $publisher) );
     }
 
-    $tmpl->param( icopywrite_link => $parent->child('icopywrite_link')->data ) if $parent->child('icopywrite_link');
+    $tmpl->param( icopyright_link => $parent->child('icopyright_link')->data ) if $parent->child('icopyright_link');
 
     $self->SUPER::fill_template( %args );
 }

@@ -37,8 +37,8 @@ sub new {
         Krang::ElementClass::Textarea->new(name => 'deck',
                                            @fixed),
         PBMM::promo->new(),
-        Krang::ElementClass::Text->new(name         => 'icopywrite_link',
-                                       display_name => 'iCopywrite Link',
+        Krang::ElementClass::Text->new(name         => 'icopyright_link',
+                                       display_name => 'iCopyright Link',
                                        max          => 1),     
         'bio_page',
         PBMM::custom_targeting->new(max =>1)
