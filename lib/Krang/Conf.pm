@@ -41,6 +41,7 @@ BugzillaPassword
 BugzillaComponent
 SiteServerAddr
 SiteServerPort
+HTMLLint
 );
 }
 

@@ -40,7 +40,7 @@ use base 'CGI::Application';
 use Krang::ErrorHandler;
 use Data::Dumper ();
 
-use Krang::Conf qw(KrangRoot InstanceDisplayName);
+use Krang::Conf qw(KrangRoot InstanceDisplayName HTMLLint);
 use File::Spec::Functions qw(catdir rel2abs);
 use Krang::CGI::Status;
 use Krang::CGI::ElementEditor;
@@ -132,5 +132,42 @@ sub dump_html {
     return $output;
 }
 
+# check for HTML errors if HTMLLint is on
+sub cgiapp_postrun {
+    my ($self, $o) = @_;   
+    return unless HTMLLint;
+
+    # parse the output with HTML::Lint
+    require HTML::Lint;
+    my $lint = HTML::Lint->new();
+    $lint->parse($$o);
+    $lint->eof();
+
+    # if there were errors put them into a javascript popup
+    if ($lint->errors) {
+        my $err_text = "<ul>" . join("", map { "<li>$_</li>" }
+                                     map { s/&/&amp;/g;
+                                           s/</&lt;/g;
+                                           s/>/&gt;/g;
+                                           s/\\/\\\\/g;
+                                           s/"/\\"/g;
+                                           $_; }
+                                     map { $_->as_string } $lint->errors) .
+                                       "</ul>";
+    my $js = <<END;
+<script language="javascript">
+  var html_lint_window = window.open("", "html_lint_window", "height=300,width=600");
+  html_lint_window.document.write("<html><head><title>HTML Errors Detected</title></head><body><h1>HTML Errors Detected</h1>$err_text</body></html>");
+  html_lint_window.document.close();
+  html_lint_window.focus(); 
+</script>
+END
+        if ($$o =~ m!</body>!) {
+            $$o =~ s!</body>!$js\n</body>!;
+        } else {
+            $$o .= $js;
+        }
+    }
+}
 
 1;
