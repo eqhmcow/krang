@@ -301,7 +301,12 @@ sub log {
 
     # check caller against defined log level setters
     my $log_level = $LOG_LEVEL_DEFAULT;
-    my $pkg = (caller)[0];
+    my $i = 0;
+    my $pkg;
+    do {
+        $pkg = (caller($i++))[0];
+    } while ($pkg eq 'Krang::Log' and $i < 100);
+
     if (exists $LOG_LEVEL_PER_MODULE{$pkg}) {
         $log_level = $LOG_LEVEL_PER_MODULE{$pkg};
     } elsif (@LOG_LEVEL_REGEX) {
