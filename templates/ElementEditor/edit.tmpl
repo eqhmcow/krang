@@ -252,7 +252,7 @@ Words: <span id=bulk_edit_words></span> &nbsp;&nbsp;&nbsp;Characters: <span id=b
       </tmpl_if>
      </table>
    </td>
-       <td align="center" class="form-cell"><input type="button" value="Reorder" onClick='reorder()' class="button"></td>
+       <td align="center" class="form-cell"><tmpl_if no_reorder>&nbsp;<tmpl_else><input type="button" value="Reorder" onClick='reorder()' class="button"></tmpl_if></td>
        <td align="center" class="form-cell"><input type="button" value="Delete" onClick='remove_children()' class="button"></td>
    </tr>
 </table>

@@ -216,7 +216,10 @@ sub element_edit {
     
     # figure out list of slots that are reorderable
     my @avail_ord = grep { $children[$_-1]->reorderable } (1 .. @children);
-        
+       
+    # let the template know if none are reorderable so no button displayed
+    $template->param( no_reorder => 1 ) if not @avail_ord;
+ 
     foreach my $child (@children) {        
         push(@child_loop, {
                            form         => $child->input_form(
