@@ -261,8 +261,7 @@ deserialize_xml().  For details, see REQUIRED METHODS below.
 Adds a file to a data-set.  This is used by media to store media files
 in the data set.  The file argument must be the full path to the file
 on disk.  Path must be the destination path of the file within the
-archive.  The links array must contain a list of objects linked-to
-from the added object.
+archive.
 
 =cut
 
@@ -276,14 +275,6 @@ sub add {
     if ($object) {
         my ($class, $id) = _obj2id($object);
 
-        # register links if called with a from
-        if ($from) {
-            my ($from_class, $from_id) = _obj2id($from);
-            $self->{objects}{$from_class}{$from_id}{links} ||= [];
-            push(@{$self->{objects}{$from_class}{$from_id}{links}},
-                 [ $class, $id ]);
-        }
-        
         # been there, done that?
         return if $self->{objects}{$class}{$id}{xml};
 
@@ -441,14 +432,6 @@ sub _write_index {
             $writer->startTag('object');
             $writer->dataElement(id  => $id);
             $writer->dataElement(xml => $self->{objects}{$class}{$id}{xml});
-            if (my $links = $self->{objects}{$class}{$id}{links}) {
-                foreach my $link (@$links) {
-                    $writer->startTag('link');
-                    $writer->dataElement(class => $link->[0]);
-                    $writer->dataElement(id    => $link->[1]);
-                    $writer->endTag('link');
-                }
-            }
             if (my $files = $self->{objects}{$class}{$id}{files}) {
                 foreach my $file (@$files) {
                     $writer->dataElement(file => $file);
@@ -480,10 +463,6 @@ sub _load_index {
         my $class = $class_rec->{name};
         foreach my $object (@{$class_rec->{object}}) {
             $index{$class}{$object->{id}[0]} = { xml => $object->{xml}[0] };
-            if ($object->{link}) {
-                $index{$class}{$object->{id}[0]}{links} =
-                  [(map {[ $_->{class}[0], $_->{id}[0] ]} @{$object->{link}})];
-            }
             croak("index.xml refers to file '$object->{content}' which is ".
                   "not in the archive.")
               unless -e catfile($self->{dir}, $object->{content});
