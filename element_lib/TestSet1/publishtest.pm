@@ -1,4 +1,4 @@
-package TestSet1::publish_test;
+package TestSet1::publishtest;
 
 use strict;
 use warnings;

@@ -481,7 +481,7 @@ sub test_publish_category_per_page {
 
     my $category = $creator->create_category();
     my $story    = $creator->create_story(category => [$category],
-                                          class    => 'publish_test');
+                                          class    => 'publishtest');
 
     $story->checkout();
 
