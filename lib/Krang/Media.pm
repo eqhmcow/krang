@@ -436,7 +436,6 @@ sub _media_id_path {
         push(@media_id_path,$media_id);
     }
     push(@media_id_path,$media_id);
-
     return catdir(@media_id_path);
 }
 
@@ -532,6 +531,16 @@ sub save {
 	mkpath($new_path);
 	$new_path = catfile($new_path,$self->{filename});		
 	move($old_path,$new_path) || croak("Cannot create $new_path");
+
+        # move thumbnail too if exists
+        if ( -f catfile($self->{tempdir},$self->{filename}) ) {
+            $old_path = catfile($self->{tempdir},"t__".$self->{filename});
+            $new_path = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version});
+            mkpath($new_path);
+            $new_path = catfile($new_path,"t__".$self->{filename});               
+        move($old_path,$new_path) || croak("Cannot create $new_path");
+
+        }
     }
 
     # remove any existing media_contrib relatinships and save any new relationships
@@ -759,7 +768,7 @@ Returns the path to the thumbnail (if media is an image).  Valid image types are
 sub thumbnail_path {
     my $self = shift;
     my $root = KrangRoot;
-
+    my $filename = $self->{filename};
     if ($self->filename()) {
         my $mime_type = $self->mime_type();
         my $is_image;
@@ -771,7 +780,7 @@ sub thumbnail_path {
             }
         }
         if ($is_image) {    
-            my $path = catfile($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version},"t__".$self->{filename});
+            my $path = $self->{media_id} ? catfile($root,'data','media',Krang::Conf->instance,$self->_media_id_path,$self->{version},"t__".$filename) : catfile($self->{tempdir},"t__".$filename);
             if (not -f $path) {
                 my $img = Imager->new();
                 $img->open(file=>$self->file_path()) || croak $img->errstr();
