@@ -4,7 +4,7 @@ use warnings;
 use PBMM::meta;
 use PBMM::promo;
                                                                            
-use base 'Krang::ElementClass::Cover';
+use base 'Krang::ElementClass::TopLevel';
 
 sub new {
    my $pkg = shift;
