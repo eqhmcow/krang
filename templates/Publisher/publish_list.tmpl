@@ -1,0 +1,47 @@
+<tmpl_include /header.tmpl>
+
+<div class="dark-bar">Publish</div>
+
+
+<div class=form-head-thin>
+  <table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
+  <tr>
+    <td width=150><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
+    <td><tmpl_var title></td>
+  </tr>
+  </table>
+</div>
+
+<table border=1>
+
+<!-- stories loop -->
+<tmpl_loop stories>
+<tr>
+<td>ID=<tmpl_var id></td><td>URL=<tmpl_var url></td><td>TITLE=<tmpl_var title></td>
+</tr>
+</tmpl_loop>
+<!-- /stories loop -->
+</table>
+
+<div class=form-head-thin>
+  <table border=0 cellspacing=0 vspace=0 hspace=0 cellpadding=0 width=100%>
+  <tr>
+    <td width=150><b>Media</b>&nbsp;&nbsp;&nbsp;</td>
+    <td><tmpl_var title></td>
+  </tr>
+  </table>
+</div>
+
+<table border=1>
+
+<!-- media loop -->
+<tmpl_loop media>
+<tr>
+<td>ID=<tmpl_var id></td><td>URL=<tmpl_var url></td><td>TITLE=<tmpl_var title></td>
+</tr>
+</tmpl_loop>
+<!-- /media loop -->
+</table>
+
+
+<tmpl_include /footer.tmpl>
