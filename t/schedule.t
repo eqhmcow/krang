@@ -578,7 +578,7 @@ $date -= (ONE_HOUR * 36);
 # need to use different touch syntax for linux vs BSD.
 my $touch_string;
 
-if ($Config{osname} =~ /bsd/i) {
+if ($Config{osname} =~ /bsd|darwin/i) {
     my $timestamp = sprintf("%04i%02i%02i%02i%02i.00", $date->year, $date->mon,
                             $date->mday, $date->hour, $date->minute);
     $touch_string = sprintf("touch -t %s %s", $timestamp, $tmpfile);

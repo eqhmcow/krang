@@ -214,6 +214,7 @@ sub build_perl_module {
     # need to tell Makefile.PL where the expat libs are
     # we stashed their locations in verify_dependencies, above
     ( $name=~/XML-Parser/i ) and ( $cmd.=' EXPATLIBPATH='.$MacOSX::Platform::libFiles{'libexpat.dylib'}.' EXPATINCPATH='.$MacOSX::Platform::incFiles{'expat.h'} );
+    ( $name=~/Imager/i ) and ( $cmd = "IM_LIBPATH=$ENV{MACOSX_LIB} IM_INCPATH=$ENV{MACOSX_INC} $cmd" );
 
    if ($use_expect) {
         print "Running '$cmd'...\n";

@@ -1,84 +1,191 @@
-BUILDING KRANG ON MACOSX
 
-Building Krang (1.025-src) has been verified on MacOSX 10.3.5. 
-This does not mean that other versions will not work, but that they have not been tested.
+--------------------------------------
+A. BUILDING KRANG ON MAC OS X "PANTHER"
+--------------------------------------
 
-Version 4.0.21 of MySQL was used.
+The following instructions have been verified for Mac OS X v10.3.7, using
+the OS-default Perl 5.8.1-RC3 and MySQL 4.1.9 -- meaning that some other
+configurations may also work, but remain untested.
 
-Follow these steps:
+[ Krang has been known to build on Mac OS X v10.3.5 with a prior version of
+  these instructions, using the OS-default Perl 5.8.1 and MySQL 4.0.21. ]
 
-1.   Fix Apple's Config.pm
 
-     Edit the file /System/Library/Perl/5.8.1/darwin-thread-multi-2level/Config.pm
+-----------------------
+B. A SMALL NOTE ON FINK
+-----------------------
 
-         sudo vi /System/Library/Perl/5.8.1/darwin-thread-multi-2level/Config.pm 
+Users are encouraged (but not required) to install the Fink package manager
+-- and, optionally, its GUI front-end, FinkCommander -- to ease the burden
+of meeting the external dependencies absent from the base Mac OS X v10.3.x
+"Developer" CD install. For more information on Fink, see:
 
-     Modify the line:
+    http://fink.sourceforge.net/
 
-         ld='MACOSX_DEPLOYMENT_TARGET=10.3 cc' 
 
-     to read:
+---------------------------------
+C. EXTERNAL DEPENDENCY: MySQL 4.x
+----------------------------------
 
-         ld='env MACOSX_DEPLOYMENT_TARGET=10.3 cc'
+MySQL 4.x must be installed in order to build Krang. Although you may opt
+to use Fink for this, MySQL AB does provide a handy Mac OS X installer
+package that includes clear documentation of the installation and initial
+configuration process:
 
-2.   Install Dependent Libraries
+    http://dev.mysql.com/downloads/mysql/
 
-     Use a package management tool (eg. Fink http://fink.sourceforge.net/) to install
-     libraries needed by Krang, or install them by hand from source.
+However you choose to install MySQL 4.x, make certain that MySQL's bin/
+directory can be located during the Krang build process -- check that it
+has been exported properly within your shell's PATH variable or the Krang
+build process will fail.
 
-         sudo apt-get install libjpeg
-         sudo apt-get install libpng3
-         sudo apt-get install libexpat
-         sudo apt-get install libungif
 
-1.   Unpack the Distribution
+---------------------------------------------
+D. EXTERNAL DEPENDENCY: DEVELOPMENT LIBRARIES
+---------------------------------------------
 
-         tar -C /usr/local/src -zxf krang-1.025-src.tar.gz
+To build Krang, the following four libraries first must be installed:
 
-2.   Install the Platform File
+    1. libexpat
+    2. libjpeg
+    3. libpng3
+    4. libungif
 
-         mkdir /usr/local/src/krang-1.025-src/platform/MacOSX
-         cp Platform.pm /usr/local/src/krang-1.025-src/platform/MacOSX/
+Although you may choose to build these from source directly, Fink can
+handle these details for you -- either from the commandline:
 
-3.   Upgrade Scalar Utils Package
+    % sudo apt-get install libjpeg
+    % sudo apt-get install libpng3
+    % sudo apt-get install libexpat
+    % sudo apt-get install libungif
 
-     The version of the Scalar Utils package (1.09) that ships with Krang 1.025 
-     does not build properly on MacOSX. You can workaround this by upgrading to 
-     a more recent version.
+...or by selecting the libraries in FinkCommander for installation.
 
-         sudo perl -MCPAN -e shell
-         get Scalar::Util
-	 quit
-         rm /usr/local/src/krang-1.025-src/src/Scalar-List-Utils-1.09.tar.gz 
-         cp ~/.cpan/sources/authors/id/G/GB/GBARR/Scalar-List-Utils-1.14.tar.gz \
-             /usr/local/src/krang-1.025-src/src/
 
-4.   Point to Libraries and Includes
+---------------------------------------------
+E. EXTERNAL DEPENDENCY: FIX APPLE'S Config.pm
+---------------------------------------------
 
-     Use the MACOSX_LIB and MACOSX_INC environment variables to tell the krang
-     build process where your dependent libraries are installed, eg. /sw/lib and
-     /sw/include
+In order to install DBD::mysql during the Krang build process, you must
+first correct the Config.pm of Panther's Perl distribution. The nature of
+this fix is mentioned here:
 
-         export MACOSX_LIB=/sw/lib
-         export MACOSX_INC=/sw/include
+    http://www.mail-archive.com/macosx%40perl.org/msg05736.html
 
-5.   Build!
+Edit the file:
 
-         cd /usr/local/src/krang-1.025-src/
-         ./bin/krang_build
+    /System/Library/Perl/5.8.1/darwin-thread-multi-2level/Config.pm
 
-6.   Install!
+Such that the line reading:
 
-         sudo ./bin/krang_install --HostName krang              \
-                                  --IPAddress 10.0.1.19         \
-                                  --AdminPassword password      \
-                                  --DBUser krang                \
-                                  --DBPass password             \
-                                  --InstanceHostName krang      \
-                                  --InstanceDBName krang        \
-                                  --InstanceElementSet Default  \
-                                  --MySQLRootPassword password
+    ld='MACOSX_DEPLOYMENT_TARGET=10.3 cc'
 
-     Your options may vary.
- 
-NOTE: Support for a boot time startup script is not provided at this time.
+Reads as follows instead:
+
+    ld='env MACOSX_DEPLOYMENT_TARGET=10.3 cc'
+
+
+------------------------------------------------
+F. OBTAIN A LOCAL COPY OF THE KRANG DISTRIBUTION
+------------------------------------------------
+
+At the time of this writing, a few essential patches to Krang in support
+of Mac OS X compatibility were not part of any packaged distribution. So,
+you'll first need to obtain a local copy of Krang from its cvs repository:
+
+    % mkdir ~/Documents/sf.net
+    % cd ~/Documents/sf.net
+    % cvs -d:pserver:anonymous@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs login
+    <Press return when prompted for a password>
+    % cvs -d:pserver:anonymous@krang-cvs.thepirtgroup.com:/usr/local/krang-cvs co -P krang
+
+Next, copy the files obtained to a build directory and remove those which
+are cvs-specific:
+
+    % cd /usr/local/src
+    % sudo su root
+    <Enter administrator password if prompted>
+    # mkdir krang
+    # cd krang
+    # cp -R /Users/yourself/Documents/sf.net/krang/ .
+    # find . -name .cvsignore -delete
+    # find . -name CVS -type d -print | xargs rm -rf
+
+    [[ continued in STEP G ... ]] 
+
+----------------------------------------------------------
+G. EXPORT LIBRARY AND INCLUDE LOCATIONS AS SHELL VARIABLES
+----------------------------------------------------------
+
+The Platform.pm file for Mac OS X utilizes two environment variables,
+MACOSX_LIB and MACOSX_INC, to inform the Krang build process of where
+library and include dependencies are located. Populate and export these
+variables.
+
+For example, should you have used Fink to install the dependent libraries
+in STEP D above -- and Fink was itself installed to /sw -- execute the
+following commands:
+
+    [[ ... continued from STEP F ]]
+
+    # export MACOSX_LIB=/sw/lib
+    # export MACOSX_INC=/sw/include
+
+    [[ continued in STEP H ... ]] 
+
+
+----------------------------------
+H. EXECUTE THE KRANG BUILD PROCESS
+----------------------------------
+
+Time to build Krang:
+
+    [[ ... continued from STEP G ]]
+
+    # ./bin/krang_build MacOSX
+
+    [[ continued in STEP I ... ]]
+
+The build process takes approximately 10 minutes on a 1 GHz G4 PowerBook,
+to provide some notion of the time requirements. During the process, the
+build of DBI will complain that the Perl distributed with Mac OS X v10.3.x
+has threading enabled. This is to be expected.
+
+
+------------------------------
+I. EXECUTE THE INSTALL PROCESS
+------------------------------
+
+Provided that Krang successfully built at the completion of STEP H, it's
+now time to install Krang on your system. Note that the options included
+and their values will likely vary -- "perldoc ./bin/krang_install" to see
+which options and values are best for your own installation:
+
+    [[ ... continued from STEP H ]]
+
+    # ./bin/krang-install \
+        --HostName localhost \
+        --IPAddress 127.0.0.1 \
+        --AdminPassword ssapnimda \
+        --DBUser krang \
+        --DBPass gnark \
+        --InstanceHostName localhost \
+        --InstanceDBName krang \
+        --InstanceElementSet Default \
+        --MySQLRootPassword ssaplqsym \
+        --InstallPath /usr/local/krang
+
+The installation process should run smoothly, and on completion it's time
+to revert to your personal shell account:
+
+    # exit
+    %
+
+
+-----------------------------------
+J. MAC OS X POST-INSTALLATION NOTES
+-----------------------------------
+
+As of this writing, there is no built-in support for Krang startup upon
+boot for Mac OS X -- don't forget to restart Krang after reboot!
+
