@@ -11,12 +11,12 @@ use Pod::Usage;
 krang_fastfill - load krang with data as fast as possible.
 
 =head1 SYNOPSIS
-                                                                                  
+
   krang_fastfill --sites 5 --cats 50 --stories 100 --media 100 --contribs 100
-                                                                                  
+
 =head1 DESCRIPTION
-                                                                                  
-This script creates fake Krang data for benchmark and load testing.  
+
+This script creates fake Krang data for benchmark and load testing.
 It uses a base of 50 stories (40 articles, 10 covers), 1 site, 10 
 categories, and 50 media objects from a .kds file that is imported.
 
@@ -26,7 +26,7 @@ for new media.  This also helps normalize the database content by keeping
 media and stories semi-consistant in size.
 
 =head1 OPTIONS
-                                                                                  
+
   --sites    - number of sites to create, defaults and minimum of 1.
 
   --cats     - number of categories to create, defaults and minimum of 10
@@ -74,7 +74,7 @@ END
 
 use Krang::Script;
 use Krang::Category;
-use Krang::Conf qw(KrangRoot SiteServerPort ElementSet);
+use Krang::Conf qw(KrangRoot SiteServerPort InstanceElementSet);
 use Krang::Site;
 use Krang::Story;
 use Krang::Media;
@@ -127,8 +127,8 @@ my $media_index = 0;
 
 # make sure element set is supported
 if (($stories or $cats) and
-    (ElementSet ne 'TestSet1')) {
-    die "Unknown element set '" . ElementSet . "'.  I only know how to create stories and categories for 'TestSet1'.\n";
+    (InstanceElementSet ne 'TestSet1')) {
+    die "Unknown element set '" . InstanceElementSet . "'.  I only know how to create stories and categories for 'TestSet1'.\n";
 }
 
 
