@@ -96,10 +96,10 @@ $site5->save();
 my @sites = Krang::Site->find(url_like => '%.com%',
                               publish_path_like => '%/%',
                               order_by => 'url',
-                              order_desc => 'asc');
+                              order_desc => 1);
 is(scalar @sites, 4, 'find() - quantity');
 isa_ok($_, 'Krang::Site') for @sites;
-is($sites[0]->url(), 'testsite1.com', 'find() - ordering');
+is($sites[0]->url(), 'testsite5.com', 'find() - ordering');
 
 # count test
 my $count = Krang::Site->find(count => 1,
@@ -122,7 +122,7 @@ is($sites[0]->url() =~ /3/, 1, 'find() - ordering 2');
 @sites = Krang::Site->find(site_id => [@site_ids],
                            limit => 2,
                            offset => 1,
-                           order_desc => 'desc');
+                           order_desc => 1);
 is(scalar @sites, 2, 'find() - limit/offset 1');
 isa_ok($_, 'Krang::Site') for @sites;
 is($sites[0]->url() =~ /4/, 1, 'find - limit/offset 2');
