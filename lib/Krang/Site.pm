@@ -44,7 +44,6 @@ Krang::Site - a means to access information on sites
     publish_path_like => '%fred%',
     preview_url => 'preview',	  # match sites where preview_url is
 				  # 'preview'
-    publish_url => 'publish',
     site_id => 8,
     url_like => '%.com%' );
 
@@ -89,7 +88,7 @@ use Carp qw(croak);
 ###################
 use Krang::Category;
 use Krang::DB qw(dbh);
-use Krang::Log qw/affirm assert should shouldnt ASSERT/;
+use Krang::Log qw/ affirm assert should shouldnt ASSERT/;
 
 #
 # Package Variables
@@ -343,8 +342,6 @@ characters must surround the sub-string).  The valid search fields are:
 
 =item * publish_path
 
-=item * publish_url
-
 =item * site_id
 
 =item * url
@@ -456,7 +453,6 @@ sub find {
     } elsif ($offset) {
         $query .= " LIMIT $offset, -1";
     }
-
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
@@ -486,7 +482,6 @@ sub find {
 
     # finish statement handle
     $sth->finish();
-
     # return number of rows if count, otherwise an array of site ids or objects
     return $count ? $sites[0] : @sites;
 }
