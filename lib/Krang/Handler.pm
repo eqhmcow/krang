@@ -218,7 +218,7 @@ sub authen_handler ($$) {
 
     # Check for invalid session
     if ($@) {
-        die("Error loading session: $@");
+        debug("Error loading session: $@");
         return OK;
     }
 
