@@ -144,6 +144,7 @@ use Krang::Media;
 use Krang::Category;
 use Krang::Site;
 use Krang::Publisher;
+use Krang::Message qw(add_message);
 
 use Time::HiRes qw(gettimeofday tv_interval);
 
