@@ -1116,8 +1116,14 @@ sub find {
             $from{"category as c"} = 1;
             push(@where, 's.story_id = sc.story_id');
             push(@where, 'sc.category_id = c.category_id');
-            push(@where, 'c.site_id = ?');
-            push(@param, $value);
+            if (ref $args{$key} eq 'ARRAY') {
+                push(@where,
+                     'c.site_id IN (' . join(',', ('?') x @{$args{$key}}) . ')');
+                push(@param, @{$args{site_id}});
+            } else {
+                push(@where, 'c.site_id = ?');
+                push(@param, $value);
+            }
             next;
         }
 

@@ -812,6 +812,12 @@ is($change->url, 'storyzest.com/test_0/change');
     $ptest_count = Krang::Story->find(may_edit=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
     is($ptest_count, 1, "Hide un-editable story");
 
+    # confirm find by site_id as arrayref works.
+    $ptest_count = Krang::Story->find(site_id => [$site->site_id]);
+    is($ptest_count, 12, "find(site_id => [ids])");
+
+
+
     # Delete temp story
     for (reverse @stories) {
         $_->delete();
