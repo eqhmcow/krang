@@ -80,7 +80,7 @@ mail-sending scheduled jobs.
 
 =cut
 
-BEGIN {use constant DEBUG => $ENV{DEBUG} || 0;}
+BEGIN {use constant SCH_DEBUG => $ENV{SCH_DEBUG} || 0;}
 
 #
 # Pragmas/Module Dependencies
@@ -623,7 +623,7 @@ sub run {
         }
 
         # what do we do in case of a failure
-        if (DEBUG) {
+        if (SCH_DEBUG) {
             debug("[$now] Schedule object id '$obj->{schedule_id}' " .
                   "did something.");
         } else {

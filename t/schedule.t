@@ -6,7 +6,8 @@ use Time::Piece;
 
 use Krang::Script;
 
-
+# set debug flag
+$ENV{SCH_DEBUG} = 1;
 
 BEGIN {use_ok('Krang::Schedule');}
 
