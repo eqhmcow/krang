@@ -192,7 +192,7 @@ my @opt_params = qw( MySQLRootPassword
                      SMTPServer 
                      InstanceDisplayName );
 
-my %options = ( map { $_ => undef } @req_params, @opt_params);
+my %options = ( map { $_ => "" } @req_params, @opt_params);
 
 do_install();
 exit(0);
@@ -207,6 +207,8 @@ sub do_install {
 
     # Do installation
     check_prereqs();
+    do_perl_install() if ($do_perl_install);
+    do_mysql_install() if ($do_mysql_install);
     create_mysql_user();
     create_unix_user_group();
     install_krang();
@@ -262,24 +264,43 @@ sub check_prereqs {
             exit_error("MySQL version 4.* not installed.  Try again with --do-mysql-install");
         }
 
-        # MySQLRootPassword must be valid for this box
+        # MySQLRootPassword must be valid, and MySQL should be running
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
         my $test_mysql = qq/\/bin\/echo 'select "world" as hello' | $mysql_bin -uroot/;
-        $test_mysql .= " -p$MySQLRootPassword" if ($MySQLRootPassword);
-        $test_mysql .= ' && echo "### OK ###"';
+        $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+        $test_mysql .= " 2>&1";
         my $mysql_test_output = `$test_mysql`;
-        unless ($mysql_test_output =~ /\#\#\#\ OK\ \#\#\#/) {
-            exit_error("MySQL not running.  Start MySQL and try again.");
+
+        unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
+            print STDERR "$mysql_test_output";
+            if ($mysql_test_output =~ /ERROR 1045: Access denied/) {
+                exit_error("MySQLRootPassword '$MySQLRootPassword' is not valid");
+            } elsif ($mysql_test_output =~ /ERROR 2002: Can\'t connect/) {
+                exit_error("Can't connect to MySQL.  Start MySQL and try again.");
+            } else {
+                exit_error("Unable to verify MySQLRootPassword.");
+            }
+        }
+
+    }
+
+    my $perl_version = $Config{version};
+    my $archname = $Config{archname};
+    if ($do_perl_install) {
+        if (($perl_version eq '5.6.1') and ($archname eq 'i686-linux')) {
+            exit_error("Correct perl already installed!  Try again without --do-perl-install");
+        }
+    } else {
+        unless (($perl_version eq '5.6.1') and ($archname eq 'i686-linux')) {
+            exit_error("Wrong Perl version ($perl_version/$archname).  Try again with --do-perl-install");
         }
     }
 
-    unless ($do_perl_install) {
-        # Check for proper version of Perl.
-        #     Suggest ""--do-perl-install"" flag if not
-        #     installed.
-    }
-
     # InstallPath must NOT exist.
+    my $InstallPath = $options{InstallPath};
+    if (-e $InstallPath) {
+        exit_error("InstallPath '$InstallPath' already exists.  Cannot continue.");
+    }
 }
 
 
@@ -369,7 +390,7 @@ sub set_param_defaults {
     # Set up defaults if value is not otherwise set
     while (my ($k, $dv) = each(%defaults)) {
         # Skip if value already defined
-        next if ($options{$k});
+        next if (length($options{$k}));
 
         # Set default
         $options{$k} = $dv;
@@ -377,7 +398,7 @@ sub set_param_defaults {
 
     # Default instancedisplayname => $instancevirtualhost
     my $idn = "InstanceDisplayName";
-    unless ($options{$idn}) {
+    unless (length($options{$idn})) {
         $options{$idn} = $options{'InstanceVirtualHost'};
     }
 }
