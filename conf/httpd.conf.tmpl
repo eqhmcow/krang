@@ -143,6 +143,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
          PerlAuthenHandler Krang::Handler->authen_handler
          PerlAuthzHandler  Krang::Handler->authz_handler
          PerlLogHandler    Krang::Handler->log_handler
+         PerlCleanupHandler Apache::SizeLimit
          require           valid-user
 
          ErrorDocument 500 /<tmpl_var InstanceName>/bug.cgi?ise=1
@@ -167,6 +168,7 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
        PerlAuthenHandler Krang::Handler->authen_handler
        PerlAuthzHandler  Krang::Handler->authz_handler
        PerlLogHandler    Krang::Handler->log_handler
+       PerlCleanupHandler Apache::SizeLimit
        require valid-user
 
        ErrorDocument 500 /bug.cgi?ise=1

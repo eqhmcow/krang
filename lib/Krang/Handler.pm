@@ -83,11 +83,14 @@ use Digest::MD5 qw(md5_hex md5);
 use Krang::Log qw(critical info debug);
 use CGI ();
 use HTTP::BrowserDetect;
+use Apache::SizeLimit;
 
 # Login app name
 use constant LOGIN_APP => 'login.pl';
 
-
+# set max process size - this could go into krang.conf if we ever felt
+# like tweaking it
+$Apache::SizeLimit::MAX_PROCESS_SIZE  = 64000; # 64MB
 
 ##########################
 ####  PUBLIC METHODS  ####
