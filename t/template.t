@@ -40,6 +40,7 @@ $tmpl = Krang::Template->new(category_id => $category->category_id(),
                              content => '<blink><tmpl_var bob></blink>',
                              filename => 'bob.tmpl');
 isa_ok($tmpl, 'Krang::Template');
+isa_ok($tmpl->creation_date, 'Time::Piece');
 
 # test category meth
 my $cat = $tmpl->category;
@@ -144,6 +145,7 @@ my @ids = ($tmpl->template_id(), $tmpl2->template_id());
 
 my $i = 1;
 my @tmpls = Krang::Template->find(template_id => \@ids);
+ok(@tmpls);
 is (ref $_, 'Krang::Template', "Find - template_id " . $i++) for @tmpls;
 
 my $count = Krang::Template->find(count => 1, template_id => \@ids);
@@ -151,6 +153,7 @@ is($count, scalar @ids, "Find - count");
 
 $i = 2;
 my @tmpls2 = Krang::Template->find(creation_date_like => '%2003%');
+ok(@tmpls2);
 is(ref $_, 'Krang::Template', "Find - _like " . $i++) for @tmpls2;
 
 my ($tmpl4) = Krang::Template->find(limit => 1,
@@ -162,6 +165,7 @@ is($tmpl4->filename(), 't_w_c.tmpl', "Find - limit, offset, order_by");
 my @tmpls5 = Krang::Template->find(order_desc => 1,
                                    creation_date_like => '%2003%',
                                    category_id => $category->category_id);
+ok(@tmpls5);
 isa_ok($_, 'Krang::Template') for @tmpls5;
 is($tmpls5[0]->filename(), 't_w_c.tmpl', "Find - ascend/descend");
 
