@@ -18,7 +18,7 @@ CREATE TABLE media (
   creation_date datetime default NULL,
   media_type_id int(10) unsigned default NULL,
   published_version int(10) unsigned default NULL,
-  published_date datetime default NULL,
+  publish_date datetime default NULL,
   checked_out_by int(10) unsigned default NULL,
   PRIMARY KEY  (media_id),
   KEY category_id (category_id),

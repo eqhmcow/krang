@@ -23,7 +23,7 @@ use File::Temp qw/ tempdir /;
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
-use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag published_version published_date checked_out_by);
+use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag published_version publish_date checked_out_by);
 use constant IMAGE_TYPES => qw(image/png image/gif image/jpeg image/tiff image/x-bmp);
 
 # setup exceptions
@@ -218,7 +218,8 @@ use Krang::MethodMaker
                           alt_tag 
                           version 
                           checked_out_by 
-                          published_version 
+                          published_version
+                          publish_date
                           caption copyright 
                           notes 
                           media_type_id 
@@ -228,7 +229,6 @@ use Krang::MethodMaker
     get => [ qw( 
                 media_id 
                 creation_date 
-                published_date 
                 may_see 
                 may_edit
                ) ];
@@ -514,8 +514,11 @@ sub file_size {
 
 =item $media->save()
 
+=item C<< $media->save(keep_version => 1) >>
+
 Commits media object to the database. Will set media_id to unique id
-if not already defined (first save).
+if not already defined (first save). Increments the version number unless 
+called with 'keep_version' set to 1.
 
 If this media object has the same URL as an existing object then
 save() will throw a Krang::Media::DuplicateURL exception with a
@@ -532,6 +535,7 @@ user does not otherwise have access to edit the media.
 
 sub save {
     my $self = shift;
+    my %args = @_;
     my $dbh = dbh;
     my $root = KrangRoot;
     my $media_id;
@@ -563,10 +567,17 @@ sub save {
         my @save_fields = grep {($_ ne 'media_id') && ($_ ne 'creation_date')} FIELDS;
 
         # update version
-        $self->{version} = $self->{version} + 1;
-        
+        $self->{version} = $self->{version} + 1 unless $args{keep_version};
+
+        # format publish_date for mysql
+        my $old_pub_date = $self->{publish_date} || undef;
+        $self->{publish_date} = $self->{publish_date}->mysql_datetime if $self->{publish_date};
+    
         my $sql = 'UPDATE media SET '.join(', ',map { "$_ = ?" } @save_fields).' WHERE media_id = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$media_id);
+
+        # reformat 
+        $self->{publish_date} = $old_pub_date if $old_pub_date;
 
 	# this file exists, new media was uploaded. copy to new position
 	if ($self->{tempfile}) {
@@ -574,7 +585,7 @@ sub save {
            my $new_path = $self->file_path;
 	   mkpath((splitpath($new_path))[1]);     
 	   move($old_path,$new_path) || croak("Cannot move to $new_path");	
-	} else {
+	} elsif (not $args{keep_version}) {
 	    # symbolically link to version dir, since it isnt changing 
             $self->{version}--;
 	    my $old_path = $self->file_path;
@@ -596,7 +607,7 @@ sub save {
 
         # make date readable
         $self->{creation_date} = Time::Piece->from_mysql_date( $self->{creation_date} );
-	
+        	
         $self->{media_id} = $dbh->{mysql_insertid};
 
         $media_id = $self->{media_id};
@@ -615,12 +626,13 @@ sub save {
     }
 
 
-    # save a copy in the version table
-    my $serialized; 
-    eval { $serialized = freeze($self); };
-    croak ("Unable to serialize object: $@") if $@;
-    $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
-
+    unless ($args{keep_version}) {
+        # save a copy in the version table
+        my $serialized; 
+        eval { $serialized = freeze($self); };
+        croak ("Unable to serialize object: $@") if $@;
+        $dbh->do('INSERT into media_version (media_id, version, data) values (?,?,?)', undef, $media_id, $self->{version}, $serialized);
+    }
 
     add_history(    object => $self,
                     action => 'new',
@@ -977,7 +989,7 @@ not $valid_params{$param};
 
             # make dates into Time::Piece objects
             foreach my $date_field (grep { /_date$/ } keys %$obj) {
-                next unless defined $obj->{$date_field};
+                next unless ((defined $obj->{$date_field}) and ( $obj->{$date_field} ne '0000-00-00 00:00:00'));
                 $obj->{$date_field} = Time::Piece->from_mysql_datetime($obj->{$date_field});
             }
 
@@ -1449,7 +1461,7 @@ sub deserialize_xml {
 
     # divide FIELDS into simple and complex groups
     my (%complex, %simple);
-    @complex{qw(media_id filename published_date creation_date checked_out_by
+    @complex{qw(media_id filename publish_date creation_date checked_out_by
                 version published_version category_id)} = ();
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
     

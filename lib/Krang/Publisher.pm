@@ -83,6 +83,7 @@ use File::Spec::Functions;
 use File::Copy qw(copy);
 use File::Path;
 use File::Temp qw(tempdir);
+use Time::Piece;
 
 use Krang::Conf qw(KrangRoot instance);
 use Krang::Story;
@@ -300,6 +301,8 @@ sub publish_story {
             # update published_version
             $object->checkout if (not ($object->checked_out));
             $object->published_version( $object->version );
+            my $t = localtime;
+            $object->publish_date( $t );
             $object->save( keep_version => 1 );
 
             # check the object back in.
@@ -307,6 +310,16 @@ sub publish_story {
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object);
         }
+
+        # update published_version
+        $object->checkout if (not ($object->checked_out));
+        $object->published_version( $object->version );
+        my $t = localtime;
+        $object->publish_date( $t );
+        $object->save( keep_version => 1 );
+                                                                                  
+        # check the object back in.
+        if ($object->checked_out()) { $object->checkin(); }
     }
 }
 
