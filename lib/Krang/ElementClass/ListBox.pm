@@ -2,8 +2,7 @@ package Krang::ElementClass::ListBox;
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
-use Storable qw(freeze thaw);
+use base 'Krang::ElementClass::Storable';
 use Carp qw(croak);
 
 use Krang::MethodMaker
@@ -42,21 +41,6 @@ sub load_query_data {
     $element->data([$query->param($param)]);
 }
 
-sub thaw_data {
-    my $class = shift;
-    my %arg = @_;
-    my ($element, $data) = @arg{qw(element data)};
-    eval { $element->data($data ? thaw($data) : []) };
-    croak("Problem thawing data '$data': $@") if $@;
-}
-
-sub freeze_data {
-    my $element = $_[2];
-    my $ret;
-    eval { $ret = freeze($element->data || []) };
-    croak("Problem freezing data: $@") if $@;
-    return $ret;
-}
 
 
 =head1 NAME
