@@ -45,6 +45,10 @@ a:active          {
   padding:          2px;
 }
 
+.dark-bar a { 
+  color:            #FFFFFF;
+}
+
 .button-bar {
   background-color: #98ccfe;
   color:            #333333;
@@ -80,18 +84,30 @@ a:active          {
   padding:        5px;
 }
 
+.tight-form-box {
+  border:         1px solid #e2e1e7;
+}
+
 .alert {
   color:          red;
   font-weight:    bold;
 }
 
-/*** prettier buttons ([type="button"] only works in Mozilla...) ***/
-input {
+/*** prettier buttons only works in Mozilla...) ***/
+input[type="button"] {
+  color:            #003466;
+  background-color: #FFFFFF;
+}
+
+input[type="reset"] {
   color:            #003466;
   background-color: #FFFFFF;
 }
 
 /*** form field classes ***/
+.invalid { 
+    background-color: #FFFF99 
+}
 .invalid textarea { 
     background-color: #FFFF99 
 }
