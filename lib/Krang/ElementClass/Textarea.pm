@@ -56,7 +56,7 @@ The number of rows in the textarea box.  Defaults to 4.
 
 =item cols
 
-The number of columns in the textarea box.  Defaults to 40.
+The number of columns in the textarea box.  Defaults to 30.
 
 =back
 
