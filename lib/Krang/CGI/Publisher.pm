@@ -70,6 +70,8 @@ sub publish_story {
     $query->delete('story_id');
 
     my ($story) = Krang::Story->find(story_id => $story_id);
+    croak("Unable to load story for story_id '$story_id'")
+      unless $story;
 
     my $t = $self->load_tmpl('publish_list.tmpl',
                              associate => $query,
@@ -406,17 +408,20 @@ sub _build_asset_list {
     my $self = shift;
     my ($story_list, $media_list) = @_;
 
-    my $publish_list;
+    my $publish_list = [];
     my @stories = ();
     my @media = ();
 
     my $publisher = Krang::Publisher->new();
 
     # retrieve all stories linked to the submitted list.
-    $publish_list = $publisher->get_publish_list(story => $story_list) if @$story_list;
-
+    push(@{$publish_list}, 
+         @{$publisher->get_publish_list(story => $story_list)})
+      if $story_list and @$story_list;
+    
     # add previously submitted media objects to the list.
-    push @{$publish_list}, @$media_list if (@$media_list);
+    push(@{$publish_list}, @$media_list)
+      if $media_list and @$media_list;
 
     # iterate over asset list to create display list.
     foreach my $asset (@$publish_list) {
