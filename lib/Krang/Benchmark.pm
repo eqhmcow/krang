@@ -170,8 +170,6 @@ sub start_benchmark {
 
 =over
 
-=item Write krang_bench!
-
 =back
 
 =cut
