@@ -111,8 +111,9 @@ for(1 .. $cats) {
 # get a random word
 BEGIN {
     my @words;
-    open(WORDS, "/usr/dict/words") or open(WORDS, "/usr/share/dict/words") or
-      or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
+    open(WORDS, "/usr/dict/words") 
+      or open(WORDS, "/usr/share/dict/words")
+        or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
     while (<WORDS>) {
         chomp;
         push @words, $_;
