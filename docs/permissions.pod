@@ -42,7 +42,7 @@ Sites, and the categories (e.g., directories) within each site.
 
 =item 2. Assets
 
-Includes four classes of applications: Story, Media, Templates, and Admin.
+Includes three classes of assets: Story, Media, and Templates
 
 
 =item 3. Desks
@@ -386,6 +386,57 @@ it is recommended that the Krang instance be shut down first.
 
 =item * Assets
 
+In Krang, "assets" refer to stories, media, or templates.  Permissions
+are assigned independently to these three different asset types, for
+each group.
+
+For each asset type, a group may be granted "edit", "read-only", or
+"hide" access.  These asset permission settings are implemented as
+enumerated fields in the "permission_groups" table, and are made
+available via the session system, in the following keys which each
+contain Boolean ("1" or "0") values:
+
+  $session{permissions}->{may_edit_story};
+  $session{permissions}->{may_see_story};
+
+  $session{permissions}->{may_edit_media};
+  $session{permissions}->{may_see_media};
+
+  $session{permissions}->{may_edit_template};
+  $session{permissions}->{may_see_template};
+
+Functionally, there are two significant differences between asset
+permissions and category permissions.  The first difference is that
+asset permissions affect the whole class, where category permissions
+are particular to an individual object.
+
+For example, if a user has "read-only" access to media, the
+Krang::Media methods which require "edit" access will croak() when
+called.  This methods include:
+
+  save()
+  delete()
+  checkout()
+  checkin()
+
+This methods should all croak() if "may_edit_media" is false.
+
+The second difference between category and asset permissions is that
+"hide" permissions for a particular asset class have no effect on
+the behavior of the find() method.  Unlike category permissions which
+will automatically hide results if a user has "hide" access to a
+category which contains a particular object, all objects will be
+returned by find() even if a user has "hide" for the asset type.
+
+The reason for this is because quite a lot of functionality in Krang
+requires access to find().  For example, a user with access to see or
+edit stories must be able to see the media associated with the
+stories.  If the behavior of find() were modified to hide all media,
+the story interface would break.
+
+Instead, the semantics of "hide" with regards to assets will be that
+the web interfaces to managing the hidden assets will be removed from
+view.  This is discussed more in the UI section of this document.
 
 
 =item * Desks

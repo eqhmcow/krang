@@ -181,10 +181,6 @@ sub init {
     my $self = shift;
     my %args = ( @_ );
 
-    # Get list of root categoies and all desks, for permissions
-    my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
-    my @all_desks = ();   # NOT YET IMPLEMENTED -- Krang::Desk->find(ids_only=>1)
-
     # Set up default values
     my %defaults = (
                     name => "",
@@ -201,9 +197,19 @@ sub init {
                     asset_story         => 'edit',
                     asset_media         => 'edit',
                     asset_template      => 'edit',
-                    categories          => { map { $_ => "edit" } @root_cats },
-                    desks               => { map { $_ => "edit" } @all_desks },
                    );
+
+    # Set up defaults for category and desk permissions
+    my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
+    my %categories = ( map { $_ => "edit" } @root_cats );
+    $args{categories} = {} unless (exists($args{categories}));
+    %{$args{categories}} = (%categories, %{$args{categories}});
+
+    my @all_desks = ();   # NOT YET IMPLEMENTED -- Krang::Desk->find(ids_only=>1)
+    my %desks = ( map { $_ => "edit" } @all_desks );
+    $args{desks} = {} unless (exists($args{desks}));
+    %{$args{desks}} = (%desks, %{$args{desks}});
+
 
     # finish the object
     $self->hash_init(%defaults, %args);

@@ -136,20 +136,20 @@ is($group->group_id, "1", "Test find(group_id=>1)");
 
 
 # Test save
-my $unique_str = time();
+my $unique_group_name = "Test ". time();
 $group = Krang::Group->new();
-$group->name("Test $unique_str");
+$group->name($unique_group_name);
 eval { $group->save(); };
 ok(not($@), "Save without die");
 die ($@) if ($@);
 ok(($group->group_id > 0), "Create and save new group");
 
 # Test create non-unique name
-eval { Krang::Group->new(name=>"Test $unique_str")->save() };
+eval { Krang::Group->new(name=>$unique_group_name)->save() };
 like($@, qr(duplicate group name), "Test create non-unique name");
 
 # Test load new save
-my ($load_group) = Krang::Group->find(name=>"Test $unique_str");
+my ($load_group) = Krang::Group->find(name=>$unique_group_name);
 ok(ref($load_group), "Can load new group");
 
 # Test delete
@@ -158,14 +158,41 @@ ok(not($@), "Delete without die");
 die ($@) if ($@);
 
 # Try to load deleted group
-($load_group) = Krang::Group->find(name=>"Test $unique_str");
+($load_group) = Krang::Group->find(name=>$unique_group_name);
 ok(not(ref($load_group)), "Can't find deleted object");
 
 
+# Test saving category & desk permissions
+$group = Krang::Group->new(
+                           name       => $unique_group_name, 
+                           desks      => { 222 => "hide" }, 
+                           categories => { 333 => "hide", 2 => "hide" },
+                          );
+$group->save();
+my ($load_group) = Krang::Group->find(name=>$unique_group_name);
+is($load_group->categories("333"), "hide", "Category permissions saved correctly");
+is($load_group->categories("2"), "hide", "Category permissions default override");
+is($load_group->desks("222"), "hide", "Desk permissions saved correctly");
 
-####  TO-DO:  Test saving category & desk permissions
-####          Test invalid security levels
 
+# Test invalid security levels
+$load_group->desks("666"=>"no_such_permission");
+eval { $load_group->save() };
+like($@, qr(Invalid security level 'no_such_permission' for desk_id '666'), "Die on invalid desk security level");
+$load_group->desks_delete("666");
+
+$load_group->categories("777"=>"no_such_permission");
+eval { $load_group->save() };
+like($@, qr(Invalid security level 'no_such_permission' for category_id '777'), "Die on invalid category security level");
+$load_group->categories_delete("777");
+
+# Test x_delete MethodMaker hash method
+eval { $load_group->save() };
+ok(not($@), "desks_delete() and categories_delete()");
+die ($@) if ($@);
+
+# Remove test group -- we're done.
+$load_group->delete();
 
 
 
