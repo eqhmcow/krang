@@ -4,6 +4,7 @@ use warnings;
 use Krang::Script;
 BEGIN { ok(1) }
 use Krang::Session qw(%session);
+BEGIN { Krang::Session->create(); }
 
 # loading Krang should provide a session
 my $id = $session{_session_id};

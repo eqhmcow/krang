@@ -48,7 +48,7 @@ BEGIN {
 use Krang::ErrorHandler;
 use Krang::Conf qw(KrangUser KrangGroup KrangRoot);
 use Krang::Log qw(debug critical);
-use Krang::Session qw(%session);
+# use Krang::Session qw(%session);
 use Carp qw(croak);
 
 BEGIN {
@@ -106,7 +106,7 @@ BEGIN {
     debug("Krang.pm:  Setting instance to '$instance'");    
     Krang::Conf->instance($instance);
   
-    my $session_id = Krang::Session->create();
+    # my $session_id = Krang::Session->create();
 
     # get a user_id from REMOTE_USER or default to 1
     unless (exists($ENV{REMOTE_USER})) {
@@ -117,8 +117,8 @@ BEGIN {
 }
 
 # arrange for session to be deleted at process end
-END { 
-    Krang::Session->delete();
-}
+# END { 
+#    Krang::Session->delete();
+# }
 
 1;
