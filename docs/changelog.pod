@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Bugfixes to L<Krang::Schedule> - checked out or missing objects will
+no longer drop large perl-heavy error messages in the logs.  Thanks
+for Michael Peters for the initial work to fix it.  [Peter]
+
+=item *
+
 Fixed a bug in L<Krang::Publisher> - zero-length story output is now
 output properly, with a logfile entry to make a note of it.  [Peter]
 

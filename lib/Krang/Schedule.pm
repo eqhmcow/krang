@@ -502,11 +502,20 @@ sub determine_priority {
 
 =item C<< $schedule->execute() >>
 
-Runs the task assigned to the C<$schedule> object.  It is assumed that C<execute()> is not being called unless it's appropriate for the job to run at the current time - there is no timestamp sanity checking going on here.
+Runs the task assigned to the C<$schedule> object.  It is assumed that
+C<execute()> is not being called unless it's appropriate for the job
+to run at the current time - there is no timestamp sanity checking
+going on here.
 
-When completed, it will update it's own C<next_run> status as applicable.
+When completed, it will update it's own C<next_run> status as
+applicable.
 
-Runtime errors (e.g. croaks) are not trapped here - they will be propegated up to the next level.
+Runtime errors (e.g. croaks) are not trapped here - they will be
+propegated up to the next level.
+
+B<NOTE>: C<publish> and C<expire> actions require the affected story
+or media object to be checked in, or the task will return with an
+error message.
 
 =cut
 
@@ -514,16 +523,36 @@ sub execute {
 
     my $self = shift;
 
-    if ($self->{action} eq 'publish') {
-        $self->_publish();
-    }
+    if ($self->{action} eq 'publish' ||
+        $self->{action} eq 'expire'  ||
+        $self->{action} eq 'send') {
 
-    elsif ($self->{action} eq 'expire') {
-        $self->_expire();
-    }
+        # check to make sure the object exists.
+        if ($self->_object_exists) {
+            if ($self->_object_checked_out) {
+                info(sprintf("%s->execute(): Cannot run Schedule id '%i'.  %s id='%i' is checked out.",
+                             __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
+                return;
+            }
+        } else {
+            info(sprintf("%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found.  Deleting scheduled job.",
+                         __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
+            $self->delete();
+        }
 
-    elsif ($self->{action} eq 'send') {
-        $self->_send();
+
+
+
+        if ($self->{action} eq 'publish') {
+            $self->_publish();
+        }
+
+        elsif ($self->{action} eq 'expire') {
+            $self->_expire();
+        }
+        elsif ($self->{action} eq 'send') {
+            $self->_send();
+        }
     }
 
     elsif ($self->{action} eq 'clean') {
@@ -578,63 +607,42 @@ sub _publish {
 
     my $publisher = new Krang::Publisher;
 
-    my $type = $self->object_type();
-    my $id   = $self->object_id();
+    my $object = $self->{object};
     my $err;
-    my %context = defined($self->{context}) ? @{$self->{context}} : ();
 
-    if ($type eq 'media') {
-        my @media = Krang::Media->find(media_id => $id, %context);
-
-        unless (@media) {
-            my $msg = sprintf("%s->_publish(): Can't find Media id '%i', skipping publish.",
-                              __PACKAGE__, $id);
-            die($msg);
-        }
-
+    if ($object->isa('Krang::Media')) {
         eval {
-            $publisher->publish_media(media => \@media);
+            $publisher->publish_media(media => $object);
         };
 
-        if (my $err = $@) {
-            my $msg = __PACKAGE__ . "->_publish(): error publishing Media ID=$id: $err";
+        if ($err = $@) {
+            my $msg = sprintf("%s->_publish(): error publishing Media ID=%i: %s",
+                              __PACKAGE__, $object->media_id, $err);
             die $msg;
         }
     }
-    elsif ($type eq 'story') {
 
-        my @stories = Krang::Story->find(story_id => $id, %context);
-
-        unless (@stories) {
-            my $msg = sprintf("%s->_publish(): Can't find Story id '%i', skipping publish.",
-                              __PACKAGE__, $id);
-            die($msg);
-        }
-
-        # Some stories may have scheduled publishing turned off.
-        my @story_publish;
-
-        foreach my $s (@stories) {
-            if ($s->element->publish_check()) {
-                push @story_publish, $s;
-            } else {
-                debug(sprintf("%s->_publish(): Story id '%i' has scheduled publish disabled.  Skipping.",
-                              __PACKAGE__, $s->story_id()));
-            }
+    elsif ($object->isa('Krang::Story')) {
+        # check to make sure scheduled publish isn't disabled
+        unless ($object->element->publish_check) {
+            debug(sprintf("%s->_publish(): Story id '%i' has scheduled publish disabled.  Skipping.",
+                          __PACKAGE__, $object->story_id()));
+            return;
         }
 
         eval {
-            $publisher->publish_story(story => \@story_publish, version_check => 0);
+            $publisher->publish_story(story => $object, version_check => 0);
         };
 
         if (my $err = $@) {
-            my $msg = __PACKAGE__ . "->_publish(): error publishing Story ID=$id: $err";
+            my $msg = sprintf("%s->_publish(): error publishing Story ID=%i: %s",
+                              __PACKAGE__, $object->story_id, $err);
             die $msg;
         }
 
     }
-
 }
+
 
 
 #
@@ -649,24 +657,11 @@ sub _publish {
 sub _expire {
 
     my $self = shift;
+    my $obj = $self->{object};
 
-    my $object_type = $self->object_type;
-    my $object_id   = $self->object_id;
-    my $class       = "Krang::" . ucfirst($object_type);
-
-    my ($obj) = $class->find($object_type . '_id' => $object_id);
-
-    unless ($obj) {
-        my $msg = sprintf("%s->_expire(): Can't find %s id '%i', skipping expiration.",
-                          __PACKAGE__, $class, $object_id);
-
-        die($msg);
-
-    } else {
-        $obj->delete;
-        debug(__PACKAGE__ . "->_expire(): Deleted $class id '$object_id'.");
-    }
-
+    $obj->delete;
+    debug(sprintf("%s->_expire(): Deleted %s id '%i'.",
+                 __PACKAGE__, $self->{object_type}, $self->{object_id}));
 
 }
 
@@ -1377,8 +1372,82 @@ sub _test_date {
 }
 
 
+#
+# check to confirm that the object associated with the schedule job still exists.
+# if so, save it in $self->{object}.
+#
+# return 1 if the object exists.
+# return 0 if the object does not exist.
+#
 
+sub _object_exists {
+    my $self = shift;
 
+    my $object;
+
+    if ($self->{action} eq 'send') {
+        # object is saved in the context hash.
+
+    } else {
+        my $type = $self->object_type();
+        my $id   = $self->object_id();
+        my %context = defined($self->{context}) ? @{$self->{context}} : ();
+
+        if ($type eq 'media') {
+            ($object) = Krang::Media->find(media_id => $id, %context);
+        } elsif ($type eq 'story') {
+            ($object) = Krang::Story->find(story_id => $id, %context);
+        } else {
+            my $msg = sprintf("%s: unknown object type '%s'", __PACKAGE__, $type);
+            die $msg;
+        }
+    }
+
+    if ($object) {
+        $self->{object} = $object;
+        return 1;
+    }
+
+    return 0;
+
+}
+
+#
+# _object_checked_out
+#
+# confirms that the object associated with the job is not checked out.
+#
+# returns 0 if the object is not checked out (or doesn't need to be).
+# returns 1 if the object is checked out, or otherwise inaccessible.
+#
+
+sub _object_checked_out {
+
+    my $self = shift;
+
+    my $object;
+
+    if ($self->{object}) {
+        $object = $self->{object};
+    }
+    else {
+        # might not have been found yet.
+        if ($self->_object_exists) {
+            $object = $self->{object};
+        } else {
+            return 0;
+        }
+    }
+
+    # return checked_out status if possible.
+    if ($object->can('checked_out')) {
+        return $object->checked_out;
+    }
+
+    # not an issue if the object cannot be checked out.
+    return 0;
+
+}
 
 =back
 
