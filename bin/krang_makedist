@@ -119,6 +119,7 @@ sub create_cvs_tag {
     print "Checking for CVS tag '$ver_string'...\n";
     if (cvs_tag_exists($ver_string)) {
         print STDERR <<EOT;
+
 Error: TAG EXISTS!
 
 It appears that Krang has already been tagged with '$ver_string'.  This 
@@ -176,18 +177,19 @@ sub exclude_directories {
 
 
 sub create_tarball {
-    my $export_dir = get_export_dir();
-
-    my $ver_string = get_ver_string();
-
     # Go to working dir
+    my $export_dir = get_export_dir();
     chdir($export_dir);
 
-    my $tarball_file = get_tarball_file_name();
+    my $dist_file = get_dist_file_name();
+    my $tarball_file = $dist_file .".tar.gz";
     my $krang_root = $ENV{KRANG_ROOT};
 
+    # Rename exported directory to version-style
+    print STDERR `mv krang $dist_file`;
+
     print "Creating tarball '$tarball_file'...\n";
-    print STDERR `tar czf $tarball_file krang/*`;
+    print STDERR `tar czf $tarball_file $dist_file/*`;
 
     print "Done.  Copying tarball to $krang_root\n";
     print STDERR `cp $tarball_file $krang_root`;
@@ -202,7 +204,7 @@ sub cleanup_makedist {
 
 
 sub output_report {
-    my $tarball_file = get_tarball_file_name();
+    my $tarball_file = get_dist_file_name() .".tar.gz";
     my $krang_root = $ENV{KRANG_ROOT};
     print <<EOF;
 
@@ -219,9 +221,9 @@ EOF
 ####  IMPLEMENTATION  ####
 ##########################
 
-# Return the name of the tarball
-sub get_tarball_file_name {
-    return "krang-". $krang_version .".tar.gz";
+# Return the name of the dist file/directory
+sub get_dist_file_name {
+    return "krang-". $krang_version;
 }
 
 
@@ -249,5 +251,3 @@ sub cvs_tag_exists {
     # No output == tag exists
     return not($tagcheck_output);
 }
-
-

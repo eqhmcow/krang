@@ -16,6 +16,14 @@
 #
 #   elements - rebuild test element trees in t/elements from Bricolage 
 #              sources in t/eloader
+#
+#   dist  - build a Krang distribution for release
+#
+#   install - install Krang from a distribution
+#
+#   upgrade - upgrade an existing Krang installation from a distribution
+#
+
 
 all:
 	@echo "Krang Makefile:  You're probably looking for 'make db' or 'make test'"
@@ -54,6 +62,9 @@ elements:
 	bin/krang_bric_eloader --set LA --xml t/eloader/LA.xml
 	bin/krang_bric_eloader --set NYM --xml t/eloader/NYM.xml
 	bin/krang_bric_eloader --set Bric_Default --xml t/eloader/Bric_Default.xml
+
+dist:
+	bin/krang_makedist
 
 
 .PHONY : all test clean TAGS bench docs bench_clean elements
