@@ -14,11 +14,6 @@ use Krang::Conf qw(KrangRoot);
 use Krang::Session;
 use Krang::DB qw(dbh);
 
-# 1. make sure that the scheduling daemon is actually running
-# 2. schedule a story publish and deletion
-# 3. sleep for the requisite period of time
-# 4. verify everything worked ala publish.t
-
 BEGIN {
     # only start if the schedule daemon is actually running....
 
