@@ -562,6 +562,8 @@ sub find {
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
         } else {
+            my $and = defined $where_clause && $where_clause ne '' ?
+              ' AND' : '';
             $where_clause .= $like ? " $lookup_field LIKE ?" :
               " $lookup_field = ?";
             push @params, $args{$arg};

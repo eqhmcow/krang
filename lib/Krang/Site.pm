@@ -76,6 +76,7 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
+use Data::Dumper;
 use Time::Piece::MySQL;
 
 # Internal Modules
@@ -295,7 +296,7 @@ The method croaks if an invalid search criteria is provided or if both the
 
 sub find {
     my $self = shift;
-    my %args = shift;
+    my %args = @_;
     my ($fields, @params, $where_clause);
 
     # grab ascend/descending, limit, and offset args
@@ -332,7 +333,9 @@ sub find {
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
         } else {
-            $where_clause .= $like ? " $lookup_field LIKE ?" :
+            my $and = defined $where_clause && $where_clause ne '' ?
+              ' AND' : '';
+            $where_clause .= $like ? "$and $lookup_field LIKE ?" :
               " $lookup_field = ?";
             push @params, $args{$arg};
         }
