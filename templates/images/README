@@ -1,0 +1,9 @@
+These files are processed by Krang::Skin to produce the images in
+htdocs/images.  They undergo a conversion which replaces transparent
+sections with the configured background color, red with light_color,
+green with bright_color and blue with dark_color.  
+
+You can also blend the colors and the result will be a blend between
+the configured colors.  For example, arrow-asc.gif blends from
+light_color to dark_color by blending red and blue in the source
+image.
