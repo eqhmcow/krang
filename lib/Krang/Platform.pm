@@ -105,7 +105,8 @@ END
     my @incs = ($Config{usrinc}, '/include', '/usr/local/include');
     
     # look for Expat
-    unless (grep { -e catfile($_, 'libexpat.so') } @libs) {
+    unless (grep { -e catfile($_, 'libexpat.so') } @libs or
+            grep { -e catfile($_, 'libexpat.so.0') } @libs) {
         die <<END;
 
 Expat XML parser library not found.  Install expat
@@ -229,7 +230,7 @@ sub build_perl_module {
     # We only want the libs, not the executables or man pages
     if ($use_expect) {
         my $command =
-          Expect->spawn("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir MAN1PODS=\\{\\} MAN3PODS=\\{\\}");
+          Expect->spawn("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir");
         
         # setup command to answer questions modules ask
         my @responses = qw(n n n n n y !);
@@ -269,7 +270,7 @@ sub build_perl_module {
     } else {
         # do it without Expect for IO-Tty and Expect installation.
         # Fortunately they don't ask any questions.
-        system("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir MAN1PODS=\\{\\} MAN3PODS=\\{\\}") == 0 
+        system("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir") == 0 
           or die "make failed: $?";
     }
 
