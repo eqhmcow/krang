@@ -66,6 +66,15 @@ like($@, qr/\QCall to forget() without prior call to remember()!\E/);
 $element->save();
 my $element_id = $element->element_id;
 
+# make some changes and save again
+$element->child('page')
+  ->child('paragraph')
+  ->data('some new paragraph data...');
+my @kids = $element->children();
+$element->children(@kids[0 .. $#kids - 1]);
+$element->add_child(class => 'page');
+$element->save();
+
 # destroy in memory copies
 undef $page;
 undef $element;

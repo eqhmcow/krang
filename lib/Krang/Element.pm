@@ -301,6 +301,16 @@ sub save {
         # update data
         $dbh->do('UPDATE element SET data = ? WHERE element_id = ?', undef,
                  $self->freeze_data(), $self->{element_id});
+
+        # loop through kids, calling _update_children()
+        my @element_ids = $self->_update_children($self->{element_id});
+
+        # remove deleted children
+        $dbh->do('DELETE FROM element WHERE root_id = ? 
+                                            AND element_id NOT IN (' .
+                 join(',', ("?") x @element_ids) . ')',
+                 undef, $self->{element_id}, @element_ids);
+
     } else {
         # create new root and get the element_id
         $dbh->do('INSERT INTO element (class, data) VALUES (?,?)', undef,
@@ -310,24 +320,47 @@ sub save {
         # update root_id (doesn't work in one statement)
         $dbh->do('UPDATE element SET root_id = element_id 
                   WHERE element_id = ?', undef, $self->{element_id});
-    }
 
-    # loop through kids, calling _save_child()
-    $self->_save_children($self->{element_id});
+        # loop through kids, calling _insert_children()
+        $self->_insert_children($self->{element_id});
+    }
 }
 
-sub _save_children {
+# a stripped-down version of _update_children used with new element trees
+sub _insert_children {
     my ($self, $root_id) = @_;
     my $dbh = dbh;
     
     # insert children, numbering in order and remembering IDs
     my $ord = 1;
-    my @child_ids;
+   
+    foreach my $child (@{$self->{children}}) {
+        # create a new element and get the ID
+        $dbh->do('INSERT INTO element (parent_id, root_id, class, data, ord)
+                  VALUES       (?,?,?,?,?)', undef,
+                 $self->{element_id}, $root_id, $child->{class}->name, 
+                 $child->freeze_data, $ord++);
+        $child->{element_id} = $dbh->{mysql_insertid};
+
+        # recurse, if needed
+        $child->_insert_children($root_id)
+          if @{$child->{children}};
+    }
+}
+
+# update an existing element tree in place
+sub _update_children {
+    my ($self, $root_id) = @_;
+    my $dbh = dbh;
+    
+    # insert children, numbering in order and remembering IDs
+    my $ord = 1;
+    my @element_ids = ($self->{element_id});
    
     foreach my $child (@{$self->{children}}) {
         if ($child->{element_id}) {
             # pre-existing child, update
-            push(@child_ids, $child->{element_id});
+            push(@element_ids, $child->{element_id});
            
             $dbh->do('UPDATE element SET data=?, ord=? WHERE element_id = ?',
                      undef, $child->freeze_data, $ord++, $child->{element_id});
@@ -340,25 +373,15 @@ sub _save_children {
                      $child->freeze_data, $ord++);
             $child->{element_id} = $dbh->{mysql_insertid};
             
-            push(@child_ids, $child->{element_id});
+            push(@element_ids, $child->{element_id});
         }
-
+        
         # recurse, if needed
-        $child->_save_children($root_id)
-          if @{$child->{children}};
+        push(@element_ids, $child->_update_children($root_id))
+             if @{$child->{children}};
     }
 
-    # remove deleted children
-    if (@child_ids) {
-        $dbh->do('DELETE FROM element WHERE parent_id = ? AND 
-                                        element_id NOT IN (' .
-                 join(',', ("?") x @child_ids) . ')', undef, 
-                 $self->{element_id}, @child_ids);
-    } else {
-        # no child elements
-        $dbh->do('DELETE FROM element WHERE parent_id = ?', undef, 
-                 $self->{element_id});
-    }
+    return @element_ids;
 }
 
 =item C<< @classes = $element->available_child_classes() >>

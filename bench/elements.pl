@@ -16,13 +16,27 @@ run_benchmark(module => 'Krang::Element',
 
 # time creating new element trees, saving to the database
 my @ids;
+my @e;
 run_benchmark(module => 'Krang::Element',
               name   => 'create tree in db',
-              count  => $n, 
+              count  => $n,
               code   => sub {
                   my $e = create_tree();
                   $e->save(); 
+                  push(@e, $e);
                   push(@ids, $e->element_id);
+              });
+
+# time making a change a re-saving to db
+run_benchmark(module => 'Krang::Element',
+              name   => 'update tree in db',
+              count  => $n, 
+              code   => sub {
+                  my $e = shift @e;
+                  $e->child('page')->child('paragraph')->data('some new paragraph data...');
+                  my @kids = $e->children();
+                  $e->children(@kids[0 .. $#kids - 1]);
+                  $e->save();
               });
 
 # time loading element trees by id
