@@ -17,7 +17,7 @@ Redhat Linux 7.3 and 9
 
 =item *
 
-Fedora Core 1
+Fedora Core 1 and 2
 
 =item *
 
