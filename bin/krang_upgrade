@@ -110,11 +110,7 @@ Following is a list of the tasks the upgrade script will perform.
 
 =item Clear out sessions from database.
 
-=item Start Krang, and 'make test' on new system.
-
-=over 4
-
-=item If failure, recommend C<krang_upgrade --rollback>
+=item Start Krang
 
 =back
 
@@ -158,12 +154,10 @@ The following tasks will roll back an upgrade to the previously installed state.
 
   --KrangRoot            - Directory where Krang is installed (KRANG_ROOT)
   --MySQLRootPassword    - Password for the MySQL user "root"
-  --AdminPassword        - CMS "admin" user password -- needed for tests
 
 
 =head2 Upgrade flags
 
-  --no-krang-test        - Skip Krang "make test"
   --rollback             - Revert to last backup
 
 
@@ -206,9 +200,9 @@ my $mysql_datadir;
 my $OLD_CONF;
 
 
-my ($help, $man, $no_krang_test, $rollback);
+my ($help, $man, $rollback);
 
-my @opt_params = qw( KrangRoot MySQLRootPassword AdminPassword );
+my @opt_params = qw( KrangRoot MySQLRootPassword );
 
 my %options = ( map { $_ => "" } @opt_params);
 
@@ -239,7 +233,6 @@ sub do_upgrade {
     }
 
     start_krang();
-    make_test() unless ($no_krang_test);
     output_report();
 }
 
@@ -249,11 +242,6 @@ sub check_prereqs {
 
     # Must be running as root.
     exit_error("Must be run as root.") unless ($> eq "0");
-
-    # Can't test unless we have AdminPassword
-    unless ($no_krang_test || $options{AdminPassword}) {
-        exit_error("Must specify AdminPassword, or disable Krang tests (via --no-krang-test).  Cannot continue.");
-    }
 
     # Validate path to KRANG_ROOT.
     my $KrangRoot = $options{KrangRoot};
@@ -684,20 +672,6 @@ sub start_krang {
 }
 
 
-sub make_test {
-    print "Running Krang tests...\n";
-
-    my $AdminPassword = $options{AdminPassword};
-
-    my $InstallPath = $options{KrangRoot};
-    chdir($InstallPath);
-
-    my $make_bin = MAKE_BIN;
-    my $make_test = "KRANG_ROOT='' PERL5LIB='' KRANG_PASSWORD='$AdminPassword' $make_bin test";
-    system($make_test) && warn("Error running Krang tests");
-}
-
-
 sub output_report {
     my $KrangRoot = $options{KrangRoot};
 
@@ -708,8 +682,6 @@ sub output_report {
 
     my $init_script = "/etc/init.d/krang-". $HostName .".init";
     my $krang_conf = $KrangRoot ."/conf/krang.conf";
-
-    my $AdminPassword = $options{AdminPassword};
 
     my $report_title = ($rollback) ? "KRANG ROLLBACK COMPLETE" : "KRANG UPGRADE COMPLETE " ;
 
@@ -732,11 +704,6 @@ sub output_report {
      ftp://$HostName:$FTPPort/
 
 EOREPORT
-
-    # Print the admin password if we know it
-    if ($AdminPassword) {
-        print "   CMS admin user password:  \"$AdminPassword\"\n\n\n";
-    } 
 
 }
 
@@ -765,7 +732,6 @@ sub setup_getopts {
     pod2usage(2) unless
         GetOptions( 'help'          => \$help,
                     'man'           => \$man,
-                    'no-krang-test' => \$no_krang_test,
                     'rollback'      => \$rollback,
                     (map { $_."=s"  => \$options{$_} } @opt_params) );
 
