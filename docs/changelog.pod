@@ -8,6 +8,20 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Limited the directories being searched by C<bin/krang_install> when
+looking to change execute permissions on a newly-installed backup
+file.  There was no need to search a number of potentially large
+directory trees, this should improve installation times. [Peter]
+
+
+=item *
+
+Added C<< published => 1 >> argument to L<Krang::Media> C<find()>
+method.  Limits returning objects to those that have been published
+before.
+
 =back
 
 =head2 v1.023 - August 31, 2004
