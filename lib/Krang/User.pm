@@ -296,6 +296,8 @@ sub delete {
     $dbh->do("DELETE FROM user WHERE user_id = ?", undef, $id);
     $dbh->do("DELETE FROM user_group_permission WHERE user_id = ?",
              undef, $id);
+    $dbh->do("DELETE FROM user_category_permission_cache WHERE user_id = ?",
+             undef, $id);
 
     return 1;
 }

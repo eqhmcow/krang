@@ -75,16 +75,6 @@ CREATE TABLE category_group_permission (
         INDEX (group_id)
 );
 
-
-/* De-normalized cache of category_group_permission */
-/* The purpose of this table is to provide a run-time optimization
-   for determining if a particular user (who belongs to N groups)
-   is allowed to access a particular category.  This table is 
-   "guaranteed" to contain one record for every group/category
-   combination.  Unlike category_group_permission which contains
-   only records of logical permission assignments, this table 
-   will allow calling code to exactly find the permissions for
-   a category/group without traversing the tree of categories. */
 DROP TABLE IF EXISTS user_category_permission_cache;
 CREATE TABLE user_category_permission_cache (
         category_id SMALLINT UNSIGNED NOT NULL,
