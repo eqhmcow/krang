@@ -1,0 +1,33 @@
+=head1 Krang XML System
+
+=head2 Introduction
+
+This document describes the Krang XML system.
+
+=head2 Export
+
+Krang's XML system is capable of dumping Krang objects into XML files.
+Each file contains one object (except for Krang::Element objects which
+are included within their containing Story or Category).  
+
+XML files are collected in a single archive along with a index file,
+forming a Krang data set (kds).  These files are in standard TAR
+format and may end in either .kds or, if gzip-compressed, .kds.gz.
+The index file lists all XML files in the set and provides the ID of
+the object contained within.  Index files also include the commands
+used to generate the data set and a timestamp.
+
+Additional non-XML files may be included in the kds.  For example,
+media objects will include their media file in the data set archive.
+
+=head2 Import
+
+Krang's XML system can load data sets created by the Export system, or
+created with external tools (like the Bricolage converter).  The data
+set is read in and all described objects are created.
+
+If any objects failed to be created, error messages are written to a
+log and a kds file of rejected data is created.  This kds file is
+itself a valid data set, with its own index.
+
+
