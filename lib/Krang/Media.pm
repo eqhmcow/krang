@@ -406,13 +406,17 @@ sub mime_type {
 
 =item $file_path = $media->file_path() 
 
-Return filesystem path of uploaded media file.  Returns undef before
-upload_file() on new objects.
+=item $relative_path = $media->file_path(relative => 1) 
+
+Return filesystem path of uploaded media file.  If the relative option
+is set to 1 then the path returned is relative to KrangRoot.  Returns
+undef before upload_file() on new objects.
 
 =cut
 
 sub file_path {
     my $self = shift;
+    my %args = @_;
     my $root = KrangRoot;
     my $media_id = $self->{media_id};
     my $filename = $self->{filename};
@@ -422,15 +426,26 @@ sub file_path {
     # no file_path if no filename
     return unless $filename;
 
-    # if we have a temp file, return it
-    return $self->{tempfile} if $self->{tempfile};
+    my $path;
 
-    # return path based on if object has been committed to db yet
-    return catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename})
-      if $self->{media_id};
+    # if we have a temp file, return it
+    if ($self->{tempfile}) {
+        $path = $self->{tempfile};
+    } elsif ($self->{media_id}) {
+        # return path based on if object has been committed to db yet
+        $path = catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename});
+    }
 
     # no file_path found
-    return;
+    return unless $path;
+
+    # make path relative if requested
+    if ($args{relative}) {
+        my $root = KrangRoot;
+        $path =~ s/^$root\/?//;
+    }
+
+    return $path;
 }
 
 sub _media_id_path {

@@ -6,7 +6,7 @@ use Krang::Conf qw (KrangRoot);
 use Krang::Contrib;
 use Krang::Site;
 use Krang::Category;
-use File::Spec::Functions qw(catdir catfile);
+use File::Spec::Functions qw(catdir catfile splitpath);
 use FileHandle;
 
 BEGIN { use_ok('Krang::Media') }
@@ -37,7 +37,7 @@ my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
 my $fh = new FileHandle $filepath;
 $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
 
-is ($media->thumbnail_path(), catfile($media->{tempdir},"t__".$media->filename));
+is ($media->thumbnail_path(), catfile((splitpath($media->{tempfile}))[1],"t__".$media->filename));
 
 
 # create new contributor object to test associating with media
@@ -59,6 +59,12 @@ is(($media->contribs)[0]->selected_contrib_type, 3);
 # save it
 $media->save();
 
+# test file_path
+like($media->file_path, qr/krang\.jpg$/);
+like($media->file_path(relative => 1), qr/krang\.jpg$/);
+is($media->file_path, catfile(KrangRoot, $media->file_path(relative => 1)));
+ok(-f $media->file_path);
+
 $fh = new FileHandle $filepath;
 
 # create another media object
@@ -77,6 +83,8 @@ is(($media2->contribs)[1]->selected_contrib_type, 1);
 
 # save second media file
 $media2->save();
+like($media->file_path, qr/krang\.jpg$/);
+ok(-f $media->file_path);
 
 # find the media objects we just created, sorting in reverse order 
 # that they were created (media_id desc)
@@ -130,8 +138,14 @@ $filepath = catfile(KrangRoot,'t','media','krang.gif');
 $fh = new FileHandle $filepath;
 $m2->upload_file(filename => 'krang.gif', filehandle => $fh);
 
+# did that register?
+like($m2->file_path, qr/krang\.gif$/);
+ok(-f $m2->file_path);
+
 # save again
 $m2->save();
+like($m2->file_path, qr/krang\.gif$/);
+ok(-f $m2->file_path);
 
 # continue with edit
 $m2->prepare_for_edit();
@@ -144,6 +158,7 @@ is ($m2->title(), 'test media object 2');
 
 # check filename to see if reverted
 is ($m2->filename(), 'krang.jpg');
+like ($m2->file_path(), qr/krang\.jpg$/);
 
 # and save
 $m2->save();
