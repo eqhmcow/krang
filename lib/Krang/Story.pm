@@ -57,7 +57,7 @@ media and templates, they may also be moved to desks (L<Krang::Desk>).
 
 Stories, unlike media and templates, may be assigned to multiple
 categories.  However, one category is the primary category and
-determines the primary URI.
+determines the primary URL.
 
 =head1 INTERFACE
 
@@ -120,18 +120,18 @@ published.
 The primary category for the story.  C<undef> until at least one
 category is assigned.
 
-=item C<uri> (readonly)
+=item C<url> (readonly)
 
-The primary URI for the story.  C<undef> until at least one category
+The primary URL for the story.  C<undef> until at least one category
 is assigned.
 
 =item C<categories>
 
 A list of category objects associated with the story.
 
-=item C<uris> (readonly)
+=item C<urls> (readonly)
 
-A list of URIs for this story.
+A list of URLs for this story.
 
 =item C<contributors>
 
@@ -227,13 +227,13 @@ Search by title.
 
 Search by slug.
 
-=item uri 
+=item url 
 
-Search by uri.
+Search by url.
 
-=item primary_uri 
+=item primary_url 
 
-Search by primary uri.
+Search by primary url.
 
 =item category_id
 
