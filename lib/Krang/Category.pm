@@ -863,7 +863,7 @@ sub save {
 
     # Throw exception if user is not allowed to edit this category
     unless ($self->may_edit) {
-        Krang::Category::NoEditAccess->throw(message => "User does not have access to delete this category");
+        Krang::Category::NoEditAccess->throw(message => "User does not have access to update this category");
     }
 
     my $id = $self->{category_id} || '';
