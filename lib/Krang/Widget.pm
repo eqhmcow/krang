@@ -7,6 +7,8 @@ use HTML::Template;
 use Time::Piece qw(localtime);
 use Krang::Category;
 use Krang::Conf qw(KrangRoot);
+use Krang::Log qw(debug);
+use HTML::PopupTreeSelect;
 
 use File::Spec::Functions qw(catfile);
 
@@ -41,9 +43,6 @@ This modules exports a set of generally useful CGI widgets.
 
 =over 4
 
-
-
-
 =item $chooser_html = category_chooser(name => 'category_id', query => $query)
 
 Returns a block of HTML implementing the standard Krang category
@@ -66,7 +65,6 @@ Additional optional parameters are as follows:
              not specified, will default to the first form in your 
              HTML document.
 
-
 The template for the category chooser is located in
 F<Widget/category_chooser.tmpl>.
 
@@ -80,10 +78,11 @@ sub category_chooser {
       unless $name and $query;
 
     my $template = HTML::Template->new(filename => 
-                                         catfile(KrangRoot, "templates",
-                                                 "Widget", 
-                                                 "category_chooser.tmpl"),
+                                       catfile(KrangRoot, "templates",
+                                               "Widget", 
+                                               "category_chooser.tmpl"),
                                        cache   => 1,
+                                       die_on_bad_params => 1,
                                       );
 
     my $category_id = $query->param($name) || 0;
@@ -92,46 +91,62 @@ sub category_chooser {
     my %find_params = (order_by => 'url');
     $find_params{site_id} = $site_id if ($site_id);
 
+    # build up data structure used by HTML::PopupTreeSelect
     my @cats = Krang::Category->find(%find_params);
-    my @category_loop;
+    my $data = { children => [], label => "", open => 1};
+    my %nodes;
     foreach my $cat (@cats) {
+        my $parent_id = $cat->parent_id;
+        my $parent_node = $parent_id ? $nodes{$parent_id} : $data;
+
+        push(@{$parent_node->{children}}, 
+             {
+              label    => ($cat->dir eq '/' ? $cat->url : $cat->dir),
+              value    => $cat->category_id . "," . $cat->url,
+              children => [],
+             });
+        $nodes{$cat->category_id} = $parent_node->{children}[-1];
+
         if ($cat->category_id == $category_id) {
             $template->param(category_id => $category_id);
             $template->param(category_url => $cat->url);
         }
-
-        push(@category_loop, {
-                              category_id => $cat->category_id,
-                              dir         => ($cat->dir eq '/' ? 
-                                              $cat->url : $cat->dir),
-                              url         => $cat->url,
-                              parent_id   => $cat->parent_id,
-                             });
     }
-    $template->param(category_loop => \@category_loop,
+    
+    # build the chooser
+    my $chooser = HTML::PopupTreeSelect->new(name       => 'ca',
+                                             title      => 'Choose a Category',
+                                             data       => $data,
+                                             image_path => 'images',
+                                             onselect   => 'choose_category',
+                                             hide_root  => 1,
+                                             button_label => $label||'Choose',
+                                             include_css => 0,
+                                            );
+
+    # send data to the template
+    $template->param(chooser       => $chooser->output,
                      name          => $name,
-                     label         => $label || 'Choose',
                      display       => defined $display ? $display : 1,
                      onchange      => $onchange,
-                     formname      => $formname,
-                    );
+                     formname      => $formname);
 
-    return $template->output();
+    return $template->output;
 }
 
 =item $chooser_html = time_chooser(name => 'time', query => $query)
-                                                                                
+
 Returns a block of HTML implementing the standard Krang datetime
 chooser.  The C<name> and C<query> parameters are required.
-                                                                                
+
 Additional optional parameters are as follows:
-                                                                                
+
   hour      - if set (in 24 hour format, i.e. 0-23) , chooser will
               be prepopulated with that hour.  If not set,
               will default to current hour (localtime)
               unless "nochoice" is true, in which case chooser
               will be set to blank ('Hour').
-  
+
   minute    - if set, chooser will be prepopulated with that
               minute.  If not set, will default to current
               minute (from localtime) unless "nochoice" is 
@@ -139,16 +154,13 @@ Additional optional parameters are as follows:
 
   nochoice  - if set to a true value, Hour/Minute/AM
               will be provided as default choices in the chooser.
-                                                                                
               The value "0" will be returned if a user chooses
               the "no choice" option.
-                                                                                
-                                                                                
-The time_chooser() implements itself in HTML via three separate
-query parameters.  They are named based on the provided name,
-plus "_hour", "_minute", and
-"_ampm" respectively. CGI query data from
-                                                                                
+
+The time_chooser() implements itself in HTML via three separate query
+parameters.  They are named based on the provided name, plus "_hour",
+"_minute", and "_ampm" respectively. CGI query data from 
+
 =cut
 
 sub time_chooser {
@@ -220,12 +232,12 @@ sub time_chooser {
 }
 
 =item $chooser_html = datetime_chooser(name => 'date', query => $query)
-                                                                                
+
 Returns a block of HTML implementing the standard Krang datetime
 chooser.  The C<name> and C<query> parameters are required.
-                                                                                
+
 Additional optional parameters are as follows:
-                                                                                
+
   date      - if set to a date object (Time::Piece), chooser will
               be prepopulated with that datetime.  If not set to a
               date object, will default to current date (localtime)
@@ -233,16 +245,14 @@ Additional optional parameters are as follows:
               will be set to blank. Please note that seconds are
               ALWAYS set to '00', regardless of what seconds may
               actually be.
-                                                                                
+
   nochoice  - if set to a true value, Month/Day/Year/Hour/Minute/AM
               will be provided as default choices in the chooser.
               Used in conjunction with the "date" parameter, the
               chooser may be set to default to no date.
-                                                                                
               The value "0" will be returned if a user chooses
               the "no choice" option.
-                                                                                
-                                                                                
+
 The date_chooser() implements itself in HTML via six separate
 query parameters.  They are named based on the provided name,
 plus "_month", "_day", "_year", "_hour", "_minute", and 
@@ -251,7 +261,7 @@ date_chooser can be retrieved and converted back into a date
 object via decode_date().
 
 =cut
-                                                                                
+
 sub datetime_chooser {
     my %args = @_;
     my ($name, $query, $date, $nochoice) =

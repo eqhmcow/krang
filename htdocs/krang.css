@@ -243,3 +243,47 @@ input[type="reset"] {
   padding-bottom:   1px;
 }
 
+/*** Category Chooser Styles ***/
+.hpts-outer {
+     visibility:       hidden;
+     position:         absolute;
+     top:              0px;
+     left:             0px;
+     border:           2px outset #333333;
+     background-color: #ffffff;
+}
+
+.hpts-title {
+     padding:          2px;
+     margin-bottom:    4px;     
+     background-color: #04044c;
+     color:            #dceaf5;
+     width:            200px;
+}
+
+.hpts-block {
+     margin-left:      24px;
+     display:          none;
+}
+
+.hpts-bbar {
+    background-color: #98ccfe;
+    color:            #333333;
+    text-align:       right;
+    padding:          3px;
+    margin-top:       10px;
+}
+
+.hpts-button {
+     margin-left:      15px;
+     background-color: #ffffff;
+     color:            #000000;
+}
+
+.hpts-label-selected {
+     background:       #98ccfe;
+}
+
+.hpts-label-unselected {
+     background:       #ffffff;
+}

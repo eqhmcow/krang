@@ -1,111 +1,20 @@
-<script src="xtree.js"></script>
-<link type="text/css" rel="stylesheet" href="xtree.css">
 
-<tmpl_if display><span id="category_url"><tmpl_if category_url><tmpl_var category_url><tmpl_else>No site / category selected.</tmpl_if></span></tmpl_if>
-<input type=button value="<tmpl_var label>" onmouseup="category_chooser_show()">
+<tmpl_if display><span id="<tmpl_var name>_url"><tmpl_if category_url><tmpl_var category_url><tmpl_else>No site / category selected.</tmpl_if></span></tmpl_if>
 <input type=hidden name="<tmpl_var name>" value="<tmpl_var category_id>">
+<tmpl_var chooser>
 
-<div id="category_chooser" style="visibility: hidden; position: absolute; top: 0px; left: 0px; background-color: white; color: black; width: 200px; border: 2px outset #333333">
-  <div class=dark-bar>Choose a Category</div>
-  <div class=form-box>
+
 <script language="javascript">
-	var tree = new WebFXTree(" ");
-	tree.setBehavior('explorer');
+  function choose_category (packed) {
+     var parts = packed.split(",",2);
+     var id = parts[0];
+     var url = parts[1];
+     document.<tmpl_if formname><tmpl_var formname><tmpl_else>forms[0]</tmpl_if>.<tmpl_var name>.value = id;
+     <tmpl_if display>
+        var span = document.getElementById("<tmpl_var name>_url");
+         span.innerHTML = url;
+     </tmpl_if>
 
-        var cats = new Array();
-        <tmpl_loop category_loop>
-           cats["<tmpl_var category_id>"] = new WebFXTreeItem("<tmpl_var dir>", "javascript:category_chooser_select(" + <tmpl_var category_id> + ", '" + "<tmpl_var url>" + "')");;
-           <tmpl_if parent_id>
-              cats["<tmpl_var parent_id>"].add(cats["<tmpl_var category_id>"]);
-           <tmpl_else>
-              tree.add(cats["<tmpl_var category_id>"]);
-           </tmpl_if>
-
-        </tmpl_loop>
-
-	document.write(tree);
-
-        /* uncomment the next block and the generated tree code will be
-           shown in a new window */
-
-        /* var win = window.open("","sub","status,height=600,width=800");
-           win.document.write("<textarea rows=20 cols=80>");
-           win.document.write(tree);
-           win.document.write("</textarea>");
-           win.document.close();
-        */
-
-</script>
-  <div class=button-bar>
-    <input type=button value=" Ok " onclick="category_chooser_ok()">
-    <input type=button value="Cancel" onclick="category_chooser_cancel()">
-  </div>
-</div>
-</div>
-
-
-<script language="JavaScript" type="text/javascript">
-  var selected_id, selected_url, selected_elem;
-  var mouseX = 0;
-  var mouseY = 0;
-
-  document.onmousedown = category_chooser_loc;
-
-  function category_chooser_select(id, url) {        
-        /* remember selection, for ok */
-        selected_id   = id;
-        selected_url  = url;
+     <tmpl_if onchange><tmpl_var onchange>();</tmpl_if>
   }
-
-  function category_chooser_loc(evt) {
-        evt = (evt) ? evt : (event) ? event : null;
-        if (evt.pageX) {
-           mouseX = evt.pageX;
-           mouseY = evt.pageY;
-        } else {
-           mouseX = evt.clientX + document.documentElement.scrollLeft + document.body.scrollLeft;
-           mouseY = evt.clientY + document.documentElement.scrollTop  + document.body.scrollTop;
-        }
-        return true;
-  }
-
-  function category_chooser_show() {
-        var chooser = document.getElementById("category_chooser");
-        chooser.style.left = (mouseX + 30) + "px";
-        chooser.style.top = (mouseY - 75) + "px";
-        chooser.style.visibility = "visible";
-  }
-
-  function category_chooser_ok() {
-        if (selected_id) {
-           /* save selection */
-           document.<tmpl_if formname><tmpl_var formname><tmpl_else>forms[0]</tmpl_if>.<tmpl_var name>.value = selected_id;
-        <tmpl_if display>
-           var span = document.getElementById("category_url");
-           span.innerHTML = selected_url;
-        </tmpl_if>
-        }
-
-        /* clear selection */
-        selected_id  = 0;
-        selected_url = "";  
-
-        /* close chooser */
-        var chooser = document.getElementById("category_chooser");
-        chooser.style.visibility = "hidden";
-
-        <tmpl_if onchange><tmpl_var onchange>();</tmpl_if>
-  }
-
-
-  function category_chooser_cancel() {
-        /* clear selection */
-        selected_id  = 0;
-        selected_url = "";  
-
-        /* close chooser */
-        var chooser = document.getElementById("category_chooser");
-        chooser.style.visibility = "hidden";
-  }
-
 </script>
