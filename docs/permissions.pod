@@ -359,10 +359,10 @@ access to see.  Note the use of sum() and "group by":
 
   where
     usr_user_group.user_id = 1 AND
+    cgpc.may_see = 1 
 
   group by
     media.media_id
-    cgpc.may_see = 1 
 
 Because the may_edit column will contain "1" if true and "0"
 if not, sum() will effectively be greater than zero if the user is
