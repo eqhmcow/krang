@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Krang::Script;
 use Krang::ListGroup;
-$ENV{KRANG_TEST_EMAIL} = '' if not $ENV{KRANG_TEST_EMAIL};
 
 # create a site and some categories to put stories in
 my $lg = Krang::ListGroup->new( name  => 'test_abc_123'.time,
