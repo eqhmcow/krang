@@ -262,12 +262,15 @@
 
 <div class="button-bar">
   <tmpl_if is_root>
+     <div style="float:left;"><input type="button" value="Delete" onclick="remove()" class="button"></div>
     <input type="button" value="Save" onclick="db_save()" class="button">
     <input type="button" value="Save &amp; Stay" onclick="db_save_and_stay()" class="button">
     <tmpl_if may_publish><input type="button" value="Publish" onclick="save_and_publish()" class="button"></tmpl_if>
     <input type="reset" value="Reset" class="button">
-     <input type="button" value="Delete" onclick="remove()" class="button">
   <tmpl_else>
+    <tmpl_unless bulk_edit>
+      <div style="float:left;"><input type="button" value="Delete" onclick="remove_element()" class="button"></div>
+    </tmpl_unless>
     <tmpl_if bulk_edit>
       <input type="button" value="Save" onclick="save_and_leave_bulk_edit()" class="button">
     <tmpl_else>
@@ -275,9 +278,6 @@
     </tmpl_if>
     <input type="button" value="Save &amp; Stay" onclick="save_and_stay()" class="button">
     <input type="reset" value="Reset" class="button">
-    <tmpl_unless bulk_edit>
-      <input type="button" value="Delete" onclick="remove_element()" class="button">
-    </tmpl_unless>
   </tmpl_if>
 
 &nbsp;&nbsp;&nbsp;</div>

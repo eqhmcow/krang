@@ -2,6 +2,18 @@
 
 <script language="JavaScript" type="text/javascript">
 
+  /* returns true is the user has checked anything */
+  function something_checked(){
+	var form = document.krang_pager_form;
+	for (i = 0; i < form.elements.length ; i++) {
+		var e = form.elements[i];
+		if (e.name == "krang_pager_rows_checked" && e.checked) {
+			return true;
+		}
+	}
+	return false;
+  }
+
   function preview_story(id) {
         Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
         Preview.focus();
@@ -38,6 +50,18 @@
     var myform = document.krang_pager_form;
     myform.rm.value = 'checkout_selected';
     myform.submit();
+  }
+
+  function publish_selected() {
+	if (something_checked()) {
+	  if (confirm("Are you sure you want to publish these items?")) {
+	    document.krang_pager_form.action = 'publisher.pl';
+	    document.krang_pager_form.rm.value = 'publish_story_list';
+	    document.krang_pager_form.submit();
+	  }
+	} else {
+	  alert("Nothing selected to publish!");
+	}
   }
 
   function show_advanced_search (show_advanced) {
@@ -347,7 +371,8 @@
 
 
 <tmpl_if row_count>
-  <div class="button-bar"><input type="button" value="Checkout" onClick="checkout_selected()" class="button"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button">&nbsp;</div>
+<div class="button-bar"><div style="float:left;"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div><input type="button" value="Checkout" onClick="checkout_selected()" class="button">&nbsp;
+<input type="button" value="Publish" onClick="publish_selected()" class="button"></div>
 </tmpl_if>
 </div>
 <tmpl_include footer.tmpl>

@@ -127,7 +127,16 @@ sub publish_story_list {
     my @id_list;
 
     foreach (@asset_id_list) {
+
+        # if only media ids are being passed in from media find
+        if ( $query->param('asset_type') eq 'media' ) {
+            push @id_list, { id => 'media_'.$_ };
+            push(@media_id_list, $_);
+            next;
+        }
+
         push @id_list, { id => $_ };
+        
         push(@story_id_list, $1), next if /^(\d+)$/;
 
         if (/^(\w+)_(\d+)$/) {

@@ -141,8 +141,8 @@
   Sort By: &nbsp;&nbsp; <tmpl_var sort_select></div>
 
 <div class="button-bar">
+  <div style="float:left;"><input type="button" value="Delete Checked" onclick="delete_checked()" class="button"></div>
   <input type="button" value="Check In" onclick="checkin_checked()" class="button">
-  <input type="button" value="Delete" onclick="delete_checked()" class="button">
   <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_checked()" class="button"></tmpl_if>
 </div>
 
@@ -195,20 +195,17 @@
            <tmpl_if is_story>
                <input type="button" value="Copy" onclick="copy('<tmpl_var id>')" class="button">
                <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button"></tmpl_if>
-               <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
               <br><br>
                Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_media>
                <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_media('<tmpl_var id>')" class="button"></tmpl_if>
-               <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
                 <br><br>
                <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_template>
                <input type="button" value="Copy" onclick="copy('<tmpl_var id>')" class="button">
                <input type="button" value="Deploy" onclick="deploy('<tmpl_var id>')" class="button">
-               <input type="button" value="Delete" onclick="remove('<tmpl_var id>')" class="button">
                 <br><br>
                <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
                Test with: <input onchange="update_testing(this, '<tmpl_var id>')" type="checkbox" <tmpl_if testing>checked</tmpl_if> name=testing_<tmpl_var id> value='1'>
@@ -235,8 +232,8 @@
   </tmpl_if></p></div></div>
 
 <div class="button-bar">
+  <div style="float:left;"><input type="button" value="Delete Checked" onclick="delete_checked()" class="button"></div>
   <input type="button" value="Check In" onclick="checkin_checked()" class="button">
-  <input type="button" value="Delete" onclick="delete_checked()" class="button">
   <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_checked()" class="button"></tmpl_if>
 </div>
 </tmpl_if>

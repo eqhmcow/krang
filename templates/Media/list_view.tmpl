@@ -14,12 +14,42 @@
     document.find_media.submit();
   }
 
+  /* returns true if the user has checked anything */
+  function something_checked() {
+	var myform = document.krang_pager_form;
+	for (i = 0; i < myform.elements.length ; i++) {
+	  var e = myform.elements[i];
+	  if (e.name == "krang_pager_rows_checked"  && e.checked) {
+		return true;
+	  }
+	}
+	return false;
+  }
+
+  function publish_selected() {
+    if (something_checked()) {
+      if (confirm("Are you sure you wish to publish all these items?")) {
+	document.krang_pager_form.action = 'publisher.pl';
+	document.krang_pager_form.rm.value = 'publish_story_list';
+	document.krang_pager_form.submit();
+      }
+    } else {
+	alert("Nothing selected to publish!");
+    }
+  }
+
   function delete_selected () {
     if (confirm("Are you SURE you want to delete the checked media?")) {
       var myform = document.krang_pager_form;
       myform.rm.value = 'delete_selected';
       myform.submit();
     }
+  }
+
+  function checkout_selected () {
+    var myform = document.krang_pager_form;
+    myform.rm.value = 'checkout_selected';
+    myform.submit();
   }
 
   function advanced_search () {
@@ -142,7 +172,8 @@
   </div>
 
 <tmpl_if row_count>
-  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button">&nbsp;</div>
+  <div class="button-bar"><div style="float:left;"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div><input type="button" value="Checkout" onClick="checkout_selected()" class="button">&nbsp;
+<input type="button" value="Publish" onClick="publish_selected()" class="button"></div>
 </tmpl_if>
 </div>
 <tmpl_include footer.tmpl>

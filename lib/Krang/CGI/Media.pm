@@ -72,6 +72,7 @@ sub setup {
                          checkin_selected
                          save_stay_add
                          checkout_and_edit
+                         checkout_selected
                          edit
                          save_edit
                          save_stay_edit
@@ -151,6 +152,7 @@ sub find {
                         rm => 'find',
                         search_filter => $search_filter,
                         show_thumbnails => $show_thumbnails,
+                        asset_type => 'media'
                        };
 
     my $find_params = { may_see => 1,
@@ -217,7 +219,7 @@ sub advanced_find {
                                       );
     $t->param(return_params => $self->make_return_params(@return_param_list));
 
-    my $persist_vars = { rm => 'advanced_find' };
+    my $persist_vars = { rm => 'advanced_find', asset_type => 'media' };
     my $find_params = {};
 
     my $show_thumbnails = $q->param('show_thumbnails');
@@ -1159,6 +1161,36 @@ sub checkin_selected {
      return $self->list_active;
 }
 
+=item checkout_selected
+
+Checkout all the media which were checked on the list_active screen.
+
+=cut
+
+sub checkout_selected {
+     my $self = shift;
+
+    my $q = $self->query();
+     my @media_checkout_list = ( $q->param('krang_pager_rows_checked') );
+     $q->delete('krang_pager_rows_checked');
+
+     foreach my $media_id (@media_checkout_list) {
+         my ($m) = Krang::Media->find(media_id=>$media_id);
+         $m->checkout();
+     }
+
+     if (scalar(@media_checkout_list)) {
+         add_message('selected_media_checkout');
+     }
+
+    # Redirect to workspace.pl
+    my $uri = WORKSPACE_URI;
+    $self->header_props(-uri => $uri);
+    $self->header_type('redirect');
+
+    return "Redirect: <a href=\"$uri\">$uri</a>";
+
+}
 
 
 

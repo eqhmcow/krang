@@ -131,7 +131,7 @@
   </div>
 
 <tmpl_if row_count>
-  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button">&nbsp;</div>
+  <div class="button-bar"><div style="float:left;"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div>&nbsp;<input type="button" value="Deploy" onClick="do_deploy()" class="button"></div>
 </tmpl_if>
   </div>
 <tmpl_include footer.tmpl>
