@@ -378,7 +378,7 @@ sub upload_file {
 
     my $session_id = $session{_session_id}; 
  
-    my $path = tempdir( CLEANUP => 1);
+    my $path = tempdir();
     my $filepath = catfile($path, $filename);
     open (FILE, ">$filepath") || croak("Unable to open $path for writing media!"); 
    
