@@ -7,7 +7,7 @@ use Krang::ElementLibrary;
 use Krang::Log qw(debug assert ASSERT);
 use Krang::Session qw(%session);
 use Krang::Message qw(add_message);
-use Krang::Widget qw(category_chooser date_chooser decode_date format_url);
+use Krang::Widget qw(category_chooser datetime_chooser decode_datetime format_url);
 use Krang::CGI::Workspace;
 use Carp qw(croak);
 use Krang::Pref;
@@ -119,7 +119,7 @@ sub new_story {
                                       query => $query));
     
     # setup date selector
-    $template->param(cover_date_selector => date_chooser(name=>'cover_date', query=>$query));
+    $template->param(cover_date_selector => datetime_chooser(name=>'cover_date', query=>$query));
 
     return $template->output();
 }
@@ -158,7 +158,7 @@ sub create {
     my $title = $query->param('title');
     my $slug = $query->param('slug');
     my $category_id = $query->param('category_id');
-    my $cover_date = decode_date(name=>'cover_date', query=>$query);
+    my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
 
     # detect bad fields
     my @bad;
@@ -266,7 +266,7 @@ sub edit {
                         );
                              # select boxes
         $template->param(cover_date_selector =>
-                         date_chooser(name=>'cover_date', date=>$story->cover_date, query=>$query));
+                         datetime_chooser(name=>'cover_date', date=>$story->cover_date, query=>$query));
         
         $template->param(priority_selector => scalar
                          $query->popup_menu(-name => 'priority',
@@ -372,7 +372,7 @@ sub view {
                          ("Low","Medium","High")[$story->priority - 1],
                         );
 
-        $template->param(cover_date => $story->cover_date->mdy("/"))
+        $template->param(cover_date => $story->cover_date->strftime('%b %e, %Y %l:%M %p'))
           if $story->cover_date;
 
         my @contribs_loop;
@@ -850,7 +850,7 @@ sub _save {
         and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug');
-        my $cover_date = decode_date(name=>'cover_date', query=>$query);
+        my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
         my @bad;
@@ -1111,8 +1111,8 @@ sub find {
 
         # Set up cover and publish date search
         for my $datetype (qw/cover publish/) {
-            my $from = decode_date(query=>$q, name => $datetype .'_from');
-            my $to =   decode_date(query=>$q, name => $datetype .'_to');
+            my $from = decode_datetime(query=>$q, name => $datetype .'_from');
+            my $to =   decode_datetime(query=>$q, name => $datetype .'_to');
             if ($from || $to) {
                 my $key = $datetype .'_date';
                 my $val = [$from, $to];
@@ -1122,7 +1122,7 @@ sub find {
             }
 
             # Persist parameter
-            for my $interval (qw/month day year/) {
+            for my $interval (qw/month day year hour minute ampm/) {
                 my $from_pname = $datetype .'_from_'. $interval;
                 my $to_pname = $datetype .'_to_'. $interval;
 
@@ -1153,10 +1153,10 @@ sub find {
                                                        );
 
         # Date choosers
-        $tmpl_data{date_chooser_cover_from}   = date_chooser(query=>$q, name=>'cover_from', nochoice=>1);
-        $tmpl_data{date_chooser_cover_to}     = date_chooser(query=>$q, name=>'cover_to', nochoice=>1);
-        $tmpl_data{date_chooser_publish_from} = date_chooser(query=>$q, name=>'publish_from', nochoice=>1);
-        $tmpl_data{date_chooser_publish_to}   = date_chooser(query=>$q, name=>'publish_to', nochoice=>1);
+        $tmpl_data{date_chooser_cover_from}   = datetime_chooser(query=>$q, name=>'cover_from', nochoice=>1);
+        $tmpl_data{date_chooser_cover_to}     = datetime_chooser(query=>$q, name=>'cover_to', nochoice=>1);
+        $tmpl_data{date_chooser_publish_from} = datetime_chooser(query=>$q, name=>'publish_from', nochoice=>1);
+        $tmpl_data{date_chooser_publish_to}   = datetime_chooser(query=>$q, name=>'publish_to', nochoice=>1);
 
         # Story class
         my @classes = grep { $_ ne 'category' } Krang::ElementLibrary->top_levels;
@@ -1310,7 +1310,7 @@ sub find_story_row_handler {
 
     # cover_date
     my $tp = $story->cover_date();
-    $row->{cover_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
+    $row->{cover_date} = (ref($tp)) ? $tp->strftime('%b %e, %Y %l:%M %p') : '[n/a]';
 
     # pub_status  -- NOT YET IMPLEMENTED
     $row->{pub_status} = '&nbsp;<b>P</b>&nbsp;';

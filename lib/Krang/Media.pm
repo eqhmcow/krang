@@ -700,6 +700,7 @@ sub find {
                          limit => 1,
                          offset => 1,
                          count => 1,
+                         creation_date => 1,
                          ids_only => 1 );
                                                                                
     # check for invalid params and croak if one is found

@@ -334,6 +334,7 @@ sub datetime_chooser {
     my $hour_12; 
     if ($date) {
         $hour_12 = ($date->hour() >= 13) ? ($date->hour() - 12) : $date->hour();
+        $hour_12 = 12 if ($hour_12 == 0);
     } 
 
     my $h_sel = $query->popup_menu(-name      => $name .'_hour',

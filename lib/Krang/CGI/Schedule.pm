@@ -191,7 +191,7 @@ sub get_existing_schedule {
         my $s_params;
 
         if ($frequency eq 'One Time') {
-            $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->cdate;
+            $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
         } elsif ($frequency eq 'Hourly') {
             ($schedule->minute eq '0') ? ($s_params = 'on the hour') : ($s_params = $schedule->minute." minutes past the hour"); 
         } elsif ($frequency eq 'Daily') {
@@ -207,7 +207,7 @@ sub get_existing_schedule {
         push(@existing_schedule_loop, {
                                                 'schedule_id' => $schedule->schedule_id,
                                                 'schedule' => $s_params,
-                                                'next_run' => Time::Piece->from_mysql_datetime($schedule->next_run)->cdate,
+                                                'next_run' => Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p'),
                                                 'action' => $ACTION_LABELS{$schedule->action},
                                                 'version' => $version
                                             });

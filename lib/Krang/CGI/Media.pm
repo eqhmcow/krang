@@ -41,7 +41,7 @@ is 'add'.
 
 use Krang::Category;
 use Krang::Media;
-use Krang::Widget qw(category_chooser date_chooser decode_date format_url);
+use Krang::Widget qw(category_chooser datetime_chooser decode_datetime format_url);
 use Krang::Message qw(add_message);
 use Krang::HTMLPager;
 use Krang::Pref;
@@ -192,7 +192,10 @@ sub advanced_find {
                                        search_title 
                                        search_creation_date_day 
                                        search_creation_date_month 
-                                       search_creation_date_year 
+                                       search_creation_date_year
+                                       search_creation_date_hour
+                                       search_creation_date_minute
+                                       search_creation_date_ampm 
                                       );
     $t->param(return_params => $self->make_return_params(@return_param_list));
 
@@ -210,20 +213,20 @@ sub advanced_find {
         $find_params->{below_category_id} = $search_below_category_id;
     }
 
-    my $search_creation_date = decode_date(
+    my $search_creation_date = decode_datetime(
                                            query => $q,
                                            name => 'search_creation_date',
                                           );
     if ($search_creation_date) {
         # If date is valid send it to search and persist it.
         $find_params->{creation_date} = $search_creation_date;
-        for (qw/day month year/) {
+        for (qw/day month year hour minute ampm/) {
             my $varname = "search_creation_date_$_";
             $persist_vars->{$varname} = $q->param($varname);
         }
     } else {
         # Delete date chooser if date is incomplete
-        for (qw/day month year/) {
+        for (qw/day month year hour minute ampm/) {
             my $varname = "search_creation_date_$_";
             $q->delete($varname);
         }
@@ -270,7 +273,7 @@ sub advanced_find {
                                                  name => 'search_below_category_id',
                                                  formname => 'search_form',
                                                 ));
-    $t->param(date_chooser => date_chooser(
+    $t->param(date_chooser => datetime_chooser(
                                            query => $q,
                                            name => 'search_creation_date',
                                            nochoice =>1,
@@ -1111,11 +1114,8 @@ sub make_media_view_tmpl_data {
 
     # Display creation_date
     my $creation_date = $m->creation_date();
-    $tmpl_data{creation_date} = sprintf("%s %d %d", 
-                                        $creation_date->month, 
-                                        $creation_date->mday, 
-                                        $creation_date->year);
-
+    $tmpl_data{creation_date} = $creation_date->strftime('%b %e, %Y %l:%M %p');
+ 
     # Handle simple scalar fields
     my @m_fields = qw(
                       title
@@ -1252,7 +1252,7 @@ sub find_media_row_handler {
 
     # creation_date
     my $tp = $media->creation_date();
-    $row->{creation_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
+    $row->{creation_date} = (ref($tp)) ? $tp->strftime('%b %e, %Y %l:%M %p') : '[n/a]';
 
     # pub_status
     my $pub_status = ($media->published()) ? 'P' : '&nbsp;' ;
