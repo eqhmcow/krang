@@ -71,6 +71,12 @@ Krang::Schedule - manage scheduled events in Krang
   # execute pending scheduled actions
   Krang::Schedule->run();
 
+  # remove files from temp older than 'max_age' (in hours)
+  Krang::Schedule->clean_tmp(max_age => 24);
+
+  # expire sessions older than 'max_age' param
+  Krang::Schedule->expire_sessions(max_age => 12);
+
 =head1 DESCRIPTION
 
 This module is responsible for handling scheduled activities for
@@ -92,6 +98,8 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(verbose croak);
+use File::Spec::Functions qw(catdir catfile);
+use File::Path qw(rmtree);
 use Storable qw/freeze thaw/;
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -100,8 +108,9 @@ use Time::Seconds;
 
 # Internal Modules
 ###################
+use Krang::Conf qw(KrangRoot);
 use Krang::DB qw(dbh);
-use Krang::Log qw/ASSERT assert/;
+use Krang::Log qw/ASSERT assert critical debug info/;
 use Krang::Media;
 use Krang::Story;
 use Krang::Template;
@@ -145,15 +154,16 @@ my %repeat2seconds = (daily => ONE_DAY,
                       hourly => ONE_HOUR,
                       weekly => ONE_WEEK,
                       never => '');
-my %schedule_args = map {$_ => 1} SCHEDULE_RW,
-  qw/date/;
+my %schedule_args = map {$_ => 1} SCHEDULE_RW, qw/date/;
 my %schedule_cols = map {$_ => 1} SCHEDULE_RO, SCHEDULE_RW;
+my $tmp_path = catdir(KrangRoot, 'tmp');
 
 # Constructor/Accessor/Mutator setup
 use Krang::MethodMaker	new_with_init => 'new',
 			new_hash_init => 'hash_init',
 			get => [SCHEDULE_RO],
 			get_set => [SCHEDULE_RW];
+
 
 
 =head1 INTERFACE
@@ -383,6 +393,61 @@ sub _next_run {
 }
 
 
+=item C<< Krang::Schedule->clean_tmp( max_age => $max_age_in_hours ) >>
+
+=item C<< Krang::Schedule->clean_tmp() >>
+
+Class method that will remove all files in $KRANG_ROOT/tmp older than
+$max_age_in_hours.  If no parameter is passed file and directories older than
+the krang.conf value TmpMaxAge will be removed.  This method will croak if it
+is unable to delete a file or directory.
+
+=cut
+
+sub clean_tmp {
+    my $self = shift;
+    my %args = @_;
+    my $max_age = exists $args{max_age} ? $args{max_age} :
+      Krang::Conf->tmpmaxage;
+    my $date = localtime();
+    $date = $date - ($max_age * ONE_HOUR);
+    my (@dirs, @files);
+
+    # build a list of files to delete
+    opendir(DIR, $tmp_path) || croak("Can't open tmpdir: $!");
+    for (readdir DIR) {
+        # skip them if they're too young
+        my $file = catfile($tmp_path, $_);
+        my $filedate = Time::Piece->new((stat($file))[8]);
+        next unless ($filedate - $date) <= 0;
+
+        if (-f $file && $file !~ /\.(conf|cvsignore|pid)$/) {
+            push @files, $file;
+        } elsif (-d $file && $file !~ /\.{1,2}$/) {
+            push @dirs, $file;
+        }
+    }
+    closedir(DIR);
+
+    info("Files to be deleted:\n\t" . join("\n\t", @files) . "\n\n") if @files;
+    info("Directories to be deleted:\n\t" . join("\n\t", @dirs) . "\n\n")
+      if @dirs;
+
+    # delete files
+    for (@files) {
+        info("Unable to delete '$_': $!") unless unlink $_;
+    }
+
+    # delete directories
+    for (@dirs) {
+        rmtree([$_], 0, 1);
+        if (-e $_) {
+            info("Unable to delete '$_'.");
+        }
+    }
+}
+
+
 =item C<< $sched->delete >>
 
 =item C<< Krang::Schedule->delete( $schedule_id ) >>
@@ -408,6 +473,48 @@ sub delete {
 
     # return 1 by default for testing
     return 1;
+}
+
+
+=item C<< Krang::Schedule->expire_sessions( max_age => $max_age_in_hours ) >>
+
+=item C<< Krang::Schedule->expire_sessions() >>
+
+Class method that deletes sessions from the sessions table whose
+'last_modified' field contains a value less than 'now() - INTERVAL
+$max_age_in_hours HOUR'
+
+=cut
+
+sub expire_sessions {
+    my $self = shift;
+    my %args = @_;
+    my $max_age = exists $args{max_age} ? $args{max_age} :
+      Krang::Conf->sessionmaxage;
+    my $dbh = dbh();
+    my ($i, @ids, $query);
+
+    # get deletion candidates
+    $query = <<SQL;
+SELECT id
+FROM sessions
+WHERE last_modified < now() - INTERVAL ? HOUR
+SQL
+    my $row_refs = $dbh->selectall_arrayref($query, undef, $max_age);
+    for $i(0..$#{@$row_refs}) {
+        push @ids, $row_refs->[$i][0];
+    }
+
+    # destroy them
+    if (@ids) {
+        $query = "DELETE FROM sessions WHERE " .
+          join(" OR ", map {"id = ?"} @ids);
+        $dbh->do($query, undef, @ids);
+
+        # log destruction
+        info("Deleted sessions with the following " .
+             "IDs:\n\t" . join("\n\t", @ids) . "\n\n");
+    }
 }
 
 
@@ -614,9 +721,9 @@ sub find {
 }
 
 
-=item C<< @schedule_ids_run = Krang::Schedule->run( $log_handle ) >>
+=item C<< @schedule_ids_run = Krang::Schedule->run() >>
 
-=item C<< $object_run_count = Krang::Schedule->run( $log_handle ) >>
+=item C<< $object_run_count = Krang::Schedule->run() >>
 
 This method runs all pending schedules.  It works by pulling a list of
 schedules with next_run greater than current time.  It runs these
@@ -636,10 +743,7 @@ will be deleted after its action is performed.
 =cut
 
 sub run {
-    my ($self, $log) = @_;
-    croak(__PACKAGE__ . "->run(): \$log handle is undefined or not an " .
-          "IO::File object.")
-      unless (defined $log || ref $log || $log->isa('IO::File'));
+    my $self = shift;
     my $now = localtime();
     my @objs = Krang::Schedule->find(next_run_less_or_equal => 'now()');
     my @schedule_ids_run;
@@ -652,14 +756,11 @@ sub run {
 
         # what do we do in case of a failure
         if (SCH_DEBUG) {
-            $log->print("[$now] Schedule object id '$obj->{schedule_id}' " .
-                        "did something.\n");
+            debug("Schedule object id '$obj->{schedule_id}' did something.\n");
             if ($context) {
                 require Data::Dumper;
-                $log->print("Object should have run with the following " .
-                            "context: " .
-                            Data::Dumper->Dump([$context],['context']) .
-                            "\n");
+                debug("Object should have run with the following context: " .
+                      Data::Dumper->Dump([$context],['context']) . "\n");
             }
         } else {
             my $call = $action_map{$type}->{$action};
@@ -671,8 +772,8 @@ sub run {
                 }
             };
             $eval_err = $@;
-            $log->print("ERROR: '$action' for Krang::$type id '$object_id' " .
-                        "failed: $eval_err")
+            critical("ERROR: '$action' for Krang::$type id '$object_id' " .
+                     "failed: $eval_err")
               if $eval_err;
         }
 

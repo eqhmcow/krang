@@ -10,22 +10,9 @@ BEGIN {
     my $lib = File::Spec->catfile($ENV{KRANG_ROOT}, 'lib');
     $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : "${lib}";
     unshift @INC, $lib, "$lib/".$Config{archname};
-    eval {require Krang::Conf};
-    die <<END if $@;
-
-######################################################################
-
-Cannot load Krang.
-
-Error message:
-
-$@
-
-######################################################################
-END
 }
 
-use Krang::Script;
 use Krang::Schedule::Daemon;
+use Krang::Script;
 
 Krang::Schedule::Daemon->run;

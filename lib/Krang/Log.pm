@@ -123,14 +123,15 @@ use warnings;
 
 # Krang Modules
 use Krang::Conf qw(assertions logfile loglevel logtimestamp timestampformat
-		   logwrap KrangUser KrangGroup);
+		   logwrap KrangUser KrangGroup KrangRoot);
 
 # Module Dependencies
+use Carp qw(verbose croak);
 use Fcntl qw(:flock);
 use IO::File;
 use File::Spec;
 use Time::Piece;
-use Carp qw(verbose croak);
+
 
 # load Text::Wrap if wrapping long lines
 BEGIN {
@@ -168,8 +169,7 @@ BEGIN {
     $LOG = bless({}, "Krang::Log");
 
     # setup filehandle for log; add $KRANG_ROOT to LogFile directive
-    my $log = File::Spec->catfile($ENV{KRANG_ROOT},
-                                  Krang::Conf->logfile());
+    my $log = File::Spec->catfile(KrangRoot, Krang::Conf->logfile());
 
     my $log_exists = (-e $log) ? 1 : 0;
     $LOG->{fh} = IO::File->new(">>$log") or
@@ -177,13 +177,13 @@ BEGIN {
     $LOG->{path} = $log;
 
     # if the log file is freshly created
-    if (not $log_exists) { 
+    if (not $log_exists) {
         my ($uid) = (getpwnam(KrangUser))[2];
         my ($gid) = (getgrnam(KrangGroup))[2];
-        chown($uid, $gid, $log) 
+        chown($uid, $gid, $log)
           or croak("Unable to chown '$log' to $uid, $gid : $!");
     }
-    
+
     # set logging level using LogLevel directive; convert arg to int
     # if we have a string
     my $level = Krang::Conf->loglevel();
@@ -357,15 +357,20 @@ sub log {
         $message = wrap('', "  ", $message) . "\n";
     }
 
+    # reopen filehandle if necessary
+    my $filehandle = $LOG->{fh};
+    $self->_reopen_log() if
+      (not(defined $filehandle && isa($filehandle, 'IO::File')));
+
     # try to obtain an exclusive lock
     croak("Failed to obtain file lock : $!")
-        unless (flock($LOG->{fh}, LOCK_EX));
+      unless (flock($LOG->{fh}, LOCK_EX));
 
     $LOG->{fh}->print($message)
       or croak("Unable to print to logfile: $!");
 
     # release lock - does it have a return value?
-    flock($LOG->{fh}, LOCK_UN) 
+    flock($LOG->{fh}, LOCK_UN)
       or croak("Unable to unlock logfile: $!");
 
     # return value for Tests...
@@ -411,6 +416,16 @@ L<Carp::Assert>.
 
 =cut
 
+# for some reason in the course of forking via Proc::Daemon some bad file
+# descriptors come out of the woodwork, this is the jury-rigging to attempt to
+# handle it
+sub _reopen_log {
+    my $self = shift;
+    $LOG->{fh} = IO::File->new(">>$LOG->{path}") or
+      croak("Unable to open logfile, $LOG->{path}: $!\n");
+}
+
+
 sub AUTOLOAD {
     our $AUTOLOAD;
     my ($self, $arg) = @_;
@@ -427,9 +442,6 @@ sub AUTOLOAD {
         } else {
             return $LOG->{$level};
         }
-    } else {
-        # forward call to log()
-        $self->log(level => $level, message => $arg);
     }
 }
 

@@ -24,6 +24,14 @@ pidfile and close its log.
 =cut
 
 
+# Start Daemon before loading Krang::Log or its file descriptor will be closed
+BEGIN {
+    use IO::File;
+    use Proc::Daemon;
+    Proc::Daemon::Init;
+}
+
+
 #
 # Pragmas/Module Dependencies
 ##############################
@@ -35,16 +43,14 @@ use warnings;
 # External Modules
 ###################
 use Carp qw(croak);
-use File::Spec;
-use IO::File;
-use Proc::Daemon;
 use Time::Piece;
 use Time::Seconds;
 
 
 # Internal Modules
 ###################
-use Krang::Conf qw(KrangRoot ScheduleInterval ScheduleLog);
+use Krang::Conf qw(KrangRoot CleanupInterval ScheduleInterval ScheduleLog);
+use Krang::Log qw/critical debug info/;
 use Krang::Schedule;
 
 #
@@ -52,41 +58,27 @@ use Krang::Schedule;
 ####################
 # Constants
 ############
+use constant CLEANUP_INTERVAL => CleanupInterval;
 use constant SLEEP_INTERVAL => ScheduleInterval;
+
 
 # Globals
 ##########
-# child of 'Proc::Daemon';
-our @ISA = 'Proc::Daemon';
-
-# log handle
-our $log;
-
-# log path
-our $logpath = File::Spec->catfile(KrangRoot,
-                                   'logs',
-                                   ScheduleLog || 'schedule.log');
-
 # pidfile path
-our $pidfile = File::Spec->catfile($ENV{KRANG_ROOT},
-                                   'tmp',
-                                   'schedule_daemon.pid');
+our $pidfile = File::Spec->catfile(KrangRoot, 'tmp', 'schedule_daemon.pid');
 
 # handle SIGTERM
 $SIG{'TERM'} = sub {
     # remove pidfile if it exists
     unlink $pidfile if -e $pidfile;
 
-    # print ending message and close if $log is defined
-    if (defined $log) {
-        my $now = localtime;
-        $log->print("[$now] SCHEDULE DAEMON STOPPED.\n\n");
-        $log->close;
-    }
+    info("Removed Schedule Daemon pidfile.");
+    info("SCHEDULE DAEMON ENDED");
 
     # get out of here
-    exit();
+    exit(0);
 };
+
 
 # Lexicals
 ###########
@@ -115,27 +107,19 @@ through setting the ScheduleLog directive in krang.conf.
 sub run {
     my $self = shift;
 
-    # do forking bit see Proc::Daemon
-    $self->SUPER::Init;
-
-    # drop of pidfile
-    my $fh = IO::File->new(">$pidfile");
+    # drop off pidfile
+    my $pidfile = IO::File->new(">$pidfile");
     croak(__PACKAGE__ . "->run() unable to write pidfile.")
-      unless defined $fh;
-    $fh->print($$);
-    $fh->close();
-
-    # open log
-    $log = IO::File->new(">>$logpath");
-    croak(__PACKAGE__ . "->run() unable to open log for appending .")
-      unless defined $log;
-
-    # autoflush
-    $log->autoflush();
+      unless defined $pidfile;
+    $pidfile->print($$);
+    $pidfile->close();
 
     # print kickoff message
     my $now = localtime;
-    $log->print("\n[$now] SCHEDULE DAEMON STARTED\n");
+    info("SCHEDULE DAEMON STARTED");
+
+    # count of cleanup_attempts
+    my $cleanups = 0;
 
     # time compare vars
     my ($after, $before, $sleep);
@@ -144,18 +128,28 @@ sub run {
     while (1) {
         $before = localtime;
 
-        my @schedule_ids = Krang::Schedule->run($log);
+        # run schedule objects every minute
+        my @schedule_ids = Krang::Schedule->run();
+
+        # attempt to clean_tmp and expire_sessions every
+        # CLEANUP_INTERVAL minutes
+        if (($cleanups == 0 ) ||
+            (($before - ($now + (CLEANUP_INTERVAL * $cleanups))) >= 0)) {
+            info(__PACKAGE__ . ": attempting cleanup.");
+            Krang::Schedule->clean_tmp();
+            Krang::Schedule->expire_sessions();
+            $cleanups++;
+        }
 
         # log activity
         if (@schedule_ids) {
-            $log->print("[$before] Ran ids: " . join(",", @schedule_ids) .
-                        "\n");
+            info(__PACKAGE__ . ": RAN SCHEDULE OBJECT IDS: " .
+                 join(",", @schedule_ids));
         } else {
-            $log->print("[$before] No objects run.\n");
+            info(__PACKAGE__ . ": NO SCHEDULE OBJECTS RAN.");
         }
 
         $after = localtime;
-
         $sleep = SLEEP_INTERVAL - ($after - $before);
 
         # only sleep if $sleep is a positive integer

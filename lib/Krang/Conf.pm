@@ -28,8 +28,11 @@ FTPPort
 FTPAddress
 FTPLog
 InstanceDisplayName
+CleanupInterval
 ScheduleInterval
 ScheduleLog
+SessionMaxAge
+TmpMaxAge
 SMTPServer
 FromAddress
 BugzillaEmail

@@ -297,10 +297,8 @@ is($context2{version}, $context1{version}, 'context good');
 
 # run test - 1 tests should run
 my $path = File::Spec->catfile($ENV{KRANG_ROOT}, 'logs', "schedule_test.log");
-my $log = IO::File->new(">$path") ||
-  croak("Unable to open logfile: $!");
 my $count;
-eval {$count = Krang::Schedule->run($log);};
+eval {$count = Krang::Schedule->run();};
 is($@, '', "run() didn't fail");
 is($count >= 14, 1, 'run() succeeded :).');
 
@@ -314,11 +312,5 @@ END {
     for (1..14) {
         no strict;
         is(${"s$_"}->delete, 1, "deletion test $_") if ${"s$_"};
-    }
-
-    # remove logfile
-    if ($log) {
-        $log->close();
-        unlink $path;
     }
 }
