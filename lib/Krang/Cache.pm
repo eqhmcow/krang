@@ -134,9 +134,7 @@ sub start {
 }
 
 sub stop { 
-    $CACHE_ON--;
-    croak("Krang::Cache::stop() called without Krang::Cache::start()!")
-      if ($CACHE_ON < 0);
+    $CACHE_ON-- if $CACHE_ON;
     if ($CACHE_ON == 0) {
         %CACHE_POS = (); 
         @CACHE = ();
