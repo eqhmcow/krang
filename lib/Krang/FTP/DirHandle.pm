@@ -199,15 +199,6 @@ sub open {
                                         category_id => $category_id );
 
         if ($media[0]) {
-            # if media exists, first version and and upload dummy media
-            # then write to the filesystem itself
-            $media[0]->checkout();
-            $media[0]->prepare_for_edit();
-            $media[0]->upload_file(filename=> $filename,
-                                    filehandle => (new IO::Scalar \$filename));
-            $media[0]->save();
-            $media[0]->checkin();
-        
             return new Krang::FTP::FileHandle(  $self->{ftps},
                                                 $media[0],
                                                 $type,

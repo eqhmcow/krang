@@ -113,8 +113,7 @@ sub open {
             tie $data, 'Krang::FTP::FileHandle::SCALAR', $object;
             $handle = new IO::Scalar \$data;
         } else {
-            tie(*FH, 'Krang::FTP::FileHandle::FILE', $object);
-            return \*FH;
+            return Krang::FTP::FileHandle::FILE->new($object);
         }
         
         return $handle;
@@ -324,16 +323,26 @@ package Krang::FTP::FileHandle::FILE;
 use strict;
 use warnings;
 
-sub TIEHANDLE {
-    my $pkg = shift;
+use base 'IO::Handle';
+
+sub new {
+    my $class = shift;
     my $media = shift;
-    my $self = { media => $media };
-    return bless $self, $pkg;
+    my $self = bless { media => $media, buffer => '' }, $class;
+
+    return $self;
 }
 
-sub WRITE {
+sub syswrite {
     my $self = shift;
-    my $data = shift;
+    my ($data,$length,$offset) = @_;
+    $self->{buffer} .= $data;
+
+    return $length;
+}
+
+sub close {
+    my $self = shift;
     my $media = $self->{media};
     
     # checkout and version media if not a new media
@@ -344,12 +353,12 @@ sub WRITE {
     
     my $filename = $media->filename();
 
-    $media->upload_file( filename => $filename, filehandle => $data);
+    $media->upload_file( filename => $filename, filehandle => (new IO::Scalar \$self->{buffer}) );
 
     $media->save();
     $media->checkin();
 
-    return syswrite $self, $data;
+    return 1;
     
 }
 
