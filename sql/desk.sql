@@ -11,3 +11,10 @@ CREATE TABLE desk (
     PRIMARY KEY (desk_id)
 ) TYPE=MyISAM;
 
+
+--
+-- Insert Default Desks
+--
+INSERT INTO desk VALUES (1, "Edit", 1);
+INSERT INTO desk VALUES (2, "Publish", 2);
+

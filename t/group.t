@@ -30,7 +30,7 @@ foreach my $cat (@root_cats) {
 
 
 # Verify that new group has inherited existing desks and set them to "edit" by default
-my @all_desks = ();   # NOT YET IMPLEMENTED -- Krang::Desk->find(ids_only=>1);
+my @all_desks = Krang::Desk->find(ids_only=>1);
 my $group_desks = $group->desks();
 foreach my $desk (@all_desks) {
     is($group_desks->{$desk}, "edit", "Desk '$desk' defaults to 'edit'");
@@ -165,14 +165,15 @@ ok(not(ref($load_group)), "Can't find deleted object");
 # Test saving category & desk permissions
 $group = Krang::Group->new(
                            name       => $unique_group_name, 
-                           desks      => { 222 => "hide" }, 
+                           desks      => { 222 => "hide", 1 => "hide" }, 
                            categories => { 333 => "hide", 2 => "hide" },
                           );
 $group->save();
-my ($load_group) = Krang::Group->find(name=>$unique_group_name);
+($load_group) = Krang::Group->find(name=>$unique_group_name);
 is($load_group->categories("333"), "hide", "Category permissions saved correctly");
 is($load_group->categories("2"), "hide", "Category permissions default override");
 is($load_group->desks("222"), "hide", "Desk permissions saved correctly");
+is($load_group->desks("1"), "hide", "Desk permissions default override");
 
 
 # Test invalid security levels

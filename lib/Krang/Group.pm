@@ -205,7 +205,7 @@ sub init {
     $args{categories} = {} unless (exists($args{categories}));
     %{$args{categories}} = (%categories, %{$args{categories}});
 
-    my @all_desks = ();   # NOT YET IMPLEMENTED -- Krang::Desk->find(ids_only=>1)
+    my @all_desks = Krang::Desk->find(ids_only=>1);
     my %desks = ( map { $_ => "edit" } @all_desks );
     $args{desks} = {} unless (exists($args{desks}));
     %{$args{desks}} = (%desks, %{$args{desks}});
@@ -483,7 +483,7 @@ sub save {
     }
 
     # Sanitize desks: Make sure all desks are specified
-    my @all_desks = ();   # NOT YET IMPLEMENTED -- Krang::Desk->find(ids_only=>1)
+    my @all_desks = Krang::Desk->find(ids_only=>1);
     my %desks = $self->desks();
     foreach my $desk (@all_desks) {
         $desks{$desk} = "edit" unless (exists($desks{$desk}));
