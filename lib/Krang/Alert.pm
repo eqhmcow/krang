@@ -399,6 +399,8 @@ sub send {
                             subject => "Krang alert for action ".$alert->action,
                             msg => $message,
                         }); 
+    } else {
+        info(__PACKAGE__."->send() - no email address found for user: alert not sent: $message");        
     }
     
 }
