@@ -200,7 +200,10 @@ sub access_handler ($$) {
         ($bd->browser_string eq 'Netscape' and $bd->major >= 5) or
         ($bd->browser_string eq 'MSIE'     and $bd->major >= 5) or
         ($bd->browser_string eq 'Mozilla'  and $bd->major >= 1) or
-        ($bd->browser_string eq 'Firefox'  and ($bd->major >= 1 or $bd->minor >= .8))
+        ($bd->browser_string eq 'Firefox'  and (($bd->major >= 1) or
+                                                ($bd->minor == .1 or
+                                                 $bd->minor >= .8))
+        )
        ) {
         return OK;
     }
