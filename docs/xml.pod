@@ -1,0 +1,434 @@
+=head1 Krang XML System
+
+=head2 Introduction
+
+This document describes the Krang XML system.  The tools used to
+perform data export and import are covered first, followed by detailed
+descriptions of the Krang XML file formats.
+
+=head1 Tools
+
+=head2 Export
+
+Krang's XML system is capable of dumping Krang objects into XML files.
+Each file contains one object (except for Krang::Element objects which
+are included within their containing Story or Category).  
+
+XML files are collected in a single archive along with a index file,
+forming a Krang data set (kds).  These files are in standard TAR
+format and may end in either .kds or, if gzip-compressed, .kds.gz.
+The index file lists all XML files in the set and provides the ID of
+the object contained within.
+
+Additional non-XML files may be included in the kds.  For example,
+media objects will include their media file in the data set archive.
+
+To perform an export, use the krang_export program.  For example, to
+export all stories into a file called export.kds:
+
+  krang_export --stories --output export.kds
+
+For more examples, see the documentation for krang_export by typing:
+
+  krang_export --man
+
+=head2 Import
+
+Krang's XML system can load data sets created by the Export system, or
+created with external tools (like the Bricolage converter).  The data
+set is read in and all described objects are created.
+
+To import a .kds file, use krang_import:
+
+  krang_import file.kds
+
+For more examples, see the documentation for krang_export by typing:
+
+  krang_import --man
+
+=head1 File Formats
+
+This section describes each XML file type which may be included in a
+Krang data set.
+
+=head2 Index
+
+Each Krang data set has one index file called F<index.xml>, which must
+conform to this XML schema:
+
+  HREF[index.xsd|schema/index.html]
+
+This example F<index.xml> contains a file of each supported type.
+Every object referenced by ID from within the .xml files must be
+present in index.xml.
+
+  <?xml version="1.0" encoding="UTF-8"?>
+
+  <index xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd">
+      <version>0.001</version>
+      <class name="Krang::Group">
+          <object>
+              <id>1</id>
+              <xml>group_1.xml</xml>
+          </object>
+      </class>
+      <class name="Krang::Media">
+        <object>
+            <id>53</id>
+            <xml>media_53.xml</xml>
+            <file>media_53/cherished.jpg</file>
+        </object>
+      </class>
+      <class name="Krang::Contrib">
+          <object>
+              <id>100</id>
+              <xml>contrib_100.xml</xml>
+          </object>
+      </class>
+      <class name="Krang::Desk">
+          <object>
+              <id>1</id>
+              <xml>desk_1.xml</xml>
+          </object>
+      </class>
+      <class name="Krang::Category">
+          <object>
+              <id>269</id>
+              <xml>category_269.xml</xml>
+          </object>
+      </class>
+      <class name="Krang::Site">
+          <object>
+              <id>77</id>
+              <xml>site_77.xml</xml>
+          </object>
+      </class>
+      <class name="Krang::Story">
+          <object>
+              <id>70</id>
+              <xml>story_70.xml</xml>
+          </object>
+      </class>
+      <class name="Krang::User">
+          <object>
+              <id>37</id>
+              <xml>user_37.xml</xml>
+          </object>
+      </class>
+      <class name="Krang::Template">
+          <object>
+              <id>61</id>
+              <xml>template_61.xml</xml>
+          </object>
+      </class>
+      <class name="Krang::Schedule">
+          <object>
+              <id>29</id>
+              <xml>schedule_29.xml</xml>
+          </object>
+      </class>
+  </index>
+
+=head2 Krang::Story
+
+L<Krang::Story> objects are described by this XML Schema:
+
+  HREF[story.xsd|schema/story.html]
+
+Here is a small example story:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <story xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="story.xsd">
+     <story_id>100</story_id>
+     <class>cover</class>
+     <title>Bernstein Infrastructure Ebbing</title>
+     <slug>bogeymen</slug>
+     <version>1</version>
+     <cover_date>2020-03-24T00:00:00</cover_date>
+     <priority>2</priority>
+     <notes></notes>
+     <category_id>96</category_id>
+     <category_id>97</category_id>
+     <url>equilibrium.kra/semblance/</url>
+     <url>equilibrium.kra/resemblance/</url>
+     <element>
+         <class>cover</class>
+         <data></data>
+         <element>
+             <class>metadata_title</class>
+             <data>acquaints oleander samson eyeglass</data>
+         </element>
+         <element>
+             <class>metadata_description</class>
+             <data>rattlers alfred empty reflecting evasive subsequently grievers construing checks floppies infringe intermediate cytology apologia aggressions planned powdery notoriously blatz incidental prover blower coarsened rioters schematics garcia insertions slyly referee ran asses incrementing incompetent tilted planners final ravages stomp bookmark contained buyers actualities runaway jonas counterfeited gatherings</data>
+         </element>
+         <element>
+             <class>cover_page</class>
+             <data></data>
+             <element>
+                 <class>double_column</class>
+                 <data></data>
+                 <element>
+                     <class>left_column</class>
+                     <data></data>
+                     <element>
+                         <class>lead_in</class>
+                         <data>50</data>
+                     </element>
+                     <element>
+                         <class>lead_in</class>
+                         <data>62</data>
+                     </element>
+                 </element>
+                 <element>
+                     <class>right_column</class>
+                     <data></data>
+                     <element>
+                         <class>image</class>
+                         <data></data>
+                         <element>
+                             <class>alignment</class>
+                             <data>Left</data>
+                         </element>
+                         <element>
+                             <class>media</class>
+                             <data>46</data>
+                         </element>
+                     </element>
+                     <element>
+                         <class>lead_in</class>
+                         <data>87</data>
+                     </element>
+                 </element>
+             </element>
+         </element>
+     </element>
+ </story>
+
+=head2 Krang::Media
+
+L<Krang::Media> objects are described by this XML Schema:
+
+  HREF[media.xsd|schema/media.html]
+
+Here is an example media file:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <media xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="media.xsd">
+     <media_id>151</media_id>
+     <media_type>Image</media_type>
+     <title>Lorelei Dangle Blurs</title>
+     <filename>affluent.png</filename>
+     <path>media_151/affluent.png</path>
+     <category_id>264</category_id>
+     <url>superscripted.kra/affluent.png</url>
+     <caption></caption>
+     <copyright></copyright>
+     <alt_tag></alt_tag>
+     <notes></notes>
+     <version>1</version>
+     <creation_date>2003-06-09T00:00:00</creation_date>
+ </media>
+
+Note that the file referenced by the C<path> element,
+F<media_151/affluent.png>, must exist in the .kds file at that
+location.
+
+=head2 Krang::Template
+
+L<Krang::Template> objects are described by this XML Schema:
+
+  HREF[template.xsd|schema/template.html]
+
+Here is an example template file:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <template xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="template.xsd">
+     <template_id>29</template_id>
+     <filename>open_format_article.tmpl</filename>
+     <url>/open_format_article.tmpl</url>
+     <content>foo</content>
+     <creation_date>2003-06-06T17:11:02</creation_date>
+     <deploy_date>FriTJun  6 17:11:02 2003</deploy_date>
+     <version>1</version>
+     <deployed_version>1</deployed_version>
+ </template>
+
+=head2 Krang::Contrib
+
+L<Krang::Contrib> objects are described by this XML Schema:
+
+  HREF[contrib.xsd|schema/contrib.html]
+
+Here is an example contrib file:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <contrib xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="contrib.xsd">
+     <contrib_id>100</contrib_id>
+     <prefix></prefix>
+     <first>Plea</first>
+     <middle></middle>
+     <last>Citrus</last>
+     <suffix></suffix>
+     <email>Plea@Citrus.com</email>
+     <phone>1-800-Citrus</phone>
+     <bio>randolph spatula distractions digests</bio>
+     <url>http://Plea.Citrus.com</url>
+     <contrib_type>Writer</contrib_type>
+     <contrib_type>Photographer</contrib_type>
+ </contrib>
+
+=head2 Krang::Category
+
+L<Krang::Category> objects are described by this XML Schema:
+
+  HREF[category.xsd|schema/category.html]
+
+Here is an example category file:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <category xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="category.xsd">
+     <category_id>100</category_id>
+     <site_id>27</site_id>
+     <parent_id>99</parent_id>
+     <dir>excusing</dir>
+     <url>equilibrium.kra/semblance/archeological/excusing/</url>
+     <element>
+         <class>category</class>
+         <data></data>
+     </element>
+ </category>
+
+=head2 Krang::Site
+
+L<Krang::Site> objects are described by this XML Schema:
+
+  HREF[site.xsd|schema/site.html]
+
+Here is an example site file:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <site xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="site.xsd">
+     <site_id>27</site_id>
+     <url>equilibrium.kra</url>
+     <preview_url>preview.equilibrium.kra</preview_url>
+     <publish_path>/tmp/equilibrium.kra_publish</publish_path>
+     <preview_path>/tmp/equilibrium.kra_preview</preview_path>
+ </site>
+
+=head2 Krang::Desk
+
+L<Krang::Desk> objects are described by this XML Schema:
+
+  HREF[desk.xsd|schema/desk.html]
+
+Here is an example site file:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <desk xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="desk.xsd">
+     <desk_id>1</desk_id>
+     <name>Edit</name>
+     <order>1</order>
+ </desk>
+
+=head2 Krang::User
+
+L<Krang::User> objects are described by this XML Schema:
+
+  HREF[user.xsd|schema/user.html]
+
+Here is an example user file:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <user xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="user.xsd">
+     <user_id>1</user_id>
+     <login>admin</login>
+     <password>36ca9aadabe4e2adcfcc9747dfb0ea10</password>
+     <first_name>Joe</first_name>
+     <last_name>Admin</last_name>
+     <email>Joe@Admin.com</email>
+     <phone></phone>
+     <mobile_phone></mobile_phone>
+     <group_id>1</group_id>
+ </user>
+
+=head2 Krang::Group
+
+L<Krang::Group> objects are described by this XML Schema:
+
+  HREF[group.xsd|schema/group.html]
+
+Here is an example group file:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <group xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="group.xsd">
+     <group_id>1</group_id>
+     <name>Admin</name>
+     <category>
+         <category_id>262</category_id>
+         <security_level>edit</security_level>
+     </category>
+     <category>
+         <category_id>92</category_id>
+         <security_level>edit</security_level>
+     </category>
+     <desk>
+         <desk_id>1</desk_id>
+         <security_level>edit</security_level>
+     </desk>
+     <desk>
+         <desk_id>2</desk_id>
+         <security_level>edit</security_level>
+     </desk>
+     <may_publish>1</may_publish>
+     <may_checkin_all>1</may_checkin_all>
+     <admin_users>1</admin_users>
+     <admin_users_limited>0</admin_users_limited>
+     <admin_groups>1</admin_groups>
+     <admin_contribs>1</admin_contribs>
+     <admin_sites>1</admin_sites>
+     <admin_categories>1</admin_categories>
+     <admin_jobs>1</admin_jobs>
+     <admin_desks>1</admin_desks>
+     <asset_story>edit</asset_story>
+     <asset_media>edit</asset_media>
+     <asset_template>edit</asset_template>
+ </group>
+
+=head2 Krang::Schedule
+
+L<Krang::Schedule> objects are described by this XML Schema:
+
+  HREF[schedule.xsd|schema/schedule.html]
+
+Here is an example file:
+
+ <?xml version="1.0" encoding="UTF-8"?>
+
+ <schedule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="schedule.xsd">
+     <schedule_id>29</schedule_id>
+     <object_type>story</object_type>
+     <object_id>96</object_id>
+     <action>publish</action>
+     <repeat>hourly</repeat>
+     <next_run>2003-06-09T15:00:01</next_run>
+     <last_run>2003-06-09T14:19:32</last_run>
+     <initial_date>2003-06-06T18:00:01</initial_date>
+     <minute>0</minute>
+ </schedule>
+
+=head2 Krang::Alert
+
+L<Krang::Alert> objects are described by this XML Schema:
+
+  HREF[alert.xsd|schema/alert.html]
+

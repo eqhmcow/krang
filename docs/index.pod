@@ -58,6 +58,10 @@ HREF[Element System|element_system.html] - the Krang element system
 
 =item *
 
+HREF[XML System|xml.html] - the Krang XML system
+
+=item *
+
 HREF[Software Requirements|requirements.html] - software dependencies for Krang
 
 =item *
