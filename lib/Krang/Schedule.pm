@@ -229,8 +229,8 @@ sub init {
     my $self = shift;
     my %args = @_;
     my (@bad_args, $repeat);
-    my ($date, $day_of_week, $hour, $minute) = map {delete $args{$_}}
-      qw/date day_of_week hour minute/;
+    my ($date, $day_of_week, $hour, $minute, $test_date) =
+      map {delete $args{$_}} qw/date day_of_week hour minute test_date/;
 
     for (keys %args) {
         push @bad_args, $_ unless exists $schedule_args{$_};
@@ -276,7 +276,7 @@ sub init {
     $self->hash_init(%args);
 
     # calculate next run
-    my $now = localtime;
+    my $now = SCH_DEBUG ? $test_date : localtime;
     $self->{next_run} = $repeat eq 'never' ? $date :
       _next_run($now, $repeat, $day_of_week, $hour, $minute);
 
@@ -288,7 +288,7 @@ sub init {
 # It returns a datetime to be stored in the object's next_run field
 sub _next_run {
     my ($now, $repeat, $day_of_week, $hour, $minute) = @_;
-    my $next = localtime;
+    my $next = $now;
     my $same_day = my $same_hour = my $same_week = 0;
 
 # I
@@ -296,7 +296,6 @@ sub _next_run {
 # I.A
         if ($now->day_of_week > $day_of_week) {
             $next += ONE_WEEK - (($now->day_of_week - $day_of_week) * ONE_DAY);
-            $next -= 3600;
 # I.B
         } elsif ($day_of_week > $now->day_of_week) {
             $next += ($day_of_week - $now->day_of_week) * ONE_DAY;
@@ -310,7 +309,6 @@ sub _next_run {
 # I.D.i
             if ($same_week) {
                 $next += ONE_WEEK - (($now->hour - $hour) * ONE_HOUR);
-                $next -= 3600;
 # I.D.ii
             } else {
                 $next += ($hour - $now->hour) * ONE_HOUR;
