@@ -463,11 +463,13 @@ sub init {
       { map { $_ => 1 } $self->class->url_attributes };
 
     # setup defaults
-    $self->{version}        = 0;
-    $self->{priority}       = 2;
-    $self->{checked_out}    = 1;
-    $self->{checked_out_by} = $ENV{REMOTE_USER};
-    $self->{cover_date}     = Time::Piece->new();
+    $self->{version}           = 0;
+    $self->{published_version} = 0;
+    $self->{preview_version}   = 0;
+    $self->{priority}          = 2;
+    $self->{checked_out}       = 1;
+    $self->{checked_out_by}    = $ENV{REMOTE_USER};
+    $self->{cover_date}        = Time::Piece->new();
 
     # Set up temporary permissions
     $self->{may_see} = 1;

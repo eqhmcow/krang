@@ -218,17 +218,17 @@ use Krang::MethodMaker
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get_set       => [ qw(
-                          title 
-                          alt_tag 
-                          version 
-                          checked_out_by 
+                          title
+                          alt_tag
+                          version
+                          checked_out_by
                           published_version
                           preview_version
                           publish_date
-                          caption copyright 
-                          notes 
+                          caption copyright
+                          notes
                           mime_type
-                          media_type_id 
+                          media_type_id
                          ) ],
     get_set_with_notify => [ { method => '_notify',
                                 attr => [ qw(
@@ -258,16 +258,19 @@ sub init {
     my $filename = $args{'filename'};
 
     my $filehandle = delete $args{'filehandle'};
-    
-    $self->{contrib_ids} = [];
-    $self->{version} = 0;  # versions start at 0
-    $self->{checked_out_by} = $ENV{REMOTE_USER};   
-    $self->{creation_date} = localtime unless defined $self->{creation_date};
+
+    $self->{contrib_ids}       = [];
+    $self->{version}           = 0;  # versions start at 0
+    $self->{published_version} = 0;
+    $self->{preview_version}   = 0;
+    $self->{checked_out_by}    = $ENV{REMOTE_USER};
+    $self->{creation_date}     = localtime unless defined $self->{creation_date};
+
 
     # Set up temporary permissions
     $self->{may_see} = 1;
     $self->{may_edit} = 1;
-    
+
     # finish the object
     $self->hash_init(%args);
 
