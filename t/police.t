@@ -12,7 +12,7 @@ find({ wanted =>
            my ($strict, $warnings);
            while(my $line = <PM>) {
                $strict = 1 if $line =~ /^\s*use\s+strict\s*;/;
-               $warnings = 1 if $line =~ /^\s*use\s+strict\s*;/;
+               $warnings = 1 if $line =~ /^\s*use\s+warnings\s*;/;
                last if $strict and $warnings;
            }
            ok($strict, "$_ 'use strict' test.");
