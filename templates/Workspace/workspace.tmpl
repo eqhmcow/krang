@@ -2,6 +2,18 @@
 
 <script language="javascript">
 
+  /* returns true if the user has checked anything */
+  function something_checked() {
+      var form = document.krang_pager_form;
+      for (i = 0; i < form.elements.length ; i++) {
+          var e = form.elements[i];
+          if (e.name == "krang_pager_rows_checked" && e.checked) {
+             return true;
+          }
+      }
+      return false;
+  }
+
   function preview_story(id) {
         window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
   }
@@ -19,9 +31,13 @@
   }
 
   function delete_checked() {
-     if (confirm("Are you sure you wish to delete these items permanently?")) {
-       document.krang_pager_form.rm.value = 'delete_checked';
-       document.krang_pager_form.submit();
+     if (something_checked()) {
+       if (confirm("Are you sure you wish to delete these items permanently?")) {
+         document.krang_pager_form.rm.value = 'delete_checked';
+         document.krang_pager_form.submit();
+       }
+     } else {
+          alert("Nothing selected to delete!");
      }
   }
 
@@ -44,10 +60,14 @@
   }
 
   function publish_checked() {
-    if (confirm("Are you sure you wish to publish all these items?")) {
-      document.krang_pager_form.action = 'publisher.pl';
-      document.krang_pager_form.rm.value = 'publish_story_list';
-      document.krang_pager_form.submit();
+    if (something_checked()) {
+      if (confirm("Are you sure you wish to publish all these items?")) {
+        document.krang_pager_form.action = 'publisher.pl';
+        document.krang_pager_form.rm.value = 'publish_story_list';
+        document.krang_pager_form.submit();
+      }
+    } else {
+      alert("Nothing selected to publish!");
     }
   }
 
@@ -76,8 +96,12 @@
   }
                                                                                
   function checkin_checked() {
+     if (something_checked()) {
        document.krang_pager_form.rm.value = 'checkin_checked';
        document.krang_pager_form.submit();
+     } else {
+       alert("Nothing selected to checkin!");
+     }
   }
 
   function update_testing(checkbox, id) {
