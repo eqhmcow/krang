@@ -366,18 +366,36 @@ sub delete {
 
     $list_item_id = $self->{list_item_id} if $is_object;
     my $order;
+    my $list_id;
+    my $parent_list_item_id;
     if (not $is_object) {
-        $order  = (Krang::ListItem->find( list_item_id => $list_item_id ))[0]->order;
+        my $list_item  = (Krang::ListItem->find( list_item_id => $list_item_id ))[0];
+        $order = $list_item->order;
+        $list_id = $list_item->list_id;
+        $parent_list_item_id = $list_item->parent_list_item_id;
+        
     } else {
-        $order = $self->{ord}
+        $order = $self->{ord};
     }
 
     $dbh->do('DELETE from list_item where list_item_id = ?', undef, $list_item_id);
 
     # get rid of gaps in order
-    my $sql = 'UPDATE list_item set ord = ord - 1 where ord > ?';
-    $dbh->do($sql, undef, $order);
-    
+    my $sql = 'UPDATE list_item set ord = (ord - 1) where ord > ? AND list_id = ?';
+    $sql .= "AND parent_list_item_id = ?" if $parent_list_item_id;
+    my @args = ($order, $list_id);
+    push (@args, $parent_list_item_id) if $parent_list_item_id;
+    $dbh->do($sql, undef, @args);
+
+    # delete child list_items recursively
+    $sql = 'SELECT list_item_id from list_item where parent_list_item_id = ?';
+    my $sth = $dbh->prepare($sql); 
+    $sth->execute($list_item_id);
+    while (my ($lid) = $sth->fetchrow_array()) {
+        $self->delete($lid);
+    }
+    $sth->finish();
+       
 }
 
 =item $list_item->serialize_xml(writer => $writer, set => $set)
