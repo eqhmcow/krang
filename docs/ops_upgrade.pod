@@ -14,3 +14,23 @@ If Krang isn't installed in C</usr/local/krang> then you'll need to
 point C<krang_upgrade> in the right direction:
 
   # ./bin/krang_upgrade --krangRoot /path/to/krang/install
+
+=head2 A Note for CVS Users
+
+First, you should only use the CVS tree if you are involved in Krang
+development.  The CVS tree is not stable for production use!
+
+If you are attempting to upgrade an existing Krang installation from a
+CVS checkout, you must build a distribution first using
+C<bin/krang_makedist>.  If you run C<krang_upgrade> directly from the
+CVS release, you run the risk of crucial config files being
+overwritten, along with getting your directory tree polluted with
+unnecessary CVS directories.
+
+  # ./bin/krang_makedist
+  # cp krang-versionnum-platformname-perlversion.tar.gz /usr/local/src/.
+  # cd /usr/local/src
+  # tar zxf krang-versionnum-platformname-perlversion.tar.gz
+  # cd krang-versionnum-platformname-perlversion/
+  # ./bin/krang_upgrade --krangRoot /path/to/krang/install
+
