@@ -139,6 +139,12 @@ my $krang_import = catfile(KrangRoot, 'bin', 'krang_import');
 # load base stuff from kds
 `$krang_import $base_kds`;
 
+# now update site preview and publish path for this installation
+my ($site1) = Krang::Site->find( url => 'equilibrium.kra:8080');
+$site1->preview_path( catdir(KrangRoot, "tmp", 'equilibrium.kra_preview') );
+$site1->publish_path( catdir(KrangRoot, "tmp", 'equilibrium.kra_publish') );
+$site1->save();
+
 # load base stories covers media into memory 
 my @base_stories = Krang::Story->find( class => 'article', limit => 40 );
 my @base_covers = Krang::Story->find( class => 'cover', limit => 10 );
