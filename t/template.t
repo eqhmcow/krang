@@ -19,10 +19,7 @@ my $site = Krang::Site->new(preview_path => './sites/test1/preview/',
 $site->save();
 isa_ok($site, 'Krang::Site');
 
-my $category = Krang::Category->new(dir => '/',
-                                    site_id => $site->site_id());
-$category->save();
-isa_ok($category, 'Krang::Category');
+my ($category) = Krang::Category->find(site_id => $site->site_id());
 
 # constructor test
 my $tmpl = Krang::Template->new(category_id => $category->category_id(),
@@ -134,6 +131,5 @@ is($tmpl->delete(), 1, 'Deletion Test 1');
 is($tmpl2->delete(), 1, 'Deletion Test 2');
 
 # delete category and site
-$category->delete();
 $site->delete();
 

@@ -19,7 +19,7 @@ my $site = Krang::Site->new(preview_url  => 'storytest.preview.com',
                             preview_path => '/tmp/storytest_preview');
 isa_ok($site, 'Krang::Site');
 $site->save();
-my ($root_cat) = Krang::Category->new(site_id => $site->site_id, dir => "/");
+my ($root_cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
 isa_ok($root_cat, 'Krang::Category');
 $root_cat->save();
 
@@ -35,7 +35,6 @@ for (0 .. 10) {
 # cleanup the mess
 END {
     $_->delete for @cat;
-    $root_cat->delete;
     $site->delete;
 }
 
