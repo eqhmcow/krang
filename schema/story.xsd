@@ -14,11 +14,7 @@
                 <xs:element name="publish_date" type="xs:dateTime" minOccurs="0"/>
                 <xs:element name="priority"/>
                 <xs:element name="notes"/>
-                <xs:element name="category_id" type="xs:int" maxOccurs="unbounded">
-                    <xs:annotation>
-                        <xs:documentation>list of category IDs present in the data set</xs:documentation>
-                    </xs:annotation>
-                </xs:element>
+                <xs:element name="category_id" type="xs:int" maxOccurs="unbounded"/>
                 <xs:element name="url" type="xs:string" maxOccurs="unbounded"/>
                 <xs:element name="contrib" minOccurs="0" maxOccurs="unbounded">
                     <xs:complexType>

@@ -1,22 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) by rth77 (rth77) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
-	<xs:element name="template">
-		<xs:annotation>
-			<xs:documentation>Comment describing your root element</xs:documentation>
-		</xs:annotation>
-		<xs:complexType>
-			<xs:sequence>
-				<xs:element name="template_id" type="xs:int"/>
-				<xs:element name="filename" type="xs:string"/>
-				<xs:element name="url" type="xs:string"/>
-				<xs:element name="category_id" type="xs:int" minOccurs="0"/>
-				<xs:element name="content" type="xs:string"/>
-				<xs:element name="creation_date" type="xs:dateTime"/>
-				<xs:element name="deploy_date" type="xs:dateTime" minOccurs="0"/>
-				<xs:element name="version" type="xs:int"/>
-                                <xs:element name="deployed_version" type="xs:int" minOccurs="0"/>
-			</xs:sequence>
-		</xs:complexType>
-	</xs:element>
+    <xs:element name="template">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="template_id" type="xs:int"/>
+                <xs:element name="filename" type="xs:string"/>
+                <xs:element name="url" type="xs:string"/>
+                <xs:element name="category_id" type="xs:int" minOccurs="0"/>
+                <xs:element name="content" type="xs:string"/>
+                <xs:element name="creation_date" type="xs:dateTime"/>
+                <xs:element name="deploy_date" type="xs:dateTime" minOccurs="0"/>
+                <xs:element name="version" type="xs:int"/>
+                <xs:element name="deployed_version" type="xs:int" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
 </xs:schema>

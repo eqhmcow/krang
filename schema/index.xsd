@@ -2,9 +2,6 @@
 <!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) by rth77 (rth77) -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
     <xs:element name="index">
-        <xs:annotation>
-            <xs:documentation>Index of objects in a KDS file</xs:documentation>
-        </xs:annotation>
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="version">
@@ -15,9 +12,6 @@
                     </xs:simpleType>
                 </xs:element>
                 <xs:element name="class" maxOccurs="unbounded">
-                    <xs:annotation>
-                        <xs:documentation>a class has a name</xs:documentation>
-                    </xs:annotation>
                     <xs:complexType>
                         <xs:sequence>
                             <xs:element name="object" maxOccurs="unbounded">
