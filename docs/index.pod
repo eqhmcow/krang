@@ -124,6 +124,9 @@ HREF[Build System|build_tech_spec.html] - How the Krang build system works.
 
 =over 4
 
+=item *
+
+HREF[ToDo List|todo.html] - the current Krang ToDo list
 
 =item *
 
