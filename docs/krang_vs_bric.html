@@ -39,6 +39,7 @@ versions of Bricolage may be included in this chart as time permits.
 <ul>
 <li><a href="#features">Feature Comparison</a></li>
 <li><a href="#complexity">Complexity Comparison</a></li>
+<li><a href="#performance">Performance Comparison</a></li>
 </ul>
 
 <p>
@@ -81,14 +82,14 @@ examples of things that stayed the same in Krang.
 </tr>
 
 <tr>
-  <td>Add Contributor During Story Edit</td>
+  <td>Configurable Story Workflow</td>
   <td class="yes">Yes</td>
-  <td class="no">No</td>
+  <td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Configurable Story Workflow</td>
-  <td class="yes">Yes</td>
+  <td>Multiple Story Workflows</td>
+  <td class="no">No</td>
   <td class="yes">Yes</td>
 </tr>
 
@@ -100,12 +101,6 @@ examples of things that stayed the same in Krang.
 
 <tr>
   <td>Publishing via SCP</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr>
-  <td>Integrated Source Support</td>
   <td class="no">No</td>
   <td class="yes">Yes</td>
 </tr>
@@ -141,6 +136,28 @@ examples of things that stayed the same in Krang.
   <td class="no">No</td>
   <td class="yes">Yes</td>
 </tr>
+
+<tr><td colspan=3 class=section>Contributors</td></tr>
+
+<tr>
+  <td>Add Contributor During Asset Edit</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Contributor Photos</td>
+  <td class="yes">Yes</td>
+  <td class="no">No</td>
+</tr>
+
+<tr>
+  <td>Customized Contributor Type Fields</td>
+  <td class="no">No</td>
+  <td class="yes">Yes</td>
+</tr>
+
+
 
 <tr><td colspan=3 class=section>Templates</td></tr>
 
@@ -315,12 +332,6 @@ examples of things that stayed the same in Krang.
 </tr>
 
 <tr>
-  <td>Must Control Entire Virtual Host</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr>
   <td>SSL Support</td>
   <td class="no">No</td>
   <td class="yes">Yes</td>
@@ -451,6 +462,49 @@ pieces of data express the relative simplicity of Krang:
   <td>Database Tables</td>
   <td class="yes">33</td>
   <td class="no">145</td>
+</tr>
+
+</table>
+
+<h2><a name="performance">Performance</a></h2>
+
+Bricolage is too slow to publish large websites (more than 100,000
+articles) in a reasonable period of time.  Even with small Bricolage
+makes poor use of system resources.  Krang was designed to publish the
+largest sites easily and support small sites with minimal overhead.
+
+<p>
+
+The following table compares a few common operations on Bricolage and
+Krang system with approximately 10,000 stories, running on identical
+machines (dual P4-2Ghz, 4GB of ram, with their databases tuned
+appropriately).  For a more comprehensive look at Krang's performance
+under load see <a href="performance.html">this document</a>.
+
+<p>
+<table border=0 cellspacing=0 width=70%>
+<tr>
+  <th width=60% align=left>Operation</th>
+  <th width=20%>Krang 1.0</th>
+  <th width=20%>Bricolage 1.4.6</th>
+</tr>
+
+<tr>
+  <td>Single Story Publish</td>
+  <td class="yes">0.33 seconds</td>
+  <td class="no">?</td>
+</tr>
+
+<tr>
+  <td>Total Site Publish</td>
+  <td class="yes">65 minutes</td>
+  <td class="no">?</td>
+</tr>
+
+<tr>
+  <td>Story Find by Title</td>
+  <td class="yes">0.15 seconds</td>
+  <td class="no">?</td>
 </tr>
 
 </table>
