@@ -11,7 +11,7 @@ use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 
 use base 'Exporter';
-our @EXPORT_OK = qw(category_chooser date_chooser datetime_chooser decode_date decode_datetime format_url);
+our @EXPORT_OK = qw(category_chooser time_chooser date_chooser datetime_chooser decode_date decode_datetime format_url);
 
 =head1 NAME
 
@@ -113,6 +113,105 @@ sub category_chooser {
     return $template->output();
 }
 
+=item $chooser_html = time_chooser(name => 'time', query => $query)
+                                                                                
+Returns a block of HTML implementing the standard Krang datetime
+chooser.  The C<name> and C<query> parameters are required.
+                                                                                
+Additional optional parameters are as follows:
+                                                                                
+  hour      - if set (in 24 hour format, i.e. 0-23) , chooser will
+              be prepopulated with that hour.  If not set,
+              will default to current hour (localtime)
+              unless "nochoice" is true, in which case chooser
+              will be set to blank ('Hour').
+  
+  minute    - if set, chooser will be prepopulated with that
+              minute.  If not set, will default to current
+              minute (from localtime) unless "nochoice" is 
+              true, in which chooser will be set to blank ('Minute').
+
+  nochoice  - if set to a true value, Hour/Minute/AM
+              will be provided as default choices in the chooser.
+                                                                                
+              The value "0" will be returned if a user chooses
+              the "no choice" option.
+                                                                                
+                                                                                
+The time_chooser() implements itself in HTML via three separate
+query parameters.  They are named based on the provided name,
+plus "_hour", "_minute", and
+"_ampm" respectively. CGI query data from
+                                                                                
+=cut
+
+sub time_chooser {
+    my %args = @_;
+    my ($name, $query, $hour, $minute, $nochoice) =
+      @args{qw(name query hour minute nochoice)};
+    croak("Missing required args: name and query")
+      unless $name and $query;
+
+    my $current_date = localtime();
+
+    unless ($nochoice) {
+        $hour = $hour ? $hour : $current_date->hour();
+        $minute = $minute ? $minute : $current_date->minute();
+    }
+    my @hour_values = (1..12);
+    my %hour_labels = ();
+                                                                                
+    my @minute_values = (0..59);
+    my %minute_labels = ();
+    $minute_labels{0} = '00';
+    for (my $count = 0; $count <= 9; $count++) {
+        $minute_labels{$count} = '0'.$count;
+    }
+    my @ampm_values = ('AM','PM');
+    my %ampm_labels = (AM => 'AM', PM => 'PM');
+
+    # set defaults
+    if ($nochoice) {
+        # Hour
+        unshift(@hour_values, 0);
+        $hour_labels{0} = 'Hour';
+                                                                                
+        # Minute
+        unshift(@minute_values, 'undef');
+        $minute_labels{undef} = 'Minute';
+                                                                                
+    }
+
+    my $hour_12;
+    if ($hour) {
+        $hour_12 = ($hour >= 13) ? ($hour - 12) : $hour;    
+    }
+                                                                                
+    my $h_sel = $query->popup_menu(-name      => $name .'_hour',
+                                   -default   => ($hour) ? $hour_12 : 0,
+                                   -values    => \@hour_values,
+                                   -labels    => \%hour_labels,
+                                  );
+                                                                                
+    my $min_sel = $query->popup_menu(-name      => $name .'_minute',
+                                   -default   => ($minute) ? $minute : 'undef',
+                                   -values    => \@minute_values,
+                                   -labels    => \%minute_labels,
+                                  );
+                                                                                
+    my $ampm = 'AM';
+    if ($hour) {
+        $ampm = 'PM' if ($hour >= 12);
+    }
+                                                                                
+    my $ampm_sel = $query->popup_menu(-name      => $name .'_ampm',
+                                   -default   => $ampm,
+                                   -values    => \@ampm_values,
+                                   -labels    => \%ampm_labels,
+                                  );
+
+    return $h_sel . "&nbsp;" . $min_sel . "&nbsp;" . $ampm_sel;
+}
 
 =item $chooser_html = datetime_chooser(name => 'date', query => $query)
                                                                                 
@@ -129,7 +228,7 @@ Additional optional parameters are as follows:
               ALWAYS set to '00', regardless of what seconds may
               actually be.
                                                                                 
-  nochoice  - if set to a true value, Month/Day/Year/Hour/00/AM
+  nochoice  - if set to a true value, Month/Day/Year/Hour/Minute/AM
               will be provided as default choices in the chooser.
               Used in conjunction with the "date" parameter, the
               chooser may be set to default to no date.
@@ -211,8 +310,8 @@ sub datetime_chooser {
         $hour_labels{0} = 'Hour';
 
         # Minute
-        unshift(@hour_values, '');
-        $minute_labels{0} = 'Minute';
+        unshift(@minute_values, 'undef');
+        $minute_labels{undef} = 'Minute';
 
     }
                                                                                 
@@ -244,7 +343,7 @@ sub datetime_chooser {
                                   );
 
     my $min_sel = $query->popup_menu(-name      => $name .'_minute',
-                                   -default   => ($date) ? $date->minute() : 0,
+                                   -default   => ($date) ? $date->minute() : 'undef',
                                    -values    => \@minute_values,
                                    -labels    => \%minute_labels,
                                   );
@@ -387,6 +486,7 @@ sub decode_datetime {
     my $y = $query->param($name . '_year');
     my $h = $query->param($name . '_hour');
     my $min = $query->param($name . '_minute');
+    $min = 0 if ($min eq 'undef');
     my $ampm = $query->param($name . '_ampm');
 
     # deal with converting AM/PM to 24 hour time
