@@ -239,7 +239,10 @@ sub delete {
             if (ref $@ && $@->isa('Krang::User::Dependency')) {
                 critical("Unable to delete user '$user_id': objects are " .
                          "checked out by this user.");
-                add_message('error_deletion_failure');
+                my ($user) = Krang::User->find(user_id => $user_id);
+                add_message('error_deletion_failure',
+                            login => $user->login,
+                            user_id => $user->user_id,);
                 return $self->search();
             } else {
                 croak($@);
@@ -279,7 +282,10 @@ sub delete_selected {
                 if (ref $@ && $@->isa('Krang::User::Dependency')) {
                     critical("Unable to delete user '$u': objects are " .
                              "checked out by this user.");
-                    add_message('error_deletion_failure');
+                    my ($user) = Krang::User->find(user_id => $u);
+                    add_message('error_deletion_failure',
+                                login => $user->login,
+                                user_id => $user->user_id,);
                     return $self->search();
                 } else {
                     croak($@);
@@ -630,6 +636,11 @@ sub search_row_handler {
 
 
 =back
+
+=head1 TO DO
+
+Instead of failing to delete a user if he has assets checked out, we should
+check all of his assets in and then perform the deletion.
 
 =head1 AUTHOR
 

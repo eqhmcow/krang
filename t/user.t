@@ -71,6 +71,11 @@ for (qw/email first_name last_name mobile_phone phone/) {
 ($admin) = Krang::User->find(login => 'admin');
 isa_ok($admin, 'Krang::User', 'find() - login');
 
+# make sure email is '' for testing
+my $email = $admin->email;
+$admin->email(undef);
+eval {$admin->save};
+croak("Very Bad things: $@") if $@;
 my $count = Krang::User->find(email => undef,
                               first_name => 'Joe',
                               last_name => 'Admin',
@@ -82,6 +87,11 @@ is($count, 1, 'find - all fields');
 my @users = Krang::User->find(email => undef);
 isa_ok($_, 'Krang::User') for @users;
 is(scalar @users, 2, 'find - count');
+
+# revert email field
+$admin->email($email);
+eval {$admin->save};
+croak("Very Bad things: $@") if $@;
 
 @users = Krang::User->find(order_by => 'login');
 my @u = sort {$a->{login} cmp $b->{login}} @users;
