@@ -609,6 +609,10 @@ sub edit {
     my $media_tmpl_data = $self->make_media_tmpl_data($m);
     $t->param($media_tmpl_data);
 
+    # permissions
+    my %admin_perms = Krang::Group->user_admin_permissions();
+    $t->param(may_publish => $admin_perms{may_publish});
+
     # Propagate messages, if we have any
     $t->param(%args) if (%args);
 

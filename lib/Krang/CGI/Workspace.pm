@@ -63,7 +63,8 @@ sub show {
     my $query = $self->query;
     my $template = $self->load_tmpl("workspace.tmpl", 
                                     associate         => $query,
-                                    die_on_bad_params => 0);
+                                    die_on_bad_params => 0,
+                                    global_vars => 1);
 
     my @found_desks = Krang::Desk->find();
     my @desk_loop;
@@ -90,6 +91,10 @@ sub show {
                                         -override => 1,
                                         -onchange => "do_sort(this.options[this.selectedIndex].value,0)",
                                        ));
+
+    # permissions
+    my %admin_perms = Krang::Group->user_admin_permissions();
+    $template->param(may_publish => $admin_perms{may_publish});
 
     # setup paging list of objects
     my $pager = Krang::HTMLPager->new

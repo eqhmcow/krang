@@ -12,6 +12,7 @@ use Krang::CGI::Workspace;
 use Carp qw(croak);
 use Krang::Pref;
 use Krang::HTMLPager;
+use Krang::Group;
 
 use base 'Krang::CGI::ElementEditor';
 
@@ -411,6 +412,10 @@ sub edit {
                          $query->popup_menu(-name    => 'version',
                                             -values  => [1 .. $story->version],
                                             -default => $story->version));
+
+        # permissions
+        my %admin_perms = Krang::Group->user_admin_permissions();
+        $template->param(may_publish => $admin_perms{may_publish});
     }
 
     # get desks for checkin selector

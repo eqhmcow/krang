@@ -62,7 +62,9 @@ sub show {
     my $query = $self->query;
     my $template = $self->load_tmpl("desk.tmpl", 
                                     associate         => $query,
-                                    die_on_bad_params => 0);
+                                    die_on_bad_params => 0,
+                                    global_vars       => 1
+                                   );
 
     my $desk_id = $query->param('desk_id');
     my $desk = (Krang::Desk->find( desk_id => $desk_id))[0];
@@ -80,6 +82,10 @@ sub show {
 });
         } 
     }
+
+    # permissions
+    my %admin_perms = Krang::Group->user_admin_permissions();
+    $template->param(may_publish => $admin_perms{may_publish});
 
     # setup sort selector
     my $sort = $query->param('krang_pager_sort_field') || 'story_id';

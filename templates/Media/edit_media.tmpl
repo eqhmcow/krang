@@ -212,7 +212,7 @@ Version: <tmpl_var media_version_chooser>
 <div class="button-bar">
   <input type="button" value="Save" onClick="do_save()" class="button">
   <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
-  <input type="button" value="Publish" onClick="do_publish()" class="button">
+  <tmpl_if may_publish><input type="button" value="Publish" onClick="do_publish()" class="button"></tmpl_if>
   <input type="reset" value="Reset" class="button">
   <tmpl_unless add_mode><input type="button" value="Delete" onClick="do_delete()" class="button"></tmpl_unless>&nbsp;
 </div>
