@@ -267,7 +267,7 @@ sub check_prereqs {
         }
     } else {
         unless (($perl_version eq '5.6.1') and ($archname eq 'i686-linux')) {
-            exit_error("Wrong Perl version ($perl_version/$archname).  Try again with --do-perl-install");
+            exit_error("Incorrect Perl version (Found $perl_version/$archname, expecting 5.6.1/i686-linux).  Try again with --do-perl-install");
         }
     }
 
@@ -536,7 +536,7 @@ sub configure_krang {
     print "  Conf written to '$output_conf'.\n";
 
     # Create DB
-    print "Creating MySQL database '$InstanceDBName' and loading schema\n";
+    print "Creating MySQL database and loading schema\n";
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
     my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb --password $MySQLRootPassword";
     system($createdb) && die("Error calling krang_createdb.  Unable to continue");
@@ -597,16 +597,17 @@ sub make_test {
 
 sub output_report {
     my $init_script = "krang-". $options{HostName} .".init";
+    my $krang_conf = $InstallPath ."/conf/krang.conf";
 
     print <<EOREPORT;
 
 Krang installation complete.
 
-  Installed at ..:  $options{InstallPath}
-  Init script ...:  $init_script
-  Configured to start at boot.
+  Installed at    :  $options{InstallPath}
+  Init script     :  $init_script (Configured to start at boot)
+  Krang conf file :  $krang_conf
 
-  Running on $options{IPAddress}:
+  Running on $options{IPAddress} --
     http://$options{HostName}:$options{ApachePort}/
     ftp://$options{HostName}:$options{FTPPort}/
 

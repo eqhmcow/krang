@@ -211,7 +211,7 @@ sub export_krang {
     my $cvs_export_cmd = "cvs -z3 export -r $ver_string krang";
     print "Exporting Krang to $export_dir...\n";
     my $cvs_output = `$cvs_export_cmd`;
-    print "Export complete.";
+    print "Export complete.\n";
 }
 
 
