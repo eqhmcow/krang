@@ -247,8 +247,9 @@ sub build_perl_module {
     
     # We only want the libs, not the executables or man pages
     if ($use_expect) {
+        print "Running '$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir'...\n";
         my $command =
-          Expect->spawn("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir");
+          Expect->spawn("$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir");
         
         # setup command to answer questions modules ask
         my @responses = qw(n n n n n y !);
@@ -288,7 +289,8 @@ sub build_perl_module {
     } else {
         # do it without Expect for IO-Tty and Expect installation.
         # Fortunately they don't ask any questions.
-        system("perl Makefile.PL LIB=$dest_dir PREFIX=$trash_dir") == 0 
+        print "Running '$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir'...\n";
+        system("$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir") == 0 
           or die "make failed: $?";
     }
 
@@ -320,10 +322,10 @@ sub build_apache_modperl {
     # build mod_perl
     my $old_dir = cwd;
     chdir($mod_perl_dir) or die "Unable to chdir($mod_perl_dir): $!";
-    print "Calling 'perl Makefile.PL $mod_perl_params'...\n";
+    print "Calling '$^X Makefile.PL $mod_perl_params'...\n";
 
     my $command =
-      Expect->spawn("perl Makefile.PL $mod_perl_params");
+      Expect->spawn("$^X Makefile.PL $mod_perl_params");
 
     # setup command to answer questions modules ask
     my @responses = qw(y n);

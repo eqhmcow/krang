@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed build and installation system to work with a Perl that isn't
+called 'perl' and in your path.  So, for example, if you've got a
+binary called 'perl5.8.0' you can build Krang with it and install with
+it.
+
+=item *
+
 Added initial support for Gentoo 1.4.3. [Peter]
 
 =item *

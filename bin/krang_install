@@ -4,22 +4,22 @@ use strict;
 use IO::Socket;
 
 # Path to pre-req binaries
-use constant MYSQL_BIN      => '/usr/bin/mysql';
-use constant PERL_BIN       => 'perl';
-use constant GROUPADD_BIN   => '/usr/sbin/groupadd';
-use constant USERADD_BIN    => '/usr/sbin/useradd';
-use constant USERMOD_BIN    => '/usr/sbin/usermod';
-use constant COPY_BIN       => '/bin/cp';
-use constant CHOWN_BIN      => '/bin/chown';
-use constant CHMOD_BIN      => '/bin/chmod';
-use constant XARGS_BIN      => '/usr/bin/xargs';
-use constant FIND_BIN       => '/usr/bin/find';
-use constant MAKE_BIN       => '/usr/bin/make';
-use constant ECHO_BIN       => '/bin/echo';
-use constant TAR_BIN        => '/bin/tar';
-use constant IFCONFIG_BIN   => '/sbin/ifconfig';
-use constant CHKCONFIG_BIN  => '/sbin/chkconfig';
-use constant LN_BIN         => '/bin/ln';
+use constant MYSQL_BIN      => 'mysql';
+use constant PERL_BIN       => $^X;
+use constant GROUPADD_BIN   => 'groupadd';
+use constant USERADD_BIN    => 'useradd';
+use constant USERMOD_BIN    => 'usermod';
+use constant COPY_BIN       => 'cp';
+use constant CHOWN_BIN      => 'chown';
+use constant CHMOD_BIN      => 'chmod';
+use constant XARGS_BIN      => 'xargs';
+use constant FIND_BIN       => 'find';
+use constant MAKE_BIN       => 'make';
+use constant ECHO_BIN       => 'echo';
+use constant TAR_BIN        => 'tar';
+use constant IFCONFIG_BIN   => 'ifconfig';
+use constant CHKCONFIG_BIN  => 'chkconfig';
+use constant LN_BIN         => 'ln';
 
 $|++;
 
@@ -563,6 +563,23 @@ sub install_krang {
     $chmod = FIND_BIN ." $InstallPath -type d | ". XARGS_BIN ." ". CHMOD_BIN ." +rx";
     system($chmod) && die("Can't fix directory read permissions: $!");
 
+    print "  Setting #! on scripts to " . PERL_BIN . "\n";
+    opendir(DIR, catdir($InstallPath, "bin")) or die $!;
+    my @scripts = grep { -f $_ }
+                    map { catfile($InstallPath, "bin", $_) } readdir(DIR);
+    closedir DIR;
+    foreach my $script (@scripts) {
+        open(SOURCE, $script) or die "Unable to $script: $!";
+        my $source = do { local $/; <SOURCE> };
+
+        $source =~ s/^#!.*$/#!${\ PERL_BIN}/m or
+          die "Couldn't find shebang line in $script to replace!";
+
+        open(SOURCE, '>', $script) or die "Unable to write $script: $!";
+        print SOURCE $source;
+        close SOURCE;
+    }
+
     print "  Setting execute bits on scripts\n";
 
     # Set all *.pl files
@@ -662,7 +679,8 @@ sub create_database {
         my $MySQLRootPassword = $options{'MySQLRootPassword'};
         my $createdb = "KRANG_ROOT='' PERL5LIB='' $InstallPath/bin/krang_createdb --all";
         $createdb .= " --password $MySQLRootPassword" if (length($MySQLRootPassword));
-        system($createdb) && die("Error calling krang_createdb.  Unable to continue");
+        system($createdb) == 0 
+          or die("Error calling krang_createdb.  Unable to continue");
     }
 }
 
