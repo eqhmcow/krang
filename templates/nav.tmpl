@@ -54,8 +54,8 @@
 
 <tmpl_unless nav_hide_media>
 <div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">Media</div>
-<div class="form-cell-nav"><tmpl_unless nav_readonly_media><a href="javascript:nav_goto('media.pl')">New Media</a><br></tmpl_unless>
-<a href="javascript:nav_goto('media.pl?rm=find')">Find Media</a><br>
+<div class="form-cell-nav"><tmpl_unless nav_readonly_media><a href="javascript:nav_goto('media.pl?rm=add')">New Media</a><br></tmpl_unless>
+<a href="javascript:nav_goto('media.pl')">Find Media</a><br>
 <a href="javascript:nav_goto('media.pl?rm=list_active')">Active Media</a><br>
 <tmpl_unless nav_readonly_media><a href="javascript:nav_goto('media_bulk_upload.pl')">Bulk Upload</a></tmpl_unless></div>
 </tmpl_unless>

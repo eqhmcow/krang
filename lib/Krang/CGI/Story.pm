@@ -1285,8 +1285,10 @@ sub find {
     my %tmpl_data = ();
 
     # Search mode
-    my $do_advanced_search = $q->param('do_advanced_search');
+    my $do_advanced_search = defined($q->param('do_advanced_search')) ? $q->param('do_advanced_search') : $session{'KRANG_PERSIST_Story_do_advanced_search'};
+    $template->param('do_advanced_search' => $do_advanced_search);
 
+    
     # Set up persist_vars for pager
     my %persist_vars = (
                         rm => 'find',
@@ -1297,7 +1299,6 @@ sub find {
     my %find_params = (may_see => 1, show_hidden => 1);
 
     if ($do_advanced_search) {
-
         # Set up advanced search
         my @auto_search_params = qw(
                                     title

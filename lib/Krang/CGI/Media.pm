@@ -59,7 +59,7 @@ use constant WORKSPACE_URI => 'workspace.pl';
 sub setup {
     my $self = shift;
 
-    $self->start_mode('add');
+    $self->start_mode('find');
 
     $self->run_modes([qw(
                          find
@@ -116,6 +116,9 @@ sub find {
     my $self = shift;
 
     my $q = $self->query();
+
+    return $self->advanced_find() if ( not $q->param('rm') and ($session{'KRANG_PERSIST_Media_rm'} eq 'advanced_find') );
+
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
 
     # Persist data for return from view in "return_params"
@@ -188,6 +191,7 @@ sub advanced_find {
     my $self = shift;
 
     my $q = $self->query();
+
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
     $t->param(do_advanced_search=>1);
 

@@ -56,8 +56,8 @@ our @history_param_list = ('rm',
 
 sub setup {
 	my $self = shift;
-
-	$self->start_mode('search');
+	
+        $self->start_mode('search');
 
 	$self->run_modes([qw/
 		add
@@ -288,7 +288,7 @@ an object, or select a set of objects to be deleted.
 
 sub advanced_search {
     my $self = shift;
-
+    
     my $q = $self->query();
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
     $t->param(do_advanced_search=>1);
@@ -758,6 +758,9 @@ simple searches.
 sub search {
     my $self = shift;
     my $q = $self->query();
+
+    return $self->advanced_search() if ( not $q->param('rm') and ($session{'KRANG_PERSIST_Template_rm'} eq 'advanced_search') );
+ 
     my $t = $self->load_tmpl("list_view.tmpl",
                              associate => $q,
                              loop_context_vars => 1);
@@ -770,7 +773,7 @@ sub search {
     my $find_params = {simple_search => $search_filter, may_see=>1};
     my $persist_vars = {rm => 'search',
                         search_filter => $search_filter};
-
+    
     # setup pager
     my $pager = $self->make_pager($persist_vars, $find_params);
 
