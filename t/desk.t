@@ -21,7 +21,7 @@ is($desks[0]->order, $copy_desk->order);
 
 my $publish_desk = Krang::Desk->new( name => 'publish_test', order => $copy_desk->order);
 
-END { $publish_desk->delete; }
+END { Krang::Desk->delete($publish_desk->desk_id) }
 
 # make sure orders are correct now
 @desks = Krang::Desk->find( desk_id => $copy_desk_id );

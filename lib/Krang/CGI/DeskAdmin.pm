@@ -6,6 +6,7 @@ use warnings;
 use Carp qw(croak);
 use Krang::Desk;
 use Krang::Message qw(add_message);
+use Krang::Log qw(debug);
 
 =head1 NAME
 
@@ -111,6 +112,11 @@ sub add {
         return $self->edit('no_name');
     } 
 
+    if (Krang::Desk->find( name => $q->param('name')) ) {
+        add_message('duplicate_desk');
+        return $self->edit('no_name');
+    }
+
     Krang::Desk->new(   name => $q->param('name'),
                         order => $q->param('order') );
 
@@ -166,6 +172,7 @@ sub delete {
     }
                                                                                  
     foreach my $desk_id (@delete_list) {
+        debug(__PACKAGE__."->delete: calling delete desk $desk_id");
         Krang::Desk->delete($desk_id);
     }
                                                                                  

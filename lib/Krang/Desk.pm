@@ -318,7 +318,7 @@ sub delete {
     $sth->finish;
 
     # Delete permissions for this desk
-    Krang::Group->delete_desk_permissions($self);
+    $is_object ? Krang::Group->delete_desk_permissions($self) :  Krang::Group->delete_desk_permissions((Krang::Desk->find( desk_id => $desk_id ))[0]);
 
     # fianlly, delete the desk
     $sth = $dbh->prepare('DELETE from desk where desk_id = ?');
