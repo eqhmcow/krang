@@ -8,6 +8,8 @@ use CGI ();
 use HTML::Template::Expr;
 use Krang::Log qw(debug info critical);
 
+use Krang::Pref;
+
 use Exception::Class
   'Krang::ElementClass::TemplateNotFound' => { fields => [ 'element_name', 'category_id', 'error_msg' ] },
   'Krang::ElementClass::TemplateParseError' => {fields => [ 'element_name', 'template_name', 'category_id', 'error_msg']};
@@ -643,6 +645,10 @@ sub fill_template {
     $params{content} = $publisher->content()
       if ($tmpl->query(name => 'content') && $element->name() eq 'category');
 
+    # add the contributors loop if desired
+    $params{contrib_loop} = $self->_build_contrib_loop(@_)
+      if ($tmpl->query(name => 'contrib_loop'));
+
 
     # iterate over the children of the element -
     # This process creates @element_loop, and also creates the various
@@ -827,6 +833,56 @@ sub init {
     $self->hash_init(%args);
 
     return $self;
+}
+
+
+#
+# builds the loop of contributors for the currently published story.
+# See docs/writing_htmltemplate.pod for more information about the final structure
+# of the contrib_loop.
+#
+sub _build_contrib_loop {
+
+    my $self = shift;
+    my %args = @_;
+
+    my %contrib_types = Krang::Pref->get('contrib_type');
+
+    my %contribs = ();
+    my @contributors = ();
+
+    my $publisher = $args{publisher};
+
+    # get the contributors for the story.
+    foreach my $contrib ($publisher->story()->contribs()) {
+        my $cid = $contrib->contrib_id();
+
+        # check to see if this contributor exists - if so, save
+        # on querying for information you already know.
+        unless (exists($contribs{$cid})) {
+            $contribs{$cid}{contrib_id} = $cid;
+            $contribs{$cid}{prefix}     = $contrib->prefix();
+            $contribs{$cid}{first}      = $contrib->first();
+            $contribs{$cid}{middle}     = $contrib->middle();
+            $contribs{$cid}{last}       = $contrib->last();
+            $contribs{$cid}{suffix}     = $contrib->suffix();
+            $contribs{$cid}{email}      = $contrib->email();
+            $contribs{$cid}{phone}      = $contrib->phone();
+            $contribs{$cid}{bio}        = $contrib->bio();
+            $contribs{$cid}{url}        = $contrib->url();
+        }
+        # add the selected contributor type to the contrib_type_loop
+        my $contrib_type_id = $contrib->selected_contrib_type();
+        push @{$contribs{$cid}{contrib_type_loop}}, {contrib_type_id => $contrib_type_id,
+                                                     contrib_type_name => $contrib_types{$contrib_type_id}};
+
+    }
+
+    foreach my $contributor (keys %contribs) {
+        push @contributors, $contribs{$contributor};
+    }
+
+    return \@contributors;
 }
 
 =head1 TODO

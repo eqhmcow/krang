@@ -4,6 +4,8 @@ use warnings;
 use Imager;
 use File::Spec::Functions;
 use File::Path;
+use Krang::Contrib;
+use Krang::Pref;
 use Krang::Conf qw(KrangRoot instance);
 use Krang::Site;
 use Krang::Category;
@@ -72,6 +74,7 @@ my @non_test_deployed_templates = ();
 my $publisher = new Krang::Publisher ();
 
 isa_ok($publisher, 'Krang::Publisher');
+
 
 ############################################################
 # remove all currently deployed templates from the system
@@ -186,6 +189,9 @@ END {
 ############################################################
 # Testing the publish process.
 
+# test contributors
+test_contributors($category);
+
 # test story construction
 test_story_build($story, $category);
 
@@ -212,6 +218,49 @@ test_full_publish();
 #
 # SUBROUTINES.
 #
+
+# test Krang::Contrib section of story
+# add contributor to story.
+# test Krang::ElementClass->_build_contrib() to see if the
+# returning hash is consistent with what's expected.
+
+sub test_contributors {
+
+    my @categories = @_;
+
+    my %contributor = build_contrib_hash();
+    my %contrib_types = Krang::Pref->get('contrib_type');
+
+    my $story   = create_story(\@categories);
+    my $contrib = create_contributor(%contributor);
+
+    $story->contribs({contrib_id => $contrib->contrib_id, contrib_type_id => 1});
+
+    my $story_element = $story->element();
+
+    $publisher->{story} = $story;
+
+    my $contributors = $story_element->class->_build_contrib_loop(publisher => $publisher,
+                                                                  element   => $story_element);
+
+    foreach my $schmoe (@$contributors) {
+        foreach (keys %contributor) {
+            ok($schmoe->{$_} eq $contributor{$_}, 'Krang::ElementClass->_build_contrib_loop()');
+        }
+        ok($schmoe->{contrib_id} eq $contrib->contrib_id(), 'Krang::ElementClass->_build_contrib_loop()');
+
+        # make sure contrib types are ok as well.
+        foreach my $gig (@{$schmoe->{contrib_type_loop}}) {
+            ok((exists($contrib_types{$gig->{contrib_type_id}}) && 
+                $contrib_types{$gig->{contrib_type_id}} eq $gig->{contrib_type_name}),
+               'Krang::ElementClass->_build_contrib_loop()');
+        }
+    }
+
+    $story->delete();
+    $contrib->delete();
+
+}
 
 
 sub test_full_preview {
@@ -821,6 +870,42 @@ sub create_story {
 }
 
 
+# create a contributor for testing of contrib section.
+sub create_contributor {
+
+    my %contrib_hash = @_;
+
+    my %contrib_types = Krang::Pref->get('contrib_type');
+
+    my $contrib = Krang::Contrib->new(%contrib_hash);
+
+    # add contrib types - let's make them all 3.
+    $contrib->contrib_type_ids(keys %contrib_types);
+
+    $contrib->save();
+
+    return $contrib;
+
+}
+
+sub build_contrib_hash {
+
+    my %contrib =   (prefix => 'Mr.',
+                     first => get_word(),
+                     middle => get_word(),
+                     last => get_word(),
+                     suffix => 'MD',
+                     email => get_word() . '@' . get_word() . '.com',
+                     phone => '111-222-3333',
+                     bio => join(' ', map { get_word() } (0 .. 20)),
+                     url => 'http://www.' . get_word() . '.com'
+                    );
+
+    return %contrib;
+
+}
+
+
 # create a storylink in $story to $dest
 sub link_story {
 
@@ -892,9 +977,9 @@ sub create_media {
     my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
 
     # create a media object
-    my $media = Krang::Media->new(title      => &get_word(),
-                                  filename   => &get_word . ".$format",
-                                  caption    => &get_word,
+    my $media = Krang::Media->new(title      => get_word(),
+                                  filename   => get_word() . ".$format",
+                                  caption    => get_word(),
                                   filehandle => $fh,
                                   category_id => $category->category_id,
                                   media_type_id => $media_type_id,

@@ -484,8 +484,8 @@ sub undeploy_template {
 
     my $category   = $template->category();
 
-    my @tmpls = $self->template_search_path(category => $category);
-    my $path = $tmpls[0];
+    my @tmpl_paths = $self->template_search_path(category => $category);
+    my $path = $tmpl_paths[0];
 
     my $file = catfile($path, $template->filename());
 
