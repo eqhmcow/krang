@@ -294,14 +294,16 @@ my $publisher = Krang::Publisher->new();
 my $increment_count = 0;
 my $increment_time  = 0;
 
-my $total_storytime = 0;
+my $total_storytime  = 0;
 my $total_storycount = 0;
-my $total_mediatime = 0;
+my $total_mediatime  = 0;
 my $total_mediacount = 0;
+my %skipcount = ();
 
 my @assettime;
 my $storycount = 0;
 my $mediacount = 0;
+
 
 # if the --everything option was specified, publish all media first,
 # then stories.
@@ -351,6 +353,21 @@ printf("media\t\t%i\t\t\t%.02f\t\t%.02f\n", $total_mediacount, $total_mediatime,
 print "----------------------------------------------------------------------\n";
 printf("TOTAL:\t\t%i assets\t\t%.02f seconds\n\n", ($total_storycount+$total_mediacount), $increment_time);
 
+if (keys %skipcount) {
+    my $total_errors = 0;
+    print "\n\nPublish Errors:\n\n";
+    print "type\t\terror type\t\tnumber\n";
+    print "----------------------------------------------------------------------\n";
+    foreach my $t (keys %skipcount) {
+        foreach my $e (keys %{$skipcount{$t}}) {
+            $total_errors += $skipcount{$t}{$e};
+            printf("%s\t\t%s\t%i\n", $t, $e, $skipcount{$t}{$e});
+        }
+    }
+    print "----------------------------------------------------------------------\n";
+    print "TOTAL:\t\tskipped in publish:\t$total_errors\n\n";
+}
+
 my ($hits, $loads, $fill) = Krang::Cache::stats();
 printf("CACHE HITS:\t\t%d\n", $hits)
   if $verbose and Krang::Cache::active();
@@ -399,6 +416,7 @@ sub publish_media {
         $increment_count += @media;
 
         $total_mediacount += $mediacount;
+
         $mediacount = 0;
 
         last if (@media < $increment);
@@ -444,33 +462,8 @@ sub publish_stories {
         };
 
         if (my $err = $@) {
-            # if there is an error, figure out what it is, create the
-            # appropriate message and return.
-            if (ref $err && $err->isa('Krang::ElementClass::TemplateNotFound')) {
-
-                print STDERR sprintf("Cannot continue publish: Missing template '%s', cannot build story in category '%s'\n", $err->template_name, $err->category_url);
-
-            } elsif (ref $err && $err->isa('Krang::ElementClass::TemplateParseError')) {
-
-                print STDERR sprintf("Cannot continue publish: Template '%s' in category '%s' has parse errors.  Error='%s'\n", $err->template_name, $err->category_url, $err->error_msg);
-
-            } elsif (ref $err && $err->isa('Krang::Publisher::FileWriteError')) {
-                my $object;
-                if ($err->story_id) {
-                    $object = 'story_id=' . $err->story_id;
-                } elsif ($err->media_id) {
-                    $object = 'media_id=' . $err->media_id;
-                } else {
-                    $object = 'template_id=' . $err->template_id;
-                }
-
-                print STDERR sprintf("Publish Output error writing %s to '%s': %s: '%s'\n", $object, $err->destination, $err->message, $err->system_error);
-
-            } else {
-
-                # report something, anything!
-                print STDERR sprintf("Publish failed for unknown reason: '%s'\n", $err);
-            }
+            # report something, anything!
+            print STDERR sprintf("Publish failed for unknown reason: '%s'\n", $err);
             exit;
         }
 
@@ -507,19 +500,50 @@ sub _skip_callback {
     my $object = $args{object};
     my $error  = $args{error};
 
-    my $id = $object->isa('Krang::Story') ? $object->story_id : $object->media_id;
+    my $id   = ($object->isa('Krang::Story')) ? $object->story_id : $object->media_id;
+    my $type = ($object->isa('Krang::Story')) ? 'stories' : 'media';
+
 
     if ($error eq 'checked_out') {
         print sprintf("WARNING: %s ID=%i was not published - it is currently checked out by User ID=%i\n",
                       (ref $object), $id, $object->checked_out_by);
-    } elsif ($error eq 'output_error') {
-        print sprintf("WARNING: %s ID=%i was not published to '%s'.  The following error occurred: '%s'\n",
-                      (ref $object), $id, $args{path}, $args{error_msg});
-    } else {
-        print sprintf("WARNING: %s ID=%i was not published for error='%s'", 
-                      (ref $object), $id, $error);
+
+        $skipcount{$type}{CheckedOut}++;
+        return;
     }
 
+    if (ref $error) {
+        # if there is an error, figure out what it is, create the
+        # appropriate message and return.
+        if ($error->isa('Krang::ElementClass::TemplateNotFound')) {
+            print sprintf("ERROR:\t%s ID=%i not published - missing template:\n\tcategory:\t'%s'\n\ttemplate:\t'%s'\n",
+                          (ref $object), $id, $error->category_url, $error->template_name);
+            $skipcount{$type}{TemplateNotFound}++;
+            return;
+        } elsif ($error->isa('Krang::ElementClass::TemplateParseError')) {
+            print sprintf("ERROR:\t%s ID=%i not published - template error:\n\ttemplate:\t'%s'\n\tcategory:\t'%s'\n\tparse error:\t'%s'\n",
+                          (ref $object), $id, $error->template_name, $error->category_url, $error->message);
+            $skipcount{$type}{TemplateParseError}++;
+            return;
+        } elsif ($error->isa('Krang::Publisher::FileWriteError')) {
+            print sprintf("ERROR: %s ID=%i not published to '%s' - output error:\n\terror:\t'%s'\n",
+                          (ref $object), $id, $error->destination, $error->system_error);
+            $skipcount{$type}{FileWriteError}++;
+            return;
+        }
+
+        # no other error object handled right now.
+        print sprintf("WARNING: %s ID=%i was not published for error='%s'\n",
+                      (ref $object), $id, ref $error);
+        $skipcount{$type}{UnknownError}++;
+        return;
+    }
+
+    # unknown error.
+    print sprintf("WARNING: %s ID=%i was not published for unknown error='%s'\n",
+                  (ref $object), $id, $error);
+
+    $skipcount{$type}{UnknownError}++;
 }
 
 

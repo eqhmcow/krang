@@ -9,6 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Cleaned up error handling in L<Krang::Publisher> and the
+C<bin/krang_publish> script - errors are now trapped properly and
+reported in a cleaner fashion.  [Peter]
+
+=item *
+
 Fixed a bug in the upgrade process of 1.024.  Users of 1.024 should
 immediately upgrade to 1.025.  [Peter]
 
