@@ -2,7 +2,7 @@ use strict;
 
 use Carp qw/verbose croak/;
 use Data::Dumper;
-use File::Spec;
+use File::Spec::Functions qw(catfile);
 use IO::File;
 use Storable qw/freeze thaw/;
 use Test::More qw(no_plan);
@@ -11,6 +11,8 @@ use Time::Piece::MySQL;
 use Time::Seconds;
 
 use Krang::Script;
+use Krang::Session;
+use Krang::DB qw(dbh);
 
 BEGIN {
     # set debug flag
@@ -296,7 +298,6 @@ is($@, '', "context thaw didn't fail");
 is($context2{version}, $context1{version}, 'context good');
 
 # run test - 1 tests should run
-my $path = File::Spec->catfile($ENV{KRANG_ROOT}, 'logs', "schedule_test.log");
 my $count;
 eval {$count = Krang::Schedule->run();};
 is($@, '', "run() didn't fail");
@@ -306,6 +307,21 @@ is($count >= 14, 1, 'run() succeeded :).');
 $s1->repeat('fred');
 eval {$s1->save()};
 like($@, qr/'repeat' field set to invalid setting -/, 'save() failure test');
+
+
+# clean_tmp tests
+my $path = catfile($ENV{KRANG_ROOT}, 'tmp', 'bob172800x');
+my $path2 = catfile($ENV{KRANG_ROOT}, 'tmp', 'bob3600x');
+if (system("touch -B 172800 $path") == 0 &&
+    system("touch -B 3600 $path2") == 0) {
+    my @deletions = Krang::Schedule->clean_tmp(max_age => 47);
+    my $sof = grep /bob172800x$/, @deletions;
+    is($sof >= 1, 1, 'clean_tmp deletion successful');
+    is(-e $path2, 1, 'clean_tmp appropriately abstemious');
+    unlink $path2;
+}
+
+# expire session test
 
 END {
     # delete everything
