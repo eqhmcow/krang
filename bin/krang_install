@@ -597,7 +597,7 @@ sub make_test {
 
 sub output_report {
     my $init_script = "krang-". $options{HostName} .".init";
-    my $krang_conf = $InstallPath ."/conf/krang.conf";
+    my $krang_conf = $options{InstallPath} ."/conf/krang.conf";
 
     print <<EOREPORT;
 
