@@ -155,7 +155,7 @@
 
 <tmpl_loop page_numbers>
   <tmpl_if is_current_page><b><tmpl_var page_number></b>
-  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number></a>
+  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number_label></a>
   </tmpl_if>
   <tmpl_unless __last__>|</tmpl_unless>
 </tmpl_loop>
