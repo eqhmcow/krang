@@ -711,7 +711,7 @@ here.  The default implementation does nothing.
 
 sub finish_upgrade {}
 
-=item C<post_install_message(options => \%options)>
+=item C<< post_install_message(options => \%options) >>
 
 Called by bin/krang_install, returns install information once everything
 is complete.
