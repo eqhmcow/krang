@@ -41,6 +41,7 @@ sub new {
                                                                  "custom"],
                                                      default => "keyword"),
  
+        PBMM::article_related_link_box->new(max => 1),
         'page',
 
        ]);
