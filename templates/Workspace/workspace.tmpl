@@ -43,6 +43,14 @@
        document.krang_pager_form.submit();
   }
 
+  function publish_checked() {
+    if (confirm("Are you sure you wish to publish all these items?")) {
+      document.krang_pager_form.action = 'publisher.pl';
+      document.krang_pager_form.rm.value = 'publish_story_list';
+      document.krang_pager_form.submit();
+    }
+  }
+
   function publish_story(story_id) {
     var pubform = document.forms["publish_story_form"];
     pubform.story_id.value=story_id;
