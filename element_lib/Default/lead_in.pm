@@ -98,7 +98,9 @@ sub fill_template {
     $tmpl->param( promo_image => $image) if $image;
 
     $tmpl->param( url => $args{element}->child('story')->template_data(publisher => $publisher) );
-   
+  
+    $tmpl->param( header_size => $args{element}->child('header_size')->data ) if $args{element}->child('header_size');
+ 
     $tmpl->param( image_alignment => $args{element}->child('image_alignment')->data ); 
     $tmpl->param( type => $type );
 
