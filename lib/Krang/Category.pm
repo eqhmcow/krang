@@ -331,8 +331,7 @@ sub init {
     croak(__PACKAGE__ . "->init(): Required argument 'dir' not present.")
       unless exists $args{dir};
 
-    croak(__PACKAGE__ . "->init(): 'dir' names can only represent a " .
-          "directory directly beneath its parent.")
+    croak(__PACKAGE__ . "->init(): 'dir' should not contain a '/' unless it's the root.")
       if $args{dir} =~ m|^/[^/]+/|;
 
     # site or parent id must be present
@@ -1199,7 +1198,7 @@ sub deserialize_xml {
             message => "A category with the URL ".
                        "$data->{url} already exists and ".
                        "no_update is set.")
-            if $no_update;
+            if $no_update and $data->{parent_id};
 
         # remove existing element tree
         $dup->element->delete;
