@@ -1,129 +1,79 @@
 =head1 Releasing Krang
 
-This document describes how to make a new release of Krang within
-PIRT.
+This document describes how to make a new release of Krang.
 
-=head2 Release Checklist
+=head2 Pre-Release Checklist
 
-=over 4
+=over
 
+=item 1
 
-=item Make sure your CVS working directory is up to date (C<cvs update -d>)
+Make sure all changes are committed to CVS.
 
-=item Update $VERSION in Krang.pm
+=item 2
 
-=item Verify that upgrade modules have been created for this release,
-if necessary
+Verify that an upgrade module has been created for this release, if necessary
 
-=item Make sure all changes are committed to CVS.
+=item 3
 
-=item Run C<bin/krang_makedist>
-
-=item Test release on separate machine
-
-=item Release to PIRT for production use by putting it in /usr/local/apache/htdocs/releases on krang-services.ops.about.com.
-
+Update $VERSION in Krang.pm and commit.
 
 =back
 
+=head2 Building the Source Distribution
 
-=head2 What C<krang_makedist> will do
+=over
 
-=over 4
+=item 1
 
-=item Tag CVS
+Make a clean checkout of Krang:
 
-Based on the version in Krang.pm, all the files in the release will be
-tagged.  Tag names are derived from the version number by replacing
-"." with "_", and pre-pending a "V", e.g., 
+  rm -rf krang
+  cvs -z3 co krang
 
-  Version: 1.23
-  CVS Tag: V1_23
+=item 2
 
-If you forget to update the $VERSION in Krang.pm, the release system
-will detect that the tag already exists and will abort.
+Run krang_makedist:
 
+  bin/krang_makedist
 
-=item Create tar-ball
+This will create 'krang-$VERSION-src.tar.gz'.
 
-At the end of the build process, a file will be created in the format:
+=item 3
 
-  krang-XX.YY.tar.gz
-
-Where XX.YY is the version of the release.  For example, version 1.23 would result in a file:
-
-  krang-1.23.tar.gz
-
-This is the distribution tarball which should be released to PIRT.
+Upload the file to SourceForge and post an announcement to the Krang
+mailing lists.
 
 =back
 
+=head2 Building Binary Distributions
 
+On each supported platform perform these steps:
 
-=head2 Creating Upgrade Modules
+=over
 
-Creating upgrade modules is one of the most critical and complicated
-tasks required for creating a Krang release.  Here are the required
-characteristics of upgrade module:
+=item 1
 
-=over 4
+Download the source distribution and untar it.
 
-=item Upgrade modules are Perl modules.
+=item 2
 
-=item They are subclasses of Krang::Upgrade.
+Run krang_build, supplying the plaform name if necessary:
 
-=item They are stored in $KRANG_ROOT/upgrade/.
+  bin/krang_build
 
-=item They are named with the version number, e.g., version 1.2 would
-be named  'V1_2.pm'
+=item 3
 
-=item These Perl modules implement a same-named package (e.g.,
-'package V1_2;')
+Run krang_makedist:
 
-=item A release may have either none, or exactly one upgrade module.
+  bin/krang_makedist
 
-=item Each upgrade module must implement two methods:
-C<per_installation()> and C<per_instance()>
+This will create 'krang-$VERSION-$PLATFORM-$PERL-$ARCH.tar.gz', which
+is a binary distribution of Krang.
 
-=item The C<per_installation()> method is called by the upgrade
-process once at the beginning.
+=item 4
 
-=item The C<per_instance()> method is called once for each Krang instance.
-
-=item The upgrade process will use each found upgrade module whose
-version number is between the previously installed Krang and the
-version to which we are upgrading.
-
-
-=back
-
-
-
-
-Fortunately, upgrade modules are not always required.  Here are some
-typical cases where you might want to create an upgrade module:
-
-=over 4
-
-=item Database Schema Changes
-
-A table or column has changed.  The upgrade script C<per_instance()>
-method will implement these changes.
-
-
-=item Data Transformation
-
-It is necessary to make a change to all data of a particular type on
-installed instances.  The upgrade script C<per_instance()> method will
-implement these changes.
-
-
-=item New F<krang.conf> directive
-
-A new directive is added to the F<krang.conf> file.  The
-C<per_installation()> method will interactively query the system
-administrator at upgrade time and add the directive to the new
-krang.conf.
-
+Upload the file to SourceForge and post an announcement to the Krang
+mailing lists.
 
 =back
