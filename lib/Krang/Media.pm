@@ -1139,7 +1139,7 @@ sub thumbnail_path {
                 eval {
                     my $img = Imager->new();
                     $img->open(file=>$self->file_path()) || croak $img->errstr();
-                    my $thumb = $img->scale(xpixels=>THUMBNAIL_SIZE,ypixels=>THUMBNAIL_SIZE,type=>'min');
+                    my $thumb = $img->scale(xpixels=>THUMBNAIL_SIZE,ypixels=>THUMBNAIL_SIZE,type=>'min', qtype =>'preview' );
                     $thumb->write(file=>$path) || croak $thumb->errstr;
                 };
  
