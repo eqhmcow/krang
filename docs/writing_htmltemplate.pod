@@ -30,6 +30,8 @@
 
 ----------------------------------------
 
+=item * C<<Handling Links to Other Stories>>
+
 =item * C<<Handling Media Objects>>
 
 =item * C<<Working With Categories>>
@@ -562,12 +564,57 @@ B<Disadvantages>
 
 =back
 
+=head1 Handling Links to Other Stories
 
+Links to other stories in Krang are all of the type Krang::ElementClass::StoryLink.  As a subclass of Krang::ElementClass, Krang::ElementClass::StoryLink objects do inherit all the methods of the parent class, but the publish() and fill_template() methods are overridden to handle the differences that exist within Krang::ElementClass::StoryLink objects.
+
+B<Default Functionality>
+
+=over
+
+=item * Without a template:
+
+If no corresponding template is found, the StoryLink object will simply return the URL to the connected story.
+
+=item * Constructing a template:
+
+If you decide to create a template, the following story attributes will be available as variables in the template: B<url>, B<title>
+
+B<Example:>
+
+ <a href="<tmpl_var escape=html url>"><tmpl_var title></a>
+
+=back
 
 =head1 Handling Media Objects
 
-Media elements in Krang are all of the type Krang::ElementClass::MediaLink.  What this means is that while it inherits all the methods of Krang::ElementClass, it also provides a connection to Krang::Media objects.  
-As a subclass of Krang::ElementClass, Krang::ElementClass::MediaLink objects use the same publish process, templates, overrideable methods and all.
+Links to media objects in Krang are all of the type Krang::ElementClass::MediaLink.  As a subclass of Krang::ElementClass, Krang::ElementClass::MediaLink objects do inherit all the methods of the parent class, but the publish() and fill_template() methods are overridden to handle the differences that exist within Krang::ElementClass::MediaLink objects.
+
+B<Default Functionality>
+
+=over
+
+=item * Without a template:
+
+If no corresponding template is found, the MediaLink object will simply return the URL to the referenced media file.
+
+=item * Constructing a template:
+
+If you decide to create a template, the following media attributes will be available as variables in the template: B<url>, B<title>, B<caption>
+
+B<Example:>
+
+ <img src="<tmpl_var escape=html url>">>
+   <br>
+   <tmpl_if title>
+     <tmpl_var title>
+   </tmpl_if>
+   <br>
+   <tmpl_if caption>
+     <tmpl_var caption>
+   </tmpl_if>
+
+=back
 
 =head2 Templates
 
@@ -599,8 +646,8 @@ Returning to the template in Example 2, a small addition is made:
             <tmpl_var pull_quote>
           </i></blockquote></p>
         </tmpl_if>
-        <tmpl_if is_image>
-            <tmpl_var image>
+        <tmpl_if is_photo>
+            <tmpl_var photo>
         </tmpl_if>
      </tmpl_loop>
 
@@ -622,18 +669,18 @@ Returning to the template in Example 2, a small addition is made:
 
 If you missed it, the entry is here - as a conditional within <tmpl_var element_loop>:
 
-  <tmpl_if is_image>
-     <tmpl_var image>
+  <tmpl_if is_photo>
+     <tmpl_var photo>
   </tmpl_if>
 
 
 
-B<Image.tmpl>
+B<Photo.tmpl>
 
-The template for the image itself will be very small.  For example:
+The template for the photo itself will be very small.  For example:
 
 
- <img src="<tmpl_var escape=html image_url>">
+ <img src="<tmpl_var escape=html url>">
  <tmpl_if caption>
   <br><font size=-1><tmpl_var caption></font>
  </tmpl_if>
@@ -647,12 +694,13 @@ Generally, the default fill_template() method should be sufficient - but for ref
     my $self = shift;
     my %named_params = @_;
     my $template = $named_params{template};
+    my $element  = $named_params{element};
 
     # get linked object from element
     my $media = $self->data();
 
-    # fill in URL to link to media
-    $template->param($self->name . "_url" => $media->url);
+    # fill in URL to link to media  -- creates a varable based on element name.
+    $template->param($element->name . "_url" => $media->url);
     # fill in image caption
     $template->param(caption => $media->caption);
 
