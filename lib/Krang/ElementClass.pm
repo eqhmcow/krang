@@ -758,10 +758,11 @@ sub publish {
     eval { $html_template = $self->find_template(@_); };
 
     if ($@ and $@->isa('Krang::ElementClass::TemplateNotFound')) {
+        my $err = $@;
         # no template found - if the element has children, this is an error.
         # otherwise, return the raw data stored in the element.
         if (scalar($args{element}->children())) {
-            die $@;
+            die $err;
         } else {
             return $args{element}->template_data(publisher => $publisher);
         }
