@@ -307,6 +307,9 @@ sub publish_story {
 
             # check the object back in.
             if ($object->checked_out()) { $object->checkin(); }
+
+            # remove from desk
+            if ($object->desk_id()) { $object->desk_id(undef) }
         } elsif ($object->isa('Krang::Media')) {
             $self->publish_media(media => $object);
         }
