@@ -302,8 +302,7 @@ SQL
     # update checkout fields
     $self->{checked_out} = 0;
     $self->{checked_out_by} = 0;
-    add_history(object => $self,
-                action => 'checkin',);
+    add_history(object => $self, action => 'checkin',);
 
     return $self;
 }
@@ -364,8 +363,7 @@ SQL
     # update checkout fields
     $self->{checked_out} = 1;
     $self->{checked_out_by} = $user_id;
-    add_history(object => $self,
-                action => 'checkout',);
+    add_history(object => $self, action => 'checkout',);
 
     return $self;
 }
@@ -477,8 +475,7 @@ SQL
 
     $dbh->do($query, undef, (1, $self->{version}, 0, $id));
 
-    add_history(object => $self,
-                action => 'deploy',);
+    add_history(object => $self, action => 'deploy',);
 
     return $self;
 }
@@ -863,8 +860,7 @@ SQL
     # be preserved.
     %{$self} = (%$obj, %preserve);
 
-    add_history(object => $self,
-                action => 'revert',);
+    add_history(object => $self, action => 'revert',);
 
     return $self;
 }
@@ -951,8 +947,8 @@ sub save {
              $self->{template_id},
              $self->{version});
 
-    add_history(object => $self,
-                action => 'save',);
+    add_history(object => $self, action => 'new') if $self->{version} == 1;
+    add_history(object => $self, action => 'save',);
 
     return $self;
 }

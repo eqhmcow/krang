@@ -33,7 +33,7 @@ use Krang::Message qw/add_message/;
 use Krang::Pref;
 use Krang::Session qw/%session/;
 use Krang::Template;
-use Krang::Widget qw/category_chooser/;
+use Krang::Widget qw/format_url category_chooser/;
 
 use constant WORKSPACE_URI => 'workspace.pl';
 
@@ -671,7 +671,8 @@ sub get_tmpl_params {
     my $self = shift;
     my $template = shift;
     my $q = $self->query();
-    my @fields = qw/content element_class_name template_id url version/;
+    my @fields = qw/content element_class_name template_id testing url
+		    version/;
     my $rm = $q->param('rm');
     my (%tmpl_params, $version);
 
@@ -691,10 +692,17 @@ sub get_tmpl_params {
     }
 
     unless ($rm =~ /^view/) {
+        # make sure category_id is set for category chooser
+        $q->param('category_id', $template->category_id);
+
         $tmpl_params{category_chooser} =
           category_chooser(query => $q,
                            name => 'category_id',
                            formname => 'edit_template_form');
+
+        # we don't need it anymore
+        $q->delete('category_id');
+
         $tmpl_params{upload_chooser} = $q->filefield(-name => 'template_file',
                                                      -size => 32);
         $tmpl_params{version_chooser} =
@@ -800,7 +808,7 @@ sub search_row_handler {
     $row->{deployed} = $template->deployed ? 'D' : '';
     $row->{element_class_name} = $template->element_class_name;
     $row->{template_id} = $template->template_id;
-    $row->{url} = $template->url;
+    $row->{url} = format_url(url => $template->url, length => 50);
 }
 
 
