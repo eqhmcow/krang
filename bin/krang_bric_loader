@@ -42,6 +42,8 @@ and optionally imports that dataset.
 
  --no-templates		- No templates are exported from Bricolage
 
+ --non-site-dependent	- Just contributors and elements are exported
+
  --password		- The password associated with the user
 			  specified by the --username argument
 			  (default: BRICOLAGE_PASSWORD)
@@ -56,8 +58,8 @@ and optionally imports that dataset.
  --server		- The ip address or hostname assigned to the
 			  Bricolage install (default: BRICOLAGE_SERVER)
 
- --set-name		- Name of the element set to be created.
-			  Required unless --no-elements is supplied.
+ --set-name		- Name of the element set to be created (default:
+			  BRICOLAGE_SERVER).
 
  --site-doc		- The path to the XML file containing the
 			  relevant Category to Site mapping info
@@ -126,8 +128,8 @@ use Krang::Script;
 use Krang::Conf qw(KrangRoot);
 
 
-my ($debug, $help, $import, $man, $output, $set_name, $site_doc, $soap,
-    $temp_path, $timeout, $verbose);
+my ($debug, $help, $import, $man, $non_site_dep, $output, $set_name, $site_doc,
+    $soap, $temp_path, $timeout, $verbose);
 our ($contributors, $elements, $no_categories, $no_contributors, $no_elements,
      $no_media, $no_sites, $no_stories, $no_templates, $password, $root,
      $server, $sites, $username);
@@ -141,7 +143,7 @@ BEGIN {
     $verbose	= 0;
     $password	= $ENV{BRICOLAGE_PASSWORD};
     $root 	= $ENV{BRICOLAGE_ROOT};
-    $server 	= $ENV{BRICOLAGE_SERVER};
+    $server 	= $set_name = $ENV{BRICOLAGE_SERVER};
     $username 	= $ENV{BRICOLAGE_USERNAME};
 
     GetOptions("debug"		        => \$debug,
@@ -157,6 +159,7 @@ BEGIN {
                "no-sites"		=> \$no_sites,
                "no-stories"		=> \$no_stories,
                "no-templates"		=> \$no_templates,
+               "non-site-dependent"	=> \$non_site_dep,
                "output=s"		=> \$output,
                "password=s"		=> \$password,
                "root=s"			=> \$root,
@@ -217,6 +220,9 @@ END
     } elsif ($elements) {
         $no_categories = $no_contributors = $no_media = $no_sites =
           $no_stories = $no_templates = $data = 1;
+    } elsif ($non_site_dep) {
+        $no_categories = $no_media = $no_sites = $no_stories = $no_templates =
+          $data = 1;
     } elsif ($sites) {
         $no_categories = $no_contributors = $no_elements = $no_media =
           $no_stories = $no_templates = $data = 1;
@@ -232,11 +238,6 @@ END
                   "that do not exclude all datatypes.\n")
           if @vars == $no_count;
     }
-
-    # must have a set-name unless -no-elements has been supplied
-    pod2usage("\nThe -set-name argument must be supplied unless the " .
-              "-no-elements arg is supplied\n")
-      unless($no_elements || $set_name);
 
     # make sure site doc exists, if we need it
     pod2usage("\nSite info doc '$site_doc' not found.\n")

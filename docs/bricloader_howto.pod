@@ -1,0 +1,168 @@
+=head1 NAME
+
+bricloader_howto - How to create Krang sites based using a Bricolage install
+and krang_bric_loader
+
+=head1 SYNOPSIS
+
+ krang_bric_loader [options]
+
+ Options:
+
+ --debug		- Displays debugging information and preserves
+			  all intermediate output.
+
+ --help			- Displays this menu.
+
+ --just-contributors	- Only contributors are exported
+
+ --just-elements	- Only elements are exported
+
+ --just-sites		- Prevents the export of any asset from
+			  Bricolage.  Only sites are expected
+
+ --man			- Displays this menu and detailed application
+			  documentation
+
+ --no-categories	- Prevents export of categories
+
+ --no-contributors	- Prevents contributors from being imported or
+			  associated with media and stories
+
+ --no-elements		- Prevents export of elements
+
+ --no-media		- Prevents media from being imported or related
+			  to stories
+
+ --no-sites		- No site information will be expected
+
+ --no-stories		- Prevents export of stories
+
+ --no-templates		- No templates are exported from Bricolage
+
+ --non-site-dependent	- Just contributors and elements are exported
+
+ --password		- The password associated with the user
+			  specified by the --username argument
+			  (default: BRICOLAGE_PASSWORD)
+
+ --output		- Saves Dataset to path supplied with option
+			  by default the dataset is output to
+			  $PWD/bric.kds
+
+ --root			- The directory root of the Bricolage install on
+			  the system (default: BRICOLAGE_ROOT)
+
+ --server		- The ip address or hostname assigned to the
+			  Bricolage install (default: BRICOLAGE_SERVER)
+
+ --set-name		- Name of the element set to be created (default:
+			  BRICOLAGE_SERVER).
+
+ --site-doc		- The path to the XML file containing the
+			  relevant Category to Site mapping info
+			  (default: $PWD/sites.xml)
+
+ --timeout		- The HTTP timeout for Bricolage SOAP calls
+			  (default: 30)
+
+ --username		- The username to employ when attempting to
+			  access Bricolage services
+			  (default: BRICOLAGE_USERNAME)
+
+ --verbose		- Prints debugging info to STDERR.  Add two more
+			  --verbose args to achieve the maximum level of
+			  verbosity
+
+
+=head1 CAVEAT
+
+At present there is a means to transfer category, contributor, element, media,
+story, and template data from Bricolage to Krang.  To obtain category, media,
+story, and template data from Bricolage, however, a site info xml doc must be
+provided.  Currently, there is no Site abstraction in Bricolage whereas in
+Krang categories, media, stories, and templates are all contained within sites.
+The purpose of the site info document is to provide a means of mapping
+Bricolage categories to putative Krang sites.
+
+A document of the following format must be provided (to export site-dependent
+data):
+
+<?xml version="1.0" encoding="UTF-8"?>
+<sites xmlns:xsi="http://www.w3.org/2001/XMLSchema"
+ xsi:noNameSpaceSchemaLocation="bric_sites.xsd">
+	<site>
+		<category>/bricolage_category_path</category>
+		<preview_path>/full/preview/path</preview_path>
+		<publish_path>/full/publish/path</publish_path>
+		<preview_url>preview.site.com</preview_url>
+		<url>site.com</url>
+	</site>
+	<site>
+	...
+	</site>
+</sites>
+
+N.B. - unless all categories, media, stories, and templates are found in
+categories mapped directly or indirectly (i.e. subcategories of directly mapped
+categories) an error will be returned and the script will exit.
+
+That being said this boils down to a single directive: an exhaustive site info
+xml document must be provided unless only contributors and elements are to be
+exported.
+
+Additionally, it should be admitted that krang_bric_loader is a bit of a
+misnomer as it only creates Krang data-set files and element libraries.  So, to
+actually use the results of the script you'll have do the following:
+
+ 1. Edit krang.conf to use the newly created ElementSet.  Either change the
+    InstanceElementSet directive to refer to your new element set or add a new
+    Instance entity that contains this value in its InstanceElementSet
+    directive i.e.:
+
+    InstanceElementSet TestSet1
+	BECOMES
+    InstanceElementSet NewBricloageElementSet
+
+ 2. Import the .kds file using krang_import: krang_import bric.kds
+
+ 3. Restart Krang: krang_ctl restart
+
+
+=head1 A FEW WORDS ON TEMPLATES
+
+.pl files are excluded from template data exported from Krang.  This is the
+case because the code therein is tightly coupled to the Bricolage API and the
+organization of story data in Krang is radically different.  As a consequence
+the .tmpl files which are exportable are of dubious value within Krang.  It is
+more likely that templates if at all imported will be used as a guide for the
+element and/or template developer to replicate Bricolage output.
+
+
+=head1 PROBABLE USE SCENARIOS
+
+Note that each of these examples presume all the Bricolage environment
+variables have been set and a site info doc at $PWD/sites.xml
+
+=over
+
+=item * Get everything
+
+ $ krang_bric_loader --set-name bric_instance
+
+=item * Just pull contributors and elements
+
+ $ krang_bric_loader --non-site-dependent
+
+=item * Pull everything but elements
+
+ $ krang_bric_loader --no-elements
+
+=item * Pull everything but templates
+
+ $ krang_bric_loader --no-templates
+
+=back
+
+=cut
+
