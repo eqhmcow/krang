@@ -818,7 +818,8 @@ The C<< min => 1 >> argument in the lines:
 
 is actually redundent - it was already made in the C<page.pm> file.
 However, you could make the page element entirely optional by setting
-it to 0 (or 2, or 10, etc..) in this call.
+it to 0 in this call.  Conversely, you could force every article to
+contain multiple pages by setting C<min> to a value greater than 1.
 
 
 =back
@@ -900,8 +901,192 @@ HREF[Krang Addons|http://krang.sourceforge.net/addons.html] to see
 some existing addons.
 
 
-=head1 Development Tips
+=head1 Further Development
 
+This section covers more advanced topics in element library development.
+
+=head2 Lists
+
+Lists in Krang are a very powerful concept - it allows you to provide
+your editorial staff with pulldown menus in the editorial user
+interface, pulldows whose content they can control themselves through
+the C<Lists> interface.
+
+The flexibility that lists provide is attractive to editorial staffs,
+as they give nearly the flexibility of a textbox (over a pulldown
+element whose options are fixed by the element definition), with none
+of the potential for error through misspelling.
+
+Additionally, Krang lists can be multidimensional and hierarchtical -
+think of 2 lists, where the content of the second list is dependent on
+the selection made in the first one.
+
+The classic example is the Year/Make/Model search seen on a lot of car
+websites - a manufacturer might have produced a 6000 SUX in 1999, but
+not in 2000.
+
+B<NOTE>: multidimensional lists are not supported properly in the
+Krang UI in versions prior to 1.102.
+
+
+=head3 Setting up Lists - lists.conf
+
+The structure of the lists associated with an element set can be saved
+in a config file in the same directory as the element set itself.
+
+The F<lists.conf> file is an XML file containing a description of each
+list group.  For example:
+
+  <list_groups>
+
+    <list_group list_group_name="Segments" description="This list group just contains one list">
+      <list list_name="Segments" />
+    </list_group>
+
+    <list_group list_group_name="Cars" description="Year/Make/Model Car list">
+      <list list_name="Year" />
+      <list list_name="Make" />
+      <list list_name="Model" />
+    </list_group>
+
+  </list_groups>
+
+This config file describes two different lists:
+
+=over
+
+=item * 
+
+the C<Segments> list is a one-dimensional list, that will show up as a single pulldown.
+
+=item *
+
+The C<Cars> list is a three-dimensional list, where the contents of
+each pulldown will be dependent on the item chosen in the list above
+it.
+
+
+=item B<NOTE:>
+
+The C<lists.conf> file is only read automatically when a
+database is set up using C<bin/krang_createdb>.
+
+If your database is already set up, you can use
+C<bin/krang_create_lists> to create the lists in Krang specified by
+your C<lists.conf> file.
+
+=back
+
+=head3 Using Lists in the Element System
+
+To demonstrate how lists are used, we're going to build a new story type: C<pulldown_article>
+
+  + pulldown_article
+     - headline       (textbox)
+     - deck           (textarea)
+     - segments_list  (listgroup)
+     - cars_list      (listgroup)
+     + page
+        - page_header (textbox)
+        - paragraph   (textarea)
+        - story_link  (storylink)
+        - image_link  (medialink)
+
+For the sake of simplicity, C<pulldown_article> is derived from
+C<basic_article> - in fact, it's just C<basic_article> with the two
+lists we created in C<lists.conf> added.
+
+C<pulldown_article> looks as follows:
+
+
+  package Tutorial::pulldown_article;
+
+  use strict;
+  use warnings;
+
+  =head1 NAME
+
+  Tutorial::pulldown_article - article type that makes use of Krang lists.
+
+
+  =head1 DESCRIPTION
+
+  Tutorial::pulldown_article is used to demonstrate how lists work in Krang.
+
+  =cut
+
+  use base 'Krang::ElementClass::TopLevel';
+
+  sub new {
+      my $pkg  = shift;
+      my %args = (
+                  name => 'pulldown_article',
+                  children => [
+                               Krang::ElementClass::Text->new(name => 'headline',
+                                                              allow_delete => 0,
+                                                              size => 40,
+                                                              min => 1,
+                                                              max => 1,
+                                                              reorderable => 0,
+                                                              required => 1
+                                                             ),
+
+                               Krang::ElementClass::Textarea->new(name         => 'deck',
+                                                                  allow_delete => 0,
+                                                                  reorderable  => 0,
+                                                                  required     => 1,
+                                                                  min => 1,
+                                                                  max => 1
+                                                                 ),
+
+                               Krang::ElementClass::ListGroup->new(name       => 'segments',
+                                                                   list_group => 'Segments',
+                                                                   multiple   => 1,
+                                                                   min => 1,
+                                                                   max => 1,
+                                                                  ),
+
+                               Krang::ElementClass::ListGroup->new(name       => 'car_selector',
+                                                                   list_group => 'Cars',
+                                                                   multiple   => 0,
+                                                                   min => 1,
+                                                                   max => 1,
+                                                                  ),
+
+                               Tutorial::page->new(name => 'article_page',
+                                                   min  => 1
+                                                  )
+
+                              ],
+                  @_
+                 );
+
+      return $pkg->SUPER::new(%args);
+
+  }
+
+
+This should look familiar by now - the only addition over the
+C<basic_article> story type are two L<Krang::ElementClass::ListGroup>
+elements.  The first one uses the C<Segments> list we defined in
+C<lists.conf>, the second uses the C<Cars> list.
+
+The only parameter of note is the C<multiple> parameter - in
+single-dimensional lists, you can allow the user to select multiple
+options.  This will not work in multi-dimensional lists.
+
+=head3 Using Lists in the User Interface
+
+Once everything has been set up, the content of these lists needs to
+be populated.  This can be done within the F<Lists> interface under
+the Admin menu.
+
+If you already have a large set of list information that needs to be
+imported, this can be done programatically by using the API provided
+by L<Krang::ListGroup>, L<Krang::List>, and L<Krang::ListItem>.
+
+Once your lists are populated, simply create a new C<pulldown_article>
+story, and you're good to go.
 
 
 =head1 Additional Reading
@@ -924,5 +1109,23 @@ L<Krang::ElementClass> - the base class for all Krang Elements
 
 L<Krang::ElementClass::TopLevel> - the base class for top-level
 element classes.
+
+=item *
+
+L<Krang::ElementClass::ListGroup> - The element class that handles
+Krang lists.
+
+=item *
+
+L<Krang::ListGroup> - Groups one or more list (L<Krang::List>) objects.
+
+=item *
+
+L<Krang::List> - A list of items (L<Krang::ListItem> objects) to be
+selected by a user within a story/category edit UI.
+
+=item *
+
+L<Krang::ListItem> - An item in a L<Krang::List> list.
 
 =back
