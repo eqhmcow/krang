@@ -116,6 +116,10 @@ HREF[Upgrade System|upgrade_system.html] - How the Krang upgrade system works.
 
 HREF[Skins|skins.html] - How to create a Krang skin
 
+=item *
+
+HREF[Scheduler Technical Design|scheduler.html] - How the Krang scheduler works.
+
 =back
 
 

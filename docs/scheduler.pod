@@ -1,0 +1,87 @@
+=head1 Krang Scheduler Technical Design
+
+This documents the design of the Krang scheduler daemon.  Krang's
+scheduler is responsible for running scheduled jobs at their appointed
+time.  Things like publishing, alerts and expiration can all be
+scheduled through the user interface.
+
+=head2 Goals
+
+The scheduler must:
+
+=over
+
+=item 1
+
+Run jobs as close to on-time as is feasible.
+
+=item 2
+
+Run time-sensitive jobs, like alerts, before less sensitive ones, like
+daily publish runs.
+
+=item 3
+
+Be memory efficient.  Since the scheduler will run indefinitely even a
+small leak will eventually become a big problem.
+
+=back
+
+=head2 Modules
+
+The scheduler will be constructed using the following modules:
+
+=over
+
+=item L<Krang::Schedule>
+
+Objects of this class represent individual scheduled jobs waiting for
+execution.
+
+=item L<Krang::CGI::Schedule>
+
+This CGI powers the "Jobs" admin screen in the UI, displaying jobs
+waiting for execution.
+
+=item L<Krang::Schedule::Daemon>
+
+The schedule daemon executes jobs at the proper time.
+
+=back
+
+=head2 Scheduler Logic
+
+Each time the scheduler wakes up to run it performs the following steps:
+
+=over
+
+=item 1
+
+Collect a list of jobs ready to run, sorted by priority and lateness.
+
+=item 2
+
+Partition jobs into chunks where chunk size is chosen to limit
+potential memory usage and improve performance on multi-processing
+systems.
+
+=item 3
+
+Fork a child to run each chunk.  The child will execute each job in
+order and then exit, freeing any memory used.  The number of children
+forked to run simultaneously will be configurable
+(C<ScheduleParallel>).
+
+=item 4
+
+Mark completed jobs finished.
+
+=item 5
+
+Check again for jobs ready to run, if found goto step 1.  If not,
+C<sleep()> for a configurable period (C<ScheduleInterval>) and then
+goto step 1.
+
+=back
+
+
