@@ -104,7 +104,7 @@ if (-f $init_script) {
 # drop all databases
 my $v = $verbose ? '--verbose' : '';
 
-system($ENV{KRANG_ROOT}."/bin/krang_createdb --destroy --no_create --no_prompt $v");
+system($ENV{KRANG_ROOT}."/bin/krang_createdb --destroy --all --no_create --no_prompt $v");
 
 # now blow all files away!
 print "\nNow removing all files...\n\n" if $verbose;
