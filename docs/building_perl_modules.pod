@@ -135,7 +135,7 @@ You must now add these, via cvs, to the project repository:
 
     cd $KRANG_MODULES
     find . -type d | grep -v CVS | xargs cvs add
-    find . -type f | grep -v CVS | xargs cvs add
+    find . -type f | grep -v CVS | xargs cvs add -ko
 
 
 Visually verify that the output looks correct.  If so, commit
