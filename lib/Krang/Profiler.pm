@@ -2,6 +2,21 @@ package Krang::Profiler;
 use strict;
 use warnings;
 
+# make sure to load element sets first so they can be profiled
+use Krang::ElementLibrary;
+
+# get a list of element sets for all instances
+use Krang::Conf qw(InstanceElementSet);
+our @ELEMENT_SETS;
+BEGIN { 
+    my $old = Krang::Conf->instance();
+    foreach my $instance (Krang::Conf->instances) {
+        Krang::Conf->instance($instance);
+        push(@ELEMENT_SETS, InstanceElementSet);
+    }
+    Krang::Conf->instance($old);
+}
+
 use Devel::Profiler 
   package_filter => \&package_filter;
 
@@ -20,6 +35,11 @@ sub package_filter {
 
     # profile all other Krang modules
     return 1 if /^Krang/;
+
+    # profile element libraries
+    foreach my $set (@ELEMENT_SETS) {
+        return 1 if /^$set/;
+    }
 
     # ignore everything else
     return 0;
