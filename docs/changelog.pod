@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Can now bundle L<Krang::List> data with your element library, and have
+it imported when the database is created (in the same fashion as
+C<templates.kds>).  The file is C<lists.kds>.  [Peter]
+
+=item *
+
 Added C<slug> as a variable available to all templates at
 publish-time.  This was intended to be there all along, but somehow
 fell through the cracks.  [Peter]

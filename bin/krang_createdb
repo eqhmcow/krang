@@ -290,6 +290,22 @@ foreach my $instance (@instances) {
     local $ENV{KRANG_INSTANCE} = $instance;
     print "Running '$cmd'\n" if $verbose > 1;
     system($cmd) && die "krang_create_lists failed: $?";
+
+    # if a lists.kds file exists, import it.
+    my $lists_import_file = catfile(KrangRoot, 'element_lib',
+                                    InstanceElementSet, 'lists.kds');
+
+    if (-f $lists_import_file) {
+        # perform import from templates.kds file
+        $cmd = catdir(KrangRoot, 'bin', 'krang_import') . " ";
+        $cmd .= "--verbose " if $verbose;
+        $cmd .= "--verbose " if $verbose > 1;
+        $cmd .= $lists_import_file;
+        local $ENV{KRANG_INSTANCE} = $instance;
+        print "Running '$cmd'\n" if $verbose > 1;
+        system($cmd) && die "krang_import failed: $?";
+    }
+
 }
 
 
