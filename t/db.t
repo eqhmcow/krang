@@ -22,7 +22,7 @@ $dbh = dbh();
 
 # Fail to get dbh if version doesn't match
 my ($db_version) = $dbh->selectrow_array("select db_version from db_version");
-$dbh->do("update db_version set db_version='NO_VERSION'");
+$dbh->do("update db_version set db_version='9999.9999'");
 forget_dbh();
 eval { $dbh2 = dbh(); };
 like($@, qr/Database <-> Krang version mismatch!/, "dbh() detects version mismatch");
