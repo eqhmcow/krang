@@ -338,9 +338,9 @@ SQL
 
 =item @templates = Krang::Template->find( template_id => [1, 2, 3, 5, 8] )
 
-=item @template_ids = Krang::Template->find( category_id => 7,
-					     ids_only => 1,
-					     etc., )
+=item @template_ids = Krang::Template->find( ids_only => 1, etc., )
+
+=item $count = Krang::Template->find( count => 1, etc., )
 
 Class method that returns the template objects or ids matching the criteria
 provided in %params.
@@ -444,11 +444,11 @@ sub find {
 
         if ($arg eq 'template_id' && ref $args{$arg} eq 'ARRAY') {
             my $tmp = join(" OR ", map {"template_id = ?"} @{$args{$arg}});
-            $where_clause .= "($tmp) ";
+            $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
         } else {
-            $where_clause .= $like ? "$lookup_field LIKE ? " :
-              "$lookup_field = ? ";
+            $where_clause .= $like ? " $lookup_field LIKE ?" :
+              " $lookup_field = ?";
             push @params, $args{$arg};
         }
     }
@@ -456,24 +456,22 @@ sub find {
     croak("The following passed search parameters are invalid: '" .
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
-    # get database handle
-    my $dbh = dbh();
-
     # construct base query
-    my $query = "SELECT $fields FROM template ";
+    my $query = "SELECT $fields FROM template";
 
-    # add WHERE clause, if any
-    $query .= "WHERE $where_clause" if $where_clause;
+    # add WHERE and ORDER BY clauses, if any
+    $query .= " WHERE $where_clause" if $where_clause;
+    $query .= " ORDER BY $order_by" if $order_by;
 
-    # append limit clause, if any
+    # add LIMIT clause, if any
     if ($limit) {
-        $query .= "LIMIT $offset, $limit ";
+        $query .= $offset ? " LIMIT $offset, $limit" : " LIMIT $limit";
     } elsif ($offset) {
-        $query .= "LIMIT $offset, -1 ";
+        $query .= " LIMIT $offset, -1";
     }
 
-    # append order clause, if any
-    $query .= "ORDER BY $order_by" if $order_by;
+    # get database handle
+    my $dbh = dbh();
 
     my $sth = $dbh->prepare($query);
     $sth->execute(@params);
@@ -482,7 +480,7 @@ sub find {
     my (@row, @templates);
     while (@row = $sth->fetchrow_array()) {
         # if we just want ids
-        if ($ids_only) {
+        if ($count || $ids_only) {
             push @templates, $row[0];
         } else {
             my $obj = bless {}, $self;
@@ -495,8 +493,9 @@ sub find {
     # finish statement handle
     $sth->finish();
 
-    # return an array or arrayref based on context
-    return @templates;
+    # return number of rows if count, otherwise an array of template ids or
+    # objects
+    return $count ? $templates[0] : @templates;
 }
 
 
