@@ -345,3 +345,11 @@ L<Krang::History>, L<Krang::HTMLPager>, L<Krang::Log>, L<Krang::Message>, L<Kran
 
 =cut
 
+
+
+my $quip = <<END;
+I do not feel obliged to believe that the same God who has endowed us
+with sense, reason, and intellect has intended us to forgo their use.
+
+-- Galileo Galilei 
+END
