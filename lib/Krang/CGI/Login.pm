@@ -76,7 +76,7 @@ sub login {
     my $dbh      = dbh();
 
     return $self->show_form(alert =>
-                            "Username and password are required fields.")
+                            "User name and password are required fields.")
       unless defined $username and length $username and
              defined $password and length $password;
 
@@ -84,7 +84,7 @@ sub login {
     my $user_id = Krang::User->check_auth($username, $password);
 
     # failure
-    return $self->show_form(alert => "Incorrect login, try again.")
+    return $self->show_form(alert => "Incorrect user name, try again.")
       unless $user_id;
 
     # create a cookie with username, session_id and instance.  Include

@@ -276,7 +276,7 @@ sub make_internal_template {
 
     # Build up table and header row
     my @columns = @{$self->columns()};
-    $pager_tmpl .= '<table class="form-cell" border="0" cellspacing="0" cellpadding="0" width="568"><tr class="form-head"><td class="form-head2">'
+    $pager_tmpl .= '<table class="form-cell" border="0" cellspacing="0" cellpadding="0" width="571"><tr class="form-head"><td class="form-head2">'
       . join("</td>\n<td class=\"form-head2\">", (map { "<tmpl_var colhead_$_><tmpl_unless colhead_$_>&nbsp;</tmpl_unless>" } @columns) ) ."</td></tr>\n\n\n";
 
     # Build loop for data
@@ -304,7 +304,7 @@ EOF
 
 <tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
 
-  <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a>
+  <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a></p></div>
   <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a></p></div>
   </tmpl_if>
 

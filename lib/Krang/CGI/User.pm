@@ -473,7 +473,7 @@ sub search {
                                                   'command_column',
                                                   'checkbox_column',
                                                  ],
-                                      column_labels => {login => 'Login',
+                                      column_labels => {login => 'User Name',
                                                         last => 'Last Name',
                                                         first => 'First Name',
                                                        },

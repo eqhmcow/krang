@@ -1,0 +1,148 @@
+/*** Separate CSS file for help files not using the background image ***/
+
+/*** Help Styles ***/
+
+body {
+  background-color: #ffffff;
+  color:            #333333;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        11px;
+  margin-top:       10px;
+  margin-left:      auto;
+  margin-right:     auto;
+  text-align:       center;
+}
+
+#hheader {
+  width:				  460px;
+  height:           47px; 
+  background-color: #ffffff;	
+  text-align:       left;
+}
+
+#hheader div.logo {
+	position: static;
+	left: 0px;
+	top: 0px;
+  background-color: #ffffff;	
+}
+
+#hheader div.dkblu {	
+  position: absolute;
+  top:         38px;
+  left:      171px; 
+  border-top: #04044c 1px solid;
+  background-color: #ffffff;  
+  height:           1px;
+  width:            300px; 
+}
+
+#hheader div.blue { 
+  position: absolute;
+  top:         42px;
+  left:      11px; 
+  height:          14px;  
+  background-color: #dbe9f4;
+  width: 460px;
+}	
+
+#hheader div.dark-bar {  
+  position: absolute;
+  top:         62px;
+  left:      11px; 
+  background-color: #04044c;
+  color:            #dbeaf5;
+  padding:          4px 4px 0px 4px;
+  height:           20px;
+  font-weight:      bold;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+  width: 453px;
+  text-align:       left;
+}
+
+.dark-bar p.left {
+	float:           left;
+	margin: 0px;
+}
+
+.dark-bar p.right {
+	float:           right;
+	margin: 0px;
+}
+
+.dark-bar a { 
+  color:            #dbeaf5;
+  text-decoration:   none;
+}
+.dark-bar a:link { 
+  color:            #dbeaf5;
+  text-decoration:   none;
+}
+.dark-bar a:visited { 
+  color:            #dbeaf5;
+  text-decoration:   none;
+}
+.dark-bar a:active {
+  color:            #dbeaf5;
+  text-decoration:   none;
+}
+
+div.boxh {
+  margin-top:       5px;
+  padding:          5px; 
+  border-right:     1px #bababa solid;
+  border-left:      1px #bababa solid;
+  border-bottom:    1px #bababa solid;
+  width:            449px;
+  text-align:       left;
+}
+
+.helptitle {
+	font-weight:     bold;
+	font-size:       14px;
+}
+
+.helpsub {
+	font-weight:     bold;
+	font-size:       11px;	
+}
+
+.helpnote {
+	font-style:     italic;
+	font-size:       10px;	
+}
+
+.helpsubhead {
+	font-style:     italic;
+	font-size:       12px;	
+}
+
+a.helplink: { 
+  color:            #05034c;
+  text-decoration:  underline; 
+}
+a.helplink:visited { 
+  color:            #05034c;
+  text-decoration:  underline;
+}
+a.helplink:active {
+  color:            #98ccfe;
+  text-decoration:  underline;
+} 
+#hfooter {
+	background-color: transparent;
+   color:            #333333;
+	width:            461px;
+	margin-top:        10px;
+  text-align:       left;
+}
+#hcopy {
+	background-color: #dbe9f4;
+   color:            #333333;
+	padding-top:      4px;
+	padding-bottom:   4px;
+	width:            460px;
+	font-size:         10px;  
+	text-align:       left;
+}

@@ -192,7 +192,7 @@
 		<tr><td>&nbsp;</td><td align="right"><input name="add_grp" onClick="add_group();" type="button" value="Add" class="button"></td><td>&nbsp;</td><td align="right"><input name="rm_grp" onClick="remove_group();" type="button" value="Remove" class="button"></td><td>&nbsp;</td></tr>
 
 <tr>
-    <td align="left" valign="bottom">Login:</td>
+    <td align="left" valign="bottom">User Name:</td>
     <td align="right" valign="top"><tmpl_if error_login_length><span class="invalid"></tmpl_if><tmpl_if duplicate_login><span class="invalid"></tmpl_if><tmpl_if error_invalid_login><span class="invalid"></tmpl_if><input type="textfield" size="20" name="login" value="<tmpl_var escape=HTML login>"><tmpl_if error_invalid_login></span></tmpl_if><tmpl_if duplicate_login></span></tmpl_if><tmpl_if error_login_length></span></tmpl_if></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
 </tr>
 

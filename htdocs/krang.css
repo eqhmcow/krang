@@ -122,14 +122,14 @@ padding:        0px;
 	width:             340px; 
 }
 
-.left2 {
-  margin-top:	     0px;
-  height:           auto; 
-  padding-bottom:   3px;
-}
+/*** General Classes ***/
 
 b {
 	font-weight:      bold;
+}
+
+i {
+	font-style: italic;
 }
 
 p.logl {
@@ -153,7 +153,6 @@ div.publish {
 	width:             590px; 
 	text-align:        center;
 }
-
 
 div.box {
   border-right:     1px #bababa solid;
@@ -210,18 +209,15 @@ td, th {
   font-size:        12px;
 }
 
-/*** default link styles ***/
-a:link { 
-  color:            #05034c;
-}
-a:visited { 
-  color:            #05034c;
-}
-a:active {
-  color:            #98ccfe;
+
+.left2 {
+  margin-top:	     0px;
+  height:           auto; 
+  padding-bottom:   3px;
 }
 
 /*** generic style palette ***/
+
 .light { 
   background-color: #dbe9f4;
   color:            #333333;
@@ -235,25 +231,9 @@ a:active {
 	margin-bottom:    5px;
 }
 
-.dark { 
-  background-color: #04044c;
-  color:            #dceaf5;
-}
-
 .bright {
   background-color: #98ccfe;
   color:            #333333;
-}
-
-
-.line {
-  color:            #bababa;
-  background-color: #bababa;
-}
-
-.darkborder {
-  color:            #bababa;
-  background-color: #bababa;
 }
 
 /*** Colored UI elements ***/
@@ -312,23 +292,6 @@ a:active {
   width:            576px;
 }
 
-.dark-bar a { 
-  color:            #dbeaf5;
-  text-decoration:   none;
-}
-.dark-bar a:link { 
-  color:            #dbeaf5;
-  text-decoration:   none;
-}
-.dark-bar a:visited { 
-  color:            #dbeaf5;
-  text-decoration:   none;
-}
-.dark-bar a:active {
-  color:            #dbeaf5;
-  text-decoration:   none;
-}
-
 .button-bar {
   background-color: #98ccfe;
   color:            #333333;
@@ -339,18 +302,6 @@ a:active {
 
 .button-bar input {
   margin-left:      15px;
-}
-
-.form-head-thin {
-  background-color: #dbe9f4;
-  color:            #333333;
-  border-top:       1px solid #bababa;
-  border-bottom:    1px solid #bababa;
-}
-
-.form-head-thin td {
-  border-top:       1px solid #bababa;
-  border-bottom:    1px solid #bababa;
 }
 
 .form-head {
@@ -377,7 +328,6 @@ a:active {
   margin-top:       5px; 
      
 }
-
 .form-cell {
   border:         1px solid #bababa;
   border-collapse:collapse;
@@ -388,36 +338,8 @@ a:active {
   vertical-align:   top;
 }
 
-.form-box {
-  border:         1px solid #bababa;
-  padding:        5px;
-}
-
-.form-box-large {
-  border:         1px solid #bababa;
-  padding-top:    5px;
-  padding-bottom: 5px;
-  padding-left:   15px;
-  padding-right:  15px;
-}
-
 .tight-form-box {
   border:         1px solid #bababa;
-}
-
-.alert {
-  color:          red;
-  font-weight:    bold;
-  margin-bottom:  5px;
-}
-
-.alertp {
-  position:      absolute;
-  color:         red;
-  font-weight:   bold;
-  width:        400px;
-  left:         275px;
-  top:          140px; 
 }
 
 .no-border { 
@@ -435,8 +357,6 @@ a:active {
 	float:           right;
 	margin: 0px;
 }
-
-.vs {font-size: 5px;}
 
 /*** prettier buttons ***/
 .button {
@@ -460,71 +380,47 @@ a:active {
     background-color: #FFFF99 
 }
 
-/*** navbar styles ***/
-.nav1 {
-  background-color: #04044c;
-  color:            #dceaf5;
-  font-weight:      bold;
-  padding:          4px;
-  height:           19px;
-  margin-bottom: 2px; 
+.alert {
+  color:          red;
+  font-weight:    bold;
+  margin-bottom:  5px;
 }
 
-.nav1 a { 
-  color:            #FFFFFF;
+.alertp {
+  position:      absolute;
+  color:         red;
+  font-weight:   bold;
+  width:        400px;
+  left:         275px;
+  top:          140px; 
 }
 
-.nav1 a:link { 
-  color:            #FFFFFF;
+/*** link styles ***/
+a:link { 
+  color:            #05034c;
 }
-.nav1 a:visited { 
-  color:            #FFFFFF;
+a:visited { 
+  color:            #05034c;
 }
-.nav1 a:active {
-  color:            #FFFFFF;
-}
-
-.nav2 {
-  background-color: #dbe9f4;
-  color:            #333333;
-  padding-left:     10px;
-  padding-top:      1px; 
-  padding-bottom:   1px;
+a:active {
+  color:            #98ccfe;
 }
 
-.nav2-leaf {
-  background-color: #ffffff;
-  color:            #333333;
-  padding-left:     10px;
-  padding-top:      1px; 
-  padding-bottom:   1px;
-  border-right:     1px #bababa solid;
-  border-left:      1px #bababa solid;
+.dark-bar a { 
+  color:            #dbeaf5;
+  text-decoration:   none;
 }
-
-.nav3 {
-  padding-left:     20px;
-  padding-top:      1px;
-  padding-bottom:   1px;
-  border-right:     1px #bababa solid;
-  border-left:      1px #bababa solid;
+.dark-bar a:link { 
+  color:            #dbeaf5;
+  text-decoration:   none;
 }
-
-.nav4 {
-  padding-left:     30px;
-  padding-top:      1px;
-  padding-bottom:   1px;
-  border-right:     1px #bababa solid;
-  border-left:      1px #bababa solid;
+.dark-bar a:visited { 
+  color:            #dbeaf5;
+  text-decoration:   none;
 }
-
-.nav5 {
-  padding-left:     20px;
-  padding-top:      1px;
-  padding-bottom:   7px;
-  border-right:     1px #bababa solid;
-  border-left:      1px #bababa solid;
-  border-bottom:      1px #bababa solid;
+.dark-bar a:active {
+  color:            #dbeaf5;
+  text-decoration:   none;
 }
 
 /*** Category Chooser Styles ***/
@@ -539,7 +435,7 @@ a:active {
 }
 
 .hpts-inner {
-     overflow:         scroll;
+     overflow:         auto;
      width:            225px;
      height:           200px;
 }
@@ -645,4 +541,111 @@ a:active {
 .blue-border {
 	background:    #ffffff;
    height:       3px;
+}
+
+/*** Help Styles ***/
+
+#hheader {
+  margin: 			  10px; 
+  width:				  460px;
+  height:           47px; 
+  background-color: #ffffff;	
+}
+
+#hheader div.logo {
+	position: static;
+	left: 0px;
+	top: 15px;
+  background-color: #ffffff;	
+}
+
+#hheader div.dkblu {	
+  position: absolute;
+  top:         38px;
+  left:      180px; 
+  border-top: #04044c 1px solid;
+  background-color: #ffffff;  
+  height:           1px;
+  width:            300px; 
+}
+
+#hheader div.blue { 
+  position: absolute;
+  top:         43px;
+  left:      20px; 
+  height:          14px;  
+  background-color: #dbe9f4;
+  width: 460px;
+}	
+
+#hheader div.dark-bar {  
+  position: absolute;
+  top:         65px;
+  left:      20px; 
+  background-color: #04044c;
+  color:            #dbeaf5;
+  padding:          4px 4px 0px 4px;
+  height:           20px;
+  font-weight:      bold;
+  font-family:      Verdana,Helvetica,Arial,sans-serif;
+  font-size:        12px;
+  width: 453px;
+}
+
+div.boxh {
+  margin-left:      10px;
+  padding:          5px; 
+  border-right:     1px #bababa solid;
+  border-left:      1px #bababa solid;
+  border-bottom:    1px #bababa solid;
+  width:            449px;
+}
+
+.helptitle {
+	font-weight:     bold;
+	font-size:       14px;
+}
+
+.helpsub {
+	font-weight:     bold;
+	font-size:       11px;	
+}
+
+.helpnote {
+	font-style:     italic;
+	font-size:       10px;	
+}
+
+.helpsubhead {
+	font-style:     italic;
+	font-size:       12px;	
+}
+
+a.helplink: { 
+  color:            #05034c;
+  text-decoration:  underline; 
+}
+a.helplink:visited { 
+  color:            #05034c;
+  text-decoration:  underline;
+}
+a.helplink:active {
+  color:            #98ccfe;
+  text-decoration:  underline;
+} 
+#hfooter {
+	background-color: transparent;
+   color:            #333333;
+	width:            461px;
+	margin-top:        10px;
+	margin-left:      10px;
+}
+#hcopy {
+	background-color: #dbe9f4;
+   color:            #333333;
+	padding-top:      4px;
+	padding-bottom:   4px;
+	width:            460px;
+	font-size:         10px;  
+	text-align:       left;
 }
