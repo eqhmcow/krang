@@ -15,29 +15,6 @@ installing Krang.
 
 =item MySQL 3.23.53
 
-=item ImageMagick-5.5.3
-
-1) Download the source: 
-
-  wget ftp://ftp.rge.com/pub/multimedia/imagemagick/ImageMagick-5.5.3-2.tar.gz
-
-2) Decompress:
-
-  tar zxvf ImageMagick-5.5.3-2.tar.gz
-  cd ImageMagick-5.5.3
-
-3) Build and install:
-
-  ./configure --without-perl
-  make
-
-4) Build and install the Perl module (must be done as a separate step)
-
-  cd PerlMagick
-  perl Makefile.PL
-  make
-  make install
-
 =back
 
 =head2 Perl Modules
