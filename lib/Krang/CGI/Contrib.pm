@@ -50,6 +50,7 @@ for Krang::CGI::Contrib is 'search'.
 
 use Krang::Contrib;
 use Krang::DB qw(dbh);
+use Krang::Session qw(%session);
 
 
 # Fields in a contrib
@@ -243,8 +244,14 @@ sub add {
     $t->param(add_mode => 1);
     $t->param(%ui_messages) if (%ui_messages);
 
+    # Make new Contrib, but don't save it
+    my $c = Krang::Contrib->new();
+
+    # Stash it in the session for later
+    $session{EDIT_CONTRIB} = $c;
+
     # Convert Krang::Contrib object to tmpl data
-    my $contrib_tmpl = $self->get_contrib_tmpl();
+    my $contrib_tmpl = $self->get_contrib_tmpl($c);
 
     # Propagate to template
     $t->param($contrib_tmpl);
@@ -272,11 +279,18 @@ sub save_add {
 
     my $q = $self->query();
 
-    return $self->add(
-                      error_invalid_first => 1,
-                      error_invalid_last => 1,
-                      error_invalid_type => 1,
-                     );
+    my %errors = ( $self->validate_contrib() );
+
+    # Return to add screen if we have errors
+    return $self->add( %errors ) if (%errors);
+
+    # Retrieve new contrib object
+    my $c = $session{EDIT_CONTRIB};
+    die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
+
+    $self->do_update_contrib($c);
+
+    return $self->search(message_contrib_added=>1);
 }
 
 
@@ -356,6 +370,9 @@ sub edit {
     # no valid (non-fatal) case where a user would be here with an invalid contrib_id
     die ("No such contrib_id '$contrib_id'") unless (defined($c));
 
+    # Stash it in the session for later
+    $session{EDIT_CONTRIB} = $c;
+
     my $t = $self->load_tmpl("edit_view.tmpl");
     $t->param(%ui_messages) if (%ui_messages);
 
@@ -388,11 +405,18 @@ sub save_edit {
 
     my $q = $self->query();
 
-    return $self->edit(
-                      error_invalid_first => 1,
-                      error_invalid_last => 1,
-                      error_invalid_type => 1,
-                     );
+    my %errors = ( $self->validate_contrib() );
+
+    # Return to add screen if we have errors
+    return $self->add( %errors ) if (%errors);
+
+    # Retrieve new contrib object
+    my $c = $session{EDIT_CONTRIB};
+    die("Can't retrieve EDIT_CONTRIB from session") unless (ref($c));
+
+    $self->do_update_contrib($c);
+
+    return $self->search(message_contrib_saved=>1);
 }
 
 
@@ -474,9 +498,75 @@ sub delete {
 #############################
 
 
-# Return a hashref based on contributor properties, suitible 
+# Updated the provided Contrib object with data
+# from the CGI query
+sub do_update_contrib {
+    my $self = shift;
+    my $contrib = shift;
+
+    my $q = $self->query();
+
+    # Get prototype for the purpose of update
+    my %contrib_prototype = ( %{&CONTRIB_PROTOTYPE} );
+
+    # We can't update contrib_id
+    delete($contrib_prototype{contrib_id});
+
+    # contrib_type_ids is a special case
+    # delete($contrib_prototype{contrib_type_ids});
+
+    # Grab each CGI query param and set the corresponding Krang::Contrib property
+    foreach my $ck (keys(%contrib_prototype)) {
+        print STDERR "UPDATE: '$ck'\n";
+
+        # Presumably, query data is already validated and un-tainted
+        $contrib->$ck($q->param($ck));
+    }
+
+    # Write back to database
+    $contrib->save();
+}
+
+
+# Examine the query data to validate that the submitted
+# contributor is valid.  Return hash-errors, if any.
+sub validate_contrib {
+    my $self = shift;
+
+    my $q = $self->query();
+
+    my %errors = ();
+
+    # Validate first name
+    my $first = $q->param('first');
+    $errors{error_invalid_first} = 1
+      unless (defined($first) && ($first =~ /\S+/));
+
+    # Validate last name
+    my $last = $q->param('last');
+    $errors{error_invalid_last} = 1
+      unless (defined($last) && ($last =~ /\S+/));
+
+    # Validate contrib types
+    # contrib_type_ids
+    my @contrib_type_ids = ( $q->param('contrib_type_ids') );
+    my $all_contrib_types = $self->get_contrib_types();
+    my @valid_contrib_type_ids = ();
+    foreach my $ctype (@contrib_type_ids) {
+        my $is_valid = grep { $_->[0] eq $ctype } @$all_contrib_types;
+        push (@valid_contrib_type_ids, $ctype) if ($is_valid);
+    }
+    $q->delete('contrib_type_ids');
+    $q->param('contrib_type_ids', @valid_contrib_type_ids );
+    $errors{error_invalid_type} = 1 unless (scalar(@valid_contrib_type_ids));
+
+    return %errors;
+}
+
+
+# Return a hashref based on contributor properties, suitible
 # to be passed to an HTML::Template edit/add screen.
-# If a $contributor object is supplied, use its properties 
+# If a $contributor object is supplied, use its properties
 # for default values.
 sub get_contrib_tmpl {
     my $self = shift;
@@ -514,12 +604,19 @@ sub get_contrib_tmpl {
     # Fix up contrib_type_ids to be tmpl-data
     my $all_contrib_types = $self->get_contrib_types();
 
+    my @contrib_types_tmpl = ();
     foreach my $ct (@$all_contrib_types) {
-        my $contrib_type_id = $ct->{contrib_type_id};
-        $ct->{selected} = 1 
-          if ( grep { $_ eq $contrib_type_id } (@{$contrib_tmpl{contrib_type_ids}}) );
+        my $contrib_type_id = $ct->[0];
+        my $type = $ct->[1];
+        my $selected = ( grep { $_ eq $contrib_type_id } (@{$contrib_tmpl{contrib_type_ids}}) );
+
+        push(@contrib_types_tmpl, {
+                                   contrib_type_id => $contrib_type_id,
+                                   type => $type,
+                                   selected => $selected,
+                                  });
     }
-    $contrib_tmpl{contrib_type_ids} = $all_contrib_types;
+    $contrib_tmpl{contrib_type_ids} = \@contrib_types_tmpl;
 
     # Return a reference to the tmpl-compat data
     return \%contrib_tmpl;
@@ -533,11 +630,8 @@ sub get_contrib_types {
     my $dbh = dbh();
     my $contrib_types = $dbh->selectall_arrayref("select contrib_type_id, type from contrib_type order by type");
 
-    my @contrib_types_tmpl = ( map { {contrib_type_id=>$_->[0], type=>$_->[1]} } @$contrib_types );
-
-    return \@contrib_types_tmpl;
+    return $contrib_types;
 }
-
 
 
 1;
