@@ -40,6 +40,7 @@ is 'search'.
 
 use Krang::ListGroup;
 use Krang::List;
+use Krang::ListItem;
 use Krang::Message qw(add_message);
 use Krang::HTMLPager;
 use Krang::Log qw(debug info critical);
@@ -169,21 +170,62 @@ sub edit {
     # no valid (non-fatal) case where a user would be here with an invalid group_id
     die ("No such list_group_id '$list_group_id'") unless (defined($lg));
    
-     my $t = $self->load_tmpl("edit.tmpl", associate=>$q, loop_context_vars=>1); 
+     my $t = $self->load_tmpl("edit.tmpl", associate=>$q, loop_context_vars=>1, die_on_bad_params => 0); 
     my @lists = Krang::List->find( list_group_id => $lg->list_group_id ); 
   
-    my $js = 'lists = new Array();';
-  
-    my $list_names= join(',', map { $_->name } @lists);
-    $js .= "\nlists = [$list_names];";
+    my $list_names= join(',', map { "'".$_->name."'" } @lists);
+    my $js = "\nlists = new Array($list_names);";
 
-    my $js .= "\nlist_data = new Array();";
+    $js .= "\nlist_data = new Array();";
     my $list_levels = scalar @lists;
 
+    my @list_loop;
+
+    my $count = 1;
+   
     foreach my $list (@lists) {
-             
+        my @list_items = Krang::ListItem->find( list_id => $list->list_id );
+
+        my @list_item_loop;
+        my $first = 1;
+
+        # set up crazy javascript data structure
+        foreach my $li (@list_items) {
+            my $has_parent = 1;
+            my @parents;
+            my $c_li = $li;
+            while ($has_parent) {
+                if ($c_li->parent_list_item_id) {
+                    $c_li = (Krang::ListItem->find( list_item_id => $c_li->parent_list_item_id ))[0]; 
+                    unshift(@parents,$c_li->list_item_id);
+                    
+                } else {
+                    push(@parents,$li->list_item_id); 
+                    $has_parent = 0;
+                }
+            }
+            @parents = map { "['".$_."']" } @parents;
+
+            my $parent_string = join('', @parents);
+            $js .= "\nlist_data$parent_string = new Array();";
+            $js .= "\nlist_data$parent_string\['__data__'] = '".$li->data."';";
+           
+            # prepopulate first list 
+            push (@list_item_loop, { data => $li->data, list_item_id => $li->list_item_id, first => $first }) if ($count == 1);
+
+        }
+
+        
+        if ($count == 1) {
+            push( @list_loop, { list_id => $list->list_id, list_name => $list->name, list_item_loop => \@list_item_loop, list_count => $count++ } );         
+        } else {
+            push( @list_loop, { list_id => $list->list_id, list_name => $list->name, list_count => $count++} ); 
+        }
     } 
-    
+   
+    $t->param( 'list_levels' => $list_levels ); 
+    $t->param( 'list_group_name' => $lg->name ); 
+    $t->param( 'list_loop' => \@list_loop ); 
     $t->param( 'js_list_arrays' => $js ); 
     $t->param( 'list_group_description' => $lg->description );
  

@@ -4,47 +4,83 @@
 <script language="Javascript">
 <!-- //
 
+    <tmpl_var js_list_arrays>
+    function populate_list (list_count) {
+
+        var next_list = list_count + 1;
+
+        // first, clear lists above one selected
+        clear_lists_above(next_list);
+
+        var select_val = eval ('document.forms["edit_form"].list_' + list_count + '.options[document.forms["edit_form"].list_' + list_count + '.selectedIndex].value');
+        
+        var count = 0;
+        for(var key in eval('list_data[' + select_val + ']') ) {
+           if (eval('list_data[' + select_val + "][key]['__data__']") ) {
+                eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + "'" + eval("list_data[" + select_val + "][key]['__data__']") + "', '" + select_val + '][' + key + "')");
+           }
+        }
+    }
+
+    function clear_lists_above(list_count) {
+        for ( var c = list_count; c <= <tmpl_var list_levels>; c++ ) {
+            eval ('document.forms["edit_form"].list_' + c + '.options.length = 0'); 
+        }
+    }
+
     nav_edit_mode();
 
     function do_save () {
-        var myform = document.forms["edit_group_form"];
+        var myform = document.forms["edit_form"];
         myform.rm.value = "save";
         myform.submit();
     }
 
 
     function save_stay () {
-        var myform = document.forms["edit_group_form"];
+        var myform = document.forms["edit_form"];
         myform.rm.value = "save_stay";
         myform.submit();
     }
 
 
-    function delete_selected () {
+    function do_delete (list_id) {
+        var select_val = eval ('document.forms["edit_form"].list_' + list_id + '.options[document.forms["edit_form"].list_' + list_id + '.selectedIndex].value');
+        alert(select_val);
     }
-
-    <tmpl_var js_list_arrays>
+    
 // -->
 </script>
 
 
 <table border="0" cellpadding="2" cellspacing="0" width="100%">
 <tr class="dark-bar">
-  <td>&nbsp;LIST GROUP EDIT</td>
+  <td>&nbsp;LIST GROUP EDIT - <tmpl_var list_group_name></td>
   <td align="right"><a href="javascript:goto_help()">Help</a>&nbsp;</td>
 </tr>
 </table>
 
-<form>
-
-Description: <textarea rows="4" cols="60"><tmpl_var list_group_description></textarea>
+<form name="edit_form" method="GET" action="list_group.pl">
+<table border="1" cellpadding="2" cellspacing="0" width="100%">
+<tr><td width="150">Description:</td><td width="400"><textarea rows="4" cols="60"><tmpl_var list_group_description></textarea></td></tr>
+<tr class="light-bar"><td colspan=2>LISTS</td></tr>
+<tmpl_loop list_loop>
+<tr><td><tmpl_var list_name></td><td><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
+<option value=" " <tmpl_unless choice>SELECTED</tmpl_unless>>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<tmpl_if list_item_loop><tmpl_loop list_item_loop><option value="<tmpl_var list_item_id>"><tmpl_var data></tmpl_loop></tmpl_if></select>
+<br><input type="text" name="new_item_<tmpl_var list_count>">
+<input type="submit" value="Add" onClick="do_add(<tmpl_var list_count>)" class="button">
+<input type="button" value="Replace" onClick="do_replace(<tmpl_var list_count>)" class="button">
+<input type="button" value="Delete Selected" onClick="do_delete(<tmpl_var list_count>)" class="button">
+</td></tr>
+</tmpl_loop>
+</table>
 <div class="button-bar">
     <input type="submit" value="Save" onClick="do_save()" class="button">
-    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()" class="button"></tmpl_unless>
+    <input type="button" value="Save &amp; Stay" onClick="save_stay()" class="button">
 </div>
 
 
-<!-- End edit_group_form -->
+<!-- End edit_form -->
 </form>
 
 
