@@ -366,11 +366,10 @@ sub send {
     $message .= "\nDESK: ".$alert->desk_id."('".(Krang::Desk->find(desk_id => $alert->desk_id))[0]->name."')" if $alert->desk_id; 
     $message .= "\nUSER TRIGGERED BY: $user_id ('".$user->first_name.' '.$user->last_name."')";   
 
-    debug(__PACKAGE__."->send() - sending email to ".$to_user->email.": $message");
-
     # mail only if user has email address defined or being tested
     my $email_to = $ENV{KRANG_TEST_EMAIL} || $to_user->email;
     if ($email_to) { 
+        debug(__PACKAGE__."->send() - sending email to ".$to_user->email.": $message");
         my $sender = new Mail::Sender {smtp => SMTPServer, from => FromAddress};
 
         $sender->MailMsg({  to => $email_to, 
