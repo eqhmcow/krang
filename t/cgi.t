@@ -8,6 +8,7 @@ our %BAD_DEFAULT = map { ($_,1) }
   (qw( Krang::CGI::History
        Krang::CGI::ElementEditor
        Krang::CGI::Schedule
+       Krang::CGI::Desk
      ));
 
 
