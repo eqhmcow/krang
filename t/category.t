@@ -150,6 +150,10 @@ my $subcat = Krang::Category->new(dir => 'stuff',
                                   parent_id => $category->category_id());
 $subcat->save();
 
+
+my @ancestors = $subcat->ancestors( ids_only => 1);
+is( join(' ', @ancestors), $subcat->parent->category_id.' '.$subcat->parent->parent->category_id , 'ancestors test');
+
 # another getter
 is($subcat->parent_id() =~ /^\d+$/, 1, 'parent_id()');
 

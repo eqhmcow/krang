@@ -448,6 +448,33 @@ SQL
     return $category_id;
 }
 
+=item * @categories = Krang::Category->ancestors()
+
+=item * @category_ids = Krang::Category->ancestors( ids_only => 1 )
+
+=cut
+
+sub ancestors {
+    my $self = shift;
+    my %args = @_;
+    my $ids_only = $args{ids_only} ? 1 : 0;
+    my @ancestors;
+    my $parent_found = $self->parent();
+
+    return if not $parent_found;
+
+    $ids_only ? (push @ancestors, $parent_found->category_id) : (push @ancestors, $parent_found);
+    
+    while ($parent_found) {
+        $parent_found = $parent_found->parent();
+
+        if ($parent_found) {
+            $ids_only ? (push @ancestors, $parent_found->category_id) : (push @ancestors, $parent_found);
+        } 
+    }
+
+    return @ancestors;        
+}
 
 =item * @categories = Krang::Category->find( %params )
 
