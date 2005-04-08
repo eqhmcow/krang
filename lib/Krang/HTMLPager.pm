@@ -782,7 +782,14 @@ sub make_sortable_column_html {
     
     # Is column currently selected? If not, attempt to find in cache, or set default
     my $krang_pager_sort_field = $q->param('krang_pager_sort_field') ? $q->param('krang_pager_sort_field') : $session{'KRANG_'.$use_module.'_PAGER_SORT_FIELD'};
-    my $krang_pager_sort_order_desc = $q->param('krang_pager_sort_order_desc') || ($session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'} ? $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'} : '0');
+    my $krang_pager_sort_order_desc;
+    if (defined $q->param('krang_pager_sort_order_desc')) {
+        $krang_pager_sort_order_desc = $q->param('krang_pager_sort_order_desc');
+    } elsif (defined $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'}) {
+        $krang_pager_sort_order_desc = $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'};
+    } else {
+        $krang_pager_sort_order_desc = '0';
+    }
 
     # set into cache if was set in query this time
     $session{'KRANG_'.$use_module.'_PAGER_SORT_FIELD'}  = $q->param('krang_pager_sort_field') if (defined($q->param('krang_pager_sort_field')) and length($q->param('krang_pager_sort_field')));
