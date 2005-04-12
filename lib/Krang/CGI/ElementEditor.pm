@@ -892,7 +892,7 @@ sub element_save {
     return $self->element_bulk_save(%args) if $query->param('bulk_edit');
 
     # saving should check for reorder, else confusing to the editor
-    $self->revise('reorder');
+    $self->revise('reorder', 1);
 
     my $root    = $args{element};
     my $element = _find_element($root, $path);
@@ -955,7 +955,7 @@ sub element_save {
 # is combined because the complex parameter reordering has to be done
 # in either case.
 sub revise {
-    my ($self, $op) = @_;
+    my ($self, $op, $no_return) = @_;
     my $query = $self->query();
 
     my $path = $query->param('path') || '/';
@@ -1021,7 +1021,7 @@ sub revise {
         add_message('reordered_elements');
     }
 
-    return $self->edit();
+    return $self->edit() unless $no_return;
 }
 
 # delete this element
