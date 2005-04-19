@@ -4,6 +4,39 @@ This document contains a list of changes for each release of Krang.
 
 =head2 v1.103 - In Development
 
+=over
+
+=item * Add-On v2
+
+The add-on v2 project is complete, bringing many improvements to the
+way Krang add-ons work.  Here's a list of the biggest changes:
+
+=over
+
+=item * Add-ons are now located installed into a separate direction
+called C<addons/>.  They may be developed in-place, potentially under
+separate version control.
+
+=item * Add-ons may be packaged with dependencies from CPAN in a
+C<src/> directory.  The Krang build system will build these modules at
+install time.
+
+=item * Add-ons may be uninstalled using the new
+C<krang_addon_uninstaller> script.  (This does not apply to addons
+installed with the old system.)
+
+=item * Add-ons may register new links in the left-navigation area.
+
+=item * Add-ons may selectively override core Krang classes via
+inheritence and the use of the C<conf/class.conf> configuration file.
+
+=item * Add-ons may include SQL source for new tables which will be
+included in the databases built by C<krang_createdb>.
+
+=back
+
+=back
+
 =head2 v1.102 - April 18th 2004
 
 =over
