@@ -1,10 +1,11 @@
 package Krang::Upgrade;
+use Krang::ClassFactory qw(pkg);
 use warnings;
 use strict;
 
 
-use Krang::Conf;
-use Krang::DB qw(dbh);
+use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader DB => qw(dbh);
 use Carp qw(croak);
 
 
@@ -115,10 +116,10 @@ sub upgrade {
     $self->per_installation();
 
     # Run per_instance() method, for each instance
-    my @instances = Krang::Conf->instances();
+    my @instances = pkg('Conf')->instances();
     foreach my $instance (@instances) {
         # Switch to that instance
-        Krang::Conf->instance($instance);
+        pkg('Conf')->instance($instance);
 
         # Load the dbh, without version checking, to prime cache
         my $dbh = dbh(ignore_version=>1);

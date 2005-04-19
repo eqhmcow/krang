@@ -1,23 +1,24 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use File::Find qw(find);
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 
 # a list of non-CGI Krang modules with a suitable find method
-our %TEST_PACKAGES = map { ($_,1) } (qw( Krang::Alert Krang::Category Krang::Contrib Krang::Desk Krang::Group Krang::List Krang::ListGroup Krang::ListItem Krang::Media Krang::Site Krang::Story Krang::Template Krang::User));
+our %TEST_PACKAGES = map { ($_,1) } (pkg('Alert'), pkg('Category'), pkg('Contrib'), pkg('Desk'), pkg('Group'), pkg('List'), pkg('ListGroup'), pkg('ListItem'), pkg('Media'), pkg('Site'), pkg('Story'), pkg('Template'), pkg('User'));
 
 # Hash of known field names for "order_by" test
 our %ORDER_BY_FIELD = (
-                       Krang::Alert    => 'alert_id', 
-                       Krang::Category => 'category_id',
-                       Krang::Contrib  => 'contrib_id',
-                       Krang::Group    => 'group_id',
-                       Krang::List     => 'list_id',
-                       Krang::ListGroup => 'list_group_id',
-                       Krang::Media    => 'media_id',
-                       Krang::Site     => 'site_id',
-                       Krang::Story    => 'story_id',
-                       Krang::Template => 'template_id',
-                       Krang::User     => 'user_id',
+                       pkg('Alert')    => 'alert_id', 
+                       pkg('Category') => 'category_id',
+                       pkg('Contrib')  => 'contrib_id',
+                       pkg('Group')    => 'group_id',
+                       pkg('List')     => 'list_id',
+                       pkg('ListGroup') => 'list_group_id',
+                       pkg('Media')    => 'media_id',
+                       pkg('Site')     => 'site_id',
+                       pkg('Story')    => 'story_id',
+                       pkg('Template') => 'template_id',
+                       pkg('User')     => 'user_id',
                       );
 
 # Check all Krang object modules

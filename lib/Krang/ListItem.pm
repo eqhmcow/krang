@@ -1,10 +1,11 @@
 package Krang::ListItem;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::DB qw(dbh);
-use Krang::Session qw(%session);
-use Krang::Log qw( debug info );
-use Krang::List;
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Log => qw( debug info );
+use Krang::ClassLoader 'List';
 use Carp qw(croak);
 
 # constants 
@@ -14,14 +15,14 @@ use constant RW_FIELDS => qw( data list_id parent_list_item_id );
 
 =head1 NAME
 
-    Krang::ListItem -  interface to manage items within a Krang::List.
+    pkg('ListItem') -  interface to manage items within a pkg('List').
 
 =head1 SYNOPSIS
 
-    use Krang::ListItem;
+    use Krang::ClassLoader 'ListItem';
 
     # create and save new list item in a Krang::List 
-    my $list_item = Krang::ListItem->new(   list => $list_object,
+    my $list_item = pkg('ListItem')->new(   list => $list_object,
                                             data => 'item data here'
                                 );
 
@@ -33,18 +34,18 @@ use constant RW_FIELDS => qw( data list_id parent_list_item_id );
    
     # create new list item in same list, assigning it to order 1
     # and thus moving $list_item to order 2
-    my $list_item2 = Krang::ListItem->new(  list => $list_object,
+    my $list_item2 = pkg('ListItem')->new(  list => $list_object,
                                             order => 1,
                                             data => 'data here' );
 
     $list_item2->save();
 
     # find and return list items in list 
-    my @found = Krang::ListItem->find( list => $list_object );
+    my @found = pkg('ListItem')->find( list => $list_object );
 
     # create new list item, a member of another Krang::List
     # and child of another list item
-    my $list_item3 = Krang::ListItem->new(  list => $list_object2,
+    my $list_item3 = pkg('ListItem')->new(  list => $list_object2,
                                             parent_list_item => $list_item,
                                             data => 'data here' );
 
@@ -52,7 +53,7 @@ use constant RW_FIELDS => qw( data list_id parent_list_item_id );
 
    
     # find list items that are children of a given list item
-    my @found = Krang::ListItem->find( parent_list_item_id => $list_item->list_item_id );
+    my @found = pkg('ListItem')->find( parent_list_item_id => $list_item->list_item_id );
  
     # delete them both
     $list_item->delete;
@@ -94,7 +95,7 @@ order (optional) - will default to the next available slot
 
 =cut
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get => [ RO_FIELDS ],
@@ -107,14 +108,14 @@ sub init {
     # get list_id from list object
     my $list = delete $args{list} || undef;
 
-    croak(__PACKAGE__."->new - Invalid Krang::List object.") unless ($list and (ref $list eq 'Krang::List'));
+    croak(__PACKAGE__."->new - Invalid pkg('List') object.") unless ($list and (ref $list eq 'Krang::List'));
 
     $args{list_id} = $list->list_id;
 
     # get list_item_id from parent_list_item object if present
     my $parent_list_item = delete $args{parent_list_item} || undef;
 
-    croak(__PACKAGE__."->new - Invalid Krang::ListItem object.") if ($parent_list_item and (ref $parent_list_item ne 'Krang::ListItem'));
+    croak(__PACKAGE__."->new - Invalid pkg('ListItem') object.") if ($parent_list_item and (ref $parent_list_item ne 'Krang::ListItem'));
     
     $args{parent_list_item_id} = $parent_list_item->list_item_id if $parent_list_item;
 
@@ -142,7 +143,7 @@ sub save {
     my $list_item_id;
 
     my %search_criteria = $self->{parent_list_item_id} ? (parent_list_item_id => $self->{parent_list_item_id}) : (list_id => $self->{list_id});
-    my $existing = Krang::ListItem->find( count => 1, %search_criteria);
+    my $existing = pkg('ListItem')->find( count => 1, %search_criteria);
 
     # if this is not a new list item
     if (defined $self->{list_item_id}) {
@@ -377,7 +378,7 @@ sub delete {
     my $list_id;
     my $parent_list_item_id;
     if (not $is_object) {
-        my $list_item  = (Krang::ListItem->find( list_item_id => $list_item_id ))[0];
+        my $list_item  = (pkg('ListItem')->find( list_item_id => $list_item_id ))[0];
         $order = $list_item->order;
         $list_id = $list_item->list_id;
         $parent_list_item_id = $list_item->parent_list_item_id;
@@ -431,12 +432,12 @@ sub serialize_xml {
     $writer->dataElement( parent_list_item_id => $self->parent_list_item_id ) if $self->parent_list_item_id;
 
     # attach list 
-    my ($list) = Krang::List->find( list_id => $self->list_id );
+    my ($list) = pkg('List')->find( list_id => $self->list_id );
     $set->add(object => $list, from => $self);
 
     # attach parent list item if one exists
     if ($self->parent_list_item_id) {
-        my ($parent_list_item) = Krang::ListItem->find( list_item_id => $self->parent_list_item_id );
+        my ($parent_list_item) = pkg('ListItem')->find( list_item_id => $self->parent_list_item_id );
         $set->add(object => $parent_list_item, from => $self);
     }
 
@@ -459,7 +460,7 @@ sub deserialize_xml {
     my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml,
+    my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1);
 
 
@@ -467,14 +468,14 @@ sub deserialize_xml {
     my $list_id = $set->map_id(class => "Krang::List",
                                        id    => $data->{list_id});
 
-    my ($list) = Krang::List->find( list_id => $list_id );
+    my ($list) = pkg('List')->find( list_id => $list_id );
 
     # get parent list item id if one
     my $parent;
     if ($data->{parent_list_item_id}) {
         my $parent_id = $set->map_id(  class => "Krang::ListItem",
                                     id => $data->{parent_list_item_id} );
-        $parent = (Krang::ListItem->find( list_item_id => $parent_id ))[0];
+        $parent = (pkg('ListItem')->find( list_item_id => $parent_id ))[0];
     }
 
     my %list_params = (data => $data->{data}, list_id => $list->list_id);
@@ -483,7 +484,7 @@ sub deserialize_xml {
         $list_params{parent_list_item_id} = $parent->list_item_id;
     }
 
-    my $dupe = (Krang::ListItem->find(%list_params))[0] || '';
+    my $dupe = (pkg('ListItem')->find(%list_params))[0] || '';
     return $dupe if $dupe;
 
     delete $list_params{list_id};
@@ -495,7 +496,7 @@ sub deserialize_xml {
         $list_params{parent_list_item} = $parent;
     }
 
-    my $li = Krang::ListItem->new( %list_params );
+    my $li = pkg('ListItem')->new( %list_params );
     $li->save;
     return $li;
 

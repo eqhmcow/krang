@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
-use Krang::ErrorHandler;
-use Krang::CGI::Media::BulkUpload;
-my $app = Krang::CGI::Media::BulkUpload->new();
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'ErrorHandler';
+use Krang::ClassLoader 'CGI::Media::BulkUpload';
+my $app = pkg('CGI::Media::BulkUpload')->new();
 $app->run();
 

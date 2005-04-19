@@ -1,13 +1,14 @@
 package Krang::ElementClass::MediaLink;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
-use Krang::Log qw(debug info critical assert ASSERT);
+use Krang::ClassLoader base => 'ElementClass';
+use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( allow_upload show_thumbnail ) ];
-use Krang::Message qw(add_message);
+use Krang::ClassLoader Message => qw(add_message);
 
 sub new {
     my $pkg = shift;
@@ -125,10 +126,10 @@ sub load_query_data {
         croak("Expected a story or a category in element->object!");
     }
 
-    my %media_types = Krang::Pref->get('media_type');
+    my %media_types = pkg('Pref')->get('media_type');
     my @media_type_ids = keys(%media_types);
 
-    my $media = Krang::Media->new(title => $filename,
+    my $media = pkg('Media')->new(title => $filename,
                                   category_id => $category_id,
                                   filename => $filename,
                                   filehandle => $fh,
@@ -146,7 +147,7 @@ sub load_query_data {
                         filename => $filename);
 
             # use the dup instead of the new object
-            $element->data(Krang::Media->find(media_id => $err->media_id));
+            $element->data(pkg('Media')->find(media_id => $err->media_id));
         } else {
             die $@;
         }
@@ -171,7 +172,7 @@ sub thaw_data {
     my ($self, %arg) = @_;
     my ($element, $data) = @arg{qw(element data)};
     return $element->data(undef) unless $data;
-    my ($media) = Krang::Media->find(media_id => $data);
+    my ($media) = pkg('Media')->find(media_id => $data);
     return $element->data($media);
 }
 
@@ -196,9 +197,9 @@ sub thaw_data_xml {
     return unless $import_id;
     my $media_id = $set->map_id(class => 'Krang::Media',
                                 id    => $import_id);
-    assert(Krang::Media->find(media_id => $media_id, count => 1))
+    assert(pkg('Media')->find(media_id => $media_id, count => 1))
       if ASSERT;
-    assert((Krang::Media->find(media_id => $media_id))[0]->url)
+    assert((pkg('Media')->find(media_id => $media_id))[0]->url)
       if ASSERT;
     $self->thaw_data(element => $element,
                      data    => $media_id);
@@ -265,7 +266,7 @@ Krang::ElementClass::MediaLink - media linking element class
 
 =head1 SYNOPSIS
 
-   $class = Krang::ElementClass::MediaLink->new(name           => "photo",
+   $class = pkg('ElementClass::MediaLink')->new(name           => "photo",
                                                 allow_upload   => 1,
                                                 show_thumbnail => 1);
 

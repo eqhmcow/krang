@@ -98,6 +98,7 @@ END
 }
 
 # process options
+use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 
@@ -148,19 +149,19 @@ BEGIN {
 
 
 
-use Krang::Script;
-use Krang::Conf qw(KrangRoot);
-use Krang::DataSet;
-use Krang::Story;
-use Krang::Media;
-use Krang::Template;
-use Krang::Contrib;
-use Krang::Category;
-use Krang::Site;
-use Krang::User;
-use Krang::ListGroup;
-use Krang::List;
-use Krang::ListItem;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'DataSet';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'ListGroup';
+use Krang::ClassLoader 'List';
+use Krang::ClassLoader 'ListItem';
 use File::Temp qw(tempfile);
 use File::Copy qw(copy);
 
@@ -176,7 +177,7 @@ print STDERR "Copied '$file' to '$tempfile'.\n" if $verbose > 1;
 $file = $tempfile;
 
 # open up the dataset
-my $set = Krang::DataSet->new(path            => $file, 
+my $set = pkg('DataSet')->new(path            => $file, 
                               import_callback => \&import_callback);
 
 # produce a listing?
@@ -228,7 +229,7 @@ sub import_callback {
     my $object = $arg{object};
     
     if ($verbose) {
-        my ($class, $id) = Krang::DataSet::_obj2id($object);
+        my ($class, $id) = pkg('DataSet')->can('_obj2id')->($object);
         if ($id > $max_id{$class}) {
             print STDERR "Imported $class => $id\n";
         } elsif (grep { $_ eq $class } @skip_classes) {

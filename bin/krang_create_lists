@@ -49,11 +49,12 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Script;
-use Krang::Conf qw (InstanceElementSet KrangRoot);
-use Krang::DB qw(dbh);
-use Krang::ListGroup;
-use Krang::List;
+use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader 'ListGroup';
+use Krang::ClassLoader 'List';
 use XML::Simple;
 
 my ($help, $man, $password, $destroy);
@@ -69,7 +70,7 @@ if (-f $list_conf_file) {
     my $dbh = dbh;
     
     foreach my $list_group (@{$config->{list_group}}) {
-        my $lg = Krang::ListGroup->new( name => $list_group->{list_group_name}, description => $list_group->{description} );
+        my $lg = pkg('ListGroup')->new( name => $list_group->{list_group_name}, description => $list_group->{description} );
         $lg->save;
         my $prev_list_id;
         foreach my $list (@{$list_group->{list}}) {
@@ -77,12 +78,12 @@ if (-f $list_conf_file) {
             $params{name} = $list->{list_name};
             $params{list_group_id} = $lg->list_group_id;
             $params{parent_list_id} = $prev_list_id if $prev_list_id; 
-            my $new_list = Krang::List->new( %params );
+            my $new_list = pkg('List')->new( %params );
             $new_list->save;
             $prev_list_id = $new_list->list_id 
         }
     }
 }
 
-print "Krang::ListGroups and Krang::Lists created successfully.\n";
+print "Krang::ListGroups and pkg('Lists') created successfully.\n";
 

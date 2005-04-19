@@ -1,5 +1,6 @@
 package Krang::CGI::Contrib;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
@@ -11,8 +12,8 @@ Krang::CGI::Contrib - web interface to manage Contributors
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Contrib;
-  my $app = Krang::CGI::Contrib->new();
+  use Krang::ClassLoader 'CGI::Contrib';
+  my $app = pkg('CGI::Contrib')->new();
   $app->run();
 
 
@@ -48,14 +49,14 @@ for Krang::CGI::Contrib is 'search'.
 =cut
 
 
-use Krang::Contrib;
-use Krang::Conf;
-use Krang::Message qw(add_message);
-use Krang::Pref;
-use Krang::Session qw(%session);
-use Krang::HTMLPager;
-use Krang::Site;
-use Krang::Category;
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
 
 
 # Fields in a contrib
@@ -141,7 +142,7 @@ sub search {
     my $search_filter = $q->param('search_filter') || '';
 
     # Configure pager
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => {
                                                        rm => 'search',
@@ -270,7 +271,7 @@ sub associate_search {
     $t->param(associate_story=>($associate_mode eq 'story'));
 
     # Get table of contrib types
-    my %contrib_types = Krang::Pref->get('contrib_type');
+    my %contrib_types = pkg('Pref')->get('contrib_type');
 
     # Build up list of currently associated contributors
     my @contribs = $ass_obj->contribs();
@@ -329,8 +330,8 @@ sub associate_search {
     } keys(%associated_contrib_filter) );
 
     # Make pager
-    my %contrib_type_prefs = Krang::Pref->get('contrib_type');
-    my $pager = Krang::HTMLPager->new(
+    my %contrib_type_prefs = pkg('Pref')->get('contrib_type');
+    my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => {
                                                        rm => 'associate_search',
@@ -552,7 +553,7 @@ sub delete_selected {
     return $self->search() unless (@contrib_delete_list);
 
     foreach my $cid (@contrib_delete_list) {
-        Krang::Contrib->delete($cid);
+        pkg('Contrib')->delete($cid);
     }
 
     add_message('message_selected_deleted');
@@ -577,7 +578,7 @@ sub add {
     $t->param(%ui_messages) if (%ui_messages);
 
     # Make new Contrib, but don't save it
-    my $c = Krang::Contrib->new();
+    my $c = pkg('Contrib')->new();
 
     # Stash it in the session for later
     $session{EDIT_CONTRIB} = $c;
@@ -724,7 +725,7 @@ sub edit {
     my $q = $self->query();
 
     my $contrib_id = $q->param('contrib_id');
-    my ( $c ) = Krang::Contrib->find( contrib_id=>$contrib_id);
+    my ( $c ) = pkg('Contrib')->find( contrib_id=>$contrib_id);
 
     # Did we get our contributor?  Presumbably, users get here from a list.  IOW, there is 
     # no valid (non-fatal) case where a user would be here with an invalid contrib_id
@@ -740,7 +741,7 @@ sub edit {
     my $contrib_tmpl = $self->get_contrib_tmpl($c);
 
     # instance_name needed for preview media
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $t->param(instance_name => $instance_name);
 
@@ -874,7 +875,7 @@ sub delete {
         delete($session{EDIT_CONTRIB});
     } else {
         # Delete this contrib by contrib_id
-        Krang::Contrib->delete($contrib_id);
+        pkg('Contrib')->delete($contrib_id);
     }
 
     add_message('message_contrib_deleted');
@@ -1126,7 +1127,7 @@ sub get_contrib_tmpl {
 
 # Replace with Krang::Prefs(?)
 sub get_contrib_types {
-    my %pref = Krang::Pref->get('contrib_type');
+    my %pref = pkg('Pref')->get('contrib_type');
     return [ map { [ $_, $pref{$_} ] } keys %pref ];
 }
 
@@ -1160,12 +1161,12 @@ sub upload_image {
     unless (defined($media)) {
         # Need to save object under a category.
         # Use first category of first site - user can always change it later.
-        my ($site) = Krang::Site->find(limit => 1);
-        my ($category) = Krang::Category->find(site_id => $site->site_id, limit => 1);
-        my %media_types = Krang::Pref->get('media_type');
+        my ($site) = pkg('Site')->find(limit => 1);
+        my ($category) = pkg('Category')->find(site_id => $site->site_id, limit => 1);
+        my %media_types = pkg('Pref')->get('media_type');
         my @media_type_ids = keys(%media_types);
 
-        $media = Krang::Media->new(
+        $media = pkg('Media')->new(
                                    title => 'Contributor Photo:' . $contrib->full_name,
                                    category_id => $category->category_id,
                                     media_type_id => $media_type_ids[0]
@@ -1189,7 +1190,7 @@ sub upload_image {
                     filename => $filename);
 
         # use the dup instead of the new object
-        ($media) = Krang::Media->find(media_id => $err->media_id);
+        ($media) = pkg('Media')->find(media_id => $err->media_id);
     } elsif ($@) {
         die $@;
     }

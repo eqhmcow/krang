@@ -1,3 +1,4 @@
 #!/usr/bin/perl -w
-use Krang::CGI::About;
-Krang::CGI::About->new()->run();
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'CGI::About';
+pkg('CGI::About')->new()->run();

@@ -1,5 +1,6 @@
 package Krang::CGI::Bugzilla;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
@@ -9,9 +10,9 @@ use File::Path;
 use File::Spec::Functions qw(catdir catfile);
 use File::Temp qw/ tempdir /;
 use WWW::Bugzilla;
-use Krang::Message qw(add_message);
-use Krang::Session qw(%session);
-use Krang::Conf qw(KrangRoot BugzillaServer BugzillaEmail BugzillaPassword BugzillaComponent EnableBugzilla);
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Conf => qw(KrangRoot BugzillaServer BugzillaEmail BugzillaPassword BugzillaComponent EnableBugzilla);
 
 =head1 NAME
 
@@ -20,8 +21,8 @@ into a bugzilla server.
 
 =head1 SYNOPSIS
   
-  use Krang::CGI::Bugzilla;
-  my $app = Krang::CGI::Bugzilla->new();
+  use Krang::ClassLoader 'CGI::Bugzilla';
+  my $app = pkg('CGI::Bugzilla')->new();
   $app->run();
 
 =head1 DESCRIPTION

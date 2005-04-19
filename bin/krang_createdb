@@ -113,9 +113,11 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Term::Prompt qw(prompt);
 use Krang;
-use Krang::Conf qw (InstanceElementSet KrangRoot InstanceDBName DBUser DBPass);
+use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot InstanceDBName DBUser DBPass);
+use Krang::File;
 
 use Getopt::Long;
 use Pod::Usage;
@@ -141,7 +143,7 @@ my @instances;
 if ($all) {
     pod2usage("Invalid attempt to combine an instance name with --all.")
       if @ARGV;
-    @instances = Krang::Conf->instances();
+    @instances = pkg('Conf')->instances();
 } else {
     pod2usage("Too many args.")
       if @ARGV > 1;
@@ -149,7 +151,7 @@ if ($all) {
       unless @ARGV;
     @instances = @ARGV;
     pod2usage("Unrecognized instance '$instances[0]'")
-      unless grep { $_ eq $instances[0] } Krang::Conf->instances;
+      unless grep { $_ eq $instances[0] } pkg('Conf')->instances;
 }
 
 # make sure MySQL has what it needs
@@ -188,7 +190,7 @@ if ($destroy) {
 
     # drop all databases
     foreach my $instance (@instances) {
-        Krang::Conf->instance($instance);
+        pkg('Conf')->instance($instance);
         my $name = InstanceDBName;
         print STDERR "Dropping database '$name'...\n" if $verbose;
         my $cmd = "mysql -uroot -e 'DROP DATABASE IF EXISTS $name'";
@@ -214,7 +216,7 @@ exit 0 if $no_create;
 
 # create databases
 foreach my $instance (@instances) {
-    Krang::Conf->instance($instance);
+    pkg('Conf')->instance($instance);
     my $name = InstanceDBName;
     my $user = DBUser;
     my $pass = DBPass;
@@ -252,8 +254,10 @@ foreach my $instance (@instances) {
     system($cmd) && die "Couldn't grant all: $?";
 
     # load all sql files as the DBUser
-    print STDERR "Loading SQL for '$name'...\n" if $verbose;
-    $cmd = "cat " . catfile(KrangRoot, 'sql', '*.sql') . 
+    my @sql_dirs = Krang::File->find_all('sql');
+    print STDERR "Loading SQL for '$name' from " . join(', ', @sql_dirs) . 
+      "...\n" if $verbose;
+    $cmd = "cat " . join(' ', map { catfile($_, '*.sql') } @sql_dirs) . 
       " | mysql -u$user $name ";
     $cmd .= " -p$pass" if $pass;
     $cmd .= " -h$hostname" if defined $hostname;

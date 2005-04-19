@@ -1,11 +1,12 @@
 package Krang::ElementClass::Date;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass::Storable';
+use Krang::ClassLoader base => 'ElementClass::Storable';
 use Carp qw(croak);
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( size maxlength start_year end_year ) ];
 use Time::Piece;
 
@@ -181,7 +182,7 @@ Krang::ElementClass::Date - date element class
 
 =head1 SYNOPSIS
 
-  $class = Krang::ElementClass::Date->new(name         => "issue_date",
+  $class = pkg('ElementClass::Date')->new(name         => "issue_date",
                                           default      => Time::Piece->new(),
                                           start_year   => 1990,
                                           end_year     => 2020);

@@ -1,4 +1,5 @@
 package Krang::Group;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -11,11 +12,11 @@ Krang::Group - Interface to manage Krang permissions
 =head1 SYNOPSIS
 
   # Include the library
-  use Krang::Group;
+  use Krang::ClassLoader 'Group';
 
 
   # Create a new group
-  my $group = Krang::Group->new( name => 'Car Editors',
+  my $group = pkg('Group')->new( name => 'Car Editors',
                                  categories => { 1 => 'read-only', 
                                                  2 => 'edit', 
                                                  23 => 'hide' },
@@ -39,19 +40,19 @@ Krang::Group - Interface to manage Krang permissions
 
 
   # Retrieve an existing group by ID
-  my ($group) = Krang::Group->find( group_id => 123 );
+  my ($group) = pkg('Group')->find( group_id => 123 );
 
 
   # Retrieve multiple existing groups by ID
-  my @groups = Krang::Group->find( group_ids => [1, 2, 3] );
+  my @groups = pkg('Group')->find( group_ids => [1, 2, 3] );
 
 
   # Find groups by exact name
-  my @groups = Krang::Group->find( name => 'Boat Editors' );
+  my @groups = pkg('Group')->find( name => 'Boat Editors' );
 
 
   # Find groups by name pattern
-  my @groups = Krang::Group->find( name_like => '%editor%' );
+  my @groups = pkg('Group')->find( name_like => '%editor%' );
 
 
   # Save group
@@ -87,18 +88,18 @@ Krang::Group - Interface to manage Krang permissions
 
 
   # Category permissions cache management
-  Krang::Group->add_category_permissions($category);
-  Krang::Group->delete_category_permissions($category);
-  Krang::Group->rebuild_category_cache();
+  pkg('Group')->add_category_permissions($category);
+  pkg('Group')->delete_category_permissions($category);
+  pkg('Group')->rebuild_category_cache();
 
   # Krang::Desk permission management
-  Krang::Group->add_desk_permissions($desk);
-  Krang::Group->delete_desk_permissions($desk);
+  pkg('Group')->add_desk_permissions($desk);
+  pkg('Group')->delete_desk_permissions($desk);
 
   # Evaluate permissions for the currently logged-in user
-  my %desk_perms = Krang::Group->user_desk_permissions();
-  my %asset_perms = Krang::Group->user_asset_permissions();
-  my %admin_perms = Krang::Group->user_admin_permissions();
+  my %desk_perms = pkg('Group')->user_desk_permissions();
+  my %asset_perms = pkg('Group')->user_asset_permissions();
+  my %admin_perms = pkg('Group')->user_admin_permissions();
 
 
 =head1 DESCRIPTION
@@ -119,11 +120,11 @@ The following methods are provided by Krang::Group.
 
 # Required modules
 use Carp;
-use Krang::DB qw(dbh);
-use Krang::Log qw(debug);
-use Krang::Desk;
-use Krang::Category;
-use Krang::Session qw(%session);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader 'Desk';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader Session => qw(%session);
 use Krang::Cache;
 
 # Exceptions
@@ -149,7 +150,7 @@ use constant FIELDS => qw( name
                            asset_template );
 
 # Constructor/Accessor/Mutator setup
-use Krang::MethodMaker ( new_with_init => 'new',
+use Krang::ClassLoader MethodMaker => ( new_with_init => 'new',
                          new_hash_init => 'hash_init',
                          get => [ "group_id" ],
                          get_set => [ FIELDS ],
@@ -159,7 +160,7 @@ use Krang::MethodMaker ( new_with_init => 'new',
 
 =item new()
 
-  my $group = Krang::Group->new();
+  my $group = pkg('Group')->new();
 
 This method returns a new Krang::Group object.  You may pass a hash
 into new() containing initial values for the object properties.  These
@@ -215,12 +216,12 @@ sub init {
                    );
 
     # Set up defaults for category and desk permissions
-    my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
+    my @root_cats = pkg('Category')->find(ids_only=>1, parent_id=>undef);
     my %categories = ( map { $_ => "edit" } @root_cats );
     $args{categories} = {} unless (exists($args{categories}));
     %{$args{categories}} = (%categories, %{$args{categories}});
 
-    my @all_desks = Krang::Desk->find(ids_only=>1);
+    my @all_desks = pkg('Desk')->find(ids_only=>1);
     my %desks = ( map { $_ => "edit" } @all_desks );
     $args{desks} = {} unless (exists($args{desks}));
     %{$args{desks}} = (%desks, %{$args{desks}});
@@ -238,7 +239,7 @@ sub init {
 
 =item find()
 
-  my @groups = Krang::Group->find();
+  my @groups = pkg('Group')->find();
 
 Retrieve Krang::Group objects from database based on a search
 specification.  Searches are specified by passing a hash to find()
@@ -246,13 +247,13 @@ with search fields as keys and search terms as the values of those keys.
 For example, the following would retrieve all groups with the 
 word "admin" in the group name:
 
-  my @groups = Krang::Group->find(name_like => '%admin%');
+  my @groups = pkg('Group')->find(name_like => '%admin%');
 
 Search terms may be combined to further narrow the result set.  For 
 example, the following will limit the above search to groups
 whose IDs are in an explicit list:
 
-  my @groups = Krang::Group->find( name_like => '%admin%',
+  my @groups = pkg('Group')->find( name_like => '%admin%',
                                    group_ids => [1, 5, 10, 34] );
 
 The following search fields are recognized by Krang::Group->find():
@@ -498,7 +499,7 @@ sub save {
     $dbh->do($update_sql, undef, @update_data);
 
     # Sanitize categories: Make sure all root categories are specified
-    my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
+    my @root_cats = pkg('Category')->find(ids_only=>1, parent_id=>undef);
     my %categories = $self->categories();
     foreach my $cat (@root_cats) {
         $categories{$cat} = "edit" unless (exists($categories{$cat}));
@@ -514,7 +515,7 @@ sub save {
     }
 
     # Sanitize desks: Make sure all desks are specified
-    my @all_desks = Krang::Desk->find(ids_only=>1);
+    my @all_desks = pkg('Desk')->find(ids_only=>1);
     my %desks = $self->desks();
     foreach my $desk (@all_desks) {
         $desks{$desk} = "edit" unless (exists($desks{$desk}));
@@ -624,7 +625,7 @@ sub serialize_xml {
         $writer->dataElement(category_id => $cat_id);
         $writer->dataElement(security_level => $cats{$cat_id});
         $writer->endTag('category');
-        $set->add(object => (Krang::Category->find( category_id => $cat_id))[0], from => $self);
+        $set->add(object => (pkg('Category')->find( category_id => $cat_id))[0], from => $self);
     }
  
     # desks
@@ -634,7 +635,7 @@ sub serialize_xml {
         $writer->dataElement(desk_id => $desk_id);
         $writer->dataElement(security_level => $desks{$desk_id});
         $writer->endTag('desk'); 
-        $set->add(object => (Krang::Desk->find( desk_id => $desk_id))[0], from => $self);
+        $set->add(object => (pkg('Desk')->find( desk_id => $desk_id))[0], from => $self);
     }
 
     $writer->dataElement( may_publish => $self->{may_publish} );
@@ -679,12 +680,12 @@ sub deserialize_xml {
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
 
        # parse it up
-    my $data = Krang::XML->simple(  xml           => $xml,
+    my $data = pkg('XML')->simple(  xml           => $xml,
                                     forcearray => ['category','desk'],
                                     suppressempty => 1);
     
     # is there an existing object?
-    my $group = (Krang::Group->find(name => $data->{name}))[0] || '';
+    my $group = (pkg('Group')->find(name => $data->{name}))[0] || '';
     if ($group) {
          
         debug (__PACKAGE__."->deserialize_xml : found group");
@@ -699,7 +700,7 @@ sub deserialize_xml {
         $group->{$_} = $data->{$_} for keys %simple;
 
     } else {
-        $group = Krang::Group->new((map { ($_,$data->{$_}) } keys %simple));
+        $group = pkg('Group')->new((map { ($_,$data->{$_}) } keys %simple));
     }
 
     # take care of category association
@@ -732,7 +733,7 @@ sub deserialize_xml {
 
 =item add_category_permissions()
 
-  Krang::Group->add_category_permissions($category);
+  pkg('Group')->add_category_permissions($category);
 
 This method is expected to be called by Krang::Category when a new 
 category is added to the system.  As the nature of categories are 
@@ -787,7 +788,7 @@ sub add_category_permissions {
 
     # root categories start with "edit" if not yet setup
     unless ($parent_id) {
-        foreach my $group_id (Krang::Group->find(ids_only => 1)) {
+        foreach my $group_id (pkg('Group')->find(ids_only => 1)) {
             $sth_check_group_perm->execute($category_id, $group_id);
             my ($perm) = $sth_check_group_perm->fetchrow_array();
             $sth_add_group_perm->execute($category_id, $group_id) unless $perm;
@@ -795,7 +796,7 @@ sub add_category_permissions {
     }
 
 
-    my @users = Krang::User->find();
+    my @users = pkg('User')->find();
    
     foreach my $user (@users) {
         my $may_see = 0;
@@ -848,7 +849,7 @@ sub add_category_permissions {
 
 =item add_user_permissions()
 
-    Krang::Group->add_user_permissions($user)
+    pkg('Group')->add_user_permissions($user)
 
 This method is expected to be called upon Krang::User save.
 It will add an entry to user_category_permission_cache for each
@@ -888,7 +889,7 @@ sub add_user_permissions {
                                             /);
 
     # get categories, sorted with parents before children
-    my @category = Krang::Category->find( ignore_user => 1,
+    my @category = pkg('Category')->find( ignore_user => 1,
                                           order_by => 'url' );
 
     foreach my $category (@category) {
@@ -933,7 +934,7 @@ sub add_user_permissions {
 
 =item delete_category_permissions()
 
-  Krang::Group->delete_category_permissions($category);
+  pkg('Group')->delete_category_permissions($category);
 
 This method is expected to be called by Krang::Category when a  
 category is about to be removed from the system.  As the nature of categories are 
@@ -971,7 +972,7 @@ sub delete_category_permissions {
 
 =item rebuild_category_cache()
 
-  Krang::Group->rebuild_category_cache();
+  pkg('Group')->rebuild_category_cache();
 
 This class method will clear the table user_category_permission_cache 
 and rebuild it from the category_group_permission table.  This logically 
@@ -994,7 +995,7 @@ sub rebuild_category_cache {
     $dbh->do( "delete from user_category_permission_cache", undef);
 
     # Traverse category hierarchy
-    my @root_cats = Krang::Category->find(parent_id=>undef, ignore_user => 1);
+    my @root_cats = pkg('Category')->find(parent_id=>undef, ignore_user => 1);
 
     foreach my $category (@root_cats) {
         $self->rebuild_category_cache_process_category($category);
@@ -1005,7 +1006,7 @@ sub rebuild_category_cache {
 
 =item add_desk_permissions()
 
-  Krang::Group->add_desk_permissions($desk);
+  pkg('Group')->add_desk_permissions($desk);
 
 This method is expected to be called by Krang::Desk when a new 
 desk is added to the system.
@@ -1044,7 +1045,7 @@ sub add_desk_permissions {
 
 =item delete_desk_permissions()
 
-  Krang::Group->delete_desk_permissions($desk);
+  pkg('Group')->delete_desk_permissions($desk);
 
 This method is expected to be called by Krang::Desk when a  
 desk is about to be removed from the system.
@@ -1076,7 +1077,7 @@ sub delete_desk_permissions {
 
 =item user_desk_permissions()
 
-  my %desk_perms = Krang::Group->user_desk_permissions();
+  my %desk_perms = pkg('Group')->user_desk_permissions();
 
 This method is expected to be used by Krang::Story and any other 
 modules which need to know if the current user has access to a particular desk.
@@ -1105,7 +1106,7 @@ In this case, the resultant permissions for this user will be:
 
 You can also request permissions for a particular desk by specifying it by ID:
 
-  my $desk1_access = Krang::Group->user_desk_permissions($desk_id);
+  my $desk1_access = pkg('Group')->user_desk_permissions($desk_id);
 
 =cut
 
@@ -1157,7 +1158,7 @@ sub user_desk_permissions {
 
 =item user_asset_permissions()
 
-  my %asset_perms = Krang::Group->user_asset_permissions();
+  my %asset_perms = pkg('Group')->user_asset_permissions();
 
 This method is expected to be used by all modules which need to know 
 if the current user has access to a particular asset class.  This method returns 
@@ -1186,7 +1187,7 @@ In this case, the resultant permissions for this user will be:
 
 You can also request permissions for a particular asset by specifying it:
 
-  my $media_access = Krang::Group->user_asset_permissions('media');
+  my $media_access = pkg('Group')->user_asset_permissions('media');
 
 =cut
 
@@ -1198,12 +1199,12 @@ sub user_asset_permissions {
     # Assumes that user_id is valid and authenticated
     my $user_id = $ENV{REMOTE_USER}
       || croak("No user_id in session");
-    my ($user) = Krang::User->find(user_id=>$user_id);
+    my ($user) = pkg('User')->find(user_id=>$user_id);
     croak("Can't find user id '$user_id'") unless ($user && ref($user));
 
     # Get groups for this user
     my @user_group_ids = $user->group_ids();
-    my @groups = ( Krang::Group->find(group_ids=>\@user_group_ids) );
+    my @groups = ( pkg('Group')->find(group_ids=>\@user_group_ids) );
 
     # Used to evaluate permission levels
     my %levels = (
@@ -1243,7 +1244,7 @@ sub user_asset_permissions {
 
 =item user_admin_permissions()
 
-  my %admin_perms = Krang::Group->user_admin_permissions($user);
+  my %admin_perms = pkg('Group')->user_admin_permissions($user);
 
 This method is expected to be used by all modules which need to know 
 if the current user has access to a particular administrative function.
@@ -1314,7 +1315,7 @@ a high privilege when it is set to 0 -- not 1.)
 
 You can also request permissions for a particular admin function by specifying it:
 
-  my $may_publish = Krang::Group->user_admin_permissions('may_publish');
+  my $may_publish = pkg('Group')->user_admin_permissions('may_publish');
 
 
 =cut
@@ -1327,12 +1328,12 @@ sub user_admin_permissions {
     # Assumes that user_id is valid and authenticated
     my $user_id = $ENV{REMOTE_USER}
       || croak("No user_id in session");
-    my ($user) = Krang::User->find(user_id=>$user_id);
+    my ($user) = pkg('User')->find(user_id=>$user_id);
     croak("Can't find user id '$user_id'") unless ($user && ref($user));
 
     # Get groups for this user
     my @user_group_ids = $user->group_ids();
-    my @groups = ( Krang::Group->find(group_ids=>\@user_group_ids) );
+    my @groups = ( pkg('Group')->find(group_ids=>\@user_group_ids) );
 
     # Used to evaluate permission levels
     my %levels;  # Will be set later
@@ -1399,7 +1400,7 @@ sub user_admin_permissions {
 sub update_group_user_permissions {
     my $self = shift;
 
-    my @users = Krang::User->find(  group_ids => [ $self->group_id ] );
+    my @users = pkg('User')->find(  group_ids => [ $self->group_id ] );
 
     foreach my $user (@users) { $self->add_user_permissions($user) };
 }
@@ -1444,7 +1445,7 @@ sub validate_group {
 
         # Make sure category exists
         croak ("No such category_id '$cat'") 
-          unless (Krang::Category->find(category_id=>$cat, count=>1));
+          unless (pkg('Category')->find(category_id=>$cat, count=>1));
     }
 
     # Check desks
@@ -1456,7 +1457,7 @@ sub validate_group {
 
         # Make sure desk exists
         croak ("No such desk_id '$desk'") 
-          unless (Krang::Desk->find(desk_id=>$desk, count=>1));
+          unless (pkg('Desk')->find(desk_id=>$desk, count=>1));
     }
 
     # Is the name unique?
@@ -1489,7 +1490,7 @@ sub insert_new_group {
                            (category_id, group_id, permission_type)
                            values (?,?,"edit") /;
     my $cat_perm_sth = $dbh->prepare($cat_perm_sql);
-    my @root_cats = Krang::Category->find(ids_only=>1, parent_id=>undef);
+    my @root_cats = pkg('Category')->find(ids_only=>1, parent_id=>undef);
     foreach my $category_id (@root_cats) {
         $cat_perm_sth->execute($category_id, $group_id);
     }

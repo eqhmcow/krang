@@ -1,10 +1,11 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 BEGIN { ok(1) }
-use Krang::Session qw(%session);
-BEGIN { Krang::Session->create(); }
+use Krang::ClassLoader Session => qw(%session);
+BEGIN { pkg('Session')->create(); }
 
 # loading Krang should provide a session
 my $id = $session{_session_id};
@@ -22,15 +23,15 @@ is($session{bar}[0], 'bing');
 is($session{bar}[2], 'boom');
 
 # unload it
-Krang::Session->unload();
+pkg('Session')->unload();
 
 # really gone?
 my @keys = keys(%session);
 is(@keys, 0);
 
 # load up
-ok(Krang::Session->validate($id));
-Krang::Session->load($id);
+ok(pkg('Session')->validate($id));
+pkg('Session')->load($id);
 
 # did that work?
 is($session{foo}, 'bar');
@@ -39,13 +40,13 @@ is($session{bar}[0], 'bing');
 is($session{bar}[2], 'boom');
 
 # vanish, I say!
-Krang::Session->delete();
-ok(not Krang::Session->validate($id));
+pkg('Session')->delete();
+ok(not pkg('Session')->validate($id));
 
 # really gone?
 @keys = keys(%session);
 is(@keys, 0);
 
 # really, really gone?
-eval { Krang::Session->load($id) };
+eval { pkg('Session')->load($id) };
 like($@, qr/does not exist/);

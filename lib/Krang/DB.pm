@@ -1,4 +1,5 @@
 package Krang::DB;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -9,7 +10,7 @@ Krang::DB - provides access to Krang database
 =head1 SYNOPSIS
 
   # get a database handle
-  use Krang::DB qw(dbh forget_dbh);
+  use Krang::ClassLoader DB => qw(dbh forget_dbh);
   $dbh = dbh();
 
   # forget about the current dbh for this instance, triggering a
@@ -35,8 +36,8 @@ use Carp qw(croak);
 use DBI;
 
 use Krang;
-use Krang::Conf qw(InstanceDBName DBUser DBPass DBHost KrangRoot);
-use Krang::Log qw(info debug critical);
+use Krang::ClassLoader Conf => qw(InstanceDBName DBUser DBPass DBHost KrangRoot);
+use Krang::ClassLoader Log => qw(info debug critical);
 
 
 
@@ -72,7 +73,7 @@ sub dbh {
 
     my $name = InstanceDBName;
     croak("Unable to create dbh, InstanceDBName is undefined.\n" . 
-          "Maybe you forgot to call Krang::Conf->instance()?")
+          "Maybe you forgot to call pkg('Conf')->instance()?")
       unless defined $name;
 
     # check cache
@@ -120,7 +121,7 @@ database connection.
 sub forget_dbh () {
     my $name = InstanceDBName;
     croak("Unable to forget dbh, InstanceDBName is undefined.\n" . 
-          "Maybe you forgot to call Krang::Conf->instance()?")
+          "Maybe you forgot to call pkg('Conf')->instance()?")
       unless defined $name;
 
     # delete from cache

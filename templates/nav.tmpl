@@ -33,52 +33,5 @@
    </tmpl_if>
 
 </script>
-<div class="dark-bar"><a href="javascript:nav_goto('workspace.pl')">My Workspace</a></div>
-<div class="plain-cell"><a href="javascript:nav_goto('my_pref.pl')">My Preferences</a><br>
-<a href="javascript:nav_goto('my_alerts.pl')">My Alerts</a></div>
 
-<tmpl_unless nav_hide_story>
-<div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">Story</div>
-<div class="form-cell-nav"><tmpl_unless nav_readonly_story><a href="javascript:nav_goto('story.pl')">New Story</a><br></tmpl_unless>
-<a href="javascript:nav_goto('story.pl?rm=find')">Find Stories</a><br>
-<a href="javascript:nav_goto('story.pl?rm=list_active')">Active Stories</a><br>
-
-<tmpl_if nav_desk_loop>
-<b>Desks</b>
-<tmpl_loop nav_desk_loop>
-<div style="margin-left: 5px;"><a href="javascript:nav_goto('desk.pl?desk_id=<tmpl_var desk_id>')"><tmpl_var desk_name></a><br></div>
-</tmpl_loop>
-</tmpl_if></div>
-
-</tmpl_unless>
-
-<tmpl_unless nav_hide_media>
-<div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">Media</div>
-<div class="form-cell-nav"><tmpl_unless nav_readonly_media><a href="javascript:nav_goto('media.pl?rm=add')">New Media</a><br></tmpl_unless>
-<a href="javascript:nav_goto('media.pl')">Find Media</a><br>
-<a href="javascript:nav_goto('media.pl?rm=list_active')">Active Media</a><br>
-<tmpl_unless nav_readonly_media><a href="javascript:nav_goto('media_bulk_upload.pl')">Bulk Upload</a></tmpl_unless></div>
-</tmpl_unless>
-
-<tmpl_unless nav_hide_template>
-<div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">Template</div>
-<div class="form-cell-nav"><tmpl_unless nav_readonly_template><a href="javascript:nav_goto('template.pl?rm=add')">New Template</a><br></tmpl_unless>
-<a href="javascript:nav_goto('template.pl')">Find Templates</a><br>
-<a href="javascript:nav_goto('template.pl?rm=list_active')">Active Templates</a><br>
-<tmpl_unless nav_readonly_template><a target="template_ftp" href="ftp://<tmpl_var nav_ftp_username>@<tmpl_var nav_ftp_server>:<tmpl_var nav_ftp_port>/<tmpl_var nav_ftp_instance>/template">FTP</a></tmpl_unless></div>
-</tmpl_unless>
-
-<tmpl_unless nav_hide_admin>
-<div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">Admin</div>
-<div class="form-cell-nav"><tmpl_if nav_admin_users><a href="javascript:nav_goto('user.pl')">Users</a><br></tmpl_if>
-<tmpl_if nav_admin_groups><a href="javascript:nav_goto('group.pl')">Groups</a><br></tmpl_if>
-<tmpl_if nav_admin_desks><a href="javascript:nav_goto('desk_admin.pl')">Desks</a><br></tmpl_if>
-<tmpl_if nav_admin_contribs><a href="javascript:nav_goto('contributor.pl')">Contributors</a><br></tmpl_if>
-<tmpl_if nav_admin_sites><a href="javascript:nav_goto('site.pl')">Sites</a><br></tmpl_if>
-<tmpl_if nav_admin_categories><a href="javascript:nav_goto('category.pl')">Categories</a><br></tmpl_if>
-<tmpl_if nav_admin_lists><a href="javascript:nav_goto('list_group.pl')">Lists</a><br></tmpl_if>
-<tmpl_if nav_admin_jobs><a href="javascript:nav_goto('schedule.pl?rm=list_all')">Jobs</a><br></tmpl_if>
-<tmpl_unless nav_hide_bugzilla><a href="javascript:nav_goto('bug.cgi')">Submit Bug</a></tmpl_unless></div>
-</tmpl_unless>
-
-
+<tmpl_var nav_content>

@@ -1,7 +1,8 @@
 package Krang::ErrorHandler;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::Log qw(critical debug);
+use Krang::ClassLoader Log => qw(critical debug);
 
 # make Exception::Class errors print a stack trace when not caught
 use Exception::Class;
@@ -38,7 +39,7 @@ Krang::ErrorHandler - consistent die() and warn() handlers for Krang
 
 At the top of your script or module:
 
-  use Krang::ErrorHandler;
+  use Krang::ClassLoader 'ErrorHandler';
 
 =head1 DESCRIPTION
 

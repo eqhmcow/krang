@@ -1,4 +1,5 @@
 package Krang::XML::Simple;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 use XML::Simple ();
@@ -13,7 +14,7 @@ Krang::XML::Simple - XML::Simple sub-class with auto Base64 decoding
 
 =head1 SYNOPSIS
 
-  use Krang::XML::Simple qw(XMLin);
+  use Krang::ClassLoader XML::Simple => qw(XMLin);
   my $data = XMLin($xml, @args);
 
 =head1 DESCRIPTION

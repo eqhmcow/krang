@@ -1,0 +1,117 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+use 5.006;
+
+=pod
+
+=head1 NAME
+
+krang_addon_dist - build an addon distribution
+
+=head1 SYNOPSIS
+
+To build a distribution of the Turbo distribution:
+
+  krang_addon_dist Turbo
+
+=head1 DESCRIPTION
+
+This script builds a Krang addon distribution from the addon files
+found in addons/AddOnName.  This script is useful for developers
+creating addons in-place.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --verbose
+
+=item --help
+
+=item --man
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+use Pod::Usage;
+use Getopt::Long;
+use File::Temp qw(tempdir);
+
+# use first instance if one isn't set.  Addons are installation wide
+# anyway.
+use Krang::ClassFactory qw(pkg);
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'AddOn';
+
+# options
+my ( $verbose, $help, $man );
+GetOptions(
+    'verbose'       => \$verbose,
+    'help'          => \$help,
+    'man'           => \$man,
+  )
+  or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage( -verbose => 2 ) if $man;
+
+# get addon name
+my $name;
+if (@ARGV == 1) {
+    $name = $ARGV[0];
+} else {
+    pod2usage("Bad arguments to krang_addon_build: '" . 
+              join(' ', @ARGV) . "'\n");
+}
+
+# find the addon
+my ($addon) = pkg('AddOn')->find(name => $name);
+die("Can't find addon named '$name'!  The following addons are installed:\n" .
+    join("\n", map { "\t" . $_->name . " v" . $_->version } 
+         pkg('AddOn')->find()) . "\n")
+  unless $addon;
+
+# assemble info for tar
+my $dir      = catdir(KrangRoot, 'addons', $name);
+my $conf     = $addon->conf;
+my $version  = $conf->get('Version');
+my $filename = $name . '-' . $version . '.tar.gz';
+
+# create tarball
+print STDERR "Creating tarball $filename...\n" if $verbose;
+my $out = `tar zvcf $filename -C $dir/.. --exclude=CVS --exclude=.svn --exclude=*.swp --exclude=*.tdy --exclude=*~ --exclude=*bak --exclude=.#* $name`;
+print STDERR $out if $verbose;
+
+print "Success.  Created addon distribution in $filename.\n";
+

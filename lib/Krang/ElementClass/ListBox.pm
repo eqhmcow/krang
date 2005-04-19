@@ -1,11 +1,12 @@
 package Krang::ElementClass::ListBox;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass::Storable';
+use Krang::ClassLoader base => 'ElementClass::Storable';
 use Carp qw(croak);
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( size multiple values labels ) ];
 
 sub new {
@@ -75,7 +76,7 @@ Krang::ElementClass::ListBox - list box element class
 
 =head1 SYNOPSIS
 
-  $class = Krang::ElementClass::ListBox->new(name         => "color",
+  $class = pkg('ElementClass::ListBox')->new(name         => "color",
                                              size         => 1,
                      values       => [ 'red', 'white', 'blue' ],
                      labels       => { red   => "Red",

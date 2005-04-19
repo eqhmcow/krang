@@ -1,5 +1,6 @@
 package Krang::CGI::Group;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
@@ -13,8 +14,8 @@ Krang::CGI::Group - web interface to manage permission groups
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Group;
-  my $app = Krang::CGI::Group->new();
+  use Krang::ClassLoader 'CGI::Group';
+  my $app = pkg('CGI::Group')->new();
   $app->run();
 
 
@@ -39,16 +40,16 @@ is 'search'.
 =cut
 
 
-use Krang::Group;
-use Krang::Widget;
-use Krang::Message qw(add_message);
-use Krang::HTMLPager;
-use Krang::Pref;
-use Krang::Session qw(%session);
-use Krang::Category;
-use Krang::Widget qw(category_chooser format_url);
-use Krang::Desk;
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader 'Group';
+use Krang::ClassLoader 'Widget';
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader Widget => qw(category_chooser format_url);
+use Krang::ClassLoader 'Desk';
+use Krang::ClassLoader Log => qw(debug info critical);
 use Carp;
 
 
@@ -139,7 +140,7 @@ sub search {
     my $search_filter = $q->param('search_filter') || '';
 
     # Configure pager
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => {
                                                        rm => 'search',
@@ -182,7 +183,7 @@ sub add {
     my $self = shift;
 
     # Make new Group, but don't save it
-    my $g = Krang::Group->new();
+    my $g = pkg('Group')->new();
 
     # Stash it in the session for later
     $session{EDIT_GROUP} = $g;
@@ -206,7 +207,7 @@ sub edit {
 
     my $q = $self->query();
     my $group_id = $q->param('group_id');
-    my ( $g ) = Krang::Group->find( group_id => $group_id );
+    my ( $g ) = pkg('Group')->find( group_id => $group_id );
 
     # Did we get our group?  Presumbably, users get here from a list.  IOW, there is 
     # no valid (non-fatal) case where a user would be here with an invalid group_id
@@ -419,7 +420,7 @@ sub delete_selected {
 
     my $dupe = 0;
     foreach my $id (@group_delete_list) {
-        my ($g) = Krang::Group->find(group_id=>$id);
+        my ($g) = pkg('Group')->find(group_id=>$id);
         eval{ $g->delete() if ($g) };
         if ($@ and ref $@ and $@->isa('Krang::Group::Dependent')) {
             my $dep = $@->dependents;
@@ -487,9 +488,9 @@ sub edit_categories {
     # Get permission categories
     my %categories = $g->categories();
 
-    my ($root_category) = Krang::Category->find(category_id=>$category_id);
+    my ($root_category) = pkg('Category')->find(category_id=>$category_id);
     croak ("Can't retrieve root category ID '$category_id'") unless ($root_category);
-    my @site_category_ids = ( Krang::Category->find(site_id=>$root_category->site_id, order_by=>"url", ids_only=>1) );
+    my @site_category_ids = ( pkg('Category')->find(site_id=>$root_category->site_id, order_by=>"url", ids_only=>1) );
 
     # Extract IDs of descendant categories for which permissions have been set
     my @perm_categories = ( grep { ($_ ne $category_id) and exists($categories{$_}) } @site_category_ids );
@@ -505,7 +506,7 @@ sub edit_categories {
                         category_id => $category_id,
                        } );
     foreach my $cid (@perm_categories) {
-        my ($c) = Krang::Category->find( category_id=>$cid );
+        my ($c) = pkg('Category')->find( category_id=>$cid );
         my $param_name = "category_".$cid;
         my $url = $c->url();
         $url =~ s/^$site_url/\//;
@@ -840,8 +841,8 @@ sub get_group_tmpl {
     my $q = $self->query();
 
     my %group_tmpl = ( %{&GROUP_PROTOTYPE} );
-    my @root_categories = Krang::Category->find(parent_id=>undef, order_by=>'url');
-    my @desks = Krang::Desk->find();
+    my @root_categories = pkg('Category')->find(parent_id=>undef, order_by=>'url');
+    my @desks = pkg('Desk')->find();
 
     # For each group prop, convert to HTML::Template compatible data
     foreach my $gf (keys(%group_tmpl)) {

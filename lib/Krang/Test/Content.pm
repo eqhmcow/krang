@@ -6,9 +6,9 @@ Krang::Test::Content - a package to simplify content handling in Krang tests.
 
 =head1 SYNOPSIS
 
-  use Krang::Test::Content;
+  use Krang::ClassLoader 'Test::Content';
 
-  my $creator = Krang::Test::Content->new();
+  my $creator = pkg('Test::Content')->new();
   
   
   # create a Krang::Site object
@@ -17,7 +17,7 @@ Krang::Test::Content - a package to simplify content handling in Krang tests.
                                    preview_path => '/tmp/preview_dogs',
                                    publish_path => '/tmp/publish_dogs');
   
-  my ($root) = Krang::Category->find(site_id => $site->site_id);
+  my ($root) = pkg('Category')->find(site_id => $site->site_id);
   
   # create a Krang::Category object.
   my $poodle_cat = $creator->create_category(dir    => 'poodles',
@@ -99,6 +99,7 @@ NOTE - It should be clear that this module assumes that the following modules ar
 
 =cut
 
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 use Carp;
@@ -107,21 +108,21 @@ use Imager;  # creating images
 use File::Spec::Functions;
 use File::Path;
 
-use Krang::Conf qw(KrangRoot InstanceElementSet instance);
-use Krang::Pref;
-use Krang::Site;
-use Krang::Category;
-use Krang::Story;
-use Krang::Media;
-use Krang::User;
-use Krang::Contrib;
-use Krang::Publisher;
-use Krang::Template;
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet instance);
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader 'Publisher';
+use Krang::ClassLoader 'Template';
 
-use Krang::MethodMaker (new_with_init => 'new',
+use Krang::ClassLoader MethodMaker => (new_with_init => 'new',
                         new_hash_init => 'hash_init');
 
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader Log => qw(debug info critical);
 
 =head1 INTERFACE
 
@@ -188,7 +189,7 @@ sub create_site {
         croak "create_site() missing required argument '$_'\n." unless exists($args{$_});
     }
 
-    my $site = Krang::Site->new(preview_url  => $args{preview_url},
+    my $site = pkg('Site')->new(preview_url  => $args{preview_url},
                                 url          => $args{publish_url},
                                 preview_path => $args{preview_path},
                                 publish_path => $args{publish_path}
@@ -248,7 +249,7 @@ sub create_category {
 
    ref($parent) ? ($parent_id = $parent->category_id()) : ($parent_id = $parent);
 
-   my $category = Krang::Category->new(dir => $dir, parent_id => $parent_id);
+   my $category = pkg('Category')->new(dir => $dir, parent_id => $parent_id);
 
    $category->element()->data($data);
    $category->save();
@@ -293,12 +294,12 @@ sub create_user {
        push @group_ids, @{$args{group_ids}};
    } else {
        # find admin groups
-       my @groups = Krang::Group->find(name_like => '%admin%');
+       my @groups = pkg('Group')->find(name_like => '%admin%');
        push @group_ids, map { $_->group_id } @groups;
    }
 
    while (1) {
-       $user = Krang::User->new(%args,
+       $user = pkg('User')->new(%args,
                                 login     => $username,
                                 password  => $password,
                                 group_ids => \@group_ids);
@@ -412,12 +413,12 @@ sub create_media {
      or die "Unable to open tmp/tmp.$fmt: $!";
 
    # Pick a type
-   my %media_types = Krang::Pref->get('media_type');
+   my %media_types = pkg('Pref')->get('media_type');
    my @media_type_ids = keys(%media_types);
    my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
 
    # create a media object
-   my $media = Krang::Media->new(title      => $title,
+   my $media = pkg('Media')->new(title      => $title,
                                  filename   => $fname . ".$fmt",
                                  caption    => $caption,
                                  filehandle => $fh,
@@ -523,7 +524,7 @@ sub create_story {
 
     if ($args{category}) {
         $categories = $args{category};
-        croak "'category' argument must be a list of Krang::Category objects'\n" 
+        croak "'category' argument must be a list of pkg('Category') objects'\n" 
           unless ref($categories) eq 'ARRAY';
     } else {
         $categories = [ $self->_root_category() ];
@@ -545,7 +546,7 @@ sub create_story {
 
     $self->{slug_id_list}{$slug_id} = 1;
 
-    my $story = Krang::Story->new(categories => $categories,
+    my $story = pkg('Story')->new(categories => $categories,
                                   title      => $title,
                                   slug       => 'TEST-SLUG-' . $slug_id,
                                   class      => $class);
@@ -679,9 +680,9 @@ sub create_contrib {
     $c_args{url}    = $args{url}    || sprintf("http://www.%s.com", $self->get_word());
     $c_args{phone}  = $args{phone}  || sprintf("(%03i) %03i-%04i", int(rand(999)), int(rand(999)), int(rand(9999)));
 
-    my %contrib_types = Krang::Pref->get('contrib_type');
+    my %contrib_types = pkg('Pref')->get('contrib_type');
 
-    my $contrib = Krang::Contrib->new(%c_args);
+    my $contrib = pkg('Contrib')->new(%c_args);
 
     # add contrib types - let's make them all 3.
     $contrib->contrib_type_ids(keys %contrib_types);
@@ -814,7 +815,7 @@ END
         $content .= "</div>";
     }
 
-    my $tmpl = Krang::Template->new(
+    my $tmpl = pkg('Template')->new(
                                     content  => $content,
                                     filename => $element_name . ".tmpl",
                                     category => $category
@@ -844,7 +845,7 @@ sub publisher {
 
     return ($self->{publisher}) if (exists($self->{publisher}));
 
-    $self->{publisher} = new Krang::Publisher;
+    $self->{publisher} = new pkg('Publisher');
 
     return $self->{publisher};
 
@@ -885,14 +886,14 @@ sub deploy_test_templates {
     croak __PACKAGE__ . "->deploy_test_templates(): Must create site before deploying templates!\n" 
       unless defined($site);
 
-    my ($category) = Krang::Category->find(site_id => $site->site_id, dir => '/');
+    my ($category) = pkg('Category')->find(site_id => $site->site_id, dir => '/');
 
 
     croak __PACKAGE__ . "->deploy_test_templates(): Must create site before deploying templates!\n" 
       unless defined($site);
 
-    my @estack = map { Krang::ElementLibrary->top_level(name => $_) }
-      Krang::ElementLibrary->top_levels;
+    my @estack = map { pkg('ElementLibrary')->top_level(name => $_) }
+      pkg('ElementLibrary')->top_levels;
     while (@estack) {
         my $element = pop(@estack);
         push(@estack, $element->children);
@@ -952,7 +953,7 @@ sub undeploy_live_templates {
 
     my $publisher = $self->publisher();
 
-    my @live_templates = Krang::Template->find(deployed => 1);
+    my @live_templates = pkg('Template')->find(deployed => 1);
 
     foreach my $t (@live_templates) {
         $publisher->undeploy_template(template => $t);
@@ -1179,7 +1180,7 @@ sub _root_category {
     croak __PACKAGE__ . "->_root_category(): Must create site before creating categories!"
       unless defined($site);
     # set parent to root category of first site created.
-    ($root) = Krang::Category->find(site_id => $site->site_id, dir => '/');
+    ($root) = pkg('Category')->find(site_id => $site->site_id, dir => '/');
 
     return $root;
 

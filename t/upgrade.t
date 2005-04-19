@@ -1,8 +1,9 @@
+use Krang::ClassFactory qw(pkg);
 use warnings;
 use strict;
 use Test::More qw(no_plan);
 
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 
 my $upmod_path;
 

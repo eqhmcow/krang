@@ -65,12 +65,13 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Script;
-use Krang::Conf qw(KrangRoot ElementLibrary);
+use Krang::ClassLoader Conf => qw(KrangRoot ElementLibrary);
 use Getopt::Long;
 use Pod::Usage;
-use Krang::Category;
-use Krang::Site;
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
 
 my ($help, $man);
 my $verbose = 0;
@@ -88,12 +89,12 @@ my ($from_url, $to_url) = @ARGV;
 $from_url .= '/' if $from_url and $from_url !~ m!/$!;
 $to_url   .= '/' if $to_url   and $to_url   !~ m!/$!;
 
-my ($from_cat) = Krang::Category->find(url => $from_url);
+my ($from_cat) = pkg('Category')->find(url => $from_url);
 die "Source category '$from_url' does not exist.\n"
   unless $from_cat;
 die "Source category '$from_url' is a root category, cannot rename.\n"
   unless $from_cat->parent_id;
-my ($to_cat) = Krang::Category->find(url => $to_url);
+my ($to_cat) = pkg('Category')->find(url => $to_url);
 die "Target category '$to_url' already exists.\n"
   if $to_cat;
 die "Target category '$to_url' is within '$from_url', cannot rename.\n"
@@ -103,13 +104,13 @@ die "Target category '$to_url' is within '$from_url', cannot rename.\n"
 my ($to_parent_url, $to_dir) = $to_url =~ m!^(.*/)([^/]+)/$!;
 print STDERR "Renaming as child of '$to_parent_url' with dir '$to_dir'.\n"
   if $verbose;
-my ($to_parent) = Krang::Category->find(url => $to_parent_url);
+my ($to_parent) = pkg('Category')->find(url => $to_parent_url);
 
 # parent doesn't exist, create it if possible
 unless ($to_parent) {
     # make sure site exists, since this script won't create new sites
     my ($to_site_url, $to_dirs) = $to_parent_url =~ m!^([^/]+)/(.*)$!;
-    my ($to_site) = Krang::Site->find(url => $to_site_url);
+    my ($to_site) = pkg('Site')->find(url => $to_site_url);
     die "Unable to find target site '$to_site_url'.\n"
       unless $to_site;
 
@@ -117,17 +118,17 @@ unless ($to_parent) {
     my @to_dirs = grep { defined } split('/', $to_dirs);
 
     # start pointer at the root for this site
-    my ($p) = Krang::Category->find(url => $to_site_url . '/');
+    my ($p) = pkg('Category')->find(url => $to_site_url . '/');
     die "Unable to find root category for site '$to_site_url'.\n"
       unless $p;
 
     # walk through dirs, creating those that don't exist.
     for(my $x = 0; $x < @to_dirs; $x++) {
         my $url = $to_site_url . '/' . join('/', @to_dirs[0 .. $x]) . '/';
-        my ($cat) = Krang::Category->find(url => $url);
+        my ($cat) = pkg('Category')->find(url => $url);
         unless ($cat) {
             print STDERR "Creating category $url...\n";
-            $cat = Krang::Category->new(dir => $to_dirs[$x],
+            $cat = pkg('Category')->new(dir => $to_dirs[$x],
                                         parent_id => $p->category_id);
             $cat->save();
         }
@@ -136,7 +137,7 @@ unless ($to_parent) {
     }
     
     # should have a parent now
-    ($to_parent) = Krang::Category->find(url => $to_parent_url);
+    ($to_parent) = pkg('Category')->find(url => $to_parent_url);
     die "Failed to create parent.\n"
       unless $to_parent;
 }

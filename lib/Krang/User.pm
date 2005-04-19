@@ -6,7 +6,7 @@ Krang::User - a means to access information on users
 
 =head1 SYNOPSIS
 
-  use Krang::User;
+  use Krang::ClassLoader 'User';
 
   # construct object
   my $user = Krang::User->new(email => 'a@b.com',		#optional
@@ -61,7 +61,7 @@ Krang::User - a means to access information on users
   # case-insensitive sub-string match on that field in the database
 
   # returns an array of user objects matching criteria in %params
-  my @users = Krang::User->find( %params );
+  my @users = pkg('User')->find( %params );
 
 =head1 DESCRIPTION
 
@@ -83,6 +83,7 @@ calculated and compared i.e.:
 ##############################
 # Pragmas
 ##########
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -100,8 +101,8 @@ require Exporter;
 
 # Internal Modules
 ###################
-use Krang::DB qw(dbh);
-use Krang::Log qw/critical debug info/;
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Log => qw/critical debug info/;
 use Krang::Cache;
 
 #
@@ -147,7 +148,7 @@ my %user_args = map {$_ => 1} USER_RW, qw/group_ids password/;
 my %user_cols = map {$_ => 1} USER_RO, USER_RW, 'password';
 
 # Constructor/Accessor/Mutator setup
-use Krang::MethodMaker	new_with_init => 'new',
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
 			new_hash_init => 'hash_init',
 			get => [USER_RO],
 			get_set => [USER_RW],
@@ -270,7 +271,7 @@ If it is successful, the 'user_id' is returned, otherwise '0' is returned.
 sub check_auth {
     my ($self, $login, $password) = @_;
 
-    my ($user) = Krang::User->find(login => $login);
+    my ($user) = pkg('User')->find(login => $login);
     return 0 unless $user;
 
     return md5_hex($SALT, $password) eq $user->{password} ?
@@ -773,8 +774,8 @@ sub save {
 
     # lazy load Krang::Group so using Krang::User won't load element
     # sets, which is sometimes bad
-    require Krang::Group;
-    Krang::Group->add_user_permissions($self);
+    eval "require " . pkg('Group') or die $@;
+    pkg('Group')->add_user_permissions($self);
     
     return $self;
 }
@@ -812,8 +813,8 @@ sub _validate_group_ids {
     foreach my $group_id (@$rgroup_ids) {
         # lazy load Krang::Group so using Krang::User won't load element
         # sets, which is sometimes bad
-        require Krang::Group;
-        my ($found_group) = Krang::Group->find(group_id=>$group_id, count=>1);
+        eval "require " . pkg('Group') or die $@;
+        my ($found_group) = pkg('Group')->find(group_id=>$group_id, count=>1);
         push (@bad_groups, $group_id) unless ($found_group);
     }
 
@@ -853,16 +854,16 @@ sub serialize_xml {
 
     # lazy load Krang::Group so using Krang::User won't load element
     # sets, which is sometimes bad
-    require Krang::Group;
+    eval "require " . pkg('Group') or die $@;
 
     my $group_ids = $self->{group_ids};
     foreach my $group_id ( @$group_ids ) {
         $writer->dataElement( group_id => $group_id );
-        $set->add(object => (Krang::Group->find( group_id => $group_id))[0], from => $self);
+        $set->add(object => (pkg('Group')->find( group_id => $group_id))[0], from => $self);
     } 
 
     # get alerts for this user
-    my @alerts = Krang::Alert->find( user_id => $self->{user_id} );
+    my @alerts = pkg('Alert')->find( user_id => $self->{user_id} );
     foreach my $alert ( @alerts ) {
         $set->add(object => $alert, from => $self);
     }
@@ -887,12 +888,12 @@ sub deserialize_xml {
     my %fields = map { ($_,1) } USER_RW;
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml,
+    my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1,
                                   forcearray => ['group_id'] );
     
     # is there an existing object?
-    my $user = (Krang::User->find(login => $data->{login}))[0] || '';
+    my $user = (pkg('User')->find(login => $data->{login}))[0] || '';
 
     if ($user) {
         debug (__PACKAGE__."->deserialize_xml : found user");
@@ -905,7 +906,7 @@ sub deserialize_xml {
         $user->{$_} = $data->{$_} for keys %fields;
         $user->password($data->{password}, 1);     
     } else {
-        $user = Krang::User->new ( password => $data->{password}, encrypted => 1, (map { ($_,$data->{$_}) } keys %fields));
+        $user = pkg('User')->new ( password => $data->{password}, encrypted => 1, (map { ($_,$data->{$_}) } keys %fields));
     }
 
     my @group_ids = @{$data->{group_id}};

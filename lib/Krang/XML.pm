@@ -1,14 +1,15 @@
 package Krang::XML;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use XML::Writer;
 use IO::Scalar;
 use Carp qw(croak);
-use Krang::XML::Simple qw(XMLin);
+use Krang::ClassLoader 'XML::Simple' => qw(XMLin);
 use XML::SAX::Expat;
 $XML::SAX::ParserPackage = 'XML::SAX::Expat';
-use Krang::XML::Writer;
+use Krang::ClassLoader 'XML::Writer';
 
 =head1 NAME
 
@@ -17,10 +18,10 @@ Krang::XML - XML utility class
 =head1 SYNOPSIS
 
   # get a new XML::Writer object, setup to write into $xml
-  $writer = Krang::XML->writer(string => \$xml);
+  $writer = pkg('XML')->writer(string => \$xml);
 
   # parse XML using XML::Simple
-  $data = Krang::XML->simple(xml => $xml, forcearray => 1);
+  $data = pkg('XML')->simple(xml => $xml, forcearray => 1);
 
 =head1 DESCRIPTION
 
@@ -56,7 +57,7 @@ sub writer {
         croak("Missing fh or string arg.");
     }
 
-    return Krang::XML::Writer->new(OUTPUT      => $fh,
+    return pkg('XML::Writer')->new(OUTPUT      => $fh,
                             DATA_MODE   => 1,
                             DATA_INDENT => 4);
 }

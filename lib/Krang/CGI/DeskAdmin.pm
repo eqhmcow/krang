@@ -1,12 +1,13 @@
 package Krang::CGI::DeskAdmin;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
 use Carp qw(croak);
-use Krang::Desk;
-use Krang::Message qw(add_message);
-use Krang::Log qw(debug);
+use Krang::ClassLoader 'Desk';
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Log => qw(debug);
 
 =head1 NAME
 
@@ -15,8 +16,8 @@ reorder Krang::Desks.
 
 =head1 SYNOPSIS
   
-  use Krang::CGI::DeskAdmin;
-  my $app = Krang::CGI::DeskAdmin->new();
+  use Krang::ClassLoader 'CGI::DeskAdmin';
+  my $app = pkg('CGI::DeskAdmin')->new();
   $app->run();
 
 =head1 DESCRIPTION
@@ -63,7 +64,7 @@ sub edit {
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
     $template->param( $error => 1 ) if $error;
 
-    my $total_desks = Krang::Desk->find('count' => 1);
+    my $total_desks = pkg('Desk')->find('count' => 1);
     $template->param( 'total_desks' => $total_desks );
     my @existing_desks = get_existing_desks($total_desks);
     $template->param( 'existing_desk_loop' => \@existing_desks ) if @existing_desks;
@@ -78,7 +79,7 @@ sub edit {
 
 sub get_existing_desks {
     my $total_desks = shift;
-    my @desks = Krang::Desk->find();
+    my @desks = pkg('Desk')->find();
     my @existing_desk_loop = ();
 
     foreach my $desk (@desks) {
@@ -113,12 +114,12 @@ sub add {
         return $self->edit('no_name');
     } 
 
-    if (Krang::Desk->find( name => $q->param('name')) ) {
+    if (pkg('Desk')->find( name => $q->param('name')) ) {
         add_message('duplicate_desk');
         return $self->edit('no_name');
     }
 
-    Krang::Desk->new(   name => $q->param('name'),
+    pkg('Desk')->new(   name => $q->param('name'),
                         order => $q->param('order') );
 
     add_message('desk_added');
@@ -150,7 +151,7 @@ sub reorder {
     }
 
 
-    Krang::Desk->reorder(@desks);
+    pkg('Desk')->reorder(@desks);
 
     add_message('desks_reordered');
     return $self->edit();
@@ -173,11 +174,11 @@ sub delete {
     }
                                                                                  
     foreach my $desk_id (@delete_list) {
-        my $desk_name = (Krang::Desk->find( desk_id => $desk_id ))[0]->name;
+        my $desk_name = (pkg('Desk')->find( desk_id => $desk_id ))[0]->name;
         
         debug(__PACKAGE__."->delete: calling delete desk $desk_id");
         
-        eval { Krang::Desk->delete($desk_id) };
+        eval { pkg('Desk')->delete($desk_id) };
         
         if ($@ and ref $@ and $@->isa('Krang::Desk::Occupied')) {
             add_message('stories_on_desk', desk_name => $desk_name);

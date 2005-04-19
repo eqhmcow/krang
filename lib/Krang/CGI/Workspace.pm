@@ -1,4 +1,5 @@
 package Krang::CGI::Workspace;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -22,14 +23,14 @@ This application manages the My Workspace for Krang.
 
 =cut
 
-use Krang::Session qw(%session);
-use Krang::Log qw(debug assert affirm ASSERT);
-use Krang::HTMLPager;
-use Krang::Widget qw(format_url);
-use Krang::Message qw(add_message);
-use Krang::Publisher;
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader Widget => qw(format_url);
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader 'Publisher';
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 
 sub setup {
     my $self = shift;
@@ -66,7 +67,7 @@ sub show {
                                     die_on_bad_params => 0,
                                     global_vars => 1);
 
-    my @found_desks = Krang::Desk->find();
+    my @found_desks = pkg('Desk')->find();
     my @desk_loop;
 
     foreach my $found_desk (@found_desks) {
@@ -93,16 +94,16 @@ sub show {
                                        ));
 
     # permissions
-    my %admin_perms = Krang::Group->user_admin_permissions();
+    my %admin_perms = pkg('Group')->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $template->param(instance_name => $instance_name);
 
     # setup paging list of objects
-    my $pager = Krang::HTMLPager->new
+    my $pager = pkg('HTMLPager')->new
       (
        cgi_query   => $query,
        use_module  => 'Krang::Workspace',
@@ -194,7 +195,7 @@ sub deploy {
     my $query = $self->query;
     my $obj = _id2obj($query->param('id'));
     add_message('deployed', id => $obj->template_id);
-    my $publisher = Krang::Publisher->new();
+    my $publisher = pkg('Publisher')->new();
     $publisher->deploy_template(template => $obj);
     $obj->checkin;
     return $self->show;
@@ -412,11 +413,11 @@ sub _id2obj {
 
     my $obj;
     if ($type eq 'story') {
-        ($obj) = Krang::Story->find(story_id => $id);
+        ($obj) = pkg('Story')->find(story_id => $id);
     } elsif ($type eq 'media') {
-        ($obj) = Krang::Media->find(media_id => $id);
+        ($obj) = pkg('Media')->find(media_id => $id);
     } else {
-        ($obj) = Krang::Template->find(template_id => $id);
+        ($obj) = pkg('Template')->find(template_id => $id);
     }
     croak("Unable to load $type $id")
       unless $obj;

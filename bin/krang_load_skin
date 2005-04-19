@@ -55,13 +55,14 @@ END
 
 # use first instance if one isn't set.  Skins are installation wide
 # anyway.
-BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
+use Krang::ClassFactory qw(pkg);
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 use Krang::Script;
 
-use Krang::Conf qw(KrangRoot);
-use Krang::Skin;
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'Skin';
 
 die "Wrong number of arguements.\n\nUsage: $0 skin-name.\n"
   unless @ARGV == 1;
-Krang::Skin->new(name => $ARGV[0])->install();
+pkg('Skin')->new(name => $ARGV[0])->install();
 

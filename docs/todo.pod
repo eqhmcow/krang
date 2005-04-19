@@ -1,13 +1,13 @@
 =head1 Krang Todo List
 
 The following are bugfixes/enhancements in Krang that we're looking to
-address.  If there are more items that should go on the list, if you
+address.  If there are more items that should go on the list or if you
 want to help, let us know!
 
-=head2 HTML-Only Items
+=head2 HTML/Perl Items
 
-These issues are entirely in the UI, and can be addressed by
-knowlegable HTML people, without any interaction with perl code.
+These items are UI issues, but require changes to the underlying Perl
+code to make them happen.
 
 =over
 
@@ -35,15 +35,6 @@ No, will not save the changes and send you to the desired page.
 Cancel, will not save changes and you will remain on the same page
 
 =back
-
-=back
-
-=head2 HTML/Perl Items
-
-These items are UI issues, but require changes to the underlying Perl
-code to make them happen.
-
-=over
 
 =item New Template - Element Chooser (1.200?)
 
@@ -75,7 +66,7 @@ Mac is one example).
 
 There are a number of flaws in Krang's HTML/CSS that need to be
 corrected - some are template-based, others are in the HTML built by
-various perl modules (L<Krang::Pager> for one).
+various perl modules (L<Krang::HTMLPager> for one).
 
 The final goal would be a cleaner HTML/CSS implementation of the UI
 that would support more browsers and be easier to maintain and skin in
@@ -150,6 +141,9 @@ HREF[HTMLArea|http://www.dynarch.com/projects/htmlarea/] to give
 developers a limited (but configurable by element developers) set of
 HTML widgets for formatting.
 
+(Plus Three has a working HTMLArea prototype, but we're not planning
+to release it.  Instead we're planning to develop a replacement using
+a non-dead HTMLArea work-alike and use that.)
 
 =item FTP Publish (1.200?)
 
@@ -167,6 +161,30 @@ an arbitrary depth.
 The MD5 Salt should be built at install.  Care is needed to make sure
 this doesn't break existing installs on upgrade.
 
+=item Krang::DataSet isn't fully compatible with the new Add-On System
+
+In particular, creating a replacement for a class via the class.conf
+file won't cause Krang::DataSet to load data using that class.  This
+should be fixed.  Once this is done it would make sense to look for
+new schema's in addon schema/ directories.
+
+=item Krang::History isn't fully compatible with the new Add-On System
+
+Krang::History stores class names in the database which interacts in
+unfortunate ways with the new class overriding system.  The fix here
+isn't particularly clear but one is obviously needed.
+
+=item Add-on scripts should get #! handling
+
+Krang fixes the #! line on scripts in bin/ to point to the Perl used
+to install Krang.  Addons should get similar processing during
+install.
+
+=item Add-ons should be able to include their own platform/ files
+
+Add-ons may ship with requirements which need additional porting.  For
+this purpose add-ons should be able to have their own platform/
+modules which inherit from the ones in KRANG_ROOT/platform.
 
 =back
 
@@ -178,9 +196,9 @@ Everything Krang-related that's not part of the application itself.
 
 =item * The Website
 
-The current Krang website was put together in about 15 minutes,
-perhaps less.  It needs a redesign.  Getting rid of the IFrames would
-be a nice start.
+The current Krang website was put together in a couple days by a Perl
+progammer.  It needs a redesign.  Getting rid of the IFrames would be
+a nice start.
 
 A long-term goal would be the eat-your-own-dogfood goal - the site
 should be managed by Krang.  Two major components are needed:
@@ -199,6 +217,7 @@ site - the element library would need a good 'POD Article' story type.
 =back
 
 Publish-to-FTP functionality (see above) would also be helpful here.
+(Not really unless we switched hosts.  SF only supports SCP. -sam)
 
 =item * Documentation
 
@@ -208,4 +227,3 @@ to help them use the site.
 
 
 =back
-

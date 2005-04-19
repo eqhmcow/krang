@@ -84,6 +84,7 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 use File::Temp qw(tempdir);

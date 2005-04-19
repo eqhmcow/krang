@@ -1,5 +1,6 @@
 package Krang::Schedule::Daemon;
 
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -11,10 +12,10 @@ use Carp qw(croak);
 use Time::Piece;
 use Time::Seconds;
 
-use Krang::Conf qw(KrangRoot instance instances SchedulerMaxChildren);
-use Krang::Log qw/critical debug info reopen_log/;
-use Krang::Schedule;
-use Krang::DB qw(dbh forget_dbh);
+use Krang::ClassLoader Conf => qw(KrangRoot instance instances SchedulerMaxChildren);
+use Krang::ClassLoader Log => qw/critical debug info reopen_log/;
+use Krang::ClassLoader 'Schedule';
+use Krang::ClassLoader DB => qw(dbh forget_dbh);
 
 use Krang::Cache;
 
@@ -52,9 +53,9 @@ Krang::Schedule::Daemon - Module to handle scheduled tasks in Krang.
 
 =head1 SYNOPSIS
 
-  use Krang::Schedule::Daemon;
+  use Krang::ClassLoader 'Schedule::Daemon';
 
-  Krang::Schedule::Daemon->run();
+  pkg('Schedule::Daemon')->run();
 
 =head1 DESCRIPTION
 
@@ -146,12 +147,12 @@ sub run {
         # make sure there's nothing dead left out there.
         _reap_dead_children() if ($CHILD_COUNT);
 
-        foreach my $instance (Krang::Conf->instances) {            
+        foreach my $instance (pkg('Conf')->instances) {            
             # switch instance and reset REMOTE_USER to the system user
             # for this instance, needed for permissions checks
-            Krang::Conf->instance($instance);
+            pkg('Conf')->instance($instance);
             unless ($system_user{$instance}) {
-                ($system_user{$instance})= Krang::User->find(login => 'system',
+                ($system_user{$instance})= pkg('User')->find(login => 'system',
                                                              ids_only => 1);
             }
             $ENV{REMOTE_USER} = $system_user{$instance};
@@ -197,7 +198,7 @@ sub scheduler_pass {
 
 #    our $CHILD_COUNT;
 
-    my $instance = Krang::Conf->instance();
+    my $instance = pkg('Conf')->instance();
 
     # cleanup - make sure there's nothing dead left out there.
     _reap_dead_children() if ($CHILD_COUNT);
@@ -278,7 +279,7 @@ sub _child_work {
 
     my $tasks = shift;
 
-    my $instance = Krang::Conf->instance();
+    my $instance = pkg('Conf')->instance();
 
     # lose the parent's DB handle.
     forget_dbh();
@@ -329,7 +330,7 @@ sub _parent_work {
 
     my ($pid, $tasks) = @_;
 
-    my $instance = Krang::Conf->instance();
+    my $instance = pkg('Conf')->instance();
 
     # parent
     foreach my $t (@$tasks) {
@@ -467,7 +468,7 @@ sub _cull_running_jobs {
 
 #    our %assigned_jobs;
 
-    my $instance = Krang::Conf->instance();
+    my $instance = pkg('Conf')->instance();
 
     my @new_jobs;
 
@@ -493,7 +494,7 @@ sub _query_for_jobs {
 
     my @schedules;
 
-    @schedules = Krang::Schedule->find(
+    @schedules = pkg('Schedule')->find(
                                        next_run_less_than_or_equal => $now->mysql_datetime,
                                        order_by => 'priority'
                                       );

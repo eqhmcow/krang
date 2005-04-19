@@ -1,15 +1,15 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 use Test::More 'no_plan';
 
 # make sure it loads
-eval {require Krang::Log};
-is($@ eq '', 1, 'require successful.');
+BEGIN { use_ok(pkg('Log')) };
 
 # Import the module and all the functions
-use Krang::Log qw/affirm ASSERT assert should shouldnt debug info critical/;
+use Krang::ClassLoader Log => qw/affirm ASSERT assert should shouldnt debug info critical/;
 
 # test assertions if they're on
 if (ASSERT) {

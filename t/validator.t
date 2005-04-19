@@ -1,13 +1,14 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use Krang::Script;
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile catdir);
 
-use_ok('Krang::XML::Validator');
+use_ok(pkg('XML::Validator'));
 
-my $v = Krang::XML::Validator->new();
+my $v = pkg('XML::Validator')->new();
 isa_ok($v, 'Krang::XML::Validator');
 
 # create a valid site XML file

@@ -1,11 +1,12 @@
 package Krang::ElementClass::RadioGroup;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use Krang::ClassLoader base => 'ElementClass';
 use Carp qw(croak);
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( values labels ) ];
 
 sub new {
@@ -35,7 +36,7 @@ Krang::ElementClass::RadioGroup - radio group element class
 
 =head1 SYNOPSIS
 
-  $class = Krang::ElementClass::RadioGroup->new(name         => "alignment",
+  $class = pkg('ElementClass::RadioGroup')->new(name         => "alignment",
                      values       => [ 'center', 'left', 'right' ],
                      labels       => { center => "Center",
                                        left   => "Left",

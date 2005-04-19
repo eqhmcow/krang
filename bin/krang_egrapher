@@ -85,6 +85,7 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 my ($help, $man);
@@ -107,8 +108,8 @@ pod2usage(2) unless
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
 
-use Krang::Script;
-use Krang::ElementLibrary;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'ElementLibrary';
 use GraphViz;
 
 my $g = GraphViz->new(rankdir => ($direction eq 'down' ? 0 : 1),
@@ -122,10 +123,10 @@ my $g = GraphViz->new(rankdir => ($direction eq 'down' ? 0 : 1),
 
 our %EDGES;
 
-my @top_names = Krang::ElementLibrary->top_levels();
+my @top_names = pkg('ElementLibrary')->top_levels();
 @top_names = ($class_to_render) if $class_to_render;
 foreach my $top_name (@top_names) {
-    my $top = Krang::ElementLibrary->top_level(name => $top_name);
+    my $top = pkg('ElementLibrary')->top_level(name => $top_name);
     $g->add_node($top->name, 
                  shape => 'ellipse',
                  rank  => 'top_levels');

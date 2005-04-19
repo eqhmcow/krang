@@ -1,7 +1,8 @@
 package Krang::Contrib;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::DB qw(dbh);
+use Krang::ClassLoader DB => qw(dbh);
 use Carp qw(croak);
 
 # constants
@@ -9,12 +10,12 @@ use constant FIELDS => qw(contrib_id prefix first middle last suffix email phone
 
 =head1 NAME
 
-    Krang::Contrib - storage and retrieval of contributor data
+    pkg('Contrib') - storage and retrieval of contributor data
 
 =head1 SYNOPSIS
 
     # create new contributor object
-    my $contrib = Krang::Contrib->new(  prefix => 'Mr.',
+    my $contrib = pkg('Contrib')->new(  prefix => 'Mr.',
                                         first => 'Matthew',
                                         middle => 'Charles',
                                         last => 'Vella',
@@ -34,7 +35,7 @@ use constant FIELDS => qw(contrib_id prefix first middle last suffix email phone
     my $contrib_id = $contrib->contrib_id();
 
     # find this contributor by id
-    my @contribs = Krang::Contrib->find( contrib_id => $contrib_id );
+    my @contribs = pkg('Contrib')->find( contrib_id => $contrib_id );
 
     # list contributor type ids (will return 1,3)
     @contrib_type_ids = $contribs[0]->contrib_type_ids();
@@ -97,7 +98,7 @@ use Exception::Class (
                       'Krang::Contrib::DuplicateName' => { fields => [ 'contrib_id' ] },
                      );
   
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get_set       => [ qw( contrib_id prefix first middle last suffix email phone bio url )],
@@ -167,7 +168,7 @@ sub image {
     my $self  = shift;
     unless (@_) {
         if (exists($self->{media_id}) && defined($self->{media_id})) {
-            my ($image) = Krang::Media->find(media_id => $self->{media_id});
+            my ($image) = pkg('Media')->find(media_id => $self->{media_id});
             return $image;
         } else {
             return undef;
@@ -176,7 +177,7 @@ sub image {
 
     my $image = shift;
     unless ($image->isa('Krang::Media')) {
-        croak __PACKAGE__ . ": parameter is not a Krang::Media object";
+        croak __PACKAGE__ . ": parameter is not a pkg('Media') object";
     }
 
     $self->{media_id} = $image->media_id;
@@ -511,7 +512,7 @@ sub serialize_xml {
 
     # media
     if (exists($self->{media_id}) && defined($self->{media_id})) {
-        my ($media) = Krang::Media->find(media_id => $self->{media_id});
+        my ($media) = pkg('Media')->find(media_id => $self->{media_id});
         if (defined($media)) {
             $writer->dataElement(media_id => $self->{media_id});
             $set->add(object => $media, from => $self);
@@ -538,12 +539,12 @@ sub deserialize_xml {
     my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml, 
+    my $data = pkg('XML')->simple(xml           => $xml, 
                                   forcearray    => ['contrib_type'],
                                   suppressempty => 1);
 
     # create new contributor object
-    my $contrib = Krang::Contrib->new();
+    my $contrib = pkg('Contrib')->new();
 
     # set fields
     $contrib->$_($data->{$_}) for (grep { $_ ne 'contrib_id' && $_ ne 'media_id' } (FIELDS));
@@ -552,20 +553,20 @@ sub deserialize_xml {
     if (exists($data->{media_id})) {
         my $media_id = $set->map_id(class => "Krang::Media",
                                     id    => $data->{media_id});
-        my ($media) = Krang::Media->find(media_id => $media_id);
+        my ($media) = pkg('Media')->find(media_id => $media_id);
         $contrib->image($media);
     }
 
 
     # get hash of contrib type names to ids
-    my %contrib_types = reverse Krang::Pref->get('contrib_type');
+    my %contrib_types = reverse pkg('Pref')->get('contrib_type');
 
     # get ids for contrib types
     my @contrib_type_ids;
     foreach my $type (@{$data->{contrib_type}}) {
         unless (exists $contrib_types{$type}) {
             # create the missing contrib type
-            $contrib_types{$type} = Krang::Pref->add_option('contrib_type',
+            $contrib_types{$type} = pkg('Pref')->add_option('contrib_type',
                                                             $type);
         }
         push(@contrib_type_ids, $contrib_types{$type});

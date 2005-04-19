@@ -1,4 +1,5 @@
 package Krang::CGI::Login;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -22,12 +23,12 @@ None.
 =cut
 
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 use Digest::MD5 qw(md5_hex md5);
-use Krang::DB qw(dbh);
-use Krang::Session qw(%session);
-use Krang::User;
-use Krang::Conf qw(InstanceDisplayName);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader Conf => qw(InstanceDisplayName);
 
 # secret salt for creating login cookies
 our $SALT = <<END;
@@ -81,7 +82,7 @@ sub login {
              defined $password and length $password;
 
     # check username and password
-    my $user_id = Krang::User->check_auth($username, $password);
+    my $user_id = pkg('User')->check_auth($username, $password);
 
     # failure
     return $self->show_form(alert => "Invalid login.  Please check your user name and password and try again.")
@@ -92,8 +93,8 @@ sub login {
     # for tampering
     my $q = $self->query();
     my $session_id = (defined($ENV{KRANG_SESSION_ID})) ?
-      $ENV{KRANG_SESSION_ID} : Krang::Session->create();
-    my $instance   = Krang::Conf->instance();
+      $ENV{KRANG_SESSION_ID} : pkg('Session')->create();
+    my $instance   = pkg('Conf')->instance();
     my %filling    = ( user_id    => $user_id, 
                        session_id => $session_id,
                        instance   => $instance,
@@ -104,7 +105,7 @@ sub login {
     $ENV{REMOTE_USER}  = $user_id;
 
     # Unload the session if we've created it
-    Krang::Session->unload() unless (defined($ENV{KRANG_SESSION_ID}));
+    pkg('Session')->unload() unless (defined($ENV{KRANG_SESSION_ID}));
 
     # build the cookie
     my $cookie = $q->cookie(
@@ -127,11 +128,11 @@ sub logout {
     my $query    = $self->query();
 
     # delete the session
-    Krang::Session->delete($ENV{KRANG_SESSION_ID});
+    pkg('Session')->delete($ENV{KRANG_SESSION_ID});
 
     # build a poison cookie
     my $cookie = $query->cookie(
-                            -name   => Krang::Conf->instance,
+                            -name   => pkg('Conf')->instance,
                             -value  => "",
                             -expires=>'-90d',
                            );

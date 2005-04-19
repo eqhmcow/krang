@@ -154,6 +154,7 @@ END
 }
 
 # process command-line args.
+use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 
@@ -192,13 +193,13 @@ BEGIN {
 }
 
 # Krang Libs
-use Krang::Script;
-use Krang::Conf;
-use Krang::Story;
-use Krang::Media;
-use Krang::Category;
-use Krang::Template;
-use Krang::Site;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Site';
 
 # quick definition for numeric sorts
 sub bynumber { $a <=> $b }
@@ -209,7 +210,7 @@ my @delete_media_links;
 
 
 # find all sites in the instance.
-my @sites = Krang::Site->find();
+my @sites = pkg('Site')->find();
 
 
 # build a list of the sites that will remain.
@@ -251,7 +252,7 @@ my @checked_out_tmpls;
 if (@remaining_sites) {
     print "Removing dependencies from remaining sites...\n" if ($execute);
     foreach my $remaining_site_id (@remaining_sites) {
-        while (my @stories = Krang::Story->find(primary_site_id => $remaining_site_id,
+        while (my @stories = pkg('Story')->find(primary_site_id => $remaining_site_id,
                                                 limit   => $limit,
                                                 offset  => $offset)) {
             foreach my $s (@stories) {
@@ -329,12 +330,12 @@ if ($execute) {
 
         print sprintf("\nStarting deletion of '%s':\n", $expunged_sites{$site_id});
 
-        my ($root_cat) = Krang::Category->find(site_id => $site_id, dir => '/');
+        my ($root_cat) = pkg('Category')->find(site_id => $site_id, dir => '/');
 
         print "\tDeleting templates...";
 
         # search Krang::Template for all templates under the root category
-        foreach my $tmpl (Krang::Template->find(below_category_id => $root_cat->category_id)) {
+        foreach my $tmpl (pkg('Template')->find(below_category_id => $root_cat->category_id)) {
             print $tmpl->template_id . ',' if ($verbose);
             eval { $tmpl->delete(); };
             delete_error(object => $tmpl, error => $@) if $@;
@@ -345,7 +346,7 @@ if ($execute) {
 
         print "\tDeleting media...";
         $offset = 0;
-        foreach my $m (Krang::Media->find(site_id => $site_id)) {
+        foreach my $m (pkg('Media')->find(site_id => $site_id)) {
             print $m->media_id . ',' if ($verbose);
             eval { $m->delete(); };
             delete_error(object => $m, error => $@) if $@;
@@ -357,7 +358,7 @@ if ($execute) {
 
         print "\tDeleting stories...";
 
-        foreach my $s (Krang::Story->find(primary_site_id => $site_id)) {
+        foreach my $s (pkg('Story')->find(primary_site_id => $site_id)) {
             print $s->story_id . ',' if ($verbose);
             eval { $s->delete(); };
             delete_error(object => $s, error => $@) if $@;
@@ -367,7 +368,7 @@ if ($execute) {
         print "\t$count deleted.\n";
 
 
-        my ($site) = Krang::Site->find(site_id => $site_id);
+        my ($site) = pkg('Site')->find(site_id => $site_id);
 
         print "\tDeleting categories...";
 
@@ -388,13 +389,13 @@ if ($execute) {
         # Krang::Template cannot be searched by site, only by a list of categories.
         my $site_cats = all_cats(site => $site_id);
 
-        push @checked_out_stories, Krang::Story->find(site_id     => $site_id,
+        push @checked_out_stories, pkg('Story')->find(site_id     => $site_id,
                                                       checked_out => 1,
                                                       ids_only    => 1);
-        push @checked_out_media, Krang::Media->find(site_id     => $site_id,
+        push @checked_out_media, pkg('Media')->find(site_id     => $site_id,
                                                     checked_out => 1,
                                                     ids_only    => 1);
-        push @checked_out_tmpls, Krang::Template->find(category_id => $site_cats,
+        push @checked_out_tmpls, pkg('Template')->find(category_id => $site_cats,
                                                        checked_out => 1,
                                                        ids_only    => 1);
     }
@@ -443,7 +444,7 @@ sub all_cats {
 
     my @cats;
 
-    foreach my $cat (Krang::Category->find(site_id => $site_id)) {
+    foreach my $cat (pkg('Category')->find(site_id => $site_id)) {
         push @cats, $cat->category_id;
     }
 

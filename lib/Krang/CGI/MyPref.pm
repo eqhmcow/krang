@@ -1,13 +1,14 @@
 package Krang::CGI::MyPref;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
 use Carp qw(croak);
-use Krang::MyPref;
-use Krang::User;
-use Krang::Message qw(add_message);
-use Krang::Session qw(%session);
+use Krang::ClassLoader 'MyPref';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Session => qw(%session);
 
 =head1 NAME
 
@@ -16,8 +17,8 @@ Krang::CGI::MyPref - interface to edit Krang user preferences
 
 =head1 SYNOPSIS
   
-  use Krang::CGI::MyPref;
-  my $app = Krang::CGI::MyPref->new();
+  use Krang::ClassLoader 'CGI::MyPref';
+  my $app = pkg('CGI::MyPref')->new();
   $app->run();
 
 =head1 DESCRIPTION
@@ -63,7 +64,7 @@ sub edit {
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
     $template->param( $error => 1 ) if $error;
     
-    my $set_sps = Krang::MyPref->get('search_page_size');
+    my $set_sps = pkg('MyPref')->get('search_page_size');
 
     $template->param(search_results_selector => scalar
                       $q->popup_menu(-name    => 'search_results_page',
@@ -83,10 +84,10 @@ sub update_prefs {
     my $self = shift;
     my $q = $self->query();
 
-    my $set_sps = Krang::MyPref->get('search_page_size');
+    my $set_sps = pkg('MyPref')->get('search_page_size');
     if ($set_sps ne  $q->param('search_results_page')) {
         # update search_page_size
-        Krang::MyPref->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size");
+        pkg('MyPref')->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size");
     } 
 
     if (my $pass = $q->param('new_password')) {
@@ -94,7 +95,7 @@ sub update_prefs {
         if (length $pass < 6) { add_message('error_password_length'); }
         else {
             my $user_id = $ENV{REMOTE_USER};
-            my $user = (Krang::User->find( user_id => $user_id ))[0];
+            my $user = (pkg('User')->find( user_id => $user_id ))[0];
             $user->password($q->param('new_password'));
             $user->save;
             add_message("changed_password");

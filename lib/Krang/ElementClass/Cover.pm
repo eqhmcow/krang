@@ -1,8 +1,9 @@
 package Krang::ElementClass::Cover;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass::TopLevel';
+use Krang::ClassLoader base => 'ElementClass::TopLevel';
 
 sub build_url {
     my ($self, %arg) = @_;

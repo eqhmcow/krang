@@ -1,22 +1,23 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use File::Path;
 use File::Spec::Functions;
 
-use Krang::Script;
-use Krang::Conf qw(KrangRoot instance InstanceElementSet);
-use Krang::Site;
-use Krang::Category;
-use Krang::Media;
-use Krang::Contrib;
-use Krang::Story;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet);
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader 'Story';
 
 
 BEGIN {
     # use the TestSet1 instance, if there is one
-    foreach my $instance (Krang::Conf->instances) {
-        Krang::Conf->instance($instance);
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
         if (InstanceElementSet eq 'TestSet1') {
             last;
         }
@@ -30,9 +31,9 @@ BEGIN {
 }
 
 
-use_ok('Krang::Test::Content');
+use_ok(pkg('Test::Content'));
 
-my $creator = new Krang::Test::Content;
+my $creator = pkg('Test::Content')->new;
 isa_ok($creator, 'Krang::Test::Content');
 
 can_ok($creator, ('create_site', 'create_category', 'create_media', 
@@ -75,7 +76,7 @@ $category = $creator->create_category();
 
 isa_ok($category, 'Krang::Category');
 
-my ($root) = Krang::Category->find(site_id => $site->site_id);
+my ($root) = pkg('Category')->find(site_id => $site->site_id);
 
 $category = $creator->create_category(dir    => 'poodles',
                                       parent => $root->category_id,
@@ -270,9 +271,9 @@ if ($@) {
     }
 
     # use find() as well.
-    my ($s) = Krang::Story->find(story_id => $story_id);
+    my ($s) = pkg('Story')->find(story_id => $story_id);
     if (defined($s)) {
-        diag("delete_item() did not delete the story -- found by Krang::Story->find().");
+        diag("delete_item() did not delete the story -- found by pkg('Story')->find().");
         fail('delete_item()');
     } else {
         pass('delete_item()');
@@ -355,27 +356,27 @@ if ($@) {
     diag("make db may be required to clean things up.");
     fail('cleanup');
 } else {
-    my ($tmpsite) = Krang::Site->find(site_id => [$site_id]);
-    ok(!defined($tmpsite), 'cleanup() - Krang::Site');
-    my ($tmpcat) = Krang::Category->find(category_id => [$cat_id]);
-    ok(!defined($tmpcat), 'cleanup() - Krang::Category');
+    my ($tmpsite) = pkg('Site')->find(site_id => [$site_id]);
+    ok(!defined($tmpsite), 'cleanup() - pkg(Site)');
+    my ($tmpcat) = pkg('Category')->find(category_id => [$cat_id]);
+    ok(!defined($tmpcat), 'cleanup() - pkg(Category)');
 
-    my @mediafiles = Krang::Media->find(media_id => \@media_ids);
+    my @mediafiles = pkg('Media')->find(media_id => \@media_ids);
     is($#mediafiles, -1, 'cleanup() - Krang::Media');
 
-    my @contribfiles = Krang::Contrib->find(contrib_id => \@contrib_ids);
+    my @contribfiles = pkg('Contrib')->find(contrib_id => \@contrib_ids);
     is($#contribfiles, -1, 'cleanup() - Krang::Contrib');
 
-    my @storyfiles = Krang::Story->find(story_id => \@story_ids);
+    my @storyfiles = pkg('Story')->find(story_id => \@story_ids);
     is($#storyfiles, -1, 'cleanup() - Krang::Story');
 
-    my @tmplfiles = Krang::Template->find(template_id => \@template_ids);
+    my @tmplfiles = pkg('Template')->find(template_id => \@template_ids);
     is($#tmplfiles, -1, 'cleanup() - Krang::Template');
 
-    my @catfiles = Krang::Category->find(category_id => \@category_ids);
+    my @catfiles = pkg('Category')->find(category_id => \@category_ids);
     is($#catfiles, -1, 'cleanup() - Krang::Category');
 
-    my @users = Krang::User->find(user_id => \@user_ids);
+    my @users = pkg('User')->find(user_id => \@user_ids);
     is($#users, -1, 'cleanup() - Krang::User');
 
     # make sure all live templates are where they should be.

@@ -1,10 +1,11 @@
 package Krang::ElementClass::Text;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use Krang::ClassLoader base => 'ElementClass';
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( size maxlength ) ];
 
 sub new {
@@ -36,7 +37,7 @@ Krang::ElementClass::Text - text element class
 
 =head1 SYNOPSIS
 
-  $class = Krang::ElementClass::Text->new(name         => "header",
+  $class = pkg('ElementClass::Text')->new(name         => "header",
                                           maxlength    => 0,
                                           size         => 30);
 

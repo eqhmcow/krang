@@ -1,3 +1,4 @@
 #!/usr/bin/perl -w
-use Krang::CGI::Nav;
-Krang::CGI::Nav->new()->run();
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'CGI::Nav';
+pkg('CGI::Nav')->new()->run();

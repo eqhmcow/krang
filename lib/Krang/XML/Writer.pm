@@ -1,4 +1,5 @@
 package Krang::XML::Writer;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 use base 'XML::Writer';
@@ -10,8 +11,8 @@ Krang::XML::Writer - XML::Writer sub-class with auto Base64 encoding
 
 =head1 SYNOPSIS
 
-  use Krang::XML::Writer;
-  my $writer = Krang::XML::Writer->new();
+  use Krang::ClassLoader 'XML::Writer';
+  my $writer = pkg('XML::Writer')->new();
   # ... same as XML::Writer
 
 =head1 DESCRIPTION

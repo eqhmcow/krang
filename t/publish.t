@@ -1,19 +1,20 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use File::Spec::Functions;
 use File::Path;
-use Krang::Contrib;
-use Krang::Pref;
-use Krang::Conf qw(KrangRoot instance InstanceElementSet);
-use Krang::Site;
-use Krang::Category;
-use Krang::Story;
-use Krang::Element;
-use Krang::Template;
-use Krang::Script;
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet);
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Element';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Script';
 
-use Krang::Test::Content;
+use Krang::ClassLoader 'Test::Content';
 
 use Data::Dumper;
 
@@ -22,8 +23,8 @@ use Data::Dumper;
 # skip all tests unless a TestSet1-using instance is available
 BEGIN {
     my $found;
-    foreach my $instance (Krang::Conf->instances) {
-        Krang::Conf->instance($instance);
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
         if (InstanceElementSet eq 'TestSet1') {
             $found = 1;
             last;
@@ -39,7 +40,7 @@ BEGIN {
 }
 
 # instantiate publisher
-use_ok('Krang::Publisher');
+use_ok(pkg('Publisher'));
 
 ############################################################
 # PRESETS
@@ -68,19 +69,19 @@ my $story_title = 'Test Title';
 
 my $pagination1 = '<P>Page number 1 of 1.</p>';
 
-my $page_break = Krang::Publisher->page_break();
+my $page_break = pkg('Publisher')->page_break();
 
 my $category1_head = 'THIS IS HEADS' . $category1 . '---';
 my $category1_tail = '---' . $category1 . 'THIS IS TAILS';
-my $category1_output = $category1_head . Krang::Publisher->content() . $category1_tail;
+my $category1_output = $category1_head . pkg('Publisher')->content() . $category1_tail;
 
 my $category2_head = 'THIS IS HEADS' . $category2 . '---';
 my $category2_tail = '---' . $category2 . 'THIS IS TAILS';
-my $category2_output = $category2_head . Krang::Publisher->content() . $category2_tail;
+my $category2_output = $category2_head . pkg('Publisher')->content() . $category2_tail;
 
 my $category3_head = 'THIS IS HEADS' . $category3 . '---';
 my $category3_tail = '---' . $category3 . 'THIS IS TAILS';
-my $category3_output = $category3_head . Krang::Publisher->content() . $category3_tail;
+my $category3_output = $category3_head . pkg('Publisher')->content() . $category3_tail;
 
 my %article_output = (3 => $category3_head .  "<title>$story_title</title>" . $page_output . $pagination1 . '1' . $category3_tail,
                       2 => $category2_head .  "<title>$story_title</title>" . $page_output . $pagination1 . '1' . $category2_tail,
@@ -99,7 +100,7 @@ my %slug_id_list;
 
 my @non_test_deployed_templates = ();
 
-my $publisher = new Krang::Publisher ();
+my $publisher = pkg('Publisher')->new();
 
 isa_ok($publisher, 'Krang::Publisher');
 
@@ -113,7 +114,7 @@ can_ok($publisher, ('publish_story', 'preview_story', 'unpublish_story',
 ############################################################
 # remove all currently deployed templates from the system
 #
-@non_test_deployed_templates = Krang::Template->find(deployed => 1);
+@non_test_deployed_templates = pkg('Template')->find(deployed => 1);
 
 foreach (@non_test_deployed_templates) {
     &test_undeploy_template($_);
@@ -128,7 +129,7 @@ END {
 
 ############################################################
 
-my $creator = Krang::Test::Content->new;
+my $creator = pkg('Test::Content')->new;
 
 
 # create a site and category for dummy story
@@ -146,7 +147,7 @@ END {
 }
 
 
-my ($category) = Krang::Category->find(site_id => $site->site_id());
+my ($category) = pkg('Category')->find(site_id => $site->site_id());
 $category->element()->data($category1);
 $category->save();
 
@@ -166,7 +167,7 @@ my $child_subcat = $creator->create_category(dir    => 'testdir_b',
 # testing template seach path.
 
 # Directory structures for template paths.
-my @rootdirs = (KrangRoot, 'data', 'templates', Krang::Conf->instance());
+my @rootdirs = (KrangRoot, 'data', 'templates', pkg('Conf')->instance());
 
 my @dirs_a = (
               File::Spec->catfile(@rootdirs, $site->url(), 'testdir_a', 'testdir_b'),
@@ -292,7 +293,7 @@ sub test_contributors {
     my @categories = ($cat);
 
     my %contributor = build_contrib_hash();
-    my %contrib_types = Krang::Pref->get('contrib_type');
+    my %contrib_types = pkg('Pref')->get('contrib_type');
 
     $publisher->_set_publish_mode();
 
@@ -532,7 +533,7 @@ sub test_publish_category_per_page {
 sub test_publish_status {
 
     my $story = $creator->create_story(category => [$category]);
-    my $pub   = Krang::Publisher->new();
+    my $pub   = pkg('Publisher')->new();
 
     # need to create filesystem paths to handle FS checks.
     my @pub_paths = build_publish_paths($story);
@@ -642,7 +643,7 @@ sub test_publish_status {
 
 sub test_linked_assets {
 
-    my $publisher = Krang::Publisher->new();
+    my $publisher = pkg('Publisher')->new();
 
     # touch filesystem locations to simulate publishing story.
     my @paths;
@@ -1365,7 +1366,7 @@ sub deploy_test_templates {
         my $content = <TMPL>;
         close TMPL;
 
-        $template = Krang::Template->new(
+        $template = pkg('Template')->new(
                                          content => $content,
                                          filename => "$element_name.tmpl",
                                          category => $category

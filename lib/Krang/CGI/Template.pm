@@ -6,8 +6,8 @@ Krang::CGI::Template - Module what manages templates
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Template;
-  my $app = Krang::CGI::Template->new();
+  use Krang::ClassLoader 'CGI::Template';
+  my $app = pkg('CGI::Template')->new();
   $app->run();
 
 
@@ -19,21 +19,22 @@ may search for, view, edit, and create templates.
 =cut
 
 
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use base qw/Krang::CGI/;
+use Krang::ClassLoader base => qw/CGI/;
 
 use Carp qw(verbose croak);
 
-use Krang::History;
-use Krang::HTMLPager;
-use Krang::Log qw/critical debug info/;
-use Krang::Message qw/add_message/;
-use Krang::Pref;
-use Krang::Session qw/%session/;
-use Krang::Template;
-use Krang::Widget qw/format_url category_chooser/;
-use Krang::Publisher;
+use Krang::ClassLoader 'History';
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader Log => qw/critical debug info/;
+use Krang::ClassLoader Message => qw/add_message/;
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader Session => qw/%session/;
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader Widget => qw/format_url category_chooser/;
+use Krang::ClassLoader 'Publisher';
 
 use constant WORKSPACE_URI => 'workspace.pl';
 
@@ -125,7 +126,7 @@ sub add {
     if ($q->param('errors')) {
         $template = $session{template};
     } else {
-        $template = Krang::Template->new();
+        $template = pkg('Template')->new();
     }
 
     # add template to session
@@ -351,7 +352,7 @@ sub advanced_search {
 
     # Set up element select
     my @element_loop;
-    for (Krang::ElementLibrary->element_names()) {
+    for (pkg('ElementLibrary')->element_names()) {
         my $selected = $search_element eq $_ ? 1 : 0;
         push @element_loop, {name => $_, selected => $selected, value => $_};
     }
@@ -382,7 +383,7 @@ sub checkin_selected {
     $q->delete('krang_pager_rows_checked');
 
     foreach my $template_id (@template_checkin_list) {
-         my ($m) = Krang::Template->find(template_id=>$template_id);
+         my ($m) = pkg('Template')->find(template_id=>$template_id);
          $m->checkin();
      }
 
@@ -408,7 +409,7 @@ sub checkout_and_edit {
     my $template_id = $q->param('template_id');
     croak("Missing required template_id parameter.") unless $template_id;
 
-    my ($t) = Krang::Template->find(template_id=>$template_id);
+    my ($t) = pkg('Template')->find(template_id=>$template_id);
     croak("Unable to load template_id '$template_id'") unless $t;
 
     $t->checkout;
@@ -431,7 +432,7 @@ sub delete {
     my $q = $self->query();
     my $template_id = $q->param('template_id');
 
-    eval {Krang::Template->delete($template_id)};
+    eval {pkg('Template')->delete($template_id)};
     if ($@){
         if (ref $@ && $@->isa('Krang::Template::Checkout')) {
             critical("Unable to delete template id '$template_id': $@");
@@ -472,7 +473,7 @@ sub delete_selected {
     my @bad_ids;
     for my $t(@template_ids) {
         debug(__PACKAGE__ . ": attempting to delete template id '$t'.");
-        eval {Krang::Template->delete($t);};
+        eval {pkg('Template')->delete($t);};
         if ($@) {
             if (ref $@ && $@->isa('Krang::Template::Checkout')) {
                 critical("Unable to delete template id '$t': $@");
@@ -526,7 +527,7 @@ sub deploy {
 
     add_message('message_saved');
 
-    my $publisher = Krang::Publisher->new();
+    my $publisher = pkg('Publisher')->new();
     $publisher->deploy_template(template => $obj);
     $obj->checkin;
 
@@ -555,7 +556,7 @@ sub deploy_selected {
     return $self->search unless @template_ids;
 
     for my $t(@template_ids) {
-        my $template = (Krang::Template->find( template_id => $t ))[0];
+        my $template = (pkg('Template')->find( template_id => $t ))[0];
         $template->deploy;
         add_message('deployed', id => $template->template_id);
     }
@@ -582,7 +583,7 @@ sub edit {
     my $template = $session{template};
 
     if ($template_id) {
-        ($template) = Krang::Template->find(template_id => $template_id);
+        ($template) = pkg('Template')->find(template_id => $template_id);
         $session{template} = $template;
     }
     croak("No template object.") unless ref $template;
@@ -863,7 +864,7 @@ sub view {
         $find{version} = $version;
         $t->param(is_old_version => 1);
     }
-    my ($template) = Krang::Template->find(%find);
+    my ($template) = pkg('Template')->find(%find);
     croak("Can't find template with template_id '$template_id'.")
       unless ref $template;
 
@@ -917,7 +918,7 @@ sub list_active {
     # FIX: this should look at user permissions
     my $may_checkin_all = 1;
 
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
        persist_vars => \%persist_vars,
        use_module => 'Krang::Template',
@@ -972,8 +973,8 @@ sub get_tmpl_params {
     $version = $template->version;
 
     if ($q->param('add_mode')) {
-        my @values = (' ', Krang::ElementLibrary->element_names);
-        my %labels = map {$_, $_} Krang::ElementLibrary->element_names;
+        my @values = (' ', pkg('ElementLibrary')->element_names);
+        my %labels = map {$_, $_} pkg('ElementLibrary')->element_names;
         my $default = '';
         $tmpl_params{element_chooser} = $q->popup_menu(-name =>
                                                        'element_class_name',
@@ -1081,7 +1082,7 @@ sub make_pager {
                         );
 
     my $q = $self->query();
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => $persist_vars,
                                       use_module => 'Krang::Template',
@@ -1206,7 +1207,7 @@ sub _save {
             return (duplicate_url => 1);
         } elsif (ref($@) && $@->isa('Krang::Template::NoCategoryEditAccess')) {
             my $category_id = $@->category_id;
-            my ($category) = Krang::Category->find(category_id=>$category_id);
+            my ($category) = pkg('Category')->find(category_id=>$category_id);
             croak ("Can't load category_id '$category_id'")
               unless (ref($category));
             add_message('error_no_category_access',
@@ -1247,7 +1248,7 @@ sub list_active_row_handler {
       $template->template_id . ')">View</a>';
 
     # user
-    my ($user) = Krang::User->find(user_id => $template->checked_out_by);
+    my ($user) = pkg('User')->find(user_id => $template->checked_out_by);
     $row->{user} = $user->first_name . " " . $user->last_name;
 }
 

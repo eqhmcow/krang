@@ -1,7 +1,10 @@
 package Krang::CGI;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
+# pull in Krang::lib when not running in mod_perl
+BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
 
 =head1 NAME
 
@@ -37,20 +40,20 @@ See L<CGI::Application>.
 
 use base 'CGI::Application';
 
-use Krang::ErrorHandler;
+use Krang::ClassLoader 'ErrorHandler';
 use Data::Dumper ();
 
-use Krang::Conf qw(KrangRoot InstanceDisplayName);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceDisplayName);
 use File::Spec::Functions qw(catdir rel2abs);
-use Krang::CGI::Status;
-use Krang::CGI::ElementEditor;
-use Krang::CGI::Login;
-use Krang::Log qw(critical info debug);
-use Krang::User;
-use Krang::HTMLTemplate;
+use Krang::ClassLoader 'CGI::Status';
+use Krang::ClassLoader 'CGI::ElementEditor';
+use Krang::ClassLoader 'CGI::Login';
+use Krang::ClassLoader Log => qw(critical info debug);
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'HTMLTemplate';
 
 # Krang sessions
-use Krang::Session qw/%session/;
+use Krang::ClassLoader Session => qw/%session/;
 
 # set this to one to see HTML errors in a popup in the UI
 use constant HTMLLint => 0;
@@ -61,9 +64,9 @@ BEGIN {
     # Krang::CGI::ElementEditor
     unless($ENV{MOD_PERL}) {
         my $instance = exists $ENV{KRANG_INSTANCE} ?
-          $ENV{KRANG_INSTANCE} : (Krang::Conf->instances())[0];
+          $ENV{KRANG_INSTANCE} : (pkg('Conf')->instances())[0];
         debug("Krang::CGI:  Setting instance to '$instance'");
-        Krang::Conf->instance($instance);
+        pkg('Conf')->instance($instance);
     }
 }
 
@@ -85,11 +88,11 @@ sub load_tmpl {
                 last;
             }
         }
-        use Krang::Log qw(debug);
+        use Krang::ClassLoader Log => qw(debug);
         push(@extra_params, path => [ $tmpl_path ]) unless $found;
     }
     
-    my $t = Krang::HTMLTemplate->new_file($tmpl_file, @extra_params);
+    my $t = pkg('HTMLTemplate')->new_file($tmpl_file, @extra_params);
     return $t;
 }
 
@@ -102,7 +105,7 @@ sub run {
     if (my $session_id = $ENV{KRANG_SESSION_ID}) {
         # Load session if we're in CGI_MODE and we have a KRANG_SESSION_ID
         debug("Krang::CGI:  Loading Session '$session_id'");
-        Krang::Session->load($session_id);
+        pkg('Session')->load($session_id);
         $we_loaded_session++;
     }
 
@@ -114,9 +117,9 @@ sub run {
     eval { $output = $self->SUPER::run(@args); };
     if (my $err = $@) {
         debug("Krang::CGI:  UN-Loading Session after error");
-        Krang::Session->unload();
+        pkg('Session')->unload();
         die $@;
-    }        
+    }
 
 
     # In debug mode append dump_html()
@@ -130,7 +133,7 @@ sub run {
     # Unload session if we loaded it
     if ($we_loaded_session) {
         debug("Krang::CGI:  UN-Loading Session");
-        Krang::Session->unload();
+        pkg('Session')->unload();
     }
 
     return $output;

@@ -1,4 +1,5 @@
 package Krang::DataSet;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -9,20 +10,27 @@ use File::Spec::Functions qw(catdir catfile splitpath
                              file_name_is_absolute rel2abs);
 use File::Copy qw(copy);
 use File::Find qw(find);
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use Archive::Tar;
 use Cwd qw(fastcwd);
-use Krang::Log qw(debug assert ASSERT);
+use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Carp qw(croak);
-use Krang::XML;
+use Krang::ClassLoader 'XML';
 use Krang;
-use Krang::Contrib;
-use Krang::Story;
-use Krang::Template;
-use Krang::Media;
-use Krang::Category;
-use Krang::Site;
-use Krang::XML::Validator;
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'XML::Validator';
+use List::Util qw(first);
+
+# list of supported classes
+our @CLASSES = (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site 
+                   Krang::Category Krang::Alert Krang::Group Krang::Media 
+                   Krang::Template Krang::Story Krang::Schedule 
+                   Krang::ListGroup Krang::List Krang::ListItem ));
 
 # setup exceptions
 use Exception::Class 
@@ -52,7 +60,7 @@ Krang::DataSet - Krang interface to XML data sets
 Creating data sets:
 
   # create a new data set
-  my $set = Krang::DataSet->new();
+  my $set = pkg('DataSet')->new();
 
   # add an objects to it
   $set->add(object => $story);
@@ -69,7 +77,7 @@ Creating data sets:
 Loading data sets:
 
   # load a data set from a file on disk
-  my $set = Krang::DataSet->new(path => "foo.kds");
+  my $set = pkg('DataSet')->new(path => "foo.kds");
 
   # get a list of objects in the set
   my @objects = $set->list();
@@ -179,7 +187,7 @@ sub _validate {
     my $self = shift;
     local $_;
 
-    my $validator = Krang::XML::Validator->new();
+    my $validator = pkg('XML::Validator')->new();
 
     # switch into directory with XML
     my $old_dir = fastcwd;
@@ -209,7 +217,7 @@ sub _validate_file {
     my $self = shift;
     my $path = shift;
 
-    my $validator = Krang::XML::Validator->new();
+    my $validator = pkg('XML::Validator')->new();
 
     my ($ok, $err) = $validator->validate(path => $path);
 
@@ -268,7 +276,7 @@ sub add {
         # register mapping before calling serialize_xml to break cycles
         $self->{objects}{$class}{$id}{xml} = $file;
         
-        my $writer = Krang::XML->writer(fh => $fh);
+        my $writer = pkg('XML')->writer(fh => $fh);
         $writer->xmlDecl();
         $object->serialize_xml(writer => $writer, set => $self);
         $writer->end();
@@ -296,7 +304,7 @@ sub add {
 
 sub _obj2id {
     my $object = shift;
-    my $class = ref $object;
+    my $class = first { $object->isa($_) } @CLASSES;
     my ($id_name) = $class =~ /^Krang::(.*)$/;
     $id_name = lc($id_name) . "_id";
     $id_name = 'list_item_id' if ($id_name eq 'listitem_id');
@@ -412,7 +420,7 @@ sub _write_index {
 
     open(my $fh, '>','index.xml') or
       croak("Unable to open index.xml: $!");
-    my $writer = Krang::XML->writer(fh => $fh);
+    my $writer = pkg('XML')->writer(fh => $fh);
 
     # open up index document
     $writer->xmlDecl();
@@ -456,7 +464,7 @@ sub _load_index {
     close $index or die $!;
   
     # parse'm up
-    my $data = Krang::XML->simple(xml => $xml, forcearray => 1);
+    my $data = pkg('XML')->simple(xml => $xml, forcearray => 1);
     my %index;
     foreach my $class_rec (@{$data->{class}}) {
         my $class = $class_rec->{name};
@@ -550,8 +558,7 @@ sub import_all {
     my @failed;
 
     # process classes in an order least likely to cause backrefs
-    foreach my $class (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site Krang::Category Krang::Alert
-                          Krang::Group Krang::Media Krang::Template Krang::Story Krang::Schedule Krang::ListGroup Krang::List Krang::ListItem )) {
+    foreach my $class (@CLASSES) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};

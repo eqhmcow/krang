@@ -7,7 +7,7 @@ Krang::Template - Interface for managing template objects
 =head1 SYNOPSIS
 
  # create a new template
- my $template = Krang::Template->new(category    => $category,
+ my $template = pkg('Template')->new(category    => $category,
 				     content     => '<tmpl_var test>',
                                      filename    => 'test.tmpl');
 
@@ -49,7 +49,7 @@ Krang::Template - Interface for managing template objects
  $template->delete();
 
  # returns array of template objects matching criteria in %params
- my @templates = Krang::Template->find( %params );
+ my @templates = pkg('Template')->find( %params );
 
  # Get permissions for this object
  $template->may_see() || croak("Not allowed to see");
@@ -75,6 +75,7 @@ Krang::Burner, the FTP interface, and the SOAP interface.
 
 # Pragmas
 ##########
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -93,13 +94,13 @@ use Time::Piece::MySQL;
 
 # Internal Module Depenedencies
 ################################
-use Krang::Category;
-use Krang::DB qw(dbh);
-use Krang::History qw(add_history);
-use Krang::Session qw(%session);
-use Krang::Site;
-use Krang::Log qw(debug);
-use Krang::Publisher;
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader History => qw(add_history);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader 'Publisher';
 
 #
 # Package Variables
@@ -140,7 +141,7 @@ my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW;
 # Interal Module Dependecies (con't)
 ####################################
 # had to define constants before we could use them
-use Krang::MethodMaker 	new_with_init => 'new',
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
   			new_hash_init => 'hash_init',
   			get => [TEMPLATE_RO, qw( may_see
                                                  may_edit )],
@@ -176,7 +177,7 @@ don't).
 sub category {
     my $self = shift;
     return undef unless $self->{category_id};
-    my ($cat) = Krang::Category->find(category_id => $self->{category_id});
+    my ($cat) = pkg('Category')->find(category_id => $self->{category_id});
     return $cat;
 }
 
@@ -254,7 +255,7 @@ A reference to the Krang::Site object with which this object is associated.
 sub site {
     my $self = shift;
     my $cat_id = $self->{category_id};
-    my ($cat) = Krang::Category->find(category_id => $cat_id);
+    my ($cat) = pkg('Category')->find(category_id => $cat_id);
     return $cat->site();
 }
 
@@ -324,7 +325,7 @@ sub checkin {
     my $dbh = dbh();
 
     # get object if we don't have it
-    ($self) = Krang::Template->find(template_id => $id) unless ref $self;
+    ($self) = pkg('Template')->find(template_id => $id) unless ref $self;
 
     # Throw exception unless we have edit access
     Krang::Template::NoEditAccess->throw( message=>"Not allowed to check in this template", template_id=>$id )
@@ -371,7 +372,7 @@ sub checkout {
     my $user_id = $ENV{REMOTE_USER};
 
     # make sure we actually have an object
-    ($self) = Krang::Template->find(template_id => $id) unless ref $self;
+    ($self) = pkg('Template')->find(template_id => $id) unless ref $self;
 
     # Throw exception unless we have edit access
     Krang::Template::NoEditAccess->throw( message=>"Not allowed to check out this template", template_id=>$id )
@@ -442,7 +443,7 @@ sub delete {
     my $id = shift || $self->{template_id};
 
     # checkout the template
-    ($self) = Krang::Template->find(template_id => $id) unless ref $self;
+    ($self) = pkg('Template')->find(template_id => $id) unless ref $self;
 
     # Throw exception unless we have edit access
     Krang::Template::NoEditAccess->throw( message=>"Not allowed to delete this template", template_id=>$id )
@@ -453,12 +454,12 @@ sub delete {
 
     # if the template has been deployed, undeploy it.
     if ($self->{deployed}) {
-        my $publisher = Krang::Publisher->new();
+        my $publisher = pkg('Publisher')->new();
         $publisher->undeploy_template(template => $self);
     }
 
     # first delete history for this object
-    Krang::History->delete(object => $self);
+    pkg('History')->delete(object => $self);
 
     my $t_query = "DELETE FROM template WHERE template_id = ?";
     my $v_query = "DELETE FROM template_version WHERE template_id = ?";
@@ -478,7 +479,7 @@ Convenience method to Krang::Publisher, deploys template.
 
 sub deploy {
     my $self = shift;
-    my $publisher = new Krang::Publisher();
+    my $publisher = pkg('Publisher')->new();
 
     $publisher->deploy_template(
                               template => $self
@@ -740,7 +741,7 @@ sub find {
         } elsif ($arg eq 'below_category_id') {
             $where_clause = "c.category_id = ? AND " .
               "t.url LIKE ?" . ($where_clause ? " AND $where_clause" : '');
-            my ($cat) = Krang::Category->find(category_id => $args{$arg});
+            my ($cat) = pkg('Category')->find(category_id => $args{$arg});
             unshift @params, $cat->url . "%";
             unshift @params, $args{$arg};
         } elsif ($arg eq 'simple_search') {
@@ -780,7 +781,7 @@ sub find {
           join("', '", @invalid_cols) . "'") if @invalid_cols;
 
     # Get user asset permissions -- overrides may_edit if false
-    my $template_access = Krang::Group->user_asset_permissions('template');
+    my $template_access = pkg('Group')->user_asset_permissions('template');
 
     my $dbh = dbh();
 
@@ -1077,7 +1078,7 @@ sub save {
     # calculate url
     my $url = "";
     if ($self->{category_id}) {
-        my ($cat) = Krang::Category->find(category_id => $self->{category_id});
+        my ($cat) = pkg('Category')->find(category_id => $self->{category_id});
 
         # Throw exception unless we have edit access
         Krang::Template::NoCategoryEditAccess->throw( message => "Not allowed to save template in this category", 
@@ -1234,11 +1235,11 @@ sub deserialize_xml {
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (TEMPLATE_RO,TEMPLATE_RW);
  
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml,
+    my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1);
    
     # is there an existing object?
-    my $template = (Krang::Template->find(url => $data->{url}))[0] || '';
+    my $template = (pkg('Template')->find(url => $data->{url}))[0] || '';
     if ($template) {
 
          debug (__PACKAGE__."->deserialize_xml : found template");
@@ -1256,19 +1257,19 @@ sub deserialize_xml {
     } else {
         # create a new template object with category and simple fields
         if ($data->{category_id}) {
-            $template = Krang::Template->new(category_id =>
+            $template = pkg('Template')->new(category_id =>
                                    $set->map_id(class => "Krang::Category",
                                                 id    => $data->{category_id}),
                                    (map { ($_,$data->{$_}) } keys %simple));
         } else {
-            $template = Krang::Template->new( (map { ($_,$data->{$_}) } keys %simple) );
+            $template = pkg('Template')->new( (map { ($_,$data->{$_}) } keys %simple) );
         }
     }
 
     $template->save();
     $template->checkin;
 
-    my $publisher = Krang::Publisher->new();
+    my $publisher = pkg('Publisher')->new();
     $publisher->deploy_template(template => $template);
 
     return $template;
@@ -1311,7 +1312,7 @@ sub _build_url { (my $url = join('/', @_)) =~ s|/+|/|g; return $url;}
 
 =head1 TO DO
 
- * Prevent duplicate template objects and paths once Krang::Category is
+ * Prevent duplicate template objects and paths once pkg('Category') is
    completed
 
 =head1 SEE ALSO

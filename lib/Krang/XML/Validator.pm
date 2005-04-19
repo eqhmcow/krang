@@ -1,4 +1,5 @@
 package Krang::XML::Validator;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -8,7 +9,7 @@ use File::Temp qw(tempdir);
 use File::Copy qw(copy);
 use Cwd qw(fastcwd);
 use File::Spec::Functions qw(catdir catfile splitdir);
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use XML::SAX::Expat;
 use XML::Validator::Schema;
 use Carp qw(croak);
@@ -20,7 +21,7 @@ Krang::XML::Validator - validate XML documents against XML Schemas
 =head1 SYNOPSIS
 
   # create a new validator
-  $validator = Krang::XML::Validator->new();
+  $validator = pkg('XML::Validator')->new();
 
   # validate a file
   ($ok, $msg) = $validator->validate(path => 'story1024.xml');

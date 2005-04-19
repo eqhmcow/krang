@@ -7,8 +7,8 @@ Krang::CGI::Site - Abstract of web application....
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Site;
-  my $app = Krang::CGI::Site->new();
+  use Krang::ClassLoader 'CGI::Site';
+  my $app = pkg('CGI::Site')->new();
   $app->run();
 
 
@@ -20,19 +20,20 @@ Krang::CGI::Site...
 =cut
 
 
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base qw/Krang::CGI/;
+use Krang::ClassLoader base => 'CGI';
 
 use Carp qw(verbose croak);
-use Krang::History;
-use Krang::HTMLPager;
-use Krang::Log qw/critical debug info/;
-use Krang::Message qw/add_message/;
-use Krang::Pref;
-use Krang::Session qw/%session/;
-use Krang::Site;
+use Krang::ClassLoader 'History';
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader Log => qw/critical debug info/;
+use Krang::ClassLoader Message => qw/add_message/;
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader Session => qw/%session/;
+use Krang::ClassLoader 'Site';
 
 our @history_param_list = ('rm',
                            'krang_pager_curr_page_num',
@@ -103,7 +104,7 @@ sub add {
     if ($q->param('errors')) {
         $site = $session{site};
     } else {
-        $site = Krang::Site->new(url => undef,
+        $site = pkg('Site')->new(url => undef,
                                  preview_url => undef,
                                  preview_path => undef,
                                  publish_path => undef);
@@ -217,7 +218,7 @@ sub delete {
     my $q = $self->query();
     my $site_id = $q->param('site_id');
     return $self->search() unless $site_id;
-    my ($site) = Krang::Site->find(site_id => $site_id);
+    my ($site) = pkg('Site')->find(site_id => $site_id);
     eval {$site->delete();};
     if ($@) {
         if (ref $@ and ($@->isa('Krang::Site::Dependency') or $@->isa('Krang::Category::Dependent'))) {
@@ -260,7 +261,7 @@ sub delete_selected {
 
     # destroy sites
     my (@bad_sites, @good_sites);
-    my (@sites) = Krang::Site->find(site_id => [@site_delete_list]);
+    my (@sites) = pkg('Site')->find(site_id => [@site_delete_list]);
     for (@sites) {
         eval {$_->delete();};
         if ($@) {
@@ -310,10 +311,10 @@ sub edit {
     my $site = $session{site};
 
     if ($site_id) {
-        ($site) = Krang::Site->find(site_id => $site_id);
+        ($site) = pkg('Site')->find(site_id => $site_id);
         $session{site} = $site;
     }
-    croak("No Krang::Site object found matching site_id '$site_id'")
+    croak("No pkg('Site') object found matching site_id '$site_id'")
       unless defined $site;
 
     my $t = $self->load_tmpl("edit.tmpl",
@@ -439,7 +440,7 @@ sub search {
     my $search_filter = $q->param('search_filter') || '';
 
     # setup pager
-    my $pager = Krang::HTMLPager->new(cgi_query => $q,
+    my $pager = pkg('HTMLPager')->new(cgi_query => $q,
                                       persist_vars => {
                                                        rm => 'search',
                                                        search_filter =>
@@ -496,8 +497,8 @@ sub view {
     my $q = $self->query();
     my $t = $self->load_tmpl('view.tmpl');
     my $site_id = $q->param('site_id');
-    my ($site) = Krang::Site->find(site_id => $site_id);
-    croak("No Krang::Site object found matching site_id '$site_id'")
+    my ($site) = pkg('Site')->find(site_id => $site_id);
+    croak("No pkg('Site') object found matching site_id '$site_id'")
       unless ref $site;
 
     $t->param($self->get_tmpl_params($site));

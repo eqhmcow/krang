@@ -1,17 +1,18 @@
 package Krang::Widget;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use Carp qw(croak);
-use Krang::HTMLTemplate;
+use Krang::ClassLoader 'HTMLTemplate';
 use Time::Piece qw(localtime);
-use Krang::Category;
-use Krang::Conf qw(KrangRoot);
-use Krang::Log qw(debug);
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Log => qw(debug);
 use HTML::PopupTreeSelect;
 use Text::Wrap qw(wrap);
-use Krang::Message qw(add_message);
-use Krang::Session qw(%session);
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Session => qw(%session);
 
 use File::Spec::Functions qw(catfile);
 
@@ -24,7 +25,7 @@ Krang::Widget - interface widgets for use by Krang::CGI modules
 
 =head1 SYNOPSIS
 
-  use Krang::Widget qw(category_chooser date_chooser decode_date);
+  use Krang::ClassLoader Widget => qw(category_chooser date_chooser decode_date);
 
   $chooser = category_chooser(name => 'category_id',
                               query => $query);
@@ -110,7 +111,7 @@ sub category_chooser {
     # may_see is on by default
     $may_see = 1 unless defined $may_see;
 
-    my $template = Krang::HTMLTemplate->new(filename => 
+    my $template = pkg('HTMLTemplate')->new(filename => 
                                             "Widget/category_chooser.tmpl",
                                             cache   => 1,
                                             die_on_bad_params => 1,
@@ -136,7 +137,7 @@ sub category_chooser {
     $find_params{may_edit} = 1 if $may_edit;
 
     # get list of all cats
-    my @cats = Krang::Category->find(%find_params);
+    my @cats = pkg('Category')->find(%find_params);
 
     # if there are no cats then there can't be any chooser
     unless (@cats) {
@@ -158,7 +159,7 @@ sub category_chooser {
         # deactivated.
         unless ($parent_node) {
             unshift(@cats, $cat);
-            unshift(@cats, Krang::Category->find(category_id => $parent_id));
+            unshift(@cats, pkg('Category')->find(category_id => $parent_id));
             $cats[0]->{_inactive} = 1;
             next;
         }

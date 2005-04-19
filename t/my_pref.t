@@ -1,17 +1,18 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 use Test::More qw(no_plan);
 
-BEGIN { use_ok('Krang::MyPref'); }
+BEGIN { use_ok(pkg('MyPref')); }
 
-eval { Krang::MyPref->get('bogus_flow') };
+eval { pkg('MyPref')->get('bogus_flow') };
 like($@, qr/invalid/i);
 
-my $old = Krang::MyPref->get('search_page_size') || 'NULL';
+my $old = pkg('MyPref')->get('search_page_size') || 'NULL';
 my $new = rand(100);
-Krang::MyPref->set('search_page_size' => $new);
-is(Krang::MyPref->get('search_page_size'), $new);
-Krang::MyPref->set('search_page_size' => $old);
-is(Krang::MyPref->get('search_page_size'), $old);
+pkg('MyPref')->set('search_page_size' => $new);
+is(pkg('MyPref')->get('search_page_size'), $new);
+pkg('MyPref')->set('search_page_size' => $old);
+is(pkg('MyPref')->get('search_page_size'), $old);
 

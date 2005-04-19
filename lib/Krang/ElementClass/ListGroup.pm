@@ -1,15 +1,16 @@
 package Krang::ElementClass::ListGroup;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass::Storable';
+use Krang::ClassLoader base => 'ElementClass::Storable';
 use Carp qw(croak);
 
 #use Krang::ListGroup;
 #use Krang::List;
 #use Krang::ListItem;
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( size multiple list_group ) ];
 
 sub new {
@@ -37,11 +38,11 @@ sub input_form {
 
     my $jparam;
 
-    require Krang::ListGroup;
-    require Krang::List;
-    require Krang::ListItem;
+    eval "require " . pkg('ListGroup') or die $@;
+    eval "require " . pkg('List')      or die $@;
+    eval "require " . pkg('ListItem')  or die $@;
 
-    my ($lg) = Krang::ListGroup->find( name => $self->list_group() );
+    my ($lg) = pkg('ListGroup')->find( name => $self->list_group() );
 
     my ($all_pulldowns, $html_output);
 
@@ -49,7 +50,7 @@ sub input_form {
     # lists for each one.
     my $list_index = 0;
 
-    my @lists = Krang::List->find( list_group_id => $lg->list_group_id );
+    my @lists = pkg('List')->find( list_group_id => $lg->list_group_id );
 
     my $element_data = $element->data();
 
@@ -76,7 +77,7 @@ END
 
         # grab the list of items for the first list in the listgroup:
         my $x = 0;
-        my @root_items = Krang::ListItem->find( list_id => $root_list->list_id,
+        my @root_items = pkg('ListItem')->find( list_id => $root_list->list_id,
                                                 no_parent => 1,
                                               );
         foreach my $item (@root_items) {
@@ -149,7 +150,7 @@ END
         $find_params{parent_list_item_id} = $element->data()->[($list_index - 1)] 
           if ($list_index && $element->data());
 
-        @items = Krang::ListItem->find( %find_params );
+        @items = pkg('ListItem')->find( %find_params );
 
         @values = map { $_->list_item_id } @items;
         %labels = map { $_->list_item_id => $_->data } @items;
@@ -197,7 +198,7 @@ sub _add_item {
     $$html .= qq{${jparam}_index["$id"] = $pre;\n};
 
     # collect sub-items.  Iterate and recursively build further.
-    my @sub_items = Krang::ListItem->find(parent_list_item_id => $id);
+    my @sub_items = pkg('ListItem')->find(parent_list_item_id => $id);
     if (@sub_items) {
         my $x = -1;
         $$html .= $pre. qq{["sub"] = new Array();\n};
@@ -234,10 +235,10 @@ sub template_data {
     my ($self, %arg) = @_;
     my $element = $arg{element};
     return "" unless $element->data;
-    require Krang::ListItem;
+    eval "require " . pkg('ListItem') or die $@;
     my @chosen;
     foreach my $e (@{$element->data}) {
-        my $i = (Krang::ListItem->find( list_item_id => $e ))[0] || '';
+        my $i = (pkg('ListItem')->find( list_item_id => $e ))[0] || '';
         push(@chosen, $i->data) if $i;
     }
     return join(', ', @chosen);
@@ -247,10 +248,10 @@ sub view_data {
     my ($self, %arg) = @_;
     my $element = $arg{element};
     return "" unless $element->data;
-    require Krang::ListItem;
+    eval "require " . pkg('ListItem') or die $@;
     my @chosen; 
     foreach my $e (@{$element->data}) {
-        my $i = (Krang::ListItem->find( list_item_id => $e ))[0] || '';
+        my $i = (pkg('ListItem')->find( list_item_id => $e ))[0] || '';
         push(@chosen, $i->data) if $i;
     }
     return join("<br>", @chosen);
@@ -262,7 +263,7 @@ Krang::ElementClass::ListGroup - list group element class
 
 =head1 SYNOPSIS
 
-  $class = Krang::ElementClass::ListGroup->new( name => "cars",
+  $class = pkg('ElementClass::ListGroup')->new( name => "cars",
                                                 size => 5,
                                                 list_group => 'Make/Model/Year',
                     );

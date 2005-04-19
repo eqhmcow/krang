@@ -1,25 +1,34 @@
-use Test::More qw(no_plan);
+use Krang::ClassFactory qw(pkg);
+
+# these tests are run from addon_lazy as sub-tests
+BEGIN {
+    unless ($ENV{SUB_TEST}) {
+        eval "use Test::More qw(no_plan);";
+        die $@ if $@;
+    }
+}
+
 use strict;
 use warnings;
-use Krang::Script;
-use Krang::Category;
-use Krang::Site;
-use Krang::Contrib;
-use Krang::Session qw(%session);
-use Krang::Media;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'Media';
 use File::Spec::Functions;
 use Storable qw(freeze thaw);
-use Krang::Conf qw(KrangRoot instance InstanceElementSet);
+use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet);
 use Time::Piece;
 
-use Krang::Test::Content;
+use Krang::ClassLoader 'Test::Content';
 
-BEGIN { use_ok('Krang::Story') }
+BEGIN { use_ok(pkg('Story')) }
 our $DELETE = 1;
 
 # use the TestSet1 instance, if there is one
-foreach my $instance (Krang::Conf->instances) {
-    Krang::Conf->instance($instance);
+foreach my $instance (pkg('Conf')->instances) {
+    pkg('Conf')->instance($instance);
     if (InstanceElementSet eq 'TestSet1') {
         last;
     }
@@ -27,7 +36,7 @@ foreach my $instance (Krang::Conf->instances) {
 
 
 # use Krang::Test::Content to create sites.
-my $creator = Krang::Test::Content->new;
+my $creator = pkg('Test::Content')->new;
 
 END {
     $creator->cleanup();
@@ -44,7 +53,7 @@ my $site = $creator->create_site(
 isa_ok($site, 'Krang::Site');
 
 # create categories.
-my ($root_cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
+my ($root_cat) = pkg('Category')->find(site_id => $site->site_id, dir => "/");
 
 my @cat;
 for (0 .. 10) {
@@ -66,12 +75,12 @@ $contrib->save();
 
 # creation should fail without required fields
 my $story;
-eval { $story = Krang::Story->new() };
+eval { $story = pkg('Story')->new() };
 ok($@);
 
 
 # create a new story
-$story = Krang::Story->new(categories => [$cat[0], $cat[1]],
+$story = pkg('Story')->new(categories => [$cat[0], $cat[1]],
                            title      => "Test",
                            slug       => "test",
                            class      => "article");
@@ -184,7 +193,7 @@ ok($story->story_id);
 END { $story->delete() if $DELETE }
 
 # try loading
-my ($story2) = Krang::Story->find(story_id => $story->{story_id});
+my ($story2) = pkg('Story')->find(story_id => $story->{story_id});
 isa_ok($story2, 'Krang::Story');
 
 # basic fields survived?
@@ -337,7 +346,7 @@ SKIP: {
       unless (InstanceElementSet eq 'TestSet1');
 
     # test versioning
-    my $v = Krang::Story->new(categories => [$cat[0], $cat[1]],
+    my $v = pkg('Story')->new(categories => [$cat[0], $cat[1]],
                               title      => "Foo",
                               slug       => "foo",
                               class      => "article");
@@ -371,7 +380,7 @@ SKIP: {
     is($v->version, 4);
 
     # try loading old versions
-    my ($v1) = Krang::Story->find(story_id => $v->story_id,
+    my ($v1) = pkg('Story')->find(story_id => $v->story_id,
                                   version  => 1);
     is($v1->version, 1);
     is($v1->title, "Foo");
@@ -383,7 +392,7 @@ SKIP: {
 
 
 # check that adding a new category can't cause a dup
-my $s1 = Krang::Story->new(class => "article",
+my $s1 = pkg('Story')->new(class => "article",
                            title => "one",
                            slug => "slug",
                            categories => [$cat[0]]);
@@ -391,7 +400,7 @@ $s1->save();
 ok($s1->story_id);
 END { $s1->delete() if $DELETE };
 
-my $s2 = Krang::Story->new(class => "article",
+my $s2 = pkg('Story')->new(class => "article",
                            title => "one",
                            slug => "slug",
                            categories => [$cat[1]]);
@@ -405,7 +414,7 @@ isa_ok($@, 'Krang::Story::DuplicateURL');
                          
 # setup three stories to test find
 my @find;
-push @find, Krang::Story->new(class => "article",
+push @find, pkg('Story')->new(class => "article",
                               title => "title one",
                               slug => "slug one",
                               categories => [$cat[7]]);
@@ -414,7 +423,7 @@ $find[-1]->element->child('deck')->data("3 one deek one deek one deek")
 $find[-1]->element->child('fancy_keyword')->data(['common', 'one'])
   if InstanceElementSet eq 'TestSet1';
 
-push @find, Krang::Story->new(class => "article",
+push @find, pkg('Story')->new(class => "article",
                               title => "title two",
                               slug => "slug two",
                               categories => [$cat[6], $cat[8]]);
@@ -423,7 +432,7 @@ $find[-1]->element->child('deck')->data("2 two deek two deek two deek")
 $find[-1]->element->child('fancy_keyword')->data(['common', 'two'])
   if InstanceElementSet eq 'TestSet1';
 $find[-1]->contribs($contrib);
-push @find, Krang::Story->new(class => "article",
+push @find, pkg('Story')->new(class => "article",
                               title => "title three",
                               slug => "slug three",
                               categories => [$cat[9]]);
@@ -435,96 +444,96 @@ $_->save for @find;
 END { if ($DELETE) { $_->delete for @find } };
 
 # find by category
-my @result = Krang::Story->find(category_id => $cat[8]->category_id,
+my @result = pkg('Story')->find(category_id => $cat[8]->category_id,
                                 ids_only => 1);
 is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 # find by primary category
-@result = Krang::Story->find(primary_category_id => $cat[8]->category_id,
+@result = pkg('Story')->find(primary_category_id => $cat[8]->category_id,
                                 ids_only => 1);
 is(@result, 0);
-@result = Krang::Story->find(primary_category_id => $cat[6]->category_id,
+@result = pkg('Story')->find(primary_category_id => $cat[6]->category_id,
                                 ids_only => 1);
 is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 # find by site
-@result = Krang::Story->find(site_id => $cat[6]->site_id,
+@result = pkg('Story')->find(site_id => $cat[6]->site_id,
                              ids_only => 1);
 ok(@result);
 ok((grep { $_ == $find[1]->story_id } @result));
 
 # find by site
-@result = Krang::Story->find(primary_site_id => $cat[8]->site_id,
+@result = pkg('Story')->find(primary_site_id => $cat[8]->site_id,
                              ids_only => 1);
 ok(@result);
 ok((grep { $_ == $find[1]->story_id } @result));
 
 # find by URL
-@result = Krang::Story->find(url => $find[1]->url,
+@result = pkg('Story')->find(url => $find[1]->url,
                              ids_only => 1);
 is(@result, 1);
 is($result[0], $find[1]->story_id);
 
-@result = Krang::Story->find(url => $find[1]->url . "XXX",
+@result = pkg('Story')->find(url => $find[1]->url . "XXX",
                              ids_only => 1);
 is(@result, 0);
 
-@result = Krang::Story->find(primary_url_like => $find[1]->category->url . '%',
+@result = pkg('Story')->find(primary_url_like => $find[1]->category->url . '%',
                              ids_only => 1);
 is(@result, 1);
 is($result[0], $find[1]->story_id);
 
 # find by simple search
-@result = Krang::Story->find(simple_search => $find[1]->url,
+@result = pkg('Story')->find(simple_search => $find[1]->url,
                              ids_only => 1);
 is(@result, 1);
 is($result[0], $find[1]->story_id);
 
-@result = Krang::Story->find(simple_search => $find[1]->url . " " . $find[1]->story_id,
+@result = pkg('Story')->find(simple_search => $find[1]->url . " " . $find[1]->story_id,
                              ids_only => 1);
 is(@result, 1);
 is($result[0], $find[1]->story_id);
 
-@result = Krang::Story->find(simple_search => $find[1]->url . " " . $find[1]->story_id . " foo",
+@result = pkg('Story')->find(simple_search => $find[1]->url . " " . $find[1]->story_id . " foo",
                              ids_only => 1);
 is(@result, 0);
 
 # find by creator search
-my ($me) = Krang::User->find(user_id => $ENV{REMOTE_USER});
+my ($me) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
 isa_ok($me, 'Krang::User');
 
-@result = Krang::Story->find(creator_simple => $me->first_name);
+@result = pkg('Story')->find(creator_simple => $me->first_name);
 ok(grep { $_->story_id == $find[0]->story_id } @result);
 ok(grep { $_->story_id == $find[1]->story_id } @result);
 ok(grep { $_->story_id == $find[2]->story_id } @result);
 
-@result = Krang::Story->find(creator_simple => $me->first_name . ' ' . $me->last_name);
+@result = pkg('Story')->find(creator_simple => $me->first_name . ' ' . $me->last_name);
 ok(grep { $_->story_id == $find[0]->story_id } @result);
 ok(grep { $_->story_id == $find[1]->story_id } @result);
 ok(grep { $_->story_id == $find[2]->story_id } @result);
 
 
-@result = Krang::Story->find(creator_simple => $me->first_name  . 'foozle');
+@result = pkg('Story')->find(creator_simple => $me->first_name  . 'foozle');
 ok(not grep { $_->story_id == $find[0]->story_id } @result);
 ok(not grep { $_->story_id == $find[1]->story_id } @result);
 ok(not grep { $_->story_id == $find[2]->story_id } @result);
 
 
 # count works with simple_search
-my $count = Krang::Story->find(simple_search => "",
+my $count = pkg('Story')->find(simple_search => "",
                                count => 1);
 ok($count);
 
 
 # order_by url working
-@result = Krang::Story->find(simple_search => "",
+@result = pkg('Story')->find(simple_search => "",
                              order_by => "url");
 ok(@result);
 
 # find by contrib_simple
-@result = Krang::Story->find(category_id => $cat[8]->category_id,
+@result = pkg('Story')->find(category_id => $cat[8]->category_id,
                              contrib_simple => 'matt', 
                              ids_only => 1);
 is(@result, 1);
@@ -535,40 +544,40 @@ SKIP: {
     skip('Element tests only work for TestSet1', 1)
       unless (InstanceElementSet eq 'TestSet1');
 
-    @result = Krang::Story->find(element_index =>[deck=>"1 three three three"]);
+    @result = pkg('Story')->find(element_index =>[deck=>"1 three three three"]);
     is(@result, 1);
     is($result[0]->story_id, $find[2]->story_id);
 
-    @result = Krang::Story->find(element_index_like =>[deck=>"%deek%"]);
+    @result = pkg('Story')->find(element_index_like =>[deck=>"%deek%"]);
     is(@result, 2);
     is($result[0]->story_id, $find[0]->story_id);
     is($result[1]->story_id, $find[1]->story_id);
 
-    @result = Krang::Story->find(element_index_like =>[deck=>"%deek%"],
+    @result = pkg('Story')->find(element_index_like =>[deck=>"%deek%"],
                                  order_by => "ei.value");
     is(@result, 2);
     is($result[1]->story_id, $find[0]->story_id);
     is($result[0]->story_id, $find[1]->story_id);
    
-    @result = Krang::Story->find(element_index_like =>[deck=>"%one deek%"]);
+    @result = pkg('Story')->find(element_index_like =>[deck=>"%one deek%"]);
     is(@result, 1);
     is($result[0]->story_id, $find[0]->story_id);
 
-    @result = Krang::Story->find(element_index_like =>[deck=>"%feck%"]);
+    @result = pkg('Story')->find(element_index_like =>[deck=>"%feck%"]);
     is(@result, 0);
 
-    @result = Krang::Story->find(element_index => [fancy_keyword => 'common']);
+    @result = pkg('Story')->find(element_index => [fancy_keyword => 'common']);
     is(@result, 3);
 
-    @result = Krang::Story->find(element_index => [fancy_keyword => 'one']);
+    @result = pkg('Story')->find(element_index => [fancy_keyword => 'one']);
     is(@result, 1);
     is($result[0]->story_id, $find[0]->story_id);
 
-    @result = Krang::Story->find(element_index => [fancy_keyword => 'two']);
+    @result = pkg('Story')->find(element_index => [fancy_keyword => 'two']);
     is(@result, 1);
     is($result[0]->story_id, $find[1]->story_id);
 
-    @result = Krang::Story->find(element_index => [fancy_keyword => 'three']);
+    @result = pkg('Story')->find(element_index => [fancy_keyword => 'three']);
     is(@result, 1);
     is($result[0]->story_id, $find[2]->story_id);
 
@@ -576,9 +585,9 @@ SKIP: {
 }
 
 # make sure count is accurate
-use Krang::DB qw(dbh);
+use Krang::ClassLoader DB => qw(dbh);
 my ($real_count) = dbh->selectrow_array('SELECT COUNT(*) FROM story');
-$count = Krang::Story->find(simple_search => "",
+$count = pkg('Story')->find(simple_search => "",
                             count => 1);
 is($count, $real_count);
 
@@ -587,7 +596,7 @@ SKIP: {
       unless (InstanceElementSet eq 'TestSet1');
 
     # create a cover to test links between stories
-    my $cover = Krang::Story->new(categories => [$cat[0]],
+    my $cover = pkg('Story')->new(categories => [$cat[0]],
                                   title      => "Test Cover",
                                   slug       => "test cover",
                                   class      => "cover");
@@ -635,20 +644,20 @@ SKIP: {
 };
 
 # test delete by ID
-my $doomed = Krang::Story->new(categories => [$cat[0], $cat[1]],
+my $doomed = pkg('Story')->new(categories => [$cat[0], $cat[1]],
                                title      => "Doomed",
                                slug       => "doomed",
                                class      => "article");
 $doomed->save();
 my $doomed_id = $doomed->story_id;
-my ($obj) = Krang::Story->find(story_id => $doomed_id);
+my ($obj) = pkg('Story')->find(story_id => $doomed_id);
 ok($obj);
-Krang::Story->delete($doomed_id);
-($obj) = Krang::Story->find(story_id => $doomed_id);
+pkg('Story')->delete($doomed_id);
+($obj) = pkg('Story')->find(story_id => $doomed_id);
 ok(not $obj);
 
 # test that when category URL changes, story URL changes too
-my $change = Krang::Story->new(class => "article",
+my $change = pkg('Story')->new(class => "article",
                                title => "I can feel it coming",
                                slug => "change",
                                categories => [$cat[0]]);
@@ -665,7 +674,7 @@ like($site->url, qr/zest/);
 $site->save();
 
 # did the story URL change?
-($change) = Krang::Story->find(story_id => $change->story_id);
+($change) = pkg('Story')->find(story_id => $change->story_id);
 is($change->url, 'storyzest.com/test_0/change');
 
 
@@ -675,15 +684,15 @@ is($change->url, 'storyzest.com/test_0/change');
     my $unique = time();
 
     # create a new site for testing
-    my $ptest_site = Krang::Site->new( url          => "$unique.com",
+    my $ptest_site = pkg('Site')->new( url          => "$unique.com",
                                        preview_url  => "preview.$unique.com",
                                        preview_path => 'preview/path/',
                                        publish_path => 'publish/path/' );
     $ptest_site->save();
     my $ptest_site_id = $ptest_site->site_id();
-    my ($ptest_root_cat) = Krang::Category->find(site_id=>$ptest_site_id);
+    my ($ptest_root_cat) = pkg('Category')->find(site_id=>$ptest_site_id);
 
-    my $story = Krang::Story->new(title      => 'Root Cat story', 
+    my $story = pkg('Story')->new(title      => 'Root Cat story', 
                                   categories => [$ptest_root_cat],
                                   slug       => 'rootie',
                                   class => 'article',
@@ -698,13 +707,13 @@ is($change->url, 'storyzest.com/test_0/change');
     my @ptest_categories = ();
     for (@ptest_cat_dirs) {
         my $parent_id = ( /1/ ) ? $ptest_root_cat->category_id() : $ptest_categories[-1]->category_id() ;
-        my $newcat = Krang::Category->new( dir => $_,
+        my $newcat = pkg('Category')->new( dir => $_,
                                            parent_id => $parent_id );
         $newcat->save();
         push(@ptest_categories, $newcat);
 
         # Add story in this category
-        my $story = Krang::Story->new(
+        my $story = pkg('Story')->new(
                                       title      => $_ .' story', 
                                       categories => [$newcat],
                                       slug       => 'slugo',
@@ -717,16 +726,16 @@ is($change->url, 'storyzest.com/test_0/change');
 
 
     # Verify that we have permissions
-    my ($tmp) = Krang::Story->find(story_id=>$stories[-1]->story_id);
+    my ($tmp) = pkg('Story')->find(story_id=>$stories[-1]->story_id);
     is($tmp->may_see, 1, "Found may_see");
     is($tmp->may_edit, 1, "Found may_edit");
 
     # Change group asset_story permissions to "read-only" and check permissions
-    my ($admin_group) = Krang::Group->find(group_id=>1);
+    my ($admin_group) = pkg('Group')->find(group_id=>1);
     $admin_group->asset_story("read-only");
     $admin_group->save();
 
-    ($tmp) = Krang::Story->find(story_id=>$stories[-1]->story_id);
+    ($tmp) = pkg('Story')->find(story_id=>$stories[-1]->story_id);
     is($tmp->may_see, 1, "asset_story read-only may_see => 1");
     is($tmp->may_edit, 0, "asset_story read-only may_edit => 0");
 
@@ -734,7 +743,7 @@ is($change->url, 'storyzest.com/test_0/change');
     $admin_group->asset_story("hide");
     $admin_group->save();
 
-    ($tmp) = Krang::Story->find(story_id=>$stories[-1]->story_id);
+    ($tmp) = pkg('Story')->find(story_id=>$stories[-1]->story_id);
     is($tmp->may_see, 1, "asset_story hide may_see => 1");
     is($tmp->may_edit, 0, "asset_story hide may_edit => 0");
 
@@ -747,10 +756,10 @@ is($change->url, 'storyzest.com/test_0/change');
     $admin_group->categories($ptest_cat_id => "read-only");
     $admin_group->save();
 
-    my ($ptest_cat) = Krang::Category->find(category_id => $ptest_categories[0]->category_id());
+    my ($ptest_cat) = pkg('Category')->find(category_id => $ptest_categories[0]->category_id());
 
     # Try to save story to read-only catgory
-    $tmp = Krang::Story->new( title => "No story", 
+    $tmp = pkg('Story')->new( title => "No story", 
                               categories => [$ptest_cat],
                               class => 'article',
                               slug => 'sluggie',
@@ -759,25 +768,25 @@ is($change->url, 'storyzest.com/test_0/change');
     isa_ok($@, "Krang::Story::NoCategoryEditAccess", "save() to read-only category throws exception");
 
     # Check permissions for that category
-    ($tmp) = Krang::Story->find(story_id=>$stories[1]->story_id);
+    ($tmp) = pkg('Story')->find(story_id=>$stories[1]->story_id);
     is($tmp->may_see, 1, "read-only may_see => 1");
     is($tmp->may_edit, 0, "read-only may_edit => 0");
 
     # Check permissions for descendant of that category
     my $ptest_story_id = $stories[2]->story_id();
-    ($tmp) = Krang::Story->find(story_id=>$ptest_story_id);
+    ($tmp) = pkg('Story')->find(story_id=>$ptest_story_id);
     is($tmp->may_see, 1, "descendant read-only may_see => 1");
     is($tmp->may_edit, 0, "descendant read-only may_edit => 0");
 
     # Check permissions for sibling
     $ptest_story_id = $stories[3]->story_id();
-    ($tmp) = Krang::Story->find(story_id=>$ptest_story_id);
+    ($tmp) = pkg('Story')->find(story_id=>$ptest_story_id);
     is($tmp->may_see, 1, "sibling edit may_see => 1");
     is($tmp->may_edit, 1, "sibling edit may_edit => 1");
 
     # Try to save "read-only" story -- should die
     $ptest_story_id = $stories[2]->story_id();
-    ($tmp) = Krang::Story->find(story_id=>$ptest_story_id);
+    ($tmp) = pkg('Story')->find(story_id=>$ptest_story_id);
     eval { $tmp->save() };
     isa_ok($@, "Krang::Story::NoEditAccess", "save() on read-only story exception");
 
@@ -800,28 +809,28 @@ is($change->url, 'storyzest.com/test_0/change');
 
     # Check permissions for that category
     $ptest_story_id = $stories[3]->story_id();
-    ($tmp) = Krang::Story->find(story_id=>$ptest_story_id);
+    ($tmp) = pkg('Story')->find(story_id=>$ptest_story_id);
     is($tmp->may_see, 0, "hide may_see => 0");
     is($tmp->may_edit, 0, "hide may_edit => 0");
 
     # Get count of all story below root category -- should return all (5)
-    my $ptest_count = Krang::Story->find(count=>1, below_category_id=>$ptest_root_cat->category_id());
+    my $ptest_count = pkg('Story')->find(count=>1, below_category_id=>$ptest_root_cat->category_id());
     is($ptest_count, 5, "Found all story by default");
 
     # Get count with "may_see=>1" -- should return root + one branch (3)
-    $ptest_count = Krang::Story->find(may_see=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
+    $ptest_count = pkg('Story')->find(may_see=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
     is($ptest_count, 3, "Hide hidden story");
 
     # Get count with "may_edit=>1" -- should return just root
-    $ptest_count = Krang::Story->find(may_edit=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
+    $ptest_count = pkg('Story')->find(may_edit=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
     is($ptest_count, 1, "Hide un-editable story");
 
     # confirm find by site_id as arrayref works.
-    $ptest_count = Krang::Story->find(site_id => [$site->site_id]);
+    $ptest_count = pkg('Story')->find(site_id => [$site->site_id]);
     is($ptest_count, 12, "find(site_id => [ids])");
 
     # confirm find by primary_site_id as arrayref works.
-    $ptest_count = Krang::Story->find(primary_site_id => [$site->site_id]);
+    $ptest_count = pkg('Story')->find(primary_site_id => [$site->site_id]);
     is($ptest_count, 12, "find(primary_site_id => [ids])");
 
     # Delete temp story
@@ -844,7 +853,7 @@ is($change->url, 'storyzest.com/test_0/change');
 sub test_linked_media {
 
     # create a new story
-    my $story = Krang::Story->new(categories => [$cat[0], $cat[1]],
+    my $story = pkg('Story')->new(categories => [$cat[0], $cat[1]],
                                   title      => "Test",
                                   slug       => "test",
                                   class      => "article");
@@ -865,7 +874,7 @@ sub test_linked_media {
     ok(@photos == 1, 'Krang::Story->linked_media()');
 
 
-    my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Joe', middle => 'E', last => 'Buttafuoco', email => 'joey@buttafuoco.com');
+    my $contrib = pkg('Contrib')->new(prefix => 'Mr', first => 'Joe', middle => 'E', last => 'Buttafuoco', email => 'joey@buttafuoco.com');
     $contrib->contrib_type_ids(1,3);
 
     my $media2 = create_media($cat[0]);
@@ -939,12 +948,12 @@ sub create_media {
       or die "Unable to open tmp/tmp.$format: $!";
 
     # Pick a type
-    my %media_types = Krang::Pref->get('media_type');
+    my %media_types = pkg('Pref')->get('media_type');
     my @media_type_ids = keys(%media_types);
     my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
 
     # create a media object
-    my $media = Krang::Media->new(title      => get_word(),
+    my $media = pkg('Media')->new(title      => get_word(),
                                   filename   => get_word() . ".$format",
                                   caption    => get_word(),
                                   filehandle => $fh,
@@ -985,14 +994,14 @@ sub test_urls {
                                          preview_path => '/tmp/storytest_preview' . $_,
                                          publish_path => '/tmp/storytest_publish' . $_
                                         );
-        my ($cat) = Krang::Category->find(site_id => $site->site_id, dir => "/");
+        my ($cat) = pkg('Category')->find(site_id => $site->site_id, dir => "/");
         push @sites, $site;
         push @cats, $cat;
     }
 
 
     # create a new story
-    my $story = Krang::Story->new(categories => \@cats,
+    my $story = pkg('Story')->new(categories => \@cats,
                                title      => "Test",
                                slug       => "test",
                                class      => "article");
@@ -1032,7 +1041,7 @@ sub test_hidden {
           unless (InstanceElementSet eq 'TestSet1');
 
         # create a new story
-        my $hidden = Krang::Story->new(categories => [$cat],
+        my $hidden = pkg('Story')->new(categories => [$cat],
                                        title      => "Test Hidden",
                                        slug       => "testhidden",
                                        class      => "hidden");
@@ -1041,12 +1050,12 @@ sub test_hidden {
         # make sure it comes back.
         my $id = $hidden->story_id;
 
-        my ($test) = Krang::Story->find(story_id => $id);
+        my ($test) = pkg('Story')->find(story_id => $id);
 
         ok($test->story_id == $hidden->story_id, 'Krang::Story->show_hidden');
 
         # do a category search - it shouldn't be found
-        my @stories = Krang::Story->find(category_id => $cat->category_id);
+        my @stories = pkg('Story')->find(category_id => $cat->category_id);
 
         my $not_found = 1;
         foreach my $s (@stories) {
@@ -1056,7 +1065,7 @@ sub test_hidden {
         ok($not_found, 'Krang::Story->show_hidden');
 
         # repeat w/ show_hidden argument.
-        @stories = Krang::Story->find(category_id => $cat->category_id, show_hidden => 1);
+        @stories = pkg('Story')->find(category_id => $cat->category_id, show_hidden => 1);
         my $found = 0;
         foreach my $s (@stories) {
             $found = 1 if ($s->story_id == $hidden->story_id);

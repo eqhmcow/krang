@@ -1,4 +1,5 @@
 package Krang::Skin;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -8,11 +9,11 @@ Krang::Skin - module to manipulate skins
 
 =head1 SYNOPSIS
 
-  use Krang::Skin;
-  use Krang::Conf qw(Skin);
+  use Krang::ClassLoader 'Skin';
+  use Krang::ClassLoader Conf => qw(Skin);
 
   # load the configured Skin
-  my $skin = Krang::Skin->load(name => Skin);
+  my $skin = pkg('Skin')->load(name => Skin);
 
   # install it into Krang
   $skin->install();
@@ -47,11 +48,12 @@ Image::BioChrome.
 =cut
 
 use Carp qw(croak);
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catdir catfile);
-use Krang::HTMLTemplate;
+use Krang::ClassLoader 'HTMLTemplate';
 use Image::BioChrome;
 use File::Copy qw(copy);
+use Krang::ClassLoader 'File';
 
 # parameters from skin.conf that go to the CSS template
 our @CSS_PARAMS = 
@@ -90,13 +92,15 @@ sub new {
     croak("Missing required 'name' parameter.")
       unless exists $self->{name};
 
+    my $skin_dir = pkg('File')->find("skins/$self->{name}");
+    croak("Unable to find skin named $self->{name}!") unless $skin_dir;
+
     # read in conf file
     my $conf = Config::ApacheFormat->new(
                    valid_directives => [@REQ, 'include'],
                    valid_blocks     => []);
-    eval { $conf->read(catfile(KrangRoot, 'skins', $self->{name}, 
-                               'skin.conf')) };
-    die "Unable to read skin.conf file for skin '$self->{name}': $@\n" if $@;
+    eval { $conf->read(catfile($skin_dir, 'skin.conf')) };
+    die "Unable to read $skin_dir/skin.conf: $@\n" if $@;
 
     # check reqs
     foreach my $req (@REQ) {
@@ -122,7 +126,7 @@ sub _install_css {
     
     foreach my $css (qw(krang krang_login krang_help)) {
         # load the css template
-        my $template = Krang::HTMLTemplate->new(filename => "$css.css.tmpl",
+        my $template = pkg('HTMLTemplate')->new(filename => "$css.css.tmpl",
                                                 die_on_bad_params => 0,
                                                );
     
@@ -140,11 +144,12 @@ sub _install_css {
 sub _install_images {
     my $self = shift;
     my $conf = $self->{conf};
+    my $skin_dir = pkg('File')->find("skins/$self->{name}");
 
     # process each image in turn
     foreach my $image (@IMAGES) {
-        my $src = catfile(KrangRoot, 'skins', $self->{name}, 'images',$image);
-        my $targ = catfile(KrangRoot, 'htdocs', 'images',$image);
+        my $src = catfile($skin_dir, 'images', $image);
+        my $targ = catfile(KrangRoot, 'htdocs', 'images', $image);
 
         # if the skin supplies this image, copy it into place
         if (-e $src) {

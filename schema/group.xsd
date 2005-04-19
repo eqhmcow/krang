@@ -6,7 +6,7 @@
 			<xs:sequence>
 				<xs:element name="group_id" type="xs:int"/>
 				<xs:element name="name" type="xs:string"/>
-				<xs:element name="category" maxOccurs="unbounded">
+				<xs:element name="category" minOccurs="0" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:sequence>
 							<xs:element name="category_id" type="xs:int"/>

@@ -1,14 +1,15 @@
 package Krang::Media;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::DB qw(dbh);
-use Krang::Conf qw(KrangRoot);
-use Krang::Log qw(debug assert ASSERT);
-use Krang::Contrib;
-use Krang::Category;
-use Krang::Group;
-use Krang::History qw( add_history );
-use Krang::Publisher;
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Log => qw(debug assert ASSERT);
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Group';
+use Krang::ClassLoader History => qw( add_history );
+use Krang::ClassLoader 'Publisher';
 use Carp qw(croak);
 use Storable qw(nfreeze thaw);
 use File::Spec::Functions qw(catdir catfile splitpath canonpath);
@@ -35,12 +36,12 @@ use Exception::Class (
 
 =head1 NAME
 
-    Krang::Media - Media and media metadata storage and access methods
+    pkg('Media') - Media and media metadata storage and access methods
 
 =head1 SYNOPSIS
 
     # create new media object
-    my $media = Krang::Media->new( title => 'test media', 
+    my $media = pkg('Media')->new( title => 'test media', 
                                    caption => 'test caption',
                                    copyright => 'AP 1999', 
                                    media_type_id => $media_type_id, 
@@ -101,7 +102,7 @@ use Exception::Class (
     my $media_id = $media->media_id();
 
     # return object by id
-    ($media_obj) = Krang::Media->find( media_id => $media_id );
+    ($media_obj) = pkg('Media')->find( media_id => $media_id );
 
 =head1 DESCRIPTION
 
@@ -214,7 +215,7 @@ Date the media object was created.  Defaults to current time unless set.
 
 =cut
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get_set       => [ qw(
@@ -300,7 +301,7 @@ sub category {
                                                                                                        
     return $self->{cat_cache} if $self->{cat_cache};
 
-    $self->{cat_cache} = (Krang::Category->find(category_id => $self->{category_id}))[0];
+    $self->{cat_cache} = (pkg('Category')->find(category_id => $self->{category_id}))[0];
    
 }
 
@@ -400,7 +401,7 @@ sub contribs {
         my $contrib;
         # return contributor objects
         foreach my $id (@{$self->{contrib_ids}}) {
-            ($contrib) = Krang::Contrib->find(contrib_id => $id->{contrib_id});
+            ($contrib) = pkg('Contrib')->find(contrib_id => $id->{contrib_id});
             croak("No contributor found with contrib_id ". $id->{contrib_id})
               unless $contrib;
             $contrib->selected_contrib_type($id->{contrib_type_id});
@@ -499,7 +500,7 @@ sub file_path {
         $path = $self->{tempfile};
     } elsif ($self->{media_id}) {
         # return path based on media_id if object has been committed to db
-        my $instance = Krang::Conf->instance;
+        my $instance = pkg('Conf')->instance;
 
         $path = catfile($root,'data','media', $instance, $self->_media_id_path(),$self->{version},$self->{filename});
     }
@@ -985,7 +986,7 @@ sub find {
 
     # add ids of category and cats below if below_category_id is passed in
     if ($args{'below_category_id'}) {
-        my $specd_cat = (Krang::Category->find(category_id => $args{below_category_id}))[0];
+        my $specd_cat = (pkg('Category')->find(category_id => $args{below_category_id}))[0];
         my @descendants = $specd_cat->descendants( ids_only => 1 );
         unshift @descendants, $specd_cat->category_id;
 
@@ -1079,7 +1080,7 @@ sub find {
     }
 
     # Get user asset permissions -- overrides may_edit if false
-    my $media_access = Krang::Group->user_asset_permissions('media');
+    my $media_access = pkg('Group')->user_asset_permissions('media');
 
     my $select_string;
     my $group_by = 0;
@@ -1306,7 +1307,7 @@ sub checkout {
     # Load media if media is not already loaded
     unless (ref($self)) {
         croak ("No media_id specified") unless ($media_id);
-        my ($media) = Krang::Media->find(media_id=>$media_id);
+        my ($media) = pkg('Media')->find(media_id=>$media_id);
         croak ("Can't find media_id '$media_id'") unless ($media and ref($media));
 
         # We got it.  Save it.
@@ -1365,7 +1366,7 @@ sub checkin {
     # Load media if media is not already loaded
     unless (ref($self)) {
         croak ("No media_id specified") unless ($media_id);
-        my ($media) = Krang::Media->find(media_id=>$media_id);
+        my ($media) = pkg('Media')->find(media_id=>$media_id);
         croak ("Can't find media_id '$media_id'") unless ($media and ref($media));
 
         # We got it.  Save it.
@@ -1575,7 +1576,7 @@ Convenience method to Krang::Publisher, previews media object.
 
 sub preview {
     my $self = shift;
-    my $publisher = new Krang::Publisher();
+    my $publisher = pkg('Publisher')->new();
 
     $publisher->preview_media(
                                    media    => $self
@@ -1591,7 +1592,7 @@ Convenience method to Krang::Publisher, publishes media object.
 
 sub publish {
     my $self = shift;
-    my $publisher = new Krang::Publisher();
+    my $publisher = pkg('Publisher')->new();
 
     $publisher->publish_media(
                                    media    => $self
@@ -1615,7 +1616,7 @@ sub delete {
 
     my $is_object = $media_id ? 0 : 1;
    
-    $self = (Krang::Media->find(media_id => $media_id))[0] if $media_id; 
+    $self = (pkg('Media')->find(media_id => $media_id))[0] if $media_id; 
    
     croak("No media_id specified for delete!") if not $self->{media_id};
  
@@ -1629,12 +1630,12 @@ sub delete {
     $self->checkout();
      
     # unpublish
-    Krang::Publisher->new->unpublish_media(media => $self);
+    pkg('Publisher')->new->unpublish_media(media => $self);
 
     # first delete history for this object
-    Krang::History->delete(object => $self);
+    pkg('History')->delete(object => $self);
 
-    my $file_dir = catdir($root,'data','media',Krang::Conf->instance,$self->_media_id_path);
+    my $file_dir = catdir($root,'data','media',pkg('Conf')->instance,$self->_media_id_path);
 
     $dbh->do('DELETE from media where media_id = ?', undef, $self->{media_id}); 
     $dbh->do('DELETE from media_version where media_id = ?', undef, $self->{media_id}); 
@@ -1675,7 +1676,7 @@ sub serialize_xml {
     # write media file into data set
     $set->add(file => $self->file_path, path => $path, from => $self);
 
-    my %media_type = Krang::Pref->get('media_type');
+    my %media_type = pkg('Pref')->get('media_type');
 
     # basic fields
     $writer->dataElement(media_id   => $self->{media_id});
@@ -1700,7 +1701,7 @@ sub serialize_xml {
     $set->add(object => $self->category, from => $self);
 
     # contributors
-    my %contrib_type = Krang::Pref->get('contrib_type');
+    my %contrib_type = pkg('Pref')->get('contrib_type');
     for my $contrib ($self->contribs) {
         $writer->startTag('contrib');
         $writer->dataElement(contrib_id => $contrib->contrib_id);
@@ -1712,7 +1713,7 @@ sub serialize_xml {
     }
 
     # schedules
-    foreach my $schedule ( Krang::Schedule->find( object_type => 'media', object_id => $self->media_id ) ) {
+    foreach my $schedule ( pkg('Schedule')->find( object_type => 'media', object_id => $self->media_id ) ) {
         $set->add(object => $schedule, from => $self);
     }
 
@@ -1744,12 +1745,12 @@ sub deserialize_xml {
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
     
     # parse it up
-    my $data = Krang::XML->simple(  xml           => $xml, 
+    my $data = pkg('XML')->simple(  xml           => $xml, 
                                     forcearray  => ['contrib'],
                                     suppressempty => 1);
 
     # is there an existing object?
-    my ($media) = Krang::Media->find(url => $data->{url});
+    my ($media) = pkg('Media')->find(url => $data->{url});
     my $update = 0;
     if ($media) {
         # if not updating this is fatal
@@ -1768,16 +1769,16 @@ sub deserialize_xml {
         # create a new media object with category and simple fields
         my $category_id = $set->map_id(class => "Krang::Category",
                                        id    => $data->{category_id});
-        assert(Krang::Category->find(category_id => $category_id, count => 1))
+        assert(pkg('Category')->find(category_id => $category_id, count => 1))
           if ASSERT;
 
-        $media = Krang::Media->new(category_id => $category_id,
+        $media = pkg('Media')->new(category_id => $category_id,
                                    (map { ($_,$data->{$_}) } keys %simple));
 
     }
       
     # get hash of contrib type names to ids
-    my %contrib_types = reverse Krang::Pref->get('contrib_type');
+    my %contrib_types = reverse pkg('Pref')->get('contrib_type');
 
     # handle contrib association
     if ($data->{contrib}) { 
@@ -1804,7 +1805,7 @@ sub deserialize_xml {
                         filename   => $data->{filename});
     
     # get hash of media type names to ids
-    my %media_types = reverse Krang::Pref->get('media_type');
+    my %media_types = reverse pkg('Pref')->get('media_type');
     
     # get ids for media types
     Krang::DataSet::DeserializationFailed->throw(

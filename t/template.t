@@ -1,43 +1,44 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Script;
-use Krang::Category;
-use Krang::Site;
-use Krang::Group;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Group';
 
 use Data::Dumper;
 use Test::More qw(no_plan);
 
 
-BEGIN {use_ok('Krang::Template');}
+BEGIN {use_ok(pkg('Template'));}
 
 # set up site and category
-my $site = Krang::Site->new(preview_path => './sites/test1/preview/',
+my $site = pkg('Site')->new(preview_path => './sites/test1/preview/',
                             preview_url => 'preview.testsite1.com',
                             publish_path => './sites/test1/',
                             url => 'testsite1.com');
 $site->save();
 isa_ok($site, 'Krang::Site');
 
-my ($category) = Krang::Category->find(site_id => $site->site_id());
+my ($category) = pkg('Category')->find(site_id => $site->site_id());
 
 # constructor failure
 my $tmpl;
-eval {$tmpl = Krang::Template->new(category => 'blah',
+eval {$tmpl = pkg('Template')->new(category => 'blah',
                                    content => 'blah',
                                    filename => 'A.tmpl')};
 like($@, qr/'category' argument must be a 'Krang::Category'/s,
      'constructor failure');
 
 # constructor success 1 - tests category arg
-eval {$tmpl = Krang::Template->new(category => $category,
+eval {$tmpl = pkg('Template')->new(category => $category,
                                    content => '<blink><tmpl_var bob></blink>',
                                    filename => 'bob.tmpl')};
 is($@, '', 'contructor good :)');
 
 # constructor success 2
-$tmpl = Krang::Template->new(category_id => $category->category_id(),
+$tmpl = pkg('Template')->new(category_id => $category->category_id(),
                              content => '<blink><tmpl_var bob></blink>',
                              filename => 'bob.tmpl');
 isa_ok($tmpl, 'Krang::Template');
@@ -53,7 +54,7 @@ is($tmpl->version(), 1, 'Version Check');
 
 # duplicate check
 eval {
-    my $tmplX = Krang::Template->new(category_id => $category->category_id(),
+    my $tmplX = pkg('Template')->new(category_id => $category->category_id(),
                                      filename => 'bob.tmpl');
     $tmplX->save();
 };
@@ -90,7 +91,7 @@ like($@, qr/Template isn't checked out/i, 'verify_checkout() Test');
 # verify checkout works
 is($tmpl->checkout()->isa('Krang::Template'), 1, 'Checkout Test');
 
-my $tmpl2 = Krang::Template->new(category_id => $category->category_id(),
+my $tmpl2 = pkg('Template')->new(category_id => $category->category_id(),
                                  content => '<html></html>',
                                  filename => 't_w_c.tmpl');
 
@@ -133,38 +134,38 @@ is($tmpl2->testing, 0);
 # find() tests
 ###############
 # make sure find() croaks
-eval {Krang::Template->find(count => 1, ids_only => 1)};
+eval {pkg('Template')->find(count => 1, ids_only => 1)};
 is($@ =~ /Only one/, 1, 'Find Failure 1');
 
-eval {Krang::Template->find(XXX => 69)};
+eval {pkg('Template')->find(XXX => 69)};
 is($@ =~ /invalid/, 1, 'Find Failure 2');
 
-my ($tmpl3) = Krang::Template->find(filename_like => '%bob%');
+my ($tmpl3) = pkg('Template')->find(filename_like => '%bob%');
 is(ref $tmpl3, 'Krang::Template', "Find - _like 1");
 
 my @ids = ($tmpl->template_id(), $tmpl2->template_id());
 
 my $i = 1;
-my @tmpls = Krang::Template->find(template_id => \@ids);
+my @tmpls = pkg('Template')->find(template_id => \@ids);
 ok(@tmpls);
 is (ref $_, 'Krang::Template', "Find - template_id " . $i++) for @tmpls;
 
-my $count = Krang::Template->find(count => 1, template_id => \@ids);
+my $count = pkg('Template')->find(count => 1, template_id => \@ids);
 is($count, scalar @ids, "Find - count");
 
 $i = 2;
 my $year = (localtime)[5] + 1900;
-my @tmpls2 = Krang::Template->find(creation_date_like => "%${year}%");
+my @tmpls2 = pkg('Template')->find(creation_date_like => "%${year}%");
 ok(@tmpls2);
 is(ref $_, 'Krang::Template', "Find - _like " . $i++) for @tmpls2;
 
-my ($tmpl4) = Krang::Template->find(limit => 1,
+my ($tmpl4) = pkg('Template')->find(limit => 1,
                                     offset => 1,
                                     order_by => 'filename',
                                     category_id => $category->category_id);
 is($tmpl4->filename(), 't_w_c.tmpl', "Find - limit, offset, order_by");
 
-my @tmpls5 = Krang::Template->find(order_desc => 1,
+my @tmpls5 = pkg('Template')->find(order_desc => 1,
                                    creation_date_like => "%${year}%",
                                    category_id => $category->category_id);
 ok(@tmpls5);
@@ -173,12 +174,12 @@ is($tmpls5[0]->filename(), 't_w_c.tmpl', "Find - ascend/descend");
 
 # check category arrayref search for find().
 my @cat_ids = ($category->category_id);
-my @tmpls6 = Krang::Template->find(category_id => \@cat_ids);
+my @tmpls6 = pkg('Template')->find(category_id => \@cat_ids);
 isa_ok($_, 'Krang::Template') for @tmpls5;
 
 
 # version find
-my ($tmplXYZ) = Krang::Template->find(template_id => $tmpl->template_id,
+my ($tmplXYZ) = pkg('Template')->find(template_id => $tmpl->template_id,
                                       version => 2);
 isa_ok($tmplXYZ, 'Krang::Template');
 is($tmplXYZ->version(), 2, 'Template version test');
@@ -199,12 +200,12 @@ END {
     my $uniqueness = time();
 
     # Create site/category hierarchy for testing purposes
-    my $site = Krang::Site->new( preview_url  => $uniqueness .'preview.com',
+    my $site = pkg('Site')->new( preview_url  => $uniqueness .'preview.com',
                                  preview_path => $uniqueness .'preview/path/',
                                  publish_path => $uniqueness .'publish/path/',
                                  url          => $uniqueness .'site.com' );
     $site->save();
-    my ($root_category) = Krang::Category->find( parent_id => undef,
+    my ($root_category) = pkg('Category')->find( parent_id => undef,
                                                  site_id => $site->site_id() );
     die ("No root category for site ". $site->site_id()) unless (ref($root_category));
 
@@ -212,12 +213,12 @@ END {
     my @test_templates = ();
 
     # Add global template
-    my $template = Krang::Template->new( filename => "GLOBAL_$uniqueness\.tmpl" );
+    my $template = pkg('Template')->new( filename => "GLOBAL_$uniqueness\.tmpl" );
     $template->save();
     push(@test_templates, $template);
 
     # Add template to root category
-    $template = Krang::Template->new( category => $root_category,
+    $template = pkg('Template')->new( category => $root_category,
                                          filename => "ROOT_$uniqueness\.tmpl" );
     $template->save();
     push(@test_templates, $template);
@@ -230,13 +231,13 @@ END {
         die ("No cat available for cat_name '$cat_name'") unless (ref($parent_cat));
 
         # Create test category
-        my $newcat = Krang::Category->new( dir => "$cat_name\_$uniqueness",
+        my $newcat = pkg('Category')->new( dir => "$cat_name\_$uniqueness",
                                            parent_id => $parent_cat->category_id() );
         $newcat->save();
         push(@test_cats, $newcat);
 
         # Add template in this category
-        my $template = Krang::Template->new( category => $newcat,
+        my $template = pkg('Template')->new( category => $newcat,
                                              filename => "$cat_name\_$uniqueness\.tmpl" );
         $template->save();
         push(@test_templates, $template);
@@ -256,27 +257,27 @@ END {
     is($test_templates[2]->may_see(), "1", "Root cat template may_see");
 
     # Test template in category w/o edit access
-    my ($admin_group) = Krang::Group->find(group_id=>1);
+    my ($admin_group) = pkg('Group')->find(group_id=>1);
     die ("Can't load admin group") unless (ref($admin_group));
     $admin_group->categories($test_cats[0]->category_id => "read-only");
     $admin_group->save();
-    ($template) = Krang::Template->find(category_id => $test_cats[0]->category_id);
+    ($template) = pkg('Template')->find(category_id => $test_cats[0]->category_id);
     is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in read-only category (".$test_cats[0]->category_id .")");
     is($template->may_see(), "1", "Can see template in read-only category");
     
     # Test template in descendant category w/o edit access
-    ($template) = Krang::Template->find(category_id => $test_cats[1]->category_id);
+    ($template) = pkg('Template')->find(category_id => $test_cats[1]->category_id);
     is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in read-only category (".$test_cats[1]->category_id .")");
     is($template->may_see(), "1", "Can see template in read-only category");
 
     # Test template in category w/o edit or read access ("hide")
     $admin_group->categories($test_cats[0]->category_id => "hide");
     $admin_group->save();
-    ($template) = Krang::Template->find(category_id => $test_cats[0]->category_id);
+    ($template) = pkg('Template')->find(category_id => $test_cats[0]->category_id);
     is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in hidden category (".$test_cats[0]->category_id .")");
     is($template->may_see(), "0", "Can't see template (". $template->template_id .") in hidden category (".$test_cats[0]->category_id .")");
     # Test template in descendant category w/o edit or read access ("hide")
-    ($template) = Krang::Template->find(category_id => $test_cats[1]->category_id);
+    ($template) = pkg('Template')->find(category_id => $test_cats[1]->category_id);
     is($template->may_edit(), "0", "Can't edit template (". $template->template_id .") in hidden category (".$test_cats[1]->category_id .")");
     is($template->may_see(), "0", "Can't see template (". $template->template_id .") in hidden category (".$test_cats[1]->category_id .")");
 
@@ -297,15 +298,15 @@ END {
     isa_ok($@, "Krang::Template::NoEditAccess", "Delete non-editable template throws exception");
 
     # Test combined permissions -- add an additional group w/read-only access
-    my $new_admin_group = Krang::Group->new( name => "group $uniqueness" );
+    my $new_admin_group = pkg('Group')->new( name => "group $uniqueness" );
     $new_admin_group->categories($test_cats[1]->category_id => "edit");
     $new_admin_group->save();
 
-    my ($admin_user) = Krang::User->find(login=>"system", hidden => 1);
+    my ($admin_user) = pkg('User')->find(login=>"system", hidden => 1);
     $admin_user->group_ids_push($new_admin_group->group_id());
     $admin_user->save();
 
-    ($template) = Krang::Template->find(category_id => $test_cats[1]->category_id);
+    ($template) = pkg('Template')->find(category_id => $test_cats[1]->category_id);
     is($template->may_edit(), "1", "Can edit template with new group access");
     is($template->may_see(), "1", "Can see template with new group access");
     
@@ -315,46 +316,46 @@ END {
     $new_admin_group->delete();
 
     # Test read and edit access to templates on other category branch
-    ($template) = Krang::Template->find(category_id => $test_cats[-1]->category_id);
+    ($template) = pkg('Template')->find(category_id => $test_cats[-1]->category_id);
     is($template->may_edit(), "1", "Can edit template on other category branch");
     is($template->may_see(), "1", "Can see template on other category branch");
     
     # Can't save to read-only category
-    $template = Krang::Template->new( category => $test_cats[0],
+    $template = pkg('Template')->new( category => $test_cats[0],
                                       filename => "noaccess\_$uniqueness\.tmpl" );
     eval { $template->save };
     isa_ok($@, "Krang::Template::NoCategoryEditAccess", "Save to non-editable category ".$test_cats[0]->category_id." throws exception");
     
     # Test "global" template for permissions
-    ($template) = Krang::Template->find(template_id => $test_templates[0]->template_id());
+    ($template) = pkg('Template')->find(template_id => $test_templates[0]->template_id());
     is($template->may_edit(), "1", "Can edit global template");
     is($template->may_see(), "1", "Can see global template");
 
     # Test "global" template w/ full access, but asset_template == "read-only"
     $admin_group->asset_template("read-only");
     $admin_group->save();
-    ($template) = Krang::Template->find(template_id => $test_templates[0]->template_id());
+    ($template) = pkg('Template')->find(template_id => $test_templates[0]->template_id());
     is($template->may_edit(), "0", "Can't edit global template (". $test_templates[0]->template_id() .") w/ asset_template == 'read-only'");
     is($template->may_see(), "1", "Can see global template (". $test_templates[0]->template_id() .") w/ asset_template == 'read-only'");
 
     # Test "global" template w/ full access, but asset_template == "hide"
     $admin_group->asset_template("hide");
     $admin_group->save();
-    ($template) = Krang::Template->find(template_id => $test_templates[0]->template_id());
+    ($template) = pkg('Template')->find(template_id => $test_templates[0]->template_id());
     is($template->may_edit(), "0", "Can't edit global template (". $test_templates[0]->template_id() .") w/ asset_template == 'hide'");
     is($template->may_see(), "1", "Can still see global template (". $test_templates[0]->template_id() .") w/ asset_template == 'hide'");
 
     # Test template in category w/ full access, but asset_template == "read-only"
     $admin_group->asset_template("read-only");
     $admin_group->save(); 
-    ($template) = Krang::Template->find(template_id => $test_templates[1]->template_id());
+    ($template) = pkg('Template')->find(template_id => $test_templates[1]->template_id());
     is($template->may_edit(), "0", "Can't edit template (". $test_templates[1]->template_id() .") w/ asset_template == 'read-only'");
     is($template->may_see(), "1", "Can see template (". $test_templates[1]->template_id() .") w/ asset_template == 'read-only'");
 
     # Test template in category w/ full access, but asset_template == "hide"
     $admin_group->asset_template("hide");
     $admin_group->save();
-    ($template) = Krang::Template->find(template_id => $test_templates[1]->template_id());
+    ($template) = pkg('Template')->find(template_id => $test_templates[1]->template_id());
     is($template->may_edit(), "0", "Can't edit template (". $test_templates[1]->template_id() .") w/ asset_template == 'hide'");
     is($template->may_see(), "1", "Can see template (". $test_templates[1]->template_id() .") w/ asset_template == 'hide'");
 

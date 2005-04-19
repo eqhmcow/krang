@@ -1,5 +1,6 @@
 package Krang::CGI::Media;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
@@ -13,8 +14,8 @@ Krang::CGI::Media - web interface to manage media
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Media;
-  my $app = Krang::CGI::Media->new();
+  use Krang::ClassLoader 'CGI::Media';
+  my $app = pkg('CGI::Media')->new();
   $app->run();
 
 
@@ -39,13 +40,13 @@ is 'add'.
 
 =cut
 
-use Krang::Category;
-use Krang::Media;
-use Krang::Widget qw(category_chooser datetime_chooser decode_datetime format_url);
-use Krang::Message qw(add_message);
-use Krang::HTMLPager;
-use Krang::Pref;
-use Krang::Session qw(%session);
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url);
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader Session => qw(%session);
 use Carp qw(croak);
 
 
@@ -177,7 +178,7 @@ sub find {
               search_filter   => $search_filter);
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $t->param(instance_name => $instance_name);
 
@@ -393,12 +394,12 @@ sub list_active {
     my %find_params = (checked_out => 1, may_see => 1);
 
     # can checkin all?
-    my %admin_perms = Krang::Group->user_admin_permissions();
-    my %asset_perms = Krang::Group->user_asset_permissions();
+    my %admin_perms = pkg('Group')->user_admin_permissions();
+    my %asset_perms = pkg('Group')->user_asset_permissions();
     my $may_checkin_all = ($admin_perms{may_checkin_all} and
                            $asset_perms{media} eq 'edit') ? 1 : 0;
 
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
        persist_vars => \%persist_vars,
        use_module => 'Krang::Media',
@@ -431,7 +432,7 @@ sub list_active {
     $template->param(may_checkin_all => $may_checkin_all);
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $template->param(instance_name => $instance_name);
 
@@ -453,7 +454,7 @@ sub add {
     my %args = ( @_ );
 
     # Create new temporary Media object to work on
-    my $m = Krang::Media->new();
+    my $m = pkg('Media')->new();
     $session{media} = $m;
 
     # Call and return the real add function
@@ -637,7 +638,7 @@ sub checkout_and_edit {
     my $media_id = $q->param('media_id');
     croak("Missing required media_id parameter.") unless $media_id;
 
-    my ($m) = Krang::Media->find(media_id=>$media_id);
+    my ($m) = pkg('Media')->find(media_id=>$media_id);
     croak("Unable to load media_id '$media_id'") unless $m;
 
     $m->checkout;
@@ -689,7 +690,7 @@ sub edit {
     my $force_reload = $q->param('force_reload');
     if ( ($force_reload) or ( $media_id  &&  not(ref($m) && defined($media_id) && ($media_id eq $m->media_id))) ) {
         # If we have a media_id, force load using it.
-        ($m) = Krang::Media->find(media_id=>$media_id);
+        ($m) = pkg('Media')->find(media_id=>$media_id);
         $session{media} = $m;
     }
 
@@ -701,14 +702,14 @@ sub edit {
     $t->param($media_tmpl_data);
 
     # permissions
-    my %admin_perms = Krang::Group->user_admin_permissions();
+    my %admin_perms = pkg('Group')->user_admin_permissions();
     $t->param(may_publish => $admin_perms{may_publish});
 
     # Propagate messages, if we have any
     $t->param(%args) if (%args);
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $t->param(instance_name => $instance_name);
 
@@ -872,7 +873,7 @@ sub delete {
         delete($session{media});
     } else {
         # Delete this media by media_id
-        my $m = Krang::Media->find(media_id=>$media_id);
+        my $m = pkg('Media')->find(media_id=>$media_id);
         $m->delete();
     }
 
@@ -912,7 +913,7 @@ sub delete_selected {
     return $self->find() unless (@media_delete_list);
 
     foreach my $mid (@media_delete_list) {
-        my ($m) = Krang::Media->find( media_id => $mid);
+        my ($m) = pkg('Media')->find( media_id => $mid);
         $m->delete();
     }
 
@@ -1099,14 +1100,14 @@ sub view {
         $t->param(is_old_version => 1);
     }
 
-    my ($m) = Krang::Media->find(%find_params);
+    my ($m) = pkg('Media')->find(%find_params);
     die ("Can't find media object with media_id '$media_id'") unless (ref($m));
 
     my $media_view_tmpl_data = $self->make_media_view_tmpl_data($m);
     $t->param($media_view_tmpl_data);
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $t->param(instance_name => $instance_name);
 
@@ -1194,7 +1195,7 @@ sub checkin_selected {
      $q->delete('krang_pager_rows_checked');
 
      foreach my $media_id (@media_checkin_list) {
-         my ($m) = Krang::Media->find(media_id=>$media_id);
+         my ($m) = pkg('Media')->find(media_id=>$media_id);
          $m->checkin();
      }
 
@@ -1219,7 +1220,7 @@ sub checkout_selected {
      $q->delete('krang_pager_rows_checked');
 
      foreach my $media_id (@media_checkout_list) {
-         my ($m) = Krang::Media->find(media_id=>$media_id);
+         my ($m) = pkg('Media')->find(media_id=>$media_id);
          $m->checkout();
      }
 
@@ -1309,7 +1310,7 @@ sub list_active_row_handler {
       $media->media_id . ')">View</a>';
 
     # user
-    my ($user) = Krang::User->find(user_id => $media->checked_out_by);
+    my ($user) = pkg('User')->find(user_id => $media->checked_out_by);
     $row->{user} = $user->first_name . " " . $user->last_name;
 }
 
@@ -1331,7 +1332,7 @@ sub _add {
     $t->param($media_tmpl_data);
 
     # permissions
-    my %admin_perms = Krang::Group->user_admin_permissions();
+    my %admin_perms = pkg('Group')->user_admin_permissions();
     $t->param(may_publish => $admin_perms{may_publish});
 
     # Propagate messages, if we have any
@@ -1427,7 +1428,7 @@ sub make_media_tmpl_data {
     }
 
     # Build type drop-down
-    my %media_types = Krang::Pref->get('media_type');
+    my %media_types = pkg('Pref')->get('media_type');
     my @media_type_ids = ( "", keys(%media_types) );
     my $media_types_popup_menu = $q->popup_menu(
                                                 -name => 'media_type_id',
@@ -1460,7 +1461,7 @@ sub make_media_tmpl_data {
 
     # Set up Contributors
     my @contribs = ();
-    my %contrib_types = Krang::Pref->get('contrib_type');
+    my %contrib_types = pkg('Pref')->get('contrib_type');
     foreach my $c ($m->contribs()) {
         my %contrib_row = (
                            first => $c->first(),
@@ -1518,13 +1519,13 @@ sub make_media_view_tmpl_data {
     $tmpl_data{version} = $m->version();
 
     # Display media type name
-    my %media_types = Krang::Pref->get('media_type');
+    my %media_types = pkg('Pref')->get('media_type');
     my $media_type_id = $m->media_type_id();
     $tmpl_data{type} = $media_types{$media_type_id} if ($media_type_id);
 
     # Display category
     my $category_id = $m->category_id();
-    my ($category) = Krang::Category->find(category_id => $category_id);
+    my ($category) = pkg('Category')->find(category_id => $category_id);
     $tmpl_data{category} = format_url( url => $category->url(),
                                        length => 50 );
 
@@ -1534,7 +1535,7 @@ sub make_media_view_tmpl_data {
 
     # Set up Contributors
     my @contribs = ();
-    my %contrib_types = Krang::Pref->get('contrib_type');
+    my %contrib_types = pkg('Pref')->get('contrib_type');
     foreach my $c ($m->contribs()) {
         my %contrib_row = (
                            first => $c->first(),
@@ -1647,7 +1648,7 @@ sub make_pager {
     }
 
     my $q = $self->query();
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => $persist_vars,
                                       use_module => 'Krang::Media',
@@ -1726,8 +1727,8 @@ sub do_save_media {
         } elsif (ref($@) and $@->isa('Krang::Media::NoCategoryEditAccess')) {
             # User tried to save to a category to which he doesn't have access
             my $category_id = $@->category_id || 
-              croak("No category_id on Krang::Media::NoCategoryEditAccess exception");
-            my ($cat) = Krang::Category->find(category_id => $category_id);
+              croak("No category_id on pkg('Media::NoCategoryEditAccess') exception");
+            my ($cat) = pkg('Category')->find(category_id => $category_id);
             add_message( 'no_category_access', 
                          url => $cat->url, 
                          id => $category_id );

@@ -6,6 +6,7 @@ Krang::Schedule - Module for scheduling events in Krang.
 
 package Krang::Schedule;
 
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -19,25 +20,25 @@ use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
 
-use Krang::Conf qw(KrangRoot);
-use Krang::DB qw(dbh);
-use Krang::Log qw/ASSERT assert critical debug info/;
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Log => qw/ASSERT assert critical debug info/;
 
-use Krang::Alert;
-use Krang::Media;
-use Krang::Publisher;
-use Krang::Story;
-use Krang::Template;
+use Krang::ClassLoader 'Alert';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Publisher';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Template';
 use Krang::Cache;
 
 
 
 =head1 SYNOPSIS
 
-  use Krang::Schedule;
+  use Krang::ClassLoader 'Schedule';
 
   # publish a story at a specific date
-  $sched = Krang::Schedule->new(object_type => 'story',
+  $sched = pkg('Schedule')->new(object_type => 'story',
                                 object_id   => $story_id,
                                 action      => 'publish',
                                 repeat      => 'never',
@@ -45,7 +46,7 @@ use Krang::Cache;
 
   # publish a story at a specific date, specifying the version to be
   # published
-  $sched = Krang::Schedule->new(object_type => 'story',
+  $sched = pkg('Schedule')->new(object_type => 'story',
                                 object_id   => $story_id,
                                 action      => 'publish',
                                 context     => [ version => $version ],
@@ -59,7 +60,7 @@ use Krang::Cache;
   $schedule_id = $schedule->schedule_id;
 
   # Create an entry to publish a story every Monday at noon.
-  $sched = Krang::Schedule->new(object_type => 'story',
+  $sched = pkg('Schedule')->new(object_type => 'story',
                                 object_id   => $story_id,
                                 action      => 'publish',
                                 repeat      => 'weekly',
@@ -69,7 +70,7 @@ use Krang::Cache;
 
 
   # Create an entry to publish a story at noon every day.
-  $sched = Krang::Schedule->new(object_type => 'story',
+  $sched = pkg('Schedule')->new(object_type => 'story',
                                 object_id   => $story_id,
                                 action      => 'publish',
                                 repeat      => 'daily',
@@ -78,7 +79,7 @@ use Krang::Cache;
 
 
   # Create an entry to publish a story every hour on the hour.
-  $sched = Krang::Schedule->new(object_type => 'story',
+  $sched = pkg('Schedule')->new(object_type => 'story',
                                 object_id   => $story_id,
                                 action      => 'publish',
                                 repeat      => 'hourly',
@@ -86,12 +87,12 @@ use Krang::Cache;
 
 
   # get a list of schedule objects for a given story
-  @schedules = Krang::Schedule->find(object_type => 'story',
+  @schedules = pkg('Schedule')->find(object_type => 'story',
                                      object_id   => 1);
 
 
   # load a schedule object by ID
-  ($schedule) = Krang::Schedule->find(schedule_id => $schedule_id);
+  ($schedule) = pkg('Schedule')->find(schedule_id => $schedule_id);
 
   # get the next execution time of a scheduled event
   $date = $schedule->next_run;
@@ -108,7 +109,7 @@ use Krang::Cache;
 
 
   # Find the default priority for a Krang::Schedule object
-  $priority = Krang::Schedule->determine_priority(schedule => $schedule);
+  $priority = pkg('Schedule')->determine_priority(schedule => $schedule);
 
   # or for the current object
   $priority = $schedule->determine_priority();
@@ -176,7 +177,7 @@ my %schedule_cols = map {$_ => 1} SCHEDULE_RO, SCHEDULE_RW, SCHEDULE_RW_NOTIFY;
 my $tmp_path = catdir(KrangRoot, 'tmp');
 
 # Constructor/Accessor/Mutator setup
-use Krang::MethodMaker 
+use Krang::ClassLoader MethodMaker => 
   new_with_init => 'new',
   new_hash_init => 'hash_init',
   get => [SCHEDULE_RO],
@@ -608,7 +609,7 @@ sub _publish {
 
     my $self = shift;
 
-    my $publisher = new Krang::Publisher;
+    my $publisher = new pkg('Publisher');
 
     my $object = $self->{object};
     my $err;
@@ -685,7 +686,7 @@ sub _send {
     my $context = $self->{context};
     
     eval {
-        Krang::Alert->send(alert_id => $id, @$context);
+        pkg('Alert')->send(alert_id => $id, @$context);
     };
 
     if (my $err = $@) {
@@ -812,7 +813,7 @@ sub delete {
     $dbh->do($query, undef, $schedule_id);
 
     if (ASSERT) {
-        my $count = Krang::Schedule->find(schedule_id => $schedule_id,
+        my $count = pkg('Schedule')->find(schedule_id => $schedule_id,
                                           count => 1);
         assert($count == 0);
     }
@@ -1342,7 +1343,7 @@ sub deserialize_xml {
       (SCHEDULE_RO,SCHEDULE_RW,SCHEDULE_RW_NOTIFY);
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml,
+    my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1);
 
     my $new_id = $set->map_id(class => "Krang::".ucfirst($data->{object_type}),
@@ -1366,10 +1367,10 @@ sub deserialize_xml {
           join(',', (map { $search_params{$_} } keys %search_params) ));
 
     # is there an existing object?
-    my $schedule = (Krang::Schedule->find( %search_params ))[0] || '';
+    my $schedule = (pkg('Schedule')->find( %search_params ))[0] || '';
 
     if (not $schedule) {
-        $schedule = Krang::Schedule->new(   object_id => $new_id,
+        $schedule = pkg('Schedule')->new(   object_id => $new_id,
                                             date => $initial_date,
                                             (map {($_,$data->{$_})}
                                              keys %simple));
@@ -1409,7 +1410,7 @@ sub _object_exists {
     my $object;
 
     if ($self->{action} eq 'send') {
-        my $alert = (Krang::Alert->find( alert_id => $self->object_id ))[0];
+        my $alert = (pkg('Alert')->find( alert_id => $self->object_id ))[0];
         return 1 if $alert; 
     } else {
         my $type = $self->object_type();
@@ -1417,9 +1418,9 @@ sub _object_exists {
         my %context = defined($self->{context}) ? @{$self->{context}} : ();
 
         if ($type eq 'media') {
-            ($object) = Krang::Media->find(media_id => $id, %context);
+            ($object) = pkg('Media')->find(media_id => $id, %context);
         } elsif ($type eq 'story') {
-            ($object) = Krang::Story->find(story_id => $id, %context);
+            ($object) = pkg('Story')->find(story_id => $id, %context);
         } else {
             my $msg = sprintf("%s: unknown object type '%s'", __PACKAGE__, $type);
             die $msg;

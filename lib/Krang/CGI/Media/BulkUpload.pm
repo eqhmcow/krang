@@ -1,18 +1,19 @@
 package Krang::CGI::Media::BulkUpload;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
                                                                                 
 use Carp qw(croak);
 
-use Krang::Media;
-use Krang::Category;
-use Krang::Message qw(add_message);
-use Krang::Widget qw(category_chooser);
-use Krang::Conf qw(KrangRoot FTPHostName FTPPort);
-use Krang::Session qw(%session);
-use Krang::Log qw(debug);
-use Krang::User;
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Widget => qw(category_chooser);
+use Krang::ClassLoader Conf => qw(KrangRoot FTPHostName FTPPort);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader 'User';
 use File::Temp qw/ tempdir /;
 use File::Spec::Functions qw(catdir catfile abs2rel);
 use File::Find;
@@ -36,8 +37,8 @@ Krang::CGI::Media::BulkUpload - web interface used to upload archives of media f
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Media::BulkUpload;
-  my $app = Krang::CGI::Media::BulkUpload->new();
+  use Krang::ClassLoader 'CGI::Media::BulkUpload';
+  my $app = pkg('CGI::Media::BulkUpload')->new();
   $app->run();
 
 =head1 DESCRIPTION
@@ -88,7 +89,7 @@ sub choose {
     $template->param( upload_chooser => scalar $query->filefield(-name => 'media_file',
                                                      -size => 32) );
     # FTP Settings    
-    my ($user) = Krang::User->find(user_id => $ENV{REMOTE_USER});    
+    my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});    
     $template->param( ftp_server => FTPHostName, 
                       ftp_port   => FTPPort, 
                       username   => $user->login, 
@@ -153,7 +154,7 @@ media!");
   
         # get chosen category_id, if one
         $chosen_cat_id = $q->param('category_id');
-        $chosen_cat_url = (Krang::Category->find( category_id => $chosen_cat_id ))[0]->url if $chosen_cat_id; 
+        $chosen_cat_url = (pkg('Category')->find( category_id => $chosen_cat_id ))[0]->url if $chosen_cat_id; 
         
         # find all files and dirs in archive 
         File::Find::find(\&build_image_list, $opened_root);    
@@ -196,7 +197,7 @@ sub create_media {
 
     foreach my $file (@$media_list) {
         if ($file->{media_id}) { # if media_id exists, update object
-            my $media = (Krang::Media->find( media_id => $file->{media_id} ))[0];
+            my $media = (pkg('Media')->find( media_id => $file->{media_id} ))[0];
             my $fh = new IO::File $file->{full_path}; 
             $media->upload_file( filename => $file->{name}, filehandle => $fh );
             $media->save();
@@ -205,10 +206,10 @@ sub create_media {
             my $category_id = $category_list{$file->{category}};
             my $fh = new IO::File $file->{full_path};
 
-            my %media_types = Krang::Pref->get('media_type');
+            my %media_types = pkg('Pref')->get('media_type');
             my @media_type_ids = keys(%media_types);
 
-            my $media = Krang::Media->new(  title => $file->{name},
+            my $media = pkg('Media')->new(  title => $file->{name},
                                             category_id => $category_id,
                                             filename => $file->{name},
                                             filehandle => $fh,
@@ -233,7 +234,7 @@ sub check_media {
     my $checked_out;
     foreach my $file (@$media_list) {
         my $category_id = $category_list{$file->{category}};
-        my $media = (Krang::Media->find( title => $file->{name},
+        my $media = (pkg('Media')->find( title => $file->{name},
                                         category_id => $category_id,
                                         filename => $file->{name} ))[0] || '';
         if ($media) {
@@ -267,7 +268,7 @@ sub check_categories {
     my $create_cats = shift;
  
     foreach my $cat (keys %category_list) {
-        my $found_cat = (Krang::Category->find( url => $cat ))[0];
+        my $found_cat = (pkg('Category')->find( url => $cat ))[0];
 
         if ($create_cats and not $found_cat) {
             my $realcat = $cat;
@@ -278,9 +279,9 @@ sub check_categories {
 
             # add each subcat if it doesnt exist already
             foreach my $splitcat  (@splitcat) {
-                my $f_cat = (Krang::Category->find( url => $realcat.$splitcat.'/' ))[0];
+                my $f_cat = (pkg('Category')->find( url => $realcat.$splitcat.'/' ))[0];
                 unless ($f_cat) {
-                    my $parent_cat = (Krang::Category->find( url => $realcat ))[0];
+                    my $parent_cat = (pkg('Category')->find( url => $realcat ))[0];
 
                     # return with message if a category that doesnt match a site appears in the root of archive
                     if (not $parent_cat) {
@@ -288,7 +289,7 @@ sub check_categories {
                         $not_found = 1;
                         last;
                     }
-                    my $new_cat = Krang::Category->new( dir => $splitcat, parent_id => $parent_cat->category_id );
+                    my $new_cat = pkg('Category')->new( dir => $splitcat, parent_id => $parent_cat->category_id );
                     $new_cat->save; 
 
                     $category_list{$new_cat->url} = $new_cat->category_id;

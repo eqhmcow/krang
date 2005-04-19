@@ -1,4 +1,5 @@
 package Krang::History;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -9,10 +10,10 @@ BEGIN {
     our @EXPORT_OK = qw( add_history );
 }
 
-use Krang::DB qw(dbh);
-use Krang::Session qw(%session);
-use Krang::Log qw( info debug );
-use Krang::Alert;
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Log => qw( info debug );
+use Krang::ClassLoader 'Alert';
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -24,11 +25,11 @@ use constant ACTIONS => qw( new save checkin checkout publish deploy undeploy mo
 
 =head1 NAME
 
-    Krang::History - records historical events for krang objects
+Krang::History - records historical events for krang objects
 
 =head1 SYNOPSIS
 
-    use Krang::History qw( add_history );
+    use Krang::ClassLoader History => qw( add_history );
 
     # record that a story was created (user_id pulled from session, 
     # object id and type from object passed in)
@@ -57,11 +58,11 @@ use constant ACTIONS => qw( new save checkin checkout publish deploy undeploy mo
     
     # find and return all events for story 
     # (object id and type from object passed in)
-    my @events = Krang::History->find(  object => $story
+    my @events = pkg('History')->find(  object => $story
                                      );
 
     # delete all history for media object 
-    Krang::History->delete( object => $media,
+    pkg('History')->delete( object => $media,
                           );
 
 =head1 DESCRIPTION
@@ -76,7 +77,7 @@ This class handles the storage and retrieval of historical events in a Krang obj
 
 =cut
 
-use Krang::MethodMaker  new_with_init => 'new',
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
                         new_hash_init => 'hash_init',
                         get_set       => [FIELDS];
 
@@ -127,7 +128,7 @@ sub add_history {
     my $object = delete $args{'object'};
     croak("No object specified") unless ($object);
 
-    my $history = Krang::History->new(%args);
+    my $history = pkg('History')->new(%args);
 
     $history->{version} = $object->version() if (($args{action} eq 'save') || ($args{action} eq 'revert'));
     $history->{user_id} = $ENV{REMOTE_USER};
@@ -147,7 +148,7 @@ sub add_history {
 
     # check if should trigger alert
     if ($object_type eq 'Krang::Story') {
-        Krang::Alert->check_alert( history => $history, story => $object);
+        pkg('Alert')->check_alert( history => $history, story => $object);
     }
 }
 

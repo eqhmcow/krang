@@ -7,9 +7,9 @@ Krang::Publisher - Center of the Publishing Universe.
 
 =head1 SYNOPSIS
 
-  use Krang::Publisher;
+  use Krang::ClassLoader 'Publisher';
 
-  my $publisher = new Krang::Publisher();
+  my $publisher = new pkg('Publisher')();
 
 
   # Publish a list of stories to the preview path.
@@ -95,6 +95,7 @@ published if they are marked as unpublished.
 
 =cut
 
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -107,14 +108,14 @@ use File::Temp qw(tempdir);
 use Time::Piece;
 use Set::IntRange;
 
-use Krang::Conf qw(KrangRoot instance);
-use Krang::Story;
-use Krang::Category;
-use Krang::Template;
-use Krang::History qw(add_history);
-use Krang::DB qw(dbh);
+use Krang::ClassLoader Conf => qw(KrangRoot instance);
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader History => qw(add_history);
+use Krang::ClassLoader DB => qw(dbh);
 
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader Log => qw(debug info critical);
 
 
 use constant PUBLISHER_RO       => qw(is_publish is_preview story category);
@@ -129,7 +130,7 @@ use Exception::Class
   ;
 
 
-use Krang::MethodMaker (new_with_init => 'new',
+use Krang::ClassLoader MethodMaker => (new_with_init => 'new',
                         new_hash_init => 'hash_init',
                         get           => [PUBLISHER_RO]
                        );
@@ -1042,7 +1043,7 @@ sub template_search_path {
 
 
     # Root dir for this instance.
-    my $root = catdir(KrangRoot, 'data', 'templates', Krang::Conf->instance());
+    my $root = catdir(KrangRoot, 'data', 'templates', pkg('Conf')->instance());
 
     if (exists($args{category})) {
         if (!defined($args{category})) {
@@ -1420,7 +1421,7 @@ sub _deploy_testing_templates {
     my $user_id = $ENV{REMOTE_USER} || croak __PACKAGE__ . ": 'REMOTE_USER' environment variable is not set!\n";
 
     # find any templates checked out by this user that are marked for testing.
-    my @templates = Krang::Template->find(testing => 1, checked_out_by => $user_id);
+    my @templates = pkg('Template')->find(testing => 1, checked_out_by => $user_id);
 
     # if there are no templates, there's nothing left to do here.
     return unless (@templates);
@@ -1724,7 +1725,7 @@ sub _check_asset_status {
     my $publish_ok  = 0;
     my $check_links = 0;
 
-    my $instance = Krang::Conf->instance();
+    my $instance = pkg('Conf')->instance();
 
     if ($self->_mark_asset(object => $object)) {
         if ($initial_assets || !$version_check) {
@@ -1756,7 +1757,7 @@ sub _mark_asset {
 
     my $object = $args{object} || croak __PACKAGE__ . ": missing argument 'object'";
 
-    my $instance = Krang::Conf->instance();
+    my $instance = pkg('Conf')->instance();
 
     my $set;
     my $id;
@@ -1803,7 +1804,7 @@ sub _mark_asset_links {
     # make sure the asset list exists - non-destructive init.
     $self->_init_asset_lists();
 
-    my $instance = Krang::Conf->instance();
+    my $instance = pkg('Conf')->instance();
     my $story_id = $object->story_id();
 
     if ($self->{asset_list}{$instance}{checked_links_set}->contains($story_id)) {
@@ -1870,7 +1871,7 @@ sub _init_asset_lists {
 
     my $self = shift;
 
-    my $instance = Krang::Conf->instance();
+    my $instance = pkg('Conf')->instance();
 
     foreach (qw(story_publish_set media_publish_set checked_links_set)) {
         $self->{asset_list}{$instance}{$_} = Set::IntRange->new(0, 4194304)
@@ -1889,7 +1890,7 @@ sub _clear_asset_lists {
 
     my $self = shift;
 
-    my $instance = Krang::Conf->instance();
+    my $instance = pkg('Conf')->instance();
 
     foreach (keys %{$self->{asset_list}{$instance}}) {
         $self->{asset_list}{$instance}{$_}->Empty();

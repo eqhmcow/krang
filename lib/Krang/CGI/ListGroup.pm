@@ -1,5 +1,6 @@
 package Krang::CGI::ListGroup;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
@@ -11,8 +12,8 @@ contents.
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::ListGroup;
-  my $app = Krang::CGI::ListGroup->new();
+  use Krang::ClassLoader 'CGI::ListGroup';
+  my $app = pkg('CGI::ListGroup')->new();
   $app->run();
 
 
@@ -38,12 +39,12 @@ is 'search'.
 =cut
 
 
-use Krang::ListGroup;
-use Krang::List;
-use Krang::ListItem;
-use Krang::Message qw(add_message);
-use Krang::HTMLPager;
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader 'ListGroup';
+use Krang::ClassLoader 'List';
+use Krang::ClassLoader 'ListItem';
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader Log => qw(debug info critical);
 use Carp;
 
 ##############################
@@ -101,7 +102,7 @@ sub search {
     $find_params{name_like} = '%'.$search_filter.'%' if $search_filter;
 
     # Configure pager
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => {
                                                        rm => 'search',
@@ -162,14 +163,14 @@ sub edit {
 
     my $q = $self->query();
     my $list_group_id = $q->param('list_group_id');
-    my ( $lg ) = Krang::ListGroup->find( list_group_id => $list_group_id );
+    my ( $lg ) = pkg('ListGroup')->find( list_group_id => $list_group_id );
 
     # Did we get our group?  Presumbably, users get here from a list.  IOW, there is 
     # no valid (non-fatal) case where a user would be here with an invalid group_id
     die ("No such list_group_id '$list_group_id'") unless (defined($lg));
    
      my $t = $self->load_tmpl("edit.tmpl", associate=>$q, loop_context_vars=>1, die_on_bad_params => 0); 
-    my @lists = Krang::List->find( list_group_id => $lg->list_group_id ); 
+    my @lists = pkg('List')->find( list_group_id => $lg->list_group_id ); 
   
     my $list_names= join(',', map { "'".$_->name."'" } @lists);
     my $js = "\nlists = new Array($list_names);";
@@ -182,7 +183,7 @@ sub edit {
     my $count = 1;
    
     foreach my $list (@lists) {
-        my @list_items = Krang::ListItem->find( list_id => $list->list_id );
+        my @list_items = pkg('ListItem')->find( list_id => $list->list_id );
 
         my @list_item_loop;
         my $first = 1;
@@ -194,7 +195,7 @@ sub edit {
             my $c_li = $li;
             while ($has_parent) {
                 if ($c_li->parent_list_item_id) {
-                    $c_li = (Krang::ListItem->find( list_item_id => $c_li->parent_list_item_id ))[0]; 
+                    $c_li = (pkg('ListItem')->find( list_item_id => $c_li->parent_list_item_id ))[0]; 
                     unshift(@parents,($c_li->order - 1));
                     
                 } else {
@@ -261,9 +262,9 @@ sub save {
             my %s_params;
             $s_params{data} = $data;
             $s_params{order} = $order;
-            $s_params{list} = (Krang::List->find( list_id => $lid))[0];
-            $s_params{parent_list_item} = (Krang::ListItem->find( list_item_id => $pid))[0] if $pid; 
-            my $new_item = Krang::ListItem->new( %s_params );
+            $s_params{list} = (pkg('List')->find( list_id => $lid))[0];
+            $s_params{parent_list_item} = (pkg('ListItem')->find( list_item_id => $pid))[0] if $pid; 
+            my $new_item = pkg('ListItem')->new( %s_params );
             $new_item->save();
             $new_ids{$c_params[0]} = $new_item->list_item_id;
         } else {
@@ -272,7 +273,7 @@ sub save {
                 $list_item_id = $new_ids{$c_params[0]};
             }
             
-            my ($item) = Krang::ListItem->find( list_item_id => $list_item_id );
+            my ($item) = pkg('ListItem')->find( list_item_id => $list_item_id );
 
             if ($c_params[1] eq 'delete') {
                 $item->delete;
@@ -288,7 +289,7 @@ sub save {
 
     # now handle list_group_description
     if ($q->param('list_group_description')) {
-        my ($lg) = Krang::ListGroup->find(list_group_id => $q->param('list_group_id'));
+        my ($lg) = pkg('ListGroup')->find(list_group_id => $q->param('list_group_id'));
         $lg->description($q->param('list_group_description'));
         $lg->save;
     }

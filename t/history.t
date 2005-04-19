@@ -1,18 +1,19 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 
 use strict;
 use warnings;
-use Krang::Script;
-use Krang::History;
-use Krang::Category;
-use Krang::Site;
-use Krang::Media;
-use Krang::Conf qw (KrangRoot);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'History';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader Conf => qw (KrangRoot);
 use File::Spec::Functions qw(catdir catfile splitpath);
 use FileHandle;
 
 # set up site and category
-my $site = Krang::Site->new(preview_path => './sites/test1/preview/',
+my $site = pkg('Site')->new(preview_path => './sites/test1/preview/',
                             preview_url => 'preview.testsite1.com',
                             publish_path => './sites/test1/',
                             url => 'testsite1.com');
@@ -23,12 +24,12 @@ END {
     $site->delete();
 }
 
-my ($category) = Krang::Category->find(site_id => $site->site_id());
+my ($category) = pkg('Category')->find(site_id => $site->site_id());
 
 my $category_id = $category->category_id();
 
 # create new media object
-my $media = Krang::Media->new(title => 'test media object', category_id => $category_id, media_type_id => 1);
+my $media = pkg('Media')->new(title => 'test media object', category_id => $category_id, media_type_id => 1);
 isa_ok($media, 'Krang::Media');
 
 END {
@@ -43,7 +44,7 @@ $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
 # save it
 $media->save();
 
-my @events = Krang::History->find( object => $media, order_by => 'action' );
+my @events = pkg('History')->find( object => $media, order_by => 'action' );
 
 is($events[0]->object_id, $media->media_id, "object_id in history matches media_id");
 is($events[0]->object_type, ref $media, "object_type stored properly in history");
@@ -59,6 +60,6 @@ $media->checkout();
 $media->save();
 $media->checkin();
 
-@events = Krang::History->find( object => $media );
+@events = pkg('History')->find( object => $media );
 
 is(@events, 4, "Four events found for media now");

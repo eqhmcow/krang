@@ -1,14 +1,15 @@
 package Krang::CGI::MyAlerts;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
                                                                                 
 use Carp qw(croak);
-use Krang::Alert;
-use Krang::User;
-use Krang::Message qw(add_message);
-use Krang::Session qw(%session);
-use Krang::Widget qw(category_chooser);
+use Krang::ClassLoader 'Alert';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Widget => qw(category_chooser);
 
 =head1 NAME
                                                                                 
@@ -16,8 +17,8 @@ Krang::CGI::MyAlerts - interface to edit Krang user alerts.
                                                                                 
 =head1 SYNOPSIS
                                                                                 
-  use Krang::CGI::MyAlerts;
-  my $app = Krang::CGI::MyAlerts->new();
+  use Krang::ClassLoader 'CGI::MyAlerts';
+  my $app = pkg('CGI::MyAlerts')->new();
   $app->run();
                                                                                 
 =head1 DESCRIPTION
@@ -71,12 +72,12 @@ sub edit {
                         move => 'Move To' );
                                                                                 
     # get current alerts
-    my @current_alerts = Krang::Alert->find( user_id => $user_id );
+    my @current_alerts = pkg('Alert')->find( user_id => $user_id );
 
     my @alert_loop;
     foreach my $alert (@current_alerts) {
-        my $desk = $alert->desk_id ? (Krang::Desk->find( desk_id => $alert->desk_id))[0]->name : '';
-        my $category = $alert->category_id ? (Krang::Category->find( category_id => $alert->category_id))[0]->url : '';
+        my $desk = $alert->desk_id ? (pkg('Desk')->find( desk_id => $alert->desk_id))[0]->name : '';
+        my $category = $alert->category_id ? (pkg('Category')->find( category_id => $alert->category_id))[0]->url : '';
                                                                                 
         push (@alert_loop, {        action => $alert_types{$alert->action},
                                     alert_id => $alert->alert_id,
@@ -86,7 +87,7 @@ sub edit {
                                                                                 
     $template->param( alert_loop => \@alert_loop );
                                                                                 
-    my @desks = Krang::Desk->find;
+    my @desks = pkg('Desk')->find;
                                                                                 
     my %desk_labels;
     foreach my $d (@desks) {
@@ -129,13 +130,13 @@ sub add_alert {
 eq 'move') and ($params{desk_id} eq 'NULL') );
     add_message("desk_requires_move"),  return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
                                                                                 
-    my @found = Krang::Alert->find( %params );
+    my @found = pkg('Alert')->find( %params );
                                                                                 
     if (not @found) {
         $params{category_id} = undef if ($params{category_id} eq 'NULL');
         $params{desk_id} = undef if ($params{desk_id} eq 'NULL');
                                                                                 
-        my $alert = Krang::Alert->new( %params );
+        my $alert = pkg('Alert')->new( %params );
         $alert->save();
         add_message("alert_added");
     } else {
@@ -162,7 +163,7 @@ sub delete_alerts {
     }
                                                                                 
     foreach my $alert_id (@delete_list) {
-        Krang::Alert->delete($alert_id);
+        pkg('Alert')->delete($alert_id);
     }
                                                                                 
     add_message('deleted_selected');

@@ -70,6 +70,7 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Conf qw(KrangRoot EnableSiteServer);
 
 # check for args
@@ -92,7 +93,7 @@ foreach my $service (@ctl) {
     my $script = catfile(KrangRoot, 'bin', $service->{'name'});
     # will need sudo?
     if (($< != 0 or $> != 0) and 
-        Krang::Conf->get($service->{'port'}) <= 1024) {
+        pkg('Conf')->get($service->{'port'}) <= 1024) {
         $script = "sudo $script";
     }
     print STDERR "=> krang_ctl calling '$script $command'...\n";

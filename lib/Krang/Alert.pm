@@ -1,14 +1,15 @@
 package Krang::Alert;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::DB qw(dbh);
-use Krang::Session qw(%session);
-use Krang::Log qw( debug info );
-use Krang::Schedule;
-use Krang::User;
-use Krang::Story;
-use Krang::Category;
-use Krang::Conf qw(SMTPServer FromAddress KrangRoot);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Log => qw( debug info );
+use Krang::ClassLoader 'Schedule';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader Conf => qw(SMTPServer FromAddress KrangRoot);
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
@@ -22,16 +23,16 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
 
 =head1 NAME
 
-    Krang::Alert -  interface to specify Krang::Story events to alert upon, 
+    pkg('Alert') -  interface to specify pkg('Story') events to alert upon, 
                     schedule alerts, and mail out alerts.
 
 =head1 SYNOPSIS
 
-    use Krang::Alert;
+    use Krang::ClassLoader 'Alert';
     
     # add new alert scenario - user 1 will be notified when any new stary is 
     # created in category 3 (or its descendants)
-    my $alert = Krang::Alert->new(  user_id => '1',
+    my $alert = pkg('Alert')->new(  user_id => '1',
                                     action => 'new',
                                     category_id => '3' ); 
 
@@ -40,7 +41,7 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
 
     # add new alert scenario - user 1 will be notified when any story is
     # moved to desk 4
-    my $alert2 = Krang::Alert->new( user_id => '1',
+    my $alert2 = pkg('Alert')->new( user_id => '1',
                                     action => 'move',
                                     desk_id => '4' );
 
@@ -49,7 +50,7 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
 
     # Let's pretend that category 5 is a decendant of category 3.
     # This find should return the $alert object from the above example. 
-    my @found = Krang::Alert->find( user_id => '1',
+    my @found = pkg('Alert')->find( user_id => '1',
                                     action => 'new',
                                     category_id => '5' ); 
 
@@ -58,7 +59,7 @@ use constant ACTIONS => qw( new save checkin checkout publish move );
     # will be scheduled to be mailed with Krang::Schedule
     # This is a convenience method that uses Krang::Alert->find() 
     # and Krang::Schedule->new()
-    Krang::Alert->check_alert(  history_object => $history_object,  
+    pkg('Alert')->check_alert(  history_object => $history_object,  
                                 story_object => $story_object );
     
     # delete alert scenario
@@ -102,7 +103,7 @@ desk_id
 
 =cut
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get_set       => [ FIELDS ];
@@ -272,7 +273,7 @@ not $valid_params{$param};
 
             if ($args{'parent_categories'}) {
                 foreach my $cat_id ( @$cat_ids ) {
-                    my @cat = Krang::Category->find( category_id => $cat_id);
+                    my @cat = pkg('Category')->find( category_id => $cat_id);
                     my @ancestors = $cat[0]->ancestors( ids_only => 1 );
                     
                     push @all_cat_ids, @ancestors;
@@ -292,7 +293,7 @@ not $valid_params{$param};
         } else {
             if ($args{'parent_categories'}) {
                 my @all_cat_ids;
-                my @cat = Krang::Category->find( category_id => $args{'category_id'});
+                my @cat = pkg('Category')->find( category_id => $args{'category_id'});
                 my @ancestors = $cat[0]->ancestors( ids_only => 1 );
                 push @all_cat_ids, @ancestors;
                 push @all_cat_ids, $args{'category_id'};
@@ -377,19 +378,19 @@ sub check_alert {
     $search_criteria{category_id} = \@category_ids if @category_ids;
     $search_criteria{parent_categories} = 1;
 
-    croak(__PACKAGE__."->check_alert requires a valid Krang::History object.") if (ref $history ne 'Krang::History');
+    croak(__PACKAGE__."->check_alert requires a valid pkg('History') object.") if (ref $history ne 'Krang::History');
 
-    croak(__PACKAGE__."->check_alert requires a valid Krang::Story object.") if (ref $story ne 'Krang::Story');
+    croak(__PACKAGE__."->check_alert requires a valid pkg('Story') object.") if (ref $story ne 'Krang::Story');
 
     debug(__PACKAGE__."->check_alert() - checking for any alerts on action $action in categories @category_ids");
 
-    my @matched_alerts = Krang::Alert->find( %search_criteria );  
+    my @matched_alerts = pkg('Alert')->find( %search_criteria );  
 
     debug(__PACKAGE__."->check_alert() - found alert_ids @matched_alerts for criteria (action $action in categories @category_ids).") if @matched_alerts;
 
     foreach my $alert_id ( @matched_alerts ) {
         my $time = localtime;
-        my $schedule = Krang::Schedule->new(    object_type => 'alert',
+        my $schedule = pkg('Schedule')->new(    object_type => 'alert',
                                                 object_id => $alert_id,
                                                 action => 'send',
                                                 date => $time,
@@ -414,21 +415,21 @@ sub send {
     my $user_id = $args{user_id} || croak(__PACKAGE__."->send() - you must specify a user_id");
     my $story_id = $args{story_id} || croak(__PACKAGE__."->send() - you must specify a story_id");
 
-    my $alert = (Krang::Alert->find(alert_id => $alert_id))[0];
+    my $alert = (pkg('Alert')->find(alert_id => $alert_id))[0];
     
-    croak("No valid Krang::Alert object found with id $alert_id") if not ( ref $alert eq 'Krang::Alert');
+    croak("No valid pkg('Alert') object found with id $alert_id") if not ( ref $alert eq 'Krang::Alert');
 
-    my $to_user = (Krang::User->find( user_id => $alert->user_id ))[0];
+    my $to_user = (pkg('User')->find( user_id => $alert->user_id ))[0];
 
-    croak("No valid Krang::User object found with id ".$alert->user_id) if not ( ref $to_user eq 'Krang::User');
+    croak("No valid pkg('User') object found with id ".$alert->user_id) if not ( ref $to_user eq 'Krang::User');
 
-    my $user = (Krang::User->find( user_id => $user_id ))[0];
+    my $user = (pkg('User')->find( user_id => $user_id ))[0];
 
-    croak("No valid Krang::User object found with id $user_id") if not ( ref $user eq 'Krang::User');
+    croak("No valid pkg('User') object found with id $user_id") if not ( ref $user eq 'Krang::User');
 
-    my $story = (Krang::Story->find(story_id => $story_id))[0];
+    my $story = (pkg('Story')->find(story_id => $story_id))[0];
 
-    croak("No valid Krang::Story object found with id $story_id") if not ( ref $story eq 'Krang::Story');
+    croak("No valid pkg('Story') object found with id $story_id") if not ( ref $story eq 'Krang::Story');
 
     my $template = HTML::Template->new(filename => catfile(KrangRoot, 'templates', 'Alert', 'message.tmpl'));
 
@@ -438,9 +439,9 @@ sub send {
                         last_name => $user->last_name,
                         action => $alert->action );
 
-    $template->param( category => (Krang::Category->find(category_id => $alert->category_id))[0]->url ) if $alert->category_id;
+    $template->param( category => (pkg('Category')->find(category_id => $alert->category_id))[0]->url ) if $alert->category_id;
 
-    $template->param( desk => (Krang::Desk->find(desk_id => $alert->desk_id))[0]->name ) if $alert->desk_id; 
+    $template->param( desk => (pkg('Desk')->find(desk_id => $alert->desk_id))[0]->name ) if $alert->desk_id; 
 
     # first check if should be using test email address,
     # else use user email address 
@@ -512,13 +513,13 @@ sub serialize_xml {
     $writer->dataElement( category_id => $self->{category_id} ) if $self->{category_id};
      
     # add category to set if needed
-    $set->add(object => (Krang::Category->find( category_id => $self->{category_id} ))[0], from => $self) if $self->{category_id};
+    $set->add(object => (pkg('Category')->find( category_id => $self->{category_id} ))[0], from => $self) if $self->{category_id};
    
     # add user to set
-    $set->add(object => (Krang::User->find( user_id => $self->{user_id} ))[0],from => $self);
+    $set->add(object => (pkg('User')->find( user_id => $self->{user_id} ))[0],from => $self);
 
     # add desk to set if needed
-    $set->add(object => (Krang::Desk->find( desk_id => $self->{desk_id} ))[0], from => $self) if $self->{desk_id};
+    $set->add(object => (pkg('Desk')->find( desk_id => $self->{desk_id} ))[0], from => $self) if $self->{desk_id};
  
     # all done
     $writer->endTag('alert');
@@ -540,7 +541,7 @@ sub deserialize_xml {
     my %fields = map { ($_,1) } grep { ('alert_id') } FIELDS;
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml,
+    my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1);
 
     my %search_params = (    action => $data->{action},
@@ -551,10 +552,10 @@ id => $data->{desk_id}) if $data->{desk_id};
     $search_params{category_id} = $set->map_id(class => "Krang::Category", id => $data->{category_id}) if $data->{category_id}; 
 
     # is there an existing object?
-    my $alert = (Krang::Alert->find( %search_params ))[0] || '';
+    my $alert = (pkg('Alert')->find( %search_params ))[0] || '';
 
     if (not $alert) {
-        $alert = Krang::Alert->new( %search_params );
+        $alert = pkg('Alert')->new( %search_params );
         $alert->save;
     }
     

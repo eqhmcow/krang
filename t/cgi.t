@@ -1,18 +1,19 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use File::Find qw(find);
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 
 # a list of CGI modules without a suitable default mode (one that
 # requires no parameters)
 our %BAD_DEFAULT = map { ($_,1) } 
-  (qw( Krang::CGI::History
-       Krang::CGI::ElementEditor
-       Krang::CGI::Schedule
-       Krang::CGI::Desk
-       Krang::CGI::Publisher
-       Krang::CGI::Help
-       Krang::CGI::Login
-     ));
+  (pkg('CGI::History'),
+   pkg('CGI::ElementEditor'),
+   pkg('CGI::Schedule'),
+   pkg('CGI::Desk'),
+   pkg('CGI::Publisher'),
+   pkg('CGI::Help'),
+   pkg('CGI::Login'),
+  );
 
 
 # Arrange for CGI output to come back via return, but NOT go to STDOUT
@@ -46,7 +47,7 @@ sub check_cgiapp {
     # Is this a Krang::CGI?
     my $app = 0;
     eval ( $app = $app_package->new() );
-    isa_ok($app, 'Krang::CGI');
+    isa_ok($app, pkg('CGI'));
 
     # skip modules without a suitable default mode
     return if $BAD_DEFAULT{$app_package};

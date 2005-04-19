@@ -1,4 +1,5 @@
 package Krang::ElementClass;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -6,9 +7,9 @@ use Carp qw(croak);
 use CGI ();
 
 use HTML::Template::Expr;
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader Log => qw(debug info critical);
 
-use Krang::Pref;
+use Krang::ClassLoader 'Pref';
 
 use Exception::Class
   'Krang::ElementClass::TemplateNotFound' =>
@@ -68,7 +69,7 @@ these will always be available.
 
 =cut
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   new_with_init => 'new',
   new_hash_init => 'hash_init',
   get_set       => [ qw( name
@@ -185,7 +186,7 @@ For example:
   $class->children([ 
                     "paragraph",
                     "image",
-                    Krang::ElementClass::Text->new(name => "header"),
+                    pkg('ElementClass::Text')->new(name => "header"),
                     LA::image_group->new(location => "bottom"),
                    ]);
 
@@ -213,7 +214,7 @@ sub children {
             $children_by_name{$arg->{name}} = $arg;
         } else {
             # it's the name of an element, load it
-            my $class = Krang::ElementLibrary->find_class(name => $arg);
+            my $class = pkg('ElementLibrary')->find_class(name => $arg);
             croak("Unable to find element class named '$arg' while instantiating '$self->{name}'.")
               unless $class;
             croak("Unable to add child named '$arg' to $self->{name}: there is already a child with that name.")
@@ -1179,7 +1180,7 @@ sub _build_contrib_loop {
     my $self = shift;
     my %args = @_;
 
-    my %contrib_types = Krang::Pref->get('contrib_type');
+    my %contrib_types = pkg('Pref')->get('contrib_type');
 
     my %contribs = ();
     my @contributors  = ();

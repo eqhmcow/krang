@@ -1,17 +1,18 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use Krang::Script;
-use Krang::Media;
-use Krang::Site;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Site';
 use Imager;
 use File::Spec::Functions;
 use File::Path;
-use Krang::Conf qw(KrangRoot instance InstanceElementSet);
+use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet);
 
 
 
-BEGIN { use_ok('Krang::Contrib') }
+BEGIN { use_ok(pkg('Contrib')) }
 
 # Site params
 my $preview_url = 'publishtest.preview.com';
@@ -20,7 +21,7 @@ my $preview_path = '/tmp/krangpubtest_preview';
 my $publish_path = '/tmp/krangpubtest_publish';
 
 # create a site and category for dummy story
-my $site = Krang::Site->new(preview_url  => $preview_url,
+my $site = pkg('Site')->new(preview_url  => $preview_url,
                             url          => $publish_url,
                             preview_path => $preview_path,
                             publish_path => $publish_path
@@ -34,13 +35,13 @@ END {
 }
 
 
-my ($category) = Krang::Category->find(site_id => $site->site_id());
+my ($category) = pkg('Category')->find(site_id => $site->site_id());
 $category->save();
 
 
 
 # create new contributor object
-my $contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
+my $contrib = pkg('Contrib')->new(prefix => 'Mr', first => 'Matthew', middle => 'Charles', last => 'Vella', email => 'mvella@thepirtgroup.com');
 isa_ok($contrib, 'Krang::Contrib');
 
 # test full_name
@@ -61,7 +62,7 @@ $contrib->save();
 
 my $contrib_id = $contrib->contrib_id();
 
-my @contrib_object = Krang::Contrib->find( contrib_id => $contrib_id );
+my @contrib_object = pkg('Contrib')->find( contrib_id => $contrib_id );
 
 my $contrib2 = $contrib_object[0];
 
@@ -73,14 +74,14 @@ $contrib2->contrib_type_ids(2,4);
 
 $contrib2->save();
 
-my @contrib_object2 = Krang::Contrib->find( full_name => 'matt vella' );
+my @contrib_object2 = pkg('Contrib')->find( full_name => 'matt vella' );
 
 my $contrib3 = $contrib_object2[0];
 
 is($contrib3->contrib_id, $contrib_id);
 
 # test count
-my $count = Krang::Contrib->find( full_name => 'matt vella',
+my $count = pkg('Contrib')->find( full_name => 'matt vella',
                                   count     => 1 );
 is($count, 1);
 
@@ -90,26 +91,26 @@ $contrib2->first('George1234');
 $contrib2->save();
 
 # Has contrib2 been updated in database?
-my ($contrib2loaded) = Krang::Contrib->find( contrib_id => $contrib2->contrib_id() );
+my ($contrib2loaded) = pkg('Contrib')->find( contrib_id => $contrib2->contrib_id() );
 is($contrib2loaded->first(), 'George1234');
 
 
 ## Test simple_search()
 #
 # Should find one
-my @ss_contribs = Krang::Contrib->find(simple_search=>'George1234 Vella');
+my @ss_contribs = pkg('Contrib')->find(simple_search=>'George1234 Vella');
 is(scalar(@ss_contribs), 1);
 
 # Should find one
-@ss_contribs = Krang::Contrib->find(simple_search=>'George1234');
+@ss_contribs = pkg('Contrib')->find(simple_search=>'George1234');
 is(scalar(@ss_contribs), 1);
 
 # Should find one
-@ss_contribs = Krang::Contrib->find(simple_search=>'Vella');
+@ss_contribs = pkg('Contrib')->find(simple_search=>'Vella');
 is(scalar(@ss_contribs), 1);
 
 # Should find NONE
-@ss_contribs = Krang::Contrib->find(simple_search=>'George1234 Carlin');
+@ss_contribs = pkg('Contrib')->find(simple_search=>'George1234 Carlin');
 is(scalar(@ss_contribs), 0);
 
 # Clean up added contrib
@@ -118,30 +119,30 @@ $contrib2->delete();
 # create a few contribs to test ordering
 my @contribs;
 push(@contribs,
-     Krang::Contrib->new(first => 'Bohemia', last => 'Bolger'),
-     Krang::Contrib->new(first => 'Alvin', last => 'Arthur'),
-     Krang::Contrib->new(first => 'Conifer', last => 'Caligula'));
+     pkg('Contrib')->new(first => 'Bohemia', last => 'Bolger'),
+     pkg('Contrib')->new(first => 'Alvin', last => 'Arthur'),
+     pkg('Contrib')->new(first => 'Conifer', last => 'Caligula'));
 $_->contrib_type_ids(1) for @contribs;
 $_->save for @contribs;
 END { $_->delete for @contribs };
 my %ids = map { $_->contrib_id, 1 } @contribs;
 
 my @results = grep { $ids{$_->contrib_id} } 
-  Krang::Contrib->find(order_by => 'first');
+  pkg('Contrib')->find(order_by => 'first');
 is(@results, 3);
 is($results[0]->contrib_id, $contribs[1]->contrib_id);
 is($results[1]->contrib_id, $contribs[0]->contrib_id);
 is($results[2]->contrib_id, $contribs[2]->contrib_id);
 
 @results = grep { $ids{$_->contrib_id} } 
-  Krang::Contrib->find(order_by => 'first', order_desc => 1);
+  pkg('Contrib')->find(order_by => 'first', order_desc => 1);
 is(@results, 3);
 is($results[2]->contrib_id, $contribs[1]->contrib_id);
 is($results[1]->contrib_id, $contribs[0]->contrib_id);
 is($results[0]->contrib_id, $contribs[2]->contrib_id);
 
 @results = grep { $ids{$_->contrib_id} } 
-  Krang::Contrib->find(order_by => 'last,first', order_desc => 1);
+  pkg('Contrib')->find(order_by => 'last,first', order_desc => 1);
 is(@results, 3);
 is($results[2]->contrib_id, $contribs[1]->contrib_id);
 is($results[1]->contrib_id, $contribs[0]->contrib_id);
@@ -156,7 +157,7 @@ is($results[0]->contrib_id, $contribs[2]->contrib_id);
     my @types = qw(1 2 3);
     my @new_contribs = ();
     for (0..5) {
-        my $c = Krang::Contrib->new(
+        my $c = pkg('Contrib')->new(
                             first => $first_names[$_],
                             last => "TestGuy_" . $last_names[$_],
                             contrib_type_ids => [ $types[rand(3)] ],
@@ -168,8 +169,8 @@ is($results[0]->contrib_id, $contribs[2]->contrib_id);
     my @exclude_contrib_ids = map { $_->contrib_id() } @new_contribs[0..2];
 
     # Select back contribs, with and without exclusions.  We should get exactly three more without
-    my $count = Krang::Contrib->find(count=>1);
-    my $count_excluded = Krang::Contrib->find(count=>1, exclude_contrib_ids=>\@exclude_contrib_ids);
+    my $count = pkg('Contrib')->find(count=>1);
+    my $count_excluded = pkg('Contrib')->find(count=>1, exclude_contrib_ids=>\@exclude_contrib_ids);
 
     # Is that what we got?
     is(($count - $count_excluded), 3, "exclude_contrib_ids");
@@ -180,16 +181,16 @@ is($results[0]->contrib_id, $contribs[2]->contrib_id);
 
 
 # make sure contribs without middle names are caught as dups
-my $con1 = Krang::Contrib->new(first => 'Bobby', last => 'Bob');
+my $con1 = pkg('Contrib')->new(first => 'Bobby', last => 'Bob');
 $con1->save();
 END { $con1->delete() };
-my $con2 = Krang::Contrib->new(first => 'Bobby', last => 'Bob');
+my $con2 = pkg('Contrib')->new(first => 'Bobby', last => 'Bob');
 eval { $con2->save() };
 isa_ok($@, 'Krang::Contrib::DuplicateName');
 
 
 # test Krang::Contrib->full_name()
-my $contrib4 = Krang::Contrib->new(prefix => 'Mr', first => 'Homer', middle => '', last => 'Simpson', email => 'homer@thepirtgroup.com');
+my $contrib4 = pkg('Contrib')->new(prefix => 'Mr', first => 'Homer', middle => '', last => 'Simpson', email => 'homer@thepirtgroup.com');
 my $name1 = 'Mr Homer Simpson';
 my $name2 = 'Mr Homer Jay Simpson';
 my $name3 = 'Mr Homer Jay Simpson, MD';
@@ -216,7 +217,7 @@ test_image();
 sub test_image {
 
     my $image = create_media($category);
-    my $img_contrib = Krang::Contrib->new(prefix => 'Mr', first => 'Homer', middle => '', last => 'Simpson', email => 'homer@thepirtgroup.com');
+    my $img_contrib = pkg('Contrib')->new(prefix => 'Mr', first => 'Homer', middle => '', last => 'Simpson', email => 'homer@thepirtgroup.com');
 
     ok(!defined($img_contrib->image()), "Krang::Contrib->image()");
     $img_contrib->image($image);
@@ -227,7 +228,7 @@ sub test_image {
 
     $img_contrib->save();
 
-    my ($contrib2) = Krang::Contrib->find(contrib_id => $img_contrib->contrib_id());
+    my ($contrib2) = pkg('Contrib')->find(contrib_id => $img_contrib->contrib_id());
     $returned_image = $contrib2->image();
 
     ok($returned_image->isa('Krang::Media'), 'Krang::Contrib->image()');
@@ -282,12 +283,12 @@ sub create_media {
       or die "Unable to open tmp/tmp.$format: $!";
 
     # Pick a type
-    my %media_types = Krang::Pref->get('media_type');
+    my %media_types = pkg('Pref')->get('media_type');
     my @media_type_ids = keys(%media_types);
     my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
 
     # create a media object
-    my $media = Krang::Media->new(title      => get_word(),
+    my $media = pkg('Media')->new(title      => get_word(),
                                   filename   => get_word() . ".$format",
                                   caption    => get_word(),
                                   filehandle => $fh,

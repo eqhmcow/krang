@@ -1,4 +1,5 @@
 package Krang::CGI::Status;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -20,9 +21,9 @@ None.
 
 =cut
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 use CGI qw/:standard/;
-use Krang::Conf;
+use Krang::ClassLoader 'Conf';
 
 sub setup {
     my $self = shift;
@@ -38,14 +39,14 @@ sub status {
                       h2('Instance Settings'),
                       table({border => 1},
                             th("Directive"), th("Value"),
-                            Tr(td("Instance"), td(Krang::Conf->instance)),
-                            ( map { Tr(td($_), td(Krang::Conf->get($_))) }
+                            Tr(td("Instance"), td(pkg('Conf')->instance)),
+                            ( map { Tr(td($_), td(pkg('Conf')->get($_))) }
                               (qw( InstanceElementSet InstanceDBName InstanceHostName ))),
                            ),
                       h2('Global Settings'),
                         table({border => 1},
                               th("Directive"), th("Value"),
-                              ( map { Tr(td($_), td(Krang::Conf->get($_))) }
+                              ( map { Tr(td($_), td(pkg('Conf')->get($_))) }
                                 
                                 (qw( KrangRoot ElementLibrary
                                      KrangUser KrangGroup

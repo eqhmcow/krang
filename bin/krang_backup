@@ -85,10 +85,11 @@ END
 
 # use first instance if one isn't set.  Backups are installation wide
 # anyway.
-BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Script;
-use Krang::Conf qw(KrangRoot InstanceDBName DBUser DBPass);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceDBName DBUser DBPass);
 use Getopt::Long;
 use Pod::Usage;
 use Sys::Hostname;
@@ -128,8 +129,8 @@ my $dir = catdir(KrangRoot, 'data', 'backup');
 mkpath([$dir]) unless -d $dir;
 
 # dump all databases into data/backup
-foreach my $instance (Krang::Conf->instances) {
-    Krang::Conf->instance($instance);
+foreach my $instance (pkg('Conf')->instances) {
+    pkg('Conf')->instance($instance);
 
     my $cmd = MYSQL_DUMP . ' -u' . DBUser .
       (DBPass ? (' -p' . DBPass) : '') . ' -e -l --databases ' . 

@@ -1,10 +1,11 @@
 package Krang::List;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::DB qw(dbh);
-use Krang::Session qw(%session);
-use Krang::Log qw( debug info );
-use Krang::ListGroup;
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Log => qw( debug info );
+use Krang::ClassLoader 'ListGroup';
 use Carp qw(croak);
 
 # constants 
@@ -14,28 +15,28 @@ use constant RW_FIELDS => qw( name list_group_id parent_list_id );
 
 =head1 NAME
 
-    Krang::List -  interface to manage lists.
+    pkg('List') -  interface to manage lists.
 
 =head1 SYNOPSIS
 
-    use Krang::List;
+    use Krang::ClassLoader 'List';
 
     # create and save new list in Krang::ListGroup 2
-    my $list = Krang::List->new(    name => 'list1',
+    my $list = pkg('List')->new(    name => 'list1',
                                     list_group_id => 2,
                                 );
 
     $list->save();
    
     # create new list in same group with first list as parent 
-    my $list2 = Krang::List->new(   name => 'list2',
+    my $list2 = pkg('List')->new(   name => 'list2',
                                     list_group_id => 2,
                                     parent_list_id => $list->list_id );
 
     $list2->save();
 
     # find and return lists in Krang;:ListGroup 2
-    my @found = Krang::List->find( list_group_id => 2 );
+    my @found = pkg('List')->find( list_group_id => 2 );
 
     # delete them both
     $list->delete;
@@ -81,7 +82,7 @@ parent_list_id
 
 =cut
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get => [ RO_FIELDS ],
@@ -325,12 +326,12 @@ sub serialize_xml {
     $writer->dataElement( parent_list_id => $self->parent_list_id ) if $self->parent_list_id;
 
     # attach list group
-    my ($lg) = Krang::ListGroup->find( list_group_id => $self->list_group_id ); 
+    my ($lg) = pkg('ListGroup')->find( list_group_id => $self->list_group_id ); 
     $set->add(object => $lg, from => $self);
 
     # attach parent list if one exists
     if ($self->parent_list_id) {
-        my ($parent_list) = Krang::List->find( list_id => $self->parent_list_id );
+        my ($parent_list) = pkg('List')->find( list_id => $self->parent_list_id );
         $set->add(object => $parent_list, from => $self);
     }
  
@@ -352,7 +353,7 @@ sub deserialize_xml {
     my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml,
+    my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1);
 
 
@@ -368,20 +369,20 @@ sub deserialize_xml {
 
     my $l;
     if ($parent_id) {
-        $l = (Krang::List->find( list_group_id => $list_group_id, parent_list_id => $parent_id, name => $data->{name} ))[0];
+        $l = (pkg('List')->find( list_group_id => $list_group_id, parent_list_id => $parent_id, name => $data->{name} ))[0];
     } else {
-        $l = (Krang::List->find( list_group_id => $list_group_id, name => $data->{name} ))[0];
+        $l = (pkg('List')->find( list_group_id => $list_group_id, name => $data->{name} ))[0];
     }
 
     # if matching list exists, don't replicate it
     return $l if $l; 
 
     if ($parent_id) {
-        my $new_l = Krang::List->new( name => $data->{name}, list_group_id => $list_group_id, parent_list_id => $parent_id );
+        my $new_l = pkg('List')->new( name => $data->{name}, list_group_id => $list_group_id, parent_list_id => $parent_id );
         $new_l->save;
         return $new_l;
     } else {
-        my $new_l = Krang::List->new( name => $data->{name}, list_group_id => $list_group_id );
+        my $new_l = pkg('List')->new( name => $data->{name}, list_group_id => $list_group_id );
         $new_l->save;
         return $new_l;
     }

@@ -141,9 +141,10 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
-use Krang::DataSet;
+use Krang::ClassLoader 'DataSet';
 
 # process args and open the output file before dropping privs
 our ($help, $man, $compress, $overwrite, $output, $verbose, 
@@ -205,22 +206,22 @@ BEGIN {
     }
 }
 
-use Krang::Script;
-use Krang::Story;
-use Krang::Media;
-use Krang::Template;
-use Krang::Contrib;
-use Krang::Category;
-use Krang::Site;
-use Krang::User;
-use Krang::ListGroup;
-use Krang::List;
-use Krang::ListItem;
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Contrib';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'ListGroup';
+use Krang::ClassLoader 'List';
+use Krang::ClassLoader 'ListItem';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Temp qw(tempfile);
 
 # open up the data set
-$set = Krang::DataSet->new($verbose ? 
+$set = pkg('DataSet')->new($verbose ? 
                            (add_callback => \&add_callback) : ());
 
 # keep a count of things added

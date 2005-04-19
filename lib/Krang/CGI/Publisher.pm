@@ -1,4 +1,5 @@
 package Krang::CGI::Publisher;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -22,18 +23,18 @@ This application provides a frontend to Krang::Publisher
 
 =cut
 
-use Krang::Session qw(%session);
-use Krang::Publisher;
-use Krang::Story;
-use Krang::User;
-use Krang::Log qw(debug critical assert ASSERT);
-use Krang::Widget qw(format_url datetime_chooser decode_datetime);
-use Krang::Message qw(add_message get_messages clear_messages);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'Publisher';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader Log => qw(debug critical assert ASSERT);
+use Krang::ClassLoader Widget => qw(format_url datetime_chooser decode_datetime);
+use Krang::ClassLoader Message => qw(add_message get_messages clear_messages);
 use Time::Piece;
 
 use Carp qw(croak);
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 
 sub setup {
     my $self = shift;
@@ -72,7 +73,7 @@ sub publish_story {
 
     $story_id =~ s/^story_(\d+)$/$1/go;
 
-    my ($story) = Krang::Story->find(story_id => $story_id);
+    my ($story) = pkg('Story')->find(story_id => $story_id);
 
     croak("Unable to load story for story_id '$story_id'")
       unless $story;
@@ -152,9 +153,9 @@ sub publish_story_list {
 
     # take care of templates first, they don't go to the next screen
     if (@template_id_list) {
-        my $publisher = Krang::Publisher->new();
+        my $publisher = pkg('Publisher')->new();
         foreach my $template_id (@template_id_list) {
-            my ($template) = Krang::Template->find(template_id =>$template_id);
+            my ($template) = pkg('Template')->find(template_id =>$template_id);
             add_message('deployed', id => $template_id);
             $publisher->deploy_template(template => $template);
             $template->checkin;
@@ -168,8 +169,8 @@ sub publish_story_list {
         return "";
     }
 
-    @story_list = Krang::Story->find(story_id => \@story_id_list) if @story_id_list;
-    @media_list = Krang::Media->find(media_id => \@media_id_list) if @media_id_list;
+    @story_list = pkg('Story')->find(story_id => \@story_id_list) if @story_id_list;
+    @media_list = pkg('Media')->find(media_id => \@media_id_list) if @media_id_list;
 
     my ($stories, $media, $checked_out) = $self->_build_asset_list(\@story_list, \@media_list);
 
@@ -226,8 +227,8 @@ sub publish_assets {
         croak __PACKAGE__ . ": what to do with asset = '$1'??";
     }
 
-    @story_list = Krang::Story->find(story_id => \@story_id_list) if @story_id_list;
-    @media_list = Krang::Media->find(media_id => \@media_id_list) if @media_id_list;
+    @story_list = pkg('Story')->find(story_id => \@story_id_list) if @story_id_list;
+    @media_list = pkg('Media')->find(media_id => \@media_id_list) if @media_id_list;
 
     if ($publish_now) {
         $self->_publish_assets_now(\@story_list, \@media_list);
@@ -263,10 +264,10 @@ sub publish_media {
     croak("Missing required media_id parameter") unless $media_id;
 
     $media_id =~ s/^media_(\d+)$/$1/go;
-    my ($media) = Krang::Media->find(media_id => $media_id);
+    my ($media) = pkg('Media')->find(media_id => $media_id);
 
     # run things to the publisher
-    my $publisher = Krang::Publisher->new();
+    my $publisher = pkg('Publisher')->new();
     $publisher->publish_media(media => $media);
     # add a message
     add_message('media_publish', media_id => $media_id,
@@ -309,7 +310,7 @@ sub preview_story {
     my $unsaved = 0;
 
     unless ($session_key) {
-        ($story) = Krang::Story->find(story_id => $story_id);
+        ($story) = pkg('Story')->find(story_id => $story_id);
         croak("Unable to find story '$story_id'")
           unless $story;
     } else {
@@ -330,7 +331,7 @@ sub preview_story {
     my $url;
     eval {
 
-        my $publisher = Krang::Publisher->new();
+        my $publisher = pkg('Publisher')->new();
         eval {
             $url = $publisher->preview_story(story    => $story, 
                                              callback =>\&_progress_callback,
@@ -442,7 +443,7 @@ sub preview_media {
 
     my $media;
     unless ($session_key) {
-        ($media) = Krang::Media->find(media_id => $media_id);
+        ($media) = pkg('Media')->find(media_id => $media_id);
         croak("Unable to find media '$media_id'")
           unless $media;
     } else {
@@ -451,7 +452,7 @@ sub preview_media {
           unless $media;
     }
 
-    my $publisher = Krang::Publisher->new();
+    my $publisher = pkg('Publisher')->new();
     my $url;
     eval { $url = $publisher->preview_media(media => $media); };
     if (my $e = $@) {
@@ -522,7 +523,7 @@ sub _build_asset_list {
     my @stories = ();
     my @media = ();
 
-    my $publisher = Krang::Publisher->new();
+    my $publisher = pkg('Publisher')->new();
 
     # retrieve all stories linked to the submitted list.
     push(@{$publish_list}, 
@@ -545,7 +546,7 @@ sub _build_asset_list {
             if ($user_id != $checked_out_by) {
                 $checked_out = 1;
                 $status = 'Checked out by <b>' .
-                  (Krang::User->find(user_id => $asset->checked_out_by))[0]->login .
+                  (pkg('User')->find(user_id => $asset->checked_out_by))[0]->login .
                     '</b>';
             }
         }
@@ -609,7 +610,7 @@ sub _publish_assets_now {
     eval {
 
         # run things to the publisher
-        my $publisher = Krang::Publisher->new();
+        my $publisher = pkg('Publisher')->new();
         if (@$story_list) {
             # publish!
             eval {
@@ -723,7 +724,7 @@ sub _schedule_assets {
     my ($story_list, $media_list, $date) = @_;
 
     foreach my $story (@$story_list) {
-        my $sched = Krang::Schedule->new(object_type => 'story',
+        my $sched = pkg('Schedule')->new(object_type => 'story',
                                          object_id   => $story->story_id,
                                          action      => 'publish',
                                          repeat      => 'never',
@@ -739,7 +740,7 @@ sub _schedule_assets {
 
     }
     foreach my $media (@$media_list) {
-        my $sched = Krang::Schedule->new(object_type => 'media',
+        my $sched = pkg('Schedule')->new(object_type => 'media',
                                          object_id   => $media->media_id,
                                          action      => 'publish',
                                          repeat      => 'never',

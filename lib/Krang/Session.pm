@@ -1,9 +1,10 @@
 package Krang::Session;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::DB qw(dbh);
-use Krang::Log qw(critical);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Log => qw(critical);
 use Apache::Session::MySQL;
 use Carp qw(croak);
 
@@ -13,7 +14,7 @@ Krang::Session - session handling for Krang
 
 =head1 SYNOPSIS
 
-  use Krang::Session qw(%session);
+  use Krang::ClassLoader Session => qw(%session);
 
   # get some session data
   my $bang = $session{buck};

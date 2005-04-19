@@ -193,13 +193,15 @@ sub check_libpng {
 # location of expat library and header to Makefile.pl of XML::Parser
 sub build_perl_module {
     my ($pkg, %arg) = @_;
-    my $name = $arg{name};
+    my $name        = $arg{name};
+    my $dest_dir    = $arg{dest_dir} || 
+                      File::Spec->catdir($ENV{KRANG_ROOT}, 'lib');
 
     # load expect unless we're building it
     my $use_expect = ($name =~ /IO-Tty/ or $name =~ /Expect/) ? 0 : 1;
     Krang::Platform->_load_expect() if $use_expect;
 
-    my $dest_dir = File::Spec->catdir($ENV{KRANG_ROOT}, 'lib');
+
     my $trash_dir = File::Spec->catdir(cwd, '..', 'trash');
 
     print "\n\n************************************************\n\n",

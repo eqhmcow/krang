@@ -9,71 +9,53 @@ theme or even a new UI feature.  Krang add-ons are separately
 versioned and can depend on a version of Krang or on other Krang
 add-ons.
 
-=head2 Installing an Addon
+=head2 Getting Started
 
-Although this document is about creating addons, it's useful to know
-how to use them.  Installing a Krang addon is done using the
-C<krang_addon_installer> on an addon file:
+Your first job creating a new addon is to come up with a clever name.
+For example, I'll create an addon which magically speeds up Krang and
+call it "Turbo".  Once you've picked a name you can create a skeleton
+with C<krang_addon_framework>:
 
-  bin/krang_addon_installer Turbo-1.00.tar.gz
+   bin/krang_addon_framework --name Turbo
 
-For more details see the krang_addon_installer help:
+This command creates a directory called C<Turbo/> inside the
+C<addons/> directory.  A single file is created there called
+C<krang_addon.conf>.
 
-  bin/krang_addon_installer --help
+=head2 How It Works
 
-=head2 File Format
+An addon's files act as an overlay on top of Krang.  For example, if
+you create a file called C<templates/Story/new.tmpl> in your addon
+then it will be used instead of the template in that location in
+KRANG_ROOT.  The same is true for Perl modules in C<lib/> and the
+files in C<htdocs/>.
 
-A Krang add-on is a specially constructed .tar.gz file containing
-files to install into Krang as well as special files used during
-installation.  
+This works well for most purposes but occaisonally you'll need
+something more powerful when overriding a core Krang library.  For
+example, imagine that I created Turbo::Story which had a better find()
+implementation.  Naturally Turbo::Story would inherit from
+Krang::Story since aside from the new find() Krang::Story's
+implementation should be used.
 
-As an example, consider an add-on called 'Turbo'.  This add-on will
-supply a script called 'krang_turbo' which optimizes Krang for faster
-performance.  It requires a new library (Krang::Turbo) supplies a new
-test file (turbo.t) and comes with some documentation (turbo.pod).  It
-has a version number of 1.00.  Its directory structure will look like:
+Krang addons support a file called C<conf/class.conf> which supports
+selecting replacement of core libraries.  In this case
+C<conf/class.conf> inside the Turbo addon would contain:
 
-    Turbo-1.00
-    |-- docs/
-    |   `-- turbo.pod
-    |-- krang_addon.conf
-    |-- lib/
-    |   `-- Krang/
-    |       `-- Turbo.pm
-    `-- t/
-        `-- turbo.t
+  SetClass Story Turbo::Story
 
-This add-on would ship in a file called 'Turbo-1.00.tar.gz'.
+This tells Krang that wherever it would have used Krang::Story
+previously it should now use Turbo::Story.
 
-Notice that this structure is ready to be copied directly into Krang,
-because the 'docs', 'lib' and 't' directories match existing
-directories in Krang.
-
-The configuration file, C<krang_addon.conf> contains the name name and
-version of the addon:
-
-  Name Turbo
-  Version 1.00
-
-That's all there is to producing a simple Krang add-on.  Just layout
-your files, write a simple C<krang_addon.conf> and tar it up.  The
-rest of the document will explain enhancements which may be used to
-produce more complex add-ons.
-
-
-B<NOTE:> As of Krang 1.102 there is a new script to automate some of
-the work here:
-
-  bin/krang_addon_framework
-
-
+An example of using C<class.conf> is included in Krang's test set:
+t/addons/LazyLoader-1.00.tar.gz.  This addon implements lazy-loading
+for Krang::Story.
 
 =head2 C<krang_addon.conf>
 
-If you need more control over how an addon is installed into Krang
-then you must create a C<krang_addon.conf> file in your add-on's
-directory.  The file follows the same Apache-inspired format as
-Krang's krang.conf file.  I'll explain each available directive.
+The C<krang_addon.conf> file in an add-on directory controls many
+important aspects of the add-on's operation.  The file follows the
+same Apache-inspired format as Krang's krang.conf file.  I'll explain
+each available directive.
 
 =over 4
 
@@ -95,9 +77,10 @@ the same as 1.1).  For example:
 =item * C<Files> I<file> I<file> I<...>
 
 This directive allows you to specify a list of files to install into
-Krang.  If not present then all files (aside from those used for
-add-on installation, like C<krang_addon.conf>) are installed into
-Krang.  For example, Turbo-1.00 might list:
+Krang when the addon is installed with C<krang_addon_installer>.  If
+not present then all files (aside from those used for add-on
+installation, like C<krang_addon.conf>) are installed into Krang.  For
+example, Turbo-1.00 might list:
 
   Files docs/turbo.pod lib/Krang/Turbo.pm t/turbo.t
 
@@ -108,6 +91,9 @@ For example, if Turbo-1.00 included a I<README> file but wanted to
 install everything else into Krang:
 
   ExcludeFiles README
+
+Files in C<upgrade/> and C<krang_addon.conf> are excluded
+automatically.
 
 =item * C<RequireKrang> I<x.y>
 
@@ -129,9 +115,73 @@ and any version of RacingStripes:
 =item * C<PostInstallScript> I<script>
 
 A script to run after file installation is complete.  C<KRANG_ROOT>
-will be set in the environment for this script.  
+will be set in the environment for this script.
+
+=item * C<UninstallScript> I<script>
+
+A script to run when the addon is being uninstalled.  C<KRANG_ROOT>
+will be set in the environment for this script.
+
+=item * C<NavigationHandler> I<Module>
+
+This parameter allows your addon to contribute navigation links to the
+left-nav in Krang.  The module you name here will be loaded and a
+method called navigation_handler() will be called with the navigation
+tree as an argument.  For example, this code adds a new navigation
+section called "Log Viewer" with a link called "View Log" pointing to
+C<log_viewer.pl>:
+
+  sub navigation_handler {
+      my ($pkg, $tree) = @_;
+      
+      my $node = $tree->new_daughter();
+      $node->name('Log Tools');
+  
+      $node = $node->new_daughter();
+      $node->name('View Log');
+      $node->link('log_viewer.pl');
+  }
+
+If this method was placed in a class called LogViewer::NavHandler then
+krang_addon.conf would contain:
+
+  NavigationHandler LogViewer::NavHandler
+
+For more about how navigation works in Krang see L<Krang::Navigation>
+and L<Krang::NavigationNode>.
+
+=item * C<Priority> N
+
+The C<Priority> directive allows you to control the order in which
+addons are loaded by Krang.  An addon which is loaded earlier will
+override a later addon.  Addons are sorted in descending order by
+priority so an addon with a C<Priority> of 100 will load before one
+with 5.
+
+By default addons have a C<Priority> of 0.
 
 =back
+
+=head2 Building an Addon Distribution
+
+In order for other people to install your addon you need to build an
+addon distribution.  This is done with the C<krang_addon_dist> script:
+
+  bin/krang_addon_dist Turbo
+
+This command creates a tar-ball called C<Turbo-1.00.tar.gz> from the
+source in C<addons/Turbo/>.
+
+=head2 Installing an Addon
+
+Installing a Krang addon is done using the C<krang_addon_installer> on
+an addon file:
+
+  bin/krang_addon_installer Turbo-1.00.tar.gz
+
+For more details see the krang_addon_installer help:
+
+  bin/krang_addon_installer --help
 
 =head2 Upgrades
 

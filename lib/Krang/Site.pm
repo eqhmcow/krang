@@ -6,7 +6,7 @@ Krang::Site - a means to access information on sites
 
 =head1 SYNOPSIS
 
-  use Krang::Site;
+  use Krang::ClassLoader 'Site';
 
   # construct object
   my $site = Krang::Site->new(preview_url => 'preview.com',   # required
@@ -51,7 +51,7 @@ Krang::Site - a means to access information on sites
   # case-insensitive sub-string match on that field in the database
 
   # returns an array of site objects matching criteria in %params
-  my @sites = Krang::Site->find( %params );
+  my @sites = pkg('Site')->find( %params );
 
 =head1 DESCRIPTION
 
@@ -77,6 +77,7 @@ N.B - On save(), the root category for the site '/' is created.
 ##############################
 # Pragmas
 ##########
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -89,9 +90,9 @@ use Exception::Class
 
 # Internal Modules
 ###################
-use Krang::Category;
-use Krang::DB qw(dbh);
-use Krang::Log qw/ affirm assert should shouldnt ASSERT/;
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Log => qw/ affirm assert should shouldnt ASSERT/;
 
 #
 # Package Variables
@@ -115,7 +116,7 @@ my %site_args = map {$_ => 1} SITE_RW, 'url';
 my %site_cols = map {$_ => 1} SITE_RO, SITE_RW, 'url';
 
 # Constructor/Accessor/Mutator setup
-use Krang::MethodMaker	new_with_init => 'new',
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
 			new_hash_init => 'hash_init',
 			get => [SITE_RO],
 			get_set => [SITE_RW];
@@ -233,13 +234,13 @@ sub delete {
     my $id = shift || $self->{site_id};
 
     # get object if we don't have it
-    ($self) = Krang::Site->find(site_id => $id);
+    ($self) = pkg('Site')->find(site_id => $id);
 
     # check for references to this site
     $self->dependent_check();
 
     # delete root category
-    my ($root) = Krang::Category->find(dir => '/',
+    my ($root) = pkg('Category')->find(dir => '/',
                                        site_id => $id);
     $root->delete();
 
@@ -248,7 +249,7 @@ sub delete {
     $dbh->do("DELETE FROM site WHERE site_id = ?", undef, ($id));
 
     # verify deletion was successful
-    return Krang::Site->find(site_id => $id) ? 0 : 1;
+    return pkg('Site')->find(site_id => $id) ? 0 : 1;
 }
 
 
@@ -561,7 +562,7 @@ sub save {
         $self->{site_id} = $dbh->{mysql_insertid};
 
         # create root category if it doesn't exist...
-        my $category = Krang::Category->new(dir => '/',
+        my $category = pkg('Category')->new(dir => '/',
                                             site_id => $self->{site_id});
         $category->save();
     }
@@ -604,10 +605,10 @@ SQL
 
     # update all the children :)
     if (@ids) {
-        should(scalar @ids, scalar Krang::Category->find(category_id => \@ids))
+        should(scalar @ids, scalar pkg('Category')->find(category_id => \@ids))
           if ASSERT;
         $_->update_child_urls($self)
-          for Krang::Category->find(category_id => \@ids);
+          for pkg('Category')->find(category_id => \@ids);
     }
 
     return 1;
@@ -676,12 +677,12 @@ sub deserialize_xml {
       = @args{qw(xml set no_update skip_update)};
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml, 
+    my $data = pkg('XML')->simple(xml           => $xml, 
                                   suppressempty => 1);
     
 
     # is there an existing site with this URL?
-    my ($dup) = Krang::Site->find(url => $data->{url});
+    my ($dup) = pkg('Site')->find(url => $data->{url});
     return $dup if $dup and $skip_update;
     
     if ($dup) {
@@ -696,7 +697,7 @@ sub deserialize_xml {
     }
 
     # create a new site
-    my $site = Krang::Site->new(map { ($_, $data->{$_}) } keys %site_args);
+    my $site = pkg('Site')->new(map { ($_, $data->{$_}) } keys %site_args);
     $site->save();
 
     return $site;

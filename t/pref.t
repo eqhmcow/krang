@@ -1,33 +1,34 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 use Test::More qw(no_plan);
 
-BEGIN { use_ok('Krang::Pref'); }
+BEGIN { use_ok(pkg('Pref')); }
 
-ok(Krang::Pref->get('search_page_size'));
+ok(pkg('Pref')->get('search_page_size'));
 
-my %contrib = Krang::Pref->get('contrib_type');
+my %contrib = pkg('Pref')->get('contrib_type');
 ok(keys(%contrib));
 for (keys(%contrib)) {
     like($_, qr/^\d+$/);
     ok(length($contrib{$_}));
 }
 
-eval { Krang::Pref->get('bogus_flow') };
+eval { pkg('Pref')->get('bogus_flow') };
 like($@, qr/invalid/i);
 
-my $old = Krang::Pref->get('search_page_size');
+my $old = pkg('Pref')->get('search_page_size');
 my $new = rand(100);
-Krang::Pref->set('search_page_size' => $new);
-is(Krang::Pref->get('search_page_size'), $new);
-Krang::Pref->set('search_page_size' => $old);
-is(Krang::Pref->get('search_page_size'), $old);
+pkg('Pref')->set('search_page_size' => $new);
+is(pkg('Pref')->get('search_page_size'), $new);
+pkg('Pref')->set('search_page_size' => $old);
+is(pkg('Pref')->get('search_page_size'), $old);
 
-my %old = Krang::Pref->get('contrib_type');
+my %old = pkg('Pref')->get('contrib_type');
 my %new = (1 => 'One', 2 => 'Two', 3 => 'Three');
-Krang::Pref->set('contrib_type', %new);
-is_deeply({Krang::Pref->get('contrib_type')}, \%new);
-Krang::Pref->set('contrib_type', %old);
-is_deeply({Krang::Pref->get('contrib_type')}, \%old);
+pkg('Pref')->set('contrib_type', %new);
+is_deeply({pkg('Pref')->get('contrib_type')}, \%new);
+pkg('Pref')->set('contrib_type', %old);
+is_deeply({pkg('Pref')->get('contrib_type')}, \%old);
 

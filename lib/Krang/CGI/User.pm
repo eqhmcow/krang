@@ -8,8 +8,8 @@ Abstract of web application....
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::User;
-  my $app = Krang::CGI::User->new();
+  use Krang::ClassLoader 'CGI::User';
+  my $app = pkg('CGI::User')->new();
   $app->run();
 
 
@@ -21,23 +21,24 @@ web application module Krang::CGI::User...
 =cut
 
 
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 
-use base qw/Krang::CGI/;
+use Krang::ClassLoader base => qw/CGI/;
 
 use Carp qw(verbose croak);
-use Krang::History;
-use Krang::HTMLPager;
-use Krang::Log qw/critical debug info/;
-use Krang::Message qw(add_message);
-use Krang::Pref;
-use Krang::Session qw(%session);
-use Krang::User;
+use Krang::ClassLoader 'History';
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader Log => qw/critical debug info/;
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'User';
 
 # query fields to delete
-use constant DELETE_FIELDS => qw(Krang::User::USER_RW
+use constant DELETE_FIELDS => qw(pkg('User::USER_RW')
 				 confirm_password
 				 new_password
 				 password
@@ -102,7 +103,7 @@ sub add {
     $t->param(%ui_messages) if %ui_messages;
 
     # make new User object
-    my $user = Krang::User->new(login => '', password => '');
+    my $user = pkg('User')->new(login => '', password => '');
 
     # store object in session
     $session{EDIT_USER} = $user;
@@ -222,12 +223,12 @@ sub delete {
     my $q = $self->query();
     my $user_id = $q->param('user_id');
     return $self->search() unless $user_id;
-    eval {Krang::User->delete($user_id);};
+    eval {pkg('User')->delete($user_id);};
     if ($@) {
         if (ref $@ && $@->isa('Krang::User::Dependency')) {
             critical("Unable to delete user '$user_id': objects are " .
                      "checked out by this user.");
-            my ($user) = Krang::User->find(user_id => $user_id);
+            my ($user) = pkg('User')->find(user_id => $user_id);
             add_message('error_deletion_failure',
                         login => $user->login,
                         user_id => $user->user_id,);
@@ -240,7 +241,7 @@ sub delete {
     # suicidal?
     if ($user_id == $ENV{REMOTE_USER}) {
         # delete the session, since it's useless now
-        Krang::Session->delete($ENV{KRANG_SESSION_ID});
+        pkg('Session')->delete($ENV{KRANG_SESSION_ID});
 
         # redirect to login
         $self->header_type('redirect');
@@ -276,12 +277,12 @@ sub delete_selected {
 
     # destroy users
     for my $u(@user_delete_list) {
-        eval {Krang::User->delete($u);};
+        eval {pkg('User')->delete($u);};
         if ($@) {
             if (ref $@ && $@->isa('Krang::User::Dependency')) {
                 critical("Unable to delete user '$u': objects are checked " .
                          "out by this user.");
-                my ($user) = Krang::User->find(user_id => $u);
+                my ($user) = pkg('User')->find(user_id => $u);
                 add_message('error_deletion_failure',
                             login => $user->login,
                             user_id => $user->user_id,);
@@ -319,10 +320,10 @@ sub edit {
     my $user = $session{EDIT_USER};
 
     if ($user_id) {
-        ($user) = Krang::User->find(user_id => $user_id);
+        ($user) = pkg('User')->find(user_id => $user_id);
         $session{EDIT_USER} = $user;
     }
-    croak(__PACKAGE__ . "->edit(): No Krang::User object found matching " .
+    croak(__PACKAGE__ . "->edit(): No pkg('User') object found matching " .
           "user_id '$user_id'") unless defined $user;
 
     my $t = $self->load_tmpl("edit_view.tmpl", associate => $q);
@@ -452,7 +453,7 @@ sub search {
     my $search_filter = $q->param('search_filter') || '';
 
     # setup pager
-    my $pager = Krang::HTMLPager->new(cgi_query => $q,
+    my $pager = pkg('HTMLPager')->new(cgi_query => $q,
                                       persist_vars => {
                                                        rm => 'search',
                                                        search_filter =>
@@ -508,7 +509,7 @@ sub get_user_params {
     my %user_tmpl;
 
     # build hash of Krang::Group permission groups...
-    my %user_groups = map {$_->group_id => $_->name} Krang::Group->find();
+    my %user_groups = map {$_->group_id => $_->name} pkg('Group')->find();
 
     # make group_ids multi-select
     my @cgids = $q->param('errors') ? $q->param('current_group_ids') :
@@ -523,10 +524,10 @@ sub get_user_params {
 
     # loop through User fields
     if ($q->param('errors')) {
-        $user_tmpl{$_} = $q->param($_) for Krang::User::USER_RW;
+        $user_tmpl{$_} = $q->param($_) for pkg('User::USER_RW');
         $q->delete('errors');
     } else {
-        $user_tmpl{$_} = $user->$_ for Krang::User::USER_RW;
+        $user_tmpl{$_} = $user->$_ for pkg('User::USER_RW');
     }
 
     delete $user_tmpl{hidden};
@@ -542,7 +543,7 @@ sub update_user {
 
     # overwrite object fields
     $user->$_($q->param($_) ? $q->param($_) : undef) 
-      for grep { $_ ne 'hidden' } Krang::User::USER_RW;
+      for grep { $_ ne 'hidden' } pkg('User::USER_RW');
 
     # set password if we've been handed one
     my $pass = $q->param('password') || '';
@@ -616,7 +617,7 @@ sub validate_user {
             if ($_ eq 'login') {
                 $errors{"error_login\_length"} = 1
                   unless (length($val) >= 6 ||
-                          grep $val eq $_, Krang::User::SHORT_NAMES);
+                          grep $val eq $_, pkg('User::SHORT_NAMES'));
             }
         } else {
             $errors{error_invalid_email} = 1

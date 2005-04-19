@@ -1,9 +1,10 @@
 package Krang::ElementClass::StoryLink;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader base => 'ElementClass';
+use Krang::ClassLoader Log => qw(debug info critical);
 
 #use Krang::MethodMaker
 #  get_set => [ qw( ) ];
@@ -29,10 +30,10 @@ sub input_form {
     my $story = $element->data();
     if ($story) {
         my $story_id = $story->story_id;
-        my ($story) = Krang::Story->find(story_id => $story_id);
+        my ($story) = pkg('Story')->find(story_id => $story_id);
         $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .
           qq{Title: "} . $story->title . qq{"<br>} . 
-          qq{URL: <a href="javascript:preview_story($story_id)">} . Krang::Widget::format_url(url => $story->url, length => 30) . qq{</a></div>};
+          qq{URL: <a href="javascript:preview_story($story_id)">} . pkg('Widget')->can('format_url')->(url => $story->url, length => 30) . qq{</a></div>};
     }
 
 
@@ -95,7 +96,7 @@ sub thaw_data {
     my ($self, %arg) = @_;
     my ($element, $data) = @arg{qw(element data)};
     return $element->data(undef) unless $data;
-    my ($story) = Krang::Story->find(story_id => $data);
+    my ($story) = pkg('Story')->find(story_id => $data);
     return $element->data($story);
 }
 
@@ -179,7 +180,7 @@ Krang::ElementClass::StoryLink - story link element class
 
 =head1 SYNOPSIS
 
-   $class = Krang::ElementClass::StoryLink->new(name => "leadin")
+   $class = pkg('ElementClass::StoryLink')->new(name => "leadin")
 
 =head1 DESCRIPTION
 

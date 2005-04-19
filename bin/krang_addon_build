@@ -1,0 +1,237 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+use 5.006;
+
+=pod
+
+=head1 NAME
+
+krang_addon_build - build source modules packaged with a Krang addon
+
+=head1 SYNOPSIS
+
+B<NOTE>: Usually this script is called for you by
+C<krang_addon_installer>.  Only developers will use this script
+directly.
+
+To build files for AddOnName:
+
+  krang_addon_build AddOnName
+
+=head1 DESCRIPTION
+
+This script builds a Krang addon from source found in
+addons/AddOnName/src.  The results are placed in addons/AddOnName/lib.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --module
+
+Specify a specific CPAN module to build.  The string you provide will
+be checked as a substring against the distribution file names, so
+C<DBD-mysql> works, but C<DBD::mysql> does not.  You can specify this
+option multiple times to build a specific set of modules.
+
+=item --skip-module
+
+Same as C<module> above, but skips the specified modules and builds
+everything else.  The C<module> and C<skip-module> options are not
+intended to be used together.
+
+=item --platform FedoraCore3
+
+In most cases Krang should be able to guess your platform.  If it
+can't you must pass it here.
+
+=item --help
+
+=item --man
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+
+    # add in $KRANG_ROOT/platform for platform build modules
+    my $plib    = catdir($ENV{KRANG_ROOT}, "platform");
+    $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
+    unshift @INC, $plib;
+}
+use Pod::Usage;
+use Getopt::Long;
+use File::Temp qw(tempdir);
+
+# use first instance if one isn't set.  Addons are installation wide
+# anyway.
+use Krang::ClassFactory qw(pkg);
+
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'AddOn';
+
+# options
+my ( @modules, @skip_modules, $platform, $help, $man );
+GetOptions(
+    'module=s'      => \@modules,
+    'skip-module=s' => \@skip_modules,
+    'platform=s'    => \$platform,
+    'help'          => \$help,
+    'man'           => \$man,
+  )
+  or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage( -verbose => 2 ) if $man;
+
+# get addon name
+my $name;
+if (@ARGV == 1) {
+    $name = $ARGV[0];
+} else {
+    pod2usage("Bad arguments to krang_addon_build: '" . 
+              join(' ', @ARGV) . "'\n");
+}
+
+# find the addon
+my ($addon) = pkg('AddOn')->find(name => $name);
+die("Can't find addon named '$name'!  The following addons are installed:\n" .
+    join("\n", map { "\t" . $_->name . " v" . $_->version } 
+         pkg('AddOn')->find()) . "\n")
+  unless $addon;
+
+# setup path variables
+my $root      = KrangRoot;
+my $src_dir   = catdir( $root, 'addons', $name, 'src' );
+my $dest_dir  = catdir( $root, 'addons', $name, 'lib' );
+my $build_dir = tempdir(DIR => catdir( $root, 'tmp' ));
+
+# stop early if src doesn't exist
+exit 0 unless -e $src_dir;
+
+# setup platform
+opendir(DIR, catdir($root, 'platform')) or die $!;
+my @platforms = 
+  grep { -e catfile($root, 'platform', $_, 'Platform.pm') }
+  readdir(DIR);
+    
+if ($platform) {
+    unless (-d catdir($root, 'platform', $platform)) {
+        die "Platform '$platform' is not supported.  " . 
+          "Available platforms are:\n\n\t"
+            . join("\n\t", @platforms) . "\n\n";
+    }
+} else {
+    # look for a platform that wants to handle this
+    my $found;
+    foreach my $plat (@platforms) {
+        my $pkg = $plat . '::Platform';
+        eval "use $pkg";
+        die "Unable to load platform modules '$pkg': $@\n" if $@;
+
+        if ($pkg->guess_platform) {
+            $found = 1;
+            $platform = $plat;
+            print "Building for platform '$plat'.\n";
+            last;
+        }
+    }
+    die "Unable to automatically determine your platform, you must\n".
+        "provide one on the command line using the --platform option.\n".
+        "Available platforms are:\n\n\t".
+          join("\n\t", @platforms) . "\n\n"
+            unless $found;
+}
+
+# load the platform build module, reference via $pkg
+my $pkg = $platform . '::Platform';
+eval "use $pkg";
+die "Unable to load platform modules '$pkg': $@\n" if $@;
+
+# verify the platform
+# $pkg->verify_dependencies(mode => 'build');
+
+# get list of files to build, considering --module and --skip-module opts
+opendir( SRC, $src_dir ) or die "Can't open $src_dir for reading: $!";
+my @files = sort readdir(SRC);
+
+if (@modules) {
+    @files = grep { contains( \@modules, $_ ) } @files;
+} elsif (@skip_modules) {
+    @files = grep { !contains( \@skip_modules, $_ ) } @files;
+}
+
+# loop through files, unpacking and calling build_perl_module()
+foreach my $file (@files) {
+    next unless $file =~ /gz$/;
+    build_module($file);
+}
+
+# all done, cleanup build dir
+print "Cleaning temporary build directory.\n";
+system("rm -rf $build_dir");
+
+print "\n\nBuild complete!\n";
+
+#
+# Subroutines
+#
+
+# unpack a distribution and use the platform module to build it
+sub build_module {
+    my $file = shift;
+
+    # unpack distribution
+    my $dist_file = catfile( $src_dir, $file );
+    print "Unpacking $dist_file...\n";
+    chdir $build_dir or die "Unable to chdir($build_dir): $!";
+    system("tar zxf $dist_file") == 0 or die "Couldn't unpack file: $?";
+
+    $dist_file =~ m!([^/]+)\.(tar\.|t)gz!;
+    my $dist_dir = $1;
+    die "Can't determine dist_dir for '$dist_file'." unless $dist_dir;
+    chdir $dist_dir or die "Unable to chdir($dist_dir): $!";
+
+    eval { $pkg->build_perl_module(name => $dist_dir, dest_dir => $dest_dir) };
+    die "Problem building $dist_dir in $build_dir:\n\n$@\n"
+      if $@;
+
+    # clean up dist dir
+    system("rm -rf $dist_dir") == 0 or die "Error cleaning $dist_dir: $?";
+}
+
+# returns true if list contains a string which contains the target string
+sub contains {
+    my ( $list, $string ) = @_;
+    return grep { index( $string, $_ ) > -1 } @{$list};
+}
+

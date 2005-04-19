@@ -61,36 +61,37 @@ END
 
 # set the instance as the first instance that exists - just so that we
 # can get Krang::Script loaded without complaints.
-BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Script;
 
 use Krang;
-use Krang::AddOn;
-use Krang::Site;
-use Krang::Story;
-use Krang::Media;
+use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
 
-my @instances  = Krang::Conf->instances;
+my @instances  = pkg('Conf')->instances;
 my $version    = $Krang::VERSION;
-my $ip_address = Krang::Conf->get('ApacheAddr');
+my $ip_address = pkg('Conf')->get('ApacheAddr');
 
 
-my @addons = sort { $a->name cmp $b->name } Krang::AddOn->find();
+my @addons = sort { $a->name cmp $b->name } pkg('AddOn')->find();
 
 my %instance_stats;
 foreach my $i (@instances) {
     my %site_list;
 
-    Krang::Conf->instance($i);
+    pkg('Conf')->instance($i);
 
-    foreach my $site (Krang::Site->find(order_by => 'url')) {
+    foreach my $site (pkg('Site')->find(order_by => 'url')) {
         $site_list{$site->url}{site_id} = $site->site_id;
         $site_list{$site->url}{story_count} =
-          Krang::Story->find(count   => 1,
+          pkg('Story')->find(count   => 1,
                              site_id => $site->site_id);
         $site_list{$site->url}{media_count} =
-          Krang::Media->find(count   => 1,
+          pkg('Media')->find(count   => 1,
                              site_id => $site->site_id);
 
     }

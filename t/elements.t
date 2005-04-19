@@ -1,39 +1,40 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use Krang::Script;
-use Krang::Site;
-use Krang::Category;
-use Krang::Story;
-use Krang::Conf qw(InstanceElementSet);
-BEGIN { use_ok('Krang::Element') }
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader Conf => qw(InstanceElementSet);
+BEGIN { use_ok(pkg('Element')) }
 
 # use the TestSet1 instance, if there is one
-foreach my $instance (Krang::Conf->instances) {
-    Krang::Conf->instance($instance);
+foreach my $instance (pkg('Conf')->instances) {
+    pkg('Conf')->instance($instance);
     if (InstanceElementSet eq 'TestSet1') {
         last;
     }
 }
 
 # create a site and category for dummy story
-my $site = Krang::Site->new(preview_url  => 'storytest.preview.com',
+my $site = pkg('Site')->new(preview_url  => 'storytest.preview.com',
                             url          => 'storytest.com',
                             publish_path => '/tmp/storytest_publish',
                             preview_path => '/tmp/storytest_preview');
 isa_ok($site, 'Krang::Site');
 $site->save();
 END { $site->delete() }
-my ($category) = Krang::Category->find(site_id => $site->site_id());
+my ($category) = pkg('Category')->find(site_id => $site->site_id());
 
 # create a new story
-my $story = Krang::Story->new(categories => [$category],
+my $story = pkg('Story')->new(categories => [$category],
                               title      => "Test",
                               slug       => "test",
                               class      => "article");
 
 
-my $element = Krang::Element->new(class => "article", object => $story);
+my $element = pkg('Element')->new(class => "article", object => $story);
 isa_ok($element, 'Krang::Element');
 
 # article has two default children, page and deck
@@ -107,7 +108,7 @@ is($element->child('deck')->data, "deck deck deck");
 # walk through elements with foreach_element
 my $count = 0;
 eval <<END;
-  use Krang::Element qw(foreach_element);
+  use Krang::ClassLoader Element => qw(foreach_element);
   foreach_element { \$count++ } \$element;
 END
 die $@ if $@;
@@ -130,7 +131,7 @@ undef $page;
 undef $element;
 
 # reload
-my $loaded = Krang::Element->load(element_id => $element_id, object => $story);
+my $loaded = pkg('Element')->load(element_id => $element_id, object => $story);
 isa_ok($loaded, 'Krang::Element');
 is($loaded->name, "article");
 @children = $loaded->children();
@@ -179,7 +180,7 @@ ok($loaded->delete());
 is($TestSet1::article::DELETE_COUNT, $delete_count + 1);
 
 # make sure it's gone
-eval { $loaded = Krang::Element->load(element_id => $element_id, object => $story) };
+eval { $loaded = pkg('Element')->load(element_id => $element_id, object => $story) };
 like($@, qr/No element found/);
 
 };

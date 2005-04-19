@@ -1,9 +1,10 @@
 package Krang::ElementClass::CategoryLink;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader base => 'ElementClass';
+use Krang::ClassLoader Log => qw(debug info critical);
 
 #use Krang::MethodMaker
 #  get_set => [ qw( ) ];
@@ -23,11 +24,12 @@ sub input_form {
     my ($param) = $self->param_names(element => $element);
 
     # show category chooser
-    require Krang::Widget;
+    eval "require " . pkg('Widget') or die $@;
     my $category = $element->data();
     (my $name = $param) =~ s/\W//g;
     $query->param($param => $category->category_id) if $category;
-    my $html = Krang::Widget::category_chooser(name  => $name,
+    my $html = pkg('Widget')->can('category_chooser')->(
+                                               name  => $name,
                                                field => $param,
                                                query => $query);
     $html .= qq{<input type="hidden" name="$param" } .
@@ -57,7 +59,7 @@ sub load_query_data {
     my ($param) = $self->param_names(element => $element);
     my $value = $query->param($param);
     if ($value) {
-        $element->data(Krang::Category->find(category_id => $value));
+        $element->data(pkg('Category')->find(category_id => $value));
     } else {
         $element->data(undef);
     }
@@ -94,7 +96,7 @@ sub thaw_data {
     my ($self, %arg) = @_;
     my ($element, $data) = @arg{qw(element data)};
     return $element->data(undef) unless $data;
-    my ($category) = Krang::Category->find(category_id => $data);
+    my ($category) = pkg('Category')->find(category_id => $data);
     return $element->data($category);
 }
 
@@ -169,7 +171,7 @@ Krang::ElementClass::CategoryLink - category link element class
 
 =head1 SYNOPSIS
 
-   $class = Krang::ElementClass::CategoryLink->new(name => "leadin")
+   $class = pkg('ElementClass::CategoryLink')->new(name => "leadin")
 
 =head1 DESCRIPTION
 

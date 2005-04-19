@@ -1,15 +1,16 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Script;
-use Krang::Site;
-use Krang::Template;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Template';
 
 use Test::More qw(no_plan);
 use Carp qw(croak);
 
 BEGIN {
-    use_ok('Krang::User');
+    use_ok(pkg('User'));
 }
 
 # Constructor tests
@@ -19,7 +20,7 @@ BEGIN {
 # invalid field
 my $user;
 eval {
-    $user = Krang::User->new(login => 'login',
+    $user = pkg('User')->new(login => 'login',
                              password => 'pwd',
                              crunk => 'X');
 };
@@ -27,9 +28,9 @@ is($@ =~ /constructor args are invalid: 'crunk'/, 1, 'new() - invalid field');
 
 # successes
 ############
-my $admin = Krang::User->new(login => 'admin',
+my $admin = pkg('User')->new(login => 'admin',
                              password => 'whale');
-$user = Krang::User->new(login => 'arobin',
+$user = pkg('User')->new(login => 'arobin',
                          password => 'gIMp');
 
 # save() tests
@@ -81,7 +82,7 @@ for (qw/email first_name last_name mobile_phone phone/) {
 
 # find() tests
 ###############
-($admin) = Krang::User->find(login => 'system', hidden => 1);
+($admin) = pkg('User')->find(login => 'system', hidden => 1);
 isa_ok($admin, 'Krang::User', 'find() - login');
 
 # make sure email is '' for testing
@@ -89,11 +90,11 @@ my $email = $admin->email;
 $admin->email(undef);
 eval {$admin->save};
 croak("Very Bad things: $@") if $@;
-my $count = Krang::User->find(login => 'system', hidden => 1, count => 1);
+my $count = pkg('User')->find(login => 'system', hidden => 1, count => 1);
 
 is($count, 1, 'find - all fields');
 
-my @users = Krang::User->find(email => undef);
+my @users = pkg('User')->find(email => undef);
 isa_ok($_, 'Krang::User') for @users;
 is(scalar @users, 2, 'find - count');
 
@@ -102,14 +103,14 @@ $admin->email($email);
 eval {$admin->save};
 croak("Very Bad things: $@") if $@;
 
-@users = Krang::User->find(order_by => 'login');
+@users = pkg('User')->find(order_by => 'login');
 my @u = sort {$a->{login} cmp $b->{login}} @users;
 is($users[0]->login, $u[0]->login, 'find - order_by');
 
-@users = Krang::User->find(limit => 1);
+@users = pkg('User')->find(limit => 1);
 is(scalar @users, 1, 'find - limit');
 
-@users = Krang::User->find(group_ids => [1,2,3], login => 'arobin');
+@users = pkg('User')->find(group_ids => [1,2,3], login => 'arobin');
 isa_ok($_, 'Krang::User') for @users;
 is($users[0]->login, 'arobin', 'find - group_ids');
 is(scalar @{$users[0]->group_ids()}, 3, 'group_ids - count');
@@ -124,9 +125,9 @@ $admin->password('whale');
 eval {$admin->save();};
 croak("Won't complete tests bad things have happened: $@") if $@;
 
-is(Krang::User->check_auth('',''), 0, 'check_auth() - failure 1');
-is(Krang::User->check_auth('system',''), 0, 'check_auth() - failure 2');
-ok(Krang::User->check_auth('system', 'whale'), 'check_auth() - success');
+is(pkg('User')->check_auth('',''), 0, 'check_auth() - failure 1');
+is(pkg('User')->check_auth('system',''), 0, 'check_auth() - failure 2');
+ok(pkg('User')->check_auth('system', 'whale'), 'check_auth() - success');
 
 # revert values
 $admin->login($clogin);
@@ -138,13 +139,13 @@ croak("Won't complete tests bad things have happened: $@") if $@;
 # delete() tests
 #################
 # create objects to force a delete failure
-my $site = Krang::Site->new(preview_path => 'a',
+my $site = pkg('Site')->new(preview_path => 'a',
                             preview_url => 'preview.com',
                             publish_path => 'b',
                             url => 'live.com');
 $site->save();
-my ($cat) = Krang::Category->find(site_id => $site->site_id());
-my $template = Krang::Template->new(category_id => $cat->category_id(),
+my ($cat) = pkg('Category')->find(site_id => $site->site_id());
+my $template = pkg('Template')->new(category_id => $cat->category_id(),
                                     content => 'ima template, baby',
                                     filename => 'tmpl.tmpl');
 $template->save();

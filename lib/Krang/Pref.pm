@@ -1,9 +1,10 @@
 package Krang::Pref;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use Carp qw(croak);
-use Krang::DB qw(dbh);
+use Krang::ClassLoader DB => qw(dbh);
 
 =head1 NAME
 
@@ -11,19 +12,19 @@ Krang::Pref - Krang Global Preference API
 
 =head1 SYNOPSIS
 
-  use Krang::Pref;
+  use Krang::ClassLoader 'Pref';
 
   # get the value set 'search_page_size', a scalar preference
-  $page_size = Krang::Pref->get('search_page_size');
+  $page_size = pkg('Pref')->get('search_page_size');
 
   # get a hash of ids to names for a list preference
-  %data = Krang::Pref->get('contrib_type');
+  %data = pkg('Pref')->get('contrib_type');
 
   # set a scalar preference
-  Krang::Pref->set(search_page_size => 10);
+  pkg('Pref')->set(search_page_size => 10);
 
   # set a list preference with a list of ids and names
-  Krang::Pref->set(contrib_type => 1 => 'Writer', 2 => 'Photographer');
+  pkg('Pref')->set(contrib_type => 1 => 'Writer', 2 => 'Photographer');
 
 =head1 DESCRIPTION
 

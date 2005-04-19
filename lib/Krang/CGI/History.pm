@@ -1,5 +1,6 @@
 package Krang::CGI::History;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
@@ -16,9 +17,9 @@ our %ACTION_LABELS = (
                      );
 
 use Carp qw(croak);
-use Krang::History;
-use Krang::HTMLPager;
-use Krang::Desk;
+use Krang::ClassLoader 'History';
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader 'Desk';
 
 =head1 NAME
 
@@ -27,8 +28,8 @@ Krang::CGI::History - web interface to view history logs
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::History;
-  my $app = Krang::CGI::History->new();
+  use Krang::ClassLoader 'CGI::History';
+  my $app = pkg('CGI::History')->new();
   $app->run();
 
 =head1 DESCRIPTION
@@ -122,11 +123,11 @@ sub show {
     # load an object
     my $object;
     if ($story_id) {
-        ($object) = Krang::Story->find(   story_id    => $story_id);
+        ($object) = pkg('Story')->find(   story_id    => $story_id);
     } elsif ($media_id) {
-        ($object) = Krang::Media->find(   media_id    => $media_id);
+        ($object) = pkg('Media')->find(   media_id    => $media_id);
     } else {
-        ($object) = Krang::Template->find(template_id => $template_id);
+        ($object) = pkg('Template')->find(template_id => $template_id);
     }
     croak("Unable to load object!")
       unless $object;
@@ -144,7 +145,7 @@ sub show {
 
 
     # setup the pager
-    my $pager = Krang::HTMLPager->new
+    my $pager = pkg('HTMLPager')->new
       (
        cgi_query => $query,
        persist_vars => {
@@ -190,7 +191,7 @@ sub show_row_handler {
     $row->{action} = "$name $action";
     
     # setup user
-    my ($user) = Krang::User->find(user_id => $history->user_id);
+    my ($user) = pkg('User')->find(user_id => $history->user_id);
     if ($user) {
         $row->{user} = $user->first_name . " " . $user->last_name;
     } else {
@@ -205,7 +206,7 @@ sub show_row_handler {
     my $attr = "";
     $attr .= "Version: " . $history->version
       if $history->version;
-    $attr .= "Desk: " . (Krang::Desk->find( desk_id => $history->desk_id))[0]->name if $history->desk_id;
+    $attr .= "Desk: " . (pkg('Desk')->find( desk_id => $history->desk_id))[0]->name if $history->desk_id;
     $row->{attr} = $attr;
 }
 

@@ -1,16 +1,17 @@
 package Krang::CGI::Schedule;
-use base qw(Krang::CGI);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
-use Krang::Schedule;
-use Krang::Message qw(add_message);
-use Krang::Session qw(%session);
-use Krang::Widget qw(time_chooser datetime_chooser decode_datetime);
-use Krang::HTMLPager;
+use Krang::ClassLoader 'Schedule';
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Widget => qw(time_chooser datetime_chooser decode_datetime);
+use Krang::ClassLoader 'HTMLPager';
 
 our %ACTION_LABELS = (
                       publish  => 'Publish',
@@ -33,14 +34,14 @@ Krang::CGI::Schedule - web interface to manage scheduling for stories and media.
 
 =head1 SYNOPSIS
   
-  use Krang::CGI::Schedule;
-  my $app = Krang::CGI::Schedule->new();
+  use Krang::ClassLoader 'CGI::Schedule';
+  my $app = pkg('CGI::Schedule')->new();
   $app->run();
 
 =head1 DESCRIPTION
 
 Krang::CGI::Schedule provides a user interface to add and delete
- scheduled actions for Krang::Media and Krang::Story objects.
+ scheduled actions for pkg('Media') and pkg('Story') objects.
 
 =head1 INTERFACE
 
@@ -175,7 +176,7 @@ sub list_all {
 
     my $template = $self->load_tmpl('list_all.tmpl', associate => $query);
 
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
                                         cgi_query => $query,
                                         persist_vars => {
                                                        rm => 'list_all' },
@@ -240,7 +241,7 @@ sub get_object {
 
 sub get_existing_schedule {
     my ($object_type, $object_id) = @_;
-    my @schedules = Krang::Schedule->find( 'object_type' => $object_type, 'object_id' => $object_id );
+    my @schedules = pkg('Schedule')->find( 'object_type' => $object_type, 'object_id' => $object_id );
     
     my @existing_schedule_loop = ();
 
@@ -331,14 +332,14 @@ sub add {
         }
 
         if ($version) {
-            $schedule = Krang::Schedule->new(   object_type => $object_type,
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                                 object_id => $object_id,
                                                 action => $action,
                                                 repeat => 'never',
                                                 context => [ version => $version ],
                                                 date => $date );
         } else {
-            $schedule = Krang::Schedule->new(   object_type => $object_type,
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                                 object_id => $object_id,
                                                 action => $action,
                                                 repeat => 'never',
@@ -347,14 +348,14 @@ sub add {
 
     } elsif ($repeat eq 'hourly') {
         if ($version) {
-            $schedule = Krang::Schedule->new(   object_type => $object_type,
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                             object_id => $object_id,
                                             action => $action,
                                             context => [ version => $version ],
                                             repeat => 'hourly',
                                             minute => $q->param('hourly_minute'));    
         } else {
-             $schedule = Krang::Schedule->new(   object_type => $object_type,
+             $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                             object_id => $object_id,
                                             action => $action,
                                             repeat => 'hourly',
@@ -377,7 +378,7 @@ sub add {
         }
         
         if ($version) { 
-            $schedule = Krang::Schedule->new(   object_type => $object_type,
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                             object_id => $object_id,
                                             action => $action,
                                             context => [ version => $version ],
@@ -385,7 +386,7 @@ sub add {
                                             minute => $minute,
                                             hour => $hour );
         } else {
-            $schedule = Krang::Schedule->new(   object_type => $object_type,
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                             object_id => $object_id,
                                             action => $action,
                                             repeat => 'daily',
@@ -413,7 +414,7 @@ sub add {
         my $day = $q->param('weekly_day');
 
         if ($version) { 
-            $schedule = Krang::Schedule->new(   object_type => $object_type,
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                             object_id => $object_id,
                                             action => $action,
                                             repeat => 'weekly',
@@ -422,7 +423,7 @@ sub add {
                                             minute => $minute,
                                             hour => $hour );
         } else {
-            $schedule = Krang::Schedule->new(   object_type => $object_type,
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                             object_id => $object_id,
                                             action => $action,
                                             repeat => 'weekly',
@@ -460,14 +461,14 @@ sub add_simple {
     if ($date) { 
         my $schedule;
         if ($q->param('version')) {
-            $schedule = Krang::Schedule->new(   object_type => $object_type,
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                                 object_id => $object_id,
                                                 action => 'publish',
                                                 repeat => 'never',
                                                 context => [ version => $q->param('version') ],
                                                 date => $date );
         } else {
-            $schedule = Krang::Schedule->new(   object_type => $object_type,
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
                                                 object_id => $object_id,
                                                 action => 'publish',
                                                 repeat => 'never',
@@ -502,7 +503,7 @@ sub delete {
     }
 
     foreach my $schedule_id (@delete_list) {
-        Krang::Schedule->delete($schedule_id);
+        pkg('Schedule')->delete($schedule_id);
     } 
     
     add_message('deleted_selected');

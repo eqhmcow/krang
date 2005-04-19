@@ -1,3 +1,4 @@
+use Krang::ClassFactory qw(pkg);
 use Test::Pod qw(no_plan);
 use Test::More;
 

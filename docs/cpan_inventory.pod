@@ -55,6 +55,11 @@ exist without your hard work.
  Version: 0.17
  License: None
 
+=item Class-ISA
+
+ Version: 0.33
+ License: Perl License
+
 =item Class-MethodMaker
 
  Version: 1.08

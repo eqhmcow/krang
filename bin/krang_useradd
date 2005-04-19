@@ -97,7 +97,8 @@ END
 
 # use first instance if one isn't set.  Addons are installation wide
 # anyway.
-BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
+use Krang::ClassFactory qw(pkg);
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
 
 # Krang-Dependent External Modules
@@ -107,9 +108,9 @@ use Pod::Usage;
 
 # Internal Modules
 ###################
-use Krang::Script;
-use Krang::Group;
-use Krang::User;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Group';
+use Krang::ClassLoader 'User';
 
 #
 # Package Variables
@@ -126,7 +127,7 @@ our ($email, $first_name, $last_name, $mobile_phone, $phone);
 my @gids;
 my @groups = qw/default/;
 my $debug = my $help = my $man = 0;
-my %valid_groups = map {lc $_->name, $_->group_id} Krang::Group->find;
+my %valid_groups = map {lc $_->name, $_->group_id} pkg('Group')->find;
 
 # termial I/O vars
 my ($c_lflag, $fd, $termios);
@@ -154,7 +155,7 @@ pod2usage(-verbose => 2) if $man;
 my $login = shift @ARGV;
 pod2usage("No user 'login' specified") unless defined $login;
 pod2usage("Logins must be at least 6 characters") unless
-  (length $login >= 6 || grep $login eq $_, Krang::User::SHORT_NAMES);
+  (length $login >= 6 || grep $login eq $_, pkg('User::SHORT_NAMES'));
 
 # handle groups
 ################
@@ -189,7 +190,7 @@ it sets the objects fields and attempts to save it to the database.
 
 sub main {
     # lookup user
-    my ($user) = Krang::User->find(login => $login);
+    my ($user) = pkg('User')->find(login => $login);
     die("User with login '$login' already exists.") if defined $user;
 
     # setup terminal I/O
@@ -202,7 +203,7 @@ sub main {
     my $pass = ask_pass($user);
 
     # constuct user
-    $user = Krang::User->new(login => $login, password => $pass);
+    $user = pkg('User')->new(login => $login, password => $pass);
     {
         # allow symbolic references to access variables and methods of the
         # same name in for loop :)

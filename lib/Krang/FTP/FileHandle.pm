@@ -1,11 +1,12 @@
 package Krang::FTP::FileHandle;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::DB qw(dbh);
-use Krang::Conf;
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader Log => qw(debug info critical);
 use Net::FTPServer::FileHandle;
-use Krang::FTP::DirHandle;
+use Krang::ClassLoader 'FTP::DirHandle';
 use IO::Scalar;
 use IO::File;
 use Time::Piece;
@@ -104,7 +105,7 @@ sub open {
         # check write access
         return undef unless $self->can_write;
 
-        return Krang::FTP::FileHandle::Handle->new($object,$type);
+        return pkg('FTP::FileHandle::Handle')->new($object,$type);
         
     }
 }
@@ -119,7 +120,7 @@ in.  Calls Bric::Util::FTP::DirHandle->new().
 sub dir {
   my $self = shift;
   debug(__PACKAGE__."::dir() : ".$self->{filename}."\n");
-  return Krang::FTP::DirHandle->new (   $self->{ftps},
+  return pkg('FTP::DirHandle')->new (   $self->{ftps},
                                         $self->dirname,
                                         $self->{type},
                                         $self->{category_id});
@@ -173,7 +174,7 @@ sub status {
     my $owner = $object->checked_out_by;
 
     if ( $owner) { # if checked out, get the username, return read-only
-        my @user = Krang::User->find( user_id => $owner );
+        my @user = pkg('User')->find( user_id => $owner );
         my $login = defined $user[0] ? $user[0]->login : "unknown";
         return ( 'f', 0777, 1, $login, "co", $size,  $date);
     } else { # check for write privs - TODO

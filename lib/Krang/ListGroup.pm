@@ -1,9 +1,10 @@
 package Krang::ListGroup;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::DB qw(dbh);
-use Krang::Session qw(%session);
-use Krang::Log qw( debug info );
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Log => qw( debug info );
 use Carp qw(croak);
 
 # constants 
@@ -13,18 +14,18 @@ use constant RW_FIELDS => qw( name description );
 
 =head1 NAME
 
-    Krang::ListGroup -  interface to manage list groups.
+Krang::ListGroup -  interface to manage list groups.
 
 =head1 SYNOPSIS
 
-    use Krang::ListGroup;
+    use Krang::ClassLoader 'ListGroup';
 
-    my $group = Krang::ListGroup->new(  name => 'testlistgroup',
+    my $group = pkg('ListGroup')->new(  name => 'testlistgroup',
                                         description => 'desc here' );
 
     $group->save;
 
-    my @groups_found = Krang::ListGroup->find( name => 'testlistgroup' );
+    my @groups_found = pkg('ListGroup')->find( name => 'testlistgroup' );
 
     $group->delete;
 
@@ -56,7 +57,7 @@ description
 
 =cut
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get => [ RO_FIELDS ],
@@ -307,12 +308,12 @@ sub deserialize_xml {
     my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml,
+    my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1);
 
 
     # is there an existing object?
-    my $lg = (Krang::ListGroup->find(name => $data->{name}))[0] || '';
+    my $lg = (pkg('ListGroup')->find(name => $data->{name}))[0] || '';
 
     if ($lg) {
 
@@ -329,7 +330,7 @@ sub deserialize_xml {
         $lg->save(); 
 
     } else {
-        $lg = Krang::ListGroup->new( name => $data->{name}, description => $data->{description} );
+        $lg = pkg('ListGroup')->new( name => $data->{name}, description => $data->{description} );
         $lg->save;
     }
 

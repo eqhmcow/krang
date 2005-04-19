@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
-use Krang::ErrorHandler;
-use Krang::CGI::Group;
-my $app = Krang::CGI::Group->new();
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'ErrorHandler';
+use Krang::ClassLoader 'CGI::Group';
+my $app = pkg('CGI::Group')->new();
 $app->run();

@@ -1,4 +1,5 @@
 package Krang::CGI::ElementEditor;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -151,15 +152,15 @@ Must return the element currently being edited from the session.
 
 =cut
 
-use Krang::ElementLibrary;
-use Krang::Element;
-use Krang::DB qw(dbh);
+use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader 'Element';
+use Krang::ClassLoader DB => qw(dbh);
 use Carp qw(croak);
-use Krang::Session qw(%session);
-use Krang::Log qw(debug assert affirm ASSERT);
-use Krang::Message qw(add_message get_messages);
-use Krang::Widget qw(category_chooser date_chooser decode_date);
-use base 'Krang::CGI';
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
+use Krang::ClassLoader Message => qw(add_message get_messages);
+use Krang::ClassLoader Widget => qw(category_chooser date_chooser decode_date);
+use Krang::ClassLoader base => 'CGI';
 
 sub setup {
     my $self = shift;
@@ -283,7 +284,7 @@ sub element_edit {
                          grep { $_->is_container } @available ]);
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $template->param(instance_name => $instance_name);
 }
@@ -440,9 +441,9 @@ sub find_story_link {
 
         # Story class
         my @classes = grep { $_ ne 'category' } 
-          Krang::ElementLibrary->top_levels;
+          pkg('ElementLibrary')->top_levels;
         my %class_labels = map {
-            $_ => Krang::ElementLibrary->top_level(name => $_)->display_name()
+            $_ => pkg('ElementLibrary')->top_level(name => $_)->display_name()
         } @classes;
         $tmpl_data{search_class_chooser} =
           scalar($query->popup_menu(-name      => 'search_class',
@@ -465,7 +466,7 @@ sub find_story_link {
         $find_params{exclude_story_ids} = [ $session{story}->story_id ];
     }
 
-    my $pager = Krang::HTMLPager->new      (cgi_query     => $query,
+    my $pager = pkg('HTMLPager')->new      (cgi_query     => $query,
        persist_vars  => {
                          rm => 'find_story_link',
                          path => $query->param('path'),
@@ -622,7 +623,7 @@ sub find_media_link {
     # always show only what should be seen
     $find{may_see} = 1;
 
-    my $pager = Krang::HTMLPager->new
+    my $pager = pkg('HTMLPager')->new
       (cgi_query     => $query,
        persist_vars  => {
                          rm => 'find_media_link',
@@ -725,7 +726,7 @@ sub select_story {
     my $element = _find_element($root, $path);
 
     # find story and set it in element data
-    my ($story) = Krang::Story->find(story_id => $story_id);
+    my ($story) = pkg('Story')->find(story_id => $story_id);
     $element->data($story);
 
     # back to edit, in the parent and out of find_story_link mode
@@ -750,7 +751,7 @@ sub select_media {
     my $element = _find_element($root, $path);
 
     # find media and set it in element data
-    my ($media) = Krang::Media->find(media_id => $media_id);
+    my ($media) = pkg('Media')->find(media_id => $media_id);
     $element->data($media);
 
     # back to edit, in the parent and out of find_media_link mode

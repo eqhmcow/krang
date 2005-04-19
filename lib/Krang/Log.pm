@@ -8,7 +8,7 @@ Krang::Log - Krang logging module
 
 =head1 SYNOPSIS
 
-  use Krang::Log qw(debug info critical ASSERT assert affirm should shouldnt);
+  use Krang::ClassLoader Log => qw(debug info critical ASSERT assert affirm should shouldnt);
 
   # logging messages
   debug("I'm inside of block X and \$a == $a.");
@@ -47,12 +47,12 @@ Optionally, log levels may be set for specific modules.  For example,
 if you were working on Krang::CGI::Story and didn't want to see debug
 messages from other modules:
 
-  LogLevel 2,Krang::CGI::Story=3
+  LogLevel 2,pkg('CGI::Story')=3
 
 You can also specify a regex to match against module names.  For
 example, to suppress debug messages from all CGI modules:
 
-  LogLevel 3,/^Krang::CGI/=2
+  LogLevel 3,/^pkg('CGI')/=2
 
 =item * Assertions
 
@@ -100,12 +100,13 @@ one is not included.
 =cut
 
 # Pragmas
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 # Krang Modules
-use Krang::Conf qw(assertions loglevel
-		   KrangUser KrangGroup KrangRoot);
+use Krang::ClassLoader Conf => qw(assertions loglevel
+                                  KrangUser KrangGroup KrangRoot);
 
 # Module Dependencies
 use Carp qw(verbose croak);
@@ -169,7 +170,7 @@ BEGIN {
 
     # set logging level using LogLevel directive; convert arg to int
     # if we have a string
-    my $level = Krang::Conf->loglevel();
+    my $level = pkg('Conf')->loglevel();
     croak("Value required for LogLevel directive in 'krang.conf'.")
         unless defined $level and length $level;
 
@@ -221,7 +222,7 @@ BEGIN {
     # turn assertions on or off based on KRANG_ASSERT or Assertions
     # conf setting
     my $assert_on = exists $ENV{KRANG_ASSERT} ? $ENV{KRANG_ASSERT} :
-      Krang::Conf->assertions();
+      pkg('Conf')->assertions();
 
     # set PERL_NDEBUG to control Carp::Assert
     $ENV{PERL_NDEBUG} = not $assert_on;
@@ -321,7 +322,7 @@ sub log {
     my $timestamp = "[" . localtime()->strftime('%D %T') . "] ";
 
     # print message to file
-    $message = $timestamp . "[" . (Krang::Conf->instance || 'none') . "] [" . lc($level_PV) . "] $message";
+    $message = $timestamp . "[" . (pkg('Conf')->instance || 'none') . "] [" . lc($level_PV) . "] $message";
 
     # make sure message ends in a newline
     $message .= "\n" unless $message =~ /\n\z/;

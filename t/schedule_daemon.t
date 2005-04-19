@@ -1,3 +1,4 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -11,10 +12,10 @@ use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
 
-use Krang::Script;
-use Krang::Conf qw(KrangRoot InstanceElementSet);
-use Krang::Schedule;
-use Krang::Test::Content;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet);
+use Krang::ClassLoader 'Schedule';
+use Krang::ClassLoader 'Test::Content';
 
 use Data::Dumper;
 
@@ -25,8 +26,8 @@ my $schedulectl;
 
 
 # use the TestSet1 instance, if there is one
-foreach my $instance (Krang::Conf->instances) {
-    Krang::Conf->instance($instance);
+foreach my $instance (pkg('Conf')->instances) {
+    pkg('Conf')->instance($instance);
     if (InstanceElementSet eq 'TestSet1') {
         last;
     }
@@ -42,8 +43,8 @@ BEGIN {
     $schedulectl = File::Spec->catfile(KrangRoot, 'bin', 'krang_schedulectl');
     $stop_daemon = 0;
 
-    foreach my $instance (Krang::Conf->instances) {
-        Krang::Conf->instance($instance);
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
         if (InstanceElementSet eq 'TestSet1') {
             eval 'use Test::More qw(no_plan)';
             $found = 1;
@@ -86,7 +87,7 @@ my $publish_path = '/tmp/krangschedtest_publish';
 
 my @schedules;
 
-my $creator = Krang::Test::Content->new();
+my $creator = pkg('Test::Content')->new();
 
 my $site = $creator->create_site(
                                  preview_url  => $preview_url,
@@ -112,7 +113,7 @@ END {
 }
 
 
-use_ok('Krang::Schedule::Daemon');
+use_ok(pkg('Schedule::Daemon'));
 
 
 # create story objects
@@ -126,7 +127,7 @@ for (1..$num_stories) {
     my $story = $creator->create_story();
     push @stories, $story;
 
-    my $sched = Krang::Schedule->new(
+    my $sched = pkg('Schedule')->new(
                                      action      => 'publish',
                                      object_id   => $story->story_id(),
                                      object_type => 'story',
@@ -152,7 +153,7 @@ foreach my $story (@stories) {
 # test expiration
 foreach my $story (@stories) {
 
-    my $sched = Krang::Schedule->new(
+    my $sched = pkg('Schedule')->new(
                                      action      => 'expire',
                                      object_id   => $story->story_id(),
                                      object_type => 'story',

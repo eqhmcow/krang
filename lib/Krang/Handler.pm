@@ -1,4 +1,5 @@
 package Krang::Handler;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -69,22 +70,23 @@ None.
 
 =cut
 
-use Krang::ErrorHandler;
+use Krang::ClassLoader 'ErrorHandler';
 use Krang;
-use Krang::CGI::Login;
+use Krang::ClassLoader 'CGI::Login';
 use Apache;
 use Apache::Constants qw(:response);
 use Apache::Cookie;
 use File::Spec::Functions qw(splitdir rel2abs catdir catfile);
 use Carp qw(croak);
-use Krang::Conf qw(KrangRoot);
-use Krang::HTMLTemplate;
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'HTMLTemplate';
 use Digest::MD5 qw(md5_hex md5);
-use Krang::Log qw(critical info debug);
+use Krang::ClassLoader Log => qw(critical info debug);
 use CGI ();
 use HTTP::BrowserDetect;
 use Apache::SizeLimit;
 use Krang::Cache;
+use Krang::ClassLoader 'File';
 
 # Login app name
 use constant LOGIN_APP => 'login.pl';
@@ -131,17 +133,18 @@ sub trans_handler ($$) {
 
         # Set current instance, or die trying
         debug("Krang::Handler:  Setting instance to '$instance_name'");
-        Krang::Conf->instance($instance_name);
+        pkg('Conf')->instance($instance_name);
 
         # Propagate the instance name to the CGI-land
         $r->cgi_env('KRANG_INSTANCE' => $instance_name);
 
         # Handle DirectoryIndex case...
         $uri .= 'workspace.pl' if ($uri =~ /\/$/);
-        $r->uri($uri);
 
-        # Our work is done -- we outta 'ere
-        return DECLINED;
+        # now map to a file on disk with Krang::File
+        my $file = pkg('File')->find("htdocs/$uri");
+        $r->filename($file);
+        return OK;
     }
 
 
@@ -157,7 +160,7 @@ sub trans_handler ($$) {
 
         # Set current instance, or die trying
         debug("Krang::Handler:  Setting instance to '$instance_name'");
-        Krang::Conf->instance($instance_name);
+        pkg('Conf')->instance($instance_name);
 
         # Propagate the instance name to the CGI-land
         $r->cgi_env('KRANG_INSTANCE' => $instance_name);
@@ -169,7 +172,8 @@ sub trans_handler ($$) {
         # Handle root case: workspace.pl
         $new_uri = "/workspace.pl" if (($new_uri eq '/') || $new_uri eq '');
 
-        my $fq_filename = $r->document_root() . $new_uri;
+        # map to filename on disk
+        my $fq_filename = pkg('File')->find("htdocs/$new_uri");
         $r->filename($fq_filename);
 
         return OK;
@@ -229,7 +233,7 @@ sub authen_handler ($$) {
     }
 
     # Get Krang instance name
-    my $instance  = Krang::Conf->instance();
+    my $instance  = pkg('Conf')->instance();
 
     my %cookies = Apache::Cookie->new($r)->parse();
     unless ($cookies{$instance}) {
@@ -251,7 +255,7 @@ sub authen_handler ($$) {
     }
 
     # Check for invalid session
-    unless (Krang::Session->validate($session_id)) {
+    unless (pkg('Session')->validate($session_id)) {
         debug("Invalid session '$session_id'.");
         return OK;
     }
@@ -278,7 +282,7 @@ sub authz_handler ($$) {
     }
 
     my $path      = $r->uri();
-    my $instance  = Krang::Conf->instance();
+    my $instance  = pkg('Conf')->instance();
     my $flavor    = $r->dir_config('flavor');
 
     # always allow access to the login app
@@ -311,12 +315,12 @@ sub authz_handler ($$) {
 sub instance_menu {
     my ($r) = @_;
 
-    my $template = Krang::HTMLTemplate->new(filename => 'instance_menu.tmpl',
+    my $template = pkg('HTMLTemplate')->new(filename => 'instance_menu.tmpl',
                                             cache    => 1);
 
     # setup the instance loop
     my @loop;
-    foreach my $instance (Krang::Conf->instances()) {
+    foreach my $instance (pkg('Conf')->instances()) {
         push(@loop, { InstanceName => $instance });
     }
     $template->param(instance_loop => \@loop);
@@ -362,11 +366,11 @@ sub siteserver_trans_handler ($$) {
     $host .= ":$port" unless $port == 80;
 
     # find a site for this hostname, looking in all instances
-    require Krang::Site;
+    eval "require " . pkg('Site') or die $@;
     my $path;
-  INSTANCE: foreach my $instance (Krang::Conf->instances) {
-        Krang::Conf->instance($instance);
-        my @sites = Krang::Site->find();
+  INSTANCE: foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
+        my @sites = pkg('Site')->find();
         foreach my $site (@sites) {
             my $url         = $site->url;
             my $preview_url = $site->preview_url;

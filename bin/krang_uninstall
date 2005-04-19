@@ -62,8 +62,9 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Term::Prompt qw(prompt);
-use Krang::Conf qw(KrangRoot HostName InstanceDBName DBUser DBPass DBHost);
+use Krang::ClassLoader Conf => qw(KrangRoot HostName InstanceDBName DBUser DBPass DBHost);
 
 my ($help, $man, $no_prompt, $MySQLRootPassword);
 my $verbose;

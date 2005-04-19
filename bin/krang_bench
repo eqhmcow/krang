@@ -76,6 +76,7 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Conf qw(KrangRoot);
         
 my ($help, $man);

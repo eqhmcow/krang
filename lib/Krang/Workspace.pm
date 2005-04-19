@@ -1,13 +1,14 @@
 package Krang::Workspace;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Session qw(%session);
-use Krang::DB qw(dbh);
-use Krang::Log qw(debug);
-use Krang::Story;
-use Krang::Media;
-use Krang::Template;
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Template';
 
 =head1 NAME
 
@@ -15,13 +16,13 @@ Krang::Workspace - data broker for My Workspace CGI
 
 =head1 SYNOPSIS
 
-  use Krang::Workspace;
+  use Krang::ClassLoader 'Workspace';
 
   # get a list of objects on the current user's workspace
-  @objects = Krang::Workspace->find();
+  @objects = pkg('Workspace')->find();
 
   # get just the first 10, sorting by url:
-  @objects = Krang::Workspace->find(limit    => 10,
+  @objects = pkg('Workspace')->find(limit    => 10,
                                     offset   => 0,
                                     order_by => 'url');
 
@@ -191,21 +192,21 @@ SQL
     my %stories;
     if (@story_ids) {
         %stories = map { ($_->story_id, $_) }
-          Krang::Story->find(story_id => \@story_ids);
+          pkg('Story')->find(story_id => \@story_ids);
     }
 
     # load media
     my %media;
     if (@media_ids) {
         %media = map { ($_->media_id, $_) }
-          Krang::Media->find(media_id => \@media_ids);
+          pkg('Media')->find(media_id => \@media_ids);
     }
 
     # load template
     my %templates;
     if (@template_ids) {
         %templates = map { ($_->template_id, $_) }
-          Krang::Template->find(template_id => \@template_ids);
+          pkg('Template')->find(template_id => \@template_ids);
     }
     
     # collate results in order

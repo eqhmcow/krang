@@ -133,12 +133,13 @@ our (%filename_map, $VERBOSE);
 our ($in, $out, $err);
 
 require Data::Dumper if $VERBOSE;
+use Krang::ClassFactory qw(pkg);
 use IPC::Run qw(run);
 use Time::Piece;
 use XML::Simple qw(XMLin);
 
-use Krang::Conf qw(KrangRoot);
-use Krang::DataSet;
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'DataSet';
 
 main();
 
@@ -263,7 +264,7 @@ sub extract {
 sub build_set {
     my ($dir) = @_;
 
-    my $set = Krang::DataSet->new;
+    my $set = pkg('DataSet')->new;
 
     while (my ($k, $v) = each %filename_map) {
         my $xmlfile = "template_$v\.xml";

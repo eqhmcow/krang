@@ -1,12 +1,13 @@
 package Krang::HTMLPager;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use Carp qw(croak);
-use Krang::HTMLTemplate;
-use Krang::Conf qw(KrangRoot);
-use Krang::MyPref;
-use Krang::Session qw(%session);
+use Krang::ClassLoader 'HTMLTemplate';
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'MyPref';
+use Krang::ClassLoader Session => qw(%session);
 use File::Spec::Functions qw(catdir);
 
 =head1 NAME
@@ -18,10 +19,10 @@ Krang::HTMLPager - Web-paginate lists of records
 
   #### In your Krang::CGI::* module...
   #
-  use Krang::HTMLPager;
+  use Krang::ClassLoader 'HTMLPager';
 
   ## In a run-mode, instantiate new pager object...
-  my $pager = Krang::HTMLPager->new(
+  my $pager = pkg('HTMLPager')->new(
     cgi_query   => $query,
     use_module  => 'Krang::Contrib',
     columns     => [ 'last', 'first', 'command_column', 'checkbox_column' ],
@@ -38,15 +39,15 @@ Krang::HTMLPager - Web-paginate lists of records
 
   #### In your HTML::Template file...
   #
-  <!-- Krang::HTMLPager Output START -->
+  <!-- pkg('HTMLPager') Output START -->
   <tmpl_var pager_html>
-  <!-- Krang::HTMLPager Output END -->
+  <!-- pkg('HTMLPager') Output END -->
 
 
 =cut
 
 
-use Krang::MethodMaker (
+use Krang::ClassLoader MethodMaker => (
                         new_with_init => 'new',
                         new_hash_init => 'hash_init',
                         get           => [ qw( row_count ) ],
@@ -99,7 +100,7 @@ Krang::HTMLPager implements the following primary methods:
 
 =item new()
 
-  my $pager = Krang::HTMLPager->new(%pager_props);
+  my $pager = pkg('HTMLPager')->new(%pager_props);
 
 The new() method instantiates a new pager.  It takes a litany of
 parameters, which are documented in full later in this POD in the
@@ -176,7 +177,7 @@ sub output {
     # Dynamically create template as scalar with proper columns
     my $pager_tmpl = $self->make_internal_template();
 
-    my $t = Krang::HTMLTemplate->new_scalar_ref(\$pager_tmpl, loop_context_vars=>1);
+    my $t = pkg('HTMLTemplate')->new_scalar_ref(\$pager_tmpl, loop_context_vars=>1);
     $self->_fill_template($t);
 
     return $t->output();
@@ -598,7 +599,7 @@ with a custom template is to have Krang::HTMLPager dynamically
 generate a template for you, which you can then customize.  This 
 can be done via the make_internal_template() method:
 
-  my $pager = Krang::HTMLPager->new(%pager_props);
+  my $pager = pkg('HTMLPager')->new(%pager_props);
   my $template = $pager->make_internal_template();
 
 Refer to the make_internal_template() POD in this document for more 
@@ -764,7 +765,7 @@ Custom size (set by user preference) and "Show 100 rows".  The
 
 # Return the user-preferred page size
 sub get_user_page_size {
-    my $page_size = Krang::MyPref->get('search_page_size');
+    my $page_size = pkg('MyPref')->get('search_page_size');
     return $page_size;
 }
 

@@ -1,11 +1,12 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More tests => 11;
 use strict;
 use warnings;
 
-BEGIN { use_ok('Krang::MethodMaker') }
+BEGIN { use_ok(pkg('MethodMaker')) }
 
 package Foo;
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   new     => 'new',
   get     => 'id',
   get_set => [ qw(bar baz) ];

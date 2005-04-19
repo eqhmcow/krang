@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
-use Krang::ErrorHandler;
-use Krang::CGI::DeskAdmin;
-my $app = Krang::CGI::DeskAdmin->new();
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'ErrorHandler';
+use Krang::ClassLoader 'CGI::DeskAdmin';
+my $app = pkg('CGI::DeskAdmin')->new();
 $app->run();

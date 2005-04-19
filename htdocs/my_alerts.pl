@@ -1,5 +1,6 @@
 #!/usr/bin/perl -w
-use Krang::ErrorHandler;
-use Krang::CGI::MyAlerts;
-my $app = Krang::CGI::MyAlerts->new();
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'ErrorHandler';
+use Krang::ClassLoader 'CGI::MyAlerts';
+my $app = pkg('CGI::MyAlerts')->new();
 $app->run();

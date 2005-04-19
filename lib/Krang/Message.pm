@@ -1,12 +1,15 @@
 package Krang::Message;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Conf qw(KrangRoot);
-use Krang::Session qw(%session);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Session => qw(%session);
 use File::Spec::Functions qw(catfile);
 use Carp qw(croak);
-use Krang::Log qw(debug);
+use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader 'File';
+use Class::ISA;
 
 use base 'Exporter';
 our @EXPORT_OK = qw(add_message get_messages clear_messages);
@@ -17,7 +20,7 @@ Krang::Message - module to handle UI messages in Krang
 
 =head1 SYNOPSIS
 
-  use Krang::Message qw(add_messsage get_messages clear_messages);
+  use Krang::ClassLoader Message => qw(add_messsage get_messages clear_messages);
 
   # show the 'invalid_type' message, which requires no parameters
   add_message('invalid_type');
@@ -70,6 +73,10 @@ like:
 
 This allows different modules to define the same name differently.
 
+Addons can include their own F<conf/messages.conf> file which will be
+read in after the standard Krang file, overriding any duplicated
+entries.
+
 =head1 INTERFACE
 
 =over 4
@@ -87,35 +94,45 @@ module or outside of any block.  Any parameters after the message name
 are parameters to the message, except for C<_from_module> which sets
 an alternate module name to use to lookup the message definition.
 
+If the module inherits from one or more modules those blocks will be
+searched if the module's block does not define the requested message
+name.
+
 =cut
 
 sub add_message {
     our ($CONF);
     my ($key, %args) = @_;
     my @caller = caller;
-    my $module = delete $args{from_module} || $caller[0];
-    debug("add_message($key) called from $module, line $caller[2].");
+    my $from_module = delete $args{from_module} || $caller[0];
+    debug("add_message($key) called from $from_module, line $caller[2].");
 
-    # get handle for the module block, if there is one
-    my $conf;
-    eval { $conf = $CONF->block(Module => $module) };
-    $conf ||= $CONF;
-
-    # get message definition
-    my $message = $conf->get($key);
-    croak("Unable to find message '$key' in conf/messages.conf for '$module'")
+    # look through this class and any super-classes for this message
+    my $message;
+    foreach my $module (Class::ISA::self_and_super_path($from_module)) {
+        # get handle for the module block, if there is one
+        my $conf;
+        eval { $conf = $CONF->block(Module => $module) };
+        $conf ||= $CONF;
+        
+        # get message definition
+        $message = $conf->get($key);
+        last if $message;
+    }
+    croak("Unable to find message '$key' in conf/messages.conf ".
+          "for '$from_module'")
       unless $message;
 
     # perform substitutions
     while (my ($name, $value) = each %args) {
         unless ($message =~ s/\$\Q$name\E/$value/g) {
-            croak("Unable to find substitution variable '$name' for message '$key' in conf/modules.conf");
+            croak("Unable to find substitution variable '$name' for message ".
+                  "'$key' in conf/messages.conf");
         }
     }
 
     # push message
-    $session{messages} ||= [];
-    push(@{$session{messages}}, [ $key, $message ]);
+    push(@{$session{messages} ||= []}, [ $key, $message ]);
 }
 
 =item @messages = get_messages();
@@ -161,12 +178,12 @@ sub clear_messages {
 
 # load the configuration file
 sub _load_config {
-    my $file = catfile(KrangRoot, "conf", "messages.conf");
-    croak("Krang::Message conf file '$file' does not exist!")
-      unless -e $file;
-
+    # find all messages.conf files in reverse order to give the
+    # intended overriding effect
+    my @files = reverse Krang::File->find_all("conf/messages.conf");
+    
     our $CONF = Config::ApacheFormat->new();
-    $CONF->read($file);
+    $CONF->read($_) for @files;
 }
 BEGIN { _load_config() };
 

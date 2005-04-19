@@ -40,13 +40,14 @@ END
 
 # setup first instance by default, schedule daemon works on all
 # instances but Krang::Script isn't happy picking one anymore.
+use Krang::ClassFactory qw(pkg);
 use Krang::Conf;
-BEGIN { $ENV{KRANG_INSTANCE} = (Krang::Conf->instances)[0]; }
-use Krang::Script;
+BEGIN { $ENV{KRANG_INSTANCE} = (pkg('Conf')->instances)[0]; }
+use Krang::ClassLoader 'Script';
 
-use Krang::Schedule::Daemon;
+use Krang::ClassLoader 'Schedule::Daemon';
 
 #use Krang::Log qw(critical);
 
-Krang::Schedule::Daemon->run;
+pkg('Schedule::Daemon')->run;
 

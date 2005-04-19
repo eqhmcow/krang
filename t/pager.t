@@ -1,18 +1,19 @@
 use Test::More qw(no_plan);   # tests => '11';
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 
 # Needed for Pager
 use CGI;
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 
-BEGIN { use_ok('Krang::HTMLPager') }
+BEGIN { use_ok(pkg('HTMLPager')) }
 
 
 # Can we create a new pager?
 my $pager;
-eval { $pager = Krang::HTMLPager->new() };
+eval { $pager = pkg('HTMLPager')->new() };
 ok(not ($@), 'new() not die');
 ok(ref($pager), 'Krang::HTMLPager->new()');
 isa_ok($pager, 'Krang::HTMLPager');
@@ -43,7 +44,7 @@ my %pager_props = (
                    row_handler => sub { my ($r,$o)=@_; map { $r->{$_} = "$_: ".$o->contrib_id } keys(%$r); },
                    id_handler => sub { return $_[0]->contrib_id },
                   );
-eval { $pager = Krang::HTMLPager->new(%pager_props) };
+eval { $pager = pkg('HTMLPager')->new(%pager_props) };
 ok(not ($@), 'new() not die');
 ok(ref($pager), 'Krang::HTMLPager->new(%pager_props)' );
 
@@ -53,7 +54,7 @@ for (keys(%pager_props)) {
 }
 
 # Test default values
-$pager = Krang::HTMLPager->new();
+$pager = pkg('HTMLPager')->new();
 my @array_props = qw(
                      columns
                      columns_sortable
@@ -84,7 +85,7 @@ for (keys(%pager_props)) {
 
 
 # Test validation
-$pager = Krang::HTMLPager->new();
+$pager = pkg('HTMLPager')->new();
 for (keys(%pager_props)) {
     $pager->$_(undef);
 }

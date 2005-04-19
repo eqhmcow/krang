@@ -1,11 +1,12 @@
 package Krang::Benchmark;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use Time::HiRes qw(time);
 use Carp qw(croak);
 
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 
 require Exporter;
@@ -20,7 +21,7 @@ Krang::Benchmark - manages the running of benchmarks scripts
 
 To create a new benchmark script, create a new .pl file in F<bench/>:
 
-  use Krang::Benchmark qw(run_benchmark);
+  use Krang::ClassLoader Benchmark => qw(run_benchmark);
 
   run_benchmark(module => "Krang::Foo",
                 name   => "name of benchmark here",

@@ -1,11 +1,12 @@
 package Krang::MyPref;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use Carp qw(croak);
-use Krang::DB qw(dbh);
-use Krang::Session qw(%session);
-use Krang::Pref;
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'Pref';
 
 =head1 NAME
 
@@ -13,13 +14,13 @@ Krang::MyPref - Krang user preference API
 
 =head1 SYNOPSIS
 
-  use Krang::MyPref;
+  use Krang::ClassLoader 'MyPref';
 
   # get the value set 'search_page_size', a scalar preference
-  $page_size = Krang::MyPref->get('search_page_size');
+  $page_size = pkg('MyPref')->get('search_page_size');
 
   # set a scalar preference
-  Krang::MyPref->set(search_page_size => 10);
+  pkg('MyPref')->set(search_page_size => 10);
 
 =head1 DESCRIPTION
 
@@ -85,7 +86,7 @@ sub get {
         my ($value) = $dbh->selectrow_array(
                               'SELECT value FROM my_pref WHERE id = ? and user_id = ?',
                                             undef, $conf->{row}, $user_id);
-        return $value || Krang::Pref->get($conf->{row});
+        return $value || pkg('Pref')->get($conf->{row});
     } elsif ($conf->{type} eq 'list') {
         # handle list pref
         my $result = $dbh->selectall_arrayref(

@@ -1,20 +1,21 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More tests => 6;
 use strict;
 use warnings;
 
-use Krang::Script;
-use Krang::Conf;
-use Krang::DB qw(dbh forget_dbh); 
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader DB => qw(dbh forget_dbh);
 
 my $dbh = dbh();
-isa_ok($dbh, 'DBI::db', 'DBI handle for "' . Krang::Conf->InstanceDBName . '" db');
+isa_ok($dbh, 'DBI::db', 'DBI handle for "' . pkg('Conf')->InstanceDBName . '" db');
 
 my $results = $dbh->selectall_arrayref('show tables');
 ok($results, 'selected some data');
 
 forget_dbh();
 my $dbh2 = dbh();
-isa_ok($dbh2, 'DBI::db', 'DBI handle for "' . Krang::Conf->InstanceDBName . '" db');
+isa_ok($dbh2, 'DBI::db', 'DBI handle for "' . pkg('Conf')->InstanceDBName . '" db');
 isnt($dbh, $dbh2);
 
 # Test version control

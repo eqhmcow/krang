@@ -90,17 +90,18 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Script;
-use Krang::Conf qw(KrangRoot SiteServerPort InstanceElementSet EnableSiteServer);
-use Krang::ElementLibrary;
-use Krang::Site;
-use Krang::Category;
-use Krang::Pref;
-use Krang::User;
-use Krang::Template;
-use Krang::Story;
-use Krang::Media;
-use Krang::Group;
+use Krang::ClassLoader Conf => qw(KrangRoot SiteServerPort InstanceElementSet EnableSiteServer);
+use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Group';
 
 
 my ($help, $man);
@@ -149,7 +150,7 @@ pod2usage(-verbose => 2) if $man;
 #### First delete media
 
 if ($media) { 
-    @media_ids = Krang::Media->find( ids_only => 1 );
+    @media_ids = pkg('Media')->find( ids_only => 1 );
 } 
 
 if (@media_ids) {
@@ -157,7 +158,7 @@ if (@media_ids) {
        
         my $exists;
         if (not $media) {
-            $exists = Krang::Media->find( media_id => $id, ids_only => 1
+            $exists = pkg('Media')->find( media_id => $id, ids_only => 1
 ) || '';
         } else {
             $exists = 1;
@@ -167,7 +168,7 @@ if (@media_ids) {
             print "Media $id does not exist.\n" if $verbose;
             next;
         }
-        Krang::Media->delete($id);
+        pkg('Media')->delete($id);
         print "Deleted media $id.\n" if $verbose;
     }
 }
@@ -175,7 +176,7 @@ if (@media_ids) {
 #### Delete templates
 
 if ($templates) {
-    @template_ids = Krang::Template->find( ids_only => 1 );
+    @template_ids = pkg('Template')->find( ids_only => 1 );
 }
                                                                                 
 if (@template_ids) {
@@ -183,7 +184,7 @@ if (@template_ids) {
        
         my $exists;
         if (not $templates) {
-            $exists = Krang::Template->find( template_id => $id, ids_only => 1
+            $exists = pkg('Template')->find( template_id => $id, ids_only => 1
 ) || '';
         } else {
             $exists = 1;
@@ -193,7 +194,7 @@ if (@template_ids) {
             print "Template $id does not exist.\n" if $verbose;
             next;
         }
-        Krang::Template->delete($id);
+        pkg('Template')->delete($id);
         print "Deleted template $id.\n" if $verbose;
     }
 }
@@ -201,7 +202,7 @@ if (@template_ids) {
 #### delete stories 
 
 if ($stories) {
-    @story_ids = Krang::Story->find( ids_only => 1, show_hidden => 1);
+    @story_ids = pkg('Story')->find( ids_only => 1, show_hidden => 1);
 }
                                                                                 
 if (@story_ids) {
@@ -209,7 +210,7 @@ if (@story_ids) {
         
         my $exists;
         if (not $stories) {
-            $exists = Krang::Story->find(story_id => $id,
+            $exists = pkg('Story')->find(story_id => $id,
                                          ids_only => 1 ) || '';
         } else {
             $exists = 1;
@@ -219,7 +220,7 @@ if (@story_ids) {
             print "Story $id does not exist.\n" if $verbose;
             next;
         }
-        Krang::Story->delete($id);
+        pkg('Story')->delete($id);
         print "Deleted story $id.\n" if $verbose;
     }
 }
@@ -227,14 +228,14 @@ if (@story_ids) {
 #### delete contributors
 
 if ($contribs) {
-    @contrib_ids = Krang::Contrib->find( ids_only => 1 );
+    @contrib_ids = pkg('Contrib')->find( ids_only => 1 );
 }
                                                                                 
 if (@contrib_ids) {
     foreach my $id (@contrib_ids) {
         my $exists;
         if (not $contribs) {
-            $exists = Krang::Contrib->find( contrib_id => $id, ids_only => 1
+            $exists = pkg('Contrib')->find( contrib_id => $id, ids_only => 1
 ) || '';
         } else {
             $exists = 1;
@@ -244,7 +245,7 @@ if (@contrib_ids) {
             print "Contrib $id does not exist.\n" if $verbose;
             next;
         }
-        Krang::Contrib->delete($id);
+        pkg('Contrib')->delete($id);
         print "Deleted contrib $id.\n" if $verbose;
     }
 }
@@ -252,17 +253,17 @@ if (@contrib_ids) {
 #### delete users
                                                                                 
 if ($users) {
-    @user_ids = Krang::User->find( ids_only => 1 );
+    @user_ids = pkg('User')->find( ids_only => 1 );
 }
                                                                                 
 if (@user_ids) {
 
-    my ($admin_user_id) = Krang::User->find( login => 'admin') || '';
+    my ($admin_user_id) = pkg('User')->find( login => 'admin') || '';
 
     foreach my $id (@user_ids) {
         my $exists;
         if (not $users) {
-            $exists = Krang::User->find( user_id => $id, ids_only => 1
+            $exists = pkg('User')->find( user_id => $id, ids_only => 1
 ) || '';
         } else {
             $exists = 1;
@@ -273,7 +274,7 @@ if (@user_ids) {
             next;
         }
         if ($id ne $admin_user_id) {
-            Krang::User->delete($id);
+            pkg('User')->delete($id);
             print "Deleted user $id.\n" if $verbose;
         }
     }
@@ -283,9 +284,9 @@ if (@user_ids) {
 my @categories;
  
 if ($cats) {
-    @categories = Krang::Category->find( order_desc => 1 );
+    @categories = pkg('Category')->find( order_desc => 1 );
 } elsif (@cat_ids) {
-    @categories = Krang::Category->find( category_id => \@cat_ids, order_desc => 1 );
+    @categories = pkg('Category')->find( category_id => \@cat_ids, order_desc => 1 );
 }
                                                                                 
 if (@categories) {
@@ -306,7 +307,7 @@ if (@categories) {
                         foreach my $d (keys %$dependents) {
                             foreach my $oid (@{$dependents->{$d}}) {
                                 if ($d eq 'category') {
-                                    push (@dep_cats, (Krang::Category->find( category_id => $oid ))[0]); 
+                                    push (@dep_cats, (pkg('Category')->find( category_id => $oid ))[0]); 
                                     $has_cats = 1;
                                 } else {
                                     my $pkg = "Krang::".ucfirst($d);
@@ -333,7 +334,7 @@ if (@categories) {
                         next;
                     }
                 } else { 
-                    next unless Krang::Category->find(category_id => $cat->category_id);
+                    next unless pkg('Category')->find(category_id => $cat->category_id);
                     $cat->delete();
                     print "Deleted category ".$cat->category_id.".\n" if $verbose;
                 }
@@ -348,16 +349,16 @@ if (@categories) {
 my @sts;
                                                                                 
 if ($sites) {
-    @sts = Krang::Site->find( order_desc => 1 );
+    @sts = pkg('Site')->find( order_desc => 1 );
 } elsif (@site_ids) {
-    @sts = Krang::Site->find( site_id => \@site_ids, order_desc => 1 );
+    @sts = pkg('Site')->find( site_id => \@site_ids, order_desc => 1 );
 }
 
 if (@sts) {
     outer: foreach my $site (@sts) {
         my @dep_cats;
         push(@dep_cats, $site);
-        my ($root) = Krang::Category->find(dir => '/',
+        my ($root) = pkg('Category')->find(dir => '/',
                                        site_id => $site->site_id); 
         push(@dep_cats, $root);                                                                               
        while (@dep_cats) {
@@ -370,7 +371,7 @@ if (@sts) {
                 if ($recursive) {    
                     push (@dep_cats, $cat);
                     foreach my $cid (@{$@->category_id}) {
-                        push (@dep_cats, (Krang::Category->find(category_id => $cid))[0] );
+                        push (@dep_cats, (pkg('Category')->find(category_id => $cid))[0] );
                     }
                 } else {
                     print STDERR "Site ".$site->site_id." cannot be deleted.  Categories with the following" .
@@ -383,7 +384,7 @@ if (@sts) {
                foreach my $d (keys %$dependents) {
                   foreach my $oid (@{$dependents->{$d}}) {
                       if ($d eq 'category') {
-                          push (@dep_cats, (Krang::Category->find( category_id => $oid ))[0]);
+                          push (@dep_cats, (pkg('Category')->find( category_id => $oid ))[0]);
                           $has_cats = 1;
                        } else {
                           my $pkg = "Krang::".ucfirst($d);

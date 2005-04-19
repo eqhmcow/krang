@@ -52,22 +52,22 @@ Krang::Conf - Krang configuration module
 =head1 SYNOPSIS
 
   # all configuration directives are available as exported subs
-  use Krang::Conf qw(KrangRoot Things);
+  use Krang::ClassLoader Conf => qw(KrangRoot Things);
   $root = KrangRoot;
   @thinks = Things;
 
   # you can also call get() in Krang::Conf directly
-  $root = Krang::Conf->get("KrangRoot");
+  $root = pkg('Conf')->get("KrangRoot");
 
   # or you can access them as methods in the Krang::Conf module
-  $root = Krang::Conf->rootdir;
+  $root = pkg('Conf')->rootdir;
 
   # the current instance, which affects the values returned, can
   # manipulated with instance():
-  Krang::Conf->instance("this_instance");
+  pkg('Conf')->instance("this_instance");
 
   # get a list of available instances
-  @instances = Krang::Conf->instances();
+  @instances = pkg('Conf')->instances();
 
 =head1 DESCRIPTION
 
@@ -245,6 +245,8 @@ This is run when the Krang::Conf loads unless the environment variable
 =cut
 
 sub check {
+    my $pkg = shift;
+
     # check required directives
     foreach my $dir (qw(KrangUser KrangGroup ApacheAddr ApachePort
                         HostName LogLevel FTPPort FTPHostName FTPAddress
@@ -257,7 +259,7 @@ sub check {
     my $element_lib = catdir($ENV{KRANG_ROOT}, 'element_lib');
 
     # make sure each instance has the necessary directives
-    foreach my $instance (Krang::Conf->instances()) {
+    foreach my $instance ($pkg->instances()) {
         my $block = $CONF->block(instance => $instance);
 
         foreach my $dir (qw(InstanceHostName InstanceElementSet InstanceDisplayName
@@ -282,7 +284,7 @@ sub check {
 
     # make sure all instances have their own DB
     my %seen;
-    foreach my $instance (Krang::Conf->instances()) {
+    foreach my $instance ($pkg->instances()) {
         my $block = $CONF->block(instance => $instance);
         if ($seen{$block->get("InstanceDBName")}) {
             _broked("More than one instance is using the '" . 
@@ -298,7 +300,7 @@ sub _broked {
 }
  
 # run the check ASAP, unless we're in upgrade mode
-BEGIN { Krang::Conf->check() unless ($ENV{KRANK_CONF_NOCHECK}) }
+BEGIN { __PACKAGE__->check() unless ($ENV{KRANK_CONF_NOCHECK}) }
 
 =back
 

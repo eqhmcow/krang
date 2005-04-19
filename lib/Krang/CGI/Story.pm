@@ -1,20 +1,21 @@
 package Krang::CGI::Story;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Story;
-use Krang::ElementLibrary;
-use Krang::Log qw(debug assert ASSERT);
-use Krang::Session qw(%session);
-use Krang::Message qw(add_message);
-use Krang::Widget qw(category_chooser datetime_chooser decode_datetime format_url);
-use Krang::CGI::Workspace;
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader Log => qw(debug assert ASSERT);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url);
+use Krang::ClassLoader 'CGI::Workspace';
 use Carp qw(croak);
-use Krang::Pref;
-use Krang::HTMLPager;
-use Krang::Group;
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader 'Group';
 
-use base 'Krang::CGI::ElementEditor';
+use Krang::ClassLoader base => 'CGI::ElementEditor';
 
 sub _get_element { $session{story}->element; }
 
@@ -24,8 +25,8 @@ Krang::CGI::Story - web interface to manage stories
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Story;
-  Krang::CGI::Story->new()->run();
+  use Krang::ClassLoader 'CGI::Story';
+  pkg('CGI::Story')->new()->run();
 
 =head1 DESCRIPTION
 
@@ -110,9 +111,9 @@ sub new_story {
 
 
     # setup the type selector
-    my @types = grep { $_ ne 'category' } Krang::ElementLibrary->top_levels;
+    my @types = grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
     my %type_labels = 
-      map { ($_, Krang::ElementLibrary->top_level(name => $_)->display_name) }
+      map { ($_, pkg('ElementLibrary')->top_level(name => $_)->display_name) }
         @types;
     $template->param(type_selector => scalar
                      $query->popup_menu(-name      => 'type',
@@ -171,7 +172,7 @@ sub create {
     # determine whether slug is required or not
     my $slug_req = 0;
     if ($type) {
-        my $class = Krang::ElementLibrary->top_level(name => $type);
+        my $class = pkg('ElementLibrary')->top_level(name => $type);
         $slug_req = 1 if (grep { $_ eq 'slug' } $class->url_attributes);
     }
 
@@ -194,7 +195,7 @@ sub create {
     # create the object
     my $story;
     eval {
-        $story = Krang::Story->new(class => $type,
+        $story = pkg('Story')->new(class => $type,
                                    title => $title,
                                    slug  => $slug,
                                    categories => [ $category_id ],
@@ -204,8 +205,8 @@ sub create {
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
-        my ($dup) = Krang::Story->find(story_id => $@->story_id);
-        my $class = Krang::ElementLibrary->top_level(name => $type);
+        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
+        my $class = pkg('ElementLibrary')->top_level(name => $type);
         add_message('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,                    
@@ -247,7 +248,7 @@ sub check_in_and_save {
     my $story;
     if ($query->param('story_id')) {
         # load story from DB
-        ($story) = Krang::Story->find(story_id => $query->param('story_id'));
+        ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
         croak("Unable to load story '" . $query->param('story_id') . "'.")
           unless $story;
 
@@ -264,7 +265,7 @@ sub check_in_and_save {
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
-        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
         add_message('duplicate_url',
                     story_id => $dup->story_id,
                     url      => $dup->url,
@@ -294,7 +295,7 @@ sub check_in_and_save {
  
     add_message(($result ? "moved_story" : "story_cant_move"),
                 id   => $story->story_id, 
-                desk => (Krang::Desk->find(desk_id => $query->param('checkin_to')))[0]->name);
+                desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
  
     # redirect to that desk 
     $self->header_props(-uri => 'desk.pl?desk_id='.$query->param('checkin_to'));
@@ -315,7 +316,7 @@ sub checkout_and_edit {
     my $story;
     if ($query->param('story_id')) {
         # load story from DB
-        ($story) = Krang::Story->find(story_id => $query->param('story_id'));
+        ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
         croak("Unable to load story '" . $query->param('story_id') . "'.")
           unless $story;
 
@@ -348,7 +349,7 @@ sub edit {
     my $story;
     if ($query->param('story_id')) {
         # load story from DB
-        ($story) = Krang::Story->find(story_id => $query->param('story_id'));
+        ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
         croak("Unable to load story '" . $query->param('story_id') . "'.")
           unless $story;
 
@@ -395,7 +396,7 @@ sub edit {
                                                          2 => "Medium",
                                                          3 => "High" }));
         my @contribs_loop;
-        my %contrib_types = Krang::Pref->get('contrib_type');
+        my %contrib_types = pkg('Pref')->get('contrib_type');
         foreach my $contrib ($story->contribs) {
             push(@contribs_loop, { first_name => $contrib->first,
                                    last_name  => $contrib->last,
@@ -431,13 +432,13 @@ sub edit {
                                             -override => 1));
 
         # permissions
-        my %admin_perms = Krang::Group->user_admin_permissions();
+        my %admin_perms = pkg('Group')->user_admin_permissions();
         $template->param(may_publish => $admin_perms{may_publish});
 
     }
 
     # get desks for checkin selector
-    my @found_desks = Krang::Desk->find();
+    my @found_desks = pkg('Desk')->find();
     my @desk_loop;
 
     foreach my $found_desk (@found_desks) {
@@ -447,7 +448,7 @@ sub edit {
     $template->param( desk_loop => \@desk_loop);
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $template->param(instance_name => $instance_name);
 
@@ -481,7 +482,7 @@ sub view {
     
     # load story from DB
     my $version = $query->param('version');
-    my ($story) = Krang::Story->find(story_id => $story_id,
+    my ($story) = pkg('Story')->find(story_id => $story_id,
                                      (length $version ? 
                                       (version => $version) : ()),
                                     );
@@ -518,7 +519,7 @@ sub view {
           if $story->cover_date;
 
         my @contribs_loop;
-        my %contrib_types = Krang::Pref->get('contrib_type');
+        my %contrib_types = pkg('Pref')->get('contrib_type');
         foreach my $contrib ($story->contribs) {
             push(@contribs_loop, { first_name => $contrib->first,
                                    last_name  => $contrib->last,
@@ -546,7 +547,7 @@ sub view {
 
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $template->param(instance_name => $instance_name);
 
@@ -588,7 +589,7 @@ sub copy {
     my $query = $self->query;
 
     # load story from DB
-    my ($story) = Krang::Story->find(story_id => $query->param('story_id'));
+    my ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
     croak("Unable to load story '" . $query->param('story_id') . "'.")
       unless $story;
 
@@ -636,7 +637,7 @@ sub db_save {
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
-        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
         add_message('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,
@@ -689,7 +690,7 @@ sub db_save_and_stay {
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
-        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
         add_message('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,
@@ -779,7 +780,7 @@ sub save_and_publish {
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
-        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
         add_message('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,
@@ -1115,7 +1116,7 @@ sub add_category {
     }
 
     # look up category
-    my ($category) = Krang::Category->find(category_id => $category_id);
+    my ($category) = pkg('Category')->find(category_id => $category_id);
     croak("Unable to load category '$category_id'!")
       unless $category;
 
@@ -1128,7 +1129,7 @@ sub add_category {
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
-        my ($dup) = Krang::Story->find(story_id => $@->story_id);
+        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
         add_message('duplicate_url_on_category_add', 
                     story_id => $dup->story_id,
                     url      => $dup->url,                    
@@ -1391,9 +1392,9 @@ sub find {
         $tmpl_data{date_chooser_publish_to}   = datetime_chooser(query=>$q, name=>'publish_to', nochoice=>1);
 
         # Story class
-        my @classes = grep { $_ ne 'category' } Krang::ElementLibrary->top_levels;
+        my @classes = grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
         my %class_labels = map {
-            $_ => Krang::ElementLibrary->top_level(name => $_)->display_name()
+            $_ => pkg('ElementLibrary')->top_level(name => $_)->display_name()
         } @classes;
         $tmpl_data{search_class_chooser} = scalar($q->popup_menu(-name      => 'search_class',
                                                                  -default   => ($persist_vars{"search_class"} || ''),
@@ -1408,7 +1409,7 @@ sub find {
         $template->param(search_filter => $search_filter);
     }
 
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => \%persist_vars,
                                       use_module => 'Krang::Story',
@@ -1443,7 +1444,7 @@ sub find {
     $template->param(row_count => $pager->row_count());
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $template->param(instance_name => $instance_name);
 
@@ -1469,9 +1470,9 @@ sub list_active {
     my %find_params = (checked_out => 1, may_see => 1);
 
     # get admin permissions
-    my %admin_perms = Krang::Group->user_admin_permissions();
+    my %admin_perms = pkg('Group')->user_admin_permissions();
 
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
        persist_vars => \%persist_vars,
        use_module => 'Krang::Story',
@@ -1502,7 +1503,7 @@ sub list_active {
     $template->param(may_checkin_all => $admin_perms{may_checkin_all});
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $template->param(instance_name => $instance_name);
 
@@ -1527,7 +1528,7 @@ sub delete_selected {
     return $self->find() unless (@story_delete_list);
 
     foreach my $story_id (@story_delete_list) {
-        Krang::Story->delete($story_id);
+        pkg('Story')->delete($story_id);
     }
 
     add_message('selected_stories_deleted');
@@ -1552,7 +1553,7 @@ sub checkout_selected {
      return $self->find() unless (@story_checkout_list);
 
      foreach my $story_id (@story_checkout_list) {
-         my ($s) = Krang::Story->find(story_id=>$story_id);
+         my ($s) = pkg('Story')->find(story_id=>$story_id);
          $s->checkout();
      }
 
@@ -1566,7 +1567,7 @@ sub checkout_selected {
          $self->header_type('redirect');
          return "Redirect: <a href=\"$url\">$url</a>";
      } else {
-         ($session{story}) = Krang::Story->find(story_id=>$story_checkout_list[0]);
+         ($session{story}) = pkg('Story')->find(story_id=>$story_checkout_list[0]);
          add_message('selected_stories_checkout_one');
          return $self->edit();
      }
@@ -1587,7 +1588,7 @@ sub checkin_selected {
      $q->delete('krang_pager_rows_checked');
 
      foreach my $story_id (@story_checkin_list) {
-         my ($s) = Krang::Story->find(story_id=>$story_id);
+         my ($s) = pkg('Story')->find(story_id=>$story_id);
          $s->checkin();
      }
 
@@ -1654,11 +1655,11 @@ sub find_story_row_handler {
     # status 
     if ($story->checked_out) {
         $row->{status} = "Checked out by <b>" . 
-          (Krang::User->find(user_id => $story->checked_out_by))[0]->login.
+          (pkg('User')->find(user_id => $story->checked_out_by))[0]->login.
             '</b>';
     } elsif ($story->desk_id) {
         $row->{status} = "On <b> " . 
-          (Krang::Desk->find(desk_id => $story->desk_id))[0]->name . 
+          (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . 
             '</b> desk';
     } else {
         $row->{status} = '&nbsp;';
@@ -1690,7 +1691,7 @@ sub list_active_row_handler {
       $story->story_id . ')">View</a>';
 
     # user
-    my ($user) = Krang::User->find(user_id => $story->checked_out_by);
+    my ($user) = pkg('User')->find(user_id => $story->checked_out_by);
     $row->{user} = $user->first_name . " " . $user->last_name;
 }
 

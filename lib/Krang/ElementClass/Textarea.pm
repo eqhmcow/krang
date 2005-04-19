@@ -1,10 +1,11 @@
 package Krang::ElementClass::Textarea;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use Krang::ClassLoader base => 'ElementClass';
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( rows cols ) ];
 
 sub new {
@@ -35,7 +36,7 @@ Krang::ElementClass::Textarea - textarea element class
 
 =head1 SYNOPSIS
 
-   $class = Krang::ElementClass::Textarea->new(name => "paragraph",
+   $class = pkg('ElementClass::Textarea')->new(name => "paragraph",
                                                rows => 4,
                                                cols => 40);
 

@@ -1,4 +1,5 @@
 package Krang::Element;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -11,13 +12,13 @@ BEGIN {
     our @EXPORT_OK = qw(foreach_element);
 }
 
-use Krang::ElementLibrary;
-use Krang::ElementClass;
-use Krang::DB qw(dbh);
+use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader 'ElementClass';
+use Krang::ClassLoader DB => qw(dbh);
 use List::Util qw(first);
 use Scalar::Util qw(weaken);
 use Carp qw(croak);
-use Krang::Log qw(assert ASSERT debug info);
+use Krang::ClassLoader Log => qw(assert ASSERT debug info);
 use Storable qw(nfreeze thaw);
 use Krang::Cache;
 
@@ -27,11 +28,11 @@ Krang::Element - element data objects
 
 =head1 SYNOPSIS
 
-  use Krang::Element;
+  use Krang::ClassLoader 'Element';
 
   # create a new top-level element, passing in the class name and
   # containing object
-  my $element = Krang::Element->new(class => "article", object => $story);
+  my $element = pkg('Element')->new(class => "article", object => $story);
 
   # add a sub-element
   my $para = $element->add_child(class => "paragraph");
@@ -65,7 +66,7 @@ Krang::Element - element data objects
   }
 
   # same thing, but recurses through children of children too
-  use Krang::Element qw(foreach_element);
+  use Krang::ClassLoader Element => qw(foreach_element);
   foreach_element { 
       print $_->display_name, " => ", $_->data, "\n";
   } $element;
@@ -82,7 +83,7 @@ Krang::Element - element data objects
   @classes = $element->available_child_classes();
 
   # load a top-level element by id
-  $element1 = Krang::Element->load(element_id => 1, object => $story);
+  $element1 = pkg('Element')->load(element_id => 1, object => $story);
 
   # delete it from the database
   $element1->delete();
@@ -135,7 +136,7 @@ the first C<save()>.
 
 =cut
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   new_with_init => 'new',
   new_hash_init => 'hash_init',    
   get_set       => [ qw( element_id ) ];
@@ -207,7 +208,7 @@ sub class {
       if ref $val and UNIVERSAL::isa($val, "Krang::ElementClass");
 
     # it's an element name, fetch it from the library
-    return $self->{class} = Krang::ElementLibrary->top_level(name => $val);
+    return $self->{class} = pkg('ElementLibrary')->top_level(name => $val);
 }
 
 =item C<< $element->data($data) >>
@@ -264,7 +265,7 @@ $element->object->isa('Krang::Story') and croaks otherwise.
 sub story { 
     my $self = shift;
     my $object = $self->object;
-    croak("Expected a Krang::Story in element->object for $self->{element_id}, but didn't find on!")
+    croak("Expected a pkg('Story') in element->object for $self->{element_id}, but didn't find on!")
       unless $object and $object->isa('Krang::Story');
     return $object;
 }
@@ -279,7 +280,7 @@ $element->object->isa('Krang::Category') and croaks otherwise.
 sub category { 
     my $self = shift;
     my $object = $self->object;
-    croak("Expected a Krang::Category in element->object, but didn't find on!")
+    croak("Expected a pkg('Category') in element->object, but didn't find on!")
       unless $object and $object->isa('Krang::Category');
     return $object;
 }
@@ -720,7 +721,7 @@ sub _load_tree {
     # start out with the root
     my %ehash;
     $ehash{$root->[ELEMENT_ID]} =
-      Krang::Element->new(element_id => $root->[ELEMENT_ID],
+      pkg('Element')->new(element_id => $root->[ELEMENT_ID],
                           class      => $root->[CLASS],
                           object     => $object,
                           no_expand  => 1,
@@ -958,7 +959,7 @@ sub deserialize_xml {
       @args{qw(data set object)};
 
     # create the root element
-    my $root = Krang::Element->new(class     => $data->{class},
+    my $root = pkg('Element')->new(class     => $data->{class},
                                    object    => $object,
                                    no_expand => 1);
     $root->thaw_data_xml(data => $data->{data},
@@ -1063,7 +1064,7 @@ sub STORABLE_thaw {
     croak("Unable to thaw element: $@") if $@;
 
     # thaw out the root
-    my $root =  Krang::Element->new(element_id => $data[0][0],
+    my $root =  pkg('Element')->new(element_id => $data[0][0],
                                     class      => $data[0][2],
                                     object     => $THAWING_OBJECT,
                                     no_expand  => 1,

@@ -43,7 +43,7 @@ TAGS:
 
 # test section, ripped from Makefile.PL output
 TEST_VERBOSE = 0
-TEST_FILES = t/*.t
+TEST_FILES = 0
 test:
 	bin/krang_test --verbose-i="$(TEST_VERBOSE)" --files="$(TEST_FILES)"
 

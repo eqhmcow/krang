@@ -70,11 +70,12 @@ END
 
 }
 
+use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 
-use Krang::Script;
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 
 
 our ($help, $man, $verbose, %class_map, $no_slug );
@@ -100,7 +101,7 @@ BEGIN {
 
 }
 
-use Krang::DB qw(dbh);
+use Krang::ClassLoader DB => qw(dbh);
 
 main();
 

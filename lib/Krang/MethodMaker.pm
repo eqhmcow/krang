@@ -1,4 +1,5 @@
 package Krang::MethodMaker;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -14,7 +15,7 @@ Krang::MethodMaker - extended version of Class::MethodMaker
   # create a readonly foo_id() accessor and standard accessor/mutators
   # title() and url().  Create standard accessor/mutators itchy() and
   # scratchy() that trigger calls to _notify() when set.
-  use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
     get     => ['foo_id'],
     get_set => ['title', 'url'],
     get_set_with_notify => { method => '_notify',

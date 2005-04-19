@@ -1,11 +1,12 @@
 package Krang::Desk;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 use Carp qw(croak);
-use Krang::DB qw(dbh);
-use Krang::Log qw(debug);
-use Krang::Group;
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Log => qw(debug);
+use Krang::ClassLoader 'Group';
 
 use Exception::Class
     (
@@ -18,10 +19,10 @@ Krang::Desk - Krang Desk API
 
 =head1 SYNOPSIS
 
-    use Krang::Desk;
+    use Krang::ClassLoader 'Desk';
 
     # add a new desk, defaulting to next available slot in order
-    my $desk = Krang::Desk->new( name => 'Publish');
+    my $desk = pkg('Desk')->new( name => 'Publish');
 
     # return desk id
     my $desk_id = $desk->desk_id;
@@ -32,13 +33,13 @@ Krang::Desk - Krang Desk API
     # create another desk, this time choosing order of
     # another desk, effectively making order of other
     # desk + 1
-    my $desk2 = Krang::Desk->new( name => 'Print', order => $desk->order );
+    my $desk2 = pkg('Desk')->new( name => 'Print', order => $desk->order );
 
     # return desk objects with name 'Publish'
-    my @desks = Krang::Desk->find( name => 'Publish' );
+    my @desks = pkg('Desk')->find( name => 'Publish' );
 
     # reorder desks (in this case switch order of the two we have created)
-    Krang::Desk->reorder(   $desk[0]->desk_id => $desk2->order,
+    pkg('Desk')->reorder(   $desk[0]->desk_id => $desk2->order,
                             $desk2->desk_id => $desk[0]->order );
 
     $desk->delete();
@@ -72,7 +73,7 @@ available slot in desk order.
 
 =cut
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
     new_with_init => 'new',
     new_hash_init => 'hash_init',
     get_set       => [ qw( name ord ) ],
@@ -90,7 +91,7 @@ sub init {
     $self->_insert(%args);
 
     # Set up permissions for this new desk
-    Krang::Group->add_desk_permissions($self);
+    pkg('Group')->add_desk_permissions($self);
 
     return $self;
 }
@@ -304,7 +305,7 @@ sub delete {
     $desk_id = $self->{desk_id} if not $desk_id;
     croak(__PACKAGE__."->delete - No desk_id specified.") if not $desk_id; 
 
-    my @stories = Krang::Story->find(desk_id => $desk_id);
+    my @stories = pkg('Story')->find(desk_id => $desk_id);
 
     if (@stories) {
         Krang::Desk::Occupied->throw(message => "Desk cannot be deleted, stories are on it.");
@@ -328,7 +329,7 @@ sub delete {
     $sth->finish;
 
     # Delete permissions for this desk
-    $is_object ? Krang::Group->delete_desk_permissions($self) :  Krang::Group->delete_desk_permissions((Krang::Desk->find( desk_id => $desk_id ))[0]);
+    $is_object ? pkg('Group')->delete_desk_permissions($self) :  pkg('Group')->delete_desk_permissions((pkg('Desk')->find( desk_id => $desk_id ))[0]);
 
     # fianlly, delete the desk
     $sth = $dbh->prepare('DELETE from desk where desk_id = ?');
@@ -376,11 +377,11 @@ sub deserialize_xml {
     my ($xml, $set, $no_update) = @args{qw(xml set no_update)};
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml,
+    my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1);
                                                                                  
     # is there an existing object?
-    my $desk = (Krang::Desk->find(name => $data->{name}))[0] || '';
+    my $desk = (pkg('Desk')->find(name => $data->{name}))[0] || '';
 
     if ($desk) {
 
@@ -393,10 +394,10 @@ sub deserialize_xml {
             if $no_update;
         
         # update simple fields
-        Krang::Desk->reorder($desk->{desk_id} => $data->{order});
+        pkg('Desk')->reorder($desk->{desk_id} => $data->{order});
 
     } else {
-        $desk = Krang::Desk->new( name => $data->{name} );
+        $desk = pkg('Desk')->new( name => $data->{name} );
     }
 
     return $desk;

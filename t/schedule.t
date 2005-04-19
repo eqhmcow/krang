@@ -1,3 +1,4 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -11,11 +12,11 @@ use Time::Piece;
 use Time::Piece::MySQL;
 use Time::Seconds;
 
-use Krang::Script;
-use Krang::Conf qw(KrangRoot InstanceElementSet);
-use Krang::Session;
-use Krang::DB qw(dbh);
-use Krang::Test::Content;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet);
+use Krang::ClassLoader 'Session';
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader 'Test::Content';
 
 use Data::Dumper;
 use Config;
@@ -31,8 +32,8 @@ BEGIN {
     $schedulectl = File::Spec->catfile(KrangRoot, 'bin', 'krang_schedulectl');
     $restart = 0;
 
-    foreach my $instance (Krang::Conf->instances) {
-        Krang::Conf->instance($instance);
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
         if (InstanceElementSet eq 'TestSet1') {
             eval 'use Test::More qw(no_plan)';
             $found = 1;
@@ -80,11 +81,11 @@ my $publish_path = '/tmp/krangschedtest_publish';
 
 my @schedules;
 
-use_ok('Krang::Schedule');
+use_ok(pkg('Schedule'));
 
 
 # create story and media object.
-my $creator = Krang::Test::Content->new();
+my $creator = pkg('Test::Content')->new();
 
 
 my $site = $creator->create_site(
@@ -95,7 +96,7 @@ my $site = $creator->create_site(
                                 );
 
 
-my ($category) = Krang::Category->find(site_id => $site->site_id());
+my ($category) = pkg('Category')->find(site_id => $site->site_id());
 
 # Create needed Krang::Story and Krang::Media objects.
 my $story = $creator->create_story(category => [$category]);
@@ -119,11 +120,11 @@ END {
 }
 
 # make sure the default schedule objects are present
-my ($tmp) = Krang::Schedule->find(object_type => 'tmp');
+my ($tmp) = pkg('Schedule')->find(object_type => 'tmp');
 ok($tmp, 'tmp cleaner is present');
-my ($session) = Krang::Schedule->find(object_type => 'session');
+my ($session) = pkg('Schedule')->find(object_type => 'session');
 ok($session, 'session cleaner is present');
-my ($analyze) = Krang::Schedule->find(object_type => 'analyze');
+my ($analyze) = pkg('Schedule')->find(object_type => 'analyze');
 ok($analyze, 'db analyzer is present');
                                   
 
@@ -132,7 +133,7 @@ ok($analyze, 'db analyzer is present');
 my $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 my $publish_date = Time::Piece->from_mysql_datetime('2003-03-03 00:00:00');
 
-my $sched = Krang::Schedule->new(
+my $sched = pkg('Schedule')->new(
                                  action      => 'publish',
                                  object_id   => $story->story_id(),
                                  object_type => 'story',
@@ -174,7 +175,7 @@ $@ ? pass('Krang::Schedule->repeat()') : fail('Krang::Schedule->repeat()');
 #
 
 # Create new story publish job - repeats weekly - Mondays at noon.
-$sched = Krang::Schedule->new(
+$sched = pkg('Schedule')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -292,7 +293,7 @@ _check_calc_next_run($sched, '2003-03-01 00:31:00', '2003-03-01 01:00:00');
 $date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
 
 # Create new story publish job - repeats hourly.
-$sched = Krang::Schedule->new(
+$sched = pkg('Schedule')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -354,7 +355,7 @@ _check_calc_next_run($sched, '2003-03-09 23:59:00', '2003-03-10 00:00:00');
 # Priority tests
 #
 
-$sched = Krang::Schedule->new(
+$sched = pkg('Schedule')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -413,7 +414,7 @@ is($sched->priority(), 2, 'Krang::Schedule->priority()');
 # Context Test
 #
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
-$sched = Krang::Schedule->new(
+$sched = pkg('Schedule')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -451,7 +452,7 @@ is($context2{version}, $context1{version}, 'Krang::Schedule->context()');
 # execute should fail.
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 
-$sched = Krang::Schedule->new(
+$sched = pkg('Schedule')->new(
                               action      => 'publish',
                               object_id   => 16384,
                               object_type => 'story',
@@ -465,13 +466,13 @@ $sched->save();
 $sched->execute();
 
 # in failure, the job should delete itself.
-my ($dead_sched_count) = Krang::Schedule->find(count => 1, schedule_id => $sched->schedule_id);
+my ($dead_sched_count) = pkg('Schedule')->find(count => 1, schedule_id => $sched->schedule_id);
 
 is($dead_sched_count, 0, 'Krang::Schedule(bogus id)');
 
 
 # create a schedule object to publish a story hourly.
-$sched = Krang::Schedule->new(
+$sched = pkg('Schedule')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -508,7 +509,7 @@ is($sched->next_run(), $date->mysql_datetime, 'Krang::Schedule->next_run()');
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 
 my $story_id = $story->story_id();
-$sched = Krang::Schedule->new(
+$sched = pkg('Schedule')->new(
                               action      => 'expire',
                               object_id   => $story_id,
                               object_type => 'story',
@@ -530,11 +531,11 @@ foreach my $p (@story_paths) {
     ok(!-e $p, 'Krang::Schedule->execute(expire)');
 }
 
-my @storyfiles = Krang::Story->find(story_id => [$story_id]);
+my @storyfiles = pkg('Story')->find(story_id => [$story_id]);
 is($#storyfiles, -1, 'Krang::Schedule->execute(expire)');
 
 # make sure that it removed itself.
-my @schedule_files = Krang::Schedule->find(schedule_id => [$sched_id]);
+my @schedule_files = pkg('Schedule')->find(schedule_id => [$sched_id]);
 is($#schedule_files, -1, 'deleting repeat(never) jobs');
 
 
@@ -546,7 +547,7 @@ is($#schedule_files, -1, 'deleting repeat(never) jobs');
 # execute should fail.
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 
-$sched = Krang::Schedule->new(
+$sched = pkg('Schedule')->new(
                               action      => 'send',
                               object_id   => 16384,
                               object_type => 'alert',
@@ -560,7 +561,7 @@ $sched->save();
 $sched->execute();
 
 # in failure, the job should delete itself.
-($dead_sched_count) = Krang::Schedule->find(count => 1, schedule_id => $sched->schedule_id);
+($dead_sched_count) = pkg('Schedule')->find(count => 1, schedule_id => $sched->schedule_id);
 
 is($dead_sched_count, 0, 'Krang::Schedule(bogus id)');
 
@@ -590,7 +591,7 @@ if ($Config{osname} =~ /bsd|darwin/i) {
 
 if (-e $tmpfile) {
 
-    $sched = Krang::Schedule->new(
+    $sched = pkg('Schedule')->new(
                                   action      => 'clean',
                                   object_type => 'tmp',
                                   repeat      => 'daily',
@@ -625,7 +626,7 @@ my $q = "INSERT INTO sessions (id, last_modified) values (?, ?)";
 
 $dbh->do($q, undef, $sess_id, $date->mysql_datetime());
 
-$sched = Krang::Schedule->new(
+$sched = pkg('Schedule')->new(
                               action      => 'clean',
                               object_type => 'session',
                               repeat      => 'daily',
@@ -638,7 +639,7 @@ push @schedules, $sched;
 
 $sched->execute();
 
-ok(Krang::Session->validate($sess_id), 'Krang::Schedule->_expire_sessions()');
+ok(pkg('Session')->validate($sess_id), 'Krang::Schedule->_expire_sessions()');
 
 # move date
 $date -= (ONE_DAY * 2);
@@ -649,7 +650,7 @@ $dbh->do($q, undef, $date->mysql_datetime(), $sess_id);
 
 $sched->execute();
 
-ok(!Krang::Session->validate($sess_id), 'Krang::Schedule->_expire_sessions()');
+ok(!pkg('Session')->validate($sess_id), 'Krang::Schedule->_expire_sessions()');
 
 
 # cleanup

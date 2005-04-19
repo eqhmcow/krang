@@ -1,20 +1,21 @@
 package Krang::CGI::Category;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Category;
-use Krang::ElementLibrary;
-use Krang::Log qw(debug assert ASSERT);
-use Krang::Session qw(%session);
-use Krang::Message qw(add_message);
-use Krang::Widget qw(category_chooser datetime_chooser decode_datetime format_url);
-use Krang::CGI::Workspace;
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader Log => qw(debug assert ASSERT);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url);
+use Krang::ClassLoader 'CGI::Workspace';
 use Carp qw(croak);
-use Krang::Pref;
-use Krang::HTMLPager;
-use Krang::Site;
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader 'Site';
 
-use base 'Krang::CGI::ElementEditor';
+use Krang::ClassLoader base => 'CGI::ElementEditor';
 
 sub _get_element { $session{category}->element; }
 
@@ -24,8 +25,8 @@ Krang::CGI::Category - web interface to manage categories
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Category;
-  Krang::CGI::Category->new()->run();
+  use Krang::ClassLoader 'CGI::Category';
+  pkg('CGI::Category')->new()->run();
 
 =head1 DESCRIPTION
 
@@ -87,7 +88,7 @@ sub find {
     my $search_filter = $q->param('search_filter') || '';
 
     # Configure pager
-    my $pager = Krang::HTMLPager->new(
+    my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => {
                                                        rm => 'find',
@@ -141,7 +142,7 @@ sub new_category {
     my %args = @_;
 
     # throw error if there are no sites in the system
-    my $site_count = Krang::Site->find(count => 1);
+    my $site_count = pkg('Site')->find(count => 1);
     unless ($site_count) {
         add_message('no_sites');
         return $self->find;
@@ -190,12 +191,12 @@ sub create {
 
     # create the object
     my $category;
-    eval { $category = Krang::Category->new( parent_id => $parent_id,
+    eval { $category = pkg('Category')->new( parent_id => $parent_id,
                                              dir       => $dir ) };
 
     if ($@ and ref($@) and $@->isa('Krang::Category::NoEditAccess')) {
         # User isn't allowed to add a descendant category
-        my ($parent_cat) = Krang::Category->find(category_id => $@->category_id);
+        my ($parent_cat) = pkg('Category')->find(category_id => $@->category_id);
         add_message( 'add_not_allowed',
                      url => $parent_cat->url );
         return $self->new_category(bad => ['parent_id']);
@@ -210,7 +211,7 @@ sub create {
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Category::DuplicateURL')) {
         # load duplicate category
-        my ($dup) = Krang::Category->find(category_id => $@->category_id);
+        my ($dup) = pkg('Category')->find(category_id => $@->category_id);
         add_message('duplicate_url', 
                     url         => $dup->url,                    
                    );
@@ -244,7 +245,7 @@ sub edit {
     my $category;
     if ($query->param('category_id')) {
         # load category from DB
-        ($category) = Krang::Category->find(category_id => $query->param('category_id'));
+        ($category) = pkg('Category')->find(category_id => $query->param('category_id'));
         croak("Unable to load category '" . $query->param('category_id') . "'.")
           unless $category;
 
@@ -596,7 +597,7 @@ sub delete_selected {
     # load all objects and sort by URL length, sorts children before
     # parents maximizing chances of delete success
     my @categories = sort { length($b->url) cmp length($a->url) } 
-                       map { Krang::Category->find(category_id => $_) } 
+                       map { pkg('Category')->find(category_id => $_) } 
                          @category_delete_list;
 
     my $err = 0;

@@ -1,11 +1,12 @@
 package Krang::ElementClass::CheckBox;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass';
+use Krang::ClassLoader base => 'ElementClass';
 use Carp qw(croak);
 
-use Krang::MethodMaker
+use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( value ) ];
 
 sub new {
@@ -34,7 +35,7 @@ Krang::ElementClass::CheckBox - check box element class
 
 =head1 SYNOPSIS
 
-  $class = Krang::ElementClass::CheckBox->new(name => "show_sprinks",
+  $class = pkg('ElementClass::CheckBox')->new(name => "show_sprinks",
                                               value => 1,
                                               default => 1);
 

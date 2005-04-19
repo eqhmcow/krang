@@ -6,7 +6,7 @@ Krang::Category - a means to access information on categories
 
 =head1 SYNOPSIS
 
-  use Krang::Category;
+  use Krang::ClassLoader 'Category';
 
   # construct object
   my $category = Krang::Category->new(dir => 'category', # required
@@ -55,7 +55,7 @@ Krang::Category - a means to access information on categories
   # case-insensitive sub-string match on that field in the database
 
   # returns an array of category objects matching criteria in %params
-  my @categories = Krang::Category->find( %params );
+  my @categories = pkg('Category')->find( %params );
 
 =head1 DESCRIPTION
 
@@ -89,6 +89,7 @@ constructor arg or a 'parent_id' must be passed.
 ##############################
 # Pragmas
 ##########
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -108,14 +109,14 @@ use Storable qw(nfreeze thaw);
 
 # Internal Modules
 ###################
-use Krang::DB qw(dbh);
-use Krang::Element qw(foreach_element);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Element => qw(foreach_element);
 
-use Krang::Media;
-use Krang::Story;
-use Krang::Template;
-use Krang::Group;
-use Krang::Log qw(debug assert ASSERT);
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Group';
+use Krang::ClassLoader Log => qw(debug assert ASSERT);
 
 #
 # Package Variables
@@ -141,7 +142,7 @@ my %category_args = map {$_ => 1} qw(dir parent_id site_id);
 my %category_cols = map {$_ => 1} CATEGORY_RO, CATEGORY_RW;
 
 # Constructor/Accessor/Mutator setup
-use Krang::MethodMaker	new_with_init => 'new',
+use Krang::ClassLoader MethodMaker => new_with_init => 'new',
 			new_hash_init => 'hash_init',
 			get => [CATEGORY_RO],
 			get_set => [grep { $_ ne 'parent_id' } CATEGORY_RW];
@@ -203,7 +204,7 @@ The parent object of the present category if any.
 sub parent {
     my $self = shift;
     return unless $self->{parent_id};
-    (Krang::Category->find(category_id => $self->{parent_id}))[0];
+    (pkg('Category')->find(category_id => $self->{parent_id}))[0];
 }
 
 =item * site_id
@@ -216,7 +217,7 @@ The site object identified by site_id.
 
 =cut
 
-sub site { (Krang::Site->find(site_id => shift->{site_id}))[0] }
+sub site { (pkg('Site')->find(site_id => shift->{site_id}))[0] }
 
 =item * url (read-only)
 
@@ -363,7 +364,7 @@ sub init {
     #################
     my ($url);
     if ($self->{parent_id}) {
-        my ($cat) = Krang::Category->find(category_id => $self->{parent_id});
+        my ($cat) = pkg('Category')->find(category_id => $self->{parent_id});
         croak(__PACKAGE__ . "->init(): No category object found corresponding".
               " to id '$self->{parent_id}'") unless defined $cat;
 
@@ -376,7 +377,7 @@ sub init {
         $url = $cat->url();
         $self->{site_id} = $cat->site_id;
     } else {
-        my ($site) = Krang::Site->find(site_id => $self->{site_id});
+        my ($site) = pkg('Site')->find(site_id => $self->{site_id});
         croak(__PACKAGE__ . "->init(): site_id '$self->{site_id}' does not " .
               "correspond to any object in the database.") unless $site;
         $url = $site->url();
@@ -389,7 +390,7 @@ sub init {
 
     # define element
     #################
-    $self->{element} = Krang::Element->new(class => 'category',
+    $self->{element} = pkg('Element')->new(class => 'category',
                                            object => $self);
 
     # Set up permissions
@@ -434,7 +435,7 @@ sub delete {
     croak("Category does not have an ID") unless ($id);
 
     # Instantiate category object from ID, if need be
-    ($self) = Krang::Category->find(category_id => $id)
+    ($self) = pkg('Category')->find(category_id => $id)
       unless (ref $self && $self->isa('Krang::Category'));
 
     # Throw exception if user is not allowed to edit this category
@@ -455,7 +456,7 @@ sub delete {
     $self->dependent_check();
 
     # Remove from permissions
-    Krang::Group->delete_category_permissions($self);
+    pkg('Group')->delete_category_permissions($self);
 
     # delete element
     $self->element()->delete();
@@ -658,7 +659,7 @@ sub children {
     my $self = shift;
     my %args = @_;
 
-    return Krang::Category->find(parent_id => $self->category_id, %args);
+    return pkg('Category')->find(parent_id => $self->category_id, %args);
 }
 
 
@@ -921,7 +922,7 @@ sub element {
     my $self = shift;
     return $self->{element} if $self->{element};
     ($self->{element}) =
-      Krang::Element->load(element_id => $self->{element_id}, 
+      pkg('Element')->load(element_id => $self->{element_id}, 
                            object     => $self);
     return $self->{element};
 }
@@ -1010,7 +1011,7 @@ sub save {
         $self->{category_id} = $dbh->{mysql_insertid};
 
         # Make sure category permissions (and cache) are added for this category
-        Krang::Group->add_category_permissions($self);
+        pkg('Group')->add_category_permissions($self);
     }
 
     # update child URLs if url has changed
@@ -1208,13 +1209,13 @@ sub deserialize_xml {
       = @args{qw(xml set no_update skip_update)};
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml, 
+    my $data = pkg('XML')->simple(xml           => $xml, 
                                   suppressempty => 1,
                                   forcearray    => ['element', 'data']);
     
 
     # is there an existing category with this URL?
-    my ($dup) = Krang::Category->find(url => $data->{url});
+    my ($dup) = pkg('Category')->find(url => $data->{url});
     return $dup if $dup and $skip_update;
 
     if ($dup) {
@@ -1231,7 +1232,7 @@ sub deserialize_xml {
                           import_id => $dup->category_id);
 
         # deserialize elements for update
-        my $element = Krang::Element->deserialize_xml(data => 
+        my $element = pkg('Element')->deserialize_xml(data => 
                                                         $data->{element}[0],
                                                       set       => $set,
                                                       no_update => $no_update,
@@ -1255,12 +1256,12 @@ sub deserialize_xml {
         # get site_id for root category
         $site_id = $set->map_id(class => "Krang::Site",
                                 id    => $data->{site_id});
-        my ($new_c) = Krang::Category->find( url => $data->{url} );
+        my ($new_c) = pkg('Category')->find( url => $data->{url} );
         return $new_c;
     }
 
     # create a new category
-    my $cat = Krang::Category->new(
+    my $cat = pkg('Category')->new(
                                    ($parent_id ? 
                                     (parent_id => $parent_id) : ()),
                                    ($site_id   ? 
@@ -1277,7 +1278,7 @@ sub deserialize_xml {
                       import_id => $cat->category_id);
 
     # deserialize elements
-    my $element = Krang::Element->deserialize_xml(data => $data->{element}[0],
+    my $element = pkg('Element')->deserialize_xml(data => $data->{element}[0],
                                                   set       => $set,
                                                   no_update => $no_update,
                                                   object    => $cat);

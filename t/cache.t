@@ -1,7 +1,8 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 use Test::More qw(no_plan);
 
 use_ok('Krang::Cache') or exit;

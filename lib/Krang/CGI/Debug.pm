@@ -1,11 +1,12 @@
 package Krang::CGI::Debug;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use base 'Krang::CGI';
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader base => 'CGI';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
-use Krang::Group;
+use Krang::ClassLoader 'Group';
 use Data::Dumper;
 
 =head1 NAME
@@ -14,8 +15,8 @@ Krang::CGI::Debug - a debugger for Krang
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Debug;
-  Krang::CGI::Debug->new()->run();
+  use Krang::ClassLoader 'CGI::Debug';
+  pkg('CGI::Debug')->new()->run();
 
 =head1 DESCRIPTION
 
@@ -52,7 +53,7 @@ sub show {
     my $self = shift;
 
     # make sure they're really a global admin
-    my %admin_perms = Krang::Group->user_admin_permissions();
+    my %admin_perms = pkg('Group')->user_admin_permissions();
     my @admin_apps = (qw(admin_users admin_groups admin_contribs
                          admin_sites admin_categories admin_jobs
                          admin_desks admin_lists));

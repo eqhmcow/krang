@@ -1,12 +1,13 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use Krang::Script;
-BEGIN { use_ok('Krang::XML') }
+use Krang::ClassLoader 'Script';
+BEGIN { use_ok(pkg('XML')) }
 
 # make sure XML::Writer is working
 my $string;
-my $writer = Krang::XML->writer(string => \$string);
+my $writer = pkg('XML')->writer(string => \$string);
 isa_ok($writer, 'XML::Writer');
 $writer->startTag('foo');
 $writer->startTag('bar');

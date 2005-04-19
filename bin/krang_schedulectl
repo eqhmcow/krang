@@ -57,6 +57,7 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Conf qw(KrangRoot);
 
 # the krang_scheduled command

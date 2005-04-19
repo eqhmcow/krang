@@ -1,14 +1,15 @@
 package Krang::FTP::Server;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 use Carp qw(croak);
-use Krang::Conf qw(KrangUser KrangGroup);
-use Krang::User;
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader Conf => qw(KrangUser KrangGroup);
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader Log => qw(debug info critical);
 use Net::FTPServer;
-use Krang::FTP::FileHandle;
-use Krang::FTP::DirHandle;
-use Krang::DB qw( forget_dbh );
+use Krang::ClassLoader 'FTP::FileHandle';
+use Krang::ClassLoader 'FTP::DirHandle';
+use Krang::ClassLoader DB => qw( forget_dbh );
 
 # Inheritance
 our @ISA = qw(Net::FTPServer);
@@ -19,8 +20,8 @@ Krang::FTP::Server - Virtual FTP Server for Krang Templates and Media
 
 =head1 SYNOPSIS
 
-    use Krang::FTP::Server;
-    Krang::FTP::Server->run();
+    use Krang::ClassLoader 'FTP::Server';
+    pkg('FTP::Server')->run();
 
 =head1 DESCRIPTION
 
@@ -111,7 +112,7 @@ sub pre_configuration_hook {
   my $self = shift;
 
   # add to version info
-  $self->{version_string} .= " Krang::FTP::Server";
+  $self->{version_string} .= " pkg('FTP::Server')";
   
 }
 
@@ -186,13 +187,13 @@ sub authentication_hook {
     return -1 if $user_is_anon;
 
     # check each instance to see if user has login on each
-    foreach my $instance (Krang::Conf->instances()) {
+    foreach my $instance (pkg('Conf')->instances()) {
 
         # set instance
-        Krang::Conf->instance($instance);
+        pkg('Conf')->instance($instance);
 
         # get user object
-        my @user_object = Krang::User->find( login => $user ); 
+        my @user_object = pkg('User')->find( login => $user ); 
 
         next if not $user_object[0];
 
@@ -201,7 +202,7 @@ sub authentication_hook {
         debug(__PACKAGE__." User object found for login $user in instance $instance.");
  
         # return failure if authentication fails.
-        my $login_ok = Krang::User->check_auth($user,$pass);
+        my $login_ok = pkg('User')->check_auth($user,$pass);
 
         if ($login_ok) {
             push @auth_instances, $instance;
@@ -215,7 +216,7 @@ sub authentication_hook {
     }
 
     # undefine instance until they choose one at top level
-    Krang::Conf->instance(undef);
+    pkg('Conf')->instance(undef);
 
     # set accepted instances
     $self->{auth_instances} = \@auth_instances;
@@ -236,7 +237,7 @@ directory.  This method just calls Krang::FTP::DirHandle->new().
 
 sub root_directory_hook {
   my $self = shift;
-  return new Krang::FTP::DirHandle ($self);
+  return pkg('FTP::DirHandle')->new($self);
 }
 
 =item system_error_hook()

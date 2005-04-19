@@ -1,20 +1,21 @@
 package Krang::Profiler;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
 # make sure to load element sets first so they can be profiled
-use Krang::ElementLibrary;
+use Krang::ClassLoader 'ElementLibrary';
 
 # get a list of element sets for all instances
-use Krang::Conf qw(InstanceElementSet);
+use Krang::ClassLoader Conf => qw(InstanceElementSet);
 our @ELEMENT_SETS;
 BEGIN { 
-    my $old = Krang::Conf->instance();
-    foreach my $instance (Krang::Conf->instances) {
-        Krang::Conf->instance($instance);
+    my $old = pkg('Conf')->instance();
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
         push(@ELEMENT_SETS, InstanceElementSet);
     }
-    Krang::Conf->instance($old);
+    pkg('Conf')->instance($old);
 }
 
 use Devel::Profiler 
@@ -28,7 +29,7 @@ sub package_filter {
 
     # ignore Krang::Conf - it plays symbol table games that confuse
     # Devel::Profiler
-    return 0 if /^Krang::Conf$/;
+    return 0 if /^pkg('Conf')$/;
 
     # ignore Exception::Class kids
     return 0 if UNIVERSAL::isa($_, "Exception::Class::Base");

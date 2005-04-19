@@ -165,6 +165,7 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 
@@ -210,15 +211,15 @@ BEGIN {
 }
 
 
-use Krang::Script;
-use Krang::DataSet;
-use Krang::Story;
-use Krang::Media;
-use Krang::Template;
-use Krang::Category;
-use Krang::Site;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'DataSet';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
 
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Temp qw(tempfile);
 use Data::Dumper;
 
@@ -233,11 +234,11 @@ my %checked_media;
 my %stats;
 
 # open up the data set
-$set = Krang::DataSet->new($verbose ? 
+$set = pkg('DataSet')->new($verbose ? 
                            (add_callback => \&add_callback) : ());
 
 # find the proper site(s).
-my @sites = Krang::Site->find(site_id => $id{site_id});
+my @sites = pkg('Site')->find(site_id => $id{site_id});
 my @cat_ids;
 
 # add them & their dependencies to the set.
@@ -247,7 +248,7 @@ foreach my $site (@sites) {
     $set->add(object => $site);
 
     # add dependent categories
-    foreach my $cat (Krang::Category->find(site_id => $site->site_id)) {
+    foreach my $cat (pkg('Category')->find(site_id => $site->site_id)) {
         $set->add(object => $cat);
         push @cat_ids, $cat->category_id;
     }
@@ -258,7 +259,7 @@ $stats{cats} = $#cat_ids + 1;
 
 # add site-specific templates -- annoyance, cannot searh by ref
 foreach my $id (@cat_ids) {
-    foreach my $tmpl (Krang::Template->find(category_id => $id)) {
+    foreach my $tmpl (pkg('Template')->find(category_id => $id)) {
         $set->add(object => $tmpl);
     }
 }
@@ -269,7 +270,7 @@ my $limit  = 50;
 my $offset = 0;
 
 
-foreach my $m (Krang::Media->find(site_id => $id{site_id})) {
+foreach my $m (pkg('Media')->find(site_id => $id{site_id})) {
     $set->add(object => $m);
     $checked_media{$m->media_id} = 1;
 
@@ -279,7 +280,7 @@ foreach my $m (Krang::Media->find(site_id => $id{site_id})) {
 
 $offset = 0;
 # add stories - this is where things get a little complicated.
-foreach my $s (Krang::Story->find(site_id => $id{site_id})) {
+foreach my $s (pkg('Story')->find(site_id => $id{site_id})) {
 
     my $clean = sanitize_story(story => $s, site_id => $id{site_id});
     $checked_stories{$clean->story_id} = 1;

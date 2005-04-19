@@ -1,3 +1,4 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use File::Find qw(find);
 

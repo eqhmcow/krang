@@ -81,18 +81,19 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Script;
-use Krang::Conf qw(KrangRoot SiteServerPort InstanceElementSet EnableSiteServer);
-use Krang::ElementLibrary;
-use Krang::Site;
-use Krang::Category;
-use Krang::Pref;
-use Krang::User;
-use Krang::Template;
-use Krang::Story;
-use Krang::Media;
-use Krang::Group;
-use Krang::Publisher;
+use Krang::ClassLoader Conf => qw(KrangRoot SiteServerPort InstanceElementSet EnableSiteServer);
+use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Group';
+use Krang::ClassLoader 'Publisher';
 
 use Time::Piece;
 use Imager;
@@ -154,7 +155,7 @@ collision.kra taoist.kra
 my (@sites, @cats);
 for(1 .. $sites) {
     my $name = $site_urls[int(rand(scalar(@site_urls)))];
-    my $site = Krang::Site->new(publish_path => 
+    my $site = pkg('Site')->new(publish_path => 
                                   catdir(KrangRoot, "tmp", "${name}_publish"),
                                 preview_path => 
                                   catdir(KrangRoot, "tmp", "${name}_preview"),
@@ -172,7 +173,7 @@ for(1 .. $sites) {
     push(@sites, $site);
 
     # remember root category
-    my ($root) = Krang::Category->find(site_id => $site->site_id);
+    my ($root) = pkg('Category')->find(site_id => $site->site_id);
     push(@cats, $root);
 }
 
@@ -180,7 +181,7 @@ for(1 .. $sites) {
 # create categorie
 for(1 .. $cats) {
     my $cname = get_word();
-    my $cat = Krang::Category->new(dir       => $cname,
+    my $cat = pkg('Category')->new(dir       => $cname,
                                    parent_id => $cats[int(rand(scalar(@cats)))]->category_id);
 
     # TestSet1 categories have display names
@@ -196,7 +197,7 @@ for(1 .. $cats) {
 
 
 # create contribs
-my %types = Krang::Pref->get('contrib_type');
+my %types = pkg('Pref')->get('contrib_type');
 my @contribs;
 for(1 .. $contribs) {
     my $fname = ucfirst(get_word());
@@ -209,7 +210,7 @@ for(1 .. $contribs) {
     my @types = grep { int(rand(2)) } keys %types;
     @types = (keys %types)[0] unless @types;
 
-    my $contrib = Krang::Contrib->new(prefix => $prefix,
+    my $contrib = pkg('Contrib')->new(prefix => $prefix,
                                       first  => $fname,
                                       middle => $mname,
                                       last   => $lname,
@@ -274,12 +275,12 @@ for my $media_count (1 .. $media) {
       or die "Unable to open tmp/tmp.$format: $!";
 
     # Pick a type
-    my %media_types = Krang::Pref->get('media_type');
+    my %media_types = pkg('Pref')->get('media_type');
     my @media_type_ids = keys(%media_types);
     my $media_type_id = $media_type_ids[int(rand(scalar(@media_type_ids)))];
 
     # create a media object
-    my $media = Krang::Media->new(title      => join(" ",
+    my $media = pkg('Media')->new(title      => join(" ",
                                                      map {ucfirst(get_word())}
                                                      (1..(int(rand(3)) + 2))),
                                   filename   => get_word() . ".$format",
@@ -319,7 +320,7 @@ for my $story_count (1 .. $stories) {
     my $story;
 
     eval {
-        $story = Krang::Story->new(title     => join(" ",
+        $story = pkg('Story')->new(title     => join(" ",
                                                      map {ucfirst(get_word())}
                                                      (1..(int(rand(3)) + 2))),
                                    slug       => get_word(),
@@ -442,7 +443,7 @@ for my $cover_count (1 .. $covers) {
     # create story
     my $cover;
 
-    $cover = Krang::Story->new(title     => join(" ",
+    $cover = pkg('Story')->new(title     => join(" ",
                                                  map {ucfirst(get_word())}
                                                  (1..(int(rand(3)) + 2))),
                                slug       => get_word(),
@@ -566,9 +567,9 @@ for my $cover_count (1 .. $covers) {
 # create templates
 my @templates;
 if ($templates) {
-    my $publisher = Krang::Publisher->new();
-    my @estack = map { Krang::ElementLibrary->top_level(name => $_) }
-      Krang::ElementLibrary->top_levels;
+    my $publisher = pkg('Publisher')->new();
+    my @estack = map { pkg('ElementLibrary')->top_level(name => $_) }
+      pkg('ElementLibrary')->top_levels;
     while (@estack) {
         my $element = pop(@estack);
         push(@estack, $element->children);
@@ -631,7 +632,7 @@ END
         }
         $content .= "</div>";
         
-        my $tmpl = Krang::Template->new(content		   => $content,
+        my $tmpl = pkg('Template')->new(content		   => $content,
                                         filename          => $element->name . ".tmpl");
         eval { $tmpl->save; };
         next if $@;
@@ -645,7 +646,7 @@ END
 
 
 # create users
-my %groups = map {$_->group_id, $_->name} Krang::Group->find();
+my %groups = map {$_->group_id, $_->name} pkg('Group')->find();
 my @users;
 for(1 .. $users) {
     my $login = lc(get_word());
@@ -655,7 +656,7 @@ for(1 .. $users) {
     my @groups = grep { int(rand(5)) } keys %groups;
     @groups = (keys %groups)[0] unless @groups;
 
-    my $user = Krang::User->new(login 		=> $login,
+    my $user = pkg('User')->new(login 		=> $login,
                                 first_name  	=> $fname,
                                 last_name   	=> $lname,
                                 email  		=> "$fname\@$lname.com",
@@ -698,16 +699,16 @@ if ($undo_script) {
 use strict;
 BEGIN { \$ENV{KRANG_ROOT} = '$ENV{KRANG_ROOT}' }
 use lib '$ENV{KRANG_ROOT}/lib';
-use Krang::Script;
-use Krang::Conf qw(KrangRoot);
-use Krang::ElementLibrary;
-use Krang::Site;
-use Krang::Category;
-use Krang::Pref;
-use Krang::User;
-use Krang::Template;
-use Krang::Story;
-use Krang::Media;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'ElementLibrary';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
 
 UNDOEND
 

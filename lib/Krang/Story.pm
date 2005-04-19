@@ -1,14 +1,15 @@
 package Krang::Story;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::Element qw(foreach_element);
-use Krang::Category;
-use Krang::History qw( add_history );
-use Krang::Log     qw(assert ASSERT affirm debug info critical);
-use Krang::DB      qw(dbh);
-use Krang::Session qw(%session);
-use Krang::Pref;
+use Krang::ClassLoader Element => qw(foreach_element);
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader History => qw( add_history );
+use Krang::ClassLoader Log => qw(assert ASSERT affirm debug info critical);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'Pref';
 use Carp           qw(croak);
 use Storable       qw(nfreeze thaw);
 use Time::Piece::MySQL;
@@ -23,7 +24,7 @@ use Exception::Class
   ;
   
 # create accessors for object fields
-use Krang::MethodMaker 
+use Krang::ClassLoader MethodMaker => 
   new_with_init => 'new',
   new_hash_init => 'hash_init',
   get           => [ qw(
@@ -89,7 +90,7 @@ Krang::Story - the Krang story class
 =head1 SYNOPSIS
 
   # create a new story
-  $story = Krang::Story->new(title      => "Foo",
+  $story = pkg('Story')->new(title      => "Foo",
                              slug       => 'foo',
                              class      => 'article',
                              categories => [10, 20]);
@@ -107,13 +108,13 @@ Krang::Story - the Krang story class
   $story->contribs(@contribs);
 
   # find some stories about Sam
-  my @stories = Krang::Story->find(title_like => '%sam%');
+  my @stories = pkg('Story')->find(title_like => '%sam%');
 
   # load a single story by id
-  my ($story) = Krang::Story->find(story_id => 1);
+  my ($story) = pkg('Story')->find(story_id => 1);
 
   # load a group of stories by id
-  my ($story) = Krang::Story->find(story_ids => [1, 20, 30, 100]);
+  my ($story) = pkg('Story')->find(story_ids => [1, 20, 30, 100]);
 
   # save a story, incrementing version
   $story->save();
@@ -235,7 +236,7 @@ sub category {
 
     # otherwise, lookup from id list
     my ($category) = 
-      Krang::Category->find(category_id => $self->{category_ids}[0]);
+      pkg('Category')->find(category_id => $self->{category_ids}[0]);
     $self->{category_cache}[0] = $category;
 
     return $category;
@@ -321,7 +322,7 @@ sub categories {
         for (0 .. $#{$self->{category_ids}}) {
             next if  $self->{category_cache}[$_];
             ($self->{category_cache}[$_]) =
-              Krang::Category->find(category_id => $self->{category_ids}[$_]);
+              pkg('Category')->find(category_id => $self->{category_ids}[$_]);
             croak("Unable to load category '$self->{category_ids}[$_]'")
               unless $self->{category_cache}[$_];
         }
@@ -366,7 +367,7 @@ sub urls {
         # load category if needed
         unless ($self->{category_cache}[$_]) {
             ($self->{category_cache}[$_]) =
-              Krang::Category->find(category_id => $self->{category_ids}[$_]);
+              pkg('Category')->find(category_id => $self->{category_ids}[$_]);
         }
 
         # build url
@@ -416,7 +417,7 @@ sub element {
     my $self = shift;
     return $self->{element} if $self->{element};
     ($self->{element}) = 
-      Krang::Element->load(element_id => $self->{element_id}, object => $self);
+      pkg('Element')->load(element_id => $self->{element_id}, object => $self);
     return $self->{element};
 }
 
@@ -433,7 +434,7 @@ it hasn't already been loaded.
 =cut
 
 sub class {
-    return Krang::ElementLibrary->top_level(name => $_[0]->{class});
+    return pkg('ElementLibrary')->top_level(name => $_[0]->{class});
 }
 
 =item C<checked_out> (readonly)
@@ -479,9 +480,9 @@ sub init {
 
     # create a new element based on class
     $self->{class} = delete $args{class};
-    croak("Missing required 'class' parameter to Krang::Story->new()")
+    croak("Missing required 'class' parameter to pkg('Story')->new()")
       unless $self->{class};
-    $self->{element} = Krang::Element->new(class => $self->{class}, 
+    $self->{element} = pkg('Element')->new(class => $self->{class}, 
                                            object => $self);
 
     # get hash of url_attributes
@@ -547,7 +548,7 @@ sub contribs {
         my $contrib;
         # return contributor objects
         foreach my $id (@{$self->{contrib_ids}}) {
-            ($contrib) = Krang::Contrib->find(contrib_id => $id->{contrib_id});
+            ($contrib) = pkg('Contrib')->find(contrib_id => $id->{contrib_id});
             croak("No contributor found with contrib_id ". $id->{contrib_id})
               unless $contrib;
             $contrib->selected_contrib_type($id->{contrib_type_id});
@@ -810,7 +811,7 @@ Fields may be matched using SQL matching.  Appending "_like" to a
 field name will specify a case-insensitive SQL match.  For example, to
 match a sub-string inside title:
 
-  @stories = Krang::Story->find(title_like => '%' . $search . '%');
+  @stories = pkg('Story')->find(title_like => '%' . $search . '%');
 
 Notice that it is necessary to surround terms with '%' to perform
 sub-string matches.
@@ -953,7 +954,7 @@ option should be set with an array containing the element name and the
 value to match against.  For example, to search for stories containing
 'foo' in their deck, assuming deck is an indexed element:
 
-  @stories = Krang::Story->find(element_index_like => [deck => '%foo%']);
+  @stories = pkg('Story')->find(element_index_like => [deck => '%foo%']);
 
 =back
 
@@ -1102,7 +1103,7 @@ sub find {
         if ($key eq 'below_category_id') {
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
-            my ($cat) = Krang::Category->find(category_id => $value);
+            my ($cat) = pkg('Category')->find(category_id => $value);
             my @ids = ($value, $cat->descendants( ids_only => 1 ));
             push(@where, 's.story_id = sc.story_id');
             push(@where, 
@@ -1115,7 +1116,7 @@ sub find {
         if ($key eq 'below_primary_category_id') {
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
-            my ($cat) = Krang::Category->find(category_id => $value);
+            my ($cat) = pkg('Category')->find(category_id => $value);
             my @ids = ($value, $cat->descendants( ids_only => 1 ));
             push(@where, 's.story_id = sc.story_id AND sc.ord = 0');
             push(@where, 
@@ -1348,7 +1349,7 @@ sub find {
     } else {
         # Get user asset permissions -- overrides may_edit if false
         my $may_edit;
-        if (Krang::Group->user_asset_permissions('story') eq "edit") {
+        if (pkg('Group')->user_asset_permissions('story') eq "edit") {
             $may_edit = "ucpc.may_edit as may_edit";
         } else {
             $may_edit = $dbh->quote("0") . " as may_edit";
@@ -1509,7 +1510,7 @@ sub checkout {
     my ($self, $story_id) = @_;
     croak("Invalid call: object method takes no parameters")
       if ref $self and @_ > 1;
-    $self = (Krang::Story->find(story_id => $story_id))[0]
+    $self = (pkg('Story')->find(story_id => $story_id))[0]
       unless $self;
     my $dbh      = dbh();
     my $user_id  = $ENV{REMOTE_USER};
@@ -1571,7 +1572,7 @@ fail if the story is not checked out.
 
 sub checkin {
     my $self     = ref $_[0] ? $_[0] : 
-      (Krang::Story->find(story_id => $_[1]))[0];
+      (pkg('Story')->find(story_id => $_[1]))[0];
     my $story_id = $self->{story_id};
     my $dbh      = dbh();
     my $user_id  = $ENV{REMOTE_USER};
@@ -1581,7 +1582,7 @@ sub checkin {
         unless ($self->may_edit);
 
     # get admin permissions
-    my %admin_perms = Krang::Group->user_admin_permissions();
+    my %admin_perms = pkg('Group')->user_admin_permissions();
 
     # make sure we're checked out, unless we have may_checkin_all powers
     $self->_verify_checkout() unless $admin_perms{may_checkin_all};
@@ -1795,7 +1796,7 @@ sub delete {
     my $self = shift;
     unless(ref $self) {
         my $story_id = shift;
-        ($self) = Krang::Story->find(story_id => $story_id);
+        ($self) = pkg('Story')->find(story_id => $story_id);
         croak("Unable to load story '$story_id'.") unless $self;
     }
     $self->checkout;
@@ -1805,10 +1806,10 @@ sub delete {
         unless ($self->may_edit);
 
     # unpublish
-    Krang::Publisher->new->unpublish_story(story => $self);
+    pkg('Publisher')->new->unpublish_story(story => $self);
 
     # first delete history for this object
-    Krang::History->delete(object => $self);
+    pkg('History')->delete(object => $self);
 
     my $dbh = dbh;
     $dbh->do('DELETE FROM story WHERE story_id = ?', 
@@ -2034,7 +2035,7 @@ sub serialize_xml {
     $writer->dataElement(url => $_) for $self->urls;
 
     # contributors
-    my %contrib_type = Krang::Pref->get('contrib_type');
+    my %contrib_type = pkg('Pref')->get('contrib_type');
     for my $contrib ($self->contribs) {
         $writer->startTag('contrib');
         $writer->dataElement(contrib_id => $contrib->contrib_id);
@@ -2046,7 +2047,7 @@ sub serialize_xml {
     }
 
     # schedules
-    foreach my $schedule ( Krang::Schedule->find( object_type => 'story', object_id => $self->story_id ) ) {
+    foreach my $schedule ( pkg('Schedule')->find( object_type => 'story', object_id => $self->story_id ) ) {
         $set->add(object => $schedule, from => $self);
     }
     
@@ -2073,7 +2074,7 @@ sub deserialize_xml {
     local $_;
 
     # parse it up
-    my $data = Krang::XML->simple(xml           => $xml, 
+    my $data = pkg('XML')->simple(xml           => $xml, 
                                   forcearray    => ['contrib',
                                                     'category_id',
                                                     'url',
@@ -2083,7 +2084,7 @@ sub deserialize_xml {
                                   suppressempty => 1);
 
     # is there an existing object?
-    my ($story) = Krang::Story->find(url => $data->{url}[0], show_hidden => 1);
+    my ($story) = pkg('Story')->find(url => $data->{url}[0], show_hidden => 1);
     if ($story) {
 
         # if primary url of this imported story matches a non-primary
@@ -2111,19 +2112,19 @@ sub deserialize_xml {
         # check if any of the secondary urls match existing stories
         # and fail if so
         for (my $count = 1; $count < @{$data->{url}}; $count++) {
-            my ($found) = Krang::Story->find(url => $data->{url}[$count], show_hidden => 1);
+            my ($found) = pkg('Story')->find(url => $data->{url}[$count], show_hidden => 1);
             Krang::DataSet::DeserializationFailed->throw(
                 message => "A story object with url '$data->{url}[$count]' already exists, which conflicts with one of this storys secondary URLs.") if $found;
         }
  
         # get category objects for story
-        my @categories = map { Krang::Category->find(category_id => $_) }
+        my @categories = map { pkg('Category')->find(category_id => $_) }
                            map { $set->map_id(class => "Krang::Category",
                                               id    => $_) }
                              @{$data->{category_id}};
 
         # create a new story object using categories, slug, title and class
-        $story = Krang::Story->new(categories => \@categories,
+        $story = pkg('Story')->new(categories => \@categories,
                                    slug       => $data->{slug} || "",
                                    title      => $data->{title} || "",
                                    class      => $data->{class});
@@ -2147,7 +2148,7 @@ sub deserialize_xml {
                       import_id => $story->story_id);
 
     # deserialize elements, may contain circular references
-    my $element = Krang::Element->deserialize_xml(data => $data->{element}[0],
+    my $element = pkg('Element')->deserialize_xml(data => $data->{element}[0],
                                                   set       => $set,
                                                   no_update => $no_update,
                                                   object    => $story);
@@ -2157,7 +2158,7 @@ sub deserialize_xml {
     $story->{element} = $element;
 
     # get hash of contrib type names to ids
-    my %contrib_types = reverse Krang::Pref->get('contrib_type');
+    my %contrib_types = reverse pkg('Pref')->get('contrib_type');
                                                                               
     # handle contrib association
     if ($data->{contrib}) {

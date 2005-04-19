@@ -72,18 +72,19 @@ END
 
 # use first instance if one isn't set.  Addons are installation wide
 # anyway.
-BEGIN { $ENV{KRANG_INSTANCE} ||= (Krang::Conf->instances)[0]; }
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
 
 # Krang-Dependent External Modules
 ###################################
+use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 
 # Internal Modules
 ###################
-use Krang::Script;
-use Krang::User;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'User';
 
 #
 # Package Variables
@@ -131,7 +132,7 @@ is a success.
 
 sub main {
     # lookup user
-    my ($user) = Krang::User->find(login => $login);
+    my ($user) = pkg('User')->find(login => $login);
     die("Login '$login' not found.") unless defined $user;
 
     # setup terminal I/O

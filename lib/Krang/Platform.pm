@@ -1,4 +1,5 @@
 package Krang::Platform;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -516,17 +517,20 @@ The default implementation includes code to answer questions asked by
 some of the modules (using Expect) and special build procedures for
 others.
 
+The optional 'dest_dir' parameter specifies the location to put the
+results of the build.  The default is KRANG_ROOT/lib.
+
 =cut
 
 sub build_perl_module {
     my ($pkg, %arg) = @_;
-    my $name = $arg{name};
+    my $name        = $arg{name};
+    my $dest_dir    = $arg{dest_dir} || catdir($ENV{KRANG_ROOT}, 'lib');
 
     # load expect unless we're building it
     my $use_expect = ($name =~ /IO-Tty/ or $name =~ /Expect/) ? 0 : 1;
     _load_expect() if $use_expect;
 
-    my $dest_dir = catdir($ENV{KRANG_ROOT}, 'lib');
     my $trash_dir = catdir(cwd, '..', 'trash');
  
     print "\n\n************************************************\n\n",

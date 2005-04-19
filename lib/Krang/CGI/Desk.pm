@@ -1,4 +1,5 @@
 package Krang::CGI::Desk;
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -8,8 +9,8 @@ Krang::CGI::Desk - displays stories on a particular desk
 
 =head1 SYNOPSIS
 
-  use Krang::CGI::Desk;
-  my $app = Krang::CGI::Desk->new();
+  use Krang::ClassLoader 'CGI::Desk';
+  my $app = pkg('CGI::Desk')->new();
   $app->run();
 
 =head1 DESCRIPTION
@@ -24,14 +25,14 @@ This application manages display of stories on desks for Krang.
 
 =cut
 
-use Krang::Session qw(%session);
-use Krang::Log qw(debug assert affirm ASSERT);
-use Krang::HTMLPager;
-use Krang::Widget qw(format_url);
-use Krang::Message qw(add_message);
-use Krang::Desk;
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
+use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader Widget => qw(format_url);
+use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader 'Desk';
 
-use base 'Krang::CGI';
+use Krang::ClassLoader base => 'CGI';
 
 sub setup {
     my $self = shift;
@@ -67,11 +68,11 @@ sub show {
                                    );
 
     my $desk_id = $query->param('desk_id');
-    my $desk = (Krang::Desk->find( desk_id => $desk_id))[0];
+    my $desk = (pkg('Desk')->find( desk_id => $desk_id))[0];
     $template->param( desk_name => $desk->name );
     $template->param( desk_id => $desk_id );
 
-    my @found_desks = Krang::Desk->find();
+    my @found_desks = pkg('Desk')->find();
     my @desk_loop;
                                                                           
     foreach my $found_desk (@found_desks) {
@@ -83,7 +84,7 @@ sub show {
     }
 
     # permissions
-    my %admin_perms = Krang::Group->user_admin_permissions();
+    my %admin_perms = pkg('Group')->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
 
     # setup sort selector
@@ -104,7 +105,7 @@ sub show {
                                        ));
 
     # setup paging list of objects
-    my $pager = Krang::HTMLPager->new
+    my $pager = pkg('HTMLPager')->new
       (
        cgi_query   => $query,
        use_module  => 'Krang::Story',
@@ -124,7 +125,7 @@ sub show {
     $pager->fill_template($template);
 
     # instance_name is used for preview window targeting
-    my $instance_name = Krang::Conf->instance;
+    my $instance_name = pkg('Conf')->instance;
     $instance_name =~ s![^\w]!_!g;
     $template->param(instance_name => $instance_name);
 
@@ -279,7 +280,7 @@ sub _obj2id {
 sub _id2obj {
     my ($id) = shift;
     my $obj;
-        ($obj) = Krang::Story->find(story_id => $id);
+        ($obj) = pkg('Story')->find(story_id => $id);
     croak("Unable to load story $id")
       unless $obj;
     return $obj;

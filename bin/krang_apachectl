@@ -79,7 +79,9 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Conf qw(KrangRoot InstanceHostName Skin);
+use Krang::File;
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
@@ -192,11 +194,12 @@ END
 sub write_conf {
     require HTML::Template;
 
+    # find template file, looking addons first then in the root
+    my $file = Krang::File->find("conf/httpd.conf.tmpl");
+
     # create the httpd.conf by processing it as a template, using conf
     # directives as params
-    my $template = HTML::Template->new(filename => catfile(KrangRoot, 
-                                                           "conf",
-                                                           "httpd.conf.tmpl"),
+    my $template = HTML::Template->new(filename => $file,
                                        global_vars => 1,
                                        die_on_bad_params => 0,
                                       );
@@ -209,17 +212,17 @@ sub write_conf {
     print STDERR ($cgi_mode ? "CGI Mode activated" : "Apache::Registry Mode activated") . "\n";
     $template->param(CGI_MODE => $cgi_mode);
 
-    $template->param((map { ($_, Krang::Conf->get($_)) }
+    $template->param((map { ($_, pkg('Conf')->get($_)) }
                       (qw(KrangUser KrangGroup 
                           ApacheAddr ApachePort
                           HostName
                          ))),
-                     KrangRoot => rel2abs(Krang::Conf->get("KrangRoot")));
+                     KrangRoot => rel2abs(pkg('Conf')->get("KrangRoot")));
     
     # setup the instance loop
     my @loop;
-    foreach my $instance (Krang::Conf->instances()) {
-        Krang::Conf->instance($instance);
+    foreach my $instance (pkg('Conf')->instances()) {
+        pkg('Conf')->instance($instance);
         push(@loop,
              {
               InstanceName => $instance,

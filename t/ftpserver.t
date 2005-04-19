@@ -1,15 +1,16 @@
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::Conf qw(KrangRoot FTPPort FTPAddress);
-use Krang::Session qw(%session);
-use Krang::Script;
-use Krang::Category;
-use Krang::Site;
-use Krang::User;
-use Krang::Media;
-use Krang::Template;
-use Krang::Session qw(%session);
-use Krang::Test::Content;
+use Krang::ClassLoader Conf => qw(KrangRoot FTPPort FTPAddress);
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader 'Test::Content';
 
 use Net::FTP;
 use IPC::Run qw(start);
@@ -27,7 +28,7 @@ BEGIN {
     die $@ if $@;
 }
 
-my $creator = Krang::Test::Content->new;
+my $creator = pkg('Test::Content')->new;
 
 END { $creator->cleanup() }
 
@@ -39,7 +40,7 @@ $sites[0] = $creator->create_site(preview_url  => 'preview.test.com',
                                   preview_path => KrangRoot.'/tmp/test_preview'
                                  );
 
-my ($root_cat) = Krang::Category->find(site_id => $sites[0]->site_id, dir => "/");
+my ($root_cat) = pkg('Category')->find(site_id => $sites[0]->site_id, dir => "/");
 isa_ok($root_cat, 'Krang::Category', 'is Krang::Category');
 $root_cat->save();
 
@@ -58,7 +59,7 @@ $sites[1] = $creator->create_site(preview_url  => 'preview.test2.com',
                                   preview_path => KrangRoot.'/tmp/test2_preview'
                                  );
 
-my ($root_cat2) = Krang::Category->find(site_id => $sites[1]->site_id, dir => "/");
+my ($root_cat2) = pkg('Category')->find(site_id => $sites[1]->site_id, dir => "/");
 isa_ok($root_cat2, 'Krang::Category', 'is Krang::Category');
 $root_cat2->save();
 
@@ -86,20 +87,20 @@ my $user = $creator->create_user(password => $password);
 is( $ftp->login( $user->login, $password ), '1', 'Login Test' );
 
 my @auth_instances;
-my @instances = Krang::Conf->instances();
+my @instances = pkg('Conf')->instances();
 foreach my $instance (@instances) {
 
     # set instance
-    Krang::Conf->instance($instance);
+    pkg('Conf')->instance($instance);
 
-    my $login_ok = Krang::User->check_auth($user->login,$password);
+    my $login_ok = pkg('User')->check_auth($user->login,$password);
 
     if ($login_ok) {
        push @auth_instances, $instance;
     }        
 }
 
-Krang::Conf->instance($instances[0]);
+pkg('Conf')->instance($instances[0]);
 
 my @listed_instances = $ftp->ls();
 
@@ -111,7 +112,7 @@ my @types = qw(media template);
 my @ret_types = $ftp->ls();
 is("@ret_types", "@types", "Type listing");
 
-my @found_sites = Krang::Site->find(order_by => 'url');
+my @found_sites = pkg('Site')->find(order_by => 'url');
 
 my $sitenames = join(" ",(map { $_->url } @found_sites));
 
@@ -121,7 +122,7 @@ foreach my $type (@types) {
     my @ret_sites = $ftp->ls();
 
     if ($type eq 'template') {
-        my @templates = Krang::Template->find( category_id => undef);
+        my @templates = pkg('Template')->find( category_id => undef);
         @templates = map { $_->filename } @templates;
 
         my $list = $sitenames;
@@ -139,18 +140,18 @@ foreach my $type (@types) {
     foreach my $site (@ret_sites) {
         next if ($site =~ /^\S*\.tmpl$/);
         $ftp->cwd($site);
-        my @site_obj = Krang::Site->find(url => $site);
+        my @site_obj = pkg('Site')->find(url => $site);
         isa_ok($site_obj[0], 'Krang::Site', "Krang::Site $site");
-        my ($rc) = Krang::Category->find(site_id => $site_obj[0]->site_id, dir => "/");
+        my ($rc) = pkg('Category')->find(site_id => $site_obj[0]->site_id, dir => "/");
         isa_ok($rc, 'Krang::Category', "Krang::Category");
 
-        my @cat_list = Krang::Category->find(site_id => $site_obj[0]->site_id, parent_id => $rc->category_id);
+        my @cat_list = pkg('Category')->find(site_id => $site_obj[0]->site_id, parent_id => $rc->category_id);
         my $catnames = join(" ",(map { $_->dir } @cat_list));
 
         my $list_string = '';
 
         if ($type eq 'media') {
-            my @existing_media = Krang::Media->find( category_id => $rc->category_id );
+            my @existing_media = pkg('Media')->find( category_id => $rc->category_id );
             my $medianames = join(" ",(map { $_->filename } @existing_media));
 
             if ($catnames) {
@@ -160,7 +161,7 @@ foreach my $type (@types) {
                 $list_string = $medianames; 
             }
         } else {
-            my @existing_templates = Krang::Template->find( category_id => $rc->category_id );
+            my @existing_templates = pkg('Template')->find( category_id => $rc->category_id );
 
             my $tnames = join(" ",(map { $_->filename } @existing_templates));
 

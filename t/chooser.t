@@ -1,14 +1,15 @@
 # test the category chooser widget
 
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use strict;
 use warnings;
-use Krang::Script;
-use Krang::Widget qw(category_chooser);
-use Krang::Test::Content;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Widget => qw(category_chooser);
+use Krang::ClassLoader 'Test::Content';
 use CGI;
 
-my $creator = Krang::Test::Content->new;
+my $creator = pkg('Test::Content')->new;
 END { $creator->cleanup(); }
 
 # set up category tree:
@@ -27,7 +28,7 @@ my $site = $creator->create_site(preview_url  => "prev.choosertest.com",
                                  preview_path => "/tmp/prev.chooser",
                                  publish_path => "/tmp/chooser",
                                 );
-my @cats = Krang::Category->find(site_id => $site->site_id());
+my @cats = pkg('Category')->find(site_id => $site->site_id());
 push @cats, $creator->create_category(dir     => 'cat_1',
                                       parent  => $cats[0]->category_id);
 push @cats, $creator->create_category(dir     => 'cat_2',
@@ -45,7 +46,7 @@ push @cats, $creator->create_category(dir     => 'cat_1.3.1',
 
 
 # create a group to test permissions with
-my $group = Krang::Group->new( name => 'Chooser Test',
+my $group = pkg('Group')->new( name => 'Chooser Test',
                                may_publish         => 1,
                                may_checkin_all     => 1,
                                admin_users         => 1,

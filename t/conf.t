@@ -1,3 +1,4 @@
+use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use strict;
 use warnings;
@@ -45,30 +46,30 @@ CONF
 # setup the test conf file
 _setup_conf($base_conf);
 
-eval "use_ok('Krang::Conf')";
+eval "use_ok(pkg('Conf'))";
 die $@ if $@;
 
 # get the globals, all ways
-ok(Krang::Conf->get("KrangRoot"));
-ok(Krang::Conf->KrangRoot);
-ok(Krang::Conf->get("ApachePort"));
-ok(Krang::Conf->ApachePort);
+ok(pkg('Conf')->get("KrangRoot"));
+ok(pkg('Conf')->KrangRoot);
+ok(pkg('Conf')->get("ApachePort"));
+ok(pkg('Conf')->ApachePort);
 
-Krang::Conf->import(qw(KrangRoot InstanceDBName ApachePort));
+pkg('Conf')->import(qw(KrangRoot InstanceDBName ApachePort));
 ok(KrangRoot());
 ok(not defined InstanceDBName());
 ok(ApachePort());
 
-Krang::Conf->instance("instance_one");
-is(Krang::Conf->instance, "instance_one");
+pkg('Conf')->instance("instance_one");
+is(pkg('Conf')->instance, "instance_one");
 ok(KrangRoot());
-is(Krang::Conf->get("InstanceDBName"), "test");
+is(pkg('Conf')->get("InstanceDBName"), "test");
 is(InstanceDBName(), "test");
 
-Krang::Conf->instance("instance_two");
-is(Krang::Conf->instance, "instance_two");
+pkg('Conf')->instance("instance_two");
+is(pkg('Conf')->instance, "instance_two");
 ok(KrangRoot());
-is(Krang::Conf->get("InstanceDBName"), "test2");
+is(pkg('Conf')->get("InstanceDBName"), "test2");
 is(InstanceDBName(), "test2");
 
 

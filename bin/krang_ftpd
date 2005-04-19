@@ -34,10 +34,11 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang::Conf qw(FTPPort FTPAddress KrangRoot);
 
 # load the server
-use Krang::FTP::Server;
+use Krang::ClassLoader 'FTP::Server';
 
 # daemon mode
 push(@ARGV, '-S');
@@ -61,4 +62,4 @@ push(@ARGV, '-o', 'limit nr files=1024');
 # setup log
 push(@ARGV, '-o', 'error log=' . catfile(KrangRoot,"logs",'ftp.log'));
 
-Krang::FTP::Server->run;
+pkg('FTP::Server')->run;

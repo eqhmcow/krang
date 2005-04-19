@@ -3,20 +3,21 @@
 ### SQL and XML techniques, they should all be as 8-bit clean as
 ### templates.
 
+use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
-use Krang::Script;
-use Krang::Template;
-use Krang::DataSet;
-use Krang::Conf qw(KrangRoot InstanceElementSet);
-use Krang::Test::Content;
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'DataSet';
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet);
+use Krang::ClassLoader 'Test::Content';
 use File::Spec::Functions qw(catfile);
 
 # skip all tests unless a TestSet1-using instance is available
 BEGIN {
     my $found;
-    foreach my $instance (Krang::Conf->instances) {
-        Krang::Conf->instance($instance);
+    foreach my $instance (pkg('Conf')->instances) {
+        pkg('Conf')->instance($instance);
         if (InstanceElementSet eq 'TestSet1') {
             eval 'use Test::More qw(no_plan)';
             die $@ if $@;
@@ -36,7 +37,7 @@ my $bits = join('', map { chr($_) } 0 .. 255) .
            join('', map { chr(int(rand(256))) } 0 .. 1024);
 
 # create a new template and try to fill it with 8-bit data
-my $template = Krang::Template->new(filename => 'test' . time . '.tmpl');
+my $template = pkg('Template')->new(filename => 'test' . time . '.tmpl');
 isa_ok($template, 'Krang::Template');
 
 $template->content($bits);
@@ -45,11 +46,11 @@ is($template->content, $bits);
 # database works for 8bit data?
 $template->save();
 END { $template->delete; }
-($template) = Krang::Template->find(template_id => $template->template_id);
+($template) = pkg('Template')->find(template_id => $template->template_id);
 is($template->content, $bits);
 
 # dataset can handle 8bit template data?
-my $set = Krang::DataSet->new();
+my $set = pkg('DataSet')->new();
 $set->add(object => $template);
 eval { 
     $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
@@ -59,9 +60,9 @@ print STDERR $@ if $@;
 ok(-e catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
 
 # load it in and see if the same data gets through
-$set = Krang::DataSet->new(path => catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
+$set = pkg('DataSet')->new(path => catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
 $set->import_all(no_update => 0);
-($template) = Krang::Template->find(template_id => $template->template_id);
+($template) = pkg('Template')->find(template_id => $template->template_id);
 is($template->content, $bits);
 
 # try doing the above for a template containing just one of each bit,
@@ -73,19 +74,19 @@ for my $bit (map { chr($_) } (0 .. 255)) {
     print "# Testing bit " . ord($bit) . "\n";
 
     # create a new template
-    my $template = Krang::Template->new(filename => 'test' . time . ord($bit) . '.tmpl');
+    my $template = pkg('Template')->new(filename => 'test' . time . ord($bit) . '.tmpl');
     $template->content($bits);
 
     # database works for 8bit data?
     $template->save();
-    ($template) = Krang::Template->find(template_id => $template->template_id);
+    ($template) = pkg('Template')->find(template_id => $template->template_id);
     is($template->content, $bits);
     push(@templates, $template);
     push(@bits, $bits);
 }
 
 # dataset can handle the 8bit template data?
-$set = Krang::DataSet->new();
+$set = pkg('DataSet')->new();
 $set->add(object => $_) for @templates;
 eval { 
     $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
@@ -95,24 +96,24 @@ print STDERR $@ if $@;
 ok(-e catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
 
 # load it in and see if the same data gets through
-$set = Krang::DataSet->new(path => 
+$set = pkg('DataSet')->new(path => 
                            catfile(KrangRoot, 'tmp', 'eight_bit_test.kds'));
 $set->import_all(no_update => 0);
 foreach my $template (@templates) {
-    ($template) = Krang::Template->find(template_id => $template->template_id);
+    ($template) = pkg('Template')->find(template_id => $template->template_id);
     is($template->content, shift @bits);
     $template->delete;
 }
 
 # make a story, with paragraphs containing 8-bit data
-my $creator = Krang::Test::Content->new();
+my $creator = pkg('Test::Content')->new();
 my $site = $creator->create_site(preview_url => 'preview.8bit.com',
                                  publish_url => 'www.8bit.com',
                                  preview_path => '/tmp/8bit-prev',
                                  publish_path => '/tmp/8bit-pub');
 my $cat = $creator->create_category(dir    => '8bit');
 
-my $story = Krang::Story->new(class => 'article',
+my $story = pkg('Story')->new(class => 'article',
                               categories => [$cat],
                               slug => '8bits',
                               title => '8 is enough');
@@ -130,7 +131,7 @@ for my $bit (map { chr($_) } (0 .. 255)) {
 
 # save it and check it
 $story->save();
-($story) = Krang::Story->find(story_id => $story->story_id);
+($story) = pkg('Story')->find(story_id => $story->story_id);
 my @b = @bits;
 foreach my $para ($story->element->match('//paragraph')) {
     my $bit = shift @b;
@@ -138,7 +139,7 @@ foreach my $para ($story->element->match('//paragraph')) {
 }
 
 # put it in a dataset
-$set = Krang::DataSet->new();
+$set = pkg('DataSet')->new();
 $set->add(object => $story);
 eval { 
     $set->write(path => catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
@@ -148,11 +149,11 @@ print STDERR $@ if $@;
 ok(-e catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
 
 # load up the dataset and see if the story made it
-$set = Krang::DataSet->new(path => 
+$set = pkg('DataSet')->new(path => 
                            catfile(KrangRoot, 'tmp', 'eight_bit_test2.kds'));
 $set->import_all(no_update => 0);
 
-($story) = Krang::Story->find(story_id => $story->story_id);
+($story) = pkg('Story')->find(story_id => $story->story_id);
 foreach my $para ($story->element->match('//paragraph')) {
     my $bit = shift @bits;
     is($para->data, $bit, 'BIT: ' . ord($bit) . ' is ok.');
@@ -162,6 +163,6 @@ foreach my $para ($story->element->match('//paragraph')) {
 # clean up
 
 $story->delete;
-($cat) = Krang::Category->find(category_id => $cat->category_id);
+($cat) = pkg('Category')->find(category_id => $cat->category_id);
 $cat->delete;
 $creator->cleanup();
