@@ -1019,7 +1019,7 @@ sub revise {
         add_message('no_elements_deleted') unless $msg{deleted_element};
 
     } else {
-        add_message('reordered_elements');
+        add_message('reordered_elements') unless $no_return;
     }
 
     return $self->edit() unless $no_return;
