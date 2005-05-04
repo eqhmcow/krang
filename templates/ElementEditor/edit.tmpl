@@ -12,19 +12,19 @@
   function find_story(p) {
         document.forms[0].rm.value = 'save_and_find_story_link';
         document.forms[0].jump_to.value = p;
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function find_media(p) {
         document.forms[0].rm.value = 'save_and_find_media_link';
         document.forms[0].jump_to.value = p;
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function edit_children(p) {
         document.forms[0].rm.value = 'save_and_jump';
         document.forms[0].jump_to.value = p;
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   var containers = new Array();
@@ -40,19 +40,19 @@
      } else {
        document.forms[0].rm.value = 'add';
      }
-     document.forms[0].submit();
+     if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function jump_to(p) {
      document.forms[0].rm.value = 'save_and_jump';
      document.forms[0].jump_to.value = p;
-     document.forms[0].submit();
+     if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function remove_children() {
         if (confirm("Really delete sub-elements?")) {
            document.forms[0].rm.value = 'delete_children';
-           document.forms[0].submit();
+           if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
         }
   }
 
@@ -61,7 +61,7 @@
      <tmpl_if allow_delete>
         if (confirm("Really delete this element?")) {
            document.forms[0].rm.value = 'delete_element';
-           document.forms[0].submit();
+           if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
         }
      <tmpl_else>
         alert("Sorry, this element cannot be deleted.");
@@ -70,12 +70,12 @@
 
   function reorder() {
         document.forms[0].rm.value = 'reorder';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_change_bulk_edit_sep() {
         document.forms[0].rm.value = 'save_and_change_bulk_edit_sep';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function checkall(checkbox, prefix) {

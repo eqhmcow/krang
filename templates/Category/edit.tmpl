@@ -5,74 +5,74 @@
         
   function db_save() {
         document.forms[0].rm.value = 'db_save';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function db_save_and_stay() {
         document.forms[0].rm.value = 'db_save_and_stay';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function check_in() {
         document.forms[0].rm.value = 'check_in';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_jump() {
         document.forms[0].rm.value = 'save_and_jump';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_add() {
         document.forms[0].rm.value = 'save_and_add';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_go_up() {
         document.forms[0].rm.value = 'save_and_go_up';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_stay() {
         document.forms[0].rm.value = 'save_and_stay';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_view() {
         document.forms[0].rm.value = 'save_and_view';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_view_log() {
         document.forms[0].rm.value = 'save_and_view_log';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_edit_schedule() {
         document.forms[0].rm.value = 'save_and_edit_schedule';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_bulk_edit() {
         document.forms[0].rm.value = 'save_and_bulk_edit';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
 
   function save_and_leave_bulk_edit() {
         document.forms[0].rm.value = 'save_and_leave_bulk_edit';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function save_and_edit_contribs() {
         document.forms[0].rm.value = 'save_and_edit_contribs';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function remove() {
         if (confirm("Really delete this category?")) {
            document.forms[0].rm.value = 'delete';
-           document.forms[0].submit();
+           if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
         }
   }
 
@@ -81,25 +81,25 @@
         var v = document.forms[0].version.options[document.forms[0].version.selectedIndex].value;
         if (confirm("Really discard changes and revert to version " + v + "?")) {
            document.forms[0].rm.value = 'revert';
-           document.forms[0].submit();
+           if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
         }
   }
 
   function add_category() {
         document.forms[0].rm.value = 'add_category';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
   function remove_categories() {
         if (confirm("Really delete categories?")) {
            document.forms[0].rm.value = 'delete_categories';
-           document.forms[0].submit();
+           if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
         }
   }
 
   function set_primary_category() {
         document.forms[0].rm.value = 'set_primary_category';
-        document.forms[0].submit();
+        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
 </script>
