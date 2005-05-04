@@ -110,6 +110,7 @@ use Krang::ClassLoader 'ElementClass::CategoryLink';
 use Krang::ClassLoader 'ElementClass::Textarea';
 use Krang::ClassLoader 'ElementClass::Text';
 use Krang::ClassLoader 'ElementClass::Date';
+use Krang::ClassLoader 'ElementClass::XinhaEditor';
 
 =head1 INTERFACE
 

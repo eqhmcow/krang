@@ -35,6 +35,12 @@ included in the databases built by C<krang_createdb>.
 
 =back
 
+=item * WYSIWYG HTML Editor
+
+Added a new element class, Krang::ElementClass::XinhaEditor, which
+offers a WYSIWYG HTML editor based on the Xinha Javascript editor.
+[Sam]
+
 =back
 
 =head2 v1.102 - April 18th 2004
