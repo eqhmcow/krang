@@ -256,8 +256,6 @@ sub check {
           unless defined $CONF->get($dir);
     }
 
-    my $element_lib = catdir($ENV{KRANG_ROOT}, 'element_lib');
-
     # make sure each instance has the necessary directives
     foreach my $instance ($pkg->instances()) {
         my $block = $CONF->block(instance => $instance);
@@ -269,11 +267,23 @@ sub check {
         }
 
         # check to make sure that the InstanceElementSet exists.
-        unless (-d catdir($element_lib, $block->get('InstanceElementSet'))) {
-            _broked(sprintf("Instance '%s' is looking for InstanceElementSet '%s' which is not installed",
-                            $instance, $block->get('InstanceElementSet')));
-        }
 
+        # using Krang::File would be easier but this module shouldn't
+        # load any Krang:: modules since that will prevent them from
+        # being overridden in addons via class.conf
+        my $element_set = $block->get('InstanceElementSet');
+        opendir(my $dir, catdir($ENV{KRANG_ROOT}, 'addons'));
+        my @addons = map  { catdir($ENV{KRANG_ROOT}, 'addons', $_) }
+                     grep { $_ !~ /^\./ and $_ ne 'CVS' } 
+                     readdir($dir);
+
+        my $found = 0;
+        foreach my $libdir ($ENV{KRANG_ROOT}, @addons) {
+            $found = 1, last
+              if -d catdir($libdir, 'element_lib', $element_set);
+        }
+        _broked("Instance '$instance' is looking for InstanceElementSet ".
+                "'$element_set' which is not installed") unless $found;
     }
 
     # make sure KrangUser and KrangGroup exist
