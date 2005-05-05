@@ -825,13 +825,18 @@ is($change->url, 'storyzest.com/test_0/change');
     $ptest_count = pkg('Story')->find(may_edit=>1, count=>1, below_category_id=>$ptest_root_cat->category_id());
     is($ptest_count, 1, "Hide un-editable story");
 
-    # confirm find by site_id as arrayref works.
-    $ptest_count = pkg('Story')->find(site_id => [$site->site_id]);
-    is($ptest_count, 12, "find(site_id => [ids])");
-
-    # confirm find by primary_site_id as arrayref works.
-    $ptest_count = pkg('Story')->find(primary_site_id => [$site->site_id]);
-    is($ptest_count, 12, "find(primary_site_id => [ids])");
+  SKIP: {
+        skip('Element tests only work for TestSet1', 2)
+          unless (InstanceElementSet eq 'TestSet1');
+        
+        # confirm find by site_id as arrayref works.
+        $ptest_count = pkg('Story')->find(site_id => [$site->site_id]);
+        is($ptest_count, 12, "find(site_id => [ids])");
+        
+        # confirm find by primary_site_id as arrayref works.
+        $ptest_count = pkg('Story')->find(primary_site_id => [$site->site_id]);
+        is($ptest_count, 12, "find(primary_site_id => [ids])");
+    };
 
     # Delete temp story
     for (reverse @stories) {
