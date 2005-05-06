@@ -543,7 +543,7 @@ sub build_perl_module {
     if ($use_expect) {
         print "Running '$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir'...\n";
         my $command =
-          Expect->spawn("$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir");
+          Expect->spawn("$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '");
         
         # setup command to answer questions modules ask
         my @responses = qw(n n n n n y !);
@@ -584,7 +584,7 @@ sub build_perl_module {
         # do it without Expect for IO-Tty and Expect installation.
         # Fortunately they don't ask any questions.
         print "Running '$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir'...\n";
-        system("$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir") == 0 
+        system("$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '") == 0 
           or die "make failed: $?";
     }
 

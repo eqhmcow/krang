@@ -41,6 +41,11 @@ Added a new element class, Krang::ElementClass::XinhaEditor, which
 offers a WYSIWYG HTML editor based on the Xinha Javascript editor.
 [Sam]
 
+=item * Build Optimization
+
+The Krang build system no longer builds man-pages for all the modules
+it builds.  This reduces the overall build time by about 10%.  [Sam] 
+
 =back
 
 =head2 v1.102 - April 18th 2004
