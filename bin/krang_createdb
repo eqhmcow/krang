@@ -275,10 +275,11 @@ foreach my $instance (@instances) {
     system($cmd) && die "Couldn't update db_version: $?";
 
     # populate default template set, if it exists
-    my $import_file = catfile(KrangRoot, 'element_lib',
-                              InstanceElementSet, 'templates.kds');
+    my $import_file = Krang::File->find(catfile('element_lib', 
+                                                InstanceElementSet,
+                                                'templates.kds'));
 
-    if (-f $import_file) {
+    if ($import_file) {
         # perform import from templates.kds file
         $cmd = catdir(KrangRoot, 'bin', 'krang_import') . " ";
         $cmd .= "--verbose " if $verbose;
@@ -286,28 +287,32 @@ foreach my $instance (@instances) {
         $cmd .= $import_file;
         local $ENV{KRANG_INSTANCE} = $instance;
         print "Running '$cmd'\n" if $verbose > 1;
-        system($cmd) && die "krang_import failed: $?";
+        system($cmd) && die "'$cmd' failed: $?";
     }
 
-    # have Krang::ListGroups and Krang::Lists created
-    $cmd = catdir(KrangRoot, 'bin', 'krang_create_lists');
-    local $ENV{KRANG_INSTANCE} = $instance;
-    print "Running '$cmd'\n" if $verbose > 1;
-    system($cmd) && die "krang_create_lists failed: $?";
-
-    # if a lists.kds file exists, import it.
-    my $lists_import_file = catfile(KrangRoot, 'element_lib',
-                                    InstanceElementSet, 'lists.kds');
-
-    if (-f $lists_import_file) {
-        # perform import from templates.kds file
-        $cmd = catdir(KrangRoot, 'bin', 'krang_import') . " ";
-        $cmd .= "--verbose " if $verbose;
-        $cmd .= "--verbose " if $verbose > 1;
-        $cmd .= $lists_import_file;
+    # have Krang::ListGroups and Krang::Lists created if needed
+    if (Krang::File->find(catfile('element_lib', InstanceElementSet, 
+                                  'lists.conf'))) {
+        $cmd = catdir(KrangRoot, 'bin', 'krang_create_lists');
         local $ENV{KRANG_INSTANCE} = $instance;
         print "Running '$cmd'\n" if $verbose > 1;
-        system($cmd) && die "krang_import failed: $?";
+        system($cmd) && die "krang_create_lists failed: $?";
+
+        # if a lists.kds file exists, import it.
+        my $lists_import_file = Krang::File->find(catfile('element_lib',
+                                                          InstanceElementSet, 
+                                                          'lists.kds'));
+        
+        if ($lists_import_file) {
+            # perform import from templates.kds file
+            $cmd = catdir(KrangRoot, 'bin', 'krang_import') . " ";
+            $cmd .= "--verbose " if $verbose;
+            $cmd .= "--verbose " if $verbose > 1;
+            $cmd .= $lists_import_file;
+            local $ENV{KRANG_INSTANCE} = $instance;
+            print "Running '$cmd'\n" if $verbose > 1;
+            system($cmd) && die "krang_import failed: $?";
+        }
     }
 
 }
