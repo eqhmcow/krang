@@ -12,6 +12,8 @@ use Krang::ClassLoader Log => qw(debug info critical);
 use Net::FTPServer::DirHandle;
 use Krang::ClassLoader 'FTP::FileHandle';
 use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader 'Group';
+use Krang::ClassLoader 'User';
 
 # Inheritance
 our @ISA = qw(Net::FTPServer::DirHandle);
@@ -380,7 +382,7 @@ sub list {
             }
         }
     }
-
+    
     return \@results; 
 }
 
@@ -483,56 +485,198 @@ sub status {
 
 =item move()
 
-Unsupported method that always returns -1.  Category management using
-the FTP interface will probably never be supported.
+Renames a category (the analog of a directory). This method will fail
+and return -1 if the user doesn't have admin permission to manage 
+categories via FTP, or if a category with the same name already exists.
 
 =cut
 
-sub move   {
-  $_[0]->{error} = "Categories cannot be modified through the FTP interface.";
-  -1;
+sub move {
+    my ($self, $dirh, $new_dir) = @_;
+
+    # Get user login for logging purposes
+    my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+    my $login = $user->login;
+
+    # Die if user doesn't have permission
+    if (! $self->_can_manage_categories_via_ftp()) {
+        $self->{error} = "User $login does not have admin permission to managed categories via FTP.";
+        warn(__PACKAGE__ . "::move() - ERROR: " . $self->{error});
+        return -1;
+    }
+
+    # Get current category object so we can modify it
+    my $category_id = $self->{category_id};
+    my ($curr_category) = Krang::Category->find(category_id => $category_id);
+    
+    # Create new url from current one. 
+    # Replace bar in /foo/bar/ with new_dir to get /foo/new_dir/.
+    my $new_url = $curr_category->url;
+    $new_url =~ s/[^\/]+\/$//;
+    $new_url .= $new_dir . '/';
+
+    # Find dupes
+    my $dup_category;
+    if (($dup_category) = Krang::Category->find(url => $new_url)) {
+        $self->{error} = "User $login failed to rename category '".$curr_category->url."' to duplicate category '$new_url'";
+        warn(__PACKAGE__ . "::move() - ERROR: " . $self->{error});
+        return -1;
+    }
+
+    # Set current category's dir property to new directory name
+    my $old_cat = $curr_category->url; # save for logging
+    $curr_category->{dir} = $new_dir;
+
+    # Try to save current category and bomb on failure
+    eval { $curr_category->save() };
+    if ($@) {                                            
+        # bomb on any exceptions
+        warn(__PACKAGE__ . "::move() - ERROR: $@");
+        $self->{error} = $@;
+        return -1;
+    }
+
+    info(__PACKAGE__ . "::move() - User $login renamed category '$old_cat' to '" . $curr_category->url . "'");
+    return 1;
 }
 
 =item delete()
 
-Unsupported method that always returns -1.  Category management using
-the FTP interface will probably never be supported.
+Deletes a category (the analog of a directory). Will fail and return -1 
+if the user does not have admin privileges for category management via 
+FTP, or if the category deletion or save throws an exception.
 
 =cut
 
 sub delete {
-  $_[0]->{error} = "Categories cannot be modified through the FTP interface.";
-  -1;
+    my $self = shift; 
+
+    # Get user login for logging purposes
+    my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+    my $login = $user->login;
+
+    # Die if user doesn't have permission
+    if (! $self->_can_manage_categories_via_ftp()) {
+        $self->{error} = "User $login does not have admin permission to managed categories via FTP.";
+        warn(__PACKAGE__ . "::delete() - ERROR: " . $self->{error});
+        return -1;
+    }
+
+    my $category_id = $self->{category_id}; # Get category object to delete it
+
+    # We need this category object to log deletes
+    my ($curr_category) = Krang::Category->find(category_id => $category_id);
+
+    # Attempt to delete category, catch exceptions
+    eval { $curr_category->delete() };
+
+    # User can't delete root categories via FTP
+    if ($@ and ref $@ and $@->isa('Krang::Category::RootDeletion')) 
+    {
+        $self->{error} = "User $login failed to delete category ".$curr_category->url." because it's a root category. Root categories cannot be deleted via FTP.";
+        warn(__PACKAGE__. "::delete() - ERROR: " . $self->{error});
+        return -1;
+    }
+    # This category has dependents and can't be deleted 
+    elsif ($@ and ref $@ and $@->isa('Krang::Category::Dependent')) 
+    {
+        my $dep = $@->dependents;
+        $self->{error} = "User $login failed to delete category ".$curr_category->url." because it has dependents. .";
+        warn(__PACKAGE__. "::delete() - ERROR: " . $self->{error});
+        return -1
+    } 
+    # Unknown exception. Fatal.
+    elsif ($@) {
+        $self->{error} = "Unknown exception '$@' while attempting to delete category '". $curr_category->url . "': $@";
+        warn(__PACKAGE__. "::delete() - ERROR: " . $self->{error});
+        return -1;
+    }
+
+    info(__PACKAGE__ . "::delete() - User $login deleted category '" . $curr_category->url . "'");
+
+    return 1;
 }
 
 =item mkdir()
 
-Unsupported method that always returns -1.  Category management using
-the FTP interface will probably never be supported.
+Creates a category (the analog of a directory) within the current 
+category. Will fail and return -1 if the user does not have admin 
+privileges for category management via FTP, or if the category 
+creation or save fails.
 
 =cut
 
-sub mkdir  {
-  $_[0]->{error} = "Categories cannot be modified through the FTP interface.";
-  -1;
+sub mkdir {
+    my ($self, $dirname) = @_;
+
+    # Get user login for logging purposes
+    my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+    my $login = $user->login;
+
+    # Die if user doesn't have permission
+    if (! $self->_can_manage_categories_via_ftp()) {
+        $self->{error} = "User $login does not have admin permission to managed categories via FTP.";
+        warn(__PACKAGE__ . "::mkdir() - ERROR: " . $self->{error});
+        return -1;
+    }
+
+    my $category_id = $self->{category_id}; # We'll need this to create a child cat
+
+    # We need this category object to log duplicates and creates
+    my ($curr_category) = Krang::Category->find(category_id => $category_id);
+
+
+    # Create new category and bomb if that fails.
+    my $new_category;
+    eval { $new_category = Krang::Category->new( parent_id => $category_id,
+                                                 dir       => $dirname ) };
+
+    if ($@ and ref($@) and $@->isa('Krang::Category::NoEditAccess')) {
+        warn(__PACKAGE__."::mkdir - ERROR: User $login not allowed to add category to category '$category_id'");
+        $self->{error} = $@;
+        return -1;
+    } 
+    elsif ($@) { 
+         warn(__PACKAGE__ . "::mkdir() - ERROR: $@"); 
+         $self->{error} = $@;
+         return -1;
+    } # bomb on any exceptions
+
+    # Save the new category and bomb if that fails.
+    eval { $new_category->save(); };
+
+    if ($@ and ref($@) and $@->isa('Krang::Category::DuplicateURL')) {
+        warn(__PACKAGE__."::mkdir() - ERROR: Duplicate url '" . $curr_category->url . "'"); 
+        $self->{error} = $@;
+        return -1;
+    }
+    elsif ($@) { 
+        warn(__PACKAGE__ . "::mkdir() - ERROR: $@"); 
+        $self->{error} = $@;
+        return -1;
+    } # bomb on any exceptions
+
+    info(__PACKAGE__ . "::mkdir() - User $login created category '" . $new_category->url . "'");
+
+    return 1;
 }
 
 =item can_*()
 
 Returns permissions information for various activites.  can_write(),
 can_enter() and can_list() all return true since these operations are
-supported on all categories.  can_delete(), can_rename() and
-can_mkdir() all return false since these operations are never
-supported.
+supported on all categories.  can_delete, can_rename() and can_mkdir() 
+return true, and are supported, but return -1 if access is denied or if the 
+operation fails.
 
 =cut
 
 sub can_write  { 1; }
-sub can_delete { 0; }
+sub can_delete { 1; }
 sub can_enter  { 1; }
 sub can_list   { 1; }
-sub can_rename { 0; }
-sub can_mkdir  { 0; }
+sub can_rename { 1; }
+sub can_mkdir  { 1; }
 
 =back
 
@@ -546,5 +690,22 @@ L<Krang::FTP::FileHandle>
 
 =cut 
 sub dir {return shift};
+
+
+=item _can_manage_categories_via_ftp()
+
+Returns true if user has admin permissions to manage categories via 
+FTP.  This permission applies to the mkdir() and move() operations.
+
+=cut
+
+sub _can_manage_categories_via_ftp {
+    my $self = shift;
+    my %admin_perms = pkg('Group')->user_admin_permissions();
+    my $can_admin_categories = $admin_perms{'admin_categories'} || 0;
+    my $can_admin_categories_ftp = $admin_perms{'admin_categories_ftp'} || 0;
+    return ($can_admin_categories && $can_admin_categories_ftp);
+}
+
 
 1;

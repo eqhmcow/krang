@@ -62,6 +62,7 @@ use constant CHECKBOX_FIELDS => qw( may_publish
                                     admin_contribs
                                     admin_sites
                                     admin_categories
+                                    admin_categories_ftp
                                     admin_jobs
                                     admin_desks );
 use constant GROUP_PROTOTYPE => {

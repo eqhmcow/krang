@@ -12,28 +12,29 @@ DROP TABLE IF EXISTS asset_group_permission;
 /* Table for Krang groups */
 DROP TABLE IF EXISTS group_permission;  /* "group" is a reserved word. */
 CREATE TABLE group_permission (
-        group_id            SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-        name                VARCHAR(255) NOT NULL DEFAULT "",
-        may_publish         BOOL NOT NULL DEFAULT 0,
-        may_checkin_all     BOOL NOT NULL DEFAULT 0,
-        admin_users         BOOL NOT NULL DEFAULT 0,
-        admin_users_limited BOOL NOT NULL DEFAULT 0,
-        admin_groups        BOOL NOT NULL DEFAULT 0,
-        admin_contribs      BOOL NOT NULL DEFAULT 0,
-        admin_sites         BOOL NOT NULL DEFAULT 0,
-        admin_categories    BOOL NOT NULL DEFAULT 0,
-        admin_jobs          BOOL NOT NULL DEFAULT 0,
-        admin_desks         BOOL NOT NULL DEFAULT 0,
-        admin_lists         BOOL NOT NULL DEFAULT 0,
-        asset_story         ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
-        asset_media         ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
-        asset_template      ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide"
+        group_id             SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        name                 VARCHAR(255) NOT NULL DEFAULT "",
+        may_publish          BOOL NOT NULL DEFAULT 0,
+        may_checkin_all      BOOL NOT NULL DEFAULT 0,
+        admin_users          BOOL NOT NULL DEFAULT 0,
+        admin_users_limited  BOOL NOT NULL DEFAULT 0,
+        admin_groups         BOOL NOT NULL DEFAULT 0,
+        admin_contribs       BOOL NOT NULL DEFAULT 0,
+        admin_sites          BOOL NOT NULL DEFAULT 0,
+        admin_categories     BOOL NOT NULL DEFAULT 0,
+        admin_categories_ftp BOOL NOT NULL DEFAULT 0,
+        admin_jobs           BOOL NOT NULL DEFAULT 0,
+        admin_desks          BOOL NOT NULL DEFAULT 0,
+        admin_lists          BOOL NOT NULL DEFAULT 0,
+        asset_story          ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
+        asset_media          ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
+        asset_template       ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide"
 );
 
 /* set up default groups */
-INSERT INTO group_permission VALUES (1, 'Admin'  , 1,1,1,0,1,1,1,1,1,1,1, "edit", "edit", "edit");
-INSERT INTO group_permission VALUES (2, 'Editor' , 1,0,1,1,0,1,0,1,1,0,0, "edit", "edit", "read-only");
-INSERT INTO group_permission VALUES (3, 'Default', 0,0,0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
+INSERT INTO group_permission VALUES (1, 'Admin'  , 1,1,1,0,1,1,1,1,0,1,1,1, "edit", "edit", "edit");
+INSERT INTO group_permission VALUES (2, 'Editor' , 1,0,1,1,0,1,0,1,0,1,0,0, "edit", "edit", "read-only");
+INSERT INTO group_permission VALUES (3, 'Default', 0,0,0,0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
 
 
 /* Join table: desk <-> group_permission */

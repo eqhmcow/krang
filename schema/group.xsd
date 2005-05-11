@@ -30,6 +30,7 @@
 				<xs:element name="admin_contribs" type="xs:boolean"/>
 				<xs:element name="admin_sites" type="xs:boolean"/>
 				<xs:element name="admin_categories" type="xs:boolean"/>
+				<xs:element name="admin_categories_ftp" type="xs:boolean"/>
 				<xs:element name="admin_jobs" type="xs:boolean"/>
 				<xs:element name="admin_desks" type="xs:boolean"/>
                                 <xs:element name="admin_lists" type="xs:boolean"/>

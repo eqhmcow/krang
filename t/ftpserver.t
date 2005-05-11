@@ -196,6 +196,31 @@ foreach my $type (@types) {
         # back to site listings
         $ftp->cdup();
     }
-    # back into type level
-    $ftp->cdup();
+
+    # Do category management tests on test.com
+
+    $ftp->cwd('test.com');
+
+    ok($ftp->mkdir('testcat'), 'Make category testcat');
+
+    ok($ftp->rename('testcat', 'testcat2'), 'Rename category testcat to testcat2');
+
+    ok($ftp->delete('testcat2'), 'Delete category testcat2');
+
+    ok($ftp->mkdir('testcat2rename'), 'Create category testcat2rename');
+
+    #fail - try to mkdir duplicate
+    ok(! $ftp->mkdir('testcat2rename'), 'Create category testcat2rename');
+
+    ok($ftp->mkdir('testcat2rename2'), 'Create category testcat2rename2');
+
+    #fail - try to rename to duplicate
+    ok(! $ftp->rename('testcat2rename', 'testcat2rename2'), 'Rename testcat2rename to testcat2rename2');
+
+    ok($ftp->delete('testcat2rename'), 'Delete category testcat2rename');
+
+    ok($ftp->delete('testcat2rename2'), 'Delete category testcat2rename2');
+
+    $ftp->cdup;
+    $ftp->cdup;
 }

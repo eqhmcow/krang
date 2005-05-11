@@ -316,6 +316,17 @@ sub close {
     
 }
 
+# Override IO::File->print so each line is saved to the internal buffer
+# and ultimately saved when close() is called. This makes ASCII transfers
+# work because Net::FTPServer calls file->print on this handle for each 
+# line, and if we don't override print, this will be fatal.
+sub print {
+  my $self = shift;
+  my $string2print = shift;
+  $self->{buffer} .= $string2print; # add string to buffer
+}
+
+
 =head1 SEE ALSO
 
 Net:FTPServer::FileHandle
