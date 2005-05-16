@@ -5,7 +5,7 @@ use warnings;
 
 =head1 NAME
 
-Krang - loader for the Krang scripts
+Krang::Script - loader for the Krang scripts
 
 =head1 SYNOPSIS
  
@@ -17,14 +17,14 @@ This module exists to load and configure the Krang system for
 command-line scripts.
 
 The first thing the module does is attempt to become the configured
-KrangUser and KrangRoot.  If you're not already KrangUser then you'll
+KrangUser and KrangGroup.  If you're not already KrangUser then you'll
 need to be root in order to change into KrangUser.
 
 Next the module sets REMOTE_USER to the user ID of the special hidden
 'system' user.  This user has global admin access to all Krang
 instances.
 
-This module will exit with an error if you F<krang.conf> has multiple
+This module will exit with an error if your F<krang.conf> has multiple
 instances but you didn't set the KRANG_INSTANCE environment variable.
 
 If you set KRANG_PROFILE to 1 then L<Krang::Profiler> will be used.
