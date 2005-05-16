@@ -51,6 +51,24 @@ it builds.  This reduces the overall build time by about 10%.  [Sam]
 This brings Krang up-to-date with all released Apache security
 fixes. [Sam]
 
+=item *
+
+Fixed a bug where setting use_category_templates to 0 in your
+top-level class meant no additional_content_blocks will get category
+content, regardless of their individual use_category setting. [Sam]
+
+=item *
+
+Fixed a bug where if you set publish_category_per_page to 1 in your
+top-level class then any additional_content_blocks with use_category
+set to 1 would get the last page's category content. [Sam]
+
+=item *
+
+Added a new method to Krang::ElementClass::TopLevel, file_mode().
+This method may be overridden to control the mode of published
+files. [Sam]
+
 =back
 
 =head2 v1.102 - April 18th 2004

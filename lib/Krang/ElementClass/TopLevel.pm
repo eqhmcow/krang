@@ -241,6 +241,16 @@ This method is false by default.
 
 sub hidden { 0 }
 
+=item C<< $file_mode = $class->file_mode($filename) >>
+
+This method supplies the mode for a given file being published.  The
+default implementation return undef which leaves the file with the
+default mode, determined by the process umask.
+
+=cut
+
+sub file_mode {}
+
 =back
 
 =cut

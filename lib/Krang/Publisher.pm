@@ -1573,11 +1573,8 @@ sub _build_story_single_category {
             foreach my $p (@article_pages) {
                 my %tmpl_args = (page_index      => $i,
                                  last_page_index => $#article_pages);
-                my $category_output =
-                  $category_element->publish(publisher          => $self,
-                                             fill_template_args => \%tmpl_args);
-                my ($head, $foot) = split(/${\CONTENT}/, $category_output, 2);
-
+                my ($head, $foot) = $self->_cat_content($category_element,
+                                                        %tmpl_args);
                 my $output = $head . $p . $foot;
                 push @pages, $output;
 
@@ -1590,10 +1587,8 @@ sub _build_story_single_category {
                 $i++;
             }
         } else {
-            my $category_output = $category_element->publish(publisher => $self);
-
-            # break the category into header & footer.
-            ($cat_header, $cat_footer) = split(/${\CONTENT}/, $category_output, 2);
+            ($cat_header, $cat_footer) = 
+              $self->_cat_content($category_element);
 
             # assemble the components.
             foreach (@article_pages) {
@@ -1609,7 +1604,10 @@ sub _build_story_single_category {
     # write additional content to disk
     while (my $block = shift @{$self->{additional_content}}) {
         my $content = $block->{content};
-        if ($block->{use_category} && $story_element->use_category_templates()) {
+        if ($block->{use_category}) {
+            ($cat_header, $cat_footer) = 
+              $self->_cat_content($category_element)
+                unless $cat_header or $cat_footer;
             $content = $cat_header . $content . $cat_footer;
         }
         push @paths, $self->_write_page(
@@ -1623,6 +1621,14 @@ sub _build_story_single_category {
     push @paths, $self->_write_story(story => $story, pages => \@pages, path => $output_path);
 
     return @paths;
+}
+
+# gets header and footer from category publishing
+sub _cat_content {
+    my ($self, $category_element, %args) = @_;
+    my $category_output = $category_element->publish(publisher => $self, 
+                                                     %args);
+    return split(/${\CONTENT}/, $category_output, 2);
 }
 
 
@@ -1977,6 +1983,8 @@ sub _write_story {
     my $story       = $args{story} || croak __PACKAGE__ . ": missing argument 'story'";
     my $pages       = $args{pages} || croak __PACKAGE__ . ": missing argument 'pages'";
     my $output_path = $args{path}  || croak __PACKAGE__ . ": missing argument 'path'";
+    my $class       = $story->element->class;
+    my $mode_fn     = $class->can('mode') || sub {};
 
     my @created_files;
 
@@ -1989,6 +1997,12 @@ sub _write_story {
                                                  filename => $filename,
                                                  story_id => $story->story_id,
                                                  data     => $pages->[$page_num]);
+
+        # set mode if available
+        if (my $mode = $mode_fn->($class, $output_filename)) {
+            chmod($mode, $output_filename) 
+              or croak("Unable to chmod($mode, $output_filename): $!");
+        }
 
         push(@created_files, $output_filename);
     }
@@ -2027,7 +2041,7 @@ sub _write_page {
     my $output_filename = catfile($args{path}, $args{filename});
 
     my $fh = IO::File->new(">$output_filename") or
-      Krang::Publisher::FileWriteError->throw(message      => 'Cannot output story',
+      Krang::Publisher::FileWriteError->throw(message      => "Cannot output story to $output_filename: $!",
                                               story_id     => $args{story_id},
                                               destination  => $output_filename,
                                               system_error => $!);
