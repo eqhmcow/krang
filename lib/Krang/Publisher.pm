@@ -1574,7 +1574,8 @@ sub _build_story_single_category {
                 my %tmpl_args = (page_index      => $i,
                                  last_page_index => $#article_pages);
                 my ($head, $foot) = $self->_cat_content($category_element,
-                                                        %tmpl_args);
+                                                        fill_template_args => 
+                                                        \%tmpl_args);
                 my $output = $head . $p . $foot;
                 push @pages, $output;
 
