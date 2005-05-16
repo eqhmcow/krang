@@ -46,6 +46,11 @@ offers a WYSIWYG HTML editor based on the Xinha Javascript editor.
 The Krang build system no longer builds man-pages for all the modules
 it builds.  This reduces the overall build time by about 10%.  [Sam] 
 
+=item * Upgraded to Apache v1.3.33.  
+
+This brings Krang up-to-date with all released Apache security
+fixes. [Sam]
+
 =back
 
 =head2 v1.102 - April 18th 2004
