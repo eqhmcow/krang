@@ -273,7 +273,7 @@ sub log {
     my $message = $args{message};    
     croak("Required argument level parameter was not passed.")
       unless $level;
-    croak("Required argument level parameter was not passed.")
+    croak("Required argument message parameter was not passed.")
       unless $message;
 
     # check for valid log level
