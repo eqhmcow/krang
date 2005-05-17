@@ -252,9 +252,9 @@ This method takes two arguments:
 =item * level
 
 This arg must be one of the valid levels in %valid_functions or an error is
-thrown.  The valid levels in increasing severity are: debug, info, notice,
-warning, error, critical, emergency.  The integers 1-3 are also valid
-arguments; on output they are converted to their corresponding strings
+thrown.  The valid levels in increasing severity are: debug, info, critical. 
+The integers 1-3 are also valid arguments; on output they are converted to 
+their corresponding strings
 
 =item * message
 
