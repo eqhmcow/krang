@@ -1985,7 +1985,7 @@ sub _write_story {
     my $pages       = $args{pages} || croak __PACKAGE__ . ": missing argument 'pages'";
     my $output_path = $args{path}  || croak __PACKAGE__ . ": missing argument 'path'";
     my $class       = $story->element->class;
-    my $mode_fn     = $class->can('mode') || sub {};
+    my $mode_fn     = $class->can('file_mode') || sub {};
 
     my @created_files;
 
