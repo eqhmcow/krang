@@ -69,6 +69,11 @@ Added a new method to Krang::ElementClass::TopLevel, file_mode().
 This method may be overridden to control the mode of published
 files. [Sam]
 
+=item *
+
+Fixed a bug where a category linking to a sub-category via an element
+would break krang_import. [Sam]
+
 =back
 
 =head2 v1.102 - April 18th 2004

@@ -575,8 +575,10 @@ SQL
     my ($category_id) = $dbh->selectrow_array($query, undef, @params) || 0;
 
     # throw exception
-    Krang::Category::DuplicateURL->throw(message => 'Duplicate URL',
-                                         category_id => $category_id)
+    Krang::Category::DuplicateURL->throw(
+              message     =>  "Duplicate URL ($self->{url}) for category ID ".
+                              "$category_id.",
+              category_id => $category_id)
         if $category_id;
 
     # otherwise return 0
@@ -1252,6 +1254,11 @@ sub deserialize_xml {
         # get import parent_id
         $parent_id = $set->map_id(class => "Krang::Category",
                                   id    => $data->{parent_id});
+
+        # this might have caused this category to get completed via a
+        # circular link, end early if it did
+        my ($dup) = pkg('Category')->find(url => $data->{url});
+        return $dup if $dup;
     } else {
         # get site_id for root category
         $site_id = $set->map_id(class => "Krang::Site",
