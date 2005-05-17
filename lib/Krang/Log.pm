@@ -47,12 +47,12 @@ Optionally, log levels may be set for specific modules.  For example,
 if you were working on Krang::CGI::Story and didn't want to see debug
 messages from other modules:
 
-  LogLevel 2,pkg('CGI::Story')=3
+  LogLevel 2,Krang::CGI::Story=3
 
 You can also specify a regex to match against module names.  For
 example, to suppress debug messages from all CGI modules:
 
-  LogLevel 3,/^pkg('CGI')/=2
+  LogLevel 3,/^Krang::CGI/=2
 
 =item * Assertions
 
