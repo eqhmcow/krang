@@ -159,7 +159,7 @@ supporting framework to simplify development of Krang addons. [Peter]
 =item *
 
 Added C<--rebuild> option to C<bin/krang_build> allowing it to build modules
-even if there an existing Krang build there already. [Perrin]
+even if there is an existing Krang build already. [Perrin]
 
 =back
 
