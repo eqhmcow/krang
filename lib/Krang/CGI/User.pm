@@ -38,11 +38,11 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
 
 # query fields to delete
-use constant DELETE_FIELDS => qw(pkg('User::USER_RW')
-				 confirm_password
-				 new_password
-				 password
-				 current_group_ids);
+use constant DELETE_FIELDS => (pkg('User')->USER_RW, 
+                               qw(confirm_password
+                                  new_password
+                                  password
+                                  current_group_ids));
 
 ##############################
 #####  OVERRIDE METHODS  #####
@@ -524,10 +524,10 @@ sub get_user_params {
 
     # loop through User fields
     if ($q->param('errors')) {
-        $user_tmpl{$_} = $q->param($_) for pkg('User::USER_RW');
+        $user_tmpl{$_} = $q->param($_) for pkg('User')->USER_RW;
         $q->delete('errors');
     } else {
-        $user_tmpl{$_} = $user->$_ for pkg('User::USER_RW');
+        $user_tmpl{$_} = $user->$_ for pkg('User')->USER_RW;
     }
 
     delete $user_tmpl{hidden};
@@ -543,7 +543,7 @@ sub update_user {
 
     # overwrite object fields
     $user->$_($q->param($_) ? $q->param($_) : undef) 
-      for grep { $_ ne 'hidden' } pkg('User::USER_RW');
+      for grep { $_ ne 'hidden' } pkg('User')->USER_RW;
 
     # set password if we've been handed one
     my $pass = $q->param('password') || '';
@@ -617,7 +617,7 @@ sub validate_user {
             if ($_ eq 'login') {
                 $errors{"error_login\_length"} = 1
                   unless (length($val) >= 6 ||
-                          grep $val eq $_, pkg('User::SHORT_NAMES'));
+                          grep $val eq $_, pkg('User')->SHORT_NAMES);
             }
         } else {
             $errors{error_invalid_email} = 1
