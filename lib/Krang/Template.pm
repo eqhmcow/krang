@@ -331,8 +331,11 @@ sub checkin {
     Krang::Template::NoEditAccess->throw( message=>"Not allowed to check in this template", template_id=>$id )
         unless ($self->may_edit);
 
-    # make sure we have it checked out, an exception is throw otherwise
-    $self->verify_checkout();
+    # get admin permissions
+    my %admin_perms = pkg('Group')->user_admin_permissions();
+
+    # make sure we're checked out, unless we have may_checkin_all powers    
+    $self->verify_checkout() unless $admin_perms{may_checkin_all};
 
     my $query = <<SQL;
 UPDATE template

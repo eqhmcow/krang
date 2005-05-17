@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Fix bug that prevents users with "may check in all" permission from 
+checking in templates checked out by other users. [Perrin]
+
 =item * Add-On v2
 
 The add-on v2 project is complete, bringing many improvements to the
