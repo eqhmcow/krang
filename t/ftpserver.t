@@ -7,6 +7,7 @@ use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'Group';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader Session => qw(%session);
@@ -83,6 +84,14 @@ isa_ok($ftp, 'Net::FTP', 'is Net::FTP');
 
 my $password = 'krangftptest';
 my $user = $creator->create_user(password => $password);
+
+my @group_ids = $user->group_ids();
+my @groups = pkg('Group')->find( group_ids => [@group_ids] );
+
+foreach my $g (@groups) {
+   $g->admin_categories_ftp(1);
+   $g->save();
+}
 
 is( $ftp->login( $user->login, $password ), '1', 'Login Test' );
 
