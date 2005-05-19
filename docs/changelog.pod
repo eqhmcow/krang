@@ -2,7 +2,34 @@
 
 This document contains a list of changes for each release of Krang.
 
+
 =head2 v1.103 - In Development
+
+
+
+
+=head2 v1.1025 - May 20, 2005
+
+=over
+
+=item *
+
+Added ability for categories to be created or removed via the FTP
+interface.  Added new group permission, "Manage categories via FTP"
+which defaults to OFF.  Turn this on to permit your users to use
+this new feature.  Fixed ASCII-mode bug in FTP interface. [Daniel Packer]
+
+
+=item *
+
+Added new platform files for RedHat Enterprise Server 
+ES3 and ES4. [Jesse Erlbaum]
+
+=back
+
+
+
+=head2 v1.102 - May 11, 2005
 
 =over
 
