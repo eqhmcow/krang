@@ -79,6 +79,10 @@ files. [Sam]
 Fixed a bug where a category linking to a sub-category via an element
 would break krang_import. [Sam]
 
+=item *
+
+Fixed the Krang FTP server to return template sorted by filename. [Sam]
+
 =back
 
 

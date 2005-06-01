@@ -327,9 +327,10 @@ sub list {
 
             unless ($asset_perms{template} eq 'hide') {
                 my @template = pkg('Template')->find( filename_like => $like,
-                                                    category_id => undef,
-                                                    may_see => 1
-);
+                                                      category_id => undef,
+                                                      may_see => 1,
+                                                      order_by => 'filename',
+                                                    );
                 foreach my $template (@template) {
                     my $fileh = pkg('FTP::FileHandle')->new($self->{ftps},
                                                             $template,
