@@ -244,6 +244,27 @@ sub template_data {
     return join(', ', @chosen);
 }
 
+# Customized to look for array content in Nth list
+sub validate { 
+    my ($self, %arg) = @_;
+    my ($query, $element) = @arg{qw(query element)};
+    my ($param) = $self->param_names(element => $element);
+
+    # Find Nth list
+    my $i = 0;
+    while (defined($query->param($param."_".$i))) {
+        # Look for next param
+        $i++;
+    }
+    my $nth_list_param = $param . "_" . ($i-1);
+    my @values = $query->param($nth_list_param);
+
+    if ($self->{required} and (not scalar(@values))) {
+        return (0, "List $self->{display_name} requires a value.");
+    }
+    return 1;
+}
+
 sub view_data {
     my ($self, %arg) = @_;
     my $element = $arg{element};

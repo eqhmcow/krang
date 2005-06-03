@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in Krang::ElementClass::ListGroup::validate() which prevented
+lists from setting required=>1.  [Jesse Erlbaum]
+
+=item *
+
 Fix bug that prevents users with "may check in all" permission from 
 checking in templates checked out by other users. [Perrin]
 
