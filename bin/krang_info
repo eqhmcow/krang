@@ -20,7 +20,6 @@ This script returns a quick summary of the Krang installation - which
 version of Krang, the addons installed, and a full list of the
 instances.
 
-
 =head1 OPTIONS
 
 None at this time.
@@ -59,11 +58,12 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
+
 # set the instance as the first instance that exists - just so that we
 # can get Krang::Script loaded without complaints.
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
-use Krang::ClassFactory qw(pkg);
 use Krang::Script;
 
 use Krang;
