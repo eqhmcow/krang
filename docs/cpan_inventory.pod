@@ -205,6 +205,11 @@ exist without your hard work.
  Version: 2.16
  License: Perl License
 
+=item Module-Build
+
+ Version: 0.2610
+ License: Perl License
+
 =item Net-FTPServer
 
  Version: 1.115
