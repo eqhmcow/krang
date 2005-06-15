@@ -88,6 +88,10 @@ would break krang_import. [Sam]
 
 Fixed the Krang FTP server to return template sorted by filename. [Sam]
 
+=item *
+
+Added support for Module::Build to the Krang build system. [Sam]
+
 =back
 
 

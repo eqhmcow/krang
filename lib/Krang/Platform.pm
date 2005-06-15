@@ -538,12 +538,30 @@ sub build_perl_module {
          
     # Net::FTPServer needs this to not try to install /etc/ftp.conf
     local $ENV{NOCONF} = 1 if $name =~ /Net-FTPServer/;
+
+    # Module::Build or MakeMaker?
+    my ($cmd, $make_cmd);
+    if (-e 'Build.PL') {
+        $cmd =
+            "$^X Build.PL "
+          . " --install_path lib=$dest_dir"
+          . " --install_path libdoc=$trash_dir"
+          . " --install_path script=$trash_dir"
+          . " --install_path bin=$trash_dir"
+          . " --install_path bindoc=$trash_dir"
+          . " --install_path arch=$dest_dir/$Config{archname}";
+
+        $make_cmd = './Build';
+    } else {
+        $cmd = "$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '";
+        $make_cmd = 'make';
+    }
     
     # We only want the libs, not the executables or man pages
     if ($use_expect) {
-        print "Running '$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir'...\n";
+        print "Running $cmd...\n";
         my $command =
-          Expect->spawn("$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '");
+          Expect->spawn($cmd);
         
         # setup command to answer questions modules ask
         my @responses = qw(n n n n n y !);
@@ -564,11 +582,11 @@ sub build_perl_module {
           }
         $command->soft_close();
         if ( $command->exitstatus() != 0 ) {
-            die "make failed: $?";
+            die "$make_cmd failed: $?";
         }
     
-        print "Running make...\n";
-        $command = Expect->spawn('make');
+        print "Running $make_cmd...\n";
+        $command = Expect->spawn($make_cmd);
         @responses = qw(n);
         while ( my $match = $command->expect( undef, 
                                               'Mail::Sender? (y/N)', 
@@ -577,18 +595,18 @@ sub build_perl_module {
         }
         $command->soft_close();
         if ( $command->exitstatus() != 0 ) {
-            die "make failed: $?";
+            die "$make_cmd failed: $?";
         }
 
     } else {
         # do it without Expect for IO-Tty and Expect installation.
         # Fortunately they don't ask any questions.
-        print "Running '$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir'...\n";
-        system("$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '") == 0 
-          or die "make failed: $?";
+        print "Running $cmd...\n";
+        system($cmd) == 0
+          or die "$cmd failed: $?";
     }
 
-    system('make install') == 0 or die "make install failed: $?";   
+    system("$make_cmd install") == 0 or die "$make_cmd install failed: $?";
 }
 
 

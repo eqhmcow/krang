@@ -188,7 +188,7 @@ foreach my $distribution qw(DBD-mysql Image-BioChrome) {
 
 # shuffle Expect, IO-Tty, Test-Harness and Test-Simple to the front
 # since they're needed by later build steps
-foreach my $distribution qw(Test-Simple Test-Harness Expect IO-Tty) {
+foreach my $distribution qw(Module-Build Test-Simple Test-Harness Expect IO-Tty) {
     my ($file) = grep( /$distribution/, @files );
     @files = grep( !/$distribution/, @files );
     unshift @files, $file if $file;
