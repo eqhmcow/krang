@@ -1,0 +1,244 @@
+=head1 Krang Addon HOWTO 1
+
+=head2 Adding Custom Navigation Entries
+
+The new Krang addon system is a powerful tool, but it can be hard to
+grasp how all the pieces work together.  This HOWTO describes how I
+solved a specific problem using the addon system.
+
+=head2 The Problem
+
+My latest project involves creating new applications which will be
+accessed via the Krang user interface.  As such these new applications
+need entries in the navigation bar on the left-hand side of the Krang
+UI.  I needed to add a new section called Reports between the existing
+Template and Admin sections.  Example 1 shows the final results.
+
+=for html <div style="background-color: #FFF; border-left:
+grey 1px dotted; padding-left: 20px"><img
+src="addon_howto1_example1.png" width="161" height="282"><br><i>Example 1: Finished Left Navigation</i></div>
+
+In addition to the new links, I wanted to be able to control access to
+each report individually using Krang's existing group system.  If a
+user didn't have access to any reports then I wanted the whole Reports
+section to disappear.
+
+=head2 Creating the Basic Addon
+
+To get started I created a new addon directory under C<addons/> using
+C<krang_addon_framework>.  I called my addon C<arcos> since that's the
+code-name for my project:
+
+  $ cd $KRANG_ROOT
+  $ bin/krang_addon_framework --name arcos
+
+This produces a basic C<krang_addon.conf> in the new C<addons/arcos/>
+directory.   Here it is, minus comments:
+
+  Name Foo
+  Version 1.00
+
+=head2 Adding Entries to Krang's Navigation
+
+To add new navigation entries, I defined a NavigationHandler in my
+C<krang_addon.conf>:
+
+   NavigationHandler Arcos::Krang::NavigationHandler
+
+This names a Perl module which will add nodes to the navigation tree.
+In this case I named it Arcos::Krang::Navigation and placed it in
+C<addons/arcos/lib/Arcos/Krang/Navigation.pm>.
+
+A Krang navigation handler module must define a single method called
+C<navigation_handler()>.  The method receives the root node of the
+navigation tree (a L<Krang::NavigationNode> object) as a parameter.
+You can write code to add new nodes or rearrange the existing nodes.
+
+I started with this code, which adds a new section and the four links
+within:
+
+  sub navigation_handler {
+      my ($pkg, $root) = @_;
+      
+      # setup the reports section
+      my $report_node = $root->new_daughter();
+      $report_node->name('Reports');
+      
+      # add links to report scripts
+      my $sub = $report_node->new_daughter();
+      $sub->name('Contributions');
+      $sub->link('contribution_report.pl');
+      
+      $sub = $report_node->new_daughter();
+      $sub->name('Petitions');
+      $sub->link('petition_report.pl');
+      
+      $sub = $report_node->new_daughter();
+      $sub->name('Volunteers');
+      $sub->link('volunteer_report.pl');
+      
+      $sub = $report_node->new_daughter();
+      $sub->name('Web Usage');
+      $sub->link('webusage_report.pl');
+  }
+
+This was sufficient to render a new navigation section called Reports
+containing four links to the different report types.  However, as you
+can see from Example 1, I wanted it between Templates and Admin.  To
+do that I added this code:
+
+    # shuffle Reports above Admin
+    my @daughters = $root->daughters();
+    ($daughters[-1], $daughters[-2]) = ($daughters[-2], $daughters[-1]);
+    $root->set_daughters(@daughters);
+
+It takes the two bottom nodes in the navigation tree and swaps them,
+putting Reports above Admin.
+
+=head2 Adding Permissions
+
+Now that the navigation entries are there I wanted to be able to hide
+them from some users.  I could have written a completely separate
+application for this purpose but it seemed easier to piggy-back on the
+existing groups interface.  The end result is shown in Example 2.
+
+=for html <div style="background-color: #FFF; border-left:
+grey 1px dotted; padding-left: 20px"><img
+src="addon_howto1_example2.png" width="369" height="388"><br><i>Example 2: Finished Report Permissions Editor</i></div>
+
+=head2 Customizing the Database
+
+The first step to reaching this goal was to add a new SQL table to
+hold these permissions settings.  I created a file called
+C<addons/arcos/sql/arcos_group.sql> containing:
+
+  /* Table for Arcos extensions to Krang groups */
+  DROP TABLE IF EXISTS arcos_group_permission;
+  CREATE TABLE arcos_group_permission (
+          group_id             SMALLINT UNSIGNED NOT NULL PRIMARY KEY,
+          may_view_contribution_reports BOOL NOT NULL DEFAULT 0,
+          may_view_petition_reports     BOOL NOT NULL DEFAULT 0,
+          may_view_volunteer_reports    BOOL NOT NULL DEFAULT 0,
+          may_view_web_usage_reports    BOOL NOT NULL DEFAULT 0
+  );
+  
+  /* set up default group permissions */
+  INSERT INTO arcos_group_permission VALUES (1, 1,1,1,1); /* admin   */
+  INSERT INTO arcos_group_permission VALUES (2, 1,1,1,1); /* editor  */
+  INSERT INTO arcos_group_permission VALUES (3, 0,0,0,0); /* default */
+
+By placing this SQL in an C<sql/> sub-directory it will be executed
+when a Krang database is created with C<krang_createdb>.
+
+=head2 Customizing Krang::Group
+
+Every Krang database table needs a model class.  For Krang's group
+tables that class is Krang::Group.  In order to extend Krang::Group I
+registered my own class as an override, by creating a file called
+C<addons/arcos/conf/class.conf> with the following contents:
+
+  SetClass Group Arcos::Krang::Group
+
+Now any code which would normally use Krang::Group will use
+Arcos::Krang::Group instead.  This is made possible by the new calling
+convention for class methods:
+
+  use Krang::ClassFactory qw(pkg);
+  @groups = pkg('Group')->find();
+
+The C<SetClass> directive above causes C<pkg()> to return
+"Arcos::Krang::Group" now instead of the usual "Krang::Group".
+
+Arcos::Krang::Group begins:
+
+  package Arcos::Krang::Group;
+  use strict;
+  use warnings;
+  
+  use base 'Krang::Group';
+
+By inheriting from Krang::Group, Arcos::Krang::Group is free to add
+new functionality while keeping the existing system running as usual.
+
+My new sub-class of Krang::Group adds a new method,
+user_reports_permissions(), which returns a hash representing a user's
+reports permissions.  I also overrode save(), init(), find() and
+delete() to account for loading, saving and deleting the new fields.
+There was nothing complicated about this work - just the usual Krang
+database programming techniques.
+
+=head2 Customizing Krang::CGI::Group
+
+To add the new fields to the group user-interface I first created a
+customized version of the Krang::CGI::Group editing interface
+template, C<templates/Group/edit_view.tmpl>.  I did this by copying it
+into my addon as C<addons/arcos/templates/Group/edit_view.tmpl> and
+editing it there.
+
+To add code to drive the new templates I created a custom sub-class of
+Krang::CGI::Group called Arcos::Krang::CGI::Group.  I registered it in
+C<addons/arcos/conf/class.conf> just like Arcos::Krang::Group:
+
+  SetClass CGI::Group Arcos::Krang::CGI::Group
+
+I then overrode two methods, get_group_tmpl() and
+update_group_from_query() to operate on the new fields.  As with
+Arcos::Krang::Group no special techniques were needed, just Krang
+interface programming as usual.
+
+=head2 Tying Permissions into Navigation
+
+Now that Krang groups have custom reporting permissions it's time to
+get them working.  The Krang navigation tree has support for
+permissions built in.  For example, to set permissions on the
+Contribution Report link I added the last line to navigation_handler:
+
+    # add links to report scripts
+    my $sub = $report_node->new_daughter();
+    $sub->name('Contributions');
+    $sub->link('contribution_report.pl');
+    $sub->condition(sub { _may_view('contribution_reports') });
+
+This causes Krang to call the _may_view() subroutine to determine
+whether to show the Contribution Reports link in the navigation.  The
+_may_view() routine is a helper function which uses the new
+user_reports_permissions() method:
+
+    # helper function to determine group perms
+    sub _may_view {
+        my $field = shift;
+        my %perms = pkg('Group')->user_reports_permissions();
+        return $perms{"may_view_$field"};
+    }
+
+Now a user must be a member of a group with
+"may_view_contribution_reports" in order to see this link in the
+navigation.
+
+=head2 Future Tasks
+
+In the future I'll add a C<postinstallscript> to my
+C<krang_addon.conf> to load the new database tables when my addon is
+installed.  Presently the database must be re-built when this happens.
+
+=head2 Resources
+
+=over
+
+=item * HREF[Building a Krang Add-On|add_on.html] - How to build a Krang add-on
+
+=item * HREF[Add-On Installation|addon_install.html] - how to install Krang add-ons
+
+=item * L<Krang::Navigation>
+
+=item * L<Krang::NavigationNode>
+
+=item * L<Krang::ClassFactory>
+
+=item * L<Krang::ClassLoader>
+
+=item * L<Krang::Group>
+
+=item * L<Krang::CGI::Group>
+
+=back

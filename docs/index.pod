@@ -99,6 +99,10 @@ HREF[Building a Krang Add-On|add_on.html] - How to build a Krang add-on
 
 =item *
 
+HREF[Add-On HOWTO 1|addon_howto1.html] - Adding Custom Navigation Entries
+
+=item *
+
 HREF[Skins|skins.html] - How to create a Krang skin
 
 =item *

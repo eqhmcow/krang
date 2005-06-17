@@ -10,7 +10,7 @@ HTML = changelog.html changes.html coding.html goals.html porting.html \
        add_on.html addon_install.html upgrade_system.html ops_backup.html \
        skins.html cpan_inventory.html scheduler.html build_tech_spec.html \
        running.html building_element_library.html krang_on_desktop.html \
-       todo.html
+       todo.html addon_howto1.html
 
 all   : $(HTML) modules.html scripts.html rm_modules rm_scripts
 
