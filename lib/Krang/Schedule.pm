@@ -22,14 +22,14 @@ use Time::Seconds;
 
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use Krang::ClassLoader DB => qw(dbh);
-use Krang::ClassLoader Log => qw/ASSERT assert critical debug info/;
+use Krang::ClassLoader Log => qw(ASSERT assert critical debug info);
 
 use Krang::ClassLoader 'Alert';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Template';
-use Krang::Cache;
+use Krang::ClassLoader 'Cache';
 
 
 
@@ -158,15 +158,12 @@ use constant SCHEDULE_RW_NOTIFY => qw(
                                       minute
                                      );
 
-# valid actions
-use constant ACTIONS => qw(expire publish send clean);
 # valid object_types
 use constant TYPES => qw(alert media story tmp session analyze);
 
 
 # Lexicals
 ###########
-my %actions = map {$_, 1} ACTIONS;
 my %types = map {$_, 1} TYPES;
 my %repeat2seconds = (daily => ONE_DAY,
                       hourly => ONE_HOUR,
@@ -195,7 +192,7 @@ use Krang::ClassLoader MethodMaker =>
 
 =over
 
-=item C<< $sched = Krang::Schedule->new() >>
+=item C<< $sched = pkg('Schedule')->new() >>
 
 Create a new schedule object.  The following keys are required:
 
@@ -313,8 +310,6 @@ sub init {
 
     # validate action field.
     $action = lc $args{action};
-    croak(__PACKAGE__ . "->init(): '$action' is not a valid 'action'.")
-      unless (exists $actions{$action});
     $args{action}   = $action;
     $self->{action} = $action;
 
@@ -501,207 +496,6 @@ sub determine_priority {
     return $priority;
 }
 
-
-
-=item C<< $schedule->execute() >>
-
-Runs the task assigned to the C<$schedule> object.  It is assumed that
-C<execute()> is not being called unless it's appropriate for the job
-to run at the current time - there is no timestamp sanity checking
-going on here.
-
-When completed, it will update it's own C<next_run> status as
-applicable.
-
-Runtime errors (e.g. croaks) are not trapped here - they will be
-propegated up to the next level.
-
-B<NOTE>: C<publish> and C<expire> actions require the affected story
-or media object to be checked in, or the task will return with an
-error message.
-
-=cut
-
-sub execute {
-
-    my $self = shift;
-
-    if ($self->{action} eq 'publish' ||
-        $self->{action} eq 'expire'  ||
-        $self->{action} eq 'send') {
-
-        # check to make sure the object exists.
-        if ($self->_object_exists) {
-            if (($self->{action} ne 'send') and $self->_object_checked_out) {
-                info(sprintf("%s->execute(): Cannot run Schedule id '%i'.  %s id='%i' is checked out.",
-                             __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
-                return;
-            }
-        } else {
-            info(sprintf("%s->execute(): Cannot run schedule id '%i'. %s id='%i' cannot be found.  Deleting scheduled job.",
-                         __PACKAGE__, $self->schedule_id, $self->object_type, $self->object_id));
-            $self->delete();
-            return;
-        }
-
-
-
-
-        if ($self->{action} eq 'publish') {
-            $self->_publish();
-        }
-
-        elsif ($self->{action} eq 'expire') {
-            $self->_expire();
-        }
-        elsif ($self->{action} eq 'send') {
-            $self->_send();
-        }
-    }
-
-    elsif ($self->{action} eq 'clean') {
-        if ($self->{object_type} eq 'tmp') {
-            $self->_clean_tmp();
-        }
-        elsif ($self->{object_type} eq 'session') {
-            $self->_expire_sessions();
-        } 
-        elsif ($self->{object_type} eq 'analyze') {
-            $self->_analyze_db();
-        }
-        else {
-            my $msg = sprintf("%s->execute('clean'): unknown object '%s'", __PACKAGE__, $self->{object_type});
-            die($msg);
-        }
-    }
-
-    else {
-        my $msg = sprintf("%s->execute(): unknown action '%s'", __PACKAGE__, $self->{action});
-        die($msg);
-    }
-
-    if ($self->{repeat} eq 'never') {
-        # never to be run again.  delete yourself.
-        $self->delete();
-    } else {
-        # set last_run, update next_run, save.
-        $self->{last_run} = $self->{next_run};
-        $self->{next_run} = $self->_calc_next_run(skip_match => 1);
-        $self->save();
-    }
-
-}
-
-
-
-
-#
-# _publish()
-#
-# Takes the story or media object pointed to, and attempts to publish it.
-#
-# Will return if successful.  It is assumed that failures in the publish process will
-# cause things to croak() or die().  If trapped, a Schedule-log entry will be made,
-# and the error will be propegated further.
-#
-
-sub _publish {
-
-    my $self = shift;
-
-    my $publisher = new pkg('Publisher');
-
-    my $object = $self->{object};
-    my $err;
-
-    if ($object->isa('Krang::Media')) {
-        eval {
-            $publisher->publish_media(media => $object);
-        };
-
-        if ($err = $@) {
-            my $msg = sprintf("%s->_publish(): error publishing Media ID=%i: %s",
-                              __PACKAGE__, $object->media_id, $err);
-            die $msg;
-        }
-    }
-
-    elsif ($object->isa('Krang::Story')) {
-        # check to make sure scheduled publish isn't disabled
-        unless ($object->element->publish_check) {
-            debug(sprintf("%s->_publish(): Story id '%i' has scheduled publish disabled.  Skipping.",
-                          __PACKAGE__, $object->story_id()));
-            return;
-        }
-
-        eval {
-            $publisher->publish_story(story => $object, version_check => 0);
-        };
-
-        if (my $err = $@) {
-            my $msg = sprintf("%s->_publish(): error publishing Story ID=%i: ERR=%s",
-                              __PACKAGE__, $object->story_id, (ref $err ? ref $err : $err));
-            die $msg;
-        }
-
-    }
-}
-
-
-
-#
-# _expire()
-#
-# Runs an expiration job on object_type-object_id.
-#
-# Will throw a croak() if it cannot find the appropriate object, or
-# will propegate errors thrown by the object itself.
-#
-
-sub _expire {
-
-    my $self = shift;
-    my $obj = $self->{object};
-
-    $obj->delete;
-    debug(sprintf("%s->_expire(): Deleted %s id '%i'.",
-                 __PACKAGE__, $self->{object_type}, $self->{object_id}));
-
-}
-
-
-#
-# _send()
-#
-# Handles the sending of a Krang::Alert.
-#
-# Will throw any errors propegated by the Krang::Alert system.
-#
-
-sub _send {
-    my $self = shift;
-
-    my $type    = $self->{object_type};
-    my $id      = $self->{object_id};
-    my $context = $self->{context};
-    
-    eval {
-        pkg('Alert')->send(alert_id => $id, @$context);
-    };
-
-    if (my $err = $@) {
-        # log the error
-        my $msg = __PACKAGE__ . "->_send(): Attempt to send alert failed: $err";
-        die $msg;
-    }
-
-    # done.
-
-}
-
-
-
-
 #
 # The all-important date calculating sub.
 #
@@ -820,168 +614,6 @@ sub delete {
 
     # return 1 by default for testing
     return 1;
-}
-
-
-
-
-
-
-
-#
-#
-# @deletions = Krang::Schedule->_clean_tmp( max_age => $max_age_hrs )
-# @deletions = Krang::Schedule->_clean_tmp()
-#
-# Class method that will remove all files in $KRANG_ROOT/tmp older than
-# $max_age_in_hours.  If no parameter is passed file and directories older than
-# 24 hours will be removed.  This method will croak if it
-# is unable to delete a file or directory.  Returns a list of files and
-# directories deleted.
-#
-#
-sub _clean_tmp {
-
-    my $self = shift;
-    my %args = @_;
-    my $max_age = ( exists ($args{max_age}) ) ? $args{max_age} : 24;
-
-    my (@dirs, @files);
-
-    my $date = ( exists($self->{_test_date}) ) ? $self->{_test_date} : localtime;
-    $date = $date - ($max_age * ONE_HOUR);
-
-    debug(__PACKAGE__ . "->_clean_tmp(): looking to delete files in tmp/ older than " . $date->mysql_datetime);
-
-    # build a list of files to delete
-    opendir(DIR, $tmp_path) || croak(__PACKAGE__ . "->_clean_tmp(): Can't open tmpdir: $!");
-    for (readdir DIR) {
-        # skip the protected files
-        next if $_ =~ /(CVS|\.{1,2}|\.(conf|cvsignore|pid))$/;
-
-        # skip them if they're too young
-        my $file = catfile($tmp_path, $_);
-        my $mtime = Time::Piece->new((stat($file))[9]);
-        next unless ($mtime - $date) <= 0;
-
-        if (-f $file) {
-            push @files, $file;
-        } elsif (-d $file) {
-            push @dirs, $file;
-        }
-    }
-    closedir(DIR);
-
-    # handle warnings generated by File::Path
-    local $SIG{__WARN__} = sub {debug(__PACKAGE__ . "->clean_tmp(): " . $_[0]);};
-
-    # list of files deleted
-    my @deletions;
-
-    # delete files
-    for (@files) {
-        unless (unlink $_) {
-            critical(__PACKAGE__ . "->_clean_tmp(): Unable to delete '$_': $!");
-        } else {
-            debug(__PACKAGE__ . "->_clean_tmp(): deleted file '$_'");
-            push @deletions, $_;
-        }
-    }
-
-    # delete directories
-    for my $dir (@dirs) {
-        File::Find::find(\&_delete_files, $dir);
-
-        debug(__PACKAGE__ . "->_clean_tmp(): deleting dir '$dir'");
-        rmtree([$dir], 0, 1);
-        if (-e $dir) {
-            critical("Unable to delete '$dir'.");
-        } else {
-            debug(__PACKAGE__ . "->_clean_tmp(): deleted dir '$dir'");
-            push @deletions, $dir;
-        }
-    }
-
-    return @deletions;
-}
-
-
-
-#
-# subroutine to be passed to File::Find::find to delete files
-# before passing the remaining directory tree to rmtree.
-#
-sub _delete_files {
-
-    my $file = $File::Find::name;
-
-    # skip if it's not a file.
-    return unless -f $file;
-
-    debug(__PACKAGE__ . "->_delete_files() - unlinking '$file'");
-
-    unlink $file;
-
-}
-
-
-
-#
-# @ids = Krang::Schedule->expire_sessions( max_age => $max_age_hrs )
-#
-# @ids = Krang::Schedule->expire_sessions()
-#
-# Class method that deletes sessions from the sessions table whose
-# 'last_modified' field contains a value less than 'now() - INTERVAL
-# $max_age_in_hours HOUR'.  Returns a list of the session ids that have been
-# expired.
-#
-# If max_age is not supplied, defaults to 24 hours.
-#
-
-sub _expire_sessions {
-    my $self = shift;
-    my %args = @_;
-    my $max_age = exists $args{max_age} ? $args{max_age} : 24;
-    my $dbh = dbh();
-    my ($i, @ids, $query);
-
-    # get deletion candidates
-    $query = <<SQL;
-SELECT id
-FROM sessions
-WHERE last_modified < now() - INTERVAL ? HOUR
-SQL
-    my $row_refs = $dbh->selectall_arrayref($query, undef, $max_age);
-    for $i(0..$#{@$row_refs}) {
-        push @ids, $row_refs->[$i][0];
-    }
-
-    # destroy them
-    if (@ids) {
-        $query = "DELETE FROM sessions WHERE " .
-          join(" OR ", map {"id = ?"} @ids);
-        $dbh->do($query, undef, @ids);
-
-        # log destruction
-        debug(__PACKAGE__ . "->_expire_sessions(): Deleted the following Expired Session IDs: (" . 
-             join(" ", @ids) . ")");
-
-        return @ids;
-    }
-}
-
-#
-# _analyze_db() - analyzes all database tables for maximum performance
-#
-sub _analyze_db {
-    my $dbh = dbh();
-    
-    my $tables = $dbh->selectcol_arrayref('show tables');
-    foreach my $table (@$tables) {
-        debug("Analyzing table $table.");
-        $dbh->do("ANALYZE TABLE $table");
-    }
 }
 
 =item @schedules = Krang::Schedule->find(...)
@@ -1174,7 +806,14 @@ sub find {
         if ($single_column) {
             push @schedules, $row;
         } else {
-            push @schedules, bless({%$row}, $self);
+            my $class = pkg('Schedule::Action::' . $row->{action});
+            eval "use $class";
+
+            if ($@) {
+                croak "Error in find() method\n@_, $@";
+            }
+
+            push @schedules, bless({%$row}, $class);
         }
     }
 
