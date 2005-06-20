@@ -150,6 +150,20 @@ krang_addon.conf would contain:
 For more about how navigation works in Krang see L<Krang::Navigation>
 and L<Krang::NavigationNode>.
 
+=item * C<InitHandler> I<Module>
+
+This configuration directive names a module which will be called
+during initialization of Krang.  It must define a method called
+C<init_handler()>.  A common use for this handler is to setup
+additional library paths or environment variables.
+
+Configured init-handlers are called during compilation of the
+following modules
+
+  Krang::Script
+  Krang::Handler
+  Krang::CGI (in CGI_MODE only)
+
 =item * C<Priority> N
 
 The C<Priority> directive allows you to control the order in which
