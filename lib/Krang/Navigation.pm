@@ -126,14 +126,7 @@ sub initialize_tree {
     my $pkg = shift;
     my $tree = $pkg->default_tree();
 
-    # mix in navigation from add-ons with NavigationHandlers
-    foreach my $addon (pkg('AddOn')->find()) {
-        my $nav_handler = $addon->conf->get('NavigationHandler')
-          or next;
-        eval "require $nav_handler";
-        croak("Failed to load NavigationHandler class $nav_handler for the " . $addon->name . " addon: $@") if $@;
-        $nav_handler->navigation_handler($tree);
-    }
+    pkg('AddOn')->call_handler(NavigationHandler => $tree);
 
     return $tree;
 }

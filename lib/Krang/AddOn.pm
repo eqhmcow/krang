@@ -27,6 +27,9 @@ Krang::AddOn - module to manage Krang add-ons
   # remove an addon
   $addon->uninstall(verbose => 0);
 
+  # call all registered handlers of a particular name
+  pkg('AddOn')->call_handler($name, @args);
+
 =head1 DESCRIPTION
 
 This module is responsible for managing Krang addons and their
@@ -79,6 +82,13 @@ Find an addon based on name.
 
 =back
 
+=item C<< pkg('AddOn')->call_handler($name, @args) >>
+
+Call all handlers named $name passing @args.  For example, the
+NavigationHandler is triggered using:
+
+   pkg('AddOn')->call_handler("NavigationHandler", $tree);
+
 =back
 
 =cut
@@ -115,6 +125,24 @@ sub init {
 
     $self->hash_init(%args);
     return $self;
+}
+
+# trigger registered handlers
+sub call_handler {
+    my ($pkg, $name, @args) = @_;
+    
+    # turn NavigationHandler into navigation_handler
+    (my $method_name = $name) =~ 
+      s!^([A-Z][a-z]+)([A-Z][a-z]+)!lc($1) . "_" . lc($2)!e;
+    
+    # mix in navigation from add-ons with NavigationHandlers
+    foreach my $addon (pkg('AddOn')->find()) {
+        my $handler = $addon->conf->get($name) or next;
+        eval "require $handler";
+        croak("Failed to load $name handler class $handler for the " . $addon->name . " addon: $@") if $@;
+        $handler->$method_name(@args);
+    }
+
 }
 
 # remove an addon
@@ -394,6 +422,7 @@ sub _addon_conf {
                                             requireaddons postinstallscript 
                                             uninstallscript
                                             navigationhandler
+                                            inithandler
                                             priority
                                           )],
                    valid_blocks     => []);
