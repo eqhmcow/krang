@@ -47,6 +47,10 @@ use Krang::ClassLoader Log => qw(debug critical);
 # use Krang::Session qw(%session);
 use Carp qw(croak);
 use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'AddOn';
+
+# trigger init handler now
+BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
 BEGIN {
     # make sure we are KrangUser/KrangGroup

@@ -1,10 +1,16 @@
 package Krang::CGI;
-use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'AddOn';
+
 # pull in Krang::lib when not running in mod_perl
 BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
+
+# trigger InitHandler when not in mod_perl
+BEGIN { $ENV{MOD_PERL} or pkg('AddOn')->call_handler('InitHandler') }
+
 
 =head1 NAME
 

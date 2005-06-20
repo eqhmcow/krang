@@ -70,23 +70,26 @@ None.
 
 =cut
 
-use Krang::ClassLoader 'ErrorHandler';
-use Krang;
-use Krang::ClassLoader 'CGI::Login';
-use Apache;
 use Apache::Constants qw(:response);
 use Apache::Cookie;
-use File::Spec::Functions qw(splitdir rel2abs catdir catfile);
-use Carp qw(croak);
-use Krang::ClassLoader Conf => qw(KrangRoot);
-use Krang::ClassLoader 'HTMLTemplate';
-use Digest::MD5 qw(md5_hex md5);
-use Krang::ClassLoader Log => qw(critical info debug);
-use CGI ();
-use HTTP::BrowserDetect;
 use Apache::SizeLimit;
+use Apache;
+use CGI ();
+use Carp qw(croak);
+use Digest::MD5 qw(md5_hex md5);
+use File::Spec::Functions qw(splitdir rel2abs catdir catfile);
+use HTTP::BrowserDetect;
 use Krang::Cache;
+use Krang::ClassLoader 'CGI::Login';
+use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
+use Krang::ClassLoader 'HTMLTemplate';
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Log => qw(critical info debug);
+use Krang::ClassLoader 'AddOn';
+use Krang;
+
+BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 
 # Login app name
 use constant LOGIN_APP => 'login.pl';
