@@ -82,6 +82,11 @@ my $publish_path = '/tmp/krangschedtest_publish';
 my @schedules;
 
 use_ok(pkg('Schedule'));
+use_ok(pkg('Schedule::Action'));
+use_ok(pkg('Schedule::Action::publish'));
+use_ok(pkg('Schedule::Action::send'));
+use_ok(pkg('Schedule::Action::clean'));
+use_ok(pkg('Schedule::Action::expire'));
 
 
 # create story and media object.
@@ -133,7 +138,7 @@ ok($analyze, 'db analyzer is present');
 my $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 my $publish_date = Time::Piece->from_mysql_datetime('2003-03-03 00:00:00');
 
-my $sched = pkg('Schedule')->new(
+my $sched = pkg('Schedule::Action::publish')->new(
                                  action      => 'publish',
                                  object_id   => $story->story_id(),
                                  object_type => 'story',
@@ -143,6 +148,8 @@ my $sched = pkg('Schedule')->new(
                                 );
 
 isa_ok($sched, 'Krang::Schedule');
+isa_ok($sched, 'Krang::Schedule::Action');
+isa_ok($sched, 'Krang::Schedule::Action::publish');
 
 # save test
 isa_ok($sched->save(), 'Krang::Schedule');
@@ -175,7 +182,7 @@ $@ ? pass('Krang::Schedule->repeat()') : fail('Krang::Schedule->repeat()');
 #
 
 # Create new story publish job - repeats weekly - Mondays at noon.
-$sched = pkg('Schedule')->new(
+$sched = pkg('Schedule::Action::publish')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -187,6 +194,8 @@ $sched = pkg('Schedule')->new(
                              );
 
 isa_ok($sched, 'Krang::Schedule');
+isa_ok($sched, 'Krang::Schedule::Action');
+isa_ok($sched, 'Krang::Schedule::Action::publish');
 
 # save test
 isa_ok($sched->save(), 'Krang::Schedule');
@@ -293,7 +302,7 @@ _check_calc_next_run($sched, '2003-03-01 00:31:00', '2003-03-01 01:00:00');
 $date = Time::Piece->from_mysql_datetime('2003-03-01 12:00:00');
 
 # Create new story publish job - repeats hourly.
-$sched = pkg('Schedule')->new(
+$sched = pkg('Schedule::Action::publish')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -307,6 +316,8 @@ $sched = pkg('Schedule')->new(
 is($sched->next_run(), $date->mysql_datetime, 'Krang::Schedule->next_run()');
 
 isa_ok($sched, 'Krang::Schedule');
+isa_ok($sched, 'Krang::Schedule::Action');
+isa_ok($sched, 'Krang::Schedule::Action::publish');
 
 # save test
 isa_ok($sched->save(), 'Krang::Schedule');
@@ -355,7 +366,7 @@ _check_calc_next_run($sched, '2003-03-09 23:59:00', '2003-03-10 00:00:00');
 # Priority tests
 #
 
-$sched = pkg('Schedule')->new(
+$sched = pkg('Schedule::Action::publish')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -414,7 +425,7 @@ is($sched->priority(), 2, 'Krang::Schedule->priority()');
 # Context Test
 #
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
-$sched = pkg('Schedule')->new(
+$sched = pkg('Schedule::Action::publish')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -452,7 +463,7 @@ is($context2{version}, $context1{version}, 'Krang::Schedule->context()');
 # execute should fail.
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 
-$sched = pkg('Schedule')->new(
+$sched = pkg('Schedule::Action::publish')->new(
                               action      => 'publish',
                               object_id   => 16384,
                               object_type => 'story',
@@ -472,7 +483,7 @@ is($dead_sched_count, 0, 'Krang::Schedule(bogus id)');
 
 
 # create a schedule object to publish a story hourly.
-$sched = pkg('Schedule')->new(
+$sched = pkg('Schedule::Action::publish')->new(
                               action      => 'publish',
                               object_id   => $story->story_id(),
                               object_type => 'story',
@@ -487,13 +498,13 @@ push @schedules, $sched;
 # run the job.
 eval { $sched->execute(); };
 
-$@ ? fail('Krang::Schedule->execute()') : pass('Krang::Schedule->execute()');
+$@ ? fail('Krang::Schedule::Action::publish->execute()') : pass('Krang::Schedule::Action::publish->execute()');
 
 # check to see if the stories exist
 my @story_paths = $creator->publish_paths(story => $story);
 
 foreach my $p (@story_paths) {
-    ok(-e $p, 'Krang::Schedule->execute(publish)');
+    ok(-e $p, 'Krang::Schedule::Action::publish->execute(publish)');
 }
 
 # check last_run and next_run - should be 2003-03-01 01:00:00.
@@ -509,7 +520,7 @@ is($sched->next_run(), $date->mysql_datetime, 'Krang::Schedule->next_run()');
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 
 my $story_id = $story->story_id();
-$sched = pkg('Schedule')->new(
+$sched = pkg('Schedule::Action::expire')->new(
                               action      => 'expire',
                               object_id   => $story_id,
                               object_type => 'story',
@@ -524,15 +535,15 @@ push @schedules, $sched;
 
 eval { $sched->execute(); };
 
-$@ ? fail('Krang::Schedule->execute()' . $@) : pass('Krang::Schedule->execute()');
+$@ ? fail('Krang::Schedule::Action::expire->execute()' . $@) : pass('Krang::Schedule::Action::expire->execute()');
 
 # check to see if the stories exist
 foreach my $p (@story_paths) {
-    ok(!-e $p, 'Krang::Schedule->execute(expire)');
+    ok(!-e $p, 'Krang::Schedule::Action::expire->execute(expire)');
 }
 
 my @storyfiles = pkg('Story')->find(story_id => [$story_id]);
-is($#storyfiles, -1, 'Krang::Schedule->execute(expire)');
+is($#storyfiles, -1, 'Krang::Schedule::Action::expire->execute(expire)');
 
 # make sure that it removed itself.
 my @schedule_files = pkg('Schedule')->find(schedule_id => [$sched_id]);
@@ -547,7 +558,7 @@ is($#schedule_files, -1, 'deleting repeat(never) jobs');
 # execute should fail.
 $date = Time::Piece->from_mysql_datetime('2003-03-01 00:00:00');
 
-$sched = pkg('Schedule')->new(
+$sched = pkg('Schedule::Action::send')->new(
                               action      => 'send',
                               object_id   => 16384,
                               object_type => 'alert',
@@ -591,7 +602,7 @@ if ($Config{osname} =~ /bsd|darwin/i) {
 
 if (-e $tmpfile) {
 
-    $sched = pkg('Schedule')->new(
+    $sched = pkg('Schedule::Action::clean')->new(
                                   action      => 'clean',
                                   object_type => 'tmp',
                                   repeat      => 'daily',
@@ -605,9 +616,9 @@ if (-e $tmpfile) {
 
     eval { $sched->execute() };
 
-    $@ ? fail("Krang::Schedule->_clean_tmp(): $@") : pass('Krang::Schedule->_clean_tmp()');
+    $@ ? fail("Krang::Schedule::Action::clean->_clean_tmp(): $@") : pass('Krang::Schedule::Action::clean->_clean_tmp()');
 
-    (-e $tmpfile) ? fail('Krang::Schedule->_clean_tmp()') : pass('Krang::Schedule->_clean_tmp()');
+    (-e $tmpfile) ? fail('Krang::Schedule::Action::clean->_clean_tmp()') : pass('Krang::Schedule::Action::clean->_clean_tmp()');
 
 
 } else {
@@ -626,7 +637,7 @@ my $q = "INSERT INTO sessions (id, last_modified) values (?, ?)";
 
 $dbh->do($q, undef, $sess_id, $date->mysql_datetime());
 
-$sched = pkg('Schedule')->new(
+$sched = pkg('Schedule::Action::clean')->new(
                               action      => 'clean',
                               object_type => 'session',
                               repeat      => 'daily',
@@ -639,7 +650,7 @@ push @schedules, $sched;
 
 $sched->execute();
 
-ok(pkg('Session')->validate($sess_id), 'Krang::Schedule->_expire_sessions()');
+ok(pkg('Session')->validate($sess_id), 'Krang::Schedule::Action::clean->_expire_sessions()');
 
 # move date
 $date -= (ONE_DAY * 2);
@@ -650,7 +661,7 @@ $dbh->do($q, undef, $date->mysql_datetime(), $sess_id);
 
 $sched->execute();
 
-ok(!pkg('Session')->validate($sess_id), 'Krang::Schedule->_expire_sessions()');
+ok(!pkg('Session')->validate($sess_id), 'Krang::Schedule::Action::expire->_expire_sessions()');
 
 
 # cleanup
@@ -681,11 +692,5 @@ sub _check_calc_next_run {
     diag("failed date check: date='$now_string', pubdate='$publish_string'") unless ($ok);
 
 }
-
-
-
-
-
-
 
 
