@@ -1,51 +1,43 @@
+body {
+  font:        12px verdana,arial,helvetica,sans-serif;
+}
+
+h1, h2 {
+  padding:     4px 4px 0 4px;
+}
+
 h1 { 
-  background-color: #5a6952;
-  color:            #e6eacd;
-  padding:          4px 4px 0px 4px;
-  font-weight:      bold;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        18px;
+  background:  #5A6952;
+  color:       #E6EACD;
+  font-weight: bold;
+  font-size:   18px;
 }
 
 h2 {
-  background-color: #acba94;
-  color:            #5a695a;
-  padding:          4px 4px 0px 4px;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        14px;
+  background:  #ACBA94;
+  color:       #5A695A;
+  font-size:   14px;
 }
 
-body {
-  font-family: Verdana, Arial, Helvetica, sans-serif;
-  font-size: 12px;
-}
-
-PRE     {
-  font-family: monospace
-  background-color: #eeeeee;
-  border: 1px solid grey;
-  color: #000010;
+pre {
+  background:  #EEE;
+  color:       #000010;
+  border:      1px solid grey;
+  padding:     3px;
   white-space: pre;
-  padding: 3px;
+  font-family: monospace;
 }
 
-CODE {
-  font-family: monospace
-  color: #336699;
+code {
+  color:       #369;
+  font-family: monospace;
 }
 
-
-ul > li > a {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
-#    font-weight: bold;
-    color: #5a695a;
+ul li a {
+  color:       #5A695A;
 }
 
-a:link {
-    color: #5a695a;
-}
-
-a:visited {
-    color: #5a695a;
+a:link, a:visited {
+  color:       #5A695A;
 }
 

@@ -14,9 +14,8 @@ need entries in the navigation bar on the left-hand side of the Krang
 UI.  I needed to add a new section called Reports between the existing
 Template and Admin sections.  Example 1 shows the final results.
 
-=for html <div style="background-color: #FFF; border-left:
-grey 1px dotted; padding-left: 20px"><img
-src="addon_howto1_example1.png" width="161" height="282"><br><i>Example 1: Finished Left Navigation</i></div>
+=for html <div style="background: #FFF; border-left: grey 1px dotted; padding-left: 20px;"><img
+src="addon_howto1_example1.png" width="161" height="282" alt=""><br><i>Example 1: Finished Left Navigation</i></div>
 
 In addition to the new links, I wanted to be able to control access to
 each report individually using Krang's existing group system.  If a
@@ -102,9 +101,8 @@ them from some users.  I could have written a completely separate
 application for this purpose but it seemed easier to piggy-back on the
 existing groups interface.  The end result is shown in Example 2.
 
-=for html <div style="background-color: #FFF; border-left:
-grey 1px dotted; padding-left: 20px"><img
-src="addon_howto1_example2.png" width="369" height="388"><br><i>Example 2: Finished Report Permissions Editor</i></div>
+=for html <div style="background: #FFF; border-left: grey 1px dotted; padding-left: 20px;"><img
+src="addon_howto1_example2.png" width="369" height="388" alt=""><br><i>Example 2: Finished Report Permissions Editor</i></div>
 
 =head2 Customizing the Database
 

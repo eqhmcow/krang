@@ -92,6 +92,10 @@ Fixed the Krang FTP server to return template sorted by filename. [Sam]
 
 Added support for Module::Build to the Krang build system. [Sam]
 
+=item *
+
+Documentation formatting cleanup. [Don Brodale]
+
 =back
 
 

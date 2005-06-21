@@ -1,40 +1,64 @@
-<html>
-<head>
-<title>Krang VS Bricolage Comparison</title>
-</head>
+<html><head>
 
-<LINK REL="stylesheet" HREF="docs.css" TYPE="text/css">
+<title>Krang vs. Bricolage Comparison</title>
+
+<link href="docs.css" rel="stylesheet" type="text/css">
+
 <style type="text/css"><!--
-  th      { border-bottom: 1px solid black }
-  td      { border-right: 1px solid #555;
-            border-bottom: 1px solid #555;
-            padding-left:   5px; }
-  .yes    { background-color: #aaffaa;
-            text-align: center;
-            padding-left: 0px;
-          }
-  .no     { background-color: #ffaaaa;
-            text-align: center;
-            padding-left: 0px;
-          }
-  .section { padding-top: 10px;
-             padding-bottom: 3px;
-             border-right: none; 
-             font-weight: bold;
-             padding-left: 0px;
-           }
+table {
+  width: 75%;
+  border-style: none;
+}
+
+th {
+  border-bottom: 1px solid #000;
+}
+
+th.topic {
+  width: 60%;
+  text-align: left;
+}
+
+th.krang, th.bric {
+  width: 20%;
+}
+
+td {
+  border-right: 1px solid #555;
+  border-bottom: 1px solid #555;
+  padding: 2px 0 2px 5px;
+}
+
+td.section {
+  border-right-style: none;
+  padding: 10px 0 3px 0;
+  font-weight: bold;
+}
+
+td.yes, td.no {
+  padding-left: 0;
+  text-align: center;
+}
+
+td.yes {
+  background: #AFA;
+}
+
+td.no {
+  background: #FAA;
+}
 --></style>
 
-<body>
+</head><body>
 
 <h1>Krang VS Bricolage Comparison</h1>
 
-This document compares Krang to Bricolage, the system Krang was based
-on.  The version of Bricolage examined is 1.4.6, which was the stable
-version for most of Krang's development.  Later versions of Bricolage
-may be included in this chart as time permits.
-
 <p>
+This document compares Krang to Bricolage, the system Krang was based on.
+The version of Bricolage examined is 1.4.6, which was the stable version
+for most of Krang's development. Later versions of Bricolage may be
+included in this chart as time permits.
+</p>
 
 <ul>
 <li><a href="#features">Feature Comparison</a></li>
@@ -42,491 +66,510 @@ may be included in this chart as time permits.
 <li><a href="#performance">Performance Comparison</a></li>
 </ul>
 
-<p>
-
 <h2><a name="features">Features</a></h2>
 
-Krang was designed as a replacement for our usage of Bricolage.
-During the design of Krang, features not found in Bricolage were added
-and some Bricolage features were removed.  This table provides a
-summary of the most important of these changes, as well as some
-examples of things that stayed the same in Krang.
-
 <p>
+Krang was designed as a replacement for our usage of Bricolage. During the
+design of Krang, features not found in Bricolage were added and some
+Bricolage features were removed. This table provides a summary of the most
+important of these changes, as well as some examples of things that stayed
+the same in Krang.
+</p>
 
-<table border=0 cellspacing=0 width=70%>
-<tr>
-  <th width=60% align=left>Feature</th>
-  <th width=20%>Krang<br>v1.011</th>
-  <th width=20%>Bricolage<br>v1.4.6</th>
-</tr>
-
-<tr><td colspan=3 class=section>Stories</td></tr>
-
-<tr>
-  <td>Scheduled Republishing</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
-</tr>
+<table cellspacing="0">
 
 <tr>
-  <td>Schedule Publish By Version</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<th class="topic">Feature</th>
+<th class="krang">Krang<br>v1.011</th>
+<th class="bric">Bricolage<br>v1.4.6</th>
 </tr>
 
 <tr>
-  <td>Publish From Anywhere In UI</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td colspan="3" class="section">Stories</td>
 </tr>
 
 <tr>
-  <td>Configurable Story Workflow</td>
-  <td class="yes">Yes</td>
-  <td class="yes">Yes</td>
+<td>Scheduled Republishing</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Multiple Story Workflows</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
+<td>Schedule Publish by Version</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Publishing via FTP</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
+<td>Publish from Anywhere in UI</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Publishing via SCP</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr><td colspan=3 class=section>Media</td></tr>
-
-<tr>
-  <td>Upload Media During Story Edit</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Configurable Story Workflow</td>
+<td class="yes">Yes</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>FTP Interface for Media</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Multiple Story Workflows</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Media Archive Upload</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Publishing via FTP</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Thumbnails</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Publishing via SCP</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Media Workflow</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
+<td colspan="3" class="section">Media</td>
 </tr>
 
 <tr>
-  <td>Media Keywords</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr><td colspan=3 class=section>Contributors</td></tr>
-
-<tr>
-  <td>Add Contributor During Asset Edit</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Upload Media during Story Edit</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Contributor Photos</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>FTP Interface for Media</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Customized Contributor Type Fields</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-
-
-<tr><td colspan=3 class=section>Templates</td></tr>
-
-<tr>
-  <td>Template Testing Facility</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Media Archive Upload</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>HTML::Template Support</td>
-  <td class="yes">Yes</td>
-  <td class="yes">Yes</td>
+<td>Thumbnails</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>HTML::Mason Support</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
+<td>Media Workflow</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Template Workflow</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr><td colspan=3 class=section>Element Classes</td></tr>
-
-<tr>
-  <td>Centralized Element Class Library</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Media Keywords</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Extensible Element Class System</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td colspan="3" class="section">Contributors</td>
 </tr>
 
 <tr>
-  <td>Categories Have Elements</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Add Contributor during Asset Edit</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Elements May Be Indexed</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Contributor Photos</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Media Objects Have Elements</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
+<td>Customized Contributor Type Fields</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Element Classes Editable by Non-Programmers</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr><td colspan=3 class=section>XML</td></tr>
-
-<tr>
-  <td>XML Import/Export for Assets</td>
-  <td class="yes">Yes</td>
-  <td class="yes">Yes</td>
-</tr>
-
-
-<tr>
-  <td>XML Import/Export for All Objects</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td colspan="3" class="section">Templates</td>
 </tr>
 
 <tr>
-  <td>Runtime XML Schema Validation</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Template Testing Facility</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>SOAP Interface</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-
-<tr><td colspan=3 class=section>User Interface</td></tr>
-
-<tr>
-  <td>All Lists Support Paging</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>HTML::Template Support</td>
+<td class="yes">Yes</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>All Lists Include Check-all Controls</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>HTML::Mason Support</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Hierarchical Category Picker</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Template Workflow</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Leaving an Editor Without Saving Warns</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td colspan="3" class="section">Element Classes</td>
 </tr>
 
 <tr>
-  <td>Skins</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
-</tr>
-
-
-<tr><td colspan=3 class=section>Permissions</td></tr>
-
-<tr>
-  <td>Configurable User Groups</td>
-  <td class="yes">Yes</td>
-  <td class="yes">Yes</td>
+<td>Centralized Element Class Library</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Supports Hiding Assets</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Extensible Element Class System</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Supports Hiding Applications</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Categories Have Elements</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Configurable Object Groups</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr><td colspan=3 class=section>Database</td></tr>
-
-<tr>
-  <td>Delete Really Deletes From DB</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Elements May Be Indexed</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>MySQL Support</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Media Objects Have Elements</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>PostgreSQL Support</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr><td colspan=3 class=section>Apache</td></tr>
-
-<tr>
-  <td>Multiple Instances in One Apache Process</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Element Classes Editable by Non-Programmers</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>SSL Support</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr><td colspan=3 class=section>Browsers</td></tr>
-
-<tr>
-  <td>Support for Netscape/6+, Mozilla/1+, IE/5+ (Windows)</td>
-  <td class="yes">Yes</td>
-  <td class="yes">Yes</td>
+<td colspan="3" class="section">XML</td>
 </tr>
 
 <tr>
-  <td>Support for Safari 1.0</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>XML Import/Export for Assets</td>
+<td class="yes">Yes</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Support for Netscape/4.x, IE/4.x, IE/5+ (Mac)</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
-</tr>
-
-<tr><td colspan=3 class=section>General</td></tr>
-
-<tr>
-  <td>Integrated Multi-Site Publishing</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>XML Import/Export for All Objects</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>User Preferences</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>Runtime XML Schema Validation</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Complete Automated Test Suite</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td>SOAP Interface</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 <tr>
-  <td>Add-on System</td>
-  <td class="yes">Yes</td>
-  <td class="no">No</td>
+<td colspan="3" class="section">User Interface</td>
 </tr>
 
 <tr>
-  <td>Email Alerts</td>
-  <td class="yes">Yes</td>
-  <td class="yes">Yes</td>
+<td>All Lists Support Paging</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Jabber Alerts</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
+<td>All Lists Include Check-all Controls</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Output Channels</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
+<td>Hierarchical Category Picker</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Unicode Support</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
+<td>Leaving an Editor Without Saving Warns</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
 </tr>
 
 <tr>
-  <td>Timezone Support</td>
-  <td class="no">No</td>
-  <td class="yes">Yes</td>
+<td>Skins</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td colspan="3" class="section">Permissions</td>
+</tr>
+
+<tr>
+<td>Configurable User Groups</td>
+<td class="yes">Yes</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td>Supports Hiding Assets</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>Supports Hiding Applications</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>Configurable Object Groups</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td colspan="3" class="section">Database</td>
+</tr>
+
+<tr>
+<td>Delete Really Deletes from DB</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>MySQL Support</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>PostgreSQL Support</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td colspan="3" class="section">Apache</td>
+</tr>
+
+<tr>
+<td>Multiple Instances in One Apache Process</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>SSL Support</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td colspan="3" class="section">Browsers</td>
+</tr>
+
+<tr>
+<td>Support for Netscape/6+, Mozilla/1+, MSIE/5+ (Windows)</td>
+<td class="yes">Yes</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td>Support for Safari 1+</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>Support for Netscape/4.x, IE/4.x, MSIE/5+ (Macintosh)</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td colspan="3" class="section">General</td>
+</tr>
+
+<tr>
+<td>Integrated Multi-Site Publishing</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>User Preferences</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>Complete Automated Test Suite</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>Add-on System</td>
+<td class="yes">Yes</td>
+<td class="no">No</td>
+</tr>
+
+<tr>
+<td>Email Alerts</td>
+<td class="yes">Yes</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td>Jabber Alerts</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td>Output Channels</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td>Unicode Support</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
+</tr>
+
+<tr>
+<td>Timezone Support</td>
+<td class="no">No</td>
+<td class="yes">Yes</td>
 </tr>
 
 </table>
 
 <h2><a name="complexity">Complexity</a></h2>
 
-Krang was designed to replace our usage of Bricolage with as simple a
-code base as possible.  While measuring complexity isn't a science,
-certain pieces of data express the relative simplicity of Krang:
-
 <p>
+Krang was designed to replace our usage of Bricolage with as simple a code
+base as possible. While measuring complexity isn't a science, certain
+pieces of data express the relative simplicity of Krang:
+</p>
 
-<table border=0 cellspacing=0 width=70%>
+<table cellspacing="0">
+
 <tr>
-  <th width=60% align=left>Metric</th>
-  <th width=20%>Krang<br>v1.011</th>
-  <th width=20%>Bricolage<br>v1.4.6</th>
+<th class="topic">Metric</th>
+<th class="krang">Krang<br>v1.011</th>
+<th class="bric">Bricolage<br>v1.4.6</th>
 </tr>
 
 <tr>
-  <td>Perl Modules</td>
-  <td class="yes">93</td>
-  <td class="no">157</td>
+<td>Perl Modules</td>
+<td class="yes">93</td>
+<td class="no">157</td>
 </tr>
 
 <tr>
-  <td>Perl Module Lines</td>
-  <td class="yes">43,261</td>
-  <td class="no">112,201</td>
+<td>Perl Module Lines</td>
+<td class="yes">43,261</td>
+<td class="no">112,201</td>
 </tr>
 
 <tr>
-  <td>Perl Module <a href="http://www.dwheeler.com/sloccount/">SLOC</a></td>
-  <td class="yes">20,442</td>
-  <td class="no">25,478</td>
-</tr>
-
-
-
-<tr>
-  <td>HTML::Template templates / HTML::Mason components</td>
-  <td class="yes">62</td>
-  <td class="no">130</td>
+<td>Perl Module <a href="http://www.dwheeler.com/sloccount/">SLOC</a></td>
+<td class="yes">20,442</td>
+<td class="no">25,478</td>
 </tr>
 
 <tr>
-  <td>HTML::Template template lines / HTML::Mason component lines</td>
-  <td class="yes">7,231</td>
-  <td class="no">15,146</td>
+<td>HTML::Template Templates /<br>HTML::Mason Components</td>
+<td class="yes">62</td>
+<td class="no">130</td>
 </tr>
 
+<tr>
+<td>HTML::Template Template Lines /<br>HTML::Mason Component Lines</td>
+<td class="yes">7,231</td>
+<td class="no">15,146</td>
+</tr>
 
 <tr>
-  <td>Database Tables</td>
-  <td class="yes">36</td>
-  <td class="no">145</td>
+<td>Database Tables</td>
+<td class="yes">36</td>
+<td class="no">145</td>
 </tr>
 
 </table>
 
 <h2><a name="performance">Performance</a></h2>
 
-The following table compares a few common operations on Bricolage and
-Krang system with approximately 7,000 stories, running on identical
-machines (Redhat Linux 7.3, dual P4-2Ghz, 4GB of ram, with their
-databases tuned appropriately).  For a more comprehensive look at
-Krang's performance under load see <a href="performance.html">this
-document</a>.
+<p>
+The following table compares a few common operations on Bricolage and Krang
+systems with approximately 7,000 stories, running on identical machines
+(Redhat Linux 7.3, dual P4-2GHz, 4GB of RAM, with databases tuned
+appropriately). For a more comprehensive look at Krang's performance under
+load <a href="performance.html">see this document</a>.
+</p>
 
 <p>
+Since Krang is not 100% compatible with Bricolage, this is somewhat of an
+apples-to-oranges comparison. Caveat lector.
+</p>
 
-Since Krang is not 100% compatible with Bricolage, this is something
-of an apples-to-oranges comparison.  Caveat lector.
+<table cellspacing="0">
 
-<p>
-<table border=0 cellspacing=0 width=70%>
 <tr>
-  <th width=60% align=left>Operation</th>
-  <th width=20%>Krang<br>v1.011</th>
-  <th width=20%>Bricolage<br>v1.4.6</th>
+<th class="topic">Operation</th>
+<th class="krang">Krang<br>v1.011</th>
+<th class="bric">Bricolage<br>v1.4.6</th>
 </tr>
 
 <tr>
-  <td>Single Story Publish</td>
-  <td class="yes">0.33 seconds</td>
-  <td class="no">4 seconds</td>
+<td>Single Story Publish</td>
+<td class="yes">0.33 seconds</td>
+<td class="no">4 seconds</td>
 </tr>
 
 <tr>
-  <td>Total Site Publish</td>
-  <td class="yes">38 minutes</td>
-  <td class="no">6.5 hours</td>
+<td>Total Site Publish</td>
+<td class="yes">38 minutes</td>
+<td class="no">6.5 hours</td>
 </tr>
 
 <tr>
-  <td>Story Find by Title</td>
-  <td class="yes">0.15 seconds</td>
-  <td class="no">2 seconds</td>
+<td>Story Find by Title</td>
+<td class="yes">0.15 seconds</td>
+<td class="no">2 seconds</td>
 </tr>
 
 </table>
 
-<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;<p>&nbsp;
+<div style="height:88ex">
+<!-- flow anchor targets nicely atop viewport -->
+</div>
 
-</body>
-</html>
+</body></html>
+

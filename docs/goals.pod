@@ -27,8 +27,7 @@ upgrade.
 
 =item *
 
-Krang will be a maintainable system that is easily understand by
-programmers.
+Krang will be a maintainable system easily understood by programmers.
 
 =item *
 

@@ -8,16 +8,16 @@ checkout.
 
 =over
 
-=item *
+=item * 
 
 HREF[Install|ops_install.html] - how to install Krang
 
-=item *
+=item * 
 
 HREF[Running Krang|running.html] - a guide to getting Krang up and
 running after installation (unfinished)
 
-=item *
+=item * 
 
 HREF[Running Krang on Your Desktop|krang_on_desktop.html] - a guide to
 setting up Krang in a desktop environment.
@@ -154,7 +154,7 @@ HREF[Scheduler Technical Design|scheduler.html] - How the Krang scheduler works.
 
 =item *
 
-HREF[Krang VS Bricolage|krang_vs_bric.html] - Krang/Bricolage comparison document
+HREF[Krang vs. Bricolage|krang_vs_bric.html] - Krang/Bricolage comparison document
 
 =item *
 
@@ -166,8 +166,7 @@ HREF[CPAN Module Inventory|cpan_inventory.html] - A list of all CPAN modules inc
 
 =item *
 
-HREF[Database Schema Diagram|database_schema.gif] - graphical overview of the database
+HREF[Database Schema Diagram|database_schema.png] - graphical overview of the database
 
 =back
-
 
