@@ -12,11 +12,50 @@ use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Widget => qw(time_chooser datetime_chooser decode_datetime);
 use Krang::ClassLoader 'HTMLPager';
+use Krang::ClassLoader 'AddOn';
 
-our %ACTION_LABELS = (
-                      publish  => 'Publish',
-                      expire   => 'Expire',
-                     );
+our %OBJECT_ACTION_LABELS;
+our %ADMIN_ACTION_LABELS;
+our %ALL_ACTION_LABELS;
+
+BEGIN {
+    ## Get ObjectSchedulerActionList items from addons.
+
+    %OBJECT_ACTION_LABELS = (
+                          publish  => 'Publish',
+                          expire   => 'Expire',
+                         );
+
+    my @object_addons = pkg('AddOn')->find(condition => 'EnableObjectSchedulerActions');
+
+    my %obj_actionlist =
+        map {
+            $_ => ucfirst($_)
+        }
+        map {
+            $_->conf()->get('ObjectSchedulerActionList')
+        } @object_addons;
+
+    %OBJECT_ACTION_LABELS = (%OBJECT_ACTION_LABELS, %obj_actionlist);
+
+    ## Get AdminSchedulerActionList items from addons.
+
+    my @admin_addons = pkg('AddOn')->find(condition => 'EnableAdminSchedulerActions');
+
+    %ADMIN_ACTION_LABELS =
+        map {
+            $_ => ucfirst($_)
+        }
+        map {
+            $_->conf()->get('AdminSchedulerActionList')
+        } @admin_addons;
+
+    ## get the whole shebang
+
+    %ALL_ACTION_LABELS = (
+        %ADMIN_ACTION_LABELS, %OBJECT_ACTION_LABELS, clean => 'Clean', delete => 'Delete'
+    );
+};
 
 our %WEEKDAYS = (
                     0 => 'Sunday',
@@ -41,7 +80,7 @@ Krang::CGI::Schedule - web interface to manage scheduling for stories and media.
 =head1 DESCRIPTION
 
 Krang::CGI::Schedule provides a user interface to add and delete
- scheduled actions for pkg('Media') and pkg('Story') objects.
+ scheduled actions for pkg('Media') and pkg('Story') objects, as well as external administrative scheduler addons.
 
 =head1 INTERFACE
 
@@ -58,7 +97,9 @@ sub setup {
     
     $self->run_modes([qw(
                             edit
+                            edit_admin
                             add
+                            add_admin
                             add_simple
                             delete
                             list_all
@@ -70,7 +111,7 @@ sub setup {
 
 =over 
 
-=item edit
+=item edit()
 
 Displays the current schedule associated with the story/media object and
 allow deletions and additions to the schedule. 
@@ -146,10 +187,11 @@ sub edit {
 
         $template->param( weekly_time_selector => time_chooser(name=>'weekly_time', query=>$query, nochoice => 1));
 
+
         $template->param( action_selector => scalar
                             $query->popup_menu( -name    => 'action',
-                                                -values => [keys %ACTION_LABELS],
-                                                -labels => \%ACTION_LABELS ));
+                                                -values => [keys %OBJECT_ACTION_LABELS],
+                                                -labels => \%OBJECT_ACTION_LABELS ));
                              
     }
 
@@ -166,6 +208,49 @@ sub edit {
     my @existing_schedule = get_existing_schedule($object_type, $object_id);
     $template->param( 'existing_schedule_loop' => \@existing_schedule ) if @existing_schedule;
 
+    return $template->output; 
+}
+
+=item edit_admin()
+
+Displays the scheduler screen for administrative scheduler addons not tied to media or story objects.  Allows deletions and additions to the schedule.
+
+Invoked by the user clicking on 'Schedule' from the admin section of the left nav bar. 
+This feature provides general cron like functionality to the krang scheduler.
+
+=back
+
+=cut
+
+
+sub edit_admin {
+    my $self = shift;
+    my $invalid = shift;
+    my $query = $self->query;
+    my $template = $self->load_tmpl('edit_admin.tmpl', associate => $query);
+
+    $template->param ( $invalid => 1 ) if $invalid;
+    # populate read-only story/media metadata fields
+    $template->param( full_date_selector => datetime_chooser(name=>'full_date', query=>$query, nochoice => 1));
+
+    $template->param( hourly_minute_selector =>  scalar
+                        $query->popup_menu( -name    => 'hourly_minute',
+                                            -values => [0..59] ));
+
+    $template->param( daily_time_selector => time_chooser(name=>'daily_time', query=>$query, nochoice => 1));
+
+    $template->param( weekly_day_selector => scalar
+                        $query->popup_menu( -name    => 'weekly_day',
+                                            -values => [keys %WEEKDAYS],
+                                            -labels => \%WEEKDAYS ));
+
+    $template->param( weekly_time_selector => time_chooser(name=>'weekly_time', query=>$query, nochoice => 1));
+
+    $template->param( action_selector => scalar
+                        $query->popup_menu( -name    => 'action',
+                                            -values => [keys %ADMIN_ACTION_LABELS],
+                                            -labels => \%ADMIN_ACTION_LABELS));
+                         
     return $template->output; 
 }
 
@@ -223,7 +308,7 @@ sub list_all_row_handler {
 
     $row->{schedule} = $s_params;
     $row->{next_run} = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
-    $row->{action} = $ACTION_LABELS{$schedule->action};
+    $row->{action} = $ALL_ACTION_LABELS{$schedule->action};
     $row->{version} = $version;
 }
 
@@ -269,7 +354,7 @@ sub get_existing_schedule {
                                                 'schedule_id' => $schedule->schedule_id,
                                                 'schedule' => $s_params,
                                                 'next_run' => Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p'),
-                                                'action' => $ACTION_LABELS{$schedule->action},
+                                                'action' => $ALL_ACTION_LABELS{$schedule->action},
                                                 'version' => $version
                                             });
     }
@@ -295,9 +380,13 @@ sub convert_hour {
     }
 }
 
+=over
+
 =item add() 
 
 Adds events to schedule based on UI selections
+
+=back
 
 =cut
 
@@ -439,6 +528,162 @@ sub add {
 
     return $self->edit();
 }
+
+=over
+
+=item add_admin() 
+
+Adds events to admin scheduler based on UI selections
+
+=back
+
+=cut
+
+sub add_admin {
+    my $self = shift;
+    my $q = $self->query();
+
+    my $action = $q->param('action');
+    my $version = $q->param('version');
+
+    my $object_type = $q->param('object_type') || 'admin';
+   
+    my ($object, $object_id); 
+    # Get media or story object from session -- or die() trying
+
+    if ($object_type ne 'admin') {
+        $object = $self->get_object($object_type);
+        $object_id = ($object_type eq 'story') ? $object->story_id  :  $object->media_id;
+    }
+
+    my $repeat = $q->param('repeat');
+    unless ($repeat) {
+        add_message('no_date_type');
+        return $self->edit_admin('no_date_type');
+    }
+ 
+    $q->param( "repeat_$repeat" => 1 );
+
+    my $schedule;
+ 
+    if ($repeat eq 'never') {
+        my $date = decode_datetime(name=>'full_date', query=>$q);
+        if (not $date) {
+            add_message('invalid_datetime');
+            return $self->edit_admin('invalid_datetime');
+        }
+
+        if ($version) {
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
+                                                object_id => $object_id,
+                                                action => $action,
+                                                repeat => 'never',
+                                                context => [ version => $version ],
+                                                date => $date );
+        } else {
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
+                                                object_id => $object_id,
+                                                action => $action,
+                                                repeat => 'never',
+                                                date => $date );
+        }
+
+    } elsif ($repeat eq 'hourly') {
+        if ($version) {
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            context => [ version => $version ],
+                                            repeat => 'hourly',
+                                            minute => $q->param('hourly_minute'));    
+        } else {
+             $schedule = pkg('Schedule')->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            repeat => 'hourly',
+                                            minute => $q->param('hourly_minute'));
+        } 
+    } elsif ($repeat eq 'daily') {
+        my $minute = $q->param('daily_time_minute') || 0;
+        $minute = 0 if ($minute eq 'undef');
+
+        my $hour = $q->param('daily_time_hour');
+        unless ($hour) {
+            add_message('no_hour');
+            return $self->edit_admin('no_hour');
+        }
+        my $ampm = $q->param('daily_time_ampm');
+        if ($ampm eq 'PM') {
+            $hour = ($hour + 12) unless ($hour == 12);
+        } else {
+            $hour = 0 if ($hour == 12);
+        }
+        
+        if ($version) { 
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            context => [ version => $version ],
+                                            repeat => 'daily',
+                                            minute => $minute,
+                                            hour => $hour );
+        } else {
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            repeat => 'daily',
+                                            minute => $minute,
+                                            hour => $hour );
+ 
+        } 
+    } elsif ($repeat eq 'weekly') {
+        my $minute = $q->param('weekly_time_minute');
+        $minute = 0 if ($minute eq 'undef');
+                                                                                  
+        my $hour = $q->param('weekly_time_hour');
+        unless ($hour) {
+            add_message('no_hour');
+            return $self->edit_admin('no_weekly_hour');
+        }
+        
+        my $ampm = $q->param('weekly_time_ampm');
+        if ($ampm eq 'PM') {
+            $hour = ($hour + 12) unless ($hour == 12);
+        } else {
+            $hour = 0 if ($hour == 12);
+        }
+       
+        my $day = $q->param('weekly_day');
+
+        if ($version) { 
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            repeat => 'weekly',
+                                            context => [ version => $version ],
+                                            day_of_week => $day,
+                                            minute => $minute,
+                                            hour => $hour );
+        } else {
+            $schedule = pkg('Schedule')->new(   object_type => $object_type,
+                                            object_id => $object_id,
+                                            action => $action,
+                                            repeat => 'weekly',
+                                            day_of_week => $day,
+                                            minute => $minute,
+                                            hour => $hour );
+
+        }
+    }
+
+    $schedule->save();
+    add_message('new_event');
+
+    return $self->edit_admin();
+}
+
+
+
 
 =item add_simple()
 
