@@ -159,7 +159,7 @@ use constant SCHEDULE_RW_NOTIFY => qw(
                                      );
 
 # valid object_types
-use constant TYPES => qw(alert media story tmp session analyze);
+use constant TYPES => qw(alert media story tmp session analyze admin);
 
 
 # Lexicals
@@ -288,6 +288,9 @@ sub init {
         $args{object_id} = 0;
     }
 
+    ## 
+    $args{object_id} ||= 0;
+
     # delete test_date and date -- they aren't actually fields in the object.
     delete $args{date};
     delete $args{test_date};
@@ -364,6 +367,8 @@ sub init {
       (exists $types{$object_type});
     $args{object_type}   = $object_type;
     $self->{object_type} = $object_type;
+
+    
 
     # set _test_date if submitted.
     if ($test_date) {
