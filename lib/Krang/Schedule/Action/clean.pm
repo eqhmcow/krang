@@ -65,16 +65,6 @@ sub execute {
         my $msg = sprintf("%s->execute('clean'): unknown object '%s'", __PACKAGE__, $self->{object_type});
         die($msg);
     }
-
-    if ($self->{repeat} eq 'never') {
-        # never to be run again.  delete yourself.
-        $self->delete();
-    } else {
-        # set last_run, update next_run, save.
-        $self->{last_run} = $self->{next_run};
-        $self->{next_run} = $self->_calc_next_run(skip_match => 1);
-        $self->save();
-    }
 }
 
 =over
