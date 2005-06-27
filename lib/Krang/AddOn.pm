@@ -20,6 +20,10 @@ Krang::AddOn - module to manage Krang add-ons
   # find a particular addon by name
   my ($addon) = pkg('AddOn')->find(name => $name);
 
+  # find a particular addon by conditional field in conf file set to true
+  # fields supported are EnableAdminSchedulerActions and EnableObjectSchedulerActions
+  my @addons = pkg('AddOn')->find(condition => 'EnableFeatureFoo')
+
   # get the name and version of an addon
   $name    = $addon->name;
   $version = $addon->version;
@@ -71,8 +75,10 @@ Get the addon's configuration, a Config::ApacheFormat object.
 
 =item C<< @addons = Krang::AddOn->find() >>
 
-Get a list of addons sorted by their Priority.  Only one option is
+Get a list of addons sorted by their Priority.
 supported:
+
+=back
 
 =over
 
@@ -82,12 +88,58 @@ Find an addon based on name.
 
 =back
 
+=over
+
+=item condition
+
+Find a set of addons based on boolean flag
+
+=back
+
+=over
+
 =item C<< pkg('AddOn')->call_handler($name, @args) >>
 
 Call all handlers named $name passing @args.  For example, the
 NavigationHandler is triggered using:
 
    pkg('AddOn')->call_handler("NavigationHandler", $tree);
+
+=back
+
+=head1 Scheduler Addons
+
+Two types of scheduler addons are supported.  They are configured with the following directives in krang_addon.conf.
+
+=over
+
+=item EnableAdminSchedulerActions 1
+
+ flags scheduler to look in this addon for items to add to the admin scheduler screen
+
+=over
+
+=item AdminSchedulerActionList Foo Bar
+
+ List of actions to add to admin scheduler screen 
+
+=back
+
+=back
+
+=over
+
+=item EnableObjectSchedulerActions 1
+
+ flags scheduler to look in this addon for actions to add to the story/media scheduler screen
+
+=over
+
+=item ObjectSchedulerActionList Foo Bar
+
+ List of actions to add to story/media scheduler screen 
+
+=back
 
 =back
 
@@ -114,7 +166,7 @@ use Krang::ClassLoader 'File';
 use Krang::ClassLoader MethodMaker => 
   new_with_init => 'new',
   new_hash_init => 'hash_init',
-  get_set => [ qw(name version conf) ];
+  get_set => [ qw(name version conf EnableAdminSchedulerActions EnableObjectSchedulerActions) ];
 
 sub init {
     my $self = shift;
@@ -183,7 +235,6 @@ sub uninstall {
     rmtree($dir);
 }
 
-
 # find caches addons in @ADDONS until _flush_cache is called
 our @ADDONS;
 sub find {
@@ -198,19 +249,29 @@ sub find {
         foreach my $addon (@files) {
             my $conf = $pkg->_addon_conf(catfile($dir, $addon, 
                                                  'krang_addon.conf'));
-            push @ADDONS, $pkg->new(name    => $addon,
-                                    version => $conf->get('version'),
-                                    conf    => $conf);
+
+            push @ADDONS, $pkg->new(
+                name    => $addon,
+                version => $conf->get('version'),
+                conf    => $conf,
+                EnableAdminSchedulerActions => $conf->get('EnableAdminSchedulerActions') || '',
+                EnableObjectSchedulerActions => $conf->get('EnableObjectSchedulerActions') || ''
+            );
         }
 
         # sort by priority in reverse order
         @ADDONS = sort { ($b->conf->get('priority') || 0)  
                            <=>
-                         ($a->conf->get('priority') || 0) } @ADDONS
+                         ($a->conf->get('priority') || 0) } @ADDONS;
     }
 
-    return @ADDONS unless $arg{name};
-    return grep { $_->{name} eq $arg{name} } @ADDONS;
+    if ($arg{name}) {
+        return grep { $_->{name} eq $arg{name} } @ADDONS;
+    } elsif ($arg{condition}) {
+        return grep { $_->{$arg{condition}} } @ADDONS;
+    }
+
+    return @ADDONS;
 }
 
 sub _flush_cache { @ADDONS = () }
@@ -424,6 +485,10 @@ sub _addon_conf {
                                             navigationhandler
                                             inithandler
                                             priority
+                                            EnableAdminSchedulerActions 
+                                            EnableObjectSchedulerActions 
+                                            AdminSchedulerActionList
+                                            ObjectSchedulerActionList
                                           )],
                    valid_blocks     => []);
     eval { $conf->read($file) };
