@@ -230,7 +230,6 @@ sub scheduler_pass {
                 debug(__PACKAGE__ . ": Child caught SIGTERM.  Exiting."); 
                 exit(0) 
             };
-
             _child_work(\@tasks);
 
         } else {
@@ -298,7 +297,11 @@ sub _child_work {
         foreach my $t (@$tasks) {
             debug(sprintf("%s->_child_work('%s'): Child PID=%i running schedule_id=%i",
                           __PACKAGE__, $instance, $$, $t->schedule_id()));
-            eval { $t->execute(); };
+            eval { 
+                $t->execute(); 
+                $t->clean_entry(); 
+
+            };
             if (my $err = $@) {
                 critical(sprintf("%s->_child_work('%s'): Child PID=%i encountered fatal error with Schedule ID=%i : %s",
                                  __PACKAGE__, $instance, $$, $t->schedule_id(), $err));
