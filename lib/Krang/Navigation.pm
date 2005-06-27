@@ -284,6 +284,12 @@ sub default_tree {
     $sub->link('bug.cgi');
     $sub->condition(sub { EnableBugzilla });
 
+    $sub = $node->new_daughter();
+    $sub->name('Scheduler');
+    $sub->link('schedule.pl?advanced_schedule=1&rm=edit_admin');
+    $sub->condition(sub { pkg('AddOn')->find(condition => 'EnableAdminSchedulerActions')});
+    
+
     return $root;
 }
 
