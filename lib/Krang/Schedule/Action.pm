@@ -62,10 +62,5 @@ sub clean_entry {
     }
 }
 
-=back
-
-=cut
-
-
 1;
 

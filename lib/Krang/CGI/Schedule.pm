@@ -683,11 +683,13 @@ sub add_admin {
 }
 
 
-
+=over
 
 =item add_simple()
 
 Adds simple scheduling (publish only) to schedule.
+
+=back
 
 =cut
 
@@ -731,9 +733,13 @@ sub add_simple {
 
 }
 
+=over
+
 =item delete()
 
 Delete selected schedules from the database by schedule_id.
+
+=back
 
 =cut
 
@@ -755,9 +761,13 @@ sub delete {
     return $q->param('is_list_all') ? $self->list_all : $self->edit();      
 }
 
+=over
+
 =item save_and_view()
 
 Preserve params and view version of story
+
+=back
 
 =cut
 
@@ -777,9 +787,5 @@ sub save_and_view {
     return;
 
 }
-
-=back
-
-=cut
 
 1;
