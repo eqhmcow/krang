@@ -114,6 +114,8 @@ sub _publish {
             die $msg;
         }
     }
+
+    $self->clean_entry();
 }
 
 =head1 See Also

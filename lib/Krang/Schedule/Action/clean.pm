@@ -65,6 +65,8 @@ sub execute {
         my $msg = sprintf("%s->execute('clean'): unknown object '%s'", __PACKAGE__, $self->{object_type});
         die($msg);
     }
+
+    $self->clean_entry();
 }
 
 =over

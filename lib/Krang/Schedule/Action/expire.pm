@@ -58,6 +58,8 @@ sub execute {
     }
 
     $self->_expire();
+
+    $self->clean_entry();
 }
 
 =over

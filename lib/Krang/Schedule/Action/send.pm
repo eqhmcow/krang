@@ -51,6 +51,8 @@ sub execute {
     }
 
     $self->_send();
+
+    $self->clean_entry();
 }
 
 =over
