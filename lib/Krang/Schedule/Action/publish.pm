@@ -62,6 +62,7 @@ sub execute {
     }
 
     $self->_publish();
+    $self->clean_entry();
 }
 
 =over
@@ -115,7 +116,6 @@ sub _publish {
         }
     }
 
-    $self->clean_entry();
 }
 
 =head1 See Also
