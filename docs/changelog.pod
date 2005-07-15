@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug where the logs would sometimes end up owned as root when
+Krang was started as root.  [Sam]
+
+=item *
+
 Fixed bug in Krang::ElementClass::ListGroup::validate() which prevented
 lists from setting required=>1.  [Jesse Erlbaum]
 

@@ -80,7 +80,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot InstanceHostName Skin);
+use Krang::Conf qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup);
 use Krang::File;
 
 # the httpd command
@@ -110,6 +110,7 @@ if ($command eq 'start') {
         die "krang_apachectl $command: httpd (pid $pid) already running\n";
     }
 
+    setup_logs();
     write_conf();
     make_links();
     apply_skin();
@@ -164,6 +165,7 @@ if ($command eq 'restart') {
     }
 
     # start
+    setup_logs();
     write_conf();
     make_links();
     apply_skin();
@@ -260,4 +262,19 @@ sub make_links {
 sub apply_skin {
     print "Loading configured skin: " . Skin . "\n";
     system(catfile(KrangRoot, 'bin', 'krang_load_skin'), Skin);
+}
+
+# make sure logs get created with the right ownership when running as root
+sub setup_logs {
+    # only worry if we're root
+    return if $< != 0 or $> != 0;
+    
+    foreach my $log (qw(apache_access_log apache_error_log krang.log)) {
+        my $file = catfile(KrangRoot, 'logs', $log);
+        next if -e $file;
+
+        # create the file and chown it to KrangUser:KrangGroup
+        system("touch", $file);
+        system("chown",  KrangUser . ":" . KrangGroup, $file);
+    }
 }

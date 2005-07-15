@@ -74,7 +74,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot InstanceHostName);
+use Krang::Conf qw(KrangRoot InstanceHostName KrangUser KrangGroup);
 use Krang::File;
 
 # the httpd command
@@ -104,6 +104,7 @@ if ($command eq 'start') {
         die "krang_siteserverctl $command: httpd (pid $pid) already running\n";
     }
 
+    setup_logs();
     write_conf();
     print "krang_siteserverctl $command: starting httpd\n";
     unless (system($httpd)) {
@@ -155,6 +156,7 @@ if ($command eq 'restart') {
     }
 
     # start
+    setup_logs();
     write_conf();
     print "krang_siteserverctl $command: starting httpd\n";
     unless (system($httpd)) {
@@ -208,4 +210,19 @@ sub write_conf {
       or die "Unable to open " . catfile(KrangRoot, "tmp", "siteserver.conf") . ": $!";
     print CONF $template->output();
     close CONF;
+}
+
+# make sure logs get created with the right ownership when running as root
+sub setup_logs {
+    # only worry if we're root
+    return if $< != 0 or $> != 0;
+    
+    foreach my $log (qw(siteserver_access_log siteserver_error_log krang.log)){
+        my $file = catfile(KrangRoot, 'logs', $log);
+        next if -e $file;
+
+        # create the file and chown it to KrangUser:KrangGroup
+        system("touch", $file);
+        system("chown",  KrangUser . ":" . KrangGroup, $file);
+    }
 }

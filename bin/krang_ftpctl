@@ -59,7 +59,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot KrangUser KrangGroup);
 
 # the krang_ftpd command
 my $ftpd = rel2abs(catfile(KrangRoot, 'bin', 'krang_ftpd'));
@@ -89,6 +89,9 @@ if ($command eq 'start') {
     }
 
     print "krang_ftpctl $command: starting krang_ftpd\n";
+
+    setup_logs();
+
     unless (system($ftpd)) {
         print "krang_ftpctl $command: krang_ftpd started\n";
         exit;
@@ -139,6 +142,9 @@ if ($command eq 'restart') {
 
     # start
     print "krang_ftpctl $command: starting krang_ftpd\n";
+
+    setup_logs();
+
     unless (system($ftpd)) {
         print "krang_ftpctl $command: krang_ftpd started\n";
         exit;
@@ -160,4 +166,19 @@ usage: krang_ftpctl (start|stop|restart|debug)
 END
 
   exit;
+}
+
+# make sure logs get created with the right ownership when running as root
+sub setup_logs {
+    # only worry if we're root
+    return if $< != 0 or $> != 0;
+    
+    foreach my $log (qw(ftp.log krang.log)) {
+        my $file = catfile(KrangRoot, 'logs', $log);
+        next if -e $file;
+
+        # create the file and chown it to KrangUser:KrangGroup
+        system("touch", $file);
+        system("chown",  KrangUser . ":" . KrangGroup, $file);
+    }
 }
