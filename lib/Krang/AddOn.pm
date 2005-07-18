@@ -225,7 +225,7 @@ sub uninstall {
     
     # run the uninstall script if one is set
     if ($self->conf->get('uninstallscript')) {
-        system("KRANG_ROOT=" . KrangRoot . " perl " .
+        system("KRANG_ROOT=" . KrangRoot . " $^X " .
                catfile($dir, $self->conf->get('uninstallscript')))
           and die "\n\nUninstall script failed, won't uninstall!\n";
     }
@@ -338,7 +338,7 @@ sub install {
     $pkg->_upgrade(%args) if $old;
 
     # run the post install script if required
-    system("KRANG_ROOT=" . KrangRoot . " perl " . 
+    system("KRANG_ROOT=" . KrangRoot . " $^X " . 
            $conf->get('postinstallscript'))
       if $conf->get('postinstallscript');
 
