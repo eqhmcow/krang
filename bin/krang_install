@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use warnings;
 use strict;
+use File::Find;
 use IO::Socket;
 
 # Path to pre-req binaries, filled in by Krang::Platform->find_bin later
@@ -553,6 +554,29 @@ sub install_krang {
         print SOURCE $source;
         close SOURCE;
     }
+
+    # fix cgi/registry scripts shebang line
+    my @cgidirs = (catdir($InstallPath, "htdocs")); 
+
+    my $wanted = 
+        sub  {
+            my $script = $File::Find::name;
+
+            if ($script =~ /\.(?:pl|cgi)$/) {
+                open(SOURCE, $script) or die "Unable to $script: $!";
+                my $source = do { local $/; <SOURCE> };
+
+                $source =~ s/^#![\w\/\.]+(\s*.*)$/#!$PERL_BIN$1/m 
+                    or warn "can't find shebang line in $script\n";
+
+                print "script: $script\n";
+                open(SOURCE, '>', $script) or die "Unable to write $script: $!";
+                print SOURCE $source;
+                close SOURCE;
+            }
+        };
+
+    find($wanted, @cgidirs);
 
     print "  Setting execute bits on scripts\n";
     # save some time - only search bin/ conf/ docs/ htdocs/ lib/
