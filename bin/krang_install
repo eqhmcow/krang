@@ -559,7 +559,7 @@ sub install_krang {
     my @cgidirs = (catdir($InstallPath, "htdocs")); 
 
     my $wanted = 
-        sub  {
+        sub {
             my $script = $File::Find::name;
 
             if ($script =~ /\.(?:pl|cgi)$/) {
@@ -569,7 +569,6 @@ sub install_krang {
                 $source =~ s/^#![\w\/\.]+(\s*.*)$/#!$PERL_BIN$1/m 
                     or warn "can't find shebang line in $script\n";
 
-                print "script: $script\n";
                 open(SOURCE, '>', $script) or die "Unable to write $script: $!";
                 print SOURCE $source;
                 close SOURCE;
