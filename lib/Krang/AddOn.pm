@@ -237,6 +237,7 @@ sub uninstall {
 
 # find caches addons in @ADDONS until _flush_cache is called
 our @ADDONS;
+our $PERL_BIN = $^X;
 sub find {
     my ($pkg, %arg) = @_;
     my $dir = catdir(KrangRoot, 'addons');
@@ -429,6 +430,19 @@ sub _copy_files {
 
     # copy the files, creating directories as necessary
     foreach my $file (@$files) {
+        # fix shebang for addon .pl and .cgi scripts.
+        if ($file =~ /\.(?:pl|cgi)$/) {
+            open(SOURCE, $file) or die "Unable to $file: $!";
+            my $source = do { local $/; <SOURCE> };
+
+            $source =~ s/^#![\w\/\.]+(\s*.*)$/#!$PERL_BIN$1/m or
+                warn "Couldn't find shebang line in $file to replace!";
+
+            open(SOURCE, '>', $file) or die "Unable to write $file: $!";
+            print SOURCE $source;
+            close SOURCE;
+        }
+
         my @parts = splitdir($file);
         my $dir   = @parts > 1 ? catdir(@parts[0 .. $#parts - 1]) : '';
         my $target_dir = catdir($addon_dir, $dir);
