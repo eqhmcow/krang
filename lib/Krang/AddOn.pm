@@ -516,6 +516,10 @@ sub _open_addon {
     my ($pkg, %args) = @_;
     my ($source, $verbose, $force) = @args{('src', 'verbose', 'force')};
 
+    # don't try to chmod anything since it's counter-productive and
+    # doesn't work on OSX for some damn reason
+    local $Archive::Tar::CHOWN = 0;
+
     # open up the tar file
     my $tar = Archive::Tar->new();
     my $ok = eval { $tar->read($source); 1 };
