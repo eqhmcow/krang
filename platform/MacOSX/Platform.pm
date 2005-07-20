@@ -8,15 +8,15 @@ use Cwd qw(cwd);
 use Config;
 
 # krang_install uses $^X but MacOSX doesn't like this
-# on the #! line
-$main::PERL_BIN="/usr/bin/perl";
+# on the #! line (doubled here to avoid warning)
+$main::PERL_BIN = $main::PERL_BIN = "/usr/bin/perl";
 
 # datastructures for library and header locations
 # filled in via findIncsAndLibs below these are hashes
 # of filenames => paths, consulted by ia MacOSX specific
 # implementation of _check_libs, below
-undef %MacOSX::Platform::libFiles;
-undef %MacOSX::Platform::incFiles;
+our %libFiles;
+our %incFiles;
 
 sub guess_platform {
     my $release = `uname -a`;
@@ -211,7 +211,25 @@ sub build_perl_module {
     # Net::FTPServer needs this to not try to install /etc/ftp.conf
     local $ENV{NOCONF} = 1 if $name =~ /Net-FTPServer/;
 
-    my $cmd = "$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir";
+
+    # Module::Build or MakeMaker?
+    my ($cmd, $make_cmd);
+    if (-e 'Build.PL') {
+        $cmd =
+          "$^X Build.PL "
+          . " --install_path lib=$dest_dir"
+          . " --install_path libdoc=$trash_dir"
+          . " --install_path script=$trash_dir"
+          . " --install_path bin=$trash_dir"
+          . " --install_path bindoc=$trash_dir"
+          . " --install_path arch=$dest_dir/$Config{archname}";
+
+        $make_cmd = './Build';
+    } else {
+        $cmd = "$^X Makefile.PL LIB=$dest_dir PREFIX=$trash_dir INSTALLMAN3DIR=' ' INSTALLMAN1DIR=' '";
+        $make_cmd = 'make';
+    }
+
     # when building XML::Parser
     # need to tell Makefile.PL where the expat libs are
     # we stashed their locations in verify_dependencies, above
@@ -242,10 +260,10 @@ sub build_perl_module {
           }
         $command->soft_close();
         if ( $command->exitstatus() != 0 ) {
-            die "make failed: $?";
+            die "$cmd failed: $?";
         }
-        print "Running make...\n";
-        $command = Expect->spawn('make');
+        print "Running $make_cmd...\n";
+        $command = Expect->spawn($make_cmd);
         @responses = qw(n);
         while ( my $match = $command->expect( undef,
                                               'Mail::Sender? (y/N)',
@@ -265,7 +283,7 @@ sub build_perl_module {
             or die "make failed: $?";
     } 
 
-    system('make install') == 0 or die "make install failed: $?";
+    system("$make_cmd install") == 0 or die "make install failed: $?";
 }
 
 # left to its own devices Apache configure will select the Darwin install layout

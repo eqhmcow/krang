@@ -163,7 +163,7 @@ which options and values are best for your own installation:
 
     [[ ... continued from STEP H ]]
 
-    # ./bin/krang-install \
+    # ./bin/krang_install \
         --HostName localhost \
         --IPAddress 127.0.0.1 \
         --AdminPassword ssapnimda \
