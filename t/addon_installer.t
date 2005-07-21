@@ -4,13 +4,13 @@ use warnings;
 
 use Krang::ClassLoader 'Script';
 use Test::More qw(no_plan);
+use Krang::ClassLoader DB => 'dbh';
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader 'Test::Apache';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader DB => 'dbh';
 
 # make sure Turbo isn't installed
 my ($turbo) = pkg('AddOn')->find(name => 'Turbo');
@@ -101,8 +101,8 @@ SKIP: {
 
     # try restarting the server, skipping if that doesn't work
     local $ENV{CGI_MODE} = 1;
-    system(KrangRoot . "/bin/krang_ctl restart > /dev/null 2>&1")
-      and skip "Krang servers couldn't be restarted, skipping tests.", 7;
+    system('sudo ' . KrangRoot . "/bin/krang_ctl restart")
+        and skip "Krang servers couldn't be restarted, skipping tests.", 7;
     
     # get creds
     my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
