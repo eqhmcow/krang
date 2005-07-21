@@ -58,7 +58,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot);
+use Krang::Conf qw(KrangRoot KrangUser KrangGroup);
 
 # the krang_scheduled command
 my $scheduled = rel2abs(catfile(KrangRoot, 'bin', 'krang_scheduled'));
@@ -89,6 +89,9 @@ if ($command eq 'start') {
     }
 
     print "krang_schedulectl $command: starting krang_scheduled\n";
+
+    setup_logs();
+
     unless (system($scheduled)) {
         print "krang_schedulectl $command: krang_scheduled started\n";
         exit;
@@ -144,6 +147,9 @@ if ($command eq 'restart') {
 
     # start
     print "krang_schedulectl $command: starting krang_scheduled\n";
+
+    setup_logs();
+
     unless (system($scheduled)) {
         print "krang_schedulectl $command: krang_scheduled started\n";
         exit;
@@ -167,3 +173,19 @@ END
 
   exit;
 }
+
+# make sure logs get created with the right ownership when running as root
+sub setup_logs {
+    # only worry if we're root
+    return if $< != 0 or $> != 0;
+
+    foreach my $log (qw(krang.log)) {
+        my $file = catfile(KrangRoot, 'logs', $log);
+        next if -e $file;
+
+        # create the file and chown it to KrangUser:KrangGroup
+        system("touch", $file);
+        system("chown",  KrangUser . ":" . KrangGroup, $file);
+    }
+}
+
