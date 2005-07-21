@@ -1606,9 +1606,12 @@ sub _build_story_single_category {
     while (my $block = shift @{$self->{additional_content}}) {
         my $content = $block->{content};
         if ($block->{use_category}) {
+            my %tmpl_args = (additional_content => $block->{filename});
             ($cat_header, $cat_footer) = 
-              $self->_cat_content($category_element)
-                unless $cat_header or $cat_footer;
+              $self->_cat_content($category_element, 
+                                  fill_template_args => \%tmpl_args)
+                unless (($cat_header or $cat_footer) and not
+                        $story_element->class->publish_category_per_page());
             $content = $cat_header . $content . $cat_footer;
         }
         push @paths, $self->_write_page(
