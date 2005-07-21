@@ -32,8 +32,9 @@ SKIP: {
 
     # try restarting the server, skipping if that doesn't work
     local $ENV{CGI_MODE} = 1;
-    system(KrangRoot . "/bin/krang_ctl restart > /dev/null 2>&1")
-      and skip "Krang servers couldn't be restarted, skipping tests.", 7;
+
+    system('sudo ' . KrangRoot . "/bin/krang_ctl restart")
+        and skip "Krang servers couldn't be restarted, skipping tests.", 7;
 
     # get creds
     my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
