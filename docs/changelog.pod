@@ -8,6 +8,41 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Refactored Krang::Scheduler class into 
+Krang::Schedule 
+Krang::Schedule::Action and 
+Krang::Schedule::Action::[expire|publish|...|YourClass]
+Where YourClass must implement an execute method.  
+This Paves the way for custom scheduler addons.  
+Simply write a class that inherits from Krang::Schedule::Action and
+implements an execute() method. [Aaron Dancygier]
+
+=item *
+
+Added conditonal Scheduler link in left nav bar under admin section 
+This is for non story or media related administrative scheduler addons.
+Link points to new admin scheduler screen.
+Allows you to use scheduler addons in place of external scripts run
+by cron.  [Aaron Dancygier]
+
+=item *
+
+Added support for Scheduler addon classes that are tied to story 
+or media content. This will show up in current scheduler screen.
+[Aaron Dancygier]
+
+=item *
+
+Fixed shebang line bug in /htdocs .pl registry/cgi scripts and 
+Addon *.pl scripts. [Aaron Dancygier]
+
+=item * 
+
+Fixed hardcoded perl bug in Addon.pm install() and uninstall() 
+[Aaron Dancygier]
+
+=item *
+
 Fixed a bug where the logs would sometimes end up owned as root when
 Krang was started as root.  [Sam]
 
