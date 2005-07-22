@@ -21,6 +21,12 @@ DBPass "<tmpl_var DBPass>"
 DBHost "<tmpl_var DBHost>"
 </tmpl_if>
 
+# the socket file used to connect to a local MySQL server (this is needed only 
+# if you get "socket file not found" connection errors from DBI.pm)
+<tmpl_if DBSock>
+DBSock "<tmpl_var DBSock>"
+</tmpl_if>
+
 # 
 # ApacheAddr and ApachePort: the IP and port for the Apache server
 #
