@@ -12,6 +12,7 @@ sub guess_platform {
     my $release = <RELEASE>;
     close RELEASE;
     return 1 if $release =~ /Red Hat Enterprise Linux ES release 4/;
+    return 1 if $release =~ /CentOS release 4/;
     return 0;
 }
 
