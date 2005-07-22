@@ -267,6 +267,19 @@ This option provides an addon which will be installed with Krang.
 Krang addons can provide element sets, libraries and other services.
 You can specify multiple addons to install by repeating this option.
 
+=item DBSock
+
+This option is used to specify the location of your MySQL server's 
+socket file.  You should only need to specify this directive if you get 
+errors such as "DBI connect(...) failed: Can't connect to local MySQL 
+server through socket '/some/nonexistent/file'" in DBI.pm whenever krang 
+tries to connect to your (local) MySQL server.  
+
+How to determine the correct socket path and filename to specify here, 
+that will correct the error above on a given system is a troubleshooting 
+task that is beyond the scope of these docs, but your MySQL server's 
+my.cnf file might be a good place to begin looking for clues.
+
 =back
 
 

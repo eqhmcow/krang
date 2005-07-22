@@ -36,7 +36,7 @@ use Carp qw(croak);
 use DBI;
 
 use Krang;
-use Krang::ClassLoader Conf => qw(InstanceDBName DBUser DBPass DBHost KrangRoot);
+use Krang::ClassLoader Conf => qw(InstanceDBName DBUser DBPass DBHost DBSock KrangRoot);
 use Krang::ClassLoader Log => qw(info debug critical);
 
 
@@ -84,12 +84,16 @@ sub dbh {
     $dsn .= ";host=" . DBHost if DBHost;
     $dsn .= ":mysql_read_default_group=krang";
 
+    my %connect_options=(
+      RaiseError           => 1, 
+      AutoCommit           => 1,
+      mysql_auto_reconnect => 1,
+    );
+
+    $connect_options{mysql_socket}=DBSock if DBSock;
+    
     # connect to the defined database
-    $DBH{$name} = DBI->connect($dsn, DBUser, DBPass,
-                               { RaiseError           => 1, 
-                                 AutoCommit           => 1,
-                                 mysql_auto_reconnect => 1,
-                               });
+    $DBH{$name} = DBI->connect($dsn, DBUser, DBPass, \%connect_options);
 
     # Check version, unless specifically asked not to
     unless ($args{ignore_version}) {
