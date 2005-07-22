@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added support for a new optional DBSock directive in krang.conf that
+allows Krang to connect to a local MySQL server using a
+user-configurable socket file location to resolve socket-related DBI
+connection errors. [David Kaufman]
+
+=item *
+
 Refactored Krang::Scheduler class into 
 Krang::Schedule 
 Krang::Schedule::Action and 
@@ -40,6 +47,14 @@ Addon *.pl scripts. [Aaron Dancygier]
 
 Fixed hardcoded perl bug in Addon.pm install() and uninstall() 
 [Aaron Dancygier]
+
+=item *
+
+Added support for centos release 4 [Ado Nishimura]
+
+=item *
+
+Fixed Krang::NavigationNode documentation [Bodo Schulze]
 
 =item *
 
