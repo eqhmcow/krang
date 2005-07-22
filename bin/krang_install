@@ -121,6 +121,7 @@ Following is a list of the tasks the installer script will perform.
   --FTPHostName          - Host name for FTP server, defaults to HostName.
   --MySQLRootPassword    - Password for the MySQL user "root"
   --DBHost               - Host name for MySQL
+  --DBSock               - Socket file for local MySQL server
   --InstallPath          - Directory for Krang install
   --KrangUser            - UNIX user for process ownership
   --KrangGroup           - UNIX group for process ownership
