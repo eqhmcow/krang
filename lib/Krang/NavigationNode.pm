@@ -18,7 +18,7 @@ Krang::NavigationNode - a node in the left-navigation menu
 
   # add a link under the new node
   my $link1 = $node->add_daughter();
-  $link1->title('Find Good Stories');
+  $link1->name('Find Good Stories');
   $link1->link('good_stories.pl?rm=find');
   
   # make a node's appearance conditional
