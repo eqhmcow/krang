@@ -95,6 +95,14 @@ my $template = pkg('HTMLTemplate')->new(filename => 'about.tmpl',
                                         path     => 'About/');
 like($template->output, qr/enhanced with LogViewer/);
 
+pkg('AddOn')->install(src =>
+            catfile(KrangRoot, 't', 'addons', 'SchedulerAddon-1.00.tar.gz'));
+my ($sched) = pkg('AddOn')->find(name => 'SchedulerAddon');
+END { $sched->uninstall }
+isa_ok($sched, 'Krang::AddOn');
+cmp_ok($sched->version, '==', 1.00);
+is($sched->name, 'SchedulerAddon');
+
 SKIP: {
     skip "Apache server isn't up, skipping live tests", 7
       unless -e catfile(KrangRoot, 'tmp', 'httpd.pid');
@@ -120,6 +128,8 @@ SKIP: {
     request_ok('workspace.pl', {});
     response_like(qr/Log Tools/);
     response_like(qr/<a.*?log_viewer.pl.*>.*?View Log/);
+    ## SchedulerAddon entry
+    response_like(qr/schedule\.pl\?advanced_schedule\=1\&rm\=edit_admin/);
 
     # Clean should be removing spaces
     response_like(qr/<html><head><title>/);
