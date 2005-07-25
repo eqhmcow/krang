@@ -104,13 +104,14 @@ die("Can't find addon named '$name'!  The following addons are installed:\n" .
 
 # assemble info for tar
 my $dir      = catdir(KrangRoot, 'addons', $name);
+my $adir     = catdir(KrangRoot, 'addons');
 my $conf     = $addon->conf;
 my $version  = $conf->get('Version');
 my $filename = $name . '-' . $version . '.tar.gz';
 
 # create tarball
 print STDERR "Creating tarball $filename...\n" if $verbose;
-my $out = `tar zvcf $filename -C $dir/.. --exclude=CVS --exclude=.svn --exclude=*.swp --exclude=*.tdy --exclude=*~ --exclude=*bak --exclude=.#* $name`;
+my $out = `tar zvcf $filename -C $adir --exclude=CVS --exclude=.svn --exclude=*.swp --exclude=*.tdy --exclude=*~ --exclude=*bak --exclude=.#* $name/.`;
 print STDERR $out if $verbose;
 
 print "Success.  Created addon distribution in $filename.\n";
