@@ -59,14 +59,19 @@ Added support for centos release 4 [Ado Nishimura]
 
 =item *
 
+Fixed bin/krang_ctl and bin/krang_scheduled, to use Krang::ClassLoader
+[Ado Nishimura]
+
+=item *
+
 Fixed Krang::NavigationNode documentation and xinha German localization 
 file [Bodo Schulze]
 
 =item *
 
 Fixed compile time ordering issues with bin/krang_addon_installer,
-bin/krang_addon_uninstaller, and bin/krang_load_skin, bin/krang_ctl 
-and bin/krang_scheduled [Bodo Schulze]
+bin/krang_addon_uninstaller, and bin/krang_load_skin
+[Bodo Schulze]
 
 =item *
 
