@@ -71,7 +71,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot EnableSiteServer);
+use Krang::ClassLoader Conf => qw(KrangRoot EnableSiteServer);
 
 # check for args
 usage() unless @ARGV;
