@@ -2,7 +2,7 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 v1.103 - In Development 
+=head2 v1.103
 
 =over
 
@@ -48,13 +48,19 @@ Addon *.pl scripts. [Aaron Dancygier]
 Fixed hardcoded perl bug in Addon.pm install() and uninstall() 
 [Aaron Dancygier]
 
+=item * 
+
+Added tests for admin scheduler addons in t/addon_installer.t 
+[Aaron Dancygier]
+
 =item *
 
 Added support for centos release 4 [Ado Nishimura]
 
 =item *
 
-Fixed Krang::NavigationNode documentation [Bodo Schulze]
+Fixed Krang::NavigationNode documentation and xinha German localization 
+file [Bodo Schulze]
 
 =item *
 
