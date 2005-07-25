@@ -64,6 +64,12 @@ file [Bodo Schulze]
 
 =item *
 
+Fixed compile time ordering issues with bin/krang_addon_installer,
+bin/krang_addon_uninstaller, and bin/krang_load_skin
+[Bodo Schulze]
+
+=item *
+
 Fixed a bug where the logs would sometimes end up owned as root when
 Krang was started as root.  [Sam]
 
