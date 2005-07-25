@@ -118,9 +118,9 @@ BEGIN {
 
 # use first instance if one isn't set.  Addons are installation wide
 # anyway.
+use Krang::ClassLoader Conf => qw(KrangRoot);
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Copy qw(copy);
 use File::Temp qw(tempdir tempfile);
 use Krang::ClassLoader 'AddOn';
