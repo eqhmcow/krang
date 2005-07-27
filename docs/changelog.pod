@@ -2,7 +2,7 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 v1.103
+=head2 v1.999
 
 =over
 
