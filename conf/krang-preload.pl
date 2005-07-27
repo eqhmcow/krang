@@ -5,11 +5,11 @@
 ##########################################
 
 # setup load paths
-use Krang::lib;
-
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'lib';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Find qw(find);
-use Krang::HTMLTemplate;
+use Krang::ClassLoader 'HTMLTemplate';
 
 # load all Krang libs, with a few exceptions
 my $skip = qr/Profiler|Test|BricLoader|Cache|FTP|DataSet|Upgrade|MethodMaker|Daemon|Script|XML|ClassLoader/;
@@ -34,7 +34,7 @@ find(
      sub {
          return if /^\.?#/; # skip emacs droppings
          return unless /\.tmpl$/;
-         Krang::HTMLTemplate->new(
+         pkg('HTMLTemplate')->new(
                                   filename => "$File::Find::dir/$_",
                                   cache => 1,
                                   loop_context_vars => 1,
