@@ -556,8 +556,13 @@ sub install_krang {
         close SOURCE;
     }
 
-    # fix cgi/registry scripts shebang line
-    my @cgidirs = (catdir($InstallPath, "htdocs")); 
+    # fix scripts shebang line
+    my @dirs = (
+        catdir($InstallPath, 'htdocs'), 
+        catdir($InstallPath, 'conf'), 
+        catdir($InstallPath, 'docs'), 
+        catdir($InstallPath, 'bench')
+    ); 
 
     my $wanted = 
         sub {
@@ -576,7 +581,7 @@ sub install_krang {
             }
         };
 
-    find($wanted, @cgidirs);
+    find($wanted, @dirs);
 
     print "  Setting execute bits on scripts\n";
     # save some time - only search bin/ conf/ docs/ htdocs/ lib/
