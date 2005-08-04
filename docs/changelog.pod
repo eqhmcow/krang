@@ -4,10 +4,17 @@ This document contains a list of changes for each release of Krang.
 
 =head2 v2.000 - In Development 
 
-=over *
+=over
+
+=item *
 
 Fixed compile bug in krang_backup introduced during the addon v2
 work. [Sam]
+
+=item *
+
+Fixed link to static files (images, CSS, Javascript) to work through
+the root server. [Sam]
 
 =back
 

@@ -126,7 +126,7 @@ sub trans_handler ($$) {
     my $flavor = $r->dir_config('flavor');
     my $uri = $r->uri();
 
-    # Are we in the context of an Instance server?
+    # Are we in the context of an Instance server?    
     if ($flavor eq 'instance') {
         unless (length($instance_name)) {
             my $error = "No instance name set for this Krang instance";
@@ -182,6 +182,14 @@ sub trans_handler ($$) {
         return OK;
 
     } else {
+        # allow requests for static files through if they're present
+        if ($uri =~ /\.(css|js|jpg|gif|png)$/i) {
+            my $filename = pkg('File')->find("htdocs/$uri");
+            if ($filename) {
+                $r->filename($filename);
+                return OK;
+            }
+        }
 
         # Allow requests for other assets to pass through normally
         return DECLINED unless ($uri eq '/');
