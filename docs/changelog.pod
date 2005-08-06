@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added support for Fedora Core 4. [Aaron Dancygier]
+
+=item *
+
 Fixed compile bug in krang_backup introduced during the addon v2
 work. [Sam]
 
