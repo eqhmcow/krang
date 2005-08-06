@@ -1,0 +1,31 @@
+Before you install Krang you'll need to install MySQL 4.
+You can find the MySQL 4 RPMs here:
+
+  http://www.mysql.com/downloads/mysql-4.0.html
+
+Install the server, client, devel and shared RPMs.  After that you
+should be ready to run krang_install.  See INSTALL for details.
+
+NOTE:  Krang will be setup to start on boot, via a link to
+bin/krang_ctl placed in /etc/init.d and activated using chkconfig.
+
+If you want to build Krang from a source distribution (ex:
+krang-1.013-src.tar.gz), you'll need to install the following RPMs,
+which should be on your installation CDs or can be fetched with yum or
+up2date.
+
+     gcc
+     cpp
+     binutils
+     glibc-kernheaders
+     zlib
+     expat-devel
+     libjpeg-devel
+     libungif-devel
+     libpng-devel
+
+To install all of that (or just update to latest versions) with yum:
+
+  yum install gcc cpp binutils  zlib-devel expat-devel glibc-kernheaders \
+              libjpeg-devel libungif-devel libpng-devel
+
