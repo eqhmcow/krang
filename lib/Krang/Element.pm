@@ -588,9 +588,14 @@ sub _update_children {
    
     foreach my $child (@{$self->{children}}) {
         if ($child->{element_id}) {
-            # pre-existing child, update
-            $dbh->do('UPDATE element SET data=?, ord=? WHERE element_id = ?',
-                     undef, $child->freeze_data, $ord++, $child->{element_id});
+            # pre-existing child, replace (allows for reverting where
+            # the element ID might be gone from the tree)
+            $dbh->do(
+                 'REPLACE INTO element (element_id, parent_id, root_id, 
+                                        class, data, ord)
+                  VALUES       (?,?,?,?,?,?)', undef,
+                     $child->{element_id}, $self->{element_id}, $root_id, 
+                     $child->{class}->name, $child->freeze_data, $ord++);
 
             # clear index data if needed
             $dbh->do('DELETE FROM element_index WHERE element_id = ?',

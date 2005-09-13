@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug where deleting an element and then reverting to an older
+version where that element existed didn't properly restore the
+element.  The old element would load properly but save wouldn't
+restore it in the database. [Sam]
+
+=item *
+
 Added support for Fedora Core 4. [Aaron Dancygier]
 
 =item *

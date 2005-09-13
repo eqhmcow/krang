@@ -391,6 +391,71 @@ SKIP: {
 };
 
 
+# test for bug involving reverting after deleting an element
+SKIP: {
+    skip('Element tests only work for TestSet1', 1)
+      unless (InstanceElementSet eq 'TestSet1');
+
+    # test versioning
+    my $v = pkg('Story')->new(categories => [$cat[0], $cat[1]],
+                              title      => "Foo",
+                              slug       => "foo2",
+                              class      => "article");
+    END { $v->delete if $v and $DELETE };
+    $v->element->child('deck')->data('Version 1 Deck');
+    is($v->version, 0);
+
+    my $page = $v->element->child('page');
+    my $p = $page->add_child(class => 'paragraph');
+    $p->data('Version 1 Paragraph');
+
+    $v->save();
+    is($v->version, 1);
+
+    my ($v2) = pkg('Story')->find(story_id => $v->story_id);
+    my $page2 = $v2->element->child('page');
+    my $p2 = $page2->add_child(class => 'paragraph');
+    $p2->data('Version 2 Paragraph');
+    $v2->save();
+    my @para = $page2->match('paragraph');
+    is(scalar(@para), 2);
+    is($v2->version, 2);
+
+    # now create version 3, deleting the v1 paragraph
+    my ($v3) = pkg('Story')->find(story_id => $v->story_id);
+    my $page3 = $v3->element->child('page');
+    my ($p3) = $page3->match('paragraph[0]');
+    $page3->remove_children($p3);
+    @para = $page3->match('paragraph');
+    is(scalar(@para), 1);
+    $v3->save();    
+    is($v3->version, 3);
+
+    # load version 3 and revert it to version 2, the bug was that the
+    # old paragraph wouldn't get saved although it would get loaded
+    my ($old) = pkg('Story')->find(story_id => $v->story_id);
+    @para = $old->element->match('//paragraph');
+    is(scalar(@para), 1);
+
+    $old->revert(2);
+    @para = $old->element->match('//paragraph');
+    is(scalar(@para), 2);
+    
+    $old->save();
+
+    my ($reverted) = pkg('Story')->find(story_id => $v->story_id);
+
+    # this fails when the bug is present - the resurected paragraph
+    # didn't successfully make it to the DB
+    @para = $reverted->element->match('//paragraph');
+    is(scalar(@para), 2);
+
+    $v->delete;
+    undef $v;
+}
+    
+
+
 # check that adding a new category can't cause a dup
 my $s1 = pkg('Story')->new(class => "article",
                            title => "one",
