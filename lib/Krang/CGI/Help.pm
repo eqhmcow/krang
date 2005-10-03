@@ -47,7 +47,7 @@ sub show {
     # load as template to process includes
     my $template = pkg('HTMLTemplate')->new(filename => $file,
                                             path     => ['Help'],
-                                            search_path_on_includes => 1,
+                                            search_path_on_include => 1,
                                             cache    => 1);
 
     return $template->output;
