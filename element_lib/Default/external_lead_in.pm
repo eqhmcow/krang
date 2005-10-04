@@ -12,15 +12,15 @@ Default external_lead_in element class for Krang.
 
 =cut
 
-
-use base 'Krang::ElementClass';
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass';
 
 sub new {
    my $pkg = shift;
    my %args = ( name => 'external_lead_in',
                 children => 
                 [
-                 Krang::ElementClass::ListBox->new(name => "type",
+                 pkg('ElementClass::ListBox')->new(name => "type",
                                                    min => 1,
                                                    max => 1,
                                                    size => 2,
@@ -28,15 +28,15 @@ sub new {
                                                                "Small"],
                                                    default => ["Small"],
                                                   ),
-                 Krang::ElementClass::Textarea->new(name => "title",
+                 pkg('ElementClass::Textarea')->new(name => "title",
                                                     min => 1,
                                                     max => 1
                                                    ),
-                 Krang::ElementClass::Textarea->new(name => "teaser",
+                 pkg('ElementClass::Textarea')->new(name => "teaser",
                                                     min => 1,
                                                     max => 1
                                                    ),
-                 Krang::ElementClass::Textarea->new(name => "url",
+                 pkg('ElementClass::Textarea')->new(name => "url",
                                                     display_name => 'URL',
                                                     min => 1,
                                                     max => 1,

@@ -12,8 +12,8 @@ Default page element class for Krang.
 
 =cut
 
-
-use base 'Krang::ElementClass';
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass';
 
 sub new {
    my $pkg = shift;
@@ -22,19 +22,19 @@ sub new {
                 pageable => 1,
                 children => 
                 [ 
-                 Krang::ElementClass::Text->new(name         => "section_header",
+                 pkg('ElementClass::Text')->new(name         => "section_header",
                                                 display_name => 'Section Header',
                                                 ),
-                 Krang::ElementClass::Text->new(name         => "large_header",
+                 pkg('ElementClass::Text')->new(name         => "large_header",
                                                 display_name => 'Large Header',
                                                 ),
-                 Krang::ElementClass::Textarea->new(name => "paragraph",
+                 pkg('ElementClass::Textarea')->new(name => "paragraph",
                                                     required => 1,
                                                     bulk_edit => 1,
                                                    ),
                  Default::image->new(),
                  Default::inset_box->new(), 
-                 Krang::ElementClass::MediaLink->new(name => "section_header_image",
+                 pkg('ElementClass::MediaLink')->new(name => "section_header_image",
                                                      display_name => 'Section Header Image'),
                  Default::empty->new( name => 'horizontal_line' )
 

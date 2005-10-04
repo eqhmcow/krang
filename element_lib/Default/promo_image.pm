@@ -13,23 +13,23 @@ that will override associated media caption/copyright if set.
 
 =cut
 
-
-use base 'Krang::ElementClass';
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass';
 
 sub new {
    my $pkg = shift;
    my %args = ( name => 'photo',
                 children => 
                 [ 
-                 Krang::ElementClass::Textarea->new(name => "caption",
+                 pkg('ElementClass::Textarea')->new(name => "caption",
                                                     min => 0,
                                                     max => 1
                                                    ),
-                 Krang::ElementClass::Textarea->new(name => "copyright",
+                 pkg('ElementClass::Textarea')->new(name => "copyright",
                                                     min => 0,
                                                     max => 1
                                                    ),
-                 Krang::ElementClass::MediaLink->new(name => "media",
+                 pkg('ElementClass::MediaLink')->new(name => "media",
                                                      min => 1,
                                                      max => 1,
                                                      allow_delete => 0),

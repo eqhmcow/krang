@@ -2,21 +2,22 @@ package Default::open_format_article;
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass::TopLevel';
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass::TopLevel';
 
 sub new {
    my $pkg = shift;
    my %args = ( name => 'open_format_article',
                 children =>
                 [
-                 Krang::ElementClass::Text->new( name => 'metadata_title',
+                 pkg('ElementClass::Text')->new( name => 'metadata_title',
                                                  display_name => 'Metadata Title', 
                                                  min => 1,
                                                  max => 1,
                                                  reorderable => 0,
                                                  allow_delete => 0,
                                                ),
-                 Krang::ElementClass::Textarea->new(name => 'metadata_description',
+                 pkg('ElementClass::Textarea')->new(name => 'metadata_description',
                                                     display_name => 'Metadata Description',
                                                     min => 1,
                                                     max => 1,
@@ -30,7 +31,7 @@ sub new {
                                               reorderable => 0,
                                               allow_delete => 0,
                                             ),
-                 Krang::ElementClass::Text->new(name => 'promo_title',
+                 pkg('ElementClass::Text')->new(name => 'promo_title',
                                                 display_name => 'Promo Title',
                                                 min => 1,
                                                 max => 1,
@@ -38,7 +39,7 @@ sub new {
                                                 reorderable => 0,
                                                 allow_delete => 0,
                                                ),
-                 Krang::ElementClass::Textarea->new(name => 'promo_teaser',
+                 pkg('ElementClass::Textarea')->new(name => 'promo_teaser',
                                                     display_name => 'Promo Teaser',
                                                     min => 1,
                                                     max => 1,
@@ -47,7 +48,7 @@ sub new {
                                                    ),
                  Default::promo_image->new(max => 1, name => 'promo_image_large'),
                  Default::promo_image->new(max => 1, name => 'promo_image_small'),
-                 Krang::ElementClass::Textarea->new(   name => 'open_format_page',
+                 pkg('ElementClass::Textarea')->new(   name => 'open_format_page',
                                                        display_name => 'Open Format Page',
                                                        pageable => 1,
                                                        rows => 10,

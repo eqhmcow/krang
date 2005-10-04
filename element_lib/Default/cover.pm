@@ -2,20 +2,21 @@ package Default::cover;
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass::Cover';
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass::Cover';
 
 sub new {
    my $pkg = shift;
    my %args = ( name => 'cover',
                 children => [
-                    Krang::ElementClass::Text->new( name => 'metadata_title',
+                    pkg('ElementClass::Text')->new( name => 'metadata_title',
                                                         display_name => 'Metadata Title', 
                                                          min => 1,
                                                          max => 1,
                                                          reorderable => 0,
                                                          allow_delete => 0,
                                                         ),
-                    Krang::ElementClass::Textarea->new(name => 'metadata_description',
+                    pkg('ElementClass::Textarea')->new(name => 'metadata_description',
                                                         display_name => 'Metadata Description',
                                                         min => 1,
                                                         max => 1,
@@ -29,7 +30,7 @@ sub new {
                                         reorderable => 0,
                                         allow_delete => 0,
                                                         ),
-                    Krang::ElementClass::Text->new(name => 'promo_title',
+                    pkg('ElementClass::Text')->new(name => 'promo_title',
                                                         display_name => 'Promo Title',
                                                         min => 1,
                                                         max => 1,
@@ -37,7 +38,7 @@ sub new {
                                                         reorderable => 0,
                                                         allow_delete => 0,
                                                         ),
-                    Krang::ElementClass::Textarea->new(name => 'promo_teaser',
+                    pkg('ElementClass::Textarea')->new(name => 'promo_teaser',
                                                         display_name => 'Promo Teaser',
                                                         min => 1,
                                                         max => 1,
@@ -57,7 +58,7 @@ sub default_schedules {
     my ($self, %arg) = @_;
     my ($element) = @arg{qw(element)};
     my $story = $element->story;
-    my $sched = Krang::Schedule->new(object_type => 'story',
+    my $sched = pkg('Schedule')->new(object_type => 'story',
                                      object_id   => $story->story_id,
                                      action      => 'publish',
                                      repeat      => 'hourly',

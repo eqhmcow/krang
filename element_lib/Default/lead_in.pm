@@ -1,7 +1,9 @@
 package Default::lead_in;
 use strict;
 use warnings;
-use base 'Krang::ElementClass';
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass';
 
 =head1 NAME
 
@@ -21,14 +23,14 @@ sub new {
    my %args = ( name => 'lead_in', 
                 children =>
                 [
-                 Krang::ElementClass::StoryLink->new( name => 'story',
+                 pkg('ElementClass::StoryLink')->new( name => 'story',
                                                       min => 1,
                                                       max => 1,
                                                       allow_delete => '0',
                                                       reorderable => '0',
                                                       required => 1
                                                     ),
-                 Krang::ElementClass::PopupMenu->new(name => "type",
+                 pkg('ElementClass::PopupMenu')->new(name => "type",
                                                      reorderable => '0',
                                                      min => 1,
                                                      max => 1,
@@ -37,7 +39,7 @@ sub new {
                                                                  "small"],
                                                      default => "small"
                                                     ),
-                 Krang::ElementClass::PopupMenu->new(name => "header_size",
+                 pkg('ElementClass::PopupMenu')->new(name => "header_size",
                                                      reorderable => '0',
                                                      min => 1,
                                                      max => 1,
@@ -46,7 +48,7 @@ sub new {
                                                                  "small"],
                                                      default => "small"
                                                     ),
-                 Krang::ElementClass::PopupMenu->new(name => "image_alignment",
+                 pkg('ElementClass::PopupMenu')->new(name => "image_alignment",
                                                      reorderable => '0',
                                                      min => 1,
                                                      max => 1,
@@ -74,7 +76,7 @@ sub input_form {
     return '';
 }
 
-use Krang::Log qw(debug info critical);
+use Krang::ClassLoader Log => qw(debug info critical);
 
 sub fill_template {
     my ($self, %args) = @_;
@@ -114,7 +116,7 @@ sub fill_template {
 
     $tmpl->param( enhanced_content => $story->element->child('enhanced_content')->data ) if $story->element->child('enhanced_content');
 
-    my %contrib_types = Krang::Pref->get('contrib_type');
+    my %contrib_types = pkg('Pref')->get('contrib_type');
 
     my %contribs = ();
     my @contributors  = ();

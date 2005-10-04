@@ -12,22 +12,22 @@ Default inset_box element class for Krang.
 
 =cut
 
-
-use base 'Krang::ElementClass';
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass';
 
 sub new {
    my $pkg = shift;
    my %args = ( name => 'inset_box',
                 children => 
                 [ 
-                 Krang::ElementClass::Text->new(name         => "title",
+                 pkg('ElementClass::Text')->new(name         => "title",
                                                 display_name => 'Title',
                                                 allow_delete => '0',
                                                 min => 1,
                                                 max => 1,
                                                 reorderable => 0
                                                 ),
-                 Krang::ElementClass::PopupMenu->new(name => "alignment",
+                 pkg('ElementClass::PopupMenu')->new(name => "alignment",
                                                      min => 1,
                                                      max => 1,
                                                      allow_delete => 0,
@@ -36,7 +36,7 @@ sub new {
                                                                  "Middle",
                                                                  "Right"],
                                                      default => "Left"),
-                 Krang::ElementClass::Textarea->new(name => "paragraph",
+                 pkg('ElementClass::Textarea')->new(name => "paragraph",
                                                     required => 1,
                                                     bulk_edit => 1,
                                                    ),

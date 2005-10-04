@@ -13,30 +13,30 @@ that will override assoicated media caption/copyright if set.  It also has an al
 
 =cut
 
-
-use base 'Krang::ElementClass';
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass';
 
 sub new {
    my $pkg = shift;
    my %args = ( name => 'image',
                 children => 
                 [ 
-                 Krang::ElementClass::PopupMenu->new(name => "alignment",
+                 pkg('ElementClass::PopupMenu')->new(name => "alignment",
                                                      min => 1,
                                                      max => 1,
                                                      allow_delete => '0',
                                                      values => [ "Left",
                                                                  "Right"],
                                                      default => "Left"),
-                 Krang::ElementClass::Textarea->new(name => "caption",
+                 pkg('ElementClass::Textarea')->new(name => "caption",
                                                     min => 0,
                                                     max => 1
                                                    ),
-                 Krang::ElementClass::Textarea->new(name => "copyright",
+                 pkg('ElementClass::Textarea')->new(name => "copyright",
                                                     min => 0,
                                                     max => 1
                                                    ),
-                 Krang::ElementClass::MediaLink->new(name => "media",
+                 pkg('ElementClass::MediaLink')->new(name => "media",
                                                      min => 1,
                                                      max => 1,
                                                      allow_delete => 0),

@@ -19,10 +19,12 @@ story C<max> is set to 1.
 
 =cut
 
+
 use base 'Default::keyword';
 use Carp qw(croak);
 use Storable qw(freeze thaw);
-use Krang::Log qw(debug);
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Log => qw(debug);
 
 sub new {
    my $pkg = shift;
