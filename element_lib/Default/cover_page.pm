@@ -12,8 +12,8 @@ Default cover  page element class for Krang.
 
 =cut
 
-
-use base 'Krang::ElementClass';
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass';
 
 sub new {
    my $pkg = shift;
@@ -22,13 +22,13 @@ sub new {
                 pageable => 1,
                 children => 
                 [ 
-                 Krang::ElementClass::Text->new(name         => "section_header" ),
-                 Krang::ElementClass::Text->new(name         => "large_header" ),
-                 Krang::ElementClass::Textarea->new(name => "paragraph",
+                 pkg('ElementClass::Text')->new(name         => "section_header" ),
+                 pkg('ElementClass::Text')->new(name         => "large_header" ),
+                 pkg('ElementClass::Textarea')->new(name => "paragraph",
                                                     required => 1,
                                                     bulk_edit => 1,
                                                    ),
-                 Krang::ElementClass::MediaLink->new(name => "header_image" ),
+                 pkg('ElementClass::MediaLink')->new(name => "header_image" ),
                  Default::lead_in->new(),
                  Default::external_lead_in->new(),
                  Default::image->new(),

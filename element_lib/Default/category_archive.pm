@@ -2,9 +2,8 @@ package Default::category_archive;
 use strict;
 use warnings;
 
-use base 'Krang::ElementClass::TopLevel';
-
-#use Krang::Story;
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass::TopLevel';
 
 sub new {
    my $pkg = shift;
@@ -21,7 +20,7 @@ sub fill_template {
     my $publisher = $args{publisher};
 
     # get stories in this category
-    my @s = Krang::Story->find( category_id => $story->category->category_id, published => '1', order_by => 'cover_date', order_desc => 1 );
+    my @s = pkg('Story')->find( category_id => $story->category->category_id, published => '1', order_by => 'cover_date', order_desc => 1 );
 
     my @story_loop;
     my @page_loop;

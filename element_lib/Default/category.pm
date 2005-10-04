@@ -13,14 +13,14 @@ moment.
 
 =cut
 
-
-use base 'Krang::ElementClass::TopLevel';
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader base => 'ElementClass::TopLevel';
 
 sub new {
    my $pkg = shift;
    my %args = ( name => 'category',
                 children => [
-                             Krang::ElementClass::Text->new(name => 'display_name',
+                             pkg('ElementClass::Text')->new(name => 'display_name',
                                                             allow_delete => 0,
                                                             min => 1,
                                                             max => 1,
