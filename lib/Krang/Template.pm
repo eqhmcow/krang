@@ -470,6 +470,11 @@ sub delete {
     $dbh->do($t_query, undef, ($id));
     $dbh->do($v_query, undef, ($id));
 
+    add_history(    object => $self,
+                    action => 'delete',
+               );
+
+
     return 1;
 }
 
