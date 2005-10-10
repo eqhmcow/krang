@@ -1647,6 +1647,9 @@ sub delete {
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?',
 undef, 'media', $self->{media_id});
 
+    add_history(    object => $self,
+                    action => 'delete',
+               );
 }
 
 =item C<< $media->serialize_xml(writer => $writer, set => $set) >>
