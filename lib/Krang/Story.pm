@@ -1824,6 +1824,11 @@ sub delete {
 
     # delete schedules for this story
     $dbh->do('DELETE FROM schedule WHERE object_type = ? and object_id = ?', undef, 'story', $self->{story_id});
+
+    add_history(    object => $self,
+                    action => 'delete',
+               );
+
 }
 
 =item C<< $copy = $story->clone() >>
