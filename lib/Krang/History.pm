@@ -21,7 +21,7 @@ use Time::Piece::MySQL;
 # constants
 use constant FIELDS => qw( object_type object_id action version desk_id user_id timestamp );
 use constant OBJECT_TYPES => qw( Krang::Story Krang::Media Krang::Template );
-use constant ACTIONS => qw( new save checkin checkout publish deploy undeploy move revert );
+use constant ACTIONS => qw( new save checkin checkout publish deploy undeploy move revert delete);
 
 =head1 NAME
 
@@ -117,7 +117,7 @@ sub _save {
 
 This method adds an entry into the database of an action taken on an object.
 
-The valid trackable objects are: Krang::Story, Krang::Media, and Krang::Template. These are passed in as 'object' - 'object_type', and 'object_id' are derived from the object.  The valid actions (specified by 'action') performed on an object are new, save, checkin, checkout, revert, move, publish, and deploy.  
+The valid trackable objects are: Krang::Story, Krang::Media, and Krang::Template. These are passed in as 'object' - 'object_type', and 'object_id' are derived from the object.  The valid actions (specified by 'action') performed on an object are new, save, checkin, checkout, revert, move, publish, deploy, and delete.  
 
 In addition to tracking actions on objects, the user who performed the action is tracked by 'user_id', which is found in the session object.  If the 'action' is  'save' or 'revert', version is also derived from the object. 'desk_id' can be used to track which desk an action was performed on.  A timestamp is added to each history event, and will appear in the field 'timestamp' on objects returned from find. 
 
