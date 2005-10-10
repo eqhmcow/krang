@@ -2,9 +2,20 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 v2.000 - In Development 
+=head2 v2.000
 
 =over
+
+=item *
+
+Added C<delete> action to track in Krang::History::add_history().
+Added add_history() calls in Krang::Story::delete(), Krang::Template::delete(), 
+and Krang::Media::delete() [Aaron Dancygier]
+
+=item *
+
+Converted default element set to use Krang::ClassLoader and Krang::ClassFactory in 
+compliance with new addon system. [Aaron Dancygier]
 
 =item *
 
@@ -368,7 +379,7 @@ ports. [Perrin]
 
 =item *
 
-Upgraded L<Scalar-List-Utils> to 1.14 from 1.09 - this should fix some
+Upgraded C<Scalar-List-Utils> to 1.14 from 1.09 - this should fix some
 compilation issues with MacOSX. [Peter]
 
 =back
