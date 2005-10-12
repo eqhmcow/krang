@@ -126,7 +126,7 @@ use constant ADDITIONAL_CONTENT => "KRANG_ADDITIONAL_CONTENT";
 use Exception::Class
   'Krang::Publisher::FileWriteError' => { fields => [ 'story_id', 'media_id', 'template_id',
                                                       'source', 'destination', 'system_error' ] },
-  'Krang::Publisher::ZeroSizeOutput' => { fields => [ 'story_id', 'url' ] }
+  'Krang::Publisher::ZeroSizeOutput' => { fields => [ 'story_id', 'category_url', 'story_class' ] }
   ;
 
 
