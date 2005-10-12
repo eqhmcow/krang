@@ -8,6 +8,17 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in bin/krang_backup where foreign key constraints in the wrong order were 
+conflicting with addons containing innodb tables.  Patch sets foreign_key_checks=0 
+at the top of the dump file. [Michael Peters]
+
+=item *
+
+Fixed a bug in Krang::Publisher::ZeroSizeOutPut().  Wrong hash keys specified.
+[Jesse Erlbaum]
+
+=item *
+
 Added C<delete> action to track in Krang::History::add_history().
 Added add_history() calls in Krang::Story::delete(), Krang::Template::delete(), 
 and Krang::Media::delete() [Aaron Dancygier]
