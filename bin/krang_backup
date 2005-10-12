@@ -133,10 +133,12 @@ mkpath([$dir]) unless -d $dir;
 foreach my $instance (pkg('Conf')->instances) {
     pkg('Conf')->instance($instance);
 
+    my $dump_file = catfile($dir, InstanceDBName . '.sql');
     my $cmd = MYSQL_DUMP . ' -u' . DBUser .
       (DBPass ? (' -p' . DBPass) : '') . ' -e -l --databases ' . 
-        InstanceDBName . 
-        ' >' . catfile($dir, InstanceDBName . '.sql');
+        InstanceDBName . ">>$dump_file";
+    # in case any addons are using InnoDB tables
+    $cmd = "echo 'SET foreign_key_checks=0;' > $dump_file; $cmd";
     print STDERR "Dumping " . InstanceDBName . " database with command:" .
       "\n\t$cmd\n\n"
         if $verbose;
