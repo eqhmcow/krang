@@ -35,7 +35,7 @@ Krang::ElementClass::CheckBox - check box element class
 
 =head1 SYNOPSIS
 
-  $class = pkg('ElementClass::CheckBox')->new(name => "show_sprinks",
+  $class = pkg('ElementClass::CheckBox')->new(name => "show_authors",
                                               value => 1,
                                               default => 1);
 
