@@ -90,7 +90,7 @@ use Krang::ClassFactory qw(pkg);
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
 use Krang::Script;
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceDBName DBUser DBPass);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceDBName DBUser DBPass DBHost);
 use Getopt::Long;
 use Pod::Usage;
 use Sys::Hostname;
@@ -135,8 +135,10 @@ foreach my $instance (pkg('Conf')->instances) {
 
     my $dump_file = catfile($dir, InstanceDBName . '.sql');
     my $cmd = MYSQL_DUMP . ' -u' . DBUser .
-      (DBPass ? (' -p' . DBPass) : '') . ' -e -l --databases ' . 
-        InstanceDBName . ">>$dump_file";
+      (DBPass ? (' -p' . DBPass) : '') . 
+      (DBHost ? (' -h' . DBHost) : '') .
+      ' -e -l --databases ' . 
+      InstanceDBName . ">>$dump_file";
     # in case any addons are using InnoDB tables
     $cmd = "echo 'SET foreign_key_checks=0;' > $dump_file; $cmd";
     print STDERR "Dumping " . InstanceDBName . " database with command:" .
