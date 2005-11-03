@@ -106,7 +106,7 @@ sub show {
     my $pager = pkg('HTMLPager')->new
       (
        cgi_query   => $query,
-       use_module  => 'Krang::Workspace',
+       use_module  => pkg('Workspace'),
        columns     => [ 'id', 'version', 'url', 'title', 'story_type', 
                         'thumbnail',
                         'command_column', 'checkbox_column'],
@@ -114,8 +114,8 @@ sub show {
        command_column_commands => [ 'log', 'edit' ],
        command_column_labels => { edit => 'Edit',
                                   log  => 'Log' },
-       id_handler  => \&_obj2id,
-       row_handler => sub { _row_handler(@_,\@desk_loop) },
+       id_handler  => sub { $self->_obj2id( @_ ) },
+       row_handler => sub { $self->_row_handler(@_,\@desk_loop) },
       );
 
     # Run the pager
@@ -124,12 +124,12 @@ sub show {
 }
 
 sub _row_handler {
-    my ($row, $obj, $desk_loop) = @_;
+    my ($self, $row, $obj, $desk_loop) = @_;
     $row->{desk_loop} = $desk_loop;
 
     if ($obj->isa('Krang::Story')) {
         $row->{story_id} = $obj->story_id;
-        $row->{id} = _obj2id($obj);
+        $row->{id} = $self->_obj2id($obj);
         $row->{title} = $obj->title;
         $row->{story_type} = $obj->class->display_name;
         $row->{is_story} = 1;
@@ -139,7 +139,7 @@ sub _row_handler {
                                 length => 50);
     } elsif ($obj->isa('Krang::Media')) {
         $row->{media_id} = $obj->media_id;
-        $row->{id} = _obj2id($obj);
+        $row->{id} = $self->_obj2id($obj);
         $row->{title} = $obj->title;
         $row->{thumbnail} = $obj->thumbnail_path(relative => 1);
         $row->{is_media} = 1;
@@ -149,7 +149,7 @@ sub _row_handler {
                                 length => 50);
     } else {
         $row->{template_id} = $obj->template_id;
-        $row->{id} = _obj2id($obj);
+        $row->{id} = $self->_obj2id($obj);
         $row->{title} = $obj->filename;
         $row->{is_template} = 1;
         $row->{url} = format_url(url    => $obj->url,
@@ -174,7 +174,7 @@ Deletes a single object.  Requires an 'id' parameter of the form
 sub delete {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
     add_message('deleted_obj',
                 type => ($obj->isa('Krang::Story') ? 'Story' : 
                          ($obj->isa('Krang::Media') ? 'Media' :
@@ -193,7 +193,7 @@ Deploys a single template.  Requires an 'id' parameter of the form
 sub deploy {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
     add_message('deployed', id => $obj->template_id);
     my $publisher = pkg('Publisher')->new();
     $publisher->deploy_template(template => $obj);
@@ -211,7 +211,7 @@ the copy loaded for editing.
 sub copy {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
     
     # redirect as appropriate
     if ($obj->isa('Krang::Story')) {
@@ -240,7 +240,7 @@ sub delete_checked {
     my $self = shift;
     my $query = $self->query;
     add_message('deleted_checked');
-    foreach my $obj (map { _id2obj($_) }
+    foreach my $obj (map { $self->_id2obj($_) }
                      $query->param('krang_pager_rows_checked')) {
         $obj->delete;
     }
@@ -256,7 +256,7 @@ Checks in object (to specified desk for stories)
 sub checkin {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
 
     if ($obj->isa('Krang::Story')) {
         my $select = 'checkin_to_'.$query->param('id');
@@ -286,7 +286,7 @@ Changes the testing flag for a template object.
 sub update_testing {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
     my $val = $query->param('testing_' . $query->param('id'));
 
     if ($val) {
@@ -310,7 +310,7 @@ Checks in checked objects (to specified desk for stories).
 sub checkin_checked {
     my $self = shift;
     my $query = $self->query;
-    foreach my $obj (map { _id2obj($_) }
+    foreach my $obj (map { $self->_id2obj($_) }
                      $query->param('krang_pager_rows_checked')) {
         if ($obj->isa('Krang::Story')) {
             my $select = 'checkin_to_story_'.$obj->story_id;
@@ -340,7 +340,7 @@ Redirects to the appropriate edit screen for this object.
 sub goto_edit {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
 
     # redirect as appropriate
     if ($obj->isa('Krang::Story')) {
@@ -367,7 +367,7 @@ Redirects to the history viewer for this object.
 sub goto_log {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
 
     # redirect as appropriate
     my $id_param;
@@ -399,6 +399,8 @@ sub goto_log {
 
 # transform object into a type_id pair
 sub _obj2id {
+    my $self = shift;
+
     my $obj = shift;
     return "story_"    . $obj->story_id    if $obj->isa('Krang::Story');
     return "media_"    . $obj->media_id    if $obj->isa('Krang::Media');
@@ -407,6 +409,8 @@ sub _obj2id {
 
 # transform type_id into an object
 sub _id2obj {
+    my $self = shift;
+
     my ($type, $id) = $_[0] =~ /^([^_]+)_(.*)$/;
     croak("Unable to find type and id in '$_[0]'")
       unless $type and $id;
