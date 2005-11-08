@@ -108,7 +108,7 @@ sub search {
                                                        rm => 'search',
                                                        search_filter => $search_filter,
                                                       },
-                                      use_module => 'Krang::ListGroup',
+                                      use_module => pkg('ListGroup'),
                                       find_params => { %find_params },
                                       columns => [qw(name description command_column )],
                                       column_labels => {
@@ -118,10 +118,7 @@ sub search {
                                       columns_sortable => [qw( name )],
                                       command_column_commands => [qw( edit_list_group )],
                                       command_column_labels => {edit_list_group => 'Edit'},
-                                      row_handler => sub {
-                                            $_[0]->{name} = $_[1]->name();
-                                            $_[0]->{description} = $_[1]->description();
-                                      },
+                     row_handler => sub { $self->row_handler(@_) },
                                       id_handler => sub { return $_[0]->list_group_id },
                                      );
 
@@ -134,7 +131,11 @@ sub search {
     return $t->output();
 }
 
-
+sub row_handler {
+    my ($self, $row_hashref, $row_obj) = @_;
+    $row_hashref->{name} = $row_obj->name();
+    $row_hashref->{description} = $row_obj->description();
+}
 
 =item add
 
