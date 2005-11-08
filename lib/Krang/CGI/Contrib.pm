@@ -148,7 +148,7 @@ sub search {
                                                        rm => 'search',
                                                        search_filter => $search_filter,
                                                       },
-                                      use_module => 'Krang::Contrib',
+                                      use_module => pkg('Contrib'),
                                       find_params => { simple_search => $search_filter },
                                       columns => [qw(last first_middle type command_column checkbox_column)],
                                       column_labels => {
@@ -160,7 +160,7 @@ sub search {
                                       columns_sort_map => {first_middle => 'first,middle'},
                                       command_column_commands => [qw( edit_contrib )],
                                       command_column_labels => {edit_contrib => 'Edit'},
-                                      row_handler => \&list_view_contrib_row_handler,
+                                      row_handler => sub { $self->list_view_contrib_row_handler(@_) },
                                       id_handler => sub { return $_[0]->contrib_id },
                                      );
 
@@ -338,7 +338,7 @@ sub associate_search {
                                                        search_filter => $search_filter,
                                                        associate_mode => $associate_mode,
                                                       },
-                                      use_module => 'Krang::Contrib',
+                                      use_module => pkg('Contrib'),
                                       find_params => {
                                                       simple_search => $search_filter,
                                                       exclude_contrib_ids => \@exclude_contrib_ids,
@@ -929,7 +929,7 @@ sub list_view_ass_contrib_row_handler {
 
 # Krang::HTMLPager row handler for contrib list view
 sub list_view_contrib_row_handler {
-    my ($row_hashref, $contrib) = @_;
+    my ($self, $row_hashref, $contrib) = @_;
     $row_hashref->{first_middle} = $contrib->first();
     $row_hashref->{first_middle} .= '&nbsp;' . $contrib->middle() if ($contrib->middle());
     $row_hashref->{last} = $contrib->last();
