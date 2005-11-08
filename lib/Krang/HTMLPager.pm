@@ -537,7 +537,7 @@ to "ascending".
 
 =item row_handler
 
-  row_handler => \&my_row_handler
+  row_handler => sub { $self->my_row_handler(@_) }
 
 A subroutine reference pointing to a custom function to process each
 row of data.  This function will receive, as arguments, a hashref into
@@ -547,7 +547,7 @@ the object attributes into template data and set that data in the
 hashref.  For example:
 
   sub my_row_handler {
-    my ($row_hashref, $row_obj) = @_;
+    my ($self, $row_hashref, $row_obj) = @_;
     $row_hashref->{first_middle} = $row_obj->first() . " " . $row_obj->middle();
     $row_hashref->{last} = $row_obj->last();
     $row_hashref->{type} = join(", ", ($row_obj->contrib_type_names()) );
