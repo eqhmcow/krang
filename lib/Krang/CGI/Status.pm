@@ -28,7 +28,7 @@ use Krang::ClassLoader 'Conf';
 sub setup {
     my $self = shift;
     $self->start_mode('status');
-    $self->run_modes(status => \&status);
+    $self->run_modes(status => 'status');
 }
 
 sub status {
