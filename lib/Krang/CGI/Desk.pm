@@ -108,7 +108,7 @@ sub show {
     my $pager = pkg('HTMLPager')->new
       (
        cgi_query   => $query,
-       use_module  => 'Krang::Story',
+       use_module  => pkg('Story'),
        columns     => [ 'id', 'version', 'url', 'title', 'story_type', 
                         'command_column', 'checkbox_column'],
        columns_sortable => [ ],
@@ -117,8 +117,8 @@ sub show {
        command_column_labels => {   view => 'View',
                                     edit => 'Edit',
                                     log  => 'Log' },
-       id_handler  => \&_obj2id,
-       row_handler => sub { _row_handler(@_,\@desk_loop) },
+       id_handler  => sub { $self->_obj2id(@_) },
+       row_handler => sub { $self->_row_handler(@_,\@desk_loop) },
       );
 
     # Run the pager
@@ -133,10 +133,10 @@ sub show {
 }
 
 sub _row_handler {
-    my ($row, $obj, $desk_loop) = @_;
+    my ($self, $row, $obj, $desk_loop) = @_;
     $row->{desk_loop} = $desk_loop;
     $row->{story_id} = $obj->story_id;
-    $row->{id} = _obj2id($obj);
+    $row->{id} = $self->_obj2id($obj);
     $row->{title} = $obj->title;
     $row->{story_type} = $obj->class->display_name;
     $row->{url} = format_url(url    => $obj->url,
@@ -158,7 +158,7 @@ Checks out a list of checked objects.
 sub checkout_checked {
     my $self = shift;
     my $query = $self->query;
-    foreach my $obj (map { _id2obj($_) }
+    foreach my $obj (map { $self->_id2obj($_) }
                      $query->param('krang_pager_rows_checked')) {
         $obj->checkout;
     }
@@ -177,7 +177,7 @@ Moves story to selected desk,
 sub move {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
     my $result = $obj->move_to_desk($query->param('move_'.$query->param('id')));
     $result ? add_message("moved_story", id => $query->param('id')) : add_message("story_cant_move", id => $query->param('id')); 
     return $self->show;
@@ -192,7 +192,7 @@ Moves list of checked stories to desks.
 sub move_checked {
     my $self = shift;
     my $query = $self->query;
-    foreach my $obj (map { _id2obj($_) }
+    foreach my $obj (map { $self->_id2obj($_) }
                      $query->param('krang_pager_rows_checked')) {
         my $result = $obj->move_to_desk($query->param('move_'.$obj->story_id));
         $result ? add_message("moved_story", id => $obj->story_id) : add_message("story_cant_move", id => $obj->story_id);
@@ -210,7 +210,7 @@ Redirects to the appropriate edit screen for this object.
 sub goto_edit {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
     $obj->checkout;
     $self->header_props(-uri => 'story.pl?rm=edit&story_id=' .
                         $obj->story_id);
@@ -228,7 +228,7 @@ Redirects to the history viewer for this object.
 sub goto_log {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
     my $desk_id = $query->param('desk_id');
 
     # redirect as appropriate
@@ -256,7 +256,7 @@ Redirects to the story view for this object.
 sub goto_view {
     my $self = shift;
     my $query = $self->query;
-    my $obj = _id2obj($query->param('id'));
+    my $obj = $self->_id2obj($query->param('id'));
     my $desk_id = $query->param('desk_id');
  
     $self->header_props(-uri => "story.pl?return_script=desk.pl&return_params=rm&return_params=show&return_params=desk_id&return_params=$desk_id&rm=view&story_id=" . $obj->story_id);
@@ -272,13 +272,13 @@ sub goto_view {
 #
 
 sub _obj2id {
-    my $obj = shift;
+    my ($self, $obj) = @_;
     return $obj->story_id;
 }
 
 # transform story_id into an object
 sub _id2obj {
-    my ($id) = shift;
+    my ($self, $id) = @_;
     my $obj;
         ($obj) = pkg('Story')->find(story_id => $id);
     croak("Unable to load story $id")
