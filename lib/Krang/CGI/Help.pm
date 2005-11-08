@@ -29,7 +29,7 @@ use Krang::ClassLoader 'HTMLTemplate';
 sub setup {
     my $self = shift;
     $self->start_mode('show');
-    $self->run_modes(show => \&show);
+    $self->run_modes(show => 'show');
 }
 
 sub show {

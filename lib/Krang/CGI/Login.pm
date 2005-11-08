@@ -48,9 +48,9 @@ END
 sub setup {
     my $self = shift;
     $self->start_mode('show_form');
-    $self->run_modes(show_form => \&show_form,
-                     login     => \&login,
-                     logout    => \&logout,
+    $self->run_modes(show_form => 'show_form',
+                     login     => 'login',
+                     logout    => 'logout',
                     );
     $self->tmpl_path('Login/');
 }
