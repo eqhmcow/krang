@@ -167,8 +167,8 @@ sub setup {
     $self->mode_param('rm');
     $self->run_modes(
                      add              => 'add',
-                     delete_children  => sub { shift->revise('delete') },
-                     reorder          => sub { shift->revise('reorder') },
+                     delete_children  => 'delete_children',
+                     reorder          => 'reorder',
                      delete_element   => 'delete_element',
                      find_story_link  => 'find_story_link',
                      select_story     => 'select_story',
@@ -473,7 +473,7 @@ sub find_story_link {
                          advanced =>($query->param('advanced') || 0),
                          %persist_vars,
                         },
-       use_module    => 'Krang::Story',
+       use_module    => pkg('Story'),
        find_params   => \%find_params,
        columns       => [qw(
                             pub_status 
@@ -496,14 +496,13 @@ sub find_story_link {
                                    select_story     => 'Select',
                                   },
        row_handler   => sub { $self->find_story_link_row_handler(@_) },
-       id_handler    => sub { shift->story_id },
+       id_handler    => sub { $self->story_id_handler(@_) },
       );
     
     $template->param(pager_html => $pager->output());
 
     return $template->output;
 }
-
 
 # Pager row handler for story find run-mode
 sub find_story_link_row_handler {
@@ -541,6 +540,8 @@ sub find_story_link_row_handler {
     $row->{pub_status} = $story->published_version() ? 
       '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
 }
+
+sub id_handler { $_[0]->story_id }
 
 sub find_media_link {
     my ($self, %args) = @_;
@@ -631,7 +632,7 @@ sub find_media_link {
                          advanced => ($query->param('advanced') || 0),
                          %persist,
                         },
-       use_module    => 'Krang::Media',
+       use_module    => pkg('Media'),
        find_params   => \%find,
        columns       => [qw(
                             pub_status 
@@ -654,7 +655,7 @@ sub find_media_link {
                                    select_media     => 'Select',
                                   },
        row_handler   => sub { $self->find_media_link_row_handler(@_) },
-       id_handler    => sub { shift->media_id },
+       id_handler    => sub { $self->media_id_handler(@_) },
       );
 
     # Set up advanced search form
@@ -672,7 +673,6 @@ sub find_media_link {
 
     return $template->output;
 }
-
 
 # Pager row handler for media find run-mode
 sub find_media_link_row_handler {
@@ -713,6 +713,8 @@ sub find_media_link_row_handler {
     $row->{pub_status} = $media->published_version() ? 
       '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
 }
+
+sub media_id_handler { $_[0]->media_id }
 
 sub select_story {
     my $self = shift;
@@ -1049,5 +1051,9 @@ sub delete_element {
     add_message('deleted_element', name => $name);
     return $self->edit();
 }
+
+sub delete_children { shift->revise('delete') }
+
+sub reorder { shift->revise('reorder') }
 
 1;
