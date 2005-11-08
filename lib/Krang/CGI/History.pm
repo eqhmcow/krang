@@ -155,7 +155,7 @@ sub show {
                         history_return_script => $history_return_script,
                         history_return_params => \@history_return_params,
                        },
-       use_module => 'Krang::History',
+       use_module => pkg('History'),
        find_params => { object => $object },
        columns => [qw(action user timestamp attr)],
        column_labels => {
@@ -168,7 +168,7 @@ sub show {
        default_sort_order_desc => 1,
        command_column_commands => [],
        command_column_labels   => {},
-       row_handler => sub { $self->show_row_handler(@_); },
+       row_handler => sub { $self->show_row_handler(@_) },
        id_handler  => sub { 0 },
       );
 
