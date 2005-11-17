@@ -2,6 +2,19 @@
 
 This document contains a list of changes for each release of Krang.
 
+
+=head2 v2.1(?)
+
+=over
+
+=item *
+
+Fixed a bug in Krang::lib which caused "legacy" /krang/element_lib path to
+not be included in Perl's @INC path.  [Jesse Erlbaum]
+
+=back
+
+
 =head2 v2.000
 
 =over

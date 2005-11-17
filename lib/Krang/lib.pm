@@ -48,6 +48,12 @@ sub import {
 
     my $root = $ENV{KRANG_ROOT} 
       or croak("KRANG_ROOT must be defined before loading pkg('lib')");
+
+    # prepend legacy element_lib/ first
+    # (This will permit addons to override legacy behavior)
+    my $legacy_elib = catdir($root, 'element_lib');
+    $ENV{PERL5LIB} = $legacy_elib . ":" . $ENV{PERL5LIB};
+    unshift (@INC, $legacy_elib);
     
     # using Krang::Addon would be easier but this module shouldn't
     # load any Krang:: modules since that will prevent them from being
@@ -56,8 +62,8 @@ sub import {
     while(my $addon = readdir($dir)) {
         next if $addon eq '.' or $addon eq '..';
         my $lib  = catdir($root, 'addons', $addon, 'lib');
-        $ENV{PERL5LIB} .= ":$lib";
-        unshift @INC, $lib, "$lib/".$Config{archname};
+        $ENV{PERL5LIB} = $lib . ":" . $ENV{PERL5LIB};
+        unshift (@INC, $lib, "$lib/".$Config{archname});
     }
 
     $DONE = 1;
