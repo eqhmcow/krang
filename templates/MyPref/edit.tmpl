@@ -1,21 +1,27 @@
 <tmpl_include header.tmpl>
-<script language=javascript>
-function check_match() {
-    var newpass = document.forms["edit_pref_form"].new_password.value;
-    var repeat = document.forms["edit_pref_form"].new_password_repeat.value;
 
-    if (newpass != repeat) {
-        alert("New passwords do not match.");
-    } else {
-        document.forms["edit_pref_form"].submit();
-    }
+<script type="text/javascript">
+<!--
+function check_match( f )
+{
+  var pA = f.elements[ 'new_password' ];
+  var pB = f.elements[ 'new_password_repeat' ];
+
+  if ( pA.value != pB.value )
+  {
+    alert( 'New passwords do not match.' );
+    return false;
+  }
+  else
+    return true;
 }
+//-->
 </script>
+
 <div class="dark-bar"><p class="left">&nbsp;My Preferences</p><p class="right"><a href="javascript:openWin('help.pl?topic=my_pref')">Help</a>&nbsp;</p></div>
 <div class="box">
-<br><form name="edit_pref_form" method="POST">
-<input type="hidden" name="rm" value="update_prefs" override='1'>
-<input type="hidden" name="search_page_size" value="<tmpl_var search_page_size>" override='1'>
+<br><form name="edit_pref_form" method="post" onsubmit="return check_match(this)">
+<input type="hidden" name="rm" value="update_prefs">
 <table cellpadding="4" cellspacing="0" class="form-head">
 	<tr class="form-head"><td>Preferences</td></tr></table>
 	<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
@@ -24,5 +30,6 @@ function check_match() {
         <tr><td class="form-cell" width="160">Change Password:</td>
         		<td class="form-cell"><input type="password" name="new_password"> (new password)<br><input type="password" name="new_password_repeat"> (repeat)</td></tr></table><br></div>
 
-<div class="button-bar"><input type="button" value="Commit Changes" onclick="check_match()" class="button"></div></form></div>
+<div class="button-bar"><input type="button" value="Commit Changes" class="button"></div></form></div>
+
 <tmpl_include footer.tmpl>
