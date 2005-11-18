@@ -28,10 +28,23 @@ END { $site->delete() }
 my ($category) = pkg('Category')->find(site_id => $site->site_id());
 
 # create a new story
-my $story = pkg('Story')->new(categories => [$category],
-                              title      => "Test",
-                              slug       => "test",
-                              class      => "article");
+my $story;
+eval { $story = pkg('Story')->new(categories => [$category],
+                                     title      => "Test",
+                                     slug       => "test",
+                                     class      => "article"); };
+
+# Was story creation successful?
+if ($@) {
+    if ($@ =~ qr/Unable to find top-level element named 'article'/) {
+        # Story type "article" doesn't exist in this set.  Exit test now.
+        SKIP: { skip("Unable to find top-level element named 'article' in element lib"); }
+        exit(0);
+    } else {
+        # We've encountered some other unexpected error.  Re-throw.
+        die($@);
+    }
+}
 
 
 my $element = pkg('Element')->new(class => "article", object => $story);

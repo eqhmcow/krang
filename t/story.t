@@ -80,10 +80,23 @@ ok($@);
 
 
 # create a new story
-$story = pkg('Story')->new(categories => [$cat[0], $cat[1]],
-                           title      => "Test",
-                           slug       => "test",
-                           class      => "article");
+eval { $story = pkg('Story')->new(categories => [$cat[0], $cat[1]],
+                                  title      => "Test",
+                                  slug       => "test",
+                                  class      => "article"); };
+
+# Was story creation successful?
+if ($@) {
+    if ($@ =~ qr/Unable to find top-level element named 'article'/) {
+        # Story type "article" doesn't exist in this set.  Exit test now.
+        $DELETE = 0;
+        SKIP: { skip("Unable to find top-level element named 'article' in element lib"); }
+        exit(0);
+    } else {
+        # We've encountered some other unexpected error.  Re-throw.
+        die($@);
+    }
+}
 
 can_ok($story, qw/title slug cover_date priority class element category categories
                   notes version priority desk_id published_version preview_version

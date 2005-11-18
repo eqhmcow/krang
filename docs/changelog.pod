@@ -9,6 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in which some tests would fail if the configured 
+element set did not have an "article" type.  Tests will now run
+even if you're using a custom element library.  [Jesse Erlbaum]
+
+=item *
+
 Fixed a bug in Krang::lib which caused "legacy" /krang/element_lib path to
 not be included in Perl's @INC path.  [Jesse Erlbaum]
 

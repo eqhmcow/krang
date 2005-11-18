@@ -20,6 +20,7 @@ foreach my $instance (pkg('Conf')->instances) {
 
 BEGIN { use_ok(pkg('DataSet')) }
 
+my $STORY_DELETE = 1;  # If set to 0, surpressed END{} delete functions.
 my $DEBUG = 0; # supresses deleting kds files at process end
 
 # try creating an empty dataset
@@ -105,12 +106,30 @@ END { $site2->delete() }
 my ($category2) = pkg('Category')->find(site_id => $site2->site_id());
 
 # create a new story
-my $story = pkg('Story')->new(categories => [$category],
-                              title      => "Test",
-                              slug       => "test",
-                              class      => "article");
+my $story;
+eval { $story = pkg('Story')->new(categories => [$category],
+                                  title      => "Test",
+                                  slug       => "test",
+                                  class      => "article"); };
+
+# Was story creation successful?
+if ($@) {
+    if ($@ =~ qr/Unable to find top-level element named 'article'/) {
+        # Story type "article" doesn't exist in this set.  Exit test now.
+        $STORY_DELETE = 0;
+        SKIP: { skip("Unable to find top-level element named 'article' in element lib"); }
+        exit(0);
+    } else {
+        # We've encountered some other unexpected error.  Re-throw.
+        die($@);
+    }
+}
+
+
+
 $story->save();
-END { (pkg('Story')->find(url => $story->url))[0]->delete() }
+END { (pkg('Story')->find(url => $story->url))[0]->delete()
+        if $STORY_DELETE; }
 
 # create a new story, again
 my $story2 = pkg('Story')->new(categories => [$category],
@@ -118,7 +137,8 @@ my $story2 = pkg('Story')->new(categories => [$category],
                                slug       => "test2",
                                class      => "article");
 $story2->save();
-END { (pkg('Story')->find(url => $story2->url))[0]->delete() }
+END { (pkg('Story')->find(url => $story2->url))[0]->delete()
+        if $STORY_DELETE; }
 
 # add schedule for story
 my $sched =  pkg('Schedule')->new(object_type => 'story',
@@ -138,7 +158,7 @@ $set->add(object => $story2);
 my $path = catfile(KrangRoot, 'tmp', 'test.kds');
 $set->write(path => $path);
 ok(-e $path and -s $path);
-END { unlink($path) if -e $path and not $DEBUG };
+END { unlink($path) if ($path and -e $path) and not $DEBUG };
 
 # try loading it again
 my $loaded = pkg('DataSet')->new(path => $path);
@@ -163,7 +183,7 @@ isa_ok($@, 'Krang::DataSet::ImportRejected');
 my $path2 = catfile(KrangRoot, 'tmp', 'test2.kds');
 $set->write(path => $path2);
 ok(-e $path2 and -s $path2);
-END { unlink($path2) if -e $path2 and not $DEBUG };
+END { unlink($path2) if ($path2 and -e $path2) and not $DEBUG };
 
 # create a media object
 my $media = pkg('Media')->new(title => 'test media object', category_id => $category->category_id, media_type_id => 1);
@@ -180,7 +200,7 @@ $loaded->add(object => $media);
 my $path3 = catfile(KrangRoot, 'tmp', 'test3.kds');
 $loaded->write(path => $path3);
 ok(-e $path3 and -s $path3);
-END { unlink($path3) if -e $path3 and not $DEBUG };
+END { unlink($path3) if ($path3 and -e $path3) and not $DEBUG };
 
 SKIP: {
     skip('floodfill tests only work for TestSet1 and Default', 1)
@@ -315,7 +335,8 @@ ok(not $found);
 $lset->import_all();
 ($found) = pkg('Site')->find(url => 'lazarus.com', count => 1);
 ok($found);
-END { (pkg('Site')->find(url => 'lazarus.com'))[0]->delete() };
+END { (pkg('Site')->find(url => 'lazarus.com'))[0]->delete()
+        if $STORY_DELETE; };
 
 # try the same with media
 $filepath = catfile(KrangRoot,'t','media','krang.jpg');
@@ -345,7 +366,8 @@ ok(not $found);
 $lset->import_all();
 ($found) = pkg('Media')->find(url_like => '%lazarus lives.jpg', count => 1);
 ok($found);
-END { (pkg('Media')->find(url_like => '%lazarus lives.jpg'))[0]->delete() }
+END { (pkg('Media')->find(url_like => '%lazarus lives.jpg'))[0]->delete() 
+        if $STORY_DELETE; }
 
 # try the same with template
 my $ltemplate = pkg('Template')->new(filename => 'abcd_fake.tmpl',
@@ -373,7 +395,8 @@ ok(not $found);
 $lset->import_all();
 ($found) = pkg('Template')->find(url => $ltemplate->url, count => 1);
 ok($found);
-END { (pkg('Template')->find(url => $ltemplate->url))[0]->delete() }
+END { (pkg('Template')->find(url => $ltemplate->url))[0]->delete()
+        if $STORY_DELETE; }
 
 # now test desks, groups, users, alerts
 my $ldesk= pkg('Desk')->new(name => 'abc_test_desk');
@@ -460,9 +483,12 @@ my $cid = (pkg('Category')->find( url => $category->url ))[0]->category_id;
 ($found) = pkg('Alert')->find( user_id => $uid, desk_id => $did, category_id => $cid, action => 'move_to', count => 1 );
 ok($found);
 
-END{ (pkg('Desk')->find(name => $ldesk->name))[0]->delete() }
-END{ (pkg('Group')->find(name => $lgroup->name))[0]->delete() }
-END{ (pkg('User')->find(login => $luser->login))[0]->delete() }
+END{ (pkg('Desk')->find(name => $ldesk->name))[0]->delete()
+       if $STORY_DELETE; }
+END{ (pkg('Group')->find(name => $lgroup->name))[0]->delete()
+       if $STORY_DELETE; }
+END{ (pkg('User')->find(login => $luser->login))[0]->delete()
+       if $STORY_DELETE; }
 
 SKIP: {
     skip('Element tests only work for TestSet1', 1)
