@@ -38,6 +38,17 @@ The script takes the following options:
 By default the script will build apache and mod_perl for you.  This
 option skips that step.
 
+=item --no-ssl
+
+If you build apache and mod_perl and you don't want SSL built into
+apache, specify this option.
+
+=item --with-openssl=/path/to/your/openssl
+
+For most distros the Apache default should work.  If you experience
+problems building Apache with SSL support, you may give it the right
+path to your OpenSSL install directory.
+
 =item --module
 
 Specify a specific CPAN module to build.  The string you provide will
@@ -97,22 +108,33 @@ my $build_dir       = tempdir(DIR     => catdir( $ENV{KRANG_ROOT}, 'tmp' ));
 # a few useful constants
 my $APACHE       = 'Apache-MOD_PERL/apache_1.3.33.tar.gz';
 my $MOD_PERL     = 'Apache-MOD_PERL/mod_perl-1.29.tar.gz';
+my $MOD_SSL      = 'Apache-MOD_PERL/mod_ssl-2.8.24-1.3.33.tar.gz';
+my $MM           = 'Apache-MOD_PERL/mm-1.4.0.tar.gz';
+my $MM_BIN       = catfile($KrangRoot, 'apache', 'mm');
 my $LIBAPREQ     = 'libapreq';
 
 # options
 my $skip_apache = 0;
+my $skip_ssl    = 0;
+my $ssl_base    = '';
 my ( @modules, @skip_modules, $rebuild, $help, $man );
 GetOptions(
-    'no-apache'     => \$skip_apache,
-    'module=s'      => \@modules,
-    'skip-module=s' => \@skip_modules,
-    'rebuild'       => \$rebuild,
-    'help'          => \$help,
-    'man'           => \$man,
-  )
+	   'no-apache'      => \$skip_apache,
+	   'no-ssl'         => \$skip_ssl,
+	   'with-openssl=s' => \$ssl_base,
+	   'module=s'       => \@modules,
+	   'skip-module=s'  => \@skip_modules,
+	   'rebuild'        => \$rebuild,
+	   'help'           => \$help,
+	   'man'            => \$man,
+	  )
   or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage( -verbose => 2 ) if $man;
+
+# set env for Apache build with SSL
+$ENV{LD_LIBRARY_PATH} = catdir($MM_BIN, 'lib');
+$ENV{SSL_BASE} = $ssl_base;
 
 # get platform arg
 pod2usage("Wrong number of arguments.\n") if @ARGV > 1;
@@ -204,23 +226,63 @@ foreach my $file (@files) {
     build_module($file);
 }
 
-
 # build Apache/mod_perl
 unless ($skip_apache) {
     chdir $build_dir or die "Unable to chdir($build_dir): $!";
 
-    my $apache_gz = catfile($src_dir, $APACHE);
-    system("tar zxf $apache_gz") == 0 or die "Couldn't unpack file: $?";
-    my ($apache_dir) = $apache_gz =~ m!/([^/]+)\.tar\.gz$!;
-    die "Can't find Apache dir '$apache_dir'." unless -d $apache_dir;
+    my $mod_ssl_params = '';    # pass to Apache build
+    my $apache_dir = '';
+
+    unless ($skip_ssl) {
+	# build mm
+	my $mm_gz = catfile($src_dir, $MM);
+	system("tar zxf $mm_gz") == 0 or die "Couldn't unpack file: $!";
+	my ($mm_dir) = $mm_gz =~ m!/([^/]+)\.tar\.gz$!;
+	die "Can't find mm dir '$mm_dir'." unless -d $mm_dir;
+
+	$pkg->build_mm(mm_dir => $mm_dir,
+		       mm_bin => $MM_BIN);
+
+	# build mod_ssl
+	my $mod_ssl_gz = catfile($src_dir, $MOD_SSL);
+	system("tar zxf $mod_ssl_gz") == 0 or die "Couldn't unpack file: $!";
+	my ($mod_ssl_dir) = $mod_ssl_gz =~ m!/([^/]+)\.tar\.gz$!;
+	die "Can't find mod_ssl dir '$mod_ssl_dir'." unless -d $mod_ssl_dir;
+
+	# we need the apache src tree
+	my $apache_gz = catfile($src_dir, $APACHE);
+	system("tar zxf $apache_gz") == 0 or die "Couldn't unpack file: $?";
+	($apache_dir) = $apache_gz =~ m!/([^/]+)\.tar\.gz$!;
+	die "Can't find Apache dir '$apache_dir'." unless -d $apache_dir;
+
+	$pkg->build_mod_ssl(build_dir   => $build_dir,
+			    mod_ssl_dir => $mod_ssl_dir,
+			    apache_dir  => $apache_dir);
+
+	# pass to apache build
+	$mod_ssl_params = "--enable-module=ssl       --enable-shared=ssl ".
+	                  "--disable-rule=SSL_COMPAT --enable-rule=SSL_SDBM ".
+			  "--enable-module=setenvif  --enable-shared=setenvif";
+    }
+
+    unless ($apache_dir) {
+	my $apache_gz = catfile($src_dir, $APACHE);
+	($apache_dir) = $apache_gz =~ m!/([^/]+)\.tar\.gz$!;
+	system("tar zxf $apache_gz") == 0 or die "Couldn't unpack file: $?";
+	die "Can't find Apache dir '$apache_dir'." unless -d $apache_dir;
+    }
 
     my $mod_perl_gz = catfile($src_dir, $MOD_PERL);
     system("tar zxf $mod_perl_gz") == 0 or die "Couldn't unpack file: $?";
     my ($mod_perl_dir) = $mod_perl_gz =~ m!/([^/]+)\.tar\.gz$!;
     die "Can't find Mod_perl dir '$mod_perl_dir'." unless -d $mod_perl_dir;
 
-    $pkg->build_apache_modperl(apache_dir   => $apache_dir,
-                               mod_perl_dir => $mod_perl_dir);
+    $pkg->build_apache_modperl(apache_dir       => $apache_dir,
+                               mod_perl_dir     => $mod_perl_dir,
+			       mod_ssl_params   => $mod_ssl_params);
+
+    # move SSL dirs from KrangRoot/apache/conf/ to KrangRoot/conf/
+    move_ssl_dirs()
 }
 
 # build libapreq now that mod_perl is in place
@@ -280,3 +342,20 @@ sub contains {
     return grep { index( $string, $_ ) > -1 } @{$list};
 }
 
+sub move_ssl_dirs {
+    my @ssl_dirs = qw(ssl.crl ssl.crt ssl.csr ssl.key ssl.prm);
+    
+    my $apache_conf_dir = catdir($KrangRoot, 'apache', 'conf');
+    my $krang_conf_dir  = catdir($KrangRoot, 'conf');
+
+    for my $ssldir (@ssl_dirs) {
+	my $ap_dir = catdir($apache_conf_dir, $ssldir);
+	my $kdir   = catdir($krang_conf_dir, $ssldir);
+
+	warn "Apache SSL dir '$ap_dir' does not exist", next
+	  unless -d $ap_dir;
+	
+	rename $ap_dir => $kdir
+	  or warn "Can't move '$ap_dir' to '$kdir': $!";
+    }
+}
