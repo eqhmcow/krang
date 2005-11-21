@@ -771,8 +771,11 @@ sub fill_template {
         if ($child->pageable) {
             # build the URL for this 'page' - will be used in the publish pass.
             my $count = @page_urls;
+	    # set protocol to 'https' in preview if running with SSL enabled
+	    my $scheme = $publisher->is_preview ? $ENV{KRANG_PREVIEW_SCHEME} : 'http';
             push @page_urls, $self->_build_page_url(page => $count,
-                                                    publisher => $publisher);
+                                                    publisher => $publisher,
+						    protocol => $scheme.'://');
         }
     }
 
