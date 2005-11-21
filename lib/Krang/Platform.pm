@@ -609,6 +609,60 @@ sub build_perl_module {
     system("$make_cmd install") == 0 or die "$make_cmd install failed: $?";
 }
 
+=item C<< build_mm(mm_dir => $mm_dir, mm_bin => $mm_bin) >>
+
+Called to build OSSP mm for shared memory allocation in Apache.
+
+=cut
+
+sub build_mm {
+    my ($self, %arg) = @_;
+    my ($mm_dir, $mm_bin) = @arg{ qw(mm_dir mm_bin) };
+
+    print "\n\n************************************************\n\n",
+          "  Building OSSP mm - Shared Memory Allocation",
+	  "\n\n************************************************\n\n";
+
+    my $mm_params = "--prefix=$mm_bin --exec-prefix=$mm_bin --disable-shared";
+
+    my $olddir = cwd;
+    chdir($mm_dir) or die "Unable to chdir($mm_dir): $!";
+
+    system("./configure $mm_params") == 0 or die "MM configure failed: $!";
+    system("make") == 0 or die "MM make failed: $!";
+    system("make install") == 0 or die "MM make install failed: $!";
+
+    chdir($olddir);
+}
+
+=item C<< build_mm(build_dir => $dir, mod_ssl_dir => $dir, apache_dir => $dir) >>
+
+Called to build mod_ssl to patch Apache.
+
+=cut
+
+sub build_mod_ssl {
+    my ($self, %arg) = @_;
+    my ($build_dir, $mod_ssl_dir, $apache_dir) = @arg{ qw(build_dir mod_ssl_dir apache_dir) };
+
+    print "\n\n************************************************\n\n",
+          "  Building MOD_SSL",
+          "\n\n************************************************\n\n";
+
+    my $trash = catfile($build_dir, 'mod_ssl_target');
+    my $apache_src = catfile($build_dir, $apache_dir);
+    mkdir($trash);
+    my $mod_ssl_params = "--prefix=$trash ".
+                         "--with-apache=$apache_src";
+    
+    my $olddir = cwd;
+    chdir($mod_ssl_dir) or die "Unable to chdir($mod_ssl_dir): $!";
+    
+    system("./configure $mod_ssl_params") == 0 or die "MOD_SSL configure failed: $!";
+
+    chdir($olddir) or die "Unable to chdir($olddir): $!";
+}
+
 
 =item C<< build_apache_modperl(apache_dir => $dir, modperl_dir => $dir) >>
 
@@ -621,7 +675,8 @@ Apache installation in C<apache/>.
 
 sub build_apache_modperl {
     my ($pkg, %arg) = @_;
-    my ($apache_dir, $mod_perl_dir) = @arg{('apache_dir', 'mod_perl_dir')};
+    my ($apache_dir, $mod_perl_dir, $mod_ssl_params)
+      = @arg{ qw(apache_dir mod_perl_dir mod_ssl_params) };
     _load_expect();
 
     print "\n\n************************************************\n\n",
@@ -663,11 +718,15 @@ sub build_apache_modperl {
     # build Apache
     chdir($old_dir) or die $!;
     chdir($apache_dir) or die "Unable to chdir($apache_dir): $!";
-    print "Calling './configure $apache_params'.\n";
-    system("./configure $apache_params") == 0
+    print "Calling './configure $apache_params $mod_ssl_params'.\n";
+    system("./configure $apache_params $mod_ssl_params") == 0
       or die "Apache configure failed: $?";
     system("make") == 0
       or die "Apache make failed: $?";
+    if ($mod_ssl_params) {
+	system("make certificate") == 0
+	  or die "Apache make certificate failed: $!";
+    }
     system("make install") == 0
       or die "Apache make install failed: $?";
 
@@ -745,6 +804,9 @@ sub post_install_message {
 
     my %options = %{$args{options}};
 
+    my @sslreport = $pkg->_get_ssl_report($args{options})
+      if $options{SSLEngine} eq 'on';
+
     print <<EOREPORT;
 
 
@@ -758,11 +820,13 @@ sub post_install_message {
    Installed at        :  $options{InstallPath}
    Control script      :  $options{InstallPath}/bin/krang_ctl
    Krang conf file     :  $options{InstallPath}/conf/krang.conf
+$sslreport[0]
 
    Running on $options{IPAddress} --
-     http://$options{HostName}:$options{ApachePort}/
+$sslreport[1]     http://$options{HostName}:$options{ApachePort}/
      ftp://$options{HostName}:$options{FTPPort}/
 
+$sslreport[2]
    CMS admin user password:  "$options{AdminPassword}"
 
 
@@ -783,6 +847,9 @@ sub post_upgrade_message {
 
     my %options = %{$args{options}};
 
+    my @sslreport = $pkg->_get_ssl_report($args{options})
+      if $options{SSLEngine} eq 'on';
+
     print <<EOREPORT;
 
 
@@ -796,9 +863,9 @@ sub post_upgrade_message {
    Installed at        :  $options{InstallPath}
    Control script      :  $options{InstallPath}/bin/krang_ctl
    Krang conf file     :  $options{InstallPath}/conf/krang.conf
-
+$sslreport[0]
    Running on $options{IPAddress} --
-     http://$options{HostName}:$options{ApachePort}/
+$sslreport[1]     http://$options{HostName}:$options{ApachePort}/
      ftp://$options{HostName}:$options{FTPPort}/
 
 EOREPORT
@@ -914,5 +981,12 @@ Krang:
 END
 }
 
+sub _get_ssl_report {
+    my ($pkg, $options) = @_;
+
+    return ("   SSL files           :  $options->{InstallPath}/conf/\n",
+        "     https://$options->{HostName}:$options->{ApacheSSLPort}/\n",
+        "\n   Provided test SSL key and cert, make sure to generate valid ones\n\n");
+}
 
 1;
