@@ -37,6 +37,23 @@ SiteServerAddr
 SiteServerPort
 SMTPServer
 Skin
+ApacheSSLPort
+InstanceHostIPAddress
+InstanceHostPort
+InstanceHostSSLPort
+SSLEngine 
+SSLPassPhraseDialog
+SSLRandomSeed
+SSLRandomSeedStartup
+SSLRandomSeedConnect
+SSLSessionCacheTimeout
+SSLProtocol
+SSLCipherSuite
+SSLVerifyClient
+SSLVerifyDepth
+SSLLogLevel
+SSLOptions
+SetEnvIf
 );
 }
 
