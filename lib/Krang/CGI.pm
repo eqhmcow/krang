@@ -65,7 +65,7 @@ use Krang::ClassLoader Session => qw/%session/;
 use constant HTMLLint => 0;
 
 BEGIN {
-    # setup instance if not running in mod_perl
+    # setup instance and preview scheme if not running in mod_perl
     # needs to be set before import of Krang::ElementLibrary in
     # Krang::CGI::ElementEditor
     unless($ENV{MOD_PERL}) {
@@ -73,6 +73,7 @@ BEGIN {
           $ENV{KRANG_INSTANCE} : (pkg('Conf')->instances())[0];
         debug("Krang::CGI:  Setting instance to '$instance'");
         pkg('Conf')->instance($instance);
+        $ENV{KRANG_PREVIEW_SCHEME} = $ENV{HTTPS} ? 'https' : 'http';
     }
 }
 
