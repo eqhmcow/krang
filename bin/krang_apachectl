@@ -80,8 +80,30 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup);
-use Krang::File;
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup SSLEngine);
+use Krang::ClassLoader 'File';
+
+# SSL directives
+my @global_ssl = qw(
+ApacheSSLPort
+SSLPassPhraseDialog
+SSLRandomSeedStartup
+SSLRandomSeedConnect
+SSLSessionCacheTimeout
+);
+
+my @instance_ssl = qw(
+SSLEngine
+InstanceHostIPAddress
+InstanceHostPort
+InstanceHostSSLPort
+SSLProtocol
+SSLCipherSuite
+SSLVerifyClient
+SSLVerifyDepth
+SSLLogLevel
+SSLOptions
+);
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));
@@ -220,16 +242,37 @@ sub write_conf {
                           HostName
                          ))),
                      KrangRoot => rel2abs(pkg('Conf')->get("KrangRoot")));
-    
+
+    # global SSL
+    if (pkg('Conf')->SSLEngine) {
+	$template->param((map { ($_, pkg('Conf')->get($_)) } 
+			  grep { $_ !~ /^Instance/ }
+			  @global_ssl, @instance_ssl),
+			 SSL_ENABLED => 1);
+
+        $template->param(ROOT_SSL_ENABLED => 1) if pkg('Conf')->SSLEngine eq 'on';
+	unless (pkg('Conf')->SSLVerifyClient eq 'none') {
+	    $template->param(verify_client => 1);
+	}
+    }
+
     # setup the instance loop
     my @loop;
     foreach my $instance (pkg('Conf')->instances()) {
         pkg('Conf')->instance($instance);
-        push(@loop,
-             {
-              InstanceName => $instance,
-              InstanceHostName  => InstanceHostName,
-             });
+	my %instance_directives = ();
+
+	# instance SSL
+	if (pkg('Conf')->SSLEngine) {
+	    %instance_directives = map { ($_, pkg('Conf')->get($_)) }
+                                   @instance_ssl;
+	    $instance_directives{INSTANCE_SSL_ENABLED} = 1 if pkg('Conf')->SSLEngine eq 'on';
+	}
+
+	@instance_directives{qw(InstanceName InstanceHostName)}
+	                     = ($instance, InstanceHostName);
+
+        push(@loop, \%instance_directives);
     }
     $template->param(InstanceLoop => \@loop);
     
@@ -278,3 +321,4 @@ sub setup_logs {
         system("chown",  KrangUser . ":" . KrangGroup, $file);
     }
 }
+
