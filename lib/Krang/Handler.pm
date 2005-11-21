@@ -73,6 +73,7 @@ None.
 use Apache::Constants qw(:response);
 use Apache::Cookie;
 use Apache::SizeLimit;
+use Apache::URI;
 use Apache;
 use CGI ();
 use Carp qw(croak);
@@ -119,6 +120,10 @@ sub trans_handler ($$) {
     unless ( $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/) {
         return DECLINED;
     }
+
+    # pass request scheme
+    my $scheme = Apache::URI->parse($r)->scheme;
+    $r->cgi_env(KRANG_PREVIEW_SCHEME => $scheme);
 
     # Read directory configuration for this request
     my $instance_name = $r->dir_config('instance');
