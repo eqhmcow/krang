@@ -42,6 +42,8 @@ Timeout              600
 LoadModule mime_magic_module  libexec/mod_mime_magic.so
 # LoadModule rewrite_module     libexec/mod_rewrite.so
 # LoadModule proxy_module       libexec/libproxy.so
+<tmpl_if SSL_ENABLED>LoadModule ssl_module           libexec/libssl.so
+LoadModule setenvif_module    libexec/mod_setenvif.so</tmpl_if>
 
 #  Reconstruction of the complete module list from all available modules
 #  (static and shared ones) to achieve correct module execution order.
@@ -67,9 +69,9 @@ AddModule mod_cgi.c
 # AddModule mod_auth.c
 # AddModule mod_proxy.c
 AddModule mod_so.c
-# AddModule mod_setenvif.c
+<tmpl_if SSL_ENABLED>AddModule mod_setenvif.c
+AddModule mod_ssl.c</tmpl_if>
 AddModule mod_perl.c
-
 
 #
 # Non mod_perl config
@@ -84,7 +86,6 @@ PassEnv KRANG_DEBUG
 PassEnv CGI_MODE
 PassEnv PERL5LIB
 PassEnv HTML_TEMPLATE_ROOT
-
 
 #
 # MOD_PERL Configuration for Krang
@@ -106,6 +107,7 @@ PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
 
 <FilesMatch "^.*\.cgi$">
         SetHandler cgi-script
+	<tmpl_if SSL_ENABLED>SSLOptions <tmpl_var SSLOptions></tmpl_if>
 </FilesMatch>
 
 <FilesMatch "^.*\.pl$">
@@ -115,9 +117,265 @@ PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
         SetHandler perl-script
         PerlHandler Apache::Registry
 </TMPL_IF>
+        <tmpl_if SSL_ENABLED>SSLOptions <tmpl_var SSLOptions></tmpl_if>
 </FilesMatch>
 
 </IfModule>
+
+<tmpl_if SSL_ENABLED>
+#
+# SSL-enabled Krang: use main server for root flavour (directory) access
+#                    IP-based vhosts for instance flavour access
+#
+<tmpl_if ROOT_SSL_ENABLED>Listen <tmpl_var ApacheAddr>:<tmpl_var ApacheSSLPort>
+<tmpl_else>Listen <tmpl_var ApacheAddr>:<tmpl_var ApachePort></tmpl_if>
+ServerName <tmpl_var HostName>
+
+PerlTransHandler Krang::Handler->trans_handler
+PerlLogHandler    Krang::Handler->log_handler
+
+<Location />
+   PerlSetVar        flavor root
+   ErrorDocument 500 /bug.cgi?rm=ise=1
+</Location>
+
+<tmpl_loop InstanceLoop>
+   <Location /<tmpl_var InstanceName>>
+      PerlSetVar        flavor root
+      PerlSetVar        instance <tmpl_var InstanceName>
+
+      AuthType          Krang::Handler
+      AuthName          <tmpl_var InstanceName>
+      PerlAccessHandler Krang::Handler->access_handler
+      PerlAuthenHandler Krang::Handler->authen_handler
+      PerlAuthzHandler  Krang::Handler->authz_handler
+      PerlLogHandler    Krang::Handler->log_handler
+      PerlCleanupHandler Apache::SizeLimit
+      require           valid-user
+
+      ErrorDocument 500 /<tmpl_var InstanceName>/bug.cgi?ise=1
+   </Location>
+</tmpl_loop>
+
+#
+#  SSL Global Context
+#
+#  All SSL configuration in this context applies both to
+#  the main server and all SSL-enabled virtual hosts.
+#
+
+#
+#   Some MIME-types for downloading Certificates and CRLs
+#
+AddType application/x-x509-ca-cert .crt
+AddType application/x-pkcs7-crl    .crl
+
+#   SSL Engine Switch:
+#   Enable/Disable SSL for this virtual host.
+SSLEngine <tmpl_var SSLEngine>
+
+#   Pass Phrase Dialog:
+#   Configure the pass phrase gathering process.
+#   The filtering dialog program (`builtin' is a internal
+#   terminal dialog) has to provide the pass phrase on stdout.
+SSLPassPhraseDialog  <tmpl_var SSLPassPhraseDialog>
+
+#   Usable SSL protocol flavours
+SSLProtocol <tmpl_var SSLProtocol>
+
+#   Inter-Process Session Cache:
+#   Configure the SSL Session Cache: First the mechanism 
+#   to use and second the expiring timeout (in seconds).
+SSLSessionCache         dbm:<tmpl_var KrangRoot>/tmp/ssl_scache
+SSLSessionCacheTimeout  <tmpl_var SSLSessionCacheTimeout>
+
+#   Semaphore:
+#   Configure the path to the mutual exclusion semaphore the
+#   SSL engine uses internally for inter-process synchronization. 
+SSLMutex  file:<tmpl_var KrangRoot>/tmp/ssl_mutex
+
+#   Pseudo Random Number Generator (PRNG):
+#   Configure one or more sources to seed the PRNG of the 
+#   SSL library. The seed data should be of good random quality.
+#   WARNING! On some platforms /dev/random blocks if not enough entropy
+#   is available. This means you then cannot use the /dev/random device
+#   because it would lead to very long connection times (as long as
+#   it requires to make more entropy available). But usually those
+#   platforms additionally provide a /dev/urandom device which doesn't
+#   block. So, if available, use this one instead. Read the mod_ssl User
+#   Manual for more details.
+SSLRandomSeed startup <tmpl_var SSLRandomSeedStartup>
+SSLRandomSeed connect <tmpl_var SSLRandomSeedConnect>
+
+#   Logging:
+#   The home of the dedicated SSL protocol logfile. Errors are
+#   additionally duplicated in the general error log file.  Put
+#   this somewhere where it cannot be used for symlink attacks on
+#   a real server (i.e. somewhere where only root can write).
+#   Log levels are (ascending order: higher ones include lower ones):
+#   none, error, warn, info, trace, debug.
+SSLLog      <tmpl_var KrangRoot>/logs/ssl.log
+SSLLogLevel <tmpl_var SSLLogLevel>
+
+#   SSL Cipher Suite:
+#   List the ciphers that the client is permitted to negotiate.
+#   See the mod_ssl documentation for a complete list.
+SSLCipherSuite <tmpl_var SSLCipherSuite>
+
+#   Server Certificate:
+#   Point SSLCertificateFile at a PEM encoded certificate.  If
+#   the certificate is encrypted, then you will be prompted for a
+#   pass phrase.  Note that a kill -HUP will prompt again. A test
+#   certificate can be generated with `make certificate' under
+#   built time. Keep in mind that if you've both a RSA and a DSA
+#   certificate you can configure both in parallel (to also allow
+#   the use of DSA ciphers, etc.)
+SSLCertificateFile <tmpl_var KrangRoot>/conf/ssl.crt/server.crt
+
+#   Server Private Key:
+#   If the key is not combined with the certificate, use this
+#   directive to point at the key file.  Keep in mind that if
+#   you've both a RSA and a DSA private key you can configure
+#   both in parallel (to also allow the use of DSA ciphers, etc.)
+SSLCertificateKeyFile <tmpl_var KrangRoot>/conf/ssl.key/server.key
+
+#   Server Certificate Chain:
+#   Point SSLCertificateChainFile at a file containing the
+#   concatenation of PEM encoded CA certificates which form the
+#   certificate chain for the server certificate. Alternatively
+#   the referenced file can be the same as SSLCertificateFile
+#   when the CA certificates are directly appended to the server
+#   certificate for convinience.
+#SSLCertificateChainFile <tmpl_var KrangRoot>/conf/ssl.crt/ca.crt
+
+#   Certificate Authority (CA):
+#   Set the CA certificate verification path where to find CA
+#   certificates for client authentication or alternatively one
+#   huge file containing all of them (file must be PEM encoded)
+#   Note: Inside SSLCACertificatePath you need hash symlinks
+#         to point to the certificate files. Use the provided
+#         Makefile to update the hash symlinks after changes.
+<tmpl_unless verify_client>#</tmpl_unless>SSLCACertificatePath <tmpl_var KrangRoot>/conf/ssl.crt
+<tmpl_unless verify_client>#</tmpl_unless>SSLCACertificateFile <tmpl_var KrangRoot>/conf/ssl.crt/ca_bundle-client.crt
+
+#   Certificate Revocation Lists (CRL):
+#   Set the CA revocation path where to find CA CRLs for client
+#   authentication or alternatively one huge file containing all
+#   of them (file must be PEM encoded)
+#   Note: Inside SSLCARevocationPath you need hash symlinks
+#         to point to the certificate files. Use the provided
+#         Makefile to update the hash symlinks after changes.
+<tmpl_unless verify_client>#</tmpl_unless>SSLCARevocationPath <tmpl_var KrangRoot>/conf/ssl.crl
+<tmpl_unless verify_client>#</tmpl_unless>SSLCARevocationFile <tmpl_var KrangRoot>/conf/ssl.crl/ca-bundle-client.crl
+
+#   Client Authentication (Type):
+#   Client certificate verification type and depth.  Types are
+#   none, optional, require and optional_no_ca.  Depth is a
+#   number which specifies how deeply to verify the certificate
+#   issuer chain before deciding the certificate is not valid.
+SSLVerifyClient <tmpl_var SSLVerifyClient>
+SSLVerifyDepth  <tmpl_var SSLVerifyDepth>
+
+#   Access Control:
+#   With SSLRequire you can do per-directory access control based
+#   on arbitrary complex boolean expressions containing server
+#   variable checks and other lookup directives.  The syntax is a
+#   mixture between C and Perl.  See the mod_ssl documentation
+#   for more details.
+#SSLRequire (    %{SSL_CIPHER} !~ m/^(EXP|NULL)/ \
+#            and %{SSL_CLIENT_S_DN_O} eq "Snake Oil, Ltd." \
+#            and %{SSL_CLIENT_S_DN_OU} in {"Staff", "CA", "Dev"} \
+#            and %{TIME_WDAY} >= 1 and %{TIME_WDAY} <= 5 \
+#            and %{TIME_HOUR} >= 8 and %{TIME_HOUR} <= 20       ) \
+#           or %{REMOTE_ADDR} =~ m/^192\.76\.162\.[0-9]+$/
+
+#   SSL Protocol Adjustments:
+#   The safe and default but still SSL/TLS standard compliant shutdown
+#   approach is that mod_ssl sends the close notify alert but doesn't wait for
+#   the close notify alert from client. When you need a different shutdown
+#   approach you can use one of the following variables:
+#   o ssl-unclean-shutdown:
+#     This forces an unclean shutdown when the connection is closed, i.e. no
+#     SSL close notify alert is send or allowed to received.  This violates
+#     the SSL/TLS standard but is needed for some brain-dead browsers. Use
+#     this when you receive I/O errors because of the standard approach where
+#     mod_ssl sends the close notify alert.
+#   o ssl-accurate-shutdown:
+#     This forces an accurate shutdown when the connection is closed, i.e. a
+#     SSL close notify alert is send and mod_ssl waits for the close notify
+#     alert of the client. This is 100% SSL/TLS standard compliant, but in
+#     practice often causes hanging connections with brain-dead browsers. Use
+#     this only for browsers where you know that their SSL implementation
+#     works correctly. 
+#   Notice: Most problems of broken clients are also related to the HTTP
+#   keep-alive facility, so you usually additionally want to disable
+#   keep-alive for those clients, too. Use variable "nokeepalive" for this.
+#   Similarly, one has to force some clients to use HTTP/1.0 to workaround
+#   their broken HTTP/1.1 implementation. Use variables "downgrade-1.0" and
+#   "force-response-1.0" for this.
+SetEnvIf User-Agent ".*MSIE.*" \
+         nokeepalive ssl-unclean-shutdown \
+         downgrade-1.0 force-response-1.0
+
+#   Per-Server Logging:
+#   The home of a custom SSL log file. Use this when you want a
+#   compact non-error SSL logfile on a virtual host basis.
+#CustomLog <tmpl_var KrangRoot>/logs/ssl_request_log \
+#          "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
+
+<tmpl_loop InstanceLoop>
+<tmpl_if INSTANCE_SSL_ENABLED>Listen <tmpl_var InstanceHostIPAddress>:<tmpl_var InstanceHostSSLPort>
+<tmpl_else>Listen <tmpl_var InstanceHostIPAddress>:<tmpl_var InstanceHostPort></tmpl_if>
+<VirtualHost <tmpl_if INSTANCE_SSL_ENABLED><tmpl_var InstanceHostIPAddress>:<tmpl_var InstanceHostSSLPort><tmpl_else><tmpl_var InstanceHostIPAddress>:<tmpl_var InstanceHostPort></tmpl_if>>
+
+   ServerName      <tmpl_var InstanceHostName>
+
+   PerlTransHandler Krang::Handler->trans_handler
+   PerlLogHandler   Krang::Handler->log_handler
+
+   <Location />
+       PerlSetVar      flavor instance   
+       PerlSetVar      instance <tmpl_var InstanceName>
+
+       AuthType Krang::Handler
+       AuthName <tmpl_var InstanceName>
+       PerlAccessHandler Krang::Handler->access_handler
+       PerlAuthenHandler Krang::Handler->authen_handler
+       PerlAuthzHandler  Krang::Handler->authz_handler
+       PerlLogHandler    Krang::Handler->log_handler
+       PerlCleanupHandler Apache::SizeLimit
+       require valid-user
+
+       ErrorDocument 500 /bug.cgi?ise=1
+   </Location>
+
+   SSLEngine                <tmpl_var SSLEngine>
+   SSLProtocol              <tmpl_var SSLProtocol>
+   SSLCipherSuite           <tmpl_var SSLCipherSuite>
+#   SSLCertificateFile       <tmpl_var KrangRoot>/conf/ssl.crt/<tmpl_var InstanceName>.crt
+#   SSLCertificateKeyFile    <tmpl_var KrangRoot>/conf/ssl.key/<tmpl_var InstanceName>.key
+#   SSLCertificateChainFile  <tmpl_var KrangRoot>/conf/ssl.crt/<tmpl_var InstanceName>_ca.crt
+<tmpl_unless verify_client>#</tmpl_unless>   SSLCACertificatePath     <tmpl_var KrangRoot>/conf/ssl.crt
+<tmpl_unless verify_client>#</tmpl_unless>   SSLCACertificateFile     <tmpl_var KrangRoot>/conf/ssl.crt/<tmpl_var InstanceName>_ca-bundle-client.crt
+<tmpl_unless verify_client>#</tmpl_unless>   SSLCARevocationPath      <tmpl_var KrangRoot>/conf/ssl.crl
+<tmpl_unless verify_client>#</tmpl_unless>   SSLCARevocationFile      <tmpl_var KrangRoot>/conf/ssl.crl/<tmpl_var InstanceName>_ca-bundle-client.crl
+   SSLVerifyClient          <tmpl_var SSLVerifyClient>
+   SSLVerifyDepth           <tmpl_var SSLVerifyDepth>
+   SSLLog                   <tmpl_var KrangRoot>/logs/ssl.log
+   SSLLogLevel              <tmpl_var SSLLogLevel>
+   #SSLRequire (    %{SSL_CIPHER} !~ m/^(EXP|NULL)/ \
+   #            and %{SSL_CLIENT_S_DN_O} eq "Snake Oil, Ltd." \
+   #            and %{SSL_CLIENT_S_DN_OU} in {"Staff", "CA", "Dev"} \
+   #            and %{TIME_WDAY} >= 1 and %{TIME_WDAY} <= 5 \
+   #            and %{TIME_HOUR} >= 8 and %{TIME_HOUR} <= 20       ) \
+   #           or %{REMOTE_ADDR} =~ m/^192\.76\.162\.[0-9]+$/
+   #CustomLog <tmpl_var KrangRoot>/logs/ssl_request_log \
+   #	   "%t %h %{SSL_PROTOCOL}x %{SSL_CIPHER}x \"%r\" %b"
+</VirtualHost>
+</tmpl_loop>
+
+<tmpl_else>
+# SSL-disabled Krang: Use NameVirtuaHosts
 
 ServerName <tmpl_var HostName>
 Listen <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
@@ -178,3 +436,4 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>
 </VirtualHost>
 </tmpl_loop>
   
+</tmpl_if>
