@@ -403,7 +403,7 @@ sub preview_story {
     assert($url eq $story->preview_url) if ASSERT;
 
     # dynamic redirect to preview if we've got a url to redirect to
-    print "<script language='javascript'>window.location = 'http://$url'</script>\n"
+    print "<script language='javascript'>window.location = '$ENV{KRANG_PREVIEW_SCHEME}://$url'</script>\n"
       if $url;
 }
 
@@ -502,8 +502,8 @@ sub preview_media {
     } else {
         # redirect to preview
         $self->header_type('redirect');
-        $self->header_props(-url=>"http://$url");
-        return "Redirecting to <a href='http://$url'>http://$url</a>.";
+        $self->header_props(-url=>"$ENV{KRANG_PREVIEW_SCHEME}://$url");
+        return "Redirecting to <a href='$ENV{KRANG_PREVIEW_SCHEME}://$url'>$ENV{KRANG_PREVIEW_SCHEME}://$url</a>.";
     }
 }
 

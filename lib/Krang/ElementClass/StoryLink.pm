@@ -140,7 +140,7 @@ sub template_data {
         if ($args{publisher}->is_publish()) {
             return 'http://' . $data->url();
         } elsif ($args{publisher}->is_preview()) {
-            return 'http://' . $data->preview_url();
+            return "$ENV{KRANG_PREVIEW_SCHEME}://" . $data->preview_url();
         } else {
             croak (__PACKAGE__ . ': Not in publish or preview mode. Cannot return proper URL.');
         }
