@@ -7,7 +7,7 @@ use LWP::UserAgent;
 use HTTP::Request::Common;
 use File::Spec::Functions qw(catfile);
 use HTTP::Cookies;
-use Krang::ClassLoader Conf => qw(KrangRoot HostName ApachePort);
+use Krang::ClassLoader Conf => qw(KrangRoot HostName ApachePort ApacheSSLPort SSLEngine ApacheAddr);
 use Krang::ClassLoader Log => qw(debug);
 use Test::Builder;
 
@@ -183,8 +183,14 @@ sub _url {
     my $script = shift;
 
     # compute Krang's URL
-    my $base_url = 'http://' . HostName;
+    my $base_url;
+    if (SSLEngine eq 'on') {
+	$base_url = 'https://' . HostName;
+	$base_url .= ":" . ApacheSSLPort if ApacheSSLPort ne '443';
+    } else {
+	$base_url = 'http://' . HostName;
     $base_url .= ":" . ApachePort if ApachePort ne '80';
+    }
 
     # build the URL
     return join('/', $base_url, pkg('Conf')->instance, $script);
