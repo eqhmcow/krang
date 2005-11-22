@@ -122,7 +122,7 @@ ok(!defined(InstanceHostSSLPort()), "InstanceHostSSLPort");
 
 pkg('Conf')->instance("instance_one");
 is(pkg('Conf')->instance, "instance_one", "Verifying first instance");
-is(InstanceHostIPAddress(), '127.0.0.200', "InstanceHostIPAddress");
+is(InstanceHostIPAddress(), '127.0.0.1', "InstanceHostIPAddress");
 is(InstanceHostPort(), '8080', "InstanceHostPort");
 is(InstanceHostSSLPort(), '8443', "InstanceHostSSLPort");
 is(SSLEngine(), 'on', "SSLEngine");
@@ -134,7 +134,7 @@ is(SSLLogLevel(), 'trace', "SSLLogLevel");
 
 pkg('Conf')->instance("instance_two"); 
 is(pkg('Conf')->instance, "instance_two", "Verifying second instance");
-is(InstanceHostIPAddress(), '127.0.0.201', "InstanceHostIPAddress");
+is(InstanceHostIPAddress(), '127.0.0.1', "InstanceHostIPAddress");
 is(InstanceHostPort(), '8081', "InstanceHostPort");
 is(InstanceHostSSLPort(), '8444', "InstanceHostSSLPort");
 is(SSLEngine(), 'on', "SSLEngine");
