@@ -38,10 +38,9 @@ The script takes the following options:
 By default the script will build apache and mod_perl for you.  This
 option skips that step.
 
-=item --no-ssl
+=item --with-ssl
 
-If you build apache and mod_perl and you don't want SSL built into
-apache, specify this option. On by default (i.e. no SSL by default).
+Give this option if you desire to build Apache with SSL.
 
 =item --with-openssl=/path/to/your/openssl
 
@@ -115,12 +114,12 @@ my $LIBAPREQ     = 'libapreq';
 
 # options
 my $skip_apache = 0;
-my $skip_ssl    = 1;
+my $with_ssl    = 0;
 my $ssl_base    = '';
 my ( @modules, @skip_modules, $rebuild, $help, $man );
 GetOptions(
 	   'no-apache'      => \$skip_apache,
-	   'no-ssl'         => \$skip_ssl,
+	   'with-ssl'       => \$with_ssl,
 	   'with-openssl=s' => \$ssl_base,
 	   'module=s'       => \@modules,
 	   'skip-module=s'  => \@skip_modules,
@@ -233,7 +232,7 @@ unless ($skip_apache) {
     my $mod_ssl_params = '';    # pass to Apache build
     my $apache_dir = '';
 
-    unless ($skip_ssl) {
+    if ($with_ssl) {
 	# build mm
 	my $mm_gz = catfile($src_dir, $MM);
 	system("tar zxf $mm_gz") == 0 or die "Couldn't unpack file: $!";
