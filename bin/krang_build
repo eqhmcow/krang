@@ -41,7 +41,7 @@ option skips that step.
 =item --no-ssl
 
 If you build apache and mod_perl and you don't want SSL built into
-apache, specify this option.
+apache, specify this option. On by default (i.e. no SSL by default).
 
 =item --with-openssl=/path/to/your/openssl
 
@@ -115,7 +115,7 @@ my $LIBAPREQ     = 'libapreq';
 
 # options
 my $skip_apache = 0;
-my $skip_ssl    = 0;
+my $skip_ssl    = 1;
 my $ssl_base    = '';
 my ( @modules, @skip_modules, $rebuild, $help, $man );
 GetOptions(
