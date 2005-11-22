@@ -559,18 +559,17 @@ sub contribs {
 
     # store list of contributors, passed as either objects or hashes
     foreach my $rec (@_) {
-        if (ref($rec) and ref($rec) eq 'Krang::Contrib') {
+        if (ref($rec) and ref($rec) eq 'HASH') {
+            croak("invalid data passed to contribs: hashes must contain contrib_id and contrib_type_id.")
+              unless $rec->{contrib_id} and $rec->{contrib_type_id};
+
+            push(@contribs, $rec);
+        } elsif (ref($rec) and $rec->isa(pkg('Contrib'))) {
             croak("invalid data passed to contrib: contributor objects must have contrib_id and selected_contrib_type set.")
               unless $rec->contrib_id and $rec->selected_contrib_type;
 
             push(@contribs, { contrib_id     => $rec->contrib_id,
                               contrib_type_id=> $rec->selected_contrib_type });
-
-        } elsif (ref($rec) and ref($rec) eq 'HASH') {
-            croak("invalid data passed to contribs: hashes must contain contrib_id and contrib_type_id.")
-              unless $rec->{contrib_id} and $rec->{contrib_type_id};
-            
-            push(@contribs, $rec);
 
         } else {
             croak("invalid data passed to contribs");
@@ -1906,12 +1905,12 @@ sub linked_stories {
     my %story_links;
     my $story;
     foreach_element { 
-        if ($_->class->isa('Krang::ElementClass::StoryLink') and 
+        if ($_->class->isa(pkg('ElementClass::StoryLink')) and 
             $story = $_->data) {
             $story_links{$story->story_id} = $story;
         }
     } $element;
-
+    
     return values %story_links;
 }
 
@@ -1932,7 +1931,7 @@ sub linked_media {
     my %media_links;
     my $media;
     foreach_element { 
-        if ($_->class->isa('Krang::ElementClass::MediaLink') and 
+        if ($_->class->isa(pkg('ElementClass::MediaLink')) and
             $media = $_->data) {
             $media_links{$media->media_id} = $media;
         }
