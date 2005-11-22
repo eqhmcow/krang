@@ -6,7 +6,7 @@ use strict;
 
 =head1 NAME
 
-krang_create_lists
+krang_create_lists - create Krang::ListGroups
 
 =head1 SYNOPSIS
 
@@ -16,6 +16,27 @@ krang_create_lists
 
 Creates Krang::ListGroups and Krang::Lists based on lists.conf files in
 element sets.  Usually called from C<krang_createdb>.
+
+
+=head1 OPTIONS
+
+=over 5
+
+=item --verbose
+
+If specified once, will output list creation status.
+If specified twice, will output list item creation, too.
+
+
+=item --help
+
+Display brief help.
+
+
+=item --man
+
+Display full man page.
+
 
 =cut
 
@@ -51,26 +72,50 @@ END
 
 use Krang::ClassFactory qw(pkg);
 use Krang::Script;
-use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot);
+use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot InstanceDisplayName);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'ListGroup';
 use Krang::ClassLoader 'List';
+use Krang::ClassLoader 'ListItem';
 use XML::Simple;
 
-my ($help, $man, $password, $destroy);
-my $verbose = 0;
+# For script commands
+use Getopt::Long;
+use Pod::Usage;
+
+our ($help, $man, $verbose);
+$verbose = 0;
+
+pod2usage(2) unless
+  GetOptions(help       => \$help,
+             man        => \$man,
+             'verbose+' => \$verbose );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+
+# Find path to element library for InstanceElementSet
+my $addon = InstanceElementSet;
+
+# Are we in the new /krang/addons/ directory, or legacy /krang/element_lib/?
+my $element_lib_dir = catdir(KrangRoot, 'addons', $addon, 'element_lib', $addon);
+$element_lib_dir = catdir(KrangRoot, 'element_lib', $addon) unless (-d $element_lib_dir);
+die("Can't find element_lib/$addon/ in krang/addons/ or krang/element_lib/") unless (-d $element_lib_dir);
+
+# Location of our file, if we have one.
+my $list_conf_file = catfile($element_lib_dir, 'lists.conf');
 
 # populate Krang::ListGroup and Krang::List info in
 # db from lists.conf file, if exists.
-my $list_conf_file = catfile(KrangRoot, 'element_lib',
-                             InstanceElementSet, 'lists.conf');
-
 if (-f $list_conf_file) {
+    print STDERR "Opening '$list_conf_file'...\n" if $verbose > 1;
     my $config = XMLin($list_conf_file, suppressempty => 1, forcearray => 1);
     my $dbh = dbh;
     
     foreach my $list_group (@{$config->{list_group}}) {
-        my $lg = pkg('ListGroup')->new( name => $list_group->{list_group_name}, description => $list_group->{description} );
+        my $list_group_name = $list_group->{list_group_name};
+        print STDERR "Adding ListGroup '$list_group_name'\n" if $verbose;
+        my $lg = pkg('ListGroup')->new( name => $list_group_name, description => $list_group->{description} );
         $lg->save;
         my $prev_list_id;
         foreach my $list (@{$list_group->{list}}) {
@@ -78,12 +123,42 @@ if (-f $list_conf_file) {
             $params{name} = $list->{list_name};
             $params{list_group_id} = $lg->list_group_id;
             $params{parent_list_id} = $prev_list_id if $prev_list_id; 
+            print STDERR "  Adding List '". $params{name} ."'\n" if $verbose;
             my $new_list = pkg('List')->new( %params );
             $new_list->save;
-            $prev_list_id = $new_list->list_id 
+
+            # Iterate through items
+            my $order = 1;
+            foreach my $item (@{$list->{list_item}}) {
+                my $item_name = $item->{item_name};
+                my $parent_item_name = $item->{parent_item_name};
+                print STDERR "    Adding item '$item_name'". ($parent_item_name ? " (parent $parent_item_name)" : "") ."\n"
+                  if $verbose > 1;
+
+                # Set up new item
+                my %item_params = ( list => $new_list,
+                                    order => $order++,
+                                    data => $item_name);
+
+                # Find parent (if applicable)
+                if ($parent_item_name) {
+                    my ($parent_item) = pkg('ListItem')->find( list_id => $prev_list_id,
+                                                               data => $parent_item_name );
+                    die ("Cannot find parent item '$parent_item_name' in list_id '$prev_list_id'") unless $parent_item;
+
+                    $item_params{parent_list_item} = $parent_item;
+                }
+
+                # Create and save
+                my $new_item = pkg('ListItem')->new(%item_params);
+                $new_item->save();
+            }
+
+            # Set up previous list ID for next list
+            $prev_list_id = $new_list->list_id ;
         }
     }
 }
 
-print "Krang::ListGroups and pkg('Lists') created successfully.\n";
+print "ListGroups and Lists created successfully for instance '". InstanceDisplayName ."'.\n";
 

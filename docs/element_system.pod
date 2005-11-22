@@ -70,6 +70,42 @@ list of 'Model's, and each 'Model' can be associated with a list of
 'Year's.   The second list group in the example contains just a single
 flat list.  Note that a default description for the list group can 
 be set within the list_group tag.
+
+You may also specify initial list items via F<lists.conf> by using the 
+optional element, "list_item", which expects two attributes,
+"item_name" and (optional) "parent_item_name":
+
+  <list_group list_group_name="Make/Model/Year" description="blah blah blah">
+    <list list_name="Make">
+      <list_item item_name="Ford" />
+      <list_item item_name="Honda" />
+      <list_item item_name="GMAC" />
+    </list>
+    <list list_name="Model">
+      <list_item parent_item_name="Ford" item_name="Explorer" />
+      <list_item parent_item_name="Ford" item_name="Escort" />
+      <list_item parent_item_name="Ford" item_name="Focus" />
+      <list_item parent_item_name="Honda" item_name="Element" />
+      <list_item parent_item_name="Honda" item_name="Civic" />
+      <list_item parent_item_name="Honda" item_name="Accord" />
+      <list_item parent_item_name="GMAC" item_name="Hummer" />
+      <list_item parent_item_name="GMAC" item_name="Pontiac" />
+      <list_item parent_item_name="GMAC" item_name="Humongulous" />
+    </list>
+    <list list_name="Year">
+      <list_item parent_item_name="Explorer" item_name="1998" />
+      <list_item parent_item_name="Explorer" item_name="1999" />
+      <list_item parent_item_name="Explorer" item_name="2000" />
+      <list_item parent_item_name="Explorer" item_name="2001" />
+      <list_item parent_item_name="Civic" item_name="1999" />
+      <list_item parent_item_name="Civic" item_name="2000" />
+      <list_item parent_item_name="Civic" item_name="2001" />
+      <list_item parent_item_name="Civic" item_name="2002" />
+    </list>
+  </list_group>
+
+This allows you to intuitively set up lists when you run a "make db".
+
 Below is an example of how a ListGroup would be added to an element in 
 your element library:
 
