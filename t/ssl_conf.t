@@ -18,9 +18,6 @@ ApacheAddr 127.0.0.1
 ApachePort 80
 ApacheSSLPort 443
 HostName krang_ssltest
-EnableSiteServer 1
-SiteServerAddr 127.0.0.1
-SiteServerPort 8080
 LogLevel 2
 FTPAddress 127.0.0.1
 FTPHostName localhost
@@ -88,82 +85,64 @@ eval "use_ok(pkg('Conf'))";
 die $@ if $@;
 
 # get the globals, all ways
-ok(pkg('Conf')->get('ApacheSSLPort'));
-ok(pkg('Conf')->ApacheSSLPort);
-ok(pkg('Conf')->get('SSLEngine'));
-ok(pkg('Conf')->SSLEngine);
-ok(pkg('Conf')->get('SSLPassPhraseDialog'));
-ok(pkg('Conf')->SSLPassPhraseDialog);
-ok(pkg('Conf')->get('SSLRandomSeed'));
-ok(pkg('Conf')->SSLRandomSeed);
-ok(pkg('Conf')->get('SSLRandomSeedStartup'));
-ok(pkg('Conf')->SSLRandomSeedStartup);
-ok(pkg('Conf')->get('SSLRandomSeedConnect'));
-ok(pkg('Conf')->SSLRandomSeedConnect);
-ok(pkg('Conf')->get('SSLProtocol'));
-ok(pkg('Conf')->SSLProtocol);
-ok(pkg('Conf')->get('SSLCipherSuite'));
-ok(pkg('Conf')->SSLCipherSuite);
-ok(pkg('Conf')->get('SSLVerifyClient'));
-ok(pkg('Conf')->SSLVerifyClient);
-ok(pkg('Conf')->get('SSLVerifyDepth'));
-ok(pkg('Conf')->SSLVerifyDepth);
-ok(pkg('Conf')->get('SetEnvIf'));
-ok(pkg('Conf')->SetEnvIf);
-ok(pkg('Conf')->get('SSLOptions'));
-ok(pkg('Conf')->SSLOptions);
-ok(pkg('Conf')->get('SSLLogLevel'));
-ok(pkg('Conf')->SSLLogLevel);
+ok(pkg('Conf')->get('ApacheSSLPort'), "ApacheSSLPort directive");
+ok(pkg('Conf')->ApacheSSLPort, "ApacheSSLPort directive");
+ok(pkg('Conf')->get('SSLEngine'), "SSLEngine directive");
+ok(pkg('Conf')->SSLEngine, "SSLEngine directive");
+ok(pkg('Conf')->get('SSLPassPhraseDialog'), "SSLPassPhraseDialog directive");
+ok(pkg('Conf')->SSLPassPhraseDialog, "SSLPassPhraseDialog directive");
+ok(pkg('Conf')->get('SSLRandomSeed'), "SSLRandomSeed directive");
+ok(pkg('Conf')->SSLRandomSeed, "SSLRandomSeed directive");
+ok(pkg('Conf')->get('SSLRandomSeedStartup'), "SSLRandomSeedStartup directive");
+ok(pkg('Conf')->SSLRandomSeedStartup, "SSLRandomSeedStartup directive");
+ok(pkg('Conf')->get('SSLRandomSeedConnect'), "SSLRandomSeedConnect directive");
+ok(pkg('Conf')->SSLRandomSeedConnect, "SSLRandomSeedConnect directive");
+ok(pkg('Conf')->get('SSLProtocol'), "SSLProtocol directive");
+ok(pkg('Conf')->SSLProtocol, "SSLProtocol directive");
+ok(pkg('Conf')->get('SSLCipherSuite'), "SSLCipherSuite directive");
+ok(pkg('Conf')->SSLCipherSuite, "SSLCipherSuite directive");
+ok(pkg('Conf')->get('SSLVerifyClient'), "SSLVerifyClient directive");
+ok(pkg('Conf')->SSLVerifyClient, "SSLVerifyClient directive");
+ok(pkg('Conf')->get('SSLVerifyDepth'), "SSLVerifyDepth directive");
+ok(pkg('Conf')->SSLVerifyDepth, "SSLVerifyDepth directive");
+ok(pkg('Conf')->get('SetEnvIf'), "SetEnvIf directive");
+ok(pkg('Conf')->SetEnvIf, "SetEnvIf directive");
+ok(pkg('Conf')->get('SSLOptions'), "SSLOptions directive");
+ok(pkg('Conf')->SSLOptions, "SSLOptions directive");
+ok(pkg('Conf')->get('SSLLogLevel'), "SSLLogLevel directive");
+ok(pkg('Conf')->SSLLogLevel, "SSLLogLevel directive");
 
 pkg('Conf')->import(qw(ApacheSSLPort InstanceHostIPAddress      InstanceHostPort InstanceHostSSLPort
                        SSLEngine     SSLProtocol SSLCipherSuite SSLVerifyClient  SSLVerifyDepth
                        SSLLogLevel   KrangRoot));
-ok(ApacheSSLPort());
-ok(not defined InstanceHostIPAddress());
-ok(not defined InstanceHostPort());
-ok(not defined InstanceHostSSLPort());
+ok(ApacheSSLPort(), "ApacheSSLPort");
+ok(!defined(InstanceHostIPAddress()), "InstanceHostIPAddress");
+ok(!defined(InstanceHostPort()), "InstanceHostPort");
+ok(!defined(InstanceHostSSLPort()), "InstanceHostSSLPort");
 
 pkg('Conf')->instance("instance_one");
-is(pkg('Conf')->instance, "instance_one");
-is(InstanceHostIPAddress(), '127.0.0.1');
-is(InstanceHostPort(), '8080');
-is(InstanceHostSSLPort(), '8443');
-is(SSLEngine(), 'on');
-is(SSLProtocol(), 'all');
-is(SSLCipherSuite(), "ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP");
-is(SSLVerifyClient(), 'optional');
-is(SSLVerifyDepth(), '10');
-is(SSLLogLevel(), 'trace');
+is(pkg('Conf')->instance, "instance_one", "Verifying first instance");
+is(InstanceHostIPAddress(), '127.0.0.200', "InstanceHostIPAddress");
+is(InstanceHostPort(), '8080', "InstanceHostPort");
+is(InstanceHostSSLPort(), '8443', "InstanceHostSSLPort");
+is(SSLEngine(), 'on', "SSLEngine");
+is(SSLProtocol(), 'all', "SSLProtocol");
+is(SSLCipherSuite(), "ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP", "SSLCipherSuite");
+is(SSLVerifyClient(), 'optional', "SSLVerifyClient");
+is(SSLVerifyDepth(), '10', "SSLVerifyDepth");
+is(SSLLogLevel(), 'trace', "SSLLogLevel");
 
-pkg('Conf')->instance("instance_two");
-is(pkg('Conf')->instance, "instance_two");
-is(InstanceHostIPAddress(), '127.0.0.1');
-is(InstanceHostPort(), '8081');
-is(InstanceHostSSLPort(), '8444');
-is(SSLEngine(), 'on');
-is(SSLProtocol(), 'all -SSLv3');
-is(SSLCipherSuite(), 'RSA');
-is(SSLVerifyClient(), 'require');
-is(SSLVerifyDepth(), '20');
-is(SSLLogLevel(), 'error');
-
-unshift @INC, catfile(KrangRoot(), 'lib');
-require 'Krang/Test/Apache.pm';
-import Krang::Test::Apache qw(login_ok login_not_ok request_ok get_response
-                              response_like response_unlike);
-
-foreach my $instance (pkg('Conf')->instances()) {
-    pkg('Conf')->instance($instance);
-
-    # try logging in with a bad password
-    login_not_ok(rand(), rand());
-    
-    # try logging in with good creds
-    login_ok($username, $password);
-}
-
-
-
+pkg('Conf')->instance("instance_two"); 
+is(pkg('Conf')->instance, "instance_two", "Verifying second instance");
+is(InstanceHostIPAddress(), '127.0.0.201', "InstanceHostIPAddress");
+is(InstanceHostPort(), '8081', "InstanceHostPort");
+is(InstanceHostSSLPort(), '8444', "InstanceHostSSLPort");
+is(SSLEngine(), 'on', "SSLEngine");
+is(SSLProtocol(), 'all -SSLv3', "SSLProtocol");
+is(SSLCipherSuite(), 'RSA', "SSLCipherSuite");
+is(SSLVerifyClient(), 'require', "SSLVerifyClient");
+is(SSLVerifyDepth(), '20', "SSLVerifyDepth");
+is(SSLLogLevel(), 'error', "SSLLogLevel");
 
 
 # put an arbitary conf file into place so that Krang::Conf will load it
