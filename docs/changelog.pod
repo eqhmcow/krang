@@ -7,11 +7,22 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+
+=item *
+
+Fixed bug in Krang::Alert which would not allow sub-classes of Krang
+objects to be used.  Fixed Krang::ListItem tests in t/find.t, and
+improved order_desc test to check entire result set.  Fixed bug
+in t/library.t which caused some tests to appear without names.
+[Jesse Erlbaum]
+
+
 =item *
 
 Fixed a bug in krang_create_lists which caused script to fail for
 new addon system.  Added new feature to krang_create_lists and
 lists.conf to permit list items to be specified. [Jesse Erlbaum]
+
 
 =item *
 
@@ -19,10 +30,12 @@ Fixed a bug in which some tests would fail if the configured
 element set did not have an "article" type.  Tests will now run
 even if you're using a custom element library.  [Jesse Erlbaum]
 
+
 =item *
 
 Fixed a bug in Krang::lib which caused "legacy" /krang/element_lib path to
 not be included in Perl's @INC path.  [Jesse Erlbaum]
+
 
 =back
 

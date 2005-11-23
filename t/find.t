@@ -102,7 +102,6 @@ sub check_find {
     ok(not($@), "$perl_package->find(ids_only=>1, order_desc => 1)");
     die ($@) if ($@);
 
-    diag("stuff: ".join(", ", @stuff)."\nstuff2: ".join(", ", @stuff2)) if @stuff;
     ok( eq_array([@stuff], [reverse @stuff2]), "$perl_package->find(ids_only=>1, order_desc => 1) : order_desc=>1 reverses order_desc=>0") 
       if @stuff;
 
