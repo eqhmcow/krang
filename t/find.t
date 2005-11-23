@@ -89,8 +89,9 @@ sub check_find {
     # 5. order_desc=>1 reverses order_desc=>0
     my %order_params = (ids_only => 1, order_desc => 0);
 
-    # Krang::List requires further grouping, or ordering will fail tests.
+    # Krang::List and Krang::ListItem require further grouping, or ordering will fail tests.
     if ($perl_package eq 'Krang::List') { $order_params{list_group_id} = 1; }
+    if ($perl_package eq 'Krang::ListItem') { $order_params{list_id} = 1; }
 
     eval { @stuff = $perl_package->find(%order_params) };
     ok(not($@), "$perl_package->find(ids_only=>1, order_desc => 0)");
@@ -101,7 +102,9 @@ sub check_find {
     ok(not($@), "$perl_package->find(ids_only=>1, order_desc => 1)");
     die ($@) if ($@);
 
-    is($stuff[0], $stuff2[-1], "$perl_package->find(ids_only=>1, order_desc => 1) : order_desc=>1 reverses order_desc=>0") if @stuff;
+    diag("stuff: ".join(", ", @stuff)."\nstuff2: ".join(", ", @stuff2)) if @stuff;
+    ok( eq_array([@stuff], [reverse @stuff2]), "$perl_package->find(ids_only=>1, order_desc => 1) : order_desc=>1 reverses order_desc=>0") 
+      if @stuff;
 
     # 6. limit=>1 returns only one record
     unless ($perl_package eq 'Krang::Desk') { # Krang::Desk doesnt use limit

@@ -11,7 +11,7 @@ BEGIN { use_ok(pkg('ElementLibrary')) }
 my $old_instance = pkg('Conf')->instance();
 foreach my $instance (pkg('Conf')->instances()) {
     pkg('Conf')->instance($instance);
-    ok(pkg('ElementLibrary')->load_set(set => InstanceElementSet));
+    ok(pkg('ElementLibrary')->load_set(set => InstanceElementSet), "load_set()");
 
     # check that element_names works
     my @names = pkg('ElementLibrary')->element_names();
@@ -21,7 +21,7 @@ foreach my $instance (pkg('Conf')->instances()) {
     my @top = pkg('ElementLibrary')->top_levels();
     ok(@top, "top_levels exist " . InstanceElementSet);
     foreach my $name (@top) {
-        ok(grep { $_ eq $name } @names, "$name is in element_names");
+        ok((grep { $_ eq $name } @names), "$name is in element_names");
         my $class = pkg('ElementLibrary')->top_level(name => $name);
         check_kids($class);
     }
@@ -34,7 +34,7 @@ sub check_kids {
     isa_ok($class, "Krang::ElementClass");
     ok($class->name, $class->name . " found");
     for ($class->children()) {
-        is($class->child($_->name), $_, $class->name . "->child(" . $_->name . ") == " . $_->name . ")");
+        is($class->child($_->name), $_, scalar($class->name . "->child(" . $_->name . ") == " . $_->name . ")") );
         check_kids($_);
     }
 }

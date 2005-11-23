@@ -378,9 +378,9 @@ sub check_alert {
     $search_criteria{category_id} = \@category_ids if @category_ids;
     $search_criteria{parent_categories} = 1;
 
-    croak(__PACKAGE__."->check_alert requires a valid pkg('History') object.") if (ref $history ne 'Krang::History');
+    croak(__PACKAGE__."->check_alert requires a valid pkg('History') object.") unless ( $history->isa('Krang::History') );
 
-    croak(__PACKAGE__."->check_alert requires a valid pkg('Story') object.") if (ref $story ne 'Krang::Story');
+    croak(__PACKAGE__."->check_alert requires a valid pkg('Story') object.") unless ( $story->isa('Krang::Story') );
 
     debug(__PACKAGE__."->check_alert() - checking for any alerts on action $action in categories @category_ids");
 
@@ -417,19 +417,19 @@ sub send {
 
     my $alert = (pkg('Alert')->find(alert_id => $alert_id))[0];
     
-    croak("No valid pkg('Alert') object found with id $alert_id") if not ( ref $alert eq 'Krang::Alert');
+    croak("No valid pkg('Alert') object found with id $alert_id") if not ( $alert->isa('Krang::Alert') );
 
     my $to_user = (pkg('User')->find( user_id => $alert->user_id ))[0];
 
-    croak("No valid pkg('User') object found with id ".$alert->user_id) if not ( ref $to_user eq 'Krang::User');
+    croak("No valid pkg('User') object found with id ".$alert->user_id) if not ( $to_user->isa('Krang::User') );
 
     my $user = (pkg('User')->find( user_id => $user_id ))[0];
 
-    croak("No valid pkg('User') object found with id $user_id") if not ( ref $user eq 'Krang::User');
+    croak("No valid pkg('User') object found with id $user_id") if not ( $user->isa('Krang::User') );
 
     my $story = (pkg('Story')->find(story_id => $story_id))[0];
 
-    croak("No valid pkg('Story') object found with id $story_id") if not ( ref $story eq 'Krang::Story');
+    croak("No valid pkg('Story') object found with id $story_id") if not ( $story->isa('Krang::Story') );
 
     my $template = HTML::Template->new(filename => catfile(KrangRoot, 'templates', 'Alert', 'message.tmpl'));
 
