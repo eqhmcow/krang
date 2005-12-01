@@ -177,13 +177,16 @@ END
 # Krang Libs
 use Krang::ClassFactory qw(pkg);
 use Krang::Script;
-use Krang::ClassLoader Conf => qw(KrangRoot ElementLibrary);
+use Krang::ClassLoader Conf => qw(KrangRoot ElementLibrary SSLEngine);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Publisher';
 use Krang::Cache;
+
+# Set preview scheme
+$ENV{KRANG_PREVIEW_SCHEME} = SSLEngine eq 'on' ? 'https' : 'http';
 
 use Time::HiRes qw(gettimeofday tv_interval);
 
@@ -258,7 +261,7 @@ if ($everything) {
     # removes checking for related stories/media.
     $publish_args{disable_related_assets} = 1;
 
-    $arg_string .= " --everything\n";
+    $arg_string .= " --everything";
 
     $has_options = 1;
 } else {
@@ -296,6 +299,8 @@ if ($everything) {
         }
     }
 }
+
+$arg_string .= " (SSL enabled)" if SSLEngine eq 'on' and $to_preview;
 
 # If there are no command-line options, return the equivilant of --help.
 pod2usage(1) unless $has_options;
