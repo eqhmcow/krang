@@ -6,7 +6,7 @@ use File::Spec::Functions;
 use File::Path;
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Pref';
-use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet);
+use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet SSLEngine);
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Story';
@@ -38,6 +38,9 @@ BEGIN {
     }
     die $@ if $@;
 }
+
+# Set preview scheme
+my $scheme = $ENV{KRANG_PREVIEW_SCHEME} = SSLEngine eq 'on' ? 'https' : 'http';
 
 # instantiate publisher
 use_ok(pkg('Publisher'));
@@ -1008,7 +1011,7 @@ sub test_storylink {
     $publisher->_set_preview_mode();
 
     $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
-    $resulting_link = '<a href="http://' . $dest_story->preview_url() . '">' . $dest_story->title() . '</a>';
+    $resulting_link = "<a href=\"$scheme://" . $dest_story->preview_url() . '">' . $dest_story->title() . '</a>';
     chomp ($story_href);
 
     ok($story_href eq $resulting_link, 'Krang::ElementClass::StoryLink->publish() -- preview w/ template');
@@ -1027,7 +1030,7 @@ sub test_storylink {
 
     $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
 
-    ok($story_href eq 'http://' . $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
+    ok($story_href eq "$scheme://" . $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
 
     # re-deploy template.
     $publisher->deploy_template(template => $template_deployed{leadin});
@@ -1063,7 +1066,7 @@ sub test_medialink {
     $publisher->_set_preview_mode();
 
     $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
-    $resulting_link = '<img src="http://' . $media->preview_url() . '">' . $media->caption() . '<BR>' . $media->title();
+    $resulting_link = "<img src=\"$scheme://" . $media->preview_url() . '">' . $media->caption() . '<BR>' . $media->title();
     chomp ($media_href);
 
     ok($media_href eq $resulting_link, 'Krang::ElementClass::MediaLink->publish() -- preview w/ template');
@@ -1081,7 +1084,7 @@ sub test_medialink {
 
     $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
 
-    ok($media_href eq "http://" . $media->preview_url(), 'Krang::ElementClass::MediaLink->publish() -- preview-no template');
+    ok($media_href eq "$scheme://" . $media->preview_url(), 'Krang::ElementClass::MediaLink->publish() -- preview-no template');
     # re-deploy template.
     $publisher->deploy_template(template => $template_deployed{photo});
 
