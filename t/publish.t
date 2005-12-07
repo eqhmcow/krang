@@ -40,7 +40,7 @@ BEGIN {
 }
 
 # Set preview scheme
-my $scheme = $ENV{KRANG_PREVIEW_SCHEME} = SSLEngine eq 'on' ? 'https' : 'http';
+my $scheme = $ENV{KRANG_PREVIEW_SCHEME} = (SSLEngine || "") eq 'on' ? 'https' : 'http';
 
 # instantiate publisher
 use_ok(pkg('Publisher'));

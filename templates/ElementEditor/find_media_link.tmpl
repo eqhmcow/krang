@@ -19,7 +19,6 @@
         document.forms[0].submit();
   }  
 
-
   function advanced_search() {
     document.forms[0].advanced.value = 1;
     document.forms[0].submit();
@@ -42,6 +41,7 @@
 <input type="hidden" name="rm" value="find_media_link">
 <input type="hidden" name="advanced" value="<tmpl_var escape=1 advanced>">
 <input type="hidden" name="path" value="<tmpl_var escape=1 path>">
+<tmpl_var hard_find_hidden>
 
 <div class="dark-bar"><p class="left">&nbsp;Select Media</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
 <tmpl_if advanced>

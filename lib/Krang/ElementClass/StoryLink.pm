@@ -6,8 +6,12 @@ use warnings;
 use Krang::ClassLoader base => 'ElementClass';
 use Krang::ClassLoader Log => qw(debug info critical);
 
-#use Krang::MethodMaker
-#  get_set => [ qw( ) ];
+# For *Link hard find feature
+use Storable qw(nfreeze);
+use MIME::Base64 qw(encode_base64);
+
+use Krang::ClassLoader MethodMaker => 
+  hash => [ qw( find ) ];
 
 sub new {
     my $pkg = shift;
@@ -42,6 +46,12 @@ sub input_form {
                                    -onClick => "find_story('$param')",
 				   -class   => "button",
                                   );
+
+    # Add hard find parameters
+    my $find = encode_base64(nfreeze(scalar($self->find())));
+    my $hard_find_param = $query->hidden("hard_find_$param", $find);
+    $html .= $hard_find_param;
+
     return $html;
 }
 
@@ -190,6 +200,29 @@ a reference to the story in data().
 =head1 INTERFACE
 
 All the normal L<Krang::ElementClass> attributes are available.
+
+In addition to the normal interfaces, Krang::ElementClass::StoryLink also 
+supports a "find" parameter.  This parameter allows you to specify a
+"hard filter" which is used to limit the scope of the universe of 
+stories from which the user may select.  For example:
+
+  # Only articles
+  my $c = Krang::ElementClass::StoryLink->new(
+                name => 'related_articles',
+                find => { class => 'article' }
+  );
+
+
+  # Only articles about cats
+  my $c = Krang::ElementClass::StoryLink->new(
+                name => 'related_articles',
+                find => { class => 'article',
+                          title_like => '%cats%' }
+  );
+
+Any find parameters which are permitted by Krang::Story may be used
+by Krang::ElementClass::StoryLink's "find" parameter.
+
 
 =over
 

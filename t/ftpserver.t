@@ -113,13 +113,13 @@ pkg('Conf')->instance($instances[0]);
 
 my @listed_instances = $ftp->ls();
 
-is ("@listed_instances", "@auth_instances", "FTPServer returned instances");
+ok(eq_set(\@listed_instances, \@auth_instances), "FTPServer returned instances");
 
 $ftp->cwd($instances[0]);
 
 my @types = qw(media template);
 my @ret_types = $ftp->ls();
-is("@ret_types", "@types", "Type listing");
+ok(eq_set(\@ret_types, \@types), "Type listing");
 
 my @found_sites = pkg('Site')->find(order_by => 'url');
 
@@ -136,14 +136,14 @@ foreach my $type (@types) {
 
         my $list = $sitenames;
         $list .= " @templates" if @templates; 
-        is("@ret_sites", $list, "Site listing in $type");
+        ok(eq_set(\@ret_sites, [ split(/\s+/, $list) ]), "Site listing in $type");
 
          my $template_path = catfile(KrangRoot, 't','template','test.tmpl');
          is($ftp->put( $template_path ), 'test.tmpl', "Put template test.tmpl, not associated with category" );
          is($ftp->delete('test.tmpl'), 1, "Delete template test.tmpl");
 
     } else {
-        is("@ret_sites", $sitenames, "Site listing in $type");
+        ok(eq_set(\@ret_sites, [ split(/\s+/, $sitenames) ]), "Site listing in $type");
     }
 
     foreach my $site (@ret_sites) {
@@ -181,9 +181,9 @@ foreach my $type (@types) {
                 $list_string = $tnames; 
             }
         }
- 
+
         my @ret_cats = $ftp->ls();
-        is("@ret_cats", $list_string, "Category ls in site $site for type $type");
+        ok(eq_set(\@ret_cats, [ split(/\s+/, $list_string) ]), "Category ls in site $site for type $type");
 
         # go into each category and create, get, put, delete media/template
         foreach my $cat (@cat_list) {

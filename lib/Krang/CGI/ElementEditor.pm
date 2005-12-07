@@ -162,6 +162,10 @@ use Krang::ClassLoader Message => qw(add_message get_messages);
 use Krang::ClassLoader Widget => qw(category_chooser date_chooser decode_date);
 use Krang::ClassLoader base => 'CGI';
 
+# For *Link hard find feature
+use Storable qw(thaw);
+use MIME::Base64 qw(decode_base64);
+
 sub setup {
     my $self = shift;
     $self->mode_param('rm');
@@ -347,13 +351,17 @@ sub find_story_link {
                                    );
     my $path    = $query->param('path') || '/';
 
+    my $hard_find_froz = $query->param("hard_find_$path");
+    my $hard_find = thaw(decode_base64($hard_find_froz));
+    $template->param( hard_find_hidden => $query->hidden("hard_find_$path", $hard_find_froz) );
+
     # find the root element, loading from the session or the DB
     my $root = $self->_get_element;
     my $element = _find_element($root, $path);
 
     # determine appropriate find params for search
     my %find_params;
-    my %persist_vars;
+    my %persist_vars = ();
     if ($query->param('advanced')) {
         my %tmpl_data;
         # Set up advanced search
@@ -466,11 +474,17 @@ sub find_story_link {
         $find_params{exclude_story_ids} = [ $session{story}->story_id ];
     }
 
+    # Apply hard find params
+    while (my ($k, $v) = each(%$hard_find)) {
+        $find_params{$k} = $v;
+    }
+
     my $pager = pkg('HTMLPager')->new      (cgi_query     => $query,
        persist_vars  => {
                          rm => 'find_story_link',
                          path => $query->param('path'),
                          advanced =>($query->param('advanced') || 0),
+                         "hard_find_$path" => $hard_find_froz,
                          %persist_vars,
                         },
        use_module    => pkg('Story'),
@@ -551,6 +565,10 @@ sub find_media_link {
                                    );
     my $path    = $query->param('path') || '/';
 
+    my $hard_find_froz = $query->param("hard_find_$path");
+    my $hard_find = thaw(decode_base64($hard_find_froz));
+    $template->param( hard_find_hidden => $query->hidden("hard_find_$path", $hard_find_froz) );
+
     # find the root element, loading from the session or the DB
     my $root = $self->_get_element;
     my $element = _find_element($root, $path);
@@ -624,12 +642,18 @@ sub find_media_link {
     # always show only what should be seen
     $find{may_see} = 1;
 
+    # Apply hard find params
+    while (my ($k, $v) = each(%$hard_find)) {
+        $find{$k} = $v;
+    }
+
     my $pager = pkg('HTMLPager')->new
       (cgi_query     => $query,
        persist_vars  => {
                          rm => 'find_media_link',
                          path => $query->param('path'),
                          advanced => ($query->param('advanced') || 0),
+                         "hard_find_$path" => $hard_find_froz,
                          %persist,
                         },
        use_module    => pkg('Media'),

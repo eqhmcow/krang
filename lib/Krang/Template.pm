@@ -738,11 +738,11 @@ sub find {
                                                      may_see
                                                      may_edit )));
 
-        if ($arg eq 'template_id' && ref $args{$arg} eq 'ARRAY') {
+        if ($arg eq 'template_id' && ref ($args{$arg}) eq 'ARRAY') {
             my $tmp = join(" OR ", map {"t.template_id = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
-        } elsif ($arg eq 'category_id' && ref ($args{$arg} eq 'ARRAY')) {
+        } elsif ($arg eq 'category_id' && ref ($args{$arg}) eq 'ARRAY') {
             my $tmp= join(" OR ", map {"t.category_id = ?"} @{$args{$arg}});
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};

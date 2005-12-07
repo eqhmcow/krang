@@ -184,7 +184,8 @@ sub _url {
 
     # compute Krang's URL
     my $base_url;
-    if (SSLEngine eq 'on') {
+    my $sslengine = SSLEngine;
+    if ($sslengine and $sslengine eq 'on') {
 	$base_url = 'https://' . HostName;
 	$base_url .= ":" . ApacheSSLPort if ApacheSSLPort ne '443';
     } else {

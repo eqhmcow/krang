@@ -70,6 +70,13 @@ sub new {
                                                    ),
                  Krang::ElementClass::MediaLink->new(name => "photo"),
                  Krang::ElementClass::StoryLink->new(name => "leadin"),
+
+                 Krang::ElementClass::StoryLink->new(name => "leadin_covers",
+                                                     find => { class => 'cover' } ),
+
+                 Krang::ElementClass::MediaLink->new(name => "photo_image_only",
+                                                     find => { media_type_id => 1 } ),
+
                 ],
                 @_);
    return $pkg->SUPER::new(%args);

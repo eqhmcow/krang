@@ -10,6 +10,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added "find" parameter to Krang::ElementClass::StoryLink and 
+::MediaLink, to allow element authors to pre-set a filter
+in their element library.  Cleaned up some tests, silenced
+some spurious warnings.  [Jesse Erlbaum]
+
+
+=item *
+
 Fixed bug in Krang::Alert which would not allow sub-classes of Krang
 objects to be used.  Fixed Krang::ListItem tests in t/find.t, and
 improved order_desc test to check entire result set.  Fixed bug

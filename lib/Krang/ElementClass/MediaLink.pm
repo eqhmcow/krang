@@ -6,8 +6,14 @@ use warnings;
 use Krang::ClassLoader base => 'ElementClass';
 use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 
+# For *Link hard find feature
+use Storable qw(nfreeze);
+use MIME::Base64 qw(encode_base64);
+
 use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( allow_upload show_thumbnail ) ];
+  get_set => [ qw( allow_upload show_thumbnail ) ],
+  hash => [ qw( find ) ];
+
 use Krang::ClassLoader Message => qw(add_message);
 
 sub new {
@@ -56,6 +62,11 @@ sub input_form {
                                 -value   => "Upload",
                                 -onClick => "save_and_stay()",
                                 -class   => "button");
+
+    # Add hard find parameters
+    my $find = encode_base64(nfreeze(scalar($self->find())));
+    my $hard_find_param = $query->hidden("hard_find_$param", $find);
+    $html .= $hard_find_param;
 
     return $html;
 }
@@ -278,6 +289,29 @@ is returned from data() for elements of this class.
 =head1 INTERFACE
 
 All the normal L<Krang::ElementClass> attributes are available, plus:
+
+In addition to the normal interfaces, Krang::ElementClass::MediaLink also 
+supports a "find" parameter.  This parameter allows you to specify a
+"hard filter" which is used to limit the scope of the universe of 
+stories from which the user may select.  For example:
+
+  # Only images
+  my $c = Krang::ElementClass::MediaLink->new(
+                name => 'associated_image',
+                find => { media_type_id => 1 }
+  );
+
+
+  # Only images about cats
+  my $c = Krang::ElementClass::MediaLink->new(
+                name => 'associated_image',
+                find => { media_type_id => 1,
+                          filename_like => '%cats%' }
+  );
+
+Any find parameters which are permitted by Krang::Media may be used
+by Krang::ElementClass::MediaLink's "find" parameter.
+
 
 =over 4
 
