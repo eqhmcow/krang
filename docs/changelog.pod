@@ -10,6 +10,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Sweetened up Krang::ElementClass::ListGroup to use HTML
+<labels>, and to allow you to specify a number of columns
+for the input form.  [Jesse Erlbaum]
+
+
+=item *
+
 Added "find" parameter to Krang::ElementClass::StoryLink and 
 ::MediaLink, to allow element authors to pre-set a filter
 in their element library.  Cleaned up some tests, silenced

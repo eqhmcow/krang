@@ -48,6 +48,17 @@ sub new {
                                               ),
                   Krang::ElementClass::Textarea->new(name => 'blurb',
                                                      bulk_edit => 1),
+
+                  Krang::ElementClass::RadioGroup->new(name => 'mood',
+                                                       values => [qw/happy sad confused manic depressive cynical/],
+                                                       labels => { happy      => "Happy",
+                                                                   sad        => "Sad",
+                                                                   confused   => "Confused",
+                                                                   manic      => "Manic",
+                                                                   depressive => "Depressive",
+                                                                   cynical    => "Cynical" },
+                                                       columns => 2 ),
+
                   'page',
                 ],
                 @_);
