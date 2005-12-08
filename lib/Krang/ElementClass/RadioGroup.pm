@@ -45,10 +45,12 @@ sub input_form {
     my @click_labels = ();
     foreach my $v (@$values) {
         $attributes{$v} = {id=>$v};
+        my $label = $labels->{$v};
+        $label = $v unless (defined $label);
         push( @click_labels, 
               sprintf( '<label for="%s">%s</label>', 
                       scalar($query->escapeHTML($v)), 
-                      scalar($query->escapeHTML($labels->{$v})) ) 
+                      scalar($query->escapeHTML($label)) ) 
             );
     }
 
@@ -59,10 +61,10 @@ sub input_form {
                                              -attributes => \%attributes );
 
     # build html output
-    my $html = "<table border=0 cellpadding=0 cellspacing=0>\n<tr>\n";
+    my $html = "<table border=0 cellpadding=0 cellspacing=1>\n<tr>\n";
     my $count = 0;
     foreach my $rb (@radio_buttons) {
-        $html .= "  <td><nobr>$rb ".$click_labels[$count]."</nobr></td>\n";
+        $html .= "  <td><nobr>$rb".$click_labels[$count]."</nobr></td>\n";
         $count++;
         if (my $cols = $self->columns) {
             unless ($count % $cols) {
