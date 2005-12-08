@@ -59,6 +59,10 @@ sub new {
                                                                    cynical    => "Cynical" },
                                                        columns => 2 ),
 
+                  Krang::ElementClass::RadioGroup->new(name => 'cost',
+                                                       list_group => 'Cost',
+                                                       columns => 2 ),
+
                   'page',
                 ],
                 @_);

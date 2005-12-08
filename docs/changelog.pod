@@ -10,9 +10,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Sweetened up Krang::ElementClass::ListGroup to use HTML
+Sweetened up Krang::ElementClass::RadioGroup to use HTML
 <labels>, and to allow you to specify a number of columns
-for the input form.  [Jesse Erlbaum]
+for the input form.  Added "list_group" parameter to allow
+RadioGroup to be populated from a Krang list.  [Jesse Erlbaum]
 
 
 =item *

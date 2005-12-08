@@ -4,16 +4,20 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass';
+use Krang::ClassLoader 'ListGroup';
+use Krang::ClassLoader 'List';
+use Krang::ClassLoader 'ListItem';
 use Carp qw(croak);
 
 use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( values labels columns ) ];
+  get_set => [ qw( values labels columns list_group ) ];
 
 sub new {
     my $pkg = shift;
-    my %args = ( values    => [],
-                 labels    => {},
-                 columns   => 0,
+    my %args = ( values     => [],
+                 labels     => {},
+                 columns    => 0,
+                 list_group => '',
                  @_
                );
     
@@ -27,6 +31,13 @@ sub input_form {
 
     my $values = $self->values();
     my $labels = $self->labels();
+
+    # if a list_group has been specified, use that instead
+    if (my $group_name = $self->list_group) {
+	($values, $labels) = $self->_get_list_data($group_name);
+    }
+
+    # Override built-in labels
     my %blank_labels = ( map { $_=>"" } @$values );
 
     # Make real labels
@@ -65,18 +76,47 @@ sub input_form {
     return $html;
 }
 
+
+sub _get_list_data {
+    my ($self, $group_name) = @_;
+    my ($lg) = pkg('ListGroup')->find(name=>$group_name);
+    my @lists = pkg('List')->find(list_group_id=>$lg->list_group_id);
+
+    # for now just use the first list found
+    my @values;
+    my %labels;
+    if (scalar @lists > 0) {
+	my @items = pkg('ListItem')->find(list_id=>$lists[0]->list_id);
+	foreach my $item (@items) {
+	    push(@values, $item->list_item_id);
+	    $labels{$item->list_item_id} = $item->data;
+	}
+    }
+    return (\@values, \%labels);
+}
+
+
+
 =head1 NAME
 
 Krang::ElementClass::RadioGroup - radio group element class
 
 =head1 SYNOPSIS
 
+  # Create radio group from static elements
   $class = pkg('ElementClass::RadioGroup')->new(
                      name         => "alignment",
                      values       => [ 'center', 'left', 'right' ],
                      labels       => { center => "Center",
                                        left   => "Left",
                                        right  => "Right" },
+                     columns      => 2 );
+
+
+  # Create radio group from Krang list group
+  $class = pkg('ElementClass::RadioGroup')->new(
+                     name         => "thingies",
+                     list_group   => "article_thingies",
                      columns      => 2 );
 
 
@@ -105,6 +145,11 @@ A reference to a hash mapping C<values> to display names.
 
 The number of columns in which you want your radio group to appear.
 This defaults to 0, which indicates that radio buttons be put horizontally.
+
+
+=item list_group
+
+If specified, this will populate the RadioGroup from a Krang list.
 
 
 =back
