@@ -510,7 +510,7 @@ sub find_story_link {
                                    select_story     => 'Select',
                                   },
        row_handler   => sub { $self->find_story_link_row_handler(@_) },
-       id_handler    => sub { $self->story_id_handler(@_) },
+       id_handler    => sub { shift->story_id },
       );
     
     $template->param(pager_html => $pager->output());
@@ -554,8 +554,6 @@ sub find_story_link_row_handler {
     $row->{pub_status} = $story->published_version() ? 
       '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
 }
-
-sub id_handler { $_[0]->story_id }
 
 sub find_media_link {
     my ($self, %args) = @_;
@@ -679,7 +677,7 @@ sub find_media_link {
                                    select_media     => 'Select',
                                   },
        row_handler   => sub { $self->find_media_link_row_handler(@_) },
-       id_handler    => sub { $self->media_id_handler(@_) },
+       id_handler    => sub { shift->media_id },
       );
 
     # Set up advanced search form
@@ -737,8 +735,6 @@ sub find_media_link_row_handler {
     $row->{pub_status} = $media->published_version() ? 
       '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
 }
-
-sub media_id_handler { $_[0]->media_id }
 
 sub select_story {
     my $self = shift;
