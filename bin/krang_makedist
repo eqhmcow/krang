@@ -117,7 +117,7 @@ my $source_dist = 0;
 my $platform;
 if (-e catfile($ENV{KRANG_ROOT}, 'data', 'build.db')) {
     # get information for a binary distribution
-    my %params = Krang::Platform->build_params();
+    my %params = pkg('Platform')->build_params();
     $name = 'krang-' . $Krang::VERSION . '-' . $params{Platform} . 
       '-perl' . $params{Perl} . '-' . $params{Arch};
     $platform = $params{Platform};
