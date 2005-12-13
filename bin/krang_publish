@@ -183,7 +183,7 @@ use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Publisher';
-use Krang::Cache;
+use Krang::ClassLoader 'Cache';
 
 # Set preview scheme
 $ENV{KRANG_PREVIEW_SCHEME} = SSLEngine eq 'on' ? 'https' : 'http';
