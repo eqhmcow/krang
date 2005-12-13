@@ -254,7 +254,7 @@ foreach my $instance (@instances) {
     system($cmd) && die "Couldn't grant all: $?";
 
     # load all sql files as the DBUser
-    my @sql_dirs = Krang::File->find_all('sql');
+    my @sql_dirs = pkg('File')->find_all('sql');
     print STDERR "Loading SQL for '$name' from " . join(', ', @sql_dirs) . 
       "...\n" if $verbose;
     $cmd = "cat " . join(' ', map { catfile($_, '*.sql') } @sql_dirs) . 
@@ -275,7 +275,7 @@ foreach my $instance (@instances) {
     system($cmd) && die "Couldn't update db_version: $?";
 
     # populate default template set, if it exists
-    my $import_file = Krang::File->find(catfile('element_lib', 
+    my $import_file = pkg('File')->find(catfile('element_lib', 
                                                 InstanceElementSet,
                                                 'templates.kds'));
 
@@ -291,7 +291,7 @@ foreach my $instance (@instances) {
     }
 
     # have Krang::ListGroups and Krang::Lists created if needed
-    if (Krang::File->find(catfile('element_lib', InstanceElementSet, 
+    if (pkg('File')->find(catfile('element_lib', InstanceElementSet, 
                                   'lists.conf'))) {
         $cmd = catdir(KrangRoot, 'bin', 'krang_create_lists');
         local $ENV{KRANG_INSTANCE} = $instance;
@@ -299,7 +299,7 @@ foreach my $instance (@instances) {
         system($cmd) && die "krang_create_lists failed: $?";
 
         # if a lists.kds file exists, import it.
-        my $lists_import_file = Krang::File->find(catfile('element_lib',
+        my $lists_import_file = pkg('File')->find(catfile('element_lib',
                                                           InstanceElementSet, 
                                                           'lists.kds'));
         
