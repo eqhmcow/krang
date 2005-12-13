@@ -6,7 +6,7 @@ use strict;
 
 =head1 NAME
 
-krang_upload_templates
+krang_upload_templates - import templates from filesystem
 
 =head1 SYNOPSIS
 
