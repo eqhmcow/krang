@@ -291,7 +291,8 @@ foreach my $instance (@instances) {
     }
 
     # Load templates from filesystem
-    {
+    my $tmpl_dir = catdir(element_lib_path(), 'templates');
+    if (-d $tmpl_dir) {
         $cmd = catdir(KrangRoot, 'bin', 'krang_upload_templates');
         $cmd .= " --verbose " if $verbose;
         $cmd .= " --verbose " if $verbose > 1;
@@ -314,7 +315,7 @@ foreach my $instance (@instances) {
                                                           'lists.kds'));
         
         if ($lists_import_file) {
-            # perform import from templates.kds file
+            # perform import from lists.kds file
             $cmd = catdir(KrangRoot, 'bin', 'krang_import') . " ";
             $cmd .= "--verbose " if $verbose;
             $cmd .= "--verbose " if $verbose > 1;
@@ -329,4 +330,20 @@ foreach my $instance (@instances) {
 
 
 print "Databases created successfully.\n";
+exit(0);
+
+
+###########################
+####  Private methods  ####
+###########################
+
+sub element_lib_path {
+    # Try addons/
+    my $libdir = catdir(KrangRoot, 'addons', InstanceElementSet, 'element_lib', InstanceElementSet);
+    return $libdir if (-d $libdir);
+
+    # Try legacy element_lib
+    $libdir = catdir(KrangRoot, 'element_lib', InstanceElementSet);
+    return $libdir if (-d $libdir);
+}
 
