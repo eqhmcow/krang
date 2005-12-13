@@ -186,7 +186,7 @@ sub write_conf {
     require HTML::Template;
 
     # find template file, looking addons first then in the root
-    my $file = Krang::File->find("conf/siteserver.conf.tmpl");
+    my $file = pkg('File')->find("conf/siteserver.conf.tmpl");
 
     # create the httpd.conf by processing it as a template, using conf
     # directives as params
