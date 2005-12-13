@@ -59,7 +59,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot KrangUser KrangGroup);
+use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup);
 
 # the krang_ftpd command
 my $ftpd = rel2abs(catfile(KrangRoot, 'bin', 'krang_ftpd'));

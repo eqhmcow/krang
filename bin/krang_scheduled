@@ -47,7 +47,5 @@ use Krang::ClassLoader 'Script';
 
 use Krang::ClassLoader 'Schedule::Daemon';
 
-#use Krang::Log qw(critical);
-
 pkg('Schedule::Daemon')->run;
 

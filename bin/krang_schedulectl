@@ -58,7 +58,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot KrangUser KrangGroup);
+use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup);
 
 # the krang_scheduled command
 my $scheduled = rel2abs(catfile(KrangRoot, 'bin', 'krang_scheduled'));

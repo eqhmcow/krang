@@ -71,7 +71,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot InstanceDisplayName);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'ListGroup';

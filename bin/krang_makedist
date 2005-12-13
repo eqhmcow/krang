@@ -90,8 +90,9 @@ BEGIN {
     unshift @INC, $lib, "$lib/".$Config{archname};
 }
 
+use Krang::ClassFactory qw(pkg);
 use Krang;
-use Krang::Platform;
+use Krang::ClassLoader 'Platform';
 use File::Find;
 use File::Temp qw(tempdir);
 use Cwd qw(cwd);

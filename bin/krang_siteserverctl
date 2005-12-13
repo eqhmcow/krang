@@ -74,8 +74,8 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot InstanceHostName KrangUser KrangGroup);
-use Krang::File;
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName KrangUser KrangGroup);
+use Krang::ClassLoader 'File';
 
 # the httpd command
 my $apache_bin = rel2abs(catfile(KrangRoot, APACHE_ROOT, APACHE_BIN));

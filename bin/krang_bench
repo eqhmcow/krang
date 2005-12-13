@@ -77,7 +77,8 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+
         
 my ($help, $man);
 pod2usage(2) unless

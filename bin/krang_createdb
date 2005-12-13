@@ -117,7 +117,7 @@ use Krang::ClassFactory qw(pkg);
 use Term::Prompt qw(prompt);
 use Krang;
 use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot InstanceDBName DBUser DBPass);
-use Krang::File;
+use Krang::ClassLoader 'File';
 
 use Getopt::Long;
 use Pod::Usage;

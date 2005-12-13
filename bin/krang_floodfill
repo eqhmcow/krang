@@ -82,7 +82,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw(KrangRoot SiteServerPort InstanceElementSet EnableSiteServer);
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader 'Site';

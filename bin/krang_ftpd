@@ -35,7 +35,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(FTPPort FTPAddress KrangRoot);
+use Krang::ClassLoader Conf => qw(FTPPort FTPAddress KrangRoot);
 
 # load the server
 use Krang::ClassLoader 'FTP::Server';

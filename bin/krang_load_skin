@@ -59,7 +59,7 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Conf => qw(KrangRoot);
 
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 
 use Krang::ClassLoader 'Skin';
 

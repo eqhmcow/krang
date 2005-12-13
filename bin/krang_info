@@ -64,7 +64,7 @@ use Krang::ClassFactory qw(pkg);
 # can get Krang::Script loaded without complaints.
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 
 use Krang;
 use Krang::ClassLoader 'AddOn';
