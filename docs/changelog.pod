@@ -10,6 +10,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added new script, krang_upload_templates, to upload a 
+directory of templates into a Krang instance.  Modified
+krang_createdb to call this script.  [Jesse Erlbaum]
+
+
+=item *
+
 Sweetened up Krang::ElementClass::RadioGroup to use HTML
 <labels>, and to allow you to specify a number of columns
 for the input form.  Added "list_group" parameter to allow

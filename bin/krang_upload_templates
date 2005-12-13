@@ -1,0 +1,236 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_upload_templates
+
+=head1 SYNOPSIS
+
+   krang_upload_templates  --path /path/to/templates
+
+
+=head1 DESCRIPTION
+
+Upload a directory of templates into a Krang instance, via the API.
+Uploaded templates will be deployed.  Checked out templates will be skipped,
+as will those for which sites or caregories do not exist in the CMS.
+
+This tool is primarily to aid developers, permitting them to work with templates 
+on the filesystem (presumably version controlled by CVS or SVN), as opposed
+to having to muck around with "templates.kds".
+
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --path
+
+Path from which to upload templates.  Note, this will be uploaded verbatim 
+to the site.  For example:
+
+  /path/to/templates/
+      +--- site1.com/
+      |     +--- bleh.tmpl
+      |     +--- foo/bleh.tmpl
+      +--- site2.com/
+            +--- bleh.tmpl
+            +--- foo/bleh.tmpl
+
+Sites and Categories will NOT be created.  Template files in invalid directories 
+will be ignored.
+
+If not specified, --path default to /element_lib/InstanceElementSet/templates/
+
+=item --verbose
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot);
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Template';
+
+
+use Getopt::Long;
+use Pod::Usage;
+
+
+my ($help, $man);
+my $path = catdir(element_lib_path(), 'templates');
+my $user = "admin";
+my $password = "";
+my $verbose = 0;
+
+pod2usage(2) unless
+  GetOptions(
+             'path=s' => \$path,
+             'user=s' => \$user,
+             'password=s' => \$password,
+             'verbose+' => \$verbose,
+             'help' => \$help,
+             'man' => \$man,
+            );
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+# Does path exist?
+pod2usage("No such directory '$path'") unless (-d $path);
+print "Found template directory '$path'\n" if $verbose;
+
+# Get sites -- needed for load bootstrap
+print "Starting upload templates\n" if $verbose;
+my @sites = pkg('Site')->find();
+if ($verbose) {
+    print "Found sites: ".join(", ", (map {$_->url} @sites))."\n" if @sites;
+    print "No sites found in instance\n" unless @sites;
+}
+foreach my $s (@sites) {
+    my $tmpl_dir = catdir($path, $s->url);
+    if (-d $tmpl_dir) {
+        my ($root_cat) = pkg('Category')->find(url => $s->url."/");
+        upload_templates($path, $root_cat);
+    }
+}
+
+
+# Done!
+print "Upload templates complete\n" if $verbose;
+exit(0);
+
+
+
+
+####  PRIVATE METHODS  ####
+#
+
+# Recursive function to upload and decend
+sub upload_templates {
+    my $tmpl_dir = shift;
+    my $category = shift;
+
+    my $fs_path = catdir($tmpl_dir, $category->url);
+
+    # Get list of files and directories
+    print "Opening '".$category->url."'\n" if $verbose;
+    opendir(TMPLDIR, "$fs_path") || die("Can't open '$fs_path': " . $!);
+    my @found = (readdir(TMPLDIR));
+    closedir(TMPLDIR);
+
+    my @files = grep { (-f catfile($fs_path, $_)) } (@found);
+    my @dirs = grep { not(/^\.{1,2}$/) and (-d catfile($fs_path, $_)) } (@found);
+
+    print "Found dirs: '". join("', '", @dirs) ."'\n" if ($verbose > 1);
+    print "Found files: '". join("', '", @files) ."'\n" if ($verbose > 1);
+
+    # Upload template files in this dir
+    foreach my $f (@files) {
+        # Try to find template.
+        my ($t) = pkg('Template')->find( category_id => $category->category_id,
+                                         filename => $f );
+        # Create it if we can't find it.
+        $t = pkg('Template')->new( category => $category,
+                                   filename => $f ) unless ($t);
+
+        # Do we have access?  (Only checked out by system user
+        if ($t->checked_out()) {
+            my ($checked_out_user) = pkg('User')->find(user_id => $t->checked_out_by);
+            my $cou_login = $checked_out_user->login();
+            unless ($cou_login eq 'system') {
+                print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
+                next;
+            }
+        }
+
+        print "  Uploading '$f'\n" if $verbose;
+        $t->checkout();
+
+        # Read template file from disk
+        my $fq_filename = catfile($fs_path, $f);
+        print "    Opening '$fq_filename' for read\n" if $verbose > 1;
+        open(TMPL, "<$fq_filename") || die("Can't open '$fq_filename': $!");
+        my @content = (<TMPL>);
+        close(TMPL);
+
+        # Upload new content
+        $t->content(join("", @content));
+
+        # Save, check in and deploy
+        $t->save();
+        $t->checkin();
+        $t->deploy();
+    }
+
+    # For each sub-directory, verify category exists and decend if so
+    foreach my $d (@dirs) {
+        my $new_cat_path = catdir($category->url, $d);
+        my ($c) = pkg('Category')->find(url=>$new_cat_path."/");
+        if ($c) {
+            upload_templates($tmpl_dir, $c);
+        } else {
+            print "  Skipping '$new_cat_path' (No category found)\n" if $verbose;
+        }
+    }
+}
+
+
+sub element_lib_path {
+    # Try addons/
+    my $libdir = catdir(KrangRoot, 'addons', InstanceElementSet, 'element_lib', InstanceElementSet);
+    return $libdir if (-d $libdir);
+
+    # Try legacy element_lib
+    $libdir = catdir(KrangRoot, 'element_lib', InstanceElementSet);
+    return $libdir if (-d $libdir);
+}
+
+
+
