@@ -90,9 +90,8 @@ BEGIN {
     unshift @INC, $lib, "$lib/".$Config{archname};
 }
 
-use Krang::ClassFactory qw(pkg);
 use Krang;
-use Krang::ClassLoader 'Platform';
+use Krang::Platform;
 use File::Find;
 use File::Temp qw(tempdir);
 use Cwd qw(cwd);
@@ -117,7 +116,7 @@ my $source_dist = 0;
 my $platform;
 if (-e catfile($ENV{KRANG_ROOT}, 'data', 'build.db')) {
     # get information for a binary distribution
-    my %params = pkg('Platform')->build_params();
+    my %params = Krang::Platform->build_params();
     $name = 'krang-' . $Krang::VERSION . '-' . $params{Platform} . 
       '-perl' . $params{Perl} . '-' . $params{Arch};
     $platform = $params{Platform};
