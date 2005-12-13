@@ -176,7 +176,7 @@ END
 
 # Krang Libs
 use Krang::ClassFactory qw(pkg);
-use Krang::Script;
+use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw(KrangRoot ElementLibrary SSLEngine);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Media';
