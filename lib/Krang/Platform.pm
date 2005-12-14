@@ -833,8 +833,7 @@ sub post_install_message {
 
     my %options = %{$args{options}};
 
-    my @sslreport = $pkg->_get_ssl_report($args{options})
-      if $options{SSLEngine} eq 'on';
+    my @sslreport = $pkg->_get_ssl_report(\%options);
 
     print <<EOREPORT;
 
@@ -876,8 +875,7 @@ sub post_upgrade_message {
 
     my %options = %{$args{options}};
 
-    my @sslreport = $pkg->_get_ssl_report($args{options})
-      if $options{SSLEngine} eq 'on';
+    my @sslreport = $pkg->_get_ssl_report(\%options);
 
     print <<EOREPORT;
 
@@ -1012,6 +1010,9 @@ END
 
 sub _get_ssl_report {
     my ($pkg, $options) = @_;
+
+    # Squash uninitialized values
+    return ("", "", "") unless (($options->{SSLEngine} || "") eq "on");
 
     return ("   SSL files           :  $options->{InstallPath}/conf/\n",
         "     https://$options->{HostName}:$options->{ApacheSSLPort}/\n",
