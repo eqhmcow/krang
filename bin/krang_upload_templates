@@ -173,6 +173,12 @@ sub upload_templates {
 
     # Upload template files in this dir
     foreach my $f (@files) {
+        # Only .tmpl files
+        unless ($f =~ /\.tmpl$/) {
+            print "  Skipping '$f' (not a *.tmpl file)\n" if $verbose;
+            next;
+        }
+
         # Try to find template.
         my ($t) = pkg('Template')->find( category_id => $category->category_id,
                                          filename => $f );
