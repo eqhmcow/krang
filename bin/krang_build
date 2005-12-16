@@ -134,7 +134,7 @@ pod2usage( -verbose => 2 ) if $man;
 # set env for Apache build with SSL
 $ENV{LD_LIBRARY_PATH} = catdir($MM_BIN, 'lib');
 $ENV{SSL_BASE} = $ssl_base;
-#Test
+
 # get platform arg
 pod2usage("Wrong number of arguments.\n") if @ARGV > 1;
 my $platform;
