@@ -25,6 +25,7 @@ use Krang::ClassLoader base => 'CGI';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile catdir);
 use Krang::ClassLoader 'HTMLTemplate';
+use Krang::ClassLoader 'File';
 
 sub setup {
     my $self = shift;
@@ -39,7 +40,7 @@ sub show {
     die "Bad topic." if $topic !~ /^\w+/;
 
     # find topic help file
-    my $file = catfile(KrangRoot, 'htdocs', 'help', "$topic.html");
+    my $file = pkg('File')->find(catfile('htdocs', 'help', "$topic.html"));
     if (not -e $file) { 
         return "<h2>Unable to find help file for '$topic' topic.</h2>";
     }
