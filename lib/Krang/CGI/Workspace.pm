@@ -29,6 +29,7 @@ use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget => qw(format_url);
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader 'Publisher';
+use Carp qw(croak);
 
 use Krang::ClassLoader base => 'CGI';
 
