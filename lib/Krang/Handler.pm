@@ -196,8 +196,8 @@ sub trans_handler ($$) {
             }
         }
 
-        # Allow requests for other assets to pass through normally
-        return DECLINED unless ($uri eq '/');
+        # stop other requests unless they're for the root
+        return FORBIDDEN unless ($uri eq '/');
 
         # We're looking at the root.  Set handler to show list of instances
         $r->handler("perl-script");
@@ -309,10 +309,11 @@ sub authz_handler ($$) {
         return OK;
     }
 
-    # always allow access to the CSS file and the logo - needed before
+    # always allow access to the CSS file and images - needed before
     # login to display the login screen
-    return OK if $path =~ m!krang\.css$! or $path =~ m!logo\.gif$!;
-
+    return OK if $path =~ m!krang(_login)?\.css$! 
+      or $path =~ m!\.(gif|jpg|png)$!;
+    
     # If user is logged in, we're done
     return OK if (defined($r->connection->user()));
 
