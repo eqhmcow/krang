@@ -16,6 +16,12 @@ This is Krang <b>v<tmpl_var version></b>.
 Server IP Address: <b><tmpl_var server_ip></b>.
 </p>
 
+<tmpl_if cgi_mode>
+<p>
+Server running in <b>CGI MODE</b>.
+</p>
+</tmpl_if>
+
 <tmpl_if addons>
 <p>The following addons are installed:
 <ul>

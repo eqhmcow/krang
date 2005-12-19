@@ -49,7 +49,8 @@ sub show {
     my $template = $self->load_tmpl('about.tmpl');
 
     $template->param(version   => $Krang::VERSION,
-                     server_ip => pkg('Conf')->get('ApacheAddr')
+                     server_ip => pkg('Conf')->get('ApacheAddr'),
+                     cgi_mode => $ENV{CGI_MODE},
                     );
     
     my @addons = sort { lc($a->name) cmp lc($b->name) } pkg('AddOn')->find();
