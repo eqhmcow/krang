@@ -15,6 +15,12 @@ content. [Sam]
 
 =item *
 
+Fixed a flaw in Krang::Handler that allowed access to any file via the
+root handler.  Now only image files and the two Krang CSS files are
+accessable without logging-in. [Sam]
+
+=item *
+
 Added new script, krang_upload_templates, to upload a 
 directory of templates into a Krang instance.  Modified
 krang_createdb to call this script.  [Jesse Erlbaum]
