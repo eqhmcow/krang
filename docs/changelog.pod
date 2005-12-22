@@ -9,6 +9,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded to HTML::Template v2.8 and HTML::Template::Expr v0.05. [Sam]
+
+=item *
+
 Fixed Krang::CGI::Help to lookup help files in an addon's
 F<htdocs/help/> directory, allowing addons to provide their own help
 content. [Sam]
