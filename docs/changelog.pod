@@ -9,6 +9,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+L<Krang::XML::Validator> now looks in the C<schema/> directories of
+installed Krang addons to find .xsd files describing objects to be
+imported or exported.  This furthers the support for non-standard
+objects within Krang. [Peter Leonard]
+
+=item *
+
 Upgraded to HTML::Template v2.8 and HTML::Template::Expr v0.05. [Sam]
 
 =item *

@@ -87,10 +87,19 @@ sub validate {
     return (0, "$path is missing noNamespaceSchemaLocation attribute necessary for schema validation.")
       unless $xsd;
 
+    my $full_xsd_path;
+
+    # iterate through the addons looking for the .xsd
+    foreach my $addons (pkg('AddOn')->find()) {
+        my $f = catfile(KrangRoot, 'addons', $addons->{name}, 'schema', $xsd);
+        $full_xsd_path = $f if (-e $f);
+    }
+
+    # default to KrangRoot/schema if unsuccessful.
+    $full_xsd_path = catfile(KrangRoot, 'schema', $xsd) unless ($full_xsd_path);
+
     # run the file through the schema validator
-    my $validator = XML::Validator::Schema->new(file => catfile(KrangRoot, 
-                                                                "schema",
-                                                                $xsd),
+    my $validator = XML::Validator::Schema->new(file => $full_xsd_path,
                                                 cache => 1,
                                                );
 
