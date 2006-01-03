@@ -108,14 +108,14 @@ sub init {
     # get list_id from list object
     my $list = delete $args{list} || undef;
 
-    croak(__PACKAGE__."->new - Invalid pkg('List') object.") unless ($list and (ref $list eq 'Krang::List'));
+    croak(__PACKAGE__."->new - Invalid pkg('List') object.") unless ($list and (ref $list eq pkg('List')));
 
     $args{list_id} = $list->list_id;
 
     # get list_item_id from parent_list_item object if present
     my $parent_list_item = delete $args{parent_list_item} || undef;
 
-    croak(__PACKAGE__."->new - Invalid pkg('ListItem') object.") if ($parent_list_item and (ref $parent_list_item ne 'Krang::ListItem'));
+    croak(__PACKAGE__."->new - Invalid pkg('ListItem') object.") if ($parent_list_item and (ref $parent_list_item ne pkg('ListItem')));
     
     $args{parent_list_item_id} = $parent_list_item->list_item_id if $parent_list_item;
 
