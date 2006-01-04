@@ -3,6 +3,17 @@
 This document contains a list of changes for each release of Krang.
 
 
+=head2 v2.002
+
+=over
+
+=item *
+
+PUT CHANGES HERE [You Sir]
+
+=back
+
+
 =head2 v2.001
 
 =over
