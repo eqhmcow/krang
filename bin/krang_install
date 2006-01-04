@@ -734,6 +734,11 @@ sub configure_krang {
         print OUTPUT $t->output();
         close(OUTPUT);
     }
+    print "  Fixing krang.conf ownership\n";
+    my $KrangUser = $options{KrangUser};
+    my $KrangGroup = $options{KrangGroup};
+    my $chown = $CHOWN_BIN ." -R $KrangUser\:$KrangGroup $InstallPath/conf";
+    system($chown) && die("Can't update /conf ownership : $!");
 
     print "  Conf written to '$InstallPath/conf/krang.conf'.\n";
 }

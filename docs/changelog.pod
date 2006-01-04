@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Installer now chowns krang.conf to KrangUser:KrangGroup
+instead of to root. [David Kaufman]
+
+=item *
+
 L<Krang::XML::Validator> now looks in the C<schema/> directories of
 installed Krang addons to find .xsd files describing objects to be
 imported or exported.  This furthers the support for non-standard
