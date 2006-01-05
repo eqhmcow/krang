@@ -98,6 +98,12 @@ Fixed a bug in Krang::lib which caused "legacy" /krang/element_lib path to
 not be included in Perl's @INC path.  [Jesse Erlbaum]
 
 
+=item *
+
+Extended bin/krang_upgrade to check an upgrade directory in each addon directory for 
+upgrade scripts to run.  This is in addition to $KRANG_ROOT/upgrade. [Mike Friedman]
+
+
 =back
 
 
