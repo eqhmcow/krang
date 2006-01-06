@@ -104,6 +104,31 @@ Extended bin/krang_upgrade to check an upgrade directory in each addon directory
 upgrade scripts to run.  This is in addition to $KRANG_ROOT/upgrade. [Mike Friedman]
 
 
+=item *
+
+Fixed bug in Krang::ListItem that did not allow sub-classes of
+Krang::List and Krang::ListItem to be used. [Bodo Schulze]
+
+
+=item *
+
+Made URL in message 'story_publish' a link opening the published 
+story in a new window. [Bodo Schulze]
+
+
+=item *
+
+Fixed bug in Krang::Story which would not allow subclasses of
+Krang::Contrib, Krang::ElementClass::StoryLink and
+Krang::ElementClass::MediaLink to be used. [Bodo Schulze]
+
+
+=item *
+
+Added SSL support. [Bodo Schulze]
+
+
+
 =back
 
 
