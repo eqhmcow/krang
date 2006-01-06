@@ -110,6 +110,7 @@ my %test_params = ( name => 'Car Editors',
                     admin_sites         => 1,
                     admin_categories    => 1,
                     admin_jobs          => 1,
+                    admin_scheduler     => 1,
                     admin_desks         => 1,
                     asset_story         => 'edit',
                     asset_media         => 'read-only',
@@ -139,6 +140,7 @@ my @scalar_params = qw( name
                         admin_sites
                         admin_categories
                         admin_jobs
+                        admin_scheduler
                         admin_desks
                         asset_story
                         asset_media
