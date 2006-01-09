@@ -40,6 +40,10 @@ Check pre-requisites
 
 Validate path to KRANG_ROOT.
 
+=item *
+
+Ensure KRANG_ROOT isnt set before invoking bin/krang_upgrade
+
 =item * 
 
 Locate and parse existing krang.conf file.
@@ -113,11 +117,13 @@ use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
 
+our $orig_krang_root;
 
 # Set up KRANG_ROOT and PERL5LIB
 BEGIN {
     # Find a KRANG_ROOT based on path to bin
     my @dir = splitdir(canonpath($RealBin));
+    $orig_krang_root = $ENV{KRANG_ROOT};
     $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
 
     # use $KRANG_ROOT/lib for modules
@@ -201,6 +207,11 @@ sub check_prereqs {
     my $KrangRoot = $options{KrangRoot};
     unless (-e $KrangRoot) {
         exit_error("KrangRoot '$KrangRoot' does not exists.  Cannot continue.");
+    }
+
+    # Make sure KRANG_ROOT wasn't set before calling script.
+    if ($orig_krang_root) {
+        exit_error("KrangRoot \$ENV{KRANG_ROOT} [$orig_krang_root] must be unset before continuing.  Cannot continue.");
     }
 
     # Does krang.conf exist at that location?
