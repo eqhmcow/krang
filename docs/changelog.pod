@@ -9,7 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-PUT CHANGES HERE [You Sir]
+Added addon admin scheduler 'admin_scheduler' permissioning bit so only admin users 
+will see this feature. [Aaron Dancygier]
+
+=item *
+
+bin/krang_upgrade now checks that ENV{KRANG_ROOT} is unset [Aaron Dancygier]
 
 =back
 
