@@ -122,6 +122,13 @@ Fixed bug in Krang::Story which would not allow subclasses of
 Krang::Contrib, Krang::ElementClass::StoryLink and
 Krang::ElementClass::MediaLink to be used. [Bodo Schulze]
 
+=item *
+
+Addon-v2 compliance for bin scripts 
+krang_scheduled krang_schedulectl krang_load_skin krang_info krang_ftpd
+krang_ftpctl krang_floodfill krang_delete krang_create_lists krang_category_rename
+krang_bench krang_backup krang_apachectl krang_siteserverctl krang_makedist krang_publish
+[Aaron Dancygier]
 
 =item *
 
