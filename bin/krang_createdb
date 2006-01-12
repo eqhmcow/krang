@@ -267,7 +267,7 @@ foreach my $instance (@instances) {
 
     # Set the db_version
     my $krang_version = $Krang::VERSION;
-    $cmd = qq{mysql -uroot -e 'UPDATE db_version set db_version=$krang_version' $name};
+    $cmd = qq{mysql -uroot -e 'UPDATE db_version set db_version="$krang_version"' $name};
     $cmd .= " -p$password" if defined $password;
     $cmd .= " -h$hostname" if defined $hostname;
     $cmd .= " -v" if $verbose > 1;

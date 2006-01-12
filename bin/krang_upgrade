@@ -484,7 +484,7 @@ sub update_db_version {
         my $update_db_version_cmd = "$mysql_bin -uroot";
         $update_db_version_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
         $update_db_version_cmd .= " -h$MySQLHost" if (length($MySQLHost));
-        $update_db_version_cmd .= " -e 'update db_version set db_version=$new_krang_version' $db";
+        $update_db_version_cmd .= qq{ -e 'update db_version set db_version="$new_krang_version"' $db};
         system($update_db_version_cmd) && exit_error("Error updating db_version");
     }
 }
