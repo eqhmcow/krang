@@ -126,7 +126,7 @@ isa_ok($group, "Krang::Group");
 
 # Test invalid create param
 eval { pkg('Group')->new(%test_params, no_such_param => 1) };
-like($@, qr(Can't locate object method "no_such_param" via package "Krang::Group"), 'Test invalid create param');
+like($@, qr(Can't locate object method "no_such_param" via package .*::Group), 'Test invalid create param');
 
 
 # Test scalar methods

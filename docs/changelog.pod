@@ -7,6 +7,12 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+
+=item *
+
+Fixed L<Krang::Group> test to not key explicitely on name to simplify
+overriding. [Peter Leonard]
+
 =item *
 
 Added addon admin scheduler 'admin_scheduler' permissioning bit so only admin users 
