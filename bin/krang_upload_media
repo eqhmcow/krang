@@ -1,0 +1,269 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+nyml_upload_media - import media from filesystem
+
+=head1 SYNOPSIS
+
+   nyml_upload_media  --path /path/to/media
+
+
+=head1 DESCRIPTION
+
+Upload a directory of media into a Krang instance, via the API.
+Uploaded media will be published.  Checked out media will be skipped,
+as will those for which sites or caregories do not exist in the CMS.
+
+This tool is primarily to aid developers, permitting them to work with media 
+on the filesystem (presumably version controlled by CVS or SVN), as opposed
+to having to muck around with "media.kds".
+
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --path
+
+Path from which to upload media.  Note, this will be uploaded verbatim 
+to the site.  For example:
+
+  /path/to/media/
+      +--- site1.com/
+      |     +--- bleh.css
+      |     +--- foo/bleh.jpg
+      +--- site2.com/
+            +--- bleh.css
+            +--- foo/bleh.jpg
+
+Sites and Categories will NOT be created.  Media files in invalid directories 
+will be ignored.
+
+If not specified, --path default to /element_lib/InstanceElementSet/media/
+
+=item --verbose
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot);
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Media';
+
+
+use Getopt::Long;
+use Pod::Usage;
+
+
+my ($help, $man);
+my $path = catdir(element_lib_path(), 'media');
+my $user = "admin";
+my $password = "";
+my $verbose = 0;
+
+pod2usage(2) unless
+  GetOptions(
+             'path=s' => \$path,
+             'user=s' => \$user,
+             'password=s' => \$password,
+             'verbose+' => \$verbose,
+             'help' => \$help,
+             'man' => \$man,
+            );
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+# Does path exist?
+pod2usage("No such directory '$path'") unless (-d $path);
+print "Found media directory '$path'\n" if $verbose;
+
+# Get sites -- needed for load bootstrap
+print "Starting upload media\n" if $verbose;
+my @sites = pkg('Site')->find();
+if ($verbose) {
+    print "Found sites: ".join(", ", (map {$_->url} @sites))."\n" if @sites;
+    print "No sites found in instance\n" unless @sites;
+}
+foreach my $s (@sites) {
+    my $media_dir = catdir($path, $s->url);
+    if (-d $media_dir) {
+        my ($root_cat) = pkg('Category')->find(url => $s->url."/");
+        upload_media($path, $root_cat);
+    }
+}
+
+
+# Done!
+print "Upload media complete\n" if $verbose;
+exit(0);
+
+
+
+
+####  PRIVATE METHODS  ####
+#
+
+# Recursive function to upload and decend
+sub upload_media {
+    my $media_dir = shift;
+    my $category = shift;
+
+    my $fs_path = catdir($media_dir, $category->url);
+
+    # Get list of files and directories
+    print "Opening '".$category->url."'\n" if $verbose;
+    opendir(MEDIADIR, "$fs_path") || die("Can't open '$fs_path': " . $!);
+    my @found = (readdir(MEDIADIR));
+    closedir(MEDIADIR);
+
+    my @files = grep { (-f catfile($fs_path, $_)) } (@found);
+    my @dirs = grep { not(/^\.{1,2}$/) and (-d catfile($fs_path, $_)) } (@found);
+
+    print "Found dirs: '". join("', '", @dirs) ."'\n" if ($verbose > 1);
+    print "Found files: '". join("', '", @files) ."'\n" if ($verbose > 1);
+
+    # From Krang core media.sql file
+    my %types = ( image => 1,
+                  text => 2,
+                  javascript => 10,
+                  stylesheet => 11 );
+
+    # Upload media files in this dir
+    foreach my $f (@files) {
+        # Try to find media.
+        my ($m) = pkg('Media')->find( category_id => $category->category_id,
+                                      filename => $f );
+
+        # Create it if we can't find it.
+        $m = pkg('Media')->new( title => $f,
+                                category_id => $category->category_id ) unless ($m);
+
+        # Do we have access?  (Only checked out by system user
+        if ($m->checked_out()) {
+            my ($checked_out_user) = pkg('User')->find(user_id => $m->checked_out_by);
+            my $cou_login = $checked_out_user->login();
+            unless ($cou_login eq 'system') {
+                print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
+                next;
+            }
+        }
+
+        print "  Uploading '$f'\n" if $verbose;
+        $m->checkout();
+
+        # Read media file from disk
+        my $fq_filename = catfile($fs_path, $f);
+        print "    Opening '$fq_filename' for read\n" if $verbose > 1;
+        my $media_fh;
+        open($media_fh, "<$fq_filename") || die("Can't open '$fq_filename': $!");
+        $m->upload_file( filehandle => $media_fh, 
+                         filename => $f );
+        close($media_fh);
+
+        # Figure out media type
+        my $media_type_id = 1;  # Image, by default
+        if ($f =~ /\.(gif|jpg|jpeg)$/i) {
+            # Image
+            $media_type_id = $types{image};
+            print "  media_type_id $media_type_id for extention '$1'\n" 
+              if ($verbose > 1);
+        } elsif ($f =~ /\.(js)$/i) {
+            # Javascript
+            $media_type_id = $types{javascript};
+            print "  media_type_id $media_type_id for extention '$1'\n" 
+              if ($verbose > 1);
+        } elsif ($f =~ /\.(css)$/i) {
+            # CSS stylesheet
+            $media_type_id = $types{stylesheet};
+            print "  media_type_id $media_type_id for extention '$1'\n" 
+              if ($verbose > 1);
+        } elsif ($f =~ /\.(txt)$/i) {
+            # Text by default
+            $media_type_id = $types{text};
+            print "  media_type_id $media_type_id for extention '$1'\n" 
+              if ($verbose > 1);
+        }
+
+        # Set media type
+        $m->media_type_id($media_type_id);
+
+        # Save, check in and publish/preview
+        $m->save();
+        eval { $m->publish() };
+        warn "Error publishing '$f'" if $@;
+        eval { $m->preview() };
+        warn "Error previewing '$f'" if $@;
+    }
+
+    # For each sub-directory, verify category exists and decend if so
+    foreach my $d (@dirs) {
+        my $new_cat_path = catdir($category->url, $d);
+        my ($c) = pkg('Category')->find(url=>$new_cat_path."/");
+        if ($c) {
+            upload_media($media_dir, $c);
+        } else {
+            print "  Skipping '$new_cat_path' (No category found)\n" if $verbose;
+        }
+    }
+}
+
+
+sub element_lib_path {
+    # Try addons/
+    my $libdir = catdir(KrangRoot, 'addons', InstanceElementSet, 'element_lib', InstanceElementSet);
+    return $libdir if (-d $libdir);
+
+    # Try legacy element_lib
+    $libdir = catdir(KrangRoot, 'element_lib', InstanceElementSet);
+    return $libdir if (-d $libdir);
+}
+

@@ -10,7 +10,16 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Fixed L<Krang::Group> test to not key explicitely on name to simplify
+Added new script krang_upload_media.  This works similarly to krang_upload_templates.
+Using this script you can maintain a media/ directory in your add-on 
+which contains all site-specific media.  This is particularly useful for
+development, when developing templates and site design.  The script
+krang_createdb now automatically loads any media found in your
+add-on directory.  [Jesse Erlbaum]
+
+=item *
+
+Fixed L<Krang::Group> test to not key explicitly on name to simplify
 overriding. [Peter Leonard]
 
 =item *
