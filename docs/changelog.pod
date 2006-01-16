@@ -36,6 +36,13 @@ bin/krang_upgrade now checks that ENV{KRANG_ROOT} is unset [Aaron Dancygier]
 Fixed bug in bin/krang_upgrade and bin/krang_createdb where without quotes mysql 
 was converting db_version to float, instead of as just a string.
 
+=item *
+
+Removed previous patch (v1.22) to bin/krang_upgrade.  Patch checked an upgrade 
+directory in each addon directory for upgrade scripts to run. This is already 
+supported in bin/krang_addon_installer.  In effect everytime you upgraded krang 
+it would re-apply addon upgrade scripts. [Aaron Dancygier]
+
 =back
 
 
