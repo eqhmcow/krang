@@ -182,8 +182,7 @@ sub do_upgrade {
     # Do upgrade
     make_backups() unless $options{'no-backup'};
     install_new_krang();
-    apply_upgrades("/upgrade");
-    apply_addon_upgrades();
+    apply_upgrades();
     update_version();
     update_db_version();
     clear_sessions();
@@ -397,7 +396,6 @@ sub install_new_krang {
 
 # Run through upgrade module per_installation() and per_instance() methods.
 sub apply_upgrades {
-    my $upgrade_path = shift;
     print "Applying upgrades\n";
 
     my $KrangRoot = $options{KrangRoot};
@@ -407,11 +405,11 @@ sub apply_upgrades {
     print "  Upgrading v$old_krang_version to v$new_krang_version\n";
 
     # Find upgrade modules
-    my $upmod_path = catdir( $KrangRoot, $upgrade_path );
+    my $upmod_path = $KrangRoot ."/upgrade/";
     print "  Upgrade path: $upmod_path\n";
     opendir(DIR, $upmod_path) || die ("Unable to open upgrade directory '$upmod_path': $!\n");
     my @upmodules = (grep {
-        (-f catfile( $upmod_path, $_) ) && (/^V(\d+)\_(\d+)\.pm$/) && ( "$1.$2" > $old_krang_version )
+        (-f $upmod_path.$_) && (/^V(\d+)\_(\d+)\.pm$/) && ( "$1.$2" > $old_krang_version )
       } sort readdir(DIR));
     closedir(DIR);
 
@@ -419,8 +417,7 @@ sub apply_upgrades {
     print "    ". join("\n    ", @upmodules) ."\n" if (@upmodules);
 
     # Run upgrade modules
-    my $perl5lib = catdir( $KrangRoot, $upgrade_path ) . ':' . catdir( $KrangRoot, "/lib" );
-
+    my $perl5lib = $KrangRoot ."/upgrade:" . $KrangRoot ."/lib";
     foreach my $module (@upmodules) {
         print "  Running $module...\n";
         # Get package name by trimming off ".pm"
@@ -432,23 +429,6 @@ sub apply_upgrades {
         system($upgrade_cmd) && die("Error using upgrade module '$module'");
     }
     
-}
-
-sub apply_addon_upgrades {
-    print "Applying addon upgrades\n";
-
-    my $KrangRoot = $options{KrangRoot};
-
-    my $addon_dir = catdir( $KrangRoot, 'addons' );
-    opendir my $dh, $addon_dir or die "Can not open addons dir: $!";
-
-    foreach my $addon( grep !/^\.\.?/, readdir $dh ) {
-        my $upgrade_dir = catdir( $addon_dir, $addon, 'upgrade' );
-
-        if( -d $upgrade_dir ) {
-            apply_upgrades( catdir( 'addons', $addon, 'upgrade' ) );
-        }
-    }
 }
 
 # copy lib/Krang.pm into place, effectively updating Krang's version
