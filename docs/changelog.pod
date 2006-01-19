@@ -34,7 +34,7 @@ bin/krang_upgrade now checks that ENV{KRANG_ROOT} is unset [Aaron Dancygier]
 =item *
 
 Fixed bug in bin/krang_upgrade and bin/krang_createdb where without quotes mysql 
-was converting db_version to float, instead of as just a string.
+was converting db_version to float, instead of as just a string. [Aaron Dancygier]
 
 =item *
 
