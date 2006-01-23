@@ -65,7 +65,8 @@ use constant CHECKBOX_FIELDS => qw( may_publish
                                     admin_categories_ftp
                                     admin_jobs
                                     admin_scheduler
-                                    admin_desks );
+                                    admin_desks
+                                    admin_lists );
 use constant GROUP_PROTOTYPE => {
                                  group_id            => '',
                                  name                => '',

@@ -3,6 +3,19 @@
 This document contains a list of changes for each release of Krang.
 
 
+=head2 v2.003
+
+=over
+
+
+=item *
+
+Added checkbox to groups manager to allow "admin_lists" to be set.  [Jesse Erlbaum]
+
+
+=back
+
+
 =head2 v2.002
 
 =over
