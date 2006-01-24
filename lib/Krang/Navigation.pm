@@ -170,7 +170,7 @@ sub default_tree {
     $sub = $node->new_daughter();
     $sub->name('Desks');
     
-    foreach my $desk (pkg('Desk')->find()) {
+    foreach my $desk (pkg('Desk')->find(order_by => 'order')) {
         my $desk_id = $desk->desk_id;
         $sub2 = $sub->new_daughter();
         $sub2->name($desk->name);
