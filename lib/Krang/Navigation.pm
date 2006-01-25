@@ -47,8 +47,7 @@ sub fill_template {
 
     my $instance = pkg('Conf')->instance;
 
-    $TREE{$instance} = $pkg->initialize_tree($instance) 
-      unless $TREE{$instance};
+    $TREE{$instance} = $pkg->initialize_tree($instance);
     
     my %perms = ( desk  => { pkg('Group')->user_desk_permissions()  },
                   asset => { pkg('Group')->user_asset_permissions() },
