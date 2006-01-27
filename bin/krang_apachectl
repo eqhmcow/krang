@@ -80,29 +80,21 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup SSLEngine);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup);
 use Krang::ClassLoader 'File';
 
 # SSL directives
-my @global_ssl = qw(
-ApacheSSLPort
+my @ssl_directives = qw(
+SSLApachePort
 SSLPassPhraseDialog
 SSLRandomSeedStartup
 SSLRandomSeedConnect
 SSLSessionCacheTimeout
-);
-
-my @instance_ssl = qw(
-SSLEngine
-InstanceHostIPAddress
-InstanceHostPort
-InstanceHostSSLPort
 SSLProtocol
 SSLCipherSuite
 SSLVerifyClient
 SSLVerifyDepth
 SSLLogLevel
-SSLOptions
 );
 
 # the httpd command
@@ -243,39 +235,35 @@ sub write_conf {
                          ))),
                      KrangRoot => rel2abs(pkg('Conf')->get("KrangRoot")));
 
-    # global SSL
-    if (pkg('Conf')->SSLEngine) {
-	$template->param((map { ($_, pkg('Conf')->get($_)) } 
-			  grep { $_ !~ /^Instance/ }
-			  @global_ssl, @instance_ssl),
-			 SSL_ENABLED => 1);
+    # SSL
+    if ( pkg('Conf')->EnableSSL ) {
+        my %tmpl_params = ( EnableSSL => 1);
+        foreach my $dir (@ssl_directives) {
+            $tmpl_params{$dir} = pkg('Conf')->get($dir) || undef;
+        }
 
-        $template->param(ROOT_SSL_ENABLED => 1) if pkg('Conf')->SSLEngine eq 'on';
-	unless (pkg('Conf')->SSLVerifyClient eq 'none') {
-	    $template->param(verify_client => 1);
-	}
+        my $verify_client = pkg('Conf')->SSLVerifyClient;
+        # we need to verify the client cert unless it's not set or set to 'none'
+        if( $verify_client && $verify_client ne 'none' ) {
+            $tmpl_params{SSL_VERIFY_CLIENT} = 1;
+        }
+        $template->param(%tmpl_params);
     }
 
     # setup the instance loop
     my @loop;
     foreach my $instance (pkg('Conf')->instances()) {
         pkg('Conf')->instance($instance);
-	my %instance_directives = ();
-
-	# instance SSL
-	if (pkg('Conf')->SSLEngine) {
-	    %instance_directives = map { ($_, pkg('Conf')->get($_)) }
-                                   @instance_ssl;
-	    $instance_directives{INSTANCE_SSL_ENABLED} = 1 if pkg('Conf')->SSLEngine eq 'on';
-	}
-
-	@instance_directives{qw(InstanceName InstanceHostName)}
-	                     = ($instance, InstanceHostName);
-
-        push(@loop, \%instance_directives);
+        push(
+            @loop, 
+            {
+                InstanceName     => $instance,
+                InstanceHostName => InstanceHostName(),
+            }
+        );
     }
     $template->param(InstanceLoop => \@loop);
-    
+
     # write out the config
     open(CONF, '>' . catfile(KrangRoot, "tmp", "httpd.conf")) 
       or die "Unable to open " . catfile(KrangRoot, "tmp", "httpd.conf") . ": $!";

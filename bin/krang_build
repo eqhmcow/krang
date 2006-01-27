@@ -118,15 +118,15 @@ my $with_ssl    = 0;
 my $ssl_base    = '';
 my ( @modules, @skip_modules, $rebuild, $help, $man );
 GetOptions(
-	   'no-apache'      => \$skip_apache,
-	   'with-ssl'       => \$with_ssl,
-	   'with-openssl=s' => \$ssl_base,
-	   'module=s'       => \@modules,
-	   'skip-module=s'  => \@skip_modules,
-	   'rebuild'        => \$rebuild,
-	   'help'           => \$help,
-	   'man'            => \$man,
-	  )
+       'no-apache'      => \$skip_apache,
+       'with-ssl'       => \$with_ssl,
+       'with-openssl=s' => \$ssl_base,
+       'module=s'       => \@modules,
+       'skip-module=s'  => \@skip_modules,
+       'rebuild'        => \$rebuild,
+       'help'           => \$help,
+       'man'            => \$man,
+      )
   or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage( -verbose => 2 ) if $man;
@@ -233,42 +233,42 @@ unless ($skip_apache) {
     my $apache_dir = '';
 
     if ($with_ssl) {
-	# build mm
-	my $mm_gz = catfile($src_dir, $MM);
-	system("tar zxf $mm_gz") == 0 or die "Couldn't unpack file: $!";
-	my ($mm_dir) = $mm_gz =~ m!/([^/]+)\.tar\.gz$!;
-	die "Can't find mm dir '$mm_dir'." unless -d $mm_dir;
+        # build mm
+        my $mm_gz = catfile($src_dir, $MM);
+        system("tar zxf $mm_gz") == 0 or die "Couldn't unpack file: $!";
+        my ($mm_dir) = $mm_gz =~ m!/([^/]+)\.tar\.gz$!;
+        die "Can't find mm dir '$mm_dir'." unless -d $mm_dir;
 
-	$pkg->build_mm(mm_dir => $mm_dir,
-		       mm_bin => $MM_BIN);
+        $pkg->build_mm(mm_dir => $mm_dir,
+                   mm_bin => $MM_BIN);
 
-	# build mod_ssl
-	my $mod_ssl_gz = catfile($src_dir, $MOD_SSL);
-	system("tar zxf $mod_ssl_gz") == 0 or die "Couldn't unpack file: $!";
-	my ($mod_ssl_dir) = $mod_ssl_gz =~ m!/([^/]+)\.tar\.gz$!;
-	die "Can't find mod_ssl dir '$mod_ssl_dir'." unless -d $mod_ssl_dir;
+        # build mod_ssl
+        my $mod_ssl_gz = catfile($src_dir, $MOD_SSL);
+        system("tar zxf $mod_ssl_gz") == 0 or die "Couldn't unpack file: $!";
+        my ($mod_ssl_dir) = $mod_ssl_gz =~ m!/([^/]+)\.tar\.gz$!;
+        die "Can't find mod_ssl dir '$mod_ssl_dir'." unless -d $mod_ssl_dir;
 
-	# we need the apache src tree
-	my $apache_gz = catfile($src_dir, $APACHE);
-	system("tar zxf $apache_gz") == 0 or die "Couldn't unpack file: $?";
-	($apache_dir) = $apache_gz =~ m!/([^/]+)\.tar\.gz$!;
-	die "Can't find Apache dir '$apache_dir'." unless -d $apache_dir;
+        # we need the apache src tree
+        my $apache_gz = catfile($src_dir, $APACHE);
+        system("tar zxf $apache_gz") == 0 or die "Couldn't unpack file: $?";
+        ($apache_dir) = $apache_gz =~ m!/([^/]+)\.tar\.gz$!;
+        die "Can't find Apache dir '$apache_dir'." unless -d $apache_dir;
 
-	$pkg->build_mod_ssl(build_dir   => $build_dir,
-			    mod_ssl_dir => $mod_ssl_dir,
-			    apache_dir  => $apache_dir);
+        $pkg->build_mod_ssl(build_dir   => $build_dir,
+                    mod_ssl_dir => $mod_ssl_dir,
+                    apache_dir  => $apache_dir);
 
-	# pass to apache build
-	$mod_ssl_params = "--enable-module=ssl       --enable-shared=ssl ".
-	                  "--disable-rule=SSL_COMPAT --enable-rule=SSL_SDBM ".
-			  "--enable-module=setenvif  --enable-shared=setenvif";
+        # pass to apache build
+        $mod_ssl_params = "--enable-module=ssl       --enable-shared=ssl ".
+                          "--disable-rule=SSL_COMPAT --enable-rule=SSL_SDBM ".
+                  "--enable-module=setenvif  --enable-shared=setenvif";
     }
 
     unless ($apache_dir) {
-	my $apache_gz = catfile($src_dir, $APACHE);
-	($apache_dir) = $apache_gz =~ m!/([^/]+)\.tar\.gz$!;
-	system("tar zxf $apache_gz") == 0 or die "Couldn't unpack file: $?";
-	die "Can't find Apache dir '$apache_dir'." unless -d $apache_dir;
+        my $apache_gz = catfile($src_dir, $APACHE);
+        ($apache_dir) = $apache_gz =~ m!/([^/]+)\.tar\.gz$!;
+        system("tar zxf $apache_gz") == 0 or die "Couldn't unpack file: $?";
+        die "Can't find Apache dir '$apache_dir'." unless -d $apache_dir;
     }
 
     my $mod_perl_gz = catfile($src_dir, $MOD_PERL);
@@ -278,7 +278,7 @@ unless ($skip_apache) {
 
     $pkg->build_apache_modperl(apache_dir       => $apache_dir,
                                mod_perl_dir     => $mod_perl_dir,
-			       mod_ssl_params   => $mod_ssl_params);
+                               mod_ssl_params   => $mod_ssl_params);
 
     # move SSL dirs from KrangRoot/apache/conf/ to KrangRoot/conf/
     move_ssl_dirs()
@@ -348,13 +348,33 @@ sub move_ssl_dirs {
     my $krang_conf_dir  = catdir($KrangRoot, 'conf');
 
     for my $ssldir (@ssl_dirs) {
-	my $ap_dir = catdir($apache_conf_dir, $ssldir);
-	my $kdir   = catdir($krang_conf_dir, $ssldir);
+        my $ap_dir = catdir($apache_conf_dir, $ssldir);
+        my $kdir   = catdir($krang_conf_dir, $ssldir);
 
-	warn "Apache SSL dir '$ap_dir' does not exist", next
-	  unless -d $ap_dir;
-	
-	rename $ap_dir => $kdir
-	  or warn "Can't move '$ap_dir' to '$kdir': $!";
+        warn "Apache SSL dir '$ap_dir' does not exist", next
+          unless -d $ap_dir;
+        
+        rename $ap_dir => $kdir
+          or warn "Can't move '$ap_dir' to '$kdir': $!";
+    }
+
+    # now make the symlinks we need to work, if real certs aren't already there
+    my $crt       = catfile($KrangRoot, 'conf', 'ssl.crt', 'server.crt');
+    my $dummy_crt = catfile($KrangRoot, 'conf', 'ssl.crt', 'snakeoil-rsa.crt');
+    my $key       = catfile($KrangRoot, 'conf', 'ssl.key', 'server.key');
+    my $dummy_key = catfile($KrangRoot, 'conf', 'ssl.key', 'snakeoil-rsa.key');
+
+    my $contents = `cat $crt`;
+    if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER CERTIFICATE/ ) {
+        unlink($crt) or warn "Can't remove cert '$crt'! $!";
+        symlink($dummy_crt, $crt) 
+            or warn "Can't symlink from '$crt' to '$dummy_crt'! $!";
+    }
+
+    $contents = `cat $key`;
+    if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER PRIVATE KEY/ ) {
+        unlink($key) or warn "Can't remove key '$key'! $!";
+        symlink($dummy_key, $key) 
+            or warn "Can't symlink from '$key' to '$dummy_key'! $!";
     }
 }

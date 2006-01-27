@@ -108,47 +108,34 @@ Following is a list of the tasks the installer script will perform.
 =head1 OPTIONS
 
  Required parameters:
-  --HostName             - Host name used for CMS
-  --IPAddress            - IP address used for HTTP and FTP
-  --AdminPassword        - For CMS "admin" user
-  --DBUser               - MySQL user used by CMS
-  --DBPass               - MySQL user password used by CMS
-  --InstanceHostName     - Host name of CMS instance virtual server
-  --InstanceDBName       - Name of MySQL database
-  --InstanceElementSet   - Name of element set used by CMS instance
-  --InstanceHostIPAddress  - IP address of instance host when enabling SSL
-                             (only required if optional SSLEngine is set to 'on')
+  --HostName                - Host name used for CMS
+  --IPAddress               - IP address used for HTTP and FTP
+  --AdminPassword           - For CMS "admin" user
+  --DBUser                  - MySQL user used by CMS
+  --DBPass                  - MySQL user password used by CMS
+  --InstanceHostName        - Host name of CMS instance virtual server
+  --InstanceDBName          - Name of MySQL database
+  --InstanceElementSet      - Name of element set used by CMS instance
 
  Optional parameters:
-  --FTPHostName          - Host name for FTP server, defaults to HostName.
-  --MySQLRootPassword    - Password for the MySQL user "root"
-  --DBHost               - Host name for MySQL
-  --DBSock               - Socket file for local MySQL server
-  --InstallPath          - Directory for Krang install
-  --KrangUser            - UNIX user for process ownership
-  --KrangGroup           - UNIX group for process ownership
-  --FTPPort              - Port for FTP server, 21 by default. 
-  --ApachePort           - Port on which CMS HTTP server should run
-  --SMTPServer           - Address of SMTP mail server 
-  --InstanceDisplayName  - Name of the Instance for UI display
-  --FromBackup           - the name of a backup file to restore from.
-  --WithAddon            - Installs Krang with an addon.  May be repeated.
-  --SSLEngine               - Provide SSL support (default: off)
-  --ApacheSSLPort           - SSL port used HTTPS on main Apache server (default 443)
-  --InstanceHostPort        - Non-SSL port of instance host when enabling SSL (default: 80)
-  --InstanceHostSSLPort     - SSL port of instance host when enabling SSL (default: 443)
-  --SSLPassPhraseDialog     - Path to programm to use for passphrase prompt
-  --SSLRandomSeedStartup    - Path to programm generating random seed at startup
-  --SSLRandomSeedConnect    - Path to programm generating random seed at connect
-  --SSLSessionCacheTimeout  - Elapse of time until next SSL handshake
-  --SSLProtocol             - Acceptable protocols for SSL connections
-  --SSLCipherSuite          - Acceptable ciphers for SSL connections
-  --SSLVerifyClient         - Set to '1' if client must identify itsself
-  --SSLVerifyDepth          - Client cert chain verification depth
-  --SSLLogLevel             - none | error | warn | info | trace | debug
-  --run-tests            - run Krang "make test", defaults off
-  --help                 - Show usage
-  --man                  - Show full man page
+  --FTPHostName             - Host name for FTP server, defaults to HostName.
+  --MySQLRootPassword       - Password for the MySQL user "root"
+  --DBHost                  - Host name for MySQL
+  --DBSock                  - Socket file for local MySQL server
+  --InstallPath             - Directory for Krang install
+  --KrangUser               - UNIX user for process ownership
+  --KrangGroup              - UNIX group for process ownership
+  --FTPPort                 - Port for FTP server, 21 by default. 
+  --ApachePort              - Port on which CMS HTTP server should run
+  --SMTPServer              - Address of SMTP mail server 
+  --InstanceDisplayName     - Name of the Instance for UI display
+  --FromBackup              - the name of a backup file to restore from.
+  --WithAddon               - Installs Krang with an addon.  May be repeated.
+  --EnableSSL               - Turn on SSL support (default: off)
+  --SSLApachePort           - SSL port used HTTPS on main Apache server (default 443)
+  --run-tests               - run Krang "make test", defaults off
+  --help                    - Show usage
+  --man                     - Show full man page
 
 =head1 SEE ALSO
 
@@ -204,44 +191,14 @@ my @opt_params = qw( FromBackup
                      SMTPServer 
                      FTPHostName
                      InstanceDisplayName
-                     SSLEngine
-                     ApacheSSLPort
-                     InstanceHostPort
-                     InstanceHostSSLPort
-                     SSLPassPhraseDialog
-                     SSLRandomSeedStartup
-                     SSLRandomSeedConnect
-                     SSLSessionCacheTimeout
-                     SSLProtocol
-                     SSLCipherSuite
-                     SSLVerifyClient
-                     SSLVerifyDepth
-                     SSLLogLevel);
+                     EnableSSL
+                     SSLApachePort);
 
-my @ssl_req_params = qw(InstanceHostIPAddress);
-
-my %options     = ( map { $_ => undef } @req_params, @opt_params, @ssl_req_params);
+my %options     = ( map { $_ => undef } @req_params, @opt_params );
 
 # SSL directives
-my @global_ssl = qw(
-ApacheSSLPort
-SSLPassPhraseDialog
-SSLRandomSeedStartup
-SSLRandomSeedConnect
-SSLSessionCacheTimeout
-);
-
-my @instance_ssl = qw(
-SSLEngine
-InstanceHostIPAddress
-InstanceHostPort
-InstanceHostSSLPort
-SSLProtocol
-SSLCipherSuite
-SSLVerifyClient
-SSLVerifyDepth
-SSLLogLevel
-SSLOptions
+my @ssl_directives = qw(
+SSLApachePort
 );
 
 do_install();
@@ -344,34 +301,25 @@ sub unpack_backup {
     $options{InstanceDisplayName}||= $conf->get('InstanceDisplayName');
 
     # Main server SSL stuff
-    if ($conf->get('SSLEngine')) {
-	for my $ssl_dir (@global_ssl, @instance_ssl) {
-	    $options{$ssl_dir} ||= $conf->get($ssl_dir);
-	}
+    if ($conf->get('EnableSSL')) {
+        for my $ssl_dir (@ssl_directives) {
+            $options{$ssl_dir} ||= $conf->get($ssl_dir);
+        }
     }
 
     # Main server SSL files
+    # TODO 
 
 
     # load extra instance data into @BACKUP_INSTANCES
     if (@blocks > 1) {
         foreach my $block_name (@blocks[1..$#blocks]) {
             $conf = $BACKUP_CONF->block($block_name);
-	    my %instance =
-                 ( InstanceElementSet => $conf->get('InstanceElementSet'),
-                   InstanceDBName     => $conf->get('InstanceDBName'),
-                   InstanceHostName   => $conf->get('InstanceHostName'),
-                 );
-
-	    # Instance SSL stuff
-	    if ($conf->get('SSLEngine')) {
-		for my $ssl_dir (@instance_ssl) {
-		    $instance{$ssl_dir} = $conf->get($ssl_dir);
-		}
-	    }
-
-	    # Instance SSL files
-
+            my %instance = ( 
+                InstanceElementSet => $conf->get('InstanceElementSet'),
+                InstanceDBName     => $conf->get('InstanceDBName'),
+                InstanceHostName   => $conf->get('InstanceHostName'),
+            );
 
             push(@BACKUP_INSTANCES, \%instance);
         }
@@ -724,10 +672,8 @@ sub configure_krang {
             }
         }
 
-	# shall we insert SSL directives? The default is NO
-	if ($options{SSLEngine} eq 'on') {
-	    $t->param(SSL_ENABLED => 1);
-	}
+        # shall we insert SSL directives? The default is NO
+        $t->param(EnableSSL => $options{EnableSSL});
 
         my $output_conf = $InstallPath ."/conf/krang.conf";
         open(OUTPUT, ">$output_conf") || die("Can't open '$output_conf' for writing: $!");
@@ -849,9 +795,6 @@ sub output_report {
 }
 
 
-
-
-
 ###########################
 ####  PRIVATE METHODS  ####
 ###########################
@@ -876,8 +819,8 @@ sub setup_getopts {
                     'man'       => \$man,
                     'run-tests' => \$run_tests,
                     'WithAddon=s' => $options{WithAddon},
-                    (map { $_."=s" => \$options{$_} } @req_params, @opt_params, @ssl_req_params),
-		  );
+                    (map { $_."=s" => \$options{$_} } @req_params, @opt_params),
+          );
 
     pod2usage(1)             if $help;
     pod2usage(-verbose => 2) if $man;
@@ -892,14 +835,6 @@ sub enforce_requirements {
         $error_output .= "Missing --". $p ."\n";
     }
 
-    if ($options{SSLEngine} eq 'on') {
-	foreach my $p (@ssl_req_params) {
-	    next if defined($options{$p});
-	    $error_output .= "Missing --". $p ."\n";
-	}
-    }
-
-
     if ($error_output) {
         print "Error:\n\n$error_output\n";
         pod2usage(1);
@@ -912,29 +847,17 @@ sub enforce_requirements {
 
 sub set_param_defaults {
     my %defaults = (
-                    MySQLRootPassword => '',
-                    InstallPath => '/usr/local/krang',
-                    KrangUser => 'krang',
-                    KrangGroup => 'krang',
-                    FTPPort => '21',
-                    FTPHostName => $options{'HostName'},
-                    ApachePort => '80',
-                    SMTPServer => '127.0.0.1',
-		    SSLEngine => 'off',
-                    ApacheSSLPort => '443',
-                    InstanceHostPort => '80',
-                    InstanceHostSSLPort => '443',
-		    SSLPassPhraseDialog => 'builtin',
-		    SSLRandomSeedStartup => 'builtin',
-		    SSLRandomSeedConnect => 'builtin',
-		    SSLSessionCacheTimeout => 3600,
-		    SSLProtocol => 'all -SSLv2',
-		    SSLCipherSuite => 'ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL',
-		    SSLVerifyClient => 'none',
-		    SSLVerifyDepth => 1,
-		    SSLLogLevel => 'info',
-		    SSLOptions => '+StdEnvVars',
-                    );
+            MySQLRootPassword       => '',
+            InstallPath             => '/usr/local/krang',
+            KrangUser               => 'krang',
+            KrangGroup              => 'krang',
+            FTPPort                 => '21',
+            FTPHostName             => $options{'HostName'},
+            ApachePort              => '80',
+            SMTPServer              => '127.0.0.1',
+            EnableSSL               => 0,
+            SSLApachePort           => '443',
+    );
 
     # Set up defaults if value is not otherwise set
     while (my ($k, $dv) = each(%defaults)) {
