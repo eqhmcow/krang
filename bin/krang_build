@@ -145,6 +145,16 @@ while (my $f = readdir DIR) {
 }
 #my @platforms = grep { $_ !~ /^\.\.?$/ and $_ !~ /CVS/ } sort readdir DIR;
 
+# do we just want to rebuild some modules
+if (@modules) {
+    $rebuild = 1;
+    $skip_apache = 1;
+    my %modules = map { $_ => 1 } @modules;
+    foreach my $required qw(Expect IO-Tty) {
+	push @modules, $required unless $modules{$required};
+    }
+}
+
 # check that we're not trying to build on top of an existing build
 die "A build of Krang already exists here.  Run 'make clean' to remove it".
   "\nbefore trying again.\n" 
