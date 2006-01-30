@@ -10,6 +10,16 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Replaced template selector in 'New Template' and 'Find Template'
+(advanced search) with category_chooser style template_chooser.
+[Bodo Schulze]
+
+=item *
+
+Simplied use of --module option with bin/krang_build [Bodo Schulze]
+
+=item *
+
 Added checkbox to groups manager to allow "admin_lists" to be set.  [Jesse Erlbaum]
 
 =item *
