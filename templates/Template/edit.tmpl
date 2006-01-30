@@ -106,14 +106,14 @@
 <table border="0" cellpadding="5" cellspacing="0" width="100%">
 <tmpl_if add_mode>
 <script language="javascript" type="text/javascript">
-  function update_filename (e) {
-     var targ = e.form.elements["filename"];
-     if (e.selectedIndex == 0) {
+  function update_filename (field) {
+     var targ = field.form.elements["filename"];
+     if (field.value == '') {
         targ.readOnly = false;
         targ.style.backgroundColor = 'white';
         targ.value = '';
      } else {
-        targ.value = e.options[e.selectedIndex].value + ".tmpl";
+        targ.value = field.value + ".tmpl";
         targ.readOnly = true;
         targ.style.backgroundColor = '#DDDDDD';
      }
