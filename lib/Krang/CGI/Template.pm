@@ -33,7 +33,7 @@ use Krang::ClassLoader Message => qw/add_message/;
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'Template';
-use Krang::ClassLoader Widget => qw/format_url category_chooser/;
+use Krang::ClassLoader Widget => qw/format_url category_chooser template_chooser/;
 use Krang::ClassLoader 'Publisher';
 
 use constant WORKSPACE_URI => 'workspace.pl';
@@ -350,15 +350,14 @@ sub advanced_search {
     $t->param(pager_html => $pager->output());
     $t->param(row_count => $pager->row_count());
 
-    # Set up element select
-    my @element_loop;
-    for (pkg('ElementLibrary')->element_names()) {
-        my $selected = $search_element eq $_ ? 1 : 0;
-        push @element_loop, {name => $_, selected => $selected, value => $_};
-    }
-    $t->param(element_loop => \@element_loop);
+    # Set up element chooser
+    $t->param(element_chooser => template_chooser(query      => $q,
+						  name       => 'search_element',
+						  formname   => 'template_search_form',
+						  persistkey => 'Element',
+						));
 
-    # Set up advanced search form
+    # Set up category chooser
     $t->param(category_chooser => category_chooser(query      => $q,
                                                    formname   => 'template_search_form',
                                                    persistkey => 'Template',
@@ -973,17 +972,16 @@ sub get_tmpl_params {
     $version = $template->version;
 
     if ($q->param('add_mode')) {
-        my @values = (' ', pkg('ElementLibrary')->element_names);
-        my %labels = map {$_, $_} pkg('ElementLibrary')->element_names;
-        my $default = '';
-        $tmpl_params{element_chooser} = $q->popup_menu(-name =>
-                                                       'element_class_name',
-                                                       -values => \@values,
-                                                       -labels => \%labels,
-                                                       -default => $default,
-                                                       -onchange =>
-                                                       'update_filename(this)',
-                                                      );
+
+	$tmpl_params{element_chooser} =
+	  template_chooser(query    => $q,
+			   name     => 'element_class_name',
+			   formname => 'edit_template_form',
+			   onchange => 'update_filename(field)',
+			  );
+
+	$q->delete('element_class_name');
+          
     }
 
     unless ($rm =~ /^view/) {
