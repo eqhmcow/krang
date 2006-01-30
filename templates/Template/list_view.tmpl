@@ -93,10 +93,7 @@
 
       <tr>
         <td>Element:</td>
-	<td><select name="search_element">
-	    <option value=""></option>
-	    <tmpl_loop element_loop><option value="<tmpl_var value>" <tmpl_if selected>selected</tmpl_if>><tmpl_var name></option>
-	    </tmpl_loop></select></td>
+        <td><tmpl_var element_chooser></td>
       </tr>
 
       <tr>
