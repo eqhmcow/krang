@@ -17,7 +17,9 @@ use Krang::ClassLoader Session => qw(%session);
 use File::Spec::Functions qw(catfile);
 
 use base 'Exporter';
-our @EXPORT_OK = qw(category_chooser time_chooser date_chooser datetime_chooser decode_date decode_datetime format_url);
+our @EXPORT_OK = qw(category_chooser time_chooser date_chooser 
+                    datetime_chooser decode_date decode_datetime 
+                    format_url template_chooser);
 
 =head1 NAME
 
@@ -696,6 +698,115 @@ sub format_url {
 }
 
 
+
+sub template_chooser {
+    my %args = @_;
+    my ($name, $query, $label, $display, $onchange, $formname, $site_id,
+        $field, $title, $may_see, $may_edit, $persistkey) =
+	  @args{qw(name query label display onchange formname site_id
+               field title may_see may_edit persistkey)};
+
+    croak("Missing required args: name and query")
+      unless $name and $query;
+
+    # field defaults to name
+    $field ||= $name;
+
+    my $template = pkg('HTMLTemplate')->new(filename => 
+                                            "Widget/template_chooser.tmpl",
+                                            cache   => 1,
+                                            die_on_bad_params => 1,
+					    loop_context_vars => 1,
+                                           );
+
+    $formname   = '' unless($formname);
+    $name       = '' unless($name);
+    $persistkey = '' unless($persistkey);
+
+    # pass the element name around in advanced search
+    my $element_name =
+      (defined($query->param($field))) ? $query->param($field) :
+        $session{KRANG_PERSIST}{$persistkey}{'tmpl_chooser_id_'.$formname."_".$name};
+
+    $element_name = '' unless $element_name;
+
+    $session{KRANG_PERSIST}{$persistkey}{'tmpl_chooser_id_'.$formname."_".$name} =
+      $query->param($field) if defined($query->param($field));
+
+    # get element names
+    my @stack = map{ pkg('ElementLibrary')->top_level(name => $_) }
+	          reverse pkg('ElementLibrary')->top_levels;
+
+    # get existing templates
+    my %exists = map{ s/\.tmpl//; $_ => 1 }
+                 map{ $_->filename } pkg('Template')->find;
+
+    # filters
+    my %seen = ();
+    my @parent = ();
+
+    # root node
+    my $data = { children => [], label => '', open => 1 };
+
+    # build element tree
+    while (@stack) {
+	my $class  = pop(@stack);
+	my $parent = pop(@parent);
+
+	my $parent_node = $parent ? $parent : $data;
+
+	my $element = $class->name;
+
+	# elements already seen further up the tree are colored in yellow
+	if ($seen{$element}++) {
+	    $element = '<span style="background-color: yellow;">'. $class->name .'</span>';
+	}
+
+	# elements for which a template already exists are colored in green
+	if ($exists{$element}) {
+	    $element = '<span style="background-color: #00bb00;">'. $class->name .'</span>';
+	}
+
+	my $child = { label => $element,
+		      value => $class->name,
+		      children => [],
+		    };
+
+	push @{$parent_node->{children}}, $child;
+
+	if (my @children = $class->children) {
+	    push(@stack, sort{$b->name cmp $a->name} @children);
+	    push(@parent, map { $child } (0..$#children));
+	}
+    }
+
+    $template->param(element_class_name => $element_name);
+
+    # build the chooser, taking care of localizing the buttons and the title
+    my $chooser = HTML::PopupTreeSelect->new(
+					     name         => $name,
+					     title        => $title || 'Choose a Template',
+					     data         => $data->{children},
+					     image_path   => 'images',
+					     onselect     => $name . '_choose_template',
+					     button_label => $label || 'Choose',
+					     include_css  => 0,
+					     width        => 225,
+					     height       => 200,
+					     resizable    => 1,
+					     hide_textareas => 1,
+					     );
+
+    # send data to the template
+    $template->param(chooser       => $chooser->output,
+                     name          => $name,
+                     field         => $field,
+                     display       => defined $display ? $display : 1,
+                     formname      => $formname,
+                     onchange      => $onchange);
+
+    return $template->output;
+}
 
 
 
