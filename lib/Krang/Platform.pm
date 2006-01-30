@@ -724,37 +724,8 @@ sub build_apache_modperl {
     system("make") == 0
       or die "Apache make failed: $?";
     if ($mod_ssl_params) {
-        my $command = Expect->spawn("make certificate");
-        
-        # setup command to answer questions modules ask
-        my @responses = ('R', 'XY', 'Snake Desert', 'Snake Town', 'Snake Oil, Ltd',
-			 'Webserver Team', 'www.snakeoil.dom', 'www@snakeoil.dom',
-			 365, 3, 'n');
-        while (
-               my $match = $command->expect(
-                  undef,
-                 'Signature Algorithm ((R)SA or (D)SA) [R]:',
-                 '1. Country Name             (2 letter code) [XY]:',
-                 '2. State or Province Name   (full name)     [Snake Desert]:',
-                 '3. Locality Name            (eg, city)      [Snake Town]:',
-                 '4. Organization Name        (eg, company)   [Snake Oil, Ltd]:',
-                 '5. Organizational Unit Name (eg, section)   [Webserver Team]:',
-                 '6. Common Name              (eg, FQDN)      [www.snakeoil.dom]:',
-                 '7. Email Address            (eg, name@FQDN) [www@snakeoil.dom]:',
-                 '8. Certificate Validity     (days)          [365]:',
-                 'Certificate Version (1 or 3) [3]:',
-                 'Encrypt the private key now? [Y/n]: ',
-                                           )
-              )
-          {
-              $command->send( $responses[ $match - 1 ] . "\n" );
-          }
-        $command->soft_close();
-        if ( $command->exitstatus() != 0 ) {
-            die "Apache 'make certificate' failed: $?";
-        }
-##	system("make certificate") == 0
-##	  or die "Apache make certificate failed: $!";
+        system("make certificate TYPE=DUMMY") == 0
+          or die "Apache make certificate failed: $!";
     }
     system("make install") == 0
       or die "Apache make install failed: $?";

@@ -41,6 +41,13 @@ option skips that step.
 =item --with-ssl
 
 Give this option if you desire to build Apache with SSL.
+During the build, dummy (Snakeoil) certificates will be created and symlinked
+to the cert and key files that Krang is expecting (as long as real certs/keys
+don't exist). Later when running krang, you should replace these with a real
+cert and key from a trusted CA.
+
+    KRANG_ROOT/conf/ssl.crt/server.crt
+    KRANG_ROOT/conf/ssl.key/server.key 
 
 =item --with-openssl=/path/to/your/openssl
 

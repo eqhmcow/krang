@@ -19,6 +19,7 @@ DBHost
 DBSock
 EnableBugzilla
 EnableSiteServer
+EnableSSL
 FromAddress
 FTPAddress
 FTPPort
@@ -37,13 +38,8 @@ SiteServerAddr
 SiteServerPort
 SMTPServer
 Skin
-ApacheSSLPort
-InstanceHostIPAddress
-InstanceHostPort
-InstanceHostSSLPort
-SSLEngine 
+SSLApachePort
 SSLPassPhraseDialog
-SSLRandomSeed
 SSLRandomSeedStartup
 SSLRandomSeedConnect
 SSLSessionCacheTimeout
@@ -52,8 +48,6 @@ SSLCipherSuite
 SSLVerifyClient
 SSLVerifyDepth
 SSLLogLevel
-SSLOptions
-SetEnvIf
 );
 }
 

@@ -96,6 +96,10 @@ Now try building Krang using the bin/krang_build script:
 
   bin/krang_build
 
+To build a version of krang that supports SSL, then supply the C<with-ssl> option.
+
+  bin/krang_build --with-ssl
+
 If Krang complains that it doesn't know what platform to build for you
 can pass it a platform name:
 
@@ -279,6 +283,27 @@ How to determine the correct socket path and filename to specify here,
 that will correct the error above on a given system is a troubleshooting 
 task that is beyond the scope of these docs, but your MySQL server's 
 my.cnf file might be a good place to begin looking for clues.
+
+=item EnableSSL
+
+Boolean flag indicating whether or not this instance of Krang will run over
+SSL (will only work if this Krang was built with the C<with-ssl> option. See
+L<"Building Krang from Source">.)
+
+When SSL is enabled and Krang is restarted, it will look for it's SSL certificate
+and key in the following locations:
+
+    KRANG_ROOT/conf/ssl.crt/server.crt
+    KRANG_ROOT/conf/ssl.key/server.key
+
+If your F<server.key> is encrypted, then you should look at setting the
+C<SSLPassPhraseDialog> in your F<krang.conf> (see L<http://www.modssl.org/docs/2.8/ssl_reference.html
+for more details).
+
+
+=item SSLApachePort
+
+Defaults to 443. Port on which the Apache server will listen for SSL requests.
 
 =back
 
