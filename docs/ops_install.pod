@@ -297,7 +297,7 @@ and key in the following locations:
     KRANG_ROOT/conf/ssl.key/server.key
 
 If your F<server.key> is encrypted, then you should look at setting the
-C<SSLPassPhraseDialog> in your F<krang.conf> (see L<http://www.modssl.org/docs/2.8/ssl_reference.html
+C<SSLPassPhraseDialog> in your F<krang.conf> (see L<http://www.modssl.org/docs/2.8/ssl_reference.html>
 for more details).
 
 
