@@ -359,6 +359,8 @@ sub find_story_link {
     my $root = $self->_get_element;
     my $element = _find_element($root, $path);
 
+    $template->param(parent_path => $element->parent->xpath());
+
     # determine appropriate find params for search
     my %find_params;
     my %persist_vars = ();
