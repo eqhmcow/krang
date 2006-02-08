@@ -127,29 +127,42 @@ sub publish_story_list {
                             );
     my @id_list;
 
-    foreach (@asset_id_list) {
+    foreach my $asset (@asset_id_list) {
 
         # if only media ids are being passed in from media find
-        if ( $query->param('asset_type') eq 'media' ) {
-            push @id_list, { id => 'media_'.$_ };
-            push(@media_id_list, $_);
+        if ( 
+            $query->param('asset_type') 
+            && 
+            ( $query->param('asset_type') eq 'media') 
+        ) {
+            push @id_list, { id => 'media_'.$asset };
+            push(@media_id_list, $asset);
             next;
         }
 
-        push @id_list, { id => $_ };
-        
-        push(@story_id_list, $1), next if /^(\d+)$/;
-
-        if (/^(\w+)_(\d+)$/) {
-            push(@story_id_list, $2), next if $1 eq 'story';
-            push(@media_id_list, $2), next if $1 eq 'media';
-            push(@template_id_list, $2), next if $1 eq 'template';
+        # if it's just a number then we're publishing stories
+        if( $asset =~ /^(\d+)$/ ) {
+            push @id_list, { id => $asset };    # save for actual publishing
+            push(@story_id_list, $1);
+        } elsif ( $asset =~ /^(\w+)_(\d+)$/) {
+            my $type = $1;
+            if( $type eq 'story' ) {
+                push(@story_id_list, $2);
+                push @id_list, { id => $asset };    # save for actual publishing
+            } elsif( $type eq 'media' ) {
+                push(@media_id_list, $2);
+                push @id_list, { id => $asset };    # save for actual publishing
+            } elsif( $type eq 'template' ) {
+                # templates don't need to be saved for publishing since we
+                # deploy them in down in the next section
+                push(@template_id_list, $2);
+            } else {
+                croak __PACKAGE__ . ": what to do with asset type = '$type'??";
+            }
+        } else {
+            croak __PACKAGE__ . ": what to do with asset = '$asset'??";
         }
-        croak __PACKAGE__ . ": what to do with asset = '$1'??";
     }
-
-
-    $t->param(asset_id_list => \@id_list);
 
     # take care of templates first, they don't go to the next screen
     if (@template_id_list) {
@@ -176,7 +189,9 @@ sub publish_story_list {
 
     add_message('checked_out_assets') if ($checked_out);
 
-    $t->param(stories => $stories, media => $media);
+    $t->param(stories       => $stories, 
+              media         => $media,
+              asset_id_list => \@id_list,);
 
     # add date chooser
     $t->param(publish_date_chooser => 
