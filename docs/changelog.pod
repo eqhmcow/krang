@@ -9,8 +9,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed sql/mypref.sql so that user's don't clobber each others
+preferences. [Bodo Schulze]
+
+=item *
+
 Added missing setting of template param 'parent_path' to
-Krang::CGI::ElementEditor::find_story_link()
+Krang::CGI::ElementEditor::find_story_link() [Bodo Schulze]
 
 =item *
 
