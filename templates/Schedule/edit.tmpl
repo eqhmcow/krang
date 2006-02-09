@@ -18,7 +18,7 @@
  function save_and_view() {
         var myform = document.forms["add_schedule_form"];
         myform.rm.value = 'save_and_view';
-        myform.submit();
+        myform.submit
   }
 
 </script>
@@ -69,7 +69,6 @@
 
 <form name="add_schedule_form" method="POST">
 <input type="hidden" name="object_type" value="<tmpl_var object_type>">
-<input type="hidden" name="object_id" value="<tmpl_var id>">
  <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
   <tmpl_if simple>
   <input type="hidden" name="rm" value="add_simple" override='1'>

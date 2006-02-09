@@ -782,8 +782,7 @@ sub save_and_view {
     $version ? ($version = '&version='.$version) : ($version = '&version=');
     
     my $object_type = $q->param('object_type'); 
-    my $object_id   = $q->param('object_id');
-    $self->header_props(-uri => $object_type.'.pl?rm=view&' . $object_type . '_id=' . $object_id . '&return_script=schedule.pl&return_params=rm&return_params=edit&return_params=object_type&return_params='.$object_type.'&return_params=advanced_schedule&return_params='.$q->param('advanced_schedule').$version);
+    $self->header_props(-uri => $object_type.'.pl?rm=view&return_script=schedule.pl&return_params=rm&return_params=edit&return_params=object_type&return_params='.$object_type.'&return_params=advanced_schedule&return_params='.$q->param('advanced_schedule').$version);
     $self->header_type('redirect');
     return;
 

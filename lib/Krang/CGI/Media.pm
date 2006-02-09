@@ -1086,8 +1086,9 @@ sub view {
     my $q = $self->query();
     my $t = $self->load_tmpl('view_media.tmpl');
 
-    # Retrieve object from session or create it if it doesn't exist
-    my $media_id = $q->param('media_id');
+    # get media_id from params or from the media in the session
+    my $media_id = $q->param('media_id') ? $q->param('media_id') :
+                   $session{media}->media_id;
     die ("No media_id specified") unless ($media_id);
 
     # Load media object into session, or die trying
