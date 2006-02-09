@@ -36,6 +36,17 @@ Added checkbox to groups manager to allow "admin_lists" to be set.  [Jesse Erlba
 Fixed Kang::Navigation bug where Desks were not being displayed in proper order.
 [Aaron Dancygier]
 
+=item *
+
+Fixed ISE when attempting to publish templates and media/stories at the same time
+from the UI.
+[Michael Peters]
+
+=item *
+
+Fixed ISE when viewing media files from the Scheduler UE.
+[Michael Peters]
+
 =back
 
 
