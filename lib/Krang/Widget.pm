@@ -759,12 +759,12 @@ sub template_chooser {
 
 	# elements already seen further up the tree are colored in yellow
 	if ($seen{$element}++) {
-	    $element = '<span style="background-color: yellow;">'. $class->name .'</span>';
+	    $element = '<span class="tmpl_chooser_seen">'. $class->name .'</span>';
 	}
 
 	# elements for which a template already exists are colored in green
 	if ($exists{$element}) {
-	    $element = '<span style="background-color: #00bb00;">'. $class->name .'</span>';
+	    $element = '<span class="tmpl_chooser_has_template">'. $class->name .'</span>';
 	}
 
 	my $child = { label => $element,
