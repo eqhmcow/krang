@@ -146,9 +146,6 @@ sub thaw_data_xml {
     my $format = "%Y-%m-%dT%H:%M:%SZ";
     my $time = Time::Piece->strptime($data,$format);
 
-    # adjust for timezone
-    $time -= $time->tzoffset;
-
     return $element->data($time);
 }
 
@@ -158,15 +155,9 @@ sub freeze_data_xml {
     my $data = $element->data;
     return $writer->dataElement(data => '') unless $data;
     
-    # adjust for timezone
-    $data += $data->tzoffset;
-
     # build XML
     my $xml = $writer->dataElement(data => 
                                    $data->strftime("%Y-%m-%dT%H:%M:%SZ"));
-    
-    # undo adjustment
-    $data -= $data->tzoffset;
 
     return $xml;
 }

@@ -4,11 +4,8 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass::Storable';
+use Krang::ClassLoader Log => qw(debug info);
 use Carp qw(croak);
-
-#use Krang::ListGroup;
-#use Krang::List;
-#use Krang::ListItem;
 
 use Krang::ClassLoader MethodMaker => 
   get_set => [ qw( size multiple list_group ) ];
@@ -277,6 +274,60 @@ sub view_data {
     }
     return join("<br>", @chosen);
 }
+
+
+# Add ListItems to DataSet.  Remove listitems which no longer exist
+sub freeze_data_xml {
+    my ($self, %arg) = @_;
+    my ($element, $writer, $set) = @arg{qw(element writer set)};
+
+    my $element_data = $element->data();
+
+    # Iterate through data, add to KDS, and remove if the item doesn't exist anymore.
+    my @real_element_data = ();
+    foreach my $list_item_id (@$element_data) {
+        my ($li) = pkg('ListItem')->find(list_item_id => $list_item_id);
+        unless ($li) {
+            info ("Can't find list item for list_item_id '$list_item_id'.  Dropping it from KDS.");
+            next;
+        }
+        my $element_id = $element->element_id();
+        debug ("Adding list_item_id '$list_item_id' associated with element_id '$element_id' to KDS");
+        $set->add(object => $li, from => $element->object);
+        push(@real_element_data, $list_item_id); # Only valid list_item_ids
+    }
+
+    # Update element data and export
+    $element->data(\@real_element_data);
+    my $data = $element->freeze_data();
+    $writer->dataElement(data => 
+                         (defined $data and length $data) ? $data : '');
+}
+
+
+# Map to incoming ListItems
+sub thaw_data_xml {
+    my ($self, %arg) = @_;
+    my ($element, $data, $set) = @arg{qw(element data set)};
+
+    # De-serialize data
+    $self->thaw_data(element => $element, data => $data->[0]);
+
+    # Expect an arrayref of IDs.  Map these to new IDs.  Set as arrayref in data()
+    my @element_data = ();
+    foreach my $list_item_id (@{$element->data}) {
+        my $real_list_item_id = $set->map_id( class => pkg('ListItem'),
+                                              id    => $list_item_id );
+        debug ("Mapping list_item_id '$list_item_id' => '$real_list_item_id'");
+        push(@element_data, $real_list_item_id);
+    }
+
+    $element->data(\@element_data);
+}
+
+
+
+
 
 =head1 NAME
 
