@@ -3,6 +3,19 @@
 This document contains a list of changes for each release of Krang.
 
 
+=head2 v2.004
+
+=over
+
+=item *
+
+Added new option "--makecats" to krang_upload_media and 
+krang_upload_templates.  When specified, missing categories
+will be created in the CMS, instead of skipped. [Jesse Erlbaum]
+
+=back
+
+
 =head2 v2.003
 
 =over

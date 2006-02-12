@@ -48,6 +48,10 @@ will be ignored.
 
 If not specified, --path default to /element_lib/InstanceElementSet/media/
 
+=item --makecats
+
+If specified, categories which do not exist will be created instead of skipped.
+
 =item --verbose
 
 =item --help
@@ -107,6 +111,7 @@ my ($help, $man);
 my $path = catdir(element_lib_path(), 'media');
 my $user = "admin";
 my $password = "";
+my $makecats = 0;
 my $verbose = 0;
 
 pod2usage(2) unless
@@ -115,6 +120,7 @@ pod2usage(2) unless
              'user=s' => \$user,
              'password=s' => \$password,
              'verbose+' => \$verbose,
+             'makecats' => \$makecats,
              'help' => \$help,
              'man' => \$man,
             );
@@ -166,7 +172,10 @@ sub upload_media {
     closedir(MEDIADIR);
 
     my @files = grep { (-f catfile($fs_path, $_)) } (@found);
-    my @dirs = grep { not(/^\.{1,2}$/) and (-d catfile($fs_path, $_)) } (@found);
+    my @dirs = grep { not(/^\.{1,2}$/) and 
+                        not(/^\.svn$/) and 
+                          not(/^CVS$/) and 
+                            (-d catfile($fs_path, $_)) } (@found);
 
     print "Found dirs: '". join("', '", @dirs) ."'\n" if ($verbose > 1);
     print "Found files: '". join("', '", @files) ."'\n" if ($verbose > 1);
@@ -250,6 +259,20 @@ sub upload_media {
         my ($c) = pkg('Category')->find(url=>$new_cat_path."/");
         if ($c) {
             upload_media($media_dir, $c);
+        } elsif ($makecats) {
+            # Create missing directory
+            my $newcat;
+            eval {
+                $newcat = pkg('Category')->new( dir => $d,
+                                                parent_id => $category->category_id );
+                $newcat->save(); 
+            };
+            if ($@) {
+                print "  Unable to create '$new_cat_path' ($@)\n";
+                next;
+            }
+            print "  Created new category '$new_cat_path'\n";
+            upload_media($media_dir, $newcat);
         } else {
             print "  Skipping '$new_cat_path' (No category found)\n" if $verbose;
         }
