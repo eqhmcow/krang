@@ -9,6 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added new primitive, Krang::ElementClass::CheckBoxGroup, 
+which integrates with Krang's lists system, in addition
+to permitting simple values.  [Jesse Erlbaum]
+
+=item *
+
 Added new option "--makecats" to krang_upload_media and 
 krang_upload_templates.  When specified, missing categories
 will be created in the CMS, instead of skipped.  [Jesse Erlbaum]

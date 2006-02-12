@@ -15,6 +15,7 @@ blurbs and one or more pages.
 =cut
 
 use base 'Krang::ElementClass::TopLevel';
+use Krang::ElementClass::CheckBoxGroup;
 
 sub new {
    my $pkg = shift;
@@ -33,6 +34,26 @@ sub new {
                                                      allow_delete => 0,
                                                      indexed => 1,
                                                     ),
+                  Krang::ElementClass::CheckBoxGroup->new( name => 'cbg_values',
+                                                           values => [map { "option\_$_" } ('a'..'z')],
+                                                           defaults => [qw(option_c option_e)],
+                                                           columns => 4,
+                                                           min => 1,
+                                                           max => 1,
+                                                           allow_delete => 1,
+                                                           reorderable => 1 ),
+                  Krang::ElementClass::CheckBoxGroup->new( name => 'cbg_listgroup',
+                                                           list_group => "Cost",
+                                                           min => 1,
+                                                           max => 1,
+                                                           allow_delete => 1,
+                                                           reorderable => 1 ),
+                  Krang::ElementClass::CheckBoxGroup->new( name => 'cbg_listgroup_2',
+                                                           list_group => "Make/Model/Year",
+                                                           min => 1,
+                                                           max => 1,
+                                                           allow_delete => 1,
+                                                           reorderable => 1 ),
                   Krang::ElementClass::ListGroup->new(  name => 'auto_segments',
                                                         list_group => 'Segments',
                                                         multiple => 1,
