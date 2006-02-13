@@ -45,18 +45,18 @@ my $contrib = pkg('Contrib')->new(prefix => 'Mr', first => 'Matthew', middle => 
 isa_ok($contrib, 'Krang::Contrib');
 
 # test full_name
-is($contrib->full_name, "Mr Matthew Charles Vella");
+is($contrib->full_name, "Mr Matthew Charles Vella", 'Krang::Contrib->full_name()');
 $contrib->suffix("The Dude");
-is($contrib->full_name, "Mr Matthew Charles Vella, The Dude");
+is($contrib->full_name, "Mr Matthew Charles Vella, The Dude", 'Krang::Contrib->full_name()');
 $contrib->suffix("");
-is($contrib->full_name, "Mr Matthew Charles Vella");
+is($contrib->full_name, "Mr Matthew Charles Vella", 'Krang::Contrib->full_name()');
 
 $contrib->contrib_type_ids(1,3);
 $contrib->selected_contrib_type(1);
 
 my @contrib_type_ids = $contrib->contrib_type_ids();
-is("@contrib_type_ids", "1 3");
-is($contrib->selected_contrib_type, 1);
+is("@contrib_type_ids", "1 3", 'Krang::Contrib->contrib_type_ids()');
+is($contrib->selected_contrib_type, 1, 'Krang::Contrib->selected_contrib_type()');
 
 $contrib->save();
 
@@ -66,24 +66,24 @@ my @contrib_object = pkg('Contrib')->find( contrib_id => $contrib_id );
 
 my $contrib2 = $contrib_object[0];
 
-is($contrib2->first, 'Matthew');
-is($contrib2->contrib_type_ids()->[0], 1);
-is($contrib2->contrib_type_ids()->[1], 3);
+is($contrib2->first, 'Matthew', 'Krang::Contrib->first()');
+is($contrib2->contrib_type_ids()->[0], 1, 'Krang::Contrib->contrib_type_ids()');
+is($contrib2->contrib_type_ids()->[1], 3, 'Krang::Contrib->contrib_type_ids()');
 
 $contrib2->contrib_type_ids(2,4);
 
 $contrib2->save();
 
-my @contrib_object2 = pkg('Contrib')->find( full_name => 'matt vella' );
+my @contrib_object2 = pkg('Contrib')->find( simple_search => 'matt vella' );
 
 my $contrib3 = $contrib_object2[0];
 
-is($contrib3->contrib_id, $contrib_id);
+is($contrib3->contrib_id, $contrib_id, 'Krang::Contrib->contrib_id()');
 
 # test count
-my $count = pkg('Contrib')->find( full_name => 'matt vella',
+my $count = pkg('Contrib')->find( simple_search => 'matt vella',
                                   count     => 1 );
-is($count, 1);
+is($count, 1, 'Krang::Contrib->find(simple_search => STRING, count => 1');
 
 
 # Test ability to make a change to an existing record and save()
@@ -92,26 +92,26 @@ $contrib2->save();
 
 # Has contrib2 been updated in database?
 my ($contrib2loaded) = pkg('Contrib')->find( contrib_id => $contrib2->contrib_id() );
-is($contrib2loaded->first(), 'George1234');
+is($contrib2loaded->first(), 'George1234', 'update contrib');
 
 
 ## Test simple_search()
 #
 # Should find one
 my @ss_contribs = pkg('Contrib')->find(simple_search=>'George1234 Vella');
-is(scalar(@ss_contribs), 1);
+is(scalar(@ss_contribs), 1, 'Krang::Contrib->find(simple_search => FIRST LAST)');
 
 # Should find one
 @ss_contribs = pkg('Contrib')->find(simple_search=>'George1234');
-is(scalar(@ss_contribs), 1);
+is(scalar(@ss_contribs), 1, 'Krang::Contrib->(simple_search => FIRST)');
 
 # Should find one
 @ss_contribs = pkg('Contrib')->find(simple_search=>'Vella');
-is(scalar(@ss_contribs), 1);
+is(scalar(@ss_contribs), 1, 'Krang::Contrib->(simple_search => LAST)');
 
 # Should find NONE
 @ss_contribs = pkg('Contrib')->find(simple_search=>'George1234 Carlin');
-is(scalar(@ss_contribs), 0);
+is(scalar(@ss_contribs), 0, 'Krang::Contrib->(simple_search => WRONG STRING');
 
 # Clean up added contrib
 $contrib2->delete();
@@ -122,32 +122,47 @@ push(@contribs,
      pkg('Contrib')->new(first => 'Bohemia', last => 'Bolger'),
      pkg('Contrib')->new(first => 'Alvin', last => 'Arthur'),
      pkg('Contrib')->new(first => 'Conifer', last => 'Caligula'));
-$_->contrib_type_ids(1) for @contribs;
+for (my $i=0; $i<3; $i++) {
+    $contribs[$i]->contrib_type_ids($i+1);
+}
 $_->save for @contribs;
 END { $_->delete for @contribs };
 my %ids = map { $_->contrib_id, 1 } @contribs;
 
 my @results = grep { $ids{$_->contrib_id} } 
   pkg('Contrib')->find(order_by => 'first');
-is(@results, 3);
-is($results[0]->contrib_id, $contribs[1]->contrib_id);
-is($results[1]->contrib_id, $contribs[0]->contrib_id);
-is($results[2]->contrib_id, $contribs[2]->contrib_id);
+is(@results, 3, 'Krang::Contrib->find(order_by => first) result count');
+is($results[0]->contrib_id, $contribs[1]->contrib_id, "Krang::Contrib->find(order_by => 'first')");
+is($results[1]->contrib_id, $contribs[0]->contrib_id, "Krang::Contrib->find(order_by => 'first')");
+is($results[2]->contrib_id, $contribs[2]->contrib_id, "Krang::Contrib->find(order_by => 'first')");
 
 @results = grep { $ids{$_->contrib_id} } 
   pkg('Contrib')->find(order_by => 'first', order_desc => 1);
-is(@results, 3);
-is($results[2]->contrib_id, $contribs[1]->contrib_id);
-is($results[1]->contrib_id, $contribs[0]->contrib_id);
-is($results[0]->contrib_id, $contribs[2]->contrib_id);
+is(@results, 3, "Krang::Contrib->find(order_by => type, order_desc => 1) result count");
+is($results[2]->contrib_id, $contribs[1]->contrib_id, "Krang::Contrib->find(order_by => 'first', order_desc => 1)");
+is($results[1]->contrib_id, $contribs[0]->contrib_id, "Krang::Contrib->find(order_by => 'first', order_desc => 1)");
+is($results[0]->contrib_id, $contribs[2]->contrib_id, "Krang::Contrib->find(order_by => 'first', order_desc => 1)");
 
 @results = grep { $ids{$_->contrib_id} } 
   pkg('Contrib')->find(order_by => 'last,first', order_desc => 1);
-is(@results, 3);
-is($results[2]->contrib_id, $contribs[1]->contrib_id);
-is($results[1]->contrib_id, $contribs[0]->contrib_id);
-is($results[0]->contrib_id, $contribs[2]->contrib_id);
+is(@results, 3, 'Krang::Contrib->find(order_by => type, order_desc => 1) result count');
+is($results[2]->contrib_id, $contribs[1]->contrib_id, "Krang::Contrib->find(order_by => 'last,first', order_desc => 1)");
+is($results[1]->contrib_id, $contribs[0]->contrib_id, "Krang::Contrib->find(order_by => 'last,first', order_desc => 1)");
+is($results[0]->contrib_id, $contribs[2]->contrib_id, "Krang::Contrib->find(order_by => 'last,first', order_desc => 1)");
 
+@results = grep { $ids{$_->contrib_id} }
+  pkg('Contrib')->find(order_by => 'type', order_desc => 1);
+is(@results, 3, 'Krang::Contrib->find(order_by => type, order_desc => 1) result count');
+for (my $i=0; $i<3; $i++) {
+    is($results[$i]->contrib_type_names, $contribs[$i]->contrib_type_names, "Krang::Contrib->find(order_by => 'type', order_desc => 1)");
+}
+
+@results = grep { $ids{$_->contrib_id} }
+  pkg('Contrib')->find(order_by => 'type', order_desc => 0);
+is(@results, 3, 'Number of find() results');
+for (my $i=0; $i<3; $i++) {
+    is($results[$i]->contrib_type_names, $contribs[$i]->contrib_type_names, "Krang::Contrib->find(order_by => 'type', order_desc => 0)");
+}
 
 # Test exclude_contrib_ids: Filter set of contribs based on ID
 {
