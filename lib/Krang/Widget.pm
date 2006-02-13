@@ -698,13 +698,52 @@ sub format_url {
 }
 
 
+=item $chooser_html = template_chooser(name => 'category_id', query => $query)
+
+Returns a block of HTML implementing the standard Krang template
+chooser.
+
+Available parameters are as follows:
+
+  name     - (required) Unique name of the chooser.  If you have multiple
+             choosers on the same page then they must have different
+             names.  Must be alphanumeric.
+
+  query    - (required) The CGI.pm query object for this request.
+
+  field    - The form field which will be set to the template_id of the
+             choosen category.  Defaults to the value set for C<name>
+             if not set.
+
+  onchange - can be set to the name of a javascript function
+             that will be called when the user picks a category.  
+
+  label    - change the label on the button which defaults to 'Choose'. 
+
+  display  - setting to false will supress displaying the chosen 
+             template name next to the button.
+
+  formname - the name of the form in which the chooser appears.  If 
+             not specified, will default to the first form in your 
+             HTML document.
+
+  title    - the title on the chooser window.  Defaults to 'Choose a 
+             Template'.
+
+  persistkey - Hash key that indicates where in the session hash to
+               look for a pre-existing value.
+
+The template for the category chooser is located in
+F<Widget/template_chooser.tmpl>.
+
+=cut
 
 sub template_chooser {
     my %args = @_;
-    my ($name, $query, $label, $display, $onchange, $formname, $site_id,
-        $field, $title, $may_see, $may_edit, $persistkey) =
-	  @args{qw(name query label display onchange formname site_id
-               field title may_see may_edit persistkey)};
+    my ($name, $query, $label, $display, $onchange, $formname,
+        $field, $title, $persistkey) =
+	  @args{qw(name query label display onchange formname
+               field title persistkey)};
 
     croak("Missing required args: name and query")
       unless $name and $query;
@@ -734,33 +773,21 @@ sub template_chooser {
       $query->param($field) if defined($query->param($field));
 
     # get element names
-    my @stack = map{ pkg('ElementLibrary')->top_level(name => $_) }
+    my @elements = map{ [pkg('ElementLibrary')->top_level(name => $_) => '']}
 	          reverse pkg('ElementLibrary')->top_levels;
 
     # get existing templates
     my %exists = map{ s/\.tmpl//; $_ => 1 }
                  map{ $_->filename } pkg('Template')->find;
 
-    # filters
-    my %seen = ();
-    my @parent = ();
-
     # root node
     my $data = { children => [], label => '', open => 1 };
 
     # build element tree
-    while (@stack) {
-	my $class  = pop(@stack);
-	my $parent = pop(@parent);
-
+    while (@elements) {
+	my ($class, $parent) = @{pop(@elements)};
 	my $parent_node = $parent ? $parent : $data;
-
 	my $element = $class->name;
-
-	# elements already seen further up the tree are colored in yellow
-	if ($seen{$element}++) {
-	    $element = '<span class="tmpl_chooser_seen">'. $class->name .'</span>';
-	}
 
 	# elements for which a template already exists are colored in green
 	if ($exists{$element}) {
@@ -775,8 +802,7 @@ sub template_chooser {
 	push @{$parent_node->{children}}, $child;
 
 	if (my @children = $class->children) {
-	    push(@stack, sort{$b->name cmp $a->name} @children);
-	    push(@parent, map { $child } (0..$#children));
+	    push(@elements, map{ [$_ => $child] } sort{$b->name cmp $a->name} @children);
 	}
     }
 
