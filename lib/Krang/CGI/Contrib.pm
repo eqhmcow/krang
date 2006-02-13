@@ -141,6 +141,10 @@ sub search {
     # Do simple search based on search field
     my $search_filter = $q->param('search_filter') || '';
 
+    # We need order_by count when counting based on contrib type
+    my $order_by = $q->param('krang_pager_sort_field')
+      if $q->param('krang_pager_sort_field') and $q->param('krang_pager_sort_field') eq 'type';
+
     # Configure pager
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
@@ -149,14 +153,15 @@ sub search {
                                                        search_filter => $search_filter,
                                                       },
                                       use_module => pkg('Contrib'),
-                                      find_params => { simple_search => $search_filter },
+                                      find_params => { simple_search => $search_filter,
+                                                       order_by => $order_by},
                                       columns => [qw(last first_middle type command_column checkbox_column)],
                                       column_labels => {
                                                         last => 'Last Name',
                                                         first_middle => 'First, Middle Name',
                                                         type => 'Types',
                                                        },
-                                      columns_sortable => [qw( last first_middle )],
+                                      columns_sortable => [qw( last first_middle type )],
                                       columns_sort_map => {first_middle => 'first,middle'},
                                       command_column_commands => [qw( edit_contrib )],
                                       command_column_labels => {edit_contrib => 'Edit'},
@@ -330,7 +335,6 @@ sub associate_search {
     } keys(%associated_contrib_filter) );
 
     # Make pager
-    my %contrib_type_prefs = pkg('Pref')->get('contrib_type');
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => {
@@ -355,7 +359,7 @@ sub associate_search {
                                           $self->list_view_ass_contrib_row_handler(
                                                                                    @_, 
                                                                                    \%associated_contrib_filter,
-                                                                                   \%contrib_type_prefs,
+                                                                                   \%contrib_types,
                                                                                   );
                                       },
                                       id_handler => sub { return 0; },
