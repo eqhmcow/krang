@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added documentation for Krang::Widget::template_chooser() and cleaned
+up template_chooser code. [Bodo Schulze]
+
+=item *
+
 Added tests for scalar methods admin_categories_ftp and admin_lists to
 t/group.t [Bodo Schulze]
 
