@@ -28,5 +28,5 @@ my $chooser = template_chooser(name => 'name', query => CGI->new);
 
 # check if the chooser offers all elements
 for my $element (pkg('ElementLibrary')->element_names) {
-    like($chooser, qr/$element/, "templae_chooser offers element '$element'");
+    like($chooser, qr/$element/, "template_chooser offers element '$element'");
 }
