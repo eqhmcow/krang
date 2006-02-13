@@ -9,6 +9,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In admin contrib list view, made type column sortable. [Bodo Schulze]
+
+=item *
+
+For Krang::History, allow Krang::Story, Krang::Media and
+Krang::Template to be overlayed with addon modules. [Bodo Schulze]
+
+=item *
+
 Added documentation for Krang::Widget::template_chooser() and cleaned
 up template_chooser code. [Bodo Schulze]
 
