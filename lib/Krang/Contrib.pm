@@ -312,10 +312,6 @@ last
 
 =item *
 
-full_name - will search first, middle, last for matching LIKE strings
-
-=item *
-
 simple_search - will search first, middle, last for matching LIKE strings
 
 =item *
@@ -368,7 +364,6 @@ sub find {
     my %valid_params = ( contrib_id => 1,
                          first => 1,
                          last => 1,
-                         full_name => 1,
                          simple_search => 1,
                          exclude_contrib_ids => 1,
                          order_by => 1,
@@ -411,23 +406,9 @@ not $valid_params{$param};
 
         # Append to SQL where clause
         $where_string .= " and " if ($where_string);
-        $where_string .= "contrib_id NOT IN ($exclude_contrib_ids_sql_set)";
+        $where_string .= "contrib.contrib_id NOT IN ($exclude_contrib_ids_sql_set)";
     }
 
-    # full_name: add like search on first, last, middle for all full_name words
-    if ($args{'full_name'}) {
-        my @words = split(/\s+/, $args{'full_name'});
-        foreach my $word (@words) {
-            if ($where_string) {
-               $where_string .= " and concat_ws(' ', first, middle, last) like ?"; 
-            } else {
-                $where_string = "concat_ws(' ', first, middle, last) like ?";
-            }
-            push (@where, $word);
-            $args{$word} = "%$word%";
-        }
-    } 
-    
     # simple_search: add like search on first, last, middle for all simple_search words
     if ($args{'simple_search'}) {
         my @words = split(/\s+/, $args{'simple_search'});
@@ -448,10 +429,23 @@ not $valid_params{$param};
     } elsif ($args{'ids_only'}) {
         $select_string = 'contrib_id';
     } else {
-        $select_string = join(',', FIELDS);
+	my @fields = FIELDS;
+        $select_string = 'contrib.contrib_id,' . join(',', splice(@fields,1));
     }
 
-    my $sql = "select $select_string from contrib";
+    my $from = 'contrib';
+
+    # Order by type needs data from tables 'contrib_type' and 'contrib_contrib_type'
+    if ($args{'order_by'} eq 'type') {
+	$order_by .= ', last asc, first asc';
+	$select_string .= ", contrib_type.contrib_type_id as contrib_type_id" unless $args{count};
+	$where_string .= " and " if ($where_string);
+	$where_string .= "contrib.contrib_id = contrib_contrib_type.contrib_id"
+	  . " and contrib_type.contrib_type_id = contrib_contrib_type.contrib_type_id";
+	$from .= ', contrib_type, contrib_contrib_type';
+    }
+
+    my $sql = "select $select_string from $from";
     $sql .= " where ".$where_string if $where_string;
     $sql .= " order by $order_by ";
     
@@ -475,10 +469,14 @@ not $valid_params{$param};
             %$obj = %$row;
 
             # load contrib_type ids
-            my $result = $dbh->selectcol_arrayref(
-                          'SELECT contrib_type_id FROM contrib_contrib_type
+	    if ($obj->{contrib_type_id}) {
+		$obj->{contrib_type_ids} = [ $obj->{contrib_type_id} ];
+	    } else {
+		my $result = $dbh->selectcol_arrayref(
+		          'SELECT contrib_type_id FROM contrib_contrib_type
                            WHERE contrib_id = ?', undef, $obj->{contrib_id});
-            $obj->{contrib_type_ids} = $result || [];
+		$obj->{contrib_type_ids} = $result || [];
+	    }
         }
         push (@contrib_object,$obj);
     }
