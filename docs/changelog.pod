@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added tests for scalar methods admin_categories_ftp and admin_lists to
+t/group.t [Bodo Schulze]
+
+=item *
+
 Added new primitive, Krang::ElementClass::CheckBoxGroup, 
 which integrates with Krang's lists system, in addition
 to permitting simple values.  [Jesse Erlbaum]
