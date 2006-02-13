@@ -97,24 +97,26 @@ foreach my $desk (@all_desks) {
 
 # Create a new group object with params
 my %test_params = ( name => 'Car Editors',
-                    categories          => { 1 => 'read-only', 
-                                             2 => 'edit', 
-                                             23 => 'hide' },
-                    desks               => { },
-                    may_publish         => 1,
-                    may_checkin_all     => 1,
-                    admin_users         => 1,
-                    admin_users_limited => 1,
-                    admin_groups        => 1,
-                    admin_contribs      => 1,
-                    admin_sites         => 1,
-                    admin_categories    => 1,
-                    admin_jobs          => 1,
-                    admin_scheduler     => 1,
-                    admin_desks         => 1,
-                    asset_story         => 'edit',
-                    asset_media         => 'read-only',
-                    asset_template      => 'hide' );
+                    categories           => { 1 => 'read-only', 
+					      2 => 'edit', 
+					      23 => 'hide' },
+                    desks                => { },
+                    may_publish          => 1,
+                    may_checkin_all      => 1,
+                    admin_users          => 1,
+                    admin_users_limited  => 1,
+                    admin_groups         => 1,
+                    admin_contribs       => 1,
+                    admin_sites          => 1,
+                    admin_categories     => 1,
+                    admin_categories_ftp => 1,
+                    admin_jobs           => 1,
+                    admin_scheduler      => 1,
+                    admin_desks          => 1,
+                    admin_lists          => 1,
+                    asset_story          => 'edit',
+                    asset_media          => 'read-only',
+                    asset_template       => 'hide' );
 
 $group = 0;
 eval { $group = pkg('Group')->new(%test_params) };
@@ -139,9 +141,11 @@ my @scalar_params = qw( name
                         admin_contribs
                         admin_sites
                         admin_categories
+                        admin_categories_ftp
                         admin_jobs
                         admin_scheduler
                         admin_desks
+                        admin_lists
                         asset_story
                         asset_media
                         asset_template );
