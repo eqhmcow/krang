@@ -20,7 +20,7 @@ use Time::Piece::MySQL;
 
 # constants
 use constant FIELDS => qw( object_type object_id action version desk_id user_id timestamp );
-use constant OBJECT_TYPES => qw( Krang::Story Krang::Media Krang::Template );
+use constant OBJECT_TYPES => qw( Story Media Template );
 use constant ACTIONS => qw( new save checkin checkout publish deploy undeploy move revert delete);
 
 =head1 NAME
@@ -96,7 +96,7 @@ sub _save {
     my $dbh = dbh;
 
     # check for valid object type and valid action
-    my %valid_types = map {$_ => 1} OBJECT_TYPES;
+    my %valid_types = map {pkg($_) => 1} OBJECT_TYPES;
     my %valid_actions = map {$_ => 1} ACTIONS;
     my @invalid;
 
@@ -136,7 +136,7 @@ sub add_history {
     my $object_type = ref $object;
     $history->{object_type} = $object_type;
   
-    my $object_id_type = lc((split('::', $object_type))[1]).'_id'; 
+    my $object_id_type = lc((split('::', $object_type))[-1]).'_id'; 
     $history->{object_id} = $object->$object_id_type; 
     $history->_save();
 
@@ -147,7 +147,7 @@ sub add_history {
     info(__PACKAGE__." - ".$info_string);
 
     # check if should trigger alert
-    if ($object_type eq 'Krang::Story') {
+    if ($object_type eq pkg('Story')) {
         pkg('Alert')->check_alert( history => $history, story => $object);
     }
 }
@@ -200,7 +200,7 @@ sub find {
 
     $args{object_type} = ref $object;
     
-    my $object_id_type = lc((split('::', $args{object_type}))[1]).'_id';
+    my $object_id_type = lc((split('::', $args{object_type}))[-1]).'_id';
     $args{object_id} = $object->$object_id_type;
 
 
@@ -278,7 +278,7 @@ sub delete {
     my $object = delete $args{'object'};
     my $object_type = ref $object;
 
-    my $object_id_type = lc((split('::', $object_type))[1]).'_id';
+    my $object_id_type = lc((split('::', $object_type))[-1]).'_id';
     my $object_id = $object->$object_id_type;
 
     $dbh->do('DELETE from history where object_id = ? and object_type = ?', undef, $object_id, $object_type);
