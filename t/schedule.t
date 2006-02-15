@@ -113,8 +113,6 @@ my $media = $creator->create_media(category => $category);
 $creator->undeploy_live_templates();
 $creator->deploy_test_templates();
 
-
-
 END {
     foreach (@schedules) {
         is($_->delete, 1, 'Krang::Schedule->delete()');
@@ -499,6 +497,8 @@ push @schedules, $sched;
 eval { $sched->execute(); };
 
 $@ ? fail('Krang::Schedule::Action::publish->execute()') : pass('Krang::Schedule::Action::publish->execute()');
+diag($@) if $@;
+
 
 # check to see if the stories exist
 my @story_paths = $creator->publish_paths(story => $story);

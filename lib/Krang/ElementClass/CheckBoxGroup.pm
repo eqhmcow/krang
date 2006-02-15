@@ -206,6 +206,25 @@ sub thaw_data_xml {
 }
 
 
+sub template_data {
+    my ($self, %arg) = @_;
+    my $element = $arg{element};
+
+    # No data?
+    return "" unless $element->data;
+
+    # Ripped from ListGroup
+    my @chosen;
+    foreach my $e (@{$element->data}) {
+        my $i = (pkg('ListItem')->find( list_item_id => $e ))[0] || '';
+        push(@chosen, $i->data) if $i;
+    }
+    return join(', ', @chosen);
+}
+
+
+
+
 =head1 NAME
 
 Krang::ElementClass::CheckBoxGroup - checkbox group element class
