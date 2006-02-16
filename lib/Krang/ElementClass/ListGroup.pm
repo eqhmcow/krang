@@ -5,6 +5,10 @@ use warnings;
 
 use Krang::ClassLoader base => 'ElementClass::Storable';
 use Krang::ClassLoader Log => qw(debug info);
+use Krang::ClassLoader 'ListGroup';
+use Krang::ClassLoader 'List';
+use Krang::ClassLoader 'ListItem';
+
 use Carp qw(croak);
 
 use Krang::ClassLoader MethodMaker => 
@@ -34,10 +38,6 @@ sub input_form {
     my ($param) = $self->param_names(element => $element);
 
     my $jparam;
-
-    eval "require " . pkg('ListGroup') or die $@;
-    eval "require " . pkg('List')      or die $@;
-    eval "require " . pkg('ListItem')  or die $@;
 
     my ($lg) = pkg('ListGroup')->find( name => $self->list_group() );
 
@@ -232,7 +232,7 @@ sub template_data {
     my ($self, %arg) = @_;
     my $element = $arg{element};
     return "" unless $element->data;
-    eval "require " . pkg('ListItem') or die $@;
+
     my @chosen;
     foreach my $e (@{$element->data}) {
         my $i = (pkg('ListItem')->find( list_item_id => $e ))[0] || '';
@@ -266,7 +266,7 @@ sub view_data {
     my ($self, %arg) = @_;
     my $element = $arg{element};
     return "" unless $element->data;
-    eval "require " . pkg('ListItem') or die $@;
+
     my @chosen; 
     foreach my $e (@{$element->data}) {
         my $i = (pkg('ListItem')->find( list_item_id => $e ))[0] || '';
