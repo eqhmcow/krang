@@ -104,6 +104,8 @@ sub _clean_tmp {
     for (readdir DIR) {
         # skip the protected files
         next if $_ =~ /(CVS|\.{1,2}|\.(conf|cvsignore|pid))$/;
+        # skip the SSL files
+        next if $_ =~ /^ssl_/;
 
         # skip them if they're too young
         my $file = catfile($tmp_path, $_);
