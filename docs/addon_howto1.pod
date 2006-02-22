@@ -34,7 +34,7 @@ code-name for my project:
 This produces a basic C<krang_addon.conf> in the new C<addons/arcos/>
 directory.   Here it is, minus comments:
 
-  Name Foo
+  Name arcos
   Version 1.00
 
 =head2 Adding Entries to Krang's Navigation
