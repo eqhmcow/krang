@@ -44,8 +44,9 @@ will be created in the CMS, instead of skipped.  [Jesse Erlbaum]
 
 =item *
 
-Fixed bug in Krang::ElementClass::ListGroup where ListItem would not be
-added to DataSet.  [Jesse Erlbaum]
+Fixed bug in Krang::ElementClass::ListGroup and Krang::ElementClass::RadioGroup 
+such that associated ListItems will now be automatically added to the 
+DataSet.  [Jesse Erlbaum]
 
 =item *
 

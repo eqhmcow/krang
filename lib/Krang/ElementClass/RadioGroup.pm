@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass';
+
+use Krang::ClassLoader Log => qw(debug info);
 use Krang::ClassLoader 'ListGroup';
 use Krang::ClassLoader 'List';
 use Krang::ClassLoader 'ListItem';
@@ -76,6 +78,59 @@ sub input_form {
     $html .= "</tr>\n</table\n>";
 
     return $html;
+}
+
+
+# do the normal XML serialization, but also include the linked list_item
+# object in the dataset
+sub freeze_data_xml {
+    my ($self, %arg) = @_;
+    my ($element, $writer, $set) = @arg{qw(element writer set)};
+
+    # add list item object, IF we're in list_group mode
+    if (my $lg_name = $self->list_group) {
+        my $list_item_id = $element->data;
+        my ($li) = pkg('ListItem')->find(list_item_id=>$list_item_id);
+        unless ($li) {
+            info ("Can't find list item for list_item_id '". ($list_item_id || "") ."'.  Dropping it from KDS.");
+            # Clear out data if we don't have an element
+            $element->data(undef);
+        } else {
+            # Debugging
+            my $element_id = $element->element_id();
+            debug ("Adding list_item_id '$list_item_id' associated with element_id '$element_id' to KDS");
+
+            # Add to set
+            $set->add(object => $li, from => $element->object);
+        }
+    }
+
+    # Write XML for this element
+    $self->SUPER::freeze_data_xml(%arg);
+}
+
+
+# translate the incoming list_item_id into a real ID
+sub thaw_data_xml {
+    my ($self, %arg) = @_;
+    my ($element, $data, $set) = @arg{qw(element data set)};
+
+    $self->thaw_data(element => $element, data => $data->[0]);
+
+    # Return now unless we're in list_group mode
+    return unless ($self->list_group);
+
+    # If this is a listgroup-based element...
+    # Expect an arrayref of IDs.  Map these to new IDs.  Set as arrayref in data()
+    my $list_item_id = $element->data();
+
+    # Bail if we have no data
+    return unless defined $list_item_id;
+
+    my $real_list_item_id = $set->map_id( class => pkg('ListItem'),
+                                          id    => $list_item_id );
+    debug ("Mapping list_item_id $list_item_id => $real_list_item_id");
+    $element->data($real_list_item_id);
 }
 
 

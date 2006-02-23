@@ -80,7 +80,9 @@ sub new {
                                                                    cynical    => "Cynical" },
                                                        columns => 2 ),
 
-                  Krang::ElementClass::RadioGroup->new(name => 'cost',
+                  Krang::ElementClass::RadioGroup->new(name => 'radio_cost',
+                                                       min          => 1,
+                                                       max          => 1,
                                                        list_group => 'Cost',
                                                        columns => 2 ),
 

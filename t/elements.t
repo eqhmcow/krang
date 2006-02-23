@@ -56,7 +56,7 @@ SKIP: {
       unless (InstanceElementSet eq 'TestSet1');
 
 my @children = $element->children();
-is(@children, 8);
+is(@children, 9);
 is($children[0]->name, "issue_date");
 is($children[1]->name, "deck");
 is($children[2]->name, "cbg_values");
@@ -64,14 +64,15 @@ is($children[3]->name, "cbg_listgroup");
 is($children[4]->name, "cbg_listgroup_2");
 is($children[5]->name, "auto_segments");
 is($children[6]->name, "fancy_keyword");
-is($children[7]->name, "page");
+is($children[7]->name, "radio_cost");
+is($children[8]->name, "page");
 
 # try push on another deck, should fail
 eval { $element->add_child(class => "deck") };
 like($@, qr/Unable to add another/);
 
 # poke around with page
-my $page = ($element->children())[7];
+my $page = ($element->children())[8];
 isa_ok($page, "Krang::Element");
 is($page->name, $page->class->name);
 is($page->display_name, "Page");
@@ -128,7 +129,7 @@ eval <<END;
   foreach_element { \$count++ } \$element;
 END
 die $@ if $@;
-is($count, 16);
+is($count, 17);
 
 # save to DB
 $element->save();
@@ -151,16 +152,17 @@ my $loaded = pkg('Element')->load(element_id => $element_id, object => $story);
 isa_ok($loaded, 'Krang::Element');
 is($loaded->name, "article");
 @children = $loaded->children();
-is(@children, 8);
+is(@children, 9);
 is($children[0]->name, "issue_date");
 is($children[1]->name, "deck");
 is($children[2]->name, "cbg_values");
 is($children[3]->name, "cbg_listgroup");
 is($children[4]->name, "cbg_listgroup_2");
 is($children[5]->name, "auto_segments");
-is($children[6]->name, "page");
+is($children[6]->name, "radio_cost");
 is($children[7]->name, "page");
-my $lpage = $children[7];
+is($children[8]->name, "page");
+my $lpage = $children[8];
 my $x = 0;
 foreach my $para ($lpage->children) {
     if ($x > 1) {
@@ -173,27 +175,29 @@ foreach my $para ($lpage->children) {
 # try some reordering
 $loaded->reorder_children(reverse($loaded->children));
 @children = $loaded->children();
-is(@children, 8);
-is($children[7]->name, "issue_date");
-is($children[6]->name, "deck");
-is($children[5]->name, "cbg_values");
-is($children[4]->name, "cbg_listgroup");
-is($children[3]->name, "cbg_listgroup_2");
-is($children[2]->name, "auto_segments");
+is(@children, 9);
+is($children[8]->name, "issue_date");
+is($children[7]->name, "deck");
+is($children[6]->name, "cbg_values");
+is($children[5]->name, "cbg_listgroup");
+is($children[4]->name, "cbg_listgroup_2");
+is($children[3]->name, "auto_segments");
+is($children[2]->name, "radio_cost");
 is($children[1]->name, "page");
 is($children[0]->name, "page");
 
 $loaded->reorder_children(reverse(0 .. $loaded->children_count - 1));
 @children = $loaded->children();
-is(@children, 8);
+is(@children, 9);
 is($children[0]->name, "issue_date");
 is($children[1]->name, "deck");
 is($children[2]->name, "cbg_values");
 is($children[3]->name, "cbg_listgroup");
 is($children[4]->name, "cbg_listgroup_2");
 is($children[5]->name, "auto_segments");
-is($children[6]->name, "page");
+is($children[6]->name, "radio_cost");
 is($children[7]->name, "page");
+is($children[8]->name, "page");
 
 # prepare to check that delete_hook is working
 my $delete_count = $TestSet1::article::DELETE_COUNT;
