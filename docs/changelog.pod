@@ -9,6 +9,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Allow multiple word action names in admin scheduler. [Bodo Schulze]
+
+=item *
+
 In admin contrib list view, made type column sortable. [Bodo Schulze]
 
 =item *

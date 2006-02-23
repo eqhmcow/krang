@@ -44,7 +44,7 @@ BEGIN {
 
     %ADMIN_ACTION_LABELS =
         map {
-            $_ => ucfirst($_)
+            $_ => join(' ', (map { ucfirst($_) } split /_/, $_))
         }
         map {
             $_->conf()->get('AdminSchedulerActionList')
