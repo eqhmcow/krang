@@ -23,8 +23,13 @@ END { $lazy->uninstall }
 isa_ok($lazy, 'Krang::AddOn');
 
 # run story.t to see if the story tests still pass with the addon installed
-{ 
+eval { 
     local $ENV{SUB_TEST} = 1;
     my $story_t = catfile(pkg('Conf')->get('KrangRoot'), 't', 'story.t');
     do $story_t or die "Unable to run story.t: $! $@";
-}
+};
+
+ok(not($@), "story.t ran with LazyLoader add-on installed");
+diag($@) if ($@);
+
+

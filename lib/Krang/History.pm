@@ -95,16 +95,17 @@ sub _save {
     my $self = shift;
     my $dbh = dbh;
 
-    # check for valid object type and valid action
-    my %valid_types = map {pkg($_) => 1} OBJECT_TYPES;
-    my %valid_actions = map {$_ => 1} ACTIONS;
-    my @invalid;
+    # Valid object type?
+    my $object_type = $self->{object_type};
+    my @valid_object_types = OBJECT_TYPES;
+    croak ("Invalid object type '$object_type' (expecting: ". join(", ", @valid_object_types) .")") 
+      unless (grep { pkg($_) eq $object_type } @valid_object_types);
 
-    push @invalid, $self->{object_type} unless exists $valid_types{$self->{object_type}};
-    push @invalid, $self->{action} unless exists $valid_actions{$self->{action}};
-
-    croak("The following parameters are invalid: '" .
-          join("', '", @invalid) . "'") if @invalid;
+    # Valid action?
+    my $action = $self->{action};
+    my @valid_actions = ACTIONS;
+    croak ("Invalid action '$action' (expecting: ". join(", ", @valid_actions) .")") 
+      unless (grep { $_ eq $action } @valid_actions);
 
     my $time = localtime();   
     $self->{timestamp} = $time->mysql_datetime();
