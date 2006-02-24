@@ -20,7 +20,7 @@ use Time::Piece::MySQL;
 
 # constants
 use constant FIELDS => qw( object_type object_id action version desk_id user_id timestamp );
-use constant OBJECT_TYPES => qw( Story Media Template );
+use constant OBJECT_TYPES => qw( Krang::Story Krang::Media Krang::Template );
 use constant ACTIONS => qw( new save checkin checkout publish deploy undeploy move revert delete);
 
 =head1 NAME
@@ -99,7 +99,7 @@ sub _save {
     my $object_type = $self->{object_type};
     my @valid_object_types = OBJECT_TYPES;
     croak ("Invalid object type '$object_type' (expecting: ". join(", ", @valid_object_types) .")") 
-      unless (grep { pkg($_) eq $object_type } @valid_object_types);
+      unless (grep { $object_type->isa($_) } @valid_object_types);
 
     # Valid action?
     my $action = $self->{action};
