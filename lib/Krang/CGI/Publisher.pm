@@ -494,7 +494,7 @@ sub preview_media {
         } else {
             # something not expected so log the error.  Can't croak()
             # here because that will trigger bug.pl.
-            push(@error_loop, 'An internal server error occurred.  Please check the error logs for details.');
+            push(@error_loop, {err => 'An internal server error occurred.  Please check the error logs for details.'});
             critical($e);
         }
 
