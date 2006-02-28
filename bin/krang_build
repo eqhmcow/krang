@@ -68,6 +68,12 @@ Same as C<module> above, but skips the specified modules and builds
 everything else.  The C<module> and C<skip-module> options are not
 intended to be used together.
 
+=item --no-modules
+
+Similar to C<skip-module> except that you don't have to specify the modules
+to skip as all of them will be skipped. This cannot be using in conjunction
+with C<module>.
+
 =item --rebuild
 
 Build even if there is already an existing Krang build in this location.
@@ -120,9 +126,10 @@ my $MM_BIN       = catfile($KrangRoot, 'apache', 'mm');
 my $LIBAPREQ     = 'libapreq';
 
 # options
-my $skip_apache = 0;
-my $with_ssl    = 0;
-my $ssl_base    = '';
+my $skip_apache      = 0;
+my $skip_all_modules = 0;
+my $with_ssl         = 0;
+my $ssl_base         = '';
 my ( @modules, @skip_modules, $rebuild, $help, $man );
 GetOptions(
        'no-apache'      => \$skip_apache,
@@ -130,6 +137,7 @@ GetOptions(
        'with-openssl=s' => \$ssl_base,
        'module=s'       => \@modules,
        'skip-module=s'  => \@skip_modules,
+       'no-modules'     => \$skip_all_modules,
        'rebuild'        => \$rebuild,
        'help'           => \$help,
        'man'            => \$man,
@@ -153,12 +161,12 @@ while (my $f = readdir DIR) {
 #my @platforms = grep { $_ !~ /^\.\.?$/ and $_ !~ /CVS/ } sort readdir DIR;
 
 # do we just want to rebuild some modules
-if (@modules) {
+if (!$skip_all_modules && @modules) {
     $rebuild = 1;
     $skip_apache = 1;
     my %modules = map { $_ => 1 } @modules;
     foreach my $required qw(Expect IO-Tty) {
-	push @modules, $required unless $modules{$required};
+        push @modules, $required unless $modules{$required};
     }
 }
 
@@ -207,39 +215,42 @@ die "Unable to load platform modules '$pkg': $@\n" if $@;
 # verify the platform
 $pkg->verify_dependencies(mode => 'build');
 
-# get list of files to build, considering --module and --skip-module opts
+# get list of files to build, considering --module, --skip-module and --no-module opts
 opendir( SRC, $src_dir ) or die "Can't open $src_dir for reading: $!";
-my @files = sort readdir(SRC);
+my @files;
+unless( $skip_all_modules ) {
+    @files = sort readdir(SRC);
 
-if (@modules) {
-    @files = grep { contains( \@modules, $_ ) } @files;
-} elsif (@skip_modules) {
-    @files = grep { !contains( \@skip_modules, $_ ) } @files;
-}
+    if (@modules) {
+        @files = grep { contains( \@modules, $_ ) } @files;
+    } elsif (@skip_modules) {
+        @files = grep { !contains( \@skip_modules, $_ ) } @files;
+    }
 
-# shuffle some to the back to get proper build order
-foreach my $distribution qw(DBD-mysql Image-BioChrome) {
-    my ($file) = grep( /$distribution/, @files );
-    @files = grep( !/$distribution/, @files );
-    push @files, $file if $file;
-}
+    # shuffle some to the back to get proper build order
+    foreach my $distribution qw(DBD-mysql Image-BioChrome) {
+        my ($file) = grep( /$distribution/, @files );
+        @files = grep( !/$distribution/, @files );
+        push @files, $file if $file;
+    }
 
-# shuffle Expect, IO-Tty, Test-Harness and Test-Simple to the front
-# since they're needed by later build steps
-foreach my $distribution qw(Module-Build Test-Simple Test-Harness Expect IO-Tty) {
-    my ($file) = grep( /$distribution/, @files );
-    @files = grep( !/$distribution/, @files );
-    unshift @files, $file if $file;
-}
+    # shuffle Expect, IO-Tty, Test-Harness and Test-Simple to the front
+    # since they're needed by later build steps
+    foreach my $distribution qw(Module-Build Test-Simple Test-Harness Expect IO-Tty) {
+        my ($file) = grep( /$distribution/, @files );
+        @files = grep( !/$distribution/, @files );
+        unshift @files, $file if $file;
+    }
 
-# loop through files, unpacking and calling build_perl_module()
-foreach my $file (@files) {
-    next unless $file =~ /gz$/;
+    # loop through files, unpacking and calling build_perl_module()
+    foreach my $file (@files) {
+        next unless $file =~ /gz$/;
 
-    # wait to build libapreq till after building Apache
-    next if $file =~ /^$LIBAPREQ/o;
+        # wait to build libapreq till after building Apache
+        next if $file =~ /^$LIBAPREQ/o;
 
-    build_module($file);
+        build_module($file);
+    }
 }
 
 # build Apache/mod_perl
