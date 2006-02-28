@@ -892,7 +892,7 @@ sub guess_platform {
 =item C<build_params()>
 
 Reads the F<data/build.db> file produced by C<krang_build> and returns
-a hash of the values available (Platform, Perl, Arch).
+a hash of the values available (Platform, Perl, Arch, SSL).
 
 =cut
 
@@ -906,7 +906,7 @@ sub build_params {
     # caller isn't running the right architecture then it will fail to
     # load.  So, fall back to parsing by hand...
     open(DB, $db_file) or die "Unable to open '$db_file': $!\n";
-    my ($platform, $perl, $arch);
+    my ($platform, $perl, $arch, $ssl);
     while(<DB>) {
         chomp;
         next if /^\s*#/;
@@ -920,9 +920,13 @@ sub build_params {
     }
     close DB;
 
+    # check if SSL was built
+    $ssl = -e catfile($ENV{KRANG_ROOT}, 'apache', 'libexec', 'libssl.so');
+
     return ( Platform => $platform,
              Perl     => $perl,
-             Arch     => $arch );
+             Arch     => $arch,
+             SSL      => $ssl);
 }
 
 =back

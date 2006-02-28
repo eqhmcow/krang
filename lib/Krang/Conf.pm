@@ -51,6 +51,7 @@ SSLLogLevel
 );
 }
 
+use Krang::Platform;
 use File::Spec::Functions qw(catfile catdir rel2abs);
 use Carp qw(croak);
 use Config::ApacheFormat;
@@ -313,6 +314,13 @@ sub check {
                     $block->get("InstanceDBName") . "' database");
         }
         $seen{$block->get("InstanceDBName")} = 1;
+    }
+
+    # make sure that if EnableSSL is true, that we were built with-sslmonitor
+    if( $CONF->get('EnableSSL') ) {
+        my %params = Krang::Platform->build_params();
+        _broked("EnableSSL cannot be true if you did not build Krang --with-ssl")
+            unless( $params{SSL} );
     }
 }
 
