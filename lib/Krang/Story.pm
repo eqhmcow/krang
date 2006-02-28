@@ -1586,7 +1586,7 @@ sub checkin {
     # make sure we're checked out, unless we have may_checkin_all powers
     $self->_verify_checkout() unless $admin_perms{may_checkin_all};
 
-    # checkout the story
+    # checkin the story
     $dbh->do('UPDATE story
               SET checked_out = ?, checked_out_by = ?
               WHERE story_id = ?', undef, 0, 0, $story_id);
