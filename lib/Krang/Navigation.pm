@@ -101,7 +101,7 @@ sub render {
 
     if ($index == 1) {
         # the first block is funny-looking
-        $pre = qq{<div class="dark-bar">$name</div><div class="plain-cell">};
+        $pre = qq{<div class="dark-bar-nav">$name</div><div class="plain-cell">};
         $post = '</div>';
 
     } elsif ($depth == 1) {
