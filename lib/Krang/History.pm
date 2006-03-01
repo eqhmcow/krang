@@ -18,11 +18,6 @@ use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
 
-# constants
-use constant FIELDS => qw( object_type object_id action version desk_id user_id timestamp );
-use constant OBJECT_TYPES => qw( Krang::Story Krang::Media Krang::Template );
-use constant ACTIONS => qw( new save checkin checkout publish deploy undeploy move revert delete);
-
 =head1 NAME
 
 Krang::History - records historical events for krang objects
@@ -77,9 +72,24 @@ This class handles the storage and retrieval of historical events in a Krang obj
 
 =cut
 
+BEGIN {
+
+=item C<< $history->fields() >>
+
+Returns a list of the DB table fields.
+Override this method to extend the list
+
+=cut
+
+    sub fields {
+        return qw( object_type object_id action version desk_id user_id timestamp );
+    }
+    
+}
+
 use Krang::ClassLoader MethodMaker => new_with_init => 'new',
                         new_hash_init => 'hash_init',
-                        get_set       => [FIELDS];
+                        get_set       => [fields()];
 
 sub init {
     my $self = shift;
@@ -97,20 +107,22 @@ sub _save {
 
     # Valid object type?
     my $object_type = $self->{object_type};
-    my @valid_object_types = OBJECT_TYPES;
+    my @valid_object_types = $self->object_types();
     croak ("Invalid object type '$object_type' (expecting: ". join(", ", @valid_object_types) .")") 
       unless (grep { $object_type->isa($_) } @valid_object_types);
 
     # Valid action?
     my $action = $self->{action};
-    my @valid_actions = ACTIONS;
+    my @valid_actions = $self->actions();
     croak ("Invalid action '$action' (expecting: ". join(", ", @valid_actions) .")") 
       unless (grep { $_ eq $action } @valid_actions);
 
     my $time = localtime();   
     $self->{timestamp} = $time->mysql_datetime();
  
-    $dbh->do('INSERT INTO history ('.join(',', FIELDS).') VALUES (?'.",?" x (scalar FIELDS - 1).")", undef, map { $self->{$_} } FIELDS);
+    my @fields = $self->fields();
+
+    $dbh->do('INSERT INTO history ('.join(',', @fields).') VALUES (?'.",?" x (scalar @fields - 1).")", undef, map { $self->{$_} } @fields);
 
 }
 
@@ -227,7 +239,7 @@ sub find {
     if ($args{'count'}) {
         $select_string = 'count(*) as count';
     } else {
-        $select_string = join(',', FIELDS);
+        $select_string = join(',', $self->fields());
     }
 
     my $sql = "select $select_string from history";
@@ -286,9 +298,30 @@ sub delete {
  
 }
 
-=back
+=item C<< $history->object_types() >>
+
+Returns a list of asset types.
+Override this method to extend the list.
 
 =cut
+
+sub object_types {
+    return qw( Krang::Story 
+               Krang::Media
+               Krang::Template 
+             );
+}
+
+=item C<< $history->actions() >>
+
+Returns a list of actions to be logged.
+Override this method to extend the list.
+
+=cut
+
+sub actions {
+    return qw( new save checkin checkout publish deploy undeploy move revert delete);
+}
 
 1;
  
