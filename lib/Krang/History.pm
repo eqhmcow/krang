@@ -173,7 +173,7 @@ Find and return Krang::History objects with parameters specified. Supported para
 
 =item *
 
-object - Krang::Story, Krang::Media, or Krang::Template object
+object - Krang::Story, Krang::Media, or Krang::Template object (required)
 
 =item * 
 
