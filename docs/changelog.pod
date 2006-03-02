@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In Krang::Story, fixed addon v2 compatibility bug in find(). [Bodo
+Schulze]
+
+=item *
+
 In Krang::History, replaced constants FIELDS, OBJECT_TYPES AND ACTIONS
 with methods fields(), object_types() and actions()
 respectively. [Bodo Schulze]

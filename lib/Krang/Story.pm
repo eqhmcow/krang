@@ -1199,13 +1199,13 @@ sub find {
             next;
         }
 
-
         # handle creator_simple
         if ($key eq 'creator_simple') {
             $from{"history as h"} = 1;
             $from{"user as u"} = 1;
             push(@where, 's.story_id = h.object_id');
-            push(@where, "h.object_type = 'Krang::Story'");
+            push(@where, "(h.object_type = 'Krang::Story' or h.object_type ='"
+                          .pkg('Story')."')");
             push(@where, "h.action = 'new'");
             push(@where, 'h.user_id = u.user_id');
 
