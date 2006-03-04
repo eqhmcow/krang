@@ -23,10 +23,10 @@ $ENV{CGI_APP_RETURN_ONLY} = 1;
 # Check all Krang CGI-App modules
 find({ wanted => 
        sub { 
-           return unless /^lib\/(Krang\/CGI\/.*)\.pm$/;
+           return unless /^lib\/Krang\/(CGI\/.*)\.pm$/;
            return if /#/; # skip emacs droppings
 
-           my $app_package = join('::', (split(/\//, $1)));
+           my $app_package = pkg(join('::', (split(/\//, $1))));
            check_cgiapp($app_package);
        },
        no_chdir => 1 },
