@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded to HTML::Template::Expr v0.06 - now with chained binary
+operators! [Sam]
+
+=item *
+
 In Krang::Story, fixed addon v2 compatibility bug in find(). [Bodo
 Schulze]
 
