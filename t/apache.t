@@ -31,5 +31,5 @@ foreach my $instance (pkg('Conf')->instances()) {
     login_not_ok(rand(), rand());
     
     # try logging in with good creds
-    login_ok($username, $password);
+    login_ok($username, $password, "Login INSTANCE '$instance' with 'KRANG_USERNAME=$username' and 'KRANG_PASSWORD=$password'");
 }
