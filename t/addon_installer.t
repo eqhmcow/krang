@@ -7,14 +7,14 @@ use Test::More qw(no_plan);
 use Krang::ClassLoader DB => 'dbh';
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Conf => qw(KrangRoot);
-use File::Spec::Functions qw(catfile);
+use File::Spec::Functions qw(catfile catdir);
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader 'Test::Apache';
 use Krang::ClassLoader 'HTMLTemplate';
 
 # make sure Turbo isn't installed
 my ($turbo) = pkg('AddOn')->find(name => 'Turbo');
-ok(not $turbo);
+ok(! $turbo, "Addon 'Turbo' does not exist");
 
 # install Turbo 1.00
 pkg('AddOn')->install(src => 
@@ -24,13 +24,24 @@ pkg('AddOn')->install(src =>
 ($turbo) = pkg('AddOn')->find(name => 'Turbo');
 END { $turbo->uninstall }
 isa_ok($turbo, 'Krang::AddOn');
-cmp_ok($turbo->version, '==', 1);
-ok(-d 'addons/Turbo');
-ok(-e 'addons/Turbo/lib/Krang/Turbo.pm');
-ok(not -e 'lib/Krang/Turbo.pm');
-ok(-e 'addons/Turbo/t/turbo.t');
-ok(-e 'addons/Turbo/docs/turbo.pod');
-ok(not -e 'krang_addon.conf');
+cmp_ok($turbo->version, '==', 1, 'Version 1.00');
+
+my $addon_dir = catdir(KrangRoot, 'addons', 'Turbo');
+ok(-d $addon_dir, "'$addon_dir' exists");
+
+for my $addon_file ( catfile(KrangRoot, 'addons', 'Turbo', 'lib', 'Krang', 'Turbo.pm'),
+		     catfile(KrangRoot, 'addons', 'Turbo', 't', 'turbo.t'),
+		     catfile(KrangRoot, 'addons', 'Turbo', 'docs', 'turbo.pod'),
+		     catfile(KrangRoot, 'addons', 'Turbo', 'krang_addon.conf'),
+		   ) {
+    ok(-e $addon_file, "'$addon_file' exists");
+}
+
+for my $file ( catfile(KrangRoot, 'lib', 'Krang', 'Turbo.pm'),
+	       catfile(KrangRoot, 'krang_addon.conf'),
+	     ) {
+    ok(! -e $file, "'$file' does not exist");
+}
 
 # try to load Krang::Turbo
 use_ok(pkg('Turbo'));
@@ -42,12 +53,18 @@ pkg('AddOn')->install(src =>
 # worked?
 ($turbo) = pkg('AddOn')->find(name => 'Turbo');
 isa_ok($turbo, 'Krang::AddOn');
-cmp_ok($turbo->version, '==', 1.01);
-ok(-e 'addons/Turbo/lib/Krang/Turbo.pm');
-ok(-e 'addons/Turbo/t/turbo.t');
-ok(-e 'addons/Turbo/docs/turbo.pod');
-ok(-e 'turbo_1.01_was_here');
-unlink('turbo_1.01_was_here');
+cmp_ok($turbo->version, '==', 1.01, "Version 1.01");
+
+for my $addon_file ( catfile(KrangRoot, 'addons', 'Turbo', 'lib', 'Krang', 'Turbo.pm'),
+		     catfile(KrangRoot, 'addons', 'Turbo', 't', 'turbo.t'),
+		     catfile(KrangRoot, 'addons', 'Turbo', 'docs', 'turbo.pod'),
+		     catfile(KrangRoot, 'addons', 'Turbo', 'krang_addon.conf'),
+		     catfile(KrangRoot, 'turbo_1.01_was_here'),
+		   ) {
+    ok(-e $addon_file, "'$addon_file' exists");
+}
+
+unlink(catfile(KrangRoot, 'turbo_1.01_was_here'));
 
 # install an addon with an element set
 pkg('AddOn')->install(src => 
@@ -56,12 +73,12 @@ pkg('AddOn')->install(src =>
 my ($def) = pkg('AddOn')->find(name => 'NewDefault');
 END { $def->uninstall }
 isa_ok($def, 'Krang::AddOn');
-cmp_ok($def->version, '==', 1.00);
-is($def->name, 'NewDefault');
+cmp_ok($def->version, '==', 1.00, "Version 1.00");
+is($def->name, 'NewDefault', "Addon name: NewDefault");
 
 # try loading the element lib
 eval { pkg('ElementLibrary')->load_set(set => "Default2") };
-ok(not $@);
+ok(! $@, "Load elementset 'Default2'");
 die $@ if $@;
 
 # install an addon which has a src/ module
@@ -73,12 +90,12 @@ END { $clean->uninstall }
 
 # try loading HTML::Clean
 eval "no warnings 'deprecated'; use HTML::Clean";
-ok(not $@);
+ok(! $@, "Loading 'HTML::Clean'");
 die $@ if $@;
 
 # look for the cleaned table
 my $dbh = dbh();
-ok($dbh->selectrow_array("SHOW TABLES LIKE 'cleaned'"));
+ok($dbh->selectrow_array("SHOW TABLES LIKE 'cleaned'"), "DB table 'cleaned' exists");
 
 # install an addon with an htdocs/ script
 pkg('AddOn')->install(src => 
@@ -87,21 +104,21 @@ pkg('AddOn')->install(src =>
 my ($log) = pkg('AddOn')->find(name => 'LogViewer');
 END { $log->uninstall }
 isa_ok($log, 'Krang::AddOn');
-cmp_ok($log->version, '==', 1.00);
-is($log->name, 'LogViewer');
+cmp_ok($log->version, '==', 1.00, "Version 1.00");
+is($log->name, 'LogViewer', "Addon name: 'LogViewer'");
 
 # try loading the about.tmpl template
 my $template = pkg('HTMLTemplate')->new(filename => 'about.tmpl',
                                         path     => 'About/');
-like($template->output, qr/enhanced with LogViewer/);
+like($template->output, qr/enhanced with LogViewer/, "Loading template");
 
 pkg('AddOn')->install(src =>
             catfile(KrangRoot, 't', 'addons', 'SchedulerAddon-1.00.tar.gz'));
 my ($sched) = pkg('AddOn')->find(name => 'SchedulerAddon');
 END { $sched->uninstall }
 isa_ok($sched, 'Krang::AddOn');
-cmp_ok($sched->version, '==', 1.00);
-is($sched->name, 'SchedulerAddon');
+cmp_ok($sched->version, '==', 1.00, "Version 1.00");
+is($sched->name, 'SchedulerAddon', "Addon name: 'SchedulerAddon'");
 
 SKIP: {
     skip "Apache server isn't up, skipping live tests", 7
