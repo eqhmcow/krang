@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use File::Temp qw(tempfile);
+use File::Spec::Functions qw(catfile);
 
 # a basic working conf file
 my $base_conf = <<CONF;
@@ -42,6 +43,8 @@ BugzillaComponent 'Auto-submitted Bugs'
    InstanceElementSet TestSet1
 </Instance>
 CONF
+
+my $test_conf = catfile($ENV{KRANG_ROOT}, 'tmp', 'test.conf');
 
 # setup the test conf file
 _setup_conf($base_conf);
@@ -109,12 +112,13 @@ is(InstanceDBName(), "test2");
 # put an arbitary conf file into place so that Krang::Conf will load it
 sub _setup_conf {
     my $conf = shift;
-    open(CONF, ">tmp/test.conf") or die $!;
+
+    open(CONF, ">$test_conf") or die $!;
     print CONF $conf;
     close(CONF);
 
     # use this file as krang.conf
-    $ENV{KRANG_CONF} = "tmp/test.conf";
+    $ENV{KRANG_CONF} = $test_conf;
 }
 
-END { unlink("tmp/test.conf") }
+END { unlink($test_conf) or warn "Can't unlink($test_conf): $!" }

@@ -3,12 +3,15 @@ use Test::Pod qw(no_plan);
 use Test::More;
 
 use File::Find qw(find);
+use File::Spec::Functions qw(catdir);
+
+use Krang::ClassLoader Conf => qw(KrangRoot);
 
 # check general pod correctness
 find({ wanted => sub { ((/\.pm$/ or /\.pod$/) and not /#/ ) and 
                          pod_file_ok($_, "POD syntax check for $_") },
        no_chdir => 1 },
-     'lib/Krang', 'docs');
+     catdir(KrangRoot, 'lib', 'Krang'), catdir(KrangRoot, 'docs'));
 
 # check for compliance with coding standards in modules
 find({ wanted => 
@@ -24,4 +27,5 @@ find({ wanted =>
            }
        },
        no_chdir => 1 },
-     'lib/Krang');
+     catdir(KrangRoot, 'lib', 'Krang'));
+

@@ -211,7 +211,8 @@ SKIP: {
     my $count = pkg('Story')->find(count => 1);
     my $undo = catfile(KrangRoot, 'tmp', 'undo.pl');
     $ENV{KRANG_INSTANCE} = pkg('Conf')->instance;
-    system("bin/krang_floodfill --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --contribs 10 --undo_script $undo > /dev/null 2>&1");
+    my $cmd = catfile(KrangRoot, 'bin', 'krang_floodfill');
+    system("$cmd --stories 7 --sites 1 --cats 3 --templates 0 --media 5 --users 0 --covers 3 --contribs 10 --undo_script $undo > /dev/null 2>&1");
     is(pkg('Story')->find(count => 1), $count + 10);
 
     # see if we can serialize them

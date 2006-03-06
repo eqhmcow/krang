@@ -48,7 +48,7 @@ use_ok(pkg('Publisher'));
 ############################################################
 # PRESETS
 
-my $template_dir = 't/publish/';
+my $template_dir = catdir(KrangRoot, 't', 'publish');
 
 
 # Site params

@@ -1,7 +1,10 @@
 use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use File::Find qw(find);
+use File::Spec::Functions qw(catdir);
+
 use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 
 # a list of CGI modules without a suitable default mode (one that
 # requires no parameters)
@@ -19,19 +22,19 @@ our %BAD_DEFAULT = map { ($_,1) }
 # Arrange for CGI output to come back via return, but NOT go to STDOUT
 $ENV{CGI_APP_RETURN_ONLY} = 1;
 
+my $krang_root = KrangRoot;
 
 # Check all Krang CGI-App modules
 find({ wanted => 
        sub { 
-           return unless /^lib\/Krang\/(CGI\/.*)\.pm$/;
+           return unless /\Q$krang_root\E\/lib\/Krang\/(CGI\/.*)\.pm$/;
            return if /#/; # skip emacs droppings
 
            my $app_package = pkg(join('::', (split(/\//, $1))));
            check_cgiapp($app_package);
        },
        no_chdir => 1 },
-     'lib/Krang/CGI/');
-
+    catdir($krang_root, 'lib', 'Krang', 'CGI'));
 
 # A Krang CGI-App module is deemed to be OK if:
 #    1. Compiles OK

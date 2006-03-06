@@ -16,7 +16,7 @@ is(pkg('CGI::Story'), 'Krang::CGI::Story');
 is(pkg('Bogus'), 'Krang::Bogus');
 
 # load an addon with a class override for Krang::CGI::About
-pkg('AddOn')->install(src => 't/addons/AboutPlus-1.00.tar.gz');
+pkg('AddOn')->install(src => catfile(KrangRoot, 't', 'addons', 'AboutPlus-1.00.tar.gz'));
 
 # worked?
 my ($aboutp) = pkg('AddOn')->find(name => 'AboutPlus');

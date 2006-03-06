@@ -1,6 +1,9 @@
 use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use File::Find qw(find);
+use File::Spec::Functions qw(catdir);
+
+use Krang::ClassLoader Conf => (KrangRoot);
 
 # license and registration please
 
@@ -20,4 +23,4 @@ find({ wanted =>
            ok($warnings, "$_ 'use warnings' test.");
        },
        no_chdir => 1 },
-     'lib/Krang');
+     catdir(KrangRoot, 'lib', 'Krang'));
