@@ -1,24 +1,25 @@
 package TestParent1::cover;
 use strict;
 use warnings;
+use Krang::ClassFactory qw(pkg);
 
-use base 'Krang::ElementClass::Cover';
+use Krang::ClassLoader base => 'ElementClass::Cover';
 
 sub new {
    my $pkg = shift;
    my %args = ( name => 'cover',
                 children => [
-                  Krang::ElementClass::Textarea->new(name => 'header',
+                  pkg('ElementClass::Textarea')->new(name => 'header',
                                                      min => 1,
                                                      max => 1,
                                                      reorderable => 0,
                                                      allow_delete => 0,
                                                     ),
-                  Krang::ElementClass::StoryLink->new(name => 'leadin',
+                  pkg('ElementClass::StoryLink')->new(name => 'leadin',
                                                       display_name => 
                                                       'Lead-In',
                                                      ),
-                  Krang::ElementClass::MediaLink->new(name => 'photo'),
+                  pkg('ElementClass::MediaLink')->new(name => 'photo'),
                 ],
                 @_);
    return $pkg->SUPER::new(%args);
@@ -29,7 +30,7 @@ sub default_schedules {
     my ($self, %arg) = @_;
     my ($element) = @arg{qw(element)};
     my $story = $element->story;
-    my $sched = Krang::Schedule->new(object_type => 'story',
+    my $sched = pkg('Schedule')->new(object_type => 'story',
                                      object_id   => $story->story_id,
                                      action      => 'publish',
                                      repeat      => 'hourly',

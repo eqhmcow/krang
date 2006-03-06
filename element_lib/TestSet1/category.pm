@@ -1,6 +1,7 @@
 package TestSet1::category;
 use strict;
 use warnings;
+use Krang::ClassFactory qw(pkg);
 
 =head1 NAME
 
@@ -14,34 +15,34 @@ moment.
 =cut
 
 
-use base 'Krang::ElementClass::TopLevel';
+use Krang::ClassLoader base => 'ElementClass::TopLevel';
 
 sub new {
    my $pkg = shift;
    my %args = ( name => 'category',
                 children => [
-                             Krang::ElementClass::Text->new(name => 'display_name',
+                             pkg('ElementClass::Text')->new(name => 'display_name',
                                                             allow_delete => 0,
                                                             min => 1,
                                                             max => 1,
                                                             reorderable => 0,
                                                             required => 1),
-                             Krang::ElementClass::Text->new(name => 'header',
+                             pkg('ElementClass::Text')->new(name => 'header',
                                                             allow_delete => 1,
                                                             min => 0,
                                                             max => 1,
                                                             reorderable => 1,
                                                             required => 1),
-                             Krang::ElementClass::Textarea->new(name => 'paragraph',
+                             pkg('ElementClass::Textarea')->new(name => 'paragraph',
                                                             allow_delete => 1,
                                                             min => 0,
                                                             max => 0,
                                                             bulk_edit => 1,
                                                             reorderable => 1,
                                                             required => 0),
-                             Krang::ElementClass::MediaLink->new(name => "photo"),
-                             Krang::ElementClass::StoryLink->new(name => "leadin"),
-                             Krang::ElementClass::CategoryLink->new(name => "leftnav_link"),
+                             pkg('ElementClass::MediaLink')->new(name => "photo"),
+                             pkg('ElementClass::StoryLink')->new(name => "leadin"),
+                             pkg('ElementClass::CategoryLink')->new(name => "leftnav_link"),
 
                             ],
                 @_);

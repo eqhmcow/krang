@@ -1,8 +1,9 @@
 package TestParent1::keyword;
 use strict;
 use warnings;
+use Krang::ClassFactory qw(pkg);
 
-use base 'Krang::ElementClass::Text';
+use Krang::ClassLoader base => 'ElementClass::Text';
 
 sub new {
    my $pkg = shift;

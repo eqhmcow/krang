@@ -14,7 +14,7 @@ will create sets of 4 keywords from bulk edit data as needed.
 
 =cut
 
-use base 'Krang::ElementClass::Storable';
+use Krang::ClassLoader base => 'ElementClass::Storable';
 use Carp qw(croak);
 use Krang::Log qw(debug);
 

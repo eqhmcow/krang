@@ -1,6 +1,7 @@
 package TestSet1::article;
 use strict;
 use warnings;
+use Krang::ClassFactory qw(pkg);
 
 =head1 NAME
 
@@ -14,7 +15,7 @@ blurbs and one or more pages.
 
 =cut
 
-use base 'Krang::ElementClass::TopLevel';
+use Krang::ClassLoader base => 'ElementClass::TopLevel';
 use Krang::ElementClass::CheckBoxGroup;
 
 sub new {
@@ -22,19 +23,19 @@ sub new {
    my %args = ( name => 'article',
                 children => 
                  [
-                  Krang::ElementClass::Date->new(name => 'issue_date',
+                  pkg('ElementClass::Date')->new(name => 'issue_date',
                                                  min  => 1,
                                                  max  => 1,
                                                  reorderable => 0,
                                                  allow_delete => 0),
-                  Krang::ElementClass::Textarea->new(name => 'deck', 
+                  pkg('ElementClass::Textarea')->new(name => 'deck', 
                                                      min => 1, 
                                                      max => 1,
                                                      reorderable => 0,
                                                      allow_delete => 0,
                                                      indexed => 1,
                                                     ),
-                  Krang::ElementClass::CheckBoxGroup->new( name => 'cbg_values',
+                  pkg('ElementClass::CheckBoxGroup')->new( name => 'cbg_values',
                                                            values => [map { "option\_$_" } ('a'..'z')],
                                                            defaults => [qw(option_c option_e)],
                                                            columns => 4,
@@ -42,19 +43,19 @@ sub new {
                                                            max => 1,
                                                            allow_delete => 1,
                                                            reorderable => 1 ),
-                  Krang::ElementClass::CheckBoxGroup->new( name => 'cbg_listgroup',
+                  pkg('ElementClass::CheckBoxGroup')->new( name => 'cbg_listgroup',
                                                            list_group => "Cost",
                                                            min => 1,
                                                            max => 1,
                                                            allow_delete => 1,
                                                            reorderable => 1 ),
-                  Krang::ElementClass::CheckBoxGroup->new( name => 'cbg_listgroup_2',
+                  pkg('ElementClass::CheckBoxGroup')->new( name => 'cbg_listgroup_2',
                                                            list_group => "Make/Model/Year",
                                                            min => 1,
                                                            max => 1,
                                                            allow_delete => 1,
                                                            reorderable => 1 ),
-                  Krang::ElementClass::ListGroup->new(  name => 'auto_segments',
+                  pkg('ElementClass::ListGroup')->new(  name => 'auto_segments',
                                                         list_group => 'Segments',
                                                         multiple => 1,
                                                         min => 1,
@@ -67,10 +68,10 @@ sub new {
                                                allow_delete => 0,
                                                indexed => 1,
                                               ),
-                  Krang::ElementClass::Textarea->new(name => 'blurb',
+                  pkg('ElementClass::Textarea')->new(name => 'blurb',
                                                      bulk_edit => 1),
 
-                  Krang::ElementClass::RadioGroup->new(name => 'mood',
+                  pkg('ElementClass::RadioGroup')->new(name => 'mood',
                                                        values => [qw/happy sad confused manic depressive cynical/],
                                                        labels => { happy      => "Happy",
                                                                    sad        => "Sad",
@@ -80,7 +81,7 @@ sub new {
                                                                    cynical    => "Cynical" },
                                                        columns => 2 ),
 
-                  Krang::ElementClass::RadioGroup->new(name => 'radio_cost',
+                  pkg('ElementClass::RadioGroup')->new(name => 'radio_cost',
                                                        min          => 1,
                                                        max          => 1,
                                                        list_group => 'Cost',

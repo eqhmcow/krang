@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In element_lib/TestParent1/* and element_lib/TestSet1/*, added addon
+v2 compatibility. [Bodo Schulze]
+
+=item *
+
 In t/cgi.t, fixed addon v2 compat bug. [Bodo Schulze]
 
 =item *

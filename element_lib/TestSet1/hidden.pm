@@ -1,7 +1,7 @@
 package TestSet1::hidden;
-
 use strict;
 use warnings;
+use Krang::ClassFactory qw(pkg);
 
 =head1 NAME
 
@@ -18,7 +18,7 @@ information.
 =cut
 
 
-use base 'Krang::ElementClass::TopLevel';
+use Krang::ClassLoader base => 'ElementClass::TopLevel';
 
 sub hidden { 1 }
 
@@ -27,7 +27,7 @@ sub new {
    my %args = ( name => 'hidden',
                 children => 
                 [
-                 Krang::ElementClass::Textarea->new(name => 'paragraph')
+                 pkg('ElementClass::Textarea')->new(name => 'paragraph')
                 ],
                 @_
               );

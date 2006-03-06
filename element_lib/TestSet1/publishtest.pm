@@ -1,7 +1,7 @@
 package TestSet1::publishtest;
-
 use strict;
 use warnings;
+use Krang::ClassFactory qw(pkg);
 
 =head1 NAME
 
@@ -17,7 +17,7 @@ one or more pages.
 
 =cut
 
-use base 'Krang::ElementClass::TopLevel';
+use Krang::ClassLoader base => 'ElementClass::TopLevel';
 
 
 sub new {
@@ -26,14 +26,14 @@ sub new {
     my %args = ( name => 'publishtest',
                  children =>
                  [
-                  Krang::ElementClass::Text->new(name => 'headline',
+                  pkg('ElementClass::Text')->new(name => 'headline',
                                                      min => 1,
                                                      max => 1,
                                                      reorderable => 0,
                                                      allow_delete => 0,
                                                      indexed => 1,
                                                     ),
-                  Krang::ElementClass::Textarea->new(name => 'deck',
+                  pkg('ElementClass::Textarea')->new(name => 'deck',
                                                      min => 1,
                                                      max => 1,
                                                      reorderable => 0,
