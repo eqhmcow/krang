@@ -7,7 +7,7 @@ use LWP::UserAgent;
 use HTTP::Request::Common;
 use File::Spec::Functions qw(catfile);
 use HTTP::Cookies;
-use Krang::ClassLoader Conf => qw(KrangRoot HostName ApachePort ApacheSSLPort SSLEngine ApacheAddr);
+use Krang::ClassLoader Conf => qw(KrangRoot HostName ApachePort SSLApachePort EnableSSL ApacheAddr);
 use Krang::ClassLoader Log => qw(debug);
 use Test::Builder;
 
@@ -90,21 +90,20 @@ sub login_ok {
 sub _do_login {
     my($username, $password) = @_;
     my $instance = pkg('Conf')->instance;
-    
+
     my $url = _url('login.pl');
     my $res = $ua->request(POST $url,
                            [ rm => 'login',
-
                              username => $username ,
                              password => $password ]);
     # should get a redirect
     return 0 unless $res->code == 302;
-    
+
     # try to request env.pl, which will only work if the login succeeded
     $res = $ua->request(GET _url('env.pl'));
     return 0 unless $res->code == 200;
     return 0 unless $res->content =~ /REMOTE_USER/;
-    
+
     # success
     return 1;
 }
@@ -184,13 +183,13 @@ sub _url {
 
     # compute Krang's URL
     my $base_url;
-    my $sslengine = SSLEngine;
-    if ($sslengine and $sslengine eq 'on') {
+
+    if (EnableSSL) {
 	$base_url = 'https://' . HostName;
-	$base_url .= ":" . ApacheSSLPort if ApacheSSLPort ne '443';
+	$base_url .= ":" . SSLApachePort if SSLApachePort ne '443';
     } else {
 	$base_url = 'http://' . HostName;
-    $base_url .= ":" . ApachePort if ApachePort ne '80';
+	$base_url .= ":" . ApachePort if ApachePort ne '80';
     }
 
     # build the URL
