@@ -56,6 +56,8 @@ SSLLogLevel  info
 </Instance>
 CONF
 
+my $test_conf = catfile($ENV{KRANG_ROOT}, 'tmp', 'test.conf');
+
 # setup the test conf file
 _setup_conf($base_conf);
 
@@ -79,12 +81,12 @@ foreach my $directive (@ssl_directives) {
 # put an arbitary conf file into place so that Krang::Conf will load it
 sub _setup_conf {
     my $conf = shift;
-    open(CONF, ">tmp/test.conf") or die $!;
+    open(CONF, ">", $test_conf) or die "No such file '$test_conf' : $!";
     print CONF $conf;
     close(CONF);
 
     # use this file as krang.conf
-    $ENV{KRANG_CONF} = "tmp/test.conf";
+    $ENV{KRANG_CONF} = $test_conf;
 }
 
-END { unlink("tmp/test.conf") }
+END { unlink($test_conf) or warn "Can't unlink($test_conf) : $!" }
