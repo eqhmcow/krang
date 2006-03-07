@@ -80,7 +80,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup EnableSSL);
 use Krang::ClassLoader 'File';
 
 # SSL directives
@@ -131,7 +131,9 @@ if ($command eq 'start') {
 
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
-        print "krang_apachectl $command: httpd started\n";
+        print "krang_apachectl $command: httpd started";
+	print " (SSL enabled)" if EnableSSL;
+	print "\n";
         exit;
     } else {
         die "krang_apachectl $command: httpd could not be started\n";
@@ -185,7 +187,9 @@ if ($command eq 'restart') {
     apply_skin();
     print "krang_apachectl $command: starting httpd\n";
     unless (system($httpd)) {
-        print "krang_apachectl $command: httpd started\n";
+        print "krang_apachectl $command: httpd started";
+	print " (SSL enabled)" if EnableSSL;
+	print "\n";
         exit;
     } else {
         die "krang_apachectl $command: httpd could not be started\n";
