@@ -1,13 +1,15 @@
 <tmpl_include /header.tmpl>
 
-
-<script language="Javascript">
+<script language="Javascript" type="text/javascript">
 <!-- //
 
     <tmpl_var js_list_arrays>
 
     var new_count = 1;
     var change_log = new Array();
+    var last_focus = '';
+    var select_state = new Array();
+    <tmpl_loop select_state_loop><tmpl_var select_state></tmpl_loop>
 
     nav_edit_mode();
                                                                                
@@ -16,6 +18,8 @@
         myform.rm.value = "save";
         var change_string = change_log.join('%^%');
         myform.changes.value = change_string;
+	myform.last_focus.value = last_focus;
+	myform.select_state.value = select_state_toString();
         myform.submit();
     }
                                                                                
@@ -26,247 +30,386 @@
         var change_string = change_log.join('%^%');
         myform.changes.value = change_string;
         myform.stay.value = 1;
+	myform.last_focus.value = last_focus;
+	myform.select_state.value = select_state_toString();
         myform.submit();
     }
 
-    function populate_list (list_count,sel_in_list,no_clear) {
-        var next_list = list_count + 1;
+    // functions to manage the select list state stored in select_state[]
+    // populate_list() populates lists according to info in this array
+    function trim_select_state(list_count) {
+	// clear state for lists above list_count
+	select_state.length = list_count;
+    }
+    
+    function store_select_state(list_count, index, value, insert_child) {
+	list_count = parseInt(list_count);
+	select_state[list_count] = { index:index, value:value };
 
-        // first, clear lists above one selected
-        if ( ! no_clear) {
-            clear_lists_above(next_list);
-        }
-
-        if ( list_count != 0 ) {
-            var select_val = get_selected_val(list_count);
-        
-            var count = 0;
-            for(var key in eval('list_data[' + select_val + ']') ) {
-                if (eval('list_data[' + select_val + "]")[key]['__data__']) {
-                    var new_val = eval("list_data[" + select_val + "]")[key]['__data__'];
-                    new_val = new_val.replace(/\"/g, '``');
-                    eval ('document.forms["edit_form"].list_' + next_list + '.options[' + count++ + '] = new Option(' + '"' + new_val + '", "' + select_val + '][' + key + '")');
-                }
-            }
-        } else {
-            var count = 0;
-            for(var key in list_data) {
-               if (list_data[key]['__data__']) {
-                   var new_val = list_data[key]['__data__'];
-                    new_val = new_val.replace(/\"/g, '``');
-                   document.forms["edit_form"].list_1.options[count++] = new Option(new_val , key); 
-               }
-            }
-        }
-        if (sel_in_list > -1) {
-            eval( 'document.forms["edit_form"].list_' + next_list).selectedIndex = sel_in_list;
-        }
+	if (insert_child && get_select_list(list_count + 1)) {
+	    var list = get_list(list_count);
+	    for (var idx = 0; idx <= list.length; idx++) {
+		if (list[idx]) break;
+	    }
+	    select_state[list_count + 1] = { index: -1, value: value.concat(']['+idx) };
+	}
     }
 
-    function clear_lists_above(list_count) {
+    function update_select_state(list_count, new_index, new_value) {
+	var list_count = parseInt(list_count);
+	var old_value  = select_state[list_count].value;
+
+	select_state[list_count] = { index:new_index, value:new_value };
+
+	// update children
+	for (var cnt = list_count + 1; cnt < select_state.length; cnt++) {
+	    var trail = select_state[cnt].value.substring(old_value.length);
+	    select_state[cnt].value = new_value.concat(trail);
+	}
+    }
+
+    function get_select_state(list_count) { return select_state[list_count] }
+
+    function select_state_toString() {
+	var stringified = '';
+	for (var i=1; i<select_state.length; i++) {
+	    if (select_state[i]) {
+		var select = select_state[i];
+		stringified += i + ':' + select.index + ',' + select.value + '|';
+	    }
+	}
+	return stringified;
+    }
+
+    function populate_list (list_count, rebuild_children) {
+	var state = get_select_state(list_count);
+
+	if ( ! state ) return;
+
+	var select_value = state.value + '';
+
+	var indexArray = select_value.split('][');
+	indexArray.pop();
+	select_value = indexArray.join('][');
+
+	var list = get_list(select_value);
+	if (select_value.length) select_value = select_value.concat('][');
+
+	var select = get_select_list(list_count);
+	select.options.length = 0;
+
+	var count = 0;
+	for (var idx=0; idx < list.length; idx++) {
+	    var selected = false;
+	    if (list[idx] && list[idx]['__data__']) {
+		var data = list[idx]['__data__'];
+		data = data.replace(/\"/g, '``'); //"
+		if (count == state.index) selected = true;
+		select.options[ count++ ] = new Option(data, select_value+idx, false, selected);
+	    }
+	}
+	list_count++;
+	if (rebuild_children) populate_list(list_count, true);
+    }
+
+    function clear_child_select_lists(list_count) {
         for ( var c = list_count; c <= <tmpl_var list_levels>; c++ ) {
-            eval ('document.forms["edit_form"].list_' + c).options.length = 0; 
+	    document.forms['edit_form']['list_'+c].options.length = 0;
         }
     }
 
-    function get_selected_val (list_count) {
-        var sindex = eval( 'document.forms["edit_form"].list_' + list_count).selectedIndex;
+    function get_selected (list_count) {
+	if (! list_count) return;
+	var list = get_select_list(list_count);
+        var sindex = list.selectedIndex;
         if (sindex > -1) {
-            return eval ('document.forms["edit_form"].list_' + list_count).options[sindex].value;
+	    var selLength = list.length;
+	    var selValue = list.options[sindex].value;
+	    var indexArray = selValue.split('][');
+	    var listIndex = parseInt(indexArray.pop());
+	    var listPath = (indexArray.join('][') || '');
+	    return { selIndex:sindex,   selValue:selValue,  selLength:selLength,
+		     listPath:listPath, listIndex:listIndex
+		   };
         } else {
-            return('undef');
+            return null;
         }
     };
 
-    function get_list_id (list_count) {
-        var lid = eval( 'document.forms["edit_form"].list_id_' + list_count).value;
-        return lid; 
+    function get_list(list_path) {
+	if (list_path.length) {
+	    return eval('list_data[' + list_path + ']');
+	} else {
+	    return list_data;
+	}
+    }
+
+    function get_select_list(list_count) {
+	return document.forms['edit_form']['list_' + list_count];
+    }
+
+    function do_select(list_count, select) {
+
+	last_focus = list_count;
+
+	var selected_index = select.selectedIndex;
+	var selected_value = select.options[selected_index].value;
+	var state = get_select_state(list_count);
+
+	if (state && state.index != -1) {
+	    if (selected_value == state.value) return;
+	}
+
+	clear_child_select_lists(list_count);
+	trim_select_state(list_count);
+	store_select_state(list_count, selected_index, selected_value, true);
+	populate_list(list_count, true);
     }
 
     function do_delete (list_count) {
-        var select_val = get_selected_val(list_count);
-        log_entry( eval('list_data[' + select_val + "]['__id__']"), 'delete', '');
-        var indexArray = select_val.split('][');
-        var current_index = indexArray.pop();
-        select_val = indexArray.join('][');
-        if (! select_val) {
-            list_data.splice(current_index, 1);
-        } else {
-            // else this is not first list
-            eval('list_data[' + select_val + ']').splice(current_index, 1);
-        }
-        populate_list(list_count-1);
+        var selected = get_selected(list_count);
+
+	if (! selected) {
+	    alert("Nothing selected to delete!");
+	    return;
+	}
+
+	// log it
+        log_entry( eval('list_data[' + selected.selValue + "]['__id__']"), 'delete', '');
+
+	var list = get_list(selected.listPath);
+
+	// don't splice, but set to null to preserve order
+	list[selected.listIndex] = null;
+
+	// prepare list population
+	var select_index  = selected.selIndex;
+	var select_length = selected.selLength;
+
+	if (select_length == 2) select_index = 0;
+	if (select_index == select_length - 1) select_index--;
+	if (select_index < 0) select_index = 0;
+
+	var new_value = get_select_list( list_count ).options[select_index+1].value;
+
+	clear_child_select_lists(list_count);
+	trim_select_state(list_count);
+	store_select_state(list_count, select_index, new_value, true);
+
+	last_focus = list_count;
+
+	populate_list(list_count, true);
     }
 
     function do_replace(list_count) {
-        var select_val = get_selected_val(list_count);
-        if ( eval("document.forms['edit_form'].new_item_" + list_count).value ) {
-            var item = eval( 'list_data[' + select_val + ']');
-            var nv = eval( "document.forms['edit_form'].new_item_" + list_count).value;
-            item['__data__'] = nv;
-            var indexArray = select_val.split('][');
-            var current_index = indexArray.pop();
-            populate_list(list_count-1, current_index, 1);
-            eval( "document.forms['edit_form'].new_item_" + list_count).value = '';
-            log_entry(item['__id__'], 'replace', nv);
-        }
+        var selected = get_selected(list_count);
+	if ( ! selected ) {
+	    alert("Nothing selected to replace!");
+	    return;
+	}
+
+        var new_data = document.forms['edit_form']['new_item_'+list_count].value;
+	if ( ! new_data) {
+	    alert("No text entered.");
+	    return;
+	}
+
+	var list = get_list(list_count);
+	if (exists(list, new_data)) return;
+
+	var item = eval( 'list_data[' + selected.selValue + ']');
+	item['__data__'] = new_data;
+	log_entry(item['__id__'], 'replace', new_data);
+	document.forms['edit_form']['new_item_'+list_count].value = '';
+	last_focus = list_count;
+	populate_list(list_count, false);
     }
 
     function do_move(list_count, down) {
-        var select_val = get_selected_val(list_count);
-        var current_index;
-        if (select_val != 'undef' ) {
-            var indexArray = select_val.split('][');
-            current_index = indexArray.pop();
-            select_val = indexArray.join('][');
-            var firstHalf;
-            var secondHalf;
-            // if moving down, up current index
+        var selected  = get_selected(list_count);
+
+        if (selected) {
+	    var list_path    = selected.listPath;
+	    var list_index   = selected.listIndex;
+	    var select_index = selected.selIndex;
+	    
             if (down) {
-                current_index = parseInt(current_index) + 1;
+		// if on last item and trying to move down do nothing
+		if (select_index == selected.selLength - 1) return;
+		// if moving down, increment current index
+                list_index++;
+		select_index++;
             } else {
-                // if on first index and trying to move up do nothing
-                if (current_index == 0) {
+                // if on first item and trying to move up do nothing
+                if (select_index == 0) {
                     return;
-                } 
-            }
-            if (! select_val) {
-                firstHalf = list_data.slice(0, current_index);
-                secondHalf = list_data.slice(current_index);
-            } else {
-                firstHalf = eval( 'list_data[' + select_val + ']').slice(0, current_index);
-                secondHalf = eval( 'list_data[' + select_val + ']').slice(current_index);
-            }
-            if (down && (secondHalf.length == 0)) {
-                return;
-            }
-            var prev = firstHalf.pop();
-            var current = secondHalf.shift();
-
-            // log this change           
-            if (down) {
-                log_entry(prev['__id__'], 'move', parseInt(current_index) + 1);
-            } else {
-                log_entry(current['__id__'], 'move', parseInt(current_index));
-            }
- 
-            firstHalf.push(current);
-            secondHalf.unshift(prev);
-        
-            if (! select_val) {
-                list_data = firstHalf.concat(secondHalf);
-            } else {
-                eval( 'list_data[' + select_val + '] = firstHalf.concat(secondHalf)' );
+                }
+		select_index--;
             }
 
-            if (! down) {
-                current_index--;
-            }
-            populate_list((list_count-1), current_index, 1);
+	    var list = get_list(list_path);
+	    
+            var firstHalf  = new Array();
+            var secondHalf = new Array();
 
-        }
+	    firstHalf  = list.splice(0, list_index);
+	    secondHalf = list.splice(0, list.length);
+
+	    // care for null values in both list halves
+	    var prev = false;    var cnt_prev=-1; 
+	    var current = false; var cnt_current=0;
+	    do { cnt_prev++;    prev = firstHalf.pop() } while (!prev);
+	    do { cnt_current++; current = secondHalf.shift() } while (!current);
+	    
+	    // log this change
+	    var new_index; var new_order;
+	    if (down) {
+	      new_order = list_index + cnt_current;
+	      new_index = new_order - 1;
+	      log_entry(prev['__id__'], 'move', new_order);
+	    } else {
+	      new_order = list_index - cnt_prev;
+	      new_index = list_index;
+	      log_entry(current['__id__'], 'move', new_order);
+	    }
+	    
+	    firstHalf.push(current);
+	    secondHalf.unshift(prev);
+
+	    // reconstruct list
+	    for (var i=0; i<firstHalf.length; i++) {
+		if (firstHalf[i] && firstHalf[i]['__data__']) {
+		    list[i] = firstHalf[i];
+		}
+	    }
+
+	    for (var i=0; i<secondHalf.length; i++) {
+		if (secondHalf[i] && secondHalf[i]['__data__']) {
+		    list[i+new_index] = secondHalf[i];
+		}
+	    }
+
+            if (!down) new_index = new_order - 1;
+
+	    if (list_path.length) new_index = list_path+']['+new_index;
+
+	    update_select_state(list_count, select_index, new_index+'');
+	    last_focus = list_count;
+            populate_list(list_count, true);
+	}
+    }
+
+    function do_add_on_return(evt, list_count) {
+      evt = (evt) ? evt : event;
+      var charCode = (evt.charCode) ? evt.charCode : evt.keyCode;
+      if (charCode == 13 || charCode == 3) {
+	do_add(list_count);
+	var target = (evt.target) ? evt.target : evt.srcElement;
+	target.focus;
+      } else {
+	return false;
+      }
     }
 
     function do_add(list_count) {
-        var select_val = get_selected_val(list_count);
+
         var new_data = eval( "document.forms['edit_form'].new_item_" + list_count).value;
 
-        // do nothing if no value is entered in textbox
-        if (! new_data) {
-            return;
-        }
- 
-        if (list_count != 1) {
-            var rlc = list_count - 1;
-           for(var key in list_data[rlc]) {
-               if (list_data[rlc][key]['__data__'] == new_data) {
-                    alert("'" + new_data  + "'" + " is already an item in this list. Not added.");
-                    return;
-                }
-            }
-        } else { 
-            for(var key in list_data) {
-               if (list_data[key]['__data__'] == new_data) {
-                    alert("'" + new_data  + "'" + " is already an item in this list. Not added.");
-                    return;
-                }
-            }
-        }
+	// alert if no text was entered
+	if ( ! new_data) {
+	    alert("No text entered.");
+	    return;
+	}
 
-        // if list item is selected in list we are adding to
-        if (select_val != 'undef' ) {
-            var indexArray = select_val.split('][');
-            var current_index = indexArray.pop();
-            select_val = indexArray.join('][');
-            
-            var t = new Array();
-            t['__data__'] = new_data;
-            t['__id__'] = 'new_' + new_count++;
+	// some defaults
+	var list_path = '';
+	var list_index = 0; 
+	var select_index = 0;
+	var has_parents = false;
 
-            // if we are on the first list
-            if (! select_val) {
-                list_data.splice(current_index, 0, t);
-            } else {
-                // else this is not first list
-                eval('list_data[' + select_val + ']').splice(current_index, 0, t);
-            }
+	// see where to insert the new item
+	var selected = get_selected(list_count);
 
-            var parent;
-            if (indexArray.length) {
-                parent = eval("list_data[" + select_val + "]")['__id__'];
-            }
-            log_entry(t['__id__'], 'new', new_data + '^*^' + (parseInt(current_index) + 1) + '^*^' + get_list_id(list_count) + '^*^' + parent );
-        } else {
-            // if this is not the first list, get the parent selected
-            if (list_count - 1) {
-                select_val = get_selected_val(list_count - 1);
-        
-                // if parent isn't selected either, dont do a thing
-                if (select_val == 'undef') {
-                    return;
-                }
-            } else {
-                 select_val = 'undef';
-            }
+	if (selected) {
+	    // we got the list and the index
+	    list_path = selected.listPath;
+	    list_index = selected.listIndex;
+	    select_index = selected.selIndex;
+	    has_parents = list_path.length;
+	} else {
+	    // insert at beginning of list, the default
+	    // but do we have parents?
+	    selected = get_selected(list_count - 1);
 
-            // if this is first list
-            if (select_val == 'undef') {
-                // if this is first item in first list
-                if( ! list_data[0]) {
-                    list_data[0] = new Array();
-                    list_data[0]['__data__'] = new_data;
-                    list_data[0]['__id__'] = 'new_' + new_count++;
-                    log_entry(list_data[0]['__id__'], 'new', list_data[0]['__data__'] + '^*^' + 1 + '^*^' + get_list_id(list_count) );
-                } else {
-                    // else add as first item in first list
-                    var nitem = new Array();
-                    nitem['__data__'] = new_data;
-                    nitem['__id__'] = 'new_' + new_count++;
-                    list_data.splice(0,0,nitem);
-                    log_entry(nitem['__id__'], 'new', new_data + '^*^' + 1 + '^*^' + get_list_id(list_count) );
-                }
-            } else { 
-                // if this list has no current items
-                if( ! eval('list_data[' + select_val + ']')[0] ) {
-                    eval('list_data[' + select_val + ']')[0] = new Array();
-                    var it = eval('list_data[' + select_val + ']')[0];
-                    it['__data__'] = new_data; 
-                    it['__id__'] = "new_" + new_count++;
-                    log_entry(it['__id__'], 'new', new_data + '^*^'
-+ 1 + '^*^' + get_list_id(list_count) + '^*^' + eval('list_data[' + select_val + ']')['__id__']);
-                } else {
-                    var nitem = new Array();
-                    nitem['__data__'] = new_data;
-                    nitem['__id__'] = 'new_' + new_count++;
-                    eval('list_data[' + select_val + ']').splice(0,0,nitem);
-                    log_entry(nitem['__id__'], 'new', new_data + '^*^' + 1 + '^*^' + get_list_id(list_count) + '^*^' + eval('list_data[' + select_val + ']')["__id__"]);
-                }
-            }
-            current_index = 0;
-        }
-        
-        eval( "document.forms['edit_form'].new_item_" + list_count).value = '';
-        populate_list(list_count-1, current_index);
+	    if (selected) {
+		// yes, we do
+		list_path = selected.selValue;
+		has_parents = true;
+	    } else {
+		// we are the first list
+		// or on a list without selected parent element
+		if (list_count != 1) {
+		    alert("No element in parent list selected!");
+		    return;
+		}
+	    }
+	}
+
+	// try to add the new item
+	var new_item_id = add_to_list(new_data, list_path, list_index);
+
+	if ( ! new_item_id ) {
+	    // item exists already
+	    return;
+	}
+
+	// gather info to log the addition
+	var parent_id = '';
+	if (has_parents) {
+	    parent_id = get_list(list_path)['__id__'];
+	}
+	var order = list_index + 1;
+	var list_id = document.forms['edit_form']['list_id_' + list_count].value;
+
+	// log it
+	log_entry(new_item_id, 'new', new_data + '^*^' + order + '^*^' + list_id + '^*^' + parent_id);
+
+	// clear text-field
+	document.forms['edit_form']['new_item_'+list_count].value = '';
+
+	// update state
+	trim_select_state(list_count + 1);
+	clear_child_select_lists(list_count + 1);
+	if (list_path.length) list_path = list_path.concat('][');
+	store_select_state(list_count, select_index, list_path+list_index, false);
+
+	populate_list(list_count, false);
+    }
+
+    function add_to_list(data, list_path, index) {
+	var list = get_list(list_path);
+
+	// check data for existence
+	if (exists(list, data)) return;
+
+	// build new item
+	var new_item = new Array();
+	new_item['__data__'] = data;
+	new_item['__id__'] = 'new_' + new_count++;
+
+	// insert it
+	list.splice(index, 0, new_item);
+	    
+	return new_item['__id__'];
+    }
+
+    function exists(list, data) {
+	for (var key in list) {
+	    if (list[key] && list[key]['__data__'] == data) {
+		alert("'" + data  + "' " + " is already an item in this list. Not added.");
+		return 1;
+	    }
+	}
     }
 
     function log_entry (item_id, action, data) {
@@ -274,15 +417,25 @@
         entry = item_id + '#&#' + action + '#&#' + data;
         change_log.push(entry);
     }
-    
+
+    function store_last_focus(elm) {
+	if (!elm) return;
+	var result = elm.name.match(/\d+$/);
+	if (result != null) {
+	    last_focus = result[0];
+	}
+    }
+
 // -->
 </script>
 
-<form name="edit_form" method="POST" action="list_group.pl">
-<input type="hidden" name="list_group_id" value="<tmpl_var list_group_id>" overwrite="1">
-<input type="hidden" name="rm" overwrite="1">
-<input type="hidden" name="changes" overwrite="1">
-<input type="hidden" name="stay" overwrite="1">
+<form name="edit_form" method="POST" action="list_group.pl" onSubmit="return false">
+<input type="hidden" name="list_group_id" value="<tmpl_var list_group_id>">
+<input type="hidden" name="rm">
+<input type="hidden" name="changes">
+<input type="hidden" name="stay">
+<input type="hidden" name="last_focus">
+<input type="hidden" name="select_state">
 
 
 <table border="0" cellpadding="2" cellspacing="0" width="100%">
@@ -304,11 +457,11 @@
 <table border="0" cellpadding="2" cellspacing="0" width="100%">
 <tmpl_loop list_loop>
 <tr><td class=form-cell width=150><tmpl_var list_name>:</td>
-<td class=form-cell><input type='hidden' name="list_id_<tmpl_var list_count>" value="<tmpl_var list_id>"><select name="list_<tmpl_var list_count>" size="10" onChange="populate_list(<tmpl_var list_count>)">
+<td class=form-cell><input type='hidden' name="list_id_<tmpl_var list_count>" value="<tmpl_var list_id>"><select name="list_<tmpl_var list_count>" size="10" onChange="do_select(<tmpl_var list_count>, this)">
 <tmpl_if list_item_loop><tmpl_loop list_item_loop><option value="<tmpl_var order>"><tmpl_var data></tmpl_loop></tmpl_if></select>
 <br>&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:do_move(<tmpl_var list_count>, 1)"><img src="images/arrow-asc.gif" border="0"></a>
 <a href="javascript:do_move(<tmpl_var list_count>)"><img src="images/arrow-desc.gif" border="0"></a>
-<br><input type="text" name="new_item_<tmpl_var list_count>">
+<br><input type="text" name="new_item_<tmpl_var list_count>" onkeypress="do_add_on_return(event, <tmpl_var list_count>)" onFocus="store_last_focus(this)" autocomplete="off">
 <input type="button" value="Add" onClick="do_add(<tmpl_var list_count>)" class="button">
 <input type="button" value="Replace" onClick="do_replace(<tmpl_var list_count>)" class="button">
 <input type="button" value="Delete Selected" onClick="do_delete(<tmpl_var list_count>)" class="button">
@@ -317,7 +470,7 @@
 </table>
 
 <div class="button-bar">
-    <input type="submit" value="Save" onClick="do_save()" class="button">
+    <input type="button" value="Save" onClick="do_save()" class="button">
     <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
 </div>
 
@@ -326,5 +479,18 @@
 </form>
 
 </div>
+
+<script language="JavaScript" type="text/javascript">
+if ("<tmpl_var last_focus>") {
+    var elm = eval('document.forms["edit_form"].<tmpl_var last_focus>');
+    elm.focus();
+    if (<tmpl_var scroll_into_view>) {
+	elm.scrollIntoView();
+    }
+} else {
+    document.forms['edit_form'].new_item_1.focus();
+}
+
+</script>
 
 <tmpl_include /footer.tmpl>

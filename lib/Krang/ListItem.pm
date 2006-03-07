@@ -142,13 +142,16 @@ sub save {
     my $dbh = dbh;
     my $list_item_id;
 
-    my %search_criteria = $self->{parent_list_item_id} ? (parent_list_item_id => $self->{parent_list_item_id}) : (list_id => $self->{list_id});
+    my %search_criteria = $self->{parent_list_item_id}
+      ? (parent_list_item_id => $self->{parent_list_item_id})
+      : (list_id => $self->{list_id});
+
     my $existing = pkg('ListItem')->find( count => 1, %search_criteria);
 
     # if this is not a new list item
     if (defined $self->{list_item_id}) {
         my $list_item_id = $self->{list_item_id};
-        
+
         # get rid of list_item_id 
         my @save_fields = grep {$_ ne 'list_item_id'} RO_FIELDS,RW_FIELDS;
 
@@ -158,10 +161,12 @@ sub save {
             my $sql = 'SELECT list_item_id from list_item where ord = ? and list_item_id != ?';
             $sql .= $self->{parent_list_item_id} ? ' and parent_list_item_id = ?' : ' and list_id = ?';
             my $sth = $dbh->prepare($sql);
-            $sth->execute($self->{ord}, $self->{list_item_id}, ($self->{parent_list_item_id} ? $self->{parent_list_item_id} : $self->{list_id}));
+            $sth->execute($self->{ord}, $self->{list_item_id}, ($self->{parent_list_item_id}
+								? $self->{parent_list_item_id}
+								: $self->{list_id}));
 
             my ($found_liid) = $sth->fetchrow_array();
-      
+
             # if one is found, update it to this object's old order 
             if ($found_liid) {
                 my $sql =  'update list_item set ord = ? where list_item_id = ?';
@@ -171,26 +176,28 @@ sub save {
                 croak(__PACKAGE__."->save - invalid order specified (".$self->{ord}.").");
             }
         }
- 
+
         my $sql = 'UPDATE list_item set '.join(', ',map { "$_ = ?" } @save_fields).' WHERE list_item_id = ?';
         $dbh->do($sql, undef, (map { $self->{$_} } @save_fields),$list_item_id);
 
     } else {
         my @save_fields =  (RO_FIELDS,RW_FIELDS);
 
-        if ($self->{ord} and ($self->{ord} <= $existing)) {
+        if ($self->{ord}){
             my $sql = 'UPDATE list_item set ord = ord + 1 where ord >= ?';
             $sql .= $self->{parent_list_item_id} ? ' and parent_list_item_id = ?' : ' and list_id = ?';
-            $dbh->do($sql, undef, $self->{ord}, ($self->{parent_list_item_id} ? $self->{parent_list_item_id} : $self->{list_id})); 
+            $dbh->do($sql, undef, $self->{ord}, ($self->{parent_list_item_id}
+						 ? $self->{parent_list_item_id}
+						 : $self->{list_id}));
         } else {
             $self->{ord} = $existing + 1;
         }
         my $sql = 'INSERT INTO list_item ('.join(',', @save_fields).') VALUES (?'.",?" x ((scalar @save_fields) - 1).")";
 
         my @save_vals = map { $self->{$_} } @save_fields;
- 
+
         $dbh->do($sql, undef, @save_vals);
-        
+
         $self->{list_item_id} = $dbh->{mysql_insertid};
     }
 }

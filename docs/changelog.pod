@@ -9,6 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Make admin list manager work intuitively and statefully.  Pressing
+RETURN does no longer submit the form, but adds a new to the
+list. [Bodo Schulze]
+
+=item *
+
 In element_lib/TestParent1/* and element_lib/TestSet1/*, added addon
 v2 compatibility. [Bodo Schulze]
 

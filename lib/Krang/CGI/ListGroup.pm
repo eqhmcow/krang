@@ -181,13 +181,30 @@ sub edit {
 
     my @list_loop;
 
+    # get state info
+    my %select_idx = ();
+    my %select_val = ();
+    for my $s (grep{defined($_)} split /\|/, $q->param('select_state')) {
+	my ($list_count, $sel) = split /:/, $s;
+	my ($sel_idx, $sel_val) = split /,/, $sel;
+	$select_idx{$list_count} = $sel_idx;
+	$select_val{$list_count} = $sel_val;
+    }
+
+    my @select_state_loop = ();
     my $count = 1;
-   
+    my $next_list_parents = '';
+    my $select_state = '';
+    my $last_list = 0;
+
     foreach my $list (@lists) {
         my @list_items = pkg('ListItem')->find( list_id => $list->list_id );
-
         my @list_item_loop;
-        my $first = 1;
+
+	# some vars to control passing of state info
+	my $item_count = 0;
+	my $curr_parents = $next_list_parents;
+	my $do_concat = 1;
 
         # set up crazy javascript data structure
         foreach my $li (@list_items) {
@@ -198,12 +215,15 @@ sub edit {
                 if ($c_li->parent_list_item_id) {
                     $c_li = (pkg('ListItem')->find( list_item_id => $c_li->parent_list_item_id ))[0]; 
                     unshift(@parents,($c_li->order - 1));
-                    
                 } else {
                     push(@parents,($li->order - 1)); 
                     $has_parent = 0;
                 }
             }
+
+	    my $this_parents = join '', @parents[0..$#parents-1];
+	    my $option_val = join '][', @parents;
+
             @parents = map { "[".$_."]" } @parents;
 
             my $parent_string = join('', @parents);
@@ -214,26 +234,56 @@ sub edit {
             $js .= "\nlist_data$parent_string = new Array();";
             $js .= "\nlist_data$parent_string\['__data__'] = ".'"'.$li_data.'";';
             $js .= "\nlist_data$parent_string\['__id__'] = '".$li->list_item_id."';";
- 
-            # prepopulate first list 
-            push (@list_item_loop, { data => $li->data, order => ($li->order - 1), first => $first }) if ($count == 1);
 
-        }
+            # prepopulate first list (perhaps also dependant lists to preserve state
+	    if (($count == 1) or ($curr_parents eq $this_parents)) {
+		if (defined($select_idx{$count})) {
+		    my ($next_parent) = $select_val{$count} =~ /(\d+)$/;
+		    $next_list_parents .= $next_parent if $do_concat;
+		    $do_concat = 0;
+		}
 
-        
-        if ($count == 1) {
-            push( @list_loop, { list_id => $list->list_id, list_name => $list->name, list_item_loop => \@list_item_loop, list_count => $count++ } );         
+		my $selected = length($select_idx{$count})
+		  ?($select_idx{$count} == $item_count ? 'selected' : '')
+		    : '';
+
+		push (@list_item_loop, { data     => $li->data,
+					 order    => ($count == 1 ? ($li->order - 1) : $option_val),
+					 selected => $selected,
+				       });
+
+		# build JS array select_state[]
+		if (length($select_idx{$count}) && ($select_idx{$count} == $item_count)) {
+		    push @select_state_loop, 
+                      { select_state => 
+			"select_state[$count] = { index:'$select_idx{$count}', value:'$select_val{$count}' };\n    "
+		      };
+		}
+		$last_list = $count;
+		$item_count++;
+	    }
+	}
+
+        if ($count == 1 or exists($select_idx{$count})) {
+            push( @list_loop, { list_id => $list->list_id, list_name => $list->name, list_item_loop => \@list_item_loop, list_count => $count++} );         
         } else {
-            push( @list_loop, { list_id => $list->list_id, list_name => $list->name, list_count => $count++} ); 
+            push( @list_loop, { list_id => $list->list_id, list_name => $list->name, list_count => $count++} );
         }
     } 
-   
+
+    # correct elm to put focus on
+    my $last_focus = ($q->param('last_focus') || '');
+    $last_focus = $last_list if $last_focus > $last_list;
+
     $t->param( 'list_levels' => $list_levels ); 
     $t->param( 'list_group_name' => $lg->name ); 
     $t->param( 'list_loop' => \@list_loop ); 
     $t->param( 'js_list_arrays' => $js ); 
     $t->param( 'list_group_description' => $lg->description );
-    $t->param( 'list_group_id' => $list_group_id ); 
+    $t->param( 'list_group_id' => $list_group_id );
+    $t->param( 'select_state_loop' => \@select_state_loop );
+    $t->param( 'scroll_into_view' => ($last_focus == 1 ? 'false' : 'true') );
+    $t->param( 'last_focus' => ($last_focus ? 'list_'.$last_focus : '') );
     return $t->output();
 }
 
