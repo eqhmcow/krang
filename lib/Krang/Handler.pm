@@ -336,17 +336,26 @@ sub instance_menu {
                                             cache    => 1);
 
     # setup the instance loop
-    my @loop;
-    foreach my $instance (pkg('Conf')->instances()) {
-        push(@loop, { InstanceName => $instance });
+    my (@loop, @instances);
+    @instances = pkg('Conf')->instances();
+
+    # if there's only one instance, just go there
+    if( scalar @instances == 1 ) {
+        $r->headers_out->{Location} = '/' . $instances[0] . '/index.pl';
+        return REDIRECT;
+    # else, show the menu
+    } else {
+        foreach my $instance (@instances) {
+            push(@loop, { InstanceName => $instance });
+        }
+        $template->param(instance_loop => \@loop);
+
+        # output HTML
+        $r->send_http_header('text/html');
+        print $template->output();
+        return OK;
     }
-    $template->param(instance_loop => \@loop);
 
-    # output HTML
-    $r->send_http_header('text/html');
-    print $template->output();
-
-    return OK;
 }
 
 
