@@ -1256,7 +1256,8 @@ sub user_asset_permissions {
 
 =item user_admin_permissions()
 
-  my %admin_perms = pkg('Group')->user_admin_permissions($user);
+  my %admin_perms = pkg('Group')->user_admin_permissions();
+  my $perms       = pkg('Group')->user_admin_permissions($permission);
 
 This method is expected to be used by all modules which need to know 
 if the current user has access to a particular administrative function.
