@@ -930,9 +930,9 @@ sub find {
                           contrib_id checked_out_by may_see may_edit 
                           mime_type );
     foreach my $key (keys %args) {
-	if ( grep { $key eq $_ } @simple_keys ) {
+        if ( grep { $key eq $_ } @simple_keys ) {
             push @where, $key;
-	} 
+        } 
     }
 
     my @where_fields = ();
