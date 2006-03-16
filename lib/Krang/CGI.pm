@@ -92,7 +92,6 @@ on the different permissions available.
 =cut
 
 use base 'CGI::Application';
-use CGI::Application::Plugin::Authorization;
 
 use Krang::ClassLoader 'ErrorHandler';
 use Data::Dumper ();
