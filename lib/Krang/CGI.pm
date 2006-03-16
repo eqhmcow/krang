@@ -42,9 +42,57 @@ CGI::Application features are available.
 
 See L<CGI::Application>.
 
+=head1 AUTHORIZATION
+
+User authentication is handled by L<Krang::Handler>. But for authoriztion,
+L<Krang::Handler> assumes that any valid user is also authorized to perform
+every action and leaves module and run-mode authorization up to the individual
+modules. A simple mechanism is provided by this base class to add this protection.
+
+=head2 Protecting a Module
+
+To restrict an entire module to only users with given permissions, simply use 
+the C<PACKAGE_PERMISSIONS> C<< param() >> in either the init stage, or through
+C< new() >. For instance, F<user.pl> contains:
+
+    my $app = pkg('CGI::User')->new(
+        PARAMS => {
+            PACKAGE_PERMISSIONS => [qw(admin_users admin_users_limited)],
+        }
+    )->run();
+
+This means that only users with either the C<admin_users> or C<admin_users_limited>
+permissions will be access to the entire script.
+
+=head2 Protecting a Run Mode
+
+Protecting a run mode is similar to protecting an entire module. Simple use the
+C<RUNMODE_PERMISSIONS> param. The main difference is that C<PACKAGE_PERMISSIONS>
+takes an arrayref, and C<RUNMODE_PERMISSIONS> takes a hashref. The keys of this
+hash are the names of the run modes. The values are arrayrefs containing the
+permissions needed.
+
+So to add run mode level protection to F<publisher> to protect the C<publish_*>
+run modes, we need something like this: 
+
+    my $app = pkg('CGI::Publisher')->new(
+        PARAMS => {
+            RUNMODE_PERMISSIONS => {
+                publish_story       => [qw(may_publish)],
+                publish_story_list  => [qw(may_publish)],
+                publish_assets      => [qw(may_publish)],
+                publish_media       => [qw(may_publish)],
+            },
+        },
+    )->run();
+
+Please see HREF[Krang Permissions System|permissions.html] for more information
+on the different permissions available.
+
 =cut
 
 use base 'CGI::Application';
+use CGI::Application::Plugin::Authorization;
 
 use Krang::ClassLoader 'ErrorHandler';
 use Data::Dumper ();
@@ -63,6 +111,7 @@ use Krang::ClassLoader Session => qw/%session/;
 
 # set this to one to see HTML errors in a popup in the UI
 use constant HTMLLint => 0;
+my $LOGIN_URL;
 
 BEGIN {
     # setup instance and preview scheme if not running in mod_perl
@@ -75,6 +124,70 @@ BEGIN {
         pkg('Conf')->instance($instance);
         $ENV{KRANG_PREVIEW_SCHEME} = $ENV{HTTPS} ? 'https' : 'http';
     }
+
+    # register the auth_forbidden runmode
+    __PACKAGE__->add_callback(
+        init => sub {
+            my $self = shift;
+            $self->run_modes( access_forbidden => \&_forbidden );
+        }
+    );
+    # setup our Authorization
+    __PACKAGE__->add_callback(
+        prerun => sub {
+            my ($self, $rm) = @_;
+
+            # if someone is actually logged in
+            if( $ENV{REMOTE_USER} ) {
+
+                # make sure they can authorize this package first
+                my $perms = $self->param('PACKAGE_PERMISSIONS');
+                my $authorized = $self->_check_permissions($perms);
+
+                # now see if there are any run mode level restrictions
+                if( $authorized ) {
+                    $perms = $self->param('RUNMODE_PERMISSIONS');
+                    if( $perms && ref $perms eq 'HASH' ) {
+                        $authorized = $self->_check_permissions($perms->{$rm});
+                    }
+                }
+
+                # don't let them go any further if they aren't authorized
+                $self->prerun_mode('access_forbidden') unless($authorized);
+            }
+        }
+    );
+}
+
+sub _check_permissions {
+    my ($self, $perms) = @_;
+    if( $perms && ref $perms eq 'ARRAY' ) {
+        my %actual_perms = pkg('Group')->user_admin_permissions();
+        foreach my $perm (@$perms) {
+            debug("Checking for permission '$perm'");
+            if( $actual_perms{$perm} ) {
+                debug("Found permission '$perm'");
+                return 1;
+            } else {
+                debug("Did not find permission '$perm'");
+            }
+        }
+        return 0;
+    } else {
+        debug("No permissions to check");
+        return 1;
+    }
+}
+
+sub _forbidden {
+    my $self = shift;
+    my $login_url = '/' . pkg('Conf')->instance . "/login.pl";
+    info(
+        "Unauthorized Access attempted by user #$ENV{REMOTE_USER}."
+        . " Redirecting to '$login_url'"
+    );
+    $self->header_add( -location => $login_url );
+    $self->header_type('redirect');
 }
 
 # load template using Krang::HTMLTemplate.  CGI::App doesn't provide a

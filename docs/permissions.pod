@@ -258,10 +258,13 @@ displaying options to which the user does not have access.  The
 permissions system provides access to security settings so that user
 interface elements may hide functions as necessary.
 
+You can also restrict access to a module or it's run modes by setting
+the C<PACKAGE_PERMISSIONS> and C<RUNMODE_PERMISSIONS> params. See
+L<Krang::CGI> for more details.
+
 Following describes how API and UI security are to be implemented for
 the four major permissions systems in Krang:  Sites/Categories,
 Assets, Desks, and Administration permissions.
-
 
 =head2 Sites/Categories
 
