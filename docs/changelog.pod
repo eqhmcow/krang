@@ -4,6 +4,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Made Krang::CGI::Category::find() and find_row_handler() addon v2
+compliant. [Bodo Schulze]
+
 =item * 
 
 Added enforcement of permissions at the application and run-mode leve

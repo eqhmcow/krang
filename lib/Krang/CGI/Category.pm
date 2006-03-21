@@ -94,7 +94,7 @@ sub find {
                                                        rm => 'find',
                                                        search_filter => $search_filter,
                                                       },
-                                      use_module => 'Krang::Category',
+                                      use_module => pkg('Category'),
                                       find_params => {
                                                       may_see => 1,
                                                       simple_search => $search_filter
@@ -106,7 +106,7 @@ sub find {
                                       columns_sortable => [qw( url )],
                                       command_column_commands => [qw( edit_category )],
                                       command_column_labels => {edit_category => 'Edit'},
-                                      row_handler => \&find_row_handler,
+                                      row_handler => sub { $self->find_row_handler(@_) },
                                       id_handler => sub { return $_[0]->category_id },
                                      );
 
@@ -120,7 +120,7 @@ sub find {
 }
 
 sub find_row_handler {
-    my ($row, $category) = @_;
+    my ($self, $row, $category) = @_;
     $row->{url} = format_url( url => $category->url(), length => 60 );
     unless ($category->may_edit) {
         $row->{command_column} = "&nbsp;";
