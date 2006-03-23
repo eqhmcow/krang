@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed "Forbidden" bug in Xinha implementation by permitting 
+static Xinha files.  [Jesse Erlbaum]
+
+=item *
+
 Made Krang::CGI::Category::find() and find_row_handler() addon v2
 compliant. [Bodo Schulze]
 

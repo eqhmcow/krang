@@ -108,10 +108,10 @@ sub input_form {
         # I'm the first!  Insert one-time JavaScript
         $html .= <<END;
 <script type="text/javascript">
-    _editor_url  = "/xinha/"
+    _editor_url  = "xinha/"
     _editor_lang = "en";
 </script>
-<script type="text/javascript" src="/xinha/htmlarea.js"></script>
+<script type="text/javascript" src="xinha/htmlarea.js"></script>
 <script type="text/javascript">
     xinha_editors = null;
     xinha_init    = null;
