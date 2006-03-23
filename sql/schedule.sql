@@ -2,7 +2,7 @@
 DROP TABLE IF EXISTS schedule;
 CREATE TABLE schedule (
         schedule_id     INT UNSIGNED NOT NULL AUTO_INCREMENT,
-        repeat          ENUM('never', 'hourly', 'daily', 'weekly') NOT NULL,
+        `repeat`          ENUM('never', 'hourly', 'daily', 'weekly') NOT NULL,
         action          VARCHAR(255) NOT NULL,
         context         TEXT,
         object_type     VARCHAR(255) NOT NULL,
@@ -23,17 +23,17 @@ CREATE TABLE schedule (
 /* add default scheduled tasks for tmp cleaning, session expiration
 and DB analyze runs */
 INSERT INTO schedule 
- (repeat, action, object_type, initial_date, last_run, next_run, hour, minute) 
+ (`repeat`, action, object_type, initial_date, last_run, next_run, hour, minute) 
 VALUES
  ('daily', 'clean', 'tmp', NOW(), NOW(), NOW(), 3, 0);
 
 INSERT INTO schedule 
- (repeat, action, object_type, initial_date, last_run, next_run, hour, minute) 
+ (`repeat`, action, object_type, initial_date, last_run, next_run, hour, minute) 
 VALUES
  ('daily', 'clean', 'session', NOW(), NOW(), NOW(), 3, 0);
 
 INSERT INTO schedule 
- (repeat, action, object_type, initial_date, last_run, next_run, hour, minute) 
+ (`repeat`, action, object_type, initial_date, last_run, next_run, hour, minute) 
 VALUES
  ('daily', 'clean', 'analyze', NOW(), NOW(), NOW(), 3, 0);
 

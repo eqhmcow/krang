@@ -718,7 +718,7 @@ sub find {
 
     # exclude 'element'
     $fields = $count ? 'count(*)' :
-      ($ids_only ? 'schedule_id' : join(", ", keys %schedule_cols));
+      ($ids_only ? 'schedule_id' : join(", ", map { "`$_`" } keys %schedule_cols));
 
     # set up WHERE clause and @params, croak unless the args are in
     # SCHEDULE_RO, SCHEDULE_RW or SCHEDULE_RW_NOTIFY.
@@ -760,10 +760,10 @@ sub find {
             my $and = defined $where_clause && $where_clause ne '' ?
               ' AND' : '';
             if (not defined $args{$arg}) {
-                $where_clause .= "$and $lookup_field IS NULL";
+                $where_clause .= "$and `$lookup_field` IS NULL";
             } else {
-                $where_clause .= $like ? "$and $lookup_field LIKE ?" :
-                  "$and $lookup_field = ?";
+                $where_clause .= $like ? "$and `$lookup_field` LIKE ?" :
+                  "$and `$lookup_field` = ?";
                 push @params, $args{$arg};
             }
         }
@@ -869,11 +869,11 @@ sub save {
     # the object has already been saved once if $id
     if ($id) {
         $query = "UPDATE schedule SET " .
-          join(", ", map {"$_ = ?"} @save_fields) .
+          join(", ", map {"`$_` = ?"} @save_fields) .
             " WHERE schedule_id = ?";
     } else {
         # build insert query
-        $query = "INSERT INTO schedule (" . join(',', @save_fields) .
+        $query = "INSERT INTO schedule (" . join(',', map { "`$_`" } @save_fields) .
           ") VALUES (?" . ", ?" x (scalar @save_fields - 1) . ")";
     }
 

@@ -152,13 +152,16 @@ END
       "Error was '$!'.\n\n"
         unless defined $mysql_version and length $mysql_version;
     chomp $mysql_version;
-    my ($version) = $mysql_version =~ /\s4\.(\d+\.\d+)/;
+    my ($major_version, $minor_version) = $mysql_version =~ /\s(4|5)\.(\d+\.\d+)/;
+
     die "\n\nMySQL version 4 not found.  'mysql -V' returned:" .
       "\n\n\t$mysql_version\n\n"
-        unless defined $version;
-    die "\n\nMySQL version too old.  Krang requires v4.0.13 or higher.\n" .
-      "'mysql -V' returned:\n\n\t$mysql_version\n\n"
-        unless $version >= 0.13;
+        unless defined $major_version;
+    if( $major_version == 4 ) {
+        die "\n\nMySQL version too old.  Krang requires v4.0.13 or higher.\n" .
+          "'mysql -V' returned:\n\n\t$mysql_version\n\n"
+            unless $minor_version >= 0.13;
+    }
 }
 
 
