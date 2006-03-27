@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added a new configuration parameter, Charset.  This may be used to
+control the character set for the Krang user-interface.  [Sam]
+
+=item *
+
 Fixed "Forbidden" bug in Xinha implementation by permitting 
 static Xinha files.  [Jesse Erlbaum]
 

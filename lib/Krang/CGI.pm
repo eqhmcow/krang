@@ -96,7 +96,7 @@ use base 'CGI::Application';
 use Krang::ClassLoader 'ErrorHandler';
 use Data::Dumper ();
 
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceDisplayName);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceDisplayName Charset);
 use File::Spec::Functions qw(catdir rel2abs);
 use Krang::ClassLoader 'CGI::Status';
 use Krang::ClassLoader 'CGI::ElementEditor';
@@ -218,6 +218,9 @@ sub load_tmpl {
 sub run {
     my $self = shift;
     my @args = ( @_ );
+
+    # setup character set if one is defined
+    $self->query->charset(Charset) if Charset;
 
     # Load and unload session ONLY if we have a session ID set
     my $we_loaded_session = 0;

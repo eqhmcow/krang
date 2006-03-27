@@ -13,6 +13,7 @@ BugzillaComponent
 BugzillaEmail
 BugzillaPassword
 BugzillaServer
+Charset
 DBPass
 DBUser
 DBHost
