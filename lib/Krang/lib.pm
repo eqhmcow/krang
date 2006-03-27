@@ -52,7 +52,8 @@ sub import {
     # prepend legacy element_lib/ first
     # (This will permit addons to override legacy behavior)
     my $legacy_elib = catdir($root, 'element_lib');
-    $ENV{PERL5LIB} = $legacy_elib . ":" . $ENV{PERL5LIB};
+    $ENV{PERL5LIB} = $legacy_elib . 
+      ($ENV{PERL5LIB} ? ":$ENV{PERL5LIB}" : "");
     unshift (@INC, $legacy_elib);
     
     # using Krang::Addon would be easier but this module shouldn't
