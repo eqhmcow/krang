@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use Krang::ClassLoader base => 'Upgrade';
 use Krang::ClassLoader DB => 'dbh';
+use Krang::ClassLoader Conf => 'KrangRoot';
+use File::Spec::Functions qw(catfile);
  
 # add new krang.conf directive, Charset
 sub per_installation {
