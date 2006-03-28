@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In Krang::Test::Content, modified _init_words() to skip words
+containing an apostrophe. [Bodo Schulze]
+
+=item *
+
 Added a new configuration parameter, Charset.  This may be used to
 control the character set for the Krang user-interface.  [Sam]
 

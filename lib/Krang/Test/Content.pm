@@ -1198,6 +1198,7 @@ sub _init_words {
       or open(WORDS, "/usr/share/dict/words")
         or croak "Can't open /usr/dict/words or /usr/share/dict/words: $!";
     while (<WORDS>) {
+        next if /'/;
         chomp;
         push @{$self->{words}}, $_;
     }
