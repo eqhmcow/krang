@@ -2,7 +2,16 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 2.004
+
 =over
+
+=item *
+
+In Krang::Publish I decoupled processing of assets from publish_story()
+and preview_story() allowing for future subclassing into Krang::Publisher::Parallel
+simply redefine _process_assets() and _process_preview_assets().
+[Aaron Dancygier]
 
 =item *
 
@@ -28,13 +37,6 @@ compliant. [Bodo Schulze]
 
 Added enforcement of permissions at the application and run-mode leve
 rather than just at the UI level. [Michael Peters]
-
-=back
-
-
-=head2 v2.004
-
-=over
 
 =item *
 
