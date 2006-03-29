@@ -202,7 +202,6 @@ sub init {
     return;
 }
 
-
 =item C<< $url = $publisher->preview_story(story => \@stories) >>
 
 Generates a story, saving it to the preview doc root on the
@@ -305,41 +304,13 @@ sub preview_story {
     my $publish_list = $self->asset_list(story         => [$story],
                                          version_check => $version_check);
 
-    my $total = @$publish_list;
-    my $counter = 0;
-    my @paths;
-    foreach my $object (@$publish_list) {
-
-        if ($object->isa('Krang::Story')) {
-            my @paths = $self->_build_story_all_categories(story => $object);
-
-            # fix up publish locations
-            $self->_rectify_publish_locations(object  => $object,
-                                              paths   => \@paths,
-                                              preview => 1);
-
-            # make a note on preview status.  Initial story may be in
-            # edit mode, the rest are not.
-            if ($object->story_id == $story->story_id) {
-                $object->mark_as_previewed(unsaved => $unsaved);
-            } else {
-                $object->mark_as_previewed(unsaved => 0);
-            }
-            # clear context to not sully the next story.
-            $self->clear_publish_context;
-
-    } elsif ($object->isa('Krang::Media')) {
-            debug('Publisher.pm: Previewing media_id=' . $object->media_id());
-            $self->preview_media(media => $object);
-        }
-
-        $callback->(object  => $object,
-                    total   => $total,
-                    counter => $counter++) if $callback;
-
-    }
-
-
+    $self->_process_preview_assets(
+        publish_list => $publish_list,
+        callback => $callback,
+        unsaved => $unsaved,
+        story => $story
+    );
+    
     # cleanup - remove any testing templates.
     $self->_undeploy_testing_templates();
 
@@ -485,9 +456,7 @@ sub publish_story {
 
     my $no_related_check = (exists($args{disable_related_assets})) ? $args{disable_related_assets} : 0;
     my $keep_asset_list  = $args{remember_asset_list} || 0;
-
     my $user_id       = $ENV{REMOTE_USER};
-
     my $publish_list;
 
     # this is needed so that element templates don't get Krang's templates
@@ -506,62 +475,16 @@ sub publish_story {
                                           version_check => $version_check);
     }
 
-    my $total = @$publish_list;
-    my $counter = 0;
-    foreach my $object (@$publish_list) {
-        if ($object->isa('Krang::Story')) {
-            if ($object->checked_out) {
-                if ($user_id != $object->checked_out_by) {
-                    debug(__PACKAGE__ . ": skipping checked out story id=" . $object->story_id);
-                    $skip_callback->(object => $object, error => 'checked_out') if $skip_callback;
-                    next;
-                }
-            }
-
-            eval {
-                my @paths = $self->_build_story_all_categories(story => $object);
-
-                # fix up publish locations
-                $self->_rectify_publish_locations(object => $object,
-                                                  paths  => \@paths,
-                                                  preview => 0);
-                # mark as published.
-                $object->mark_as_published();
-
-                # don't make callbacks on media, that's handled in publish_media().
-                $callback->(object  => $object,
-                            total   => $total,
-                            counter => $counter++) if $callback;
-
-            };
-
-            if (my $err = $@) {
-                if ($skip_callback) {
-                    # call skip_callback, hopefully with a real error
-                    # object
-                    $skip_callback->(object => $object, error => $err);
-                } else {
-                    # the skip_callback is not used by the CGIs,
-                    # re-propegate the error so the UI can handle it.
-                    die ($err);
-                }
-            }
-
-            # clear the publish context to not dirty things for the
-            # next pass.
-            $self->clear_publish_context();
-
-        } elsif ($object->isa('Krang::Media')) {
-            # publish_media() will mark the media object as published.
-            $self->publish_media(media => $object, %args);
-        }
-
-
-    }
+    $self->_process_assets(
+        publish_list => $publish_list,
+        skip_callback => $skip_callback,
+        callback => $callback,
+        user_id => $user_id,
+        remember_asset_list => $keep_asset_list
+    );
 
     $self->_clear_asset_lists() unless ($keep_asset_list);
 }
-
 
 =item C<< $publisher->unpublish_story(story => $story) >>
 
@@ -827,9 +750,6 @@ sub publish_media {
 
 }
 
-
-
-
 =item C<< $asset_list = $publisher->asset_list(story => $story) >>
 
 Returns the list of stories and media objects that will get published
@@ -925,8 +845,186 @@ sub asset_list {
 
 }
 
+=item C<< $publisher->_process_assets(%args) >>
+
+Called by publish_story(). Method takes in a list of assets to publish in publish_list, 
+it than proceeds to write the assets to disk.
+
+Arguments:
+
+=over
+
+=item * C<publish_list>
+
+Array reference of assets to publish.
+
+=item * C<skip_callback>
+
+The optional parameter C<skip_callback> is a pointer to a subroutine
+which is called whenever an object is skipped during the publish
+process, for whatever reason.  It takes four named parameters:
+
+=item * C<callback>
+
+The optional parameter C<callback> will point to a subroutine which is
+called when each object is published to the preview location.  It
+recieves three named parameters:
+
+=item * C<remember_asset_list>
+
+Boolean if set to true will not call clear asset lists in _clear_asset_lists()
+
+=item * C<user_id>
+
+Needed to make sure the object to published isn't checked out by another user
+
+=back
+
+=cut
+
+sub _process_assets {
+    my ($self, %args) = @_;
+
+    my $total = @{$args{publish_list}};
+    my $counter = 0;
+
+    foreach my $object (@{$args{publish_list}}) {
+        if ($object->isa('Krang::Story')) {
+            if ($object->checked_out) {
+                if ($args{user_id} != $object->checked_out_by) {
+                    debug(__PACKAGE__ . ": skipping checked out story id=" . $object->story_id);
+                    $args{skip_callback}->(object => $object, error => 'checked_out') if $args{skip_callback};
+                    next;
+                }
+            }
+
+            eval {
+                my @paths = $self->_build_story_all_categories(story => $object);
+
+                # fix up publish locations
+                $self->_rectify_publish_locations(object => $object,
+                                                  paths  => \@paths,
+                                                  preview => 0);
+                # mark as published.
+                $object->mark_as_published();
+
+                # don't make callbacks on media, that's handled in publish_media().
+                $args{callback}->(
+                    object  => $object,
+                    total   => $total,
+                    counter => $counter++
+                ) if $args{callback};
+
+            };
+
+            if (my $err = $@) {
+                if ($args{skip_callback}) {
+                    # call skip_callback, hopefully with a real error
+                    # object
+                    $args{skip_callback}->(object => $object, error => $err);
+                } else {
+                    # the skip_callback is not used by the CGIs,
+                    # re-propegate the error so the UI can handle it.
+                    die ($err);
+                }
+            }
+
+            # clear the publish context to not dirty things for the
+            # next pass.
+            $self->clear_publish_context();
+
+        } elsif ($object->isa('Krang::Media')) {
+            # publish_media() will mark the media object as published.
+            $self->publish_media(
+                media => $object, 
+                callback => $args{callback}, 
+                skip_callback => $args{skip_callback}, 
+                remember_asset_list => $args{remember_asset_list}
+            );
+        }
+    }
+}
 
 
+
+=item C<< $publisher->_process_preview_assets(%args) >>
+
+Called by preview_story(). Method takes in a list of assets to publish in publish_list, 
+it than proceeds to write the assets to the preview_path.  Decoupling of asset list from publishing of assets, permits an more natural entry point for a subclass ( to be written at a later time) to provide parallel publishing behavior.
+
+Arguments:
+
+=over
+
+=item * C<publish_list>
+
+array reference of assets to publish to the preview location.
+
+=item * C<callback>
+
+The optional parameter C<callback> will point to a subroutine which is
+called when each object is published to the preview location.  It
+recieves three named parameters:
+
+=item * C<story>
+
+Initial story object to preview.
+
+=item * C<unsaved>
+
+defaults to 0.  If C<unsaved> is true,
+L<Krang::Story>->preview_version will be set to -1.  What this does
+is force a republish of the story object to the preview path the next
+time the object comes up as a related object to a story being
+previewed.
+
+As part of the publish process, all media and stories linked to by
+C<$story> will be examined.  If the current version of each object has
+not been published to preview, it will be.  If the object has been
+previewed previously, it will be skipped.
+
+=back
+
+=cut
+
+
+sub _process_preview_assets {
+    my ($self, %args) = @_;
+
+    my $total = @{$args{publish_list}};
+    my $counter = 0;
+
+    foreach my $object (@{$args{publish_list}}) {
+
+        if ($object->isa('Krang::Story')) {
+            my @paths = $self->_build_story_all_categories(story => $object);
+
+            # fix up publish locations
+            $self->_rectify_publish_locations(object  => $object,
+                                              paths   => \@paths,
+                                              preview => 1);
+
+            # make a note on preview status.  Initial story may be in
+            # edit mode, the rest are not.
+            if ($object->story_id == $args{story}->story_id) {
+                $object->mark_as_previewed(unsaved => $args{unsaved});
+            } else {
+                $object->mark_as_previewed(unsaved => 0);
+            }
+            # clear context to not sully the next story.
+            $self->clear_publish_context;
+
+        } elsif ($object->isa('Krang::Media')) {
+            debug('Publisher.pm: Previewing media_id=' . $object->media_id());
+            $self->preview_media(media => $object);
+        }
+
+        $args{callback}->(object  => $object,
+                          total   => $total,
+                          counter => $counter++) if $args{callback};
+
+    }
+}
 
 =item C<< $filename = $publisher->deploy_template(template => $template); >>
 
