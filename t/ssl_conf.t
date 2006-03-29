@@ -1,4 +1,5 @@
 use Krang::ClassFactory qw(pkg);
+use Krang::Platform;
 use Test::More (tests => 31);
 use strict;
 use warnings;
@@ -58,25 +59,34 @@ CONF
 
 my $test_conf = catfile($ENV{KRANG_ROOT}, 'tmp', 'test.conf');
 
-# setup the test conf file
-_setup_conf($base_conf);
+## get SSL from build_params()
 
-eval "use_ok(pkg('Conf'))";
-die $@ if $@;
+my %params = Krang::Platform->build_params();
 
-# get the globals, all ways
-my @ssl_directives = qw(
-    SSLApachePort EnableSSL SSLPassPhraseDialog SSLRandomSeedStartup 
-    SSLRandomSeedConnect SSLProtocol SSLCipherSuite SSLVerifyClient 
-    SSLVerifyDepth SSLLogLevel
-);
+SKIP: {
 
-foreach my $directive (@ssl_directives) {
-    ok(pkg('Conf')->get($directive), "$directive get()");
-    ok(pkg('Conf')->$directive, "$directive as method");
-    pkg('Conf')->import($directive);
-    ok(eval "$directive()", "$directive imported");
-}
+    skip('Krang not built with --with-ssl option skipping ssl_conf tests.', 31) 
+        unless($params{SSL});
+    # setup the test conf file
+    _setup_conf($base_conf);
+
+    eval "use_ok(pkg('Conf'))";
+    die $@ if $@;
+
+    # get the globals, all ways
+    my @ssl_directives = qw(
+        SSLApachePort EnableSSL SSLPassPhraseDialog SSLRandomSeedStartup 
+        SSLRandomSeedConnect SSLProtocol SSLCipherSuite SSLVerifyClient 
+        SSLVerifyDepth SSLLogLevel
+    );
+
+    foreach my $directive (@ssl_directives) {
+        ok(pkg('Conf')->get($directive), "$directive get()");
+        ok(pkg('Conf')->$directive, "$directive as method");
+        pkg('Conf')->import($directive);
+        ok(eval "$directive()", "$directive imported");
+    }
+};
 
 # put an arbitary conf file into place so that Krang::Conf will load it
 sub _setup_conf {
