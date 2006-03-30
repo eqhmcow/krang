@@ -30,7 +30,7 @@ our %button_layouts = (
         "linebreak",
 
        "htmlmode", "separator",
-       "popupeditor", "separator", "about", "space", "undo", "redo" ]
+       "fullscreen", "separator", "about", "space", "undo", "redo" ]
     },
     standard => q{
      [ "fontname", "space",
@@ -105,6 +105,14 @@ sub input_form {
         my @params = map { $self->param_names( element => $_ ) } @sibs;
         my $params = join(', ', map { "'$_'" } @params);
 
+        # Adjust for Xinha's link-breaking hack-a-thon
+        #   var serverBase = location.href.replace(/(https?:\/\/[^\/]*)\/.*/, '$1') + '/';
+        my $serverbase = ($ENV{SERVER_PROTOCOL} =~ /^HTTP\//) ? "http://" : "https://" ;
+        $serverbase .= $ENV{HTTP_HOST} . '/';
+        my $specialreplacement = qq{ xinha_config.specialReplacements['href="/'] = 'href="$serverbase'; } . "\n";
+        $specialreplacement .= qq{ xinha_config.specialReplacements['src="/'] = 'src="$serverbase'; } . "\n";
+        $specialreplacement .= qq{ xinha_config.specialReplacements['background="/'] = 'background="$serverbase'; } . "\n";
+
         # I'm the first!  Insert one-time JavaScript
         $html .= <<END;
 <script type="text/javascript">
@@ -134,6 +142,7 @@ sub input_form {
 
       xinha_config = xinha_config ? xinha_config : new HTMLArea.Config();
       xinha_config.sizeIncludesToolbar = false;
+      $specialreplacement
       xinha_editors   = HTMLArea.makeEditors(xinha_editors, xinha_config, xinha_plugins);
 END
 
