@@ -131,7 +131,7 @@ No element can return until it's children have returned.  Using the above tree a
 
 Krang uses an internal method, C<< Krang::ElementClass->fill_template() >> (see more in C<Publishing With Customized Publish Methods>) to buld the data available to a template.  fill_template() will fill in the variables and loops in your template in a predictable fashion.
 
-Several types of variables and loops are created.  Using the element tree for C<Story> above as an example, the follwoing variables will be created:
+Several types of variables and loops are created.  Using the element tree for C<Story> above as an example, the following variables will be created:
 
 =over
 
