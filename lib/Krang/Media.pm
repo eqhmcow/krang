@@ -36,7 +36,7 @@ use Exception::Class (
 
 =head1 NAME
 
-    pkg('Media') - Media and media metadata storage and access methods
+    Krang::Media - Media and media metadata storage and access methods
 
 =head1 SYNOPSIS
 
