@@ -6,7 +6,7 @@ use File::Spec::Functions;
 use File::Path;
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Pref';
-use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet SSLEngine);
+use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet EnableSSL);
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Story';
@@ -40,7 +40,7 @@ BEGIN {
 }
 
 # Set preview scheme
-my $scheme = $ENV{KRANG_PREVIEW_SCHEME} = (SSLEngine || "") eq 'on' ? 'https' : 'http';
+my $scheme = $ENV{KRANG_PREVIEW_SCHEME} = EnableSSL ? 'https' : 'http';
 
 # instantiate publisher
 use_ok(pkg('Publisher'));

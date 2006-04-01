@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Adapted t/publish.t to Michael Peters' SSL simplification patch. [Bodo
+Schulze]
+
+=item *
+
 Fixed addon v2 compat bug in t/find.t. [Bodo Schulze]
 
 =item *
