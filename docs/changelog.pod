@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed addon v2 compat bug in t/find.t. [Bodo Schulze]
+
+=item *
+
 Fixed Xinha link-munging so that you can now use the WYSIWYG editor
 to create links and images.  Full-screen mode now works properly.
 [Jesse Erlbaum]

@@ -1,7 +1,10 @@
 use Krang::ClassFactory qw(pkg);
 use Test::More qw(no_plan);
 use File::Find qw(find);
+use File::Spec::Functions qw(catdir);
+
 use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(KrangRoot);
 
 # a list of non-CGI Krang modules with a suitable find method
 our %TEST_PACKAGES = map { ($_,1) } (pkg('Alert'), pkg('Category'), pkg('Contrib'), pkg('Desk'), pkg('Group'), pkg('List'), pkg('ListGroup'), pkg('ListItem'), pkg('Media'), pkg('Site'), pkg('Story'), pkg('Template'), pkg('User'));
@@ -22,19 +25,20 @@ our %ORDER_BY_FIELD = (
                       );
 
 # Check all Krang object modules
+my $krang_root = KrangRoot;
+
 find({
       wanted => sub { 
-           return unless /^lib\/(Krang\/.*)\.pm$/;
+           return unless /\Q$krang_root\E\/lib\/Krang\/([^\/]+)\.pm$/;
            return if /#/; # skip emacs droppings
-           return if /^lib\/Krang\/CGI/;  # Skip CGIs
+           return if /lib\/Krang\/CGI/;  # Skip CGIs
            return if /^lib\/Krang\/Profiler/;  # Skip Profiler
 
-           my $perl_package = join('::', (split(/\//, $1)));
-           check_find($perl_package);
+           check_find(pkg($1));
        },
        no_chdir => 1
      },
-     'lib/Krang/');
+     catdir($krang_root, 'lib', 'Krang'));
 
 
 # A Krang object module find() method is OK if:
@@ -90,8 +94,8 @@ sub check_find {
     my %order_params = (ids_only => 1, order_desc => 0);
 
     # Krang::List and Krang::ListItem require further grouping, or ordering will fail tests.
-    if ($perl_package eq 'Krang::List') { $order_params{list_group_id} = 1; }
-    if ($perl_package eq 'Krang::ListItem') { $order_params{list_id} = 1; }
+    if ($perl_package eq pkg('List')) { $order_params{list_group_id} = 1; }
+    if ($perl_package eq pkg('ListItem')) { $order_params{list_id} = 1; }
 
     eval { @stuff = $perl_package->find(%order_params) };
     ok(not($@), "$perl_package->find(ids_only=>1, order_desc => 0)");
@@ -106,7 +110,7 @@ sub check_find {
       if @stuff;
 
     # 6. limit=>1 returns only one record
-    unless ($perl_package eq 'Krang::Desk') { # Krang::Desk doesnt use limit
+    unless ($perl_package eq pkg('Desk')) { # Krang::Desk doesnt use limit
         eval { @stuff = $perl_package->find(limit=>1) };
         ok(not($@), "$perl_package->find(limit=>1)");
         die ($@) if ($@);
@@ -116,7 +120,7 @@ sub check_find {
     }
 
     # 7. offset=>1, limit=>1 returns the next record
-    unless ($perl_package eq 'Krang::Desk') { # Krang::Desk doesnt use offset
+    unless ($perl_package->isa(pkg('Desk'))) { # Krang::Desk doesnt use offset
         eval { @stuff = $perl_package->find(limit=>2) };
         ok(not($@), "$perl_package->find(limit=>2)");
         die ($@) if ($@);
