@@ -186,7 +186,7 @@ use Krang::ClassLoader 'Publisher';
 use Krang::Cache;
 
 # Set preview scheme
-$ENV{KRANG_PREVIEW_SCHEME} = SSLEngine eq 'on' ? 'https' : 'http';
+$ENV{KRANG_PREVIEW_SCHEME} = SSLEngine && SSLEngine eq 'on' ? 'https' : 'http';
 
 use Time::HiRes qw(gettimeofday tv_interval);
 
@@ -300,7 +300,7 @@ if ($everything) {
     }
 }
 
-$arg_string .= " (SSL enabled)" if SSLEngine eq 'on' and $to_preview;
+$arg_string .= " (SSL enabled)" if SSLEngine and SSLEngine eq 'on' and $to_preview;
 
 # If there are no command-line options, return the equivilant of --help.
 pod2usage(1) unless $has_options;
