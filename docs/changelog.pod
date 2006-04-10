@@ -2,6 +2,17 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 2.005
+
+=over
+
+=item *
+
+Upgraded HTML::PopupTreeSelect to v1.5, fixing a bug affecting Firefox
+and Camino on Mac OSX. [Sam]
+
+=back
+
 =head2 2.004
 
 =over
