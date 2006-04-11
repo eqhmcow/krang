@@ -1775,6 +1775,11 @@ sub deserialize_xml {
         assert(pkg('Category')->find(category_id => $category_id, count => 1))
           if ASSERT;
 
+        # this might have caused this media to get completed via a
+        # circular link, end early if it did
+        my ($dup) = pkg('Media')->find(url => $data->{url});
+        return $dup if( $dup );
+
         $media = pkg('Media')->new(category_id => $category_id,
                                    (map { ($_,$data->{$_}) } keys %simple));
 
@@ -1821,6 +1826,12 @@ sub deserialize_xml {
     # save changes
     $media->save();
     $media->checkin();
+
+    # register this with the dataset to prevent circular reference loops
+    $set->register_id(
+        class     => 'Krang::Media',
+        id        => $data->{media_id},
+        import_id => $media->media_id,);
 
     # make sure there's a file on the other end
     assert($media->file_path and -e $media->file_path,
