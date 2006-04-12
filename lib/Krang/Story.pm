@@ -2127,6 +2127,11 @@ sub deserialize_xml {
                                               id    => $_) }
                              @{$data->{category_id}};
 
+        # this might have caused this Story to get completed via a
+        # circular link, end early if it did
+        my ($dup) = pkg('Story')->find(url => $data->{url});
+        return $dup if( $dup );
+
         # create a new story object using categories, slug, title and class
         $story = pkg('Story')->new(categories => \@categories,
                                    slug       => $data->{slug} || "",
