@@ -41,10 +41,10 @@ option skips that step.
 =item --with-ssl
 
 Give this option if you desire to build Apache with SSL.
-During the build, dummy (Snakeoil) certificates will be created and symlinked
-to the cert and key files that Krang is expecting (as long as real certs/keys
-don't exist). Later when running krang, you should replace these with a real
-cert and key from a trusted CA.
+During the build, dummy (Snakeoil) RSA certificates will be created and 
+copied to the cert and key files that Krang is expecting (as long as 
+certs/keys don't exist). Later when running krang, you should replace 
+these with a real cert and key from a trusted CA.
 
     KRANG_ROOT/conf/ssl.crt/server.crt
     KRANG_ROOT/conf/ssl.key/server.key 
@@ -109,6 +109,7 @@ BEGIN {
 use Pod::Usage;
 use Getopt::Long;
 use File::Temp qw(tempdir);
+use File::Copy qw(copy);
 
 # setup path variables
 my $KrangRoot       = $ENV{KRANG_ROOT};
@@ -386,23 +387,36 @@ sub move_ssl_dirs {
           or warn "Can't move '$ap_dir' to '$kdir': $!";
     }
 
-    # now make the symlinks we need to work, if real certs aren't already there
+    # now make certs we need to work, if real certs aren't already there
     my $crt       = catfile($KrangRoot, 'conf', 'ssl.crt', 'server.crt');
     my $dummy_crt = catfile($KrangRoot, 'conf', 'ssl.crt', 'snakeoil-rsa.crt');
     my $key       = catfile($KrangRoot, 'conf', 'ssl.key', 'server.key');
     my $dummy_key = catfile($KrangRoot, 'conf', 'ssl.key', 'snakeoil-rsa.key');
 
-    my $contents = `cat $crt`;
-    if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER CERTIFICATE/ ) {
-        unlink($crt) or warn "Can't remove cert '$crt'! $!";
-        symlink($dummy_crt, $crt) 
-            or warn "Can't symlink from '$crt' to '$dummy_crt'! $!";
+    my $ok_to_replace = 0;
+    if( ! -e $crt ) {
+        $ok_to_replace = 1;
+    } else {
+        my $contents = `cat $crt`;
+        if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER CERTIFICATE/ ) {
+            $ok_to_replace = 1;
+        }
+    }
+    if( $ok_to_replace ) {
+        copy($dummy_crt, $crt) or warn "Can't copy '$dummy_crt' to '$crt': $!";
     }
 
-    $contents = `cat $key`;
-    if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER PRIVATE KEY/ ) {
-        unlink($key) or warn "Can't remove key '$key'! $!";
-        symlink($dummy_key, $key) 
-            or warn "Can't symlink from '$key' to '$dummy_key'! $!";
+    $ok_to_replace = 0;
+    if( ! -e $key ) {
+        $ok_to_replace = 1;
+    } else {
+        my $contents = `cat $key`;
+        if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER PRIVATE KEY/ ) {
+            $ok_to_replace = 1;
+        }
+    }
+
+    if( $ok_to_replace ) {
+        copy($dummy_key, $key) or warn "Can't copy '$dummy_key' to '$key': $!";
     }
 }

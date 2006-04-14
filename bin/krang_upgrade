@@ -60,7 +60,16 @@ Make a backup of the existing Krang system using 'krang_backup'.
 
 =item * 
 
-Install new Krang system over the existing files in KRANG_ROOT, with the exception of lib/Krang.pm which holds the Krang version number.
+Install new Krang system over the existing files in KRANG_ROOT with the following exceptions:
+
+=over
+
+=item F<lib/Krang.pm> which holds the Krang version number.
+
+=item F<conf/ssl.crt/server.crt> and F<conf/ssl.key/server.key> files are not overwritten
+if they curent exist, to prevent loosing existing SSL certificates.
+
+=back
 
 =item * 
 
@@ -375,6 +384,20 @@ sub install_new_krang {
     # before the upgrade is really finished
     rename('./lib/Krang.pm', './lib/Krang.new') 
       or die "Unable to rename ./lib/Krang.pm to ./lib/Krang.new: $!\n";
+
+    # make sure we don't over-write existing ssl certs
+    if( -e catfile($InstallPath, 'conf', 'ssl.crt', 'server.crt') ) {
+        rename(
+            catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt'),
+            catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt.new'),
+        ) or die "Unable to rename conf/ssl.crt/server.crt to conf/ssl.crt/server.crt.new: $!\n";
+    }
+    if( -e catfile($InstallPath, 'conf', 'ssl.key', 'server.key') ) {
+        rename(
+            catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key'),
+            catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key.new'),
+        ) or die "Unable to rename conf/ssl.key/server.key to conf/ssl.key/server.key.new: $!\n";
+    }
 
     eval {
         my $copy = "$COPY_BIN -a * $InstallPath\/";
