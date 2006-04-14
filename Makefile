@@ -36,7 +36,7 @@ dist:
 clean:	bench_clean
 	- find lib/ -mindepth 1 -maxdepth 1 | grep -v Krang | grep -v CVS | grep -v '.cvsignore' | xargs rm -rf
 	- find apache/ -mindepth 1 -maxdepth 1 | grep -v CVS | grep -v '.cvsignore' | xargs rm -rf
-	- rm data/build.db
+	- rm -f data/build.db
 
 TAGS:	
 	find -name '*.pm' | etags --language="perl" --regex='/[ \\t]*[A-Za-z]+::[a-zA-Z:]+/' -
@@ -55,7 +55,7 @@ bench:
 	ls $(BENCH_FILES) | KRANG_ROOT=`pwd` xargs -n1 perl -Ilib
 
 bench_clean:
-	- rm bench.out
+	- rm -f bench.out
 
 db:
 	bin/krang_createdb --destroy --all
