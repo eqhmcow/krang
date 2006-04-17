@@ -313,6 +313,7 @@ sub install {
         my @addons = $conf->get('requireaddons');
         while(@addons) {
             my ($req_name, $req_ver) = (shift(@addons), shift(@addons));
+            $req_ver ||= 0; # if the add-on didn't specify a version
             my ($req) = pkg('AddOn')->find(name => $req_name);
             die "This addon requires the '$req_name' addon, ".
               "which is not installed!\n"
