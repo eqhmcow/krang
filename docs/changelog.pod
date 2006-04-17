@@ -6,6 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Added missing button GIF for Xinha's SuperClean plugin. [Bodo Schulze]
+
 =item * 
 
 Fixed krang_upgrade and krang_build to prevent overwriting existing SSL certificates
