@@ -1768,6 +1768,7 @@ sub revert {
                    checked_out       => $self->{checked_out_by},
                    published_version => $self->{published_version},
                    publish_date      => $self->{publish_date},
+                   url_cache         => [],
                   );
     my ($obj) = $self->_load_version($self->{story_id}, $target);
 
