@@ -1214,7 +1214,6 @@ sub deserialize_xml {
     my $data = pkg('XML')->simple(xml           => $xml, 
                                   suppressempty => 1,
                                   forcearray    => ['element', 'data']);
-    
 
     # is there an existing category with this URL?
     my ($dup) = pkg('Category')->find(url => $data->{url});
@@ -1227,24 +1226,7 @@ sub deserialize_xml {
                        "no_update is set.")
             if $no_update and $data->{parent_id};
 
-        # register id before deserializing elements, since they may
-        # contain circular references
-        $set->register_id(class     => 'Krang::Category',
-                          id        => $data->{category_id},
-                          import_id => $dup->category_id);
-
-        # deserialize elements for update
-        my $element = pkg('Element')->deserialize_xml(data => 
-                                                        $data->{element}[0],
-                                                      set       => $set,
-                                                      no_update => $no_update,
-                                                      object    => $dup);
-        # remove existing element tree
-        $dup->element->delete;
-        $dup->{element}    = $element;
-        $dup->{element_id} = undef;
-        $dup->save();
-
+        $pkg->_update_category_element($set, $dup, $data, $no_update);
         return $dup;
     }
 
@@ -1264,6 +1246,7 @@ sub deserialize_xml {
         $site_id = $set->map_id(class => "Krang::Site",
                                 id    => $data->{site_id});
         my ($new_c) = pkg('Category')->find( url => $data->{url} );
+        $pkg->_update_category_data($set, $new_c, $data, $no_update);
         return $new_c;
     }
 
@@ -1277,6 +1260,13 @@ sub deserialize_xml {
                                   );
     # save the new category.
     $cat->save();
+    $pkg->_update_category_data($set, $cat, $data, $no_update);
+
+    return $cat;
+}
+
+sub _update_category_data {
+    my ($pkg, $set, $cat, $data, $no_update) = @_;
 
     # register id before deserializing elements, since they may
     # contain circular references
@@ -1284,19 +1274,16 @@ sub deserialize_xml {
                       id        => $data->{category_id},
                       import_id => $cat->category_id);
 
-    # deserialize elements
-    my $element = pkg('Element')->deserialize_xml(data => $data->{element}[0],
+    # deserialize elements for update
+    my $element = pkg('Element')->deserialize_xml(data      => $data->{element}[0],
                                                   set       => $set,
                                                   no_update => $no_update,
                                                   object    => $cat);
-
-    # update the element tree - delete the old one if it exists.
-    $cat->{element}->delete if ($cat->{element});
+    # remove existing element tree
+    $cat->element->delete if( $cat->{element} );
     $cat->{element}    = $element;
     $cat->{element_id} = undef;
     $cat->save();
-
-    return $cat;
 }
 
 =item * C<< $data = Storable::freeze($category) >>
