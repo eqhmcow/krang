@@ -1226,7 +1226,7 @@ sub deserialize_xml {
                        "no_update is set.")
             if $no_update and $data->{parent_id};
 
-        $pkg->_update_category_element($set, $dup, $data, $no_update);
+        $pkg->_update_category_data($set, $dup, $data, $no_update);
         return $dup;
     }
 
