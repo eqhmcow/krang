@@ -809,7 +809,10 @@ sub fill_template {
         }
 
         # build element_loop if it exists.
-        if (exists($template_vars{element_loop}{$name})) {
+        if (
+            exists($template_vars{element_loop}{$name})
+            || exists($template_vars{element_loop}{"is_$name"})
+        ) {
             # get html for element
             $html = $child->publish(publisher => $publisher, 
                                     fill_template_args =>\%fill_template_args);
