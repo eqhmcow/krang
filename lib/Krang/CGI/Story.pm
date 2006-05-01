@@ -78,7 +78,6 @@ sub setup {
                      save_and_stay    => 'save_and_stay',
                      save_and_edit_contribs => 'save_and_edit_contribs',
                      save_and_edit_schedule => 'save_and_edit_schedule',
-                     save_and_stay    => 'save_and_stay',
                      save_and_go_up   => 'save_and_go_up',
                      save_and_bulk_edit => 'save_and_bulk_edit',
                      save_and_leave_bulk_edit => 'save_and_leave_bulk_edit',
