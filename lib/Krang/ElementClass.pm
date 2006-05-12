@@ -373,7 +373,7 @@ sub validate {
 =item C<< ($bool, $msg) = $class->validate_children(element => $element, query => $query) >>
 
 Given the CGI.pm query object from a form submission, this call must
-return true of the input is valid for the elements children, taken
+return true if the input is valid for the elements children, taken
 collectively and false if not.  If false, an error message should be
 returned as well, describing the error.  This method is only called if
 all the children return (1) from their validate methods.
