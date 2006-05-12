@@ -350,7 +350,7 @@ sub view_data {
 =item C<< ($bool, $msg) = $class->validate(element => $element, query => $query) >>
 
 Given the CGI.pm query object from a form submission, this call must
-return true of the input is valid for the element and false if not.
+return true if the input is valid for the element and false if not.
 If false, an error message should be returned as well, describing the
 error.
 
