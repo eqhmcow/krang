@@ -1074,6 +1074,9 @@ sub find {
                     push @where, 'simple_search';
                 } else {
                     push @where, ($word, $word, $word);
+                    # escape any literal SQL wildcard chars
+                    $word =~ s/_/\\_/g;
+                    $word =~ s/%/\\%/g;
                     $args{$word} = '%'.$word.'%';
                 } 
         } 

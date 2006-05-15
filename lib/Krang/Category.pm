@@ -787,6 +787,9 @@ sub find {
             foreach my $word (@words) {
                 my $simple_search_where = "cat.url LIKE ? OR cat.category_id = ?";
                 push(@wheres, $simple_search_where);
+                # escape any literal SQL wildcard chars
+                $word =~ s/_/\\_/g;
+                $word =~ s/%/\\%/g;
                 push(@where_data, '%'.$word.'%', $word);
             }
         } else {

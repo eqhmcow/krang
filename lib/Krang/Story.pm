@@ -1231,6 +1231,11 @@ sub find {
                           ($numeric ? 's.story_id = ?' : ()),
                           's.title LIKE ?', 
                           'sc.url LIKE ?') . ')');
+                # escape any literal SQL wildcard chars
+                if( !$numeric ) {
+                    $word =~ s/_/\\_/g;
+                    $word =~ s/%/\\%/g;
+                } 
                 push(@param, ($numeric ? ($word) : ()),
                      "%${word}%", "%${word}%");
             }

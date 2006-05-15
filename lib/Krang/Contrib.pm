@@ -419,7 +419,10 @@ not $valid_params{$param};
                 $where_string = "concat_ws(' ', first, middle, last) like ?";
             }
             push (@where, $word);
-            $args{$word} = "%$word%";
+            # escape any literal SQL wildcard chars
+            $word =~ s/_/\\_/g;
+            $word =~ s/%/\\%/g;
+            $args{$word} = '%' . $word . '%';
         }
     } 
     

@@ -758,6 +758,12 @@ sub find {
                 my $numeric = /^\d+$/ ? 1 : 0;
                 $where_clause .= " AND " if ($where_clause);
                 $where_clause .= $numeric ? "t.template_id = ?" : "t.url LIKE ?";
+                # escape any literal SQL wildcard chars
+                unless( $numeric ) {
+                    s/_/\\_/g;
+                    s/%/\\%/g;
+                }
+
                 push @params, $numeric ? $_ : "%" . $_ . "%";
             }
         } elsif (grep { $arg eq $_ } qw(may_see may_edit)) {
