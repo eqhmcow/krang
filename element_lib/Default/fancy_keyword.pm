@@ -46,40 +46,51 @@ sub input_form {
     # javascript identifier
     (my $jparam = $param) =~ s/\W//g;
 
-    # get data and make sure it has at least required number of fields
-    my $data = $element->data || [];
-    while (@$data < $self->fields) {
-        push(@$data, "");
+    # get data (check the query first, and the element second)
+    # and make sure it has at least required number of fields
+    my @data;
+    my %query_vars = $query->Vars();
+    my $found      = 0;
+    foreach my $key (sort keys %query_vars) {
+        if( $key =~ /^\Q$param\E_\d+$/ ) {
+            $found = 1;
+            push(@data, $query->param($key)) if( $query->param($key) );
+        }
+    }
+
+    # if we didn't find anything in the query
+    unless( $found ) {
+        @data = @{$element->data};
     }
 
     # build text fields
     my $index = 0;
-    my @fields = 
+    my @fields =
       map { scalar $query->textfield(-name     => $param . '_' . $index++,
                                      -default  => $_,
                                      -size      => $self->size,
-                                     ($self->maxlength ? 
+                                     ($self->maxlength ?
                                       (-maxlength => $self->maxlength) :
-                                      ())) 
-        } @$data;
+                                      ()))
+        } @data;
 
     # pad them out
-    my $field_html = 
+    my $field_html =
       join("\n",
            (map { '<div style="padding:2px">' . $_ . '</div>' } @fields));
 
     # get a dummy field like the real ones and spit it around the
     # field name
-    my $dummy_field = '<div style="padding:2px">' . 
+    my $dummy_field = '<div style="padding:2px">' .
       scalar $query->textfield(-name     => 'DUMMY',
-                               -default  => "",                               
+                               -default  => "",
                                -size      => $self->size,
-                               ($self->maxlength ? 
+                               ($self->maxlength ?
                                 (-maxlength => $self->maxlength) :
                                 ())) .
                       '</div>';
     $dummy_field =~ s/"/\\"/g;
-    my ($dummy_field_start, $dummy_field_end) = 
+    my ($dummy_field_start, $dummy_field_end) =
       $dummy_field =~ /^(.*?)DUMMY(.*)$/;
 
     # javascript to add fields when "add more" is clicked
@@ -90,10 +101,10 @@ sub input_form {
       for(var i=0; i < 4; i++) {
         var index = ++${jparam}_index;
         var span = document.getElementById("${param}_add_" + index + "_span");
-        span.innerHTML += "$dummy_field_start" + 
-                          "${param}_" + index  + 
-                          "$dummy_field_end" + 
-                           "\\n" + 
+        span.innerHTML += "$dummy_field_start" +
+                          "${param}_" + index  +
+                          "$dummy_field_end" +
+                           "\\n" +
                           "<div id=\\"${param}_add_" + (index + 1) + "_span\\"></div>";
       }
   }
