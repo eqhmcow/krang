@@ -3,40 +3,40 @@
 <script language="javascript" type="text/javascript">
   nav_edit_mode();
 
-  function preview_media(id) {
+  preview_media = function (id) {
         window.open("publisher.pl?rm=preview_media&media_id=" + id, "");
   }
 
-  function select_media(id) {
+  select_media = function (id) {
         document.forms[0].rm.value = 'select_media';
         document.forms[0].selected_media_id.value = id;
         document.forms[0].submit();
   }
 
-  function cancel_select() {
+  cancel_select = function () {
         document.forms[0].rm.value = 'edit';
         document.forms[0].path.value = '<tmpl_var parent_path>';
         document.forms[0].submit();
   }  
 
-  function advanced_search() {
+  advanced_search = function () {
     document.forms[0].advanced.value = 1;
     document.forms[0].submit();
   }
 
-  function simple_search() {
+  simple_search = function () {
     document.forms[0].advanced.value = 0;
     document.forms[0].submit();
   }
 
-  function clear_advanced_search () {
+  clear_advanced_search  = function () {
     var myform = document.clear_advanced_search_form;
     myform.submit();
   }
 
 </script>
 
-<form name=select_media method=post>
+<form name="select_media" method="post" action="<tmpl_var action>">
 <input type="hidden" name="selected_media_id">
 <input type="hidden" name="rm" value="find_media_link">
 <input type="hidden" name="advanced" value="<tmpl_var escape=1 advanced>">
@@ -113,7 +113,7 @@
 
 </form>
 
-<form name="clear_advanced_search_form" method="POST">
+<form name="clear_advanced_search_form" method="POST" action="<tmpl_var action>">
 <input type="hidden" name="rm" value="find_media_link">
 <input type="hidden" name="path" value="<tmpl_var path>">
 <input type="hidden" name="advanced" value=1>

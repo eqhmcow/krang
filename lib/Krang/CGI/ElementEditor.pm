@@ -148,6 +148,12 @@ Your sub-class must define the following helper methods:
 
 Must return the element currently being edited from the session.
 
+=item _get_script_name
+
+Must return the name of the C<.pl> script in htdocs directory which
+uses this module. This allows the C<action> attribute for forms
+to be filled in.
+
 =back
 
 =cut
@@ -516,6 +522,7 @@ sub find_story_link {
       );
     
     $template->param(pager_html => $pager->output());
+    $template->param(action => $self->_get_script_name);
 
     return $template->output;
 }
@@ -694,6 +701,7 @@ sub find_media_link {
                                               ));
     
     $template->param(pager_html => $pager->output());
+    $template->param(action => $self->_get_script_name);
 
     return $template->output;
 }
@@ -1078,4 +1086,15 @@ sub delete_children { shift->revise('delete') }
 
 sub reorder { shift->revise('reorder') }
 
+sub _get_element {
+    my $self = shift;
+    croak "_get_element() must be defined in child class '" 
+        . ref( $self ) . "'";
+}
+
+sub _get_script_name {
+    my $self = shift;
+    croak "_get_script_name() must be defined in child class '" 
+        . ref( $self ) . "'";
+}
 1;

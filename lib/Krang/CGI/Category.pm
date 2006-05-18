@@ -17,7 +17,8 @@ use Krang::ClassLoader 'Site';
 
 use Krang::ClassLoader base => 'CGI::ElementEditor';
 
-sub _get_element { $session{category}->element; }
+sub _get_element     { $session{category}->element; }
+sub _get_script_name { "category.pl" };
 
 =head1 NAME
 

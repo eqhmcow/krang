@@ -17,7 +17,8 @@ use Krang::ClassLoader 'Group';
 
 use Krang::ClassLoader base => 'CGI::ElementEditor';
 
-sub _get_element { $session{story}->element; }
+sub _get_element     { $session{story}->element; }
+sub _get_script_name { "story.pl"; }
 
 =head1 NAME
 
@@ -1693,6 +1694,7 @@ sub list_active_row_handler {
     my ($user) = pkg('User')->find(user_id => $story->checked_out_by);
     $row->{user} = $user->first_name . " " . $user->last_name;
 }
+
 
 
 1;

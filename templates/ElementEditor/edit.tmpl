@@ -1,27 +1,27 @@
 <script language=javascript>
-  function preview_media(id) {
+  preview_media = function (id) {
         aWindow=window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var instance_name>");
         aWindow.focus();
   }
 
-  function preview_story(id) {
+  preview_story = function (id) {
         aWindow=window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var instance_name>");
         aWindow.focus();
   }
 
-  function find_story(p) {
+  find_story = function (p) {
         document.forms[0].rm.value = 'save_and_find_story_link';
         document.forms[0].jump_to.value = p;
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function find_media(p) {
+  find_media = function (p) {
         document.forms[0].rm.value = 'save_and_find_media_link';
         document.forms[0].jump_to.value = p;
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function edit_children(p) {
+  edit_children = function (p) {
         document.forms[0].rm.value = 'save_and_jump';
         document.forms[0].jump_to.value = p;
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
@@ -32,7 +32,7 @@
      containers["<tmpl_var name>"] = 1;
   </tmpl_loop>
 
-  function add_child() {
+  add_child = function () {
      var list = document.forms[0].child;
      var name = list.options[list.selectedIndex].value;
      if (containers[name]) {
@@ -43,13 +43,13 @@
      if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function jump_to(p) {
+  jump_to = function (p) {
      document.forms[0].rm.value = 'save_and_jump';
      document.forms[0].jump_to.value = p;
      if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function remove_children() {
+  remove_children = function () {
         if (confirm("Really delete sub-elements?")) {
            document.forms[0].rm.value = 'delete_children';
            if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
@@ -57,7 +57,7 @@
   }
 
 
-  function remove_element() {
+  remove_element = function () {
      <tmpl_if allow_delete>
         if (confirm("Really delete this element?")) {
            document.forms[0].rm.value = 'delete_element';
@@ -68,17 +68,17 @@
      </tmpl_if>
   }
 
-  function reorder() {
+  reorder = function () {
         document.forms[0].rm.value = 'reorder';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_change_bulk_edit_sep() {
+  save_and_change_bulk_edit_sep = function () {
         document.forms[0].rm.value = 'save_and_change_bulk_edit_sep';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function checkall(checkbox, prefix) {
+  checkall = function (checkbox, prefix) {
      for (var i = 0; i < checkbox.form.elements.length ; i++) {
         var e = checkbox.form.elements[i];
         if (e.name && e.name.indexOf(prefix) == 0) {
@@ -88,7 +88,7 @@
   }
 
 // updates the order pull downs to stay consistent
-function update_order(obj, prefix) {
+update_order = function (obj, prefix) {
     var form  = obj.form;
     var requestedIndex = obj.selectedIndex;
     var i;
@@ -122,14 +122,14 @@ function update_order(obj, prefix) {
 // "chosenOne" to either get sorted higher or lower.
 
 var chosenOne;
-function update_order_sort_north (a, b) {
+update_order_sort_north  = function (a, b) {
     if (a.selectedIndex < b.selectedIndex) { return -1; }
     if (a.selectedIndex > b.selectedIndex) { return  1; }
     if (a == chosenOne) { return -1; }
     if (b == chosenOne) { return 1; }
     return 0;
 }
-function update_order_sort_south (a, b) {
+update_order_sort_south  = function (a, b) {
     if (a.selectedIndex < b.selectedIndex) { return -1; }
     if (a.selectedIndex > b.selectedIndex) { return  1; }
     if (a == chosenOne) { return 1; }
@@ -151,7 +151,7 @@ function update_order_sort_south (a, b) {
   <input type="hidden" name=bulk_edit_sep value="<tmpl_var bulk_edit_sep>">
 
 <script language="javascript" type="text/javascript">
-  function update_bulk_edit_counts() {
+  update_bulk_edit_counts = function () {
       var words_span = document.getElementById("bulk_edit_words");
       var chars_span = document.getElementById("bulk_edit_chars");
       var text       = document.forms[0].bulk_data.value;
