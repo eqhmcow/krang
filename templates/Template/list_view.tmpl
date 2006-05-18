@@ -2,19 +2,19 @@
 
 <script language="JavaScript" type="text/javascript">
 
-  function edit_template (id) {
+  edit_template  = function (id) {
     document.find_template.rm.value = 'checkout_and_edit';
     document.find_template.template_id.value = id;
     document.find_template.submit();
   }
 
-  function view_template (id) {
+  view_template  = function (id) {
     document.find_template.rm.value = 'view';
     document.find_template.template_id.value = id;
     document.find_template.submit();
   }
 
-  function delete_selected () {
+  delete_selected  = function () {
     if (confirm("Are you SURE you want to delete the checked templates?")) {
       var myform = document.krang_pager_form;
       myform.rm.value = 'delete_selected';
@@ -22,24 +22,24 @@
     }
   }
 
-  function advanced_search () {
+  advanced_search  = function () {
     var myform = document.template_search_form;
     myform.rm.value = 'advanced_search';
     myform.submit();
   }
 
-  function simple_search () {
+  simple_search  = function () {
     var myform = document.template_search_form;
     myform.rm.value = 'search';
     myform.submit();
   }
 
-  function clear_advanced_search () {
+  clear_advanced_search  = function () {
     var myform = document.clear_advanced_search_form;
     myform.submit();
   }
 
-  function do_deploy () {
+  do_deploy  = function () {
     if (confirm("Are you SURE you want to deploy the checked templates?")) {
       var myform = document.krang_pager_form;
       myform.rm.value = 'deploy_selected';
@@ -50,7 +50,7 @@
 </script>
 
 
-<form method="POST" name="find_template">
+<form method="POST" name="find_template" action="template.pl">
 <input type="hidden" name="rm" value="view">
 <input type="hidden" name="template_id">
 
@@ -61,14 +61,14 @@
 </form>
 
 
-<form name="clear_advanced_search_form" method="POST">
+<form name="clear_advanced_search_form" method="POST" action="template.pl">
 <input type="hidden" name="rm" value="advanced_search">
 <input type="hidden" name="search_filter" value="">
 <input type="hidden" name="clear_search_form" value="1">
 </form>
 
 <div class="dark-bar"><p class="left">&nbsp;Find Template<p class="right"><a href="javascript:openWin('help.pl?topic=template_find')">Help</a>&nbsp;</p></div>
-<form name="template_search_form" method="POST">
+<form name="template_search_form" method="POST" action="template.pl">
 <tmpl_if do_advanced_search>
 <div class="box">
 <table border="0" cellpadding="6" cellspacing="0" width="571">

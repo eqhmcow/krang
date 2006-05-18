@@ -1,7 +1,7 @@
 <tmpl_include header.tmpl>
 <script language=javascript>
 
-function checkall(checkbox, prefix) {
+checkall = function (checkbox, prefix) {
      for (var i = 0; i < checkbox.form.elements.length ; i++) {
         var e = checkbox.form.elements[i];
         if (e.name && e.name.indexOf(prefix) == 0) {
@@ -16,7 +16,7 @@ function checkall(checkbox, prefix) {
 <tmpl_if alert_loop>
 
 <div class="no-border">Current Alerts</div>
-<form name="current_alert_form" method="post">
+<form name="current_alert_form" method="post" action="my_alerts.pl">
 <input type="hidden" name="rm" value="delete_alerts" override='1'>
 
 <table cellspacing="0" cellpadding="4" class="form-head">
@@ -40,7 +40,7 @@ onClick="checkall(this, 'alert_delete_list')"></td></tr></table>
 
 <div class="no-border">No Current Alerts</div></tmpl_if>
 </form>
-<form name="add_alert_form" method="post">
+<form name="add_alert_form" method="post" action="my_alerts.pl">
 
 <table cellspacing="0" class="form-head" cellpadding="4">
 <input type="hidden" name="rm" value="add_alert" override='1'>

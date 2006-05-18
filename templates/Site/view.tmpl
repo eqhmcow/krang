@@ -28,11 +28,11 @@
   <td><tmpl_var publish_path></td>
 </tr>
 
-<form name="return_form" method="POST">
+<form name="return_form" method="POST" action="site.pl">
 <tmpl_var history_return_params>
 </form>
 
-<form name="edit_site_form" method="POST">
+<form name="edit_site_form" method="POST" action="site.pl">
 <input type="hidden" name="rm" value="edit">
 <input type="hidden" name="site_id" value="<tmpl_var escape=HTML site_id>">
 </form>
@@ -40,13 +40,13 @@
 <script language="javascript" type="text/javascript">
 <!-- //
 
-        function do_return () {
+        do_return = function () {
             var myform = document.return_form;
             myform.submit();
         }
 
 
-        function do_edit_site () {
+        do_edit_site = function () {
                 var myform = document.edit_site_form;
                 myform.submit();
         }

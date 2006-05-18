@@ -2,18 +2,18 @@
 
 <script language="JavaScript" type="text/javascript">
 
-  function preview_story(id) {
+  preview_story = function (id) {
         Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
         Preview.focus();
   }
 
-  function view_story (id) {
+  view_story  = function (id) {
     document.find_story.rm.value = 'view';
     document.find_story.story_id.value = id;
     document.find_story.submit();
   }
 
-  function checkin_selected () {
+  checkin_selected  = function () {
     var myform = document.krang_pager_form;
     myform.rm.value = 'checkin_selected';
     myform.submit();
@@ -21,7 +21,7 @@
 
 </script>
 
-<form method=post name=find_story>
+<form method="post" name="find_story" action="story.pl">
 <input type="hidden" name="rm" value="list_active">
 <input type="hidden" name="story_id">
 

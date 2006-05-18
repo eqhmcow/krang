@@ -2,20 +2,20 @@
 
 <script language="JavaScript" type="text/javascript">
 
-  function edit_media (id) {
+  edit_media  = function (id) {
     document.find_media.rm.value = 'checkout_and_edit';
     document.find_media.media_id.value = id;
     document.find_media.submit();
   }
 
-  function view_media (id) {
+  view_media  = function (id) {
     document.find_media.rm.value = 'view';
     document.find_media.media_id.value = id;
     document.find_media.submit();
   }
 
   /* returns true if the user has checked anything */
-  function something_checked() {
+  something_checked = function () {
 	var myform = document.krang_pager_form;
 	for (i = 0; i < myform.elements.length ; i++) {
 	  var e = myform.elements[i];
@@ -26,7 +26,7 @@
 	return false;
   }
 
-  function publish_selected() {
+  publish_selected = function () {
     if (something_checked()) {
       if (confirm("Are you sure you wish to publish all these items?")) {
 	document.krang_pager_form.action = 'publisher.pl';
@@ -38,7 +38,7 @@
     }
   }
 
-  function delete_selected () {
+  delete_selected  = function () {
     if (confirm("Are you SURE you want to delete the checked media?")) {
       var myform = document.krang_pager_form;
       myform.rm.value = 'delete_selected';
@@ -46,30 +46,30 @@
     }
   }
 
-  function checkout_selected () {
+  checkout_selected  = function () {
     var myform = document.krang_pager_form;
     myform.rm.value = 'checkout_selected';
     myform.submit();
   }
 
-  function advanced_search () {
+  advanced_search  = function () {
     var myform = document.search_form;
     myform.rm.value = 'advanced_find';
     myform.submit();
   }
 
-  function simple_search () {
+  simple_search  = function () {
     var myform = document.search_form;
     myform.rm.value = 'find';
     myform.submit();
   }
 
-  function clear_advanced_search () {
+  clear_advanced_search  = function () {
     var myform = document.clear_advanced_search_form;
     myform.submit();
   }
 
-  function preview_media(id) {
+  preview_media = function (id) {
         Preview = window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var "instance_name">");
         Preview.focus();
   }
@@ -77,7 +77,7 @@
 </script>
 
 
-<form method="POST" name="find_media">
+<form method="POST" name="find_media" action="media.pl">
 <input type="hidden" name="rm" value="view">
 <input type="hidden" name="media_id">
 
@@ -88,7 +88,7 @@
 
 </form>
 
-<form name="clear_advanced_search_form" method="POST">
+<form name="clear_advanced_search_form" method="POST" action="media.pl">
 <input type="hidden" name="rm" value="advanced_find">
 <input type="hidden" name="clear_search_form" value="1">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
@@ -96,7 +96,7 @@
 </form>
 
 <div class="dark-bar"><p class="left">&nbsp;Find Media</p><p class="right"><a href="javascript:openWin('help.pl?topic=media_find')">Help</a>&nbsp;</p></div>
-<form name="search_form" method="POST">
+<form name="search_form" method="POST" action="media.pl">
 <tmpl_if do_advanced_search>
 <div class="box">
 <table border="0" cellpadding="6" cellspacing="0" width="571">

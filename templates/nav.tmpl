@@ -4,14 +4,14 @@
 
    /* Call to set edit mode with a particular message.  If msg is */
    /* empty will use the default message. */
-   function nav_edit_mode(msg) {
+   nav_edit_mode = function (msg) {
      nav_emode = 1;
      if (msg && msg.length) {
         nav_emsg = msg;
      }
    }
 
-   function nav_goto(loc) {
+   nav_goto = function (loc) {
      if (!nav_emode || confirm(nav_emsg)) {
         window.location = loc;
      }
@@ -19,7 +19,7 @@
 
    <tmpl_if nav_global_admin>
      document.onkeypress = debug_catcher;
-     function debug_catcher (evt) {
+     debug_catcher  = function (evt) {
         evt = (evt) ? evt : ((event) ? event : null);
         if (evt == null) return;
         if (!evt.altKey) return;

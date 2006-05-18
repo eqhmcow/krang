@@ -3,18 +3,18 @@
 <script language="javascript" type="text/javascript">
 <!-- //
 
-    function add_group () {
+    add_group  = function () {
         var myform = document.forms["add_group_form"];
         myform.submit();
     }
 
-    function edit_group (group_id) {
+    edit_group  = function (group_id) {
         var myform = document.forms["edit_group_form"];
         myform.group_id.value = group_id;
         myform.submit();
     }
 
-    function delete_selected () {
+    delete_selected  = function () {
         if (confirm("Are you SURE you want to delete these groups?")) {
             var myform = document.forms["krang_pager_form"];
             myform.rm.value = 'delete_selected';
@@ -25,7 +25,7 @@
 // -->
 </script>
 
-<form name="add_group_form" method="POST">
+<form name="add_group_form" method="POST" action="group.pl">
 <input type="hidden" name="rm" value="add">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 
@@ -37,7 +37,7 @@
 
 </form>
 
-<form name="edit_group_form" method="POST">
+<form name="edit_group_form" method="POST" action="group.pl">
 <input type="hidden" name="rm" value="edit">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
@@ -52,7 +52,7 @@
 
 <div class="dark-bar"><p class="left">&nbsp;Group List</p><p class="right"><a href="javascript:openWin('help.pl?topic=group')">Help</a>&nbsp;</p></div>
 
-<form name="search_form" method="POST">
+<form name="search_form" method="POST" action="group.pl">
 <div class="boxb"> 
  <div class="light">
 

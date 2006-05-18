@@ -3,18 +3,18 @@
 <script language="javascript" type="text/javascript">
 <!-- //
 
-    function add_site () {
+    add_site = function () {
         var myform = document.forms["add_site_form"];
         myform.submit();
     }
 
-    function edit_site (site_id) {
+    edit_site = function (site_id) {
         var myform = document.forms["edit_site_form"];
         myform.site_id.value = site_id;
         myform.submit();
     }
 
-    function delete_selected () {
+    delete_selected = function () {
         if (confirm("Are you SURE you want to delete these sites?")) {
             var myform = document.forms["krang_pager_form"];
             myform.rm.value = 'delete_selected';
@@ -22,7 +22,7 @@
         }
     }
 
-  function view_site (id) {
+  view_site = function (id) {
     document.find_site.rm.value = 'view';
     document.find_site.site_id.value = id;
     document.find_site.submit();
@@ -31,7 +31,7 @@
 // -->
 </script>
 
-<form name="add_site_form" method="POST">
+<form name="add_site_form" method="POST" action="site.pl">
 <input type="hidden" name="rm" value="add">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 
@@ -43,7 +43,7 @@
 
 </form>
 
-<form name="edit_site_form" method="POST">
+<form name="edit_site_form" method="POST" action="site.pl">
 <input type="hidden" name="rm" value="edit">
 <input type="hidden" name="site_id" value="">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
@@ -56,7 +56,7 @@
 
 </form>
 
-<form method="POST" name="find_site">
+<form method="POST" name="find_site" action="site.pl">
 <input type="hidden" name="rm" value="view">
 <input type="hidden" name="site_id">
 
@@ -67,7 +67,7 @@
 
 <div class="dark-bar"><p class="left">&nbsp;Site List</p><p class="right"><a href="javascript:openWin('help.pl?topic=site')">Help</a>&nbsp;</p></div>
 
-<form name="search_form" method="POST">
+<form name="search_form" method="POST" action="site.pl">
 <div class="boxb"> 
  <div class="light">
 

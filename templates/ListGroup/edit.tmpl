@@ -13,7 +13,7 @@
 
     nav_edit_mode();
                                                                                
-    function do_save () {
+    do_save  = function () {
         var myform = document.forms["edit_form"];
         myform.rm.value = "save";
         var change_string = change_log.join('%^%');
@@ -24,7 +24,7 @@
     }
                                                                                
                                                                                
-    function do_save_stay () {
+    do_save_stay  = function () {
         var myform = document.forms["edit_form"];
         myform.rm.value = "save";
         var change_string = change_log.join('%^%');
@@ -37,12 +37,12 @@
 
     // functions to manage the select list state stored in select_state[]
     // populate_list() populates lists according to info in this array
-    function trim_select_state(list_count) {
+    trim_select_state = function (list_count) {
 	// clear state for lists above list_count
 	select_state.length = list_count;
     }
     
-    function store_select_state(list_count, index, value, insert_child) {
+    store_select_state = function (list_count, index, value, insert_child) {
 	list_count = parseInt(list_count);
 	select_state[list_count] = { index:index, value:value };
 
@@ -55,7 +55,7 @@
 	}
     }
 
-    function update_select_state(list_count, new_index, new_value) {
+    update_select_state = function (list_count, new_index, new_value) {
 	var list_count = parseInt(list_count);
 	var old_value  = select_state[list_count].value;
 
@@ -68,9 +68,9 @@
 	}
     }
 
-    function get_select_state(list_count) { return select_state[list_count] }
+    get_select_state = function (list_count) { return select_state[list_count] }
 
-    function select_state_toString() {
+    select_state_toString = function () {
 	var stringified = '';
 	for (var i=1; i<select_state.length; i++) {
 	    if (select_state[i]) {
@@ -81,7 +81,7 @@
 	return stringified;
     }
 
-    function populate_list (list_count, rebuild_children) {
+    populate_list  = function (list_count, rebuild_children) {
 	var state = get_select_state(list_count);
 
 	if ( ! state ) return;
@@ -112,13 +112,13 @@
 	if (rebuild_children) populate_list(list_count, true);
     }
 
-    function clear_child_select_lists(list_count) {
+    clear_child_select_lists = function (list_count) {
         for ( var c = list_count; c <= <tmpl_var list_levels>; c++ ) {
 	    document.forms['edit_form']['list_'+c].options.length = 0;
         }
     }
 
-    function get_selected (list_count) {
+    get_selected  = function (list_count) {
 	if (! list_count) return;
 	var list = get_select_list(list_count);
         var sindex = list.selectedIndex;
@@ -136,7 +136,7 @@
         }
     };
 
-    function get_list(list_path) {
+    get_list = function (list_path) {
 	if (list_path.length) {
 	    return eval('list_data[' + list_path + ']');
 	} else {
@@ -144,11 +144,11 @@
 	}
     }
 
-    function get_select_list(list_count) {
+    get_select_list = function (list_count) {
 	return document.forms['edit_form']['list_' + list_count];
     }
 
-    function do_select(list_count, select) {
+    do_select = function (list_count, select) {
 
 	last_focus = list_count;
 
@@ -166,7 +166,7 @@
 	populate_list(list_count, true);
     }
 
-    function do_delete (list_count) {
+    do_delete  = function (list_count) {
         var selected = get_selected(list_count);
 
 	if (! selected) {
@@ -201,7 +201,7 @@
 	populate_list(list_count, true);
     }
 
-    function do_replace(list_count) {
+    do_replace = function (list_count) {
         var selected = get_selected(list_count);
 	if ( ! selected ) {
 	    alert("Nothing selected to replace!");
@@ -225,7 +225,7 @@
 	populate_list(list_count, false);
     }
 
-    function do_move(list_count, down) {
+    do_move = function (list_count, down) {
         var selected  = get_selected(list_count);
 
         if (selected) {
@@ -299,7 +299,7 @@
 	}
     }
 
-    function do_add_on_return(evt, list_count) {
+    do_add_on_return = function (evt, list_count) {
       evt = (evt) ? evt : event;
       var charCode = (evt.charCode) ? evt.charCode : evt.keyCode;
       if (charCode == 13 || charCode == 3) {
@@ -311,7 +311,7 @@
       }
     }
 
-    function do_add(list_count) {
+    do_add = function (list_count) {
 
         var new_data = eval( "document.forms['edit_form'].new_item_" + list_count).value;
 
@@ -386,7 +386,7 @@
 	populate_list(list_count, false);
     }
 
-    function add_to_list(data, list_path, index) {
+    add_to_list = function (data, list_path, index) {
 	var list = get_list(list_path);
 
 	// check data for existence
@@ -403,7 +403,7 @@
 	return new_item['__id__'];
     }
 
-    function exists(list, data) {
+    exists = function (list, data) {
 	for (var key in list) {
 	    if (list[key] && list[key]['__data__'] == data) {
 		alert("'" + data  + "' " + " is already an item in this list. Not added.");
@@ -412,13 +412,13 @@
 	}
     }
 
-    function log_entry (item_id, action, data) {
+    log_entry  = function (item_id, action, data) {
         var entry;
         entry = item_id + '#&#' + action + '#&#' + data;
         change_log.push(entry);
     }
 
-    function store_last_focus(elm) {
+    store_last_focus = function (elm) {
 	if (!elm) return;
 	var result = elm.name.match(/\d+$/);
 	if (result != null) {

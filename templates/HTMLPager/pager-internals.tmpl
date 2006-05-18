@@ -4,7 +4,7 @@
 <script language="Javascript">
 <!-- //
 
-    function go_page (page_num) {
+    go_page  = function (page_num) {
         var myform = get_form_obj();
         myform.krang_pager_curr_page_num.value = page_num;
 
@@ -17,7 +17,7 @@
     }
 
 
-    function do_sort (sort_field, sort_order_desc) {
+    do_sort  = function (sort_field, sort_order_desc) {
         var myform = get_form_obj();
         myform.krang_pager_sort_field.value = sort_field;
         myform.krang_pager_sort_order_desc.value = sort_order_desc;
@@ -25,14 +25,14 @@
     }
 
 
-    function show_big_view (big_page_state) {
+    show_big_view  = function (big_page_state) {
         var myform = get_form_obj();
         myform.krang_pager_show_big_view.value = big_page_state;
         go_page("1");
     }
 
 
-    function checkall(checkbox, prefix) {
+    checkall = function (checkbox, prefix) {
        for (var i = 0; i < checkbox.form.elements.length ; i++) {
           var e = checkbox.form.elements[i];
           if (e.name && e.name.indexOf(prefix) == 0) {
@@ -42,7 +42,7 @@
     }
 
 
-    function get_form_obj () {
+    get_form_obj  = function () {
         var magic_name = '<tmpl_var get_form_obj_magic_name>';
 
         // Iterate through forms in document

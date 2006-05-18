@@ -4,7 +4,7 @@
 <input type="button" value="Clear" class="hpts-button" onclick="<tmpl_var name>_clear_template()">
 
 <script language="javascript">
-  function <tmpl_var name>_choose_template (packed) {
+  <tmpl_var name>_choose_template  = function (packed) {
      <tmpl_if display>
         var span = document.getElementById("<tmpl_var name>_id");
          span.innerHTML = packed + '.tmpl';
@@ -14,7 +14,7 @@
      <tmpl_if onchange><tmpl_var onchange>;</tmpl_if>
   }
 
-  function <tmpl_var name>_clear_template (){ 
+  <tmpl_var name>_clear_template  = function (){ 
      <tmpl_if display>
         var span = document.getElementById("<tmpl_var name>_id");
         span.innerHTML = "No template selected.";

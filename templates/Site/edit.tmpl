@@ -6,13 +6,13 @@
 
     nav_edit_mode();
 
-    function do_save () {
+    do_save = function () {
         var myform = document.forms["edit_site_form"];
         myform.rm.value = <tmpl_if add_mode>'add_save'<tmpl_else>'edit_save'</tmpl_if>;
         myform.submit();
     }
 
-    function save_stay () {
+    save_stay = function () {
         var myform = document.forms["edit_site_form"];
       <tmpl_if add_mode>
         myform.rm.value = "add_save_stay";
@@ -23,7 +23,7 @@
     }
 
 
-    function cancel_site_change () {
+    site_change = function () {
         var myform = document.forms["edit_site_form"];
       <tmpl_if add_mode>
         myform.rm.value = "add_cancel";
@@ -34,7 +34,7 @@
     }
 
 
-    function delete_site () {
+    delete_site = function () {
         var myform = document.forms["edit_site_form"];
         if (confirm("Are you SURE you want to delete this site?")) {
             myform.rm.value = "delete";
@@ -50,7 +50,7 @@
 
 <div class="box">
 
-<form name="edit_site_form" method="POST">
+<form name="edit_site_form" method="POST" action="site.pl">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <tmpl_if add_mode>
   <input type="hidden" name="rm" value="save_add">

@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/krang.css" type="text/css" />
 </head>
 <script language='javascript'>
-   function update_progress_bar (counter, total, string) {
+   update_progress_bar  = function (counter, total, string) {
       var bar = document.getElementById("progress_bar");
       var prog = (counter + 1)/total;
       var width = Math.floor(prog * 300);

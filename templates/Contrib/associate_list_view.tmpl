@@ -4,37 +4,37 @@
 <!-- //
     nav_edit_mode();
 
-    function add_contrib () {
+    add_contrib  = function () {
         var myform = document.forms["add_contrib_form"];
         myform.submit();
     }
 
-    function associate_selected () {
+    associate_selected  = function () {
         var myform = document.forms["krang_pager_form"];
         myform.rm.value = 'associate_selected';
         myform.submit();
     }
 
-    function unassociate_selected () {
+    unassociate_selected  = function () {
         var myform = document.forms["current_contributors_form"];
         myform.rm.value = "unassociate_selected";
         myform.submit();
     }
 
-    function reorder_contributors () {
+    reorder_contributors  = function () {
         var myform = document.forms["current_contributors_form"];
         myform.rm.value = "reorder_contribs";
         myform.submit();
     }
 
-    function do_return () {
+    do_return  = function () {
         var myform = document.forms["do_return_form"];
         myform.submit();
     }
 
 
 // updates the order pull downs to stay consistent
-function update_order(obj, prefix) {
+update_order = function (obj, prefix) {
     var form  = obj.form;
     var requestedIndex = obj.selectedIndex;
     var i;
@@ -68,7 +68,7 @@ function update_order(obj, prefix) {
 // "chosenOne" to either get sorted higher or lower.
 
 var chosenOne;
-function update_order_sort_north (a, b) {
+update_order_sort_north  = function (a, b) {
     if (a.selectedIndex < b.selectedIndex) { return -1; }
     if (a.selectedIndex > b.selectedIndex) { return  1; }
     if (a.name == chosenOne.name) { return -1; }
@@ -77,7 +77,7 @@ function update_order_sort_north (a, b) {
 }
 
 
-function update_order_sort_south (a, b) {
+update_order_sort_south  = function (a, b) {
     if (a.selectedIndex < b.selectedIndex) { return -1; }
     if (a.selectedIndex > b.selectedIndex) { return  1; }
     if (a.name == chosenOne.name) { return 1; }
@@ -98,7 +98,7 @@ Current Contributors</div>
 <input type="hidden" name="rm" value="edit">
 </form>
 
-<form name="add_contrib_form" method="POST">
+<form name="add_contrib_form" method="POST" action="contributor.pl">
 <input type="hidden" name="rm" value="add">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
@@ -112,7 +112,7 @@ Current Contributors</div>
 </form>
 
 
-<form name="current_contributors_form" method="POST">
+<form name="current_contributors_form" method="POST" action="contributor.pl">
 <input type="hidden" name="rm" value="reorder_contribs">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
@@ -161,7 +161,7 @@ Current Contributors</div>
 
 <div class="boxb">
  <div class="light">
-<form name="search_form" method="POST">
+<form name="search_form" method="POST" action="contributor.pl">
 <!-- Krang::HTMLPager params -->
 <input type="hidden" name="krang_pager_curr_page_num" value="">
 <input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
@@ -180,7 +180,7 @@ Current Contributors</div>
 
 <div class="no-border">
 Choose Contributors
-<form name="krang_pager_form" method="POST">
+<form name="krang_pager_form" method="POST" action="contributor.pl">
 <p><b><a href="javascript:add_contrib()">Add A Contributor</a></b></p></div>
 <tmpl_include HTMLPager/pager-internals.tmpl>
 <tmpl_if krang_pager_rows>

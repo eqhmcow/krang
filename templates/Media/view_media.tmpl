@@ -3,7 +3,7 @@
 <script language="javascript" type="text/javascript">
   <tmpl_if was_edit>nav_edit_mode();</tmpl_if>
 
-  function preview_media(id) {
+  preview_media = function (id) {
         Preview = window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var "instance_name">");
         Preview.focus();
   }
@@ -100,7 +100,7 @@
 <input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
 </form>
 
-<form name="edit_media_form" method="POST">
+<form name="edit_media_form" method="POST" action="media.pl">
 <input type="hidden" name="rm" value="edit">
 <input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
 </form>
@@ -108,13 +108,13 @@
 <script language="javascript" type="text/javascript">
 <!-- //
 
-        function do_return () {
+        do_return  = function () {
                 var myform = document.return_form;
                 myform.submit();
         }
 
 
-        function do_edit_media () {
+        do_edit_media  = function () {
                 var myform = document.edit_media_form;
                 myform.submit();
         }

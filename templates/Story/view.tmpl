@@ -3,17 +3,17 @@
 <script language="javascript" type="text/javascript">
   <tmpl_if was_edit>nav_edit_mode();</tmpl_if>
 
-  function preview_story(id) {
+  preview_story = function (id) {
         Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
         Preview.focus();
   }
 
-  function preview_media(id) {
+  preview_media = function (id) {
         Preview = window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var "instance_name">");
         Preview.focus();
   }
 
-  function edit_story() {
+  edit_story = function () {
     document.forms[0].rm.value = 'checkout_and_edit';
     document.forms[0].submit();
 
@@ -21,14 +21,14 @@
 
 </script>
 
-<form method=post name=view>
-  <input type=hidden name=rm value=view>
-  <input type=hidden name=story_id value="<tmpl_var story_id>">
-  <input type=hidden name=version value="<tmpl_var version>">
-  <input type=hidden name=return_script value="<tmpl_var escape=html return_script>"> 
+<form method="post" name="view" action="story.pl">
+  <input type="hidden" name="rm" value="view">
+  <input type="hidden" name="story_id" value="<tmpl_var story_id>">
+  <input type="hidden" name="version" value="<tmpl_var version>">
+  <input type="hidden" name="return_script" value="<tmpl_var escape=html return_script>"> 
    <tmpl_loop return_params_loop>
-      <input type=hidden name=return_params value="<tmpl_var escape=HTML name="name">">
-      <input type=hidden name=return_params value="<tmpl_var escape=HTML name="value">">
+      <input type="hidden" name="return_params" value="<tmpl_var escape=HTML name="name">">
+      <input type="hidden" name="return_params" value="<tmpl_var escape=HTML name="value">">
    </tmpl_loop>
 
 <div class="dark-bar"><p class="left">&nbsp;View Story</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:openWin('help.pl?topic=story_view')">Help</a>&nbsp;</p></div>
@@ -119,9 +119,9 @@
 </p>
 
 </form>
-<form name="ret" action=<tmpl_var return_script> method=post>
+<form name="ret" action="<tmpl_var return_script>" method="post">
    <tmpl_loop return_params_loop>
-      <input type=hidden name="<tmpl_var escape=HTML name="name">" value="<tmpl_var escape=HTML name="value">">
+      <input type="hidden" name="<tmpl_var escape=HTML name="name">" value="<tmpl_var escape=HTML name="value">">
    </tmpl_loop>
 </form><br>
 </div>
@@ -136,34 +136,34 @@
 </form>
 
 
-<form method=post name=view_log action=history.pl>
-  <input type=hidden name=history_return_script value=story.pl>
-  <input type=hidden name=story_id value=<tmpl_var story_id>>
+<form method="post" name="view_log" action="history.pl">
+  <input type="hidden" name="history_return_script" value="story.pl">
+  <input type="hidden" name="story_id" value="<tmpl_var story_id>">
 
-  <input type=hidden name=history_return_script value=return_script>
-  <input type=hidden name=history_return_script value=story.pl>
+  <input type="hidden" name="history_return_script" value="return_script">
+  <input type="hidden" name="history_return_script" value="story.pl">
 
-  <input type=hidden name=history_return_params value=rm>
-  <input type=hidden name=history_return_params value=view>
+  <input type="hidden" name="history_return_params" value="rm">
+  <input type="hidden" name="history_return_params" value="view">
 
-  <input type=hidden name=history_return_params value=story_id>
-  <input type=hidden name=history_return_params value=<tmpl_var story_id>>
+  <input type="hidden" name="history_return_params" value="story_id">
+  <input type="hidden" name="history_return_params" value="<tmpl_var story_id>">
 
-  <input type=hidden name=history_return_params value=version>
-  <input type=hidden name=history_return_params value=<tmpl_var version>>
+  <input type="hidden" name="history_return_params" value="version">
+  <input type="hidden" name="history_return_params" value="<tmpl_var version>">
 
-  <input type=hidden name=history_return_params value=path>
-  <input type=hidden name=history_return_params value=<tmpl_var path>>
+  <input type="hidden" name="history_return_params" value="path">
+  <input type="hidden" name="history_return_params" value="<tmpl_var path>">
 
-  <input type=hidden name=history_return_params value=return_script>
-  <input type=hidden name=history_return_params value="<tmpl_var return_script>">
+  <input type="hidden" name="history_return_params" value="return_script">
+  <input type="hidden" name="history_return_params" value="<tmpl_var return_script>">
 
     <tmpl_loop return_params_loop>
-      <input type=hidden name=history_return_params value=return_params>
-      <input type=hidden name=history_return_params value="<tmpl_var escape=HTML name="name">">
+      <input type="hidden" name="history_return_params" value=return_params>
+      <input type="hidden" name="history_return_params" value="<tmpl_var escape=HTML name="name">">
 
-      <input type=hidden name=history_return_params value=return_params>
-      <input type=hidden name=history_return_params value="<tmpl_var escape=HTML name="value">">
+      <input type="hidden" name="history_return_params" value=return_params>
+      <input type="hidden" name="history_return_params" value="<tmpl_var escape=HTML name="value">">
    </tmpl_loop>
 </form>
 </div>

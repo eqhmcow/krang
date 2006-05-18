@@ -1,7 +1,7 @@
 <tmpl_include header.tmpl>
 
 <script language=javascript>
- function checkall(checkbox, prefix) {
+ checkall = function (checkbox, prefix) {
      for (var i = 0; i < checkbox.form.elements.length ; i++) {
         var e = checkbox.form.elements[i];
         if (e.name && e.name.indexOf(prefix) == 0) {
@@ -10,12 +10,12 @@
      }
   }
 
-  function delete_selected () {
+  delete_selected  = function () {
         var myform = document.forms["current_schedule_form"];
         myform.submit();
   }
 
- function save_and_view() {
+ save_and_view = function () {
         document.forms[0].rm.value = 'save_and_view';
         document.forms[0].submit();
   }
@@ -24,7 +24,7 @@
 
 <div class="dark-bar"><p class="left">&nbsp;Schedule Editor<p class="right"><a href="javascript:openWin('help.pl?topic=schedule')">Help</a>&nbsp;</p></div>
 
-<form name="add_schedule_form" method="POST">
+<form name="add_schedule_form" method="POST" action="schedule.pl">
  <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
 
 <input type="hidden" name="advanced_schedule" value="1" override="1">

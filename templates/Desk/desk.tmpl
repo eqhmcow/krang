@@ -3,7 +3,7 @@
 <script language="javascript" type="text/javascript">
 
   /* returns true if the user has checked anything */
-  function something_checked() {
+  something_checked = function () {
       var form = document.krang_pager_form;
       for (i = 0; i < form.elements.length ; i++) {
           var e = form.elements[i];
@@ -14,12 +14,12 @@
       return false;
   }
 
-  function preview_story(id) {
+  preview_story = function (id) {
         Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
         Preview.focus();
   }
 
-  function remove(id) {
+  remove = function (id) {
      if (confirm("Are you sure you wish to delete this item permanently?")) {
        document.krang_pager_form.rm.value = 'delete';
        document.krang_pager_form.id.value = id;
@@ -27,13 +27,13 @@
      }
   }
 
-  function checkout(id) {
+  checkout = function (id) {
     document.krang_pager_form.rm.value = 'goto_edit';
     document.krang_pager_form.id.value = id;
     document.krang_pager_form.submit();
   }
 
-  function checkout_checked() {
+  checkout_checked = function () {
      if (something_checked()) {
        document.krang_pager_form.rm.value = 'checkout_checked';
        document.krang_pager_form.submit();
@@ -42,13 +42,13 @@
      }
   }
 
-  function move(id) {
+  move = function (id) {
     document.krang_pager_form.rm.value = 'move';
     document.krang_pager_form.id.value = id;
     document.krang_pager_form.submit();
   }
 
-  function move_checked() {
+  move_checked = function () {
      if (something_checked()) {
        document.krang_pager_form.rm.value = 'move_checked';
        document.krang_pager_form.submit();
@@ -57,25 +57,25 @@
      }
   }
 
-  function edit(id) {
+  edit = function (id) {
        document.krang_pager_form.rm.value = 'goto_edit';
        document.krang_pager_form.id.value = id;
        document.krang_pager_form.submit();
   }
 
-  function view(id) {
+  view = function (id) {
        document.krang_pager_form.rm.value = 'goto_view';
        document.krang_pager_form.id.value = id;
        document.krang_pager_form.submit();
   }
 
-  function log(id) {
+  log = function (id) {
        document.krang_pager_form.rm.value = 'goto_log';
        document.krang_pager_form.id.value = id;
        document.krang_pager_form.submit();
   }
 
-  function publish_checked() {
+  publish_checked = function () {
     if (something_checked()) {
       if (confirm("Are you sure you wish to publish all these items?")) {
         document.krang_pager_form.action = 'publisher.pl';
@@ -87,7 +87,7 @@
     }
   }
 
-  function publish_story(story_id) {
+  publish_story = function (story_id) {
     var pubform = document.forms["publish_story_form"];
     pubform.story_id.value=story_id;
     pubform.submit();
@@ -103,7 +103,7 @@
 <input type=hidden name="story_id" value="">
 </form>
 
-<form name="krang_pager_form" method="POST">
+<form name="krang_pager_form" method="POST" action="desk.pl">
   <input type="hidden" name="rm">
   <input type="hidden" name="id">
   <input type="hidden" name="desk_id" value="<tmpl_var desk_id>">

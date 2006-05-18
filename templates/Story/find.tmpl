@@ -3,7 +3,7 @@
 <script language="JavaScript" type="text/javascript">
 
   /* returns true is the user has checked anything */
-  function something_checked(){
+  something_checked = function (){
 	var form = document.krang_pager_form;
 	for (i = 0; i < form.elements.length ; i++) {
 		var e = form.elements[i];
@@ -14,31 +14,31 @@
 	return false;
   }
 
-  function preview_story(id) {
+  preview_story = function (id) {
         Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
         Preview.focus();
   }
 
-  function edit_story (id) {
+  edit_story  = function (id) {
     document.find_story.rm.value = 'checkout_and_edit';
     document.find_story.story_id.value = id;
     document.find_story.submit();
   }
 
 
-  function view_story (id) {
+  view_story  = function (id) {
     document.find_story.rm.value = 'view';
     document.find_story.story_id.value = id;
     document.find_story.submit();
   }
 
-  function view_story_log (id) {
+  view_story_log  = function (id) {
     document.view_story_log.story_id.value = id;
     document.view_story_log.submit();
   }
 
 
-  function delete_selected () {
+  delete_selected  = function () {
     if (confirm("Are you SURE you want to delete the checked stories?")) {
       var myform = document.krang_pager_form;
       myform.rm.value = 'delete_selected';
@@ -46,13 +46,13 @@
     }
   }
 
-  function checkout_selected () {
+  checkout_selected  = function () {
     var myform = document.krang_pager_form;
     myform.rm.value = 'checkout_selected';
     myform.submit();
   }
 
-  function publish_selected() {
+  publish_selected = function () {
 	if (something_checked()) {
 	  if (confirm("Are you sure you want to publish these items?")) {
 	    document.krang_pager_form.action = 'publisher.pl';
@@ -64,20 +64,20 @@
 	}
   }
 
-  function show_advanced_search (show_advanced) {
+  show_advanced_search  = function (show_advanced) {
     var myform = document.krang_pager_form;
     myform.do_advanced_search.value = show_advanced;
     myform.submit();
   }
 
-  function clear_advanced_search () {
+  clear_advanced_search  = function () {
     var myform = document.clear_advanced_search_form;
     myform.submit();
   }
 
 </script>
 
-<form method=post name=view_story_log action=history.pl>
+<form method="post" name="view_story_log" action="history.pl">
   <input type="hidden" name="story_id">
 
 <!-- Set up history mode return -->
@@ -168,7 +168,7 @@
 
 </form>
 
-<form method=post name=find_story>
+<form method="post" name="find_story" action="story.pl">
 <input type="hidden" name="rm" value="find">
 <input type="hidden" name="story_id">
 
@@ -262,14 +262,14 @@
 
 </form>
 
-<form name="clear_advanced_search_form" method="POST">
+<form name="clear_advanced_search_form" method="POST" action="story.pl">
 <input type="hidden" name="rm" value="find">
 <input type="hidden" name="do_advanced_search" value="1">
 <input type="hidden" name="clear_search_form" value="1">
 </form>
 
 <div class="dark-bar"><p class="left">&nbsp;Find Story<p class="right"><a href="javascript:openWin('help.pl?topic=story_find')">Help</a>&nbsp;</p></div>
-<form name="search_form" method="POST">
+<form name="search_form" method="POST" action="story.pl">
 <tmpl_if do_advanced_search>
 <div class="box">
 <table border="0" cellpadding="6" cellspacing="0" width="571">

@@ -3,73 +3,73 @@
 <script language="javascript" type="text/javascript">
   nav_edit_mode();
         
-  function db_save() {
+  db_save = function () {
         document.forms[0].rm.value = 'db_save';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function db_save_and_stay() {
+  db_save_and_stay = function () {
         document.forms[0].rm.value = 'db_save_and_stay';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function check_in() {
+  check_in = function () {
         document.forms[0].rm.value = 'check_in';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_jump() {
+  save_and_jump = function () {
         document.forms[0].rm.value = 'save_and_jump';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_add() {
+  save_and_add = function () {
         document.forms[0].rm.value = 'save_and_add';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_go_up() {
+  save_and_go_up = function () {
         document.forms[0].rm.value = 'save_and_go_up';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_stay() {
+  save_and_stay = function () {
         document.forms[0].rm.value = 'save_and_stay';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_view() {
+  save_and_view = function () {
         document.forms[0].rm.value = 'save_and_view';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_view_log() {
+  save_and_view_log = function () {
         document.forms[0].rm.value = 'save_and_view_log';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_edit_schedule() {
+  save_and_edit_schedule = function () {
         document.forms[0].rm.value = 'save_and_edit_schedule';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_bulk_edit() {
+  save_and_bulk_edit = function () {
         document.forms[0].rm.value = 'save_and_bulk_edit';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
 
-  function save_and_leave_bulk_edit() {
+  save_and_leave_bulk_edit = function () {
         document.forms[0].rm.value = 'save_and_leave_bulk_edit';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function save_and_edit_contribs() {
+  save_and_edit_contribs = function () {
         document.forms[0].rm.value = 'save_and_edit_contribs';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function remove() {
+  remove = function () {
         if (confirm("Really delete this category?")) {
            document.forms[0].rm.value = 'delete';
            if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
@@ -77,7 +77,7 @@
   }
 
 
-  function revert() {
+  revert = function () {
         var v = document.forms[0].version.options[document.forms[0].version.selectedIndex].value;
         if (confirm("Really discard changes and revert to version " + v + "?")) {
            document.forms[0].rm.value = 'revert';
@@ -85,27 +85,27 @@
         }
   }
 
-  function add_category() {
+  add_category = function () {
         document.forms[0].rm.value = 'add_category';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
-  function remove_categories() {
+  remove_categories = function () {
         if (confirm("Really delete categories?")) {
            document.forms[0].rm.value = 'delete_categories';
            if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
         }
   }
 
-  function set_primary_category() {
+  set_primary_category = function () {
         document.forms[0].rm.value = 'set_primary_category';
         if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
   }
 
 </script>
 
-<form method=post name=edit enctype="multipart/form-data">
-<input type=hidden name=rm value=edit>
+<form method="post" name="edit" enctype="multipart/form-data" action="category.pl">
+<input type="hidden" name="rm" value="edit">
 
 
 <tmpl_loop alerts_loop>

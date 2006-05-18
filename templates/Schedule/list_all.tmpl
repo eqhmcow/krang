@@ -1,7 +1,7 @@
 <tmpl_include header.tmpl>
 
 <script language=javascript>
- function checkall(checkbox, prefix) {
+ checkall = function (checkbox, prefix) {
      for (var i = 0; i < checkbox.form.elements.length ; i++) {
         var e = checkbox.form.elements[i];
         if (e.name && e.name.indexOf(prefix) == 0) {
@@ -10,7 +10,7 @@
      }
   }
 
-  function delete_selected () {
+  delete_selected  = function () {
         var myform = document.forms["current_schedule_form"];
         myform.rm.value = 'delete';
         myform.submit();
@@ -21,7 +21,7 @@
 
 <div class="box">
 
-<form name="current_schedule_form" method="POST">
+<form name="current_schedule_form" method="POST" action="schedule.pl">
 <input type="hidden" name="is_list_all" value="1" override='1'>
 <br>
 <tmpl_var pager_html>

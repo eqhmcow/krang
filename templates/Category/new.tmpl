@@ -3,11 +3,11 @@
 <script language="JavaScript" type="text/javascript">
   nav_edit_mode();
                 
-  function create() {
+  create = function () {
      document.new_category.rm.value = 'create';
      document.new_category.submit();
   }
-  function cancel() {
+  cancel = function () {
      if (confirm("Are you sure?")) {
         document.new_category.rm.value = 'find';
         document.new_category.submit();
@@ -15,8 +15,8 @@
   }
 </script>
 
-<form method=post name=new_category>
-<input type=hidden name=rm>
+<form method="post" name="new_category" action="category.pl">
+<input type="hidden" name="rm">
 
 
 <div class="dark-bar"><p class="left">&nbsp;New Category</p><p class="right"><a href="javascript:openWin('help.pl?topic=category')">Help</a>&nbsp;</p></div>

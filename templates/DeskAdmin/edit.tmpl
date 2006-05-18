@@ -1,7 +1,7 @@
 <tmpl_include header.tmpl>
 
 <script language=javascript>
- function checkall(checkbox, prefix) {
+ checkall = function (checkbox, prefix) {
      for (var i = 0; i < checkbox.form.elements.length ; i++) {
         var e = checkbox.form.elements[i];
         if (e.name && e.name.indexOf(prefix) == 0) {
@@ -10,19 +10,19 @@
      }
   }
 
-  function delete_selected () {
+  delete_selected  = function () {
         var myform = document.forms["current_desk_form"];
         myform.submit();
   }
 
-  function reorder () {
+  reorder  = function () {
         var myform = document.forms["current_desk_form"];
         myform.rm.value = "reorder";
         myform.submit();
   }
 
   // updates the order pull downs to stay consistent
-function update_order(obj, prefix) {
+update_order = function (obj, prefix) {
     var form  = obj.form;
     var requestedIndex = obj.selectedIndex;
     var i;
@@ -56,14 +56,14 @@ function update_order(obj, prefix) {
 // "chosenOne" to either get sorted higher or lower.
                                                                                 
 var chosenOne;
-function update_order_sort_north (a, b) {
+update_order_sort_north  = function (a, b) {
     if (a.selectedIndex < b.selectedIndex) { return -1; }
     if (a.selectedIndex > b.selectedIndex) { return  1; }
     if (a == chosenOne) { return -1; }
     if (b == chosenOne) { return 1; }
     return 0;
 }
-function update_order_sort_south (a, b) {
+update_order_sort_south  = function (a, b) {
     if (a.selectedIndex < b.selectedIndex) { return -1; }
     if (a.selectedIndex > b.selectedIndex) { return  1; }
     if (a == chosenOne) { return 1; }
@@ -75,7 +75,7 @@ function update_order_sort_south (a, b) {
 
 <div class="dark-bar"><p class="left">&nbsp;Desk Editor</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:openWin('help.pl?topic=desk_admin')">Help</a>&nbsp;</p></div>
 <TMPL_IF existing_desk_loop>
-<form name="current_desk_form" method="POST">
+<form name="current_desk_form" method="POST" action="desk_admin.pl">
 <input type="hidden" name="total_desks" value="<tmpl_var total_desks>" override='1'>
 <input type="hidden" name="rm" value="delete" override='1'>
 <div class="box">
@@ -101,7 +101,7 @@ function update_order_sort_south (a, b) {
  <div class="no-border">No Desks Found</div>
 </TMPL_IF>
 <br>
-<form name="add_desk_form" method="POST">
+<form name="add_desk_form" method="POST" action="desk_admin.pl">
 <input type="hidden" name="rm" value="add" override='1'>
 <table cellspacing="0" class="form-head" cellpadding="4">
       <tr>

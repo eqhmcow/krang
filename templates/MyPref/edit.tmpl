@@ -2,7 +2,7 @@
 
 <script type="text/javascript">
 <!--
-function check_match( f )
+check_match = function ( f )
 {
   var pA = f.elements[ 'new_password' ];
   var pB = f.elements[ 'new_password_repeat' ];
@@ -20,7 +20,7 @@ function check_match( f )
 
 <div class="dark-bar"><p class="left">&nbsp;My Preferences</p><p class="right"><a href="javascript:openWin('help.pl?topic=my_pref')">Help</a>&nbsp;</p></div>
 <div class="box">
-<br><form name="edit_pref_form" method="post" onsubmit="return check_match(this)">
+<br><form name="edit_pref_form" method="post" onsubmit="return check_match(this)" action="my_pref.pl">
 <input type="hidden" name="rm" value="update_prefs">
 <table cellpadding="4" cellspacing="0" class="form-head">
 	<tr class="form-head"><td>Preferences</td></tr></table>

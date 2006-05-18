@@ -3,18 +3,18 @@
 <script language="javascript" type="text/javascript">
 <!-- //
 
-    function add_user () {
+    add_user  = function () {
         var myform = document.forms["add_user_form"];
         myform.submit();
     }
 
-    function edit_user (user_id) {
+    edit_user  = function (user_id) {
         var myform = document.forms["edit_user_form"];
         myform.user_id.value = user_id;
         myform.submit();
     }
 
-    function delete_selected () {
+    delete_selected  = function () {
         if (confirm("Are you SURE you want to delete these users?")) {
             var myform = document.forms["krang_pager_form"];
             myform.rm.value = 'delete_selected';
@@ -25,7 +25,7 @@
 // -->
 </script>
 
-<form name="add_user_form" method="POST">
+<form name="add_user_form" method="POST" action="user.pl">
 <input type="hidden" name="rm" value="add">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 
@@ -37,7 +37,7 @@
 
 </form>
 
-<form name="edit_user_form" method="POST">
+<form name="edit_user_form" method="POST" action="user.pl">
 <input type="hidden" name="rm" value="edit">
 <input type="hidden" name="user_id" value="">
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
@@ -52,7 +52,7 @@
 
 <div class="dark-bar"><p class="left">&nbsp;User List</p><p class="right"><a href="javascript:openWin('help.pl?topic=user')">Help</a>&nbsp;</p></div>
 
-<form name="search_form" method="POST">
+<form name="search_form" method="POST" action="user.pl">
 <div class="boxb"> 
  <div class="light">
 

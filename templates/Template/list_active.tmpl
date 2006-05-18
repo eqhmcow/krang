@@ -2,17 +2,17 @@
 
 <script language="JavaScript" type="text/javascript">
 
-  function preview_template(id) {
+  preview_template = function (id) {
         window.open("publisher.pl?rm=preview_template&template_id=" + id, "");
   }
 
-  function view_template (id) {
+  view_template  = function (id) {
     document.find_template.rm.value = 'view';
     document.find_template.template_id.value = id;
     document.find_template.submit();
   }
 
-  function checkin_selected () {
+  checkin_selected  = function () {
     var myform = document.krang_pager_form;
     myform.rm.value = 'checkin_selected';
     myform.submit();
@@ -20,7 +20,7 @@
 
 </script>
 
-<form method=post name=find_template>
+<form method=post name=find_template action="template.pl">
 <input type="hidden" name="rm" value="list_active">
 <input type="hidden" name="template_id">
 

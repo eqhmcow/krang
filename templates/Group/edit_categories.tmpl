@@ -6,7 +6,7 @@
 
     nav_edit_mode();
 
-    function delete_category (cat_id) {
+    delete_category  = function (cat_id) {
         if (confirm("Are you sure you want to remove this category?")) {
             var myform = document.forms["edit_categories_form"];
             myform.rm.value = "delete_category";
@@ -16,14 +16,14 @@
     }
 
 
-    function add_category () {
+    add_category  = function () {
         var myform = document.forms["edit_categories_form"];
         myform.rm.value = "add_category";
         myform.submit();
     }
 
 
-    function do_return () {
+    do_return  = function () {
         var myform = document.forms["edit_categories_form"];
         myform.rm.value = "edit_categories_return";
         myform.submit();
@@ -37,7 +37,7 @@
 <div class="dark-bar"><p class="left">&nbsp;Group Category Permissions Edit</p><p class="right"><a href="javascript:openWin('help.pl?topic=group')">Help</a>&nbsp;</p></div>
 <div class="box">
 
-<form name="edit_categories_form" method="POST">
+<form name="edit_categories_form" method="POST" action="group.pl"
 <input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
 <input type="hidden" name="category_id" value="<tmpl_var ESCAPE=HTML category_id>">
 <input type="hidden" name="rm" value="save">

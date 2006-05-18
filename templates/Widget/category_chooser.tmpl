@@ -4,7 +4,7 @@
 <input type="button" value="Clear" class="hpts-button" onclick="<tmpl_var name>_clear_category()">
 
 <script language="javascript">
-  function <tmpl_var name>_choose_category (packed) {
+  <tmpl_var name>_choose_category  = function (packed) {
      var parts = packed.split(",",2);
      var id = parts[0];
      var url = parts[1];
@@ -18,7 +18,7 @@
      <tmpl_if onchange><tmpl_var onchange>();</tmpl_if>
   }
 
-  function <tmpl_var name>_clear_category (){ 
+  <tmpl_var name>_clear_category  = function (){ 
      <tmpl_if display>
         var span = document.getElementById("<tmpl_var name>_url");
         span.innerHTML = "No site / category selected.";
