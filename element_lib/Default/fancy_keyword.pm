@@ -60,7 +60,7 @@ sub input_form {
 
     # if we didn't find anything in the query
     unless( $found ) {
-        @data = @{$element->data};
+        @data = $element->data ? @{$element->data} : ();
     }
 
     # build text fields
