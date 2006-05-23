@@ -99,4 +99,10 @@ sub _setup_conf {
     $ENV{KRANG_CONF} = $test_conf;
 }
 
-END { unlink($test_conf) or warn "Can't unlink($test_conf) : $!" }
+END { 
+    if( -e $test_conf ) {
+        unlink($test_conf) or warn "Can't unlink($test_conf) : $!" 
+    }
+}
+
+
