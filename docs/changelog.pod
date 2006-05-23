@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in Krang::CGI::Site::add_save_stay() where clicking "Delete"
+right after "Save & Stay" wouldn't delete the newly created site. [Bodo Schulze]
+
+=item *
+
 Added missing button GIF for Xinha's SuperClean plugin. [Bodo Schulze]
 
 =item * 

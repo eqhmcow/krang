@@ -199,7 +199,7 @@ sub add_save_stay {
 
     add_message('message_saved');
 
-    return $self->edit();
+    return $self->edit(site_id => $site->site_id);
 }
 
 
