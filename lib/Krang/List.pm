@@ -132,7 +132,7 @@ sub save {
 
 =item find()
 
-Find and return lists with parameters specified.
+Find and return list objects with parameters specified.
 
 Supported keys:
 
