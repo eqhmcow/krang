@@ -2,14 +2,40 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2
+=head2 2.005
 
 =over
 
 =item *
 
+Made changes to Krang's Javascript to allow easier future integration
+of Prototype Javascript library. [Michael Peters]
+
+=item *
+
+Fixed bug in Default::fancy_keywords; updates to fields would be lost
+if a new element was added to the story. [Michael Peters]
+
+=item *
+
+Upgraded to HTML::Template::Expr v0.07, providing a better expression
+syntax and some bug-fixes. [Michael Peters]
+
+=item *
+
+Fixed a bug which occurred when a story was reverted after a change in
+category assignment. [Michael Peters]
+
+=item *
+
+Fixed KDS deserialization to work when categories point to stories and
+media below in the category tree. [Michael Peters]
+
+=item *
+
 Fixed bug in Krang::CGI::Site::add_save_stay() where clicking "Delete"
-right after "Save & Stay" wouldn't delete the newly created site. [Bodo Schulze]
+right after "Save & Stay" wouldn't delete the newly created
+site. [Bodo Schulze]
 
 =item *
 
@@ -17,14 +43,8 @@ Added missing button GIF for Xinha's SuperClean plugin. [Bodo Schulze]
 
 =item * 
 
-Fixed krang_upgrade and krang_build to prevent overwriting existing SSL certificates
-[Michael Peters]
-
-=back
-
-=head2 2.005
-
-=over
+Fixed krang_upgrade and krang_build to prevent overwriting existing
+SSL certificates [Michael Peters]
 
 =item *
 
