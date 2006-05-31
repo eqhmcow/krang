@@ -155,7 +155,7 @@ use Krang;
 use Getopt::Long;
 use Pod::Usage;
 use Config::ApacheFormat;
-
+use File::Find qw(find);
 
 my @original_args = ();
 my $uniqueness = time();
@@ -410,9 +410,22 @@ sub install_new_krang {
     print "  Fixing ownership\n";
     my $KrangUser = $OLD_CONF->get("KrangUser");
     my $KrangGroup = $OLD_CONF->get("KrangGroup");
-    my $chown = "$CHOWN_BIN -R $KrangUser\.$KrangGroup $InstallPath";
-    system($chown) 
-      && die("Can't update ownership, chown exited with error code $?\n");
+
+    # skip sym-links to files that don't exist, which will choke
+    # chown.  This can happen as a result of installing an older SSL
+    # Krang which had links to install directory.  It'd be nice to
+    # write an upgrade module to weed them out but upgrade modules
+    # don't run until after the chown...
+    my $chown_cmd = "$CHOWN_BIN $KrangUser\.$KrangGroup ";
+    find({ no_chdir => 1,
+           follow   => 0,
+           wanted   => 
+           sub { 
+               return if -l $_ and !-e $_; # skip bad links
+               system("$chown_cmd '$_'")
+                 && die("Can't update ownership for $_: exit code is $?\n");
+           }
+         }, $InstallPath);
 
     print "  Krang files installed.\n";
 }
