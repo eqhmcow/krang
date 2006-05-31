@@ -37,6 +37,8 @@ clean:	bench_clean
 	- find lib/ -mindepth 1 -maxdepth 1 | grep -v Krang | grep -v CVS | grep -v '.cvsignore' | xargs rm -rf
 	- find apache/ -mindepth 1 -maxdepth 1 | grep -v CVS | grep -v '.cvsignore' | xargs rm -rf
 	- rm -f data/build.db
+	- rm htdocs/data
+	- rm htdocs/tmp
 
 TAGS:	
 	find -name '*.pm' | etags --language="perl" --regex='/[ \\t]*[A-Za-z]+::[a-zA-Z:]+/' -
