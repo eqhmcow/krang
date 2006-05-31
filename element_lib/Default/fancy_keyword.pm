@@ -51,10 +51,11 @@ sub input_form {
     my @data;
     my %query_vars = $query->Vars();
     my $found      = 0;
-    foreach my $key (sort keys %query_vars) {
-        if( $key =~ /^\Q$param\E_\d+$/ ) {
+
+    foreach my $key (keys %query_vars) {
+        if( $key =~ /^\Q$param\E_(\d+)$/ ) {
             $found = 1;
-            push(@data, $query->param($key)) if( $query->param($key) );
+            $data[$1] = $query_vars{$key} if( length $query_vars{$key} > 0 );
         }
     }
 
@@ -161,6 +162,23 @@ sub index_data {
     return @$data if $data;
     return ();
 }
+
+# override the Default::keyword version since we could have
+# double digit positions and string sort won't work
+sub load_query_data {
+    my ($self, %arg) = @_;
+    my ($query, $element) = @arg{qw(query element)};
+    my $param = $element->xpath;
+    my @data;
+    foreach my $key ($query->param()) {
+        if( $key =~ /^\Q$param\E_(\d+)$/ ) {
+            $data[$1] = $query->param($key) if( length $query->param($key) > 0 );
+            $query->delete($key);
+        }
+    }
+    $element->data(\@data);
+}
+
 
 
 1;
