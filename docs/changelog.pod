@@ -2,7 +2,13 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 2.005
+=head2 2.006 - Under Development
+
+=over
+
+=back
+
+=head2 2.005 - June 1st, 2006
 
 =over
 
