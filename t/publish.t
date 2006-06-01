@@ -1245,11 +1245,16 @@ sub test_story_unpublish {
         ok((not -e $old), "expired publish path '$old' cleaned up");
     }
 
-    # delete it
-    $creator->delete_item(item => $story);
+    # un-publish it
+    $publisher->unpublish_story( story => $story );
+    ok(! $story->published_version, 'published_version reset');
+    ok(! $story->publish_date, 'published_date reset');
 
     # make sure it's really gone
     ok((not -e $_), 'delete removed dead paths') for @new_paths;    
+
+    # delete it
+    $creator->delete_item(item => $story);
 }
 
 sub test_media_unpublish {
@@ -1287,12 +1292,16 @@ sub test_media_unpublish {
     ok(-e $publish_path);
     ok((not -e $old_publish_path), 'changed URL removed obsolete file');
 
-    # delete it
-    $creator->delete_item(item => $media);
-
+    $publisher->unpublish_media( media => $media );
+    ok(! $media->published_version, 'published_version reset');
+    ok(! $media->publish_date, 'published_date reset');
+ 
     # make sure it's really gone
     ok((not -e $preview_path), 'delete removed published media');
     ok((not -e $publish_path), 'delete removed published media');
+
+    # delete it
+    $creator->delete_item(item => $media);
 }
 
 #

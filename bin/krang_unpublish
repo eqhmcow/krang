@@ -1,0 +1,281 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+use File::Spec::Functions qw(catdir splitdir canonpath);
+use FindBin qw($RealBin);
+use Getopt::Long;
+use Pod::Usage;
+use Config;
+use Carp;
+
+=head1 NAME
+
+krang_unpublish - command-line un-publishing utility for Krang.
+
+=head1 SYNOPSIS
+
+Un-Publish all assets for a given category, specified by category_id
+
+  $ krang_unpublish --category_id 10
+
+Un-Publish a specific story
+
+  $ krang_unpublish --story_id 10
+
+Un-Publish a specific media object
+
+  $ krang_unpublish --media_id 15
+
+=head1 DESCRIPTION
+
+This script provides a command-line tool for un-publishing content in
+Krang. Un-publishing a story means the published story is removed from
+the filesystem and the story's publish flag is set to false.
+
+=head1 OPTIONS
+
+=over
+
+=item --category_id
+
+Un-Publish all content (stories and media) under the category specified
+by the category_id.
+
+Using the --category_id flag will cause krang_publish to ignore the
+--story_id and --media_id options.
+
+=item --story_id
+
+Un-Publishes the story with the story_id.  Supports multiple --story_id 
+arguments, or a single --story_id argument with a comma-separated list 
+of IDs to publish more than one story.
+
+=item --media_id
+
+Un-Publish a single media object, specified by its media_id.
+
+=item --verbose
+
+Increases the level of output to STDOUT to give a more in-depth
+explanation of what is going on.
+
+=back
+
+=cut
+
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+
+# Krang Libs
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader DB => qw(dbh);
+
+# Setup - grabbing all the command-line options.
+
+my %id  = map { ($_, [])} qw(story_id media_id category_id);
+
+my ($help, $man, $everything, $verbose) = (0, 0, 0, 0);
+my %find_options;
+
+pod2usage(2) unless
+  GetOptions(help           => \$help,
+             man            => \$man,
+             verbose        => \$verbose,
+             (map { ("$_=s", $id{$_}) } keys %id)
+
+            );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+pod2usage("Unrecognized options to krang_unpublish: '" . join(' ', @ARGV) . "'\n")
+  if @ARGV;
+
+my $arg_string = "Un-Publishing content with the following options:\n$0";
+
+# If there are no command-line options, return the equivilant of --help.
+pod2usage(1) unless (@{$id{category_id}} || @{$id{story_id}} || @{$id{media_id}});
+
+# NOTE: --category_id option is mutually exclusive from --story_id and --media_id.
+if (@{$id{category_id}}) {
+    $find_options{category_id} = $id{category_id}[0];
+    $arg_string .= " --category_id $find_options{category_id}";
+} elsif (@{$id{story_id}} || @{$id{media_id}}) {
+    # you can specify both --story_id and --media_id
+    # arguments simultaneously.
+    if (@{$id{story_id}}) {
+        $arg_string .= " --story_id $id{story_id}[0]";
+        if ((@{$id{story_id}} == 1 && $id{story_id}[0] =~ /,/)) {
+            $id{story_id} = [ split /,/, $id{story_id}[0] ];
+        }
+        $find_options{story_id} = $id{story_id};
+    }
+
+    if (@{$id{media_id}}) {
+        $arg_string .= " --media_id $id{media_id}[0]";
+        if ((@{$id{media_id}} == 1 && $id{media_id}[0] =~ /,/)) {
+            $id{media_id} = [ split /,/, $id{media_id}[0] ];
+        }
+        $find_options{media_id} = $id{media_id};
+    }
+}
+
+my ($total_storycount, $total_mediacount) = (0,0);
+my %skipcount;
+my $publisher = pkg('Publisher')->new();
+
+# now unpublish
+if ( $find_options{category_id} ) {
+    my ($cat) = pkg('Category')->find(category_id => $find_options{category_id});
+    if( $verbose ) {
+        if( $cat ) {
+            print "Found category #$find_options{category_id}\n";
+        } else {
+            print "Could not find category #$find_options{category_id}\n";
+        }
+    }
+    unpublish_category($cat) if $cat;
+} else {
+    if( $find_options{media_id} ) {
+        my @media;
+        if( ref $find_options{media_id} eq 'ARRAY' ) {
+            @media = map { pkg('Media')->find( media_id => $_ ) } ( @{ $find_options{media_id} } );
+        } else {
+            @media = pkg('Media')->find( media_id => $find_options{media_id} );
+        }
+
+        # un-publish each media obj
+        unpublish_obj($_, 'media') foreach (@media);
+    }
+    if( $find_options{story_id} ) {
+        my @stories;
+        if( ref $find_options{story_id} eq 'ARRAY' ) {
+            @stories = map { pkg('Story')->find( story_id => $_ ) } ( @{ $find_options{story_id} } );
+        } else {
+            @stories = pkg('Story')->find( story_id => $find_options{story_id} );
+        }
+
+        # un-publish each story obj
+        unpublish_obj($_, 'story') foreach (@stories);
+    }
+}
+
+
+# now show the status of the whole shebang
+print "\n\nSTATUS: Publish completed.\n======================================================================\n";
+print "$arg_string\n\nResults:\n";
+print "\ntype\t\tnumber published\ttime(seconds)\tseconds/asset\n";
+print "----------------------------------------------------------------------\n";
+printf("stories\t\t%i\n", $total_storycount);
+printf("media\t\t%i\n", $total_mediacount);
+
+print "----------------------------------------------------------------------\n";
+printf("TOTAL:\t\t%i assets\n\n", $total_storycount+$total_mediacount);
+
+if (keys %skipcount) {
+    my $total_errors = 0;
+    print "\n\nPublish Errors:\n\n";
+    print "type\t\terror type\t\tnumber\n";
+    print "----------------------------------------------------------------------\n";
+    foreach my $t (keys %skipcount) {
+        foreach my $e (keys %{$skipcount{$t}}) {
+            $total_errors += $skipcount{$t}{$e};
+            printf("%s\t\t%s\t%i\n", $t, $e, $skipcount{$t}{$e});
+        }
+    }
+    print "----------------------------------------------------------------------\n";
+    print "TOTAL:\t\tskipped in publish:\t$total_errors\n\n";
+}
+
+sub unpublish_category {
+    my $cat = shift;
+    if( $cat ) {
+        print "Un-Publishing category # " . $cat->category_id . "\n"
+            if $verbose;
+        # unpublish each category under this
+        my @children = pkg('Category')->find(parent_id => $cat->category_id);
+        unpublish_category($_) foreach (@children);
+
+        # now do the stories
+        my @stories = pkg('Story')->find(category_id => $cat->category_id);
+        unpublish_obj($_, 'story') foreach (@stories);
+
+        # and media
+        my @media = pkg('Media')->find(category_id => $cat->category_id);
+        unpublish_obj($_, 'media') foreach (@media);
+
+        # now remove the category path
+        my $path = $cat->dir;
+        my $parent = $cat->parent;
+        while($parent) {
+            $path = catdir($parent->dir, $path);
+            $parent = $parent->parent;
+        }
+
+        my $full_path = catdir($cat->site->publish_path, $path);
+        if( ! rmdir($full_path) ) {
+            print "Could not delete category directory '$full_path': $!\n" if $verbose;
+            $skipcount{Category}->{$!}++;
+        }
+        # remove the preview if it exists
+        $full_path = catdir($cat->site->preview_path, $path);
+        rmdir($full_path) if( -d $full_path );
+    }
+}
+
+sub unpublish_obj {
+    my ($obj, $type) = @_;
+    my $id = $type eq 'media' ? $obj->media_id : $obj->story_id;
+
+    # only do this if the object is already published
+    if( $obj->published_version ) {
+        print "Un-Publishing $type #$id\n" if $verbose;
+        my $method = "unpublish_$type";
+
+        eval { $publisher->$method($type => $obj) };
+        if( $@ ) {
+            print "$@\n" if $verbose;
+            if( $@ =~ /(Unable to delete file)/i ) {
+                $skipcount{$type}{$1}++;
+            } else {
+                $skipcount{$type}{'Error'}++;
+            }
+        } else {
+            $type eq 'media' ? $total_mediacount++ : $total_storycount++;
+        }
+    } else {
+        print "Skipping $type #$id: not published\n" if $verbose;
+        $skipcount{$type}{'Not Published'}++;
+    }
+}
+

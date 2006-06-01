@@ -491,12 +491,8 @@ sub publish_story {
 Removes a story from its published locations.  Usually called by
 $story->delete.  Affects both preview and publish locations.
 
-B<NOTE:> The C<published>, C<publish_date> and C<published_version>
-attributes of the L<Krang::Story> object are not updated at this time.
-If the UI ever supports Unpublish-Story functionality (currently, this
-is only called when a Krang::Story object is deleted), this work needs
-to be done.
-
+The C<published>, C<publish_date> and C<published_version>
+attributes of the L<Krang::Story> object all removed and set to C<undef>.
 
 =cut
 
@@ -505,22 +501,51 @@ sub unpublish_story {
     my $dbh = dbh;
     my $story = $arg{story} || croak __PACKAGE__ . ": missing required argument 'story'";
 
+    return unless $story->published_version;
+
     # get location list, preview and publish
     my $paths = $dbh->selectcol_arrayref(
                "SELECT path FROM publish_story_location WHERE story_id = ?",
                                          undef, $story->story_id);
 
     # delete
-    foreach my $path (@$paths) {
-        next unless -f $path;
-        unlink($path) or 
-          croak("Unable to delete file '$path' during unpublish : $!");
+    if( @$paths ) {
+        foreach my $path (@$paths) {
+            next unless -f $path;
+            unlink($path) or 
+              croak("Unable to delete file '$path' during unpublish : $!");
+        }
+
+        # delete the dir (or dirs if it's in multiple categories)
+        my @cats = $story->categories();
+        foreach my $cat (@cats) {
+            # only if the story isn't a "Cover"
+            next if( $cat->url eq $story->url );
+            
+            my %path_args = ( category => $cat );
+            my $dir = $self->is_preview ? $story->preview_path(%path_args) 
+                : $story->publish_path(%path_args);
+            rmdir($dir) or croak("Unable to delete dir '$dir' during unpublish : $!");
+        }
+
+        # clean the table
+        $dbh->do('DELETE FROM publish_story_location WHERE story_id = ?',
+                 undef, $story->story_id)
     }
 
-    # clean the table
-    $dbh->do('DELETE FROM publish_story_location WHERE story_id = ?',
-             undef, $story->story_id)
-      if @$paths;
+    # unset the publish flags
+    $story->{published_version} = undef;
+    $story->{publish_date} = undef;
+    $dbh->do('UPDATE story
+              SET
+                  published_version = ?,
+                  publish_date = ?
+              WHERE story_id = ?',
+             undef,
+             $story->{published_version},
+             $story->{publish_date},
+             $story->{story_id}
+            );
 }
 
 =item C<< $publisher->unpublish_media(media => $media) >>
@@ -528,12 +553,8 @@ sub unpublish_story {
 Removes a media object from its published locations.  Usually called
 by $media->delete.  Affects both preview and publish locations.
 
-B<NOTE:> The C<published>, C<publish_date> and C<published_version>
-attributes of the L<Krang::Media> object are not updated at this time.
-If the UI ever supports Unpublish-Media functionality (currently, this
-is only called when a Krang::Media object is deleted), this work needs
-to be done.
-
+The C<published>, C<publish_date> and C<published_version>
+attributes of the L<Krang::Media> object are reset to C<undef>.
 
 =cut
 
@@ -558,6 +579,21 @@ sub unpublish_media {
     $dbh->do('DELETE FROM publish_media_location WHERE media_id = ?',
              undef, $media->media_id)
       if @$paths;
+
+    # unset the publish flags
+    $media->{published_version} = undef;
+    $media->{publish_date} = undef;
+
+    # update the DB.
+    $dbh->do('UPDATE media
+              SET published_version = ?,
+                  publish_date = ?
+              WHERE media_id = ?',
+             undef,
+             $media->{published_version},
+             $media->{publish_date},
+             $media->{media_id}
+            );
 }
 
 
