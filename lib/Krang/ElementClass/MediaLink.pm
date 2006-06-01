@@ -262,7 +262,7 @@ sub fill_template {
     my $height = $element->data->height;
 
     $params{width} = $width if $tmpl->query(name => 'width');
-    $params{height} = $width if $tmpl->query(name => 'height');
+    $params{height} = $height if $tmpl->query(name => 'height');
     $params{image_dimensions} = "width='$width' height='$height'" if $tmpl->query(name => 'image_dimensions');
 
     $tmpl->param(\%params);
