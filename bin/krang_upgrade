@@ -387,16 +387,18 @@ sub install_new_krang {
 
     # make sure we don't over-write existing ssl certs
     if( -e catfile($InstallPath, 'conf', 'ssl.crt', 'server.crt') ) {
-        rename(
-            catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt'),
-            catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt.new'),
-        ) or die "Unable to rename conf/ssl.crt/server.crt to conf/ssl.crt/server.crt.new: $!\n";
+        my $src_crt = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt');
+        if( -e $src_crt ) {
+            rename( $src_crt, "$src_crt.new")
+                or die "Unable to rename $src_crt to $src_crt.new: $!\n";
+        }
     }
     if( -e catfile($InstallPath, 'conf', 'ssl.key', 'server.key') ) {
-        rename(
-            catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key'),
-            catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key.new'),
-        ) or die "Unable to rename conf/ssl.key/server.key to conf/ssl.key/server.key.new: $!\n";
+        my $src_key = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key');
+        if( -e $src_key ) {
+            rename( $src_key, "$src_key.new" )
+                or die "Unable to rename $src_key to $src_key.new: $!\n";
+        }
     }
 
     eval {
