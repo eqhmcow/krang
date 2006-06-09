@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Fixed a bug which could cause an upgrade to fail if the target Krang
+has media files with single-quotes in their filenames. [Sam]
+
 =back
 
 =head2 2.005 - June 1st, 2006

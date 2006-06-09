@@ -418,14 +418,18 @@ sub install_new_krang {
     # Krang which had links to install directory.  It'd be nice to
     # write an upgrade module to weed them out but upgrade modules
     # don't run until after the chown...
-    my $chown_cmd = "$CHOWN_BIN $KrangUser\.$KrangGroup ";
+    my (undef, undef, $uid) = getpwnam($KrangUser);
+    my (undef, undef, $gid) = getpwnam($KrangGroup);
+    die "Unable to find uid and gid for $KrangUser:$KrangGroup.\n"
+      unless defined $uid and defined $gid;
+
     find({ no_chdir => 1,
            follow   => 0,
            wanted   => 
            sub { 
                return if -l $_ and !-e $_; # skip bad links
-               system("$chown_cmd '$_'")
-                 && die("Can't update ownership for $_: exit code is $?\n");
+               chown($uid, $gid, $_)
+                 or warn("   Warning: unable to chown '$_'.\n");
            }
          }, $InstallPath);
 
