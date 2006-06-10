@@ -39,7 +39,7 @@ run_benchmark(module => 'Krang::Media',
               count  => $count,               
               code   =>
 sub {
-    $media = Krang::Media->new(title => 'test media object', category_id => $category_id);
+    $media = Krang::Media->new(title => 'test media object', category_id => $category_id, media_type_id=>1);
     my $fh = new FileHandle $filepath;
     $media->upload_file(filename => $i++."krang.jpg", filehandle => $fh);
     $media->save();

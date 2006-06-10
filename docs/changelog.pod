@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in benchmarking system.  [Jesse Erlbaum]
+
+=item *
+
 Fixed a bug which could cause an upgrade to fail if the target Krang
 has media files with single-quotes in their filenames. [Sam]
 
