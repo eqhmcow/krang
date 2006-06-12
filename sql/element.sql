@@ -10,7 +10,8 @@ CREATE TABLE element (
 
         INDEX       (root_id),
         INDEX       (parent_id),
-        INDEX       (ord)
+        INDEX       (ord),
+        INDEX  element_root_id_class (root_id, class(100))
 );
 
 /* element_index holds indexed data managed by Krang::Element */
