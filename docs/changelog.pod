@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added --clean option to bin/krang_addon_installer. [Michael Peters]
+
+=item *
+
 Added new index to element table.  This index will greatly speed 
 complex publishing logic.  Thanks to James Reidy for identifying
 the bottleneck.  [Jesse Erlbaum]
