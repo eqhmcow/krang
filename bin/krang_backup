@@ -114,7 +114,7 @@ my $file;
 if (@ARGV == 1) {
     $file = shift @ARGV;
     die "Filename '$file' should end in .gz to be used with --compress.\n"
-      if $compress and $file !~ /.gz$/;
+      if $compress and $file !~ /\.gz$/;
 } elsif (@ARGV) {
     pod2usage("Too many arguments to $0.");
 } else {
@@ -158,7 +158,7 @@ print STDERR "Creating backup archive with command:\n\t$cmd\n\n"
 
 # go to KrangRoot if not already there and run the tar command
 chdir(KrangRoot) or die $!;
-system($cmd) &&die "taring of data failed... Please try again\n";
+system($cmd) && die "taring of data failed... Please try again\n";
 
 # clean up backup dir
 rmtree([$dir]);
