@@ -6,11 +6,11 @@ use strict;
 
 =head1 NAME
 
-nyml_upload_media - import media from filesystem
+krang_upload_media - import media from filesystem
 
 =head1 SYNOPSIS
 
-   nyml_upload_media  --path /path/to/media
+   krang_upload_media  --path /path/to/media
 
 
 =head1 DESCRIPTION
