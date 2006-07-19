@@ -148,10 +148,9 @@ Two types of scheduler addons are supported.  They are configured with the follo
 use Carp qw(croak);
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catdir catfile canonpath splitdir);
-use File::Path qw(mkpath);
+use File::Path qw(mkpath rmtree);
 
 use File::Copy qw(copy);
-use File::Path qw(mkpath rmtree);
 
 use File::Temp qw(tempdir tempfile);
 use Archive::Tar;
@@ -279,7 +278,7 @@ sub _flush_cache { @ADDONS = () }
 
 sub install {
     my ($pkg, %args) = @_;
-    my ($source, $verbose, $force) = @args{('src', 'verbose', 'force')};
+    my ($source, $verbose, $force, $clean) = @args{qw(src verbose force clean)};
     croak("Missing src param!") unless $source;
 
     my $old_dir = fastcwd();
@@ -422,12 +421,15 @@ sub _list_files {
     
 sub _copy_files {
     my ($pkg, %args) = @_;
-    my ($source, $verbose, $force, $conf, $files) = 
-      @args{('src', 'verbose', 'force', 'conf', 'files')};
+    my ($source, $verbose, $force, $conf, $files, $clean) = 
+      @args{qw(src verbose force conf files clean)};
 
     my $root = KrangRoot;
     my $name = $conf->get('name');
     my $addon_dir = catdir($root, 'addons', $name);
+
+    # if we need to cleanup the old one first
+    rmtree($addon_dir) if( $clean );
 
     # copy the files, creating directories as necessary
     foreach my $file (@$files) {

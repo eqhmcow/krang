@@ -31,6 +31,11 @@ The following options are available:
 
 Force reinstallation even if already installed.
 
+=item --clean
+
+Removes the older version of the addon before installing
+the new one
+
 =item --verbose
 
 Print information about what's happening.
@@ -82,7 +87,7 @@ END
 use Krang::ClassFactory qw(pkg);
 use Pod::Usage;
 use Getopt::Long;
-our ($help, $man, $force, $source);
+our ($help, $man, $force, $clean, $source);
 our $verbose;
 BEGIN {
     $verbose = 0;
@@ -91,6 +96,7 @@ BEGIN {
                  man        => \$man,
                  'verbose+' => \$verbose,
                  force      => \$force,
+                 clean      => \$clean,
                 );
     pod2usage(1)             if $help;
     pod2usage(-verbose => 2) if $man;
@@ -136,6 +142,9 @@ print STDERR "Copied '$source' to '$tempfile'.\n" if $verbose > 1;
 $source = $tempfile;
 
 # install the addon
-pkg('AddOn')->install(src => $source, verbose => $verbose, force => $force);
+pkg('AddOn')->install(src     => $source, 
+                      verbose => $verbose, 
+                      force   => $force,
+                      clean   => $clean);
 
 print "Installation complete.\n";
