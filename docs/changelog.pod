@@ -8,7 +8,16 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded Archive::Tar to latest version (v1.29) to correct several
+annoying bugs, including the nefarious "unable to read chunk" bug
+related to high-ASCII characters contained in archived files.
+[Jesse Erlbaum]
+
+
+=item *
+
 Added --clean option to bin/krang_addon_installer. [Michael Peters]
+
 
 =item *
 
