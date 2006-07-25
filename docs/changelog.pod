@@ -8,6 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed krang_upload_templates script to now handle "global"
+templates (those without categories).  Fixed undefined value
+warning in Krang::Template when searching for templates
+without categories.  [Jesse Erlbaum]
+
+
+=item *
+
 Upgraded Archive::Tar to latest version (v1.29) to correct several
 annoying bugs, including the nefarious "unable to read chunk" bug
 related to high-ASCII characters contained in archived files.

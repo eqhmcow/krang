@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 use warnings;
 use strict;
 
@@ -36,6 +36,7 @@ Path from which to upload templates.  Note, this will be uploaded verbatim
 to the site.  For example:
 
   /path/to/templates/
+      +--- bleh.tmpl
       +--- site1.com/
       |     +--- bleh.tmpl
       |     +--- foo/bleh.tmpl
@@ -95,6 +96,8 @@ $@
 END
 }
 
+
+
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot);
@@ -132,21 +135,8 @@ pod2usage(-verbose => 2) if $man;
 pod2usage("No such directory '$path'") unless (-d $path);
 print "Found template directory '$path'\n" if $verbose;
 
-# Get sites -- needed for load bootstrap
-print "Starting upload templates\n" if $verbose;
-my @sites = pkg('Site')->find();
-if ($verbose) {
-    print "Found sites: ".join(", ", (map {$_->url} @sites))."\n" if @sites;
-    print "No sites found in instance\n" unless @sites;
-}
-foreach my $s (@sites) {
-    my $tmpl_dir = catdir($path, $s->url);
-    if (-d $tmpl_dir) {
-        my ($root_cat) = pkg('Category')->find(url => $s->url."/");
-        upload_templates($path, $root_cat);
-    }
-}
-
+# Upload templates, starting with the "global" (no site/category) templates
+upload_templates($path);
 
 # Done!
 print "Upload templates complete\n" if $verbose;
@@ -163,10 +153,13 @@ sub upload_templates {
     my $tmpl_dir = shift;
     my $category = shift;
 
-    my $fs_path = catdir($tmpl_dir, $category->url);
+    my $fs_path = $tmpl_dir;
+
+    # Append category path, if we have one (non-global tmpl)
+    $fs_path = catdir($tmpl_dir, $category->url) if ($category);
 
     # Get list of files and directories
-    print "Opening '".$category->url."'\n" if $verbose;
+    print "Opening '". ( ($category) ? $category->url : "/" ) ."'\n" if $verbose;
     opendir(TMPLDIR, "$fs_path") || die("Can't open '$fs_path': " . $!);
     my @found = (readdir(TMPLDIR));
     closedir(TMPLDIR);
@@ -189,11 +182,18 @@ sub upload_templates {
         }
 
         # Try to find template.
-        my ($t) = pkg('Template')->find( category_id => $category->category_id,
+        my $category_id = undef;
+        $category_id = $category->category_id if $category;
+        my ($t) = pkg('Template')->find( category_id => $category_id,
                                          filename => $f );
+
         # Create it if we can't find it.
-        $t = pkg('Template')->new( category => $category,
-                                   filename => $f ) unless ($t);
+        unless ($t) {
+            my %new_params = (filename => $f);
+            $new_params{category} = $category if ($category);
+            $t = pkg('Template')->new( category => $category,
+                                       filename => $f );
+        }
 
         # Do we have access?  (Only checked out by system user
         if ($t->checked_out()) {
@@ -226,26 +226,39 @@ sub upload_templates {
 
     # For each sub-directory, verify category exists and decend if so
     foreach my $d (@dirs) {
-        my $new_cat_path = catdir($category->url, $d);
-        my ($c) = pkg('Category')->find(url=>$new_cat_path."/");
-        if ($c) {
-            upload_templates($tmpl_dir, $c);
-        } elsif ($makecats) {
-            # Create missing directory
-            my $newcat;
-            eval {
-                $newcat = pkg('Category')->new( dir => $d,
-                                                parent_id => $category->category_id );
-                $newcat->save(); 
-            };
-            if ($@) {
-                print "  Unable to create '$new_cat_path' ($@)\n";
-                next;
+        if ($category) {
+
+            # If we're in a site
+            my $new_cat_path = catdir($category->url, $d);
+            my ($c) = pkg('Category')->find(url=>$new_cat_path."/");
+            if ($c) {
+                upload_templates($tmpl_dir, $c);
+            } elsif ($makecats) {
+                # Create missing directory
+                my $newcat;
+                eval {
+                    $newcat = pkg('Category')->new( dir => $d,
+                                                    parent_id => $category->category_id );
+                    $newcat->save(); 
+                };
+                if ($@) {
+                    print "  Unable to create '$new_cat_path' ($@)\n";
+                    next;
+                }
+                print "  Created new category '$new_cat_path'\n";
+                upload_templates($tmpl_dir, $newcat);
+            } else {
+                print "  Skipping '$new_cat_path' (No category found)\n" if $verbose;
             }
-            print "  Created new category '$new_cat_path'\n";
-            upload_templates($tmpl_dir, $newcat);
+
         } else {
-            print "  Skipping '$new_cat_path' (No category found)\n" if $verbose;
+
+            # No site yet -- still global templates
+            my ($s) = pkg('Site')->find( url => $d);
+            die ("Can't find site '$d'") unless ($s);
+            my ($root_cat) = pkg('Category')->find(url => $s->url."/");
+            upload_templates($tmpl_dir, $root_cat);
+
         }
     }
 }
