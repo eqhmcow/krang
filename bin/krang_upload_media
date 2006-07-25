@@ -52,6 +52,13 @@ If not specified, --path default to /element_lib/InstanceElementSet/media/
 
 If specified, categories which do not exist will be created instead of skipped.
 
+
+=item --grep
+
+if specified, will be used as a perl regex against the would-be URL of
+the media to be uploaded.  Only matching files will be uploaded.
+
+
 =item --verbose
 
 =item --help
@@ -113,11 +120,13 @@ my $user = "admin";
 my $password = "";
 my $makecats = 0;
 my $verbose = 0;
+my $grep = "";
 
 pod2usage(2) unless
   GetOptions(
              'path=s' => \$path,
              'user=s' => \$user,
+             'grep=s' => \$grep,
              'password=s' => \$password,
              'verbose+' => \$verbose,
              'makecats' => \$makecats,
@@ -188,6 +197,15 @@ sub upload_media {
 
     # Upload media files in this dir
     foreach my $f (@files) {
+        # Does file match grep pattern (if specified)?
+        if ($grep) {
+            my $fq_f = catfile($category->url, $f);
+            unless ($fq_f =~ /$grep/o) {
+                print "  Skipping '$fq_f' (doesn't match grep '$grep')\n" if $verbose > 1;
+                next;
+            }
+        }
+
         # Try to find media.
         my ($m) = pkg('Media')->find( category_id => $category->category_id,
                                       filename => $f );

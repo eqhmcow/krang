@@ -6,6 +6,13 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item * 
+
+Added new --grep option to krang_upload_media.  This option
+permits you to use a regex to filter what you want media
+to upload.  [Jesse Erlbaum]
+
+
 =item *
 
 Changed krang_upload_templates script to now handle "global"
