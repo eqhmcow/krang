@@ -83,7 +83,7 @@ usage() unless $command eq 'start' or
 my @ctl = (
            { name => 'krang_apachectl',   port => 'ApachePort' },
            { name => 'krang_ftpctl',      port => 'FTPPort'    },
-	   { name => 'krang_schedulectl', port => 'ApachePort' },
+           { name => 'krang_schedulectl', port => 'ApachePort' },
           );
 push(@ctl, { name => 'krang_siteserverctl', port => 'SiteServerPort' })
     if EnableSiteServer;

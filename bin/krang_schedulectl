@@ -58,7 +58,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup);
+use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup SchedulerMaxChildren);
 
 # the krang_scheduled command
 my $scheduled = rel2abs(catfile(KrangRoot, 'bin', 'krang_scheduled'));
@@ -83,6 +83,12 @@ usage() unless @ARGV;
 my $command = shift @ARGV;
 
 if ($command eq 'start') {
+
+    unless (SchedulerMaxChildren > 0) {
+        print "krang_schedulectl $command: skipping -- SchedulerMaxChildren set to 0.\n";
+        exit;
+    }
+
     if ($running) {
         die "krang_schedulectl $command: krang_scheduled (pid $pid) already " .
           "running\n";
@@ -145,17 +151,22 @@ if ($command eq 'restart') {
 
     }
 
-    # start
-    print "krang_schedulectl $command: starting krang_scheduled\n";
+    # start (Only if SchedulerMaxChildren is not 0)
+    if (SchedulerMaxChildren > 0) {
+        print "krang_schedulectl $command: starting krang_scheduled\n";
 
-    setup_logs();
+        setup_logs();
 
-    unless (system($scheduled)) {
-        print "krang_schedulectl $command: krang_scheduled started\n";
-        exit;
+        unless (system($scheduled)) {
+            print "krang_schedulectl $command: krang_scheduled started\n";
+            exit;
+        } else {
+            die "krang_schedulectl $command: krang_scheduled could not be " .
+              "started\n";
+        }
     } else {
-        die "krang_schedulectl $command: krang_scheduled could not be " .
-          "started\n";
+        print "krang_schedulectl $command: skipping -- SchedulerMaxChildren set to 0.\n";
+        exit;
     }
 }
 
