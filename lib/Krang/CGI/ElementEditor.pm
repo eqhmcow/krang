@@ -883,7 +883,7 @@ sub element_bulk_save {
     my $element = _find_element($root, $path);
 
     my $sep = $query->param('bulk_edit_sep');
-    $sep = ($sep eq "__TWO_NEWLINE__") ? "\r?\n\r?\n" : "\r?\n?$sep\r?\n?";
+    $sep = ($sep eq "__TWO_NEWLINE__") ? "\r?\n[ \t]*\r?\n" : "\r?\n?[ \t]*${sep}[ \t]*\r?\n?";
     my $data = $query->param('bulk_data');
     my $name = $query->param('bulk_edit_child');
     my @children = grep { $_->name eq $name } $element->children;

@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bulk-edit to allow white-space on blank line separating
+paragraphs.  [Sam]
+
+=item *
+
 Modified krang_schedulectl to skip scheduler start-up if 
 SchedulerMaxChildren parameter is set to 0 in krang.conf.
 This is useful in development when you do not want the
