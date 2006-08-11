@@ -2,13 +2,13 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 2.006 - Under Development
+=head2 2.006 - August 11th, 2007
 
 =over
 
 =item *
 
-Fixed bulk-edit to allow white-space on blank line separating
+Fixed bulk-edit to allow white-space on the blank line separating
 paragraphs.  [Sam]
 
 =item *
