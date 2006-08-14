@@ -1,4 +1,4 @@
-#!/usr/bin/perl 
+#!/usr/bin/perl
 use warnings;
 use strict;
 
@@ -6,32 +6,42 @@ use strict;
 
 =head1 NAME
 
-krang_create_lists - create Krang::ListGroups
+krang_create_lists - sync Krang::ListGroups with lists.conf file
 
 =head1 SYNOPSIS
 
    krang_create_lists
 
+
 =head1 DESCRIPTION
 
 Creates Krang::ListGroups and Krang::Lists based on lists.conf files in
-element sets.  Usually called from C<krang_createdb>.
-
+element sets. (Ignores already-existing items.) Usually called from 
+C<krang_createdb>.
 
 =head1 OPTIONS
 
 =over 5
+
+=item --input_file
+
+By default, we take our input from the lists.conf file in the element
+library. You may use this option to specify an alternate file (the
+full path must be included).
+
+=item --delete_missing
+
+If specified, removes from the CMS any groups, lists, or items that 
+are NOT in the file. 
 
 =item --verbose
 
 If specified once, will output list creation status.
 If specified twice, will output list item creation, too.
 
-
 =item --help
 
 Display brief help.
-
 
 =item --man
 
@@ -83,16 +93,20 @@ use XML::Simple;
 use Getopt::Long;
 use Pod::Usage;
 
-our ($help, $man, $verbose);
+our ($help, $man, $verbose, $list_conf_file, $delete_missing);
 $verbose = 0;
 
 pod2usage(2) unless
-  GetOptions(help       => \$help,
-             man        => \$man,
-             'verbose+' => \$verbose );
+  GetOptions(help           => \$help,
+             man            => \$man,
+             'verbose+'     => \$verbose,
+             'input_file=s' => \$list_conf_file,
+             delete_missing => \$delete_missing);
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
 
+my ($groups_created, $groups_deleted, $lists_created, $lists_deleted,
+    $items_created, $items_deleted);
 
 # Find path to element library for InstanceElementSet
 my $addon = InstanceElementSet;
@@ -103,62 +117,166 @@ $element_lib_dir = catdir(KrangRoot, 'element_lib', $addon) unless (-d $element_
 die("Can't find element_lib/$addon/ in krang/addons/ or krang/element_lib/") unless (-d $element_lib_dir);
 
 # Location of our file, if we have one.
-my $list_conf_file = catfile($element_lib_dir, 'lists.conf');
+$list_conf_file ||= catfile($element_lib_dir, 'lists.conf');
 
 # populate Krang::ListGroup and Krang::List info in
-# db from lists.conf file, if exists.
+# db from lists.conf file, if it exists.
 if (-f $list_conf_file) {
     print STDERR "Opening '$list_conf_file'...\n" if $verbose > 1;
     my $config = XMLin($list_conf_file, suppressempty => 1, forcearray => 1);
     my $dbh = dbh;
-    
+
+    # Get groups currently in the CMS
+    my %existing_groups = map { $_->name, $_ } pkg('ListGroup')->find;
+
+    # Iterate through groups in the lists.conf file
     foreach my $list_group (@{$config->{list_group}}) {
         my $list_group_name = $list_group->{list_group_name};
-        print STDERR "Adding ListGroup '$list_group_name'\n" if $verbose;
-        my $lg = pkg('ListGroup')->new( name => $list_group_name, description => $list_group->{description} );
-        $lg->save;
+
+        my $lg;
+        if ($lg = $existing_groups{$list_group_name}) {
+            print STDERR "Found Group '$list_group_name'\n" if $verbose;
+            # remove group fr. hash so it'll be easy to find superfluous ones
+            delete $existing_groups{$list_group_name};
+        } else {
+            print STDERR "Adding Group '$list_group_name'\n" if $verbose;
+            $lg = pkg('ListGroup')->new( name => $list_group_name, 
+                                         description => $list_group->{description} );            
+            $lg->save;
+            ++$groups_created;
+        }
+        
         my $prev_list_id;
+        
+        # Get lists currently in the CMS under this group
+        my %existing_lists = 
+            ( map { ($_->parent_list_id || '').':'.$_->name, $_ }
+              pkg('List')->find (list_group_id => $lg->list_group_id) );
+        
+        # Iterate through lists in the lists.conf file under this group
         foreach my $list (@{$list_group->{list}}) {
             my %params;
             $params{name} = $list->{list_name};
             $params{list_group_id} = $lg->list_group_id;
             $params{parent_list_id} = $prev_list_id if $prev_list_id; 
-            print STDERR "  Adding List '". $params{name} ."'\n" if $verbose;
-            my $new_list = pkg('List')->new( %params );
-            $new_list->save;
-
-            # Iterate through items
+            
+            my $new_list;
+            my $list_key = ($prev_list_id || '').':'.$list->{list_name};
+            if ($new_list = $existing_lists{$list_key}) {
+                print STDERR "  Found List '". $params{name} ."'\n" 
+                  if $verbose;
+                delete $existing_lists{$list_key};
+            } else {
+                print STDERR "  Adding List '". $params{name} ."'\n" 
+                  if $verbose;
+                $new_list = pkg('List')->new( %params );
+                $new_list->save;
+                ++$lists_created;
+            }
+            
+            # Get items currently in the CMS for this list
+            my %existing_items = 
+                ( map { ($_->parent_list_item_id || '').':'.$_->data, $_ }
+                  pkg('ListItem')->find (list_id => $new_list->list_id) );
+            
+            # Iterate through items in the lists.conf file for this list
             my $order = 1;
             foreach my $item (@{$list->{list_item}}) {
                 my $item_name = $item->{item_name};
                 my $parent_item_name = $item->{parent_item_name};
-                print STDERR "    Adding item '$item_name'". ($parent_item_name ? " (parent $parent_item_name)" : "") ."\n"
-                  if $verbose > 1;
-
+                $item_name =~ s/\s+$//;        # remove any trailing whitespace
+                $parent_item_name =~ s/\s+$//  # since CMS seems to do the same
+                  if $parent_item_name;
+                
                 # Set up new item
                 my %item_params = ( list => $new_list,
                                     order => $order++,
                                     data => $item_name);
 
                 # Find parent (if applicable)
+                my $parent_item_id;
                 if ($parent_item_name) {
-                    my ($parent_item) = pkg('ListItem')->find( list_id => $prev_list_id,
-                                                               data => $parent_item_name );
-                    die ("Cannot find parent item '$parent_item_name' in list_id '$prev_list_id'") unless $parent_item;
-
-                    $item_params{parent_list_item} = $parent_item;
+                    if (my ($parent_item) = pkg('ListItem')->find
+                        ( list_id => $prev_list_id,
+                          data => $parent_item_name )) {
+                        $item_params{parent_list_item} = $parent_item;
+                        $parent_item_id = $parent_item->list_item_id;
+                    } elsif (!$delete_missing) {
+                        die ("Cannot find parent item '$parent_item_name' ".
+                             "in list_id '$prev_list_id'");
+                    }
                 }
 
-                # Create and save
-                my $new_item = pkg('ListItem')->new(%item_params);
-                $new_item->save();
+                my $item_key = ($parent_item_id || '').':'.$item_name;
+                if ( $existing_items{$item_key} ) {
+                    print STDERR "    Found Item '$item_name'\n"
+                      if $verbose > 1;
+                    delete $existing_items{$item_key};
+                } else {
+                    print STDERR "    Adding Item '$item_name'". 
+                      ($parent_item_name ? " (parent $parent_item_name)" : "") ."\n"
+                        if $verbose > 1;
+                    my $new_item = pkg('ListItem')->new(%item_params);
+                    $new_item->save();
+                    ++$items_created;
+                }
             }
-
+            
             # Set up previous list ID for next list
             $prev_list_id = $new_list->list_id ;
+
+            # If user wanted, remove items in CMS that aren't in lists.conf...
+            if ($delete_missing) {
+                foreach my $item_not_in_file (keys %existing_items) {
+                    print STDERR "    Deleting item '$item_not_in_file'\n" if ($verbose>1);
+                    $existing_items{$item_not_in_file}->delete;
+                    ++$items_deleted;
+                }
+            }
+
+        }
+
+        # ...and lists that aren't in lists.conf
+        if ($delete_missing) {
+            foreach my $list_not_in_file (keys %existing_lists) {
+                print STDERR "  Deleting list '$list_not_in_file'\n" if ($verbose);
+                $existing_lists{$list_not_in_file}->delete;
+                ++$lists_deleted;
+            }
+        }
+
+    }
+    
+    # ...and groups that aren't in lists.conf
+    if ($delete_missing) {
+        foreach my $group_not_in_file (keys %existing_groups) {
+            print STDERR "Deleting group '$group_not_in_file'\n" if ($verbose);
+            $existing_groups{$group_not_in_file}->delete;
+            ++$groups_deleted;
         }
     }
+    
+} else {
+
+    print "\nERROR: Could not open '$list_conf_file'\n\n";
+    exit -1;
+
 }
 
-print "ListGroups and Lists created successfully for instance '". InstanceDisplayName ."'.\n";
 
+# Output report
+if ($verbose) {
+    print "\nListGroups and Lists updated successfully for instance '". InstanceDisplayName ."'.\n\n";
+
+    print "Groups    created: " . ($groups_created || 0) . "\n";
+    print "  Lists   created: " . ($lists_created  || 0) . "\n";
+    print "    Items created: " . ($items_created  || 0) . "\n";
+
+    if ($delete_missing) {
+        print "\n(entire) Groups    deleted: " . ($groups_deleted || 0) . "\n";
+        print   "  (entire) Lists   deleted: " . ($lists_deleted  || 0) . "\n";
+        print   "    (single) Items deleted: " . ($items_deleted  || 0) . "\n";
+    }
+
+    print "\n";
+}

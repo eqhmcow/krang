@@ -2,6 +2,22 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 2.007 - In Development
+
+=over
+
+=item *
+
+Added --delete_missing and --input_file options to krang_create_lists.
+The latter will permit you to specify a lists.conf file for import.
+The former will delete list/group/items which are not found in the
+specified lists.conf (as opposed to adding the new records to the 
+existing ones).  [Jesse Erlbaum]
+
+
+=back
+
+
 =head2 2.006 - August 11th, 2007
 
 =over
