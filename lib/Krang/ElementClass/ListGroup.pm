@@ -162,7 +162,8 @@ END
 
         # make the jscript call if it is multidimensional
         if ($#lists > 0) {
-            $params{-onclick} = "${jparam}_update(this, $list_index);";
+            $params{-onclick}  = "${jparam}_update(this, $list_index);";
+            $params{-onkeyup}  = "${jparam}_update(this, $list_index);";
         }
 
         my $pulldown = scalar $query->scrolling_list(%params);

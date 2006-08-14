@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed long-standing bug in Krang::ElementClass::ListGroup in which 
+multi-dimensional sub lists would not update if you used the
+keyboard (not the mouse) to update the selected item.  [Jesse Erlbaum]
+
+
+=item *
+
 Added --delete_missing and --input_file options to krang_create_lists.
 The latter will permit you to specify a lists.conf file for import.
 The former will delete list/group/items which are not found in the
