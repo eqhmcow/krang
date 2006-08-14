@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in Krang::ElementClass::TopLevel error message.  [Jesse Erlbaum]
+
+
+=item *
+
 Fixed long-standing bug in Krang::ElementClass::ListGroup in which 
 multi-dimensional sub lists would not update if you used the
 keyboard (not the mouse) to update the selected item.  [Jesse Erlbaum]

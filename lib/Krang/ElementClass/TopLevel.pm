@@ -56,7 +56,7 @@ BEGIN {
                          bulk_edit_filter view_data validate 
                          load_query_data)) {
         *{"Krang::ElementClass::TopLevel::$meth"} = 
-          sub { croak('$meth called on a top-level element!'); };
+          sub { croak($meth .'() called on a top-level element!'); };
     }
 }
 
