@@ -150,9 +150,11 @@ read_only(document.edit_template_form.filename);
 </tmpl_if>
 
 <tr>
-  <td width="150">Upload template file:<tmpl_if filename><br />
-<tmpl_if template_id><a href="javascript:preview_template('<tmpl_var escape=HTML template_id>')"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if template_id></a></tmpl_if>
-<tmpl_var escape=HTML file_size></tmpl_if></td>
+  <td width="150">
+  Upload template file:<tmpl_if filename><br />
+  <tmpl_var escape=HTML filename>
+  <tmpl_var escape=HTML file_size></tmpl_if>
+</td>
   <td ><tmpl_if error_template_file><span class="invalid"></tmpl_if><tmpl_var upload_chooser><tmpl_if error_template_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
 </tr>
 

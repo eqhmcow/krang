@@ -1234,9 +1234,7 @@ sub list_active_row_handler {
     $row->{template_id} = $template->template_id();
 
     # format url to fit on the screen and to link to preview
-    $row->{url} = format_url( url => $template->url(),
-                              linkto => "javascript:preview_template('".
-                              $row->{template_id} ."')" );
+    $row->{url} = format_url( url => $template->url() );
 
     # filename
     $row->{filename} = $template->filename();
