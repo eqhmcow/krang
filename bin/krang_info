@@ -62,6 +62,7 @@ use Krang::ClassFactory qw(pkg);
 
 # set the instance as the first instance that exists - just so that we
 # can get Krang::Script loaded without complaints.
+use Krang::ClassLoader 'Conf';
 BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
 use Krang::ClassLoader 'Script';
