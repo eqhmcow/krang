@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed several bin/ scripts to always load Krang::Conf via
+Krang::ClassLoader before using it.  This fixes problems overriding
+Krang::Conf in an addon.  [Sam]
+
+=item *
+
 Fixed bug in Krang::ElementClass::TopLevel error message.  [Jesse Erlbaum]
 
 
