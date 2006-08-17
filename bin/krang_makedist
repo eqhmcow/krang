@@ -39,8 +39,8 @@ distribution.
 
 =item 3
 
-Create list of files and directories to be excluded, bench/,
-conf/krang.conf, CVS/* and src/ in binary distributions.
+Create list of files and directories to be excluded (ex. bench/,
+conf/krang.conf and CVS/*).
 
 =item 4
 
@@ -154,8 +154,7 @@ find({ no_chdir => 1,
                        m!\.cvsignore! or             # skip all CVS dirs
                        m!~$! or                      # skip Emacs droppings
                        m!#! or                       # skip Emacs droppings
-                       m!krang-[^/]+\.tar\.gz! or    # skip Krang distribs
-                       (not $source_dist and m!^$name/./src!o); 
+                       m!krang-[^/]+\.tar\.gz!;      # skip Krang distribs
 
              # print "Excluding $_.\n";
              print LIST "$_\n";
