@@ -69,6 +69,12 @@ AddModule mod_setenvif.c
 AddModule mod_perl.c
 
 
+#
+# To use server-parsed HTML files
+#
+AddHandler server-parsed .html .txt
+
+
 PassEnv KRANG_ROOT
 PassEnv KRANG_CONF
 PassEnv KRANG_DEBUG

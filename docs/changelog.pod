@@ -8,6 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+SiteServer configuration now does server-side includes by default.
+SSI is very common for sites managed by Krang.  This will make
+development use of the SiteServer more useful and easier.
+[Jesse Erlbaum]
+
+
+=item *
+
 Binary distributions now include src/ allowing for rebuilding
 installed copies of Krang. [Sam]
 
