@@ -8,6 +8,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In Krang::CGI::Story::view(), use tmpl_var 'is_root' to inform
+templates/Story/view.tmpl whether to show the 'Edit' button or not.
+In templates/Story/view.tmpl, get rid of tmpl_var 'old_version'
+which fails to show this button when returning from viewing a non-root
+sub-element.  [Bodo Schulze]
+
+
+=item *
+
 In templates/Contrib/associate_list_view.tmpl, alert user if no
 contributor has been checked to (un-)associate.  [Bodo Schulze]
 

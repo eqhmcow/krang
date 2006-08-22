@@ -126,7 +126,7 @@
 </form><br>
 </div>
 <div class="button-bar">
-  <tmpl_unless old_version><tmpl_if can_edit><input type=button value="Edit" onclick="edit_story()" class="button"></tmpl_if></tmpl_unless>
+  <tmpl_if is_root><tmpl_if can_edit><input type=button value="Edit" onclick="edit_story()" class="button"></tmpl_if></tmpl_if>
   <tmpl_if parent_path>
     <input type="button" value="Return" onclick="view_path('<tmpl_var parent_path>')" class="button">
   <tmpl_else>
