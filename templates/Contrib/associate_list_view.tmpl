@@ -9,16 +9,34 @@
         myform.submit();
     }
 
+    something_checked = function(list) {
+        var checkbox = document.getElementsByName(list);
+        for (var i = 0; i < checkbox.length; i++) {
+	    if (checkbox[i].checked) {
+	        return true;
+	    }
+        }
+        return false;
+    }
+
     associate_selected  = function () {
-        var myform = document.forms["krang_pager_form"];
-        myform.rm.value = 'associate_selected';
-        myform.submit();
+        if (something_checked('krang_pager_rows_checked')) {
+            var myform = document.forms["krang_pager_form"];
+            myform.rm.value = 'associate_selected';
+            myform.submit();
+        } else {
+            alert("No contributor selected to associate!");
+        }
     }
 
     unassociate_selected  = function () {
-        var myform = document.forms["current_contributors_form"];
-        myform.rm.value = "unassociate_selected";
-        myform.submit();
+        if (something_checked('contrib_unassociate_list')) {
+            var myform = document.forms["current_contributors_form"];
+            myform.rm.value = "unassociate_selected";
+            myform.submit();
+        } else {
+            alert("No contributor selected to unassociate!");
+        }
     }
 
     reorder_contributors  = function () {

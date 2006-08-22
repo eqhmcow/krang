@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In templates/Contrib/associate_list_view.tmpl, alert user if no
+contributor has been checked to (un-)associate.  [Bodo Schulze]
+
+
+=item *
+
 SiteServer configuration now does server-side includes by default.
 SSI is very common for sites managed by Krang.  This will make
 development use of the SiteServer more useful and easier.
