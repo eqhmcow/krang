@@ -27,7 +27,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'User';
-use Krang::ClassLoader Log => qw(debug critical assert ASSERT);
+use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget => qw(format_url datetime_chooser decode_datetime);
 use Krang::ClassLoader Message => qw(add_message get_messages clear_messages);
 use Time::Piece;
@@ -311,14 +311,21 @@ sub preview_story {
     my $self = shift;
     my $query = $self->query;
 
+    my $session_key = $query->param('session');
+    my $story_id    = $query->param('story_id');
+    # if they didn't give us enough to find the story
+    # take them back to the workspace
+    unless( $story_id or $session_key ) {
+        info "Missing required story_id or session parameter. "
+            . "Redirecting to workspace.";
+        $self->header_type('redirect');
+        $self->header_add(-url => 'workspace.pl?rm=show');
+        return "Redirecting to workspace.";
+    }
+
     # this is a no-parse header script
     $self->header_type('none');
     print $query->header(-expires => '-1d');
-
-    my $session_key = $query->param('session');
-    my $story_id    = $query->param('story_id');
-    croak("Missing required story_id or session parameter.")
-      unless $story_id or $session_key;
 
     my $story;
 
