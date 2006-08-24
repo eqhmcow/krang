@@ -8,6 +8,18 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Entering F<publisher.pl> without any query params or a story in
+the session will now redirect to the workspace instead of croak'ing.
+[Michael Peters]
+
+=item *
+
+Fix issue in Krang::CGI::Story::db_save() changes to the slug or title
+could get lost if the submission was invalid for other reasons.
+[Michael Peters]
+
+=item *
+
 In Krang::CGI::Story::view(), use tmpl_var 'is_root' to inform
 templates/Story/view.tmpl whether to show the 'Edit' button or not.
 In templates/Story/view.tmpl, get rid of tmpl_var 'old_version'
