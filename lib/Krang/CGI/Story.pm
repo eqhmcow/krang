@@ -379,8 +379,8 @@ sub edit {
     my $path  = $query->param('path') || '/';
     if ($path eq '/' and not $query->param('bulk_edit')) {
         $template->param(is_root           => 1,
-                         title             => $story->title,
-                         slug              => $story->slug,
+                         title             => ($query->param('title') || $story->title),
+                         slug              => ($query->param('slug')  || $story->slug),
                          version           => $story->version,
                          published_version => $story->published_version,
                         );
