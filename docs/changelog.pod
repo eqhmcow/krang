@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed redirect problem when going to the installation root already
+logged in on a single installation machine (resulted in a 404).
+[Michael Peters]
+
+=item *
+
 Entering F<publisher.pl> without any query params or a story in
 the session will now redirect to the workspace instead of croak'ing.
 [Michael Peters]

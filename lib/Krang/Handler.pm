@@ -341,19 +341,19 @@ sub authz_handler ($$) {
 sub instance_menu {
     my ($r) = @_;
 
-    my $template = pkg('HTMLTemplate')->new(filename => 'instance_menu.tmpl',
-                                            cache    => 1);
-
     # setup the instance loop
     my (@loop, @instances);
     @instances = pkg('Conf')->instances();
 
     # if there's only one instance, just go there
     if( scalar @instances == 1 ) {
-        $r->headers_out->{Location} = '/' . $instances[0] . '/index.pl';
+        $r->headers_out->{Location} = '/' . $instances[0] . '/';
         return REDIRECT;
     # else, show the menu
     } else {
+        my $template = pkg('HTMLTemplate')->new(filename => 'instance_menu.tmpl',
+                                                cache    => 1);
+
         foreach my $instance (@instances) {
             push(@loop, { InstanceName => $instance });
         }
