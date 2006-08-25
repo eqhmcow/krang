@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Allow users whose page-size preference is 100, to be able to toggle
+between 100 and 20, instead of 100 and 100. [Michael Peters]
+
+=item *
+
 Fixed redirect problem when going to the installation root already
 logged in on a single installation machine (resulted in a 404).
 [Michael Peters]
