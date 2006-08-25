@@ -283,7 +283,6 @@ sub make_internal_template {
  
   </table>
 EOF
-
     # Make page jump, next/prev navigation tmpl
     $pager_tmpl .= <<EOF;
 <div class="no-border"><p class="left2">&nbsp;<tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
@@ -298,7 +297,7 @@ EOF
 <tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
 
   <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a></p></div>
-  <tmpl_else><a href="javascript:show_big_view('1')">show 100 per page</a></p></div>
+  <tmpl_else><a href="javascript:show_big_view('1')">show <tmpl_var big_view_page_size> per page</a></p></div>
   </tmpl_if>
 
 <tmpl_else>
@@ -308,6 +307,7 @@ EOF
 
     # Close pager form
     $pager_tmpl .= "\n</form>\n";
+warn "\n\n$pager_tmpl\n\n";
 
     return $pager_tmpl;
 }
@@ -736,25 +736,27 @@ between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 =item show_big_view
 
 Krang::HTMLPager allows the user to toggle between two page sizes: 
-Custom size (set by user preference) and "Show 100 rows".  The
+Custom size (set by user preference) and "Show 100 rows" (unless Custom
+size is 100, then this becomes "Show 20 rows").  The
 <TMPL_VAR> "show_big_view" is set to "1" if the user is in the 
 "100 rows" mode, "0" otherwise.
 
 (N.b.: A Javascript function, "show_big_view()", is provided for 
 toggling between modes by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
-
-
 =item user_page_size
 
 Krang::HTMLPager allows the user to toggle between two page sizes: 
-Custom size (set by user preference) and "Show 100 rows".  The
+Custom size (set by user preference) and "Show 100 rows" (unless Custom
+size is 100, then this becomes "Show 20 rows").  The
 <TMPL_VAR> "user_page_size" is set to the custom page size.
 
+=item big_view_page_size
+
+The number of items to show when C<show_big_view> is true. Normally this
+is 100, but if the user's preference is for 100, then this becomes 20.
 
 =back
-
-
 
 =cut
 
@@ -900,7 +902,8 @@ sub get_pager_view {
     # Page size is either 100, or user preferred size.
     my $show_big_view = ($q->param('krang_pager_show_big_view') || '0');
     my $user_page_size = $self->get_user_page_size();
-    my $limit = ($show_big_view) ? 100 : $user_page_size ;
+    my $big_view_size  = $user_page_size == 100 ? 20 : 100;
+    my $limit = ($show_big_view) ? ($user_page_size == 100 ? 20 : 100) : $user_page_size ;
 
     # Count used to calculate page navigation
     my %find_params = %{$self->find_params()};
@@ -993,21 +996,22 @@ sub get_pager_view {
     my $end_row = $offset + $row_count;
 
     my %pager_view = (
-                      curr_page_num    => $curr_page_num,
-                      sort_field       => $sort_field,
-                      sort_order_desc  => $sort_order_desc,
-                      show_big_view    => $show_big_view,
-                      user_page_size   => $user_page_size,
+                      curr_page_num      => $curr_page_num,
+                      sort_field         => $sort_field,
+                      sort_order_desc    => $sort_order_desc,
+                      show_big_view      => $show_big_view,
+                      user_page_size     => $user_page_size,
+                      big_view_page_size => $big_view_size,
 
-                      found_count      => $found_count,
-                      start_row        => $start_row,
-                      end_row          => $end_row,
+                      found_count        => $found_count,
+                      start_row          => $start_row,
+                      end_row            => $end_row,
 
-                      page_numbers     => \@page_numbers,
-                      prev_page_number => $prev_page_number,
-                      next_page_number => $next_page_number,
+                      page_numbers       => \@page_numbers,
+                      prev_page_number   => $prev_page_number,
+                      next_page_number   => $next_page_number,
 
-                      krang_pager_rows => \@krang_pager_rows,
+                      krang_pager_rows   => \@krang_pager_rows,
                      );
 
     return \%pager_view;
