@@ -739,6 +739,9 @@ sub install_addons {
 
         my $cmd = catfile($InstallPath, 'bin', 'krang_addon_installer') .
           ' ' . $addon;
+        # the backup may already contain the addon, so we need to 
+        # force install it
+        $cmd .= " --force" if( $options{FromBackup} );
         my $result = `$cmd`;
         exit_error("Unable to install addon '$addon':\n\n$result")
           unless $result =~ /Installation complete\./;
