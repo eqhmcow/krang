@@ -1283,7 +1283,7 @@ sub _update_category_data {
                                                   no_update => $no_update,
                                                   object    => $cat);
     # remove existing element tree
-    $cat->element->delete if( $cat->element );
+    $cat->element->delete(skip_delete_hook => 1) if( $cat->element );
     $cat->{element}    = $element;
     $cat->{element_id} = undef;
     $cat->save();

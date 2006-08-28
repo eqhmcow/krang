@@ -2171,7 +2171,7 @@ sub deserialize_xml {
                                                   object    => $story);
 
     # update element
-    $story->{element}->delete if $story->{element};   
+    $story->{element}->delete(skip_delete_hook => 1) if $story->{element};   
     $story->{element} = $element;
 
     # get hash of contrib type names to ids

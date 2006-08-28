@@ -793,7 +793,7 @@ parent and then call C<save>.
 =cut
 
 sub delete {
-    my $self = shift;
+    my ($self, %args) = @_;
     my $dbh  = dbh;
 
     # check top-levelitude
@@ -804,8 +804,10 @@ sub delete {
     croak("Unable to delete() non-saved element.")    
       unless $self->{element_id};
 
-    # call delete hook in the element class
-    $self->class->delete_hook(element => $self);
+    # call delete hook in the element class, unless it shouldn't run
+    # now (as in story or category import)
+    $self->class->delete_hook(element => $self)
+      unless $args{skip_delete_hook};
 
     # delete all from the DB
     foreach_element {
