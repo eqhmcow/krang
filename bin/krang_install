@@ -258,7 +258,7 @@ sub unpack_backup {
     $kba = rel2abs($kba);
 
     # make temp directory for backup files
-    $BACKUP_DIR = tempdir(CLEANUP => 1,
+    $BACKUP_DIR = tempdir(CLEANUP => 0,
                           DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'));
 
     print "Unpacking backup file '$kba'.\n";
@@ -893,12 +893,29 @@ sub set_param_defaults {
 }
 
 # check that the specified element set exists in Krang or in an addon
-# to be installed.  Returns 1 if ok, else 0.
+# to be installed (or already installed if using FromBackup).  
+# Returns 1 if ok, else 0.
 sub _check_element_set {
     my $set = shift;
 
     return 1 if -d catfile($ENV{KRANG_ROOT}, "element_lib", $set);
 
+    # check to see if we have this element_lib in one of the addons
+    # already installed
+    if( $options{FromBackup} ) {
+        # look in each addon dir
+        my $addons_dir = catdir($ENV{KRANG_ROOT}, 'addons');
+        opendir( my $DH, $addons_dir)
+            or die "Could not open addons dir '$addons_dir' for reading: $!";
+        my @dirs = readdir $DH;
+        closedir($DH);
+        foreach my $dir (@dirs) {
+            next if( $dir =~ /^\./ );   # skip hidden things
+            return 1 if -d catfile($ENV{KRANG_ROOT}, 'addons', $dir, 'element_lib', $set);
+        }
+    }
+
+    # else check one of the addons to install
     foreach my $addon (@{$options{WithAddon}}) {
         my $tar = $TAR_BIN . " t" . ($addon =~ /gz$/ ? "z" : "") . "f $addon";
         my $contents = `$tar`;
