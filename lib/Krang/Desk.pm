@@ -331,6 +331,9 @@ sub delete {
     # Delete permissions for this desk
     $is_object ? pkg('Group')->delete_desk_permissions($self) :  pkg('Group')->delete_desk_permissions((pkg('Desk')->find( desk_id => $desk_id ))[0]);
 
+    # Delete any alerts associated with this desk
+    $_->delete foreach (pkg('Alert')->find( desk_id => $desk_id ));
+
     # fianlly, delete the desk
     $sth = $dbh->prepare('DELETE from desk where desk_id = ?');
     $sth->execute($desk_id);

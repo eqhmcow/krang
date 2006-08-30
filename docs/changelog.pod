@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Krang now automatically deletes any alerts tied to a desk when
+that desk is deleted. [Michael Peters]
+
+=item *
+
 Fixed krang_install --FromBackup issues when the backups contain
 addons. [Michael Peters]
 
