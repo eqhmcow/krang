@@ -307,7 +307,6 @@ EOF
 
     # Close pager form
     $pager_tmpl .= "\n</form>\n";
-warn "\n\n$pager_tmpl\n\n";
 
     return $pager_tmpl;
 }
