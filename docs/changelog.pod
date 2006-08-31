@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed several places lacking in HTML escaping, particularly
+in places that used Krang::HTMLPager. [Michael Peters]
+
+=item *
+
 Krang now automatically deletes any alerts tied to a desk when
 that desk is deleted. [Michael Peters]
 
