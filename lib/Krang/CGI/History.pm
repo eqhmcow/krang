@@ -182,18 +182,19 @@ sub show {
 
 sub show_row_handler {
     my $self = shift;
+    my $q    = $self->query;
     my ($row, $history) = @_;
     
     # setup action
     my $name = ucfirst((split('::', $history->object_type))[1]);
     my $action = $history->action;
     $action = $ACTION_LABELS{$action} if exists $ACTION_LABELS{$action};
-    $row->{action} = "$name $action";
+    $row->{action} = $q->escapeHTML("$name $action");
     
     # setup user
     my ($user) = pkg('User')->find(user_id => $history->user_id);
     if ($user) {
-        $row->{user} = $user->first_name . " " . $user->last_name;
+        $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
     } else {
         # user does not exist, might have been deleted
         $row->{user} = "Unknown User";

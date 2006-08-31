@@ -185,7 +185,7 @@
 <table border="0"><tr><td>
 <tmpl_if contribs_loop>
   <tmpl_loop contribs_loop>
-     <tmpl_var first_name> <tmpl_var last_name> (<tmpl_var type>)<tmpl_unless __last__>, </tmpl_unless>
+     <tmpl_var first_name escape=html> <tmpl_var last_name escape=html> (<tmpl_var type escape=html>)<tmpl_unless __last__>, </tmpl_unless>
   </tmpl_loop>
 <tmpl_else>
   None.

@@ -95,7 +95,7 @@
 
 </script>
 
-<div class="dark-bar"><p class="left"><tmpl_var desk_name> Desk</p><p class="right"><a href="javascript:openWin('help.pl?topic=desk')">Help</a>&nbsp;</p></div>
+<div class="dark-bar"><p class="left"><tmpl_var desk_name escape=html> Desk</p><p class="right"><a href="javascript:openWin('help.pl?topic=desk')">Help</a>&nbsp;</p></div>
 
 <!-- publish_story form -->
 <form name="publish_story_form" method="GET" action="publisher.pl">
@@ -131,7 +131,7 @@
     <td width="150"><b>Story</b> <tmpl_var story_id>
         v<tmpl_var version>&nbsp;&nbsp;&nbsp;
     </td>
-    <td><b><tmpl_var title></b></td>
+    <td><b><tmpl_var title escape=html></b></td>
  <td align="right">
       <tmpl_if may_edit><tmpl_var checkbox_column></tmpl_if>
     </td>
@@ -152,7 +152,7 @@
                <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button"></tmpl_if>
                <input type="button" value="Check Out" onclick="checkout('<tmpl_var id>')" class="button">
                 <br><br>
-               <input type="button" value="Move" onclick="move('<tmpl_var id>')" class="button"> to <select name="move_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>" <tmpl_if is_selected>SELECTED</tmpl_if>><tmpl_var choice_desk_name> Desk</tmpl_loop></select>
+               <input type="button" value="Move" onclick="move('<tmpl_var id>')" class="button"> to <select name="move_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>" <tmpl_if is_selected>SELECTED</tmpl_if>><tmpl_var choice_desk_name escape=html> Desk</tmpl_loop></select>
           </tmpl_if>
        </td>
      </tr>

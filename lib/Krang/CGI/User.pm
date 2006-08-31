@@ -486,7 +486,7 @@ sub search {
                                       [qw(edit_user)],
                                       command_column_labels =>
                                       {edit_user => 'Edit'},
-                                      row_handler => \&search_row_handler,
+                                      row_handler => sub { $self->search_row_handler(@_) },
                                       id_handler =>
                                       sub {return $_[0]->user_id},
                                      );
@@ -666,10 +666,11 @@ sub validate_user {
 
 # Handles rows for search run mode
 sub search_row_handler {
-    my ($row, $user) = @_;
-    $row->{login} = $user->login();
-    $row->{last} = $user->last_name();
-    $row->{first} = $user->first_name();
+    my ($self, $row, $user) = @_;
+    my $q = $self->query;
+    $row->{login} = $q->escapeHTML($user->login);
+    $row->{last}  = $q->escapeHTML($user->last_name);
+    $row->{first} = $q->escapeHTML($user->first_name);
 }
 
 

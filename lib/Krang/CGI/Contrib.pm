@@ -897,9 +897,10 @@ sub delete {
 sub list_view_ass_contrib_row_handler {
     my $self = shift;
     my ($row_hashref, $contrib, $associated_contrib_filter, $contrib_type_prefs) = @_;
-    $row_hashref->{first_middle} = $contrib->first();
-    $row_hashref->{first_middle} .= '&nbsp;' . $contrib->middle() if ($contrib->middle());
-    $row_hashref->{last} = $contrib->last();
+
+    $row_hashref->{first_middle} = $contrib->first;
+    $row_hashref->{first_middle} .= '&nbsp;' . $contrib->middle if ($contrib->middle);
+    $row_hashref->{last} = $contrib->last;
 
     # 'type' isn't actually used.  Loop 'contrib_types' instead
     delete($row_hashref->{type});
@@ -934,10 +935,11 @@ sub list_view_ass_contrib_row_handler {
 # Krang::HTMLPager row handler for contrib list view
 sub list_view_contrib_row_handler {
     my ($self, $row_hashref, $contrib) = @_;
-    $row_hashref->{first_middle} = $contrib->first();
-    $row_hashref->{first_middle} .= '&nbsp;' . $contrib->middle() if ($contrib->middle());
-    $row_hashref->{last} = $contrib->last();
-    $row_hashref->{type} = join(',&nbsp;', ( $contrib->contrib_type_names() ) );
+    my $q = $self->query;
+    $row_hashref->{first_middle} = $q->escapeHTML($contrib->first);
+    $row_hashref->{first_middle} .= '&nbsp;' . $q->escapeHTML($contrib->middle) if ($contrib->middle());
+    $row_hashref->{last} = $q->escapeHTML($contrib->last);
+    $row_hashref->{type} = join(',&nbsp;', ( $q->escapeHTML($contrib->contrib_type_names) ) );
 }
 
 

@@ -159,7 +159,7 @@ sub search {
                                       command_column_commands => [qw( edit_group )],
                                       command_column_labels => {edit_group => 'Edit'},
                                       row_handler => sub {
-                                          $_[0]->{name} = $_[1]->name();
+                                          $_[0]->{name} = $q->escapeHTML($_[1]->name());
                                       },
                                       id_handler => sub { return $_[0]->group_id },
                                      );

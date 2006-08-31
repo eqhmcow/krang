@@ -1245,7 +1245,7 @@ sub list_active_row_handler {
 
     # user
     my ($user) = pkg('User')->find(user_id => $template->checked_out_by);
-    $row->{user} = $user->first_name . " " . $user->last_name;
+    $row->{user} = $self->query->escapeHTML($user->first_name . " " . $user->last_name);
 }
 
 

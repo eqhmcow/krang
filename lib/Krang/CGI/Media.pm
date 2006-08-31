@@ -1284,6 +1284,7 @@ sub validate_media {
 sub list_active_row_handler {
     my $self = shift;
     my ($row, $media) = @_;
+    my $q = $self->query;
 
     # Columns:
     #
@@ -1304,7 +1305,7 @@ sub list_active_row_handler {
                               linkto => "javascript:preview_media('". $row->{media_id} ."')" );
 
     # title
-    $row->{title} = $media->title();
+    $row->{title} = $q->escapeHTML($media->title);
 
     # commands column
     $row->{commands_column} = '<a href="javascript:view_media(' .
@@ -1312,7 +1313,7 @@ sub list_active_row_handler {
 
     # user
     my ($user) = pkg('User')->find(user_id => $media->checked_out_by);
-    $row->{user} = $user->first_name . " " . $user->last_name;
+    $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
 }
 
 # Return an add form.  This method expects a media object in the session.
@@ -1679,7 +1680,7 @@ sub find_media_row_handler {
                               linkto => "javascript:preview_media('". $media_id ."')" );
 
     # title
-    $row->{title} = $media->title();
+    $row->{title} = $self->query->escapeHTML($media->title);
 
     # thumbnail
     if ($show_thumbnails) {

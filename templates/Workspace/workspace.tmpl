@@ -157,7 +157,7 @@
         <tmpl_if is_template><b>Template</b> <tmpl_var template_id></tmpl_if>
         v<tmpl_var version>&nbsp;&nbsp;&nbsp;
     </td>
-    <td><b><tmpl_var title></td></b>
+    <td><b><tmpl_var title escape=html></td></b>
     <td align="right">
       <tmpl_if may_edit><tmpl_var checkbox_column></tmpl_if>
     </td>
@@ -196,7 +196,7 @@
                <input type="button" value="Copy" onclick="copy('<tmpl_var id>')" class="button">
                <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button"></tmpl_if>
               <br><br>
-               Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select> <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
+               Desk: <select name="checkin_to_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name escape=html></tmpl_loop></select> <input type="button" value="Check In" onclick="checkin('<tmpl_var id>')" class="button">
            </tmpl_if>
            <tmpl_if is_media>
                <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_media('<tmpl_var id>')" class="button"></tmpl_if>

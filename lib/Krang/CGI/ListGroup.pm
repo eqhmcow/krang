@@ -133,8 +133,9 @@ sub search {
 
 sub row_handler {
     my ($self, $row_hashref, $row_obj) = @_;
-    $row_hashref->{name} = $row_obj->name();
-    $row_hashref->{description} = $row_obj->description();
+    my $q = $self->query;
+    $row_hashref->{name} = $q->escapeHTML($row_obj->name);
+    $row_hashref->{description} = $q->escapeHTML($row_obj->description);
 }
 
 =item add

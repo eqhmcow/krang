@@ -137,7 +137,7 @@ sub _row_handler {
     $row->{desk_loop} = $desk_loop;
     $row->{story_id} = $obj->story_id;
     $row->{id} = $self->_obj2id($obj);
-    $row->{title} = $obj->title;
+    $row->{title} = $self->query->escapeHTML($obj->title);
     $row->{story_type} = $obj->class->display_name;
     $row->{url} = format_url(url    => $obj->url,
                              linkto => 

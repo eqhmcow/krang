@@ -1623,7 +1623,7 @@ sub find_story_row_handler {
                               linkto => "javascript:preview_story('". $row->{story_id} ."')" );
 
     # title
-    $row->{title} = $story->title();
+    $row->{title} = $self->query->escapeHTML($story->title);
 
     # cover_date
     my $tp = $story->cover_date();
@@ -1671,6 +1671,7 @@ sub find_story_row_handler {
 sub list_active_row_handler {
     my $self = shift;
     my ($row, $story) = @_;
+    my $q = $self->query;
 
     # Columns:
     #
@@ -1683,7 +1684,7 @@ sub list_active_row_handler {
                               linkto => "javascript:preview_story('". $row->{story_id} ."')" );
 
     # title
-    $row->{title} = $story->title();
+    $row->{title} = $q->escapeHTML($story->title);
 
     # commands column
     $row->{commands_column} = '<a href="javascript:view_story(' .
@@ -1691,7 +1692,7 @@ sub list_active_row_handler {
 
     # user
     my ($user) = pkg('User')->find(user_id => $story->checked_out_by);
-    $row->{user} = $user->first_name . " " . $user->last_name;
+    $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
 }
 
 

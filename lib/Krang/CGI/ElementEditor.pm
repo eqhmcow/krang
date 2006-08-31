@@ -553,7 +553,7 @@ sub find_story_link_row_handler {
 
 
     # title
-    $row->{title} = $story->title();
+    $row->{title} = $self->query->escapeHTML($story->title);
 
     # cover_date
     my $tp = $story->cover_date();
