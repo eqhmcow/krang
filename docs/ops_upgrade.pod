@@ -15,7 +15,7 @@ Then, as root, run the Krang upgrade script:
 If Krang isn't installed in C</usr/local/krang> then you'll need to
 point C<krang_upgrade> in the right direction:
 
-  # ./bin/krang_upgrade --krangRoot /path/to/krang/install
+  # ./bin/krang_upgrade --KrangRoot /path/to/krang/install
 
 
 =head1 Upgrading Krang from a Source Release
