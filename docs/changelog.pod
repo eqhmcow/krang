@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in which HTTP redirects in KRANG_DEBUG mode would
+cause session to not be unloaded and saved to disk.  [Jesse Erlbaum]
+
+=item *
+
 MSIE Mac is not un-supported (it never was really, it's now
 official). Allow Konqueror to come in as well. [Michael Peters]
 

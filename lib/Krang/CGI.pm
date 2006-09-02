@@ -245,7 +245,7 @@ sub run {
 
 
     # In debug mode append dump_html()
-    if ($ENV{KRANG_DEBUG}) {
+    if ($ENV{KRANG_DEBUG} and $self->header_type() ne 'redirect') {
         my $dump_html = $self->dump_html();
         $output .= $dump_html;
         print $dump_html;
