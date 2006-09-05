@@ -70,15 +70,9 @@ $@
 END
 }
 
-# use first instance if one isn't set.  Addons are installation wide
-# anyway.
-use Krang::ClassLoader 'Conf';
-BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
-
 
 # Krang-Dependent External Modules
 ###################################
-use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 
@@ -86,6 +80,11 @@ use Pod::Usage;
 ###################
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'User';
+# use first instance if one isn't set.  Addons are installation wide
+# anyway.
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Conf';
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
 
 #
 # Package Variables
