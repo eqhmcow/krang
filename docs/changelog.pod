@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Changed ElementClass::ListGroup input_form so that it will not
+redundantly label single-dimensional lists.  Also modified 
+ListGroup to be more easily sub-classed. [Jesse Erlbaum]
+
+=item *
+
 Fixed bug in which HTTP redirects in KRANG_DEBUG mode would
 cause session to not be unloaded and saved to disk.  [Jesse Erlbaum]
 

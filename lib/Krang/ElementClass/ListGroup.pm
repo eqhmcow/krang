@@ -78,7 +78,7 @@ END
                                                 no_parent => 1,
                                               );
         foreach my $item (@root_items) {
-            _add_item(\$html_output, $item, "${jparam}_data[$x]", $jparam);
+            $self->_add_item(\$html_output, $item, "${jparam}_data[$x]", $jparam);
             $x++;
         }
 
@@ -170,8 +170,13 @@ END
 
         $pulldown =~ s!<select!<select id="${param}_${list_index}"!i;
 
-        $all_pulldowns .= sprintf("<strong>%s</strong><BR>\n%s<BR>\n",
-                              $list->name, $pulldown);
+        if ($#lists > 1) {
+            $all_pulldowns .= sprintf( "<strong>%s</strong><BR>\n%s<BR>\n",
+                                       $list->name, $pulldown );
+        } else {
+            $all_pulldowns .= sprintf( "%s",
+                                       $pulldown );
+        }
 
         $list_index++;
     }
@@ -185,6 +190,7 @@ END
 # _add_item is used to build out the javascript array for multidimensional lists.
 #
 sub _add_item {
+    my $self = shift;
     my ($html, $item, $pre, $jparam, $stop) = @_;
     my $id = $item->list_item_id;
     my $data = $item->data;
@@ -202,7 +208,7 @@ sub _add_item {
         $$html .= $pre. qq{["sub"] = new Array();\n};
         foreach my $item (@sub_items) {
             $x++;
-            _add_item($html, $item, $pre . qq{["sub"][$x]}, $jparam, ($stop || 0) + 1);
+            $self->_add_item($html, $item, $pre . qq{["sub"][$x]}, $jparam, ($stop || 0) + 1);
         }
     } else {
         $$html .= $pre . qq{["sub"] = [];\n};
