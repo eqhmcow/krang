@@ -53,5 +53,5 @@ unnecessary CVS directories.
   # cd /usr/local/src
   # tar zxf krang-versionnum-platformname-perlversion.tar.gz
   # cd krang-versionnum-platformname-perlversion/
-  # ./bin/krang_upgrade --krangRoot /path/to/krang/install
+  # ./bin/krang_upgrade --KrangRoot /path/to/krang/install
 
