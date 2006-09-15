@@ -335,14 +335,6 @@ sub install {
            $conf->get('name')) 
       and die "Unable to build with krang_addon_build: $!";
 
-    # perform upgrades if necessary
-    $pkg->_upgrade(%args) if $old;
-
-    # run the post install script if required
-    system("KRANG_ROOT=" . KrangRoot . " $^X " . 
-           $conf->get('postinstallscript'))
-      if $conf->get('postinstallscript');
-
     # installing a new addon means that @INC needs updating, reload
     # Krang::lib and flush the file cache and the addon cache
     pkg('File')->flush_cache();
@@ -350,6 +342,14 @@ sub install {
     pkg('lib')->reload();
     pkg('HTMLTemplate')->reload_paths() if @Krang::HTMLTemplate::PATH;
     pkg('ClassFactory')->reload_configuration();
+
+    # perform upgrades if necessary
+    $pkg->_upgrade(%args) if $old;
+
+    # run the post install script if required
+    system("KRANG_ROOT=" . KrangRoot . " $^X " . 
+           $conf->get('postinstallscript'))
+      if $conf->get('postinstallscript');
 
     # all done, return home if possible
     chdir $old_dir;

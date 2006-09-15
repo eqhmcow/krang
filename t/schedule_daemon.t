@@ -13,7 +13,7 @@ use Time::Piece::MySQL;
 use Time::Seconds;
 
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet SchedulerMaxChildren);
 use Krang::ClassLoader 'Schedule';
 use Krang::ClassLoader 'Test::Content';
 
@@ -45,7 +45,7 @@ BEGIN {
 
     foreach my $instance (pkg('Conf')->instances) {
         pkg('Conf')->instance($instance);
-        if (InstanceElementSet eq 'TestSet1') {
+        if ((InstanceElementSet eq 'TestSet1') and (SchedulerMaxChildren > 0)) {
             eval 'use Test::More qw(no_plan)';
             $found = 1;
             last;
@@ -65,6 +65,8 @@ BEGIN {
             }
         }
         eval 'use Test::More qw(no_plan)';
+    } elsif (SchedulerMaxChildren == 0) {
+        eval "use Test::More skip_all => 'SchedulerMaxChildren set to 0 -- schedule daemon will not run';";
     } else {
         eval "use Test::More skip_all => 'test requires a TestSet1 instance';";
     }

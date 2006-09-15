@@ -2,6 +2,21 @@
 
 This document contains a list of changes for each release of Krang.
 
+=head2 2.008 - In Development
+
+=over
+
+=item *
+
+Fixed bug in Krang::AddOn which would cause multiple version upgrades
+which include changes to class.conf to fail.  Specifically, the updated
+class.conf (and other libraries) were not being reloaded until after
+the upgrade ran.  [Jesse Erlbaum]
+
+
+=back
+
+
 =head2 2.007 - Sep 14th, 2006
 
 =over
