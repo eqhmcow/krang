@@ -213,8 +213,8 @@ Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row
 
   <tmpl_loop krang_pager_rows>
     <tr>
-      <td class="form-cell" rowspan="<tmpl_var contrib_type_count>"><tmpl_var last></td>
-      <td class="form-cell" rowspan="<tmpl_var contrib_type_count>"><tmpl_var first_middle></td>
+      <td class="form-cell" rowspan="<tmpl_var contrib_type_count>"><tmpl_var last escape=html></td>
+      <td class="form-cell" rowspan="<tmpl_var contrib_type_count>"><tmpl_var first_middle escape=html></td>
 
     <tmpl_loop contrib_types>
       <tmpl_unless __first__><tr></tmpl_unless>
