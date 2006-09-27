@@ -1284,7 +1284,10 @@ sub deserialize_xml {
     $template->checkin;
 
     my $publisher = pkg('Publisher')->new();
-    $publisher->deploy_template(template => $template);
+
+    # only deploy if the previous template was deployed
+    $publisher->deploy_template(template => $template)
+        if( $data->{deployed_version} );
 
     return $template;
 }

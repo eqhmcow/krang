@@ -13,9 +13,12 @@ which include changes to class.conf to fail.  Specifically, the updated
 class.conf (and other libraries) were not being reloaded until after
 the upgrade ran.  [Jesse Erlbaum]
 
+=item *
+
+Fixed bug in import where templates that were not deployed on the original
+site, where deployed on the target site upon import. [Michael Peters]
 
 =back
-
 
 =head2 2.007 - Sep 14th, 2006
 
