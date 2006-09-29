@@ -18,6 +18,11 @@ the upgrade ran.  [Jesse Erlbaum]
 Fixed bug in import where templates that were not deployed on the original
 site, where deployed on the target site upon import. [Michael Peters]
 
+=item *
+
+Fixed bug in install/upgrade when using a binary built for SSL
+in the way SSL symlinked conf files were handled. [Michael Peters]
+
 =back
 
 =head2 2.007 - Sep 14th, 2006
