@@ -125,6 +125,7 @@ Refer to F<docs/ops_upgrade.pod>.
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
+use Cwd qw(getcwd chdir);
 
 our $orig_krang_root;
 
@@ -170,6 +171,7 @@ my ($help, $man);
 my @opt_params = qw( KrangRoot MySQLRootPassword MySQLHost );
 
 my %options = ( map { $_ => "" } @opt_params);
+my %build_params;
 
 do_upgrade();
 exit(0);
@@ -323,7 +325,7 @@ sub load_platform {
     exit_error("Can't find data/build.db.  Do you need to run 'make build'?")
       unless -e catfile($ENV{KRANG_ROOT}, 'data', 'build.db');
     require Krang::Platform;
-    my %build_params = Krang::Platform->build_params;
+    %build_params = Krang::Platform->build_params;
 
     # add in $KRANG_ROOT/platform for platform build modules
     my $plib    = catdir($ENV{KRANG_ROOT}, "platform");
@@ -374,7 +376,7 @@ sub make_backups {
 }
 
 sub install_new_krang {
-    my $new_krang = $ENV{KRANG_ROOT};
+    my $new_krang   = $ENV{KRANG_ROOT};
     my $InstallPath = $options{KrangRoot};
 
     print "Installing new Krang files into '$InstallPath'\n";
@@ -385,51 +387,64 @@ sub install_new_krang {
     rename('./lib/Krang.pm', './lib/Krang.new') 
       or die "Unable to rename ./lib/Krang.pm to ./lib/Krang.new: $!\n";
 
-    # make sure we don't over-write existing ssl certs
-    if( -e catfile($InstallPath, 'conf', 'ssl.crt', 'server.crt') ) {
-        my $src_crt = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt');
-        if( -e $src_crt ) {
-            rename( $src_crt, "$src_crt.new")
-                or die "Unable to rename $src_crt to $src_crt.new: $!\n";
+    # if we were built with SSL
+    if( $build_params{SSL} ) {
+        # make sure we don't over-write existing ssl certs
+        if( -e catfile($InstallPath, 'conf', 'ssl.crt', 'server.crt') ) {
+            my $src_crt = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt');
+            rename( $src_crt, "$src_crt.sample")
+                or die "Unable to rename $src_crt to $src_crt.sample: $!\n";
         }
-    }
-    if( -e catfile($InstallPath, 'conf', 'ssl.key', 'server.key') ) {
-        my $src_key = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key');
-        if( -e $src_key ) {
-            rename( $src_key, "$src_key.new" )
-                or die "Unable to rename $src_key to $src_key.new: $!\n";
+        if( -e catfile($InstallPath, 'conf', 'ssl.key', 'server.key') ) {
+            my $src_key = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key');
+            rename( $src_key, "$src_key.sample" )
+                or die "Unable to rename $src_key to $src_key.sample: $!\n";
         }
     }
 
     eval {
-        my $copy = "$COPY_BIN -a * $InstallPath\/";
+        my $copy = "$COPY_BIN -a  --no-dereference * $InstallPath\/";
         system($copy) && die("Can't copy files, cp died with error code $?\n");
     };
     my $err = $@;    
     rename('./lib/Krang.new', './lib/Krang.pm');
     die $err if $err;
 
-    print "  Fixing ownership\n";
-    my $KrangUser = $OLD_CONF->get("KrangUser");
-    my $KrangGroup = $OLD_CONF->get("KrangGroup");
+    # if we were built with SSL
+    if( $build_params{SSL} ) {
+        # redo the symlinks for SSL conf
+        print "  Fixing SSL symlinks\n";
+        my $cwd = getcwd();
 
+        # go into the conf/ssl.* dirs
+        foreach my $ext qw(crl crt csr key prm) {
+            my $dir = catdir($InstallPath, 'conf', "ssl.$ext");
+            chdir($dir)
+                or die "Could not change into directory $dir : $!";
+            if( -e catfile($dir, 'Makefile') ) {
+                system("make") == 0
+                    or die "Could not run 'make' in directory $dir : $!";
+            }
+        }
+        chdir($cwd) or die "Could not return to directory '$cwd': $!";
+    }
+
+    print "  Fixing ownership\n";
+    my $KrangUser  = $OLD_CONF->get("KrangUser");
+    my $KrangGroup = $OLD_CONF->get("KrangGroup");
     # skip sym-links to files that don't exist, which will choke
     # chown.  This can happen as a result of installing an older SSL
     # Krang which had links to install directory.  It'd be nice to
     # write an upgrade module to weed them out but upgrade modules
     # don't run until after the chown...
-    my (undef, undef, $uid) = getpwnam($KrangUser);
-    my (undef, undef, $gid) = getpwnam($KrangGroup);
-    die "Unable to find uid and gid for $KrangUser:$KrangGroup.\n"
-      unless defined $uid and defined $gid;
-
+    my $chown = $CHOWN_BIN ." -R  --no-dereference $KrangUser\:$KrangGroup ";
     find({ no_chdir => 1,
            follow   => 0,
            wanted   => 
            sub { 
                return if -l $_ and !-e $_; # skip bad links
-               chown($uid, $gid, $_)
-                 or warn("   Warning: unable to chown '$_'.\n");
+               system($chown . " '$_'")
+                 and warn("   Warning: unable to chown '$_'.\n");
            }
          }, $InstallPath);
 

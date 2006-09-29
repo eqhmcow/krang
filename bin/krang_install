@@ -147,6 +147,7 @@ Refer to F<docs/ops_install.pod>.
 use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
 use FindBin qw($RealBin);
 use Config;
+use Cwd qw(getcwd chdir);
 
 
 # Set up KRANG_ROOT and PERL5LIB
@@ -195,6 +196,7 @@ my @opt_params = qw( FromBackup
                      SSLApachePort);
 
 my %options     = ( map { $_ => undef } @req_params, @opt_params );
+my %build_params;
 
 # SSL directives
 my @ssl_directives = qw(
@@ -307,10 +309,6 @@ sub unpack_backup {
         }
     }
 
-    # Main server SSL files
-    # TODO 
-
-
     # load extra instance data into @BACKUP_INSTANCES
     if (@blocks > 1) {
         foreach my $block_name (@blocks[1..$#blocks]) {
@@ -341,7 +339,7 @@ sub load_platform {
     exit_error("Can't find data/build.db.  Do you need to run 'make build'?")
       unless -e catfile($ENV{KRANG_ROOT}, 'data', 'build.db');
     require Krang::Platform;
-    my %build_params = Krang::Platform->build_params;
+    %build_params = Krang::Platform->build_params;
 
     # add in $KRANG_ROOT/platform for platform build modules
     my $plib    = catdir($ENV{KRANG_ROOT}, "platform");
@@ -528,22 +526,40 @@ sub create_unix_user_group {
 
 sub install_krang {
     my $InstallPath = $options{InstallPath};
-    mkdir($InstallPath) || die($!);
 
     print "Installing Krang files into '$InstallPath'\n";
+    mkdir($InstallPath) || die($!);
 
     chdir($ENV{KRANG_ROOT});
-    my $copy = $COPY_BIN ." -r * $InstallPath\/";
+    my $copy = $COPY_BIN ." --no-dereference -r * $InstallPath\/";
     system($copy) && die("Can't copy: $!");
 
     # remove scripts that won't do anything useful in an installed
     # system
     system("rm $InstallPath/bin/krang_install $InstallPath/bin/krang_makedist $InstallPath/bin/krang_upgrade $InstallPath/bin/krang_build");
 
+    # redo the symlinks for SSL conf if we were built with SSL
+    if( $build_params{SSL} ) {
+        print "  Fixing SSL symlinks\n";
+        my $cwd = getcwd();
+
+        # go into the conf/ssl
+        foreach my $ext qw(crl crt csr key prm) {
+            my $dir = catdir($InstallPath, 'conf', "ssl.$ext");
+            chdir($dir)
+                or die "Could not change into directory $dir : $!";
+            if( -e catfile($dir, 'Makefile') ) {
+                system("make") == 0
+                    or die "Could not run 'make' in directory $dir : $!";
+            }
+        }
+        chdir($cwd) or die "Could not return to directory '$cwd': $!";
+    }
+
     print "  Fixing ownership\n";
-    my $KrangUser = $options{KrangUser};
+    my $KrangUser  = $options{KrangUser};
     my $KrangGroup = $options{KrangGroup};
-    my $chown = $CHOWN_BIN ." -R $KrangUser\:$KrangGroup $InstallPath";
+    my $chown = $CHOWN_BIN ." -R  --no-dereference $KrangUser\:$KrangGroup $InstallPath";
     system($chown) && die("Can't update ownership: $!");
 
     # For commands
