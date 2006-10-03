@@ -141,7 +141,7 @@ sub extension {
 =item C<< $class->save_hook(element => $element) >>
 
 Called just before the story/category containing the element tree is
-deleted.  The default implementation does nothing.
+saved.  The default implementation does nothing.
 
 =cut
 
