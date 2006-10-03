@@ -61,7 +61,7 @@ sub import {
     # overridden in addons
     opendir(my $dir, catdir($root, 'addons'));
     while(my $addon = readdir($dir)) {
-        next if $addon eq '.' or $addon eq '..';
+        next if $addon eq '.' or $addon eq '..' or $addon eq 'CVS' or $addon eq '.cvsignore';
         my $lib  = catdir($root, 'addons', $addon, 'lib');
         $ENV{PERL5LIB} = $lib . ":" . $ENV{PERL5LIB};
         unshift (@INC, $lib, "$lib/".$Config{archname});

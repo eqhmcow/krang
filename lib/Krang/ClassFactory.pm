@@ -11,6 +11,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(pkg);
 
+
 =head1 NAME
 
 Krang::ClassFactory - a registry for class names allowing runtime overrides
@@ -83,7 +84,7 @@ sub load_configuration {
     # overridden in addons via class.conf
     opendir(my $dir, catdir($root, 'addons'));
     while(my $addon = readdir($dir)) {
-        next if $addon eq '.' or $addon eq '..';
+        next if $addon eq '.' or $addon eq '..' or $addon eq 'CVS' or $addon eq '.cvsignore';
         my $conf  = catfile($root, 'addons', $addon, 'conf', 'class.conf');
         if (-e $conf) {
             $pkg->load_file($conf);
