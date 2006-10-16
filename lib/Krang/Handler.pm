@@ -356,7 +356,14 @@ sub instance_menu {
                                                 cache    => 1);
 
         foreach my $instance (@instances) {
-            push(@loop, { InstanceName => $instance });
+            pkg('Conf')->instance($instance);
+            push(
+                @loop, 
+                { 
+                    InstanceName        => $instance,
+                    InstanceDisplayName => pkg('Conf')->InstanceDisplayName(),
+                }
+            );
         }
         $template->param(instance_loop => \@loop);
 
