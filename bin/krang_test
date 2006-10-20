@@ -43,6 +43,11 @@ Which files to run tests on.  May be a space-separated list of files
 
 Prints a running dialog of what's happening.
 
+=item --xml
+
+Output XML instead of Test::Harness summary. Useful when you
+want to process the resulting test run.
+
 =item --help
 
 =item --man
@@ -90,7 +95,7 @@ use Krang::ClassLoader 'lib';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'Conf';
 
-our ($help, $man);
+our ($help, $man, $xml);
 my $v = 0;
 my $files;
 pod2usage(2) unless
@@ -98,6 +103,7 @@ pod2usage(2) unless
              man        => \$man,
              'verbose'  => \$v,
              'verbose-i=i' => \$v,
+             'xml'      => \$xml,
              'files=s'  => \$files,
             );
 pod2usage(1)             if $help;
@@ -114,7 +120,16 @@ unless ($ENV{KRANG_INSTANCE}) {
     $ENV{KRANG_INSTANCE} = (pkg('Conf')->instances())[0];
 }
 
-# run tests through Test::Harness
-use Test::Harness qw(&runtests $verbose);
-$verbose=$v; 
-runtests(glob($files));
+if( $xml ) {
+    # if we want XML, run tests through Test::TAP::XML
+    $ENV{TEST_HARNESS} = 1;
+    require Test::TAP::XML;
+    my $harness = Test::TAP::XML->new();
+    $harness->run_tests(glob($files));
+    print $harness->xml();
+} else {
+    # run tests through Test::Harness
+    require Test::Harness;
+    $Test::Harness::Verbose = $v;
+    Test::Harness::runtests(glob($files));
+}
