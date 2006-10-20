@@ -113,7 +113,6 @@ my $root = pkg('Conf')->get('KrangRoot');
 $files ||= join(" ", map { s!^$root/!!; $_ } 
                      map { "$_/*.t" } 
                      grep { -d $_ } pkg('File')->find_all('t'));
-print "FILES: $files\n";
 
 # choose the first instance if KRANG_INSTANCE not set
 unless ($ENV{KRANG_INSTANCE}) {
@@ -128,6 +127,7 @@ if( $xml ) {
     $harness->run_tests(glob($files));
     print $harness->xml();
 } else {
+    print "FILES: $files\n";
     # run tests through Test::Harness
     require Test::Harness;
     $Test::Harness::Verbose = $v;
