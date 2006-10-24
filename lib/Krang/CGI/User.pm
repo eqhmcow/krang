@@ -161,9 +161,13 @@ sub save_add {
     return $self->add(%errors) if %errors;
 
     # now validate the password
-    unless( pkg('PasswordHandler')->check_pw($q->param('new_password') ) ) {
-        return $self->add();
-    }
+    my $valid = pkg('PasswordHandler')->check_pw(
+        $q->param('new_password'),
+        $q->param('email'),
+        $q->param('first_name'),
+        $q->param('last_name'),
+    );
+    return $self->add() unless $valid;
 
     # Get user from session
     my $user = $session{EDIT_USER} || 0;

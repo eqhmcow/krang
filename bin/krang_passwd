@@ -183,14 +183,13 @@ sub ask_pass {
 
     chomp $npass;
 
-    unless (pkg('PasswordHandler')->check_pw($npass)) {
-        # get any messages added to the stack and print them
-        my @msgs = get_messages();
-        print STDERR "\n$_" foreach( @msgs );
-        print STDERR "\nInvalid password!\n";
-        exit 1;
-    } else {
-
+    my $ok = pkg('PasswordHandler')->check_pw(
+        $npass,
+        $user->email,
+        $user->first_name,
+        $user->last_name,
+    );
+    if( $ok ) {
         # Confirm new pass
         ###################
         set_echo();
@@ -206,6 +205,12 @@ sub ask_pass {
             print STDERR "\nPasswords do not match.";
             exit 1;
         }
+    } else {
+        # get any messages added to the stack and print them
+        my @msgs = get_messages();
+        print STDERR "\n$_" foreach( @msgs );
+        print STDERR "\nInvalid password!\n";
+        exit 1;
     }
 
     return $npass;

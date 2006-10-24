@@ -92,10 +92,18 @@ sub update_prefs {
     } 
 
     if (my $pass = $q->param('new_password')) {
+        my $user_id = $ENV{REMOTE_USER};
+        my $user = (pkg('User')->find( user_id => $user_id ))[0];
+
         # check the password constraints
-        if( pkg('PasswordHandler')->check_pw($pass) ) {
-            my $user_id = $ENV{REMOTE_USER};
-            my $user = (pkg('User')->find( user_id => $user_id ))[0];
+        my $valid = pkg('PasswordHandler')->check_pw(
+            $q->param('new_password'),
+            $user->email,
+            $user->first_name,
+            $user->last_name,            
+        );
+
+        if( $valid ) {
             $user->password($q->param('new_password'));
             $user->save;
             add_message("changed_password");
