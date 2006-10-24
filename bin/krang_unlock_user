@@ -1,0 +1,95 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+=head1 NAME
+
+krang_unlock_user - Removes the login locks placed on user.
+
+=head1 SYNOPSIS
+
+If a user has failed enough logins (set by C<BadLoginCount>) then
+they are locked out of the system for C<BadLoginWait> minutes.
+
+This script will remove any recorded failed attempts by the given
+user which will remove any locks as well.
+
+  bin/krang_info username
+
+=head1 DESCRIPTION
+
+This script will allow an admin to unlock the account of forgetful
+users.
+
+=head1 OPTIONS
+
+Simply pass the username of the user to unlock.
+
+=cut
+
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+
+# set the instance as the first instance that exists - just so that we
+# can get Krang::Script loaded without complaints.
+use Krang::ClassLoader 'Conf';
+BEGIN { $ENV{KRANG_INSTANCE} ||= (pkg('Conf')->instances)[0]; }
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'DB' => qw(dbh);
+
+# check for args
+my $username = shift @ARGV;
+unless( $username ) {
+  print "\n  usage: krang_unlock_user username\n\n";
+  exit(1);
+}
+
+# make sure the user exists
+my ($user) = pkg('User')->find( login => $username );
+unless( $user ) {
+    print "No user found with login '$username'.\n";
+    exit(1);
+}
+
+# Delete all entries in the rate_limit_hits table associated with this user
+my $count = dbh->do('DELETE FROM rate_limit_hits WHERE user_id = ?', undef, $username);
+if( $count > 0) {
+    print "Login lock successfully removed for user '$username'.\n";
+} else {
+    print "No locks to remove.\n";
+    exit(1);
+}
+
