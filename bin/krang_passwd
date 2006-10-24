@@ -80,6 +80,8 @@ use Pod::Usage;
 ###################
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'PasswordHandler';
+use Krang::ClassLoader Message => qw(get_messages);
 # use first instance if one isn't set.  Addons are installation wide
 # anyway.
 use Krang::ClassFactory qw(pkg);
@@ -181,9 +183,11 @@ sub ask_pass {
 
     chomp $npass;
 
-    unless (valid_pass($npass)) {
-        print STDERR "\nInvalid password!  Passwords must be at least 6 " .
-          "characters.\n";
+    unless (pkg('PasswordHandler')->check_pw($npass)) {
+        # get any messages added to the stack and print them
+        my @msgs = get_messages();
+        print STDERR "\n$_" foreach( @msgs );
+        print STDERR "\nInvalid password!\n";
         exit 1;
     } else {
 
@@ -223,17 +227,6 @@ sub set_echo {
 
     # activate changes to terminal now
     $termios->setattr($fd, TCSANOW);
-}
-
-
-=item * $success = valid_pass( $password )
-
-Returns 1 if the passed string is a valid password or 0 otherwise.
-
-=cut
-
-sub valid_pass {
-    return length shift >= 6 ? 1 : 0;
 }
 
 

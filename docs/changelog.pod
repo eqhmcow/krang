@@ -6,6 +6,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+More uniform password validation. Now also easier to implement a custom
+password policy as an addon. [Michael Peters]
+
 =item * 
 
 Added security feature of locking out users after several failed login

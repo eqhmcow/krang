@@ -36,6 +36,7 @@ use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'PasswordHandler';
 
 # query fields to delete
 use constant DELETE_FIELDS => (pkg('User')->USER_RW, 
@@ -145,6 +146,9 @@ equality is they are equal the value in 'new_password' will be MD5'd and stored
 in the password field, otherwise the end-user will be returned to the 'edit'
 screen.
 
+The password will also be checked by the C<PasswordHandler> and if validation
+fails, the user will be returned to the 'add' screen.
+
 =cut
 
 sub save_add {
@@ -153,9 +157,13 @@ sub save_add {
     my $q = $self->query();
 
     my %errors = $self->validate_user();
-
     # Return to edit screen if there are errors
     return $self->add(%errors) if %errors;
+
+    # now validate the password
+    unless( pkg('PasswordHandler')->check_pw($q->param('new_password') ) ) {
+        return $self->add();
+    }
 
     # Get user from session
     my $user = $session{EDIT_USER} || 0;
@@ -647,8 +655,6 @@ sub validate_user {
                 $q->param('password', $pass);
             }
         }
-
-        $errors{error_password_length} = 1 if length $pass < 6;
     }
 
     # Add error messages

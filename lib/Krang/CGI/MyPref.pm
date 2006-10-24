@@ -7,6 +7,7 @@ use warnings;
 use Carp qw(croak);
 use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Session => qw(%session);
 
@@ -91,9 +92,8 @@ sub update_prefs {
     } 
 
     if (my $pass = $q->param('new_password')) {
-        # check minimum password length.
-        if (length $pass < 6) { add_message('error_password_length'); }
-        else {
+        # check the password constraints
+        if( pkg('PasswordHandler')->check_pw($pass) ) {
             my $user_id = $ENV{REMOTE_USER};
             my $user = (pkg('User')->find( user_id => $user_id ))[0];
             $user->password($q->param('new_password'));
