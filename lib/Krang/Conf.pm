@@ -9,6 +9,8 @@ BEGIN {
 ApacheAddr
 ApachePort
 Assertions
+BadLoginCount
+BadLoginWait
 BugzillaComponent
 BugzillaEmail
 BugzillaPassword

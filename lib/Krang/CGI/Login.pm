@@ -28,7 +28,8 @@ use Digest::MD5 qw(md5_hex md5);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
-use Krang::ClassLoader Conf => qw(InstanceDisplayName);
+use Krang::ClassLoader Conf => qw(InstanceDisplayName BadLoginCount BadLoginWait);
+use CGI::Application::Plugin::RateLimit;
 
 # secret salt for creating login cookies
 our $SALT = <<END;
@@ -48,11 +49,36 @@ END
 sub setup {
     my $self = shift;
     $self->start_mode('show_form');
-    $self->run_modes(show_form => 'show_form',
-                     login     => 'login',
-                     logout    => 'logout',
+    $self->run_modes(show_form  => 'show_form',
+                     login      => 'login',
+                     logout     => 'logout',
+                     login_wait => 'login_wait',
                     );
     $self->tmpl_path('Login/');
+
+    # use CAP::RateLimit to limit the number of bad logins
+    # per username if we need to
+    if( BadLoginCount() ) {
+        my $rl = $self->rate_limit();
+        $rl->protected_actions(
+            failed_login => {
+                timeframe => BadLoginWait() . 'm',
+                max_hits  => BadLoginCount(),
+            },
+        );
+        $rl->violation_mode('login_wait');
+    }
+}
+
+# show the user a message that informs them they have failed
+# login too many times and need to wait
+sub login_wait {
+    my $self = shift;
+    return $self->show_form(
+        alert => "Invalid login. You have failed " 
+            . BadLoginCount . " and must wait " 
+            . BadLoginWait . " minutes before logging in again."
+    );
 }
 
 # show the login form
@@ -76,6 +102,17 @@ sub login {
     my $target   = $query->param('target') || './';
     my $dbh      = dbh();
 
+    # if we're protecting with RateLimit
+    if( BadLoginCount ) {
+        my $rl = $self->rate_limit;
+        $rl->identity_callback(sub { $username });
+        $rl->dbh($dbh);
+        # if they've exceeded their limit, stop 'em
+        if( BadLoginCount && $rl->check_violation(action => 'failed_login') ) {
+            return $self->login_wait 
+        }
+    }
+
     return $self->show_form(alert =>
                             "User name and password are required fields.")
       unless defined $username and length $username and
@@ -85,8 +122,15 @@ sub login {
     my $user_id = pkg('User')->check_auth($username, $password);
 
     # failure
-    return $self->show_form(alert => "Invalid login.  Please check your user name and password and try again.")
-      unless $user_id;
+    unless( $user_id ) {
+        # record the failed login if we are protecting with RateLimit
+        if( BadLoginCount ) {
+            $self->rate_limit->record_hit(action => 'failed_login');
+        }
+        return $self->show_form(
+            alert => "Invalid login.  Please check your user name and password and try again."
+        );
+    }
 
     # create a cookie with username, session_id and instance.  Include
     # an MD5 hash with $SALT to allow the PerlAuthenHandler to check

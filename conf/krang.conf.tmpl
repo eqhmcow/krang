@@ -89,6 +89,14 @@ Skin Default
 #
 SchedulerMaxChildren 3
 
+#
+# Set the number of bad login attempts that can be attempted for
+# the same username before that username is locked out and also
+# set for how long (BadLoginWait is in minutes). A BadLoginCount 
+# of 0 means there is no lock-out.
+BadLoginCount 0
+BadLoginWait  15
+
 <tmpl_if EnableSSL>
 ##
 ##  SSL Global Context

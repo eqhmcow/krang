@@ -20,8 +20,8 @@ CREATE TABLE schedule (
         INDEX       (next_run)
 );
 
-/* add default scheduled tasks for tmp cleaning, session expiration
-and DB analyze runs */
+/* add default scheduled tasks for tmp cleaning, session expiration,
+DB analyze runs and rate_limit cleaning */
 INSERT INTO schedule 
  (`repeat`, action, object_type, initial_date, last_run, next_run, hour, minute) 
 VALUES
@@ -37,3 +37,7 @@ INSERT INTO schedule
 VALUES
  ('daily', 'clean', 'analyze', NOW(), NOW(), NOW(), 3, 0);
 
+INSERT INTO schedule 
+ (`repeat`, action, object_type, initial_date, last_run, next_run, hour, minute) 
+VALUES
+ ('daily', 'clean', 'rate_limit', NOW(), NOW(), NOW(), 3, 0);

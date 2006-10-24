@@ -11,7 +11,7 @@ use strict;
 use warnings;
 use Krang::ClassLoader base => 'Schedule::Action';
 
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot BadLoginCount BadLoginWait);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw(ASSERT assert critical debug info);
 
@@ -61,6 +61,8 @@ sub execute {
         $self->_expire_sessions();
     } elsif ($self->{object_type} eq 'analyze') {
         $self->_analyze_db();
+    } elsif ($self->{object_type} eq 'rate_limit') {
+        $self->_expire_rate_limit_data();
     } else {
         my $msg = sprintf("%s->execute('clean'): unknown object '%s'", __PACKAGE__, $self->{object_type});
         die($msg);
@@ -233,8 +235,6 @@ sub _analyze_db {
 subroutine to be passed to File::Find::find to delete files
 before passing the remaining directory tree to rmtree.
 
-=back
-
 =cut
 
 sub _delete_files {
@@ -249,6 +249,36 @@ sub _delete_files {
     unlink $file;
 
 }
+
+=over
+
+=item C<< pkg('Schedule')->_expire_rate_limit_data() >>
+
+
+Class method that deletes rate_limit data from the rate_limit_hits table whose
+'timestamp' field contains a value less than C<time() + BadLoginWait>
+
+    pkg('Schedule')->_expire_rate_limit_data()
+
+=back
+
+=cut
+
+
+sub _expire_rate_limit_data {
+    my $self = shift;
+    my %args = @_;
+    my $dbh = dbh();
+
+    # only clean up if we have BadLoginCount set
+    if( BadLoginCount ) {
+        my $past_due = time() + ( BadLoginWait * 60 );
+        $dbh->do('DELETE FROM rate_limit_hits WHERE timestamp < ?', undef, $past_due);
+        debug(__PACKAGE__ . "->expire_rate_limit_data() Deleted all hits with timestamp < $past_due");
+    }
+}
+
+=back
 
 =head1 See Also
 
