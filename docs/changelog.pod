@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<PasswordChangeTime> and C<PasswordChangeCount> directives
+to allow the forcing of users to change their password evern C<PasswordChangeTime>
+days and not permit users to use old passwords with C<PasswordChangeCount>
+changes. [Michael Peters]
+
+=item *
+
 More uniform password validation. Now also easier to implement a custom
 password policy as an addon. [Michael Peters]
 

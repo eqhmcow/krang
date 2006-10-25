@@ -36,6 +36,8 @@ KrangGroup
 KrangRoot
 KrangUser
 LogLevel
+PasswordChangeTime
+PasswordChangeCount
 SchedulerMaxChildren
 SiteServerAddr
 SiteServerPort

@@ -28,7 +28,7 @@ use Digest::MD5 qw(md5_hex md5);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
-use Krang::ClassLoader Conf => qw(InstanceDisplayName BadLoginCount BadLoginWait);
+use Krang::ClassLoader Conf => qw(InstanceDisplayName BadLoginCount BadLoginWait PasswordChangeTime);
 use CGI::Application::Plugin::RateLimit;
 
 # secret salt for creating login cookies
@@ -132,6 +132,16 @@ sub login {
         );
     }
 
+    # if we are enforcing password changes every few days
+    if( PasswordChangeTime ) {
+        my ($user) = pkg('User')->find(user_id => $user_id);
+        my $expired = time() - (PasswordChangeTime * 24 * 60 * 60); 
+        if( $user->password_changed < $expired ) {
+            $user->force_pw_change(1);
+            $user->save();
+        }
+    }
+
     # create a cookie with username, session_id and instance.  Include
     # an MD5 hash with $SALT to allow the PerlAuthenHandler to check
     # for tampering
@@ -156,7 +166,7 @@ sub login {
                             -name   => $instance,
                             -value  => \%filling,
                            );
-
+    
     # redirect to original destination and set the cookie
     $self->header_props(-uri          => $target,
                         -cookie       => $cookie->as_string);

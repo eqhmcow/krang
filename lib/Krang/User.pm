@@ -103,6 +103,7 @@ require Exporter;
 ###################
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw/critical debug info/;
+use Krang::ClassLoader Conf => qw/PasswordChangeTime PasswordChangeCount/;
 use Krang::Cache;
 
 #
@@ -120,7 +121,9 @@ use constant USER_RW => qw(email
 			   login
 			   mobile_phone
 			   phone
-                           hidden);
+               hidden
+               password_changed
+               force_pw_change);
 
 # user_user_group table fields
 use constant USER_USER_GROUP => qw(user_id
@@ -136,7 +139,7 @@ use constant SHORT_NAMES	=> qw(adam
 
 # Globals
 ##########
-my $SALT = <<SALT;
+our $SALT = <<SALT;
 Dulce et decorum est pro patria mori
 --Horace
 SALT
@@ -693,7 +696,41 @@ sub password {
     my $self = shift;
     return $self->{password} unless @_;
     my $pass = $_[1] ? $_[0] : md5_hex($SALT, $_[0]);
-    $self->{password} = $pass if ((ref $self) && $pass);
+    if ((ref $self) && $pass) {
+        # record that this password was updated
+        my $old_pw = $self->{password};
+        $self->{password} = $pass;
+        $self->password_changed(scalar time);
+        $self->force_pw_change(0);
+
+        # store the old one in the old_passwords table 
+        if( PasswordChangeCount ) {
+            # get all of our old password and remove the oldest ones
+            # if we have too many
+            my $sth = dbh()->prepare_cached(
+                'SELECT password FROM old_password WHERE user_id = ? ORDER BY timestamp DESC'
+            );
+            $sth->execute($self->user_id);
+            my $old_pws = $sth->fetchall_arrayref();
+            if( scalar @$old_pws > (PasswordChangeCount -1) ) {
+                # delete any we don't want
+                foreach my $i ((PasswordChangeCount -2)..$#$old_pws) {
+                    dbh->do(
+                        'DELETE FROM old_password WHERE user_id = ? AND password = ?', 
+                        undef, 
+                        $self->user_id, 
+                        $old_pws->[0]->[0],
+                    ); 
+                }
+            }
+
+            # remember the latest old one
+            $sth = dbh->prepare_cached(
+                'INSERT INTO old_password (user_id, password) VALUES (?,?)'
+            );
+            $sth->execute($self->user_id, $old_pw);
+        }
+    }
     return $pass;
 }
 

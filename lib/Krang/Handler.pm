@@ -48,13 +48,17 @@ associated with the user_id via the $request->connection->user()
 method.  The effect of this is that $query->remote_user() and 
 $ENV{REMOTE_USER} will properly report the user who is logged in.
 
-
 =item Krang::Handler->authz_handler
 
-Authorization.  Currently enforced "require valid-user" only.  IOW, 
+Authorization. Enforces "require valid-user" only.  IOW, 
 if a user is specified, they are authorized.  If no user
 has been specified (via the authen_handler), the request is
 redirected to the login application.
+
+Also, if C<PasswordChangeTime> is set to a non-zero value,
+we check to see if the user's C<force_pw_change> has been
+set. If it has, the user is redirected to C<force_pw_change>
+runmode of the C<CGI::MyPref> class.
 
 =item Krang::Handler->log_handler
 
@@ -85,7 +89,7 @@ use Krang::ClassLoader 'CGI::Login';
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime);
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
@@ -321,11 +325,27 @@ sub authz_handler ($$) {
 
     # always allow access to the CSS file and images - needed before
     # login to display the login screen
-    return OK if $path =~ m!krang(_login)?\.css$! 
-      or $path =~ m!\.(gif|jpg|png)$!;
+    return OK if $path =~ m!krang_login$! 
+      or $path =~ m!\.(gif|jpg|png|css|js)$!;
     
-    # If user is logged in, we're done
-    return OK if (defined($r->connection->user()));
+    # If user is logged in
+    if (my $user_id = $r->connection->user) {
+        # if we are enforcing changes in pw and the user's not
+        # already trying to change their pw
+        if( PasswordChangeTime && $path !~ /my_pref\.pl/ ) {
+            # check the last time the user changed their pw
+            eval "require pkg('User')";
+            my ($user) = pkg('User')->find(user_id => $user_id);
+            if( $user->force_pw_change ) {
+                return $self->_redirect_to_change_pw($r, $flavor, $instance)
+            } else {
+                return OK 
+            }
+        } else {
+            # if we're logged in, we're good
+            return OK 
+        }
+    }
 
     # No user?  Not a request to login?  Redirect the user to login!
     return $self->_redirect_to_login($r, $flavor, $instance);
@@ -454,6 +474,15 @@ sub _redirect_to_login {
     return $self->_do_redirect($r, $new_uri);
 }
 
+sub _redirect_to_change_pw {
+    my $self = shift;
+    my ($r, $flavor, $instance) = @_;
+
+    my $app = 'my_pref.pl?rm=force_pw_change';
+    my $new_uri = ($flavor eq 'instance' ? "/$app" : "/$instance/$app");
+
+    return $self->_do_redirect($r, $new_uri);
+}
 
 sub _do_redirect {
     my $self = shift;

@@ -12,6 +12,7 @@ sub per_instance {
 
     my $dbh  = dbh();
 
+    # add new tables and data for login security
     print "Adding rate_limit_hits table and scheduling cleanup task\n";
     eval {
         $dbh->do(q(
@@ -24,7 +25,6 @@ sub per_instance {
             ) TYPE=MyISAM;
         ));
     };
-    
     eval {
         $dbh->do(q(
             INSERT INTO schedule
@@ -34,6 +34,28 @@ sub per_instance {
         ));
     }
     warn("Failed to schedule rate_limit cleanup: $@") if( $@ );
+    eval {
+        $dbh->do(q(
+            CREATE TABLE old_password (
+                    user_id     INT UNSIGNED NOT NULL,
+                    password    VARCHAR(255) NOT NULL,
+                    timestamp   INT UNSIGNED,
+                    KEY (user_id),
+                    PRIMARY KEY (user_id, password)
+            );
+        ));
+    }
+    warn("Failed to create old_password table: $@") if( $@ );
+    eval {
+        $dbh->do('ALTER TABLE user ADD COLUMN force_pw_change BOOL NOT NULL DEFAULT 0');
+    }
+    warn("Failed to add force_pw_change column to user table: $@") if( $@ );
+    eval {
+        $dbh->do('ALTER TABLE user ADD COLUMN password_changed TIMESTAMP');
+        $dbh->do('UPDATE user SET password_changed = EPOCH()');
+    }
+    warn("Failed to add password_changed column to user table: $@") if( $@ );
+
 }
 
 # add new krang.conf directive, Charset

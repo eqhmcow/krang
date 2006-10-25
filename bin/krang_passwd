@@ -185,6 +185,7 @@ sub ask_pass {
 
     my $ok = pkg('PasswordHandler')->check_pw(
         $npass,
+        $user->login,
         $user->email,
         $user->first_name,
         $user->last_name,

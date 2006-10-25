@@ -97,6 +97,16 @@ SchedulerMaxChildren 3
 BadLoginCount 0
 BadLoginWait  15
 
+#
+# Force the users to change their password every few days
+# (PasswordChangeTime is in days) and don't let them use
+# old passwords (we remember the last PasswordChangeCount
+# passwords). A PasswordChangeTime value of '0' means it
+# doesn't have to change, and a PasswordChangeCount value
+# of '0' means they can use the same password over and over
+PasswordChangeTime 0
+PasswordChangeCount 0
+
 <tmpl_if EnableSSL>
 ##
 ##  SSL Global Context

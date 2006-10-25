@@ -10,6 +10,7 @@ use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Conf => qw(PasswordChangeTime);
 
 =head1 NAME
 
@@ -44,6 +45,7 @@ sub setup {
     $self->run_modes([qw(
                             edit
                             update_prefs
+                            force_pw_change
                     )]);
 
     $self->tmpl_path('MyPref/');    
@@ -64,6 +66,10 @@ sub edit {
     my $user_id = $ENV{REMOTE_USER};
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
     $template->param( $error => 1 ) if $error;
+
+    # do we want just show the pw portion
+    my $pw_only = $self->param('password_only') || $q->param('password_only');
+    $template->param( password_only => $pw_only);
     
     my $set_sps = pkg('MyPref')->get('search_page_size');
 
@@ -86,7 +92,8 @@ sub update_prefs {
     my $q = $self->query();
 
     my $set_sps = pkg('MyPref')->get('search_page_size');
-    if ($set_sps ne  $q->param('search_results_page')) {
+    my $new_sps = $q->param('search_results_page');
+    if ($new_sps && $set_sps ne $new_sps) {
         # update search_page_size
         pkg('MyPref')->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size");
     } 
@@ -98,6 +105,7 @@ sub update_prefs {
         # check the password constraints
         my $valid = pkg('PasswordHandler')->check_pw(
             $q->param('new_password'),
+            $user->login,
             $user->email,
             $user->first_name,
             $user->last_name,            
@@ -109,6 +117,20 @@ sub update_prefs {
             add_message("changed_password");
         }
     }
+    return $self->edit();
+}
+
+=item force_pw_change()
+
+Shows the user the preference edit screen with message letting
+them know they are required to change their password.
+
+=cut
+
+sub force_pw_change {
+    my $self = shift;
+    add_message('force_password_change', days => PasswordChangeTime);
+    $self->param(password_only => 1);
     return $self->edit();
 }
 

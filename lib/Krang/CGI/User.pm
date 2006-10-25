@@ -160,18 +160,19 @@ sub save_add {
     # Return to edit screen if there are errors
     return $self->add(%errors) if %errors;
 
+    # Get user from session
+    my $user = $session{EDIT_USER} || 0;
+    croak("Can't retrieve EDIT_USER from session") unless $user;
+
     # now validate the password
     my $valid = pkg('PasswordHandler')->check_pw(
         $q->param('new_password'),
+        $user->login,
         $q->param('email'),
         $q->param('first_name'),
         $q->param('last_name'),
     );
     return $self->add() unless $valid;
-
-    # Get user from session
-    my $user = $session{EDIT_USER} || 0;
-    croak("Can't retrieve EDIT_USER from session") unless $user;
 
     %errors = $self->update_user($user);
     return $self->edit(%errors) if %errors;
