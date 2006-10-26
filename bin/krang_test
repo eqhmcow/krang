@@ -130,6 +130,7 @@ if( $xml ) {
     print "FILES: $files\n";
     # run tests through Test::Harness
     require Test::Harness;
+    no warnings; # silence used-only-once warning
     $Test::Harness::Verbose = $v;
     Test::Harness::runtests(glob($files));
 }
