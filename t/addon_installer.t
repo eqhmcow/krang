@@ -128,15 +128,16 @@ SKIP: {
     local $ENV{CGI_MODE} = 1;
     system('sudo ' . KrangRoot . "/bin/krang_ctl restart")
         and skip "Krang servers couldn't be restarted, skipping tests.", 7;
-    
+
     # get creds
     my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
     my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
-    login_ok($username, $password);
+    login_ok($username, $password, "Login $username:$password")
+      or die "Unable to login!  Aborting tests.";
 
     # hit about.pl and see if the server is in CGI mode, skip if not
     # since the addon won't be registered
-    request_ok('about.pl', {});
+    request_ok('about.pl', {}, "Request for about.pl");
     my $res = get_response();
     skip "Apache server isn't running in CGI mode, skipping live tests", 5
       unless $res->content =~ /running\s+in\s+CGI\s+mode/i;
