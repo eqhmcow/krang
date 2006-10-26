@@ -19,7 +19,7 @@ CREATE TABLE user (
 
 /* default account 'admin', password 'whale' */
 INSERT INTO user (email, login, password, first_name, last_name, password_changed) VALUES
-('Joe@Admin.com', 'admin', 'f1a93f635e172bd5be55ae08dd41553a', 'Joe', 'Admin', EPOCH());
+('Joe@Admin.com', 'admin', 'f1a93f635e172bd5be55ae08dd41553a', 'Joe', 'Admin', UNIX_TIMESTAMP(NOW()));
 
 /* default account 'system', hidden with no password*/
 INSERT INTO user (email, login, password, first_name, last_name, hidden) VALUES

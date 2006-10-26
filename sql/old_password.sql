@@ -5,6 +5,5 @@ CREATE TABLE old_password (
         user_id     INT UNSIGNED NOT NULL,
         password    VARCHAR(255) NOT NULL,
         timestamp   TIMESTAMP,
-        INDEX (user_id),
-        PRIMARY KEY (user_id, password)
+        INDEX (user_id)
 );

@@ -52,7 +52,7 @@ sub per_instance {
     warn("Failed to add force_pw_change column to user table: $@") if( $@ );
     eval {
         $dbh->do('ALTER TABLE user ADD COLUMN password_changed TIMESTAMP');
-        $dbh->do('UPDATE user SET password_changed = EPOCH()');
+        $dbh->do('UPDATE user SET password_changed = UNIX_TIMESTAMP(NOW())');
     }
     warn("Failed to add password_changed column to user table: $@") if( $@ );
 
