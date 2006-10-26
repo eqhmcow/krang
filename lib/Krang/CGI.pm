@@ -98,9 +98,6 @@ use Data::Dumper ();
 
 use Krang::ClassLoader Conf => qw(KrangRoot InstanceDisplayName Charset);
 use File::Spec::Functions qw(catdir rel2abs);
-use Krang::ClassLoader 'CGI::Status';
-use Krang::ClassLoader 'CGI::ElementEditor';
-use Krang::ClassLoader 'CGI::Login';
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'HTMLTemplate';
