@@ -4,7 +4,6 @@ use warnings;
 
 # all valid configuration directives must be listed here
 our @VALID_DIRECTIVES;
-BEGIN {
 @VALID_DIRECTIVES = map { lc($_) } qw(
 ApacheAddr
 ApachePort
@@ -54,7 +53,6 @@ SSLVerifyClient
 SSLVerifyDepth
 SSLLogLevel
 );
-}
 
 use Krang::Platform;
 use File::Spec::Functions qw(catfile catdir rel2abs);
@@ -146,7 +144,7 @@ CROAK
 }
 
 # load the configuration file during startup
-BEGIN { _load(); }
+_load();
 
 =head1 INTERFACE
 
@@ -335,7 +333,7 @@ sub _broked {
 }
  
 # run the check ASAP, unless we're in upgrade mode
-BEGIN { __PACKAGE__->check() unless ($ENV{KRANK_CONF_NOCHECK}) }
+__PACKAGE__->check() unless ($ENV{KRANK_CONF_NOCHECK});
 
 =back
 
