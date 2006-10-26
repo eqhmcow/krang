@@ -32,7 +32,7 @@ sub per_instance {
             VALUES
              ('daily', 'clean', 'rate_limit', NOW(), NOW(), NOW(), 3, 0);
         ));
-    }
+    };
     warn("Failed to schedule rate_limit cleanup: $@") if( $@ );
     eval {
         $dbh->do(q(
@@ -44,16 +44,16 @@ sub per_instance {
                     PRIMARY KEY (user_id, password)
             );
         ));
-    }
+    };
     warn("Failed to create old_password table: $@") if( $@ );
     eval {
         $dbh->do('ALTER TABLE user ADD COLUMN force_pw_change BOOL NOT NULL DEFAULT 0');
-    }
+    };
     warn("Failed to add force_pw_change column to user table: $@") if( $@ );
     eval {
         $dbh->do('ALTER TABLE user ADD COLUMN password_changed INT UNSIGNED');
         $dbh->do('UPDATE user SET password_changed = UNIX_TIMESTAMP(NOW())');
-    }
+    };
     warn("Failed to add password_changed column to user table: $@") if( $@ );
 
 }
