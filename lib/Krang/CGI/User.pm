@@ -98,7 +98,9 @@ sub add {
     my $self = shift;
     my %ui_messages = @_;
     my $q = $self->query();
-    my $t = $self->load_tmpl("edit_view.tmpl", associate => $q);
+    my $t = $self->load_tmpl("edit_view.tmpl", 
+                             associate         => $q, 
+                             die_on_bad_params => 0);
 
     $t->param(add_mode => 1);
     $t->param(%ui_messages) if %ui_messages;
@@ -339,7 +341,9 @@ sub edit {
     croak(__PACKAGE__ . "->edit(): No pkg('User') object found matching " .
           "user_id '$user_id'") unless defined $user;
 
-    my $t = $self->load_tmpl("edit_view.tmpl", associate => $q);
+    my $t = $self->load_tmpl("edit_view.tmpl",
+                             associate         => $q,
+                             die_on_bad_params => 0);
 
     $t->param(%ui_messages) if %ui_messages;
 
