@@ -106,8 +106,13 @@ sub check_find {
     ok(not($@), "$perl_package->find(ids_only=>1, order_desc => 1)");
     die ($@) if ($@);
 
-    ok( eq_array([@stuff], [reverse @stuff2]), "$perl_package->find(ids_only=>1, order_desc => 1) : order_desc=>1 reverses order_desc=>0") 
-      if @stuff;
+  SKIP: {
+        if ($perl_package eq 'Krang::User') {
+            skip "Krang::User order_desc doesn't work on MySQL v4.1.21.", 1;
+        }
+        ok(eq_array([@stuff], [reverse @stuff2]), "$perl_package->find(ids_only=>1, order_desc => 1) : order_desc=>1 reverses order_desc=>0") 
+          if @stuff;
+    }
 
     # 6. limit=>1 returns only one record
     unless ($perl_package eq pkg('Desk')) { # Krang::Desk doesnt use limit
