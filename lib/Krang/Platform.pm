@@ -567,7 +567,7 @@ sub build_perl_module {
           Expect->spawn($cmd);
         
         # setup command to answer questions modules ask
-        my @responses = qw(n n n n n y !);
+        my @responses = qw(n n n n n y ! /tmp 0007);
         while (
                my $match = $command->expect(
                   undef,
@@ -578,6 +578,8 @@ sub build_perl_module {
                  'unicode entities? [no]',
                  'Do you want to skip these tests? [y]',
                  "('!' to skip)",
+                 "UUID state storage",
+                 "default umask",
                                            )
               )
           {
