@@ -1,9 +1,12 @@
 package V2_008;
 use strict;
 use warnings;
+use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => 'Upgrade';
 use Krang::ClassLoader DB => 'dbh';
 use Krang::ClassLoader Conf => 'KrangRoot';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'UUID';
 use File::Spec::Functions qw(catfile);
  
 # nothing yet
@@ -56,6 +59,24 @@ sub per_instance {
     };
     warn("Failed to add password_changed column to user table: $@") if( $@ );
 
+
+    # add UUID columns
+    eval { 
+        $dbh->do('ALTER TABLE story ADD COLUMN '.
+                 'story_uuid CHAR(36) NOT NULL');
+    };
+    warn("Failed to add story_uuid column to story table: $@") if( $@ );
+
+    # give all stories a UUID
+    eval {
+        my @story_ids = pkg('Story')->find(ids_only    => 1,
+                                           show_hidden => 1,
+                                           story_uuid  => undef);
+        $dbh->do('UPDATE story SET story_uuid = ? WHERE story_id = ?',
+                 undef, pkg('UUID')->new, $_)
+          for @story_ids;
+    };
+    warn("Failed to story_uuid values to story table: $@") if( $@ );
 }
 
 # add new krang.conf directive, Charset
