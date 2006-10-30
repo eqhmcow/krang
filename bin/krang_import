@@ -39,6 +39,16 @@ Never attempt to update existing objects, even when duplicates exist.
 You probably don't want this option unless you're importing into an
 entirely empty system and you want to know if that's not the case.
 
+=item --no-uuid
+
+Ignore UUIDs for the purpose of finding matches to update.  This
+essentially reverts Krang to its behavior before v2.008.
+
+=item --require-uuid
+
+Only use UUIDs for the purpose of finding matches to update.  Matches
+using other fields (URL, name, etc) will be treated as errors.
+
 =item --skip sites
 
 =item --skip categories
@@ -102,18 +112,20 @@ use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
 
-our ($help, $man, $list, $no_update, $verbose, $file, @skip, @skip_classes);
+our ($help, $man, $list, $no_update, $verbose, $file, @skip, @skip_classes,
+     $no_uuid, $require_uuid);
 BEGIN {
     $verbose = 0;
-    pod2usage(2) unless
-      GetOptions(help       => \$help,
-                 man        => \$man,
-                 'verbose+' => \$verbose,
-                 list       => \$list,
-                 'no-update'=> \$no_update,
-                 'skip=s'   => \@skip,
-                );
-    pod2usage(1)             if $help;
+    pod2usage(2)
+      unless GetOptions(help           => \$help,
+                        man            => \$man,
+                        'verbose+'     => \$verbose,
+                        list           => \$list,
+                        'no-update'    => \$no_update,
+                        'no-uuid'      => \$no_uuid,
+                        'require-uuid' => \$require_uuid,
+                        'skip=s'       => \@skip);
+   pod2usage(1)             if $help;
     pod2usage(-verbose => 2) if $man;
     
     # get input file
@@ -210,9 +222,13 @@ foreach my $class (keys %classes) {
     
 
 # do the import
-eval { $set->import_all(($no_update ? (no_update => 1) : ()),
-                        (@skip_classes ? (skip_classes => \@skip_classes): ()),
-                       ); };
+eval {
+    $set->import_all(($no_update    ? (no_update    => 1)              : ()),
+                     ($no_uuid      ? (no_uuid      => 1)              : ()),
+                     ($require_uuid ? (require_uuid => 1)              : ()),
+                     (@skip_classes ? (skip_classes => \@skip_classes) : ()),
+                    );
+};
 if ($@ and ref $@ and $@->isa('Krang::DataSet::ImportRejected')) {
     print STDERR "Import failed for the following reasons:\n\n",
       $@->message, "\n";
