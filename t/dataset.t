@@ -220,6 +220,8 @@ SKIP: {
                                      offset   => $count, 
                                      order_by => 'story_id');
 
+    my @story_uuids = map { $_->story_uuid } @stories;
+
     # create a data set containing the stories
     my $set10 = pkg('DataSet')->new();
     isa_ok($set10, 'Krang::DataSet');
@@ -254,6 +256,11 @@ SKIP: {
                $import_cat->parent->url);
         }
     }
+
+    # check story UUIDs
+    my @loaded_uuids =
+      map { $_->story_uuid } grep { $_->isa('Krang::Story') } @imported;
+    is_deeply([sort @loaded_uuids],[sort @story_uuids]);
 
     # check story content
     my %imported = map { ($_->url, $_) } 

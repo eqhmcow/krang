@@ -10,6 +10,7 @@ use Krang::ClassLoader Log => qw(assert ASSERT affirm debug info critical);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Pref';
+use Krang::ClassLoader 'UUID';
 use Carp           qw(croak);
 use Storable       qw(nfreeze thaw);
 use Time::Piece::MySQL;
@@ -29,6 +30,7 @@ use Krang::ClassLoader MethodMaker =>
   new_hash_init => 'hash_init',
   get           => [ qw(
                         story_id
+                        story_uuid
                         version
                         checked_out
                         checked_out_by
@@ -54,6 +56,7 @@ use Krang::ClassLoader MethodMaker =>
 # fields in the story table, aside from story_id
 use constant STORY_FIELDS =>
   qw( story_id
+      story_uuid
       version
       title
       slug
@@ -174,6 +177,11 @@ the checkout() method.
 =over
 
 =item C<story_id> (readonly)
+
+=item C<story_uuid> (readonly)
+
+Unique ID for stories, valid across different machines when the story
+is moved via krang_export and krang_import.
 
 =item C<title>
 
@@ -500,6 +508,7 @@ sub init {
     $self->{checked_out}       = 1;
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
     $self->{cover_date}        = Time::Piece->new();
+    $self->{story_uuid}        = pkg('UUID')->new;
 
     # Set up temporary permissions
     $self->{may_see} = 1;
@@ -900,6 +909,10 @@ which link to the contributor.
 
 Load a story by ID.  Given an array of story IDs, loads all the identified
 stories.
+
+=item story_uuid
+
+Load a story by UUID.
 
 =item version
 
@@ -1844,7 +1857,8 @@ Creates a copy of the story object, with most fields identical except
 for C<story_id> and C<< element->element_id >> which will both be
 C<undef>.  Sets to title to "Copy of $title".  Sets slug to
 "$slug_copy" if slug is set.  Will remove categories as necessary to
-generate a story without duplicate URLs.
+generate a story without duplicate URLs.  Cloned stories get a new
+story_uuid.
 
 =cut
 
@@ -1868,6 +1882,9 @@ sub clone {
     # never been published
     $copy->{publish_date} = undef;
     $copy->{published_version} = 0;
+
+    # get a new UUID
+    $copy->{story_uuid} = pkg('UUID')->new;
 
     # returns 1 if there is a dup, 0 otherwise
     my $is_dup = sub {  
@@ -2028,6 +2045,7 @@ sub serialize_xml {
 
     # basic fields
     $writer->dataElement(story_id   => $self->story_id);
+    $writer->dataElement(story_uuid => $self->story_uuid);
     $writer->dataElement(class      => $self->class->name);
     $writer->dataElement(title      => $self->title);
     $writer->dataElement(slug       => $self->slug);
@@ -2140,11 +2158,15 @@ sub deserialize_xml {
         my ($dup) = pkg('Story')->find(url => $data->{url});
         return $dup if( $dup );
 
-        # create a new story object using categories, slug, title and class
+        # create a new story object using categories, slug, title,
+        # and class
         $story = pkg('Story')->new(categories => \@categories,
                                    slug       => $data->{slug} || "",
                                    title      => $data->{title} || "",
                                    class      => $data->{class});
+
+        # preserve UUID if available
+        $story->{story_uuid} = $data->{story_uuid} if $data->{story_uuid};
     }
     
     $story->cover_date(Time::Piece->strptime($data->{cover_date},

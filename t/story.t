@@ -103,7 +103,7 @@ can_ok($story, qw/title slug cover_date priority class element category categori
                   contribs url preview_url urls preview_urls find save
                   checkin checkout checked_out checked_out_by revert
                   linked_stories linked_media move_to_desk publish_path preview_path
-                  delete clone serialize_xml deserialize_xml/);
+                  delete clone serialize_xml deserialize_xml story_uuid/);
 
 
 
@@ -111,6 +111,7 @@ is($story->title, "Test");
 is($story->slug, "test");
 is($story->class->display_name, "Article");
 is($story->element->name, "article");
+like($story->story_uuid, qr/^[0-9A-F]{8}-([0-9A-Z]{4}-){3}[0-9A-F]{12}$/);
 my @story_cat = $story->categories();
 is(@story_cat, 2);
 is($story_cat[0], $cat[0]);
@@ -211,6 +212,7 @@ isa_ok($story2, 'Krang::Story');
 
 # basic fields survived?
 for (qw( story_id
+         story_uuid
          published_version
          preview_version
          class
@@ -224,6 +226,11 @@ for (qw( story_id
          priority )) {
     is($story->$_, $story2->$_, "$_ save/load");
 }
+
+# try loading by UUID
+my ($story_by_uuid) = pkg('Story')->find(story_uuid => $story->{story_uuid});
+isa_ok($story_by_uuid, 'Krang::Story');
+is($story_by_uuid->story_id, $story->story_id);
 
 # test hidden
 test_hidden($root_cat);
@@ -263,6 +270,7 @@ is($story->element->element_id, $story2->element->element_id);
 my $copy;
 eval { $copy = $story->clone() };
 ok(not $copy->story_id);
+ok($copy->story_uuid ne $story->story_uuid);
 
 # mangled as expected?
 is($copy->title, "Copy of " . $story->title);
@@ -286,6 +294,7 @@ END { $copy->delete if $DELETE };
 my $copy2;
 eval { $copy2 = $story->clone() };
 ok(not $copy2->story_id);
+ok($copy2->story_uuid ne $story->story_uuid);
 
 # mangled as expected?
 is($copy2->title, "Copy of " . $story->title);
@@ -353,6 +362,7 @@ my $thawed = thaw($data);
 ok($thawed);
 isa_ok($thawed, 'Krang::Story');
 is($thawed->story_id, $story->story_id);
+is($thawed->story_uuid, $story->story_uuid);
 
 SKIP: {
     skip('Element tests only work for TestSet1', 1)

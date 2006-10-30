@@ -4,6 +4,8 @@ CREATE TABLE story (
         story_id        INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         version         SMALLINT UNSIGNED NOT NULL,
 
+        story_uuid      CHAR(36) NOT NULL,
+
         title           VARCHAR(255) NOT NULL,
         slug            VARCHAR(255) NOT NULL,
         cover_date      DATETIME,
@@ -28,7 +30,8 @@ CREATE TABLE story (
         INDEX(checked_out),
         INDEX(checked_out_by),
         INDEX(class),
-        INDEX(published_version)
+        INDEX(published_version),
+        UNIQUE INDEX (story_uuid)
 );
 
 /* story_version holds version data managed by Krang::Story */
