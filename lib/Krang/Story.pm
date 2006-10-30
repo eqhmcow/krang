@@ -844,6 +844,10 @@ Search by url.
 
 Search by primary url.
 
+=item non_primary_url
+
+Search by non-primary url.
+
 =item category_id
 
 Find stories by category.
@@ -1188,6 +1192,16 @@ sub find {
             push(@where, 's.story_id = sc.story_id');
             push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'),
                          'sc.ord = 0');
+            push(@param, $value);
+            next;
+        }
+
+        # handle search by non-primary_url
+        if ($key eq 'non_primary_url') {
+            $from{"story_category as sc"} = 1;
+            push(@where, 's.story_id = sc.story_id');
+            push(@where, ($like ? 'sc.url LIKE ?' : 'sc.url = ?'),
+                         'sc.ord != 0');
             push(@param, $value);
             next;
         }
@@ -2114,21 +2128,44 @@ sub deserialize_xml {
                                   suppressempty => 1);
 
     # is there an existing object?
-    my ($story) = pkg('Story')->find(url => $data->{url}[0], show_hidden => 1);
-    if ($story) {
+    my $story;
+    
+    # start with a UUID lookup
+    my $match_type;
+    unless ($args{no_uuid} and $data->{story_uuid}) {
+        ($story) =
+          $pkg->find(story_uuid  => $data->{story_uuid},
+                     show_hidden => 1);
 
-        # if primary url of this imported story matches a non-primary
-        # url of an existing story, reject
-        if ($story->url ne $data->{url}[0]) {
-            Krang::DataSet::DeserializationFailed->throw(
-                message => "A story object with a non-primary url '$data->{url}[0]' already exists.");
-        }
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(message =>
+                  "A story object with the UUID '$data->{story_uuid}' already"
+                  . " exists and no_update is set.")
+          if $story and $no_update;
+    }
+    
+    # proceed to URL lookup if no dice
+    unless ($story or $args{require_uuid}) {
+        ($story) =
+          pkg('Story')->find(url => $data->{url}[0], show_hidden => 1);
 
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
             message => "A story object with the url '$data->{url}[0]' already".
                        " exists and no_update is set.")
-            if $no_update;
+            if $story and $no_update;
+    }
+
+    if ($story) {
+        # if primary url of this imported story matches a non-primary
+        # url of an existing story, reject
+        my ($fail) =
+          $pkg->find(non_primary_url => $data->{url}[0],
+                     ids_only        => 1);
+        Krang::DataSet::DeserializationFailed->throw(
+                           message => "A story object with a non-primary url "
+                             . "'$data->{url}[0]' already exists.")
+          if $fail;
 
         # check it out to make changes
         $story->checkout;
@@ -2137,14 +2174,32 @@ sub deserialize_xml {
         $story->slug($data->{slug} || "");
         $story->title($data->{title} || "");
 
+        # get category objects for story
+        my @category_ids = map { $set->map_id(class => "Krang::Category",
+                                              id    => $_) }
+                             @{$data->{category_id}};
+        
+        # set categories, which might have changed if this was a match
+        # by UUID
+        $story->categories(\@category_ids);
+
     } else {
+
+        # check primary URL for conflict - can happen with require_uuid on
+        my ($fail) =
+          $pkg->find(primary_url => $data->{url}[0],
+                     ids_only    => 1);
+        Krang::DataSet::DeserializationFailed->throw(
+                           message => "A story object with a primary url "
+                             . "'$data->{url}[0]' already exists.")
+          if $fail;
 
         # check if any of the secondary urls match existing stories
         # and fail if so
         for (my $count = 1; $count < @{$data->{url}}; $count++) {
             my ($found) = pkg('Story')->find(url => $data->{url}[$count], show_hidden => 1);
             Krang::DataSet::DeserializationFailed->throw(
-                message => "A story object with url '$data->{url}[$count]' already exists, which conflicts with one of this storys secondary URLs.") if $found;
+                message => "A story object with url '$data->{url}[$count]' already exists, which conflicts with one of this story's secondary URLs.") if $found;
         }
  
         # get category objects for story
@@ -2164,11 +2219,12 @@ sub deserialize_xml {
                                    slug       => $data->{slug} || "",
                                    title      => $data->{title} || "",
                                    class      => $data->{class});
-
-        # preserve UUID if available
-        $story->{story_uuid} = $data->{story_uuid} if $data->{story_uuid};
     }
     
+    # preserve UUID if available
+    $story->{story_uuid} = $data->{story_uuid} 
+      if $data->{story_uuid} and not $args{no_uuid};
+
     $story->cover_date(Time::Piece->strptime($data->{cover_date},
                                              '%Y-%m-%dT%T'))
       if exists $data->{cover_date};
