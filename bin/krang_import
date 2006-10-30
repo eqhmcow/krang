@@ -44,7 +44,7 @@ entirely empty system and you want to know if that's not the case.
 Ignore UUIDs for the purpose of finding matches to update.  This
 essentially reverts Krang to its behavior before v2.008.
 
-=item --require-uuid
+=item --uuid-only
 
 Only use UUIDs for the purpose of finding matches to update.  Matches
 using other fields (URL, name, etc) will be treated as errors.
@@ -113,18 +113,18 @@ use Getopt::Long;
 use Pod::Usage;
 
 our ($help, $man, $list, $no_update, $verbose, $file, @skip, @skip_classes,
-     $no_uuid, $require_uuid);
+     $no_uuid, $uuid_only);
 BEGIN {
     $verbose = 0;
     pod2usage(2)
-      unless GetOptions(help           => \$help,
-                        man            => \$man,
-                        'verbose+'     => \$verbose,
-                        list           => \$list,
-                        'no-update'    => \$no_update,
-                        'no-uuid'      => \$no_uuid,
-                        'require-uuid' => \$require_uuid,
-                        'skip=s'       => \@skip);
+      unless GetOptions(help        => \$help,
+                        man         => \$man,
+                        'verbose+'  => \$verbose,
+                        list        => \$list,
+                        'no-update' => \$no_update,
+                        'no-uuid'   => \$no_uuid,
+                        'uuid-only' => \$uuid_only,
+                        'skip=s'    => \@skip);
    pod2usage(1)             if $help;
     pod2usage(-verbose => 2) if $man;
     
@@ -225,7 +225,7 @@ foreach my $class (keys %classes) {
 eval {
     $set->import_all(($no_update    ? (no_update    => 1)              : ()),
                      ($no_uuid      ? (no_uuid      => 1)              : ()),
-                     ($require_uuid ? (require_uuid => 1)              : ()),
+                     ($uuid_only    ? (uuid_only    => 1)              : ()),
                      (@skip_classes ? (skip_classes => \@skip_classes) : ()),
                     );
 };

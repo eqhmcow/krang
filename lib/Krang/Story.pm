@@ -2145,7 +2145,7 @@ sub deserialize_xml {
     }
     
     # proceed to URL lookup if no dice
-    unless ($story or $args{require_uuid}) {
+    unless ($story or $args{uuid_only}) {
         ($story) =
           pkg('Story')->find(url => $data->{url}[0], show_hidden => 1);
 
@@ -2185,7 +2185,7 @@ sub deserialize_xml {
 
     } else {
 
-        # check primary URL for conflict - can happen with require_uuid on
+        # check primary URL for conflict - can happen with uuid_only on
         my ($fail) =
           $pkg->find(primary_url => $data->{url}[0],
                      ids_only    => 1);

@@ -133,7 +133,7 @@ END { unlink($path) if ($path and -e $path) }
              );
 
     eval { 
-        pkg('DataSet')->new(path => $path)->import_all(require_uuid => 1);
+        pkg('DataSet')->new(path => $path)->import_all(uuid_only => 1);
     };
     ok($@);
     isa_ok($@, 'Krang::DataSet::ImportRejected');

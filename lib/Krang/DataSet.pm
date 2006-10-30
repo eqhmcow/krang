@@ -522,7 +522,7 @@ deserialize_xml() method.)
 Ignore UUIDs for the purpose of finding matches to update.  This
 essentially reverts Krang to its behavior before v2.008.
 
-=item require_uuid
+=item uuid_only
 
 Only use UUIDs for the purpose of finding matches to update.  Matches
 using other fields (URL, name, etc) will be treated as errors.
@@ -557,7 +557,7 @@ sub import_all {
     $self->{done}         = {};
     $self->{no_update}    = $arg{no_update} || 0;
     $self->{no_uuid}      = $arg{no_uuid} || 0;
-    $self->{require_uuid} = $arg{require_uuid} || 0;
+    $self->{uuid_only}    = $arg{uuid_only} || 0;
     $self->{skip_classes} = {map { ($_, 1) } @{$arg{skip_classes} || []}};
 
     # check skip classes
@@ -660,7 +660,7 @@ sub _deserialize {
                                       set          => $self,
                                       no_update    => $self->{no_update},
                                       no_uuid      => $self->{no_uuid},
-                                      require_uuid => $self->{require_uuid},
+                                      uuid_only    => $self->{uuid_only},
                                       skip_update  => $skip);
     croak("Call to $class->deserialize failed!")
       unless $obj;
@@ -767,7 +767,7 @@ serialized object will be packaged.  The object is responsible for
 calling C<< $set->add() >> on any objects referenced by ID in the
 output XML.
 
-=item C<< $object = Krang::Foo->deserialize_xml(xml => $xml, set => $set, no_update => 0, no_uuid => 0, require_uuid => 0, skip_update => 0); >>
+=item C<< $object = Krang::Foo->deserialize_xml(xml => $xml, set => $set, no_update => 0, no_uuid => 0, uuid_only => 0, skip_update => 0); >>
 
 This call must instantiate a new object using the XML provided.  If
 C<no_update> is false then the method should make an effort to use the
@@ -779,7 +779,7 @@ an existing object.  Instead, it should return the object unchanged.
 New objects should still be created as usual.
 
 If C<no_uuid> is true then UUIDs should not be used to match objects
-for update.  If C<require_uuid> is true then only UUIDs should be used
+for update.  If C<uuid_only> is true then only UUIDs should be used
 to match.  The default should be to prefer UUID matches and fall-back
 to pre-existing keys.
 
