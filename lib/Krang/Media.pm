@@ -10,6 +10,7 @@ use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader History => qw( add_history );
 use Krang::ClassLoader 'Publisher';
+use Krang::ClassLoader 'UUID';
 use Carp qw(croak);
 use Storable qw(nfreeze thaw);
 use File::Spec::Functions qw(catdir catfile splitpath canonpath);
@@ -25,7 +26,7 @@ use Image::Info qw( image_info dim );
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
-use constant FIELDS => qw(media_id title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by);
+use constant FIELDS => qw(media_id media_uuid title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by);
 
 # setup exceptions
 use Exception::Class (
@@ -239,6 +240,7 @@ use Krang::ClassLoader MethodMaker =>
                             } ],
     get => [ qw( 
                 media_id 
+                media_uuid
                 creation_date 
                 may_see 
                 may_edit
@@ -272,6 +274,8 @@ sub init {
     $self->{may_see} = 1;
     $self->{may_edit} = 1;
 
+    $self->{media_uuid}        = pkg('UUID')->new;
+
     # finish the object
     $self->hash_init(%args);
 
@@ -283,6 +287,11 @@ sub init {
 =item $id = $media->media_id()
 
 Returns the unique id assigned the media object.  Will not be populated until $media->save() is called the first time.
+
+=item $media->media_uuid()
+
+Unique ID for media, valid across different machines when the object
+is moved via krang_export and krang_import.
 
 =item $media->title()
 
@@ -730,6 +739,10 @@ media_id (can optionally take a list of ids)
 
 =item *
 
+media_uuid
+
+=item *
+
 version - combined with a single C<media_id> (and only C<media_id>),
 loads a specific version of a media object.  Unlike C<revert()>, this
 object has C<version> set to the actual version number of the loaded
@@ -859,6 +872,7 @@ sub find {
     my @media_object;
 
     my %valid_params = ( media_id          => 1,
+                         media_uuid        => 1,
                          version           => 1,
                          title             => 1,
                          title_like        => 1,
@@ -927,7 +941,7 @@ sub find {
 
     # set simple keys
     my @simple_keys = qw( title alt_tag category_id media_type_id filename url
-                          contrib_id checked_out_by may_see may_edit 
+                          contrib_id checked_out_by may_see may_edit media_uuid
                           mime_type );
     foreach my $key (keys %args) {
         if ( grep { $key eq $_ } @simple_keys ) {
@@ -1686,6 +1700,7 @@ sub serialize_xml {
 
     # basic fields
     $writer->dataElement(media_id   => $self->{media_id});
+    $writer->dataElement(media_uuid => $self->{media_uuid});
     $writer->dataElement(media_type => $media_type{$self->{media_type_id}});
     $writer->dataElement(title      => $self->{title});
     $writer->dataElement(filename   => $self->{filename});
@@ -1747,7 +1762,7 @@ sub deserialize_xml {
     # divide FIELDS into simple and complex groups
     my (%complex, %simple);
     @complex{qw(media_id filename publish_date creation_date checked_out_by
-                version url published_version category_id)} = ();
+                version url published_version category_id media_uuid)} = ();
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
     
     # parse it up
@@ -1756,24 +1771,46 @@ sub deserialize_xml {
                                     suppressempty => 1);
 
     # is there an existing object?
-    my ($media) = pkg('Media')->find(url => $data->{url});
-    my $update = 0;
-    if ($media) {
+    my $media;
+
+    # start with UUID lookup
+    unless ($args{no_uuid} and $data->{media_uuid}) {
+        ($media) = $pkg->find(media_uuid  => $data->{media_uuid});
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(message =>
+                  "A media object with the UUID '$data->{media_uuid}' already"
+                  . " exists and no_update is set.")
+          if $media and $no_update;
+    }
+
+    # proceed to URL lookup if no dice
+    unless ($media or $args{uuid_only}) {
+        ($media) = pkg('Media')->find(url => $data->{url});
+
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
             message => "A media object with the url '$data->{url}' already ".
                        "exists and no_update is set.")
-            if $no_update;
+            if $media and $no_update;
+    }
 
+    my $update = 0;
+    if ($media) {
         # update simple fields
         $media->{$_} = $data->{$_} for keys %simple;
+
+        # update the category, which can change now with UUID matching
+        my $category_id = $set->map_id(class => pkg('Category'),
+                                       id    => $data->{category_id});
+        $media->category_id($category_id);
         
         # set the update flag
         $update = 1;
 
     } else {
         # create a new media object with category and simple fields
-        my $category_id = $set->map_id(class => "Krang::Category",
+        my $category_id = $set->map_id(class => pkg('Category'),
                                        id    => $data->{category_id});
         assert(pkg('Category')->find(category_id => $category_id, count => 1))
           if ASSERT;
@@ -1787,6 +1824,10 @@ sub deserialize_xml {
                                    (map { ($_,$data->{$_}) } keys %simple));
 
     }
+
+    # preserve UUID if available
+    $media->{media_uuid} = $data->{media_uuid} 
+      if $data->{media_uuid} and not $args{no_uuid};
       
     # get hash of contrib type names to ids
     my %contrib_types = reverse pkg('Pref')->get('contrib_type');

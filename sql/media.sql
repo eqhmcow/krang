@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS media;
 
 CREATE TABLE media (
         media_id                mediumint unsigned NOT NULL auto_increment,
+        media_uuid              CHAR(36) NOT NULL,
         category_id             mediumint unsigned NOT NULL,
         title                   varchar(255) NOT NULL,
         filename                varchar(255) NOT NULL,
@@ -27,7 +28,8 @@ CREATE TABLE media (
         KEY (media_type_id),
 	KEY (url),
         KEY (title),
-	KEY (checked_out_by)
+	KEY (checked_out_by),
+        UNIQUE KEY (media_uuid)
 ) TYPE=MyISAM;
 
 DROP TABLE IF EXISTS media_version;

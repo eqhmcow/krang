@@ -101,6 +101,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'Publisher';
+use Krang::ClassLoader 'UUID';
 
 #
 # Package Variables
@@ -109,6 +110,7 @@ use Krang::ClassLoader 'Publisher';
 ############
 # Read-only fields for the object
 use constant TEMPLATE_RO => qw(template_id
+                               template_uuid
 			       checked_out
 			       checked_out_by
 			       creation_date
@@ -645,6 +647,8 @@ The list valid search fields is:
 
 =item * template_id
 
+=item * template_uuid
+
 =item * testing
 
 =item * version
@@ -934,6 +938,7 @@ sub init {
     $self->{deployed}       = 0;
     $self->{testing}        = 0;
     $self->{creation_date}  = localtime();
+    $self->{template_uuid}  = pkg('UUID')->new();
 
     $self->hash_init(%args);
 
@@ -1204,6 +1209,7 @@ sub serialize_xml {
                         'template.xsd');
 
     $writer->dataElement( template_id => $self->{template_id} );
+    $writer->dataElement( template_uuid => $self->{template_uuid} );
     $writer->dataElement( filename => $self->{filename} );
     $writer->dataElement( url => $self->{url} );
     $writer->dataElement( category_id => $self->{category_id} )
@@ -1244,8 +1250,11 @@ sub deserialize_xml {
     my (%complex, %simple);
 
     # strip out all fields we don't want updated or used.
-    @complex{qw(template_id deploy_date creation_date url checked_out checked_out_by 
-                version deployed testing deployed_version category_id)} = ();
+    @complex{
+        qw(template_id deploy_date creation_date url
+          checked_out checked_out_by version deployed testing
+          deployed_version category_id template_uuid)}
+      = ();
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (TEMPLATE_RO,TEMPLATE_RW);
  
     # parse it up
@@ -1253,20 +1262,44 @@ sub deserialize_xml {
                                   suppressempty => 1);
    
     # is there an existing object?
-    my $template = (pkg('Template')->find(url => $data->{url}))[0] || '';
-    if ($template) {
+    my $template;
 
-         debug (__PACKAGE__."->deserialize_xml : found template");
+    # start with UUID lookup
+    unless ($args{no_uuid} and $data->{template_uuid}) {
+        ($template) = $pkg->find(template_uuid => $data->{template_uuid});
+
         # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(
-            message => "A template object with the url '$data->{url}' already ".
-                       "exists and no_update is set.")
-            if $no_update;
+        Krang::DataSet::DeserializationFailed->throw(message =>
+            "A template object with the UUID '$data->{template_uuid}' already"
+            . " exists and no_update is set.")
+          if $template and $no_update;
+    }
+
+    # proceed to URL lookup if no dice
+    unless ($template or $args{uuid_only}) {
+        ($template) = pkg('Template')->find(url => $data->{url});
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(message =>
+                      "A template object with the url '$data->{url}' already "
+                      . "exists and no_update is set.")
+          if $template and $no_update;
+    }
+
+    if ($template) {
+        debug (__PACKAGE__."->deserialize_xml : found template");
        
         $template->checkout;
 
         # update simple fields
         $template->{$_} = $data->{$_} for keys %simple;
+
+        # update the category, which can change now with UUID matching
+        if ($data->{category_id}) {
+            my $category_id = $set->map_id(class => pkg('Category'),
+                                           id    => $data->{category_id});
+            $template->category_id($category_id);
+        }
     
     } else {
         # create a new template object with category and simple fields

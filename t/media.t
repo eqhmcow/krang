@@ -34,6 +34,7 @@ my $subcat_id = $subcat->category_id();
 # create new media object
 my $media = pkg('Media')->new(title => 'test media object', category_id => $category_id, media_type_id => 1);
 isa_ok($media, 'Krang::Media');
+ok($media->media_uuid);
 
 # upload media file
 my $filepath = catfile(KrangRoot,'t','media','krang.jpg');
@@ -95,7 +96,14 @@ ok(-f $media->file_path, "Media file is still found on hard disk");
 # try to load it again and see if the file is still available
 my ($copy) = pkg('Media')->find(media_id => $media->media_id);
 is($media->file_path, $copy->file_path);
+is($media->media_uuid, $copy->media_uuid);
 ok(-f $copy->file_path);
+
+# find by UUID
+my ($copy2) = pkg('Media')->find(media_uuid => $media->media_uuid);
+is($media->file_path, $copy->file_path);
+is($media->media_id, $copy->media_id);
+ok(-f $copy2->file_path);
 
 $fh = new FileHandle $filepath;
 

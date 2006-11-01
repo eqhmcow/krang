@@ -5,6 +5,7 @@
 DROP TABLE IF EXISTS template;
 CREATE TABLE template (
         template_id 		int(11) UNSIGNED NOT NULL auto_increment,
+        template_uuid           CHAR(36) NOT NULL,
         category_id 		int(11) UNSIGNED,
         checked_out 		tinyint(1) UNSIGNED NOT NULL,
         checked_out_by 		int(11) UNSIGNED ,
@@ -20,7 +21,8 @@ CREATE TABLE template (
         version 		smallint UNSIGNED NOT NULL,
         PRIMARY KEY  (template_id),
         INDEX (category_id),
-        INDEX (checked_out_by)
+        INDEX (checked_out_by),
+        UNIQUE INDEX (template_uuid)
 ) TYPE=MyISAM;
 
 

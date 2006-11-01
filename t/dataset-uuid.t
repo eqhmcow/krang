@@ -9,6 +9,8 @@ use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'DataSet';
 use Krang::ClassLoader Conf    => qw(KrangRoot InstanceElementSet);
 use Krang::ClassLoader Element => qw(foreach_element);
@@ -69,10 +71,31 @@ if ($@) {
 $story->save();
 END { (pkg('Story')->find(story_id => $story->story_id))[0]->delete() }
 
-# create a data set containing the story
+# create a test media object
+my $media =
+  pkg('Media')
+  ->new(title => 'test media object', category_id => $category->category_id,
+        media_type_id => 1);
+my $filepath = catfile(KrangRoot, 't', 'media', 'krang.jpg');
+my $fh = new FileHandle $filepath;
+$media->upload_file(filename => 'krang.jpg', filehandle => $fh);
+$media->save();
+END { (pkg('Media')->find(media_id => $media->media_id))[0]->delete() }
+
+# create a test template
+my $template = pkg('Template')->new(
+                                   category => $category,
+                                   content => '<blink><tmpl_var bob></blink>',
+                                   filename => 'bob.tmpl');
+$template->save();
+END { $template->delete() }
+
+# create a data set containing the story and media
 my $set = pkg('DataSet')->new();
 isa_ok($set, 'Krang::DataSet');
 $set->add(object => $story);
+$set->add(object => $media);
+$set->add(object => $template);
 
 # write it out
 my $path = catfile(KrangRoot, 'tmp', 'test.kds');
@@ -89,13 +112,32 @@ END { unlink($path) if ($path and -e $path) }
     my $new_url = $story->url;
     isnt($old_url, $new_url, "URL changed");
 
+    my $old_media_url = $media->url;
+    $media->category_id($category2->category_id);
+    $media->save();
+    my $new_media_url = $media->url;
+    isnt($old_media_url, $new_media_url, "media URL changed");
+
+    my $old_template_url = $template->url;
+    $template->category_id($category2->category_id);
+    $template->save();
+    my $new_template_url = $template->url;
+    isnt($old_template_url, $new_template_url, "template URL changed");
+
     pkg('DataSet')->new(path => $path)->import_all();
 
-    my ($found) = Krang::Story->find(story_id => $story->story_id);
+    my ($found) = pkg('Story')->find(story_id => $story->story_id);
     is($found->url, $old_url);
+
+    my ($found2) = pkg('Media')->find(media_id => $media->media_id);
+    is($found2->url, $old_media_url);
+
+    my ($found3) =
+      pkg('Template')->find(template_id => $template->template_id);
+    is($found3->url, $old_template_url);
 }
 
-# try an import with UUID matching off - should create a copy of the story
+# try an import with UUID matching off - should create copies
 {
     my ($s) = pkg('Story')->find(story_id => $story->story_id);
     my $old_url = $s->url;
@@ -132,9 +174,7 @@ END { unlink($path) if ($path and -e $path) }
               undef, '98DBE9EE-684A-11DB-8805-80D0EC6873C7', $story->story_id
              );
 
-    eval { 
-        pkg('DataSet')->new(path => $path)->import_all(uuid_only => 1);
-    };
+    eval { pkg('DataSet')->new(path => $path)->import_all(uuid_only => 1); };
     ok($@);
     isa_ok($@, 'Krang::DataSet::ImportRejected');
     like($@->message, qr/primary url.*already exists/);

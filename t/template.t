@@ -43,6 +43,7 @@ $tmpl = pkg('Template')->new(category_id => $category->category_id(),
                              filename => 'bob.tmpl');
 isa_ok($tmpl, 'Krang::Template');
 isa_ok($tmpl->creation_date, 'Time::Piece');
+ok($tmpl->template_uuid);
 
 # test category meth
 my $cat = $tmpl->category;
