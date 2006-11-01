@@ -55,6 +55,7 @@ isa_ok($@, 'Krang::User::MissingGroup', "Not allowed to save user without groups
 $user->group_ids_push(1);
 $user->save();
 like($user->user_id(), qr/^\d+$/, 'save() - success');
+ok($user->user_uuid());
 
 # getters
 ##########

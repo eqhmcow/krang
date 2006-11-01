@@ -104,6 +104,7 @@ require Exporter;
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw/critical debug info/;
 use Krang::ClassLoader Conf => qw/PasswordChangeTime PasswordChangeCount/;
+use Krang::ClassLoader 'UUID';
 use Krang::Cache;
 
 #
@@ -112,7 +113,7 @@ use Krang::Cache;
 # Constants
 ############
 # Read-only fields
-use constant USER_RO => qw(user_id);
+use constant USER_RO => qw(user_id user_uuid);
 
 # Read-write fields
 use constant USER_RW => qw(email
@@ -195,6 +196,11 @@ for this field see L<Class::MethodMaker>
 
 The id of the current object in the database's user table
 
+=item * user_uuid (read-only)
+
+A unique id of the current object valid between systems when the
+object is moved via krang_export/krang_import.
+
 =back
 
 =head2 METHODS
@@ -254,6 +260,8 @@ sub init {
     # hidden defaults to 0
     $args{hidden} = 0 unless exists $args{hidden};
 
+    $self->{user_uuid} = pkg('UUID')->new();
+    
     $self->hash_init(%args);
 
     # set password
@@ -467,6 +475,8 @@ characters must surround the sub-striqng).  The valid search fields are:
 =item * phone
 
 =item * user_id
+
+=item * user_uuid
 
 =item * simple_search
 
@@ -879,6 +889,7 @@ sub serialize_xml {
                         'user.xsd');
 
     $writer->dataElement( user_id => $self->{user_id} );
+    $writer->dataElement( user_uuid => $self->{user_uuid} );
     $writer->dataElement( login => $self->{login} );
     $writer->dataElement( password => $self->{password} );
     $writer->dataElement( first_name => $self->{first_name} );
@@ -929,22 +940,45 @@ sub deserialize_xml {
                                   suppressempty => 1,
                                   forcearray => ['group_id'] );
     
+
     # is there an existing object?
-    my $user = (pkg('User')->find(login => $data->{login}))[0] || '';
+    my $user;
+
+    # start with UUID lookup
+    unless ($args{no_uuid} and $data->{user_uuid}) {
+        ($user) = $pkg->find(user_uuid  => $data->{user_uuid});
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(message =>
+                  "A user object with the UUID '$data->{user_uuid}' already"
+                  . " exists and no_update is set.")
+          if $user and $no_update;
+    }
+
+    # proceed to login lookup if no dice
+    unless ($user or $args{uuid_only}) {
+        ($user) = pkg('User')->find(login => $data->{login});
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(message =>
+                      "A user object with the login '$data->{login}' already "
+                      . "exists and no_update is set.")
+          if $user and $no_update;
+    }
 
     if ($user) {
         debug (__PACKAGE__."->deserialize_xml : found user");
-        # if not updating this is fatal
-        Krang::DataSet::DeserializationFailed->throw(
-            message => "A user object with the login '$data->{login}' already ".                       "exists and no_update is set.")
-            if $no_update;
-        
+
         # update simple fields
         $user->{$_} = $data->{$_} for keys %fields;
         $user->password($data->{password}, 1);     
     } else {
         $user = pkg('User')->new ( password => $data->{password}, encrypted => 1, (map { ($_,$data->{$_}) } keys %fields));
     }
+
+    # preserve UUID if available
+    $user->{user_uuid} = $data->{user_uuid} 
+      if $data->{user_uuid} and not $args{no_uuid};
 
     my @group_ids = @{$data->{group_id}};
     my @new_group_ids;

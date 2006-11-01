@@ -3,6 +3,7 @@
 DROP TABLE IF EXISTS user;
 CREATE TABLE user (
         user_id          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        user_uuid        CHAR(36) NOT NULL,
         email            VARCHAR(255),
         first_name	     VARCHAR(64),
         last_name	     VARCHAR(64),

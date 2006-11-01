@@ -106,6 +106,13 @@ my $template = pkg('Template')->new(
 $template->save();
 END { $template->delete() }
 
+# create a test user
+my $user = pkg('User')->new(login    => 'testing',
+                            password => 'dataset!');
+$user->group_ids_push(1);
+$user->save();
+END { $user->delete }
+
 # create a data set containing the story and media
 my $set = pkg('DataSet')->new();
 isa_ok($set, 'Krang::DataSet');
@@ -114,6 +121,7 @@ $set->add(object => $media);
 $set->add(object => $template);
 $set->add(object => $site3);
 $set->add(object => $sub_cat);
+$set->add(object => $user);
 
 # write it out
 my $path = catfile(KrangRoot, 'tmp', 'test.kds');
@@ -154,6 +162,12 @@ END { unlink($path) if ($path and -e $path) }
     my $new_cat_url = $sub_cat->url;
     isnt($old_cat_url, $new_cat_url, "category URL changed");
 
+    my $old_login = $user->login;
+    $user->login('testing2');
+    $user->save();
+    my $new_login = $user->login;
+    isnt($old_login, $new_login, "user login changed");
+
     pkg('DataSet')->new(path => $path)->import_all();
 
     my ($found) = pkg('Story')->find(story_id => $story->story_id);
@@ -172,6 +186,10 @@ END { unlink($path) if ($path and -e $path) }
     my ($found_cat) =
       pkg('Category')->find(category_id => $sub_cat->category_id);
     is($found_cat->url, $old_cat_url, "Category reverted to old URL");
+
+    my ($found_user) =
+      pkg('User')->find(user_id => $user->user_id);
+    is($found_user->login, $old_login, "User reverted to old login");
 }
 
 # try an import with UUID matching off - should create copies
@@ -216,5 +234,4 @@ END { unlink($path) if ($path and -e $path) }
     isa_ok($@, 'Krang::DataSet::ImportRejected');
     like($@->message, qr/primary url.*already exists/);
 }
-
 
