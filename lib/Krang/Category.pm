@@ -116,6 +116,7 @@ use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'Group';
+use Krang::ClassLoader 'UUID';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 
 #
@@ -125,6 +126,7 @@ use Krang::ClassLoader Log => qw(debug assert ASSERT);
 ############
 # Read-only fields
 use constant CATEGORY_RO => qw( category_id
+                                category_uuid
 			        element_id
 			        url );
 
@@ -397,6 +399,8 @@ sub init {
     my $user_id = $ENV{REMOTE_USER} || croak("No user_id set");
     $self->{may_see}{$user_id} = 1;
     $self->{may_edit}{$user_id} = 1;
+
+    $self->{category_uuid} = pkg('UUID')->new();
 
     return $self;
 }
@@ -1182,6 +1186,7 @@ sub serialize_xml {
                         'category.xsd');
 
     $writer->dataElement(category_id   => $self->category_id);
+    $writer->dataElement(category_uuid => $self->category_uuid);
     $writer->dataElement(site_id => $self->site_id);
     if ($self->parent_id) {
         $writer->dataElement(parent_id => $self->parent_id);
@@ -1218,19 +1223,36 @@ sub deserialize_xml {
                                   suppressempty => 1,
                                   forcearray    => ['element', 'data']);
 
-    # is there an existing category with this URL?
-    my ($dup) = pkg('Category')->find(url => $data->{url});
-    return $dup if $dup and $skip_update;
+    # is there an existing object?
+    my $category;
 
-    if ($dup) {
+    # start with UUID lookup
+    unless ($args{no_uuid} and $data->{category_uuid}) {
+        ($category) = $pkg->find(category_uuid  => $data->{category_uuid});
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(message =>
+                  "A category object with the UUID '$data->{category_uuid}' already"
+                  . " exists and no_update is set.")
+          if $category and $no_update;
+    }
+
+    # proceed to URL lookup if no dice
+    unless ($category or $args{uuid_only}) {
+        ($category) = pkg('Category')->find(url => $data->{url});
+
+        # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
-            message => "A category with the URL ".
-                       "$data->{url} already exists and ".
-                       "no_update is set.")
-            if $no_update and $data->{parent_id};
+            message => "A category object with the url '$data->{url}' already ".
+                       "exists and no_update is set.")
+            if $category and $no_update;
+    }
 
-        $pkg->_update_category_data($set, $dup, $data, $no_update);
-        return $dup;
+    if ($category) {
+        return $category if $skip_update;
+
+        $pkg->_update_category_data($set, $category, $data, $no_update, %args);
+        return $category;
     }
 
     # get import site_id
@@ -1248,8 +1270,9 @@ sub deserialize_xml {
         # get site_id for root category
         $site_id = $set->map_id(class => "Krang::Site",
                                 id    => $data->{site_id});
-        my ($new_c) = pkg('Category')->find( url => $data->{url} );
-        $pkg->_update_category_data($set, $new_c, $data, $no_update);
+        my ($new_c) = pkg('Category')->find( site_id => $site_id,
+                                             parent_id => undef );
+        $pkg->_update_category_data($set, $new_c, $data, $no_update, %args);
         return $new_c;
     }
 
@@ -1263,14 +1286,22 @@ sub deserialize_xml {
                                   );
     # save the new category.
     $cat->save();
-    $pkg->_update_category_data($set, $cat, $data, $no_update);
+    $pkg->_update_category_data($set, $cat, $data, $no_update, %args);
 
     return $cat;
 }
 
 sub _update_category_data {
-    my ($pkg, $set, $cat, $data, $no_update) = @_;
+    my ($pkg, $set, $cat, $data, $no_update, %args) = @_;
 
+    # update dir, which can change now with UUID matching
+    $cat->dir($data->{dir});
+
+    # preserve UUID if available
+    $cat->{category_uuid} = $data->{category_uuid} 
+      if $data->{category_uuid} and not $args{no_uuid};
+
+    
     # register id before deserializing elements, since they may
     # contain circular references
     $set->register_id(class     => 'Krang::Category',

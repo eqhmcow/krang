@@ -41,12 +41,15 @@ my $site2 = pkg('Site')->new(publish_path => 'sites/test1/',
                              preview_url => 'preview.testsite.t',
                              url => 'testsite.t');
 isa_ok($site2, 'Krang::Site', 'new() test');
-
+ok($site2->site_uuid);
 
 # save tests
 #############
 $site2->save();
 isa_ok($site2, 'Krang::Site', 'save() test');
+
+my ($found) = pkg('Site')->find(site_uuid => $site2->site_uuid);
+is($found->site_id, $site2->site_id);
 
 # duplicate test
 my $site3 = pkg('Site')->new(publish_path => 'sites/test2/',

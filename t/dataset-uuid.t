@@ -34,6 +34,15 @@ $site->save();
 END { $site->delete() }
 my ($category) = pkg('Category')->find(site_id => $site->site_id());
 
+my $sub_cat = pkg('Category')->new(dir       => 'foo',
+                                   parent_id => $category->category_id,
+                                   site_id   => $site->site_id);
+$sub_cat->save();
+
+END {
+    (pkg('Category')->find(category_id => $sub_cat->category_id))[0]->delete;
+}
+
 my $site2 = pkg('Site')->new(preview_url  => 'storytest2.preview.com',
                              url          => 'storytest2.com',
                              publish_path => '/tmp/storytest_publish2',
@@ -41,6 +50,14 @@ my $site2 = pkg('Site')->new(preview_url  => 'storytest2.preview.com',
 $site2->save();
 END { $site2->delete() }
 my ($category2) = pkg('Category')->find(site_id => $site2->site_id());
+
+my $site3 = pkg('Site')->new(preview_url  => 'storytest3.preview.com',
+                             url          => 'storytest3.com',
+                             publish_path => '/tmp/storytest_publish3',
+                             preview_path => '/tmp/storytest_preview3');
+$site3->save();
+END { $site3->delete() }
+my ($category3) = pkg('Category')->find(site_id => $site3->site_id());
 
 # create a new story
 my $story;
@@ -72,10 +89,9 @@ $story->save();
 END { (pkg('Story')->find(story_id => $story->story_id))[0]->delete() }
 
 # create a test media object
-my $media =
-  pkg('Media')
-  ->new(title => 'test media object', category_id => $category->category_id,
-        media_type_id => 1);
+my $media = pkg('Media')->new(
+          title => 'test media object', category_id => $category->category_id,
+          media_type_id => 1);
 my $filepath = catfile(KrangRoot, 't', 'media', 'krang.jpg');
 my $fh = new FileHandle $filepath;
 $media->upload_file(filename => 'krang.jpg', filehandle => $fh);
@@ -96,6 +112,8 @@ isa_ok($set, 'Krang::DataSet');
 $set->add(object => $story);
 $set->add(object => $media);
 $set->add(object => $template);
+$set->add(object => $site3);
+$set->add(object => $sub_cat);
 
 # write it out
 my $path = catfile(KrangRoot, 'tmp', 'test.kds');
@@ -103,8 +121,8 @@ $set->write(path => $path);
 ok(-e $path and -s $path);
 END { unlink($path) if ($path and -e $path) }
 
-# try moving the story and then re-importing - UUID match should move
-# the story back
+# try moving the objects and then re-importing - UUID match should
+# move them back
 {
     my $old_url = $story->url;
     $story->categories([$category2]);
@@ -124,6 +142,18 @@ END { unlink($path) if ($path and -e $path) }
     my $new_template_url = $template->url;
     isnt($old_template_url, $new_template_url, "template URL changed");
 
+    my $old_site_url = $site3->url;
+    $site3->url("new.example.com");
+    $site3->save();
+    my $new_site_url = $site3->url;
+    isnt($old_site_url, $new_site_url, "site URL changed");
+
+    my $old_cat_url = $sub_cat->url;
+    $sub_cat->dir("bar");
+    $sub_cat->save();
+    my $new_cat_url = $sub_cat->url;
+    isnt($old_cat_url, $new_cat_url, "category URL changed");
+
     pkg('DataSet')->new(path => $path)->import_all();
 
     my ($found) = pkg('Story')->find(story_id => $story->story_id);
@@ -135,6 +165,13 @@ END { unlink($path) if ($path and -e $path) }
     my ($found3) =
       pkg('Template')->find(template_id => $template->template_id);
     is($found3->url, $old_template_url);
+
+    my ($found_site) = pkg('Site')->find(site_id => $site3->site_id);
+    is($found_site->url, $old_site_url, "Site reverted to old URL");
+
+    my ($found_cat) =
+      pkg('Category')->find(category_id => $sub_cat->category_id);
+    is($found_cat->url, $old_cat_url, "Category reverted to old URL");
 }
 
 # try an import with UUID matching off - should create copies
@@ -179,4 +216,5 @@ END { unlink($path) if ($path and -e $path) }
     isa_ok($@, 'Krang::DataSet::ImportRejected');
     like($@->message, qr/primary url.*already exists/);
 }
+
 

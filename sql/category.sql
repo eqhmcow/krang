@@ -5,6 +5,7 @@
 DROP TABLE IF EXISTS category;
 CREATE TABLE category (
         category_id	int UNSIGNED NOT NULL AUTO_INCREMENT,
+        category_uuid   CHAR(36) NOT NULL,
         element_id      int UNSIGNED,
         dir		varchar(255) NOT NULL,
         parent_id	int UNSIGNED,

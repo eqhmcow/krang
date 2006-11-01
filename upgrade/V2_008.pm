@@ -64,7 +64,7 @@ sub per_instance {
     warn("Failed to add password_changed column to user table: $@") if ($@);
 
     # add UUID columns
-    foreach my $table (qw(story media template)) {
+    foreach my $table (qw(story media template site category)) {
         eval {
             $dbh->do(  "ALTER TABLE $table ADD COLUMN "
                      . "${table}_uuid CHAR(36) NOT NULL");

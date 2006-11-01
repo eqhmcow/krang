@@ -91,6 +91,7 @@ use Exception::Class
 # Internal Modules
 ###################
 use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'UUID';
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw/ affirm assert should shouldnt ASSERT/;
 
@@ -100,7 +101,7 @@ use Krang::ClassLoader Log => qw/ affirm assert should shouldnt ASSERT/;
 # Constants
 ############
 # Read-only fields
-use constant SITE_RO => qw(site_id);
+use constant SITE_RO => qw(site_id site_uuid);
 
 # Read-write fields
 use constant SITE_RW => qw(preview_path
@@ -155,6 +156,11 @@ Full filesystem path under which the media and stories are published.
 
 Integer which identifies the database rows associated with this site object.
 
+=item * site_uuid (read-only)
+
+Unique ID which identfies a site across different machines when moved
+via krang_export/krang_import.
+
 =item * url
 
 Base URL where site content is found.  Categories and consequently media and
@@ -203,6 +209,8 @@ sub init {
         croak(__PACKAGE__ . "->init(): Required argument '$_' not present.")
           unless exists $args{$_};
     }
+
+    $self->{site_uuid} = pkg('UUID')->new();
 
     $self->url($args{url}) if exists $args{url};
 
@@ -349,6 +357,8 @@ characters must surround the sub-string).  The valid search fields are:
 =item * publish_path
 
 =item * site_id
+
+=item * site_uuid
 
 =item * url
 
@@ -655,7 +665,7 @@ sub serialize_xml {
                         'site.xsd');
 
     $writer->dataElement($_, $self->$_)
-      for qw(site_id url preview_url publish_path preview_path);
+      for qw(site_id site_uuid url preview_url publish_path preview_path);
     $writer->endTag('site');
 }
 
@@ -680,24 +690,46 @@ sub deserialize_xml {
     my $data = pkg('XML')->simple(xml           => $xml, 
                                   suppressempty => 1);
     
+    # is there an existing object?
+    my $site;
 
-    # is there an existing site with this URL?
-    my ($dup) = pkg('Site')->find(url => $data->{url});
-    return $dup if $dup and $skip_update;
-    
-    if ($dup) {
-        Krang::DataSet::DeserializationFailed->throw(
-            message => "A site with the URL ".
-                       "$data->{url} already exists and ".
-                       "no_update is set.")
-            if $no_update;
-        
-        # otherwise, skip the import
-        return $dup;
+    # start with UUID lookup
+    unless ($args{no_uuid} and $data->{site_uuid}) {
+        ($site) = $pkg->find(site_uuid  => $data->{site_uuid});
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(message =>
+                  "A site object with the UUID '$data->{site_uuid}' already"
+                  . " exists and no_update is set.")
+          if $site and $no_update;
     }
 
-    # create a new site
-    my $site = pkg('Site')->new(map { ($_, $data->{$_}) } keys %site_args);
+    # proceed to URL lookup if no dice
+    unless ($site or $args{uuid_only}) {
+        ($site) = pkg('Site')->find(url => $data->{url});
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(
+            message => "A site object with the url '$data->{url}' already ".
+                       "exists and no_update is set.")
+            if $site and $no_update;
+    }
+
+    if ($site) {
+        return $site if $skip_update;
+
+        # update URLs, ignore paths (these can change now with UUID matches)
+        $site->url($data->{url});
+        $site->preview_url($data->{preview_url});
+    } else {
+        # create a new site
+        $site = pkg('Site')->new(map { ($_, $data->{$_}) } keys %site_args);
+    }
+
+    # preserve UUID if available
+    $site->{site_uuid} = $data->{site_uuid} 
+      if $data->{site_uuid} and not $args{no_uuid};
+
     $site->save();
 
     return $site;

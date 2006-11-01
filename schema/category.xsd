@@ -5,6 +5,13 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="category_id" type="xs:int"/>
+                <xs:element name="category_uuid" minOccurs="0" maxOccurs="1">
+                  <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                      <xs:pattern value="^[0-9A-F]{8}-([0-9A-Z]{4}-){3}[0-9A-F]{12}$"/>
+                    </xs:restriction>
+                  </xs:simpleType>
+                </xs:element>
                 <xs:element name="site_id" type="xs:int"/>
                 <xs:element name="parent_id" type="xs:int" minOccurs="0"/>
                 <xs:element name="dir" type="xs:string"/>
