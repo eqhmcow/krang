@@ -12,6 +12,8 @@
 #
 #   db    - recreates databases by calling bin/krang_createdb
 #
+#   db_q  - recreates databases by calling bin/krang_createdb with no prompt
+#
 #   docs  - build HTML docs from pod
 #
 #   elements - rebuild test element trees in t/elements from Bricolage 
@@ -66,6 +68,9 @@ bench_clean:
 
 db:
 	bin/krang_createdb --destroy --all
+
+db_q:
+	bin/krang_createdb --destroy --all --no_prompt
 
 docs:
 	cd docs && $(MAKE)
