@@ -207,6 +207,7 @@ eval { $group->save(); };
 ok(not($@), "Save without die");
 die ($@) if ($@);
 ok(($group->group_id > 0), "Create and save new group");
+ok($group->group_uuid);
 
 # Test create non-unique name
 eval { pkg('Group')->new(name=>$unique_group_name)->save() };

@@ -128,6 +128,7 @@ use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'UUID';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::Cache;
 
@@ -138,6 +139,7 @@ use Exception::Class ( 'Krang::Group::DuplicateName' => { fields => [ 'group_id'
 
 # Database fields in table group_permission, asidde from group_id
 use constant FIELDS => qw( name
+                           group_uuid
                            may_publish
                            may_checkin_all
                            admin_users
@@ -223,6 +225,7 @@ sub init {
                     asset_story         => 'edit',
                     asset_media         => 'edit',
                     asset_template      => 'edit',
+                    group_uuid          => pkg('UUID')->new(),
                    );
 
     # Set up defaults for category and desk permissions
@@ -321,6 +324,7 @@ sub find {
                                simple_search
                                group_id
                                group_ids
+                               group_uuid
                                name
                                name_like
                               );
@@ -365,6 +369,16 @@ sub find {
         push(@sql_where_data, $search);
     }
 
+
+    # group_uuid
+    if (my $search = $args{group_uuid}) {
+        if (defined $search) {
+            push(@sql_wheres, "group_uuid = ?" );
+            push(@sql_where_data, $search);
+        } else {
+            push(@sql_wheres, "group_id IS NULL" );
+        }
+    }
 
     # group_ids
     if (my $search = $args{group_ids}) {
@@ -626,6 +640,8 @@ sub serialize_xml {
                         'group.xsd');
 
     $writer->dataElement( group_id => $self->{group_id} );
+    $writer->dataElement( group_uuid => $self->{group_uuid} )
+      if $self->{group_uuid};
     $writer->dataElement( name => $self->{name} );
    
     # categories
@@ -688,25 +704,43 @@ sub deserialize_xml {
     my (%complex, %simple);
     
     # strip out all fields we don't want updated or used or we want to deal with manually.
-    @complex{qw(group_id)} = ();
+    @complex{qw(group_id group_uuid)} = ();
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
 
        # parse it up
     my $data = pkg('XML')->simple(  xml           => $xml,
                                     forcearray => ['category','desk'],
                                     suppressempty => 1);
-    
+
     # is there an existing object?
-    my $group = (pkg('Group')->find(name => $data->{name}))[0] || '';
-    if ($group) {
-         
-        debug (__PACKAGE__."->deserialize_xml : found group");
-        
+    my $group;
+
+    # start with UUID lookup
+    unless ($args{no_uuid} and $data->{group_uuid}) {
+        ($group) = $pkg->find(group_uuid  => $data->{group_uuid});
+
+        # if not updating this is fatal
+        Krang::DataSet::DeserializationFailed->throw(message =>
+                  "A group object with the UUID '$data->{group_uuid}' already"
+                  . " exists and no_update is set.")
+          if $group and $no_update;
+    }
+
+    # proceed to name lookup if no dice
+    unless ($group or $args{uuid_only}) {
+        ($group) = pkg('Group')->find(name => $data->{name});
+
         # if not updating this is fatal
         Krang::DataSet::DeserializationFailed->throw(
-            message => "A group object with the name '$data->{name}' already ".
-                       "exists and no_update is set.")
-            if $no_update;
+            message => "A group object with the name '$data->{name}' already "
+              . "exists and no_update is set.")
+          if $group and $no_update;
+    }
+
+    
+    # is there an existing object?
+    if ($group) {         
+        debug (__PACKAGE__."->deserialize_xml : found group");
         
         # update simple fields
         $group->{$_} = $data->{$_} for keys %simple;
@@ -714,6 +748,10 @@ sub deserialize_xml {
     } else {
         $group = pkg('Group')->new((map { ($_,$data->{$_}) } keys %simple));
     }
+
+    # preserve UUID if available
+    $group->{group_uuid} = $data->{group_uuid} 
+      if $data->{group_uuid} and not $args{no_uuid};
 
     # take care of category association
     if ($data->{category}) {
@@ -1526,7 +1564,7 @@ sub debug_sql {
     my ($query, $param) = ( @_ );
 
     debug(__PACKAGE__ . "::find() SQL: " . $query);
-    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @$param));
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', map { defined $_ ? $_ : 'undef' } @$param));
 }
 
 

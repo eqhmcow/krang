@@ -64,12 +64,19 @@ sub per_instance {
     warn("Failed to add password_changed column to user table: $@") if ($@);
 
     # add UUID columns
-    foreach my $table (qw(story media template site category)) {
+    foreach my $table (qw(story media template site category user group)) {
         eval {
             $dbh->do(  "ALTER TABLE $table ADD COLUMN "
                      . "${table}_uuid CHAR(36) NOT NULL");
         };
         warn("Failed to add ${table}_uuid column to $table table: $@") if $@;
+
+        eval {
+            my $unique = $table eq 'group' ? "UNIQUE" : "";
+            $dbh->do(  "CREATE $unique INDEX ${table}_uuid_index "
+                     . "ON $table (${table}_uuid)");
+        };
+        warn("Failed to add index for ${table}_uuid column: $@") if $@;
 
         # give all objects a distinct UUID, could take a while for
         # large tables
@@ -88,7 +95,7 @@ sub per_instance {
     }
 }
 
-# add new krang.conf directive, Charset
+# nothing yet
 sub per_installation { }
 
 1;

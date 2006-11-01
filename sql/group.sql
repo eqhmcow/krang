@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS asset_group_permission;
 DROP TABLE IF EXISTS group_permission;  /* "group" is a reserved word. */
 CREATE TABLE group_permission (
         group_id             SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+        group_uuid           CHAR(36),
         name                 VARCHAR(255) NOT NULL DEFAULT "",
         may_publish          BOOL NOT NULL DEFAULT 0,
         may_checkin_all      BOOL NOT NULL DEFAULT 0,
@@ -29,13 +30,16 @@ CREATE TABLE group_permission (
         admin_lists          BOOL NOT NULL DEFAULT 0,
         asset_story          ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
         asset_media          ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
-        asset_template       ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide"
+        asset_template       ENUM ("hide", "read-only", "edit") NOT NULL DEFAULT "hide",
+
+        INDEX (group_uuid)
 );
 
-/* set up default groups */
-INSERT INTO group_permission VALUES (1, 'Admin'  , 1,1,1,0,1,1,1,1,0,1,1,1,1, "edit", "edit", "edit");
-INSERT INTO group_permission VALUES (2, 'Editor' , 1,0,1,1,0,1,0,1,0,1,0,0,0, "edit", "edit", "read-only");
-INSERT INTO group_permission VALUES (3, 'Default', 0,0,0,0,0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
+/* set up default groups w/ null UUIDs - getting real ones via Krang::UUID 
+   would be better, but how? */
+INSERT INTO group_permission VALUES (1, NULL, 'Admin'  , 1,1,1,0,1,1,1,1,0,1,1,1,1, "edit", "edit", "edit");
+INSERT INTO group_permission VALUES (2, NULL, 'Editor' , 1,0,1,1,0,1,0,1,0,1,0,0,0, "edit", "edit", "read-only");
+INSERT INTO group_permission VALUES (3, NULL, 'Default', 0,0,0,0,0,0,0,0,0,0,0,0,0, "read-only", "read-only", "hide");
 
 
 /* Join table: desk <-> group_permission */

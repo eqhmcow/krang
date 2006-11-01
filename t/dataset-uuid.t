@@ -11,6 +11,8 @@ use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'Group';
 use Krang::ClassLoader 'DataSet';
 use Krang::ClassLoader Conf    => qw(KrangRoot InstanceElementSet);
 use Krang::ClassLoader Element => qw(foreach_element);
@@ -106,10 +108,15 @@ my $template = pkg('Template')->new(
 $template->save();
 END { $template->delete() }
 
+# create a test group
+my $group = pkg('Group')->new(name => 'testing_group');
+$group->save;
+END { $group->delete }
+
 # create a test user
 my $user = pkg('User')->new(login    => 'testing',
                             password => 'dataset!');
-$user->group_ids_push(1);
+$user->group_ids_push($group->group_id);
 $user->save();
 END { $user->delete }
 
@@ -168,6 +175,12 @@ END { unlink($path) if ($path and -e $path) }
     my $new_login = $user->login;
     isnt($old_login, $new_login, "user login changed");
 
+    my $old_name = $group->name;
+    $group->name('testing2');
+    $group->save();
+    my $new_name = $group->name;
+    isnt($old_name, $new_name, "group name changed");
+
     pkg('DataSet')->new(path => $path)->import_all();
 
     my ($found) = pkg('Story')->find(story_id => $story->story_id);
@@ -190,6 +203,10 @@ END { unlink($path) if ($path and -e $path) }
     my ($found_user) =
       pkg('User')->find(user_id => $user->user_id);
     is($found_user->login, $old_login, "User reverted to old login");
+
+    my ($found_group) =
+      pkg('Group')->find(group_id => $group->group_id);
+    is($found_group->name, $old_name, "Group reverted to old name");
 }
 
 # try an import with UUID matching off - should create copies
