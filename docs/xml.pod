@@ -46,6 +46,28 @@ For more examples, see the documentation for krang_export by typing:
 
   krang_import --man
 
+=head3 UUIDs
+
+Several Krang objects have universally-unique identifiers (UUIDs)
+which facilitate updates across machines when their keys have changed.
+For example, Krang story objects are normally matched via URL during
+import.  If you import a KDS file containing the
+http://example.com/foo story it will update a story with the same URL.
+Consider what would happen if you moved that story to a new URL and
+then tried to move it using a KDS file.  Without a UUID it would
+create a new story in the destination, leaving the old matching story
+in place.  However, if if a UUID match is found it will be used
+instead, and the story will be correctly updated with its new URL.
+
+Note that UUID matches are only possible for objects which share a
+common ancestor, either by copying in a KDS or via krang_backup.
+
+You can control how UUIDs are used during import with the --no-uuid
+and --uuid-only option to C<krang_import>.  See the C<krang_import>
+docs for more information:
+
+  $KRANG_ROOT/bin/krang_import --man
+
 =head1 File Formats
 
 This section describes each XML file type which may be included in a
@@ -165,6 +187,7 @@ Here is a small example story:
 
  <story xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="story.xsd">
      <story_id>100</story_id>
+     <story_uuid>98DBE9EE-684A-11DB-8805-80D0EC6873C7</story_uuid>
      <class>cover</class>
      <title>Bernstein Infrastructure Ebbing</title>
      <slug>bogeymen</slug>
@@ -242,6 +265,7 @@ Here is an example media file:
 
  <media xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="media.xsd">
      <media_id>151</media_id>
+     <media_uuid>98DBE9EE-684A-11DB-8805-80D0EC6873C7</media_uuid>
      <media_type>Image</media_type>
      <title>Lorelei Dangle Blurs</title>
      <filename>affluent.png</filename>
@@ -272,6 +296,7 @@ Here is an example template file:
 
  <template xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="template.xsd">
      <template_id>29</template_id>
+     <template_uuid>98DBE9EE-684A-11DB-8805-80D0EC6873C7</template_uuid>
      <filename>open_format_article.tmpl</filename>
      <url>/open_format_article.tmpl</url>
      <content>foo</content>
@@ -318,6 +343,7 @@ Here is an example category file:
 
  <category xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="category.xsd">
      <category_id>100</category_id>
+     <category_uuid>98DBE9EE-684A-11DB-8805-80D0EC6873C7</category_uuid>
      <site_id>27</site_id>
      <parent_id>99</parent_id>
      <dir>excusing</dir>
@@ -340,6 +366,7 @@ Here is an example site file:
 
  <site xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="site.xsd">
      <site_id>27</site_id>
+     <site_uuid>98DBE9EE-684A-11DB-8805-80D0EC6873C7</site_uuid>
      <url>equilibrium.kra</url>
      <preview_url>preview.equilibrium.kra</preview_url>
      <publish_path>/tmp/equilibrium.kra_publish</publish_path>
@@ -374,6 +401,7 @@ Here is an example user file:
 
  <user xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="user.xsd">
      <user_id>1</user_id>
+     <user_uuid>98DBE9EE-684A-11DB-8805-80D0EC6873C7</user_uuid>
      <login>admin</login>
      <password>36ca9aadabe4e2adcfcc9747dfb0ea10</password>
      <first_name>Joe</first_name>
@@ -396,6 +424,7 @@ Here is an example group file:
 
  <group xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="group.xsd">
      <group_id>1</group_id>
+     <group_uuid>98DBE9EE-684A-11DB-8805-80D0EC6873C7</group_uuid>
      <name>Admin</name>
      <category>
          <category_id>262</category_id>
