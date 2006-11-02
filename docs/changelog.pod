@@ -9,15 +9,15 @@ This document contains a list of changes for each release of Krang.
 =item *
 
 Implemented a system of univerally-unique identfiers (UUIDs) for Krang
-objects with keys that may change (stories may change their URL, users
-may change their login, etc.).  This allows updates between machines
-to propogate these changes correctly when objects are moved with
-krang_export and krang_import.  [Sam]
+objects with keys that may change (ex. stories may change their URL).
+This allows updates between machines to propogate these changes
+correctly when objects are moved with krang_export and krang_import.
+[Sam]
 
 =item *
 
 Added C<PasswordChangeTime> and C<PasswordChangeCount> directives
-to allow the forcing of users to change their password evern C<PasswordChangeTime>
+to allow the forcing of users to change their password every C<PasswordChangeTime>
 days and not permit users to use old passwords with C<PasswordChangeCount>
 changes. [Michael Peters]
 
