@@ -74,6 +74,8 @@ use constant STORY_FIELDS =>
       hidden
     );
 
+sub id_meth { 'story_id' }
+
 # called by get_set_with_notify attibutes.  Catches changes that must
 # invalidate the URL cache.
 sub _notify {
@@ -2132,7 +2134,7 @@ sub deserialize_xml {
     
     # start with a UUID lookup
     my $match_type;
-    unless ($args{no_uuid} and $data->{story_uuid}) {
+    if (not $args{no_uuid} and $data->{story_uuid}) {
         ($story) =
           $pkg->find(story_uuid  => $data->{story_uuid},
                      show_hidden => 1);

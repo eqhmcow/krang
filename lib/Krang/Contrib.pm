@@ -104,6 +104,8 @@ use Krang::ClassLoader MethodMaker =>
     get_set       => [ qw( contrib_id prefix first middle last suffix email phone bio url )],
     list          => [ qw( contrib_type_ids ) ];
 
+sub id_meth { 'contrib_id' }
+
 sub init {
     my $self = shift;
     my %args = @_;

@@ -159,6 +159,8 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
 			list => 'group_ids';
 
 
+sub id_meth { 'user_id' }
+
 =head1 INTERFACE
 
 =head2 FIELDS
@@ -889,7 +891,8 @@ sub serialize_xml {
                         'user.xsd');
 
     $writer->dataElement( user_id => $self->{user_id} );
-    $writer->dataElement( user_uuid => $self->{user_uuid} );
+    $writer->dataElement( user_uuid => $self->{user_uuid} )
+      if $self->{user_uuid};
     $writer->dataElement( login => $self->{login} );
     $writer->dataElement( password => $self->{password} );
     $writer->dataElement( first_name => $self->{first_name} );
@@ -945,7 +948,7 @@ sub deserialize_xml {
     my $user;
 
     # start with UUID lookup
-    unless ($args{no_uuid} and $data->{user_uuid}) {
+    if (not $args{no_uuid} and $data->{user_uuid}) {
         ($user) = $pkg->find(user_uuid  => $data->{user_uuid});
 
         # if not updating this is fatal

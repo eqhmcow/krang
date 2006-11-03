@@ -149,6 +149,8 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
 			get => [CATEGORY_RO],
 			get_set => [grep { $_ ne 'parent_id' } CATEGORY_RW];
 
+sub id_meth { 'category_id' }
+
 
 =head1 INTERFACE
 
@@ -1227,7 +1229,7 @@ sub deserialize_xml {
     my $category;
 
     # start with UUID lookup
-    unless ($args{no_uuid} and $data->{category_uuid}) {
+    if (not $args{no_uuid} and $data->{category_uuid}) {
         ($category) = $pkg->find(category_uuid  => $data->{category_uuid});
 
         # if not updating this is fatal

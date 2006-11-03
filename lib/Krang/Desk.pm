@@ -79,6 +79,8 @@ use Krang::ClassLoader MethodMaker =>
     get_set       => [ qw( name ord ) ],
     get => [ qw( desk_id ) ];
 
+sub id_meth { 'desk_id' }
+
 sub init {
     my $self = shift;
     my %args = @_;
@@ -218,7 +220,8 @@ sub find {
                             ids_only => 1,
                             order_by => 1,
                             order_desc => 1,
-                            limit => 1
+                            limit => 1,
+                            offset => 1,
                         );
 
     # check for invalid params and croak if one is found
@@ -265,7 +268,14 @@ sub find {
     my $query = "$select from desk";
     $query .= " $where_clause" if $where_clause;
     $query .= " order by $order_by $order_dir";
-    $query .= " limit ".$args{limit} if $args{limit};
+    if ($args{limit}) {
+        $query .=
+          $args{offset}
+          ? " LIMIT $args{offset}, $args{limit}"
+          : " LIMIT $args{limit}";
+    } elsif ($args{offset}) {
+        $query .= " LIMIT $args{offset}, -1";
+    }
 
     my $dbh = dbh();
     my $sth = $dbh->prepare($query);

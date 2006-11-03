@@ -26,12 +26,6 @@ use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'XML::Validator';
 use List::Util qw(first);
 
-# list of supported classes
-our @CLASSES = (qw(Krang::Desk Krang::User Krang::Contrib Krang::Site 
-                   Krang::Category Krang::Alert Krang::Group Krang::Media 
-                   Krang::Template Krang::Story Krang::Schedule 
-                   Krang::ListGroup Krang::List Krang::ListItem ));
-
 # setup exceptions
 use Exception::Class 
   'Krang::DataSet::ValidationFailed' => 
@@ -50,6 +44,30 @@ use Exception::Class
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(write _write_index _validate _validate_file);
 
+# base list of classes - addons can declare more with DataSetClasses
+# in krang_addon.conf
+our @CLASSES = (pkg('Desk'),      pkg('User'),  pkg('Contrib'), pkg('Site'),
+                pkg('Category'),  pkg('Alert'), pkg('Group'),   pkg('Media'),
+                pkg('Template'),  pkg('Story'), pkg('Schedule'),
+                pkg('ListGroup'), pkg('List'),  pkg('ListItem'));
+
+sub classes {
+    my @classes = @CLASSES;
+    foreach my $addon (pkg('AddOn')->find()) {
+        my $conf = $addon->conf;
+        if ($conf->get('DataSetClasses')) {
+            push @classes, $conf->get('DataSetClasses');
+        }
+    }
+    return @classes;
+}
+
+# load all classes needed by datasets - with addons involved clients
+# can't know what they'll need to load
+foreach my $class (__PACKAGE__->classes()) {
+    eval "use $class";
+    die "Unable to load $class: $@" if $@;
+}
 
 =head1 NAME
 
@@ -84,6 +102,11 @@ Loading data sets:
 
   # import objects from the set, solving dependencies and updating links
   $set->import_all();
+
+Utility methods:
+
+  # get list of all classes available for import/export
+  my @classes = $set->classes;
 
 =head1 DESCRIPTION
 
@@ -258,7 +281,7 @@ sub add {
     my $path   = $args{path};
 
     if ($object) {
-        my ($class, $id) = _obj2id($object);
+        my ($class, $id) = $self->_obj2id($object);
 
         # been there, done that?
         return if $self->{objects}{$class}{$id}{xml};
@@ -267,7 +290,7 @@ sub add {
         $self->{add_callback}->(%args);
         
         # serialize it
-        my ($file) = ($class =~ /^Krang::(.*)$/);
+        my ($file) = ($class->id_meth =~ /(.*)_id$/);
         $file = lc($file) . '_' . $id . '.xml';
         my $path = catfile($self->{dir}, $file);
         open(my $fh, '>', $path)
@@ -294,7 +317,7 @@ sub add {
           or croak("Unable to copy file '$file' to '$full_path' : $!");
         
         # register file with caller
-        my ($from_class, $from_id) = _obj2id($from);
+        my ($from_class, $from_id) = $self->_obj2id($from);
         $self->{objects}{$from_class}{$from_id}{files} ||= [];
         push(@{$self->{objects}{$from_class}{$from_id}{files}}, $path);
      } else {
@@ -303,17 +326,10 @@ sub add {
 }
 
 sub _obj2id {
-    my $object = shift;
-    my $class = first { $object->isa($_) } @CLASSES;
-    my ($id_name) = $class =~ /^Krang::(.*)$/;
-    $id_name = lc($id_name) . "_id";
-    $id_name = 'list_item_id' if ($id_name eq 'listitem_id');
-    $id_name = 'list_group_id' if ($id_name eq 'listgroup_id');
-
-    croak("Unable to determine how to get an id from $class - " . 
-          "can($id_name) failed.")
-      unless $object->can($id_name);
-    return ($class, $object->$id_name);
+    my ($self, $object) = @_;
+    my $class = first { $object->isa($_) } $self->classes;
+    my $id_meth = $class->id_meth;
+    return ($class, $object->$id_meth);
 }
 
 =item C<< @objects = $set->list() >>
@@ -570,7 +586,7 @@ sub import_all {
     my @failed;
 
     # process classes in an order least likely to cause backrefs
-    foreach my $class (@CLASSES) {
+    foreach my $class ($self->classes) {
         foreach my $id (keys %{$objects->{$class} || {}}) {
             # might have already loaded through a call to map_id
             next if $self->{done}{$class}{$id};
@@ -630,7 +646,7 @@ sub map_id {
     
     # deserialize
     my $object = $self->_deserialize($class, $id);
-    my ($new_class, $new_id) = _obj2id($object);
+    my ($new_class, $new_id) = $self->_obj2id($object);
 
     # trigger the callback
     $self->{import_callback}->(object => $object);

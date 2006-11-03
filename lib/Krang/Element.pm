@@ -141,6 +141,8 @@ use Krang::ClassLoader MethodMaker =>
   new_hash_init => 'hash_init',    
   get_set       => [ qw( element_id ) ];
 
+sub id_meth { 'element_id' }
+
 # initialize a new object, creating children as required by the class
 # unless no_expand is passed in
 sub init {

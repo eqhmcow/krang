@@ -88,6 +88,8 @@ use Krang::ClassLoader MethodMaker =>
     get => [ RO_FIELDS ],
     get_set       => [ RW_FIELDS ];
 
+sub id_meth { 'list_id' }
+
 sub init {
     my $self = shift;
     my %args = @_;

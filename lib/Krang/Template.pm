@@ -149,6 +149,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
                                                  may_edit )],
   			get_set => [grep { $_ ne 'filename'} TEMPLATE_RW];
 
+sub id_meth { 'template_id' }
 
 =head1 INTERFACE
 
@@ -1265,7 +1266,7 @@ sub deserialize_xml {
     my $template;
 
     # start with UUID lookup
-    unless ($args{no_uuid} and $data->{template_uuid}) {
+    if (not $args{no_uuid} and $data->{template_uuid}) {
         ($template) = $pkg->find(template_uuid => $data->{template_uuid});
 
         # if not updating this is fatal

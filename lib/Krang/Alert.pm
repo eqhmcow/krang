@@ -108,6 +108,8 @@ use Krang::ClassLoader MethodMaker =>
     new_hash_init => 'hash_init',
     get_set       => [ FIELDS ];
 
+sub id_meth { 'alert_id' }
+
 sub init {
     my $self = shift;
     my %args = @_;

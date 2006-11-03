@@ -165,6 +165,8 @@ use Krang::ClassLoader MethodMaker => ( new_with_init => 'new',
                          hash => [ qw( categories
                                        desks ) ] );
 
+sub id_meth { 'group_id' }
+
 
 =item new()
 
@@ -707,7 +709,7 @@ sub deserialize_xml {
     @complex{qw(group_id group_uuid)} = ();
     %simple = map { ($_,1) } grep { not exists $complex{$_} } (FIELDS);
 
-       # parse it up
+    # parse it up
     my $data = pkg('XML')->simple(  xml           => $xml,
                                     forcearray => ['category','desk'],
                                     suppressempty => 1);
@@ -716,7 +718,7 @@ sub deserialize_xml {
     my $group;
 
     # start with UUID lookup
-    unless ($args{no_uuid} and $data->{group_uuid}) {
+    if (not $args{no_uuid} and $data->{group_uuid}) {
         ($group) = $pkg->find(group_uuid  => $data->{group_uuid});
 
         # if not updating this is fatal

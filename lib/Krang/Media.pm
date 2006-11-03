@@ -246,6 +246,8 @@ use Krang::ClassLoader MethodMaker =>
                 may_edit
                ) ];
 
+sub id_meth { 'media_id' }
+
 sub _notify {
     my ($self, $which, $old, $new) = @_;
     return if defined $old and defined $new and $old eq $new;
@@ -1774,7 +1776,7 @@ sub deserialize_xml {
     my $media;
 
     # start with UUID lookup
-    unless ($args{no_uuid} and $data->{media_uuid}) {
+    if (not $args{no_uuid} and $data->{media_uuid}) {
         ($media) = $pkg->find(media_uuid  => $data->{media_uuid});
 
         # if not updating this is fatal

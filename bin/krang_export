@@ -147,17 +147,26 @@ use Pod::Usage;
 use Krang::ClassLoader 'DataSet';
 
 # process args and open the output file before dropping privs
+# process args and open the output file before dropping privs
 our ($help, $man, $compress, $overwrite, $output, $verbose, 
-     %all, %id, $file, $set);
+     %all, %id, %classes, $file, $set);
 BEGIN { 
     eval {
+        %classes = map { ($_, 0) } pkg('DataSet')->classes;
+
         $output = 'export.kds';
         $verbose = 0;
-        %all = map { ($_, 0) } qw(stories media templates contribs categories 
-                                  sites users groups alerts list_items );
-        %id  = map { ($_, [])} qw(story_id media_id template_id contrib_id 
-                                  category_id site_id user_id group_id 
-                                  alert_id list_item_id );
+        %all = (stories    => pkg('Story'),
+                media      => pkg('Media'),
+                templates  => pkg('Template'),
+                contribs   => pkg('Contrib'),
+                categories => pkg('Category'),
+                sites      => pkg('Site'),
+                users      => pkg('User'),
+                groups     => pkg('Group'),
+                alerts     => pkg('Alert'),
+                list_items => pkg('ListItem'));
+        %id  = map { ($_, [])} map { $_->id_meth } pkg('DataSet')->classes;
 
         pod2usage(2) unless
           GetOptions(help       => \$help,
@@ -169,9 +178,9 @@ BEGIN {
                      
                      'output=s' => \$output,
                      
-                     everything => sub { $all{$_} = 1 for keys %all },
+                     everything => sub { $classes{$_} = 1 for keys %classes },
                      
-                     (map { ($_,    \$all{$_}) } keys %all),
+                     (map { ($_,    \$classes{$all{$_}}) } keys %all),
                      (map { ("$_=i", $id{$_})  } keys %id),
                      
                     );
@@ -207,16 +216,6 @@ BEGIN {
 }
 
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader 'Story';
-use Krang::ClassLoader 'Media';
-use Krang::ClassLoader 'Template';
-use Krang::ClassLoader 'Contrib';
-use Krang::ClassLoader 'Category';
-use Krang::ClassLoader 'Site';
-use Krang::ClassLoader 'User';
-use Krang::ClassLoader 'ListGroup';
-use Krang::ClassLoader 'List';
-use Krang::ClassLoader 'ListItem';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Temp qw(tempfile);
 
@@ -228,12 +227,8 @@ $set = pkg('DataSet')->new($verbose ?
 my $added = 0;
 
 # add all objects for a type?
-foreach my $type (grep { $all{$_} } keys %all) {
-    $type =~ /ies$/ ? $type =~ s/ies$/y/ : $type =~ /es$/ ? $type =~ s/s$// : $type =~ s/s$//;
-    my $class = "Krang::" . ucfirst($type);
-    $class = "Krang::ListItem" if ($type eq 'list_item');
-
-    my $id_meth = $type . "_id";
+foreach my $class (grep { $classes{$_} } keys %classes) {
+    my $id_meth = $class->id_meth;
     
     # loop through all objects, 10 at a time
     my $count = $class->find(count => 1);
@@ -248,14 +243,10 @@ foreach my $type (grep { $all{$_} } keys %all) {
 
 # add by id?
 foreach my $id_meth (grep { @{$id{$_}} } keys %id) {
-    my $type = $id_meth;
-    $type =~ s/_id$//;
-    my $class = "Krang::" . ucfirst($type);
-    $class = "Krang::ListItem" if ($type eq 'list_item');
-
+    my ($class) = grep { $_->id_meth eq $id_meth } keys %classes;
     foreach my $id (@{$id{$id_meth}}) {
         my ($object) = $class->find($id_meth => $id);
-        die "Unable to find $type $id in database!\n" unless $object;
+        die "Unable to find $class $id in database!\n" unless $object;
         $set->add(object => $object);
         $added++;
     }
@@ -296,14 +287,10 @@ exit(0);
 sub add_callback {
     my $object = $_[1];
     my $class = ref $object;
-    my ($type) = $class =~ /^Krang::(.*)$/;
-    my $id_meth = lc($type) . "_id";
-    $id_meth = 'list_item_id' if ($id_meth eq 'listitem_id');
-    $id_meth = 'list_group_id' if ($id_meth eq 'listgroup_id');
-
-    # Debugging output sometimes bombs.  Trap and warn instead
-    eval {
-        print STDERR "Adding $type " . $object->$id_meth . " to $file...\n";
-    };
+    my $id_meth = $class->id_meth;
+    my ($type) = $id_meth =~ /(.*)_id$/;
+    $type =~ s!_! !g;
+    
+    print STDERR "Adding $type " . $object->$id_meth . " to $file...\n";
     warn $@ if $@
 }

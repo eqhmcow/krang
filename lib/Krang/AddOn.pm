@@ -506,6 +506,7 @@ sub _addon_conf {
                                             EnableObjectSchedulerActions 
                                             AdminSchedulerActionList
                                             ObjectSchedulerActionList
+                                            DataSetClasses
                                           )],
                    valid_blocks     => []);
     eval { $conf->read($file) };

@@ -11,6 +11,7 @@ use File::Spec::Functions qw(catfile catdir);
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader 'Test::Apache';
 use Krang::ClassLoader 'HTMLTemplate';
+use IPC::Run qw(run);
 
 # make sure Turbo isn't installed
 my ($turbo) = pkg('AddOn')->find(name => 'Turbo');
@@ -96,6 +97,39 @@ die $@ if $@;
 # look for the cleaned table
 my $dbh = dbh();
 ok($dbh->selectrow_array("SHOW TABLES LIKE 'cleaned'"), "DB table 'cleaned' exists");
+
+# try and export/import cycle - Clean implements a new data-set class
+{
+    my $krang_export = catfile(KrangRoot, 'bin', 'krang_export');
+    my $krang_import = catfile(KrangRoot, 'bin', 'krang_import');
+    my $kds          = catfile(KrangRoot, 'tmp', 'export.kds');
+    my ($in, $out, $err) = ("", "", "");
+    my @export_cmd =
+      ($krang_export, '--overwrite', '--verbose', '--output', $kds, '--everything');
+    my @import_cmd =
+      ($krang_import, '--verbose', $kds);
+
+    run(\@export_cmd, \$in, \$out, \$err);
+    like($out, qr/Export completed/, 'export worked');
+    ok(-s $kds);
+    
+    # look for the Clean::Record objects
+    like($err, qr/Adding record 1/, 'Clean::Record 1 exported');
+    like($err, qr/Adding record 2/, 'Clean::Record 2 exported');
+    like($err, qr/Adding record 2/, 'Clean::Record 3 exported');
+
+    # try importing
+    run(\@import_cmd, \$in, \$out, \$err);
+    like($out, qr/Import completed/, 'import worked');
+    ok(-s $kds);
+    
+    # look for the Clean::Record objects
+    like($err, qr/Clean::Record => 1/, 'Clean::Record 1 imported');
+    like($err, qr/Clean::Record => 2/, 'Clean::Record 2 imported');
+    like($err, qr/Clean::Record => 3/, 'Clean::Record 3 imported');
+
+    unlink $kds;
+}
 
 # install an addon with an htdocs/ script
 pkg('AddOn')->install(src => 

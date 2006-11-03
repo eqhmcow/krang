@@ -148,9 +148,9 @@ BEGIN {
         my $class = ucfirst lc $skip;
         $class =~ s!ies$!y!;
         $class =~ s!s$!!;
-        $class = "Krang::$class";
+        $class = pkg($class);
         die "Unrecognized type '$skip' found in --skip option.  Should be 'sites' or 'categories'.\n" 
-          unless $class eq 'Krang::Site' or $class eq 'Krang::Category';
+          unless $class eq pkg('Site') or $class eq pkg('Category');
         push(@skip_classes, $class);
     }
      
@@ -206,11 +206,7 @@ if ($list) {
 my %classes = map { ($_->[0], 1) } $set->list;
 my %max_id;
 foreach my $class (keys %classes) {
-    my $id_field = $class;
-    $id_field =~ s/^Krang:://;
-    $id_field = lc($id_field) . "_id";
-    $id_field = 'list_item_id' if ($id_field eq 'listitem_id');
-    $id_field = 'list_group_id' if ($id_field eq 'listgroup_id');
+    my $id_field = $class->id_meth;
     my ($max) = $class->find(ids_only   => 1, 
                              order_by   => $id_field, 
                              order_desc => 1, 
@@ -245,7 +241,7 @@ sub import_callback {
     my $object = $arg{object};
     
     if ($verbose) {
-        my ($class, $id) = pkg('DataSet')->can('_obj2id')->($object);
+        my ($class, $id) = pkg('DataSet')->_obj2id($object);
         if ($id > $max_id{$class}) {
             print STDERR "Imported $class => $id\n";
         } elsif (grep { $_ eq $class } @skip_classes) {

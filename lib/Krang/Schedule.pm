@@ -159,7 +159,7 @@ use constant SCHEDULE_RW_NOTIFY => qw(
                                      );
 
 # valid object_types
-use constant TYPES => qw(alert media story tmp session analyze admin);
+use constant TYPES => qw(alert media story tmp session analyze admin rate_limit);
 
 
 # Lexicals
@@ -185,6 +185,8 @@ use Krang::ClassLoader MethodMaker =>
                            attr   => [SCHEDULE_RW_NOTIFY]
                           }
                          ];
+
+sub id_meth { 'schedule_id' }
 
 
 
@@ -990,9 +992,12 @@ sub deserialize_xml {
     my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1);
 
-    my $new_id = $set->map_id(class => "Krang::".ucfirst($data->{object_type}),
-                              id => $data->{object_id});
-
+    my $new_id = 0;
+    if ($data->{object_id}) {
+        $new_id = $set->map_id(class => pkg(ucfirst($data->{object_type})),
+                               id => $data->{object_id});
+    }
+        
     my $initial_date = $data->{initial_date};
     $initial_date =~ s/T/ /;
 

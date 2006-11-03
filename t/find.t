@@ -115,38 +115,33 @@ sub check_find {
     }
 
     # 6. limit=>1 returns only one record
-    unless ($perl_package eq pkg('Desk')) { # Krang::Desk doesnt use limit
-        eval { @stuff = $perl_package->find(limit=>1) };
-        ok(not($@), "$perl_package->find(limit=>1)");
-        die ($@) if ($@);
-
-        # actually check for one or less records, since may be no records in db
-        ok(scalar @stuff <= 1, "$perl_package->find(limit=>1) : limit=>1 returns only one record");
-    }
+    eval { @stuff = $perl_package->find(limit=>1) };
+    ok(not($@), "$perl_package->find(limit=>1)");
+    die ($@) if ($@);
+    
+    # actually check for one or less records, since may be no records in db
+    ok(scalar @stuff <= 1, "$perl_package->find(limit=>1) : limit=>1 returns only one record");
 
     # 7. offset=>1, limit=>1 returns the next record
-    unless ($perl_package->isa(pkg('Desk'))) { # Krang::Desk doesnt use offset
-        eval { @stuff = $perl_package->find(limit=>2) };
-        ok(not($@), "$perl_package->find(limit=>2)");
-        die ($@) if ($@);
-
-        eval { @stuff2 = $perl_package->find(offset=>1, limit=>1) };
-        ok(not($@), "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record");
-        die ($@) if ($@);
-
-        my $order_by = $ORDER_BY_FIELD{$perl_package};
-        if ($order_by) {
-            is($stuff[1]->$order_by, $stuff2[0]->$order_by, "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record") if $stuff[1];
-        }
+    eval { @stuff = $perl_package->find(limit=>2) };
+    ok(not($@), "$perl_package->find(limit=>2)");
+    die ($@) if ($@);
+    
+    eval { @stuff2 = $perl_package->find(offset=>1, limit=>1) };
+    ok(not($@), "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record");
+    die ($@) if ($@);
+    
+    my $order_by = $ORDER_BY_FIELD{$perl_package};
+    if ($order_by) {
+        is($stuff[1]->$order_by, $stuff2[0]->$order_by, "$perl_package->find(offset=>1, limit=>1) : offset=>1, limit=>1 returns the next record") if $stuff[1];
     }
-
+    
     # 8. unknown param is fatal error
     my $unknown_param = time() . '_no_such_param';
     eval { @stuff = $perl_package->find($unknown_param => 1) };
     ok($@, "$perl_package->find($unknown_param => 1) : unknown param is fatal error");
     
     # 9. order_by $ORDER_BY_FIELD{$perl_package}
-    my $order_by = $ORDER_BY_FIELD{$perl_package};
     if ($order_by) {
         eval { @stuff = $perl_package->find( order_by => $order_by ) };
         ok(not($@), "$perl_package->find( order_by => $order_by )".' : order_by $ORDER_BY_FIELD{$perl_package}' );

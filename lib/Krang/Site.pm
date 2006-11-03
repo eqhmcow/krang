@@ -122,6 +122,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
 			get => [SITE_RO],
 			get_set => [SITE_RW];
 
+sub id_meth { 'site_id' }
 
 =head1 INTERFACE
 
@@ -694,7 +695,7 @@ sub deserialize_xml {
     my $site;
 
     # start with UUID lookup
-    unless ($args{no_uuid} and $data->{site_uuid}) {
+    if (not $args{no_uuid} and $data->{site_uuid}) {
         ($site) = $pkg->find(site_uuid  => $data->{site_uuid});
 
         # if not updating this is fatal
