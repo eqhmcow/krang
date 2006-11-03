@@ -768,9 +768,15 @@ written out to a file, repaired and then reimported.
 
 =head1 REQUIRED METHODS
 
-Objects which are serialized in data-sets must support two methods:
+Objects which are serialized in data-sets must support three methods:
 
 =over 4
+
+=item C<< $object->id_meth >>
+
+Must return the name of the ID-returning method for the object.  For
+example, Krang::Story returns "story_id".  You must also implement the
+returned method, of course.
 
 =item C<< $object->serialize_xml(writer => $writer, set => $set) >>
 
