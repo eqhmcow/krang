@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added a new option for addons, DataSetClasses.  This allows addons to
+extend Krang::DataSet and include new objects in KDS files.  [Sam]
+
+=item *
+
 Implemented a system of univerally-unique identfiers (UUIDs) for Krang
 objects with keys that may change (ex. stories may change their URL).
 This allows updates between machines to propogate these changes
