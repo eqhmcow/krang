@@ -69,6 +69,16 @@ foreach my $class (__PACKAGE__->classes()) {
     die "Unable to load $class: $@" if $@;
 }
 
+sub id_meths {
+    my $pkg = shift;
+    return map { $_->id_meth } $pkg->classes();
+}
+
+sub id_meth_to_class {
+    my ($pkg, $id_meth) = @_;
+    return grep { $_->id_meth eq $id_meth } $pkg->classes;
+}
+
 =head1 NAME
 
 Krang::DataSet - Krang interface to XML data sets
@@ -107,6 +117,12 @@ Utility methods:
 
   # get list of all classes available for import/export
   my @classes = $set->classes;
+
+  # get list of all valid ID method names (story_id, media_id, etc.)
+  my @id_names = $set->id_meths;
+
+  # find the class for a given ID method name
+  my $class = $set->id_meth_to_class('story_id');
 
 =head1 DESCRIPTION
 

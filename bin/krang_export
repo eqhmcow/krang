@@ -77,6 +77,13 @@ media, templates, categories, sites, contribs, users and groups.
 These select all available objects, and their dependencies, for
 export.  May not be combined with --everything.
 
+=item --all
+
+You can use --all=story to mean --stories, --all=category to mean
+--categories, etc.  This also works with objects from addons which are
+available for datasets, so if your addon provides "widgets" you can
+export them all with --all=widget.
+
 =item --story_id 10
 
 =item --media_id 10 
@@ -99,6 +106,12 @@ export.  May not be combined with --everything.
 
 These select a single object by ID, and its dependecies.  May be
 repeated multiple times to select multiple objects.
+
+=item --widget_id 10
+
+You can also specify IDs for addon objects here.  So if you have an
+addon which provides widgets you can get widget 10 with '--widget_id
+10'.
 
 =item --verbose
 
@@ -149,24 +162,43 @@ use Krang::ClassLoader 'DataSet';
 # process args and open the output file before dropping privs
 # process args and open the output file before dropping privs
 our ($help, $man, $compress, $overwrite, $output, $verbose, 
-     %all, %id, %classes, $file, $set);
+     %all, %all_shortcut, %id, %classes, $file, $set);
 BEGIN { 
     eval {
         %classes = map { ($_, 0) } pkg('DataSet')->classes;
 
         $output = 'export.kds';
         $verbose = 0;
-        %all = (stories    => pkg('Story'),
-                media      => pkg('Media'),
-                templates  => pkg('Template'),
-                contribs   => pkg('Contrib'),
-                categories => pkg('Category'),
-                sites      => pkg('Site'),
-                users      => pkg('User'),
-                groups     => pkg('Group'),
-                alerts     => pkg('Alert'),
-                list_items => pkg('ListItem'));
-        %id  = map { ($_, [])} map { $_->id_meth } pkg('DataSet')->classes;
+        %all_shortcut = (stories    => pkg('Story')->id_meth,
+                         media      => pkg('Media')->id_meth,
+                         templates  => pkg('Template')->id_meth,
+                         contribs   => pkg('Contrib')->id_meth,
+                         categories => pkg('Category')->id_meth,
+                         sites      => pkg('Site')->id_meth,
+                         users      => pkg('User')->id_meth,
+                         groups     => pkg('Group')->id_meth,
+                         alerts     => pkg('Alert')->id_meth,
+                         list_items => pkg('ListItem')->id_meth);
+        %all =
+          map { ($_, pkg('DataSet')->id_meth_to_class($_)) }
+          pkg('DataSet')->id_meths;
+        %id = map { ($_, []) } pkg('DataSet')->id_meths;
+
+        # setup complex options
+        my %get_opts = (
+            everything => sub { $classes{$_} = 1 for keys %classes },
+
+            (map { ($_, sub { $classes{$all{$all_shortcut{$_[0]}}} = 1 }) }
+               keys %all_shortcut
+            ),
+            'all=s' => sub {
+                die "Unknown type $_[1].\n" unless exists $all{"$_[1]_id"};
+                $classes{$all{"$_[1]_id"}} = 1;
+            },
+            (map {
+                 ("$_=i", $id{$_})
+               } keys %id
+            ));
 
         pod2usage(2) unless
           GetOptions(help       => \$help,
@@ -176,13 +208,9 @@ BEGIN {
                      'compress' => \$compress,
                      'overwrite'=> \$overwrite,
                      
-                     'output=s' => \$output,
+                     'output=s' => \$output,                     
                      
-                     everything => sub { $classes{$_} = 1 for keys %classes },
-                     
-                     (map { ($_,    \$classes{$all{$_}}) } keys %all),
-                     (map { ("$_=i", $id{$_})  } keys %id),
-                     
+                     %get_opts
                     );
         pod2usage(1)             if $help;
         pod2usage(-verbose => 2) if $man;
