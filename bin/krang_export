@@ -157,6 +157,7 @@ END
 use Krang::ClassFactory qw(pkg);
 use Getopt::Long;
 use Pod::Usage;
+use Krang::ClassLoader Script => 'no_su';
 use Krang::ClassLoader 'DataSet';
 
 # process args and open the output file before dropping privs
@@ -243,7 +244,7 @@ BEGIN {
     }
 }
 
-use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Script'; # load again to su if needed
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Temp qw(tempfile);
 
