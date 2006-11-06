@@ -181,11 +181,15 @@ Krang::DataSet.  Objects of these classes can be imported and exported
 via KDS files using krang_import and krang_export.  Classes listed
 here must implement to following methods:
 
-  id_meth()         - returns the name of the ID-returning method
+  id_meth()         - returns the name of the ID-returning method.
   $id_meth()        - must return a unique ID for your objects
   find()            - including count, limit and offset functionality
   serialize_xml()
   deserialize_xml() 
+
+Note that id_meth() should return a value of the form "NAME_id" where
+"NAME" will be used as a short-hand name for your class and must be
+unique.  For example, Krang::Story returns "story_id".
 
 You must also create XML Schema documents in a schema/ directory in
 your addon.

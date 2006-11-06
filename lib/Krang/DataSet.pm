@@ -776,7 +776,11 @@ Objects which are serialized in data-sets must support three methods:
 
 Must return the name of the ID-returning method for the object.  For
 example, Krang::Story returns "story_id".  You must also implement the
-returned method, of course.
+returned method, of course. 
+
+Note that id_meth() should return a value of the form "NAME_id" where
+"NAME" will be used as a short-hand name for your class and must be
+unique.
 
 =item C<< $object->serialize_xml(writer => $writer, set => $set) >>
 
