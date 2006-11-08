@@ -104,9 +104,6 @@ require Exporter;
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw/critical debug info/;
 use Krang::ClassLoader Conf => qw/PasswordChangeTime PasswordChangeCount/;
-use Krang::ClassLoader 'Media';
-use Krang::ClassLoader 'Template';
-use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'UUID';
 use Krang::Cache;
 
@@ -368,7 +365,9 @@ sub dependent_check {
     for my $class(qw/media story template/) {
         my $module = ucfirst $class;
         no strict 'subs';
-        my @objects = "Krang::$module"->find(checked_out_by => $id);
+        my $pkg = pkg($module);
+        eval "require $pkg";
+        my @objects = $pkg->find(checked_out_by => $id);
         if (@objects) {
             my $id_field = $class . "_id";
             $dependents += scalar @objects;
