@@ -174,7 +174,10 @@ sub save_add {
         $q->param('first_name'),
         $q->param('last_name'),
     );
-    return $self->add() unless $valid;
+    unless ($valid) {
+        $q->param(errors => 1);
+        return $self->add();
+    }
 
     %errors = $self->update_user($user);
     return $self->edit(%errors) if %errors;
