@@ -435,7 +435,7 @@ sub _copy_files {
     foreach my $file (@$files) {
         # fix shebang for addon .pl and .cgi scripts.
         if ($file =~ /\.(?:pl|cgi)$/) {
-            open(SOURCE, $file) or die "Unable to $file: $!";
+            open(SOURCE, $file) or die "Unable to open $file: $!";
             my $source = do { local $/; <SOURCE> };
 
             $source =~ s/^#![\w\/\.]+(\s*.*)$/#!$PERL_BIN$1/m or
