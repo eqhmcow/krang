@@ -27,9 +27,13 @@ object id.
 
   --site_id     - delete site specified by this id
 
+  --site_uuid   - delete site specified by this uuid
+
   --categories  - delete all categories (except site top level cats)
 
-  --category_id - delete category specified by this id
+  --category_id - delete category specified by this uuid
+
+  --category_uuid - delete category specified by this uuid
 
   --contribs    - delete all contributors
 
@@ -39,17 +43,25 @@ object id.
 
   --media_id    - delete media specified by this id
 
+  --media_uuid  - delete media specified by this uuid
+
   --stories     - delete all stories
 
-  --story_id    - delete story specified by this id
+  --story_id    - delete story specified by this uuid
+
+  --story_uuid  - delete story specified by this uuid
 
   --templates   - delete all templates
 
   --template_id - delete templates specified by this id  
 
+  --template_uuid - delete templates specified by this uuid  
+
   --users       - delete all users (except user with login 'admin', if exists)
 
   --user_id     - delete user specified by this id 
+
+  --user_uuid    - delete user specified by this uuid 
 
   --recursive   - if this is set, all dependant objects will be deleted.
                   Use this option with care!
@@ -119,6 +131,9 @@ my @story_ids;
 my @media_ids;
 my @user_ids;
 my @template_ids;
+my %uuids =
+  (site => [], category => [], story => [], media => [], user => [],
+   template => []);
 my $verbose;
 my $recursive;
 
@@ -128,24 +143,47 @@ pod2usage(2) unless
              verbose => \$verbose,
              'sites'    => \$sites,
              'site_id=s'  => \@site_ids,
+             'site_uuid=s'  => $uuids{site},
              'categories'     => \$cats,
              'cats'     => \$cats,
              'category_id=s' => \@cat_ids,
+             'category_uuid=s' => $uuids{category},
              'contribs' => \$contribs,
              'contrib_id=s' => \@contrib_ids,
              'stories'  => \$stories,
              'story_id=s' => \@story_ids,
+             'story_uuid=s' => $uuids{story},
              'media'    => \$media,
              'media_id=s' => \@media_ids,
+             'media_uuid=s' => $uuids{media},
 	     'users'	  => \$users,
              'user_id=s' => \@user_ids,
+             'user_uuid=s' => $uuids{user},
              'templates'=> \$templates,
              'template_id=s' => \@template_ids,
+             'template_uuid=s' => $uuids{template},
              'recursive' => \$recursive
             );
 
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
+
+# translate UUIDs to IDs
+sub _uuids_to_ids {
+    my ($uuids, $ids, $name, $class) = @_;
+    foreach my $uuid (@$uuids) {
+        my ($id) = $class->find(ids_only => 1, "${name}_uuid" => $uuid);
+        die "Unable to find $class with UUID $uuid.\n"
+          unless $id;
+        push @$ids, $id;
+    }
+}
+_uuids_to_ids($uuids{site},     \@site_ids,     'site',     pkg('Site'));
+_uuids_to_ids($uuids{category}, \@cat_ids,      'category', pkg('Category'));
+_uuids_to_ids($uuids{user},     \@user_ids,     'user',     pkg('User'));
+_uuids_to_ids($uuids{story},    \@story_ids,    'story',    pkg('Story'));
+_uuids_to_ids($uuids{media},    \@media_ids,    'media',    pkg('Media'));
+_uuids_to_ids($uuids{template}, \@template_ids, 'template', pkg('Template'));
 
 #### First delete media
 
