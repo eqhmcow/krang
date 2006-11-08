@@ -104,6 +104,9 @@ require Exporter;
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Log => qw/critical debug info/;
 use Krang::ClassLoader Conf => qw/PasswordChangeTime PasswordChangeCount/;
+use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'UUID';
 use Krang::Cache;
 
