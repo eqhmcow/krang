@@ -365,8 +365,11 @@ sub dependent_check {
     for my $class(qw/media story template/) {
         my $module = ucfirst $class;
         no strict 'subs';
+
         my $pkg = pkg($module);
         eval "require $pkg";
+        die $@ if $@;
+
         my @objects = $pkg->find(checked_out_by => $id);
         if (@objects) {
             my $id_field = $class . "_id";
