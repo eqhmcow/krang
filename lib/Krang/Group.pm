@@ -166,6 +166,7 @@ use Krang::ClassLoader MethodMaker => ( new_with_init => 'new',
                                        desks ) ] );
 
 sub id_meth { 'group_id' }
+sub uuid_meth { 'group_uuid' }
 
 
 =item new()

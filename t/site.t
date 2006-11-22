@@ -43,6 +43,12 @@ my $site2 = pkg('Site')->new(publish_path => 'sites/test1/',
 isa_ok($site2, 'Krang::Site', 'new() test');
 ok($site2->site_uuid);
 
+# make sure our id_meth and uuid_meth are correct
+my $method = $site2->id_meth;
+is($site2->$method, $site2->site_id, 'id_meth() is correct');
+$method = $site2->uuid_meth;
+is($site2->$method, $site2->site_uuid, 'uuid_meth() is correct');
+
 # save tests
 #############
 $site2->save();

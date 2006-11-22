@@ -123,6 +123,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
 			get_set => [SITE_RW];
 
 sub id_meth { 'site_id' }
+sub uuid_meth { 'site_uuid' }
 
 =head1 INTERFACE
 

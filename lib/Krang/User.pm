@@ -160,6 +160,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
 
 
 sub id_meth { 'user_id' }
+sub uuid_meth { 'user_uuid' }
 
 =head1 INTERFACE
 

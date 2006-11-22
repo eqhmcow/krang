@@ -81,6 +81,12 @@ is($category->url() =~ /$dir/, 1, 'url()');
 
 is($category->element_id(), $element1->element_id(), 'element_id');
 
+# make sure our id_meth and uuid_meth are correct
+my $method = $category->id_meth;
+is($category->$method, $category->category_id, 'id_meth() is correct');
+$method = $category->uuid_meth;
+is($category->$method, $category->category_uuid, 'uuid_meth() is correct');
+
 # dir()
 my $d = $category->dir('fred');
 my $u = $category->url();

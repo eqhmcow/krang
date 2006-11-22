@@ -45,6 +45,12 @@ isa_ok($tmpl, 'Krang::Template');
 isa_ok($tmpl->creation_date, 'Time::Piece');
 ok($tmpl->template_uuid);
 
+# make sure our id_meth and uuid_meth are correct
+my $method = $tmpl->id_meth;
+is($tmpl->$method, $tmpl->template_id, 'id_meth() is correct');
+$method = $tmpl->uuid_meth;
+is($tmpl->$method, $tmpl->template_uuid, 'uuid_meth() is correct');
+
 # test category meth
 my $cat = $tmpl->category;
 is($cat->dir, $category->dir, 'category() method test');

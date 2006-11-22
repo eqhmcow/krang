@@ -66,6 +66,12 @@ ok($user->user_uuid());
 }
 is(scalar(@{$user->group_ids}), 1, 'getter - group_ids()');
 
+# make sure our id_meth and uuid_meth are correct
+my $method = $user->id_meth;
+is($user->$method, $user->user_id, 'id_meth() is correct');
+$method = $user->uuid_meth;
+is($user->$method, $user->user_uuid, 'uuid_meth() is correct');
+
 # setters
 ##########
 $user->group_ids(1, 2, 3);

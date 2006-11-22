@@ -75,6 +75,7 @@ use constant STORY_FIELDS =>
     );
 
 sub id_meth { 'story_id' }
+sub uuid_meth { 'story_uuid' }
 
 # called by get_set_with_notify attibutes.  Catches changes that must
 # invalidate the URL cache.

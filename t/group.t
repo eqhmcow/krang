@@ -166,6 +166,12 @@ for (@hash_params) {
     is($group->$_($val), "true", "Get $_");
 }
 
+# make sure our id_meth and uuid_meth are correct
+my $method = $group->id_meth;
+is($group->$method, $group->group_id, 'id_meth() is correct');
+$method = $group->uuid_meth;
+is($group->$method, $group->group_uuid, 'uuid_meth() is correct');
+
 
 # Test find() for invalid arg handling
 eval { pkg('Group')->find( no_such_find_arg => 1) };

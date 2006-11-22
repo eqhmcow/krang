@@ -150,6 +150,7 @@ use Krang::ClassLoader MethodMaker => new_with_init => 'new',
 			get_set => [grep { $_ ne 'parent_id' } CATEGORY_RW];
 
 sub id_meth { 'category_id' }
+sub uuid_meth { 'category_uuid' }
 
 
 =head1 INTERFACE

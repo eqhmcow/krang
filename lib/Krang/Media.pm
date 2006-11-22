@@ -247,6 +247,7 @@ use Krang::ClassLoader MethodMaker =>
                ) ];
 
 sub id_meth { 'media_id' }
+sub uuid_meth { 'media_uuid' }
 
 sub _notify {
     my ($self, $which, $old, $new) = @_;

@@ -117,6 +117,11 @@ is(@story_cat, 2);
 is($story_cat[0], $cat[0]);
 is($story_cat[1], $cat[1]);
 
+# make sure our id_meth and uuid_meth are correct
+my $method = $story->id_meth;
+is($story->$method, $story->story_id, 'id_meth() is correct');
+$method = $story->uuid_meth;
+is($story->$method, $story->story_uuid, 'uuid_meth() is correct');
 
 
 SKIP: {

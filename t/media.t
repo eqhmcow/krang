@@ -78,6 +78,12 @@ is ($media->width(), 68, "Width test");
 # test width and height
 is ($media->height(), 68, "Height test");
 
+# make sure our id_meth and uuid_meth are correct
+my $method = $media->id_meth;
+is($media->$method, $media->media_id, 'id_meth() is correct');
+$method = $media->uuid_meth;
+is($media->$method, $media->media_uuid, 'uuid_meth() is correct');
+
 # test file_path
 like($media->file_path, qr/krang\.jpg$/, "Absolute path looks right after save");
 like($media->file_path(relative => 1), qr/krang\.jpg$/, "Relative path looks right after save");
