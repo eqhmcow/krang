@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added several new configuration options which allow Krang instances to
+run on separate IPs and have different SSL configurations.  [Sam]
+
+=item *
+
 Added a new option for addons, DataSetClasses.  This allows addons to
 extend Krang::DataSet and include new objects in KDS files.  [Sam]
 
