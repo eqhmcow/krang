@@ -190,4 +190,21 @@ SSLApachePort <tmpl_var SSLApachePort default="443">
    # element sets.
    InstanceElementSet <tmpl_var InstanceElementSet>
 
+<tmpl_if EnableSSL>
+
+   # optionally run this instance on a different IP and port than
+   # other Krang instances
+
+   # InstanceApacheAddr 10.0.1.86
+   # InstanceApachePort 8090
+   # InstanceSSLPort 4430
+
+   # optionally use a different SSL config for this instance, use with EnableSSL
+
+   # InstanceSSLCertificateFile /path/to/krang/conf/rabbit.crt
+   # InstanceSSLCertificateKeyFile /path/to/krang/conf/rabbit.key
+   # InstanceSSLCertificateChainFile /path/to/krang/conf/rabbit-ca.crt
+   # InstanceSSLCACertificateFile /path/to/krang/conf/rabbit-ca_client.crt
+   # InstanceSSLCARevocationFile  /path/to/krang/conf/rabbit-ca_client.crl
+</tmpl_if>
 </Instance>

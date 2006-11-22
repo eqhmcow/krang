@@ -171,8 +171,15 @@ Listen <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>
 NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>
 </tmpl_if>
 
-
-
+<tmpl_loop InstanceLoop>
+  <tmpl_if InstanceApacheAddr>
+# connections for <tmpl_var InstanceName>
+Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceApachePort><tmpl_var InstanceApachePort><tmpl_else><tmpl_var ApachePort></tmpl_if>
+  <tmpl_if EnableSSL>
+Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var InstanceSSLPort><tmpl_else><tmpl_var SSLApachePort></tmpl_if>
+</tmpl_if>
+  </tmpl_if>
+</tmpl_loop>
 
 <VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
    ServerName <tmpl_var HostName>
@@ -341,8 +348,14 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>
 
 # Use NameVirtuaHosts
 <tmpl_loop InstanceLoop>
-<VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
-   ServerName      <tmpl_var InstanceHostName>
+
+<tmpl_if InstanceApacheAddr>
+  <VirtualHost <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceApachePort><tmpl_var InstanceApachePort><tmpl_else><tmpl_var ApachePort></tmpl_if>>
+     ServerName      <tmpl_var InstanceHostName>
+<tmpl_else>
+  <VirtualHost <tmpl_var ApacheAddr>:<tmpl_var ApachePort>>
+     ServerName      <tmpl_var InstanceHostName>
+</tmpl_if>
 
 <tmpl_if EnableSSL>
    # redirect all traffic to the SSL VHost
@@ -354,8 +367,14 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>
 
 </VirtualHost>
 
-<VirtualHost <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>>
-   ServerName <tmpl_var InstanceHostName>
+<tmpl_if InstanceApacheAddr>
+  <VirtualHost <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var InstanceSSLPort><tmpl_else><tmpl_var SSLApachePort></tmpl_if>>
+     ServerName      <tmpl_var InstanceHostName>
+<tmpl_else>
+  <VirtualHost <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>>
+     ServerName <tmpl_var InstanceHostName>
+</tmpl_if>
+
 </tmpl_if>
 
    PerlTransHandler Krang::Handler->trans_handler
@@ -376,6 +395,65 @@ NameVirtualHost <tmpl_var ApacheAddr>:<tmpl_var SSLApachePort>
 
        ErrorDocument 500 /bug.cgi?ise=1
    </Location>
+
+   <tmpl_if EnableSSL>
+
+   #  All SSL configuration in this context applies to the virtual hosts
+   SSLEngine on
+   SSLProtocol <tmpl_var SSLProtocol default="all -SSLv2">
+   SSLLog      <tmpl_var KrangRoot>/logs/ssl.log
+   SSLLogLevel <tmpl_var SSLLogLevel default="info">
+   SSLCipherSuite <tmpl_var SSLCipherSuite default="ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL">
+
+<tmpl_if InstanceSSLCertificateFile>
+   SSLCertificateFile <tmpl_var InstanceSSLCertificateFile>
+<tmpl_else>
+   SSLCertificateFile <tmpl_var KrangRoot>/conf/ssl.crt/server.crt
+</tmpl_if>
+
+<tmpl_if InstanceSSLCertificateKeyFile>
+   SSLCertificateKeyFile <tmpl_var InstanceSSLCertificateKeyFile>
+<tmpl_else>
+   SSLCertificateKeyFile <tmpl_var KrangRoot>/conf/ssl.key/server.key
+</tmpl_if>
+
+
+<tmpl_if InstanceSSLCertificateChainFile>
+   SSLCertificateChainFile <tmpl_var InstanceSSLCertificateChainFile>
+<tmpl_else>
+   #SSLCertificateChainFile <tmpl_var KrangRoot>/conf/ssl.crt/ca-bundle.crt
+</tmpl_if>
+   
+   <tmpl_if SSL_VERIFY_CLIENT>
+   AddType application/x-x509-ca-cert .crt
+   AddType application/x-pkcs7-crl    .crl
+
+   SSLCACertificatePath <tmpl_var KrangRoot>/conf/ssl.crt
+<tmpl_if InstanceSSLCACertificateFile>
+   SSLCACertificateFile <tmpl_var InstanceSSLCACertificateFile>
+<tmpl_else>
+   SSLCACertificateFile <tmpl_var KrangRoot>/conf/ssl.crt/ca_bundle-client.crt
+</tmpl_if>
+
+   SSLCARevocationPath <tmpl_var KrangRoot>/conf/ssl.crl
+<tmpl_if InstanceSSLCARevocationFile>
+   SSLCARevocationFile <tmpl_var InstanceSSLCARevocationFile>
+<tmpl_else>
+   SSLCARevocationFile <tmpl_var KrangRoot>/conf/ssl.crl/ca-bundle-client.crl
+</tmpl_if>
+
+
+
+   SSLVerifyClient <tmpl_var SSLVerifyClient default="none">
+   SSLVerifyDepth  <tmpl_var SSLVerifyDepth default="1">
+   </tmpl_if>
+   
+   SetEnvIf User-Agent ".*MSIE.*" \
+            nokeepalive ssl-unclean-shutdown \
+            downgrade-1.0 force-response-1.0
+
+
+   </tmpl_if>
 
 </VirtualHost>
 </tmpl_loop>

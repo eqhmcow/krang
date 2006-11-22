@@ -80,7 +80,11 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup EnableSSL);
+use Krang::ClassLoader Conf =>
+  qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup EnableSSL 
+     InstanceApacheAddr InstanceApachePort InstanceSSLCertificateFile 
+     InstanceSSLCertificateKeyFile InstanceSSLCertificateChainFile
+     InstanceSSLCACertificateFile InstanceSSLCARevocationFile InstanceSSLPort);
 use Krang::ClassLoader 'File';
 
 # SSL directives
@@ -258,13 +262,23 @@ sub write_conf {
     my @loop;
     foreach my $instance (pkg('Conf')->instances()) {
         pkg('Conf')->instance($instance);
-        push(
-            @loop, 
-            {
-                InstanceName     => $instance,
-                InstanceHostName => InstanceHostName(),
-            }
-        );
+        push(@loop,
+             {InstanceName       => $instance,
+              InstanceHostName   => InstanceHostName(),
+              InstanceApacheAddr => scalar InstanceApacheAddr(),
+              InstanceApachePort => scalar InstanceApachePort(),
+              InstanceSSLCertificateFile =>
+                scalar InstanceSSLCertificateFile(),
+              InstanceSSLCertificateKeyFile =>
+                scalar InstanceSSLCertificateKeyFile(),
+              InstanceSSLCertificateChainFile =>
+                scalar InstanceSSLCertificateChainFile(),
+              InstanceSSLCACertificateFile =>
+                scalar InstanceSSLCACertificateFile(),
+              InstanceSSLCARevocationFile =>
+                scalar InstanceSSLCARevocationFile(),
+              InstanceSSLPort => scalar InstanceSSLPort(),
+             });
     }
     $template->param(InstanceLoop => \@loop);
 
