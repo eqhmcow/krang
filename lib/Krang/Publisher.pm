@@ -512,20 +512,39 @@ sub unpublish_story {
     if( @$paths ) {
         foreach my $path (@$paths) {
             next unless -f $path;
+
+            # make sure this path isn't claimed by another story
+            my ($claimed) =
+              $dbh->selectrow_array("SELECT 1 FROM publish_story_location "
+                                    . "WHERE path = ? AND story_id != ?",
+                                    undef, $path, $story->story_id);
+            next if $claimed;
+
             unlink($path) or 
               croak("Unable to delete file '$path' during unpublish : $!");
         }
 
-        # delete the dir (or dirs if it's in multiple categories)
+        # delete the dir if it's empty
         my @cats = $story->categories();
         foreach my $cat (@cats) {
             # only if the story isn't a "Cover"
             next if( $cat->url eq $story->url );
             
             my %path_args = ( category => $cat );
-            my $dir = $self->is_preview ? $story->preview_path(%path_args) 
-                : $story->publish_path(%path_args);
-            rmdir($dir) or croak("Unable to delete dir '$dir' during unpublish : $!");
+            my $dir =
+                $self->is_preview
+              ? $story->preview_path(%path_args)
+              : $story->publish_path(%path_args);
+            next unless -d $dir;
+                        
+            opendir(DIRH, $dir)
+              or croak("Unable to open directory $dir during unpublish: $!");
+            my @files = grep { not /^\./ } readdir(DIRH);
+            closedir(DIRH);
+            next if @files;
+            
+            rmdir($dir) 
+              or croak("Unable to delete dir '$dir' during unpublish : $!");
         }
 
         # clean the table
@@ -1521,6 +1540,15 @@ sub _rectify_publish_locations {
     foreach my $old (@$old_paths) {
         next if $cur{$old};
         next unless -f $old;
+
+        # make sure this path isn't claimed by another object
+        my ($claimed) =
+          $dbh->selectrow_array("SELECT 1 FROM publish_${type}_location "
+                                  . "WHERE path = ? AND preview = ? "
+                                  . "AND ${type}_id != ?",
+                                undef, $old, $preview, $id);
+        next if $claimed;
+
         unlink($old) 
           or croak("Unable to delete extinct publish result '$old'.");
     }

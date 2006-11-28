@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a long standing publishing bug.  Shuffling stories around could
+cause the wrong files to be deleted when publishing.  [Sam]
+
+=item *
+
 Added several new configuration options which allow Krang instances to
 run on separate IPs and have different SSL configurations.  [Sam]
 

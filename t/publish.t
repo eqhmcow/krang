@@ -270,6 +270,8 @@ test_full_publish();
 
 test_story_unpublish();
 
+test_story_disappearing();
+
 test_media_unpublish();
 
 test_additional_content_block();
@@ -1256,6 +1258,47 @@ sub test_story_unpublish {
     # delete it
     $creator->delete_item(item => $story);
 }
+
+# test for a bug when a story was moved and then republished - it
+# could delete files it no longer owns
+sub test_story_disappearing {
+    # create a story in one
+    my $story1   = $creator->create_story(category => [$child_cat],
+                                          slug     => "disappear");
+
+    # now publish it, files exist
+    $publisher->publish_story(story => $story1);
+    my @paths = build_publish_paths($story1);
+    ok(-e $_) for @paths;
+    my $url = $story1->url;
+
+    # now move the story to a new cat
+    $story1->categories([$child_subcat]);
+    $story1->checkout();
+    $story1->save();
+    ok($story1->url ne $url);
+
+    # make a new story in the original place
+    my $story2   = $creator->create_story(category => [$child_cat],
+                                          slug     => "disappear");
+
+    # now publish it, files exist
+    $publisher->publish_story(story => $story2);
+    my @paths2 = build_publish_paths($story2);
+    ok(-e $_) for @paths2;
+    is($paths[$_], $paths2[$_]) for (0 .. $#paths);
+    is($story2->url, $url);
+
+    # publish first story again, make sure it doesn't erase story 2's files
+    $publisher->publish_story(story => $story1);
+    my @new_paths = build_publish_paths($story1);
+    ok(-e $_) for @new_paths;
+    ok(-e $_, "original files haven't disappeared ($_)") for @paths2;
+
+    $creator->delete_item(item => $story1);
+    $creator->delete_item(item => $story2);
+}
+
 
 sub test_media_unpublish {
     # create media

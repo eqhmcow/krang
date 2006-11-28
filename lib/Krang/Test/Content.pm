@@ -540,15 +540,17 @@ sub create_story {
     my $page_count = $args{pages} || 1;
 
     my $slug_id;
-    do {
-        $slug_id = int(rand(16777216));
-    } until (!exists($self->{slug_id_list}{$slug_id}));
-
-    $self->{slug_id_list}{$slug_id} = 1;
+    unless ($args{slug}) {
+        do {
+            $slug_id = int(rand(16777216));
+        } until (!exists($self->{slug_id_list}{$slug_id}));
+        $self->{slug_id_list}{$slug_id} = 1;
+        $args{slug} = "TEST-SLUG-" . $slug_id;
+    }
 
     my $story = pkg('Story')->new(categories => $categories,
                                   title      => $title,
-                                  slug       => 'TEST-SLUG-' . $slug_id,
+                                  slug       => $args{slug},
                                   class      => $class);
 
 
