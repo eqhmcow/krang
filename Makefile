@@ -1,6 +1,6 @@
 # Krang master Makefile.  The following targets are supported: 
 #
-#   all   - Show help text
+#   all   - Show help text 
 #
 #   test  - runs the test suite
 #
