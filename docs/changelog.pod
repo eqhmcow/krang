@@ -44,8 +44,8 @@ password policy as an addon. [Michael Peters]
 =item * 
 
 Added security feature of locking out users after several failed login
-attempts. Configurable by the BadLoginCount and BadLoginWait conf
-directives. [Michael Peters]
+attempts. Configurable by the C<BadLoginCount>, C<BadLoginWait> and
+C<BadLoginNotify> conf directives. [Michael Peters]
 
 =item *
 

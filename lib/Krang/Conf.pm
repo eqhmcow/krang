@@ -10,6 +10,7 @@ ApachePort
 Assertions
 BadLoginCount
 BadLoginWait
+BadLoginNotify
 BugzillaComponent
 BugzillaEmail
 BugzillaPassword

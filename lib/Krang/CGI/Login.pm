@@ -28,7 +28,19 @@ use Digest::MD5 qw(md5_hex md5);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
-use Krang::ClassLoader Conf => qw(InstanceDisplayName BadLoginCount BadLoginWait PasswordChangeTime);
+use Krang::ClassLoader 'Log' => qw(debug);
+use Krang::ClassLoader Conf => qw(
+    BadLoginCount
+    BadLoginWait
+    BadLoginNotify
+    PasswordChangeTime
+    SMTPServer
+    FromAddress
+    InstanceHostName
+    InstanceDisplayName
+    InstanceApachePort
+    ApachePort
+);
 use CGI::Application::Plugin::RateLimit;
 
 # secret salt for creating login cookies
@@ -59,7 +71,7 @@ sub setup {
     # use CAP::RateLimit to limit the number of bad logins
     # per username if we need to
     if( BadLoginCount() ) {
-        my $rl = $self->rate_limit();
+        my $rl = $self->rate_limit;
         $rl->protected_actions(
             failed_login => {
                 timeframe => BadLoginWait() . 'm',
@@ -67,6 +79,7 @@ sub setup {
             },
         );
         $rl->violation_mode('login_wait');
+        $rl->dbh(dbh);
     }
 }
 
@@ -74,9 +87,41 @@ sub setup {
 # login too many times and need to wait
 sub login_wait {
     my $self = shift;
+
+    # send an email to the BadLoginNotify email address if it
+    # exists
+    if (BadLoginNotify) {
+        my $email_to = $ENV{KRANG_TEST_EMAIL} || BadLoginNotify;
+        my $user     = $self->query->param('username');
+        my $url      = 'http://' . InstanceHostName . ':' . (InstanceApachePort || ApachePort);
+        my $msg      =
+            "User '$user' has been locked out of Krang at $url for "
+          . BadLoginWait
+          . " minutes because of more than "
+          . BadLoginCount
+          . " failed login attempts.";
+
+        debug( __PACKAGE__ . "->send() - sending email to $email_to : $msg" );
+        my $sender = Mail::Sender->new(
+            {
+                smtp      => SMTPServer,
+                from      => FromAddress,
+                on_errors => 'die'
+            }
+        );
+
+        $sender->MailMsg(
+            {
+                to      => $email_to,
+                subject => "[Krang] Repeated failed login attempts",
+                msg     => $msg,
+            }
+        );
+    }
+
     return $self->show_form(
-        alert => "Invalid login. You have failed " 
-            . BadLoginCount . " and must wait " 
+        alert => "Invalid login. You have failed more than " 
+            . BadLoginCount . " login attempts and must wait " 
             . BadLoginWait . " minutes before logging in again."
     );
 }
@@ -102,17 +147,6 @@ sub login {
     my $target   = $query->param('target') || './';
     my $dbh      = dbh();
 
-    # if we're protecting with RateLimit
-    if( BadLoginCount ) {
-        my $rl = $self->rate_limit;
-        $rl->identity_callback(sub { $username });
-        $rl->dbh($dbh);
-        # if they've exceeded their limit, stop 'em
-        if( BadLoginCount && $rl->check_violation(action => 'failed_login') ) {
-            return $self->login_wait 
-        }
-    }
-
     return $self->show_form(alert =>
                             "User name and password are required fields.")
       unless defined $username and length $username and
@@ -125,10 +159,15 @@ sub login {
     unless( $user_id ) {
         # record the failed login if we are protecting with RateLimit
         if( BadLoginCount ) {
-            $self->rate_limit->record_hit(action => 'failed_login');
+            my $rl = $self->rate_limit;
+            $rl->identity_callback(sub { $username });
+            $rl->record_hit(action => 'failed_login');
+            if( $rl->check_violation(action => 'failed_login') ) {
+                return $self->login_wait;
+            }
         }
         return $self->show_form(
-            alert => "Invalid login.  Please check your user name and password and try again."
+            alert => "Invalid login. Please check your user name and password and try again."
         );
     }
 
