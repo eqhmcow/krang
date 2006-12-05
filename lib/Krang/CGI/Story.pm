@@ -112,6 +112,13 @@ sub new_story {
 
     # setup the type selector
     my @types = grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
+    # sort the type by their display name, not their real name
+    @types = sort {
+        pkg('ElementLibrary')->top_level( name => $a )->display_name
+        cmp 
+        pkg('ElementLibrary')->top_level( name => $b )->display_name
+    } @types;
+
     my %type_labels = 
       map { ($_, pkg('ElementLibrary')->top_level(name => $_)->display_name) }
         @types;
