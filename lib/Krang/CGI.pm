@@ -4,6 +4,7 @@ use warnings;
 
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader Message => qw(add_message);
 
 # pull in Krang::lib when not running in mod_perl
 BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
@@ -177,12 +178,13 @@ sub _check_permissions {
 
 sub _forbidden {
     my $self = shift;
-    my $login_url = '/' . pkg('Conf')->instance . "/login.pl";
+
     info(
         "Unauthorized Access attempted by user #$ENV{REMOTE_USER}."
-        . " Redirecting to '$login_url'"
+        . " Redirecting to 'login.pl'"
     );
-    $self->header_add( -location => $login_url );
+    my $msg = "You do not have permissions to access that portion of the site.";
+    $self->header_add( -location => "login.pl?alert=$msg" );
     $self->header_type('redirect');
 }
 
