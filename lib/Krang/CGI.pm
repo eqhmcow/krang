@@ -194,22 +194,21 @@ sub load_tmpl {
     my $self = shift;
     my ($tmpl_file, @extra_params) = @_;
     
-    # add tmpl_path to path array of one is set, otherwise add a path arg
+    # add tmpl_path to path array if one is set, otherwise add a path arg
     if (my $tmpl_path = $self->tmpl_path) {
+        my @tmpl_paths = (ref $tmpl_path eq 'ARRAY') ? @$tmpl_path : $tmpl_path;
         my $found = 0;
         for( my $x = 0; $x < @extra_params; $x += 2 ) {
-            if ($extra_params[$x] eq 'path' and 
-                ref $extra_params[$x+1]     and
-                ref $extra_params[$x+1] eq 'ARRAY') {
-                unshift @{$extra_params[$x+1]}, $tmpl_path;
+            if ($extra_params[$x] eq 'path' and
+            ref $extra_params[$x+1] eq 'ARRAY') {
+                unshift @{$extra_params[$x+1]}, @tmpl_paths;
                 $found = 1;
                 last;
             }
         }
-        use Krang::ClassLoader Log => qw(debug);
-        push(@extra_params, path => [ $tmpl_path ]) unless $found;
-    }
-    
+        push(@extra_params, path => [ @tmpl_paths ]) unless $found;
+    } 
+
     my $t = pkg('HTMLTemplate')->new_file($tmpl_file, @extra_params);
     return $t;
 }
