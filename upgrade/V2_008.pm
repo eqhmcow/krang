@@ -63,34 +63,38 @@ sub per_instance {
     warn("Failed to add password_changed column to user table: $@") if ($@);
 
     # add UUID columns
-    foreach my $table (qw(story media template site category user group)) {
-        eval {
-            $dbh->do(  "ALTER TABLE $table ADD COLUMN "
-                     . "${table}_uuid CHAR(36) NOT NULL");
-        };
-        warn("Failed to add ${table}_uuid column to $table table: $@") if $@;
+    foreach my $tid (qw(story media template site category user group)) {
+        my $table = $tid;  # Table name matches table "id" most of the time
+        $table .= "_permission" if ($tid eq 'group');
 
         eval {
-            my $unique = $table eq 'group' ? "UNIQUE" : "";
-            $dbh->do(  "CREATE $unique INDEX ${table}_uuid_index "
-                     . "ON $table (${table}_uuid)");
+            $dbh->do(  "ALTER TABLE $table ADD COLUMN "
+                     . "${tid}_uuid CHAR(36) NOT NULL");
         };
-        warn("Failed to add index for ${table}_uuid column: $@") if $@;
+        warn("Failed to add ${tid}_uuid column to $table table: $@") if $@;
 
         # give all objects a distinct UUID, could take a while for
         # large tables
         print "Creating new UUIDs in $table table...\n";
         eval {
             my $ids =
-              $dbh->selectcol_arrayref("SELECT ${table}_id FROM $table");
+              $dbh->selectcol_arrayref("SELECT ${tid}_id FROM $table");
             my $set_sth =
               $dbh->prepare(
-                 "UPDATE $table SET ${table}_uuid = ? WHERE ${table}_id = ?");
+                 "UPDATE $table SET ${tid}_uuid = ? WHERE ${tid}_id = ?");
             foreach my $id (@$ids) {
                 $set_sth->execute(pkg('UUID')->new(), $id);
             }
         };
-        warn("Failed to set ${table}_uuid values in $table table: $@") if $@;
+        warn("Failed to set ${tid}_uuid values in $table table: $@") if $@;
+
+        eval {
+            my $unique = $tid eq 'group' ? "UNIQUE" : "";
+            $dbh->do(  "CREATE $unique INDEX ${tid}_uuid_index "
+                     . "ON $table (${tid}_uuid)");
+        };
+        warn("Failed to add index for ${tid}_uuid column: $@") if $@;
+
     }
 }
 
