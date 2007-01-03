@@ -104,7 +104,7 @@ Krang::Story - the Krang story class
   # basic setable fields
   $story->title("Life is very long");
   $story->slug("life");
-  $story->cover_date(Time::Piece->strptime("%D %R", "1/1/2004 12:00"));
+  $story->cover_date(Time::Piece->strptime("1/1/2004 12:00", "%D %R"));
   $story->priority(3);
 
   # get the root element for this story
