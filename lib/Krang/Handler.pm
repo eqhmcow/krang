@@ -449,8 +449,14 @@ sub siteserver_trans_handler ($$) {
         }
     }
 
-    # didn't find a path?
-    return DECLINED unless $path;
+    # Didn't find a site?  Null out doc root and forbid request
+    unless ($path) {
+        $r->document_root(catdir(KrangRoot, "tmp"));
+        return FORBIDDEN;
+    }
+
+    # Set up DOCUMENT_ROOT
+    $r->document_root($path);
 
     # map the URI to a filename    
     my $filename = catfile($path, $r->uri);

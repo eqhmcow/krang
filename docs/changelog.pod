@@ -9,6 +9,14 @@ This document contains a list of changes for each release of Krang.
 
 =item * 
 
+Changed SiteServer to forbid any request which doesn't match a
+publish or preview URL.  SiteServer trans handler now sets up 
+$ENV{DOCUMENT_ROOT} correctly which is needed in a CGI environment.
+[Jesse Erlbaum]
+
+
+=item * 
+
 Krang::lib set to also ignore ".svn" directories.  [Jesse Erlbaum]
 
 
