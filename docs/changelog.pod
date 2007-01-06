@@ -2,6 +2,20 @@
 
 This document contains a list of changes for each release of Krang.
 
+
+=head2 2.X - IN DEVELOPMENT
+
+=over 
+
+=item * 
+
+Krang::lib set to also ignore ".svn" directories.  [Jesse Erlbaum]
+
+
+=back
+
+
+
 =head2 2.008 - Dec 20th, 2006
 
 =over
