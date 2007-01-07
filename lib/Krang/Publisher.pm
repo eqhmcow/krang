@@ -1294,6 +1294,11 @@ or not to add the current L<Krang::Category> header/footer to the
 final output, as it will for the regular published output.  Defaults
 to true.
 
+C<mode> is an optional parameter which will set the permissions
+of the file which is published.  The mode should be specified in
+octal (NOT a string).  If not specified, the mode of the published
+file will be based on the umask.
+
 B<WARNING:> C<additional_content_block()> can be called as many times
 as desired, however it does not perform any sanity checks on
 C<filename> - if your output contains multiple blocks of additional
@@ -1313,6 +1318,7 @@ sub additional_content_block {
     $block{content}  = $args{content}  || croak __PACKAGE__ . ": missing required argument 'content'";
     $block{filename} = $args{filename} || croak __PACKAGE__ . ": missing required argument 'filename'";
     $block{use_category} = exists($args{use_category}) ? $args{use_category} : 1;
+    $block{mode} = exists($args{mode}) ? $args{mode} : undef;
 
     push @{$self->{additional_content}}, \%block;
 
@@ -1776,12 +1782,20 @@ sub _build_story_single_category {
                         $story_element->class->publish_category_per_page());
             $content = $cat_header . $content . $cat_footer;
         }
-        push @paths, $self->_write_page(
-                                        data     => $content,
-                                        filename => $block->{filename},
-                                        story_id => $story->story_id,
-                                        path     => $output_path
-                                       );
+        my $output_filename = $self->_write_page(
+                                                 data     => $content,
+                                                 filename => $block->{filename},
+                                                 story_id => $story->story_id,
+                                                 path     => $output_path
+                                                );
+        push (@paths, $output_filename);
+
+        # set mode if available
+        if (my $mode = $block->{mode}) {
+            chmod($mode, $output_filename) 
+              or croak("Unable to chmod($mode, $output_filename): $!");
+        }
+
     }
 
     push @paths, $self->_write_story(story => $story, pages => \@pages, path => $output_path);

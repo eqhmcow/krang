@@ -7,6 +7,14 @@ This document contains a list of changes for each release of Krang.
 
 =over 
 
+=item *
+
+Added new parameter "mode" to additional_content_block() method
+in Publisher.  This new parameter permits the permission of the
+file to be set, which is particularly useful for publishing
+executable files.  [Jesse Erlbaum]
+
+
 =item * 
 
 Changed SiteServer to forbid any request which doesn't match a

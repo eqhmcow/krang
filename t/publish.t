@@ -1479,6 +1479,13 @@ sub test_additional_content_block {
         }
     }
 
+    # Try writing one executable file
+    $publisher->additional_content_block( content => "Exe Title",
+                                          filename => "foo.pl",
+                                          use_category => 0,
+                                          mode => 0755,
+                                        );
+
     $publisher->_set_publish_mode();
     my @files = $publisher->_build_story_single_category(story => $story, category => $category);
 
@@ -1486,7 +1493,17 @@ sub test_additional_content_block {
     for (my $i = 0; $i <= $#expected; $i++) {
         my $path = catfile($story->publish_path(category => $category), "test$i.txt");
         ok(-e $path, 'Krang::Publisher->additional_content_block');
+
+        # Should NOT be executable
+        my $found_mode = sprintf("%lo", (stat($path))[2] & 07777);
+        ok($found_mode ne "755", "$path is NOT executable (0755)");
     }
+
+    # Test mode of exe file
+    my $exe_file_path = catfile($story->publish_path(category => $category), "foo.pl");
+    ok((-e $exe_file_path), "File '$exe_file_path' exists");
+    my $found_mode = sprintf("%lo", (stat($exe_file_path))[2] & 07777);
+    ok($found_mode eq "755", "$exe_file_path is executable (0755)");
 
     $creator->delete_item(item => $story);
     $creator->delete_item(item => $category);
