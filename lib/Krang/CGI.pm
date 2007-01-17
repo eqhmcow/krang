@@ -46,15 +46,16 @@ See L<CGI::Application>.
 =head1 AUTHORIZATION
 
 User authentication is handled by L<Krang::Handler>. But for authoriztion,
-L<Krang::Handler> assumes that any valid user is also authorized to perform
-every action and leaves module and run-mode authorization up to the individual
-modules. A simple mechanism is provided by this base class to add this protection.
+L<Krang::Handler> assumes that any valid user is also authorized to
+perform every action and leaves module and run-mode authorization up
+to the individual modules. A simple mechanism is provided by this base
+class to add this protection.
 
 =head2 Protecting a Module
 
-To restrict an entire module to only users with given permissions, simply use 
-the C<PACKAGE_PERMISSIONS> C<< param() >> in either the init stage, or through
-C< new() >. For instance, F<user.pl> contains:
+To restrict an entire module to only users with given permissions, simply
+use the C<PACKAGE_PERMISSIONS> C<< param() >> in either the init stage,
+or through C< new() >. For instance, F<user.pl> contains:
 
     my $app = pkg('CGI::User')->new(
         PARAMS => {
@@ -62,19 +63,27 @@ C< new() >. For instance, F<user.pl> contains:
         }
     )->run();
 
-This means that only users with either the C<admin_users> or C<admin_users_limited>
-permissions will be access to the entire script.
+This means that only users with either the C<admin_users> or
+C<admin_users_limited> permissions will be access to the entire script.
+
+You can also protect on asset permissions:
+
+    my $app = pkg('CGI::Story')->new(
+        PARAMS => {
+            PACKAGE_ASSETS => { story => [qw(read-only edit)] },
+        }
+    )->run();
 
 =head2 Protecting a Run Mode
 
-Protecting a run mode is similar to protecting an entire module. Simple use the
-C<RUNMODE_PERMISSIONS> param. The main difference is that C<PACKAGE_PERMISSIONS>
-takes an arrayref, and C<RUNMODE_PERMISSIONS> takes a hashref. The keys of this
-hash are the names of the run modes. The values are arrayrefs containing the
-permissions needed.
+Protecting a run mode is similar to protecting an entire module. Simple
+use the C<RUNMODE_PERMISSIONS> param. The main difference is that
+C<PACKAGE_PERMISSIONS> takes an arrayref, and C<RUNMODE_PERMISSIONS>
+takes a hashref. The keys of this hash are the names of the run modes. The
+values are arrayrefs containing the permissions needed.
 
-So to add run mode level protection to F<publisher> to protect the C<publish_*>
-run modes, we need something like this: 
+So to add run mode level protection to F<publisher> to protect the
+C<publish_*> run modes, we need something like this:
 
     my $app = pkg('CGI::Publisher')->new(
         PARAMS => {
@@ -87,8 +96,48 @@ run modes, we need something like this:
         },
     )->run();
 
-Please see HREF[Krang Permissions System|permissions.html] for more information
-on the different permissions available.
+and you can also protect based on asset permissions:
+
+    my $app = pkg('CGI::Story')->new(
+        PARAMS => {
+            PACKAGE_ASSETS => { story => [qw(read-only edit)] },
+            RUNMODE_ASSETS => {
+                new_story                     => { story => ['edit'] },
+                create                        => { story => ['edit'] },
+                edit                          => { story => ['edit'] },
+                checkout_and_edit             => { story => ['edit'] },
+                check_in                      => { story => ['edit'] },
+                revert                        => { story => ['edit'] },
+                delete                        => { story => ['edit'] },
+                delete_selected               => { story => ['edit'] },
+                checkout_selected             => { story => ['edit'] },
+                checkin_selected              => { story => ['edit'] },
+                delete_categories             => { story => ['edit'] },
+                add_category                  => { story => ['edit'] },
+                set_primary_category          => { story => ['edit'] },
+                copy                          => { story => ['edit'] },
+                db_save                       => { story => ['edit'] },
+                db_save_and_stay              => { story => ['edit'] },
+                save_and_jump                 => { story => ['edit'] },
+                save_and_add                  => { story => ['edit'] },
+                save_and_publish              => { story => ['edit'] },
+                save_and_view                 => { story => ['edit'] },
+                save_and_view_log             => { story => ['edit'] },
+                save_and_stay                 => { story => ['edit'] },
+                save_and_edit_contribs        => { story => ['edit'] },
+                save_and_edit_schedule        => { story => ['edit'] },
+                save_and_go_up                => { story => ['edit'] },
+                save_and_bulk_edit            => { story => ['edit'] },
+                save_and_leave_bulk_edit      => { story => ['edit'] },
+                save_and_change_bulk_edit_sep => { story => ['edit'] },
+                save_and_find_story_link      => { story => ['edit'] },
+                save_and_find_media_link      => { story => ['edit'] },
+              },
+        }
+    )->run();
+
+Please see HREF[Krang Permissions System|permissions.html] for more
+information on the different permissions available.
 
 =cut
 
@@ -139,14 +188,15 @@ BEGIN {
 
                 # make sure they can authorize this package first
                 my $perms = $self->param('PACKAGE_PERMISSIONS');
-                my $authorized = $self->_check_permissions($perms);
+                my $assets = $self->param('PACKAGE_ASSETS');
+                my $authorized = $self->_check_permissions($perms) && $self->_check_assets($assets);
 
                 # now see if there are any run mode level restrictions
                 if( $authorized ) {
-                    $perms = $self->param('RUNMODE_PERMISSIONS');
-                    if( $perms && ref $perms eq 'HASH' ) {
-                        $authorized = $self->_check_permissions($perms->{$rm});
-                    }
+                    $perms  = $self->param('RUNMODE_PERMISSIONS');
+                    $assets = $self->param('RUNMODE_ASSETS');
+                    $authorized = $self->_check_permissions($perms->{$rm})
+                        && $self->_check_assets($assets->{$rm});
                 }
 
                 # don't let them go any further if they aren't authorized
@@ -172,6 +222,29 @@ sub _check_permissions {
         return 0;
     } else {
         debug("No permissions to check");
+        return 1;
+    }
+}
+
+sub _check_assets {
+    my ($self, $assets) = @_;
+    if( $assets && ref $assets eq 'HASH' ) {
+        my %actual_assets = pkg('Group')->user_asset_permissions();
+        foreach my $asset (keys %$assets) {
+            debug("Checking for asset '$asset'");
+            
+            # assets have values, not just true/false so check for a correct value
+            for my $val (@{$assets->{$asset}}) {
+                if( $val eq $actual_assets{$asset} ) {
+                    debug("Found correct value '$val' for asset '$asset'");
+                    return 1;
+                }
+            }
+            debug("No correct asset value found for '$asset'");
+        }
+        return 0;
+    } else {
+        debug("No asset to check");
         return 1;
     }
 }
