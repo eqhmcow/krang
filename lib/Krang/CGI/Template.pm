@@ -64,23 +64,23 @@ sub setup {
 		add
 		add_cancel
 		add_save
-                add_checkin
+        add_checkin
 		add_save_stay
 		advanced_search
 		cancel_add
 		cancel_edit
-                checkin_selected
+        checkin_selected
 		delete
 		delete_selected
-                deploy
-                deploy_selected
-                checkout_and_edit
+        deploy
+        deploy_selected
+        checkout_and_edit
 		edit
 		edit_cancel
 		edit_save
-                edit_checkin
+        edit_checkin
 		edit_save_stay
-                list_active
+        list_active
 		revert_version
 		save_and_view_log
 		search
