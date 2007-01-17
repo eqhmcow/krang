@@ -19,7 +19,7 @@ executable files.  [Jesse Erlbaum]
 
 Changed SiteServer to forbid any request which doesn't match a
 publish or preview URL.  SiteServer trans handler now sets up 
-$ENV{DOCUMENT_ROOT} correctly which is needed in a CGI environment.
+C< $ENV{DOCUMENT_ROOT} > correctly which is needed in a CGI environment.
 [Jesse Erlbaum]
 
 
@@ -27,6 +27,9 @@ $ENV{DOCUMENT_ROOT} correctly which is needed in a CGI environment.
 
 Krang::lib set to also ignore ".svn" directories.  [Jesse Erlbaum]
 
+=item *
+
+Stricter enforcement of asset permissions. [Michael Peters]
 
 =back
 
