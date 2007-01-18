@@ -6,10 +6,17 @@
 
 # setup load paths
 use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'AddOn';
+# call the init-handler of any Addons being used
+BEGIN {
+    print STDERR "Initializing AddOns...\n";
+    pkg('AddOn')->call_handler('InitHandler');
+}
 use Krang::ClassLoader 'lib';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Find qw(find);
 use Krang::ClassLoader 'HTMLTemplate';
+
 
 # load all Krang libs, with a few exceptions
 my $skip = qr/Profiler|Test|BricLoader|Cache|FTP|DataSet|Upgrade|MethodMaker|Daemon|Script|XML|ClassLoader/;

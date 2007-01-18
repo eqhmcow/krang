@@ -39,6 +39,11 @@ Krang::lib set to also ignore ".svn" directories.  [Jesse Erlbaum]
 
 Stricter enforcement of asset permissions. [Michael Peters]
 
+=item *
+
+During Apache startup, krang now properly calls AddOn
+init-handlers. [Michael Peters]
+
 =back
 
 
