@@ -9,6 +9,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Modified Site Server configuration to support CGI applications
+(ending in ".cgi") and Apache::Registry apps (ending ".pl").
+This will permit the site server to host interactive applications.
+[Jesse Erlbaum]
+
+
+=item *
+
 Added new parameter "mode" to additional_content_block() method
 in Publisher.  This new parameter permits the permission of the
 file to be set, which is particularly useful for publishing

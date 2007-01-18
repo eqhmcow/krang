@@ -54,7 +54,7 @@ AddModule mod_status.c
 AddModule mod_include.c
 AddModule mod_autoindex.c
 AddModule mod_dir.c
-# AddModule mod_cgi.c
+AddModule mod_cgi.c
 AddModule mod_asis.c
 # AddModule mod_imap.c
 AddModule mod_actions.c
@@ -73,6 +73,12 @@ AddModule mod_perl.c
 # To use server-parsed HTML files
 #
 AddHandler server-parsed .html .txt
+
+#
+# CGIs
+#
+AddHandler cgi-script .cgi .pl
+AddDefaultCharset utf-8
 
 
 PassEnv KRANG_ROOT
@@ -113,5 +119,17 @@ NameVirtualHost <tmpl_var SiteServerAddr>:<tmpl_var SiteServerPort>
    ServerName <tmpl_var HostName>
    ServerAlias *
 
+   DirectoryIndex index.html
+   Options +ExecCGI +Includes
+
+   # Serve up pages based on preview or publish directory
    PerlTransHandler Krang::Handler->siteserver_trans_handler
+
+   # Run CGIs ending ".pl" via mod_perl
+   PerlInitHandler Apache::StatINC
+   <Files *.pl>
+       SetHandler perl-script
+       PerlHandler Apache::Registry
+   </Files>
+
 </VirtualHost>
