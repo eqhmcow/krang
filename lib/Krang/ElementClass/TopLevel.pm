@@ -257,34 +257,52 @@ sub file_mode {}
 =item publish_frontend_app_template()
 
   $self->publish_frontend_app_template(
-      publisher => $publisher,
+      publisher         => $publisher,
       fill_with_element => $element,
-      filename => "search_results.tmpl",
-      use_category => 1,
-      tmpl_data => {Foo => 123, Bar => 456},
+      filename          => "search_results.tmpl",
+      use_category      => 1,
+      tmpl_data         => {Foo => 123, Bar => 456},
   );
 
 This method is used to publish a template to the front-end of a website for 
 use by a front-end CGI.  It is expected to be called from within the 
 fill_template() or publish() methods.  This method takes the following 
-parameters (* means required):
+parameters:
 
- *publisher    -- The Krang::Publisher object.
+=over
 
- *filename     -- The name of the template file to publish.  The
-                  template will be located via the category path
-                  as per Krang's normal template finding behavior.
+=item * publisher
 
-  use_category -- Set to "1" to wrap this template in the category 
-                  template.  Defaults to "0".
+The Krang::Publisher object.  This parameter is required.
 
-  tmpl_data    -- If provided, this hashref will be used to populate
-                  any parameters in the template.
+=item filename
 
-  fill_with_element -- If supplied, this element will be used to
-                  populate the contents of the template.  (In which
-                  case, the tmpl_data hashref will augment the
-                  output of the fill_template() process.
+The name of the template file to publish.  The template will be located
+via the category path as per Krang's normal template finding behavior.
+This parameter is required.
+
+=item output_filename
+
+The name of the file that is published. If not given it will default
+to C<filename>.
+
+=item use_category
+
+Set to "1" to wrap this template in the category template.  Defaults to
+"0".
+
+=item tmpl_data
+
+If provided, this hashref will be used to populate any parameters in
+the template.
+
+=item fill_with_element
+
+If supplied, this element will be used to populate the contents of
+the template.  (In which case, the tmpl_data hashref will augment the
+output of the fill_template() process.
+
+=back
 
 NOTE: Template vars, loops (etc.) which are needed by your front-end CGI 
 should be named "<dyn_*>" instead of "<tmpl_*>", e.g.:
@@ -311,6 +329,7 @@ sub publish_frontend_app_template {
     my $use_category = $args{use_category} || 0;
     my $tmpl_data = $args{tmpl_data} || 0;
     my $fill_with_element = $args{fill_with_element} || 0;
+    my $output_filename = $args{output_filename} || $filename;
 
     # Find template or die trying
     my $tmpl = $self->find_template( filename  => $filename,
@@ -333,12 +352,11 @@ sub publish_frontend_app_template {
 
     # Publish the template
     debug("Publishing template '$filename'");
-    $publisher->additional_content_block( filename => $filename,
+    $publisher->additional_content_block( filename => $output_filename,
                                           content => $html,
                                           use_category => $use_category );
 
 }
-
 
 sub _post_process_html {
     my ($self, $html_ref) = @_;
@@ -350,33 +368,48 @@ sub _post_process_html {
     }
 }
 
-
-
 =item publish_frontend_app_stub()
 
   $self->publish_frontend_app_stub(
-      publisher => $publisher,
-      filename => "myapp.pl",
+      publisher  => $publisher,
+      filename   => "myapp.pl",
       app_module => 'Foo::Bar::Baz',
       app_params => {Foo => 123, Bar => 456},
   );
 
-Publish a CGI "instance script" which will invoke a 
-CGI::Application-based module.  This method takes the following 
-parameters (* means required):
+Publish a CGI "instance script" which will invoke a CGI::Application-based
+module.  This method takes the following parameters:
 
- *publisher    -- The Krang::Publisher object.
+=over
 
- *filename     -- The name of the stub file to publish.  This file 
-                  will be made executable (mode 0755) so as to comply with 
-                  mod_cgi, Apache::Registry, and ModPerl::Registry
+=item * publisher
 
- *app_module   -- The CGI::Application based (or compatible) module which
-                  will be instantiated via the application stub file.
+The Krang::Publisher object.  This parameter is required.
 
-  app_params   -- These parameters will be passed to the application
-                  and made available via the $app->param() method.
-                  (See the CGI::Application documentation.)
+=item * filename
+
+The name of the stub file to publish.  This file will be made executable
+(mode 0755) so as to comply with mod_cgi, Apache::Registry, and
+ModPerl::Registry This parameter is required.
+
+=item * app_module
+
+The CGI::Application based (or compatible) module which will be
+instantiated via the application stub file.  This parameter is required.
+
+=item * app_params
+
+These parameters will be passed to the application and made available
+via the $app->param() method.  (See the CGI::Application documentation.)
+
+=item * return_only
+
+If true, then the text of the resulting script won't be published to
+the filesystem but will instead be returned. This is useful if you
+want to return the output as part of your publish() method.
+Defaults to false;
+
+=back
 
 =cut
 
@@ -384,10 +417,11 @@ sub publish_frontend_app_stub {
     my $self = shift;
     my %args = @_;
 
-    my $publisher = $args{publisher} || croak ("No publisher specified");
-    my $filename = $args{filename} || croak("No filename specified");
-    my $app_module = $args{app_module} || croak("No app_module specified");
-    my $app_params = $args{app_params} || 0;
+    my $publisher   = $args{publisher}  || croak("No publisher specified");
+    my $filename    = $args{filename}   || croak("No filename specified");
+    my $app_module  = $args{app_module} || croak("No app_module specified");
+    my $app_params  = $args{app_params} || 0;
+    my $return_only = $args{return_only};
 
     my $params_string = "";
     if ($app_params) {
@@ -407,13 +441,16 @@ my \$app = $app_module->new($params_string);
 EOF
 ;
 
-    debug("Publishing app stub '$filename'");
-    $publisher->additional_content_block
-        ( filename      => $filename, 
-          content       => $script, 
-          use_category  => 0,
-          mode          => 0755,
-        );    
+    unless( $return_only ) {
+        debug("Publishing app stub '$filename'");
+        $publisher->additional_content_block
+            ( filename      => $filename, 
+              content       => $script, 
+              use_category  => 0,
+              mode          => 0755,
+            );    
+    }
+    return $script;
 }
 
 
