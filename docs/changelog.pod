@@ -50,7 +50,7 @@ Stricter enforcement of asset permissions. [Michael Peters]
 
 =item *
 
-During Apache startup, krang now properly calls AddOn
+During Apache and FTP startup, krang now properly calls AddOn
 init-handlers. [Michael Peters]
 
 =back
