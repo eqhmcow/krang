@@ -256,6 +256,8 @@ test_publish_story($story);
 
 test_preview_story($story);
 
+test_cgistory_publish();
+
 test_media_deploy();
 
 test_storylink();
@@ -1194,6 +1196,45 @@ sub test_publish_story {
             fail('Krang::Publisher->publish_story() -- compare');
         }
     }
+}
+
+
+sub test_cgistory_publish {
+    my $story = $creator->create_story( class => 'cgi_story', category => [$category] );
+    my ($dyn_vars_block) = $story->element->child('dyn_vars_block');
+    my $unique = "test_var_".time;
+    $dyn_vars_block->data('Test: <dyn_var '.$unique.'>');
+    $story->checkout();
+    $story->save();
+    $story->checkin();
+
+    my $tmpl = $creator->create_template(element => $story->element);
+    $tmpl->deploy();
+
+    $publisher->publish_story(story => $story);
+
+    my @story_paths = build_publish_paths($story);
+
+    # Just test first path
+    my $story_path = $story_paths[0];
+    my $story_txt = load_story_page($story_path);
+    ok(($story_txt =~ /dyn\_var $unique/), "HTML page has dyn var");
+
+    # Check to make sure there is a template
+    my $tmpl_path = $story_path;
+    $tmpl_path =~ s/index\.html$/cgi_story\.tmpl/;
+    my $tmpl_text = load_story_page($tmpl_path);
+    ok(($tmpl_text =~ /tmpl\_var $unique/i), "Template has tmpl var");
+
+    # Check to make sure there is a stub file
+    my $stub_path = $story_path;
+    $stub_path =~ s/index\.html$/cgi_story\.cgi/;
+    my $stub_text = load_story_page($stub_path);
+    ok(($stub_text =~ /use CGI\:\:Application/i), "Stub looks right");
+
+    # Test that fill_template works as expected for published templates
+    my $diff = `/usr/bin/diff -I $unique $story_path $tmpl_path`;
+    ok($diff =~ /^\s*$/, "No difference between CGI tmpl and story");
 }
 
 

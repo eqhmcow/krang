@@ -9,6 +9,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added two new methods to Krang::ElementClass::TopLevel,
+publish_frontend_app_template() and publish_frontend_app_stub().
+These new methods permit a Krang site to publish interactive 
+applications and templates for those applications easily and
+consistently.  [Jesse Erlbaum]
+
+
+=item *
+
 Modified Site Server configuration to support CGI applications
 (ending in ".cgi") and Apache::Registry apps (ending ".pl").
 This will permit the site server to host interactive applications.

@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
+use Data::Dumper qw();
 
 use Krang::ClassLoader Log => qw(debug info critical);
 use Krang::ClassLoader base => 'ElementClass';
@@ -250,6 +251,172 @@ default mode, determined by the process umask.
 =cut
 
 sub file_mode {}
+
+
+
+=item publish_frontend_app_template()
+
+  $self->publish_frontend_app_template(
+      publisher => $publisher,
+      fill_with_element => $element,
+      filename => "search_results.tmpl",
+      use_category => 1,
+      tmpl_data => {Foo => 123, Bar => 456},
+  );
+
+This method is used to publish a template to the front-end of a website for 
+use by a front-end CGI.  It is expected to be called from within the 
+fill_template() or publish() methods.  This method takes the following 
+parameters (* means required):
+
+ *publisher    -- The Krang::Publisher object.
+
+ *filename     -- The name of the template file to publish.  The
+                  template will be located via the category path
+                  as per Krang's normal template finding behavior.
+
+  use_category -- Set to "1" to wrap this template in the category 
+                  template.  Defaults to "0".
+
+  tmpl_data    -- If provided, this hashref will be used to populate
+                  any parameters in the template.
+
+  fill_with_element -- If supplied, this element will be used to
+                  populate the contents of the template.  (In which
+                  case, the tmpl_data hashref will augment the
+                  output of the fill_template() process.
+
+NOTE: Template vars, loops (etc.) which are needed by your front-end CGI 
+should be named "<dyn_*>" instead of "<tmpl_*>", e.g.:
+
+  <dyn_if some_boolean>
+    <dyn_loop some_loop>
+      <dyn_var foo1>
+      <dyn_var foo2>
+      <dyn_var foo3>
+    </dyn_loop>
+  </dyn_if>
+
+This is to differentiate the template tags needed by the CGI from
+those needed by the Krang publishing process.
+
+=cut
+
+sub publish_frontend_app_template {
+    my $self = shift;
+    my %args = @_;
+
+    my $publisher = $args{publisher} || croak ("No publisher specified");
+    my $filename = $args{filename} || croak("No filename specified");
+    my $use_category = $args{use_category} || 0;
+    my $tmpl_data = $args{tmpl_data} || 0;
+    my $fill_with_element = $args{fill_with_element} || 0;
+
+    # Find template or die trying
+    my $tmpl = $self->find_template( filename  => $filename,
+                                     publisher => $publisher );
+
+    if ($fill_with_element) {
+        $fill_with_element->class->fill_template
+            ( tmpl => $tmpl,
+              publisher => $publisher,
+              element => $fill_with_element,
+            );
+    }
+
+    # Put tmpl_data into template
+    $tmpl->param(%$tmpl_data) if ($tmpl_data);
+
+    # Convert <DYN_*> to <TMPL_*>
+    my $html = $tmpl->output();
+    $self->_post_process_html(\$html);
+
+    # Publish the template
+    debug("Publishing template '$filename'");
+    $publisher->additional_content_block( filename => $filename,
+                                          content => $html,
+                                          use_category => $use_category );
+
+}
+
+
+sub _post_process_html {
+    my ($self, $html_ref) = @_;
+
+    # change tags for dynamic HTML::Template stuff
+    if (defined $html_ref && defined $$html_ref) {
+        $$html_ref =~ s|<DYN_|<TMPL_|gi;
+        $$html_ref =~ s|</DYN_|</TMPL_|gi;
+    }
+}
+
+
+
+=item publish_frontend_app_stub()
+
+  $self->publish_frontend_app_stub(
+      publisher => $publisher,
+      filename => "myapp.pl",
+      app_module => 'Foo::Bar::Baz',
+      app_params => {Foo => 123, Bar => 456},
+  );
+
+Publish a CGI "instance script" which will invoke a 
+CGI::Application-based module.  This method takes the following 
+parameters (* means required):
+
+ *publisher    -- The Krang::Publisher object.
+
+ *filename     -- The name of the stub file to publish.  This file 
+                  will be made executable (mode 0755) so as to comply with 
+                  mod_cgi, Apache::Registry, and ModPerl::Registry
+
+ *app_module   -- The CGI::Application based (or compatible) module which
+                  will be instantiated via the application stub file.
+
+  app_params   -- These parameters will be passed to the application
+                  and made available via the $app->param() method.
+                  (See the CGI::Application documentation.)
+
+=cut
+
+sub publish_frontend_app_stub {
+    my $self = shift;
+    my %args = @_;
+
+    my $publisher = $args{publisher} || croak ("No publisher specified");
+    my $filename = $args{filename} || croak("No filename specified");
+    my $app_module = $args{app_module} || croak("No app_module specified");
+    my $app_params = $args{app_params} || 0;
+
+    my $params_string = "";
+    if ($app_params) {
+        my $dumper = Data::Dumper->new([$app_params]);
+        $dumper->Terse(1);
+        $dumper->Indent(0);
+        $params_string = "PARAMS => " . $dumper->Dump;
+    }
+
+    my $script = <<EOF;
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use $app_module;
+my \$app = $app_module->new($params_string);
+\$app->run;
+EOF
+;
+
+    debug("Publishing app stub '$filename'");
+    $publisher->additional_content_block
+        ( filename      => $filename, 
+          content       => $script, 
+          use_category  => 0,
+          mode          => 0755,
+        );    
+}
+
+
 
 =back
 
