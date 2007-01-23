@@ -22,7 +22,7 @@ None.
 =cut
 
 use Krang::ClassLoader base => 'CGI';
-use CGI qw/:standard/;
+use CGI qw/:html/;
 use Krang::ClassLoader 'Conf';
 
 sub setup {
