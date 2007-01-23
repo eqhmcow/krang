@@ -1145,7 +1145,12 @@ sub update_template {
                 $template->$_($val);
             }
         } elsif ($_ eq 'category_id') {
-            $template->$_($val) if $val ne '';
+            if ($val eq '') {
+                # clear the category, none selected
+                $template->category_id(undef);
+            } else {
+                $template->category_id($val);
+            }
         } else {
             $template->{filename} = $val;
         }
