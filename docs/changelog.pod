@@ -9,6 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In Krang::CGI::Status, import only ':html' functions from CGI, since
+CGI's param() may mess up CAP's param().  [Bodo Schulze]
+
+
+=item *
+
 Added two new methods to Krang::ElementClass::TopLevel,
 publish_frontend_app_template() and publish_frontend_app_stub().
 These new methods permit a Krang site to publish interactive 
