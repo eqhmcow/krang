@@ -234,8 +234,7 @@ sub check_media {
     my $checked_out;
     foreach my $file (@$media_list) {
         my $category_id = $category_list{$file->{category}};
-        my $media = (pkg('Media')->find( title => $file->{name},
-                                        category_id => $category_id,
+        my $media = (pkg('Media')->find(category_id => $category_id,
                                         filename => $file->{name} ))[0] || '';
         if ($media) {
             if ($media->checked_out) {

@@ -9,6 +9,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug in media bulk upload - unless the media object was
+originally created with its filename for title (i.e. uploaded via
+bulk-upload or FTP) then trying to replace it with bulk upload
+wouldn't work. [Sam]
+
+=item *
+
 In Krang::CGI::Status, import only ':html' functions from CGI, since
 CGI's param() may mess up CAP's param().  [Bodo Schulze]
 
