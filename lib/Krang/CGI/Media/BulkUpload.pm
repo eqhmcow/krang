@@ -387,6 +387,9 @@ sub build_image_list {
 
     # ignore fluff in MacOSX .zip files
     return if $path =~ /__MACOSX/;
+
+    # ignore .files
+    return if $file =~ /^\./;
    
     my $opened_root = $File::Find::topdir; 
     $path =~ s/$opened_root//; 
