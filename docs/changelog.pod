@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed media bulk upload to ignore MacOSX fluff in upload archives
+(__MACOSX directory and contents). [Sam]
+
+=item *
+
 Fixed bug in New Template where it was imposible to clear the category
 selector after making a selection and clicking Save.  [Sam]
 

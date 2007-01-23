@@ -384,6 +384,9 @@ sub build_image_list {
     my $path = $File::Find::dir;
     my $file = $_;
     return unless -f $File::Find::name;
+
+    # ignore fluff in MacOSX .zip files
+    return if $path =~ /__MACOSX/;
    
     my $opened_root = $File::Find::topdir; 
     $path =~ s/$opened_root//; 
