@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where use of URL search on Find Template would result in
+incorrect substituition of % for non-alphanumeric characters. [Sam]
+
+=item *
+
 Fixed bug where hitting enter on the new or edit template screens
 would produce an ISE.  [Sam]
 
