@@ -254,7 +254,9 @@ foreach my $instance (@instances) {
     system($cmd) && die "Couldn't grant all: $?";
 
     # load all sql files as the DBUser
-    my @sql_dirs = pkg('File')->find_all('sql');
+    # find them in reverse order so that krang files get run first
+    # and addons have a chance to change them later
+    my @sql_dirs = reverse pkg('File')->find_all('sql'); 
     print STDERR "Loading SQL for '$name' from " . join(', ', @sql_dirs) . 
       "...\n" if $verbose;
     $cmd = "cat " . join(' ', map { catfile($_, '*.sql') } @sql_dirs) . 

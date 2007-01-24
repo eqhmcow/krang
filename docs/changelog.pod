@@ -7,6 +7,12 @@ This document contains a list of changes for each release of Krang.
 
 =over 
 
+=item * 
+
+During DB creation, addon F<sql/> files should come after core
+Krang. This allows addons to change existing Krang data/tables. 
+[Michael Peters]
+
 =item *
 
 Fixed bug where deleting a category which was used in an advanced
