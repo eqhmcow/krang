@@ -296,9 +296,13 @@ EOF
 
 <tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
 
-  <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a></p></div>
-  <tmpl_else><a href="javascript:show_big_view('1')">show <tmpl_var big_view_page_size> per page</a></p></div>
+<tmpl_if show_big_view>
+  <a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a></p></div>
+<tmpl_else>
+  <tmpl_if page_numbers>
+    <a href="javascript:show_big_view('1')">show <tmpl_var big_view_page_size> per page</a></p></div>
   </tmpl_if>
+</tmpl_if>
 
 <tmpl_else>
   <div class="no-border"><p class="left2"><b>&nbsp;None Found</b></p></div>
@@ -941,11 +945,13 @@ sub get_pager_view {
              { page_number => $total_pages,
                page_number_label => $total_pages }) if $end != $total_pages;
     } else {
-        @page_numbers = 
-          map { { page_number      => $_, 
-                  page_number_label=> $_,
-                  is_current_page  => ($_ eq $curr_page_num) } }
-            (1..$total_pages);
+        if( $total_pages > 1 ) {
+            @page_numbers = 
+              map { { page_number      => $_, 
+                      page_number_label=> $_,
+                      is_current_page  => ($_ eq $curr_page_num) } }
+                (1..$total_pages);
+        }
     }
 
     # Determine row number at which display starts
