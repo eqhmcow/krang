@@ -339,8 +339,7 @@ sub advanced_search {
       $q->param('search_url') : $session{KRANG_PERSIST}{Template}{search_url};
 
     if ($search_url) {
-        $search_url =~ s/\W+/\%/g;
-        $find_params->{url_like} = "\%$search_url\%";
+        $find_params->{url_like} = "%$search_url%";
         $persist_vars->{search_url} = $q->param('search_url');
         $t->param( search_url => $search_url );
     }
