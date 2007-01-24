@@ -1090,11 +1090,11 @@ sub find {
                 if ($numeric) {
                     push @where, 'simple_search';
                 } else {
-                    push @where, ($word, $word, $word);
                     # escape any literal SQL wildcard chars
                     $word =~ s/_/\\_/g;
                     $word =~ s/%/\\%/g;
                     $args{$word} = '%'.$word.'%';
+                    push @where, ($word, $word, $word);
                 } 
         } 
     }

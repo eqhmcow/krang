@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug in media find - searches which included _ or % wouldn't find
+anything. [Sam]
+
+=item *
+
 Fixed media bulk upload to ignore MacOSX fluff in upload archives
 (__MACOSX directory, .DS_Store, .localized). [Sam]
 
