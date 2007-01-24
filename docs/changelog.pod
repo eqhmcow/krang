@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where hitting enter on the new or edit template screens
+would produce an ISE.  [Sam]
+
+=item *
+
 Fixed bug in media find - searches which included _ or % wouldn't find
 anything. [Sam]
 

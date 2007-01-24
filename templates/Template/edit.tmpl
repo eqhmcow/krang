@@ -100,7 +100,7 @@
 </form>
 
 <form name="edit_template_form" method="POST" enctype="multipart/form-data" action="template.pl">
-<input type="hidden" name="rm" value=<tmpl_if add_mode>"save_add"<tmpl_else>"save_edit"</tmpl_if>>
+<input type="hidden" name="rm" value=<tmpl_if add_mode>"add_save"<tmpl_else>"edit_save"</tmpl_if>>
 <input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
 <div class="box">
 <table border="0" cellpadding="5" cellspacing="0" width="100%">
