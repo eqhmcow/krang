@@ -10,8 +10,7 @@ This document contains a list of changes for each release of Krang.
 =item *
 
 Fixed media bulk upload to ignore MacOSX fluff in upload archives
-(__MACOSX directory and contents), as well as any file starting with a
-dot. [Sam]
+(__MACOSX directory, .DS_Store, .localized). [Sam]
 
 =item *
 
