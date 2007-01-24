@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed bug where deleting a category which was used in an advanced
+searched caused an ISE when returning to the advanced search.  [Sam]
+
+=item *
+
 Fixed bug where use of URL search on Find Template would result in
 incorrect substituition of % for non-alphanumeric characters. [Sam]
 

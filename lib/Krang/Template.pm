@@ -753,11 +753,13 @@ sub find {
             $where_clause .= " ($tmp)";
             push @params, @{$args{$arg}};
         } elsif ($arg eq 'below_category_id') {
-            $where_clause = "c.category_id = ? AND " .
-              "t.url LIKE ?" . ($where_clause ? " AND $where_clause" : '');
             my ($cat) = pkg('Category')->find(category_id => $args{$arg});
-            unshift @params, $cat->url . "%";
-            unshift @params, $args{$arg};
+            if ($cat) {
+                $where_clause = "c.category_id = ? AND " .
+                  "t.url LIKE ?" . ($where_clause ? " AND $where_clause" : '');
+                unshift @params, $cat->url . "%";
+                unshift @params, $args{$arg};
+            }
         } elsif ($arg eq 'simple_search') {
             my @words = split(/\s+/, $args{$arg});
             for (@words) {

@@ -1123,11 +1123,13 @@ sub find {
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
             my ($cat) = pkg('Category')->find(category_id => $value);
-            my @ids = ($value, $cat->descendants( ids_only => 1 ));
-            push(@where, 's.story_id = sc.story_id');
-            push(@where, 
-                 'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
-            push(@param, @ids);
+            if ($cat) {
+                my @ids = ($value, $cat->descendants( ids_only => 1 ));
+                push(@where, 's.story_id = sc.story_id');
+                push(@where, 
+                     'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
+                push(@param, @ids);
+            }
             next;
         }
 
@@ -1136,11 +1138,13 @@ sub find {
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
             my ($cat) = pkg('Category')->find(category_id => $value);
-            my @ids = ($value, $cat->descendants( ids_only => 1 ));
-            push(@where, 's.story_id = sc.story_id AND sc.ord = 0');
-            push(@where, 
-                 'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
-            push(@param, @ids);
+            if ($cat) {
+                my @ids = ($value, $cat->descendants( ids_only => 1 ));
+                push(@where, 's.story_id = sc.story_id AND sc.ord = 0');
+                push(@where, 
+                     'sc.category_id IN (' . join(',', ('?') x @ids) . ')');
+                push(@param, @ids);
+            }
             next;
         }
 

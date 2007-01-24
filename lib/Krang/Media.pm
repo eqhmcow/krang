@@ -1004,12 +1004,14 @@ sub find {
     # add ids of category and cats below if below_category_id is passed in
     if ($args{'below_category_id'}) {
         my $specd_cat = (pkg('Category')->find(category_id => $args{below_category_id}))[0];
-        my @descendants = $specd_cat->descendants( ids_only => 1 );
-        unshift @descendants, $specd_cat->category_id;
-
-        $where_string .= " and " if $where_string;
-        $where_string .= "(".
-          join(" OR ", map { "media.category_id = $_" } @descendants) .")";
+        if ($specd_cat) {
+            my @descendants = $specd_cat->descendants( ids_only => 1 );
+            unshift @descendants, $specd_cat->category_id;
+            
+            $where_string .= " and " if $where_string;
+            $where_string .= "(".
+              join(" OR ", map { "media.category_id = $_" } @descendants) .")";
+        }
     }
 
     # add join to category table if site_id param is passed in.
