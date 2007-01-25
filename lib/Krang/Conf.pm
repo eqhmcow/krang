@@ -46,6 +46,7 @@ KrangUser
 LogLevel
 PasswordChangeTime
 PasswordChangeCount
+PreviewSSL
 SchedulerMaxChildren
 SiteServerAddr
 SiteServerPort

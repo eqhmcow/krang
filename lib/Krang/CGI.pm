@@ -168,7 +168,6 @@ BEGIN {
           $ENV{KRANG_INSTANCE} : (pkg('Conf')->instances())[0];
         debug("Krang::CGI:  Setting instance to '$instance'");
         pkg('Conf')->instance($instance);
-        $ENV{KRANG_PREVIEW_SCHEME} = $ENV{HTTPS} ? 'https' : 'http';
     }
 
     # register the auth_forbidden runmode

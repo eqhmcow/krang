@@ -7,6 +7,13 @@ This document contains a list of changes for each release of Krang.
 
 =over 
 
+=item *
+
+Added a new configuration variable, PreviewSSL, which controls whether
+links to preview use SSL.  This behavior was previously the default
+when EnableSSL was set, but now it is available independently and can
+be turned off even when Krang itself is using SSL.  [Sam]
+
 =item * 
 
 During DB creation, addon F<sql/> files should come after core

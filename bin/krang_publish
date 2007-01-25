@@ -185,9 +185,6 @@ use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Publisher';
 use Krang::Cache;
 
-# Set preview scheme
-$ENV{KRANG_PREVIEW_SCHEME} = SSLEngine && SSLEngine eq 'on' ? 'https' : 'http';
-
 use Time::HiRes qw(gettimeofday tv_interval);
 
 # Setup - grabbing all the command-line options.

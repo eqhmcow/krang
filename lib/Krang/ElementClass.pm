@@ -8,6 +8,7 @@ use CGI ();
 
 use HTML::Template::Expr;
 use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader Conf => qw(PreviewSSL);
 
 use Krang::ClassLoader 'Pref';
 
@@ -772,7 +773,7 @@ sub fill_template {
             # build the URL for this 'page' - will be used in the publish pass.
             my $count = @page_urls;
 	    # set protocol to 'https' in preview if running with SSL enabled
-	    my $scheme = $publisher->is_preview ? $ENV{KRANG_PREVIEW_SCHEME} : 'http';
+	    my $scheme = ($publisher->is_preview and PreviewSSL) ? 'https' : 'http';
             push @page_urls, $self->_build_page_url(page => $count,
                                                     publisher => $publisher,
 						    protocol => $scheme.'://');

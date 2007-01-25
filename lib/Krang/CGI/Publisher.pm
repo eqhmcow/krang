@@ -27,6 +27,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'User';
+use Krang::ClassLoader Conf => qw(PreviewSSL);
 use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget => qw(format_url datetime_chooser decode_datetime);
 use Krang::ClassLoader Message => qw(add_message get_messages clear_messages);
@@ -425,7 +426,8 @@ sub preview_story {
     assert($url eq $story->preview_url) if ASSERT;
 
     # dynamic redirect to preview if we've got a url to redirect to
-    print "<script language='javascript'>window.location = '$ENV{KRANG_PREVIEW_SCHEME}://$url'</script>\n"
+    my $scheme = PreviewSSL ? 'https' : 'http';
+    print "<script language='javascript'>window.location = '$scheme://$url'</script>\n"
       if $url;
 }
 
@@ -524,8 +526,10 @@ sub preview_media {
     } else {
         # redirect to preview
         $self->header_type('redirect');
-        $self->header_props(-url=>"$ENV{KRANG_PREVIEW_SCHEME}://$url");
-        return "Redirecting to <a href='$ENV{KRANG_PREVIEW_SCHEME}://$url'>$ENV{KRANG_PREVIEW_SCHEME}://$url</a>.";
+
+        my $scheme = PreviewSSL ? 'https' : 'http';
+        $self->header_props(-url=>"$scheme://$url");
+        return "Redirecting to <a href='$scheme://$url'>$scheme://$url</a>.";
     }
 }
 

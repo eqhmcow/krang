@@ -125,10 +125,6 @@ sub trans_handler ($$) {
         return DECLINED;
     }
 
-    # pass request scheme
-    my $scheme = Apache::URI->parse($r)->scheme;
-    $r->cgi_env(KRANG_PREVIEW_SCHEME => $scheme);
-
     # Read directory configuration for this request
     my $instance_name = $r->dir_config('instance');
     $instance_name = '' unless (defined($instance_name));
