@@ -271,7 +271,7 @@ parameters:
 
 =over
 
-=item * publisher
+=item publisher
 
 The Krang::Publisher object.  This parameter is required.
 
