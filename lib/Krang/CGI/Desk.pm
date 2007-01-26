@@ -68,6 +68,13 @@ sub show {
                                    );
 
     my $desk_id = $query->param('desk_id');
+
+    # make sure they have permissions to view this desk
+    my %perms = pkg('Group')->user_desk_permissions();
+    unless( $perms{$desk_id} && $perms{$desk_id} ne 'hide' ) {
+        return $self->access_forbidden;
+    } 
+    
     my $desk = (pkg('Desk')->find( desk_id => $desk_id))[0];
     $template->param( desk_name => $desk->name );
     $template->param( desk_id => $desk_id );

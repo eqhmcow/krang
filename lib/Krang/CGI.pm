@@ -174,7 +174,7 @@ BEGIN {
     __PACKAGE__->add_callback(
         init => sub {
             my $self = shift;
-            $self->run_modes( access_forbidden => \&_forbidden );
+            $self->run_modes(access_forbidden => 'access_forbidden');
         }
     );
     # setup our Authorization
@@ -248,7 +248,7 @@ sub _check_assets {
     }
 }
 
-sub _forbidden {
+sub access_forbidden {
     my $self = shift;
 
     info(
