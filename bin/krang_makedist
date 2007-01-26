@@ -152,6 +152,7 @@ find({ no_chdir => 1,
                        m!^$name/\./conf/krang.conf$!o or # skip krang.conf
                        m!/CVS! or                    # skip all CVS dirs
                        m!\.cvsignore! or             # skip all CVS dirs
+                       m!/\.svn! or                  # skip all SVN dirs
                        m!~$! or                      # skip Emacs droppings
                        m!#! or                       # skip Emacs droppings
                        m!krang-[^/]+\.tar\.gz!;      # skip Krang distribs
