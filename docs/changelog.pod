@@ -9,6 +9,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Upgraded to HTML::Template v2.9 fixing several bugs. [Sam]
+
+=item *
+
 Added a new configuration variable, PreviewSSL, which controls whether
 links to preview use SSL.  This behavior was previously the default
 when EnableSSL was set, but now it is available independently and can
