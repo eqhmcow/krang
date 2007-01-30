@@ -229,10 +229,13 @@ sub element_edit {
     my @children = $element->children;
     
     # figure out list of slots that are reorderable
-    my @avail_ord = grep { $children[$_-1]->reorderable } (1 .. @children);
+    my @avail_ord = grep { $children[$_-1]->reorderable  } (1 .. @children);
+    my $avail_del = grep { $_->allow_delete } @children;
        
-    # let the template know if none are reorderable so no button displayed
-    $template->param( no_reorder => 1 ) if not @avail_ord;
+    # let the template know if none are reorderable/deleteable so no
+    # button displayed
+    $template->param(no_reorder => 1) if not @avail_ord;
+    $template->param(no_delete  => 1) if not $avail_del;
  
     foreach my $child (@children) {        
         # setup form, making it invalid if needed

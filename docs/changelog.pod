@@ -7,6 +7,12 @@ This document contains a list of changes for each release of Krang.
 
 =over 
 
+=item *
+
+Fixed element editor to not display a delete button when no elements
+allow deletion.  Also suppressed the Order column when nothing is
+reorderable.  [Sam]
+
 =item * 
 
 Send no-cache HTTP headers for all L<Krang::CGI> requests. This
