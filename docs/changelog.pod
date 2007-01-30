@@ -7,6 +7,12 @@ This document contains a list of changes for each release of Krang.
 
 =over 
 
+=item * 
+
+Send no-cache HTTP headers for all L<Krang::CGI> requests. This
+will fix some problems when logging in as a different user with
+the same browser session in IE. [Michael Peters]
+
 =item *
 
 Upgraded to HTML::Template v2.9 fixing several bugs. [Sam]

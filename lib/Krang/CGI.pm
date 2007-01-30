@@ -171,10 +171,22 @@ BEGIN {
     }
 
     # register the auth_forbidden runmode
+    # and prevent aggressive caching from some browsers (looking at you IE)
     __PACKAGE__->add_callback(
         init => sub {
             my $self = shift;
             $self->run_modes(access_forbidden => 'access_forbidden');
+
+            if( $ENV{MOD_PERL} ) {
+                require Apache;
+                my $r = Apache->request();
+                $r->no_cache(1);
+            } else {
+                $self->header_add(
+                    -cache_Control => 'no-cache',
+                    -pragma        => 'no-cache',
+                );
+            }
         }
     );
     # setup our Authorization
