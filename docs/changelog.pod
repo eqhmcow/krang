@@ -10,8 +10,8 @@ This document contains a list of changes for each release of Krang.
 =item *
 
 Fixed element editor to not display a delete button when no elements
-allow deletion.  Also suppressed the Order column when nothing is
-reorderable.  [Sam]
+allow deletion.  Also suppressed the Order checkbox when nothing is
+reorderable. [Sam]
 
 =item * 
 
