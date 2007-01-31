@@ -797,7 +797,7 @@ sub calculate_order_by {
         $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"} = $order_by if $cache_key;
     } elsif( $cache_key && $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"} ) {
         $order_by = $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"};
-    } else {
+    } elsif( ref $self ) {
         $order_by = $self->columns_sortable()->[0];  # First sort column
     }
 
