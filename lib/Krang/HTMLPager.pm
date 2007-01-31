@@ -55,6 +55,9 @@ use Krang::ClassLoader MethodMaker => (
                                                cgi_query 
                                                persist_vars 
                                                use_module 
+                                               use_data
+                                               use_data_size
+                                               cache_key
                                                find_params 
                                                columns 
                                                column_labels
@@ -229,7 +232,7 @@ or not any results were found.
 
 =cut
 
-### row_count() in implemented via Krang::MethodMaker
+### row_count() is implemented via Krang::MethodMaker
 
 
 =item make_internal_template()
@@ -379,6 +382,26 @@ the following parameters are supported:
   * offset
   * limit
 
+=item use_data
+
+In some cases you might already have the data you want to page
+and you just need HTMLPager to do the formatting. In this case
+pass in an array ref to your data here instead of providing
+a value for L<use_module>.
+
+=item use_data_size
+
+If you are using L<use_data> and what you provided was not the
+entire dataset, then you can let HTMLPager know what the full
+size is. This allows it to accurately build the paging links.
+
+=item cache_key
+
+HTMLPager uses the session cache to store some information about
+a paged list to re-use that same information on future requests
+for the same list. By default we use L<use_module> as the cache
+key, but you may need to provide your own key if you use the
+same L<use_module> in multiple places or you are using L<use_data>.
 
 =item find_params
 
@@ -388,8 +411,6 @@ A hashref containing the search parameters exactly as they should be
 passed to find().  This hashref will be augmented to include 
 parameters related to sorting (order_by, order_desc) and paging 
 (limit, offset). 
-
-
 
 =item columns
 
@@ -763,6 +784,62 @@ is 100, but if the user's preference is for 100, then this becomes 20.
 
 =cut
 
+sub calculate_order_by {
+    my ($self, $q, $cache_key) = @_;
+    my $order_by;
+
+    # if we weren't given a cache key and we're called as an object method
+    $cache_key ||= ref $self ? ($self->cache_key || $self->use_module) : '';
+
+    if( defined $q->param('krang_pager_sort_field') ) {
+        $order_by = scalar $q->param('krang_pager_sort_field');
+        # store it in the session if we have a module to key it off of
+        $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"} = $order_by if $cache_key;
+    } elsif( $cache_key && $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"} ) {
+        $order_by = $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"};
+    } else {
+        $order_by = $self->columns_sortable()->[0];  # First sort column
+    }
+
+    return $order_by;
+}
+
+sub calculate_order_desc {
+    my ($self, $q, $cache_key) = @_;
+    my $order_desc;
+
+    # if we weren't given a cache key and we're called as an object method
+    $cache_key ||= ref $self ? ($self->cache_key || $self->use_module) : '';
+
+    if (defined $q->param('krang_pager_sort_order_desc')) {
+        $order_desc = $q->param('krang_pager_sort_order_desc');
+        # store it in the session if we have a module to key it off of
+        $session{"KRANG_${cache_key}_PAGER_SORT_ORDER_DESC"} = $order_desc if $cache_key;
+    } elsif( $cache_key && defined $session{"KRANG_${cache_key}_PAGER_SORT_ORDER_DESC"}) {
+        $order_desc = $session{"KRANG_${cache_key}_PAGER_SORT_ORDER_DESC"};
+    } elsif( ref $self ) {
+        $order_desc = $self->default_sort_order_desc ? '1' : '0';
+    } else {
+        $order_desc = 0;
+    }
+    return $order_desc;
+}
+
+sub calculate_limit {
+    my ($self, $q, $cache_key) = @_;
+    my $limit;
+
+    # Page size is either 100, or user preferred size.
+    my $show_big_view = ($q->param('krang_pager_show_big_view') || '0');
+    my $user_page_size = $self->get_user_page_size();
+    my $big_view_size  = $user_page_size == 100 ? 20 : 100;
+    return ($show_big_view) ? ($user_page_size == 100 ? 20 : 100) : $user_page_size ;
+}
+
+sub calculate_current_page_num {
+    my ($self, $q, $cache_key) = @_;
+    return (scalar $q->param('krang_pager_curr_page_num') || '1');
+}
 
 ###########################
 ####  PRIVATE METHODS  ####
@@ -774,7 +851,6 @@ sub get_user_page_size {
     return $page_size;
 }
 
-
 # Given a column name and a column label, return an HTML block containing
 # the sort button, plus state (currently selected, ascending/descending)
 sub make_sortable_column_html {
@@ -783,40 +859,22 @@ sub make_sortable_column_html {
 
     my $q = $self->cgi_query();
 
-    my $use_module = $self->use_module();
+    my $use_module = $self->use_module() || ''; # use_data doesn't have a use_module
     $use_module =~ s/Krang:://;
     
     # Is column currently selected? If not, attempt to find in cache, or set default
-    my $krang_pager_sort_field = $q->param('krang_pager_sort_field') ? $q->param('krang_pager_sort_field') : $session{'KRANG_'.$use_module.'_PAGER_SORT_FIELD'};
-    my $krang_pager_sort_order_desc;
-    if (defined $q->param('krang_pager_sort_order_desc')) {
-        $krang_pager_sort_order_desc = $q->param('krang_pager_sort_order_desc');
-    } elsif (defined $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'}) {
-        $krang_pager_sort_order_desc = $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'};
-    } else {
-        $krang_pager_sort_order_desc = '0';
-    }
-
-    # set into cache if was set in query this time
-    $session{'KRANG_'.$use_module.'_PAGER_SORT_FIELD'}  = $q->param('krang_pager_sort_field') if (defined($q->param('krang_pager_sort_field')) and length($q->param('krang_pager_sort_field')));
-    $session{'KRANG_'.$use_module.'_PAGER_SORT_ORDER_DESC'}  = $q->param('krang_pager_sort_order_desc') if defined($q->param('krang_pager_sort_order_desc'));
-
-    # No sort field set?  Use defaults...
-    unless (defined($krang_pager_sort_field) && length($krang_pager_sort_field)) {
-        $krang_pager_sort_field = $self->columns_sortable()->[0];  # First sort column
-        $krang_pager_sort_order_desc = ($self->default_sort_order_desc() ? '1' : '0');
-        $q->param('krang_pager_sort_order_desc', $krang_pager_sort_order_desc);
-    }
+    my $sort_field = $self->calculate_order_by($q);
+    my $sort_order_desc = $self->calculate_order_desc($q);
 
     # If selected, show in bold, with arrow showing current sort order (ascending, descending)
-    my $is_selected = ( $krang_pager_sort_field eq $col );
+    my $is_selected = ( $sort_field eq $col );
     if ($is_selected) {
         $col_label = "<b>$col_label</b>";
-        $col_label .= '<img border="0" src="/images/arrow-'. ($krang_pager_sort_order_desc ? 'desc' : 'asc') .'.gif">';
+        $col_label .= '<img border="0" src="/images/arrow-'. ($sort_order_desc ? 'desc' : 'asc') .'.gif">';
     }
 
     # Make link to re-sort
-    my $new_sort_order_desc = ($is_selected && not($krang_pager_sort_order_desc)) ?  '1' : '0';
+    my $new_sort_order_desc = ($is_selected && not($sort_order_desc)) ?  '1' : '0';
     $col_label = "<a href=\"javascript:do_sort('$col', '$new_sort_order_desc')\">$col_label</a>";
 
     return $col_label;
@@ -870,8 +928,7 @@ sub _fill_template {
 
     # Set up persist_vars
     my @pager_persist_data = ();
-    my $use_module = $self->use_module();
-    $use_module =~ s/Krang:://;
+    my $cache_key = $self->cache_key || $self->use_module;
 
     while (my ($k, $v) = each(%{$self->persist_vars()})) {
         push(@pager_persist_data, $q->hidden(
@@ -880,37 +937,32 @@ sub _fill_template {
                                              -override => 1
                                             ));
 
-        $session{KRANG_PERSIST}{$use_module}{$k} = $v;
+        $session{KRANG_PERSIST}{$cache_key}{$k} = $v;
     }
     
     $t->param(pager_persist_data => join("\n", @pager_persist_data));
 }
-
 
 sub get_pager_view {
     my $self = shift;
 
     my $q = $self->cgi_query();
 
-    my $use_module = $self->use_module();
-    
-    # the following is used to attempt to grab any sort criteria from the cache
-    my $use_module_truncate = $use_module;
-    $use_module_truncate =~ s/Krang:://;
+    my $cache_key = $self->cache_key || $self->use_module;
+    my $use_module = $self->use_module;
 
-    my $curr_page_num = ($q->param('krang_pager_curr_page_num') || '1');
-    my $sort_field = $q->param('krang_pager_sort_field') || $session{'KRANG_'.$use_module_truncate.'_PAGER_SORT_FIELD'} || $self->columns_sortable()->[0] || '';
-    my $sort_order_desc = $q->param('krang_pager_sort_order_desc') || $session{'KRANG_'.$use_module_truncate.'_PAGER_SORT_ORDER_DESC'} || '0';
-
-    # Page size is either 100, or user preferred size.
-    my $show_big_view = ($q->param('krang_pager_show_big_view') || '0');
-    my $user_page_size = $self->get_user_page_size();
-    my $big_view_size  = $user_page_size == 100 ? 20 : 100;
-    my $limit = ($show_big_view) ? ($user_page_size == 100 ? 20 : 100) : $user_page_size ;
+    my $curr_page_num = $self->calculate_current_page_num($q);
+    my $sort_field = $self->calculate_order_by($q);
+    my $sort_order_desc = $self->calculate_order_desc($q);
+    my $limit = $self->calculate_limit($q);
 
     # Count used to calculate page navigation
     my %find_params = %{$self->find_params()};
-    my $found_count = $use_module->find(%find_params, count=>1);
+    my $found_count = $use_module 
+        ? $use_module->find(%find_params, count=>1)
+        : $self->use_data_size 
+            ? $self->use_data_size
+            : scalar @{$self->use_data};
     my $total_pages = int($found_count / $limit) + (($found_count % $limit) > 0);
     $total_pages ||= 1; # For the case when 0 == $found_count.
 
@@ -967,14 +1019,19 @@ sub get_pager_view {
 
     # Retrieve and build rows
     my $order_by = $self->columns_sort_map()->{$sort_field} || $sort_field;
-    my %all_find_params = (
-                           %find_params,
-                           order_by => $order_by,
-                           order_desc => $sort_order_desc,
-                           offset => $offset,
-                           limit => $limit,
-                          );
-    my @found_objects = $use_module->find(%all_find_params);
+    my @found_objects;
+    if( $use_module ) {
+        my %all_find_params = (
+                               %find_params,
+                               order_by => $order_by,
+                               order_desc => $sort_order_desc,
+                               offset => $offset,
+                               limit => $limit,
+                              );
+        @found_objects = $use_module->find(%all_find_params);
+    } else {
+        @found_objects = @{$self->use_data};
+    }
 
     # Build TMPL_LOOP data
     my @krang_pager_rows = ();
@@ -1004,18 +1061,15 @@ sub get_pager_view {
                       curr_page_num      => $curr_page_num,
                       sort_field         => $sort_field,
                       sort_order_desc    => $sort_order_desc,
-                      show_big_view      => $show_big_view,
-                      user_page_size     => $user_page_size,
-                      big_view_page_size => $big_view_size,
-
+                      show_big_view      => ($q->param('krang_pager_show_big_view') || '0'),
+                      user_page_size     => $self->get_user_page_size,
+                      big_view_page_size => ( $self->get_user_page_size == 100 ? 20 : 100 ),
                       found_count        => $found_count,
                       start_row          => $start_row,
                       end_row            => $end_row,
-
                       page_numbers       => \@page_numbers,
                       prev_page_number   => $prev_page_number,
                       next_page_number   => $next_page_number,
-
                       krang_pager_rows   => \@krang_pager_rows,
                      );
 
@@ -1071,13 +1125,21 @@ sub validate_pager {
 
     # use_module
     my $use_module = $self->use_module();
-    croak ("No use_module specified") unless ($use_module);
-    eval "require $use_module";
-    croak ("Can't require $use_module: $@") if ($@);
-    croak ("The use_module '$use_module' has no find() method") unless ($use_module->can('find'));
+    my $use_data   = $self->use_data();
+    croak ("No use_module or use_data specified") unless ($use_module || $use_data);
+    if( $use_module ) {
+        eval "require $use_module";
+        croak ("Can't require $use_module: $@") if ($@);
+        croak ("The use_module '$use_module' has no find() method") unless ($use_module->can('find'));
+        # find_params
+        croak ("find_params is not a hash") unless (ref($self->find_params) eq 'HASH');
+    } elsif( $use_data ) {
+        croak ("use_data is not an array") unless (ref $use_data eq 'ARRAY');
+    }
 
-    # find_params
-    croak ("find_params is not a hash") unless (ref($self->find_params) eq 'HASH');
+    # make sure there's something we can use as the cache_key
+    croak("You must either provide a 'cache_key' or 'use_module' value")
+        unless $self->use_module or $self->cache_key;
 
     # columns
     my $columns = $self->columns();

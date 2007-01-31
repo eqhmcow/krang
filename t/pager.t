@@ -99,11 +99,16 @@ like($@, qr/persist_vars is not a hash/, "Validate: persist_vars hash");
 
 $pager->persist_vars({});
 eval { $pager->output() };
-like($@, qr/No use_module specified/, "Validate: No use_module");
+like($@, qr/No use_module or use_data specified/, "Validate: No use_module");
 
 $pager->use_module('No::Such::Module');
 eval { $pager->output() };
 like($@, qr/Can\'t require No::Such::Module/, "Validate: No such use_module");
+
+$pager->use_module('');
+$pager->use_data({});
+eval { $pager->output() };
+like($@, qr/use_data is not an array/, "Validate: use_data array");
 
 $pager->use_module('Krang');
 eval { $pager->output() };

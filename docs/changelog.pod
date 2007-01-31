@@ -9,6 +9,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<use_data>, C<use_data_size> and C<cache_key> options to
+L<Krang::HTMLPager>'s C<new()>. Also added C<calculate_limit()>,
+C<calculate_order_by()>, C<calculate_order_desc()> 
+and C<calculate_current_page_num()> to expose the inner calculations
+when needed. [Michael Peters]
+
+=item *
+
 Fixed element editor to not display a delete button when no elements
 allow deletion.  Also suppressed the Order checkbox when nothing is
 reorderable. [Sam]
