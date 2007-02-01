@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Story Type selector on Find Story Advanced Search is now ordered
+by the element's C<display_name>. [Michael Peters]
+
+=item *
+
 Added C<use_data>, C<use_data_size> and C<cache_key> options to
 L<Krang::HTMLPager>'s C<new()>. Also added C<calculate_limit()>,
 C<calculate_order_by()>, C<calculate_order_desc()> 

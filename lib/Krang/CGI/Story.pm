@@ -1398,13 +1398,13 @@ sub find {
         $tmpl_data{date_chooser_publish_to}   = datetime_chooser(query=>$q, name=>'publish_to', nochoice=>1);
 
         # Story class
-        my @classes = grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
-        my %class_labels = map {
-            $_ => pkg('ElementLibrary')->top_level(name => $_)->display_name()
-        } @classes;
+        my @classes = sort { $a->display_name cmp $b->display_name }
+            map { pkg('ElementLibrary')->top_level(name => $_ ) } 
+            grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
+        my %class_labels = map { $_->name => $_->display_name } @classes;
         $tmpl_data{search_class_chooser} = scalar($q->popup_menu(-name      => 'search_class',
                                                                  -default   => ($persist_vars{"search_class"} || ''),
-                                                                 -values    => [ ('', @classes) ],
+                                                                 -values    => [ ('', map {$_->name} @classes) ],
                                                                  -labels    => \%class_labels));
     } else {
         # Set up simple search
