@@ -1806,7 +1806,7 @@ sub revert {
     my %persist = (
                    version           => $self->{version},
                    checked_out_by    => $self->{checked_out_by},
-                   checked_out       => $self->{checked_out_by},
+                   checked_out       => $self->{checked_out},
                    published_version => $self->{published_version},
                    publish_date      => $self->{publish_date},
                    url_cache         => [],

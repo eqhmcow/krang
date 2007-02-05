@@ -1,8 +1,8 @@
 package V2_009;
 use strict;
 use warnings;
-use base 'Krang::Upgrade';
-
+use Krang::ClassLoader base => 'Upgrade';
+use Krang::ClassLoader DB => 'dbh';
 use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 
@@ -34,6 +34,13 @@ END
 
     close(CONF);
 
+    # previous versions had a bug on stories where checked_out could
+    # bet set to checked_out_by instead of the simple boolean if the story
+    # was reverted. Fix this so that 'Active Stories' works again
+    my $dbh = dbh();
+    $dbh->do(qq/
+        UPDATE story SET checked_out = 1 WHERE checked_out != 0
+    /);
 }
 
 # nothing yet
