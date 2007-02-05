@@ -9,6 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed a bug where C<< Krang::Story->revert() >> would set the
+C<checked_out> field to the C<checked_out_by> column, thus breaking
+the "Active Stories" screen. [Michael Peters]
+
+=item *
+
 Story Type selector on Find Story Advanced Search is now ordered
 by the element's C<display_name>. [Michael Peters]
 
