@@ -190,7 +190,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    RewriteLogLevel 0
    RewriteLog <tmpl_var KrangRoot>/logs/apache_rewrite_log
    RewriteCond %{SERVER_PORT} !^<tmpl_var SSLApachePort>$
-   RewriteRule ^.*$ https://%{SERVER_NAME}:<tmpl_var SSLApachePort>%{REQUEST_URI} [R,L] 
+   RewriteRule ^.*$ https://%{SERVER_NAME}:<tmpl_var SSLApachePort>%{REQUEST_URI} [R,L,NE] 
 
 </VirtualHost>
 
@@ -363,7 +363,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
    RewriteLogLevel 0
    RewriteLog <tmpl_var KrangRoot>/logs/apache_rewrite_log
    RewriteCond %{SERVER_PORT} !^<tmpl_var SSLApachePort>$
-   RewriteRule ^.*$ https://%{SERVER_NAME}:<tmpl_var SSLApachePort>%{REQUEST_URI} [R,L] 
+   RewriteRule ^.*$ https://%{SERVER_NAME}:<tmpl_var SSLApachePort>%{REQUEST_URI} [R,L,NE] 
 
 </VirtualHost>
 
