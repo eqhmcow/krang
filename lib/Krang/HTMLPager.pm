@@ -1018,7 +1018,9 @@ sub get_pager_view {
     $next_page_number = 0 unless ($next_page_number <= $total_pages);
 
     # Retrieve and build rows
-    my $order_by = $self->columns_sort_map()->{$sort_field} || $sort_field;
+    my $order_by = defined $sort_field
+        ? ( $self->columns_sort_map()->{$sort_field} || $sort_field )
+        : undef;
     my @found_objects;
     if( $use_module ) {
         my %all_find_params = (
