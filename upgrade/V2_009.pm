@@ -33,7 +33,9 @@ PreviewSSL 0
 END
 
     close(CONF);
+}
 
+sub per_instance {
     # previous versions had a bug on stories where checked_out could
     # bet set to checked_out_by instead of the simple boolean if the story
     # was reverted. Fix this so that 'Active Stories' works again
@@ -42,8 +44,5 @@ END
         UPDATE story SET checked_out = 1 WHERE checked_out != 0
     /);
 }
-
-# nothing yet
-sub per_instance {}
 
 1;
