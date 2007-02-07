@@ -322,7 +322,7 @@ sub authz_handler ($$) {
     # always allow access to the CSS file and images - needed before
     # login to display the login screen
     return OK if $path =~ m!krang_login$! 
-      or $path =~ m!\.(gif|jpg|png|css|js)$!;
+      or $path =~ m!\.(gif|jpg|png|css|js|ico)$!;
     
     # If user is logged in
     if (my $user_id = $r->connection->user) {
