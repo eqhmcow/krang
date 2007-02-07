@@ -721,8 +721,10 @@ sub password {
         $self->password_changed(scalar time);
         $self->force_pw_change(0);
 
-        # store the old one in the old_passwords table 
-        if( PasswordChangeCount ) {
+        # store the old one in the old_passwords table if this is an
+        # actual user with an old pw and not a temp user stored in the
+        # session while being created by the UI
+        if( PasswordChangeCount && $old_pw && $self->user_id ) {
             # get all of our old password and remove the oldest ones
             # if we have too many
             my $sth = dbh()->prepare_cached(

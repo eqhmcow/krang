@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fix ISE that happens when creating a new user via the UI when 
+C<PasswordChangeCount> is set to a non-zero value. [Michael Peters]
+
+=item *
+
 Fixed a bug where C<< Krang::Story->revert() >> would set the
 C<checked_out> field to the C<checked_out_by> column, thus breaking
 the "Active Stories" screen. [Michael Peters]
