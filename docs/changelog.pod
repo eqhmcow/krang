@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed problem with BadLoginCount violations being checked too late.
+[Bodo Schulze and Michael Peters]
+
+=item *
+
 Fix bug that occurs when changing a user's info the user would then
 be forced to change their password the next time they logged in if
 C<PasswordChangeTime> were set. [Michael Peters]
