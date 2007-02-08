@@ -9,6 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fix bug that occurs when changing a user's info the user would then
+be forced to change their password the next time they logged in if
+C<PasswordChangeTime> were set. [Michael Peters]
+
+=item *
+
 Fix ISE that happens when creating a new user via the UI when 
 C<PasswordChangeCount> is set to a non-zero value. [Michael Peters]
 

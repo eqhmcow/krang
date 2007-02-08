@@ -562,8 +562,9 @@ sub update_user {
     my $q = $self->query();
 
     # overwrite object fields
-    $user->$_($q->param($_) ? $q->param($_) : undef) 
-      for grep { $_ ne 'hidden' } pkg('User')->USER_RW;
+    $user->$_( $q->param($_) ? $q->param($_) : undef )
+      for grep { $_ ne 'hidden' and $_ ne 'password_changed' and $_ ne 'force_pw_change' }
+      pkg('User')->USER_RW;
 
     # set password if we've been handed one
     my $pass = $q->param('password') || '';
