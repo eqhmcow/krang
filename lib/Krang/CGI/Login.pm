@@ -147,6 +147,15 @@ sub login {
     my $target   = $query->param('target') || './';
     my $dbh      = dbh();
 
+    # make sure they don't need to wait
+    if( BadLoginCount ) {
+        my $rl = $self->rate_limit;
+        $rl->identity_callback(sub { $username });
+        if( $rl->check_violation(action => 'failed_login') ) {
+            return $self->login_wait;
+        }
+    }
+
     return $self->show_form(alert =>
                             "User name and password are required fields.")
       unless defined $username and length $username and
@@ -159,12 +168,8 @@ sub login {
     unless( $user_id ) {
         # record the failed login if we are protecting with RateLimit
         if( BadLoginCount ) {
-            my $rl = $self->rate_limit;
             $rl->identity_callback(sub { $username });
-            $rl->record_hit(action => 'failed_login');
-            if( $rl->check_violation(action => 'failed_login') ) {
-                return $self->login_wait;
-            }
+            $self->rate_limit->record_hit(action => 'failed_login');
         }
         return $self->show_form(
             alert => "Invalid login. Please check your user name and password and try again."
