@@ -168,7 +168,6 @@ sub login {
     unless( $user_id ) {
         # record the failed login if we are protecting with RateLimit
         if( BadLoginCount ) {
-            $rl->identity_callback(sub { $username });
             $self->rate_limit->record_hit(action => 'failed_login');
         }
         return $self->show_form(
