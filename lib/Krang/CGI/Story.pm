@@ -114,9 +114,9 @@ sub new_story {
     my @types = grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
     # sort the type by their display name, not their real name
     @types = sort {
-        pkg('ElementLibrary')->top_level( name => $a )->display_name
+        lc pkg('ElementLibrary')->top_level( name => $a )->display_name
         cmp 
-        pkg('ElementLibrary')->top_level( name => $b )->display_name
+        lc pkg('ElementLibrary')->top_level( name => $b )->display_name
     } @types;
 
     my %type_labels = 
@@ -1398,7 +1398,7 @@ sub find {
         $tmpl_data{date_chooser_publish_to}   = datetime_chooser(query=>$q, name=>'publish_to', nochoice=>1);
 
         # Story class
-        my @classes = sort { $a->display_name cmp $b->display_name }
+        my @classes = sort { lc $a->display_name cmp lc $b->display_name }
             map { pkg('ElementLibrary')->top_level(name => $_ ) } 
             grep { $_ ne 'category' } pkg('ElementLibrary')->top_levels;
         my %class_labels = map { $_->name => $_->display_name } @classes;
