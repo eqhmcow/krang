@@ -597,7 +597,7 @@ sub delete_selected {
 
     # load all objects and sort by URL length, sorts children before
     # parents maximizing chances of delete success
-    my @categories = sort { length($b->url) cmp length($a->url) } 
+    my @categories = sort { length($b->url) <=> length($a->url) } 
                        map { pkg('Category')->find(category_id => $_) } 
                          @category_delete_list;
 
