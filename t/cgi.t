@@ -40,7 +40,7 @@ find({ wanted =>
 #    1. Compiles OK
 #    2. Instantiates as a sub-class of Krang::CGI
 #    3. Runs with default (start) mode
-#    4. Output starts "Content-Type:"
+#    4. Emits the correct HTTP headers
 sub check_cgiapp {
     my $app_package = shift;
 
@@ -60,6 +60,7 @@ sub check_cgiapp {
     eval { $output = $app->run() };
     ok(not($@), "\$$app_package->run()");
 
-    # Does our output start "Content-Type:"?
-    like($output,  qr/^Content\-Type\:/, "Testing output of $app_package->run().");
+    # Does our output have the right HTTP headers?
+    my $regex = qr/^Pragma: no-cache\s*\nCache-control: no-cache\s*\nContent\-Type\:([^\n]+)\s*\n/;
+    like( $output, $regex, "correct headers for $app_package->run().");
 }
