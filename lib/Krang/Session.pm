@@ -46,6 +46,9 @@ B<NOTE> The session hash should not be used as a general mechanism to
 speed up Krang.  This is not a cache, it is an intermediary data
 store.
 
+Sessions older than 24 hours are cleaned out daily by the scheduler.
+See Krang::Schedule::Action::clean for details.
+
 =head1 INTERFACE
 
 Aside from the exported %session hash, the module supports the
@@ -189,13 +192,6 @@ sub delete {
         $tied = 0;
     }
 }
-
-=head1 TODO
-
-Old sessions should be expired eventually.  It should be easy to add
-this feature once the cron runner is in.
-
-=cut
 
 1;
 
