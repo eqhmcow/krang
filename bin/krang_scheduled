@@ -38,11 +38,19 @@ $@
 END
 }
 
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'AddOn';
+# call the init-handler of any Addons being used
+BEGIN { 
+    print STDERR "Initializing AddOns...\n";
+    pkg('AddOn')->call_handler('InitHandler');
+}
+
 # setup first instance by default, schedule daemon works on all
 # instances but Krang::Script isn't happy picking one anymore.
-use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Conf';
 BEGIN { $ENV{KRANG_INSTANCE} = (pkg('Conf')->instances)[0]; }
+
 use Krang::ClassLoader 'Script';
 
 use Krang::ClassLoader 'Schedule::Daemon';
