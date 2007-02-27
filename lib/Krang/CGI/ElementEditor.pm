@@ -827,6 +827,7 @@ sub element_view {
     
     # figure out list of slots that are reorderable
     foreach my $child (@children) {        
+        next if $child->hidden;
         push(@child_loop, {
                            data         => $child->view_data(),
                            name         => $child->display_name(),
