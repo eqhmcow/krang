@@ -637,20 +637,21 @@ sub _update_children {
 
 =item C<< @classes = $element->available_child_classes() >>
 
-Taking into account C<< $child->class->max >>, returns a list of
-available child classes for new children.
+Taking into account C<< $child->class->max >>, and C<< $child->class->hidden >> 
+returns a list of available child classes for new children.
 
 =cut
 
 sub available_child_classes {
     my $self = shift;
-    my ($name, $max, %max);
+    my ($name, $max, %max, %hidden);
 
-    # find maximums
+    # find maximums and hiddens
     foreach my $child_class ($self->{class}->children()) {
         $name = $child_class->name;
         $max  = $child_class->max;
         $max{$name} = $max == 0 ? ~0 : $max;
+        $hidden{$name} = 1 if $child_class->hidden;
     }
 
     # loop through children, removing classes that have reached their max
@@ -661,7 +662,7 @@ sub available_child_classes {
         delete $max{$name} if --$max{$name} == 0;
     }
 
-    return grep { exists $max{$_->name} } $self->{class}->children;
+    return grep { exists $max{$_->name} or $hidden{$_->name} } $self->{class}->children;
 }
 
 =item C<< $element = Krang::Element->load(element_id => $id, object => $object) >>

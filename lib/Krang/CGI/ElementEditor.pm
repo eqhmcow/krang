@@ -238,6 +238,7 @@ sub element_edit {
     $template->param(no_delete  => 1) if not $avail_del;
  
     foreach my $child (@children) {        
+        next if $child->hidden;
         # setup form, making it invalid if needed
         my $form = $child->input_form(query   => $query,
                                       order   => $index,
@@ -975,7 +976,7 @@ sub element_save {
     # save data
     $index = 0;
     foreach my $child ($element->children()) {
-        $child->load_query_data(query => $query);
+        $child->load_query_data(query => $query) unless $child->hidden;
         $index++;
     }
 
@@ -999,8 +1000,9 @@ sub revise {
     my $element = _find_element($root, $path);
 
     # get list of existing children and their query parameters
-    my @old = $element->children();
+    my @old = grep { !$_->hidden } $element->children();
     my @old_names =  map { [ $_->param_names ] } @old;
+    my @hidden = grep { $_->hidden } $element->children();
 
     # compute new list of children and rearrange query data
     my (@new, @old_to_new, @msgs);
@@ -1031,7 +1033,7 @@ sub revise {
     assert(not(grep { not defined $_ } @new)) if ASSERT;
 
     # do the reorder
-    $element->reorder_children(@new) if $op eq 'reorder';
+    $element->reorder_children(@new, @hidden) if $op eq 'reorder';
 
     # get a list of new param names
     my @new_names =  map { [ $_->param_names ] } @new;
