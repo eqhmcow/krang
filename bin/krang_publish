@@ -120,7 +120,7 @@ BROKEN>
 This modifier will limit the publish process to assets that have been
 published previously.
 
-=item --not_on_desk
+=item --not-on-desk
 
 This modifier will limit the publish process to assets that are not
 currently on a desk (associated with a Krang::Desk object).
@@ -211,7 +211,8 @@ pod2usage(2) unless
              limited_to_site     => \$limited_to_site,
              limited_to_category => \$limited_to_category,
              republish_only      => \$republish_only,
-             not_on_desk         => \$not_on_desk,
+             'not-on-desk'       => \$not_on_desk,
+             'not_on_desk'       => \$not_on_desk, # for backwards compat
              version_check       => \$version_check,
              'to-preview'        => \$to_preview,
 
