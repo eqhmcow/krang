@@ -119,6 +119,7 @@ if (-e catfile($ENV{KRANG_ROOT}, 'data', 'build.db')) {
     my %params = Krang::Platform->build_params();
     $name = 'krang-' . $Krang::VERSION . '-' . $params{Platform} . 
       '-perl' . $params{Perl} . '-' . $params{Arch};
+    $name .= '-ssl' if $params{SSL};
     $platform = $params{Platform};
 } else {
     $source_dist = 1;
