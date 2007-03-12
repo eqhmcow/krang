@@ -829,7 +829,7 @@ sub save {
         croak($err);
     }
 
-    # lazy load Krang::Group so using Krang::User won't load element
+    # lazy load Group so using User won't load element
     # sets, which is sometimes bad
     eval "require " . pkg('Group') or die $@;
     pkg('Group')->add_user_permissions($self);
@@ -868,7 +868,7 @@ sub _validate_group_ids {
         unless (defined($rgroup_ids) and @$rgroup_ids);
 
     foreach my $group_id (@$rgroup_ids) {
-        # lazy load Krang::Group so using Krang::User won't load element
+        # lazy load Group so using User won't load element
         # sets, which is sometimes bad
         eval "require " . pkg('Group') or die $@;
         my ($found_group) = pkg('Group')->find(group_id=>$group_id, count=>1);
@@ -911,7 +911,7 @@ sub serialize_xml {
     $writer->dataElement( hidden => $self->{hidden} );
 
 
-    # lazy load Krang::Group so using Krang::User won't load element
+    # lazy load Group so using User won't load element
     # sets, which is sometimes bad
     eval "require " . pkg('Group') or die $@;
 
@@ -994,7 +994,7 @@ sub deserialize_xml {
     my @group_ids = @{$data->{group_id}};
     my @new_group_ids;
     foreach my $g (@group_ids) {
-        push (@new_group_ids, $set->map_id(class => "Krang::Group", id => $g));
+        push (@new_group_ids, $set->map_id(class => pkg('Group'), id => $g));
     }
     $user->group_ids(@new_group_ids);
 
