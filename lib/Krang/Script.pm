@@ -51,7 +51,6 @@ use Krang::ClassLoader 'lib';
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader Conf => qw(KrangUser KrangGroup KrangRoot);
 use Krang::ClassLoader Log => qw(debug critical);
-# use Krang::Session qw(%session);
 use Carp qw(croak);
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'AddOn';
