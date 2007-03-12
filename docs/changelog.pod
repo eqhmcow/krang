@@ -11,6 +11,11 @@ This document contains a list of changes for each release of Krang.
 Fixed handling of C<hidden> elements in the Story editor so they
 wouldn't appear in the UI as advertised. [Michael Peters]
 
+=item *
+
+Fixed problem with importing data when an addon overrode the 'Group'
+package. [Michael Peters]
+
 =back
 
 =head2 2.100 - Feb 19th, 2007
