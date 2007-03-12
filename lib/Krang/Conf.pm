@@ -7,6 +7,7 @@ our @VALID_DIRECTIVES;
 @VALID_DIRECTIVES = map { lc($_) } qw(
 ApacheAddr
 ApachePort
+ApacheMaxSize
 Assertions
 BadLoginCount
 BadLoginWait
