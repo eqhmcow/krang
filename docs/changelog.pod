@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In F<krang.conf>, allow multiple word InstanceDisplayName.
+[Bodo Schulze]
+
+=item *
+
 Fixed addon v2 bugs in deserialize_xml() of Krang::Alert,
 Krang::Category, Krang::Contrib, Krang::Group, Krang::List,
 Krang::ListItem, Krang::Media, Krang::Story and Krang::Template.
