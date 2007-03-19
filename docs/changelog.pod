@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed addon v2 bugs in deserialize_xml() of Krang::Alert,
+Krang::Category, Krang::Contrib, Krang::Group, Krang::List,
+Krang::ListItem, Krang::Media, Krang::Story and Krang::Template.
+[Bodo Schulze]
+
+=item *
+
 Added C<ApacheMaxSize> directive to F<krang.conf> so that you can
 adjust the memory used depending on the machine capabilities and
 the number of addons installed. [Michael Peters]
