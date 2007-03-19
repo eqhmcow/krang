@@ -761,9 +761,9 @@ sub deserialize_xml {
         my @categories = @{$data->{category}};
         my %altered_cats;
         foreach my $cat (@categories) {
-           $altered_cats{ $set->map_id(class => "Krang::Category", id => $cat->{category_id})} = $cat->{security_level};
+           $altered_cats{ $set->map_id(class => pkg('Category'), id => $cat->{category_id})} = $cat->{security_level};
         }
-                                                                            
+
         $group->categories(%altered_cats);
     }
 
@@ -772,10 +772,9 @@ sub deserialize_xml {
         my @desks = @{$data->{desk}};
         my %altered_desks;
         foreach my $desk (@desks) {
-           $altered_desks{ $set->map_id(class => "Krang::Desk", id
-=> $desk->{desk_id}) } = $desk->{security_level};
+           $altered_desks{ $set->map_id(class => pkg('Desk'), id => $desk->{desk_id}) } = $desk->{security_level};
         }
-                                                                              
+
         $group->desks(%altered_desks);
     }
 

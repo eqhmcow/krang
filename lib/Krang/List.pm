@@ -360,13 +360,13 @@ sub deserialize_xml {
 
 
     # get list_group info
-    my $list_group_id = $set->map_id(class => "Krang::ListGroup",
-                                       id    => $data->{list_group_id});
+    my $list_group_id = $set->map_id(class => pkg('ListGroup'),
+                                     id    => $data->{list_group_id});
 
     my $parent_id;
     if ($data->{parent_list_id}) {
-        $parent_id = $set->map_id(  class => "Krang::List",
-                                    id => $data->{parent_list_id} );
+        $parent_id = $set->map_id(class => pkg('List'),
+                                  id    => $data->{parent_list_id} );
     }
 
     my $l;

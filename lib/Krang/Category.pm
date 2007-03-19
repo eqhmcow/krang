@@ -1262,7 +1262,7 @@ sub deserialize_xml {
     my ($site_id, $parent_id);
     if ($data->{parent_id}) {
         # get import parent_id
-        $parent_id = $set->map_id(class => "Krang::Category",
+        $parent_id = $set->map_id(class => pkg('Category'),
                                   id    => $data->{parent_id});
 
         # this might have caused this category to get completed via a
@@ -1271,7 +1271,7 @@ sub deserialize_xml {
         return $dup if $dup;
     } else {
         # get site_id for root category
-        $site_id = $set->map_id(class => "Krang::Site",
+        $site_id = $set->map_id(class => pkg('Site'),
                                 id    => $data->{site_id});
         my ($new_c) = pkg('Category')->find( site_id => $site_id,
                                              parent_id => undef );
@@ -1307,7 +1307,7 @@ sub _update_category_data {
     
     # register id before deserializing elements, since they may
     # contain circular references
-    $set->register_id(class     => 'Krang::Category',
+    $set->register_id(class     => pkg('Category'),
                       id        => $data->{category_id},
                       import_id => $cat->category_id);
 

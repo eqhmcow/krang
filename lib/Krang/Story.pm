@@ -2182,7 +2182,7 @@ sub deserialize_xml {
         $story->title($data->{title} || "");
 
         # get category objects for story
-        my @category_ids = map { $set->map_id(class => "Krang::Category",
+        my @category_ids = map { $set->map_id(class => pkg('Category'),
                                               id    => $_) }
                              @{$data->{category_id}};
         
@@ -2211,7 +2211,7 @@ sub deserialize_xml {
  
         # get category objects for story
         my @categories = map { pkg('Category')->find(category_id => $_) }
-                           map { $set->map_id(class => "Krang::Category",
+                           map { $set->map_id(class => pkg('Category'),
                                               id    => $_) }
                              @{$data->{category_id}};
 
@@ -2245,7 +2245,7 @@ sub deserialize_xml {
 
     # register id before deserializing elements, since they may
     # contain circular references
-    $set->register_id(class     => 'Krang::Story',
+    $set->register_id(class     => pkg('Story'),
                       id        => $data->{story_id},
                       import_id => $story->story_id);
 
@@ -2270,8 +2270,8 @@ sub deserialize_xml {
             my $contrib_type_id = $contrib_types{$c->{contrib_type}} ||
                             Krang::DataSet::DeserializationFailed->throw(
                                  "Unknown contrib_type '".$c->{contrib_type}."'.");
-                                                                              
-            push (@altered_contribs, { contrib_id => $set->map_id(class => "Krang::Contrib", id => $c->{contrib_id}), contrib_type_id => $contrib_type_id });
+
+            push (@altered_contribs, { contrib_id => $set->map_id(class => pkg('Contrib'), id => $c->{contrib_id}), contrib_type_id => $contrib_type_id });
         }
                                                                               
         $story->contribs(@altered_contribs);

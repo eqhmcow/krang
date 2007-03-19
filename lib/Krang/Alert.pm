@@ -546,12 +546,17 @@ sub deserialize_xml {
     my $data = pkg('XML')->simple(xml           => $xml,
                                   suppressempty => 1);
 
-    my %search_params = (    action => $data->{action},
-                            user_id => $set->map_id(class => "Krang::User", id => $data->{user_id}) );
-    
-    $search_params{desk_id} = $set->map_id(class => "Krang::Desk",
-id => $data->{desk_id}) if $data->{desk_id};
-    $search_params{category_id} = $set->map_id(class => "Krang::Category", id => $data->{category_id}) if $data->{category_id}; 
+    my %search_params = (action  => $data->{action},
+			 user_id => $set->map_id(class => pkg('User'),
+						 id => $data->{user_id}));
+
+    $search_params{desk_id} = $set->map_id(class => pkg('Desk'),
+					   id => $data->{desk_id}) 
+      if $data->{desk_id};
+
+    $search_params{category_id} = $set->map_id(class => pkg('Category'), 
+					       id => $data->{category_id}) 
+      if $data->{category_id}; 
 
     # is there an existing object?
     my $alert = (pkg('Alert')->find( %search_params ))[0] || '';

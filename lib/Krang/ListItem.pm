@@ -474,16 +474,16 @@ sub deserialize_xml {
 
 
     # get list info
-    my $list_id = $set->map_id(class => "Krang::List",
-                                       id    => $data->{list_id});
+    my $list_id = $set->map_id(class => pkg('List'),
+                               id    => $data->{list_id});
 
     my ($list) = pkg('List')->find( list_id => $list_id );
 
     # get parent list item id if one
     my $parent;
     if ($data->{parent_list_item_id}) {
-        my $parent_id = $set->map_id(  class => "Krang::ListItem",
-                                    id => $data->{parent_list_item_id} );
+        my $parent_id = $set->map_id(class => pkg('ListItem'),
+                                     id    => $data->{parent_list_item_id} );
         $parent = (pkg('ListItem')->find( list_item_id => $parent_id ))[0];
     }
 

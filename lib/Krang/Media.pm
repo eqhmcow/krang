@@ -1846,14 +1846,14 @@ sub deserialize_xml {
                             Krang::DataSet::DeserializationFailed->throw(
                                  "Unknown contrib_type '".$c->{contrib_type}."'.");
 
-            push (@altered_contribs, { contrib_id => $set->map_id(class => "Krang::Contrib", id => $c->{contrib_id}), contrib_type_id => $contrib_type_id });
+            push (@altered_contribs, {contrib_id => $set->map_id(class => pkg('Contrib'), id => $c->{contrib_id}), contrib_type_id => $contrib_type_id });
         }
     
         $media->contribs(@altered_contribs);
     }
  
     # upload the file
-    my $full_path = $set->map_file(class => "Krang::Media",
+    my $full_path = $set->map_file(class => pkg('Media'),
                                    id    => $data->{media_id});
     croak("Unable to get file path from dataset!") unless $full_path;
     my $fh = IO::File->new($full_path) or 
@@ -1878,7 +1878,7 @@ sub deserialize_xml {
 
     # register this with the dataset to prevent circular reference loops
     $set->register_id(
-        class     => 'Krang::Media',
+        class     => pkg('Media'),
         id        => $data->{media_id},
         import_id => $media->media_id,);
 

@@ -1309,7 +1309,7 @@ sub deserialize_xml {
         # create a new template object with category and simple fields
         if ($data->{category_id}) {
             $template = pkg('Template')->new(category_id =>
-                                   $set->map_id(class => "Krang::Category",
+                                   $set->map_id(class => pkg('Category'),
                                                 id    => $data->{category_id}),
                                    (map { ($_,$data->{$_}) } keys %simple));
         } else {
