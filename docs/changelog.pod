@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In list_active() in Krang::CGI::Media, Krang::CGI::Story and
+Krang::CGI::Template, made admin permission may_checkin_all
+consistently control whether checkin checkboxes and button should be
+displayed in "Active Media", "Active Stories" and "Activ Templates".
+
+=item *
+
 In F<krang.conf>, allow multiple word InstanceDisplayName.
 [Bodo Schulze]
 
