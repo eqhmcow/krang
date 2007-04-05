@@ -1475,8 +1475,9 @@ sub list_active {
     # Set up find_params for pager
     my %find_params = (checked_out => 1, may_see => 1);
 
-    # get admin permissions
+    # may checkin all?
     my %admin_perms = pkg('Group')->user_admin_permissions();
+    my $may_checkin_all = $admin_perms{may_checkin_all};
 
     my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
@@ -1489,7 +1490,7 @@ sub list_active {
                        title 
                        user
                        commands_column
-                      )), ($admin_perms{may_checkin_all} ? ('checkbox_column') : ())],
+                      )), ($may_checkin_all ? ('checkbox_column') : ())],
        column_labels => {
                          story_id => 'ID',
                          url => 'URL',
@@ -1506,7 +1507,7 @@ sub list_active {
     my $template = $self->load_tmpl('list_active.tmpl', associate=>$q);
     $template->param(pager_html => $pager->output());
     $template->param(row_count => $pager->row_count());
-    $template->param(may_checkin_all => $admin_perms{may_checkin_all});
+    $template->param(may_checkin_all => $may_checkin_all);
 
     # instance_name is used for preview window targeting
     my $instance_name = pkg('Conf')->instance;

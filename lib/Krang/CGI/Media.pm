@@ -395,9 +395,7 @@ sub list_active {
 
     # can checkin all?
     my %admin_perms = pkg('Group')->user_admin_permissions();
-    my %asset_perms = pkg('Group')->user_asset_permissions();
-    my $may_checkin_all = ($admin_perms{may_checkin_all} and
-                           $asset_perms{media} eq 'edit') ? 1 : 0;
+    my $may_checkin_all = $admin_perms{may_checkin_all};
 
     my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
