@@ -102,9 +102,17 @@ sub update_prefs {
         my $user_id = $ENV{REMOTE_USER};
         my $user = (pkg('User')->find( user_id => $user_id ))[0];
 
+        # make sure the passwords match
+        my $new_pw = $q->param('new_password');
+        my $pw_re  = $q->param('new_password_repeat');
+        if( $new_pw ne $pw_re ) {
+            add_message('password_mismatch');
+            return $self->edit();
+        }
+
         # check the password constraints
         my $valid = pkg('PasswordHandler')->check_pw(
-            $q->param('new_password'),
+            $new_pw,
             $user->login,
             $user->email,
             $user->first_name,
@@ -112,7 +120,7 @@ sub update_prefs {
         );
 
         if( $valid ) {
-            $user->password($q->param('new_password'));
+            $user->password($new_pw);
             $user->save;
             add_message("changed_password");
         }
