@@ -490,7 +490,7 @@ sub view {
     # load story from DB
     my $version = $query->param('version');
     my ($story) = pkg('Story')->find(story_id => $story_id,
-                                     (length $version ? 
+                                     ($version && length($version) ?
                                       (version => $version) : ()),
                                     );
     croak("Unable to load story '" . $query->param('story_id') . "'" . 
