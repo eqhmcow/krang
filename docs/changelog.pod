@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Backport to trunk of Michael Peters' Ajax branch revision 3705,
+implementing password match check in Krang::CGI::MyPref. [Bodo
+Schulze]
+
+=item *
+
 In list_active() in Krang::CGI::Media, Krang::CGI::Story and
 Krang::CGI::Template, made admin permission may_checkin_all
 consistently control whether checkin checkboxes and button should be
