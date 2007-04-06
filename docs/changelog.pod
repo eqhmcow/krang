@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In templates/story/view.tmpl, changed static template string 'Version'
+to 'Current Version'. [Bodo Schulze]
+
+=item *
+
 Backport to trunk of Michael Peters' Ajax branch revision 3699,
 removing warning in view() of Krang::CGI::Story occuring when story
 version is undef. [Bodo Schulze]
