@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Backport to trunk of Michael Peters' Ajax branch revision 3699,
+removing warning in view() of Krang::CGI::Story occuring when story
+version is undef. [Bodo Schulze]
+
+=item *
+
 Backport to trunk of Michael Peters' Ajax branch revision 3705,
 implementing password match check in Krang::CGI::MyPref. [Bodo
 Schulze]
