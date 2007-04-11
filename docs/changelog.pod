@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In check_categories() of Krang::CGI::Media::BulkUpload, fixed bug
+where creation of non existing categories would fail if no parent
+category is chosen. [Bodo Schulze]
+
+=item *
+
 In templates/story/view.tmpl, changed static template string 'Version'
 to 'Current Version'. [Bodo Schulze]
 
