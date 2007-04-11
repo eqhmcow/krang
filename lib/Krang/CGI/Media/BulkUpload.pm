@@ -265,7 +265,13 @@ Otherwise, returns 1 if bad categories found.
 sub check_categories {
     my $not_found;
     my $create_cats = shift;
- 
+
+    # Make sure we have a parent category when creating categories
+    unless ($chosen_cat_url) {
+	my $site_url = (keys %category_list)[0];
+	($chosen_cat_url) = $site_url =~ m{^([^/]+/)}; # default to site URL
+    }
+
     foreach my $cat (keys %category_list) {
         my $found_cat = (pkg('Category')->find( url => $cat ))[0];
 
