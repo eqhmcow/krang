@@ -8,10 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In templates/Desk/desk.tmpl, removed 'Check out' Button and JavaScript
+goto_edit() function, since they double the 'Edit' link. [Bodo Schulze]
+
+=item *
+
 Since first and middle name are concatenated with &nbsp;, we can't
 html-escape the tmpl_var first_middle.  So we'll do it one by one in
-Krang::CGI::Contrib.
-
+Krang::CGI::Contrib. [Bodo Schulze]
 
 =item *
 
