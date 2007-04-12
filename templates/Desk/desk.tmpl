@@ -27,12 +27,6 @@
      }
   }
 
-  checkout = function (id) {
-    document.krang_pager_form.rm.value = 'goto_edit';
-    document.krang_pager_form.id.value = id;
-    document.krang_pager_form.submit();
-  }
-
   checkout_checked = function () {
      if (something_checked()) {
        document.krang_pager_form.rm.value = 'checkout_checked';
@@ -150,8 +144,6 @@
            <span style="float:right; font-weight: bold;"><tmpl_if may_edit><tmpl_var command_column><tmpl_else><a href="javascript:log(<tmpl_var id>)">Log</a>&nbsp;|&nbsp;<a href="javascript:view(<tmpl_var id>)">View</a></tmpl_if></span>
            <tmpl_if may_edit>
                <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button"></tmpl_if>
-               <input type="button" value="Check Out" onclick="checkout('<tmpl_var id>')" class="button">
-                <br><br>
                <input type="button" value="Move" onclick="move('<tmpl_var id>')" class="button"> to <select name="move_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>" <tmpl_if is_selected>SELECTED</tmpl_if>><tmpl_var choice_desk_name escape=html> Desk</tmpl_loop></select>
           </tmpl_if>
        </td>
