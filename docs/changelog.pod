@@ -8,6 +8,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Since first and middle name are concatenated with &nbsp;, we can't
+html-escape the tmpl_var first_middle.  So we'll do it one by one in
+Krang::CGI::Contrib.
+
+
+=item *
+
 In check_categories() of Krang::CGI::Media::BulkUpload, fixed bug
 where creation of non existing categories would fail if no parent
 category is chosen. [Bodo Schulze]
