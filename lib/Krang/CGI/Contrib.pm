@@ -896,10 +896,11 @@ sub delete {
 # Set up special row_handler for associate contrib screen
 sub list_view_ass_contrib_row_handler {
     my $self = shift;
+    my $q = $self->query;
     my ($row_hashref, $contrib, $associated_contrib_filter, $contrib_type_prefs) = @_;
 
-    $row_hashref->{first_middle} = $contrib->first;
-    $row_hashref->{first_middle} .= '&nbsp;' . $contrib->middle if ($contrib->middle);
+    $row_hashref->{first_middle} = $q->escapeHTML($contrib->first);
+    $row_hashref->{first_middle} .= '&nbsp;' . $q->escapeHTML($contrib->middle) if ($contrib->middle);
     $row_hashref->{last} = $contrib->last;
 
     # 'type' isn't actually used.  Loop 'contrib_types' instead
