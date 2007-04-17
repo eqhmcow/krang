@@ -134,10 +134,19 @@ Add, edit or delete categories.
 Add, edit or delete jobs.
 
 
+=item * Manage Scheduler Addons (admin_scheduler)
+
+Add, edit or delete scheduled admin jobs.
+
+
 =item * Manage desks (admin_desks)
 
 Add, edit or delete desks.
 
+
+=item * Manage lists (admin_lists)
+
+Edit list groups
 
 =back
 

@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In docs/permissions.pod, describe admin bits 'admin_scheduler' and
+'admin_lists'. [Bodo Schulze]
+
+=item *
+
 In templates/Desk/desk.tmpl, removed 'Check out' Button and JavaScript
 goto_edit() function, since they double the 'Edit' link. [Bodo Schulze]
 
