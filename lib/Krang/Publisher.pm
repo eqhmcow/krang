@@ -786,7 +786,7 @@ sub publish_media {
                                      error_msg => $@->system_error);
                 } else {
                     # call generic skip_callback.
-                    $skip_callback->(object => $media_object, error => $@->isa);
+                    $skip_callback->(object => $media_object, error => ref $@ ? $@->isa : $@);
                 }
             }
             # the skip_callback is not used by the CGIs - re-propegate the error so the UI
