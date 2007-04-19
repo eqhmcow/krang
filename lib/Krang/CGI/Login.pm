@@ -144,7 +144,6 @@ sub login {
     my $query    = $self->query();
     my $username = $query->param('username');
     my $password = $query->param('password');
-    my $target   = $query->param('target') || './';
     my $dbh      = dbh();
 
     # make sure they don't need to wait
@@ -210,9 +209,10 @@ sub login {
                             -value  => \%filling,
                            );
     
-    # redirect to original destination and set the cookie
-    $self->header_props(-uri          => $target,
-                        -cookie       => $cookie->as_string);
+    # redirect and set the cookie
+    my $target = './';
+    $self->header_props(-uri    => $target,
+                        -cookie => $cookie->as_string);
 
     $self->header_type('redirect');
     my $output = "Redirect: <a href=\"$target\">$target</a>";
