@@ -85,7 +85,7 @@ Krang::PasswordHandler - implement a system wide password policy
 =head1 DESCRIPTION
 
 This module implements the password policy for Krang. Anywhere a password
-is created or changed, it will need to pass this module's valiation first.
+is created or changed, it will need to pass this module's validation first.
 
 It is quite likely that individual organizations will need to implement their
 own password policy, which makes this an ideal class to override in an addon.
@@ -94,7 +94,7 @@ own password policy, which makes this an ideal class to override in an addon.
 
 =head2 check_pw
 
-This method receives the password and return true if it passes all checks,
+This method receives the password and returns true if it passes all checks,
 false otherwise. It is possible for this module to also call C<add_message()>
 to indicate how the password fails the checks.
 
