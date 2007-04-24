@@ -8,6 +8,14 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed problem with desk deletion where desks were reported to have
+stories while those stories have been checked out to the user's
+workspace.  Also make sure the desk selector preselects as the default
+checkin desk the next desk given by the desk's sorting order. [Bodo
+Schulze]
+
+=item *
+
 In docs/permissions.pod, describe admin bits 'admin_scheduler' and
 'admin_lists'. [Bodo Schulze]
 
