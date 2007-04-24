@@ -24,6 +24,7 @@ CREATE TABLE story (
         checked_out_by  INT UNSIGNED NOT NULL,
 
         desk_id         SMALLINT UNSIGNED,
+        last_desk_id    SMALLINT UNSIGNED,
 
         INDEX(desk_id),
         INDEX(title),
