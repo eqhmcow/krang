@@ -99,7 +99,7 @@ if ($@) {
 }
 
 can_ok($story, qw/title slug cover_date priority class element category categories
-                  notes version priority desk_id published_version preview_version
+                  notes version priority desk_id last_desk_id published_version preview_version
                   contribs url preview_url urls preview_urls find save
                   checkin checkout checked_out checked_out_by revert
                   linked_stories linked_media move_to_desk publish_path preview_path
