@@ -294,15 +294,27 @@ sub check_in_and_save {
                 url      => $story->url,
                 version  => $story->version);
                                                                                                        
+
+    # check it in
+    $story->checkin();
+
+    # move story to desk
+    my $desk_id = $query->param('checkin_to');
+    eval { $story->move_to_desk($desk_id); };
+
+    if ($@ and ref($@) and $@->isa('Krang::Story::CheckedOut')) {
+	add_message( 'story_cant_move_checked_out',
+		     id   => $story->story_id,
+		     desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
+    } elsif ($@ and ref($@) and $@->isa('Krang::Story::NoDesk')) {
+	add_message( 'story_cant_move_no_desk',
+		     story_id   => $story->story_id,
+		     desk_id    => $desk_id );
+	return $self->edit;
+    }
+
     # remove story from session
     delete $session{story};
-
-    $story->checkin();
-    my $result = $story->move_to_desk($query->param('checkin_to'));
- 
-    add_message(($result ? "moved_story" : "story_cant_move"),
-                id   => $story->story_id, 
-                desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
  
     # redirect to that desk 
     $self->header_props(-uri => 'desk.pl?desk_id='.$query->param('checkin_to'));
@@ -445,11 +457,21 @@ sub edit {
     }
 
     # get desks for checkin selector
+    my $last_desk;
+    my $last_desk_id = $story->last_desk_id;
+    ($last_desk) = pkg('Desk')->find( desk_id => $last_desk_id )
+      if $last_desk_id;
+
     my @found_desks = pkg('Desk')->find();
     my @desk_loop;
+    my $is_selected;
 
     foreach my $found_desk (@found_desks) {
-        push (@desk_loop, { choice_desk_id => $found_desk->desk_id, choice_desk_name => $found_desk->name });
+	if ($last_desk) {
+	    $is_selected = ($found_desk->order eq ($last_desk->order + 1)) ? 1 : 0;
+	}
+        push (@desk_loop, { choice_desk_id => $found_desk->desk_id, choice_desk_name => $found_desk->name,
+			    is_selected => $is_selected});
     }
 
     $template->param( desk_loop => \@desk_loop);
