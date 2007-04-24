@@ -400,7 +400,7 @@ sub list_active {
     my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
        persist_vars => \%persist_vars,
-       use_module => 'Krang::Media',
+       use_module => pkg('Media'),
        find_params => \%find_params,
        columns => [(qw(
                        media_id
@@ -1651,7 +1651,7 @@ sub make_pager {
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => $persist_vars,
-                                      use_module => 'Krang::Media',
+                                      use_module => pkg('Media'),
                                       find_params => $find_params,
                                       columns => \@columns,
                                       column_labels => \%column_labels,
