@@ -18,10 +18,12 @@ use File::Spec::Functions qw(catdir canonpath);
 
 # setup exceptions
 use Exception::Class 
-  'Krang::Story::DuplicateURL'         => { fields => [ 'story_id' ] },
-  'Krang::Story::MissingCategory'      => { fields => [ ] },
+  'Krang::Story::DuplicateURL'         => { fields => [ 'story_id'    ] },
+  'Krang::Story::MissingCategory'      => { fields => [               ] },
   'Krang::Story::NoCategoryEditAccess' => { fields => [ 'category_id' ] },
-  'Krang::Story::NoEditAccess'         => { fields => [ 'story_id' ] },
+  'Krang::Story::NoEditAccess'         => { fields => [ 'story_id'    ] },
+  'Krang::Story::CheckedOut'           => { fields => [ 'desk_id'     ] },
+  'Krang::Story::NoDesk'               => { fields => [ 'desk_id'     ] },
   ;
   
 # create accessors for object fields
@@ -50,6 +52,7 @@ use Krang::ClassLoader MethodMaker =>
                                          preview_version
                                          priority
                                          desk_id
+                                         last_desk_id
                                         ) ]
                            } ];
 
@@ -71,6 +74,7 @@ use constant STORY_FIELDS =>
       checked_out
       checked_out_by
       desk_id
+      last_desk_id
       hidden
     );
 
@@ -1517,24 +1521,29 @@ Will return 1 if successful, else 0.
 
 sub move_to_desk {
     my ($self, $desk_id) = @_;
-    my $dbh      = dbh();
+    my $dbh = dbh();
 
     croak(__PACKAGE__."->move_to_desk requires a desk_id") if not $desk_id;
+
+    my $story_id = $self->story_id;
 
     # check status
     my ($co) = $dbh->selectrow_array(
          'SELECT checked_out FROM story
-           WHERE story_id = ?', undef, $self->story_id);
+           WHERE story_id = ?', undef, $story_id);
 
-    return 0 if $co;
+    Krang::Story::CheckedOut->throw( message => "Story is checked out and can't be moved to desk",
+				     desk_id => $desk_id) if $co;
 
-    $dbh->do('UPDATE story SET desk_id = ? where story_id = ?', undef, $desk_id, $self->story_id);
+    Krang::Story::NoDesk->throw( message => "Story can't be moved to non existing desk", desk_id => $desk_id)
+	unless scalar(pkg('Desk')->find( desk_id => $desk_id ));
+
+    $dbh->do('UPDATE story SET desk_id = ? where story_id = ?', undef, $desk_id, $story_id);
 
     $self->{desk_id} = $desk_id;
-    add_history(    action => 'move',
-                    object => $self,
-                    desk_id => $desk_id );
-    return 1;     
+    add_history( action  => 'move',
+                 object  => $self,
+                 desk_id => $desk_id );
 }
 
 =item C<< $story->checkout() >>
@@ -1578,8 +1587,10 @@ sub checkout {
 
         # checkout the story
         $dbh->do('UPDATE story
-                  SET checked_out = ?, checked_out_by = ?
-                  WHERE story_id = ?', undef, 1, $user_id, $self->{story_id});
+                  SET checked_out = ?, checked_out_by = ?,
+                      desk_id     = ?, last_desk_id   = ?
+                  WHERE story_id = ?', undef, 
+		 1, $user_id, undef, $self->{desk_id}, $self->{story_id});
 
         # unlock template table
         $dbh->do("UNLOCK TABLES");
