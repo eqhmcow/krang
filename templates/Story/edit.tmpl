@@ -248,7 +248,7 @@
   
   <table width="568" cellpadding="0" border="0" class="no-border"><tr>
     <td width="210">
-      Desk: <select name="checkin_to"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>"><tmpl_var choice_desk_name></tmpl_loop></select>&nbsp;
+      Desk: <select name="checkin_to"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>" <tmpl_if is_selected>SELECTED</tmpl_if>><tmpl_var escape=html choice_desk_name></tmpl_loop></select>&nbsp;
       <input type="button" value="Check In" onclick="check_in()" class="button">
     </td>
     <td align="right" width="348">
