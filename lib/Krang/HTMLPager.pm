@@ -24,7 +24,7 @@ Krang::HTMLPager - Web-paginate lists of records
   ## In a run-mode, instantiate new pager object...
   my $pager = pkg('HTMLPager')->new(
     cgi_query   => $query,
-    use_module  => 'Krang::Contrib',
+    use_module  => pkg('Contrib'),
     columns     => [ 'last', 'first', 'command_column', 'checkbox_column' ],
     columns_sortable => [ 'last', 'first' ],
     command_column_commands => [ 'edit_contrib' ],
@@ -364,7 +364,7 @@ set regardless of the current state of that form parameter.
 
 =item use_module
 
-  use_module => 'Krang::Contrib'
+  use_module => pkg('Contrib')
 
 The name of the Krang object module which contains the find() method 
 pager should use for retrieving data.  This module's find() method 

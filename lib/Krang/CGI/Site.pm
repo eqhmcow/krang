@@ -446,7 +446,7 @@ sub search {
                                                        search_filter =>
                                                        $search_filter,
                                                       },
-                                      use_module => 'Krang::Site',
+                                      use_module => pkg('Site'),
                                       find_params =>
                                       {simple_search => $search_filter},
                                       columns => [

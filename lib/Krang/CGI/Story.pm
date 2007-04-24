@@ -1440,7 +1440,7 @@ sub find {
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => \%persist_vars,
-                                      use_module => 'Krang::Story',
+                                      use_module => pkg('Story'),
                                       find_params => \%find_params,
                                       columns => [qw(
                                                      pub_status 
@@ -1504,7 +1504,7 @@ sub list_active {
     my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
        persist_vars => \%persist_vars,
-       use_module => 'Krang::Story',
+       use_module => pkg('Story'),
        find_params => \%find_params,
        columns => [(qw(
                        story_id 

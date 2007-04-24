@@ -920,7 +920,7 @@ sub list_active {
     my $pager = pkg('HTMLPager')->new(
        cgi_query => $q,
        persist_vars => \%persist_vars,
-       use_module => 'Krang::Template',
+       use_module => pkg('Template'),
        find_params => \%find_params,
        columns => [(qw(
                        template_id
@@ -1083,7 +1083,7 @@ sub make_pager {
     my $pager = pkg('HTMLPager')->new(
                                       cgi_query => $q,
                                       persist_vars => $persist_vars,
-                                      use_module => 'Krang::Template',
+                                      use_module => pkg('Template'),
                                       find_params => $find_params,
                                       columns => \@columns,
                                       column_labels => \%column_labels,

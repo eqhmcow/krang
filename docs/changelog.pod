@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fix various buglets regarding paging and using overridden modules
+in an addon. [Michael Peters]
+
+=item *
+
 Fixed problem with desk deletion where desks were reported to have
 stories while those stories have been checked out to the user's
 workspace.  Also make sure the desk selector preselects as the default

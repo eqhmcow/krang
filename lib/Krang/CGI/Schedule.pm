@@ -265,7 +265,7 @@ sub list_all {
                                         cgi_query => $query,
                                         persist_vars => {
                                                        rm => 'list_all' },
-                                        use_module => 'Krang::Schedule',
+                                        use_module => pkg('Schedule'),
                                         columns => [qw( asset schedule next_run action version checkbox_column )],
                                         column_labels => {  asset => 'Asset',
                                                             schedule => 'Schedule',

@@ -149,7 +149,7 @@ sub search {
                                                        rm => 'search',
                                                        search_filter => $search_filter,
                                                       },
-                                      use_module => 'Krang::Group',
+                                      use_module => pkg('Group'),
                                       find_params => { simple_search => $search_filter },
                                       columns => [qw(name command_column checkbox_column)],
                                       column_labels => {
