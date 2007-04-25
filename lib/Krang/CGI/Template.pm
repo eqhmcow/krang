@@ -296,7 +296,7 @@ sub advanced_search {
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
-        delete $session{KRANG_PERSIST}{Template};
+        delete $session{KRANG_PERSIST}{pkg('Template')};
     }
 
     $t->param(do_advanced_search=>1);
@@ -309,7 +309,7 @@ sub advanced_search {
     # Build find params
     my $search_below_category_id = defined($q->param('search_below_category_id')) ? 
       $q->param('search_below_category_id') : 
-        $session{KRANG_PERSIST}{Template}{cat_chooser_id_template_search_form_search_below_category_id};
+        $session{KRANG_PERSIST}{pkg('Template')}{cat_chooser_id_template_search_form_search_below_category_id};
     if ($search_below_category_id) {
         $persist_vars->{search_below_category_id} = $search_below_category_id;
         $find_params->{below_category_id} = $search_below_category_id;
@@ -317,7 +317,7 @@ sub advanced_search {
 
     # search_element
     my $search_element = defined($q->param('search_element')) ? 
-      $q->param('search_element') : $session{KRANG_PERSIST}{Template}{search_element};
+      $q->param('search_element') : $session{KRANG_PERSIST}{pkg('Template')}{search_element};
 
     if ($search_element) {
         $find_params->{filename}        = "$search_element.tmpl";
@@ -326,7 +326,7 @@ sub advanced_search {
 
     # search_template_id
     my $search_template_id = defined($q->param('search_template_id')) ?
-      $q->param('search_template_id') : $session{KRANG_PERSIST}{Template}{search_template_id};
+      $q->param('search_template_id') : $session{KRANG_PERSIST}{pkg('Template')}{search_template_id};
 
     if ($search_template_id) {
         $find_params->{template_id} = $search_template_id;
@@ -336,7 +336,7 @@ sub advanced_search {
 
     # search_url
     my $search_url = defined($q->param('search_url')) ?
-      $q->param('search_url') : $session{KRANG_PERSIST}{Template}{search_url};
+      $q->param('search_url') : $session{KRANG_PERSIST}{pkg('Template')}{search_url};
 
     if ($search_url) {
         $find_params->{url_like} = "%$search_url%";
@@ -802,8 +802,8 @@ sub search {
     # if no runmode, and last search was advanced, do advanced.
     return $self->advanced_search() if
       (not $q->param('rm') and
-       ($session{KRANG_PERSIST}{Template}{rm} and
-        ($session{KRANG_PERSIST}{Template}{rm} eq 'advanced_search')
+       ($session{KRANG_PERSIST}{pkg('Template')}{rm} and
+        ($session{KRANG_PERSIST}{pkg('Template')}{rm} eq 'advanced_search')
        )
       );
  
@@ -816,7 +816,7 @@ sub search {
 
     my $search_filter = defined($q->param('search_filter')) ?
       $q->param('search_filter') :
-        $session{KRANG_PERSIST}{Template}{search_filter};
+        $session{KRANG_PERSIST}{pkg('Template')}{search_filter};
 
     # ensure that $search_filter is at the very least defined.
     $search_filter = '' unless ($search_filter);

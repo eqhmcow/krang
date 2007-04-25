@@ -122,8 +122,8 @@ sub find {
     # if no run-mode is specified and the last search was advanced, go advanced.
     return $self->advanced_find() if
       ( not $q->param('rm') and (
-                                 $session{KRANG_PERSIST}{Media}{rm} and
-                                 ($session{KRANG_PERSIST}{Media}{rm} eq 'advanced_find'))
+                                 $session{KRANG_PERSIST}{pkg('Media')}{rm} and
+                                 ($session{KRANG_PERSIST}{pkg('Media')}{rm} eq 'advanced_find'))
       );
 
     my $t = $self->load_tmpl('list_view.tmpl', associate=>$q);
@@ -142,14 +142,14 @@ sub find {
     $t->param(return_params => $self->make_return_params(@return_param_list));
 
     my $search_filter = defined($q->param('search_filter')) ?
-      $q->param('search_filter') : $session{KRANG_PERSIST}{Media}{search_filter};
+      $q->param('search_filter') : $session{KRANG_PERSIST}{pkg('Media')}{search_filter};
 
     my $show_thumbnails;
 
     if ($q->param('rm')) {
         $show_thumbnails = $q->param('show_thumbnails');
-    } elsif (defined($session{KRANG_PERSIST}{Media}{show_thumbnails})) {
-        $show_thumbnails = $session{KRANG_PERSIST}{Media}{show_thumbnails};
+    } elsif (defined($session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails})) {
+        $show_thumbnails = $session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails};
     } else {
         $show_thumbnails = 1;
     }
@@ -210,7 +210,7 @@ sub advanced_find {
 
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
-        delete $session{KRANG_PERSIST}{Media};
+        delete $session{KRANG_PERSIST}{pkg('Media')};
     }
 
     # Persist data for return from view in "return_params"
@@ -244,8 +244,8 @@ sub advanced_find {
 
     if (defined($q->param('search_filename'))) {
         $show_thumbnails = $q->param('show_thumbnails');
-    } elsif (defined($session{KRANG_PERSIST}{Media}{show_thumbnails})) {
-        $show_thumbnails = $session{KRANG_PERSIST}{Media}{show_thumbnails};
+    } elsif (defined($session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails})) {
+        $show_thumbnails = $session{KRANG_PERSIST}{pkg('Media')}{show_thumbnails};
     } else {
         $show_thumbnails = 1;
     }
@@ -255,7 +255,7 @@ sub advanced_find {
     # Build find params
     my $search_below_category_id = defined($q->param('search_below_category_id')) ?
       $q->param('search_below_category_id') :
-        $session{KRANG_PERSIST}{Media}{cat_chooser_id_search_form_search_below_category_id};
+        $session{KRANG_PERSIST}{pkg('Media')}{cat_chooser_id_search_form_search_below_category_id};
     if (defined($search_below_category_id)) {
         $persist_vars->{search_below_category_id} = $search_below_category_id;
         $find_params->{below_category_id} = $search_below_category_id;
@@ -298,7 +298,7 @@ sub advanced_find {
 
     # search_filename
     my $search_filename = defined($q->param('search_filename')) ?
-      $q->param('search_filename') : $session{KRANG_PERSIST}{Media}{search_filename};
+      $q->param('search_filename') : $session{KRANG_PERSIST}{pkg('Media')}{search_filename};
 
     if (defined($search_filename)) {
         $search_filename =~ s/\W+/\%/g;
@@ -309,7 +309,7 @@ sub advanced_find {
 
     # search_alt_tag
     my $search_alt_tag = defined($q->param('search_alt_tag')) ?
-      $q->param('search_alt_tag') : $session{KRANG_PERSIST}{Media}{search_alt_tag};
+      $q->param('search_alt_tag') : $session{KRANG_PERSIST}{pkg('Media')}{search_alt_tag};
 
     if ($search_alt_tag) {
         $search_alt_tag =~ s/\W+/\%/g;
@@ -320,7 +320,7 @@ sub advanced_find {
 
     # search_title
     my $search_title = defined($q->param('search_title')) ?
-      $q->param('search_title') : $session{KRANG_PERSIST}{Media}{search_title};
+      $q->param('search_title') : $session{KRANG_PERSIST}{pkg('Media')}{search_title};
 
     if (defined($search_title)) {
         $search_title =~ s/\W+/\%/g;
@@ -331,7 +331,7 @@ sub advanced_find {
 
     # search_media_id
     my $search_media_id = defined($q->param('search_media_id')) ?
-      $q->param('search_media_id') : $session{KRANG_PERSIST}{Media}{search_media_id};
+      $q->param('search_media_id') : $session{KRANG_PERSIST}{pkg('Media')}{search_media_id};
 
     if (defined($search_media_id)) {
         $find_params->{media_id} = $search_media_id;
@@ -341,7 +341,7 @@ sub advanced_find {
 
     # search_no_attributes
     my $search_no_attributes = ($q->param('rm') eq 'advanced_find') ?
-      $q->param('search_no_attributes') : $session{KRANG_PERSIST}{Media}{search_no_attributes};
+      $q->param('search_no_attributes') : $session{KRANG_PERSIST}{pkg('Media')}{search_no_attributes};
 
     $find_params->{no_attributes} = $search_no_attributes;
     $persist_vars->{search_no_attributes} = $search_no_attributes;
@@ -1435,11 +1435,11 @@ sub make_media_tmpl_data {
                                                 -values => \@media_type_ids,
                                                 -labels => \%media_types,
                                                 -default => ($m->media_type_id() ||
-                                                             $session{KRANG_PERSIST}{Media}{media_type_id}),
+                                                             $session{KRANG_PERSIST}{pkg('Media')}{media_type_id}),
                                                );
 
     # persist media_type_id in session for next time someone adds media..
-    $session{KRANG_PERSIST}{Media}{media_type_id} = $m->media_type_id();
+    $session{KRANG_PERSIST}{pkg('Media')}{media_type_id} = $m->media_type_id();
 
     $tmpl_data{type_chooser} = $media_types_popup_menu;
 
@@ -1603,7 +1603,7 @@ sub make_return_params {
 
         # set the value either to a CGI param, what was previously in the
         # session, or nothing.
-        my $pval = $q->param($hrp) || $session{KRANG_PERSIST}{Media}{$hrp} || '';
+        my $pval = $q->param($hrp) || $session{KRANG_PERSIST}{pkg('Media')}{$hrp} || '';
 
         push(@return_params_hidden, $q->hidden(-name     => 'return_params',
                                                -value    => $pval,

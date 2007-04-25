@@ -644,7 +644,7 @@ sub find_media_link {
         }
     } else {
         my $search_filter = defined($query->param('search_filter')) ?
-          $query->param('search_filter') : $session{KRANG_PERSIST}{Media}{search_filter};
+          $query->param('search_filter') : $session{KRANG_PERSIST}{pkg('Media')}{search_filter};
         %find = (simple_search => $search_filter);
         %persist = (search_filter => $search_filter);
         $template->param(search_filter => $search_filter);
