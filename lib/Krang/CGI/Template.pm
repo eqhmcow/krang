@@ -1091,7 +1091,7 @@ sub make_pager {
                                       ['template_id',
                                        'filename',
                                        'url',],
-                                      row_handler => \&search_row_handler,
+                                      row_handler => sub { $self->search_row_handler(@_) },
                                       id_handler =>
                                       sub {return $_[0]->template_id},
                                      );
@@ -1102,7 +1102,7 @@ sub make_pager {
 
 # Handles rows for search run mode
 sub search_row_handler {
-    my ($row, $template) = @_;
+    my ($self, $row, $template) = @_;
     $row->{deployed} = $template->deployed ? 'D' : '';
     $row->{filename} = $template->filename;
     $row->{template_id} = $template->template_id;
