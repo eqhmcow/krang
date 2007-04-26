@@ -273,8 +273,8 @@ sub list_all {
                                                             action => 'Action',
                                                             version => 'Version'
                                                             },
-                                        row_handler => \&list_all_row_handler,
-                                        id_handler => sub { return $_[0]->schedule_id },
+                                        row_handler => sub { list_all_row_handler(@_) },
+                                        id_handler  => sub { return $_[0]->schedule_id },
                                                             );
 
     # Run pager
@@ -284,7 +284,7 @@ sub list_all {
 }
 
 sub list_all_row_handler {
-    my ($row, $schedule) = @_;
+    my ($self, $row, $schedule) = @_;
     $row->{asset} = ucfirst($schedule->object_type).' '.$schedule->object_id;
     
     my %context = $schedule->context ? @{$schedule->context} : ();
