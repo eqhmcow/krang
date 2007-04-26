@@ -166,15 +166,18 @@ sub default_tree {
     $sub->name('Active Stories');
     $sub->link('story.pl?rm=list_active');
 
-    $sub = $node->new_daughter();
-    $sub->name('Desks');
-    
-    foreach my $desk (pkg('Desk')->find(order_by => 'order')) {
-        my $desk_id = $desk->desk_id;
-        $sub2 = $sub->new_daughter();
-        $sub2->name($desk->name);
-        $sub2->link("desk.pl?desk_id=" . $desk_id);
-        $sub2->condition(sub { (shift->{desk}{$desk_id} || "") ne "hide" });
+    my @desks = pkg('Desk')->find(order_by => 'order');
+    if( @desks ) {
+        $sub = $node->new_daughter();
+        $sub->name('Desks');
+
+        foreach my $desk (@desks) {
+            my $desk_id = $desk->desk_id;
+            $sub2 = $sub->new_daughter();
+            $sub2->name($desk->name);
+            $sub2->link("desk.pl?desk_id=" . $desk_id);
+            $sub2->condition(sub { (shift->{desk}{$desk_id} || "") ne "hide" });
+        }
     }
 
     # media block
