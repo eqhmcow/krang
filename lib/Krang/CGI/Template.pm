@@ -359,7 +359,7 @@ sub advanced_search {
     # Set up category chooser
     $t->param(category_chooser => category_chooser(query      => $q,
                                                    formname   => 'template_search_form',
-                                                   persistkey => 'Template',
+                                                   persistkey => pkg('Template'),
                                                    name       =>
                                                    'search_below_category_id',
                                                   ));

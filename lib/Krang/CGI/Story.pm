@@ -1410,7 +1410,7 @@ sub find {
                            name       => 'search_below_primary_category_id',
                            query      => $q,
                            formname   => 'search_form',
-                           persistkey => 'Story',
+                           persistkey => pkg('Story'),
                           );
 
         # Date choosers

@@ -357,7 +357,7 @@ sub advanced_find {
                                                    query    => $q,
                                                    name     => 'search_below_category_id',
                                                    formname => 'search_form',
-                                                   persistkey => 'Media',
+                                                   persistkey => pkg('Media'),
                                                 ));
     $t->param(date_from_chooser => datetime_chooser(
                                            query => $q,
@@ -1451,7 +1451,7 @@ sub make_media_tmpl_data {
                                             name       => 'category_id',
                                             formname   => 'edit_media_form',
                                             may_edit   => 1,
-                                            persistkey => 'Media',
+                                            persistkey => pkg('Media'),
                                            );
     $tmpl_data{category_chooser} = $category_chooser;
 
