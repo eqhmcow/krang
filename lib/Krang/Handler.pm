@@ -89,7 +89,7 @@ use Krang::ClassLoader 'CGI::Login';
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize);
+use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize ApacheMaxUnsharedSize);
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
@@ -99,9 +99,12 @@ BEGIN { pkg('AddOn')->call_handler('InitHandler') }
 # Login app name
 use constant LOGIN_APP => 'login.pl';
 
-# set max process size - this could go into krang.conf if we ever felt
-# like tweaking it
-$Apache::SizeLimit::MAX_PROCESS_SIZE  = ApacheMaxSize || 64000; # 64MB by default
+if( ApacheMaxSize ) {
+    Apache::SizeLimit->set_max_process_size(ApacheMaxSize);
+} elsif(! defined ApacheMaxSize) {
+    Apache::SizeLimit->set_max_process_size(64000); # 64MB by default
+}
+Apache::SizeLimit->set_max_unshared_size(ApacheMaxUnsharedSize) if ApacheMaxUnsharedSize;
 
 ##########################
 ####  PUBLIC METHODS  ####

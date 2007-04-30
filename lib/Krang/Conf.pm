@@ -8,6 +8,7 @@ our @VALID_DIRECTIVES;
 ApacheAddr
 ApachePort
 ApacheMaxSize
+ApacheMaxUnsharedSize
 Assertions
 BadLoginCount
 BadLoginWait

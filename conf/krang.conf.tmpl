@@ -32,7 +32,14 @@ DBSock "<tmpl_var DBSock>"
 #
 ApacheAddr <tmpl_var IPAddress>
 ApachePort <tmpl_var ApachePort>
+
+#
+# ApacheMaxSize and ApacheMaxUnsharedSize are used to control the memory
+# usage of individual Apache children. Adding more addons may increase your
+# memory usage. 0 means there is no limit.
+#
 ApacheMaxSize 64000
+ApacheMaxUnsharedSize 0
 
 #
 # HostName: the virtual host for the root server, which
