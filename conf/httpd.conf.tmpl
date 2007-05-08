@@ -66,7 +66,7 @@ AddModule mod_cgi.c
 # AddModule mod_actions.c
 # AddModule mod_userdir.c
 # AddModule mod_alias.c
-# AddModule mod_access.c
+AddModule mod_access.c
 # AddModule mod_auth.c
 # AddModule mod_proxy.c
 AddModule mod_so.c
@@ -124,6 +124,9 @@ PerlRequire "<tmpl_var KrangRoot>/conf/krang-preload.pl"
 </TMPL_IF>
 </FilesMatch>
 
+<FilesMatch ".(conf|pid|db)">
+    Deny from all
+</FilesMatch>
 
 <tmpl_if EnableSSL>
 #
