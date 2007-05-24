@@ -4,14 +4,13 @@ use strict;
 use warnings;
 
 use Exporter;
-use File::Temp qw(tempdir);
+use File::Temp qw(tempdir tempfile);
 use File::Path qw(mkpath rmtree);
 use File::Spec::Functions qw(catdir catfile splitpath 
                              file_name_is_absolute rel2abs);
 use File::Copy qw(copy);
 use File::Find qw(find);
 use Krang::ClassLoader Conf => qw(KrangRoot);
-use Archive::Tar;
 use Cwd qw(fastcwd);
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Carp qw(croak);
@@ -25,6 +24,8 @@ use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'XML::Validator';
 use List::Util qw(first);
+use IO::Zlib;
+use IPC::Run qw(run);
 
 # setup exceptions
 use Exception::Class 
@@ -395,12 +396,11 @@ sub write {
         croak("Path does not end in .kds") unless $path =~ /\.kds$/;
     }
 
+    $path = file_name_is_absolute($path) ? $path : rel2abs($path);
+
     # go to the kds dir
     my $old_dir = fastcwd;
     chdir($self->{dir}) or die "Unable to chdir to $self->{dir}: $!";
-
-    # open up a new archive
-    my $kds = Archive::Tar->new();
 
     # write the index
     eval { $self->_write_index; };
@@ -412,28 +412,62 @@ sub write {
         die $err;
     }
 
-    # add all files to the tar
+    # build list of files to tar in segments of X number of files each, as
+    # defined in $to_tar_at_a_time 
+    my (%files_to_tar,$segment);
+    my $count = 0;
+    # tar can only accept a certain number of files to be passed in at a time
+    # a limit imposed by the OS; here set the limit to a conservative figure 
+    my $to_tar_at_a_time = 100;
     find({ wanted => sub { return unless -f;
                            s!^$self->{dir}/!!;
-                           $kds->add_files($_)
-                             or croak("Failed to add $_ to KDS : " .
-                                      Archive::Tar->error());
+                           if ($count % $to_tar_at_a_time == 0) {
+                               $segment = 'segment' . $count;
+  			   }
+                           push(@{$files_to_tar{$segment}},$_);
+     			   $count++;
                        },
            no_chdir => 1 },
          $self->{dir});
 
-    eval {
-        $kds->write((file_name_is_absolute($path) ? 
-                     $path : catfile($old_dir, $path)), 
-                    $compress ? 9 : 0);
-    };
-    if ($@) {
-        # gotta get back, regardless of errors
-        my $err = $@;
-        chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
-        die $err;
+    # give current user read,write,execute permissions for tar cmd further below
+    chmod(0700, $path);
+ 
+    foreach my $file_list (keys %files_to_tar) {
+        # use tar with -r option to be able to append files, to get around
+        # "Argument list too long" problem when used with the -c option and
+        # passed a large number of files
+        my $cmd = ["tar", "rf", $path, @{$files_to_tar{$file_list}}];
+
+        debug("Running @$cmd");
+        my $rc = run($cmd, \my($in, $out, $err));
+
+        if (!$rc) {
+            # gotta get back, regardless of errors
+            chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
+            die "Unable to add files to archive '$path': $err";
+        }
+
     }
-    
+
+    # we're done adding files to tar, let's compress it if compression is on
+    if ($compress) {
+        open(FILE, $path) or 
+          die "Error compressing: Cannot open tar archive '$path'";
+        my (undef, $tmpfilename) = tempfile(DIR => catdir(KrangRoot, 'tmp'));
+
+        my $fh = IO::Zlib->new($tmpfilename, "wb9") or
+          die "IO::Zlib can't open $tmpfilename ($!)";
+
+        while(<FILE>) {
+            print $fh "$_";
+        }
+        $fh->close;
+        close(FILE);
+
+        copy ($tmpfilename, $path) or die ("Error compressing: Can't copy $tmpfilename to '$path' ($!)");
+    }
+
     chdir($old_dir) or die "Unable to chdir to $old_dir: $!";
 
     # Do a validation pass in dev mode to make sure we didn't write
@@ -441,6 +475,7 @@ sub write {
     # something on disk to look at if validation fails.
     $self->_validate if ASSERT;
 }
+
 
 # write out the index XML
 sub _write_index {
@@ -488,13 +523,13 @@ sub _write_index {
 # load index.xml into objects
 sub _load_index {
     my $self = shift;
-    
+
     # read in index
-    open(my $index, '<', catfile($self->{dir}, 'index.xml')) or 
+    open(my $index, '<', catfile($self->{dir}, 'index.xml')) or
       croak("Unable to open $self->{dir}/index.xml: $!");
     my $xml = join('', <$index>);
     close $index or die $!;
-  
+
     # parse'm up
     my $data = pkg('XML')->simple(xml => $xml, forcearray => 1);
     my %index;
@@ -502,8 +537,8 @@ sub _load_index {
         my $class = $class_rec->{name};
         foreach my $object (@{$class_rec->{object}}) {
             $index{$class}{$object->{id}[0]} = { xml => $object->{xml}[0],
-                                                 ($object->{file} ? 
-                                                  (files => $object->{file}) : 
+                                                 ($object->{file} ?
+                                                  (files => $object->{file}) :
                                                   ()),
                                                };
             croak("index.xml refers to file '$object->{xml}[0]' which is ".
@@ -744,6 +779,7 @@ sub map_file {
     return $full_path;
 }
 
+
 =back
 
 =head1 EXCEPTIONS
@@ -838,5 +874,4 @@ by the media object:
 =back
 
 =cut
-
 1;
