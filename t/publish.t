@@ -1554,6 +1554,14 @@ sub test_additional_content_block {
 # test Krang::Publisher->publish_context().
 sub text_publish_context {
 
+    # First, try to call publish_context() without ever setting a publish_context
+    my %first_pc = ();
+    eval {
+        %first_pc = $publisher->publish_context();
+    };
+    ok((not($@) and not(each %first_pc)), 'publish_context() works even if never set');
+
+
     my %vars;
 
     for (1..10) {
