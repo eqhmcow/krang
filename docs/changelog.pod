@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added platform files to support Redhat Adaptive Server AS3 
+and AS4. [Jesse Erlbaum]
+
+=item *
+
 Applied Jose Quijada's patch to permit krang_export to handle large 
 sites without running out of ram. [Jesse Erlbaum]
 
