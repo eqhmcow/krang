@@ -1559,13 +1559,16 @@ sub _rectify_publish_locations {
           or croak("Unable to delete extinct publish result '$old'.");
     }
 
-    # write new paths to publish location table
-    $dbh->do("DELETE FROM publish_${type}_location 
-              WHERE ${type}_id = ? AND preview = ?", undef, $id, $preview);
-    $dbh->do("INSERT INTO publish_${type}_location 
-              (${type}_id,preview,path) VALUES ".join(',',('(?,?,?)')x@$paths),
-             undef, map { ($id, $preview, $_) } @$paths)
-      if @$paths;
+    # write new paths to publish location table if we have an id (it
+    # was saved)
+    if( $id ) {
+        $dbh->do("DELETE FROM publish_${type}_location 
+                  WHERE ${type}_id = ? AND preview = ?", undef, $id, $preview);
+        $dbh->do("INSERT INTO publish_${type}_location 
+                  (${type}_id,preview,path) VALUES ".join(',',('(?,?,?)')x@$paths),
+                 undef, map { ($id, $preview, $_) } @$paths)
+          if @$paths;
+    }
 }
 
 #

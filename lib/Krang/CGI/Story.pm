@@ -385,7 +385,7 @@ sub edit {
                         element => $story->element);
     
     # static data
-    $template->param(story_id          => $story->story_id || "",
+    $template->param(story_id          => $story->story_id || "N/A",
                      type              => $story->element->display_name,
                      url               => $story->url ? 
                                             format_url(
