@@ -952,7 +952,7 @@ sub serialize_xml {
             $writer->dataElement( value => $c_hash{$key} );
             $writer->endTag('context');
 
-            $set->add(object =>(Krang::User->find(user_id =>
+            $set->add(object =>(pkg('User')->find(user_id =>
                                                    $c_hash{user_id}))[0],
                       from => $self)
               if ($key eq 'user_id');
