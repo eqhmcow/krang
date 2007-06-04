@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In bin/krang_build, got rid of hard coded versions of Apache
+tarballs. [Bodo Schulze]
+
+=item *
+
 Fixed bug when previewing a story that was copied from another
 story but hadn't been saved yet. [Michael Peters]
 
