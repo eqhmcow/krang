@@ -214,12 +214,14 @@ sub create {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
         my $class = pkg('ElementLibrary')->top_level(name => $type);
+	my $url_attributes = join(', ', $class->url_attributes);
+	my $which = $url_attributes
+	  ? $url_attributes . ' and site/category'
+	    : 'site/category';
         add_message('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,                    
-                    which    => join(' and ', 
-                                     join(', ', $class->url_attributes),
-                                     "site/category"),
+                    which    => $which,
                    );
 
         return $self->new_story(bad => ['category_id',$class->url_attributes]);
