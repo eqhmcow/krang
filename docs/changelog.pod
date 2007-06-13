@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In Krang::CGI::Media::list_active_row_handler(), fixed building of
+thumbnail preview link. [Bodo Schulze]
+
+=item *
+
 In Krang::CGI::Story's create() method, fixed building of message
 string after a Krang::Story::DuplicateURL error has been thrown.
 [Bodo Schulze]
