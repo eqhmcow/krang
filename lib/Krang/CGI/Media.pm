@@ -1288,19 +1288,20 @@ sub list_active_row_handler {
     #
 
     # media_id
-    $row->{media_id} = $media->media_id();
+    my $media_id = $media->media_id();
+    $row->{media_id} = $media_id;
 
     # thumbnail path   
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
-        $row->{thumbnail} = "<a href='javascript:preview_media('".$row->{media_id}."')'><img src=\"$thumbnail_path\" border=0></a>";
+        $row->{thumbnail} = "<a href='javascript:preview_media($media_id)'><img src=\"$thumbnail_path\" border=0></a>";
     } else {
         $row->{thumbnail} = "&nbsp;";
     }
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $media->url(),
-                              linkto => "javascript:preview_media('". $row->{media_id} ."')" );
+                              linkto => "javascript:preview_media('". $media_id ."')" );
 
     # title
     $row->{title} = $q->escapeHTML($media->title);
