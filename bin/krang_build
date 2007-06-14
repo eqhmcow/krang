@@ -218,6 +218,13 @@ die "Unable to load platform modules '$pkg': $@\n" if $@;
 # verify the platform
 $pkg->verify_dependencies(mode => 'build');
 
+# if we have rebuild and we were previously built with-ssl, then
+# the rebuild should be with-ssl too
+if( $rebuild ) {
+    my %build_params = $pkg->build_params;
+    $with_ssl = 1 if $build_params{SSL};
+}
+
 # get list of files to build, considering --module, --skip-module and --no-module opts
 opendir( SRC, $src_dir ) or die "Can't open $src_dir for reading: $!";
 my @files;

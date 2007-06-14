@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+After you've already built Krang C<--with--ssl>, if you do a 
+C<krang_build --rebuild> it will do the rebuild C<--with-ssl> too.
+
+=item *
+
 In Krang::CGI::Media::list_active_row_handler(), fixed building of
 thumbnail preview link. [Bodo Schulze]
 
