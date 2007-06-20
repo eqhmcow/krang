@@ -207,7 +207,7 @@ sub thaw_data_xml {
 
     my $import_id = $data->[0];
     return unless $import_id;
-    my $media_id = $set->map_id(class => 'Krang::Media',
+    my $media_id = $set->map_id(class => pkg('Media'),
                                 id    => $import_id);
     assert(pkg('Media')->find(media_id => $media_id, count => 1))
       if ASSERT;

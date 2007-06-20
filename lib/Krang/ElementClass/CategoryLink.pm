@@ -121,7 +121,7 @@ sub thaw_data_xml {
 
     my $import_id = $data->[0];
     return unless $import_id;
-    my $category_id = $set->map_id(class => 'Krang::Category',
+    my $category_id = $set->map_id(class => pkg('Category'),
                                    id    => $import_id);
     $self->thaw_data(element => $element,
                      data    => $category_id);
