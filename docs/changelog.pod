@@ -8,8 +8,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-After you've already built Krang C<--with--ssl>, if you do a 
-C<krang_build --rebuild> it will do the rebuild C<--with-ssl> too.
+In Krang::ElementClass::CategoryLink, Krang::ElementClass::MediaLink
+and Krang::ElementClass::StoryLink fixed addon v2 compat bugs.
+[Bodo Schulze]
+
+=item *
+
+After you've already built Krang C<--with--ssl>, if you do a
+C<krang_build --rebuild> it will do the rebuild C<--with-ssl>
+too. [Michael Peters]
 
 =item *
 
