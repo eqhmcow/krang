@@ -43,10 +43,12 @@ Which files to run tests on.  May be a space-separated list of files
 
 Prints a running dialog of what's happening.
 
-=item --xml
+=item --tap-archive
 
-Output XML instead of Test::Harness summary. Useful when you
-want to process the resulting test run.
+Create an archive file of the test run's TAP output instead of the
+normal L<Test::Harness> summary. Useful when you want to process the
+resulting test run or feed it to smolder. The resulting file is named
+F<krang_test_run.tar.gz>.
 
 =item --help
 
@@ -95,16 +97,16 @@ use Krang::ClassLoader 'lib';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'Conf';
 
-our ($help, $man, $xml);
+our ($help, $man, $archive);
 my $v = 0;
 my $files;
 pod2usage(2) unless
-  GetOptions(help       => \$help,
-             man        => \$man,
-             'verbose'  => \$v,
+  GetOptions(help          => \$help,
+             man           => \$man,
+             'verbose'     => \$v,
              'verbose-i=i' => \$v,
-             'xml'      => \$xml,
-             'files=s'  => \$files,
+             'tap-archive' => \$archive,
+             'files=s'     => \$files,
             );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
@@ -113,24 +115,66 @@ my $root = pkg('Conf')->get('KrangRoot');
 $files ||= join(" ", map { s!^$root/!!; $_ } 
                      map { "$_/*.t" } 
                      grep { -d $_ } pkg('File')->find_all('t'));
+$files = [ glob($files) ];
 
 # choose the first instance if KRANG_INSTANCE not set
 unless ($ENV{KRANG_INSTANCE}) {
     $ENV{KRANG_INSTANCE} = (pkg('Conf')->instances())[0];
 }
 
-if( $xml ) {
+if( $archive ) {
     # if we want XML, run tests through Test::TAP::XML
     $ENV{TEST_HARNESS} = 1;
-    require Test::TAP::XML;
-    my $harness = Test::TAP::XML->new();
-    $harness->run_tests(glob($files));
-    print $harness->xml();
+    create_tap_archive($files);
 } else {
     print "FILES: $files\n";
     # run tests through Test::Harness
     require Test::Harness;
     no warnings; # silence used-only-once warning
     $Test::Harness::Verbose = $v;
-    Test::Harness::runtests(glob($files));
+    Test::Harness::runtests($files);
+}
+
+sub create_tap_archive {
+    my $files = shift;
+    require Archive::Tar;
+    require YAML;
+    require File::Temp;
+    require File::Basename;
+    require Cwd;
+
+    # create a an archive to put the TAP files into
+    my $temp_dir = File::Temp::tempdir();
+    my $archive = Archive::Tar->new();
+
+    my %meta_info = (
+        file_order => $files,
+        start_time => time(),
+    );
+    foreach my $f (@$files) {
+        my $basename = File::Basename::basename($f, '.t');
+        my $destination = catfile($temp_dir, "$basename.tap");
+        my $cmd = "$^X $f 2>&1 > $destination";
+        print "Capturing output of $f into $basename.tap\n" if $v;
+        system($cmd) == 0
+            or warn "Could not run command $cmd: $!";
+    }
+
+    # create the meta.yml file
+    $meta_info{stop_time} = time();
+    open(my $meta_fh, '>', catfile($temp_dir, 'meta.yml'))
+       or die "Could not open meta.yml for writing: $!";
+    print $meta_fh YAML::Dump(\%meta_info);
+    close($meta_fh);
+
+
+    # now tar up the archive
+    my $cwd = Cwd::getcwd();
+    chdir($temp_dir) or die "Could not change to directory $temp_dir: $!";
+    $archive->add_files(glob('*'));
+    chdir($cwd) or die "Could not change to directory $temp_dir: $!";
+
+    my $output_file = 'krang_test_run.tar.gz';
+    $archive->write($output_file, 1);
+    print "Test run complete. Archive file - $output_file\n";
 }
