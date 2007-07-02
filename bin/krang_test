@@ -115,6 +115,7 @@ my $root = pkg('Conf')->get('KrangRoot');
 $files ||= join(" ", map { s!^$root/!!; $_ } 
                      map { "$_/*.t" } 
                      grep { -d $_ } pkg('File')->find_all('t'));
+print "FILES: $files\n";
 $files = [ glob($files) ];
 
 # choose the first instance if KRANG_INSTANCE not set
@@ -127,12 +128,11 @@ if( $archive ) {
     $ENV{TEST_HARNESS} = 1;
     create_tap_archive($files);
 } else {
-    print "FILES: $files\n";
     # run tests through Test::Harness
     require Test::Harness;
     no warnings; # silence used-only-once warning
     $Test::Harness::Verbose = $v;
-    Test::Harness::runtests($files);
+    Test::Harness::runtests(@$files);
 }
 
 sub create_tap_archive {
@@ -156,8 +156,7 @@ sub create_tap_archive {
         my $destination = catfile($temp_dir, "$basename.tap");
         my $cmd = "$^X $f 2>&1 > $destination";
         print "Capturing output of $f into $basename.tap\n" if $v;
-        system($cmd) == 0
-            or warn "Could not run command $cmd: $!";
+        system($cmd);
     }
 
     # create the meta.yml file
