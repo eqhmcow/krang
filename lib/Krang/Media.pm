@@ -355,7 +355,7 @@ Returns id of user who has object checked out, if checked out.
 
 =item $media->published()
 
-Returns 1 if published version > 1.  (Unnecessary convenience method)
+Returns 1 if published version >= 1.  (Unnecessary convenience method)
 
 =cut
 
@@ -379,10 +379,6 @@ Returns the current version number.
 =item $creation_date = $media->creation_date()
 
 Returns the initial creation date of the media object.  Not settable here.
-
-=item $url = $media->url()
-
-Returns the path that the media object will preview/publish to. Not settable here.
 
 =item @contribs = $media->contribs();
 

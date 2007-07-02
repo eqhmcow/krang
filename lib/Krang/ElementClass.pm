@@ -477,7 +477,7 @@ sub index_data { $_[2]->freeze_data() }
 
 =item C<< $template_data = $class->template_data() >>
 
-This attribute returns the data associated with the element, formatted
+This method returns the data associated with the element, formatted
 for use in an output template.  In most cases, what
 $element->template_data() returns is identical to $element->data(),
 but some element classes may override this method to return something
