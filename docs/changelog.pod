@@ -8,15 +8,19 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added F<krang_src_dependency_check> script to check Perl source module
+dependencies. [Michael Peters]
+
+=item *
+
 In Krang::ElementClass::CategoryLink, Krang::ElementClass::MediaLink
 and Krang::ElementClass::StoryLink fixed addon v2 compat bugs.
 [Bodo Schulze]
 
 =item *
 
-After you've already built Krang C<--with--ssl>, if you do a
-C<krang_build --rebuild> it will do the rebuild C<--with-ssl>
-too. [Michael Peters]
+After you've already built Krang C<--with--ssl>, if you do a 
+C<krang_build --rebuild> it will do the rebuild C<--with-ssl> too.
 
 =item *
 
