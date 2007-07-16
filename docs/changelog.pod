@@ -8,6 +8,23 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added test_categorylink() to t/publish.t (implicitely tests
+Krang::URL::real_url()). [Bodo Schulze]
+
+=item *
+
+Make use of Krang::URL::real_url() in the template_data() method of
+Krang::ElementClass::CategoryLink, Krang::ElementClass::MediaLink and
+Krang::ElementClass::StoryLink. [Bodo Schulze]
+
+=item *
+
+Added new module Krang::URL.  It provides one method -- real_url() --
+which adjusts the URL of story, media and category objects according
+to their publishing context. [Bodo Schulze]
+
+=item *
+
 Added F<krang_src_dependency_check> script to check Perl source module
 dependencies. [Michael Peters]
 
