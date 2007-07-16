@@ -13,6 +13,7 @@ use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Element';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'URL';
 
 use Krang::ClassLoader 'Test::Content';
 
@@ -263,6 +264,8 @@ test_media_deploy();
 test_storylink();
 
 test_medialink();
+
+test_categorylink();
 
 test_template_testing($story, $category);
 
@@ -1028,13 +1031,19 @@ sub test_storylink {
 
     $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
 
-    ok($story_href eq 'http://' . $dest_story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
+##    ok($story_href eq 'http://' . $dest_story->url(), 'Krang::ElementClass::StoryLink->publish() -- publish-no template');
+
+    ok($story_href eq pkg('URL')->real_url(object => $dest_story, publisher => $publisher),
+       'Krang::ElementClass::StoryLink->publish() -- publish-no template');
 
     $publisher->_set_preview_mode();
 
     $story_href = $storylink->publish(element => $storylink, publisher => $publisher);
 
-    ok($story_href eq "$scheme://" . $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
+##    ok($story_href eq "$scheme://" . $dest_story->preview_url(), 'Krang::ElementClass::StoryLink->publish() -- preview-no template');
+
+    ok($story_href eq pkg('URL')->real_url(object => $dest_story, publisher => $publisher),
+       'Krang::ElementClass::StoryLink->publish() -- preview-no template');
 
     # re-deploy template.
     $publisher->deploy_template(template => $template_deployed{leadin});
@@ -1082,13 +1091,16 @@ sub test_medialink {
 
     $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
 
-    ok($media_href eq "http://" . $media->url(), 'Krang::ElementClass::MediaLink->publish() -- publish-no template');
+    ok($media_href eq pkg('URL')->real_url(object => $media, publisher => $publisher),
+       'Krang::ElementClass::MediaLink->publish() -- publish-no template');
 
     $publisher->_set_preview_mode();
 
     $media_href = $medialink->publish(element => $medialink, publisher => $publisher);
 
-    ok($media_href eq "$scheme://" . $media->preview_url(), 'Krang::ElementClass::MediaLink->publish() -- preview-no template');
+    ok($media_href eq pkg('URL')->real_url(object => $media, publisher => $publisher),
+       'Krang::ElementClass::MediaLink->publish() -- preview-no template');
+
     # re-deploy template.
     $publisher->deploy_template(template => $template_deployed{photo});
 
@@ -1098,7 +1110,61 @@ sub test_medialink {
 
 }
 
+# test to make sure Krang::ElementClass::CategoryLink->publish works as expected.
+sub test_categorylink {
 
+    my $category  = $creator->create_category();
+    my $story     = $creator->create_story(category => [ $category ]);
+    my $navlink   = $creator->create_category(parent => $category);
+
+    $publisher->_set_publish_mode();
+
+    # test related story - add a storylink from one story to the other.
+    $publisher->{story} = $story;
+    $publisher->{category} = $category;
+
+    my $categorylink = $category->element->add_child(class => 'leftnav_link');
+    $categorylink->data($navlink);
+
+    # w/ deployed template - make sure it works w/ template.
+    my $nav_href = $categorylink->publish(element => $categorylink, publisher => $publisher);
+    my $resulting_link = '<a href="http://' . $navlink->url() . '"></a>';
+    chomp ($nav_href);
+
+    ok($nav_href eq $resulting_link, 'Krang::ElementClass::CategoryLink->publish() -- publish w/ template');
+
+    $publisher->_set_preview_mode();
+
+    $nav_href = $categorylink->publish(element => $categorylink, publisher => $publisher);
+    $resulting_link = "<a href=\"$scheme://" . $navlink->preview_url() . '"></a>';
+    chomp ($nav_href);
+
+    ok($nav_href eq $resulting_link, 'Krang::ElementClass::CategoryLink->publish() -- preview w/ template');
+
+    $publisher->_set_publish_mode();
+
+    # undeploy template - make sure it works w/ no template.
+    $publisher->undeploy_template(template => $template_deployed{leftnav_link});
+
+    $nav_href = $categorylink->publish(element => $categorylink, publisher => $publisher);
+
+    ok($nav_href eq pkg('URL')->real_url(object => $navlink, publisher => $publisher),
+       'Krang::ElementClass::Categorylink->publish() -- publish-no template');
+
+    $publisher->_set_preview_mode();
+
+    $nav_href = $categorylink->publish(element => $categorylink, publisher => $publisher);
+
+    ok($nav_href eq pkg('URL')->real_url(object => $navlink, publisher => $publisher),
+       'Krang::ElementClass::Categorylink->publish() -- preview-no template');
+
+    # re-deploy template.
+    $publisher->deploy_template(template => $template_deployed{leftnav_link});
+
+    $creator->delete_item(item => $navlink);
+    $creator->delete_item(item => $story);
+    $creator->delete_item(item => $category);
+}
 
 sub test_story_build {
 
