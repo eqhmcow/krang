@@ -6,6 +6,7 @@ use warnings;
 use Krang::ClassLoader base => 'ElementClass';
 use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Conf => qw(PreviewSSL);
+use Krang::ClassLoader 'URL';
 
 # For *Link hard find feature
 use Storable qw(nfreeze);
@@ -224,16 +225,9 @@ sub thaw_data_xml {
 sub template_data {
     my $self = shift;
     my %args = @_;
-    return "" unless $args{element}->data;
 
-    if ($args{publisher}->is_publish()) {
-        return 'http://' . $args{element}->data()->url();
-    } elsif ($args{publisher}->is_preview()) {
-        my $scheme = PreviewSSL ? 'https' : 'http';
-        return "$scheme://" . $args{element}->data()->preview_url();
-    } else {
-        croak (__PACKAGE__ . ': Not in publish or preview mode.  Cannot return proper URL.');
-    }
+    return pkg('URL')->real_url(object    => $args{element}->data,
+                                publisher => $args{publisher});
 }
 
 
