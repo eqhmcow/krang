@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In Krang::Publisher::publish_context(), return an empty list to avoid
+warnings when trying to get an empty publish context. [Bodo Schulze]
+
+=item *
+
 Added test_categorylink() to t/publish.t (implicitely tests
 Krang::URL::real_url()). [Bodo Schulze]
 
