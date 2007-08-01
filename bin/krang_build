@@ -410,6 +410,7 @@ sub move_ssl_dirs {
         my $contents = `cat $crt`;
         if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER CERTIFICATE/ ) {
             $ok_to_replace = 1;
+            unlink($crt) or warn "Could not remove placeholder crt: $!";
         }
     }
     if( $ok_to_replace ) {
@@ -423,6 +424,7 @@ sub move_ssl_dirs {
         my $contents = `cat $key`;
         if( $contents =~ /THIS FILE HAS TO BE REPLACED BY A REAL SERVER PRIVATE KEY/ ) {
             $ok_to_replace = 1;
+            unlink($key) or warn "Could not remove placeholder key: $!";
         }
     }
 
