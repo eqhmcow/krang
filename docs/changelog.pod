@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In Krang::CGI::Story::copy(), preserve charset when copying a
+story. [Bodo Schulze]
+
+=item *
+
 In Krang::Publisher::publish_context(), return an empty list to avoid
 warnings when trying to get an empty publish context. [Bodo Schulze]
 
