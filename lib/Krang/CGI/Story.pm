@@ -14,6 +14,7 @@ use Carp qw(croak);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Group';
+use Krang::ClassLoader Conf => qw(Charset);
 
 use Krang::ClassLoader base => 'CGI::ElementEditor';
 
@@ -639,8 +640,14 @@ sub copy {
                     title => $clone->title);
     }                    
 
-    # go edit the copy
+
+    # delete query...
     $query->delete_all;
+
+    # ... but preserve charset
+    $query->charset(Charset) if Charset;
+
+    # go edit the copy
     return $self->edit();
 }
 
