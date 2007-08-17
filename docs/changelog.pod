@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Add Fedora 7 as a platform for building. [Michael Peters]
+
+=item *
+
 Upgraded L<DBI> and L<DBD::mysql> to be able to build Krang against
 newer versions of MySQL. [Michael Peters]
 
