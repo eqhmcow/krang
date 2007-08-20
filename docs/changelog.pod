@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added C<--below_category_id> option and implemented
+C<--limited_to_category> option for C<bin/krang_publish>. [Bodo
+Schulze]
+
+=item *
+
 Add Fedora 7 as a platform for building. [Michael Peters]
 
 =item *
