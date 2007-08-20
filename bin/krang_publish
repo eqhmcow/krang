@@ -65,10 +65,10 @@ Using the --everything flag will cause krang_publish to ignore the
 =item --site_id
 
 Publish all content (stories and media) under the site specified by
-the site_id.
+the site_id.  May only be specified once.
 
 Using the --site_id flag will cause krang_publish to ignore the
---category_id, --story_id and --media_id options.
+--story_id and --media_id options.
 
 =item --limited_to_site
 
@@ -85,15 +85,21 @@ publish path, or broken links in the publish path may result.
 =item --category_id
 
 Publish all content (stories and media) under the category specified
-by the category_id.
+by the category_id. May only be specified once.
 
 Using the --category_id flag will cause krang_publish to ignore the
 --story_id and --media_id options.
 
+=item --below_category_id
+
+Publish all content (stories and media) below the given category and
+its child categories.  May only be specified once.
+
 =item --limited_to_category
 
-An option addendum to --category_id, any related stories or media that
-are outside of the specified category will not be published.
+An option addendum to --category_id and --below_category_id, any
+related stories or media that are outside of the specified category
+will not be published.
 
 B<WARNING>: The intended use case for this option would be an
 installation that is already in production and underwent template
@@ -109,6 +115,9 @@ Publishes the story and related media objects associated with the
 story_id.  Supports multiple --story_id arguments, or a single
 --story_id argument with a comma-separated list of IDs to publish more
 than one story.
+
+Using the --story_id flag will cause krang_publish to ignore the
+--site_id, --category_id and --below_category_id options.
 
 =item --media_id
 
@@ -189,7 +198,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 # Setup - grabbing all the command-line options.
 
-my %id  = map { ($_, [])} qw(story_id media_id category_id site_id);
+my %id  = map { ($_, [])} qw(story_id media_id category_id below_category_id site_id);
 
 my ($help, $man, $everything, $verbose) = (0, 0, 0, 0);
 my $limited_to_site     = 0;
@@ -265,7 +274,7 @@ if ($everything) {
 } else {
     # NOTE: --site_id and --category_id options are mutually 
     #       exclusive from --story_id and --media_id.
-    if (@{$id{site_id}} || @{$id{category_id}}) {
+    if (@{$id{site_id}} || @{$id{category_id}} || @{$id{below_category_id}}) {
         if (@{$id{site_id}}) {
             $find_options{site_id} = $id{site_id}[0];
             $arg_string .= " --site_id $find_options{site_id}";
@@ -273,6 +282,12 @@ if ($everything) {
         } elsif (@{$id{category_id}}) {
             $find_options{category_id} = $id{category_id}[0];
             $arg_string .= " --category_id $find_options{category_id}";
+            $publish_args{disable_related_assets} = $limited_to_category;
+            $has_options = 1;
+        } elsif (@{$id{below_category_id}}) {
+            $find_options{below_category_id} = $id{below_category_id}[0];
+            $arg_string .= " --below_category_id $find_options{below_category_id}";
+            $publish_args{disable_related_assets} = $limited_to_category;
             $has_options = 1;
         }
     } elsif (@{$id{story_id}} || @{$id{media_id}}) {
@@ -331,8 +346,9 @@ if ($everything) {
 
 } else {
     if (
-        $find_options{site_id}     ||
-        $find_options{category_id} ||
+        $find_options{site_id}           ||
+        $find_options{category_id}       ||
+        $find_options{below_category_id} ||
         $find_options{media_id}
        ) {
         # publish media first - remove story_id arg
@@ -353,8 +369,9 @@ if ($everything) {
     }
 
     if (
-        $find_options{site_id}     ||
-        $find_options{category_id} ||
+        $find_options{site_id}           ||
+        $find_options{category_id}       ||
+        $find_options{below_category_id} ||
         $find_options{story_id}
        ) {
         publish_stories(\%find_options, \%publish_args);
