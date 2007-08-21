@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In C<Krang::HTMLPager>, make krang_pager_sort_field persistent on
+initial call to a C<Krang::CGI::*> module's C<find()> method.
+[Bodo Schulze]
+
+=item *
+
 Added C<--below_category_id> option and implemented
 C<--limited_to_category> option for C<bin/krang_publish>. [Bodo
 Schulze]
