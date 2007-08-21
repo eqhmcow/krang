@@ -799,6 +799,7 @@ sub calculate_order_by {
         $order_by = $session{"KRANG_${cache_key}_PAGER_SORT_FIELD"};
     } elsif( ref $self ) {
         $order_by = $self->columns_sortable()->[0];  # First sort column
+	$q->param(-name => 'krang_pager_sort_field', -value => $order_by);
     }
 
     return $order_by;
