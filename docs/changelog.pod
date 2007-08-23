@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Show the 'text' cursor all over Xinha's edit area. [Bodo Schulze]
+
+=item *
+
 In C<Krang::HTMLPager>, make krang_pager_sort_field persistent on
 initial call to a C<Krang::CGI::*> module's C<find()> method.
 [Bodo Schulze]
