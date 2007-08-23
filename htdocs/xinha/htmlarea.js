@@ -27,9 +27,9 @@
     --     included in the top 10 lines of the file (see the embedded edit mode)
     --
     --  $HeadURL: http://svn.xinha.python-hosting.com/trunk/htmlarea.js $
-    --  $LastChangedDate: 2005-05-04 04:37:33 +1200 (Wed, 04 May 2005) $
-    --  $LastChangedRevision: 108 $
-    --  $LastChangedBy: niko $
+    --  $LastChangedDate$
+    --  $LastChangedRevision$
+    --  $LastChangedBy$
     --------------------------------------------------------------------------*/
 
 if (typeof _editor_url == "string") {
@@ -1532,6 +1532,11 @@ HTMLArea.prototype.generate = function ()
       editor.updateToolbar();
       editor._timerToolbar = null;
     }, 250);
+
+    if (HTMLArea.is_gecko) {
+	editor._iframe.contentDocument.documentElement.style.cursor='text';
+	editor._iframe.contentDocument.documentElement.style.height='100%';
+    }
   }
 
 // Switches editor mode; parameter can be "textmode" or "wysiwyg".  If no
