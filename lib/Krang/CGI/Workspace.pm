@@ -417,8 +417,11 @@ sub _do_checkin {
     my ($self, $obj) = @_;
 
     if ($obj->isa('Krang::Story')) {
-	my $story_id = $obj->story_id;
-	my $desk_id = $self->query->param('checkin_to_story_'.$story_id);
+	my $story_id  = $obj->story_id;
+	my $desk_id   = $self->query->param('checkin_to_story_'.$story_id);
+	my ($desk)    = pkg('Desk')->find(desk_id => $desk_id);
+	my $desk_name = $desk ? $desk->name : '';
+
         $obj->checkin();
 
         eval {$obj->move_to_desk($desk_id); };
@@ -426,14 +429,14 @@ sub _do_checkin {
 	if ($@ and ref($@) and $@->isa('Krang::Story::CheckedOut')) {
 	    add_message( 'story_cant_move_checked_out',
 			 id   => $story_id,
-			 desk => (pkg('Desk')->find(desk_id => $desk_id))[0]->name);
+			 desk => $desk_name);
 	} elsif ($@ and ref($@) and $@->isa('Krang::Story::NoDesk')) {
 	    add_message( 'story_cant_move_no_desk',
 			 story_id   => $story_id,
 			 desk_id    => $desk_id );
 	    $obj->checkout();
 	} else {
-	    add_message("moved_story", id => $story_id);
+	    add_message("moved_story", id => $story_id, desk => $desk_name);
 	}
     } elsif ($obj->isa('Krang::Media')) {
         add_message("checkin_media", id => $obj->media_id);
