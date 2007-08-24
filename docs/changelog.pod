@@ -8,6 +8,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In C<Krang::CGI::Desk> and C<Krang::CGI::Workspace>, include desk name
+in message when moving a story to another desk. [Bodo Schulze]
+
+=item *
+
 Show the 'text' cursor all over Xinha's edit area. [Bodo Schulze]
 
 =item *
