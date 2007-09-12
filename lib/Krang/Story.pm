@@ -1440,6 +1440,9 @@ sub find {
     my $sth = $dbh->prepare($query);
     $sth->execute(@param);
 
+    # we'll fold in user desk permissions after constructing story objects
+    my %desk_permissions = pkg('Group')->user_desk_permissions;
+
     # construct objects from results
     my ($row, @stories, $result);
     while ($row = $sth->fetchrow_arrayref()) {
@@ -1477,6 +1480,11 @@ sub find {
                     contrib_type_id => $_->[1] 
                   } } @$result ] :
           [];
+
+	# fold in user desk permissions
+	if (my $desk_id = $obj->desk_id) {
+	    $desk_permissions{$desk_id} eq 'edit' or $obj->{may_edit} = 0;
+	}
 
         push @stories, $obj;
     }

@@ -16,6 +16,7 @@ use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Media';
+use Krang::ClassLoader 'Desk';
 use File::Spec::Functions;
 use Storable qw(freeze thaw);
 use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet);
@@ -389,8 +390,8 @@ SKIP: {
     $v->title("Bar");
 
     $v->save();
-    is($v->version, 2);
-    is($v->title(), "Bar");
+    is($v->version, 2, 'Is version 2');
+    is($v->title(), "Bar", 'Title eq "Bar"');
     $v->element->child('deck')->data('Version 3 Deck');
     is($v->element->child('deck')->data, 'Version 3 Deck');
 
@@ -931,15 +932,118 @@ is($change->url, 'storyzest.com/test_0/change');
         is($ptest_count, 12, "find(primary_site_id => [ids])");
     };
 
+    ### test desk permissions (implemented in rXXXX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # setup desks
+    my $rw_desk   = pkg('Desk')->new(name => 'read_write_desk');
+    my $ro_desk   = pkg('Desk')->new(name => 'read_only_desk');
+    my $hide_desk = pkg('Desk')->new(name => 'hide_desk');
+    my @desks = ( $rw_desk, $ro_desk, $hide_desk);
+
+    # setup group with desk permissions
+    my $r_group = pkg('Group')->new(name => 'restricted',
+				    desks => { $rw_desk->desk_id => 'edit',
+					       $ro_desk->desk_id => 'read-only',
+					       $hide_desk->desk_id => 'hide',
+					     },
+				   );
+    $r_group->save();
+
+    # put a user into this group
+    my $r_user = pkg('User')->new(login    => 'bob',
+				  password => 'bobspass',
+				  group_ids => [ $r_group->group_id ],
+				 );
+    $r_user->save();
+
+    # create a story to test desk permissions
+    $story = pkg('Story')->new(title      => 'Root Cat story', 
+			       categories => [$ptest_root_cat],
+			       slug       => 'rootie_3',
+			       class      => 'article',
+			       cover_date => scalar localtime,
+			      );
+    $story->save();
+    $story->checkin();
+    push @stories, $story;
+
+    # make sure story is checked in
+    is($story->checked_out, 0, 'Story is not checked out');
+    is($story->checked_out_by, 0, 'Story is not checked out by anybody');
+
+    {
+	my $old_user = $ENV{REMOTE_USER};
+
+	my $user_id = $r_user->user_id;
+	local $ENV{REMOTE_USER} = $user_id;
+
+	$story->checkout;
+	is($story->checked_out, 1, 'Story checked out');
+	is($story->checked_out_by, $user_id, 'Story checked out by restricted user');
+	$story->checkin;
+
+	# move story to RW desk and test its permissions there
+	is($story->checked_out, 0, 'Restricted user checked in the story');
+	is($story->checked_out_by, 0, 'Story is not checked out by anybody else');
+	ok(pkg('Group')->may_move_story_to_desk($rw_desk->desk_id),
+	   "Passed security check: Restricted user may move story TO desk '".$rw_desk->name."'");
+	$story->move_to_desk($rw_desk->desk_id);
+	is($story->desk_id, $rw_desk->desk_id, "After moving, story now lives on desk '".$rw_desk->name."'");
+	my ($f_story) = pkg('Story')->find(story_id => $story->story_id);
+	isa_ok($f_story, 'Krang::Story', 'Story found via story_id');
+	is($f_story->may_see, 1, "Restricted user may see the story on desk '".$rw_desk->name."' (story listing)");
+	is($f_story->may_edit, 1, "Restricted user may edit the story on '".$rw_desk->name."' (story listing)");
+	($f_story) = pkg('Story')->find(desk_id => $rw_desk->desk_id);
+	isa_ok($f_story, 'Krang::Story', 'Story found via desk_id');
+	is($f_story->may_see, 1, "Restricted user may see the story on desk '".$rw_desk->name."' (desk listing)");
+	is($f_story->may_edit, 1, "Restricted user may edit the story '".$rw_desk->name."' (desk listing)");
+
+	# move story to RO desk and test its permissions there
+	ok(pkg('Group')->may_move_story_from_desk($rw_desk->desk_id),
+	   "Passed security check: Restricted user may move story FROM desk '".$rw_desk->name."'");
+	ok(pkg('Group')->may_move_story_to_desk($ro_desk->desk_id),
+	   "Passed security check: Restricted user may move story TO desk '".$ro_desk->name."'");
+	$story->move_to_desk($ro_desk->desk_id);
+	is($story->last_desk_id, $rw_desk->desk_id, "Story was on desk '".$rw_desk->name."'");
+	is($story->desk_id, $ro_desk->desk_id, "Story is now on desk '".$ro_desk->name."'");
+	($f_story) = pkg('Story')->find(story_id => $story->story_id);
+	isa_ok($f_story, 'Krang::Story', 'Story found via story_id');
+	is($f_story->may_see, 1, "Restricted user may see the story on desk '".$ro_desk->name."' (story listing)");
+	is($f_story->may_edit, 0, "Restricted user may not edit the story on desk '".$ro_desk->name."'(story listing)");
+	($f_story) = pkg('Story')->find(desk_id => $ro_desk->desk_id);
+	isa_ok($f_story, 'Krang::Story', 'Story found via desk_id');
+	is($f_story->may_see, 1, "Restricted user may see the story on desk '".$ro_desk->name."' (desk listing)");
+	is($f_story->may_edit, 0, "Restricted user may not edit the story on desk '".$ro_desk->name."' (desk listing)");
+
+	# restricted user shouldn't be able to further move the story
+	is(pkg('Group')->may_move_story_from_desk($ro_desk->desk_id), 0,
+	   "Didn't pass security check: Restricted user may not move story FROM desk '".$ro_desk->name."'");
+
+	# let the system user move the story back to the RW desk
+	local $ENV{REMOTE_USER} = $old_user;
+	$story->move_to_desk($rw_desk->desk_id);
+	is($story->last_desk_id, $ro_desk->desk_id, "System user moved the story: It was on desk '".$ro_desk->name."'");
+	is($story->desk_id, $rw_desk->desk_id, "It is now on desk '".$rw_desk->name."'");
+
+	# finally check that restricted user may not move the story to 'hide' desk
+	local $ENV{REMOTE_USER} = $user_id;
+	is (pkg('Group')->may_move_story_to_desk($hide_desk->desk_id), 0,
+	    "Didn't pass security check: Restricted user may not move story TO desk '".$hide_desk->name."'");
+    }
+
     # Delete temp story
     for (reverse @stories) {
         $_->delete();
     }
 
     # Delete temp categories
-    for (reverse@ptest_categories) {
+    for (reverse @ptest_categories) {
         $_->delete();
     }
+
+    # Delete restricted user, group and desks
+    $r_user->delete();
+    $r_group->delete();
+    $_->delete() for @desks;
 
     # Delete site
     $ptest_site->delete();
@@ -1120,9 +1224,6 @@ sub create_media {
     return $media;
 
 }
-
-
-
 
 # test URL functionality
 sub test_urls {

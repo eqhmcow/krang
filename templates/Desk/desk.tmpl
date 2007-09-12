@@ -110,13 +110,13 @@
 <div class="boxb">
 <div class="light">Sort By: &nbsp;&nbsp; <tmpl_var sort_select></div>
 
+                            <tmpl_if may_move>
 <div class=button-bar>
   <input type="button" value="Move" onclick='move_checked()' class="button">
   <input type="button" value="Check Out" onclick='checkout_checked()' class="button">
   <tmpl_if may_publish><input type="button" value="Publish" onclick='publish_checked()' class="button"></tmpl_if>
-</div>
-<div class="no-border" style="height: 20px"><p class="left">Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></p><p class="right"><tmpl_var colhead_checkbox_column></p></div>
-
+</div>                      </tmpl_if>
+<div class="no-border" style="height: 20px"><p class="left">Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></p><tmpl_if may_move><p class="right"><tmpl_var colhead_checkbox_column></p></tmpl_if></div>
 
 <tmpl_loop krang_pager_rows>
 <table cellspacing="0" width="571" class="form-head">
@@ -167,12 +167,12 @@
   <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a>
   <tmpl_else><a href="javascript:show_big_view('1')">show <tmpl_var big_view_page_size> per page</a>
   </tmpl_if></div></div>
-
+                               <tmpl_if may_move>
 <div class="button-bar">
   <input type="button" value="Move" onclick='move_checked()' class="button">
   <input type="button" value="Check Out" onclick='checkout_checked()' class="button">
   <tmpl_if may_publish><input type="button" value="Publish" onclick='publish_checked()' class="button"></tmpl_if>
-</div>
+</div>                         </tmpl_if>
 
 </tmpl_if>
 

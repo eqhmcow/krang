@@ -31,6 +31,7 @@ use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget => qw(format_url);
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader 'Desk';
+use Krang::ClassLoader 'Group';
 
 use Krang::ClassLoader base => 'CGI';
 
@@ -73,21 +74,30 @@ sub show {
     my %perms = pkg('Group')->user_desk_permissions();
     unless( $perms{$desk_id} && $perms{$desk_id} ne 'hide' ) {
         return $self->access_forbidden;
-    } 
-    
-    my $desk = (pkg('Desk')->find( desk_id => $desk_id))[0];
+    }
+
+    # set up the desk selector
+    my ($desk) = pkg('Desk')->find(desk_id => $desk_id);
     $template->param( desk_name => $desk->name );
-    $template->param( desk_id => $desk_id );
+    $template->param( desk_id   => $desk_id    );
 
     my @found_desks = pkg('Desk')->find();
-    my @desk_loop;
-                                                                          
-    foreach my $found_desk (@found_desks) {
-        if ( $found_desk->desk_id ne $desk_id ) {
-            my $is_selected = ($found_desk->order eq ($desk->order + 1)) ? 1 : 0;
-            push (@desk_loop, { choice_desk_id => $found_desk->desk_id, choice_desk_name => $found_desk->name, is_selected => $is_selected
-});
-        } 
+    my @desk_loop = ();
+
+    if (pkg('Group')->may_move_story_from_desk($desk_id)) {
+	foreach my $found_desk (@found_desks) {
+	    my $found_desk_id = $found_desk->desk_id;
+
+	    next unless pkg('Group')->may_move_story_to_desk($found_desk_id);
+	    next if $found_desk_id eq $desk_id;
+
+	    my $is_selected = ($found_desk->order eq ($desk->order + 1)) ? 1 : 0;
+	    push @desk_loop, { choice_desk_id => $found_desk_id,
+			       choice_desk_name => $found_desk->name,
+			       is_selected => $is_selected
+			     };
+	}
+	$template->param(may_move => 1);
     }
 
     # permissions
@@ -182,9 +192,18 @@ Moves story to selected desk,
 =cut 
 
 sub move {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    my $obj = $self->_id2obj($query->param('id'));
+    my $obj   = $self->_id2obj($query->param('id'));
+
+    # check if they may *move* object
+    return $self->access_forbidden()
+      unless pkg('Group')->may_move_story_from_desk($obj->desk_id);
+
+    # check if they may move object to desired desk
+    return $self->access_forbidden()
+      unless pkg('Group')->may_move_story_to_desk($self->query->param('move_'.$obj->story_id));
+
     $self->_do_move($obj);
     return $self->show;
 }
@@ -200,6 +219,15 @@ sub move_checked {
     my $query = $self->query;
     foreach my $obj (map { $self->_id2obj($_) }
                      $query->param('krang_pager_rows_checked')) {
+
+	# check if they may *move* object
+	return $self->access_forbidden()
+	  unless pkg('Group')->may_move_story_from_desk($obj->desk_id);
+
+	# check if they may move object to desired desk
+	return $self->access_forbidden()
+	  unless pkg('Group')->may_move_story_to_desk($self->query->param('move_'.$obj->story_id));
+
 	$self->_do_move($obj);
     }
     return $self->show;
@@ -252,11 +280,11 @@ sub goto_log {
 }
 
 =item goto_view
-                                                                                
+
 Redirects to the story view for this object.
-                                                                                
+
 =cut
-                                                                                
+
 sub goto_view {
     my $self = shift;
     my $query = $self->query;
@@ -294,21 +322,23 @@ sub _id2obj {
 sub _do_move {
     my ($self, $obj) = @_;
 
-    my $story_id = $obj->story_id;
-    my $desk_id = $self->query->param('move_'.$story_id);
+    my $story_id  = $obj->story_id;
+    my $desk_id   = $self->query->param('move_'.$story_id);
     my ($desk)    = pkg('Desk')->find(desk_id => $desk_id);
     my $desk_name = $desk ? $desk->name : '';
 
-    eval {$obj->move_to_desk($desk_id); };
+    eval { $obj->move_to_desk($desk_id); };
 
-    if ($@ and ref($@) and $@->isa('Krang::Story::CheckedOut')) {
-	add_message( 'story_cant_move_checked_out',
-		     id   => $story_id,
-		     desk => $desk_name);
-    } elsif ($@ and ref($@) and $@->isa('Krang::Story::NoDesk')) {
-	add_message( 'story_cant_move_no_desk',
-		     story_id   => $story_id,
-		     desk_id    => $desk_id );
+    if ($@ and ref($@)) {
+	if ($@->isa('Krang::Story::CheckedOut')) {
+	    add_message( 'story_cant_move_checked_out',
+			 id   => $story_id,
+			 desk => $desk_name);
+	} elsif ($@->isa('Krang::Story::NoDesk')) {
+	    add_message( 'story_cant_move_no_desk',
+			 story_id   => $story_id,
+			 desk_id    => $desk_id );
+	}
     } else {
 	add_message("moved_story", id => $story_id, desk => $desk_name);
     }

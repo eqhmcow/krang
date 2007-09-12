@@ -1605,6 +1605,33 @@ sub new_from_db {
     return $group_data;
 }
 
+=item may_move_story_from_desk($desk_id)
+
+Convenience method for desk security checks.  If user has 'edit'
+(check in/out) permission for $desk_id returns true, otherwise returns
+false.
+
+=cut
+
+sub may_move_story_from_desk {
+    my ($self, $desk_id) = @_;
+    return $self->user_desk_permissions($desk_id) eq 'edit' ? 1 : 0;
+}
+
+=item may_move_story_to_desk($desk_id)
+
+Convenience method for desk security checks. If user has 'read-only'
+(check in) or 'edit' (check in/out) permission for $desk_id, returns
+true, otherwise returns false.
+
+=cut
+
+sub may_move_story_to_desk {
+    my ($self, $desk_id) = @_;
+    return $self->user_desk_permissions($desk_id) ne 'hide' ? 1 : 0;
+}
+
+
 
 =back
 
