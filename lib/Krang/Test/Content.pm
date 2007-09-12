@@ -214,7 +214,7 @@ B<Arguments:>
 
 The parent category for this category.  This must be an integer corresponding to the ID of a valid Krang::Category object, or a Krang::Category object.
 
-If C<parent> is not set, it will default to the root category of the first C<Krang::Site> object created by C<create_site>.
+If C<parent> is not set, it will default to the root category of the first L<Krang::Site> object created by C<create_site>.
 
 
 =item dir
@@ -263,7 +263,7 @@ sub create_category {
 
 =item C<< $user = $creator->create_user() >>
 
-Creates and returns a Krang::User object.
+Creates and returns a L<Krang::User> object.
 
 Accepts the standard arguments passed to Krang::User, or will function
 with no arguments whatsoever, in which case it will only create the
