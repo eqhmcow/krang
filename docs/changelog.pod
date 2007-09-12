@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+In C<Krang::Story->checkout()> and C<Krang::Story->move_to_desk()>,
+fixed bugs related to story's desk_id and last_desk_id. Added tests
+for it in F<t/story.t>. [Bodo Schulze]
+
+=item *
+
 In C<Krang::CGI::Desk> and C<Krang::CGI::Workspace>, include desk name
 in message when moving a story to another desk. [Bodo Schulze]
 
