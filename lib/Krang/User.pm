@@ -11,7 +11,7 @@ Krang::User - a means to access information on users
   # construct object
   my $user = Krang::User->new(email => 'a@b.com',		#optional
 			      first_name => 'fname',		#optional
-			      group_ids => (1, 2, 3),		#optional
+			      group_ids => [1, 2, 3],		#optional
 			      last_name => 'lname',		#optional
 			      login => 'login',			#required
 			      mobile_phone => '112-358-1321'	#optional
