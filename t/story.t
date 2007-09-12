@@ -945,8 +945,54 @@ is($change->url, 'storyzest.com/test_0/change');
     $ptest_site->delete();
 }
 
+# test $story->{last_desk_id} functionality introduced in r3790 - r3798
+test_story_desk_id_fields();
 
+sub test_story_desk_id_fields {
 
+    my @desks = pkg('Desk')->find;
+    my $story = pkg('Story')->new(title      => 'Root Cat story', 
+				  categories => [pkg('Category')->find(dir => '/')],
+				  slug       => 'trari_trara',
+				  class      => 'article',
+				  cover_date => scalar localtime,
+			     );
+    is($story->desk_id, undef, "After creation, story has no desk_id");
+    is($story->last_desk_id, undef, "After creation, story has no last_desk_id");
+
+    $story->save;
+    $story->checkin;
+    is($story->checked_out, 0, 'Story is now checked in');
+
+    # test desk_id and last_desk_id with Krang::Story->move_to_desk()
+    for my $desk (@desks) {
+	my ($last_desk_id) = ($story->desk_id || undef);
+	$story->move_to_desk($desk->desk_id);
+	is($story->desk_id, $desk->desk_id, "Moved it to desk '".$desk->name."' (checking desk_id)");
+	is($story->last_desk_id, $last_desk_id, "Moved it to desk '".$desk->name."' (checking last_desk_id)");
+    }
+
+    # test desk_id and last_desk_id with Krang::Story->checkout()
+    my $last_desk_id = $story->desk_id;
+    $story->checkout;
+    is($story->desk_id, undef, 'Checked it out (desk_id is undef)');
+    is($story->last_desk_id, $last_desk_id, 'Checked it out (last_desk_id is set)');
+
+    # test it all again
+    $last_desk_id = $story->desk_id;
+    $story->checkin;
+    is($story->checked_out, 0, 'Story is now checked in');
+    my $new_desk_id = $desks[0]->desk_id;
+    $story->move_to_desk($new_desk_id);
+    is($story->desk_id, $new_desk_id, "Moved it to desk '".$desks[0]->name."' (checking desk_id)");
+    is($story->last_desk_id, $last_desk_id, "Moved it to desk '".$desks[0]->name."' (checking last_desk_id)");
+    $last_desk_id = $story->desk_id;
+    $story->checkout;
+    is($story->desk_id, undef, 'Checked it out (desk_id is undef)');
+    is($story->last_desk_id, $last_desk_id, 'Checked it out (last_desk_id is set)');
+
+    $story->delete();
+}
 
 sub test_linked_media {
 
