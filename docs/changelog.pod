@@ -8,6 +8,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Implemented desk security as specified in docs/permissions.pod and
+discussed with Jesse Erlbaum. Also added tests to verify the API part
+of this patch. [Bodo Schulze]
+
+=item *
+
 In C<Krang::Story->checkout()> and C<Krang::Story->move_to_desk()>,
 fixed bugs related to story's desk_id and last_desk_id. Added tests
 for it in F<t/story.t>. [Bodo Schulze]
