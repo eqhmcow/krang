@@ -860,9 +860,6 @@ sub make_sortable_column_html {
 
     my $q = $self->cgi_query();
 
-    my $use_module = $self->use_module() || ''; # use_data doesn't have a use_module
-    $use_module =~ s/Krang:://;
-    
     # Is column currently selected? If not, attempt to find in cache, or set default
     my $sort_field = $self->calculate_order_by($q);
     my $sort_order_desc = $self->calculate_order_desc($q);
