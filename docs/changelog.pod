@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Make sure a copied story won't receive a duplicate URL. [Bodo Schulze]
+
+=item *
+
 Implemented desk security as specified in docs/permissions.pod and
 discussed with Jesse Erlbaum. Also added tests to verify the API part
 of this patch. [Bodo Schulze]
