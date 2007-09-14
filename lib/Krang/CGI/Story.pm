@@ -1185,7 +1185,7 @@ sub add_category {
 
         # remove added category
         pop(@categories);
-        $story->categories(@categories);
+        $story->categories(\@categories);
 
         return $self->edit;
     } elsif ($@) {
