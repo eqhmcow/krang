@@ -392,13 +392,17 @@ sub install_new_krang {
         # make sure we don't over-write existing ssl certs
         if( -e catfile($InstallPath, 'conf', 'ssl.crt', 'server.crt') ) {
             my $src_crt = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.crt', 'server.crt');
-            rename( $src_crt, "$src_crt.sample")
-                or die "Unable to rename $src_crt to $src_crt.sample: $!\n";
+            if( -e $src_crt ) {
+                rename( $src_crt, "$src_crt.sample")
+                    or die "Unable to rename $src_crt to $src_crt.sample: $!\n";
+            }
         }
         if( -e catfile($InstallPath, 'conf', 'ssl.key', 'server.key') ) {
             my $src_key = catfile($ENV{KRANG_ROOT}, 'conf', 'ssl.key', 'server.key');
-            rename( $src_key, "$src_key.sample" )
-                or die "Unable to rename $src_key to $src_key.sample: $!\n";
+            if( -e $src_key ) {
+                rename( $src_key, "$src_key.sample" )
+                    or die "Unable to rename $src_key to $src_key.sample: $!\n";
+            }
         }
     }
 
@@ -443,8 +447,10 @@ sub install_new_krang {
            wanted   => 
            sub { 
                return if -l $_ and !-e $_; # skip bad links
-               system($chown . " '$_'")
-                 and warn("   Warning: unable to chown '$_'.\n");
+               # handle files with double quotes in the name
+               $_ =~ s/"/\\"/g;
+               system($chown . qq| "$_"|)
+                 and warn(qq/   Warning: unable to chown "$_".\n/);
            }
          }, $InstallPath);
 
@@ -481,7 +487,7 @@ sub apply_upgrades {
         my $package = $module;
         $package =~ s/\.pm$//;
 
-        my $upgrade_cmd = "KRANG_ROOT=$KrangRoot PERL5LIB=$perl5lib $PERL_BIN";
+        my $upgrade_cmd = "KRANK_CONF_NOCHECK=1 KRANG_ROOT=$KrangRoot PERL5LIB=$perl5lib $PERL_BIN";
         $upgrade_cmd .= " -M$package -e 'my \$ug = $package->new(); \$ug->upgrade()'";
         system($upgrade_cmd) && die("Error using upgrade module '$module'");
     }

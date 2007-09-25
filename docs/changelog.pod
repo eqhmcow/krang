@@ -2,9 +2,14 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 2.20 - Sept 17th, 2007
+=head2 2.20 - Sept 25th, 2007
 
 =over
+
+=item * 
+
+Fixed bug in F<bin/krang_upgrade> when trying to C<chown> files
+that had a single quote in them. [Mark Pearson, Michael Peters]
 
 =item *
 
