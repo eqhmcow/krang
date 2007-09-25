@@ -84,7 +84,7 @@ sub input_form {
     my $html = <<END;
 <script language="javascript">
   var ${jparam}_index = $index - 1;
-  function add_more_$jparam() {
+  add_more_$jparam = function() {
       for(var i=0; i < 4; i++) {
         var index = ++${jparam}_index;
         var span = document.getElementById("${param}_add_" + index + "_span");

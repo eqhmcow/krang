@@ -39,17 +39,17 @@ is 'search'.
 
 =cut
 
-
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader 'Widget';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Category';
-use Krang::ClassLoader Widget => qw(category_chooser format_url);
+use Krang::ClassLoader Widget => qw(category_chooser format_url autocomplete_values);
 use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader Conf => qw(EnableFTP);
 use Carp;
 
 
@@ -103,6 +103,7 @@ sub setup {
                          add_category
                          delete_category
                          edit_categories_return
+                         autocomplete
                         )]);
 
     $self->tmpl_path('Group/');
@@ -140,7 +141,11 @@ sub search {
     my $t = $self->load_tmpl("list_view.tmpl", associate=>$q, loop_context_vars=>1);
 
     # Do simple search based on search field
-    my $search_filter = $q->param('search_filter') || '';
+    my $search_filter = $q->param('search_filter');
+    if(! defined $search_filter ) {
+        $search_filter = $session{KRANG_PERSIST}{pkg('Group')}{search_filter}
+            || '';
+    }
 
     # Configure pager
     my $pager = pkg('HTMLPager')->new(
@@ -164,11 +169,12 @@ sub search {
                                       id_handler => sub { return $_[0]->group_id },
                                      );
 
-    # Run pager
-    $t->param(pager_html =>  $pager->output());
-
-    # Propagate other params
-    $t->param(row_count => $pager->row_count());
+    # fill the template
+    $t->param(
+        pager_html    =>  $pager->output(),
+        row_count     => $pager->row_count(),
+        search_filter => $search_filter,
+    );
 
     return $t->output();
 }
@@ -384,7 +390,7 @@ sub delete {
 
     if ($@ and ref $@ and $@->isa('Krang::Group::Dependent')) {
         my $dep = $@->dependents;
-        add_message('group_has_users', name => $g->name, logins => join(", ",@$dep)); 
+        add_alert('group_has_users', name => $g->name, logins => join(", ",@$dep)); 
         return $self->edit;
     }
 
@@ -427,7 +433,7 @@ sub delete_selected {
         eval{ $g->delete() if ($g) };
         if ($@ and ref $@ and $@->isa('Krang::Group::Dependent')) {
             my $dep = $@->dependents;
-            add_message('group_has_users', name => $g->name, logins => "@$dep");
+            add_alert('group_has_users', name => $g->name, logins => "@$dep");
             $dupe = 1;
         }
     }
@@ -483,7 +489,7 @@ sub edit_categories {
     die("Can't retrieve EDIT_GROUP from session") unless ($g && ref($g));
 
     my $q = $self->query();
-    my $t = $self->load_tmpl('edit_categories.tmpl', associate=>$q);
+    my $t = $self->load_tmpl('edit_categories.tmpl', associate=>$q, loop_context_vars => 1);
 
     my $category_id = $q->param('category_id');
     croak ("No category ID specified") unless ($category_id);
@@ -665,7 +671,7 @@ sub _edit {
     croak("Can't retrieve group object") unless ($g and ref($g));
 
     my $q = $self->query();
-    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q);
+    my $t = $self->load_tmpl("edit_view.tmpl", associate=>$q, loop_context_vars => 1);
     $t->param(add_mode => 1) unless ($g->group_id);
     $t->param(%ui_messages) if (%ui_messages);
 
@@ -674,6 +680,9 @@ sub _edit {
 
     # Propagate to template
     $t->param($group_tmpl);
+    
+    # are we using FTP
+    $t->param(enable_ftp => (EnableFTP || 0));
 
     return $t->output();
 }
@@ -695,7 +704,7 @@ sub validate_group {
 
     # Add messages
     foreach my $error (keys(%errors)) {
-        add_message($error);
+        add_alert($error);
     }
 
     return %errors;
@@ -717,7 +726,7 @@ sub do_update_group {
     # Is it a dup?
     if ($@) {
         if (ref($@) and $@->isa('Krang::Group::DuplicateName')) {
-            add_message('duplicate_name');
+            add_alert('duplicate_name');
             return (duplicate_name=>1);
         } else {
             # Not our error!
@@ -780,6 +789,17 @@ sub update_group_from_query {
         # Presumably, query data is already validated and un-tainted
         $group->$gk($value);
     }
+
+    # if this user is in this group then update their nav
+    my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+    my @group_ids = $user->group_ids;
+    my $group_id = $group->group_id;
+    foreach my $gid (@group_ids) {
+        if( $gid == $group_id ) {
+            $self->update_nav();
+            last;
+        }
+    }
 }
 
 
@@ -796,7 +816,7 @@ sub make_permissions_radio {
     my $group = $session{EDIT_GROUP};
     croak("No group available") unless ($group);
 
-    my $default = "[N/A]";
+    my $default = "[n/a]";
     if ($param_name =~ /^desk\_(\d+)$/) {
         # Got desk
         my $desk_id = $1;
@@ -917,7 +937,13 @@ sub get_group_tmpl {
     return \%group_tmpl;
 }
 
-
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'group_permission',
+        fields => [qw(name)],
+    );
+}
 
 
 1;

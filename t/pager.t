@@ -1,5 +1,6 @@
 use Test::More qw(no_plan);   # tests => '11';
 use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Test::Content';
 use strict;
 use warnings;
 
@@ -10,6 +11,7 @@ use Krang::ClassLoader 'Script';
 
 BEGIN { use_ok(pkg('HTMLPager')) }
 
+my $creator = pkg('Test::Content')->new();
 
 # Can we create a new pager?
 my $pager;
@@ -186,5 +188,7 @@ like($@, qr/id_handler not a subroutine reference/, "Validate: id_handler subref
 $pager->id_handler( sub { return $_[0]->contrib_id } );
 
 # Pager should be able to output now.
+my $contrib = $creator->create_contrib;
 my $output = $pager->output();
 like($output, qr/krang_pager_curr_page_num/, "Pager output looks right");
+$contrib->delete;

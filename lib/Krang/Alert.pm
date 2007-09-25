@@ -419,19 +419,19 @@ sub send {
 
     my $alert = (pkg('Alert')->find(alert_id => $alert_id))[0];
     
-    croak("No valid pkg('Alert') object found with id $alert_id") if not ( $alert->isa('Krang::Alert') );
+    croak("No valid pkg('Alert') object found with id $alert_id") if not ( $alert && $alert->isa('Krang::Alert') );
 
     my $to_user = (pkg('User')->find( user_id => $alert->user_id ))[0];
 
-    croak("No valid pkg('User') object found with id ".$alert->user_id) if not ( $to_user->isa('Krang::User') );
+    croak("No valid pkg('User') object found with id ".$alert->user_id) if not ( $to_user && $to_user->isa('Krang::User') );
 
     my $user = (pkg('User')->find( user_id => $user_id ))[0];
 
-    croak("No valid pkg('User') object found with id $user_id") if not ( $user->isa('Krang::User') );
+    croak("No valid pkg('User') object found with id $user_id") if not ( $user && $user->isa('Krang::User') );
 
     my $story = (pkg('Story')->find(story_id => $story_id))[0];
 
-    croak("No valid pkg('Story') object found with id $story_id") if not ( $story->isa('Krang::Story') );
+    croak("No valid pkg('Story') object found with id $story_id") if not ( $story && $story->isa('Krang::Story') );
 
     my $template = HTML::Template->new(filename => catfile(KrangRoot, 'templates', 'Alert', 'message.tmpl'));
 

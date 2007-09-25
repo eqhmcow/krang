@@ -335,6 +335,22 @@ sub delete {
              undef, $id);
     $dbh->do("DELETE FROM alert WHERE user_id = ?", undef, $id);
 
+    # we also need to delete all send schedule entries that might refer to this
+    # user in it's context
+    my $schedule_class = pkg('Schedule');
+    eval "require $schedule_class";
+    croak "Could not load $schedule_class: $@" if $@;
+    
+    my @scheduled = pkg('Schedule')->find(action => 'send');
+    foreach my $schedule (@scheduled) {
+        if( $schedule->context ) {
+            my %context = @{$schedule->context};
+            if( exists $context{user_id} and $context{user_id} == $id ) {
+                $schedule->delete();
+            }
+        }
+    }
+
     return 1;
 }
 

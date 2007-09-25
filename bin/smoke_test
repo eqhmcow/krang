@@ -1,0 +1,63 @@
+#!/bin/bash
+#################################################################
+# BASH script used to run the Krang smoke tests
+# and upload the results to http://smolder.plusthree.com
+#################################################################
+
+# set this to the path of smoking
+TEST_ROOT=/usr/local/smoke/krang
+
+# upload the krang tests results to smolder
+function krang_results_to_smolder {
+        cd $TEST_ROOT
+        perl -I$KRANG_ROOT/lib -I$KRANG_ROOT/lib/i686-linux $TEST_ROOT/smolder_smoke_signal \
+                --server 'smolder.plusthree.com' \
+                --project 'Krang' \
+                --username 'autobot' \
+                --password 'lemons!' \
+                --file "$KRANG_ROOT/krang_test_run.tar.gz." \
+                --architecture "`uname -m`" \
+                --platform "`cat /etc/redhat-release`"
+}
+
+# don't run the tests if we're already running
+cd $TEST_ROOT
+if ls tests_running 2>/dev/null
+then
+        echo "Tests are currently running. Exiting."
+        exit
+fi
+
+# don't let another run go while we're going
+touch tests_running
+
+# run the krang tests first
+export KRANG_ROOT=$TEST_ROOT/svn
+export KRANG_INSTANCE=test1
+
+cd $KRANG_ROOT
+# stop any possible previous runs
+bin/krang_ctl stop
+
+# get the latest Krang from SVN
+if svn update | grep 'Updated to'
+then
+        # gives us a clean slate to start
+        bin/krang_build --with-ssl --rebuild
+        bin/krang_createdb --destroy --no_prompt test1
+        bin/krang_createdb --destroy --no_prompt test2
+
+        # run the tests
+        bin/krang_ctl start
+        bin/krang_test --tap-archive
+        sudo bin/krang_ctl stop
+
+        # now send the results off to smolder
+        krang_results_to_smolder
+else
+        echo "No updates to Krang"
+fi
+
+# cleanup after ourselves for the next run
+cd $TEST_ROOT
+rm -f tests_running

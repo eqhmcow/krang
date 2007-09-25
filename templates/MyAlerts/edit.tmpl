@@ -1,64 +1,119 @@
 <tmpl_include header.tmpl>
-<script language=javascript>
 
-checkall = function (checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
-}
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'my_alerts' );
+} );
 
-</script>
-<div class="dark-bar"><p class="left">&nbsp;My Alerts</p><p class="right"><a href="javascript:openWin('help.pl?topic=my_alerts')">Help</a>&nbsp;</p></div>
-<div class="box">
 <tmpl_if alert_loop>
+  delete_checked = function()
+  {
+    if ( !Krang.row_checked( 'current_alert_form', 'alert_delete_list' ) )
+      alert( 'No Alerts selected to delete!' );
+    else if ( confirm( 'Are you SURE you wish to delete these Alerts?' ) )
+      Krang.form_submit( 'current_alert_form', {}, { to_top: false } );
+  }
+</tmpl_if>
+</script>
 
-<div class="no-border">Current Alerts</div>
-<form name="current_alert_form" method="post" action="my_alerts.pl">
-<input type="hidden" name="rm" value="delete_alerts" override='1'>
+<h2>
+Alerts
+</h2>
 
-<table cellspacing="0" cellpadding="4" class="form-head">
-<tr><td width="160">Action</td><td width="300">Site/Category</td><td width="55">Desk</td><td align="right"><input type="checkbox" name="checkallbox" value="1"
-onClick="checkall(this, 'alert_delete_list')"></td></tr></table>
+<h3>
+Current Alerts
+</h3>
 
-    <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-	 <tmpl_loop alert_loop>
-<tr>
-<td class="form-cell" width="160"><tmpl_var action></td>
-<td class="form-cell" width="300"><tmpl_var category></td>
-<td class="form-cell" width="55"><tmpl_var desk></td>
-<td class="form-cell" align="right"><input type="checkbox" name="alert_delete_list" value="<tmpl_var ESCAPE=HTML alert_id>"></td>
-</tr></tmpl_loop></table><br>
+<tmpl_unless alert_loop>
 
-
-
-<div class="button-bar"><input type="button" value="Delete Checked" onclick="submit()" class="button"></div>
+  <p class="naught">
+  There are currently no Alerts.
+  </p>
 
 <tmpl_else>
 
-<div class="no-border">No Current Alerts</div></tmpl_if>
-</form>
+  <form name="current_alert_form" method="post" action="my_alerts.pl">
+
+  <input name="rm" value="delete_alerts" type="hidden">
+
+  <table class="result select_row" summary="">
+
+  <colgroup>
+  <col>
+  <col>
+  <col>
+  <col class="tick">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="f">Action</th>
+  <th>Site/Category</th>
+  <th>Desk</th>
+  <th class="tick l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop alert_loop>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td><tmpl_var escape=html action></td>
+    <td><tmpl_if category><tmpl_var escape=html category><tmpl_else>Any</tmpl_if></td>
+    <td><tmpl_if desk><tmpl_var escape=html desk><tmpl_else>Any</tmpl_if></td>
+    <td class="tick"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox"></td>
+    </tr>
+  </tmpl_loop></tbody>
+
+  </table>
+
+  <div class="panel">
+  <input value="Delete" onclick="delete_checked()" type="button">
+  </div>
+
+  </form>
+
+</tmpl_unless>
+
+<h3>
+Create a New Alert
+</h3>
+
 <form name="add_alert_form" method="post" action="my_alerts.pl">
 
-<table cellspacing="0" class="form-head" cellpadding="4">
-<input type="hidden" name="rm" value="add_alert" override='1'>
-      <tr>
-          <td>Add New Alert</td>
-      </tr></table>
-		<table cellspacing="0" width="571" class="form-cell">
-        <tr>
-            <td class="form-cell" width="160">Action:</td>
-            <td class="form-cell"><tmpl_var action_selector></td></tr>
-        <tr>
-            <td class="form-cell" width="160">Site/Category:</td>
-            <td class="form-cell"><tmpl_var category_chooser> (optional)</td></tr>
-        <tr>
-            <td class="form-cell" width="160">Desk:</td>
-            <td class="form-cell"><tmpl_var desk_selector> (optional)</td>
-</tr></table><br></div>
+<input name="rm" value="add" type="hidden">
 
-<div class="button-bar"><input type="button" value="Add Alert" onclick="submit()" class="button"></div></form></div>
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-mini">
+<col>
+</colgroup>
+
+<tbody class="half">
+
+<tr>
+<th>*Action</th>
+<td><tmpl_var action_selector></td>
+</tr>
+
+<tr>
+<th>Site/Category</th>
+<td><tmpl_var category_chooser></td>
+</tr>
+
+<tr>
+<th>Desk</th>
+<td><tmpl_var desk_selector></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel lame capped">
+<input value="Add Alert" type="submit" class="west">
+</div>
+
+</form>
 
 <tmpl_include footer.tmpl>
+

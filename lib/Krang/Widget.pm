@@ -4,22 +4,34 @@ use strict;
 use warnings;
 
 use Carp qw(croak);
-use Krang::ClassLoader 'HTMLTemplate';
-use Time::Piece qw(localtime);
-use Krang::ClassLoader 'Category';
-use Krang::ClassLoader Conf => qw(KrangRoot);
-use Krang::ClassLoader Log => qw(debug);
-use HTML::PopupTreeSelect;
-use Text::Wrap qw(wrap);
-use Krang::ClassLoader Message => qw(add_message);
-use Krang::ClassLoader Session => qw(%session);
-
+use CGI;
 use File::Spec::Functions qw(catfile);
+use HTML::PopupTreeSelect::Dynamic;
+use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'HTMLTemplate';
+use Krang::ClassLoader Conf    => qw(KrangRoot);
+use Krang::ClassLoader DB      => qw(dbh);
+use Krang::ClassLoader Log     => qw(debug);
+use Krang::ClassLoader Message => qw(add_alert);
+use Krang::ClassLoader Session => qw(%session);
+use Text::Wrap qw(wrap);
+use Time::Piece qw(localtime);
 
 use base 'Exporter';
-our @EXPORT_OK = qw(category_chooser time_chooser date_chooser 
-                    datetime_chooser decode_date decode_datetime 
-                    format_url template_chooser);
+our @EXPORT_OK = qw(
+    category_chooser
+    category_chooser_object
+    time_chooser
+    decode_time
+    date_chooser
+    datetime_chooser
+    decode_date
+    decode_datetime
+    format_url
+    template_chooser
+    template_chooser_object
+    autocomplete_values
+);
 
 =head1 NAME
 
@@ -39,7 +51,7 @@ Krang::Widget - interface widgets for use by Krang::CGI modules
                           query => $query);
 
   $url_html = format_url(url => 'http://my.host/some/long/url.html',
-                         linkto => "javascript:preview_media('". $id ."')" );
+                         linkto => "javascript:Krang.preview('media','" . $id . "')");
 
 =head1 DESCRIPTION
 
@@ -56,42 +68,75 @@ chooser.
 
 Available parameters are as follows:
 
-  name     - (required) Unique name of the chooser.  If you have multiple
-             choosers on the same page then they must have different
-             names.  Must be alphanumeric.
+=over
 
-  query    - (required) The CGI.pm query object for this request.
+=item name (required)
 
-  field    - The form field which will be set to the category_id of the
-             choosen category.  Defaults to the value set for C<name>
-             if not set.
+Unique name of the chooser.  If you have multiple
+choosers on the same page then they must have different
+names.  Must be alphanumeric.
 
-  site_id  - If specified, chooser will limit selection to only
-             this site and its descendant categories.
+=item query (required)
 
-  onchange - can be set to the name of a javascript function
-             that will be called when the user picks a category.  
+The CGI.pm query object for this request.
 
-  label    - change the label on the button which defaults to 'Choose'. 
+=item field   
 
-  display  - setting to false will supress displaying the chosen 
-             category URL next to the button.
+The form field which will be set to the category_id of the
+choosen category.  Defaults to the value set for C<name>
+if not set.
 
-  formname - the name of the form in which the chooser appears.  If 
-             not specified, will default to the first form in your 
-             HTML document.
+=item site_id 
 
-  title    - the title on the chooser window.  Defaults to 'Choose a 
-             Category'.
+If specified, chooser will limit selection to only
+this site and its descendant categories.
 
-  may_see  - Hide categories which are hidden to the current user.
-             Defaults to 1.
+=item onchange
 
-  may_edit - Hide categoriew which are read-only to the current user.
-             Defaults to 0.
+can be set to the name of a JavaScript function
+that will be called when the user picks a category.  
 
-  persistkey - Hash key that indicates where in the session hash to
-               look for a pre-existing value.
+=item label   
+
+change the label on the button which defaults to 'Choose'. 
+
+=item display 
+
+setting to false will supress displaying the chosen 
+category URL next to the button.
+
+=item formname
+
+the name of the form in which the chooser appears.  If 
+not specified, will default to the first form in your 
+HTML document.
+
+=item title   
+
+the title on the chooser window.  Defaults to 'Choose a 
+Category'.
+
+=item may_see 
+
+Hide categories which are hidden to the current user.
+Defaults to 1.
+
+=item may_edit
+
+Hide categories which are read-only to the current user.
+Defaults to 0.
+
+=item persistkey
+
+Hash key that indicates where in the session hash to
+look for a pre-existing value.
+
+=item allow_clear
+
+Shows a button labeled 'Clear' that allows a user to undo
+their choice. Defaults to true.
+
+=back
 
 The template for the category chooser is located in
 F<Widget/category_chooser.tmpl>.
@@ -100,12 +145,135 @@ F<Widget/category_chooser.tmpl>.
 
 sub category_chooser {
     my %args = @_;
-    my ($name, $query, $label, $display, $onchange, $formname, $site_id, 
-        $field, $title, $may_see, $may_edit, $persistkey) =
-      @args{qw(name query label display onchange formname site_id 
-               field title may_see may_edit persistkey)};
+    my ( $name, $query, $display, $onchange, $formname, $field, $persistkey ) =
+      @args{qw(name query display onchange formname field persistkey)};
     croak("Missing required args: name and query")
       unless $name and $query;
+
+    # field defaults to name
+    $field ||= $name;
+
+    # allow_clear defaults to true
+    my $allow_clear = exists $args{allow_clear} ? $args{allow_clear} : 1;
+
+    my $chooser = category_chooser_object(%args);
+    # if we didn't get a choose it's cause there are no categories to choose from
+    if( ! $chooser ) {
+        add_alert('no_categories_for_chooser');
+        return "No categories are defined.";
+    }
+
+    my $template = pkg('HTMLTemplate')->new(
+        filename          => "Widget/category_chooser.tmpl",
+        cache             => 1,
+        die_on_bad_params => 1,
+    );
+    $formname   ||= '';
+    $name       ||= '';
+    $persistkey ||= '';
+
+    my $category_id =
+      defined $query->param($field) ? $query->param($field)
+      : $persistkey
+      ? $session{KRANG_PERSIST}{$persistkey}{ 'cat_chooser_id_' . $formname . "_" . $name }
+      : 0;
+
+    my ($cat) = pkg('Category')->find( category_id => $category_id );
+
+    if ($cat) {
+        $template->param( category_id  => $category_id );
+        $template->param( category_url => $cat->url );
+    }
+
+    # send data to the template
+    $template->param(
+        chooser     => $chooser->output,
+        name        => $name,
+        field       => $field,
+        display     => defined $display ? $display : 1,
+        formname    => $formname,
+        onchange    => $onchange,
+        allow_clear => $allow_clear,
+    );
+
+    return $template->output();
+}
+
+=item $chooser = category_chooser_object(name => 'category_id', query => $query)
+
+Creates and returns an L<HTML::PopupTreeSelect::Dynamic> object for
+use with categories. This is used to create the HTML for the original
+widget and to dynamically supply the limbs of the tree on demand in
+AJAX requests.
+
+Available parameters are as follows:
+
+=over
+
+=item name (required)
+
+Unique name of the chooser.  If you have multiple
+choosers on the same page then they must have different
+names.  Must be alphanumeric.
+
+=item query (required)
+
+The CGI.pm query object for this request.
+
+=item label   
+
+change the label on the button which defaults to 'Choose'. 
+
+=item field   
+
+The form field which will be set to the category_id of the
+choosen category.  Defaults to the value set for C<name>
+if not set.
+
+=item site_id 
+
+If specified, chooser will limit selection to only
+this site and its descendant categories.
+
+=item title   
+
+the title on the chooser window.  Defaults to 'Choose a 
+Category'.
+
+=item may_see 
+
+Hide categories which are hidden to the current user.
+Defaults to 1.
+
+=item may_edit
+
+Hide categories which are read-only to the current user.
+Defaults to 0.
+
+=item persistkey
+
+Hash key that indicates where in the session hash to
+look for a pre-existing value.
+
+=back
+
+=cut 
+
+sub category_chooser_object {
+    my %args = @_;
+    my (
+        $name,  $query, $label,   $formname, $site_id,
+        $field, $title, $may_see, $may_edit, $persistkey
+      )
+      = @args{
+        qw(name query label formname site_id
+          field title may_see may_edit persistkey)
+      };
+
+    croak("Missing required args: query") unless $query;
+
+    $name ||= $query->param('name');
+    croak("Missing required args: name") unless $name;
 
     # field defaults to name
     $field ||= $name;
@@ -113,100 +281,77 @@ sub category_chooser {
     # may_see is on by default
     $may_see = 1 unless defined $may_see;
 
-    my $template = pkg('HTMLTemplate')->new(filename => 
-                                            "Widget/category_chooser.tmpl",
-                                            cache   => 1,
-                                            die_on_bad_params => 1,
-                                           );
+    $formname   ||= '';
+    $name       ||= '';
+    $persistkey ||= '';
 
-    $formname   = '' unless($formname);
-    $name       = ''  unless($name);
-    $persistkey = '' unless($persistkey);
-
-    my $category_id =
-      (defined($query->param($field))) ? $query->param($field) :
-        $session{KRANG_PERSIST}{$persistkey}{'cat_chooser_id_'.$formname."_".$name};
-
-    $category_id = 0 unless $category_id;
-
-    $session{KRANG_PERSIST}{$persistkey}{'cat_chooser_id_'.$formname."_".$name} =
-      $query->param($field) if defined($query->param($field));
+    $session{KRANG_PERSIST}{$persistkey}{ 'cat_chooser_id_' . $formname . "_" . $name } =
+      $query->param($field)
+      if defined( $query->param($field) );
 
     # setup category loop
-    my %find_params = (order_by => 'url');
-    $find_params{site_id} = $site_id if ($site_id);
-    $find_params{may_see} = 1 if $may_see;
-    $find_params{may_edit} = 1 if $may_edit;
+    my %find_params = ( order_by => 'url' );
+    $find_params{site_id}  = $site_id if ($site_id);
+    $find_params{may_see}  = 1        if $may_see;
+    $find_params{may_edit} = 1        if $may_edit;
 
     # get list of all cats
     my @cats = pkg('Category')->find(%find_params);
 
     # if there are no cats then there can't be any chooser
-    unless (@cats) {
-        add_message('no_categories_for_chooser');
-        return "No categories are defined.";
-    }
+    return unless @cats;
 
-    # build up data structure used by HTML::PopupTreeSelect
-    my $data = { children => [], label => "", open => 1};
+    # build up data structure used by HTML::PopupTreeSelect::Dynamic
+    my $data = { children => [], label => "", open => 1 };
     my %nodes;
     while (@cats) {
         my $cat = shift @cats;
 
-        my $parent_id = $cat->parent_id;
+        my $parent_id   = $cat->parent_id;
         my $parent_node = $parent_id ? $nodes{$parent_id} : $data;
 
         # maybe they don't have permissions to the parent, so it
         # wasn't returned from the initial find().  Fill it in
         # deactivated.
         unless ($parent_node) {
-            unshift(@cats, $cat);
-            unshift(@cats, pkg('Category')->find(category_id => $parent_id));
+            unshift( @cats, $cat );
+            unshift( @cats, pkg('Category')->find( category_id => $parent_id ) );
             $cats[0]->{_inactive} = 1;
             next;
         }
-            
-        push(@{$parent_node->{children}}, 
-             {
-              label    => ($cat->dir eq '/' ? $cat->url : $cat->dir),
-              value    => $cat->category_id . "," . $cat->url,
-              children => [],
-              ($cat->{_inactive} ? 
-               (inactive => 1) : ()),
-             });
-        $nodes{$cat->category_id} = $parent_node->{children}[-1];
 
-        if ($cat->category_id == $category_id) {
-            $template->param(category_id => $category_id);
-            $template->param(category_url => $cat->url);
-        }
+        push(
+            @{ $parent_node->{children} },
+            {
+                label => ( $cat->dir eq '/' ? $cat->url : $cat->dir ),
+                value    => $cat->category_id . "," . $cat->url,
+                children => [],
+                ( $cat->{_inactive} ? ( inactive => 1 ) : () ),
+            }
+        );
+        $nodes{ $cat->category_id } = $parent_node->{children}[-1];
     }
-    
+
     # build the chooser
-    my $chooser = HTML::PopupTreeSelect->new(name       => $name,
-                                             title      => $title || 'Choose a Category',
-                                             data       => $data->{children},
-                                             image_path => 'images',
-                                             onselect   => $name . '_choose_category',
-                                             hide_root  => 1,
-                                             button_label => $label||'Choose',
-                                             include_css => 0,
-                                             width      => 225,
-                                             height     => 200,
-                                             resizable  => 1,
-                                             hide_textareas => 1,
-                                            );
-
-    # send data to the template
-    $template->param(chooser       => $chooser->output,
-                     name          => $name,
-                     field         => $field,
-                     display       => defined $display ? $display : 1,
-                     formname      => $formname,
-                     onchange      => $onchange);
-
-    return $template->output;
+    return HTML::PopupTreeSelect::Dynamic->new(
+        name              => $name,
+        title             => $title || 'Choose a Category',
+        data              => $data->{children},
+        image_path        => 'images',
+        onselect          => $name . '_choose_category',
+        hide_root         => 1,
+        button_label      => $label || 'Choose',
+        include_css       => 0,
+        width             => 225,
+        height            => 200,
+        resizable         => 1,
+        dynamic_url       => $query->url(-absolute => 1),
+        dynamic_params    => "rm=category_chooser_node&name=${name}",
+        include_prototype => 0,
+        include_full_js   => 0,
+    );
 }
+
 
 =item $chooser_html = time_chooser(name => 'time', query => $query)
 
@@ -231,78 +376,104 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
-The time_chooser() implements itself in HTML via three separate query
-parameters.  They are named based on the provided name, plus "_hour",
-"_minute", and "_ampm" respectively. CGI query data from 
+  onchange  - JavaScript code to be executed when the date is changed.
+
+The time_chooser() implements itself in HTML via a text input with some
+JavaScript popup magic. The string input from the user can be retrieved
+via the CGI query object using the same name given during the creation
+of the widget.
 
 =cut
 
 sub time_chooser {
     my %args = @_;
-    my ($name, $query, $hour, $minute, $nochoice) =
-      @args{qw(name query hour minute nochoice)};
+    my ($name, $query, $hour, $minute, $nochoice, $onchange) =
+      @args{qw(name query hour minute nochoice onchange)};
     croak("Missing required args: name and query")
       unless $name and $query;
+
+    # pull the time from the query first, then from given hour/minute and
+    # finally from localtime
+    my $value;
+    if( $query->param($name) ) {
+        ($hour, $minute) = decode_time(name => $name, query => $query);
+        $value = $query->param($name);
+    } else {
+        unless( $nochoice ) {
+            my $current_date = localtime();
+            $hour   ||= $current_date->hour;
+            $minute ||= $current_date->minute;
+        }
+    }
 
     my $current_date = localtime();
 
     unless ($nochoice) {
-        $hour = $hour ? $hour : $current_date->hour();
-        $minute = $minute ? $minute : $current_date->minute();
-    }
-    my @hour_values = (1..12);
-    my %hour_labels = ();
-                                                                                
-    my @minute_values = (0..59);
-    my %minute_labels = ();
-    $minute_labels{0} = '00';
-    for (my $count = 0; $count <= 9; $count++) {
-        $minute_labels{$count} = '0'.$count;
-    }
-    my @ampm_values = ('AM','PM');
-    my %ampm_labels = (AM => 'AM', PM => 'PM');
-
-    # set defaults
-    if ($nochoice) {
-        # Hour
-        unshift(@hour_values, 0);
-        $hour_labels{0} = 'Hour';
-                                                                                
-        # Minute
-        unshift(@minute_values, 'undef');
-        $minute_labels{undef} = 'Minute';
-                                                                                
+        $hour   ||= $current_date->hour();
+        $minute ||= $current_date->minute();
     }
 
-    my $hour_12;
-    if ($hour) {
-        $hour_12 = ($hour >= 13) ? ($hour - 12) : $hour;    
-    }
-                                                                                
-    my $h_sel = $query->popup_menu(-name      => $name .'_hour',
-                                   -default   => ($hour) ? $hour_12 : 0,
-                                   -values    => \@hour_values,
-                                   -labels    => \%hour_labels,
-                                  );
-                                                                                
-    my $min_sel = $query->popup_menu(-name      => $name .'_minute',
-                                   -default   => ($minute) ? $minute : 'undef',
-                                   -values    => \@minute_values,
-                                   -labels    => \%minute_labels,
-                                  );
-                                                                                
-    my $ampm = 'AM';
-    if ($hour) {
-        $ampm = 'PM' if ($hour >= 12);
-    }
-                                                                                
-    my $ampm_sel = $query->popup_menu(-name      => $name .'_ampm',
-                                   -default   => $ampm,
-                                   -values    => \@ampm_values,
-                                   -labels    => \%ampm_labels,
-                                  );
+    $hour = $hour && $hour >= 13 ? $hour - 12 : $hour;
+    my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
+    $value ||= $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
 
-    return $h_sel . "&nbsp;" . $min_sel . "&nbsp;" . $ampm_sel;
+    # setup the onchange
+    $onchange ||= '';
+    my $onchange_attr = $onchange ? qq/ onchange="$onchange"/ : '';
+    return qq|
+        <input id="$name" name="$name" value="$value" size="9"$onchange_attr class="time_chooser">
+        <img alt="" src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
+        <div id="${name}_clock" class="clock_widget" style="display:none">
+            <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
+                <option value="">Hour</option> | 
+        . join(' ', map { qq|<option value="$_">$_</option>| } (1..12)) .
+        qq|
+            </select>
+            :
+            <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
+                <option value="">Minute</option> |
+        . join(' ', map { qq|<option value="$_">$_</option>| } 
+            ('00', '01', '02', '03', '04', '05', '06', '07', '08', '09', 10..59)) .
+        qq|
+            </select>
+            &nbsp;
+            <select name="${name}_ampm" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
+                <option value="AM">AM</option> <option value="PM">PM</option>
+            </select>
+        </div>
+        <script type="text/javascript">
+        Krang.onload( function() { Krang.Widget.time_chooser( '$name' ); } );
+        </script>
+    |;
+}
+
+=item $date_obj = decode_time(name => 'daily_time', query => $query)
+
+Reads CGI data submitted via a standard Krang time_chooser
+and returns 2 integers representing the hour and minute
+that were selected.
+
+If decode_time() is unable to parse the time it will return 2
+undef values.
+
+Standard Krang time choosers can be created via C<time_chooser()>.
+
+=cut
+
+sub decode_time {
+    my %args = @_;
+    my ($name, $query) = @args{qw(name query)};
+    croak("Missing required args: name and query")
+      unless $name and $query;
+
+    my $value = $query->param($name);
+    my ($hour, $minute);
+    if( $value && $value =~ /^(\d+):(\d+)\s?(am|pm)$/i ) {
+        $hour = $1;
+        $minute = $2;
+        $hour += 12 if( uc $3 eq 'PM' );
+    }
+    return ($hour, $minute);
 }
 
 =item $chooser_html = datetime_chooser(name => 'date', query => $query)
@@ -327,153 +498,48 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
-  onchange  - set this to a javascript function to run when the user
-              makes a selection in any of the dropdowns.
+  onchange  - JavaScript code to be executed when either the date
+              or time values are changed.
 
-The date_chooser() implements itself in HTML via six separate
-query parameters.  They are named based on the provided name,
-plus "_month", "_day", "_year", "_hour", "_minute", and 
-"_ampm" respectively. CGI query data from
-date_chooser can be retrieved and converted back into a date
-object via decode_date().
+The C<datetime_chooser()> implements via the C<date_chooser()>
+and C<time_chooser()>. The values input by the user can be retrieved
+via C<decode_datetime()>.
 
 =cut
 
 sub datetime_chooser {
     my %args = @_;
-    my ($name, $query, $date, $nochoice, $onchange) =
-      @args{qw(name query date nochoice onchange)};
-    croak("Missing required args: name and query")
-      unless $name and $query;
+    croak("Missing required args: name and query") unless $args{name} and $args{query};
 
-    # Set date to today if it is NOT already set, AND if we do not allow "no choice"
-    $date ||= localtime() unless ($nochoice);
-                                                                                
-    # Set up month input
-    my @month_values = (1..12);
-    my %month_labels = (
-                        1  => 'Jan',
-                        2  => 'Feb',
-                        3  => 'Mar',
-                        4  => 'Apr',
-                        5  => 'May',
-                        6  => 'Jun',
-                        7  => 'Jul',
-                        8  => 'Aug',
-                        9  => 'Sep',
-                        10 => 'Oct',
-                        11 => 'Nov',
-                        12 => 'Dec'
-                       );
-                                                                                
-    my @day_values = (1..31);
-    my %day_labels = ();
-                                                                                    my @year_values = ((localtime()->year() - 10) .. (localtime()->year() + 10));
-    my %year_labels = ();
-
-    my @hour_values = (1..12);
-    my %hour_labels = ();
-
-    my @minute_values = (0..59);
-    my %minute_labels = ();
-    $minute_labels{0} = '00';
-    for (my $count = 0; $count <= 9; $count++) {
-        $minute_labels{$count} = '0'.$count;
-    }
-    my @ampm_values = ('AM','PM');
-    my %ampm_labels = (AM => 'AM', PM => 'PM');
-
-    # Set up dummy vals if "no choice" IS allowed
-    if ($nochoice) {
-        # Month
-        unshift(@month_values, 0);
-        $month_labels{0} = 'Month';
-                                                                                
-        # Day
-        unshift(@day_values, 0);
-        $day_labels{0} = 'Day';
-                                                                                
-        # Year
-        unshift(@year_values, 0);
-        $year_labels{0} = 'Year';
-        
-        # Hour
-        unshift(@hour_values, 0);
-        $hour_labels{0} = 'Hour';
-
-        # Minute
-        unshift(@minute_values, 'undef');
-        $minute_labels{undef} = 'Minute';
-
-    }
-                                                                                
-    my $m_sel = $query->popup_menu(-name      => $name .'_month',
-                                   -default   => ($date) ? $date->mon() : 0,
-                                   -values    => \@month_values,
-                                   -labels    => \%month_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-    my $d_sel = $query->popup_menu(-name      => $name .'_day',
-                                   -default   => ($date) ? $date->mday() : 0,
-                                   -values    => \@day_values,
-                                   -labels    => \%day_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-    my $y_sel = $query->popup_menu(-name      => $name .'_year',
-                                   -default   => ($date) ? $date->year() : 0,
-                                   -values    => \@year_values,
-                                   -labels    => \%year_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-
-    my $hour_12; 
-    if ($date) {
-        $hour_12 = ($date->hour() >= 13) ? ($date->hour() - 12) : $date->hour();
-        $hour_12 = 12 if ($hour_12 == 0);
-    } 
-
-    my $h_sel = $query->popup_menu(-name      => $name .'_hour',
-                                   -default   => ($date) ? $hour_12 : 0,
-                                   -values    => \@hour_values,
-                                   -labels    => \%hour_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-
-    my $min_sel = $query->popup_menu(-name      => $name .'_minute',
-                                   -default   => ($date) ? $date->minute() : 'undef',
-                                   -values    => \@minute_values,
-                                   -labels    => \%minute_labels,
-                                   ($onchange ? (-onChange => $onchange) : ())
-                                  );
-
-    my $ampm = 'AM';
-    if ($date) {
-        $ampm = 'PM' if ($date->hour >= 12);
-    }
-
-    my $ampm_sel = $query->popup_menu(-name      => $name .'_ampm',
-                                   -default   => $ampm,
-                                   -values    => \@ampm_values,
-                                   -labels    => \%ampm_labels,
-                                  );
-                                                                                
-                                                                                
-    return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel . "&nbsp;" . $h_sel . "&nbsp;" . $min_sel . "&nbsp;" . $ampm_sel;
+    # get the first part from the date_chooser
+    my $html = date_chooser(%args);
+    $html .= '&nbsp;';
+    # and get the 2nd part from the time_chooser
+    my $date = $args{date};
+    my $hour = $date ? $date->hour : undef;
+    my $minute = $date ? $date->minute : undef;
+    $html .= time_chooser(
+        %args,
+        name     => $args{name} . '_time',
+        hour     => $hour,
+        minute   => $minute,
+    );
+    return $html;
 }
 
 
-=item $chooser_html = date_chooser(name => 'cover_date', query => $query)
+=item $chooser_html = date_chooser(name => 'cover_date')
 
 Returns a block of HTML implementing the standard Krang date
 chooser.  The C<name> and C<query> parameters are required.
 
 Additional optional parameters are as follows:
 
-  date      - if set to a date object (Time::Piece), chooser will
-              be prepopulated with that date.  If not set to a
-              date object, will default to current date (localtime)
-              unless "nochoice" is true, in which case chooser
-              will be set to blank.
+  date      - if set to a date object (L<Time::Piece> or L<DateTime>), 
+              chooser will be prepopulated with that date. If not set 
+              to a date object, will default to current date (localtime) 
+              unless "nochoice" is true, in which case chooser will be 
+              set to blank.
 
   nochoice  - if set to a true value, blanks will be provided
               as choices in the chooser.  Used in conjunction
@@ -483,81 +549,42 @@ Additional optional parameters are as follows:
               The value "0" will be returned if a user chooses
               the "no choice" option.
 
+  onchange  - JavaScript code to be executed when the date value
+              is changed.
 
-The date_chooser() implements itself in HTML via three separate 
-query parameters.  They are named based on the provided name, 
-plus "_month", "_day", and "_year", respectively. CGI query data from 
-date_chooser can be retrieved and converted back into a date 
-object via decode_date().
+
+The date_chooser() implements itself in HTML via a text input
+with a JavaScript popup calendar. The full string typed by the
+user can be retrieved via the CGI object, or you can retrieve
+a L<Time::Piece> object via C<decode_date()>.
 
 =cut
 
 sub date_chooser {
     my %args = @_;
-    my ($name, $query, $date, $nochoice) =
-      @args{qw(name query date nochoice)};
-    croak("Missing required args: name and query")
-      unless $name and $query;
+    my ($name, $date, $query, $nochoice, $onchange) = @args{qw(name date query nochoice onchange)};
+    croak("Missing required args: name and query") unless $name and $query;
 
-    # Set date to today if it is NOT already set, AND if we do not allow "no choice"
-    $date ||= localtime() unless ($nochoice);
-
-    # Set up month input
-    my @month_values = (1..12);
-    my %month_labels = (
-                        1  => 'Jan',
-                        2  => 'Feb',
-                        3  => 'Mar',
-                        4  => 'Apr',
-                        5  => 'May',
-                        6  => 'Jun',
-                        7  => 'Jul',
-                        8  => 'Aug',
-                        9  => 'Sep',
-                        10 => 'Oct',
-                        11 => 'Nov',
-                        12 => 'Dec'
-                       );
-
-    my @day_values = (1..31);
-    my %day_labels = ();
-
-    my @year_values = ((localtime()->year() - 10)..(localtime()->year() + 10));
-    my %year_labels = ();
-
-    # Set up blanks if "no choice" IS allowed
-    if ($nochoice) {
-        # Month
-        unshift(@month_values, 0);
-        $month_labels{0} = '';
-
-        # Day
-        unshift(@day_values, 0);
-        $day_labels{0} = '';
-
-        # Year
-        unshift(@year_values, 0);
-        $year_labels{0} = '';
+    # use the date from the query first, if not there use
+    if( $query->param($name) ) {
+        $date = $query->param($name);
+    } else {
+        # Set date to today if it is NOT already set, AND if we do not allow "no choice"
+        $date ||= localtime() unless ($nochoice);
+        $date = $date ? $date->strftime('%m/%d/%Y') : '';
     }
 
-    my $m_sel = $query->popup_menu(-name      => $name .'_month',
-                                   -default   => ($date) ? $date->mon() : 0,
-                                   -values    => \@month_values,
-                                   -labels    => \%month_labels,
-                                  );
-    my $d_sel = $query->popup_menu(-name      => $name .'_day',
-                                   -default   => ($date) ? $date->mday() : 0,
-                                   -values    => \@day_values,
-                                   -labels    => \%day_labels,
-                                  );
-    my $y_sel = $query->popup_menu(-name      => $name .'_year',
-                                   -default   => ($date) ? $date->year() : 0,
-                                   -values    => \@year_values,
-                                   -labels    => \%year_labels,
-                                  );
+    # setup the default onchange value
+    $onchange = $onchange ? qq/ onchange="$onchange"/ : '';
 
+    return qq|
+        <input id="$name" name="$name" value="$date" size="11"$onchange class="date_chooser">
+        <img alt="" src="images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
+        <script type="text/javascript">
+        Krang.onload( function() { Krang.Widget.date_chooser( '$name' ); } );
+        </script>
+    |;
 
-    return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
 }
 
 
@@ -584,39 +611,14 @@ sub decode_datetime {
     croak("Missing required args: name and query")
       unless $name and $query;
 
-    my $m = $query->param($name . '_month');
-    my $d = $query->param($name . '_day');
-    my $y = $query->param($name . '_year');
-    my $h = $query->param($name . '_hour');
-    my $min = $query->param($name . '_minute');
-    my $ampm;
-    my $sec = '00';
-    if ( (defined $min) and ($min eq 'undef') ) {
-        if ($ntie and ($h eq 0)) {
-            $ampm = 'na';
-            $min  = 59;
-            $h    = 23;
-            $sec  = '59';
-        } else {
-            $min = 0;
-        }
+    my $date = $query->param($name);
+    my $time = $query->param($name . '_time');
+    if( $date && $time ) {
+        my $piece;
+        eval { $piece = Time::Piece->strptime("$date $time", '%m/%d/%Y %I:%M %p') };
+        return $piece unless $@;
     }
-    $ampm = $query->param($name . '_ampm') unless $ampm;
-
-    # deal with converting AM/PM to 24 hour time
-    if (defined($h)) {
-        if ($h == 12) {
-            $h = 0 if ($ampm eq 'AM'); 
-        } else {
-            $h = $h + 12 if ((defined $ampm) and ($ampm eq 'PM'));
-        }
-    } else { 
-        $h = 12 if ((defined $ampm) and ($ampm eq 'PM'));
-    }
-
-    return undef unless $m and $d and $y;
-
-    return Time::Piece->strptime("$y-$m-$d $h:$min:$sec", '%Y-%m-%d %H:%M:%S');
+    return;
 }
 
 =item $date_obj = decode_date(name => 'cover_date', query => $query)
@@ -637,15 +639,13 @@ sub decode_date {
     croak("Missing required args: name and query")
       unless $name and $query;
 
-    my $m = $query->param($name . '_month');
-    my $d = $query->param($name . '_day');
-    my $y = $query->param($name . '_year');
-    return undef unless $m and $d and $y;
-
-    return Time::Piece->strptime("$m/$d/$y", '%m/%d/%Y');
+    my $value = $query->param($name);
+    if( $value ) {
+        return Time::Piece->strptime($value, '%m/%d/%Y');
+    } else {
+        return;
+    }
 }
-
-
 
 =item $url_html = format_url(url => 'http://my.host/url.html', linkto => 'url.html', length => 15);
 
@@ -679,7 +679,7 @@ sub format_url {
     # put spaces after /'s so that wrap() will try to wrap to them if
     # possible
     $url =~ s!/!/ !g;
-    $url = wrap("","",$url);    
+    $url = wrap("","",$url);
     $url =~ s!/ !/!g;
 
     # format wrapped URL in HTML
@@ -687,11 +687,10 @@ sub format_url {
     my @url_lines = split("\n",$url);
     if ($linkto) {
         # URL with links
-        $format_url_html = qq{<a href="$linkto">} . 
-          join('<br>', @url_lines ) . qq{</a>};
+        $format_url_html = qq{<a href="$linkto">} . join('<wbr>', @url_lines) . qq{</a>};
     } else {
         # URL without links
-        $format_url_html = join( '<br>', @url_lines );
+        $format_url_html = join( '<wbr>', @url_lines );
     }
 
     return $format_url_html;
@@ -705,33 +704,51 @@ chooser.
 
 Available parameters are as follows:
 
-  name     - (required) Unique name of the chooser.  If you have multiple
-             choosers on the same page then they must have different
-             names.  Must be alphanumeric.
+=over
 
-  query    - (required) The CGI.pm query object for this request.
+=item name (required)
 
-  field    - The form field which will be set to the template_id of the
-             choosen category.  Defaults to the value set for C<name>
-             if not set.
+Unique name of the chooser.  If you have multiple choosers on the same
+page then they must have different names.  Must be alphanumeric.
 
-  onchange - can be set to the name of a javascript function
-             that will be called when the user picks a category.  
+=item query (required)
 
-  label    - change the label on the button which defaults to 'Choose'. 
+The CGI.pm query object for this request.
 
-  display  - setting to false will supress displaying the chosen 
-             template name next to the button.
+=item field
 
-  formname - the name of the form in which the chooser appears.  If 
-             not specified, will default to the first form in your 
-             HTML document.
+The form field which will be set to the template_id of the choosen
+category.  Defaults to the value set for C<name> if not set.
 
-  title    - the title on the chooser window.  Defaults to 'Choose a 
-             Template'.
+=item onchange
 
-  persistkey - Hash key that indicates where in the session hash to
-               look for a pre-existing value.
+Can be set to the name of a JavaScript function that will be called when
+the user picks a category.
+
+=item label
+
+Change the label on the button which defaults to 'Choose'.
+
+=item display
+
+Setting to false will supress displaying the chosen template name next
+to the button.
+
+=item formname
+
+The name of the form in which the chooser appears.  If not specified,
+will default to the first form in your HTML document.
+
+=item title
+
+The title on the chooser window.  Defaults to 'Choose a Template'.
+
+=item persistkey
+
+Hash key that indicates where in the session hash to look for a
+pre-existing value.
+
+=back
 
 The template for the category chooser is located in
 F<Widget/template_chooser.tmpl>.
@@ -740,103 +757,244 @@ F<Widget/template_chooser.tmpl>.
 
 sub template_chooser {
     my %args = @_;
-    my ($name, $query, $label, $display, $onchange, $formname,
-        $field, $title, $persistkey) =
-	  @args{qw(name query label display onchange formname
-               field title persistkey)};
+    my ( $name, $query, $display, $onchange, $formname, $field, $persistkey ) = @args{
+        qw(name query display onchange formname
+          field title persistkey)
+      };
 
     croak("Missing required args: name and query")
       unless $name and $query;
 
+    my $template = pkg('HTMLTemplate')->new(
+        filename          => "Widget/template_chooser.tmpl",
+        cache             => 1,
+        die_on_bad_params => 1,
+        loop_context_vars => 1,
+    );
+
     # field defaults to name
-    $field ||= $name;
-
-    my $template = pkg('HTMLTemplate')->new(filename => 
-                                            "Widget/template_chooser.tmpl",
-                                            cache   => 1,
-                                            die_on_bad_params => 1,
-					    loop_context_vars => 1,
-                                           );
-
-    $formname   = '' unless($formname);
-    $name       = '' unless($name);
-    $persistkey = '' unless($persistkey);
+    $field      ||= $name;
+    $formname   ||= '';
+    $name       ||= '';
+    $persistkey ||= '';
 
     # pass the element name around in advanced search
-    my $element_name =
-      (defined($query->param($field))) ? $query->param($field) :
-        $session{KRANG_PERSIST}{$persistkey}{'tmpl_chooser_id_'.$formname."_".$name};
+    my $element_name = $query->param($field)
+      || $session{KRANG_PERSIST}{$persistkey}{ 'tmpl_chooser_id_' . $formname . "_" . $name }
+      || '';
 
-    $element_name = '' unless $element_name;
+    $session{KRANG_PERSIST}{$persistkey}{ 'tmpl_chooser_id_' . $formname . "_" . $name } =
+      $query->param($field)
+      if defined( $query->param($field) );
 
-    $session{KRANG_PERSIST}{$persistkey}{'tmpl_chooser_id_'.$formname."_".$name} =
-      $query->param($field) if defined($query->param($field));
+    $template->param( element_class_name => $element_name );
+
+    # build the chooser
+    my $chooser = template_chooser_object(%args);
+
+    # send data to the template
+    $template->param(
+        chooser  => $chooser->output,
+        name     => $name,
+        field    => $field,
+        display  => defined $display ? $display : 1,
+        formname => $formname,
+        onchange => $onchange
+    );
+
+    return $template->output;
+}
+
+=item $chooser = template_chooser_object(name => 'category_id', query => $query)
+
+Creates and returns an L<HTML::PopupTreeSelect::Dynamic> object for
+use with templates. This is used to create the HTML for the original
+widget and to dynamically supply the limbs of the tree on demand in
+AJAX requests.
+
+Available parameters are as follows:
+
+=over
+
+=item name (required)
+
+Unique name of the chooser.  If you have multiple choosers on the same
+page then they must have different names.  Must be alphanumeric.
+
+=item query (required)
+
+The CGI.pm query object for this request.
+
+=item label
+
+Change the label on the button which defaults to 'Choose'.
+
+=item title
+
+The title on the chooser window.  Defaults to 'Choose a Template'.
+
+=back
+
+=cut
+
+sub template_chooser_object {
+    my %args = @_;
+    my ( $name, $query, $label, $title ) =
+      @args{qw(name query label title)};
+
+    croak("Missing required arg: query") unless $query;
+
+    $name ||= $query->param('name');
+    croak("Missing required arg: name") unless $name;
 
     # get element names
-    my @elements = map{ [pkg('ElementLibrary')->top_level(name => $_) => '']}
-	          reverse pkg('ElementLibrary')->top_levels;
+    my @elements = map { [ pkg('ElementLibrary')->top_level( name => $_ ) => '' ] }
+      reverse pkg('ElementLibrary')->top_levels;
 
     # get existing templates
-    my %exists = map{ s/\.tmpl//; $_ => 1 }
-                 map{ $_->filename } pkg('Template')->find;
+    my %exists = map { s/\.tmpl//; $_ => 1 }
+      map { $_->filename } pkg('Template')->find;
 
     # root node
     my $data = { children => [], label => '', open => 1 };
 
     # build element tree
     while (@elements) {
-	my ($class, $parent) = @{pop(@elements)};
-	my $parent_node = $parent ? $parent : $data;
-	my $element = $class->name;
+        my ( $class, $parent ) = @{ pop(@elements) };
+        my $parent_node = $parent ? $parent : $data;
+        my $element     = $class->name;
 
-	# elements for which a template already exists are colored in green
-	if ($exists{$element}) {
-	    $element = '<span class="tmpl_chooser_has_template">'. $class->name .'</span>';
-	}
+        # elements for which a template already exists are colored in green
+        if ( $exists{$element} ) {
+            $element = '<span class="tmpl_chooser_has_template">' . $class->name . '</span>';
+        }
 
-	my $child = { label => $element,
-		      value => $class->name,
-		      children => [],
-		    };
+        my $child = {
+            label    => $element,
+            value    => $class->name,
+            children => [],
+        };
 
-	push @{$parent_node->{children}}, $child;
+        push @{ $parent_node->{children} }, $child;
 
-	if (my @children = $class->children) {
-	    push(@elements, map{ [$_ => $child] } sort{$b->name cmp $a->name} @children);
-	}
+        if ( my @children = $class->children ) {
+            push( @elements, map { [ $_ => $child ] } sort { $b->name cmp $a->name } @children );
+        }
     }
 
-    $template->param(element_class_name => $element_name);
-
     # build the chooser, taking care of localizing the buttons and the title
-    my $chooser = HTML::PopupTreeSelect->new(
-					     name         => $name,
-					     title        => $title || 'Choose a Template',
-					     data         => $data->{children},
-					     image_path   => 'images',
-					     onselect     => $name . '_choose_template',
-					     button_label => $label || 'Choose',
-					     include_css  => 0,
-					     width        => 225,
-					     height       => 200,
-					     resizable    => 1,
-					     hide_textareas => 1,
-					     );
-
-    # send data to the template
-    $template->param(chooser       => $chooser->output,
-                     name          => $name,
-                     field         => $field,
-                     display       => defined $display ? $display : 1,
-                     formname      => $formname,
-                     onchange      => $onchange);
-
-    return $template->output;
+    return HTML::PopupTreeSelect::Dynamic->new(
+        name              => $name,
+        title             => $title || 'Choose a Template',
+        data              => $data->{children},
+        image_path        => 'images',
+        onselect          => $name . '_choose_template',
+        button_label      => $label || 'Choose',
+        include_css       => 0,
+        width             => 225,
+        height            => 200,
+        resizable         => 1,
+        dynamic_url       => $query->url(-absolute => 1),
+        dynamic_params    => "rm=template_chooser_node&name=${name}",
+        include_prototype => 0,
+        include_full_js   => 0,
+    );
 }
 
 
+=item $values = autocomplete_values(%args)
 
+Returns an arrayref of alphabetized "words" that begin with the
+given C<phrase>, pulled from the specifed C<fields> of the 
+given C<table>.
 
+It takes the following named arguments:
+
+=over
+
+=item table
+
+The database table to use for the lookup.
+This is required.
+
+=item fields
+
+An array ref of field names in the database from which to fetch "words".
+This is required.
+
+=item phrase
+
+The phrase typed by the user. If none is given it will be pulled from
+the C<phrase> param of the query string.
+This is optional.
+
+=item dbh
+
+The database handle to use. If none is provided it will default
+to the normal Krang one for the current instance.
+This is optional.
+
+=item where
+
+Any additional logic that will added the generated SQL's C<WHERE> clause
+using C<AND>.
+
+=back
+
+=cut
+
+sub autocomplete_values {
+    my %args = @_;
+    my ($phrase, $table, $fields, $dbh, $where) = @args{qw(phrase table fields dbh where)};
+    $dbh ||= dbh();
+    if(! $phrase ) {
+        my $cgi = CGI->new();
+        $phrase = $cgi->param('phrase');
+    }
+
+    # query the db for these values
+    my $sql   = "SELECT " . join(', ', map { "`$_`" } @$fields) . " FROM `$table` WHERE ("
+        . join(' OR ', map { "`$_` REGEXP ?" } @$fields ) . ')';
+    $sql .= " AND $where" if $where;
+
+    my $regex = '(^|[[:blank:]_//])' . $phrase;
+    my $sth   = $dbh->prepare_cached($sql);
+    my @binds = map { $regex } @$fields;
+    $sth->execute(@binds);
+
+    # split into individual words and then sort
+    my %words;
+    while( my $row = $sth->fetchrow_arrayref ) {
+        foreach my $pos (0..(scalar @$row -1) ) {
+            my $answer = lc($row->[$pos]);
+            # remove any potential file suffixes
+            $answer =~ s/\.\w{3,5}$//;
+            # remove these characters
+            $answer =~ s/['"\.\,:]//g;
+
+            # split on '_' or \s to make words and only keep the ones that
+            # start with our phrase
+            foreach (split(/(?:_|\s|\/)+/, $answer)) {
+                my $w = lc($_);
+                if( index($w, $phrase) == 0 ) {
+                    $words{$w} = 1;
+                }
+            }
+            # if it has an '_' and no spaces, keep the whole word as well
+            if( $answer =~ /_/ && $answer !~ /\s/ && ( index($answer, $phrase) == 0 ) ) {
+                $words{$answer} = 1;
+            }
+        }
+    }
+    
+    my $html = '<ul>';
+    foreach (sort keys %words) {
+        s/</&lt;/g;
+        s/&/&amp;/g;
+        $html .= "<li>$_</li>";
+    }
+    return $html . '</ul>';
+}
 
 1;
 

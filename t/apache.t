@@ -4,6 +4,7 @@ use warnings;
 
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw(KrangRoot HostName ApachePort);
+use Krang::ClassLoader DB   => qw(dbh);
 use LWP::UserAgent;
 use HTTP::Request::Common;
 use File::Spec::Functions qw(catfile);
@@ -18,18 +19,21 @@ BEGIN {
     }
     die $@ if $@;
 }
-use Krang::ClassLoader 'Test::Apache';
+use Krang::ClassLoader 'Test::Web';
 
-# get creds
-my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
-my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
+my $mech = pkg('Test::Web')->new();
 
 foreach my $instance (pkg('Conf')->instances()) {
     pkg('Conf')->instance($instance);
 
     # try logging in with a bad password
-    login_not_ok(rand(), rand());
+    $mech->login_not_ok(rand(), rand());
     
-    # try logging in with good creds
-    login_ok($username, $password, "Login INSTANCE '$instance' with 'KRANG_USERNAME=$username' and 'KRANG_PASSWORD=$password'");
+    # try logging in with good (default) creds
+    $mech->login_ok('', '', "Login INSTANCE '$instance'");
+
+    # remove any rate_limit_hits that resulted from our bad logins
+    # so the db is clean
+    dbh()->do('DELETE FROM rate_limit_hits');
 }
+

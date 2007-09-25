@@ -123,6 +123,7 @@ use Krang::ClassLoader MethodMaker => (new_with_init => 'new',
                         new_hash_init => 'hash_init');
 
 use Krang::ClassLoader Log => qw(debug info critical);
+use Krang::ClassLoader DB => qw(dbh);
 
 =head1 INTERFACE
 
@@ -1139,6 +1140,15 @@ sub cleanup {
     foreach (qw/user contrib media story template category site/) {
         if (exists($self->{stack}{$_})) {
             while (my $obj = pop @{$self->{stack}{$_}}) {
+                # user's need to delete any old_password entries related to them
+                if( $_ eq 'user' ) {
+                    dbh()->do(
+                        'DELETE FROM old_password WHERE user_id = ?', 
+                        {}, 
+                        $obj->user_id
+                    );
+                }
+                
                 debug(__PACKAGE__ . '->cleanup() deleting object: ' . ref($obj));
                 $obj->delete();
             }

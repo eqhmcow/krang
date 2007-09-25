@@ -1,37 +1,25 @@
-<script language="javascript" type="text/javascript">
-   var nav_emode = 0;
-   var nav_emsg  = "Are you sure you want to discard your unsaved changes?";
+<tmpl_if nav_global_admin><script type="text/javascript">
+//(db2)this is broken:
+debug_catcher = function( evt )
+{
+  evt = evt ? evt : ( ( event ) ? event : null );
 
-   /* Call to set edit mode with a particular message.  If msg is */
-   /* empty will use the default message. */
-   nav_edit_mode = function (msg) {
-     nav_emode = 1;
-     if (msg && msg.length) {
-        nav_emsg = msg;
-     }
-   }
+  if ( !evt || !evt.altKey || !evt.ctrlKey ) return;
 
-   nav_goto = function (loc) {
-     if (!nav_emode || confirm(nav_emsg)) {
-        window.location = loc;
-     }
-   }
+  var code = evt.keyCode ? evt.keyCode : evt.charCode;
 
-   <tmpl_if nav_global_admin>
-     document.onkeypress = debug_catcher;
-     debug_catcher  = function (evt) {
-        evt = (evt) ? evt : ((event) ? event : null);
-        if (evt == null) return;
-        if (!evt.altKey) return;
-        if (!evt.ctrlKey) return;
-        var code = evt.keyCode ? evt.keyCode : evt.charCode;
-        if (code == 100) {
-            window.open("debug.pl", "", "width=800, height=700");
-        }
-     }
+  if ( code == 100 )
+    window.open( 'debug.pl', '', 'width=800,height=700,resizeable');
+}
 
-   </tmpl_if>
+document.onkeypress = debug_catcher;
+</script></tmpl_if>
 
+<!--Krang::Navigation:-->
+<tmpl_var nav_content>
+<!--:Krang::Navigation-->
+
+<script type="text/javascript">
+new Krang.Navigation();
 </script>
 
-<tmpl_var nav_content>

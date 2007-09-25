@@ -1,41 +1,72 @@
 <tmpl_include header.tmpl>
 
-<div class="dark-bar"><p class="left">&nbsp;Bulk Media Upload</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:openWin('help.pl?topic=media_bulk_upload')">Help</a>&nbsp;</p></div>
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'media_bulk_upload' );
+} );
+</script>
 
-  <div class="box">
-<br>
-<table class="form-head">
+<h2>
+Bulk Upload
+</h2>
+
+<form name="upload_form" method="post" enctype="multipart/form-data" action="media_bulk_upload.pl">
+
+<input name="rm" value="upload" type="hidden">
+
+<tmpl_if enable_ftp>
+  <h3>
+  FTP Upload
+  </h3>
+
+  <p><!--:FIXME(db2)-->
+  For use with Internet Explorer or an external FTP client:
+  </p>
+
+  <p><!--:FIXME(db2)-->
+  <a href="ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media" target="_blank">ftp://<tmpl_var escape=html username>@<tmpl_var escape=html ftp_server>:<tmpl_var escape=html ftp_port>/<tmpl_var escape=html instance>/media</a>
+  </p>
+</tmpl_if>
+
+<h3>
+Archive Upload
+</h3>
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-mini">
+<col>
+</colgroup>
+
+<tbody>
 
 <tr>
-<td>FTP Upload</td>
-</tr></table>
+<th>Archive</th>
+<td><tmpl_var upload_chooser></td>
+</tr>
 
-<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
 <tr>
-<td class="form-cell">&nbsp;<br>(Windows IE or for use with an external FTP client)<br>&nbsp;<br><a target="media_bulkupload" href="ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media">ftp://<tmpl_var username>@<tmpl_var ftp_server>:<tmpl_var ftp_port>/<tmpl_var instance>/media</a><br>&nbsp;</td></tr>
+<th>Site/Category</th>
+<td><tmpl_var category_chooser></td>
+</tr>
+
+<tr>
+<td colspan="2">
+<input name="create_cats" type="checkbox">
+Create New Categories (to match those within Archive)
+</td>
+</tr>
+
+</tbody>
+
 </table>
 
-<br>
-
-<table class="form-head">
-
-<tr>
-<td>Archive Upload</td>
-</tr></table>
-
-<form name="upload_form" method="POST" enctype="multipart/form-data" action="media_bulk_upload.pl">
-
-<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
-<tr>
-<td class="form-cell"><tmpl_var upload_chooser></td></tr>
-    <tr><td class="form-cell"><tmpl_var category_chooser></td></tr>
-    <tr><td class="form-cell"><input type='checkbox' name='create_cats'> Create non-existant categories found in archive</td></tr>
-    </table><br>
-	 </div>
-<div class="button-bar">
-<input type="hidden" name="rm" value="upload" override="1">
-  <input type="button" value="Upload" onclick="document.upload_form.submit()" class="button">&nbsp;
+<div class="panel capped">
+<input value="Upload" type="submit">
 </div>
+
 </form>
-</div>
+
 <tmpl_include footer.tmpl>
+

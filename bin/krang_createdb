@@ -121,7 +121,6 @@ use Krang::ClassLoader 'File';
 
 use Getopt::Long;
 use Pod::Usage;
-use XML::Simple;
 
 my ($help, $man, $password, $hostname, $destroy, $no_prompt, $no_create, $all);
 my $verbose = 0;

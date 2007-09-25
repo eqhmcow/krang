@@ -4,13 +4,9 @@ use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
 
-
-
-
 =head1 NAME
 
 Krang::CGI::Media - web interface to manage media
-
 
 =head1 SYNOPSIS
 
@@ -18,13 +14,11 @@ Krang::CGI::Media - web interface to manage media
   my $app = pkg('CGI::Media')->new();
   $app->run();
 
-
 =head1 DESCRIPTION
 
 Krang::CGI::Media provides a web-based system
 through which users can add, modify, delete, 
 check out, or publish media.
-
 
 =head1 INTERFACE
 
@@ -42,8 +36,8 @@ is 'add'.
 
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Media';
-use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url);
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
@@ -88,6 +82,7 @@ sub setup {
                          view_version
                          revert_version
                          save_and_edit_schedule
+                         autocomplete
                         )]);
 
     $self->tmpl_path('Media/');
@@ -170,17 +165,21 @@ sub find {
                         simple_search => $search_filter };
 
     my $pager = $self->make_pager($persist_vars, $find_params, $show_thumbnails);
+    my $pager_tmpl = $self->load_tmpl(
+        'list_view_pager.tmpl', 
+        associate         => $q,
+        loop_context_vars => 1,
+        global_vars       => 1,
+        die_on_bad_params => 0,
+    );
+    $pager->fill_template($pager_tmpl);
+    $pager_tmpl->param(show_thumbnails => $show_thumbnails);
 
     # Run pager
-    $t->param(pager_html      => $pager->output(),
+    $t->param(pager_html      => $pager_tmpl->output(),
               row_count       => $pager->row_count(),
               show_thumbnails => $show_thumbnails,
               search_filter   => $search_filter);
-
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $t->param(instance_name => $instance_name);
 
     return $t->output();
 }
@@ -405,20 +404,20 @@ sub list_active {
        columns => [(qw(
                        media_id
                        thumbnail
-                       url
                        title
+                       url
                        user
                        commands_column
                       )), ($may_checkin_all ? ('checkbox_column') : ())],
        column_labels => {
                          media_id => 'ID',
                          thumbnail => 'Thumbnail',
-                         url => 'URL',
                          title => 'Title',
+                         url => 'URL',
                          user  => 'User',
                          commands_column => '',
                         },
-       columns_sortable => [qw( media_id url title )],
+       columns_sortable => [qw( media_id title url )],
        row_handler => sub { $self->list_active_row_handler(@_); },
        id_handler => sub { return $_[0]->media_id },
       );
@@ -428,11 +427,6 @@ sub list_active {
     $template->param(pager_html => $pager->output());
     $template->param(row_count => $pager->row_count());
     $template->param(may_checkin_all => $may_checkin_all);
-
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
 
     return $template->output;
 
@@ -569,7 +563,7 @@ sub cancel_add {
 
     # Redirect to workspace
     my $workspace_uri = WORKSPACE_URI;
-    $self->header_props(-uri=>$workspace_uri);
+    $self->header_props(-uri => $workspace_uri);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$workspace_uri\">$workspace_uri</a>";
@@ -615,7 +609,7 @@ sub save_stay_add {
     # Redirect to edit mode
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&media_id=". $m->media_id();
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -706,11 +700,6 @@ sub edit {
     # Propagate messages, if we have any
     $t->param(%args) if (%args);
 
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $t->param(instance_name => $instance_name);
-
     return $t->output();
 }
 
@@ -753,7 +742,7 @@ sub save_edit {
 
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=>$uri);
+    $self->header_props(-uri => $uri);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$uri\">$uri</a>";
@@ -794,7 +783,7 @@ sub checkin_edit {
 
     # Redirect to workspace.pl
     my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=>$uri);
+    $self->header_props(-uri => $uri);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$uri\">$uri</a>";
@@ -839,7 +828,7 @@ sub save_stay_edit {
     # Redirect to edit mode
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&media_id=". $m->media_id();
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -961,7 +950,7 @@ sub save_and_associate_media {
 
     # Redirect to associate screen
     my $url = 'contributor.pl?rm=associate_media';
-    $self->header_props(-uri=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -999,7 +988,7 @@ sub save_and_publish {
 
     # Redirect to associate screen
     my $url = 'publisher.pl?rm=publish_media&media_id=' . $m->media_id;
-    $self->header_props(-uri=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -1034,7 +1023,7 @@ sub save_and_preview {
 
     # Redirect to associate screen
     my $url = 'publisher.pl?rm=preview_media&no_view=1&media_id=' . $m->media_id;
-    $self->header_props(-uri=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -1062,7 +1051,7 @@ sub save_and_view_log {
 
     # Redirect to associate screen
     my $url = 'history.pl?history_return_script=media.pl&history_return_params=rm&history_return_params=edit&media_id=' . $m->media_id;
-    $self->header_props(-uri=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -1104,11 +1093,6 @@ sub view {
 
     my $media_view_tmpl_data = $self->make_media_view_tmpl_data($m);
     $t->param($media_view_tmpl_data);
-
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $t->param(instance_name => $instance_name);
 
     return $t->output();
 }
@@ -1172,7 +1156,7 @@ sub revert_version {
     # Redirect to edit mode
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit";
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
 
     return "Redirect: <a href=\"$url\">$url</a>";
@@ -1242,7 +1226,7 @@ sub checkout_selected {
 #####  PRIVATE METHODS  #####
 #############################
 
-# Validate media object to check validity.  Return errors as hash and add_message()s.
+# Validate media object to check validity.  Return errors as hash and add_alert()s.
 # Must pass in $media object
 sub validate_media {
     my $self = shift;
@@ -1270,7 +1254,7 @@ sub validate_media {
     # Add messages, return hash for errors
     my %hash_errors = ();
     foreach my $error (@errors) {
-        add_message($error);
+        add_alert($error);
         $hash_errors{$error} = 1;
     }
 
@@ -1294,21 +1278,20 @@ sub list_active_row_handler {
     # thumbnail path   
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
-        $row->{thumbnail} = "<a href='javascript:preview_media($media_id)'><img src=\"$thumbnail_path\" border=0></a>";
+        $row->{thumbnail} = "<a href='javascript:Krang.preview('media', $media_id)'><img src=\"$thumbnail_path\" border=0></a>";
     } else {
         $row->{thumbnail} = "&nbsp;";
     }
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $media->url(),
-                              linkto => "javascript:preview_media('". $media_id ."')" );
+                              linkto => "javascript:Krang.preview('media', $media_id)" );
 
     # title
     $row->{title} = $q->escapeHTML($media->title);
 
     # commands column
-    $row->{commands_column} = '<a href="javascript:view_media(' .
-      $media->media_id . ')">View</a>';
+    $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $media->checked_out_by);
@@ -1408,14 +1391,14 @@ sub make_media_tmpl_data {
         my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
         $tmpl_data{thumbnail_path} = $thumbnail_path;
         $tmpl_data{url} = format_url( url => $m->url(),
-                                      linkto => "javascript:preview_media_session()",
+                                      linkto => "javascript:Krang.preview('media', null)",
                                       length => 50 );
         $tmpl_data{published_version} = $m->published_version();
         $tmpl_data{version} = $m->version();
 
         # Display creation_date
         my $creation_date = $m->creation_date();
-        $tmpl_data{creation_date} = $creation_date->strftime('%b %e, %Y %l:%M %p');
+        $tmpl_data{creation_date} = $creation_date->strftime('%m/%d/%Y %I:%M %p');
 
         # Set up versions drop-down
         my $curr_version = $tmpl_data{version};
@@ -1430,7 +1413,7 @@ sub make_media_tmpl_data {
 
     # Build type drop-down
     my %media_types = pkg('Pref')->get('media_type');
-    my @media_type_ids = ( "", keys(%media_types) );
+    my @media_type_ids = ( "", sort { $media_types{$a} cmp $media_types{$b} } keys(%media_types) );
     my $media_types_popup_menu = $q->popup_menu(
                                                 -name => 'media_type_id',
                                                 -values => \@media_type_ids,
@@ -1508,11 +1491,11 @@ sub make_media_view_tmpl_data {
 
     $tmpl_data{media_id} = $m->media_id();
 
-    my $thumbnail_path = $m->thumbnail_path(relative => 1) || '';
+    my $thumbnail_path = $m->thumbnail_path(relative => 1, medium => 1) || '';
     $tmpl_data{thumbnail_path} = $thumbnail_path;
 
     $tmpl_data{url} = format_url( url => $m->url(),
-                                  linkto => "javascript:preview_media('". $tmpl_data{media_id} ."')",
+                                  linkto => "javascript:Krang.preview('media','". $tmpl_data{media_id} ."')",
                                   length => 50 );
 
     $tmpl_data{published_version} = $m->published_version();
@@ -1550,7 +1533,7 @@ sub make_media_view_tmpl_data {
 
     # Display creation_date
     my $creation_date = $m->creation_date();
-    $tmpl_data{creation_date} = $creation_date->strftime('%b %e, %Y %l:%M %p');
+    $tmpl_data{creation_date} = $creation_date->strftime('%m/%d/%Y %I:%M %p');
  
     # Handle simple scalar fields
     my @m_fields = qw(
@@ -1625,21 +1608,23 @@ sub make_pager {
                      pub_status 
                      media_id 
                      thumbnail
-                     url
                      title 
+                     url
                      creation_date
                      commands_column
+                     status
                      checkbox_column
                     );
 
     my %column_labels = ( 
-                         pub_status => '',
-                         media_id => 'ID',
-                         thumbnail => 'Thumbnail',
-                         url => 'URL',
-                         commands_column => '',
-                         title => 'Title',
-                         creation_date => 'Date',
+                          pub_status      => '',
+                          media_id        => 'ID',
+                          thumbnail       => 'Thumbnail',
+                          title           => 'Title',
+                          url             => 'URL',
+                          creation_date   => 'Date',
+                          commands_column => '',
+                          status          => 'Status',
                         );
 
     # Hide thumbnails
@@ -1656,7 +1641,7 @@ sub make_pager {
                                       find_params => $find_params,
                                       columns => \@columns,
                                       column_labels => \%column_labels,
-                                      columns_sortable => [qw( media_id url title creation_date )],
+                                      columns_sortable => [qw( media_id title url creation_date )],
                                       row_handler => sub { $self->find_media_row_handler($show_thumbnails, @_); },
                                       id_handler => sub { return $_[0]->media_id },
                                      );
@@ -1676,7 +1661,7 @@ sub find_media_row_handler {
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $media->url(),
-                              linkto => "javascript:preview_media('". $media_id ."')" );
+                              linkto => "javascript:Krang.preview('media','". $media_id ."')" );
 
     # title
     $row->{title} = $self->query->escapeHTML($media->title);
@@ -1685,7 +1670,7 @@ sub find_media_row_handler {
     if ($show_thumbnails) {
         my $thumbnail_path = $media->thumbnail_path(relative => 1);
         if ($thumbnail_path) {
-            $row->{thumbnail} = "<a href='javascript:preview_media($media_id)'><img src=\"$thumbnail_path\" border=0></a>";
+            $row->{thumbnail} = qq|<a href="javascript:Krang.preview('media','$media_id')"><img alt="" src="$thumbnail_path"></a>|;
         } else {
             $row->{thumbnail} = "&nbsp;";
         }
@@ -1693,19 +1678,27 @@ sub find_media_row_handler {
 
     # creation_date
     my $tp = $media->creation_date();
-    $row->{creation_date} = (ref($tp)) ? $tp->strftime('%b %e, %Y %l:%M %p') : '[n/a]';
+    $row->{creation_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 
     # pub_status
-    my $pub_status = ($media->published()) ? 'P' : '&nbsp;' ;
-    $row->{pub_status} = '&nbsp;<b>'. $pub_status .'</b>&nbsp;';
+    $row->{pub_status} = $media->published() ? '<b>P</b>' : '&nbsp;';
 
     if ( not($media->may_edit) or (($media->checked_out) and ($media->checked_out_by ne $ENV{REMOTE_USER})) ) {
         $row->{checkbox_column} = "&nbsp;";
-        $row->{commands_column} = '<a href="javascript:view_media('."'".$media->media_id."'".')">View</a>'
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|;
     } else {
-        $row->{commands_column} = '<a href="javascript:edit_media('."'".$media->media_id."'".')">Edit</a>'
-        . '&nbsp;|&nbsp;'
-        . '<a href="javascript:view_media('."'".$media->media_id."'".')">View</a>'
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|
+        . ' '
+        . qq|<input value="Edit" onclick="edit_media('| . $media->media_id . qq|')" type="button" class="button">|;
+    }
+
+    # status 
+    if ($media->checked_out) {
+        $row->{status} = "Checked out by <b>"
+            . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login
+            . '</b>';
+    } else {
+        $row->{status} = '&nbsp;';
     }
 
 }
@@ -1723,14 +1716,14 @@ sub do_save_media {
     # Is it a dup?
     if ($@) {
         if (ref($@) and $@->isa('Krang::Media::DuplicateURL')) {
-            add_message('duplicate_url');
+            add_alert('duplicate_url');
             return (duplicate_url=>1);
         } elsif (ref($@) and $@->isa('Krang::Media::NoCategoryEditAccess')) {
             # User tried to save to a category to which he doesn't have access
             my $category_id = $@->category_id || 
               croak("No category_id on pkg('Media::NoCategoryEditAccess') exception");
             my ($cat) = pkg('Category')->find(category_id => $category_id);
-            add_message( 'no_category_access', 
+            add_alert( 'no_category_access', 
                          url => $cat->url, 
                          id => $category_id );
             return (error_category_id=>1);
@@ -1744,8 +1737,13 @@ sub do_save_media {
     return ();
 }
 
-
-
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'media',
+        fields => [qw(media_id title caption alt_tag filename)],
+    );
+}
 
 1;
 

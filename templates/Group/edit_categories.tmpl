@@ -1,104 +1,139 @@
-<tmpl_include /header.tmpl>
+<tmpl_include header.tmpl>
 
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'group' );
+} );
 
-<script language="javascript" type="text/javascript">
-<!-- //
+delete_category = function( id )
+{
+  if ( confirm( 'Are you SURE you want to remove this Category?' ) )
+    Krang.form_submit('edit_categories_form', { rm: 'delete_category', delete_category_id: id }, { to_top: false });
+}
 
-    nav_edit_mode();
+add_category = function()
+{
+  Krang.form_submit('edit_categories_form', { rm: 'add_category' }, { to_top: false });
+}
 
-    delete_category  = function (cat_id) {
-        if (confirm("Are you sure you want to remove this category?")) {
-            var myform = document.forms["edit_categories_form"];
-            myform.rm.value = "delete_category";
-            myform.delete_category_id.value = cat_id;
-            myform.submit();
-        }
-    }
-
-
-    add_category  = function () {
-        var myform = document.forms["edit_categories_form"];
-        myform.rm.value = "add_category";
-        myform.submit();
-    }
-
-
-    do_return  = function () {
-        var myform = document.forms["edit_categories_form"];
-        myform.rm.value = "edit_categories_return";
-        myform.submit();
-    }
-
-
-// -->
+do_return = function()
+{
+  Krang.form_submit('edit_categories_form', { rm: 'edit_categories_return' });
+}
 </script>
 
+<h2>
+Edit Group Category Permissions
+</h2>
 
-<div class="dark-bar"><p class="left">&nbsp;Group Category Permissions Edit</p><p class="right"><a href="javascript:openWin('help.pl?topic=group')">Help</a>&nbsp;</p></div>
-<div class="box">
+<form name="edit_categories_form" action="group.pl" method="post">
 
-<form name="edit_categories_form" method="POST" action="group.pl"
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<input type="hidden" name="category_id" value="<tmpl_var ESCAPE=HTML category_id>">
-<input type="hidden" name="rm" value="save">
-<input type="hidden" name="delete_category_id" value="">
-<input type="hidden" name="group_id" value="<tmpl_var escape=HTML group_id>">
-<input type="hidden" name="name" value="<tmpl_var escape=HTML name>">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+<input name="category_id" value="<tmpl_var escape=html category_id>" type="hidden">
+<input name="rm" value="save" type="hidden">
+<input name="delete_category_id" value="" type="hidden">
+<input name="group_id" value="<tmpl_var escape=html group_id>" type="hidden">
+<input name="name" value="<tmpl_var escape=html name>" type="hidden">
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+<h3>
+Properties
+</h3>
 
-<table border="0" cellspacing="6" class="no-border" width="100%">
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
 
 <tr>
-  <td width="100">Site:</td>
-    <td><tmpl_var escape=HTML site_url></td>
+<th>Name</th>
+<td><tmpl_if name>
+  <tmpl_var name>
+<tmpl_else>
+  [n/a]
+</tmpl_if></td>
 </tr>
 
 <tr>
-    <td>Group:</td>
-    <td><tmpl_var escape=HTML name></td>
+<th>Site</th>
+<td><tmpl_var site_url></td>
 </tr>
 
-<tr>
-    <td valign="bottom">Add category:</td>
-    <td valign="top"><tmpl_var category_chooser></td>
-</tr>
+</tbody>
 
 </table>
 
-<!-- Category permissions -->
-<table cellspacing="0" cellpadding="4" class="form-head">
+<h3>
+Current Permissions
+</h3>
+
+<table class="request" summary="">
+
+<colgroup>
+<col>
+<col class="series">
+<col class="series">
+<col class="series">
+<col>
+</colgroup>
+
+<thead>
 <tr>
-    <td>Category</td>
-    <td width="80">Edit</td>
-    <td width="80">Read-Only</td>
-    <td width="80">Hide</td>
-    <td width="80">&nbsp;</td>
-</tr></table>
- <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-<tmpl_loop categories><tr>
-    <td class="form-cell"><tmpl_var category_url></td>
-    <tmpl_loop permission_radio><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
-    <td class="form-cell" width="80" align="center"><tmpl_unless is_root><a href="javascript:delete_category('<tmpl_var category_id>')">Delete</a><tmpl_else>&nbsp;</tmpl_unless></td>
-</tr></tmpl_loop>
- 
-</table><br>
-<!-- END Category permissions -->
+<th class="f">Category</th>
+<th class="series">Edit</th>
+<th class="series">Read-Only</th>
+<th class="series">Hide</th>
+<th class="l"></th>
+</tr>
+</thead>
+
+<tbody><tmpl_loop categories>
+  <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+  <td><tmpl_var category_url></td>
+  <tmpl_loop permission_radio>
+    <td class="series"><tmpl_var radio_select></td>
+  </tmpl_loop>
+  <td><tmpl_unless is_root>
+    <input value="Delete" onclick="delete_category('<tmpl_var escape=html category_id>')" type="button" class="button">
+  </tmpl_unless></td>
+  </tr>
+</tmpl_loop></tbody>
+
+</table>
+
+<table class="request" summary=""><!--:FIX(db2)-->
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th>Add Category</th>
+<td>
+<tmpl_var category_chooser>
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel lame capped">
+<input value="Back" onclick="do_return()" type="button" class="west">
 </div>
 
-
-
-<div class="button-bar">
-    <input type="button" value="Return" onClick="do_return()" class="button">
-</div>
-
-
-<!-- End edit_categories_form -->
 </form>
 
-</div>
-<tmpl_include /footer.tmpl>
+<tmpl_include footer.tmpl>
+

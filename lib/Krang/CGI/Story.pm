@@ -7,8 +7,8 @@ use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Message => qw(add_message);
-use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url);
+use Krang::ClassLoader Message => qw(add_message add_alert);
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader 'CGI::Workspace';
 use Carp qw(croak);
 use Krang::ClassLoader 'Pref';
@@ -86,6 +86,7 @@ sub setup {
                      save_and_change_bulk_edit_sep => 'save_and_change_bulk_edit_sep',
                      save_and_find_story_link    => 'save_and_find_story_link',
                      save_and_find_media_link    => 'save_and_find_media_link',
+                     autocomplete => 'autocomplete',
                     );
 
     $self->tmpl_path('Story/');
@@ -186,18 +187,12 @@ sub create {
 
     # detect bad fields
     my @bad;
-    push(@bad, 'type'),        add_message('missing_type')
-      unless $type;
-    push(@bad, 'title'),       add_message('missing_title')
-      unless $title;
-    push(@bad, 'slug'),        add_message('missing_slug')
-      unless not($slug_req) or $slug;
-    push(@bad, 'slug'),        add_message('bad_slug')
-      if length $slug and $slug !~ /^[-\w]+$/;
-    push(@bad, 'category_id'), add_message('missing_category')
-      unless $category_id;
-    push(@bad, 'cover_date'),  add_message('missing_cover_date')
-      unless $cover_date;
+    push(@bad, 'type'),        add_alert('missing_type') unless $type;
+    push(@bad, 'title'),       add_alert('missing_title') unless $title;
+    push(@bad, 'slug'),        add_alert('missing_slug') unless not($slug_req) or $slug;
+    push(@bad, 'slug'),        add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
+    push(@bad, 'category_id'), add_alert('missing_category') unless $category_id;
+    push(@bad, 'cover_date'),  add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
 
     # create the object
@@ -215,11 +210,9 @@ sub create {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
         my $class = pkg('ElementLibrary')->top_level(name => $type);
-	my $url_attributes = join(', ', $class->url_attributes);
-	my $which = $url_attributes
-	  ? $url_attributes . ' and site/category'
-	    : 'site/category';
-        add_message('duplicate_url', 
+	    my $url_attributes = join(', ', $class->url_attributes);
+	    my $which = $url_attributes ? $url_attributes . ' and site/category' : 'site/category';
+        add_alert('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,                    
                     which    => $which,
@@ -281,7 +274,7 @@ sub check_in_and_save {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url',
+        add_alert('duplicate_url',
                     story_id => $dup->story_id,
                     url      => $dup->url,
                     which    => join(' and ',
@@ -291,7 +284,7 @@ sub check_in_and_save {
 
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_message('missing_category_on_save');
+        add_alert('missing_category_on_save');
         return $self->edit;
     } elsif ($@) {
         # rethrow
@@ -302,30 +295,39 @@ sub check_in_and_save {
                 url      => $story->url,
                 version  => $story->version);
                                                                                                        
-
     # check it in
     $story->checkin();
 
     # move story to desk
     eval { $story->move_to_desk($desk_id); };
 
-    if ($@ and ref($@)) {
-	if ($@->isa('Krang::Story::CheckedOut')) {
-	    add_message( 'story_cant_move_checked_out',
-			 id   => $story->story_id,
-			 desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name);
-	} elsif ($@->isa('Krang::Story::NoDesk')) {
-	    add_message( 'story_cant_move_no_desk',
-			 story_id   => $story->story_id,
-			 desk_id    => $desk_id );
-	} else {
-	    $@->rethrow;
-	}
-	return $self->edit;
+    if($@ and ref($@)) {
+        if($@->isa('Krang::Story::CheckedOut')) {
+            add_alert(
+                'story_cant_move_checked_out',
+                id   => $story->story_id,
+                desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name
+            );
+        } elsif($@->isa('Krang::Story::NoDesk')) {
+            add_alert(
+                'story_cant_move_no_desk',
+                story_id => $story->story_id,
+                desk_id  => $desk_id
+            );
+        } else {
+            $@->rethrow;
+        }
+        return $self->edit;
     }
 
     # remove story from session
     delete $session{story};
+ 
+    add_message(
+        "moved_story",
+        id   => $story->story_id, 
+        desk => (pkg('Desk')->find(desk_id => $query->param('checkin_to')))[0]->name
+    );
  
     # redirect to that desk 
     $self->header_props(-uri => 'desk.pl?desk_id='.$query->param('checkin_to'));
@@ -401,7 +403,7 @@ sub edit {
                      url               => $story->url ? 
                                             format_url(
                                                        url => $story->url,
-                                                       linkto => "javascript:preview_story_session()",
+                                                       linkto => "javascript:Krang.preview('story',null)",
                                                        length => 50,
                                                       ) : "");
 
@@ -447,12 +449,13 @@ sub edit {
         }
         $template->param(category_loop => \@category_loop);
         $template->param(category_chooser => 
-                         category_chooser(name     => 'new_category_id',
-                                          query    => $query,
-                                          label    => 'Add Site / Category',
-                                          display  => 0,
-                                          onchange => 'add_category',
-                                          may_edit => 1,
+                         category_chooser(name        => 'new_category_id',
+                                          query       => $query,
+                                          label       => 'Add Site/Category',
+                                          display     => 0,
+                                          onchange    => 'add_category',
+                                          may_edit    => 1,
+                                          allow_clear => 0,
                                          ));
 
         $template->param(version_selector => scalar
@@ -489,11 +492,6 @@ sub edit {
 
     $template->param( desk_loop => \@desk_loop);
 
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
-
     return $template->output();
 }
 
@@ -525,7 +523,7 @@ sub view {
     # load story from DB
     my $version = $query->param('version');
     my ($story) = pkg('Story')->find(story_id => $story_id,
-                                     ($version && length($version) ?
+                                     ($version && length($version) ? 
                                       (version => $version) : ()),
                                     );
     croak("Unable to load story '" . $query->param('story_id') . "'" . 
@@ -541,7 +539,7 @@ sub view {
                      type              => $story->element->display_name,
                      url               => format_url(
                                                      url => $story->url,
-                                                     linkto => "javascript:preview_story('". $story->story_id() ."')",
+                                                     linkto => "javascript:Krang.preview('story','" . $story->story_id() . "')",
                                                      length => 50,
                                                     ),
                      version           => $story->version);
@@ -556,7 +554,7 @@ sub view {
                          ("Low","Medium","High")[$story->priority - 1],
                         );
 
-        $template->param(cover_date => $story->cover_date->strftime('%b %e, %Y %l:%M %p'))
+        $template->param(cover_date => $story->cover_date->strftime('%m/%d/%Y %I:%M %p'))
           if $story->cover_date;
 
         my @contribs_loop;
@@ -585,12 +583,6 @@ sub view {
       unless ( $story->checked_out and 
                ($story->checked_out_by ne $ENV{REMOTE_USER})) or 
                  not $story->may_edit;
-
-
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
 
     return $template->output();
 }
@@ -634,8 +626,14 @@ sub copy {
     croak("Unable to load story '" . $query->param('story_id') . "'.")
       unless $story;
 
-    # make a copy and story it in the session
+    # make a copy and store it in the session
     my $clone = $session{story} = $story->clone();
+    
+    # make sure it's checked out in case we want to save it later
+    unless( $clone->{checked_out} ) {
+        $clone->{checked_out}    = 1;
+        $clone->{checked_out_by} = $ENV{REMOTE_USER};
+    }
 
     # talk about it, get it all out
     if ($clone->categories) {
@@ -645,7 +643,7 @@ sub copy {
                     slug  => $clone->slug,
                    );
     } else {
-        add_message('copied_story_no_cats',
+        add_alert('copied_story_no_cats',
                     id    => $story->story_id,
                     title => $clone->title);
     }                    
@@ -685,7 +683,7 @@ sub db_save {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url', 
+        add_alert('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,
                     which    => join(' and ', 
@@ -695,7 +693,7 @@ sub db_save {
 
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_message('missing_category_on_save');
+        add_alert('missing_category_on_save');
         return $self->edit;
     } elsif ($@) {
         # rethrow
@@ -738,7 +736,7 @@ sub db_save_and_stay {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url', 
+        add_alert('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,
                     which    => join(' and ', 
@@ -748,7 +746,7 @@ sub db_save_and_stay {
 
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_message('missing_category_on_save');
+        add_alert('missing_category_on_save');
         return $self->edit;
     } elsif ($@) {
         # rethrow
@@ -828,7 +826,7 @@ sub save_and_publish {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url', 
+        add_alert('duplicate_url', 
                     story_id => $dup->story_id,
                     url      => $dup->url,
                     which    => join(' and ', 
@@ -838,7 +836,7 @@ sub save_and_publish {
 
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
-        add_message('missing_category_on_save');
+        add_alert('missing_category_on_save');
         return $self->edit;
     } elsif ($@) {
         # rethrow
@@ -1110,13 +1108,13 @@ sub _save {
         my $slug_req = (grep { $_ eq 'slug' } $story->element->class->url_attributes) ? 1 : 0;
 
         my @bad;
-        push(@bad, 'title'),       add_message('missing_title')
+        push(@bad, 'title'),       add_alert('missing_title')
           unless $title;
-        push(@bad, 'slug'),        add_message('missing_slug')
+        push(@bad, 'slug'),        add_alert('missing_slug')
           unless not($slug_req) or $slug;
-        push(@bad, 'slug'),        add_message('bad_slug')
+        push(@bad, 'slug'),        add_alert('bad_slug')
           if length $slug and $slug !~ /^[-\w]+$/;
-        push(@bad, 'cover_date'),  add_message('missing_cover_date')
+        push(@bad, 'cover_date'),  add_alert('missing_cover_date')
           unless $cover_date;
         # return to edit mode if there were problems
         return $self->edit(bad => \@bad) if @bad;
@@ -1151,14 +1149,14 @@ sub add_category {
 
     my $category_id = $query->param('new_category_id');
     unless ($category_id) {
-        add_message("added_no_category");
+        add_alert("added_no_category");
         return $self->edit();
     }
 
     # make sure this isn't a dup
     my @categories = $story->categories();
     if (grep { $_->category_id == $category_id } @categories) {
-        add_message("duplicate_category");
+        add_alert("duplicate_category");
         return $self->edit();
     }
 
@@ -1177,7 +1175,7 @@ sub add_category {
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
         # load duplicate story
         my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_message('duplicate_url_on_category_add', 
+        add_alert('duplicate_url_on_category_add', 
                     story_id => $dup->story_id,
                     url      => $dup->url,                    
                     category => $category->url,
@@ -1272,7 +1270,7 @@ sub delete_categories {
 
     # put together a reasonable summary of what happened
     if (@urls == 0) {
-        add_message('deleted_no_categories');
+        add_alert('deleted_no_categories');
     } elsif (@urls == 1) {
         add_message('deleted_a_category', url => $urls[0]);
     } else {
@@ -1335,6 +1333,15 @@ sub find {
     # if the user clicked 'clear', nuke the cached params in the session.
     if (defined($q->param('clear_search_form'))) {
         delete $session{KRANG_PERSIST}{pkg('Story')};
+    }
+
+    my $show_type_and_version = $q->param('show_type_and_version');
+    # if they submitted the search form then either search_filter (simple search)
+    # or search_title (advanced search) will at least be defined
+    if( defined $q->param('search_filter') or defined $q->param('search_title') ) {
+        $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version} = $show_type_and_version;
+    } else {
+        $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
     }
 
     # Search mode
@@ -1464,8 +1471,8 @@ sub find {
                                       columns => [qw(
                                                      pub_status 
                                                      story_id 
-                                                     url 
                                                      title 
+                                                     url 
                                                      cover_date 
                                                      commands_column 
                                                      status 
@@ -1474,26 +1481,33 @@ sub find {
                                       column_labels => {
                                                         pub_status => '',
                                                         story_id => 'ID',
-                                                        url => 'URL',
                                                         title => 'Title',
+                                                        url => 'URL',
                                                         commands_column => '',
                                                         cover_date => 'Date',
                                                         status => 'Status',
                                                        },
-                                      columns_sortable => [qw( story_id url title cover_date )],
+                                      columns_sortable => [qw( story_id title url cover_date )],
                                       row_handler => sub { $self->find_story_row_handler(@_); },
                                       id_handler => sub { return $_[0]->story_id },
                                      );
 
-    # Set up output
-    $template->param(%tmpl_data);
-    $template->param(pager_html => $pager->output());
-    $template->param(row_count => $pager->row_count());
+    my $pager_tmpl = $self->load_tmpl( 'find_pager.tmpl', 
+        die_on_bad_params => 0, 
+        loop_context_vars => 1,
+        global_vars       => 1,
+        associate         => $q,
+    );
+    $pager->fill_template($pager_tmpl);
+    $pager_tmpl->param(show_type_and_version => $show_type_and_version);
 
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
+    # Set up output
+    $template->param(
+        %tmpl_data,
+        pager_html           => $pager_tmpl->output,
+        row_count            => $pager->row_count,
+        show_type_and_version => $show_type_and_version,
+    );
 
     return $template->output;
 }
@@ -1527,19 +1541,19 @@ sub list_active {
        find_params => \%find_params,
        columns => [(qw(
                        story_id 
-                       url 
                        title 
+                       url 
                        user
                        commands_column
                       )), ($may_checkin_all ? ('checkbox_column') : ())],
        column_labels => {
                          story_id => 'ID',
-                         url => 'URL',
                          title => 'Title',
+                         url => 'URL',
                          user  => 'User',
                          commands_column => '',
                         },
-       columns_sortable => [qw( story_id url title )],
+       columns_sortable => [qw( story_id title url )],
        row_handler => sub { $self->list_active_row_handler(@_); },
        id_handler => sub { return $_[0]->story_id },
       );
@@ -1549,11 +1563,6 @@ sub list_active {
     $template->param(pager_html => $pager->output());
     $template->param(row_count => $pager->row_count());
     $template->param(may_checkin_all => $may_checkin_all);
-
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
 
     return $template->output;
 }
@@ -1611,7 +1620,7 @@ sub checkout_selected {
 
          # Redirect to Workplace
          my $url = "workspace.pl";
-         $self->header_props(-url=>$url);
+         $self->header_props(-uri=>$url);
          $self->header_type('redirect');
          return "Redirect: <a href=\"$url\">$url</a>";
      } else {
@@ -1660,60 +1669,63 @@ sub checkin_selected {
 sub find_story_row_handler {
     my $self = shift;
     my ($row, $story) = @_;
+    my $q = $self->query;
+    my $show_type_and_version = $session{KRANG_PERSIST}{pkg('Story')}{show_type_and_version};
 
     # Columns:
-    #
-
-    # story_id
-    $row->{story_id} = $story->story_id();
+    $row->{story_id}   = $story->story_id();
+    $row->{title}      = $story->title;
+    $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
 
     # format url to fit on the screen and to link to preview
-    $row->{url} = format_url( url => $story->url(),
-                              linkto => "javascript:preview_story('". $row->{story_id} ."')" );
-
-    # title
-    $row->{title} = $self->query->escapeHTML($story->title);
+    $row->{url} = format_url(
+        url    => $story->url(),
+        linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')"
+    );
 
     # cover_date
     my $tp = $story->cover_date();
-    $row->{cover_date} = (ref($tp)) ? $tp->strftime('%b %e, %Y %l:%M %p') : '[n/a]';
+    $row->{cover_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 
-    # pub_status
-    if ($story->published_version) {
-        $row->{pub_status} = '&nbsp;<b>P</b>&nbsp;';
-    } else {
-        $row->{pub_status} = '&nbsp;&nbsp;&nbsp;';
-    }
+    # command column
+    $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| 
+        . $story->story_id 
+        . qq|')" type="button" class="button">|
+        . ' '
+        . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id 
+        . qq|')" type="button" class="button">|
+        . ' '
+        . qq|<input value="Copy" onclick="copy_story('| . $story->story_id 
+        . qq|')" type="button" class="button">|;
 
     if (($story->checked_out) and 
-        ($story->checked_out_by ne $ENV{REMOTE_USER}) 
+        ($story->checked_out_by ne $ENV{REMOTE_USER})
         or not $story->may_edit ) {
-        $row->{commands_column} = '<a href="javascript:view_story('."'".$story->story_id."'".')">View</a>'
-          . '&nbsp;|&nbsp;'
-        . '<a href="javascript:view_story_log('."'".$story->story_id."'".')">Log</a>';
         $row->{checkbox_column} = "&nbsp;";
     } else {
-        $row->{commands_column} = '<a href="javascript:edit_story('."'".$story->story_id."'".')">Edit</a>'
-        . '&nbsp;|&nbsp;'
-        . '<a href="javascript:view_story('."'".$story->story_id."'".')">View</a>'
-        . '&nbsp;|&nbsp;'
-        . '<a href="javascript:view_story_log('."'".$story->story_id."'".')">Log</a>';
+        $row->{commands_column} .= qq| <input value="Edit" onclick="edit_story('| 
+            . $story->story_id 
+            . qq|')" type="button" class="button">|;
     }
- 
+
     # status 
     if ($story->checked_out) {
-        $row->{status} = "Checked out by <b>" . 
-          (pkg('User')->find(user_id => $story->checked_out_by))[0]->login.
-            '</b>';
+        $row->{status} = "Checked out by <b>"
+            . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login
+            . '</b>';
     } elsif ($story->desk_id) {
-        $row->{status} = "On <b> " . 
-          (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name . 
-            '</b> desk';
+        $row->{status} = "On <b>"
+            . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
+            . '</b> Desk';
     } else {
         $row->{status} = '&nbsp;';
     }
-    
 
+    if( $show_type_and_version ) {
+        # story type
+        $row->{story_type}    = $story->class->display_name;
+        $row->{story_version} = $story->version;
+    }
 }
 
 # Pager row handler for story list active run-mode
@@ -1730,18 +1742,25 @@ sub list_active_row_handler {
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url( url => $story->url(),
-                              linkto => "javascript:preview_story('". $row->{story_id} ."')" );
+                              linkto => "javascript:Krang.preview('story','" . $row->{story_id} . "')" );
 
     # title
     $row->{title} = $q->escapeHTML($story->title);
 
     # commands column
-    $row->{commands_column} = '<a href="javascript:view_story(' .
-      $story->story_id . ')">View</a>';
+    $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| . $story->story_id . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $story->checked_out_by);
     $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
+}
+
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'story',
+        fields => [qw(story_id title slug)],
+    );
 }
 
 

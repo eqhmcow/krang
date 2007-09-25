@@ -1,102 +1,158 @@
-<tmpl_include /header.tmpl>
+<tmpl_include header.tmpl>
 
-<script language="JavaScript" type="text/javascript">
-
-    preview_story = function (id) {
-      window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
-    }
-    
-    preview_media = function (id) {
-      window.open("publisher.pl?rm=preview_media&media_id=" + id, "");
-    }
-
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set();
+} );
 </script>
-  
- <div class="dark-bar"><p class="left">Publish Story</p></div>
 
-  <form method=post action="publisher.pl">
+<h2>
+Publish
 
-  <div class="box">
-    <br>
-    <table cellspacing="0" cellpadding="4" class="form-head">
-      <tr>
-        <td colspan="4"><b>Stories</b>&nbsp;&nbsp;&nbsp;</td>
-      </tr>
-      <tr>
-        <td width="43">ID</td>
-        <td width="200">URL</td>
-        <td>Title</td>
-        <td width="50">Status</td>
-      </tr></table>
-    
-      <!-- stories loop -->
-      <tmpl_loop stories>
-		<table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-        <tmpl_if checked_out><tr class="invalid"><tmpl_else><tr></tmpl_if>
-            <td class="form-cell" width="40"><tmpl_var id></td>
-            <td class="form-cell" width="200"><tmpl_var url></td>
-            <td class="form-cell"><tmpl_var title></td>
-            <td class="form-cell" width="50"><tmpl_if status><tmpl_var status><tmpl_else>&nbsp;</tmpl_if></td>
-          </tr></table>
-        </tmpl_loop>
-        <!-- /stories loop -->
- <table cellspacing="0" cellpadding="4" class="form-head">
-        <tr>
-          <td colspan="5"><b>Media</b></td>
-        </tr>
-        <tr>
-          <td width="43">ID</td>
-          <td width="200">URL</td>
-          <td>Title</td>
-          <td width="80">Thumbnail</td>
-          <td width="50">Status</td>
-      </tr></table>
-        
-        <!-- media loop -->
-        <tmpl_loop media>
-		  <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-          <tmpl_if checked_out><tr class="invalid"><tmpl_else><tr></tmpl_if>
-              <td class="form-cell" width="40"><tmpl_var id></td>
-              <td class="form-cell" width="200"><tmpl_var url></td>
-              <td class="form-cell"><tmpl_var title></td>
-              <td class="form-cell" width="80"><tmpl_if thumbnail><a href="javascript:preview_media(<tmpl_var id>)"><img src="<tmpl_var thumbnail>" border="0"></a><tmpl_else>&nbsp;</tmpl_if></td>
-              <td class="form-cell" width="50"><tmpl_if status><tmpl_var status><tmpl_else>&nbsp;</tmpl_if></td>
-            </tr></table>
-          </tmpl_loop>
-    <!-- /media loop -->
+<tmpl_if stories><!--(db2)hack plural:-->
+  <tmpl_loop stories>
+    <tmpl_if __first__>
+      <tmpl_if __last__>
+        Story
+      <tmpl_else>
+        Stories
+      </tmpl_if>
+    </tmpl_if>
+  </tmpl_loop>
+</tmpl_if>
 
+<tmpl_if media>
+  <tmpl_if stories>
+    &amp;
+  </tmpl_if>
 
-  <input type=hidden name=rm value="publish_assets">
-  <tmpl_loop name=asset_id_list>
-    <input type=hidden name="asset_id_list" value="<tmpl_var id>">
+  Media
+</tmpl_if>
+</h2>
+
+<form action="publisher.pl" method="post" class="non_ajax">
+
+<input name="rm" value="publish_assets" type="hidden">
+<tmpl_loop asset_id_list>
+  <input name="asset_id_list" value="<tmpl_var escape=html id>" type="hidden">
+</tmpl_loop>
+
+<h3>
+Publication Materials
+</h3>
+
+<table class="result" summary=""><!--:FIX(db2)-->
+
+<colgroup>
+<col class="c-id">
+<col class="c-type">
+<col>
+<col>
+<tmpl_if media>
+  <col class="c-thumb">
+</tmpl_if>
+<col>
+</colgroup>
+
+<thead>
+<tr>
+<th class="f">ID</th>
+<th>Type</th>
+<th>Title</th>
+<th>URL</th>
+<tmpl_if media>
+  <th></th>
+</tmpl_if>
+<th class="l">Status</th>
+</tr>
+</thead>
+
+<!--FIXME(zebra):-->
+<tbody>
+
+<tmpl_if media>
+
+  <tmpl_loop stories>
+    <tr<tmpl_if checked_out> class="err"</tmpl_if>>
+    <td><tmpl_var escape=html id></td>
+    <td>Story</td>
+    <td><tmpl_var escape=html title></td>
+    <td><tmpl_var url><!--:markup--></td>
+    <td></td>
+    <td><tmpl_var status><!--:markup--></td>
+    </tr>
   </tmpl_loop>
 
-  <br>
-
- <table cellspacing="0" cellpadding="4" class="form-head">
-    <tr>
-      <td>Schedule Publish Time</td>
-    </tr></table>
-   <table cellspacing="0" width="571" class="form-cell" cellpadding="4"> 
-    <tr>
-      <td class="form-cell" width="40"><input type="radio" name="publish_now" value="1" checked="checked"/></td>
-      <td class="form-cell">Now</td>
+  <tmpl_loop media>
+    <tr<tmpl_if checked_out> class="err"</tmpl_if>>
+    <td><tmpl_var escape=html id></td>
+    <td>Media</td>
+    <td><tmpl_var escape=html title></td>
+    <td><tmpl_var url><!--:markup--></td>
+    <td><tmpl_if thumbnail>
+      <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
+    </tmpl_if></td>
+    <td><tmpl_var status><!--:markup--></td>
     </tr>
-    <tr>
-      <td class="form-cell" width="40"><input type="radio" name="publish_now" value="0"/></td>
-      <td class="form-cell">At: <tmpl_if bad_publish_date><span class="invalid"></tmpl_if>
-        <tmpl_var publish_date_chooser>
-          <tmpl_if bad_publish_date></span></tmpl_if>
-      </td>
-    </tr>    
-  </table>
-<br>
+  </tmpl_loop>
+
+<tmpl_else>
+
+  <tmpl_loop stories>
+    <tr<tmpl_if checked_out> class="err"</tmpl_if>>
+    <td><tmpl_var escape=html id></td>
+    <td>Story</td>
+    <td><tmpl_var escape=html title></td>
+    <td><tmpl_var url><!--:markup--></td>
+    <td><tmpl_var status><!--:markup--></td>
+    </tr>
+  </tmpl_loop>
+
+</tmpl_if>
+
+</tbody>
+
+</table>
+
+<h3>
+Publication Time
+</h3>
+
+<table class="request" summary=""><!--:FIX(db2)-->
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th colspan="2">
+<input name="publish_now" value="1" type="radio" checked>
+Immediate
+</th>
+</tr>
+
+<tr<tmpl_if bad_publish_date> class="err"</tmpl_if>>
+<th>
+<input name="publish_now" value="0" type="radio">
+Scheduled For
+</th>
+<td>
+<tmpl_var publish_date_chooser>
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel capped">
+<input name="Publish" value="Publish" type="submit">
 </div>
 
-<div class="button-bar">
-   <input type="submit" name="Publish" value="Publish" class="button">
-</div>
-  
 </form>
-</div>
-<tmpl_include /footer.tmpl>
+
+<tmpl_include footer.tmpl>
+

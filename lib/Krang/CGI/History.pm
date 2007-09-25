@@ -104,7 +104,7 @@ might be used:
 sub show {
     my $self = shift;
     my $query = $self->query;
-    my $template = $self->load_tmpl('show.tmpl', associate => $query);
+    my $template = $self->load_tmpl('show.tmpl', associate => $query, loop_context_vars => 1);
 
     # load params
     my $story_id    = $query->param('story_id');
@@ -149,6 +149,7 @@ sub show {
       (
        cgi_query => $query,
        persist_vars => {
+                        rm => 'show',
                         story_id => $story_id,
                         media_id => $media_id,
                         template_id => $template_id,
@@ -161,7 +162,7 @@ sub show {
        column_labels => {
                          action    => 'Action',
                          user      => 'Triggered By',
-                         timestamp => 'Timestamp',
+                         timestamp => 'Date',
                          attr      => 'Attributes',
                         },
        columns_sortable => [qw( timestamp action )],
@@ -173,8 +174,7 @@ sub show {
       );
 
     # Set up output
-    $template->param(pager_html => $pager->output());
-    # $template->param(row_count => $pager->row_count());
+    $pager->fill_template($template);
 
     return $template->output;
 
@@ -201,14 +201,14 @@ sub show_row_handler {
     }
 
     # setup date
-    $row->{timestamp}   = $history->timestamp->strftime('%b %e, %Y %l:%M %p'); 
+    $row->{timestamp} = $history->timestamp->strftime('%m/%d/%Y %I:%M %p');
 
     # some events have attributes
     my $attr = "";
     $attr .= "Version: " . $history->version
       if $history->version;
     $attr .= "Desk: " . (pkg('Desk')->find( desk_id => $history->desk_id))[0]->name if $history->desk_id;
-    $row->{attr} = $attr;
+    $row->{attr} = $q->escapeHTML($attr);
 }
 
 

@@ -1,29 +1,45 @@
-<tmpl_if display><span id="<tmpl_var name>_url"><tmpl_if category_url><tmpl_var category_url><tmpl_else>No site / category selected.</tmpl_if></span></tmpl_if>
-<input type=hidden id="<tmpl_if formname><tmpl_var formname>.</tmpl_if><tmpl_var field>" name="<tmpl_var field>" value="<tmpl_var category_id>">
+<input id="<tmpl_if formname><tmpl_var escape=html formname>.</tmpl_if><tmpl_var escape=html field>" name="<tmpl_var escape=html field>" value="<tmpl_var escape=html category_id>" type="hidden">
+
 <tmpl_var chooser>
-<input type="button" value="Clear" class="hpts-button" onclick="<tmpl_var name>_clear_category()">
 
-<script language="javascript">
-  <tmpl_var name>_choose_category  = function (packed) {
-     var parts = packed.split(",",2);
-     var id = parts[0];
-     var url = parts[1];
-     <tmpl_if display>
-        var span = document.getElementById("<tmpl_var name>_url");
-         span.innerHTML = url;
-     </tmpl_if>
+<tmpl_if allow_clear>
+  <input value="Clear" onclick="<tmpl_var escape=html name>_clear_category()" type="button" class="hpts-button">
+</tmpl_if>
 
-     var field = document.getElementById("<tmpl_if formname><tmpl_var formname>.</tmpl_if><tmpl_var field>");
-     field.value = id;
-     <tmpl_if onchange><tmpl_var onchange>();</tmpl_if>
+<tmpl_if display><span id="<tmpl_var escape=html name>_url"><tmpl_if category_url>
+  <tmpl_var escape=html category_url>
+<tmpl_else>
+  No Site/Category selected.
+</tmpl_if></span></tmpl_if>
+
+<script type="text/javascript">
+<tmpl_var name>_choose_category = function( packed )
+{
+  var parts = packed.split( ',', 2 );
+  var id    = parts[ 0 ];
+  var url   = parts[ 1 ];
+<tmpl_if display>
+  var mySpan  = document.getElementById( '<tmpl_var escape=js name>_url' );
+  mySpan.innerHTML = url;
+</tmpl_if>
+
+  var myField   = document.getElementById( '<tmpl_if formname><tmpl_var escape=js formname>.</tmpl_if><tmpl_var escape=js field>' );
+  myField.value = id;
+
+  <tmpl_if onchange><tmpl_var onchange>();</tmpl_if>
+}
+
+<tmpl_if allow_clear>
+  <tmpl_var name>_clear_category = function()
+  {
+  <tmpl_if display>
+    var mySpan       = document.getElementById( '<tmpl_var escape=js name>_url' );
+    mySpan.innerHTML = 'No Site/Category selected.';
+  </tmpl_if>
+
+    var myField   = document.getElementById( '<tmpl_if formname><tmpl_var escape=js formname>.</tmpl_if><tmpl_var escape=js field>' );
+    myField.value = '';
   }
-
-  <tmpl_var name>_clear_category  = function (){ 
-     <tmpl_if display>
-        var span = document.getElementById("<tmpl_var name>_url");
-        span.innerHTML = "No site / category selected.";
-     </tmpl_if>
-     var field = document.getElementById("<tmpl_if formname><tmpl_var formname>.</tmpl_if><tmpl_var field>");
-     field.value = "";
-  }
+</tmpl_if>
 </script>
+

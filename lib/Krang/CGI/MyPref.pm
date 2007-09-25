@@ -8,9 +8,10 @@ use Carp qw(croak);
 use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'PasswordHandler';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf => qw(PasswordChangeTime);
+use JSON qw(objToJson);
 
 =head1 NAME
 
@@ -71,12 +72,32 @@ sub edit {
     my $pw_only = $self->param('password_only') || $q->param('password_only');
     $template->param( password_only => $pw_only);
     
-    my $set_sps = pkg('MyPref')->get('search_page_size');
 
-    $template->param(search_results_selector => scalar
-                      $q->popup_menu(-name    => 'search_results_page',
-                                     -values  => [5, 10, 20, 30, 40, 50, 100 ],
-                                         -default => $set_sps));
+    $template->param(
+        search_results_selector => scalar $q->popup_menu(
+            -name    => 'search_page_size',
+            -values  => [ 5, 10, 20, 30, 40, 50, 100 ],
+            -default => pkg('MyPref')->get('search_page_size'),
+        )
+    );
+
+    $template->param(
+        use_autocomplete_selector => scalar $q->radio_group(
+            -name   => 'use_autocomplete',
+            -values => [ 1, 0 ],
+            -labels => { 1 => 'Yes', 0 => 'No' },
+            -default => pkg('MyPref')->get('use_autocomplete'),
+        )
+    );
+
+    $template->param(
+        message_timeout_selector => scalar $q->popup_menu(
+            -name   => 'message_timeout',
+            -values => [ (1..10), 0 ],
+            -labels => { 0 => 'Never' },
+            -default => pkg('MyPref')->get('message_timeout'),
+        )
+    );
 
     return $template->output; 
 }
@@ -90,13 +111,35 @@ Updates preferences and user password
 sub update_prefs {
     my $self = shift;
     my $q = $self->query();
+    my $prefs_changed = 0;
 
-    my $set_sps = pkg('MyPref')->get('search_page_size');
-    my $new_sps = $q->param('search_results_page');
-    if ($new_sps && $set_sps ne $new_sps) {
-        # update search_page_size
-        pkg('MyPref')->set(search_page_size => $q->param('search_results_page')), add_message("changed_search_page_size");
-    } 
+    # look at each pref
+    my @prefs = qw(search_page_size use_autocomplete message_timeout);
+    for my $name (@prefs) {
+        my $old = pkg('MyPref')->get($name);
+        my $new = $q->param($name);
+        # if it's changed then update it
+        if (defined $new && $old ne $new) {
+            pkg('MyPref')->set($name => $new);
+            add_message("changed_$name");
+            $prefs_changed = 1;
+        } 
+    }
+
+    # if we changed anything, then update our prefs cookie
+    # with the new values via JSON so that the JS
+    # on the client side can access it
+    if( $prefs_changed ) {
+        my %prefs;
+        for my $name (@prefs) {
+            $prefs{$name} = pkg('MyPref')->get($name);
+        }
+        my $pref_cookie = $q->cookie(
+            -name  => 'KRANG_PREFS',
+            -value => objToJson(\%prefs),
+        );
+        $self->header_add(-cookie => [$pref_cookie]);
+    }
 
     if (my $pass = $q->param('new_password')) {
         my $user_id = $ENV{REMOTE_USER};
@@ -106,7 +149,7 @@ sub update_prefs {
         my $new_pw = $q->param('new_password');
         my $pw_re  = $q->param('new_password_repeat');
         if( $new_pw ne $pw_re ) {
-            add_message('password_mismatch');
+            add_alert('password_mismatch');
             return $self->edit();
         }
 
@@ -137,7 +180,7 @@ them know they are required to change their password.
 
 sub force_pw_change {
     my $self = shift;
-    add_message('force_password_change', days => PasswordChangeTime);
+    add_alert('force_password_change', days => PasswordChangeTime);
     $self->param(password_only => 1);
     return $self->edit();
 }

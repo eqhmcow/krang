@@ -1,31 +1,39 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
-<html>
-<head>
-<title><tmpl_var instance_name> Login</title>
-<style type="text/css"><tmpl_include ../htdocs/krang_login.css></style>
-</head>
+<tmpl_include login_header.tmpl>
 
-<body onload="logform.username.focus();">
-<div id="header"><div class="logo"><img src="/images/logo.gif" height="27" width="155" alt="logo"></div>
-<div class="title"><tmpl_var header_instance_name></div>
+<script type="text/javascript">
+focusFormField( 'form-login', 'username' );
+</script>
 
-<div class="dkblu"></div>
-<div class="blue"></div></div>
+<h2>
+Welcome!
+</h2>
 
+<form id="form-login" name="form-login" action="login.pl" method="post">
 
-&nbsp;<br>&nbsp;
-<div align="center">
-<p class="error"><tmpl_var escape=html alert></p> 
-		
-<form method="POST" action="login.pl" name="logform">
-<div id="login">
-<div class="dark-bar"><tmpl_var instance_name> Log In</div>
-<div class="boxb">
-<div class="light"><p>User Name:&nbsp;&nbsp;&nbsp;<input type="text" name="username" value="<tmpl_var escape=html username>" size="12"><br><br>Password:&nbsp;&nbsp;&nbsp;<input type="password" name="password" size="12"></p></div></div>
-<div class="button-bar"><input class="button" type="submit" value="Log In"></div><input type="hidden" name="rm" value="login"></div>
+<input name="rm" value="login" type="hidden">
+<input name="target" value="<tmpl_var escape=html target>" type="hidden">
+
+<p>
+<label for="login-username">User Name</label>
+<input id="login-username" name="username" value="<tmpl_var escape=html username>">
+</p>
+
+<p>
+<label for="login-password">Password</label>
+<input id="login-password" name="password" type="password">
+</p>
+
+<tmpl_if header_alert_loop><ul class="err"><tmpl_loop header_alert_loop>
+  <li>
+  <tmpl_var escape=html alert>
+  </li>
+</tmpl_loop></ul></tmpl_if>
+
+<p class="btn">
+<input value="Log In" type="submit">
+<a href="login.pl?rm=forgot_pw">Forgot your Login?</a>
+</p>
+
 </form>
 
-
-
-</body>
-</html>
+<tmpl_include login_footer.tmpl>

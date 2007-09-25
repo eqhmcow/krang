@@ -164,7 +164,7 @@ use Krang::ClassLoader DB => qw(dbh);
 use Carp qw(croak);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
-use Krang::ClassLoader Message => qw(add_message get_messages);
+use Krang::ClassLoader Message => qw(add_message get_messages add_alert);
 use Krang::ClassLoader Widget => qw(category_chooser date_chooser decode_date);
 use Krang::ClassLoader base => 'CGI';
 
@@ -236,6 +236,14 @@ sub element_edit {
     # button displayed
     $template->param(no_reorder => 1) if not @avail_ord;
     $template->param(no_delete  => 1) if not $avail_del;
+
+    # find out how many children are reorderable
+    my $multiple_reorders = 0;
+    foreach my $child (@children) {
+        $multiple_reorders++ if $child->reorderable;
+        last if $multiple_reorders > 1;
+    }
+    $multiple_reorders = 0 if $multiple_reorders < 2;
  
     foreach my $child (@children) {        
         next if $child->hidden;
@@ -250,12 +258,12 @@ sub element_edit {
                            name         => $child->display_name(),
                            path         => $child->xpath(),
                            (order_select =>
-                             $child->reorderable ? 
+                             $child->reorderable && $multiple_reorders ? 
                              $query->popup_menu(-name => "order_$index",
                                                 -values => \@avail_ord,
                                                 -default => $index + 1,
                                                 -onchange => 
-                                                "update_order(this, 'order_')",
+                                                "Krang.update_order(this, 'order_')",
                                                 -override => 1) : 
                              ($index + 1) .  
                              $query->hidden(-name     => "order_$index",
@@ -274,7 +282,7 @@ sub element_edit {
     # whip up child element picker from available classes
     my @available =  $element->available_child_classes();
     if (@available) {
-        my @values = map { $_->name } @available;
+        my @values = sort { $a cmp $b } map { $_->name } @available;
         my %labels = map { ($_->name, $_->display_name) } @available;
         $template->param(child_select => 
                          $query->popup_menu(-name   => "child",
@@ -297,10 +305,6 @@ sub element_edit {
                      [ map { { name => $_->name } } 
                          grep { $_->is_container } @available ]);
 
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
 }
 
 sub element_bulk_edit {
@@ -525,8 +529,11 @@ sub find_story_link {
        id_handler    => sub { shift->story_id },
       );
     
-    $template->param(pager_html => $pager->output());
-    $template->param(action => $self->_get_script_name);
+    $template->param(
+        pager_html => $pager->output(),
+        row_count  => $pager->row_count,
+        action     => $self->_get_script_name,
+    );
 
     return $template->output;
 }
@@ -534,6 +541,7 @@ sub find_story_link {
 # Pager row handler for story find run-mode
 sub find_story_link_row_handler {
     my $self = shift;
+    my $q = $self->query;
     my ($row, $story) = @_;
 
     # Columns:
@@ -552,20 +560,19 @@ sub find_story_link_row_handler {
         }
         $url_lines[-1] .= "/" . $_;
     }
-    $row->{url} = join('<br>', 
-                       map { qq{<a href="javascript:preview_story($row->{story_id})">$_</a>} } @url_lines);
+    $row->{url} = join('<wbr>', 
+                       map { qq{<a href="javascript:Krang.preview('story',$row->{story_id})">$_</a>} } @url_lines);
 
 
     # title
-    $row->{title} = $self->query->escapeHTML($story->title);
+    $row->{title} = $q->escapeHTML($story->title);
 
     # cover_date
     my $tp = $story->cover_date();
-    $row->{cover_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
+    $row->{cover_date} = $q->escapeHTML((ref($tp)) ? $tp->mdy('/') : '[n/a]');
 
     # pub_status
-    $row->{pub_status} = $story->published_version() ? 
-      '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
+    $row->{pub_status} = $story->published_version() ? '<b>P</b>' : '&nbsp;';
 }
 
 sub find_media_link {
@@ -731,12 +738,12 @@ sub find_media_link_row_handler {
         }
         $url_lines[-1] .= "/" . $_;
     }
-    $row->{url} = join('<br>', 
-                       map { qq{<a href="javascript:preview_media($row->{media_id})">$_</a>} } @url_lines);
+    $row->{url} = join('<wbr>', 
+                       map { qq{<a href="javascript:Krang.preview('media',$row->{media_id})">$_</a>} } @url_lines);
 
     my $thumbnail_path = $media->thumbnail_path(relative => 1);
     if ($thumbnail_path) {
-        $row->{thumbnail} = qq{<a href="javascript:preview_media($row->{media_id})"><img src="$thumbnail_path" border=0></a>};
+        $row->{thumbnail} = qq{<a href="javascript:Krang.preview('media',$row->{media_id})"><img alt="" src="$thumbnail_path"></a>};
     } else {
         $row->{thumbnail} = "&nbsp;";
     }
@@ -746,8 +753,7 @@ sub find_media_link_row_handler {
     $row->{creation_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
 
     # pub_status
-    $row->{pub_status} = $media->published_version() ? 
-      '&nbsp;<b>P</b>&nbsp;' : '&nbsp;';
+    $row->{pub_status} = $media->published_version() ? '<b>P</b>' : '&nbsp;';
 }
 
 sub select_story {
@@ -858,11 +864,13 @@ sub add {
     # add the child element and save the element tree
     my $kid = $element->add_child(class => $child);
 
-    # start editing the new element if it has children
-    $query->param(path => $kid->xpath()) if $kid->is_container;
-    
-    add_message('added_element', child  => $kid->display_name(),
-                                 parent => $element->display_name());
+    # does this element have children?
+    if( $kid->is_container ) {
+        # start editing the new element
+        $query->param(path => $kid->xpath());
+        add_message('added_element', child  => $kid->display_name(),
+                                     parent => $element->display_name());
+    }
 
     # toss to edit
     return $self->edit();
@@ -951,7 +959,7 @@ sub element_save {
                  $child->class->isa('Krang::ElementClass::MediaLink'))) {
             my ($valid, $msg) = $child->validate(query => $query);
             if (not $valid) {
-                add_message('invalid_element_data', msg => $msg);
+                add_alert('invalid_element_data', msg => $msg);
                 push @invalid, $index;
                 $clean = 0;
             }
@@ -963,7 +971,7 @@ sub element_save {
     if ($clean) {
         my ($valid, $msg) = $element->validate_children(query => $query);
         if (not $valid) {
-            add_message('invalid_element_data', msg => $msg);
+            add_alert('invalid_element_data', msg => $msg);
             $clean = 0;
         }
     }
@@ -1054,7 +1062,7 @@ sub revise {
     # deletions get a message listing deleted elements
     if ($op eq 'delete') {
         my %msg = get_messages(keys => 1);
-        add_message('no_elements_deleted') unless $msg{deleted_element};
+        add_alert('no_elements_deleted') unless $msg{deleted_element};
 
     } else {
         add_message('reordered_elements') unless $no_return;

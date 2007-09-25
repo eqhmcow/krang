@@ -205,7 +205,7 @@ Listen <tmpl_var InstanceApacheAddr>:<tmpl_if InstanceSSLPort><tmpl_var Instance
 
    <Location />
       PerlSetVar        flavor root
-      ErrorDocument 500 /bug.cgi?rm=ise=1
+      ErrorDocument 500 /bug.cgi?ise=1
    </Location>
 
    <tmpl_loop InstanceLoop>

@@ -567,7 +567,7 @@ sub build_perl_module {
           Expect->spawn($cmd);
         
         # setup command to answer questions modules ask
-        my @responses = qw(n n n n n y ! /tmp 0007 y);
+        my @responses = qw(n n n n n y ! /tmp 0007 y n);
         while (
                my $match = $command->expect(
                   undef,
@@ -581,6 +581,7 @@ sub build_perl_module {
                  "UUID state storage",
                  "default umask",
                  "install Inline::C",
+                 "the 'runtests' utility"
                                            )
               )
           {

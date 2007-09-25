@@ -1,146 +1,156 @@
-<tmpl_include /header.tmpl>
+<tmpl_include header.tmpl>
 
-<script language="javascript" type="text/javascript">
-<!-- //
-    nav_edit_mode();
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'contributor' );
+} );
 
-    preview_media = function (media_id) {
-        Preview = window.open("publisher.pl?rm=preview_media&media_id=" + media_id, "<tmpl_var instance_name>");
-        Preview.focus();
-    }
+cancel_contrib_change = function()
+{
+  Krang.form_submit( 'edit_contrib_form', { rm: 'cancel_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
+}
 
-    save_stay  = function () {
-        var myform = document.forms["edit_contrib_form"];
-      <tmpl_if add_mode>
-        myform.rm.value = "save_stay_add";
-      <tmpl_else>
-        myform.rm.value = "save_stay_edit";
-      </tmpl_if>
-        myform.submit();
-    }
+<tmpl_unless add_mode>
+  delete_contrib = function()
+  {
+    if ( confirm( "Are you SURE you want to delete this Contributor?\n\nIf any Stories or Media are associated with this Contributor the association will be removed." ) )
+      Krang.form_submit('edit_contrib_form', { rm: 'delete' });
+  }
+</tmpl_unless>
 
-
-    cancel_contrib_change  = function () {
-        var myform = document.forms["edit_contrib_form"];
-      <tmpl_if add_mode>
-        myform.rm.value = "cancel_add";
-      <tmpl_else>
-        myform.rm.value = "cancel_edit";
-      </tmpl_if>
-        myform.submit();
-    }
-
-
-    delete_contrib  = function () {
-        var myform = document.forms["edit_contrib_form"];
-        if (confirm("Are you SURE you want to delete this contributor?\n\nIf any stories or media are associated with this contributor then the association will be removed.")) {
-            myform.rm.value = "delete";
-            myform.submit();
-        }
-    }
-
-// -->
+<tmpl_unless associate_mode>
+  save_stay = function()
+  {
+    Krang.form_submit( 'edit_contrib_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
+  }
+</tmpl_unless>
 </script>
 
-
-<div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if> Contributor</p><p class="right"><a href="javascript:openWin('help.pl?topic=contributor')">Help</a>&nbsp;</p></div>
-
-<div class="box">
-<form name="edit_contrib_form" method="POST" enctype="multipart/form-data" action="contributor.pl">
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<input type="hidden" name="associate_mode" value="<tmpl_var ESCAPE=HTML associate_mode>">
+<h2>
 <tmpl_if add_mode>
-  <input type="hidden" name="rm" value="save_add">
+  New
 <tmpl_else>
-  <input type="hidden" name="rm" value="save_edit">
-  <input type="hidden" name="contrib_id" value="<tmpl_var escape=HTML contrib_id>">
+  Edit
 </tmpl_if>
+Contributor
+</h2>
 
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+<form name="edit_contrib_form" method="post" enctype="multipart/form-data" action="contributor.pl">
 
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
+<input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+<input name="associate_mode" value="<tmpl_var escape=html associate_mode>" type="hidden">
+<tmpl_unless add_mode>
+  <input name="contrib_id" value="<tmpl_var escape=html contrib_id>" type="hidden">
+</tmpl_unless>
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody class="demi">
+
 <tr>
-    <td align="left" valign="top">Prefix:</td>
-    <td align="left" valign="top"><input type="text" size="40" name="prefix" value="<tmpl_var escape=HTML prefix>"></td>
+<th>Prefix</th>
+<td><input name="prefix" value="<tmpl_var escape=html prefix>"></td>
+</tr>
+
+<tr<tmpl_if duplicate_name> class="err"<tmpl_else><tmpl_if error_invalid_first> class="err"</tmpl_if></tmpl_if>>
+<th>First</th>
+<td>
+<input name="first" value="<tmpl_var escape=html first>">
+</td>
+</tr>
+
+<tr<tmpl_if duplicate_name> class="err"</tmpl_if>>
+<th>Middle</th>
+<td>
+<input name="middle" value="<tmpl_var escape=html middle>">
+</td>
+</tr>
+
+<tr<tmpl_if duplicate_name> class="err"<tmpl_else><tmpl_if error_invalid_last> class="err"</tmpl_if></tmpl_if>>
+<th>Last</th>
+<td>
+<input name="last" value="<tmpl_var escape=html last>">
+</td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">First:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_first><span class="invalid"></tmpl_if><input type="text" size="40" name="first" value="<tmpl_var escape=HTML first>"><tmpl_if error_invalid_first></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+<th>Suffix</th>
+<td><input name="suffix" value="<tmpl_var escape=html suffix>"></td>
+</tr>
+
+<tr<tmpl_if error_invalid_type> class="err"</tmpl_if>>
+<th>Contributor Type</th>
+<td>
+<select name="contrib_type_ids" size="3" multiple><tmpl_loop contrib_type_ids>
+  <option value="<tmpl_var escape=html contrib_type_id>"<tmpl_if selected> selected</tmpl_if>><tmpl_var escape=html type></option>
+</tmpl_loop></select>
+</td>
+</tr>
+
+<tr<tmpl_if error_invalid_email> class="err"</tmpl_if>>
+<th>Email</th>
+<td>
+<input name="email" value="<tmpl_var escape=html email>">
+</td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">Middle:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><input type="text" size="40" name="middle" value="<tmpl_var escape=HTML middle>"><tmpl_if duplicate_name></span></tmpl_if></td>
+<th>Phone</th>
+<td><input name="phone" value="<tmpl_var escape=html phone>"></td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">Last:</td>
-    <td align="left" valign="top"><tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_last><span class="invalid"></tmpl_if><input type="text" size="40" name="last" value="<tmpl_var escape=HTML last>"><tmpl_if error_invalid_last></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></td>
+<th>Bio</th>
+<td><textarea name="bio" rows="9" cols="50"><tmpl_var escape=html bio></textarea></td>
+</tr>
+
+<tr<tmpl_if error_invalid_url> class="err"</tmpl_if>>
+<th>URL</th>
+<td>
+<input name="url" value="<tmpl_var escape=html url>">
+</td>
 </tr>
 
 <tr>
-    <td align="left" valign="top">Suffix:</td>
-    <td align="left" valign="top"><input type="text" size="40" name="suffix" value="<tmpl_var escape=HTML suffix>"></td>
+<th>Photograph</th>
+<td>
+<tmpl_if media_id>
+  <img alt="" src="<tmpl_var escape=html thumbnail_path>">
+  <a href="javascript:Krang.preview('media','<tmpl_var escape=html media_id>')"><tmpl_var escape=html filename></a>
+  <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
+  <br>
+</tmpl_if>
+<input name="media_file" type="file">
+</td>
 </tr>
 
-<tr>
-    <td align="left" valign="top">Contributor Type:</td>
-    <td align="left" valign="top"><tmpl_if error_invalid_type><span class="invalid"></tmpl_if><select name="contrib_type_ids" size="3" multiple="multiple"><tmpl_loop contrib_type_ids>
-        <option value="<tmpl_var escape=HTML contrib_type_id>"<tmpl_if selected> selected</tmpl_if>><tmpl_var escape=HTML type></option></tmpl_loop>
-    </select><tmpl_if error_invalid_type></span></tmpl_if></td>
-</tr>
+</tbody>
 
-<tr>
-    <td align="left" valign="top">Email:</td>
-    <td align="left" valign="top"><tmpl_if error_invalid_email><span class="invalid"></tmpl_if><input type="text" size="40" name="email" value="<tmpl_var escape=HTML email>"></td>
-</tr>
-
-<tr>
-    <td align="left" valign="top">Phone:</td>
-    <td align="left" valign="top"><input type="text" size="40" name="phone" value="<tmpl_var escape=HTML phone>"></td>
-</tr>
-
-<tr>
-    <td align="left" valign="top">Bio:</td>
-    <td align="left" valign="top"><textarea cols="50" rows="9" name="bio"><tmpl_var escape=HTML bio></textarea></td>
-</tr>
-
-<tr>
-    <td align="left" valign="top">URL:</td>
-    <td align="left" valign="top"><tmpl_if error_invalid_url><span class="invalid"></tmpl_if><input type="text" size="40" name="url" value="<tmpl_var escape=HTML url>"></td>
-</tr>
-
-<tr>
-    <td align="left" valign="top">Photograph:</td>
-    <td align="left" valign="top">
-                <tmpl_if media_id>
-                  <img src="<tmpl_var thumbnail_path>">
-                  <a href="javascript:preview_media(<tmpl_var media_id>)">
-                  <tmpl_var escape=HTML filename></a>
-                  <tmpl_var escape=HTML file_size>
-                 <br></tmpl_if>
-                <input type="file" name="media_file" size="32" class="button">
-    </td>
-</tr>
 </table>
+
+<div class="panel capped">
+<input value="Cancel" onclick="cancel_contrib_change()" type="button" class="west">
+<tmpl_unless associate_mode>
+  <input value="Save &amp; Stay" onclick="save_stay()" type="button">
+</tmpl_unless>
+<input value="Save" type="submit">
+<tmpl_unless add_mode>
+  <input value="Delete" onclick="delete_contrib()" type="button">
+</tmpl_unless>
 </div>
 
-<div class="button-bar">
-    <input type="submit" value="Save" class="button">
-    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()" class="button"></tmpl_unless>
-    <input type="reset" value="Reset" class="button">
-    <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_contrib()" class="button"></tmpl_unless>
-    <input type="button" value="Cancel" onClick="cancel_contrib_change()" class="button">&nbsp;
-</div>
-
-
-<!-- End edit_contrib_form -->
 </form>
-</div>
 
-<tmpl_include /footer.tmpl>
+<tmpl_include footer.tmpl>
+

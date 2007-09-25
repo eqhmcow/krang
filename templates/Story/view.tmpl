@@ -1,170 +1,180 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript" type="text/javascript">
-  <tmpl_if was_edit>nav_edit_mode();</tmpl_if>
+<script type="text/javascript">
+Krang.onload( function() {
+<tmpl_if was_edit>
+  Krang.Nav.edit_mode();
+</tmpl_if>
+  Krang.Help.set( 'story_find' );
+} );
 
-  preview_story = function (id) {
-        Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
-        Preview.focus();
+view_log = function()
+{
+  Krang.form_submit( 'view_log_form' );
+}
+
+<tmpl_unless old_version><tmpl_if can_edit>
+  edit_story = function()
+  {
+    Krang.form_submit( 'view', { rm: 'checkout_and_edit' } );
   }
+</tmpl_if></tmpl_unless>
 
-  preview_media = function (id) {
-        Preview = window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var "instance_name">");
-        Preview.focus();
-  }
-
-  edit_story = function () {
-    document.forms[0].rm.value = 'checkout_and_edit';
-    document.forms[0].submit();
-
-  }
-
+<tmpl_unless parent_path>
+ do_return = function()
+ {
+    Krang.form_submit( 'return_form' );
+ }
+</tmpl_unless>
 </script>
 
-<form method="post" name="view" action="story.pl">
-  <input type="hidden" name="rm" value="view">
-  <input type="hidden" name="story_id" value="<tmpl_var story_id>">
-  <input type="hidden" name="version" value="<tmpl_var version>">
-  <input type="hidden" name="return_script" value="<tmpl_var escape=html return_script>"> 
-   <tmpl_loop return_params_loop>
-      <input type="hidden" name="return_params" value="<tmpl_var escape=HTML name="name">">
-      <input type="hidden" name="return_params" value="<tmpl_var escape=HTML name="value">">
-   </tmpl_loop>
+<form name="view" method="post" action="story.pl">
 
-<div class="dark-bar"><p class="left">&nbsp;View Story</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:openWin('help.pl?topic=story_view')">Help</a>&nbsp;</p></div>
-<div class="box">
-<br>
-<table class="form-head">
+<input name="rm" value="view" type="hidden">
+<input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="version" value="<tmpl_var escape=html version>" type="hidden">
+<input name="return_script" value="<tmpl_var escape=html return_script>" type="hidden">
+<tmpl_loop return_params_loop>
+  <input name="return_params" value="<tmpl_var escape=html name>" type="hidden">
+  <input name="return_params" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
+
+<p class="cram east">
+<input value="View Log" onclick="view_log()" type="button" class="button">
+</p>
+
+<h2>
+View Story
+</h2>
+
+<h3>
+Properties
+</h3>
+
+<table class="result" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
 
 <tr>
-<td>Information</td>
-</tr></table>
-
-<table width="571" cellpadding="2" cellspacing="0" class="form-cell">
-<tr>
-<td width="160" class="form-cell">ID:</td>
-<td class="form-cell"><tmpl_var story_id></td>
+<th>Story ID</th>
+<td><tmpl_var escape=html story_id></td>
 </tr>
 
 <tr>
-<td class="form-cell">Type:</td>
-<td class="form-cell"><tmpl_var type></td>
+<th>Type</th>
+<td><tmpl_var escape=html type></td>
 </tr>
 
 <tr>
-<td class="form-cell">Current Version:</td>
-<td class="form-cell"><tmpl_var version></td>
-</tr>
-
-<tmpl_if is_root>
-<tr>
-<td class="form-cell">Published Version:</td>
-<td class="form-cell"><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td>
-</tr>
-
-<tr>
-<td class="form-cell">Title:</td>
-<td class="form-cell"><tmpl_var title></td>
-</tr>
-
-<tr>
-<td class="form-cell">Slug:</td>
-<td class="form-cell"><tmpl_var slug></td>
-</td>
-</tr>
-</tmpl_if>
-
-<tr>
-<td class="form-cell">URL:</td>
-<td class="form-cell"><tmpl_var url></td>
+<th>Current Version</th>
+<td><tmpl_var escape=html version></td>
 </tr>
 
 <tmpl_if is_root>
-<tr>
-<td class="form-cell">Categories:</td>
-<td class="form-cell"><tmpl_loop category_loop><tmpl_var url><br></tmpl_loop></td>
-</tr>
+  <tr>
+  <th>Published Version</th>
+  <td><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+  </tr>
 
-<tr>
-<td class="form-cell">Cover Date:</td>
-<td class="form-cell"><tmpl_var cover_date></td>
-</tr>
+  <tr>
+  <th>Title</th>
+  <td><tmpl_var escape=html title></td>
+  </tr>
 
-<tr>
-<td class="form-cell">Priority:</td>
-<td class="form-cell"><tmpl_var priority></td>
-</tr>
-
-<tr>
-<td class="form-cell">Contributors:</td>
-<td class="form-cell">
-<tmpl_if contribs_loop>
-  <tmpl_loop contribs_loop>
-     <tmpl_var first_name> <tmpl_var last_name> (<tmpl_var type>)<tmpl_unless __last__>, </tmpl_unless>
-  </tmpl_loop>
-<tmpl_else>
-  None.
+  <tr>
+  <th>Slug</th>
+  <td><tmpl_var escape=html slug></td>
+  </tr>
 </tmpl_if>
-</td>
+
+<tr>
+<th>URL</th>
+<td><tmpl_var url><!--:markup--></td>
 </tr>
 
+<tmpl_if is_root>
+  <tr>
+  <th>Categories</th>
+  <td><tmpl_loop category_loop>
+    <tmpl_var escape=html url>
+    <tmpl_unless __last__><br></tmpl_unless>
+  </tmpl_loop></td>
+  </tr>
+
+  <tr>
+  <th>Cover Date</th>
+  <td><tmpl_var escape=html cover_date></td>
+  </tr>
+
+  <tr>
+  <th>Priority</th>
+  <td><tmpl_var escape=html priority></td>
+  </tr>
+
+  <tr>
+  <th>Contributors</th>
+  <td>
+  <tmpl_if contribs_loop>
+    <tmpl_loop contribs_loop>
+      <tmpl_var escape=html first_name> <tmpl_var escape=html last_name> (<tmpl_var escape=html type>)<tmpl_unless __last__>,</tmpl_unless>
+    </tmpl_loop>
+  <tmpl_else>
+    None.
+  </tmpl_if>
+  </td>
+  </tr>
 </tmpl_if>
+
+</tbody>
 
 </table>
 
-<p>
-
+<!--/ElementEditor/view.tmpl:-->
 <tmpl_include /ElementEditor/view.tmpl>
+<!--:/ElementEditor/view.tmpl-->
 
-</p>
-
-</form>
-<form name="ret" action="<tmpl_var return_script>" method="post">
-   <tmpl_loop return_params_loop>
-      <input type="hidden" name="<tmpl_var escape=HTML name="name">" value="<tmpl_var escape=HTML name="value">">
-   </tmpl_loop>
-</form><br>
+<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped">
+<input value="Back" onclick="<tmpl_if parent_path>view_path('<tmpl_var escape=html parent_path>')<tmpl_else>do_return()</tmpl_if>" type="button" class="west">
+<tmpl_unless old_version><tmpl_if can_edit>
+  <input value="Edit" onclick="edit_story()" type="button">
+</tmpl_if></tmpl_unless>
 </div>
-<div class="button-bar">
-  <tmpl_if is_root><tmpl_if can_edit><input type=button value="Edit" onclick="edit_story()" class="button"></tmpl_if></tmpl_if>
-  <tmpl_if parent_path>
-    <input type="button" value="Return" onclick="view_path('<tmpl_var parent_path>')" class="button">
-  <tmpl_else>
-     <input type="button" value="Return" onclick="document.ret.submit()" class="button">
-  </tmpl_if></div>
 
 </form>
 
-
-<form method="post" name="view_log" action="history.pl">
-  <input type="hidden" name="history_return_script" value="story.pl">
-  <input type="hidden" name="story_id" value="<tmpl_var story_id>">
-
-  <input type="hidden" name="history_return_script" value="return_script">
-  <input type="hidden" name="history_return_script" value="story.pl">
-
-  <input type="hidden" name="history_return_params" value="rm">
-  <input type="hidden" name="history_return_params" value="view">
-
-  <input type="hidden" name="history_return_params" value="story_id">
-  <input type="hidden" name="history_return_params" value="<tmpl_var story_id>">
-
-  <input type="hidden" name="history_return_params" value="version">
-  <input type="hidden" name="history_return_params" value="<tmpl_var version>">
-
-  <input type="hidden" name="history_return_params" value="path">
-  <input type="hidden" name="history_return_params" value="<tmpl_var path>">
-
-  <input type="hidden" name="history_return_params" value="return_script">
-  <input type="hidden" name="history_return_params" value="<tmpl_var return_script>">
-
-    <tmpl_loop return_params_loop>
-      <input type="hidden" name="history_return_params" value=return_params>
-      <input type="hidden" name="history_return_params" value="<tmpl_var escape=HTML name="name">">
-
-      <input type="hidden" name="history_return_params" value=return_params>
-      <input type="hidden" name="history_return_params" value="<tmpl_var escape=HTML name="value">">
-   </tmpl_loop>
+<form name="view_log_form" action="history.pl" method="post">
+<input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="history_return_script" value="story.pl" type="hidden">
+<input name="history_return_script" value="return_script" type="hidden">
+<input name="history_return_script" value="story.pl" type="hidden">
+<input name="history_return_params" value="rm" type="hidden">
+<input name="history_return_params" value="view" type="hidden">
+<input name="history_return_params" value="story_id" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="history_return_params" value="version" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html version>" type="hidden">
+<input name="history_return_params" value="path" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html path>" type="hidden">
+<input name="history_return_params" value="return_script" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html return_script>" type="hidden">
+<tmpl_loop return_params_loop>
+  <input name="history_return_params" value="return_params" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html name>" type="hidden">
+  <input name="history_return_params" value="return_params" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
 </form>
-</div>
+
+<form name="return_form" action="<tmpl_var escape=html return_script>" method="post">
+<tmpl_loop return_params_loop>
+  <input name="<tmpl_var escape=html name>" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
+</form>
+
 <tmpl_include footer.tmpl>
+

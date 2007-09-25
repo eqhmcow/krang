@@ -1,69 +1,97 @@
 <tmpl_include header.tmpl>
 
-<div class="dark-bar"><p class="left">&nbsp;View Template</p><p class="right"><a href="javascript:openWin('help.pl?topic=template_view')">Help</a>&nbsp;</p></div>
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'template_find' );
+} );
 
-<div class="boxb">
-<div class="light">
-<table width="100%" cellspacing="10" border="0">
-    <tr><td width="150">ID:</td>
-  <td><tmpl_var template_id></td></tr>
+do_return = function()
+{
+  Krang.form_submit( 'return_form' );
+}
 
-<tr>
-  <td>Filename:</td>
-  <td><tmpl_var filename></td>
-</tr>
-
-
-<tr>
-  <td>URL:</td>
-  <td><tmpl_var url></td>
-</tr>
-
-<tr>
-  <td>Current Version:</td>
-  <td><tmpl_var version></td>
-</tr>
-
-<tr>
-  <td valign="top">Template Code:</td>
-  <td valign="top"><textarea rows="30" cols="35" readonly><tmpl_var escape=HTML content></textarea></td>
-</tr>
-
-
-<form name="return_form" method="POST" action="template.pl">
-<tmpl_var history_return_params>
-<input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
-</form>
-
-<form name="edit_template_form" method="POST" action="template.pl">
-<input type="hidden" name="rm" value="checkout_and_edit">
-<input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
-</form>
-
-<script language="javascript" type="text/javascript">
-<!-- //
-
-        do_return  = function () {
-            var myform = document.return_form;
-            myform.submit();
-        }
-
-
-        do_edit_template  = function () {
-                var myform = document.edit_template_form;
-                myform.submit();
-        }
-
-// -->
+<tmpl_unless is_old_version><tmpl_if can_edit>
+  do_edit_template = function()
+  {
+    Krang.form_submit( 'edit_template_form' );
+  }
+</tmpl_if></tmpl_unless>
 </script>
 
-</table></div>
+<!--[p class="cram east"]
+(db2)add 'View Log' here
+[/p]-->
 
-  </div>
+<h2>
+View Template
+</h2>
 
-<div class="button-bar">
-  <input type="button" value="Return" onClick="javascript:do_return()" class="button"><tmpl_unless is_old_version>&nbsp;<tmpl_if can_edit><input type="button" value="Edit" onClick="javascript:do_edit_template()" class="button"></tmpl_if></tmpl_unless>
-</div></div>
+<form name="return_form" action="template.pl" method="post">
 
+<tmpl_var history_return_params>
+<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+
+<h3>
+Properties
+</h3>
+
+<table class="result" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th>URL</th>
+<td colspan="3"><tmpl_var escape=html url></td>
+</tr>
+
+<tr>
+<th>Template ID</th>
+<td><tmpl_var escape=html template_id></td>
+<th>Current Version</th>
+<td><tmpl_var escape=html version></td>
+</tr>
+
+<tr>
+<th>File Name</th>
+<td><tmpl_var escape=html filename></td>
+<th>Deployed Version</th>
+<td><tmpl_unless deployed_version>[n/a]<tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<h3>
+Content
+</h3>
+
+<p class="full">
+<textarea rows="30" cols="50" readonly><tmpl_var escape=html content></textarea>
+</p>
+
+<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped">
+<input value="Back" onclick="do_return()" type="button" class="west">
+<tmpl_unless is_old_version><tmpl_if can_edit>
+  <input value="Edit" onclick="do_edit_template()" type="button">
+</tmpl_if></tmpl_unless>
+</div>
+
+</form>
+
+<tmpl_unless is_old_version><tmpl_if can_edit>
+  <form name="edit_template_form" method="post" action="template.pl">
+  <input name="rm" value="checkout_and_edit" type="hidden">
+  <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+  </form>
+</tmpl_if></tmpl_unless>
 
 <tmpl_include footer.tmpl>
+

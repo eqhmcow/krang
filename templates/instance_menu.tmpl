@@ -1,21 +1,27 @@
-<html>
-<head><title>Welcome To Krang</title></head>
-<body>
-<h1>Welcome to Krang</h1>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="en-US"><head>
+
+<title>Welcome To <tmpl_var escape=html krang_product_name></title>
+
+</head><body>
+
+<h1>
+Welcome
+</h1>
 
 <p>
-This is the Krang root server menu.  Here you will find a list of
-available Krang instances served by this Krang installation.  Click on
-the links below to enter the Krang of your choice.
+This is the menu of available instances <tmpl_var escape=html krang_product_name> serves.
+Select any instance listed below to begin work.
 </p>
 
 <ul>
-<tmpl_loop instance_loop>
-<li><a href="/<tmpl_var InstanceName>/"><tmpl_var InstanceDisplayName></a></li>
-</tmpl_loop>
+
+<tmpl_loop instance_loop><li>
+  <a href="/<tmpl_var escape=html InstanceName>/"><tmpl_var escape=html InstanceDisplayName></a>
+</li></tmpl_loop>
+
 </ul>
-</body>
-</html>
 
-
+</body></html>
 

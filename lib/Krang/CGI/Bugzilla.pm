@@ -10,7 +10,7 @@ use File::Path;
 use File::Spec::Functions qw(catdir catfile);
 use File::Temp qw/ tempdir /;
 use WWW::Bugzilla;
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf => qw(KrangRoot BugzillaServer BugzillaEmail BugzillaPassword BugzillaComponent EnableBugzilla);
 
@@ -66,7 +66,7 @@ sub edit {
     my $error = shift || '';
     my $q = $self->query;
     my $template = $self->load_tmpl('edit.tmpl', associate => $q);
-    $template->param( enable_bugzilla => EnableBugzilla );
+    $template->param( bug_page => 1);
     $template->param( $error => 1 ) if $error;
     $template->param( "reproduce_".$q->param('reproduce') => 1 ) if $q->param('reproduce');
     $template->param( "bug_severity_".$q->param('bug_severity') => 1 ) if $q->param('reproduce');
@@ -84,10 +84,10 @@ sub commit {
     my $q = $self->query();
 
     if (not $q->param('summary')) {
-        add_message('no_summary');
+        add_alert('no_summary');
         return $self->edit('no_summary');
     } elsif (not $q->param('description')) {
-        add_message('no_description');
+        add_alert('no_description');
         return $self->edit('no_description');
     }
 

@@ -1,27 +1,81 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html401/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 
-<html>
-<head>
-<title>Processing <tmpl_if preview>Preview<tmpl_else>Publish</tmpl_if> Request</title>
-<link rel="stylesheet" href="/krang.css" type="text/css" />
-</head>
-<script language='javascript'>
-   update_progress_bar  = function (counter, total, string) {
-      var bar = document.getElementById("progress_bar");
-      var prog = (counter + 1)/total;
-      var width = Math.floor(prog * 300);
-      bar.style.width = width + 'px';
-      bar.innerHTML = Math.floor(prog * 100) + "%";
+<html lang="en-US"><head>
 
-      var label = document.getElementById("progress_bar_label");
-      label.innerHTML = string;
-   }
-</script>
-<body>
+<title><tmpl_var escape=html krang_product_name> - <tmpl_var escape=html instance_display_name> - Processing <tmpl_if preview>Preview<tmpl_else>Publish</tmpl_if> Request</title>
+
+<link href="favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
+
+<style type="text/css">
+@import url("/krang.css");
+</style>
+
+<!--[if lte IE 7]><style type="text/css">
+body { position: relative; font-size: 69%; }
+
+.enclose { zoom: 1; }
+</style><![endif]-->
+
+<!--[if lt IE 7]><style type="text/css">
+#S { height: 420px; }
+
+#C { display: inline; margin-left: 19px; }
+</style><![endif]-->
+
+<tmpl_if custom_css>
+<tmpl_var custom_css>
+</tmpl_if>
+
+<script src="/js/prototype.js" type="text/javascript"></script>
+<script src="/js/krang.js" type="text/javascript"></script>
+
+</head><body>
+
+<div id="H">
+
+<h1><!--
+--><img alt="<tmpl_var escape=html krang_product_name>" src="/images/logo-cms.jpg" height="90" width="180"><!--
+--></h1>
+
+<div id="instance_logo"></div>
+
+</div>
+
+<div id="M" class="enclose">
+
+<div id="C">
+
+<h2>
+Processing
+<tmpl_if preview>
+  Preview
+<tmpl_else>
+  Publish
+</tmpl_if>
+Request
+</h2>
+
 <div class="publish">
-<div class="dark-bar"><p class="center">Processing <tmpl_if preview>Preview<tmpl_else>Publish</tmpl_if> Request</p></div>
-<div class="box"><br>
-<div style="margin-top: 10px; border: 1px solid #bababa; padding: 1px; width: 300px; height: 15px; margin-left: auto; margin-right: auto; text-align: left;" class="light"><div id="progress_bar" style="width: 0px; height: 15px; text-align: right; overflow: clip;" class="bright"></div></div>
-<div style="text-align: center" id="progress_bar_label">&nbsp;</div>
-<br></div></div>
+
+<div id="progress"><div id="progress_bar"></div></div>
+
+<div id="progress_bar_percent"></div>
+
+<div id="progress_bar_label"></div>
+
+</div>
+
+</div>
+
+<div id="S">
+<!--(db2)skipped-->
+</div>
+
+</div>
+
+<div id="F"><div>
+
+</div></div>
+
+</body><!--:leave page unclosed(db2)-->
+

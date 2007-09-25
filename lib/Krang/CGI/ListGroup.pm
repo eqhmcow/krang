@@ -43,6 +43,7 @@ use Krang::ClassLoader 'ListGroup';
 use Krang::ClassLoader 'List';
 use Krang::ClassLoader 'ListItem';
 use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Widget => qw(autocomplete_values);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Carp;
@@ -60,6 +61,7 @@ sub setup {
                          search
                          edit
                          save
+                         autocomplete
                         )]);
 
     $self->tmpl_path('ListGroup/');
@@ -244,9 +246,9 @@ sub edit {
 		    $do_concat = 0;
 		}
 
-		my $selected = length($select_idx{$count})
-		  ?($select_idx{$count} == $item_count ? 'selected' : '')
-		    : '';
+		my $selected = length($select_idx{$count} || '')
+		  ? ($select_idx{$count} == $item_count ? 'selected' : '')
+		  : '';
 
 		push (@list_item_loop, { data     => $li->data,
 					 order    => ($count == 1 ? ($li->order - 1) : $option_val),
@@ -254,7 +256,7 @@ sub edit {
 				       });
 
 		# build JS array select_state[]
-		if (length($select_idx{$count}) && ($select_idx{$count} == $item_count)) {
+		if (length($select_idx{$count} || '') && ($select_idx{$count} == $item_count)) {
 		    push @select_state_loop, 
                       { select_state => 
 			"select_state[$count] = { index:'$select_idx{$count}', value:'$select_val{$count}' };\n    "
@@ -265,10 +267,25 @@ sub edit {
 	    }
 	}
 
-        if ($count == 1 or exists($select_idx{$count})) {
-            push( @list_loop, { list_id => $list->list_id, list_name => $list->name, list_item_loop => \@list_item_loop, list_count => $count++} );         
+        if ( $count == 1 or exists( $select_idx{$count} ) ) {
+            push(
+                @list_loop,
+                {
+                    list_id        => $list->list_id,
+                    list_name      => $list->name,
+                    list_item_loop => \@list_item_loop,
+                    list_count     => $count++,
+                }
+            );
         } else {
-            push( @list_loop, { list_id => $list->list_id, list_name => $list->name, list_count => $count++} );
+            push(
+                @list_loop,
+                {
+                    list_id    => $list->list_id,
+                    list_name  => $list->name,
+                    list_count => $count++,
+                }
+            );
         }
     } 
 
@@ -353,6 +370,14 @@ sub save {
     } else {
         return $self->search();
     }
+}
+
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'list_group',
+        fields => [qw(list_group_id name)],
+    );
 }
 
 

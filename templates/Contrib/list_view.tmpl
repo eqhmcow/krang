@@ -1,83 +1,106 @@
-<tmpl_include /header.tmpl>
+<tmpl_include header.tmpl>
 
-<script language="javascript" type="text/javascript">
-<!-- //
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'contributor' );
+} );
 
-    add_contrib  = function () {
-        var myform = document.forms["add_contrib_form"];
-        myform.submit();
-    }
-
-    edit_contrib  = function (contrib_id) {
-        var myform = document.forms["edit_contrib_form"];
-        myform.contrib_id.value = contrib_id;
-        myform.submit();
-    }
-
-    delete_selected  = function () {
-        if (confirm("Are you SURE you want to delete this contributor?\n\nIf any stories or media are associated with these contributors then the association will be removed.")) {
-            var myform = document.forms["krang_pager_form"];
-            myform.rm.value = 'delete_selected';
-            myform.submit();
-        }
-    }
-
-// -->
-</script>
-
-<form name="add_contrib_form" method="POST" action="contributor.pl">
-<input type="hidden" name="rm" value="add">
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
-</form>
-
-<form name="edit_contrib_form" method="POST" action="contributor.pl">
-<input type="hidden" name="rm" value="edit">
-<input type="hidden" name="contrib_id" value="">
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
-</form>
-
-<div class="dark-bar"><p class="left">&nbsp;Contributor List</p><p class="right"><a href="javascript:openWin('help.pl?topic=contributor')">Help</a>&nbsp;</p></div>
-
-<div class="boxb"> 
- <div class="light">
- <p>SEARCH</p>
-<form name="search_form" method="POST" action="contributor.pl">
-  <input type="hidden" name="rm" value="search">
-<input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">&nbsp;&nbsp;&nbsp;<input type="submit" value="Search" class="button"><br><span style="font-size: smaller;">(by full name)</span></div>
-
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
-</form>
-<div class="no-border">
-
-<b><a href="javascript:add_contrib()">Add A Contributor</a></b></div><br>
-
-
-<!-- START Krang::HTMLPager output -->
-<tmpl_var pager_html>
-<!-- END Krang::HTMLPager output -->
-    </div>
+add_contrib = function()
+{
+  Krang.form_submit('add_contrib_form');
+}
 
 <tmpl_if row_count>
-  <div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button">&nbsp;</div>
+  edit_contrib = function( id )
+  {
+    Krang.form_submit('edit_contrib_form', { contrib_id: id });
+  }
+
+  delete_selected = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( 'Nothing selected to delete!' );
+    else if ( confirm( "Are you SURE you want to delete these Contributors?\n\nIf any Stories or Media are associated with these Contributors the association will be removed." ) )
+      Krang.form_submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
+  }
 </tmpl_if>
+</script>
+
+<h2>
+Contributors
+</h2>
+
+<form name="search_form" action="contributor.pl" method="post">
+
+<input name="rm" value="search" type="hidden">
+<input name="krang_pager_curr_page_num" value="" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+
+<div class="tabset finder">
+
+<ul class="tabs"><li>
+<b><span>
+Simple Search
+</span></b>
+</li></ul>
+
+<div class="tabbed">
+
+<div class="faux-p">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
+<input value="Search" type="submit" class="button">
 </div>
-<tmpl_include /footer.tmpl>
+
+</div>
+
+</div>
+
+</form>
+
+<h3>
+Search Results
+</h3>
+
+<div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
+<input value="Add Contributor" onclick="add_contrib()" type="button" class="west">
+<tmpl_if row_count>
+  <input value="Delete" onclick="delete_selected()" type="button">
+</tmpl_if>
+</form></div>
+
+<!--Krang::HTMLPager:-->
+<tmpl_var pager_html>
+<!--:Krang::HTMLPager-->
+
+<div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
+<input value="Add Contributor" onclick="add_contrib()" type="button" class="west">
+<tmpl_if row_count>
+  <input value="Delete" onclick="delete_selected()" type="button">
+</tmpl_if>
+</form></div>
+
+<form name="add_contrib_form" action="contributor.pl" method="post">
+<input name="rm" value="add" type="hidden">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+</form>
+
+<tmpl_if row_count>
+  <form name="edit_contrib_form" action="contributor.pl" method="post">
+  <input name="rm" value="edit" type="hidden">
+  <input name="contrib_id" value="" type="hidden">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+  <input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+  <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+  <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+  <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+  </form>
+</tmpl_if>
+
+<tmpl_include footer.tmpl>
+

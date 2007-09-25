@@ -51,9 +51,10 @@ for Krang::CGI::Contrib is 'search'.
 
 use Krang::ClassLoader 'Contrib';
 use Krang::ClassLoader 'Conf';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Widget => qw(autocomplete_values);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Category';
@@ -103,6 +104,7 @@ sub setup {
                          cancel_edit
                          save_stay_edit
                          delete
+                         autocomplete
                         )]);
 
     $self->tmpl_path('Contrib/');
@@ -139,7 +141,11 @@ sub search {
     my $t = $self->load_tmpl("list_view.tmpl", associate=>$q, loop_context_vars=>1);
 
     # Do simple search based on search field
-    my $search_filter = $q->param('search_filter') || '';
+    my $search_filter = $q->param('search_filter');
+    if(! defined $search_filter ) {
+        $search_filter = $session{KRANG_PERSIST}{pkg('Contrib')}{search_filter}
+            || '';
+    }
 
     # We need order_by count when counting based on contrib type
     my $order_by = $q->param('krang_pager_sort_field')
@@ -159,7 +165,7 @@ sub search {
                                       column_labels => {
                                                         last => 'Last Name',
                                                         first_middle => 'First, Middle Name',
-                                                        type => 'Types',
+                                                        type => 'Type',
                                                        },
                                       columns_sortable => [qw( last first_middle type )],
                                       columns_sort_map => {first_middle => 'first,middle'},
@@ -169,11 +175,14 @@ sub search {
                                       id_handler => sub { return $_[0]->contrib_id },
                                      );
 
-    # Run pager
-    $t->param(pager_html =>  $pager->output());
+    # Fill the template
+    $t->param(
+        pager_html    =>  $pager->output(),
+        row_count     => $pager->row_count(),
+        search_filter => $search_filter,
+    );
 
     # Propagate other params
-    $t->param(row_count => $pager->row_count());
 
     return $t->output();
 }
@@ -205,7 +214,7 @@ sub associate_story {
 
     # Redirect back to search
     $self->header_type('redirect');
-    $self->header_props(-url=>$new_url);
+    $self->header_props(-uri => $new_url);
 
     return "Redirect: <a href=\"$new_url\">$new_url</a>";
 }
@@ -237,7 +246,7 @@ sub associate_media {
 
     # Redirect back to search
     $self->header_type('redirect');
-    $self->header_props(-url=>$new_url);
+    $self->header_props(-uri => $new_url);
 
     return "Redirect: <a href=\"$new_url\">$new_url</a>";
 }
@@ -305,7 +314,7 @@ sub associate_search {
         my $associated_contrib_id_type = sprintf("%d:%d", $c->contrib_id, $contrib_type_id);
         my $order_contrib_popup_menu = $q->popup_menu(
                                                       -name => 'order_contrib_' . $associated_contrib_id_type,
-                                                      -onChange => "update_order(this, 'order_contrib_')",
+                                                      -onChange => "Krang.update_order(this, 'order_contrib_')",
                                                       -values => [ (1..$ass_contrib_count) ],
                                                       -default => ++$curr_contrib_pos,
                                                       -override => 1,
@@ -393,7 +402,7 @@ sub associate_selected {
     my @contrib_associate_list = ( $q->param('krang_pager_rows_checked') );
 
     unless (@contrib_associate_list) {
-        add_message('missing_contrib_associate_list');
+        add_alert('missing_contrib_associate_list');
         return $self->associate_search();
     }
 
@@ -453,7 +462,7 @@ sub unassociate_selected {
     my @contrib_unassociate_list = ( $q->param('contrib_unassociate_list') );
 
     unless (@contrib_unassociate_list) {
-        add_message('missing_contrib_unassociate_list');
+        add_alert('missing_contrib_unassociate_list');
         return $self->associate_search();
     }
 
@@ -744,11 +753,6 @@ sub edit {
     # Convert Krang::Contrib object to tmpl data
     my $contrib_tmpl = $self->get_contrib_tmpl($c);
 
-    # instance_name needed for preview media
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $t->param(instance_name => $instance_name);
-
     # Propagate to template
     $t->param($contrib_tmpl);
 
@@ -899,8 +903,8 @@ sub list_view_ass_contrib_row_handler {
     my $q = $self->query;
     my ($row_hashref, $contrib, $associated_contrib_filter, $contrib_type_prefs) = @_;
 
-    $row_hashref->{first_middle} = $q->escapeHTML($contrib->first);
-    $row_hashref->{first_middle} .= '&nbsp;' . $q->escapeHTML($contrib->middle) if ($contrib->middle);
+    $row_hashref->{first_middle} = $contrib->first;
+    $row_hashref->{first_middle} .= ' ' . $contrib->middle if $contrib->middle;
     $row_hashref->{last} = $contrib->last;
 
     # 'type' isn't actually used.  Loop 'contrib_types' instead
@@ -997,7 +1001,7 @@ sub do_update_contrib {
         # delete the media object if it exists
 
         if (ref($@) and $@->isa('Krang::Contrib::DuplicateName')) {
-            add_message('duplicate_name');
+            add_alert('duplicate_name');
             return (duplicate_name=>1);
         } else {
             # Not our error!
@@ -1053,7 +1057,7 @@ sub validate_contrib {
 
     # Add messages
     foreach my $error (keys(%errors)) {
-        add_message($error);
+        add_alert($error);
     }
 
     return %errors;
@@ -1193,7 +1197,7 @@ sub upload_image {
         my $err = $@;
 
         # tell all about it
-        add_message('duplicate_media_upload',
+        add_alert('duplicate_media_upload',
                     filename => $filename);
 
         # use the dup instead of the new object
@@ -1209,6 +1213,13 @@ sub upload_image {
 
 }
 
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'contrib',
+        fields => [qw(contrib_id first middle last)],
+    );
+}
 
 
 1;

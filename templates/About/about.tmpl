@@ -1,38 +1,66 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html401/loose.dtd">
-<html>
-<head>
-<title>About Krang</title>
-<link rel="stylesheet" href="krang.css" type="text/css">
-</head>
-<body style="background-image: none">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 
-<div class="dark-bar">About Krang</div>
+<html lang="en-US"><head>
+
+<title>About <tmpl_var escape=html krang_product_name></title>
+
+<link href="favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon">
+<link href="/krang_about.css" rel="stylesheet" type="text/css">
+
+<!--[if lte IE 7]><style type="text/css">
+body { font-size: 69%; }
+
+h2 { border-bottom-width: 1px; }
+</style><![endif]-->
+
+</head><body>
+
+<div id='H'></div>
+
+<h2>
+About <tmpl_var escape=html krang_product_name>
+</h2>
+
+<h3>
+CMS
+</h3>
 
 <p>
-This is Krang <b>v<tmpl_var version></b>.
+Version <tmpl_var escape=html version>
 </p>
+
+<h3>
+Server IP Address
+</h3>
 
 <p>
-Server IP Address: <b><tmpl_var server_ip></b>.
+<tmpl_var escape=html server_ip>
 </p>
 
-<tmpl_if cgi_mode>
-<p>
-Server running in <b>CGI MODE</b>.
-</p>
-</tmpl_if>
+<tmpl_if cgi_mode><p>
+  Server running with CGI_MODE set.
+</p></tmpl_if>
 
-<tmpl_if addons>
-<p>The following addons are installed:
-<ul>
-<tmpl_loop addons>
-  <li><tmpl_var name> <b>v<tmpl_var version></b></li>
-</tmpl_loop>
-</ul>
-</p>
+<h3>
+Addons
+</h3>
+
+<tmpl_unless addons>
+
+  <p>
+  No addons are installed.
+  </p>
 
 <tmpl_else>
 
-<p>There are no addons installed.</p>
+  <ul><tmpl_loop addons>
+    <li>
+    <tmpl_var escape=html name>
+    Version <tmpl_var escape=html version>
+    </li>
+  </tmpl_loop></ul>
 
-</tmpl_if>
+</tmpl_unless>
+
+</body></html>
+

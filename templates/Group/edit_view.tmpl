@@ -1,231 +1,285 @@
-<tmpl_include /header.tmpl>
+<tmpl_include header.tmpl>
 
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'group' );
+} );
 
-<script language="javascript" type="text/javascript">
-<!-- //
+do_save = function()
+{
+  Krang.form_set('edit_group_form', { rm: 'save' });
+}
 
-    nav_edit_mode();
+cancel_group_change = function()
+{
+  Krang.form_submit('edit_group_form', { rm: 'cancel' });
+}
 
-    do_save  = function () {
-        var myform = document.forms["edit_group_form"];
-        myform.rm.value = "save";
-        myform.submit();
-    }
+<tmpl_if categories>
+  edit_categories = function( id )
+  {
+    Krang.form_submit('edit_group_form', { rm: 'save_and_edit_categories', category_id: id });
+  }
+</tmpl_if>
 
+<tmpl_unless associate_mode>
+  save_stay = function()
+  {
+    Krang.form_submit('edit_group_form', { rm: 'save_stay' }, { to_top: false });
+  }
+</tmpl_unless>
 
-    save_stay  = function () {
-        var myform = document.forms["edit_group_form"];
-        myform.rm.value = "save_stay";
-        myform.submit();
-    }
-
-
-    cancel_group_change  = function () {
-        var myform = document.forms["edit_group_form"];
-        myform.rm.value = "cancel";
-        myform.submit();
-    }
-
-
-    edit_categories  = function (category_id) {
-        var myform = document.forms["edit_group_form"];
-        myform.rm.value = "save_and_edit_categories";
-        myform.category_id.value = category_id;
-        myform.submit();
-    }
-
-
-    delete_group  = function () {
-        var myform = document.forms["edit_group_form"];
-        if (confirm("Are you SURE you want to delete this group?")) {
-            myform.rm.value = "delete";
-            myform.submit();
-        }
-    }
-
-// -->
+<tmpl_unless add_mode>
+  delete_group = function()
+  {
+    if ( confirm( 'Are you SURE you want to delete this Group?' ) )
+      Krang.form_submit('edit_group_form', { rm: 'delete' });
+  }
+</tmpl_unless>
 </script>
 
+<h2>
+<tmpl_if add_mode>
+  New
+<tmpl_else>
+  Edit
+</tmpl_if>
+Group
+</h2>
 
-<div class="dark-bar"><p class="left">&nbsp;Group <tmpl_if add_mode>Add<tmpl_else>Edit</tmpl_if></p><p class="right"><a href="javascript:openWin('help.pl?topic=group')">Help</a>&nbsp;</p></div>
+<form name="edit_group_form" action="group.pl" method="post">
 
-<div class="box">
-<form name="edit_group_form" method="POST" action="group.pl">
-<input type="hidden" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-<input type="hidden" name="rm" value="save">
-<input type="hidden" name="category_id" value="">
-<input type="hidden" name="group_id" value="<tmpl_var escape=HTML group_id>">
+<input name="rm" value="save" type="hidden">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+<input name="category_id" value="" type="hidden">
+<input name="group_id" value="<tmpl_var escape=html group_id>" type="hidden">
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var ESCAPE=HTML krang_pager_curr_page_num>">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
+<h3>
+Properties
+</h3>
 
-<div class="no-border">Group Name:&nbsp;&nbsp;&nbsp;<tmpl_if duplicate_name><span class="invalid"></tmpl_if><tmpl_if error_invalid_name><span class="invalid"></tmpl_if><input type="text" size="30" name="name" value="<tmpl_var escape=HTML name>"><tmpl_if error_invalid_name></span></tmpl_if><tmpl_if duplicate_name></span></tmpl_if></div>
+<table class="request" summary="">
 
-<table cellspacing="0" cellpadding="4" class="form-head">
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
 
-<tr>
-   <td align="left">Sites</td>
-    <td width="85" align="center">Categories</td>
-    <td width="85" align="center">Edit</td>
-    <td width="85" align="center">Read-Only</td>
-    <td width="85" align="center">Hide</td>
-</tr></table>
+<tbody>
 
-    <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
+<tr class="demi<tmpl_if duplicate_name> err<tmpl_else><tmpl_if error_invalid_name> err</tmpl_if></tmpl_if>">
+<th>Group Name</th>
+<td><input name="name" value="<tmpl_var escape=html name>"></td>
+</tr>
 
-<tmpl_loop categories><tr>
-    <td class="form-cell"><tmpl_var category_url></td>
-    <td class="form-cell" align="center" width="80"><a href="javascript:edit_categories('<tmpl_var category_id>')">Edit</a></td>
-    <tmpl_loop permission_radio><td class="form-cell" align="center" width="80"><tmpl_var radio_select></td></tmpl_loop>
-</tr></tmpl_loop>
- 
+</tbody>
+
 </table>
-<!-- END Site/Root Category permissions -->
 
+<h3>
+Site Permissions
+</h3>
 
-<br>
+<table class="request" summary="">
 
-<!-- Asset permissions -->
-<table cellspacing="0" cellpadding="4" class="form-head">
+<colgroup>
+<col>
+<col>
+<col class="series">
+<col class="series">
+<col class="series">
+</colgroup>
 
+<thead>
 <tr>
-  <td align="left">Assets</td>
-    <td width="85" align="center">Edit</td>
-    <td width="85" align="center">Read-Only</td>
-    <td width="85" align="center">Hide</td> 
-</tr></table>
-
-    <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-
-<tr>
-    <td class="form-cell">Stories</td>
-    <tmpl_loop asset_story><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
+<th colspan="2" class="f">Site</th>
+<th class="series">Edit</th>
+<th class="series">Read-Only</th>
+<th class="series l">Hide</th>
 </tr>
+</thead>
 
-<tr>
-    <td class="form-cell">Media</td>
-    <tmpl_loop asset_media><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
-</tr>
+<tbody><tmpl_loop categories>
+  <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+  <td><tmpl_var escape=html category_url></td>
+  <td><input value="Set Category Permissions" onclick="edit_categories('<tmpl_var escape=html category_id>')" type="button" class="button"></td>
+  <tmpl_loop permission_radio>
+    <td class="series"><tmpl_var radio_select></td>
+  </tmpl_loop>
+  </tr>
+</tmpl_loop></tbody>
 
-<tr>
-    <td class="form-cell">Templates</td>
-    <tmpl_loop asset_template><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
-</tr>
-
- 
 </table>
-<!-- END Asset permissions -->
 
+<h3>
+Asset Permissions
+</h3>
 
-<br>
+<table class="request" summary="">
 
+<colgroup>
+<col>
+<col class="series">
+<col class="series">
+<col class="series">
+</colgroup>
 
+<thead>
+<tr>
+<th class="f">Asset</th>
+<th class="series">Edit</th>
+<th class="series">Read-Only</th>
+<th class="series l">Hide</th>
+</tr>
+</thead>
 
-<!-- Desk permissions -->
-<table cellspacing="0" cellpadding="4" class="form-head">
+<tbody>
+<tr>
+<td>Stories</td>
+<tmpl_loop asset_story>
+  <td class="series"><tmpl_var radio_select></td>
+</tmpl_loop>
+</tr>
+
+<tr class="even">
+<td>Media</td>
+<tmpl_loop asset_media>
+  <td class="series"><tmpl_var radio_select></td>
+</tmpl_loop>
+</tr>
 
 <tr>
-  <td align="left">Desks</td>
-    <td width="85" align="center">Edit</td>
-    <td width="85" align="center">Read-Only</td>
-    <td width="85" align="center">Hide</td>
-</tr></table>
+<td>Templates</td>
+<tmpl_loop asset_template>
+  <td class="series"><tmpl_var radio_select></td>
+</tmpl_loop>
+</tr>
+</tbody>
 
- <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-
-<tmpl_loop desks><tr>
-    <td class="form-cell"><tmpl_var desk_name></td>
-    <tmpl_loop permission_radio><td class="form-cell" width="80" align="center"><tmpl_var radio_select></td></tmpl_loop>
-</tr></tmpl_loop>
- 
 </table>
-<!-- END Desk permissions -->
 
-<br>
+<h3>
+Desk Permissions
+</h3>
 
-<!-- Administration permissions -->
-<table cellspacing="0" cellpadding="4" class="form-head">
+<table class="request" summary="">
+
+<colgroup>
+<col>
+<col class="series">
+<col class="series">
+<col class="series">
+</colgroup>
+
+<thead>
+<tr>
+<th class="f">Desk</th>
+<th class="series">Edit</th>
+<th class="series">Read-Only</th>
+<th class="l series">Hide</th>
+</tr>
+</thead>
+
+<tbody><tmpl_loop desks>
+  <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+  <td><tmpl_var desk_name></td>
+  <tmpl_loop permission_radio>
+    <td class="series"><tmpl_var radio_select></td>
+  </tmpl_loop>
+  </tr>
+</tmpl_loop></tbody>
+
+</table>
+
+<h3>
+Administrative Permissions
+</h3>
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="tick">
+<col class="tick">
+<col>
+<col class="tick">
+<col class="tick">
+<col>
+</colgroup>
+
+<tbody>
 
 <tr>
-    <td width="40">&nbsp;</td><td align="left">Administration permissions</td>
-</tr></table>
-
-    <table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-
-<tr>
-    <td class="form-cell" align="center" width="30"><tmpl_var may_publish></td>
-    <td class="form-cell" align="left">May Publish</td>
+<td class="tick"><tmpl_var may_publish></td>
+<td colspan="2">May Publish</td>
+<td class="tick"><tmpl_var may_checkin_all></td>
+<td colspan="2">May Check In All</td>
 </tr>
 
 <tr>
-    <td class="form-cell" align="center"><tmpl_var admin_users></td>
-    <td class="form-cell" align="left">Manage Users<br /><tmpl_var admin_users_limited> Group Limited</td>
+<td class="tick"><tmpl_var admin_desks></td>
+<td colspan="2">Manage Desks</td>
+<td class="tick"><tmpl_var admin_jobs></td>
+<td colspan="2">Manage Jobs</td>
 </tr>
 
 <tr>
-    <td class="form-cell" align="center"><tmpl_var admin_groups></td>
-    <td class="form-cell" align="left">Manage Groups</td>
+<td class="tick"><tmpl_var admin_groups></td>
+<td colspan="2">Manage Groups</td>
+<td class="tick"><tmpl_var admin_sites></td>
+<td colspan="2">Manage Sites</td>
 </tr>
 
 <tr>
-    <td class="form-cell" align="center"><tmpl_var admin_contribs></td>
-    <td class="form-cell" align="left">Manage Contributors</td>
+<td class="tick"><tmpl_var admin_users></td>
+<td colspan="2">Manage Users</td>
+<td class="tick"><tmpl_var admin_categories></td>
+<td colspan="2">Manage Categories</td>
 </tr>
 
 <tr>
-    <td class="form-cell" align="center"><tmpl_var admin_sites></td>
-    <td class="form-cell" align="left">Manage Sites</td>
+<td></td>
+<td class="tick"><tmpl_var admin_users_limited></td>
+<td<tmpl_unless enable_ftp> colspan="4"</tmpl_unless>>Group Limited</td>
+<tmpl_if enable_ftp>
+  <td></td>
+  <td class="tick"><tmpl_var admin_categories_ftp></td>
+  <td>Via FTP</td>
+</tmpl_if>
 </tr>
 
 <tr>
-    <td class="form-cell" align="center"><tmpl_var admin_categories></td>
-    <td class="form-cell" align="left">Manage Categories<br /><tmpl_var admin_categories_ftp> Via FTP</td>
+<td class="tick"><tmpl_var admin_contribs></td>
+<td colspan="2">Manage Contributors</td>
+<td class="tick"><tmpl_var admin_scheduler></td>
+<td colspan="2">Manage Scheduler Addons</td>
 </tr>
 
 <tr>
-    <td class="form-cell" align="center"><tmpl_var admin_jobs></td>
-    <td class="form-cell" align="left">Manage Jobs</td>
+<td class="tick"><tmpl_var admin_lists></td>
+<td colspan="2">Manage Lists</td>
 </tr>
 
-<tr>
-    <td class="form-cell" align="center"><tmpl_var admin_scheduler></td>
-    <td class="form-cell" align="left">Manage Scheduler Addons</td>
-</tr>
+</tbody>
 
-<tr>
-    <td class="form-cell" align="center"><tmpl_var admin_desks></td>
-    <td class="form-cell" align="left">Manage Desks</td>
-</tr>
+</table>
 
-<tr>
-    <td class="form-cell" align="center"><tmpl_var admin_lists></td>
-    <td class="form-cell" align="left">Manage Lists</td>
-</tr>
-
-<tr>
-    <td class="form-cell" align="center"><tmpl_var may_checkin_all></td>
-    <td class="form-cell" align="left">May Check In All</td>
-</tr>
- 
-</table><br>
-<!-- END Administration permissions -->
-
+<div class="panel capped">
+<input value="Cancel" onclick="cancel_group_change()" type="button" class="west">
+<tmpl_unless associate_mode>
+  <input value="Save &amp; Stay" onclick="save_stay()" type="button">
+</tmpl_unless>
+<input value="Save" onclick="do_save()" type="submit">
+<tmpl_unless add_mode>
+  <input value="Delete" onclick="delete_group()" type="button">
+</tmpl_unless>
 </div>
 
-<div class="button-bar">
-    <input type="submit" value="Save" onClick="do_save()" class="button">
-    <tmpl_unless associate_mode><input type="button" value="Save &amp; Stay" onClick="save_stay()" class="button"></tmpl_unless>
-    <input type="reset" value="Reset" class="button">
-    <tmpl_unless add_mode><input type="button" value="Delete" onClick="delete_group()" class="button"></tmpl_unless>
-    <input type="button" value="Cancel" onClick="cancel_group_change()" class="button">
-</div>
-
-
-<!-- End edit_group_form -->
 </form>
-</div>
 
-<tmpl_include /footer.tmpl>
+<tmpl_include footer.tmpl>
+

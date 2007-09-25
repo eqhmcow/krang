@@ -28,7 +28,6 @@ database for this instance does not yet exist, it will be created.
 
 =cut
 
-
 use base 'Exporter';
 our @EXPORT_OK = qw(dbh forget_dbh);
 
@@ -38,8 +37,7 @@ use DBI;
 use Krang;
 use Krang::ClassLoader Conf => qw(InstanceDBName DBUser DBPass DBHost DBSock KrangRoot);
 use Krang::ClassLoader Log => qw(info debug critical);
-
-
+use Krang::ClassLoader 'Charset';
 
 =item C<< $dbh = dbh() >>
 
@@ -92,6 +90,9 @@ sub dbh {
 
     $connect_options{mysql_socket}=DBSock if DBSock;
     
+    my $is_utf8 = pkg('Charset')->is_utf8;
+    $connect_options{mysql_enable_utf8} = 1 if $is_utf8;
+    
     # connect to the defined database
     $DBH{$name} = DBI->connect($dsn, DBUser, DBPass, \%connect_options);
 
@@ -102,6 +103,9 @@ sub dbh {
         die("Database <-> Krang version mismatch! (Krang v$krang_version, DB v$db_version).\n\n Unable to continue.\n")
           unless ($db_version == $krang_version);
     }
+
+    # if we're using UTF-8, we need to tell mysql this
+    $DBH{$name}->do('Set names utf8') if $is_utf8;
 
     return $DBH{$name};
 }

@@ -1,68 +1,75 @@
 <tmpl_include header.tmpl>
 
-<div class="dark-bar"><p class="left">&nbsp;View Site</p><p class="right"><tmpl_unless add_mode><a href="javascript:save_and_view_log()">Log</a> | </tmpl_unless><a href="javascript:openWin('help.pl?topic=site')">Help</a>&nbsp;</p></div>
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'site' );
+} );
 
+do_return = function()
+{
+  Krang.form_submit( 'return_form' );
+}
 
-<div class="boxb">
-<div class="light">
-<table width="100%" cellspacing="10" border="0">
+do_edit_site = function()
+{
+  Krang.form_submit( 'edit_site_form' );
+}
+</script>
+
+<h2>
+View Site
+</h2>
+
+<h3>
+Properties
+</h3>
+
+<table class="result" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
 <tr>
-<td width="135">URL:</td>
-  <td width="445"><tmpl_var url></td>
+<th>URL</th>
+<td><tmpl_var escape=html url></td>
 </tr>
 
-
 <tr>
-  <td>Preview URL:</td>
-  <td><tmpl_var preview_url></td>
-</tr>
-
-
-<tr>
-  <td>Preview Path:</td>
-  <td><tmpl_var preview_path></td>
+<th>Preview URL</th>
+<td><tmpl_var escape=html preview_url></td>
 </tr>
 
 <tr>
-  <td>Publish Path:</td>
-  <td><tmpl_var publish_path></td>
+<th>Preview Path</th>
+<td><tmpl_var escape=html preview_path></td>
 </tr>
 
-<form name="return_form" method="POST" action="site.pl">
+<tr>
+<th>Publish Path</th>
+<td><tmpl_var escape=html publish_path></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel capped"><form>
+<input value="Back" onclick="do_return()" type="button" class="west">
+<input value="Edit" onclick="do_edit_site()" type="button">
+</form></div>
+
+<form name="return_form" method="post" action="site.pl">
 <tmpl_var history_return_params>
 </form>
 
-<form name="edit_site_form" method="POST" action="site.pl">
-<input type="hidden" name="rm" value="edit">
-<input type="hidden" name="site_id" value="<tmpl_var escape=HTML site_id>">
+<form name="edit_site_form" method="post" action="site.pl">
+<input name="rm" value="edit" type="hidden">
+<input name="site_id" value="<tmpl_var escape=html site_id>" type="hidden">
 </form>
 
-<script language="javascript" type="text/javascript">
-<!-- //
-
-        do_return = function () {
-            var myform = document.return_form;
-            myform.submit();
-        }
-
-
-        do_edit_site = function () {
-                var myform = document.edit_site_form;
-                myform.submit();
-        }
-
-// -->
-</script>
-
-
-</table></div>
-
-  </div>
-
-<div class="button-bar">
-  <input type="button" value="Return" onClick="javascript:do_return()" class="button">
-  <input type="button" value="Edit" onClick="javascript:do_edit_site()" class="button"></div>
-</div>
-
-
 <tmpl_include footer.tmpl>
+

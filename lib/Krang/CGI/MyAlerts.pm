@@ -7,7 +7,7 @@ use warnings;
 use Carp qw(croak);
 use Krang::ClassLoader 'Alert';
 use Krang::ClassLoader 'User';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Widget => qw(category_chooser);
 
@@ -41,7 +41,7 @@ sub setup {
                                                                                 
     $self->run_modes([qw(
                             edit
-                            add_alert
+                            add
                             delete_alerts
                     )]);
                                                                                 
@@ -61,7 +61,7 @@ sub edit {
     my $error = shift || '';
     my $q = $self->query;
     my $user_id = $ENV{REMOTE_USER};
-    my $template = $self->load_tmpl('edit.tmpl', associate => $q);
+    my $template = $self->load_tmpl('edit.tmpl', associate => $q, loop_context_vars => 1);
     $template->param( $error => 1 ) if $error;
                                                                                 
     my %alert_types = ( new => 'New',
@@ -109,13 +109,13 @@ sub edit {
     return $template->output;
 }
 
-=item add_alert()
+=item add()
                                                                                 
 Commits new Krang::Alert to server.
                                                                                 
 =cut
                                                                                 
-sub add_alert {
+sub add {
     my $self = shift;
     my $q = $self->query();
     my %params;
@@ -125,10 +125,10 @@ sub add_alert {
     $params{desk_id} = $q->param('desk_list') ? $q->param('desk_list') : 'NULL';    $params{category_id} = $q->param('category_id') ? $q->param('category_id') : 'NULL';
                                                                                 
     # return error message on bad combination
-    add_message("bad_desk_combo"), return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
-    add_message("move_needs_desk"),  return $self->edit() if ( ($params{action}
+    add_alert("bad_desk_combo"), return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
+    add_alert("move_needs_desk"),  return $self->edit() if ( ($params{action}
 eq 'move') and ($params{desk_id} eq 'NULL') );
-    add_message("desk_requires_move"),  return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
+    add_alert("desk_requires_move"),  return $self->edit() if ( ($params{action} ne 'move') and ($params{desk_id} ne 'NULL') );
                                                                                 
     my @found = pkg('Alert')->find( %params );
                                                                                 
@@ -140,7 +140,7 @@ eq 'move') and ($params{desk_id} eq 'NULL') );
         $alert->save();
         add_message("alert_added");
     } else {
-        add_message("duplicate_alert");
+        add_alert("duplicate_alert");
     }
                                                                                 
     return $self->edit();
@@ -158,7 +158,7 @@ sub delete_alerts {
     my @delete_list = ( $q->param('alert_delete_list') );
                                                                                 
     unless (@delete_list) {
-        add_message('missing_alert_delete_list');
+        add_alert('missing_alert_delete_list');
         return $self->edit();
     }
                                                                                 

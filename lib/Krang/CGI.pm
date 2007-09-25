@@ -5,13 +5,16 @@ use warnings;
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Widget  => qw(category_chooser_object);
+use Krang::ClassLoader 'Charset';
+use MIME::Base64 qw(decode_base64);
+use Encode qw(decode_utf8);
 
 # pull in Krang::lib when not running in mod_perl
 BEGIN { $ENV{MOD_PERL} or eval "use pkg('lib')" }
 
 # trigger InitHandler when not in mod_perl
 BEGIN { $ENV{MOD_PERL} or pkg('AddOn')->call_handler('InitHandler') }
-
 
 =head1 NAME
 
@@ -42,6 +45,17 @@ CGI::Application features are available.
 =head1 INTERFACE
 
 See L<CGI::Application>.
+
+Some additional methods are provided:
+
+=over
+
+=item script_name
+
+The name of the script making the request. This is useful if you need
+to set the target actions for requests that might come from various places.
+
+=back
 
 =head1 AUTHORIZATION
 
@@ -143,17 +157,16 @@ information on the different permissions available.
 
 use base 'CGI::Application';
 
-use Krang::ClassLoader 'ErrorHandler';
-use Data::Dumper ();
-
 use Krang::ClassLoader Conf => qw(KrangRoot InstanceDisplayName Charset);
-use File::Spec::Functions qw(catdir rel2abs);
-use Krang::ClassLoader Log => qw(critical info debug);
-use Krang::ClassLoader 'User';
+use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'HTMLTemplate';
-
-# Krang sessions
+use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader Session => qw/%session/;
+use Krang::ClassLoader 'User';
+
+use CGI::Application::Plugin::JSON qw(:all);
+use Data::Dumper ();
+use File::Spec::Functions qw(catdir rel2abs);
 
 # set this to one to see HTML errors in a popup in the UI
 use constant HTMLLint => 0;
@@ -172,11 +185,14 @@ BEGIN {
 
     # register the auth_forbidden runmode
     # and prevent aggressive caching from some browsers (looking at you IE)
+    # it also does Base64 decoding if the parameters were encoded as Base64
     __PACKAGE__->add_callback(
         init => sub {
             my $self = shift;
+            # add auth_forbidden rm
             $self->run_modes(access_forbidden => 'access_forbidden');
 
+            # send the no-cache headers
             if( $ENV{MOD_PERL} ) {
                 require Apache;
                 my $r = Apache->request();
@@ -186,6 +202,43 @@ BEGIN {
                     -cache_Control => 'no-cache',
                     -pragma        => 'no-cache',
                 );
+            }
+
+            my $q = $self->query;
+
+            # Decode the data
+            # If the 'base64' flag is set data could be Base64 encoded (we 
+            # Base64 encode in the client-side JavaScript since JavaScript 
+            # would natively encode to UTF-8 (done # by encodeURIComponent()).
+            # So by encoding in Base64 first we preserve the orginal 
+            # characters.
+            if( $q->param('base64') ) {
+                my @names = $q->param();
+                foreach my $name (@names) {
+                    # 'ajax' and 'base64' are not encoded
+                    next if $name eq 'ajax' or $name eq 'base64';
+                    my @values = $q->param($name);
+                    foreach my $i (0..$#values) {
+                        $values[$i] = decode_base64($values[$i]);
+                    }
+
+                    $q->param($name => @values);
+                }
+# this still isn't working completely. for some reason after editing
+# a nested element and then saving the top level (after everything's already
+# been saved and returned to) can corrupt things
+#            } elsif( $q->param('ajax') or pkg('Charset')->is_utf8 ) {
+#                # else we mark the strings as UTF8 so other stuff doesn't
+#                # have to worry about it
+#                my @names = $q->param();
+#                foreach my $name (@names) {
+#                    my @values = $q->param($name);
+#                    foreach my $i (0..$#values) {
+#                        $values[$i] = decode_utf8($values[$i]);
+#                    }
+#
+#                    $q->param($name => @values);
+#                }
             }
         }
     );
@@ -215,6 +268,88 @@ BEGIN {
             }
         }
     );
+
+    __PACKAGE__->add_callback(postrun => sub {
+        # check for HTML errors if HTMLLint is on
+        my ($self, $o) = @_;   
+        return unless HTMLLint;
+
+        # parse the output with HTML::Lint
+        require HTML::Lint;
+        my $lint = HTML::Lint->new();
+        $lint->parse($$o);
+        $lint->eof();
+
+        # if there were errors put them into a javascript popup
+        if ($lint->errors) {
+            my $err_text = "<ul>" . join("", map { "<li>$_</li>" }
+                                         map { s/&/&amp;/g;
+                                               s/</&lt;/g;
+                                               s/>/&gt;/g;
+                                               s/\\/\\\\/g;
+                                               s/"/\\"/g;
+                                               $_; }
+                                         map { $_->as_string } $lint->errors) .
+                                           "</ul>";
+        my $js = qq|
+            <script type="text/javascript">
+            var html_lint_window = window.open( '', 'html_lint_window', 'height=300,width=600' );
+            html_lint_window.document.write( '<html><head><title>HTML Errors Detected</title></head><body><h1>HTML Errors Detected</h1>$err_text</body></html>' );
+            html_lint_window.document.close();
+            html_lint_window.focus();
+            </script>
+        |;
+            if ($$o =~ m!</body>!) {
+                $$o =~ s!</body>!$js\n</body>!;
+            } else {
+                $$o .= $js;
+            }
+        }
+    });
+
+    # make sure our redirect headers are AJAXy
+    # if the original request was for AJAX
+    __PACKAGE__->add_callback(postrun => sub {
+        my $self  = shift;
+        my %props = $self->header_props();
+        my $uri   = delete $props{'uri'} 
+            || delete $props{'-uri'} 
+            || delete $props{'url'} 
+            || delete $props{'-url'};
+        my $ajax  = $self->param('ajax');
+        if( $uri && $ajax ) {
+            if( $uri =~ /\?/ ) {
+                $uri .= '&';
+            } else {
+                $uri .= '?';
+            }
+            $uri .= 'ajax=' . $ajax;
+            $props{'-uri'} = $uri;
+            $self->header_props(%props);
+        }
+    });
+
+    __PACKAGE__->add_callback(prerun => sub {
+        my $self  = shift;
+        # This run mode is added as a run mode to every controller class since it's used
+        # in almost all of them. It is designed to be called as an AJAX request by
+        # the C<category_chooser> widget to return a portion of the category tree.
+        $self->run_modes(
+            category_chooser_node => sub {
+                my $self = shift;
+                my $query = $self->query();
+                my $chooser = category_chooser_object(
+                    query    => $query,
+                    may_edit => 1,
+                );
+                return $chooser->handle_get_node( query => $query );
+            },
+        );
+
+        # store the ajax flag in $self->param early on
+        # since some modules will call $query->delete_all();
+        $self->param( ajax => (scalar $self->query->param('ajax') ) );
+    });
 }
 
 sub _check_permissions {
@@ -294,6 +429,9 @@ sub load_tmpl {
     } 
 
     my $t = pkg('HTMLTemplate')->new_file($tmpl_file, @extra_params);
+
+    # add the AJAX flag if we need to
+    $t->param(ajax => 1 ) if( $self->param('ajax') && $t->query( name => 'ajax' ) );
     return $t;
 }
 
@@ -353,49 +491,22 @@ sub dump_html {
     $output .= $self->SUPER::dump_html();
 
     # Dump Session state
-    $output .= "<P>\nSession State:<BR>\n<b><PRE>";
+    $output .= "\n<p>Session State:</p>\n<pre><b>\n";
     $output .= Data::Dumper::Dumper(\%session);
-    $output .= "</PRE></b>\n";
+    $output .= "\n</b></pre>\n";
 
-    return "<div style='text-align: left; margin-left: 170px'>$output</div>";
+    return qq|<div style="text-align:left;margin-left:170px">\n$output\n</div>|;
 }
 
-# check for HTML errors if HTMLLint is on
-sub cgiapp_postrun {
-    my ($self, $o) = @_;   
-    return unless HTMLLint;
+sub script_name {
+    return shift->query->url(-relative => 1);
+}
 
-    # parse the output with HTML::Lint
-    require HTML::Lint;
-    my $lint = HTML::Lint->new();
-    $lint->parse($$o);
-    $lint->eof();
+sub update_nav {
+    my $self = shift;
+    my $q = $self->query;
 
-    # if there were errors put them into a javascript popup
-    if ($lint->errors) {
-        my $err_text = "<ul>" . join("", map { "<li>$_</li>" }
-                                     map { s/&/&amp;/g;
-                                           s/</&lt;/g;
-                                           s/>/&gt;/g;
-                                           s/\\/\\\\/g;
-                                           s/"/\\"/g;
-                                           $_; }
-                                     map { $_->as_string } $lint->errors) .
-                                       "</ul>";
-    my $js = <<END;
-<script language="javascript">
-  var html_lint_window = window.open("", "html_lint_window", "height=300,width=600");
-  html_lint_window.document.write("<html><head><title>HTML Errors Detected</title></head><body><h1>HTML Errors Detected</h1>$err_text</body></html>");
-  html_lint_window.document.close();
-  html_lint_window.focus(); 
-</script>
-END
-        if ($$o =~ m!</body>!) {
-            $$o =~ s!</body>!$js\n</body>!;
-        } else {
-            $$o .= $js;
-        }
-    }
+    $self->add_json_header('krang_update_nav' => 1);
 }
 
 1;

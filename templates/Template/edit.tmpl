@@ -1,223 +1,227 @@
 <tmpl_include header.tmpl>
 
-<script language="JavaScript" type="text/javascript">
-<!-- //
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'template_<tmpl_if add_mode>new<tmpl_else>edit</tmpl_if>' );
+} );
 
-    nav_edit_mode();
+do_save_stay = function()
+{
+  Krang.form_submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save_stay' }, { to_top: false });
+}
 
-    do_save_stay  = function () {
-        var myform = document.edit_template_form;
-        myform.rm.value = <tmpl_if add_mode>'add_save_stay'<tmpl_else>'edit_save_stay'</tmpl_if>;
-        myform.submit();
-    }
+do_save = function()
+{
+  Krang.form_submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save' });
+}
 
+//(db2)untied to UI; runmodes exist:
+//do_checkin = function()
+//{
+//  Krang.form_submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_checkin' });
+//}
+//
+//do_cancel = function()
+//{
+//  Krang.form_submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_cancel' });
+//}
 
-    do_save  = function () {
-        var myform = document.edit_template_form;
-        myform.rm.value = <tmpl_if add_mode>'add_save'<tmpl_else>'edit_save'</tmpl_if>;
-        myform.submit();
-    }
+do_deploy = function()
+{
+  Krang.form_submit('edit_template_form', { rm: 'deploy' });
+}
 
-    do_checkin  = function () {
-        var myform = document.edit_template_form;
-        myform.rm.value = <tmpl_if add_mode>'add_checkin'<tmpl_else>'edit_checkin'</tmpl_if>;
-        myform.submit();
-    }
+save_and_view_log = function()
+{
+  Krang.form_submit('edit_template_form', { rm: 'save_and_view_log' });
+}
 
-    do_cancel  = function () {
-        var myform = document.edit_template_form;
-        <tmpl_if add_mode>
-          myform.rm.value = 'add_cancel';
-        <tmpl_else>
-          myform.rm.value = 'edit_cancel';
-        </tmpl_if>
-        myform.submit();
-    }
+<tmpl_if add_mode>
+  update_filename = function( el )
+  {
+    var isNil  = ( el.value == '' );
+    var elFile = el.form[ 'filename' ];
 
-    do_deploy  = function () {
-        var myform = document.edit_template_form;
-        myform.rm.value = 'deploy';
-        myform.submit();
-    }
+    elFile.value                 = isNil ? ''     : el.value + '.tmpl';
+    elFile.style.backgroundColor = isNil ? '#FFF' : '#DDD';
+    elFile.readOnly              = !isNil;
+  }
+  do_cancel = function()
+  {
+    Krang.form_submit( 'edit_template_form', { rm: 'add_cancel' });
+  }
+<tmpl_else>
+  revert_version = function()
+  {
+    if ( confirm( 'Are you SURE you want to discard your work and revert to this old version?' ) )
+      Krang.form_submit('edit_template_form', { rm: 'revert_version' });
+  }
 
+  view_version = function()
+  {
+    Krang.form_submit('edit_template_form', { rm: 'view_version' });
+  }
 
-    do_delete  = function () {
-        if (confirm("Are you sure you want to delete this template?")) {
-            var myform = document.delete_template_form;<tmpl_if add_mode>
-            myform.rm.value = 'cancel_add';</tmpl_if>
-            myform.submit();
-        }
-    }
-
-    save_and_view_log  = function () {
-        var myform = document.edit_template_form;
-        myform.rm.value = 'save_and_view_log';
-        myform.submit();
-    }
-
-    save_and_edit_schedule  = function () {
-        alert("Schedule editor not yet implemented.");
-    }
-
-// -->
+  do_delete = function()
+  {
+    if ( confirm( 'Are you SURE you want to delete this Template?' ) )
+      Krang.form_submit( 'delete_template_form'<tmpl_if add_mode>, { rm : 'cancel_add' }</tmpl_if> );
+  }
+</tmpl_if>
 </script>
 
-<div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>New Template</p><p class="right"><a href="javascript:openWin('help.pl?topic=template_new')">Help</a>&nbsp;</p></div><tmpl_else>Edit Template</p><p class="right"><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:openWin('help.pl?topic=template_edit')">Help</a>&nbsp;</p></div></tmpl_if>
+<form name="edit_template_form" action="template.pl" method="post" enctype="multipart/form-data">
 
-
-
+<input name="rm" value="<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save" type="hidden">
+<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
 <tmpl_unless add_mode>
-<div class="boxb">
-<table width="100%" cellpadding="5" cellspacing="0" border="0">
-<tr class="light">
-  <td width="150">ID:</td>
-  <td><tmpl_var template_id></td></tr>
-
-<tr class="light">
-  <td width="150">Filename:</td>
-  <td><tmpl_var filename></td>
-</tr>
-
-<tr class="light">
-  <td width="150">URL:</td>
-  <td><tmpl_var url></td>
-</tr>
-
-<tr class="light">
-  <td width="150">Current&nbsp;Version:</td>
-  <td><tmpl_var version></td>
-</tr>
-
-<tr class="light">
-  <td width="150">Deployed&nbsp;Version:</td>
-  <td><tmpl_unless deployed_version>[n/a]</tmpl_unless><tmpl_var deployed_version></td></tr>
-</table></div>
+  <tmpl_var history_return_params>
 </tmpl_unless>
 
-<form name="delete_template_form" method="post" action="template.pl">
-<input type="hidden" name="rm" value="delete">
-<input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
-</form>
+<tmpl_unless add_mode><p class="cram east">
+  <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
+</p></tmpl_unless>
 
-<form name="edit_template_form" method="POST" enctype="multipart/form-data" action="template.pl">
-<input type="hidden" name="rm" value=<tmpl_if add_mode>"add_save"<tmpl_else>"edit_save"</tmpl_if>>
-<input type="hidden" name="template_id" value="<tmpl_var escape=HTML template_id>">
-<div class="box">
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
+<h2>
 <tmpl_if add_mode>
-<script language="javascript" type="text/javascript">
-  update_filename  = function (field) {
-     var targ = field.form.elements["filename"];
-     if (field.value == '') {
-        targ.readOnly = false;
-        targ.style.backgroundColor = 'white';
-        targ.value = '';
-     } else {
-        targ.value = field.value + ".tmpl";
-        targ.readOnly = true;
-        targ.style.backgroundColor = '#DDDDDD';
-     }
-  }
-
-  read_only  = function (field) {
-      field.readOnly = true;
-  }
-
-</script>
-
-<tr>
-  <td width="150">Element:</td>
-  <td><tmpl_if error_no_filename><span class="invalid"></tmpl_if><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_element><span class="invalid"></tmpl_if><tmpl_var element_chooser><tmpl_if error_element></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
-</tr>
-
-<tr>
-<!-- <tmpl_if duplicate_url><span class="invalid"></tmpl_if>
-<tmpl_if duplicate_url></span></tmpl_if> -->
-  <td>Filename:</td>
-  <td colspan="2"><tmpl_if error_invalid_filename><span class="invalid"></tmpl_if><tmpl_if error_no_filename><span class="invalid"></tmpl_if><input type=text name="filename" size=30 value="<tmpl_var escape=html filename>"><tmpl_if error_element></span></tmpl_if><tmpl_if error_invalid_filename></span></tmpl_if></td>
-<tmpl_if duplicate_url>
-<script language="javascript">
-read_only(document.edit_template_form.filename);
-</script>
+  New
+<tmpl_else>
+  Edit
 </tmpl_if>
-</tr>
+Template
+</h2>
 
-<tr>
-  <td width="150">Site/Categories:</td>
-  <td><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_category_id><span class="invalid"></tmpl_if><tmpl_var category_chooser><tmpl_if error_category_id></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
-</tr>
+<h3>
+Properties
+</h3>
 
-</tmpl_if>
-
-<tr>
-  <td width="150">
-  Upload template file:<tmpl_if filename><br />
-  <tmpl_var escape=HTML filename>
-  <tmpl_var escape=HTML file_size></tmpl_if>
-</td>
-  <td ><tmpl_if error_template_file><span class="invalid"></tmpl_if><tmpl_var upload_chooser><tmpl_if error_template_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
-</tr>
-
-<tr>
-  <td colspan="2" align="right"><textarea rows="30" cols="60" name="content"><tmpl_var escape=HTML content></textarea></td>
-</tr>
-
-<tr>
-  <td width="150">Test with Template:</td>
-  <td><input name="testing" type="checkbox" value="1" <tmpl_if testing>checked</tmpl_if>></td>
-</tr>
-</table>
-
-
-
-<!-- Version Navigation -->
 <tmpl_unless add_mode>
-<tmpl_var history_return_params>
 
-<script language="javascript" type="text/javascript">
-<!--
-  revert_version  = function () {
-    if (confirm("Are you sure you want to discard your work and revert to " +
-                "this old version?")) {
-        var myform = document.edit_template_form;
-        myform.rm.value = 'revert_version';
-        myform.submit();
-    }
-  }
+  <table class="result" summary="">
 
-  view_version  = function () {
-      var myform = document.edit_template_form;
-      myform.rm.value = 'view_version';
-      myform.submit();
-  }
-// -->
-</script>
-</div>
+  <colgroup>
+  <col class="c-label">
+  <col>
+  <col class="c-label">
+  <col>
+  </colgroup>
 
-<div class="boxc">
-Version: <tmpl_var version_chooser>
-<input type="button" value="Revert" onClick="revert_version()" class="button">
-<input type="button" value="View" onClick="view_version()" class="button">
-</div>
+  <tbody>
+
+  <tr>
+  <th>URL</th>
+  <td colspan="3"><tmpl_var escape=html url></td>
+  </tr>
+
+  <tr>
+  <th>Template ID</th>
+  <td><tmpl_var escape=html template_id></td>
+  <th>Current Version</th>
+  <td><tmpl_var escape=html version></td>
+  </tr>
+
+  <tr>
+  <th>File Name</th>
+  <td><tmpl_var escape=html filename></td>
+  <th>Deployed Version</th>
+  <td><tmpl_unless deployed_version>[n/a]<tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
+  </tr>
+
+  <tr><!--:FIXME(db2)-->
+  <th>All Versions</th>
+  <td>
+  <tmpl_var version_chooser>
+  <input value="Revert" onclick="revert_version()" type="button" class="button">
+  <input value="View" onclick="view_version()" type="button" class="button">
+  </td>
+  </tr>
+
+  <tr<tmpl_if error_template_file> class="err"</tmpl_if>>
+  <th>Upload Template File</th>
+  <td colspan="3">
+    Current File
+    <tmpl_var escape=html filename>
+    <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
+    <i>&mdash; or &mdash;</i>
+    <br>
+    <tmpl_var upload_chooser>
+  </td>
+  </tr>
+
+  </tbody>
+
+  </table>
+
+<tmpl_else>
+
+  <table class="request" summary="">
+
+  <colgroup>
+  <col class="c-label">
+  <col>
+  </colgroup>
+
+  <tbody>
+
+  <tr<tmpl_if error_no_filename> class="err"<tmpl_else><tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_element> class="err"</tmpl_if></tmpl_if></tmpl_if>>
+  <th>Element</th>
+  <td><tmpl_var element_chooser></td>
+  </tr>
+
+  <tr<tmpl_if error_invalid_filename> class="err"<tmpl_else><tmpl_if error_no_filename> class="err"</tmpl_if></tmpl_if>>
+  <th>File Name</th>
+  <td class="demi"><input name="filename" value="<tmpl_var escape=html filename>"<tmpl_if duplicate_url> readonly</tmpl_if>></td>
+  </tr>
+
+  <tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_category_id> class="err"</tmpl_if></tmpl_if>>
+  <th>Site/Category</th>
+  <td><tmpl_var category_chooser></td>
+  </tr>
+
+  <tr<tmpl_if error_template_file> class="err"</tmpl_if>>
+  <th>Upload Template File</th>
+  <td><tmpl_var upload_chooser></td>
+  </tr>
+
+  </tbody>
+
+  </table>
 </tmpl_unless>
+
+<h3>
+Content
+</h3>
+
+<p class="full">
+<textarea name="content" rows="30" cols="60"><tmpl_var escape=html content></textarea>
+</p>
+
+<p><label>
+<input name="testing" value="1" type="checkbox"<tmpl_if testing> checked</tmpl_if>>
+Test
+</label></p>
+
+<div class="panel capped<tmpl_if add_mode> clearfix</tmpl_if>">
 <tmpl_if add_mode>
-   </div>
+  <input value="Cancel" onclick="do_cancel()" type="button" class="west">
 </tmpl_if>
-<!-- END Version Navigation -->
-
-
-
-<div class="button-bar">
-  <input type="button" value="Save" onClick="do_save()" class="button">
-  <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
-  <tmpl_unless add_mode>
-  <input type="button" value="Delete" onClick="do_delete()" class="button">
-  </tmpl_unless>
-  <input type="button" value="Deploy" onClick="do_deploy()" class="button">
-  <input type="reset" value="Reset" class="button">
-</div></div>
-
+<input value="Save &amp; Stay" onclick="do_save_stay()" type="button">
+<input value="Save" onclick="do_save()" type="button">
+<input value="Deploy" onclick="do_deploy()" type="button">
+<tmpl_unless add_mode>
+  <input value="Delete" onclick="do_delete()" type="button">
+</tmpl_unless>
+</div>
 
 </form>
- </div>
+
+<tmpl_unless add_mode>
+  <form name="delete_template_form" method="post" action="template.pl">
+  <input name="rm" value="delete" type="hidden">
+  <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+  </form>
+</tmpl_unless>
+
 <tmpl_include footer.tmpl>
+

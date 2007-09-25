@@ -32,7 +32,8 @@ use Carp qw(verbose croak);
 use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Log => qw/critical debug info/;
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Widget => qw/autocomplete_values/;
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
@@ -66,6 +67,7 @@ sub setup {
 		save_edit
 		save_stay_edit
 		search
+        autocomplete
 	/]);
 
     $self->tmpl_path('User/');
@@ -213,6 +215,19 @@ sub save_stay_add {
     my $user = $session{EDIT_USER} || 0;
     croak("Can't retrieve EDIT_USER from session") unless $user;
 
+    # now validate the password
+    my $valid = pkg('PasswordHandler')->check_pw(
+        $q->param('new_password'),
+        $user->login,
+        $q->param('email'),
+        $q->param('first_name'),
+        $q->param('last_name'),
+    );
+    unless ($valid) {
+        $q->param(errors => 1);
+        return $self->add();
+    }
+
     %errors = $self->update_user($user);
     return $self->add(%errors) if %errors;
 
@@ -247,7 +262,7 @@ sub delete {
             critical("Unable to delete user '$user_id': objects are " .
                      "checked out by this user.");
             my ($user) = pkg('User')->find(user_id => $user_id);
-            add_message('error_deletion_failure',
+            add_alert('error_deletion_failure',
                         login => $user->login,
                         user_id => $user->user_id,);
             return $self->search();
@@ -263,7 +278,7 @@ sub delete {
 
         # redirect to login
         $self->header_type('redirect');
-        $self->header_props(-url=>'login.pl');
+        $self->header_props(-uri => 'login.pl');
         return "";
     }
 
@@ -301,7 +316,7 @@ sub delete_selected {
                 critical("Unable to delete user '$u': objects are checked " .
                          "out by this user.");
                 my ($user) = pkg('User')->find(user_id => $u);
-                add_message('error_deletion_failure',
+                add_alert('error_deletion_failure',
                             login => $user->login,
                             user_id => $user->user_id,);
                 return $self->search();
@@ -403,6 +418,21 @@ sub save_edit {
     my $user = $session{EDIT_USER} || 0;
     croak("Can't retrieve EDIT_USER from session") unless $user;
 
+    # now validate the password
+    if( $q->param('new_password') ) {
+        my $valid = pkg('PasswordHandler')->check_pw(
+            $q->param('new_password'),
+            $user->login,
+            $q->param('email')      || $user->email,
+            $q->param('first_name') || $user->first_name,
+            $q->param('last_name')  || $user->last_name,
+        );
+        unless ($valid) {
+            $q->param(errors => 1);
+            return $self->edit();
+        }
+    }
+
     %errors = $self->update_user($user);
     return $self->edit(%errors) if %errors;
 
@@ -437,6 +467,21 @@ sub save_stay_edit {
     my $user = $session{EDIT_USER} || 0;
     croak("Can't retrieve EDIT_USER from session") unless $user;
 
+    # now validate the password
+    if( $q->param('new_password') ) {
+        my $valid = pkg('PasswordHandler')->check_pw(
+            $q->param('new_password'),
+            $user->login,
+            $q->param('email')      || $user->email,
+            $q->param('first_name') || $user->first_name,
+            $q->param('last_name')  || $user->last_name,
+        );
+        unless ($valid) {
+            $q->param(errors => 1);
+            return $self->edit();
+        }
+    }
+
     %errors = $self->update_user($user);
     return $self->edit(%errors) if %errors;
 
@@ -470,7 +515,11 @@ sub search {
                              loop_context_vars => 1);
 
     # simple search
-    my $search_filter = $q->param('search_filter') || '';
+    my $search_filter = $q->param('search_filter');
+    if(! defined $search_filter ) {
+        $search_filter = $session{KRANG_PERSIST}{pkg('User')}{search_filter}
+            || '';
+    }
 
     # setup pager
     my $pager = pkg('HTMLPager')->new(cgi_query => $q,
@@ -512,7 +561,10 @@ sub search {
                                      );
 
     # get pager output
-    $t->param(pager_html => $pager->output());
+    $t->param(
+        pager_html    => $pager->output,
+        search_filter => $search_filter,
+    );
 
     # get counter params
     $t->param(row_count => $pager->row_count());
@@ -534,13 +586,14 @@ sub get_user_params {
     # make group_ids multi-select
     my @cgids = $q->param('errors') ? $q->param('current_group_ids') :
       $user->group_ids;
-    my %cgids = map {$_, 1} @cgids;
-    my @pgids = grep {not exists $cgids{$_}} keys %user_groups;
+    my %cgids = map {$_, 1} 
+        sort { lc $user_groups{$a} cmp lc $user_groups{$b} } @cgids;
+    my @pgids = grep {not exists $cgids{$_}} 
+        sort { lc $user_groups{$a} cmp lc $user_groups{$b} } keys %user_groups;
     push @{$user_tmpl{possible_group_ids}},
       {id => $_, name => $user_groups{$_}} for @pgids;
     push @{$user_tmpl{current_group_ids}},
       {id => $_, name => $user_groups{$_}} for @cgids;
-    $user_tmpl{size} = scalar keys %user_groups;
 
     # loop through User fields
     if ($q->param('errors')) {
@@ -591,7 +644,7 @@ sub update_user {
                     my $error = "duplicate_" . $_;
                     $errors{$error} = 1;
                     $q->param('errors', 1);
-                    add_message($error);
+                    add_alert($error);
                 }
             }
             return %errors;
@@ -601,13 +654,13 @@ sub update_user {
               'error_null_group';
             $errors{$error} = 1;
             $q->param('errors', 1);
-            add_message($error);
+            add_alert($error);
             return %errors;
         } elsif (ref $@ && $@->isa('Krang::User::MissingGroup')) {
             my $error = "error_missing_group";
             $errors{$error} = 1;
             $q->param('errors', 1);
-            add_message($error);
+            add_alert($error);
             return %errors;
         } else {
             # it's somebody else's problem :)
@@ -671,7 +724,7 @@ sub validate_user {
     }
 
     # Add error messages
-    add_message($_) for keys %errors;
+    add_alert($_) for keys %errors;
     $q->param('errors', 1) if keys %errors;
 
     return %errors;
@@ -690,6 +743,15 @@ sub search_row_handler {
     $row->{login} = $q->escapeHTML($user->login);
     $row->{last}  = $q->escapeHTML($user->last_name);
     $row->{first} = $q->escapeHTML($user->first_name);
+}
+
+
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'user',
+        fields => [qw(user_id first_name last_name)],
+    );
 }
 
 

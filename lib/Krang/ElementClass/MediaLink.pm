@@ -16,7 +16,7 @@ use Krang::ClassLoader MethodMaker =>
   get_set => [ qw( allow_upload show_thumbnail ) ],
   hash => [ qw( find ) ];
 
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_alert);
 
 sub new {
     my $pkg = shift;
@@ -45,9 +45,9 @@ sub input_form {
         my $thumbnail_path = $media->thumbnail_path(relative => 1);
         $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .
           ($thumbnail_path ? 
-           qq{<a href="javascript:preview_media($media_id)"><img src="$thumbnail_path" align=bottom border=0></a> } :
+           qq{<a href="javascript:Krang.preview('media',$media_id)"><img src="$thumbnail_path" align=bottom border=0></a> } :
            "") . 
-             qq{<a href="javascript:preview_media($media_id)">} . 
+             qq{<a href="javascript:Krang.preview('media',$media_id)">} . 
                $media->filename . qq{</a> ${size}} . 
                  qq{</div>};
     }
@@ -100,9 +100,9 @@ sub view_data {
         my $path = $media->file_path(relative => 1);
         my $thumbnail_path = $media->thumbnail_path(relative => 1);       
         $html .= ($thumbnail_path ? 
-                  qq{<a href="javascript:preview_media($media_id)"><img src="$thumbnail_path" align=bottom border=0></a> }  : 
+                  qq{<a href="javascript:Krang.preview('media',$media_id)"><img src="$thumbnail_path" align=bottom border=0></a> }  : 
                   "") .
-                    qq{<a href="javascript:preview_media($media_id)">} . 
+                    qq{<a href="javascript:Krang.preview('media',$media_id)">} . 
                       $media->filename . qq{</a> ${size}};
     } else {
         $html = "No media object assigned.";
@@ -155,7 +155,7 @@ sub load_query_data {
             my $err = $@;
 
             # tell all about it
-            add_message(duplicate_media_upload => 
+            add_alert(duplicate_media_upload => 
                         id => $err->media_id,
                         filename => $filename);
 

@@ -5,7 +5,7 @@ use Test::More qw(no_plan);
 use strict;
 use warnings;
 use Krang::ClassLoader 'Script';
-use Krang::ClassLoader Widget => qw(category_chooser);
+use Krang::ClassLoader Widget => qw(category_chooser_object);
 use Krang::ClassLoader 'Test::Content';
 use CGI;
 
@@ -73,34 +73,19 @@ END { $ENV{REMOTE_USER} = 1 };
 
 # create a choose with every category, using all varieties of
 # permissions checking
-my $query = CGI->new();
-my $chooser = category_chooser(name => 'name', query => $query);
-ok(_chooser_has($chooser, $_)) for @cats;
-$chooser = category_chooser(name => 'name', query => $query,
-                            may_see => 0,
-                           );
-ok(_chooser_has($chooser, $_)) for @cats;
-$chooser = category_chooser(name  => 'name', query => $query,
-                            may_edit => 1,
-                           );
-ok(_chooser_has($chooser, $_)) for @cats;
+ok(_chooser_has_cat($_)) for @cats;
+ok(_chooser_has_cat($_, { may_see  => 0 })) for @cats;
+ok(_chooser_has_cat($_, { may_edit => 1 })) for @cats;
 
 # now mark a category readonly.  Make sure it doesn't appear in
 # may_edit chooser
 $group->categories($cats[3]->category_id => 'read-only');
 $group->save();
 
-$chooser = category_chooser(name => 'name', query => $query);
-ok(_chooser_has($chooser, $_)) for @cats;
-$chooser = category_chooser(name => 'name', query => $query,
-                            may_see => 0,
-                           );
-ok(_chooser_has($chooser, $_)) for @cats;
-$chooser = category_chooser(name => 'name', query => $query,
-                            may_edit => 1,
-                           );
-ok(_chooser_has($chooser, $_)) for grep { $_ != $cats[3] } @cats;
-ok(not _chooser_has($chooser, $cats[3]));
+ok(_chooser_has_cat($_)) for @cats;
+ok(_chooser_has_cat($_, { may_see  => 0 })) for @cats;
+ok(_chooser_has_cat($_, { may_edit => 1 })) for grep { $_ != $cats[3] } @cats;
+ok(not _chooser_has_cat($cats[3], { may_edit => 1 }));
 
 
 # now mark a category hidden.  Make sure it doesn't appear in
@@ -108,23 +93,61 @@ ok(not _chooser_has($chooser, $cats[3]));
 $group->categories($cats[3]->category_id => 'hide');
 $group->save();
 
-$chooser = category_chooser(name => 'name', query => $query);
-ok(_chooser_has($chooser, $_)) for grep { $_ != $cats[3] } @cats;
-ok(not _chooser_has($chooser, $cats[3]));
-$chooser = category_chooser(name => 'name', query => $query,
-                            may_see => 0,
-                           );
-ok(_chooser_has($chooser, $_)) for @cats;
-$chooser = category_chooser(name => 'name', query => $query,
-                            may_edit => 1,
-                           );
-ok(_chooser_has($chooser, $_)) for grep { $_ != $cats[3] } @cats;
-ok(not _chooser_has($chooser, $cats[3]));
+ok(_chooser_has_cat($_)) for grep { $_ != $cats[3] } @cats;
+ok(not _chooser_has_cat($cats[3]));
+ok(_chooser_has_cat($_, { may_see  => 0 })) for @cats;
+ok(_chooser_has_cat($_, { may_edit => 1 })) for grep { $_ != $cats[3] } @cats;
+ok(not _chooser_has_cat($cats[3], { may_edit => 1 }));
 
 # returns 1 if a chooser has the category in it, 0 otherwise
-sub _chooser_has {
-    my ($chooser, $cat) = @_;
-    return 1 if $chooser =~ $cat->dir;
-    return 0;
+# we look at the HTML returned for the categories parent
+# to see if the category's url is in there
+sub _chooser_has_cat {
+    my ($cat, $extra_args) = @_;
+    $extra_args ||= {};
+
+    my $query     = CGI->new();
+    my $chooser   = category_chooser_object(name => 'name', query => $query, %$extra_args);
+    my $parent_id = _get_parent_tree_id($cat, $chooser);
+    return 0 unless defined $parent_id and $parent_id ne '';
+
+    $query->param(id => $parent_id);
+    my $html = $chooser->handle_get_node( query => $query );
+    my $regex = quotemeta($cat->dir);
+    return $html =~ /$regex/;
+}
+
+# the $chooser->handler_get_node() method uses sort of an xpath like
+# id for the nodes position. We need to determine what the id is
+# recursively
+sub _get_parent_tree_id {
+    my ($cat, $chooser) = @_;
+    # sorta icky since we rely on $chooser's internal {data} element
+    my $id;
+    my $val = $cat->category_id . "," . $cat->url;
+    $id = _get_tree_id($id, $val, $chooser->{data});
+    if( $id =~ m/(.*)\/[^\/]*$/ ) {
+        return $1;
+    } else {
+        return $id;
+    }
+}
+
+sub _get_tree_id {
+    my ($id, $val, $data) = @_;
+    my $new_id;
+    for(0..$#$data) {
+        $new_id = defined $id ? ($id . '/' . $_) : $_;
+        if( $data->[$_]->{value} eq $val ) {
+            return $new_id;
+        } else {
+            my $children = $data->[$_]->{children};
+            # look at our children if we have any
+            if( $children && scalar @$children ) {
+                $new_id = _get_tree_id($new_id, $val, $children);
+                return $new_id if $new_id;
+            }
+        }
+    }
 }
 

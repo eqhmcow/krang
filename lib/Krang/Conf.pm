@@ -18,11 +18,15 @@ BugzillaEmail
 BugzillaPassword
 BugzillaServer
 Charset
+ContactEmail
+ContactURL
+CustomCSS
 DBPass
 DBUser
 DBHost
 DBSock
 EnableBugzilla
+EnableFTP
 EnableSiteServer
 EnableSSL
 FromAddress
@@ -50,6 +54,7 @@ PasswordChangeTime
 PasswordChangeCount
 PreviewSSL
 SchedulerMaxChildren
+Secret
 SiteServerAddr
 SiteServerPort
 SMTPServer
@@ -64,6 +69,31 @@ SSLCipherSuite
 SSLVerifyClient
 SSLVerifyDepth
 SSLLogLevel
+);
+
+our @REQUIRED_DIRECTIVES = qw(
+ApacheAddr 
+ApachePort
+BugzillaComponent
+BugzillaEmail
+BugzillaPassword
+BugzillaServer
+FromAddress
+HostName 
+KrangGroup 
+KrangUser 
+LogLevel 
+Secret
+SMTPServer
+);
+
+our @REQUIRED_INSTANCE_DIRECTIVES = qw(
+DBPass 
+DBUser
+InstanceDBName
+InstanceDisplayName
+InstanceElementSet
+InstanceHostName 
 );
 
 use Krang::Platform;
@@ -276,10 +306,7 @@ sub check {
     my $pkg = shift;
 
     # check required directives
-    foreach my $dir (qw(KrangUser KrangGroup ApacheAddr ApachePort
-                        HostName LogLevel FTPPort FTPHostName FTPAddress
-                        SMTPServer FromAddress BugzillaEmail BugzillaServer
-                        BugzillaPassword BugzillaComponent)) {
+    foreach my $dir (@REQUIRED_DIRECTIVES) {
         _broked("Missing required $dir directive") 
           unless defined $CONF->get($dir);
     }
@@ -288,8 +315,7 @@ sub check {
     foreach my $instance ($pkg->instances()) {
         my $block = $CONF->block(instance => $instance);
 
-        foreach my $dir (qw(InstanceHostName InstanceElementSet InstanceDisplayName
-                            InstanceDBName DBPass DBUser)) {
+        foreach my $dir (@REQUIRED_INSTANCE_DIRECTIVES) {
             _broked("Instance '$instance' missing required '$dir' directive")
               unless defined $block->get($dir);
         }

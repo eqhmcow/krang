@@ -1,26 +1,38 @@
-<tmpl_if display><span id="<tmpl_var name>_id"><tmpl_if element_class_name><tmpl_var element_class_name><tmpl_else>No template selected.</tmpl_if></span></tmpl_if>
-<input type=hidden id="<tmpl_if formname><tmpl_var formname>.</tmpl_if><tmpl_var field>" name="<tmpl_var field>" value="<tmpl_var element_class_name>">
+<input id="<tmpl_if formname><tmpl_var escape=html formname>.</tmpl_if><tmpl_var escape=html field>" name="<tmpl_var escape=html field>" value="<tmpl_var escape=html element_class_name>" type="hidden">
+
 <tmpl_var chooser>
-<input type="button" value="Clear" class="hpts-button" onclick="<tmpl_var name>_clear_template()">
 
-<script language="javascript">
-  <tmpl_var name>_choose_template  = function (packed) {
-     <tmpl_if display>
-        var span = document.getElementById("<tmpl_var name>_id");
-         span.innerHTML = packed + '.tmpl';
-     </tmpl_if>
-     var field = document.getElementById("<tmpl_if formname><tmpl_var formname>.</tmpl_if><tmpl_var field>");
-     field.value = packed;
-     <tmpl_if onchange><tmpl_var onchange>;</tmpl_if>
-  }
+<input value="Clear" onclick="<tmpl_var escape=html name>_clear_template()" type="button" class="hpts-button">
 
-  <tmpl_var name>_clear_template  = function (){ 
-     <tmpl_if display>
-        var span = document.getElementById("<tmpl_var name>_id");
-        span.innerHTML = "No template selected.";
-     </tmpl_if>
-     var field = document.getElementById("<tmpl_if formname><tmpl_var formname>.</tmpl_if><tmpl_var field>");
-     field.value = "";
-     <tmpl_if onchange><tmpl_var onchange>;</tmpl_if>
-  }
+<tmpl_if display><span id="<tmpl_var escape=html name>_id"><tmpl_if element_class_name>
+  <tmpl_var escape=html element_class_name>
+<tmpl_else>
+  No Template selected.
+</tmpl_if></span></tmpl_if>
+
+<script type="text/javascript">
+<tmpl_var name>_choose_template = function( packed )
+{
+<tmpl_if display>
+  document.getElementById( '<tmpl_var escape=js name>_id' ).innerHTML = packed + '.tmpl';
+</tmpl_if>
+
+  var field = document.getElementById( '<tmpl_if formname><tmpl_var escape=js formname>.</tmpl_if><tmpl_var escape=js field>' );
+  field.value = packed;
+
+  <tmpl_if onchange><tmpl_var onchange>;</tmpl_if>
+}
+
+<tmpl_var name>_clear_template = function()
+{
+<tmpl_if display>
+  document.getElementById( '<tmpl_var escape=js name>_id' ).innerHTML = 'No template selected.';
+</tmpl_if>
+
+  var field = document.getElementById( '<tmpl_if formname><tmpl_var escape=js formname>.</tmpl_if><tmpl_var escape=js field>' );
+  field.value = '';
+
+  <tmpl_if onchange><tmpl_var onchange>;</tmpl_if>
+}
 </script>
+

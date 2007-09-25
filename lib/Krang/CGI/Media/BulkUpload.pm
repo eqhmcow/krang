@@ -8,9 +8,9 @@ use Carp qw(croak);
 
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Category';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Widget => qw(category_chooser);
-use Krang::ClassLoader Conf => qw(KrangRoot FTPHostName FTPPort);
+use Krang::ClassLoader Conf => qw(KrangRoot FTPHostName FTPPort EnableFTP);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'User';
@@ -84,16 +84,20 @@ sub choose {
     
     my $template = $self->load_tmpl('choose.tmpl', associate => $query );
 
-    $template->param( category_chooser => category_chooser(name=>'category_id', query=>$query, may_edit => 1) );
+    $template->param( 
+        enable_ftp       => (EnableFTP || 0),
+        category_chooser => category_chooser(name=>'category_id', query=>$query, may_edit => 1),
+        upload_chooser   => scalar $query->filefield(-name => 'media_file',-size => 32),
+    );
 
-    $template->param( upload_chooser => scalar $query->filefield(-name => 'media_file',
-                                                     -size => 32) );
     # FTP Settings    
-    my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});    
-    $template->param( ftp_server => FTPHostName, 
-                      ftp_port   => FTPPort, 
-                      username   => $user->login, 
-                      instance   => $ENV{KRANG_INSTANCE} );
+    if( EnableFTP ) {
+        my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});    
+        $template->param( ftp_server => FTPHostName, 
+                          ftp_port   => FTPPort, 
+                          username   => $user->login, 
+                          instance   => $ENV{KRANG_INSTANCE} );
+    }
     return $template->output; 
 }
 
@@ -129,15 +133,14 @@ sub upload {
         my $archive_type = file_type($filename);
     
         if (not $archive_type) {
-            add_message('invalid_file_type');
+            add_alert('invalid_file_type');
             return $self->choose();
         }
          
         # store file in tempdir
         my $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
         my $filepath = catfile($path, $filename );
-        open (FILE, ">$filepath") || croak("Unable to open $filepath for writing
-media!");
+        open (FILE, ">$filepath") || croak("Unable to open $filepath for writing media!");
                                                                          
         my $buffer;
         while (read($fh, $buffer, 10240)) { print FILE $buffer }
@@ -178,7 +181,7 @@ media!");
         # remove tempdir 
         rmtree($opened_root);    
     } else {
-        add_message('no_file');
+        add_alert('no_file');
     } 
 
     return $self->choose();
@@ -290,7 +293,7 @@ sub check_categories {
 
                     # return with message if a category that doesnt match a site appears in the root of archive
                     if (not $parent_cat) {
-                        add_message("bad_category", url => $realcat.$splitcat.'/');
+                        add_alert("bad_category", url => $realcat.$splitcat.'/');
                         $not_found = 1;
                         last;
                     }
@@ -307,7 +310,7 @@ sub check_categories {
             $category_list{$cat} = $found_cat->category_id if $found_cat;
 
             if (not $found_cat) {
-                add_message("bad_category", url => $cat);
+                add_alert("bad_category", url => $cat);
                 $not_found = 1;
             }
         }
@@ -334,17 +337,17 @@ sub open_media_source {
     if ($type eq 'tar') {
         my $tar_bin = `which tar`;
         chomp $tar_bin;
-        add_message('no_opener_binary', which => 'tar', type => 'tar'), return 0 if not ( -B $tar_bin);
+        add_alert('no_opener_binary', which => 'tar', type => 'tar'), return 0 if not ( -B $tar_bin);
         $source_open_statement = "$tar_bin -xf $filepath -C $tempdir";
     } elsif ($type eq 'zip') {
         my $unzip_bin = `which unzip`;
         chomp $unzip_bin;
-        add_message('no_opener_binary', which => 'unzip', type => 'zip'), return 0 if not ( -B $unzip_bin);
+        add_alert('no_opener_binary', which => 'unzip', type => 'zip'), return 0 if not ( -B $unzip_bin);
         $source_open_statement = "$unzip_bin -oq $filepath -d $tempdir";
     } elsif ($type eq 'sit') {
         my $unstuff_bin = `which unstuff`;
         chomp $unstuff_bin;
-        add_message('no_opener_binary', which => 'unstuff', type => 'stuffit'), return 0 if not ( -B $unstuff_bin);        
+        add_alert('no_opener_binary', which => 'unstuff', type => 'stuffit'), return 0 if not ( -B $unstuff_bin);        
         # unstuff wants relative paths
         my $rel_filepath = abs2rel( $filepath );
         my $rel_tempdir = abs2rel( $tempdir );
@@ -354,7 +357,7 @@ sub open_media_source {
     debug(__PACKAGE__."->open_media_source - atempting to run '$source_open_statement'");
 
     unless (system($source_open_statement) == 0) { 
-        add_message("problems_opening");
+        add_alert("problems_opening");
         return 0;
     }
                                                                      

@@ -81,7 +81,7 @@ use Pod::Usage;
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'PasswordHandler';
-use Krang::ClassLoader Message => qw(get_messages);
+use Krang::ClassLoader Message => qw(get_messages get_alerts);
 # use first instance if one isn't set.  Addons are installation wide
 # anyway.
 use Krang::ClassFactory qw(pkg);
@@ -210,6 +210,8 @@ sub ask_pass {
         # get any messages added to the stack and print them
         my @msgs = get_messages();
         print STDERR "\n$_" foreach( @msgs );
+        my @alerts = get_alerts();
+        print STDERR "\n! $_" foreach( @alerts );
         print STDERR "\nInvalid password!\n";
         exit 1;
     }

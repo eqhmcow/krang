@@ -1,47 +1,53 @@
 <tmpl_include header.tmpl>
 
-<script language="JavaScript" type="text/javascript">
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'media_active' );
+} );
 
-  preview_media = function (id) {
-        Preview = window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var "instance_name">");
-        Preview.focus();
+<tmpl_if row_count>
+  view_media = function( id )
+  {
+    Krang.form_submit('find_media', { rm: 'view', media_id: id });
   }
 
-  view_media  = function (id) {
-    document.find_media.rm.value = 'view';
-    document.find_media.media_id.value = id;
-    document.find_media.submit();
-  }
-
-  checkin_selected  = function () {
-    var myform = document.krang_pager_form;
-    myform.rm.value = 'checkin_selected';
-    myform.submit();
-  }
-
+  <tmpl_if may_checkin_all>
+    checkin_selected = function()
+    {
+      if ( !Krang.pager_row_checked() )
+        alert( 'Nothing selected to check in!' );
+      else
+        Krang.form_submit('krang_pager_form', { rm: 'checkin_selected' }, { to_top: false });
+    }
+  </tmpl_if>
+</tmpl_if>
 </script>
 
-<form method=post name=find_media action="media.pl">
-<input type="hidden" name="rm" value="list_active">
-<input type="hidden" name="media_id">
+<h2>
+Active Media
+</h2>
 
-<!-- Set up view mode return -->
-<input type="hidden" name="return_script" value="media.pl">
-<input type="hidden" name="return_params" value="rm">
-<input type="hidden" name="return_params" value="list_active">
+<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel"><form>
+  <input value="Check In" onclick="checkin_selected()" type="button">
+</form></div></tmpl_if></tmpl_if>
 
-</form>
-
-<div class="dark-bar"><p class="left">&nbsp;Active Media</p><p class="right"><a href="javascript:openWin('help.pl?topic=media_active')">Help</a></p></div>
-
-<div class="box">
-<!-- Krang::HTMLPager -->
+<!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
-<!-- Krang::HTMLPager -->
-    </div>
+<!--:Krang::HTMLPager-->
 
-<tmpl_if row_count><tmpl_if may_checkin_all>
-  <div class="button-bar"><input type="button" value="Check In" onClick="checkin_selected()" class="button">&nbsp;</div>
-</tmpl_if></tmpl_if>
-</div>
+<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel capped"><form>
+  <input value="Check In" onclick="checkin_selected()" type="button">
+</form></div></tmpl_if></tmpl_if>
+
+<tmpl_if row_count>
+  <form name="find_media" method="post" action="media.pl">
+  <input name="rm" value="list_active" type="hidden">
+  <input name="media_id" type="hidden">
+  <input name="return_script" value="media.pl" type="hidden">
+  <input name="return_params" value="rm" type="hidden">
+  <input name="return_params" value="list_active" type="hidden">
+  </form>
+</tmpl_if>
+
 <tmpl_include footer.tmpl>
+

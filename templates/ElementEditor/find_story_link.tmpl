@@ -1,152 +1,192 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript" type="text/javascript">
-  nav_edit_mode();
-
-  preview_story = function (id) {
-        window.open("publisher.pl?rm=preview_story&story_id=" + id, "");
-  }
-
-  select_story = function (id) {
-        document.forms[0].rm.value = 'select_story';
-        document.forms[0].selected_story_id.value = id;
-        document.forms[0].submit();
-  }
-
-  cancel_select = function () {
-        document.forms[0].rm.value = 'edit';
-        document.forms[0].path.value = '<tmpl_var parent_path>';
-        document.forms[0].submit();
-  }  
-
-  advanced_search = function () {
-    document.forms[0].advanced.value = 1;
-    document.forms[0].submit();
-  }
-
-  simple_search = function () {
-    document.forms[0].advanced.value = 0;
-    document.forms[0].submit();
-  }
-
-  clear_advanced_search  = function () {
-    var myform = document.clear_advanced_search_form;
-    myform.submit();
-  }
-
-</script>
-
-<form name="select_story" method="post" action="<tmpl_var action>">
-<input type="hidden" name="selected_story_id">
-<input type="hidden" name="rm" value="find_story_link">
-<input type="hidden" name="path" value="<tmpl_var escape=1 path>">
-<input type="hidden" name="advanced" value="<tmpl_var escape=1 advanced>">
-<tmpl_var hard_find_hidden>
-
-<div class="dark-bar"><p class="left">Select Story</p><p class="right"><a href="javascript:goto_help()">Help</a>&nbsp;</p></div>
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set();
+} );
 
 <tmpl_if advanced>
-<div class="box">
-<table border="0" cellpadding="6" cellspacing="0" width="571">
+  simple_search = function()
+  {
+    Krang.form_submit('select_story_form', { advanced: 0 }, { to_top: false });
+  }
 
-<tr><td>SEARCH
-  (<a href="javascript:simple_search()">Simple Search</a>)
-</td></tr>
-    <tr><td>
-    <table border="0" cellspacing="5" cellpadding="2">
-      <tr>
-        <td colspan="2">Title:</td>
-        <td colspan="3"><input size="40" type="text" name="search_title" value="<tmpl_var escape=HTML search_title>"></td>
-      </tr>
+  clear_advanced_search = function()
+  {
+    Krang.form_submit('clear_advanced_search_form', {}, { to_top: false });
+  }
+<tmpl_else>
+  advanced_search = function()
+  {
+    Krang.form_submit('select_story_form', { advanced: 1 }, { to_top: false });
+  }
+</tmpl_if>
 
-      <tr>
-        <td colspan="2">URL:</td>
-        <td colspan="3"><input size="40" type="text" name="search_url" value="<tmpl_var escape=HTML search_url>"></td>
-      </tr>
+<tmpl_if row_count>
+  select_story = function( id )
+  {
+    Krang.form_submit('select_story_form', { rm: 'select_story', selected_story_id: id });
+  }
+</tmpl_if>
 
-      <tr>
-        <td>Cover Date:</td>
-        <td>from</td>
-        <td><tmpl_var date_chooser_cover_from></td>
-        <td>To</td>
-        <td><tmpl_var date_chooser_cover_to></td>
-      </tr>
+cancel_select = function()
+{
+  Krang.form_submit('select_story_form', { rm: 'edit', path: '<tmpl_var escape=js parent_path>' });
+}
+</script>
 
-      <tr>
-        <td>Publish Date:</td>
-        <td>from</td>
-        <td><tmpl_var date_chooser_publish_from></td>
-        <td>To</td>
-        <td><tmpl_var date_chooser_publish_to></td>
-      </tr>
+<h2>
+Select Story
+</h2>
 
-      <tr>
-        <td colspan="2">Story Type:</td>
-        <td colspan="3"><tmpl_var search_class_chooser></td>
-      </tr>
+<form name="select_story_form" action="<tmpl_var escape=html action>" method="post">
 
-      <tr>
-        <td colspan="2">Story ID:</td>
-        <td colspan="3"><input size="40" type="text" name="search_story_id" value="<tmpl_var escape=HTML search_story_id>"></td>
-      </tr>
+<input name="rm" value="find_story_link" type="hidden">
+<input name="selected_story_id" type="hidden">
+<input name="path" value="<tmpl_var escape=html path>" type="hidden">
+<input name="advanced" value="<tmpl_var escape=html advanced>" type="hidden">
+<input name="krang_pager_curr_page_num" value="" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+<tmpl_var hard_find_hidden>
 
-      <tr>
-        <td colspan="2">Contributor:</td>
-        <td colspan="3"><input size="40" type="text" name="search_contrib_simple" value="<tmpl_var escape=HTML search_contrib_simple>"></td>
-      </tr>
+<div class="tabset finder">
 
-      <tr>
-        <td colspan="2">Site/Category:</td>
-        <td colspan="3"><tmpl_var category_chooser></td>
-      </tr>
+<ul class="tabs"><li>
+<tmpl_if advanced><a href="javascript:simple_seach()"><tmpl_else><b></tmpl_if><span>
+Simple Search
+</span><tmpl_if advanced></a><tmpl_else></b></tmpl_if>
+</li><li>
+<tmpl_if advanced><b><tmpl_else><a href="javascript:advanced_search()"></tmpl_if><span>
+Advanced Search
+</span><tmpl_if advanced></b><tmpl_else></a></tmpl_if>
+</li></ul>
 
-      <tr>
-        <td colspan="2"></td>
-        <td colspan="3"><input type="button" value="Clear" onClick="clear_advanced_search()">&nbsp;<input type="button" value="Search" onclick="document.forms[0].submit()"></td>
-      </tr>
+<div class="tabbed">
 
-    </table></td></tr></table>
+<tmpl_unless advanced>
+
+  <div class="faux-p">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
+  <input value="Search" type="submit" class="button">
+  </div>
 
 <tmpl_else>
-<div class="boxb"> 
- <div class="light">
-  <p>SEARCH
-  (<a href="javascript:advanced_search()">Advanced Search</a>)</p>
-  <input type="text" name="search_filter" value="<tmpl_var ESCAPE=HTML search_filter>">
-  <input type="button" value="Search" onclick="document.forms[0].submit()">
 
+  <table class="request" summary="">
+
+  <colgroup>
+  <col class="c-mini">
+  <col>
+  <col class="c-mini">
+  <col>
+  </colgroup>
+
+  <tbody class="demi">
+
+  <tr>
+  <th>URL</th>
+  <td><input name="search_url" value="<tmpl_var escape=html search_url>"></td>
+  <th>Title</th>
+  <td><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
+  </tr>
+
+  <tr>
+  <th>Story Type</th>
+  <td><tmpl_var search_class_chooser></td>
+  <th>Contributor</th>
+  <td><input name="search_contrib_simple" value="<tmpl_var escape=html search_contrib_simple>"></td>
+  </tr>
+
+  <tr>
+  <th>Story ID</th>
+  <td><input name="search_story_id" value="<tmpl_var escape=html search_story_id>"></td>
+  <th><!-- Creator --></th>
+  <td><!-- <input name="search_creator_simple" value="<tmpl_var escape=html search_creator_simple>"> --></td>
+  </tr>
+
+  </tbody>
+
+  <tbody>
+
+  <tr>
+  <th>Cover Date</th>
+  <td colspan="3">
+  From
+  <tmpl_var date_chooser_cover_from>
+  To
+  <tmpl_var date_chooser_cover_to>
+  </td>
+  </tr>
+
+  <tr>
+  <th>Publish Date</th>
+  <td colspan="3">
+  From
+  <tmpl_var date_chooser_publish_from>
+  To
+  <tmpl_var date_chooser_publish_to>
+  </td>
+  </tr>
+
+  <tr>
+  <th>Site/Category</th>
+  <td colspan="3"><tmpl_var category_chooser></td>
+  </tr>
+
+  </tbody>
+
+  </table>
+
+  <div class="panel">
+  <input value="Clear" onclick="clear_advanced_search()" type="button">
+  <input value="Search" type="submit">
+  </div>
+
+</tmpl_unless>
+
+</div>
+
+</div>
+
+</form>
+
+<h3>
+Search Results
+</h3>
+
+<div class="panel lame"><form>
+<input value="Cancel" onclick="cancel_select()" type="button" class="west">
+</form></div>
+
+<tmpl_unless row_count>
+
+  <p class="naught">
+  No Stories found.
+  </p>
+
+<tmpl_else>
+
+  <!--Krang::HTMLPager:-->
+  <tmpl_var pager_html>
+  <!--:Krang::HTMLPager-->
+
+</tmpl_unless>
+
+<div class="panel lame capped"><form>
+<input value="Cancel" onclick="cancel_select()" type="button" class="west">
+</form></div>
+
+<tmpl_if advanced>
+  <form name="clear_advanced_search_form" action="<tmpl_var escape=html action>" method="post">
+  <input name="rm" value="find_story_link" type="hidden">
+  <input name="path" value="<tmpl_var escape=html path>" type="hidden">
+  <input name="advanced" value="1" type="hidden">
+  <input name="search_filter" value="" type="hidden">
+  </form>
 </tmpl_if>
-</div>
-
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
-</form>
-
-<!-- Krang::HTMLPager params -->
-<input type="hidden" name="krang_pager_curr_page_num" value="">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var ESCAPE=HTML krang_pager_show_big_view>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var ESCAPE=HTML krang_pager_sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var ESCAPE=HTML krang_pager_sort_order_desc>">
-
-</form>
-
-<form name="clear_advanced_search_form" method="POST" action="<tmpl_var action>">
-<input type="hidden" name="rm" value="find_story_link">
-<input type="hidden" name="path" value="<tmpl_var path>">
-<input type="hidden" name="advanced" value=1>
-<input type="hidden" name="search_filter" value="">
-</form>
-
-<tmpl_var pager_html>
-</div>
-
-<div class="button-bar">
-    <input type="button" value="Cancel" onclick="cancel_select()" class="button">
-</div>
-</div>
 
 <tmpl_include footer.tmpl>
+

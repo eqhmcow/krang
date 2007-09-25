@@ -39,7 +39,7 @@ sub input_form {
         my ($story) = pkg('Story')->find(story_id => $story_id);
         $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .
           qq{Title: "} . $story->title . qq{"<br>} . 
-          qq{URL: <a href="javascript:preview_story($story_id)">} . pkg('Widget')->can('format_url')->(url => $story->url, length => 30) . qq{</a></div>};
+          qq{URL: <a href="javascript:Krang.preview('story',$story_id)">} . pkg('Widget')->can('format_url')->(url => $story->url, length => 30) . qq{</a></div>};
     }
 
 
@@ -82,7 +82,7 @@ sub view_data {
     if ($story) {
         my $story_id = $story->story_id;
         $html .= qq{Title: "} . $story->title . qq{"<br>} . 
-          qq{URL: <a href="javascript:preview_story($story_id)">} . $story->url . qq{</a>};
+          qq{URL: <a href="javascript:Krang.preview('story',$story_id)">} . $story->url . qq{</a>};
     }
 
     return $html;

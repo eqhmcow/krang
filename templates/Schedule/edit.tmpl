@@ -1,135 +1,263 @@
 <tmpl_include header.tmpl>
 
-<script language=javascript>
- checkall = function (checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
-  }
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set('schedule');
+} );
 
-  delete_selected  = function () {
-        var myform = document.forms["current_schedule_form"];
-        myform.submit();
-  }
+save_and_view = function()
+{
+  Krang.form_submit('add_schedule_form', { rm: 'save_and_view' });
+}
 
- save_and_view = function () {
-        var myform = document.forms["add_schedule_form"];
-        myform.rm.value = 'save_and_view';
-        myform.submit();
+<tmpl_if existing_schedule_loop>
+  delete_selected = function()
+  {
+    if ( !Krang.row_checked( 'current_schedule_form', 'schedule_delete_list' ) )
+      alert( 'Nothing selected to delete!' );
+    else if ( confirm( 'Are you SURE you want to delete the selected Actions from the Schedule?' ) )
+      Krang.form_submit('current_schedule_form');
   }
+</tmpl_if>
 
+do_return = function()
+{
+  Krang.form_submit('return_form');
+}
 </script>
 
-<div class="dark-bar"><p class="left">&nbsp;<tmpl_if is_story>Story</tmpl_if><tmpl_if is_media>Media</tmpl_if> Schedule Editor<tmpl_if simple> (Simple)</tmpl_if><p class="right"><a href="javascript:openWin('help.pl?topic=schedule')">Help</a>&nbsp;</p></div>
-
-<div class="boxb">
-<table width="100%" cellpadding="5" cellspacing="0" border="0">
-  <tr class="light"><td>ID:</td><td><tmpl_var id></td></tr>
+<h2>
+Edit
 <tmpl_if is_story>
-  <tr class="light"><td>Story Type:</td><td><tmpl_var story_type></td></tr>
-</tmpl_if>
-  <tr class="light"><td>Current Version:</td><td><tmpl_var current_version></td></tr>
-  <tr class="light"><td>Published Version:</td><td><tmpl_if published_version><tmpl_var published_version><tmpl_else>n/a</tmpl_if></td>
-  </tr>
-  <tr class="light"><td>URL:</td><td><tmpl_var url></td></tr>
-  </table>
-  
-<TMPL_IF existing_schedule_loop><div class="no-border"><form name="current_schedule_form" method="POST" action="schedule.pl">
-<input type="hidden" name="rm" value="delete" override='1'>
-<tmpl_if advanced><input type="hidden" name="advanced_schedule" value="1" override="1"></tmpl_if></div>
+  Story
+<tmpl_else><tmpl_if is_media>
+  Media
+</tmpl_if></tmpl_if>
+Schedule
+</h2>
 
-<input type="hidden" name="object_type" value="<tmpl_var object_type>">
-  <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
-<tr class="form-head">
-     <th width="130">Schedule</th>
-     <th width="130">Next Run</th>
-     <th width="130">Action</th>
-     <th width="130">Version</th>
-     <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'schedule_delete_list')"></th>
-   </tr>                                                                       
-  <tmpl_loop existing_schedule_loop>
-   <tr>
-     <td class="form-cell" width="130"><tmpl_var ESCAPE=HTML schedule></td>
-     <td class="form-cell" width="130"><tmpl_var ESCAPE=HTML next_run></td>
-     <td class="form-cell" width="130"><tmpl_var ESCAPE=HTML action></td>
-     <td class="form-cell" width="130"><tmpl_if version><tmpl_var ESCAPE=HTML version><tmpl_else>&nbsp;</tmpl_if></td>          
-     <td class="form-cell"><input type="checkbox" name="schedule_delete_list" value="<tmpl_var ESCAPE=HTML schedule_id>"></td>
-   </tr>
-  </tmpl_loop>
-  </table>
+<h3>
+<tmpl_if is_story>
+  Story
+<tmpl_else><tmpl_if is_media>
+  Media
+</tmpl_if></tmpl_if>
+Properties
+</h3>
 
-  <div style="text-align:right; padding-top:5px; padding-bottom:5px; padding-right: 10px;">
-  <input type="button" value="Delete" onClick="delete_selected()" class="button"></div>
-</form>                                                                      
-<TMPL_ELSE><div class="no-border">No Schedule Found</div>
-</TMPL_IF>
+<table class="result" summary="">
 
-<form name="add_schedule_form" method="POST" action="schedule.pl">
-<input type="hidden" name="object_type" value="<tmpl_var object_type>">
- <table cellspacing="0" width="571" cellpadding="0" class="form-cell">
-  <tmpl_if simple>
-  <input type="hidden" name="rm" value="add_simple" override='1'>
-  <tr class="form-head">
-    <th align="left" colspan="2">Schedule Publication</th>
-  </tr>
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th>URL</th>
+<td><tmpl_var escape=html url></td>
+</tr>
+
+<tmpl_if is_story>
   <tr>
-    <td class="form-cell" width="80" style="border-bottom:none; border-right:none;">Publish:</td>
-    <td  class="form-cell" style="border-bottom:none; border-left:none;"<tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var publish_selector></td>
+  <th>Story Type</th>
+  <td><tmpl_var escape=html story_type></td>
   </tr>
-  <tr>
-     <td class="form-cell" width="80" style="border-top:none; border-right:none;">Version:</td>
-     <td class="form-cell" style="border-top:none; border-left:none;"><tmpl_var version_selector> <input type=button value="View" onclick="save_and_view()" class="button"></td>
-  </tr>
-<tmpl_else>
-<input type="hidden" name="advanced_schedule" value="1" override="1">
-<input type="hidden" name="rm" value="add" override='1'>
-   <tr class="form-head">
-      <th align="left" colspan="2">Add to Schedule</th>
-   </tr>
-   <tr>
-      <td class="form-cell" width="80" style="border-left:none;">Date/Time</td>
-      <td class="form-cell" style="border-right:none;">
-      <table>
-      <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="never" <tmpl_if repeat_never>CHECKED</tmpl_if>>Once at:</td><td <tmpl_if invalid_datetime>class="invalid"</tmpl_if>><tmpl_var full_date_selector><br></td></tr>
-      <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="hourly" <tmpl_if repeat_hourly>CHECKED</tmpl_if>>Hourly at:</td><td><tmpl_var hourly_minute_selector> minutes after the hour</td></tr>
-      <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="daily" <tmpl_if repeat_daily>CHECKED</tmpl_if>>Daily at:</td><td <tmpl_if no_hour>class="invalid"</tmpl_if>><tmpl_var daily_time_selector></td></tr>
-      <tr><td <tmpl_if no_date_type>class="invalid"</tmpl_if>><input type="radio" name="repeat" value="weekly" <tmpl_if repeat_weekly>CHECKED</tmpl_if>>Weekly on:</td><td <tmpl_if no_weekly_hour>class="invalid"</tmpl_if>><tmpl_var weekly_day_selector>
-- <tmpl_var weekly_time_selector></td></tr>
-                </table>
-    </td>
-    </tr>
-    <tr>
-            <td class="form-cell" style="border-bottom:none; border-right:none;">Version:</td>
-            <td class="form-cell" style="border-bottom:none; border-left:none;"><tmpl_var version_selector> <input type=button value="View" onclick="save_and_view()" class="button"></td>
-    </tr>
-    <tr>
-            <td class="form-cell" style="border-top:none; border-right:none;">Action:</td>
-            <td class="form-cell" style="border-top:none; border-left:none;"><tmpl_var action_selector></td>
-    </tr>
-</tmpl_if>
-<tr><td>&nbsp;</td><td style="padding: 5px;"><input type="button" value="Add to Schedule" onclick="submit()" class="button"></td></tr>
-                </table>
-<tmpl_if simple>
-<div class="no-border"><a href="schedule.pl?advanced_schedule=1&rm=edit&object_type=<tmpl_var object_type>">Advanced Schedule</a></div>
-<tmpl_else>
-<div class="no-border"><a href="schedule.pl?rm=edit&object_type=<tmpl_var object_type>">Simple Schedule</a></div>
 </tmpl_if>
 
-</form>
- </td></tr>
-                </table>
+<tr>
+<th><tmpl_if is_story>Story<tmpl_else><tmpl_if is_media>Media</tmpl_if></tmpl_if> ID</th>
+<td><tmpl_var escape=html id></td>
+</tr>
+
+<tr>
+<th>Current Version</th>
+<td><tmpl_var escape=html current_version></td>
+</tr>
+
+<tr>
+<th>Published Version</th>
+<td><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<h3>
+Current Schedule
+</h3>
+
+<tmpl_unless existing_schedule_loop>
+
+  <p class="naught">
+  No Actions scheduled.
+  </p>
+
+<tmpl_else>
+
+  <form name="current_schedule_form" method="post" action="schedule.pl">
+
+  <input name="rm" value="delete" type="hidden">
+  <input name="object_type" value="<tmpl_var escape=html object_type>" type="hidden">
+  <tmpl_if advanced>
+    <input name="advanced_schedule" value="1" type="hidden">
+  </tmpl_if>
+
+  <table class="result select_row" summary=""><!--:FIX(db2)-->
+
+  <colgroup>
+  <col>
+  <col>
+  <col>
+  <col class="c-date">
+  <col class="tick">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="f">Action</th>
+  <th>Version</th>
+  <th>Trigger</th>
+  <th>Next Event</th>
+  <th class="l tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'schedule_delete_list')"></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop existing_schedule_loop>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td><tmpl_var escape=html action></td>
+    <td><tmpl_if version>
+      <tmpl_var escape=html version>
+    <tmpl_else>
+      [newest]
+    </tmpl_if></td>
+    <td><tmpl_var escape=html schedule></td>
+    <td><tmpl_var escape=html next_run></td>
+    <td class="tick"><input name="schedule_delete_list" value="<tmpl_var escape=html schedule_id>" type="checkbox"></td>
+    </tr>
+  </tmpl_loop></tbody>
+
+  </table>
+
+  <div class="panel">
+  <input value="Delete" onclick="delete_selected()" type="button">
   </div>
 
+  </form>
 
-<div class="button-bar">
-  <input type="button" value="Return" onclick="document.return_form.submit()" class="button">&nbsp;
+</tmpl_unless>
+
+<form name="add_schedule_form" method="post" action="schedule.pl">
+
+<input name="rm" value="add<tmpl_if simple>_simple</tmpl_if>" type="hidden">
+<input name="object_type" value="<tmpl_var escape=html object_type>" type="hidden">
+<tmpl_unless simple>
+  <input name="advanced_schedule" value="1" type="hidden">
+</tmpl_unless>
+
+<p class="cram east">
+<input value="<tmpl_if simple>Advanced<tmpl_else>Simple</tmpl_if> Scheduler" onclick="Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type><tmpl_if simple>&amp;advanced_schedule=1</tmpl_if>')" type="button" class="button">
+</p>
+
+<h3>
+Add Action
+(<tmpl_if simple>Simple<tmpl_else>Advanced</tmpl_if>)
+</h3>
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th>Action</th>
+<td>
+<tmpl_if simple>
+  Publish
+<tmpl_else>
+  <tmpl_var action_selector>
+</tmpl_if>
+</td>
+</tr>
+
+<tr>
+<th>Version</th>
+<td>
+<tmpl_var version_selector>
+<input value="View" onclick="save_and_view()" type="button" class="button">
+</td>
+</tr>
+
+<tmpl_if simple>
+
+  <tr<tmpl_if invalid_datetime> class="err"</tmpl_if>>
+  <th>Trigger Once</th>
+  <td><tmpl_var publish_selector></td>
+  </tr>
+
+<tmpl_else>
+
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if invalid_datetime> class="err"</tmpl_if></tmpl_if>">
+  <th>
+  <input name="repeat" value="never" type="radio"<tmpl_if repeat_never> checked</tmpl_if>>
+  Trigger Once
+  </th>
+  <td><tmpl_var full_date_selector></td>
+  </tr>
+
+  <tr<tmpl_if no_date_type> class="err"</tmpl_if>>
+  <th>
+  <input name="repeat" value="hourly" type="radio"<tmpl_if repeat_hourly> checked</tmpl_if>>
+  Trigger Hourly
+  </th>
+  <td>
+  <tmpl_var hourly_minute_selector>
+  minutes after the hour
+  </td>
+  </tr>
+
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_hour> class="err"</tmpl_if></tmpl_if>>
+  <th>
+  <input name="repeat" value="daily" type="radio"<tmpl_if repeat_daily> checked</tmpl_if>>
+  Trigger Daily
+  </th>
+  <td><tmpl_var daily_time_selector></td>
+  </tr>
+
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_weekly_hour> class="err"</tmpl_if></tmpl_if>>
+  <th>
+  <input name="repeat" value="weekly" type="radio"<tmpl_if repeat_weekly> checked</tmpl_if>>
+  Trigger Weekly
+  </th>
+  <td>
+  <tmpl_var weekly_day_selector>
+  at
+  <tmpl_var weekly_time_selector>
+  </td>
+  </tr>
+
+</tmpl_if>
+
+</tbody>
+
+</table>
+
+<div class="panel capped">
+<input value="Back" onclick="do_return()" type="button" class="west">
+<input value="Schedule Action" type="submit">
 </div>
 
-<form name="return_form" method="POST" action="<tmpl_if is_story>story.pl<tmpl_else>media.pl</tmpl_if>">
-<input type="hidden" name="rm" value="edit">
 </form>
-</div>
+
+<form name="return_form" action="<tmpl_if is_story>story<tmpl_else>media</tmpl_if>.pl" method="post">
+<input name="rm" value="edit" type="hidden">
+</form>
+
 <tmpl_include footer.tmpl>
+

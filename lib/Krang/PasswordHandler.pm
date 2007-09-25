@@ -2,7 +2,7 @@ package Krang::PasswordHandler;
 use strict;
 use warnings;
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_alert);
 use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader 'User';
 use Digest::MD5 qw(md5_hex);
@@ -15,11 +15,11 @@ sub check_pw {
 
     my $valid = 0;
     if( length $pw < 6 ) {
-        add_message('password_too_short');
+        add_alert('password_too_short');
     } elsif( _pw_is_used($pw, $info[0]) ) {
-        add_message('password_currently_used');
+        add_alert('password_currently_used');
     } elsif( _pw_was_used($pw, $info[0]) ) {
-        add_message('password_used_recently');
+        add_alert('password_used_recently');
     } else {
         $valid = 1;
     }
@@ -95,7 +95,7 @@ own password policy, which makes this an ideal class to override in an addon.
 =head2 check_pw
 
 This method receives the password and returns true if it passes all checks,
-false otherwise. It is possible for this module to also call C<add_message()>
+false otherwise. It is possible for this module to also call C<add_alert()>
 to indicate how the password fails the checks.
 
 It receives the following ordered arguments

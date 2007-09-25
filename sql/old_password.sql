@@ -7,3 +7,5 @@ CREATE TABLE old_password (
         timestamp   TIMESTAMP,
         INDEX (user_id)
 );
+
+INSERT INTO old_password (user_id, password) VALUES (1, 'f1a93f635e172bd5be55ae08dd41553a');

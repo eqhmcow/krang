@@ -1,218 +1,263 @@
 <tmpl_include header.tmpl>
 
-<script language="JavaScript" type="text/javascript">
-<!-- //
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'media_<tmpl_if add_mode>new<tmpl_else>edit</tmpl_if>' );
+} );
 
-    nav_edit_mode();
+publish_media_preview = function()
+{
+  Krang.form_submit('edit_media_form', { rm: 'save_and_preview' });
+}
 
-    do_save_stay  = function () {
-        var myform = document.edit_media_form;
-        myform.rm.value = <tmpl_if add_mode>'save_stay_add'<tmpl_else>'save_stay_edit'</tmpl_if>;
-        myform.submit();
-    }
+do_checkin = function()
+{
+  Krang.form_submit( 'edit_media_form', { rm: 'checkin_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
+}
 
+do_save = function()
+{
+  Krang.form_submit( 'edit_media_form', { rm: 'save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
+}
 
-    do_save  = function () {
-        var myform = document.edit_media_form;
-        myform.rm.value = <tmpl_if add_mode>'save_add'<tmpl_else>'save_edit'</tmpl_if>;
-        myform.submit();
-    }
+do_save_stay = function()
+{
+  Krang.form_submit( 'edit_media_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
+}
 
-    do_checkin  = function () {
-        var myform = document.edit_media_form;
-        myform.rm.value = <tmpl_if add_mode>'checkin_add'<tmpl_else>'checkin_edit'</tmpl_if>;
-        myform.submit();
-    }
+edit_contribs = function()
+{
+  Krang.form_submit('edit_media_form', { rm: 'save_and_associate_media' });
+}
 
-    publish_media = function (media_id) {
-      var myform = document.edit_media_form;
-      myform.rm.value='save_and_publish';
-      myform.submit();
-    }
+save_and_edit_schedule = function()
+{
+  Krang.form_submit('edit_media_form', { rm: 'save_and_edit_schedule' });
+}
 
-    preview_media = function (media_id) {
-      var myform = document.edit_media_form;
-      myform.rm.value='save_and_preview';
-      myform.submit();
-    }
+save_and_view_log = function()
+{
+  Krang.form_submit('edit_media_form', { rm: 'save_and_view_log' });
+}
 
-    do_delete  = function () {
-        if (confirm("Are you sure you want to delete this media?")) {
-            var myform = document.delete_media_form;<tmpl_if add_mode>
-            myform.rm.value = 'cancel_add';</tmpl_if>
-            myform.submit();
-        }
-    }
-
-    edit_contribs  = function () {
-        var myform = document.edit_media_form;
-        myform.rm.value = 'save_and_associate_media';
-        myform.submit();
-    }
-
-   
-    save_and_view_log  = function () {
-        var myform = document.edit_media_form;
-        myform.rm.value = 'save_and_view_log';
-        myform.submit();
-    }
-
-   
-    save_and_edit_schedule  = function () {
-        var myform = document.edit_media_form;
-        myform.rm.value = 'save_and_edit_schedule';
-        myform.submit();
-    }
-
-    preview_media_session = function () {
-        Preview = window.open("publisher.pl?rm=preview_media&session=media", "<tmpl_var "instance_name">");
-        Preview.focus();
-    }
-
-// -->
-</script>
-
-<div class="dark-bar"><p class="left">&nbsp;<tmpl_if add_mode>New Media</p><p class="right"><a href="javascript:openWin('help.pl?topic=media_new')">Help</a>&nbsp;</p></div><tmpl_else>Edit Media</p><p class="right"><a href="javascript:save_and_view_log()">Log</a> | <a href="javascript:save_and_edit_schedule()">Schedule</a> | <a href="javascript:openWin('help.pl?topic=media_edit')">Help</a>&nbsp;</p></div></tmpl_if>
-
-<form name="delete_media_form" method="post" action="media.pl">
-<input type="hidden" name="rm" value="delete">
-<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
-</form>
-<form name="edit_media_form" method="POST" enctype="multipart/form-data" action="media.pl">
-<input type="hidden" name="rm" value=<tmpl_if add_mode>"save_add"<tmpl_else>"save_edit"</tmpl_if>>
-<input type="hidden" name="media_id" value="<tmpl_var escape=HTML media_id>">
-
-<tmpl_unless add_mode>
-<div class="boxb">
-<table width="100%" cellpadding="5" cellspacing="0" border="0">
-<tr class="light">
-  <td width="135">ID:</td>
-  <td><tmpl_var media_id></td>
-
-  <td rowspan="4" align="left"><tmpl_if media_id><a href="javascript:preview_media_session()"></tmpl_if><tmpl_if thumbnail_path><img border="0" src="<tmpl_var thumbnail_path>"></tmpl_if><tmpl_if media_id></a></tmpl_if></td>
-</tr>
-
-<tr class="light">
-  <td width="135">Current&nbsp;Version:</td>
-  <td><tmpl_var version></td>
-</tr>
-
-<tr class="light">
-  <td width="135">Published&nbsp;Version:</td>
-  <td><tmpl_unless published_version>[n/a]</tmpl_unless><tmpl_var published_version></td>
-</tr>
-
-<tr class="light">
-  <td width="135">URL:</td>
-  <td><tmpl_var url></td>
-</tr>
-
-<tr class="light">
-  <td>Creation&nbsp;Date:</td>
-  <td colspan="2"><tmpl_var escape=HTML creation_date></td>
-</tr>
-
-</table></div>
-</tmpl_unless>
-<div class="box">
-<table border="0" cellpadding="5" cellspacing="0" width="100%">
-
-<tr>
-  <td>*Type:</td>
-  <td colspan="2"><tmpl_if error_media_type_id><span class="invalid"></tmpl_if><tmpl_var type_chooser><tmpl_if error_media_type_id></span></tmpl_if></td>
-</tr>
-
-<tr>
-  <td>*Title:</td>
-  <td colspan="2"><tmpl_if error_invalid_title><span class="invalid"></tmpl_if><input type="text" size="45" name="title" value="<tmpl_var escape=HTML title>"><tmpl_if error_invalid_title></span></tmpl_if></td>
-</tr>
-
-<tr>
-  <td>*Site/Categories:</td>
-  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_category_id><span class="invalid"></tmpl_if><tmpl_var category_chooser><tmpl_if error_category_id></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
-</tr>
-
-<tr>
-  <td>*Upload File:<tmpl_if filename><br />
-<tmpl_if media_id><a href="javascript:preview_media_session()"></tmpl_if><tmpl_var escape=HTML filename><tmpl_if media_id></a></tmpl_if>
-<tmpl_var escape=HTML file_size></tmpl_if></td>
-  <td colspan="2"><tmpl_if duplicate_url><span class="invalid"></tmpl_if><tmpl_if error_media_file><span class="invalid"></tmpl_if><input type="file" name="media_file" size="32" class="button"><tmpl_if error_media_file></span></tmpl_if><tmpl_if duplicate_url></span></tmpl_if></td>
-</tr>
-
-<tr>
-  <td>Default Caption:</td>
-  <td colspan="2"><input type="text" size="45" name="caption" value="<tmpl_var escape=HTML caption>"></td>
-</tr>
-
-<tr>
-  <td>Default Copyright:</td>
-  <td colspan="2"><input type="text" size="45" name="copyright" value="<tmpl_var escape=HTML copyright>"></td>
-</tr>
-
-<tr>
-  <td>Alt Tag:</td>
-  <td colspan="2"><input type="text" size="45" name="alt_tag" value="<tmpl_var escape=HTML alt_tag>"></td>
-</tr>
-
-<tr>
-  <td>Notes:</td>
-  <td colspan="2"><textarea rows="4" cols="35" name="notes"><tmpl_var escape=HTML notes></textarea></td>
-</tr>
-
-<tr>
-  <td>Contributors:</td>
-  <td width="250"><tmpl_if contribs><tmpl_loop contribs><tmpl_var first> <tmpl_var last> (<tmpl_var type>)<tmpl_unless __last__>, </tmpl_unless></tmpl_loop><tmpl_else>None.</tmpl_if></td>
-  <td><input type="button" value="Edit Contributors" onClick="edit_contribs()" class="button"></td>
-</tr>
-</table>
-
-
-<!-- Version Navigation -->
-<tmpl_unless add_mode>
-<input type="hidden" name="return_script" value="media.pl">
-<tmpl_var return_params>
-
-<script language="javascript" type="text/javascript">
-<!-- 
-  revert_version  = function () {
-    if (confirm("Are you sure you want to discard your work and revert to this old version?")) {
-          var myform = document.edit_media_form;
-          myform.rm.value = 'revert_version';
-          myform.submit();
-    }
+<tmpl_if may_publish>
+  publish_media = function()
+  {
+    Krang.form_submit('edit_media_form', { rm: 'save_and_publish' });
   }
-
-  view_version  = function () {
-    var myform = document.edit_media_form;
-    myform.rm.value = 'view_version';
-    myform.submit();
-  }
-// -->
-</script>
-</div>
-<div class="boxc">
-Version: <tmpl_var media_version_chooser>
-<input type="button" value="Revert" onClick="revert_version()" class="button">
-<input type="button" value="View" onClick="view_version()" class="button">
-</div>
-</tmpl_unless>
-<tmpl_if add_mode>
-  </div>
 </tmpl_if>
 
-<!-- END Version Navigation -->
+<tmpl_unless add_mode>
+  do_delete = function()
+  {
+    if ( confirm( 'Are you SURE you want to delete this Media?' ) )
+      Krang.form_submit( 'delete_media_form'<tmpl_if add_mode>, { rm: 'cancel_add' }</tmpl_if> );
+  }
 
+  revert_version = function()
+  {
+    if ( confirm( 'Are you SURE you want to discard your work and revert to this old version?' ) )
+      Krang.form_submit('edit_media_form', { rm: 'revert_version' });
+  }
 
+  view_version = function()
+  {
+    Krang.form_submit('edit_media_form', { rm: 'view_version' });
+  }
+<tmpl_else>
+  do_cancel = function()
+  {
+    Krang.form_submit( 'edit_media_form', { rm: 'find' });
+  }
+</tmpl_unless>
+</script>
 
-<div class="button-bar">
-  <input type="button" value="Save" onClick="do_save()" class="button">
-  <input type="button" value="Save &amp; Stay" onClick="do_save_stay()" class="button">
-  <tmpl_if may_publish><input type="button" value="Publish" onClick="publish_media('<tmpl_var media_id>')" class="button"></tmpl_if>
-  <input type="button" value="Publish to Preview" onClick="preview_media('<tmpl_var media_id>')" class="button">
-  <tmpl_unless add_mode><input type="button" value="Delete" onClick="do_delete()" class="button"></tmpl_unless>&nbsp;
-</div></div>
+<form name="edit_media_form" method="post" enctype="multipart/form-data" action="media.pl">
 
-</form>
+<input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
+<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+<tmpl_unless add_mode>
+  <input name="return_script" value="media.pl" type="hidden">
+  <tmpl_var return_params>
+</tmpl_unless>
+
+<tmpl_unless add_mode><p class="cram east">
+  <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
+  <input value="View Schedule" onclick="save_and_edit_schedule()" type="button" class="button">
+</p></tmpl_unless>
+
+<h2>
+<tmpl_if add_mode>
+  New
+<tmpl_else>
+  Edit
+</tmpl_if>
+Media
+</h2>
+
+<tmpl_unless add_mode>
+  <tmpl_if thumbnail_path><div class="east">
+    <tmpl_if media_id><a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media',null)"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
+  </div></tmpl_if>
+
+  <h3>
+  Properties
+  </h3>
+
+  <table class="request" summary="">
+
+  <colgroup>
+  <col class="c-label">
+  <col>
+  </colgroup>
+
+  <tbody>
+
+  <tr>
+  <th>Media ID</th>
+  <td><tmpl_var escape=html media_id></td>
+  </tr>
+
+  <tr>
+  <th>Current Version</th>
+  <td><tmpl_var escape=html version></td>
+  </tr>
+
+  <tr>
+  <th>Published Version</th>
+  <td><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+  </tr>
+
+  <tr>
+  <th>URL</th>
+  <td><tmpl_var url></td>
+  </tr>
+
+  <tr>
+  <th>Creation Date</th>
+  <td colspan="2"><tmpl_var escape=html creation_date></td>
+  </tr>
+
+  </tbody>
+
+  </table>
+</tmpl_unless>
+
+<table class="request" summary=""><!--:FIX(db2)-->
+
+<colgroup>
+<col class="c-label">
+<col>
+<col>
+</colgroup>
+
+<tbody class="demi">
+
+<tr<tmpl_if error_media_type_id> class="err"</tmpl_if>>
+<th>*Type</th>
+<td colspan="2">
+<tmpl_var type_chooser>
+</td>
+</tr>
+
+<tr<tmpl_if error_invalid_title> class="err"</tmpl_if>>
+<th>*Title</th>
+<td colspan="2">
+<input name="title" value="<tmpl_var escape=html title>">
+</td>
+</tr>
+
+<tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_category_id> class="err"</tmpl_if></tmpl_if>>
+<th>*Site/Category</th>
+<td colspan="2">
+<tmpl_var category_chooser>
+</td>
+</tr>
+
+<tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_media_file> class="err"</tmpl_if></tmpl_if>>
+<th>*Upload File</th>
+<td colspan="2">
+<tmpl_if filename>
+  Current File
+  <tmpl_if media_id><a href="javascript:Krang.preview('media',null)"></tmpl_if><tmpl_var escape=html filename><tmpl_if media_id></a></tmpl_if>
+  <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
+  <i>&mdash; or &mdash;</i>
+  <br>
+</tmpl_if>
+<input name="media_file" type="file">
+</td>
+</tr>
+
+<tr>
+<th>Default Caption</th>
+<td colspan="2"><input name="caption" value="<tmpl_var escape=html caption>"></td>
+</tr>
+
+<tr>
+<th>Default Copyright</th>
+<td colspan="2"><input name="copyright" value="<tmpl_var escape=html copyright>"></td>
+</tr>
+
+<tr>
+<th>Alt Text</th>
+<td colspan="2"><input name="alt_tag" value="<tmpl_var escape=html alt_tag>"></td>
+</tr>
+
+<tr>
+<th>Notes</th>
+<td colspan="2"><textarea name="notes" rows="4" cols="40"><tmpl_var escape=html notes></textarea></td>
+</tr>
+
+<tr>
+<th>Contributors</th>
+<td>
+<tmpl_if contribs>
+  <tmpl_loop contribs>
+    <tmpl_var escape=html first> <tmpl_var escape=html last> (<tmpl_var escape=html type>)<tmpl_unless __last__>,</tmpl_unless>
+  </tmpl_loop>
+<tmpl_else>
+  None.
+</tmpl_if></td>
+<td><input value="Edit Contributors" onclick="edit_contribs()" type="button" class="button"></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<tmpl_unless add_mode>
+  <p><!--:FIXME(db2)-->
+  Version
+  <tmpl_var media_version_chooser>
+  <input value="Revert" onclick="revert_version()" type="button" class="button">
+  <input value="View" onclick="view_version()" type="button" class="button">
+  </p>
+</tmpl_unless>
+
+<div class="panel capped<tmpl_if add_mode> clearfix</tmpl_if>">
+<tmpl_if add_mode>
+  <input value="Cancel" onclick="do_cancel()" type="button" class="west">
+</tmpl_if>
+<input value="Save &amp; Stay" onclick="do_save_stay()" type="button">
+<input value="Save" onclick="do_save()" type="button">
+<tmpl_if may_publish>
+  <input value="Publish" onclick="publish_media()" type="button">
+</tmpl_if>
+<input value="Publish to Preview" onclick="publish_media_preview()" type="button">
+<tmpl_unless add_mode>
+  <input value="Delete" onclick="do_delete()" type="button">
+</tmpl_unless>
 </div>
 
+</form>
+
+<tmpl_unless add_mode>
+  <form name="delete_media_form" method="post" action="media.pl">
+  <input name="rm" value="delete" type="hidden">
+  <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+  </form>
+</tmpl_unless>
+
 <tmpl_include footer.tmpl>
+

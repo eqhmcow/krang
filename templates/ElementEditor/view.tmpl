@@ -1,33 +1,48 @@
-<script language=javascript>
-
-  view_path = function (p) {
-    document.forms[0].path.value = p;
-    document.forms[0].submit();
-  }
-
+<script type="text/javascript">
+view_path = function( p )
+{
+  Krang.form_submit( 'view', { path : p } );
+}
 </script>
 
-<input type="hidden" name=path value="<tmpl_var path>">
+<input name="path" value="<tmpl_var escape=html path>" type="hidden">
 
-<table class="form-head">
+<tmpl_if crumbs><div class="east"><tmpl_loop crumbs>
+  <tmpl_unless __last__><a href="javascript:view_path('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
+</tmpl_loop></div></tmpl_if>
 
-<tr>
-    <td>Content<tmpl_if crumbs>&nbsp;&nbsp;&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:view_path("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if>
-<br></td>
-  </tr></table> 
-<table cellspacing="0" width="571" cellpadding="2" class="form-cell">
- <tmpl_loop child_loop>
-  <tr>
-    <td width="160" class="form-cell"><tmpl_var name></td>
-    <td class="form-cell">
-      <tmpl_if is_container><input type="button" value="View" onClick='view_path("<tmpl_var path>")' class="button">&nbsp;</tmpl_if>
-      <tmpl_var data>
+<h3>
+Content
+</h3>
+
+<tmpl_unless child_loop>
+
+  <p class="naught">
+  No sub-elements defined.
+  </p>
+
+<tmpl_else>
+
+  <table class="result" summary="">
+
+  <colgroup>
+  <col class="c-label">
+  <col>
+  </colgroup>
+
+  <tbody><tmpl_loop child_loop>
+    <tr>
+    <th><tmpl_var escape=html name></th>
+    <td>
+    <tmpl_if is_container>
+      <input value="View Detail" onclick="view_path('<tmpl_var escape=html path>')" type="button" class="button">
+    </tmpl_if>
+    <tmpl_var data><!--:markup, maybe; CHILDREN MUST HANDLE ESCAPE AS NEEDED(db2)-->
     </td>
-  </tr>
- </tmpl_loop>
+    </tr>
+  </tmpl_loop></tbody>
 
- <tmpl_unless child_loop>
-   <tr><td colspan="2" class="form-cell">No sub-elements defined.</td></tr>
- </tmpl_unless>
-</table>
+  </table>
+
+</tmpl_unless>
 

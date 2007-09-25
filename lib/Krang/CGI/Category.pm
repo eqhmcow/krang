@@ -7,8 +7,8 @@ use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Message => qw(add_message);
-use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url);
+use Krang::ClassLoader Message => qw(add_message add_alert);
+use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader 'CGI::Workspace';
 use Carp qw(croak);
 use Krang::ClassLoader 'Pref';
@@ -69,6 +69,7 @@ sub setup {
                      save_and_change_bulk_edit_sep => 'save_and_change_bulk_edit_sep',
                      save_and_find_story_link    => 'save_and_find_story_link',
                      save_and_find_media_link    => 'save_and_find_media_link',
+                     autocomplete => 'autocomplete',
                     );
 
     $self->tmpl_path('Category/');
@@ -86,7 +87,11 @@ sub find {
     my $t = $self->load_tmpl("find.tmpl", associate=>$q, loop_context_vars=>1);
 
     # Do simple search based on search field
-    my $search_filter = $q->param('search_filter') || '';
+    my $search_filter = $q->param('search_filter');
+    if(! defined $search_filter ) {
+        $search_filter = $session{KRANG_PERSIST}{pkg('Category')}{search_filter}
+            || '';
+    }
 
     # Configure pager
     my $pager = pkg('HTMLPager')->new(
@@ -111,11 +116,12 @@ sub find {
                                       id_handler => sub { return $_[0]->category_id },
                                      );
 
-    # Run pager
-    $t->param(pager_html =>  $pager->output());
-
-    # Propagate other params
-    $t->param(row_count => $pager->row_count());
+    # fill the template
+    $t->param(
+        pager_html    => $pager->output(),
+        row_count     => $pager->row_count(),
+        search_filter => $search_filter,
+    );
 
     return $t->output();
 }
@@ -145,7 +151,7 @@ sub new_category {
     # throw error if there are no sites in the system
     my $site_count = pkg('Site')->find(count => 1);
     unless ($site_count) {
-        add_message('no_sites');
+        add_alert('no_sites');
         return $self->find;
     }
 
@@ -182,11 +188,11 @@ sub create {
 
     # detect bad fields
     my @bad;
-    push(@bad, 'parent_id'),  add_message('missing_parent_id')
+    push(@bad, 'parent_id'),  add_alert('missing_parent_id')
       unless $parent_id;
-    push(@bad, 'dir'),        add_message('missing_dir')
+    push(@bad, 'dir'),        add_alert('missing_dir')
       unless $dir;
-    push(@bad, 'dir'),        add_message('bad_dir')
+    push(@bad, 'dir'),        add_alert('bad_dir')
       unless $dir =~ /^[-\w]+$/;
     return $self->new_category(bad => \@bad) if @bad;
 
@@ -198,7 +204,7 @@ sub create {
     if ($@ and ref($@) and $@->isa('Krang::Category::NoEditAccess')) {
         # User isn't allowed to add a descendant category
         my ($parent_cat) = pkg('Category')->find(category_id => $@->category_id);
-        add_message( 'add_not_allowed',
+        add_alert( 'add_not_allowed',
                      url => $parent_cat->url );
         return $self->new_category(bad => ['parent_id']);
     } elsif ($@) {
@@ -213,7 +219,7 @@ sub create {
     if ($@ and ref($@) and $@->isa('Krang::Category::DuplicateURL')) {
         # load duplicate category
         my ($dup) = pkg('Category')->find(category_id => $@->category_id);
-        add_message('duplicate_url', 
+        add_alert('duplicate_url', 
                     url         => $dup->url,                    
                    );
 
@@ -232,8 +238,8 @@ sub create {
 
 =item edit
 
-The category editing interface.  Expects to find a story to edit in
-$session{category}.
+The category editing interface. Expects to find a category to edit in
+$session{category} or a category_id in they query params.
 
 =cut
 
@@ -554,17 +560,17 @@ sub delete {
 
     eval { $category->delete(); };
     if ($@ and ref $@ and $@->isa('Krang::Category::RootDeletion')) {
-        add_message('cant_delete_root', url => $category->url);
+        add_alert('cant_delete_root', url => $category->url);
         return $self->edit;
     } elsif ($@ and ref $@ and $@->isa('Krang::Category::Dependent')) {
         my $dep = $@->dependents;
-        add_message('category_has_children', url => $category->url)
+        add_alert('category_has_children', url => $category->url)
           if $dep->{category} and @{$dep->{category}};
-        add_message('category_has_stories', url => $category->url)
+        add_alert('category_has_stories', url => $category->url)
           if $dep->{story} and @{$dep->{story}};
-        add_message('category_has_media', url => $category->url)
+        add_alert('category_has_media', url => $category->url)
           if $dep->{media} and @{$dep->{media}};
-        add_message('category_has_templates', url => $category->url)
+        add_alert('category_has_templates', url => $category->url)
           if $dep->{template} and @{$dep->{template}};
         return $self->edit;
     } elsif ($@) {
@@ -606,17 +612,17 @@ sub delete_selected {
         eval { $category->delete(); };
 
         if ($@ and ref $@ and $@->isa('Krang::Category::RootDeletion')) {
-            add_message('cant_delete_root', url => $category->url);
+            add_alert('cant_delete_root', url => $category->url);
             $err = 1;
         } elsif ($@ and ref $@ and $@->isa('Krang::Category::Dependent')) {
             my $dep = $@->dependents;
-            add_message('category_has_children', url => $category->url)
+            add_alert('category_has_children', url => $category->url)
               if $dep->{category} and @{$dep->{category}};
-            add_message('category_has_stories', url => $category->url)
+            add_alert('category_has_stories', url => $category->url)
               if $dep->{story} and @{$dep->{story}};
-            add_message('category_has_media', url => $category->url)
+            add_alert('category_has_media', url => $category->url)
               if $dep->{media} and @{$dep->{media}};
-            add_message('category_has_templates', url => $category->url)
+            add_alert('category_has_templates', url => $category->url)
               if $dep->{template} and @{$dep->{template}};
            $err = 1;
         } elsif ($@) {
@@ -649,6 +655,12 @@ sub category_save {
     $category->save();
 }
 
-
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'category',
+        fields => [qw(category_id url)],
+    );
+}
 
 1;

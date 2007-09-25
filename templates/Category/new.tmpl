@@ -1,56 +1,61 @@
 <tmpl_include header.tmpl>
 
-<script language="JavaScript" type="text/javascript">
-  nav_edit_mode();
-                
-  create = function () {
-     document.new_category.rm.value = 'create';
-     document.new_category.submit();
-  }
-  cancel = function () {
-     if (confirm("Are you sure?")) {
-        document.new_category.rm.value = 'find';
-        document.new_category.submit();
-     }
-  }
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'category' );
+} );
+
+cancel = function()
+{
+  if ( confirm( 'Are you sure?' ) )  //:of what?(db2)
+    Krang.form_submit( 'new_category', { rm: 'find' } );
+}
 </script>
 
-<form method="post" name="new_category" action="category.pl">
-<input type="hidden" name="rm">
+<h2>
+New Category
+</h2>
 
+<form name="new_category" action="category.pl" method="post">
 
-<div class="dark-bar"><p class="left">&nbsp;New Category</p><p class="right"><a href="javascript:openWin('help.pl?topic=category')">Help</a>&nbsp;</p></div>
+<input name="rm" value="create" type="hidden">
 
-<tmpl_loop alerts_loop>
-  <div class="alert">* <tmpl_var alert></div>
-</tmpl_loop>
+<h3>
+Properties
+</h3>
 
-<div class="box">
-<br>
-<table cellspacing="0" cellpadding="4" class="form-head">
-<tr><td>Properties</td></tr></table>
+<table class="request" summary="">
 
-<table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-        <tr>
-            <td class="form-cell">Parent</td>
-            <td class="form-cell"><tmpl_if bad_parent_id><span class="invalid"></tmpl_if>
-    <tmpl_var parent_chooser>
-  <tmpl_if bad_parent_id></span></tmpl_if>
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody class="demi">
+
+<tr<tmpl_if bad_parent_id> class="err"</tmpl_if>>
+<th>Parent</th>
+<td>
+<tmpl_var parent_chooser>
 </td>
 </tr>
 
-<tr>
-<td class=form-cell>Directory</td>
-<td class=form-cell><input <tmpl_if bad_dir>class="invalid"</tmpl_if> type=text size=15 value="<tmpl_var escape=html dir>" name=dir></td>
-        </tr></table><br></div>
+<tr<tmpl_if bad_dir> class="err"</tmpl_if>>
+<th>Directory</th>
+<td><input name="dir" value="<tmpl_var escape=html dir>"></td>
+</tr>
 
-<div class="button-bar">
-  <input type=button value="Create" onclick="create()" class="button">
-  <input type=reset value="Reset" class="button">
-  <input type=button value="Cancel" onclick="cancel()" class="button">
-</div></form>
+</tbody>
+
+</table>
+
+<div class="panel capped">
+<input value="Cancel" onclick="cancel()" type="button" class="west">
+<input value="Create" type="submit">
 </div>
 
+</form>
 
 <tmpl_include footer.tmpl>
-        
+

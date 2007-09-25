@@ -27,7 +27,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget => qw(format_url);
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Publisher';
 use Carp qw(croak);
 
@@ -50,7 +50,6 @@ sub setup {
       deploy
       update_testing
     )]);
-
 }
 
 =item show
@@ -66,6 +65,7 @@ sub show {
     my $template = $self->load_tmpl("workspace.tmpl", 
                                     associate         => $query,
                                     die_on_bad_params => 0,
+                                    loop_context_vars => 1,
                                     global_vars => 1);
 
     # setup sort selector
@@ -84,17 +84,12 @@ sub show {
                                                      date  => 'Date' },
                                         -default => $sort,
                                         -override => 1,
-                                        -onchange => "do_sort(this.options[this.selectedIndex].value,0)",
+                                        -onchange => "Krang.Pager.sort(this.options[this.selectedIndex].value,0)",
                                        ));
 
     # permissions
     my %admin_perms = pkg('Group')->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
-
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
 
     # setup paging list of objects
     my $pager = pkg('HTMLPager')->new
@@ -106,8 +101,7 @@ sub show {
                         'command_column', 'checkbox_column'],
        columns_sortable => [ ],
        command_column_commands => [ 'log', 'edit' ],
-       command_column_labels => { edit => 'Edit',
-                                  log  => 'Log' },
+       command_column_labels => { log  => 'View Log', edit => 'Edit' },
        id_handler  => sub { $self->_obj2id( @_ ) },
        row_handler => sub { $self->_row_handler(@_) },
       );
@@ -118,58 +112,70 @@ sub show {
 }
 
 sub _row_handler {
-    my ($self, $row, $obj) = @_;
+    my ( $self, $row, $obj ) = @_;
 
-    if ($obj->isa('Krang::Story')) {
-        $row->{story_id} = $obj->story_id;
-        $row->{id} = $self->_obj2id($obj);
-        $row->{title} = $obj->title;
+    my $date;
+    if($obj->isa('Krang::Story')) {
+        $row->{story_id}   = $obj->story_id;
+        $row->{id}         = $self->_obj2id($obj);
+        $row->{title}      = $obj->title;
         $row->{story_type} = $obj->class->display_name;
-        $row->{is_story} = 1;
-        $row->{url} =format_url(url    => $obj->url,
-                                linkto => 
-                                "javascript:preview_story(".$obj->story_id.")",
-                                length => 50);
+        $row->{is_story}   = 1;
+        $row->{url}        = format_url(
+            url    => $obj->url,
+            linkto => "javascript:Krang.preview('story'," . $obj->story_id . ")",
+            length => 50
+        );
 
-	# setup desk selector
-	my $last_desk_id = $obj->last_desk_id;
-	my ($last_desk) = $last_desk_id ? pkg('Desk')->find( desk_id => $last_desk_id ) : ();
+        # setup desk selector
+        my $last_desk_id = $obj->last_desk_id;
+        my ($last_desk) = $last_desk_id ? pkg('Desk')->find(desk_id => $last_desk_id) : ();
 
-	my @found_desks = pkg('Desk')->find();
-	my @desk_loop;
-	my $is_selected = 0;
+        my @found_desks = pkg('Desk')->find();
+        my @desk_loop;
+        my $is_selected = 0;
 
-	foreach my $found_desk (@found_desks) {
-	    next unless pkg('Group')->may_move_story_to_desk($found_desk->desk_id);
+        foreach my $found_desk (@found_desks) {
+            next unless pkg('Group')->may_move_story_to_desk($found_desk->desk_id);
 
-	    if ($last_desk) {
-		$is_selected = ($found_desk->order eq ($last_desk->order + 1)) ? 1 : 0;
-	    }
+            if($last_desk) {
+                $is_selected = ($found_desk->order eq ($last_desk->order + 1)) ? 1 : 0;
+            }
 
-	    push @desk_loop, { choice_desk_id   => $found_desk->desk_id,
-			       choice_desk_name => $found_desk->name,
-			       is_selected      => $is_selected};
-	}
-	$row->{desk_loop} = \@desk_loop;
-    } elsif ($obj->isa('Krang::Media')) {
-        $row->{media_id} = $obj->media_id;
-        $row->{id} = $self->_obj2id($obj);
-        $row->{title} = $obj->title;
+            push @desk_loop,
+              {
+                choice_desk_id   => $found_desk->desk_id,
+                choice_desk_name => $found_desk->name,
+                is_selected      => $is_selected
+              };
+        }
+        $row->{desk_loop} = \@desk_loop;
+    } elsif($obj->isa('Krang::Media')) {
+        $row->{media_id}  = $obj->media_id;
+        $row->{id}        = $self->_obj2id($obj);
+        $row->{title}     = $obj->title;
         $row->{thumbnail} = $obj->thumbnail_path(relative => 1);
-        $row->{is_media} = 1;
-        $row->{url} =format_url(url    => $obj->url,
-                                linkto => 
-                                "javascript:preview_media(".$obj->media_id.")",
-                                length => 50);
+        $row->{is_media}  = 1;
+        $row->{url}       = format_url(
+            url    => $obj->url,
+            linkto => "javascript:preview_media(" . $obj->media_id . ")",
+            length => 50
+        );
     } else {
         $row->{template_id} = $obj->template_id;
-        $row->{id} = $self->_obj2id($obj);
-        $row->{title} = $obj->filename;
+        $row->{id}          = $self->_obj2id($obj);
+        $row->{title}       = $obj->filename;
         $row->{is_template} = 1;
-        $row->{url} = format_url(url    => $obj->url,
-                                 length => 50);
+        $row->{url}         = format_url(
+            url    => $obj->url,
+            length => 50
+        );
         $row->{testing} = $obj->testing;
+        $date = $obj->creation_date();
     }
+
+    # format the date
+    $row->{date} = ref $date ? $date->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
 
     # setup version, used by all type
     $row->{version} = $obj->version;
@@ -314,18 +320,18 @@ Checks in checked objects (to specified desk for stories).
 =cut
                                                                                
 sub checkin_checked {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    foreach my $obj (map { $self->_id2obj($_) }
-                     $query->param('krang_pager_rows_checked')) {
+    foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
 
-	# check if they may move story to desired desk
-	if ($obj->isa('Krang::Story')) {
-	    return $self->access_forbidden()
-	      unless pkg('Group')->may_move_story_to_desk($self->query->param('move_'.$obj->story_id));
-	}
+        # check if they may move story to desired desk
+        if($obj->isa('Krang::Story')) {
+            return $self->access_forbidden()
+              unless pkg('Group')
+              ->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
+        }
 
-	$self->_do_checkin($obj);
+        $self->_do_checkin($obj);
     }
     return $self->show;
 }
@@ -431,31 +437,35 @@ sub _id2obj {
 sub _do_checkin {
     my ($self, $obj) = @_;
 
-    if ($obj->isa('Krang::Story')) {
-	my $story_id  = $obj->story_id;
-	my $desk_id   = $self->query->param('checkin_to_story_'.$story_id);
-	my ($desk)    = pkg('Desk')->find(desk_id => $desk_id);
-	my $desk_name = $desk ? $desk->name : '';
+    if($obj->isa('Krang::Story')) {
+        my $story_id = $obj->story_id;
+        my $desk_id  = $self->query->param('checkin_to_story_' . $story_id);
+        my ($desk) = pkg('Desk')->find(desk_id => $desk_id);
+        my $desk_name = $desk ? $desk->name : '';
 
         $obj->checkin();
 
-        eval {$obj->move_to_desk($desk_id); };
+        eval { $obj->move_to_desk($desk_id); };
 
-	if ($@ and ref($@)) {
-	    if ($@->isa('Krang::Story::CheckedOut')) {
-		add_message( 'story_cant_move_checked_out',
-			     id   => $story_id,
-			     desk => $desk_name);
-	    } elsif ($@->isa('Krang::Story::NoDesk')) {
-		add_message( 'story_cant_move_no_desk',
-			     story_id   => $story_id,
-			     desk_id    => $desk_id );
-		$obj->checkout();
-	    }
-	} else {
-	    add_message("moved_story", id => $story_id, desk => $desk_name);
-	}
-    } elsif ($obj->isa('Krang::Media')) {
+        if($@ and ref($@)) {
+            if($@->isa('Krang::Story::CheckedOut')) {
+                add_alert(
+                    'story_cant_move_checked_out',
+                    id   => $story_id,
+                    desk => $desk_name
+                );
+            } elsif($@->isa('Krang::Story::NoDesk')) {
+                add_alert(
+                    'story_cant_move_no_desk',
+                    story_id => $story_id,
+                    desk_id  => $desk_id
+                );
+                $obj->checkout();
+            }
+        } else {
+            add_message("moved_story", id => $story_id, desk => $desk_name);
+        }
+    } elsif($obj->isa('Krang::Media')) {
         add_message("checkin_media", id => $obj->media_id);
         $obj->checkin();
     } else {

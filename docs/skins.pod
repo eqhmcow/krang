@@ -18,28 +18,76 @@ The F<skins/Red/skin.conf> file will contain the basic configuration
 information for the skin.  For example, here's one that changes
 Krang's colors to shades of red:
 
-  # based on the Default skin
-  Include ../Default/skin.conf
+    # based on the Default skin
+    Base Default
+    Include ../Default/skin.conf
 
-  # change palette to reds
-  dark_color       #660002
-  light_color      #eba4a5
-  bright_color     #ff0004
+    <CSS>
+        # change palette to reds
+        DarkColor       #660002
+        LightColor      #eba4a5
+        BrightColor     #ff0004
 
-  # logo colors
-  logo_color1      #660002
-  logo_color2      #eba4a5
-  logo_color3      #ff0004
+        # text colors
+        TextColor       #414041
+        LightTextColor  #e6e2e6
+        LinkColor       #52797b
+        ButtonColor     #414041
+    </CSS>
 
-  # text colors to match the red palette
-  text_color       #333333
-  light_text_color #ffffff
-  link_color       #660002
+    <Images>
+        BioChromeBlack  #ffffff
+        BioChromeRed    #eba4a5
+        BioChromeGreen  #ff0004
+        BioChromeBlue   #660002
+        <File logo.gif>
+            # logo colors
+            BioChromeRed    #660002
+            BioChromeGreen  #eba4a5
+            BioChromeBlue   #ff0004
+        </File>
+        <File arrow.gif></File>
+        <File arrow-asc.gif></File>
+        <File arrow-desc.gif></File>
+        <File left-bg.gif></File>
+    </Images>
 
-The C<Include> directive brings in all the default settings from the
-C<Default/skin.conf> file.  This is useful if you don't want to define
-all the required settings.  The remaining lines configure Krang to use
-shades of red in the UI.
+Let's look at some of the directives and blocks we're using:
+
+=over
+
+=item Base
+
+This directive tells Krang that you you want to use the CSS files
+and image files from another skin as your base. This is really useful
+if you want to just tweak the style of an existing skin or just change
+a few of the images.
+
+In this case we're using 'Default' as our base and we share it's images
+and CSS template files.
+
+=item Include
+
+This directive brings in another config file (in this case F<Default/skin.conf>)
+and uses it as if it appeared exactly in our configuration file.
+
+This is useful if you wish to base your skin off of another skin's configuration
+or what to have your skin configuration in multiple files.
+
+=item CSS
+
+This block can contain an arbitrary list of colors that will be used as
+parameters to the CSS templates (files that would match F<templates/*.css.tmpl>).
+
+=item Images
+
+This block refers to images that will be run through L<Image::BioChrome>.
+This will allow you to use the same images as your base skin, but filtering
+them for different colors. You will probably need to experiment a lot
+with the values you use for C<BioChromeBlack>, C<BioChromeRed>, C<BioChromeGreen>
+and C<BioChromeBlue>. 
+
+=back
 
 To use this skin, first change the configured skin in your
 F<conf/krang.conf> file:
@@ -72,6 +120,12 @@ logo, I would create a file called:
 The names of the image files must match files in F<templates/images>.
 These are the source images used if the skin does not define
 replacements.
+
+=head2 Replacing CSS files
+
+To replace the default CSS files, simply place a templated CSS file
+in the F<css/> directory (of the skin you're creating) with the same
+name as the css file you're replacing.
 
 =head2 Replacing Templates
 

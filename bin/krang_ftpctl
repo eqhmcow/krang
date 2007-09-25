@@ -59,7 +59,7 @@ END
 }
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup);
+use Krang::ClassLoader Conf => qw(KrangRoot KrangUser KrangGroup EnableFTP);
 
 # the krang_ftpd command
 my $ftpd = rel2abs(catfile(KrangRoot, 'bin', 'krang_ftpd'));
@@ -84,6 +84,11 @@ usage() unless @ARGV;
 my $command = shift @ARGV;
 
 if ($command eq 'start') {
+    unless( EnableFTP ) {
+        print "FTP has been disabled.\n";
+        exit(0);
+    }
+
     if ($running) {
         die "krang_ftpctl $command: krang_ftpd (pid $pid) already running\n";
     }
@@ -138,6 +143,11 @@ if ($command eq 'restart') {
             die "\nkrang_ftpctl $command: krang_ftpd not stopped in time\n";
         }
 
+    }
+
+    unless( EnableFTP ) {
+        print "FTP has been disabled.\n";
+        exit(0);
     }
 
     # start

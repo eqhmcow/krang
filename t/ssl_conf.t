@@ -29,6 +29,7 @@ BugzillaEmail krang_test\@yahoo.com
 BugzillaPassword whale
 BugzillaComponent 'Auto-submitted Bugs'
 EnableSSL 1
+Secret 'ad0243-1j!\@LdaAWEOIGFa-39021-:skj'
 SSLApachePort 443
 SSLPassPhraseDialog  builtin
 SSLSessionCacheTimeout  3600

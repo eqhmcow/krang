@@ -1,74 +1,15 @@
-<!-- Pager Internals: START -->
+<!--HTMLPager/pager-internals.tmpl:-->
 
-
-<script language="Javascript">
-<!-- //
-
-    go_page  = function (page_num) {
-        var myform = get_form_obj();
-        myform.krang_pager_curr_page_num.value = page_num;
-
-        <tmpl_if javascript_presubmit>if (<tmpl_var javascript_presubmit>) {
-            myform.submit();
-        }
-
-        <tmpl_else>myform.submit();
-        </tmpl_if>
-    }
-
-
-    do_sort  = function (sort_field, sort_order_desc) {
-        var myform = get_form_obj();
-        myform.krang_pager_sort_field.value = sort_field;
-        myform.krang_pager_sort_order_desc.value = sort_order_desc;
-        go_page("1");
-    }
-
-
-    show_big_view  = function (big_page_state) {
-        var myform = get_form_obj();
-        myform.krang_pager_show_big_view.value = big_page_state;
-        go_page("1");
-    }
-
-
-    checkall = function (checkbox, prefix) {
-       for (var i = 0; i < checkbox.form.elements.length ; i++) {
-          var e = checkbox.form.elements[i];
-          if (e.name && e.name.indexOf(prefix) == 0) {
-             e.checked = checkbox.checked;
-          }
-       }
-    }
-
-
-    get_form_obj  = function () {
-        var magic_name = '<tmpl_var get_form_obj_magic_name>';
-
-        // Iterate through forms in document
-        for (var i=0; i<document.forms.length; i++) {
-            var currform = document.forms[i];
-
-            // Iterate through elements of form
-            for (var j=0; j<currform.elements.length ; j++) {
-                var currelement = currform.elements[j];
-                if (currelement && currelement.name && currelement.name == magic_name) {
-                    return currform;
-                }
-            }
-        }
-    }
-
-
-// -->
-</script>
-
-<input type="hidden" name="<tmpl_var get_form_obj_magic_name>" value="">
-<input type="hidden" name="krang_pager_curr_page_num" value="<tmpl_var curr_page_num>">
-<input type="hidden" name="krang_pager_sort_field" value="<tmpl_var sort_field>">
-<input type="hidden" name="krang_pager_sort_order_desc" value="<tmpl_var sort_order_desc>">
-<input type="hidden" name="krang_pager_show_big_view" value="<tmpl_var show_big_view>">
+<input name="<tmpl_var escape=html get_form_obj_magic_name>" value="" type="hidden">
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html curr_page_num>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html sort_order_desc>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html show_big_view>" type="hidden">
 <tmpl_var pager_persist_data>
 
+<script type="text/javascript">
+Krang.Pager.input_key('<tmpl_var escape=js get_form_obj_magic_name>');
+</script>
 
-<!-- Pager Internals: END -->
+<!--:HTMLPager/pager-internals.tmpl-->
+

@@ -39,7 +39,6 @@ The alternative form for multiple-story publish
 
   $ krang_publish --story_id 10 --story_id 11 --story_id 12
 
-
 Publish all assets of a single site, but only those assets that have been previously published
 
   $ krang_publish --site_id 10 --republish_only
@@ -61,6 +60,15 @@ Publish all content (stories and media) in a Krang installation.
 
 Using the --everything flag will cause krang_publish to ignore the
 --site_id, --category_id, --story_id and --media_id options.
+
+=item --all_instances
+
+Normally we will just publish the content for the instance specified
+in the C<KRANG_INSTANCE> environment variable. But sometimes after
+and upgrade (or installation of a new addon or element library uprade)
+it's convenient to be able to publish everything in all instances.
+
+This only works along with the C<--everything> flag.
 
 =item --site_id
 
@@ -185,8 +193,8 @@ END
 
 # Krang Libs
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader 'Script';
 use Krang::ClassLoader Conf => qw(KrangRoot ElementLibrary SSLEngine);
+use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader 'Category';
@@ -200,7 +208,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 my %id  = map { ($_, [])} qw(story_id media_id category_id below_category_id site_id);
 
-my ($help, $man, $everything, $verbose) = (0, 0, 0, 0);
+my ($help, $man, $everything, $verbose, $all_instances) = (0, 0, 0, 0, 0);
 my $limited_to_site     = 0;
 my $limited_to_category = 0;
 my $republish_only      = 0;
@@ -217,6 +225,7 @@ pod2usage(2) unless
 
              verbose             => \$verbose,
              everything          => \$everything,
+             all_instances       => \$all_instances,
              limited_to_site     => \$limited_to_site,
              limited_to_category => \$limited_to_category,
              republish_only      => \$republish_only,
@@ -236,6 +245,11 @@ pod2usage(-verbose => 2) if $man;
 
 pod2usage("Unrecognized options to krang_publish: '" . join(' ', @ARGV) . "'\n")
   if @ARGV;
+
+if( $all_instances && ! $everything ) {
+    warn "Can't use --all_instances without also using --everything!\n";
+    exit(1);
+}
 
 # turn on the cache
 Krang::Cache::start();
@@ -341,8 +355,18 @@ my $mediacount = 0;
 # if the --everything option was specified, publish all media first,
 # then stories.
 if ($everything) {
-    publish_media(\%find_options, \%publish_args);
-    publish_stories(\%find_options, \%publish_args);
+    my @instances;
+    if( $all_instances ) {
+        @instances = pkg('Conf')->instances();
+    } else {
+        @instances = ($ENV{KRANG_INSTANCE});
+    }
+    foreach my $instance (@instances) {
+        print "INSTANCE $instance\n" if @instances > 1;
+        pkg('Conf')->instance($instance);
+        publish_media(\%find_options, \%publish_args);
+        publish_stories(\%find_options, \%publish_args);
+    }
 
 } else {
     if (

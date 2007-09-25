@@ -5,7 +5,7 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Conf => qw(KrangRoot);
-use Krang::ClassLoader 'Test::Apache';
+use Krang::ClassLoader 'Test::Web';
 use File::Spec::Functions qw(catfile catdir);
 
 use Test::More qw(no_plan);
@@ -37,21 +37,19 @@ SKIP: {
         and skip "Krang servers couldn't be restarted, skipping tests.", 7;
 
     # get creds
-    my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
-    my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
-    login_ok($username, $password);
+    my $mech = pkg('Test::Web')->new();
+    $mech->login_ok();
 
     # hit about.pl and see if the server is in CGI mode, skip if not
     # since the addon won't be registered
-    request_ok('about.pl', {});
-    my $res = get_response();
+    $mech->get_ok('about.pl');
     skip "Apache server isn't running in CGI mode, skipping live tests", 5
-      unless $res->content =~ /running\s+in\s+CGI\s+mode/i;
+      unless $mech->content =~ /running\s+in\s+CGI\s+mode/i;
 
-    response_like(qr/PLUS BIG IMPROVEMENTS/);
+    $mech->content_like(qr/PLUS BIG IMPROVEMENTS/);
 
     # hit the barf runmode which tests messages.conf extensions
-    request_ok('about.pl', {rm => 'barf'});
-    response_like(qr/Barf!/);
-    response_like(qr/Barf\s+Barf/);
+    $mech->get_ok('about.pl?rm=barf');
+    $mech->content_like(qr/Barf!/);
+    $mech->content_like(qr/Barf\s+Barf/);
 }

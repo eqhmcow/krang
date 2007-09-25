@@ -4,11 +4,13 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader 'Desk';
-use Krang::ClassLoader Conf => qw(FTPHostName FTPPort EnableBugzilla);
+use Krang::ClassLoader Conf => qw(EnableFTP FTPHostName FTPPort EnableBugzilla);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'NavigationNode';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Carp qw(croak);
+use CGI;
+use CGI::Cookie;
 
 =head1 NAME
 
@@ -34,6 +36,26 @@ This call fills the navigation variables in the supplied template.
 All navigation vars and loops start with "nav_".  If the template does
 not include the standard header.tmpl then this call with do nothing.
 
+By default, when the C<ajax> param is true in the query string then
+nothing is added to the template. This is almost always what you want
+since AJAX requests don't update the nav. But this can be changed via
+the C<force_ajax> option below.
+
+It takes the following named arguments:
+
+=over
+
+=item template
+
+The L<HTML::Template> object to fill. This argument is required.
+
+=item force_ajax
+
+Normally AJAX requests don't need to have the navigation added.
+This allows you to override that. This argument is optional.
+
+=back
+
 =back
 
 =cut
@@ -42,6 +64,12 @@ our %TREE;
 
 sub fill_template {
     my ($pkg, %arg) = @_;
+
+    # don't do this work if we're doing an ajax request
+    my $q = CGI->new();
+    return if $q->param('ajax') && !$arg{force_ajax};
+
+    # don't do the work if there's no place to put the results
     my $template = $arg{template};
     return unless $template->query(name => 'nav_content');
 
@@ -74,15 +102,15 @@ sub render {
     return if $condition and not $condition->($perms);
 
     # handle root
-    return join('', map { $pkg->render($_, $perms, $depth+1, ++$index) } 
+    return join('', map { $pkg->render($_, $perms, $depth+1, ++$index) }
                       $node->daughters)
       unless $node->mother;
-    
+
     # recurse and build up kids
     my $i = 1;
-    my $kids = 
-      join("<br>", grep { defined }
-                   map { $pkg->render($_, $perms, $depth+1, $index + $i++) } 
+    my $kids =
+      join("</dt>\n<dt>", grep { defined }
+                   map { $pkg->render($_, $perms, $depth+1, $index + $i++) }
                          $node->daughters);
 
     # get link for node
@@ -91,28 +119,32 @@ sub render {
 
     # format name with link
     my $name =
-      ($link ? 
-       qq{<a href="javascript:nav_goto('} . $link . qq{')">} : "") .
+      ($link ?
+       qq{<a href="javascript:Krang.Nav.goto_url('} . $link . qq{')">} : "") .
       $node->name .
       ($link ? qq{</a>} : '');
+    my $class = lc($node->name);
+    $class =~ s/\s+/_/g;
 
     # setup blocks as needed
     my ($pre, $post) = ("", "");
+    my $opened_panels = $pkg->_get_opened_panels();
 
-    if ($index == 1) {
-        # the first block is funny-looking
-        $pre = qq{<div class="dark-bar-nav">$name</div><div class="plain-cell">};
-        $post = '</div>';
-
-    } elsif ($depth == 1) {
-        # blocks get funky little arrows
-        $pre = qq{<div class="light-bar-nav"><img src="/images/arrow.gif" height="10" width="10" alt="arrow" border="0">$name</div><div class="form-cell-nav">};
-        $post = '</div>';
+    if ($depth == 1) {
+        my $opened_style = $opened_panels->{$index -1} ? '' : ' style="display:none"';
+        if ($index == 1) {
+            $pre = qq{<div class="first nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
+        } else {
+            $pre = qq{<div class="nav_panel"><h2 class="$class"><span>$name</span></h2><div$opened_style><dl>\n<dt>};
+        }
+        $post = qq{</dt>\n</dl></div></div>\n\n};
     } elsif ($depth == 2) {
-        $pre = $name . 
-          ($kids ? qq{<div style="margin-left: 5px;">} : '');
-        $post = '</div>' if $kids;
-   } else {
+        if( $kids ) {
+            $pre = qq{<b>$name</b></dt>\n<dt>};
+        } else {
+            $pre = $name;
+        }
+    } else {
        $pre = $name;
     }
 
@@ -135,22 +167,9 @@ sub default_tree {
     $root = pkg('NavigationNode')->new();
     $root->name('Root');
 
-    # My Workspace block
-    $node = $root->new_daughter();
-    $node->name('My Workspace');
-    $node->link('workspace.pl');
-
-    $sub  = $node->new_daughter();
-    $sub->name('My Preferences');
-    $sub->link('my_pref.pl');
-
-    $sub  = $node->new_daughter();
-    $sub->name('My Alerts');
-    $sub->link('my_alerts.pl');
-
     # Story block
     $node = $root->new_daughter();
-    $node->name('Story');
+    $node->name('Stories');
     $node->condition(sub { shift->{asset}{story} ne 'hide' });
 
     $sub  = $node->new_daughter();
@@ -205,7 +224,7 @@ sub default_tree {
 
     # template block
     $node = $root->new_daughter();
-    $node->name('Template');
+    $node->name('Templates');
     $node->condition(sub { shift->{asset}{template} ne 'hide' });
 
     $sub  = $node->new_daughter();
@@ -221,17 +240,19 @@ sub default_tree {
     $sub->name('Active Templates');
     $sub->link('template.pl?rm=list_active');
 
-    # setup template FTP link, which is dynamic
-    $sub  = $node->new_daughter();
-    $sub->name('FTP');
-    $sub->link(
-       sub {
-           my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
-           return "ftp://" . $user->login . '@' . 
-                   FTPHostName . ':' . FTPPort .  '/' . $ENV{KRANG_INSTANCE} .
-                   '/template';
-       });
-    $sub->condition(sub { shift->{asset}{template} ne 'read-only' });
+    # setup template FTP link (which is dynamic) unless it's disabled
+    if( EnableFTP ) {
+        $sub  = $node->new_daughter();
+        $sub->name('FTP');
+        $sub->link(
+           sub {
+               my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+               return "ftp://" . $user->login . '@' . 
+                       FTPHostName . ':' . FTPPort .  '/' . $ENV{KRANG_INSTANCE} .
+                       '/template';
+           });
+        $sub->condition(sub { shift->{asset}{template} ne 'read-only' });
+    }
 
     # admin block
     my $admin_node = $root->new_daughter();
@@ -298,6 +319,17 @@ sub default_tree {
     
 
     return $root;
+}
+
+sub _get_opened_panels {
+    my $pkg = shift;
+    my %cookies = CGI::Cookie->fetch();
+    my $cookie = $cookies{'KRANG_NAV_ACCORDION_OPEN_PANELS'};
+    my $value = '';
+    $value = $cookie->value if $cookie;
+
+    my %opened = map { $_ => 1 } split(',', $value);
+    return \%opened;
 }
 
 1;

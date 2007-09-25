@@ -29,6 +29,7 @@ DBSock "<tmpl_var DBSock>"
 
 # 
 # ApacheAddr and ApachePort: the IP and port for the Apache server
+# ApacheMaxSize: the maximum process size (in KB) for apache children. Default is 64000
 #
 ApacheAddr <tmpl_var IPAddress>
 ApachePort <tmpl_var ApachePort>
@@ -58,6 +59,7 @@ LogLevel 2
 # FTPAddress and FTPPort: set this to the address and port of the
 # Krang internal FTP server.
 #
+EnableFTP 1
 FTPAddress <tmpl_var IPAddress>
 FTPPort <tmpl_var FTPPort>
 FTPHostName <tmpl_var FTPHostName>
@@ -117,6 +119,16 @@ BadLoginNotify ''
 # of '0' means they can use the same password over and over
 PasswordChangeTime 0
 PasswordChangeCount 0
+
+#
+# Secret is a shared secret used for encryption and checksumming
+Secret '<tmpl_var Secret>'
+
+# ContactEmail provides an optional way for you to specify how
+# users are to contact you in case of problems or compliments (heh).
+# It will place into the UI templates to fill the 'cms_contact_email'
+# template variable.
+# ContactEmail cms@company.org
 
 <tmpl_if EnableSSL>
 ##

@@ -1,181 +1,199 @@
 <tmpl_include header.tmpl>
 
-<script language="javascript" type="text/javascript">
-
-  /* returns true if the user has checked anything */
-  something_checked = function () {
-      var form = document.krang_pager_form;
-      for (i = 0; i < form.elements.length ; i++) {
-          var e = form.elements[i];
-          if (e.name == "krang_pager_rows_checked" && e.checked) {
-             return true;
-          }
-      }
-      return false;
-  }
-
-  preview_story = function (id) {
-        Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
-        Preview.focus();
-  }
-
-  remove = function (id) {
-     if (confirm("Are you sure you wish to delete this item permanently?")) {
-       document.krang_pager_form.rm.value = 'delete';
-       document.krang_pager_form.id.value = id;
-       document.krang_pager_form.submit();
-     }
-  }
-
-  checkout_checked = function () {
-     if (something_checked()) {
-       document.krang_pager_form.rm.value = 'checkout_checked';
-       document.krang_pager_form.submit();
-     } else {
-          alert("Nothing selected to check out!");
-     }
-  }
-
-  move = function (id) {
-    document.krang_pager_form.rm.value = 'move';
-    document.krang_pager_form.id.value = id;
-    document.krang_pager_form.submit();
-  }
-
-  move_checked = function () {
-     if (something_checked()) {
-       document.krang_pager_form.rm.value = 'move_checked';
-       document.krang_pager_form.submit();
-     } else {
-          alert("Nothing selected to move!");
-     }
-  }
-
-  edit = function (id) {
-       document.krang_pager_form.rm.value = 'goto_edit';
-       document.krang_pager_form.id.value = id;
-       document.krang_pager_form.submit();
-  }
-
-  view = function (id) {
-       document.krang_pager_form.rm.value = 'goto_view';
-       document.krang_pager_form.id.value = id;
-       document.krang_pager_form.submit();
-  }
-
-  log = function (id) {
-       document.krang_pager_form.rm.value = 'goto_log';
-       document.krang_pager_form.id.value = id;
-       document.krang_pager_form.submit();
-  }
-
-  publish_checked = function () {
-    if (something_checked()) {
-      if (confirm("Are you sure you wish to publish all these items?")) {
-        document.krang_pager_form.action = 'publisher.pl';
-        document.krang_pager_form.rm.value = 'publish_story_list';
-        document.krang_pager_form.submit();
-      }
-    } else {
-         alert("Nothing selected to publish!");
-    }
-  }
-
-  publish_story = function (story_id) {
-    var pubform = document.forms["publish_story_form"];
-    pubform.story_id.value=story_id;
-    pubform.submit();
-  }
-
-</script>
-
-<div class="dark-bar"><p class="left"><tmpl_var desk_name escape=html> Desk</p><p class="right"><a href="javascript:openWin('help.pl?topic=desk')">Help</a>&nbsp;</p></div>
-
-<!-- publish_story form -->
-<form name="publish_story_form" method="GET" action="publisher.pl">
-<input type=hidden name="rm" value="publish_story">
-<input type=hidden name="story_id" value="">
-</form>
-
-<form name="krang_pager_form" method="POST" action="desk.pl">
-  <input type="hidden" name="rm">
-  <input type="hidden" name="id">
-  <input type="hidden" name="desk_id" value="<tmpl_var desk_id>">
-  
-
-
-<tmpl_include HTMLPager/pager-internals.tmpl>
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'desk' );
+} );
 
 <tmpl_if krang_pager_rows>
-<div class="boxb">
-<div class="light">Sort By: &nbsp;&nbsp; <tmpl_var sort_select></div>
+  log = function( id )
+  {
+    Krang.form_submit( 'krang_pager_form', { rm: 'goto_log', id: id } );
+  }
 
-                            <tmpl_if may_move>
-<div class=button-bar>
-  <input type="button" value="Move" onclick='move_checked()' class="button">
-  <input type="button" value="Check Out" onclick='checkout_checked()' class="button">
-  <tmpl_if may_publish><input type="button" value="Publish" onclick='publish_checked()' class="button"></tmpl_if>
-</div>                      </tmpl_if>
-<div class="no-border" style="height: 20px"><p class="left">Showing <tmpl_var start_row> to <tmpl_var end_row> of <tmpl_var found_count></p><tmpl_if may_move><p class="right"><tmpl_var colhead_checkbox_column></p></tmpl_if></div>
+  view = function( id )
+  {
+    Krang.form_submit( 'krang_pager_form', { rm: 'goto_view', id: id } );
+  }
 
-<tmpl_loop krang_pager_rows>
-<table cellspacing="0" width="571" class="form-head">
+  edit = function( id )
+  {
+    Krang.form_submit( 'krang_pager_form', { rm: 'goto_edit', id: id } );
+  }
 
-<tr class="form-head">
-    <td width="150"><b>Story</b> <tmpl_var story_id>
-        v<tmpl_var version>&nbsp;&nbsp;&nbsp;
+  publish_story = function( id )
+  {
+    Krang.form_submit( 'publish_story_form', { story_id: id } );
+  }
+
+  move = function( id )
+  {
+    Krang.form_submit( 'krang_pager_form', { rm: 'move', id: id }, { to_top: false } );
+  }
+
+  <tmpl_if may_publish>
+    publish_checked = function()
+    {
+      if ( !Krang.pager_row_checked() )
+        alert( 'Nothing selected to publish!' );
+      else if ( confirm( 'Are you SURE you wish to publish all these items?' ) )
+      {
+        document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
+        Krang.form_submit( 'krang_pager_form', { rm: 'publish_story_list' } );
+      }
+    }
+  </tmpl_if>
+
+  checkout_checked = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( 'Nothing selected to check out!' );
+    else
+      Krang.form_submit( 'krang_pager_form', { rm: 'checkout_checked' } );
+  }
+
+  move_checked = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( 'Nothing selected to move!' );
+    else
+      Krang.form_submit( 'krang_pager_form', { rm: 'move_checked' }, { to_top: false } );
+  }
+</tmpl_if>
+</script>
+
+<h2>
+Desk:
+&ldquo;<tmpl_var escape=html desk_name>&rdquo;
+</h2>
+
+<tmpl_unless krang_pager_rows>
+
+  <p class="naught">
+  The &ldquo;<tmpl_var escape=html desk_name>&rdquo; Desk is currently empty.
+  </p>
+
+<tmpl_else>
+
+  <form name="krang_pager_form" action="desk.pl" method="post">
+
+  <input name="rm" type="hidden">
+  <input name="id" type="hidden">
+  <input name="desk_id" value="<tmpl_var escape=html desk_id>" type="hidden">
+  <tmpl_include HTMLPager/pager-internals.tmpl>
+
+  <div class="panel">
+  <div class="west">
+  Sorted by
+  <tmpl_var sort_select>
+  </div>
+
+  <tmpl_if may_publish>
+    <input value="Publish" onclick="publish_checked()" type="button">
+  </tmpl_if>
+  <tmpl_if may_move>
+    <input value="Check Out" onclick="checkout_checked()" type="button">
+    <input value="Move" onclick="move_checked()" type="button">
+  </tmpl_if>
+  </div>
+
+  <tmpl_include HTMLPager/pager-pagination.tmpl>
+
+  <table class="result select_row" summary="">
+
+  <colgroup>
+  <col class="c-id">
+  <col>
+  <col class="c-link" style="width:auto">
+  <col class="tick">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="f">ID</th>
+  <th>Title</th>
+  <th>URL</th>
+  <th class="tick l"><tmpl_if may_move><tmpl_var colhead_checkbox_column></tmpl_if></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop krang_pager_rows>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td><tmpl_var escape=html story_id></td>
+
+    <td>
+    <b><tmpl_var escape=html title></b>
+
+    <br>
+
+    <tmpl_var escape=html story_type>
+
+    <br>
+
+    Version <tmpl_var escape=html version>
     </td>
-    <td><b><tmpl_var title escape=html></b></td>
- <td align="right">
-      <tmpl_if may_edit><tmpl_var checkbox_column></tmpl_if>
+
+    <td>
+    <tmpl_var url><!--:markup-->
+
+    <br>
+
+    <tmpl_unless may_edit>
+
+      <input value="View Detail" onclick="view('<tmpl_var escape=html story_id>')" type="button" class="button">
+      <input value="View Log" onclick="log('<tmpl_var escape=html story_id>')" type="button" class="button">
+
+    <tmpl_else>
+
+      <tmpl_var command_column>
+
+      <tmpl_if may_publish>
+        <input value="Publish" onclick="publish_story('<tmpl_var escape=html story_id>')" type="button" class="button">
+      </tmpl_if>
+
+      <tmpl_if desk_loop><span class="glue">
+        <input value="Move To" onclick="move('<tmpl_var escape=html story_id>')" type="button" class="button">
+        <select name="move_<tmpl_var escape=html story_id>" style="width:10em"><tmpl_loop desk_loop>
+          <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
+        </tmpl_loop></select>
+      </span></tmpl_if>
+
+    </tmpl_unless>
     </td>
-  </tr></table>
-  <table cellspacing="0" width="571" class="form-cell">
-       <tr>
-          <td class="form-cell" width="138" style="border-bottom:none;">Type</td>
-          <td class="form-cell" style="border-bottom:none;"><tmpl_var story_type></td>
-       </tr>
-     <tr>
-        <td class="form-cell" width="138" style="border-top:none;">URL</td>
-        <td class="form-cell" style="border-top:none;"><tmpl_var url></td>
-     </tr>
-     <tr>
-       <td colspan=<tmpl_if thumbnail>"3"<tmpl_else>"2"</tmpl_if> class="form-cell">
-           <span style="float:right; font-weight: bold;"><tmpl_if may_edit><tmpl_var command_column><tmpl_else><a href="javascript:log(<tmpl_var id>)">Log</a>&nbsp;|&nbsp;<a href="javascript:view(<tmpl_var id>)">View</a></tmpl_if></span>
-           <tmpl_if may_edit>
-               <tmpl_if may_publish><input type="button" value="Publish" onclick="publish_story('<tmpl_var id>')" class="button"></tmpl_if>
-               <input type="button" value="Move" onclick="move('<tmpl_var id>')" class="button"> to <select name="move_<tmpl_var id>"><tmpl_loop desk_loop><option value="<tmpl_var choice_desk_id>" <tmpl_if is_selected>SELECTED</tmpl_if>><tmpl_var choice_desk_name escape=html> Desk</tmpl_loop></select>
-          </tmpl_if>
-       </td>
-     </tr>
+
+    <td class="tick"><tmpl_if may_edit>
+      <tmpl_var checkbox_column>
+    </tmpl_if></td>
+    </tr>
+
+  </tmpl_loop></tbody>
+
   </table>
 
-  <div style='height:15px'></div>
+  <tmpl_include HTMLPager/pager-pagination.tmpl>
 
-  </tmpl_loop>
-<div class="no-border"><p class="left2"><tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
+  <div class="panel capped">
+  <div class="west">
+  Sorted by
+  <tmpl_var sort_select>
+  </div>
 
-<tmpl_loop page_numbers>
-  <tmpl_if is_current_page><b><tmpl_var page_number></b>
-  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number_label></a>
+  <tmpl_if may_publish>
+    <input value="Publish" onclick="publish_checked()" type="button">
   </tmpl_if>
-  <tmpl_unless __last__>|</tmpl_unless>
-</tmpl_loop>
+  <tmpl_if may_move>
+    <input value="Check Out" onclick="checkout_checked()" type="button">
+    <input value="Move" onclick="move_checked()" type="button">
+  </tmpl_if>
+  </div>
 
-<tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
+  </form>
 
-  <tmpl_if show_big_view><a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a>
-  <tmpl_else><a href="javascript:show_big_view('1')">show <tmpl_var big_view_page_size> per page</a>
-  </tmpl_if></div></div>
-                               <tmpl_if may_move>
-<div class="button-bar">
-  <input type="button" value="Move" onclick='move_checked()' class="button">
-  <input type="button" value="Check Out" onclick='checkout_checked()' class="button">
-  <tmpl_if may_publish><input type="button" value="Publish" onclick='publish_checked()' class="button"></tmpl_if>
-</div>                         </tmpl_if>
+  <form name="publish_story_form" action="publisher.pl">
+  <input name="rm" value="publish_story" type="hidden">
+  <input name="story_id" value="" type="hidden">
+  </form>
+</tmpl_unless>
 
-</tmpl_if>
-
-</form>
-</div>
 <tmpl_include footer.tmpl>
+

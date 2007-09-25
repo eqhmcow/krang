@@ -26,6 +26,7 @@ BugzillaServer krang-services.ops.about.com/bugzilla
 BugzillaEmail krang_test\@yahoo.com
 BugzillaPassword whale
 BugzillaComponent 'Auto-submitted Bugs'
+Secret "foo"
 <Instance instance_one>
    InstanceDisplayName "Test Magazine One"
    InstanceHostName cms.test1.com

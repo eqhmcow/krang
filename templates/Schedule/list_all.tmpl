@@ -1,34 +1,38 @@
 <tmpl_include header.tmpl>
 
-<script language=javascript>
- checkall = function (checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
-  }
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'job' );
+} );
 
-  delete_selected  = function () {
-        var myform = document.forms["current_schedule_form"];
-        myform.rm.value = 'delete';
-        myform.submit();
-  }
-
+delete_selected = function()
+{
+  if ( !Krang.pager_row_checked() )
+    alert( 'Nothing selected to delete!' );
+  else if ( confirm( 'Are you SURE you want to delete these Jobs?' ) )
+    Krang.form_submit('krang_pager_form', { rm: 'delete' }, { to_top: false });
+}
 </script>
-<div class="dark-bar"><p class="left">&nbsp;Scheduled Jobs</p><p class="right"><a href="javascript:openWin('help.pl?topic=schedule_job')">Help</a>&nbsp;</p></div>
 
-<div class="box">
+<h2>
+Scheduled Jobs
+</h2>
 
-<form name="current_schedule_form" method="POST" action="schedule.pl">
-<input type="hidden" name="is_list_all" value="1" override='1'>
-<br>
+<tmpl_if row_count>
+  <div class="panel"><form>
+  <input value="Delete" onclick="delete_selected()" type="button">
+  </form></div>
+</tmpl_if>
+
+<!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
-<br>
-</div>
+<!--:Krang::HTMLPager-->
 
-<div class="button-bar"><input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div>
-</form>                                                                      
-  </div>
+<tmpl_if row_count>
+  <div class="panel capped"><form>
+  <input value="Delete" onclick="delete_selected()" type="button">
+  </form></div>
+</tmpl_if>
+
 <tmpl_include footer.tmpl>
+

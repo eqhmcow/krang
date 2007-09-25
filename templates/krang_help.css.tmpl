@@ -1,134 +1,16 @@
-/*** Separate CSS file for help files not using the background image ***/
+body         { background: <tmpl_var BackgroundColor>; color: <tmpl_var TextColor>; margin: 0 0 2em; padding: 0; font: 12px sans-serif; }
+a, a:visited { background: inherit; color: <tmpl_var link_color>; font-weight: bold; }
+h2           { background: #b4cf66; color: #3c6731; margin: 0 0 1.5em; border: thin solid #3c6731; border-width: thin 0; border-top: 0; padding: .25em .5em; font: bold 14px/1 sans-serif; }
+h3           { margin: 1.5em 0; border-bottom: thin solid <tmpl_var BorderColor>; font: bold 12px/1 sans-serif; }
+p            { margin: 1.5em 0; line-height: 1.25; }
+p.note       { background: #FFC; color: #333; border: thin solid <tmpl_var BorderColor>; padding: .25em; }
+ul,ol        { margin: 1.5em 0; padding: 0 1.75em; }
+li           { margin: .5em 0; }
+dl           { margin: 1.5em 0; line-height: 1.25; }
+dt           { float: left; clear: left; padding: 0 .5em 0 0; font-weight: bold; }
+dd           { margin: .5em 0; }
+p.note       { border: 1px solid <tmpl_var DarkColor>; background: <tmpl_var LightColor>; padding: 4px; }
+#F           { margin: 2em 1em; text-align: right; }
+#H           { background-image: url('/images/help-bkg-header.jpg'); width: 100%; height: 45px; border-bottom: 2px solid <tmpl_var DarkColor>; margin: 0 0 1em; }
+#C           { margin: 0 2em 0 2em; }
 
-/*** Help Styles ***/
-
-body {
-  background-color: <tmpl_var background_color>;
-  color:            <tmpl_var text_color>;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        11px;
-  margin-top:       10px;
-  margin-left:      auto;
-  margin-right:     auto;
-  text-align:       center;
-}
-
-#hheader {
-  width:            460px;
-  height:           47px; 
-  background-color: <tmpl_var background_color>;
-  text-align:       left;
-  margin:           10px;
-}
-
-#hheader div.dkblu {	
-  margin-left:      160px; 
-  border-top: <tmpl_var dark_color> 1px solid;
-  background-color: <tmpl_var background_color>;  
-  height:           1px;
-  width:            300px; 
-}
-
-#hheader div.blue { 
-  height:          14px;  
-  background-color: <tmpl_var light_color>;
-  width: 460px;
-}	
-
-#hheader div.dark-bar {  
-  background-color: <tmpl_var dark_color>;
-  color:            <tmpl_var light_text_color>;  
-  margin-top:       10px;
-  padding:          4px 4px 0px 4px;
-  height:           20px;
-  font-weight:      bold;
-  font-family:      Verdana,Helvetica,Arial,sans-serif;
-  font-size:        12px;
-  width: 453px;
-  text-align:       left;
-}
-
-.dark-bar p.left {
-	float:           left;
-	margin: 0px;
-}
-
-.dark-bar p.right {
-	float:           right;
-	margin: 0px;
-}
-
-.dark-bar a { 
-  color:            <tmpl_var light_text_color>;
-  text-decoration:   none;
-}
-.dark-bar a:link { 
-  color:            <tmpl_var light_text_color>;
-  text-decoration:   none;
-}
-.dark-bar a:visited { 
-  color:            <tmpl_var light_text_color>;
-  text-decoration:   none;
-}
-.dark-bar a:active {
-  color:            <tmpl_var light_text_color>;
-  text-decoration:   none;
-}
-
-div.boxh {
-  padding:          5px; 
-  border-right:     1px <tmpl_var border_color> solid;
-  border-left:      1px <tmpl_var border_color> solid;
-  border-bottom:    1px <tmpl_var border_color> solid;
-  width:            449px;
-  text-align:       left;
-}
-
-.helptitle {
-	font-weight:     bold;
-	font-size:       14px;
-}
-
-.helpsub {
-	font-weight:     bold;
-	font-size:       11px;
-}
-
-.helpnote {
-	font-style:     italic;
-	font-size:       10px;	
-}
-
-.helpsubhead {
-	font-style:     italic;
-	font-size:       12px;	
-}
-
-a.helplink { 
-  color:            <tmpl_var link_color>;
-  text-decoration:  underline; 
-}
-a.helplink:visited { 
-  color:            <tmpl_var link_color>;
-  text-decoration:  underline;
-}
-a.helplink:active {
-  color:            <tmpl_var bright_color>;
-  text-decoration:  underline;
-} 
-#hfooter {
-	background-color: transparent;
-   color:            <tmpl_var text_color>;
-	width:            461px;
-	margin-top:        10px;
-  text-align:       left;
-}
-#hcopy {
-	background-color: <tmpl_var light_color>;
-   color:            <tmpl_var text_color>;
-	padding-top:      4px;
-	padding-bottom:   4px;
-	width:            460px;
-	font-size:         10px;  
-	text-align:       left;
-}

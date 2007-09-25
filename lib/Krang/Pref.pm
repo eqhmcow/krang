@@ -55,28 +55,31 @@ Default search page size, used by Krang::UserPref as a default.
 
 =cut
 
-our %CONFIG = 
-  (
-
-   contrib_type => {
-                    type      => 'list',
-                    table     => 'contrib_type',
-                    id_field  => 'contrib_type_id',
-                    name_field=> 'type',
-                   },
-   
-   media_type => {
-                  type      => 'list',
-                  table     => 'media_type',
-                  id_field  => 'media_type_id',
-                  name_field=> 'name',
-                 },
-   
-   
-   search_page_size => {
-                        type  => 'scalar',
-                        row   => 'search_page_size',
-                       },
+our %CONFIG = (
+    contrib_type => {
+        type       => 'list',
+        table      => 'contrib_type',
+        id_field   => 'contrib_type_id',
+        name_field => 'type',
+    },
+    media_type => {
+        type       => 'list',
+        table      => 'media_type',
+        id_field   => 'media_type_id',
+        name_field => 'name',
+    },
+    search_page_size => {
+        type => 'scalar',
+        row  => 'search_page_size',
+    },
+    use_autocomplete => {
+        type => 'scalar',
+        row  => 'use_autocomplete',
+    },
+    message_timeout => {
+        type => 'scalar',
+        row  => 'message_timeout',
+    },
 );
 
 =pod

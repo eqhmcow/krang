@@ -30,7 +30,7 @@ use Krang::ClassLoader 'User';
 use Krang::ClassLoader Conf => qw(PreviewSSL);
 use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget => qw(format_url datetime_chooser decode_datetime);
-use Krang::ClassLoader Message => qw(add_message get_messages clear_messages);
+use Krang::ClassLoader Message => qw(add_message add_alert get_alerts clear_alerts);
 use Time::Piece;
 
 use Carp qw(croak);
@@ -93,13 +93,12 @@ sub publish_story {
     $t->param(asset_id_list => [{id => "story_$story_id"}]);
 
     # add date chooser
-    $t->param(publish_date_chooser => datetime_chooser(name => 'publish_date',
-                                                       query => $query,
-                                                       onchange => 'document.forms[0].publish_now[1].checked = true;',
+    $t->param(publish_date_chooser => datetime_chooser(name     => 'publish_date',
+                                                       query    => $query,
+                                                       onchange => "this.form['publish_now'][1].checked = true",
                                                       ));
 
     return $t->output();
-
 }
 
 
@@ -196,9 +195,9 @@ sub publish_story_list {
 
     # add date chooser
     $t->param(publish_date_chooser => 
-              datetime_chooser(name => 'publish_date',
-                               query => $query,
-                               onchange => 'document.forms[0].publish_now[1].checked = true;')
+              datetime_chooser(name     => 'publish_date',
+                               query    => $query,
+                               onchange => "this.form['publish_now'][1].checked = true")
              );
     return $t->output();
 
@@ -365,19 +364,19 @@ sub preview_story {
             # if there is an error, figure out what it is, create the
             # appropriate message and return an error page.
             if (ref $error && $error->isa('Krang::ElementClass::TemplateNotFound')) {
-                add_message('missing_template',
+                add_alert('missing_template',
                             filename       => $error->template_name,
                             category_url   => $error->category_url
                            );
             } elsif (ref $error && $error->isa('Krang::ElementClass::TemplateParseError')) {
-                add_message('template_parse_error',
+                add_alert('template_parse_error',
                             element_name  => $error->element_name,
                             template_name => $error->template_name,
                             category_url  => $error->category_url,
                             error_msg     => $error->message
                            );
             } elsif (ref $error and $error->isa('Krang::Publisher::FileWriteError')) {
-                add_message(
+                add_alert(
                             'file_write_error',
                             path => $error->destination
                            );
@@ -388,7 +387,7 @@ sub preview_story {
                 critical($err_msg);
 
             } elsif (ref $error and $error->isa('Krang::Publisher::ZeroSizeOutput')) {
-                add_message('zero_size_output',
+                add_alert('zero_size_output',
                             story_id     => $error->story_id,
                             category_url => $error->category_url,
                             story_class  => $error->story_class
@@ -397,16 +396,15 @@ sub preview_story {
             } else {
                 # something not expected so log the error.  Can't croak()
                 # here because that will trigger bug.pl.
-                print "<div class='alertp'>An internal server error occurred.  Please check the error logs for details.</div>\n";
+                print qq|<div class="alertp">An Internal Server Error occurred. Please check the error logs for details.</div>\n|;
                 critical($error);
             }
 
             # put the messages on the screen
-            foreach my $msg (get_messages()) {
-                print "<div class='alertp'>" . $query->escapeHTML($msg) . 
-                  "</div>\n";
+            foreach my $msg (get_alerts()) {
+                print '<div class="alertp">' . $query->escapeHTML($msg) . "</div>\n";
             }
-            clear_messages();
+            clear_alerts();
 
             # make sure to turn off caching
             Krang::Cache::stop();
@@ -427,7 +425,7 @@ sub preview_story {
 
     # dynamic redirect to preview if we've got a url to redirect to
     my $scheme = PreviewSSL ? 'https' : 'http';
-    print "<script language='javascript'>window.location = '$scheme://$url'</script>\n"
+    print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
       if $url;
 }
 
@@ -441,7 +439,7 @@ sub _progress_callback {
     } else {
         $string = "Media " . $object->media_id . ": " . $object->url;
     }
-    print "<script language='javascript'>update_progress_bar($counter, $total, '$string');</script>\n";
+    print qq|<script type="text/javascript">\nKrang.update_progress( $counter, $total, '$string' );\n</script>\n|;
 }
 
 =item preview_media
@@ -486,13 +484,13 @@ sub preview_media {
         my @error_loop;
 
         if (ref $e and $e->isa('Krang::Publisher::FileWriteError')) {
-            add_message('file_write_error',
+            add_alert('file_write_error',
                         path => $e->destination);
             # put the messages on the screen
-            foreach my $err (get_messages()) {
+            foreach my $err (get_alerts()) {
                 push(@error_loop, { err => $err });
             }
-            clear_messages();
+            clear_alerts();
 
             # pass a more informative message to the log file - ops should know.
             my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
@@ -528,7 +526,7 @@ sub preview_media {
         $self->header_type('redirect');
 
         my $scheme = PreviewSSL ? 'https' : 'http';
-        $self->header_props(-url=>"$scheme://$url");
+        $self->header_props(-uri => "$scheme://$url");
         return "Redirecting to <a href='$scheme://$url'>$scheme://$url</a>.";
     }
 }
@@ -581,7 +579,7 @@ sub _build_asset_list {
         if ($asset->isa('Krang::Story')) {
             push @stories, {id          => $asset->story_id,
                             url         => format_url(url    => $asset->url,
-                                                      linkto => "javascript:preview_story('" . $asset->story_id . "')",
+                                                      linkto => "javascript:Krang.preview('story','" . $asset->story_id . "')",
                                                       length => 20
                                                      ),
                             title       => $asset->title,
@@ -591,7 +589,7 @@ sub _build_asset_list {
         } elsif ($asset->isa('Krang::Media')) {
             push @media, {id          => $asset->media_id,
                           url         => format_url(url    => $asset->url,
-                                                    linkto => "javascript:preview_media('".$asset->media_id."')",
+                                                    linkto => "javascript:Krang.preview('media','" . $asset->media_id . "')",
                                                     length => 20
                                                  ),
                           title       => $asset->title,
@@ -615,7 +613,7 @@ sub _build_asset_list {
 # _publish_assets_now($story_list_ref, $media_list_ref);
 #
 # Given lists of story & media objects, start the publish process on both.
-# If errors occur, make entires in the message system & return.
+# If errors occur, make entries in the message system & return.
 #
 sub _publish_assets_now {
     my $self = shift;
@@ -649,7 +647,7 @@ sub _publish_assets_now {
                 # appropriate message and return.
                 if (ref $err &&
                     $err->isa('Krang::ElementClass::TemplateNotFound')) {
-                    add_message('missing_template',
+                    add_alert('missing_template',
                                 filename     => $err->template_name,
                                 category_url => $err->category_url
                                );
@@ -658,7 +656,7 @@ sub _publish_assets_now {
 
                 } elsif (ref $err &&
                          $err->isa('Krang::ElementClass::TemplateParseError')) {
-                    add_message('template_parse_error',
+                    add_alert('template_parse_error',
                                 element_name  => $err->element_name,
                                 template_name => $err->template_name,
                                 category_url  => $err->category_url,
@@ -670,7 +668,7 @@ sub _publish_assets_now {
                          $err->isa('Krang::Publisher::FileWriteError')
                         ) {
 
-                    add_message('file_write_error',
+                    add_alert('file_write_error',
                                 path => $err->destination);
                     # pass a more informative message to the log file - ops should know.
                     my $err_msg = sprintf("Could not write '%s' to disk.  Error='%s'",
@@ -681,7 +679,7 @@ sub _publish_assets_now {
                          ref $err &&
                          $err->isa('Krang::Publisher::ZeroSizeOutput')
                         ) {
-                    add_message('zero_size_output',
+                    add_alert('zero_size_output',
                                 story_id     => $err->story_id,
                                 category_url => $err->category_url,
                                 story_class  => $err->story_class
@@ -731,8 +729,16 @@ sub _publish_assets_now {
     # die if you want to
     die $err if $err;
 
-    # dynamic redirect to workspace
-    print "<form action=workspace.pl></form><script language='javascript'>document.forms[0].submit();</script>\n";
+    # dynamic redirect to workspace, but give the page time to update
+    # itself
+    print qq|
+    <script type="text/javascript">
+        setTimeout(
+            function() { location.replace('workspace.pl') },
+            10
+        )
+    </script>
+    |;
 
     return;
 }

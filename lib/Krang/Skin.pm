@@ -41,49 +41,20 @@ which reflect the skin settings.
 
 =head1 TODO
 
-The colors that come out of Image::BioChrome are never exactly right.
-I might be using alpha() wrong or there might be a bug in
-Image::BioChrome.
+If you're using the CC< <ImageBioChrome> >> features of F<skin.conf>
+be aware that the colors that come out of Image::BioChrome are never 
+exactly right. We might be using C<alpha()> wrong or there might be a 
+bug in C<Image::BioChrome>.
 
 =cut
 
-use Carp qw(croak);
 use Krang::ClassLoader Conf => qw(KrangRoot);
-use File::Spec::Functions qw(catdir catfile);
 use Krang::ClassLoader 'HTMLTemplate';
-use Image::BioChrome;
-use File::Copy qw(copy);
 use Krang::ClassLoader 'File';
 
-# parameters from skin.conf that go to the CSS template
-our @CSS_PARAMS = 
-  (qw( background_color
-       dark_color
-       light_color
-       bright_color
-       border_color
-       text_color
-       light_text_color                               
-       link_color
-       button_color
-       alert_color
-       invalid_color
-     ));
-
-# images processed by the skin
-our @IMAGES =
-  (qw( arrow.gif 
-       logo.gif 
-       arrow-asc.gif
-       arrow-desc.gif
-       left-bg.gif
-     ));
-
-# required params in skin.conf
-our @REQ = (@CSS_PARAMS, 
-            qw(logo_color1
-               logo_color2
-               logo_color3));
+use Carp qw(croak);
+use File::Spec::Functions qw(catdir catfile);
+use File::Basename qw(basename);
 
 sub new {
     my $pkg = shift;
@@ -97,17 +68,12 @@ sub new {
 
     # read in conf file
     my $conf = Config::ApacheFormat->new(
-                   valid_directives => [@REQ, 'include'],
-                   valid_blocks     => []);
+        expand_vars   => 1,
+        valid_blocks  => [qw(CSS Images File)]
+    );
     eval { $conf->read(catfile($skin_dir, 'skin.conf')) };
     die "Unable to read $skin_dir/skin.conf: $@\n" if $@;
 
-    # check reqs
-    foreach my $req (@REQ) {
-        die "skin.conf for '$self->{name}' is missing the '$req' directive.\n"
-          unless (defined $conf->get($req));
-    }
-    
     $self->{conf} = $conf;
 
     return $self;
@@ -116,6 +82,13 @@ sub new {
 sub install {
     my $self = shift;
 
+    # does our skin use another skin as it's base?
+    my $conf = $self->{conf};
+    my $base = $self->{conf}->get('Base');
+    if( $base ) {
+        pkg('Skin')->new(name => $base)->install();
+    }
+
     $self->_install_css;
     $self->_install_images;
 }
@@ -123,66 +96,106 @@ sub install {
 sub _install_css {
     my $self = shift;
     my $conf = $self->{conf};   
+    my $name = $self->{name};
     
-    foreach my $css (qw(krang krang_login krang_help)) {
+    # look at any directives in the CSS block and add them to the css templates
+    my %css_directives = map { ($_ => $conf->get($_)) } 
+        grep { $_ ne 'css' and $_ ne 'images' } $conf->get;
+    my $css_block;
+    eval { $css_block = $conf->block('CSS') };
+    if( $css_block ) {
+        %css_directives = (
+            %css_directives,
+            map { ($_ => $css_block->get($_)) } $css_block->get()
+        );
+    }
+
+    # by default we load any *.css.tmpl files in templates/ and we
+    # also add any *.css.tmpl files in the skin's css/ dir
+    my @css_tmpls = (
+        pkg('File')->find_glob(catfile('templates', '*.css.tmpl')),
+        pkg('File')->find_glob(catfile('skins', $name, 'css', '*.css.tmpl')),
+    );
+
+    my %processed; # to keep track of files we've already seen
+    foreach my $css_tmpl (@css_tmpls) {
+        my $basename = basename($css_tmpl, '.css.tmpl');
+        next if $processed{$basename};
         # load the css template
-        my $template = pkg('HTMLTemplate')->new(filename => "$css.css.tmpl",
+        my $template = pkg('HTMLTemplate')->new(filename => $css_tmpl,
                                                 die_on_bad_params => 0,
                                                );
-    
+
         # pass in params
-        $template->param({ map { ($_, $conf->get($_)) } @CSS_PARAMS });
+        $template->param(%css_directives);
         
         # put output in htdocs/krang.css
-        open(CSS, '>', catfile(KrangRoot, 'htdocs', "$css.css"))
-          or croak("Unable to open htdocs/krang.css: $!");
+        my $dest_file = catfile(KrangRoot, 'htdocs', "$basename.css");
+        open(CSS, '>', $dest_file)
+          or croak("Unable to open $dest_file: $!");
         print CSS $template->output;
         close CSS;
+        $processed{$basename} = $css_tmpl;
     }
 }
 
 sub _install_images {
     my $self = shift;
     my $conf = $self->{conf};
-    my $skin_dir = pkg('File')->find("skins/$self->{name}");
+    my $skin_dir = pkg('File')->find(catfile('skins', $self->{name}));
 
-    # process each image in turn
-    foreach my $image (@IMAGES) {
-        my $src = catfile($skin_dir, 'images', $image);
-        my $targ = catfile(KrangRoot, 'htdocs', 'images', $image);
-
-        # if the skin supplies this image, copy it into place
-        if (-e $src) {
-            copy($src, $targ);
-            next;
-        }
-
-        # otherwise open up the template image and color it with
-        # Image::BioChrome
-        my $template = catfile(KrangRoot, 'templates', 'images', $image);
-        $Image::BioChrome::VERBOSE = 0;
-        $Image::BioChrome::DEBUG = 0;
-        my $bio = Image::BioChrome->new($template);
-        croak("Unable to load image $template.") unless $bio;
-        
-        if ($image eq 'logo.gif') {
-            $bio->alphas(
-                         $conf->get('background_color'),
-                         $conf->get('logo_color1'),
-                         $conf->get('logo_color2'),
-                         $conf->get('logo_color3'), 
-                        );
-        } else {
-            $bio->alphas(
-                         $conf->get('background_color'),
-                         $conf->get('light_color'),
-                         $conf->get('bright_color'),
-                         $conf->get('dark_color'), 
-                        );
-            
-         }
-        $bio->write_file($targ); 
+    # copy anything in images/ to htdocs/images/
+    my $img_dir = catdir($skin_dir, 'images');
+    my $dest_dir = catdir(KrangRoot, 'htdocs', 'images');
+    if( -d $img_dir ) {
+        $img_dir = catdir($img_dir, '*');
+        system("cp -R $img_dir $dest_dir") == 0
+            or croak "Could not copy images from $img_dir to $dest_dir";
     }
+
+    # if we have <Images> then process them too
+    my $img_block;
+    eval { $img_block = $conf->block('Images') };
+    if( $img_block ) {
+        require Image::BioChrome;
+        my @files = map { $_->[1] } $img_block->get('File');
+        # process each image file we're given
+        foreach my $file (@files) {
+            my $file_block = $img_block->block(File => $file);
+
+            # open up the image and color it with Image::BioChrome
+            my $template = pkg('File')->find(catfile('htdocs', 'images', $file));
+            if( -e $template ) {
+                $Image::BioChrome::VERBOSE = 0;
+                $Image::BioChrome::DEBUG = 0;
+                my $bio = Image::BioChrome->new($template);
+                croak("Unable to load image $template.") unless $bio;
+
+                # colorize
+                $bio->alphas(
+                    $self->_normalize_color($file_block->get('BioChromeBlack')),
+                    $self->_normalize_color($file_block->get('BioChromeRed')),
+                    $self->_normalize_color($file_block->get('BioChromeGreen')),
+                    $self->_normalize_color($file_block->get('BioChromeBlue')),
+                );
+                
+                $bio->write_file(catfile(KrangRoot, 'htdocs', 'images', $file)); 
+            } else {
+                warn "Could not find file matching $file!\n";
+            }
+        }
+    }
+}
+
+# change #FFF into #FFFFFF
+sub _normalize_color {
+    my ($self, $color) = @_;
+    if( $color =~ /^#(.)(.)(.)$/ ) {
+        $color = "#$1$1$2$2$3$3";
+    } elsif( $color !~ /^#(.{6})$/ ) {
+        croak "Skin '$self->{name}' color $color is not a valid color!";
+    }
+    return $color;
 }
 
 1;

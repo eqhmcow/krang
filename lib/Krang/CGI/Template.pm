@@ -29,11 +29,17 @@ use Carp qw(verbose croak);
 use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Log => qw/critical debug info/;
-use Krang::ClassLoader Message => qw/add_message/;
+use Krang::ClassLoader Message => qw/add_message add_alert/;
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw/%session/;
 use Krang::ClassLoader 'Template';
-use Krang::ClassLoader Widget => qw/format_url category_chooser template_chooser/;
+use Krang::ClassLoader Widget => qw/
+    format_url
+    category_chooser
+    template_chooser
+    template_chooser_object
+    autocomplete_values
+/;
 use Krang::ClassLoader 'Publisher';
 
 use constant WORKSPACE_URI => 'workspace.pl';
@@ -87,13 +93,13 @@ sub setup {
 		view
 		view_edit
 		view_version
+        autocomplete
+        template_chooser_node
 	/]);
 
 	$self->tmpl_path('Template/');
 
 }
-
-
 
 =head1 INTERFACE
 
@@ -271,7 +277,7 @@ sub add_save_stay {
     # Redirect to edit
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&template_id=". $template->template_id();
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$url\">$url</a>";
 }
@@ -434,7 +440,7 @@ sub delete {
     if ($@){
         if (ref $@ && $@->isa('Krang::Template::Checkout')) {
             critical("Unable to delete template id '$template_id': $@");
-            add_message('error_deletion_failure',
+            add_alert('error_deletion_failure',
                         template_id => 'template_id');
         } else {
             croak($@);
@@ -483,7 +489,7 @@ sub delete_selected {
     }
 
     if (@bad_ids) {
-        add_message('error_deletion_failure',
+        add_alert('error_deletion_failure',
                     template_id => join(", ", @bad_ids));
     } else {
         add_message('message_selected_deleted');
@@ -719,7 +725,7 @@ sub edit_save_stay {
     # Redirect to edit
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&template_id=". $template->template_id();
-    $self->header_props(-url=>$url);
+    $self->header_props(-uri => $url);
     $self->header_type('redirect');
     return "Redirect: <a href=\"$url\">$url</a>";
 }
@@ -924,19 +930,19 @@ sub list_active {
        find_params => \%find_params,
        columns => [(qw(
                        template_id
-                       url
                        filename
+                       url
                        user
                        commands_column
                       )), ($may_checkin_all ? ('checkbox_column') : ())],
        column_labels => {
                          template_id => 'ID',
+                         filename => 'File Name',
                          url => 'URL',
-                         filename => 'Filename',
                          user  => 'User',
                          commands_column => '',
                         },
-       columns_sortable => [qw( template_id url filename )],
+       columns_sortable => [qw( template_id filename url )],
        row_handler => sub { $self->list_active_row_handler(@_); },
        id_handler => sub { return $_[0]->template_id },
       );
@@ -967,7 +973,7 @@ sub get_tmpl_params {
     my (%tmpl_params, $version);
 
     # loop through template fields
-    $tmpl_params{$_} = $template->$_ for @fields;
+    $tmpl_params{$_} = ($template->$_ || '') for @fields;
     debug("FILENAME: $tmpl_params{filename}");
     $version = $template->version;
 
@@ -1069,14 +1075,16 @@ sub make_pager {
                      filename
                      url
                      commands_column
+                     status
                      checkbox_column
                     );
 
-    my %column_labels = (deployed => '',
-                         template_id => 'ID',
+    my %column_labels = (deployed        => '',
+                         template_id     => 'ID',
+                         filename        => 'File Name',
+                         url             => 'URL',
                          commands_column => '',
-                         filename => 'Filename',
-                         url => 'URL',
+                         status          => 'Status',
                         );
 
     my $q = $self->query();
@@ -1103,7 +1111,7 @@ sub make_pager {
 # Handles rows for search run mode
 sub search_row_handler {
     my ($self, $row, $template) = @_;
-    $row->{deployed} = $template->deployed ? 'D' : '';
+    $row->{deployed} = $template->deployed ? '<b>D</b>' : '&nbsp;';
     $row->{filename} = $template->filename;
     $row->{template_id} = $template->template_id;
     $row->{url} = format_url(url => $template->url, length => 30);
@@ -1111,15 +1119,21 @@ sub search_row_handler {
     if (not($template->may_edit()) or
         (($template->checked_out) and
          ($template->checked_out_by ne $ENV{REMOTE_USER}))) {
-        $row->{commands_column} = '<a href="javascript:view_template('."'".
-          $template->template_id."'".')">View</a>';
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|;
         $row->{checkbox_column} = "&nbsp;";
     } else {
-        $row->{commands_column} = '<a href="javascript:edit_template('."'".
-          $template->template_id."'".')">Edit</a>'
-            . '&nbsp;|&nbsp;'
-              . '<a href="javascript:view_template('."'".
-                $template->template_id."'".')">View</a>';
+        $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|
+            . ' '
+            . qq|<input value="Edit" onclick="edit_template('| . $template->template_id . qq|')" type="button" class="button">|;
+    }
+
+    # status 
+    if ($template->checked_out) {
+        $row->{status} = "Checked out by <b>"
+            . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login
+            . '</b>';
+    } else {
+        $row->{status} = '&nbsp;';
     }
 }
 
@@ -1188,7 +1202,7 @@ sub validate {
           unless $filename =~ /^[-\w]+\.tmpl$/;
     }
     
-    add_message($_) for keys %errors;
+    add_alert($_) for keys %errors;
     $q->param('errors', 1) if keys %errors;
 
     return %errors;
@@ -1204,7 +1218,7 @@ sub _save {
 
     if ($@) {
         if (ref($@) && $@->isa('Krang::Template::DuplicateURL')) {
-            add_message('duplicate_url',
+            add_alert('duplicate_url',
                         url => $template->url);
             $q->param('errors', 1);
             return (duplicate_url => 1);
@@ -1213,7 +1227,7 @@ sub _save {
             my ($category) = pkg('Category')->find(category_id=>$category_id);
             croak ("Can't load category_id '$category_id'")
               unless (ref($category));
-            add_message('error_no_category_access',
+            add_alert('error_no_category_access',
                         url => $category->url,
                         cat_id => $category_id );
             $q->param('errors', 1);
@@ -1230,6 +1244,7 @@ sub _save {
 # Pager row handler for template list active run-mode
 sub list_active_row_handler {
     my $self = shift;
+    my $q    = $self->query;
     my ($row, $template) = @_;
 
     # Columns:
@@ -1242,23 +1257,36 @@ sub list_active_row_handler {
     $row->{url} = format_url( url => $template->url() );
 
     # filename
-    $row->{filename} = $template->filename();
+    $row->{filename} = $q->escapeHTML($template->filename);
 
     # commands column
-    $row->{commands_column} = '<a href="javascript:view_template(' .
-      $template->template_id . ')">View</a>';
+    $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $template->checked_out_by);
-    $row->{user} = $self->query->escapeHTML($user->first_name . " " . $user->last_name);
+    $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
 }
+
+sub autocomplete {
+    my $self = shift;
+    return autocomplete_values(
+        table  => 'template',
+        fields => [qw(template_id element_class_name filename)],
+    );
+}
+
+sub template_chooser_node {
+    my $self = shift;
+    my $query = $self->query();
+    my $chooser = template_chooser_object(
+        query  => $query,
+    );
+    return $chooser->handle_get_node( query => $query );
+};
 
 
 =back
 
 =cut
 
-
-my $quip = <<QUIP;
-1
-QUIP
+1;

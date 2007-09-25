@@ -5,9 +5,13 @@ use warnings;
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Schedule';
+use Krang::ClassLoader 'Alert';
+use Krang::ClassLoader DB => qw(dbh);
 
 use Test::More qw(no_plan);
 use Carp qw(croak);
+use Time::Piece;
 
 BEGIN {
     use_ok(pkg('User'));
@@ -169,6 +173,59 @@ $template->delete();
 $site->delete();
 
 END {
+    # delete the old passwords for this user first
+    dbh()->do(
+        'DELETE FROM old_password WHERE user_id = ?',
+        {},
+        $user->user_id
+    );
     # success
     is($user->delete(), 1, 'delete()');
+
+    # delete the old passwords for $admin
+    dbh()->do(
+        'DELETE FROM old_password WHERE user_id = ?',
+        {},
+        $admin->user_id
+    );
 }
+
+# if a scheduled send alert refers to a user in it's context stash
+# then it should be deleted when the user is deleted
+$user = pkg('User')->new(login => 'asdfasdf',
+                         password => 'gIMp');
+$user->group_ids_push(1);
+$user->save();
+my $date = localtime();
+$date->year($date->year + 1);
+my $alert = pkg('Alert')->new(
+    user_id => $user->user_id,
+    action  => 'move',
+);
+
+my $schedule1 = pkg('Schedule')->new(
+    object_type => 'alert',
+    object_id   => $alert->alert_id,
+    action      => 'send',
+    repeat      => 'never',
+    date        => $date,
+    context     => [ user_id => $user->user_id ],
+);
+isa_ok($schedule1, pkg('Schedule'));
+$schedule1->save();
+my $schedule2 = pkg('Schedule')->new(
+    object_type => 'alert',
+    object_id   => $alert->alert_id,
+    action      => 'send',
+    repeat      => 'never',
+    date        => $date,
+);
+isa_ok($schedule2, pkg('Schedule'));
+$schedule2->save();
+
+$user->delete();
+my ($schedule) = pkg('Schedule')->find(schedule_id => $schedule1->schedule_id);
+ok(! defined $schedule, 'schedule1 was deleted');
+($schedule) = pkg('Schedule')->find(schedule_id => $schedule2->schedule_id);
+isa_ok($schedule, pkg('Schedule'), 'schedule2 was not deleted');
+$schedule->delete();

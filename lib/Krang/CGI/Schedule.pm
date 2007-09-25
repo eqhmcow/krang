@@ -8,9 +8,9 @@ use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
 use Krang::ClassLoader 'Schedule';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Widget => qw(time_chooser datetime_chooser decode_datetime);
+use Krang::ClassLoader Widget => qw(time_chooser decode_time datetime_chooser decode_datetime);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'AddOn';
 
@@ -140,7 +140,7 @@ sub edit {
     my $self = shift;
     my $invalid = shift;
     my $query = $self->query;
-    my $template = $self->load_tmpl('edit.tmpl', associate => $query);
+    my $template = $self->load_tmpl('edit.tmpl', associate => $query, loop_context_vars => 1);
 
     $template->param ( $invalid => 1 ) if $invalid;
     # load params
@@ -262,20 +262,23 @@ sub list_all {
     my $template = $self->load_tmpl('list_all.tmpl', associate => $query);
 
     my $pager = pkg('HTMLPager')->new(
-                                        cgi_query => $query,
-                                        persist_vars => {
-                                                       rm => 'list_all' },
-                                        use_module => pkg('Schedule'),
-                                        columns => [qw( asset schedule next_run action version checkbox_column )],
-                                        column_labels => {  asset => 'Asset',
-                                                            schedule => 'Schedule',
-                                                            next_run => 'Next Run',
-                                                            action => 'Action',
-                                                            version => 'Version'
-                                                            },
-                                        row_handler => sub { $self->list_all_row_handler(@_) },
-                                        id_handler  => sub { return $_[0]->schedule_id },
-                                                            );
+        cgi_query    => $query,
+        persist_vars => {
+            rm          => 'list_all',
+            is_list_all => 1,
+        },
+        use_module    => pkg('Schedule'),
+        columns       => [qw( asset schedule next_run action version checkbox_column )],
+        column_labels => {
+            asset    => 'Asset',
+            schedule => 'Schedule',
+            next_run => 'Next Run',
+            action   => 'Action',
+            version  => 'Version'
+        },
+        row_handler => sub { $self->list_all_row_handler(@_) },
+        id_handler  => sub { return $_[0]->schedule_id },
+    );
 
     # Run pager
     $template->param(pager_html =>  $pager->output());
@@ -293,7 +296,7 @@ sub list_all_row_handler {
     my $s_params;
 
     if ($frequency eq 'One Time') {
-       $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
+       $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p');
     } elsif ($frequency eq 'Hourly') {
        ($schedule->minute eq '0') ? ($s_params = 'on the hour') : ($s_params = $schedule->minute." minutes past the hour");
     } elsif ($frequency eq 'Daily') {
@@ -307,7 +310,7 @@ sub list_all_row_handler {
     $s_params = ($frequency eq 'Daily') ? ($frequency.' at '.$s_params) : ($frequency.', '.$s_params);
 
     $row->{schedule} = $s_params;
-    $row->{next_run} = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
+    $row->{next_run} = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p');
     $row->{action} = $ALL_ACTION_LABELS{$schedule->action};
     $row->{version} = $version;
 }
@@ -337,7 +340,7 @@ sub get_existing_schedule {
         my $s_params;
 
         if ($frequency eq 'One Time') {
-            $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p');
+            $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p');
         } elsif ($frequency eq 'Hourly') {
             ($schedule->minute eq '0') ? ($s_params = 'on the hour') : ($s_params = $schedule->minute." minutes past the hour"); 
         } elsif ($frequency eq 'Daily') {
@@ -353,7 +356,7 @@ sub get_existing_schedule {
         push(@existing_schedule_loop, {
                                                 'schedule_id' => $schedule->schedule_id,
                                                 'schedule' => $s_params,
-                                                'next_run' => Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%b %e, %Y %l:%M %p'),
+                                                'next_run' => Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p'),
                                                 'action' => $ALL_ACTION_LABELS{$schedule->action},
                                                 'version' => $version
                                             });
@@ -405,7 +408,7 @@ sub add {
 
     my $repeat = $q->param('repeat');
     unless ($repeat) {
-        add_message('no_date_type');
+        add_alert('no_date_type');
         return $self->edit('no_date_type');
     }
  
@@ -416,7 +419,7 @@ sub add {
     if ($repeat eq 'never') {
         my $date = decode_datetime(name=>'full_date', query=>$q);
         if (not $date) {
-            add_message('invalid_datetime');
+            add_alert('invalid_datetime');
             return $self->edit('invalid_datetime');
         }
 
@@ -451,19 +454,11 @@ sub add {
                                             minute => $q->param('hourly_minute'));
         } 
     } elsif ($repeat eq 'daily') {
-        my $minute = $q->param('daily_time_minute') || 0;
-        $minute = 0 if ($minute eq 'undef');
-
-        my $hour = $q->param('daily_time_hour');
+        my ($hour, $minute) = decode_time(name => 'daily_time', query => $q);
+        $minute = 0 if (! defined $minute);
         unless ($hour) {
-            add_message('no_hour');
+            add_alert('no_hour');
             return $self->edit('no_hour');
-        }
-        my $ampm = $q->param('daily_time_ampm');
-        if ($ampm eq 'PM') {
-            $hour = ($hour + 12) unless ($hour == 12);
-        } else {
-            $hour = 0 if ($hour == 12);
         }
         
         if ($version) { 
@@ -484,22 +479,13 @@ sub add {
  
         } 
     } elsif ($repeat eq 'weekly') {
-        my $minute = $q->param('weekly_time_minute');
-        $minute = 0 if ($minute eq 'undef');
-                                                                                  
-        my $hour = $q->param('weekly_time_hour');
+        my ($hour, $minute) = decode_time(name => 'weekly_time', query => $q);
+        $minute = 0 if (! defined $minute);
         unless ($hour) {
-            add_message('no_hour');
+            add_alert('no_hour');
             return $self->edit('no_weekly_hour');
         }
         
-        my $ampm = $q->param('weekly_time_ampm');
-        if ($ampm eq 'PM') {
-            $hour = ($hour + 12) unless ($hour == 12);
-        } else {
-            $hour = 0 if ($hour == 12);
-        }
-       
         my $day = $q->param('weekly_day');
 
         if ($version) { 
@@ -558,7 +544,7 @@ sub add_admin {
 
     my $repeat = $q->param('repeat');
     unless ($repeat) {
-        add_message('no_date_type');
+        add_alert('no_date_type');
         return $self->edit_admin('no_date_type');
     }
  
@@ -569,7 +555,7 @@ sub add_admin {
     if ($repeat eq 'never') {
         my $date = decode_datetime(name=>'full_date', query=>$q);
         if (not $date) {
-            add_message('invalid_datetime');
+            add_alert('invalid_datetime');
             return $self->edit_admin('invalid_datetime');
         }
 
@@ -604,19 +590,11 @@ sub add_admin {
                                             minute => $q->param('hourly_minute'));
         } 
     } elsif ($repeat eq 'daily') {
-        my $minute = $q->param('daily_time_minute') || 0;
-        $minute = 0 if ($minute eq 'undef');
-
-        my $hour = $q->param('daily_time_hour');
+        my ($hour, $minute) = decode_time(name => 'daily_time', query => $q);
+        $minute = 0 if (! defined $minute);
         unless ($hour) {
-            add_message('no_hour');
+            add_alert('no_hour');
             return $self->edit_admin('no_hour');
-        }
-        my $ampm = $q->param('daily_time_ampm');
-        if ($ampm eq 'PM') {
-            $hour = ($hour + 12) unless ($hour == 12);
-        } else {
-            $hour = 0 if ($hour == 12);
         }
         
         if ($version) { 
@@ -637,22 +615,13 @@ sub add_admin {
  
         } 
     } elsif ($repeat eq 'weekly') {
-        my $minute = $q->param('weekly_time_minute');
-        $minute = 0 if ($minute eq 'undef');
-                                                                                  
-        my $hour = $q->param('weekly_time_hour');
+        my ($hour, $minute) = decode_time(name => 'weekly_time', query => $q);
+        $minute = 0 if (! defined $minute);
         unless ($hour) {
-            add_message('no_hour');
+            add_alert('no_hour');
             return $self->edit_admin('no_weekly_hour');
         }
         
-        my $ampm = $q->param('weekly_time_ampm');
-        if ($ampm eq 'PM') {
-            $hour = ($hour + 12) unless ($hour == 12);
-        } else {
-            $hour = 0 if ($hour == 12);
-        }
-       
         my $day = $q->param('weekly_day');
 
         if ($version) { 
@@ -727,7 +696,7 @@ sub add_simple {
         add_message('scheduled_publish');
         return $self->edit();
     } else {
-        add_message('invalid_datetime');
+        add_alert('invalid_datetime');
         return $self->edit('invalid_datetime');
     }
 
@@ -749,7 +718,7 @@ sub delete {
     my @delete_list = $q->param('is_list_all') ? ($q->param('krang_pager_rows_checked')) : ( $q->param('schedule_delete_list') );
 
     unless (@delete_list) {
-        add_message('missing_schedule_delete_list');
+        add_alert('missing_schedule_delete_list');
         return $q->param('is_list_all') ? $self->list_all : $self->edit();
     }
 

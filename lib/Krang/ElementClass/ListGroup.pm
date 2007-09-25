@@ -65,12 +65,11 @@ sub input_form {
 
         # start by serializing all list data
         $html_output = <<END;
-<script language="javascript">
-  // Javascript to manage listgroup $jparam
+<script type="text/javascript">
+  // JavaScript to manage listgroup $jparam
   var ${jparam}_data = new Array();
   var ${jparam}_index = new Array();
 END
-
 
         # grab the list of items for the first list in the listgroup:
         my $x = 0;

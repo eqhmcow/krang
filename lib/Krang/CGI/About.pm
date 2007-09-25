@@ -8,6 +8,7 @@ use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 use Krang;
 use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader 'Info';
 
 =head1 NAME
 
@@ -48,7 +49,7 @@ sub show {
     my $self = shift;
     my $template = $self->load_tmpl('about.tmpl');
 
-    $template->param(version   => $Krang::VERSION,
+    $template->param(version   => pkg('Info')->version,
                      server_ip => pkg('Conf')->get('ApacheAddr'),
                      cgi_mode => $ENV{CGI_MODE},
                     );

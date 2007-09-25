@@ -9,7 +9,7 @@ use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile catdir);
 use Krang::ClassLoader 'ElementLibrary';
-use Krang::ClassLoader 'Test::Apache';
+use Krang::ClassLoader 'Test::Web';
 use Krang::ClassLoader 'HTMLTemplate';
 use IPC::Run qw(run);
 
@@ -164,31 +164,33 @@ SKIP: {
         and skip "Krang servers couldn't be restarted, skipping tests.", 7;
 
     # get creds
-    my $username = $ENV{KRANG_USERNAME} ? $ENV{KRANG_USERNAME} : 'admin';
-    my $password = $ENV{KRANG_PASSWORD} ? $ENV{KRANG_PASSWORD} : 'whale';
-    login_ok($username, $password, "Login $username:$password")
+    my $mech = pkg('Test::Web')->new();
+    $mech->login_ok()
       or die "Unable to login!  Aborting tests.";
+
+    # remove any rate_limit_hits that resulted from our login
+    # so the db is clean
+    dbh()->do('DELETE FROM rate_limit_hits');
 
     # hit about.pl and see if the server is in CGI mode, skip if not
     # since the addon won't be registered
-    request_ok('about.pl', {}, "Request for about.pl");
-    my $res = get_response();
+    $mech->get_ok('about.pl', "Request for about.pl");
     skip "Apache server isn't running in CGI mode, skipping live tests", 5
-      unless $res->content =~ /running\s+in\s+CGI\s+mode/i;
+      unless $mech->content =~ /running\s+in\s+CGI\s+mode/i;
 
     # hit workspace.pl and look for the new nav entries
-    request_ok('workspace.pl', {});
-    response_like(qr/Log Tools/);
-    response_like(qr/<a.*?log_viewer.pl.*>.*?View Log/);
+    $mech->get_ok('workspace.pl');
+    $mech->content_contains('Log Tools');
+    $mech->content_like(qr/<a.*?log_viewer.pl.*>.*?View Log/);
     ## SchedulerAddon entry
-    response_like(qr/schedule\.pl\?advanced_schedule\=1\&rm\=edit_admin/);
+    $mech->content_contains('schedule.pl?advanced_schedule=1&rm=edit_admin');
 
     # Clean should be removing spaces
-    response_like(qr/<html><head><title>/);
+    $mech->content_like(qr/<html[^>]*><head[^>]*><title[^>]*>/);
 
     # try the script
-    request_ok('log_viewer.pl', {});
-    response_like(qr/hi mom/i);
+    $mech->get_ok('log_viewer.pl');
+    $mech->content_like(qr/hi mom/i);
 }
 
 

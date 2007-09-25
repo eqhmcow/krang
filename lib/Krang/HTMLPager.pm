@@ -251,77 +251,88 @@ be saved to a file and customized as needed.
 
 sub make_internal_template {
     my $self = shift;
-
-    # Verify that pager specification is sane before proceeding
     $self->validate_pager();
-
     my $q = $self->cgi_query();
-    my $pager_tmpl = '';
 
-    # Start pager form 'krang_pager_form'
-    $pager_tmpl .= '<form name="krang_pager_form" method="POST">';
-
-    # Include javascript and hidden data template elements
-    $pager_tmpl .= "\n\n<tmpl_include HTMLPager/pager-internals.tmpl>\n\n";
-
-    # Major TMPL_IF block for results, start
-    $pager_tmpl .= "<tmpl_if krang_pager_rows>\n\n";
-
-    # Result count/page status display
-    $pager_tmpl .= '<div class="no-border">&nbsp;Found <tmpl_var found_count>:  Showing <tmpl_var start_row> to <tmpl_var end_row></div>';
-
-    # Build up table and header row
+    my $pager_tmpl = "";
     my @columns = @{$self->columns()};
-    $pager_tmpl .= '<table class="form-cell" border="0" cellspacing="0" cellpadding="0" width="571"><tr class="form-head"><td class="form-head2">'
-      . join("</td>\n<td class=\"form-head2\">", (map { "<tmpl_var colhead_$_><tmpl_unless colhead_$_>&nbsp;</tmpl_unless>" } @columns) ) ."</td></tr>\n\n\n";
 
-    # Build loop for data
-    my $row_tmpl = "<tr>\n<td class=\"form-cell\">"
-      . join("</td>\n    <td class=\"form-cell\">", (map { "<tmpl_var $_>" } @columns)) ."</td>\n</tr>";
+    # don't show a label for thumbnail columns since it gets cut off
+    my $labels = $self->column_labels() || {};
+    $labels->{thumbnail} = "" if exists $labels->{thumbnail};
 
-    $pager_tmpl .= <<EOF;
-  <tmpl_loop krang_pager_rows>
-    $row_tmpl
-  </tmpl_loop>
- 
-  </table>
-EOF
-    # Make page jump, next/prev navigation tmpl
-    $pager_tmpl .= <<EOF;
-<div class="no-border"><p class="left2">&nbsp;<tmpl_if prev_page_number><a href="javascript:go_page('<tmpl_var prev_page_number>')">&lt;&lt;</a></tmpl_if>
+    # we need to put the action attribute in here since
+    # when using ajax, it might not be the current URL
+    # that's supposed to receive the submission
+    my $script_name = $q->url(-relative => 1) || '';
 
-<tmpl_loop page_numbers>
-  <tmpl_if is_current_page><b><tmpl_var page_number></b>
-  <tmpl_else><a href="javascript:go_page('<tmpl_var page_number>')"><tmpl_var page_number_label></a>
-  </tmpl_if>
-  <tmpl_unless __last__>|</tmpl_unless>
-</tmpl_loop>
+    # build colgroup that sets column layout widths through CSS
+    my $colgroup = $self->create_colgroup();
 
-<tmpl_if next_page_number><a href="javascript:go_page('<tmpl_var next_page_number>')">&gt;&gt;</a></tmpl_if>
+    # build column headers
+    my $thead = "<thead>\n<tr>\n";
 
-<tmpl_if show_big_view>
-  <a href="javascript:show_big_view('0')">show <tmpl_var user_page_size> per page</a></p></div>
+    foreach (0 .. $#columns) {
+        $thead .= '<th';
+
+        if ( $_ == 0 ) {
+            $thead .= ' class="f"';
+        } elsif ( $_ == $#columns ) {
+            $thead .= ' class="l"';
+        }
+
+        $thead .= "><tmpl_var colhead_$columns[$_]></th>\n";
+    }
+
+    $thead .= "</tr>\n</thead>";
+
+    # setup pager output
+    $pager_tmpl .= <<"END";
+<tmpl_if krang_pager_rows>
+
+<form name="krang_pager_form" action="$script_name" method="post">
+
+<tmpl_include HTMLPager/pager-internals.tmpl>
+
+<tmpl_include HTMLPager/pager-pagination.tmpl>
+
+<table class="result select_row" summary="">
+
+$colgroup
+
+$thead
+
+<tbody><tmpl_loop krang_pager_rows>
+END
+
+    # build loop for data
+    $pager_tmpl .= qq{<tr<tmpl_unless __odd__> class="even"</tmpl_unless>>\n}
+      . join("\n", map { qq{<td><tmpl_var $_></td>} } @columns)
+      . "\n</tr>\n";
+
+    # finish pager output
+    $pager_tmpl .= <<"EOF";
+</tmpl_loop></tbody>
+
+</table>
+
+<tmpl_include HTMLPager/pager-pagination.tmpl>
+
+</form>
+
 <tmpl_else>
-  <tmpl_if page_numbers>
-    <a href="javascript:show_big_view('1')">show <tmpl_var big_view_page_size> per page</a></p></div>
-  </tmpl_if>
-</tmpl_if>
 
-<tmpl_else>
-  <div class="no-border"><p class="left2"><b>&nbsp;None Found</b></p></div>
+<p class="naught">
+None found
+</p>
+
 </tmpl_if>
 EOF
-
-    # Close pager form
-    $pager_tmpl .= "\n</form>\n";
 
     return $pager_tmpl;
 }
 
-
-
 =back
-
 
 =head2 Krang::HTMLPager Properties
 
@@ -424,10 +435,10 @@ There are two special values which can be included in the list of
 columns.  If included in the column list, these columns will be
 automagically handled by pager as follows:
 
-  "command_column"   - A list of actions, implemented as Javascript links.
+  "command_column"   - A list of actions, implemented as button controls.
   "checkbox_column"  - A series of checkboxes, one per record/row.
 
-"command_column" is used for button links such as "Edit" or "View".
+"command_column" is used for button links such as "Edit" or "View Detail".
 How these buttons are configured is described in more detail below
 (pager parameters "command_column_commands" and
 "command_column_labels").
@@ -490,16 +501,16 @@ a highly functional gadget in the header, which is probably required.
 
   command_column_commands => [qw( edit_contrib )]
 
-An arrayref containing the names of the Javascript functions to 
+An arrayref containing the names of the JavaScript functions to 
 be called when the user clicks on a particular command.  The
 function will be called with the "ID" (as returned per row by 
 the "id_handler" pager parameter described below) as the only
 argument.  For example, following would be the HTML generated
 if ID was set to "4":
 
-  <a href="javascript:edit_contrib('4')">
+  <input onclick="edit_contrib('4')" type="button" class="button">
 
-It is expected that a corresponding Javascript function would be
+It is expected that a corresponding JavaScript function would be
 written to implement the functionality desired when the user
 clicks on the command link for a particular row.
 
@@ -512,7 +523,7 @@ A hashref containing a map of command names (as defined by "command_column_comma
 to the text which should be in the link which appears to the user.
 For example, the above might generate:
 
-  <a href="javascript:edit_contrib('4')">Edit</a>
+  <input value="Edit" onclick="edit_contrib('4')" type="button" class="button">
 
 If a label is not defined for a particular command, the name will 
 be used instead.
@@ -524,7 +535,7 @@ be used instead.
 
 An arrayref containing the names of the columns (as defined by
 "columns") by which the user is allowed to sort.  These column
-headers will be clickable Javascript links which will modify the
+headers will be clickable JavaScript links which will modify the
 sorting order of the data listed.
 
 An arrow will appear next to the current sort column.  This 
@@ -640,7 +651,7 @@ will find.
 =item <tmpl_include HTMLPager/pager-internals.tmpl>
 
 This tmpl_include brings in a special template containing 
-Javascript and CGI form elements required for all pagers.
+JavaScript and CGI form elements required for all pagers.
 (This should not be confused with the "internal" template.
 The template name, F<pager-internals.tmpl>, is coincidental.)
 
@@ -702,7 +713,7 @@ number of the previous page, or "0" if we're already on the first page.
 The internal template uses "prev_page_number" in the context of a
 <TMPL_IF> to hide the previous page button on the first page.
 
-(N.b.: A Javascript function, "go_page()", is provided for navigation
+(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
 between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 
@@ -715,7 +726,7 @@ number of the next page, or "0" if we're already on the last page.
 The internal template uses "next_page_number" in the context of a
 <TMPL_IF> to hide the next page button on the last page.
 
-(N.b.: A Javascript function, "go_page()", is provided for navigation
+(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
 between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 
@@ -735,7 +746,7 @@ Available in the context of the <TMPL_LOOP> "page_numbers", the
 This is used by the internal template as a link to jump to a 
 particular page of output.
 
-(N.b.: A Javascript function, "go_page()", is provided for navigation
+(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
 between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 =item page_number_label
@@ -753,7 +764,7 @@ is, in fact, the current page being viewed, "0" if not.  This is used by the
 internal template in the context of a <TMPL_IF>/<TMPL_ELSE> to 
 conditionally disable the link to the current page.
 
-(N.b.: A Javascript function, "go_page()", is provided for navigation
+(N.b.: A JavaScript function, "Krang.Pager.goto_page()", is provided for navigation
 between pages by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 
@@ -765,7 +776,7 @@ size is 100, then this becomes "Show 20 rows").  The
 <TMPL_VAR> "show_big_view" is set to "1" if the user is in the 
 "100 rows" mode, "0" otherwise.
 
-(N.b.: A Javascript function, "show_big_view()", is provided for 
+(N.b.: A JavaScript function, "Krang.Pager.show_big_view()", is provided for 
 toggling between modes by F<pager-internals.tmpl>.  You are encouraged to use it.)
 
 =item user_page_size
@@ -789,7 +800,7 @@ sub calculate_order_by {
     my $order_by;
 
     # if we weren't given a cache key and we're called as an object method
-    $cache_key ||= ref $self ? ($self->cache_key || $self->use_module) : '';
+    $cache_key ||= ref $self ? $self->_get_cache_key : '';
 
     if( defined $q->param('krang_pager_sort_field') ) {
         $order_by = scalar $q->param('krang_pager_sort_field');
@@ -810,7 +821,7 @@ sub calculate_order_desc {
     my $order_desc;
 
     # if we weren't given a cache key and we're called as an object method
-    $cache_key ||= ref $self ? ($self->cache_key || $self->use_module) : '';
+    $cache_key ||= ref $self ? $self->_get_cache_key : '';
 
     if (defined $q->param('krang_pager_sort_order_desc')) {
         $order_desc = $q->param('krang_pager_sort_order_desc');
@@ -867,13 +878,13 @@ sub make_sortable_column_html {
     # If selected, show in bold, with arrow showing current sort order (ascending, descending)
     my $is_selected = ( $sort_field eq $col );
     if ($is_selected) {
-        $col_label = "<b>$col_label</b>";
-        $col_label .= '<img border="0" src="/images/arrow-'. ($sort_order_desc ? 'desc' : 'asc') .'.gif">';
+        $col_label = "$col_label";
+        $col_label .= '<img alt="" src="/images/arrow-'. ($sort_order_desc ? 'desc' : 'asc') .'.gif">';
     }
 
     # Make link to re-sort
     my $new_sort_order_desc = ($is_selected && not($sort_order_desc)) ?  '1' : '0';
-    $col_label = "<a href=\"javascript:do_sort('$col', '$new_sort_order_desc')\">$col_label</a>";
+    $col_label = "<a href=\"javascript:Krang.Pager.sort('$col','$new_sort_order_desc')\">$col_label</a>";
 
     return $col_label;
 }
@@ -903,7 +914,7 @@ sub _fill_template {
 
         # Create col header for checkbox_column
         if ( $col eq 'checkbox_column' ) {
-            my $checkall = '<input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, \'krang_pager_rows_checked\')">';
+            my $checkall = '<input type="checkbox" name="checkallbox" value="1" onclick="Krang.check_all(this,\'krang_pager_rows_checked\')">';
             $col_label = ( defined($col_label) ? $col_label : $checkall );
         }
 
@@ -926,7 +937,7 @@ sub _fill_template {
 
     # Set up persist_vars
     my @pager_persist_data = ();
-    my $cache_key = $self->cache_key || $self->use_module;
+    my $cache_key = $self->_get_cache_key;
 
     while (my ($k, $v) = each(%{$self->persist_vars()})) {
         push(@pager_persist_data, $q->hidden(
@@ -946,7 +957,7 @@ sub get_pager_view {
 
     my $q = $self->cgi_query();
 
-    my $cache_key = $self->cache_key || $self->use_module;
+    my $cache_key = $self->_get_cache_key;
     my $use_module = $self->use_module;
 
     my $curr_page_num = $self->calculate_current_page_num($q);
@@ -1093,21 +1104,21 @@ sub make_dynamic_columns {
         # Build HTML for commands
         my @commands_html = ();
         foreach my $command (@command_column_commands) {
-            my $href = "javascript:$command('$row_id')";
+            my $href = "$command('$row_id')";
             my $link_text = (exists($command_column_labels{$command}) 
                              ? $command_column_labels{$command} : $command);
-            my $link = "<a href=\"$href\">$link_text</a>";
+            my $link = qq{<input value="$link_text" onclick="$href" type="button" class="button">};
             push(@commands_html, $link);
         }
 
         # Propagate to template
-        my $command_column_html = join("&nbsp;|&nbsp;", @commands_html);
+        my $command_column_html = join(" ", @commands_html);
         $row_data->{command_column} = $command_column_html;
     }
 
     # Build checkbox_column
     if (exists($row_data->{checkbox_column})) {
-        my $html = '<input type="checkbox" name="krang_pager_rows_checked" value="'. $row_id .'">';
+        my $html = '<input name="krang_pager_rows_checked" class="hilite-row" value="'. $row_id .'" type="checkbox">';
         $row_data->{checkbox_column} = $html;
     }
 }
@@ -1208,6 +1219,88 @@ sub validate_pager {
     croak ("id_handler not a subroutine reference") unless (ref($self->id_handler()) eq 'CODE');
 
     # DONE!
+}
+
+sub create_colgroup {
+    my $self    = shift;
+    my $columns = $self->columns;
+
+    my $html = "<colgroup>\n";
+    foreach my $name (@$columns) {
+        my %attr;
+
+        # assign classes to columns when possible
+        if ($name =~ /_id$/i or $name =~ /^id$/i) {
+            $attr{class} = 'c-id';
+        } elsif (   $name =~ /deployed/i
+                 or $name =~ /published/
+                 or $name =~ /^pub_/)
+        {
+            $attr{class} = 'c-flag';
+        } elsif ($name eq 'checkbox_column') {
+            $attr{class} = 'tick';
+        } elsif ($name =~ /date/ or $name =~ /timestamp/) {
+            $attr{class} = 'c-date';
+        } elsif ($name =~ /thumbnail/) {
+            $attr{class} = 'c-thumb';
+        } elsif ($name =~ /status/ or $name =~ /attr/ or $name =~ /is_hidden/)
+        {
+            $attr{class} = 'c-stat';
+        } elsif (   $name =~ /length/
+                 or $name =~ /_count/
+                 or $name =~ /circulation/)
+        {
+            $attr{class} = 'c-sum';
+        } elsif ($name =~ /dollars/) {
+            $attr{class} = 'c-big-sum';
+        } elsif ($name =~ /user/) {
+            $attr{class} = 'c-user';
+        } elsif ($name =~ /command/) {
+            $attr{class} = 'c-link';
+
+            # make a guess about how wide to make the command-column
+            my $commands = $self->command_column_commands || [];
+            my $labels   = $self->command_column_labels   || {};
+            my $size = 0;
+            foreach my $command (@$commands) {
+                my $label = $labels->{$command} || $command;
+                $size += length($label);
+            }
+
+            # many modules don't declare their columns, or declare
+            # them with values smaller than they actually produce, so
+            # guess if possible (this is worth doing because truncated
+            # command columns are unusable)
+            my $module = $self->use_module;
+            if ( $module eq pkg('Template') or $module eq pkg('Media') ) {
+                # room for View Detail, Edit
+                $size = 9;
+            }
+
+            if ($size) {
+                # scale upwards to account for visual formatting as buttons
+                # (is there a better way to do this?)
+                $size = int($size * 1.5);
+
+                $attr{style} = "width:${size}em";
+            }
+        }
+
+        $html .= "<!-- '$name' column -->\n";
+        $html .= "<col"
+          . (%attr ? " " : "")
+          . join(" ", map { qq{$_="$attr{$_}"} } keys %attr) . ">\n";
+
+    }
+    $html .= "</colgroup>";
+
+    return $html;
+}
+
+
+sub _get_cache_key {
+    my $self = shift;
+    return defined $self->cache_key ? $self->cache_key : $self->use_module;
 }
 
 # Hallelujah!

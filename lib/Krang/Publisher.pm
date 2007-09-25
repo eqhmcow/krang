@@ -1315,8 +1315,10 @@ sub additional_content_block {
 
     my %block;
 
-    $block{content}  = $args{content}  || croak __PACKAGE__ . ": missing required argument 'content'";
-    $block{filename} = $args{filename} || croak __PACKAGE__ . ": missing required argument 'filename'";
+    $block{content}  = $args{content};
+    $block{filename} = $args{filename};
+    croak __PACKAGE__ . ": missing required argument 'content'" unless defined $block{content};
+    croak __PACKAGE__ . ": missing required argument 'filename'" unless length $block{filename};
     $block{use_category} = exists($args{use_category}) ? $args{use_category} : 1;
     $block{mode} = exists($args{mode}) ? $args{mode} : undef;
 
@@ -1355,6 +1357,7 @@ persistant across stories.
 sub publish_context {
 
     my $self = shift;
+    $self->{publish_context} ||= {};
 
     # check to see if there are params.
     if (@_) {

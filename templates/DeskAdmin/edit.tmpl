@@ -1,123 +1,120 @@
 <tmpl_include header.tmpl>
 
-<script language=javascript>
- checkall = function (checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'desk_admin' );
+} );
+
+<tmpl_if existing_desk_loop>
+  delete_selected = function()
+  {
+    if ( !Krang.row_checked( 'current_desk_form', 'desk_delete_list' ) )
+      alert( 'No Desks selected to delete!' );
+    else if ( confirm( 'Are you SURE you want to delete these Desks?' ) )
+      Krang.form_submit('current_desk_form', {}, { to_top: false });
   }
 
-  delete_selected  = function () {
-        var myform = document.forms["current_desk_form"];
-        myform.submit();
+  reorder = function()
+  {
+    Krang.form_submit('current_desk_form', { rm: 'reorder' }, {}, { to_top: false });
   }
-
-  reorder  = function () {
-        var myform = document.forms["current_desk_form"];
-        myform.rm.value = "reorder";
-        myform.submit();
-  }
-
-  // updates the order pull downs to stay consistent
-update_order = function (obj, prefix) {
-    var form  = obj.form;
-    var requestedIndex = obj.selectedIndex;
-    var i;
-                                                                                
-    // get list of relevent form elements
-    var elem = new Array();
-    for (i = 0; i < form.elements.length ; i++) {
-        var e = form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0 && e.options) {
-           elem.push(e);
-        }
-     }
-                                                                                
-    // sort them by their indexes
-    chosenOne = obj;
-    elem.sort(update_order_sort_south);
-                                                                                
-    // did that do it?
-    if (elem[requestedIndex] != obj) {
-        // the opposite bias must be right
-        elem.sort(update_order_sort_north);
-    }
-                                                                                
-    // walk through the elements handing out indexes
-    for (i = 0; i < elem.length; i++) {
-        elem[i].selectedIndex = i;
-    }
-}
-
-// special sort functions that sort by selectedIndex and bias the
-// "chosenOne" to either get sorted higher or lower.
-                                                                                
-var chosenOne;
-update_order_sort_north  = function (a, b) {
-    if (a.selectedIndex < b.selectedIndex) { return -1; }
-    if (a.selectedIndex > b.selectedIndex) { return  1; }
-    if (a == chosenOne) { return -1; }
-    if (b == chosenOne) { return 1; }
-    return 0;
-}
-update_order_sort_south  = function (a, b) {
-    if (a.selectedIndex < b.selectedIndex) { return -1; }
-    if (a.selectedIndex > b.selectedIndex) { return  1; }
-    if (a == chosenOne) { return 1; }
-    if (b == chosenOne) { return -1; }
-    return 0;
-}
-
+</tmpl_if>
 </script>
 
-<div class="dark-bar"><p class="left">&nbsp;Desk Editor</p><p class="right"><a href="javascript:document.view_log.submit()">Log</a> | <a href="javascript:openWin('help.pl?topic=desk_admin')">Help</a>&nbsp;</p></div>
-<TMPL_IF existing_desk_loop>
-<form name="current_desk_form" method="POST" action="desk_admin.pl">
-<input type="hidden" name="total_desks" value="<tmpl_var total_desks>" override='1'>
-<input type="hidden" name="rm" value="delete" override='1'>
-<div class="box">
-<br>
- <table cellspacing="0" class="form-head" cellpadding="4">                                                                        
-      <tr>
-          <th width="240">Name</th>
-          <th width="202">Order</th>
-          <th><input type="checkbox" name="checkallbox" value="1" onClick="checkall(this, 'desk_delete_list')"></th>
-      </tr></table>                                       
-		<table cellspacing="0" width="571" class="form-cell" cellpadding="4">
-		<tmpl_loop existing_desk_loop> 
-      <tr>
-          <td class="form-cell" width="240"><tmpl_var ESCAPE=HTML name></td>
-          <td class="form-cell" width="200"><select onchange="update_order(this, 'order_')" name="order_<tmpl_var desk_id>"><tmpl_loop desk_count_loop><option value="<tmpl_var count>" <tmpl_if selected>selected</tmpl_if>><tmpl_var count></tmpl_loop></td>
-          <td class="form-cell"><input type="checkbox" name="desk_delete_list" value="<tmpl_var ESCAPE=HTML desk_id>"></td>
-      </tr></tmpl_loop></table><br>
+<h2>
+Desks
+</h2>
 
- <div class="button-bar"><input type="button" value="Reorder Desks" onClick="reorder()" class="button">&nbsp;&nbsp;&nbsp;<input type="button" value="Delete Checked" onClick="delete_selected()" class="button"></div>
+<h3>
+Current Desks
+</h3>
 
-</form>                                                                      
-<TMPL_ELSE>
- <div class="no-border">No Desks Found</div>
-</TMPL_IF>
-<br>
-<form name="add_desk_form" method="POST" action="desk_admin.pl">
-<input type="hidden" name="rm" value="add" override='1'>
-<table cellspacing="0" class="form-head" cellpadding="4">
-      <tr>
-          <th colspan=2 align=left>Add New Desk</th>
-      </tr></table>
-		<table cellspacing="0" width="571" class="form-cell">
-        <tr>
-            <td class="form-cell" width="240">Name:</td>
-            <td class="form-cell"><input <tmpl_if no_name>class="invalid"</tmpl_if> name="name" type="text" <tmpl_if no_name>value="<tmpl_var name>"</tmpl_if>></td>
-        </tr>
-        <tr>
-            <td class="form-cell" width="240">Order:</td>
-            <td class="form-cell"><tmpl_var order_selector></td>
-        </tr></table><br></div>
-		  
-		  <div class="button-bar"><input type=button value="Add Desk" onclick="submit()" class="button"></div></form></div>
+<tmpl_unless existing_desk_loop>
+
+  <p class="naught">
+  There currently are no Desks.
+  </p>
+
+<tmpl_else>
+
+  <form name="current_desk_form" action="desk_admin.pl" method="post">
+
+  <input name="rm" value="delete" type="hidden">
+  <input name="total_desks" value="<tmpl_var escape=html total_desks>" type="hidden">
+
+  <table class="result select_row" summary="">
+
+  <colgroup>
+  <col class="series">
+  <col>
+  <col class="tick">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="series f">Order</th>
+  <th>Name</th>
+  <th class="tick l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'desk_delete_list')"></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop existing_desk_loop>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td class="series"><select name="order_<tmpl_var escape=html desk_id>" onchange="Krang.update_order(this,'order_')"><tmpl_loop desk_count_loop>
+      <option value="<tmpl_var escape=html count>"<tmpl_if selected> selected</tmpl_if>><tmpl_var escape=html count></option>
+    </tmpl_loop></select></td>
+    <td><tmpl_var escape=html name></td>
+    <td class="tick"><input name="desk_delete_list" value="<tmpl_var escape=html desk_id>" type="checkbox"></td>
+    </tr>
+  </tmpl_loop></tbody>
+
+  </table>
+
+  <div class="panel">
+  <input value="Reorder" onclick="reorder()" type="button" class="west">
+  <input value="Delete" onclick="delete_selected()" type="button">
+  </div>
+
+  </form>
+
+</tmpl_unless>
+
+<form name="add_desk_form" action="desk_admin.pl" method="post">
+
+<input name="rm" value="add" type="hidden">
+
+<h3>
+Create a New Desk
+</h3>
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-mini">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr class="demi<tmpl_if no_name> err</tmpl_if>">
+<th>Name</th>
+<td><input name="name" value="<tmpl_var escape=html name>"></td>
+</tr>
+
+<tr>
+<th>Order</th>
+<td><tmpl_var order_selector></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel lame capped">
+<input value="Add Desk" type="submit" class="west">
 </div>
 
+</form>
+
 <tmpl_include footer.tmpl>
+

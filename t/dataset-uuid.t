@@ -118,7 +118,14 @@ my $user = pkg('User')->new(login    => 'testing',
                             password => 'dataset!');
 $user->group_ids_push($group->group_id);
 $user->save();
-END { $user->delete }
+END { 
+    dbh()->do(
+        'DELETE FROM old_password WHERE user_id = ?', 
+        {}, 
+        $user->user_id
+    );
+    $user->delete;
+}
 
 # create a data set containing the story and media
 my $set = pkg('DataSet')->new();

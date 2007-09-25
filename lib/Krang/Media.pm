@@ -26,6 +26,7 @@ use Image::Info qw( image_info dim );
 
 # constants
 use constant THUMBNAIL_SIZE => 35;
+use constant MED_THUMBNAIL_SIZE => 200;
 use constant FIELDS => qw(media_id media_uuid title category_id media_type_id filename creation_date caption copyright notes url version alt_tag mime_type published_version preview_version publish_date checked_out_by);
 
 # setup exceptions
@@ -1252,10 +1253,15 @@ sub _load_version {
 
 =item $thumbnail_path = $media->thumbnail_path(relative => 1);
 
+=item $thunbnail_path = $media->thumbnail_path(medium => 1);
+
 Returns the path to the thumbnail (if media is an image).  Valid image
 types are stored in IMAGE_TYPES constant. Will create thumbnail if
-first time called.  If relative is set to 1, returns a path relative
+first time called.  If C<relative> is set to 1, returns a path relative
 to KrangRoot.
+
+If C<medium> is set to true, then it will return the path to the medium
+sized thumbnail.
 
 Returns undef if a thumbnail cannot be created.
 
@@ -1268,9 +1274,10 @@ sub thumbnail_path {
     my $filename = $self->{filename};
     return undef unless $filename;
 
-    # thumbnail path is the same as the file path with t__ in front of
-    # the filename
-    my $path = catfile((splitpath($self->file_path(relative => $args{relative})))[1], "t__$filename");
+    # thumbnail path is the same as the file path with t__ or m__ in front of
+    # the filename (depending on whether or not it's medium or not)
+    my $prefix = $args{medium} ? 'm__' : 't__';
+    my $path = catfile((splitpath($self->file_path(relative => $args{relative})))[1], $prefix . $filename);
 
     # all done if it exists
     return $path if (-s $path);
@@ -1282,10 +1289,18 @@ sub thumbnail_path {
     eval {
         my $img = Imager->new();
         $img->open(file=>$self->file_path()) or croak $img->errstr();
-        my $thumb = $img->scale(xpixels => THUMBNAIL_SIZE,
-                                ypixels => THUMBNAIL_SIZE,
-                                type    =>'min',
-                                qtype   =>'preview' );
+        my $size = $args{medium} ? MED_THUMBNAIL_SIZE : THUMBNAIL_SIZE;
+
+        # only resize if one side is bigger than the size we're scaling to
+        my $thumb;
+        if( $img->getwidth > $size || $img->getheight > $size ) {
+            $thumb = $img->scale(xpixels => $size,
+                                 ypixels => $size,
+                                 type    =>'min',
+                                 qtype   =>'preview' );
+        } else {
+            $thumb = $img;
+        }
 
         # patch to fix a bug in Imager - zero-dimension images cause segfaults.
         if ($thumb->getwidth >= 1 && $thumb->getheight >= 1) {

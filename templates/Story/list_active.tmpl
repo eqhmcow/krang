@@ -1,46 +1,53 @@
 <tmpl_include header.tmpl>
 
-<script language="JavaScript" type="text/javascript">
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'story_active' );
+} );
 
-  preview_story = function (id) {
-        Preview = window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var "instance_name">");
-        Preview.focus();
+<tmpl_if row_count>
+  view_story = function( id )
+  {
+    Krang.form_submit( 'find_story', { rm: 'view', story_id: id } );
   }
 
-  view_story  = function (id) {
-    document.find_story.rm.value = 'view';
-    document.find_story.story_id.value = id;
-    document.find_story.submit();
-  }
-
-  checkin_selected  = function () {
-    var myform = document.krang_pager_form;
-    myform.rm.value = 'checkin_selected';
-    myform.submit();
-  }
-
+  <tmpl_if may_checkin_all>
+    checkin_selected = function()
+    {
+      if ( !Krang.pager_row_checked() )
+        alert( 'Nothing selected to check in!' );
+      else
+        Krang.form_submit( 'krang_pager_form', { rm: 'checkin_selected' }, { to_top: false } );
+    }
+  </tmpl_if>
+</tmpl_if>
 </script>
 
-<form method="post" name="find_story" action="story.pl">
-<input type="hidden" name="rm" value="list_active">
-<input type="hidden" name="story_id">
+<h2>
+Active Stories
+</h2>
 
-<!-- Set up view mode return -->
-<input type="hidden" name="return_script" value="story.pl">
-<input type="hidden" name="return_params" value="rm">
-<input type="hidden" name="return_params" value="list_active">
+<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel"><form>
+  <input value="Check In" onclick="checkin_selected()" type="button">
+</form></div></tmpl_if></tmpl_if>
 
-</form>
-
-<div class="dark-bar"><p class="left">&nbsp;Active Stories</p><p class="right"><a href="javascript:openWin('help.pl?topic=story_active')">Help</a>&nbsp;</p></div>
-<div class="box">
-<!-- Krang::HTMLPager -->
+<!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
-<!-- Krang::HTMLPager -->
-</div>
+<!--:Krang::HTMLPager-->
 
-<tmpl_if row_count><tmpl_if may_checkin_all>
-  <div class="button-bar"><input type="button" value="Check In" onClick="checkin_selected()" class="button">&nbsp;</div>
-</tmpl_if></tmpl_if></div>
-</div>
+<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel capped"><form>
+  <input value="Check In" onclick="checkin_selected()" type="button">
+</form></div></tmpl_if></tmpl_if>
+
+<tmpl_if row_count>
+  <form name="find_story" method="post" action="story.pl">
+  <input name="rm" value="list_active" type="hidden">
+  <input name="story_id" type="hidden">
+  <input name="return_script" value="story.pl" type="hidden">
+  <input name="return_params" value="rm" type="hidden">
+  <input name="return_params" value="list_active" type="hidden">
+  </form>
+</tmpl_if>
+
 <tmpl_include footer.tmpl>
+

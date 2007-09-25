@@ -26,10 +26,9 @@ This application manages display of stories on desks for Krang.
 =cut
 
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget => qw(format_url);
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader 'Group';
 
@@ -65,6 +64,7 @@ sub show {
     my $template = $self->load_tmpl("desk.tmpl", 
                                     associate         => $query,
                                     die_on_bad_params => 0,
+                                    loop_context_vars => 1,
                                     global_vars       => 1
                                    );
 
@@ -118,7 +118,7 @@ sub show {
                                                      cover_date  => 'Cover Date' },
                                         -default => $sort,
                                         -override => 1,
-                                        -onchange => "do_sort(this.options[this.selectedIndex].value,0)",
+                                        -onchange => "Krang.Pager.sort(this.options[this.selectedIndex].value,0)",
                                        ));
 
     # setup paging list of objects
@@ -130,10 +130,10 @@ sub show {
                         'command_column', 'checkbox_column'],
        columns_sortable => [ ],
        find_params => { desk_id => $desk_id, may_see => 1, checked_out => 0 },
-       command_column_commands => [ 'log', 'view', 'edit' ],
-       command_column_labels => {   view => 'View',
-                                    edit => 'Edit',
-                                    log  => 'Log' },
+       command_column_commands => [ 'view', 'log', 'edit' ],
+       command_column_labels => {   view => 'View Detail',
+                                    log  => 'View Log',
+                                    edit => 'Edit' },
        id_handler  => sub { $self->_obj2id(@_) },
        row_handler => sub { $self->_row_handler(@_,\@desk_loop) },
       );
@@ -141,24 +141,18 @@ sub show {
     # Run the pager
     $pager->fill_template($template);
 
-    # instance_name is used for preview window targeting
-    my $instance_name = pkg('Conf')->instance;
-    $instance_name =~ s![^\w]!_!g;
-    $template->param(instance_name => $instance_name);
-
     return $template->output;
 }
 
 sub _row_handler {
     my ($self, $row, $obj, $desk_loop) = @_;
-    $row->{desk_loop} = $desk_loop;
-    $row->{story_id} = $obj->story_id;
-    $row->{id} = $self->_obj2id($obj);
-    $row->{title} = $self->query->escapeHTML($obj->title);
+    $row->{desk_loop}  = $desk_loop;
+    $row->{story_id}   = $obj->story_id;
+    $row->{title}      = $obj->title;
     $row->{story_type} = $obj->class->display_name;
     $row->{url} = format_url(url    => $obj->url,
                              linkto => 
-                             "javascript:preview_story($row->{id})",
+                             "javascript:Krang.preview('story',$row->{story_id})",
                              length => 50);
     $row->{may_edit} = $obj->may_edit;
 
@@ -215,20 +209,20 @@ Moves list of checked stories to desks.
 =cut
 
 sub move_checked {
-    my $self = shift;
+    my $self  = shift;
     my $query = $self->query;
-    foreach my $obj (map { $self->_id2obj($_) }
-                     $query->param('krang_pager_rows_checked')) {
+    foreach my $obj (map { $self->_id2obj($_) } $query->param('krang_pager_rows_checked')) {
 
-	# check if they may *move* object
-	return $self->access_forbidden()
-	  unless pkg('Group')->may_move_story_from_desk($obj->desk_id);
+        # check if they may *move* object
+        return $self->access_forbidden()
+          unless pkg('Group')->may_move_story_from_desk($obj->desk_id);
 
-	# check if they may move object to desired desk
-	return $self->access_forbidden()
-	  unless pkg('Group')->may_move_story_to_desk($self->query->param('move_'.$obj->story_id));
+        # check if they may move object to desired desk
+        return $self->access_forbidden()
+          unless pkg('Group')
+          ->may_move_story_to_desk($self->query->param('move_' . $obj->story_id));
 
-	$self->_do_move($obj);
+        $self->_do_move($obj);
     }
     return $self->show;
 }
@@ -330,17 +324,21 @@ sub _do_move {
     eval { $obj->move_to_desk($desk_id); };
 
     if ($@ and ref($@)) {
-	if ($@->isa('Krang::Story::CheckedOut')) {
-	    add_message( 'story_cant_move_checked_out',
-			 id   => $story_id,
-			 desk => $desk_name);
-	} elsif ($@->isa('Krang::Story::NoDesk')) {
-	    add_message( 'story_cant_move_no_desk',
-			 story_id   => $story_id,
-			 desk_id    => $desk_id );
-	}
+        if($@->isa('Krang::Story::CheckedOut')) {
+            add_alert(
+                'story_cant_move_checked_out',
+                id   => $story_id,
+                desk => $desk_name
+            );
+        } elsif($@->isa('Krang::Story::NoDesk')) {
+            add_alert(
+                'story_cant_move_no_desk',
+                story_id => $story_id,
+                desk_id  => $desk_id
+            );
+        }
     } else {
-	add_message("moved_story", id => $story_id, desk => $desk_name);
+        add_message("moved_story", id => $story_id, desk => $desk_name);
     }
 }
 

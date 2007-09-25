@@ -1228,10 +1228,10 @@ sub find {
             foreach my $word (@words){
                 push(@where, 
                     q{concat(
-		        coalesce(con.first,''), ' ',
-		        coalesce(con.middle,''), ' ',
-		        coalesce(con.last),'') LIKE ?
-		     });
+                      coalesce(con.first,''), ' ',
+                      coalesce(con.middle,''), ' ',
+                      coalesce(con.last),'') LIKE ?
+                });
                 push(@param, "%${word}%");
             }
             next;
@@ -1315,8 +1315,8 @@ sub find {
         # handle published flag
         if ($key eq 'published') {
             my $ps = ($args{published} eq '1') ? 
-	        's.published_version > 0' : 
-		'(s.published_version IS NULL OR s.published_version = 0)';
+                     's.published_version > 0' : 
+                     '(s.published_version IS NULL OR s.published_version = 0)';
             push(@where, $ps);
             next;
         }

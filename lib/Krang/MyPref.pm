@@ -43,11 +43,18 @@ Default search page size.
 
 =cut
 
-our %CONFIG = 
-  (
-   search_page_size => {
+our %CONFIG = (
+    search_page_size => {
                         type  => 'scalar',
                         row   => 'search_page_size',
+                       },
+    use_autocomplete => {
+                        type  => 'scalar',
+                        row   => 'use_autocomplete',
+                       },
+    message_timeout  => {
+                        type  => 'scalar',
+                        row   => 'message_timeout',
                        },
 );
 
@@ -86,7 +93,7 @@ sub get {
         my ($value) = $dbh->selectrow_array(
                               'SELECT value FROM my_pref WHERE id = ? and user_id = ?',
                                             undef, $conf->{row}, $user_id);
-        return $value || pkg('Pref')->get($conf->{row});
+        return defined $value ? $value : pkg('Pref')->get($conf->{row});
     } elsif ($conf->{type} eq 'list') {
         # handle list pref
         my $result = $dbh->selectall_arrayref(

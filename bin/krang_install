@@ -688,6 +688,9 @@ sub configure_krang {
             }
         }
 
+        # add a secret
+        $t->param(Secret => _generate_secret());
+
         # shall we insert SSL directives? The default is NO
         $t->param(EnableSSL => $options{EnableSSL});
 
@@ -941,3 +944,12 @@ sub _check_element_set {
     }
     return 0;
 }
+
+sub _generate_secret {
+    my $length = int(rand(10) + 20);
+    my $secret = '';
+    my @chars = ('a'..'z', 'A'..'Z', 0..9, qw(! @ $ % ^ & - _ = + | ; : . / < > ?));
+    $secret .= $chars[int(rand($#chars + 1))] for(0..$length);
+    return $secret;
+}
+

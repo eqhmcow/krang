@@ -6,7 +6,7 @@ use warnings;
 
 use Carp qw(croak);
 use Krang::ClassLoader 'Desk';
-use Krang::ClassLoader Message => qw(add_message);
+use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Log => qw(debug);
 
 =head1 NAME
@@ -61,7 +61,7 @@ sub edit {
     my $self = shift;
     my $error = shift || '';
     my $q = $self->query;
-    my $template = $self->load_tmpl('edit.tmpl', associate => $q);
+    my $template = $self->load_tmpl('edit.tmpl', associate => $q, loop_context_vars => 1);
     $template->param( $error => 1 ) if $error;
 
     my $total_desks = pkg('Desk')->find('count' => 1);
@@ -110,12 +110,12 @@ sub add {
     my $q = $self->query();
 
     if (not $q->param('name')) {
-        add_message('no_name');
+        add_alert('no_name');
         return $self->edit('no_name');
     } 
 
     if (pkg('Desk')->find( name => $q->param('name')) ) {
-        add_message('duplicate_desk');
+        add_alert('duplicate_desk');
         return $self->edit('no_name');
     }
 
@@ -123,6 +123,7 @@ sub add {
                         order => $q->param('order') );
 
     add_message('desk_added');
+    $self->update_nav();
     return $self->edit();
 
 }
@@ -142,7 +143,6 @@ sub reorder {
     my @param_names = $q->param;
     foreach my $index_name ( @param_names ) {
         if ($index_name =~ /order_\d*/) {
-        print STDERR $index_name."\n";
             my $desk_id = $index_name;
             $desk_id =~ s/order_//;
             push (@desks, $desk_id);
@@ -154,6 +154,7 @@ sub reorder {
     pkg('Desk')->reorder(@desks);
 
     add_message('desks_reordered');
+    $self->update_nav();
     return $self->edit();
 }
 
@@ -169,7 +170,7 @@ sub delete {
     my @delete_list = ( $q->param('desk_delete_list') );
                                                                                  
     unless (@delete_list) {
-        add_message('missing_desk_delete_list');
+        add_alert('missing_desk_delete_list');
         return $self->edit();
     }
                                                                                  
@@ -181,7 +182,7 @@ sub delete {
         eval { pkg('Desk')->delete($desk_id) };
         
         if ($@ and ref $@ and $@->isa('Krang::Desk::Occupied')) {
-            add_message('stories_on_desk', desk_name => $desk_name);
+            add_alert('stories_on_desk', desk_name => $desk_name);
         } elsif ($@) {
             die $@;
         } else {
@@ -189,6 +190,7 @@ sub delete {
         }
     }
                                                                                  
+    $self->update_nav();
     return $self->edit();
 }
 

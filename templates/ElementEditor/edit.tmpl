@@ -1,263 +1,270 @@
-<script language=javascript>
-  preview_media = function (id) {
-        aWindow=window.open("publisher.pl?rm=preview_media&media_id=" + id, "<tmpl_var instance_name>");
-        aWindow.focus();
+<script type="text/javascript">
+//(mp) We reference the 'edit' form throughout. This isn't
+// the most ideal since we're forcing the parent template
+// to name their form a certain way, but it will work for the
+// time being
+
+<tmpl_if crumbs>
+  jump_to = function( p )  //:cf. edit_children(db2)
+  {
+    Krang.form_submit('edit', { rm: 'save_and_jump', jump_to: p });
   }
-
-  preview_story = function (id) {
-        aWindow=window.open("publisher.pl?rm=preview_story&story_id=" + id, "<tmpl_var instance_name>");
-        aWindow.focus();
-  }
-
-  find_story = function (p) {
-        document.forms[0].rm.value = 'save_and_find_story_link';
-        document.forms[0].jump_to.value = p;
-        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
-  }
-
-  find_media = function (p) {
-        document.forms[0].rm.value = 'save_and_find_media_link';
-        document.forms[0].jump_to.value = p;
-        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
-  }
-
-  edit_children = function (p) {
-        document.forms[0].rm.value = 'save_and_jump';
-        document.forms[0].jump_to.value = p;
-        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
-  }
-
-  var containers = new Array();
-  <tmpl_loop container_loop>
-     containers["<tmpl_var name>"] = 1;
-  </tmpl_loop>
-
-  add_child = function () {
-     var list = document.forms[0].child;
-     var name = list.options[list.selectedIndex].value;
-     if (containers[name]) {
-       document.forms[0].rm.value = 'save_and_add';
-     } else {
-       document.forms[0].rm.value = 'add';
-     }
-     if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
-  }
-
-  jump_to = function (p) {
-     document.forms[0].rm.value = 'save_and_jump';
-     document.forms[0].jump_to.value = p;
-     if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
-  }
-
-  remove_children = function () {
-        if (confirm("Really delete sub-elements?")) {
-           document.forms[0].rm.value = 'delete_children';
-           if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
-        }
-  }
-
-
-  remove_element = function () {
-     <tmpl_if allow_delete>
-        if (confirm("Really delete this element?")) {
-           document.forms[0].rm.value = 'delete_element';
-           if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
-        }
-     <tmpl_else>
-        alert("Sorry, this element cannot be deleted.");
-     </tmpl_if>
-  }
-
-  reorder = function () {
-        document.forms[0].rm.value = 'reorder';
-        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
-  }
-
-  save_and_change_bulk_edit_sep = function () {
-        document.forms[0].rm.value = 'save_and_change_bulk_edit_sep';
-        if (!document.forms[0].onsubmit || document.forms[0].onsubmit()) { document.forms[0].submit(); }
-  }
-
-  checkall = function (checkbox, prefix) {
-     for (var i = 0; i < checkbox.form.elements.length ; i++) {
-        var e = checkbox.form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0) {
-           e.checked = checkbox.checked;
-        }
-     }
-  }
-
-// updates the order pull downs to stay consistent
-update_order = function (obj, prefix) {
-    var form  = obj.form;
-    var requestedIndex = obj.selectedIndex;
-    var i;
-
-    // get list of relevent form elements
-    var elem = new Array();
-    for (i = 0; i < form.elements.length ; i++) {
-        var e = form.elements[i];
-        if (e.name && e.name.indexOf(prefix) == 0 && e.options) {
-           elem.push(e);
-        }
-     }
-
-    // sort them by their indexes
-    chosenOne = obj;
-    elem.sort(update_order_sort_south);
-
-    // did that do it?
-    if (elem[requestedIndex] != obj) {
-        // the opposite bias must be right 
-        elem.sort(update_order_sort_north);
-    }
-
-    // walk through the elements handing out indexes
-    for (i = 0; i < elem.length; i++) {
-        elem[i].selectedIndex = i;
-    }
-}
-
-// special sort functions that sort by selectedIndex and bias the
-// "chosenOne" to either get sorted higher or lower.
-
-var chosenOne;
-update_order_sort_north  = function (a, b) {
-    if (a.selectedIndex < b.selectedIndex) { return -1; }
-    if (a.selectedIndex > b.selectedIndex) { return  1; }
-    if (a == chosenOne) { return -1; }
-    if (b == chosenOne) { return 1; }
-    return 0;
-}
-update_order_sort_south  = function (a, b) {
-    if (a.selectedIndex < b.selectedIndex) { return -1; }
-    if (a.selectedIndex > b.selectedIndex) { return  1; }
-    if (a == chosenOne) { return 1; }
-    if (b == chosenOne) { return -1; }
-    return 0;
-}
-
-</script>
-
-<tmpl_if alert><div class=alert><tmpl_var alert></div></tmpl_if>
-
-  <input type="hidden" name=path value="<tmpl_var path>">
-  <input type="hidden" name=jump_to>
-  <input type="hidden" name=bulk_edit value="<tmpl_var bulk_edit>">
+</tmpl_if>
 
 <tmpl_if bulk_edit>
 
-  <input type="hidden" name=bulk_edit_child value="<tmpl_var bulk_edit_child>">
-  <input type="hidden" name=bulk_edit_sep value="<tmpl_var bulk_edit_sep>">
+  save_and_change_bulk_edit_sep = function()
+  {
+    Krang.form_submit('edit', { rm: 'save_and_change_bulk_edit_sep' });
+  }
 
-<script language="javascript" type="text/javascript">
-  update_bulk_edit_counts = function () {
-      var words_span = document.getElementById("bulk_edit_words");
-      var chars_span = document.getElementById("bulk_edit_chars");
-      var text       = document.forms[0].bulk_data.value;
-      var words      = text.split(/\s+/);
+  update_bulk_edit_counts = function()
+  {
+    var words_span = $( 'bulk_edit_words' );
+    var chars_span = $( 'bulk_edit_chars' );
+
+    if ( words_span && chars_span )
+    {
+      var text       = document.forms[ 'edit' ].bulk_data.value;
+      var words      = text.split( /\s+/ );
       var word_count = 0;
       var char_count = 0;
-      var re = /\S/;
-      for(var i=0; i < words.length; i++) {
-         if (re.test(words[i]) && words[i] != "<tmpl_var bulk_edit_sep>") {
-            word_count++;
-            char_count += words[i].length;
-         }
+      var re         = /\S/;
+
+      for ( var i = 0; i < words.length; i++ )
+      {
+        if ( re.test( words[ i ] ) && ( words[ i ] != '<tmpl_var escape=js bulk_edit_sep>' ) )
+        {
+          word_count++;
+          char_count += words[ i ].length;
+        }
       }
-      words_span.innerHTML = word_count;
-      chars_span.innerHTML = char_count;
-      setTimeout(update_bulk_edit_counts, 1000 + (text.length/10));
+
+      words_span.update( word_count );
+      chars_span.update( char_count );
+
+      setTimeout( update_bulk_edit_counts, 1000 + ( text.length / 10 ) );
+    }
   }
-  setTimeout(update_bulk_edit_counts, 1000);
-
-</script>
-
-<p style="margin-left:10px;">
-Bulk Edit
-
-<tmpl_if crumbs>&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if><br><br>
-
-<textarea name=bulk_data rows="20" cols="60"><tmpl_var escape=HTML bulk_data></textarea>
-
-
-<br><br>
-
-<b>Separator String</b>&nbsp;&nbsp;&nbsp;
-
-<tmpl_var bulk_edit_sep_selector>
-<input type="hidden" name=bulk_edit_sep value="<tmpl_var bulk_edit_sep>">
-<input type="button" value="Change Separator" onclick="save_and_change_bulk_edit_sep()" class="button">
-
-<br><br>
-
-<b>Statistics</b>&nbsp;&nbsp;&nbsp;
-
-Words: <span id=bulk_edit_words></span> &nbsp;&nbsp;&nbsp;Characters: <span id=bulk_edit_chars></span>
-</p>
 
 <tmpl_else>
-<p style="margin-left:10px;">Content</p>
 
-<tmpl_if crumbs>&nbsp;&nbsp;&nbsp;&nbsp;(<tmpl_loop crumbs><tmpl_if __last__><tmpl_var name><tmpl_else><a href='javascript:jump_to("<tmpl_var path>")'><tmpl_var name></a> &raquo; </tmpl_if></tmpl_loop>)</tmpl_if>
+  find_media = function( p )
+  {
+    Krang.form_submit('edit', { rm: 'save_and_find_media_link', jump_to: p });
+  }
 
+  find_story = function( p )
+  {
+    Krang.form_submit('edit', { rm: 'save_and_find_story_link', jump_to: p });
+  }
 
-<table border="0" cellpadding="0" cellspacing="0" class="form-cell">
-  <tr class="form-head" style="border-bottom:1px solid #bababa;">
-    <td width="125">Element</td>
-    <td width="275">Data Entry</td>
-    <td width="85">Order</td>
-    <td width="75"><tmpl_unless no_reorder><input type="checkbox" onclick="checkall(this, 'remove_')"></tmpl_unless></td>
-  </tr> 
+  save_and_add = function()
+  {
+    Krang.form_submit('edit', { rm: 'save_and_add' });
+  }
 
- <tmpl_loop child_loop>
-  <tr>
+  save_and_jump = function()
+  {
+    Krang.form_submit('edit', { rm: 'save_and_jump' });
+  }
 
-    <td align="left" class="form-cell">
-      <tmpl_if required>*</tmpl_if><tmpl_var name>
-    </td>
+  edit_children = function( p )
+  {
+    Krang.form_submit('edit', { rm: 'save_and_jump', jump_to: p });
+  }
 
-    <td align=left class="form-cell">
-      <tmpl_if is_container><input type="button" value=Edit onClick='edit_children("<tmpl_var path>")' class="button">&nbsp;</tmpl_if>
-      <tmpl_var form>
-    </td>
+  <tmpl_if bulk_edit_select>
+    save_and_bulk_edit = function()
+    {
+      Krang.form_submit('edit', { rm: 'save_and_bulk_edit' });
+    }
+  </tmpl_if>
 
-    <td align=center class="form-cell">
-         <tmpl_var order_select>
-    </td>
+  remove_children = function()
+  {
+    if ( confirm( 'Are you SURE you want to delete these sub-elements?' ) )
+      Krang.form_submit('edit', { rm: 'delete_children' }, { to_top: false });
+  }
 
-    <td class="form-cell">
-      <tmpl_if allow_delete><input type="checkbox" name=remove_<tmpl_var index>><tmpl_else>&nbsp;</tmpl_if>
-    </td>
+  <tmpl_if child_select>
+    var containers = new Array();
 
-  </tr>
- </tmpl_loop>
+    <tmpl_loop container_loop>
+      containers[ '<tmpl_var escape=js name>' ] = 1;
+    </tmpl_loop>
 
- <tmpl_unless child_loop>
-   <tr><td colspan="4">No sub-elements defined.</td></tr>
- </tmpl_unless>
+    add_child = function()
+    {
+      var f      = document.forms[ 'edit' ];
+      var list   = f.elements[ 'child' ];
+      var name   = list.options[ list.selectedIndex ].value;
+      var rm     = 'add';
+      var to_top = false;
 
-   <tr><td align="left" colspan="2" class="form-cell">
-     <table border="0" cellspacing="1">
-      <tmpl_if child_select> 
-        <tr><td>
-           <tmpl_var child_select>
-        </td><td>
-           <input type="button" value="Add Element" onClick='add_child()' class="button">
-        </td><tr>
-      </tmpl_if>
-      <tmpl_if bulk_edit_select> 
-        <tr><td>
-          <tmpl_var bulk_edit_select>
-        </td><td>
-          <input type="button" value="Bulk Edit" onClick='save_and_bulk_edit()' class="button">
-        </td></tr>           
-      </tmpl_if>
-     </table>
-   </td>
-       <td align="center" class="form-cell"><tmpl_if no_reorder>&nbsp;<tmpl_else><input type="button" value="Reorder" onClick='reorder()' class="button"></tmpl_if></td>
-       <td align="center" class="form-cell"><tmpl_unless no_delete><input type="button" value="Delete" onClick='remove_children()' class="button"></tmpl_unless></td>
-   </tr>
-</table>
-<br>
+      // container elements behave differently
+      if ( containers[ name ] )
+      {
+        rm     = 'save_and_add';
+        to_top = true;
+      }
+
+      Krang.form_submit( 'edit', { rm : rm }, { to_top : to_top } );
+    }
+  </tmpl_if>
+
+  <tmpl_unless no_reorder>
+    reorder = function()
+    {
+      Krang.form_submit('edit', { rm: 'reorder' }, { to_top: false });
+    }
+  </tmpl_unless>
+
 </tmpl_if>
+</script>
+
+<input name="path" value="<tmpl_var escape=html path>" type="hidden">
+<input name="jump_to" type="hidden">
+<input name="bulk_edit" value="<tmpl_var escape=html bulk_edit>" type="hidden">
+<tmpl_if bulk_edit>
+  <input name="bulk_edit_child" value="<tmpl_var escape=html bulk_edit_child>" type="hidden">
+  <input name="bulk_edit_sep" value="<tmpl_var escape=html bulk_edit_sep>" type="hidden">
+</tmpl_if>
+
+<tmpl_if crumbs><div class="east"><tmpl_loop crumbs>
+  <tmpl_unless __last__><a href="javascript:jump_to('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
+</tmpl_loop></div></tmpl_if>
+
+<h3><tmpl_if bulk_edit>
+  Bulk Edit
+<tmpl_else>
+  Content
+</tmpl_if></h3>
+
+<tmpl_if bulk_edit>
+
+  <table class="request" summary="">
+
+  <colgroup>
+  <col class="c-label">
+  <col>
+  </colgroup>
+
+  <tbody>
+
+  <tr>
+  <td colspan="2" class="full">
+  <textarea name="bulk_data" rows="20" cols="60"><tmpl_var escape=html bulk_data></textarea>
+  </td>
+  </tr>
+
+  <tr>
+  <th>Separator String</th>
+  <td>
+  <tmpl_var bulk_edit_sep_selector>
+  <input value="Change Separator" onclick="save_and_change_bulk_edit_sep()" type="button" class="button">
+  </td>
+  </tr>
+
+  <tr>
+  <th>Word Count</th>
+  <td id="bulk_edit_words"></td>
+  </tr>
+
+  <tr>
+  <th>Character Count</th>
+  <td id="bulk_edit_chars"></td>
+  </tr>
+
+  </tbody>
+
+  </table>
+
+  <script type="text/javascript">
+  setTimeout( update_bulk_edit_counts, 1000 );  //:should trigger onload(db2)
+  </script>
+
+<tmpl_else><tmpl_unless child_loop>
+
+  <p class="naught">
+  No sub-elements defined.
+  </p>
+
+  <tmpl_if child_select>
+    <br>
+    <tmpl_var child_select>
+    <input value="Add Element" onclick="add_child()" type="button" class="button">
+  </tmpl_if>
+
+  <tmpl_if bulk_edit_select>
+    <br>
+    <tmpl_var bulk_edit_select>
+    <input value="Bulk Edit" onclick="save_and_bulk_edit()" type="button" class="button">
+  </tmpl_if>
+
+<tmpl_else>
+
+  <table class="result edit select_row" summary=""><!--:FIX(db2)-->
+
+  <colgroup>
+  <col class="series">
+  <col class="c-mini">
+  <col>
+  <col class="series">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="series f">Order</th>
+  <th>Element</th>
+  <th>Data Entry</th>
+  <th class="series l"><tmpl_unless no_reorder><input type="checkbox" onclick="Krang.check_all(this,'remove_')"></tmpl_unless></th><!--:unnamed control(db2)-->
+  </tr>
+  </thead>
+
+  <tbody>
+
+  <tmpl_loop child_loop>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td class="series"><tmpl_var order_select></td>
+
+    <th class="wrap"><tmpl_if required>*</tmpl_if><tmpl_var escape=html name></th>
+
+    <td>
+    <tmpl_if is_container>
+      <input value="Edit" onclick="edit_children('<tmpl_var escape=html path>')" type="button" class="button">
+    </tmpl_if>
+    <tmpl_var form>
+    </td>
+
+    <td class="series"><tmpl_if allow_delete><input name="remove_<tmpl_var escape=html index>" type="checkbox" class="hilite-row"></tmpl_if></td>
+    </tr>
+  </tmpl_loop>
+
+  <tr>
+  <td class="series"><tmpl_unless no_reorder><input value="Reorder" onclick="reorder()" type="button" class="button"></tmpl_unless></td>
+
+  <td></td>
+
+  <td><!--(db2)TODO - constrain form control widths:-->
+  <tmpl_if child_select>
+    <tmpl_var child_select>
+    <input value="Add Element" onclick="add_child()" type="button" class="button">
+  </tmpl_if>
+
+  <tmpl_if bulk_edit_select>
+    <br>
+    <tmpl_var bulk_edit_select>
+    <input value="Bulk Edit" onclick="save_and_bulk_edit()" type="button" class="button">
+  </tmpl_if>
+  </td>
+
+  <td class="series"><tmpl_unless no_delete><input value="Delete" onclick="remove_children()" type="button" class="button"></tmpl_unless></td>
+  </tr>
+
+  </tbody>
+
+  </table>
+
+</tmpl_unless></tmpl_if>
+

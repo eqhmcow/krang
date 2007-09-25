@@ -8,7 +8,7 @@ Krang::Template - Interface for managing template objects
 
  # create a new template
  my $template = pkg('Template')->new(category    => $category,
-				     content     => '<tmpl_var test>',
+                                     content     => '<tmpl_var test>',
                                      filename    => 'test.tmpl');
 
  # save contents of the object to the DB.
@@ -111,25 +111,25 @@ use Krang::ClassLoader 'UUID';
 # Read-only fields for the object
 use constant TEMPLATE_RO => qw(template_id
                                template_uuid
-			       checked_out
-			       checked_out_by
-			       creation_date
-			       deploy_date
-			       deployed
-			       deployed_version
-			       testing
-			       url
-			       version);
+                               checked_out
+                               checked_out_by
+                               creation_date
+                               deploy_date
+                               deployed
+                               deployed_version
+                               testing
+                               url
+                               version);
 
 # Read-write fields
 use constant TEMPLATE_RW => qw(category_id
-			       content
+                               content
                                filename);
 
 # Fieldnames for template_version
 use constant VERSION_COLS => qw(data
-				template_id
-				version);
+                               template_id
+                               version);
 
 # Globals
 ##########
@@ -144,10 +144,10 @@ my %template_cols = map {$_ => 1} TEMPLATE_RO, TEMPLATE_RW;
 ####################################
 # had to define constants before we could use them
 use Krang::ClassLoader MethodMaker => new_with_init => 'new',
-  			new_hash_init => 'hash_init',
-  			get => [TEMPLATE_RO, qw( may_see
-                                                 may_edit )],
-  			get_set => [grep { $_ ne 'filename'} TEMPLATE_RW];
+            new_hash_init => 'hash_init',
+            get => [TEMPLATE_RO, qw( may_see
+                                     may_edit )],
+            get_set => [grep { $_ ne 'filename'} TEMPLATE_RW];
 
 sub id_meth { 'template_id' }
 sub uuid_meth { 'template_uuid' }
