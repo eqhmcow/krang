@@ -6,6 +6,10 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=item *
+
+Get C<bin/krang_install> ready for use with MySQL 5.* [Bodo Schulze]
+
 =item * 
 
 Added C<--all-instances> flag to F<bin/krang_publish> to work with 
