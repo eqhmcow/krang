@@ -231,12 +231,12 @@ sub do_install {
     check_prereqs();
 
     # working here - must create all users spec'd in backup conf
-    create_mysql_user();
     create_unix_user_group();
     install_krang();
     configure_krang();
     install_addons();
     create_database();
+    create_mysql_user();
     update_password();
     finish_install();
     start_krang();
@@ -435,10 +435,10 @@ sub check_prereqs {
     $db_exists_test .= " $InstanceDBName 2>&1";
     my $db_exists_test_output = `$db_exists_test`;
 
-    unless ($db_exists_test_output =~ /ERROR 1049[^:]*: Unknown database/) {
+    unless ($db_exists_test_output =~ /ERROR 1049[^:]*: Unknown database/ or        # for MySQL 4.*
+            $db_exists_test_output =~ /ERROR 1102[^:]*: Incorrect database name/) { # for MySQL 5.*
         exit_error("Database '$InstanceDBName' already exists.  Cannot continue.");
     }
-
 }
 
 # sort of simulates Term::Prompt, but not really
