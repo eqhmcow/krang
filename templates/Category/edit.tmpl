@@ -6,6 +6,11 @@ Krang.onload( function() {
   Krang.Help.set( 'category' );
 } );
 
+cancel_category_change = function()
+{
+  Krang.form_submit( 'edit', { rm: 'find' } );
+}
+
 save_and_leave = function()
 {
   Krang.form_submit( 'edit', { rm: '<tmpl_if is_root>db_save<tmpl_else>save_and_<tmpl_if bulk_edit>leave_bulk_edit<tmpl_else>go_up</tmpl_if></tmpl_if>' } );
@@ -75,6 +80,7 @@ Properties
 <!--:ElementEditor/edit.tmpl-->
 
 <div class="panel capped">
+<input class="west" type="button" onclick="cancel_category_change()" value="Cancel"/>
 <input value="Save &amp; Stay" onclick="save_and_stay()" type="button">
 <input value="Save" onclick="save_and_leave()" type="button">
 <tmpl_if is_root>
