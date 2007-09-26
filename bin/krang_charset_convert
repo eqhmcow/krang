@@ -55,12 +55,16 @@ instance (as set in C<$ENV{KRANG_INSTANCE}>). But you can optionally
 tell it to run for just a specific site. This option can be specified
 multiple times.
 
+=item --verbose
+
+Show more information about what is being converted.
+
 =back
 
 =head2 Supported Encodings
 
 Krang supports any character encoding set that is listed by Perl's
-built-in M<Encode::Supported>. If you need other encodings than
+built-in L<Encode::Supported>. If you need other encodings than
 Perl provides by default, you can install other Perl encoding modules
 on your system.
 
@@ -162,7 +166,6 @@ my %tables = (
     contrib      => {fields => [qw(prefix first middle last suffix bio)],},
     contrib_type => {fields => [qw(type)],},
     desk         => {fields => [qw(name)],},
-    history      => {fields => [qw(action)], id_fields => [qw(object_type object_id)]},
     list         => {fields => [qw(name)],},
     list_group   => {fields => [qw(name description)],},
     list_item    => {fields => [qw(data)],},
