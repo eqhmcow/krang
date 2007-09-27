@@ -53,6 +53,7 @@ LogLevel
 PasswordChangeTime
 PasswordChangeCount
 PreviewSSL
+RewriteLogLevel
 SchedulerMaxChildren
 Secret
 SiteServerAddr
