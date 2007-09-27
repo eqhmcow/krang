@@ -224,21 +224,18 @@ BEGIN {
 
                     $q->param($name => @values);
                 }
-# this still isn't working completely. for some reason after editing
-# a nested element and then saving the top level (after everything's already
-# been saved and returned to) can corrupt things
-#            } elsif( $q->param('ajax') or pkg('Charset')->is_utf8 ) {
-#                # else we mark the strings as UTF8 so other stuff doesn't
-#                # have to worry about it
-#                my @names = $q->param();
-#                foreach my $name (@names) {
-#                    my @values = $q->param($name);
-#                    foreach my $i (0..$#values) {
-#                        $values[$i] = decode_utf8($values[$i]);
-#                    }
-#
-#                    $q->param($name => @values);
-#                }
+            } elsif( $q->param('ajax') or pkg('Charset')->is_utf8 ) {
+                # else we mark the strings as UTF8 so other stuff doesn't
+                # have to worry about it
+                my @names = $q->param();
+                foreach my $name (@names) {
+                    my @values = $q->param($name);
+                    foreach my $i (0..$#values) {
+                        $values[$i] = decode_utf8($values[$i]);
+                    }
+
+                    $q->param($name => @values);
+                }
             }
         }
     );
