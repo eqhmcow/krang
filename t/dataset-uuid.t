@@ -229,7 +229,7 @@ END { unlink($path) if ($path and -e $path) }
     pkg('DataSet')->new(path => $path)->import_all(no_uuid => 1);
 
     # the original story is unchanged
-    my ($found) = Krang::Story->find(story_id => $s->story_id);
+    my ($found) = pkg('Story')->find(story_id => $s->story_id);
     is($found->url, $new_url);
 
     # find the new one

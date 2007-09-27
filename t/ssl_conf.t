@@ -62,7 +62,7 @@ my $test_conf = catfile($ENV{KRANG_ROOT}, 'tmp', 'test.conf');
 
 ## get SSL from build_params()
 
-my %params = Krang::Platform->build_params();
+my %params = pkg('Platform')->build_params();
 
 SKIP: {
 

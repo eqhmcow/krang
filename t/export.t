@@ -68,9 +68,9 @@ isa_ok($set, 'Krang::DataSet');
 # site.
 my @obj = $set->list;
 is(@obj, 3);
-ok(grep { $_->[0] eq 'Krang::Story' and
+ok(grep { $_->[0]->isa('Krang::Story') and
           $_->[1] eq $story->story_id  } @obj);
-ok(grep { $_->[0] eq 'Krang::Category' and
+ok(grep { $_->[0]->isa('Krang::Category') and
           $_->[1] eq $story->category->category_id  } @obj);
-ok(grep { $_->[0] eq 'Krang::Site' and
+ok(grep { $_->[0]->isa('Krang::Site') and
           $_->[1] eq $story->category->site->site_id  } @obj);

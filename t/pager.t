@@ -29,7 +29,7 @@ my %pager_props = (
                                     rm => 'search',
                                     search_filter => '',
                                    },
-                   use_module => 'Krang::Contrib',
+                   use_module => pkg('Contrib'),
                    find_params => { simple_search => $q->param('search_filter') },
                    columns => [qw( last first_middle type command_column checkbox_column )],
                    column_labels => {
@@ -116,7 +116,7 @@ $pager->use_module('Krang');
 eval { $pager->output() };
 like($@, qr/The use_module \'Krang\' has no find\(\) method/, "Validate: No find() method");
 
-$pager->use_module('Krang::Contrib');
+$pager->use_module(pkg('Contrib'));
 eval { $pager->output() };
 like($@, qr/find_params is not a hash/, "Validate: find_params hash");
 

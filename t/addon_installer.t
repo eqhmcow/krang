@@ -213,7 +213,7 @@ END { $first->uninstall }
 # pull addons, looking for just these
 my @addons = grep { $_->name eq 'First' or 
                     $_->name eq 'Last' or 
-                    $_->name eq 'AAMiddle' } Krang::AddOn->find();
+                    $_->name eq 'AAMiddle' } pkg('AddOn')->find();
 is($addons[0]->name, 'First', 'first is first');
 is($addons[1]->name, 'AAMiddle', 'middle is middle');
 is($addons[2]->name, 'Last', 'last is last');

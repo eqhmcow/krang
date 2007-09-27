@@ -148,14 +148,14 @@ eval {pkg('Template')->find(XXX => 69)};
 is($@ =~ /invalid/, 1, 'Find Failure 2');
 
 my ($tmpl3) = pkg('Template')->find(filename_like => '%bob%');
-is(ref $tmpl3, 'Krang::Template', "Find - _like 1");
+isa_ok($tmpl3, 'Krang::Template', "Find - _like 1");
 
 my @ids = ($tmpl->template_id(), $tmpl2->template_id());
 
 my $i = 1;
 my @tmpls = pkg('Template')->find(template_id => \@ids);
 ok(@tmpls);
-is (ref $_, 'Krang::Template', "Find - template_id " . $i++) for @tmpls;
+isa_ok($_, 'Krang::Template', "Find - template_id " . $i++) for @tmpls;
 
 my $count = pkg('Template')->find(count => 1, template_id => \@ids);
 is($count, scalar @ids, "Find - count");
@@ -164,7 +164,7 @@ $i = 2;
 my $year = (localtime)[5] + 1900;
 my @tmpls2 = pkg('Template')->find(creation_date_like => "%${year}%");
 ok(@tmpls2);
-is(ref $_, 'Krang::Template', "Find - _like " . $i++) for @tmpls2;
+isa_ok($_, 'Krang::Template', "Find - _like " . $i++) for @tmpls2;
 
 my ($tmpl4) = pkg('Template')->find(limit => 1,
                                     offset => 1,

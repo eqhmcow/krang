@@ -107,7 +107,7 @@ sub check_find {
     die ($@) if ($@);
 
   SKIP: {
-        if ($perl_package eq 'Krang::User') {
+        if ($perl_package->isa('User')) {
             skip "Krang::User order_desc doesn't work on MySQL v4.1.21.", 1;
         }
         ok(eq_array([@stuff], [reverse @stuff2]), "$perl_package->find(ids_only=>1, order_desc => 1) : order_desc=>1 reverses order_desc=>0") 

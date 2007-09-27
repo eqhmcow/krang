@@ -167,9 +167,9 @@ isa_ok($loaded, 'Krang::DataSet');
 # make sure add() matches loaded
 my @objects = $loaded->list();
 ok(@objects >= 2);
-ok(grep { $_->[0] eq 'Krang::Story' and
+ok(grep { $_->[0]->isa('Krang::Story') and
           $_->[1] eq $story->story_id  } @objects);
-ok(grep { $_->[0] eq 'Krang::Story' and
+ok(grep { $_->[0]->isa('Krang::Story') and
           $_->[1] eq $story2->story_id } @objects);
 
 # try an import
@@ -567,7 +567,7 @@ SKIP: {
     isa_ok($j2set, 'Krang::DataSet');
 
     # should be just two stories
-    is((grep { $_->[0] eq 'Krang::Story' } $j2set->list), 2);
+    is((grep { $_->[0]->isa('Krang::Story') } $j2set->list), 2);
 
     # write it out
     my $j2path = catfile(KrangRoot, 'tmp', 'j2.kds');
