@@ -8,6 +8,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Fixed addon v2 compat bugs in some test files. [Bodo Schulze]
+
+=item *
+
 Get C<bin/krang_install> ready for use with MySQL 5.* [Bodo Schulze]
 
 =item * 
