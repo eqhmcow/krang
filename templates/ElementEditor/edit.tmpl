@@ -5,86 +5,84 @@
 // time being
 
 <tmpl_if crumbs>
-  jump_to = function( p )  //:cf. edit_children(db2)
-  {
+  jump_to = function(p)  {
+    Krang.ElementEditor.run_save_hooks();
     Krang.form_submit('edit', { rm: 'save_and_jump', jump_to: p });
   }
 </tmpl_if>
 
 <tmpl_if bulk_edit>
 
-  save_and_change_bulk_edit_sep = function()
-  {
+  save_and_change_bulk_edit_sep = function() {
+    Krang.ElementEditor.run_save_hooks();
     Krang.form_submit('edit', { rm: 'save_and_change_bulk_edit_sep' });
   }
 
-  update_bulk_edit_counts = function()
-  {
-    var words_span = $( 'bulk_edit_words' );
-    var chars_span = $( 'bulk_edit_chars' );
+  update_bulk_edit_counts = function() {
+    var words_span = $('bulk_edit_words');
+    var chars_span = $('bulk_edit_chars');
 
-    if ( words_span && chars_span )
-    {
-      var text       = document.forms[ 'edit' ].bulk_data.value;
-      var words      = text.split( /\s+/ );
-      var word_count = 0;
-      var char_count = 0;
-      var re         = /\S/;
+    if( words_span && chars_span ) {
+        var text       = document.forms['edit'].bulk_data.value;
+        var words      = text.split(/\s+/);
+        var word_count = 0;
+        var char_count = 0;
+        var re         = /\S/;
 
-      for ( var i = 0; i < words.length; i++ )
-      {
-        if ( re.test( words[ i ] ) && ( words[ i ] != '<tmpl_var escape=js bulk_edit_sep>' ) )
-        {
-          word_count++;
-          char_count += words[ i ].length;
+        for( var i = 0; i < words.length; i++ ) { 
+            if( re.test(words[i]) && (words[i] != '<tmpl_var escape=js bulk_edit_sep>') ) {
+                word_count++;
+                char_count += words[i].length;
+            }
         }
-      }
 
-      words_span.update( word_count );
-      chars_span.update( char_count );
+        words_span.update(word_count);
+        chars_span.update(char_count);
 
-      setTimeout( update_bulk_edit_counts, 1000 + ( text.length / 10 ) );
+        // update the count again in 1 sec
+        setTimeout(update_bulk_edit_counts, 1000 + ( text.length / 10 ));
     }
   }
 
 <tmpl_else>
 
-  find_media = function( p )
-  {
+  find_media = function(p) {
+    Krang.ElementEditor.run_save_hooks();
     Krang.form_submit('edit', { rm: 'save_and_find_media_link', jump_to: p });
   }
 
-  find_story = function( p )
-  {
+  find_story = function(p) {
+    Krang.ElementEditor.run_save_hooks();
     Krang.form_submit('edit', { rm: 'save_and_find_story_link', jump_to: p });
   }
 
-  save_and_add = function()
-  {
+  save_and_add = function() {
+    Krang.ElementEditor.run_save_hooks();
     Krang.form_submit('edit', { rm: 'save_and_add' });
   }
 
-  save_and_jump = function()
-  {
+  save_and_jump = function() {
+    Krang.ElementEditor.run_save_hooks();
     Krang.form_submit('edit', { rm: 'save_and_jump' });
   }
 
-  edit_children = function( p )
-  {
+  edit_children = function( p ) {
+    Krang.ElementEditor.run_save_hooks();
     Krang.form_submit('edit', { rm: 'save_and_jump', jump_to: p });
   }
 
   <tmpl_if bulk_edit_select>
-    save_and_bulk_edit = function()
-    {
+    save_and_bulk_edit = function() {
+      Krang.ElementEditor.run_save_hooks();
       Krang.form_submit('edit', { rm: 'save_and_bulk_edit' });
     }
   </tmpl_if>
 
-  remove_children = function()
-  {
-    if ( confirm( 'Are you SURE you want to delete these sub-elements?' ) )
+  remove_children = function() {
+    if( confirm( 'Are you SURE you want to delete these sub-elements?' ) ) {
+      Krang.ElementEditor.run_save_hooks();
       Krang.form_submit('edit', { rm: 'delete_children' }, { to_top: false });
+    }
   }
 
   <tmpl_if child_select>
@@ -94,28 +92,26 @@
       containers[ '<tmpl_var escape=js name>' ] = 1;
     </tmpl_loop>
 
-    add_child = function()
-    {
-      var f      = document.forms[ 'edit' ];
-      var list   = f.elements[ 'child' ];
+    add_child = function() {
+      var f      = document.forms['edit'];
+      var list   = f.elements['child'];
       var name   = list.options[ list.selectedIndex ].value;
       var rm     = 'add';
       var to_top = false;
 
       // container elements behave differently
-      if ( containers[ name ] )
-      {
+      if ( containers[name] ) {
         rm     = 'save_and_add';
         to_top = true;
       }
 
-      Krang.form_submit( 'edit', { rm : rm }, { to_top : to_top } );
+      Krang.ElementEditor.run_save_hooks();
+      Krang.form_submit('edit', { rm : rm }, { to_top : to_top });
     }
   </tmpl_if>
 
   <tmpl_unless no_reorder>
-    reorder = function()
-    {
+    reorder = function() {
       Krang.form_submit('edit', { rm: 'reorder' }, { to_top: false });
     }
   </tmpl_unless>

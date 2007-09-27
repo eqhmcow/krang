@@ -27,16 +27,19 @@ Krang.preload_img = function(path) {
     Optionally receives a target (either id, or element object)
     for which to apply the behaviors.
 */
+Krang.run_code = function(code_array) {
+    var size = code_array.length;
+    for(var i=0; i< size; i++) {
+        var code = code_array.pop();
+        if( code ) code();
+    }
+}
 Krang.load = function(target) {
     // apply our registered behaviours
     Behaviour.apply(target);
 
     // run any code from Krang.onload()
-    var size = Krang.onload_code.length;
-    for(var i=0; i< size; i++) {
-        var code = Krang.onload_code.pop();
-        if( code ) code();
-    }
+    Krang.run_code(Krang.onload_code);
 
     // show messages and alerts that have been added
     Krang.Messages.show('alerts');
@@ -89,11 +92,12 @@ Krang.onunload = function(code) {
 };
 Krang.unload = function() {
     // run any code from Krang.onunload()
-    var size = Krang.onunload_code.length;
-    for(var i=0; i< size; i++) {
-        var code = Krang.onunload_code.pop();
-        if( code ) code();
-    }
+    Krang.run_code(Krang.onunload_code);
+}
+var oldOnUnload = document.onunload;
+document.onunload = function() {
+    Krang.unload();
+    oldOnUnload();
 }
 
 /*
@@ -1302,5 +1306,15 @@ Krang.Base64 = {
         return output;  
     }
 }  
+
+Krang.ElementEditor = {
+    save_hooks     : [],
+    add_save_hook  : function(code) {
+        Krang.ElementEditor.save_hooks.push(code);
+    },
+    run_save_hooks : function() {
+        Krang.run_code(Krang.ElementEditor.save_hooks);
+    },
+};
 
 
