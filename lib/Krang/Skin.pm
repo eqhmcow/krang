@@ -1,5 +1,4 @@
 package Krang::Skin;
-use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
@@ -48,7 +47,9 @@ bug in C<Image::BioChrome>.
 
 =cut
 
+use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'Info';
 use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader 'File';
 
@@ -127,7 +128,10 @@ sub _install_css {
                                                );
 
         # pass in params
-        $template->param(%css_directives);
+        $template->param(
+            %css_directives,
+            krang_install_id => pkg('Info')->install_id,
+        );
         
         # put output in htdocs/krang.css
         my $dest_file = catfile(KrangRoot, 'htdocs', "$basename.css");

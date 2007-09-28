@@ -89,7 +89,7 @@ use Krang::ClassLoader 'CGI::Login';
 use Krang::ClassLoader 'ErrorHandler';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize Secret ApacheMaxUnsharedSize);
+use Krang::ClassLoader Conf => qw(KrangRoot PasswordChangeTime ApacheMaxSize Secret ApacheMaxUnsharedSize ForceStaticBrowserCaching);
 use Krang::ClassLoader Log => qw(critical info debug);
 use Krang::ClassLoader 'AddOn';
 use Krang;
@@ -121,10 +121,30 @@ Apache::SizeLimit->set_max_unshared_size(ApacheMaxUnsharedSize) if ApacheMaxUnsh
 sub trans_handler ($$) {
     my $self = shift;
     my ($r) = @_;
+    my $uri = $r->uri;
+
+    # if it's a request for a /static file then strip off the static
+    # prefix that looks like "/static/XXXX" where "XXXX" is the install_id
+    if( $uri =~ /^\/static\// ) {
+        # if we have it configured to do so
+        if( ForceStaticBrowserCaching ) {
+            # make it expire waaaaay in the future
+            $r->err_header_out('Expires' => 'Mon, 28 Jul 2014 23:30:00 GMT');
+            $r->err_header_out('Cache-Control' => 'max-age=315360000');
+        }
+
+        # find the appropriate krang file
+        $uri =~ s{^/static/[^/]+/}{/};
+        my $file = pkg('File')->find("htdocs/$uri");
+        $r->filename($file);
+        return OK;
+    }
+    
+    return OK if $r->prev && $r->prev->uri =~ /^\/static\//;
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    unless ( $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/) {
+    unless ( $r->is_initial_req() or $uri =~ /\/bug\.cgi/) {
         return DECLINED;
     }
 
@@ -132,7 +152,6 @@ sub trans_handler ($$) {
     my $instance_name = $r->dir_config('instance');
     $instance_name = '' unless (defined($instance_name));
     my $flavor = $r->dir_config('flavor');
-    my $uri = $r->uri();
 
     # Are we in the context of an Instance server?    
     if ($flavor eq 'instance') {
@@ -251,6 +270,7 @@ sub access_handler ($$) {
     }
     
     # failure
+return OK;
     debug("Unsupported browser detected: " . $r->header_in('User-Agent'));
     $r->custom_response(FORBIDDEN,  "<h1>Unsupported browser detected.</h1><p>This application requires Firefox 1.5+, Safari 1.3+, Internet Explorer 6+, Mozilla 1.7+, Netscape 7+ or Konqueror 1+.</p>");
     return FORBIDDEN;
@@ -263,11 +283,13 @@ sub authen_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
+    # if the request (or redirected request) was for a static item, then
+    # just let it through
+    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// );
+
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    unless ( $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/) {
-        return DECLINED;
-    }
+    return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
 
     # Get Krang instance name
     my $instance  = pkg('Conf')->instance();
@@ -312,11 +334,13 @@ sub authz_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
+    # if the request (or redirected request) was for a static item, then
+    # just let it through
+    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// );
+
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
-    unless ( $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/) {
-        return DECLINED;
-    }
+    return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
 
     my $path      = $r->uri();
     my $instance  = pkg('Conf')->instance();
@@ -333,7 +357,7 @@ sub authz_handler ($$) {
     # always allow access to the CSS file and images - needed before
     # login to display the login screen
     return OK if $path =~ m!krang_login$! 
-      or $path =~ m!\.(gif|jpg|png|css|js|ico)$!;
+      or $path =~ m!\.(gif|jpg|jpeg|png|css|js|ico)$!;
     
     # If user is logged in
     if (my $user_id = $r->connection->user) {

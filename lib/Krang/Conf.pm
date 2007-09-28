@@ -29,6 +29,7 @@ EnableBugzilla
 EnableFTP
 EnableSiteServer
 EnableSSL
+ForceStaticBrowserCaching
 FromAddress
 FTPAddress
 FTPPort

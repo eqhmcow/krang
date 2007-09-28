@@ -137,11 +137,11 @@ sub output {
         }
     }
 
-    # add the Krang version and Product name
-    $template->param(krang_version => pkg('Info')->version )
-        if $template->query(name => 'krang_version');
-    $template->param(krang_product_name => pkg('Info')->product_name )
-        if $template->query(name => 'krang_product_name');
+    # add the Krang version, product_name and install_id
+    foreach my $name qw(version product_name install_id) {
+        $template->param("krang_$name" => pkg('Info')->$name )
+            if $template->query(name => "krang_$name");
+    }
 
     # add any contact info
     $template->param(cms_contact_email => ContactEmail() )
