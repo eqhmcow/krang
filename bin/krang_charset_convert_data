@@ -1,0 +1,315 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_charset_convert_data - convert the character set of krang data.
+
+=head1 SYNOPSIS
+
+B<NOTE>: It is important to back up your data before running this
+script. If used incorrectly ic royally screw up your data. Please,
+please, B<please> back up before using this.
+
+    krang_charset_convert_data --from ISO8859-1 --to UTF-8
+
+=head1 DESCRIPTION
+
+This script will convert your data in the Krang database from one
+character set to another. This is useful if you've been running
+Krang for while and your site needs to change it's character set.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --from
+
+Specify the character set your data is already in. If you never set
+Krang to use a particular character set, chances are you are using
+either an C<ISO-8859> version or C<windows-1252>. You can also look
+to see if the site being served declares it's character set.
+
+When in doubt, you'll probably have to guess and try one. Make sure to
+backup so you can roll it back if your guess was wrong.
+
+=item --to
+
+Specify the character set that you are converting your data to.
+
+=item --all-instances
+
+By default this will just run for all of the tables in the given
+instance (as set in C<$ENV{KRANG_INSTANCE}>). But you can optionally
+tell it to run for every instance installed.
+
+=item --site-id
+
+By default this will run for all of the sites in the give instance
+instance (as set in C<$ENV{KRANG_INSTANCE}>). But you can optionally
+tell it to run for just a specific site. This option can be specified
+multiple times.
+
+=item --verbose
+
+Show more information about what is being converted.
+
+=back
+
+=head2 Supported Encodings
+
+Krang supports any character encoding set that is listed by Perl's
+built-in L<Encode::Supported>. If you need other encodings than
+Perl provides by default, you can install other Perl encoding modules
+on your system.
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+
+    # add in $KRANG_ROOT/platform for platform build modules
+    my $plib = catdir($ENV{KRANG_ROOT}, "platform");
+    $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
+    unshift @INC, $plib;
+}
+use Pod::Usage;
+use Getopt::Long;
+
+# use first instance if one isn't set.  Addons are installation wide
+# anyway.
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Site';
+use Krang::ClassLoader 'Story';
+use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader 'Charset';
+use Krang::ClassLoader DB => qw(dbh);
+use Encode qw(from_to);
+use Storable qw(nfreeze thaw);
+use MIME::Base64 qw(encode_base64 decode_base64);
+
+# options
+my ($from, $to, $help, $man, $all_instances, @site_ids, @instances, $v);
+GetOptions(
+    'from=s'        => \$from,
+    'to=s'          => \$to,
+    'help'          => \$help,
+    'man'           => \$man,
+    'all-instances' => \$all_instances,
+    'site-id=s'     => \@site_ids,
+    'verbose'       => \$v,
+) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+
+die "You must supply a --from encoding!\n" unless $from;
+die "You must supply a --to encoding!\n"   unless $to;
+die "You can't use both --all-instances and --site-id at the same time!\n"
+  if $all_instances and @site_ids;
+
+# which instances are we going to use
+@instances = $all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE});
+
+# figure out which sites (and hence, which stories) we're going to use
+my @story_ids;
+if(!@site_ids) {
+    foreach my $instance (@instances) {
+        my @instance_site_ids = pkg('Site')->find(ids_only => 1);
+        push(@site_ids, @instance_site_ids);
+        push(@story_ids, pkg('Story')->find(ids_only => 1, site_id => \@instance_site_ids));
+    }
+}
+
+# placeholders when using site_ids in queries
+my $site_ph  = join(', ', ('?') x scalar @site_ids);
+my $story_ph = join(', ', ('?') x scalar @story_ids);
+
+my %tables = (
+    category => {
+        fields    => [qw(dir)],
+        extra_sql => " WHERE category.site_id IN ($site_ph)",
+        binds     => \@site_ids,
+    },
+    contrib      => {fields => [qw(prefix first middle last suffix bio)],},
+    contrib_type => {fields => [qw(type)],},
+    desk         => {fields => [qw(name)],},
+    list         => {fields => [qw(name)],},
+    list_group   => {fields => [qw(name description)],},
+    list_item    => {fields => [qw(data)],},
+    media => {
+        fields    => [qw(title filename caption copyright notes alt_tag)],
+        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
+        binds     => \@site_ids,
+    },
+    media_type => {fields => [qw(name)],},
+    story      => {
+        fields    => [qw(title slug notes)],
+        extra_sql => " WHERE story_id IN ($story_ph) ",
+        binds     => \@story_ids,
+    },
+    template => {
+        fields    => [qw(content)],
+        extra_sql => " JOIN category c USING (category_id) WHERE c.site_id IN ($site_ph)",
+        binds     => \@site_ids,
+    },
+    template_version => {fields => [qw(data)], id_fields => [qw(template_id version)]},
+    user => {fields => [qw(first_name last_name login password)],},
+);
+
+foreach my $instance (@instances) {
+    print "Converting instance '$instance'\n" if $v;
+    print "  For site(s) " . join(', ', map { "#$_" } @site_ids) . "\n" if $v;
+    pkg('Conf')->instance($instance);
+    my $dbh = dbh();
+
+    # convert all the fields in the tables listed above
+    foreach my $name (keys %tables) {
+        my $table     = $tables{$name};
+        my @fields    = @{$table->{fields}};
+        my @id_fields = $table->{id_fields} ? @{$table->{id_fields}} : ("${name}_id");
+        my @binds;
+        print "  Converting field(s) " . join(', ', @fields) . " of table '$name'\n" if $v;
+
+        # get the fields we need to manipulate and the id fields to identify them by
+        my $sql =
+          'SELECT ' . join(', ', map { "$name.$_ AS `$_` " } @fields, @id_fields) . " FROM $name";
+        if($table->{extra_sql}) {
+            $sql .= $table->{extra_sql};
+            @binds = @{$table->{binds}};
+        }
+        my $sth = $dbh->prepare_cached($sql);
+
+        # what we need to update the info
+        my $update_sql =
+            "UPDATE $name SET "
+          . join(', ', map { " $_ = ? " } @fields)
+          . " WHERE "
+          . join(' AND ', map { " $_ = ? " } @id_fields);
+        my $update_sth = $dbh->prepare_cached($update_sql);
+        $sth->execute(@binds);
+        my $count = 0;
+        while(my $row = $sth->fetchrow_hashref) {
+            my @data = map { $row->{$_} } @fields;
+            my @ids  = map { $row->{$_} } @id_fields;
+
+            # convert each data field
+            from_to($_, $from, $to) foreach @data;
+
+            # now put the data back
+            $update_sth->execute(@data, @ids);
+            $count++;
+        }
+        print "    Updated $count rows in $name\n" if $v;
+    }
+
+    # dig into the elements' data to decode/unthaw it, convert it and then
+    # thaw/decode it and store it.
+    print "  Converting element data\n" if $v;
+
+    # we need to select all the elements for the sites in question.
+    # this means all elements attached to categories in these sites
+    # as well as all elements and sub-elements attached to the stories
+    # in these categories
+    my $fetch_sth = $dbh->prepare_cached(
+        qq/
+        SELECT e.element_id AS id, e.data AS data FROM element e 
+        JOIN category c USING (element_id)
+        WHERE c.site_id IN ($site_ph)
+      UNION DISTINCT
+        SELECT e.element_id AS id, e.data AS data FROM element e 
+        JOIN story s ON (s.element_id = e.element_id OR s.element_id = e.root_id)
+        WHERE s.story_id IN ($story_ph)
+    /
+    );
+
+    my $to_dbh = dbh();
+    $to_dbh->do("SET names " . pkg('Charset')->mysql_charset($to));
+    my $update_sth = $to_dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
+    $fetch_sth->execute(@site_ids, @story_ids);
+
+    # tell the DB what the data is coming as
+    my $count = 0;
+    while(my $row = $fetch_sth->fetchrow_hashref) {
+        next unless defined $row->{data};
+        my $data;
+        my $id = $row->{id};
+
+        # try an unthaw it to tell if it was frozen with Storable
+        my $frozen;
+        eval {
+            no warnings;
+            $data   = thaw(decode_base64($row->{data}));
+            $frozen = 1;
+        };
+        $data = $row->{data} if $@;
+
+        $data = convert_element_data($data);
+        if(defined $data) {
+            if($frozen) {
+                $data = encode_base64(nfreeze($data));
+            }
+            $update_sth->execute($data, $id);
+        } else {
+            warn "  !Could not convert element #$id which is a "
+              . (ref $data ? ref $data : 'scalar') . "!\n";
+        }
+        $count++;
+    }
+    print "    Converted #$count elements\n" if $v;
+
+    # now deploy any deployed templates after their data has been changed
+}
+
+sub convert_element_data {
+    my $data = shift;
+    my $ref  = ref $data;
+    if(!$ref) {
+        from_to($data, $from, $to);
+        return $data;
+    } elsif($ref eq 'SCALAR') {
+        from_to($$data, $from, $to);
+        return $data;
+    } elsif($ref eq 'ARRAY') {
+        return [map { convert_element_data($_) } @$data];
+    } elsif($ref eq 'HASH') {
+        return {map { $_ => convert_element_data($data->{$_}) } %$data};
+    }
+
+    # else we don't know how to convert it
+    return;
+}
+
