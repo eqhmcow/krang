@@ -96,7 +96,6 @@ use Pod::Usage;
 use Krang::ClassLoader 'lib';
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'Conf';
-use TAP::Harness;
 
 our ($help, $man, $archive);
 my $v = 0;
@@ -132,10 +131,11 @@ if( $archive ) {
         verbose => $v,
         merge   => 1, 
     });
+    $harness->runtests(@$files);
 } else {
-    $harness = TAP::Harness->new({
-        verbose => $v,
-        merge   => 1, 
-    });
+    # run tests through Test::Harness
+    require Test::Harness;
+    no warnings; # silence used-only-once warning
+    $Test::Harness::Verbose = $v;
+    Test::Harness::runtests(@$files);
 }
-$harness->runtests(@$files);
