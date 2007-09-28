@@ -1,9 +1,9 @@
 package Krang::Charset;
-use Krang::ClassFactory qw(pkg);
 use strict;
 use warnings;
 
-use Krang::ClassLoader Conf => qw(Charset);
+use Krang::ClassLoader 'Conf';
+use Krang::ClassFactory qw(pkg);
 
 =head1 NAME
 
@@ -35,21 +35,18 @@ the configured characters set if none is given.
 
 =cut
 
-my $MUNGED;
 sub _munge_charset {
     my $charset = lc shift;
     $charset =~ s/\s*//; # remove ws
     $charset =~ s/-//;   # remove hyphens
     return $charset;
 }
-BEGIN {
-    $MUNGED = _munge_charset(Charset());
-}
 
 
 sub is_utf8 {
     my ($class, $charset ) = @_;
-    return ( $charset ? _munge_charset($charset) : $MUNGED ) eq 'utf8';
+    $charset ||= pkg('Conf')->get('Charset') || '';
+    return _munge_charset($charset) eq 'utf8';
 }
 
 =head2 C<< Krang::Charset->mysql_charset([$charset])
@@ -69,9 +66,11 @@ my %MYSQL_MAP = (
     cp1252      => 'latin1',
     windows1252 => 'latin1',
 );
+
 sub mysql_charset {
     my ($pkg, $charset) = @_;
-    $charset = $charset ? _munge_charset($charset) : $MUNGED;
+    $charset ||= pkg('Conf')->get('Charset') || '';
+    $charset = _munge_charset($charset);
 
     return $MYSQL_MAP{$charset} || $charset;
 }
