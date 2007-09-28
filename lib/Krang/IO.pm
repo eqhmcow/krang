@@ -49,7 +49,9 @@ set the appropriate encoding based on the Charset.
 
 sub open {
     my ($pkg, $fh, $mode, $path) = @_;
-    $mode .= ':encoding(' . Charset() . ')';
+    if( Charset ) {
+        $mode .= ':encoding(' . Charset() . ')';
+    }
     return open($fh, $mode, $path);
 }
 
@@ -66,18 +68,23 @@ sub io_file {
     my ($pkg, $file) = @_;
     my $charset = Charset();
 
-    # see if the mode is specified
-    my $mode;
-    if( $file =~ /^\s*(<|>|>>)\s*(.*)/ ) {
-        $mode = $1;
-        $file = $2;
-    } else {
-        # it's an implicit read
-        $mode = '<';
-    }
-    $mode .= ':encoding(' . Charset() . ')';
+    if( $charset ) {
+        # see if the mode is specified
+        my $mode;
+        if( $file =~ /^\s*(<|>|>>)\s*(.*)/ ) {
+            $mode = $1;
+            $file = $2;
+        } else {
+            # it's an implicit read
+            $mode = '<';
+        }
 
-    return IO::File->new($file, $mode);
+        $mode .= ':encoding(' . Charset() . ')';
+
+        return IO::File->new($file, $mode);
+    } else {
+        return IO::File->new($file);
+    }
 }
 
 1;
