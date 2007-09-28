@@ -14,7 +14,7 @@ function krang_results_to_smolder {
                 --server 'smolder.plusthree.com' \
                 --project 'Krang' \
                 --username 'autobot' \
-                --password 'lemons!' \
+                --password 'XXXXXX' \
                 --file "$KRANG_ROOT/krang_test_run.tar.gz." \
                 --architecture "`uname -m`" \
                 --platform "`cat /etc/redhat-release`"
