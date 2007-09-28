@@ -112,6 +112,7 @@ use Krang::ClassLoader Conf => qw(KrangRoot instance);
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'IO';
 use Krang::ClassLoader History => qw(add_history);
 use Krang::ClassLoader DB => qw(dbh);
 
@@ -2228,7 +2229,7 @@ sub _write_page {
 
     my $output_filename = catfile($args{path}, $args{filename});
 
-    my $fh = IO::File->new(">$output_filename") or
+    my $fh = pkg('IO')->io_file(">$output_filename") or
       Krang::Publisher::FileWriteError->throw(message      => "Cannot output story to $output_filename: $!",
                                               story_id     => $args{story_id},
                                               destination  => $output_filename,
@@ -2276,7 +2277,7 @@ sub _write_template {
     my $file = catfile($path, $template->filename());
 
     # write out file
-    my $fh = IO::File->new(">$file") or
+    my $fh = pkg('IO')->io_file(">$file") or
       Krang::Publisher::FileWriteError->throw(message      => 'Cannot deploy template',
                                               template_id  => $id,
                                               destination  => $file,

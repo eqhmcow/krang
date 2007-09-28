@@ -60,9 +60,7 @@ sub verify_dependencies {
     my @PATH = split(':', ($ENV{PATH} || ""));
 
     # check perl
-    if ($mode eq 'install') {
-        $pkg->check_perl();
-    }
+    $pkg->check_perl($mode);
 
     # check mysql
     $pkg->check_mysql();
@@ -88,15 +86,30 @@ sub verify_dependencies {
 
 =item C<check_perl()>
 
-Perl is the right version and compiled for the right architecture
-(skipped in build mode).
+Starting with V3, Krang can be used completely with UTF-8 so
+we need to make sure that the Perl we are using has PerlIO
+enabled.
+
+We also verify that Perl is the right version and compiled for 
+the right architecture (skipped in build mode).
 
 =cut
 
 sub check_perl {
+    my ($pkg, $mode) = @_;
 
-    my $pkg = shift;
+    # make sure we were built with PerlIO layers
+    unless( $Config{useperlio} ) {
+        die <<END;
 
+Krang needs a Perl that was built with PerlIO layer support.
+This is the default and most systems stick with this default,
+but yours does not. Please recompile Perl with PerlIO support.
+
+END
+    }
+
+    return unless $mode eq 'install';
     # check that Perl is right for this build
     my %params = $pkg->build_params();
 
