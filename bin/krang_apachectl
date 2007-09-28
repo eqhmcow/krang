@@ -84,7 +84,9 @@ use Krang::ClassLoader Conf =>
   qw(KrangRoot InstanceHostName Skin KrangUser KrangGroup EnableSSL 
      InstanceApacheAddr InstanceApachePort InstanceSSLCertificateFile 
      InstanceSSLCertificateKeyFile InstanceSSLCertificateChainFile
-     InstanceSSLCACertificateFile InstanceSSLCARevocationFile InstanceSSLPort);
+     InstanceSSLCACertificateFile InstanceSSLCARevocationFile InstanceSSLPort
+     RewriteLogLevel
+);
 use Krang::ClassLoader 'File';
 
 # SSL directives
@@ -236,10 +238,11 @@ sub write_conf {
     print STDERR ($cgi_mode ? "CGI Mode activated" : "Apache::Registry Mode activated") . "\n";
     $template->param(CGI_MODE => $cgi_mode);
 
-    $template->param((map { ($_, pkg('Conf')->get($_)) }
+    $template->param((map { ($_, scalar pkg('Conf')->get($_)) }
                       (qw(KrangUser KrangGroup 
                           ApacheAddr ApachePort
                           HostName
+                          RewriteLogLevel
                          ))),
                      KrangRoot => rel2abs(pkg('Conf')->get("KrangRoot")));
 
@@ -278,6 +281,7 @@ sub write_conf {
               InstanceSSLCARevocationFile =>
                 scalar InstanceSSLCARevocationFile(),
               InstanceSSLPort => scalar InstanceSSLPort(),
+              RewriteLogLevel => scalar RewriteLogLevel(),
              });
     }
     $template->param(InstanceLoop => \@loop);
