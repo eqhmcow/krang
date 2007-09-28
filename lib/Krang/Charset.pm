@@ -11,9 +11,11 @@ Krang::Charset - some handy utility methods for dealing with character sets
 
 =head1 SYNOPSIS
 
-    pkg('Charset')->is_utf8();
+    pkg('Charset')->is_utf8(); # depends on krang.conf
 
-    pkg('Charset')->is_latin();
+    pkg('Charset')->is_utf8('ISO 8859-1');  # false
+    pkg('Charset')->is_utf8('UTF 8');       # true
+    pkg('Charset')->is_utf8('utf-8');       # true
 
 =head1 DESCRIPTION
 
@@ -29,26 +31,21 @@ the configured characters set if none is given.
 
 =cut
 
+my $MUNGED;
+sub _munge_charset {
+    my $charset = lc shift;
+    $charset =~ s/\s*//; # remove ws
+    $charset =~ s/-//;   # remove hyphens
+    return $charset;
+}
+BEGIN {
+    $MUNGED = _munge_charset(Charset());
+}
+
+
 sub is_utf8 {
     my ($class, $charset ) = @_;
-    $charset ||= Charset();
-    $charset = lc $charset;
-    return $charset eq 'utf-8' or $charset eq 'utf8';
+    return ( $charset ? _munge_charset($charset) : $MUNGED ) eq 'utf8';
 }
-
-=head2 C<< Krang::Charset->is_latin >>
-
-Returns true if the character set looks like an ISO-8859 character set.
-Defaults to using the configured characters set if none is given.
-
-=cut
-
-sub is_latin {
-    my ($class, $charset ) = @_;
-    $charset ||= Charset();
-    $charset = lc $charset;
-    return index($charset, 'iso-8859') == 0 or index($charset, 'iso8859') == 0;
-}
-
 
 1;
