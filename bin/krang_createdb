@@ -116,8 +116,9 @@ END
 use Krang::ClassFactory qw(pkg);
 use Term::Prompt qw(prompt);
 use Krang;
-use Krang::ClassLoader Conf => qw (InstanceElementSet KrangRoot InstanceDBName DBUser DBPass);
+use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot InstanceDBName DBUser DBPass Charset);
 use Krang::ClassLoader 'File';
+use Krang::ClassLoader 'Charset';
 
 use Getopt::Long;
 use Pod::Usage;
@@ -234,7 +235,8 @@ foreach my $instance (@instances) {
 
     # create the database
     print STDERR "Creating database '$name'...\n" if $verbose;
-    $cmd = "mysql -uroot -e 'CREATE DATABASE $name'";
+    my $charset_clause = Charset ? (" CHARACTER SET " . pkg('Charset')->mysql_charset) : '';
+    $cmd = "mysql -uroot -e 'CREATE DATABASE $name $charset_clause'";
     $cmd .= " -p$password" if defined $password;
     $cmd .= " -h$hostname" if defined $hostname;
     $cmd .= " -v" if $verbose > 1;

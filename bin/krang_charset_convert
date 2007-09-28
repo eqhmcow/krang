@@ -116,6 +116,7 @@ use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Site';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader 'Charset';
 use Krang::ClassLoader DB => qw(dbh);
 use Encode qw(from_to);
 use Storable qw(nfreeze thaw);
@@ -256,7 +257,7 @@ foreach my $instance (@instances) {
     );
 
     my $to_dbh = dbh();
-    $to_dbh->do("SET names " . mysql_charset($to));
+    $to_dbh->do("SET names " . pkg('Charset')->mysql_charset($to));
     my $update_sth = $to_dbh->prepare_cached('UPDATE element SET data = ? WHERE element_id = ?');
     $fetch_sth->execute(@site_ids, @story_ids);
 
@@ -310,22 +311,5 @@ sub convert_element_data {
 
     # else we don't know how to convert it
     return;
-}
-
-# try and convert it to something that mysql likes
-sub mysql_charset {
-    my $charset = lc(shift);
-    $charset =~ s/\s*//;    # remove whitespace
-    $charset =~ s/-//;      # remove hyphens
-
-    my %charset_map = (
-        iso88591    => 'latin1',
-        iso88592    => 'latin2',
-        iso88598    => 'hebrew',
-        iso88599    => 'latin5',
-        cp1252      => 'latin1',
-        windows1252 => 'latin1',
-    );
-    return $charset_map{$charset} || $charset;
 }
 
