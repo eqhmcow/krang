@@ -49,9 +49,8 @@ set the appropriate encoding based on the Charset.
 
 sub open {
     my ($pkg, $fh, $mode, $path) = @_;
-    if( Charset ) {
-        $mode .= ':encoding(' . Charset() . ')';
-    }
+    my $charset = Charset();
+    $mode .= ":encoding($charset)" if $charset;
     return open($fh, $mode, $path);
 }
 
@@ -79,7 +78,7 @@ sub io_file {
             $mode = '<';
         }
 
-        $mode .= ':encoding(' . Charset() . ')';
+        $mode .= ":encoding($charset)" if $charset;
 
         return IO::File->new($file, $mode);
     } else {
