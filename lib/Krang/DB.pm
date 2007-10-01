@@ -104,9 +104,6 @@ sub dbh {
           unless ($db_version == $krang_version);
     }
 
-    # if we're using UTF-8, we need to tell mysql this
-    $DBH{$name}->do('Set names utf8') if $is_utf8;
-
     return $DBH{$name};
 }
 
