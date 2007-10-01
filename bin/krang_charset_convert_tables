@@ -1,0 +1,175 @@
+#!/usr/bin/env perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_charset_convert_tables - convert the character set of krang DB tables
+
+=head1 SYNOPSIS
+
+B<NOTE>: It is important to back up your data before running this
+script. If used incorrectly ic royally screw up your data. Please,
+please, B<please> back up before using this.
+
+    krang_charset_convert_tables --to UTF-8
+
+=head1 DESCRIPTION
+
+This script will convert your MySQL database tables to the given
+character set. 
+
+If your data isn't already in the C<--to> format you will need to
+use the F<bin/krang_charset_convert_data> script to make it so
+or you could have some funky data on your hands.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+Specify the character set that you are converting your data to.
+This can take the same values that can appear in the C<Charset>
+configuration directive.
+
+=item --all-instances
+
+By default this will just run for all of the tables in the given
+instance (as set in C<$ENV{KRANG_INSTANCE}>). But you can optionally
+tell it to run for every instance installed.
+
+=item --verbose
+
+Show more information about what is being converted.
+
+=back
+
+=head2 Supported Encodings
+
+Krang supports any character encoding set that is listed by Perl's
+built-in L<Encode::Supported>. If you need other encodings than
+Perl provides by default, you can install other Perl encoding modules
+on your system.
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+
+    # add in $KRANG_ROOT/platform for platform build modules
+    my $plib = catdir($ENV{KRANG_ROOT}, "platform");
+    $ENV{PERL5LIB} = "$ENV{PERL5LIB}:${plib}";
+    unshift @INC, $plib;
+}
+use Pod::Usage;
+use Getopt::Long;
+
+# use first instance if one isn't set.  Addons are installation wide
+# anyway.
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader 'Charset';
+use Krang::ClassLoader DB => qw(dbh);
+
+# options
+my ($to, $help, $man, $all_instances, @instances, $v);
+GetOptions(
+    'to=s'          => \$to,
+    'help'          => \$help,
+    'man'           => \$man,
+    'all-instances' => \$all_instances,
+    'verbose'       => \$v,
+) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-verbose => 2) if $man;
+
+die "You must supply a --to encoding!\n"   unless $to;
+
+# which instances are we going to use
+@instances = $all_instances ? pkg('Conf')->instances() : ($ENV{KRANG_INSTANCE});
+
+foreach my $instance (@instances) {
+    pkg('Conf')->instance($instance);
+    my $db_name = pkg('Conf')->get('InstanceDBName');
+    print "Converting instance '$instance', DB '$db_name'\n" if $v;
+    my $dbh = dbh();
+    my $to_charset = pkg('Charset')->mysql_charset($to);
+
+    my @tables;
+    my $sth = $dbh->prepare_cached('SHOW TABLES');
+    $sth->execute();
+    while( my $row = $sth->fetchrow_arrayref) {
+        push(@tables, $row->[0]);
+    }
+
+    foreach my $table (@tables) {
+        print "  Altering $table\n" if $v;
+        my @cols;
+        $sth = $dbh->prepare_cached("DESCRIBE $table");
+        $sth->execute();
+        while(my $row = $sth->fetchrow_arrayref) {
+            # only do this for text and char columns
+            my $type = $row->[1];
+            next unless $type =~ /(var)?char/i or $type =~ /text/i;
+            my %info = (
+                name    => $row->[0],
+                type    => $type,
+                null    => ((uc $row->[2] eq 'YES') ? 'NULL' : 'NOT NULL'),
+                default => $row->[4],
+                extra   => $row->[5],
+            );
+            push(@cols, \%info);
+        }
+
+        foreach my $col (@cols) {
+            print "    Changing '$col->{name}' column to 'binary' and then to '$to_charset'\n" if $v;
+            foreach my $charset ('binary', $to_charset) {
+                my $sql = "ALTER TABLE $table MODIFY "
+                    . "`$col->{name}` $col->{type} CHARACTER SET $charset " 
+                    . $col->{null} 
+                    . ($col->{default} ? "DEFAULT $col->{default}" : '')
+                    . " $col->{extra}";
+                $dbh->do($sql);
+            }
+        }
+
+        # now change the default charset of the whole table
+        print "    Changing default charset to $to_charset\n";
+        $dbh->do("ALTER TABLE $table DEFAULT CHARACTER SET $to_charset");
+        
+    }
+}
+print " Done\n";
+
