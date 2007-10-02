@@ -10,7 +10,7 @@ use Carp qw(croak);
 use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'Charset';
-use Encode qw(decode_utf8);
+use Encode qw(decode_utf8 encode_utf8);
 use Class::ISA;
 
 use base 'Exporter';
@@ -244,7 +244,7 @@ sub get_message_text {
         $msg = $conf->get($key);
 
         # turn UTF-8 on the string if we need to
-        $msg = decode_utf8($msg) if pkg('Charset')->is_utf8;
+        $msg = decode_utf8(encode_utf8($msg)) if pkg('Charset')->is_utf8;
 
         last if $msg;
     }
