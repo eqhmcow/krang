@@ -446,6 +446,7 @@ sub run {
         debug("Krang::CGI:  Loading Session '$session_id'");
         pkg('Session')->load($session_id);
         $we_loaded_session++;
+        binmode(STDOUT, ':utf8') if pkg('Charset')->is_utf8;
     }
 
 
