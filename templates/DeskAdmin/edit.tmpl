@@ -11,12 +11,12 @@ Krang.onload( function() {
     if ( !Krang.row_checked( 'current_desk_form', 'desk_delete_list' ) )
       alert( 'No Desks selected to delete!' );
     else if ( confirm( 'Are you SURE you want to delete these Desks?' ) )
-      Krang.form_submit('current_desk_form', {}, { to_top: false });
+      Krang.Form.submit('current_desk_form', {}, { to_top: false });
   }
 
   reorder = function()
   {
-    Krang.form_submit('current_desk_form', { rm: 'reorder' }, {}, { to_top: false });
+    Krang.Form.submit('current_desk_form', { rm: 'reorder' }, {}, { to_top: false });
   }
 </tmpl_if>
 </script>

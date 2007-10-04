@@ -8,21 +8,21 @@ Krang.onload( function() {
 
 cancel_contrib_change = function()
 {
-  Krang.form_submit( 'edit_contrib_form', { rm: 'cancel_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
+  Krang.Form.submit( 'edit_contrib_form', { rm: 'cancel_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
 }
 
 <tmpl_unless add_mode>
   delete_contrib = function()
   {
     if ( confirm( "Are you SURE you want to delete this Contributor?\n\nIf any Stories or Media are associated with this Contributor the association will be removed." ) )
-      Krang.form_submit('edit_contrib_form', { rm: 'delete' });
+      Krang.Form.submit('edit_contrib_form', { rm: 'delete' });
   }
 </tmpl_unless>
 
 <tmpl_unless associate_mode>
   save_stay = function()
   {
-    Krang.form_submit( 'edit_contrib_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
+    Krang.Form.submit( 'edit_contrib_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
   }
 </tmpl_unless>
 </script>

@@ -10,20 +10,20 @@ Krang.onload( function() {
 
 view_log = function()
 {
-  Krang.form_submit( 'view_log_form' );
+  Krang.Form.submit( 'view_log_form' );
 }
 
 <tmpl_unless old_version><tmpl_if can_edit>
   edit_story = function()
   {
-    Krang.form_submit( 'view', { rm: 'checkout_and_edit' } );
+    Krang.Form.submit( 'view', { rm: 'checkout_and_edit' } );
   }
 </tmpl_if></tmpl_unless>
 
 <tmpl_unless parent_path>
  do_return = function()
  {
-    Krang.form_submit( 'return_form' );
+    Krang.Form.submit( 'return_form' );
  }
 </tmpl_unless>
 </script>

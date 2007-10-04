@@ -8,7 +8,7 @@ Krang.onload( function() {
 <tmpl_if row_count>
   view_template = function( id )
   {
-    Krang.form_submit('find_template', { rm: 'view', template_id: id });
+    Krang.Form.submit('find_template', { rm: 'view', template_id: id });
   }
 
   <tmpl_if may_checkin_all>
@@ -17,7 +17,7 @@ Krang.onload( function() {
       if ( !Krang.pager_row_checked() )
         alert( 'Nothing selected to check in!' );
       else
-        Krang.form_submit('krang_pager_form', { rm: 'checkin_selected' }, { to_top: false });
+        Krang.Form.submit('krang_pager_form', { rm: 'checkin_selected' }, { to_top: false });
     }
   </tmpl_if>
 </tmpl_if>

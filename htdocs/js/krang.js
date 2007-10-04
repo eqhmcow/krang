@@ -1,6 +1,5 @@
 /*
-Create the Krang namespace and put some helper methods
-in it
+Create the Krang namespace.
 */
 
 var Krang = {};
@@ -114,60 +113,61 @@ Krang.popup = function(url, options) {
 };
 
 /*
-    Krang.get_cookie(name)
-    Returns the value of a specific cookie.
+    // Returns the value of a specific cookie.
+    Krang.Cookie.get(name)
+
+    // Sets a cookie to a particular value.
+    Krang.Cookie.set(name, value)
 */
-Krang.get_cookie = function(name) {
-    var value  = null;
-    var cookie = document.cookie;
-    var start, end;
+Krang.Cookie = {
+    get : function(name) {
+        var value  = null;
+        var cookie = document.cookie;
+        var start, end;
 
-    if (cookie.length > 0) {
-        start = cookie.indexOf(name + '=');
+        if (cookie.length > 0) {
+            start = cookie.indexOf(name + '=');
 
-        // if the cookie exists
-        if (start != -1)  {
-            start += name.length + 1; // need to account for the '='
+            // if the cookie exists
+            if (start != -1)  {
+                start += name.length + 1; // need to account for the '='
 
-            // set index of beginning of value
-            end = cookie.indexOf(';', start);
+                // set index of beginning of value
+                end = cookie.indexOf(';', start);
 
-            if (end == -1) end = cookie.length;
+                if (end == -1) end = cookie.length;
 
-            value = decodeURIComponent(cookie.substring(start, end));
+                value = decodeURIComponent(cookie.substring(start, end));
+            }
         }
+        return value;
+    },
+    set : function(name, value) {
+        document.cookie = name + '=' + encodeURIComponent(value);
+    },
+    json_get : function(name) {
+        var json = Krang.Cookie.get(name);
+        return eval('(' + json + ')');
     }
-    return value;
-};
+}
 
-/*
-    Krang.set_cookie(name, value)
-    Sets a cookie to a particular value.
-*/
-Krang.set_cookie = function(name, value) {
-    document.cookie = name + '=' + encodeURIComponent(value);
-};
 
 /*
     Krang.my_prefs()
     Returns a hash of preferences values from the server
     (passed to use via a JSON cookie)
 */
-Krang.my_prefs = function() {
-    var json = Krang.get_cookie('KRANG_PREFS');
-    return eval('(' + json + ')');
-};
+Krang.my_prefs = function() { return Krang.Cookie.json_get('KRANG_PREFS') }
 
 /*
     Krang.config()
     Returns a hash of config information values from the server
     (passed to use via a JSON cookie)
 */
-Krang.config = function() {
-    var json = Krang.get_cookie('KRANG_CONFIG');
-    return eval('(' + json + ')');
-};
+Krang.config = function() { return Krang.Cookie.json_get('KRANG_CONFIG') }
 
+
+// Krang.AJAX namespace
 Krang.Ajax = {
     _encode_params : function(params) {
         // only encode to Base64 if our character set is not utf-8
@@ -387,27 +387,11 @@ Krang.Ajax.update = function(args) {
 };
 
 /*
-    Krang.form_set(form, { input: 'value'})
+    Krang.Form.set(form, { input: 'value'})
     Select a form (can be either the name of the form, or the form object
     itself) and set the values of it's inputs
-*/
-Krang.form_set = function(form, inputs) {
-    form = typeof form == 'object' ? form : document.forms[form];
-    var err = 'Krang.form_set(): ';
 
-    if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
-
-    if( inputs ) {
-        $H(inputs).each( function(pair) {
-            var el = form.elements[pair.key];
-            if(! el ) alert(err + 'input "' + pair.key + '" does not exist in form "' + form.name + '"!');
-            el.value = pair.value;
-        });
-    }
-}
-
-/*
-    Krang.form_submit(form, { input: 'value' }, { new_window: true })
+    Krang.Form.submit(form, { input: 'value' }, { new_window: true })
     Select a form (can either be the name of the form, or the form object
     itself) optionally sets the values of those elements and then submits 
     the form. 
@@ -430,59 +414,76 @@ Krang.form_set = function(form, inputs) {
     class. This is because the browser won't stop the chain of events
     when we reach form.submit(), but will instead call the form's onsubmit()
     handler and then possibly submit the form again for the 2nd time.
-    In the case of inputs of type 'submit', just use Krang.form_set()
+    In the case of inputs of type 'submit', just use Krang.Form.set()
     to set the values and let the form take care of the rest.
 */
-Krang.form_submit = function(form, inputs, options) {
-    form = typeof form == 'object' ? form : document.forms[form];
-    if( inputs ) Krang.form_set(form, inputs);
+Krang.Form = {
+    set : function(form, inputs) {
+        form = typeof form == 'object' ? form : document.forms[form];
+        var err = 'Krang.Form.set(): ';
 
-    // take care of our default options
-    if(options == null ) options = {};
+        if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
 
-    if( options.new_window ) {
-        // save the old target of the form so we can restore it after
-        // submission
-        var old_target = form.target;
-        form.target = '_blank';
-        form.submit();
-        form.target = old_target;
-    } else {
-        Krang.show_indicator();
-
-        // we don't use AJAX if the form specifically disallows it
-        // or it has a file input
-        var use_ajax = !form.hasClassName('non_ajax');
-        var inputs = form.elements;
-        for(var i=0; i < inputs.length; i++) {
-            var field = inputs[i];
-            if( field.type == 'file' && field.value ) {
-                use_ajax = false;
-                break;
-            }
-        }
-        
-        if( use_ajax ) {
-            var url;
-            if( form.action ) {
-                url = form.readAttribute('action');
-            } else {
-                url = document.URL;
-                // remove any possible query bits
-                url = url.replace(/\?.*/, '');
-            }
-
-            Krang.Ajax.update({
-                url    : url,
-                params : Form.serialize(form, true),
-                target : options.target,
-                to_top : options.to_top
+        if( inputs ) {
+            $H(inputs).each( function(pair) {
+                var el = form.elements[pair.key];
+                if(! el ) alert(err + 'input "' + pair.key + '" does not exist in form "' + form.name + '"!');
+                el.value = pair.value;
             });
-        } else {
+        }
+    },
+    submit : function(form, inputs, options) {
+        form = typeof form == 'object' ? form : document.forms[form];
+        if( inputs ) Krang.Form.set(form, inputs);
+
+        // take care of our default options
+        if(options == null ) options = {};
+
+        if( options.new_window ) {
+            // save the old target of the form so we can restore it after
+            // submission
+            var old_target = form.target;
+            form.target = '_blank';
             form.submit();
+            form.target = old_target;
+        } else {
+            Krang.show_indicator();
+
+            // we don't use AJAX if the form specifically disallows it
+            // or it has a file input
+            var use_ajax = !form.hasClassName('non_ajax');
+            var inputs = form.elements;
+            for(var i=0; i < inputs.length; i++) {
+                var field = inputs[i];
+                if( field.type == 'file' && field.value ) {
+                    use_ajax = false;
+                    break;
+                }
+            }
+            
+            if( use_ajax ) {
+                var url;
+                if( form.action ) {
+                    url = form.readAttribute('action');
+                } else {
+                    url = document.URL;
+                    // remove any possible query bits
+                    url = url.replace(/\?.*/, '');
+                }
+
+                Krang.Ajax.update({
+                    url    : url,
+                    params : Form.serialize(form, true),
+                    target : options.target,
+                    to_top : options.to_top
+                });
+            } else {
+                form.submit();
+            }
         }
     }
 };
+
 
 /*
     Krang.show_indicator(id)
@@ -813,7 +814,7 @@ Krang.Pager = {
         Krang.Pager._form = Krang.Pager._get_form(key);
     },
     goto_page     : function(num) {
-        Krang.form_submit(
+        Krang.Form.submit(
             Krang.Pager._form, 
             { krang_pager_curr_page_num : num }, 
             { to_top : false, target: Krang.Pager.target }
@@ -822,7 +823,7 @@ Krang.Pager = {
         Krang.Pager.target = null;
     },
     sort          : function(field, desc) {
-        Krang.form_set( 
+        Krang.Form.set( 
             Krang.Pager._form, 
             { 
                 krang_pager_sort_field      : field, 
@@ -832,7 +833,7 @@ Krang.Pager = {
         Krang.Pager.goto_page(1);
     },
     show_big_view : function(big) {
-        Krang.form_set( Krang.Pager._form, { krang_pager_show_big_view : big });
+        Krang.Form.set( Krang.Pager._form, { krang_pager_show_big_view : big });
         Krang.Pager.goto_page(1);
     },
     _get_form     : function(key) {
@@ -999,7 +1000,7 @@ Object.extend( Krang.Navigation.prototype, {
         }
     },
     save_opened_panels: function(positions) {
-        Krang.set_cookie(this.cookie_name, positions.join(','));
+        Krang.Cookie.set(this.cookie_name, positions.join(','));
         this.opened_panels = positions;
     },
     remove_opened_panel: function(pos) {
@@ -1020,7 +1021,7 @@ Object.extend( Krang.Navigation.prototype, {
         this.save_opened_panels(panels);
     },
     opened_panels_from_cookie: function() {
-        var value = Krang.get_cookie(this.cookie_name);
+        var value = Krang.Cookie.get(this.cookie_name);
         var panels = [];
 
         // if we have nav cookie, then just use what it gives us

@@ -7,13 +7,13 @@ Krang.onload( function() {
 
 add_group = function()
 {
-  Krang.form_submit('add_group_form');
+  Krang.Form.submit('add_group_form');
 }
 
 <tmpl_if row_count>
   edit_group = function( id )
   {
-    Krang.form_submit('edit_group_form', { group_id: id });
+    Krang.Form.submit('edit_group_form', { group_id: id });
   }
 
   delete_selected = function()
@@ -21,7 +21,7 @@ add_group = function()
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to delete!' );
     else if ( confirm( 'Are you SURE you want to delete these Groups?' ) )
-      Krang.form_submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
+      Krang.Form.submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
   }
 </tmpl_if>
 </script>

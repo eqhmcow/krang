@@ -7,13 +7,13 @@ Krang.onload( function() {
 
 add_user = function()
 {
-  Krang.form_submit('add_user_form');
+  Krang.Form.submit('add_user_form');
 }
 
 <tmpl_if row_count>
   edit_user = function( id )
   {
-    Krang.form_submit('edit_user_form', { user_id: id });
+    Krang.Form.submit('edit_user_form', { user_id: id });
   }
 
   delete_selected = function()
@@ -21,7 +21,7 @@ add_user = function()
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to delete!' );
     else if ( confirm( 'Are you SURE you want to delete these Users?' ) )
-      Krang.form_submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
+      Krang.Form.submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
   }
 </tmpl_if>
 </script>

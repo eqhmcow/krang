@@ -6,39 +6,39 @@ Krang.onload( function() {
 } );
 
 add_media = function() {
-    Krang.form_submit('search_form', { rm: 'add' });
+    Krang.Form.submit('search_form', { rm: 'add' });
 }
 
 do_search = function() {
-    Krang.form_submit('search_form');
+    Krang.Form.submit('search_form');
 }
 
 <tmpl_if do_advanced_search>
   simple_search = function()
   {
-    Krang.form_submit( 'search_form', { rm: 'find' }, { to_top: false } );
+    Krang.Form.submit( 'search_form', { rm: 'find' }, { to_top: false } );
   }
 
   clear_advanced_search = function()
   {
-    Krang.form_submit( 'clear_advanced_search_form', {}, { to_top: false } );
+    Krang.Form.submit( 'clear_advanced_search_form', {}, { to_top: false } );
   }
 <tmpl_else>
   advanced_search = function()
   {
-    Krang.form_submit( 'search_form', { rm: 'advanced_find' }, { to_top: false } );
+    Krang.Form.submit( 'search_form', { rm: 'advanced_find' }, { to_top: false } );
   }
 </tmpl_if>
 
 <tmpl_if row_count>
   edit_media = function( id )
   {
-    Krang.form_submit( 'find_media', { rm: 'checkout_and_edit', media_id: id } );
+    Krang.Form.submit( 'find_media', { rm: 'checkout_and_edit', media_id: id } );
   }
 
   view_media = function( id )
   {
-    Krang.form_submit( 'find_media', { rm: 'view', media_id: id } );
+    Krang.Form.submit( 'find_media', { rm: 'view', media_id: id } );
   }
 
   delete_selected = function()
@@ -46,7 +46,7 @@ do_search = function() {
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to delete!' );
     else if ( confirm( 'Are you SURE you want to delete the checked Media?' ) )
-      Krang.form_submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
+      Krang.Form.submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
   }
 
   checkout_selected = function()
@@ -54,7 +54,7 @@ do_search = function() {
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to check out!' );
     else
-      Krang.form_submit( 'krang_pager_form', { rm: 'checkout_selected' } );
+      Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_selected' } );
   }
 
   publish_selected = function()
@@ -64,7 +64,7 @@ do_search = function() {
     else if ( confirm( 'Are you SURE you wish to publish all these items?' ) )
     {
       document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
-      Krang.form_submit( 'krang_pager_form', { rm: 'publish_story_list' } );
+      Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
     }
   }
 </tmpl_if>

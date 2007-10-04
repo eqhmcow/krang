@@ -312,12 +312,12 @@ log_entry = function( item_id, action, data )
 
 do_save = function()
 {
-  Krang.form_set('edit_form', { rm: 'save', changes: change_log.join( '%^%' ) });
+  Krang.Form.set('edit_form', { rm: 'save', changes: change_log.join( '%^%' ) });
 }
 
 do_save_stay = function()
 {
-  Krang.form_submit('edit_form', { rm: 'save', changes: change_log.join( '%^%' ), stay:  1 }, { to_top: false });
+  Krang.Form.submit('edit_form', { rm: 'save', changes: change_log.join( '%^%' ), stay:  1 }, { to_top: false });
 }
 </script>
 

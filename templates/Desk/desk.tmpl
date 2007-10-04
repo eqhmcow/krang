@@ -8,27 +8,27 @@ Krang.onload( function() {
 <tmpl_if krang_pager_rows>
   log = function( id )
   {
-    Krang.form_submit( 'krang_pager_form', { rm: 'goto_log', id: id } );
+    Krang.Form.submit( 'krang_pager_form', { rm: 'goto_log', id: id } );
   }
 
   view = function( id )
   {
-    Krang.form_submit( 'krang_pager_form', { rm: 'goto_view', id: id } );
+    Krang.Form.submit( 'krang_pager_form', { rm: 'goto_view', id: id } );
   }
 
   edit = function( id )
   {
-    Krang.form_submit( 'krang_pager_form', { rm: 'goto_edit', id: id } );
+    Krang.Form.submit( 'krang_pager_form', { rm: 'goto_edit', id: id } );
   }
 
   publish_story = function( id )
   {
-    Krang.form_submit( 'publish_story_form', { story_id: id } );
+    Krang.Form.submit( 'publish_story_form', { story_id: id } );
   }
 
   move = function( id )
   {
-    Krang.form_submit( 'krang_pager_form', { rm: 'move', id: id }, { to_top: false } );
+    Krang.Form.submit( 'krang_pager_form', { rm: 'move', id: id }, { to_top: false } );
   }
 
   <tmpl_if may_publish>
@@ -39,7 +39,7 @@ Krang.onload( function() {
       else if ( confirm( 'Are you SURE you wish to publish all these items?' ) )
       {
         document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
-        Krang.form_submit( 'krang_pager_form', { rm: 'publish_story_list' } );
+        Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
       }
     }
   </tmpl_if>
@@ -49,7 +49,7 @@ Krang.onload( function() {
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to check out!' );
     else
-      Krang.form_submit( 'krang_pager_form', { rm: 'checkout_checked' } );
+      Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_checked' } );
   }
 
   move_checked = function()
@@ -57,7 +57,7 @@ Krang.onload( function() {
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to move!' );
     else
-      Krang.form_submit( 'krang_pager_form', { rm: 'move_checked' }, { to_top: false } );
+      Krang.Form.submit( 'krang_pager_form', { rm: 'move_checked' }, { to_top: false } );
   }
 </tmpl_if>
 </script>

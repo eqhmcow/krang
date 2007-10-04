@@ -10,7 +10,7 @@ delete_selected = function()
   if ( !Krang.pager_row_checked() )
     alert( 'Nothing selected to delete!' );
   else if ( confirm( 'Are you SURE you want to delete these Jobs?' ) )
-    Krang.form_submit('krang_pager_form', { rm: 'delete' }, { to_top: false });
+    Krang.Form.submit('krang_pager_form', { rm: 'delete' }, { to_top: false });
 }
 </script>
 

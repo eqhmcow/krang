@@ -16,15 +16,15 @@ Results
 </p>
 
 <ul>
-<tmpl_if prev_page_number><li><a href="javascript:Krang.Pager.goto_page(<tmpl_var prev_page_number>)">
+<li><tmpl_if prev_page_number><a href="javascript:Krang.Pager.goto_page(<tmpl_var prev_page_number>)" class="l">
   &laquo;
-</a></li></tmpl_if><tmpl_loop page_numbers><li><tmpl_if is_current_page><b<tmpl_if __last__> class="l"</tmpl_if>>
+</a><tmpl_else><b class="l">&laquo;</b></tmpl_if></li><tmpl_loop page_numbers><li><tmpl_if is_current_page><b<tmpl_if __last__> class="l"</tmpl_if>>
   <tmpl_var page_number>
-</b><tmpl_else><a href="javascript:Krang.Pager.goto_page(<tmpl_var page_number>)">
+</b><tmpl_else><a href="javascript:Krang.Pager.goto_page(<tmpl_var page_number>)"<tmpl_if __last__> class="l"</tmpl_if>>
   <tmpl_var page_number_label>
-</a></tmpl_if></li></tmpl_loop><tmpl_if next_page_number><li><a href="javascript:Krang.Pager.goto_page(<tmpl_var next_page_number>)" class="l">
+</a></tmpl_if></li></tmpl_loop><li><tmpl_if next_page_number><a href="javascript:Krang.Pager.goto_page(<tmpl_var next_page_number>)" class="l">
   &raquo;
-</a></li></tmpl_if>
+</a><tmpl_else><b class="l">&raquo;</b></tmpl_if></li>
 </ul>
 
 </div>

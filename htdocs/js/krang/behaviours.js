@@ -27,9 +27,9 @@ var rules = {
         // do anything automatically
         if( el.onsubmit ) return;
 
-        // now change the submission to use Krang.form_submit
+        // now change the submission to use Krang.Form.submit
         el.observe('submit', function(e) {
-            Krang.form_submit(el);
+            Krang.Form.submit(el);
             Event.stop(e);
         });
     },

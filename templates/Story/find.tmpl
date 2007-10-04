@@ -7,42 +7,42 @@ Krang.onload( function() {
 
 show_advanced_search = function( show_advanced )
 {
-  Krang.form_submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
+  Krang.Form.submit( 'search_form', { do_advanced_search: show_advanced }, { to_top: false } );
 }
 
 add_story = function() {
-  Krang.form_submit('search_form', { rm: 'new_story' });
+  Krang.Form.submit('search_form', { rm: 'new_story' });
 }
 
 do_search = function() {
-  Krang.form_submit('search_form');
+  Krang.Form.submit('search_form');
 }
 
 <tmpl_if do_advanced_search>
   clear_advanced_search = function()
   {
-    Krang.form_submit( 'clear_advanced_search_form', {}, { to_top: false } );
+    Krang.Form.submit( 'clear_advanced_search_form', {}, { to_top: false } );
   }
 </tmpl_if>
 
 <tmpl_if row_count>
   edit_story = function( id )
   {
-    Krang.form_submit( 'find_story', { rm: 'checkout_and_edit', story_id: id } );
+    Krang.Form.submit( 'find_story', { rm: 'checkout_and_edit', story_id: id } );
   }
 
   view_story = function( id )
   {
-    Krang.form_submit( 'find_story', { rm: 'view', story_id: id } );
+    Krang.Form.submit( 'find_story', { rm: 'view', story_id: id } );
   }
 
   view_story_log = function( id )
   {
-    Krang.form_submit( 'view_story_log_form', { story_id: id } );
+    Krang.Form.submit( 'view_story_log_form', { story_id: id } );
   }
 
   copy_story = function(id) {
-    Krang.form_submit('find_story', { rm: 'copy', story_id: id });
+    Krang.Form.submit('find_story', { rm: 'copy', story_id: id });
   }
 
   delete_selected = function()
@@ -50,7 +50,7 @@ do_search = function() {
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to delete!' );
     else if ( confirm( 'Are you SURE you want to delete the checked Stories?' ) )
-      Krang.form_submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
+      Krang.Form.submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
   }
 
   checkout_selected = function()
@@ -58,7 +58,7 @@ do_search = function() {
     if ( !Krang.pager_row_checked() )
       alert( 'Nothing selected to check out!' );
     else
-      Krang.form_submit( 'krang_pager_form', { rm: 'checkout_selected' } );
+      Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_selected' } );
   }
 
   publish_selected = function()
@@ -68,7 +68,7 @@ do_search = function() {
     else if ( confirm( 'Are you SURE you want to publish these items?' ) )
     {
       document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
-      Krang.form_submit( 'krang_pager_form', { rm: 'publish_story_list' } );
+      Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
     }
   }
 </tmpl_if>

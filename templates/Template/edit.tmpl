@@ -8,33 +8,33 @@ Krang.onload( function() {
 
 do_save_stay = function()
 {
-  Krang.form_submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save_stay' }, { to_top: false });
+  Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save_stay' }, { to_top: false });
 }
 
 do_save = function()
 {
-  Krang.form_submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save' });
+  Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save' });
 }
 
 //(db2)untied to UI; runmodes exist:
 //do_checkin = function()
 //{
-//  Krang.form_submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_checkin' });
+//  Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_checkin' });
 //}
 //
 //do_cancel = function()
 //{
-//  Krang.form_submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_cancel' });
+//  Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_cancel' });
 //}
 
 do_deploy = function()
 {
-  Krang.form_submit('edit_template_form', { rm: 'deploy' });
+  Krang.Form.submit('edit_template_form', { rm: 'deploy' });
 }
 
 save_and_view_log = function()
 {
-  Krang.form_submit('edit_template_form', { rm: 'save_and_view_log' });
+  Krang.Form.submit('edit_template_form', { rm: 'save_and_view_log' });
 }
 
 <tmpl_if add_mode>
@@ -49,24 +49,24 @@ save_and_view_log = function()
   }
   do_cancel = function()
   {
-    Krang.form_submit( 'edit_template_form', { rm: 'add_cancel' });
+    Krang.Form.submit( 'edit_template_form', { rm: 'add_cancel' });
   }
 <tmpl_else>
   revert_version = function()
   {
     if ( confirm( 'Are you SURE you want to discard your work and revert to this old version?' ) )
-      Krang.form_submit('edit_template_form', { rm: 'revert_version' });
+      Krang.Form.submit('edit_template_form', { rm: 'revert_version' });
   }
 
   view_version = function()
   {
-    Krang.form_submit('edit_template_form', { rm: 'view_version' });
+    Krang.Form.submit('edit_template_form', { rm: 'view_version' });
   }
 
   do_delete = function()
   {
     if ( confirm( 'Are you SURE you want to delete this Template?' ) )
-      Krang.form_submit( 'delete_template_form'<tmpl_if add_mode>, { rm : 'cancel_add' }</tmpl_if> );
+      Krang.Form.submit( 'delete_template_form'<tmpl_if add_mode>, { rm : 'cancel_add' }</tmpl_if> );
   }
 </tmpl_if>
 </script>

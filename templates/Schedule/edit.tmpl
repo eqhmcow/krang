@@ -7,7 +7,7 @@ Krang.onload( function() {
 
 save_and_view = function()
 {
-  Krang.form_submit('add_schedule_form', { rm: 'save_and_view' });
+  Krang.Form.submit('add_schedule_form', { rm: 'save_and_view' });
 }
 
 <tmpl_if existing_schedule_loop>
@@ -16,13 +16,13 @@ save_and_view = function()
     if ( !Krang.row_checked( 'current_schedule_form', 'schedule_delete_list' ) )
       alert( 'Nothing selected to delete!' );
     else if ( confirm( 'Are you SURE you want to delete the selected Actions from the Schedule?' ) )
-      Krang.form_submit('current_schedule_form');
+      Krang.Form.submit('current_schedule_form');
   }
 </tmpl_if>
 
 do_return = function()
 {
-  Krang.form_submit('return_form');
+  Krang.Form.submit('return_form');
 }
 </script>
 

@@ -11,7 +11,7 @@ Krang.onload( function() {
     if ( !Krang.row_checked( 'current_alert_form', 'alert_delete_list' ) )
       alert( 'No Alerts selected to delete!' );
     else if ( confirm( 'Are you SURE you wish to delete these Alerts?' ) )
-      Krang.form_submit( 'current_alert_form', {}, { to_top: false } );
+      Krang.Form.submit( 'current_alert_form', {}, { to_top: false } );
   }
 </tmpl_if>
 </script>

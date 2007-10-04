@@ -10,13 +10,13 @@ Krang.onload( function() {
 
 do_return = function()
 {
-  Krang.form_submit( 'return_form' );
+  Krang.Form.submit( 'return_form' );
 }
 
 <tmpl_unless is_old_version><tmpl_if can_edit>
   do_edit_media = function()
   {
-    Krang.form_submit( 'edit_media_form' );
+    Krang.Form.submit( 'edit_media_form' );
   }
 </tmpl_if></tmpl_unless>
 </script>

@@ -9,30 +9,30 @@ Krang.onload( function() {
 <tmpl_if advanced>
   simple_search = function()
   {
-    Krang.form_submit('select_media_form', { advanced: 0 }, { to_top: false });
+    Krang.Form.submit('select_media_form', { advanced: 0 }, { to_top: false });
   }
 
   clear_advanced_search = function()
   {
-    Krang.form_submit('clear_advanced_search_form', {}, { to_top: false });
+    Krang.Form.submit('clear_advanced_search_form', {}, { to_top: false });
   }
 <tmpl_else>
   advanced_search = function()
   {
-    Krang.form_submit('select_media_form', { advanced: 1 }, { to_top: false });
+    Krang.Form.submit('select_media_form', { advanced: 1 }, { to_top: false });
   }
 </tmpl_if>
 
 //[tmpl_if row_count] db2: not populated
   select_media = function( id )
   {
-    Krang.form_submit('select_media_form', { rm: 'select_media', selected_media_id: id });
+    Krang.Form.submit('select_media_form', { rm: 'select_media', selected_media_id: id });
   }
 //[/tmpl_if]
 
 cancel_select = function()
 {
-  Krang.form_submit('select_media_form', { rm: 'edit', path: '<tmpl_var escape=js parent_path>' });
+  Krang.Form.submit('select_media_form', { rm: 'edit', path: '<tmpl_var escape=js parent_path>' });
 }
 </script>
 

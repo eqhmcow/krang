@@ -9,17 +9,17 @@ Krang.onload( function() {
 delete_category = function( id )
 {
   if ( confirm( 'Are you SURE you want to remove this Category?' ) )
-    Krang.form_submit('edit_categories_form', { rm: 'delete_category', delete_category_id: id }, { to_top: false });
+    Krang.Form.submit('edit_categories_form', { rm: 'delete_category', delete_category_id: id }, { to_top: false });
 }
 
 add_category = function()
 {
-  Krang.form_submit('edit_categories_form', { rm: 'add_category' }, { to_top: false });
+  Krang.Form.submit('edit_categories_form', { rm: 'add_category' }, { to_top: false });
 }
 
 do_return = function()
 {
-  Krang.form_submit('edit_categories_form', { rm: 'edit_categories_return' });
+  Krang.Form.submit('edit_categories_form', { rm: 'edit_categories_return' });
 }
 </script>
 

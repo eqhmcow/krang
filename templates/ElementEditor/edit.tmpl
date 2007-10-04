@@ -7,7 +7,7 @@
 <tmpl_if crumbs>
   jump_to = function(p)  {
     Krang.ElementEditor.run_save_hooks();
-    Krang.form_submit('edit', { rm: 'save_and_jump', jump_to: p });
+    Krang.Form.submit('edit', { rm: 'save_and_jump', jump_to: p });
   }
 </tmpl_if>
 
@@ -15,7 +15,7 @@
 
   save_and_change_bulk_edit_sep = function() {
     Krang.ElementEditor.run_save_hooks();
-    Krang.form_submit('edit', { rm: 'save_and_change_bulk_edit_sep' });
+    Krang.Form.submit('edit', { rm: 'save_and_change_bulk_edit_sep' });
   }
 
   update_bulk_edit_counts = function() {
@@ -48,40 +48,40 @@
 
   find_media = function(p) {
     Krang.ElementEditor.run_save_hooks();
-    Krang.form_submit('edit', { rm: 'save_and_find_media_link', jump_to: p });
+    Krang.Form.submit('edit', { rm: 'save_and_find_media_link', jump_to: p });
   }
 
   find_story = function(p) {
     Krang.ElementEditor.run_save_hooks();
-    Krang.form_submit('edit', { rm: 'save_and_find_story_link', jump_to: p });
+    Krang.Form.submit('edit', { rm: 'save_and_find_story_link', jump_to: p });
   }
 
   save_and_add = function() {
     Krang.ElementEditor.run_save_hooks();
-    Krang.form_submit('edit', { rm: 'save_and_add' });
+    Krang.Form.submit('edit', { rm: 'save_and_add' });
   }
 
   save_and_jump = function() {
     Krang.ElementEditor.run_save_hooks();
-    Krang.form_submit('edit', { rm: 'save_and_jump' });
+    Krang.Form.submit('edit', { rm: 'save_and_jump' });
   }
 
   edit_children = function( p ) {
     Krang.ElementEditor.run_save_hooks();
-    Krang.form_submit('edit', { rm: 'save_and_jump', jump_to: p });
+    Krang.Form.submit('edit', { rm: 'save_and_jump', jump_to: p });
   }
 
   <tmpl_if bulk_edit_select>
     save_and_bulk_edit = function() {
       Krang.ElementEditor.run_save_hooks();
-      Krang.form_submit('edit', { rm: 'save_and_bulk_edit' });
+      Krang.Form.submit('edit', { rm: 'save_and_bulk_edit' });
     }
   </tmpl_if>
 
   remove_children = function() {
     if( confirm( 'Are you SURE you want to delete these sub-elements?' ) ) {
       Krang.ElementEditor.run_save_hooks();
-      Krang.form_submit('edit', { rm: 'delete_children' }, { to_top: false });
+      Krang.Form.submit('edit', { rm: 'delete_children' }, { to_top: false });
     }
   }
 
@@ -106,13 +106,13 @@
       }
 
       Krang.ElementEditor.run_save_hooks();
-      Krang.form_submit('edit', { rm : rm }, { to_top : to_top });
+      Krang.Form.submit('edit', { rm : rm }, { to_top : to_top });
     }
   </tmpl_if>
 
   <tmpl_unless no_reorder>
     reorder = function() {
-      Krang.form_submit('edit', { rm: 'reorder' }, { to_top: false });
+      Krang.Form.submit('edit', { rm: 'reorder' }, { to_top: false });
     }
   </tmpl_unless>
 
