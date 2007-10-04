@@ -306,7 +306,9 @@ BEGIN {
 
     # make sure our redirect headers are AJAXy
     # if the original request was for AJAX
+    # also make sure that the Charset is set if we have it
     __PACKAGE__->add_callback(postrun => sub {
+        # take care of AJAXy redirects
         my $self  = shift;
         my %props = $self->header_props();
         my $uri   = delete $props{'uri'} 
@@ -324,6 +326,10 @@ BEGIN {
             $props{'-uri'} = $uri;
             $self->header_props(%props);
         }
+
+        # setup character set if one is defined
+        $self->query->charset(Charset) if Charset;
+
     });
 
     __PACKAGE__->add_callback(prerun => sub {
@@ -435,9 +441,6 @@ sub load_tmpl {
 sub run {
     my $self = shift;
     my @args = ( @_ );
-
-    # setup character set if one is defined
-    $self->query->charset(Charset) if Charset;
 
     # Load and unload session ONLY if we have a session ID set
     my $we_loaded_session = 0;

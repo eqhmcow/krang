@@ -652,9 +652,6 @@ sub copy {
     # delete query...
     $query->delete_all;
 
-    # ... but preserve charset
-    $query->charset(Charset) if Charset;
-
     # go edit the copy
     return $self->edit();
 }
