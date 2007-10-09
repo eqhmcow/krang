@@ -88,6 +88,17 @@ var rules = {
     '#H .nav .menu' : function( el ) {
         if ( Krang.is_ie_6() )
             el.onmouseover = el.onmouseout = function(){ this.toggleClassName( 'over' ); };
+    },
+    // popup tooltips for thumbnails
+    'img.thumbnail' : function( el ) {
+        var url = el.src.replace(/\/(m|t)__/, '/');
+        el.observe('mouseover', function(event) {
+            Krang.Tooltip.Media.show(event, el, url);
+        }.bindAsEventListener(el));
+        el.observe('mouseout', function(event) {
+            Krang.Tooltip.Media.hide();
+        }.bindAsEventListener(el));
+        
     }
 };
 

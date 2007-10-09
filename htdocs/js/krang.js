@@ -1318,4 +1318,39 @@ Krang.ElementEditor = {
     },
 };
 
+Krang.Tooltip = {
+    cursor_offset_x: 16,
+    cursor_offset_y: 2,
+    pointer_offset_x: 2,
+    pointer_offset_y: 15,
+    container_id : 'tooltip',
+    pointer_id : 'tooltip-pointer'
+};
+Krang.Tooltip.Media = {
+    img_id : 'tooltip-img',
+    loading_img_src: '/images/icon-loading-small.gif',
+    show : function(e, el, url) {
+        var cur_pos = Position.cumulativeOffset(el);
+        var curX = cur_pos[0] + el.width;
+        var curY = cur_pos[1];
+
+        var tip     = $(Krang.Tooltip.container_id);
+        tip.style.left = curX + Krang.Tooltip.cursor_offset_x + 'px';
+        tip.style.top  = curY + Krang.Tooltip.cursor_offset_y + 'px';
+
+        var pointer = $(Krang.Tooltip.pointer_id);
+        pointer.style.left = curX + Krang.Tooltip.pointer_offset_x + 'px';
+        pointer.style.top  = curY + Krang.Tooltip.pointer_offset_y + 'px';
+        $(Krang.Tooltip.Media.img_id).src = url;
+
+        tip.style.visibility = "visible"
+        pointer.style.visibility = "visible";
+    },
+    hide : function() {
+        $(Krang.Tooltip.container_id).style.visibility = "hidden";
+        $(Krang.Tooltip.pointer_id).style.visibility = "hidden";
+        $(Krang.Tooltip.Media.img_id).src = Krang.Tooltip.Media.loading_img_src;
+    }
+};
+
 

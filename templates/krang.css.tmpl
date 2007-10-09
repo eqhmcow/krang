@@ -424,6 +424,13 @@ img.clock_trigger:hover { cursor: pointer; }
 div.clock_widget        { background-color: <tmpl_var XLightColor>; position: absolute; width: auto; border: 1px solid #999; padding: 3px; white-space: nowrap; z-index: 100}
 
 
+/************
+ * Tooltips *
+*************/
+#tooltip         { position: absolute; left: -300px; border: 1px solid <tmpl_var BorderColor>; padding: 10px; background-color: <tmpl_var XHilightColor>; visibility: hidden; z-index: 100; }
+#tooltip-pointer { position:absolute; left: -300px; z-index: 101; visibility: hidden; }
+#tooltip-img     { border: 1px solid <tmpl_var BorderColor>; }
+
 /**********************
  * Ajax.Autocompleter *
  **********************/
