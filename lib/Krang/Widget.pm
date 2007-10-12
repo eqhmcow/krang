@@ -9,7 +9,8 @@ use File::Spec::Functions qw(catfile);
 use HTML::PopupTreeSelect::Dynamic;
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf    => qw(KrangRoot);
+use Krang::ClassLoader 'Info';
+use Krang::ClassLoader Conf    => qw(KrangRoot ForceStaticBrowserCaching);
 use Krang::ClassLoader DB      => qw(dbh);
 use Krang::ClassLoader Log     => qw(debug);
 use Krang::ClassLoader Message => qw(add_alert);
@@ -337,7 +338,7 @@ sub category_chooser_object {
         name              => $name,
         title             => $title || 'Choose a Category',
         data              => $data->{children},
-        image_path        => 'images',
+        image_path        => _img_prefix() . 'images',
         onselect          => $name . '_choose_category',
         hide_root         => 1,
         button_label      => $label || 'Choose',
@@ -417,12 +418,15 @@ sub time_chooser {
     my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
     $value ||= $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
 
+    # an image src prefix for caching
+    my $img_prefix = _img_prefix();
+
     # setup the onchange
     $onchange ||= '';
     my $onchange_attr = $onchange ? qq/ onchange="$onchange"/ : '';
     return qq|
         <input id="$name" name="$name" value="$value" size="9"$onchange_attr class="time_chooser">
-        <img alt="" src="images/clock.gif" id="${name}_trigger" class="clock_trigger">
+        <img alt="" src="${img_prefix}images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div id="${name}_clock" class="clock_widget" style="display:none">
             <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
                 <option value="">Hour</option> | 
@@ -577,9 +581,10 @@ sub date_chooser {
     # setup the default onchange value
     $onchange = $onchange ? qq/ onchange="$onchange"/ : '';
 
+    my $img_prefix = _img_prefix();
     return qq|
         <input id="$name" name="$name" value="$date" size="11"$onchange class="date_chooser">
-        <img alt="" src="images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
+        <img alt="" src="${img_prefix}images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
         <script type="text/javascript">
         Krang.onload( function() { Krang.Widget.date_chooser( '$name' ); } );
         </script>
@@ -887,7 +892,7 @@ sub template_chooser_object {
         name              => $name,
         title             => $title || 'Choose a Template',
         data              => $data->{children},
-        image_path        => 'images',
+        image_path        => _img_prefix() . 'images',
         onselect          => $name . '_choose_template',
         button_label      => $label || 'Choose',
         include_css       => 0,
@@ -994,6 +999,12 @@ sub autocomplete_values {
         $html .= "<li>$_</li>";
     }
     return $html . '</ul>';
+}
+
+sub _img_prefix {
+    return ForceStaticBrowserCaching 
+        ? '/static/' . pkg('Info')->install_id .'/' 
+        : '';
 }
 
 1;
