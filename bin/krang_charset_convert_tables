@@ -143,6 +143,7 @@ foreach my $instance (@instances) {
             # only do this for text and char columns
             my $type = $row->[1];
             next unless $type =~ /(var)?char/i or $type =~ /text/i;
+            next if $row->[0] eq 'rate_limit_hits'; # skip this one
             my %info = (
                 name    => $row->[0],
                 type    => $type,
