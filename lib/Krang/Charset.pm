@@ -37,8 +37,8 @@ the configured characters set if none is given.
 
 sub _munge_charset {
     my $charset = lc shift;
-    $charset =~ s/\s*//; # remove ws
-    $charset =~ s/-//;   # remove hyphens
+    $charset =~ s/\s*//g; # remove ws
+    $charset =~ s/-//g;   # remove hyphens
     return $charset;
 }
 
