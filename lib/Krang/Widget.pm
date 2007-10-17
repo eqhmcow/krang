@@ -338,7 +338,7 @@ sub category_chooser_object {
         name              => $name,
         title             => $title || 'Choose a Category',
         data              => $data->{children},
-        image_path        => _img_prefix() . 'images',
+        image_path        => pkg('Widget')->_img_prefix() . 'images',
         onselect          => $name . '_choose_category',
         hide_root         => 1,
         button_label      => $label || 'Choose',
@@ -419,7 +419,7 @@ sub time_chooser {
     $value ||= $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
 
     # an image src prefix for caching
-    my $img_prefix = _img_prefix();
+    my $img_prefix = pkg('Widget')->_img_prefix();
 
     # setup the onchange
     $onchange ||= '';
@@ -581,7 +581,7 @@ sub date_chooser {
     # setup the default onchange value
     $onchange = $onchange ? qq/ onchange="$onchange"/ : '';
 
-    my $img_prefix = _img_prefix();
+    my $img_prefix = pkg('Widget')->_img_prefix();
     return qq|
         <input id="$name" name="$name" value="$date" size="11"$onchange class="date_chooser">
         <img alt="" src="${img_prefix}images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
@@ -892,7 +892,7 @@ sub template_chooser_object {
         name              => $name,
         title             => $title || 'Choose a Template',
         data              => $data->{children},
-        image_path        => _img_prefix() . 'images',
+        image_path        => pkg('Widget')->_img_prefix() . 'images',
         onselect          => $name . '_choose_template',
         button_label      => $label || 'Choose',
         include_css       => 0,
