@@ -65,7 +65,9 @@ AddModule mod_access.c
 AddModule mod_auth.c
 # AddModule mod_proxy.c
 AddModule mod_so.c
+<tmpl_if EnableSSL>
 AddModule mod_setenvif.c
+</tmpl_if>
 AddModule mod_perl.c
 
 
