@@ -231,6 +231,11 @@ BEGIN {
                 foreach my $name (@names) {
                     my @values = $q->param($name);
                     foreach my $i (0..$#values) {
+                        # CGI.pm overloads file upload params so that they are both
+                        # strings and filehandles. If we decode it it will just be
+                        # a string. There might be a better way to handle this if
+                        # we might have UTF-8 named files.
+                        next if lc(ref $values[$i]) eq 'fh';
                         $values[$i] = decode_utf8($values[$i]);
                     }
 
