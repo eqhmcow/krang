@@ -167,7 +167,7 @@ foreach my $instance (@instances) {
         }
 
         # now change the default charset of the whole table
-        print "    Changing default charset to $to_charset\n";
+        print "    Changing default charset to $to_charset\n" if $v;
         $dbh->do("ALTER TABLE $table DEFAULT CHARACTER SET $to_charset");
         
     }
