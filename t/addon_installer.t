@@ -10,6 +10,7 @@ use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Spec::Functions qw(catfile catdir);
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader 'Test::Web';
+use Krang::ClassLoader 'Test::Util' => qw(restart_krang);
 use Krang::ClassLoader 'HTMLTemplate';
 use IPC::Run qw(run);
 
@@ -160,8 +161,8 @@ SKIP: {
 
     # try restarting the server, skipping if that doesn't work
     local $ENV{CGI_MODE} = 1;
-    system('sudo ' . KrangRoot . "/bin/krang_ctl restart")
-        and skip "Krang servers couldn't be restarted, skipping tests.", 7;
+    restart_krang()
+        or skip "Krang servers couldn't be restarted, skipping tests.", 7;
 
     # get creds
     my $mech = pkg('Test::Web')->new();
