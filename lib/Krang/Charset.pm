@@ -49,7 +49,7 @@ sub is_utf8 {
     return _munge_charset($charset) eq 'utf8';
 }
 
-=head2 C<< Krang::Charset->mysql_charset([$charset])
+=head2 C<< Krang::Charset->mysql_charset([$charset]) >>
 
 This method tries to convert the given charset into something that MySQL
 can understand. Defaults to using the configured characters set if none
