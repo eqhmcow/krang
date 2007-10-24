@@ -31,12 +31,15 @@ sub input_form {
     my ($query, $element) = @arg{qw(query element)};
     my ($param) = $self->param_names(element => $element);
 
-    my $values = $self->values();
-    my $labels = $self->labels();
+    my $values = $self->values || [];
+    my $labels = $self->labels || {};
+    # if it's code, then call it to get the values
+    $values = $values->($self, %arg) if ref $values eq 'CODE';
+    $labels = $labels->($self, %arg) if ref $labels eq 'CODE';
 
     # if a list_group has been specified, use that instead
     if (my $group_name = $self->list_group) {
-	($values, $labels) = $self->_get_list_data($group_name);
+	    ($values, $labels) = $self->_get_list_data($group_name);
     }
 
     # Override built-in labels
@@ -192,22 +195,30 @@ All the normal L<Krang::ElementClass> attributes are available, plus:
 
 A reference to an array of values for the select box.
 
+This can also be a code reference that will return an array reference.
+This is really helpful when you don't know ahead of time what possible
+values might be in the list, or they might change based on other actions.
+This code reference will be called as a method in the element class with the
+same arguments that are passed to element class's C<input_form()>.
 
 =item labels
 
 A reference to a hash mapping C<values> to display names.
 
+This can also be a code reference that will return a hash reference.
+This is really helpful when you don't know ahead of time what possible
+values might be in the list, or they might change based on other actions.
+This code reference will be called as a method in the element class with the
+same arguments that are passed to element class's C<input_form()>.
 
 =item columns
 
 The number of columns in which you want your radio group to appear.
 This defaults to 0, which indicates that radio buttons be put horizontally.
 
-
 =item list_group
 
 If specified, this will populate the RadioGroup from a Krang list.
-
 
 =back
 

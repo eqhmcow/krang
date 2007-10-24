@@ -40,10 +40,16 @@ sub input_form {
         $default = $element->data ? $element->data()->[0] : "";
     }
 
+    my $values = $self->values || [];
+    my $labels = $self->labels || {};
+    # if it's code, then call it to get the values
+    $values = $values->($self, %arg) if ref $values eq 'CODE';
+    $labels = $labels->($self, %arg) if ref $labels eq 'CODE';
+
     return scalar $query->scrolling_list(-name      => $param,
                                          -default   => $default,
-                                         -values    => $self->values(),
-                                         -labels    => $self->labels(),
+                                         -values    => $values,
+                                         -labels    => $labels,
                                          -size      => $self->size(),
                                          ($self->multiple ? 
                                           (-multiple => 'true') : ()));
@@ -117,9 +123,21 @@ true.
 
 A reference to an array of values for the select box.
 
+This can also be a code reference that will return an array reference.
+This is really helpful when you don't know ahead of time what possible
+values might be in the list, or they might change based on other actions.
+This code reference will be called as a method in the element class with the
+same arguments that are passed to element class's C<input_form()>.
+
 =item labels
 
 A reference to a hash mapping C<values> to display names.
+
+This can also be a code reference that will return a hash reference.
+This is really helpful when you don't know ahead of time what possible
+values might be in the list, or they might change based on other actions.
+This code reference will be called as a method in the element class with the
+same arguments that are passed to element class's C<input_form()>.
 
 =back
 

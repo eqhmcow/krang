@@ -31,8 +31,11 @@ sub input_form {
     my ($param)  = $self->param_names(element=>$element);
     my $defaults = $element->data || $self->defaults || [];
 
-    my $values = $self->values;
-    my $labels = $self->labels;
+    my $values = $self->values || [];
+    my $labels = $self->labels || {};
+    # if it's code, then call it to get the values
+    $values = $values->($self, %arg) if ref $values eq 'CODE';
+    $labels = $labels->($self, %arg) if ref $labels eq 'CODE';
 
     # given a list_group name, find:
     # 1) the list group object;
@@ -40,7 +43,7 @@ sub input_form {
     # 3) use the first list in the group;
     # 4) and get the items for that list;
     if (my $group_name = $self->list_group) {
-	($values, $labels) = $self->_get_list_data($group_name);
+	    ($values, $labels) = $self->_get_list_data($group_name);
     }
 
     # Set up clickable (in IE) checkbox labels
@@ -258,9 +261,21 @@ All the normal L<Krang::ElementClass> attributes are available, plus:
 
 A reference to an array of values for the checkboxes.
 
+This can also be a code reference that will return an array reference.
+This is really helpful when you don't know ahead of time what possible
+values might be in the list, or they might change based on other actions.
+This code reference will be called as a method in the element class with the
+same arguments that are passed to element class's C<input_form()>.
+
 =item labels
 
 A reference to a hash mapping C<values> to display names.
+
+This can also be a code reference that will return a hash reference.
+This is really helpful when you don't know ahead of time what possible
+values might be in the list, or they might change based on other actions.
+This code reference will be called as a method in the element class with the
+same arguments that are passed to element class's C<input_form()>.
 
 =item list_group
 
