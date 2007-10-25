@@ -2,7 +2,7 @@
 
 This document contains a list of changes for each release of Krang.
 
-=head2 3.00 - IN DEVELOPMENT Still!
+=head2 3.00 - IN DEVELOPMENT
 
 =over
 
