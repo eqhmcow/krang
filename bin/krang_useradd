@@ -32,7 +32,7 @@ Options:
  --help			- Displays this menu.
 
  --lname OR		- Set the last name for this user
- --last_name
+ --last-name
 
  --man			- Displays POD for entire script as manpage.
 
@@ -136,19 +136,18 @@ my ($c_lflag, $fd, $termios);
 
 # Input Validation
 ###################
-pod2usage(2) unless GetOptions("debug"		=> \$debug,
-                               "email=s"	=> \$email,
-                               "first-name=s"	=> \$first_name,
-                               "fname=s"	=> \$first_name,
-                               "g=s"		=> \@groups,
-                               "G=s"		=> \@groups,
-                               "groups=s"	=> \@groups,
-                               help		=> \$help,
-                               "last=s"		=> \$last_name,
-                               "lname=s"	=> \$last_name,
-                               man		=> \$man,
-                               "mobile-phone=s"	=> \$mobile_phone,
-                               "phone=s"	=> \$phone);
+pod2usage(2)
+  unless GetOptions(
+    "debug"                  => \$debug,
+    "email=s"                => \$email,
+    "first-name|fname=s"     => \$first_name,
+    "g|G|groups=s"           => \@groups,
+    help                     => \$help,
+    "last|last-name|lname=s" => \$last_name,
+    man                      => \$man,
+    "mobile-phone=s"         => \$mobile_phone,
+    "phone=s"                => \$phone
+  );
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
 
