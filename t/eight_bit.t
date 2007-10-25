@@ -9,9 +9,17 @@ use warnings;
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'DataSet';
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet CharSet);
 use Krang::ClassLoader 'Test::Content';
 use File::Spec::Functions qw(catfile);
+use Test::More;
+
+# skip all the tests if we are using a CharSet since this means we
+# can no longer be 8 bit clean.
+BEGIN {
+    plan(skip_all => "Can't be 8-bit clean if using a CharSet")
+        if CharSet;
+}
 
 # skip all tests unless a TestSet1-using instance is available
 BEGIN {
@@ -19,16 +27,15 @@ BEGIN {
     foreach my $instance (pkg('Conf')->instances) {
         pkg('Conf')->instance($instance);
         if (InstanceElementSet eq 'TestSet1') {
-            eval 'use Test::More qw(no_plan)';
-            die $@ if $@;
             $found = 1;
             last;
         }
     }
-
-    eval "use Test::More skip_all => 'test requires a TestSet1 instance';"
-      unless $found;
-    die $@ if $@;
+    if( $found ) {
+        plan(tests => 1290);
+    } else {
+        plan(skip_all => 'test requires a TestSet1 instance');
+    }
 }
 
 # a bunch of binary data containing all 256 bytes
