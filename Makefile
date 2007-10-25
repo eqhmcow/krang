@@ -4,6 +4,8 @@
 #
 #   test  - runs the test suite
 #
+#   test  - runs the test suite and put the results into a TAP archive file
+#
 #   TAGS  - builds an etags file from Krang module sources
 #
 #   clean - cleans up benchmarks
@@ -57,6 +59,9 @@ TEST_VERBOSE = 0
 TEST_FILES = 0
 test:
 	bin/krang_test --verbose-i="$(TEST_VERBOSE)" --files="$(TEST_FILES)"
+
+test_archive:
+	bin/krang_test --verbose-i="$(TEST_VERBOSE)" --files="$(TEST_FILES)" --tap-archive
 
 # setup default BENCH_NAME
 BENCH_NAME  = $(shell date +'[ %D %H:%M ]')
