@@ -123,9 +123,9 @@ unless ($ENV{KRANG_INSTANCE}) {
     $ENV{KRANG_INSTANCE} = (pkg('Conf')->instances())[0];
 }
 
-my $harness;
 if( $archive ) {
     require TAP::Harness::Archive;
+    my $harness;
     $harness = TAP::Harness::Archive->new({
         archive => 'krang_test_run.tar.gz',
         verbose => $v,
