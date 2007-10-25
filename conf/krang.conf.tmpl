@@ -100,6 +100,16 @@ Skin Default
 SchedulerMaxChildren 3
 
 #
+# This variable controls the character-set for Krang's user interface.
+# Compliant browsers will use this setting to encode data they send to
+# Krang.  NOTE: If your editors use IE 6 on Windows XP and may copy
+# non-ASCII data into Krang then you may need to set this to either
+# "windows-1252" or "utf-8" to work-around a bug in IE 6.
+#
+<tmpl_unless Charset># </tmpl_unless>Charset <tmpl_var Charset default="UTF-8">
+
+
+#
 # Set the number of bad login attempts that can be attempted for
 # the same username before that username is locked out and also
 # set for how long (BadLoginWait is in minutes). A BadLoginCount 

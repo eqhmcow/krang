@@ -115,9 +115,9 @@ Following is a list of the tasks the installer script will perform.
   --DBPass                  - MySQL user password used by CMS
   --InstanceHostName        - Host name of CMS instance virtual server
   --InstanceDBName          - Name of MySQL database
-  --InstanceElementSet      - Name of element set used by CMS instance
 
  Optional parameters:
+  --InstanceElementSet      - Name of element set used by CMS instance, defaults to 'Default'
   --FTPHostName             - Host name for FTP server, defaults to HostName.
   --MySQLRootPassword       - Password for the MySQL user "root"
   --DBHost                  - Host name for MySQL
@@ -133,6 +133,7 @@ Following is a list of the tasks the installer script will perform.
   --WithAddon               - Installs Krang with an addon.  May be repeated.
   --EnableSSL               - Turn on SSL support (default: off)
   --SSLApachePort           - SSL port used HTTPS on main Apache server (default 443)
+  --Charset                 - The character set to use. Defaults to none (8-bit clean)
   --run-tests               - run Krang "make test", defaults off
   --help                    - Show usage
   --man                     - Show full man page
@@ -168,6 +169,7 @@ use Getopt::Long;
 use Pod::Usage;
 use HTML::Template;
 use File::Temp qw(tempdir);
+use Krang::Charset;
 
 my @original_args = ();
 my $uniqueness = time();
@@ -178,8 +180,7 @@ my @req_params = qw( HostName
                      AdminPassword 
                      InstanceDBName 
                      DBUser 
-                     DBPass
-                     InstanceElementSet );
+                     DBPass);
 
 my @opt_params = qw( FromBackup
                      MySQLRootPassword 
@@ -192,8 +193,10 @@ my @opt_params = qw( FromBackup
                      SMTPServer 
                      FTPHostName
                      InstanceDisplayName
+                     InstanceElementSet
                      EnableSSL
-                     SSLApachePort);
+                     SSLApachePort
+                     Charset);
 
 my %options     = ( map { $_ => undef } @req_params, @opt_params );
 my %build_params;
@@ -301,6 +304,7 @@ sub unpack_backup {
     $options{ApachePort}         ||= $conf->get('ApachePort');
     $options{SMTPServer}         ||= $conf->get('SMTPServer');
     $options{InstanceDisplayName}||= $conf->get('InstanceDisplayName');
+    $options{Charset}            ||= $conf->get('Charset');
 
     # Main server SSL stuff
     if ($conf->get('EnableSSL')) {
@@ -409,12 +413,12 @@ sub check_prereqs {
     # MySQLRootPassword must be valid, and MySQL should be running
     my $MySQLRootPassword = $options{'MySQLRootPassword'};
     my $DBHost            = $options{'DBHost'};
-    my $mysql_bin = $MYSQL_BIN;
-    my $test_mysql = $ECHO_BIN ." 'select \"world\" as hello' | $mysql_bin -uroot";
-    $test_mysql .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
-    $test_mysql .= " -h$DBHost" if (defined($DBHost));
-    $test_mysql .= " 2>&1";
-    my $mysql_test_output = `$test_mysql`;
+    my $mysql_cmd = "$MYSQL_BIN -uroot";
+    my $test_sql = 'select "world" as hello';
+    $mysql_cmd .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
+    $mysql_cmd .= " -h$DBHost" if (defined($DBHost));
+    $mysql_cmd .= " 2>&1";
+    my $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd`;
 
     unless (($mysql_test_output =~ /hello/) and ($mysql_test_output =~ /world/)) {
         print STDERR "$mysql_test_output";
@@ -427,16 +431,34 @@ sub check_prereqs {
         }
     }
 
+    # Charset should be supported if it's given
+    if( $options{Charset} ) {
+        my $charset = $options{Charset};
+        require Encode;
+        # see if Perl supports it
+        eval { Encode::encode($charset, 'abc') };
+        if( $@ ) {
+            exit_error("Charset $charset is not supported by your version of Perl.")
+                if $@ =~ /Unknown encoding/i;
+            die $@; # nothing more we can do
+        }
+
+        require Krang::Charset;
+        my $mysql_charset = Krang::Charset->mysql_charset($charset);
+        $test_sql = qq/SHOW CHARACTER SET LIKE "$mysql_charset"/;
+        $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd`;
+        unless( $mysql_test_output =~ /\Q$mysql_charset\E/ ) {
+            exit_error("Charset $charset is not supported by your version of MySQL.");
+        }
+    }
+
     # InstanceDBName should NOT exist in MySQL
     my $InstanceDBName = $options{InstanceDBName};
-    my $db_exists_test = $ECHO_BIN ." 'select 1' | $mysql_bin -uroot";
-    $db_exists_test .= " -p$MySQLRootPassword" if (length($MySQLRootPassword));
-    $db_exists_test .= " -h$DBHost" if (defined($DBHost));
-    $db_exists_test .= " $InstanceDBName 2>&1";
-    my $db_exists_test_output = `$db_exists_test`;
+    $test_sql = 'SELECT 1';
+    $mysql_test_output = `$ECHO_BIN '$test_sql' | $mysql_cmd $InstanceDBName`;
 
-    unless ($db_exists_test_output =~ /ERROR 1049[^:]*: Unknown database/ or        # for MySQL 4.*
-            $db_exists_test_output =~ /ERROR 1102[^:]*: Incorrect database name/) { # for MySQL 5.*
+    unless ($mysql_test_output =~ /ERROR 1049[^:]*: Unknown database/ or        # for MySQL 4.*
+            $mysql_test_output =~ /ERROR 1102[^:]*: Incorrect database name/) { # for MySQL 5.*
         exit_error("Database '$InstanceDBName' already exists.  Cannot continue.");
     }
 }
@@ -611,7 +633,7 @@ sub install_krang {
                 my $source = do { local $/; <SOURCE> };
 
                 $source =~ s/^#![\w\/\.]+(\s*.*)$/#!$PERL_BIN$1/m 
-                    or warn "can't find shebang line in $script\n";
+                    or warn "    can't find shebang line in $script\n";
 
                 open(SOURCE, '>', $script) or die "Unable to write $script: $!";
                 print SOURCE $source;
@@ -879,6 +901,7 @@ sub set_param_defaults {
             SMTPServer              => '127.0.0.1',
             EnableSSL               => 0,
             SSLApachePort           => '443',
+            InstanceElementSet      => 'Default',
     );
 
     # Set up defaults if value is not otherwise set

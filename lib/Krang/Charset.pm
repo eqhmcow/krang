@@ -2,8 +2,9 @@ package Krang::Charset;
 use strict;
 use warnings;
 
-use Krang::ClassLoader 'Conf';
 use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Conf';
+use Encode qw(encode);
 
 =head1 NAME
 
@@ -73,6 +74,36 @@ sub mysql_charset {
     $charset = _munge_charset($charset);
 
     return $MYSQL_MAP{$charset} || $charset;
+}
+
+=head2 C<< Krang::Charset->is_supported($charset, [$dbh]) >>
+
+Returns true if the given encoding is supported by the version
+of Perl and MySQL installed.
+
+Takes the Character Set to test as the first argument and an optional
+database handle as the second (in case we're in a situation where
+we can't use Krang::DB yet like during the install).
+
+=cut
+
+sub is_supported {
+    my ($pkg, $charset, $dbh) = @_;
+
+    # see if Perl supports it
+    eval { encode($charset, 'abc') };
+    if( $@ ) {
+        return 0 if $@ =~ /Unknown encoding/i;
+        die $@;
+    }
+
+    # now see if mysql supports it
+    my $db_class = pkg('DB');
+    $dbh ||= $db_class->dbh();
+    my $sth = $dbh->prepare_cached('SHOW CHARACTER SET LIKE ?');
+    $sth->execute($pkg->mysql_charset($charset));
+    my $rows = $sth->selectall_arrayref();
+    return @$rows == 1;
 }
 
 

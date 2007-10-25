@@ -75,6 +75,11 @@ provide it here.
 
 Once gives you a play-by-play.  Twice gets you full SQL.
 
+=item --charset
+
+The character set for the database. If this is unspecified it will be
+taken from C<krang.conf> if one exists.
+
 =item --help
 
 =item --man
@@ -116,14 +121,14 @@ END
 use Krang::ClassFactory qw(pkg);
 use Term::Prompt qw(prompt);
 use Krang;
-use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot InstanceDBName DBUser DBPass);
+use Krang::ClassLoader Conf => qw(InstanceElementSet KrangRoot InstanceDBName DBUser DBPass Charset);
 use Krang::ClassLoader 'File';
 use Krang::ClassLoader 'Charset';
 
 use Getopt::Long;
 use Pod::Usage;
 
-my ($help, $man, $password, $hostname, $destroy, $no_prompt, $no_create, $all);
+my ($help, $man, $password, $hostname, $destroy, $no_prompt, $no_create, $all, $charset);
 my $verbose = 0;
 GetOptions(help         => \$help,
            man          => \$man,
@@ -133,10 +138,14 @@ GetOptions(help         => \$help,
             no_create   => \$no_create,
            'password=s' => \$password,
            'hostname=s' => \$hostname,
+           'charset=s'  => \$charset,
            all          => \$all,
           );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
+
+# use the configured charset if one exists
+$charset ||= Charset();
 
 # get an instance, or collect instances for all
 my @instances;
@@ -235,7 +244,8 @@ foreach my $instance (@instances) {
 
     # create the database
     print STDERR "Creating database '$name'...\n" if $verbose;
-    my $charset_clause = pkg('Conf')->get('Charset') ? (" CHARACTER SET " . pkg('Charset')->mysql_charset) : '';
+    my $charset_clause =
+      $charset ? (" CHARACTER SET " . pkg('Charset')->mysql_charset($charset)) : '';
     $cmd = "mysql -uroot -e 'CREATE DATABASE $name $charset_clause'";
     $cmd .= " -p$password" if defined $password;
     $cmd .= " -h$hostname" if defined $hostname;
