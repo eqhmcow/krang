@@ -9,7 +9,7 @@ use warnings;
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'DataSet';
-use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet CharSet);
+use Krang::ClassLoader Conf => qw(KrangRoot InstanceElementSet Charset);
 use Krang::ClassLoader 'Test::Content';
 use File::Spec::Functions qw(catfile);
 use Test::More;
@@ -17,8 +17,8 @@ use Test::More;
 # skip all the tests if we are using a CharSet since this means we
 # can no longer be 8 bit clean.
 BEGIN {
-    plan(skip_all => "Can't be 8-bit clean if using a CharSet")
-        if CharSet;
+    plan(skip_all => "Can't be 8-bit clean if using a Charset")
+        if Charset;
 }
 
 # skip all tests unless a TestSet1-using instance is available
