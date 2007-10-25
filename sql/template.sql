@@ -32,7 +32,7 @@ CREATE TABLE template (
 
 DROP TABLE IF EXISTS template_version;
 CREATE TABLE template_version (
-        data 		mediumtext NOT NULL,
+        data 		blob NOT NULL,
         template_id 	int(11) UNSIGNED NOT NULL,
         version 	smallint UNSIGNED NOT NULL,
         PRIMARY KEY (version, template_id)

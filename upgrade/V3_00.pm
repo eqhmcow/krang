@@ -22,6 +22,8 @@ sub per_instance {
     # change sessions and story_version tables to handle UTF-8
     $dbh->do('ALTER TABLE sessions CHANGE COLUMN a_session a_session BLOB');
     $dbh->do('ALTER TABLE story_version CHANGE COLUMN data data BLOB');
+    $dbh->do('ALTER TABLE template_version CHANGE COLUMN data data BLOB');
+    $dbh->do('ALTER TABLE media_version CHANGE COLUMN data data BLOB');
 }
 
 # add new EnableFTP and Secret directives if they aren't already there
