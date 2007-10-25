@@ -14,8 +14,8 @@ function krang_results_to_smolder {
                 --server 'smolder.plusthree.com' \
                 --project 'Krang' \
                 --username 'autobot' \
-                --password 'XXXXXX' \
-                --file "$KRANG_ROOT/krang_test_run.tar.gz." \
+                --password 'XXXX' \
+                --file "$KRANG_ROOT/krang_test_run.tar.gz" \
                 --architecture "`uname -m`" \
                 --platform "`cat /etc/redhat-release`"
 }
@@ -36,20 +36,21 @@ export KRANG_ROOT=$TEST_ROOT/svn
 export KRANG_INSTANCE=test1
 
 cd $KRANG_ROOT
-# stop any possible previous runs
-bin/krang_ctl stop
 
 # get the latest Krang from SVN
 if svn update | grep 'Updated to'
 then
+        # stop any possible previous runs
+        bin/krang_ctl stop
+
         # gives us a clean slate to start
         bin/krang_build --with-ssl --rebuild
         bin/krang_createdb --destroy --no_prompt test1
         bin/krang_createdb --destroy --no_prompt test2
 
-        # run the tests
-        bin/krang_ctl start
-        bin/krang_test --tap-archive
+        # run the test
+        make restart
+        make test_archive
         sudo bin/krang_ctl stop
 
         # now send the results off to smolder
