@@ -172,22 +172,18 @@ $template->delete();
 # remove leftover site
 $site->delete();
 
+my $old_user = $user; # save this so we can cleanup later
 END {
-    # delete the old passwords for this user first
-    dbh()->do(
-        'DELETE FROM old_password WHERE user_id = ?',
-        {},
-        $user->user_id
-    );
-    # success
-    is($user->delete(), 1, 'delete()');
-
-    # delete the old passwords for $admin
-    dbh()->do(
-        'DELETE FROM old_password WHERE user_id = ?',
-        {},
-        $admin->user_id
-    );
+    # clean up the user and any old passwords
+    foreach my $u ($user, $old_user, $admin) {
+        dbh()->do(
+            'DELETE FROM old_password WHERE user_id = ?',
+            {},
+            $u->user_id
+        );
+        # success
+        is($u->delete(), 1, 'delete()') unless $u->hidden;
+    }
 }
 
 # if a scheduled send alert refers to a user in it's context stash
