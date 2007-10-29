@@ -201,7 +201,7 @@ Properties
     <th><tmpl_if require_slug>*</tmpl_if>Slug</th>
     <td><input name="slug" value="<tmpl_var escape=html slug>" <tmpl_if cat_idx> disabled</tmpl_if>>
     <tmpl_unless require_slug>
-      <input name="cat_idx" type="checkbox" onchange="usr_toggled_cat_idx()" class="pushright small hcenter"<tmpl_if cat_idx> checked</tmpl_if>>
+      <input name="cat_idx" type="checkbox" onclick="usr_toggled_cat_idx()" class="pushright small hcenter"<tmpl_if cat_idx> checked</tmpl_if>>
       Category Index
     </tmpl_unless>
     </td>
