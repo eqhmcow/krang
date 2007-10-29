@@ -94,14 +94,28 @@ $category->save();
 my $u2 = $category->url();
 is($category->url() =~ /fred/, 1, 'dir() - setter');
 
-# duplicate test
-#################
+# duplicate tests
+##################
+
+# make sure we can't create two categories with the same URL
 my $dupe = pkg('Category')->new(dir => 'fred',
                                 parent_id => $parent->category_id);
 eval {$dupe->save()};
 isa_ok($@, 'Krang::Category::DuplicateURL');
 like($@, qr/Duplicate URL/, 'DuplicateURL exception test 1');
 like($@->category_id, qr/^\d+$/, 'DuplicateURL exception test 2');
+
+# make sure we can't create a category that matches a story URL
+my $test_story = pkg('Story')->new(class => "article",	
+   	                           title => "wilma",
+				   slug => "wilma",
+				   categories => [$parent]);
+$test_story->save;
+$dupe = pkg('Category')->new(dir => 'wilma', 
+		             parent_id => $parent->category_id);
+eval {$dupe->save()};
+isa_ok($@, 'Krang::Category::DuplicateURL');
+$test_story->delete;
 
 # find() tests
 ###############

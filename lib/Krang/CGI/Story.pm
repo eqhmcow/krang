@@ -7,7 +7,7 @@ use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
 use Krang::ClassLoader Log => qw(debug assert ASSERT);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Message => qw(add_message add_alert);
+use Krang::ClassLoader Message => qw(add_message add_alert clear_messages clear_alerts);
 use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
 use Krang::ClassLoader 'CGI::Workspace';
 use Carp qw(croak);
@@ -65,8 +65,10 @@ sub setup {
                      delete_selected  => 'delete_selected',
                      checkout_selected => 'checkout_selected',
                      checkin_selected  => 'checkin_selected',
+		     steal_selected    => 'steal_selected',
                      delete_categories    => 'delete_categories',
                      add_category         => 'add_category',
+		     replace_category     => 'replace_category',
                      set_primary_category => 'set_primary_category',
                      copy                 => 'copy',
 
@@ -77,7 +79,6 @@ sub setup {
                      save_and_publish => 'save_and_publish',
                      save_and_view    => 'save_and_view',
                      save_and_view_log => 'save_and_view_log',
-                     save_and_stay    => 'save_and_stay',
                      save_and_edit_contribs => 'save_and_edit_contribs',
                      save_and_edit_schedule => 'save_and_edit_schedule',
                      save_and_go_up   => 'save_and_go_up',
@@ -128,16 +129,56 @@ sub new_story {
                      $query->popup_menu(-name      => 'type',
                                         -default   => '',
                                         -values    => [ ('', @types) ],
-                                        -labels    => \%type_labels));    
+                                        -labels    => \%type_labels,
+					-onkeyup   => 'javascript:set_slug_entry_by_type()',
+					-onchange  => 'javascript:set_slug_entry_by_type()'));
 
     $template->param(category_chooser => 
                      category_chooser(name => 'category_id',
+				      formname => 'new_story',
                                       query => $query,
                                       may_edit => 1,
+				      persistkey => 'NEW_STORY_DIALOGUE'
                                      ));
 
     # setup date selector
     $template->param(cover_date_selector => datetime_chooser(name=>'cover_date', query=>$query));
+    
+    # pass a list of index types (for which the 'slug' field should be inactive by default)
+    my $selected_type = $query->param('type') || ''; 
+    my @slug_entry_by_type;
+    my $slug_entry_for_selected_type;
+    foreach my $story_type (@types) {
+	my $slug_use = pkg('ElementLibrary')->top_level(name => $story_type)->slug_use();
+	if (($slug_use eq 'require') || ($slug_use eq 'encourage') || ($slug_use eq 'discourage') || ($slug_use eq 'prohibit')) {
+	    push @slug_entry_by_type, { story_type      => $story_type,
+					slug_entry_mode => $slug_use };
+	    $slug_entry_for_selected_type = $slug_use if ($story_type eq $selected_type);
+	} else {
+	    die ("Invalid slug_use() returned by class '$story_type': must be 'require', 'encourage', 'discourage', or 'prohibit'");
+	}
+    }
+    $template->param(slug_entry_by_type_loop => \@slug_entry_by_type);
+
+    # pass in any class-specific slug-to-title javascript functions
+    my @title_to_slug_loop;
+    for my $type (@types) {
+	if (my $js = pkg('ElementLibrary')->top_level(name => $type)->title_to_slug) {
+	    push @title_to_slug_loop, { type => $type, function => $js };
+	}
+    }
+    $template->param("title_to_slug_function_loop" => \@title_to_slug_loop);
+
+    # remember user's manual selections (in case we're returning to screen with an error)
+    for ('manual_slug', 'usr_checked_cat_idx', 'usr_unchecked_cat_idx') {
+	$template->param($_ => $query->param($_) || ''); 
+    }
+
+    # set initial slug-display information (in case a type has already been selected)
+    if ($selected_type) {
+	$template->param('show_slug' => 1) unless ($slug_entry_for_selected_type eq 'prohibit');
+	$template->param('require_slug' => 1) if ($slug_entry_for_selected_type eq 'require');
+    }
 
     return $template->output();
 }
@@ -174,25 +215,23 @@ sub create {
 
     my $type = $query->param('type');
     my $title = $query->param('title');
-    my $slug = $query->param('slug');
+    my $slug = $query->param('slug') || '';
+    my $cat_idx = $query->param('cat_idx') || 0;
     my $category_id = $query->param('category_id');
-    my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
+    $session{KRANG_PERSIST}{NEW_STORY_DIALOGUE}{ cat_chooser_id_new_story_category_id } = $category_id;
 
-    # determine whether slug is required or not
-    my $slug_req = 0;
-    if ($type) {
-        my $class = pkg('ElementLibrary')->top_level(name => $type);
-        $slug_req = 1 if (grep { $_ eq 'slug' } $class->url_attributes);
-    }
+    my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
 
     # detect bad fields
     my @bad;
-    push(@bad, 'type'),        add_alert('missing_type') unless $type;
-    push(@bad, 'title'),       add_alert('missing_title') unless $title;
-    push(@bad, 'slug'),        add_alert('missing_slug') unless not($slug_req) or $slug;
-    push(@bad, 'slug'),        add_alert('bad_slug') if length $slug and $slug !~ /^[-\w]+$/;
-    push(@bad, 'category_id'), add_alert('missing_category') unless $category_id;
-    push(@bad, 'cover_date'),  add_alert('missing_cover_date') unless $cover_date;
+    push(@bad, 'type'),         add_alert('missing_type') unless $type;
+    push(@bad, 'title'),        add_alert('missing_title') unless $title;
+    push(@bad, 'slug'),         if ($type && !$self->verify_slug_input(slug => $slug, 
+								       type => $type, 
+								       cat_idx => $cat_idx));
+
+    push(@bad, 'category_id'),  add_alert('missing_category') unless $category_id;
+    push(@bad, 'cover_date'),   add_alert('missing_cover_date') unless $cover_date;
     return $self->new_story(bad => \@bad) if @bad;
 
     # create the object
@@ -204,20 +243,12 @@ sub create {
                                    categories => [ $category_id ],
                                    cover_date => $cover_date);   
     };
-    
+
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        my $class = pkg('ElementLibrary')->top_level(name => $type);
-	    my $url_attributes = join(', ', $class->url_attributes);
-	    my $which = $url_attributes ? $url_attributes . ' and site/category' : 'site/category';
-        add_alert('duplicate_url', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,                    
-                    which    => $which,
-                   );
 
+	my $class = pkg('ElementLibrary')->top_level(name => $type);
+	$self->alert_duplicate_url($@, $class);
         return $self->new_story(bad => ['category_id',$class->url_attributes]);
     } elsif ($@) {
         # rethrow
@@ -241,11 +272,13 @@ Save, Check-In story to a particular desk and redirects to that desk.
 =cut
 
 sub check_in_and_save {
-    my $self    = shift;
+    my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
+
     my $query   = $self->query;
     my $desk_id = $query->param('checkin_to');
 
-    # check if they may move object to desired desk
+    # check if user may move object to desired desk
     return $self->access_forbidden()
       unless pkg('Group')->may_move_story_to_desk($desk_id);
 
@@ -272,16 +305,7 @@ sub check_in_and_save {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url',
-                    story_id => $dup->story_id,
-                    url      => $dup->url,
-                    which    => join(' and ',
-                                     join(', ', $story->class->url_attributes),
-                                     "site/category"),
-                   );
-
+	$self->alert_duplicate_url($@, $story->class);
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
@@ -377,10 +401,9 @@ sub edit {
     my $query = $self->query;
     my $template = $self->load_tmpl('edit.tmpl', associate => $query, die_on_bad_params => 0, loop_context_vars => 1);
     my %args = @_;
-              
+
     my $story;
     if ($query->param('story_id')) {
-        # load story from DB
         ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
         croak("Unable to load story '" . $query->param('story_id') . "'.")
           unless $story;
@@ -388,16 +411,15 @@ sub edit {
         $query->delete('story_id');
         $session{story} = $story;
     } else {
-        $story = $session{story};
-        croak("Unable to load story from session!")
-          unless $story;
+	$self->make_sure_story_is_still_ours() || return '';
+	$story = $session{story};
     }
-        
+
     # run the element editor edit
     $self->element_edit(template => $template, 
                         element => $story->element);
     
-    # static data
+    # set fields shown everywhere
     $template->param(story_id          => $story->story_id || "N/A",
                      type              => $story->element->display_name,
                      url               => $story->url ? 
@@ -407,12 +429,19 @@ sub edit {
                                                        length => 50,
                                                       ) : "");
 
-    # edit fields for top-level
+    # set fields for top-level
     my $path  = $query->param('path') || '/';
     if ($path eq '/' and not $query->param('bulk_edit')) {
+
+        my $slug = $query->param('returning_from_root') ? $query->param('slug') : $story->slug;
+        my $cat_idx = $query->param('returning_from_root') ? $query->param('cat_idx') : !$slug;
+
         $template->param(is_root           => 1,
                          title             => ($query->param('title') || $story->title),
-                         slug              => ($query->param('slug')  || $story->slug),
+                         show_slug         => ($story->class->slug_use ne 'prohibit'),
+                         require_slug      => ($story->class->slug_use eq 'require'),
+                         cat_idx           => $cat_idx || '',
+                         slug              => $slug || '',
                          version           => $story->version,
                          published_version => $story->published_version,
                         );
@@ -436,24 +465,40 @@ sub edit {
         }
         $template->param(contribs_loop => \@contribs_loop);
 
+        # figure out where to position 'replace' radio-button (use primary cat unless user selected something else)
+        my @categories = $story->categories;
+        my $selected_for_replace_id = ($query->param('category_to_replace_id') || $categories[0]->category_id);
+
         my @category_loop;
-        foreach my $cat ($story->categories) {
+        foreach my $cat (@categories) {
             my $url = $cat->url;
             my ($site, $dir) = split('/', $url, 2);
             $dir = "/" . $dir;
 
             push(@category_loop, {
-                                  site        => $site,
-                                  category    => $dir,
-                                  category_id => $cat->category_id });
+                                  site                 => $site,
+                                  category             => $dir,
+                                  category_id          => $cat->category_id,
+                                  selected_for_replace => ($cat->category_id == $selected_for_replace_id)});
+            
+
         }
         $template->param(category_loop => \@category_loop);
-        $template->param(category_chooser => 
-                         category_chooser(name        => 'new_category_id',
+        $template->param(add_category_chooser => 
+                         category_chooser(name        => 'add_category_id',
                                           query       => $query,
                                           label       => 'Add Site/Category',
                                           display     => 0,
                                           onchange    => 'add_category',
+                                          may_edit    => 1,
+                                          allow_clear => 0,
+                                         ));
+        $template->param(replace_category_chooser => 
+                         category_chooser(name        => 'category_replacement_id',
+                                          query       => $query,
+                                          label       => 'Replace This Category',
+                                          display     => 0,
+                                          onchange    => 'replace_category',
                                           may_edit    => 1,
                                           allow_clear => 0,
                                          ));
@@ -597,6 +642,8 @@ after C<< $story->revert() >>.
 
 sub revert {
     my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
+
     my $query = $self->query;
     my $version = $query->param('version');
     my $story = $session{story};
@@ -612,7 +659,7 @@ sub revert {
 
 =item copy
 
-Creates a clone of the current story identfied by the passed story_id
+Creates a clone of the current story identified by the passed story_id
 and redirects to edit mode.  The story is not saved.
 
 =cut
@@ -667,6 +714,7 @@ sending control to workspace.pl.
 
 sub db_save {
     my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -678,16 +726,7 @@ sub db_save {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,
-                    which    => join(' and ', 
-                                     join(', ', $story->class->url_attributes),
-                                     "site/category"),
-                   );
-
+	$self->alert_duplicate_url($@, $story->class);
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
@@ -720,6 +759,7 @@ This mode saves the story to the database and returns to edit.
 
 sub db_save_and_stay {
     my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
 
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -731,16 +771,7 @@ sub db_save_and_stay {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,
-                    which    => join(' and ', 
-                                     join(', ', $story->class->url_attributes),
-                                     "site/category"),
-                   );
-
+	$self->alert_duplicate_url($@, $story->class);
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
@@ -810,6 +841,7 @@ publisher.pl to publish the story.
 
 sub save_and_publish {
     my $self = shift;
+    $self->make_sure_story_is_still_ours() || return '';
     
     # call internal _save and return output from it on error
     my $output = $self->_save();
@@ -821,16 +853,7 @@ sub save_and_publish {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,
-                    which    => join(' and ', 
-                                     join(', ', $story->class->url_attributes),
-                                     "site/category"),
-                   );
-
+	$self->alert_duplicate_url($@, $story->class);
         return $self->edit;
     } elsif ($@ and ref($@) and $@->isa('Krang::Story::MissingCategory')) {
         add_alert('missing_category_on_save');
@@ -929,23 +952,6 @@ sub save_and_edit_contribs {
     $self->header_props(-uri => 'contributor.pl?rm=associate_story');
     $self->header_type('redirect');
     return "";
-}
-
-=item save_and_stay
-
-This mode saves the current element data to the session and returns to
-edit.
-
-=cut
-
-sub save_and_stay {
-    my $self = shift;
-
-    # call internal _save and return output from it on error
-    my $output = $self->_save();
-    return $output if length $output;
-
-    return $self->edit();
 }
 
 =item save_and_bulk_edit
@@ -1097,22 +1103,22 @@ sub _save {
     if ($path eq '/' 
         and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
-        my $slug = $query->param('slug');
+        my $slug = $query->param('slug') || '';
+	my $cat_idx = $query->param('cat_idx') || 0;
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         my $priority = $query->param('priority');
         
-        # determine whether slug is required or not
-        my $slug_req = (grep { $_ eq 'slug' } $story->element->class->url_attributes) ? 1 : 0;
-
         my @bad;
         push(@bad, 'title'),       add_alert('missing_title')
-          unless $title;
-        push(@bad, 'slug'),        add_alert('missing_slug')
-          unless not($slug_req) or $slug;
-        push(@bad, 'slug'),        add_alert('bad_slug')
-          if length $slug and $slug !~ /^[-\w]+$/;
+	    unless $title;
         push(@bad, 'cover_date'),  add_alert('missing_cover_date')
-          unless $cover_date;
+	    unless $cover_date;
+        push(@bad, 'slug')
+	    unless $self->verify_slug_input(slug => $slug, 
+					    story => $story,
+					    cat_idx => $cat_idx,
+					    categories => [$story->categories]);
+	
         # return to edit mode if there were problems
         return $self->edit(bad => \@bad) if @bad;
 
@@ -1130,7 +1136,7 @@ sub _save {
 =item add_category
 
 Adds a category to the story.  Expects a category ID in
-new_category_id, which is filled in by the category chooser on the
+add_category_id, which is filled in by the category chooser on the
 edit screen.  Returns to edit mode on success and on failure with an
 error message.
 
@@ -1144,7 +1150,7 @@ sub add_category {
     croak("Unable to load story from session!")
       unless $story;
 
-    my $category_id = $query->param('new_category_id');
+    my $category_id = $query->param('add_category_id');
     unless ($category_id) {
         add_alert("added_no_category");
         return $self->edit();
@@ -1162,35 +1168,16 @@ sub add_category {
     croak("Unable to load category '$category_id'!")
       unless $category;
 
-    # push it on
+    # add it to list 
     push(@categories, $category);
 
-    # this might fail if a duplicate URL is created
-    eval { $story->categories(@categories); };
-
-    # is it a dup?
-    if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
-        # load duplicate story
-        my ($dup) = pkg('Story')->find(story_id => $@->story_id);
-        add_alert('duplicate_url_on_category_add', 
-                    story_id => $dup->story_id,
-                    url      => $dup->url,                    
-                    category => $category->url,
-                   );
-
-        # remove added category
-        pop(@categories);
-        $story->categories(\@categories);
-
-        return $self->edit;
-    } elsif ($@) {
-        # rethrow
-        die($@);
+    # and, assuming update_categories() succeeds...
+    if ($self->update_categories(query => $query,    
+				 story => $story,    
+				 categories => \@categories)) {
+	add_message('added_category', url => $category->url);
     }
-
-    # success
-    add_message('added_category', url => $category->url);
-
+    
     return $self->edit();
 }
 
@@ -1225,12 +1212,78 @@ sub set_primary_category {
         }
     }
 
-    # set it
-    $story->categories(@categories);
-    add_message('set_primary_category', url => $url);
+    # and, assuming update_categories() succeeds...
+    if ($self->update_categories(query => $query, 
+				 story => $story,
+				 categories => \@categories)) {
+	add_message('set_primary_category', url => $url);
+    }
 
     return $self->edit();
 }
+
+=item replace_category
+
+Replaces one category with another. Expects one category ID in
+category_to_replace_id, and another in category_replacement_id.
+Returns to edit mode on success and on failure with an error message.
+
+=cut
+
+sub replace_category {
+    my $self = shift;
+    my $query = $self->query;
+
+    my $story = $session{story};
+    croak("Unable to load story from session!")
+      unless $story;
+
+    my $old_category_id = $query->param('category_to_replace_id');
+    my $new_category_id = $query->param('category_replacement_id');
+    unless ($old_category_id && $new_category_id) {
+        add_alert("replaced_no_category");
+        return $self->edit();
+    }
+
+    # make sure this isn't a dup
+    my @existing_categories = $story->categories();
+    if (grep { $_->category_id == $new_category_id } @existing_categories) {
+        add_alert("duplicate_category");
+        return $self->edit();
+    }
+
+    # load both categories
+    my ($old_category) = pkg('Category')->find(category_id => $old_category_id);
+    croak("Unable to load category '$old_category_id'!")
+      unless $old_category;
+
+    my ($new_category) = pkg('Category')->find(category_id => $new_category_id);
+    croak("Unable to load category '$new_category_id'!")
+      unless $new_category;
+
+    # perform the replacement
+    my @new_categories;
+    foreach my $existing_category ($story->categories) {
+	if ($existing_category->category_id == $old_category_id) {
+	    push @new_categories, $new_category;
+	} else {
+	    push @new_categories, $existing_category;
+	}
+    }
+
+    # and, assuming update_categories() succeeds...
+    if ($self->update_categories(query => $query, 
+				 story => $story,
+				 categories => \@new_categories)) {
+
+	add_message('replaced_category', old_url => $old_category->url, new_url => $new_category->url);
+	$query->param('category_to_replace_id' => $new_category->category_id); # so radio-button remains!
+    } 
+
+    return $self->edit();
+}
+
+
 
 
 =item delete_categories
@@ -1262,18 +1315,21 @@ sub delete_categories {
         }
     }
 
-    # set remaining cats
-    $story->categories(@categories);
-
-    # put together a reasonable summary of what happened
-    if (@urls == 0) {
-        add_alert('deleted_no_categories');
-    } elsif (@urls == 1) {
-        add_message('deleted_a_category', url => $urls[0]);
-    } else {
-        add_message('deleted_categories', 
-                    urls => join(', ', @urls[0..$#urls-1]) . 
-                              ' and ' . $urls[-1]);
+    # and, assuming update_categories() succeeds...
+    if ($self->update_categories(query => $query, 
+				 story => $story,
+				 categories => \@categories)) {
+	
+	# put together a reasonable summary of what happened
+	if (@urls == 0) {
+	    add_alert('deleted_no_categories');
+	} elsif (@urls == 1) {
+	    add_message('deleted_a_category', url => $urls[0]);
+	} else {
+	    add_message('deleted_categories', 
+			urls => join(', ', @urls[0..$#urls-1]) . 
+			' and ' . $urls[-1]);
+	}
     }
 
     return $self->edit();
@@ -1288,6 +1344,8 @@ the session.
 
 sub delete {
     my $self = shift;
+    $self->make_sure_story_is_still_ours || return '';
+
     my $query = $self->query();
     my $story = $session{story};
     croak("Unable to load story from session!")
@@ -1513,7 +1571,7 @@ sub find {
 
 List all active stories.  Provide links to view each story.  If the
 user has 'checkin all' admin abilities then checkboxes are provided to
-allow the stories to be checked-in.
+allow the stories to be stole or checked-in.
 
 =cut
 
@@ -1654,8 +1712,68 @@ sub checkin_selected {
 }
 
 
+=item steal_selected
 
+Steal all the stories which were checked on the list_active screen,
+and either go to workspace of user, or - if only one story was checked -
+directly to the edit screen.
 
+=cut
+
+sub steal_selected {
+     my $self = shift;
+
+     my $q = $self->query();
+     my @story_ids = ( $q->param('krang_pager_rows_checked') );
+     $q->delete('krang_pager_rows_checked');
+
+     # loop through selected stories, checking ownership
+     my (@owned_ids, @stolen_ids, %victims);
+     foreach my $story_id (@story_ids) {
+	 my ($s) = pkg('Story')->find(story_id => $story_id);
+	 if ($s->checked_out_by ne $ENV{REMOTE_USER}) {
+	     my ($victim) = pkg('User')->find(user_id => $s->checked_out_by);
+	     my $victim_name = $q->escapeHTML($victim->first_name.' '.$victim->last_name);
+	     $s->checkin();  # this story was checked out to someone
+	     $s->checkout(); # else; steal it and keep track of victim
+	     $victims{$victim_name} = 1;
+	     push @stolen_ids, $story_id;
+	 } else {
+	     push @owned_ids, $story_id; # this story was already ours!
+	 }
+     }
+
+     # explain our actions to user
+     if (@story_ids == 1) {
+	 %victims ? 
+	     add_message('selected_story_stolen', id => $story_ids[0], victim => (keys %victims)[0]) :
+	     add_message('selected_story_yours',  id => $story_ids[0]);
+     } elsif (@owned_ids && !@stolen_ids) {
+	 add_message('all_selected_stories_yours');
+     } else {
+	 if (@owned_ids) {
+	     (@owned_ids > 1) ? 
+		 add_message('multiple_stories_yours', ids => join(' & ',@owned_ids)) :
+		 add_message('one_story_yours', id => $owned_ids[0]);
+	 }
+	 if (@stolen_ids) {
+	     (@stolen_ids > 1) ? 
+		 add_message('multiple_stories_stolen', ids => join(' & ',@stolen_ids), victims => join(' & ', sort keys %victims)) :
+		 add_message('one_story_stolen', id => $stolen_ids[0], victim => (keys %victims)[0]);
+	 }
+     }
+
+     # if user selected one story, open it for editing
+     if (@story_ids == 1) {
+	 ($session{story}) = pkg('Story')->find(story_id => $story_ids[0]);
+	 return $self->edit; 
+     } else { # otherwise send user to Workspace
+	 my $url = "workspace.pl";
+	 $self->header_props(-uri=>$url);
+	 $self->header_type('redirect');
+	 return "Redirect: <a href=\"$url\">$url</a>";
+     }
+}
 
 ###########################
 ####  PRIVATE METHODS  ####
@@ -1760,7 +1878,169 @@ sub autocomplete {
     );
 }
 
+sub update_categories {
 
+    my ($self, %args)  = @_;
+    my $query          = $args{query};
+    my $story          = $args{story};
+    my @old_cats       = $story->categories;
+    my @new_cats       = @{$args{categories}};
+
+    # find what has changed between old and new categories
+    my %old_cats       = map { $_ => 1 } @old_cats;
+    my @added_cats     = grep { !$old_cats{$_} } @new_cats;
+    my @unchanged_cats = grep {  $old_cats{$_} } @new_cats; 
+
+    # if user changed slug...
+    my $old_slug      = $story->slug || '';
+    my $new_slug      = $query->param('slug') || '';
+    if ($new_slug ne $old_slug) {
+	
+	# is new slug valid? will it build unique URLs with the unchanged categories?
+	if (!$self->verify_slug_input(slug => $new_slug, 
+				      story => $story,
+				      cat_idx => $query->param('cat_idx') || 0,
+				      categories => \@unchanged_cats)) {
+	    add_alert('new_slug_prevented_category_change');
+	    return 0;
+	}
+    }
+    
+    # slug is safe on current cats, so now let's try the new cats
+    eval { $story->categories(@new_cats) };
+    return 1 unless $@;
+
+    # throw any errors
+    if (ref($@) and $@->isa('Krang::Story::DuplicateURL')) {    
+	$self->alert_duplicate_url_on_add_category($@, \@added_cats);
+	$story->categories(@old_cats);
+	return 0;
+    } else { 
+	die ($@); 
+    }
+}
+
+sub verify_slug_input {
+
+    my ($self, %args) = @_;
+
+    my $slug       = $args{slug};       
+    my $story      = $args{story};        
+    my $type       = $args{type} || ($story && $story->class->name);
+    my $cat_idx    = $args{cat_idx};    
+    my @categories = $args{categories} && @{$args{categories}}; 
+    
+    my $slug_entry_for_type = pkg('ElementLibrary')->top_level(name => $type)->slug_use();
+    my $slug_required       = ($slug_entry_for_type eq 'require');
+    my $slug_optional       = (($slug_entry_for_type eq 'encourage') || ($slug_entry_for_type eq 'discourage'));
+
+    if (length $slug && $slug !~ /^[-\w]+$/) {
+	add_alert('bad_slug');
+	return 0;
+    } elsif ($slug_optional && !$slug && !$cat_idx) {
+	add_alert('no_slug_no_cat_idx');
+	return 0;
+    } elsif ($slug_required && !$slug) {
+	add_alert('missing_slug');
+	return 0;
+    } elsif ($story && @categories && ($story->slug ne $slug)) {
+
+	# store old slug/cats in case we need to revert
+	my $old_slug = $story->slug;         
+	my @old_cats = $story->categories;   
+
+        # try out new slug on category list to see if it causes any dupes
+	$story->slug($slug); 
+	eval { $story->categories(@categories) };
+	if ($@ and ref($@) and $@->isa('Krang::Story::DuplicateURL')) {
+	    $self->alert_duplicate_url($@, $story->class);
+	    $story->slug($old_slug);       
+	    $story->categories(@old_cats); 
+	    return 0;
+	} elsif ($@) {
+	    die ($@);
+	}
+    }
+    # success
+    return 1; 
+}
+
+sub alert_duplicate_url {
+
+    my ($self, $dupe, $class) = @_;
+    
+    # figure out how our story builds the URL (to remind user)
+    my $which = join(' or ', 
+		     join(', ', $class->url_attributes),
+		     "site/category");
+
+    # load clashing story/category, and add alert
+    if ($dupe->story_id) {
+	add_alert('duplicate_url',
+		  story_id => $dupe->story_id,
+		  url      => $dupe->url,
+		  which    => $which);
+    } elsif ($dupe->category_id) {
+	add_alert('category_has_url',
+		  category_id => $dupe->category_id,
+		  url         => $dupe->url,
+		  which       => $which);
+    } else {
+	croak ("DuplicateURL didn't include story_id OR category_id");
+    }
+}
+
+sub alert_duplicate_url_on_add_category {
+
+    my ($self, $dupe, $added_cats) = @_;
+    my $new_cat_url = join(' & ', map { $_->{url} } @{$added_cats});
+
+    if ($dupe->story_id) {
+	add_alert('duplicate_url_on_add_category', 
+		  story_id     => $dupe->story_id,
+		  url          => $dupe->url,
+		  category_url => $new_cat_url);
+    } elsif ($dupe->category_id) {
+	add_alert('category_has_url_on_add_category', 
+		  category_id  => $dupe->category_id,
+		  url          => $dupe->url,
+		  category_url => $new_cat_url);
+    } else {
+	croak ("DuplicateURL didn't include story_id OR category_id");
+    }
+}
+
+sub make_sure_story_is_still_ours {
+
+    my ($self) = @_;
+
+    # grab story in session hash
+    if (!$session{story}) { croak ("Could not load story from session!") }
+    my $story_id = $session{story}->story_id;
+    
+    # look up actual story in database to make sure it's still ours
+    my ($story) = pkg('Story')->find(story_id => $story_id);
+    if (!$story) {
+	clear_messages(); clear_alerts(); 
+	add_alert('story_deleted_during_edit', id => $story_id);
+    } elsif (!$story->checked_out) {
+	clear_messages(); clear_alerts(); 
+	add_alert('story_checked_in_during_edit', id => $story_id);
+    } elsif ($story->checked_out_by ne $ENV{REMOTE_USER}) {
+	my ($thief) = pkg('User')->find(user_id => $story->checked_out_by);
+	my $thief_name = CGI->escapeHTML($thief->first_name.' '.$thief->last_name);	
+	clear_messages(); clear_alerts(); 
+	add_alert('story_stolen_during_edit', id => $story_id, thief => $thief_name);
+    } else {
+        # story is still ours
+	return 1; 
+    }
+    
+    # story is no longer ours! go to workspace
+    $self->header_props(-uri=>"workspace.pl");
+    $self->header_type('redirect');
+    return 0;
+}
 
 1;
 

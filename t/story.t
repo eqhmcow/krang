@@ -505,6 +505,17 @@ END { $s2->delete() if $DELETE };
 eval { $s2->categories($s2->categories, $cat[0]); };
 ok($@);
 isa_ok($@, 'Krang::Story::DuplicateURL');
+
+# check that dup is thrown when new story conflicts with existing category
+my $test_cat = pkg('Category')->new(dir => 'wilma', 
+				    parent_id => $cat[0]->category_id);
+$test_cat->save;
+eval { my $dupe_story = pkg('Story')->new(class => 'article', 
+					  categories => [$cat[0]], 
+					  slug => 'wilma', 
+					  title => 'wilma') };
+isa_ok($@, 'Krang::Story::DuplicateURL');
+$test_cat->delete;
                          
 # setup three stories to test find
 my @find;

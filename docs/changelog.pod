@@ -2,9 +2,65 @@
 
 This document contains a list of changes for each release of Krang.
 
+
+
 =head2 3.00 - IN DEVELOPMENT
 
 =over
+
+=item *
+
+Added alerts notifying user if the story being edited was checked-in, stolen,
+or deleted by another user while they were editing it. [Noam Weinstein]
+
+=item *
+
+Implemented requested "Steal Story" feature, allowing a user with force-checkin
+permission to grab/edit stories checked out to others in one step. [Noam Weinstein]
+
+=item *
+
+Enhanced all duplicate-URL checking methods to prevent new stories
+with slugs from conflicting with existing category URLs, and new
+categories from conflicting with existing stories. [Noam Weinstein]
+
+=item *
+
+Implemented 'Replace Category' button in Edit Story CGI
+to simplify process of moving stories. [Noam Weinstein]
+
+=item *
+
+Made slugs optional (but not required) for all story types,
+added slug_use() method to TopLevel allowing class-based
+defaults/requirements, and enhanced New Story and Edit
+Story CGI to show slug fields as appropriate. [Noam Weinstein]
+
+=item *
+
+Added title/slug mapping for high CP1252 and latin-1 chars to
+Krang.Slug.title_to_slug(). [Bodo Schulze]
+
+=item *
+
+Fixed bug in ListGroup.pm where re-editing from GUI lost all 
+but first value selected when multiple => 1. [Noam Weinstein]
+
+=item *
+
+Implemented automatic slug-generation based on title and story 
+type. [Noam Weinstein]
+
+=item *
+
+Made 'New Story' & 'Add Category' dialogues remember the last 
+category chosen during current session. [Noam Weinstein] 
+
+=item *
+
+Made 'Save' buttons in element editor truly save to disk even
+when editing a container, and replaced old non-disk save with 
+a 'Done' button. [Noam Weinstein]
 
 =item *
 

@@ -12,6 +12,14 @@ Krang.onload( function() {
   }
 
   <tmpl_if may_checkin_all>
+    steal_selected = function()
+    {
+      if ( !Krang.pager_row_checked() )
+        alert( 'Nothing selected to steal!' );
+      else
+        Krang.Form.submit( 'krang_pager_form', { rm: 'steal_selected' }, { to_top: false } );
+    }
+
     checkin_selected = function()
     {
       if ( !Krang.pager_row_checked() )
@@ -27,17 +35,31 @@ Krang.onload( function() {
 Active Stories
 </h2>
 
-<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel"><form>
-  <input value="Check In" onclick="checkin_selected()" type="button">
-</form></div></tmpl_if></tmpl_if>
+<tmpl_if may_checkin_all>
+  <tmpl_if row_count>
+    <div class="panel">
+      <form>
+        <input value="Steal" onclick="steal_selected()" type="button">      
+        <input value="Check In" onclick="checkin_selected()" type="button">
+      </form>
+    </div>
+  </tmpl_if>
+</tmpl_if>
 
 <!--Krang::HTMLPager:-->
 <tmpl_var pager_html>
 <!--:Krang::HTMLPager-->
 
-<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel capped"><form>
-  <input value="Check In" onclick="checkin_selected()" type="button">
-</form></div></tmpl_if></tmpl_if>
+<tmpl_if may_checkin_all>
+  <tmpl_if row_count>
+    <div class="panel">
+      <form>
+        <input value="Steal" onclick="steal_selected()" type="button">      
+        <input value="Check In" onclick="checkin_selected()" type="button">
+      </form>
+    </div>
+  </tmpl_if>
+</tmpl_if>
 
 <tmpl_if row_count>
   <form name="find_story" method="post" action="story.pl">

@@ -35,6 +35,10 @@ save_and_stay = function() {
     Krang.ElementEditor.run_save_hooks();
     Krang.Form.submit('edit', { rm: 'add_category' }, { to_top: false });
   }
+  replace_category = function() {
+    Krang.ElementEditor.run_save_hooks();
+    Krang.Form.submit('edit', { rm: 'replace_category' }, { to_top: false });
+  }
 
   set_primary_category = function() {
     Krang.ElementEditor.run_save_hooks();
@@ -83,6 +87,17 @@ save_and_stay = function() {
     Krang.Form.submit('edit', { rm: 'db_save_and_stay' }, { to_top: false });
   }
 
+  usr_toggled_cat_idx = function() {
+    document.edit.slug.disabled = document.edit.cat_idx.checked;
+    if (document.edit.slug.disabled) {	
+	document.edit.slug_before_empty.value = document.edit.slug.value; 
+	document.edit.slug.value = '';
+    } else {
+	// in case the user checks and then unchecks 'Category Index'...
+	document.edit.slug.value = document.edit.slug_before_empty.value; 
+    }
+  }
+
   <tmpl_if may_publish>
     save_and_publish = function() {
         Krang.ElementEditor.run_save_hooks();
@@ -91,6 +106,13 @@ save_and_stay = function() {
   </tmpl_if>
 
 <tmpl_else>
+
+  db_save = function() {
+    if ( confirm('Save this Story and return to your Workspace?') ) {
+      Krang.ElementEditor.run_save_hooks();
+      Krang.Form.submit('edit', { rm: 'db_save' });
+    }
+  }
 
   <tmpl_if bulk_edit>
 
@@ -128,6 +150,8 @@ save_and_stay = function() {
 <tmpl_if is_root><tmpl_if story_id><p class="cram east">
   <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
   <input value="View Schedule" onclick="save_and_edit_schedule()" type="button" class="button">
+  <input name="returning_from_root" value="1" type="hidden">
+  <input name="slug_before_empty" value="<tmpl_var slug_before_empty>" type="hidden">
 </p></tmpl_if></tmpl_if>
 
 <h2>
@@ -165,17 +189,24 @@ Properties
 </tbody>
 
 <tmpl_if is_root>
-  <tbody class="demi">
+  <tbody class="half">
 
   <tr<tmpl_if bad_title> class="err"</tmpl_if>>
   <th>*Title</th>
   <td><input name="title" value="<tmpl_var escape=html title>"></td>
   </tr>
 
-  <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
-  <th>Slug</th>
-  <td><input name="slug" value="<tmpl_var escape=html slug>"></td>
-  </tr>
+  <tmpl_if show_slug>
+    <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
+    <th><tmpl_if require_slug>*</tmpl_if>Slug</th>
+    <td><input name="slug" value="<tmpl_var escape=html slug>" <tmpl_if cat_idx> disabled</tmpl_if>>
+    <tmpl_unless require_slug>
+      <input name="cat_idx" type="checkbox" onchange="usr_toggled_cat_idx()" class="pushright small hcenter"<tmpl_if cat_idx> checked</tmpl_if>>
+      Category Index
+    </tmpl_unless>
+    </td>
+    </tr>
+  </tmpl_if>
 
   </tbody>
 
@@ -253,7 +284,7 @@ Properties
     No Categories assigned.
     </p>
 
-    <tmpl_var category_chooser><!--:FIXME(db2)-->
+    <tmpl_var add_category_chooser><!--:FIXME(db2)-->
 
   <tmpl_else>
 
@@ -263,6 +294,8 @@ Properties
     <col class="series">
     <col>
     <col>
+    <col>
+    <col>
     <col class="series">
     </colgroup>
 
@@ -270,7 +303,8 @@ Properties
     <tr>
     <th class="f series">Primary</th>
     <th>Site</th>
-    <th>Category</th>
+    <th colspan="2">Category</th>
+    <th></th>
     <th class="l series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input type="checkbox" onclick="Krang.check_all(this,'cat_remove_')"></tmpl_unless></tmpl_if></tmpl_loop></th>  <!--:ick, but should work(db2)-->
     </tr>
     </thead>
@@ -281,7 +315,8 @@ Properties
       <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
       <td class="series"><input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>></td>
       <td><tmpl_var escape=html site></td>
-      <td><tmpl_var escape=html category></td>
+      <td colspan="2"><tmpl_var escape=html category></td>
+      <td class="series"><input name="category_to_replace_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if selected_for_replace> checked</tmpl_if>></td>
       <td class="series"><tmpl_unless __first__>
         <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox">
       </tmpl_unless></td>
@@ -290,7 +325,8 @@ Properties
 
     <tr>
     <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Set" onclick="set_primary_category()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
-    <td colspan="2"><tmpl_var category_chooser></td>
+    <td colspan="3"><tmpl_var add_category_chooser></td>
+    <td><tmpl_var replace_category_chooser></td>
     <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Delete" onclick="remove_categories()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
     </tr>
 
@@ -302,22 +338,42 @@ Properties
 
 </tmpl_if>
 
+
+
 <div class="panel capped">
-<input value="Save &amp; Stay" onclick="<tmpl_if is_root>db_save_and_stay<tmpl_else>save_and_stay</tmpl_if>()" type="button">
-<input value="Save" onclick="<tmpl_if is_root>db_save<tmpl_else><tmpl_if bulk_edit>save_and_leave_bulk_edit<tmpl_else>save_and_go_up</tmpl_if></tmpl_if>()" type="button">
-<tmpl_if is_root>
-  <input value="Check In To" onclick="check_in()" type="button">
-  <select name="checkin_to"><tmpl_loop desk_loop>
-    <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
-  </tmpl_loop></select>
-  <tmpl_if may_publish>
-    <input value="Publish" onclick="save_and_publish()" type="button">
+
+<tmpl_if bulk_edit>
+  <input value="Done Bulk Editing <tmpl_var name_of_this_element>" onclick="save_and_leave_bulk_edit()" type="button" class="west">
+
+<tmpl_else>  
+
+  <tmpl_if is_root>
+
+    <tmpl_if may_publish>
+      <input value="Publish" onclick="save_and_publish()" type="button" class="west">
+    </tmpl_if>
+    <input value="Check In To" onclick="check_in()" type="button" class="west">
+    <select name="checkin_to" class="west"><tmpl_loop desk_loop>
+      <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> Desk</option>
+    </tmpl_loop></select>
+    <input value="Delete" onclick="remove_story()" type="button" class="west">
+
+  <tmpl_else>
+
+     <input value="Done Editing <tmpl_var name_of_this_element>" onclick="save_and_go_up()" type="button" class="west">
+     <tmpl_if allow_delete>
+       <input value="Delete <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
+     </tmpl_if>
+
   </tmpl_if>
-  <input value="Delete" onclick="remove_story()" type="button">
-<tmpl_else><tmpl_unless bulk_edit><tmpl_if allow_delete>
-  <input value="Delete" onclick="remove_element()" type="button">
-</tmpl_if></tmpl_unless></tmpl_if>
+
+  <input value="Save Story &amp; Stay" onclick="db_save_and_stay()" type="button">
+  <input value="Save Story" onclick="db_save()" type="button">
+
+</tmpl_if>
+
 </div>
+
 
 </form>
 

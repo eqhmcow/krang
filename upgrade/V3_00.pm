@@ -24,6 +24,8 @@ sub per_instance {
     $dbh->do('ALTER TABLE story_version CHANGE COLUMN data data BLOB');
     $dbh->do('ALTER TABLE template_version CHANGE COLUMN data data BLOB');
     $dbh->do('ALTER TABLE media_version CHANGE COLUMN data data BLOB');
+
+    $self->_wipe_slugs_from_cover_stories();
 }
 
 # add new EnableFTP and Secret directives if they aren't already there
@@ -51,6 +53,28 @@ sub _random_secret {
     my @chars = ('a'..'z', 'A'..'Z', 0..9, qw(! @ $ % ^ & - _ = + | ; : . / < > ?));
     $secret .= $chars[int(rand($#chars + 1))] for(0..$length);
     return $secret;
+}
+
+
+# remove slugs from stories that subclass Cover 
+# (since slugs will now be optional for all types)
+sub _wipe_slugs_from_cover_stories {
+
+    my ($self) = @_;
+
+    my @types_that_subclass_cover =
+	grep { pkg('ElementLibrary')->top_level(name => $_)->isa('Krang::ElementClass::Cover') }
+            pkg('ElementLibrary')->top_levels;
+
+    my $dbh = dbh();
+    my $sql = qq/update story set slug="" where story.class=?/;
+    my $sth = $dbh->prepare($sql);
+    
+    foreach my $type (@types_that_subclass_cover) {
+	print "Cleaning slugs from stories of type '$type'... ";
+	$sth->execute($type);
+	print "DONE\n";
+    }
 }
 
 1;

@@ -12,12 +12,17 @@ cancel_category_change = function() {
 
 save_and_leave = function() {
     Krang.ElementEditor.run_save_hooks();
-    Krang.Form.submit('edit', { rm: '<tmpl_if is_root>db_save<tmpl_else>save_and_<tmpl_if bulk_edit>leave_bulk_edit<tmpl_else>go_up</tmpl_if></tmpl_if>' });
+    Krang.Form.submit('edit', { rm: 'save_and_<tmpl_if bulk_edit>leave_bulk_edit<tmpl_else>go_up</tmpl_if>' });
 }
 
-save_and_stay = function() {
+db_save = function() {
     Krang.ElementEditor.run_save_hooks();
-    Krang.Form.submit('edit', { rm: '<tmpl_if is_root>db_</tmpl_if>save_and_stay' }, { to_top: false });
+    Krang.Form.submit('edit', { rm: 'db_save' });
+}
+
+db_save_and_stay = function() {
+    Krang.ElementEditor.run_save_hooks();
+    Krang.Form.submit('edit', { rm: 'db_save_and_stay' }, { to_top: false });
 }
 
 <tmpl_if is_root>
@@ -79,14 +84,27 @@ Properties
 <!--:ElementEditor/edit.tmpl-->
 
 <div class="panel capped">
-<input class="west" type="button" onclick="cancel_category_change()" value="Cancel"/>
-<input value="Save &amp; Stay" onclick="save_and_stay()" type="button">
-<input value="Save" onclick="save_and_leave()" type="button">
-<tmpl_if is_root>
-  <input value="Delete" onclick="remove_category()" type="button">
-<tmpl_else><tmpl_unless bulk_edit><tmpl_if allow_delete>
-  <input value="Delete" onclick="remove_element()" type="button">
-</tmpl_if></tmpl_unless></tmpl_if>
+<input class="west" type="button" onclick="cancel_category_change()" value="Cancel Category Edit"/>
+
+<tmpl_if bulk_edit> 
+  <input value="Done Bulk Editing <tmpl_var name_of_this_element>" onclick="save_and_leave()" type="button" class="west">
+
+<tmpl_else>
+
+  <tmpl_if is_root>
+    <input value="Delete Category" onclick="remove_category()" type="button">
+  <tmpl_else>
+    <input value="Done Editing <tmpl_var name_of_this_element>" onclick="save_and_leave()" type="button" class="west">
+    <tmpl_unless bulk_edit><tmpl_if allow_delete>
+      <input value="Delete <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
+    </tmpl_if></tmpl_unless>
+  </tmpl_if>
+
+  <input value="Save Category &amp; Stay" onclick="db_save_and_stay()" type="button">
+  <input value="Save Category" onclick="db_save()" type="button">
+
+</tmpl_if>
+
 </div>
 
 </form>

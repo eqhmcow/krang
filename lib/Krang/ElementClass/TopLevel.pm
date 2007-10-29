@@ -66,16 +66,15 @@ BEGIN {
 Builds a URL for the given story and category.  The default
 implementation takes the category url and appends a URI encoded copy
 of the story slug.  This may be overriden by top level elements to
-implement alternative URL schemes.  See L<Krang::ElementClass::Cover>
-for an example.
+implement alternative URL schemes.  
 
 =cut
 
 sub build_url {
     my ($self, %arg) = @_;
     my ($story, $category) = @arg{qw(story category)};
-    croak("Category not defined!") unless $category;
-    return $category->url . CGI::Util::escape($story->slug || '');
+    my $use_slug = ($story->slug && ($story->class->slug_use ne 'prohibit'));
+    return ($category ? $category->url : '') . ($use_slug ? CGI::Util::escape($story->slug) : '');
 }
 
 
@@ -92,8 +91,8 @@ L<Krang::ElementClass::Cover> for an example.
 sub build_preview_url {
     my ($self, %arg) = @_;
     my ($story, $category) = @arg{qw(story category)};
-    croak("Category not defined!") unless $category;
-    return $category->preview_url . CGI::Util::escape($story->slug || '');
+    my $use_slug = ($story->slug && ($story->class->slug_use ne 'prohibit'));
+    return ($category ? $category->preview_url : '') . ($use_slug ? CGI::Util::escape($story->slug) : '');
 }
 
 
@@ -101,13 +100,14 @@ sub build_preview_url {
 
 Returns a list of Story attributes that are being used to compute the
 url in build_url().  For example, the default implementation returns
-('slug') because slug is the only story attribute used in the URL.
-L<Krang::ElementClass::Cover> returns an empty list because it uses no
-story attributes in its C<build_url()>.
+('slug') unless slug_use() is set to 'prohibit'.
 
 =cut
 
-sub url_attributes { ('slug') }
+sub url_attributes { 
+    my $self = shift;
+    ($self->slug_use ne 'prohibit') ? ('slug') : ();
+}
 
 =item C<< @schedules = $class->default_schedules(element => $element, story_id ==> $story_id) >>
 
@@ -220,6 +220,37 @@ content on category templates varies for each page in a story.
 =cut
 
 sub publish_category_per_page { 0 }
+
+
+=item C<< $show_slug = $class->slug_use() >>
+
+Returns 1 of 4 values:
+'require'    - slug is required
+'encourage'  - slug field is present in New Story CGI, but can be left empty
+'discourage' - slug field is initially greyed-out in New Story CGI
+'prohibit'   - slug is prohibited 
+ 
+=cut
+    
+sub slug_use {
+    return 'encourage';
+}
+
+
+=item C<< $title_to_slug = $class->title_to_slug() >>
+
+Returns the Javascript necessary to dynamically convert a title to a slug 
+in the New Story form. The default implementation returns nothing, causing
+the hard-coded Javascript to execute. If a particular story type requires 
+a different approach, this method can be overridden in the story class. The 
+Javascript returned should consist of an unnamed function, for example 
+"function(title) { return title.toLowerCase }"
+
+=cut
+
+sub title_to_slug {
+    return '';
+}
 
 
 =item C<< $bool = $class->hidden() >>

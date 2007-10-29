@@ -99,7 +99,7 @@ use Carp qw(verbose croak);
 use Exception::Class
   (
    'Krang::Category::Dependent' => {fields => 'dependents'},
-   'Krang::Category::DuplicateURL' => {fields => 'category_id'},
+   'Krang::Category::DuplicateURL' => {fields => [ 'category_id', 'story_id', 'url' ]},
    'Krang::Category::NoEditAccess' => {fields => 'category_id'},
    'Krang::Category::RootDeletion',
   );
@@ -482,10 +482,10 @@ sub delete {
 =item * Krang::Category->dependent_check(category_id => $category_id )
 
 Class or instance method that should be called before attempting to delete the
-given category object.  If dependents are found a Krang::Category::Duplicate
-exception is thrown, otherwise, 0 is returned.
+given category object.  If dependents are found a Krang::Category::Dependent
+exception is thrown; otherwise, 0 is returned.
 
-Krang::Category::Duplicate exceptions have one field 'dependents' that
+Krang::Category::Dependent exceptions have one field 'dependents' that
 contains a hashref of the classnames and ids of the objects which depend upon
 the given category object.  You might want to handle the exception thusly:
 
@@ -546,17 +546,22 @@ sub dependent_check {
 
 =item * $category->duplicate_check()
 
-This method checks the database to see if an existing category already possess
-the same values in its 'url' as the object in memory.  If a duplicate is found,
-a Krang::Category::DuplicateURL exception is thrown, otherwise, 0 is returned.
+This method checks the database to see if an existing category or story already 
+has the same 'url' as the object in memory. If a duplicate is found,
+a Krang::Category::DuplicateURL exception is thrown; otherwise, 0 is returned.
 
-Krang::Category::DuplicateURL excpetions have a single field 'category_id' that
-indicates the id of the Category object that would be duplicated:
+Krang::Category::DuplicateURL exceptions have a single nonempty field - either
+'category_id' or 'story_id' - that indicates the id of the clashing object
 
  eval {$self->duplicate_check()};
  if ($@ and $@->isa('Krang::Category::DuplicateURL')) {
-     croak("The 'url' of this category duplicates that of category id: " .
-       $@->category_id\n");
+     if ($@->story_id) {
+	 croak("The 'url' of this category duplicates that of story id: " .
+	       $@->story_id\n");
+     } elsif {
+	 croak("The 'url' of this category duplicates that of category id: " .
+	       $@->category_id\n");
+     }
  }
 
 =cut
@@ -564,6 +569,8 @@ indicates the id of the Category object that would be duplicated:
 sub duplicate_check {
     my $self = shift;
     my $id = $self->{category_id};
+
+    # 1) check for category that has our URL
     my $query = <<SQL;
 SELECT category_id
 FROM category
@@ -579,17 +586,31 @@ SQL
     }
 
     my $dbh = dbh();
-    my ($category_id) = $dbh->selectrow_array($query, undef, @params) || 0;
+    my ($category_id) = $dbh->selectrow_array($query, undef, @params);
 
     # throw exception
     Krang::Category::DuplicateURL->throw(
               message     =>  "Duplicate URL ($self->{url}) for category ID ".
                               "$category_id.",
-              category_id => $category_id)
+              category_id => $category_id,
+	      url         => $self->{url})
         if $category_id;
 
-    # otherwise return 0
-    return $category_id;
+    # 2) check for story that has our URL
+    $query = 'SELECT story_id FROM story_category WHERE url = ?';
+    my ($url_without_trailing_slash) = ($self->{url} =~ /^(.+)\/$/);
+    my ($story_id) = $dbh->selectrow_array($query, undef, $url_without_trailing_slash);
+
+    # throw exception
+    Krang::Category::DuplicateURL->throw(
+              message     =>  "Duplicate URL ($self->{url}) for story ID ".
+                              "$story_id.",
+              story_id => $story_id,
+              url      => $url_without_trailing_slash)
+        if $story_id;
+
+    # 3) return false if there were no duplicates
+    return 0;
 }
 
 =item * @categories = Krang::Category->ancestors()

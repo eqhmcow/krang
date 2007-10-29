@@ -1037,6 +1037,175 @@ Object.extend( Krang.Navigation.prototype, {
     }
 } );
 
+
+Krang.Slug = {};
+
+/*
+    Krang.Slug.title_to_slug = function(title) 
+    Default auto-slug-building method. Can be overridden by ElementClass::title_to_slug
+*/
+
+Krang.Slug.title_to_slug = function(title) {
+    var slug = title;
+    slug = slug.replace(Krang.Slug.high_latin1_re, function(notNeeded, code_position) {
+	return Krang.Slug.high_latin1_map[code_position];
+    })
+    .replace(/[^\s\w\-]/g,'') // remove illegal chars
+    .replace(/^\s+/,'')       // remove leading whitespace
+    .replace(/\s+$/,'')       // remove trailing whitespace
+    .replace(/\s+/g,'_')      // replace whitespace with underscores
+    .toLowerCase(slug);       // make the whole thing lowercase
+    return slug;
+}
+
+/*
+    Title -> slug mappings for high latin-1 chars
+*/
+Krang.Slug.high_latin1_map = {
+    // these are from CP1252
+    // those substituted with nothing may of course be deleted
+    // I put them in just for documentation purposes
+  //
+//  unicode    subst          CP1252 Entity   Description
+//  --------------------------------------------------------------------------
+    "\u20AC" : "euro",       // 0x80 &euro;   EURO SIGN
+    "\u201A" : "",           // 0x82 &sbquo;  SINGLE LOW-9 QUOTATION MARK
+    "\u0192" : "f",          // 0x83 &fnof;   LATIN SMALL LETTER F WITH HOOK
+    "\u201E" : "",           // 0x84 &bdquo;  DOUBLE LOW-9 QUOTATION MARK
+    "\u2026" : "",           // 0x85 &hellip; HORIZONTAL ELLIPSIS
+    "\u2020" : "",           // 0x86 &dagger; DAGGER
+    "\u2021" : "",           // 0x87 &Dagger; DOUBLE DAGGER 
+    "\u02C6" : "",           // 0x88 &circ;   MODIFIER LETTER CIRCUMFLEX ACCENT
+    "\u2030" : "",           // 0x89 &permil; PER MILLE SIGN
+    "\u0160" : "S",          // 0x8A &Scaron; LATIN CAPITAL LETTER S WITH CARON
+    "\u2039" : "",           // 0x8B &lsaquo; SINGLE LEFT-POINTING ANGLE QUOTATION MARK
+    "\u0152" : "OE",         // 0x8C &OElig;  LATIN CAPITAL LIGATURE OE 
+    "\u017D" : "Z",          // 0x8E &#381;   LATIN CAPITAL LETTER Z WITH CARON
+    "\u2018" : "",           // 0x91 &lsquo;  LEFT SINGLE QUOTATION MARK
+    "\u2019" : "",           // 0x92 &rsquo;  RIGHT SINGLE QUOTATION MARK
+    "\u201C" : "",           // 0x93 &ldquo;  LEFT DOUBLE QUOTATION MARK
+    "\u201D" : "",           // 0x94 &rdquo;  RIGHT DOUBLE QUOTATION MARK
+    "\u2022" : "",           // 0x95 &bull;   BULLET
+    "\u2013" : "-",          // 0x96 &ndash;  EN DASH
+    "\u2014" : "-",          // 0x97 &mdash;  EM DASH
+    "\u02DC" : "",           // 0x98 &tilde;  SMALL TILDE
+    "\u2122" : "TM",         // 0x99 &trade;  TRADE MARK SIGN
+    "\u0161" : "s",          // 0x9A &scaron; LATIN SMALL LETTER S WITH CARON
+    "\u203A" : "",           // 0x9B &rsaquo; SINGLE RIGHT-POINTING ANGLE QUOTATION MARK
+    "\u0153" : "oe",         // 0x9C &oelig;  LATIN SMALL LIGATURE OE
+    "\u017E" : "z",          // 0x9E &#382;"  LATIN SMALL LETTER Z WITH CARON
+    "\u0178" : "Y",          // 0x9F &Yuml;   LATIN CAPITAL LETTER Y WITH DIAERESIS
+    // and now for real latin-1
+    "\u00A0" : " ",          // 0xA0          NO-BREAK SPACE
+    "\u00A1" : "",           // 0xA1          INVERTED EXCLAMATION MARK
+    "\u00A2" : "cent",       // 0xA2          CENT SIGN
+    "\u00A3" : "pound",      // 0xA3          POUND SIGN
+    "\u00A4" : "o",          // 0xA4          CURRENCY SIGN
+    "\u00A5" : "yen",        // 0xA5          YEN SIGN
+    "\u00A6" : "_",          // 0xA6          BROKEN BAR
+    "\u00A7" : "paragraph",  // 0xA7          SECTION SIGN
+    "\u00A8" : "",           // 0xA8          DIAERESIS
+    "\u00A9" : "copyright",  // 0xA9          COPYRIGHT SIGN
+    "\u00AA" : "a",          // 0xAA          FEMININE ORDINAL INDICATOR
+    "\u00AB" : "",           // 0xAB          LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
+    "\u00AC" : "not",        // 0xAC          NOT SIGN
+    "\u00AD" : "-",          // 0xAD          SOFT HYPHEN
+    "\u00AE" : "R",          // 0xAE          REGISTERED SIGN
+    "\u00AF" : "-",          // 0xAF          MACRON
+    "\u00B0" : "degree",     // 0xB0          DEGREE SIGN
+    "\u00B1" : "plus_minus", // 0xB1          PLUS-MINUS SIGN
+    "\u00B2" : "2",          // 0xB2          SUPERSCRIPT TWO
+    "\u00B3" : "3",          // 0xB3          SUPERSCRIPT THREE
+    "\u00B4" : "",           // 0xB4          ACUTE ACCENT
+    "\u00B5" : "micro",      // 0xB5          MICRO SIGN
+    "\u00B6" : "",           // 0xB6          PILGROW SIGN
+    "\u00B7" : "",           // 0xB7          MIDDLE DOT
+    "\u00B8" : "",           // 0xB8          CEDILLA
+    "\u00B9" : "1",          // 0xB9          SUPERSCRIPT ONE
+    "\u00BA" : "o",          // 0xBA          MASCULINE ORDINAL INDICATOR
+    "\u00BB" : "",           // 0xBB          RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK
+    "\u00BC" : "one_quarter",// 0xBC          VULGAR FRACTION ONE QUARTER
+    "\u00BD" : "one_half",   // 0xBD          VULGAR FRACTION ONE HALF
+    "\u00BE" : "three_quarters",//0xBE        VULGAR FRACTION THREE QUARTERS
+    "\u00BF" : "",           // 0xBF          INVERTED QUESTION MARK
+    "\u00C0" : "A",          // 0xC0          LATIN CAPITAL LETTER A WITH GRAVE
+    "\u00C1" : "A",          // 0xC1          LATIN CAPITAL LETTER A WITH ACUTE
+    "\u00C2" : "A",          // 0xC2          LATIN CAPITAL LETTER A WITH CIRCUMFLEX
+    "\u00C3" : "A",          // 0xC3          LATIN CAPITAL LETTER A WITH TILDE
+    "\u00C4" : "Ae",         // 0xC4          LATIN CAPITAL LETTER A WITH DIAERESIS
+    "\u00C5" : "A",          // 0xC5          LATIN CAPITAL LETTER A WITH RING ABOVE
+    "\u00C6" : "AE",         // 0xC6          LATIN CAPITAL LETTER AE
+    "\u00C7" : "C",          // 0xC7          LATIN CAPITAL LETTER C WITH CEDILLA
+    "\u00C8" : "E",          // 0xC8          LATIN CAPITAL LETTER E WITH GRAVE 
+    "\u00C9" : "E",          // 0xC9          LATIN CAPITAL LETTER E WITH ACUTE 
+    "\u00CA" : "E",          // 0xCA          LATIN CAPITAL LETTER E WITH CIRCUMFLEX
+    "\u00CB" : "E",          // 0xCB          LATIN CAPITAL LETTER E WITH DIAERESIS
+    "\u00CC" : "I",          // 0xCC          LATIN CAPITAL LETTER I WITH GRAVE 
+    "\u00CD" : "I",          // 0xCD          LATIN CAPITAL LETTER I WITH ACUTE
+    "\u00CE" : "I",          // 0xCE          LATIN CAPITAL LETTER I WITH CIRCUMFLEX
+    "\u00CF" : "I",          // 0xCF          LATIN CAPITAL LETTER I WITH DIAERESIS
+    "\u00D0" : "D",          // 0xD0          LATIN CAPITAL LETTER ETH
+    "\u00D1" : "N",          // 0xD1          LATIN CAPITAL LETTER N WITH TILDE
+    "\u00D2" : "O",          // 0xD2          LATIN CAPITAL LETTER O WITH GRAVE
+    "\u00D3" : "O",          // 0xD3          LATIN CAPITAL LETTER O WITH ACUTE
+    "\u00D4" : "O",          // 0xD4          LATIN CAPITAL LETTER O WITH CIRCUMFLEX
+    "\u00D5" : "O",          // 0xD5          LATIN CAPITAL LETTER O WITH TILDE
+    "\u00D6" : "Oe",         // 0xD6          LATIN CAPITAL LETTER O WITH DIAERESIS
+    "\u00D7" : "x",          // 0xD7          MULTIPLICATION SIGN
+    "\u00D8" : "O",          // 0xD8          LATIN CAPITAL LETTER O WITH STROKE
+    "\u00D9" : "U",          // 0xD9          LATIN CAPITAL LETTER U WITH GRAVE
+    "\u00DA" : "U",          // 0xDA          LATIN CAPITAL LETTER U WITH ACUTE
+    "\u00DB" : "U",          // 0xDB          LATIN CAPITAL LETTER U WITH CIRCUMFLEX
+    "\u00DC" : "Ue",         // 0xDC          LATIN CAPITAL LETTER U WITH DIAERESIS
+    "\u00DD" : "Y",          // 0xDD          LATIN CAPITAL LETTER Y WITH ACUTE
+    "\u00DE" : "th",         // 0xDE          LATIN CAPITAL LETTER THORN
+    "\u00DF" : "ss",         // 0xDF          LATIN SMALL LETTER SHARP S
+    "\u00E0" : "a",          // 0xE0          LATIN SMALL LETTER A WITH GRAVE
+    "\u00E1" : "a",          // 0xE1          LATIN SMALL LETTER A WITH ACUTE
+    "\u00E2" : "a",          // 0xE2          LATIN SMALL LETTER A WITH CIRCUMFLEX
+    "\u00E3" : "a",          // 0xE3          LATIN SMALL LETTER A WITH TILDE
+    "\u00E4" : "ae",         // 0xE4          LATIN SMALL LETTER A WITH DIAERESIS
+    "\u00E5" : "a",          // 0xE5          LATIN SMALL LETTER A WITH RING ABOVE
+    "\u00E6" : "ae",         // 0xE6          LATIN SMALL LETTER AE
+    "\u00E7" : "c",          // 0xE7          LATIN SMALL LETTER C WITH CEDILLA
+    "\u00E8" : "e",          // 0xE8          LATIN SMALL LETTER E WITH GRAVE
+    "\u00E9" : "e",          // 0xE9          LATIN SMALL LETTER E WITH ACUTE
+    "\u00EA" : "e",          // 0xEA          LATIN SMALL LETTER E WITH CIRCUMFLEX
+    "\u00EB" : "e",          // 0xEB          LATIN SMALL LETTER E WITH DIAERESIS
+    "\u00EC" : "i",          // 0xEC          LATIN SMALL LETTER I WITH GRAVE
+    "\u00ED" : "i",          // 0xED          LATIN SMALL LETTER I WITH ACUTE
+    "\u00EE" : "i",          // 0xEE          LATIN SMALL LETTER I WITH CIRCUMFLEX
+    "\u00EF" : "i",          // 0xEF          LATIN SMALL LETTER I WITH DIAERESIS
+    "\u00F0" : "eth",        // 0xF0          LATIN SMALL LETTER ETH
+    "\u00F1" : "n",          // 0xF1          LATIN SMALL LETTER N WITH TILDE
+    "\u00F2" : "o",          // 0xF2          LATIN SMALL LETTER O WITH GRAVE
+    "\u00F3" : "o",          // 0xF3          LATIN SMALL LETTER O WITH ACUTE
+    "\u00F4" : "o",          // 0xF4          LATIN SMALL LETTER O WITH CIRCUMFLEX
+    "\u00F5" : "o",          // 0xF5          LATIN SMALL LETTER O WITH TILDE
+    "\u00F6" : "oe",         // 0xF6          LATIN SMALL LETTER O WITH DIAERESIS
+    "\u00F7" : "",           // 0xF7          DIVISION SIGN
+    "\u00F8" : "o",          // 0xF8          LATIN SMALL LETTER O WITH STROKE
+    "\u00F9" : "u",          // 0xF9          LATIN SMALL LETTER U WITH GRAVE
+    "\u00FA" : "u",          // 0xFA          LATIN SMALL LETTER U WITH ACUTE
+    "\u00FB" : "u",          // 0xFB          LATIN SMALL LETTER U WITH CIRCUMFLEX
+    "\u00FC" : "ue",         // 0xFC          LATIN SMALL LETTER U WITH DIAERESIS
+    "\u00FD" : "y",          // 0xFD          LATIN SMALL LETTER Y WITH ACUTE
+    "\u00FE" : "th",         // 0xFE          LATIN SMALL LETTER THORN
+    "\u00FF" : "y",          // 0xFF          LATIN SMALL LETTER Y WITH DIAERESIS
+};
+
+/*
+    Build slug substitution regexp
+*/
+Krang.Slug.high_latin1_re = '';
+(function() {
+    var codePoints = '';
+    for (codePoint in Krang.Slug.high_latin1_map) {
+	codePoints += codePoint;
+    }
+    Krang.Slug.high_latin1_re = new RegExp('([' + codePoints + '])', 'g');
+})();
+
 Krang.Widget = {};
 /* 
     Krang.Widget.date_chooser(inputName)

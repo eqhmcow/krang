@@ -135,9 +135,10 @@ END
 
         my %params = (-name    => $list_param,
                       -size    => $self->size(),
-                      -default => $element->data ? $element->data()->[$list_index] : ""
+                      -default => ($self->multiple ?
+                                   ($element->data || []) :
+                                   (($element->data && $element->data->[$list_index]) || ""))
                      );
-
 
         # only populate scrolling listbox for the first list - the
         # rest will be done w/ javascript.
@@ -152,7 +153,6 @@ END
         %labels = map { $_->list_item_id => $_->data } @items;
 
         if ($self->multiple) {
-            $params{-default} = $element_data->[$list_index] || [];
             $params{-multiple} = 'true';
         }
 

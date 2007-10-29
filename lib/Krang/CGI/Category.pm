@@ -62,7 +62,6 @@ sub setup {
                      db_save_and_stay => 'db_save_and_stay',
                      save_and_jump    => 'save_and_jump',
                      save_and_add     => 'save_and_add',
-                     save_and_stay    => 'save_and_stay',
                      save_and_go_up   => 'save_and_go_up',
                      save_and_bulk_edit => 'save_and_bulk_edit',
                      save_and_leave_bulk_edit => 'save_and_leave_bulk_edit',
@@ -163,9 +162,11 @@ sub new_category {
     # setup parent selector
     $template->param(parent_chooser =>
                      category_chooser(name => 'parent_id',
+				      formname => 'new_category',
                                       title => 'Choose Parent Category',
                                       query => $query,
                                       may_edit => 1,
+				      persistkey => 'NEW_CATEGORY_DIALOGUE'
                                      ));
 
     return $template->output();
@@ -185,6 +186,9 @@ sub create {
 
     my $parent_id = $query->param('parent_id');
     my $dir       = $query->param('dir');
+    
+    # remember parent for duration of session
+    $session{KRANG_PERSIST}{NEW_CATEGORY_DIALOGUE}{ cat_chooser_id_new_category_parent_id } = $parent_id;
 
     # detect bad fields
     my @bad;
@@ -217,12 +221,18 @@ sub create {
 
     # is it a dup?
     if ($@ and ref($@) and $@->isa('Krang::Category::DuplicateURL')) {
-        # load duplicate category
-        my ($dup) = pkg('Category')->find(category_id => $@->category_id);
-        add_alert('duplicate_url', 
-                    url         => $dup->url,                    
-                   );
-
+        # load clashing category/story
+	if ($@->category_id) {
+	    add_alert('duplicate_url', 
+		      url         => $@->url,
+		      category_id => $@->category_id);
+	} elsif ($@->story_id) {
+	    add_alert('story_has_url', 
+		      url         => $@->url,
+		      story_id    => $@->story_id);
+	} else {
+	    croak ("DuplicateURL didn't include category_id OR story_id");
+	}
         return $self->new_category(bad => ['parent_id','dir']);
     } elsif ($@) {
         # rethrow
@@ -378,23 +388,6 @@ sub save_and_add {
     return $output if length $output;
 
     return $self->add();
-}
-
-=item save_and_stay
-
-This mode saves the current element data to the session and returns to
-edit.
-
-=cut
-
-sub save_and_stay {
-    my $self = shift;
-
-    # call internal _save and return output from it on error
-    my $output = $self->_save();
-    return $output if length $output;
-
-    return $self->edit();
 }
 
 =item save_and_bulk_edit

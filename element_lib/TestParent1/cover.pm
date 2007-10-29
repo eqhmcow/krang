@@ -39,4 +39,10 @@ sub default_schedules {
     return ($sched);
 }
 
+# even though TopLevel's Cover now allows optional slugs, for
+# testing purposes we maintain a prohibition on them here
+sub slug_use {
+    return 'prohibit';
+}
+
 1;

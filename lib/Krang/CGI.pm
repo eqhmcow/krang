@@ -137,7 +137,6 @@ and you can also protect based on asset permissions:
                 save_and_publish              => { story => ['edit'] },
                 save_and_view                 => { story => ['edit'] },
                 save_and_view_log             => { story => ['edit'] },
-                save_and_stay                 => { story => ['edit'] },
                 save_and_edit_contribs        => { story => ['edit'] },
                 save_and_edit_schedule        => { story => ['edit'] },
                 save_and_go_up                => { story => ['edit'] },
