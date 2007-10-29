@@ -433,19 +433,27 @@ sub edit {
     my $path  = $query->param('path') || '/';
     if ($path eq '/' and not $query->param('bulk_edit')) {
 
-        my $slug = $query->param('returning_from_root') ? $query->param('slug') : $story->slug;
-        my $cat_idx = $query->param('returning_from_root') ? $query->param('cat_idx') : !$slug;
+        # if we got here from a top-level edit...
+        if ($query->param('returning_from_root')) {
+	  # maintain query's title & slug, even if empty
+	  $template->param(title   => $query->param('title')   || '',
+			   slug    => $query->param('slug')    || '',
+			   cat_idx => $query->param('cat_idx') || '');
+	} else {
+ 	  # otherwise grab them from the session
+	  $template->param(title   => $story->title || '',
+			   slug    => $story->slug  || '',
+			   cat_idx => !$story->slug || '');
+        }
 
-        $template->param(is_root           => 1,
-                         title             => ($query->param('title') || $story->title),
-                         show_slug         => ($story->class->slug_use ne 'prohibit'),
-                         require_slug      => ($story->class->slug_use eq 'require'),
-                         cat_idx           => $cat_idx || '',
-                         slug              => $slug || '',
-                         version           => $story->version,
-                         published_version => $story->published_version,
-                        );
-                             # select boxes
+	# set other basic vars
+	$template->param(is_root           => 1,
+			 show_slug         => ($story->class->slug_use ne 'prohibit'),
+			 require_slug      => ($story->class->slug_use eq 'require'),
+			 version           => $story->version,
+			 published_version => $story->published_version);
+
+        # build select boxes
         $template->param(cover_date_selector =>
                          datetime_chooser(name=>'cover_date', date=>$story->cover_date, query=>$query));
         
