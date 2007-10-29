@@ -1191,7 +1191,7 @@ Krang.Slug.high_latin1_map = {
     "\u00FC" : "ue",         // 0xFC          LATIN SMALL LETTER U WITH DIAERESIS
     "\u00FD" : "y",          // 0xFD          LATIN SMALL LETTER Y WITH ACUTE
     "\u00FE" : "th",         // 0xFE          LATIN SMALL LETTER THORN
-    "\u00FF" : "y",          // 0xFF          LATIN SMALL LETTER Y WITH DIAERESIS
+    "\u00FF" : "y"           // 0xFF          LATIN SMALL LETTER Y WITH DIAERESIS
 };
 
 /*
