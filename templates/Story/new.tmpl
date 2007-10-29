@@ -48,16 +48,18 @@ auto_slug = function() // returns slug built from title
 
 enable_slug_input = function() 
 {
-  document.new_story.slug.value       = manual_slug() || auto_slug();
-  document.new_story.slug.disabled    = false;
-  document.new_story.cat_idx.checked = false;	
+  document.new_story.cat_idx.checked        = false;	
+  document.new_story.slug.value             = manual_slug() || auto_slug();
+  document.new_story.slug.disabled          = false;
+  document.getElementById('slug').className = ""; 
 }
 
 grey_out_slug_input = function() 
 {
-  document.new_story.slug.value       = '';
-  document.new_story.slug.disabled    = true;
-  document.new_story.cat_idx.checked = true;	
+  document.new_story.cat_idx.checked        = true;	
+  document.new_story.slug.value             = '';
+  document.new_story.slug.disabled          = true;
+  document.getElementById('slug').className = "disabled"; 
 }
 
 set_slug_entry_by_type = function() {
@@ -90,7 +92,7 @@ set_slug_entry_by_type = function() {
 	    document.getElementById('require_slug_asterisk').style.display='none';
             if (document.new_story.usr_checked_cat_idx.value == 1) {          
 	       grey_out_slug_input(); 			                       // when switching to a type with
-	    } else if (document.new_story.usr_unchecked_cat_idx.value == 1) { // optional slugs, check if user
+	    } else if (document.new_story.usr_unchecked_cat_idx.value == 1) {  // optional slugs, check if user
 	       enable_slug_input();			                       // manually checked/unchecked box
 	    } else {
 	       (slug_entry_for_this_type == 'encourage') ? enable_slug_input() : grey_out_slug_input();
@@ -161,7 +163,7 @@ New Story
 
 <tr id="slug_row"<tmpl_if bad_slug> class="err"<tmpl_else><tmpl_unless show_slug> style="display:none"</tmpl_unless></tmpl_if>>
 <th><label id="require_slug_asterisk" <tmpl_unless require_slug>style="display:none"</tmpl_unless>>*</label>Slug</th>
-<td><input name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()"<tmpl_if cat_idx> disabled</tmpl_if>>
+<td><input id="slug" name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()"<tmpl_if cat_idx> disabled class="disabled"</tmpl_if>>
 <input name="cat_idx" type="checkbox" onclick="usr_toggled_cat_idx()"<tmpl_if cat_idx> checked</tmpl_if> class="pushright small vcenter"<tmpl_if require_slug> style="display:none"</tmpl_if>>
 <label id="idx_label"<tmpl_if require_slug> style="display:none"</tmpl_if>>Category Index</label>
 </td>

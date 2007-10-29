@@ -90,11 +90,13 @@ save_and_stay = function() {
   usr_toggled_cat_idx = function() {
     document.edit.slug.disabled = document.edit.cat_idx.checked;
     if (document.edit.slug.disabled) {	
+        document.getElementById('slug').className = "disabled"; 
 	document.edit.slug_before_empty.value = document.edit.slug.value; 
 	document.edit.slug.value = '';
     } else {
 	// in case the user checks and then unchecks 'Category Index'...
-	document.edit.slug.value = document.edit.slug_before_empty.value; 
+        document.getElementById('slug').className = ""; 
+	document.edit.slug.value = document.edit.slug_before_empty.value;
     }
   }
 
@@ -199,7 +201,7 @@ Properties
   <tmpl_if show_slug>
     <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
     <th><tmpl_if require_slug>*</tmpl_if>Slug</th>
-    <td><input name="slug" value="<tmpl_var escape=html slug>" <tmpl_if cat_idx> disabled</tmpl_if>>
+    <td><input id="slug" name="slug" value="<tmpl_var escape=html slug>" <tmpl_if cat_idx> disabled class="disabled"</tmpl_if>>
     <tmpl_unless require_slug>
       <input name="cat_idx" type="checkbox" onclick="usr_toggled_cat_idx()" class="pushright small hcenter"<tmpl_if cat_idx> checked</tmpl_if>>
       Category Index
