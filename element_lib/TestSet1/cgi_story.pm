@@ -103,6 +103,22 @@ sub new {
    return $pkg->SUPER::new(%args);
 }
 
+sub slug_use {
+    return 'discourage';
+}
+
+sub title_to_slug {
+    return q%
+	function(title) {
+	    slug = title.replace(/[^\s\w\-]/g,'') // remove illegal chars
+	 	.replace(/^\s+/,'')       // remove leading whitespace
+		.replace(/\s+$/,'')       // remove trailing whitespace
+	  	.replace(/\s+/g,'-')      // replace inner space with hyphens
+		.toLowerCase();           // make the whole thing lowercase
+  	    return slug;
+	}
+    %;
+}
 
 sub publish {
     my $self = shift;

@@ -1053,7 +1053,7 @@ Krang.Slug.title_to_slug = function(title) {
     .replace(/[^\s\w\-]/g,'') // remove illegal chars
     .replace(/^\s+/,'')       // remove leading whitespace
     .replace(/\s+$/,'')       // remove trailing whitespace
-    .replace(/\s+/g,'_')      // replace whitespace with underscores
+    .replace(/\s+/g,'_')      // replace inner spaces with underscores
     .toLowerCase(slug);       // make the whole thing lowercase
     return slug;
 }
