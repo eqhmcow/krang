@@ -407,8 +407,9 @@ sub time_chooser {
         }
     }
 
-    $hour = $hour && $hour >= 13 ? $hour - 12 : $hour;
     my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
+    $hour    = $hour && $hour >= 13 ? $hour - 12 : $hour;
+    $hour    = 12 if defined $hour && $hour == 0;
     $value ||= (defined $hour && defined $minute) ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
 
     # an image src prefix for caching
