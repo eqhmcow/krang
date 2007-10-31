@@ -787,8 +787,9 @@ sub replace_dupes {
   my $last_query = $session{KRANG_PERSIST}{DUPE_STORIES}->{QUERY};
   foreach (keys %$last_query) { $self->query->param($_ => $last_query->{$_}) }
   delete $session{KRANG_PERSIST}{DUPE_STORIES};
-  my $rm = $self->query->param('rm');
-  $self->$rm;
+  my %run_modes = $self->run_modes;                      # get full hash of runmodes => method_names
+  my $rm_method = $run_modes{$self->query->param('rm')}; # get method name for runmode of last query
+  $self->$rm_method;
 }
 
 =item db_save
