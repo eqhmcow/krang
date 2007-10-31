@@ -150,6 +150,7 @@ sub _row_handler {
               };
         }
         $row->{desk_loop} = \@desk_loop;
+        $date = $obj->cover_date();
     } elsif($obj->isa('Krang::Media')) {
         $row->{media_id}  = $obj->media_id;
         $row->{id}        = $self->_obj2id($obj);
@@ -161,6 +162,7 @@ sub _row_handler {
             linkto => "javascript:preview_media(" . $obj->media_id . ")",
             length => 50
         );
+        $date = $obj->creation_date();
     } else {
         $row->{template_id} = $obj->template_id;
         $row->{id}          = $self->_obj2id($obj);
