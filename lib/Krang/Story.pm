@@ -18,7 +18,7 @@ use File::Spec::Functions qw(catdir canonpath);
 
 # setup exceptions
 use Exception::Class 
-  'Krang::Story::DuplicateURL'         => { fields => [ 'story_id', 'category_id', 'url' ] },
+  'Krang::Story::DuplicateURL'         => { fields => [ 'stories', 'categories' ] },
   'Krang::Story::MissingCategory'      => { fields => [               ] },
   'Krang::Story::NoCategoryEditAccess' => { fields => [ 'category_id' ] },
   'Krang::Story::NoEditAccess'         => { fields => [ 'story_id'    ] },
@@ -798,32 +798,34 @@ sub _save_version {
 sub _verify_unique {
     my $self   = shift;
     my $dbh    = dbh;
-
-    # first look for a story with the same URL
-    my @urls  = $self->urls;
+    
+    my @urls   = $self->urls;
     return unless @urls;
 
+    # first - unless we're a category index - make sure no categories have one of our URLs
+    if ($self->{slug}) {
+      my $query = 'SELECT category_id, url FROM category WHERE ('.
+	join(' OR ', ('url = ?') x @urls) . ')';
+      my $result = $dbh->selectall_arrayref($query, undef, map { $_.'/' } $self->urls);
+      if ($result && @$result) {
+	my @dupes = map { { id => $_->[0], url => $_->[1] } } @$result;
+	Krang::Story::DuplicateURL->throw(message    => "Category has our URL",
+					  categories => \@dupes);
+      }
+    }
+
+    # then look for stories that have one of our URLs
     my $query = 'SELECT story_id, url FROM story_category WHERE ('.
       join(' OR ', ('url = ?') x @urls) . ')' . 
         ($self->{story_id} ? ' AND story_id != ?' : '');
-    my ($dup_id, $dup_url) = $dbh->selectrow_array($query, undef, $self->urls, 
-						   ($self->{story_id} ? 
-						    ($self->{story_id}) : ()));
-    # throw exception on dup
-    Krang::Story::DuplicateURL->throw(message => "Duplicate URL",
-                                      story_id => $dup_id,
-				      url => $dup_url)
-        if $dup_id;
-    
-    # then - unless we're a category index - make sure no category has our URL!
-    if ($self->{slug}) {
-	$query = 'SELECT category_id, url FROM category WHERE ('.
-	    join(' OR ', ('url = ?') x @urls) . ')';
-	($dup_id, $dup_url) = $dbh->selectrow_array($query, undef, map { $_.'/' } $self->urls);
-	Krang::Story::DuplicateURL->throw(message => "Category has our URL",
-					  category_id => $dup_id,
-					  url => $dup_url)
-	    if $dup_id;
+    my $result = $dbh->selectall_arrayref($query, undef, $self->urls, 
+					  ($self->{story_id} ? 
+					   ($self->{story_id}) : ()));
+    if ($result && @$result) {
+      my @dupes = map { { id => $_->[0], url => $_->[1] } } @$result;
+      @dupes = sort { $a->{id} > $b->{id} ? 1 : # sort dupes by ID and then URL
+			($a->{id} < $b->{id} ? -1 : $a->{url} cmp $b->{url}) } @dupes;
+      Krang::Story::DuplicateURL->throw(message => "Duplicate URL", stories => \@dupes);
     }
 }
 

@@ -298,6 +298,7 @@ END { $copy->delete if $DELETE };
 
 # make another copy, this should result in a slug ending in _copy2
 my $copy2;
+	
 eval { $copy2 = $story->clone() };
 ok(not $copy2->story_id);
 ok($copy2->story_uuid ne $story->story_uuid);
