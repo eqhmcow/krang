@@ -402,21 +402,14 @@ sub time_chooser {
     } else {
         unless( $nochoice ) {
             my $current_date = localtime();
-            $hour   ||= $current_date->hour;
-            $minute ||= $current_date->minute;
+            $hour   = $current_date->hour   unless defined $hour;
+            $minute = $current_date->minute unless defined $minute;
         }
-    }
-
-    my $current_date = localtime();
-
-    unless ($nochoice) {
-        $hour   ||= $current_date->hour();
-        $minute ||= $current_date->minute();
     }
 
     $hour = $hour && $hour >= 13 ? $hour - 12 : $hour;
     my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
-    $value ||= $hour && $minute ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
+    $value ||= (defined $hour && defined $minute) ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
 
     # an image src prefix for caching
     my $img_prefix = pkg('Widget')->_img_prefix();
