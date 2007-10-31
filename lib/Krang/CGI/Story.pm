@@ -735,24 +735,45 @@ sub replace_dupes {
   my %dupes;
   foreach (@dupes) { push @{$dupes{$_->{id}}}, $_->{url}; }
 
-  # grab the story objects, and make sure we can modify them!
+  # build array of actual story objects, and hash of original locations
   my @dupe_stories;
+  my %dupe_stories_original_home; # we'll use -1 to mean 'not ours, but not on a desk'
   my %admin_perms = pkg('Group')->user_admin_permissions();
   my $may_checkin_all = $admin_perms{may_checkin_all};
 
   foreach my $id (keys %dupes) {
     my ($dupe_story) = Krang::Story->find(story_id => $id);
-    if ($dupe_story->checked_out && $dupe_story->checked_out_by ne $ENV{REMOTE_USER}) {
-      if ($may_checkin_all && $dupe_story->may_edit) {
-	$dupe_story->checkin;
+    if ($dupe_story->checked_out) {
+      # if story is checked out to us, do nothing; otherwise...
+      if ($dupe_story->checked_out_by ne $ENV{REMOTE_USER}) {
+	if ($may_checkin_all && $dupe_story->may_edit) {
+	  # if we can, force-check-in and take ownership
+	  $dupe_stories_original_home{$id} = $dupe_story->desk_id || -1;
+	  $dupe_story->checkin;
+	  $dupe_story->checkout;
+	} else {
+	  # we hit a roadblack... undo our changes and alert the user
+	  foreach (@dupe_stories) {
+	    # stories we hashed in original_home were not previously checked out to us
+	    if (my $orig_home = $dupe_stories_original_home{$_->story_id}) {
+	      $_->checkin; 
+	      # if we checked out this story from a desk and it's no longer on that desk...
+	      if ($orig_home != -1 && $_->desk_id != $orig_home &&
+		  scalar(pkg('Desk')->find(desk_id => $orig_home))) {
+		$_->move_to_desk($orig_home);
+	      }
+	    }
+	  }
+	  # return to edit (or new-story) screen with the error
+	  add_alert('dupe_story_checked_out', id => $id, url => $dupes{$id}[0]);
+	  return $self->query->param('returning_from_root') ? $self->edit : $self->new_story;
+	  }
+	}
       } else {
-	add_alert('dupe_story_checked_out', id => $id, url => $dupes{$id}[0]);
-	foreach (@dupe_stories) { $_->checkin }; # undo our checkouts
-	return 0;
+	# story is currently checked in
+	$dupe_stories_original_home{$id} = $dupe_story->desk_id || -1;
+	$dupe_story->checkout;
       }
-    } else {
-      $dupe_story->checkout;
-    }
     push @dupe_stories, $dupe_story;
   }
   
@@ -770,7 +791,7 @@ sub replace_dupes {
     } else {
       # otherwise, replace full list of cats with list of non-dupe cats
       my %dupe_cats;
-      my $dupe_slug = $dupe_story->slug;
+      my $dupe_slug = $dupe_story->slug || '';
       foreach my $dupe_url (@dupe_urls) {
 	my ($cat_url, $slug) = ($dupe_url =~ /^(.*)$dupe_slug$/);
 	$dupe_cats{$cat_url} = 1;
@@ -778,12 +799,19 @@ sub replace_dupes {
       my @safe_cats = grep { !$dupe_cats{$_->url} } @all_cats;
       $dupe_story->categories(@safe_cats);
       $dupe_story->save;
-      $dupe_story->checkin;
+      # and, if appropriate, return story to its original location
+      if (my $orig_home = $dupe_stories_original_home{$dupe_story->story_id}) {
+	$dupe_story->checkin;
+	if ($orig_home != -1 && $dupe_story->desk_id != $orig_home &&
+	    scalar(pkg('Desk')->find(desk_id => $orig_home))) {
+	  $dupe_story->move_to_desk($orig_home);
+	}
+      }
       add_message('dupe_story_modified', id => $dupe_story->story_id);
     }
   }  
 
-  # at this point we've succeeded, so re-submit user's failed query
+  # at this point we're finished, so re-submit user's failed query
   my $last_query = $session{KRANG_PERSIST}{DUPE_STORIES}->{QUERY};
   foreach (keys %$last_query) { $self->query->param($_ => $last_query->{$_}) }
   delete $session{KRANG_PERSIST}{DUPE_STORIES};
