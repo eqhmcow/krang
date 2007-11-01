@@ -75,12 +75,12 @@ sub fill_template {
 
     my $instance = pkg('Conf')->instance;
 
-    $TREE{$instance} = $pkg->initialize_tree($instance);
-    
     my %perms = ( desk  => { pkg('Group')->user_desk_permissions()  },
                   asset => { pkg('Group')->user_asset_permissions() },
                   admin => { pkg('Group')->user_admin_permissions() },
                 );
+
+    $TREE{$instance} = $pkg->initialize_tree($instance, \%perms);
 
     $template->param(nav_content => $pkg->render($TREE{$instance}, \%perms));
 
@@ -154,8 +154,8 @@ sub render {
 
 # initialize navigation tree
 sub initialize_tree {
-    my $pkg = shift;
-    my $tree = $pkg->default_tree();
+    my ($pkg, $instance, $perms) = @_;
+    my $tree = $pkg->default_tree($perms);
 
     pkg('AddOn')->call_handler(NavigationHandler => $tree);
 
@@ -163,6 +163,7 @@ sub initialize_tree {
 }
 
 sub default_tree {
+    my ($pkg, $perms) = @_;
     my ($root, $node, $sub, $sub2);
     $root = pkg('NavigationNode')->new();
     $root->name('Root');
@@ -186,7 +187,9 @@ sub default_tree {
     $sub->link('story.pl?rm=list_active');
 
     my @desks = pkg('Desk')->find(order_by => 'order');
-    if( @desks ) {
+    my $user_desk_permissions = $perms->{desk};
+    my $show_desk_section = grep { $user_desk_permissions->{$_->desk_id} ne 'hide' } @desks;
+    if( $show_desk_section ) {
         $sub = $node->new_daughter();
         $sub->name('Desks');
 
