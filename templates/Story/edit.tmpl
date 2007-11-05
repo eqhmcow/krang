@@ -6,7 +6,7 @@ Krang.onload( function() {
   Krang.Help.set( 'story_edit' );
 } );
 
-save_and_stay = function() {
+db_save_and_stay = function() {
   Krang.ElementEditor.run_save_hooks();
   Krang.Form.submit('edit', { rm: 'db_save_and_stay' }, { to_top: false });
 }
@@ -364,7 +364,7 @@ Properties
 
   </tmpl_if>
 
-  <input value="Save Story &amp; Stay" onclick="save_and_stay()" type="button">
+  <input value="Save Story &amp; Stay" onclick="db_save_and_stay()" type="button">
   <input value="Save Story" onclick="db_save()" type="button">
 
 </tmpl_if>
