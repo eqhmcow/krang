@@ -164,7 +164,7 @@ New Story
 <tr id="slug_row"<tmpl_if bad_slug> class="err"<tmpl_else><tmpl_unless show_slug> style="display:none"</tmpl_unless></tmpl_if>>
 <th><label id="require_slug_asterisk" <tmpl_unless require_slug>style="display:none"</tmpl_unless>>*</label>Slug</th>
 <td><input id="slug" name="slug" value="<tmpl_if slug><tmpl_var escape=html slug></tmpl_if>" onkeyup="usr_changed_slug()"<tmpl_if cat_idx> disabled class="disabled"</tmpl_if>>
-<input name="cat_idx" type="checkbox" onclick="usr_toggled_cat_idx()"<tmpl_if cat_idx> checked</tmpl_if> class="pushright small vcenter"<tmpl_if require_slug> style="display:none"</tmpl_if>>
+<input name="cat_idx" type="checkbox" onclick="usr_toggled_cat_idx()"<tmpl_if cat_idx> checked</tmpl_if> class="usual pushright"<tmpl_if require_slug> style="display:none"</tmpl_if>>
 <label id="idx_label"<tmpl_if require_slug> style="display:none"</tmpl_if>>Category Index</label>
 </td>
 </tr>
