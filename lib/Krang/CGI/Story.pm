@@ -55,7 +55,7 @@ sub setup {
         create                        => 'create',
         edit                          => 'edit',
         checkout_and_edit             => 'checkout_and_edit',
-        check_in                      => 'check_in_and_save',
+        check_in_and_save             => 'check_in_and_save',
         view                          => 'view',
         revert                        => 'revert',
         find                          => 'find',
