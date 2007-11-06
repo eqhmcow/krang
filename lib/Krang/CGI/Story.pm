@@ -1469,13 +1469,24 @@ categories, does the same thing for all of them.)
 
 sub new_category_from_slug {
   
-  my $self  = shift;
-  my $story = $session{story};
-  my $slug  = $story->slug;
+  my $self     = shift;
+  my $query    = $self->query;
   $self->make_sure_story_is_still_ours || return '';
 
-  # form new categories by appending slug to existing categories
+  # grab current story data
+  my $story    = $session{story};
+  my $slug     = $story->slug;
   my @old_cats = $story->categories;
+
+  # make sure we have necessary permissions to create in parent dir
+  foreach my $old_cat (@old_cats) {
+    unless (Krang::Category->find(url => $old_cat->url . $slug) || $old_cat->may_edit) {
+      add_alert('no_permissions_to_create_category', url => $old_cat->url . $slug);
+      return $self->edit;
+    }
+  }
+
+  # then form new categories by appending slug to existing categories
   my @new_cats;
   foreach my $old_cat (@old_cats) {
     my ($new_cat) = Krang::Category->find(url => $old_cat->url . $slug);
@@ -1496,6 +1507,11 @@ sub new_category_from_slug {
       add_message('new_categories_from_slug', urls => join(', ',map { $_->url } @new_cats)) :
       add_message('new_category_from_slug', url => $new_cats[0]->url);
   } 
+
+  # update edit-screen
+  $query->param(cat_idx           => 1);
+  $query->param(slug              => '');
+  $query->param(slug_before_empty => ''); # no longer display old slug when unchecking Cat Idx
 
   # write to disk and return to edit screen
   return $self->db_save_and_stay();
