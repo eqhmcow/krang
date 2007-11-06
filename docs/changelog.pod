@@ -14,6 +14,9 @@ Implemented requested "Replace Story" feature where instead of a simple duplicat
 error, creating a story that conflicts with existing URLs now yields a dialogue box 
 giving users the option of overwriting the duplicate URLs. [Noam Weinstein]
 
+=item *
+
+Removed deprecated Story "Priority". [Noam Weinstein]
 
 =back
 

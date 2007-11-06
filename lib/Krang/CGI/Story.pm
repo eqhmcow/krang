@@ -459,13 +459,6 @@ sub edit {
         $template->param(cover_date_selector =>
                          datetime_chooser(name=>'cover_date', date=>$story->cover_date, query=>$query));
         
-        $template->param(priority_selector => scalar
-                         $query->popup_menu(-name => 'priority',
-                                            -default => $story->priority,
-                                            -values => [ 1, 2, 3],
-                                            -labels => { 1 => "Low",
-                                                         2 => "Medium",
-                                                         3 => "High" }));
         my @contribs_loop;
         my %contrib_types = pkg('Pref')->get('contrib_type');
         foreach my $contrib ($story->contribs) {
@@ -610,8 +603,6 @@ sub view {
                          title             => $story->title,
                          slug              => $story->slug,
                          published_version => $story->published_version,
-                         priority => 
-                         ("Low","Medium","High")[$story->priority - 1],
                         );
 
         $template->param(cover_date => $story->cover_date->strftime('%m/%d/%Y %I:%M %p'))
@@ -1226,7 +1217,6 @@ sub _save {
         my $slug = $query->param('slug') || '';
 	my $cat_idx = $query->param('cat_idx') || 0;
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
-        my $priority = $query->param('priority');
         
         my @bad;
         push(@bad, 'title'),       add_alert('missing_title')
@@ -1246,7 +1236,6 @@ sub _save {
         $story->title($title);
         $story->slug($slug);
         $story->cover_date($cover_date);
-        $story->priority($priority);
     }
     
     # success, no output

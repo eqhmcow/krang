@@ -50,7 +50,6 @@ use Krang::ClassLoader MethodMaker =>
                                          publish_date
                                          published_version
                                          preview_version
-                                         priority
                                          desk_id
                                          last_desk_id
                                         ) ]
@@ -68,7 +67,6 @@ use constant STORY_FIELDS =>
       published_version
       preview_version
       notes
-      priority
       element_id
       class
       checked_out
@@ -109,7 +107,6 @@ Krang::Story - the Krang story class
   $story->title("Life is very long");
   $story->slug("life");
   $story->cover_date(Time::Piece->strptime("1/1/2004 12:00", "%D %R"));
-  $story->priority(3);
 
   # get the root element for this story
   my $element = $story->element();
@@ -195,10 +192,6 @@ is moved via krang_export and krang_import.
 =item C<slug>
 
 =item C<notes>
-
-=item C<priority>
-
-A number from 1 (meaning low priority) to 3 (meaning high priority).
 
 =item C<cover_date>
 
@@ -513,7 +506,6 @@ sub init {
     $self->{version}           = 0;
     $self->{published_version} = 0;
     $self->{preview_version}   = 0;
-    $self->{priority}          = 2;
     $self->{checked_out}       = 1;
     $self->{checked_out_by}    = $ENV{REMOTE_USER};
     $self->{cover_date}        = Time::Piece->new();
@@ -2119,7 +2111,6 @@ sub serialize_xml {
     $writer->dataElement(slug       => $self->slug);
     $writer->dataElement(version    => $self->version);
     $writer->dataElement(cover_date => $self->cover_date->datetime);
-    $writer->dataElement(priority   => $self->priority);
     $writer->dataElement(notes      => $self->notes);
     
     # categories
@@ -2282,8 +2273,6 @@ sub deserialize_xml {
     $story->cover_date(Time::Piece->strptime($data->{cover_date},
                                              '%Y-%m-%dT%T'))
       if exists $data->{cover_date};
-    $story->priority($data->{priority})
-      if exists $data->{priority};
     $story->notes($data->{notes})
       if exists $data->{notes};
 
