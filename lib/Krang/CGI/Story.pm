@@ -70,6 +70,7 @@ sub setup {
         add_category                  => 'add_category',
         replace_category              => 'replace_category',
         set_primary_category          => 'set_primary_category',
+        new_category_from_slug        => 'new_category_from_slug',
         copy                          => 'copy',
         replace_dupes                 => 'replace_dupes',
         db_save                       => 'db_save',
@@ -478,6 +479,11 @@ sub edit {
         my @categories = $story->categories;
         my $selected_for_replace_id = ($query->param('category_to_replace_id') || $categories[0]->category_id);
 
+	# store basic URL for story and primary category as text
+	$template->param(story_url_no_link => $story->url);
+	$template->param(primary_cat_url_no_link => $categories[0]->url);
+
+	# build category choosers
         my @category_loop;
         foreach my $cat (@categories) {
             my $url = $cat->url;
@@ -1452,6 +1458,52 @@ sub delete_categories {
     
     return $self->edit();
 }
+
+=item new_category_from_slug
+
+Creates a new category based on the story's slug and makes the story
+an index page located in the new category. (If the story has multiple
+categories, does the same thing for all of them.)
+
+=cut
+
+sub new_category_from_slug {
+  
+  my $self  = shift;
+  my $story = $session{story};
+  my $slug  = $story->slug;
+  $self->make_sure_story_is_still_ours || return '';
+
+  # form new categories by appending slug to existing categories
+  my @old_cats = $story->categories;
+  my @new_cats;
+  foreach my $old_cat (@old_cats) {
+    my ($new_cat) = Krang::Category->find(url => $old_cat->url . $slug);
+    unless ($new_cat) {
+      $new_cat = Krang::Category->new(dir       => $slug,
+				      parent_id => $old_cat->category_id,
+                                      site_id   => $old_cat->site_id);
+      $new_cat->save;
+    }
+    push @new_cats, $new_cat;
+  }
+  $story->slug('');
+  $story->categories(@new_cats);
+
+  # inform user of changes
+  if (@new_cats) {
+    @new_cats > 1 ?
+      add_message('new_categories_from_slug', urls => join(', ',map { $_->url } @new_cats)) :
+      add_message('new_category_from_slug', url => $new_cats[0]->url);
+  } 
+
+  # write to disk and return to edit screen
+  return $self->db_save_and_stay();
+}
+    
+
+
+
 
 =item delete
 

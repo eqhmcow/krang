@@ -99,7 +99,7 @@ use Carp qw(verbose croak);
 use Exception::Class
   (
    'Krang::Category::Dependent' => {fields => 'dependents'},
-   'Krang::Category::DuplicateURL' => {fields => [ 'category_id', 'story_id', 'url' ]},
+   'Krang::Category::DuplicateURL' => {fields => [ 'category_id', 'url' ]},
    'Krang::Category::NoEditAccess' => {fields => 'category_id'},
    'Krang::Category::RootDeletion',
   );
@@ -546,8 +546,8 @@ sub dependent_check {
 
 =item * $category->duplicate_check()
 
-This method checks the database to see if an existing category or story already 
-has the same 'url' as the object in memory. If a duplicate is found,
+This method checks the database to see if an existing category already 
+has the same url as the object in memory. If a duplicate is found,
 a Krang::Category::DuplicateURL exception is thrown; otherwise, 0 is returned.
 
 Krang::Category::DuplicateURL exceptions have a single nonempty field - either
@@ -570,7 +570,6 @@ sub duplicate_check {
     my $self = shift;
     my $id = $self->{category_id};
 
-    # 1) check for category that has our URL
     my $query = <<SQL;
 SELECT category_id
 FROM category
@@ -596,20 +595,7 @@ SQL
 	      url         => $self->{url})
         if $category_id;
 
-    # 2) check for story that has our URL
-    $query = 'SELECT story_id FROM story_category WHERE url = ?';
-    my ($url_without_trailing_slash) = ($self->{url} =~ /^(.+)\/$/);
-    my ($story_id) = $dbh->selectrow_array($query, undef, $url_without_trailing_slash);
-
-    # throw exception
-    Krang::Category::DuplicateURL->throw(
-              message     =>  "Duplicate URL ($self->{url}) for story ID ".
-                              "$story_id.",
-              story_id => $story_id,
-              url      => $url_without_trailing_slash)
-        if $story_id;
-
-    # 3) return false if there were no duplicates
+    # return false if there was no duplicate
     return 0;
 }
 

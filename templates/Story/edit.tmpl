@@ -82,18 +82,31 @@ db_save_and_stay = function() {
     Krang.Form.submit('edit', { rm: 'db_save' });
   }
 
+  turn_on_cat_idx = function() {
+    document.edit.cat_idx.checked = true;
+    document.edit.slug.disabled = true;
+    document.getElementById('slug').className = "disabled"; 
+    // save slug in case the user unchecks 'Category Index' later
+    document.edit.slug_before_empty.value = document.edit.slug.value;  
+    document.edit.slug.value = '';
+  }		
+
   usr_toggled_cat_idx = function() {
-    document.edit.slug.disabled = document.edit.cat_idx.checked;
     if (document.edit.slug.disabled) {	
-        document.getElementById('slug').className = "disabled"; 
-	document.edit.slug_before_empty.value = document.edit.slug.value; 
-	document.edit.slug.value = '';
-    } else {
-	// in case the user checks and then unchecks 'Category Index'...
+        document.edit.slug.disabled = false;
         document.getElementById('slug').className = ""; 
 	document.edit.slug.value = document.edit.slug_before_empty.value;
-    }
+    } else {
+        document.edit.cat_idx.checked = false; 
+        <tmpl_unless slug>turn_on_cat_idx(); return;</tmpl_unless>
+	Krang.Messages.add("Please clarify where you'd like the Index to reside:<center>(Existing Category)<br><input type='button' value='<tmpl_var primary_cat_url_no_link>' onclick='turn_on_cat_idx(); Krang.Messages.hide("+'"alerts")'+"'><br><br><br>(New Category)<br><input type='button' value='<tmpl_var story_url_no_link>/' onclick='if (confirm("+'"Are you sure? This will create a new Category, make the Story its Category Index, and save both the Story and Category to disk."'+")) { turn_on_cat_idx(); wipe_old_slug(); Krang.Form.submit("+'"edit", { rm: "new_category_from_slug" }, { to_top: false }); } Krang.Messages.hide("alerts")'+"'><br><br><br><br>", "alerts");
+	Krang.Messages.show('alerts');
+     }
   }
+
+  wipe_old_slug = function() {
+    document.edit.slug_before_empty.value = '';
+  } 
 
   <tmpl_if may_publish>
     save_and_publish = function() {
