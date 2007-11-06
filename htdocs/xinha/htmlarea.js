@@ -3820,22 +3820,40 @@ HTMLArea.prototype.setDoctype = function(doctype) {
 HTMLArea._object = null;
 
 // function that returns a clone of the given object
-HTMLArea.cloneObject = function(obj) {
-  if (!obj) return null;
-  var newObj = new Object;
+HTMLArea.cloneObject = function(obj)
+{
+  if ( !obj )
+  {
+    return null;
+  }
+
+  var newObj = {};
 
   // check for array objects
-  if (obj.constructor.toString().indexOf("function Array(") == 1) {
+  if ( obj.constructor.toString().match( /\s*function Array\(/ ) )
+  {
     newObj = obj.constructor();
   }
 
   // check for function objects (as usual, IE is fucked up)
-  if (obj.constructor.toString().indexOf("function Function(") == 1) {
+  if ( obj.constructor.toString().match( /\s*function Function\(/ ) )
+  {
     newObj = obj; // just copy reference to it
-  } else for (var n in obj) {
-    var node = obj[n];
-    if (typeof node == 'object') { newObj[n] = HTMLArea.cloneObject(node); }
-    else                         { newObj[n] = node; }
+  }
+  else
+  {
+    for ( var n in obj )
+    {
+      var node = obj[n];
+      if ( typeof node == 'object' )
+      {
+        newObj[n] = HTMLArea.cloneObject(node);
+      }
+      else
+      {
+        newObj[n] = node;
+      }
+    }
   }
 
   return newObj;

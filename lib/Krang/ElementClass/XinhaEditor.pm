@@ -118,9 +118,15 @@ sub input_form {
 <script type="text/javascript">
     _editor_url  = "xinha/"
     _editor_lang = "en";
-</script>
-<script type="text/javascript" src="xinha/htmlarea.js"></script>
-<script type="text/javascript">
+
+    if (!Krang.XinhaLoaded) {
+        var xinha_script = document.createElement('script');
+        xinha_script.setAttribute('type', 'text/javascript');
+        xinha_script.setAttribute('src',  '/static/<tmpl_var krang_install_id>/xinha/htmlarea.js');
+        document.body.appendChild(xinha_script);
+        Krang.XinhaLoaded = 1;
+    }
+
     xinha_editors = null;
     xinha_init    = null;
     xinha_config  = null;
@@ -129,6 +135,11 @@ sub input_form {
     // This contains the names of textareas we will make into Xinha editors
     xinha_init = xinha_init ? xinha_init : function()
     {
+      if (typeof HTMLArea == 'undefined') {
+         setTimeout(xinha_init, 10);
+         return;
+      }
+
       xinha_plugins = xinha_plugins ? xinha_plugins :
       [
        'FullScreen',
@@ -144,6 +155,13 @@ sub input_form {
       xinha_config.sizeIncludesToolbar = false;
       $specialreplacement
       xinha_editors   = HTMLArea.makeEditors(xinha_editors, xinha_config, xinha_plugins);
+
+      Krang.ElementEditor.add_save_hook(function() {
+	  for (name in xinha_editors) {
+	      xinha = xinha_editors[name];
+	      xinha._textArea.value = xinha.outwardHtml(xinha.getHTML());
+	  }
+      });
 END
 
         # setup configuration for each editor
@@ -160,10 +178,10 @@ END
         }
 
         $html .= <<END
-      HTMLArea.startEditors(xinha_editors);    
+      HTMLArea.startEditors(xinha_editors);
     }
 
-    window.onload = xinha_init;
+    Krang.onload(xinha_init);
 </script>
 END
     }

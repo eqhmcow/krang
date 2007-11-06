@@ -4,7 +4,7 @@ This document contains a list of changes for each release of Krang.
 
 
 
-=head2 3.00 - IN DEVELOPMENT
+=head2 3.01 - IN DEVELOPMENT
 
 =over
 
@@ -14,10 +14,28 @@ Implemented requested "Replace Story" feature where instead of a simple duplicat
 error, creating a story that conflicts with existing URLs now yields a dialogue box 
 giving users the option of overwriting the duplicate URLs. [Noam Weinstein]
 
+
+=back
+
+
+
+=head2 3.00 - IN DEVELOPMENT
+
+=over
+
 =item *
 
 Fixed small bugs in TimeChooser where hour/mins of 0 were taken to be null,
 and midnight hour was misunderstood during conversion. [Noam Weinstein]
+
+=item *
+
+Made C<Krang::ElementClass::XinhaEditor> work again. [Bodo Schulze]
+
+=item *
+
+Fixed bug in Sites:  Sites can now rename their URL without
+losing deployed templates.  [Jesse Erlbaum]
 
 =item *
 

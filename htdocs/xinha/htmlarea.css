@@ -7,12 +7,12 @@
   border: 1px solid;
   border-color: ButtonHighlight ButtonShadow ButtonShadow ButtonHighlight;
 }
-.htmlarea .toolbar table { font-family: tahoma,verdana,sans-serif; font-size: 11px; }
+.htmlarea .toolbar table { font-family: tahoma,verdana,sans-serif; font-size: 11px; width: auto !important}
 .htmlarea .toolbar img { border: none; }
 .htmlarea .toolbar .label { padding: 0px 3px; }
 
 .htmlarea .toolbar .button {
-  background: ButtonFace;
+  background: ButtonFace !important;
   color: ButtonText;
   border: 1px solid ButtonFace;
   padding: 1px;

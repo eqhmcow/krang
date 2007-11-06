@@ -93,7 +93,10 @@ use Exception::Class
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'UUID';
 use Krang::ClassLoader DB => qw(dbh);
-use Krang::ClassLoader Log => qw/ affirm assert should shouldnt ASSERT/;
+use Krang::ClassLoader Log => qw/debug affirm assert should shouldnt ASSERT/;
+use Krang::ClassLoader Conf => qw(KrangRoot instance);
+
+use File::Spec::Functions qw(catdir);
 
 #
 # Package Variables
@@ -581,6 +584,18 @@ sub save {
 
     # update category urls if necessary
     if ($update) {
+        # Rename templates directory (if it exists)
+        my $current_instance = pkg('Conf')->instance;
+        my $base_template_path = catdir(KrangRoot, "data", "templates", $current_instance);
+        my $template_directory_path = catdir($base_template_path, $self->{_old_url});
+        debug("template_directory_path = '$template_directory_path'");
+        if (-d $template_directory_path) {
+            my $new_template_path = catdir($base_template_path, $self->{url});
+            debug("Renaming '$template_directory_path' to '$new_template_path'");
+            rename($template_directory_path, $new_template_path) 
+              || die("Can't rename '$template_directory_path' to '$new_template_path': $!");
+        }
+
         $self->update_child_categories();
         $self->{_old_url} = $self->{url};
     }

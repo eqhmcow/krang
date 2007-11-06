@@ -4,6 +4,8 @@ use warnings;
 
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'Category';
+use Krang::ClassLoader 'Template';
+use Krang::ClassLoader 'Publisher';
 use Test::More qw(no_plan);
 
 BEGIN {
@@ -170,3 +172,52 @@ is($result, 1, 'delete() test 4');
 
 $result = $site5->delete();
 is($result, 1, 'delete() test 5');
+
+
+#
+# Test renaming a site URL
+# This formally (Bug #1) would cause site-specific
+# deployed templates to go missing
+#
+{
+    my $site = pkg('Site')->new( publish_path => 'pblish/pathn/',
+                                 preview_path => 'preview/pathn/',
+                                 preview_url => 'preview.testsiten.t',
+                                 url => 'testsiten.t' );
+    $site->save;
+
+    my ($root_cat) = pkg('Category')->find( dir => '/',
+                                            site_id => $site->site_id );
+
+    my $t1 = pkg('Template')->new( category => $root_cat,
+                                   content => 'site tmpl file',
+                                   filename => 'A.tmpl' );
+    $t1->save();
+    $t1->deploy();
+
+    # NOW, test to see if we can find our tmpl?
+    my $publisher = pkg('Publisher')->new();
+    my @sp = $publisher->template_search_path(category=>$root_cat);
+    my $found_it=0;
+    foreach my $p (@sp) {
+        $found_it++ if (-r $p."/A.tmpl");
+    }
+    ok($found_it, "Found template before site URL rename");
+
+    # Rename site and try again
+    $site->url("someother.site");
+    $site->save();
+
+    ($root_cat) = pkg('Category')->find( dir => '/',
+                                         site_id => $site->site_id );
+    @sp = $publisher->template_search_path(category=>$root_cat);
+    $found_it=0;
+    foreach my $p (@sp) {
+        $found_it++ if (-r $p."/A.tmpl");
+    }
+    ok($found_it, "Found template AFTER site URL rename");
+
+    # Delete test content
+    $t1->delete();
+    $site->delete();
+}
