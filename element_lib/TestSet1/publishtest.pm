@@ -53,4 +53,5 @@ sub new {
 sub publish_category_per_page { 1 }
 
 
+sub slug_use { return 'require' }
 1;
