@@ -2197,6 +2197,20 @@ sub alert_duplicate_url {
 
     # find clashing stories/categories, and add alert
     if ($error->stories) {
+
+      if (1) {
+
+	my $dupe = $error->stories->[0];
+	$new_cat ?
+	  add_alert('duplicate_url_on_add_cat_simple', cat => $new_cat, id => $dupe->{id}, url => $dupe->{url}) : 
+          add_alert('duplicate_url_simple',            attributes => $url_attributes, id => $dupe->{id}, url => $dupe->{url});
+
+      }
+
+      else {
+
+      # THIS 'ELSE' CLAUSE (WHICH WILL NEVER RUN) IS THE NEW REPLACE-STORY 
+      # FEATURE, WHICH NEEDS TO BE MORE FULLY TESTED BEFORE IT CAN GO LIVE
       
       # dupe story alerts get a special easily-readable table of IDs/URLs; we build the rows here
       my $dupes = join ('', map { sprintf(qq{<tr>  <td> %d </td>  <td> <a href="%s" target='_blank'>%s</a> </td>  </tr>},
@@ -2215,6 +2229,8 @@ sub alert_duplicate_url {
       # finally, store dupes & query in session hash in case a subsequent replace_dupes() needs them
       $session{KRANG_PERSIST}{DUPE_STORIES}->{DUPES} = $error->stories;
       $session{KRANG_PERSIST}{DUPE_STORIES}->{QUERY} = { map { $_ => $self->query->param($_) } $self->query->param };
+
+      }
       
     } elsif ($error->categories) {
 
