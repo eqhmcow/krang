@@ -216,11 +216,12 @@ sub create {
         die($@);
     }
 
-    # see if there's a story with our URL
+    # see if there's a story with our URL (and no existing category with it)
     my ($url_without_backslash) = ($category->url =~ /^(.*[^\/])\/?$/);
-    if (my ($story) = Krang::Story->find(url => $url_without_backslash)) {
-
-      # there is: make sure we can edit it
+    if ((my ($story) = Krang::Story->find(url => $url_without_backslash)) && 
+	!Krang::Category->find(url => $category->url)) {
+      
+      # there is: make sure we can edit the story
       unless ($story->may_edit) {
 	add_alert ('uneditable_story_has_url', id => $story->story_id);
 	return $self->new_category(bad => ['parent_id','dir']);
@@ -268,12 +269,8 @@ sub create {
 	  add_alert('duplicate_url', 
 		    url         => $@->url,
 		    category_id => $@->category_id);
-	} elsif ($@->story_id) {
-	  add_alert('story_has_url', 
-		    url         => $@->url,
-		    story_id    => $@->story_id);
 	} else {
-	  croak ("DuplicateURL didn't include category_id OR story_id");
+	  croak ("DuplicateURL didn't include category_id");
 	}
         return $self->new_category(bad => ['parent_id','dir']);
       } elsif ($@) {
