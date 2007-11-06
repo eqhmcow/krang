@@ -94,7 +94,7 @@ sub _fix_slugs_that_duplicate_categories {
     # loop through stories, converting them into category covers
     foreach (@$result) {
       my $story_id = $_->[0];
-      print "Converting Story ID $story_id into a Category Cover...\n";
+      print "Converting Story $story_id into a Category Cover...\n";
       
       # grab story object and - if necessary - check it in
       my ($story) = Krang::Story->find(story_id => $story_id);
