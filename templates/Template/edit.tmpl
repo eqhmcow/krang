@@ -8,11 +8,13 @@ Krang.onload( function() {
 
 do_save_stay = function()
 {
+  templateEditor.toggleEditor();
   Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save_stay' }, { to_top: false });
 }
 
 do_save = function()
 {
+  templateEditor.toggleEditor();
   Krang.Form.submit( 'edit_template_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save' });
 }
 
@@ -29,11 +31,13 @@ do_save = function()
 
 do_deploy = function()
 {
+  templateEditor.toggleEditor();
   Krang.Form.submit('edit_template_form', { rm: 'deploy' });
 }
 
 save_and_view_log = function()
 {
+  templateEditor.toggleEditor();
   Krang.Form.submit('edit_template_form', { rm: 'save_and_view_log' });
 }
 
@@ -69,6 +73,12 @@ save_and_view_log = function()
       Krang.Form.submit( 'delete_template_form'<tmpl_if add_mode>, { rm : 'cancel_add' }</tmpl_if> );
   }
 </tmpl_if>
+
+// Register CodePress's onload event:
+Krang.onload( function() { 
+  CodePress.run();
+} );
+
 </script>
 
 <form name="edit_template_form" action="template.pl" method="post" enctype="multipart/form-data">
@@ -194,7 +204,7 @@ Content
 </h3>
 
 <p class="full">
-<textarea name="content" rows="30" cols="60"><tmpl_var escape=html content></textarea>
+<textarea name="content" id="templateEditor" class="codepress html" rows="30" cols="60"><tmpl_var escape=html content></textarea>
 </p>
 
 <p><label>

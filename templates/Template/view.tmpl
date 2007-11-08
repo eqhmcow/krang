@@ -16,6 +16,12 @@ do_return = function()
     Krang.Form.submit( 'edit_template_form' );
   }
 </tmpl_if></tmpl_unless>
+
+// Register CodePress's onload event:
+Krang.onload( function() { 
+  CodePress.run();
+} );
+
 </script>
 
 <!--[p class="cram east"]
@@ -74,7 +80,7 @@ Content
 </h3>
 
 <p class="full">
-<textarea rows="30" cols="50" readonly><tmpl_var escape=html content></textarea>
+<textarea id="templateViewer" class="codepress html readonly-on" rows="30" cols="50"><tmpl_var escape=html content></textarea>
 </p>
 
 <div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped">
