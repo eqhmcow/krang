@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Krang::ClassLoader base => 'Upgrade';
 use Krang::ClassLoader DB => 'dbh';
+use Krang::ClassFactory qw(pkg);
 use Krang::Conf qw(KrangRoot);
 use File::Spec::Functions qw(catfile);
 
