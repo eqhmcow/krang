@@ -134,12 +134,12 @@ sub new_story {
 					-onkeyup   => 'javascript:set_slug_entry_by_type()',
 					-onchange  => 'javascript:set_slug_entry_by_type()'));
 
-    $template->param(category_chooser => 
+    $template->param(category_chooser => scalar
                      category_chooser(name => 'category_id',
-				      formname => 'new_story',
+                                      formname => 'new_story',
                                       query => $query,
                                       may_edit => 1,
-				      persistkey => 'NEW_STORY_DIALOGUE'
+                                      persistkey => 'NEW_STORY_DIALOGUE'
                                      ));
 
     # setup date selector
@@ -470,11 +470,11 @@ sub edit {
 
         # figure out where to position 'replace' radio-button (use primary cat unless user selected something else)
         my @categories = $story->categories;
-        my $selected_for_replace_id = ($query->param('category_to_replace_id') || (@categories && $categories[0]->category_id));
+	my $selected_for_replace_id = ($query->param('category_to_replace_id') || (@categories && $categories[0]->category_id));
 
 	# store basic URL for story and primary category as text
 	$template->param(story_url_no_link => $story->url);
-	$template->param(primary_cat_url_no_link => @categories && $categories[0]->url);
+        $template->param(primary_cat_url_no_link => @categories && $categories[0]->url);
 
 	# build category choosers
         my @category_loop;
@@ -492,24 +492,30 @@ sub edit {
 
         }
         $template->param(category_loop => \@category_loop);
-        $template->param(add_category_chooser => 
-                         category_chooser(name        => 'add_category_id',
-                                          query       => $query,
-                                          label       => 'Add Site/Category',
-                                          display     => 0,
-                                          onchange    => 'add_category',
-                                          may_edit    => 1,
-                                          allow_clear => 0,
-                                         ));
-        $template->param(replace_category_chooser => 
-                         category_chooser(name        => 'category_replacement_id',
-                                          query       => $query,
-                                          label       => 'Replace This Category',
-                                          display     => 0,
-                                          onchange    => 'replace_category',
-                                          may_edit    => 1,
-                                          allow_clear => 0,
-                                         ));
+
+	my ($add_button, $add_chooser)
+	  = category_chooser(name        => 'add_category_id',
+			     query       => $query,
+			     label       => 'Add Site/Category',
+			     display     => 0,
+			     onchange    => 'add_category',
+			     may_edit    => 1,
+			     allow_clear => 0,
+			    );
+        $template->param(add_category_chooser => $add_chooser,
+                         add_category_button  => $add_button);
+
+	my ($replace_button, $replace_chooser)
+	  = category_chooser(name        => 'category_replacement_id',
+			     query       => $query,
+			     label       => 'Replace This Category',
+			     display     => 0,
+			     onchange    => 'replace_category',
+			     may_edit    => 1,
+			     allow_clear => 0,
+			    );
+        $template->param(replace_category_chooser => $replace_chooser,
+                         replace_category_button  => $replace_button);
 
         $template->param(version_selector => scalar
                          $query->popup_menu(-name    => 'version',
@@ -2190,7 +2196,6 @@ sub alert_duplicate_url {
       # dupe story alerts get a special easily-readable table of IDs/URLs; we build the rows here
       my $dupes = join ('', map { sprintf(qq{<tr>  <td> %d </td>  <td> <a href="%s" target='_blank'>%s</a> </td>  </tr>},
 					  $_->{id}, 'http://'.$_->{url}, $_->{url}) } @{$error->stories});
-
       # and we throw (using $s for plural messages, $q for quotes, $f for form)...
       my $s = @{$error->stories} > 1 ? 's' : '';
       my $f = $self->query->param('returning_from_root') ? 'edit' : 'new_story';

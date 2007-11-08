@@ -86,7 +86,7 @@ sub choose {
 
     $template->param( 
         enable_ftp       => (EnableFTP || 0),
-        category_chooser => category_chooser(name=>'category_id', query=>$query, may_edit => 1),
+        category_chooser => scalar category_chooser(name=>'category_id', query=>$query, may_edit => 1),
         upload_chooser   => scalar $query->filefield(-name => 'media_file',-size => 32),
     );
 

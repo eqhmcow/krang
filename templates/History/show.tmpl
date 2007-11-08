@@ -28,7 +28,10 @@ Log
  <tmpl_include HTMLPager/pager-pagination.tmpl>
 </div>
 
-<table class="result select_row" summary="">
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result select_row" summary="">
 
 <colgroup>
 <!-- 'action' column -->
@@ -38,7 +41,7 @@ Log
 <!-- 'timestamp' column - not normal length so that we can fit it all on one line -->
 <col class="c-ldate">
 <!-- 'attr' column -->
-<col class="c-stat">
+<col class="c-user">
 </colgroup>
 
 <thead>
@@ -52,14 +55,14 @@ Log
 
 <tbody><tmpl_loop krang_pager_rows>
 <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-<td><tmpl_var action></td>
+<td class="f"><tmpl_var action></td>
 <td><tmpl_var user></td>
 <td><tmpl_var timestamp></td>
-<td><tmpl_var attr></td>
+<td class="l"><tmpl_var attr></td>
 </tr>
 </tmpl_loop></tbody>
 
-</table>
+</table></div>
 
 <tmpl_include HTMLPager/pager-pagination.tmpl>
 

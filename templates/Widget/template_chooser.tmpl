@@ -1,7 +1,5 @@
 <input id="<tmpl_if formname><tmpl_var escape=html formname>.</tmpl_if><tmpl_var escape=html field>" name="<tmpl_var escape=html field>" value="<tmpl_var escape=html element_class_name>" type="hidden">
 
-<tmpl_var chooser>
-
 <input value="Clear" onclick="<tmpl_var escape=html name>_clear_template()" type="button" class="hpts-button">
 
 <tmpl_if display><span id="<tmpl_var escape=html name>_id"><tmpl_if element_class_name>

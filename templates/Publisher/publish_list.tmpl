@@ -41,7 +41,10 @@ Publish
 Publication Materials
 </h3>
 
-<table class="result" summary=""><!--:FIX(db2)-->
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result" summary="">
 
 <colgroup>
 <col class="c-id">
@@ -74,25 +77,25 @@ Publication Materials
 
   <tmpl_loop stories>
     <tr<tmpl_if checked_out> class="err"</tmpl_if>>
-    <td><tmpl_var escape=html id></td>
+    <td class="f"><tmpl_var escape=html id></td>
     <td>Story</td>
     <td><tmpl_var escape=html title></td>
     <td><tmpl_var url><!--:markup--></td>
     <td></td>
-    <td><tmpl_var status><!--:markup--></td>
+    <td class="l"><tmpl_var status><!--:markup--></td>
     </tr>
   </tmpl_loop>
 
   <tmpl_loop media>
     <tr<tmpl_if checked_out> class="err"</tmpl_if>>
-    <td><tmpl_var escape=html id></td>
+    <td class="f"><tmpl_var escape=html id></td>
     <td>Media</td>
     <td><tmpl_var escape=html title></td>
     <td><tmpl_var url><!--:markup--></td>
     <td><tmpl_if thumbnail>
       <a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media','<tmpl_var escape=html id>')"><img alt="" src="<tmpl_var escape=html thumbnail>"></a>
     </tmpl_if></td>
-    <td><tmpl_var status><!--:markup--></td>
+    <td class="l"><tmpl_var status><!--:markup--></td>
     </tr>
   </tmpl_loop>
 
@@ -100,11 +103,11 @@ Publication Materials
 
   <tmpl_loop stories>
     <tr<tmpl_if checked_out> class="err"</tmpl_if>>
-    <td><tmpl_var escape=html id></td>
+    <td class="f"><tmpl_var escape=html id></td>
     <td>Story</td>
     <td><tmpl_var escape=html title></td>
     <td><tmpl_var url><!--:markup--></td>
-    <td><tmpl_var status><!--:markup--></td>
+    <td class="l"><tmpl_var status><!--:markup--></td>
     </tr>
   </tmpl_loop>
 

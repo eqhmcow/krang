@@ -133,15 +133,18 @@ Workspace
 
   <tmpl_include HTMLPager/pager-pagination.tmpl>
 
-  <table class="result select_row" summary="">
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
 
   <colgroup>
-  <col class="c-id">
+  <col class="c-id f">
   <col class="c-type">
   <col>
   <col class="c-thumb">
   <col class="c-date">
-  <col class="tick">
+  <col class="tick l">
   </colgroup>
 
   <thead>
@@ -157,7 +160,7 @@ Workspace
 
   <tbody><tmpl_loop krang_pager_rows>
     <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-    <td><tmpl_if is_story>
+    <td class="f"><tmpl_if is_story>
       <tmpl_var escape=html story_id>
     <tmpl_else><tmpl_if is_media>
       <tmpl_var escape=html media_id>
@@ -229,13 +232,14 @@ Workspace
 
     <td><tmpl_var date escape=html></td>
 
-    <td class="tick"><tmpl_if may_edit>
+    <td class="tick l"><tmpl_if may_edit>
       <tmpl_var checkbox_column>
     </tmpl_if></td>
     </tr>
   </tmpl_loop></tbody>
 
   </table>
+  </div>
 
   <tmpl_include HTMLPager/pager-pagination.tmpl>
 

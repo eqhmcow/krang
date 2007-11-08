@@ -36,54 +36,60 @@ Edit
 Schedule
 </h2>
 
-<h3>
-<tmpl_if is_story>
-  Story
-<tmpl_else><tmpl_if is_media>
-  Media
-</tmpl_if></tmpl_if>
-Properties
-</h3>
-
-<table class="result" summary="">
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
 <col class="c-label">
 <col>
 </colgroup>
 
+<thead>
+<tr>
+<th class="f l" colspan="2">
+<tmpl_if is_story>
+  Story
+<tmpl_else><tmpl_if is_media>
+  Media
+</tmpl_if></tmpl_if>
+Properties</th>
+</tr>
+</thead>
+
 <tbody>
 
 <tr>
-<th>URL</th>
-<td><tmpl_var escape=html url></td>
+<td class="f">URL</td>
+<td class="l"><tmpl_var escape=html url></td>
 </tr>
 
 <tmpl_if is_story>
-  <tr>
-  <th>Story Type</th>
-  <td><tmpl_var escape=html story_type></td>
+  <tr class="even">
+  <td class="f">Story Type</td>
+  <td class="l"><tmpl_var escape=html story_type></td>
   </tr>
 </tmpl_if>
 
-<tr>
-<th><tmpl_if is_story>Story<tmpl_else><tmpl_if is_media>Media</tmpl_if></tmpl_if> ID</th>
-<td><tmpl_var escape=html id></td>
+<tr class="even">
+<td class="f"><tmpl_if is_story>Story<tmpl_else><tmpl_if is_media>Media</tmpl_if></tmpl_if> ID</td>
+<td class="l"><tmpl_var escape=html id></td>
 </tr>
 
 <tr>
-<th>Current Version</th>
-<td><tmpl_var escape=html current_version></td>
+<td class="f">Current Version</td>
+<td class="l"><tmpl_var escape=html current_version></td>
 </tr>
 
 <tr>
-<th>Published Version</th>
-<td><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+<td class="f">Published Version</td>
+<td class="l"><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
 </tr>
 
 </tbody>
 
-</table>
+</table></div>
 
 <h3>
 Current Schedule
@@ -105,14 +111,17 @@ Current Schedule
     <input name="advanced_schedule" value="1" type="hidden">
   </tmpl_if>
 
-  <table class="result select_row" summary=""><!--:FIX(db2)-->
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
 
   <colgroup>
   <col>
   <col>
   <col>
   <col class="c-date">
-  <col class="tick">
+  <col class="series">
   </colgroup>
 
   <thead>
@@ -121,13 +130,13 @@ Current Schedule
   <th>Version</th>
   <th>Trigger</th>
   <th>Next Event</th>
-  <th class="l tick"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'schedule_delete_list')"></th>
+  <th class="l series"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'schedule_delete_list')"></th>
   </tr>
   </thead>
 
   <tbody><tmpl_loop existing_schedule_loop>
     <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-    <td><tmpl_var escape=html action></td>
+    <td class="f"><tmpl_var escape=html action></td>
     <td><tmpl_if version>
       <tmpl_var escape=html version>
     <tmpl_else>
@@ -135,15 +144,16 @@ Current Schedule
     </tmpl_if></td>
     <td><tmpl_var escape=html schedule></td>
     <td><tmpl_var escape=html next_run></td>
-    <td class="tick"><input name="schedule_delete_list" value="<tmpl_var escape=html schedule_id>" type="checkbox"></td>
+    <td class="series l"><input name="schedule_delete_list" value="<tmpl_var escape=html schedule_id>" type="checkbox"></td>
     </tr>
   </tmpl_loop></tbody>
 
-  </table>
+  <tr class="command-row">
+  <td class="f" colspan="4">&nbsp;</td>
+  <td class="series l"><input value="Delete" onclick="delete_selected()" type="button" class="button"></td>
+  </tr>
 
-  <div class="panel">
-  <input value="Delete" onclick="delete_selected()" type="button">
-  </div>
+  </table></div>
 
   </form>
 
@@ -157,14 +167,13 @@ Current Schedule
   <input name="advanced_schedule" value="1" type="hidden">
 </tmpl_unless>
 
-<p class="cram east">
-<input value="<tmpl_if simple>Advanced<tmpl_else>Simple</tmpl_if> Scheduler" onclick="Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type><tmpl_if simple>&amp;advanced_schedule=1</tmpl_if>')" type="button" class="button">
-</p>
+<div class="tabset finder">
+<ul class="tabs">
+<li><tmpl_if simple><b><tmpl_else><a href="javascript:Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type>')"></tmpl_if><span>Simple Scheduler</span><tmpl_if simple></b><tmpl_else></a></tmpl_if></li>
+<li><tmpl_if simple><a href="javascript:Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type>&amp;advanced_schedule=1')"><tmpl_else><b></tmpl_if><span>Advanced Scheduler</span><tmpl_if simple></a><tmpl_else></b></tmpl_if></li>
+</ul>
 
-<h3>
-Add Action
-(<tmpl_if simple>Simple<tmpl_else>Advanced</tmpl_if>)
-</h3>
+<div class="tabbed">
 
 <table class="request" summary="">
 
@@ -203,7 +212,7 @@ Add Action
 
 <tmpl_else>
 
-  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if invalid_datetime> class="err"</tmpl_if></tmpl_if>">
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if invalid_datetime> class="err"</tmpl_if></tmpl_if>>
   <th>
   <input name="repeat" value="never" type="radio"<tmpl_if repeat_never> checked</tmpl_if>>
   Trigger Once
@@ -248,10 +257,12 @@ Add Action
 
 </table>
 
-<div class="panel capped">
+<div class="panel cadpped">
 <input value="Back" onclick="do_return()" type="button" class="west">
 <input value="Schedule Action" type="submit">
 </div>
+
+</div></div>
 
 </form>
 

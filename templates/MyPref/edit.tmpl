@@ -21,40 +21,48 @@ Preferences
   <input name="password_only" value="1" type="hidden">
 </tmpl_if>
 
-<table class="request" summary=""><!--:FIXME(db2)-->
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
 <col class="c-label">
 <col>
 </colgroup>
 
+<thead>
+<tr>
+<th class="f l" colspan="2">Preferences</th>
+</thead>
+
 <tbody>
 
 <tmpl_unless password_only>
   <tr>
-  <th>Search Results per Page</th>
-  <td>
+  <td class="f">Search Results per Page</td>
+  <td class="l">
   <tmpl_var search_results_selector>
   </td>
   </tr>
 
-  <tr>
-  <th>Autocomplete Searches?</th>
-  <td><tmpl_var use_autocomplete_selector></td>
+  <tr class="evden">
+  <td class="f">Autocomplete Searches?</td>
+  <td class="l"><tmpl_var use_autocomplete_selector></td>
   </tr>
 
   <tr>
-  <th>Timeout for Messages</th>
-  <td>
+  <td class="f">Timeout for Messages</td>
+  <td class="l">
   <tmpl_var message_timeout_selector>
   seconds
   </td>
   </tr>
 </tmpl_unless>
 
-<tr>
-<th>Change Account Password</th>
-<td>
+<tr class="evedn">
+<td class="f">Change Account Password</td>
+<td class="l">
 <input name="new_password" type="password">
 (new password)
 <br>
@@ -63,15 +71,15 @@ Preferences
 </td>
 </tr>
 
-<tr>
-<td colspan="2">
+<tr class="evedn">
+<td class="f l" colspan="2">
 Password must be at least 8 characters long and include at least one number and one symbol.
 </td>
 </tr>
 
 </tbody>
 
-</table>
+</table></div>
 
 <div class="panel capped">
 <input value="Update Preferences" type="button" onclick="update_prefs()">

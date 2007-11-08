@@ -127,15 +127,9 @@
   <input name="bulk_edit_sep" value="<tmpl_var escape=html bulk_edit_sep>" type="hidden">
 </tmpl_if>
 
-<tmpl_if crumbs><div class="east"><tmpl_loop crumbs>
+<tmpl_if crumbs><div class="crumbs"><tmpl_loop crumbs>
   <tmpl_unless __last__><a href="javascript:jump_to('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
 </tmpl_loop></div></tmpl_if>
-
-<h3><tmpl_if bulk_edit>
-  Bulk Edit
-<tmpl_else>
-  Content
-</tmpl_if></h3>
 
 <tmpl_if bulk_edit>
 
@@ -200,7 +194,10 @@
 
 <tmpl_else>
 
-  <table class="result edit select_row" summary=""><!--:FIX(db2)-->
+  <div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result edit select_row" summary="">
 
   <colgroup>
   <col class="series">
@@ -222,7 +219,7 @@
 
   <tmpl_loop child_loop>
     <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-    <td class="series"><tmpl_var order_select></td>
+    <td class="series f"><tmpl_var order_select></td>
 
     <th class="wrap"><tmpl_if required>*</tmpl_if><tmpl_var escape=html name></th>
 
@@ -233,34 +230,36 @@
     <tmpl_var form>
     </td>
 
-    <td class="series"><tmpl_if allow_delete><input name="remove_<tmpl_var escape=html index>" type="checkbox" class="hilite-row"></tmpl_if></td>
+    <td class="series l"><tmpl_if allow_delete><input name="remove_<tmpl_var escape=html index>" type="checkbox" class="hilite-row"><tmpl_else>&nbsp;</tmpl_if></td>
     </tr>
   </tmpl_loop>
 
-  <tr>
-  <td class="series"><tmpl_unless no_reorder><input value="Reorder" onclick="reorder()" type="button" class="button"></tmpl_unless></td>
+  <tr class="command-row">
+  <td class="series f"><tmpl_unless no_reorder><input value="Reorder" onclick="reorder()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></td>
 
-  <td></td>
+  <td>&nbsp;</td>
 
   <td><!--(db2)TODO - constrain form control widths:-->
-  <tmpl_if child_select>
-    <tmpl_var child_select>
-    <input value="Add Element" onclick="add_child()" type="button" class="button">
-  </tmpl_if>
+  <table>
+  <tmpl_if child_select><tr>
+    <td><tmpl_var child_select></td>
+    <td><input value="Add Element" onclick="add_child()" type="button" class="button"></td>
+  </tr></tmpl_if>
 
-  <tmpl_if bulk_edit_select>
-    <br>
-    <tmpl_var bulk_edit_select>
-    <input value="Bulk Edit" onclick="save_and_bulk_edit()" type="button" class="button">
-  </tmpl_if>
+  <tmpl_if bulk_edit_select><tr>
+<!--     <br> -->
+    <td><tmpl_var bulk_edit_select></td>
+    <td><input value="Bulk Edit" onclick="save_and_bulk_edit()" type="button" class="button"></td>
+  </tr></tmpl_if>
+  </table>
   </td>
 
-  <td class="series"><tmpl_unless no_delete><input value="Delete" onclick="remove_children()" type="button" class="button"></tmpl_unless></td>
+  <td class="series l"><tmpl_unless no_delete><input value="Delete" onclick="remove_children()" type="button" class="button"></tmpl_unless></td>
   </tr>
 
   </tbody>
 
-  </table>
+  </table></div>
 
 </tmpl_unless></tmpl_if>
 

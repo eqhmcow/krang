@@ -296,7 +296,10 @@ sub make_internal_template {
 
 <tmpl_include HTMLPager/pager-pagination.tmpl>
 
-<table class="result select_row" summary="">
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result select_row" summary="">
 
 $colgroup
 
@@ -306,15 +309,19 @@ $thead
 END
 
     # build loop for data
+    my $first_col = '<td class="f"><tmpl_var ' . shift(@columns) . "></td>\n";
+    my $last_col  = '<td class="l"><tmpl_var ' . pop(@columns)   . "></td>\n";
     $pager_tmpl .= qq{<tr<tmpl_unless __odd__> class="even"</tmpl_unless>>\n}
+      . $first_col
       . join("\n", map { qq{<td><tmpl_var $_></td>} } @columns)
+      . $last_col
       . "\n</tr>\n";
 
     # finish pager output
     $pager_tmpl .= <<"EOF";
 </tmpl_loop></tbody>
 
-</table>
+</table></div>
 
 <tmpl_include HTMLPager/pager-pagination.tmpl>
 

@@ -352,12 +352,12 @@ sub advanced_find {
     $t->param(row_count => $pager->row_count());
 
     # Set up advanced search form
-    $t->param(category_chooser => category_chooser(
+    $t->param(category_chooser => scalar(category_chooser(
                                                    query    => $q,
                                                    name     => 'search_below_category_id',
                                                    formname => 'search_form',
                                                    persistkey => pkg('Media'),
-                                                ));
+                                                )));
     $t->param(date_from_chooser => datetime_chooser(
                                            query => $q,
                                            name => 'search_creation_date_from',

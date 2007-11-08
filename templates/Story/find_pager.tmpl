@@ -6,7 +6,10 @@
 
 <tmpl_include HTMLPager/pager-pagination.tmpl>
 
-<table class="result select_row" summary="">
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result select_row" summary="">
 
 <colgroup>
 <!-- 'pub_status' column -->
@@ -40,7 +43,7 @@
 
 <tbody><tmpl_loop krang_pager_rows>
 <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-<td><tmpl_var pub_status></td>
+<td class="f">P<tmpl_var pub_status></td>
 <td><tmpl_var story_id escape=html></td>
 <td>
     <strong><tmpl_var title escape=html></strong><br>
@@ -54,11 +57,11 @@
 </td>
 <td><tmpl_var cover_date escape=html></td>
 <td><tmpl_var status></td>
-<td><tmpl_var checkbox_column></td>
+<td class="l"><tmpl_var checkbox_column></td>
 </tr>
 </tmpl_loop></tbody>
 
-</table>
+</table></div>
 
 <tmpl_include HTMLPager/pager-pagination.tmpl>
 

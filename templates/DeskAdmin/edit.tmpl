@@ -42,7 +42,10 @@ Current Desks
   <input name="rm" value="delete" type="hidden">
   <input name="total_desks" value="<tmpl_var escape=html total_desks>" type="hidden">
 
-  <table class="result select_row" summary="">
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
 
   <colgroup>
   <col class="series">
@@ -60,15 +63,15 @@ Current Desks
 
   <tbody><tmpl_loop existing_desk_loop>
     <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-    <td class="series"><select name="order_<tmpl_var escape=html desk_id>" onchange="Krang.update_order(this,'order_')"><tmpl_loop desk_count_loop>
+    <td class="series f"><select name="order_<tmpl_var escape=html desk_id>" onchange="Krang.update_order(this,'order_')"><tmpl_loop desk_count_loop>
       <option value="<tmpl_var escape=html count>"<tmpl_if selected> selected</tmpl_if>><tmpl_var escape=html count></option>
     </tmpl_loop></select></td>
     <td><tmpl_var escape=html name></td>
-    <td class="tick"><input name="desk_delete_list" value="<tmpl_var escape=html desk_id>" type="checkbox"></td>
+    <td class="tick l"><input name="desk_delete_list" value="<tmpl_var escape=html desk_id>" type="checkbox"></td>
     </tr>
   </tmpl_loop></tbody>
 
-  </table>
+  </table></div>
 
   <div class="panel">
   <input value="Reorder" onclick="reorder()" type="button" class="west">

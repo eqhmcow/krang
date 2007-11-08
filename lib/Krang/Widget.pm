@@ -64,8 +64,13 @@ This modules exports a set of generally useful CGI widgets.
 
 =item $chooser_html = category_chooser(name => 'category_id', query => $query)
 
-Returns a block of HTML implementing the standard Krang category
+=item ($chooser_interface, $chooser_html) = template_chooser(name => 'category_id', query => $query);
+
+In scalar context returns a block of HTML implementing the standard Krang category
 chooser.
+
+In list context returns the chooser interface (show button, clear
+button, display of selected element) separately.
 
 Available parameters are as follows:
 
@@ -188,7 +193,6 @@ sub category_chooser {
 
     # send data to the template
     $template->param(
-        chooser     => $chooser->output,
         name        => $name,
         field       => $field,
         display     => defined $display ? $display : 1,
@@ -197,7 +201,11 @@ sub category_chooser {
         allow_clear => $allow_clear,
     );
 
-    return $template->output();
+    my ($show_button, $chooser_html) = $chooser->output();
+
+    return wantarray
+      ? ($show_button . $template->output() , $chooser_html)
+      : ($show_button . $template->output() . $chooser_html);
 }
 
 =item $chooser = category_chooser_object(name => 'category_id', query => $query)
@@ -350,6 +358,7 @@ sub category_chooser_object {
         dynamic_params    => "rm=category_chooser_node&name=${name}",
         include_prototype => 0,
         include_full_js   => 0,
+        separate_show_bnt => 1,
     );
 }
 
@@ -698,8 +707,13 @@ sub format_url {
 
 =item $chooser_html = template_chooser(name => 'category_id', query => $query)
 
-Returns a block of HTML implementing the standard Krang template
+=item ($chooser_interface, $chooser_html) = template_chooser(name => 'category_id', query => $query);
+
+In scalar context returns a block of HTML implementing the standard Krang template
 chooser.
+
+In list context returns the chooser interface (show button, clear
+button, display of selected element) separately.
 
 Available parameters are as follows:
 
@@ -793,7 +807,6 @@ sub template_chooser {
 
     # send data to the template
     $template->param(
-        chooser  => $chooser->output,
         name     => $name,
         field    => $field,
         display  => defined $display ? $display : 1,
@@ -801,7 +814,11 @@ sub template_chooser {
         onchange => $onchange
     );
 
-    return $template->output;
+    my ($show_button, $chooser_html) = $chooser->output();
+
+    return wantarray
+      ? ($show_button . $template->output() , $chooser_html)
+      : ($show_button . $template->output() . $chooser_html);
 }
 
 =item $chooser = template_chooser_object(name => 'category_id', query => $query)
@@ -897,6 +914,7 @@ sub template_chooser_object {
         dynamic_params    => "rm=template_chooser_node&name=${name}",
         include_prototype => 0,
         include_full_js   => 0,
+        separate_show_btn => 1,
     );
 }
 

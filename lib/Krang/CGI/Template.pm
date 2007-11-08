@@ -356,19 +356,21 @@ sub advanced_search {
     $t->param(row_count => $pager->row_count());
 
     # Set up element chooser
-    $t->param(element_chooser => template_chooser(query      => $q,
-						  name       => 'search_element',
-						  formname   => 'template_search_form',
-						  persistkey => 'Element',
-						));
+    $t->param(element_chooser => scalar
+	      template_chooser(query      => $q,
+			       name       => 'search_element',
+			       formname   => 'template_search_form',
+			       persistkey => 'Element',
+			      ));
 
     # Set up category chooser
-    $t->param(category_chooser => category_chooser(query      => $q,
-                                                   formname   => 'template_search_form',
-                                                   persistkey => pkg('Template'),
-                                                   name       =>
-                                                   'search_below_category_id',
-                                                  ));
+    $t->param(category_chooser => scalar
+	      category_chooser(query      => $q,
+			       formname   => 'template_search_form',
+			       persistkey => pkg('Template'),
+			       name       =>
+			       'search_below_category_id',
+			      ));
     return $t->output();
 }
 

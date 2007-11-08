@@ -47,73 +47,77 @@ view_log = function()
 View Story
 </h2>
 
-<h3>
-Properties
-</h3>
-
-<table class="result" summary="">
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
 <col class="c-label">
 <col>
 </colgroup>
 
+<thead>
+<tr>
+<th class="f">Properties</th>
+<th class="l"></th>
+</tr>
+</thead>
+
 <tbody>
 
 <tr>
-<th>Story ID</th>
-<td><tmpl_var escape=html story_id></td>
+<td class="f">URL</td>
+<td class="l"><tmpl_var url><!--:markup--></td>
+</tr>
+
+<tr<tmpl_unless is_root> class="even"</tmpl_unless>>
+<td class="f">Type</td>
+<td class="l"><tmpl_var escape=html type></td>
 </tr>
 
 <tr>
-<th>Type</th>
-<td><tmpl_var escape=html type></td>
-</tr>
-
-<tr>
-<th>Current Version</th>
-<td><tmpl_var escape=html version></td>
+<td class="f">Story ID</td>
+<td class="l"><tmpl_var escape=html story_id></td>
 </tr>
 
 <tmpl_if is_root>
-  <tr>
-  <th>Published Version</th>
-  <td><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+  <tr class="even">
+  <td class="f">Title</td>
+  <td class="l"><tmpl_var escape=html title></td>
+  </tr>
+
+  <tr class="even">
+  <td class="f">Slug</td>
+  <td class="l"><tmpl_var escape=html slug></td>
+  </tr>
+
+  <tr class="even">
+  <td class="f">Cover Date</td>
+  <td class="l"><tmpl_var escape=html cover_date></td>
   </tr>
 
   <tr>
-  <th>Title</th>
-  <td><tmpl_var escape=html title></td>
+  <td class="f">Current Version</td>
+  <td class="l"><tmpl_var escape=html version></td>
   </tr>
 
   <tr>
-  <th>Slug</th>
-  <td><tmpl_var escape=html slug></td>
+  <td class="f">Published Version</td>
+  <td class="l"><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
   </tr>
-</tmpl_if>
 
-<tr>
-<th>URL</th>
-<td><tmpl_var url><!--:markup--></td>
-</tr>
-
-<tmpl_if is_root>
-  <tr>
-  <th>Categories</th>
-  <td><tmpl_loop category_loop>
+  <tr class="even">
+  <td class="f">Categories</td>
+  <td class="l"><tmpl_loop category_loop>
     <tmpl_var escape=html url>
     <tmpl_unless __last__><br></tmpl_unless>
   </tmpl_loop></td>
   </tr>
 
-  <tr>
-  <th>Cover Date</th>
-  <td><tmpl_var escape=html cover_date></td>
-  </tr>
-
-  <tr>
-  <th>Contributors</th>
-  <td>
+  <tr class="even">
+  <td class="f">Contributors</td>
+  <td class="l">
   <tmpl_if contribs_loop>
     <tmpl_loop contribs_loop>
       <tmpl_var escape=html first_name> <tmpl_var escape=html last_name> (<tmpl_var escape=html type>)<tmpl_unless __last__>,</tmpl_unless>
@@ -127,7 +131,7 @@ Properties
 
 </tbody>
 
-</table>
+</table></div>
 
 <!--/ElementEditor/view.tmpl:-->
 <tmpl_include /ElementEditor/view.tmpl>

@@ -3,7 +3,8 @@
  **************/
 
 html { background: #333; color: #FFF; overflow-y: scroll; }
-body { background: url("/static/<tmpl_var krang_install_id>/images/bkg-body.gif") repeat-y; width: 974px; margin: 0 auto; padding: 0; font: 11px/1 "Helvetica Neue",arial,helvetica,sans-serif; }
+html, body { margin: 0; padding: 0 }
+#B { background: url("/static/<tmpl_var krang_install_id>/images/bkg-body.gif") repeat-y; width: 974px; margin: 0 auto; padding: 0; font: 11px/1 "Helvetica Neue",arial,helvetica,sans-serif; }
 #H   { background: <tmpl_var DarkLinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-header.jpg") no-repeat; position: relative; height: 105px; margin: 0 7px; }
 #M   { background: #FFF url("/static/<tmpl_var krang_install_id>/images/bkg-midriff.gif") repeat-y; color: #000; min-height: 420px; margin: 0 7px; border: 1px solid #D4D4D4; border-width: 1px 0; }
 #S   { width: 178px; margin: 20px 0; }
@@ -171,10 +172,10 @@ form { margin: 0; padding: 0; }
 #C thead { }
 
 #C tbody { }
-#C tbody.even { background-color: #EEE; }
+#C tbody.even { background-color: #F3F3F3; }
 
 #C tr             { }
-#C tr.even        { background-color: #EEE; }
+#C tr.even        { background-color: #F3F3F3; }
 #C tr.hilite      { background-color: <tmpl_var HilightColor> !important; }
 #C tr.even.hilite { background-color: <tmpl_var EvenHilightColor> !important; }
 
@@ -193,25 +194,31 @@ form { margin: 0; padding: 0; }
 #C table.request thead th.f { background-position: 0 -2400px; }
 #C table.request thead th.l { background-position: 100% -2700px; }
 
-#C table.result { }
+#C table.result { border-bottom: 1px solid #DDD; border-collapse: separate; border-spacing: 0; margin: 0; }
 #C table.result thead { background-color: <tmpl_var XLightColor>; }
-#C table.result tbody { border: 1px solid #DDD; border-top: 0px; }
-#C table.result tbody th, #C table.result td { padding-top: .45em; padding-bottom: .45em; }
-#C div table.result tbody th, #C div table.result td { padding-top: .27em; padding-bottom: .27em; }/*:TESTING*/
-#C table.result thead th.f, #C table.result thead th.l { background-image: url("/static/<tmpl_var krang_install_id>/images/bkg-corners-inner.gif"); background-repeat: no-repeat; }
-#C table.result thead th.f { background-position: 0 -2400px; }
-#C table.result thead th.l { background-position: 100% -2700px; }
+#C table.result tbody th, #C table.result td { padding-top: .27em; padding-bottom: .27em; }
+
+#C table.result thead th.f { border-left:  1px solid <tmpl_var XLightColor>; padding-left: 10px}
+#C table.result thead th.l { border-right: 1px solid <tmpl_var XLightColor>; }
+#C table.result tbody td.f { border-left:  1px solid #DDD !important; padding-left: 10px}
+#C table.result tbody td.l { border-right: 1px solid #DDD !important; }
 
 #C table.compact { width: auto; table-layout: auto; }
 #C table.compact th, #C table.compact td { overflow: visible; word-wrap: normal; white-space: nowrap; }
 
 #C table table    { margin-top: 0; table-layout: auto; }/*:ONLY ElementEditor?(db2)*/
-#C table.result table tbody { border-style: none; }/*:ONLY ElementEditor?(bodo)*/
 #C table table td { padding-left: 0; overflow: visible; word-wrap: normal; }/*:ONLY ElementEditor?(db2)*/
+
+#C table.props { border-bottom: 1px solid #DDD; border-collapse: separate; border-spacing: 0; margin: 0 }
+#C table.props thead { background-color: <tmpl_var XLightColor>; }
+#C table.props tbody th, #C div table.props td { padding: .27em 0px }
+#C table.props thead th.f { border-left:  1px solid <tmpl_var XLightColor>; padding-left: 10px}
+#C table.props tbody td.f { border-left:  1px solid #DDD; padding-left: 10px; font-weight: bold; color: #666}
+#C table.props tbody td.l { border-right: 1px solid #DDD }
 
 /*column widths must account for padding (~1.5em):*/
 #C col.c-date  { width:    7em; }/*:format = 'xx/xx/xxxx xx:xx XX' on 2 lines*/
-#C col.c-ldate { width:    12em; }/*:format = 'xx/xx/xxxx xx:xx XX' on 1 line*/
+#C col.c-ldate { width:   12em; }/*:format = 'xx/xx/xxxx xx:xx XX' on 1 line*/
 #C col.c-flag  { width:  2.5em; }/*:character*/
 #C col.c-id    { width:    5em; }/*:five digits, at most*/
 #C col.c-link  { width: 11.5em; }/*:per-row actions (FIX?)*/
@@ -232,6 +239,19 @@ form { margin: 0; padding: 0; }
 #C thead img, #C thead input, #C thead th.tick { vertical-align: middle; }
 #C thead a img { margin: 0 0 0 .25em; }/*:sortables*/
 
+/*  Table container for rounded table header corners */
+#C .table-container { position: relative; margin: 20px 0px 10px }
+#C img.left-corner  { position: absolute; top:0; left:0;  }
+#C img.right-corner { position: absolute; top:0; right:0; }
+
+/* ElementEditor command row */
+#C tr.command-row td    { border-top:   2px solid #F3F3F3; border-bottom: 1px solid #F3F3F3; }
+#C tr.command-row td.f  { border-left:  1px solid #F3F3F3 !important; vertical-align: middle}
+#C tr.command-row td.l  { border-right: 1px solid #F3F3F3 !important; vertical-align: middle}
+#C tr.command-row table { width: auto !important }
+#C tr.command-row table, #C tr.command-row table td { border: none }
+
+#C .crumbs { margin-top: 20px; padding-left: 10px }
 
 /*********
  * Forms *
@@ -341,7 +361,7 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 .hpts-outer *   { width: 225px; }
 .hpts-outer * * { width: auto; }
 
-.hpts-title { overflow: hidden; background: #999; color: #ffffff; margin-bottom: 4px; padding: 2px 0 0 6px; font-weight: bold; white-space: nowrap; cursor: move; }
+.hpts-title { overflow: hidden; background: #999; color: #ffffff; margin-bottom: 4px; padding: 2px 0 0 6px; font-weight: bold; white-space: nowrap; cursor: move; line-height: 1.82}
 .hpts-inner { overflow: auto; height: 200px; padding: 4px 0 0 4px; }
 .hpts-block { display: none; margin-left: 24px; }
 .hpts-inner span a { text-decoration: none; }

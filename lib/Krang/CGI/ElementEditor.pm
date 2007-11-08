@@ -705,10 +705,10 @@ sub find_media_link {
       );
 
     # Set up advanced search form
-    $template->param(category_chooser => category_chooser(
+    $template->param(category_chooser => scalar(category_chooser(
                                                    query => $query,
                                                    name => 'search_below_category_id',
-                                                  ));
+                                                  )));
     $template->param(date_chooser     => date_chooser(
                                                query => $query,
                                                name => 'search_creation_date',

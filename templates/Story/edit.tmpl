@@ -164,32 +164,38 @@ db_save_and_stay = function() {
 Edit Story
 </h2>
 
-<h3>
-Properties
-</h3>
-
-<table class="request" summary="">
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
 <col class="c-label">
 <col>
 </colgroup>
 
+<thead>
+<tr>
+<th class="f">Properties</th>
+<th class="l"></th>
+</tr>
+</thead>
+
 <tbody>
 
 <tr>
-<th>URL</th>
-<td><tmpl_var url><!--:markup--></td>
+<td class="f">URL</td>
+<td class="l"><tmpl_var url><!--:markup--></td>
+</tr>
+
+<tr<tmpl_unless is_root> class="even"</tmpl_unless>>
+<td class="f">Type</td>
+<td class="l"><tmpl_var escape=html type></td>
 </tr>
 
 <tr>
-<th>Type</th>
-<td><tmpl_var escape=html type></td>
-</tr>
-
-<tr>
-<th>Story ID</th>
-<td><tmpl_var escape=html story_id></td>
+<td class="f">Story ID</td>
+<td class="l"><tmpl_var escape=html story_id></td>
 </tr>
 
 </tbody>
@@ -197,15 +203,15 @@ Properties
 <tmpl_if is_root>
   <tbody class="half">
 
-  <tr<tmpl_if bad_title> class="err"</tmpl_if>>
-  <th>*Title</th>
-  <td><input name="title" value="<tmpl_var escape=html title>"></td>
+  <tr class="even<tmpl_if bad_title> err</tmpl_if>">
+  <td class="f">*Title</td>
+  <td class="l"><input name="title" value="<tmpl_var escape=html title>"></td>
   </tr>
 
   <tmpl_if show_slug>
-    <tr<tmpl_if bad_slug> class="err"</tmpl_if>>
-    <th><tmpl_if require_slug>*</tmpl_if>Slug</th>
-    <td><input id="slug" name="slug" value="<tmpl_var escape=html slug>" <tmpl_if cat_idx> disabled class="disabled"</tmpl_if>>
+    <tr class="even<tmpl_if bad_slug> err</tmpl_if>">
+    <td class="f"><tmpl_if require_slug>*</tmpl_if>Slug</td>
+    <td class="l"><input id="slug" name="slug" value="<tmpl_var escape=html slug>" <tmpl_if cat_idx> disabled class="disabled"</tmpl_if>>
     <tmpl_unless require_slug>
       <input name="cat_idx" type="checkbox" onclick="usr_toggled_cat_idx()" class="usual pushright"<tmpl_if cat_idx> checked</tmpl_if>>
       Category Index
@@ -218,14 +224,33 @@ Properties
 
   <tbody>
 
-  <tr<tmpl_if bad_cover_date> class="err"</tmpl_if>>
-  <th>*Cover Date</th>
-  <td><tmpl_var cover_date_selector></td>
+  <tr class="even<tmpl_if bad_cover_date> err</tmpl_if>">
+  <td class="f">*Cover Date</td>
+  <td class="l"><tmpl_var cover_date_selector></td>
   </tr>
 
   <tr>
-  <th>Contributors</th>
-  <td class="glue">
+  <td class="f">Current Version</td>
+  <td class="l"><tmpl_var escape=html version></td>
+  </tr>
+
+  <tr>
+  <td class="f">Published Version</td>
+  <td class="l"><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+  </tr>
+
+  <tr>
+  <td class="f">All Versions</td>
+  <td class="l">
+  <tmpl_var version_selector>
+  <input value="Revert" onclick="revert()" type="button" class="button">
+  <input value="View" onclick="save_and_view()" type="button" class="button">
+  </td>
+  </tr>
+
+  <tr class="even">
+  <td class="f">Contributors</td>
+  <td class="glue l">
   <tmpl_if contribs_loop>
     <tmpl_loop contribs_loop>
       <tmpl_var escape=html first_name> <tmpl_var escape=html last_name> (<tmpl_var escape=html type>)
@@ -234,9 +259,9 @@ Properties
     </td>
     </tr>
 
-    <tr>
-    <th></th>
-    <td>
+    <tr class="even">
+    <td class="f"></td>
+    <td class="l">
     <input value="Edit" onclick="save_and_edit_contribs()" type="button" class="button">
   <tmpl_else>
     <input value="Add" onclick="save_and_edit_contribs()" type="button" class="button">
@@ -244,30 +269,11 @@ Properties
   </td>
   </tr>
 
-  <tr>
-  <th>Current Version</th>
-  <td><tmpl_var escape=html version></td>
-  </tr>
-
-  <tr>
-  <th>Published Version</th>
-  <td><tmpl_unless published_version>[n/a]<tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
-  </tr>
-
-  <tr>
-  <th>All Versions</th>
-  <td>
-  <tmpl_var version_selector>
-  <input value="Revert" onclick="revert()" type="button" class="button">
-  <input value="View" onclick="save_and_view()" type="button" class="button">
-  </td>
-  </tr>
-
   </tbody>
 
 </tmpl_if>
 
-</table>
+</table></div>
 
 <!--ElementEditor/edit.tmpl-->
 <tmpl_include /ElementEditor/edit.tmpl>
@@ -285,11 +291,14 @@ Properties
     No Categories assigned.
     </p>
 
-    <tmpl_var add_category_chooser><!--:FIXME(db2)-->
+    <tmpl_var add_category_button>
 
   <tmpl_else>
 
-    <table class="request select_row" summary=""><!--:FIX(db2)-->
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result edit select_row" summary="">
 
     <colgroup>
     <col class="series">
@@ -314,26 +323,26 @@ Properties
 
     <tmpl_loop category_loop>
       <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-      <td class="series"><input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>></td>
+      <td class="series f"><input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>></td>
       <td><tmpl_var escape=html site></td>
       <td colspan="2"><tmpl_var escape=html category></td>
       <td class="series"><input name="category_to_replace_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if selected_for_replace> checked</tmpl_if>></td>
-      <td class="series"><tmpl_unless __first__>
+      <td class="series l"><tmpl_unless __first__>
         <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox">
-      </tmpl_unless></td>
+      <tmpl_else>&nbsp;</tmpl_unless></td>
       </tr>
     </tmpl_loop>
 
-    <tr>
-    <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Set" onclick="set_primary_category()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
-    <td colspan="3"><tmpl_var add_category_chooser></td>
-    <td><tmpl_var replace_category_chooser></td>
-    <td class="series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Delete" onclick="remove_categories()" type="button" class="button"></tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
+    <tr class="command-row">
+    <td class="series f"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Set" onclick="set_primary_category()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
+    <td colspan="3"><tmpl_var add_category_button></td>
+    <td><tmpl_var replace_category_button></td>
+    <td class="series l"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="Delete" onclick="remove_categories()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
     </tr>
 
     </tbody>
 
-    </table>
+    </table></div>
 
   </tmpl_unless>
 
@@ -375,7 +384,8 @@ Properties
 
 </div>
 
-
+<tmpl_var add_category_chooser>
+<tmpl_var replace_category_chooser>
 </form>
 
 <tmpl_include footer.tmpl>

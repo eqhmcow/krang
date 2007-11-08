@@ -68,7 +68,7 @@ sub input_form {
 
     # get a dummy field like the real ones and spit it around the
     # field name
-    my $dummy_field = '<div style="padding:2px">' . 
+    my $dummy_field = '<div style="padding:2px 0px">' . 
       scalar $query->textfield(-name     => 'DUMMY',
                                -default  => "",                               
                                -size      => $self->size,

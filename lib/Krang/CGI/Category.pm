@@ -161,13 +161,13 @@ sub new_category {
 
     # setup parent selector
     $template->param(parent_chooser =>
-                     category_chooser(name => 'parent_id',
+                     scalar(category_chooser(name => 'parent_id',
 				      formname => 'new_category',
                                       title => 'Choose Parent Category',
                                       query => $query,
                                       may_edit => 1,
 				      persistkey => 'NEW_CATEGORY_DIALOGUE'
-                                     ));
+                                     )));
 
     return $template->output();
 }

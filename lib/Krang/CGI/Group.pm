@@ -528,13 +528,13 @@ sub edit_categories {
     }
 
     $t->param(categories => \@categories);
-    $t->param(category_chooser => category_chooser(
+    $t->param(category_chooser => scalar(category_chooser(
                                                    query => $q,
                                                    name => "add_category_id",
                                                    site_id => $root_category->site_id,
                                                    onchange => 'add_category',
                                                    may_see => 0,
-                                                  ));
+                                                  )));
 
     return $t->output();
 }

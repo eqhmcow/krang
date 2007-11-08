@@ -3,7 +3,7 @@ use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => qw(CGI);
 use strict;
 use warnings;
-                                                                                
+
 use Carp qw(croak);
 use Krang::ClassLoader 'Alert';
 use Krang::ClassLoader 'User';
@@ -12,50 +12,50 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Widget => qw(category_chooser);
 
 =head1 NAME
-                                                                                
+
 Krang::CGI::MyAlerts - interface to edit Krang user alerts.
-                                                                                
+
 =head1 SYNOPSIS
-                                                                                
+
   use Krang::ClassLoader 'CGI::MyAlerts';
   my $app = pkg('CGI::MyAlerts')->new();
   $app->run();
-                                                                                
+
 =head1 DESCRIPTION
-                                                                                
+
 Krang::CGI::MyAlerts provides a form in which a krang user
 can view and change thier alerts.  
-                                                                                
+
 =head1 INTERFACE
-                                                                                
+
 Following are descriptions of all the run-modes provided by
 Krang::CGI::MyAlerts.
-                                                                                
+
 =cut
 
 # setup runmodes
 sub setup {
     my $self = shift;
-                                                                                
+
     $self->start_mode('edit');
-                                                                                
+
     $self->run_modes([qw(
                             edit
                             add
                             delete_alerts
                     )]);
-                                                                                
+
     $self->tmpl_path('MyAlerts/');
 }
 
 =over
-                                                                                
+
 =item edit
-                                                                                
+
 Displays current alerts edit form.
-                                                                                
+
 =cut
-                                                                                
+
 sub edit {
     my $self = shift;
     my $error = shift || '';
@@ -63,14 +63,14 @@ sub edit {
     my $user_id = $ENV{REMOTE_USER};
     my $template = $self->load_tmpl('edit.tmpl', associate => $q, loop_context_vars => 1);
     $template->param( $error => 1 ) if $error;
-                                                                                
+
     my %alert_types = ( new => 'New',
                         save => 'Save',
                         checkin => 'Check In',
                         checkout => 'Check Out',
                         publish => 'Publish',
                         move => 'Move To' );
-                                                                                
+
     # get current alerts
     my @current_alerts = pkg('Alert')->find( user_id => $user_id );
 
@@ -78,43 +78,48 @@ sub edit {
     foreach my $alert (@current_alerts) {
         my $desk = $alert->desk_id ? (pkg('Desk')->find( desk_id => $alert->desk_id))[0]->name : '';
         my $category = $alert->category_id ? (pkg('Category')->find( category_id => $alert->category_id))[0]->url : '';
-                                                                                
+
         push (@alert_loop, {        action => $alert_types{$alert->action},
                                     alert_id => $alert->alert_id,
                                     desk => $desk,
                                     category => $category } );
     }
-                                                                                
+
     $template->param( alert_loop => \@alert_loop );
-                                                                                
+
     my @desks = pkg('Desk')->find;
-                                                                                
+
     my %desk_labels;
     foreach my $d (@desks) {
         $desk_labels{$d->desk_id} = $d->name;
     }
-                                                                                
+
     $template->param(desk_selector => scalar
                     $q->popup_menu( -name    => 'desk_list',
                                     -values  => ['',keys %desk_labels],
                                     -labels  => \%desk_labels ) );
-                                                                                
+
     $template->param(action_selector => scalar
                     $q->popup_menu( -name    => 'action_list',
                                     -values  => [sort keys %alert_types],
                                     -labels  => \%alert_types ) );
-                                                                                
-    $template->param( category_chooser => category_chooser(name => 'category_id', query => $q, formname => "add_alert_form") );
-                                                                                
+
+    my ($interface, $chooser) = category_chooser(name     => 'category_id',
+                                                 query    => $q,
+                                                 formname => "add_alert_form");
+
+    $template->param(category_chooser            => $chooser,
+                     category_chooser_interface  => $interface);
+
     return $template->output;
 }
 
 =item add()
-                                                                                
+
 Commits new Krang::Alert to server.
-                                                                                
+
 =cut
-                                                                                
+
 sub add {
     my $self = shift;
     my $q = $self->query();
