@@ -101,29 +101,34 @@ document.onunload = function() {
 
 
 /*
-    // Find or build the current window's ID.
-    Krang.Window.build_id()
+    // Initialize the window id, name, title, and cookie
+    Krang.Window.init();
 
-    // Set a cookie for the current window's ID.
-    Krang.Window.set_cookie()
+    // Set a cookie with the current window's ID (for handler)
+    Krang.Window.set_cookie();
 */
 Krang.Window = {
 
-    build_id : function() {
-        var window_id = window.name.match(/^krang_window_/) && window.name.match(/\d+$/);
-        if (!window_id) {
-	   window_id = Krang.Cookie.get('krang_highest_window_id') || 0;
-           window.name = 'krang_window_' + (++window_id);
-           Krang.Cookie.set('krang_highest_window_id', window_id);
-        }
-        document.title += window_id > 1 ? ' ('+window_id+')' : '';
-	return window_id;
+    init : function() {
+	var id = Krang.Window._id_from_name() || Krang.Window._id_from_count();
+	window.name = 'krang_window_' + id;
+        document.title += id > 1 ? ' ('+id+')' : '';
+	Krang.Window.set_cookie();
     },
 
     set_cookie : function() {
-	var window_id = window.name.match(/\d+$/);
-	Krang.Cookie.set('krang_window_id', window_id);
-    }
+	Krang.Cookie.set('krang_window_id', Krang.Window._id_from_name());
+    },
+
+    _id_from_name : function() {
+	return window.name.match(/^krang_window_/) && window.name.match(/\d+$/);		
+    },	
+
+    _id_from_count : function() {
+	var count = Krang.Cookie.get('krang_highest_window_id') || 0;
+	Krang.Cookie.set('krang_highest_window_id', ++count);
+	return count;
+    }	
 }
 
 
