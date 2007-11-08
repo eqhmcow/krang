@@ -10,6 +10,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added real-time client-side syntax-highlighting (the CodePress library) to 
+the textareas used for viewing and editing Templates.  Thanks to Jesse for 
+suggesting this feature, and finding the most excellent CodePress.org project!
+[David Kaufman]
+
+=item *
+
 Added beta version of multiple-window, multiple-session support, allowing a user
 in a single browser to open multiple windows, multiple stories, etc. In addition,
 the user's login may be changed independently per window, allowing concurrent
