@@ -29,7 +29,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader 'PasswordHandler';
-use Krang::ClassLoader 'Log' => qw(debug);
+use Krang::ClassLoader 'Log' => qw(debug info);
 use Krang::ClassLoader 'Message' => qw(add_message add_alert);
 use Krang::ClassLoader Conf => qw(
     ApachePort
@@ -51,7 +51,7 @@ use JSON qw(objToJson);
 sub setup {
     my $self = shift;
     $self->start_mode('show_form');
-    $self->run_modes([qw(show_form login logout login_wait forgot_pw reset_pw)]);
+    $self->run_modes([qw(show_form login logout login_wait forgot_pw reset_pw new_window)]);
     $self->tmpl_path('Login/');
 
     # use CAP::RateLimit to limit the number of bad logins
@@ -197,11 +197,13 @@ sub _do_login {
     pkg('Session')->unload() unless (defined($ENV{KRANG_SESSION_ID}));
 
     # build the cookie
+    my $window_id = ($q->cookie('krang_window_id') || (($q->cookie('krang_highest_window_id') || 0) + 1));
+    
     my $session_cookie = $q->cookie(
-        -name  => $instance,
+        -name  => "krang_window_$window_id",
         -value => \%filling,
     );
-
+    
     # put our preferences into our cookie via JSON so that the JS
     # on the client side can access it
     my %prefs;
@@ -235,25 +237,58 @@ sub _do_login {
     return $output;
 }
 
+sub new_window {
+    my $self       = shift;
+    my $q          = $self->query();
+    my $session_id = pkg('Session')->create(); pkg('Session')->unload();
+    my $window_id  = $q->cookie('krang_highest_window_id') + 1;
+
+    # build new session cookie for new window
+    my $user_id    = $q->param('caller');
+    my $instance   = pkg('Conf')->instance();
+    my %filling = (session_id => $session_id,
+		   user_id    => $user_id, 
+		   instance   => $instance,
+		   hash       => md5_hex($user_id . $instance .
+					 $session_id . Secret()) );
+    my $session_cookie = $q->cookie(
+        -name  => 'krang_window_'.$window_id,
+        -value => \%filling
+    );
+
+    # redirect and set the cookie
+    my $target = './';
+    $self->header_add(
+        -uri    => $target,
+        -cookie => [$session_cookie->as_string]
+    );
+    $self->header_type('redirect');
+    my $output = "Redirect: <a href=\"$target\">$target</a>";
+    return $output;
+}
+  
+
 # handle a logout
 sub logout {
     my $self     = shift;
     my $query    = $self->query();
+    my $window_id = $query->cookie('krang_window_id');
+
+    # build a poison cookie
+    my $cookie = $query->cookie(
+				-name   => "krang_window_$window_id",
+				-value  => "",
+				-expires=>'-90d',
+			       );
+
+    # redirect to login
+    $self->header_props(-uri    => "login.pl",
+                        -cookie => [$cookie->as_string]);   
+    $self->header_type('redirect');
 
     # delete the session
     pkg('Session')->delete($ENV{KRANG_SESSION_ID});
 
-    # build a poison cookie
-    my $cookie = $query->cookie(
-                            -name   => pkg('Conf')->instance,
-                            -value  => "",
-                            -expires=>'-90d',
-                           );
-    
-    # redirect to login
-    $self->header_props(-uri    => 'login.pl',
-                        -cookie => $cookie->as_string);
-    $self->header_type('redirect');
     return "";
 }
 

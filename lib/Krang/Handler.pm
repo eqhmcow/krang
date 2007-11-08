@@ -290,22 +290,24 @@ sub authen_handler ($$) {
     # which happens on redirects from ISEs
     return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
 
-    # Get Krang instance name
-    my $instance  = pkg('Conf')->instance();
-
+    # Get Window ID of current request (either from the window itself, 
+    # or - if it doesn't have an ID yet - by incrementing overall count)
     my %cookies = Apache::Cookie->new($r)->parse();
-    unless ($cookies{$instance}) {
+    my $window_id = (($cookies{krang_window_id} && $cookies{krang_window_id}->value) || 
+		     ($cookies{krang_highest_window_id} && $cookies{krang_highest_window_id}->value + 1) || 1); 
+
+    unless ($cookies{"krang_window_$window_id"}) {
         # no cookie, redirect to login
         debug("No cookie found, passing Authen without user login");
         return OK;
     }
 
-    # validate cookie
-    my %cookie = $cookies{$instance}->value;
+    # Validate cookie
+    my %cookie = $cookies{"krang_window_$window_id"}->value;
     my $session_id = $cookie{session_id};
-    my $hash = md5_hex($cookie{user_id} . $cookie{instance} . 
-                       $session_id . Secret());
-    if ($cookie{hash} ne $hash or $cookie{instance} ne $instance) {
+    my $hash = md5_hex($cookie{user_id} . $cookie{instance} . $session_id . Secret());
+    if ($cookie{hash} ne $hash or $cookie{instance} ne pkg('Conf')->instance()) {
+
         # invalid cookie, send to login
         critical("Invalid cookie found, possible breakin attempt from IP " . 
                  $r->connection->remote_ip . ".  Passing Authen without user login.");

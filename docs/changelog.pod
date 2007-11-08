@@ -10,6 +10,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added beta version of multiple-window, multiple-session support, allowing a user
+in a single browser to open multiple windows, multiple stories, etc. In addition,
+the user's login may be changed independently per window, allowing concurrent
+users (for testing, training, admin, etc.) Needs fine-tuning! [Noam Weinstein]
+
+=item *
+
 Implemented requested "Replace Story" feature where instead of a simple duplicate-URL
 error, creating a story that conflicts with existing URLs now yields a dialogue box 
 giving users the option of overwriting the duplicate URLs. [Noam Weinstein]

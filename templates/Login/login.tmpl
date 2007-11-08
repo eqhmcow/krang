@@ -8,7 +8,7 @@ focusFormField( 'form-login', 'username' );
 Welcome!
 </h2>
 
-<form id="form-login" name="form-login" action="login.pl" method="post">
+<form id="form-login" name="form-login" action="login.pl" method="post" onsubmit="set_window_cookie()">
 
 <input name="rm" value="login" type="hidden">
 <input name="target" value="<tmpl_var escape=html target>" type="hidden">

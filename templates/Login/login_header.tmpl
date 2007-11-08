@@ -50,6 +50,18 @@ function focusFormField( idForm, idField )
                 : function() { if ( onloadWin ) onloadWin(); setFocus(); }
   ;
 }
+
+// in case we're logging back in, check for existing window ID...
+window_id = function() {
+   return window.name.match(/^krang_window_/) && window.name.match(/\d+$/);
+}
+set_window_cookie = function() {
+  if (window_id()) {
+    document.cookie = 'krang_window_id='+window_id();
+   }
+}
+set_window_cookie();
+document.title += window_id() > 1 ? ' ('+window_id()+')' : '';
 </script>
 
 </head><body>

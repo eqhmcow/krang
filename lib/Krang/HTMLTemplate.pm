@@ -90,9 +90,10 @@ sub output {
 
     # fill in header variables as necessary
     if ($template->query(name => 'header_user_name')) {
-        my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
-        $template->param(header_user_name => $user->first_name . " " . 
-                                             $user->last_name) if $user;
+      if (my ($user) = pkg('User')->find(user_id => $ENV{REMOTE_USER})) {
+        $template->param(header_user_id   => $user->user_id,
+			 header_user_name => $user->first_name.' '.$user->last_name);
+      }
     }
 
     $template->param(charset => Charset)

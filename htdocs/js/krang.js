@@ -1,4 +1,4 @@
-/*
+	/*
 Create the Krang namespace.
 */
 
@@ -98,6 +98,34 @@ document.onunload = function() {
     Krang.unload();
     oldOnUnload();
 }
+
+
+/*
+    // Find or build the current window's ID.
+    Krang.Window.build_id()
+
+    // Set a cookie for the current window's ID.
+    Krang.Window.set_cookie()
+*/
+Krang.Window = {
+
+    build_id : function() {
+        var window_id = window.name.match(/^krang_window_/) && window.name.match(/\d+$/);
+        if (!window_id) {
+	   window_id = Krang.Cookie.get('krang_highest_window_id') || 0;
+           window.name = 'krang_window_' + (++window_id);
+           Krang.Cookie.set('krang_highest_window_id', window_id);
+        }
+        document.title += window_id > 1 ? ' ('+window_id+')' : '';
+	return window_id;
+    },
+
+    set_cookie : function() {
+	var window_id = window.name.match(/\d+$/);
+	Krang.Cookie.set('krang_window_id', window_id);
+    }
+}
+
 
 /*
     Krang.popup(url, { width: 400, height: 600 })
@@ -418,6 +446,7 @@ Krang.Ajax.update = function(args) {
     to set the values and let the form take care of the rest.
 */
 Krang.Form = {
+
     set : function(form, inputs) {
         form = typeof form == 'object' ? form : document.forms[form];
         var err = 'Krang.Form.set(): ';
@@ -433,6 +462,8 @@ Krang.Form = {
         }
     },
     submit : function(form, inputs, options) {
+	Krang.Window.set_cookie();
+
         form = typeof form == 'object' ? form : document.forms[form];
         if( inputs ) Krang.Form.set(form, inputs);
 
@@ -582,6 +613,9 @@ Krang.Nav = {
         Krang.Nav.edit_mode_flag = flag;
     },
     goto_url       : function(url, ajax) {
+	
+	Krang.Window.set_cookie();
+
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);
