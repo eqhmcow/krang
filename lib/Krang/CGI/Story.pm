@@ -409,7 +409,7 @@ sub edit {
         ($story) = pkg('Story')->find(story_id => $query->param('story_id'));
         croak("Unable to load story '" . $query->param('story_id') . "'.")
           unless $story;
-
+	
         $query->delete('story_id');
         $session{story} = $story;
     } else {
@@ -470,11 +470,11 @@ sub edit {
 
         # figure out where to position 'replace' radio-button (use primary cat unless user selected something else)
         my @categories = $story->categories;
-        my $selected_for_replace_id = ($query->param('category_to_replace_id') || $categories[0]->category_id);
+        my $selected_for_replace_id = ($query->param('category_to_replace_id') || (@categories && $categories[0]->category_id));
 
 	# store basic URL for story and primary category as text
 	$template->param(story_url_no_link => $story->url);
-	$template->param(primary_cat_url_no_link => $categories[0]->url);
+	$template->param(primary_cat_url_no_link => @categories && $categories[0]->url);
 
 	# build category choosers
         my @category_loop;
@@ -2232,6 +2232,7 @@ sub make_sure_story_is_still_ours {
     # grab story in session hash
     if (!$session{story}) { croak ("Could not load story from session!") }
     my $story_id = $session{story}->story_id;
+    return 1 unless $story_id;
     
     # look up actual story in database to make sure it's still ours
     my ($story) = pkg('Story')->find(story_id => $story_id);
