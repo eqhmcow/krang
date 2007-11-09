@@ -51,17 +51,22 @@ function focusFormField( idForm, idField )
   ;
 }
 
-// in case we're logging back in, check for existing window ID...
-window_id = function() {
+function krang_window_id_from_name() {
    return window.name.match(/^krang_window_/) && window.name.match(/\d+$/);
 }
-set_window_cookie = function() {
-  if (window_id()) {
-    document.cookie = 'krang_window_id='+window_id();
-   }
+function krang_window_id_from_count() {  // the ID returned by this function
+    var window_id;                       // prevents manually-opened windows
+    var cookie = document.cookie;        // from clashing with existing windows
+    if (cookie.length > 0) {             
+	var name_val = cookie.match(/krang_highest_window_id=(\d+)/);
+	window_id    = name_val && name_val[1];
+    }			
+    return (window_id ? ++window_id : 1);
+}		
+function set_window_cookie() {
+  var window_id = krang_window_id_from_name() || krang_window_id_from_count();
+  document.cookie = 'krang_window_id='+window_id;
 }
-set_window_cookie();
-document.title += window_id() > 1 ? ' ('+window_id()+')' : '';
 </script>
 
 </head><body>

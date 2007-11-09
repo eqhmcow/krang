@@ -293,10 +293,8 @@ sub authen_handler ($$) {
     # Get Window ID of current request (either from the window itself, 
     # or - if it doesn't have an ID yet - by incrementing overall count)
     my %cookies = Apache::Cookie->new($r)->parse();
-    my $window_id = (($cookies{krang_window_id} && $cookies{krang_window_id}->value) || 
-		     ($cookies{krang_highest_window_id} && $cookies{krang_highest_window_id}->value + 1) || 1); 
-
-    unless ($cookies{"krang_window_$window_id"}) {
+    my $window_id = $cookies{krang_window_id} && $cookies{krang_window_id}->value;
+    unless ($window_id && $cookies{"krang_window_$window_id"}) {
         # no cookie, redirect to login
         debug("No cookie found, passing Authen without user login");
         return OK;
