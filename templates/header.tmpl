@@ -133,7 +133,7 @@ if( Prototype.Browser.WebKit ) {
 
 <div class="nav"><ul>
 
-<li class="l"><a href="login.pl?rm=logout" onclick="Krang.Window.set_cookie()" class="logout">
+<li class="l"><a href="login.pl?rm=logout" onclick="Krang.Window.pass_id()" class="logout">
 Log Out
 </a></li>
 
@@ -151,7 +151,7 @@ Help with this Page
 
 </ul></li>
 
-<li><a href="login.pl?rm=new_window&caller=<tmpl_var header_user_id>" target='_blank' onclick="Krang.Window.set_cookie()">
+<li><a href="login.pl?rm=new_window" target='_blank' onclick="Krang.Window.pass_id()">
 New Window 
 </a></li>
 

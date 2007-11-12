@@ -244,10 +244,10 @@ sub new_window {
     my $window_id  = $q->cookie('krang_highest_window_id') + 1;
 
     # build new session cookie for new window
-    my $user_id    = $q->param('caller');
+    my $user_id    = $ENV{REMOTE_USER};
     my $instance   = pkg('Conf')->instance();
     my %filling = (session_id => $session_id,
-		   user_id    => $user_id, 
+		   user_id    => $user_id,
 		   instance   => $instance,
 		   hash       => md5_hex($user_id . $instance .
 					 $session_id . Secret()) );

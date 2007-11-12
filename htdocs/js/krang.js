@@ -101,11 +101,12 @@ document.onunload = function() {
 
 
 /*
-    // Initialize the window id, name, title, and cookie
+    // Initialize the window id, name and title
     Krang.Window.init();
 
-    // Set a cookie with the current window's ID (for handler)
-    Krang.Window.set_cookie();
+    // Pass handler a cookie with the current window's ID. 
+    // (This should be invoked by all post-login page requests/form submissions.)
+    Krang.Window.pass_id();
 */
 Krang.Window = {
 
@@ -113,10 +114,11 @@ Krang.Window = {
 	var id = Krang.Window._id_from_name() || Krang.Window._id_from_count();
 	window.name = 'krang_window_' + id;
         document.title += id > 1 ? ' ('+id+')' : '';
-	Krang.Window.set_cookie();
+	// clean window ID from last transaction (so other windows don't use it!)
+	Krang.Cookie.set('krang_window_id', 0); 
     },
 
-    set_cookie : function() {
+    pass_id : function() {
 	Krang.Cookie.set('krang_window_id', Krang.Window._id_from_name());
     },
 
@@ -467,7 +469,7 @@ Krang.Form = {
         }
     },
     submit : function(form, inputs, options) {
-	Krang.Window.set_cookie();
+	Krang.Window.pass_id();
 
         form = typeof form == 'object' ? form : document.forms[form];
         if( inputs ) Krang.Form.set(form, inputs);
@@ -619,7 +621,7 @@ Krang.Nav = {
     },
     goto_url       : function(url, ajax) {
 	
-	Krang.Window.set_cookie();
+	Krang.Window.pass_id();
 
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
