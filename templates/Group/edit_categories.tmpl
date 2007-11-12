@@ -40,22 +40,27 @@ Edit Group Category Permissions
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 
-<h3>
-Properties
-</h3>
-
-<table class="request" summary="">
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
-<col class="c-label">
+<col class="c-user">
 <col>
 </colgroup>
+
+<thead>
+<tr>
+<th class="f l" colspan="2">Properties</th>
+<tr>
+<thead>
 
 <tbody>
 
 <tr>
-<th>Name</th>
-<td><tmpl_if name>
+<td class="f">Name</td>
+<td class="l"><tmpl_if name>
   <tmpl_var name>
 <tmpl_else>
   [n/a]
@@ -63,26 +68,25 @@ Properties
 </tr>
 
 <tr>
-<th>Site</th>
-<td><tmpl_var site_url></td>
+<td class="f">Site</td>
+<td class="l"><tmpl_var site_url></td>
 </tr>
 
 </tbody>
 
-</table>
+</table></div>
 
-<h3>
-Current Permissions
-</h3>
-
-<table class="request" summary="">
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result edit select_row" summary="">
 
 <colgroup>
 <col>
 <col class="series">
 <col class="series">
 <col class="series">
-<col>
+<col class="series">
 </colgroup>
 
 <thead>
@@ -97,42 +101,29 @@ Current Permissions
 
 <tbody><tmpl_loop categories>
   <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-  <td><tmpl_var category_url></td>
+  <td class="f"><tmpl_var category_url></td>
   <tmpl_loop permission_radio>
     <td class="series"><tmpl_var radio_select></td>
   </tmpl_loop>
-  <td><tmpl_unless is_root>
+  <td class="l"><tmpl_unless is_root>
     <input value="Delete" onclick="delete_category('<tmpl_var escape=html category_id>')" type="button" class="button">
-  </tmpl_unless></td>
+  <tmpl_else>&nbsp;</tmpl_unless></td>
   </tr>
-</tmpl_loop></tbody>
+</tmpl_loop>
 
-</table>
-
-<table class="request" summary=""><!--:FIX(db2)-->
-
-<colgroup>
-<col class="c-label">
-<col>
-</colgroup>
-
-<tbody>
-
+<tr class="command-row">
+<td class="f l" colspan="5"><tmpl_var category_chooser_interface></td>
 <tr>
-<th>Add Category</th>
-<td>
-<tmpl_var category_chooser>
-</td>
-</tr>
 
 </tbody>
 
-</table>
+</table></div>
 
 <div class="panel lame capped">
 <input value="Back" onclick="do_return()" type="button" class="west">
 </div>
 
+<tmpl_var category_chooser_logic>
 </form>
 
 <tmpl_include footer.tmpl>

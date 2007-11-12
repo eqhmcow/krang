@@ -247,13 +247,18 @@ sub element_edit {
         last if $multiple_reorders > 1;
     }
     $multiple_reorders = 0 if $multiple_reorders < 2;
- 
+
+    # the chooser logic is separately sent to the template
+    my @categorylink_chooser_loop = ();
+
     foreach my $child (@children) {        
         next if $child->hidden;
         # setup form, making it invalid if needed
-        my $form = $child->input_form(query   => $query,
-                                      order   => $index,
-                                      invalid => $invalid{$index});
+        # Krang::ElementClass::CategoryLink objects
+        # return the category chooser separately
+        my ($form, $cat_link_chooser) = $child->input_form(query   => $query,
+                                                           order   => $index,
+                                                           invalid => $invalid{$index});
         $form = $child->mark_form_invalid(html => $form) if $invalid{$index};
 
         push(@child_loop, {
@@ -278,9 +283,16 @@ sub element_edit {
                            required     => $child->required,
                            invalid      => $invalid{$index},
                           });
+
+	push(@categorylink_chooser_loop, { categorylink_chooser => $cat_link_chooser })
+	  if $cat_link_chooser;
+
         $index++;
     }
+
     $template->param(child_loop => \@child_loop);
+    $template->param(categorylink_chooser_loop => \@categorylink_chooser_loop)
+      if scalar(@categorylink_chooser_loop);
 
     # whip up child element picker from available classes
     my @available =  $element->available_child_classes();

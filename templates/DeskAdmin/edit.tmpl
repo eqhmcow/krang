@@ -25,9 +25,9 @@ Krang.onload( function() {
 Desks
 </h2>
 
-<h3>
-Current Desks
-</h3>
+<!-- <h3> -->
+<!-- Current Desks -->
+<!-- </h3> -->
 
 <tmpl_unless existing_desk_loop>
 
@@ -50,14 +50,14 @@ Current Desks
   <colgroup>
   <col class="series">
   <col>
-  <col class="tick">
+  <col class="series">
   </colgroup>
 
   <thead>
   <tr>
   <th class="series f">Order</th>
   <th>Name</th>
-  <th class="tick l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'desk_delete_list')"></th>
+  <th class="series l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'desk_delete_list')"></th>
   </tr>
   </thead>
 
@@ -67,16 +67,18 @@ Current Desks
       <option value="<tmpl_var escape=html count>"<tmpl_if selected> selected</tmpl_if>><tmpl_var escape=html count></option>
     </tmpl_loop></select></td>
     <td><tmpl_var escape=html name></td>
-    <td class="tick l"><input name="desk_delete_list" value="<tmpl_var escape=html desk_id>" type="checkbox"></td>
+    <td class="series l"><input name="desk_delete_list" value="<tmpl_var escape=html desk_id>" type="checkbox"></td>
     </tr>
-  </tmpl_loop></tbody>
+  </tmpl_loop>
+
+  <tr class="command-row">
+  <td class="f" colspan="2"><input value="Reorder" onclick="reorder()" type="button" class="button"></td>
+  <td class="series l"><input value="Delete" onclick="delete_selected()" type="button" class="button"></td>
+  </tr>
+
+  </tbody>
 
   </table></div>
-
-  <div class="panel">
-  <input value="Reorder" onclick="reorder()" type="button" class="west">
-  <input value="Delete" onclick="delete_selected()" type="button">
-  </div>
 
   </form>
 
@@ -86,32 +88,37 @@ Current Desks
 
 <input name="rm" value="add" type="hidden">
 
-<h3>
-Create a New Desk
-</h3>
-
-<table class="request" summary="">
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
 <col class="c-mini">
 <col>
 </colgroup>
 
+<thead>
+<tr>
+<th class="c-mini f l" colspan="2">Create a New Desk</th>
+</tr>
+</thead>
+
 <tbody>
 
 <tr class="demi<tmpl_if no_name> err</tmpl_if>">
-<th>Name</th>
-<td><input name="name" value="<tmpl_var escape=html name>"></td>
+<td class="f">Name</td>
+<td class="l"><input name="name" value="<tmpl_var escape=html name>"></td>
 </tr>
 
 <tr>
-<th>Order</th>
-<td><tmpl_var order_selector></td>
+<td class="f">Order</td>
+<td class="l"><tmpl_var order_selector></td>
 </tr>
 
 </tbody>
 
-</table>
+</table></div>
 
 <div class="panel lame capped">
 <input value="Add Desk" type="submit" class="west">

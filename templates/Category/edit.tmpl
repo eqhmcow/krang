@@ -52,27 +52,32 @@ Edit Category
 
 <input name="rm" value="edit" type="hidden">
 
-<h3>
-Properties
-</h3>
-
-<table class="request" summary="">
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
 <col class="c-label">
 <col>
 </colgroup>
 
+<thead>
+<tr>
+<th class="f l" colspan="2">Properties</th>
+</tr>
+</thead>
+
 <tbody>
 
 <tr>
-<th>Category ID</th>
-<td><tmpl_var escape=html category_id></td>
+<td class="f">Category ID</td>
+<td class="l"><tmpl_var escape=html category_id></td>
 </tr>
 
 <tr>
-<th>URL</th>
-<td><tmpl_var url><!--:markup--></td>
+<td class="f">URL</t>
+<td class="l"><tmpl_var url><!--:markup--></td>
 </tr>
 
 </tbody>
@@ -106,6 +111,8 @@ Properties
 </tmpl_if>
 
 </div>
+
+<tmpl_loop categorylink_chooser_loop><tmpl_var categorylink_chooser></tmpl_loop>
 
 </form>
 

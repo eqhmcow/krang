@@ -59,11 +59,7 @@ Group
 <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
 <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
 
-<h3>
-Properties
-</h3>
-
-<table class="request" summary="">
+<table class="request" summary="" style="margin-top:20px">
 
 <colgroup>
 <col class="c-label">
@@ -73,19 +69,18 @@ Properties
 <tbody>
 
 <tr class="demi<tmpl_if duplicate_name> err<tmpl_else><tmpl_if error_invalid_name> err</tmpl_if></tmpl_if>">
-<th>Group Name</th>
-<td><input name="name" value="<tmpl_var escape=html name>"></td>
+<th class="f">Group Name</td>
+<td class="l"><input name="name" value="<tmpl_var escape=html name>"></td>
 </tr>
 
 </tbody>
 
 </table>
 
-<h3>
-Site Permissions
-</h3>
-
-<table class="request" summary="">
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result edit select_row" summary="">
 
 <colgroup>
 <col>
@@ -97,7 +92,7 @@ Site Permissions
 
 <thead>
 <tr>
-<th colspan="2" class="f">Site</th>
+<th colspan="2" class="f">Site/Categories Permissions</th>
 <th class="series">Edit</th>
 <th class="series">Read-Only</th>
 <th class="series l">Hide</th>
@@ -106,21 +101,20 @@ Site Permissions
 
 <tbody><tmpl_loop categories>
   <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-  <td><tmpl_var escape=html category_url></td>
-  <td><input value="Set Category Permissions" onclick="edit_categories('<tmpl_var escape=html category_id>')" type="button" class="button"></td>
+  <td class="f"><tmpl_var escape=html category_url></td>
+  <td class=""><input value="Set Category Permissions" onclick="edit_categories('<tmpl_var escape=html category_id>')" type="button" class="button"></td>
   <tmpl_loop permission_radio>
-    <td class="series"><tmpl_var radio_select></td>
+    <td class="series<tmpl_if __last__> l</tmpl_if>"><tmpl_var radio_select></td>
   </tmpl_loop>
   </tr>
 </tmpl_loop></tbody>
 
-</table>
+</table></div>
 
-<h3>
-Asset Permissions
-</h3>
-
-<table class="request" summary="">
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result edit select_row" summary="">
 
 <colgroup>
 <col>
@@ -131,7 +125,7 @@ Asset Permissions
 
 <thead>
 <tr>
-<th class="f">Asset</th>
+<th class="f">Asset Permissions</th>
 <th class="series">Edit</th>
 <th class="series">Read-Only</th>
 <th class="series l">Hide</th>
@@ -140,34 +134,33 @@ Asset Permissions
 
 <tbody>
 <tr>
-<td>Stories</td>
+<td class="f">Stories</td>
 <tmpl_loop asset_story>
-  <td class="series"><tmpl_var radio_select></td>
+  <td class="series<tmpl_if __last__> l</tmpl_if>"><tmpl_var radio_select></td>
 </tmpl_loop>
 </tr>
 
 <tr class="even">
-<td>Media</td>
+<td class="f">Media</td>
 <tmpl_loop asset_media>
-  <td class="series"><tmpl_var radio_select></td>
+  <td class="series<tmpl_if __last__> l</tmpl_if>"><tmpl_var radio_select></td>
 </tmpl_loop>
 </tr>
 
 <tr>
-<td>Templates</td>
+<td class="f">Templates</td>
 <tmpl_loop asset_template>
-  <td class="series"><tmpl_var radio_select></td>
+  <td class="series<tmpl_if __last__> l</tmpl_if>"><tmpl_var radio_select></td>
 </tmpl_loop>
 </tr>
 </tbody>
 
-</table>
+</table></div>
 
-<h3>
-Desk Permissions
-</h3>
-
-<table class="request" summary="">
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result edit select_row" summary="">
 
 <colgroup>
 <col>
@@ -178,7 +171,7 @@ Desk Permissions
 
 <thead>
 <tr>
-<th class="f">Desk</th>
+<th class="f">Desk Permissions</th>
 <th class="series">Edit</th>
 <th class="series">Read-Only</th>
 <th class="l series">Hide</th>
@@ -187,20 +180,19 @@ Desk Permissions
 
 <tbody><tmpl_loop desks>
   <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-  <td><tmpl_var desk_name></td>
+  <td class="f"><tmpl_var desk_name></td>
   <tmpl_loop permission_radio>
-    <td class="series"><tmpl_var radio_select></td>
+    <td class="series<tmpl_if __last__> l</tmpl_if>"><tmpl_var radio_select></td>
   </tmpl_loop>
   </tr>
 </tmpl_loop></tbody>
 
-</table>
+</table></div>
 
-<h3>
-Administrative Permissions
-</h3>
-
-<table class="request" summary="">
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result edit select_row" summary="">
 
 <colgroup>
 <col class="tick">
@@ -211,62 +203,68 @@ Administrative Permissions
 <col>
 </colgroup>
 
+<thead>
+<tr>
+<th class="f l" colspan="6">Administrative Permissions</th>
+</tr>
+</thead>
+
 <tbody>
 
 <tr>
-<td class="tick"><tmpl_var may_publish></td>
+<td class="tick f"><tmpl_var may_publish></td>
 <td colspan="2">May Publish</td>
 <td class="tick"><tmpl_var may_checkin_all></td>
-<td colspan="2">May Check In All</td>
+<td class="l" colspan="2">May Check In All</td>
 </tr>
 
 <tr>
-<td class="tick"><tmpl_var admin_desks></td>
+<td class="tick f"><tmpl_var admin_desks></td>
 <td colspan="2">Manage Desks</td>
 <td class="tick"><tmpl_var admin_jobs></td>
-<td colspan="2">Manage Jobs</td>
+<td class="l" colspan="2">Manage Jobs</td>
 </tr>
 
 <tr>
-<td class="tick"><tmpl_var admin_groups></td>
+<td class="tick f"><tmpl_var admin_groups></td>
 <td colspan="2">Manage Groups</td>
 <td class="tick"><tmpl_var admin_sites></td>
-<td colspan="2">Manage Sites</td>
+<td class="l" colspan="2">Manage Sites</td>
 </tr>
 
 <tr>
-<td class="tick"><tmpl_var admin_users></td>
+<td class="tick f"><tmpl_var admin_users></td>
 <td colspan="2">Manage Users</td>
 <td class="tick"><tmpl_var admin_categories></td>
-<td colspan="2">Manage Categories</td>
+<td class="l" colspan="2">Manage Categories</td>
 </tr>
 
 <tr>
-<td></td>
+<td class="f">&nbsp;</td>
 <td class="tick"><tmpl_var admin_users_limited></td>
-<td<tmpl_unless enable_ftp> colspan="4"</tmpl_unless>>Group Limited</td>
+<td<tmpl_unless enable_ftp> class="l" colspan="4"</tmpl_unless>>Group Limited</td>
 <tmpl_if enable_ftp>
   <td></td>
   <td class="tick"><tmpl_var admin_categories_ftp></td>
-  <td>Via FTP</td>
+  <td class="l" >Via FTP</td>
 </tmpl_if>
 </tr>
 
 <tr>
-<td class="tick"><tmpl_var admin_contribs></td>
+<td class="tick f"><tmpl_var admin_contribs></td>
 <td colspan="2">Manage Contributors</td>
 <td class="tick"><tmpl_var admin_scheduler></td>
-<td colspan="2">Manage Scheduler Addons</td>
+<td class="l" colspan="2">Manage Scheduler Addons</td>
 </tr>
 
 <tr>
-<td class="tick"><tmpl_var admin_lists></td>
-<td colspan="2">Manage Lists</td>
+<td class="tick f"><tmpl_var admin_lists></td>
+<td class="l" colspan="5">Manage Lists</td>
 </tr>
 
 </tbody>
 
-</table>
+</table></div>
 
 <div class="panel capped">
 <input value="Cancel" onclick="cancel_group_change()" type="button" class="west">

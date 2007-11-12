@@ -20,10 +20,6 @@ Krang.onload( function() {
 Alerts
 </h2>
 
-<h3>
-Current Alerts
-</h3>
-
 <tmpl_unless alert_loop>
 
   <p class="naught">
@@ -81,10 +77,10 @@ Current Alerts
 
 <input name="rm" value="add" type="hidden">
 
-  <div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
-  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
-  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
-  <table cellspacing="0" class="props" summary="">
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
 
 <colgroup>
 <col class="c-mini">

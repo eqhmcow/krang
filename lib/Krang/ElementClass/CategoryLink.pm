@@ -30,13 +30,13 @@ sub input_form {
     my $category = $element->data();
     (my $name = $param) =~ s/\W//g;
     $query->param($param => $category->category_id) if $category;
-    my $html = pkg('Widget')->can('category_chooser')->(
+    my ($html, $chooser) = pkg('Widget')->can('category_chooser')->(
                                                name  => $name,
                                                field => $param,
                                                query => $query);
     $html .= qq{<input type="hidden" name="$param" } .
       ($category ? q{value="} . $category->category_id . q{"} : '') . q{>};
-    return $html;
+    return ($html, $chooser);
 }
 
 sub validate { 

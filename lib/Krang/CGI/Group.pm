@@ -528,13 +528,16 @@ sub edit_categories {
     }
 
     $t->param(categories => \@categories);
-    $t->param(category_chooser => scalar(category_chooser(
+    my ($chooser_interface, $chooser_logic) = category_chooser(
                                                    query => $q,
                                                    name => "add_category_id",
                                                    site_id => $root_category->site_id,
                                                    onchange => 'add_category',
                                                    may_see => 0,
-                                                  )));
+                                                  );
+
+    $t->param(category_chooser_interface => $chooser_interface,
+              category_chooser_logic     => $chooser_logic);
 
     return $t->output();
 }

@@ -74,7 +74,7 @@ Current Contributors
   <col>
   <col>
   <col>
-  <col class="tick">
+  <col class="series">
   </colgroup>
 
   <thead>
@@ -95,61 +95,63 @@ Current Contributors
     <td><tmpl_var escape=html type></td>
     <td class="tick l"><input name="contrib_unassociate_list" value="<tmpl_var escape=html contrib_id>:<tmpl_var escape=html contrib_type_id>" type="checkbox"></td>
     </tr>
-  </tmpl_loop></tbody>
+  </tmpl_loop>
+
+  <tr class="command-row">
+  <td class="f" colspan="4"><input value="Reorder" onclick="reorder_contributors()" type="button" class="button"></td>
+  <td class="l"><input value="Unassociate" onclick="unassociate_selected()" type="button" class="button"></td>
+  </tr>
+
+  </tbody>
 
   </table>
-  </div>
-
-  <div class="panel">
-  <input value="Reorder" onclick="reorder_contributors()" type="button" class="west">
-  <input value="Unassociate" onclick="unassociate_selected()" type="button">
   </div>
 
   </form>
 
 </tmpl_unless>
 
-<form name="search_form" action="contributor.pl" method="post">
-
-<input name="rm" value="search" type="hidden">
-<input name="krang_pager_curr_page_num" value="" type="hidden">
-<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
-<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
-<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
-<input name="associate_mode" value="<tmpl_var escape=html associate_mode>" type="hidden">
-
-<div class="tabset finder">
-
-<ul class="tabs"><li>
-<b><span>
-Simple Search
-</span></b>
-</li></ul>
-
-<div class="tabbed">
-
-<div class="faux-p">
-<input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
-<input value="Search" type="submit" class="button">
-</div>
-
-</div>
-
-</div>
-
-</form>
-
-<h3>
-Choose Contributors
-</h3>
-
 <tmpl_unless krang_pager_rows>
 
   <p class="naught">
-  No Contributors Found.
+  No More Contributors Found.
   </p>
 
 <tmpl_else>
+
+  <h3>
+  Choose Contributors
+  </h3>
+
+  <form name="search_form" action="contributor.pl" method="post">
+
+  <input name="rm" value="search" type="hidden">
+  <input name="krang_pager_curr_page_num" value="" type="hidden">
+  <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+  <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+  <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+  <input name="associate_mode" value="<tmpl_var escape=html associate_mode>" type="hidden">
+
+  <div class="tabset finder">
+
+  <ul class="tabs"><li>
+  <b><span>
+  Simple Search
+  </span></b>
+  </li></ul>
+
+  <div class="tabbed">
+
+  <div class="faux-p">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
+  <input value="Search" type="submit" class="button">
+  </div>
+
+  </div>
+
+  </div>
+
+  </form>
 
   <form name="krang_pager_form" action="contributor.pl" method="post">
 
@@ -166,7 +168,7 @@ Choose Contributors
   <col>
   <col>
   <col>
-  <col class="tick">
+  <col class="series">
   </colgroup>
 
   <thead>
@@ -174,7 +176,7 @@ Choose Contributors
   <th class="f"><tmpl_var colhead_last></th>
   <th><tmpl_var colhead_first_middle></th>
   <th><tmpl_var colhead_type></th>
-  <th class="tick l"><tmpl_var colhead_checkbox_column></th>
+  <th class="series l"><tmpl_var colhead_checkbox_column></th>
   </tr>
   </thead>
 
@@ -186,10 +188,20 @@ Choose Contributors
     <tmpl_loop contrib_types>
       <tmpl_unless __first__><tr></tmpl_unless>
       <td><tmpl_var escape=html type></td>
-      <td class="tick l"><input name="krang_pager_rows_checked" value="<tmpl_var escape=html contrib_id>:<tmpl_var escape=html contrib_type_id>" type="checkbox"></td>
+      <td class="series l"><input name="krang_pager_rows_checked" value="<tmpl_var escape=html contrib_id>:<tmpl_var escape=html contrib_type_id>" type="checkbox"></td>
       </tr>
     </tmpl_loop>
-  </tmpl_loop></tbody>
+  </tmpl_loop>
+
+  <tr class="command-row">
+  <td class="f" colspan="3">&nbsp;</td>
+  <td class="l">
+    <tmpl_if row_count><input value="Associate" onclick="associate_selected()" type="button" class="button">
+    <tmpl_else>&nbsp;</tmpl_if>
+  </td>
+  </tr>
+
+  </tbody>
 
   </table>
   </div>
@@ -207,9 +219,6 @@ Choose Contributors
 <div class="panel capped">
 <input value="Back" type="submit" class="west">
 <input value="Add Contributor" onclick="add_contrib()" type="button">
-<tmpl_if row_count>
-  <input value="Associate" onclick="associate_selected()" type="button">
-</tmpl_if>
 </div>
 
 </form>

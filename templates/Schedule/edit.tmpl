@@ -257,8 +257,7 @@ Current Schedule
 
 </table>
 
-<div class="panel cadpped">
-<input value="Back" onclick="do_return()" type="button" class="west">
+<div class="panel">
 <input value="Schedule Action" type="submit">
 </div>
 
@@ -268,6 +267,11 @@ Current Schedule
 
 <form name="return_form" action="<tmpl_if is_story>story<tmpl_else>media</tmpl_if>.pl" method="post">
 <input name="rm" value="edit" type="hidden">
+
+<div class="panel">
+<input value="Back" onclick="do_return()" type="button" class="west">
+</div>
+
 </form>
 
 <tmpl_include footer.tmpl>
