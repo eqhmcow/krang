@@ -99,8 +99,8 @@ if ($@) {
     }
 }
 
-can_ok($story, qw/title slug cover_date priority class element category categories
-                  notes version priority desk_id last_desk_id published_version preview_version
+can_ok($story, qw/title slug cover_date class element category categories
+                  notes version desk_id last_desk_id published_version preview_version
                   contribs url preview_url urls preview_urls find save
                   checkin checkout checked_out checked_out_by revert
                   linked_stories linked_media move_to_desk publish_path preview_path
@@ -228,8 +228,7 @@ for (qw( story_id
          slug
          notes
          cover_date
-         publish_date
-         priority )) {
+         publish_date )) {
     is($story->$_, $story2->$_, "$_ save/load");
 }
 
@@ -287,8 +286,7 @@ for (qw( class
          checked_out
          checked_out_by
          notes
-         cover_date
-         priority )) {
+         cover_date )) {
     is($story->$_, $copy->$_, "$_ cloned");
 }
 
