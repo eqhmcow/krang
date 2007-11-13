@@ -296,7 +296,7 @@ sub authen_handler ($$) {
     my $window_id = 
       (($cookies{krang_window_id} && $cookies{krang_window_id}->value) ||
        ($cookies{krang_highest_window_id} && $cookies{krang_highest_window_id}->value+1) || 1);
-    
+
     unless ($window_id && $cookies{"krang_window_$window_id"}) {
         # no cookie, redirect to login
         debug("No cookie found, passing Authen without user login");

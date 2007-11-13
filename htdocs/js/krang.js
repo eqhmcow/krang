@@ -111,11 +111,16 @@ document.onunload = function() {
 Krang.Window = {
 
     init : function() {
+        // determine ID and name of our current window 
 	var id = Krang.Window._id_from_name() || Krang.Window._id_from_count();
 	window.name = 'krang_window_' + id;
         document.title += id > 1 ? ' ('+id+')' : '';
-	// clean window ID from last transaction (so other windows don't use it!)
+
+	// clean ID of last transaction (so other windows don't accidentally use it!)
 	Krang.Cookie.set('krang_window_id', 0); 
+
+        // make sure page refresh will send Handler our ID
+        window.onbeforeunload = Krang.Window.pass_id; 
     },
 
     pass_id : function() {
@@ -620,9 +625,9 @@ Krang.Nav = {
         Krang.Nav.edit_mode_flag = flag;
     },
     goto_url       : function(url, ajax) {
-	
-	Krang.Window.pass_id();
 
+        Krang.Window.pass_id();
+	
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);
@@ -658,6 +663,7 @@ Krang.Help = {
         // if we have something go to it
         if( topic )    url = url + '?topic=' + topic;
         if( subtopic ) url = url + '#' + subtopic;
+	Krang.Window.pass_id();
         Krang.popup(url, { width: 500, height: 600});
     }
 };
