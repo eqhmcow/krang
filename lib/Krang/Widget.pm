@@ -12,7 +12,7 @@ use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader 'Info';
 use Krang::ClassLoader Conf    => qw(KrangRoot ForceStaticBrowserCaching);
 use Krang::ClassLoader DB      => qw(dbh);
-use Krang::ClassLoader Log     => qw(debug);
+use Krang::ClassLoader Log     => qw(debug info);
 use Krang::ClassLoader Message => qw(add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Text::Wrap qw(wrap);
@@ -202,6 +202,7 @@ sub category_chooser {
     );
 
     my ($show_button, $chooser_html) = $chooser->output();
+    $show_button =~ s/onmouseup=\"/onmouseup=\"Krang.Window.pass_id(); /;
 
     return wantarray
       ? ($show_button . $template->output() , $chooser_html)
@@ -815,6 +816,7 @@ sub template_chooser {
     );
 
     my ($show_button, $chooser_html) = $chooser->output();
+    $show_button =~ s/onmouseup=\"/onmouseup=\"Krang.Window.pass_id(); /;
 
     return wantarray
       ? ($show_button . $template->output() , $chooser_html)
