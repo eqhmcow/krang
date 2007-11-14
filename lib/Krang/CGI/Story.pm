@@ -1481,6 +1481,9 @@ sub new_category_from_slug {
     }
   }
 
+  # give story temporary slug so we don't throw dupe error during conversion!
+  $story->slug('_TEMP_SLUG_FOR_CONVERSION_'); $story->save;
+
   # then form new categories by appending slug to existing categories
   my @new_cats;
   foreach my $old_cat (@old_cats) {

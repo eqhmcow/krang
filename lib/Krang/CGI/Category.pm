@@ -216,70 +216,73 @@ sub create {
         die($@);
     }
 
-    # see if there's a story with our URL (and no existing category with it)
-    my ($url_without_backslash) = ($category->url =~ /^(.*[^\/])\/?$/);
-    if ((my ($story) = Krang::Story->find(url => $url_without_backslash)) && 
-	!Krang::Category->find(url => $category->url)) {
-      
-      # there is: make sure we can edit the story
-      unless ($story->may_edit) {
-	add_alert ('uneditable_story_has_url', id => $story->story_id);
-	return $self->new_category(bad => ['parent_id','dir']);
-      }
-      if ($story->checked_out) {
-	if ($story->checked_out_by ne $ENV{REMOTE_USER}) {
-	  my %admin_perms = pkg('Group')->user_admin_permissions();
-	  unless ($admin_perms{may_checkin_all}) {
-	    add_alert ('uneditable_story_has_url', id => $story->story_id);
-	    return $self->new_category(bad => ['parent_id','dir']);
-	  }
-	  $story->checkin; $story->checkout;
-	} 
-      } else {
-	$story->checkout;
-      }
+    # try saving
+    eval { $category->save(); };
+    
+    # is there an existing category or story with our URL?
+    if ($@ and ref($@) and $@->isa('Krang::Category::DuplicateURL')) {
 
-      # and then form new cats by appending its slug to existing cats
-      my $slug = $story->slug;
-      my @old_cats = $story->categories;
-      my @new_cats;
-      foreach my $old_cat (@old_cats) {
-	my ($new_cat) = Krang::Category->find(url => $old_cat->url . $slug);
-	unless ($new_cat) {
-	  $new_cat = Krang::Category->new(dir       => $slug,
-					  parent_id => $old_cat->category_id,
-					  site_id   => $old_cat->site_id);
-	  $new_cat->save;
-	}
-	push @new_cats, $new_cat;
-      }
-      $story->slug('');
-      $story->categories(@new_cats);
-      $story->save; $story->checkin;
-      add_message ('story_had_category_url', id => $story->story_id);
-    } else {
-
-      # no story dupe, so try saving
-      eval { $category->save(); };
-      
-      # is there a category dup?
-      if ($@ and ref($@) and $@->isa('Krang::Category::DuplicateURL')) {
-        # load clashing category/story
-	if ($@->category_id) {
-	  add_alert('duplicate_url', 
-		    url         => $@->url,
-		    category_id => $@->category_id);
-	} else {
-	  croak ("DuplicateURL didn't include category_id");
-	}
+      if ($@->category_id) {
+	# there's an existing category...
+	add_alert('duplicate_url', 
+		  url         => $@->url,
+		  category_id => $@->category_id);
         return $self->new_category(bad => ['parent_id','dir']);
-      } elsif ($@) {
-        # rethrow
-        die($@);
-      }
-    }
 
-    # store in session for edit
+      } elsif ($@->story_id) {
+	# there's an existing story; turn it into a category cover
+	# (after making sure we can edit it!)
+	my ($story) = Krang::Story->find(story_id => $@->story_id);
+	unless ($story->may_edit) {
+	  add_alert ('uneditable_story_has_url', id => $story->story_id);
+	  return $self->new_category(bad => ['parent_id','dir']);
+	}
+	if ($story->checked_out) {
+	  if ($story->checked_out_by ne $ENV{REMOTE_USER}) {
+	    my %admin_perms = pkg('Group')->user_admin_permissions();
+	    unless ($admin_perms{may_checkin_all}) {
+	      add_alert ('uneditable_story_has_url', id => $story->story_id);
+	      return $self->new_category(bad => ['parent_id','dir']);
+	    }
+	    $story->checkin; $story->checkout;
+	  } 
+	} else {
+	  $story->checkout;
+	}
+	
+	# give story temporary slug so we don't throw dupe error during conversion!
+	my $slug = $story->slug;
+	$story->slug('_TEMP_SLUG_FOR_CONVERSION_'); $story->save;
+
+	# form story's new cats by appending its slug to existing cats
+	my @old_cats = $story->categories;
+	my @new_cats;
+	foreach my $old_cat (@old_cats) {
+	  my ($new_cat) = Krang::Category->find(url => $old_cat->url . $slug);
+	  unless ($new_cat) {
+	    $new_cat = Krang::Category->new(dir       => $slug,
+					    parent_id => $old_cat->category_id,
+					    site_id   => $old_cat->site_id);
+	    $new_cat->save;
+	    # if this cat corresponds to session's cat, update session cat's ID
+	    $category->{category_id} = $new_cat->category_id
+	      if ($parent_id eq $old_cat->category_id);
+	  }
+	  push @new_cats, $new_cat;
+	}
+	$story->slug('');
+	$story->categories(@new_cats);
+	$story->save; $story->checkin;
+	add_message ('story_had_category_url', id => $story->story_id);	
+      } else {
+	croak ("DuplicateURL didn't include category_id OR story_id!");
+      }
+    } elsif ($@) {
+      # rethrow
+      die($@);
+    }
+    
+    # store category in session for edit
     $session{category} = $category;
 
     # toss to edit

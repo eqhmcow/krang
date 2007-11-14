@@ -105,6 +105,18 @@ isa_ok($@, 'Krang::Category::DuplicateURL');
 like($@, qr/Duplicate URL/, 'DuplicateURL exception test 1');
 like($@->category_id, qr/^\d+$/, 'DuplicateURL exception test 2');
 
+# make sure we can't create a category that matches a story URL
+my $test_story = pkg('Story')->new(class => "article",	
+   	                           title => "wilma",
+				   slug => "wilma",
+				   categories => [$parent]);
+$test_story->save;
+$dupe = pkg('Category')->new(dir => 'wilma', 
+		             parent_id => $parent->category_id);
+eval {$dupe->save()};
+isa_ok($@, 'Krang::Category::DuplicateURL');
+$test_story->delete;
+
 # find() tests
 ###############
 # setup a bunch of categorys

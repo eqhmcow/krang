@@ -107,9 +107,12 @@ sub _fix_slugs_that_duplicate_categories {
 	}
 	print "Done\n";
 	    
-        # make new categories by appending slug to existing categories
+	# give story temporary slug so we don't throw dupe error during conversion!
 	$story->checkout;
         my $slug = $story->slug;
+	$story->slug('_TEMP_SLUG_FOR_CONVERSION_'); $story->save;
+
+        # make new categories by appending slug to existing categories
         my @old_cats = $story->categories;
         my @new_cats;
         foreach my $old_cat (@old_cats) {
