@@ -202,7 +202,6 @@ sub category_chooser {
     );
 
     my ($show_button, $chooser_html) = $chooser->output();
-    $show_button =~ s/onmouseup=\"/onmouseup=\"Krang.Window.pass_id(); /;
 
     return wantarray
       ? ($show_button . $template->output() , $chooser_html)
@@ -816,7 +815,6 @@ sub template_chooser {
     );
 
     my ($show_button, $chooser_html) = $chooser->output();
-    $show_button =~ s/onmouseup=\"/onmouseup=\"Krang.Window.pass_id(); /;
 
     return wantarray
       ? ($show_button . $template->output() , $chooser_html)

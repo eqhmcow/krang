@@ -290,15 +290,30 @@ sub authen_handler ($$) {
     # which happens on redirects from ISEs
     return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
 
-    # Get Window ID of current request (either from the window itself, 
-    # or - if it doesn't have an ID yet - by incrementing overall count)
+    # Get Window ID of current request
+    my $window_id;
     my %cookies = Apache::Cookie->new($r)->parse();
-    my $window_id = 
-      (($cookies{krang_window_id} && $cookies{krang_window_id}->value) ||
-       ($cookies{krang_highest_window_id} && $cookies{krang_highest_window_id}->value+1) || 1);
+    if ($r->args =~ /ajax/ || $r->uri =~ /\/bug\.cgi/ || $r->uri !~ /((\.pl)|(\/))$/) {
+      # 1. Is this an Ajax call, bug or static call? If so, inherit ID from previous request
+      $window_id = $cookies{krang_previous_window_id} && $cookies{krang_previous_window_id}->value;
+    } elsif ($cookies{krang_window_id} && $cookies{krang_window_id}->value) {
+      # 2. Has this window passed the ID explicitly via calling Krang.Window.pass_id()?
+      $window_id = $cookies{krang_window_id}->value;
+    } elsif ($cookies{krang_highest_window_id} && $cookies{krang_highest_window_id}->value) {
+      # 3. Are there other open windows? If so, this must be a new window; increment count
+      $window_id = $cookies{krang_highest_window_id}->value + 1;
+    } 
+    $window_id ||= 1;
 
-    unless ($window_id && $cookies{"krang_window_$window_id"}) {
-        # no cookie, redirect to login
+    info ($r->uri . " ($window_id) " . $r->args || '');
+
+    # clean/update cookies 
+    $r->headers_out->add("Set-Cookie" => "krang_window_id=0")         # but maintain ID for login.pl and other
+      unless ($r->uri =~ /login.pl$/ || $r->args =~ /will_redirect/); # redirects so the subsequent call finds it
+    $r->headers_out->add("Set-Cookie" => "krang_previous_window_id=$window_id");
+
+    # If there's no session cookie for this Window ID, redirect to Login
+    unless ($cookies{"krang_window_$window_id"}) {
         debug("No cookie found, passing Authen without user login");
         return OK;
     }

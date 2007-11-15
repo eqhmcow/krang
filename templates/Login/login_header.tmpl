@@ -51,7 +51,6 @@ function focusFormField( idForm, idField )
   ;
 }
 
-document.cookie = 'krang_window_id=0';
 function pass_window_id() {
   var window_id = window.name.match(/^krang_window_/) && window.name.match(/\d+$/);
   if (window_id) {

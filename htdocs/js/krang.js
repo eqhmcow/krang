@@ -116,9 +116,6 @@ Krang.Window = {
 	window.name = 'krang_window_' + id;
         document.title += id > 1 ? ' ('+id+')' : '';
 
-	// clean ID of last transaction (so other windows don't accidentally use it!)
-	Krang.Cookie.set('krang_window_id', 0); 
-
         // make sure page refresh will send Handler our ID
         window.onbeforeunload = Krang.Window.pass_id; 
     },
@@ -148,6 +145,7 @@ Krang.popup = function(url, options) {
     if( ! options ) options = {};
     var height = options.height || 600;
     var width  = options.width  || 800;
+    Krang.Window.pass_id();
     var win = window.open( url, 'krangpopup', 'width=' + width + ',height=' + height + ',top=25,left=50,resizable,scrollbars,status' );
     if ( win ) win.focus();
 };
@@ -397,7 +395,7 @@ Krang.Ajax.update = function(args) {
                 // update the navigation if we need to
                 if( json && json.krang_update_nav ) {
                     Krang.Ajax.update({ url: 'nav.pl', target: 'S', to_top: false });
-                }
+	        }
             },
             onComplete  : function(transport, json) {
                 // wait 12 ms so we know that the JS in our request has been evaled
@@ -991,7 +989,8 @@ Krang.preview = function(type, id) {
     var instance = Krang.instance;
     // remove problematic characters for use as window name (IE may otherwise choke)
     instance = instance.toLowerCase().replace( new RegExp( '[^a-z]' , 'g' ), '' );
-
+   
+    Krang.Window.pass_id();
     var pop = window.open( url, instance + 'preview' );
 
     if ( pop ) pop.focus();
