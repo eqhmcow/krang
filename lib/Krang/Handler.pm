@@ -305,8 +305,6 @@ sub authen_handler ($$) {
     } 
     $window_id ||= 1;
 
-    info ($r->uri . " ($window_id) " . $r->args || '');
-
     # clean/update cookies 
     $r->headers_out->add("Set-Cookie" => "krang_window_id=0")         # but maintain ID for login.pl and other
       unless ($r->uri =~ /login.pl$/ || $r->args =~ /will_redirect/); # redirects so the subsequent call finds it
