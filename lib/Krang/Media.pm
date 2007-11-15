@@ -450,7 +450,7 @@ Removes all contributor associatisons.
 
 sub clear_contribs { shift->{contrib_ids} = []; }
 
-=item $media->upload_file({filehandle => $filehandle, filename => $filename})
+=item $media->upload_file(filehandle => $filehandle, filename => $filename)
 
 Stores media file to temporary location on filesystem. Sets $media->filename() also. 
 
@@ -471,6 +471,44 @@ sub upload_file {
     my $buffer;
     while (read($filehandle, $buffer, 10240)) { print FILE $buffer }
     close $filehandle;
+    close FILE;
+
+    $self->{tempfile} = $filepath;
+    $self->{tempdir} = $path;
+    $self->{filename} = $filename;
+
+    # blow the URL cache since filename has changed
+    undef $self->{url_cache};
+
+    # guess the mime_type
+    return $self->{mime_type} = guess_media_type($filepath);
+
+    return $self; 
+}
+
+=item $media->store_temp_file(filename => $filename, content=> $text)
+
+Stores media file to temporary location on filesystem, and sets 
+$media->filename(), just like upload_file().  But in this case, the 
+filename and its scalar text content are passed, instead of an actual file.
+
+=cut
+
+sub store_temp_file {
+    my $self = shift;
+    my %args = @_;
+    my $root = KrangRoot;
+    my $filename = $args{filename} 
+      || croak('You must pass in a filename in order to save the temp file');
+    croak('You cannot use a / in a filename!') if $filename =~ /\//;
+    
+    my $content = $args{content};
+    $content = '' unless defined $content;
+
+    my $path = tempdir( DIR => catdir(KrangRoot, 'tmp'));
+    my $filepath = catfile($path, $filename);
+    open (FILE, ">$filepath") || croak("Unable to open $path for writing media!"); 
+    print FILE $content;
     close FILE;
 
     $self->{tempfile} = $filepath;

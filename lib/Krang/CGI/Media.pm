@@ -1,6 +1,7 @@
 package Krang::CGI::Media;
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => qw(CGI);
+use Krang::ClassLoader Log => qw(debug critical);
 use strict;
 use warnings;
 
@@ -1339,6 +1340,7 @@ sub update_media {
                       media_type_id
                       category_id
                       media_file
+                      text_content
                       caption
                       copyright 
                       alt_tag 
@@ -1360,8 +1362,26 @@ sub update_media {
             $m->upload_file(filehandle => $filehandle,
                             filename => $filename);
 
-            # Clear param and continue
-            $q->delete($mf);
+            next;
+        }
+        if ($mf eq 'text_content') {
+            # Handle direct text-file editing
+            next unless $q->param('text_content');
+            my $text = $q->param('text_content');
+            
+            my $media_file = $q->param('title');
+            critical('MEDIA TITLE: ' . $media_file ."\n\n");
+
+            # Coerce a reasonable name from what we get
+            my @filename_parts = split(/[\/\\\:]/, $media_file);
+            my $filename = $filename_parts[-1];
+
+            # Put the file in the Media object
+            $m->store_temp_file(
+                content   => $text,
+                filename  => $filename,
+            );
+
             next;
         }
 
@@ -1370,7 +1390,7 @@ sub update_media {
         $m->$mf( $val );
 
         # Clear param and continue
-        $q->delete($mf);
+        #$q->delete($mf);
     }
 
     # Done!
@@ -1410,7 +1430,16 @@ sub make_media_tmpl_data {
                                                   );
         $tmpl_data{media_version_chooser} = $media_version_chooser;
     }
-
+    
+    if ($m->filename && $m->mime_type && $m->mime_type =~ m{^text/}) {
+      $tmpl_data{is_text} = 1;
+      open(FILE, $m->file_path) 
+        or croak "unable to open media file " . $m->file_path . " - $!";
+      my $text_content = join '', <FILE>;
+      close FILE;
+      $tmpl_data{text_content} = $text_content;
+    }
+    
     # Build type drop-down
     my %media_types = pkg('Pref')->get('media_type');
     my @media_type_ids = ( "", sort { $media_types{$a} cmp $media_types{$b} } keys(%media_types) );
