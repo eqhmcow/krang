@@ -8,50 +8,50 @@ Krang.onload( function() {
 
 publish_media_preview = function()
 {
-  if ($('mediaEditor')) mediaEditor.toggleEditor();
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
   Krang.Form.submit('edit_media_form', { rm: 'save_and_preview' });
 }
 
 do_checkin = function()
 {
-  if ($('mediaEditor')) mediaEditor.toggleEditor();
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
   Krang.Form.submit( 'edit_media_form', { rm: 'checkin_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
 }
 
 do_save = function()
 {
-  if ($('mediaEditor')) mediaEditor.toggleEditor();
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
   Krang.Form.submit( 'edit_media_form', { rm: 'save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
 }
 
 do_save_stay = function()
 {
-  if ($('mediaEditor')) mediaEditor.toggleEditor();
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
   Krang.Form.submit( 'edit_media_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
 }
 
 edit_contribs = function()
 {
-  if ($('mediaEditor')) mediaEditor.toggleEditor();
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
   Krang.Form.submit('edit_media_form', { rm: 'save_and_associate_media' });
 }
 
 save_and_edit_schedule = function()
 {
-  if ($('mediaEditor')) mediaEditor.toggleEditor();
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
   Krang.Form.submit('edit_media_form', { rm: 'save_and_edit_schedule' });
 }
 
 save_and_view_log = function()
 {
-  if ($('mediaEditor')) mediaEditor.toggleEditor();
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
   Krang.Form.submit('edit_media_form', { rm: 'save_and_view_log' });
 }
 
 <tmpl_if may_publish>
   publish_media = function()
   {
-  if ($('mediaEditor')) mediaEditor.toggleEditor();
+    <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
     Krang.Form.submit('edit_media_form', { rm: 'save_and_publish' });
   }
 </tmpl_if>
@@ -242,7 +242,8 @@ Media
 <h3>
 Content
 </h3>
-<textarea style="width: 100%" name="text_content" id="mediaEditor" class="codepress css" rows="30" cols="60"><tmpl_var escape=html text_content></textarea>
+<textarea style="width: 100%" name="text_content" id="mediaEditor" rows="30" cols="60"
+  class="codepress <tmpl_var text_type>"><tmpl_var escape=html text_content></textarea>
 </td>
 </tr>
 </tmpl_if>

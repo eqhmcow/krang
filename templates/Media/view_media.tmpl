@@ -19,6 +19,12 @@ do_return = function()
     Krang.Form.submit( 'edit_media_form' );
   }
 </tmpl_if></tmpl_unless>
+
+// Register CodePress's onload event:
+Krang.onload( function() { 
+  CodePress.run();
+} );
+
 </script>
 
 <!--[p class="east"]
@@ -126,6 +132,18 @@ Properties
 </tmpl_if>
 </td>
 </tr>
+
+<tmpl_if is_text>
+<tr>
+<td colspan="2">
+<h3>
+Content
+</h3>
+<textarea style="width: 100%" name="text_content" id="mediaEditor" rows="30" cols="60"
+  class="codepress readonly-on <tmpl_var text_type>"><tmpl_var escape=html text_content></textarea>
+</td>
+</tr>
+</tmpl_if>
 
 </tbody>
 

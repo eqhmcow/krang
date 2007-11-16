@@ -1370,7 +1370,7 @@ sub update_media {
             my $text = $q->param('text_content');
             
             my $media_file = $q->param('title');
-            critical('MEDIA TITLE: ' . $media_file ."\n\n");
+            debug('MEDIA TITLE: ' . $media_file ."\n\n");
 
             # Coerce a reasonable name from what we get
             my @filename_parts = split(/[\/\\\:]/, $media_file);
@@ -1433,11 +1433,26 @@ sub make_media_tmpl_data {
     
     if ($m->filename && $m->mime_type && $m->mime_type =~ m{^text/}) {
       $tmpl_data{is_text} = 1;
+      
+      # populate template with the file's contents
       open(FILE, $m->file_path) 
         or croak "unable to open media file " . $m->file_path . " - $!";
       my $text_content = join '', <FILE>;
       close FILE;
       $tmpl_data{text_content} = $text_content;
+      
+      # populate template with the syntax-highlighting "language"
+      my $text_type = 'html'; # the default
+      my $extension = $m->file_path =~ /\.([^\.]+)$/ ? $1 : '';
+      my %extension_map = (
+        js    => 'javascript',
+        css   => 'css', 
+        php   => 'php',
+        pl    => 'perl',
+      );
+      $text_type = $extension_map{$extension} if $extension_map{$extension};
+      debug("CodePress text type: $text_type");
+      $tmpl_data{text_type} = $text_type;
     }
     
     # Build type drop-down
@@ -1578,6 +1593,31 @@ sub make_media_view_tmpl_data {
         unless (defined($q->param($mf))) {
             $tmpl_data{$mf} = $m->$mf();
         }
+    }
+    
+    # CodePress tmppl_vars: is_text, text_content & text_type
+    if ($m->filename && $m->mime_type && $m->mime_type =~ m{^text/}) {
+      $tmpl_data{is_text} = 1;
+      
+      # populate template with the file's contents
+      open(FILE, $m->file_path) 
+        or croak "unable to open media file " . $m->file_path . " - $!";
+      my $text_content = join '', <FILE>;
+      close FILE;
+      $tmpl_data{text_content} = $text_content;
+      
+      # populate template with the syntax-highlighting "language"
+      my $text_type = 'html'; # the default
+      my $extension = $m->file_path =~ /\.([^\.]+)$/ ? $1 : '';
+      my %extension_map = (
+        js    => 'javascript',
+        css   => 'css', 
+        php   => 'php',
+        pl    => 'perl',
+      );
+      $text_type = $extension_map{$extension} if $extension_map{$extension};
+      debug("CodePress text type: $text_type");
+      $tmpl_data{text_type} = $text_type;
     }
 
     # Set up return state
