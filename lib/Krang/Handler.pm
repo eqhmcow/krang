@@ -291,24 +291,34 @@ sub authen_handler ($$) {
     return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
 
     # Get Window ID of current request
+    my %cookies = Apache::Cookie->new($r)->parse;
+    my $login_id = ($cookies{krang_login_id} && $cookies{krang_login_id}->value);
+
     my $window_id;
-    my %cookies = Apache::Cookie->new($r)->parse();
     if ($r->args =~ /ajax/ || $r->uri =~ /\/bug\.cgi/ || $r->uri !~ /((\.pl)|(\/))$/) {
-      # 1. Is this an Ajax call, bug or static call? If so, inherit ID from previous request
+      # 1. This is an Ajax call, bug or static file: inherit ID from previous request
       $window_id = $cookies{krang_previous_window_id} && $cookies{krang_previous_window_id}->value;
     } elsif ($cookies{krang_window_id} && $cookies{krang_window_id}->value) {
-      # 2. Has this window passed the ID explicitly via calling Krang.Window.pass_id()?
+      # 2. This window passed the ID explicitly via calling Krang.Window.pass_id()
       $window_id = $cookies{krang_window_id}->value;
-    } elsif ($cookies{krang_highest_window_id} && $cookies{krang_highest_window_id}->value) {
-      # 3. Are there other open windows? If so, this must be a new window; increment count
-      $window_id = $cookies{krang_highest_window_id}->value + 1;
-    } 
-    $window_id ||= 1;
+    } elsif ($login_id) {
+      # 3. This is a new window for which login.pl passed us an ID
+      $window_id = $login_id;
+    } elsif (grep { $_ =~ /^krang_window_(\d+)/ && $cookies{"krang_window_$1"}->value } keys %cookies) {
+      # 4. We have no ID, and there are other active windows, so assume nothing (force login)
+      $window_id = 0;
+    } else {
+      # 5. There are NOT other windows, so assume ID 1
+      $window_id = 1;
+    }
+      
+    # clean login.pl cookie (used only by login redirect to pass us ID of new window)
+    my $c = Apache::Cookie->new($r, -name => 'krang_login_id', -value => '0', -path => '/'); $c->bake;
 
-    # clean/update cookies 
-    $r->headers_out->add("Set-Cookie" => "krang_window_id=0")         # but maintain ID for login.pl and other
-      unless ($r->uri =~ /login.pl$/ || $r->args =~ /will_redirect/); # redirects so the subsequent call finds it
+    # update other cookies
+    $r->headers_out->add("Set-Cookie" => "krang_window_id=0"); # so next request starts fresh
     $r->headers_out->add("Set-Cookie" => "krang_previous_window_id=$window_id");
+    $r->headers_out->add("Set-Cookie" => "krang_new_window_id=$login_id");      
 
     # If there's no session cookie for this Window ID, redirect to Login
     unless ($cookies{"krang_window_$window_id"}) {

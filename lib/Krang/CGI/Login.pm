@@ -196,14 +196,21 @@ sub _do_login {
     # Unload the session if we've created it
     pkg('Session')->unload() unless (defined($ENV{KRANG_SESSION_ID}));
 
-    # build the cookie
-    my $window_id = ($q->cookie('krang_window_id') || (($q->cookie('krang_highest_window_id') || 0) + 1));
-    
+    # build the session cookie (using next available window ID)
+    my $window_id = 1;
+    while ($q->cookie("krang_window_$window_id")) { ++$window_id };
     my $session_cookie = $q->cookie(
         -name  => "krang_window_$window_id",
-        -value => \%filling,
+        -value => \%filling
     );
-    
+
+    # pass handler ID of our new window
+    my $login_id_cookie = $q->cookie(
+        -name  => 'krang_login_id',
+        -value => $window_id,
+        -path  => '/'
+    );
+
     # put our preferences into our cookie via JSON so that the JS
     # on the client side can access it
     my %prefs;
@@ -229,7 +236,7 @@ sub _do_login {
     my $target = './';
     $self->header_add(
         -uri    => $target,
-        -cookie => [$session_cookie->as_string, $pref_cookie->as_string, $conf_cookie->as_string],
+        -cookie => [$session_cookie->as_string, $login_id_cookie->as_string, $pref_cookie->as_string, $conf_cookie->as_string]
     );
 
     $self->header_type('redirect');
@@ -240,10 +247,15 @@ sub _do_login {
 sub new_window {
     my $self       = shift;
     my $q          = $self->query();
-    my $session_id = pkg('Session')->create(); pkg('Session')->unload();
-    my $window_id  = $q->cookie('krang_highest_window_id') + 1;
 
-    # build new session cookie for new window
+    # build new session for new window (keep same user)
+    my $session_id = pkg('Session')->create(); pkg('Session')->unload();
+
+    # find next available window ID
+    my $window_id  = 1;
+    while ($q->cookie("krang_window_$window_id")) { ++$window_id };
+
+    # build the session cookie
     my $user_id    = $ENV{REMOTE_USER};
     my $instance   = pkg('Conf')->instance();
     my %filling = (session_id => $session_id,
@@ -256,11 +268,18 @@ sub new_window {
         -value => \%filling
     );
 
+    # pass handler ID of our new window
+    my $login_id_cookie = $q->cookie(
+        -name  => 'krang_login_id',
+        -value => $window_id,
+        -path  => '/'
+    );
+
     # redirect and set the cookie
     my $target = './';
     $self->header_add(
         -uri    => $target,
-        -cookie => [$session_cookie->as_string]
+        -cookie => [$session_cookie->as_string, $login_id_cookie->as_string]
     );
     $self->header_type('redirect');
     my $output = "Redirect: <a href=\"$target\">$target</a>";
@@ -280,7 +299,6 @@ sub logout {
 				-value  => "",
 				-expires=>'-90d',
 			       );
-
     # redirect to login
     $self->header_props(-uri    => "login.pl",
                         -cookie => [$cookie->as_string]);   

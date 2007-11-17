@@ -1,4 +1,4 @@
-	/*
+/*
 Create the Krang namespace.
 */
 
@@ -112,26 +112,29 @@ Krang.Window = {
 
     init : function() {
         // determine ID and name of our current window 
-	var id = Krang.Window._id_from_name() || Krang.Window._id_from_count();
+	var id = Krang.Window._id_from_name() || Krang.Window._id_from_pool();
 	window.name = 'krang_window_' + id;
-        document.title += id > 1 ? ' ('+id+')' : '';
+        document.title += ' ('+id+')';
 
-        // make sure page refresh will send Handler our ID
-        window.onbeforeunload = Krang.Window.pass_id; 
+        // make sure page refresh will send Handler our ID 
+	window.onbeforeunload = Krang.Window.pass_id; // only IE & Firefox support this?
     },
 
     pass_id : function() {
-	Krang.Cookie.set('krang_window_id', Krang.Window._id_from_name());
+	var id = Krang.Window._id_from_name();
+	if (id) {
+  	  Krang.Cookie.set('krang_window_id', Krang.Window._id_from_name());	
+	}
     },
 
     _id_from_name : function() {
 	return window.name.match(/^krang_window_/) && window.name.match(/\d+$/);		
     },	
 
-    _id_from_count : function() {
-	var count = Krang.Cookie.get('krang_highest_window_id') || 0;
-	Krang.Cookie.set('krang_highest_window_id', ++count);
-	return count;
+    _id_from_pool : function() {
+	var id = Krang.Cookie.get('krang_new_window_id');
+	Krang.Cookie.set('krang_new_window_id', '0');
+	return id;
     }	
 }
 
