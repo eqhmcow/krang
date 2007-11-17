@@ -177,9 +177,7 @@ sub publish_story_list {
 
     # if there are no stories and media, return to workspace directly
     unless (@story_id_list or @media_id_list) {
-        $self->header_props(-uri => 'workspace.pl');
-        $self->header_type('redirect');
-        return "";
+      return $self->_redirect_to_workspace;
     }
 
     @story_list = pkg('Story')->find(story_id => \@story_id_list) if @story_id_list;
@@ -253,9 +251,7 @@ sub publish_assets {
         $self->_schedule_assets(\@story_list, \@media_list, $date);
 
         # return to my workspace
-        $self->header_props(-uri => 'workspace.pl');
-        $self->header_type('redirect');
-        return "";
+	return $self->_redirect_to_workspace;
     }
 
 }
@@ -290,9 +286,7 @@ sub publish_media {
                 version => $media->version);
 
     # return to my workspace
-    $self->header_props(-uri => 'workspace.pl');
-    $self->header_type('redirect');
-    return "";
+    return $self->_redirect_to_workspace;
 
 }
 
@@ -318,9 +312,7 @@ sub preview_story {
     unless( $story_id or $session_key ) {
         info "Missing required story_id or session parameter. "
             . "Redirecting to workspace.";
-        $self->header_type('redirect');
-        $self->header_add(-url => 'workspace.pl?rm=show');
-        return "Redirecting to workspace.";
+	return $self->_redirect_to_workspace;
     }
 
     # this is a no-parse header script
@@ -409,7 +401,7 @@ sub preview_story {
             # make sure to turn off caching
             Krang::Cache::stop();
             debug("Krang::Cache Stats " . join(' : ', Krang::Cache::stats()));
-        }
+	  }
     };
     my $err = $@;
 
@@ -427,6 +419,7 @@ sub preview_story {
     my $scheme = PreviewSSL ? 'https' : 'http';
     print qq|<script type="text/javascript">\nwindow.location = '$scheme://$url';\n</script>\n|
       if $url;
+
 }
 
 # update the progress bar during preview or publish
@@ -518,9 +511,7 @@ sub preview_media {
                 version => $media->version);
 
         # return to my workspace
-        $self->header_props(-uri => 'workspace.pl');
-        $self->header_type('redirect');
-        return "";
+	return $self->_redirect_to_workspace;
     } else {
         # redirect to preview
         $self->header_type('redirect');
@@ -734,7 +725,7 @@ sub _publish_assets_now {
     print qq|
     <script type="text/javascript">
         setTimeout(
-            function() { location.replace('workspace.pl') },
+            function() { Krang.Window.pass_id(); location.replace('workspace.pl') },
             10
         )
     </script>
@@ -788,6 +779,19 @@ sub _schedule_assets {
 
     return;
 
+}
+
+
+sub _redirect_to_workspace {
+  my $self      = shift;
+  my $query     = $self->query;
+  my $window_id = $query->param('wid');
+
+  $self->header_props(-uri    => 'workspace.pl'); 
+  $self->header_add  (-cookie => "krang_window_id=$window_id; path=/") if $window_id;
+  $self->header_type ('redirect');
+
+  return "";
 }
 
 
