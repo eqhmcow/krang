@@ -101,18 +101,21 @@ document.onunload = function() {
 
 
 /*
-    // Initialize the window id, name and title
+    // Initialize the name and title of current window
     Krang.Window.init();
 
-    // Pass handler a cookie with the current window's ID. 
-    // (This should be invoked by all post-login page requests/form submissions.)
+    // Get the ID of current window
+    Krang.Window.get_id();
+
+    // Pass handler a cookie with the ID of current window. (This should be invoked
+    // by all page requests, forms, etc: anything that communicates with the server!)
     Krang.Window.pass_id();
 */
 Krang.Window = {
 
     init : function() {
-        // determine ID and name of our current window 
-	var id = Krang.Window._id_from_name() || Krang.Window._id_from_pool();
+        // set name and title of our window
+	var id = Krang.Window.get_id();
 	window.name = 'krang_window_' + id;
         document.title += ' ('+id+')';
 
@@ -120,10 +123,15 @@ Krang.Window = {
 	window.onbeforeunload = Krang.Window.pass_id; // only IE & Firefox support this?
     },
 
+    get_id : function() {
+	var id = Krang.Window._id_from_name() || Krang.Window._id_from_pool();
+	return parseInt(id);
+    },
+
     pass_id : function() {
-	var id = Krang.Window._id_from_name();
+	var id = Krang.Window.get_id();
 	if (id) {
-  	  Krang.Cookie.set('krang_window_id', Krang.Window._id_from_name());	
+  	  Krang.Cookie.set('krang_window_id', id);	
 	}
     },
 
@@ -133,8 +141,8 @@ Krang.Window = {
 
     _id_from_pool : function() {
 	var id = Krang.Cookie.get('krang_new_window_id');
-	Krang.Cookie.set('krang_new_window_id', '0');
-	return id;
+  	Krang.Cookie.set('krang_new_window_id', '0');
+	return id;	
     }	
 }
 
