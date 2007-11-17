@@ -2237,27 +2237,31 @@ sub make_sure_story_is_still_ours {
 
     my ($self) = @_;
 
-    # grab story in session hash
-    if (!$session{story}) { croak ("Could not load story from session!") }
-    my $story_id = $session{story}->story_id;
-    return 1 unless $story_id;
-    
-    # look up actual story in database to make sure it's still ours
-    my ($story) = pkg('Story')->find(story_id => $story_id);
-    if (!$story) {
-	clear_messages(); clear_alerts(); 
-	add_alert('story_deleted_during_edit', id => $story_id);
-    } elsif (!$story->checked_out) {
-	clear_messages(); clear_alerts(); 
-	add_alert('story_checked_in_during_edit', id => $story_id);
-    } elsif ($story->checked_out_by ne $ENV{REMOTE_USER}) {
-	my ($thief) = pkg('User')->find(user_id => $story->checked_out_by);
-	my $thief_name = CGI->escapeHTML($thief->first_name.' '.$thief->last_name);	
-	clear_messages(); clear_alerts(); 
-	add_alert('story_stolen_during_edit', id => $story_id, thief => $thief_name);
+    # grab story from session hash
+    if (!$session{story}) {
+       clear_messages(); clear_alerts(); 
+       add_alert('story_no_longer_in_session');
     } else {
-        # story is still ours
-	return 1; 
+       my $story_id = $session{story}->story_id;
+       return 1 unless $story_id;
+    
+       # look up actual story in database to make sure it's still ours
+       my ($story) = pkg('Story')->find(story_id => $story_id);
+       if (!$story) {
+   	   clear_messages(); clear_alerts(); 
+	   add_alert('story_deleted_during_edit', id => $story_id);
+       } elsif (!$story->checked_out) {
+	   clear_messages(); clear_alerts(); 
+	   add_alert('story_checked_in_during_edit', id => $story_id);
+       } elsif ($story->checked_out_by ne $ENV{REMOTE_USER}) {
+	   my ($thief) = pkg('User')->find(user_id => $story->checked_out_by);
+	   my $thief_name = CGI->escapeHTML($thief->first_name.' '.$thief->last_name);	
+	   clear_messages(); clear_alerts(); 
+	   add_alert('story_stolen_during_edit', id => $story_id, thief => $thief_name);
+       } else {
+           # story is still ours
+	   return 1; 
+       }
     }
     
     # story is no longer ours! go to workspace
