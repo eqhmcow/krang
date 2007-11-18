@@ -70,7 +70,6 @@ sub setup {
         add_category                  => 'add_category',
         replace_category              => 'replace_category',
         set_primary_category          => 'set_primary_category',
-        new_category_from_slug        => 'new_category_from_slug',
         copy                          => 'copy',
         replace_dupes                 => 'replace_dupes',
         db_save                       => 'db_save',
@@ -439,13 +438,11 @@ sub edit {
         if ($query->param('returning_from_root')) {
 	  # maintain query's title & slug, even if empty
 	  $template->param(title   => $query->param('title')   || '',
-			   slug    => $query->param('slug')    || '',
-			   cat_idx => $query->param('cat_idx') || '');
+			   slug    => $query->param('slug')    || '');
 	} else {
  	  # otherwise grab them from the session
 	  $template->param(title   => $story->title || '',
-			   slug    => $story->slug  || '',
-			   cat_idx => !$story->slug || '');
+			   slug    => $story->slug  || '');
         }
 
 	# set other basic vars
@@ -1221,7 +1218,6 @@ sub _save {
         and not $query->param('bulk_edit')) {
         my $title = $query->param('title');
         my $slug = $query->param('slug') || '';
-	my $cat_idx = $query->param('cat_idx') || 0;
         my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
         
         my @bad;
@@ -1232,7 +1228,6 @@ sub _save {
         push(@bad, 'slug')
 	    unless $self->process_slug_input(slug => $slug, 
 					     story => $story,
-					     cat_idx => $cat_idx,
 					     categories => [$story->categories]);
 	
         # return to edit mode if there were problems
@@ -1453,70 +1448,6 @@ sub delete_categories {
     
     return $self->edit();
 }
-
-=item new_category_from_slug
-
-Creates a new category based on the story's slug and makes the story
-an index page located in the new category. (If the story has multiple
-categories, does the same thing for all of them.)
-
-=cut
-
-sub new_category_from_slug {
-  
-  my $self     = shift;
-  my $query    = $self->query;
-  $self->make_sure_story_is_still_ours || return '';
-
-  # grab current story data
-  my $story    = $session{story};
-  my $slug     = $story->slug;
-  my @old_cats = $story->categories;
-
-  # make sure we have necessary permissions to create in parent dir
-  foreach my $old_cat (@old_cats) {
-    unless (Krang::Category->find(url => $old_cat->url . $slug) || $old_cat->may_edit) {
-      add_alert('no_permissions_to_create_category', url => $old_cat->url . $slug);
-      return $self->edit;
-    }
-  }
-
-  # give story temporary slug so we don't throw dupe error during conversion!
-  $story->slug('_TEMP_SLUG_FOR_CONVERSION_'); $story->save;
-
-  # then form new categories by appending slug to existing categories
-  my @new_cats;
-  foreach my $old_cat (@old_cats) {
-    my ($new_cat) = Krang::Category->find(url => $old_cat->url . $slug);
-    unless ($new_cat) {
-      $new_cat = Krang::Category->new(dir       => $slug,
-				      parent_id => $old_cat->category_id,
-                                      site_id   => $old_cat->site_id);
-      $new_cat->save;
-    }
-    push @new_cats, $new_cat;
-  }
-  $story->slug('');
-  $story->categories(@new_cats);
-
-  # inform user of changes
-  if (@new_cats) {
-    @new_cats > 1 ?
-      add_message('new_categories_from_slug', urls => join(', ',map { $_->url } @new_cats)) :
-      add_message('new_category_from_slug', url => $new_cats[0]->url);
-  } 
-
-  # update edit-screen
-  $query->param(cat_idx           => 1);
-  $query->param(slug              => '');
-  $query->param(slug_before_empty => ''); # no longer display old slug when unchecking Cat Idx
-
-  # write to disk and return to edit screen
-  return $self->db_save_and_stay();
-}
-    
-
-
 
 
 =item delete
@@ -2087,7 +2018,6 @@ sub update_categories {
       # is new slug valid? will it build unique URLs with the unchanged categories?
       if (!$self->process_slug_input(slug => $new_slug, 
 				     story => $story,
-				     cat_idx => $query->param('cat_idx') || 0,
 				     categories => \@unchanged_cats)) {
 	add_alert('new_slug_prevented_category_change');
 	return 0;
@@ -2141,13 +2071,13 @@ sub process_slug_input {
     if (length $slug && $slug !~ /^[-\w]+$/) {
 	add_alert('bad_slug');
 	return 0;
-    } elsif ($slug_optional && !$slug && !$cat_idx) {
-	add_alert('no_slug_no_cat_idx');
-	return 0;
     } elsif ($slug_required && !$slug) {
 	add_alert('missing_slug');
 	return 0;
-    } if ($story && ($story->slug ne $slug)) {
+    } elsif ($slug_optional && !$slug && defined $cat_idx && !$cat_idx) { # New Story cat-idx check 
+	add_alert('no_slug_no_cat_idx');
+	return 0;
+    } elsif ($story && ($story->slug ne $slug)) {
 
       # and if we've been given categories to check against new slug...
       if (@categories) {
@@ -2170,7 +2100,7 @@ sub process_slug_input {
       } else {
 	# even if we're not checking categories, update slug
 	$story->slug($slug); 
-      }      
+      }
     }
     # success
     return 1; 
@@ -2222,7 +2152,7 @@ sub alert_duplicate_url {
 		  url        => $error->categories->[0]->{url},  # most one new duplicate URL
   		  cat        => $new_cat) :
 	add_alert('category_has_url',
-		  ids        => join(', ', map { $_->{id} }  @{$error->categories}),
+		  ids        => join(' and Category ', map { $_->{id} }  @{$error->categories}),
 		  urls       => join(', ', map { $_->{url} } @{$error->categories}),
 		  s          => @{$error->categories} > 1  ? 's' : '',  # plural
   		  attributes => $url_attributes); 

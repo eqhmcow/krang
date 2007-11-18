@@ -115,10 +115,6 @@ Media
     <tmpl_if media_id><a title="Preview <tmpl_var escape=html title>" href="javascript:Krang.preview('media',null)"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
   </div></tmpl_if>
 
-  <h3>
-  Properties
-  </h3>
-
   <table class="request" summary="">
 
   <colgroup>
@@ -223,17 +219,39 @@ Media
 <td colspan="2"><textarea name="notes" rows="4" cols="40"><tmpl_var escape=html notes></textarea></td>
 </tr>
 
+</tbody>
+<tbody>
+
+<tmpl_unless add_mode>
 <tr>
-<th>Contributors</th>
-<td>
+<th>Version</td>
+<td colspan="2">
+  <tmpl_var media_version_chooser>
+  <input value="Revert" onclick="revert_version()" type="button" class="button">
+  <input value="View" onclick="view_version()" type="button" class="button">
+</td>
+</tr>
+</tmpl_unless>
+
+<tr>
+<th>Contributors</td>
+<td colspan="2">
 <tmpl_if contribs>
   <tmpl_loop contribs>
-    <tmpl_var escape=html first> <tmpl_var escape=html last> (<tmpl_var escape=html type>)<tmpl_unless __last__>,</tmpl_unless>
+    <tmpl_var escape=html first> <tmpl_var escape=html last> (<tmpl_var escape=html type>)
+    <tmpl_unless __last__><br></tmpl_unless>
   </tmpl_loop>
+  </td>
+  </tr>
+
+  <tr>
+  <td></td>
+  <td>
+  <input value="Edit" onclick="edit_contribs()" type="button" class="button">
 <tmpl_else>
-  None.
-</tmpl_if></td>
-<td><input value="Edit Contributors" onclick="edit_contribs()" type="button" class="button"></td>
+  <input value="Add" onclick="edit_contribs()" type="button" class="button">
+</tmpl_if>
+</td>
 </tr>
 
 <tmpl_if is_text>
@@ -251,15 +269,6 @@ Content
 </tbody>
 
 </table>
-
-<tmpl_unless add_mode>
-  <p><!--:FIXME(db2)-->
-  Version
-  <tmpl_var media_version_chooser>
-  <input value="Revert" onclick="revert_version()" type="button" class="button">
-  <input value="View" onclick="view_version()" type="button" class="button">
-  </p>
-</tmpl_unless>
 
 <div class="panel capped<tmpl_if add_mode> clearfix</tmpl_if>">
 <tmpl_if add_mode>

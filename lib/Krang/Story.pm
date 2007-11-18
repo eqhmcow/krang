@@ -644,12 +644,15 @@ sub save {
        message => "Not allowed to edit story in this category",
        category_id => $self->category->category_id)
         unless ($self->category->may_edit);
-    
-    # make sure it's got a unique URL
-    $self->_verify_unique();
 
-    # update the version number
-    $self->{version}++ unless $args{keep_version};
+    # unless we're halfway through a category-index conversion...
+    unless ($self->{slug} eq '_TEMP_SLUG_FOR_CONVERSION_') {
+      # make sure it's got a unique URL
+      $self->_verify_unique();
+      
+      # update the version number
+      $self->{version}++ unless $args{keep_version};
+    }
 
     # save element tree, populating $self->{element_id}
     $self->_save_element();

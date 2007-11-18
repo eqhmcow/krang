@@ -104,12 +104,45 @@ Current Contributors
 
   </tbody>
 
-  </table>
-  </div>
+  </table></div>
 
   </form>
 
 </tmpl_unless>
+
+<form name="search_form" action="contributor.pl" method="post">
+
+<input name="rm" value="search" type="hidden">
+<input name="krang_pager_curr_page_num" value="" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+<input name="associate_mode" value="<tmpl_var escape=html associate_mode>" type="hidden">
+
+<div class="tabset finder">
+
+<ul class="tabs"><li>
+<b><span>
+Simple Search
+</span></b>
+</li></ul>
+
+<div class="tabbed">
+
+<div class="faux-p">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
+<input value="Search" type="submit" class="button">
+</div>
+
+</div>
+
+</div>
+
+</form>
+
+<h3>
+Choose Contributors
+</h3>
 
 <tmpl_unless krang_pager_rows>
 
@@ -118,40 +151,6 @@ Current Contributors
   </p>
 
 <tmpl_else>
-
-  <h3>
-  Choose Contributors
-  </h3>
-
-  <form name="search_form" action="contributor.pl" method="post">
-
-  <input name="rm" value="search" type="hidden">
-  <input name="krang_pager_curr_page_num" value="" type="hidden">
-  <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
-  <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
-  <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
-  <input name="associate_mode" value="<tmpl_var escape=html associate_mode>" type="hidden">
-
-  <div class="tabset finder">
-
-  <ul class="tabs"><li>
-  <b><span>
-  Simple Search
-  </span></b>
-  </li></ul>
-
-  <div class="tabbed">
-
-  <div class="faux-p">
-  <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
-  <input value="Search" type="submit" class="button">
-  </div>
-
-  </div>
-
-  </div>
-
-  </form>
 
   <form name="krang_pager_form" action="contributor.pl" method="post">
 
