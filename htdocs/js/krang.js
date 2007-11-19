@@ -164,7 +164,7 @@ Krang.Window = {
 	   var win_name = win_names[i];
 	   if (win_name != window.name) { // make sure this isn't the current window
 	     win_id = win_name.match(/\d+$/);
-	     var win = window.open('login.pl?rm=logout&window='+win_id+'&close=1', win_name);
+	     var win = window.open('login.pl?rm=logout&window='+win_id, win_name);
 	     win.name = '';
 	   }
         }

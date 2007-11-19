@@ -272,13 +272,11 @@ sub logout {
     # delete the session
     pkg('Session')->delete($ENV{KRANG_SESSION_ID});
 
-    # were we told to close the window, or to redirect to login?
-    my $url = $query->param('close') ? "close_win.html" : "login.pl";
-    $self->header_props(-uri => $url,
+    # redirect to login
+    $self->header_props(-uri => 'login.pl',
 			-cookie => [$cookie->as_string]);
     $self->header_type('redirect');
-
-    return "";
+    return '';
 }
 
 sub forgot_pw {
