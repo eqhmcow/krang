@@ -514,4 +514,21 @@ sub update_nav {
     $self->add_json_header('krang_update_nav' => 1);
 }
 
+
+# We override the base class's cgiapp_postrun so that redirects include a cookie
+# with the current window ID. (This is necessary in the case of redirects because
+# the initial request's window ID will already have been wiped clean by the handler.)
+sub cgiapp_postrun {
+  my ($self) = @_;
+  if ($self->header_type eq 'redirect' && $ENV{KRANG_WINDOW_ID}) {
+    my %props = $self->header_props();
+    my $cookies = $props{'-cookie'} || [];
+    push @$cookies, $self->query->cookie(-name => 'krang_redirect_wid', 
+					 -value => $ENV{KRANG_WINDOW_ID});
+    $props{'-cookie'} = $cookies;
+    $self->header_props(%props);
+  }
+  $self->SUPER::cgiapp_postrun;
+}
+
 1;

@@ -785,12 +785,9 @@ sub _schedule_assets {
 sub _redirect_to_workspace {
   my $self      = shift;
   my $query     = $self->query;
-  my $window_id = $query->param('wid');
 
   $self->header_props(-uri    => 'workspace.pl'); 
-  $self->header_add  (-cookie => "krang_window_id=$window_id; path=/") if $window_id;
   $self->header_type ('redirect');
-
   return "";
 }
 

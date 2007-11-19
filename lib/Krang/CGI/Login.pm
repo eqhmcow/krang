@@ -181,8 +181,7 @@ sub _do_login {
     # create a cookie with username, session_id and instance.  Include
     # an MD5 hash with Secret to allow the PerlAuthenHandler to check
     # for tampering
-    my $session_id = (defined($ENV{KRANG_SESSION_ID})) ?
-      $ENV{KRANG_SESSION_ID} : pkg('Session')->create();
+    my $session_id = pkg('Session')->create();
     my $instance   = pkg('Conf')->instance();
     my %filling    = ( user_id    => $user_id, 
                        session_id => $session_id,
@@ -190,21 +189,23 @@ sub _do_login {
                        hash       => md5_hex($user_id . $instance .
                                              $session_id . Secret()) );
 
-    # Propagate user ID to environment
-    $ENV{REMOTE_USER}  = $user_id;
+    # Unload the session
+    pkg('Session')->unload();
 
-    # Unload the session if we've created it
-    pkg('Session')->unload() unless (defined($ENV{KRANG_SESSION_ID}));
-
-    # build the session cookie (using next available window ID)
+    # Find next available window ID
     my $window_id = 1;
     while ($q->cookie("krang_window_$window_id")) { ++$window_id };
+
+    # Propagate user to environment
+    $ENV{REMOTE_USER} = $user_id;
+
+    # build the session cookie (using next available window ID)
     my $session_cookie = $q->cookie(
         -name  => "krang_window_$window_id",
         -value => \%filling
     );
 
-    # pass handler ID of our new window
+    # pass ID of new window to handler
     my $login_id_cookie = $q->cookie(
         -name  => 'krang_login_id',
         -value => $window_id,
@@ -268,7 +269,7 @@ sub new_window {
         -value => \%filling
     );
 
-    # pass handler ID of our new window
+    # pass ID of new window to handler
     my $login_id_cookie = $q->cookie(
         -name  => 'krang_login_id',
         -value => $window_id,

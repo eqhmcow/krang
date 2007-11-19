@@ -277,56 +277,51 @@ sub access_handler ($$) {
 
 
 # Attempt to retrieve user adentity from session cookie.
-# Set REMOTE_USER and KRANG_SESSION_ID if successful
+# Set REMOTE_USER and KRANG_SESSION_ID if successful.
 sub authen_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    # if the request (or redirected request) was for a static item, then
-    # just let it through
+    # If the request (or redirected request) was for a static item, then just let it through
     return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// );
 
-    # Only handle main requests, unless this is a request for bug.pl
-    # which happens on redirects from ISEs
+    # Only handle main requests, unless request is for bug.pl (which happens on ISE redirects)
     return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
 
-    # Get Window ID of current request
+    # Get cookies
     my %cookies = Apache::Cookie->new($r)->parse;
-    my $login_id = ($cookies{krang_login_id} && $cookies{krang_login_id}->value);
 
+    # Determine window ID of request
     my $window_id;
-    if ($r->args =~ /ajax/ || $r->uri =~ /\/bug\.cgi/ || $r->uri !~ /((\.pl)|(\/))$/) {
-      # 1. This is an Ajax call, bug or static file: inherit ID from previous request
-      $window_id = $cookies{krang_previous_window_id} && $cookies{krang_previous_window_id}->value;
+    my $new_login_id;
+    if ($new_login_id = ($cookies{krang_login_id} && $cookies{krang_login_id}->value)) {
+      # 1. This is a new window: login.pm passed us the ID (use it and clean login.pm's cookie)
+      $window_id = $new_login_id;
+      Apache::Cookie->new($r, -name => 'krang_login_id', -value => '0', -path => '/')->bake; 
     } elsif ($cookies{krang_window_id} && $cookies{krang_window_id}->value) {
-      # 2. This window passed the ID explicitly via calling Krang.Window.pass_id()
+      # 2. This is an existing window: the page passed us the ID by calling Krang.Window.pass_id()
       $window_id = $cookies{krang_window_id}->value;
-    } elsif ($login_id) {
-      # 3. This is a new window for which login.pl passed us an ID
-      $window_id = $login_id;
-    } elsif (grep { $_ =~ /^krang_window_(\d+)/ && $cookies{"krang_window_$1"}->value } keys %cookies) {
-      # 4. We have no ID, and there are other active windows, so assume nothing (force login)
-      $window_id = 0;
-    } else {
-      # 5. There are NOT other windows, so assume ID 1
-      $window_id = 1;
+    } elsif ($cookies{krang_redirect_wid} && $cookies{krang_redirect_wid}->value) {
+      # 3. This is an existing window: CGI.pm passed us the ID along with a redirect request
+      $window_id = $cookies{krang_redirect_wid}->value;
+      Apache::Cookie->new($r, -name => 'krang_redirect_wid', -value => '0', -path => '/')->bake; 
+    } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi/) {
+      # 4. This is a non-PERL request (e.g. image), or a bug: inherit ID from previous request
+      $window_id = $cookies{krang_previous_wid} && $cookies{krang_previous_wid}->value;
     }
-      
-    # clean login.pl cookie (used only by login redirect to pass us ID of new window)
-    my $c = Apache::Cookie->new($r, -name => 'krang_login_id', -value => '0', -path => '/'); $c->bake;
 
-    # update other cookies
-    $r->headers_out->add("Set-Cookie" => "krang_window_id=0"); # so next request starts fresh
-    $r->headers_out->add("Set-Cookie" => "krang_previous_window_id=$window_id");
-    $r->headers_out->add("Set-Cookie" => "krang_new_window_id=$login_id");      
+    # Update window cookies 
+    $r->headers_out->add("Set-Cookie" => "krang_window_id=0");                 # So next request starts fresh
+    $r->headers_out->add("Set-Cookie" => "krang_previous_wid=$window_id");     #     (unless it needs our ID)!
+    $r->headers_out->add("Set-Cookie" => "krang_new_window_id=$new_login_id"); # For JS Krang.Window.init()...
 
-    # If there's no session cookie for this Window ID, redirect to Login
-    unless ($cookies{"krang_window_$window_id"}) {
-        debug("No cookie found, passing Authen without user login");
+    # If there's no ID or no session cookie, redirect to Login
+    unless ($window_id && $cookies{"krang_window_$window_id"}) {
+        debug("No ID/cookie found, passing Authen without user login");
         return OK;
     }
 
-    # Validate cookie
+    # Validate session cookie
     my %cookie = $cookies{"krang_window_$window_id"}->value;
     my $session_id = $cookie{session_id};
     my $hash = md5_hex($cookie{user_id} . $cookie{instance} . $session_id . Secret());
@@ -344,11 +339,12 @@ sub authen_handler ($$) {
         return OK;
     }
 
-    # We have a valid cookie/user!  Setup REMOTE_USER
+    # We have a valid session/user!  Setup REMOTE_USER
     $r->connection->user($cookie{user_id});
 
-    # Propagate it to CGI-land via the environment
+    # Propagate user & window to CGI-land via the environment
     $r->cgi_env('KRANG_SESSION_ID' => $cookie{session_id});
+    $r->cgi_env('KRANG_WINDOW_ID'  => $window_id);
 
     return OK;
 }

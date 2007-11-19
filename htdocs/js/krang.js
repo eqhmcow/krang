@@ -438,7 +438,7 @@ Krang.Ajax.update = function(args) {
 /*
     Krang.Form.set(form, { input: 'value'})
     Select a form (can be either the name of the form, or the form object
-    itself) and set the values of it's inputs
+    itself) and set the values of its inputs
 
     Krang.Form.submit(form, { input: 'value' }, { new_window: true })
     Select a form (can either be the name of the form, or the form object
@@ -473,7 +473,7 @@ Krang.Form = {
         var err = 'Krang.Form.set(): ';
 
         if( !form ) alert(err + 'form "' + form.name + '" does not exist!');
-
+ 
         if( inputs ) {
             $H(inputs).each( function(pair) {
                 var el = form.elements[pair.key];
@@ -483,10 +483,11 @@ Krang.Form = {
         }
     },
     submit : function(form, inputs, options) {
-	Krang.Window.pass_id();
-
         form = typeof form == 'object' ? form : document.forms[form];
         if( inputs ) Krang.Form.set(form, inputs);
+
+	// pass window ID to handler
+	Krang.Window.pass_id();
 
         // take care of our default options
         if(options == null ) options = {};
@@ -636,7 +637,7 @@ Krang.Nav = {
     goto_url       : function(url, ajax) {
 
         Krang.Window.pass_id();
-	
+
         if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
             if( ajax ) {
                 var matches = url.match(/(.*)\?(.*)/);

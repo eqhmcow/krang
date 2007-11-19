@@ -30,10 +30,9 @@ Publish
 </tmpl_if>
 </h2>
 
-<form name="pub" action="publisher.pl" method="post" class="non_ajax" onsubmit="document.pub.wid.value=Krang.Window.get_id()">
+<form name="pub" action="publisher.pl" method="post" class="non_ajax">
 
 <input name="rm" value="publish_assets" type="hidden">
-<input name="wid" value="" type="hidden">
 <tmpl_loop asset_id_list>
   <input name="asset_id_list" value="<tmpl_var escape=html id>" type="hidden">
 </tmpl_loop>
