@@ -165,8 +165,8 @@ sub login {
 }
 
 sub _do_login {
-    my ($self, $user_id) = @_;
-    my $q      = $self->query();
+    my ($self, $user_id, $mode) = @_;
+    my $q = $self->query();
 
     # if we are enforcing password changes every few days
     if( PasswordChangeTime ) {
@@ -198,7 +198,7 @@ sub _do_login {
 
     # Propagate user to environment
     $ENV{REMOTE_USER} = $user_id;
-
+    
     # build the session cookie (using next available window ID)
     my $session_cookie = $q->cookie(
         -name  => "krang_window_$window_id",
@@ -212,81 +212,50 @@ sub _do_login {
         -path  => '/'
     );
 
-    # put our preferences into our cookie via JSON so that the JS
-    # on the client side can access it
-    my %prefs;
-    for my $name qw(search_page_size use_autocomplete message_timeout) {
+    # if we're copying an existing window's user, preferences, etc.
+    if ($mode && $mode eq 'copy_existing') {
+
+      # then all we need to store in cookies is the new session and login ID
+      $self->header_add(-cookie => [$session_cookie->as_string, $login_id_cookie->as_string]);
+
+   } else {
+
+      # otherwise, store preferences via JSON so the client-side JS can access them
+      my %prefs;
+      for my $name qw(search_page_size use_autocomplete message_timeout) {
         $prefs{$name} = pkg('MyPref')->get($name);
-    }
-    my $pref_cookie = $q->cookie(
-        -name  => 'KRANG_PREFS',
-        -value => objToJson(\%prefs),
-    );
+      }
+      my $pref_cookie = $q->cookie(
+          -name  => 'KRANG_PREFS',
+          -value => objToJson(\%prefs),
+      );
 
-    # put some meta information about this installation/instance of Krang
-    # into a cookie that the front-end JS can use
-    my %conf_info = (
-        charset => ( Charset() || '' ),
-    );
-    my $conf_cookie = $q->cookie(
-        -name  => 'KRANG_CONFIG',
-        -value => objToJson(\%conf_info),
-    );
+      # and store meta information about this installation/instance of Krang
+      my %conf_info = (
+          charset => ( Charset() || '' ),
+      );
+      my $conf_cookie = $q->cookie(
+          -name  => 'KRANG_CONFIG',
+          -value => objToJson(\%conf_info),
+      );
     
-    # redirect and set the cookies
-    my $target = './';
-    $self->header_add(
-        -uri    => $target,
-        -cookie => [$session_cookie->as_string, $login_id_cookie->as_string, $pref_cookie->as_string, $conf_cookie->as_string]
-    );
+      # and set all four cookies
+      $self->header_add(-cookie => [$session_cookie->as_string, $login_id_cookie->as_string, 
+				    $pref_cookie->as_string, $conf_cookie->as_string]);
+    }
 
+    # now we're ready to redirect
+    my $target = './';
+    $self->header_add(-uri => $target);
     $self->header_type('redirect');
-    my $output = "Redirect: <a href=\"$target\">$target</a>";
-    return $output;
+    return "Redirect: <a href=\"$target\">$target</a>";
 }
 
+# build new session for new window (keep same user)
 sub new_window {
-    my $self       = shift;
-    my $q          = $self->query();
-
-    # build new session for new window (keep same user)
-    my $session_id = pkg('Session')->create(); pkg('Session')->unload();
-
-    # find next available window ID
-    my $window_id  = 1;
-    while ($q->cookie("krang_window_$window_id")) { ++$window_id };
-
-    # build the session cookie
-    my $user_id    = $ENV{REMOTE_USER};
-    my $instance   = pkg('Conf')->instance();
-    my %filling = (session_id => $session_id,
-		   user_id    => $user_id,
-		   instance   => $instance,
-		   hash       => md5_hex($user_id . $instance .
-					 $session_id . Secret()) );
-    my $session_cookie = $q->cookie(
-        -name  => 'krang_window_'.$window_id,
-        -value => \%filling
-    );
-
-    # pass ID of new window to handler
-    my $login_id_cookie = $q->cookie(
-        -name  => 'krang_login_id',
-        -value => $window_id,
-        -path  => '/'
-    );
-
-    # redirect and set the cookie
-    my $target = './';
-    $self->header_add(
-        -uri    => $target,
-        -cookie => [$session_cookie->as_string, $login_id_cookie->as_string]
-    );
-    $self->header_type('redirect');
-    my $output = "Redirect: <a href=\"$target\">$target</a>";
-    return $output;
+    my $self = shift;
+    return $self->_do_login($ENV{REMOTE_USER}, 'copy_existing');
 }
-  
 
 # handle a logout
 sub logout {

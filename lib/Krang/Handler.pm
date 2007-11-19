@@ -283,7 +283,7 @@ sub authen_handler ($$) {
     my ($r) = @_;
 
     # If the request (or redirected request) was for a static item (or to close a dying window) let it through
-    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// ) or ($r->uri eq 'close_win.html');
+    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// ) or ($r->uri =~ /close_win.html$/);
 
     # Only handle main requests, unless request is for bug.pl (which happens on ISE redirects)
     return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
@@ -361,7 +361,7 @@ sub authz_handler ($$) {
     my ($r) = @_;
 
     # If the request (or redirected request) was for a static item (or to close a dying window) let it through
-    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// ) or ($r->uri eq 'close_win.html');
+    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// ) or ($r->uri =~ /close_win.html$/);
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs
