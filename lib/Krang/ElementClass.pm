@@ -15,7 +15,7 @@ use Krang::ClassLoader 'Pref';
 use Exception::Class
   'Krang::ElementClass::TemplateNotFound' =>
   {
-   fields => [ 'element_name', 'template_name',
+   fields => [ 'element_name', 'template_name', 'included_file',
                'category_url', 'error_msg' ]
   },
 
@@ -586,11 +586,13 @@ sub find_template {
         # HTML::Template::Expr is having problems - throw an error
         # based on the problem reported.
         if ($err =~ /file not found/) {
+	    my ($included_file) = $err =~ /Cannot open included file (\S+)/;
             Krang::ElementClass::TemplateNotFound->throw
                 (
                  message       => "Missing required output template: '$err'",
                  element_name  => ($element ? $element->display_name() : $filename),
                  template_name => $filename,
+		 included_file => (($included_file || '') ne $filename) && $included_file,
                  category_url  => $publisher->category->url(),
                  error_msg     => $err
                 );

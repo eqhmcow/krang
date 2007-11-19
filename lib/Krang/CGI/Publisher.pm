@@ -356,10 +356,18 @@ sub preview_story {
             # if there is an error, figure out what it is, create the
             # appropriate message and return an error page.
             if (ref $error && $error->isa('Krang::ElementClass::TemplateNotFound')) {
+	      if ($error->included_file) {
+                add_alert('missing_template_include',
+                            filename       => $error->template_name,
+			    included_file  => $error->included_file,
+                            category_url   => $error->category_url
+                           );
+	      } else {
                 add_alert('missing_template',
                             filename       => $error->template_name,
                             category_url   => $error->category_url
                            );
+	      }
             } elsif (ref $error && $error->isa('Krang::ElementClass::TemplateParseError')) {
                 add_alert('template_parse_error',
                             element_name  => $error->element_name,
@@ -638,13 +646,22 @@ sub _publish_assets_now {
                 # appropriate message and return.
                 if (ref $err &&
                     $err->isa('Krang::ElementClass::TemplateNotFound')) {
+		  if ($err->included_file) {
+		    add_alert('missing_template_include',
+			      filename       => $err->template_name,
+			      included_file  => $err->included_file,
+			      category_url   => $err->category_url
+			     );
+                    critical(sprintf("Unable to find included_file '%s' in template '%s' for Category '%s'",
+                                     $err->included_file, $err->template_name, $err->category_url));
+		  } else {
                     add_alert('missing_template',
                                 filename     => $err->template_name,
                                 category_url => $err->category_url
                                );
                     critical(sprintf("Unable to find template '%s' for Category '%s'",
                                      $err->template_name, $err->category_url));
-
+		  }
                 } elsif (ref $err &&
                          $err->isa('Krang::ElementClass::TemplateParseError')) {
                     add_alert('template_parse_error',
