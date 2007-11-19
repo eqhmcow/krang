@@ -297,20 +297,22 @@ sub authen_handler ($$) {
     if ($new_login_id = ($cookies{krang_login_id} && $cookies{krang_login_id}->value)) {
       # 1. This is a new window: login.pm passed us the ID (use it and clean login.pm's cookie)
       $window_id = $new_login_id;
-      Apache::Cookie->new($r, -name => 'krang_login_id', -value => '0', -path => '/')->bake; 
     } elsif ($cookies{krang_window_id} && $cookies{krang_window_id}->value) {
       # 2. This is an existing window: the page passed us the ID by calling Krang.Window.pass_id()
       $window_id = $cookies{krang_window_id}->value;
     } elsif ($cookies{krang_redirect_wid} && $cookies{krang_redirect_wid}->value) {
       # 3. This is an existing window: CGI.pm passed us the ID along with a redirect request
       $window_id = $cookies{krang_redirect_wid}->value;
-      Apache::Cookie->new($r, -name => 'krang_redirect_wid', -value => '0', -path => '/')->bake; 
     } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi/) {
       # 4. This is a non-PERL request (e.g. image), or a bug: inherit ID from previous request
       $window_id = $cookies{krang_previous_wid} && $cookies{krang_previous_wid}->value;
     }
 
-    # Update window cookies 
+    # Clean window cookies used by CGI
+    Apache::Cookie->new($r, -name => 'krang_redirect_wid', -value => '0', -path => '/')->bake; 
+    Apache::Cookie->new($r, -name => 'krang_login_id', -value => '0', -path => '/')->bake; 
+
+    # Update window cookies used by JS
     $r->headers_out->add("Set-Cookie" => "krang_window_id=0");                 # So next request starts fresh
     $r->headers_out->add("Set-Cookie" => "krang_previous_wid=$window_id");     #     (unless it needs our ID)!
     $r->headers_out->add("Set-Cookie" => "krang_new_window_id=$new_login_id"); # For JS Krang.Window.init()...
