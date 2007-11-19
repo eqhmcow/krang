@@ -133,9 +133,19 @@ if( Prototype.Browser.WebKit ) {
 
 <div class="nav"><ul>
 
-<li class="l"><a href="login.pl?rm=logout" onclick="Krang.Window.pass_id(); window.name='';" class="logout">
+<li id="menu-logout" class="menu logout l"><b>
 Log Out
+</b><ul>
+
+<li><a href="Javascript:Krang.Window.log_out()">
+This Window
 </a></li>
+
+<li><a href="Javascript:Krang.Window.log_out_all()">
+All Krang Windows
+</a></li>
+
+</ul></li>
 
 <li id="menu-help" class="menu"><b>
 Help

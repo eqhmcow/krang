@@ -282,8 +282,8 @@ sub authen_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    # If the request (or redirected request) was for a static item, then just let it through
-    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// );
+    # If the request (or redirected request) was for a static item (or to close a dying window) let it through
+    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// ) or ($r->uri eq 'close_win.html');
 
     # Only handle main requests, unless request is for bug.pl (which happens on ISE redirects)
     return DECLINED unless $r->is_initial_req() or $r->uri =~ /\/bug\.cgi/;
@@ -295,16 +295,19 @@ sub authen_handler ($$) {
     my $window_id;
     my $new_login_id;
     if ($new_login_id = ($cookies{krang_login_id} && $cookies{krang_login_id}->value)) {
-      # 1. This is a new window: login.pm passed us the ID (use it and clean login.pm's cookie)
+      # 1. This is a new window: login.pm passed us the ID
       $window_id = $new_login_id;
+    } elsif ($r->args && $r->args =~ /logout/i && $r->args =~ /window=(\d+)/i) {
+      # 2. A dying window: the page passed us the ID via Krang.Window.log_out/log_out_all
+      $window_id = $1;   
     } elsif ($cookies{krang_window_id} && $cookies{krang_window_id}->value) {
-      # 2. This is an existing window: the page passed us the ID by calling Krang.Window.pass_id()
+      # 3. An active window: the page passed us the ID via Krang.Window.pass_id
       $window_id = $cookies{krang_window_id}->value;
     } elsif ($cookies{krang_redirect_wid} && $cookies{krang_redirect_wid}->value) {
-      # 3. This is an existing window: CGI.pm passed us the ID along with a redirect request
+      # 4. An active window: CGI.pm passed us the ID along with a redirect request
       $window_id = $cookies{krang_redirect_wid}->value;
     } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi/) {
-      # 4. This is a non-PERL request (e.g. image), or a bug: inherit ID from previous request
+      # 5. A non-PERL request (e.g. image), or a bug: inherit ID from previous request
       $window_id = $cookies{krang_previous_wid} && $cookies{krang_previous_wid}->value;
     }
 
@@ -357,9 +360,8 @@ sub authz_handler ($$) {
     my $self = shift;
     my ($r) = @_;
 
-    # if the request (or redirected request) was for a static item, then
-    # just let it through
-    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// );
+    # If the request (or redirected request) was for a static item (or to close a dying window) let it through
+    return OK if $r->uri =~ /^\/static\// or ( $r->prev && $r->prev->uri =~ /^\/static\// ) or ($r->uri eq 'close_win.html');
 
     # Only handle main requests, unless this is a request for bug.pl
     # which happens on redirects from ISEs

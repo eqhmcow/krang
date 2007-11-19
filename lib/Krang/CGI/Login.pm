@@ -292,21 +292,22 @@ sub new_window {
 sub logout {
     my $self     = shift;
     my $query    = $self->query();
-    my $window_id = $query->cookie('krang_window_id');
 
     # build a poison cookie
     my $cookie = $query->cookie(
-				-name   => "krang_window_$window_id",
+				-name   => "krang_window_".$ENV{KRANG_WINDOW_ID},
 				-value  => "",
 				-expires=>'-90d',
 			       );
-    # redirect to login
-    $self->header_props(-uri    => "login.pl",
-                        -cookie => [$cookie->as_string]);   
-    $self->header_type('redirect');
 
     # delete the session
     pkg('Session')->delete($ENV{KRANG_SESSION_ID});
+
+    # were we told to close the window, or to redirect to login?
+    my $url = $query->param('close') ? "close_win.html" : "login.pl";
+    $self->header_props(-uri => $url,
+			-cookie => [$cookie->as_string]);
+    $self->header_type('redirect');
 
     return "";
 }

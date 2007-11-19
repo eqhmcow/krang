@@ -110,12 +110,24 @@ document.onunload = function() {
     // Pass handler a cookie with the ID of current window. (This should be invoked
     // by all page requests, forms, etc: anything that communicates with the server!)
     Krang.Window.pass_id();
+
+    // Log out the current window
+    Krang.Window.log_out();
+
+    // Log out all Krang windows
+    Krang.Window.log_out_all();
 */
 Krang.Window = {
 
     init : function() {
         // set name and title of our window
 	var id = Krang.Window.get_id();
+	if (!id) { 
+	   // we couldn't find a valid Window ID; get a new one!
+   	   window.location = 'login.pl?rm=logout';
+	   return;
+        }
+
 	window.name = 'krang_window_' + id;
         document.title += ' ('+id+')';
 
@@ -134,6 +146,33 @@ Krang.Window = {
   	  Krang.Cookie.set('krang_window_id', id);	
 	}
     },
+	
+    log_out : function() {
+        if (!Krang.Nav.edit_mode_flag || confirm(Krang.Nav.edit_message)) {
+	   window.location = 'login.pl?rm=logout&window='+Krang.Window.get_id();
+	   window.name = '';
+	}	
+    },
+
+    log_out_all : function() {
+	if (!confirm('Are you sure? This will discard any unsaved changes in any window.')) { return; }
+        Krang.show_indicator();
+
+        // first log out any other windows that have cookies set
+	var win_names = document.cookie.match(/(krang_window_\d+)/g);
+	for (i = 0; i < win_names.length; i++) {
+	   var win_name = win_names[i];
+	   if (win_name != window.name) { // make sure this isn't the current window
+	     win_id = win_name.match(/\d+$/);
+	     var win = window.open('login.pl?rm=logout&window='+win_id+'&close=1', win_name);
+	     win.name = '';
+	   }
+        }
+
+	// then log out this window
+        window.location = 'login.pl?rm=logout&window='+Krang.Window.get_id();
+	window.name = '';
+    },
 
     _id_from_name : function() {
 	return window.name.match(/^krang_window_/) && window.name.match(/\d+$/);		
@@ -141,8 +180,8 @@ Krang.Window = {
 
     _id_from_pool : function() {
 	var id = Krang.Cookie.get('krang_new_window_id');
-  	Krang.Cookie.set('krang_new_window_id', '0');
-	return id;	
+	Krang.Cookie.set('krang_new_window_id', '0'); // so next window doesn't find our ID!
+	return id;
     }	
 }
 
