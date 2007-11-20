@@ -133,15 +133,15 @@ if( Prototype.Browser.WebKit ) {
 
 <div class="nav"><ul>
 
-<li id="menu-logout" class="menu logout l" onclick="Javascript:Krang.Window.log_out()"><b>
+<li id="menu-logout" class="menu logout l" onclick="Krang.Window.log_out();"><b>
 Log Out
 </b><ul>
 
-<li><a href="Javascript:Krang.Window.log_out()">
+<li><a href="#" onclick="Krang.Window.log_out(); Event.stop(event);">
 This Window
 </a></li>
 
-<li><a href="Javascript:Krang.Window.log_out_all()">
+<li><a href="#" onclick="Krang.Window.log_out_all(); Event.stop(event);">
 All Krang Windows
 </a></li>
 

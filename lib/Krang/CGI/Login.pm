@@ -276,8 +276,9 @@ sub logout {
 				-expires=>'-90d',
 			       );
 
-    # delete the session
+    # delete the session & window ID
     pkg('Session')->delete($ENV{KRANG_SESSION_ID});
+    delete $ENV{KRANG_WINDOW_ID};
 
     # redirect to login
     $self->header_props(-uri => 'login.pl',
