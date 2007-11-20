@@ -1017,6 +1017,59 @@ sub deserialize_xml {
     $user->save;
 }
 
+=item * C<< $user->may_delete_user($other_user_obj) >>
+
+=item * C<< $user->may_delete_user($other_user_id) >>
+
+Convenience method accepting a Krang::User object or a user
+id. Returns true if the calling user may delete the given user, false
+otherwise. This method may be used in Krang::CGI::User to prevent CGI
+param tampering.
+
+=cut
+
+sub may_delete_user {
+    my ($self, $user) = @_;
+
+    # we are fine if we have global user admin perms
+    return 1 unless pkg('Group')->user_admin_permissions('admin_users_limited');
+
+    # make sure we have a Krang::User object
+    ($user) = pkg('User')->find(user_id => $user)
+      unless ref($user) && $user->isa('Krang::User');
+
+    # get our groups...
+    my %curr_user_group_id = map {$_ => 1} $self->group_ids;
+    my %curr_user_group_for
+      = map { $_ => pkg('Group')->find(group_id => $_) } keys %curr_user_group_id;
+
+    # ... and the targeted user's groups
+    my @target_user_group_ids = $user->group_ids;
+
+    # verify if we may manage any group the targeted user is in
+    for my $gid (@target_user_group_ids) {
+	return unless $curr_user_group_id{$gid};
+
+	return 1 if $curr_user_group_for{$gid}->admin_users_limited;
+    }
+
+    return;
+}
+
+=item * C<< $current_user = pkg('User')->current_user_group_ids >>
+
+=item * C<< $current_user = $other_user->current_user_group_ids >>
+
+Convenience method returning the group_ids for the logged in user.
+
+=cut
+
+sub current_user_group_ids {
+    my $user_id = $ENV{REMOTE_USER}
+      || croak("No user_id in session");
+    return (pkg('User')->find(user_id => $user_id))[0]->group_ids;
+}
+
 =back
 
 =head1 TO DO

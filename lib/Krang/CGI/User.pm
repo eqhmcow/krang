@@ -33,7 +33,7 @@ use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Log => qw/critical debug info/;
 use Krang::ClassLoader Widget => qw/autocomplete_values/;
-use Krang::ClassLoader Message => qw(add_message add_alert);
+use Krang::ClassLoader Message => qw(add_message add_alert get_alerts clear_alerts);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
@@ -182,6 +182,7 @@ sub save_add {
     }
 
     %errors = $self->update_user($user);
+    return $self->access_forbidden if $errors{'tampered_gids'};
     return $self->edit(%errors) if %errors;
 
     $q->delete(DELETE_FIELDS);
@@ -229,6 +230,7 @@ sub save_stay_add {
     }
 
     %errors = $self->update_user($user);
+    return $self->access_forbidden if $errors{'tampered_gids'};
     return $self->add(%errors) if %errors;
 
     # preserve, set vals for 'edit' run mode
@@ -256,7 +258,18 @@ sub delete {
     my $q = $self->query();
     my $user_id = $q->param('user_id');
     return $self->search() unless $user_id;
+
+    my ($logged_in_user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+    $self->_redirect_to_login() unless $logged_in_user;
+
+    unless ($logged_in_user->may_delete_user($user_id)) {
+        my ($u) = pkg('User')->find(user_id => $user_id);
+        add_alert('may_not_delete_user', user => $u->login);
+        return $self->edit;
+    }
+
     eval {pkg('User')->delete($user_id);};
+
     if ($@) {
         if (ref $@ && $@->isa('Krang::User::Dependency')) {
             critical("Unable to delete user '$user_id': objects are " .
@@ -273,13 +286,8 @@ sub delete {
 
     # suicidal?
     if ($user_id == $ENV{REMOTE_USER}) {
-        # delete the session, since it's useless now
-        pkg('Session')->delete($ENV{KRANG_SESSION_ID});
-
-        # redirect to login
-        $self->header_type('redirect');
-        $self->header_props(-uri => 'login.pl');
-        return "";
+        add_alert('user_suicide');
+        return $self->_redirect_to_login();
     }
 
     add_message('message_deleted');
@@ -302,15 +310,28 @@ sub delete_selected {
     my $self = shift;
 
     my $q = $self->query();
-    my @user_delete_list = ($q->param('krang_pager_rows_checked'));
+    my %user_delete_list = map {$_ => 1} ($q->param('krang_pager_rows_checked'));
     $q->delete('krang_pager_rows_checked');
 
     # return to search if no ids were passed
-    return $self->search() unless @user_delete_list;
+    return $self->search() unless %user_delete_list;
+
+    my ($current_user) = pkg('User')->find(user_id => $ENV{REMOTE_USER});
+    my $num_users_deleted = 0;
+    my @users_not_deleted = ();
 
     # destroy users
-    for my $u(@user_delete_list) {
+    for my $u (keys %user_delete_list) {
+
+	# list of users we may not delete
+	unless ($current_user->may_delete_user($u)) {
+	    # CGI param tampering, remember it
+	    push @users_not_deleted, pkg('User')->find(user_id => $u);
+	    next;
+	}
+
         eval {pkg('User')->delete($u);};
+
         if ($@) {
             if (ref $@ && $@->isa('Krang::User::Dependency')) {
                 critical("Unable to delete user '$u': objects are checked " .
@@ -324,9 +345,17 @@ sub delete_selected {
                 croak($@);
             }
         }
+
+	$num_users_deleted++;
+
+	# suicidal?
+	if ($user_delete_list{$ENV{REMOTE_USER}}) {
+	    add_alert('user_suicide');
+	    return $self->_redirect_to_login();
+	}
     }
 
-    add_message('message_selected_deleted');
+    $self->add_message_for_delete_selected($num_users_deleted, @users_not_deleted);
 
     return $self->search();
 }
@@ -434,6 +463,7 @@ sub save_edit {
     }
 
     %errors = $self->update_user($user);
+    return $self->access_forbidden if $errors{'tampered_gids'};
     return $self->edit(%errors) if %errors;
 
     $q->delete(DELETE_FIELDS);
@@ -483,6 +513,7 @@ sub save_stay_edit {
     }
 
     %errors = $self->update_user($user);
+    return $self->access_forbidden if $errors{'tampered_gids'};
     return $self->edit(%errors) if %errors;
 
     # preserve, set vals for 'edit' run mode
@@ -580,12 +611,18 @@ sub get_user_params {
     my $q = $self->query();
     my %user_tmpl;
 
+    # only show groups we are allowed to manage
+    my %find_params = ();
+    if (pkg('Group')->user_admin_permissions('admin_users_limited')) {
+        $find_params{group_ids} = [ pkg('User')->current_user_group_ids ];
+    }
+
     # build hash of Krang::Group permission groups...
-    my %user_groups = map {$_->group_id => $_->name} pkg('Group')->find();
+    my %user_groups = map {$_->group_id => $_->name} pkg('Group')->find(%find_params);
 
     # make group_ids multi-select
-    my @cgids = $q->param('errors') ? $q->param('current_group_ids') :
-      $user->group_ids;
+    my @cgids = $q->param('errors') ? $q->param('current_group_ids')
+                                    : grep { $user_groups{$_} } $user->group_ids;
     my %cgids = map {$_, 1} 
         sort { lc $user_groups{$a} cmp lc $user_groups{$b} } @cgids;
     my @pgids = grep {not exists $cgids{$_}} 
@@ -624,11 +661,29 @@ sub update_user {
     $user->password($pass) unless $pass eq '';
 
     # handle group ids
-    my @gids = $q->param('current_group_ids');
-    unless (@gids) {
-        $user->group_ids_clear();
+    my %preserve_gids   = (); # groups the current user may not handle
+    my %may_manage_gids = map {$_ => 1} pkg('User')->current_user_group_ids;
+    my %incoming_gids   = map {$_ => 1} $q->param('current_group_ids');
+    my @target_user_gids        = $user->group_ids;
+
+    # be careful when having limited user management perms
+    if (pkg('Group')->user_admin_permissions('admin_users_limited')) {
+	# preserve groups the current user is not allowed to handle
+	%preserve_gids = map {$_ => 1 }
+	                 grep { not $may_manage_gids{$_} } @target_user_gids;
+
+	# prevent current user from tampering current_group_ids param
+	return ('tampered_gids' => 1)
+	  if grep { not $may_manage_gids{$_} } keys %incoming_gids;
+    }
+
+    # combine the incoming and the preserved gids
+    my %gids = (%incoming_gids, %preserve_gids);
+
+    if (%gids) {
+        $user->group_ids(keys %gids);
     } else {
-        $user->group_ids(@gids);
+        $user->group_ids_clear();
     }
 
     # attempt to save
@@ -754,6 +809,43 @@ sub autocomplete {
     );
 }
 
+sub add_message_for_delete_selected {
+    my ($self, $num_users_deleted, @users_not_deleted) = @_;
+
+    if (@users_not_deleted) {
+        if (scalar(@users_not_deleted) == 1) {
+	    add_alert('may_not_delete_user', user => $users_not_deleted[0]->login);
+        } else {
+	    my $u = pop(@users_not_deleted);
+	    my $users = $u->login;
+	    while (@users_not_deleted) {
+		my $u = pop(@users_not_deleted);
+		if (scalar(@users_not_deleted)) {
+		    $users .= ', ' . $u->login;
+		} else {
+		    $users .= ' and ' . $u->login;
+		}
+	    }
+	    add_alert('may_not_delete_users', users => $users);
+        }
+        if ($num_users_deleted) {
+	    my $s = $num_users_deleted == 1
+	      ? add_alert('one_user_deleted')
+		: add_alert('num_users_deleted', num => $num_users_deleted);
+        }
+    } else {
+	add_message('message_selected_deleted');
+    }
+}
+
+sub _redirect_to_login {
+    my ($self) = shift;
+
+    my $msg = join ' ', get_alerts();
+    clear_alerts();
+
+    return $self->redirect_to_login($msg);
+}
 
 =back
 

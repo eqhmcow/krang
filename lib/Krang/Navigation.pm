@@ -268,7 +268,7 @@ sub default_tree {
     $sub  = $node->new_daughter();
     $sub->name('Users');
     $sub->link('user.pl');
-    $sub->condition(sub { shift->{admin}{admin_users} });
+    $sub->condition(sub { $_[0]->{admin}{admin_users} or $_[0]->{admin}{admin_users_limited} });
 
     $sub  = $node->new_daughter();
     $sub->name('Groups');
