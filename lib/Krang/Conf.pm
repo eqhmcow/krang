@@ -51,6 +51,7 @@ KrangGroup
 KrangRoot
 KrangUser
 LogLevel
+MaxConcurrentKrangSessions
 PasswordChangeTime
 PasswordChangeCount
 PreviewSSL

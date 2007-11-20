@@ -140,6 +140,11 @@ Secret '<tmpl_var Secret>'
 # template variable.
 # ContactEmail cms@company.org
 
+#
+# This variable prevents the user from creating an unreliable number
+# of session cookies. (When absent, the default is 10.)
+#MaxConcurrentKrangSessions 10
+
 <tmpl_if EnableSSL>
 ##
 ##  SSL Global Context

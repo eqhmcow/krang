@@ -41,6 +41,7 @@ use Krang::ClassLoader Conf => qw(
     InstanceApachePort
     InstanceDisplayName
     InstanceHostName
+    MaxConcurrentKrangSessions
     PasswordChangeTime
     Secret
     SMTPServer
@@ -168,6 +169,16 @@ sub _do_login {
     my ($self, $user_id, $mode) = @_;
     my $q = $self->query();
 
+    # find next available window ID
+    my $window_id = 1;
+    while ($q->cookie("krang_window_$window_id")) { ++$window_id };
+
+    # and if the number of windows is getting too high...
+    if ($window_id > (MaxConcurrentKrangSessions || 10)) {
+      add_alert('too_many_krang_sessions', num => $window_id-1);
+      return $self->show_form;
+    }
+
     # if we are enforcing password changes every few days
     if( PasswordChangeTime ) {
         my ($user) = pkg('User')->find(user_id => $user_id);
@@ -191,10 +202,6 @@ sub _do_login {
 
     # Unload the session
     pkg('Session')->unload();
-
-    # Find next available window ID
-    my $window_id = 1;
-    while ($q->cookie("krang_window_$window_id")) { ++$window_id };
 
     # Propagate user to environment
     $ENV{REMOTE_USER} = $user_id;
