@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added new option --no_default to F<bin/krang_useradd> to prevent the user
+being associated with group 'default'. [Bodo Schulze]
+
+=item *
+
 Added real-time client-side syntax-highlighting (the CodePress library) to 
 the textareas used for viewing and editing Templates.  Thanks to Jesse for 
 suggesting this feature, and finding the most excellent CodePress.org project!
@@ -119,7 +124,7 @@ Fixed addon v2 compat bugs in some test files. [Bodo Schulze]
 
 =item *
 
-Get C<bin/krang_install> ready for use with MySQL 5.* [Bodo Schulze]
+Get F<bin/krang_install> ready for use with MySQL 5.* [Bodo Schulze]
 
 =item * 
 
@@ -221,7 +226,7 @@ initial call to a C<Krang::CGI::*> module's C<find()> method.
 =item *
 
 Added C<--below_category_id> option and implemented
-C<--limited_to_category> option for C<bin/krang_publish>. [Bodo
+C<--limited_to_category> option for F<bin/krang_publish>. [Bodo
 Schulze]
 
 =item *
