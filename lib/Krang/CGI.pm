@@ -411,9 +411,19 @@ sub access_forbidden {
         "Unauthorized Access attempted by user #$ENV{REMOTE_USER}."
         . " Redirecting to 'login.pl'"
     );
-    my $msg = "You do not have permissions to access that portion of the site.";
-    $self->header_add( -location => "login.pl?alert=$msg" );
-    $self->header_type('redirect');
+
+    my $module = 'URI::Escape';
+    eval "require $module";
+    import $module qw(uri_escape);
+
+    my $msg = uri_escape("You do not have permissions to access that portion of the site.");
+
+    if ($self->param('ajax')) {
+        return qq{<script type="text/javascript">location.replace("login.pl?alert=$msg")</script>};
+    } else {
+        $self->header_add( -location => "login.pl?alert=$msg" );
+        $self->header_type('redirect');
+    }
 }
 
 # load template using Krang::HTMLTemplate.  CGI::App doesn't provide a
