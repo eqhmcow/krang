@@ -25,9 +25,13 @@ Options:
  --fname OR		- Set the first name for this user
  --first-name
 
- --groups group, [...]	- Associate login with the listed groups.  By
- --g OR --G		  default, user is associated with the group
-			  'default'
+ --groups group1,[...]	- Associate login with the listed groups 
+ --g OR --G		  (a comma-separated list).
+                          By default, user is associated with the group 'default'
+                          If this is not want you want, specify the
+                          --no_default option.
+
+ --no_default           - Don't insert the user into group 'default'.
 
  --help			- Displays this menu.
 
@@ -121,12 +125,11 @@ use Krang::ClassLoader 'User';
 
 # Globals
 ##########
-our ($email, $first_name, $last_name, $mobile_phone, $phone);
+our ($email, $first_name, $last_name, $mobile_phone, $phone, @groups, $no_default);
 
 # Lexicals
 ###########
 my @gids;
-my @groups = qw/default/;
 my $debug = my $help = my $man = 0;
 my %valid_groups = map {lc $_->name, $_->group_id} pkg('Group')->find;
 
@@ -146,7 +149,8 @@ pod2usage(2)
     "last|last-name|lname=s" => \$last_name,
     man                      => \$man,
     "mobile-phone=s"         => \$mobile_phone,
-    "phone=s"                => \$phone
+    "phone=s"                => \$phone,
+    "no_default"             => \$no_default,
   );
 pod2usage(1) if $help;
 pod2usage(-verbose => 2) if $man;
@@ -159,8 +163,16 @@ pod2usage("Logins must be at least 6 characters") unless
 
 # handle groups
 ################
+# maybe associate user with group 'default'
+push @groups, 'default' unless $no_default;
+
 # fix comma-delimited groups
 @groups = split /,/, join(',', @groups);
+
+# bail out if we have no groups
+pod2usage("\n>>> If you don't want to put the new user into the 'default' group,\n"
+	  .">>> you must specify the user's group(s) using option --groups\n")
+  unless @groups;
 
 # erase dupes
 my %groups = map {$_, 1} @groups;
