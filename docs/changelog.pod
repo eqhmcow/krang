@@ -41,7 +41,7 @@ Removed deprecated Story "Priority". [Noam Weinstein]
 
 
 
-=head2 3.00 - IN DEVELOPMENT
+=head2 3.00 - November 20th, 2007
 
 =over
 
@@ -49,6 +49,11 @@ Removed deprecated Story "Priority". [Noam Weinstein]
 
 Fixed small bugs in TimeChooser where hour/mins of 0 were taken to be null,
 and midnight hour was misunderstood during conversion. [Noam Weinstein]
+
+=item *
+
+Added F<bin/krang_dump_session> CLI util to help track down session
+problems. [Michael Peters]
 
 =item *
 

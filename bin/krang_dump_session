@@ -1,0 +1,150 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+=pod
+
+=head1 NAME
+
+krang_dump_session - show the contents of a session
+
+=head1 SYNOPSIS
+
+  krang_dump_session --id RzpMWH8AAAEAAHQMbbA
+  krang_dump_session --id RzpMWH8AAAEAAHQMbbA --depth 2
+
+=head1 DESCRIPTION
+
+This script will print out information about a request session in Krang
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over
+
+=item --id
+
+The id of the session you wish to view. The id can be found in the C<KRANG_SID>
+cookie.
+
+=item --depth
+
+The maximum "depth" to display when dumping the session data structure. Defaults
+to 1. If you want to see more nested items, increase this value.
+
+=item --key
+
+If you want to isolate and dump just one key of the session just specify it.
+If you want to drill down to a really nested key, then you can just specify
+multiple keys
+
+    krang_dump_session --id RzpMWH8AAAEAAHQMbbA --key story --key urls
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} =
+      $ENV{PERL5LIB}
+      ? "$ENV{PERL5LIB}:${lib}"
+      : "${lib}";
+    unshift @INC, $lib, "$lib/" . $Config{archname};
+
+    # load Krang
+    eval { require Krang };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Conf';
+BEGIN { pkg('Conf')->instance($ENV{KRANG_INSTANCE})  }
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader 'Session' => qw(%session);
+use Krang::Session;
+use Data::Dumper;
+use Getopt::Long;
+use Pod::Usage;
+
+my ($help, $man, $id);
+my $depth = 1;
+my @keys;
+GetOptions(
+    help      => \$help,
+    man       => \$man,
+    'id=s'    => \$id,
+    'depth=s' => \$depth,
+    'key=s'   => \@keys,
+);
+pod2usage(1) if $help;
+pod2usage("You must provide an --id!") unless $id;
+
+eval { pkg('Session')->load($id) };
+if( $@ ) {
+    if( $@ =~ /Session '\Q$id\E' does not exist/ ) {
+        print "No session with id #$id exists\n";
+        exit(1);
+    } else {
+        die $@;
+    }
+}
+
+$Data::Dumper::Indent = 2;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Maxdepth = $depth;
+my $data = \%session;
+while(my $key = shift @keys) {
+    my $type = ref $data || '';
+    if( $type eq 'ARRAY' ) {
+        if( $key =~ /^\d+$/ ) {
+            if( $#$data >= $key ) {
+                $data = $data->[$key];
+            } else {
+                print "Index $key does not exist!\n";
+            }
+        } else {
+            print "Data is an array and key '$key' needs to be an integer!\n";
+            exit(0);
+        }
+    } elsif( $type ) {
+        # try to treat everything else like a hash
+        if( exists $data->{$key } ) {
+            $data = $data->{$key};
+        } else {
+            print "Key $key does not exist!\n";
+            exit(1);
+        }
+    } else {
+        print "Data is not a hash or array when looking for key $key!\n";
+        exit(1);
+    } 
+}
+
+print "\n" . Dumper($data) . "\n";
+
