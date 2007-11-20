@@ -10,6 +10,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Implemented admin perm 'admin_users_limited'.  Redirect to login
+screen if user tampers with GID params. [Bodo Schulze]
+
+=item *
+
 Added new option --no_default to F<bin/krang_useradd> to prevent the user
 being associated with group 'default'. [Bodo Schulze]
 
