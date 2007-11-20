@@ -64,6 +64,11 @@ form { margin: 0; padding: 0; }
 #H .nav .menu li a     { border-bottom: 1px solid #CCC; }
 #H .nav .menu li.xxx   { display: none; }
 
+#H .nav b.logout        { background: none; width: 3.25em; color: <tmpl_var LinkColor>; }
+#H .nav li.logout       { width: auto; }
+#H .nav li.logout a     { padding-right: 7px; }
+#H .nav li.logout a.def { background-color: <tmpl_var HiLightColor>; }
+
 #F .nav        { background: <tmpl_var DarkLinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-footer-grass.jpg") no-repeat; height: 65px; max-height: 65px; }
 #F .nav div    { background: #E1E1E1 url("/static/<tmpl_var krang_install_id>/images/bkg-footer-nav.gif") 0 100% repeat-x; margin: 0 0 0 180px; }
 #F .nav ul     { background: url("/static/<tmpl_var krang_install_id>/images/bkg-footer-corner.gif") 0 100% no-repeat; height: 2.28em; padding: 0 20px; text-align: right; }

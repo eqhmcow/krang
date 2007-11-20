@@ -133,16 +133,18 @@ if( Prototype.Browser.WebKit ) {
 
 <div class="nav"><ul>
 
-<li id="menu-logout" class="menu logout l" onclick="Krang.Window.log_out();"><b>
+<li class="menu l" onclick="Krang.Window.log_out();"><b class="logout">
 Log Out
 </b><ul>
 
-<li><a href="#" onclick="Krang.Window.log_out(); Event.stop(event);">
-This Window
+<li class="logout"><a class="def" id="lo1" href="#" onclick="Krang.Window.log_out(); Event.stop(event);">
+Window
 </a></li>
 
-<li><a href="#" onclick="Krang.Window.log_out_all(); Event.stop(event);">
-All Open Sessions
+<li class="logout"><a href="#" onclick="Krang.Window.log_out_all(); Event.stop(event);"
+	        onmouseover="document.getElementById('lo1').className=''"     
+		onmouseout="document.getElementById('lo1').className='def'">   
+All Logins
 </a></li>
 
 </ul></li>
