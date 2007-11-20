@@ -1,16 +1,22 @@
 package V3_00;
 use strict;
 use warnings;
+
 use Krang::ClassLoader base => 'Upgrade';
-use Krang::ClassLoader DB => 'dbh';
+
 use Krang::ClassFactory qw(pkg);
-use Krang::Conf qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader DB => qw(dbh);
+use Krang::ClassLoader 'ElementLibrary';
+
 use File::Spec::Functions qw(catfile);
+
 
 # Add new krang.conf directive PreviewSSL
 sub per_installation {
     _update_config();
 }
+
 
 sub per_instance {
     my $self = shift;
