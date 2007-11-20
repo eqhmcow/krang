@@ -188,8 +188,9 @@ BEGIN {
     __PACKAGE__->add_callback(
         init => sub {
             my $self = shift;
-            # add auth_forbidden rm
-            $self->run_modes(access_forbidden => 'access_forbidden');
+            # add access_forbidden and redirect_to_login rm
+            $self->run_modes(access_forbidden  => 'access_forbidden',
+                             redirect_to_login => 'redirect_to_login');
 
             # send the no-cache headers
             if( $ENV{MOD_PERL} ) {
@@ -404,25 +405,69 @@ sub _check_assets {
     }
 }
 
+=head1 RUN MODES
+
+This base class provides two runmodes:
+
+  * access_forbidden
+
+  * redirect_to_login
+
+=over 4
+
+=item * access_forbidden($msg)
+
+This runmode logs an unauthorized access attempt and passes $msg to
+C<$pkg->redirect_to_login($msg)>.
+
+If not provided, the message defaults to C<You do not have permissions
+to access that portion of the site.>
+
+=back
+
+=cut
+
 sub access_forbidden {
-    my $self = shift;
+    my ($self, $msg) = @_;
 
     info(
         "Unauthorized Access attempted by user #$ENV{REMOTE_USER}."
         . " Redirecting to 'login.pl'"
     );
 
-    my $module = 'URI::Escape';
-    eval "require $module";
-    import $module qw(uri_escape);
+    $msg ||= "You do not have permissions to access that portion of the site.";
 
-    my $msg = uri_escape("You do not have permissions to access that portion of the site.");
+    return $self->redirect_to_login($msg);
+}
+
+=item * redirect_to_login($msg)
+
+This runmode deletes the user's session and redirects to the login
+screen, where $msg will be shown.
+
+=cut
+
+sub redirect_to_login {
+    my ($self, $msg) = @_;
+
+    # delete user's session
+    pkg('Session')->delete($ENV{KRANG_SESSION_ID});
+
+    if ($msg) {
+	# care for non-urics in $msg
+	my $module = 'URI::Escape';
+	eval "require $module";
+	import $module qw(uri_escape);
+
+	$msg = uri_escape($msg);
+    }
 
     if ($self->param('ajax')) {
         return qq{<script type="text/javascript">location.replace("login.pl?alert=$msg")</script>};
     } else {
         $self->header_add( -location => "login.pl?alert=$msg" );
         $self->header_type('redirect');
+        return '';
     }
 }
 
