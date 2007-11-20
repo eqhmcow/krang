@@ -327,9 +327,11 @@ BEGIN {
                 $uri .= '?';
             }
             $uri .= 'ajax=' . $ajax;
-            $props{'-uri'} = $uri;
-            $self->header_props(%props);
         }
+
+        # and allow non-AJAXy redirects
+        $props{'-uri'} = $uri if $uri;
+        $self->header_props(%props);
 
         # setup character set if one is defined
         $self->query->charset(Charset) if Charset;
