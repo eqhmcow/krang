@@ -2169,8 +2169,7 @@ sub make_sure_story_is_still_ours {
 
     # grab story from session hash
     if (!$session{story}) {
-       clear_messages(); clear_alerts(); 
-       add_alert('story_no_longer_in_session');
+       croak("Unable to load story from session!")
     } else {
        my $story_id = $session{story}->story_id;
        return 1 unless $story_id;
