@@ -489,6 +489,9 @@ sub save_add {
     # Notify user
     add_message("new_media_saved");
 
+    # Clear media object from session
+    delete $session{media};
+
     # Redirect to workspace.pl
     $self->redirect_to_workspace;
 }
@@ -524,6 +527,9 @@ sub checkin_add {
 
     # Notify user
     add_message("new_media_saved");
+
+    # Clear media object from session
+    delete $session{media};
 
     # Redirect to workspace.pl
     $self->redirect_to_workspace;
@@ -726,6 +732,9 @@ sub save_edit {
     # Notify user
     add_message("media_saved");
 
+    # Clear media object from session
+    delete $session{media};
+
     # Redirect to workspace.pl
     $self->redirect_to_workspace;
 }
@@ -762,6 +771,9 @@ sub checkin_edit {
 
     # Notify user
     add_message("media_saved");
+
+    # Clear media object from session
+    delete $session{media};
 
     # Redirect to workspace.pl
     $self->redirect_to_workspace;
@@ -959,6 +971,9 @@ sub save_and_publish {
 
     # publish should also send to preview
     $m->preview;
+
+    # Clear media object from session
+    delete $session{media};
 
     # Redirect to associate screen
     my $url = 'publisher.pl?rm=publish_media&media_id=' . $m->media_id;
@@ -1308,13 +1323,13 @@ sub update_media {
 	if (!$media_in_db->checked_out || 
 	    $media_in_db->checked_out_by ne $ENV{REMOTE_USER} ||
 	    $media_in_db->version > $m->version) {
-	  delete $session{media};
 	  add_alert('media_modified_elsewhere', id => $id);
+	  delete $session{media};
 	  return 0;
 	}
       } else {
-	delete $session{media};
 	add_alert('media_deleted_elsewhere', id => $id);
+	delete $session{media};
 	return 0;
       }
     }
