@@ -10,6 +10,21 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Made previewing from story-edit screen validate and then display the user's
+latest changes (i.e. changes they haven't yet saved). [Noam Weinstein]
+
+=item *
+
+Made missing-template errors show the actual name of a missing file
+even if it was included by another template. [Noam Weinstein]
+
+=item *
+
+Added alerts notifying user if the template or media file being edited was
+modified by another user or window. (This used to crash.) [Noam Weinstein]
+
+=item *
+
 Implemented admin perm 'admin_users_limited'.  Redirect to login
 screen if user tampers with GID params. [Bodo Schulze]
 
@@ -27,10 +42,9 @@ suggesting this feature, and finding the most excellent CodePress.org project!
 
 =item *
 
-Added beta version of multiple-window, multiple-session support, allowing a user
-in a single browser to open multiple windows, multiple stories, etc. In addition,
-the user's login may be changed independently per window, allowing concurrent
-users (for testing, training, admin, etc.) Needs fine-tuning! [Noam Weinstein]
+Completed v1 of multiple-window, multiple-session support, allowing a user 
+to open multiple stories, templates, publishing windows, etc. at the same time,
+and log off each window individually or all together. [Noam Weinstein]
 
 =item *
 
