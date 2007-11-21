@@ -1133,8 +1133,11 @@ sub update_template {
 	    $template_in_db->checked_out_by ne $ENV{REMOTE_USER} ||
 	    $template_in_db->version > $template->version) {
 	  add_alert('template_modified_elsewhere', id => $id);
-	  return 0; # failure
+	  return 0;
 	}
+      } else {
+	add_alert('template_deleted_elsewhere', id => $id);
+	return 0;
       }
     }
     
