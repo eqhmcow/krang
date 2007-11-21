@@ -194,6 +194,9 @@ sub add_checkin {
 
     $template->checkin;
 
+    # clear template object from session
+    delete $session{template};
+
     # return to workspace with message
     add_message('checkin_template', id => $template->template_id);
     $self->redirect_to_workspace;
@@ -228,6 +231,9 @@ sub add_save {
 
     # checkout
     $template->checkout;
+
+    # clear template object from session
+    delete $session{template};
 
     # return to workspace with message
     add_message('message_saved');
@@ -528,6 +534,9 @@ sub deploy {
     $publisher->deploy_template(template => $obj);
     $obj->checkin;
 
+    # clear template object from session
+    delete $session{template};
+
     # Redirect to workspace with message
     add_message('deployed', id => $obj->template_id);
     $self->redirect_to_workspace;
@@ -607,6 +616,8 @@ sub edit_cancel {
 
     add_message('message_edit_cancelled');
 
+    delete $session{template};
+
     return $self->search();
 }
 
@@ -637,6 +648,9 @@ sub edit_checkin {
     return $self->edit(%errors) if %errors;
 
     $template->checkin;
+
+    # clear template object from session
+    delete $session{template};    
 
     # Redirect to workspace with message
     add_message('checkin_template', id => $template->template_id);
@@ -670,6 +684,9 @@ sub edit_save {
     # save
     %errors = $self->_save($template);
     return $self->edit(%errors) if %errors;
+
+    # clear template object from session
+    delete $session{template};
 
     # Redirect to workspace with message
     add_message('message_saved');
@@ -1133,10 +1150,12 @@ sub update_template {
 	    $template_in_db->checked_out_by ne $ENV{REMOTE_USER} ||
 	    $template_in_db->version > $template->version) {
 	  add_alert('template_modified_elsewhere', id => $id);
+	  delete $session{template};
 	  return 0;
 	}
       } else {
 	add_alert('template_deleted_elsewhere', id => $id);
+	delete $session{template};
 	return 0;
       }
     }
