@@ -2188,6 +2188,9 @@ sub make_sure_story_is_still_ours {
 	   my $thief_name = CGI->escapeHTML($thief->first_name.' '.$thief->last_name);	
 	   clear_messages(); clear_alerts(); 
 	   add_alert('story_stolen_during_edit', id => $story_id, thief => $thief_name);
+       } elsif ($story->version > $session{story}->version) {
+           clear_messages; clear_alerts();
+           add_alert('story_saved_in_other_window', id => $story_id);
        } else {
            # story is still ours
 	   return 1; 
