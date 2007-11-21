@@ -276,7 +276,7 @@ sub access_handler ($$) {
 }
 
 
-# Attempt to retrieve user adentity from session cookie.
+# Attempt to retrieve user identity from session cookie.
 # Set REMOTE_USER and KRANG_SESSION_ID if successful.
 sub authen_handler ($$) {
     my $self = shift;
@@ -340,7 +340,8 @@ sub authen_handler ($$) {
 
     # Check for invalid session
     unless (pkg('Session')->validate($session_id)) {
-        debug("Invalid session '$session_id'.");
+        debug("Invalid session '$session_id' passed by window $window_id. Wiping its cookie.");
+	Apache::Cookie->new($r, -name => "krang_window_$window_id", -value => '0', -path => '/')->bake; 
         return OK;
     }
 
