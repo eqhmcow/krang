@@ -45,9 +45,6 @@ use Krang::ClassLoader Session => qw(%session);
 use Carp qw(croak);
 
 
-use constant WORKSPACE_URI => 'workspace.pl';
-
-
 ##############################
 #####  OVERRIDE METHODS  #####
 ##############################
@@ -476,7 +473,7 @@ sub save_add {
     die ("No media object in session") unless (ref($m));
 
     # Update object in session
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
@@ -493,11 +490,7 @@ sub save_add {
     add_message("new_media_saved");
 
     # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri => $uri);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    $self->redirect_to_workspace;
 }
 
 =item checkin_add 
@@ -516,7 +509,7 @@ sub checkin_add {
     die ("No media object in session") unless (ref($m));
 
     # Update object in session
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
@@ -533,11 +526,7 @@ sub checkin_add {
     add_message("new_media_saved");
 
     # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri => $uri);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    $self->redirect_to_workspace;
 
 }
 
@@ -563,11 +552,7 @@ sub cancel_add {
     add_message('message_media_deleted');
 
     # Redirect to workspace
-    my $workspace_uri = WORKSPACE_URI;
-    $self->header_props(-uri => $workspace_uri);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$workspace_uri\">$workspace_uri</a>";
+    $self->redirect_to_workspace;
 }
 
 
@@ -591,7 +576,7 @@ sub save_stay_add {
     die ("No media object in session") unless (ref($m));
 
     # Update object in session
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
@@ -725,7 +710,7 @@ sub save_edit {
     die ("No media object in session") unless (ref($m));
 
     # Update object in session
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
@@ -742,11 +727,7 @@ sub save_edit {
     add_message("media_saved");
 
     # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri => $uri);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    $self->redirect_to_workspace;
 }
 
 =item checkin_edit
@@ -766,7 +747,7 @@ sub checkin_edit {
     die ("No media object in session") unless (ref($m));
 
     # Update object in session
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
@@ -783,11 +764,7 @@ sub checkin_edit {
     add_message("media_saved");
 
     # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri => $uri);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    $self->redirect_to_workspace;
 }
 
 
@@ -810,7 +787,7 @@ sub save_stay_edit {
     die ("No media object in session") unless (ref($m));
 
     # Update object in session
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
@@ -867,12 +844,8 @@ sub delete {
 
     add_message('message_media_deleted');
 
-    # Redirect to workspace
-    my $workspace_uri = WORKSPACE_URI;
-    $self->header_props(-uri => $workspace_uri);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$workspace_uri\">$workspace_uri</a>";
+    # Redirect to workspace.pl
+    $self->redirect_to_workspace;
 }
 
 
@@ -921,7 +894,7 @@ sub save_and_edit_schedule {
 
     # Update media object
     my $m = $session{media};
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     $self->header_props(-uri => 'schedule.pl?rm=edit&object_type=media');
     $self->header_type('redirect');
@@ -947,7 +920,7 @@ sub save_and_associate_media {
 
     # Update media object
     my $m = $session{media};
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Redirect to associate screen
     my $url = 'contributor.pl?rm=associate_media';
@@ -974,7 +947,7 @@ sub save_and_publish {
     die ("No media object in session") unless (ref($m));
 
     # Update object in session
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
@@ -1012,7 +985,7 @@ sub save_and_preview {
     die ("No media object in session") unless (ref($m));
 
     # Update object in session
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Validate input.  Return errors, if any.
     my %errors = $self->validate_media($m);
@@ -1048,7 +1021,7 @@ sub save_and_view_log {
 
     # Update media object
     my $m = $session{media};
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Redirect to associate screen
     my $url = 'history.pl?history_return_script=media.pl&history_return_params=rm&history_return_params=edit&media_id=' . $m->media_id;
@@ -1120,7 +1093,7 @@ sub view_version {
 
     # Update media object
     my $m = $session{media};
-    $self->update_media($m);
+    $self->update_media($m) || return $self->redirect_to_workspace;
 
     # Return view mode with version
     return $self->view($selected_version);
@@ -1213,11 +1186,7 @@ sub checkout_selected {
      }
 
     # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri => $uri);
-    $self->header_type('redirect');
-
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    $self->redirect_to_workspace;
 
 }
 
@@ -1333,8 +1302,25 @@ sub update_media {
     my $self = shift;
     my $m = shift;
 
-    my $q = $self->query();
+    # Make sure object hasn't been modified elsewhere
+    if (my $id = $m->media_id) {
+      if (my ($media_in_db) = pkg('Media')->find(media_id => $id)) {
+	if (!$media_in_db->checked_out || 
+	    $media_in_db->checked_out_by ne $ENV{REMOTE_USER} ||
+	    $media_in_db->version > $m->version) {
+	  delete $session{media};
+	  add_alert('media_modified_elsewhere', id => $id);
+	  return 0;
+	}
+      } else {
+	delete $session{media};
+	add_alert('media_deleted_elsewhere', id => $id);
+	return 0;
+      }
+    }
 
+    # We're safe to continue...
+    my $q = $self->query();
     my @m_fields = qw(
                       title
                       media_type_id
@@ -1393,7 +1379,8 @@ sub update_media {
         #$q->delete($mf);
     }
 
-    # Done!
+    # Success
+    return 1;
 }
 
 
