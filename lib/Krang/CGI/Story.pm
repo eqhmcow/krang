@@ -74,6 +74,7 @@ sub setup {
         replace_dupes                 => 'replace_dupes',
         db_save                       => 'db_save',
         db_save_and_stay              => 'db_save_and_stay',
+	preview_and_stay              => 'preview_and_stay',
         save_and_jump                 => 'save_and_jump',
         save_and_add                  => 'save_and_add',
         save_and_publish              => 'save_and_publish',
@@ -426,7 +427,7 @@ sub edit {
                      url               => $story->url ? 
                                             format_url(
                                                        url => $story->url,
-                                                       linkto => "javascript:Krang.preview('story',null)",
+                                                       linkto => "javascript:preview_and_stay()",
                                                        length => 50,
                                                       ) : "");
 
@@ -902,6 +903,26 @@ sub db_save_and_stay {
 
     # return to edit
     return $self->edit();
+}
+
+=item preview_and_stay
+
+This mode saves the current data to the session and previews the
+story in a new window. 
+
+=cut
+
+sub preview_and_stay {
+    my $self = shift;
+
+    # call internal _save and return output from it on error
+    my $output = $self->_save();
+    return $output if length $output;
+
+    # re-load edit window and have it launch new window for preview
+    my $edit_window    = $self->edit || '';
+    my $js_for_preview = qq|<script type="text/javascript">Krang.preview('story', null);</script>|;
+    return ($edit_window . $js_for_preview);
 }
 
 =item save_and_jump

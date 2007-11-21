@@ -11,6 +11,11 @@ db_save_and_stay = function() {
   Krang.Form.submit('edit', { rm: 'db_save_and_stay' }, { to_top: false });
 }
 
+preview_and_stay = function() {
+  Krang.ElementEditor.run_save_hooks();
+  Krang.Form.submit('edit', { rm: 'preview_and_stay' }, { to_top: false });
+}
+
 <tmpl_if is_root>
 
   <tmpl_if story_id>  //:ever not the case?(db2)
