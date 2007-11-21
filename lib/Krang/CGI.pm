@@ -188,9 +188,10 @@ BEGIN {
     __PACKAGE__->add_callback(
         init => sub {
             my $self = shift;
-            # add access_forbidden and redirect_to_login rm
-            $self->run_modes(access_forbidden  => 'access_forbidden',
-                             redirect_to_login => 'redirect_to_login');
+            # add access_forbidden, redirect_to_login, redirect_to_workspace rms
+            $self->run_modes(access_forbidden      => 'access_forbidden',
+                             redirect_to_login     => 'redirect_to_login',
+                             redirect_to_workspace => 'redirect_to_workspace');
 
             # send the no-cache headers
             if( $ENV{MOD_PERL} ) {
@@ -413,6 +414,8 @@ This base class provides two runmodes:
 
   * redirect_to_login
 
+  * redirect_to_workspace
+
 =over 4
 
 =item * access_forbidden($msg)
@@ -469,6 +472,20 @@ sub redirect_to_login {
         $self->header_type('redirect');
         return '';
     }
+}
+
+=item * redirect_to_workspace()
+
+This runmode redirects the user to his or her workspace.
+
+=cut
+
+sub redirect_to_workspace {
+  my $self = shift;
+  my $uri = 'workspace.pl';
+  $self->header_props(-uri => $uri);
+  $self->header_type('redirect');
+  return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
 # load template using Krang::HTMLTemplate.  CGI::App doesn't provide a

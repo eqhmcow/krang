@@ -177,7 +177,7 @@ sub publish_story_list {
 
     # if there are no stories and media, return to workspace directly
     unless (@story_id_list or @media_id_list) {
-      return $self->_redirect_to_workspace;
+      return $self->redirect_to_workspace;
     }
 
     @story_list = pkg('Story')->find(story_id => \@story_id_list) if @story_id_list;
@@ -251,7 +251,7 @@ sub publish_assets {
         $self->_schedule_assets(\@story_list, \@media_list, $date);
 
         # return to my workspace
-	return $self->_redirect_to_workspace;
+	return $self->redirect_to_workspace;
     }
 
 }
@@ -286,7 +286,7 @@ sub publish_media {
                 version => $media->version);
 
     # return to my workspace
-    return $self->_redirect_to_workspace;
+    return $self->redirect_to_workspace;
 
 }
 
@@ -312,7 +312,7 @@ sub preview_story {
     unless( $story_id or $session_key ) {
         info "Missing required story_id or session parameter. "
             . "Redirecting to workspace.";
-	return $self->_redirect_to_workspace;
+	return $self->redirect_to_workspace;
     }
 
     # this is a no-parse header script
@@ -519,7 +519,7 @@ sub preview_media {
                 version => $media->version);
 
         # return to my workspace
-	return $self->_redirect_to_workspace;
+	return $self->redirect_to_workspace;
     } else {
         # redirect to preview
         $self->header_type('redirect');
@@ -796,16 +796,6 @@ sub _schedule_assets {
 
     return;
 
-}
-
-
-sub _redirect_to_workspace {
-  my $self      = shift;
-  my $query     = $self->query;
-
-  $self->header_props(-uri    => 'workspace.pl'); 
-  $self->header_type ('redirect');
-  return "";
 }
 
 

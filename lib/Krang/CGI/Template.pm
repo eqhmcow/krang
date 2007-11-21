@@ -42,8 +42,6 @@ use Krang::ClassLoader Widget => qw/
 /;
 use Krang::ClassLoader 'Publisher';
 
-use constant WORKSPACE_URI => 'workspace.pl';
-
 # Persist data for return from view in "history_return_params"
 our @history_param_list = ('rm',
                            'krang_pager_curr_page_num',
@@ -184,7 +182,7 @@ sub add_checkin {
     croak("No object in session") unless ref $template;
 
     # update template with CGI values
-    $self->update_template($template);
+    $self->update_template($template) || return $self->redirect_to_workspace;
 
     # validate
     my %errors = $self->validate($template);
@@ -195,13 +193,10 @@ sub add_checkin {
     return $self->add(%errors) if %errors;
 
     $template->checkin;
-    add_message('checkin_template', id => $template->template_id);
 
-    # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=> $uri);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    # return to workspace with message
+    add_message('checkin_template', id => $template->template_id);
+    $self->redirect_to_workspace;
 }
 
 
@@ -221,7 +216,7 @@ sub add_save {
     croak("No object in session") unless ref $template;
 
     # update template with CGI values
-    $self->update_template($template);
+    $self->update_template($template) || return $self->redirect_to_workspace;
 
     # validate
     my %errors = $self->validate($template);
@@ -234,13 +229,9 @@ sub add_save {
     # checkout
     $template->checkout;
 
+    # return to workspace with message
     add_message('message_saved');
-
-    # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=> $uri);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    $self->redirect_to_workspace;
 }
 
 
@@ -259,7 +250,7 @@ sub add_save_stay {
     croak("No object in session") unless ref $template;
 
     # update template with CGI values
-    $self->update_template($template);
+    $self->update_template($template) || return $self->redirect_to_workspace;
     
     # validate
     my %errors = $self->validate($template);
@@ -515,7 +506,7 @@ sub deploy {
     croak("No object in session") unless ref $obj;
 
     # update template with CGI values
-    $self->update_template($obj);
+    $self->update_template($obj) || return $self->redirect_to_workspace;
 
     if ($obj->template_id) {
         my %errors = $self->validate($obj);
@@ -537,13 +528,9 @@ sub deploy {
     $publisher->deploy_template(template => $obj);
     $obj->checkin;
 
+    # Redirect to workspace with message
     add_message('deployed', id => $obj->template_id);
-
-    # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri => $uri);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    $self->redirect_to_workspace;
 }
 
 
@@ -639,7 +626,7 @@ sub edit_checkin {
     croak("No object in session") unless ref $template;
 
     # update template with CGI values
-    $self->update_template($template);
+    $self->update_template($template) || return $self->redirect_to_workspace;
 
     # validate
     my %errors = $self->validate($template);
@@ -650,13 +637,10 @@ sub edit_checkin {
     return $self->edit(%errors) if %errors;
 
     $template->checkin;
-    add_message('checkin_template', id => $template->template_id);
 
-    # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=> $uri);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    # Redirect to workspace with message
+    add_message('checkin_template', id => $template->template_id);
+    $self->redirect_to_workspace;
 }
 
 
@@ -677,7 +661,7 @@ sub edit_save {
     croak("No object in session") unless ref $template;
 
     # update template with CGI values
-    $self->update_template($template);
+    $self->update_template($template) || return $self->redirect_to_workspace;
 
     # validate
     my %errors = $self->validate($template);
@@ -687,13 +671,9 @@ sub edit_save {
     %errors = $self->_save($template);
     return $self->edit(%errors) if %errors;
 
+    # Redirect to workspace with message
     add_message('message_saved');
-
-    # Redirect to workspace.pl
-    my $uri = WORKSPACE_URI;
-    $self->header_props(-uri=> $uri);
-    $self->header_type('redirect');
-    return "Redirect: <a href=\"$uri\">$uri</a>";
+    $self->redirect_to_workspace;
 }
 
 
@@ -712,7 +692,7 @@ sub edit_save_stay {
     croak("No object in session") unless ref $template;
 
     # update template with CGI values
-    $self->update_template($template);
+    $self->update_template($template) || return $self->redirect_to_workspace;
 
     # validate
     my %errors = $self->validate($template);
@@ -781,7 +761,7 @@ sub save_and_view_log {
 
     # Update media object
     my $template = $session{template};
-    $self->update_template($template);
+    $self->update_template($template) || return $self->redirect_to_workspace;
 
     # Redirect to associate screen
     my $url = "history.pl?history_return_script=template.pl&history_return_params=rm&history_return_params=edit&template_id=" . $template->template_id;
@@ -897,7 +877,7 @@ sub view_version {
 
     # Update media object
     my $template = $session{template};
-    $self->update_template($template);
+    $self->update_template($template) || return $self->redirect_to_workspace;
 
     # Return view mode with version
     return $self->view($selected_version);
@@ -1146,6 +1126,19 @@ sub update_template {
     my $template = shift;
     my $q = $self->query();
 
+    # make sure template is still checked out to us (and hasn't been saved in another window)
+    if (my $id = $template->template_id) {
+      if (my ($template_in_db) = pkg('Template')->find(template_id => $id)) {
+	if (!$template_in_db->checked_out || 
+	    $template_in_db->checked_out_by ne $ENV{REMOTE_USER} ||
+	    $template_in_db->version > $template->version) {
+	  add_alert('template_modified_elsewhere', id => $id);
+	  return 0; # failure
+	}
+      }
+    }
+    
+    # we're safe to continue...
     for (qw/category_id content filename/) {
         next if ($_ eq 'filename') && $template->template_id;
         next if ($_ eq 'category_id') && $template->template_id;
@@ -1178,6 +1171,8 @@ sub update_template {
     } else {
         $template->unmark_for_testing;
     }
+
+    return 1; # success
 }
 
 
@@ -1234,8 +1229,8 @@ sub _save {
                         cat_id => $category_id );
             $q->param('errors', 1);
             return (error_category_id => 1);
-        } else {
-            croak($@);
+	 } else {
+	    croak($@);
         }
     }
 
@@ -1285,6 +1280,8 @@ sub template_chooser_node {
     );
     return $chooser->handle_get_node( query => $query );
 };
+
+
 
 
 =back
