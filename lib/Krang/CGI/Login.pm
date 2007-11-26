@@ -37,6 +37,7 @@ use Krang::ClassLoader Conf => qw(
     BadLoginNotify
     BadLoginWait
     Charset
+    DefaultLanguage
     FromAddress
     InstanceApachePort
     InstanceDisplayName
@@ -205,7 +206,9 @@ sub _do_login {
 
     # Propagate user to environment
     $ENV{REMOTE_USER} = $user_id;
-    
+
+    $session{language} = pkg('MyPref')->get('language') || DefaultLanguage;
+
     # build the session cookie (using next available window ID)
     my $session_cookie = $q->cookie(
         -name  => "krang_window_$window_id",
@@ -229,7 +232,7 @@ sub _do_login {
 
       # otherwise, store preferences via JSON so the client-side JS can access them
       my %prefs;
-      for my $name qw(search_page_size use_autocomplete message_timeout) {
+      for my $name qw(search_page_size use_autocomplete message_timeout language) {
         $prefs{$name} = pkg('MyPref')->get($name);
       }
       my $pref_cookie = $q->cookie(
