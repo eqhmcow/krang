@@ -10,7 +10,8 @@ use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Conf => qw(PasswordChangeTime);
+use Krang::ClassLoader Conf => qw(PasswordChangeTime DefaultLanguage);
+use Krang::ClassLoader Localization => qw(%LANG);
 use JSON qw(objToJson);
 
 =head1 NAME
@@ -99,7 +100,22 @@ sub edit {
         )
     );
 
-    return $template->output; 
+    # Show language selector only if we have more than one AvailableLanguage
+    if (scalar keys %LANG > 1) {
+	my $lang = pkg('MyPref')->get('language') || DefaultLanguage;
+
+	$template->param(
+            language_selector => scalar $q->popup_menu(
+                -name     => 'language',
+                -values   => [ sort keys %LANG ],
+                -labels   => \%LANG,
+                -default  => $lang,
+            )
+        );
+	$template->param(multi_lang => 1);
+    }
+
+    return $template->output;
 }
 
 =item update_prefs()
@@ -168,6 +184,21 @@ sub update_prefs {
             add_message("changed_password");
         }
     }
+
+    # process language pref only if we have more than one AvailableLanguage
+    if (scalar keys %LANG > 1) {
+	my $curr_lang = pkg('MyPref')->get('language') || DefaultLanguage;
+	my $new_lang = $q->param('language');
+
+	if ($new_lang ne $curr_lang) {
+	    # update language
+	    pkg('MyPref')->set(language => $new_lang);
+	    $session{language} = $new_lang;
+	    add_message("changed_language", lang => $LANG{$new_lang});
+	}
+    }
+
+
     return $self->edit();
 }
 

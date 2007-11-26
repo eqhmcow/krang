@@ -45,17 +45,21 @@ Default search page size.
 
 our %CONFIG = (
     search_page_size => {
-                        type  => 'scalar',
-                        row   => 'search_page_size',
-                       },
+        type  => 'scalar',
+        row   => 'search_page_size',
+    },
     use_autocomplete => {
-                        type  => 'scalar',
-                        row   => 'use_autocomplete',
-                       },
-    message_timeout  => {
-                        type  => 'scalar',
-                        row   => 'message_timeout',
-                       },
+        type  => 'scalar',
+        row   => 'use_autocomplete',
+    },
+    message_timeout => {
+        type  => 'scalar',
+        row   => 'message_timeout',
+    },
+    language => {
+        type => 'scalar',
+        row  => 'language',
+    },
 );
 
 =pod

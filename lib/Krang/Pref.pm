@@ -80,6 +80,10 @@ our %CONFIG = (
         type => 'scalar',
         row  => 'message_timeout',
     },
+    language => {
+        type => 'scalar',
+        row  => 'language',
+    },
 );
 
 =pod
