@@ -10,6 +10,7 @@ ApachePort
 ApacheMaxSize
 ApacheMaxUnsharedSize
 Assertions
+AvailableLanguages
 BadLoginCount
 BadLoginWait
 BadLoginNotify
@@ -21,6 +22,7 @@ Charset
 ContactEmail
 ContactURL
 CustomCSS
+DefaultLanguage
 DBPass
 DBUser
 DBHost

@@ -123,6 +123,12 @@ PreviewSSL 0
 # Secret is a shared secret used for encryption and checksumming
 Secret 'ad0243-1j!@LdaAWEOIGFa-39021-:skj'
 
+#
+# Localization (RFC 3060-style language tags)
+DefaultLanguage en
+AvailableLanguages en de-DE
+
+
 ###########################################################################
 #
 # Instance Configuration

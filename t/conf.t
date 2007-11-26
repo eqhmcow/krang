@@ -12,6 +12,8 @@ KrangUser nobody
 KrangGroup nobody
 ApacheAddr 127.0.0.1
 ApachePort 80
+AvailableLanguages en de-DE
+DefaultLanguage en
 HostName localhost.localdomain
 EnableSiteServer 1
 SiteServerAddr 127.0.0.1
@@ -58,6 +60,11 @@ ok(pkg('Conf')->get("KrangRoot"));
 ok(pkg('Conf')->KrangRoot);
 ok(pkg('Conf')->get("ApachePort"));
 ok(pkg('Conf')->ApachePort);
+
+is(pkg('Conf')->get("DefaultLanguage"), "en", "Getting DefaultLanguage");
+is(pkg('Conf')->DefaultLanguage, "en", "DefaultLanguage");
+is_deeply( [pkg('Conf')->get("AvailableLanguages")], ['en', 'de-DE'], "Getting AvailableLanguages");
+is_deeply( [pkg('Conf')->AvailableLanguages], ['en', 'de-DE'], "AvailableLanguages");
 
 pkg('Conf')->import(qw(KrangRoot InstanceDBName ApachePort));
 ok(KrangRoot());
