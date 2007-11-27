@@ -40,6 +40,7 @@ print STDERR "Pre-loading HTML Templates...\n";
 find(
      sub {
          return if /^\.?#/; # skip emacs droppings
+	 return if /\.tmpl\.tmpl$/;
          return unless /\.tmpl$/;
          pkg('HTMLTemplate')->new(
                                   filename => "$File::Find::dir/$_",
