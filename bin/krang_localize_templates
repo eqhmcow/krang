@@ -1,0 +1,280 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_localize_templates - localize templates for all AvailableLanguages
+
+=head1 SYNOPSIS
+
+   krang_localize_templates --verbose --verbose --verbose [ --print_missing ]
+
+=head1 DESCRIPTION
+
+This script is normally called by L<bin/krang_ctl> at Krang startup.
+It searches all templates/SomeModule/ directories below KrangRoot and
+below addons' root directories for template files with the double
+'.tmpl' file extensions, e.g.
+
+      templates/Workspace/workspace.tmpl.tmpl
+
+Static strings in these template templates should be wrapped in
+<tmpl_lang SomeString> tags.  They are replaced by their English
+content or their corresponding translations according to the
+L<Krang::Conf> directive AvailableLanguages.  The result is written out
+to template files stored in a subdirectory called by the name of the
+language tag. For English -- which is the always created default -- this
+gives us
+
+      templates/Workspace/en/workspace.tmpl
+
+For French and German we'd have:
+
+      templates/Workspace/fr/workspace.tmpl
+      templates/Workspace/de/workspace.tmpl
+
+B<NOTABENE:> Those language-specific directories must exist; this
+script does not take care to create them.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over 4
+
+=item --verbose
+
+Once gives you a list templates/ root directories searched for
+template files, twice the language, thrice the filenames of all
+localized templates.
+
+=item --only_lang=en
+
+Create templates only for the given language.  Note that this language
+must be in the list of AvailableLanguages.  This option may be
+interesting for lexicon writers.
+
+=item --print_missing
+
+Give this option if you want the script to print out a list of missing
+localizations ordered by language.  This option is only useful for
+lexicon writers.
+
+=item --help
+
+=item --man
+
+=back
+
+=head1 WARNINGS
+
+If you get warnings
+
+  "Use of uninitialized value in substitution iterator at
+   /<KrangRoot>/lib/Krang/Localization.pm line <NUM>"
+
+your lexicon is not complete.  Run the script with the
+option --print_missing to get a list of missing localizations.
+
+=cut
+
+use File::Find;
+use File::Spec::Functions qw(catdir catfile splitdir canonpath);
+use File::Path;
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+our ($help, $man, $only_lang);
+our $print_missing = 0;
+our $verbose = 0;
+
+use Getopt::Long;
+use Pod::Usage;
+
+my $result = GetOptions(
+    'verbose+'      => \$verbose,
+    'help'          => \$help,
+    'man'           => \$man,
+    'only_lang=s'   => \$only_lang,
+    'print_missing' => \$print_missing,
+) or pod2usage(2);
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Conf => qw(AvailableLanguages);
+use Krang::ClassLoader Localization => qw(localize_template %LANG %missing);
+
+# record missing localizations
+$ENV{KRANG_RECORD_MISSING_LOCALIZATIONS} = $print_missing;
+
+# also localize addon /templates
+for my $tmpl_root (pkg('File')->find_all('templates')) {
+    show("### Localizing templates below '$tmpl_root'", 1);
+
+    my $templates = collect_templates_in_root($tmpl_root);
+
+    localize_templates($templates);
+}
+
+#         --- END Main ---
+
+sub collect_templates_in_root {
+    my $template_root = shift;
+
+    my @templates = ();
+
+    opendir(my $dh, $template_root) or die "Couldn't opendir($template_root): $!";
+
+    find({
+	  wanted => sub {
+
+	      return unless m{\.tmpl\.tmpl$};
+
+	      push @templates, {root => $template_root,
+				dir  => $File::Find::dir,
+				file => $_};
+	  },
+	  no_chdir => 0,
+	 },
+	 grep { -d $_                      }
+	 map  { catdir($template_root, $_) }
+         grep { $_ !~ m{^\.(\.?|svn)}      } readdir($dh)
+    );
+
+    closedir($dh) or warn "Couldn't closedir($template_root): $!";
+
+    return \@templates;
+}
+
+sub localize_templates {
+    my $templates = shift;
+
+    # make sure have the English default
+    my @languages = AvailableLanguages;
+    push @languages, 'en' unless scalar(@languages);
+
+    for my $lang (@languages) {
+
+	# only for one language?
+	next if $only_lang && $only_lang ne $lang;
+
+	show("    Localizing templates for '$LANG{$lang}'", 2);
+
+	for my $template (@$templates) {
+
+	    # slurp the template containing <tmpl_lang ...>
+	    my $tmpltmpl = catfile($template->{dir}, $template->{file});
+
+	    my $content = '';
+
+	    {
+		local $/ = undef;
+		open my $if, $tmpltmpl or die "Couldn't open($tmpltmpl) for reading: $!";
+		$content = <$if>;
+		close $if or warn "Couldn't close($tmpltmpl): $!";
+	    }
+
+	    # localize it
+	    localize_template(\$content, $lang);
+
+	    # make sure we have a language-specific directory for our localized template
+	    my $loc_dir = catdir($template->{dir}, $lang);
+	    make_dir($loc_dir);
+
+	    # correct the file path
+	    (my $loc_tmpl = $template->{file}) =~ s/\.tmpl$//;
+	    $loc_tmpl = catfile($loc_dir, $loc_tmpl);
+
+	    # and print the localized template
+	    open(my $of, ">", $loc_tmpl) or die "Couldn't open($loc_tmpl) for writing: $!";
+	    print $of $content;
+	    close $of or warn "Couldn't close($loc_tmpl): $!";
+
+	    show("      Created $loc_tmpl", 3);
+	}
+    }
+}
+
+sub make_dir {
+    my $dir = shift;
+
+    eval {
+	mkpath($dir, 0, 0755);
+    };
+
+    if ($@) {
+	die "Couldn't make directory '$dir': $@";
+    }
+
+    show("      Created $dir", 3);
+}
+
+sub show {
+    my ($msg, $level) = @_;
+
+    if ($verbose == 1) {
+	print "$msg\n" if $level < 2;
+    } elsif ($verbose == 2) {
+	print "$msg\n" if $level < 3;
+    } elsif ($verbose == 3) {
+	print "$msg\n" if $level < 4;
+    }
+}
+
+END {
+    exit(0) unless $print_missing;
+
+    my $message = '';
+
+    for my $language (sort keys %missing) {
+	my $missing .= join "\n", sort keys %{$missing{$language}};
+	if ($missing) {
+	    $missing = "###\n"
+	             . "### Missing in '$LANG{$language}' lexicon lang/perl.$language\n"
+                     . "###\n".$missing;
+	    $message .= $missing."\n";
+	}
+    }
+
+    if (length($message)) {
+	print STDERR "###\n"
+                   . "### There are missing entries in one or more lexicons\n"
+	           . "### for localizing static template strings\n"
+                   . "###\n"
+	           . $message
+                   . "###\n\n";
+    }
+}
