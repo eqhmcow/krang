@@ -608,10 +608,3 @@ AMPM 0
 "Invalid login. You have failed more than " "Ungültige Anmeldung. Sie haben "
 " login attempts and must wait "            " Mal versucht, sich anzumelden. Nun müssen Sie "
 " minutes before logging in again."         " Minuten warten, bevor Sie es wieder probieren dürfen."
-
-### Copyright ###
-# (C) Bodo Schulze (bobesch@letras.net)
-# Alle Rechte vorbehalten.
-# All rights reserved.
-### Copyright END ###
-
