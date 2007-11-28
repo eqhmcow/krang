@@ -19,7 +19,7 @@ It searches all templates/SomeModule/ directories below KrangRoot and
 below addons' root directories for template files with the double
 '.tmpl' file extensions, e.g.
 
-      templates/Workspace/workspace.tmpl.tmpl
+      templates/Workspace/workspace.base.tmpl
 
 Static strings in these template templates should be wrapped in
 <tmpl_lang SomeString> tags.  They are replaced by their English
@@ -161,7 +161,7 @@ sub collect_templates_in_root {
     find({
 	  wanted => sub {
 
-	      return unless m{\.tmpl\.tmpl$};
+	      return unless m{\.base\.tmpl$};
 
 	      push @templates, {root => $template_root,
 				dir  => $File::Find::dir,
@@ -215,7 +215,7 @@ sub localize_templates {
 	    make_dir($loc_dir);
 
 	    # correct the file path
-	    (my $loc_tmpl = $template->{file}) =~ s/\.tmpl$//;
+	    (my $loc_tmpl = $template->{file}) =~ s/\.base\.tmpl$/.tmpl/;
 	    $loc_tmpl = catfile($loc_dir, $loc_tmpl);
 
 	    # and print the localized template
