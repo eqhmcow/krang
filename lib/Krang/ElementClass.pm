@@ -846,16 +846,14 @@ sub fill_template {
 	  } else {
 
 	    # it DOESN'T: must be a flattened template; recurse to build the inner loop's vars
-	    if (my $inner_loop_tags = $self->_inner_loop_to_tmpl_tags($tmpl, $loopname)) {
-	      my $inner_loop_tmpl   = HTML::Template->new( scalarref => \$inner_loop_tags, 
-							   die_on_bad_params => 0);
+	    if (my $inner_tmpl = $self->_inner_loop_to_tmpl(tmpl => $tmpl, loop => $loopname, publisher => $publisher)) {
 	      $child->fill_template(publisher          => $publisher, 
 				    fill_template_args => \%fill_template_args,
-				    tmpl               => $inner_loop_tmpl,
+				    tmpl               => $inner_tmpl,
 				    element            => $child);
-	      foreach ($inner_loop_tmpl->query) {
-		$loop_entry{$_} = $inner_loop_tmpl->param($_) 
-		  if $inner_loop_tmpl->param($_);
+	      foreach ($inner_tmpl->query) {
+		$loop_entry{$_} = $inner_tmpl->param($_)
+		  if $inner_tmpl->param($_);
 	      }
 	    }
 	  }
@@ -886,9 +884,32 @@ sub fill_template {
     $tmpl->param(%params, %child_params);
 }
 
-# helper function for fill_template: returns simplified template string containing 
-# all vars and loops at a certain level of template (isn't used for actual output; 
-# is just passed to fill_template of inner elements so they fill appropriate vars)
+# _inner_loop_to_tmpl: helper function for fill_template - returns simplified template 
+# containing <tmpl_var> and <tmpl_loop> tags for all the variables that appear within
+# a particular loop (the resulting template isn't used for actual output; it's just 
+# passed to the fill_template() call of inner elements so they fill appropriate vars)
+sub _inner_loop_to_tmpl {
+  my ($self, %args) = @_;
+  my $publisher     = $args{publisher};
+
+  my $tmpl          = $args{tmpl};
+  my $loopname      = $args{loop};
+  my $cache_key     = $tmpl . $loopname;
+  
+  # the publisher object stores a cache of our inner templates, so first look there...
+  my $inner_tmpl  = $publisher->inner_tmpl_cache->{$cache_key};
+  unless ($inner_tmpl) {
+    if (my $tags = $self->_inner_loop_to_tmpl_tags($tmpl, $loopname)) {
+      # couldn't find template in cache, so build a new one....
+      $inner_tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
+      $publisher->inner_tmpl_cache->{$cache_key} = $inner_tmpl;
+    }
+  }
+  return $inner_tmpl;
+}
+
+# _inner_loop_to_tmpl_tags: helper function called by inner_loop_to_tmpl to
+# recursively build text of inner template (consisting of vars within a loop)
 sub _inner_loop_to_tmpl_tags {
   my ($self, $tmpl, @scope) = @_;
   my $output = ''; 
