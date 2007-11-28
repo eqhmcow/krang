@@ -1619,6 +1619,11 @@ Krang.Tooltip.Media = {
     }
 };
 
+// Localization stub
+Krang.L10N = {
+    loc : function(s) { return s }
+}
+
 
 // Krang Behavioral rules
 // This is a nice convenient way to unobstrusively apply JavaScript
