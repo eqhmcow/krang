@@ -169,6 +169,7 @@ sub collect_templates_in_root {
 	  },
 	  no_chdir => 0,
 	 },
+	 sort { $a cmp $b                  }
 	 grep { -d $_                      }
 	 map  { catdir($template_root, $_) }
          grep { $_ !~ m{^\.(\.?|svn)}      } readdir($dh)
