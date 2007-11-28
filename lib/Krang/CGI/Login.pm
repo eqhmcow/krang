@@ -201,13 +201,13 @@ sub _do_login {
                        hash       => md5_hex($user_id . $instance .
                                              $session_id . Secret()) );
 
-    # Unload the session
-    pkg('Session')->unload();
-
     # Propagate user to environment
     $ENV{REMOTE_USER} = $user_id;
 
     $session{language} = pkg('MyPref')->get('language') || DefaultLanguage;
+
+    # Unload the session
+    pkg('Session')->unload();
 
     # build the session cookie (using next available window ID)
     my $session_cookie = $q->cookie(
