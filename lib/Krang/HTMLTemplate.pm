@@ -75,8 +75,8 @@ sub _compute_path {
     my @out;
     foreach my $in (@$in) {
         foreach my $path (@PATH) {
-            push(@out, "$path/$in/$session{language}");
-            push(@out, "$path/$in");
+            push(@out, catdir($path, $in, $session{language}));
+            push(@out, catdir($path, $in));
         }
     }
     push(@out, @PATH);
