@@ -157,10 +157,9 @@ sub input_form {
       xinha_editors   = HTMLArea.makeEditors(xinha_editors, xinha_config, xinha_plugins);
 
       Krang.ElementEditor.add_save_hook(function() {
-	  for (name in xinha_editors) {
-	      xinha = xinha_editors[name];
+	  __htmlareas.each(function(xinha) {
 	      xinha._textArea.value = xinha.outwardHtml(xinha.getHTML());
-	  }
+	  })
       });
 END
 
