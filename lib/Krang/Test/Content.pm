@@ -847,7 +847,7 @@ sub _element_to_loop {
         next if $already_included{$child->name}++;
         $content .= "<tmpl_if is_" . $child->name . ">";
         $content .= ($flattened && $child->children) ?
-          $self->_element_to_loop($child, $flattened) :
+          "\n".$self->_element_to_loop($child, $flattened)."\n" :
           "<tmpl_var name='" . $child->name . "'>";
         $content .= "</tmpl_if>\n";
     }
