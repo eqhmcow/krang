@@ -653,16 +653,16 @@ would correspond to the first paragraph child element.
 
 =item * 
 
-If the template has a loop named after a particular child element 
+If the template has a loop named after a specific child 
 (e.g. C<page_loop>) it is created as follows: 
 
 If the inside of the loop contains a direct reference to the child
-- e.g. <tmpl_var page> - AND there is a template named after the child 
-(e.g. C<page.tmpl>), then each row of the loop will contain C<$childname>
-= HTML, where HTML is the result of publishing $child using 
-its own template. If not, each row will contain the vars returned by 
-calling $child->fill_template() (i.e. any of its OWN children used
-in the template - <tmpl_var paragraph> etc. - will be populated). 
+- e.g. <tmpl_var page> - and the child is either a primitive element
+or a container for which a separate template exists (e.g. C<page.tmpl>), 
+then each row of the loop will contain C<$childname> = HTML, where HTML 
+is the result of publishing $child. If not, each row will contain the 
+vars returned by $child->fill_template() (i.e. any of its OWN children 
+used in the template - <tmpl_var paragraph> etc. - will be populated). 
 
 Either way, each row will also contain the variable $childname_count
 (e.g. C<page_count>)
