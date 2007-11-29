@@ -259,6 +259,8 @@ test_preview_story($story);
 
 test_cgistory_publish();
 
+test_publish_using_flattened_template();
+
 test_media_deploy();
 
 test_storylink();
@@ -1301,7 +1303,58 @@ sub test_cgistory_publish {
     # Test that fill_template works as expected for published templates
     my $diff = `/usr/bin/diff -I $unique $story_path $tmpl_path`;
     ok($diff =~ /^\s*$/, "No difference between CGI tmpl and story");
+
+    # clean up
+    $creator->delete_item(item => $tmpl);
+    $creator->delete_item(item => $story);
 }
+
+
+sub test_publish_using_flattened_template {
+
+    # create new story
+    my $story = $creator->create_story( class => 'cgi_story', category => [$category] );
+    $story->checkout(); $story->save(); $story->checkin();
+    my @paragraphs = $story->element->match('/page[0]/paragraph');
+
+    # publish story twice - once with flattened template, once without
+    my @tmpl_content;
+    my @output_text;
+    for (0..1) {
+        # create template 
+        my ($tmpl, $content) = $creator->create_template(element     => $story->element, 
+                                                         flattened   => $_,
+                                                         predictable => 1);
+        $tmpl->deploy();
+
+        # publish with it
+        $publisher->publish_story(story => $story);
+        
+        # save results
+        push @tmpl_content, $content;
+        my @story_paths = build_publish_paths($story);
+        my $output_text = load_story_page($story_paths[0]);
+        push @output_text, $output_text;
+
+        # clean up
+        $creator->delete_item(item => $tmpl);
+    }
+    $creator->delete_item(item => $story);
+
+    # make sure the templates were both non-empty
+    ok ($tmpl_content[0] && $tmpl_content[1]);
+
+    # make sure the templates were different from each other
+    ok ($tmpl_content[0] ne $tmpl_content[1]);
+
+    # make sure both templates managed to publish all three paragraphs
+    for my $flattened (0..1) {
+        for (0..2) {
+            my $paragraph = $paragraphs[$_]->data;
+            ok ($output_text[$flattened] =~ /$paragraph/);
+        }
+    }
+}    
 
 
 sub test_preview_story {
