@@ -730,6 +730,12 @@ Associates the template with the L<Krang::Category> object
 C<$category>.  Otherwise the template will be associated with the root
 category for the first L<Krang::Site> object created.
 
+=item * C<flattened>
+
+This is an optional argument which defaults to 0: if set to 1, the template will
+be created in a flattened form (i.e. rather than each container appearing in the 
+form of <tmpl_var container>, it will appear as: 
+<tmpl_if container><tmp_loop element_loop><tmpl_var child_1>etc.</tmpl_loop></tmpl_if>
 
 =back
 
@@ -743,6 +749,8 @@ sub create_template {
     my $element      = $args{element};
     my $element_name = $args{element_name} || $element->name;
     my $content      = $args{content};
+
+    my $flattened    = $args{flattened};
 
     croak __PACKAGE__ .
       "->create_template(): Missing required argument(s) - either 'element' or 'element_name' and 'content'."
@@ -772,13 +780,7 @@ END
 
         if ($element->children) {
             # container
-            $content .= "<tmpl_loop element_loop>\n";
-            foreach my $child ($element->children) {
-                $content .= "<tmpl_if is_" . $child->name . ">".
-                  "<tmpl_var name='" . $child->name . "'>".
-                    "</tmpl_if>\n";
-            }
-            $content .= "</tmpl_loop>";
+            $content .= $self->_element_to_loop($element, $flattened);
         } elsif ($element->isa('Krang::ElementClass::MediaLink')) {
             # media link
             $content .= "<img src='<tmpl_var name='url'>'>\n";
@@ -833,6 +835,25 @@ END
 
     return $tmpl;
 
+}
+
+# helper function - builds element_loop text from element
+sub _element_to_loop {
+    my ($self, $element, $flattened) = @_;
+    my %already_included;
+    
+    my $content .= "<tmpl_loop element_loop>\n";
+    foreach my $child ($element->children) {
+        next if $already_included{$child->name}++;
+        $content .= "<tmpl_if is_" . $child->name . ">";
+        $content .= ($flattened && $child->children) ?
+          $self->_element_to_loop($child, $flattened) :
+          "<tmpl_var name='" . $child->name . "'>";
+        $content .= "</tmpl_if>\n";
+    }
+    $content .= "</tmpl_loop>";
+    
+    return $content;
 }
 
 
