@@ -63,6 +63,19 @@ Give this option if you want the script to print out a list of missing
 localizations ordered by language.  This option is only useful for
 lexicon writers.
 
+=item --pkg Story
+
+Only process templates below templates/Story/
+
+This option is useful to find missing localizations per package.
+
+=item --tmpl edit
+
+This option should be used together with C<--pkg>.  It causes the
+script to only process the template edit.base.tmpl.
+
+This option is useful to find missing localizations per template.
+
 =item --help
 
 =item --man
@@ -114,7 +127,7 @@ $@
 END
 }
 
-our ($help, $man, $only_lang);
+our ($help, $man, $only_lang, $pkg, $tmpl);
 our $print_missing = 0;
 our $verbose = 0;
 
@@ -127,6 +140,8 @@ my $result = GetOptions(
     'man'           => \$man,
     'only_lang=s'   => \$only_lang,
     'print_missing' => \$print_missing,
+    'pkg=s'         => \$pkg,
+    'tmpl=s'        => \$tmpl,
 ) or pod2usage(2);
 
 pod2usage(1)             if $help;
@@ -160,6 +175,12 @@ sub collect_templates_in_root {
 
     find({
 	  wanted => sub {
+
+	      # only for one package
+	      return if $pkg && $File::Find::dir !~ /$pkg$/;
+
+	      # only for one template
+	      return if $tmpl && $_ ne "$tmpl.base.tmpl";
 
 	      return unless m{\.base\.tmpl$};
 
