@@ -334,8 +334,8 @@ for (1..10) {
 
     my $s = $creator->create_story(category => [$cat]);
     my $m = $creator->create_media(category => $cat);
-    my $c = $creator->create_contrib();
-    my $t = $creator->create_template(element => $s->element, category => $cat);
+    my $c = $creator->create_contrib();                                         # flatten half of them
+    my $t = $creator->create_template(element => $s->element, category => $cat, flattened => $_ % 2);
     my $u = $creator->create_user();
 
     push @story_ids, $s->story_id;
