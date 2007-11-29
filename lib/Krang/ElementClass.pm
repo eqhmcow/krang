@@ -785,8 +785,8 @@ sub fill_template {
     my %child_params;
 
     foreach my $child (@element_children) {
-        my $name     = $child->name;
-        my $loopname = $name . '_loop';
+        my $name       = $child->name;
+        my $child_loop = $name . '_loop';
         my $html;
         my %fill_template_args;
 
@@ -795,7 +795,7 @@ sub fill_template {
         # directly in the template, not seen before.
         next unless (exists($template_vars{element_loop}{$name}) || 
                      exists($template_vars{element_loop}{"is_$name"}) ||
-                     exists($template_vars{$loopname}) ||
+                     exists($template_vars{$child_loop}) ||
                      (exists($template_vars{$name}) && !exists($child_params{$name})));
 
         # Pass pagination variables along to child->publish if the
@@ -809,69 +809,45 @@ sub fill_template {
 
         }
 
-        # build element_loop if it exists.
-        if ( 
-            exists($template_vars{element_loop}{$name})
-            || exists($template_vars{element_loop}{"is_$name"})
-        ) {
-            # get html for element
-  	    $html = $child->publish(publisher => $publisher, 
-				    fill_template_args =>\%fill_template_args);
-            $element_count{$name} ? $element_count{$name}++ : ($element_count{$name} = 1);
-            push @{$child_params{element_loop}}, {
-                                            "is_$name" => 1,
-                                            $name      => $html,
-                                            $name.'_count' => $element_count{$name}
-                                           };
+        # if 'element_loop' exists in template, create or append to it
+        if (exists($template_vars{element_loop}{$name}) || exists($template_vars{element_loop}{"is_$name"})) {
+
+            my $loop_idx   = $element_count{$name} ? $element_count{$name}++ : ($element_count{$name} = 1);
+            my $loop_entry = $self->_fill_inner_loop(tmpl      => $tmpl,
+                                                     child     => $child,
+                                                     html      => \$html,
+                                                     loopname  => 'element_loop',
+                                                     count     => $loop_idx,
+                                                     publisher => $publisher,
+                                                     fill_template_args => \%fill_template_args);
+            push @{$child_params{element_loop}}, $loop_entry;
         }
 
-        # does '$name_loop' exist?  build it.
-        if (exists($template_vars{$loopname})) {
-
-	  # if we already started building it on previous iterations, append to what we have
-	  my $loop_idx = 1;
-	  if (exists($child_params{$loopname})) {
-	    $loop_idx = @{$child_params{$loopname}} + 1;
-	  }
-	  my %loop_entry = ($name . '_count' => $loop_idx,
-			    "is_$name"       => 1);
-
-	  # see if inner loop contains a tag for the element itself (ie without the '_loop')
-	  if ($tmpl->query(name => [$loopname, $name])) {
-	    
-	    # it DOES: publish the element, and use the resulting HTML as its value
-            $loop_entry{$name} =  $child->publish(publisher          => $publisher, 
-					 	  fill_template_args => \%fill_template_args);
-
-	  } else {
-
-	    # it DOESN'T: must be a flattened template; recurse to build the inner loop's vars
-	    if (my $inner_tmpl = $self->_inner_loop_to_tmpl(tmpl => $tmpl, loop => $loopname, publisher => $publisher)) {
-	      $child->fill_template(publisher          => $publisher, 
-				    fill_template_args => \%fill_template_args,
-				    tmpl               => $inner_tmpl,
-				    element            => $child);
-	      foreach ($inner_tmpl->query) {
-		$loop_entry{$_} = $inner_tmpl->param($_)
-		  if $inner_tmpl->param($_);
-	      }
-	    }
-	  }
-
-	  # fix to make contrib_loop available - this is because
-	  # HTML::Template does not support global loops - only global_vars
-	  if ($tmpl->query(name => [$loopname, 'contrib_loop'])) {
-	    $child_params{contrib_loop} = $self->_build_contrib_loop(@_) unless
-	      exists($child_params{contrib_loop});
-	    $loop_entry{contrib_loop} = $child_params{contrib_loop};
-	  }
-	  
-	  push @{$child_params{$loopname}}, \%loop_entry;
+        # if "$name_loop" exists in template, create or append to it
+        if (exists($template_vars{$child_loop})) {
+            
+            my $loop_idx   = exists($child_params{$child_loop}) ? (@{$child_params{$child_loop}} + 1) : 1;
+            my $loop_entry = $self->_fill_inner_loop(tmpl      => $tmpl,
+                                                     child     => $child,
+                                                     html      => \$html,
+                                                     loopname  => $child_loop,
+                                                     count     => $loop_idx,
+                                                     publisher => $publisher,
+                                                     fill_template_args => \%fill_template_args);
+            
+            # fix to make contrib_loop available - this is because
+            # HTML::Template does not support global loops - only global_vars
+            if ($tmpl->query(name => [$child_loop, 'contrib_loop'])) {
+                $child_params{contrib_loop} = $self->_build_contrib_loop(@_) unless
+                  exists($child_params{contrib_loop});
+                $loop_entry->{contrib_loop} = $child_params{contrib_loop};
+            }
+            
+            push @{$child_params{$child_loop}}, $loop_entry;
         }
 	
-        # if the element is used in the template outside of a loop,
-        # and hasn't been set (first child element takes precedence),
-        # do it.
+        # if the element is used in the template outside of a loop, and 
+        # hasn't been set (first child element takes precedence), set it.
         if (exists($template_vars{$name}) && !exists($child_params{$name})) {
             # get html for element, unless it's already built
             $html ||= $child->publish(publisher => $publisher, 
@@ -880,32 +856,88 @@ sub fill_template {
             $child_params{$name} = $html;
         }
     }
-
+    
     $tmpl->param(%params, %child_params);
 }
 
-# _inner_loop_to_tmpl: helper function for fill_template - returns simplified template 
+
+# _fill_inner_loop: helper function called by fill_template which returns a hashref 
+# of the keys & vals necessary inside an iteration of 'element_loop' or "$child_loop"
+sub _fill_inner_loop {
+
+    my ($self, %args) = @_;
+
+    my $tmpl  = $args{tmpl};
+    my $child = $args{child};
+    my $html  = $args{html};
+    my $count = $args{count};
+    my $loopname = $args{loopname};
+    my $publisher = $args{publisher};
+    my $fill_template_args = $args{fill_template_args};
+
+    my $name = $child->name;
+    my %loop_filled = ($name . '_count' => $count,
+                       "is_$name"       => 1);
+    
+    # see if inner loop contains a tag for the element itself (ie without '_loop')
+    if ($tmpl->query(name => [$loopname, $name])) {
+        
+        # it DOES: try publishing the element, and using the resulting html as its value
+        eval { $$html ||= $child->publish(publisher          => $publisher, 
+                                          fill_template_args => $fill_template_args) };
+        if (my $err = $@) {
+            if ($err->isa('Krang::ElementClass::TemplateNotFound')) {
+                # no template could be found; we'll use flattened-template recursion below
+            } else {
+                # there was an unknown error
+                die ($err);
+            }
+        } else {
+            # success
+            $loop_filled{$name} = $$html;
+        }
+    }
+    unless ($loop_filled{$name}) {
+        
+        # it DOESN'T (or the element had no template): recurse to build the inner loop's vars and propagate them up
+        if (my $inner_tmpl = $self->_inner_loop_to_tmpl(tmpl => $tmpl, loop => $loopname, publisher => $publisher)) {
+            $child->fill_template(publisher          => $publisher, 
+                                  fill_template_args => $fill_template_args,
+                                  tmpl               => $inner_tmpl,
+                                  element            => $child);
+            foreach (grep {$inner_tmpl->param($_)} $inner_tmpl->param) {
+                $loop_filled{$_} = $inner_tmpl->param($_);
+            }
+        }
+    }
+    return \%loop_filled;
+}
+
+
+
+# _inner_loop_to_tmpl: helper function for fill_inner_loop - returns simplified template 
 # containing <tmpl_var> and <tmpl_loop> tags for all the variables that appear within
 # a particular loop (the resulting template isn't used for actual output; it's just 
 # passed to the fill_template() call of inner elements so they fill appropriate vars)
 sub _inner_loop_to_tmpl {
   my ($self, %args) = @_;
-  my $publisher     = $args{publisher};
 
-  my $tmpl          = $args{tmpl};
-  my $loopname      = $args{loop};
-  my $cache_key     = $tmpl . $loopname;
-  
-  # the publisher object stores a cache of our inner templates, so first look there...
-  my $inner_tmpl  = $publisher->inner_tmpl_cache->{$cache_key};
-  unless ($inner_tmpl) {
-    if (my $tags = $self->_inner_loop_to_tmpl_tags($tmpl, $loopname)) {
-      # couldn't find template in cache, so build a new one....
-      $inner_tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
+  my $publisher = $args{publisher};
+  my $tmpl      = $args{tmpl};
+  my $loopname  = $args{loop};
+
+  # see if this inner template has already been cached
+  my $cache_key = $tmpl . $loopname;
+  if (my $inner_tmpl = $publisher->inner_tmpl_cache->{$cache_key}) {
+      # it's in cache: clear its values and return it
+      $inner_tmpl->clear_params();
+      return $inner_tmpl;
+  } elsif (my $tags = $self->_inner_loop_to_tmpl_tags($tmpl, $loopname)) {
+      # it's not in cache: build a new one and return it
+      my $inner_tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
       $publisher->inner_tmpl_cache->{$cache_key} = $inner_tmpl;
-    }
-  }
-  return $inner_tmpl;
+      return $inner_tmpl;
+  } 
 }
 
 # _inner_loop_to_tmpl_tags: helper function called by inner_loop_to_tmpl to
@@ -972,7 +1004,7 @@ sub publish {
             # no template found - if the element has children, this is an error.
             # otherwise, return the raw data stored in the element.
             if (scalar($args{element}->children())) {
-                die $err;
+                $err->rethrow;
             } else {
                 return $args{element}->template_data(publisher => $publisher);
             }
