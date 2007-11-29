@@ -259,7 +259,11 @@ test_preview_story($story);
 
 test_cgistory_publish();
 
-test_publish_using_flattened_template();
+test_publish_flattened_template();
+
+test_fill_flattened_page_loop($story);
+
+test_fill_flattened_missing_template($story);
 
 test_media_deploy();
 
@@ -1310,7 +1314,7 @@ sub test_cgistory_publish {
 }
 
 
-sub test_publish_using_flattened_template {
+sub test_publish_flattened_template {
 
     # create new story
     my $story = $creator->create_story( class => 'cgi_story', category => [$category] );
@@ -1321,7 +1325,7 @@ sub test_publish_using_flattened_template {
     my @tmpl_content;
     my @output_text;
     for (0..1) {
-        # create template 
+        # create template (using <element_loop> built by Test::Content)
         my ($tmpl, $content) = $creator->create_template(element     => $story->element, 
                                                          flattened   => $_,
                                                          predictable => 1);
@@ -1342,20 +1346,62 @@ sub test_publish_using_flattened_template {
     $creator->delete_item(item => $story);
 
     # make sure the templates were both non-empty
-    ok ($tmpl_content[0] && $tmpl_content[1]);
+    ok ($tmpl_content[0] && $tmpl_content[1], "Flattened & unflattened tmpls non-empty");
 
     # make sure the templates were different from each other
-    ok ($tmpl_content[0] ne $tmpl_content[1]);
+    ok ($tmpl_content[0] ne $tmpl_content[1], "Flattened & unflattened tmpls different");
 
     # make sure both templates managed to publish all three paragraphs
     for my $flattened (0..1) {
         for (0..2) {
             my $paragraph = $paragraphs[$_]->data;
-            ok ($output_text[$flattened] =~ /$paragraph/);
+            ok ($output_text[$flattened] =~ /$paragraph/, "Flattened/unflattened output correct");
         }
     }
 }    
 
+sub test_fill_flattened_page_loop {
+
+    # set up publisher
+    my $story = shift;
+    $publisher->{story} = $story;
+
+    # fill story's 'page_loop' (as opposed to publish test above, which fills 'element_loop')
+    my $tags = '<TMPL_LOOP PAGE_LOOP><TMPL_LOOP PARAGRAPH_LOOP><TMPL_VAR PARAGRAPH></TMPL_LOOP></TMPL_LOOP>';
+    my $tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
+    $story->element->fill_template(element => $story->element, tmpl => $tmpl, publisher => $publisher);
+
+    # check results
+    ok(ref $tmpl->param('page_loop'), "Flattened page_loop built");
+    ok(ref $tmpl->param('page_loop')->[0], "Flattened page 1 built");
+    ok(ref $tmpl->param('page_loop')->[0]->{'paragraph_loop'}, "Flattened paragraph loop built");
+    ok($tmpl->param('page_loop')->[0]->{'paragraph_loop'}->[0], "Flattened paragraph 1 built");
+    ok($tmpl->param('page_loop')->[0]->{'paragraph_loop'}->[1], "Flattened paragraph 2 built");
+    ok($tmpl->param('page_loop')->[0]->{'paragraph_loop'}->[2], "Flattened paragraph 3 built");
+}
+
+sub test_fill_flattened_missing_template {
+
+    # set up publisher
+    my $story = shift;
+    $publisher->{story} = $story;
+
+    # fill page-loop twice...
+    my @params; 
+    my $tags = '<TMPL_LOOP PAGE_LOOP><TMPL_VAR PAGE><TMPL_LOOP PARAGRAPH_LOOP></TMPL_LOOP></TMPL_LOOP>';
+    my $tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
+    
+    # ...once when page.tmpl is missing
+    $publisher->undeploy_template(template => $template_deployed{page});
+    $story->element->fill_template(element => $story->element, tmpl => $tmpl, publisher => $publisher);
+    ok(ref $tmpl->param('PAGE_LOOP')->[0]->{'paragraph_loop'}, "Paragraph loop built due to missing page.tmpl");
+
+    # ...once when it's not
+    $publisher->deploy_template(template => $template_deployed{page});
+    $story->element->fill_template(element => $story->element, tmpl => $tmpl, publisher => $publisher);
+    ok(!$tmpl->param('PAGE_LOOP')->[0]->{'paragraph_loop'}, "Paragraph loop missing - page.tmpl takes precedence");
+}
+    
 
 sub test_preview_story {
     my $story = shift;
