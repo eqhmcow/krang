@@ -207,6 +207,8 @@ BEGIN {
 
             my $q = $self->query;
 
+            return if $q->param('is_non_utf8_redirect');
+
             # Decode the data
             # If the 'base64' flag is set data could be Base64 encoded (we 
             # Base64 encode in the client-side JavaScript since JavaScript 
@@ -329,6 +331,10 @@ BEGIN {
                 $uri .= '?';
             }
             $uri .= 'ajax=' . $ajax;
+
+            unless (pkg('Charset')->is_utf8()) {
+                $uri .= '&is_non_utf8_redirect=1';
+            }
         }
 
         # and allow non-AJAXy redirects
