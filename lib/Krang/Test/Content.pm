@@ -703,6 +703,8 @@ sub create_contrib {
 =item C<< $template = $creator->create_template() >>
 
 Creates a valid HTML template and Krang::Template object based on a Krang::Element object.
+When called in scalar mode, returns the template. When called in array mode, returns 
+the template and the text content.
 
 The following arguments are taken:
 
@@ -737,6 +739,11 @@ be created in a flattened form (i.e. rather than each container appearing in the
 form of <tmpl_var container>, it will appear as: 
 <tmpl_if container><tmp_loop element_loop><tmpl_var child_1>etc.</tmpl_loop></tmpl_if>
 
+=item * C<predictable>
+
+This is an optional argument which defaults to 0: if set to 1, no random content 
+will be included.
+
 =back
 
 =cut
@@ -768,8 +775,8 @@ sub create_template {
 
     unless ($content) {
 
-        my $bgcolor = "#" . 
-          join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
+        my $bgcolor = $args{predictable} ? 'ABCDEF' :
+          "#" . join('', map { (3 .. 9, 'A' .. 'F')[int(rand(13))] } (1 .. 6));
 
         # draw a labeled box for the element
         my $display_name = $element->display_name;
@@ -833,7 +840,7 @@ END
 
     $tmpl->checkin;
 
-    return $tmpl;
+    return wantarray ? ($tmpl, $content) : $tmpl;
 
 }
 
