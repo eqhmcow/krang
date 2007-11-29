@@ -156,7 +156,7 @@ Krang.onload( function() {
 
       <tmpl_if desk_loop><span class="glue">
         <input value="<tmpl_lang Move To>" onclick="move('<tmpl_var escape=html story_id>')" type="button" class="button">
-        <select name="move_<tmpl_var escape=html story_id>" style="width:10em"><tmpl_loop desk_loop>
+        <select name="move_<tmpl_var escape=html story_id>"><tmpl_loop desk_loop>
           <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> <tmpl_lang Desk></option>
         </tmpl_loop></select>
       </span></tmpl_if>
