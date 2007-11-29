@@ -1,0 +1,120 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+    Krang.Nav.edit_mode();
+    Krang.Help.set( 'category' );
+} );
+
+cancel_category_change = function() {
+    Krang.Form.submit('edit', { rm: 'find' });
+}
+
+save_and_leave = function() {
+    Krang.ElementEditor.run_save_hooks();
+    Krang.Form.submit('edit', { rm: 'save_and_<tmpl_if bulk_edit>leave_bulk_edit<tmpl_else>go_up</tmpl_if>' });
+}
+
+db_save = function() {
+    Krang.ElementEditor.run_save_hooks();
+    Krang.Form.submit('edit', { rm: 'db_save' });
+}
+
+db_save_and_stay = function() {
+    Krang.ElementEditor.run_save_hooks();
+    Krang.Form.submit('edit', { rm: 'db_save_and_stay' }, { to_top: false });
+}
+
+<tmpl_if is_root>
+
+  remove_category = function() {
+    if ( confirm(Krang.L10N.loc('Are you SURE you want to delete this Category?') )) 
+      Krang.Form.submit('edit', { rm: 'delete' });
+  }
+
+<tmpl_else><tmpl_unless bulk_edit><tmpl_if allow_delete>
+
+  remove_element = function() {
+    if (confirm( Krang.L10N.loc('Are you SURE you want to delete this Element?') )) {
+        Krang.ElementEditor.run_save_hooks();
+        Krang.Form.submit('edit', { rm: 'delete_element' }, { to_top: false });
+    }
+  }
+
+</tmpl_if></tmpl_unless></tmpl_if>
+</script>
+
+<h2>
+<tmpl_lang Edit Category>
+</h2>
+
+<form name="edit" action="category.pl" method="post" enctype="multipart/form-data">
+
+<input name="rm" value="edit" type="hidden">
+
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<thead>
+<tr>
+<th class="f l" colspan="2"><tmpl_lang Properties></th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td class="f"><tmpl_lang Category ID></td>
+<td class="l"><tmpl_var escape=html category_id></td>
+</tr>
+
+<tr>
+<td class="f"><tmpl_lang URL></t>
+<td class="l"><tmpl_var url><!--:markup--></td>
+</tr>
+
+</tbody>
+
+</table></div>
+
+<!--ElementEditor/edit.tmpl:-->
+<tmpl_include /ElementEditor/edit.tmpl>
+<!--:ElementEditor/edit.tmpl-->
+
+<div class="panel capped">
+<input class="west" type="button" onclick="cancel_category_change()" value="<tmpl_lang Cancel Category Edit>"/>
+
+<tmpl_if bulk_edit> 
+  <input value="<tmpl_lang Done Bulk Editing> <tmpl_var name_of_this_element>" onclick="save_and_leave()" type="button" class="west">
+
+<tmpl_else>
+
+  <tmpl_if is_root>
+    <input value="<tmpl_lang Delete Category>" onclick="remove_category()" type="button">
+  <tmpl_else>
+    <input value="<tmpl_lang Done Editing> <tmpl_var name_of_this_element>" onclick="save_and_leave()" type="button" class="west">
+    <tmpl_unless bulk_edit><tmpl_if allow_delete>
+      <input value="<tmpl_lang Delete> <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
+    </tmpl_if></tmpl_unless>
+  </tmpl_if>
+
+  <input value="<tmpl_lang Save Category &amp; Stay>" onclick="db_save_and_stay()" type="button">
+  <input value="<tmpl_lang Save Category>" onclick="db_save()" type="button">
+
+</tmpl_if>
+
+</div>
+
+<tmpl_loop categorylink_chooser_loop><tmpl_var categorylink_chooser></tmpl_loop>
+
+</form>
+
+<tmpl_include footer.tmpl>
+

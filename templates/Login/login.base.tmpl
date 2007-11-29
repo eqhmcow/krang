@@ -1,0 +1,39 @@
+<tmpl_include login_header.tmpl>
+
+<script type="text/javascript">
+focusFormField( 'form-login', 'username' );
+</script>
+
+<h2>
+<tmpl_lang Welcome!>
+</h2>
+
+<form id="form-login" name="form-login" action="login.pl" method="post">
+
+<input name="rm" value="login" type="hidden">
+<input name="target" value="<tmpl_var escape=html target>" type="hidden">
+
+<p>
+<label for="login-username"><tmpl_lang User Name></label>
+<input id="login-username" name="username" value="<tmpl_var escape=html username>">
+</p>
+
+<p>
+<label for="login-password"><tmpl_lang Password></label>
+<input id="login-password" name="password" type="password">
+</p>
+
+<tmpl_if header_alert_loop><ul class="err"><tmpl_loop header_alert_loop>
+  <li>
+  <tmpl_var escape=html alert>
+  </li>
+</tmpl_loop></ul></tmpl_if>
+
+<p class="btn">
+<input value="<tmpl_lang Log In>" type="submit">
+<a href="login.pl?rm=forgot_pw"><tmpl_lang Forgot your Login?></a>
+</p>
+
+</form>
+
+<tmpl_include login_footer.tmpl>

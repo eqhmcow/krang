@@ -1,0 +1,234 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'media_find' );
+} );
+
+add_media = function() {
+    Krang.Form.submit('search_form', { rm: 'add' });
+}
+
+do_search = function() {
+    Krang.Form.submit('search_form');
+}
+
+<tmpl_if do_advanced_search>
+  simple_search = function()
+  {
+    Krang.Form.submit( 'search_form', { rm: 'find' }, { to_top: false } );
+  }
+
+  clear_advanced_search = function()
+  {
+    Krang.Form.submit( 'clear_advanced_search_form', {}, { to_top: false } );
+  }
+<tmpl_else>
+  advanced_search = function()
+  {
+    Krang.Form.submit( 'search_form', { rm: 'advanced_find' }, { to_top: false } );
+  }
+</tmpl_if>
+
+<tmpl_if row_count>
+  edit_media = function( id )
+  {
+    Krang.Form.submit( 'find_media', { rm: 'checkout_and_edit', media_id: id } );
+  }
+
+  view_media = function( id )
+  {
+    Krang.Form.submit( 'find_media', { rm: 'view', media_id: id } );
+  }
+
+  delete_selected = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( Krang.L10N.loc('Nothing selected to delete!') );
+    else if ( confirm( Krang.L10N.loc('Are you SURE you want to delete the checked Media?') ) )
+      Krang.Form.submit( 'krang_pager_form', { rm: 'delete_selected' }, { to_top: false } );
+  }
+
+  checkout_selected = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( Krang.L10N.loc('Nothing selected to check out!') );
+    else
+      Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_selected' } );
+  }
+
+  publish_selected = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( Krang.L10N.loc('Nothing selected to publish!') );
+    else if ( confirm( Krang.L10N.loc('Are you SURE you wish to publish all these items?') ) )
+    {
+      document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
+      Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
+    }
+  }
+</tmpl_if>
+</script>
+
+<h2>
+<tmpl_lang Find Media>
+</h2>
+
+<form name="search_form" action="media.pl" method="post">
+
+<input name="rm" value="<tmpl_if do_advanced_search>advanced_</tmpl_if>find" type="hidden">
+<input name="krang_pager_curr_page_num" value="" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+<tmpl_if do_advanced_search>
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+</tmpl_if>
+
+<div class="tabset finder">
+
+<p class="tab-option"><label>
+<input name="show_thumbnails" value="1" type="checkbox" onclick="do_search()"<tmpl_if show_thumbnails> checked</tmpl_if>>
+<tmpl_lang Show Thumbnails>
+</label></p>
+
+<ul class="tabs"><li>
+<tmpl_if do_advanced_search><a href="javascript:simple_search()"><tmpl_else><b></tmpl_if><span>
+<tmpl_lang Simple Search>
+</span><tmpl_if do_advanced_search></a><tmpl_else></b></tmpl_if>
+</li><li>
+<tmpl_if do_advanced_search><b><tmpl_else><a href="javascript:advanced_search()"></tmpl_if><span>
+<tmpl_lang Advanced Search>
+</span><tmpl_if do_advanced_search></b><tmpl_else></a></tmpl_if>
+</li></ul>
+
+<div class="tabbed">
+
+<tmpl_unless do_advanced_search>
+
+  <div class="faux-p">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
+  <input value="<tmpl_lang Search>" type="submit" class="button">
+  </div>
+
+<tmpl_else>
+
+  <table class="request" summary="">
+
+  <colgroup>
+  <col class="c-mini">
+  <col>
+  <col class="c-mini">
+  <col>
+  </colgroup>
+
+  <tbody class="demi">
+
+  <tr>
+  <th><tmpl_lang File Name></th>
+  <td><input name="search_filename" value="<tmpl_var escape=html search_filename>"></td>
+  <th><tmpl_lang Media ID></th>
+  <td><input name="search_media_id" value="<tmpl_var escape=html search_media_id>"></td>
+  </tr>
+
+  <tr>
+  <th><tmpl_lang Title></th>
+  <td><input name="search_title" value="<tmpl_var escape=html search_title>"></td>
+  <th><tmpl_lang Alt Text></th>
+  <td><input name="search_alt_tag" value="<tmpl_var escape=html search_alt_tag>"></td>
+  </tr>
+
+  </tbody>
+
+  <tbody>
+
+  <tr>
+  <th><tmpl_lang Creation Date></th>
+  <td colspan="3">
+  <tmpl_lang From>
+  <tmpl_var date_from_chooser>
+  <tmpl_lang To>
+  <tmpl_var date_to_chooser>
+  </td>
+  </tr>
+
+  <tr>
+  <th><tmpl_lang Site/Category></th>
+  <td colspan="3"><tmpl_var category_chooser></td>
+  </tr>
+
+  <tr>
+  <td colspan="4"><label>
+  <input name="search_no_attributes" value="1" type="checkbox"<tmpl_if search_no_attributes> checked</tmpl_if>>
+  <tmpl_lang Without Attributes>
+  </label></td>
+  </tr>
+
+  </tbody>
+
+  </table>
+
+  <div class="panel">
+  <input value="<tmpl_lang Clear>" onclick="clear_advanced_search()" type="button">
+  <input value="<tmpl_lang Search>" type="submit">
+  </div>
+
+</tmpl_unless>
+
+</div>
+
+</div>
+
+</form>
+
+<h3>
+<tmpl_lang Search Results>
+</h3>
+
+<div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
+  <input value="<tmpl_lang Add Media>" onclick="add_media()" type="button" class="west">
+  <tmpl_if row_count>
+    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button">
+    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  </tmpl_if>
+</form></div>
+
+<!--Krang::HTMLPager:-->
+<tmpl_var pager_html>
+<!--:Krang::HTMLPager-->
+
+<div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
+  <input value="<tmpl_lang Add Media>" onclick="add_media()" type="button" class="west">
+  <tmpl_if row_count>
+    <input value="<tmpl_lang Publish>" onclick="publish_selected()" type="button">
+    <input value="<tmpl_lang Check Out>" onclick="checkout_selected()" type="button">
+    <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  </tmpl_if>
+</form></div>
+
+<tmpl_if do_advanced_search>
+  <form name="clear_advanced_search_form" action="media.pl" method="post">
+  <input name="rm" value="advanced_find" type="hidden">
+  <input name="clear_search_form" value="1" type="hidden">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+  <input name="show_thumbnails" value="<tmpl_var escape=html show_thumbnails>" type="hidden">
+  </form>
+</tmpl_if>
+
+<tmpl_if row_count>
+  <form name="find_media" action="media.pl" method="post">
+  <input name="rm" value="view" type="hidden">
+  <input name="media_id" type="hidden">
+  <input name="return_script" value="media.pl" type="hidden">
+  <tmpl_var return_params>
+  </form>
+</tmpl_if>
+
+<!-- tooltips for media previews: -->
+<div id="tooltip"><img id="tooltip-img" src="/images/icon-loading-small.gif" /></div>
+<img id="tooltip-pointer" src="/images/tooltip_arrow.gif" />
+<!-- :tooltips for media previews -->
+
+<tmpl_include footer.tmpl>
+

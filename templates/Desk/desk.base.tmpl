@@ -1,0 +1,202 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'desk' );
+} );
+
+<tmpl_if krang_pager_rows>
+  log = function( id )
+  {
+    Krang.Form.submit( 'krang_pager_form', { rm: 'goto_log', id: id } );
+  }
+
+  view = function( id )
+  {
+    Krang.Form.submit( 'krang_pager_form', { rm: 'goto_view', id: id } );
+  }
+
+  edit = function( id )
+  {
+    Krang.Form.submit( 'krang_pager_form', { rm: 'goto_edit', id: id } );
+  }
+
+  publish_story = function( id )
+  {
+    Krang.Form.submit( 'publish_story_form', { story_id: id } );
+  }
+
+  move = function( id )
+  {
+    Krang.Form.submit( 'krang_pager_form', { rm: 'move', id: id }, { to_top: false } );
+  }
+
+  <tmpl_if may_publish>
+    publish_checked = function()
+    {
+      if ( !Krang.pager_row_checked() )
+        alert( Krang.L10N.loc('Nothing selected to publish!') );
+      else if ( confirm( Krang.L10N.loc('Are you SURE you wish to publish all these items?') ) )
+      {
+        document.forms[ 'krang_pager_form' ].action = 'publisher.pl';
+        Krang.Form.submit( 'krang_pager_form', { rm: 'publish_story_list' } );
+      }
+    }
+  </tmpl_if>
+
+  checkout_checked = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( Krang.L10N.loc('Nothing selected to check out!') );
+    else
+      Krang.Form.submit( 'krang_pager_form', { rm: 'checkout_checked' } );
+  }
+
+  move_checked = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( Krang.L10N.loc('Nothing selected to move!') );
+    else
+      Krang.Form.submit( 'krang_pager_form', { rm: 'move_checked' }, { to_top: false } );
+  }
+</tmpl_if>
+</script>
+
+<h2>
+<tmpl_lang Desk:>
+&ldquo;<tmpl_var escape=html desk_name>&rdquo;
+</h2>
+
+<tmpl_unless krang_pager_rows>
+
+  <p class="naught">
+  <tmpl_lang The> &ldquo;<tmpl_var escape=html desk_name>&rdquo; <tmpl_lang Desk is currently empty.>
+  </p>
+
+<tmpl_else>
+
+  <form name="krang_pager_form" action="desk.pl" method="post">
+
+  <input name="rm" type="hidden">
+  <input name="id" type="hidden">
+  <input name="desk_id" value="<tmpl_var escape=html desk_id>" type="hidden">
+  <tmpl_include HTMLPager/pager-internals.tmpl>
+
+  <div class="panel">
+  <div class="west">
+  <tmpl_lang Sorted by>
+  <tmpl_var sort_select>
+  </div>
+
+  <tmpl_if may_publish>
+    <input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button">
+  </tmpl_if>
+  <tmpl_if may_move>
+    <input value="<tmpl_lang Check Out>" onclick="checkout_checked()" type="button">
+    <input value="<tmpl_lang Move>" onclick="move_checked()" type="button">
+  </tmpl_if>
+  </div>
+
+  <tmpl_include HTMLPager/pager-pagination.tmpl>
+
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
+
+  <colgroup>
+  <col class="c-id">
+  <col>
+  <col class="c-link" style="width:auto">
+  <col class="tick">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="f">ID</th>
+  <th><tmpl_lang Title></th>
+  <th><tmpl_lang URL></th>
+  <th class="tick l"><tmpl_if may_move><tmpl_var colhead_checkbox_column></tmpl_if></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop krang_pager_rows>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td class="f"><tmpl_var escape=html story_id></td>
+
+    <td>
+    <b><tmpl_var escape=html title></b>
+
+    <br>
+
+    <tmpl_var escape=html story_type>
+
+    <br>
+
+    <tmpl_lang Version> <tmpl_var escape=html version>
+    </td>
+
+    <td>
+    <tmpl_var url><!--:markup-->
+
+    <br>
+
+    <tmpl_unless may_edit>
+
+      <input value="<tmpl_lang View Detail>" onclick="view('<tmpl_var escape=html story_id>')" type="button" class="button">
+      <input value="<tmpl_lang View Log>" onclick="log('<tmpl_var escape=html story_id>')" type="button" class="button">
+
+    <tmpl_else>
+
+      <tmpl_var command_column>
+
+      <tmpl_if may_publish>
+        <input value="<tmpl_lang Publish>" onclick="publish_story('<tmpl_var escape=html story_id>')" type="button" class="button">
+      </tmpl_if>
+
+      <tmpl_if desk_loop><span class="glue">
+        <input value="<tmpl_lang Move To>" onclick="move('<tmpl_var escape=html story_id>')" type="button" class="button">
+        <select name="move_<tmpl_var escape=html story_id>" style="width:10em"><tmpl_loop desk_loop>
+          <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> <tmpl_lang Desk></option>
+        </tmpl_loop></select>
+      </span></tmpl_if>
+
+    </tmpl_unless>
+    </td>
+
+    <td class="tick l"><tmpl_if may_edit>
+      <tmpl_var checkbox_column>
+    </tmpl_if></td>
+    </tr>
+
+  </tmpl_loop></tbody>
+
+  </table></div>
+
+  <tmpl_include HTMLPager/pager-pagination.tmpl>
+
+  <div class="panel capped">
+  <div class="west">
+  <tmpl_lang Sorted by>
+  <tmpl_var sort_select>
+  </div>
+
+  <tmpl_if may_publish>
+    <input value="<tmpl_lang Publish>" onclick="publish_checked()" type="button">
+  </tmpl_if>
+  <tmpl_if may_move>
+    <input value="<tmpl_lang Check Out>" onclick="checkout_checked()" type="button">
+    <input value="<tmpl_lang Move>" onclick="move_checked()" type="button">
+  </tmpl_if>
+  </div>
+
+  </form>
+
+  <form name="publish_story_form" action="publisher.pl">
+  <input name="rm" value="publish_story" type="hidden">
+  <input name="story_id" value="" type="hidden">
+  </form>
+</tmpl_unless>
+
+<tmpl_include footer.tmpl>
+

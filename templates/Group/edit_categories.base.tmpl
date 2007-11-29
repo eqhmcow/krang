@@ -1,0 +1,130 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'group' );
+} );
+
+delete_category = function( id )
+{
+  if ( confirm( Krang.L10N.loc('Are you SURE you want to remove this Category?') ) )
+    Krang.Form.submit('edit_categories_form', { rm: 'delete_category', delete_category_id: id }, { to_top: false });
+}
+
+add_category = function()
+{
+  Krang.Form.submit('edit_categories_form', { rm: 'add_category' }, { to_top: false });
+}
+
+do_return = function()
+{
+  Krang.Form.submit('edit_categories_form', { rm: 'edit_categories_return' });
+}
+</script>
+
+<h2>
+<tmpl_lang Edit Group Category Permissions>
+</h2>
+
+<form name="edit_categories_form" action="group.pl" method="post">
+
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+<input name="category_id" value="<tmpl_var escape=html category_id>" type="hidden">
+<input name="rm" value="save" type="hidden">
+<input name="delete_category_id" value="" type="hidden">
+<input name="group_id" value="<tmpl_var escape=html group_id>" type="hidden">
+<input name="name" value="<tmpl_var escape=html name>" type="hidden">
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
+
+<colgroup>
+<col class="c-user">
+<col>
+</colgroup>
+
+<thead>
+<tr>
+<th class="f l" colspan="2"><tmpl_lang Properties></th>
+<tr>
+<thead>
+
+<tbody>
+
+<tr>
+<td class="f"><tmpl_lang Name></td>
+<td class="l"><tmpl_if name>
+  <tmpl_var name>
+<tmpl_else>
+  <tmpl_lang [n/a]>
+</tmpl_if></td>
+</tr>
+
+<tr>
+<td class="f"><tmpl_lang Site></td>
+<td class="l"><tmpl_var site_url></td>
+</tr>
+
+</tbody>
+
+</table></div>
+
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result edit select_row" summary="">
+
+<colgroup>
+<col>
+<col class="series">
+<col class="series">
+<col class="series">
+<col class="series">
+</colgroup>
+
+<thead>
+<tr>
+<th class="f"><tmpl_lang Category></th>
+<th class="series"><tmpl_lang Edit></th>
+<th class="series"><tmpl_lang Read-Only></th>
+<th class="series"><tmpl_lang Hide></th>
+<th class="l"></th>
+</tr>
+</thead>
+
+<tbody><tmpl_loop categories>
+  <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+  <td class="f"><tmpl_var category_url></td>
+  <tmpl_loop permission_radio>
+    <td class="series"><tmpl_var radio_select></td>
+  </tmpl_loop>
+  <td class="l"><tmpl_unless is_root>
+    <input value="<tmpl_lang Delete>" onclick="delete_category('<tmpl_var escape=html category_id>')" type="button" class="button">
+  <tmpl_else>&nbsp;</tmpl_unless></td>
+  </tr>
+</tmpl_loop>
+
+<tr class="command-row">
+<td class="f l" colspan="5"><tmpl_var category_chooser_interface></td>
+<tr>
+
+</tbody>
+
+</table></div>
+
+<div class="panel lame capped">
+<input value="<tmpl_lang Back>" onclick="do_return()" type="button" class="west">
+</div>
+
+<tmpl_var category_chooser_logic>
+</form>
+
+<tmpl_include footer.tmpl>
+

@@ -1,0 +1,40 @@
+<tmpl_include login_header.tmpl>
+
+<script type="text/javascript">
+focusFormField( 'form-password', 'new_password' );
+</script>
+
+<h2>
+<tmpl_lang Reset Your Password>
+</h2>
+
+<form id="form-password" action="login.pl" method="post">
+
+<input name="rm" value="reset_pw" type="hidden">
+<input name="t" value="<tmpl_var escape=html t>" type="hidden">
+
+<p>
+<label for="password-new"><tmpl_lang New Password></label>
+<input id="password-new" name="new_password" type="password">
+</p>
+
+<p>
+<label for="password-retype"><tmpl_lang Repeat Password></label>
+<input id="password-retype" name="new_password_re" type="password">
+</p>
+
+<tmpl_if header_alert_loop><ul class="err"><tmpl_loop header_alert_loop>
+  <li>
+  <tmpl_var escape=html alert>
+  </li>
+</tmpl_loop></ul></tmpl_if>
+
+<p class="btn">
+<input value="<tmpl_lang Reset Password>" type="submit">
+<a href="login.pl?rm=show_form"><tmpl_lang Return to Log-In Screen></a>
+</p>
+
+</form>
+
+<tmpl_include login_footer.tmpl>
+

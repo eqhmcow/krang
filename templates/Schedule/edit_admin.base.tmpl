@@ -1,0 +1,99 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set();
+} );
+
+//(db2)no apparent call to these functions:
+//delete_selected = function()
+//{
+//  Krang.Form.submit('current_schedule_form', {}, { to_top: false });
+//}
+//
+//save_and_view = function()
+//{
+//  Krang.Form.submit('add_schedule_form', { rm: 'save_and_view' });
+//}
+</script>
+
+<h2>
+<tmpl_lang Edit Schedule>
+</h2>
+
+<form name="add_schedule_form" method="post" action="schedule.pl">
+
+<input name="rm" value="add_admin" type="hidden">
+<input name="advanced_schedule" value="1" type="hidden">
+
+<h3>
+<tmpl_lang Add Action>
+</h3>
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th><tmpl_lang Action></th>
+<td><tmpl_var action_selector></td>
+</tr>
+
+<tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if invalid_datetime> class="err"</tmpl_if></tmpl_if>>
+<th>
+<input name="repeat" value="never" type="radio"<tmpl_if repeat_never> checked</tmpl_if>>
+<tmpl_lang Trigger Once>
+</th>
+<td><tmpl_var full_date_selector></td>
+</tr>
+
+<tr<tmpl_if no_date_type> class="err"</tmpl_if>>
+<th>
+<input name="repeat" value="hourly" type="radio"<tmpl_if repeat_hourly> checked</tmpl_if>>
+<tmpl_lang Trigger Hourly>
+</th>
+<td>
+<tmpl_var hourly_minute_selector>
+<tmpl_lang minutes after the hour>
+</td>
+</tr>
+
+<tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_hour> class="err"</tmpl_if></tmpl_if>>
+<th>
+<input name="repeat" value="daily" type="radio"<tmpl_if repeat_daily> checked</tmpl_if>>
+<tmpl_lang Trigger Daily>
+</th>
+<td>
+<tmpl_var daily_time_selector>
+</td>
+</tr>
+
+<tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_weekly_hour> class="err"</tmpl_if></tmpl_if>>
+<th>
+<input name="repeat" value="weekly" type="radio"<tmpl_if repeat_weekly> checked</tmpl_if>>
+<tmpl_lang Trigger Weekly>
+</th>
+<td>
+<tmpl_var weekly_day_selector>
+&ndash;
+<tmpl_var weekly_time_selector>
+</td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel capped">
+<input value="<tmpl_lang Schedule Action>" type="submit">
+</div>
+
+</form>
+
+<tmpl_include footer.tmpl>
+

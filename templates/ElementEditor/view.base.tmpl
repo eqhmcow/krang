@@ -1,0 +1,55 @@
+<script type="text/javascript">
+view_path = function( p )
+{
+  Krang.Form.submit( 'view', { path : p } );
+}
+</script>
+
+<input name="path" value="<tmpl_var escape=html path>" type="hidden">
+
+<tmpl_if crumbs><div class="crumbs"><tmpl_loop crumbs>
+  <tmpl_unless __last__><a href="javascript:view_path('<tmpl_var escape=html path>')"></tmpl_unless><tmpl_var escape=html name><tmpl_unless __last__></a> &raquo;</tmpl_unless>
+</tmpl_loop></div></tmpl_if>
+
+<tmpl_unless child_loop>
+
+  <p class="naught">
+  <tmpl_lang No sub-elements defined.>
+  </p>
+
+<tmpl_else>
+
+  <div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="props" summary="">
+
+
+  <colgroup>
+  <col class="c-label">
+  <col>
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="f"><tmpl_lang Element></th>
+  <th class="l"><tmpl_lang Data></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop child_loop>
+    <tr <tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td class="f"><b><tmpl_var escape=html name></b></th>
+    <td class="l">
+    <tmpl_if is_container>
+      <input value="<tmpl_lang View Detail>" onclick="view_path('<tmpl_var escape=html path>')" type="button" class="button">
+    </tmpl_if>
+    <tmpl_var data><!--:markup, maybe; CHILDREN MUST HANDLE ESCAPE AS NEEDED(db2)-->
+    </td>
+    </tr>
+  </tmpl_loop></tbody>
+
+  </table></div>
+
+</tmpl_unless>
+

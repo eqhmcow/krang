@@ -1,0 +1,297 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'media_<tmpl_if add_mode>new<tmpl_else>edit</tmpl_if>' );
+} );
+
+publish_media_preview = function()
+{
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+  Krang.Form.submit('edit_media_form', { rm: 'save_and_preview' });
+}
+
+do_checkin = function()
+{
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+  Krang.Form.submit( 'edit_media_form', { rm: 'checkin_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
+}
+
+do_save = function()
+{
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+  Krang.Form.submit( 'edit_media_form', { rm: 'save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' });
+}
+
+do_save_stay = function()
+{
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+  Krang.Form.submit( 'edit_media_form', { rm: 'save_stay_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>' }, { to_top: false });
+}
+
+edit_contribs = function()
+{
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+  Krang.Form.submit('edit_media_form', { rm: 'save_and_associate_media' });
+}
+
+save_and_edit_schedule = function()
+{
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+  Krang.Form.submit('edit_media_form', { rm: 'save_and_edit_schedule' });
+}
+
+save_and_view_log = function()
+{
+  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+  Krang.Form.submit('edit_media_form', { rm: 'save_and_view_log' });
+}
+
+<tmpl_if may_publish>
+  publish_media = function()
+  {
+    <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
+    Krang.Form.submit('edit_media_form', { rm: 'save_and_publish' });
+  }
+</tmpl_if>
+
+<tmpl_unless add_mode>
+  do_delete = function()
+  {
+    if ( confirm( Krang.L10N.loc('Are you SURE you want to delete this Media?') ) )
+      Krang.Form.submit( 'delete_media_form'<tmpl_if add_mode>, { rm: 'cancel_add' }</tmpl_if> );
+  }
+
+  revert_version = function()
+  {
+    if ( confirm( Krang.L10N.loc('Are you SURE you want to discard your work and revert to this old version?') ) )
+      Krang.Form.submit('edit_media_form', { rm: 'revert_version' });
+  }
+
+  view_version = function()
+  {
+    Krang.Form.submit('edit_media_form', { rm: 'view_version' });
+  }
+<tmpl_else>
+  do_cancel = function()
+  {
+    Krang.Form.submit( 'edit_media_form', { rm: 'find' });
+  }
+</tmpl_unless>
+
+// Register CodePress's onload event:
+Krang.onload( function() { 
+  CodePress.run();
+} );
+
+</script>
+
+<form name="edit_media_form" method="post" enctype="multipart/form-data" action="media.pl">
+
+<input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
+<input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+<tmpl_unless add_mode>
+  <input name="return_script" value="media.pl" type="hidden">
+  <tmpl_var return_params>
+</tmpl_unless>
+
+<tmpl_unless add_mode><p class="cram east">
+  <input value="<tmpl_lang View Log>" onclick="save_and_view_log()" type="button" class="button">
+  <input value="<tmpl_lang View Schedule>" onclick="save_and_edit_schedule()" type="button" class="button">
+</p></tmpl_unless>
+
+<h2>
+<tmpl_if add_mode>
+  <tmpl_lang New Media>
+<tmpl_else>
+  <tmpl_lang Edit Media>
+</tmpl_if>
+</h2>
+
+<tmpl_unless add_mode>
+  <tmpl_if thumbnail_path><div class="east">
+    <tmpl_if media_id><a title="<tmpl_lang Preview> <tmpl_var escape=html title>" href="javascript:Krang.preview('media',null)"></tmpl_if><img alt="" src="<tmpl_var escape=html thumbnail_path>"><tmpl_if media_id></a></tmpl_if>
+  </div></tmpl_if>
+
+  <table class="request" summary="">
+
+  <colgroup>
+  <col class="c-label">
+  <col>
+  </colgroup>
+
+  <tbody>
+
+  <tr>
+  <th><tmpl_lang Media ID></th>
+  <td><tmpl_var escape=html media_id></td>
+  </tr>
+
+  <tr>
+  <th><tmpl_lang Current Version></th>
+  <td><tmpl_var escape=html version></td>
+  </tr>
+
+  <tr>
+  <th><tmpl_lang Published Version></th>
+  <td><tmpl_unless published_version><tmpl_lang [n/a]><tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+  </tr>
+
+  <tr>
+  <th><tmpl_lang URL></th>
+  <td><tmpl_var url></td>
+  </tr>
+
+  <tr>
+  <th><tmpl_lang Creation Date></th>
+  <td colspan="2"><tmpl_var escape=html creation_date></td>
+  </tr>
+
+  </tbody>
+
+  </table>
+</tmpl_unless>
+
+<table class="request" summary=""><!--:FIX(db2)-->
+
+<colgroup>
+<col class="c-label">
+<col>
+<col>
+</colgroup>
+
+<tbody class="demi">
+
+<tr<tmpl_if error_media_type_id> class="err"</tmpl_if>>
+<th>*<tmpl_lang Type></th>
+<td colspan="2">
+<tmpl_var type_chooser>
+</td>
+</tr>
+
+<tr<tmpl_if error_invalid_title> class="err"</tmpl_if>>
+<th>*<tmpl_lang Title></th>
+<td colspan="2">
+<input name="title" value="<tmpl_var escape=html title>">
+</td>
+</tr>
+
+<tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_category_id> class="err"</tmpl_if></tmpl_if>>
+<th>*<tmpl_lang Site/Category></th>
+<td colspan="2">
+<tmpl_var category_chooser>
+</td>
+</tr>
+
+<tr<tmpl_if duplicate_url> class="err"<tmpl_else><tmpl_if error_media_file> class="err"</tmpl_if></tmpl_if>>
+<th>*<tmpl_lang Upload File></th>
+<td colspan="2">
+<tmpl_if filename>
+  <tmpl_lang Current File>
+  <tmpl_if media_id><a href="javascript:Krang.preview('media',null)"></tmpl_if><tmpl_var escape=html filename><tmpl_if media_id></a></tmpl_if>
+  <tmpl_if file_size>(<tmpl_var escape=html file_size>)</tmpl_if>
+  <i>&mdash; <tmpl_lang or> &mdash;</i>
+  <br>
+</tmpl_if>
+<input name="media_file" type="file">
+</td>
+</tr>
+
+<tr>
+<th><tmpl_lang Default Caption></th>
+<td colspan="2"><input name="caption" value="<tmpl_var escape=html caption>"></td>
+</tr>
+
+<tr>
+<th><tmpl_lang Default Copyright></th>
+<td colspan="2"><input name="copyright" value="<tmpl_var escape=html copyright>"></td>
+</tr>
+
+<tr>
+<th><tmpl_lang Alt Text></th>
+<td colspan="2"><input name="alt_tag" value="<tmpl_var escape=html alt_tag>"></td>
+</tr>
+
+<tr>
+<th><tmpl_lang Notes></th>
+<td colspan="2"><textarea name="notes" rows="4" cols="40"><tmpl_var escape=html notes></textarea></td>
+</tr>
+
+</tbody>
+<tbody>
+
+<tmpl_unless add_mode>
+<tr>
+<th><tmpl_lang Version></td>
+<td colspan="2">
+  <tmpl_var media_version_chooser>
+  <input value="<tmpl_lang Revert>" onclick="revert_version()" type="button" class="button">
+  <input value="<tmpl_lang View>" onclick="view_version()" type="button" class="button">
+</td>
+</tr>
+</tmpl_unless>
+
+<tr>
+<th><tmpl_lang Contributors></td>
+<td colspan="2">
+<tmpl_if contribs>
+  <tmpl_loop contribs>
+    <tmpl_var escape=html first> <tmpl_var escape=html last> (<tmpl_var escape=html type>)
+    <tmpl_unless __last__><br></tmpl_unless>
+  </tmpl_loop>
+  </td>
+  </tr>
+
+  <tr>
+  <td></td>
+  <td>
+  <input value="<tmpl_lang Edit>" onclick="edit_contribs()" type="button" class="button">
+<tmpl_else>
+  <input value="<tmpl_lang Add>" onclick="edit_contribs()" type="button" class="button">
+</tmpl_if>
+</td>
+</tr>
+
+<tmpl_if is_text>
+<tr>
+<td colspan="3">
+<h3>
+<tmpl_lang Content>
+</h3>
+<textarea style="width: 100%" name="text_content" id="mediaEditor" rows="30" cols="60"
+  class="codepress <tmpl_var text_type>"><tmpl_var escape=html text_content></textarea>
+</td>
+</tr>
+</tmpl_if>
+
+</tbody>
+
+</table>
+
+<div class="panel capped<tmpl_if add_mode> clearfix</tmpl_if>">
+<tmpl_if add_mode>
+  <input value="<tmpl_lang Cancel>" onclick="do_cancel()" type="button" class="west">
+</tmpl_if>
+<input value="<tmpl_lang Save &amp; Stay>" onclick="do_save_stay()" type="button">
+<input value="<tmpl_lang Save>" onclick="do_save()" type="button">
+<tmpl_if may_publish>
+  <input value="<tmpl_lang Publish>" onclick="publish_media()" type="button">
+</tmpl_if>
+<input value="<tmpl_lang Publish to Preview>" onclick="publish_media_preview()" type="button">
+<tmpl_unless add_mode>
+  <input value="<tmpl_lang Delete>" onclick="do_delete()" type="button">
+</tmpl_unless>
+</div>
+
+</form>
+
+<tmpl_unless add_mode>
+  <form name="delete_media_form" method="post" action="media.pl">
+  <input name="rm" value="delete" type="hidden">
+  <input name="media_id" value="<tmpl_var escape=html media_id>" type="hidden">
+  </form>
+</tmpl_unless>
+
+<tmpl_include footer.tmpl>
+

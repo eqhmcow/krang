@@ -1,0 +1,179 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+<tmpl_if was_edit>
+  Krang.Nav.edit_mode();
+</tmpl_if>
+  Krang.Help.set( 'story_find' );
+} );
+
+view_log = function()
+{
+  Krang.Form.submit( 'view_log_form' );
+}
+
+<tmpl_unless old_version><tmpl_if can_edit>
+  edit_story = function()
+  {
+    Krang.Form.submit( 'view', { rm: 'checkout_and_edit' } );
+  }
+</tmpl_if></tmpl_unless>
+
+<tmpl_unless parent_path>
+ do_return = function()
+ {
+    Krang.Form.submit( 'return_form' );
+ }
+</tmpl_unless>
+</script>
+
+<form name="view" method="post" action="story.pl">
+
+<input name="rm" value="view" type="hidden">
+<input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="version" value="<tmpl_var escape=html version>" type="hidden">
+<input name="return_script" value="<tmpl_var escape=html return_script>" type="hidden">
+<tmpl_loop return_params_loop>
+  <input name="return_params" value="<tmpl_var escape=html name>" type="hidden">
+  <input name="return_params" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
+
+<p class="cram east">
+<input value="View Log" onclick="view_log()" type="button" class="button">
+</p>
+
+<h2>
+<tmpl_lang View Story>
+</h2>
+
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<thead>
+<tr>
+<th class="f"><tmpl_lang Properties></th>
+<th class="l"></th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td class="f"><tmpl_lang URL></td>
+<td class="l"><tmpl_var url><!--:markup--></td>
+</tr>
+
+<tr<tmpl_unless is_root> class="even"</tmpl_unless>>
+<td class="f"><tmpl_lang Type></td>
+<td class="l"><tmpl_var escape=html type></td>
+</tr>
+
+<tr>
+<td class="f"><tmpl_lang Story ID></td>
+<td class="l"><tmpl_var escape=html story_id></td>
+</tr>
+
+<tmpl_if is_root>
+  <tr class="even">
+  <td class="f"><tmpl_lang Title></td>
+  <td class="l"><tmpl_var escape=html title></td>
+  </tr>
+
+  <tr class="even">
+  <td class="f"><tmpl_lang Slug></td>
+  <td class="l"><tmpl_var escape=html slug></td>
+  </tr>
+
+  <tr class="even">
+  <td class="f"><tmpl_lang Cover Date></td>
+  <td class="l"><tmpl_var escape=html cover_date></td>
+  </tr>
+
+  <tr>
+  <td class="f"><tmpl_lang Current Version></td>
+  <td class="l"><tmpl_var escape=html version></td>
+  </tr>
+
+  <tr>
+  <td class="f"><tmpl_lang Published Version></td>
+  <td class="l"><tmpl_unless published_version><tmpl_lang [n/a]><tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+  </tr>
+
+  <tr class="even">
+  <td class="f"><tmpl_lang Categories></td>
+  <td class="l"><tmpl_loop category_loop>
+    <tmpl_var escape=html url>
+    <tmpl_unless __last__><br></tmpl_unless>
+  </tmpl_loop></td>
+  </tr>
+
+  <tr class="even">
+  <td class="f"><tmpl_lang Contributors></td>
+  <td class="l">
+  <tmpl_if contribs_loop>
+    <tmpl_loop contribs_loop>
+      <tmpl_var escape=html first_name> <tmpl_var escape=html last_name> (<tmpl_var escape=html type>)<tmpl_unless __last__>,</tmpl_unless>
+    </tmpl_loop>
+  <tmpl_else>
+    <tmpl_lang None.>
+  </tmpl_if>
+  </td>
+  </tr>
+</tmpl_if>
+
+</tbody>
+
+</table></div>
+
+<!--/ElementEditor/view.tmpl:-->
+<tmpl_include /ElementEditor/view.tmpl>
+<!--:/ElementEditor/view.tmpl-->
+
+<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped">
+<input value="<tmpl_lang Back>" onclick="<tmpl_if parent_path>view_path('<tmpl_var escape=html parent_path>')<tmpl_else>do_return()</tmpl_if>" type="button" class="west">
+<tmpl_unless old_version><tmpl_if can_edit>
+  <input value="<tmpl_lang Edit>" onclick="edit_story()" type="button">
+</tmpl_if></tmpl_unless>
+</div>
+
+</form>
+
+<form name="view_log_form" action="history.pl" method="post">
+<input name="story_id" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="history_return_script" value="story.pl" type="hidden">
+<input name="history_return_script" value="return_script" type="hidden">
+<input name="history_return_script" value="story.pl" type="hidden">
+<input name="history_return_params" value="rm" type="hidden">
+<input name="history_return_params" value="view" type="hidden">
+<input name="history_return_params" value="story_id" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html story_id>" type="hidden">
+<input name="history_return_params" value="version" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html version>" type="hidden">
+<input name="history_return_params" value="path" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html path>" type="hidden">
+<input name="history_return_params" value="return_script" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html return_script>" type="hidden">
+<tmpl_loop return_params_loop>
+  <input name="history_return_params" value="return_params" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html name>" type="hidden">
+  <input name="history_return_params" value="return_params" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
+</form>
+
+<form name="return_form" action="<tmpl_var escape=html return_script>" method="post">
+<tmpl_loop return_params_loop>
+  <input name="<tmpl_var escape=html name>" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
+</form>
+
+<tmpl_include footer.tmpl>
+

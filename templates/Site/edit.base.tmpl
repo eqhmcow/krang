@@ -1,0 +1,98 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Nav.edit_mode();
+  Krang.Help.set( 'site' );
+} );
+
+cancel_site_change = function()
+{
+  Krang.Form.submit( 'edit_site_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_cancel' } );
+}
+
+do_save = function()
+{
+  Krang.Form.set( 'edit_site_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save' } );
+}
+
+save_stay = function()
+{
+  Krang.Form.submit( 'edit_site_form', { rm: '<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save_stay' }, { to_top: false } );
+}
+
+<tmpl_unless add_mode>
+  delete_site = function()
+  {
+    if ( confirm( Krang.L10N.loc('Are you SURE you want to delete this Site?') ) )
+      Krang.Form.submit( 'edit_site_form', { rm: 'delete' }, { to_top: false } );
+  }
+</tmpl_unless>
+</script>
+
+<h2>
+<tmpl_if add_mode>
+  <tmpl_lang New Site>
+<tmpl_else>
+  <tmpl_lang Edit Site>
+</tmpl_if>
+</h2>
+
+<form name="edit_site_form" method="post" action="site.pl">
+
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+<input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
+<tmpl_unless add_mode>
+  <input name="site_id" value="<tmpl_var escape=html site_id>" type="hidden">
+</tmpl_unless>
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody class="demi">
+
+<tr<tmpl_if error_invalid_url> class="err"<tmpl_else><tmpl_if duplicate_url> class="err"</tmpl_if></tmpl_if>>
+<th><tmpl_lang URL></th>
+<td><input name="url" value="<tmpl_var escape=html url>"></td>
+</tr>
+
+<tr<tmpl_if error_invalid_preview_url> class="err"<tmpl_else><tmpl_if duplicate_preview_url> class="err"</tmpl_if></tmpl_if>>
+<th><tmpl_lang Preview URL></th>
+<td><input name="preview_url" value="<tmpl_var escape=html preview_url>"></td>
+</tr>
+
+<tr<tmpl_if error_invalid_publish_path> class="err"<tmpl_else><tmpl_if duplicate_publish_path> class="err"</tmpl_if></tmpl_if>>
+<th><tmpl_lang Publish Path></th>
+<td><input name="publish_path" value="<tmpl_var escape=html publish_path>"></td>
+</tr>
+
+<tr<tmpl_if error_invalid_preview_path> class="err"<tmpl_else><tmpl_if duplicate_preview_path> class="err"</tmpl_if></tmpl_if>>
+<th><tmpl_lang Preview Path></th>
+<td><input name="preview_path" value="<tmpl_var escape=html preview_path>"></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<div class="panel capped">
+<input value="<tmpl_lang Cancel>" onclick="cancel_site_change()" type="button" class="west">
+<input value="<tmpl_lang Save &amp; Stay>" onclick="save_stay()" type="button">
+<input value="<tmpl_lang Save>" onclick="do_save()" type="submit">
+<tmpl_unless add_mode>
+  <input value="<tmpl_lang Delete>" onclick="delete_site()" type="button">
+</tmpl_unless>
+</div>
+
+</form>
+
+<tmpl_include footer.tmpl>
+

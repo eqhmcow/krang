@@ -1,0 +1,276 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set('schedule');
+} );
+
+save_and_view = function()
+{
+  Krang.Form.submit('add_schedule_form', { rm: 'save_and_view' });
+}
+
+<tmpl_if existing_schedule_loop>
+  delete_selected = function()
+  {
+    if ( !Krang.row_checked( 'current_schedule_form', 'schedule_delete_list' ) )
+      alert( Krang.L10N.loc('Nothing selected to delete!') );
+    else if ( confirm( Krang.L10N.loc('Are you SURE you want to delete the selected Actions from the Schedule?') ) )
+      Krang.Form.submit('current_schedule_form');
+  }
+</tmpl_if>
+
+do_return = function()
+{
+  Krang.Form.submit('return_form');
+}
+</script>
+
+<h2>
+<tmpl_if is_story>
+  <tmpl_lang Edit Story Schedule>
+<tmpl_else><tmpl_if is_media>
+  <tmpl_lang Edit Media Schedule>
+</tmpl_if></tmpl_if>
+</h2>
+
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<thead>
+<tr>
+<th class="f l" colspan="2">
+<tmpl_if is_story>
+  <tmpl_lang Story Properties>
+<tmpl_else><tmpl_if is_media>
+  <tmpl_lang Media Properties>
+</tmpl_if></tmpl_if>
+</th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr>
+<td class="f"><tmpl_lang URL></td>
+<td class="l"><tmpl_var escape=html url></td>
+</tr>
+
+<tmpl_if is_story>
+  <tr class="even">
+  <td class="f"><tmpl_lang Story Type></td>
+  <td class="l"><tmpl_var escape=html story_type></td>
+  </tr>
+</tmpl_if>
+
+<tr class="even">
+<td class="f"><tmpl_if is_story><tmpl_lang Story ID><tmpl_else><tmpl_if is_media><tmpl_lang Media ID></tmpl_if></tmpl_if></td>
+<td class="l"><tmpl_var escape=html id></td>
+</tr>
+
+<tr>
+<td class="f"><tmpl_lang Current Version></td>
+<td class="l"><tmpl_var escape=html current_version></td>
+</tr>
+
+<tr>
+<td class="f"><tmpl_lang Published Version></td>
+<td class="l"><tmpl_unless published_version><tmpl_lang [n/a]><tmpl_else><tmpl_var escape=html published_version></tmpl_unless></td>
+</tr>
+
+</tbody>
+
+</table></div>
+
+<h3>
+<tmpl_lang Current Schedule>
+</h3>
+
+<tmpl_unless existing_schedule_loop>
+
+  <p class="naught">
+  <tmpl_lang No Actions scheduled.>
+  </p>
+
+<tmpl_else>
+
+  <form name="current_schedule_form" method="post" action="schedule.pl">
+
+  <input name="rm" value="delete" type="hidden">
+  <input name="object_type" value="<tmpl_var escape=html object_type>" type="hidden">
+  <tmpl_if advanced>
+    <input name="advanced_schedule" value="1" type="hidden">
+  </tmpl_if>
+
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
+
+  <colgroup>
+  <col>
+  <col>
+  <col>
+  <col class="c-date">
+  <col class="series">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="f"><tmpl_lang Action></th>
+  <th><tmpl_lang Version></th>
+  <th><tmpl_lang Trigger></th>
+  <th><tmpl_lang Next Event></th>
+  <th class="l series"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'schedule_delete_list')"></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop existing_schedule_loop>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td class="f"><tmpl_var escape=html action></td>
+    <td><tmpl_if version>
+      <tmpl_var escape=html version>
+    <tmpl_else>
+      <tmpl_lang [newest]>
+    </tmpl_if></td>
+    <td><tmpl_var escape=html schedule></td>
+    <td><tmpl_var escape=html next_run></td>
+    <td class="series l"><input name="schedule_delete_list" value="<tmpl_var escape=html schedule_id>" type="checkbox"></td>
+    </tr>
+  </tmpl_loop></tbody>
+
+  <tr class="command-row">
+  <td class="f" colspan="4">&nbsp;</td>
+  <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="button"></td>
+  </tr>
+
+  </table></div>
+
+  </form>
+
+</tmpl_unless>
+
+<form name="add_schedule_form" method="post" action="schedule.pl">
+
+<input name="rm" value="add<tmpl_if simple>_simple</tmpl_if>" type="hidden">
+<input name="object_type" value="<tmpl_var escape=html object_type>" type="hidden">
+<tmpl_unless simple>
+  <input name="advanced_schedule" value="1" type="hidden">
+</tmpl_unless>
+
+<div class="tabset finder">
+<ul class="tabs">
+<li><tmpl_if simple><b><tmpl_else><a href="javascript:Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type>')"></tmpl_if><span><tmpl_lang Simple Scheduler></span><tmpl_if simple></b><tmpl_else></a></tmpl_if></li>
+<li><tmpl_if simple><a href="javascript:Krang.Nav.goto_url('schedule.pl?rm=edit&amp;object_type=<tmpl_var escape=url object_type>&amp;advanced_schedule=1')"><tmpl_else><b></tmpl_if><span><tmpl_lang Advanced Scheduler></span><tmpl_if simple></a><tmpl_else></b></tmpl_if></li>
+</ul>
+
+<div class="tabbed">
+
+<table class="request" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th><tmpl_lang Action></th>
+<td>
+<tmpl_if simple>
+  <tmpl_lang Publish>
+<tmpl_else>
+  <tmpl_var action_selector>
+</tmpl_if>
+</td>
+</tr>
+
+<tr>
+<th><tmpl_lang Version></th>
+<td>
+<tmpl_var version_selector>
+<input value="<tmpl_lang View>" onclick="save_and_view()" type="button" class="button">
+</td>
+</tr>
+
+<tmpl_if simple>
+
+  <tr<tmpl_if invalid_datetime> class="err"</tmpl_if>>
+  <th><tmpl_lang Trigger Once></th>
+  <td><tmpl_var publish_selector></td>
+  </tr>
+
+<tmpl_else>
+
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if invalid_datetime> class="err"</tmpl_if></tmpl_if>>
+  <th>
+  <input name="repeat" value="never" type="radio"<tmpl_if repeat_never> checked</tmpl_if>>
+  <tmpl_lang Trigger Once>
+  </th>
+  <td><tmpl_var full_date_selector></td>
+  </tr>
+
+  <tr<tmpl_if no_date_type> class="err"</tmpl_if>>
+  <th>
+  <input name="repeat" value="hourly" type="radio"<tmpl_if repeat_hourly> checked</tmpl_if>>
+  <tmpl_lang Trigger Hourly>
+  </th>
+  <td>
+  <tmpl_var hourly_minute_selector>
+  <tmpl_lang minutes after the hour>
+  </td>
+  </tr>
+
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_hour> class="err"</tmpl_if></tmpl_if>>
+  <th>
+  <input name="repeat" value="daily" type="radio"<tmpl_if repeat_daily> checked</tmpl_if>>
+  <tmpl_lang Trigger Daily>
+  </th>
+  <td><tmpl_var daily_time_selector></td>
+  </tr>
+
+  <tr<tmpl_if no_date_type> class="err"<tmpl_else><tmpl_if no_weekly_hour> class="err"</tmpl_if></tmpl_if>>
+  <th>
+  <input name="repeat" value="weekly" type="radio"<tmpl_if repeat_weekly> checked</tmpl_if>>
+  <tmpl_lang Trigger Weekly>
+  </th>
+  <td>
+  <tmpl_var weekly_day_selector>
+  <tmpl_lang at>
+  <tmpl_var weekly_time_selector>
+  </td>
+  </tr>
+
+</tmpl_if>
+
+</tbody>
+
+</table>
+
+<div class="panel">
+<input value="<tmpl_lang Schedule Action>" type="submit">
+</div>
+
+</div></div>
+
+</form>
+
+<form name="return_form" action="<tmpl_if is_story>story<tmpl_else>media</tmpl_if>.pl" method="post">
+<input name="rm" value="edit" type="hidden">
+
+<div class="panel">
+<input value="<tmpl_lang Back>" onclick="do_return()" type="button" class="west">
+</div>
+
+</form>
+
+<tmpl_include footer.tmpl>
+

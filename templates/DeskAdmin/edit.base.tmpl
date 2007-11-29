@@ -1,0 +1,130 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'desk_admin' );
+} );
+
+<tmpl_if existing_desk_loop>
+  delete_selected = function()
+  {
+    if ( !Krang.row_checked( 'current_desk_form', 'desk_delete_list' ) )
+      alert( Krang.L10N.loc('No Desks selected to delete!') );
+    else if ( confirm( Krang.L10N.loc('Are you SURE you want to delete these Desks?') ) )
+      Krang.Form.submit('current_desk_form', {}, { to_top: false });
+  }
+
+  reorder = function()
+  {
+    Krang.Form.submit('current_desk_form', { rm: 'reorder' }, {}, { to_top: false });
+  }
+</tmpl_if>
+</script>
+
+<h2>
+<tmpl_lang Desks>
+</h2>
+
+<!-- <h3> -->
+<!-- Current Desks -->
+<!-- </h3> -->
+
+<tmpl_unless existing_desk_loop>
+
+  <p class="naught">
+  <tmpl_lang There currently are no Desks.>
+  </p>
+
+<tmpl_else>
+
+  <form name="current_desk_form" action="desk_admin.pl" method="post">
+
+  <input name="rm" value="delete" type="hidden">
+  <input name="total_desks" value="<tmpl_var escape=html total_desks>" type="hidden">
+
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
+
+  <colgroup>
+  <col class="series">
+  <col>
+  <col class="series">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="series f"><tmpl_lang Order></th>
+  <th><tmpl_lang Name></th>
+  <th class="series l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'desk_delete_list')"></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop existing_desk_loop>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td class="series f"><select name="order_<tmpl_var escape=html desk_id>" onchange="Krang.update_order(this,'order_')"><tmpl_loop desk_count_loop>
+      <option value="<tmpl_var escape=html count>"<tmpl_if selected> selected</tmpl_if>><tmpl_var escape=html count></option>
+    </tmpl_loop></select></td>
+    <td><tmpl_var escape=html name></td>
+    <td class="series l"><input name="desk_delete_list" value="<tmpl_var escape=html desk_id>" type="checkbox"></td>
+    </tr>
+  </tmpl_loop>
+
+  <tr class="command-row">
+  <td class="f" colspan="2"><input value="<tmpl_lang Reorder>" onclick="reorder()" type="button" class="button"></td>
+  <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button" class="button"></td>
+  </tr>
+
+  </tbody>
+
+  </table></div>
+
+  </form>
+
+</tmpl_unless>
+
+<form name="add_desk_form" action="desk_admin.pl" method="post">
+
+<input name="rm" value="add" type="hidden">
+
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
+
+<colgroup>
+<col class="c-mini">
+<col>
+</colgroup>
+
+<thead>
+<tr>
+<th class="c-mini f l" colspan="2"><tmpl_lang Create a New Desk></th>
+</tr>
+</thead>
+
+<tbody>
+
+<tr class="demi<tmpl_if no_name> err</tmpl_if>">
+<td class="f"><tmpl_lang Name></td>
+<td class="l"><input name="name" value="<tmpl_var escape=html name>"></td>
+</tr>
+
+<tr>
+<td class="f"><tmpl_lang Order></td>
+<td class="l"><tmpl_var order_selector></td>
+</tr>
+
+</tbody>
+
+</table></div>
+
+<div class="panel lame capped">
+<input value="<tmpl_lang Add Desk>" type="submit" class="west">
+</div>
+
+</form>
+
+<tmpl_include footer.tmpl>
+

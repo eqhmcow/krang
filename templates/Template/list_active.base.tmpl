@@ -1,0 +1,53 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'template_active' );
+} );
+
+<tmpl_if row_count>
+  view_template = function( id )
+  {
+    Krang.Form.submit('find_template', { rm: 'view', template_id: id });
+  }
+
+  <tmpl_if may_checkin_all>
+    checkin_selected = function()
+    {
+      if ( !Krang.pager_row_checked() )
+        alert( Krang.L10N.loc('Nothing selected to check in!') );
+      else
+        Krang.Form.submit('krang_pager_form', { rm: 'checkin_selected' }, { to_top: false });
+    }
+  </tmpl_if>
+</tmpl_if>
+</script>
+
+<h2>
+<tmpl_lang Active Templates>
+</h2>
+
+<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel"><form>
+  <input value="<tmpl_lang Check In>" onclick="checkin_selected()" type="button">
+</form></div></tmpl_if></tmpl_if>
+
+<!--Krang::HTMLPager:-->
+<tmpl_var pager_html>
+<!--:Krang::HTMLPager-->
+
+<tmpl_if row_count><tmpl_if may_checkin_all><div class="panel capped"><form>
+  <input value="<tmpl_lang Check In>" onclick="checkin_selected()" type="button">
+</form></div></tmpl_if></tmpl_if>
+
+<tmpl_if row_count>
+  <form name="find_template" method="post" action="template.pl">
+  <input name="rm" value="list_active" type="hidden">
+  <input name="template_id" type="hidden">
+  <input name="return_script" value="template.pl" type="hidden">
+  <input name="return_params" value="rm" type="hidden">
+  <input name="return_params" value="list_active" type="hidden">
+  </form>
+</tmpl_if>
+
+<tmpl_include footer.tmpl>
+

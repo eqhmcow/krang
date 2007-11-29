@@ -1,0 +1,38 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'job' );
+} );
+
+delete_selected = function()
+{
+  if ( !Krang.pager_row_checked() )
+    alert( Krang.L10N.loc('Nothing selected to delete!') );
+  else if ( confirm( Krang.L10N.loc('Are you SURE you want to delete these Jobs?') ) )
+    Krang.Form.submit('krang_pager_form', { rm: 'delete' }, { to_top: false });
+}
+</script>
+
+<h2>
+<tmpl_lang Scheduled Jobs>
+</h2>
+
+<tmpl_if row_count>
+  <div class="panel"><form>
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  </form></div>
+</tmpl_if>
+
+<!--Krang::HTMLPager:-->
+<tmpl_var pager_html>
+<!--:Krang::HTMLPager-->
+
+<tmpl_if row_count>
+  <div class="panel capped"><form>
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+  </form></div>
+</tmpl_if>
+
+<tmpl_include footer.tmpl>
+

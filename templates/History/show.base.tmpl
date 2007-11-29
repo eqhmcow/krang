@@ -1,0 +1,90 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set();
+} );
+</script>
+
+<h2>
+<tmpl_if story_id>
+  <tmpl_lang Story>
+<tmpl_else><tmpl_if media_id>
+  <tmpl_lang Media>
+<tmpl_else><tmpl_if template_id>
+  <tmpl_lang Template>
+</tmpl_if></tmpl_if></tmpl_if>
+<tmpl_lang Log>
+</h2>
+
+<tmpl_if krang_pager_rows>
+
+<form name="krang_pager_form" action="history.pl" method="post">
+
+<tmpl_include HTMLPager/pager-internals.tmpl>
+
+<div class="killborder">
+<!-- avoid double blue lines -->
+ <tmpl_include HTMLPager/pager-pagination.tmpl>
+</div>
+
+<div class="table-container">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="result select_row" summary="">
+
+<colgroup>
+<!-- 'action' column -->
+<col>
+<!-- 'user' column -->
+<col class="c-user">
+<!-- 'timestamp' column - not normal length so that we can fit it all on one line -->
+<col class="c-ldate">
+<!-- 'attr' column -->
+<col class="c-user">
+</colgroup>
+
+<thead>
+<tr>
+<th class="f"><tmpl_var colhead_action></th>
+<th><tmpl_var colhead_user></th>
+<th><tmpl_var colhead_timestamp></th>
+<th class="l"><tmpl_var colhead_attr></th>
+</tr>
+</thead>
+
+<tbody><tmpl_loop krang_pager_rows>
+<tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+<td class="f"><tmpl_var action></td>
+<td><tmpl_var user></td>
+<td><tmpl_var timestamp></td>
+<td class="l"><tmpl_var attr></td>
+</tr>
+</tmpl_loop></tbody>
+
+</table></div>
+
+<tmpl_include HTMLPager/pager-pagination.tmpl>
+
+</form>
+
+<tmpl_else>
+
+<p class="naught">
+<tmpl_lang None found>
+</p>
+
+</tmpl_if>
+
+<form name="return_form" action="<tmpl_var escape=html return_script>" method="post">
+
+<tmpl_var return_hidden>
+
+<div class="panel lame capped">
+<input value="<tmpl_lang Back>" type="submit" class="west">
+</div>
+
+</form>
+
+<tmpl_include footer.tmpl>
+

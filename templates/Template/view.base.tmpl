@@ -1,0 +1,103 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'template_find' );
+} );
+
+do_return = function()
+{
+  Krang.Form.submit( 'return_form' );
+}
+
+<tmpl_unless is_old_version><tmpl_if can_edit>
+  do_edit_template = function()
+  {
+    Krang.Form.submit( 'edit_template_form' );
+  }
+</tmpl_if></tmpl_unless>
+
+// Register CodePress's onload event:
+Krang.onload( function() { 
+  CodePress.run();
+} );
+
+</script>
+
+<!--[p class="cram east"]
+(db2)add 'View Log' here
+[/p]-->
+
+<h2>
+<tmpl_lang View Template>
+</h2>
+
+<form name="return_form" action="template.pl" method="post">
+
+<tmpl_var history_return_params>
+<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+
+<h3>
+<tmpl_lang Properties>
+</h3>
+
+<table class="result" summary="">
+
+<colgroup>
+<col class="c-label">
+<col>
+<col class="c-label">
+<col>
+</colgroup>
+
+<tbody>
+
+<tr>
+<th><tmpl_lang URL></th>
+<td colspan="3"><tmpl_var escape=html url></td>
+</tr>
+
+<tr>
+<th><tmpl_lang Template ID></th>
+<td><tmpl_var escape=html template_id></td>
+<th><tmpl_lang Current Version></th>
+<td><tmpl_var escape=html version></td>
+</tr>
+
+<tr>
+<th><tmpl_lang File Name></th>
+<td><tmpl_var escape=html filename></td>
+<th><tmpl_lang Deployed Version></th>
+<td><tmpl_unless deployed_version><tmpl_lang [n/a]><tmpl_else><tmpl_var escape=html deployed_version></tmpl_unless></td>
+</tr>
+
+</tbody>
+
+</table>
+
+<h3>
+<tmpl_lang Content>
+</h3>
+
+<p class="full">
+<textarea id="templateViewer" class="codepress html readonly-on" rows="30" cols="50"><tmpl_var escape=html content></textarea>
+</p>
+
+<div class="panel<tmpl_if is_old_version> lame<tmpl_else><tmpl_unless can_edit> lame</tmpl_unless></tmpl_if> capped">
+<input value="<tmpl_lang Back>" onclick="do_return()" type="button" class="west">
+<tmpl_unless is_old_version><tmpl_if can_edit>
+  <input value="<tmpl_lang Edit>" onclick="do_edit_template()" type="button">
+</tmpl_if></tmpl_unless>
+</div>
+
+</form>
+
+<tmpl_unless is_old_version><tmpl_if can_edit>
+  <form name="edit_template_form" method="post" action="template.pl">
+  <input name="rm" value="checkout_and_edit" type="hidden">
+  <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+  </form>
+</tmpl_if></tmpl_unless>
+
+<tmpl_include footer.tmpl>
+

@@ -1,0 +1,106 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'user' );
+} );
+
+add_user = function()
+{
+  Krang.Form.submit('add_user_form');
+}
+
+<tmpl_if row_count>
+  edit_user = function( id )
+  {
+    Krang.Form.submit('edit_user_form', { user_id: id });
+  }
+
+  delete_selected = function()
+  {
+    if ( !Krang.pager_row_checked() )
+      alert( Krang.L10N.loc('Nothing selected to delete!') );
+    else if ( confirm( Krang.L10N.loc('Are you SURE you want to delete these Users?') ) )
+      Krang.Form.submit('krang_pager_form', { rm: 'delete_selected' }, { to_top: false });
+  }
+</tmpl_if>
+</script>
+
+<h2>
+<tmpl_lang Users>
+</h2>
+
+<form name="search_form" method="post" action="user.pl">
+
+<input name="rm" value="search" type="hidden">
+<input name="krang_pager_curr_page_num" value="" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+
+<div class="tabset finder">
+
+<ul class="tabs"><li>
+<b><span>
+<tmpl_lang Simple Search>
+</span></b>
+</li></ul>
+
+<div class="tabbed">
+
+<div class="faux-p">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
+<input value="<tmpl_lang Search>" type="submit" class="button">
+</div>
+
+</div>
+
+</div>
+
+</form>
+
+<h3>
+<tmpl_lang Search Results>
+</h3>
+
+<div class="panel"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
+<input value="<tmpl_lang Add User>" onclick="add_user()" type="button" class="west">
+<tmpl_if row_count>
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+</tmpl_if>
+</form></div>
+
+<!--Krang::HTMLPager:-->
+<tmpl_var pager_html>
+<!--:Krang::HTMLPager-->
+
+<div class="panel capped"><form<tmpl_unless row_count> class="clearfix"</tmpl_unless>>
+<input value="<tmpl_lang Add User>" onclick="add_user()" type="button" class="west">
+<tmpl_if row_count>
+  <input value="<tmpl_lang Delete>" onclick="delete_selected()" type="button">
+</tmpl_if>
+</form></div>
+
+<form name="add_user_form" method="post" action="user.pl">
+<input name="rm" value="add" type="hidden">
+<input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+<input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+<input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+<input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+<input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+</form>
+
+<tmpl_if row_count>
+  <form name="edit_user_form" method="post" action="user.pl">
+  <input name="rm" value="edit" type="hidden">
+  <input name="user_id" value="" type="hidden">
+  <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
+  <input name="krang_pager_curr_page_num" value="<tmpl_var escape=html krang_pager_curr_page_num>" type="hidden">
+  <input name="krang_pager_show_big_view" value="<tmpl_var escape=html krang_pager_show_big_view>" type="hidden">
+  <input name="krang_pager_sort_field" value="<tmpl_var escape=html krang_pager_sort_field>" type="hidden">
+  <input name="krang_pager_sort_order_desc" value="<tmpl_var escape=html krang_pager_sort_order_desc>" type="hidden">
+  </form>
+</tmpl_if>
+
+<tmpl_include footer.tmpl>
+

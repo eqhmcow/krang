@@ -1,0 +1,125 @@
+<tmpl_include header.tmpl>
+
+<script type="text/javascript">
+Krang.onload( function() {
+  Krang.Help.set( 'my_alerts' );
+} );
+
+<tmpl_if alert_loop>
+  delete_checked = function()
+  {
+    if ( !Krang.row_checked( 'current_alert_form', 'alert_delete_list' ) )
+      alert( Krang.L10N.loc('No Alerts selected to delete!') );
+    else if ( confirm( Krang.L10N.loc('Are you SURE you wish to delete these Alerts?') ) )
+      Krang.Form.submit( 'current_alert_form', {}, { to_top: false } );
+  }
+</tmpl_if>
+</script>
+
+<h2>
+Alerts
+</h2>
+
+<tmpl_unless alert_loop>
+
+  <p class="naught">
+  <tmpl_lang There are currently no Alerts.>
+  </p>
+
+<tmpl_else>
+
+  <form name="current_alert_form" method="post" action="my_alerts.pl">
+
+  <input name="rm" value="delete_alerts" type="hidden">
+
+  <div class="table-container">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+  <img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+  <table cellspacing="0" class="result select_row" summary="">
+
+  <colgroup>
+  <col>
+  <col>
+  <col>
+  <col class="series">
+  </colgroup>
+
+  <thead>
+  <tr>
+  <th class="f"><tmpl_lang Action></th>
+  <th><tmpl_lang Site/Category></th>
+  <th><tmpl_lang Desk></th>
+  <th class="series l"><input name="checkallbox" value="1" type="checkbox" onclick="Krang.check_all(this,'alert_delete_list')"></th>
+  </tr>
+  </thead>
+
+  <tbody><tmpl_loop alert_loop>
+    <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
+    <td class="f"><tmpl_var escape=html action></td>
+    <td><tmpl_if category><tmpl_var escape=html category><tmpl_else><tmpl_lang Any></tmpl_if></td>
+    <td><tmpl_if desk><tmpl_var escape=html desk><tmpl_else><tmpl_lang Any></tmpl_if></td>
+    <td class="series l"><input name="alert_delete_list" value="<tmpl_var escape=html alert_id>" type="checkbox"></td>
+    </tr>
+  </tmpl_loop></tbody>
+
+  <tr class="command-row">
+  <td class="f" colspan="3">&nbsp;</td>
+  <td class="series l"><input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button" class="button"></td
+  </tr>
+
+  </table></div>
+
+  </form>
+
+</tmpl_unless>
+
+<form name="add_alert_form" method="post" action="my_alerts.pl">
+
+<input name="rm" value="add" type="hidden">
+
+<div class="table-container"<tmpl_if crumbs> style="margin-top:10px"</tmpl_if>>
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
+<img src="/static/<tmpl_var krang_install_id>/images/corner-top-right.gif" class="right-corner">
+<table cellspacing="0" class="props" summary="">
+
+<colgroup>
+<col class="c-mini">
+<col>
+</colgroup>
+
+<thead>
+<tr>
+<th class="c-mini f l" colspan="2">Create a New Alert</th>
+</tr>
+</thead>
+
+<tbody class="half">
+
+<tr>
+<td class="f">*<tmpl_lang Action></td>
+<td class="l"><tmpl_var action_selector></td>
+</tr>
+
+<tr>
+<td class="f"><tmpl_lang Site/Category></td>
+<td class="l"><tmpl_var category_chooser_interface></td>
+</tr>
+
+<tr>
+<td class="f"><tmpl_lang Desk></td>
+<td class="l"><tmpl_var desk_selector></td>
+</tr>
+
+</tbody>
+
+</table></div>
+
+<div class="panel lame capped">
+<input value="<tmpl_lang Add Alert>" type="submit" class="west">
+</div>
+
+<tmpl_var category_chooser>
+</form>
+
+<tmpl_include footer.tmpl>
+
