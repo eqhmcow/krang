@@ -643,23 +643,36 @@ A single variable is created for C<< $element->name() >>.
 
 =item *
 
-A single variable called C<< $child->name() >> is created for each 
-B<UNIQUELY NAMED> child element.  For example, if the element contains 
-children named (C<paragraph>, C<paragraph>, C<deck>), two variables 
+For each B<UNIQUELY NAMED> child element used in the template,
+a single variable called C<$childname> is created. For 
+example, if the element contains children named (C<paragraph>, 
+C<paragraph>, C<deck>), and both <tmpl_var paragraph> and
+<tmpl_var deck> are included in the template, two variables 
 would be created, C<paragraph> and C<deck>.  The value of C<paragraph> 
 would correspond to the first paragraph child element.
 
 =item * 
 
-A loop is created for every child element named with the name of the
-element followed by _loop. The rows of the loop contain the variable
-described above and a _count variable.
+If the template has a loop named after a particular child element 
+(e.g. C<page_loop>) it is created as follows: 
+
+If the inside of the loop contains a direct reference to the child
+- e.g. <tmpl_var page> - AND there is a template named after the child 
+(e.g. C<page.tmpl>), then each row of the loop will contain C<$childname>
+= HTML, where HTML is the result of publishing $child using 
+its own template. If not, each row will contain the vars returned by 
+calling $child->fill_template() (i.e. any of its OWN children used
+in the template - <tmpl_var paragraph> etc. - will be populated). 
+
+Either way, each row will also contain the variable $childname_count
+(e.g. C<page_count>)
 
 =item * 
 
-A loop called C<element_loop> is created with a row for every child
-element contained. The values are the same as for the loop above with
-the addition of a boolean is_ variable.
+If the template contains an C<element_loop> (i.e. <tmpl_loop element_loop>), it 
+is created with a row for every child element. The variables are 
+the same as for the child-specific loop above with the addition of a boolean 
+C<is_$childname>.
 
 =item *
 
@@ -974,8 +987,8 @@ In these cases, the element will have no template associated with it -
 which will cause find_template to fail.  If the element has no
 children, the value of $element->template_data() will be returned as
 the result of the publish() call.  If the element *does* have
-children, however, publish() will propegate the error thrown by
-find_template().
+children, publish() will propagate the error, causing fill_template() 
+to make the element's children available directly to its parent's template.
 
 
 =cut
