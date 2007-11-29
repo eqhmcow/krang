@@ -259,7 +259,7 @@ test_preview_story($story);
 
 test_cgistory_publish();
 
-test_publish_flattened_template();
+test_publish_flattened();
 
 test_fill_flattened_page_loop($story);
 
@@ -1314,7 +1314,7 @@ sub test_cgistory_publish {
 }
 
 
-sub test_publish_flattened_template {
+sub test_publish_flattened {
 
     # create new story
     my $story = $creator->create_story( class => 'cgi_story', category => [$category] );
