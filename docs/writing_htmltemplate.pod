@@ -208,9 +208,9 @@ See the section C<Using Pagination>, further on in this document, for more infor
 
 =back
 
-=head2 Example 1: Using One Large Template
+=head2 Example 1: Using One Large Template (For Each Story Type)
 
-With simple stories, it is easy to use a single template to handle the entire publish process.
+With simple story types, it is easy to use a single template to handle the entire publish process.
 
 For the purposes of this example, imagine the following element tree for a story:
 
@@ -253,7 +253,7 @@ B<The Template - Story.tmpl>
 
 This is a pretty boring example, but it illustrates the basic concepts of variable construction in Krang.  <tmpl_loop element_loop> provides access to all child elements.  <tmpl_loop paragraph_loop> and <tmpl_loop pull_quote_loop> are available, but are really not of much use.  While <tmpl_var paragraph> exists only once in the template, because it is within the context of <tmpl_loop element_loop>, both paragraphs will be built.
 
-Now let's imagine a more complex story.
+Now let's imagine a more complex story type.
 
    Story
         - Deck             (subclass of Krang::ElementClass::Text)
@@ -321,7 +321,7 @@ With only one template, everything is in a single place - it's easy to keep trac
 
 =item *
 
-For simple stories, putting together a single template is fast.
+For simple story types, putting together a single template is fast.
 
 =back
 
@@ -335,7 +335,7 @@ There is no customizability - small variations require changing the main templat
 
 =back
 
-=head2 Example 2: Using Multiple Templates
+=head2 Example 2: Using Multiple Templates (For Each Story Type)
 
 B<The Templates>
 
