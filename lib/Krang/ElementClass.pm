@@ -946,7 +946,7 @@ sub _inner_loop_to_tmpl {
       $inner_tmpl->clear_params();
       return $inner_tmpl;
   } elsif (my $tags = $self->_inner_loop_to_tmpl_tags($tmpl, $loopname)) {
-      # it's not in cache: build a new one and return it
+      # it's not in cache: build it and return it
       my $inner_tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
       $publisher->inner_tmpl_cache->{$cache_key} = $inner_tmpl;
       return $inner_tmpl;
