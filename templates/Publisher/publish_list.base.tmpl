@@ -7,15 +7,14 @@ Krang.onload( function() {
 </script>
 
 <h2>
-Publish
 
 <tmpl_if stories><!--(db2)hack plural:-->
   <tmpl_loop stories>
     <tmpl_if __first__>
       <tmpl_if __last__>
-        <tmpl_lang Story>
+        <tmpl_lang Publish Story>
       <tmpl_else>
-        <tmpl_lang Stories>
+        <tmpl_lang Publish Stories>
       </tmpl_if>
     </tmpl_if>
   </tmpl_loop>
@@ -24,6 +23,8 @@ Publish
 <tmpl_if media>
   <tmpl_if stories>
     &amp;
+  <tmpl_else>
+    <tmpl_lang Publish>
   </tmpl_if>
 
   <tmpl_lang Media>
@@ -115,7 +116,7 @@ Publish
 
 </tbody>
 
-</table>
+</table></div>
 
 <h3>
 <tmpl_lang Publication Time>
@@ -152,7 +153,7 @@ Publish
 </table>
 
 <div class="panel capped">
-<input name="<tmpl_lang Publish>" value="Publish" type="submit">
+<input value="<tmpl_lang Publish>" name="Publish" type="submit">
 </div>
 
 </form>
