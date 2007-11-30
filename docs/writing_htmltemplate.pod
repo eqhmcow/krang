@@ -745,7 +745,8 @@ If your template includes a <tmpl_var leadin>, and no corresponding leadin.tmpl 
 =item * Constructing a template:
 
 If you decide to create a leadin.tmpl (or to remove the reference to <tmpl_var leadin> and use leadin's children directly),
-the following variables will be made available: B<url>, B<title>
+the following variables will be made available: B<url>, B<title>. (This title variable will override the Story's title
+variable, since it is an explicitly declared child of the element.)
 
 =back
 
