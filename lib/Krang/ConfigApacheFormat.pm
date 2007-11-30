@@ -20,7 +20,7 @@ See L<Config::ApacheFormat>
 This module provides the same functionality as Config::ApacheFormat,
 but allows directives to be double quoted strings.
 
-=head INTERFACE
+=head1 INTERFACE
 
 See L<Config::ApacheFormat>
 

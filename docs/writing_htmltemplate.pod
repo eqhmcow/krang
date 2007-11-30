@@ -335,6 +335,8 @@ There is no customizability - small variations require changing the main templat
 
 =back
 
+=back
+
 =head2 Example 2: Using Multiple Templates (For Each Story Type)
 
 B<The Templates>
