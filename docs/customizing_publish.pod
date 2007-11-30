@@ -257,7 +257,7 @@ The story element will use the following templates:
 
 B<IMPORTANT NOTE: Starting in Krang v3.02, developers have the option of using one complex template for each story type
 rather than multiple simple ones. The procedure for using a single template is beyond the scope of this document
-but described in> HREF[Writing HTML::Template Templates in Krang|writing_htmltemplate.html]B<. (The examples in this
+but described in HREF[Writing HTML::Template Templates in Krang|writing_htmltemplate.html]. (The examples in this
 document all make use of the multiple-template approach.)>
 
 
