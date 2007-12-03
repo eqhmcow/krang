@@ -26,7 +26,8 @@ See L<HTML::Template>.
 
 use base 'HTML::Template';
 use Krang::ClassLoader Session => qw(%session);
-use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS EnableBugzilla ContactEmail Charset);
+use Krang::ClassLoader Conf => qw(InstanceDisplayName KrangRoot Skin CustomCSS
+                                  EnableBugzilla ContactEmail Charset DefaultLanguage);
 use Krang::ClassLoader Message => qw(get_messages clear_messages get_alerts clear_alerts);
 use Krang::ClassLoader 'Navigation';
 use Krang::ClassLoader Log => qw(debug);
@@ -73,10 +74,15 @@ sub _compute_path {
 
     # append @PATH to each input path
     my @out;
+
+    # caring for localized templates
+    my $language = $session{language} || DefaultLanguage || 'en';
+
     foreach my $in (@$in) {
         foreach my $path (@PATH) {
-            push(@out, catdir($path, $in, $session{language}));
-            push(@out, catdir($path, $in));
+            push(@out, catdir($path, $in, $language));
+            push(@out, catdir($path, $language     ));
+            push(@out, catdir($path, $in           ));
         }
     }
     push(@out, @PATH);

@@ -155,12 +155,24 @@ use Krang::ClassLoader Localization => qw(localize_template %LANG %missing);
 # record missing localizations
 $ENV{KRANG_RECORD_MISSING_LOCALIZATIONS} = $print_missing;
 
+my @single_templates = ( qw(
+    footer
+    header
+));
+
+
 # also localize addon /templates
 for my $tmpl_root (pkg('File')->find_all('templates')) {
     show("### Localizing templates below '$tmpl_root'", 1);
 
+    # collect templates in subdirs below tmpl root
     my $templates = collect_templates_in_root($tmpl_root);
 
+    # add templates in tmpl root to collection
+    push @$templates, map { {root => $tmpl_root,
+			     dir  => $tmpl_root,
+			     file => "$_.base.tmpl"} } @single_templates;
+    # localize it
     localize_templates($templates);
 }
 
@@ -204,7 +216,7 @@ sub collect_templates_in_root {
 sub localize_templates {
     my $templates = shift;
 
-    # make sure have the English default
+    # make sure we have the English default
     my @languages = AvailableLanguages;
     push @languages, 'en' unless scalar(@languages);
 
