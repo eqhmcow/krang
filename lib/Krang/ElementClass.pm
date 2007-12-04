@@ -568,16 +568,35 @@ sub find_template {
 
     # Attempt to find or instantiate an HTML::Template::Expr object 
     my $template;
-    my $cache_key = $element->name . $publisher->template_search_path;
-    if ($template = $publisher->tmpl_cache->{$cache_key}) {
-        # Found it in cache...
-        $template->clear_params;
-        return $template;
-    } 
+    my $full_path;
+    foreach (@search_path) {
+        $full_path = $_ . '/' . $filename;
+        if ($template = $publisher->tmpl_cache->{$full_path}) {
+            # we've looked for this path before...
+            if ($template == -1) {
+                # ...and found nothing; jump to next path
+                next;
+            } else {
+                # ...and found a file; grab template from cache
+                $template->clear_params;  
+                $template->{options}->{path} = \@search_path; # in case last time we were in another category
+                return $template;
+            }
+        } else {
+            # we've never looked for this path...
+            if (-e $full_path) {
+                # ...and it exists: use it
+                last;
+            } else  {
+                # ...and it doesn't exist: never check again
+                $publisher->tmpl_cache->{$full_path} = -1;
+            }
+        }
+    }
     
     eval {
-        # Wasn't in cache - create a new one...
-        $template = HTML::Template::Expr->new(filename          => $filename,
+        # The template wasn't in cache - instantiate a new one...
+        $template = HTML::Template::Expr->new(filename          => $full_path,
                                               path              => \@search_path,
                                               die_on_bad_params => 0,
                                               loop_context_vars => 1,
@@ -586,7 +605,7 @@ sub find_template {
                                               search_path_on_include => 1,
                                               %args,
                                              );
-        $publisher->tmpl_cache->{$cache_key} = $template;
+        $publisher->tmpl_cache->{$full_path} = $template;
     };
     if ($@) {
         my $err = $@;
