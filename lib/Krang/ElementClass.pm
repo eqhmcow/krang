@@ -566,10 +566,17 @@ sub find_template {
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
-    # Attempt to instantiate an HTML::Template::Expr object with that
-    # as the search path.
+    # Attempt to find or instantiate an HTML::Template::Expr object 
     my $template;
+    my $cache_key = $element->name . $publisher->template_search_path;
+    if ($template = $publisher->tmpl_cache->{$cache_key}) {
+        # Found it in cache...
+        $template->clear_params;
+        return $template;
+    } 
+    
     eval {
+        # Wasn't in cache - create a new one...
         $template = HTML::Template::Expr->new(filename          => $filename,
                                               path              => \@search_path,
                                               die_on_bad_params => 0,
@@ -579,8 +586,8 @@ sub find_template {
                                               search_path_on_include => 1,
                                               %args,
                                              );
+        $publisher->tmpl_cache->{$cache_key} = $template;
     };
-
     if ($@) {
         my $err = $@;
         # HTML::Template::Expr is having problems - throw an error
@@ -941,14 +948,14 @@ sub _inner_loop_to_tmpl {
 
   # see if this inner template has already been cached
   my $cache_key = $tmpl . $loopname;
-  if (my $inner_tmpl = $publisher->inner_tmpl_cache->{$cache_key}) {
+  if (my $inner_tmpl = $publisher->tmpl_cache->{$cache_key}) {
       # it's in cache: clear its values and return it
       $inner_tmpl->clear_params();
       return $inner_tmpl;
   } elsif (my $tags = $self->_inner_loop_to_tmpl_tags($tmpl, $loopname)) {
       # it's not in cache: build it and return it
       my $inner_tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
-      $publisher->inner_tmpl_cache->{$cache_key} = $inner_tmpl;
+      $publisher->tmpl_cache->{$cache_key} = $inner_tmpl;
       return $inner_tmpl;
   } 
 }

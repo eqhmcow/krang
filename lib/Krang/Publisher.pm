@@ -133,7 +133,7 @@ use Exception::Class
 
 use Krang::ClassLoader MethodMaker => (new_with_init => 'new',
                         new_hash_init => 'hash_init',
-			hash          => 'inner_tmpl_cache',
+			hash          => 'tmpl_cache',
                         get           => [PUBLISHER_RO]
                        );
 
@@ -174,11 +174,9 @@ published.
 
 Returns a Krang::Story object for the Story currently being published.
 
-=item * inner_tmpl_cache
+=item * tmpl_cache
 
-This object (which - unlike those above - is a hash allowing read/write access) contains
-a cache of the format ($tmpl.$loopname => $tmpl_of_vars_within_loop). It's used by 
-fill_template() to avoid redundant calls while processing flattened templates.
+This object (which - unlike those above - is a hash allowing read/write access) contains a cache of template objects used by fill_template and find_template to avoid redundant creation.
 
 =back
 
