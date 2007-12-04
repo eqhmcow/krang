@@ -73,7 +73,11 @@ module.
 
 =item $value = Krang::MyPref->get('scalar_pref');
 
+=item $value = Krang::MyPref->get('scalar_pref', $user_id);
+
 =item %hash = Krang::MyPref->get('list_pref');
+
+=item %hash = Krang::MyPref->get('list_pref', $user_id);
 
 Gets the data configured for a given preference.  For scalar
 preferences, returns the configured value.  For list preferences,
@@ -82,15 +86,18 @@ returns a hash mapping IDs to names.
 If no value has been configured for the preference then nothing is
 returned (undef in scalar context, empty list in list context).
 
+The second argument '$user_id' is optional.  If not specified, this
+method will return the preference(s) of the logged-in user.
+
 =cut
 
 sub get {
-    my ($pkg, $name) = @_;
+    my ($pkg, $name, $user_id) = @_;
     my $conf = $CONFIG{$name};
     my $dbh  = dbh();
     croak("Invalid pref '$name' does not exist in %Krang::MyPref::CONFIG")
       unless $conf;
-    my $user_id = $ENV{REMOTE_USER};
+    $user_id ||= $ENV{REMOTE_USER};
 
     if ($conf->{type} eq 'scalar') {
         # handle scalar pref

@@ -9,13 +9,15 @@ use Krang::ClassLoader 'Schedule';
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'Category';
-use Krang::ClassLoader Conf => qw(SMTPServer FromAddress KrangRoot);
+use Krang::ClassLoader Conf => qw(SMTPServer FromAddress KrangRoot DefaultLanguage);
+use Krang::ClassLoader 'MyPref';
+use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 use Time::Piece;
 use Time::Piece::MySQL;
 use Mail::Sender;
 use HTML::Template;
-use File::Spec::Functions qw(catfile);
+use File::Spec::Functions qw(catdir);
 
 # constants 
 use constant FIELDS => qw( alert_id user_id action desk_id category_id );
@@ -412,58 +414,67 @@ Sends an alert to email address.  Message sent is formatted by template at Krang
 sub send {
     my $self = shift;
     my %args = @_;
-    
+
     my $alert_id = $args{alert_id} || croak(__PACKAGE__."->send() - you must specify an alert_id");
-    my $user_id = $args{user_id} || croak(__PACKAGE__."->send() - you must specify a user_id");
-    my $story_id = $args{story_id} || croak(__PACKAGE__."->send() - you must specify a story_id");
+    my $user_id  = $args{user_id}  || croak(__PACKAGE__."->send() - you must specify a user_id"  );
+    my $story_id = $args{story_id} || croak(__PACKAGE__."->send() - you must specify a story_id" );
 
     my $alert = (pkg('Alert')->find(alert_id => $alert_id))[0];
-    
-    croak("No valid pkg('Alert') object found with id $alert_id") if not ( $alert && $alert->isa('Krang::Alert') );
 
-    my $to_user = (pkg('User')->find( user_id => $alert->user_id ))[0];
+    croak("No valid pkg('Alert') object found with id $alert_id")
+      if not ($alert && $alert->isa('Krang::Alert'));
 
-    croak("No valid pkg('User') object found with id ".$alert->user_id) if not ( $to_user && $to_user->isa('Krang::User') );
+    my $to_user = (pkg('User')->find(user_id => $alert->user_id))[0];
 
-    my $user = (pkg('User')->find( user_id => $user_id ))[0];
+    croak("No valid pkg('User') object found with id ".$alert->user_id)
+      if not ($to_user && $to_user->isa('Krang::User'));
 
-    croak("No valid pkg('User') object found with id $user_id") if not ( $user && $user->isa('Krang::User') );
+    my $user = (pkg('User')->find(user_id => $user_id ))[0];
+
+    croak("No valid pkg('User') object found with id $user_id")
+      if not ($user && $user->isa('Krang::User'));
 
     my $story = (pkg('Story')->find(story_id => $story_id))[0];
 
-    croak("No valid pkg('Story') object found with id $story_id") if not ( $story && $story->isa('Krang::Story') );
+    croak("No valid pkg('Story') object found with id $story_id")
+      if not ($story && $story->isa('Krang::Story'));
 
-    my $template = HTML::Template->new(filename => catfile(KrangRoot, 'templates', 'Alert', 'message.tmpl'));
+    my $language = pkg('MyPref')->get('language', $alert->user_id) || DefaultLanguage || 'en';
 
-    $template->param(   story_id => $story_id, 
-                        story_title => $story->title,
-                        first_name => $user->first_name,
-                        last_name => $user->last_name,
-                        action => $alert->action );
+    my $template = HTML::Template->new(path     => [catdir(KrangRoot, 'templates', 'Alert', $language),
+                                                    catdir(KrangRoot, 'templates', 'Alert')],
+                                       filename => 'message.tmpl');
 
-    $template->param( category => (pkg('Category')->find(category_id => $alert->category_id))[0]->url ) if $alert->category_id;
+    $template->param(story_id    => $story_id, 
+                     story_title => $story->title,
+                     first_name  => $user->first_name,
+                     last_name   => $user->last_name,
+                     action      => ucfirst(localize($alert->action)));
 
-    $template->param( desk => (pkg('Desk')->find(desk_id => $alert->desk_id))[0]->name ) if $alert->desk_id; 
+    $template->param(category => (pkg('Category')->find(category_id => $alert->category_id))[0]->url)
+      if $alert->category_id;
+
+    $template->param(desk => (pkg('Desk')->find(desk_id => $alert->desk_id))[0]->name)
+      if $alert->desk_id;
 
     # first check if should be using test email address,
     # else use user email address 
     my $email_to = $ENV{KRANG_TEST_EMAIL};
     $email_to = $to_user->email if not defined $email_to;
 
-    if ($email_to) { 
+    if ($email_to) {
         debug(__PACKAGE__."->send() - sending email to ".$email_to.": ".$template->output);
-        my $sender = Mail::Sender->new({smtp => SMTPServer, 
-                                        from => FromAddress,
+
+        my $sender = Mail::Sender->new({smtp      => SMTPServer,
+                                        from      => FromAddress,
                                         on_errors => 'die'});
 
-        $sender->MailMsg({  to => $email_to, 
-                            subject => "Krang alert for action '".$alert->action."'",
-                            msg => $template->output,
-                        }); 
+        $sender->MailMsg({to      => $email_to,
+                          subject => localize("Krang alert for action")." '".ucfirst(localize($alert->action))."'",
+                          msg     => $template->output});
     } else {
-        info(__PACKAGE__."->send() - no email address found for user: alert not sent: ".$template->output);        
+        info(__PACKAGE__."->send() - no email address found for user: alert not sent: ".$template->output);
     }
-    
 }
 
 =item delete()
