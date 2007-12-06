@@ -5,6 +5,7 @@ use warnings;
 
 use base 'Tree::DAG_Node';
 use Krang::ClassLoader MethodMaker => get_set => [ qw(link condition) ];
+use Krang::ClassLoader Localization => qw(localize);
 
 =head1 NAME
 
@@ -42,6 +43,16 @@ methods available:
 
 Get/set the name of the node.  This is the textual value displayed in
 the left-nav.
+
+=cut
+
+sub name {
+    my $self = shift;
+
+    $self->{name} = $_[0] if @_;
+
+    return localize($self->{name});
+}
 
 =head2 link()
 
