@@ -204,7 +204,7 @@ sub _do_login {
     # Propagate user to environment
     $ENV{REMOTE_USER} = $user_id;
 
-    $session{language} = pkg('MyPref')->get('language') || DefaultLanguage;
+    $session{language} = pkg('MyPref')->get('language') || DefaultLanguage || 'en';
 
     # Unload the session
     pkg('Session')->unload();
