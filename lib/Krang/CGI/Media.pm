@@ -42,6 +42,7 @@ use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 
 
@@ -1276,7 +1277,11 @@ sub list_active_row_handler {
     $row->{title} = $q->escapeHTML($media->title);
 
     # commands column
-    $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|;
+    $row->{commands_column} = '<input value="'
+                            . localize('View Detail')
+                            . qq|" onclick="view_media('|
+                            . $media->media_id
+                            . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $media->checked_out_by);
@@ -1420,7 +1425,7 @@ sub make_media_tmpl_data {
 
         # Display creation_date
         my $creation_date = $m->creation_date();
-        $tmpl_data{creation_date} = $creation_date->strftime('%m/%d/%Y %I:%M %p');
+        $tmpl_data{creation_date} = $creation_date->strftime(localize('%m/%d/%Y %I:%M %p'));
 
         # Set up versions drop-down
         my $curr_version = $tmpl_data{version};
@@ -1459,7 +1464,11 @@ sub make_media_tmpl_data {
     
     # Build type drop-down
     my %media_types = pkg('Pref')->get('media_type');
+
+    %media_types = map { $_ => localize($media_types{$_}) } keys %media_types;
+
     my @media_type_ids = ( "", sort { $media_types{$a} cmp $media_types{$b} } keys(%media_types) );
+
     my $media_types_popup_menu = $q->popup_menu(
                                                 -name => 'media_type_id',
                                                 -values => \@media_type_ids,
@@ -1496,7 +1505,7 @@ sub make_media_tmpl_data {
         my %contrib_row = (
                            first => $c->first(),
                            last => $c->last(),
-                           type => $contrib_types{ $c->selected_contrib_type() },
+                           type => localize($contrib_types{ $c->selected_contrib_type() }),
                           );
         push(@contribs, \%contrib_row);
     }
@@ -1551,7 +1560,7 @@ sub make_media_view_tmpl_data {
     # Display media type name
     my %media_types = pkg('Pref')->get('media_type');
     my $media_type_id = $m->media_type_id();
-    $tmpl_data{type} = $media_types{$media_type_id} if ($media_type_id);
+    $tmpl_data{type} = localize($media_types{$media_type_id}) if ($media_type_id);
 
     # Display category
     my $category_id = $m->category_id();
@@ -1570,7 +1579,7 @@ sub make_media_view_tmpl_data {
         my %contrib_row = (
                            first => $c->first(),
                            last => $c->last(),
-                           type => $contrib_types{ $c->selected_contrib_type() },
+                           type => localize($contrib_types{ $c->selected_contrib_type() }),
                           );
         push(@contribs, \%contrib_row);
     }
@@ -1579,7 +1588,7 @@ sub make_media_view_tmpl_data {
 
     # Display creation_date
     my $creation_date = $m->creation_date();
-    $tmpl_data{creation_date} = $creation_date->strftime('%m/%d/%Y %I:%M %p');
+    $tmpl_data{creation_date} = $creation_date->strftime(localize('%m/%d/%Y %I:%M %p'));
  
     # Handle simple scalar fields
     my @m_fields = qw(
@@ -1749,25 +1758,37 @@ sub find_media_row_handler {
 
     # creation_date
     my $tp = $media->creation_date();
-    $row->{creation_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
+    $row->{creation_date} = (ref($tp)) ? $tp->strftime(localize('%m/%d/%Y %I:%M %p')) : localize('[n/a]');
 
     # pub_status
-    $row->{pub_status} = $media->published() ? '<b>P</b>' : '&nbsp;';
+    $row->{pub_status} = $media->published() ? '<b>' . localize('P') . '</b>' : '&nbsp;';
 
     if ( not($media->may_edit) or (($media->checked_out) and ($media->checked_out_by ne $ENV{REMOTE_USER})) ) {
         $row->{checkbox_column} = "&nbsp;";
-        $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|;
+        $row->{commands_column} = qq|<input value="|
+                                . localize('View Detail')
+                                . qq|" onclick="view_media('|
+                                . $media->media_id . qq|')" type="button" class="button">|;
     } else {
-        $row->{commands_column} = qq|<input value="View Detail" onclick="view_media('| . $media->media_id . qq|')" type="button" class="button">|
-        . ' '
-        . qq|<input value="Edit" onclick="edit_media('| . $media->media_id . qq|')" type="button" class="button">|;
+        $row->{commands_column} = qq|<input value="|
+                                . localize('View Detail')
+                                . qq|" onclick="view_media('|
+                                . $media->media_id
+                                . qq|')" type="button" class="button">|
+                                . ' '
+                                . qq|<input value="|
+                                . localize('Edit')
+                                . qq|" onclick="edit_media('|
+                                . $media->media_id
+                                . qq|')" type="button" class="button">|;
     }
 
     # status 
     if ($media->checked_out) {
-        $row->{status} = "Checked out by <b>"
-            . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login
-            . '</b>';
+        $row->{status} = localize('Checked out by')
+                       . ' <b>'
+                       . (pkg('User')->find(user_id => $media->checked_out_by))[0]->login
+                       . '</b>';
     } else {
         $row->{status} = '&nbsp;';
     }
