@@ -273,7 +273,7 @@ sub create {
 	$story->slug('');
 	$story->categories(@new_cats);
 	$story->save; $story->checkin;
-	add_message ('story_had_category_url', id => $story->story_id);	
+	add_message ('story_has_category_url', id => $story->story_id);	
       } else {
 	croak ("DuplicateURL didn't include category_id OR story_id!");
       }
