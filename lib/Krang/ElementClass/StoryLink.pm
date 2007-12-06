@@ -7,6 +7,7 @@ use Krang::ClassLoader base => 'ElementClass';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Krang::ClassLoader Conf => qw(PreviewSSL);
 use Krang::ClassLoader 'URL';
+use Krang::ClassLoader Localization => qw(localize);
 
 # For *Link hard find feature
 use Storable qw(nfreeze);
@@ -37,14 +38,16 @@ sub input_form {
     if ($story) {
         my $story_id = $story->story_id;
         my ($story) = pkg('Story')->find(story_id => $story_id);
-        $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">} .
-          qq{Title: "} . $story->title . qq{"<br>} . 
-          qq{URL: <a href="javascript:Krang.preview('story',$story_id)">} . pkg('Widget')->can('format_url')->(url => $story->url, length => 30) . qq{</a></div>};
+        $html .= qq{<div style="padding-bottom: 2px; margin-bottom: 2px; border-bottom: solid #333333 1px">}
+               . localize('Title:') . ' "' . $story->title . qq{"<br>}
+               . localize('URL:')   . qq{ <a href="javascript:Krang.preview('story',$story_id)">}
+                                    . pkg('Widget')->can('format_url')->(url => $story->url, length => 30)
+                                    . qq{</a></div>};
     }
 
 
     $html .= scalar $query->button(-name    => "find_story_$param",
-                                   -value   => "Find Story",
+                                   -value   => localize("Find Story"),
                                    -onClick => "find_story('$param')",
 				   -class   => "button",
                                   );
@@ -63,7 +66,7 @@ sub validate {
     my ($self, %arg) = @_;
     my ($query, $element) = @arg{qw(query element)};
     if ($self->{required} and not defined $element->data) {
-        return (0, "$self->{display_name} requires a value.");
+        return (0, $self->display_name . ' ' . localize('requires a value.'));
     }
     return 1;
 }
@@ -81,8 +84,9 @@ sub view_data {
     my $story = $element->data();
     if ($story) {
         my $story_id = $story->story_id;
-        $html .= qq{Title: "} . $story->title . qq{"<br>} . 
-          qq{URL: <a href="javascript:Krang.preview('story',$story_id)">} . $story->url . qq{</a>};
+        $html = localize('Title:') . ' "' . $story->title . qq{"<br>}
+              . localize('URL:'  ) . qq{ <a href="javascript:Krang.preview('story',$story_id)">}
+                                   . $story->url . qq{</a>};
     }
 
     return $html;

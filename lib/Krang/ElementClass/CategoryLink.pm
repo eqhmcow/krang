@@ -6,6 +6,7 @@ use warnings;
 use Krang::ClassLoader base => 'ElementClass';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Krang::ClassLoader Conf => qw(PreviewSSL);
+use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'URL';
 
 #use Krang::MethodMaker
@@ -49,7 +50,7 @@ sub validate {
     my $object = $element->object;
     if ($object->isa('Krang::Category') and 
         $value and $value == $object->category_id) {
-        return (0, "$self->{display_name} cannot link to this category!");
+        return (0, $self->display_name . ' ' . localize('cannot link to this category!'));
     }
 
     return $self->SUPER::validate(%arg);

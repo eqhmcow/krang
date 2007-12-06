@@ -4,10 +4,11 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass';
+use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 
 use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( values labels ) ];
+  get_set => [ qw( values ) ];
 
 sub new {
     my $pkg = shift;
@@ -34,6 +35,30 @@ sub input_form {
                                      -default   => $element->data(),
                                      -values    => $values,
                                      -labels    => $labels);
+}
+
+sub labels {
+    my ($self, $val) = @_;
+
+    $self->{labels} = $val if $val;
+
+    return $self->{labels} if ref($self->{labels}) eq 'CODE';
+
+    my %localized_labels = ();
+
+    if (%{$self->{labels}}) {
+	# We've got labels
+	while ( my ($key, $val) = each %{$self->{labels}} ) {
+	    $localized_labels{$key} = localize($val);
+	}
+    } else {
+	# We've only got values
+	for my $val (@{$self->{values}}) {
+	    $localized_labels{$val} = localize($val);
+	}
+    }
+
+    return \%localized_labels;
 }
 
 =head1 NAME

@@ -5,7 +5,9 @@ use warnings;
 use base 'Krang::ElementClass::Textarea';
 use Carp qw(croak);
 
-use Krang::Message qw(add_message);
+use Krang::ClassLoader Message      => qw(add_message);
+use Krang::ClassLoader Localization => qw(localize);
+
 use Krang::MethodMaker get_set =>
   [qw( toolbar_config toolbar_config_string rows cols )];
 
@@ -79,7 +81,7 @@ sub validate {
     if ($self->{required} and 
         (not defined $value or not length $value or
          $value =~ m!^<br\s*/>\s*$!)) {
-        return (0, $self->display_name . " requires a value.");
+        return (0, $self->display_name . ' ' . localize('requires a value.'));
     }
     return 1;
 }
@@ -97,6 +99,9 @@ sub input_form {
     my ( $query, $element ) = @arg{qw(query element)};
     my ($param) = $self->param_names( element => $element );
     my $html = "";
+
+    my $lang = localize('en');
+    $lang = substr($lang, 0, 2) unless $lang eq 'en';
 
     # only add this once
     my @sibs = grep { $_->class->isa(__PACKAGE__) } 
@@ -117,7 +122,7 @@ sub input_form {
         $html .= <<END;
 <script type="text/javascript">
     _editor_url  = "xinha/"
-    _editor_lang = "en";
+    _editor_lang = "$lang";
 
     if (!Krang.XinhaLoaded) {
         var xinha_script = document.createElement('script');

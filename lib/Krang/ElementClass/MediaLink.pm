@@ -7,6 +7,7 @@ use Krang::ClassLoader base => 'ElementClass';
 use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Conf => qw(PreviewSSL);
 use Krang::ClassLoader 'URL';
+use Krang::ClassLoader Localization => qw(localize);
 
 # For *Link hard find feature
 use Storable qw(nfreeze);
@@ -54,15 +55,15 @@ sub input_form {
 
     # add interface for find/upload
     $html .= scalar $query->button(-name    => "find_media_$param",
-                                   -value   => "Find Media",
+                                   -value   => localize("Find Media"),
                                    -onClick => "find_media('$param')",
                                    -class   => "button",
                                   ) 
-      . ' or upload a new file: '
+      . ' ' . localize('or upload a new file:') . ' '
         . scalar $query->filefield(-name => $param) . '&nbsp;' .
           scalar $query->button(-name    => "upload_media_$param",
-                                -value   => "Upload",
-                                -onClick => "save_and_stay()",
+                                -value   => localize("Upload"),
+                                -onClick => "db_save_and_stay()",
                                 -class   => "button");
 
     # Add hard find parameters
@@ -81,7 +82,7 @@ sub validate {
     my ($param) = $self->param_names(element => $element);
     return 1 unless $self->{required};
     return 1 if $element->data or $query->param($param);
-    return (0, "$self->{display_name} requires a value.");
+    return (0, $self->display_name . ' ' . localize('requires a value.'));
 }
 
 # show a thumbnail in view mode
@@ -105,7 +106,7 @@ sub view_data {
                     qq{<a href="javascript:Krang.preview('media',$media_id)">} . 
                       $media->filename . qq{</a> ${size}};
     } else {
-        $html = "No media object assigned.";
+        $html = localize("No media object assigned.");
     }
     return $html;
 }

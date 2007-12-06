@@ -4,10 +4,11 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass::Storable';
+use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 
 use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( size multiple values labels ) ];
+  get_set => [ qw( size multiple values ) ];
 
 sub new {
     my $pkg = shift;
@@ -74,6 +75,30 @@ sub view_data {
     my $element = $arg{element};
     return "" unless $element->data;
     return join("<br>", @{$element->data});
+}
+
+sub labels {
+    my ($self, $val) = @_;
+
+    $self->{labels} = $val if $val;
+
+    return $self->{labels} if ref($self->{labels}) eq 'CODE';
+
+    my %localized_labels = ();
+
+    if (%{$self->{labels}}) {
+	# We've got labels
+	while ( my ($key, $val) = each %{$self->{labels}} ) {
+	    $localized_labels{$key} = localize($key);
+	}
+    } else {
+	# We've only got values
+	for my $val (@{$self->{values}}) {
+	    $localized_labels{$val} = localize($val);
+	}
+    }
+
+    return \%localized_labels;
 }
 
 =head1 NAME

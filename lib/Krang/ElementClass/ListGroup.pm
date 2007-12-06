@@ -8,6 +8,7 @@ use Krang::ClassLoader Log => qw(debug info);
 use Krang::ClassLoader 'ListGroup';
 use Krang::ClassLoader 'List';
 use Krang::ClassLoader 'ListItem';
+use Krang::ClassLoader Localization => qw(localize);
 
 use Carp qw(croak);
 
@@ -81,6 +82,7 @@ END
             $x++;
         }
 
+	my $not_found = localize("Couldn't find");
 
         # setup function to update lists
         $html_output .= <<END;
@@ -93,7 +95,7 @@ function ${jparam}_update( e, which ) {
    // find target list and empty it
    var target = document.getElementById("${param}_" + (which + 1));
    if (!target) {
-      // alert("Couldn't find " + "${param}_" + (which + 1));
+      // alert("$not_found " + "${param}_" + (which + 1));
       return;
    }
    target.options.length = 0;
@@ -263,7 +265,7 @@ sub validate {
     my @values = $query->param($nth_list_param);
 
     if ($self->{required} and (not scalar(@values))) {
-        return (0, "List $self->{display_name} requires a value.");
+        return (0, localize('List') . ' ' .  $self->display_name . ' ' . localize('requires a value.'));
     }
     return 1;
 }

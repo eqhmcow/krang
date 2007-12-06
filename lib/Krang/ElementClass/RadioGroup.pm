@@ -9,10 +9,11 @@ use Krang::ClassLoader Log => qw(debug info);
 use Krang::ClassLoader 'ListGroup';
 use Krang::ClassLoader 'List';
 use Krang::ClassLoader 'ListItem';
+use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 
 use Krang::ClassLoader MethodMaker => 
-  get_set => [ qw( values labels columns list_group ) ];
+  get_set => [ qw( values columns list_group ) ];
 
 sub new {
     my $pkg = shift;
@@ -153,6 +154,30 @@ sub _get_list_data {
 	}
     }
     return (\@values, \%labels);
+}
+
+sub labels {
+    my ($self, $val) = @_;
+
+    $self->{labels} = $val if $val;
+
+    return $self->{labels} if ref($self->{labels}) eq 'CODE';
+
+    my %localized_labels = ();
+
+    if (%{$self->{labels}}) {
+	# We've got labels
+	while ( my ($key, $val) = each %{$self->{labels}} ) {
+	    $localized_labels{$key} = localize($key);
+	}
+    } else {
+	# We've only got values
+	for my $val (@{$self->{values}}) {
+	    $localized_labels{$val} = localize($val);
+	}
+    }
+
+    return \%localized_labels;
 }
 
 

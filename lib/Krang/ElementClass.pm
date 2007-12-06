@@ -9,7 +9,7 @@ use CGI ();
 use HTML::Template::Expr;
 use Krang::ClassLoader Log => qw(debug info critical);
 use Krang::ClassLoader Conf => qw(PreviewSSL);
-
+use Krang::ClassLoader Localization => qw(localize);
 use Krang::ClassLoader 'Pref';
 
 use Exception::Class
@@ -74,7 +74,6 @@ use Krang::ClassLoader MethodMaker =>
   new_with_init => 'new',
   new_hash_init => 'hash_init',
   get_set       => [ qw( name
-                         display_name
                          min
                          max
                          bulk_edit
@@ -197,6 +196,15 @@ fully constructed objects will be returned from the accessor.
 =back
 
 =cut
+
+# always return the localized version
+sub display_name {
+    my ($self, $new_val) = @_;
+
+    $self->{display_name} = $new_val if $new_val;
+
+    return localize($self->{display_name});
+}
 
 # the children attribute decodes its input, instantiating element
 # classes where needed
@@ -366,7 +374,7 @@ sub validate {
     my ($param) = $self->param_names(element => $element);
     my $value = $query->param($param);
     if ($self->{required} and (not defined $value or not length $value)) {
-        return (0, "$self->{display_name} requires a value.");
+        return (0, $self->display_name . ' ' . localize('requires a value.'));
     }
     return 1;
 }
@@ -771,7 +779,8 @@ sub fill_template {
     $params{slug} = $publisher->story()->slug()
       if exists($template_vars{slug});
 
-    $params{cover_date} = $publisher->story()->cover_date()->strftime('%b %e, %Y %l:%M %p') if exists($template_vars{cover_date});
+    $params{cover_date} = $publisher->story()->cover_date()->strftime(localize('%b %e, %Y %l:%M %p'))
+      if exists($template_vars{cover_date});
 
     $params{page_break} = $publisher->page_break()
       if exists($template_vars{page_break});

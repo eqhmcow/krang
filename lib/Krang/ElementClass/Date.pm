@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Krang::ClassLoader base => 'ElementClass::Storable';
+use Krang::ClassLoader Localization => qw(localize);
+use Krang::ClassLoader Session => qw(%session);
 use Carp qw(croak);
 
 use Krang::ClassLoader MethodMaker => 
@@ -52,14 +54,14 @@ sub validate {
 
     if (not $m and not $d and not $y) {
         if ($self->{required}) {
-            return (0, "$self->{display_name} requires a value.");
+            return (0, $self->display_name . ' ' . localize('requires a value.'));
         } else {
             return (1, undef);
         }
     } elsif ($m and $d and $y) {
         return (1, undef);
     } elsif ($m or $d or $y) {
-        return (0, "$self->{display_name} selection incomplete.");
+        return (0, $self->display_name . ' ' . localize('selection incomplete.'));
     }
 
     return (1, undef);
@@ -83,7 +85,14 @@ sub load_query_data {
 sub view_data {
     my $element = $_[2];
     return "" unless $element->data;
-    return $element->data->mdy("/");
+    my $date_format    = 'mdy';
+    my $date_separator = '/';
+
+    unless ($session{language} eq 'en') {
+	($date_format, $date_separator) = localize('NUMERIC_DATE_FORMAT');
+    }
+
+    return $element->data->$date_format($date_separator);
 }
 
 # takes a name and an optional date object (Time::Piece::MySQL).
@@ -91,22 +100,31 @@ sub view_data {
 sub _date_input {
     my ($self, $query, $name, $date) = @_;
 
+    my %month_labels = {
+        ''  => ' ',
+        1  => 'Jan',
+        2  => 'Feb',
+        3  => 'Mar',
+        4  => 'Apr',
+        5  => 'May',
+        6  => 'Jun',
+        7  => 'Jul',
+        8  => 'Aug',
+        9  => 'Sep',
+        10 => 'Oct',
+        11 => 'Nov',
+        12 => 'Dec',
+    };
+
+    unless ($session{language} eq 'en') {
+	@month_labels{1..12} = localize('MONTH_LABELS');
+    }
+
     my $m_sel = $query->popup_menu(-name      => $name . "_month",
                                    -default   => $date ? $date->mon : 0,
                                    -values    => [ '', 1 .. 12 ],
-                                   -labels    => { ''  => ' ',
-                                                   1  => 'Jan',
-                                                   2  => 'Feb',
-                                                   3  => 'Mar',
-                                                   4  => 'Apr',
-                                                   5  => 'May',
-                                                   6  => 'Jun',
-                                                   7  => 'Jul',
-                                                   8  => 'Aug',
-                                                   9  => 'Sep',
-                                                   10 => 'Oct',
-                                                   11 => 'Nov',
-                                                   12 => 'Dec' });
+                                   -labels    => \%month_labels,
+				  );
     my $d_sel = $query->popup_menu(-name      => $name . "_day",
                                    -default   => $date ? $date->mday : 0,
                                    -values    => [ '', 1 .. 31 ],
@@ -120,7 +138,11 @@ sub _date_input {
                                    -labels    => { '' => ' ' });
 
 
-    return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
+    if ($session{language} eq 'en') {
+	return $m_sel . "&nbsp;" . $d_sel . "&nbsp;" . $y_sel;
+    } else {
+	return join '&nbsp;', ($m_sel, $d_sel, $y_sel)[localize('DATE_ORDER')];
+    }
 }
 
 sub fill_template {
@@ -131,7 +153,7 @@ sub fill_template {
 sub template_data {
     my ($self, %arg) = @_;
     return "" unless $arg{element}->data;
-    $arg{element}->data->strftime('%b %e, %Y')
+    $arg{element}->data->strftime(localize('%b %e, %Y'));
 } 
 
 sub thaw_data_xml {
