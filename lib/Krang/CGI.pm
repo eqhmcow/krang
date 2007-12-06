@@ -7,6 +7,7 @@ use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader Message => qw(add_message);
 use Krang::ClassLoader Widget  => qw(category_chooser_object);
 use Krang::ClassLoader 'Charset';
+use Krang::ClassLoader Localization => qw(localize);
 use MIME::Base64 qw(decode_base64);
 use Encode qw(decode_utf8);
 
@@ -444,7 +445,7 @@ sub access_forbidden {
         . " Redirecting to 'login.pl'"
     );
 
-    $msg ||= "You do not have permissions to access that portion of the site.";
+    $msg ||= localize("You do not have permissions to access that portion of the site.");
 
     return $self->redirect_to_login($msg);
 }
