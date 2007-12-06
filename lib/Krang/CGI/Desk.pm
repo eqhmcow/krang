@@ -31,6 +31,7 @@ use Krang::ClassLoader Widget => qw(format_url);
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader 'Group';
+use Krang::ClassLoader 'Localization' => qw(localize);
 
 use Krang::ClassLoader base => 'CGI';
 
@@ -104,19 +105,24 @@ sub show {
     my %admin_perms = pkg('Group')->user_admin_permissions();
     $template->param(may_publish => $admin_perms{may_publish});
 
+    # localize labels
+    my $labels = {
+        story_id   => localize('ID'),
+        title      => localize('Title'),
+        url        => localize('URL'),
+        cover_date => localize('Cover Date'),
+    };
+
     # setup sort selector
     my $sort = $query->param('krang_pager_sort_field') || 'story_id';
     $template->param('sort_select' => scalar
-                     $query->popup_menu(-name => 'sort_select',
-                                        -values => [ 'story_id',
+                     $query->popup_menu(-name     => 'sort_select',
+                                        -values   => [ 'story_id',
                                                      'title',
                                                      'url',
                                                      'cover_date' ],
-                                        -labels => { story_id => 'ID',
-                                                     title => 'Title',
-                                                     url   => 'URL',
-                                                     cover_date  => 'Cover Date' },
-                                        -default => $sort,
+                                        -labels   => $labels,
+                                        -default  => $sort,
                                         -override => 1,
                                         -onchange => "Krang.Pager.sort(this.options[this.selectedIndex].value,0)",
                                        ));
