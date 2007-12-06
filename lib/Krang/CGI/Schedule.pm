@@ -13,6 +13,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Widget => qw(time_chooser decode_time datetime_chooser decode_datetime);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'AddOn';
+use Krang::ClassLoader Localization => qw(localize);
 
 our %OBJECT_ACTION_LABELS;
 our %ADMIN_ACTION_LABELS;
@@ -56,16 +57,6 @@ BEGIN {
         %ADMIN_ACTION_LABELS, %OBJECT_ACTION_LABELS, clean => 'Clean', delete => 'Delete'
     );
 };
-
-our %WEEKDAYS = (
-                    0 => 'Sunday',
-                    1 => 'Monday',
-                    2 => 'Tuesday',
-                    3 => 'Wednesday',
-                    4 => 'Thursday',
-                    5 => 'Friday',
-                    6 => 'Saturday'
-                );
 
 =head1 NAME
 
@@ -163,6 +154,8 @@ sub edit {
     $template->param( 'published_version' => $object->published_version );
     $template->param( 'url' => $object->url );
 
+    my $weekdays = $self->_get_weekdays();
+
     if ($schedule_type eq 'simple') {
         $template->param( 'simple' => 1 );
                                                                                   
@@ -182,22 +175,22 @@ sub edit {
 
         $template->param( weekly_day_selector => scalar
                             $query->popup_menu( -name    => 'weekly_day',
-                                                -values => [keys %WEEKDAYS],
-                                                -labels => \%WEEKDAYS ));
+                                                -values => [keys %$weekdays],
+                                                -labels => $weekdays ));
 
         $template->param( weekly_time_selector => time_chooser(name=>'weekly_time', query=>$query, nochoice => 1));
 
+        %OBJECT_ACTION_LABELS = map { $_ => localize($OBJECT_ACTION_LABELS{$_}) } keys %OBJECT_ACTION_LABELS;
 
         $template->param( action_selector => scalar
                             $query->popup_menu( -name    => 'action',
                                                 -values => [keys %OBJECT_ACTION_LABELS],
                                                 -labels => \%OBJECT_ACTION_LABELS ));
-                             
     }
 
     my %version_labels = map { $_ => $_ } [0 .. $object->version];
-        $version_labels{0} = 'Newest Version';
-                                                                                  
+        $version_labels{0} = localize('Newest Version');
+
         $template->param(version_selector => scalar
                          $query->popup_menu(-name    => 'version',
                                             -values  => [0 .. $object->version],
@@ -205,7 +198,7 @@ sub edit {
                                             -default => 0));
 
     # get existing scheduled actions for object
-    my @existing_schedule = get_existing_schedule($object_type, $object_id);
+    my @existing_schedule = $self->get_existing_schedule($object_type, $object_id);
     $template->param( 'existing_schedule_loop' => \@existing_schedule ) if @existing_schedule;
 
     return $template->output; 
@@ -234,24 +227,27 @@ sub edit_admin {
     $template->param( full_date_selector => datetime_chooser(name=>'full_date', query=>$query, nochoice => 1));
 
     $template->param( hourly_minute_selector =>  scalar
-                        $query->popup_menu( -name    => 'hourly_minute',
+                        $query->popup_menu( -name   => 'hourly_minute',
                                             -values => [0..59] ));
 
     $template->param( daily_time_selector => time_chooser(name=>'daily_time', query=>$query, nochoice => 1));
 
+    my $weekdays = $self->_get_weekdays();
+
     $template->param( weekly_day_selector => scalar
-                        $query->popup_menu( -name    => 'weekly_day',
-                                            -values => [keys %WEEKDAYS],
-                                            -labels => \%WEEKDAYS ));
+                        $query->popup_menu( -name   => 'weekly_day',
+                                            -values => [keys %$weekdays],
+                                            -labels => $weekdays ));
 
     $template->param( weekly_time_selector => time_chooser(name=>'weekly_time', query=>$query, nochoice => 1));
 
+    %ADMIN_ACTION_LABELS = map { $_ => localize($ADMIN_ACTION_LABELS{$_}) } keys %ADMIN_ACTION_LABELS;
+
     $template->param( action_selector => scalar
-                        $query->popup_menu( -name    => 'action',
+                        $query->popup_menu( -name   => 'action',
                                             -values => [keys %ADMIN_ACTION_LABELS],
                                             -labels => \%ADMIN_ACTION_LABELS));
-                         
-    return $template->output; 
+    return $template->output;
 }
 
 # used by 'Jobs' admin tool
@@ -260,6 +256,8 @@ sub list_all {
     my $query = $self->query;
 
     my $template = $self->load_tmpl('list_all.tmpl', associate => $query);
+
+    my $weekdays = $self->_get_weekdays();
 
     my $pager = pkg('HTMLPager')->new(
         cgi_query    => $query,
@@ -276,62 +274,72 @@ sub list_all {
             action   => 'Action',
             version  => 'Version'
         },
-        row_handler => sub { $self->list_all_row_handler(@_) },
+        row_handler => sub { $self->list_all_row_handler(@_, $weekdays) },
         id_handler  => sub { return $_[0]->schedule_id },
     );
 
     # Run pager
-    $template->param(pager_html =>  $pager->output());
+    $template->param(pager_html => $pager->output(),
+                     row_count  => $pager->row_count );
 
     return $template->output;
 }
 
 sub list_all_row_handler {
-    my ($self, $row, $schedule) = @_;
-    $row->{asset} = ucfirst($schedule->object_type).' '.$schedule->object_id;
-    
+    my ($self, $row, $schedule, $weekdays) = @_;
+
+    $row->{asset} = localize(ucfirst($schedule->object_type)).' '.$schedule->object_id;
+
     my %context = $schedule->context ? @{$schedule->context} : ();
     my $version = $context{'version'} ? $context{'version'} : '';
     my $frequency = ($schedule->repeat eq 'never') ? 'One Time' : ucfirst($schedule->repeat);
     my $s_params;
 
+    my $localize = $self->_get_datetime_semantic();
+
     if ($frequency eq 'One Time') {
-       $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p');
+       $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime(localize('%m/%d/%Y %I:%M %p'));
     } elsif ($frequency eq 'Hourly') {
-       ($schedule->minute eq '0') ? ($s_params = 'on the hour') : ($s_params = $schedule->minute." minutes past the hour");
+       ($schedule->minute eq '0') ? ($s_params = $localize->{'on the hour'})
+                                  : ($s_params = $schedule->minute." ".$localize->{"minutes past the hour"});
     } elsif ($frequency eq 'Daily') {
         my ($hour, $ampm) = convert_hour($schedule->hour);
         $s_params = "$hour:".convert_minute($schedule->minute)." $ampm";
     } elsif ($frequency eq 'Weekly') {
         my ($hour, $ampm) = convert_hour($schedule->hour);
-        $s_params = $WEEKDAYS{$schedule->day_of_week}." at $hour:".convert_minute($schedule->minute)." $ampm";
+        $s_params = $weekdays->{$schedule->day_of_week}." $localize->{at} $hour:".convert_minute($schedule->minute)." $ampm";
     }
-                                                                                
-    $s_params = ($frequency eq 'Daily') ? ($frequency.' at '.$s_params) : ($frequency.', '.$s_params);
+
+    $s_params = ($frequency eq 'Daily') ? ($localize->{$frequency}." $localize->{at} ".$s_params)
+                                        : ($localize->{$frequency}.', '.$s_params);
 
     $row->{schedule} = $s_params;
-    $row->{next_run} = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p');
-    $row->{action} = $ALL_ACTION_LABELS{$schedule->action};
-    $row->{version} = $version;
+    $row->{next_run} = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime(localize('%m/%d/%Y %I:%M %p'));
+    $row->{action}   = $schedule->action ? localize($ALL_ACTION_LABELS{$schedule->action}) : localize('[n/a]');
+    $row->{version}  = $version ? $version : localize('[n/a]');
 }
 
 # Get the media or story object from session or die() trying
 sub get_object {
     my $self = shift;
-    my $object_type = shift;                            
-                                            
+    my $object_type = shift;
+
     # Get media or story object from session -- or die() trying
     my $object = $session{$object_type};
     die ("No story or media object available for schedule edit") unless (ref($object));
-                                                                        
+
     return $object;
 }
 
 sub get_existing_schedule {
-    my ($object_type, $object_id) = @_;
+    my ($self, $object_type, $object_id) = @_;
+
     my @schedules = pkg('Schedule')->find( 'object_type' => $object_type, 'object_id' => $object_id );
-    
+
     my @existing_schedule_loop = ();
+
+    my $weekdays = $self->_get_weekdays();
+    my $localize = $self->_get_datetime_semantic();
 
     foreach my $schedule (@schedules) {
         my %context = $schedule->context ? @{$schedule->context} : ();
@@ -340,26 +348,30 @@ sub get_existing_schedule {
         my $s_params;
 
         if ($frequency eq 'One Time') {
-            $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p');
+            $s_params = Time::Piece->from_mysql_datetime($schedule->next_run)->strftime(localize('%m/%d/%Y %I:%M %p'));
         } elsif ($frequency eq 'Hourly') {
-            ($schedule->minute eq '0') ? ($s_params = 'on the hour') : ($s_params = $schedule->minute." minutes past the hour"); 
+            ($schedule->minute eq '0') ? ($s_params = $localize->{'on the hour'})
+                                       : ($s_params = $schedule->minute." $localize->{'minutes past the hour'}"); 
         } elsif ($frequency eq 'Daily') {
             my ($hour, $ampm) = convert_hour($schedule->hour);
             $s_params = "$hour:".convert_minute($schedule->minute)." $ampm"; 
         } elsif ($frequency eq 'Weekly') {
             my ($hour, $ampm) = convert_hour($schedule->hour);
-            $s_params = $WEEKDAYS{$schedule->day_of_week}." at $hour:".convert_minute($schedule->minute)." $ampm";        
+            $s_params = $weekdays->{$schedule->day_of_week}." $localize->{at} $hour:".convert_minute($schedule->minute)." $ampm";        
         }
-        
-        $s_params = ($frequency eq 'Daily') ? ($frequency.' at '.$s_params) : ($frequency.', '.$s_params);
-        
-        push(@existing_schedule_loop, {
-                                                'schedule_id' => $schedule->schedule_id,
-                                                'schedule' => $s_params,
-                                                'next_run' => Time::Piece->from_mysql_datetime($schedule->next_run)->strftime('%m/%d/%Y %I:%M %p'),
-                                                'action' => $ALL_ACTION_LABELS{$schedule->action},
-                                                'version' => $version
-                                            });
+
+        $s_params = ($frequency eq 'Daily') ? ($localize->{$frequency}." $localize->{at} ".$s_params)
+                                            : ($localize->{$frequency}.', '.$s_params);
+
+        push(@existing_schedule_loop,
+	     {
+              'schedule_id' => $schedule->schedule_id,
+              'schedule'    => $s_params,
+              'next_run'
+                 => Time::Piece->from_mysql_datetime($schedule->next_run)->strftime(localize('%m/%d/%Y %I:%M %p')),
+              'action'      => localize($ALL_ACTION_LABELS{$schedule->action}),
+              'version'     => $version,
+	     });
     }
 
     return @existing_schedule_loop;
@@ -374,12 +386,16 @@ sub convert_minute {
 sub convert_hour {
     my $hour = shift;
 
-    if ($hour >= 13) {
-        return ($hour - 12), 'PM'; 
-    } elsif ($hour == 0) {
-        return 12, 'AM';
+    if (localize('AMPM') eq 'AMPM') {
+	if ($hour >= 13) {
+	    return ($hour - 12), 'PM';
+	} elsif ($hour == 0) {
+	    return 12, 'AM';
+	} else {
+	    return $hour, 'AM';
+	}
     } else {
-        return $hour, 'AM'; 
+	return $hour, '';
     }
 }
 
@@ -425,33 +441,33 @@ sub add {
 
         if ($version) {
             $schedule = pkg('Schedule')->new(   object_type => $object_type,
-                                                object_id => $object_id,
-                                                action => $action,
-                                                repeat => 'never',
-                                                context => [ version => $version ],
-                                                date => $date );
+                                                object_id   => $object_id,
+                                                action      => $action,
+                                                repeat      => 'never',
+                                                context     => [ version => $version ],
+                                                date        => $date );
         } else {
             $schedule = pkg('Schedule')->new(   object_type => $object_type,
-                                                object_id => $object_id,
-                                                action => $action,
-                                                repeat => 'never',
-                                                date => $date );
+                                                object_id   => $object_id,
+                                                action      => $action,
+                                                repeat      => 'never',
+                                                date        => $date );
         }
 
     } elsif ($repeat eq 'hourly') {
         if ($version) {
             $schedule = pkg('Schedule')->new(   object_type => $object_type,
-                                            object_id => $object_id,
-                                            action => $action,
-                                            context => [ version => $version ],
-                                            repeat => 'hourly',
-                                            minute => $q->param('hourly_minute'));    
+                                                object_id   => $object_id,
+                                                action      => $action,
+                                                context     => [ version => $version ],
+                                                repeat      => 'hourly',
+                                                minute      => $q->param('hourly_minute'));    
         } else {
-             $schedule = pkg('Schedule')->new(   object_type => $object_type,
-                                            object_id => $object_id,
-                                            action => $action,
-                                            repeat => 'hourly',
-                                            minute => $q->param('hourly_minute'));
+             $schedule = pkg('Schedule')->new(  object_type => $object_type,
+                                                object_id   => $object_id,
+                                                action      => $action,
+                                                repeat      => 'hourly',
+                                                minute      => $q->param('hourly_minute'));
         } 
     } elsif ($repeat eq 'daily') {
         my ($hour, $minute) = decode_time(name => 'daily_time', query => $q);
@@ -463,19 +479,19 @@ sub add {
         
         if ($version) { 
             $schedule = pkg('Schedule')->new(   object_type => $object_type,
-                                            object_id => $object_id,
-                                            action => $action,
-                                            context => [ version => $version ],
-                                            repeat => 'daily',
-                                            minute => $minute,
-                                            hour => $hour );
+                                                object_id   => $object_id,
+                                                action      => $action,
+                                                context     => [ version => $version ],
+                                                repeat      => 'daily',
+                                                minute      => $minute,
+                                                hour        => $hour );
         } else {
             $schedule = pkg('Schedule')->new(   object_type => $object_type,
-                                            object_id => $object_id,
-                                            action => $action,
-                                            repeat => 'daily',
-                                            minute => $minute,
-                                            hour => $hour );
+                                                object_id   => $object_id,
+                                                action      => $action,
+                                                repeat      => 'daily',
+                                                minute      => $minute,
+                                                hour        => $hour );
  
         } 
     } elsif ($repeat eq 'weekly') {
@@ -756,5 +772,48 @@ sub save_and_view {
     return;
 
 }
+
+# localization helper methods
+sub _get_weekdays {
+    my $self = shift;
+
+    my %weekdays = (
+        0 => 'Sunday',
+	1 => 'Monday',
+	2 => 'Tuesday',
+	3 => 'Wednesday',
+	4 => 'Thursday',
+	5 => 'Friday',
+	6 => 'Saturday'
+    );
+
+    unless ($session{language} && $session{language} eq 'en') {
+	@weekdays{0..6} = localize('FULLDAY_LABELS');
+    }
+
+    return \%weekdays;
+}
+
+sub _get_datetime_semantic {
+    my $self = shift;
+
+    our %indicators = (
+        'One Time'     => 'One Time',
+	Hourly         => 'Hourly',
+	Daily          => 'Daily',
+	Weekly         => 'Weekly',
+	at             => 'at',
+	'on the hour'  => 'on the hour',
+	'minutes past the hour' => 'minutes past the hour',
+    );
+
+    unless ($session{language} eq 'en') {
+	@indicators{ 'One Time', 'Hourly', 'on the hour', 'minutes past the hour', 'Daily', 'Weekly', 'at' }
+	  = split /\|/, localize('DATETIME_SEMANTIC');
+    }
+
+    return \%indicators
+}
+
 
 1;
