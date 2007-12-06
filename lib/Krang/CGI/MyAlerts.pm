@@ -10,6 +10,7 @@ use Krang::ClassLoader 'User';
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Widget => qw(category_chooser);
+use Krang::ClassLoader Localization => qw(localize);
 
 =head1 NAME
 
@@ -64,12 +65,13 @@ sub edit {
     my $template = $self->load_tmpl('edit.tmpl', associate => $q, loop_context_vars => 1);
     $template->param( $error => 1 ) if $error;
 
-    my %alert_types = ( new => 'New',
-                        save => 'Save',
-                        checkin => 'Check In',
-                        checkout => 'Check Out',
-                        publish => 'Publish',
-                        move => 'Move To' );
+    my %alert_types = ( new      => localize('New'      ),
+                        save     => localize('Save'     ),
+                        checkin  => localize('Check In' ),
+                        checkout => localize('Check Out'),
+                        publish  => localize('Publish'  ),
+                        move     => localize('Move To'  ),
+		      );
 
     # get current alerts
     my @current_alerts = pkg('Alert')->find( user_id => $user_id );
