@@ -38,6 +38,7 @@ use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'User';
 use Krang::ClassLoader 'PasswordHandler';
+use Krang::ClassLoader Localization => qw(localize);
 
 # query fields to delete
 use constant DELETE_FIELDS => (pkg('User')->USER_RW, 
@@ -823,7 +824,7 @@ sub add_message_for_delete_selected {
 		if (scalar(@users_not_deleted)) {
 		    $users .= ', ' . $u->login;
 		} else {
-		    $users .= ' and ' . $u->login;
+		    $users .= ' ' . localize('and') . ' ' . $u->login;
 		}
 	    }
 	    add_alert('may_not_delete_users', users => $users);
