@@ -20,6 +20,7 @@ use Carp qw(croak);
 use Krang::ClassLoader 'History';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Desk';
+use Krang::ClassLoader Localization => qw(localize);
 
 =head1 NAME
 
@@ -189,7 +190,7 @@ sub show_row_handler {
     my $name = ucfirst((split('::', $history->object_type))[1]);
     my $action = $history->action;
     $action = $ACTION_LABELS{$action} if exists $ACTION_LABELS{$action};
-    $row->{action} = $q->escapeHTML("$name $action");
+    $row->{action} = $q->escapeHTML("$name " . localize($action));
     
     # setup user
     my ($user) = pkg('User')->find(user_id => $history->user_id);
@@ -197,17 +198,18 @@ sub show_row_handler {
         $row->{user} = $q->escapeHTML($user->first_name . " " . $user->last_name);
     } else {
         # user does not exist, might have been deleted
-        $row->{user} = "Unknown User";
+        $row->{user} = localize("Unknown User");
     }
 
     # setup date
-    $row->{timestamp} = $history->timestamp->strftime('%m/%d/%Y %I:%M %p');
+    $row->{timestamp} = $history->timestamp->strftime(localize('%m/%d/%Y %I:%M %p'));
 
     # some events have attributes
     my $attr = "";
-    $attr .= "Version: " . $history->version
+    $attr .= localize("Version:") . ' ' . $history->version
       if $history->version;
-    $attr .= "Desk: " . (pkg('Desk')->find( desk_id => $history->desk_id))[0]->name if $history->desk_id;
+    $attr .= localize("Desk:") . ' ' . localize((pkg('Desk')->find( desk_id => $history->desk_id))[0]->name)
+      if $history->desk_id;
     $row->{attr} = $q->escapeHTML($attr);
 }
 
