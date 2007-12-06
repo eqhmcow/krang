@@ -166,6 +166,10 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Log => qw(debug assert affirm ASSERT);
 use Krang::ClassLoader Message => qw(add_message get_messages add_alert);
 use Krang::ClassLoader Widget => qw(category_chooser date_chooser decode_date);
+use Krang::ClassLoader Localization => qw(localize);
+
+use File::Spec::Functions qw(catdir);
+
 use Krang::ClassLoader base => 'CGI';
 
 # For *Link hard find feature
@@ -344,14 +348,15 @@ sub element_bulk_edit {
     $sep = (defined $sep and length $sep) ? $sep : "__TWO_NEWLINE__";
 
     $template->param(bulk_edit_sep_selector => scalar
-                     $query->radio_group(-name => 'new_bulk_edit_sep',
-                                         -values => [ "__TWO_NEWLINE__",
+                     $query->radio_group(-name     => 'new_bulk_edit_sep',
+                                         -values   => [ "__TWO_NEWLINE__",
                                                       "<p>",
                                                       "<br>" ],
-                                         -labels => { "__TWO_NEWLINE__" =>
-                                                      "One Blank Line" },
-                                         -default => $sep,
+                                         -labels   => { "__TWO_NEWLINE__" =>
+                                                      localize("One Blank Line") },
+                                         -default  => $sep,
                                          -override => 1,
+                                         -class    => 'radio',
                                         ),
                      bulk_edit_sep => $sep);
     
@@ -376,8 +381,10 @@ sub element_bulk_edit {
 sub find_story_link {
     my ($self, %args) = @_;
     my $query = $self->query();
-    my $template = $self->load_tmpl('/ElementEditor/find_story_link.tmpl',
-                                    associate => $query
+    my $template = $self->load_tmpl('find_story_link.tmpl',
+                                    path      => [ catdir('ElementEditor', $session{language}),
+                                                   'ElementEditor' ],
+                                    associate => $query,
                                    );
     my $path    = $query->param('path') || '/';
 
@@ -585,16 +592,18 @@ sub find_story_link_row_handler {
 
     # cover_date
     my $tp = $story->cover_date();
-    $row->{cover_date} = $q->escapeHTML((ref($tp)) ? $tp->mdy('/') : '[n/a]');
+    $row->{cover_date} = $self->_numeric_date_format($tp);
 
     # pub_status
-    $row->{pub_status} = $story->published_version() ? '<b>P</b>' : '&nbsp;';
+    $row->{pub_status} = $story->published_version() ? '<b>' . localize('P') . '</b>' : '&nbsp;';
 }
 
 sub find_media_link {
     my ($self, %args) = @_;
     my $query = $self->query();
-    my $template = $self->load_tmpl('/ElementEditor/find_media_link.tmpl',
+    my $template = $self->load_tmpl('find_media_link.tmpl',
+                                    path      => [ catdir('ElementEditor', $session{language}),
+                                                   'ElementEditor' ],
                                     associate => $query
                                    );
     my $path    = $query->param('path') || '/';
@@ -766,10 +775,10 @@ sub find_media_link_row_handler {
 
     # creation_date
     my $tp = $media->creation_date();
-    $row->{creation_date} = (ref($tp)) ? $tp->mdy('/') : '[n/a]';
+    $row->{creation_date} = $self->_numeric_date_format($tp);
 
     # pub_status
-    $row->{pub_status} = $media->published_version() ? '<b>P</b>' : '&nbsp;';
+    $row->{pub_status} = $media->published_version() ? '<b>' . localize('P') . '</b>' : '&nbsp;';
 }
 
 sub select_story {
@@ -1127,4 +1136,23 @@ sub _get_script_name {
     croak "_get_script_name() must be defined in child class '" 
         . ref( $self ) . "'";
 }
+
+sub _numeric_date_format {
+    my ($self, $time_piece);
+
+    # default numeric date format
+    my $date_format = 'mdy';
+    my $date_separator = '/';
+
+    # maybe change this format for other languages
+    unless ($session{language} eq 'en') {
+	($date_format, $date_separator) = localize('NUMERIC_DATE_FORMAT');
+    }
+
+    return ref($time_piece)
+        ? $self->query->escapeHTML($time_piece->date_format($date_separator))
+        : localize('[n/a]');
+}
+
+
 1;
