@@ -50,6 +50,8 @@ use Krang::ClassLoader Widget => qw(category_chooser format_url autocomplete_val
 use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader Log => qw(debug info critical);
 use Krang::ClassLoader Conf => qw(EnableFTP);
+use Krang::ClassLoader Localization => qw(localize);
+
 use Carp;
 
 
@@ -509,7 +511,7 @@ sub edit_categories {
 
     # Build up tmpl loop
     my @categories = ( {
-                        category_url => "Default",
+                        category_url => localize("Default"),
                         permission_radio => $self->make_permissions_radio("category_".$category_id),
                         is_root => 1,
                         category_id => $category_id,
