@@ -10,13 +10,16 @@ use HTML::PopupTreeSelect::Dynamic;
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader 'Info';
-use Krang::ClassLoader Conf    => qw(KrangRoot ForceStaticBrowserCaching);
-use Krang::ClassLoader DB      => qw(dbh);
-use Krang::ClassLoader Log     => qw(debug info);
-use Krang::ClassLoader Message => qw(add_alert);
-use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Conf         => qw(KrangRoot ForceStaticBrowserCaching);
+use Krang::ClassLoader DB           => qw(dbh);
+use Krang::ClassLoader Log          => qw(debug info);
+use Krang::ClassLoader Message      => qw(add_alert);
+use Krang::ClassLoader Session      => qw(%session);
+use Krang::ClassLoader Localization => qw(localize);
+
 use Text::Wrap qw(wrap);
 use Time::Piece qw(localtime);
+use File::Spec::Functions qw(catdir);
 
 use base 'Exporter';
 our @EXPORT_OK = qw(
@@ -170,7 +173,8 @@ sub category_chooser {
     }
 
     my $template = pkg('HTMLTemplate')->new(
-        filename          => "Widget/category_chooser.tmpl",
+        path              => [ catdir('Widget', $session{language}), 'Widget' ],
+        filename          => 'category_chooser.tmpl',
         cache             => 1,
         die_on_bad_params => 1,
     );
@@ -344,12 +348,12 @@ sub category_chooser_object {
     # build the chooser
     return HTML::PopupTreeSelect::Dynamic->new(
         name              => $name,
-        title             => $title || 'Choose a Category',
+        title             => $title || localize('Choose a Category'),
         data              => $data->{children},
         image_path        => pkg('Widget')->_img_prefix() . 'images',
         onselect          => $name . '_choose_category',
         hide_root         => 1,
-        button_label      => $label || 'Choose',
+        button_label      => $label || localize('Choose'),
         include_css       => 0,
         width             => 225,
         height            => 200,
@@ -779,7 +783,8 @@ sub template_chooser {
       unless $name and $query;
 
     my $template = pkg('HTMLTemplate')->new(
-        filename          => "Widget/template_chooser.tmpl",
+        path              => [ catdir('Widget', $session{language}), 'Widget' ],
+        filename          => 'template_chooser.tmpl',
         cache             => 1,
         die_on_bad_params => 1,
         loop_context_vars => 1,
@@ -901,11 +906,11 @@ sub template_chooser_object {
     # build the chooser, taking care of localizing the buttons and the title
     return HTML::PopupTreeSelect::Dynamic->new(
         name              => $name,
-        title             => $title || 'Choose a Template',
+        title             => $title || localize('Choose a Template'),
         data              => $data->{children},
         image_path        => pkg('Widget')->_img_prefix() . 'images',
         onselect          => $name . '_choose_template',
-        button_label      => $label || 'Choose',
+        button_label      => $label || localize('Choose'),
         include_css       => 0,
         width             => 225,
         height            => 200,
