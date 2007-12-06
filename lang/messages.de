@@ -1,0 +1,416 @@
+# -*- mode: text; coding: latin-1 -*-
+# messages.conf: the message configuration file
+
+missing_type        "Typangabe fehlt."
+missing_title       "Titelangabe fehlt."
+missing_slug        "Verzeichnisangabe fehlt."
+missing_category    "Website/Kategorie fehlt."
+missing_cover_date  "Datumsangabe fehlt."
+
+no_slug_no_cat_idx  "Eine Story braucht entweder ein eigenes Verzeichnis oder sie muss der Index einer Kategorie sein."
+
+no_categories_for_chooser "Sie haben noch keine Website definiert. Ohne Website können Sie weder Storys, Medien noch Vorlagen anlegen."
+
+
+<Module "Krang::CGI::Story">
+  duplicate_url "Die URL '$url' ist bereits für Story $story_id vergeben. Bitte ändern Sie die Angaben für $which." 
+
+  bad_slug "Ungültige Namensangabe.  Der Name darf nur Buchstaben (allerdings weder Umlaute noch 'ß') sowie Zahlen, Unter- und Bindestriche enthalten."
+
+  story_save "Version $version von Story $story_id mit der URL $url gespeichert."
+
+  story_delete "Story $story_id mit der URL $url gelöscht."
+
+  story_checked_in_during_edit "Story $id wurde von einem anderen Benutzer oder in einem anderen Fenster freigegeben, während sie hier geöffnet war.  Veränderungen, die Sie hier vorgenommen haben, werden nicht gespeichert."
+
+  story_stolen_during_edit "Story $id wurde von '$thief' übernommen, während Sie sie hier bearbeiteten! Ihre Veränderungen werden nicht gespeichert."
+
+  story_deleted_during_edit "Story $id wurde von einem anderen Benutzer oder in einem anderen Fenster gelöscht, während Sie sie hier in Arbeit hatten."
+
+  story_saved_in_other_window "Story $id wurde von einem anderen Benutzer oder in einem anderen Fenster gespeichert, während Sie sie hier in Arbeit hatten.  Veränderungen, die Sie hier vorgenommen haben, werden nicht gespeichert."
+
+  duplicate_category "Die Kategorie kann nicht hinzugefügt werden, weil sie mit dieser Story bereits verknüpft ist."
+
+  added_category "Story zu Kategory $url hinzugefügt."
+
+  added_no_category "Bitte wählen Sie eine Kategorie aus."
+
+  replaced_category "Die URL der Story ändert sich von '$old_url' zu '$new_url'."
+
+  replaced_no_category "Sie müssen sowohl die zu ersetzende Kategorie als auch die Ersatzkategorie angeben!"
+
+  new_slug_prevented_category_change "Das veränderte Story-Verzeichnis führt zu einem Konflikt mit bestehenden Kategorien. Diesen Konflikt müssen Sie zunächst auflösen, bevor Sie die Kategorie der Story ändern können."
+
+  set_primary_category "Primäre Kategorie für URL $url festgelegt."
+
+  deleted_a_category "Die Story wurde aus Kategory '$url' entfernt."
+
+  deleted_categories "Die Kategorien $urls wurden von der Story entfernt."
+
+  deleted_no_categories "Sie wollen die Story aus einer oder mehreren Kategorien entfernen, haben aber keine markiert."
+
+  no_permissions_to_create_category "Sie besitzen nicht die nötigen Rechte, um eine Kategorie mit der URL '$url' anzulegen."
+
+  reverted_story "Sie verwenden wieder Version $version."
+
+  selected_stories_deleted  "Markierte Storys gelöscht."
+
+  selected_stories_checkout  "Die markierten Storys liegen nun in Ihrem Arbeitsbereich."
+
+  selected_stories_checkin  "Die markierten Storys wurden freigegeben."
+
+  selected_stories_checkout_one  "Die markierte Story liegt nun in Ihrem Arbeitsbereich.  Hinweis: Wenn Sie nur eine Story brauchen, können Sie auch einfach auf 'Bearbeiten' klicken."
+
+  one_story_stolen_and_opened "Story $id von '$victim' übernommen und zum Bearbeiten geöffnet."
+
+  one_story_yours_and_opened "Story $id lag bereits auf Ihrem Arbeitsplatz und wurde nun zum Bearbeiten geöffnet."
+
+  one_story_stolen "Story $id wurde von '$victim' übernommen und liegt nun auf Ihrem Arbeitsplatz."
+
+  one_story_yours "Story $id lag bereits auf Ihrem Arbeitsplatz."
+
+  multiple_stories_stolen "Die Storys $ids wurden (von $victims) übernommen und liegen nun auf Ihrem Arbeitsplatz."
+
+  multiple_stories_yours "Die Story $ids lagen bereits auf Ihrem Arbeitsplatz."
+
+  all_selected_stories_yours "Ausnahmslos alle markierten Storys lagen bereits auf Ihrem Arbeitsplatz."
+
+  cancel_new_story "Story Anlegen abgebrochen."
+
+  missing_category_on_save "Sie müssen Ihrer Story mindestens eine Kategorie zuweisen."
+
+  copied_story "Von Story $id wurde eine Kopie angelegt. Der Titel der Kopie lautet '$title', ihr Verzeichnis '$slug'."
+
+  copied_story_no_cats "Von Story $id wurde eine Kopie angelegt. Der Titel der Kopie lautet '$title'. Bevor Sie die Kopie speichern können, müssen Sie ihr mindestens eine Kategorie zuweisen."
+
+  story_cant_move_checked_out    "Story $id kann nicht in Abteilung '$desk' verschoben werden, weil sie bei einem anderen Benutzer in Arbeit ist."
+  story_cant_move_no_desk         "Story $story_id kann nicht in die Abteilung mit der ID '$desk_id' verschoben werden, weil diese Abteilung nicht mehr existiert."
+
+  moved_story                     "Story $id wurde in die Abteilung '$desk' verschoben."
+
+  category_has_url "URL-Konflikt: Ihre Angaben führen zu URL$s, die mit denen der Kategorien $ids ($urls) identisch sind. Bitte ändern Sie Ihre Angaben für $attributes."
+
+  category_has_url_on_add_cat "URL-Konflikt. Die Kategorie $cat und das Verzeichnis der Story ergeben die URL der Kategorie $id ($url)."
+
+  duplicate_url "URL-Konflikt. Ihre Angaben für $attributes scheitern an der URL einer anderen Story:"
+ 
+  duplicate_urls "URL-Konflikt. Ihre Angaben für $attributes scheitern an den URLs anderer Storys:"
+
+  duplicate_url_on_add_cat "URL-Konflikt.  Die Hinzufügung der Story zur Kategorie $cat scheitert an der URL einer anderen Story:"
+
+  duplicate_url_table "<center> <table border=1 style='text-align:center'> <tr> <td>Story ID</td> <td>URL</td> </tr> $dupe_rows <tr> <td><input type='button' value='Abbrechen' onclick='Krang.Messages.hide($qalerts$q)'></td> <td><input type='submit' value='Löschen und durch Ihre Story ersetzen' onclick='if (confirm($q Sind Sie sicher?  Wird eine Story gelöscht, zeigen alle Links, die bislang auf sie zeigten, ins Leere. $q)) { Krang.Messages.hide($qalerts$q); Krang.Form.submit($q$form$q, { rm: $qreplace_dupes$q }, { to_top: false })}'></td> </tr> </table> <br><br>"
+
+  dupe_story_deleted  "Story $id wurde gelöscht."
+
+  dupe_story_modified "Story $id wurde aus Kategorien, die einen URL-Konflikt provozieren, entfernt."
+
+  dupe_story_checked_out "Story $id ($url) konnte nicht ersetzt werden, weil sie momentan bei einem anderen Benutzer in Arbeit ist."
+
+</Module>
+
+# used by MediaLink elements, but they might be in different modules...
+duplicate_media_upload "Ein Medium mit dem Dateinamen '$filename' ist bereits vorhanden.  Deshalb wird das vorhandene Objekt verwendet."
+
+<Module "Krang::CGI::ElementEditor">
+  saved_element        "$name gespeichert."
+  saved_bulk           "Gesamtbearbeitung von Element '$name' gespeichert."
+  added_element        "$child zu '$parent' hinzugefügt."
+  no_elements_deleted  "Keine Elemente zum Löschen markiert."
+  deleted_element      "$name gelöscht."
+  reordered_elements   "Elemente neu geordnet."
+# Inhalt von $msg wird in Localized::Krang::ElementClass lokalisiert
+# It's composed of the element's display_name and the string 'requires a value.'
+  invalid_element_data "$msg"
+  selected_story       "Verlinkung mit Story $id ok."
+  selected_media       "Verlinkung mit Medium '$id' ok."
+</Module>
+
+<Module "Krang::CGI::Contrib">
+  duplicate_name                   "Es gibt bereits einen Mitarbeiter mit diesem Namen."
+  duplicate_media_upload           "Ein Medium mit dem Dateinamen '$filename' ist bereits vorhanden.  Deshalb wird das vorhandene Objekt verwendet."
+  error_invalid_first              "Bitte geben Sie einen Vornamen ein."
+  error_invalid_last               "Bitte geben Sie einen Nachnamen ein."
+  error_invalid_type               "Bitte ordnen Sie den Mitarbeiter einer Gruppe zu."
+  error_invalid_url                "Die angegebene URL ist ungültig. Sie sollte mit 'http://' beginnen und dem Muster 'http://webseite.de/irgend/etwas' folgen."
+  error_invalid_email              "Die angegebene Email Adresse ist ungültig: Sie darf keine Leerzeichen enthalten."
+  message_contrib_added            "Mitarbeiterdaten hinzugefügt."
+  message_contrib_saved            "Mitarbeiterdaten gespeichert."
+  message_add_cancelled            "Mitarbeiterdaten NICHT hinzugefügt: Sie haben den Vorgang abgebrochen."
+  message_save_cancelled           "Mitarbeiterdaten NICHT gespeichert: Sie haben den Vorgang abgebrochen."
+  message_selected_deleted         "Markierte Mitarbeiter gelöscht."
+  message_contrib_deleted          "Mitarbeiter gelöscht."
+  message_selected_associated      "Markierte Mitarbeiter eingetragen."
+  message_selected_unassociated    "Markierte Mitarbeiter entfernt."
+  missing_contrib_associate_list   "Keine Mitarbeiter zum Eintragen markiert."
+  missing_contrib_unassociate_list "Keine Mitarbeiter zum Entfernen markiert."
+  message_contribs_reordered       "Reihenfolge der Mitarbeiter geändert."
+</Module>
+
+
+<Module "Krang::CGI::Group">
+  message_selected_deleted         "Markierte Gruppen gelöscht."
+  error_invalid_name               "Eine Gruppenname darf keine Leerzeichen enthalten."
+  duplicate_name                   "Es gibt bereits eine Gruppe mit diesem Namen."
+  message_group_added              "Die Gruppe wurde hinzugefügt."
+  message_group_saved              "Die neuen Angaben zu dieser Gruppe wurden gespeichert."
+  message_add_cancelled            "Die Gruppe wurde NICHT hinzugefügt, weil Sie den Vorgang abgebrochen haben."
+  message_save_cancelled           "Die neuen Angaben wurden NICHT gespeichert, weil Sie den Vorgang abgebrochen haben."
+  message_group_deleted            "Gruppe gelöscht."
+  category_perms_updated           "Kategorienrechte gespeichert."
+  added_category_none              "Sie wollen der Gruppe Rechte für eine bestimmte Kategorie zuweisen, haben aber nicht angegeben, welche Kategorie sie meinen."
+  added_category_exists            "Die Gruppe hat bereits Rechte für diese Kategorie."
+  added_category                   "Kategorie zu den Gruppenrechten hinzugefügt."
+  deleted_category                 "Kategorie aus den Gruppenrechten entfernt."
+  group_has_users                  "Die Gruppe '$name' kann nicht gelöscht werden, weil sie noch folgende Mitglieder hat: $logins."
+</Module>
+
+<Module "Krang::CGI::Media">
+  new_media_saved                  "Neues Medium gespeichert."
+  media_saved                      "Medium gespeichert."
+  message_selected_deleted         "Markierte Medien gelöscht."
+  message_media_deleted            "Medium gelöscht."
+  error_invalid_title              "Bitte geben Sie einen Titel an."
+  error_media_type_id              "Bitte geben Sie den Medientyp an."
+  error_category_id                "Bitte geben Sie eine Website/Kategorie an."
+  error_media_file                 "Bitte wählen Sie eine Datei aus."
+  duplicate_url                    "Der Dateiname des Mediums, das Sie hochladen wollen, existiert in dieser Kategorie bereits. Bitte wählen Sie einen neuen Namen."
+  no_category_access               "Sie dürfen die Kategorie $url (ID: $id) nicht bearbeiten."
+  message_revert_version           "Sie verwenden wieder Version $version."
+  selected_media_checkin           "Markierte Medien freigegeben."
+  selected_media_checkout          "Die markierten Medien Dateien liegen in Ihrem Arbeitsbereich."
+  media_modified_elsewhere         "Die Media-Datei '$id' wurde in einem anderen Fenster oder von einem anderen Benutzer verändert, während Sie sie hier in Arbeit hatten.  Veränderungen, die Sie hier in diesem Fenster vorgenommen haben, werden nicht gespeichert."
+  media_deleted_elsewhere          "Die Media-Datei '$id' wurde von einem anderen Benutzer oder in einem anderen Fenster gelöscht, während Sie sie hier in Arbeit hatten!"
+</Module>
+
+<Module "Krang::CGI::Media::BulkUpload">
+  no_file                           "Sie haben keine Datei ausgewählt."
+  invalid_file_type                 "Sie können nur ZIP-, TAR- und Stuffit-Archive hochladen."
+  problems_opening                  "Probleme beim Öffnen des Archivs. Stellen Sie sicher, dass es sich um ein gültiges ZIP, TAR oder Stuffit Archive handelt."
+  bad_category                      "Das Archiv enthält die Kategorie '$url', die Krang nicht kennt."
+  media_in_root                     "Das Archiv enthält Mediendateien im Wurzelverzeichnis, und Sie haben keine Kategorie ausgewählt.  Mediendateien brauchen einen Wohnsitz: Wählen Sie bitte eine Website/Kategorie aus."
+  new_category                      "Neue Kategorie '$new_cat' angelegt."
+  media_uploaded                    "Medien erfolgreich importiert: $update_count Dateien aktualisiert, $new_count Dateien neu angelegt."
+  checked_out                       "Das Archiv, das Sie hochladen wollen enthält die Datei '$file'. Da diese Datei bei einem anderen Benutzer in Arbeit ist, können Sie das Archiv nicht hochladen."
+  no_opener_binary                  "Das Programm $which zum Öffnen des Archivs ist auf diesem Server nicht installiert.  Dateien vom Typ $type können daher nicht geöffnet werden.  Verwenden Sie bitte ein anderes Archiv-Format (oder wenden Sie sich an Ihren Administrator)."
+</Module>
+
+<Module "Krang::CGI::DeskAdmin">
+  stories_on_desk               "Die Abteilung '$desk_name' kann nicht gelöscht werden, weil dort noch Storys liegen. Verschieben Sie die Storys in eine andere Abteilung, bevor Sie Abteilung '$desk_name' löschen."
+  no_name                       "Die neue Abteilung wurde NICHT gespeichert, weil Sie keinen Namen angegeben haben."
+  deleted_selected              "Abteilung '$desk_name' gelöscht."
+  missing_desk_delete_list      "Sie haben nichts zum Löschen markiert."
+  desk_added                    "Abteilung hinzugeführt."
+  desks_reordered               "Abteilungen neu geordnet."
+  duplicate_desk                "Es gibt bereits eine Abteilung mit diesem Namen. Bitte wählen Sie einen anderen."
+</Module>
+
+<Module "Krang::CGI::MyPref">
+  changed_password              "Das neue Passwort wurde gespeichert."
+  changed_search_page_size      "Die neue Anzahl der Suchergebnisse je Seite wurde gespeichert."  
+  changed_use_autocomplete      "Die neue Einstellung zur 'Suche mit Vorschlagsliste' wurde gespeichert."
+  changed_message_timeout       "Die neue Einstellung zur 'Dauer der Mitteilungen' wurde gespeichert."
+  changed_language              "Neue Spracheinstellung: $lang"
+  force_password_change         "Es sind mehr als $days Tage vergangen, seit Sie Ihr Passwort das letzte Mal verändert haben. Sie müssen ein neues Passwort eingeben, bevor Sie fortfahren können."
+  password_mismatch	        "Die beiden Passwort-Felder stimmen nicht überein."
+</Module>
+
+<Module "Krang::CGI::MyAlerts">
+  deleted_selected              "Benachtigung(en) gelöscht."
+  missing_alert_delete_list     "Sie haben nichts zum Löschen markiert."
+  alert_added                   "Neue Benachrichtigung hinzugefügt."
+  bad_desk_combo                "Die Angabe einer Abteilung macht nur im Zusammenhang der Aktion 'Verschieben nach' Sinn."
+  move_needs_desk               "Die Aktion 'Verschieben nach' erfordert die Angabe einer Abteilung."
+  desk_requires_move            "Die Angabe einer Abteilung macht nur im Zusammenhang der Aktion 'Verschieben nach' Sinn."
+  duplicate_alert               "Diese Benachrichtigung ist doppelt gemoppelt. Sie existiert schon."
+</Module>
+
+<Module "Krang::CGI::Site">
+# Die nächsten drei werden nicht verwendet.
+  duplicate_preview_path	"Es gibt bereits eine Website mit diesem Vorschau Pfad."
+  duplicate_preview_url		"Es gibt bereits eine Website mit dieser Vorschau URL."
+  duplicate_publish_path	"Es gibt bereits eine Website mit diesem Online Pfad."
+  duplicate_url			"Es gibt bereits eine Website mit dieser URL."
+  error_deletion_failure	"Die Website(s) $urls können nicht gelöscht werden, weil sie noch Kategorien, Storys, Medien und/oder Vorlagen enthalten."
+  error_invalid_preview_url	"Bitte geben Sie eine gültige Vorschau URL an."
+  error_invalid_preview_path	"Bitte geben Sie einen gültigen Vorschau Pfad an."
+  error_invalid_publish_path	"Bitte geben Sie einen gültigen Online Pfad an."
+  error_invalid_url		"Bitte geben Sie eine gültige Online URL an."
+  error_url_has_http            "Bitte geben Sie die Website URL ohne 'http://' an."
+  error_preview_url_has_http    "Bitte geben Sie die Vorschau URL ohne 'http://' an."
+  error_url_has_path            "Die Website URL darf keine Verzeichnisse enthalten, sondern nur den Domain Namen."
+  error_preview_url_has_path    "Die Vorschau URL darf keine Verzeichnisse enthalten, sondern nur den Domain Namen."
+  error_url_has_bad_chars       "Die Website URL enthält ungültige Zeichen. Sie darf nur Buchstaben (keine Umlaute, kein 'ß') sowie Zahlen,  Punkte, Binde- und Unterstriche enthalten. Die Angabe einer Portnummer ist ebenfalls erlaubt."
+  error_preview_url_has_bad_chars "Die Vorschau URL enthält ungültige Zeichen. Sie darf nur Buchstaben (keine Umlaute, kein 'ß') sowie Zahlen, Punkte, Binde- und Unterstriche enthalten. Die Angabe einer Portnummer ist ebenfalls erlaubt."
+  error_publish_path_not_absolute "Der Website Pfad muss als absolute Pfad angeben sein und also mit einem '/' beginnen."
+  error_preview_path_not_absolute "Der Vorschau Pfad muss als absolute Pfad angeben sein und also mit einem '/' beginnen."
+
+  message_add_cancelled		"Website Hinzufügen abgebrochen."
+  message_deleted		"Website: $url gelöscht."
+  message_edit_cancelled	"Website Bearbeiten abgebrochen."
+#nicht verwendet
+  message_save_cancelled	"Website Bearbeiten abgebrochen."
+  message_selected_deleted	"Folgende Websites gelöscht: $urls."
+  message_saved			"Website gespeichert."
+</Module>
+
+<Module "Krang::CGI::Template">
+  duplicate_url			"Es gibt bereits eine Vorlage mit der URL '$url'."
+  error_deletion_failure	"Vorlage $template_id konnte nichte gelöscht werden, weil Sie das entweder nicht dürfen oder weil die Vorlage bei einem anderen Benutzer in Arbeit ist."
+#nicht verwendet
+  error_element			"Bitte geben Sie ein Element an."
+  error_invalid_category_id	"Die Kategorie ID ist ungültig."
+  error_no_category_access      "Sie dürfen die Vorlage mit der URL $url (ID: $cat_id) nicht bearbeiten."
+  error_no_filename             "Sie müssen entweder ein Element auswählen oder einen Dateinamen mit der Endung .tmpl angeben."
+  error_invalid_filename	"Bitte geben Sie einen gültigen Dateinamen mit der Endung .tmpl an."
+  message_add_cancelled		"Vorlage Hinzufügen abgebrochen."
+  message_deleted		"Vorlage gelöscht."
+  message_edit_cancelled	"Vorlage Bearbeiten abgebrochen."
+  message_revert_version	"Sie verwenden wieder Version $version."
+  message_saved			"Vorlage gespeichert."
+  checkin_template              "Vorlage $id gespeichert und freigegeben."
+  message_selected_deleted	"Markierte Vorlagen gelöscht."
+  deployed                      "Vorlage $id aktiviert."
+  selected_template_checkin     "Markierte Vorlagen freigegeben."
+  template_modified_elsewhere   "Vorlage $id wurde von einem anderen Benutzer oder in einem anderen Fenster verändert, während Sie sie hier in Arbeit hatten. Veränderungen, die Sie hier vorgenommen haben, werden nicht gespeichert."
+  template_deleted_elsewhere    "Vorlage $id wurde von einem anderen Benutzer oder in einem anderen Fenster gelöscht, während Sie sie hier in Arbeit hatten!"
+</Module>
+
+<Module "Krang::CGI::User">
+  duplicate_first_name		"Es gibt bereits einen Benutzer mit diesem Vornamen."
+  duplicate_last_name		"Es gibt bereits einen Benutzer mit diesem Nachnamen."
+  duplicate_login		"Es gibt bereits einen Benutzer mit diesem Benutzernamen."
+  error_deletion_failure	"Der Benutzer mit der ID $user_id und dem Benutzernamen '$login' kann nicht gelöscht werden, weil er Ressourcen in Arbeit hat."
+  error_invalid_email		"Bitte geben Sie eine gültige Mail Adresse ein."
+  error_invalid_first_name	"Bitte geben Sie einen Vornamen ein."
+  error_invalid_group_id	"Bitte geben Sie einen gültigen Gruppennamen ein."
+  error_login_length		"Der Benutzername muss mindestens 6 Zeichen lang sein."
+  error_missing_group           "Sie müssen mindestens eine Gruppe für den Benutzer auswählen."
+  error_invalid_last_name	"Bitte geben Sie einen gültigen Nachnamen ein."
+  error_invalid_login		"Bitte geben Sie einen gültigen Benutzernamen mit mindestens 6 Zeichen ein."
+  error_null_group		"Bitte wählen Sie eine Gruppe aus."
+  error_null_password		"Bitte geben Sie ein Passwort mit mindestens 6 Zeichen ein."
+  error_password_length		"Das Passwort muss mindestens 6 Zeichen lang sein."
+  error_password_mismatch	"Die Passworteingaben stimmen nicht überein."
+  message_add_cancelled		"Benutzer Hinzufügen abgebrochen."
+  message_deleted		"Benutzer gelöscht."
+  message_save_cancelled	"Benutzer Bearbeiten abgebrochen."
+  message_selected_deleted	"Markierte Benutzer gelöscht."
+  message_user_saved		"Benutzer gespeichert."
+  may_not_delete_user           "Sie dürfen den Benutzer '$user' nicht löschen, weil er Mitglied einer Gruppe ist, für die Sie keine Benutzerverwaltungsrechte besitzen."
+  may_not_delete_users          "Sie dürfen die Benutzer '$users' nicht löschen, weil sie zu Gruppen gehören, für die Sie keine Benutzerverwaltungsrechte haben."
+  one_user_deleted              "Ein Benutzer gelöscht."
+  num_users_deleted             "$num Benutzer gelöscht."
+  user_suicide                  "Sie haben sich selbst gelöscht."
+</Module>
+
+<Module "Krang::CGI::Schedule">
+  deleted_selected                  "Die markierten Aktionen wurden aus dem Zeitplan gelöscht."
+  missing_schedule_delete_list      "Sie haben nichts zum Löschen markiert."
+  scheduled_publish                 "Veröffentlichung in den Zeitplan aufgenommen."
+  invalid_datetime                  "Ungültige Zeit- oder Datumsangabe."
+  no_date_type                      "Sie haben keinen Zeitpunkt festgelegt."
+  new_event                         "Die Aktion wurde zum Zeitplan hinzugefügt."
+  no_hour                           "Bitte legen Sie die Stunde fest."
+</Module>
+
+<Module "Krang::CGI::Bugzilla">
+  no_summary                        "Bitte geben Sie eine Zusammenfassung ein."
+  no_description                    "Bitte geben Sie eine Beschreibung ein."
+  bug_added                         "Vielen Dank für Ihr Feedback. Ihr Problem wird so bald wie möglich behandelt. Für Nachfragen notieren Sie sich bitte die Nummer ihrer Fehlermeldung: $bug_num."
+</Module>
+
+<Module "Krang::CGI::Workspace">
+  deleted_obj                    "Markiertes gelöscht."
+  deleted_checked                "Markiertes gelöscht."
+  moved_story                    "Story $id freigegeben und in Abteilung '$desk' verschoben."
+  checkin_media                  "Medium mit der ID $id freigegeben."
+  checkin_template               "Vorlage $id freigegeben."
+  deployed                       "Vorlage $id aktiviert."
+  marked_for_testing             "Nichtaktivierte Version von Vorlage $id wird bei der Vorschau verwendet."
+  unmarked_for_testing           "Nichtaktivierte Version von Vorlage $id wird bei der Vorschau nicht mehr verwendet."
+  story_cant_move_checked_out    "Story $id kann nicht in Abteilung '$desk' verschoben werden, weil sie bei einem anderen Benutzer in Arbeit ist."
+  story_cant_move_no_desk        "Story $story_id kann nicht in die Abteilung mit der ID '$desk_id' verschoben werden, weil diese Abteilung nicht mehr existiert."
+</Module>
+
+<Module "Krang::CGI::Desk">
+  checkout_checked                "Markiertes abgeholt."
+  moved_story                     "Story $id in Abteilung '$desk' verschoben."
+  story_cant_move_checked_out     "Story $id kann nicht in Abteilung '$desk' verschoben werden, weil sie bei einem anderen Benutzer in Arbeit ist."
+  story_cant_move_no_desk         "Story $story_id kann nicht in die Abteilung mit der ID '$desk_id' verschoben werden, weil diese Abteilung nicht mehr existiert."
+</Module>
+
+<Module "Krang::CGI::Category">
+  missing_parent_id              "Sie müssen eine Eltern-Kategorie auswählen."
+  missing_dir                    "Sie müssen ein Verzeichnis angeben."
+  bad_dir                        "Verzeichnisnamen dürfen nur Buchstaben (keine Umlaute, kein 'ß') sowie Zahlen, Binde- und Unterstriche enthalten. Leerzeichen und andere Sonderzeichen sind nicht erlaubt."
+  duplicate_url "Es gibt bereits eine Kategorie mit der URL '$url'. Bitte ändern Sie entweder die Eltern-Kategorie oder den Verzeichnisnamen."
+  story_has_category_url "Story $id hat dieselbe URL wie Ihre neue Kategorie und wurde deshalb in einen Kategorienindex umgewandelt."
+  uneditable_story_has_url "Story $id hat dieselbe URL wie die Kategory, die Sie anlegen wollen.  Wir können diesen Konflikt nicht auflösen, weil Sie nicht die nötigen Rechte besitzen, um die im Weg stehende Story in einen Kategorienindex umzuwandeln."
+  add_not_allowed "Sie dürfen zu der Eltern-Kategorie '$url' keine Unterkategorien hinzufügen."
+  category_save "Kategorie '$url' gespeichert."
+  cant_delete_root "Die Kategorie '$url' ist die Wurzel-Kategorie der Website. Sie können sie nur löschen, indem Sie die ganze Website löschen."
+  category_has_children "Die Kategorie '$url' hat Unterkategorien und kann, solange letztere existieren, nicht gelöscht werden."
+  category_has_stories "Die Kategorie '$url' kann nicht gelöscht werden, solange sie Storys enthält."
+  category_has_media "Die Kategorie '$url' kann nicht gelöscht werden, solange sie Medien enthält."
+  category_has_templates "Die Kategorie '$url' kann nicht gelöscht werden, solange sie Vorlagen enthält."
+
+  category_delete "Kategorie '$url' gelöscht."
+
+  selected_categories_deleted  "Markierte Kategorien gelöscht."
+  no_sites "Sie können Kategorien erst anlegen, wenn Sie eine Website angelegt haben."
+</Module>
+
+<Module "Krang::CGI::Publisher">
+  story_publish "Story $story_id veröffentlicht (Version: $version, URL: $url)."
+  story_schedule "Story $story_id (Version: $version) wird am $publish_datetime veröffentlicht."
+  media_publish "Medium $media_id veröffentlicht (Version: $version, URL: $url)."
+  media_preview "Medium $media_id in der Vorschau veröffentlicht (Version: $version, URL: $url)."
+  media_schedule "Medium $media_id (Version: $version) wird am $publish_datetime veröffentlicht."
+  missing_template "Die Story in Kategorie $category_url kann nicht erstellt werden, weil die Vorlage '$filename' fehlt."
+  missing_template_include "Die Datei '$included_file', die von der Vorlage '$filename' eingebunden wird, existiert nicht. Deshalb kann die Story nicht zusammengesetzt werden." 
+  template_parse_error "Die Vorlage '$template_name', die für das Element '$element_name' verwendet wird, ist fehlerhaft. (Kategorie: $category_url, Fehler: '$error_msg')"
+  checked_out_assets "Einige Ressourcen sind noch bei anderen Benutzern in Arbeit und können daher nicht veröffentlicht werden."
+  file_write_error "Beim Schreiben der Datei '$path' trat ein Fehler auf. Bitte benachrichtigen Sie ihren Administrator. Mögliche Fehlerquelle sind falsch gesetzte Dateirechte."
+  deployed                       "Vorlage $id aktiviert."
+  zero_size_output "Die Story $story_id in Kategorie '$category_url' ist leer. Mögliche Ursache ist, dass die Vorlage $story_class.tmpl leer ist."
+</Module>
+
+<Module "Krang::CGI::ListGroup">
+ lists_saved "Listengruppe gespeichert."
+</Module>
+
+<Module "Krang::CGI::Login">
+  missing_username_pw   "Benutzername und Passwort sind für die Anmeldung unabdingbar."
+  failed_login          "Anmeldung fehlgeschlagen. Bitte überprüfen Sie Benutzernamen und Passwort und versuchen Sie es noch einmal."
+  login_wait            "Anmeldung fehlgeschlagen.  Nach über $count fehlgeschlagenen Anmeldeversuchen müssen Sie nun $minutes Minuten warten, bevor Sie es noch einmal versuchen dürfen. (Das ist keine Schikane, sondern eine Sicherheitsmaßnahme!)"
+  custom_msg            "$msg"
+  forgot_pw             "Vielen Dank. Wenn die angegebene Email-Adresse zu einem Benutzerkonto gehört, geht eine Mail an diese Adresse. Darin steht, wie Sie Ihr Passwort zurücksetzen können."
+  invalid_account       "Ungültiges Benutzerkonto."
+  passwords_dont_match  "Die Passwörter stimmen nicht überein. Bitte versuchen Sie es noch einmal."
+  changed_password      "Das neue Passwort wurde gespeichert."
+  too_many_krang_sessions "Sie haben bereits das Maximum von $num gleichzeitigen Krang Sessions geöffnet. (Klicken Sie auf "Abmelden", wenn Sie ein Fenster nicht mehr brauchen, anstatt es einfach nur zu schließen. Wenn alles nichts hilft, starten Sie Ihren Browser bitte neu.)"
+</Module>
+
+<Module "Krang::PasswordHandler">
+  password_too_short        "Ein Passwort muss mindestens 6 Zeichen lang sein."
+  password_currently_used   "Das ist Ihr derzeitiges Passwort. Sie brauchen es nicht zu erneuern."
+  password_used_recently    "Sie haben dieses Passwort kürzlich verwendet. Bitte denken Sie sich ein anderes aus."
+</Module>
+
+
+###############################
+# test messages, do not alter #
+###############################
+
+test1 "This is a test."
+test2 "This is a $test."
+test3 "This is a $test $test $test $foo."
+
+<Module "Test::Module1">
+  test1 "Now for something completely different."
+  test2 "Now for $test completely different."
+</Module>
+
+<Module "Test::Module2">
+  test1 "Another test, oh joy."
+</Module>
