@@ -72,7 +72,6 @@ sub edit {
     # do we want just show the pw portion
     my $pw_only = $self->param('password_only') || $q->param('password_only');
     $template->param( password_only => $pw_only);
-    
 
     $template->param(
         search_results_selector => scalar $q->popup_menu(
@@ -84,10 +83,11 @@ sub edit {
 
     $template->param(
         use_autocomplete_selector => scalar $q->radio_group(
-            -name   => 'use_autocomplete',
-            -values => [ 1, 0 ],
-            -labels => { 1 => 'Yes', 0 => 'No' },
+            -name    => 'use_autocomplete',
+            -values  => [ 1, 0 ],
+            -labels  => { 1 => 'Yes', 0 => 'No' },
             -default => pkg('MyPref')->get('use_autocomplete'),
+            -class   => 'radio',
         )
     );
 
