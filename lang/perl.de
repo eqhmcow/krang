@@ -37,7 +37,7 @@
 "Add New Alert"                  "Benachrichtigung anlegen"
 "Add New Desk"                   "Neue Abteilung"
 "Add Site"                       "Website anlegen"
-"Add Site / Category"            "Website / Kategorie hinzufügen"
+"Add Site/Category"              "Site/Kategorie hinzufügen"
 "Add Story"                      "Story hinzufügen"
 "Add Template"                   "Vorlage anlegen"
 "Add User"                       "Benutzer anlegen"
@@ -55,7 +55,7 @@
 "Alignment"                      "Ausrichtung"
 "All Logins"                     "Alle Anmeldungen"
 "All Versions"                   "Alle Versionen"
-"Alt Text"                       "Alternativtext:"
+"Alt Text"                       "Alternativtext"
 "Analyze"                        "Analyse"
 "An internal server error has occurred.  This almost certainly indicates a bug in the system."   "Es ist ein interner Server-Fehler aufgetreten. Dies weist mit ziemlicher Sicherheit auf einen Bug im System hin."
 "Any"                            "Alle"
@@ -157,7 +157,7 @@
 "Creator:"                       "Urheber:"
 "Critical: Crashes or hangs system, or causes data loss."   "Kritischer Bug: Das System bleibt hängen oder verursacht Datenverlust."
 "Current Alerts"                 "Aktuelle Benachrichtigungen"
-"Current File"                   "Momentaner Dateiname"
+"Current File"                   "Derzeitiger Dateiname"
 "Current Contributors"           "Derzeitige Mitarbeiter"
 "Current Schedule"               "Momentaner Zeitplan"
 "Current Version:"               "Aktuelle Version:"
@@ -193,8 +193,8 @@
 "Desks"                          "Abteilungen"
 "Directory"                      "Verzeichnis"
 "Display Name"                   "Name"
-"Done Bulk Editing"              "Fertig"
-"Done Editing"                   "Fertig"
+"Done Bulk Editing"              "Fertig mit"
+"Done Editing"                   "Fertig mit"
 "Double Column"                  "Zweispaltig"
 "Edit Category"                  "Kategorie bearbeiten"
 "Edit Contributor"               "Mitarbeiter bearbeiten"
@@ -250,7 +250,7 @@
 "Getting Started"                "Einleitung"
 "Good Example:"                   "Sondern so:"
 "Group Category Permissions Edit"   "Gruppenrechte für Kategorien"
-"Group Limited"                  "Auf Gruppe begrenzt"
+"Group Limited"                  "Nur eigene Gruppe"
 "Group List"                     "Gruppen verwalten"
 "Group Name"                     "Gruppenname"
 "Group Name:"                    "Gruppenname:"
@@ -322,7 +322,7 @@
 "Looks like a little bug (probably an Internal Server Error)."  "Sieht aus wie ein kleiner Bug (wahrscheinlich ein unerwarteter Serverfehler)."
 "Low"                            "Niedrig"
 "Major: Breaks a significant feature; no workaround."   "Ernsthaftes Problem: Legt eine wichtige Funktion lahm."
-"Manage Scheduler Addons"        "Zeitplan Addons verwalten"
+"Manage Scheduler Addons"        "Zeitplaner Addons verwalten"
 "Manage Categories"              "Kategorien verwalten"
 "Manage Contributors"            "Mitarbeiter verwalten"
 "Manage Desks"                   "Abteilungen verwalten"
@@ -431,7 +431,7 @@
 "Preview URL"                    "Vorschau URL"
 "Preview URL:"                   "Vorschau URL:"
 "Preview"                        "Vorschau"
-"Primary"                        "Hauptkategorie"
+"Primary"                        "Primär"
 "Priority:"                      "Priorität:"
 "Processing"                     "In Arbeit:"
 "Processing Preview Request"     "Vorschau in Arbeit"
@@ -446,8 +446,8 @@
 "Publication Time"               "Publikationszeit"
 "Publish Date:"                  "Ersch.-Datum:"
 "Publish Date"                   "Ersch.-Datum"
-"Publish Path"                   "Publish Pfad"
-"Publish Path:"                  "Publish Pfad:"
+"Publish Path"                   "Online Pfad"
+"Publish Path:"                  "Online Pfad:"
 "Publish Story"                  "Story veröffentlichen"
 "Publish Stories"                "Storys veröffentlichen"
 "Publish to Preview"             "Für Vorschau"
@@ -467,6 +467,7 @@
 "Repeat Password:"               "Passwort wiederholen:"
 "Repeat Password"                "Passwort wiederholen"
 "Replace"                        "Ersetzen"
+"Replace This Category"          "Kategorie ersetzen"
 "Report this bug"                "Melden Sie diesen Fehler"
 "Reproducability"                "Reproduzierbarkeit"
 "Request"                        ""
@@ -565,7 +566,7 @@
 "Teaser"                         "Teaser"
 "Template ID"                    "Vorlagen ID"
 "Template Code:"                 "Vorlagen Code:"
-"Template"                       "Vorlagen"
+"Template"                       "Vorlage"
 "Templates"                      "Vorlagen"
 "Test"                           "Testen"
 "Test with Template:"            "Bei der Vorschau verwenden:"
@@ -661,7 +662,7 @@
 "cannot link to this category!"  "kann nicht mit dieser Kategorie verknüpft werden!"
 "desk"                           "Abteilung"
 "edit"                           "bearbeiten"
-"en"                             "de-DE"
+"en"                             "de"
 "from"                           "von"
 "grey"                           "grau"
 "hide"                           "verstecken"
@@ -721,21 +722,27 @@
 ### Datetime format in History, Story, Media, Schedule and ElementClass
 ### From the strftime() manpage:
 ### %b     The abbreviated month name according to the current locale.
+### %m     The month as a decimal number (range 01 to 12).
+### %d     The day of the month as a decimal number (range 01 to 31).
 ### %e     Like %d, the day of the month as a decimal number, but a leading
 ###        zero is replaced by a space.
 ### %Y     The year as a decimal number including the century.
+### %I     The hour as a decimal number using a 12-hour clock (range 01 to 12).
 ### %l     The hour (12-hour clock) as a decimal number (range  1  to  12);
 ###        single digits are preceded by a blank.
+### %H     The hour as a decimal number using a 24-hour clock (range 00 to 23).
 ### %M     The minute as a decimal number (range 00 to 59).
 ### %p     Either  `AM'  or  `PM' according to the given time value, or the
 ###        corresponding strings for the current locale.  Noon  is  treated
 ###        as  `pm'  and  midnight as `am'.  Note that in many locales `am'
-###       and `pm' notation is unsupported  and  in  such  cases  %p  will
-###       return an empty string.
-"%b %e, %Y %l:%M %p"             "%e. %b %Y, %k:%M"
+###        and `pm' notation is unsupported  and  in  such  cases  %p  will
+###        return an empty string.
+"%b %e, %Y %l:%M %p"   "%e. %b %Y, %k:%M"  # this war for v2.* 
+"%m/%d/%Y %I:%M %p"    "%d. %m %Y %H:%M"   # this is for v3.*
+
 
 ### Date format in Krang::ElementClass::Date
-"%b %e, %Y"                      "%e. %b %Y"
+"%b %e, %Y"   "%e. %b %Y"  # this was for v2.* and is for v3.*
 
 ### Set to 'AMPM' if your time should be in englich AM/PM format
 AMPM 0
