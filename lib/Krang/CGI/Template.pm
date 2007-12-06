@@ -41,6 +41,7 @@ use Krang::ClassLoader Widget => qw/
     autocomplete_values
 /;
 use Krang::ClassLoader 'Publisher';
+use Krang::ClassLoader Localization => qw(localize);
 
 # Persist data for return from view in "history_return_params"
 our @history_param_list = ('rm',
@@ -1110,7 +1111,7 @@ sub make_pager {
 # Handles rows for search run mode
 sub search_row_handler {
     my ($self, $row, $template) = @_;
-    $row->{deployed} = $template->deployed ? '<b>D</b>' : '&nbsp;';
+    $row->{deployed} = $template->deployed ? '<b>' . localize('D') . '</b>' : '&nbsp;';
     $row->{filename} = $template->filename;
     $row->{template_id} = $template->template_id;
     $row->{url} = format_url(url => $template->url, length => 30);
@@ -1118,17 +1119,29 @@ sub search_row_handler {
     if (not($template->may_edit()) or
         (($template->checked_out) and
          ($template->checked_out_by ne $ENV{REMOTE_USER}))) {
-        $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|;
+        $row->{commands_column} = qq|<input value="|
+                                . localize('View Detail')
+                                . qq|" onclick="view_template('|
+                                . $template->template_id
+                                . qq|')" type="button" class="button">|;
         $row->{checkbox_column} = "&nbsp;";
     } else {
-        $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|
-            . ' '
-            . qq|<input value="Edit" onclick="edit_template('| . $template->template_id . qq|')" type="button" class="button">|;
+        $row->{commands_column} = qq|<input value="|
+                                . localize('View Detail')
+                                . qq|" onclick="view_template('|
+                                . $template->template_id
+                                . qq|')" type="button" class="button">|
+                                . ' '
+                                . qq|<input value="|
+                                . localize('Edit')
+                                . qq|" onclick="edit_template('|
+                                . $template->template_id
+                                . qq|')" type="button" class="button">|;
     }
 
     # status 
     if ($template->checked_out) {
-        $row->{status} = "Checked out by <b>"
+        $row->{status} = localize('Checked out by') . ' <b>'
             . (pkg('User')->find(user_id => $template->checked_out_by))[0]->login
             . '</b>';
     } else {
@@ -1279,7 +1292,11 @@ sub list_active_row_handler {
     $row->{filename} = $q->escapeHTML($template->filename);
 
     # commands column
-    $row->{commands_column} = qq|<input value="View Detail" onclick="view_template('| . $template->template_id . qq|')" type="button" class="button">|;
+    $row->{commands_column} = qq|<input value="|
+                            . localize('View Detail')
+                            . qq|" onclick="view_template('|
+                            . $template->template_id
+                            . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $template->checked_out_by);

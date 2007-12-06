@@ -90,7 +90,7 @@ Krang.onload( function() {
 </tmpl_unless>
 
 <tmpl_unless add_mode><p class="cram east">
-  <input value="View Log" onclick="save_and_view_log()" type="button" class="button">
+  <input value="<tmpl_lang View Log>" onclick="save_and_view_log()" type="button" class="button">
 </p></tmpl_unless>
 
 <h2>
@@ -101,13 +101,13 @@ Krang.onload( function() {
 </tmpl_if>
 </h2>
 
-<h3>
-<tmpl_lang Properties>
-</h3>
+<!-- <h3> -->
+<!-- <tmpl_lang Properties> -->
+<!-- </h3> -->
 
 <tmpl_unless add_mode>
 
-  <table class="result" summary="">
+  <table class="bordered-request" summary="">
 
   <colgroup>
   <col class="c-label">
@@ -139,7 +139,7 @@ Krang.onload( function() {
 
   <tr><!--:FIXME(db2)-->
   <th><tmpl_lang All Versions></th>
-  <td>
+  <td colspan="3">
   <tmpl_var version_chooser>
   <input value="<tmpl_lang Revert>" onclick="revert_version()" type="button" class="button">
   <input value="<tmpl_lang View>" onclick="view_version()" type="button" class="button">
@@ -164,7 +164,7 @@ Krang.onload( function() {
 
 <tmpl_else>
 
-  <table class="request" summary="">
+  <table class="bordered-request" summary="">
 
   <colgroup>
   <col class="c-label">
@@ -198,9 +198,9 @@ Krang.onload( function() {
   </table>
 </tmpl_unless>
 
-<h3>
-<tmpl_lang Content>
-</h3>
+<!-- <h3> -->
+<!-- <tmpl_lang Content> -->
+<!-- </h3> -->
 
 <p class="full">
 <textarea name="content" id="templateEditor" class="codepress html" rows="30" cols="60"><tmpl_var escape=html content></textarea>
