@@ -131,7 +131,7 @@ Krang.onload( function() {
   <input value="<tmpl_lang Delete>" onclick="delete_checked()" type="button">
   </div>
 
-  <tmpl_include HTMLPager/pager-pagination.tmpl>
+  <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
   <div class="table-container">
   <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
@@ -203,7 +203,7 @@ Krang.onload( function() {
         <input value="<tmpl_lang Copy>" onclick="copy('<tmpl_var escape=html id>')" type="button" class="button">
         <tmpl_if desk_loop><span class="glue">
           <input value="<tmpl_lang Check In To>" onclick="checkin('<tmpl_var escape=html id>')" type="button" class="button">
-          <select name="checkin_to_<tmpl_var escape=html id>" style="width:10em"><tmpl_loop desk_loop>
+          <select name="checkin_to_<tmpl_var escape=html id>"><tmpl_loop desk_loop>
             <option value="<tmpl_var escape=html choice_desk_id>"<tmpl_if is_selected> selected</tmpl_if>><tmpl_var escape=html choice_desk_name> <tmpl_lang Desk></option>
           </tmpl_loop></select>
         </span></tmpl_if>
@@ -241,7 +241,7 @@ Krang.onload( function() {
   </table>
   </div>
 
-  <tmpl_include HTMLPager/pager-pagination.tmpl>
+  <tmpl_include HTMLPager/<tmpl_lang en>/pager-pagination.tmpl>
 
   <div class="panel capped">
   <div class="west">

@@ -29,6 +29,7 @@ use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader Widget => qw(format_url);
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Publisher';
+use Krang::ClassLoader Localization => qw(localize);
 use Carp qw(croak);
 
 use Krang::ClassLoader base => 'CGI';
@@ -70,19 +71,23 @@ sub show {
 
     # setup sort selector
     my $sort = $query->param('krang_pager_sort_field') || 'type';
+
+    my %labels = (
+        type  => 'Type',
+        id    => 'ID',
+        title => 'Title',
+        url   => 'URL',
+        date  => 'Date',
+    );
+
+    %labels = map { $_ => localize($labels{$_}) } keys %labels
+      unless $session{language} and $session{language} eq 'en';
+
     $template->param('sort_select' => scalar
-                     $query->popup_menu(-name => 'sort_select',
-                                        -values => [ 'type',
-                                                     'id',
-                                                     'title',
-                                                     'url',
-                                                     'date' ],
-                                        -labels => { type => 'Type',
-                                                     id   => 'ID',
-                                                     title => 'Title',
-                                                     url   => 'URL',
-                                                     date  => 'Date' },
-                                        -default => $sort,
+                     $query->popup_menu(-name     => 'sort_select',
+                                        -values   => [ keys %labels ],
+                                        -labels   => \%labels,
+                                        -default  => $sort,
                                         -override => 1,
                                         -onchange => "Krang.Pager.sort(this.options[this.selectedIndex].value,0)",
                                        ));
