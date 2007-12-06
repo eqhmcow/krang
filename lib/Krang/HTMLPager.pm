@@ -8,6 +8,7 @@ use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader Session => qw(%session);
+use Krang::ClassLoader Localization => qw(localize);
 use File::Spec::Functions qw(catdir);
 
 =head1 NAME
@@ -132,6 +133,14 @@ sub init {
     # finish the object
     $self->hash_init(%defaults, %args);
 
+    # localize column labels
+    %{$self->column_labels} 
+      = map { $_ => localize($self->column_labels->{$_}) } keys %{$self->column_labels};
+
+    # localize command column labels
+    %{$self->command_column_labels} 
+      = map { $_ => localize($self->command_column_labels->{$_}) } keys %{$self->command_column_labels};
+
     # Set default row_count
     $self->{row_count} = undef;
 
@@ -180,7 +189,11 @@ sub output {
     # Dynamically create template as scalar with proper columns
     my $pager_tmpl = $self->make_internal_template();
 
-    my $t = pkg('HTMLTemplate')->new_scalar_ref(\$pager_tmpl, loop_context_vars=>1);
+    my $t = pkg('HTMLTemplate')->new_scalar_ref(\$pager_tmpl, 
+                                                loop_context_vars=>1,
+                                                path => [ catdir('HTMLPager', $session{language}),
+                                                          'HTMLPager' ],
+					       );
     $self->_fill_template($t);
 
     return $t->output();
@@ -292,9 +305,9 @@ sub make_internal_template {
 
 <form name="krang_pager_form" action="$script_name" method="post">
 
-<tmpl_include HTMLPager/pager-internals.tmpl>
+<tmpl_include pager-internals.tmpl>
 
-<tmpl_include HTMLPager/pager-pagination.tmpl>
+<tmpl_include pager-pagination.tmpl>
 
 <div class="table-container">
 <img src="/static/<tmpl_var krang_install_id>/images/corner-top-left.gif" class="left-corner">
@@ -323,14 +336,18 @@ END
 
 </table></div>
 
-<tmpl_include HTMLPager/pager-pagination.tmpl>
+<tmpl_include pager-pagination.tmpl>
 
 </form>
 
 <tmpl_else>
 
 <p class="naught">
-None found
+EOF
+
+    $pager_tmpl .= localize('None found');
+
+    $pager_tmpl .= <<"EOF";
 </p>
 
 </tmpl_if>
