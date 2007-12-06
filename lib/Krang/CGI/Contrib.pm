@@ -1,6 +1,7 @@
 package Krang::CGI::Contrib;
 use Krang::ClassFactory qw(pkg);
 use Krang::ClassLoader base => qw(CGI);
+use Krang::ClassLoader Localization => qw(localize);
 use strict;
 use warnings;
 
@@ -286,6 +287,9 @@ sub associate_search {
 
     # Get table of contrib types
     my %contrib_types = pkg('Pref')->get('contrib_type');
+
+    # Localize contrib_types
+    %contrib_types = map { $_ => localize($contrib_types{$_}) } keys %contrib_types;
 
     # Build up list of currently associated contributors
     my @contribs = $ass_obj->contribs();
@@ -944,7 +948,7 @@ sub list_view_contrib_row_handler {
     $row_hashref->{first_middle} = $q->escapeHTML($contrib->first);
     $row_hashref->{first_middle} .= '&nbsp;' . $q->escapeHTML($contrib->middle) if ($contrib->middle());
     $row_hashref->{last} = $q->escapeHTML($contrib->last);
-    $row_hashref->{type} = join(',&nbsp;', ( $q->escapeHTML($contrib->contrib_type_names) ) );
+    $row_hashref->{type} = join(',&nbsp;', $q->escapeHTML(map {localize($_)} $contrib->contrib_type_names));
 }
 
 
@@ -1139,7 +1143,7 @@ sub get_contrib_tmpl {
 # Replace with Krang::Prefs(?)
 sub get_contrib_types {
     my %pref = pkg('Pref')->get('contrib_type');
-    return [ map { [ $_, $pref{$_} ] } keys %pref ];
+    return [ map { [ $_, localize($pref{$_}) ] } sort {$pref{$a} cmp $pref{$b}} keys %pref ];
 }
 
 
