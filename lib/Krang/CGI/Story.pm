@@ -15,6 +15,7 @@ use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader Conf => qw(Charset);
+use Krang::ClassLoader Localization => qw(localize);
 
 use Krang::ClassLoader base => 'CGI::ElementEditor';
 
@@ -422,7 +423,7 @@ sub edit {
                         element => $story->element);
     
     # set fields shown everywhere
-    $template->param(story_id          => $story->story_id || "N/A",
+    $template->param(story_id          => $story->story_id || localize("n/a"),
                      type              => $story->element->display_name,
                      url               => $story->url ? 
                                             format_url(
@@ -462,7 +463,7 @@ sub edit {
         foreach my $contrib ($story->contribs) {
             push(@contribs_loop, { first_name => $contrib->first,
                                    last_name  => $contrib->last,
-                                   type       => $contrib_types{$contrib->selected_contrib_type}});
+                                   type       => localize($contrib_types{$contrib->selected_contrib_type})});
         }
         $template->param(contribs_loop => \@contribs_loop);
 
@@ -494,7 +495,7 @@ sub edit {
 	my ($add_button, $add_chooser)
 	  = category_chooser(name        => 'add_category_id',
 			     query       => $query,
-			     label       => 'Add Site/Category',
+			     label       => localize('Add Site/Category'),
 			     display     => 0,
 			     onchange    => 'add_category',
 			     may_edit    => 1,
@@ -506,7 +507,7 @@ sub edit {
 	my ($replace_button, $replace_chooser)
 	  = category_chooser(name        => 'category_replacement_id',
 			     query       => $query,
-			     label       => 'Replace This Category',
+			     label       => localize('Replace This Category'),
 			     display     => 0,
 			     onchange    => 'replace_category',
 			     may_edit    => 1,
@@ -566,40 +567,41 @@ not present then a story must be available in the session.
 sub view {    
     my $self = shift;
     my $query = $self->query;
-    my $template = $self->load_tmpl('view.tmpl', 
+    my $template = $self->load_tmpl('view.tmpl',
                                     associate         => $query,
                                     die_on_bad_params => 0,
                                     loop_context_vars => 1);
     my %args = @_;
-              
+
     # get story_id from params or from the story in the session
-    my $story_id = $query->param('story_id') ? $query->param('story_id') :
-                   $session{story}->story_id;
+    my $story_id = $query->param('story_id') ? $query->param('story_id')
+                                             : $session{story}->story_id;
+
     croak("Unable to get story_id!") unless $story_id;
-    
+
     # load story from DB
     my $version = $query->param('version');
     my ($story) = pkg('Story')->find(story_id => $story_id,
-                                     ($version && length($version) ? 
+                                     ($version && length($version) ?
                                       (version => $version) : ()),
                                     );
-    croak("Unable to load story '" . $query->param('story_id') . "'" . 
+    croak("Unable to load story '" . $query->param('story_id') . "'" .
           (defined $version ? ", version '$version'." : "."))
       unless $story;
-    
+
     # run the element editor edit
     $self->element_view(template => $template, 
                         element  => $story->element);
-    
+
     # static data
-    $template->param(story_id          => $story->story_id,
-                     type              => $story->element->display_name,
-                     url               => format_url(
-                                                     url => $story->url,
-                                                     linkto => "javascript:Krang.preview('story','" . $story->story_id() . "')",
-                                                     length => 50,
-                                                    ),
-                     version           => $story->version);
+    $template->param(story_id => $story->story_id,
+                     type     => $story->element->display_name,
+                     url      => format_url(
+					    url => $story->url,
+					    linkto => "javascript:Krang.preview('story','" . $story->story_id() . "')",
+					    length => 50,
+					   ),
+                     version  => $story->version);
 
     if (not $query->param('path') or $query->param('path') eq '/') {
         # fields for top-level
@@ -609,7 +611,7 @@ sub view {
                          published_version => $story->published_version,
                         );
 
-        $template->param(cover_date => $story->cover_date->strftime('%m/%d/%Y %I:%M %p'))
+        $template->param(cover_date => $story->cover_date->strftime(localize('%m/%d/%Y %I:%M %p')))
           if $story->cover_date;
 
         my @contribs_loop;
@@ -617,13 +619,11 @@ sub view {
         foreach my $contrib ($story->contribs) {
             push(@contribs_loop, { first_name => $contrib->first,
                                    last_name  => $contrib->last,
-                                   type       => $contrib_types{$contrib->selected_contrib_type}});
+                                   type       => localize($contrib_types{$contrib->selected_contrib_type})});
         }
         $template->param(contribs_loop => \@contribs_loop);
-        
-        $template->param(category_loop => 
-                         [ map { { url => $_->url } } $story->categories ]);
-        
+
+        $template->param(category_loop => [ map { { url => $_->url } } $story->categories ]);
     }
 
     # setup return form
@@ -1930,7 +1930,7 @@ sub find_story_row_handler {
     # Columns:
     $row->{story_id}   = $story->story_id();
     $row->{title}      = $story->title;
-    $row->{pub_status} = $story->published_version ? '<b>P</b>' : '&nbsp;';
+    $row->{pub_status} = $story->published_version ? '<b>'.localize('P').'</b>' : '&nbsp;';
 
     # format url to fit on the screen and to link to preview
     $row->{url} = format_url(
@@ -1940,17 +1940,23 @@ sub find_story_row_handler {
 
     # cover_date
     my $tp = $story->cover_date();
-    $row->{cover_date} = (ref($tp)) ? $tp->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
+    $row->{cover_date} = (ref($tp)) ? $tp->strftime(localize('%m/%d/%Y %I:%M %p')) : localize('[n/a]');
 
     # command column
-    $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| 
+    $row->{commands_column} = qq|<input value="|
+        . localize('View Detail')
+        . qq|" onclick="view_story('|
         . $story->story_id 
         . qq|')" type="button" class="button">|
         . ' '
-        . qq|<input value="View Log" onclick="view_story_log('| . $story->story_id 
+        . qq|<input value="|
+        . localize('View Log')
+        . qq|" onclick="view_story_log('| . $story->story_id 
         . qq|')" type="button" class="button">|
         . ' '
-        . qq|<input value="Copy" onclick="copy_story('| . $story->story_id 
+        . qq|<input value="|
+        . localize('Copy')
+        . qq|" onclick="copy_story('| . $story->story_id 
         . qq|')" type="button" class="button">|;
 
     if (($story->checked_out) and 
@@ -1958,20 +1964,25 @@ sub find_story_row_handler {
         or not $story->may_edit ) {
         $row->{checkbox_column} = "&nbsp;";
     } else {
-        $row->{commands_column} .= qq| <input value="Edit" onclick="edit_story('| 
+        $row->{commands_column} .= qq| <input value="|
+            . localize('Edit')
+            . qq|" onclick="edit_story('| 
             . $story->story_id 
             . qq|')" type="button" class="button">|;
     }
 
     # status 
     if ($story->checked_out) {
-        $row->{status} = "Checked out by <b>"
+        $row->{status} = localize('Checked out by')
+            . ' <b>'
             . (pkg('User')->find(user_id => $story->checked_out_by))[0]->login
             . '</b>';
     } elsif ($story->desk_id) {
-        $row->{status} = "On <b>"
+        $row->{status} = localize('On')
+            . ' <b>'
             . (pkg('Desk')->find(desk_id => $story->desk_id))[0]->name
-            . '</b> Desk';
+            . '</b> '
+            . localize('Desk');
     } else {
         $row->{status} = '&nbsp;';
     }
@@ -2003,7 +2014,11 @@ sub list_active_row_handler {
     $row->{title} = $q->escapeHTML($story->title);
 
     # commands column
-    $row->{commands_column} = qq|<input value="View Detail" onclick="view_story('| . $story->story_id . qq|')" type="button" class="button">|;
+    $row->{commands_column} = qq|<input value="|
+        . localize('View Detail')
+        . qq|" onclick="view_story('|
+        . $story->story_id
+        . qq|')" type="button" class="button">|;
 
     # user
     my ($user) = pkg('User')->find(user_id => $story->checked_out_by);
@@ -2140,9 +2155,10 @@ sub alert_duplicate_url {
     my $new_cat = $added_cats && $added_cats->[0]->url; 
     
     # figure out how our story builds its URL (to remind user)
-    my $url_attributes = join(' and ', 
-			      join(', ', $class->url_attributes),
-			      "site/category");
+    my $attribs = localize(join(', ', $class->url_attributes));
+    my $url_attributes = $attribs
+                       ? $attribs . localize(' and site/category')
+	               : localize('site/category');
 
     # find clashing stories/categories, and add alert
     if ($error->stories) {

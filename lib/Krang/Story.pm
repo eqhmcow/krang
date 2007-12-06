@@ -11,6 +11,7 @@ use Krang::ClassLoader DB => qw(dbh);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader 'UUID';
+use Krang::ClassLoader Localization => qw(localize);
 use Carp           qw(croak);
 use Storable       qw(nfreeze thaw);
 use Time::Piece::MySQL;
@@ -1937,7 +1938,7 @@ sub clone {
     $copy->{element}{element_id} = undef;
 
     # mangle title
-    $copy->{title} = "Copy of $copy->{title}";
+    $copy->{title} = localize('Copy of') . ' ' . $copy->{title};
 
     # start at version 0
     $copy->{version} = 0;
