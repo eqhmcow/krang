@@ -31,6 +31,7 @@ use Krang::ClassLoader Conf => qw(PreviewSSL);
 use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget => qw(format_url datetime_chooser decode_datetime);
 use Krang::ClassLoader Message => qw(add_message add_alert get_alerts clear_alerts);
+use Krang::ClassLoader Localization => qw(localize);
 use Time::Piece;
 
 use Carp qw(croak);
@@ -568,7 +569,7 @@ sub _build_asset_list {
             my $checked_out_by = $asset->checked_out_by();
             if ($user_id != $checked_out_by) {
                 $checked_out = 1;
-                $status = 'Checked out by <b>' .
+                $status = localize('Checked out by') . ' <b>' .
                   (pkg('User')->find(user_id => $asset->checked_out_by))[0]->login .
                     '</b>';
             }
