@@ -220,6 +220,8 @@ form { margin: 0; padding: 0; }
 #C table.props tbody td.f { border-left:  1px solid #DDD; padding-left: 10px; font-weight: bold; color: #666}
 #C table.props tbody td.l { border-right: 1px solid #DDD }
 
+#C table.bordered-request { border-bottom: 1px solid #DDD; margin-top: 10px; }
+
 /*column widths must account for padding (~1.5em):*/
 #C col.c-date  { width:    7em; }/*:format = 'xx/xx/xxxx xx:xx XX' on 2 lines*/
 #C col.c-ldate { width:   12em; }/*:format = 'xx/xx/xxxx xx:xx XX' on 1 line*/
@@ -234,8 +236,9 @@ form { margin: 0; padding: 0; }
 #C col.c-label { width: 15.5em; }    #C col.c-label-big { width: 21.5em; }    #C col.c-mini { width: 9.5em; }
 #C col.c-sum   { width:  7.5em; }    #C col.c-big-sum   { width:  9.5em; }
 
-#C col.series { width: 8.5em; }/*:compact button, select, label*/
-#C col.tick   { width:  40px; }/*:checkbox ONLY (~3.5em)*/
+#C col.series  { width: 8.5em;  }/*:compact button, select, label*/
+#C col.tick    { width:  40px;  }/*:checkbox ONLY (~3.5em)*/
+#C col.desk-cmd { width: 31em;  }/*:desk cmd column*/
 #C tr .series, #C tr .tick { text-align: center; }
 
 #C table .button { margin: 0; }
@@ -279,6 +282,8 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 
 #C label { background-color: inherit; color: #666; font-weight: bold; }
 #C label input { vertical-align: middle; }
+#C input.radio { margin: 0 3px 0 0; }
+
 
 /*****************
  * Action Panels *
@@ -286,7 +291,7 @@ input.non-hilite:focus, select.non-hilite:focus, textarea.non-hilite:focus { bac
 
 #C .panel  { padding: 20px 0 0; text-align: right; }
 
-#C .panel input       { background: <tmpl_var LinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-button-full.gif") 0 50% repeat-x; color: #FFF; width: auto; overflow: visible; margin: 0 0 0 5px; border: 1px solid <tmpl_var DarkLinkColor>; border-color: <tmpl_var LinkColor> <tmpl_var DarkLinkColor> <tmpl_var DarkLinkColor> <tmpl_var LinkColor>; padding: .1em .5em; font-size: 1.27em; line-height: 1; }
+#C .panel input       { background: <tmpl_var LinkColor> url("/static/<tmpl_var krang_install_id>/images/bkg-button-full.gif") 0 50% repeat-x; color: #FFF; width: auto; overflow: visible; margin: 0 0 0 5px; border: 1px solid <tmpl_var DarkLinkColor>; border-color: <tmpl_var LinkColor> <tmpl_var DarkLinkColor> <tmpl_var DarkLinkColor> <tmpl_var LinkColor>; padding: .1em .5em; font-size: 1.2em; line-height: 1; }
 #C .panel input:hover { background-color: <tmpl_var DarkLinkColor>; background-image: none; }
 
 /*(db2)testing - TOO effective:*/
@@ -514,4 +519,4 @@ div.autocomplete li.selected { background-color: <tmpl_var HilightColor>; }
 #C .err .hpts-outer, #C .err .hpts-outer * { background: <tmpl_var BackgroundColor>; color: <tmpl_var TextColor>; }
 #C .err .hpts-title { background: <tmpl_var DarkColor>; color: <tmpl_var LightTextColor>; }
 #C .err .hpts-label-selected a { background: <tmpl_var LightColor>; color: <tmpl_var TextColor>; }
-#C .err .hpts-bbar { background: <tmpl_var BrightColor>; color: <tmpl_var TextColor>; }
+#C .err .hpts-bbar, #C .err .hpts-botbar { background: <tmpl_var BrightColor>; color: <tmpl_var TextColor>; }
