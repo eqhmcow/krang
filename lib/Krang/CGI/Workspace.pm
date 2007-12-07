@@ -182,7 +182,7 @@ sub _row_handler {
     }
 
     # format the date
-    $row->{date} = ref $date ? $date->strftime('%m/%d/%Y %I:%M %p') : '[n/a]';
+    $row->{date} = ref $date ? $date->strftime(localize('%m/%d/%Y %I:%M %p')) : '[n/a]';
 
     # setup version, used by all type
     $row->{version} = $obj->version;
