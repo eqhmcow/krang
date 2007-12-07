@@ -347,22 +347,28 @@ sub category_chooser_object {
 
     # build the chooser
     return HTML::PopupTreeSelect::Dynamic->new(
-        name              => $name,
-        title             => $title || localize('Choose a Category'),
-        data              => $data->{children},
-        image_path        => pkg('Widget')->_img_prefix() . 'images',
-        onselect          => $name . '_choose_category',
-        hide_root         => 1,
-        button_label      => $label || localize('Choose'),
-        include_css       => 0,
-        width             => 225,
-        height            => 200,
-        resizable         => 1,
-        dynamic_url       => $query->url(-absolute => 1),
-        dynamic_params    => "rm=category_chooser_node&name=${name}",
-        include_prototype => 0,
-        include_full_js   => 0,
-        separate_show_bnt => 1,
+        name                => $name,
+        title               => $title || localize('Choose a Category'),
+        data                => $data->{children},
+        image_path          => pkg('Widget')->_img_prefix() . 'images',
+        onselect            => $name . '_choose_category',
+        hide_root           => 1,
+        button_label        => $label || localize('Choose'),
+        include_css         => 0,
+        width               => 225,
+        height              => 200,
+        resizable           => 1,
+        dynamic_url         => $query->url(-absolute => 1),
+        dynamic_params      => "rm=category_chooser_node&name=${name}",
+        include_prototype   => 0,
+        include_full_js     => 0,
+        separate_show_bnt   => 1,
+        ok_button_label     => localize(' Ok '),
+        cancel_button_label => localize('Cancel'),
+        # The following is just for documentation purposes
+        # In our Krang installation the alert message is part
+        # of htdocs/js/popup_tree_select.js
+        # alert => localize('Please select an item or click Cancel to cancel selection.'),
     );
 }
 
@@ -905,21 +911,27 @@ sub template_chooser_object {
 
     # build the chooser, taking care of localizing the buttons and the title
     return HTML::PopupTreeSelect::Dynamic->new(
-        name              => $name,
-        title             => $title || localize('Choose a Template'),
-        data              => $data->{children},
-        image_path        => pkg('Widget')->_img_prefix() . 'images',
-        onselect          => $name . '_choose_template',
-        button_label      => $label || localize('Choose'),
-        include_css       => 0,
-        width             => 225,
-        height            => 200,
-        resizable         => 1,
-        dynamic_url       => $query->url(-absolute => 1),
-        dynamic_params    => "rm=template_chooser_node&name=${name}",
-        include_prototype => 0,
-        include_full_js   => 0,
-        separate_show_btn => 1,
+        name                => $name,
+        title               => $title || localize('Choose a Template'),
+        data                => $data->{children},
+        image_path          => pkg('Widget')->_img_prefix() . 'images',
+        onselect            => $name . '_choose_template',
+        button_label        => $label || localize('Choose'),
+        include_css         => 0,
+        width               => 225,
+        height              => 200,
+        resizable           => 1,
+        dynamic_url         => $query->url(-absolute => 1),
+        dynamic_params      => "rm=template_chooser_node&name=${name}",
+        include_prototype   => 0,
+        include_full_js     => 0,
+        separate_show_btn   => 1,
+        ok_button_label     => localize(' Ok '),
+        cancel_button_label => localize('Cancel'),
+        # The following is just for documentation purposes
+        # In our installation the alert message is part
+        # of htdocs/js/popup_tree_select.js
+        # alert => localize('Please select an item or click Cancel to cancel selection.'),
     );
 }
 
