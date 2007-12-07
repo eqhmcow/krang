@@ -1325,20 +1325,21 @@ Krang.Widget.date_chooser = function(inputName) {
     Krang.Widget.time_chooser(inputName)
     Primarily used by the HTML output by Krang::Widget::time_chooser()
 */
-Krang.Widget.time_chooser = function(inputName) {
+Krang.Widget.time_chooser = function(inputName, use_ampm_time) {
     // we need to find the associated clock and make the trigger display it
     var trigger = $(inputName + '_trigger');
     var clock   = $(inputName + '_clock');
     var hour    = clock.down('select', 0);
     var minute  = clock.down('select', 1);
-    var ampm    = clock.down('select', 2);
+    var ampm    = null;
+    if (use_ampm_time) { ampm = clock.down('select', 2); }
 
     var hide_clock = function() {
         clock.hide();
         // re-disable the inputs
         hour.disabled   = true;
         minute.disabled = true;
-        ampm.disabled   = true;
+        if (use_ampm_time) { ampm.disabled = true; }
     };
 
     trigger.observe('click', function(event) {
@@ -1353,17 +1354,17 @@ Krang.Widget.time_chooser = function(inputName) {
             // re-enable the inputs
             hour.disabled   = false;
             minute.disabled = false;
-            ampm.disabled   = false;
+            if (use_ampm_time) { ampm.disabled = false; }
 
             // parse the date in the input. If we get a valid time, then
             // set the selected values of the dropdowns
             var input = $(inputName);
             current = input.value;
-            var matches = current.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+            var matches = current.match(/^(\d+):(\d+)\s*(AM|PM)?$/i);
             if( matches ) {
                 hour.value   = matches[1] || '';
                 minute.value = matches[2] || '';
-                ampm.value   = matches[3].toUpperCase();
+                if (use_ampm_time) { ampm.value = matches[3].toUpperCase(); }
             } else if(! current ) {
                 input.value = '';
             }
@@ -1383,13 +1384,14 @@ Krang.Widget.time_chooser = function(inputName) {
         }
     });
 };
-Krang.Widget.update_time_chooser = function(inputName) {
+Krang.Widget.update_time_chooser = function(inputName, use_ampm_time) {
     var clock  = $(inputName + '_clock');
     var hour   = clock.down('select', 0).value;
     var minute = clock.down('select', 1).value;
-    var ampm   = clock.down('select', 2).value;
-    if( hour && minute && ampm ) {
-        $(inputName).value = hour + ':' + minute + ' ' + ampm;
+
+    var ampm   = use_ampm_time ? (clock.down('select', 2).value + ' ') : '';
+    if( hour && minute && ((use_ampm_time && ampm) || true ) ) {
+        $(inputName).value = hour + ':' + minute + ampm;
     }
 };
 

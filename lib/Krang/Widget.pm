@@ -375,7 +375,7 @@ sub category_chooser_object {
 
 =item $chooser_html = time_chooser(name => 'time', query => $query)
 
-Returns a block of HTML implementing the standard Krang datetime
+Returns a block of HTML implementing the standard Krang time
 chooser.  The C<name> and C<query> parameters are required.
 
 Additional optional parameters are as follows:
@@ -426,42 +426,62 @@ sub time_chooser {
         }
     }
 
-    my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
-    $hour    = $hour && $hour >= 13 ? $hour - 12 : $hour;
-    $hour    = 12 if defined $hour && $hour == 0;
-    $value ||= (defined $hour && defined $minute) ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
+    # hours running from 1-12 or 0-23
+    my $use_ampm_time = localize('AMPM');
+
+    my @hours = (1..12);
+
+    if ($use_ampm_time) {
+        my $ampm = $hour && $hour >= 12 ? 'PM' : 'AM';
+        $hour    = $hour && $hour >= 13 ? $hour - 12 : $hour;
+        $hour    = 12 if defined $hour && $hour == 0;
+        $value ||= (defined $hour && defined $minute) ? sprintf('%i:%02i %s', $hour, $minute, $ampm) : "";
+    } else {
+        $value ||= (defined $hour && defined $minute) ? sprintf('%i:%02i', $hour, $minute) : "";
+	@hours = (0..23);
+    }
 
     # an image src prefix for caching
     my $img_prefix = pkg('Widget')->_img_prefix();
 
+    # inform Krang.Widget about time format
+    my $js_use_ampm_time = $use_ampm_time ? 'true' : 'false';
+
     # setup the onchange
     $onchange ||= '';
     my $onchange_attr = $onchange ? qq/ onchange="$onchange"/ : '';
-    return qq|
+    my $html = qq|
         <input id="$name" name="$name" value="$value" size="9"$onchange_attr class="time_chooser">
         <img alt="" src="${img_prefix}images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div id="${name}_clock" class="clock_widget" style="display:none">
-            <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
+            <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
                 <option value="">Hour</option> | 
-        . join(' ', map { qq|<option value="$_">$_</option>| } (1..12)) .
+        . join(' ', map { qq|<option value="$_">$_</option>| } @hours) .
         qq|
             </select>
             :
-            <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
+            <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
                 <option value="">Minute</option> |
         . join(' ', map { qq|<option value="$_">$_</option>| } 
             ('00', '01', '02', '03', '04', '05', '06', '07', '08', '09', 10..59)) .
-        qq|
-            </select>
+        qq|</select>|;
+
+    if ($use_ampm_time) {
+	$html .= qq|
             &nbsp;
-            <select name="${name}_ampm" onchange="Krang.Widget.update_time_chooser('$name'); $onchange" disabled>
+            <select name="${name}_ampm" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
                 <option value="AM">AM</option> <option value="PM">PM</option>
-            </select>
+            </select>|;
+    }
+
+    $html .= qq|
         </div>
         <script type="text/javascript">
-        Krang.onload( function() { Krang.Widget.time_chooser( '$name' ); } );
+        Krang.onload( function() { Krang.Widget.time_chooser( '$name', $js_use_ampm_time ); } );
         </script>
     |;
+
+    return $html;
 }
 
 =item $date_obj = decode_time(name => 'daily_time', query => $query)
@@ -485,10 +505,11 @@ sub decode_time {
 
     my $value = $query->param($name);
     my ($hour, $minute);
-    if( $value && $value =~ /^(\d+):(\d+)\s?(am|pm)$/i ) {
-        $hour = $1;
-        $minute = $2;
-        $hour += 12 if( uc $3 eq 'PM' );
+    if( $value && $value =~ /^(\d+):(\d+)\s?(am|pm)?$/i ) {
+        $hour    = $1;
+        $minute  = $2;
+        my $ampm = $3 || '';
+        $hour += 12 if( uc($ampm) eq 'PM' );
     }
     return ($hour, $minute);
 }
