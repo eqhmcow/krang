@@ -738,14 +738,16 @@
 ###        and `pm' notation is unsupported  and  in  such  cases  %p  will
 ###        return an empty string.
 "%b %e, %Y %l:%M %p"   "%e. %b %Y, %k:%M"  # this war for v2.* 
-"%m/%d/%Y %I:%M %p"    "%d. %m %Y %H:%M"   # this is for v3.*
+"%m/%d/%Y %I:%M %p"    "%d. %m. %Y %H:%M"   # this is for v3.*
 
-
-### Date format in Krang::ElementClass::Date
-"%b %e, %Y"   "%e. %b %Y"  # this was for v2.* and is for v3.*
+### Date format for Krang::Widget date_chooser()
+"%m/%d/%Y"    "%d. %m. %Y"
 
 ### Set to 'AMPM' if your time should be in englich AM/PM format
 AMPM 0
+
+### Date format in Krang::ElementClass::Date
+"%b %e, %Y"   "%e. %b %Y"  # this was for v2.* and is for v3.*
 
 # Login stuff
 "Invalid login. You have failed more than " "Ungültige Anmeldung. Sie haben "

@@ -1308,11 +1308,11 @@ Krang.Widget = {};
     Krang.Widget.date_chooser(inputName)
     Primarily used by the HTML output by Krang::Widget::date_chooser()
 */
-Krang.Widget.date_chooser = function(inputName) {
+Krang.Widget.date_chooser = function(inputName, date_format) {
     // create a calendar object
     var cal = Calendar.setup({
         inputField  : inputName,
-        ifFormat    : "%m/%d/%Y",
+        ifFormat    : date_format,
         button      : inputName + '_trigger',
         weekNumbers : false,
         showOthers  : true,

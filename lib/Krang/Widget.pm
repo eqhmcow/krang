@@ -603,13 +603,15 @@ sub date_chooser {
     my ($name, $date, $query, $nochoice, $onchange) = @args{qw(name date query nochoice onchange)};
     croak("Missing required args: name and query") unless $name and $query;
 
+    my $date_format = localize('%m/%d/%Y');
+
     # use the date from the query first, if not there use
     if( $query->param($name) ) {
         $date = $query->param($name);
     } else {
         # Set date to today if it is NOT already set, AND if we do not allow "no choice"
         $date ||= localtime() unless ($nochoice);
-        $date = $date ? $date->strftime('%m/%d/%Y') : '';
+        $date = $date ? $date->strftime($date_format) : '';
     }
 
     # setup the default onchange value
@@ -620,7 +622,7 @@ sub date_chooser {
         <input id="$name" name="$name" value="$date" size="11"$onchange class="date_chooser">
         <img alt="" src="${img_prefix}images/calendar.gif" id="${name}_trigger" class="calendar_trigger">
         <script type="text/javascript">
-        Krang.onload( function() { Krang.Widget.date_chooser( '$name' ); } );
+        Krang.onload( function() { Krang.Widget.date_chooser( '$name', '$date_format' ); } );
         </script>
     |;
 
@@ -652,9 +654,10 @@ sub decode_datetime {
 
     my $date = $query->param($name);
     my $time = $query->param($name . '_time');
+
     if( $date && $time ) {
         my $piece;
-        eval { $piece = Time::Piece->strptime("$date $time", '%m/%d/%Y %I:%M %p') };
+        eval { $piece = Time::Piece->strptime("$date $time", localize('%m/%d/%Y %I:%M %p')) };
         return $piece unless $@;
     }
     return;
@@ -680,7 +683,7 @@ sub decode_date {
 
     my $value = $query->param($name);
     if( $value ) {
-        return Time::Piece->strptime($value, '%m/%d/%Y');
+        return Time::Piece->strptime($value, localize('%m/%d/%Y'));
     } else {
         return;
     }
