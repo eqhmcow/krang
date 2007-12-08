@@ -83,9 +83,9 @@ sub localize {
     my $language = $session{language} || DefaultLanguage;
 
     # return as-is
-    return $key if $language eq 'en'   # return English default
-                or not length($key)    # empty string
-                or not $language;      # krang startup
+    return $key if not $language       # krang startup
+                or $language eq 'en'   # English default
+                or not length($key);   # empty string
 
     debug("localize($key) called from " . (caller)[0]. ", line " . (caller)[2] . ".");
 
