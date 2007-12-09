@@ -574,37 +574,10 @@ sub find_template {
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
-    # Attempt to find or instantiate an HTML::Template::Expr object 
+    # Attempt to instantiate an HTML::Template::Expr object 
     my $template;
-    my $full_path;
-    foreach (@search_path) {
-        $full_path = $_ . '/' . $filename;
-        if ($template = $publisher->tmpl_cache->{$full_path}) {
-            # we've looked for this path before...
-            if ($template == -1) {
-                # ...and found nothing; jump to next path
-                next;
-            } else {
-                # ...and found a file; grab template from cache
-                $template->clear_params;  
-                $template->{options}->{path} = \@search_path; # in case last time we were in another category
-                return $template;
-            }
-        } else {
-            # we've never looked for this path...
-            if (-e $full_path) {
-                # ...and it exists: use it
-                last;
-            } else  {
-                # ...and it doesn't exist: never check again
-                $publisher->tmpl_cache->{$full_path} = -1;
-            }
-        }
-    }
-    
     eval {
-        # The template wasn't in cache - instantiate a new one...
-        $template = HTML::Template::Expr->new(filename          => $full_path,
+        $template = HTML::Template::Expr->new(filename       => $filename,
                                               path              => \@search_path,
                                               die_on_bad_params => 0,
                                               loop_context_vars => 1,
@@ -613,7 +586,6 @@ sub find_template {
                                               search_path_on_include => 1,
                                               %args,
                                              );
-        $publisher->tmpl_cache->{$full_path} = $template;
     };
     if ($@) {
         my $err = $@;
@@ -890,7 +862,7 @@ sub fill_template {
                   exists($child_params{contrib_loop});
                 $loop_entry->{contrib_loop} = $child_params{contrib_loop};
             }
-            
+
             push @{$child_params{$child_loop}}, $loop_entry;
         }
 	
@@ -947,61 +919,21 @@ sub _fill_inner_loop {
     }
     unless ($loop_filled{$name}) {
         
-        # it DOESN'T (or the element had no template): recurse to build the inner loop's vars and propagate them up
-        if (my $inner_tmpl = $self->_inner_loop_to_tmpl(tmpl => $tmpl, loop => $loopname, publisher => $publisher)) {
-            $child->fill_template(publisher          => $publisher, 
-                                  fill_template_args => $fill_template_args,
-                                  tmpl               => $inner_tmpl,
-                                  element            => $child);
-            foreach (grep {$inner_tmpl->param($_)} $inner_tmpl->param) {
-                $loop_filled{$_} = $inner_tmpl->param($_);
-            }
+        # it DOESN'T (or the element had no template): recurse to build the inner loop's vars
+        my ($sub_tmpl, undef) = values %{$tmpl->{param_map}{$loopname}->[HTML::Template::LOOP::TEMPLATE_HASH]};
+        $sub_tmpl->clear_params; # $sub_tmpl should now be the appropriate HTML::Template sub-template, w/o vals
+        $child->fill_template(publisher          => $publisher, 
+                              fill_template_args => $fill_template_args,
+                              tmpl               => $sub_tmpl,
+                              element            => $child);
+        foreach (grep {$sub_tmpl->param($_)} $sub_tmpl->param) {
+            $loop_filled{$_} = $sub_tmpl->param($_); # store the values in this iteration of loop
         }
     }
     return \%loop_filled;
 }
 
 
-
-# _inner_loop_to_tmpl: helper function for fill_inner_loop - returns simplified template 
-# containing <tmpl_var> and <tmpl_loop> tags for all the variables that appear within
-# a particular loop (the resulting template isn't used for actual output; it's just 
-# passed to the fill_template() call of inner elements so they fill appropriate vars)
-sub _inner_loop_to_tmpl {
-  my ($self, %args) = @_;
-
-  my $publisher = $args{publisher};
-  my $tmpl      = $args{tmpl};
-  my $loopname  = $args{loop};
-
-  # see if this inner template has already been cached
-  my $cache_key = $tmpl . $loopname;
-  if (my $inner_tmpl = $publisher->tmpl_cache->{$cache_key}) {
-      # it's in cache: clear its values and return it
-      $inner_tmpl->clear_params();
-      return $inner_tmpl;
-  } elsif (my $tags = $self->_inner_loop_to_tmpl_tags($tmpl, $loopname)) {
-      # it's not in cache: build it and return it
-      my $inner_tmpl = HTML::Template->new( scalarref => \$tags, die_on_bad_params => 0);
-      $publisher->tmpl_cache->{$cache_key} = $inner_tmpl;
-      return $inner_tmpl;
-  } 
-}
-
-# _inner_loop_to_tmpl_tags: helper function called by inner_loop_to_tmpl to
-# recursively build text of inner template (consisting of vars within a loop)
-sub _inner_loop_to_tmpl_tags {
-  my ($self, $tmpl, @scope) = @_;
-  my $output = ''; 
-
-  foreach ($tmpl->query(loop => [@scope])) {
-    next if $_ =~ /^__.*__$/; # skip HTML::Template innards like __counter__
-    $output .= ( ($tmpl->query(name => [@scope,$_]) eq 'LOOP') ?
-		 "<TMPL_LOOP $_>" . $self->_inner_loop_to_tmpl_tags($tmpl,@scope,$_) . "</TMPL_LOOP>" :
-  	         "<TMPL_VAR $_>" );
-  }
-  return $output;
-}
 
 =item C<< $html = $class->publish(element => $element, publisher => $publisher) >>
 

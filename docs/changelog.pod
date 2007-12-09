@@ -3,6 +3,17 @@
 This document contains a list of changes for each release of Krang.
 
 
+=head2 3.01 - IN DEVELOPMENT
+
+=over
+
+=item *
+
+Implemented beta version of flat-template support, allowing
+a single template per top-level story type.
+
+=back
+
 
 =head2 3.01 - IN DEVELOPMENT
 
