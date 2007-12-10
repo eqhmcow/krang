@@ -680,9 +680,10 @@ is created with a row for every child element. The variables are
 the same as for the child-specific loop above with the addition of a boolean 
 C<is_$childname>.
 
-(Note: It's generally unwise to include the same loop twice in a template, not
-only because it's inefficient - requiring extra iterations - but because the
-population of the variables inside becomes hard to predict.)
+(Note: If the template contains multiple instances of the same loop, each will
+be populated with identical variables. This means that if ANY of them contains a 
+direct reference to the child, they will all have access to C<$childname> = HTML, 
+and none will have access to the child's own children.)
 
 =item *
 
@@ -924,14 +925,16 @@ sub _fill_inner_loop {
     unless ($loop_filled{$name}) {
         
         # it DOESN'T (or the element had no template): recurse to build the inner loop's vars
-        my ($sub_tmpl, undef) = values %{$tmpl->{param_map}{$loopname}->[HTML::Template::LOOP::TEMPLATE_HASH]};
-        $sub_tmpl->clear_params; # $sub_tmpl should now be the appropriate HTML::Template sub-template, w/o vals
-        $child->fill_template(publisher          => $publisher, 
-                              fill_template_args => $fill_template_args,
-                              tmpl               => $sub_tmpl,
-                              element            => $child);
-        foreach (grep {$sub_tmpl->param($_)} $sub_tmpl->param) {
-            $loop_filled{$_} = $sub_tmpl->param($_); # store the values in this iteration of loop
+        foreach my $sub_tmpl (values %{$tmpl->{param_map}{$loopname}->[HTML::Template::LOOP::TEMPLATE_HASH]}) {
+            # here we're directly accessing any sub-template(s) HTML::Template built for $loopname....
+            $sub_tmpl->clear_params;                                            
+            $child->fill_template(publisher          => $publisher,              
+                                  fill_template_args => $fill_template_args,     
+                                  tmpl               => $sub_tmpl,               
+                                  element            => $child);
+            foreach (grep {$sub_tmpl->param($_)} $sub_tmpl->param) {
+                $loop_filled{$_} = $sub_tmpl->param($_); # store the values in this iteration of loop
+            }
         }
     }
     return \%loop_filled;

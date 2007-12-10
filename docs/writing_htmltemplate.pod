@@ -164,9 +164,10 @@ The variables within each iteration are the same as for the child-specific loop 
 C<is_$childname>. In our example, <tmpl_loop element_loop> would contain <tmpl_var is_deck>, <tmpl_var deck>, 
 <tmpl_var is_page>, <tmpl_var page>.
 
-(Note: It's generally unwise to include the same loop twice in a template, not
-only because it's inefficient - requiring extra iterations - but because the
-population of the variables inside becomes hard to predict.)
+(Note: If the template contains multiple instances of the same loop, each will
+be populated with identical variables. This means that if ANY of them contains a
+direct reference to the child, they will all have access to C<$childname> = HTML,
+and none will have access to the child's own children.)
 
 =item *
 
