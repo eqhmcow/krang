@@ -680,6 +680,10 @@ is created with a row for every child element. The variables are
 the same as for the child-specific loop above with the addition of a boolean 
 C<is_$childname>.
 
+(Note: It's generally unwise to include the same loop twice in a template, not
+only because it's inefficient - requiring extra iterations - but because the
+population of the variables inside becomes hard to predict.)
+
 =item *
 
 A loop C<contrib_loop> that contains all contributor information.  See
