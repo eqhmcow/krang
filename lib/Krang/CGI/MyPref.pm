@@ -11,7 +11,7 @@ use Krang::ClassLoader 'PasswordHandler';
 use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Conf => qw(PasswordChangeTime DefaultLanguage);
-use Krang::ClassLoader Localization => qw(%LANG);
+use Krang::ClassLoader Localization => qw(%LANG localize);
 use JSON qw(objToJson);
 
 =head1 NAME
@@ -85,7 +85,7 @@ sub edit {
         use_autocomplete_selector => scalar $q->radio_group(
             -name    => 'use_autocomplete',
             -values  => [ 1, 0 ],
-            -labels  => { 1 => 'Yes', 0 => 'No' },
+            -labels  => { 1 => localize('Yes'), 0 => localize('No') },
             -default => pkg('MyPref')->get('use_autocomplete'),
             -class   => 'radio',
         )
@@ -95,7 +95,7 @@ sub edit {
         message_timeout_selector => scalar $q->popup_menu(
             -name   => 'message_timeout',
             -values => [ (1..10), 0 ],
-            -labels => { 0 => 'Never' },
+            -labels => { 0 => localize('Never') },
             -default => pkg('MyPref')->get('message_timeout'),
         )
     );
@@ -110,6 +110,7 @@ sub edit {
                 -values   => [ sort keys %LANG ],
                 -labels   => \%LANG,
                 -default  => $lang,
+                -onchange => q|$('edit_pref_form').addClassName('non_ajax')|,
             )
         );
 	$template->param(multi_lang => 1);
@@ -140,6 +141,21 @@ sub update_prefs {
             add_message("changed_$name");
             $prefs_changed = 1;
         } 
+    }
+
+    # process language pref only if we have more than one AvailableLanguage
+    if (scalar keys %LANG > 1) {
+	my $curr_lang = pkg('MyPref')->get('language') || DefaultLanguage || 'en';
+	my $new_lang = $q->param('language');
+
+	if ($new_lang ne $curr_lang) {
+	    # update language
+	    pkg('MyPref')->set(language => $new_lang);
+	    $session{language} = $new_lang;
+	    add_message("changed_language", lang => $LANG{$new_lang});
+	    push @prefs, 'language';
+	    $prefs_changed = 1;
+	}
     }
 
     # if we changed anything, then update our prefs cookie
@@ -183,19 +199,6 @@ sub update_prefs {
             $user->save;
             add_message("changed_password");
         }
-    }
-
-    # process language pref only if we have more than one AvailableLanguage
-    if (scalar keys %LANG > 1) {
-	my $curr_lang = pkg('MyPref')->get('language') || DefaultLanguage;
-	my $new_lang = $q->param('language');
-
-	if ($new_lang ne $curr_lang) {
-	    # update language
-	    pkg('MyPref')->set(language => $new_lang);
-	    $session{language} = $new_lang;
-	    add_message("changed_language", lang => $LANG{$new_lang});
-	}
     }
 
 
