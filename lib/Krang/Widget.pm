@@ -447,6 +447,10 @@ sub time_chooser {
     # inform Krang.Widget about time format
     my $js_use_ampm_time = $use_ampm_time ? 'true' : 'false';
 
+    # localize some
+    my $Hour   = localize('Hour');
+    my $Minute = localize('Minute');
+
     # setup the onchange
     $onchange ||= '';
     my $onchange_attr = $onchange ? qq/ onchange="$onchange"/ : '';
@@ -455,13 +459,13 @@ sub time_chooser {
         <img alt="" src="${img_prefix}images/clock.gif" id="${name}_trigger" class="clock_trigger">
         <div id="${name}_clock" class="clock_widget" style="display:none">
             <select name="${name}_hour" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
-                <option value="">Hour</option> | 
+                <option value="">$Hour</option> | 
         . join(' ', map { qq|<option value="$_">$_</option>| } @hours) .
         qq|
             </select>
             :
             <select name="${name}_minute" onchange="Krang.Widget.update_time_chooser('$name', $js_use_ampm_time); $onchange" disabled>
-                <option value="">Minute</option> |
+                <option value="">$Minute</option> |
         . join(' ', map { qq|<option value="$_">$_</option>| } 
             ('00', '01', '02', '03', '04', '05', '06', '07', '08', '09', 10..59)) .
         qq|</select>|;
