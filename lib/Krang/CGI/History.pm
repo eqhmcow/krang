@@ -187,7 +187,7 @@ sub show_row_handler {
     my ($row, $history) = @_;
     
     # setup action
-    my $name = ucfirst((split('::', $history->object_type))[1]);
+    my $name = ucfirst((split('::', $history->object_type))[-1]);
     my $action = $history->action;
     $action = $ACTION_LABELS{$action} if exists $ACTION_LABELS{$action};
     $row->{action} = $q->escapeHTML("$name " . localize($action));
