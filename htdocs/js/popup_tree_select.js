@@ -242,7 +242,7 @@ Object.extend(PopupTreeSelect.prototype, {
     /* user clicks the ok button */
     ok : function(fieldName, formName, onselect) {
         if (this.selected_id == null) {
-            alert("Please select an item or click Cancel to cancel selection.");
+            alert(Krang.L10N.loc("Please select an item or click Cancel to cancel selection."));
             return;
         }
 
