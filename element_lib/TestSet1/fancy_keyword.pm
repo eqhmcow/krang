@@ -64,7 +64,7 @@ sub input_form {
     # pad them out
     my $field_html = 
       join("\n",
-           (map { '<div style="padding:2px">' . $_ . '</div>' } @fields));
+           (map { '<div style="padding:2px 0px">' . $_ . '</div>' } @fields));
 
     # get a dummy field like the real ones and spit it around the
     # field name
