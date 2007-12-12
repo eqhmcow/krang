@@ -1,0 +1,169 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_make_js_loc - make JavaScript localization files
+
+=head1 SYNOPSIS
+
+   krang_make_js_loc --verbose
+
+=head1 DESCRIPTION
+
+This script is normally called by L<bin/krang_ctl> at Krang startup.
+It writes JavaScript files F<htdocs/js/lexicon.LANG.js> for all
+AvailableLanguages, defaulting to just generate one for English.
+These files implement the C<Krang.L10N> object responsible for
+localizing JavaScript alert() messages and the like.  The lexicons
+used by this object's localization method C<Krang.L10N.loc()> are
+coming from F<lang/javascript.LANG>.
+
+For English, a default file is generated.  Its C<Krang.L10N.loc()>
+method just returns its argument.
+
+=head1 OPTIONS
+
+The script takes the following options:
+
+=over 4
+
+=item --verbose
+
+Tells you which files get written.
+
+=item --only_lang=en
+
+Create htdocs/js/lexicon.en.js only.
+
+=item --help
+
+=item --man
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile canonpath splitdir);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 1]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+our ($help, $man, $only_lang);
+our $print_missing = 0;
+our $verbose = 0;
+
+use Getopt::Long;
+use Pod::Usage;
+
+my $result = GetOptions(
+    'verbose+'      => \$verbose,
+    'help'          => \$help,
+    'man'           => \$man,
+    'only_lang=s'   => \$only_lang,
+) or pod2usage(2);
+
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Conf => qw(KrangRoot AvailableLanguages);
+use Krang::ClassLoader 'ConfigApacheFormat';
+use Krang::ClassLoader 'IO';
+use Krang::ClassLoader 'File';
+
+use HTML::Template;
+use I18N::LangTags qw(is_language_tag);
+
+# 2 variables
+my @languages = AvailableLanguages;
+push @languages, 'en' unless scalar(@languages);
+
+my $js_dir = catdir(KrangRoot, 'htdocs', 'js');
+
+# do it
+check_js_dir();
+write_js_file($_) for @languages;
+
+#       --- END Main ---
+
+sub write_js_file {
+    my $lang = shift;
+
+    return if $only_lang && $only_lang eq $lang;
+
+    my $tmpl = HTML::Template->new(filename => catfile(KrangRoot, 'templates', 'krang_js_loc.tmpl'),
+				   loop_context_vars => 1,);
+
+    my $lexicon = get_lexicon($lang);
+
+    $tmpl->param(lexicon_loop => $lexicon,
+		 is_en        => ($lang eq 'en' ? 1 : 0));
+
+    my $of = catfile($js_dir, "lexicon.$lang.js");
+
+    my $fh = pkg('IO')->io_file(">$of")
+      or die "Couldn't open '$of' for writing: $!";
+
+    print "Writing '$of'\n" if $verbose;
+
+    print $fh $tmpl->output;
+}
+
+sub get_lexicon {
+    my $lang = shift;
+
+    die "$lang is not a RFC3066-style language tag"
+      unless is_language_tag($lang);
+
+    return [] if $lang eq 'en';
+
+    # read also addon lexicons
+    my @files = reverse pkg('File')->find_all(catfile('lang', "javascript.$lang"));
+
+    # read the main lexicons in memory
+    my $l10n = Krang::ConfigApacheFormat->new(case_sensitive => 1);
+
+    $l10n->read($_) for @files;
+
+    my @lexicon = ();
+    for my $orig (keys %{$l10n->{_data}} ) {
+	push @lexicon, {orig => $orig, loc => $l10n->{_data}{$orig}[0]};
+    }
+
+    return \@lexicon;
+}
+
+sub check_js_dir {
+    die "Missing JavaScript directory '$js_dir'"
+      unless -e $js_dir && -d _;
+}

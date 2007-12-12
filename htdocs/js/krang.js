@@ -1,8 +1,10 @@
 /*
-Create the Krang namespace.
+Maybe create the Krang namespace.
 */
-
-var Krang = {};
+var Krang;
+if (typeof Krang == 'undefined') {
+    Krang = {};
+}
 
 /*
     Krang.preload_img('/path/to/image')
@@ -155,7 +157,7 @@ Krang.Window = {
     },
 
     log_out_all : function() {
-	if (!confirm('Are you sure? This will discard any unsaved changes in any window.')) { return; }
+	if (!confirm(Krang.L10N.loc('Are you sure? This will discard any unsaved changes in any window.'))) { return; }
         Krang.show_indicator();
 
         // first log out any other windows that have cookies set
@@ -666,7 +668,7 @@ Krang.class_suffix = function(el, prefix) {
 */
 Krang.Nav = {
     edit_mode_flag : false,
-    edit_message   : 'Are you sure you want to discard your unsaved changes?',
+    edit_message   : Krang.L10N.loc('Are you sure you want to discard your unsaved changes?'),
     edit_mode      : function(flag) {
         // by default it's true
         if( flag === undefined ) flag = true;
@@ -1620,12 +1622,6 @@ Krang.Tooltip.Media = {
         $(Krang.Tooltip.Media.img_id).src = Krang.Tooltip.Media.loading_img_src;
     }
 };
-
-// Localization stub
-Krang.L10N = {
-    loc : function(s) { return s }
-}
-
 
 // Krang Behavioral rules
 // This is a nice convenient way to unobstrusively apply JavaScript

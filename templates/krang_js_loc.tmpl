@@ -1,0 +1,15 @@
+/*
+Maybe create the Krang namespace.
+*/
+var Krang;
+if (typeof Krang == 'undefined') {
+    Krang = {};
+}
+
+Krang.L10N = {
+<tmpl_if is_en>    loc : function(s) { return s }<tmpl_else>
+    lexicon : {<tmpl_loop lexicon_loop>
+        "<tmpl_var orig>" : "<tmpl_var loc>"<tmpl_unless __last__>,</tmpl_unless></tmpl_loop>
+    },
+    loc : function(s) { return this.lexicon[s] }</tmpl_if>
+}
