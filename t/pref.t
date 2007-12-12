@@ -32,3 +32,11 @@ is_deeply({pkg('Pref')->get('contrib_type')}, \%new);
 pkg('Pref')->set('contrib_type', %old);
 is_deeply({pkg('Pref')->get('contrib_type')}, \%old);
 
+# test language setting
+$old = pkg('Pref')->get('language') || 'en';
+$new = 'i-klingon';
+ok(pkg('Pref')->set('language' => $new), "Setting language pref to '$new'");
+is(pkg('Pref')->get('language'),  $new,  'Getting language preference after setting it');
+ok(pkg('Pref')->set('language' => $old), "Setting language pref to '$old'");
+is(pkg('Pref')->get('language'),  $old,  'Getting language preference after setting it');
+
