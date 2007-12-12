@@ -23,13 +23,13 @@ no_categories_for_chooser "Sie haben noch keine Website definiert. Ohne Website 
 
   story_checked_in_during_edit "Story $id wurde von einem anderen Benutzer oder in einem anderen Fenster freigegeben, während sie hier geöffnet war.  Veränderungen, die Sie hier vorgenommen haben, werden nicht gespeichert."
 
-  story_stolen_during_edit "Story $id wurde von '$thief' übernommen, während Sie sie hier bearbeiteten! Ihre Veränderungen werden nicht gespeichert."
+  story_stolen_during_edit "Story $id wurde von '$thief' übernommen, während Sie sie in Arbeit hatten! Ihre Veränderungen wurden nicht gespeichert."
 
   story_deleted_during_edit "Story $id wurde von einem anderen Benutzer oder in einem anderen Fenster gelöscht, während Sie sie hier in Arbeit hatten."
 
   story_saved_in_other_window "Story $id wurde von einem anderen Benutzer oder in einem anderen Fenster gespeichert, während Sie sie hier in Arbeit hatten.  Veränderungen, die Sie hier vorgenommen haben, werden nicht gespeichert."
 
-  duplicate_category "Die Kategorie kann nicht hinzugefügt werden, weil sie mit dieser Story bereits verknüpft ist."
+  duplicate_category "Die Story liegt bereits in dieser Kategorie und kann daher nicht noch einmal mit ihr verknüpft werden."
 
   added_category "Story zu Kategory $url hinzugefügt."
 
@@ -79,7 +79,7 @@ no_categories_for_chooser "Sie haben noch keine Website definiert. Ohne Website 
 
   missing_category_on_save "Sie müssen Ihrer Story mindestens eine Kategorie zuweisen."
 
-  copied_story "Von Story $id wurde eine Kopie angelegt. Der Titel der Kopie lautet '$title', ihr Verzeichnis '$slug'."
+  copied_story "Von Story $id wurde eine Kopie angelegt. Der Arbeitstitel der Kopie lautet '$title', ihr Verzeichnis '$slug'. Sie können nun beides verändern."
 
   copied_story_no_cats "Von Story $id wurde eine Kopie angelegt. Der Titel der Kopie lautet '$title'. Bevor Sie die Kopie speichern können, müssen Sie ihr mindestens eine Kategorie zuweisen."
 
@@ -234,7 +234,7 @@ duplicate_media_upload "Ein Medium mit dem Dateinamen '$filename' ist bereits vo
   error_invalid_preview_url	"Bitte geben Sie eine gültige Vorschau URL an."
   error_invalid_preview_path	"Bitte geben Sie einen gültigen Vorschau Pfad an."
   error_invalid_publish_path	"Bitte geben Sie einen gültigen Online Pfad an."
-  error_invalid_url		"Bitte geben Sie eine gültige Online URL an."
+  error_invalid_url		"Bitte geben Sie eine gültige URL an."
   error_url_has_http            "Bitte geben Sie die Website URL ohne 'http://' an."
   error_preview_url_has_http    "Bitte geben Sie die Vorschau URL ohne 'http://' an."
   error_url_has_path            "Die Website URL darf keine Verzeichnisse enthalten, sondern nur den Domain Namen."
@@ -333,8 +333,8 @@ duplicate_media_upload "Ein Medium mit dem Dateinamen '$filename' ist bereits vo
 </Module>
 
 <Module "Krang::CGI::Desk">
-  checkout_checked                "Markiertes abgeholt."
-  moved_story                     "Story $id in Abteilung '$desk' verschoben."
+  checkout_checked                "Die markierten Storys liegen nun auf Ihrem Arbeitsplatz."
+  moved_story                     "Story $id wurde in Abteilung '$desk' verschoben."
   story_cant_move_checked_out     "Story $id kann nicht in Abteilung '$desk' verschoben werden, weil sie bei einem anderen Benutzer in Arbeit ist."
   story_cant_move_no_desk         "Story $story_id kann nicht in die Abteilung mit der ID '$desk_id' verschoben werden, weil diese Abteilung nicht mehr existiert."
 </Module>
@@ -366,8 +366,8 @@ duplicate_media_upload "Ein Medium mit dem Dateinamen '$filename' ist bereits vo
   media_publish "Medium $media_id veröffentlicht (Version: $version, URL: $url)."
   media_preview "Medium $media_id in der Vorschau veröffentlicht (Version: $version, URL: $url)."
   media_schedule "Medium $media_id (Version: $version) wird am $publish_datetime veröffentlicht."
-  missing_template "Die Story in Kategorie $category_url kann nicht erstellt werden, weil die Vorlage '$filename' fehlt."
-  missing_template_include "Die Datei '$included_file', die von der Vorlage '$filename' eingebunden wird, existiert nicht. Deshalb kann die Story nicht zusammengesetzt werden." 
+  missing_template "Die Story in Kategorie $category_url kann nicht veröffentlicht werden, weil die Vorlage '$filename' fehlt."
+  missing_template_include "Die Datei '$included_file', die von der Vorlage '$filename' eingebunden wird, existiert nicht. Die Story kann deshalb nicht veröffentlicht werden." 
   template_parse_error "Die Vorlage '$template_name', die für das Element '$element_name' verwendet wird, ist fehlerhaft. (Kategorie: $category_url, Fehler: '$error_msg')"
   checked_out_assets "Einige Ressourcen sind noch bei anderen Benutzern in Arbeit und können daher nicht veröffentlicht werden."
   file_write_error "Beim Schreiben der Datei '$path' trat ein Fehler auf. Bitte benachrichtigen Sie ihren Administrator. Mögliche Fehlerquelle sind falsch gesetzte Dateirechte."
