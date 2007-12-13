@@ -124,10 +124,26 @@ PreviewSSL 0
 Secret 'ad0243-1j!@LdaAWEOIGFa-39021-:skj'
 
 #
-# Localization (RFC 3060-style language tags)
-DefaultLanguage en
-AvailableLanguages en de
-
+# Localization directives
+#
+# If none is specified the English default is used
+#
+# DefaultLanguage is used on the login screen and if the user has
+#                 not yet specified his language preference
+#
+# AvailableLanguages figure in the language selector on the 'Preferences' screen
+#
+# These are RFC3066-style language tags telling Krang which
+# dictionaries in lang/ it should make use of.  Make sure you've got
+# the appropriate lexicon files. For the English default, you just need
+#      lang/messages.en
+# For other languages you need
+#      lang/messages.LANG-TAG
+#      lang/perl.LANG-TAG
+#      lang/javascript.LANG-TAGB
+#
+#DefaultLanguage de
+#AvailableLanguages en de
 
 ###########################################################################
 #
