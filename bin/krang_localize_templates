@@ -148,7 +148,7 @@ pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
 
 use Krang::ClassFactory qw(pkg);
-use Krang::ClassLoader 'Script';
+use Krang::ClassLoader Script => 'instance_agnostic';
 use Krang::ClassLoader Conf => qw(AvailableLanguages);
 use Krang::ClassLoader Localization => qw(localize_template %LANG %missing);
 
