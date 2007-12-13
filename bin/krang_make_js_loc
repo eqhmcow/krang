@@ -101,6 +101,7 @@ use Krang::ClassLoader Conf => qw(KrangRoot AvailableLanguages);
 use Krang::ClassLoader 'ConfigApacheFormat';
 use Krang::ClassLoader 'IO';
 use Krang::ClassLoader 'File';
+use Krang::ClassLoader Script => qw(instance_agnostic);
 
 use HTML::Template;
 use I18N::LangTags qw(is_language_tag);
