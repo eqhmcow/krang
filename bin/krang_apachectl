@@ -85,7 +85,7 @@ use Krang::ClassLoader Conf =>
      InstanceApacheAddr InstanceApachePort InstanceSSLCertificateFile 
      InstanceSSLCertificateKeyFile InstanceSSLCertificateChainFile
      InstanceSSLCACertificateFile InstanceSSLCARevocationFile InstanceSSLPort
-     RewriteLogLevel
+     RewriteLogLevel AvailableLanguages
 );
 use Krang::ClassLoader 'File';
 
@@ -120,6 +120,11 @@ if (-e $pid_file) {
     }
 }
 
+# make language string for messages
+my %languages = ();
+@languages{ AvailableLanguages, 'en' } = ();
+my $langs = join q{,}, map { "'$_'" } sort keys %languages;
+
 # check for args
 usage() unless @ARGV;
 
@@ -130,20 +135,8 @@ if ($command eq 'start') {
         die "krang_apachectl $command: httpd (pid $pid) already running\n";
     }
 
-    setup_logs();
-    write_conf();
-    make_links();
-    apply_skin();
-
-    print "krang_apachectl $command: starting httpd\n";
-    unless (system($httpd)) {
-        print "krang_apachectl $command: httpd started";
-	print " (SSL enabled)" if EnableSSL;
-	print "\n";
-        exit;
-    } else {
-        die "krang_apachectl $command: httpd could not be started\n";
-    }
+    # start
+    start();
 }
 
 if ($command eq 'stop') {
@@ -187,19 +180,7 @@ if ($command eq 'restart') {
     }
 
     # start
-    setup_logs();
-    write_conf();
-    make_links();
-    apply_skin();
-    print "krang_apachectl $command: starting httpd\n";
-    unless (system($httpd)) {
-        print "krang_apachectl $command: httpd started";
-	print " (SSL enabled)" if EnableSSL;
-	print "\n";
-        exit;
-    } else {
-        die "krang_apachectl $command: httpd could not be started\n";
-    }
+    start();
 }
 
 usage();
@@ -215,6 +196,25 @@ restart    - restart httpd if running
 END
 
   exit;
+}
+
+sub start {
+    setup_logs();
+    write_conf();
+    make_links();
+    apply_skin();
+    make_templates();
+    make_js_localizer();
+
+    print "krang_apachectl $command: starting httpd\n";
+    unless (system($httpd)) {
+        print "krang_apachectl $command: httpd started";
+	print " (SSL enabled)" if EnableSSL;
+	print "\n";
+        exit;
+    } else {
+        die "krang_apachectl $command: httpd could not be started\n";
+    }
 }
 
 sub write_conf {
@@ -332,3 +332,14 @@ sub setup_logs {
     }
 }
 
+sub make_templates {
+    print "Making localized templates for $langs.\n";
+    system(catfile(KrangRoot, 'bin', 'krang_localize_templates'))
+      and die "Couldn't localize templates: $?";
+}
+
+sub make_js_localizer {
+    print "Making JavaScript localizer for $langs.\n";
+    system(catfile(KrangRoot, 'bin', 'krang_make_js_loc'))
+      and die "Couldn't make JavaScript localizer: $?";
+}
