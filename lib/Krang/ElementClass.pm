@@ -838,13 +838,13 @@ sub fill_template {
         if (exists($template_vars{element_loop}{$name}) || exists($template_vars{element_loop}{"is_$name"})) {
 
             my $loop_idx   = $element_count{$name} ? $element_count{$name}++ : ($element_count{$name} = 1);
-            my $loop_entry = $self->_fill_inner_loop(tmpl      => $tmpl,
-                                                     child     => $child,
-                                                     html      => \$html,
-                                                     loopname  => 'element_loop',
-                                                     count     => $loop_idx,
-                                                     publisher => $publisher,
-                                                     fill_template_args => \%fill_template_args);
+            my $loop_entry = $self->_fill_loop_iteration(tmpl      => $tmpl,
+                                                         child     => $child,
+                                                         html      => \$html,
+                                                         loopname  => 'element_loop',
+                                                         count     => $loop_idx,
+                                                         publisher => $publisher,
+                                                         fill_template_args => \%fill_template_args);
             push @{$child_params{element_loop}}, $loop_entry;
         }
 
@@ -852,13 +852,13 @@ sub fill_template {
         if (exists($template_vars{$child_loop})) {
             
             my $loop_idx   = exists($child_params{$child_loop}) ? (@{$child_params{$child_loop}} + 1) : 1;
-            my $loop_entry = $self->_fill_inner_loop(tmpl      => $tmpl,
-                                                     child     => $child,
-                                                     html      => \$html,
-                                                     loopname  => $child_loop,
-                                                     count     => $loop_idx,
-                                                     publisher => $publisher,
-                                                     fill_template_args => \%fill_template_args);
+            my $loop_entry = $self->_fill_loop_iteration(tmpl      => $tmpl,
+                                                         child     => $child,
+                                                         html      => \$html,
+                                                         loopname  => $child_loop,
+                                                         count     => $loop_idx,
+                                                         publisher => $publisher,
+                                                         fill_template_args => \%fill_template_args);
             
             # fix to make contrib_loop available - this is because
             # HTML::Template does not support global loops - only global_vars
@@ -886,9 +886,9 @@ sub fill_template {
 }
 
 
-# _fill_inner_loop: helper function called by fill_template which returns a hashref 
+# _fill_loop_iteration: helper function called by fill_template which returns a hashref 
 # of the keys & vals necessary inside an iteration of 'element_loop' or "$child_loop"
-sub _fill_inner_loop {
+sub _fill_loop_iteration {
 
     my ($self, %args) = @_;
 
