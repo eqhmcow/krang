@@ -34,7 +34,7 @@ use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader 'Info';
 
-use File::Spec::Functions qw(catdir);
+use File::Spec::Functions qw(catdir catfile);
 use Carp qw(croak);
 
 # setup paths to templates
@@ -91,7 +91,7 @@ sub _compute_path {
 }
 
 # overload output() to setup template variables
-my %CUSTOM_CSS;
+my %CSS_CACHE; # for CustomCSS and language-specific CSS files in skin/*/css/
 sub output {
     my $template = shift;
 
@@ -126,22 +126,8 @@ sub output {
         # read in the custom css file if we can find it
         my $file = pkg('File')->find(CustomCSS());
         if( $file ) {
-            my $css;
-            if( $CUSTOM_CSS{$file} ) {
-                $css = $CUSTOM_CSS{$file};
-            } else {
-                my $IN;
-                open($IN, $file) or croak "Could not open file $file for reading: $!";
-                # hopefully a tiny file, so slurp it
-                {
-                    local $/;
-                    $css = <$IN>;
-                }
-                close($IN);
-                $CUSTOM_CSS{$file} = $css;
-            }
-            $template->param(custom_css => $css);
-        }
+	    $template->_insert_css($file, 'custom_css');
+	}
     }
 
     # add the Krang version, product_name and install_id
@@ -156,7 +142,36 @@ sub output {
 
     pkg('Navigation')->fill_template(template => $template);
 
+    # maybe include language-specific CSS file
+    if ($template->query(name => 'language_specific_css')) {
+	my $lang = $session{language} || DefaultLanguage || 'en';
+	my $file = pkg('File')->find(catfile('skins', Skin, 'css', "$lang.css"));
+	if ($file) {
+	    $template->_insert_css($file, 'language_specific_css');
+	}
+    }
+
     return $template->SUPER::output();
+}
+
+sub _insert_css {
+    my ($template, $file, $param_name) = @_;
+
+    my $css;
+    if( $CSS_CACHE{$file} ) {
+	$css = $CSS_CACHE{$file};
+    } else {
+	my $IN;
+	open($IN, $file) or croak "Could not open file $file for reading: $!";
+	# hopefully a tiny file, so slurp it
+	{
+	    local $/;
+	    $css = <$IN>;
+	}
+	close($IN);
+	$CSS_CACHE{$file} = $css;
+    }
+    $template->param($param_name => $css);
 }
 
 1;

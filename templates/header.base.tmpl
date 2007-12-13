@@ -55,6 +55,8 @@ div.autocomplete { height: expression( ( this.scrollHeight > 154 ) ? '154px' : '
 .krang-slider .content, #modal_container .content { height: expression( ( ( this.scrollHeight < 60 ) ? 60 : ( this.scrollHeight > 314 ) ? 314 : this.scrollHeight ) + 'px' ); }
 </style><![endif]-->
 
+<tmpl_if language_specific_css><tmpl_var language_specific_css></tmpl_if>
+
 <tmpl_if custom_css>
 <tmpl_var custom_css>
 </tmpl_if>
