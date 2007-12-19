@@ -88,6 +88,7 @@ use Krang::ClassLoader Conf =>
      RewriteLogLevel AvailableLanguages
 );
 use Krang::ClassLoader 'File';
+use Krang::ClassLoader Localization => qw(%LANG);
 
 # SSL directives
 my @ssl_directives = qw(
@@ -123,7 +124,7 @@ if (-e $pid_file) {
 # make language string for messages
 my %languages = ();
 @languages{ AvailableLanguages, 'en' } = ();
-my $langs = join q{,}, map { "'$_'" } sort keys %languages;
+my $langs = join q{,}, map { "'$LANG{$_}'" } sort keys %languages;
 
 # check for args
 usage() unless @ARGV;
