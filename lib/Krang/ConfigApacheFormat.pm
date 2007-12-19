@@ -1,4 +1,5 @@
 package Krang::ConfigApacheFormat;
+use Krang::ClassFactory qw(pkg);
 use warnings;
 use strict;
 
@@ -6,6 +7,8 @@ use base 'Config::ApacheFormat';
 use Text::Balanced qw(extract_delimited extract_variable);
 use Scalar::Util qw(weaken);
 use Carp qw(croak);
+
+use Krang::ClassLoader 'IO';
 
 =head1 NAME
 
@@ -20,11 +23,36 @@ See L<Config::ApacheFormat>
 This module provides the same functionality as Config::ApacheFormat,
 but allows directives to be double quoted strings.
 
+Configuration files must be encoded according to the Charset directive
+in C<conf/krang.conf>
+
 =head1 INTERFACE
 
 See L<Config::ApacheFormat>
 
 =cut
+
+# read the configuration file, optionally ending at block_name
+sub read {
+    my ($self, $file) = @_;
+
+    my @fstack;
+
+    # open the file if needed and setup file stack
+    my $fh;
+    if (ref $file) {
+        @fstack = { fh       => $file,
+                    filename => "",
+                    line_num => 0 };                     
+    } else {
+        $fh = pkg('IO')->io_file($file) or croak("Unable to open file '$file': $!");
+        @fstack = { fh       => $fh,
+                    filename => $file,
+                    line_num => 0 };
+    }
+    
+    return $self->_read(\@fstack);
+}
 
 # underlying _read, called recursively an block name for
 # nested block objects
