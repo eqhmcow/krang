@@ -5,7 +5,7 @@ use warnings;
 
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'ElementLibrary';
-use Krang::ClassLoader Log => qw(debug assert ASSERT);
+use Krang::ClassLoader Log => qw(debug assert ASSERT info);
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Message => qw(add_message add_alert clear_messages clear_alerts);
 use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
@@ -1559,6 +1559,7 @@ sub find {
                                     story_id
                                     contrib_simple
                                     creator_simple
+                                    advanced_full_text
                                    );
         for (@auto_search_params) {
             my $key = $_;
@@ -1652,6 +1653,11 @@ sub find {
         $find_params{simple_search} = $search_filter;
         $persist_vars{search_filter} = $search_filter;
         $template->param(search_filter => $search_filter);
+
+        my $search_full_text = defined ($q->param('search_filter')) ?
+          $q->param('search_full_text') : $session{KRANG_PERSIST}{pkg('Story')}{search_full_text};
+        $find_params{search_full_text} = $persist_vars{search_full_text} = $search_full_text;
+        $template->param(search_full_text => $search_full_text);
     }
 
     my $pager = pkg('HTMLPager')->new(

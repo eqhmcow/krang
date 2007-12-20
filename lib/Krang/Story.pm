@@ -1059,6 +1059,7 @@ sub find {
     my $offset      = delete $args{offset}      || 0;
     my $count       = delete $args{count}       || 0;
     my $ids_only    = delete $args{ids_only}    || 0;
+    my $full_text   = delete $args{search_full_text} || 0;
 
     # determine whether or not to display hidden stories.
     my $show_hidden = delete $args{show_hidden} || 0;
@@ -1268,25 +1269,33 @@ sub find {
         }
 
         # handle simple_search
-        if ($key eq 'simple_search') {            
+        if ($key eq 'simple_search') {
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
+            if ($full_text) {
+                $from{"element as el"} = 1;
+                push(@where, 'el.root_id = s.element_id');
+            }
 
-            my @words = split(/\s+/, ($args{'simple_search'} || ""));
+            my @words = split(/\s+/, ($value || ""));
             foreach my $word (@words){
                 my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
                   push(@where, '(' .                      
                      join(' OR ', 
                           ($numeric ? 's.story_id = ?' : ()),
                           's.title LIKE ?', 
-                          'sc.url LIKE ?') . ')');
+                          'sc.url LIKE ?',
+                          ($full_text ? 'el.data like ?' : ())).
+                       ')');
                 # escape any literal SQL wildcard chars
                 if( !$numeric ) {
                     $word =~ s/_/\\_/g;
                     $word =~ s/%/\\%/g;
                 } 
                 push(@param, ($numeric ? ($word) : ()),
-                     "%${word}%", "%${word}%");
+                     "%${word}%", "%${word}%",
+                     ($full_text ? "%${word}%" : ())
+                    );
             }
             next;
         }
@@ -1359,6 +1368,20 @@ sub find {
                  'e.class = ?',
                  ($like ? 'ei.value LIKE ?' : 'ei.value = ?'));
             push(@param, $value->[0], $value->[1]);
+            next;
+        }
+
+        # handle advanced full-text search
+        if ($key eq 'advanced_full_text') {
+            $from{"element as el"} = 1;
+            push(@where, 'el.root_id = s.element_id');
+            my @words = split(/\s+/, ($value || ""));
+            foreach my $word (@words){
+                push(@where, '(' . join(' OR ', 'el.data like ?') . ')');
+                $word =~ s/_/\\_/g;
+                $word =~ s/%/\\%/g;
+                push(@param, "%${word}%");
+            }
             next;
         }
 
