@@ -1544,13 +1544,13 @@ sub find {
 sub _search_text_to_phrases {
     my ($pkg, $text) = @_;
     my @phrases;
-    # first add any quoted text as a multi-word phrase
-    while ($text =~ s/([\'\"])\s*([^\1]*?)\s*\1//) {
+    # first add any quoted text as multi-word phrase(s)
+    while ($text =~ s/([\'\"])([^\1]*?)\1//) {
         my $phrase = $2;
         $phrase =~ s/\s+/ /;
         push @phrases, $phrase;
     }
-    # then split remaining text into individual one-word phrases
+    # then split remaining text into one-word phrases
     push @phrases, (split/\s+/, $text);
     return @phrases;
 }
