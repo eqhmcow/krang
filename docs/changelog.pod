@@ -9,6 +9,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added ability to search full text of stories from CMS. [Noam Weinstein]
+
+=item *
+
 Implemented beta version of flat-template support, allowing
 a single template per top-level story type. [Noam Weinstein]
 
