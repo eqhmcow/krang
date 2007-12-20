@@ -884,8 +884,8 @@ Find stories by site, looking only at the primary location.
 
 =item advanced_full_text
 
-Find stories by performing a full-text search. (If the entire
-phrase is enclosed in quotes, matches as a full piece.)
+Find stories by performing a full-text search. (Any words
+enclosed in quotes will be matched as a full phrase.)
 
 =item checked_out
 
@@ -955,8 +955,8 @@ match against story_id if a word is a number.
 =item simple_full_text
 
 If set to 1 and passed along with a simple_search, also
-performs a full-text search on the words. (If the entire
-phrase is enclosed in quotes, matches as a full piece.)
+performs a full-text search on the words. (Any words
+enclosed in quotes will be matched as a full phrase.)
 
 =item exclude_story_ids
 
@@ -1288,14 +1288,8 @@ sub find {
                 push(@where, 'el.root_id = s.element_id');
             }
 
-            my @words;
-            if ($value =~ /^[\"\'](.*)[\"\']$/) {
-                @words = ($1); # user put search phrase in quotes; match whole string
-            } else {
-                @words = split(/\s+/, ($value || "")); 
-            }
-            foreach my $word (@words){
-                my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
+            foreach my $phrase ($pkg->_search_text_to_phrases($value)) {
+                my $numeric = ($phrase =~ /^\d+$/) ? 1 : 0;
                   push(@where, '(' .                      
                      join(' OR ', 
                           ($numeric ? 's.story_id = ?' : ()),
@@ -1305,12 +1299,12 @@ sub find {
                        ')');
                 # escape any literal SQL wildcard chars
                 if( !$numeric ) {
-                    $word =~ s/_/\\_/g;
-                    $word =~ s/%/\\%/g;
+                    $phrase =~ s/_/\\_/g;
+                    $phrase =~ s/%/\\%/g;
                 } 
-                push(@param, ($numeric ? ($word) : ()),
-                     "%${word}%", "%${word}%",
-                     ($simple_full_text ? "%${word}%" : ())
+                push(@param, ($numeric ? ($phrase) : ()),
+                     "%${phrase}%", "%${phrase}%",
+                     ($simple_full_text ? "%${phrase}%" : ())
                     );
             }
             next;
@@ -1391,17 +1385,11 @@ sub find {
         if ($key eq 'advanced_full_text') {
             $from{"element as el"} = 1;
             push(@where, 'el.root_id = s.element_id');
-            my @words;
-            if ($value =~ /^[\"\'](.*)[\"\']$/) {
-                @words = ($1); # user put search phrase in quotes; match whole string
-            } else {
-                @words = split(/\s+/, ($value || "")); 
-            }
-            foreach my $word (@words){
+            foreach my $phrase ($pkg->_search_text_to_phrases($value)){
                 push(@where, '(' . join(' OR ', 'el.data like ?') . ')');
-                $word =~ s/_/\\_/g;
-                $word =~ s/%/\\%/g;
-                push(@param, "%${word}%");
+                $phrase =~ s/_/\\_/g;
+                $phrase =~ s/%/\\%/g;
+                push(@param, "%${phrase}%");
             }
             next;
         }
@@ -1549,6 +1537,35 @@ sub find {
 
     return @stories;
 }}
+
+# this private helper method takes a search string and returns 
+# an array of phrases - e.g. ONE TWO THREE returns (ONE, TWO, 
+# THREE) whereas "ONE TWO" THREE returns (ONE TWO, THREE)
+sub _search_text_to_phrases {
+    my ($pkg, $text) = @_;
+    my @phrases;
+    my $phrase = '';
+    foreach my $word (split/\s+/, $text) {
+        if ($word =~ /^[\'\"]([^\'\"]*)/) {
+            # open quote & word
+            $phrase = $1; 
+        } elsif ($word =~ /(.*)[\'\"]$/) {
+            # word & close quote
+            push @phrases, "$phrase $1";
+            $phrase = ''; 
+        } else {
+            # word by itself
+            if ($phrase) {
+                $phrase .= " $word";
+            } else {
+                push @phrases, $word;
+            }
+        }
+    }
+    push @phrases, $phrase if $phrase; # catch dangling quote
+    return @phrases;
+}
+
 
 sub _load_version {
     my ($pkg, $story_id, $version) = @_;
