@@ -1277,7 +1277,12 @@ sub find {
                 push(@where, 'el.root_id = s.element_id');
             }
 
-            my @words = split(/\s+/, ($value || ""));
+            my @words;
+            if ($value =~ /^[\"\'](.*)[\"\']$/) {
+                @words = ($1); # user put search phrase in quotes; match whole string
+            } else {
+                @words = split(/\s+/, ($value || "")); 
+            }
             foreach my $word (@words){
                 my $numeric = ($word =~ /^\d+$/) ? 1 : 0;
                   push(@where, '(' .                      
@@ -1375,7 +1380,12 @@ sub find {
         if ($key eq 'advanced_full_text') {
             $from{"element as el"} = 1;
             push(@where, 'el.root_id = s.element_id');
-            my @words = split(/\s+/, ($value || ""));
+            my @words;
+            if ($value =~ /^[\"\'](.*)[\"\']$/) {
+                @words = ($1); # user put search phrase in quotes; match whole string
+            } else {
+                @words = split(/\s+/, ($value || "")); 
+            }
             foreach my $word (@words){
                 push(@where, '(' . join(' OR ', 'el.data like ?') . ')');
                 $word =~ s/_/\\_/g;
