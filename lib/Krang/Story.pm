@@ -1295,7 +1295,7 @@ sub find {
                           ($numeric ? 's.story_id = ?' : ()),
                           's.title LIKE ?', 
                           'sc.url LIKE ?',
-                          ($simple_full_text ? 'el.data like ?' : ())).
+                          ($simple_full_text ? 'el.data LIKE ?' : ())).
                        ')');
                 # escape any literal SQL wildcard chars
                 if( !$numeric ) {
@@ -1386,7 +1386,7 @@ sub find {
             $from{"element as el"} = 1;
             push(@where, 'el.root_id = s.element_id');
             foreach my $phrase ($pkg->_search_text_to_phrases($value)){
-                push(@where, '(' . join(' OR ', 'el.data like ?') . ')');
+                push(@where, '(' . join(' OR ', 'el.data LIKE ?') . ')');
                 $phrase =~ s/_/\\_/g;
                 $phrase =~ s/%/\\%/g;
                 push(@param, "%${phrase}%");
