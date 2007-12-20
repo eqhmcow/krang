@@ -684,6 +684,13 @@ SKIP: {
     is(@result, 1);
     is($result[0]->story_id, $find[2]->story_id);
 
+    # find by full-text search - no quotes
+    @result = pkg('Story')->find(advanced_full_text => 'deek');
+    is(@result, 2);
+
+    # find by full-text search - with quotes
+    @result = pkg('Story')->find(advanced_full_text => '"two deek"');
+    is(@result, 1);
 
 }
 
