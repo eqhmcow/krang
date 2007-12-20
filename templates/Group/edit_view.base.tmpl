@@ -8,7 +8,7 @@ Krang.onload( function() {
 
 do_save = function()
 {
-  Krang.Form.set('edit_group_form', { rm: 'save' });
+  Krang.Form.submit('edit_group_form', { rm: 'save' });
 }
 
 cancel_group_change = function()
@@ -270,7 +270,7 @@ cancel_group_change = function()
 <tmpl_unless associate_mode>
   <input value="<tmpl_lang Save &amp; Stay>" onclick="save_stay()" type="button">
 </tmpl_unless>
-<input value="<tmpl_lang Save>" onclick="do_save()" type="submit">
+<input value="<tmpl_lang Save>" onclick="do_save()" type="button">
 <tmpl_unless add_mode>
   <input value="<tmpl_lang Delete>" onclick="delete_group()" type="button">
 </tmpl_unless>
