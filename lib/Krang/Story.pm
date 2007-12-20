@@ -1544,25 +1544,14 @@ sub find {
 sub _search_text_to_phrases {
     my ($pkg, $text) = @_;
     my @phrases;
-    my $phrase = '';
-    foreach my $word (split/\s+/, $text) {
-        if ($word =~ /^[\'\"]([^\'\"]*)/) {
-            # open quote & word
-            $phrase = $1; 
-        } elsif ($word =~ /(.*)[\'\"]$/) {
-            # word & close quote
-            push @phrases, "$phrase $1";
-            $phrase = ''; 
-        } else {
-            # word by itself
-            if ($phrase) {
-                $phrase .= " $word";
-            } else {
-                push @phrases, $word;
-            }
-        }
+    # first add any quoted text as a multi-word phrase
+    while ($text =~ s/([\'\"])\s*([^\1]*?)\s*\1//) {
+        my $phrase = $2;
+        $phrase =~ s/\s+/ /;
+        push @phrases, $phrase;
     }
-    push @phrases, $phrase if $phrase; # catch dangling quote
+    # then split remaining text into individual one-word phrases
+    push @phrases, (split/\s+/, $text);
     return @phrases;
 }
 
