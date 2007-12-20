@@ -111,7 +111,7 @@ do_search = function() {
   <div class="faux-p">
   <input name="search_filter" value="<tmpl_var escape=html search_filter>" class="autocomplete">
   <input value="<tmpl_lang Search>" type="submit" class="button">
-  <input name="search_full_text" type="checkbox" <tmpl_if search_full_text>checked</tmpl_if>><tmpl_lang Search full text?>
+  <input name="search_simple_full_text" type="checkbox" <tmpl_if search_simple_full_text>checked</tmpl_if>><tmpl_lang Search full text?>
   </div>
 
 <tmpl_else>
@@ -283,8 +283,8 @@ do_search = function() {
   <tmpl_else>
     <input name="history_return_params" value="search_filter" type="hidden">
     <input name="history_return_params" value="<tmpl_var escape=html search_filter>" type="hidden">
-    <input name="history_return_params" value="search_full_text" type="hidden">
-    <input name="history_return_params" value="<tmpl_var escape=html search_full_text>" type="hidden">
+    <input name="history_return_params" value="search_simple_full_text" type="hidden">
+    <input name="history_return_params" value="<tmpl_var escape=html search_simple_full_text>" type="hidden">
   </tmpl_if>
   <input name="history_return_params" value="do_advanced_search" type="hidden">
   <input name="history_return_params" value="<tmpl_var escape=html do_advanced_search>" type="hidden">
@@ -348,8 +348,8 @@ do_search = function() {
   <tmpl_else>
     <input name="return_params" value="search_filter" type="hidden">
     <input name="return_params" value="<tmpl_var escape=html search_filter>" type="hidden">
-    <input name="return_params" value="search_full_text" type="hidden">
-    <input name="return_params" value="<tmpl_var escape=html search_full_text>" type="hidden">
+    <input name="return_params" value="search_simple_full_text" type="hidden">
+    <input name="return_params" value="<tmpl_var escape=html search_simple_full_text>" type="hidden">
   </tmpl_if>
   <input name="return_params" value="do_advanced_search" type="hidden">
   <input name="return_params" value="<tmpl_var escape=html do_advanced_search>" type="hidden">

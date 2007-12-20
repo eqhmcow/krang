@@ -882,6 +882,11 @@ Find stories by site.
 
 Find stories by site, looking only at the primary location.
 
+=item advanced_full_text
+
+Find stories by performing a full-text search. (If the entire
+phrase is enclosed in quotes, matches as a full piece.)
+
 =item checked_out
 
 Set to 0 to find only non-checked-out stories.  Set to 1 to find only
@@ -946,6 +951,12 @@ set to the actual version number of the loaded object.
 
 Performs a per-word LIKE match against title and URL, and an exact
 match against story_id if a word is a number.
+
+=item simple_full_text
+
+If set to 1 and passed along with a simple_search, also
+performs a full-text search on the words. (If the entire
+phrase is enclosed in quotes, matches as a full piece.)
 
 =item exclude_story_ids
 
@@ -1059,7 +1070,7 @@ sub find {
     my $offset      = delete $args{offset}      || 0;
     my $count       = delete $args{count}       || 0;
     my $ids_only    = delete $args{ids_only}    || 0;
-    my $full_text   = delete $args{search_full_text} || 0;
+    my $simple_full_text = delete $args{simple_full_text} || 0;
 
     # determine whether or not to display hidden stories.
     my $show_hidden = delete $args{show_hidden} || 0;
@@ -1272,7 +1283,7 @@ sub find {
         if ($key eq 'simple_search') {
             $from{"story_category as sc"} = 1;
             push(@where, 's.story_id = sc.story_id');
-            if ($full_text) {
+            if ($simple_full_text) {
                 $from{"element as el"} = 1;
                 push(@where, 'el.root_id = s.element_id');
             }
@@ -1290,7 +1301,7 @@ sub find {
                           ($numeric ? 's.story_id = ?' : ()),
                           's.title LIKE ?', 
                           'sc.url LIKE ?',
-                          ($full_text ? 'el.data like ?' : ())).
+                          ($simple_full_text ? 'el.data like ?' : ())).
                        ')');
                 # escape any literal SQL wildcard chars
                 if( !$numeric ) {
@@ -1299,7 +1310,7 @@ sub find {
                 } 
                 push(@param, ($numeric ? ($word) : ()),
                      "%${word}%", "%${word}%",
-                     ($full_text ? "%${word}%" : ())
+                     ($simple_full_text ? "%${word}%" : ())
                     );
             }
             next;

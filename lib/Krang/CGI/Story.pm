@@ -1654,10 +1654,11 @@ sub find {
         $persist_vars{search_filter} = $search_filter;
         $template->param(search_filter => $search_filter);
 
-        my $search_full_text = defined ($q->param('search_filter')) ?
-          $q->param('search_full_text') : $session{KRANG_PERSIST}{pkg('Story')}{search_full_text};
-        $find_params{search_full_text} = $persist_vars{search_full_text} = $search_full_text;
-        $template->param(search_full_text => $search_full_text);
+        my $simple_full_text = defined ($q->param('search_filter')) ?
+          $q->param('search_simple_full_text') : $session{KRANG_PERSIST}{pkg('Story')}{search_simple_full_text};
+        $find_params{simple_full_text} = $simple_full_text;
+        $persist_vars{search_simple_full_text} = $simple_full_text;
+        $template->param(search_simple_full_text => $simple_full_text);
     }
 
     my $pager = pkg('HTMLPager')->new(
