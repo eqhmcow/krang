@@ -684,12 +684,20 @@ SKIP: {
     is(@result, 1);
     is($result[0]->story_id, $find[2]->story_id);
 
-    # find by full-text search - no quotes
+    # find by full-text search - one word, unqouted
     @result = pkg('Story')->find(advanced_full_text => 'deek');
     is(@result, 2);
 
-    # find by full-text search - with quotes
-    @result = pkg('Story')->find(advanced_full_text => '"two deek"');
+    # find by full-text search - two words, unqouted
+    @result = pkg('Story')->find(advanced_full_text => 'two 2');
+    is(@result, 1);
+
+    # find by full-text search - two words, qouted in wrong order
+    @result = pkg('Story')->find(advanced_full_text => '"two 2"');
+    is(@result, 0);
+
+    # find by full-text search - two words, qouted in right order
+    @result = pkg('Story')->find(advanced_full_text => '"2 two"');
     is(@result, 1);
 
 }
