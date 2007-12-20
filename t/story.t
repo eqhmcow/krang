@@ -684,19 +684,19 @@ SKIP: {
     is(@result, 1);
     is($result[0]->story_id, $find[2]->story_id);
 
-    # find by full-text search - one word, unqouted
-    @result = pkg('Story')->find(advanced_full_text => 'deek');
-    is(@result, 2);
+    # find by full-text search - a one word phrase
+    @result = pkg('Story')->find(advanced_full_text => 'two');
+    is(@result, 1);
 
-    # find by full-text search - two words, unqouted
+    # find by full-text search - two one-word phrases
     @result = pkg('Story')->find(advanced_full_text => 'two 2');
     is(@result, 1);
 
-    # find by full-text search - two words, qouted in wrong order
+    # find by full-text search - a two-word phrase that doesn't exist
     @result = pkg('Story')->find(advanced_full_text => '"two 2"');
     is(@result, 0);
 
-    # find by full-text search - two words, qouted in right order
+    # find by full-text search - a two-word phrase that does exist 
     @result = pkg('Story')->find(advanced_full_text => '"2 two"');
     is(@result, 1);
 
