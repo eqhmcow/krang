@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Removed requirement to upload file when creating new media; can now use inline 
+editor without specifying a file. [Noam Weinstein]
+
+=item *
+
 Added ability to search full text of stories from CMS. [Noam Weinstein]
 
 =item *

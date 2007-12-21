@@ -38,7 +38,7 @@ is 'add'.
 use Krang::ClassLoader 'Category';
 use Krang::ClassLoader 'Media';
 use Krang::ClassLoader Widget => qw(category_chooser datetime_chooser decode_datetime format_url autocomplete_values);
-use Krang::ClassLoader Message => qw(add_message add_alert);
+use Krang::ClassLoader Message => qw(add_message add_alert clear_messages);
 use Krang::ClassLoader 'HTMLPager';
 use Krang::ClassLoader 'Pref';
 use Krang::ClassLoader Session => qw(%session);
@@ -1233,9 +1233,17 @@ sub validate_media {
     my $category_id = $media->category_id();
     push(@errors, 'error_category_id') unless ($category_id);
 
-    # Validate: media_file
-    my $media_file = $media->filename();
-    push(@errors, 'error_media_file') unless ($media_file);
+    # Check for media_file; if none exists, create an empty one
+    if (!@errors && !$media->filename) {
+        my $filename = $media->title;
+        $filename =~ s/[^\w\s\-]//g;    # clean invalid chars
+        $filename =~ s/(^\s+|\s+$)+//g; # clean excess whitespace
+        $filename =~ s/[\s\-\_]+/_/g;   # use underscores btw words
+        open (my $filehandle);
+        $media->upload_file(filehandle => $filehandle,
+                            filename => $filename);        
+        add_message('empty_file_created', filename => $filename);
+    }
 
     # Add messages, return hash for errors
     my %hash_errors = ();
@@ -1375,17 +1383,10 @@ sub update_media {
             next unless $q->param('text_content');
             my $text = $q->param('text_content');
             
-            my $media_file = $q->param('title');
-            debug('MEDIA TITLE: ' . $media_file ."\n\n");
-
-            # Coerce a reasonable name from what we get
-            my @filename_parts = split(/[\/\\\:]/, $media_file);
-            my $filename = $filename_parts[-1];
-
             # Put the file in the Media object
             $m->store_temp_file(
                 content   => $text,
-                filename  => $filename,
+                filename  => $m->filename,
             );
 
             next;
@@ -1809,6 +1810,8 @@ sub do_save_media {
     if ($@) {
         if (ref($@) and $@->isa('Krang::Media::DuplicateURL')) {
             add_alert('duplicate_url');
+            clear_messages();
+            undef $m->{filename};
             return (duplicate_url=>1);
         } elsif (ref($@) and $@->isa('Krang::Media::NoCategoryEditAccess')) {
             # User tried to save to a category to which he doesn't have access
@@ -1818,6 +1821,7 @@ sub do_save_media {
             add_alert( 'no_category_access', 
                          url => $cat->url, 
                          id => $category_id );
+            clear_messages();
             return (error_category_id=>1);
         } else {
             # Not our error!
@@ -1825,7 +1829,7 @@ sub do_save_media {
         }
     }
 
-    # If everything is OK, rturn an empty array
+    # If everything is OK, return an empty array
     return ();
 }
 
