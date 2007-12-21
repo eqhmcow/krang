@@ -172,8 +172,9 @@ duplicate_media_upload "Ein Medium mit dem Dateinamen '$filename' ist bereits vo
   error_invalid_title              "Bitte geben Sie einen Titel an."
   error_media_type_id              "Bitte geben Sie den Medientyp an."
   error_category_id                "Bitte geben Sie eine Website/Kategorie an."
-  error_media_file                 "Bitte wählen Sie eine Datei aus."
-  duplicate_url                    "Der Dateiname des Mediums, das Sie hochladen wollen, existiert in dieser Kategorie bereits. Bitte wählen Sie einen neuen Namen."
+  duplicate_url                    "Der Dateiname des Media-Datei, die Sie hinzufügen wollen, existiert in dieser Kategorie bereits. Bitte wählen Sie einen anderen Namen."
+  empty_file_created               "No file uploaded; creating an empty file called '$filename'"
+
   no_category_access               "Sie dürfen die Kategorie $url (ID: $id) nicht bearbeiten."
   message_revert_version           "Sie verwenden wieder Version $version."
   selected_media_checkin           "Markierte Medien freigegeben."
