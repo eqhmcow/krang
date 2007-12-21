@@ -145,7 +145,10 @@ sub output {
     # maybe include language-specific CSS file
     if ($template->query(name => 'language_specific_css')) {
 	my $lang = $session{language} || DefaultLanguage || 'en';
-	my $file = pkg('File')->find(catfile('skins', Skin, 'css', "$lang.css"));
+
+	next if $lang eq 'en';
+
+	my $file = pkg('File')->find(catfile('lang', $lang, 'skins', Skin, 'css', "$lang.css"));
 	if ($file) {
 	    $template->_insert_css($file, 'language_specific_css');
 	}
