@@ -124,7 +124,7 @@ sub localize_template {
 	if ($ENV{KRANG_RECORD_MISSING_LOCALIZATIONS}) {
 	    debug_template_localization->($textref, $language);
 	} else {
-	    $$textref =~ s|<tmpl_lang \s+ ([^>]+)>|$lexicon->get($1)|egx;
+	    $$textref =~ s{<tmpl_lang \s+ ([^>]+)>}{$lexicon->get($1) || $1}egx;
 	}
     }
 }
