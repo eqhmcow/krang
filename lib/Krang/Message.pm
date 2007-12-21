@@ -5,7 +5,7 @@ use warnings;
 
 use Krang::ClassLoader Conf => qw(KrangRoot AvailableLanguages);
 use Krang::ClassLoader Session => qw(%session);
-use File::Spec::Functions qw(catfile);
+use File::Spec::Functions qw(catfile catdir);
 use Carp qw(croak);
 use Krang::ClassLoader Log => qw(debug);
 use Krang::ClassLoader 'File';
@@ -294,18 +294,23 @@ sub clear_alerts {
 sub _load_config {
     our %CONF;
 
-    # load at least the English messages file
-    my @languages = AvailableLanguages;
-    @languages = ('en') unless scalar(@languages);
+    # the English default
+    my @languages = ( ['en' => 'conf'] );
+
+    # other languages
+    push @languages, map  { [$_ => catdir('lang', $_)] }
+                     grep { $_ ne 'en'                 } AvailableLanguages;
 
     # load them for all AvailableLanguages or just English
-    for my $lang (@languages) {
+    for my $spec (@languages) {
+	my ($lang, $dir) = @$spec;
+
 	croak "$lang is not a valid language tag"
 	  unless is_language_tag($lang);
 
-	# find all lang/messages.LANGUAGE files in reverse order to
+	# find all messages.conf files in reverse order to
 	# give the intended overriding effect
-	my @files = reverse Krang::File->find_all(catfile('lang', "messages.$lang"));
+	my @files = reverse Krang::File->find_all(catfile($dir, 'messages.conf'));
 
 	my $conf = Config::ApacheFormat->new();
 	$conf->read($_) for @files;

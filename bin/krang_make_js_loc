@@ -150,7 +150,7 @@ sub get_lexicon {
     return [] if $lang eq 'en';
 
     # read also addon lexicons
-    my @files = reverse pkg('File')->find_all(catfile('lang', "javascript.$lang"));
+    my @files = reverse pkg('File')->find_all(catfile('lang', $lang, 'javascript.dict'));
 
     # read the main lexicons in memory
     my $l10n = Krang::ConfigApacheFormat->new(case_sensitive => 1);

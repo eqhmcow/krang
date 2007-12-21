@@ -196,7 +196,7 @@ sub _load_localization {
 	  unless is_language_tag($lang);
 
 	# read also addon lexicons
-	my @files = reverse pkg('File')->find_all(catfile('lang', "perl.$lang"));
+	my @files = reverse pkg('File')->find_all(catfile('lang', $lang, 'perl.dict'));
 
 	# read the main lexicons in memory
 	my $l10n = Krang::ConfigApacheFormat->new(case_sensitive => 1);
