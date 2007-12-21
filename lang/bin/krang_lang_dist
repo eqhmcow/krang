@@ -1,0 +1,107 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Script => qw(instance_agnostic);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Localization => qw(%LANG);
+
+use Pod::Usage;
+use Getopt::Long;
+
+our ($help, $man, $verbose, $lang);
+my $result = GetOptions(
+   'help'    => \$help,
+   'man'     => \$man,
+   'verbose' => \$verbose,
+   'lang=s'  => \$lang,
+   ) or pod2usage(1);
+
+pod2usage(1) if $help;
+pod2usage( -verbose => 2 ) if $man;
+
+pod2usage(1) unless $lang;
+
+=pod
+
+=head1 NAME
+
+krang_lang_dist - build a localization distribution for one language
+
+=head1 SYNOPSIS
+
+To build a localization distribution for French:
+
+   lang/bin/krang_lang_dist --lang fr
+
+=head1 DESCRIPTION
+
+This script builds a localization distribution from the lexicon files
+found in lang/LANGUAGE-TAG.
+
+=head1 OPTIONS
+
+=over
+
+=item --lang LANGUAGE-TAG
+
+The RFC3066-style LANGUAGE-TAG represents the name of the directory
+containing the localization files for this language, e.g. C<lang/fr/>
+for French.
+
+=item --verbose
+
+=item --help
+
+=item --man
+
+=cut
+
+# some variables
+my $lang_root = catdir(KrangRoot, 'lang');
+my $lang_dir  = catdir($lang_root, $lang);
+my $dist_name = 'Krang-Localization-' . $LANG{$lang} . '-' . $Krang::VERSION . '.tar.gz';
+
+# does the language's directory exist?
+die "Can't find localization files for '$lang': $!"
+  unless -e $lang_dir && -d _;
+
+# make dist
+print STDERR "Creating tarball $dist_name...\n" if $verbose;
+my $out = `tar zvcf $dist_name -C $lang_root --exclude=CVS --exclude=.svn --exclude=*.swp --exclude=*.tdy --exclude=*~ --exclude=*bak --exclude=.#* $lang`;
+print STDERR $out if $verbose;
+
+print "Success. Created language distribution in $dist_name.\n";
+
