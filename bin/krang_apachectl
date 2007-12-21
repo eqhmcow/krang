@@ -335,12 +335,12 @@ sub setup_logs {
 
 sub make_templates {
     print "Making localized templates for $langs.\n";
-    system(catfile(KrangRoot, 'bin', 'krang_localize_templates'))
+    system(catfile(KrangRoot, 'lang', 'bin', 'krang_localize_templates'))
       and die "Couldn't localize templates: $?";
 }
 
 sub make_js_localizer {
     print "Making JavaScript localizer for $langs.\n";
-    system(catfile(KrangRoot, 'bin', 'krang_make_js_loc'))
+    system(catfile(KrangRoot, 'lang', 'bin', 'krang_make_js_loc'))
       and die "Couldn't make JavaScript localizer: $?";
 }
