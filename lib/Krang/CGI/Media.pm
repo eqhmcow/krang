@@ -1380,7 +1380,7 @@ sub update_media {
         }
         if ($mf eq 'text_content') {
             # Handle direct text-file editing
-            next unless $q->param('text_content');
+            next unless ($q->param('text_content') && !$q->param('media_file'));
             my $text = $q->param('text_content');
             
             # Put the file in the Media object
