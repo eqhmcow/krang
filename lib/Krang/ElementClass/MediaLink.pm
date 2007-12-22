@@ -57,14 +57,12 @@ sub input_form {
     $html .= scalar $query->button(-name    => "find_media_$param",
                                    -value   => localize("Find Media"),
                                    -onClick => "find_media('$param')",
-                                   -class   => "button",
-                                  ) 
-      . ' ' . localize('or upload a new file:') . ' '
-        . scalar $query->filefield(-name => $param) . '&nbsp;' .
-          scalar $query->button(-name    => "upload_media_$param",
-                                -value   => localize("Upload"),
-                                -onClick => "db_save_and_stay()",
-                                -class   => "button");
+                                   -class   => "button"
+                                  );
+    if ($self->allow_upload) {
+      $html .= ' ' . localize('or upload a new file:') . ' '
+        . scalar $query->filefield(-name => $param) . '&nbsp;';
+    }
 
     # Add hard find parameters
     my $find = encode_base64(nfreeze(scalar($self->find())));
