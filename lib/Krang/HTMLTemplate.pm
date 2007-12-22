@@ -146,12 +146,14 @@ sub output {
     if ($template->query(name => 'language_specific_css')) {
 	my $lang = $session{language} || DefaultLanguage || 'en';
 
-	next if $lang eq 'en';
+	unless ($lang eq 'en') {
 
-	my $file = pkg('File')->find(catfile('lang', $lang, 'skins', Skin, 'css', "$lang.css"));
-	if ($file) {
-	    $template->_insert_css($file, 'language_specific_css');
-	}
+            my $file = pkg('File')->find(catfile('lang', $lang, 'skins', Skin, 'css', "$lang.css"));
+            if ($file) {
+                $template->_insert_css($file, 'language_specific_css');
+            }
+
+        }
     }
 
     return $template->SUPER::output();
