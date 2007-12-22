@@ -306,8 +306,8 @@ sub authen_handler ($$) {
     } elsif ($cookies{krang_redirect_wid} && $cookies{krang_redirect_wid}->value) {
       # 4. An active window: CGI.pm passed us the ID along with a redirect request
       $window_id = $cookies{krang_redirect_wid}->value;
-    } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi/) {
-      # 5. A non-PERL request (e.g. image), or a bug: inherit ID from previous request
+    } elsif ($r->uri !~ /((\.pl)|(\/))$/ || $r->uri =~ /\/bug\.cgi/ || $r->uri =~ /\/help\.pl$/) {
+      # 5. A non-PERL request (e.g. image), a help screen, or a bug: inherit ID from previous request
       $window_id = $cookies{krang_previous_wid} && $cookies{krang_previous_wid}->value;
     }
 

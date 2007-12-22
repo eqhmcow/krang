@@ -134,7 +134,7 @@ Krang.Window = {
         document.title += ' ('+id+')';
 
         // make sure page refresh will send Handler our ID 
-	window.onbeforeunload = Krang.Window.pass_id; // only IE & Firefox support this?
+	window.onbeforeunload = Krang.Window.pass_id;
     },
 
     get_id : function() {
