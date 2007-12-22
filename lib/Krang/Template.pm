@@ -647,6 +647,8 @@ The list valid search fields is:
 
 =item * filename
 
+=item * full_text_string
+
 =item * template_id
 
 =item * template_uuid
@@ -656,6 +658,10 @@ The list valid search fields is:
 =item * version
 
 =item * simple_search
+
+=item * simple_search_check_full_text (boolean)
+
+=item * 
 
 =back
 
@@ -720,6 +726,9 @@ sub find {
     # set bool to determine whether to use $row or %row for binding below
     my $single_column = $ids_only || $count ? 1 : 0;
 
+    # set bool to determine whether simple search should check full text
+    my $simple_full_text = delete $args{simple_search_check_full_text} || 0;
+
     croak(__PACKAGE__ . "->find(): 'count' and 'ids_only' were supplied. " .
           "Only one can be present.") if ($count && $ids_only);
 
@@ -761,18 +770,20 @@ sub find {
                 unshift @params, $args{$arg};
             }
         } elsif ($arg eq 'simple_search') {
-            my @words = split(/\s+/, $args{$arg});
-            for (@words) {
-                my $numeric = /^\d+$/ ? 1 : 0;
+            foreach my $phrase ($self->_search_text_to_phrases($args{$arg})) {
+                my $numeric = ($phrase =~ /^\d+$/) ? 1 : 0;
                 $where_clause .= " AND " if ($where_clause);
-                $where_clause .= $numeric ? "t.template_id = ?" : "t.url LIKE ?";
+                $where_clause .= '(' . join(' OR ',
+                                            ($numeric ? "t.template_id = ?" : "t.url LIKE ?"),
+                                            ($simple_full_text ? "t.content LIKE ?" : ())) . ')';
                 # escape any literal SQL wildcard chars
                 unless( $numeric ) {
                     s/_/\\_/g;
                     s/%/\\%/g;
                 }
-
-                push @params, $numeric ? $_ : "%" . $_ . "%";
+                
+                push @params, ($numeric ? $phrase : "%" . $phrase . "%"), 
+                              ($simple_full_text ? "%" . $phrase . "%" : ());
             }
         } elsif (grep { $arg eq $_ } qw(may_see may_edit)) {
             my $fqfield = "ucpc.$arg";
@@ -888,6 +899,23 @@ sub find {
     # return number of rows if count, otherwise an array of template ids or
     # objects
     return $count ? $templates[0] : @templates;
+}
+
+# this private helper method takes a search string and returns 
+# an array of phrases - e.g. ONE TWO THREE returns (ONE, TWO, 
+# THREE) whereas "ONE TWO" THREE returns (ONE TWO, THREE)
+sub _search_text_to_phrases {
+    my ($self, $text) = @_;
+    my @phrases;
+    # first add any quoted text as multi-word phrase(s)
+    while ($text =~ s/([\'\"])([^\1]*?)\1//) {
+        my $phrase = $2;
+        $phrase =~ s/\s+/ /;
+        push @phrases, $phrase;
+    }
+    # then split remaining text into one-word phrases
+    push @phrases, (split/\s+/, $text);
+    return @phrases;
 }
 
 

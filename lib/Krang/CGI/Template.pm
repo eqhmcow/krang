@@ -823,13 +823,19 @@ sub search {
     my $search_filter = defined($q->param('search_filter')) ?
       $q->param('search_filter') :
         $session{KRANG_PERSIST}{pkg('Template')}{search_filter};
+    my $search_filter_check_full_text = defined($q->param('search_filter')) ?
+      $q->param('search_filter_check_full_text') :
+        $session{KRANG_PERSIST}{pkg('Template')}{search_filter_check_full_text};
 
     # ensure that $search_filter is at the very least defined.
     $search_filter = '' unless ($search_filter);
-
-    my $find_params = {simple_search => $search_filter, may_see=>1};
+    
+    my $find_params = {simple_search => $search_filter, 
+                       simple_search_check_full_text => $search_filter_check_full_text,
+                       may_see=>1};
     my $persist_vars = {rm => 'search',
-                        search_filter => $search_filter};
+                        search_filter => $search_filter,
+                        search_filter_check_full_text => $search_filter_check_full_text};
     
     # setup pager
     my $pager = $self->make_pager($persist_vars, $find_params);
@@ -841,6 +847,7 @@ sub search {
     $t->param(row_count => $pager->row_count());
 
     $t->param(search_filter => $search_filter);
+    $t->param(search_filter_check_full_text => $search_filter_check_full_text);
 
     return $t->output();
 }
