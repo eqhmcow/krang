@@ -14,7 +14,7 @@ editor without specifying a file. [Noam Weinstein]
 
 =item *
 
-Added ability to search full text of stories from CMS. [Noam Weinstein]
+Added ability to search full text of stories and templates from CMS. [Noam Weinstein]
 
 =item *
 
