@@ -62,6 +62,7 @@ sub setup {
         find                          => 'find',
         list_active                   => 'list_active',
         cancel                        => 'cancel',
+        undo                          => 'undo',
         delete                        => 'delete',
         delete_selected               => 'delete_selected',
         checkout_selected             => 'checkout_selected',
@@ -187,20 +188,26 @@ sub new_story {
 
 =item cancel
 
-Returns to My Workspace without creating a new story.
+Returns to Workspace without creating a new story.
 
 =cut
 
 sub cancel {
     my $self = shift;
-
-    # add a message for the kids
     add_message('cancel_new_story');
+    $self->redirect_to_workspace;
+}
 
-    # return to my workspace
-    $self->header_props(-uri => 'workspace.pl');
-    $self->header_type('redirect');
-    return;
+=item undo
+
+Returns to Workspace without saving changes
+
+=cut
+
+sub undo {
+    my $self = shift;
+    delete $session{story};
+    $self->redirect_to_workspace;
 }
 
 =item create
@@ -858,10 +865,8 @@ sub db_save {
     # remove story from session
     delete $session{story};
 
-    # return to my workspace
-    $self->header_props(-uri => 'workspace.pl');
-    $self->header_type('redirect');
-    return "";
+    # return to workspace
+    $self->redirect_to_workspace;    
 }
 
 
@@ -1005,7 +1010,7 @@ sub save_and_publish {
     # remove story from session
     delete $session{story};
 
-    # return to my workspace
+    # redirect to publish
     $self->header_props(-uri => 'publisher.pl?rm=publish_story&story_id=' . $story->story_id);
     $self->header_type('redirect');
     return "";
@@ -1498,10 +1503,7 @@ sub delete {
 
     delete $session{story};
 
-    # return to my workspace
-    $self->header_props(-uri => 'workspace.pl');
-    $self->header_type('redirect');
-    return "";
+    $self->redirect_to_workspace;
 }
 
 =item find
@@ -1817,10 +1819,7 @@ sub checkout_selected {
          add_message('selected_stories_checkout');
 
          # Redirect to Workplace
-         my $url = "workspace.pl";
-         $self->header_props(-uri=>$url);
-         $self->header_type('redirect');
-         return "Redirect: <a href=\"$url\">$url</a>";
+         return $self->redirect_to_workspace;
      } else {
          ($session{story}) = pkg('Story')->find(story_id=>$story_checkout_list[0]);
          add_message('selected_stories_checkout_one');
@@ -1915,10 +1914,7 @@ sub steal_selected {
 	 ($session{story}) = $single_story;
 	 return $self->edit; 
      } else { # otherwise send user to Workspace
-	 my $url = "workspace.pl";
-	 $self->header_props(-uri=>$url);
-	 $self->header_type('redirect');
-	 return "Redirect: <a href=\"$url\">$url</a>";
+         return $self->redirect_to_workspace;
      }
 }
 
@@ -2240,7 +2236,7 @@ sub make_sure_story_is_still_ours {
        }
     }
     
-    # story is no longer ours! go to workspace
+    # story is no longer ours! return FALSE and go to workspace
     $self->header_props(-uri=>"workspace.pl");
     $self->header_type('redirect');
     return 0;

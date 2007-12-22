@@ -8,8 +8,7 @@ Krang.onload( function() {
 
 undo = function() {
   if (confirm(Krang.L10N.loc('Discard any unsaved changes and return to your Workspace? (This will not undo anything already written to disk by clicking Save Story & Stay.)'))) {
-     Krang.Nav.edit_mode_flag = false; // So user doesn't get a second confirmation message
-     Krang.Nav.goto_url('workspace.pl');
+     Krang.Form.submit('edit', { rm: 'undo' });
   }           
 }                 
 
