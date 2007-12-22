@@ -191,6 +191,12 @@ my ($tmplXYZ) = pkg('Template')->find(template_id => $tmpl->template_id,
 isa_ok($tmplXYZ, 'Krang::Template');
 is($tmplXYZ->version(), 2, 'Template version test');
 
+# full-text find
+my ($tmpl7) = pkg('Template')->find(full_text_string => 'html');
+is($tmpl7->filename, 't_w_c.tmpl', "Find - search by full text that exists");
+my ($tmpl8) = pkg('Template')->find(full_text_string => 'ascii');
+is($tmpl8, undef, "Find - search by full text that doesn't exist");
+
 # clean up the mess
 END {
     unlink 't_w_c.tmpl';

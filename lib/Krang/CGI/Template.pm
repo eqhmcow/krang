@@ -348,6 +348,16 @@ sub advanced_search {
         $t->param( search_url => $search_url );
     }
 
+    # search_full_text_string
+    my $search_full_text_string = defined($q->param('search_full_text_string')) ?
+      $q->param('search_full_text_string') : $session{KRANG_PERSIST}{pkg('Template')}{search_full_text_string};
+
+    if ($search_full_text_string) {
+        $find_params->{full_text_string} = $search_full_text_string;
+        $persist_vars->{search_full_text_string} = $search_full_text_string;
+        $t->param( search_full_text_string => $search_full_text_string);
+    }
+
     # Run pager
     my $pager = $self->make_pager($persist_vars, $find_params);
     $t->param(pager_html => $pager->output());

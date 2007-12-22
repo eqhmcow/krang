@@ -751,7 +751,8 @@ sub find {
                                                  qw( simple_search 
                                                      below_category_id 
                                                      may_see
-                                                     may_edit )));
+                                                     may_edit
+                                                     full_text_string )));
 
         if ($arg eq 'template_id' && ref ($args{$arg}) eq 'ARRAY') {
             my $tmp = join(" OR ", map {"t.template_id = ?"} @{$args{$arg}});
@@ -768,6 +769,12 @@ sub find {
                   "t.url LIKE ?" . ($where_clause ? " AND $where_clause" : '');
                 unshift @params, $cat->url . "%";
                 unshift @params, $args{$arg};
+            }
+        } elsif ($arg eq 'full_text_string') {
+            foreach my $phrase ($self->_search_text_to_phrases($args{$arg})) {
+                $where_clause .= ' AND ' if $where_clause;
+                $where_clause .= ' t.content LIKE ? ';
+                push(@params, "%" . $phrase . "%");
             }
         } elsif ($arg eq 'simple_search') {
             foreach my $phrase ($self->_search_text_to_phrases($args{$arg})) {
