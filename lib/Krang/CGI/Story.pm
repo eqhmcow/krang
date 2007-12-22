@@ -1559,7 +1559,7 @@ sub find {
                                     story_id
                                     contrib_simple
                                     creator_simple
-                                    advanced_full_text
+                                    full_text_string
                                    );
         for (@auto_search_params) {
             my $key = $_;
@@ -1654,11 +1654,11 @@ sub find {
         $persist_vars{search_filter} = $search_filter;
         $template->param(search_filter => $search_filter);
 
-        my $simple_full_text = defined ($q->param('search_filter')) ?
-          $q->param('search_simple_full_text') : $session{KRANG_PERSIST}{pkg('Story')}{search_simple_full_text};
-        $find_params{simple_full_text} = $simple_full_text;
-        $persist_vars{search_simple_full_text} = $simple_full_text;
-        $template->param(search_simple_full_text => $simple_full_text);
+        my $check_full_text = defined ($q->param('search_filter')) ?
+          $q->param('search_filter_check_full_text') : $session{KRANG_PERSIST}{pkg('Story')}{search_filter_check_full_text};
+        $find_params{simple_search_check_full_text} = $check_full_text;
+        $persist_vars{search_filter_check_full_text} = $check_full_text;
+        $template->param(search_filter_check_full_text => $check_full_text);
     }
 
     my $pager = pkg('HTMLPager')->new(

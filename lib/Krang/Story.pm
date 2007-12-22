@@ -882,7 +882,7 @@ Find stories by site.
 
 Find stories by site, looking only at the primary location.
 
-=item advanced_full_text
+=item full_text_string
 
 Find stories by performing a full-text search. (Any words
 enclosed in quotes will be matched as a full phrase.)
@@ -952,7 +952,7 @@ set to the actual version number of the loaded object.
 Performs a per-word LIKE match against title and URL, and an exact
 match against story_id if a word is a number.
 
-=item simple_full_text
+=item simple_search_check_full_text
 
 If set to 1 and passed along with a simple_search, also
 performs a full-text search on the words. (Any words
@@ -1070,7 +1070,7 @@ sub find {
     my $offset      = delete $args{offset}      || 0;
     my $count       = delete $args{count}       || 0;
     my $ids_only    = delete $args{ids_only}    || 0;
-    my $simple_full_text = delete $args{simple_full_text} || 0;
+    my $simple_full_text = delete $args{simple_search_check_full_text} || 0;
 
     # determine whether or not to display hidden stories.
     my $show_hidden = delete $args{show_hidden} || 0;
@@ -1381,8 +1381,8 @@ sub find {
             next;
         }
 
-        # handle advanced full-text search
-        if ($key eq 'advanced_full_text') {
+        # handle full-text search
+        if ($key eq 'full_text_string') {
             $from{"element as el"} = 1;
             push(@where, 'el.root_id = s.element_id');
             foreach my $phrase ($pkg->_search_text_to_phrases($value)){
