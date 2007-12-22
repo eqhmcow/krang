@@ -9,7 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Removed requirement to upload file when creating new media; can now use inline 
+Implemented simple 'Undo' button to discard unsaved changes when editing
+stories. [Noam Weinstein]
+
+=item *
+
+Removed requirement to upload a file when creating new media; can now use inline 
 editor without specifying a file. [Noam Weinstein]
 
 =item *

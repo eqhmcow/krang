@@ -6,6 +6,13 @@ Krang.onload( function() {
   Krang.Help.set( 'story_edit' );
 } );
 
+undo = function() {
+  if (confirm(Krang.L10N.loc('Discard any unsaved changes and return to your Workspace? (This will not undo anything already written to disk by clicking Save Story & Stay.)'))) {
+     Krang.Nav.edit_mode_flag = false; // So user doesn't get a second confirmation message
+     Krang.Nav.goto_url('workspace.pl');
+  }           
+}                 
+
 db_save_and_stay = function() {
   Krang.ElementEditor.run_save_hooks();
   Krang.Form.submit('edit', { rm: 'db_save_and_stay' }, { to_top: false });
@@ -327,6 +334,8 @@ preview_and_stay = function() {
 
 
 <div class="panel capped">
+
+<input value="<tmpl_lang Undo>" onclick="undo()" type="button" class="west"> 
 
 <tmpl_if bulk_edit>
   <input value="<tmpl_lang Done Bulk Editing> <tmpl_var name_of_this_element>" onclick="save_and_leave_bulk_edit()" type="button" class="west">
