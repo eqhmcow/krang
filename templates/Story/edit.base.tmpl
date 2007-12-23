@@ -334,8 +334,6 @@ preview_and_stay = function() {
 
 <div class="panel capped">
 
-<input value="<tmpl_lang Undo>" onclick="undo()" type="button" class="west"> 
-
 <tmpl_if bulk_edit>
   <input value="<tmpl_lang Done Bulk Editing> <tmpl_var name_of_this_element>" onclick="save_and_leave_bulk_edit()" type="button" class="west">
 
@@ -352,17 +350,22 @@ preview_and_stay = function() {
     </tmpl_loop></select>
     <input value="<tmpl_lang Delete>" onclick="remove_story()" type="button" class="west">
 
+     <input value="<tmpl_lang Undo" onclick="undo()" type="button"> 
+     <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_and_stay()" type="button">
+     <input value="<tmpl_lang Save>" onclick="db_save()" type="button">
+
   <tmpl_else>
 
-     <input value="<tmpl_lang Done Editing> <tmpl_var name_of_this_element>" onclick="save_and_go_up()" type="button" class="west">
+     <input value="<tmpl_lang Done With> <tmpl_var name_of_this_element>" onclick="save_and_go_up()" type="button" class="west">
      <tmpl_if allow_delete>
        <input value="<tmpl_lang Delete> <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
      </tmpl_if>
 
-  </tmpl_if>
+     <input value="<tmpl_lang Undo Story Edit>" onclick="undo()" type="button"> 
+     <input value="<tmpl_lang Save Story &amp; Stay>" onclick="db_save_and_stay()" type="button">
+     <input value="<tmpl_lang Save Story>" onclick="db_save()" type="button">
 
-  <input value="<tmpl_lang Save Story &amp; Stay>" onclick="db_save_and_stay()" type="button">
-  <input value="<tmpl_lang Save Story>" onclick="db_save()" type="button">
+  </tmpl_if>
 
 </tmpl_if>
 
