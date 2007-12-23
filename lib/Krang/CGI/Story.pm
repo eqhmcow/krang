@@ -434,10 +434,12 @@ sub checkout_and_edit {
         $query->delete('story_id');
         $session{story} = $story;
         
-        # remember location of browser and state of story in case of undo
-        $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=find';
-        $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $story->version; 
-        $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $story->checked_out_by || 0;
+        # unless we got here via Edit -> View -> Edit (!), we haven't yet stored undo info
+        unless ($query->param('version') && $query->param('return_params') eq 'rm') {
+            $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=find';
+            $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $story->version; 
+            $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $story->checked_out_by || 0;
+        }
     } else {
         $story = $session{story};
         croak("Unable to load story from session!")
