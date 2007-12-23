@@ -200,14 +200,54 @@ sub cancel {
 
 =item undo
 
-Returns to Workspace without saving changes
+Returns Story to the state it was in previous to Edit
 
 =cut
 
 sub undo {
-    my $self = shift;
-    delete $session{story};
-    $self->redirect_to_workspace;
+    my $self         = shift;
+    my $q            = $self->query;
+    my $this_user_id = $ENV{REMOTE_USER};
+
+    my $story        = delete $session{story};
+    my $prev_url     = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'};
+    my $prev_user_id = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'};
+    my $prev_version = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'};
+
+    if ($prev_version == 0) {
+        # if it's a new story, just delete it
+        $story->checkin;
+        $story->delete;
+    } else {
+        # otherwise undo any Save Story & Stays
+        if ($prev_version < $story->version) {
+            $story->revert($prev_version);
+            $story->save;
+            clear_messages; # so user doesn't get a Story Saved message!
+            add_message('reverted_story', version => $prev_version);
+        }
+    }
+
+    # then, if we opened story from workspace, we'll simply return there, otherwise...
+    unless ($prev_url eq 'workspace.pl') {
+        if (!$prev_user_id) {
+            # if story wasn't checked out to anyone prior to our edit, check it in...
+            $story->checkin;
+            if (my $prev_desk_id = $story->last_desk_id) {
+                # and, if it was on a desk, return it to that desk 
+                $story->move_to_desk($prev_desk_id);
+            }
+        } elsif ($prev_user_id != $this_user_id) {
+            # if story was checked out to a different user, we must have stolen it..
+            $story->checkin;
+            $ENV{REMOTE_USER} = $prev_user_id; # this hack returns the story to 
+            $story->checkout;                  # the user from whom we stole it
+            $ENV{REMOTE_USER} = $this_user_id;
+        }
+    }
+    $self->header_props(uri => $prev_url);
+    $self->header_type('redirect');
+    return ""; 
 }
 
 =item create
@@ -270,6 +310,11 @@ sub create {
 
     # store in session for edit
     $session{story} = $story;
+
+    # remember location of browser and state of story in case of undo
+    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=new_story';
+    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = 0; 
+    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $ENV{REMOTE_USER};
 
     # toss to edit
     return $self->edit;
@@ -388,6 +433,11 @@ sub checkout_and_edit {
 
         $query->delete('story_id');
         $session{story} = $story;
+        
+        # remember location of browser and state of story in case of undo
+        $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=find';
+        $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $story->version; 
+        $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $story->checked_out_by || 0;
     } else {
         $story = $session{story};
         croak("Unable to load story from session!")
@@ -401,8 +451,7 @@ sub checkout_and_edit {
 
 =item edit
 
-The story editing interface.  Expects to find a story to edit in
-$session{story}.
+The story editing interface.  
 
 =cut
 
@@ -1809,9 +1858,12 @@ sub checkout_selected {
      # No selected stories?  Just return to find without any message
      return $self->find() unless (@story_checkout_list);
 
+     my $was_checked_out;
      foreach my $story_id (@story_checkout_list) {
          my ($s) = pkg('Story')->find(story_id=>$story_id);
-         $s->checkout();
+         unless ($was_checked_out = $s->checked_out) {
+             $s->checkout();
+         }
      }
 
      # Do we go to the edit screen (one story) or Workspace (N stories)?
@@ -1823,6 +1875,12 @@ sub checkout_selected {
      } else {
          ($session{story}) = pkg('Story')->find(story_id=>$story_checkout_list[0]);
          add_message('selected_stories_checkout_one');
+
+         # Remember location of browser and state of story in case of undo
+         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=find';
+         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $session{story}->version;
+         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $was_checked_out ? $ENV{REMOTE_USER} : 0;
+
          return $self->edit();
      }
 }
@@ -1878,7 +1936,7 @@ sub steal_selected {
 	     my $victim_name = $q->escapeHTML($victim->first_name.' '.$victim->last_name);
 	     $s->checkin();  # this story was checked out to someone
 	     $s->checkout(); # else; steal it and keep track of victim
-	     $victims{$victim_name} = 1;
+	     $victims{$victim_name} = $victim->user_id;
 	     push @stolen_ids, $story_id;
 	 } else {
 	     push @owned_ids, $story_id; # this story was already ours!
@@ -1912,7 +1970,13 @@ sub steal_selected {
      # if user selected one story, hopefully we can open it for editing
      if ((@story_ids == 1) && ($single_story->may_edit)) {
 	 ($session{story}) = $single_story;
+
+         # remember location of browser and state of story in case of undo
+         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=list_active'; 
+         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $single_story->version; 
+         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = %victims ? (values %victims)[0] : $ENV{REMOTE_USER}; 
 	 return $self->edit; 
+
      } else { # otherwise send user to Workspace
          return $self->redirect_to_workspace;
      }

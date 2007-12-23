@@ -358,6 +358,12 @@ sub goto_edit {
     if ($obj->isa('Krang::Story')) {
         $self->header_props(-uri => 'story.pl?rm=edit&story_id=' .
                             $obj->story_id);
+
+        # remember location of browser and state of story in case of undo
+        $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'workspace.pl'; 
+        $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $obj->version;
+        $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $ENV{REMOTE_USER};
+
     } elsif ($obj->isa('Krang::Media')) {
         $self->header_props(-uri => 'media.pl?rm=edit&media_id=' .
                             $obj->media_id);

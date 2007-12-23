@@ -7,7 +7,7 @@ Krang.onload( function() {
 } );
 
 undo = function() {
-  if (confirm(Krang.L10N.loc('Discard any unsaved changes and return to your Workspace? (This will not undo anything already written to disk by clicking Save Story & Stay.)'))) {
+  if (confirm(Krang.L10N.loc("Are you SURE you want to revert the Story to the state it was in before you edited it?"))) {
      Krang.Form.submit('edit', { rm: 'undo' });
   }           
 }                 

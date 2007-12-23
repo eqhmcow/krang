@@ -9,8 +9,8 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Implemented simple 'Undo' button to discard unsaved changes when editing
-stories. [Noam Weinstein]
+Implemented 'Undo' button that returns Story to the state and location it was in prior to 
+being edited, and redirects the user to the page from where he/she opened it. [Noam Weinstein]
 
 =item *
 

@@ -243,10 +243,14 @@ sub goto_edit {
     my $self = shift;
     my $query = $self->query;
     my $obj = $self->_id2obj($query->param('id'));
+
+    # remember location of browser and state of story in case of undo
+    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'desk.pl?desk_id=' . $obj->desk_id;
+    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $obj->version;
+    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = 0;
+
     $obj->checkout;
-    $self->header_props(-uri => 'story.pl?rm=edit&story_id=' .
-                        $obj->story_id);
-    
+    $self->header_props(-uri => 'story.pl?rm=edit&story_id=' . $obj->story_id);
     $self->header_type('redirect');
     return "";
 }
