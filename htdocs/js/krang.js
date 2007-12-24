@@ -668,7 +668,7 @@ Krang.class_suffix = function(el, prefix) {
 */
 Krang.Nav = {
     edit_mode_flag : false,
-    edit_message   : Krang.L10N.loc('Are you sure you want to discard your unsaved changes?'),
+    edit_message   : Krang.L10N.loc('Are you sure you want to discard any unsaved changes?'),
     edit_mode      : function(flag) {
         // by default it's true
         if( flag === undefined ) flag = true;

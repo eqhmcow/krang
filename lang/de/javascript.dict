@@ -43,9 +43,9 @@
 "Nothing selected to steal!"     "Sie haben nichts zum Übernehmen markiert!"
 "Nothing selected to unassociate!" "Kein Mitarbeiter zum Entfernen markiert!"
 "Please select an item or click Cancel to cancel selection."  "Wählen Sie ein Element aus oder klicken Sie auf 'Abbrechen'."
-"Save this Story and return to your Workspace?"  "Wollen Sie diese Story speichern und zu Ihrem Arbeitsplatz zurückkehren?"
+"Save changes and return to your Workspace?"  "Wollen Sie diese Story speichern und zu Ihrem Arbeitsplatz zurückkehren?"
 "is already an item in this list. Not added."   "ist in der Liste bereits vorhanden und wird daher nicht hinzugefügt."
 
 # In krang.js
 "Are you sure? This will discard any unsaved changes in any window."  "Sind Sie sicher, dass Sie sich in allen Fenstern/Tabs, in denen Sie Krang geöffnet haben, abmelden wollen? Dadurch gehen alle noch nicht gespeicherten Veränderungen verloren."
-"Are you sure you want to discard your unsaved changes?"  "Sind Sie sicher, dass Sie die noch nicht gespeicherten Veränderungen verwerfen wollen?"
+"Are you sure you want to discard any unsaved changes?"  "Sind Sie sicher, dass Sie die noch nicht gespeicherten Veränderungen verwerfen wollen?"

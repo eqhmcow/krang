@@ -32,6 +32,7 @@ use Krang::ClassLoader Message => qw(add_message add_alert);
 use Krang::ClassLoader 'Desk';
 use Krang::ClassLoader 'Group';
 use Krang::ClassLoader 'Localization' => qw(localize);
+use Krang::ClassLoader 'CGI::Story';
 
 use Krang::ClassLoader base => 'CGI';
 
@@ -235,7 +236,7 @@ sub move_checked {
 
 =item goto_edit
 
-Redirects to the appropriate edit screen for this object.
+Redirects to the story edit screen 
 
 =cut
 
@@ -243,11 +244,7 @@ sub goto_edit {
     my $self = shift;
     my $query = $self->query;
     my $obj = $self->_id2obj($query->param('id'));
-
-    # remember location of browser and state of story in case of undo
-    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'desk.pl?desk_id=' . $obj->desk_id;
-    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $obj->version;
-    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = 0;
+    Krang::CGI::Story->_cancel_edit_goes_to('desk.pl?desk_id=' . $obj->desk_id);
 
     $obj->checkout;
     $self->header_props(-uri => 'story.pl?rm=edit&story_id=' . $obj->story_id);
@@ -257,7 +254,7 @@ sub goto_edit {
 
 =item goto_log
 
-Redirects to the history viewer for this object.
+Redirects to the story history view
 
 =cut
 
@@ -285,7 +282,7 @@ sub goto_log {
 
 =item goto_view
 
-Redirects to the story view for this object.
+Redirects to the story element view
 
 =cut
 

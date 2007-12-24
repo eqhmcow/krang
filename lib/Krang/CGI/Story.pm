@@ -61,8 +61,8 @@ sub setup {
         revert                        => 'revert',
         find                          => 'find',
         list_active                   => 'list_active',
-        cancel                        => 'cancel',
-        undo                          => 'undo',
+        cancel_create                 => 'cancel_create',
+        cancel_edit                   => 'cancel_edit',
         delete                        => 'delete',
         delete_selected               => 'delete_selected',
         checkout_selected             => 'checkout_selected',
@@ -192,43 +192,36 @@ Returns to Workspace without creating a new story.
 
 =cut
 
-sub cancel {
+sub cancel_create {
     my $self = shift;
     add_message('cancel_new_story');
     $self->redirect_to_workspace;
 }
 
-=item undo
+=item cancel_edit
 
-Returns Story to the state it was in previous to Edit
+Returns Story to the state it was in previous to Edit (though a new 
+version may have been written to disk via Save Story & Stay)
 
 =cut
 
-sub undo {
+sub cancel_edit {
     my $self         = shift;
     my $q            = $self->query;
     my $this_user_id = $ENV{REMOTE_USER};
-
     my $story        = delete $session{story};
-    my $prev_url     = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'};
-    my $prev_user_id = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'};
-    my $prev_version = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'};
 
-    if ($prev_version == 0) {
-        # if it's a new story, just delete it
+    # if it's a new story that hasn't yet been saved, delete it
+    if ($self->_is_newly_created($story)) {
         $story->checkin;
         $story->delete;
-    } else {
-        # otherwise undo any Save Story & Stays
-        if ($prev_version < $story->version) {
-            $story->revert($prev_version);
-            $story->save;
-            clear_messages; # so user doesn't get a Story Saved message!
-            add_message('reverted_story', version => $prev_version);
-        }
-    }
+    } 
+    
+    # regardless, grab previous URL and check-out status
+    my $prev_url     = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'};
+    my $prev_user_id = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'};
 
-    # then, if we opened story from workspace, we'll simply return there, otherwise...
+    # if it's a story we opened from workspace, we'll leave it there, otherwise...
     unless ($prev_url eq 'workspace.pl') {
         if (!$prev_user_id) {
             # if story wasn't checked out to anyone prior to our edit, check it in...
@@ -249,6 +242,18 @@ sub undo {
     $self->header_type('redirect');
     return ""; 
 }
+
+sub _cancel_edit_goes_to {
+    my ($self, $url_where_story_was_opened, $user_who_had_it_checked_out) = @_;
+    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = $url_where_story_was_opened;
+    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $user_who_had_it_checked_out;
+}
+
+sub _is_newly_created {
+    my ($self, $story) = @_;
+    return ($story->version == 1 && $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} =~ /new_story$/);
+}
+    
 
 =item create
 
@@ -311,12 +316,8 @@ sub create {
     # store in session for edit
     $session{story} = $story;
 
-    # remember location of browser and state of story in case of undo
-    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=new_story';
-    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = 0; 
-    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $ENV{REMOTE_USER};
-
     # toss to edit
+    $self->_cancel_edit_goes_to('story.pl?rm=new_story', $ENV{REMOTE_USER});
     return $self->edit;
 }
 
@@ -424,6 +425,10 @@ sub checkout_and_edit {
     my $self = shift;
     my $query = $self->query;
 
+    foreach my $key ($query->param) {
+        info ($key . ' = ' . $query->param($key));
+    }
+
     my $story;
     if ($query->param('story_id')) {
         # load story from DB
@@ -434,11 +439,9 @@ sub checkout_and_edit {
         $query->delete('story_id');
         $session{story} = $story;
         
-        # unless we got here via Edit -> View -> Edit (!), we haven't yet stored undo info
+        # this hack catches Edit -> View -> Edit (!) cases so they don't overwrite cancel info
         unless ($query->param('version') && $query->param('return_params') eq 'rm') {
-            $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=find';
-            $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $story->version; 
-            $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $story->checked_out_by || 0;
+            $self->_cancel_edit_goes_to('story.pl?rm=find', $story->checked_out_by);
         }
     } else {
         $story = $session{story};
@@ -606,7 +609,9 @@ sub edit {
                             is_selected      => $is_selected });
     }
 
-    $template->param( desk_loop => \@desk_loop);
+    $template->param(desk_loop => \@desk_loop);
+
+    $template->param(newly_created => $self->_is_newly_created($story)); # affects Cancel message
 
     return $template->output();
 }
@@ -937,7 +942,8 @@ sub db_save_and_stay {
     return $output if length $output;
 
     # save story to the database
-    my $story = $session{story};
+    my $story  = $session{story};
+    my $is_new = $self->_is_newly_created($story);
     eval { $story->save() };
 
     # is it a dup?
@@ -951,12 +957,14 @@ sub db_save_and_stay {
         # rethrow
         die($@);
     }
-
     
     add_message('story_save', story_id => $story->story_id,
                 url      => $story->url,
                 version  => $story->version);
 
+    # if Cancel was redirecting to New Story, now it should redirect to Workspace
+    $is_new ? $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER}) : ();
+    
     # return to edit
     return $self->edit();
 }
@@ -1878,11 +1886,8 @@ sub checkout_selected {
          ($session{story}) = pkg('Story')->find(story_id=>$story_checkout_list[0]);
          add_message('selected_stories_checkout_one');
 
-         # Remember location of browser and state of story in case of undo
-         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=find';
-         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $session{story}->version;
-         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $was_checked_out ? $ENV{REMOTE_USER} : 0;
-
+         # Redirect to Edit
+         $self->_cancel_edit_goes_to('story.pl?rm=find', $was_checked_out && $ENV{REMOTE_USER});
          return $self->edit();
      }
 }
@@ -1969,17 +1974,17 @@ sub steal_selected {
 	 }
      }
 
-     # if user selected one story, hopefully we can open it for editing
+     # if user selected one story, and it's editable....
      if ((@story_ids == 1) && ($single_story->may_edit)) {
+         
+         # open it (after storing cancel info)
 	 ($session{story}) = $single_story;
-
-         # remember location of browser and state of story in case of undo
-         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = 'story.pl?rm=list_active'; 
-         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_VERSION'} = $single_story->version; 
-         $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = %victims ? (values %victims)[0] : $ENV{REMOTE_USER}; 
+         $self->_cancel_edit_goes_to('story.pl?rm=list_active', 
+                                     %victims ? (values %victims)[0] : $ENV{REMOTE_USER});
 	 return $self->edit; 
 
-     } else { # otherwise send user to Workspace
+     } else { 
+         # otherwise go to Workspace
          return $self->redirect_to_workspace;
      }
 }

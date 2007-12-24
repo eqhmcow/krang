@@ -6,9 +6,11 @@ Krang.onload( function() {
   Krang.Help.set( 'story_edit' );
 } );
 
-undo = function() {
-  if (confirm(Krang.L10N.loc("Are you SURE you want to revert the Story to the state it was in before you edited it?"))) {
-     Krang.Form.submit('edit', { rm: 'undo' });
+cancel_edit = function() {
+  if (confirm(Krang.L10N.loc(<tmpl_if newly_created>"Discard new Story and return to previous screen?"
+                             <tmpl_else>"Discard any unsaved changes and return the Story to its previous location?"
+                             </tmpl_if>))) {
+     Krang.Form.submit('edit', { rm: 'cancel_edit' });
   }           
 }                 
 
@@ -103,7 +105,7 @@ preview_and_stay = function() {
 <tmpl_else>
 
   db_save = function() {
-    if ( confirm( Krang.L10N.loc('Save this Story and return to your Workspace?') ) ) {
+    if ( confirm( Krang.L10N.loc('Save changes and return to your Workspace?') ) ) {
       Krang.ElementEditor.run_save_hooks();
       Krang.Form.submit('edit', { rm: 'db_save' });
     }
@@ -350,10 +352,6 @@ preview_and_stay = function() {
     </tmpl_loop></select>
     <input value="<tmpl_lang Delete>" onclick="remove_story()" type="button" class="west">
 
-     <input value="<tmpl_lang Undo" onclick="undo()" type="button"> 
-     <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_and_stay()" type="button">
-     <input value="<tmpl_lang Save>" onclick="db_save()" type="button">
-
   <tmpl_else>
 
      <input value="<tmpl_lang Done With> <tmpl_var name_of_this_element>" onclick="save_and_go_up()" type="button" class="west">
@@ -361,11 +359,11 @@ preview_and_stay = function() {
        <input value="<tmpl_lang Delete> <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
      </tmpl_if>
 
-     <input value="<tmpl_lang Undo Story Edit>" onclick="undo()" type="button"> 
-     <input value="<tmpl_lang Save Story &amp; Stay>" onclick="db_save_and_stay()" type="button">
-     <input value="<tmpl_lang Save Story>" onclick="db_save()" type="button">
-
   </tmpl_if>
+
+  <input value="<tmpl_lang Cancel" onclick="cancel_edit()" type="button"> 
+  <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_and_stay()" type="button">
+  <input value="<tmpl_lang Save>" onclick="db_save()" type="button">
 
 </tmpl_if>
 
