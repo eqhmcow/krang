@@ -806,8 +806,11 @@ than L<Krang::ElementClass::Cover>.
 The reason is that the story slug (entered when creating a new story)
 is used along with the story's category in building the URL for the
 story.  Cover stories (those that subclass
-L<Krang::ElementClass::Cover>) do not use the slug - they use only the
-category path for the URL.
+L<Krang::ElementClass::Cover>) by default use only the
+category path for the URL. (Prior to Krang v3.00, Cover stories were 
+prohibited from including slugs in their URLs; in newer versions this
+behavior is optional for all types, and governed by a method called
+slug_use() which is explained further in ElementClass/TopLevel.pm)
 
 =item *
 
