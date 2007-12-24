@@ -210,61 +210,7 @@ sub cancel_create {
     $self->redirect_to_workspace;
 }
 
-=item cancel_edit
 
-Returns Story to the state it was in previous to Edit (though a new 
-version may have been written to disk via Save Story & Stay)
-
-=cut
-
-sub cancel_edit {
-    my $self         = shift;
-    my $q            = $self->query;
-    my $this_user_id = $ENV{REMOTE_USER};
-    my $story        = delete $session{story};
-
-    # if it's a new story that hasn't yet been saved, delete it
-    if ($self->_is_newly_created($story)) {
-        $story->checkin;
-        $story->delete;
-    } 
-    
-    # regardless, grab previous URL and check-out status
-    my $prev_url     = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'};
-    my $prev_user_id = delete $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'};
-
-    # if it's a story we opened from workspace, we'll leave it there, otherwise...
-    unless ($prev_url eq 'workspace.pl') {
-        if (!$prev_user_id) {
-            # if story wasn't checked out to anyone prior to our edit, check it in...
-            $story->checkin;
-            if (my $prev_desk_id = $story->last_desk_id) {
-                # and, if it was on a desk, return it to that desk 
-                $story->move_to_desk($prev_desk_id);
-            }
-        } elsif ($prev_user_id != $this_user_id) {
-            # if story was checked out to a different user, we must have stolen it..
-            $story->checkin;
-            $ENV{REMOTE_USER} = $prev_user_id; # this hack returns the story to 
-            $story->checkout;                  # the user from whom we stole it
-            $ENV{REMOTE_USER} = $this_user_id;
-        }
-    }
-    $self->header_props(uri => $prev_url);
-    $self->header_type('redirect');
-    return ""; 
-}
-
-sub _cancel_edit_goes_to {
-    my ($self, $url_where_story_was_opened, $user_who_had_it_checked_out) = @_;
-    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} = $url_where_story_was_opened;
-    $session{KRANG_PERSIST}{pkg('Story')}{'PREV_CHECKED_OUT_BY'} = $user_who_had_it_checked_out;
-}
-
-sub _is_newly_created {
-    my ($self, $story) = @_;
-    return ($story->version == 1 && $session{KRANG_PERSIST}{pkg('Story')}{'PREV_URL'} =~ /new_story$/);
-}
     
 
 =item create
@@ -632,7 +578,9 @@ sub edit {
 
     $template->param(desk_loop => \@desk_loop);
 
-    $template->param(newly_created => $self->_is_newly_created($story)); # affects Cancel message
+    $template->param(cancel_deletes           => $self->_cancel_edit_deletes($story));
+    $template->param(cancel_changes_owner     => $self->_cancel_edit_changes_owner);
+    $template->param(cancel_goes_to_workspace => $self->_cancel_edit_goes_to_workspace);
 
     return $template->output();
 }
@@ -964,7 +912,6 @@ sub db_save_and_stay {
 
     # save story to the database
     my $story  = $session{story};
-    my $is_new = $self->_is_newly_created($story);
     eval { $story->save() };
 
     # is it a dup?
@@ -983,8 +930,8 @@ sub db_save_and_stay {
                 url      => $story->url,
                 version  => $story->version);
 
-    # if Cancel was redirecting to New Story, now it should redirect to Workspace
-    $is_new ? $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER}) : ();
+    # Cancel should now redirect to Workspace since we created a new version
+    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
     
     # return to edit
     return $self->edit();

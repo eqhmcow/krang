@@ -415,13 +415,15 @@ sub _check_assets {
 
 =head1 RUN MODES
 
-This base class provides two runmodes:
+This base class provides four runmodes:
 
   * access_forbidden
 
   * redirect_to_login
 
   * redirect_to_workspace
+
+  * cancel_edit
 
 =over 4
 
@@ -494,6 +496,94 @@ sub redirect_to_workspace {
   $self->header_type('redirect');
   return "Redirect: <a href=\"$uri\">$uri</a>";
 }
+
+=item cancel_edit
+
+Returns object to the state it was in previous to Edit (though a new 
+version may have been written to disk via Save & Stay)
+
+=cut
+
+sub cancel_edit {
+    my $self   = shift;
+    my $q      = $self->query;
+    my $user   = $ENV{REMOTE_USER};
+    my ($type) = $q->url(-relative => 1) =~ /(.*)\.pl$/;
+    my $object = delete $session{$type};
+
+    die ('cancel_edit did not recognize URL: ' . $q->url) 
+      unless ($type eq 'story' || $type eq 'template' || $type eq 'media');
+    die ("cancel_edit did not find a $type in session")
+      unless ($object);
+
+    # if it's a new object that hasn't yet been saved, delete it
+    if ($self->_cancel_edit_deletes($object)) {
+        $object->checkin;
+        $object->delete;
+    } 
+    
+    # regardless, grab previous URL and check-out status
+    my $pre_edit_url   = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL};
+    my $pre_edit_owner = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID};
+
+    # if it's an object we opened from workspace, we'll leave it there, otherwise...
+    unless ($pre_edit_url eq 'workspace.pl') {
+        if (!$pre_edit_owner) {
+            # if object wasn't checked out to anyone prior to our edit, check it in...
+            $object->checkin;
+            if ($object->isa('Krang::Story') && $object->last_desk_id) {
+                # and, if it was a story on a desk, return it to that desk 
+                $object->move_to_desk($object->last_desk_id);
+            }
+        } elsif ($pre_edit_owner != $user) {
+            # if object was checked out to a different user, we must have stolen it..
+            $object->checkin;
+            $ENV{REMOTE_USER} = $pre_edit_owner; # this hack returns the object to 
+            $object->checkout;                   # the user from whom we stole it
+            $ENV{REMOTE_USER} = $user;
+        }
+    }
+
+    # finally, return to pre-edit URL
+    $self->header_props(uri => $pre_edit_url);
+    $self->header_type('redirect');
+    return ""; 
+}
+
+sub _cancel_edit_goes_to {
+    my ($self, $pre_edit_url, $pre_edit_owner) = @_;
+    if (!$pre_edit_url) {
+        # get
+        return ($session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL},
+                $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID});
+    } else {
+        # set
+        $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL}      = $pre_edit_url;
+        $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID} = $pre_edit_owner;
+    }
+}
+
+sub _cancel_edit_deletes {
+    my ($self, $object) = @_;
+    return ($object->version == 1 && ($self->_cancel_edit_goes_to)[0] =~ /new_story$/);
+}
+
+sub _cancel_edit_changes_owner {
+    my $self = shift;
+    my $pre_edit_owner = ($self->_cancel_edit_goes_to)[1];
+    return (!$pre_edit_owner || $pre_edit_owner != $ENV{REMOTE_USER});
+}
+
+sub _cancel_edit_goes_to_workspace {
+    my $self = shift;
+    return (($self->_cancel_edit_goes_to)[0] eq 'workspace.pl');
+}
+
+
+
+
+
+
 
 # load template using Krang::HTMLTemplate.  CGI::App doesn't provide a
 # way to specify a different class to use, so this code is copied in.
