@@ -62,21 +62,36 @@ grey_out_slug_input = function()
   document.getElementById('slug').className = "disabled"; 
 }
 
-set_slug_entry_by_type = function() {
+show_slug_and_cat_by_type = function() {
 
-  // prohibit slug-entry if no type has been selected
+  // hide slug and cat input if no type has been selected
   if (!document.new_story.type.value) {
 	slug_entry_for_this_type = 'prohibit';
+        cat_entry_for_this_type  = 'prohibit';
   }
 
-  // otherwise determine slug-entry mode by type
-  <tmpl_loop slug_entry_by_type_loop>
+  // otherwise determine by type
+  <tmpl_loop slug_and_cat_entry_by_type_loop>
   if (document.new_story.type.value == '<tmpl_var story_type>') 
   { 
-        slug_entry_for_this_type = '<tmpl_var slug_entry_mode>';
+        slug_entry_for_this_type = '<tmpl_var slug_entry>';
+        cat_entry_for_this_type  = '<tmpl_var cat_entry>';
   }	
   </tmpl_loop>
+
+  // for cat, all we need to do is hide/show row and asterisk
+  if (cat_entry_for_this_type == 'prohibit') {
+     document.getElementById('cat_row').style.display = 'none';
+  } else {
+     document.getElementById('cat_row').style.display = '';
+     if (cat_entry_for_this_type == 'require') {
+       document.getElementById('require_cat_asterisk').style.display='';
+     } else {
+       document.getElementById('require_cat_asterisk').style.display='none';
+     }
+  }
   
+  // for slug, there's a bit more work due to checkbox & its functionality
   if (slug_entry_for_this_type == 'prohibit') {
      document.getElementById('slug_row').style.display = 'none';
      document.new_story.slug.value = '';
@@ -178,8 +193,8 @@ usr_changed_slug = function(new_value) {
 <td><tmpl_var cover_date_selector></td>
 </tr>
 
-<tr<tmpl_if bad_category_id> class="err"</tmpl_if>>
-<th>*<tmpl_lang Site/Category></th>
+<tr id="cat_row"<tmpl_if bad_category_id> class="err"<tmpl_else><tmpl_unless show_cat> style="display:none"</tmpl_unless></tmpl_if>>
+<th><label id="require_cat_asterisk" <tmpl_unless require_cat>style="display:none"</tmpl_unless>>*</label><tmpl_lang Site/Category></th>
 <td><tmpl_var category_chooser></td>
 </tr>
 

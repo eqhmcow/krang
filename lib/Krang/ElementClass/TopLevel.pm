@@ -221,14 +221,65 @@ content on category templates varies for each page in a story.
 
 sub publish_category_per_page { 0 }
 
+=item C<< $category_input = $class->category_input() >>
 
-=item C<< $show_slug = $class->slug_use() >>
+This method is used to determine whether the user needs
+to select a category when creating a New Story.
 
-Returns 1 of 4 values:
-'require'    - slug is required
-'encourage'  - slug field is present in New Story CGI, but can be left empty
-'discourage' - slug field is initially greyed-out in New Story CGI
-'prohibit'   - slug is prohibited 
+  It returns 1 of 3 values:
+  'require'  - user must specify category 
+  'allow'    - user may specify category 
+  'prohibit' - user may not specify category 
+
+The default implementation returns 'require'.
+ 
+=cut
+
+sub category_input     { 
+    return 'require'; 
+}
+
+=item C<< $category_id = $class->auto_category_id(cover_date => $cover_date,
+                                                  slug => $slug,
+                                                  title => $title); >>
+
+This method auto-selects a category ID based on cover_date, title, and/or slug. 
+The default implementation simply returns the first category ID it can find.
+
+=cut 
+
+sub auto_category_id {
+    return (pkg('Category')->find(limit => 1, ids_only => 1))[0];
+}
+
+=item C<< $validate = $class->validate_category(category => $category,
+                                                cover_date => $cover_date,
+                                                slug => $slug,
+                                                title => $title); >>
+
+This method validates whether a given category is acceptable for a story
+based on the story's cover_date, slug, and/or title. If so, it returns 1.
+If not, it returns a text error that is passed onto the user.
+
+The default implementation returns 1 in all cases.
+
+=cut
+
+sub validate_category  { 
+    return 1;
+}
+
+=item C<< $slug_use = $class->slug_use() >>
+
+This method is used to determine slug behavior.
+
+  It returns 1 of 4 values:
+  'require'    - slug is required
+  'encourage'  - slug field is present in New Story CGI, but can be left empty
+  'discourage' - slug field is initially greyed-out in New Story CGI
+  'prohibit'   - slug is prohibited 
+
+The default implementation returns 'encourage'.
  
 =cut
     
@@ -239,12 +290,12 @@ sub slug_use {
 
 =item C<< $title_to_slug = $class->title_to_slug() >>
 
-Returns the Javascript necessary to dynamically convert a title to a slug 
-in the New Story form. The default implementation returns nothing, causing
-the hard-coded Javascript to execute. If a particular story type requires 
-a different approach, this method can be overridden in the story class. The 
-Javascript returned should consist of an unnamed function, for example 
-"function(title) { return title.toLowerCase }"
+This method returns the Javascript necessary to dynamically convert a 
+title to a slug in the New Story form. The default implementation returns 
+nothing, causing the hard-coded Javascript to execute. If a particular story 
+type requires a different approach, this method can be overridden in the 
+story class. The Javascript returned should consist of an unnamed function, 
+for example "function(title) { return title.toLowerCase }"
 
 =cut
 

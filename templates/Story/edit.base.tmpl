@@ -299,7 +299,11 @@ preview_and_stay = function() {
     <th><tmpl_lang Site></th>
     <th colspan="2"><tmpl_lang Category></th>
     <th></th>
-    <th class="l series"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input type="checkbox" onclick="Krang.check_all(this,'cat_remove_')"></tmpl_unless></tmpl_if></tmpl_loop></th>  <!--:ick, but should work(db2)-->
+    <th class="l series">
+      <tmpl_unless auto_category>
+        <tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input type="checkbox" onclick="Krang.check_all(this,'cat_remove_')"></tmpl_unless></tmpl_if></tmpl_loop>  <!--:ick, but should work(db2)-->
+      </tmpl_unless>
+    </th>
     </tr>
     </thead>
 
@@ -307,22 +311,35 @@ preview_and_stay = function() {
 
     <tmpl_loop category_loop>
       <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
-      <td class="series f"><input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>></td>
+      <td class="series f">
+        <tmpl_if auto_category>
+          <tmpl_if __first__>YES</tmpl_if>
+        <tmpl_else>
+          <input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>>
+        </tmpl_if>
+      </td>
       <td><tmpl_var escape=html site></td>
       <td colspan="2"><tmpl_var escape=html category></td>
-      <td class="series"><input name="category_to_replace_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if selected_for_replace> checked</tmpl_if>></td>
-      <td class="series l"><tmpl_unless __first__>
-        <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox">
-      <tmpl_else>&nbsp;</tmpl_unless></td>
+      <tmpl_unless auto_category>
+        <td class="series"><input name="category_to_replace_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if selected_for_replace> checked</tmpl_if>></td>
+        <td class="series l">
+          <tmpl_unless __first__>
+            <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox">
+          <tmpl_else>&nbsp;
+          </tmpl_unless>
+        </td>
+      </tmpl_unless>
       </tr>
     </tmpl_loop>
 
-    <tr class="command-row">
-    <td class="series f"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="<tmpl_lang Set>" onclick="set_primary_category()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
-    <td colspan="3"><tmpl_var add_category_button></td>
-    <td><tmpl_var replace_category_button></td>
-    <td class="series l"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="<tmpl_lang Delete>" onclick="remove_categories()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
-    </tr>
+    <tmpl_unless auto_category>
+      <tr class="command-row">
+      <td class="series f"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="<tmpl_lang Set>" onclick="set_primary_category()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
+      <td colspan="3"><tmpl_var add_category_button></td>
+      <td><tmpl_var replace_category_button></td>
+      <td class="series l"><tmpl_loop category_loop><tmpl_if __first__><tmpl_unless __last__><input value="<tmpl_lang Delete>" onclick="remove_categories()" type="button" class="button"><tmpl_else>&nbsp;</tmpl_unless></tmpl_if></tmpl_loop></td><!--:ick, but should work(db2)-->
+      </tr>
+    </tmpl_unless>
 
     </tbody>
 
@@ -369,8 +386,11 @@ preview_and_stay = function() {
 
 </div>
 
-<tmpl_var add_category_chooser>
-<tmpl_var replace_category_chooser>
+<tmpl_unless auto_category>
+  <tmpl_var add_category_chooser>
+  <tmpl_var replace_category_chooser>
+</tmpl_unless>
+
 <tmpl_loop categorylink_chooser_loop><tmpl_var categorylink_chooser></tmpl_loop>
 
 </form>

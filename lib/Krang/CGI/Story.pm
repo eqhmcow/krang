@@ -133,8 +133,8 @@ sub new_story {
                                         -default   => '',
                                         -values    => [ ('', @types) ],
                                         -labels    => \%type_labels,
-					-onkeyup   => 'javascript:set_slug_entry_by_type()',
-					-onchange  => 'javascript:set_slug_entry_by_type()'));
+					-onkeyup   => 'javascript:show_slug_and_cat_by_type()',
+					-onchange  => 'javascript:show_slug_and_cat_by_type()'));
 
     $template->param(category_chooser => scalar
                      category_chooser(name => 'category_id',
@@ -147,21 +147,31 @@ sub new_story {
     # setup date selector
     $template->param(cover_date_selector => datetime_chooser(name=>'cover_date', query=>$query));
     
-    # pass a list of index types (for which the 'slug' field should be inactive by default)
+    # pass template a loop of types and how they should affect display of slug/category input
     my $selected_type = $query->param('type') || ''; 
-    my @slug_entry_by_type;
-    my $slug_entry_for_selected_type;
+    my @slug_and_cat_entry_by_type;
+    my ($slug_entry_for_selected_type, $cat_entry_for_selected_type);
     foreach my $story_type (@types) {
-	my $slug_use = pkg('ElementLibrary')->top_level(name => $story_type)->slug_use();
-	if (($slug_use eq 'require') || ($slug_use eq 'encourage') || ($slug_use eq 'discourage') || ($slug_use eq 'prohibit')) {
-	    push @slug_entry_by_type, { story_type      => $story_type,
-					slug_entry_mode => $slug_use };
-	    $slug_entry_for_selected_type = $slug_use if ($story_type eq $selected_type);
-	} else {
-	    die ("Invalid slug_use() returned by class '$story_type': must be 'require', 'encourage', 'discourage', or 'prohibit'");
-	}
+
+        my $class      = pkg('ElementLibrary')->top_level(name => $story_type);
+	my $slug_entry = $class->slug_use(); 
+        my $cat_entry  = $class->category_input();
+
+        die ("Invalid slug_use() returned by class '$story_type': must be 'require', 'encourage', 'discourage', or 'prohibit'")
+          unless ($slug_entry eq 'require' || $slug_entry eq 'encourage' || $slug_entry eq 'discourage' || $slug_entry eq 'prohibit');
+        die ("Invalid cat_entry() returned by class '$story_type': must be 'require', 'optional', 'prohibit'")
+          unless ($cat_entry eq 'require' || $cat_entry eq 'optional' || $cat_entry eq 'prohibit');
+
+        if ($story_type eq $selected_type) {
+	    $slug_entry_for_selected_type = $slug_entry;
+	    $cat_entry_for_selected_type = $cat_entry;
+        }
+
+        push @slug_and_cat_entry_by_type, { story_type => $story_type,
+                                            slug_entry => $slug_entry,
+                                            cat_entry  => $cat_entry};
     }
-    $template->param(slug_entry_by_type_loop => \@slug_entry_by_type);
+    $template->param(slug_and_cat_entry_by_type_loop => \@slug_and_cat_entry_by_type);
 
     # pass in any class-specific slug-to-title javascript functions
     my @title_to_slug_loop;
@@ -179,8 +189,10 @@ sub new_story {
 
     # set initial slug-display information (in case a type has already been selected)
     if ($selected_type) {
-	$template->param('show_slug' => 1) unless ($slug_entry_for_selected_type eq 'prohibit');
+	$template->param('show_slug'    => 1) unless ($slug_entry_for_selected_type eq 'prohibit');
 	$template->param('require_slug' => 1) if ($slug_entry_for_selected_type eq 'require');
+	$template->param('show_cat'     => 1) unless ($cat_entry_for_selected_type eq 'prohibit');
+	$template->param('require_cat'  => 1) if ($cat_entry_for_selected_type eq 'require');
     }
 
     return $template->output();
@@ -280,12 +292,23 @@ sub create {
     my @bad;
     push(@bad, 'type'),         add_alert('missing_type') unless $type;
     push(@bad, 'title'),        add_alert('missing_title') unless $title;
-    push(@bad, 'slug'),         if ($type && !$self->process_slug_input(slug => $slug, 
-									type => $type, 
-									cat_idx => $cat_idx));
-
-    push(@bad, 'category_id'),  add_alert('missing_category') unless $category_id;
     push(@bad, 'cover_date'),   add_alert('missing_cover_date') unless $cover_date;
+
+    if ($type) {
+        push(@bad, 'slug') 
+          unless $self->process_slug_input
+            (slug => $slug, 
+             type => $type, 
+             cat_idx => $cat_idx);
+        
+        push(@bad, 'category_id') 
+          unless $category_id = $self->process_category_input
+            (category_id => $category_id,
+             type        => $type,
+             slug        => $slug,
+             cover_date  => $cover_date);
+    }
+    
     return $self->new_story(bad => \@bad) if @bad;
 
     # create the object
@@ -425,10 +448,6 @@ sub checkout_and_edit {
     my $self = shift;
     my $query = $self->query;
 
-    foreach my $key ($query->param) {
-        info ($key . ' = ' . $query->param($key));
-    }
-
     my $story;
     if ($query->param('story_id')) {
         # load story from DB
@@ -512,6 +531,7 @@ sub edit {
 	$template->param(is_root           => 1,
 			 show_slug         => ($story->class->slug_use ne 'prohibit'),
 			 require_slug      => ($story->class->slug_use eq 'require'),
+                         auto_category     => ($story->class->category_input eq 'prohibit'),
 			 version           => $story->version,
 			 published_version => $story->published_version);
 
@@ -543,7 +563,7 @@ sub edit {
             my ($site, $dir) = split('/', $url, 2);
             $dir = "/" . $dir;
 
-            push(@category_loop, {
+            push(@category_loop, {auto_category        => $template->param('auto_category'), # so it's usable within loop
                                   site                 => $site,
                                   category             => $dir,
                                   category_id          => $cat->category_id,
@@ -1363,6 +1383,16 @@ sub add_category {
     croak("Unable to load category '$category_id'!")
       unless $category;
 
+    # make sure it passes validation check
+    my $validate = $story->class->validate_category(category => $category,
+                                                    slug => $story->slug,
+                                                    title => $story->title,
+                                                    cover_date => $story->cover_date);
+    unless ($validate == 1) {
+        add_alert('bad_category', explanation => $validate || '');
+        return $self->edit();
+    }
+
     # add it to list 
     push(@categories, $category);
 
@@ -1456,6 +1486,16 @@ sub replace_category {
     my ($new_category) = pkg('Category')->find(category_id => $new_category_id);
     croak("Unable to load category '$new_category_id'!")
       unless $new_category;
+
+    # make sure new one passes validation check
+    my $validate = $story->class->validate_category(category => $new_category,
+                                                    slug => $story->slug,
+                                                    title => $story->title,
+                                                    cover_date => $story->cover_date);
+    unless ($validate == 1) {
+        add_alert('bad_category', explanation => $validate || '');
+        return $self->edit();
+    }
 
     # perform the replacement
     my @new_categories;
@@ -2163,6 +2203,42 @@ sub update_categories {
       }
     }
 }
+
+sub process_category_input {
+
+    my ($self, %args) = @_;
+    my $type   = $args{type};
+    my $class  = pkg('ElementLibrary')->top_level(name => $type);
+    my $cat_id = $args{category_id};
+
+    if ($class->category_input eq 'prohibit') {
+        # this type doesn't allow manual selection for category, so auto-select
+        return $class->auto_category_id(%args);
+    } elsif ($cat_id) {
+        # user made a manual selection for category, so validate it
+        my ($category) = pkg('Category')->find(category_id => $cat_id);
+        my $validate = $class->validate_category(category => $category, %args);
+        if ($validate == 1) {
+            # a return code of 1 means success
+            return $cat_id; 
+        } else {
+            # anything else is an error passed on to the user
+            add_alert('bad_category', explanation => $validate || '');
+            return 0;
+        }
+    } else {
+        # user left category blank
+        if ($class->category_input eq 'require') {
+            # and this type requires manual selection
+            add_alert('missing_category');
+            return 0;
+        } else {
+            # and this type autoselects category when blank
+            return $class->auto_category_id(%args);
+        }
+    }
+}
+
 
 sub process_slug_input {
 

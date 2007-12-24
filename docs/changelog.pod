@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added support for Story Type-based category behavior, including auto-selection of category based on
+type, cover-date, slug, and/or title, and validation of manually selected categories. [Noam Weinstein]
+
+=item *
+
 Implemented 'Cancel' button on Story Edit screen that returns Story to the desk and owner to whom
 it previously belonged, and sends user to the page from where he/she opened it. [Noam Weinstein]
 
