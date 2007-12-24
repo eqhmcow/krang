@@ -287,6 +287,7 @@ sub create {
     $session{KRANG_PERSIST}{NEW_STORY_DIALOGUE}{ cat_chooser_id_new_story_category_id } = $category_id;
 
     my $cover_date = decode_datetime(name=>'cover_date', query=>$query);
+    my @category_ids = ($category_id);
 
     # detect bad fields
     my @bad;
@@ -302,7 +303,7 @@ sub create {
              cat_idx => $cat_idx);
         
         push(@bad, 'category_id') 
-          unless $category_id = $self->process_category_input
+          unless @category_ids = $self->process_category_input
             (category_id => $category_id,
              type        => $type,
              slug        => $slug,
@@ -317,7 +318,7 @@ sub create {
         $story = pkg('Story')->new(class => $type,
                                    title => $title,
                                    slug  => $slug,
-                                   categories => [ $category_id ],
+                                   categories => [ @category_ids ],
                                    cover_date => $cover_date);   
     };
 
@@ -2213,7 +2214,7 @@ sub process_category_input {
 
     if ($class->category_input eq 'prohibit') {
         # this type doesn't allow manual selection for category, so auto-select
-        return $class->auto_category_id(%args);
+        return $class->auto_category_ids(%args);
     } elsif ($cat_id) {
         # user made a manual selection for category, so validate it
         my ($category) = pkg('Category')->find(category_id => $cat_id);
@@ -2224,17 +2225,17 @@ sub process_category_input {
         } else {
             # anything else is an error passed on to the user
             add_alert('bad_category', explanation => $validate || '');
-            return 0;
+            return;
         }
     } else {
         # user left category blank
         if ($class->category_input eq 'require') {
             # and this type requires manual selection
             add_alert('missing_category');
-            return 0;
+            return;
         } else {
             # and this type autoselects category when blank
-            return $class->auto_category_id(%args);
+            return $class->auto_category_ids(%args);
         }
     }
 }

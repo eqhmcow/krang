@@ -313,22 +313,26 @@ preview_and_stay = function() {
       <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
       <td class="series f">
         <tmpl_if auto_category>
-          <tmpl_if __first__>YES</tmpl_if>
+          <tmpl_if __first__>YES<tmpl_else>NO</tmpl_if>
         <tmpl_else>
           <input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>>
         </tmpl_if>
       </td>
       <td><tmpl_var escape=html site></td>
       <td colspan="2"><tmpl_var escape=html category></td>
-      <tmpl_unless auto_category>
-        <td class="series"><input name="category_to_replace_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if selected_for_replace> checked</tmpl_if>></td>
-        <td class="series l">
+      <td class="series">
+        <tmpl_unless auto_category>
+          <input name="category_to_replace_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if selected_for_replace> checked</tmpl_if>></td>
+        </tmpl_unless>
+      <td class="series l">
+        <tmpl_unless auto_category>
           <tmpl_unless __first__>
             <input name="cat_remove_<tmpl_var escape=html category_id>" type="checkbox">
-          <tmpl_else>&nbsp;
+          <tmpl_else>
+            &nbsp;
           </tmpl_unless>
-        </td>
-      </tmpl_unless>
+        </tmpl_unless>
+      </td>
       </tr>
     </tmpl_loop>
 

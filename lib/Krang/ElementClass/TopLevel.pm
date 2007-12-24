@@ -239,16 +239,17 @@ sub category_input     {
     return 'require'; 
 }
 
-=item C<< $category_id = $class->auto_category_id(cover_date => $cover_date,
-                                                  slug => $slug,
-                                                  title => $title); >>
+=item C<< @category_ids = $class->auto_category_ids(cover_date => $cover_date,
+                                                    slug => $slug,
+                                                    title => $title); >>
 
-This method auto-selects a category ID based on cover_date, title, and/or slug. 
-The default implementation simply returns the first category ID it can find.
+This method auto-selects one or more category IDs based on cover_date, title, 
+and/or slug. The default implementation simply returns the first category ID 
+it can find.
 
 =cut 
 
-sub auto_category_id {
+sub auto_category_ids {
     return (pkg('Category')->find(limit => 1, ids_only => 1))[0];
 }
 
