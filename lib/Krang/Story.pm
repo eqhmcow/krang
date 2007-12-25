@@ -885,7 +885,9 @@ Find stories by site, looking only at the primary location.
 =item full_text_string
 
 Find stories by performing a full-text search. (Any words
-enclosed in quotes will be matched as a full phrase.)
+enclosed in quotes will be matched as a complete string, and
+whitespace around the edges of a quoted phrase will cause
+partial-word matches to be ignored.)
 
 =item checked_out
 
@@ -955,8 +957,7 @@ match against story_id if a word is a number.
 =item simple_search_check_full_text
 
 If set to 1 and passed along with a simple_search, also
-performs a full-text search on the words. (Any words
-enclosed in quotes will be matched as a full phrase.)
+performs a full-text search on the input. 
 
 =item exclude_story_ids
 
