@@ -60,7 +60,7 @@ sub setup {
                          advanced_find
                          add
                          save_add
-                         cancel_add
+                         cancel_edit
                          checkin_add
                          checkin_edit
                          checkin_selected
@@ -537,35 +537,6 @@ sub checkin_add {
 
 }
 
-
-=item cancel_add
-
-Called when user clicks "delete" from an add new media screen.
-This mode removes the currewnt media object from the session
-and redirects the user to the Workspace.
-
-
-=cut
-
-
-sub cancel_add {
-    my $self = shift;
-
-    my $q = $self->query();
-
-    # Remove media from session
-    delete($session{media});
-
-    add_message('message_media_deleted');
-
-    # Redirect to workspace
-    $self->redirect_to_workspace;
-}
-
-
-
-
-
 =item save_stay_add
 
 Functions the same as save_add, except user is
@@ -599,6 +570,9 @@ sub save_stay_add {
     # Notify user
     add_message("new_media_saved");
 
+    # Cancel should now redirect to Workspace since we created a new version
+    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
+
     # Redirect to edit mode
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&media_id=". $m->media_id();
@@ -625,6 +599,8 @@ sub checkout_and_edit {
 
     my ($m) = pkg('Media')->find(media_id=>$media_id);
     croak("Unable to load media_id '$media_id'") unless $m;
+
+    $self->_cancel_edit_goes_to('media.pl?rm=find', $m->checked_out_by);
 
     $m->checkout;
     return $self->edit;
@@ -692,6 +668,9 @@ sub edit {
 
     # Propagate messages, if we have any
     $t->param(%args) if (%args);
+
+    $t->param(cancel_changes_owner     => $self->_cancel_edit_changes_owner);
+    $t->param(cancel_goes_to_workspace => $self->_cancel_edit_goes_to_workspace);
 
     return $t->output();
 }
@@ -815,6 +794,11 @@ sub save_stay_edit {
 
     # Notify user
     add_message("media_saved");
+
+    # if Story wasn't ours to begin with, Cancel should now
+    # redirect to our Workspace since we created a new version
+    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER})
+      if $self->_cancel_edit_changes_owner;
 
     # Redirect to edit mode
     my $url = $q->url(-relative=>1);

@@ -358,19 +358,16 @@ sub goto_edit {
     # redirect as appropriate
     if ($obj->isa('Krang::Story')) {
         $self->header_props(-uri => 'story.pl?rm=edit&story_id=' . $obj->story_id);
-        Krang::CGI::Story->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
-        
     } elsif ($obj->isa('Krang::Media')) {
         $self->header_props(-uri => 'media.pl?rm=edit&media_id=' . $obj->media_id);
-
     } elsif ($obj->isa('Krang::Template'))  {
         $self->header_props(-uri => 'template.pl?rm=edit&template_id=' . $obj->template_id);
-
     } else {
         croak ('Unknown object type!');
     }
     
     $self->header_type('redirect');
+    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
     return "";
 }
 

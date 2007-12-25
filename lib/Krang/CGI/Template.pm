@@ -67,7 +67,6 @@ sub setup {
 
 	$self->run_modes([qw/
 		add
-                add_cancel
 		add_save
         add_checkin
 		add_save_stay
@@ -146,24 +145,6 @@ sub add {
 
     return $t->output();
 }
-
-=item add_cancel
-
-Cancels edit of template object on "Add" screen and returns to 'search' run
-mode.
-
-=cut
-
-sub add_cancel {
-    my $self = shift;
-
-    my $q = $self->query();
-
-    add_message('message_add_cancelled');
-
-    return $self->search();
-}
-
 
 
 =item add_checkin
@@ -427,6 +408,7 @@ sub checkout_and_edit {
 
     my ($t) = pkg('Template')->find(template_id=>$template_id);
     croak("Unable to load template_id '$template_id'") unless $t;
+
     $self->_cancel_edit_goes_to('template.pl?rm=search', $t->checked_out_by);
 
     $t->checkout;
@@ -735,8 +717,8 @@ sub edit_save_stay {
 
     add_message('message_saved');
 
-    # if Story wasn't ours to begin with, Cancel should 
-    # now redirect to Workspace since we created a new version
+    # if Story wasn't ours to begin with, Cancel should now
+    # redirect to our Workspace since we created a new version
     $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER})
       if $self->_cancel_edit_changes_owner;
 

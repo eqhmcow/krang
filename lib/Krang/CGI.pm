@@ -566,6 +566,7 @@ sub _cancel_edit_goes_to {
 
 sub _cancel_edit_deletes {
     my ($self, $object) = @_;
+    # currently only story.pl creates an object even before the user hits Save...
     return ($object->version == 1 && ($self->_cancel_edit_goes_to)[0] =~ /new_story$/);
 }
 
