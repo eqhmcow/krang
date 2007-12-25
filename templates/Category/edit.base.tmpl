@@ -7,7 +7,9 @@ Krang.onload( function() {
 } );
 
 cancel_category_change = function() {
-    Krang.Form.submit('edit', { rm: 'find' });
+    if (confirm( Krang.L10N.loc('Discard any unsaved changes?') )) {
+      Krang.Form.submit('edit', { rm: 'find' });
+    }
 }
 
 save_and_leave = function() {
@@ -89,7 +91,7 @@ db_save_and_stay = function() {
 <!--:ElementEditor/edit.tmpl-->
 
 <div class="panel capped">
-<input class="west" type="button" onclick="cancel_category_change()" value="<tmpl_lang Cancel Category Edit>"/>
+<input class="west" type="button" onclick="cancel_category_change()" value="<tmpl_lang Cancel>"/>
 
 <tmpl_if bulk_edit> 
   <input value="<tmpl_lang Done Bulk Editing> <tmpl_var name_of_this_element>" onclick="save_and_leave()" type="button" class="west">
@@ -97,16 +99,16 @@ db_save_and_stay = function() {
 <tmpl_else>
 
   <tmpl_if is_root>
-    <input value="<tmpl_lang Delete Category>" onclick="remove_category()" type="button">
+    <input value="<tmpl_lang Delete>" onclick="remove_category()" type="button">
   <tmpl_else>
-    <input value="<tmpl_lang Done Editing> <tmpl_var name_of_this_element>" onclick="save_and_leave()" type="button" class="west">
+    <input value="<tmpl_lang Done With> <tmpl_var name_of_this_element>" onclick="save_and_leave()" type="button" class="west">
     <tmpl_unless bulk_edit><tmpl_if allow_delete>
       <input value="<tmpl_lang Delete> <tmpl_var name_of_this_element>" onclick="remove_element()" type="button" class="west">
     </tmpl_if></tmpl_unless>
   </tmpl_if>
 
-  <input value="<tmpl_lang Save Category &amp; Stay>" onclick="db_save_and_stay()" type="button">
-  <input value="<tmpl_lang Save Category>" onclick="db_save()" type="button">
+  <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_and_stay()" type="button">
+  <input value="<tmpl_lang Save" onclick="db_save()" type="button">
 
 </tmpl_if>
 
