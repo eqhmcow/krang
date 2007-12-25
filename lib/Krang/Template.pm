@@ -773,24 +773,38 @@ sub find {
         } elsif ($arg eq 'full_text_string') {
             foreach my $phrase ($self->_search_text_to_phrases($args{$arg})) {
                 $where_clause .= ' AND ' if $where_clause;
-                $where_clause .= ' t.content LIKE ? ';
-                push(@params, "%" . $phrase . "%");
+                if ($phrase =~ /^\s(.*)\s$/) {
+                    # user wants full-word match: replace spaces w/ MySQL word boundaries
+                    $where_clause .= '(t.content RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" ))';
+                    push(@params, $1);
+                } else {
+                    # user wants regular substring match 
+                    $where_clause .= '(t.content LIKE ?)';
+                    push(@params, "%${phrase}%");
+                }
             }
         } elsif ($arg eq 'simple_search') {
             foreach my $phrase ($self->_search_text_to_phrases($args{$arg})) {
                 my $numeric = ($phrase =~ /^\d+$/) ? 1 : 0;
-                $where_clause .= " AND " if ($where_clause);
-                $where_clause .= '(' . join(' OR ',
-                                            ($numeric ? "t.template_id = ?" : "t.url LIKE ?"),
-                                            ($simple_full_text ? "t.content LIKE ?" : ())) . ')';
-                # escape any literal SQL wildcard chars
-                unless( $numeric ) {
-                    s/_/\\_/g;
-                    s/%/\\%/g;
+                if( !$numeric ) {
+                    $phrase =~ s/_/\\_/g; # escape any literal 
+                    $phrase =~ s/%/\\%/g; # SQL wildcard chars
                 }
-                
-                push @params, ($numeric ? $phrase : "%" . $phrase . "%"), 
-                              ($simple_full_text ? "%" . $phrase . "%" : ());
+                $where_clause .= " AND " if $where_clause;
+                $where_clause .= '(' . ($numeric ? "t.template_id = ?" : "t.url LIKE ?");
+                push @params, ($numeric ? $phrase : "%" . $phrase . "%");
+                if ($simple_full_text) {
+                    if ($phrase =~ /^\s(.*)\s$/) {
+                        # user wants full-word match: replace spaces w/ MySQL word boundaries
+                        $where_clause .= ' OR t.content RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" )';
+                        push(@params, $1);
+                    } else {
+                        # user wants regular substring match 
+                        $where_clause .= ' OR t.content LIKE ?';
+                        push(@params, "%${phrase}%");
+                    }
+                }
+                $where_clause .= ')';
             }
         } elsif (grep { $arg eq $_ } qw(may_see may_edit)) {
             my $fqfield = "ucpc.$arg";
