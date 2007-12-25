@@ -1217,16 +1217,24 @@ sub validate_media {
     my $category_id = $media->category_id();
     push(@errors, 'error_category_id') unless ($category_id);
 
-    # Check for media_file; if none exists, create an empty one
-    if (!@errors && !$media->filename) {
-        my $filename = $media->title;
-        $filename =~ s/[^\w\s\-]//g;    # clean invalid chars
-        $filename =~ s/(^\s+|\s+$)+//g; # clean excess whitespace
-        $filename =~ s/[\s\-\_]+/_/g;   # use underscores btw words
-        open (my $filehandle);
-        $media->upload_file(filehandle => $filehandle,
-                            filename => $filename);        
-        add_message('empty_file_created', filename => $filename);
+    # Validate: filename to upload or text-file to create...
+    if (!$media->filename) {
+        my %types = pkg('Pref')->get('media_type');
+        my $type  = $types{$media_type_id};
+        unless ('html include javascript stylesheet text' =~ /\b$type\b/i) {
+            # binary types require upload
+            push(@errors, 'error_media_file');
+        } elsif (!@errors) {
+            # text types allow auto-creation
+            my $filename = $media->title;
+            $filename =~ s/[^\w\s\-]//g;    # clean invalid chars
+            $filename =~ s/(^\s+|\s+$)+//g; # clean excess whitespace
+            $filename =~ s/[\s\-\_]+/_/g;   # use underscores btw words
+            open (my $filehandle);
+            $media->upload_file(filehandle => $filehandle,
+                                filename => $filename);        
+            add_message('empty_file_created', filename => $filename);
+        }
     }
 
     # Add messages, return hash for errors
