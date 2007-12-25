@@ -1287,25 +1287,31 @@ sub find {
                 $from{"element as el"} = 1;
                 push(@where, 'el.root_id = s.element_id');
             }
-
             foreach my $phrase ($pkg->_search_text_to_phrases($value)) {
                 my $numeric = ($phrase =~ /^\d+$/) ? 1 : 0;
-                  push(@where, '(' .                      
-                     join(' OR ', 
-                          ($numeric ? 's.story_id = ?' : ()),
-                          's.title LIKE ?', 
-                          'sc.url LIKE ?',
-                          ($simple_full_text ? 'el.data LIKE ?' : ())).
-                       ')');
-                # escape any literal SQL wildcard chars
                 if( !$numeric ) {
-                    $phrase =~ s/_/\\_/g;
-                    $phrase =~ s/%/\\%/g;
-                } 
-                push(@param, ($numeric ? ($phrase) : ()),
-                     "%${phrase}%", "%${phrase}%",
-                     ($simple_full_text ? "%${phrase}%" : ())
-                    );
+                    $phrase =~ s/_/\\_/g; # escape any literal 
+                    $phrase =~ s/%/\\%/g; # SQL wildcard chars
+                }
+                my $where = join(' OR ', 
+                                 ($numeric ? 's.story_id = ?' : ()),
+                                 's.title LIKE ?', 
+                                 'sc.url LIKE ?');
+                push(@param, ($numeric ? ($phrase) : ()), 
+                             "%${phrase}%", 
+                             "%${phrase}%");
+                if ($simple_full_text) {
+                    if ($phrase =~ /^\s(.*)\s$/) {
+                        # user wants full-word match: replace spaces w/ MySQL word boundaries
+                        $where .= ' OR el.data RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" )';
+                        push(@param, $1);
+                    } else {
+                        # user wants regular substring match 
+                        $where .= ' OR el.data LIKE ?';
+                        push(@param, "%${phrase}%");
+                    }
+                }
+                push (@where, "($where)");
             }
             next;
         }
@@ -1386,10 +1392,17 @@ sub find {
             $from{"element as el"} = 1;
             push(@where, 'el.root_id = s.element_id');
             foreach my $phrase ($pkg->_search_text_to_phrases($value)){
-                push(@where, '(' . join(' OR ', 'el.data LIKE ?') . ')');
                 $phrase =~ s/_/\\_/g;
                 $phrase =~ s/%/\\%/g;
-                push(@param, "%${phrase}%");
+                if ($phrase =~ /^\s(.*)\s$/) {
+                    # user wants full-word match: replace spaces w/ MySQL word boundaries
+                    push(@where, '(el.data RLIKE CONCAT( "[[:<:]]", ?, "[[:>:]]" ))');
+                    push(@param, $1);
+                } else {
+                    # user wants regular substring match 
+                    push(@where, '(el.data LIKE ?)');
+                    push(@param, "%${phrase}%");
+                }
             }
             next;
         }
@@ -1464,8 +1477,8 @@ sub find {
         $query .= " LIMIT $offset, -1";
     }
 
-    debug(__PACKAGE__ . "::find() SQL: " . $query);
-    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @param));
+    info(__PACKAGE__ . "::find() SQL: " . $query);
+    info(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @param));
     
     # return count results
     if ($count) {
@@ -1480,6 +1493,12 @@ sub find {
     }
     
     # execute an object search
+    my $test = 'SELECT s.story_id, s.story_uuid, s.version, s.title, s.slug, s.cover_date, s.publish_date, s.published_version, s.preview_version, s.notes, s.element_id, s.class, s.checked_out, s.checked_out_by, s.desk_id, s.last_desk_id, s.hidden,ucpc.may_see as may_see, ucpc.may_edit as may_edit FROM story AS s  LEFT JOIN story_category AS sc_p
+                   ON s.story_id = sc_p.story_id
+                 LEFT JOIN user_category_permission_cache as ucpc
+                   ON sc_p.category_id = ucpc.category_id , element as el WHERE el.root_id = s.element_id AND (el.data REGEXP "[[:<:]]start[[:>:]]") AND ucpc.may_see = 1 AND ucpc.user_id = 1 AND sc_p.ord = 0 GROUP BY s.story_id ORDER BY s.story_id ASC  LIMIT 20';
+    my ($test) = $dbh->do($test);
+
     my $sth = $dbh->prepare($query);
     $sth->execute(@param);
 
