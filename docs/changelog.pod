@@ -14,8 +14,8 @@ type, cover-date, slug, and/or title, and validation of manually selected catego
 
 =item *
 
-Implemented 'Cancel' button on Story Edit screen that returns Story to the desk and owner to whom
-it previously belonged, and sends user to the page from where he/she opened it. [Noam Weinstein]
+Implemented 'Cancel' button in Story and Template Edit that returns object to its previous location
+(i.e. owner, desk, etc.) and sends user to the page from where he/she opened it. [Noam Weinstein]
 
 =item *
 

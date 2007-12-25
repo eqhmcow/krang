@@ -525,6 +525,7 @@ sub cancel_edit {
     # regardless, grab previous URL and check-out status
     my $pre_edit_url   = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{SENDS_BROWSER_TO_URL};
     my $pre_edit_owner = delete $session{KRANG_PERSIST}{CANCEL_EDIT}{RETURNS_OBJECT_TO_USER_ID};
+    die ("cancel_edit wasn't told where to send browser!") unless $pre_edit_url;
 
     # if it's an object we opened from workspace, we'll leave it there, otherwise...
     unless ($pre_edit_url eq 'workspace.pl') {

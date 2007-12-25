@@ -930,8 +930,10 @@ sub db_save_and_stay {
                 url      => $story->url,
                 version  => $story->version);
 
-    # Cancel should now redirect to Workspace since we created a new version
-    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
+    # if story wasn't ours to begin with, Cancel should now 
+    # redirect to our Workspace since we created a new version
+    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER})
+      if $self->_cancel_edit_changes_owner;
     
     # return to edit
     return $self->edit();

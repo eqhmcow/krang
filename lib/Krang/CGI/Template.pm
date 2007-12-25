@@ -67,13 +67,12 @@ sub setup {
 
 	$self->run_modes([qw/
 		add
-		add_cancel
+                add_cancel
 		add_save
         add_checkin
 		add_save_stay
 		advanced_search
-		cancel_add
-		cancel_edit
+                cancel_edit
         checkin_selected
 		delete
 		delete_selected
@@ -272,6 +271,9 @@ sub add_save_stay {
 
     add_message('message_saved');
 
+    # Cancel should now redirect to Workspace since we created a new version
+    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER});
+
     # Redirect to edit
     my $url = $q->url(-relative=>1);
     $url .= "?rm=edit&template_id=". $template->template_id();
@@ -425,6 +427,7 @@ sub checkout_and_edit {
 
     my ($t) = pkg('Template')->find(template_id=>$template_id);
     croak("Unable to load template_id '$template_id'") unless $t;
+    $self->_cancel_edit_goes_to('template.pl?rm=search', $t->checked_out_by);
 
     $t->checkout;
     return $self->edit;
@@ -731,6 +734,11 @@ sub edit_save_stay {
     return $self->edit(%errors) if %errors;
 
     add_message('message_saved');
+
+    # if Story wasn't ours to begin with, Cancel should 
+    # now redirect to Workspace since we created a new version
+    $self->_cancel_edit_goes_to('workspace.pl', $ENV{REMOTE_USER})
+      if $self->_cancel_edit_changes_owner;
 
     # Redirect to edit
     my $url = $q->url(-relative=>1);
@@ -1047,6 +1055,9 @@ sub get_tmpl_params {
                                             ($template->checked_out_by ne
                                              $ENV{REMOTE_USER})) );
     }
+
+    $tmpl_params{cancel_changes_owner}     = $self->_cancel_edit_changes_owner;
+    $tmpl_params{cancel_goes_to_workspace} = $self->_cancel_edit_goes_to_workspace;
 
     return \%tmpl_params;
 }
