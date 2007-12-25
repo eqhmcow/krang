@@ -1477,8 +1477,8 @@ sub find {
         $query .= " LIMIT $offset, -1";
     }
 
-    info(__PACKAGE__ . "::find() SQL: " . $query);
-    info(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @param));
+    debug(__PACKAGE__ . "::find() SQL: " . $query);
+    debug(__PACKAGE__ . "::find() SQL ARGS: " . join(', ', @param));
     
     # return count results
     if ($count) {
@@ -1493,12 +1493,6 @@ sub find {
     }
     
     # execute an object search
-    my $test = 'SELECT s.story_id, s.story_uuid, s.version, s.title, s.slug, s.cover_date, s.publish_date, s.published_version, s.preview_version, s.notes, s.element_id, s.class, s.checked_out, s.checked_out_by, s.desk_id, s.last_desk_id, s.hidden,ucpc.may_see as may_see, ucpc.may_edit as may_edit FROM story AS s  LEFT JOIN story_category AS sc_p
-                   ON s.story_id = sc_p.story_id
-                 LEFT JOIN user_category_permission_cache as ucpc
-                   ON sc_p.category_id = ucpc.category_id , element as el WHERE el.root_id = s.element_id AND (el.data REGEXP "[[:<:]]start[[:>:]]") AND ucpc.may_see = 1 AND ucpc.user_id = 1 AND sc_p.ord = 0 GROUP BY s.story_id ORDER BY s.story_id ASC  LIMIT 20';
-    my ($test) = $dbh->do($test);
-
     my $sth = $dbh->prepare($query);
     $sth->execute(@param);
 
