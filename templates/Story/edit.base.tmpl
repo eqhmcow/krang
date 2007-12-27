@@ -315,7 +315,7 @@ preview_and_stay = function() {
       <tr<tmpl_unless __odd__> class="even"</tmpl_unless>>
       <td class="series f">
         <tmpl_if auto_category>
-          <tmpl_if __first__>YES<tmpl_else>NO</tmpl_if>
+          <tmpl_if __first__><tmpl_lang YES><tmpl_else><tmpl_lang NO></tmpl_if>
         <tmpl_else>
           <input name="primary_category_id" value="<tmpl_var escape=html category_id>" type="radio"<tmpl_if __first__> checked</tmpl_if>>
         </tmpl_if>
@@ -384,7 +384,7 @@ preview_and_stay = function() {
 
   </tmpl_if>
 
-  <input value="<tmpl_lang Cancel" onclick="cancel_edit()" type="button"> 
+  <input value="<tmpl_lang Cancel>" onclick="cancel_edit()" type="button"> 
   <input value="<tmpl_lang Save &amp; Stay>" onclick="db_save_and_stay()" type="button">
   <input value="<tmpl_lang Save>" onclick="db_save()" type="button">
 
