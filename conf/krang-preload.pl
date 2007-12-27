@@ -15,6 +15,7 @@ BEGIN {
 use Krang::ClassLoader 'lib';
 use Krang::ClassLoader Conf => qw(KrangRoot);
 use File::Find qw(find);
+use File::Spec::Functions qw(catdir);
 use Krang::ClassLoader 'HTMLTemplate';
 
 
@@ -39,14 +40,15 @@ find({
 print STDERR "Pre-loading HTML Templates...\n";
 find(
      sub {
-         return if /^\.?#/; # skip emacs droppings
-	 return if /\.base\.tmpl$/;
-         return unless /\.tmpl$/;
+         return if /^\.?#/;          # skip emacs droppings
+         return if /\.base\.tmpl$/;  # skip base templates
+         return unless /\.tmpl$/;    # only load localized templates
          pkg('HTMLTemplate')->new(
-                                  filename => "$File::Find::dir/$_",
-                                  cache => 1,
-                                  loop_context_vars => 1,
-                                 );
+				   path     => $File::Find::dir,
+				   filename => $_,
+				   cache    => 1,
+				   loop_context_vars => 1,
+				  );
      },
      KrangRoot . '/templates');
 
