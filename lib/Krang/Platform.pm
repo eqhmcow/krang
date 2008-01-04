@@ -75,6 +75,12 @@ sub verify_dependencies {
     }
     my @incs = ($Config{usrinc}, '/include', '/usr/local/include');
 
+    # check for perl headers
+    $pkg->check_libperl(lib_files => \@lib_files, includes => \@incs, mode => $mode);
+
+    # check for libmysqlclient headers
+    $pkg->check_libmysqlclient(lib_files => \@lib_files, includes => \@incs, mode => $mode);
+
     # check expat
     $pkg->check_expat(lib_files => \@lib_files, includes => \@incs, mode => $mode);
 
@@ -176,6 +182,57 @@ END
             unless $minor_version >= 0.13;
     }
 }
+
+
+=item C<< check_libperl(lib_files => \@libs, includes => \@incs, mode => $mode) >>
+
+Checks to see that the Perl libraries are installed.  The default
+implementation looks in $Config{libpath} for libperl.so
+
+=cut
+
+sub check_libperl {
+
+    my ($pkg, %args) = @_;
+    my $mode = $args{mode};
+
+    unless (grep { /^libperl\.so$/ } @{$args{lib_files}}) {
+        die <<END;
+
+Perl shared objects not found.  These are required for the proper operation of Krang.
+
+Install the perl development libraries and try again.
+
+END
+    }
+
+}
+
+
+=item C<< check_libmysqlclient(lib_files => \@libs, includes => \@incs, mode => $mode) >>
+
+Checks to see that the Perl libraries are installed.  The default
+implementation looks in $Config{libpath} for libperl.so
+
+=cut
+
+sub check_libmysqlclient {
+
+    my ($pkg, %args) = @_;
+    my $mode = $args{mode};
+
+    unless (grep { /^libmysqlclient\./ } @{$args{lib_files}}) {
+        die <<END;
+
+MySQL client development libraries not found.  These are required for the proper operation of Krang.
+
+Install the MySQL client development libraries and try again.
+
+END
+
+    }
+}
+
 
 
 =item C<< check_expat(lib_files => \@libs, includes => \@incs, mode => $mode) >>
