@@ -1,0 +1,64 @@
+Krang has been compiled on Ubuntu 7.10 (Gutsy Gibbon), with an x86_64
+architecture.
+
+The initial setup/configuration has been done on the desktop version
+of Ubuntu 7.10.  It *should* work with the server version of Ubuntu,
+and likely with previous versions of Ubuntu, but YMMV.
+
+A number of dependencies must be installed prior to running Krang.
+These include:
+
+  * MySQL client libraries
+  * MySQL server (if Krang is on the same server as MySQL)
+  * Expat XML Parser libraries
+  * JPG, PNG and GIF developer libraries
+
+These can all be installed with the following:
+
+  $ sudo apt-get install libperl-dev \ 
+                         libmysqlclient \
+                         libmysqlclient-dev \
+                         libexpat1 libexpat1-dev \
+                         libjpeg-dev \
+                         libungif4g libungif4-dev \
+                         libpng12-dev 
+
+
+Lastly, Ubuntu ships with a default shell (/bin/dash) that breaks the
+Apache configuration process, among other things.  The short
+explanation is that /bin/dash is the future, but some Krang
+dependencies are still in the past.  A longer explanation can be seen
+here:
+
+  https://wiki.ubuntu.com/DashAsBinSh  
+
+The fix is to reconfigure /bin/dash to not act as /bin/sh by running:
+
+  $ sudo dpkg-reconfigure dash
+
+At this point, Krang should build without a hitch:
+
+  $ bin/krang_build
+
+Follow the INSTALL document to fully install Krang.
+
+Just do a ./bin/krang_install with the parameters (see INSTALL doc)
+and go from there.  I would recommend using /usr/local/krang as the
+installation path, so it won't interfere with the rest of your system.
+Krang is self-contained with its own Apache server and Perl libraries,
+all of which are contained within its own installation directory.
+
+After the installation, it will place an init script in
+/etc/init.d and you will need to use update-rc.d to setup the
+symlinks in the proper runlevel rc.d directories to ensure that
+Krang is properly shutdown and started up along with the rest
+of your system.
+
+That's it ... once you're done, open a web browser and connect
+to your localhost and have fun!  I would recommend joining the
+Krang-general mailing list at this point, if you haven't
+already for any further assistance and education.
+
+Peter Leonard
+pete@peteleonard.com
+
