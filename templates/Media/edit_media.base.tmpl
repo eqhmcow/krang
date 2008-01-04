@@ -66,10 +66,10 @@ save_and_view_log = function()
 <tmpl_else>
   do_cancel_edit = function()
   { 
-    if (confirm(Krang.L10N.loc(<tmpl_if cancel_goes_to_workspace>"Discard any unsaved changes and go to Workspace?"
-                               <tmpl_else><tmpl_if cancel_changes_owner>"Discard any changes and check the Media back in?"
-                               <tmpl_else>"Discard any unsaved changes and go back to Find Media screen?"
-                               </tmpl_if></tmpl_if>))) {
+    if (confirm(<tmpl_if cancel_goes_to_workspace>Krang.L10N.loc("Discard any unsaved changes and go to Workspace?")
+                <tmpl_else><tmpl_if cancel_changes_owner>Krang.L10N.loc("Discard any changes and check the Media back in?")
+                <tmpl_else>Krang.L10N.loc("Discard any unsaved changes and go back to Find Media screen?")
+                </tmpl_if></tmpl_if>)) {
         Krang.Form.submit( 'edit_media_form', {rm: 'cancel_edit'});
     }
   }
