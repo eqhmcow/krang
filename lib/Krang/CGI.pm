@@ -435,8 +435,6 @@ C<$pkg->redirect_to_login($msg)>.
 If not provided, the message defaults to C<You do not have permissions
 to access that portion of the site.>
 
-=back
-
 =cut
 
 sub access_forbidden {
@@ -497,7 +495,7 @@ sub redirect_to_workspace {
   return "Redirect: <a href=\"$uri\">$uri</a>";
 }
 
-=item cancel_edit
+=item * cancel_edit()
 
 Returns object to the state it was in previous to Edit (though a new 
 version may have been written to disk via Save & Stay)
@@ -550,6 +548,13 @@ sub cancel_edit {
     $self->header_type('redirect');
     return ""; 
 }
+
+# end of POD notes
+
+=back
+
+=cut
+
 
 sub _cancel_edit_goes_to {
     my ($self, $pre_edit_url, $pre_edit_owner) = @_;

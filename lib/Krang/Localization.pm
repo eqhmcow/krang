@@ -64,7 +64,6 @@ English.  For German, a lexicon entry may be
 
     "Edit Story"               "Story bearbeiten"
 
-=back
 
 =item C<< localize('WEEKDAYS') >>
 
@@ -72,8 +71,6 @@ Returns a localized list of weekday names according to the user's
 language setting. For French, the lexicon entry should read
 
     "Weekdays"   Dim Lun Mar Mer Jeu Ven Sam
-
-=back
 
 =cut
 
@@ -164,7 +161,7 @@ sub debug_template_localization {
     }
 }
 
-=item C<pkg('Localization')->get_lexicon($language)>
+=item C<< pkg('Localization')->get_lexicon($language) >>
 
 Returns a Krang::ConfigApacheFormat object representing a lexicon
 mapping English to the language indicated the methods
@@ -172,6 +169,8 @@ argument. $language must be a valid RFC3066-style language tag.
 
 Croaks if $language is not a valid language tag or if no lexicon for
 the given language is found in the package hash %L10N.
+
+=back
 
 =cut
 
@@ -213,6 +212,7 @@ sub _load_localization {
     # don't forget the default language
     $LANG{en} = I18N::LangTags::List::name('en');
 }
+
 
 BEGIN { _load_localization() }
 
