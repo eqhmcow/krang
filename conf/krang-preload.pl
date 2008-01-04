@@ -13,9 +13,9 @@ BEGIN {
     pkg('AddOn')->call_handler('InitHandler');
 }
 use Krang::ClassLoader 'lib';
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot AvailableLanguages);
 use File::Find qw(find);
-use File::Spec::Functions qw(catdir);
+use File::Spec::Functions qw(catdir splitdir);
 use Krang::ClassLoader 'HTMLTemplate';
 
 
@@ -36,13 +36,20 @@ find({
      },
      KrangRoot . '/lib/Krang');
 
-# load all template
+# load all templates for AvailableLanguages
+my %languages = ();
+@languages{ AvailableLanguages, 'en' } = ();
+
 print STDERR "Pre-loading HTML Templates...\n";
+
 find(
      sub {
-         return if /^\.?#/;          # skip emacs droppings
-         return if /\.base\.tmpl$/;  # skip base templates
-         return unless /\.tmpl$/;    # only load localized templates
+         return if /^\.?#/;                            # skip emacs droppings
+         return if /\.base\.tmpl$/;                    # skip base templates
+         my $lang = (splitdir($File::Find::dir))[-1];  #
+         return unless exists $languages{$lang};       # skip unconfigured languages
+         return unless /\.tmpl$/;                      # only load localized templates
+
          pkg('HTMLTemplate')->new(
 				   path     => $File::Find::dir,
 				   filename => $_,
