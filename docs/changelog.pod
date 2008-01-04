@@ -9,6 +9,10 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added support for Ubuntu [Peter Leonard]
+
+=item *
+
 Added support for Story Type-based category behavior, including auto-selection of category based on
 type, cover-date, slug, and/or title, and validation of manually selected categories. [Noam Weinstein]
 
