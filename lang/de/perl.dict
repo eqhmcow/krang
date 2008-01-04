@@ -548,6 +548,8 @@
 "right"                          "rechts"
 "Show"                           "Zeige"
 "seconds"                        "Sekunden"
+"slug"                           "Verzeichnis"
+"and site/category"              "und Site/Kategorie"
 "site/category"                  "Website/ Kategorie"
 "slug and site/category"         "Verzeichnis und/oder Website/Kategorie"
 "small"                          "klein"

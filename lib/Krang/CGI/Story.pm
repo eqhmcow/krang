@@ -2257,7 +2257,7 @@ sub alert_duplicate_url {
     # figure out how our story builds its URL (to remind user)
     my $attribs = localize(join(', ', $class->url_attributes));
     my $url_attributes = $attribs
-                       ? $attribs . localize(' and site/category')
+                       ? $attribs . ' ' . localize('and site/category')
 	               : localize('site/category');
 
     # find clashing stories/categories, and add alert
