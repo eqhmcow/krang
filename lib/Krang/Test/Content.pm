@@ -1242,6 +1242,7 @@ sub _init_words {
         chomp;
         push @{$self->{words}}, $_;
     }
+    close WORDS;
 
 }
 
