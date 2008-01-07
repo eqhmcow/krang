@@ -13,7 +13,6 @@ CREATE TABLE story (
         published_version INT UNSIGNED,
         preview_version INT UNSIGNED,
         notes           TEXT,
-        priority        TINYINT UNSIGNED NOT NULL DEFAULT 2,
         
         element_id      INT UNSIGNED NOT NULL,
         class           VARCHAR(255) NOT NULL,
