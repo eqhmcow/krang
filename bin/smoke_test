@@ -2,10 +2,14 @@
 #################################################################
 # BASH script used to run the Krang smoke tests
 # and upload the results to http://smolder.plusthree.com
+# The following Environment variables need to be set
+# + TEST_ROOT - the root of the testing setup
+# The following Environment variables can be set alter the behaviour
+# + KRANG_SMOLDER_CATEGORY - set the category for this upload to smolder
 #################################################################
 
-# set this to the path of smoking
-TEST_ROOT=/usr/local/smoke/krang
+export KRANG_ROOT=$TEST_ROOT/svn
+export KRANG_INSTANCE=test1
 
 # upload the krang tests results to smolder
 function krang_results_to_smolder {
@@ -18,6 +22,7 @@ function krang_results_to_smolder {
                 --file "$KRANG_ROOT/krang_test_run.tar.gz" \
                 --architecture "`uname -m`" \
                 --platform "`cat /etc/redhat-release`"
+                --category "$KRANG_SMOLDER_CATEGORY"
 }
 
 # don't run the tests if we're already running
@@ -30,10 +35,6 @@ fi
 
 # don't let another run go while we're going
 touch tests_running
-
-# run the krang tests first
-export KRANG_ROOT=$TEST_ROOT/svn
-export KRANG_INSTANCE=test1
 
 cd $KRANG_ROOT
 
