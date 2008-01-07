@@ -5,7 +5,7 @@ use warnings;
 
 use Carp qw(croak);
 use Krang::ClassLoader 'HTMLTemplate';
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot DefaultLanguage);
 use Krang::ClassLoader 'MyPref';
 use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader Localization => qw(localize);
@@ -189,9 +189,10 @@ sub output {
     # Dynamically create template as scalar with proper columns
     my $pager_tmpl = $self->make_internal_template();
 
+    my $language = $session{language} || DefaultLanguage || 'en';
     my $t = pkg('HTMLTemplate')->new_scalar_ref(\$pager_tmpl, 
                                                 loop_context_vars=>1,
-                                                path => [ catdir('HTMLPager', $session{language}),
+                                                path => [ catdir('HTMLPager', $language),
                                                           'HTMLPager' ],
 					       );
     $self->_fill_template($t);
