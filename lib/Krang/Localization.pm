@@ -47,7 +47,7 @@ class method
 
   pkg('Localization')->get_lexicon($language_tag);
 
-Direct access to lexicons should be rarely necessairy.  Use the
+Direct access to lexicons should be rarely necessary.  Use the
 exported localize() function instead which honors the logged in user's
 language preference.
 
@@ -112,7 +112,7 @@ sub localize_template {
 
     if ($language eq 'en') {
 
-	$$textref =~ s|<tmpl_lang \s+ ([^>]+)>|$1|gx;
+	$$textref =~ s|<tmpl_lang ([^>]+)>|$1|gx;
 
     } else {
 
@@ -121,7 +121,7 @@ sub localize_template {
 	if ($ENV{KRANG_RECORD_MISSING_LOCALIZATIONS}) {
 	    debug_template_localization->($textref, $language);
 	} else {
-	    $$textref =~ s{<tmpl_lang \s+ ([^>]+)>}{$lexicon->get($1) || $1}egx;
+	    $$textref =~ s{<tmpl_lang ([^>]+)>}{$lexicon->get($1) || $1}egx;
 	}
     }
 }
@@ -146,9 +146,7 @@ sub debug_template_localization {
     while ($$textref =~ m|<tmpl_lang ([^>]+)>|g) {
 	my $key = $1;
 	my $pos = $-[0];
-	my $translation = '';
-
-	$translation = $lexicon->get($key);
+	my $translation = $lexicon->get($key);
 
 	if (defined($translation)) {
 	    pos($pos);
