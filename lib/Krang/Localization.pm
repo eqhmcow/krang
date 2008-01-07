@@ -112,7 +112,7 @@ sub localize_template {
 
     if ($language eq 'en') {
 
-	$$textref =~ s|<tmpl_lang ([^>]+)>|$1|gx;
+	$$textref =~ s|<tmpl_lang\s+([^>]+)>|$1|gx;
 
     } else {
 
@@ -121,7 +121,7 @@ sub localize_template {
 	if ($ENV{KRANG_RECORD_MISSING_LOCALIZATIONS}) {
 	    debug_template_localization->($textref, $language);
 	} else {
-	    $$textref =~ s{<tmpl_lang ([^>]+)>}{$lexicon->get($1) || $1}egx;
+	    $$textref =~ s{<tmpl_lang\s+([^>]+)>}{$lexicon->get($1) || $1}egx;
 	}
     }
 }
@@ -150,10 +150,10 @@ sub debug_template_localization {
 
 	if (defined($translation)) {
 	    pos($pos);
-	    $$textref =~ s|<tmpl_lang ([^>]+)>|$translation|;
+	    $$textref =~ s|<tmpl_lang\s+([^>]+)>|$translation|;
 	} else {
 	    # remember missing localizations in templates
-	    $$textref =~ s|<tmpl_lang ([^>]+)>|$1|;
+	    $$textref =~ s|<tmpl_lang\s+([^>]+)>|$1|;
 	    $missing{$language}{$key}++;
 	}
     }
