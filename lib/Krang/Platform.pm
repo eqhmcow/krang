@@ -192,11 +192,18 @@ implementation looks in $Config{libpath} for libperl.so
 =cut
 
 sub check_libperl {
-
     my ($pkg, %args) = @_;
-    my $mode = $args{mode};
+    my @files = @{$args{lib_files}};
 
-    unless (grep { /^libperl\.so$/ } @{$args{lib_files}}) {
+    # add $Config{archlib} since lots of distros place it in there
+    my $extra_dir = catdir($Config{archlib}, 'CORE');
+    if( -d $extra_dir ) {
+        opendir(DIR, $extra_dir) or die "Could not open $extra_dir for reading: $!";
+        push(@files, grep { not -d $_ } readdir(DIR));
+        closedir(DIR);
+    }
+
+    unless (grep { /^libperl\.so$/ } @files) {
         die <<END;
 
 Perl shared objects not found.  These are required for the proper operation of Krang.
@@ -205,7 +212,6 @@ Install the perl development libraries and try again.
 
 END
     }
-
 }
 
 
@@ -217,11 +223,18 @@ implementation looks in $Config{libpath} for libperl.so
 =cut
 
 sub check_libmysqlclient {
-
     my ($pkg, %args) = @_;
-    my $mode = $args{mode};
+    my @files = @{$args{lib_files}};
 
-    unless (grep { /^libmysqlclient\./ } @{$args{lib_files}}) {
+    # add /usr/lib/mysql since lots of distros place it in there
+    my $extra_dir = catdir('', 'usr', 'lib', 'mysql');
+    if( -d $extra_dir ) {
+        opendir(DIR, $extra_dir) or die "Could not open $extra_dir for reading: $!";
+        push(@files, grep { not -d $_ } readdir(DIR));
+        closedir(DIR);
+    }
+
+    unless (grep { /^libmysqlclient\./ } @files) {
         die <<END;
 
 MySQL client development libraries not found.  These are required for the proper operation of Krang.
@@ -229,7 +242,6 @@ MySQL client development libraries not found.  These are required for the proper
 Install the MySQL client development libraries and try again.
 
 END
-
     }
 }
 
