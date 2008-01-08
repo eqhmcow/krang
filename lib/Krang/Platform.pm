@@ -187,7 +187,8 @@ END
 =item C<< check_libperl(lib_files => \@libs, includes => \@incs, mode => $mode) >>
 
 Checks to see that the Perl libraries are installed.  The default
-implementation looks in $Config{libpath} for libperl.so
+implementation looks in the standard locations plus $Config{archlib} 
+for libperl.so or libperl.a
 
 =cut
 
@@ -203,7 +204,7 @@ sub check_libperl {
         closedir(DIR);
     }
 
-    unless (grep { /^libperl\.so$/ } @files) {
+    unless (grep { /^libperl\.$/ } @files) {
         die <<END;
 
 Perl shared objects not found.  These are required for the proper operation of Krang.
@@ -218,7 +219,7 @@ END
 =item C<< check_libmysqlclient(lib_files => \@libs, includes => \@incs, mode => $mode) >>
 
 Checks to see that the Perl libraries are installed.  The default
-implementation looks in $Config{libpath} for libperl.so
+implementation looks in $Config{libpath} for libmysqlclient.so or libmysqlclient.a
 
 =cut
 
