@@ -204,7 +204,7 @@ sub check_libperl {
         closedir(DIR);
     }
 
-    unless (grep { /^libperl\.$/ } @files) {
+    unless (grep { /^libperl\./ } @files) {
         die <<END;
 
 Perl shared objects not found.  These are required for the proper operation of Krang.
