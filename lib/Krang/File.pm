@@ -45,6 +45,10 @@ It's up to you to use -f or -d as needed.
 
 Returns all instances of C<$path> in an addon or in Krang's core.
 
+=head2 C<< @files = pkg('File')->find_glob("/htdocs/images/*.png");
+
+Returns all files matching a file glob in an addon or in Krang's core.
+
 =head2 C<< Krang::File->flush_cache() >>
 
 Drop the cache of files found.  This is needed if files are deleted or
