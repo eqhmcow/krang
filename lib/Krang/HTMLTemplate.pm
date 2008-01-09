@@ -82,6 +82,7 @@ sub _compute_path {
         foreach my $path (@PATH) {
             push(@out, catdir($path, $in, $language));
             push(@out, catdir($path, $language     ));
+            push(@out, catdir($path, $in           ));
         }
     }
     push(@out, @PATH);
