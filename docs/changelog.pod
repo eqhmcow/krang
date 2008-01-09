@@ -9,6 +9,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added new option C<--with_language> to C<bin/krang_makedist>. Per
+default Krang distributions will be made without the lexicons
+under lang/, but with the localization admin scripts in
+lang/bin/. [Bodo Schulze]
+
+=item *
+
 Added DefaultLanguage check to F<bin/krang_test> (must be set to 'en'
 to pass all tests). [Bodo Schulze]
 
