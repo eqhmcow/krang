@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added F<bin/krang_smoke_test> to make it as easy as possible to create a smoke server
+to send the results to L<http://smolder.plusthree.com>. [Michael Peters]
+
+=item *
+
 Added new option C<--with_language> to C<bin/krang_makedist>. Per
 default Krang distributions will be made without the lexicons
 under lang/, but with the localization admin scripts in
@@ -25,7 +30,7 @@ Added localization API and German lexicon. [Bodo Schulze]
 
 =item *
 
-Added support for Ubuntu [Peter Leonard]
+Added support for Ubuntu [Peter Leonard and Michael Peters]
 
 =item *
 
