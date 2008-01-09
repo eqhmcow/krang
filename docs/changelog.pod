@@ -9,6 +9,15 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added DefaultLanguage check to F<bin/krang_test> (must be set to 'en'
+to pass all tests). [Bodo Schulze]
+
+=item *
+
+Added localization API and German lexicon. [Bodo Schulze]
+
+=item *
+
 Added support for Ubuntu [Peter Leonard]
 
 =item *
