@@ -95,7 +95,12 @@ use Getopt::Long;
 use Pod::Usage;
 use Krang::ClassLoader 'lib';
 use Krang::ClassLoader 'File';
-use Krang::ClassLoader 'Conf';
+use Krang::ClassLoader Conf => qw(DefaultLanguage);
+
+if (DefaultLanguage && DefaultLanguage ne 'en') {
+    print "Please set DefaultLanguage in conf/krang.conf to 'en' when running tests!\n";
+    exit(0);
+}
 
 our ($help, $man, $archive);
 my $v = 0;
