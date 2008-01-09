@@ -129,7 +129,7 @@ if($no_update or `svn update` =~ /Updated to/i) {
     # run the test
     system('make restart') == 0            or die "Could not restart Krang";
     system('make test_archive') == 0       or die "Could not run test suite";
-    system('sudo bin/krang_ctl stop') == 0 or die "Could not stop Krang";
+    system('bin/krang_ctl stop') == 0 or die "Could not stop Krang";
 
     # now send the results off to smolder
     send_results_to_smolder();
