@@ -14,7 +14,7 @@ krang_makedist - make a release of Krang
 
 Build a distribution from the contents of the current directory.
 
-  $ bin/krang_makedist
+  $ bin/krang_makedist [ --with_language de,fr | --with_language all ]
 
 
 =head1 DESCRIPTION
@@ -40,7 +40,7 @@ distribution.
 =item 3
 
 Create list of files and directories to be excluded (ex. bench/,
-conf/krang.conf and CVS/*).
+conf/krang.conf, CVS/*, lang/de and other localization lexicons).
 
 =item 4
 
@@ -59,8 +59,11 @@ Builds the tar.gz archive.
 
 =head1 OPTIONS
 
-  --help      - Show usage
-  --man       - Show full man page
+  --with_language  - comma-delimited list of language tags (ex. 'de,fr')
+                     Specify 'all' if you want to include all localizations.
+
+  --help           - Show usage
+  --man            - Show full man page
 
 =head1 SEE ALSO
 
@@ -92,14 +95,19 @@ BEGIN {
 
 use Krang;
 use Krang::Platform;
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader 'File';
 use File::Find;
 use File::Temp qw(tempdir);
 use Cwd qw(cwd);
 
 my ($help, $man);
+my $with_language = '';
 pod2usage(2) unless
-  GetOptions(help       => \$help,
-             man        => \$man,
+  GetOptions(help  => \$help,
+             man   => \$man,
+             'with_language=s' => \$with_language,
             );
 pod2usage(1)             if $help;
 pod2usage(-verbose => 2) if $man;
@@ -108,7 +116,7 @@ pod2usage("Unrecognized options to krang_makedist: '".join(' ', @ARGV)."'\n")
 
 # make a temp directory to hold dist files
 my $temp = tempdir(DIR     => catdir($ENV{KRANG_ROOT}, 'tmp'),
-                   CLEANUP => 1);
+                   CLEANUP => 0);
 
 # figure out name
 my $name;
@@ -138,6 +146,9 @@ chdir($temp) or die $!;
 system('ln -s ' . $ENV{KRANG_ROOT} . " $name");
 die "Unable to setup link." unless -e catfile($name, 'lib', 'Krang.pm');
 
+# maybe exclude localizaion lexicons
+my $excluded_lang_re = get_excluded_lang_re();
+
 # build file list in temp dir
 print "Computing exclude file list...\n";
 my $list_file = catfile($temp, 'list.txt');
@@ -156,11 +167,13 @@ find({ no_chdir => 1,
                        m!/\.svn! or                  # skip all SVN dirs
                        m!~$! or                      # skip Emacs droppings
                        m!#! or                       # skip Emacs droppings
-                       m!krang-[^/]+\.tar\.gz!;      # skip Krang distribs
+                       m!krang-[^/]+\.tar\.gz! or    # skip Krang distribs
+                       m!$excluded_lang_re!;         # skip lexicons
 
              # print "Excluding $_.\n";
              print LIST "$_\n";
          } }, "$name/.");
+
 close LIST;
 
 # create INSTALL from docs/ops_install.pod
@@ -191,3 +204,29 @@ unlink("rm $ENV{KRANG_ROOT}/README.*")
 unlink($name) or die $!;
 
 print "\n\nDistribution complete in $name.tar.gz\n";
+
+sub get_excluded_lang_re {
+    # placeholder to make the exclude file matching happy
+    my $placeholder = 'make-the-exclude-file-matching-happy';
+
+    return $placeholder if $with_language eq 'all';
+
+    # default to exclude all lexicons, but include lang/bin/*
+    my %exclude_lang = ();
+    @exclude_lang{ grep { -d && $_ !~ m[bin$] } pkg('File')->find_glob('lang/*') } = ();
+
+    # maybe include some lexicon(s)
+    my $krang_root = KrangRoot;
+    if ($with_language) {
+	my @include_lang = map { catdir($krang_root, 'lang', $_ ) }
+                           split(/\s*,\s*/, $with_language);
+
+	delete @exclude_lang{ @include_lang };
+    }
+
+    # build regexp
+    my @exclude_lang = map { s|$krang_root/(.*)|$name/./$1|; $_ } keys %exclude_lang;
+
+    return join('|', @exclude_lang) || $placeholder;
+}
+
