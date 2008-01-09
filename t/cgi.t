@@ -55,6 +55,9 @@ sub check_cgiapp {
     # skip modules without a suitable default mode
     return if $BAD_DEFAULT{$app_package};
 
+    # silence warnings coming from CGI->url() due to non-existing script name
+    $app->query->script_name('silence_uninitialized_warnings.pl');
+
     # Can we run the default mode?
     my $output = '';
     eval { $output = $app->run() };
