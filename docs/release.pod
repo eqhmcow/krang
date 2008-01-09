@@ -37,7 +37,9 @@ Run krang_makedist:
 
   bin/krang_makedist
 
-This will create 'krang-$VERSION-src.tar.gz'.
+This will create 'krang-$VERSION-src.tar.gz'. Per default, this
+distribution won't contain any localization lexicons. You may however
+include them using the C<--with_language> option.
 
 =item 3
 
