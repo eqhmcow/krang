@@ -48,11 +48,11 @@ find(
          return if /\.base\.tmpl$/;                    # skip base templates
          my $lang = (splitdir($File::Find::dir))[-1];  #
          return unless exists $languages{$lang};       # skip unconfigured languages
-         return unless /\.tmpl$/;                      # only load localized templates
+         return unless /\.tmpl$/;                      # only templates
 
          pkg('HTMLTemplate')->new(
-				   path     => $File::Find::dir,
-				   filename => $_,
+				   path     => $lang,
+				   filename => $File::Find::name,
 				   cache    => 1,
 				   loop_context_vars => 1,
 				  );
