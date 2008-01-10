@@ -9,6 +9,12 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added localization admin scripts C<lang/bin/krang_lang_installer> and
+C<lang/bin/krang_lang_uninstaller> and updated install and upgrade
+documentation. [Bodo Schulze]
+
+=item *
+
 Added F<bin/krang_smoke_test> to make it as easy as possible to create a smoke server
 to send the results to L<http://smolder.plusthree.com>. [Michael Peters]
 
