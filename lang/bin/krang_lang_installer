@@ -1,0 +1,152 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_lang_installer - installs a localization distribution into Krang
+
+=head1 SYNOPSIS
+
+To install a localization distribution into this Krang installation:
+
+  lang/bin/krang_lang_installer Krang-Localization-LANGUAGE-3.01.tar.gz
+
+=head1 DESCRIPTION
+
+This script installs localization packages into Krang.  These packages
+must have been created using F<lang/bin/krang_lang_dist>.  For
+instructions on creating a new localization, read the documentation:
+
+  perldoc docs/create_localization.pod  (TODO)
+
+=head1 OPTIONS
+
+The following options are available:
+
+=over
+
+=item --downgrade
+
+Force installation of a localization distribution whose version is
+lower than $KRANG::VERSION.
+
+=item --verbose
+
+Print information about what's happening.
+
+=item --help
+
+Show usage information.
+
+=item --man
+
+Show full manpage.
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# process command options
+use Krang::ClassFactory qw(pkg);
+use Pod::Usage;
+use Getopt::Long;
+our ($help, $man, $downgrade, $clean, $source);
+our $verbose;
+BEGIN {
+    $verbose = 0;
+    pod2usage(2) unless
+      GetOptions(help       => \$help,
+                 man        => \$man,
+                 'verbose+' => \$verbose,
+                 downgrade  => \$downgrade,
+                );
+    pod2usage(1)             if $help;
+    pod2usage(-verbose => 2) if $man;
+
+    # get source arg
+    if (@ARGV == 1) {
+        $source = $ARGV[0];
+    } else {
+        pod2usage("Bad arguments to krang_lang_installer: '" . 
+                  join(' ', @ARGV) . "'\n");
+    }
+}
+
+# must open the input file before loading Krang::Script which will su
+# to KrangUser, who may not have permission to read the file.
+# parse options
+BEGIN {
+    if (-f $source) {
+        open(SOURCE, '<', $source) or die "Unable to open '$source': $!";
+    } else {
+        pod2usage("Unable to open source '$source', file does not exist.");
+    }
+}
+
+use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Script => qw(instance_agnostic);
+use Krang::ClassLoader 'Localization';
+use File::Copy qw(copy);
+use File::Temp qw(tempfile);
+use File::Basename;
+
+# extract version
+my $filename = basename($source);
+my ($version) = $filename =~ m|Krang-Localization-\w+-(\d+\.\d{2})\.tar\.gz$|;
+
+# copy source file into someplace it can be read
+my (undef, $tempfile) = tempfile(DIR => catdir(KrangRoot, 'tmp'),
+				 SUFFIX => 
+				 ($source =~ /\.gz$/ ? '.tar.gz' : '.tar'),
+				 CLEANUP => 1);
+copy(\*SOURCE, $tempfile)
+  or die "Unable to copy '$source' to '$tempfile': $!";
+print STDERR "Copied '$source' to '$tempfile'.\n" if $verbose > 1;
+$source = $tempfile;
+
+# install the localization distribution
+pkg('Localization')->install(src       => $source,
+			     verbose   => $verbose,
+			     downgrade => $downgrade,
+			     version   => $version);
+
+print <<"EOH"
+Installation complete.
+Next steps:
+  Edit conf/krang.conf and add the newly installed localization to the list of AvailableLanguages.
+  Then restart Krang.
+EOH

@@ -1,0 +1,103 @@
+#!/usr/bin/perl 
+use warnings;
+use strict;
+
+=pod
+
+=head1 NAME
+
+krang_lang_uninstaller - removes localizations from Krang
+
+=head1 SYNOPSIS
+
+To uninstall a localization distribution:
+
+  bin/krang_addon_uninstaller --lang LANGUAGE_TAG
+
+=head1 DESCRIPTION
+
+This script removes localizations from Krang.  Do this instead of just
+deleting the language directory from lang/ since it handles
+dependencies.
+
+The C<--lang> argument must be a RFC3066-style language tag
+representing the root directory of a localization package below lang/.
+
+=head1 OPTIONS
+
+The following options are available:
+
+=over
+
+=item --verbose
+
+Print information about what's happening.
+
+=item --help
+
+Show usage information.
+
+=item --man
+
+Show full manpage.
+
+=back
+
+=cut
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use FindBin qw($RealBin);
+use Config;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" :
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+# process command options
+use Pod::Usage;
+use Getopt::Long;
+our ($help, $man, $lang);
+our $verbose = 0;
+
+pod2usage(2) unless
+  GetOptions('lang=s'   => \$lang,
+	     help       => \$help,
+	     man        => \$man,
+	     'verbose+' => \$verbose,
+	    );
+pod2usage(1)             if $help;
+pod2usage(-verbose => 2) if $man;
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader 'Localization';
+use Krang::ClassLoader Script => qw(instance_agnostic);
+
+pkg('Localization')->uninstall(lang => $lang, verbose => $verbose);
+
+print <<"EOH"
+Uninstallation complete.
+Next steps:
+  Edit conf/krang.conf and remove the uninstalled localization from the list of AvailableLanguages.
+  Then restart Krang.
+EOH
