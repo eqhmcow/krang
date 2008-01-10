@@ -22,10 +22,11 @@ None.
 =cut
 
 use Krang::ClassLoader base => 'CGI';
-use Krang::ClassLoader Conf => qw(KrangRoot);
+use Krang::ClassLoader Conf => qw(KrangRoot DefaultLanguage);
 use File::Spec::Functions qw(catfile catdir);
 use Krang::ClassLoader 'HTMLTemplate';
 use Krang::ClassLoader 'File';
+use Krang::ClassLoader Session => qw(%session);
 
 sub setup {
     my $self = shift;
@@ -39,8 +40,13 @@ sub show {
     my $topic = $query->param('topic') or die "Missing required topic.";
     die "Bad topic." if $topic !~ /^\w+/;
 
+    # maybe localized help
+    my $lang = $session{language} || DefaultLanguage || 'en';
+    my $symlink = catdir(KrangRoot, 'htdocs', 'help', $lang);
+    my $localized_help_dir = -l $symlink ? $lang : '';
+
     # find topic help file
-    my $file = pkg('File')->find(catfile('htdocs', 'help', "$topic.html"));
+    my $file = pkg('File')->find(catfile('htdocs', 'help', $localized_help_dir, "$topic.html"));
     if (not -e $file) { 
         return "<h2>Unable to find help file for '$topic' topic.</h2>";
     }
