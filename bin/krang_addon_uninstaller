@@ -17,7 +17,7 @@ To uninstall an addon:
 =head1 DESCRIPTION
 
 This script removes addons from Krang.  Do this instead of just
-deleteing the directory from addons/ since it handles dependencies and
+deleting the directory from addons/ since it handles dependencies and
 allows addon uninstall scripts to get run.
 
 =head1 OPTIONS

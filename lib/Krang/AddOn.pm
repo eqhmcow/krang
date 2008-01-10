@@ -46,8 +46,8 @@ complete description of how add-ons work.
 
 =item C<< Krang::AddOn->install(src => $path, verbose => 1, force => 1) >>
 
-Install a new addon.  The source arguement must contain the path to an
-addon tarball, which must be readable by C<KrangUser>.  
+Install a new addon.  The source argument must contain the path to an
+addon tarball, which must be readable by C<KrangUser>.
 
 The C<verbose> option will cause install steps to be logged to STDERR.
 The C<force> option will allow an addon to be installed even if the
@@ -56,8 +56,8 @@ this version.
 
 =item C<< $addon->uninstall(verbose => 1, force => 1) >>
 
-Uninstall an addon.  The C<verbose> option will cause install steps to
-be logged to STDERR.  The C<force> option will allow an addon to be
+Uninstall an addon.  The C<verbose> option will cause uninstall steps
+to be logged to STDERR.  The C<force> option will allow an addon to be
 uninstalled even if an existing addon depends on it, otherwise the
 method will die().
 
