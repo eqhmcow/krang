@@ -299,16 +299,38 @@ sub write_conf {
 
 sub make_links {
 
-    if (-l catfile(KrangRoot, 'htdocs', 'data')) {
-        unlink(catfile(KrangRoot, 'htdocs', 'data'));
-    }
-    system("ln -s " . catfile(KrangRoot, 'data') . " " . catfile(KrangRoot, 'htdocs', 'data'));
+    my @links = (
+		{
+		 src => catdir(KrangRoot, 'data'),
+		 dst => catfile(KrangRoot, 'htdocs', 'data')
+		},
+		{
+		 src => catdir(KrangRoot, 'tmp'),
+		 dst => catfile(KrangRoot, 'htdocs', 'tmp'),
+		},
+	       );
 
-    if (-l catfile(KrangRoot, 'htdocs', 'tmp')) {
-        unlink(catfile(KrangRoot, 'htdocs', 'tmp'));
+    # link for localized help
+    for my $lang (grep {$_ ne 'en'} AvailableLanguages) {
+	push @links, {src => catdir(KrangRoot, 'lang', $lang, 'help'),
+		      dst => catfile(KrangRoot, 'htdocs', 'help', $lang)};
     }
-    system("ln -s " . catfile(KrangRoot, 'tmp') . " " . catfile(KrangRoot, 'htdocs', 'tmp'));
 
+    do_make_links(@links);
+}
+
+sub do_make_links {
+    my @links = @_;
+
+    for my $link (@links) {
+
+        unlink $link->{dst} if -l $link->{dst};
+
+        if (-e $link->{src}) {
+            system("ln -s $link->{src} $link->{dst}")
+	       and die "Couldn't symlink $link->{src} to $link->{dst}: $!";
+        }
+    }
 }
 
 
