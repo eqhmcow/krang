@@ -53,7 +53,7 @@ Krang::Localization - Krang localization module
 
 This module provides localization to Krang by exporting the functions
 localize() and localize_template().  The latter is primarily used in
-L<bin/krang_localize_templates> to pre-compile localized templates.
+L<lang/bin/krang_localize_templates> to pre-compile localized templates.
 For this to work, wrap any static template strings in
 
    <tmpl_lang SomeSTRING>
@@ -147,7 +147,7 @@ sub localize_template {
 =item C<debug_localize_template($textref, $language)>
 
 This method is only useful for debugging and testing.  It's used when
-calling L<bin/krang_localize_templates> with the C<--print_missing>
+calling L<lang/bin/krang_localize_templates> with the C<--print_missing>
 option to find strings in templates whose localization is missing in
 the lexicon indicated by $language.
 
@@ -311,6 +311,7 @@ sub uninstall {
          * _list_files()
          * _copy_files()
      were largely stolen from Krang::AddOn
+
 =cut
 
 sub _copy_files {

@@ -138,6 +138,18 @@ describing how to setup Krang:
 
 These options are described below.
 
+=head2 Localization
+
+After installing Krang, you may optionally install localization
+distributions.  To install the localization distribution for German,
+download Krang-Localization-Deutsch-VERSION.tar.gz and install it
+using lang/bin/krang_lang_installer:
+
+  lang/bin/krang_lang_installer Krang-Localization-Deutsch-VERSION.tar.gz
+
+Note that the VERSION number must be the same as the Version of Krang
+itself.
+
 =head2 Required Variables
 
 Before you install you must gather the following information.  The
@@ -304,6 +316,24 @@ for more details).
 =item SSLApachePort
 
 Defaults to 443. Port on which the Apache server will listen for SSL requests.
+
+=item DefaultLanguage
+
+Defaults to 'en' (English).  This must be a RFC3066-style language tag
+representing either the English default or the root directory of some
+localization distribution you are going to install below C<lang/>.
+The DefaultLanguage will be used on the Login screen and when a user
+has not yet set his language preference.
+
+=item AvailableLanguages
+
+A list of RFC3066-style language tags (at a minimum 'en', the English
+default).  The specified languages will show up in the language
+selector on the preferences screen and allow the user to select the
+language of the Krang UI.  For this to work, you have to install the
+corresponding Krang localization distributions after installing Krang
+itself.  To install a localization distribution use the script
+C<lang/bin/krang_lang_installer>.
 
 =back
 

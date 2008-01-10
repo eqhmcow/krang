@@ -17,6 +17,14 @@ point C<krang_upgrade> in the right direction:
 
   # ./bin/krang_upgrade --KrangRoot /path/to/krang/install
 
+If you have installed Krang localization distributions, download the
+new versions of those distributions and install them as
+usual. Example:
+
+  # ./lang/bin/krang_lang_installer Krang-Localization-Deutsch-VERSION.tar.gz
+
+Note that the VERSION number must be the same as the Version of Krang
+itself.
 
 =head1 Upgrading Krang from a Source Release
 
