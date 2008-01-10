@@ -600,12 +600,16 @@ sub install_krang {
     system($chmod) && die("Can't fix directory read permissions: $!");
 
     print "  Setting #! on scripts to " . $PERL_BIN . "\n";
-    opendir(DIR, catdir($InstallPath, "bin")) or die $!;
-    my @scripts = grep { -f $_ }
-                    map { catfile($InstallPath, "bin", $_) } readdir(DIR);
-    closedir DIR;
+    my @scripts = ();
+    for my $dir ('bin', catdir('lang', 'bin')) {
+        my $bin = catdir($InstallPath, $dir);
+        opendir(DIR, $bin) or die $!;
+        push @scripts, grep { -f $_ }
+                       map  { catfile($bin, $_) } readdir(DIR);
+        closedir DIR;
+    }
     foreach my $script (@scripts) {
-        open(SOURCE, $script) or die "Unable to $script: $!";
+        open(SOURCE, $script) or die "Unable to open '$script' for reading: $!";
         my $source = do { local $/; <SOURCE> };
 
         $source =~ s/^#!.*$/#!$PERL_BIN/m or
@@ -655,10 +659,12 @@ sub install_krang {
     $chmod = $FIND_BIN ." $binpath -type f -name '*.cgi' | ". $XARGS_BIN ." ". $CHMOD_BIN ." +x";
     system($chmod) && die("Can't set execute bits: $!");
 
-    # Set all files in krang/bin/*
-    $chmod = $CHMOD_BIN ." +x $InstallPath/bin/*";
-    system($chmod) && die("Can't set execute bits: $!");
-
+    # Set all files in bin/* and lang/bin/*
+    for my $dir ('bin', catdir('lang', 'bin')) {
+        my $bin = catdir($InstallPath, $dir);
+        $chmod = $CHMOD_BIN . " +x $bin/*";
+        system($chmod) && die("Can't set execute bits: $!");
+    }
     print "  Krang files installed.\n";
 }
 
