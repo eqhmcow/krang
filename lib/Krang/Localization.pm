@@ -115,7 +115,7 @@ sub localize {
     return wantarray ? @localized : $localized[0];
 }
 
-=item C<localize_template($textref, $language_tag)>
+=item C<< localize_template($textref, $language_tag) >>
 
 All strings in $textref wrapped in <tmpl_lang ...> tags are localized
 for the language indicated by $language_tag. $textref should contain a
@@ -144,7 +144,7 @@ sub localize_template {
     }
 }
 
-=item C<debug_localize_template($textref, $language)>
+=item C<< debug_localize_template($textref, $language) >>
 
 This method is only useful for debugging and testing.  It's used when
 calling L<lang/bin/krang_localize_templates> with the C<--print_missing>
@@ -185,8 +185,6 @@ argument. $language must be a valid RFC3066-style language tag.
 
 Croaks if $language is not a valid language tag or if no lexicon for
 the given language is found in the package hash %L10N.
-
-=back
 
 =cut
 
@@ -287,6 +285,8 @@ directory below F<lang/>. The C<verbose> option will
 cause uninstall steps to be logged to STDERR.
 
 =cut
+
+=back
 
 sub uninstall {
     my ($pkg, %args) = @_;
