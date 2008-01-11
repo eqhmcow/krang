@@ -122,6 +122,10 @@ HREF[Releasing Krang|release.html] - how to make a krang distribution
 
 HREF[Build System|build_tech_spec.html] - How the Krang build system works.
 
+=item *
+
+HREF[Localization API|localization_api.html] - How to use Krang's localization API.
+
 =back
 
 =head2 Technical Reference / Design Documentation
