@@ -41,7 +41,7 @@ save_stay = function()
 <form name="edit_site_form" method="post" action="site.pl">
 
 <input name="search_filter" value="<tmpl_var escape=html search_filter>" type="hidden">
-<input name="rm" value="save_<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>" type="hidden">
+<input name="rm" value="<tmpl_if add_mode>add<tmpl_else>edit</tmpl_if>_save" type="hidden">
 <tmpl_unless add_mode>
   <input name="site_id" value="<tmpl_var escape=html site_id>" type="hidden">
 </tmpl_unless>
