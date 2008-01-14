@@ -20,8 +20,8 @@ AvailableLanguages, defaulting to just generate one for English.
 These files implement the C<Krang.L10N> object responsible for
 localizing JavaScript alert() messages and the like.  The lexicons
 used by this object's localization method C<Krang.L10N.loc()> are
-coming from F<lang/javascript.LANG>.  Addon's lexicons in
-F<addons/YourAddon/lang/javascript.LANG> will also be read-in.
+coming from F<lang/LANG/javascript.dict>.  Addon's lexicons in
+F<addons/YourAddon/lang/LANG/javascript.dict> will also be read-in.
 
 For English, a default file is generated.  Its C<Krang.L10N.loc()>
 method just returns its argument.

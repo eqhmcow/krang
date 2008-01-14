@@ -297,7 +297,7 @@ END {
 	my $missing .= join "\n", sort keys %{$missing{$language}};
 	if ($missing) {
 	    $missing = "###\n"
-	             . "### Missing in '$LANG{$language}' lexicon lang/perl.$language\n"
+	             . "### Missing in '$LANG{$language}' lexicon lang/$language/perl.dict\n"
                      . "###\n".$missing;
 	    $message .= $missing."\n";
 	}
