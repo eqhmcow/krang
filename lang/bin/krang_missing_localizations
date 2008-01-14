@@ -1,0 +1,540 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+
+use File::Spec::Functions qw(catdir catfile splitdir rel2abs canonpath);
+use File::Find;
+
+use FindBin qw($RealBin);
+use Config;
+use Data::Dumper;
+
+BEGIN {
+    # Find a KRANG_ROOT based on path to bin
+    my @dir = splitdir(canonpath($RealBin));
+    $ENV{KRANG_ROOT} ||= catdir(@dir[0 .. $#dir - 2]);
+
+    # use $KRANG_ROOT/lib for modules
+    my $lib    = catdir($ENV{KRANG_ROOT}, "lib");
+    $ENV{PERL5LIB} = $ENV{PERL5LIB} ? "$ENV{PERL5LIB}:${lib}" : 
+      "${lib}";
+    unshift @INC, $lib, "$lib/".$Config{archname};
+
+    # load Krang::Conf (don't need to load Krang here because we won't
+    # be slinging elements)
+    eval { require Krang::Conf };
+    warn << "END" and exit(1) if $@;
+######################################################################
+
+Cannot load Krang.
+
+Error message:
+
+$@
+
+######################################################################
+END
+}
+
+use Krang::ClassFactory qw(pkg);
+use Krang::ClassLoader Conf => qw(KrangRoot);
+
+use Pod::Usage;
+use Getopt::Long;
+
+our ($help, $man, $verbose, $lang, $no_parsing, $missing, $addon, $find);
+my $result = GetOptions(
+   'help'       => \$help,
+   'man'        => \$man,
+   'verbose'    => \$verbose,
+   'lang=s'     => \$lang,
+   'no_parsing' => \$no_parsing,
+   'missing=s'  => \$missing,
+   'addon=s'    => \$addon,
+   'find=s'     => \$find,
+) or pod2usage(1);
+
+pod2usage(1) if $help;
+pod2usage( -verbose => 2 ) if $man;
+
+pod2usage(1) unless $lang;
+
+# check $missing option
+my %missing = ();
+@missing{ qw(tmpl_lang javascript message module) } = ();
+pod2usage(1) if $missing and not (exists $missing{$missing} or $missing eq 'all');
+
+# some variables
+my $dump_file = catfile(KrangRoot, 'tmp', 'krang_missing_localizations.db');
+my %required = ();
+my %existing = ();
+
+# some regexps to parse templates, Perl packages and JavaScript files
+use Regexp::Common;
+my $tmpl_lang_re   = qr|<tmpl_lang \s+ ([^>]+)>|x;
+my $js_re          = qr|Krang\.L10N\.loc \s* ($RE{balanced}{-parens=>'()'})|x;
+my $localize_re    = qr|localize         \s* ($RE{balanced}{-parens=>'()'})|x;
+my $add_message_re = qr|add_message      \s* ($RE{balanced}{-parens=>'()'})|x;
+my $add_alert_re   = qr|add_alert        \s* ($RE{balanced}{-parens=>'()'})|x;
+my $dict_re        = qr[^ \s* (\w+ | $RE{quoted} )]x;
+
+# skip some "strings" when parsing modules
+my %skip_localize = ();
+@skip_localize{
+    q{$ADMIN_ACTION_LABELS{$_}},
+    q{$ALL_ACTION_LABELS{$schedule->action}},
+    q{$OBJECT_ACTION_LABELS{$_}},
+    q{$_},
+    q{$action},
+    q{$alert->action},
+    q{$contrib_types{ $c->selected_contrib_type() }},
+    q{$contrib_types{$_}},
+    q{$contrib_types{$contrib->selected_contrib_type}},
+    q{$key},
+    q{$labels{$_}},
+    q{$media_types{$_}},
+    q{$media_types{$media_type_id}},
+    q{$pref{$_}},
+    q{$self->column_labels->{$_}},
+    q{$self->command_column_labels->{$_}},
+    q{$self->{display_name}},
+    q{$self->{name}},
+    q{$val},
+    q{FULLDAY_LABELS},
+    q{MONTH_LABELS},
+    q{WEEKDAYS},
+    q{join(', ', $class->url_attributes},
+    q{pkg('Desk')->find( desk_id => $history->desk_id))[0]->name},
+    q{ucfirst($schedule->object_type},
+    q{some string},
+} = (); #' keep Emacs cperl-mode happy
+
+# skip some message keys only known at runtime
+my %skip_messages = ();
+@skip_messages{
+    q{$_},
+    q{$error},
+    q{$msg},
+    q{changed_$name},
+    q{duplicate_url$s},
+    q{error_${name}_has_bad_chars},
+    q{error_${name}_has_http},
+    q{error_${name}_has_path},
+    q{error_${name}_not_absolute},
+    q{error_invalid_$name},
+} = (); #' keep Emacs cperl-mode happy
+
+# where to find what
+my %lexicon_for = (
+    tmpl_lang  => 'perl.dict',
+    javascript => 'javascript.dict',
+    message    => 'messages.conf',
+    module     => 'perl.dict',
+);
+
+# go ahead!
+build_or_load_db();
+$find    and print_found();
+if ($missing eq 'all') {
+    print_missing_for($_) for keys %missing;
+    exit(0);
+}
+$missing and print_missing_for($missing);
+
+#     --- End Main ---
+
+sub print_missing_for {
+    my ($missing) = @_;
+
+    my $req =  $required{$lang}{$missing};
+    my $lex  = $existing{$lang}{$lexicon_for{$missing}};
+
+    my @missing = ();
+
+    for my $r (sort keys %$req) {
+	push @missing, $r unless $lex->{$r};
+    }
+
+    if (@missing) {
+	print "### Missing in lang/$lang/$lexicon_for{$missing}", "\n";
+	print "$_\n" for @missing;
+    } else {
+	print "None missing for '$missing' in lang/$lang/$lexicon_for{$missing} (as far as file parsing can tell).\n"
+    }
+    print "---\n";
+}
+
+sub print_found {
+    for my $place ( @{$required{$find}} ) {
+	print "Found in '$place->[0]' at line $place->[1]\n";
+    }
+}
+
+sub build_or_load_db {
+    if (-e $dump_file and $no_parsing) {
+	show("Loading '$dump_file'");
+	load_db();
+    } else {
+	show("Parsing...");
+	build_db();
+    }
+}
+
+sub load_db {
+    my $data = do {
+	if (open(my $fh, $dump_file)) {
+	    local $/;
+	    <$fh>;
+	} else {
+	    die "Couldn't open '$dump_file' for reading: $!";
+	}
+    };
+
+    eval $data;
+}
+
+sub build_db {
+
+    build_required($_) for (
+	{
+	 file_root => get_root_for('lib'),
+	 file_re   => qr|\.pm$|,
+	 fill_func => sub { cache_module_strings(@_) },
+	},
+	{
+	 file_root => get_root_for('element_lib'),
+	 file_re   => qr|\.pm$|,
+	 fill_func => sub { cache_module_strings(@_) },
+	},
+	{
+	 file_root => get_root_for(catdir('htdocs', 'js')),
+	 file_re   => qr|\.js$|,
+	 fill_func => sub { cache_javascript_strings(@_) },
+	},
+	{
+	 file_root => get_root_for('templates'),
+	 file_re   => qr|\.base\.tmpl$|,
+	 fill_func => sub { cache_template_strings(@_) },
+	},
+    );
+
+    build_existing();
+
+    dump_db() if $no_parsing;
+}
+
+sub dump_db {
+
+    my $dd = Data::Dumper->new(
+        [ \%required,  \%existing ],
+	[ qw(*required *existing) ]
+    );
+
+    open(my $fh, ">", $dump_file)
+      or die "Couldn't dump db to '$dump_file': $!";
+
+    print $fh $dd->Dump;
+
+    close($fh);
+}
+
+sub build_existing {
+
+    my $dir = get_root_for('lang');
+
+    for my $dict ( 'perl.dict', 'messages.conf', 'javascript.dict') {
+	my $file = catfile($dir, $lang, $dict);
+
+	my $fh = open_read_fh($file);
+
+	while (<$fh>) {
+	    next if /^#/;
+	    if (/$dict_re/) {
+		my $string = strip($1, q{'"}, q{'"});
+		$existing{$lang}{$dict}{$string} = $.;
+	    }
+	}
+
+	close $fh;
+    }
+}
+
+sub build_required {
+    my $args = shift;
+
+    find({
+	  wanted => sub {
+
+	      return unless m{$args->{file_re}};
+
+	      my $dir      = (splitdir($File::Find::dir))[-1];
+	      my $lines    = get_lines($File::Find::name);
+	      my $file     = $_;
+
+	      $args->{fill_func}->($lines, $dir, $file);
+	  },
+	  no_chdir => 0,
+	 }, $args->{file_root}
+    );
+}
+
+my $perl_pkg = '';
+sub cache_module_strings {
+    my ($lines, $dir, $file) = @_;
+
+    # the package name
+    my $first_line = $lines->[0];
+    $first_line =~ /package \s+ (.*) \s* ;/x and $perl_pkg = $1;
+
+    return if $perl_pkg eq 'Krang::Message';
+
+    my $content = join '', @$lines;
+
+    # localize()
+    my $line_num = 1;
+    while ( $content =~ /$localize_re/xg ) {
+	my $string = $1;
+	$string = strip($string, q{\s'"(}, q{\s'")});
+	next unless $string;
+	next if exists $skip_localize{$string}; # example in Krang::Localization POD
+	$line_num = get_line_num($lines, $string, $line_num);
+        $required{$lang}{module}{$string} = 's';
+	push @{$required{$string}}, [$perl_pkg, $line_num];
+    }
+
+    # add_message() and add_alert()
+    for my $regexp ( $add_message_re, $add_alert_re ) {
+	$line_num = 1;
+	while ( $content =~ /$regexp/g ) {
+	    my $string = $1;
+	    $string = strip($string, q{\s'"(}, q{\s'")});
+	    $string =~ s{^([^,\s=]+).*}{$1}ms;
+	    $string =~ s{['"]$}{};
+	    next unless $string;
+	    next if exists $skip_messages{$string};
+	    $line_num = get_line_num($lines, $string, $line_num);
+	    $required{$lang}{message}{$string} = 's';
+	    push @{$required{$string}}, [$perl_pkg, $line_num];
+	}
+    }
+}
+
+sub cache_javascript_strings {
+    my ($lines, $dir, $file) = @_;
+
+    my $content = join '', @$lines;
+
+    # JavaScript strings
+    my $line_num = 1;
+    while ($content =~ /$js_re/g) {
+	my $string = strip($1, q{\s'"(}, q{\s'")});
+	next unless $string;
+	$line_num = get_line_num($lines, $string, $line_num);
+	$required{$lang}{javascript}{$string} = 's';
+	push @{$required{$string}}, [$file, $line_num];
+    }
+}
+
+sub cache_template_strings {
+    my ($lines, $dir, $file) = @_;
+
+    my $content = join '', @$lines;
+
+    # <tmpl_lang ...> strings
+    my $line_num = 1;
+    while ($content =~ /$tmpl_lang_re/g) {
+	my $string = $1;
+	next unless $string;
+	$line_num = get_line_num($lines, $string, $line_num);
+	$required{$lang}{tmpl_lang}{$string} = 's';
+	push @{$required{$string}}, ["$dir/$file", $line_num];
+    }
+
+    # JavaScript strings
+    $line_num = 1;
+    while ($content =~ /$js_re/g) {
+	my $string = $1;
+	$string = strip($string, q{\s'"(}, q{\s'")});
+	next unless $string;
+	$line_num = get_line_num($lines, $string, $line_num);
+	$required{$lang}{javascript}{$string} = 's';
+	push @{$required{$string}}, ["$dir/$file", $line_num];
+    }
+}
+
+sub get_lines {
+    my $file = shift;
+
+    open(my $fh => $file)
+      or die "Couldn't open '$file' for reading: $!";
+
+    my @lines = <$fh>;
+
+    return \@lines;
+}
+
+sub open_read_fh {
+    my $file = shift;
+
+    open(my $fh => $file)
+      or die "Couldn't open '$file' for reading: $!";
+
+    return $fh;
+}
+
+sub get_root_for {
+    my $what = shift;
+
+    my $dir = $addon
+      ? catdir(KrangRoot, 'addons', $addon, $what)
+      : catdir(KrangRoot, $what);
+
+    $dir = catdir($dir, 'Krang') if $what eq 'lib';
+
+    if (-e $dir and -d _) {
+	return $dir;
+    } else {
+	die "Directory '$dir' does not exist: $!"
+    }
+}
+
+sub strip {
+    my ($string, $start, $end) = @_;
+
+    $string =~ s|^[$start]+||;
+    $string =~ s|[$end]+$||;
+
+    return $string;
+}
+
+sub show {
+    if ($verbose) {
+	print join ' ', @_;
+	print "\n";
+    }
+}
+
+sub get_line_num {
+    my ($lines, $string, $begin) = @_;
+
+    my $num_lines = scalar(@$lines);
+
+    no warnings 'numeric';
+
+    for (my $i=$begin; $i<$num_lines; $i++) {
+	if ($lines->[$i] =~ /\Q$string/) {
+	    return $i+1;
+	}
+    }
+
+    return '??';
+}
+
+=pod
+
+=head1 NAME
+
+krang_missing_localizations - a script helping to find missing dictionary entries
+
+=head1 SYNOPSIS
+
+  # to find <tmpl_lang STRING> localizations missing in lang/LANG/perl.dict
+  lang/bin/krang_missing_localizations --lang LANG --missing tmpl_lang
+
+  # to find Perl localize(STRING) localizations missing in lang/LANG/perl.dict
+  lang/bin/krang_missing_localizations --lang LANG --missing module
+
+  # to find JavaScript Krang.L10N.loc(STRING) localizations missing in lang/LANG/javascript.dict
+  lang/bin/krang_missing_localizations --lang LANG --missing javascript
+
+  # to find Krang::Message messages missing in lang/LANG/messages.conf
+  lang/bin/krang_missing_localizations --lang LANG --missing javascript
+
+  # to find them all
+  lang/bin/krang_missing_localizations --lang LANG --missing all
+
+
+=head1 DESCRIPTION
+
+This script might help maintainers of Krang localizations
+distributions to keep their distribution up-to-date.  You may search
+for missing strings in a language's perl.dict, javascript.dict and
+messages.conf separately or you may look them up altogether.  After
+you found some missing entries, you might want to know where those
+strings are coming from. Use the C<--find> option to find out.
+
+By default, this script only checks core Krang files and modules.  If
+you have to maintain an addon specific lexicon, you might want to
+check the addon's files and modules only: Use the C<--addon> option to
+do this.
+
+=head1 OPTIONS
+
+The following options are available:
+
+=over
+
+=item --missing tmpl_lang | javascript | message | module | all
+
+Specify what kind of missing localizations you are looking for.
+
+Specifying 'tmpl_lang' will search all templates for strings wrapped
+in <tmpl_lang ...>. Strings not found in lang/LANG/perl.dict will be
+printed to STDOUT.
+
+Specifying 'javascript' will search all templates and all *.js files
+under htdocs/js/ for strings passed to Krang.L10N.loc(). Strings
+not found in lang/LANG/javascript.dict will be printed to STDOUT.
+
+Specifying 'message' will search all Krang::* modules for message keys
+passed to add_message() and add_alert(). Keys not found in
+lang/LANG/messages.conf will be printed to STDOUT.
+
+Specifying 'module' will search all Krang::* modules for strings
+passed to localize(). Strings not found in lang/LANG/perl.dict will be
+printed to STDOUT.
+
+Specifying 'all' will do the above four things.
+
+=item --find STRING
+
+Print the file or package name where STRING has been found.
+
+=item --addon YourAddon
+
+Add this option if you want to verify your addon's lexicon instead of
+Krang's core lexicons.
+
+=item --no_parsing
+
+As parsing all template, Javascript and Krang module files each time
+you run this script is slow, you may want to build a database on the
+first run and then use this database on all following runs.  Use
+C<--no_parsing> to consult the database instead of parsing the files
+anew.  Note that you have to run without this option each time you
+modified either the parsed files or your dictionaries.
+
+The database is stored in F<tmp/krang_missing_localizations.db>
+
+=item --verbose
+
+Print information about what's happening.
+
+=item --help
+
+Show usage information.
+
+=item --man
+
+Show full manpage.
+
+=back
+
+=head1 CAVEAT
+
+This script does statically parse templates, JavaScript and Perl files
+to extract the strings to be localized.  Strings only known at
+runtime can't be captured this way.  This concerns some Krang::Message
+messages and some Perl strings passed to localize().
+
+=cut
