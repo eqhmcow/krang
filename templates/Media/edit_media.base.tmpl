@@ -81,7 +81,7 @@ save_and_view_log = function()
 
   revert_version = function()
   {
-    if ( confirm( Krang.L10N.loc('Are you SURE you want to discard your work and revert to this old version?') ) )
+    if ( confirm( Krang.L10N.loc('Are you SURE you want to discard your work and revert to this old version? (Note that doing so will not revert the actual media content unless your earlier version included a different file.)') ) )
       Krang.Form.submit('edit_media_form', { rm: 'revert_version' });
   }
 
