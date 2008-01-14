@@ -363,7 +363,7 @@ sub category_chooser_object {
         include_prototype   => 0,
         include_full_js     => 0,
         separate_show_bnt   => 1,
-        ok_button_label     => localize(' Ok '),
+        ok_button_label     => ' ' . localize('Ok') . ' ',
         cancel_button_label => localize('Cancel'),
         # The following is just for documentation purposes
         # In our Krang installation the alert message is part
@@ -954,7 +954,7 @@ sub template_chooser_object {
         include_prototype   => 0,
         include_full_js     => 0,
         separate_show_btn   => 1,
-        ok_button_label     => localize(' Ok '),
+        ok_button_label     => ' ' . localize('Ok') . ' ',
         cancel_button_label => localize('Cancel'),
         # The following is just for documentation purposes
         # In our installation the alert message is part
