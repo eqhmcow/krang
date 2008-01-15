@@ -169,9 +169,10 @@ for my $tmpl_root (pkg('File')->find_all('templates')) {
     my $templates = collect_templates_in_root($tmpl_root);
 
     # add templates in tmpl root to collection
-    push @$templates, map { {root => $tmpl_root,
-			     dir  => $tmpl_root,
-			     file => "$_.base.tmpl"} } @single_templates;
+    push @$templates, map  { {root => $tmpl_root,
+			      dir  => $tmpl_root,
+			      file => "$_.base.tmpl"} }
+                      grep { -e catfile($tmpl_root, "$_.base.tmpl") } @single_templates;
     # localize it
     localize_templates($templates);
 }
@@ -187,7 +188,6 @@ sub collect_templates_in_root {
 
     find({
 	  wanted => sub {
-
 	      # only for one package
 	      return if $pkg && $File::Find::dir !~ /$pkg$/;
 
