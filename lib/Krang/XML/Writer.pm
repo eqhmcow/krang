@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use base 'XML::Writer';
 use MIME::Base64 qw(encode_base64);
+use Krang::ClassLoader 'Charset';
+use Encode qw(encode_utf8);
 
 =head1 NAME
 
@@ -72,7 +74,9 @@ sub _fix_val {
       (${$_[0]} =~ /[^\x20-\x7E\n\t]/s or 
        ${$_[0]} =~ /^\s+$/ or
        ${$_[0]} =~ /^!!!BASE64!!!/);
-    ${$_[0]} = '!!!BASE64!!!'.encode_base64(${$_[0]}, "");
+
+    ${$_[0]} = encode_utf8(${$_[0]}) if pkg('Charset')->is_utf8;
+    ${$_[0]} = '!!!BASE64!!!' . encode_base64(${$_[0]}, "");
 }
 
 1;

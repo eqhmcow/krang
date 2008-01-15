@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use XML::Simple ();
 use MIME::Base64 qw(decode_base64);
+use Encode qw(decode_utf8);
+use Krang::ClassLoader 'Charset';
 
 use base 'Exporter';
 our @EXPORT_OK = qw(XMLin);
@@ -44,19 +46,32 @@ sub _fix {
 
     if ($type eq 'HASH') {
         foreach my $val (values %$data) {
-            _fix($val) if ref $val;
-            if ($val =~ s/^!!!BASE64!!!//) {
-                $val = decode_base64($val);
+            if( ref $val ) {
+                _fix($val);
+            } else {
+                $val = _fix_scalar($val);
             }
         }
     } elsif ($type eq 'ARRAY') {
         foreach my $val (@$data) {
-            _fix($val) if ref $val;
-            $val = decode_base64($val) if $val =~ s/^!!!BASE64!!!//;
+            if( ref $val ) {
+                _fix($val);
+            } else {
+                $val = _fix_scalar($val);
+            }
         }
     } else {
         croak("What am I supposed to do with '$type'?");
     }
+}
+
+sub _fix_scalar {
+    my $val = shift;
+    if ($val =~ s/^!!!BASE64!!!//) {
+        $val = decode_base64($val);
+    }
+    $val = decode_utf8($val) if pkg('Charset')->is_utf8;
+    return $val;
 }
 
 1;
