@@ -17,9 +17,13 @@ krang_floodfill - create fake Krang data the easy way
 =head1 DESCRIPTION
 
 This script creates fake Krang data for use during testing.  It uses
-the standard UNIX dict file in F</usr/dict/words> (or
-F</usr/share/dict/words> if that's not available) to generate random
-text.
+the Krang's dict file in F<t/dict/words.ascii> to generate filenames
+and F<t/dict/words.latin1> to generate random text. The latter
+dictionary is a mixture of English, French, German, Italian, Spanish
+and Portuguese word lists coming with Debian Etch.
+
+If the Charset directive is set to 'utf-8', the words from
+F<t/dict/words.latin1> will be UTF-8 encoded.
 
 Stories and media created will be checked in after being created.
 Templates will be checked in and deployed.
@@ -150,6 +154,10 @@ slurs.kra beautifying.kra farkas.kra outperformed.kra subtree.kra tautness.kra
 stella.kra renaults.kra synthesizers.kra toryizes.kra outlasts.kra limp.kra
 collision.kra taoist.kra
 );
+use Krang::ClassLoader 'Test::Content';
+    # get a random word
+
+my $creator = pkg('Test::Content')->new();
 
 # create sites
 my (@sites, @cats);
@@ -180,7 +188,7 @@ for(1 .. $sites) {
 
 # create categorie
 for(1 .. $cats) {
-    my $cname = get_word();
+    my $cname = get_word('ascii');
     my $cat = pkg('Category')->new(dir       => $cname,
                                    parent_id => $cats[int(rand(scalar(@cats)))]->category_id);
 
@@ -200,8 +208,8 @@ for(1 .. $cats) {
 my %types = pkg('Pref')->get('contrib_type');
 my @contribs;
 for(1 .. $contribs) {
-    my $fname = ucfirst(get_word());
-    my $lname = ucfirst(get_word());
+    my $fname = ucfirst(get_word('ascii'));
+    my $lname = ucfirst(get_word('ascii'));
     my $mname = int(rand(2)) ? ucfirst(get_word()) : "";
     my $prefix = ("Sir", "General", "Her Royal Highness",
                   ("") x 20)[int(rand(23))];
@@ -283,7 +291,7 @@ for my $media_count (1 .. $media) {
     my $media = pkg('Media')->new(title      => join(" ",
                                                      map {ucfirst(get_word())}
                                                      (1..(int(rand(3)) + 2))),
-                                  filename   => get_word() . ".$format",
+                                  filename   => get_word('ascii') . ".$format",
                                   filehandle => $fh,
                                   category_id => $cats[int(rand(scalar(@cats)))]->category_id,
                                   media_type_id => $media_type_id,
@@ -323,7 +331,7 @@ for my $story_count (1 .. $stories) {
         $story = pkg('Story')->new(title     => join(" ",
                                                      map {ucfirst(get_word())}
                                                      (1..(int(rand(3)) + 2))),
-                                   slug       => get_word(),
+                                   slug       => get_word('ascii'),
                                    categories => \@c,
                                    cover_date => get_date(),
                                    class      => "article");
@@ -446,7 +454,7 @@ for my $cover_count (1 .. $covers) {
     $cover = pkg('Story')->new(title     => join(" ",
                                                  map {ucfirst(get_word())}
                                                  (1..(int(rand(3)) + 2))),
-                               slug       => get_word(),
+                               slug       => get_word('ascii'),
                                categories => [$c],
                                cover_date => get_date(),
                                class      => "cover");
@@ -650,8 +658,8 @@ my %groups = map {$_->group_id, $_->name} pkg('Group')->find();
 my @users;
 for(1 .. $users) {
     my $login = lc(get_word());
-    my $fname = ucfirst(get_word());
-    my $lname = ucfirst(get_word());
+    my $fname = ucfirst(get_word('ascii'));
+    my $lname = ucfirst(get_word('ascii'));
     my $password = lc(get_word());
     my @groups = grep { int(rand(5)) } keys %groups;
     @groups = (keys %groups)[0] unless @groups;
@@ -729,30 +737,20 @@ sub get_date {
     return Time::Piece->strptime("$m/$d/$y", '%m/%d/%Y');
 }
 
-
-BEGIN {
-    my @words;
-    open(WORDS, "/usr/dict/words")
-      or open(WORDS, "/usr/share/dict/words")
-        or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
-    while (<WORDS>) {
-        chomp;
-        push @words, $_;
-    }
-    srand (time ^ $$);
-
-    # get a random word
-    sub get_word {
-        return lc $words[int(rand(scalar(@words)))];
-    }
-
-    # get $num random words, joined by $sep, defaulting to " "
-    sub get_words {
-        my ($num, $sep) = @_;
-        $sep = " " unless defined $sep and length $sep;
-        return join($sep, map { get_word() } (0 .. ((int(rand($num)))+1)));
-    }
+# get a random word
+sub get_word {
+    my $type = shift;
+    return $creator->get_word($type);
 }
+
+# get $num random words, joined by $sep, defaulting to " "
+sub get_words {
+    my ($num, $sep, $type) = @_;
+    $type = 'ascii' if $sep eq 'ascii' && not $type;
+    $sep = " " unless defined $sep and length $sep;
+    return join($sep, map { get_word($type) } (0 .. ((int(rand($num)))+1)));
+}
+
 
 # we outy
 exit(0);

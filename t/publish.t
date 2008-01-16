@@ -14,6 +14,7 @@ use Krang::ClassLoader 'Element';
 use Krang::ClassLoader 'Template';
 use Krang::ClassLoader 'Script';
 use Krang::ClassLoader 'URL';
+use Krang::ClassLoader 'IO';
 
 use Krang::ClassLoader 'Test::Content';
 
@@ -1783,10 +1784,10 @@ sub build_contrib_hash {
                      middle => $creator->get_word(),
                      last => $creator->get_word(),
                      suffix => 'MD',
-                     email => $creator->get_word() . '@' . $creator->get_word() . '.com',
+                     email => $creator->get_word('ascii') . '@' . $creator->get_word('ascii') . '.com',
                      phone => '111-222-3333',
                      bio => join(' ', map { $creator->get_word() } (0 .. 20)),
-                     url => 'http://www.' . $creator->get_word() . '.com'
+                     url => 'http://www.' . $creator->get_word('ascii') . '.com'
                     );
 
     return %contrib;
@@ -1859,9 +1860,10 @@ sub load_story_page {
     ok(-e $filename, 'Krang::Publisher->publish/preview_story() -- exists');
 
     undef $/;
-    if (open(PAGE, "<$filename")) {
-        $data = <PAGE>;
-        close PAGE;
+
+    if (my $PAGE = pkg('IO')->io_file("<$filename")) {
+	$data = <$PAGE>;
+	close $PAGE;
     } else {
         diag("Cannot open $filename: $!");
         fail('Krang::Publisher->publish_story();');

@@ -45,9 +45,11 @@ can_ok($creator, ('create_site', 'create_category', 'create_media',
 # this is by no means a comprehensive test of get_word()'s randomness.  Just a sanity check.
 my %words;
 for (1..10) {
-    my $w = $creator->get_word();
-    ok(!exists($words{$w}), 'get_word()');
-    $words{$w} = 1;
+    for my $type ('', 'ascii') {
+	my $w = $creator->get_word($type);
+	ok(!exists($words{$w}), 'get_word()');
+	$words{$w} = 1;
+    }
 }
 
 ##################################################
@@ -327,7 +329,7 @@ my @user_ids;
 for (1..10) {
 
     my $cat = $creator->create_category(
-                                        dir    => $creator->get_word(),
+                                        dir    => $creator->get_word('ascii'),
                                         parent => $cat_id,
                                         data   => join(' ', map { $creator->get_word() } (0 .. 5) ),
                                        );

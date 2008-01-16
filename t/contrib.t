@@ -10,7 +10,9 @@ use File::Spec::Functions;
 use File::Path;
 use Krang::ClassLoader Conf => qw(KrangRoot instance InstanceElementSet);
 
+use Krang::ClassLoader 'Test::Content';
 
+my $creator = pkg('Test::Content')->new();
 
 BEGIN { use_ok(pkg('Contrib')) }
 
@@ -328,18 +330,8 @@ sub create_media {
 }
 
 # get a random word
-BEGIN {
-    my @words;
-    open(WORDS, "/usr/dict/words")
-      or open(WORDS, "/usr/share/dict/words")
-        or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
-    while (<WORDS>) {
-        chomp;
-        push @words, $_;
-    }
-    srand (time ^ $$);
-
-    sub get_word {
-        return lc $words[int(rand(scalar(@words)))];
-    }
+sub get_word {
+    my $type = shift;
+    $creator->get_word($type);
 }
+
