@@ -78,9 +78,11 @@ Krang::Test::Content - a package to simplify content handling in Krang tests.
   $ok = $creator->redeploy_live_templates();
   
   
-  # get a random word.
+  # get a random word (returns UTF-8 encoded words if Charset directive is set to utf-8)
   my $word = $creator->get_word();
   
+  # get a random word exclusively composed of ascii letters a-z and A-Z
+  my $ascii = $creator->get_word('ascii');
   
   # delete a previously created object
   $creator->delete_item(item => $story);
@@ -124,6 +126,8 @@ use Krang::ClassLoader MethodMaker => (new_with_init => 'new',
 
 use Krang::ClassLoader Log => qw(debug info critical);
 use Krang::ClassLoader DB => qw(dbh);
+
+use Encode qw(encode_utf8 decode_utf8);
 
 =head1 INTERFACE
 
@@ -236,7 +240,7 @@ sub create_category {
    my %args = @_;
 
    my $parent;
-   my $dir    = $args{dir} || $self->get_word();
+   my $dir    = $args{dir} || $self->get_word('ascii');
    my $data   = $args{data} || $self->get_word();
 
    if ($args{parent}) {
@@ -376,7 +380,7 @@ sub create_media {
    my $y   = $args{y_size} || int(rand(300) + 50);
    my $fmt = $args{format} ||(qw(jpg png gif))[int(rand(3))];
    my $title = $args{title} || join(' ', map { $self->get_word() } (0 .. 5));
-   my $fname = $args{filename} || $self->get_word();
+   my $fname = $args{filename} || $self->get_word('ascii');
    my $caption = $args{caption} || join(' ', map { $self->get_word() } (0 .. 5)); 
 
 
@@ -678,9 +682,9 @@ sub create_contrib {
 
     $c_args{prefix} = $args{prefix} || 'Mr.';
     $c_args{suffix} = $args{suffix} || 'Jr.';
-    $c_args{email}  = $args{email}  || sprintf("%s\@%s.com", $self->get_word, $self->get_word);
+    $c_args{email}  = $args{email}  || sprintf("%s\@%s.com", $self->get_word('ascii'), $self->get_word('ascii'));
     $c_args{bio}    = $args{bio}    || join(' ', map { $self->get_word() } (0 .. 20));
-    $c_args{url}    = $args{url}    || sprintf("http://www.%s.com", $self->get_word());
+    $c_args{url}    = $args{url}    || sprintf("http://www.%s.com", $self->get_word('ascii'));
     $c_args{phone}  = $args{phone}  || sprintf("(%03i) %03i-%04i", int(rand(999)), int(rand(999)), int(rand(9999)));
 
     my %contrib_types = pkg('Pref')->get('contrib_type');
@@ -1018,14 +1022,26 @@ sub redeploy_live_templates {
 
 =item C<< $word = get_word() >>
 
-This subroutine creates all the random text content for the module - each call returns a randomly-chosen word from the source - either /usr/dict/words or /usr/share/dict/words.
+=item C<< $word = get_word('ascii') >>
+
+This subroutine creates all the random text content for the module -
+each call returns a randomly-chosen word from the source - either
+F<t/dict/words.latin1> or <t/dict/words.ascii>.
+
+Depending on the Charset directive in F<conf/krang.conf> those words
+are utf-8 encoded or not.
 
 =cut
 
 sub get_word {
-    my $self = shift;
+    my ($self, $type) = @_;
 
-    return lc $self->{words}[int(rand(scalar(@{$self->{words}})))];
+    croak "Unknown option for get_word()"
+      if $type && $type ne "ascii";
+
+    my $slot = $type && $type eq 'ascii' ? 'ascii_words' : 'high_char_words';
+
+    return lc $self->{$slot}[int(rand(scalar(@{$self->{$slot}})))];
 }
 
 =item C<< $creator->delete_item(item => $krang_object) >>
@@ -1234,19 +1250,23 @@ sub _init_words {
 
     my $self = shift;
 
-    open(WORDS, "/usr/dict/words")
-      or open(WORDS, "/usr/share/dict/words")
-        or croak "Can't open /usr/dict/words or /usr/share/dict/words: $!";
-    while (<WORDS>) {
-        next if /'/;
-        chomp;
-        push @{$self->{words}}, $_;
+    for my $f ( ['words.ascii' , 'ascii_words'    ],
+                ['words.latin1', 'high_char_words'],
+              ) {
+        my $dict = catfile(KrangRoot, 't', 'dict', $f->[0]);
+
+        open (WORDS, $dict)
+          or croak "Couldn't open '$dict' for reading: $!";
+
+        while (<WORDS>) {
+            chomp;
+            $_ = decode_utf8(encode_utf8($_)) if pkg('Charset')->is_utf8;
+            push @{$self->{$f->[1]}}, $_;
+        }
+
+        close WORDS;
     }
-    close WORDS;
-
 }
-
-
 
 # create a storylink in $story to $dest
 sub _link_story {
