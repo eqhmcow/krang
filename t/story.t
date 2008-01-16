@@ -1349,18 +1349,20 @@ sub test_hidden {
 
 
 # get a random word
-BEGIN {
-    my @words;
-    open(WORDS, "/usr/dict/words")
-      or open(WORDS, "/usr/share/dict/words")
-        or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
-    while (<WORDS>) {
-        chomp;
-        push @words, $_;
-    }
-    srand (time ^ $$);
+##BEGIN {
+##    my @words;
+##    open(WORDS, "/usr/dict/words")
+##      or open(WORDS, "/usr/share/dict/words")
+##        or die "Can't open /usr/dict/words or /usr/share/dict/words: $!";
+##    while (<WORDS>) {
+##        chomp;
+##        push @words, $_;
+##    }
+##    srand (time ^ $$);
 
     sub get_word {
-        return lc $words[int(rand(scalar(@words)))];
+	my $type = shift;
+	$creator->get_word($type);
+##        return lc $words[int(rand(scalar(@words)))];
     }
-}
+##}
