@@ -7,6 +7,8 @@ use Carp qw(croak);
 use CGI ();
 
 use HTML::Template::Expr;
+use Encode qw(decode_utf8);
+
 use Krang::ClassLoader Log => qw(debug info critical);
 use Krang::ClassLoader Conf => qw(PreviewSSL);
 use Krang::ClassLoader Localization => qw(localize);
@@ -574,10 +576,26 @@ sub find_template {
     # this is needed so that element templates don't get Krang's templates
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
+    # maybe add a utf-8 decoding filter
+    my @filters = ();
+    my $filter = $args{filter};
+    if ($filter) {
+	if (ref($filter) eq 'CODE') {
+	    push @filters, $filter;
+	} elsif (ref($filter) eq 'ARRAY') {
+	    @filters = @$filter;
+	} else {
+	    croak "Filter argument to HTML::Template::Expr must be a code or an array reference, "
+	        . "but ref($filter) returned '" . ref($filter) . "'";
+	}
+    }
+    push @filters, sub { ${$_[0]} = decode_utf8(${$_[0]}) } if pkg('Charset')->is_utf8;
+    $args{filter} = \@filters;
+
     # Attempt to instantiate an HTML::Template::Expr object 
     my $template;
     eval {
-        $template = HTML::Template::Expr->new(filename       => $filename,
+        $template = HTML::Template::Expr->new(filename          => $filename,
                                               path              => \@search_path,
                                               die_on_bad_params => 0,
                                               loop_context_vars => 1,
