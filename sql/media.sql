@@ -41,7 +41,7 @@ DROP TABLE IF EXISTS media_version;
 CREATE TABLE media_version (
 	media_id        mediumint unsigned NOT NULL,
 	version         SMALLINT unsigned NOT NULL,
-	data            blob NOT NULL,
+	data            mediumblob NOT NULL,
 	PRIMARY KEY (media_id, version),
 	KEY (media_id),
 	KEY (version)

@@ -39,7 +39,7 @@ DROP TABLE IF EXISTS story_version;
 CREATE TABLE story_version (
         story_id        INT      UNSIGNED NOT NULL,
         version         SMALLINT UNSIGNED NOT NULL,
-        data            BLOB,
+        data            MEDIUMBLOB,
         PRIMARY KEY (story_id, version)
 );
 
