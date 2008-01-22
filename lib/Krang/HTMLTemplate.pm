@@ -35,6 +35,7 @@ use Krang::ClassLoader 'AddOn';
 use Krang::ClassLoader 'Info';
 
 use File::Spec::Functions qw(catdir catfile);
+use Encode qw(decode_utf8 encode_utf8);
 use Carp qw(croak);
 
 # setup paths to templates
@@ -63,6 +64,24 @@ sub new {
     $arg{search_path_on_include} = defined $arg{search_path_on_include} 
         ? $arg{search_path_on_include}
         : 1;
+
+    # maybe add a utf-8 decoding filter
+    if (pkg('Charset')->is_utf8) {
+	my @filters = ();
+	my $filter = $arg{filter};
+	if ($filter) {
+	    if (ref($filter) eq 'CODE') {
+		push @filters, $filter;
+	    } elsif (ref($filter) eq 'ARRAY') {
+		@filters = @$filter;
+	    } else {
+		croak "Filter argument to Krang::HTMLTemplate must be a code or an array reference, "
+		  . "but ref($filter) returned '" . ref($filter) . "'";
+	    }
+	}
+	push @filters, sub { ${$_[0]} = decode_utf8(encode_utf8(${$_[0]})) };
+	$arg{filter} = \@filters;
+    }
 
     return $pkg->SUPER::new(%arg);
 }
