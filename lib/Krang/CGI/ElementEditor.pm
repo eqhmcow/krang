@@ -210,7 +210,8 @@ sub element_edit {
     my $element = $self->_find_element($root, $path);
 
     # store current element's name
-    $template->param(name_of_this_element => $element->display_name);
+    $template->param(done_with_this_element => localize('Done With '.$element->display_name));
+    $template->param(delete_this_element    => localize('Delete '   .$element->display_name));
     
     # crumbs let the user jump up the tree
     my $pointer = $element;
@@ -375,7 +376,7 @@ sub element_bulk_edit {
         $pointer = $pointer->parent;
     } while ($pointer);
     $template->param(crumbs => \@crumbs) unless @crumbs == 1;
-    $template->param(name_of_this_element => $element->class->child($name)->display_name);
+    $template->param(bulk_done_with_this_element => localize('Done Bulk Editing '.$element->class->child($name)->display_name));
 }
 
 sub find_story_link {

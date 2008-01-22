@@ -88,6 +88,29 @@ the whole expression, including "User" into each of the tmpl_langs:
   </tmpl_if>
   </h2>
 
+As a positive side-effect, this is also slightly more readable then
+the piecemeal version above.
+
+The same logic applies when it comes to the interplay of tmpl_lang and
+tmpl_var tags.  Consider the following example:
+
+  # in Krang::CGI::ElementEditor we had
+  $template->param(name_of_this_element => $element->display_name);
+
+  # and in templates/Story/edit.tmpl
+  <input value="Done Editing <tmpl_var name_of_this_element>" onclick="save_and_go_up()" type="button" class="west">
+
+The button label, then, is built from the static template string "Done
+Editing " and the element name provided by the tmpl_var.  Again, other
+languages might require to reverse the wording.  That's why it is
+necessary to put things in the following way:
+
+  # in Krang::CGI::ElementEditor
+  $template->param(done_with_this_element => localize('Done With '.$element->display_name));
+
+  # and in templates/Story/edit.base.tmpl
+  <input value="<tmpl_var done_with_this_element>" onclick="save_and_go_up()" type="button" class="west">
+
 
 =head2 JavaScript strings
 
