@@ -27,7 +27,7 @@ use Krang::ClassLoader Session => qw(%session);
 use Krang::ClassLoader 'Publisher';
 use Krang::ClassLoader 'Story';
 use Krang::ClassLoader 'User';
-use Krang::ClassLoader Conf => qw(PreviewSSL);
+use Krang::ClassLoader Conf => qw(PreviewSSL Charset);
 use Krang::ClassLoader Log => qw(debug info critical assert ASSERT);
 use Krang::ClassLoader Widget => qw(format_url datetime_chooser decode_datetime);
 use Krang::ClassLoader Message => qw(add_message add_alert get_alerts clear_alerts);
@@ -338,6 +338,8 @@ sub preview_story {
     # output the progress header
     my $template = $self->load_tmpl('progress.tmpl');
     $template->param(preview => 1);
+    my $charset = Charset || '';
+    $template->param(charset => $charset);
     $|++;
     print $template->output;
 
@@ -626,6 +628,8 @@ sub _publish_assets_now {
 
     # output the progress header
     my $template = $self->load_tmpl('progress.tmpl');
+    my $charset = Charset || '';
+    $template->param(charset => $charset);
     $|++;
     print $template->output;
 

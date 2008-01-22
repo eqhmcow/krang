@@ -341,10 +341,6 @@ BEGIN {
         # and allow non-AJAXy redirects
         $props{'-uri'} = $uri if $uri;
         $self->header_props(%props);
-
-        # setup character set if one is defined
-        $self->query->charset(Charset) if Charset;
-
     });
 
     __PACKAGE__->add_callback(prerun => sub {
@@ -634,6 +630,8 @@ sub run {
         binmode(STDOUT, ':utf8') if pkg('Charset')->is_utf8;
     }
 
+    # setup character set if one is defined
+    $self->query->charset(Charset) if Charset;
 
     #
     # Run CGI
