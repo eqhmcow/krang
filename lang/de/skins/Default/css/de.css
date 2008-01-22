@@ -1,3 +1,7 @@
 <style type="text/css">
-#C .panel input { font-size: 1.2em }
+#C .panel input { font-size: 1.1em }
+#C col.c-stat   { width: 9em }
+
+/*  Desk selector on main story edit screen */
+#C .panel select.west { width: 8em !important}
 </style>

@@ -399,15 +399,15 @@
 "Revert"                         "Verwenden"
 "Right"                          "Rechts"
 "Right Column"                   "Rechte Spalte"
-"Save &amp; Stay"                "Sichern &amp; Bleiben"
-"Save"                           "Sichern"
+"Save &amp; Stay"                "Speichern/Bleiben"
+"Save"                           "Speichern"
 "Schedule"                       "Zeitplan"
 "Scheduler"                      "Zeitplaner"
 "Scheduled Jobs"                 "Zeitgesteuerte Aktionen"
 "Scheduled For"                  "Späterer Zeitpunkt"
 "Schedule Action"                "Hinzufügen"
 "Search"                         "Suchen"
-"Search full text?"              "Volltextsuche?"
+"Search full text?"              "Volltextsuche"
 "Search Results"                 "Suchergebnis"
 "Search Results per Page"        "Suchergebnisse je Seite"
 "Second Level Link"              "Link auf zweiter Ebene"
@@ -616,4 +616,5 @@ AMPM 0
 
 # Krang::Widget
 "Ok"                           "OK"
+
 
