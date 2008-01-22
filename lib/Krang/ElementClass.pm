@@ -577,20 +577,22 @@ sub find_template {
     local $ENV{HTML_TEMPLATE_ROOT} = "";
 
     # maybe add a utf-8 decoding filter
-    my @filters = ();
-    my $filter = $args{filter};
-    if ($filter) {
-	if (ref($filter) eq 'CODE') {
-	    push @filters, $filter;
-	} elsif (ref($filter) eq 'ARRAY') {
-	    @filters = @$filter;
-	} else {
-	    croak "Filter argument to HTML::Template::Expr must be a code or an array reference, "
-	        . "but ref($filter) returned '" . ref($filter) . "'";
+    if (pkg('Charset')->is_utf8) {
+	my @filters = ();
+	my $filter = $args{filter};
+	if ($filter) {
+	    if (ref($filter) eq 'CODE') {
+		push @filters, $filter;
+	    } elsif (ref($filter) eq 'ARRAY') {
+		@filters = @$filter;
+	    } else {
+		croak "Filter argument to HTML::Template::Expr must be a code or an array reference, "
+		  . "but ref($filter) returned '" . ref($filter) . "'";
+	    }
 	}
+	push @filters, sub { ${$_[0]} = decode_utf8(${$_[0]}) };
+	$args{filter} = \@filters;
     }
-    push @filters, sub { ${$_[0]} = decode_utf8(${$_[0]}) } if pkg('Charset')->is_utf8;
-    $args{filter} = \@filters;
 
     # Attempt to instantiate an HTML::Template::Expr object 
     my $template;
