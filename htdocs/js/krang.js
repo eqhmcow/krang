@@ -123,18 +123,21 @@ Krang.Window = {
 
     init : function() {
         // set name and title of our window
-	var id = Krang.Window.get_id();
-	if (!id) { 
-	   // we couldn't find a valid Window ID; get a new one!
-   	   window.location = 'login.pl?rm=logout';
-	   return;
+        var id = Krang.Window.get_id();
+            if (!id) { 
+            // we couldn't find a valid Window ID; get a new one!
+            alert (Krang.L10N.loc("Krang couldn't find a valid Window ID for this login. Please login again, and if the problem persists, try restarting your browser."));
+            window.location = 'login.pl?rm=logout';
+            return;
         }
 
-	window.name = 'krang_window_' + id;
-        document.title += ' ('+id+')';
+        window.name = 'krang_window_' + id;
+        if( id > 1 ) {
+            document.title += ' ('+id+')';
+        }
 
         // make sure page refresh will send Handler our ID 
-	window.onbeforeunload = Krang.Window.pass_id;
+        window.onbeforeunload = Krang.Window.pass_id; // this doesn't work in Safari
     },
 
     get_id : function() {
@@ -160,15 +163,18 @@ Krang.Window = {
 	if (!confirm(Krang.L10N.loc('Are you sure? This will discard any unsaved changes in any window.'))) { return; }
         Krang.show_indicator();
 
-        // first log out any other windows that have cookies set
-	var win_names = document.cookie.match(/(krang_window_\d+)/g);
-	for (i = 0; i < win_names.length; i++) {
-	   var win_name = win_names[i];
-	   if (win_name != window.name) { // make sure this isn't the current window
-	     win_id = win_name.match(/\d+$/);
-	     var win = window.open('login.pl?rm=logout&window='+win_id, win_name);
-	     win.name = '';
-	   }
+        // clear new-window cookie (in case we're closing a window that hasn't been initialized)
+        Krang.Cookie.set('krang_new_window_id', '0');
+
+        // log out any other windows that have cookies set
+        var win_names = document.cookie.match(/(krang_window_\d+)/g);
+        for (i = 0; i < win_names.length; i++) {
+            var win_name = win_names[i];
+            if (win_name != window.name) { // make sure this isn't the current window
+                win_id = win_name.match(/\d+$/);
+                var win = window.open('login.pl?rm=logout&window='+win_id, win_name);
+                win.name = '';
+            }
         }
 
 	// then log out this window
@@ -329,6 +335,9 @@ Krang.Ajax.request = function(args) {
     // add the ajax=1 flag to the existing query params
     params['ajax'] = 1;
 
+    // pass window ID to handler
+    Krang.Window.pass_id();
+
     Krang.unload();
 
     new Ajax.Request(
@@ -420,6 +429,9 @@ Krang.Ajax.update = function(args) {
 
     // add the ajax=1 flag to the existing query params
     params['ajax'] = 1;
+
+    // pass window ID to handler
+    Krang.Window.pass_id();
 
     // the default target
     if( target == null || target == '' )
@@ -668,7 +680,7 @@ Krang.class_suffix = function(el, prefix) {
 */
 Krang.Nav = {
     edit_mode_flag : false,
-    edit_message   : Krang.L10N.loc('Are you sure you want to discard any unsaved changes?'),
+    edit_message   : Krang.L10N.loc('Are you sure you want to discard your unsaved changes?'),
     edit_mode      : function(flag) {
         // by default it's true
         if( flag === undefined ) flag = true;
@@ -714,7 +726,6 @@ Krang.Help = {
         // if we have something go to it
         if( topic )    url = url + '?topic=' + topic;
         if( subtopic ) url = url + '#' + subtopic;
-	Krang.Window.pass_id();
         Krang.popup(url, { width: 500, height: 600});
     }
 };
@@ -1666,7 +1677,7 @@ var rules = {
     },
     // create an autocomplete widget. This involves creating a div
     // in which to place the results and creating an Ajax.Autocompleter
-    // object. We only do this if the use has the "use_autocomplete"
+    // object. We only do this if the user has the "use_autocomplete"
     // preference.
     // Can specifically ignore inputs by giving them the 'non_auto' class
     'input.autocomplete' : function(el) {
@@ -1691,6 +1702,7 @@ var rules = {
                     paramName: 'phrase',
                     tokens   : [' '],
                     callback : function(el, url) {
+                        Krang.Window.pass_id();
                         url = url + '&rm=autocomplete';
                         return url;
                     }
