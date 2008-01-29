@@ -9,8 +9,20 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
-Added t/dict/words.ascii (to generate filenames and the like) and
-t/dict/words.latin1, a mixture of English, French, German, Italian,
+Replaced C<src/Digest-MD5-2.23.tar.gz> with
+C<src/Digest-MD5-2.36_patched_for_UTF8.tar.gz> which handles UTF-8
+data transparently. [Bodo Schulze]
+
+=item *
+
+Made sure each Krang template points to its own help files.  Also
+streamlined help file names to ease the making of more sophisticated
+help systems. [Bodo Schulze]
+
+=item *
+
+Added C<t/dict/words.ascii> (to generate filenames and the like) and
+C<t/dict/words.latin1>, a mixture of English, French, German, Italian,
 Portuguese and Spanish words for content generation.  Also made all
 tests use Krang::Test::Content's get_word() method to generate UTF-8
 content if the Charset directive says so.
