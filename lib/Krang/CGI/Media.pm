@@ -1191,7 +1191,7 @@ sub validate_media {
         } elsif (!@errors) {
             # text types allow auto-creation
             my $filename = $media->title;
-            $filename =~ s/[^\w\s\-]//g;    # clean invalid chars
+            $filename =~ s/[^\w\s\.\-]//g;  # clean invalid chars
             $filename =~ s/(^\s+|\s+$)+//g; # clean excess whitespace
             $filename =~ s/[\s\-\_]+/_/g;   # use underscores btw words
             open (my $filehandle);
