@@ -6,12 +6,6 @@ Krang.onload( function() {
   Krang.Help.set( 'media_<tmpl_if add_mode>new<tmpl_else>edit</tmpl_if>' );
 } );
 
-publish_media_preview = function()
-{
-  <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
-  Krang.Form.submit('edit_media_form', { rm: 'save_and_preview' });
-}
-
 do_checkin = function()
 {
   <tmpl_if is_text>mediaEditor.toggleEditor();</tmpl_if>
@@ -287,7 +281,6 @@ Krang.onload( function() {
 <tmpl_if may_publish>
   <input value="<tmpl_lang Publish>" onclick="publish_media()" type="button">
 </tmpl_if>
-<input value="<tmpl_lang Publish to Preview>" onclick="publish_media_preview()" type="button">
 <tmpl_unless add_mode>
   <input value="<tmpl_lang Delete>" onclick="do_delete()" type="button">
 </tmpl_unless>
