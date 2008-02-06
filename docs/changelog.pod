@@ -9,6 +9,11 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+Added 'View Log' to Media View (r4815) and Template View (r4820)
+screens. [Bodo Schulze]
+
+=item *
+
 For Media Edit screen, ripped out 'Publish to Preview' button
 including its JavaScript function and Perl runmode, since each Save
 and Save & Stay now does publish to preview anyway (behavior
