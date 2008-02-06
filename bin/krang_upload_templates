@@ -49,6 +49,10 @@ will be ignored.
 
 If not specified, --path default to /element_lib/InstanceElementSet/templates/
 
+=item --force-checkin
+
+If specified, templates which are checked out will be checked in rather than skipped.
+
 =item --makecats
 
 If specified, categories which do not exist in the CMS will be created instead of skipped.
@@ -116,6 +120,7 @@ my $user = "admin";
 my $password = "";
 my $makecats = 0;
 my $verbose = 0;
+my $force_checkin = 0;
 
 pod2usage(2) unless
   GetOptions(
@@ -123,6 +128,7 @@ pod2usage(2) unless
              'user=s' => \$user,
              'password=s' => \$password,
              'verbose+' => \$verbose,
+             'force-checkin' => \$force_checkin,
              'makecats' => \$makecats,
              'help' => \$help,
              'man' => \$man,
@@ -195,13 +201,22 @@ sub upload_templates {
                                        filename => $f );
         }
 
-        # Do we have access?  (Only checked out by system user
+        # Do we have access?  
         if ($t->checked_out()) {
             my ($checked_out_user) = pkg('User')->find(user_id => $t->checked_out_by);
             my $cou_login = $checked_out_user->login();
             unless ($cou_login eq 'system') {
-                print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
-                next;
+		if ($force_checkin) {
+		    $t->checkin;
+		    if ($t->checked_out) {
+			print STDERR "*** UNABLE TO CHECK IN '$f' ***\n";
+		    } else {
+			print "Checked in '$f' (was checked out by '$cou_login')\n" if $verbose;
+		    }
+		} else {
+		    print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
+		    next;
+		}
             }
         }
 

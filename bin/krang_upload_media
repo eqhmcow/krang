@@ -48,10 +48,13 @@ will be ignored.
 
 If not specified, --path default to /element_lib/InstanceElementSet/media/
 
+=item --force-checkin
+
+If specified, media objects which are checked out will be checked in rather than skipped.
+
 =item --makecats
 
 If specified, categories which do not exist will be created instead of skipped.
-
 
 =item --grep
 
@@ -118,6 +121,7 @@ my ($help, $man);
 my $path = catdir(element_lib_path(), 'media');
 my $user = "admin";
 my $password = "";
+my $force_checkin = 0;
 my $makecats = 0;
 my $verbose = 0;
 my $grep = "";
@@ -128,7 +132,8 @@ pod2usage(2) unless
              'user=s' => \$user,
              'grep=s' => \$grep,
              'password=s' => \$password,
-             'verbose+' => \$verbose,
+	     'verbose+' => \$verbose,
+	     'force-checkin' => \$force_checkin,
              'makecats' => \$makecats,
              'help' => \$help,
              'man' => \$man,
@@ -214,13 +219,23 @@ sub upload_media {
         $m = pkg('Media')->new( title => $f,
                                 category_id => $category->category_id ) unless ($m);
 
-        # Do we have access?  (Only checked out by system user
+        # Do we have access?  
+
         if ($m->checked_out()) {
             my ($checked_out_user) = pkg('User')->find(user_id => $m->checked_out_by);
             my $cou_login = $checked_out_user->login();
             unless ($cou_login eq 'system') {
-                print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
-                next;
+		if ($force_checkin) {
+		    $m->checkin;
+		    if ($m->checked_out) {
+			print STDERR "*** UNABLE TO CHECK IN '$f' ***\n";
+		    } else {
+			print "Checked in '$f' (was checked out by '$cou_login')\n" if $verbose;
+		    }
+		} else {
+		    print "  Skipping '$f' (checked out by '$cou_login')\n" if $verbose;
+		    next;
+		}
             }
         }
 
