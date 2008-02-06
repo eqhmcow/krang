@@ -5,6 +5,11 @@ Krang.onload( function() {
   Krang.Help.set( 'template_view' );
 } );
 
+view_log = function()
+{
+  Krang.Form.submit( 'view_log_form' );
+}
+
 do_return = function()
 {
   Krang.Form.submit( 'return_form' );
@@ -24,9 +29,9 @@ Krang.onload( function() {
 
 </script>
 
-<!--[p class="cram east"]
-(db2)add 'View Log' here
-[/p]-->
+<p class="cram east">
+  <input value="<tmpl_lang View Log>" onclick="view_log()" type="button" class="button">
+</p>
 
 <h2>
 <tmpl_lang View Template>
@@ -98,6 +103,27 @@ Krang.onload( function() {
   <input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
   </form>
 </tmpl_if></tmpl_unless>
+
+<form name="view_log_form" action="history.pl" method="post">
+<input name="template_id" value="<tmpl_var escape=html template_id>" type="hidden">
+<input name="history_return_script" value="template.pl" type="hidden">
+<input name="history_return_script" value="return_script" type="hidden">
+<input name="history_return_script" value="template.pl" type="hidden">
+<input name="history_return_params" value="rm" type="hidden">
+<input name="history_return_params" value="view" type="hidden">
+<input name="history_return_params" value="template_id" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html template_id>" type="hidden">
+<input name="history_return_params" value="version" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html version>" type="hidden">
+<input name="history_return_params" value="return_script" type="hidden">
+<input name="history_return_params" value="<tmpl_var escape=html return_script>" type="hidden">
+<tmpl_loop return_params_loop>
+  <input name="history_return_params" value="return_params" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html name>" type="hidden">
+  <input name="history_return_params" value="return_params" type="hidden">
+  <input name="history_return_params" value="<tmpl_var escape=html value>" type="hidden">
+</tmpl_loop>
+</form>
 
 <tmpl_include footer.tmpl>
 
