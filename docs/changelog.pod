@@ -9,6 +9,13 @@ This document contains a list of changes for each release of Krang.
 
 =item *
 
+For Media Edit screen, ripped out 'Publish to Preview' button
+including its JavaScript function and Perl runmode, since each Save
+and Save & Stay now does publish to preview anyway (behavior
+introduced by Noam in r4513). [Bodo Schulze]
+
+=item *
+
 Replaced C<src/Digest-MD5-2.23.tar.gz> with
 C<src/Digest-MD5-2.36_patched_for_UTF8.tar.gz> which handles UTF-8
 data transparently. [Bodo Schulze]
