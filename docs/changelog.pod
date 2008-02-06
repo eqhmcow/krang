@@ -7,6 +7,11 @@ This document contains a list of changes for each release of Krang.
 
 =over
 
+=teim * 
+
+Added 'force-checkin' option to krang_upload_templates and krang_upload_media.
+(In the past objects checked out to other users were skipped). [Noam Weinstein]
+
 =item *
 
 Added 'View Log' to Media View (r4815) and Template View (r4820)
