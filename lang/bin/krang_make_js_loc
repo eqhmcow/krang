@@ -115,6 +115,7 @@ my $js_dir = catdir(KrangRoot, 'htdocs', 'js');
 # do it
 check_js_dir();
 write_js_file($_) for @languages;
+print " Done.\n";
 
 #       --- END Main ---
 

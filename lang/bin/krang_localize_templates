@@ -177,6 +177,8 @@ for my $tmpl_root (pkg('File')->find_all('templates')) {
     localize_templates($templates);
 }
 
+print " Done.\n";
+
 #         --- END Main ---
 
 sub collect_templates_in_root {
