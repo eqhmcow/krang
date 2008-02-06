@@ -61,7 +61,7 @@ preview_and_stay = function() {
   }
 
   remove_categories = function() {
-    if( confirm( Krang.L10N.loc('Are you SURE you want to delete these Categories?') ) ) {
+    if( confirm( Krang.L10N.loc('Are you SURE you want to remove the Story from these Categories?') ) ) {
         Krang.ElementEditor.run_save_hooks();
         Krang.Form.submit('edit', { rm: 'delete_categories' }, { to_top: false });
     }
