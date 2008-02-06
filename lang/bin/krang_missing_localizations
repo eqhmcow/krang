@@ -42,7 +42,8 @@ use Krang::ClassLoader Conf => qw(KrangRoot);
 use Pod::Usage;
 use Getopt::Long;
 
-our ($help, $man, $verbose, $lang, $no_parsing, $missing, $addon, $find);
+my $missing = '';
+my ($help, $man, $verbose, $lang, $no_parsing, $addon, $find);
 my $result = GetOptions(
    'help'       => \$help,
    'man'        => \$man,
@@ -63,6 +64,7 @@ pod2usage(1) unless $lang;
 my %missing = ();
 @missing{ qw(tmpl_lang javascript message module) } = ();
 pod2usage(1) if $missing and not (exists $missing{$missing} or $missing eq 'all');
+pod2usage(1) unless $missing || $find;
 
 # some variables
 my $dump_file = catfile(KrangRoot, 'tmp', 'krang_missing_localizations.db');
@@ -134,7 +136,7 @@ my %lexicon_for = (
 
 # go ahead!
 build_or_load_db();
-$find    and print_found();
+$find and print_found();
 if ($missing eq 'all') {
     print_missing_for($_) for keys %missing;
     exit(0);
@@ -310,8 +312,10 @@ sub cache_module_strings {
 	    $string = strip($string, q{\s'"(}, q{\s'")});
 	    $string =~ s{^([^,\s=]+).*}{$1}ms;
 	    $string =~ s{['"]$}{};
+
 	    next unless $string;
 	    next if exists $skip_messages{$string};
+
 	    $line_num = get_line_num($lines, $string, $line_num);
 	    $required{$lang}{message}{$string} = 's';
 	    push @{$required{$string}}, [$perl_pkg, $line_num];
